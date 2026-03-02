@@ -8,7 +8,7 @@ def _clamp(v, a, b):
 
 class Imagem:
     """
-    Imagem com efeito "brilho em ondas" (sweep) para logos/banners.
+    Imagem com efeito vibrante suave usando máscara do ícone.
     Use: img.draw(TELA, dt)
     """
 
@@ -20,10 +20,10 @@ class Imagem:
         scale=None,              # (w,h) ou None
         efeito=True,
         duracao=2.2,             # segundos por ciclo
-        largura_faixa=0.28,      # 0..1 (largura do brilho relativo ao tamanho)
-        intensidade=0.9,         # 0..1 (força do brilho)
-        angulo_graus=-20,        # direção do brilho
-        alpha_base=140,          # alpha máximo do brilho (0..255)
+        largura_faixa=0.28,      # mantido por compatibilidade
+        intensidade=0.9,         # 0..1 (força do efeito de cor)
+        angulo_graus=-20,        # mantido por compatibilidade
+        alpha_base=140,          # mantido por compatibilidade
     ):
         self.base = surface.convert_alpha()
         self.pos = pos
@@ -33,14 +33,18 @@ class Imagem:
             self.base = pygame.transform.smoothscale(self.base, scale).convert_alpha()
 
         self.efeito = efeito
-        self.duracao = max(0.2, float(duracao))
-        self.largura_faixa = _clamp(float(largura_faixa), 0.05, 0.8)
+        self.duracao = max(0.4, float(duracao))
         self.intensidade = _clamp(float(intensidade), 0.0, 1.0)
-        self.angulo_graus = float(angulo_graus)
-        self.alpha_base = int(_clamp(alpha_base, 0, 255))
 
         self._t = 0.0
-        self._mask_cache = {}  # key -> Surface (cache por w,h,angulo,largura)
+        self._mask_cache = {}
+
+        # parâmetros do efeito (usando máscara do ícone, não brilho reflexivo)
+        self._saturacao_amp = 0.06
+        self._luminosidade_amp = 0.08
+        self._r_amp = 0.035
+        self._g_amp = 0.025
+        self._b_amp = 0.04
 
     def set_pos(self, pos):
         self.pos = pos
@@ -50,79 +54,53 @@ class Imagem:
         setattr(r, self.align, self.pos)
         return r
 
-    def _get_shine_mask(self, w, h):
-        # cache key
-        key = (w, h, int(self.angulo_graus), round(self.largura_faixa, 3))
-        if key in self._mask_cache:
-            return self._mask_cache[key]
+    def _get_alpha_mask(self, size):
+        if size in self._mask_cache:
+            return self._mask_cache[size]
 
-        # máscara grande para permitir rotacionar sem cortar
-        diag = int(math.hypot(w, h))
-        mw, mh = diag, diag
+        w, h = size
+        mask = pygame.Surface((w, h), pygame.SRCALPHA)
+        alpha = pygame.surfarray.array_alpha(self.base)
+        rgb = pygame.surfarray.pixels3d(mask)
+        rgb[:, :, :] = 255
+        del rgb
+        alpha_target = pygame.surfarray.pixels_alpha(mask)
+        alpha_target[:, :] = alpha[:, :]
+        del alpha_target
 
-        mask = pygame.Surface((mw, mh), pygame.SRCALPHA)
-
-        # cria gradiente 1D horizontal (faixa) e "espalha" na máscara
-        # a faixa tem centro branco e bordas transparentes
-        faixa_w = max(10, int(mw * self.largura_faixa))
-        grad = pygame.Surface((faixa_w, mh), pygame.SRCALPHA)
-
-        # gradiente manual (rápido e simples)
-        for x in range(faixa_w):
-            # 0..1..0
-            p = x / max(1, faixa_w - 1)
-            tri = 1.0 - abs(2.0 * p - 1.0)
-            a = int(self.alpha_base * tri)
-            grad.fill((255, 255, 255, a), rect=pygame.Rect(x, 0, 1, mh))
-
-        # cola gradiente no meio
-        mask.blit(grad, ((mw - faixa_w) // 2, 0))
-
-        # rotaciona
-        if self.angulo_graus != 0:
-            mask = pygame.transform.rotate(mask, self.angulo_graus).convert_alpha()
-
-        self._mask_cache[key] = mask
+        self._mask_cache[size] = mask
         return mask
 
+    def _modular_cor(self, base_surf, phase):
+        overlay = pygame.Surface(base_surf.get_size(), pygame.SRCALPHA)
+
+        sat_wave = 1.0 + self._saturacao_amp * math.sin(phase)
+        lum_wave = 1.0 + self._luminosidade_amp * math.sin(phase * 1.43 + 0.6)
+        r_wave = 1.0 + self._r_amp * math.sin(phase * 1.1)
+        g_wave = 1.0 + self._g_amp * math.sin(phase * 1.9 + 1.2)
+        b_wave = 1.0 + self._b_amp * math.sin(phase * 1.6 + 2.1)
+
+        pulse_color = (
+            int(255 * _clamp(lum_wave * sat_wave * r_wave, 0.85, 1.22)),
+            int(255 * _clamp(lum_wave * sat_wave * g_wave, 0.85, 1.20)),
+            int(255 * _clamp(lum_wave * sat_wave * b_wave, 0.85, 1.24)),
+            int(80 * self.intensidade),
+        )
+        overlay.fill(pulse_color)
+
+        mask = self._get_alpha_mask(base_surf.get_size())
+        overlay.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        return overlay
+
     def draw(self, tela: pygame.Surface, dt: float):
-        # desenha imagem base
         rect = self.get_rect()
         tela.blit(self.base, rect.topleft)
 
         if not self.efeito:
             return
 
-        # avança tempo (ciclo)
         self._t = (self._t + dt) % self.duracao
-        phase = self._t / self.duracao  # 0..1
+        phase = (self._t / self.duracao) * (2.0 * math.pi)
 
-        w, h = self.base.get_size()
-
-        # máscara
-        mask = self._get_shine_mask(w, h)
-
-        # posição do brilho: varre da esquerda pra direita (fora -> dentro -> fora)
-        # usamos o tamanho da máscara pra garantir varredura completa
-        mw, mh = mask.get_size()
-        # deslocamento vai de -mw..+mw
-        x = int((-mw) + (2 * mw) * phase)
-        y = int((h // 2) - (mh // 2))
-
-        # cria uma surface do tamanho da imagem para recortar a parte visível do brilho
-        overlay = pygame.Surface((w, h), pygame.SRCALPHA)
-
-        # desenha máscara no overlay (com offset animado)
-        overlay.blit(mask, (x, y))
-
-        # aplica intensidade (multiplica alpha)
-        if self.intensidade < 1.0:
-            # reduz alpha geral do overlay
-            overlay.set_alpha(int(255 * self.intensidade))
-
-        # recorta brilho só onde a imagem tem pixels (usa alpha da imagem como máscara)
-        # BLEND_RGBA_MULT: multiplica RGBA (mantém transparente fora da imagem)
-        overlay.blit(self.base, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-
-        # soma brilho por cima (fica bonito)
+        overlay = self._modular_cor(self.base, phase)
         tela.blit(overlay, rect.topleft, special_flags=pygame.BLEND_RGBA_ADD)

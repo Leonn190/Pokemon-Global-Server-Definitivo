@@ -204,16 +204,23 @@ class Botao:
         radius = int(self.style["radius"])
         bw = int(self.style["border_width"])
 
+        clip_surf = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+
         if self.hover and frames:
             frame = frames[self._frame_idx]
             frame = pygame.transform.smoothscale(frame, (self.rect.width, self.rect.height))
-            tela.blit(frame, self.rect.topleft)
+            clip_surf.blit(frame, (0, 0))
         elif self.style["bg_image"] is not None:
             img = self.style["bg_image"]
             img = pygame.transform.smoothscale(img, (self.rect.width, self.rect.height))
-            tela.blit(img, self.rect.topleft)
+            clip_surf.blit(img, (0, 0))
         else:
-            pygame.draw.rect(tela, bg_now, self.rect, border_radius=radius)
+            clip_surf.fill((*bg_now, 255))
+
+        mask = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        pygame.draw.rect(mask, (255, 255, 255, 255), mask.get_rect(), border_radius=radius)
+        clip_surf.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        tela.blit(clip_surf, self.rect.topleft)
 
         # borda
         if bw > 0:

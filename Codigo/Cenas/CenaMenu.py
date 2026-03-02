@@ -19,17 +19,18 @@ class CenaMenu:
         self.Fundo = pygame.image.load(str(caminho_fundo)).convert()
         self.FundoLargura, self.FundoAltura = self.Fundo.get_size()
         self.FundoOffsetX = 0.0
+        self.FundoDirecao = 1
         self.FundoVelocidade = 26.0
 
         caminho_logo = Path("Recursos/Visual/Icones/GlobalServer/Logo.png")
         logo_surface = pygame.image.load(str(caminho_logo)).convert_alpha()
 
-        largura_logo = min(int(largura_tela * 0.58), logo_surface.get_width())
+        largura_logo = min(int(largura_tela * 0.48), logo_surface.get_width())
         altura_logo = int(logo_surface.get_height() * (largura_logo / logo_surface.get_width()))
 
         self.Logo = Imagem(
             logo_surface,
-            pos=(largura_tela // 2, int(altura_tela * 0.28)),
+            pos=(largura_tela // 2, int(altura_tela * 0.23)),
             align="center",
             scale=(largura_logo, altura_logo),
             efeito=True,
@@ -40,7 +41,14 @@ class CenaMenu:
             alpha_base=160,
         )
 
-        textura_cosmica = pygame.image.load("Recursos/Visual/Texturas/TexturaCosmica/gif_frame0.png").convert_alpha()
+        pasta_textura = Path("Recursos/Visual/Texturas/TexturaCosmica")
+        frames_textura = sorted(pasta_textura.glob("gif_frame*.png"), key=lambda p: int(p.stem.replace("gif_frame", "")))
+        frames_hover = [
+            pygame.image.load(str(frame)).convert_alpha()
+            for i, frame in enumerate(frames_textura)
+            if i % 6 == 0
+        ]
+        textura_base = frames_hover[0] if frames_hover else None
 
         estilo_botao = {
             "radius": 22,
@@ -50,12 +58,14 @@ class CenaMenu:
             "bg": (18, 20, 30),
             "bg_hover": (38, 44, 66),
             "bg_pressed": (16, 19, 28),
-            "bg_image": textura_cosmica,
+            "bg_image": textura_base,
+            "bg_frames_hover": frames_hover,
+            "bg_frames_fps": 20,
             "hover_scale": 1.08,
             "hover_speed": 14.0,
             "press_scale": 0.97,
             "text_style": {
-                "size": 46,
+                "size": 40,
                 "color": (245, 246, 255),
                 "hover_color": (255, 232, 80),
                 "hover_speed": 28.0,
@@ -68,10 +78,10 @@ class CenaMenu:
             },
         }
 
-        largura_botao = 520
-        altura_botao = 122
-        espacamento = 34
-        inicio_y = int(altura_tela * 0.55)
+        largura_botao = 480
+        altura_botao = 108
+        espacamento = 28
+        inicio_y = int(altura_tela * 0.50)
         x = (largura_tela - largura_botao) // 2
 
         self.Botoes = [
@@ -106,12 +116,20 @@ class CenaMenu:
     def _desenhar_fundo(self, JOGO, dt):
         largura_tela, altura_tela = JOGO.TELA.get_size()
 
-        self.FundoOffsetX = (self.FundoOffsetX + self.FundoVelocidade * dt) % self.FundoLargura
+        max_offset = max(self.FundoLargura, largura_tela)
+        self.FundoOffsetX += self.FundoVelocidade * dt * self.FundoDirecao
+        if self.FundoOffsetX >= max_offset:
+            self.FundoOffsetX = max_offset
+            self.FundoDirecao = -1
+        elif self.FundoOffsetX <= 0:
+            self.FundoOffsetX = 0
+            self.FundoDirecao = 1
+
         x_base = int(self.FundoOffsetX)
 
-        JOGO.TELA.blit(self.Fundo, (-x_base, 0))
-        if self.FundoLargura - x_base < largura_tela:
-            JOGO.TELA.blit(self.Fundo, (self.FundoLargura - x_base, 0))
+        for x in (-x_base, self.FundoLargura - x_base):
+            for y in range(0, altura_tela, self.FundoAltura):
+                JOGO.TELA.blit(self.Fundo, (x, y))
 
         if self.FundoAltura != altura_tela:
             overlay = pygame.Surface((largura_tela, altura_tela), pygame.SRCALPHA)

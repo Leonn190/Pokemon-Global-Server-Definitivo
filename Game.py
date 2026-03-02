@@ -35,4 +35,5 @@ if ConfigFixa is not None:
 CONFIG.update({"VERSÃO": 1.0})
 
 Game = ControladorCenas(TELA, RELOGIO, CONFIG)
+Game.DefinirCena("Menu")
 Game.Rodar()

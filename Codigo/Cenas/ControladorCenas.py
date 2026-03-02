@@ -1,7 +1,7 @@
 from Codigo.Cenas.CenaMenu import CenaMenu
 from Codigo.Cenas.CenaMundo import CenaMundo
 from Codigo.Cenas.CenaCombate import CenaCombate
-from Codigo.Cenas.CenaCarregamento import CenaCarregamento  
+from Codigo.Cenas.CenaCarregamento import CenaCarregamento
 
 class ControladorCenas:
     def __init__(self, TELA, RELOGIO, CONFIG):
@@ -17,19 +17,22 @@ class ControladorCenas:
             "Combate": CenaCombate(),
         }
 
+        self.Escuro = 100
+        self.CenaAlvo = None
         self.Cena = None
         self.Rodando = True
 
-    def DefinirCena(self, CenaID):
+    def DefinirCena(self):
         
         if self.Cena is not None:
-            self.Cena.Finalizar()
+            self.INFO.update({"UltimaCena": self.Cena.ID})
+            self.Cena.Finalizar(self)
         
-        self.Cena = self.Cenas[CenaID]
-        self.Cena.Inicializar()
+        self.Cena = self.Cenas[self.CenaAlvo]
+        self.CenaAlvo = None
+        self.Cena.Inicializar(self)
 
-    def Rodar(self, CenaInicial="Menu"):
-        self.DefinirCena(CenaInicial)
+    def Rodar(self):
 
         while self.Rodando:
             self.Cena.Loop(self)

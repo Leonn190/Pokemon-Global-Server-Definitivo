@@ -57,6 +57,8 @@ class Botao:
         "text_style": {
             "size": 26,
             "color": (255, 255, 255),
+            "hover_color": (255, 238, 90),
+            "hover_speed": 24.0,
             "align": "center",
 
             "outline": True,
@@ -98,6 +100,7 @@ class Botao:
 
         self._frame_idx = 0
         self._frame_acc = 0.0
+        self._text_hover_t = 0.0
 
     def set_text(self, text: str):
         self.text.set_text(text)
@@ -160,6 +163,14 @@ class Botao:
             1.0,
         )
 
+        text_style = self.style["text_style"]
+        text_speed = float(text_style.get("hover_speed", 24.0))
+        self._text_hover_t = _clamp(
+            self._text_hover_t + (target - self._text_hover_t) * _clamp(text_speed * dt, 0.0, 1.0),
+            0.0,
+            1.0,
+        )
+
         # escala final
         scale = _lerp(1.0, float(self.style["hover_scale"]), self._hover_t)
         if self.pressed:
@@ -209,6 +220,10 @@ class Botao:
             pygame.draw.rect(tela, border_now, self.rect, width=bw, border_radius=radius)
 
         # texto
+        base_text_color = text_style.get("color", (255, 255, 255))
+        hover_text_color = text_style.get("hover_color", (255, 238, 90))
+        text_color_now = _lerp_color(base_text_color, hover_text_color, self._text_hover_t)
+        self.text.set_style(color=text_color_now)
         self.text.set_pos(self.rect.center)
         self.text.draw(tela)
 

@@ -2,15 +2,25 @@ import pygame
 
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 
+
 class CenaCarregamento:
     def Inicializar(self, JOGO):
         self.TelaAtiva = self.Tela
         self.Abertura = Clarear
         self.Fechamento = Escurecer
         self.ID = "Carregamento"
+        self.FonteFPS = pygame.font.SysFont("consolas", 24)
+
+    def _desenhar_fps(self, JOGO):
+        if not JOGO.CONFIG.get("FPS Visivel", False):
+            return
+
+        texto_fps = f"FPS: {int(JOGO.RELOGIO.get_fps())}"
+        superficie_fps = self.FonteFPS.render(texto_fps, True, (255, 255, 255))
+        rect_fps = superficie_fps.get_rect(topright=(JOGO.TELA.get_width() - 16, 12))
+        JOGO.TELA.blit(superficie_fps, rect_fps)
 
     def Loop(self, JOGO):
-
         dt = JOGO.RELOGIO.tick(JOGO.CONFIG["FPS"]) / 1000.0
 
         EVENTOS = pygame.event.get()
@@ -19,6 +29,7 @@ class CenaCarregamento:
                 JOGO.Rodando = False
 
         self.TelaAtiva(JOGO, EVENTOS)
+        self._desenhar_fps(JOGO)
 
         if JOGO.CenaAlvo is None and JOGO.Escuro != 0:
             self.Abertura(JOGO, dt)
@@ -30,10 +41,9 @@ class CenaCarregamento:
             JOGO.DefinirCena()
 
         pygame.display.update()
-        JOGO.RELOGIO.tick(JOGO.CONFIG["FPS"])
 
     def Tela(self, JOGO, EVENTOS):
         JOGO.TELA.fill((20, 20, 28))
-    
+
     def Finalizar(self, JOGO):
         pass

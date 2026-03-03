@@ -52,9 +52,16 @@ def _gerar_estilos():
     return estilo_base, estilo_destaque
 
 
-def _definir_server_selecionado(indice):
+def _limpar_selecao():
     global _SERVER_SELECIONADO
-    _SERVER_SELECIONADO = indice
+    _SERVER_SELECIONADO = None
+    for botao in _BOTOES_SERVERS:
+        botao.set_selecionado(False)
+
+
+def _alternar_server_selecionado(indice):
+    global _SERVER_SELECIONADO
+    _SERVER_SELECIONADO = None if _SERVER_SELECIONADO == indice else indice
     for i, botao in enumerate(_BOTOES_SERVERS):
         botao.set_selecionado(i == _SERVER_SELECIONADO)
 
@@ -71,12 +78,19 @@ def _renomear_server(novo_nome):
     _BOTOES_SERVERS[_SERVER_SELECIONADO].set_text(novo_nome)
 
 
+def _adicionar_server(nome, link):
+    nome = nome.strip()
+    link = link.strip()
+    if not nome or not link:
+        return
+    SERVER_LIST.append({"nome": nome, "ip": link})
+
+
 def _apagar_server():
-    global _SERVER_SELECIONADO
     if _SERVER_SELECIONADO is None:
         return
     SERVER_LIST.pop(_SERVER_SELECIONADO)
-    _SERVER_SELECIONADO = None
+    _limpar_selecao()
 
 
 def _abrir_subtela_renomear(JOGO):
@@ -86,9 +100,21 @@ def _abrir_subtela_renomear(JOGO):
     nome_atual = SERVER_LIST[_SERVER_SELECIONADO].get("nome", "")
     _SUBTELA_ATIVA = SubtelaTexto(
         JOGO.TELA.get_size(),
-        "Renomear servidor",
+        "Renomear Servidor",
         nome_atual,
         enviar_callback=_renomear_server,
+    )
+
+
+def _abrir_subtela_adicionar(JOGO):
+    global _SUBTELA_ATIVA
+    _SUBTELA_ATIVA = SubtelaTexto(
+        JOGO.TELA.get_size(),
+        "Adicionar novo server",
+        ["", ""],
+        enviar_callback=_adicionar_server,
+        placeholders=["Nome do servidor", "Link do servidor"],
+        max_chars=[28, 50],
     )
 
 
@@ -99,16 +125,24 @@ def _abrir_subtela_apagar(JOGO):
     nome_server = SERVER_LIST[_SERVER_SELECIONADO].get("nome", "servidor")
     _SUBTELA_ATIVA = SubtelaConfirmacao(
         JOGO.TELA.get_size(),
-        f"Deseja apagar {nome_server}?",
+        f"Deseja apagar servidor {nome_server}?",
         confirmar_callback=_apagar_server,
+        titulo="Deseja apagar servidor",
     )
+
+
+def _voltar_menu(Cena):
+    global _SUBTELA_ATIVA, _TELA_CARREGADA
+    _SUBTELA_ATIVA = None
+    _limpar_selecao()
+    _TELA_CARREGADA = False
+    Cena.DefinirTela("MenuPrincipal")
 
 
 def _montar_layout(Cena, JOGO):
     global _TELA_CARREGADA, _TAMANHO_CACHE
     global _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE
     global _BOTAO_ADICIONAR, _BOTOES_SERVERS, _BOTOES_ACOES
-    global _SERVER_SELECIONADO
 
     largura_tela, altura_tela = JOGO.TELA.get_size()
 
@@ -122,6 +156,7 @@ def _montar_layout(Cena, JOGO):
     _BOTAO_ADICIONAR = Botao(
         pygame.Rect(x_adicionar, y_adicionar, largura_adicionar, altura_adicionar),
         "Adicionar novo server",
+        execute=lambda jogo, botao: _abrir_subtela_adicionar(jogo),
         style=_ESTILO_BOTAO_DESTAQUE,
     )
 
@@ -139,7 +174,7 @@ def _montar_layout(Cena, JOGO):
             BotaoSelecao(
                 pygame.Rect(x_server, y_server, largura_server, altura_server),
                 nome_server,
-                execute=lambda jogo, botao, indice=i: _definir_server_selecionado(indice),
+                execute=lambda jogo, botao, indice=i: _alternar_server_selecionado(indice),
                 style=_ESTILO_BOTAO,
                 selecionado=(i == _SERVER_SELECIONADO),
             )
@@ -163,7 +198,7 @@ def _montar_layout(Cena, JOGO):
 
         execute = None
         if nome == "Voltar":
-            execute = lambda jogo, botao: Cena.DefinirTela("MenuPrincipal")
+            execute = lambda jogo, botao: _voltar_menu(Cena)
         elif nome == "Renomear":
             execute = lambda jogo, botao: _abrir_subtela_renomear(jogo)
         elif nome == "Apagar":
@@ -181,7 +216,7 @@ def _montar_layout(Cena, JOGO):
     _TELA_CARREGADA = True
 
 
-def _render_acao(nome, tela, eventos, dt, JOGO):
+def _render_acao(nome, tela, eventos, dt, JOGO, mouse_pos=None):
     botao = _BOTOES_ACOES[nome]
     requer_selecao = nome in ("Renomear", "Apagar")
     habilitado = (not requer_selecao) or (_SERVER_SELECIONADO is not None)
@@ -194,7 +229,7 @@ def _render_acao(nome, tela, eventos, dt, JOGO):
             border_hover=(255, 220, 120),
             text_style={"color": (245, 246, 255)},
         )
-        botao.render(tela, eventos, dt, JOGO=JOGO)
+        botao.render(tela, eventos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
         return
 
     botao.set_style(
@@ -205,7 +240,7 @@ def _render_acao(nome, tela, eventos, dt, JOGO):
         border_hover=(70, 70, 78),
         text_style={"color": (140, 140, 150), "hover_color": (140, 140, 150)},
     )
-    botao.render(tela, [], dt, JOGO=JOGO)
+    botao.render(tela, [], dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
 
 def TelaServers(Cena, JOGO, EVENTOS, dt):
@@ -219,17 +254,18 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
     JOGO.TELA.fill((8, 12, 24))
 
     eventos_ativos = [] if _SUBTELA_ATIVA else EVENTOS
+    mouse_pos = (-99999, -99999) if _SUBTELA_ATIVA else None
 
-    _BOTAO_ADICIONAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO)
+    _BOTAO_ADICIONAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
     if len(SERVER_LIST) != len(_BOTOES_SERVERS):
         _montar_layout(Cena, JOGO)
 
     for botao in _BOTOES_SERVERS:
-        botao.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO)
+        botao.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
     for nome in ("Voltar", "Renomear", "Entrar", "Apagar", "Operar"):
-        _render_acao(nome, JOGO.TELA, eventos_ativos, dt, JOGO)
+        _render_acao(nome, JOGO.TELA, eventos_ativos, dt, JOGO, mouse_pos=mouse_pos)
 
     if _SUBTELA_ATIVA:
         _SUBTELA_ATIVA.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)

@@ -1,5 +1,6 @@
 import pygame
-from Codigo.Prefabs.Botao import Botao
+from Codigo.Prefabs.Botao import Botao, BotaoSelecao
+from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 from ServerList import SERVER_LIST
 
 _TELA_CARREGADA = False
@@ -10,7 +11,10 @@ _ESTILO_BOTAO_DESTAQUE = None
 
 _BOTAO_ADICIONAR = None
 _BOTOES_SERVERS = []
-_BOTOES_ACOES = []
+_BOTOES_ACOES = {}
+
+_SERVER_SELECIONADO = None
+_SUBTELA_ATIVA = None
 
 
 def _gerar_estilos():
@@ -48,10 +52,63 @@ def _gerar_estilos():
     return estilo_base, estilo_destaque
 
 
+def _definir_server_selecionado(indice):
+    global _SERVER_SELECIONADO
+    _SERVER_SELECIONADO = indice
+    for i, botao in enumerate(_BOTOES_SERVERS):
+        botao.set_selecionado(i == _SERVER_SELECIONADO)
+
+
+def _renomear_server(novo_nome):
+    if _SERVER_SELECIONADO is None:
+        return
+
+    novo_nome = novo_nome.strip()
+    if not novo_nome:
+        return
+
+    SERVER_LIST[_SERVER_SELECIONADO]["nome"] = novo_nome
+    _BOTOES_SERVERS[_SERVER_SELECIONADO].set_text(novo_nome)
+
+
+def _apagar_server():
+    global _SERVER_SELECIONADO
+    if _SERVER_SELECIONADO is None:
+        return
+    SERVER_LIST.pop(_SERVER_SELECIONADO)
+    _SERVER_SELECIONADO = None
+
+
+def _abrir_subtela_renomear(JOGO):
+    global _SUBTELA_ATIVA
+    if _SERVER_SELECIONADO is None:
+        return
+    nome_atual = SERVER_LIST[_SERVER_SELECIONADO].get("nome", "")
+    _SUBTELA_ATIVA = SubtelaTexto(
+        JOGO.TELA.get_size(),
+        "Renomear servidor",
+        nome_atual,
+        enviar_callback=_renomear_server,
+    )
+
+
+def _abrir_subtela_apagar(JOGO):
+    global _SUBTELA_ATIVA
+    if _SERVER_SELECIONADO is None:
+        return
+    nome_server = SERVER_LIST[_SERVER_SELECIONADO].get("nome", "servidor")
+    _SUBTELA_ATIVA = SubtelaConfirmacao(
+        JOGO.TELA.get_size(),
+        f"Deseja apagar {nome_server}?",
+        confirmar_callback=_apagar_server,
+    )
+
+
 def _montar_layout(Cena, JOGO):
     global _TELA_CARREGADA, _TAMANHO_CACHE
     global _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE
     global _BOTAO_ADICIONAR, _BOTOES_SERVERS, _BOTOES_ACOES
+    global _SERVER_SELECIONADO
 
     largura_tela, altura_tela = JOGO.TELA.get_size()
 
@@ -79,38 +136,44 @@ def _montar_layout(Cena, JOGO):
         x_server = (largura_tela - largura_server) // 2
         y_server = y_base_servers + i * (altura_server + espacamento_server)
         _BOTOES_SERVERS.append(
-            Botao(
+            BotaoSelecao(
                 pygame.Rect(x_server, y_server, largura_server, altura_server),
                 nome_server,
+                execute=lambda jogo, botao, indice=i: _definir_server_selecionado(indice),
                 style=_ESTILO_BOTAO,
+                selecionado=(i == _SERVER_SELECIONADO),
             )
         )
-
-    nomes_acoes = ["Voltar", "Renomear", "Entrar", "Apagar", "Operar"]
-    _BOTOES_ACOES = []
 
     altura_acao = 95
     largura_acao = 220
     largura_entrar = 290
     espacamento_acao = 22
 
+    nomes = ["Voltar", "Renomear", "Entrar", "Apagar", "Operar"]
     largura_total = largura_acao * 4 + largura_entrar + espacamento_acao * 4
     x_inicio = (largura_tela - largura_total) // 2
     y_acoes = int(altura_tela * 0.82)
 
+    _BOTOES_ACOES = {}
     x_cursor = x_inicio
-    for nome in nomes_acoes:
+    for nome in nomes:
         largura_atual = largura_entrar if nome == "Entrar" else largura_acao
         estilo_atual = _ESTILO_BOTAO_DESTAQUE if nome == "Entrar" else _ESTILO_BOTAO
-        execute = (lambda jogo, botao: Cena.DefinirTela("MenuPrincipal")) if nome == "Voltar" else None
 
-        _BOTOES_ACOES.append(
-            Botao(
-                pygame.Rect(x_cursor, y_acoes, largura_atual, altura_acao),
-                nome,
-                execute=execute,
-                style=estilo_atual,
-            )
+        execute = None
+        if nome == "Voltar":
+            execute = lambda jogo, botao: Cena.DefinirTela("MenuPrincipal")
+        elif nome == "Renomear":
+            execute = lambda jogo, botao: _abrir_subtela_renomear(jogo)
+        elif nome == "Apagar":
+            execute = lambda jogo, botao: _abrir_subtela_apagar(jogo)
+
+        _BOTOES_ACOES[nome] = Botao(
+            pygame.Rect(x_cursor, y_acoes, largura_atual, altura_acao),
+            nome,
+            execute=execute,
+            style=estilo_atual,
         )
         x_cursor += largura_atual + espacamento_acao
 
@@ -118,7 +181,36 @@ def _montar_layout(Cena, JOGO):
     _TELA_CARREGADA = True
 
 
+def _render_acao(nome, tela, eventos, dt, JOGO):
+    botao = _BOTOES_ACOES[nome]
+    requer_selecao = nome in ("Renomear", "Apagar")
+    habilitado = (not requer_selecao) or (_SERVER_SELECIONADO is not None)
+
+    if habilitado:
+        botao.set_style(
+            bg=(18, 24, 44),
+            bg_hover=(30, 40, 70),
+            border=(20, 26, 50),
+            border_hover=(255, 220, 120),
+            text_style={"color": (245, 246, 255)},
+        )
+        botao.render(tela, eventos, dt, JOGO=JOGO)
+        return
+
+    botao.set_style(
+        bg=(34, 34, 38),
+        bg_hover=(34, 34, 38),
+        bg_pressed=(34, 34, 38),
+        border=(70, 70, 78),
+        border_hover=(70, 70, 78),
+        text_style={"color": (140, 140, 150), "hover_color": (140, 140, 150)},
+    )
+    botao.render(tela, [], dt, JOGO=JOGO)
+
+
 def TelaServers(Cena, JOGO, EVENTOS, dt):
+    global _SUBTELA_ATIVA, _TELA_CARREGADA
+
     largura_tela, altura_tela = JOGO.TELA.get_size()
 
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura_tela, altura_tela):
@@ -126,5 +218,21 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
 
     JOGO.TELA.fill((8, 12, 24))
 
-    for botao in [_BOTAO_ADICIONAR, *_BOTOES_SERVERS, *_BOTOES_ACOES]:
-        botao.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
+    eventos_ativos = [] if _SUBTELA_ATIVA else EVENTOS
+
+    _BOTAO_ADICIONAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO)
+
+    if len(SERVER_LIST) != len(_BOTOES_SERVERS):
+        _montar_layout(Cena, JOGO)
+
+    for botao in _BOTOES_SERVERS:
+        botao.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO)
+
+    for nome in ("Voltar", "Renomear", "Entrar", "Apagar", "Operar"):
+        _render_acao(nome, JOGO.TELA, eventos_ativos, dt, JOGO)
+
+    if _SUBTELA_ATIVA:
+        _SUBTELA_ATIVA.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
+        if _SUBTELA_ATIVA.encerrada:
+            _SUBTELA_ATIVA = None
+            _TELA_CARREGADA = False

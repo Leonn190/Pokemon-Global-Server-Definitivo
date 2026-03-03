@@ -8,12 +8,11 @@ def VerificaSonoridade(config):
     global silencio
     global Volume
 
-    if config["Mudo"]:
-        silencio = True
-    else:
-        silencio = False
-    
-    Volume = config["Volume"] 
+    silencio = bool(config["Mudo"])
+    Volume = max(0.0, min(1.0, float(config["Volume"])))
+
+    volume_musica = 0.0 if silencio else Volume
+    pygame.mixer.music.set_volume(volume_musica)
 
 Sons = {
     "Clique": {"Som": lambda: pygame.mixer.Sound("Recursos/Audio/Sons/Clique.wav"), "Volume": 0.75},

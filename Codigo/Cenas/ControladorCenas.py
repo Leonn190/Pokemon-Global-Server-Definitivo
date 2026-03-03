@@ -5,6 +5,7 @@ from Codigo.Cenas.CenaCarregamento import CenaCarregamento
 import pygame
 
 from Codigo.Modulos.Sonoridades import AtualizarMusica
+from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer
 from Codigo.Prefabs.Texto import Texto
 
 class ControladorCenas:
@@ -26,6 +27,7 @@ class ControladorCenas:
         self.CenaAlvo = None
         self.Cena = None
         self.Rodando = True
+        self.Saindo = False
 
         self.TextoFPS = Texto(
             "",
@@ -68,10 +70,9 @@ class ControladorCenas:
             EVENTOS = pygame.event.get()
             for e in EVENTOS:
                 if e.type == pygame.QUIT:
-                    self.Rodando = False
+                    self.SolicitarSair()
 
             self.Cena.Tela(self, EVENTOS, dt)
-            self.DesenhosAdicionais()
 
             if self.CenaAlvo is None and self.Escuro != 0:
                 self.Cena.Abertura(self, dt)
@@ -82,8 +83,18 @@ class ControladorCenas:
             if self.CenaAlvo is not None and self.Escuro == 100:
                 self.DefinirCena()
 
+            if self.Saindo:
+                Escurecer(self, dt)
+                if self.Escuro >= 100:
+                    self.Rodando = False
+
+            self.DesenhosAdicionais()
             AtualizarMusica()
             pygame.display.update()
+
+    def SolicitarSair(self):
+        self.CenaAlvo = None
+        self.Saindo = True
 
     def DesenhosAdicionais(self):
         largura_tela = self.TELA.get_width()
@@ -97,3 +108,5 @@ class ControladorCenas:
             self.TextoPing.set_pos((largura_tela - 16, 44))
             self.TextoPing.set_text("Ping: 5")
             self.TextoPing.draw(self.TELA)
+
+        aplicar_claridade(self.TELA, self.CONFIG.get("Claridade", 75))

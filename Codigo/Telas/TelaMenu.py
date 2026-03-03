@@ -112,7 +112,7 @@ def TelaMenu(Cena, JOGO, EVENTOS, dt):
             Botao(
                 pygame.Rect(x, inicio_y + (altura_botao + espacamento) * 2, largura_botao, altura_botao),
                 "Sair",
-                execute=lambda jogo, botao: setattr(jogo, "Rodando", False),
+                execute=lambda jogo, botao: jogo.SolicitarSair(),
                 style=_ESTILO_BOTAO,
             ),
         ]

@@ -29,13 +29,14 @@ _ESTILO_BOTAO_MODAL = {
 
 
 class SubtelaConfirmacao:
-    def __init__(self, tela_size, pergunta, confirmar_callback, cancelar_callback=None):
+    def __init__(self, tela_size, pergunta, confirmar_callback, cancelar_callback=None, titulo=None):
         largura, altura = tela_size
         caixa = pygame.Rect(0, 0, min(860, int(largura * 0.75)), min(340, int(altura * 0.46)))
         caixa.center = (largura // 2, altura // 2)
 
         self.caixa = caixa
         self.pergunta = pergunta
+        self.titulo = titulo or pergunta
         self.confirmar_callback = confirmar_callback
         self.cancelar_callback = cancelar_callback
         self.encerrada = False
@@ -72,8 +73,8 @@ class SubtelaConfirmacao:
         pygame.draw.rect(tela, (16, 21, 40), self.caixa, border_radius=20)
         pygame.draw.rect(tela, (255, 220, 120), self.caixa, width=2, border_radius=20)
 
-        titulo = Texto("Confirmação", (self.caixa.centerx, self.caixa.top + 50), style={"size": 38, "align": "center"})
-        pergunta = Texto(self.pergunta, (self.caixa.centerx, self.caixa.centery - 20), style={"size": 29, "align": "center"})
+        titulo = Texto(self.titulo, (self.caixa.centerx, self.caixa.top + 56), style={"size": 38, "align": "center"})
+        pergunta = Texto(self.pergunta, (self.caixa.centerx, self.caixa.centery - 18), style={"size": 29, "align": "center"})
         titulo.draw(tela)
         pergunta.draw(tela)
 
@@ -82,9 +83,45 @@ class SubtelaConfirmacao:
 
 
 class SubtelaTexto:
-    def __init__(self, tela_size, titulo, texto_inicial, enviar_callback, voltar_callback=None):
+    def __init__(
+        self,
+        tela_size,
+        titulo,
+        texto_inicial,
+        enviar_callback,
+        voltar_callback=None,
+        placeholders=None,
+        max_chars=None,
+    ):
         largura, altura = tela_size
-        caixa = pygame.Rect(0, 0, min(980, int(largura * 0.82)), min(460, int(altura * 0.60)))
+
+        if isinstance(texto_inicial, (list, tuple)):
+            textos_iniciais = [str(t) for t in texto_inicial]
+        else:
+            textos_iniciais = [str(texto_inicial)]
+
+        self._qtd_campos = max(1, len(textos_iniciais))
+
+        if placeholders is None:
+            placeholders = ["Digite o texto..."] * self._qtd_campos
+        elif isinstance(placeholders, str):
+            placeholders = [placeholders] * self._qtd_campos
+        else:
+            placeholders = list(placeholders)
+            while len(placeholders) < self._qtd_campos:
+                placeholders.append("Digite o texto...")
+
+        if max_chars is None:
+            max_chars = [24] * self._qtd_campos
+        elif isinstance(max_chars, int):
+            max_chars = [max_chars] * self._qtd_campos
+        else:
+            max_chars = list(max_chars)
+            while len(max_chars) < self._qtd_campos:
+                max_chars.append(24)
+
+        altura_modal = min(620, int(altura * 0.72)) if self._qtd_campos > 1 else min(460, int(altura * 0.60))
+        caixa = pygame.Rect(0, 0, min(980, int(largura * 0.82)), altura_modal)
         caixa.center = (largura // 2, altura // 2)
 
         self.caixa = caixa
@@ -99,13 +136,22 @@ class SubtelaTexto:
             placeholder="Título",
             ativo=False,
         )
-        self.barra_texto = CaixaTexto(
-            pygame.Rect(self.caixa.left + 42, self.caixa.top + 168, self.caixa.width - 84, 72),
-            texto_inicial=texto_inicial,
-            placeholder="Digite o texto...",
-            max_chars=24,
-            ativo=True,
-        )
+
+        self.barras_texto = []
+        y_base = self.caixa.top + 168
+        espacamento = 96
+        for i in range(self._qtd_campos):
+            self.barras_texto.append(
+                CaixaTexto(
+                    pygame.Rect(self.caixa.left + 42, y_base + i * espacamento, self.caixa.width - 84, 72),
+                    texto_inicial=textos_iniciais[i],
+                    placeholder=placeholders[i],
+                    max_chars=max_chars[i],
+                    ativo=True,
+                )
+            )
+
+        self.barra_texto = self.barras_texto[0]
 
         y_botoes = self.caixa.bottom - 94
         self.botao_voltar = Botao(
@@ -116,14 +162,18 @@ class SubtelaTexto:
         )
         self.botao_enviar = Botao(
             pygame.Rect(self.caixa.right - 262, y_botoes, 220, 66),
-            "Enviar",
+            "Criar" if self._qtd_campos > 1 else "Enviar",
             execute=self._enviar,
             style=_ESTILO_BOTAO_MODAL,
         )
 
     def _enviar(self, jogo, botao):
         if callable(self.enviar_callback):
-            self.enviar_callback(self.barra_texto.texto.strip())
+            valores = [barra.texto.strip() for barra in self.barras_texto]
+            if len(valores) == 1:
+                self.enviar_callback(valores[0])
+            else:
+                self.enviar_callback(*valores)
         self.encerrada = True
 
     def _voltar(self, jogo, botao):
@@ -139,11 +189,12 @@ class SubtelaTexto:
         pygame.draw.rect(tela, (14, 20, 38), self.caixa, border_radius=20)
         pygame.draw.rect(tela, (255, 220, 120), self.caixa, width=2, border_radius=20)
 
-        titulo = Texto("Subtela de Texto", (self.caixa.centerx, self.caixa.top + 38), style={"size": 36, "align": "center"})
+        titulo = Texto(self.titulo, (self.caixa.centerx, self.caixa.top + 38), style={"size": 36, "align": "center"})
         titulo.draw(tela)
 
         self.barra_titulo.render(tela, [], dt)
-        self.barra_texto.render(tela, eventos, dt)
+        for barra in self.barras_texto:
+            barra.render(tela, eventos, dt)
 
         self.botao_voltar.render(tela, eventos, dt, JOGO=JOGO)
         self.botao_enviar.render(tela, eventos, dt, JOGO=JOGO)

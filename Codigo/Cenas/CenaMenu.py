@@ -2,6 +2,7 @@ from Codigo.Modulos.Sonoridades import Musica
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaMenu import TelaMenu
 from Codigo.Telas.TelaServers import TelaServers
+from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
 
 
 class CenaMenu:
@@ -14,11 +15,17 @@ class CenaMenu:
         Musica("Menu")
 
     def DefinirTela(self, tela):
+        if tela == "Config":
+            ResetTelaConfig()
         self.TelaAtual = tela
 
     def Tela(self, JOGO, EVENTOS, dt):
         if self.TelaAtual == "Servers":
             TelaServers(self, JOGO, EVENTOS, dt)
+            return
+
+        if self.TelaAtual == "Config":
+            TelaConfig(self, JOGO, EVENTOS, dt)
             return
 
         TelaMenu(self, JOGO, EVENTOS, dt)

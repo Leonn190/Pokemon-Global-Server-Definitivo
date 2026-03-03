@@ -241,7 +241,7 @@ class Botao:
                         clicou_bloqueado = True
                 self.pressed = False
 
-        target = 1.0 if self.hover else 0.0
+        target = 1.0 if (self.hover and self.habilitado) else 0.0
         speed = float(self.style["hover_speed"])
         self._hover_t = _clamp(
             self._hover_t + (target - self._hover_t) * _clamp(speed * dt, 0.0, 1.0),
@@ -258,7 +258,7 @@ class Botao:
         )
 
         scale = _lerp(1.0, float(self.style["hover_scale"]), self._hover_t)
-        if self.pressed:
+        if self.pressed and self.habilitado:
             scale *= float(self.style["press_scale"])
         self.rect = self._scaled_rect(scale)
 
@@ -292,10 +292,10 @@ class Botao:
         bg_pressed = self.style["bg_pressed"]
 
         bg_now = _lerp_color(bg, bg_hover, self._hover_t)
-        if self.pressed:
+        if self.pressed and self.habilitado:
             bg_now = bg_pressed
 
-        border_now = self.style["border_hover"] if self.hover else self.style["border"]
+        border_now = self.style["border_hover"] if (self.hover and self.habilitado) else self.style["border"]
 
         radius = int(self.style["radius"])
         bw = int(self.style["border_width"])

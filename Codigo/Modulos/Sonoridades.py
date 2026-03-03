@@ -15,8 +15,8 @@ def VerificaSonoridade(config):
     pygame.mixer.music.set_volume(volume_musica)
 
 Sons = {
-    "Clique": {"Som": lambda: pygame.mixer.Sound("Recursos/Audio/Sons/Clique.wav"), "Volume": 0.75},
-    "Bloq": {"Som": lambda: pygame.mixer.Sound("Recursos/Audio/Sons/Bloq.wav"), "Volume": 0.85}
+    "Clique": {"Som": lambda: pygame.mixer.Sound("Recursos/Sonoridades/Sons/Clique.wav"), "Volume": 0.75},
+    "Bloq": {"Som": lambda: pygame.mixer.Sound("Recursos/Sonoridades/Sons/Bloq.wav"), "Volume": 0.85}
 }
 
 def tocar(som):

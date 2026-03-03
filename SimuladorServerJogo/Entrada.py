@@ -1,13 +1,7 @@
 import json
+import time
 
-_SERVER_DISPONIVEL = {
-    "nome": "Servidor Indigo",
-    "ip": "203.0.113.77:8123",
-    "ligado": True,
-    "mundo_existente": True,
-    "banidos": {"JogadorBanido"},
-    "jogadores_com_personagem": {"Leon19"},
-}
+from SimuladorServerJogo.EstadoServidor import snapshot_estado
 
 
 def _resposta(status, mensagem, possui_personagem=None):
@@ -18,6 +12,8 @@ def _resposta(status, mensagem, possui_personagem=None):
 
 
 def processar_entrada_json(requisicao_json):
+    time.sleep(0.25)
+
     try:
         pacote = json.loads(requisicao_json)
     except json.JSONDecodeError:
@@ -33,16 +29,18 @@ def processar_entrada_json(requisicao_json):
     if not usuario:
         return json.dumps(_resposta("erro", "Usuário obrigatório"), ensure_ascii=False)
 
-    if not _SERVER_DISPONIVEL["mundo_existente"]:
+    estado = snapshot_estado()
+
+    if not estado["mundo_existente"]:
         return json.dumps(_resposta("negado", "Este servidor ainda não possui mundo"), ensure_ascii=False)
 
-    if not _SERVER_DISPONIVEL["ligado"]:
+    if not estado["ligado"]:
         return json.dumps(_resposta("negado", "Este servidor está desligado"), ensure_ascii=False)
 
-    if usuario in _SERVER_DISPONIVEL["banidos"]:
+    if usuario in estado["banidos"]:
         return json.dumps(_resposta("negado", "Você está banido deste servidor"), ensure_ascii=False)
 
-    possui_personagem = usuario in _SERVER_DISPONIVEL["jogadores_com_personagem"]
+    possui_personagem = usuario in estado["jogadores_com_personagem"]
     if possui_personagem:
         mensagem = "Entrada autorizada: personagem já encontrado no servidor."
     else:

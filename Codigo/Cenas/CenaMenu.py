@@ -3,6 +3,7 @@ from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaMenu import TelaMenu
 from Codigo.Telas.TelaServers import TelaServers
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
+from Codigo.Telas.TelaOperador import TelaOperador
 
 
 class CenaMenu:
@@ -26,6 +27,10 @@ class CenaMenu:
 
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt)
+            return
+
+        if self.TelaAtual == "Operador":
+            TelaOperador(self, JOGO, EVENTOS, dt)
             return
 
         TelaMenu(self, JOGO, EVENTOS, dt)

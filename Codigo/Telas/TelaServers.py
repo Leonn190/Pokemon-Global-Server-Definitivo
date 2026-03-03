@@ -1,3 +1,5 @@
+import threading
+
 import pygame
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
@@ -18,6 +20,10 @@ _BOTOES_ACOES = {}
 _SERVER_SELECIONADO = None
 _SUBTELA_ATIVA = None
 _MENSAGEM = None
+
+_REQUISICAO_THREAD = None
+_REQUISICAO_RESULTADO = None
+
 
 def _gerar_estilos():
     estilo_base = {
@@ -101,16 +107,35 @@ def _apagar_server():
     _limpar_selecao()
 
 
+def _worker_requisicao(tipo, ip, payload):
+    global _REQUISICAO_RESULTADO
+
+    if tipo == "entrar":
+        resposta = entrar_server(ip, payload)
+    else:
+        resposta = operar_server(ip, payload)
+
+    _REQUISICAO_RESULTADO = {"tipo": tipo, "resposta": resposta}
+
+
+def _iniciar_requisicao(tipo, ip, payload, mensagem):
+    global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO
+    if _REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive():
+        return
+
+    _REQUISICAO_RESULTADO = None
+    _emitir_feedback(mensagem)
+    _REQUISICAO_THREAD = threading.Thread(target=_worker_requisicao, args=(tipo, ip, payload), daemon=True)
+    _REQUISICAO_THREAD.start()
+
+
 def _entrar_server(jogo):
     if _SERVER_SELECIONADO is None:
         return
 
     server = SERVER_LIST[_SERVER_SELECIONADO]
     usuario = (jogo.CONFIG.get("Usuario") or "Visitante").strip()
-    resposta = entrar_server(server.get("ip", ""), usuario)
-
-    sucesso = resposta.get("status") == "ok"
-    _emitir_feedback(resposta.get("mensagem", "Falha de comunicação com servidor"), sucesso=sucesso)
+    _iniciar_requisicao("entrar", server.get("ip", ""), usuario, "Conectando ao servidor de jogo...")
 
 
 def _enviar_chave_operacao(chave):
@@ -118,9 +143,7 @@ def _enviar_chave_operacao(chave):
         return
 
     server = SERVER_LIST[_SERVER_SELECIONADO]
-    resposta = operar_server(server.get("ip", ""), chave)
-    sucesso = resposta.get("status") == "ok"
-    _emitir_feedback(resposta.get("mensagem", "Falha de comunicação com servidor"), sucesso=sucesso)
+    _iniciar_requisicao("operar", server.get("ip", ""), chave, "Validando chave de operação...")
 
 
 def _abrir_subtela_renomear(JOGO):
@@ -275,6 +298,9 @@ def _render_acao(nome, tela, eventos, dt, JOGO, mouse_pos=None):
     requer_selecao = nome in ("Renomear", "Apagar", "Entrar", "Operar")
     habilitado = (not requer_selecao) or (_SERVER_SELECIONADO is not None)
 
+    if _REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive() and nome in ("Entrar", "Operar"):
+        habilitado = False
+
     botao.set_habilitado(habilitado)
 
     if habilitado:
@@ -299,6 +325,24 @@ def _render_acao(nome, tela, eventos, dt, JOGO, mouse_pos=None):
     botao.render(tela, eventos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
 
+def _processar_requisicao(Cena):
+    global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO
+    if not _REQUISICAO_RESULTADO:
+        return
+
+    payload = _REQUISICAO_RESULTADO
+    _REQUISICAO_RESULTADO = None
+    _REQUISICAO_THREAD = None
+
+    resposta = payload["resposta"]
+    sucesso = resposta.get("status") == "ok"
+    _emitir_feedback(resposta.get("mensagem", "Falha de comunicação com servidor"), sucesso=sucesso)
+
+    if payload["tipo"] == "operar" and sucesso and _SERVER_SELECIONADO is not None:
+        Cena.ServerOperadorIndice = _SERVER_SELECIONADO
+        Cena.DefinirTela("Operador")
+
+
 def TelaServers(Cena, JOGO, EVENTOS, dt):
     global _SUBTELA_ATIVA, _TELA_CARREGADA
 
@@ -306,6 +350,8 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
 
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura_tela, altura_tela):
         _montar_layout(Cena, JOGO)
+
+    _processar_requisicao(Cena)
 
     JOGO.TELA.fill((8, 12, 24))
 

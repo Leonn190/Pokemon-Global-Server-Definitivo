@@ -1,4 +1,5 @@
 import json
+import time
 
 _CONTAS = {
     "Leon19": "Batata19",
@@ -14,6 +15,7 @@ def _resposta(status, mensagem, usuario=None):
 
 
 def processar_requisicao_json(requisicao_json):
+    time.sleep(0.25)
     try:
         pacote = json.loads(requisicao_json)
     except json.JSONDecodeError:

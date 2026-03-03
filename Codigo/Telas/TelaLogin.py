@@ -1,3 +1,5 @@
+import threading
+
 import pygame
 
 from Codigo.Prefabs.Botao import Botao
@@ -18,6 +20,9 @@ _CAMPO_SENHA = None
 
 _BOTAO_ACESSAR = None
 _BOTAO_SAIR = None
+
+_LOGIN_THREAD = None
+_LOGIN_RESULTADO = None
 
 
 _ESTILO_BOTAO = {
@@ -54,11 +59,40 @@ def _definir_mensagem(texto, cor=(245, 246, 255)):
     _MSG.set_style(color=cor)
 
 
+def _worker_autenticacao(usuario, senha):
+    global _LOGIN_RESULTADO
+    _LOGIN_RESULTADO = {"resposta": autenticar(usuario, senha), "usuario_digitado": usuario}
+
+
 def _acessar(jogo, botao):
+    global _LOGIN_THREAD, _LOGIN_RESULTADO
+
+    if _LOGIN_THREAD and _LOGIN_THREAD.is_alive():
+        return
+
     usuario = _CAMPO_USUARIO.texto.strip() if _CAMPO_USUARIO else ""
     senha = _CAMPO_SENHA.texto.strip() if _CAMPO_SENHA else ""
 
-    resposta = autenticar(usuario, senha)
+    _LOGIN_RESULTADO = None
+    _definir_mensagem("Conectando ao ServerGeral...", (255, 226, 120))
+
+    _LOGIN_THREAD = threading.Thread(target=_worker_autenticacao, args=(usuario, senha), daemon=True)
+    _LOGIN_THREAD.start()
+
+
+def _processar_resposta_login(jogo):
+    global _LOGIN_THREAD, _LOGIN_RESULTADO
+
+    if not _LOGIN_RESULTADO:
+        return
+
+    payload = _LOGIN_RESULTADO
+    _LOGIN_RESULTADO = None
+    _LOGIN_THREAD = None
+
+    resposta = payload["resposta"]
+    usuario = payload["usuario_digitado"]
+
     if resposta.get("status") != "ok":
         _definir_mensagem(resposta.get("mensagem", "Falha no login"), (255, 140, 140))
         return
@@ -120,7 +154,6 @@ def _montar_layout(jogo):
         style=_ESTILO_BOTAO,
     )
 
-    # Otimização: remove função _sair e usa lambda direto
     _BOTAO_SAIR = Botao(
         pygame.Rect(largura // 2 + 18, y_botao, largura_botao, altura_botao),
         "Sair",
@@ -138,6 +171,8 @@ def TelaLogin(Cena, JOGO, EVENTOS, dt):
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura, altura):
         _montar_layout(JOGO)
 
+    _processar_resposta_login(JOGO)
+
     JOGO.TELA.fill((9, 14, 30))
 
     _TITULO.draw(JOGO.TELA)
@@ -145,6 +180,9 @@ def TelaLogin(Cena, JOGO, EVENTOS, dt):
 
     _CAMPO_USUARIO.render(JOGO.TELA, EVENTOS, dt)
     _CAMPO_SENHA.render(JOGO.TELA, EVENTOS, dt)
+
+    carregando = _LOGIN_THREAD is not None and _LOGIN_THREAD.is_alive()
+    _BOTAO_ACESSAR.set_habilitado(not carregando)
 
     _BOTAO_ACESSAR.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
     _BOTAO_SAIR.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)

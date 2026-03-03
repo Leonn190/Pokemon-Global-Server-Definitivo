@@ -2,9 +2,6 @@ import pygame
 from pathlib import Path
 from Codigo.Prefabs.Botao import Botao
 
-# =========================
-# CONFIG / CACHE (sem convert aqui!)
-# =========================
 _CAMINHO_FUNDO = Path("Recursos/Visual/Fundos/FundoMenu.jpg")
 _CAMINHO_LOGO = Path("Recursos/Visual/Icones/GlobalServer/Logo.png")
 _PASTA_TEXTURA = Path("Recursos/Visual/Texturas/TexturaCosmica")
@@ -25,9 +22,14 @@ _BOTOES = None
 _OVERLAY = None
 _OVERLAY_SIZE = (0, 0)
 
+# -------- cache da logo (pra não smoothscale todo frame)
+_LOGO_CACHE = None
+_LOGO_CACHE_SIZE = (0, 0)
+_LOGO_CACHE_POS = (0, 0)
+
 _FUNDO_OFFSET_X = 0.0
 _FUNDO_DIRECAO = 1
-_FUNDO_VELOCIDADE = 26.0
+_FUNDO_VELOCIDADE = 30.0
 
 
 def TelaMenu(JOGO, EVENTOS, dt):
@@ -35,13 +37,14 @@ def TelaMenu(JOGO, EVENTOS, dt):
     global _FUNDO, _FUNDO_LARGURA, _FUNDO_ALTURA, _LOGO_ORIGINAL
     global _FRAMES_HOVER, _TEXTURA_BASE, _ESTILO_BOTAO, _BOTOES
     global _OVERLAY, _OVERLAY_SIZE
+    global _LOGO_CACHE, _LOGO_CACHE_SIZE, _LOGO_CACHE_POS
     global _FUNDO_OFFSET_X, _FUNDO_DIRECAO
 
     tela = JOGO.TELA
     largura_tela, altura_tela = tela.get_size()
 
     # -------------------------
-    # CARREGA 1 VEZ (AGORA o display já existe, então pode convert)
+    # CARREGA 1 VEZ
     # -------------------------
     if not _MENU_CARREGADO:
         _FUNDO = pygame.image.load(str(_CAMINHO_FUNDO)).convert()
@@ -66,7 +69,7 @@ def TelaMenu(JOGO, EVENTOS, dt):
             "bg_pressed": (16, 19, 28),
             "bg_image": _TEXTURA_BASE,
             "bg_frames_hover": _FRAMES_HOVER,
-            "bg_frames_fps": 12,
+            "bg_frames_fps": 14,
             "hover_scale": 1.08,
             "hover_speed": 14.0,
             "press_scale": 0.97,
@@ -84,7 +87,6 @@ def TelaMenu(JOGO, EVENTOS, dt):
             },
         }
 
-        # cria botões 1 vez (posição depende do tamanho atual da tela)
         largura_botao = 480
         altura_botao = 120
         espacamento = 28
@@ -100,7 +102,7 @@ def TelaMenu(JOGO, EVENTOS, dt):
         _MENU_CARREGADO = True
 
     # -------------------------
-    # FUNDO (pan) — leve
+    # FUNDO (pan)
     # -------------------------
     max_offset = max(0, _FUNDO_LARGURA - largura_tela)
     if max_offset > 0:
@@ -125,13 +127,23 @@ def TelaMenu(JOGO, EVENTOS, dt):
         tela.blit(_OVERLAY, (0, 0))
 
     # -------------------------
-    # LOGO (se sua resolução é fixa, dá pra cachear também; por enquanto ok)
+    # LOGO (CACHE: só recalcula quando a tela muda)
     # -------------------------
+    # calcula o tamanho alvo
     largura_logo = min(int(largura_tela * 0.36), _LOGO_ORIGINAL.get_width())
     altura_logo = int(_LOGO_ORIGINAL.get_height() * (largura_logo / _LOGO_ORIGINAL.get_width()))
-    logo = pygame.transform.smoothscale(_LOGO_ORIGINAL, (largura_logo, altura_logo)).convert_alpha()
-    logo_pos = (largura_tela // 2 - largura_logo // 2, int(altura_tela * 0.30) - altura_logo // 2)
-    tela.blit(logo, logo_pos)
+    alvo = (largura_logo, altura_logo)
+
+    # se mudou, recalcula UMA vez
+    if _LOGO_CACHE is None or _LOGO_CACHE_SIZE != alvo or _OVERLAY_SIZE != (largura_tela, altura_tela):
+        _LOGO_CACHE = pygame.transform.smoothscale(_LOGO_ORIGINAL, alvo).convert_alpha()
+        _LOGO_CACHE_SIZE = alvo
+        _LOGO_CACHE_POS = (
+            largura_tela // 2 - largura_logo // 2,
+            int(altura_tela * 0.30) - altura_logo // 2
+        )
+
+    tela.blit(_LOGO_CACHE, _LOGO_CACHE_POS)
 
     # -------------------------
     # BOTÕES

@@ -19,22 +19,6 @@ def _clamp(v, a, b):
 
 
 class Botao:
-    """
-    Botão "HTML/CSS" com 1 método só: render(...)
-    - hover, click
-    - escala suave no hover
-    - fundo cor / imagem / frames hover (gif -> lista)
-    - borda e radius
-    - texto via classe Texto (com highlight/outline/shadow)
-    - executa ações no clique (não retorna True/False)
-
-    execute pode ser:
-      - uma função (callable)
-      - uma lista/tupla de funções
-      - None
-    Cada função será chamada como: func(JOGO, self)
-    """
-
     DEFAULT_STYLE = {
         "radius": 16,
         "border_width": 3,
@@ -50,9 +34,13 @@ class Botao:
         "hover_speed": 12.0,
         "press_scale": 0.98,
 
-        "bg_image": None,         # pygame.Surface
-        "bg_frames_hover": None,  # list[pygame.Surface]
+        "bg_image": None,
+        "bg_frames_hover": None,
         "bg_frames_fps": 12,
+
+        # ---- NOVO: controle de FPS do texto ----
+        "text_color_steps": 12,      # 8..16 (0 = modo turbo sem lerp)
+        "text_update_on_change": True,  # só atualiza style quando muda de fato
 
         "text_style": {
             "size": 26,
@@ -80,9 +68,8 @@ class Botao:
         self.base_rect = pygame.Rect(rect)
         self.rect = pygame.Rect(rect)
 
-        self.execute = execute  # callable | list[callable] | None
+        self.execute = execute
 
-        # merge de estilo
         self.style = dict(self.DEFAULT_STYLE)
         if style:
             text_style = dict(self.style["text_style"])
@@ -93,7 +80,6 @@ class Botao:
 
         self.text = Texto(text, pos=self.base_rect.center, style=self.style["text_style"])
 
-        # estado interno
         self.hover = False
         self.pressed = False
         self._hover_t = 0.0
@@ -102,8 +88,21 @@ class Botao:
         self._frame_acc = 0.0
         self._text_hover_t = 0.0
 
+        # caches de surface
+        self._clip_cache_size = None
+        self._clip_surf = None
+
+        self._mask_cache = {}
+        self._scaled_cache = {}
+
+        # ---- NOVO: cache da última cor do texto e do "step" ----
+        self._last_text_color = None
+        self._last_text_step = None
+
     def set_text(self, text: str):
         self.text.set_text(text)
+        self._last_text_color = None
+        self._last_text_step = None
 
     def set_execute(self, execute):
         self.execute = execute
@@ -112,6 +111,11 @@ class Botao:
         if "text_style" in kwargs:
             self.text.set_style(**kwargs["text_style"])
         self.style.update({k: v for k, v in kwargs.items() if k != "text_style"})
+
+        # se mudar coisas do texto, reseta cache de cor
+        if "text_color_steps" in kwargs or "text_update_on_change" in kwargs:
+            self._last_text_color = None
+            self._last_text_step = None
 
     def _scaled_rect(self, scale: float):
         cx, cy = self.base_rect.center
@@ -124,25 +128,77 @@ class Botao:
     def _executar(self, JOGO):
         if self.execute is None:
             return
-
         if callable(self.execute):
             self.execute(JOGO, self)
             return
-
         if isinstance(self.execute, (list, tuple)):
             for acao in self.execute:
                 if callable(acao):
                     acao(JOGO, self)
 
+    def _get_mask(self, w: int, h: int, radius: int) -> pygame.Surface:
+        key = (w, h, radius)
+        mask = self._mask_cache.get(key)
+        if mask is not None:
+            return mask
+        mask = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.rect(mask, (255, 255, 255, 255), mask.get_rect(), border_radius=radius)
+        self._mask_cache[key] = mask
+        return mask
+
+    def _get_scaled(self, surf: pygame.Surface, w: int, h: int) -> pygame.Surface:
+        key = (id(surf), w, h)
+        cached = self._scaled_cache.get(key)
+        if cached is not None:
+            return cached
+        scaled = pygame.transform.smoothscale(surf, (w, h)).convert_alpha()
+        self._scaled_cache[key] = scaled
+        return scaled
+
+    def _ensure_clip(self, w: int, h: int):
+        if self._clip_surf is None or self._clip_cache_size != (w, h):
+            self._clip_cache_size = (w, h)
+            self._clip_surf = pygame.Surface((w, h), pygame.SRCALPHA)
+
+    def _update_text_color_fast(self, text_style):
+        """
+        Atualiza a cor do Texto sem destruir FPS:
+        - se text_color_steps == 0: modo turbo (sem lerp)
+        - senão: quantiza o hover_t em steps e só muda quando step mudar
+        """
+        base = text_style.get("color", (255, 255, 255))
+        hover = text_style.get("hover_color", (255, 238, 90))
+
+        steps = int(self.style.get("text_color_steps", 12))
+        update_on_change = bool(self.style.get("text_update_on_change", True))
+
+        if steps <= 0:
+            # TURBO: troca instantânea
+            color_now = hover if self.hover else base
+            if (not update_on_change) or (color_now != self._last_text_color):
+                self.text.set_style(color=color_now)
+                self._last_text_color = color_now
+            return
+
+        # bonito e leve: quantiza
+        step = int(self._text_hover_t * steps)
+        step = 0 if step < 0 else steps if step > steps else step
+
+        if update_on_change and (step == self._last_text_step):
+            return
+
+        tq = step / steps
+        color_now = _lerp_color(base, hover, tq)
+
+        if (not update_on_change) or (color_now != self._last_text_color):
+            self.text.set_style(color=color_now)
+            self._last_text_color = color_now
+            self._last_text_step = step
+
     def render(self, tela: pygame.Surface, eventos, dt: float, JOGO=None, mouse_pos=None):
-        """
-        Faz UPDATE + DRAW num método só.
-        Se clicar, executa self.execute (ações).
-        """
         if mouse_pos is None:
             mouse_pos = pygame.mouse.get_pos()
 
-        # hover baseado no rect do frame anterior
         self.hover = self.rect.collidepoint(mouse_pos)
 
         clicou = False
@@ -154,7 +210,6 @@ class Botao:
                     clicou = True
                 self.pressed = False
 
-        # transição hover estilo CSS
         target = 1.0 if self.hover else 0.0
         speed = float(self.style["hover_speed"])
         self._hover_t = _clamp(
@@ -171,13 +226,11 @@ class Botao:
             1.0,
         )
 
-        # escala final
         scale = _lerp(1.0, float(self.style["hover_scale"]), self._hover_t)
         if self.pressed:
             scale *= float(self.style["press_scale"])
         self.rect = self._scaled_rect(scale)
 
-        # animação frames no hover
         frames = self.style["bg_frames_hover"] or []
         if self.hover and frames:
             self._frame_acc += dt
@@ -189,7 +242,6 @@ class Botao:
             self._frame_idx = 0
             self._frame_acc = 0.0
 
-        # cores por estado
         bg = self.style["bg"]
         bg_hover = self.style["bg_hover"]
         bg_pressed = self.style["bg_pressed"]
@@ -200,40 +252,38 @@ class Botao:
 
         border_now = self.style["border_hover"] if self.hover else self.style["border"]
 
-        # desenhar fundo
         radius = int(self.style["radius"])
         bw = int(self.style["border_width"])
 
-        clip_surf = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        w, h = self.rect.width, self.rect.height
+
+        self._ensure_clip(w, h)
+        clip_surf = self._clip_surf
+        clip_surf.fill((0, 0, 0, 0))
 
         if self.hover and frames:
             frame = frames[self._frame_idx]
-            frame = pygame.transform.smoothscale(frame, (self.rect.width, self.rect.height))
-            clip_surf.blit(frame, (0, 0))
+            frame_scaled = self._get_scaled(frame, w, h)
+            clip_surf.blit(frame_scaled, (0, 0))
         elif self.style["bg_image"] is not None:
             img = self.style["bg_image"]
-            img = pygame.transform.smoothscale(img, (self.rect.width, self.rect.height))
-            clip_surf.blit(img, (0, 0))
+            img_scaled = self._get_scaled(img, w, h)
+            clip_surf.blit(img_scaled, (0, 0))
         else:
             clip_surf.fill((*bg_now, 255))
 
-        mask = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-        pygame.draw.rect(mask, (255, 255, 255, 255), mask.get_rect(), border_radius=radius)
+        mask = self._get_mask(w, h, radius)
         clip_surf.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+
         tela.blit(clip_surf, self.rect.topleft)
 
-        # borda
         if bw > 0:
             pygame.draw.rect(tela, border_now, self.rect, width=bw, border_radius=radius)
 
-        # texto
-        base_text_color = text_style.get("color", (255, 255, 255))
-        hover_text_color = text_style.get("hover_color", (255, 238, 90))
-        text_color_now = _lerp_color(base_text_color, hover_text_color, self._text_hover_t)
-        self.text.set_style(color=text_color_now)
+        # -------- texto: agora não mata FPS --------
+        self._update_text_color_fast(text_style)
         self.text.set_pos(self.rect.center)
         self.text.draw(tela)
 
-        # clique -> executa ações
         if clicou:
             self._executar(JOGO)

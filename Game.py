@@ -28,7 +28,7 @@ CONFIG = {
     "Ping Visivel": False,
 }
 
-from ConfigFixa import ConfigFixa
+from Outros.ConfigFixa import ConfigFixa
 
 if ConfigFixa is not None:
     CONFIG = ConfigFixa

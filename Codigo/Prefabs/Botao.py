@@ -317,20 +317,14 @@ class BotaoAlavanca(Botao):
         self.nome = nome
         self.estado = bool(estado_inicial)
 
-        estilo_base = {
-            "bg": (24, 128, 42) if self.estado else (150, 32, 32),
-            "bg_hover": (35, 156, 54) if self.estado else (186, 42, 42),
-            "bg_pressed": (20, 102, 34) if self.estado else (118, 26, 26),
-            "border": (12, 60, 20) if self.estado else (70, 16, 16),
-            "border_hover": (180, 255, 180) if self.estado else (255, 180, 180),
-        }
-
-        estilo_final = dict(estilo_base)
+        estilo_final = dict(self._estilo_estado())
         if style:
             texto_style = dict(style.get("text_style", {}))
             estilo_final.update(style)
             if texto_style:
                 estilo_final["text_style"] = texto_style
+
+        estilo_final.update(self._estilo_estado())
 
         super().__init__(rect, self._texto_estado(), execute=execute, style=estilo_final)
 

@@ -3,6 +3,33 @@ import pygame
 import math
 
 
+GerouSurface = False
+surface = None
+
+
+def aplicar_claridade(tela, claridade):
+    global GerouSurface, surface
+
+    if (not GerouSurface) or surface is None or surface.get_size() != tela.get_size():
+        surface = pygame.Surface(tela.get_size())
+        surface = surface.convert_alpha()
+        GerouSurface = True
+
+    claridade = int(max(0, min(100, claridade)))
+
+    if claridade == 75:
+        return
+
+    if claridade < 75:
+        intensidade = int((75 - claridade) / 50 * 50)
+        surface.fill((0, 0, 0, intensidade))
+    else:
+        intensidade = int((claridade - 75) / 25 * 70)
+        surface.fill((255, 255, 255, intensidade))
+
+    tela.blit(surface, (0, 0))
+
+
 def _clamp(v, a, b):
     return a if v < a else b if v > b else v
 

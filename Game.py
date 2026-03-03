@@ -18,11 +18,11 @@ pygame.display.set_icon(icone)
 RELOGIO = pygame.time.Clock()
 
 CONFIG = {
-    "FPS": 100,
+    "FPS": 180,
     "Volume": 0.5,
     "Claridade": 75,
     "Mudo": False,
-    "FPS Visivel": False,
+    "FPS Visivel": True,
     "Cords Visiveis": False,
     "Ping Visivel": False,
 }
@@ -35,5 +35,6 @@ if ConfigFixa is not None:
 CONFIG.update({"VERSÃO": 1.0})
 
 Game = ControladorCenas(TELA, RELOGIO, CONFIG)
-Game.DefinirCena("Menu")
+Game.CenaAlvo = "Menu"
+Game.DefinirCena()
 Game.Rodar()

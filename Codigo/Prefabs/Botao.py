@@ -371,3 +371,35 @@ class BotaoAlavanca(Botao):
             for acao in self.execute:
                 if callable(acao):
                     acao(JOGO, self.estado, self)
+
+
+class BotaoSelecao(Botao):
+    def __init__(self, rect: pygame.Rect, text: str, execute=None, style=None, selecionado=False):
+        self.selecionado = bool(selecionado)
+        self._base_style = dict(style or {})
+        super().__init__(rect, text, execute=execute, style=self._estilo_atual())
+
+    def _estilo_selecionado(self):
+        return {
+            "bg": (28, 86, 48),
+            "bg_hover": (40, 115, 64),
+            "bg_pressed": (20, 60, 34),
+            "border": (180, 230, 180),
+            "border_hover": (255, 245, 180),
+        }
+
+    def _estilo_atual(self):
+        estilo = dict(self._base_style)
+        texto_style = dict(estilo.get("text_style", {}))
+        if self.selecionado:
+            estilo.update(self._estilo_selecionado())
+        if texto_style:
+            estilo["text_style"] = texto_style
+        return estilo
+
+    def set_selecionado(self, selecionado: bool):
+        self.selecionado = bool(selecionado)
+        self.set_style(**self._estilo_atual())
+
+    def render(self, tela: pygame.Surface, eventos, dt: float, JOGO=None, mouse_pos=None):
+        super().render(tela, eventos, dt, JOGO=JOGO, mouse_pos=mouse_pos)

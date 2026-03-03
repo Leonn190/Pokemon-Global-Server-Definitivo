@@ -1,5 +1,7 @@
 import pygame
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
+from Codigo.Prefabs.Mensagem import Mensagem
+from Codigo.Server.ServerMenu import entrar_server, operar_server
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 from ServerList import SERVER_LIST, salvar_server_list
 
@@ -15,6 +17,7 @@ _BOTOES_ACOES = {}
 
 _SERVER_SELECIONADO = None
 _SUBTELA_ATIVA = None
+_MENSAGEM = None
 
 
 def _persistir_servers():
@@ -54,6 +57,12 @@ def _gerar_estilos():
     estilo_destaque["hover_scale"] = 1.06
 
     return estilo_base, estilo_destaque
+
+
+def _emitir_feedback(texto, sucesso=False):
+    if _MENSAGEM is None:
+        return
+    _MENSAGEM.emitir(texto, tipo="sucesso" if sucesso else "erro")
 
 
 def _limpar_selecao():
@@ -100,6 +109,28 @@ def _apagar_server():
     _limpar_selecao()
 
 
+def _entrar_server(jogo):
+    if _SERVER_SELECIONADO is None:
+        return
+
+    server = SERVER_LIST[_SERVER_SELECIONADO]
+    usuario = (jogo.CONFIG.get("Usuario") or "Visitante").strip()
+    resposta = entrar_server(server.get("ip", ""), usuario)
+
+    sucesso = resposta.get("status") == "ok"
+    _emitir_feedback(resposta.get("mensagem", "Falha de comunicação com servidor"), sucesso=sucesso)
+
+
+def _enviar_chave_operacao(chave):
+    if _SERVER_SELECIONADO is None:
+        return
+
+    server = SERVER_LIST[_SERVER_SELECIONADO]
+    resposta = operar_server(server.get("ip", ""), chave)
+    sucesso = resposta.get("status") == "ok"
+    _emitir_feedback(resposta.get("mensagem", "Falha de comunicação com servidor"), sucesso=sucesso)
+
+
 def _abrir_subtela_renomear(JOGO):
     global _SUBTELA_ATIVA
     if _SERVER_SELECIONADO is None:
@@ -138,6 +169,21 @@ def _abrir_subtela_apagar(JOGO):
     )
 
 
+def _abrir_subtela_operar(JOGO):
+    global _SUBTELA_ATIVA
+    if _SERVER_SELECIONADO is None:
+        return
+
+    _SUBTELA_ATIVA = SubtelaTexto(
+        JOGO.TELA.get_size(),
+        "Digite a chave de segurança",
+        "",
+        enviar_callback=_enviar_chave_operacao,
+        placeholders="Chave de 4 dígitos",
+        max_chars=4,
+    )
+
+
 def _voltar_menu(Cena):
     global _SUBTELA_ATIVA, _TELA_CARREGADA
     _SUBTELA_ATIVA = None
@@ -149,11 +195,16 @@ def _voltar_menu(Cena):
 def _montar_layout(Cena, JOGO):
     global _TELA_CARREGADA, _TAMANHO_CACHE
     global _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE
-    global _BOTAO_ADICIONAR, _BOTOES_SERVERS, _BOTOES_ACOES
+    global _BOTAO_ADICIONAR, _BOTOES_SERVERS, _BOTOES_ACOES, _MENSAGEM
 
     largura_tela, altura_tela = JOGO.TELA.get_size()
 
     _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE = _gerar_estilos()
+
+    if _MENSAGEM is None:
+        _MENSAGEM = Mensagem((largura_tela, altura_tela))
+    else:
+        _MENSAGEM.redimensionar((largura_tela, altura_tela))
 
     largura_adicionar = min(760, int(largura_tela * 0.72))
     altura_adicionar = 110
@@ -211,9 +262,9 @@ def _montar_layout(Cena, JOGO):
         elif nome == "Apagar":
             execute = lambda jogo, botao: _abrir_subtela_apagar(jogo)
         elif nome == "Entrar":
-            execute = lambda jogo, botao: None
+            execute = lambda jogo, botao: _entrar_server(jogo)
         elif nome == "Operar":
-            execute = lambda jogo, botao: None
+            execute = lambda jogo, botao: _abrir_subtela_operar(jogo)
 
         _BOTOES_ACOES[nome] = Botao(
             pygame.Rect(x_cursor, y_acoes, largura_atual, altura_acao),
@@ -285,3 +336,5 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
         if _SUBTELA_ATIVA.encerrada:
             _SUBTELA_ATIVA = None
             _TELA_CARREGADA = False
+
+    _MENSAGEM.render(JOGO.TELA, dt)

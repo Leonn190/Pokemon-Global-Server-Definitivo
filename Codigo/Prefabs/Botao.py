@@ -1,4 +1,5 @@
 import pygame
+from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Prefabs.Texto import Texto
 
 
@@ -48,6 +49,9 @@ class Botao:
         # ---- NOVO: controle de FPS do texto ----
         "text_color_steps": 12,
         "text_update_on_change": True,
+
+        "som_clique": "Clique",
+        "som_bloqueado": "Bloq",
 
         "text_style": {
             "size": 26,
@@ -109,6 +113,10 @@ class Botao:
         # ---- frames (para modo ticks) ----
         self._last_tick_ms = 0
 
+        self.habilitado = True
+        self.som_clique = self.style.get("som_clique", "Clique")
+        self.som_bloqueado = self.style.get("som_bloqueado", "Bloq")
+
     def set_text(self, text: str):
         self.text.set_text(text)
         self._last_text_color = None
@@ -122,9 +130,17 @@ class Botao:
             self.text.set_style(**kwargs["text_style"])
         self.style.update({k: v for k, v in kwargs.items() if k != "text_style"})
 
+        if "som_clique" in kwargs:
+            self.som_clique = kwargs["som_clique"]
+        if "som_bloqueado" in kwargs:
+            self.som_bloqueado = kwargs["som_bloqueado"]
+
         if "text_color_steps" in kwargs or "text_update_on_change" in kwargs:
             self._last_text_color = None
             self._last_text_step = None
+
+    def set_habilitado(self, habilitado: bool):
+        self.habilitado = bool(habilitado)
 
     def _scaled_rect(self, scale: float):
         cx, cy = self.base_rect.center
@@ -135,6 +151,9 @@ class Botao:
         return r
 
     def _executar(self, JOGO):
+        if self.som_clique:
+            tocar(self.som_clique)
+
         if self.execute is None:
             return
         if callable(self.execute):
@@ -210,12 +229,16 @@ class Botao:
         self.hover = self.rect.collidepoint(mouse_pos)
 
         clicou = False
+        clicou_bloqueado = False
         for e in eventos:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 and self.hover:
                 self.pressed = True
             if e.type == pygame.MOUSEBUTTONUP and e.button == 1:
                 if self.pressed and self.hover:
-                    clicou = True
+                    if self.habilitado:
+                        clicou = True
+                    else:
+                        clicou_bloqueado = True
                 self.pressed = False
 
         target = 1.0 if self.hover else 0.0
@@ -261,6 +284,7 @@ class Botao:
             self._frame_idx = 0
             self._frame_acc = 0.0
             self._last_tick_ms = 0
+
         # ----------------------------------------------------------------
 
         bg = self.style["bg"]
@@ -307,6 +331,9 @@ class Botao:
         self._update_text_color_fast(text_style)
         self.text.set_pos(self.rect.center)
         self.text.draw(tela)
+
+        if clicou_bloqueado and self.som_bloqueado:
+            tocar(self.som_bloqueado)
 
         if clicou:
             self._executar(JOGO)

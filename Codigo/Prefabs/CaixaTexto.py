@@ -14,6 +14,11 @@ class CaixaTexto:
         self._cursor_visivel = True
         self._cursor_timer = 0.0
 
+        self._backspace_ativo = False
+        self._backspace_timer = 0.0
+        self._backspace_delay = 0.32
+        self._backspace_intervalo = 0.05
+
         self._estilo_texto = {
             "size": 30,
             "color": (235, 238, 255),
@@ -29,11 +34,37 @@ class CaixaTexto:
         self.ativo = bool(ativo)
         if not self.ativo:
             self.selecionada = False
+            self._backspace_ativo = False
+
+    def _adicionar_texto(self, conteudo):
+        if not conteudo:
+            return
+        espaco = self.max_chars - len(self.texto)
+        if espaco <= 0:
+            return
+        self.texto += conteudo[:espaco]
+
+    def _capturar_colar(self):
+        try:
+            if not pygame.scrap.get_init():
+                pygame.scrap.init()
+            raw = pygame.scrap.get(pygame.SCRAP_TEXT)
+            if not raw:
+                return ""
+            if isinstance(raw, bytes):
+                conteudo = raw.decode("utf-8", errors="ignore")
+            else:
+                conteudo = str(raw)
+            return "".join(ch for ch in conteudo.replace("\x00", "") if ch.isprintable())
+        except Exception:
+            return ""
 
     def _processar_eventos(self, eventos):
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 self.selecionada = self.ativo and self.rect.collidepoint(evento.pos)
+                if not self.selecionada:
+                    self._backspace_ativo = False
 
             if not self.selecionada:
                 continue
@@ -41,13 +72,37 @@ class CaixaTexto:
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_BACKSPACE:
                     self.texto = self.texto[:-1]
+                    self._backspace_ativo = True
+                    self._backspace_timer = 0.0
                 elif evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     self.selecionada = False
-                elif evento.unicode and evento.unicode.isprintable() and len(self.texto) < self.max_chars:
-                    self.texto += evento.unicode
+                    self._backspace_ativo = False
+                elif evento.key == pygame.K_v and (pygame.key.get_mods() & pygame.KMOD_CTRL):
+                    self._adicionar_texto(self._capturar_colar())
+                elif evento.unicode and evento.unicode.isprintable():
+                    self._adicionar_texto(evento.unicode)
+
+            if evento.type == pygame.KEYUP and evento.key == pygame.K_BACKSPACE:
+                self._backspace_ativo = False
+
+    def _atualizar_backspace_continuo(self, dt):
+        if not self.selecionada or not self._backspace_ativo:
+            return
+
+        self._backspace_timer += dt
+        if self._backspace_timer < self._backspace_delay:
+            return
+
+        while self._backspace_timer >= self._backspace_delay + self._backspace_intervalo:
+            self._backspace_timer -= self._backspace_intervalo
+            if not self.texto:
+                self._backspace_ativo = False
+                break
+            self.texto = self.texto[:-1]
 
     def render(self, tela, eventos, dt):
         self._processar_eventos(eventos)
+        self._atualizar_backspace_continuo(dt)
 
         self._cursor_timer += dt
         if self._cursor_timer >= 0.5:

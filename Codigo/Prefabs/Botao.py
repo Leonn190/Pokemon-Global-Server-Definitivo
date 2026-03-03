@@ -310,3 +310,70 @@ class Botao:
 
         if clicou:
             self._executar(JOGO)
+
+
+class BotaoAlavanca(Botao):
+    def __init__(self, rect: pygame.Rect, nome: str, estado_inicial=False, execute=None, style=None):
+        self.nome = nome
+        self.estado = bool(estado_inicial)
+
+        estilo_base = {
+            "bg": (24, 128, 42) if self.estado else (150, 32, 32),
+            "bg_hover": (35, 156, 54) if self.estado else (186, 42, 42),
+            "bg_pressed": (20, 102, 34) if self.estado else (118, 26, 26),
+            "border": (12, 60, 20) if self.estado else (70, 16, 16),
+            "border_hover": (180, 255, 180) if self.estado else (255, 180, 180),
+        }
+
+        estilo_final = dict(estilo_base)
+        if style:
+            texto_style = dict(style.get("text_style", {}))
+            estilo_final.update(style)
+            if texto_style:
+                estilo_final["text_style"] = texto_style
+
+        super().__init__(rect, self._texto_estado(), execute=execute, style=estilo_final)
+
+    def _texto_estado(self):
+        return f"{self.nome}: {'Ligado' if self.estado else 'Desligado'}"
+
+    def _estilo_estado(self):
+        if self.estado:
+            return {
+                "bg": (24, 128, 42),
+                "bg_hover": (35, 156, 54),
+                "bg_pressed": (20, 102, 34),
+                "border": (12, 60, 20),
+                "border_hover": (180, 255, 180),
+            }
+        return {
+            "bg": (150, 32, 32),
+            "bg_hover": (186, 42, 42),
+            "bg_pressed": (118, 26, 26),
+            "border": (70, 16, 16),
+            "border_hover": (255, 180, 180),
+        }
+
+    def set_estado(self, estado: bool):
+        self.estado = bool(estado)
+        self.set_text(self._texto_estado())
+        self.set_style(**self._estilo_estado())
+
+    def alternar(self, JOGO=None):
+        self.set_estado(not self.estado)
+        return self.estado
+
+    def _executar(self, JOGO):
+        self.alternar(JOGO)
+
+        if self.execute is None:
+            return
+
+        if callable(self.execute):
+            self.execute(JOGO, self.estado, self)
+            return
+
+        if isinstance(self.execute, (list, tuple)):
+            for acao in self.execute:
+                if callable(acao):
+                    acao(JOGO, self.estado, self)

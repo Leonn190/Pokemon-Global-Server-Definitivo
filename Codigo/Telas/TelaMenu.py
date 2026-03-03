@@ -103,8 +103,18 @@ def TelaMenu(Cena, JOGO, EVENTOS, dt):
                 execute=lambda jogo, botao: Cena.DefinirTela("Servers"),
                 style=_ESTILO_BOTAO,
             ),
-            Botao(pygame.Rect(x, inicio_y + (altura_botao + espacamento) * 1, largura_botao, altura_botao), "Configurações", style=_ESTILO_BOTAO),
-            Botao(pygame.Rect(x, inicio_y + (altura_botao + espacamento) * 2, largura_botao, altura_botao), "Sair", style=_ESTILO_BOTAO),
+            Botao(
+                pygame.Rect(x, inicio_y + (altura_botao + espacamento) * 1, largura_botao, altura_botao),
+                "Configurações",
+                execute=lambda jogo, botao: Cena.DefinirTela("Config"),
+                style=_ESTILO_BOTAO,
+            ),
+            Botao(
+                pygame.Rect(x, inicio_y + (altura_botao + espacamento) * 2, largura_botao, altura_botao),
+                "Sair",
+                execute=lambda jogo, botao: setattr(jogo, "Rodando", False),
+                style=_ESTILO_BOTAO,
+            ),
         ]
 
         _MENU_CARREGADO = True

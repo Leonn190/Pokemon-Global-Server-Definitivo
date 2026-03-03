@@ -115,8 +115,9 @@ class CaixaTexto:
         pygame.draw.rect(tela, bg, self.rect, border_radius=14)
         pygame.draw.rect(tela, borda, self.rect, width=2, border_radius=14)
 
-        conteudo = self.texto if self.texto else self.placeholder
-        cor = (235, 238, 255) if self.texto else (160, 166, 190)
+        exibir_placeholder = (not self.texto) and (not self.selecionada)
+        conteudo = self.placeholder if exibir_placeholder else self.texto
+        cor = (160, 166, 190) if exibir_placeholder else (235, 238, 255)
 
         estilo = dict(self._estilo_texto)
         estilo["color"] = cor
@@ -124,7 +125,7 @@ class CaixaTexto:
         label.draw(tela)
 
         if self.selecionada and self._cursor_visivel:
-            largura_texto = label.get_rect().width
+            largura_texto = Texto(self.texto, (0, 0), style=estilo).get_rect().width
             x_cursor = min(self.rect.right - 14, self.rect.x + 16 + largura_texto + 2)
             pygame.draw.line(
                 tela,

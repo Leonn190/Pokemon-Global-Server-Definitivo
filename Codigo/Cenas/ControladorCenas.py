@@ -74,19 +74,19 @@ class ControladorCenas:
 
             self.Cena.Tela(self, EVENTOS, dt)
 
-            if self.CenaAlvo is None and self.Escuro != 0:
-                self.Cena.Abertura(self, dt)
-
-            if self.CenaAlvo is not None and self.Escuro != 100:
-                self.Cena.Fechamento(self, dt)
-
-            if self.CenaAlvo is not None and self.Escuro == 100:
-                self.DefinirCena()
-
             if self.Saindo:
                 Escurecer(self, dt)
                 if self.Escuro >= 100:
                     self.Rodando = False
+            else:
+                if self.CenaAlvo is None and self.Escuro != 0:
+                    self.Cena.Abertura(self, dt)
+
+                if self.CenaAlvo is not None and self.Escuro != 100:
+                    self.Cena.Fechamento(self, dt)
+
+                if self.CenaAlvo is not None and self.Escuro == 100:
+                    self.DefinirCena()
 
             self.DesenhosAdicionais()
             AtualizarMusica()

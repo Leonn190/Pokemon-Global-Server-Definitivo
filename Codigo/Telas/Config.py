@@ -4,6 +4,7 @@ from Codigo.Modulos.Sonoridades import VerificaSonoridade
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Telas.TelasGenericas import SubtelaConfirmacao
 
 _CONFIG_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)
@@ -12,7 +13,10 @@ _BARRAS = {}
 _BOTOES_TOGGLE = {}
 _BOTAO_SALVAR = None
 _BOTAO_CANCELAR = None
+_BOTAO_DESLOGAR = None
 _TITULO = None
+
+_SUBTELA_ATIVA = None
 
 _CONFIG_INICIAL = None
 
@@ -82,9 +86,26 @@ def _executar_salvar(Cena, JOGO, botao):
     _voltar_menu(Cena)
 
 
+def _confirmar_deslogar(Cena, JOGO):
+    JOGO.CONFIG["Usuario"] = None
+    salvar_config_fixa(JOGO.CONFIG)
+    Cena.DefinirTela("MenuPrincipal")
+    JOGO.CenaAlvo = "Login"
+
+
+def _abrir_confirmacao_deslogar(Cena, JOGO):
+    global _SUBTELA_ATIVA
+    _SUBTELA_ATIVA = SubtelaConfirmacao(
+        JOGO.TELA.get_size(),
+        "Você será desconectado da conta atual.",
+        confirmar_callback=lambda: _confirmar_deslogar(Cena, JOGO),
+        titulo="Confirmar logout",
+    )
+
+
 def _montar_layout(Cena, JOGO):
     global _CONFIG_CARREGADA, _TAMANHO_CACHE, _CONFIG_INICIAL
-    global _BARRAS, _BOTOES_TOGGLE, _BOTAO_SALVAR, _BOTAO_CANCELAR, _TITULO
+    global _BARRAS, _BOTOES_TOGGLE, _BOTAO_SALVAR, _BOTAO_CANCELAR, _BOTAO_DESLOGAR, _TITULO
 
     largura_tela, altura_tela = JOGO.TELA.get_size()
     estilo = _estilo_base()
@@ -151,6 +172,19 @@ def _montar_layout(Cena, JOGO):
         style=estilo_acao,
     )
 
+    estilo_deslogar = dict(estilo_acao)
+    estilo_deslogar["text_style"] = dict(estilo_acao["text_style"])
+    estilo_deslogar["bg"] = (105, 38, 38)
+    estilo_deslogar["bg_hover"] = (132, 48, 48)
+    estilo_deslogar["bg_pressed"] = (86, 30, 30)
+
+    _BOTAO_DESLOGAR = Botao(
+        pygame.Rect(largura_tela // 2 - (largura_acao // 2), y_acao - 98, largura_acao, 78),
+        "Deslogar",
+        execute=lambda jogo, botao: _abrir_confirmacao_deslogar(Cena, jogo),
+        style=estilo_deslogar,
+    )
+
     _TITULO = Texto(
         "Configurações",
         pos=(largura_tela // 2, int(altura_tela * 0.08)),
@@ -171,11 +205,14 @@ def _montar_layout(Cena, JOGO):
 
 
 def ResetTelaConfig():
-    global _CONFIG_CARREGADA
+    global _CONFIG_CARREGADA, _SUBTELA_ATIVA
     _CONFIG_CARREGADA = False
+    _SUBTELA_ATIVA = None
 
 
 def TelaConfig(Cena, JOGO, EVENTOS, dt):
+    global _SUBTELA_ATIVA
+
     largura_tela, altura_tela = JOGO.TELA.get_size()
     if (not _CONFIG_CARREGADA) or _TAMANHO_CACHE != (largura_tela, altura_tela):
         _montar_layout(Cena, JOGO)
@@ -183,9 +220,12 @@ def TelaConfig(Cena, JOGO, EVENTOS, dt):
     JOGO.TELA.fill((10, 14, 28))
     _TITULO.draw(JOGO.TELA)
 
-    alterou_fps = _BARRAS["FPS"].render(JOGO.TELA, EVENTOS)
-    alterou_claridade = _BARRAS["Claridade"].render(JOGO.TELA, EVENTOS)
-    alterou_volume = _BARRAS["Volume"].render(JOGO.TELA, EVENTOS)
+    eventos_ativos = [] if _SUBTELA_ATIVA else EVENTOS
+    mouse_pos = (-99999, -99999) if _SUBTELA_ATIVA else None
+
+    alterou_fps = _BARRAS["FPS"].render(JOGO.TELA, eventos_ativos)
+    alterou_claridade = _BARRAS["Claridade"].render(JOGO.TELA, eventos_ativos)
+    alterou_volume = _BARRAS["Volume"].render(JOGO.TELA, eventos_ativos)
 
     if alterou_fps:
         JOGO.CONFIG["FPS"] = int(round(_BARRAS["FPS"].valor))
@@ -198,7 +238,13 @@ def TelaConfig(Cena, JOGO, EVENTOS, dt):
         VerificaSonoridade(JOGO.CONFIG)
 
     for botao in _BOTOES_TOGGLE.values():
-        botao.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
+        botao.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
-    _BOTAO_CANCELAR.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
-    _BOTAO_SALVAR.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
+    _BOTAO_DESLOGAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    _BOTAO_CANCELAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    _BOTAO_SALVAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+
+    if _SUBTELA_ATIVA:
+        _SUBTELA_ATIVA.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
+        if _SUBTELA_ATIVA.encerrada:
+            _SUBTELA_ATIVA = None

@@ -130,15 +130,8 @@ class SubtelaTexto:
         self.voltar_callback = voltar_callback
         self.encerrada = False
 
-        self.barra_titulo = CaixaTexto(
-            pygame.Rect(self.caixa.left + 42, self.caixa.top + 72, self.caixa.width - 84, 72),
-            texto_inicial=titulo,
-            placeholder="Título",
-            ativo=False,
-        )
-
         self.barras_texto = []
-        y_base = self.caixa.top + 168
+        y_base = self.caixa.top + 112
         espacamento = 96
         for i in range(self._qtd_campos):
             self.barras_texto.append(
@@ -189,10 +182,9 @@ class SubtelaTexto:
         pygame.draw.rect(tela, (14, 20, 38), self.caixa, border_radius=20)
         pygame.draw.rect(tela, (255, 220, 120), self.caixa, width=2, border_radius=20)
 
-        titulo = Texto(self.titulo, (self.caixa.centerx, self.caixa.top + 38), style={"size": 36, "align": "center"})
+        titulo = Texto(self.titulo, (self.caixa.centerx, self.caixa.top + 52), style={"size": 36, "align": "center"})
         titulo.draw(tela)
 
-        self.barra_titulo.render(tela, [], dt)
         for barra in self.barras_texto:
             barra.render(tela, eventos, dt)
 

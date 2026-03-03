@@ -3,7 +3,7 @@ from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.Server.ServerMenu import entrar_server, operar_server
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
-from ServerList import SERVER_LIST, salvar_server_list
+from ServerList import SERVER_LIST
 
 _TELA_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)
@@ -18,11 +18,6 @@ _BOTOES_ACOES = {}
 _SERVER_SELECIONADO = None
 _SUBTELA_ATIVA = None
 _MENSAGEM = None
-
-
-def _persistir_servers():
-    salvar_server_list()
-
 
 def _gerar_estilos():
     estilo_base = {
@@ -88,7 +83,6 @@ def _renomear_server(novo_nome):
         return
 
     SERVER_LIST[_SERVER_SELECIONADO]["nome"] = novo_nome
-    _persistir_servers()
     _BOTOES_SERVERS[_SERVER_SELECIONADO].set_text(novo_nome)
 
 
@@ -98,14 +92,12 @@ def _adicionar_server(nome, link):
     if not nome or not link:
         return
     SERVER_LIST.append({"nome": nome, "ip": link})
-    _persistir_servers()
 
 
 def _apagar_server():
     if _SERVER_SELECIONADO is None:
         return
     SERVER_LIST.pop(_SERVER_SELECIONADO)
-    _persistir_servers()
     _limpar_selecao()
 
 

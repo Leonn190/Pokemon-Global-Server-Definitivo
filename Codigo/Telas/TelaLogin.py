@@ -6,6 +6,7 @@ from Codigo.Prefabs.Texto import Texto
 from Codigo.Server.Login import autenticar
 from Codigo.Telas.Config import salvar_config_fixa
 
+
 _TELA_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)
 
@@ -47,28 +48,25 @@ _ESTILO_BOTAO = {
 
 
 def _definir_mensagem(texto, cor=(245, 246, 255)):
+    if _MSG is None:
+        return
     _MSG.set_text(texto)
     _MSG.set_style(color=cor)
 
 
-def _sair(jogo, botao):
-    jogo.SolicitarSair()
-
-
 def _acessar(jogo, botao):
-    usuario = _CAMPO_USUARIO.texto.strip()
-    senha = _CAMPO_SENHA.texto.strip()
+    usuario = _CAMPO_USUARIO.texto.strip() if _CAMPO_USUARIO else ""
+    senha = _CAMPO_SENHA.texto.strip() if _CAMPO_SENHA else ""
 
     resposta = autenticar(usuario, senha)
-    status = resposta.get("status")
-
-    if status != "ok":
+    if resposta.get("status") != "ok":
         _definir_mensagem(resposta.get("mensagem", "Falha no login"), (255, 140, 140))
         return
 
     usuario_login = resposta.get("usuario") or usuario
     jogo.CONFIG["Usuario"] = usuario_login
     salvar_config_fixa(jogo.CONFIG)
+
     _definir_mensagem("Login feito com sucesso!", (130, 255, 160))
     jogo.CenaAlvo = "Menu"
 
@@ -121,10 +119,12 @@ def _montar_layout(jogo):
         execute=_acessar,
         style=_ESTILO_BOTAO,
     )
+
+    # Otimização: remove função _sair e usa lambda direto
     _BOTAO_SAIR = Botao(
         pygame.Rect(largura // 2 + 18, y_botao, largura_botao, altura_botao),
         "Sair",
-        execute=_sair,
+        execute=lambda jogo, botao: jogo.SolicitarSair(),
         style=_ESTILO_BOTAO,
     )
 

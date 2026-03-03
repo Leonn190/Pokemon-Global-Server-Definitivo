@@ -28,7 +28,59 @@ _ESTILO_BOTAO_MODAL = {
 }
 
 
-class SubtelaConfirmacao:
+def _normalizar_lista(valor, n, padrao):
+    if valor is None:
+        return [padrao] * n
+    if isinstance(valor, str):
+        return [valor] * n
+    if isinstance(valor, int):
+        return [valor] * n
+    lst = list(valor)
+    while len(lst) < n:
+        lst.append(padrao)
+    return lst
+
+
+class _BaseModal:
+    def __init__(self, tela_size, alpha_overlay=180):
+        self._overlay_size = (0, 0)
+        self._overlay = None
+        self._alpha_overlay = int(alpha_overlay)
+
+        self._painel_size = (0, 0)
+        self._painel_surf = None
+
+        self._rebuild_cache(tela_size)
+
+    def _rebuild_cache(self, tela_size):
+        w, h = tela_size
+        if (w, h) != self._overlay_size:
+            self._overlay_size = (w, h)
+            self._overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+            self._overlay.fill((0, 0, 0, self._alpha_overlay))
+
+        # painel é dependente do tamanho/rect (cada classe define caixa), então aqui não desenha o painel
+
+    def _get_painel(self, caixa_rect, bg_color, border_color, border_w=2, radius=20):
+        size = (caixa_rect.width, caixa_rect.height)
+        if size != self._painel_size or self._painel_surf is None:
+            self._painel_size = size
+            self._painel_surf = pygame.Surface(size, pygame.SRCALPHA)
+
+            r = self._painel_surf.get_rect()
+            pygame.draw.rect(self._painel_surf, bg_color, r, border_radius=radius)
+            pygame.draw.rect(self._painel_surf, border_color, r, width=border_w, border_radius=radius)
+
+        return self._painel_surf
+
+    def _blit_overlay(self, tela):
+        size = tela.get_size()
+        if size != self._overlay_size:
+            self._rebuild_cache(size)
+        tela.blit(self._overlay, (0, 0))
+
+
+class SubtelaConfirmacao(_BaseModal):
     def __init__(self, tela_size, pergunta, confirmar_callback, cancelar_callback=None, titulo=None):
         largura, altura = tela_size
         caixa = pygame.Rect(0, 0, min(860, int(largura * 0.75)), min(340, int(altura * 0.46)))
@@ -40,6 +92,8 @@ class SubtelaConfirmacao:
         self.confirmar_callback = confirmar_callback
         self.cancelar_callback = cancelar_callback
         self.encerrada = False
+
+        super().__init__(tela_size, alpha_overlay=175)
 
         self._texto_titulo = Texto(
             self.titulo,
@@ -76,13 +130,39 @@ class SubtelaConfirmacao:
             self.cancelar_callback()
         self.encerrada = True
 
-    def render(self, tela, eventos, dt, JOGO=None):
-        overlay = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 175))
-        tela.blit(overlay, (0, 0))
+    def _on_resize(self, tela_size):
+        largura, altura = tela_size
+        caixa = pygame.Rect(0, 0, min(860, int(largura * 0.75)), min(340, int(altura * 0.46)))
+        caixa.center = (largura // 2, altura // 2)
+        self.caixa = caixa
 
-        pygame.draw.rect(tela, (16, 21, 40), self.caixa, border_radius=20)
-        pygame.draw.rect(tela, (255, 220, 120), self.caixa, width=2, border_radius=20)
+        self._texto_titulo.set_pos((self.caixa.centerx, self.caixa.top + 56))
+        self._texto_pergunta.set_pos((self.caixa.centerx, self.caixa.centery - 18))
+
+        y_botoes = self.caixa.bottom - 98
+        self.botao_voltar.rect = pygame.Rect(self.caixa.left + 60, y_botoes, 250, 70)
+        self.botao_confirmar.rect = pygame.Rect(self.caixa.right - 310, y_botoes, 250, 70)
+
+        # invalida painel cache (tamanho mudou)
+        self._painel_surf = None
+        self._painel_size = (0, 0)
+
+    def render(self, tela, eventos, dt, JOGO=None):
+        size = tela.get_size()
+        if size != self._overlay_size:
+            self._rebuild_cache(size)
+            self._on_resize(size)
+
+        self._blit_overlay(tela)
+
+        painel = self._get_painel(
+            self.caixa,
+            bg_color=(16, 21, 40),
+            border_color=(255, 220, 120),
+            border_w=2,
+            radius=20,
+        )
+        tela.blit(painel, self.caixa.topleft)
 
         self._texto_titulo.draw(tela)
         self._texto_pergunta.draw(tela)
@@ -91,7 +171,7 @@ class SubtelaConfirmacao:
         self.botao_confirmar.render(tela, eventos, dt, JOGO=JOGO)
 
 
-class SubtelaTexto:
+class SubtelaTexto(_BaseModal):
     def __init__(
         self,
         tela_size,
@@ -111,23 +191,8 @@ class SubtelaTexto:
 
         self._qtd_campos = max(1, len(textos_iniciais))
 
-        if placeholders is None:
-            placeholders = ["Digite o texto..."] * self._qtd_campos
-        elif isinstance(placeholders, str):
-            placeholders = [placeholders] * self._qtd_campos
-        else:
-            placeholders = list(placeholders)
-            while len(placeholders) < self._qtd_campos:
-                placeholders.append("Digite o texto...")
-
-        if max_chars is None:
-            max_chars = [24] * self._qtd_campos
-        elif isinstance(max_chars, int):
-            max_chars = [max_chars] * self._qtd_campos
-        else:
-            max_chars = list(max_chars)
-            while len(max_chars) < self._qtd_campos:
-                max_chars.append(24)
+        placeholders = _normalizar_lista(placeholders, self._qtd_campos, "Digite o texto...")
+        max_chars = _normalizar_lista(max_chars, self._qtd_campos, 24)
 
         altura_modal = min(620, int(altura * 0.72)) if self._qtd_campos > 1 else min(460, int(altura * 0.60))
         caixa = pygame.Rect(0, 0, min(980, int(largura * 0.82)), altura_modal)
@@ -136,13 +201,16 @@ class SubtelaTexto:
         self.caixa = caixa
         self.titulo = titulo
         self.enviar_callback = enviar_callback
+        self.voltar_callback = voltar_callback
+        self.encerrada = False
+
+        super().__init__(tela_size, alpha_overlay=185)
+
         self._texto_titulo = Texto(
             self.titulo,
             (self.caixa.centerx, self.caixa.top + 52),
             style={"size": 36, "align": "center"},
         )
-        self.voltar_callback = voltar_callback
-        self.encerrada = False
 
         self.barras_texto = []
         y_base = self.caixa.top + 112
@@ -188,13 +256,44 @@ class SubtelaTexto:
             self.voltar_callback()
         self.encerrada = True
 
-    def render(self, tela, eventos, dt, JOGO=None):
-        overlay = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 185))
-        tela.blit(overlay, (0, 0))
+    def _on_resize(self, tela_size):
+        largura, altura = tela_size
 
-        pygame.draw.rect(tela, (14, 20, 38), self.caixa, border_radius=20)
-        pygame.draw.rect(tela, (255, 220, 120), self.caixa, width=2, border_radius=20)
+        altura_modal = min(620, int(altura * 0.72)) if self._qtd_campos > 1 else min(460, int(altura * 0.60))
+        caixa = pygame.Rect(0, 0, min(980, int(largura * 0.82)), altura_modal)
+        caixa.center = (largura // 2, altura // 2)
+        self.caixa = caixa
+
+        self._texto_titulo.set_pos((self.caixa.centerx, self.caixa.top + 52))
+
+        y_base = self.caixa.top + 112
+        espacamento = 96
+        for i, barra in enumerate(self.barras_texto):
+            barra.rect = pygame.Rect(self.caixa.left + 42, y_base + i * espacamento, self.caixa.width - 84, 72)
+
+        y_botoes = self.caixa.bottom - 94
+        self.botao_voltar.rect = pygame.Rect(self.caixa.left + 42, y_botoes, 220, 66)
+        self.botao_enviar.rect = pygame.Rect(self.caixa.right - 262, y_botoes, 220, 66)
+
+        self._painel_surf = None
+        self._painel_size = (0, 0)
+
+    def render(self, tela, eventos, dt, JOGO=None):
+        size = tela.get_size()
+        if size != self._overlay_size:
+            self._rebuild_cache(size)
+            self._on_resize(size)
+
+        self._blit_overlay(tela)
+
+        painel = self._get_painel(
+            self.caixa,
+            bg_color=(14, 20, 38),
+            border_color=(255, 220, 120),
+            border_w=2,
+            radius=20,
+        )
+        tela.blit(painel, self.caixa.topleft)
 
         self._texto_titulo.draw(tela)
 
@@ -203,3 +302,4 @@ class SubtelaTexto:
 
         self.botao_voltar.render(tela, eventos, dt, JOGO=JOGO)
         self.botao_enviar.render(tela, eventos, dt, JOGO=JOGO)
+

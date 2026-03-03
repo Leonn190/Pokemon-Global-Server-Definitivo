@@ -1,5 +1,4 @@
 import pygame
-from pathlib import Path
 
 from Codigo.Modulos.Sonoridades import VerificaSonoridade
 from Codigo.Prefabs.Barra import Barra
@@ -46,9 +45,11 @@ def _estilo_base():
     }
 
 
-def _salvar_config(config):
-    caminho = Path("ConfigFixa.py")
-    caminho.write_text("ConfigFixa = " + repr(config) + "\n", encoding="utf-8")
+def salvar_config_fixa(config):
+    from pathlib import Path
+
+    caminho = Path("Outros/ConfigFixa.py")
+    caminho.write_text("ConfigFixa = " + repr(dict(config)) + "\n", encoding="utf-8")
 
 
 def _voltar_menu(Cena):
@@ -77,7 +78,7 @@ def _executar_cancelar(Cena, JOGO, botao):
 
 
 def _executar_salvar(Cena, JOGO, botao):
-    _salvar_config(JOGO.CONFIG)
+    salvar_config_fixa(JOGO.CONFIG)
     _voltar_menu(Cena)
 
 

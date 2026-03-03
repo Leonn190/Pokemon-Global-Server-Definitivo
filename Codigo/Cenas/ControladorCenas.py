@@ -2,6 +2,7 @@ from Codigo.Cenas.CenaMenu import CenaMenu
 from Codigo.Cenas.CenaMundo import CenaMundo
 from Codigo.Cenas.CenaCombate import CenaCombate
 from Codigo.Cenas.CenaCarregamento import CenaCarregamento
+from Codigo.Cenas.CenaLogin import CenaLogin
 import pygame
 
 from Codigo.Modulos.Sonoridades import AtualizarMusica
@@ -18,6 +19,7 @@ class ControladorCenas:
 
         self.Cenas = {
             "Carregamento": CenaCarregamento(),
+            "Login": CenaLogin(),
             "Menu": CenaMenu(),
             "Mundo": CenaMundo(),
             "Combate": CenaCombate(),

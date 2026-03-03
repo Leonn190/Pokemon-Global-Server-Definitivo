@@ -221,6 +221,8 @@ def _render_acao(nome, tela, eventos, dt, JOGO, mouse_pos=None):
     requer_selecao = nome in ("Renomear", "Apagar")
     habilitado = (not requer_selecao) or (_SERVER_SELECIONADO is not None)
 
+    botao.set_habilitado(habilitado)
+
     if habilitado:
         botao.set_style(
             bg=(18, 24, 44),
@@ -240,7 +242,7 @@ def _render_acao(nome, tela, eventos, dt, JOGO, mouse_pos=None):
         border_hover=(70, 70, 78),
         text_style={"color": (140, 140, 150), "hover_color": (140, 140, 150)},
     )
-    botao.render(tela, [], dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    botao.render(tela, eventos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
 
 def TelaServers(Cena, JOGO, EVENTOS, dt):

@@ -39,6 +39,6 @@ CONFIG.update({"VERSÃO": 1.0})
 VerificaSonoridade(CONFIG)
 
 Game = ControladorCenas(TELA, RELOGIO, CONFIG)
-Game.CenaAlvo = "Menu"
+Game.CenaAlvo = "Menu" if CONFIG.get("Usuario") else "Login"
 Game.DefinirCena()
 Game.Rodar()

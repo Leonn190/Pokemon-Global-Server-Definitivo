@@ -1,7 +1,7 @@
 import pygame
 
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
-from Codigo.Telas.TelaMenu import inicializar_tela_menu, desenhar_tela_menu
+from Codigo.Telas.TelaMenu import TelaMenu
 
 
 class CenaMenu:
@@ -10,17 +10,16 @@ class CenaMenu:
         self.Abertura = Clarear
         self.Fechamento = Escurecer
         self.ID = "Menu"
-        self.EstadoTela = inicializar_tela_menu(JOGO)
         self.FonteFPS = pygame.font.SysFont("consolas", 24)
 
-    def _desenhar_fps(self, JOGO):
+    def DesenhosAdicionais(self, JOGO):
         if not JOGO.CONFIG.get("FPS Visivel", False):
             return
 
-        texto_fps = f"FPS: {int(JOGO.RELOGIO.get_fps())}"
-        superficie_fps = self.FonteFPS.render(texto_fps, True, (255, 255, 255))
-        rect_fps = superficie_fps.get_rect(topright=(JOGO.TELA.get_width() - 16, 12))
-        JOGO.TELA.blit(superficie_fps, rect_fps)
+        texto_status = f"FPS: {int(JOGO.RELOGIO.get_fps())} | Ping: 5"
+        superficie_status = self.FonteFPS.render(texto_status, True, (255, 255, 255))
+        rect_status = superficie_status.get_rect(topright=(JOGO.TELA.get_width() - 16, 12))
+        JOGO.TELA.blit(superficie_status, rect_status)
 
     def Loop(self, JOGO):
         dt = JOGO.RELOGIO.tick(JOGO.CONFIG["FPS"]) / 1000.0
@@ -31,7 +30,7 @@ class CenaMenu:
                 JOGO.Rodando = False
 
         self.TelaAtiva(JOGO, EVENTOS, dt)
-        self._desenhar_fps(JOGO)
+        self.DesenhosAdicionais(JOGO)
 
         if JOGO.CenaAlvo is None and JOGO.Escuro != 0:
             self.Abertura(JOGO, dt)
@@ -45,7 +44,7 @@ class CenaMenu:
         pygame.display.update()
 
     def Tela(self, JOGO, EVENTOS, dt):
-        desenhar_tela_menu(JOGO, self.EstadoTela, EVENTOS, dt)
+        TelaMenu(JOGO, EVENTOS, dt)
 
     def Finalizar(self, JOGO):
         pass

@@ -26,6 +26,7 @@ CONFIG = {
     "FPS Visivel": True,
     "Cords Visiveis": False,
     "Ping Visivel": False,
+    "Usuario": None
 }
 
 from Outros.ConfigFixa import ConfigFixa

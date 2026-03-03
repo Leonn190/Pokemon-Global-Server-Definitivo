@@ -1,7 +1,7 @@
 import pygame
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
-from ServerList import SERVER_LIST
+from ServerList import SERVER_LIST, salvar_server_list
 
 _TELA_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)
@@ -15,6 +15,10 @@ _BOTOES_ACOES = {}
 
 _SERVER_SELECIONADO = None
 _SUBTELA_ATIVA = None
+
+
+def _persistir_servers():
+    salvar_server_list()
 
 
 def _gerar_estilos():
@@ -75,6 +79,7 @@ def _renomear_server(novo_nome):
         return
 
     SERVER_LIST[_SERVER_SELECIONADO]["nome"] = novo_nome
+    _persistir_servers()
     _BOTOES_SERVERS[_SERVER_SELECIONADO].set_text(novo_nome)
 
 
@@ -84,12 +89,14 @@ def _adicionar_server(nome, link):
     if not nome or not link:
         return
     SERVER_LIST.append({"nome": nome, "ip": link})
+    _persistir_servers()
 
 
 def _apagar_server():
     if _SERVER_SELECIONADO is None:
         return
     SERVER_LIST.pop(_SERVER_SELECIONADO)
+    _persistir_servers()
     _limpar_selecao()
 
 
@@ -203,6 +210,10 @@ def _montar_layout(Cena, JOGO):
             execute = lambda jogo, botao: _abrir_subtela_renomear(jogo)
         elif nome == "Apagar":
             execute = lambda jogo, botao: _abrir_subtela_apagar(jogo)
+        elif nome == "Entrar":
+            execute = lambda jogo, botao: None
+        elif nome == "Operar":
+            execute = lambda jogo, botao: None
 
         _BOTOES_ACOES[nome] = Botao(
             pygame.Rect(x_cursor, y_acoes, largura_atual, altura_acao),
@@ -218,7 +229,7 @@ def _montar_layout(Cena, JOGO):
 
 def _render_acao(nome, tela, eventos, dt, JOGO, mouse_pos=None):
     botao = _BOTOES_ACOES[nome]
-    requer_selecao = nome in ("Renomear", "Apagar")
+    requer_selecao = nome in ("Renomear", "Apagar", "Entrar", "Operar")
     habilitado = (not requer_selecao) or (_SERVER_SELECIONADO is not None)
 
     botao.set_habilitado(habilitado)

@@ -41,6 +41,17 @@ class SubtelaConfirmacao:
         self.cancelar_callback = cancelar_callback
         self.encerrada = False
 
+        self._texto_titulo = Texto(
+            self.titulo,
+            (self.caixa.centerx, self.caixa.top + 56),
+            style={"size": 38, "align": "center"},
+        )
+        self._texto_pergunta = Texto(
+            self.pergunta,
+            (self.caixa.centerx, self.caixa.centery - 18),
+            style={"size": 29, "align": "center"},
+        )
+
         y_botoes = self.caixa.bottom - 98
         self.botao_voltar = Botao(
             pygame.Rect(self.caixa.left + 60, y_botoes, 250, 70),
@@ -73,10 +84,8 @@ class SubtelaConfirmacao:
         pygame.draw.rect(tela, (16, 21, 40), self.caixa, border_radius=20)
         pygame.draw.rect(tela, (255, 220, 120), self.caixa, width=2, border_radius=20)
 
-        titulo = Texto(self.titulo, (self.caixa.centerx, self.caixa.top + 56), style={"size": 38, "align": "center"})
-        pergunta = Texto(self.pergunta, (self.caixa.centerx, self.caixa.centery - 18), style={"size": 29, "align": "center"})
-        titulo.draw(tela)
-        pergunta.draw(tela)
+        self._texto_titulo.draw(tela)
+        self._texto_pergunta.draw(tela)
 
         self.botao_voltar.render(tela, eventos, dt, JOGO=JOGO)
         self.botao_confirmar.render(tela, eventos, dt, JOGO=JOGO)
@@ -127,6 +136,11 @@ class SubtelaTexto:
         self.caixa = caixa
         self.titulo = titulo
         self.enviar_callback = enviar_callback
+        self._texto_titulo = Texto(
+            self.titulo,
+            (self.caixa.centerx, self.caixa.top + 52),
+            style={"size": 36, "align": "center"},
+        )
         self.voltar_callback = voltar_callback
         self.encerrada = False
 
@@ -182,8 +196,7 @@ class SubtelaTexto:
         pygame.draw.rect(tela, (14, 20, 38), self.caixa, border_radius=20)
         pygame.draw.rect(tela, (255, 220, 120), self.caixa, width=2, border_radius=20)
 
-        titulo = Texto(self.titulo, (self.caixa.centerx, self.caixa.top + 52), style={"size": 36, "align": "center"})
-        titulo.draw(tela)
+        self._texto_titulo.draw(tela)
 
         for barra in self.barras_texto:
             barra.render(tela, eventos, dt)

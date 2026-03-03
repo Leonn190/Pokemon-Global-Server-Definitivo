@@ -60,30 +60,56 @@ def TelaMenu(JOGO, EVENTOS, dt):
         _TEXTURA_BASE = _FRAMES_HOVER[0] if _FRAMES_HOVER else None
 
         _ESTILO_BOTAO = {
-            "radius": 22,
+            # forma
+            "radius": 26,                 # mais arredondado, cara de UI moderna
             "border_width": 2,
-            "border": (22, 26, 40),
-            "border_hover": (252, 234, 125),
-            "bg": (18, 20, 30),
-            "bg_hover": (38, 44, 66),
-            "bg_pressed": (16, 19, 28),
+
+            # bordas (mais suaves)
+            "border": (14, 18, 32),       # menos "preto chapado"
+            "border_hover": (255, 220, 120),  # dourado suave (não estoura)
+
+            # fallback de cor (quando não tiver bg_image)
+            "bg": (12, 14, 22),
+            "bg_hover": (22, 26, 44),
+            "bg_pressed": (10, 12, 20),
+
+            # fundo cósmico
             "bg_image": _TEXTURA_BASE,
             "bg_frames_hover": _FRAMES_HOVER,
-            "bg_frames_fps": 14,
-            "hover_scale": 1.08,
-            "hover_speed": 14.0,
-            "press_scale": 0.97,
+
+            # animação do gif: “vibe” boa
+            "bg_frames_mode": "ticks",        # mantém o feeling antigo
+            "bg_frames_interval_ms": 65,      # 50-65 fica bonito (mais lento = mais elegante)
+            "bg_frames_scale_mode": "fast",   # fast = mais “gif”, smooth = mais “polido”
+
+            # interação
+            "hover_scale": 1.06,          # 1.08 às vezes fica “inflado”
+            "hover_speed": 11.0,          # transição mais macia
+            "press_scale": 0.965,
+
+            # texto
+            "text_color_steps": 12,       # mantém bonito e não mata FPS
+            "text_update_on_change": True,
+
             "text_style": {
-                "size": 40,
+                "size": 42,               # levemente maior e mais “título”
                 "color": (245, 246, 255),
-                "hover_color": (255, 232, 80),
-                "hover_speed": 28.0,
+                "hover_color": (255, 226, 120),  # dourado mais elegante
+                "hover_speed": 18.0,      # transição mais suave
+                "align": "center",
+
+                # outline: mais fino (2 pode ficar “cartoon”)
                 "outline": True,
                 "outline_color": (0, 0, 0),
-                "outline_thickness": 2,
+                "outline_thickness": 1,
+
+                # sombra: dá profundidade e substitui outline pesado
                 "shadow": True,
-                "shadow_color": (0, 0, 0, 170),
+                "shadow_color": (0, 0, 0, 190),
                 "shadow_offset": (2, 2),
+
+                # opcional (desligado): highlight costuma deixar “placa”
+                "highlight": False,
             },
         }
 

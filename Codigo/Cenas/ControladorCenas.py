@@ -8,7 +8,8 @@ class ControladorCenas:
         self.TELA = TELA
         self.RELOGIO = RELOGIO
         self.CONFIG = CONFIG
-        self.INFO = {}
+        self.INFO = {
+        }
 
         self.Cenas = {
             "Carregamento": CenaCarregamento(),

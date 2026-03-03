@@ -3,6 +3,7 @@ import pygame
 from pathlib import Path
 
 from Codigo.Cenas.ControladorCenas import ControladorCenas
+from Codigo.Modulos.Sonoridades import VerificaSonoridade
 
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("pokemon.global.server")
 
@@ -33,6 +34,8 @@ if ConfigFixa is not None:
     CONFIG = ConfigFixa
 
 CONFIG.update({"VERSÃO": 1.0})
+
+VerificaSonoridade(CONFIG)
 
 Game = ControladorCenas(TELA, RELOGIO, CONFIG)
 Game.CenaAlvo = "Menu"

@@ -38,9 +38,16 @@ class Botao:
         "bg_frames_hover": None,
         "bg_frames_fps": 12,
 
+        # ---- NOVO: frames como o antigo (ticks) + escolha de scale ----
+        # "ticks": usa pygame.time.get_ticks() e intervalo fixo (mais "gif vibe")
+        # "dt": usa dt e fps (modo anterior)
+        "bg_frames_mode": "ticks",        # "ticks" | "dt"
+        "bg_frames_interval_ms": 50,      # usado se mode == "ticks"
+        "bg_frames_scale_mode": "fast",   # "fast" (scale) | "smooth" (smoothscale)
+
         # ---- NOVO: controle de FPS do texto ----
-        "text_color_steps": 12,      # 8..16 (0 = modo turbo sem lerp)
-        "text_update_on_change": True,  # só atualiza style quando muda de fato
+        "text_color_steps": 12,
+        "text_update_on_change": True,
 
         "text_style": {
             "size": 26,
@@ -95,9 +102,12 @@ class Botao:
         self._mask_cache = {}
         self._scaled_cache = {}
 
-        # ---- NOVO: cache da última cor do texto e do "step" ----
+        # ---- texto ----
         self._last_text_color = None
         self._last_text_step = None
+
+        # ---- frames (para modo ticks) ----
+        self._last_tick_ms = 0
 
     def set_text(self, text: str):
         self.text.set_text(text)
@@ -112,7 +122,6 @@ class Botao:
             self.text.set_style(**kwargs["text_style"])
         self.style.update({k: v for k, v in kwargs.items() if k != "text_style"})
 
-        # se mudar coisas do texto, reseta cache de cor
         if "text_color_steps" in kwargs or "text_update_on_change" in kwargs:
             self._last_text_color = None
             self._last_text_step = None
@@ -146,12 +155,18 @@ class Botao:
         self._mask_cache[key] = mask
         return mask
 
-    def _get_scaled(self, surf: pygame.Surface, w: int, h: int) -> pygame.Surface:
-        key = (id(surf), w, h)
+    # --------- MUDANÇA AQUI: escala com modo "fast" ou "smooth" ---------
+    def _get_scaled(self, surf: pygame.Surface, w: int, h: int, scale_mode: str = "smooth") -> pygame.Surface:
+        key = (id(surf), w, h, scale_mode)
         cached = self._scaled_cache.get(key)
         if cached is not None:
             return cached
-        scaled = pygame.transform.smoothscale(surf, (w, h)).convert_alpha()
+
+        if scale_mode == "fast":
+            scaled = pygame.transform.scale(surf, (w, h)).convert_alpha()
+        else:
+            scaled = pygame.transform.smoothscale(surf, (w, h)).convert_alpha()
+
         self._scaled_cache[key] = scaled
         return scaled
 
@@ -161,11 +176,6 @@ class Botao:
             self._clip_surf = pygame.Surface((w, h), pygame.SRCALPHA)
 
     def _update_text_color_fast(self, text_style):
-        """
-        Atualiza a cor do Texto sem destruir FPS:
-        - se text_color_steps == 0: modo turbo (sem lerp)
-        - senão: quantiza o hover_t em steps e só muda quando step mudar
-        """
         base = text_style.get("color", (255, 255, 255))
         hover = text_style.get("hover_color", (255, 238, 90))
 
@@ -173,14 +183,12 @@ class Botao:
         update_on_change = bool(self.style.get("text_update_on_change", True))
 
         if steps <= 0:
-            # TURBO: troca instantânea
             color_now = hover if self.hover else base
             if (not update_on_change) or (color_now != self._last_text_color):
                 self.text.set_style(color=color_now)
                 self._last_text_color = color_now
             return
 
-        # bonito e leve: quantiza
         step = int(self._text_hover_t * steps)
         step = 0 if step < 0 else steps if step > steps else step
 
@@ -231,16 +239,29 @@ class Botao:
             scale *= float(self.style["press_scale"])
         self.rect = self._scaled_rect(scale)
 
+        # --------- MUDANÇA AQUI: frames "ticks" (antigo) ou "dt" ---------
         frames = self.style["bg_frames_hover"] or []
-        if self.hover and frames:
-            self._frame_acc += dt
-            frame_dur = 1.0 / max(1, int(self.style["bg_frames_fps"]))
-            while self._frame_acc >= frame_dur:
-                self._frame_acc -= frame_dur
-                self._frame_idx = (self._frame_idx + 1) % len(frames)
+        if frames and self.hover:
+            mode = self.style.get("bg_frames_mode", "ticks")
+            if mode == "ticks":
+                intervalo = int(self.style.get("bg_frames_interval_ms", 50))
+                agora = pygame.time.get_ticks()
+                if self._last_tick_ms == 0:
+                    self._last_tick_ms = agora
+                if agora - self._last_tick_ms >= intervalo:
+                    self._frame_idx = (self._frame_idx + 1) % len(frames)
+                    self._last_tick_ms = agora
+            else:
+                self._frame_acc += dt
+                frame_dur = 1.0 / max(1, int(self.style["bg_frames_fps"]))
+                while self._frame_acc >= frame_dur:
+                    self._frame_acc -= frame_dur
+                    self._frame_idx = (self._frame_idx + 1) % len(frames)
         else:
             self._frame_idx = 0
             self._frame_acc = 0.0
+            self._last_tick_ms = 0
+        # ----------------------------------------------------------------
 
         bg = self.style["bg"]
         bg_hover = self.style["bg_hover"]
@@ -261,16 +282,19 @@ class Botao:
         clip_surf = self._clip_surf
         clip_surf.fill((0, 0, 0, 0))
 
+        # --------- MUDANÇA AQUI: scale_mode pros frames ---------
         if self.hover and frames:
             frame = frames[self._frame_idx]
-            frame_scaled = self._get_scaled(frame, w, h)
+            scale_mode = self.style.get("bg_frames_scale_mode", "fast")
+            frame_scaled = self._get_scaled(frame, w, h, scale_mode)
             clip_surf.blit(frame_scaled, (0, 0))
         elif self.style["bg_image"] is not None:
             img = self.style["bg_image"]
-            img_scaled = self._get_scaled(img, w, h)
+            img_scaled = self._get_scaled(img, w, h, "smooth")
             clip_surf.blit(img_scaled, (0, 0))
         else:
             clip_surf.fill((*bg_now, 255))
+        # --------------------------------------------------------
 
         mask = self._get_mask(w, h, radius)
         clip_surf.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
@@ -280,7 +304,6 @@ class Botao:
         if bw > 0:
             pygame.draw.rect(tela, border_now, self.rect, width=bw, border_radius=radius)
 
-        # -------- texto: agora não mata FPS --------
         self._update_text_color_fast(text_style)
         self.text.set_pos(self.rect.center)
         self.text.draw(tela)

@@ -1,8 +1,9 @@
 import pygame
 
+
+from Codigo.Modulos.Sonoridades import Musica, AtualizarMusica
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaMenu import TelaMenu
-
 
 class CenaMenu:
     def Inicializar(self, JOGO):
@@ -11,6 +12,8 @@ class CenaMenu:
         self.Fechamento = Escurecer
         self.ID = "Menu"
         self.FonteFPS = pygame.font.SysFont("consolas", 24)
+
+        Musica("Menu")
 
     def DesenhosAdicionais(self, JOGO):
         if not JOGO.CONFIG.get("FPS Visivel", False):
@@ -41,6 +44,7 @@ class CenaMenu:
         if JOGO.CenaAlvo is not None and JOGO.Escuro == 100:
             JOGO.DefinirCena()
 
+        AtualizarMusica()
         pygame.display.update()
 
     def Tela(self, JOGO, EVENTOS, dt):

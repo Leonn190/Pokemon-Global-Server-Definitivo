@@ -174,7 +174,7 @@ def _abrir_subtela_criar_personagem(jogo):
     usuario = (jogo.CONFIG.get("Usuario") or "Visitante").strip()
 
     def _concluir():
-        jogo.CenaAlvo = "Mundo"
+        jogo.CenaAlvo = "Carregamento"
 
     _SUBTELA_ATIVA = SubtelaCriarPersonagem(
         jogo.TELA.get_size(),
@@ -414,7 +414,7 @@ def _processar_requisicao(Cena, JOGO):
 
     if payload["tipo"] == "entrar" and sucesso:
         if resposta.get("possui_personagem", True):
-            JOGO.CenaAlvo = "Mundo"
+            JOGO.CenaAlvo = "Carregamento"
         else:
             _abrir_subtela_criar_personagem(JOGO)
 

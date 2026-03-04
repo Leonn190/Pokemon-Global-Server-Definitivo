@@ -1,6 +1,8 @@
 import json
 import time
 
+from SimuladorServerJogo.Ativador import registrar_diff
+from SimuladorServerJogo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.EstadoServidor import adicionar_personagem, snapshot_estado
 
 
@@ -47,6 +49,12 @@ def processar_entrada_json(requisicao_json):
             personagem = dict(estado.get("personagens", {}).get(usuario, {}))
             personagem.setdefault("nome", usuario)
             personagem.setdefault("posicao", (0.0, 0.0))
+            ator = BANCO_DADOS.garantir_player(
+                usuario=usuario,
+                skin=str(personagem.get("skin", "S1.png")),
+                posicao=tuple(personagem.get("posicao", (0.0, 0.0))),
+            )
+            personagem["id"] = ator.Id
             mensagem = "Entrada autorizada: personagem já encontrado no servidor."
         else:
             mensagem = "Entrada autorizada: nenhum personagem encontrado para sua conta."
@@ -69,6 +77,14 @@ def processar_entrada_json(requisicao_json):
             return json.dumps(_resposta("erro", "Pokémon inicial inválido"), ensure_ascii=False)
 
         criado, mensagem = adicionar_personagem(usuario, skin, pokemon)
+        if criado:
+            ator = BANCO_DADOS.garantir_player(usuario=usuario, skin=skin, posicao=(0.0, 0.0))
+            registrar_diff(
+                "spawn",
+                payload=ator.serializar(),
+                escopo={"centro": [ator.posicao[0], ator.posicao[1]], "raio": 1000.0},
+                objeto_id=ator.Id,
+            )
         status = "ok" if criado else "negado"
         return json.dumps(_resposta(status, mensagem), ensure_ascii=False)
 

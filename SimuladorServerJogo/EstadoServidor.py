@@ -8,9 +8,8 @@ _ESTADO = {
     "ligado": True,
     "mundo_existente": True,
     "banidos": {"JogadorBanido"},
-    "jogadores_com_personagem": {"Leon19"},
+    "jogadores_com_personagem": {},
     "personagens": {
-        "Leon19": {"skin": "S1", "pokemon_inicial": "Bulbasaur"},
     },
 }
 

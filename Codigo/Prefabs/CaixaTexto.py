@@ -1,5 +1,6 @@
 import pygame
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Prefabs.Texto import CAMINHO_FONTE_PADRAO
 
 
 class CaixaTexto:
@@ -13,6 +14,7 @@ class CaixaTexto:
 
         self._cursor_visivel = True
         self._cursor_timer = 0.0
+        self._cursor_indice = len(self.texto)
 
         self._backspace_ativo = False
         self._backspace_timer = 0.0
@@ -27,8 +29,11 @@ class CaixaTexto:
             "shadow": False,
         }
 
+        self._fonte = pygame.font.Font(str(CAMINHO_FONTE_PADRAO), int(self._estilo_texto["size"]))
+
     def set_texto(self, texto):
         self.texto = str(texto)[: self.max_chars]
+        self._cursor_indice = min(self._cursor_indice, len(self.texto))
 
     def set_ativo(self, ativo: bool):
         self.ativo = bool(ativo)
@@ -42,7 +47,34 @@ class CaixaTexto:
         espaco = self.max_chars - len(self.texto)
         if espaco <= 0:
             return
-        self.texto += conteudo[:espaco]
+        trecho = conteudo[:espaco]
+        self.texto = self.texto[:self._cursor_indice] + trecho + self.texto[self._cursor_indice:]
+        self._cursor_indice += len(trecho)
+
+    def _apagar_anterior(self):
+        if self._cursor_indice <= 0:
+            return
+        self.texto = self.texto[:self._cursor_indice - 1] + self.texto[self._cursor_indice:]
+        self._cursor_indice -= 1
+
+    def _apagar_atual(self):
+        if self._cursor_indice >= len(self.texto):
+            return
+        self.texto = self.texto[:self._cursor_indice] + self.texto[self._cursor_indice + 1:]
+
+    def _indice_cursor_por_mouse(self, pos_mouse_x):
+        x_interno = pos_mouse_x - (self.rect.x + 16)
+        if x_interno <= 0:
+            return 0
+        for i in range(len(self.texto) + 1):
+            largura = self._fonte.size(self.texto[:i])[0]
+            if largura >= x_interno:
+                return i
+        return len(self.texto)
+
+    def _resetar_cursor(self):
+        self._cursor_timer = 0.0
+        self._cursor_visivel = True
 
     def _capturar_colar(self):
         try:
@@ -63,6 +95,9 @@ class CaixaTexto:
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 self.selecionada = self.ativo and self.rect.collidepoint(evento.pos)
+                if self.selecionada:
+                    self._cursor_indice = self._indice_cursor_por_mouse(evento.pos[0])
+                    self._resetar_cursor()
                 if not self.selecionada:
                     self._backspace_ativo = False
 
@@ -71,16 +106,34 @@ class CaixaTexto:
 
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_BACKSPACE:
-                    self.texto = self.texto[:-1]
+                    self._apagar_anterior()
                     self._backspace_ativo = True
                     self._backspace_timer = 0.0
+                    self._resetar_cursor()
+                elif evento.key == pygame.K_DELETE:
+                    self._apagar_atual()
+                    self._resetar_cursor()
+                elif evento.key == pygame.K_LEFT:
+                    self._cursor_indice = max(0, self._cursor_indice - 1)
+                    self._resetar_cursor()
+                elif evento.key == pygame.K_RIGHT:
+                    self._cursor_indice = min(len(self.texto), self._cursor_indice + 1)
+                    self._resetar_cursor()
+                elif evento.key == pygame.K_HOME:
+                    self._cursor_indice = 0
+                    self._resetar_cursor()
+                elif evento.key == pygame.K_END:
+                    self._cursor_indice = len(self.texto)
+                    self._resetar_cursor()
                 elif evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     self.selecionada = False
                     self._backspace_ativo = False
                 elif evento.key == pygame.K_v and (pygame.key.get_mods() & pygame.KMOD_CTRL):
                     self._adicionar_texto(self._capturar_colar())
+                    self._resetar_cursor()
                 elif evento.unicode and evento.unicode.isprintable():
                     self._adicionar_texto(evento.unicode)
+                    self._resetar_cursor()
 
             if evento.type == pygame.KEYUP and evento.key == pygame.K_BACKSPACE:
                 self._backspace_ativo = False
@@ -98,7 +151,7 @@ class CaixaTexto:
             if not self.texto:
                 self._backspace_ativo = False
                 break
-            self.texto = self.texto[:-1]
+            self._apagar_anterior()
 
     def render(self, tela, eventos, dt):
         self._processar_eventos(eventos)
@@ -125,7 +178,7 @@ class CaixaTexto:
         label.draw(tela)
 
         if self.selecionada and self._cursor_visivel:
-            largura_texto = Texto(self.texto, (0, 0), style=estilo).get_rect().width
+            largura_texto = self._fonte.size(self.texto[:self._cursor_indice])[0]
             x_cursor = min(self.rect.right - 14, self.rect.x + 16 + largura_texto + 2)
             pygame.draw.line(
                 tela,

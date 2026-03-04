@@ -32,7 +32,7 @@ def _clarear_cor(cor, fator=0.35):
     return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
 
 
-class DesenhaPlayer:
+class DesenhaAtor:
     def __init__(self, skin_surface, escala=1.45):
         self.escala = float(escala)
         self.sprite_offset_graus = -90

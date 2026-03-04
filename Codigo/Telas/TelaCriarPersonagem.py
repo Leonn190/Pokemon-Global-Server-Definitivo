@@ -3,7 +3,7 @@ import threading
 
 import pygame
 
-from Codigo.Modulos.DesenhaPlayer import DesenhaPlayer
+from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
@@ -87,7 +87,7 @@ class SubtelaCriarPersonagem:
         self._pokemon_index = 0
 
         self._skins = self._carregar_skins()
-        self._desenhador = DesenhaPlayer(self._skins[self._skin_index], escala=1.35)
+        self._desenhador = DesenhaAtor(self._skins[self._skin_index], escala=1.35)
 
         self._icones_pokemon = self._carregar_icones_pokemon()
         self._animacoes_pokemon = self._carregar_animacoes_pokemon()

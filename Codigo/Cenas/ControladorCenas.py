@@ -16,6 +16,7 @@ class ControladorCenas:
         self.CONFIG = CONFIG
         self.INFO = {
         }
+        self.FilaMensagensTecnicas = []
 
         self.Cenas = {
             "Carregamento": CenaCarregamento(),

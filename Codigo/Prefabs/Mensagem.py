@@ -22,14 +22,18 @@ class Mensagem:
         "slide_dist": 20,
     }
 
-    def __init__(self, tela_size, style=None):
+    def __init__(self, tela_size, style=None, fila_externa=None, limite_fila=4):
         self.style = dict(self.DEFAULT_STYLE)
         if style:
             self.style.update(style)
 
         self._largura_tela, self._altura_tela = tela_size
-        self._fila = []
+        self._fila = fila_externa if fila_externa is not None else []
+        self._limite_fila = max(1, int(limite_fila))
         self._fonte = pygame.font.Font(None, int(self.style["font_size"]))
+
+    def set_fila_externa(self, fila_externa):
+        self._fila = fila_externa if fila_externa is not None else []
 
     def redimensionar(self, tela_size):
         self._largura_tela, self._altura_tela = tela_size
@@ -40,21 +44,33 @@ class Mensagem:
             self._fonte = pygame.font.Font(None, int(self.style["font_size"]))
 
     def emitir(self, texto, tipo="info", duracao=None):
+        tipo_mensagem = self._normalizar_tipo(tipo)
         self._fila.append(
             {
                 "texto": str(texto),
-                "tipo": tipo,
+                "tipo": tipo_mensagem,
                 "duracao": float(duracao or self.style["duracao"]),
                 "tempo": 0.0,
             }
         )
+        excesso = len(self._fila) - self._limite_fila
+        if excesso > 0:
+            del self._fila[0:excesso]
+
+    def _normalizar_tipo(self, tipo):
+        tipo = str(tipo).lower().strip()
+        if tipo in ("sucesso", "positivo", "positiva"):
+            return "sucesso"
+        if tipo in ("erro", "negativo", "negativa"):
+            return "erro"
+        return "info"
 
     def _cores_tipo(self, tipo):
         if tipo == "sucesso":
             return (118, 255, 162), (19, 55, 35, 230)
         if tipo == "erro":
             return (255, 130, 130), (66, 20, 24, 230)
-        return self.style["border_color"], self.style["bg_color"]
+        return (255, 226, 120), (72, 58, 18, 230)
 
     def _alfa_animacao(self, item):
         tempo = item["tempo"]
@@ -73,12 +89,18 @@ class Mensagem:
             return
 
         item = self._fila[0]
+        fator_duracao = 0.55 if len(self._fila) > 1 else 1.0
+        duracao_efetiva = max(0.45, item["duracao"] * fator_duracao)
+
         item["tempo"] += dt
-        if item["tempo"] >= item["duracao"]:
+        if item["tempo"] >= duracao_efetiva:
             self._fila.pop(0)
             return
 
-        alpha = self._alfa_animacao(item)
+        item_render = dict(item)
+        item_render["duracao"] = duracao_efetiva
+
+        alpha = self._alfa_animacao(item_render)
         borda, fundo = self._cores_tipo(item["tipo"])
 
         texto = self._fonte.render(item["texto"], True, self.style["font_color"])

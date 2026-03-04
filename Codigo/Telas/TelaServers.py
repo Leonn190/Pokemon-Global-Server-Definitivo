@@ -258,8 +258,13 @@ def _montar_layout(Cena, JOGO):
     _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE = _gerar_estilos()
 
     if _MENSAGEM is None:
-        _MENSAGEM = Mensagem((largura_tela, altura_tela))
+        _MENSAGEM = Mensagem(
+            (largura_tela, altura_tela),
+            fila_externa=JOGO.FilaMensagensTecnicas,
+            limite_fila=4,
+        )
     else:
+        _MENSAGEM.set_fila_externa(JOGO.FilaMensagensTecnicas)
         _MENSAGEM.redimensionar((largura_tela, altura_tela))
 
     largura_adicionar = min(760, int(largura_tela * 0.72))

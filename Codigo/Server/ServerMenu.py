@@ -52,3 +52,21 @@ def definir_server_ligado(ip, ligado):
 
 def definir_mundo_server(ip, mundo_existente):
     return _enviar_operacao(ip, "definir_mundo", {"mundo_existente": bool(mundo_existente)})
+
+
+def criar_personagem(ip, usuario, skin, pokemon_inicial):
+    pacote = {
+        "ip": ip,
+        "acao": "criar_personagem",
+        "dados": {
+            "usuario": usuario,
+            "skin": skin,
+            "pokemon_inicial": pokemon_inicial,
+        },
+    }
+
+    resposta_json = processar_entrada_json(json.dumps(pacote, ensure_ascii=False))
+    try:
+        return json.loads(resposta_json)
+    except json.JSONDecodeError:
+        return _erro_padrao("Falha ao interpretar resposta de criação de personagem")

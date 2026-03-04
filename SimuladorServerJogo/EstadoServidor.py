@@ -9,6 +9,9 @@ _ESTADO = {
     "mundo_existente": True,
     "banidos": {"JogadorBanido"},
     "jogadores_com_personagem": {"Leon19"},
+    "personagens": {
+        "Leon19": {"skin": "S1", "pokemon_inicial": "Bulbasaur"},
+    },
 }
 
 _LOCK = threading.Lock()
@@ -38,3 +41,17 @@ def definir_ligado(ativo):
 def definir_mundo_existente(ativo):
     with _LOCK:
         _ESTADO["mundo_existente"] = bool(ativo)
+
+
+def adicionar_personagem(usuario, skin, pokemon_inicial):
+    with _LOCK:
+        if usuario in _ESTADO["jogadores_com_personagem"]:
+            return False, "Sua conta já possui personagem neste servidor"
+
+        _ESTADO["jogadores_com_personagem"].add(usuario)
+        _ESTADO["personagens"][usuario] = {
+            "skin": skin,
+            "pokemon_inicial": pokemon_inicial,
+        }
+
+    return True, "Personagem criado com sucesso"

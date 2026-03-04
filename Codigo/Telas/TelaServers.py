@@ -4,6 +4,7 @@ import pygame
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
+from Codigo.Telas.TelaCriarPersonagem import SubtelaCriarPersonagem
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 from ServerList import SERVER_LIST
 
@@ -159,6 +160,25 @@ def _entrar_server(jogo):
     server = SERVER_LIST[_SERVER_SELECIONADO]
     usuario = (jogo.CONFIG.get("Usuario") or "Visitante").strip()
     _iniciar_requisicao("entrar", server.get("ip", ""), usuario, "Conectando ao servidor de jogo...")
+
+
+def _abrir_subtela_criar_personagem(jogo):
+    global _SUBTELA_ATIVA
+    if _SERVER_SELECIONADO is None:
+        return
+
+    server = SERVER_LIST[_SERVER_SELECIONADO]
+    usuario = (jogo.CONFIG.get("Usuario") or "Visitante").strip()
+
+    def _concluir():
+        jogo.CenaAlvo = "Mundo"
+
+    _SUBTELA_ATIVA = SubtelaCriarPersonagem(
+        jogo.TELA.get_size(),
+        ip_server=server.get("ip", ""),
+        usuario=usuario,
+        concluir_callback=_concluir,
+    )
 
 
 def _enviar_chave_operacao(chave):
@@ -371,7 +391,7 @@ def _render_acao(nome, tela, eventos, dt, JOGO, mouse_pos=None):
     botao.render(tela, eventos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
 
-def _processar_requisicao(Cena):
+def _processar_requisicao(Cena, JOGO):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO
     if not _REQUISICAO_RESULTADO:
         return
@@ -387,6 +407,13 @@ def _processar_requisicao(Cena):
     if payload["tipo"] == "operar" and sucesso and _SERVER_SELECIONADO is not None:
         Cena.ServerOperadorIndice = _SERVER_SELECIONADO
         Cena.DefinirTela("Operador")
+        return
+
+    if payload["tipo"] == "entrar" and sucesso:
+        if resposta.get("possui_personagem", True):
+            JOGO.CenaAlvo = "Mundo"
+        else:
+            _abrir_subtela_criar_personagem(JOGO)
 
 
 def TelaServers(Cena, JOGO, EVENTOS, dt):
@@ -397,7 +424,7 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura_tela, altura_tela):
         _montar_layout(Cena, JOGO)
 
-    _processar_requisicao(Cena)
+    _processar_requisicao(Cena, JOGO)
     _processar_status()
 
     _STATUS_ACUMULADO += dt

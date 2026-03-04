@@ -15,6 +15,7 @@ class Barra:
         self.valor = float(valor)
         self.casas_decimais = casas_decimais
         self.arrastando = False
+        self._estava_arrastando = False
 
         self.cor_fundo = (25, 28, 40)
         self.cor_preenchimento = (60, 170, 255)
@@ -51,6 +52,17 @@ class Barra:
         proporcao = _clamp(proporcao, 0.0, 1.0)
         self.set_valor(self.minimo + (self.maximo - self.minimo) * proporcao)
 
+    def _encaixar_no_ponto_mais_proximo(self):
+        if self.maximo <= self.minimo:
+            return
+        passo = 1.0 / (10 ** max(self.casas_decimais, 0))
+        if passo <= 0:
+            return
+
+        idx = round((self.valor - self.minimo) / passo)
+        alvo = self.minimo + (idx * passo)
+        self.set_valor(alvo)
+
     def render(self, tela, eventos):
         mouse_pos = pygame.mouse.get_pos()
         alterou = False
@@ -58,12 +70,18 @@ class Barra:
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1 and self.rect.collidepoint(mouse_pos):
                 self.arrastando = True
+                self._estava_arrastando = True
                 valor_antes = self.valor
                 self._valor_por_mouse(mouse_pos[0])
                 alterou = alterou or (self.valor != valor_antes)
 
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
+                if self._estava_arrastando:
+                    valor_antes = self.valor
+                    self._encaixar_no_ponto_mais_proximo()
+                    alterou = alterou or (self.valor != valor_antes)
                 self.arrastando = False
+                self._estava_arrastando = False
 
             if evento.type == pygame.MOUSEMOTION and self.arrastando:
                 valor_antes = self.valor

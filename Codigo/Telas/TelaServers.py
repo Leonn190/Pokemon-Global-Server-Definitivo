@@ -173,7 +173,17 @@ def _abrir_subtela_criar_personagem(jogo):
     server = SERVER_LIST[_SERVER_SELECIONADO]
     usuario = (jogo.CONFIG.get("Usuario") or "Visitante").strip()
 
-    def _concluir():
+    def _concluir(skin_nome=None, pokemon_nome=None):
+        skin_val = skin_nome or "S1"
+        if not str(skin_val).lower().endswith(".png"):
+            skin_val = f"{skin_val}.png"
+
+        jogo.INFO["PlayerDadosServer"] = {
+            "nome": usuario,
+            "skin": skin_val,
+            "pokemon_inicial": pokemon_nome or "Bulbasaur",
+            "posicao": (0.0, 0.0),
+        }
         jogo.CenaAlvo = "Carregamento"
 
     _SUBTELA_ATIVA = SubtelaCriarPersonagem(
@@ -413,7 +423,17 @@ def _processar_requisicao(Cena, JOGO):
         return
 
     if payload["tipo"] == "entrar" and sucesso:
+        if _SERVER_SELECIONADO is not None:
+            server = SERVER_LIST[_SERVER_SELECIONADO]
+            JOGO.INFO["ServerSelecionado"] = {
+                "indice": _SERVER_SELECIONADO,
+                "nome": server.get("nome", "Servidor"),
+                "ip": server.get("ip", ""),
+            }
+
         if resposta.get("possui_personagem", True):
+            personagem = resposta.get("personagem") or {}
+            JOGO.INFO["PlayerDadosServer"] = personagem
             JOGO.CenaAlvo = "Carregamento"
         else:
             _abrir_subtela_criar_personagem(JOGO)

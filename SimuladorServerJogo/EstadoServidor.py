@@ -29,6 +29,7 @@ def snapshot_estado():
             "mundo_existente": _ESTADO["mundo_existente"],
             "banidos": set(_ESTADO["banidos"]),
             "jogadores_com_personagem": set(_ESTADO["jogadores_com_personagem"]),
+            "personagens": {k: dict(v) for k, v in _ESTADO["personagens"].items()},
         }
 
 
@@ -51,6 +52,7 @@ def adicionar_personagem(usuario, skin, pokemon_inicial):
         _ESTADO["personagens"][usuario] = {
             "skin": skin,
             "pokemon_inicial": pokemon_inicial,
+            "posicao": (0.0, 0.0),
         }
 
     return True, "Personagem criado com sucesso"

@@ -1,6 +1,7 @@
 import json
 
 from SimuladorServerJogo.Entrada import processar_entrada_json
+from SimuladorServerJogo.EstadoServidor import snapshot_estado
 from SimuladorServerJogo.ServerOperar import processar_operacao_json
 
 
@@ -70,3 +71,35 @@ def criar_personagem(ip, usuario, skin, pokemon_inicial):
         return json.loads(resposta_json)
     except json.JSONDecodeError:
         return _erro_padrao("Falha ao interpretar resposta de criação de personagem")
+
+
+def consultar_estado_mundo(ip, posicao_main):
+    """Mock de pacote de atualização do mundo para o leitor local."""
+    estado = snapshot_estado()
+    px, py = posicao_main
+
+    estruturas = [
+        {
+            "id": 501,
+            "tipo": "arvore",
+            "posicao": (px + 180.0, py - 120.0),
+            "raio_colisao": 22.0,
+            "raio_interacao": 28.0,
+            "recursos": {"madeira": 2},
+        }
+    ]
+
+    return {
+        "server": ip,
+        "chunks": [
+            {
+                "pos": (0, 0),
+                "grid": [[0 for _ in range(8)] for _ in range(8)],
+            }
+        ],
+        "entidades": [],
+        "estruturas": estruturas,
+        "meta": {
+            "nome": estado.get("nome", "Servidor"),
+        },
+    }

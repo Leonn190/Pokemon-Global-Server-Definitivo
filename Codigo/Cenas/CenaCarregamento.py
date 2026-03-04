@@ -20,6 +20,7 @@ class CenaCarregamento:
         self._ultimo_tamanho = None
         self._frame_escalado = None
         self._botao_cancelar = None
+        self._tempo_espera_mundo = 0.0
 
         self._carregar_frames()
         self._montar_layout(JOGO)
@@ -125,6 +126,11 @@ class CenaCarregamento:
 
         if self._botao_cancelar:
             self._botao_cancelar.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
+
+        if JOGO.INFO.get("ServerSelecionado") and JOGO.INFO.get("PlayerDadosServer") is not None:
+            self._tempo_espera_mundo += max(0.0, float(dt))
+            if self._tempo_espera_mundo >= 0.8:
+                JOGO.CenaAlvo = "Mundo"
 
     def Finalizar(self, JOGO):
         pass

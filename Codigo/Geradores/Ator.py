@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import math
 from typing import Optional, Tuple
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Modulos.Entidade import Entidade
+from Codigo.Modulos.colisor import Colisor
 
 Vector2 = Tuple[float, float]
 
@@ -31,9 +33,70 @@ class Ator(Entidade):
         self.Skin = skin_surface
         self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin)
 
+        self.AnguloOlhar = 0.0
+        self._duracao_tapa = 0.16
+        self._tempo_tapa = 0.0
+        self._raio_mao_colisao = max(6.0, raio_colisao * 0.65)
+        self.ColisorMao = Colisor(
+            x=self.Posicao[0],
+            y=self.Posicao[1],
+            raio_colisao=self._raio_mao_colisao,
+            raio_interacao=self._raio_mao_colisao,
+            ativo=False,
+        )
+
     def set_skin(self, skin_surface) -> None:
         self.Skin = skin_surface
         self.Desenhador.set_skin(skin_surface)
 
-    def desenhar(self, tela, mouse_pos) -> None:
-        self.Desenhador.desenhar(tela, self.Posicao, mouse_pos)
+    def definir_angulo_olhar(self, angulo_graus: float) -> None:
+        self.AnguloOlhar = float(angulo_graus)
+
+    def iniciar_tapa(self) -> None:
+        self._tempo_tapa = self._duracao_tapa
+
+    def Tapar(self) -> None:
+        """Alias em PT para compatibilidade."""
+        self.iniciar_tapa()
+
+    def atualizar(self, dt: float) -> None:
+        if self._tempo_tapa > 0.0:
+            self._tempo_tapa = max(0.0, self._tempo_tapa - max(0.0, float(dt)))
+
+    def _alcance_tapa_px(self) -> float:
+        if self._tempo_tapa <= 0.0:
+            return 0.0
+
+        progresso = 1.0 - (self._tempo_tapa / self._duracao_tapa)
+        # pico no meio (ida e volta)
+        fase = 1.0 - abs(1.0 - (progresso * 2.0))
+        return max(0.0, fase) * 22.0
+
+    def desenhar(self, tela, mouse_pos=None, posicao_tela=None) -> None:
+        centro = self.Posicao if posicao_tela is None else posicao_tela
+        dados_mao = self.Desenhador.desenhar(
+            tela,
+            centro,
+            mouse_pos=mouse_pos,
+            angulo_graus=self.AnguloOlhar,
+            alcance_tapa=self._alcance_tapa_px(),
+        )
+
+        if self._tempo_tapa > 0.0:
+            mx, my = dados_mao["mao_tapa"]
+            self.ColisorMao.mover_para(mx, my)
+            self.ColisorMao.ativo = True
+        else:
+            self.ColisorMao.mover_para(self.Posicao[0], self.Posicao[1])
+            self.ColisorMao.ativo = False
+
+    def atualizar_colisor_mao_mundo(self) -> None:
+        rad = math.radians(self.AnguloOlhar)
+        frente_x = math.cos(rad)
+        frente_y = -math.sin(rad)
+        alcance = self._alcance_tapa_px()
+        self.ColisorMao.mover_para(
+            self.Posicao[0] + frente_x * alcance,
+            self.Posicao[1] + frente_y * alcance,
+        )
+        self.ColisorMao.ativo = self._tempo_tapa > 0.0

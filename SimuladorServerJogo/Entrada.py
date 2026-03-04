@@ -4,10 +4,12 @@ import time
 from SimuladorServerJogo.EstadoServidor import adicionar_personagem, snapshot_estado
 
 
-def _resposta(status, mensagem, possui_personagem=None):
+def _resposta(status, mensagem, possui_personagem=None, personagem=None):
     pacote = {"status": status, "mensagem": mensagem}
     if possui_personagem is not None:
         pacote["possui_personagem"] = bool(possui_personagem)
+    if personagem is not None:
+        pacote["personagem"] = personagem
     return pacote
 
 
@@ -40,12 +42,19 @@ def processar_entrada_json(requisicao_json):
             return json.dumps(_resposta("negado", "Você está banido deste servidor"), ensure_ascii=False)
 
         possui_personagem = usuario in estado["jogadores_com_personagem"]
+        personagem = None
         if possui_personagem:
+            personagem = dict(estado.get("personagens", {}).get(usuario, {}))
+            personagem.setdefault("nome", usuario)
+            personagem.setdefault("posicao", (0.0, 0.0))
             mensagem = "Entrada autorizada: personagem já encontrado no servidor."
         else:
             mensagem = "Entrada autorizada: nenhum personagem encontrado para sua conta."
 
-        return json.dumps(_resposta("ok", mensagem, possui_personagem=possui_personagem), ensure_ascii=False)
+        return json.dumps(
+            _resposta("ok", mensagem, possui_personagem=possui_personagem, personagem=personagem),
+            ensure_ascii=False,
+        )
 
     if acao == "criar_personagem":
         usuario = str(dados.get("usuario", "")).strip()

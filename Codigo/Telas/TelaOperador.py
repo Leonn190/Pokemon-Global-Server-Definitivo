@@ -182,8 +182,13 @@ def _montar_layout(jogo):
     largura, altura = jogo.TELA.get_size()
 
     if _MENSAGEM is None:
-        _MENSAGEM = Mensagem((largura, altura))
+        _MENSAGEM = Mensagem(
+            (largura, altura),
+            fila_externa=jogo.FilaMensagensTecnicas,
+            limite_fila=4,
+        )
     else:
+        _MENSAGEM.set_fila_externa(jogo.FilaMensagensTecnicas)
         _MENSAGEM.redimensionar((largura, altura))
 
     largura_botao = min(560, int(largura * 0.54))

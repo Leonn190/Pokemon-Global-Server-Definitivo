@@ -60,21 +60,25 @@ class DesenhaAtor:
         self.escala = max(0.2, float(escala))
         self._skin = self._redimensionar_skin(self._skin_original)
 
-    def desenhar(self, tela, centro, mouse_pos):
+    def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0):
         cx, cy = centro
-        mx, my = mouse_pos
 
-        dx = mx - cx
-        dy = my - cy
-        if dx == 0 and dy == 0:
-            dx = 1
+        if angulo_graus is None:
+            mx, my = mouse_pos if mouse_pos is not None else (cx + 1, cy)
+            dx = mx - cx
+            dy = my - cy
+            if dx == 0 and dy == 0:
+                dx = 1
+            angulo_base = math.degrees(math.atan2(-dy, dx))
+        else:
+            angulo_base = float(angulo_graus)
 
-        mag = max(1e-6, math.hypot(dx, dy))
-        vx = dx / mag
-        vy = dy / mag
+        rad = math.radians(angulo_base)
+        vx = math.cos(rad)
+        vy = -math.sin(rad)
 
         # +180 pra não ficar de costas
-        angulo = math.degrees(math.atan2(-dy, dx)) + self.sprite_offset_graus + 180
+        angulo = angulo_base + self.sprite_offset_graus + 180
 
         corpo = pygame.transform.rotate(self._skin, angulo)
         corpo_rect = corpo.get_rect(center=(int(cx), int(cy)))
@@ -95,7 +99,11 @@ class DesenhaAtor:
         # micro ajuste vertical se quiser
         dist_vertical = int(base * 0.02)
 
-        mao_esq = (int(cx - px * dist_lateral), int(cy - py * dist_lateral - dist_vertical))
+        empurrao_tapa = max(0.0, float(alcance_tapa))
+        mao_esq = (
+            int(cx - px * dist_lateral + vx * empurrao_tapa),
+            int(cy - py * dist_lateral + vy * empurrao_tapa - dist_vertical),
+        )
         mao_dir = (int(cx + px * dist_lateral), int(cy + py * dist_lateral - dist_vertical))
 
         tela.blit(corpo, corpo_rect)
@@ -105,3 +113,9 @@ class DesenhaAtor:
         pygame.draw.circle(tela, contorno, mao_dir, raio_mao + 2)
         pygame.draw.circle(tela, self._cor_maos, mao_esq, raio_mao)
         pygame.draw.circle(tela, self._cor_maos, mao_dir, raio_mao)
+
+        return {
+            "mao_tapa": mao_esq,
+            "mao_apoio": mao_dir,
+            "raio_mao": raio_mao,
+        }

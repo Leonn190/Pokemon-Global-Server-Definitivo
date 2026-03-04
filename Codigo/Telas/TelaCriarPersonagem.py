@@ -98,6 +98,8 @@ class SubtelaCriarPersonagem:
 
         self._thread = None
         self._resultado = None
+        self._skin_escolhida = None
+        self._pokemon_escolhido = None
 
         self._titulo = None
         self._mensagem = Texto("Escolha sua skin e seu inicial", (0, 0), style={"size": 24, "align": "center"})
@@ -300,6 +302,8 @@ class SubtelaCriarPersonagem:
 
         skin_nome = _SKINS_LIBERADAS[self._skin_index].replace(".png", "")
         pokemon = _LISTA_INICIAIS[self._pokemon_index]
+        self._skin_escolhida = skin_nome
+        self._pokemon_escolhido = pokemon
 
         self._mensagem.set_text("Registrando personagem no servidor...")
         self._thread = threading.Thread(target=self._worker_criar, args=(skin_nome, pokemon), daemon=True)
@@ -317,7 +321,7 @@ class SubtelaCriarPersonagem:
         if resposta.get("status") == "ok":
             self._mensagem.set_text(resposta.get("mensagem", "Personagem criado!"))
             if callable(self.concluir_callback):
-                self.concluir_callback()
+                self.concluir_callback(self._skin_escolhida, self._pokemon_escolhido)
             self.encerrada = True
             return
 

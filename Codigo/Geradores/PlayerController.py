@@ -8,17 +8,27 @@ import pygame
 
 
 class PlayerController:
-    def __init__(self, ator, velocidade_px=220.0):
+    def __init__(self, ator, velocidade_px=220.0, callback_diff=None):
         self.Ator = ator
         self.VelocidadePx = float(velocidade_px)
+        self.CallbackDiff = callback_diff
 
     def atualizar(self, eventos, dt, mouse_pos_mundo):
         dt = max(0.0, float(dt))
         self._processar_input_tapa(eventos)
         self._processar_rotacao(mouse_pos_mundo)
-        self._processar_movimento(dt)
+        moveu = self._processar_movimento(dt)
         self.Ator.atualizar(dt)
         self.Ator.atualizar_colisor_mao_mundo()
+        if moveu:
+            self._emitir_diff_update_posicao()
+
+    def _emitir_diff(self, tipo, payload):
+        if callable(self.CallbackDiff):
+            self.CallbackDiff({"tipo": tipo, "objeto_id": getattr(self.Ator, "Id", None), "payload": payload})
+
+    def _emitir_diff_update_posicao(self):
+        self._emitir_diff("update", {"posicao": [self.Ator.Posicao[0], self.Ator.Posicao[1]]})
 
     def _processar_movimento(self, dt):
         teclas = pygame.key.get_pressed()
@@ -39,7 +49,9 @@ class PlayerController:
             eixo_x /= mag
             eixo_y /= mag
 
+        antes = self.Ator.Posicao
         self.Ator.mover(eixo_x * self.VelocidadePx * dt, eixo_y * self.VelocidadePx * dt)
+        return self.Ator.Posicao != antes
 
     def _processar_rotacao(self, mouse_pos_mundo):
         px, py = self.Ator.Posicao
@@ -50,8 +62,10 @@ class PlayerController:
             return
         angulo = math.degrees(math.atan2(-dy, dx))
         self.Ator.definir_angulo_olhar(angulo)
+        self._emitir_diff("update", {"estado": {"angulo": angulo}})
 
     def _processar_input_tapa(self, eventos):
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 self.Ator.iniciar_tapa()
+                self._emitir_diff("update", {"estado": {"tapa": True}})

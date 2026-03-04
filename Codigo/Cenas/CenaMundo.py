@@ -7,7 +7,7 @@ from Codigo.Geradores.Camera import Camera
 from Codigo.Geradores.LeitorMundo import LeitorMundo
 from Codigo.Geradores.PlayerController import PlayerController
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
-from Codigo.Server.ServerMenu import consultar_estado_mundo
+from Codigo.Server.ServerMenu import consultar_estado_mundo, enviar_diffs_mundo
 
 
 class CenaMundo:
@@ -43,15 +43,22 @@ class CenaMundo:
             pos = (0.0, 0.0)
 
         self.EntidadeMain = Ator(skin_surface=skin, posicao=(float(pos[0]), float(pos[1])), escala_skin=1.45)
-        self.PlayerController = PlayerController(self.EntidadeMain, velocidade_px=230.0)
-        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain)
+        if dados.get("id") is not None:
+            self.EntidadeMain.Id = int(dados.get("id"))
 
         self.LeitorMundo = LeitorMundo(
             jogo=JOGO,
             entidade_main=self.EntidadeMain,
             callback_atualizacao=consultar_estado_mundo,
+            callback_envio_diffs=enviar_diffs_mundo,
             intervalo_poll=0.20,
         )
+        self.PlayerController = PlayerController(
+            self.EntidadeMain,
+            velocidade_px=230.0,
+            callback_diff=self.LeitorMundo.enfileirar_diff,
+        )
+        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain)
 
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")

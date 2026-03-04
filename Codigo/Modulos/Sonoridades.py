@@ -34,60 +34,89 @@ def tocar(som):
         audio2.play()
 
 Musicas = {
-    "Menu": {
-        "arquivo": "Recursos/Sonoridades/Musicas/TelaMenu.ogg",
+    "Menu1": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu1.ogg",
         "loop": 12.7,
-        "fimloop": 110.55
+        "fimloop": 110.55,
+        "vol_mult": 1.0
+    },
+    "Menu2": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu2.ogg",
+        "loop": 1.34,
+        "fimloop": 146.92,
+        "vol_mult": 1.0
+    },
+    "Menu3": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu3.ogg",
+        "loop": 1.67,
+        "fimloop": 134.19,
+        "vol_mult": 1.0
+    },
+    "Login": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Login.ogg",
+        "loop": 7.03,
+        "fimloop": 60.26,
+        "vol_mult": 0.6
     },
     "ConfrontoDoVale": {
-        "arquivo": "Recursos/Audio/Musicas/ConfrontoDoVale.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVale.ogg",
         "loop": 2.34,
-        "fimloop": 83.6
+        "fimloop": 83.6,
+        "vol_mult": 1.0
     },
     "ConfrontoDaNeve": {
-        "arquivo": "Recursos/Audio/Musicas/ConfrontoDaNeve.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaNeve.ogg",
         "loop": 2.32,
-        "fimloop": 83.6
+        "fimloop": 83.65,
+        "vol_mult": 1.0
     },
     "ConfrontoDoMar": {
-        "arquivo": "Recursos/Audio/Musicas/ConfrontoDoMar.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoMar.ogg",
         "loop": 2.27,
-        "fimloop": 83.64
+        "fimloop": 83.64,
+        "vol_mult": 1.0
     },
     "ConfrontoDoDeserto": {
-        "arquivo": "Recursos/Audio/Musicas/ConfrontoDoDeserto.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoDeserto.ogg",
         "loop": 2.33,
-        "fimloop": 83.655
+        "fimloop": 83.655,
+        "vol_mult": 1.0
     },
     "ConfrontoDoVulcao": {
-        "arquivo": "Recursos/Audio/Musicas/ConfrontoDoVulcao.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVulcao.ogg",
         "loop": 2.34,
-        "fimloop": 83.62
+        "fimloop": 83.62,
+        "vol_mult": 1.0
     },
     "ConfrontoDoMagia": {
-        "arquivo": "Recursos/Audio/Musicas/ConfrontoDaMagia.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaMagia.ogg",
         "loop": 2.34,
-        "fimloop": 83.62
+        "fimloop": 83.62,
+        "vol_mult": 1.0
     },
     "ConfrontoDoPantano": {
-        "arquivo": "Recursos/Audio/Musicas/ConfrontoDoPantano.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoPantano.ogg",
         "loop": 2.34,
-        "fimloop": 83.62
+        "fimloop": 83.62,
+        "vol_mult": 1.0
     },
     "Vale": {
-        "arquivo": "Recursos/Audio/Musicas/Vale.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vale.ogg",
         "loop": 3.2,
-        "fimloop": 111.9
+        "fimloop": 111.9,
+        "vol_mult": 1.0
     },
     "Neve": {
-        "arquivo": "Recursos/Audio/Musicas/Neve.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Neve.ogg",
         "loop": 4.2,
-        "fimloop": 68.35
+        "fimloop": 68.35,
+        "vol_mult": 1.0
     },
     "Deserto": {
-        "arquivo": "Recursos/Audio/Musicas/Deserto.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Deserto.ogg",
         "loop": 0.2,
-        "fimloop": 87.45
+        "fimloop": 87.45,
+        "vol_mult": 1.0
     }
 }
 
@@ -96,6 +125,7 @@ _musica_atual = None
 _loop_point = 0.0
 _fimloop_point = 0.0
 _posicao_manual = 0.0   # NOVO: corrige o loop perfeito
+_vol_mult_atual = 1.0   # NOVO: multiplicador de volume da música atual
 
 # ======= ESTADOS P/ TRANSIÇÃO =======
 _fade_state = "idle"         # "idle" | "out" | "in"
@@ -106,6 +136,13 @@ _fade_to_vol = 0.0
 _fade_target_music = None    # nome da música a tocar após o fade-out
 _fade_prev_music = None      # música que estava tocando quando o fade começou
 
+
+def _volume_musica_alvo():
+    if silencio:
+        return 0.0
+    return max(0.0, min(1.0, Volume * _vol_mult_atual))
+
+
 def TransicaoMusica(nome):
 
     global _fade_state, _fade_start_ms, _fade_from_vol, _fade_to_vol
@@ -114,7 +151,7 @@ def TransicaoMusica(nome):
     # Nada tocando? Toca direto, sem transição
     if not pygame.mixer.music.get_busy():
         Musica(nome)
-        pygame.mixer.music.set_volume(Volume)
+        pygame.mixer.music.set_volume(_volume_musica_alvo())
         _fade_state = "idle"
         _fade_target_music = None
         _fade_prev_music = None
@@ -127,7 +164,7 @@ def TransicaoMusica(nome):
             _fade_state = "in"
             _fade_start_ms = pygame.time.get_ticks()
             _fade_from_vol = pygame.mixer.music.get_volume()
-            _fade_to_vol = Volume
+            _fade_to_vol = _volume_musica_alvo()
             _fade_target_music = None
             return
         # Trocar alvo durante o fade-out: atualiza alvo e recomeça fade a partir do volume atual
@@ -147,9 +184,10 @@ def TransicaoMusica(nome):
     _fade_to_vol = 0.0
     _fade_target_music = nome
 
+
 def Musica(nome):
     """Inicia a música e define os pontos de loop."""
-    global _musica_atual, _loop_point, _fimloop_point, _posicao_manual
+    global _musica_atual, _loop_point, _fimloop_point, _posicao_manual, _vol_mult_atual
     if nome not in Musicas:
         print(f"[ERRO] Música '{nome}' não encontrada.")
         return
@@ -158,11 +196,13 @@ def Musica(nome):
     _musica_atual = nome
     _loop_point = dados["loop"]
     _fimloop_point = dados["fimloop"]
+    _vol_mult_atual = float(dados.get("vol_mult", 1.0))
 
     pygame.mixer.music.load(dados["arquivo"])
-    pygame.mixer.music.set_volume(Volume)
+    pygame.mixer.music.set_volume(_volume_musica_alvo())
     pygame.mixer.music.play()  # toca do início
     _posicao_manual = 0.0  # zera a posição manual
+
 
 def AtualizarMusica():
     """Chamar a cada frame: mantém o loop perfeito e aplica a transição suave."""
@@ -173,17 +213,26 @@ def AtualizarMusica():
     if _fade_state != "idle":
         now = pygame.time.get_ticks()
         t = min(1.0, (now - _fade_start_ms) / float(_fade_ms))
-        vol = _fade_from_vol + (_fade_to_vol - _fade_from_vol) * t
+
+        # Fade é aplicado sobre o volume-alvo atual (já com multiplicador)
+        alvo = _volume_musica_alvo()
+        # Mantém compatibilidade com o seu estado: "out" vai pra 0, "in" vai pro alvo
+        if _fade_state == "out":
+            v0 = _fade_from_vol
+            v1 = 0.0
+        else:  # "in"
+            v0 = _fade_from_vol
+            v1 = alvo
+
+        vol = v0 + (v1 - v0) * t
         vol = max(0.0, min(1.0, vol))
         pygame.mixer.music.set_volume(vol)
 
         if t >= 1.0:
             if _fade_state == "out":
-                # troca de faixa sem fade-in: volta direto ao volume padrão
                 if _fade_target_music is not None:
-                    Musica(_fade_target_music)          # toca do início
-                    pygame.mixer.music.set_volume(Volume)
-                # encerra transição
+                    Musica(_fade_target_music)  # já seta volume com vol_mult
+                    pygame.mixer.music.set_volume(_volume_musica_alvo())
                 _fade_state = "idle"
                 _fade_target_music = None
             else:  # "in"

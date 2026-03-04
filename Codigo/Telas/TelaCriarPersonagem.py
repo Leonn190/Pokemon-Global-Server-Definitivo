@@ -87,7 +87,7 @@ class SubtelaCriarPersonagem:
         self._pokemon_index = 0
 
         self._skins = self._carregar_skins()
-        self._desenhador = DesenhaPlayer(self._skins[self._skin_index], escala=2.1)
+        self._desenhador = DesenhaPlayer(self._skins[self._skin_index], escala=1.35)
 
         self._icones_pokemon = self._carregar_icones_pokemon()
         self._animacoes_pokemon = self._carregar_animacoes_pokemon()
@@ -186,7 +186,6 @@ class SubtelaCriarPersonagem:
         self._painel.center = (largura // 2, altura // 2)
 
         pad = 30
-        x0 = self._painel.left + pad
         y0 = self._painel.top + pad
 
         self._titulo = Texto("Criar Personagem", (self._painel.centerx, y0), style={"size": 40, "align": "center"})
@@ -202,6 +201,13 @@ class SubtelaCriarPersonagem:
         col_gap = 42
         quadro_w = 188
         quadro_h = 156
+
+        # Centraliza o bloco inteiro (grid + gap + coluna da direita) dentro do painel
+        inner_w = self._painel.width - (pad * 2)
+        total_content_w = grid_w + col_gap + quadro_w
+        offset_x = max(0, int((inner_w - total_content_w) / 2))
+
+        x0 = self._painel.left + pad + offset_x
         col_dir_x = x0 + grid_w + col_gap
 
         max_right = self._painel.right - pad
@@ -253,7 +259,7 @@ class SubtelaCriarPersonagem:
                 }
             )
 
-        anim_top = blocos_y + 2
+        anim_top = blocos_y + 4  # 2px para baixo
         self._quadro_anim = pygame.Rect(col_dir_x, anim_top, quadro_w, quadro_h)
 
         y_rodape = self._painel.bottom - 74
@@ -393,18 +399,11 @@ class SubtelaCriarPersonagem:
         self._render_grupos_pokemon(tela, eventos)
 
         nome_poke = _LISTA_INICIAIS[self._pokemon_index]
-        tipo_poke = _TIPO_POR_POKEMON.get(nome_poke, "")
         texto_poke = Texto(
             nome_poke,
             (self._quadro_anim.centerx, self._quadro_anim.top - 28),
             style={"size": 24, "align": "center"},
         )
-        texto_tipo = Texto(
-            tipo_poke,
-            (self._quadro_anim.left, self._quadro_anim.top - 28),
-            style={"size": 20, "align": "topleft"},
-        )
-        texto_tipo.draw(tela)
         texto_poke.draw(tela)
 
         pygame.draw.rect(tela, (20, 29, 52), self._quadro_anim, border_radius=14)

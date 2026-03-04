@@ -8,7 +8,7 @@ _ESTADO = {
     "ligado": True,
     "mundo_existente": True,
     "banidos": {"JogadorBanido"},
-    "jogadores_com_personagem": {},
+    "jogadores_com_personagem": set(),
     "personagens": {
     },
 }

@@ -21,22 +21,40 @@ def _cor_predominante(surface):
     return (soma_r // total, soma_g // total, soma_b // total)
 
 
+def _clarear_cor(cor, fator=0.35):
+    """
+    fator: 0.0 = original, 1.0 = branco
+    """
+    r, g, b = cor
+    r = int(r + (255 - r) * fator)
+    g = int(g + (255 - g) * fator)
+    b = int(b + (255 - b) * fator)
+    return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
+
+
 class DesenhaPlayer:
-    def __init__(self, skin_surface, escala=2.4):
+    def __init__(self, skin_surface, escala=1.45):
         self.escala = float(escala)
+        self.sprite_offset_graus = -90
+
         self._skin_original = skin_surface.convert_alpha()
         self._skin = self._redimensionar_skin(self._skin_original)
-        self._cor_maos = _cor_predominante(self._skin_original)
+
+        # cor da mão: base + clareada (mais “fofinha”)
+        base = _cor_predominante(self._skin_original)
+        self._cor_maos = _clarear_cor(base, fator=0.40)
 
     def _redimensionar_skin(self, surf):
-        largura = max(1, int(surf.get_width() * self.escala))
-        altura = max(1, int(surf.get_height() * self.escala))
-        return pygame.transform.smoothscale(surf, (largura, altura)).convert_alpha()
+        w = max(1, int(surf.get_width() * self.escala))
+        h = max(1, int(surf.get_height() * self.escala))
+        return pygame.transform.smoothscale(surf, (w, h)).convert_alpha()
 
     def set_skin(self, skin_surface):
         self._skin_original = skin_surface.convert_alpha()
         self._skin = self._redimensionar_skin(self._skin_original)
-        self._cor_maos = _cor_predominante(self._skin_original)
+
+        base = _cor_predominante(self._skin_original)
+        self._cor_maos = _clarear_cor(base, fator=0.40)
 
     def set_escala(self, escala):
         self.escala = max(0.2, float(escala))
@@ -51,28 +69,39 @@ class DesenhaPlayer:
         if dx == 0 and dy == 0:
             dx = 1
 
-        angulo = math.degrees(math.atan2(-dy, dx))
-
-        corpo = pygame.transform.rotate(self._skin, angulo)
-        corpo_rect = corpo.get_rect(center=(int(cx), int(cy)))
-
         mag = max(1e-6, math.hypot(dx, dy))
         vx = dx / mag
         vy = dy / mag
 
+        # +180 pra não ficar de costas
+        angulo = math.degrees(math.atan2(-dy, dx)) + self.sprite_offset_graus + 180
+
+        corpo = pygame.transform.rotate(self._skin, angulo)
+        corpo_rect = corpo.get_rect(center=(int(cx), int(cy)))
+
+        # perpendicular (lado a lado do olhar)
         px = -vy
         py = vx
 
         base = min(self._skin.get_width(), self._skin.get_height())
-        raio_mao = max(6, int(base * 0.12))
-        dist_lateral = int(base * 0.42)
 
-        mao_esq = (int(cx - px * dist_lateral), int(cy - py * dist_lateral))
-        mao_dir = (int(cx + px * dist_lateral), int(cy + py * dist_lateral))
+        raio_mao = max(5, int(base * 0.14))
 
-        pygame.draw.circle(tela, (12, 20, 38), mao_esq, raio_mao + 2)
-        pygame.draw.circle(tela, (12, 20, 38), mao_dir, raio_mao + 2)
-        pygame.draw.circle(tela, self._cor_maos, mao_esq, raio_mao)
-        pygame.draw.circle(tela, self._cor_maos, mao_dir, raio_mao)
+        # MAIS ESPAÇADO:
+        # - percentual maior
+        # - +gap fixo em pixels pra nunca grudar
+        dist_lateral = int(base * 0.76) + 7
+
+        # micro ajuste vertical se quiser
+        dist_vertical = int(base * 0.02)
+
+        mao_esq = (int(cx - px * dist_lateral), int(cy - py * dist_lateral - dist_vertical))
+        mao_dir = (int(cx + px * dist_lateral), int(cy + py * dist_lateral - dist_vertical))
 
         tela.blit(corpo, corpo_rect)
+
+        contorno = (12, 20, 38)
+        pygame.draw.circle(tela, contorno, mao_esq, raio_mao + 2)
+        pygame.draw.circle(tela, contorno, mao_dir, raio_mao + 2)
+        pygame.draw.circle(tela, self._cor_maos, mao_esq, raio_mao)
+        pygame.draw.circle(tela, self._cor_maos, mao_dir, raio_mao)

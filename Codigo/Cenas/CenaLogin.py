@@ -1,3 +1,4 @@
+from Codigo.Modulos.Sonoridades import Musica
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaLogin import TelaLogin
 
@@ -7,6 +8,8 @@ class CenaLogin:
         self.Abertura = Clarear
         self.Fechamento = Escurecer
         self.ID = "Login"
+
+        Musica("Login")
 
     def Tela(self, JOGO, EVENTOS, dt):
         TelaLogin(self, JOGO, EVENTOS, dt)

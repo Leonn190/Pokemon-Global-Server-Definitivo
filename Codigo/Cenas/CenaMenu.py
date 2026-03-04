@@ -1,3 +1,5 @@
+import random
+
 from Codigo.Modulos.Sonoridades import Musica
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaMenu import TelaMenu
@@ -13,7 +15,7 @@ class CenaMenu:
         self.ID = "Menu"
         self.TelaAtual = "MenuPrincipal"
 
-        Musica("Menu")
+        Musica(random.choice(["Menu1","Menu2","Menu3"]))
 
     def DefinirTela(self, tela):
         if tela == "Config":

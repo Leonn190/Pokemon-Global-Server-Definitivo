@@ -120,11 +120,11 @@ def _montar_layout(jogo):
     largura_logo = min(int(largura * 0.234), _LOGO_ORIGINAL.get_width())
     altura_logo = int(_LOGO_ORIGINAL.get_height() * (largura_logo / _LOGO_ORIGINAL.get_width()))
     _LOGO = pygame.transform.smoothscale(_LOGO_ORIGINAL, (largura_logo, altura_logo)).convert_alpha()
-    _LOGO_POS = (largura // 2 - largura_logo // 2, int(altura * 0.18) - altura_logo // 2)
+    _LOGO_POS = (largura // 2 - largura_logo // 2, int(altura * 0.2) - altura_logo // 2)
 
     _MSG = Texto(
         "Informe usuário e senha",
-        (largura // 2, int(altura * 0.33)),
+        (largura // 2, int(altura * 0.42)),
         style={"size": 30, "align": "center", "outline": False, "shadow": False},
     )
 
@@ -133,7 +133,7 @@ def _montar_layout(jogo):
     x_campo = (largura - largura_campo) // 2
 
     _CAMPO_USUARIO = CaixaTexto(
-        pygame.Rect(x_campo, int(altura * 0.42), largura_campo, altura_campo),
+        pygame.Rect(x_campo, int(altura * 0.48), largura_campo, altura_campo),
         texto_inicial="",
         placeholder="Usuário",
         max_chars=32,
@@ -141,7 +141,7 @@ def _montar_layout(jogo):
     )
 
     _CAMPO_SENHA = CaixaTexto(
-        pygame.Rect(x_campo, int(altura * 0.54), largura_campo, altura_campo),
+        pygame.Rect(x_campo, int(altura * 0.6), largura_campo, altura_campo),
         texto_inicial="",
         placeholder="Senha",
         max_chars=32,
@@ -150,7 +150,7 @@ def _montar_layout(jogo):
 
     largura_botao = 280
     altura_botao = 88
-    y_botao = int(altura * 0.72)
+    y_botao = int(altura * 0.78)
 
     _BOTAO_SAIR = Botao(
         pygame.Rect(largura // 2 - largura_botao - 18, y_botao, largura_botao, altura_botao),

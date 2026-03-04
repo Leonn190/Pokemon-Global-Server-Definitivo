@@ -103,6 +103,7 @@ def _renomear_server(novo_nome):
 
     SERVER_LIST[_SERVER_SELECIONADO]["nome"] = novo_nome
     _BOTOES_SERVERS[_SERVER_SELECIONADO].set_text(novo_nome)
+    _emitir_feedback("Server Renomeado com sucesso", sucesso=True)
 
 
 def _adicionar_server(nome, link):
@@ -111,6 +112,7 @@ def _adicionar_server(nome, link):
     if not nome or not link:
         return
     SERVER_LIST.append({"nome": nome, "ip": link})
+    _emitir_feedback("Server Criado com sucesso", sucesso=True)
 
 
 def _apagar_server():
@@ -118,6 +120,7 @@ def _apagar_server():
         return
     SERVER_LIST.pop(_SERVER_SELECIONADO)
     _limpar_selecao()
+    _emitir_feedback("Server Apagado com Sucesso", sucesso=True)
 
 
 def _worker_requisicao(tipo, ip, payload):

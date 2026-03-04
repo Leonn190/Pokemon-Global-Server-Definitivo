@@ -1,6 +1,6 @@
 from Codigo.Modulos.Sonoridades import Musica
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
-from Codigo.Telas.TelaLogin import TelaLogin
+from Codigo.Telas.TelaLogin import ReiniciarTelaLogin, TelaLogin
 
 
 class CenaLogin:
@@ -15,4 +15,4 @@ class CenaLogin:
         TelaLogin(self, JOGO, EVENTOS, dt)
 
     def Finalizar(self, JOGO):
-        pass
+        ReiniciarTelaLogin()

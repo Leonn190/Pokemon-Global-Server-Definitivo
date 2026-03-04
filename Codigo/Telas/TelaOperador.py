@@ -4,7 +4,7 @@ import pygame
 
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Mensagem import Mensagem
-from Codigo.Server.ServerMenu import definir_mundo_server, definir_server_ligado, obter_status_operacao, operar_server
+from Codigo.Server.ServerMenu import definir_mundo_server, definir_server_ligado, operar_server
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 from ServerList import SERVER_LIST
 
@@ -13,7 +13,6 @@ _TAMANHO_CACHE = (0, 0)
 
 _MENSAGEM = None
 _SUBTELA_ATIVA = None
-_POS_APAGAR_DESEJADO = False
 
 _BOTAO_VOLTAR = None
 _BOTAO_LIGAR = None
@@ -56,6 +55,12 @@ def _emitir_feedback(texto, sucesso=False):
     _MENSAGEM.emitir(texto, tipo="sucesso" if sucesso else "erro")
 
 
+def _emitir_info(texto):
+    if _MENSAGEM is None:
+        return
+    _MENSAGEM.emitir(texto, tipo="info")
+
+
 def _get_server_ip(cena):
     indice = getattr(cena, "ServerOperadorIndice", None)
     if indice is None or indice >= len(SERVER_LIST):
@@ -66,9 +71,7 @@ def _get_server_ip(cena):
 def _worker(tipo, ip, payload):
     global _REQUISICAO_RESULTADO
 
-    if tipo == "status":
-        resposta = obter_status_operacao(ip)
-    elif tipo == "ligado":
+    if tipo == "ligado":
         resposta = definir_server_ligado(ip, payload)
     elif tipo == "mundo":
         resposta = definir_mundo_server(ip, payload)
@@ -84,7 +87,7 @@ def _iniciar_requisicao(tipo, ip, payload=None, mensagem="Comunicando com Simula
         return False
 
     _REQUISICAO_RESULTADO = None
-    _emitir_feedback(mensagem)
+    _emitir_info(mensagem)
     _REQUISICAO_THREAD = threading.Thread(target=_worker, args=(tipo, ip, payload), daemon=True)
     _REQUISICAO_THREAD.start()
     return True
@@ -97,12 +100,11 @@ def _voltar(cena):
 
 
 def _pedir_confirmacao_apagar_mundo(jogo, estado, botao):
-    global _SUBTELA_ATIVA, _POS_APAGAR_DESEJADO
+    global _SUBTELA_ATIVA
     if estado:
         _iniciar_requisicao("mundo", _get_server_ip(jogo.Cena), True, "Criando mundo no servidor...")
         return
 
-    _POS_APAGAR_DESEJADO = False
     _SUBTELA_ATIVA = SubtelaConfirmacao(
         jogo.TELA.get_size(),
         "Tem certeza que deseja apagar o mundo?",
@@ -124,17 +126,22 @@ def _abrir_subtela_chave_apagar(jogo):
 
 
 def _validar_chave_apagar(jogo, chave):
-    global _POS_APAGAR_DESEJADO
-    _POS_APAGAR_DESEJADO = True
     _iniciar_requisicao("validar_chave", _get_server_ip(jogo.Cena), chave, "Validando chave de segurança...")
 
 
 def _toggle_ligado(jogo, estado, botao):
-    _iniciar_requisicao("ligado", _get_server_ip(jogo.Cena), estado, "Atualizando estado do servidor...")
+    _iniciar_requisicao("ligado", _get_server_ip(jogo.Cena), estado, "Atualizando status do servidor...")
+
+
+def _atualizar_rotulos_botoes():
+    if _BOTAO_LIGAR is not None:
+        _BOTAO_LIGAR.set_text("Desligar Server" if _BOTAO_LIGAR.estado else "Ligar Server")
+    if _BOTAO_MUNDO is not None:
+        _BOTAO_MUNDO.set_text("Apagar Mundo" if _BOTAO_MUNDO.estado else "Criar Mundo")
 
 
 def _processar_resposta(jogo):
-    global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _POS_APAGAR_DESEJADO
+    global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO
     if not _REQUISICAO_RESULTADO:
         return
 
@@ -146,11 +153,7 @@ def _processar_resposta(jogo):
     sucesso = resposta.get("status") == "ok"
 
     tipo = payload["tipo"]
-    if tipo == "status" and sucesso:
-        _BOTAO_LIGAR.set_estado(resposta.get("ligado", False))
-        _BOTAO_MUNDO.set_estado(resposta.get("mundo_existente", False))
-
-    elif tipo == "ligado":
+    if tipo == "ligado":
         if sucesso:
             _BOTAO_LIGAR.set_estado(resposta.get("ligado", payload["payload"]))
         else:
@@ -163,14 +166,13 @@ def _processar_resposta(jogo):
             _BOTAO_MUNDO.set_estado(not payload["payload"])
 
     elif tipo == "validar_chave":
-        if sucesso and _POS_APAGAR_DESEJADO:
+        if sucesso:
             _iniciar_requisicao("mundo", _get_server_ip(jogo.Cena), False, "Apagando mundo do servidor...")
-            _POS_APAGAR_DESEJADO = False
         else:
             _BOTAO_MUNDO.set_estado(True)
-            _POS_APAGAR_DESEJADO = False
 
     _emitir_feedback(resposta.get("mensagem", "Falha de comunicação"), sucesso=sucesso)
+    _atualizar_rotulos_botoes()
 
 
 def _montar_layout(jogo):
@@ -184,13 +186,13 @@ def _montar_layout(jogo):
     else:
         _MENSAGEM.redimensionar((largura, altura))
 
-    largura_botao = min(780, int(largura * 0.68))
-    altura_botao = 120
+    largura_botao = min(560, int(largura * 0.54))
+    altura_botao = 92
     x = (largura - largura_botao) // 2
 
     _BOTAO_LIGAR = BotaoAlavanca(
         pygame.Rect(x, int(altura * 0.28), largura_botao, altura_botao),
-        "Ligar/Desligar Server",
+        "Server",
         estado_inicial=False,
         execute=_toggle_ligado,
         style=_ESTILO_BOTAO,
@@ -198,7 +200,7 @@ def _montar_layout(jogo):
 
     _BOTAO_MUNDO = BotaoAlavanca(
         pygame.Rect(x, int(altura * 0.48), largura_botao, altura_botao),
-        "Criar/Apagar Mundo",
+        "Mundo",
         estado_inicial=False,
         execute=_pedir_confirmacao_apagar_mundo,
         style=_ESTILO_BOTAO,
@@ -213,6 +215,7 @@ def _montar_layout(jogo):
 
     _TAMANHO_CACHE = (largura, altura)
     _TELA_CARREGADA = True
+    _atualizar_rotulos_botoes()
 
 
 def TelaOperador(cena, jogo, eventos, dt):
@@ -222,7 +225,6 @@ def TelaOperador(cena, jogo, eventos, dt):
 
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura, altura):
         _montar_layout(jogo)
-        _iniciar_requisicao("status", _get_server_ip(cena), mensagem="Carregando estado do servidor...")
 
     _processar_resposta(jogo)
 

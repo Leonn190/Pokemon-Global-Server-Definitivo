@@ -3,7 +3,7 @@ import threading
 import pygame
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
-from Codigo.Server.ServerMenu import entrar_server, operar_server
+from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 from ServerList import SERVER_LIST
 
@@ -23,6 +23,12 @@ _MENSAGEM = None
 
 _REQUISICAO_THREAD = None
 _REQUISICAO_RESULTADO = None
+
+_STATUS_THREAD = None
+_STATUS_RESULTADO = None
+_STATUS_CACHE = {}
+_STATUS_INTERVALO = 2.0
+_STATUS_ACUMULADO = 999.0
 
 
 def _gerar_estilos():
@@ -64,6 +70,12 @@ def _emitir_feedback(texto, sucesso=False):
     if _MENSAGEM is None:
         return
     _MENSAGEM.emitir(texto, tipo="sucesso" if sucesso else "erro")
+
+
+def _emitir_info(texto):
+    if _MENSAGEM is None:
+        return
+    _MENSAGEM.emitir(texto, tipo="info")
 
 
 def _limpar_selecao():
@@ -118,13 +130,24 @@ def _worker_requisicao(tipo, ip, payload):
     _REQUISICAO_RESULTADO = {"tipo": tipo, "resposta": resposta}
 
 
+def _worker_status():
+    global _STATUS_RESULTADO
+    resultado = {}
+    for i, server in enumerate(SERVER_LIST):
+        ip = server.get("ip", "")
+        resposta = obter_status_operacao(ip)
+        if resposta.get("status") == "ok":
+            resultado[i] = bool(resposta.get("ligado", False))
+    _STATUS_RESULTADO = resultado
+
+
 def _iniciar_requisicao(tipo, ip, payload, mensagem):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO
     if _REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive():
         return
 
     _REQUISICAO_RESULTADO = None
-    _emitir_feedback(mensagem)
+    _emitir_info(mensagem)
     _REQUISICAO_THREAD = threading.Thread(target=_worker_requisicao, args=(tipo, ip, payload), daemon=True)
     _REQUISICAO_THREAD.start()
 
@@ -200,11 +223,29 @@ def _abrir_subtela_operar(JOGO):
 
 
 def _voltar_menu(Cena):
-    global _SUBTELA_ATIVA, _TELA_CARREGADA
+    global _SUBTELA_ATIVA, _TELA_CARREGADA, _STATUS_CACHE
     _SUBTELA_ATIVA = None
     _limpar_selecao()
+    _STATUS_CACHE = {}
     _TELA_CARREGADA = False
     Cena.DefinirTela("MenuPrincipal")
+
+
+def _iniciar_atualizacao_status():
+    global _STATUS_THREAD
+    if _STATUS_THREAD and _STATUS_THREAD.is_alive():
+        return
+    _STATUS_THREAD = threading.Thread(target=_worker_status, daemon=True)
+    _STATUS_THREAD.start()
+
+
+def _processar_status():
+    global _STATUS_THREAD, _STATUS_RESULTADO, _STATUS_CACHE
+    if _STATUS_RESULTADO is None:
+        return
+    _STATUS_CACHE = dict(_STATUS_RESULTADO)
+    _STATUS_RESULTADO = None
+    _STATUS_THREAD = None
 
 
 def _montar_layout(Cena, JOGO):
@@ -344,7 +385,7 @@ def _processar_requisicao(Cena):
 
 
 def TelaServers(Cena, JOGO, EVENTOS, dt):
-    global _SUBTELA_ATIVA, _TELA_CARREGADA
+    global _SUBTELA_ATIVA, _TELA_CARREGADA, _STATUS_ACUMULADO
 
     largura_tela, altura_tela = JOGO.TELA.get_size()
 
@@ -352,6 +393,12 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
         _montar_layout(Cena, JOGO)
 
     _processar_requisicao(Cena)
+    _processar_status()
+
+    _STATUS_ACUMULADO += dt
+    if _STATUS_ACUMULADO >= _STATUS_INTERVALO:
+        _STATUS_ACUMULADO = 0.0
+        _iniciar_atualizacao_status()
 
     JOGO.TELA.fill((8, 12, 24))
 
@@ -363,8 +410,21 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
     if len(SERVER_LIST) != len(_BOTOES_SERVERS):
         _montar_layout(Cena, JOGO)
 
-    for botao in _BOTOES_SERVERS:
+    for i, botao in enumerate(_BOTOES_SERVERS):
         botao.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+        ligado = _STATUS_CACHE.get(i)
+        if ligado is None:
+            cor = (230, 208, 88)
+        elif ligado:
+            cor = (72, 235, 98)
+        else:
+            cor = (240, 75, 75)
+
+        raio = 10
+        x_bola = botao.rect.right + 24
+        y_bola = botao.rect.centery
+        pygame.draw.circle(JOGO.TELA, (0, 0, 0), (x_bola, y_bola), raio + 2)
+        pygame.draw.circle(JOGO.TELA, cor, (x_bola, y_bola), raio)
 
     for nome in ("Voltar", "Renomear", "Entrar", "Apagar", "Operar"):
         _render_acao(nome, JOGO.TELA, eventos_ativos, dt, JOGO, mouse_pos=mouse_pos)

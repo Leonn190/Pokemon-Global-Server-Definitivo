@@ -34,6 +34,25 @@ class BancoDadosMundo:
         self._largura_blocos = int(meta.get("largura_blocos", len(self._grid[0]) if self._grid else 0))
         self._altura_blocos = int(meta.get("altura_blocos", len(self._grid)))
 
+
+    def recarregar_mundo(self, estado_mundo: Dict[str, object], limpar_objetos: bool = False) -> None:
+        with self._lock:
+            self._estado_mundo = estado_mundo if isinstance(estado_mundo, dict) else {}
+            self._grid = self._estado_mundo.get("grid", [])
+            meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
+            self._chunk_blocos = max(1, int(meta.get("chunk_blocos", CHUNK_BLOCOS)))
+            self._largura_blocos = int(meta.get("largura_blocos", len(self._grid[0]) if self._grid else 0))
+            self._altura_blocos = int(meta.get("altura_blocos", len(self._grid)))
+
+            if limpar_objetos:
+                self._objetos.clear()
+                self._usuarios_para_objeto.clear()
+                self._indice_espacial.clear()
+
+    def limites_mundo(self) -> Tuple[int, int]:
+        with self._lock:
+            return (max(1, int(self._largura_blocos)), max(1, int(self._altura_blocos)))
+
     def gerar_id(self) -> int:
         with self._lock:
             novo = self._next_id
@@ -154,12 +173,21 @@ class BancoDadosMundo:
 
     def chunks_proximos(self, posicao: Vector2, raio_chunks: int = 1) -> List[Tuple[int, int]]:
         chunk_tamanho = self.chunk_tamanho_unidade()
-        cpx = int(math.floor(posicao[0] / chunk_tamanho))
-        cpy = int(math.floor(posicao[1] / chunk_tamanho))
+        largura, altura = self.limites_mundo()
+        total_chunks_x = max(1, int(math.ceil(largura / chunk_tamanho)))
+        total_chunks_y = max(1, int(math.ceil(altura / chunk_tamanho)))
+
+        cpx = int(math.floor(posicao[0] / chunk_tamanho)) % total_chunks_x
+        cpy = int(math.floor(posicao[1] / chunk_tamanho)) % total_chunks_y
         coords = []
+        vistos: Set[Tuple[int, int]] = set()
         for dx in range(-raio_chunks, raio_chunks + 1):
             for dy in range(-raio_chunks, raio_chunks + 1):
-                coords.append((cpx + dx, cpy + dy))
+                chunk = ((cpx + dx) % total_chunks_x, (cpy + dy) % total_chunks_y)
+                if chunk in vistos:
+                    continue
+                vistos.add(chunk)
+                coords.append(chunk)
         return coords
 
 

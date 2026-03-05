@@ -18,7 +18,7 @@ class LeitorMundo:
         callback_atualizacao: Callable[[str, str, Vector2, int], Optional[PacoteMundo]],
         callback_envio_diffs: Optional[Callable[[str, str, List[Dict[str, object]]], Optional[Dict[str, object]]]] = None,
         intervalo_poll: float = 0.20,
-        raio_chunks: int = 5,
+        raio_chunks: int = 2,
     ) -> None:
         self.JOGO = jogo
         self.Camera = camera

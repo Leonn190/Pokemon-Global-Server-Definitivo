@@ -69,7 +69,7 @@ class CenaMundo:
             callback_atualizacao=consultar_estado_mundo,
             callback_envio_diffs=enviar_diffs_mundo,
             intervalo_poll=0.20,
-            raio_chunks=5,
+            raio_chunks=2,
         )
 
         self.Player = Player(

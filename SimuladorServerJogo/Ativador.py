@@ -161,3 +161,11 @@ def desconectar_client(client_id: str) -> None:
     with _DIFF_LOCK:
         _CLIENTS_CONHECIDOS.discard(client_id)
         _CLIENT_STATE.pop(client_id, None)
+
+
+def resetar_estado_clientes() -> None:
+    with _DIFF_LOCK:
+        _CLIENTS_CONHECIDOS.clear()
+        _CLIENT_STATE.clear()
+        _DIFF_LOG.clear()
+

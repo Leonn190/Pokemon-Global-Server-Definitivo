@@ -23,6 +23,23 @@ class Camera:
         self.EntidadeMain = entidade_main
         self.Suavizacao = max(0.1, float(suavizacao))
         self.TilePx = int(tile_px)
+        self.LimitesMundoTiles: Optional[Vector2] = None
+
+    def definir_limites_mundo(self, largura_tiles: float, altura_tiles: float) -> None:
+        try:
+            largura = max(1.0, float(largura_tiles))
+            altura = max(1.0, float(altura_tiles))
+        except (TypeError, ValueError):
+            self.LimitesMundoTiles = None
+            return
+        self.LimitesMundoTiles = (largura, altura)
+
+    @staticmethod
+    def _delta_toroidal(origem: float, destino: float, tamanho: float) -> float:
+        delta = float(destino) - float(origem)
+        if tamanho <= 0:
+            return delta
+        return delta - round(delta / tamanho) * tamanho
 
     def definir_main(self, entidade_main) -> None:
         self.EntidadeMain = entidade_main
@@ -37,19 +54,34 @@ class Camera:
         alvo_y = float(self.EntidadeMain.Posicao[1]) - half_h_tiles
 
         fator = min(1.0, max(0.0, float(delta_time)) * self.Suavizacao)
-        x = self.PosicaoTiles[0] + (alvo_x - self.PosicaoTiles[0]) * fator
-        y = self.PosicaoTiles[1] + (alvo_y - self.PosicaoTiles[1]) * fator
+        if self.LimitesMundoTiles:
+            largura, altura = self.LimitesMundoTiles
+            alvo_x %= largura
+            alvo_y %= altura
+            delta_x = self._delta_toroidal(self.PosicaoTiles[0], alvo_x, largura)
+            delta_y = self._delta_toroidal(self.PosicaoTiles[1], alvo_y, altura)
+            x = (self.PosicaoTiles[0] + delta_x * fator) % largura
+            y = (self.PosicaoTiles[1] + delta_y * fator) % altura
+        else:
+            x = self.PosicaoTiles[0] + (alvo_x - self.PosicaoTiles[0]) * fator
+            y = self.PosicaoTiles[1] + (alvo_y - self.PosicaoTiles[1]) * fator
         self.PosicaoTiles = (x, y)
         return self.PosicaoTiles
 
     def mundo_para_tela_px(self, posicao_mundo_tiles: Vector2) -> Vector2:
-        return (
-            (float(posicao_mundo_tiles[0]) - self.PosicaoTiles[0]) * self.TilePx,
-            (float(posicao_mundo_tiles[1]) - self.PosicaoTiles[1]) * self.TilePx,
-        )
+        dx = float(posicao_mundo_tiles[0]) - self.PosicaoTiles[0]
+        dy = float(posicao_mundo_tiles[1]) - self.PosicaoTiles[1]
+        if self.LimitesMundoTiles:
+            largura, altura = self.LimitesMundoTiles
+            dx = self._delta_toroidal(0.0, dx, largura)
+            dy = self._delta_toroidal(0.0, dy, altura)
+        return (dx * self.TilePx, dy * self.TilePx)
 
     def tela_para_mundo_tiles(self, posicao_tela_px: Vector2) -> Vector2:
-        return (
-            self.PosicaoTiles[0] + (float(posicao_tela_px[0]) / self.TilePx),
-            self.PosicaoTiles[1] + (float(posicao_tela_px[1]) / self.TilePx),
-        )
+        wx = self.PosicaoTiles[0] + (float(posicao_tela_px[0]) / self.TilePx)
+        wy = self.PosicaoTiles[1] + (float(posicao_tela_px[1]) / self.TilePx)
+        if self.LimitesMundoTiles:
+            largura, altura = self.LimitesMundoTiles
+            wx %= largura
+            wy %= altura
+        return (wx, wy)

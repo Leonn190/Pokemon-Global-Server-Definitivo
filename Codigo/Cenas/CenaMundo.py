@@ -9,6 +9,7 @@ from Codigo.Modulos.LeitorMundo import LeitorMundo
 from Codigo.Modulos.Player.Player import Player
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.SubtelaOpcoes import SubtelaOpcoes
+from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import consultar_estado_mundo, enviar_diffs_mundo, desconectar_mundo
 
 
@@ -26,6 +27,7 @@ class CenaMundo:
         self.Player = None
         self.SubtelaOpcoes = SubtelaOpcoes()
         self._desconectado = False
+        self.TelaAtual = None
 
         self.TamanhoChunkBlocos = 32
         self.CoresBlocos = {
@@ -37,6 +39,11 @@ class CenaMundo:
         }
 
         self._montar_mundo(JOGO)
+
+        tela_sobreposta = JOGO.INFO.pop("MundoTelaSobreposta", None)
+        if tela_sobreposta == "Config":
+            ResetTelaConfig()
+            self.TelaAtual = "Config"
 
     def _carregar_skin(self, nome_skin):
         if not nome_skin:
@@ -90,7 +97,7 @@ class CenaMundo:
 
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
 
-        if not self.SubtelaOpcoes.Ativa:
+        if not self.SubtelaOpcoes.Ativa and self.TelaAtual != "Config":
             mouse_tela = pygame.mouse.get_pos()
             mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)
             self.Player.Controle.atualizar(EVENTOS, dt, mouse_mundo_tiles)
@@ -111,6 +118,8 @@ class CenaMundo:
         ignorar_id_main = getattr(self.EntidadeMain, "Id", None)
         self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera, ignorar_entidade_id=ignorar_id_main)
         self.SubtelaOpcoes.desenhar(JOGO)
+        if self.TelaAtual == "Config":
+            TelaConfig(self, JOGO, EVENTOS, dt)
 
 
     def _atualizar_limites_loop_mundo(self):
@@ -125,6 +134,8 @@ class CenaMundo:
         if largura is None or altura is None:
             return
         self.Player.Controle.definir_limites_mundo(largura, altura)
+        if self.Camera:
+            self.Camera.definir_limites_mundo(largura, altura)
 
     def _atualizar_cache_mundo(self):
         estado = self.LeitorMundo.snapshot() if self.LeitorMundo else {"chunks": {}}
@@ -164,11 +175,21 @@ class CenaMundo:
             self._cache_chunks_surface[chave_cache] = surface
 
     def _desenhar_mundo(self, JOGO):
+        limites = self.Camera.LimitesMundoTiles if self.Camera else None
+        repeticoes_x = (0,)
+        repeticoes_y = (0,)
+        if limites:
+            largura, altura = limites
+            repeticoes_x = (-largura, 0, largura)
+            repeticoes_y = (-altura, 0, altura)
+
         for (chunk_x, chunk_y, _, _), chunk_surface in self._cache_chunks_surface.items():
             origem_x_tile = chunk_x * self.TamanhoChunkBlocos
             origem_y_tile = chunk_y * self.TamanhoChunkBlocos
-            px, py = self.Camera.mundo_para_tela_px((origem_x_tile, origem_y_tile))
-            JOGO.TELA.blit(chunk_surface, (int(px), int(py)))
+            for off_x in repeticoes_x:
+                for off_y in repeticoes_y:
+                    px, py = self.Camera.mundo_para_tela_px((origem_x_tile + off_x, origem_y_tile + off_y))
+                    JOGO.TELA.blit(chunk_surface, (int(px), int(py)))
 
     def Finalizar(self, JOGO):
         if self.LeitorMundo:

@@ -6,7 +6,7 @@ from typing import Dict, Iterable, Optional, Tuple
 
 import pygame
 
-from Codigo.Modulos.Entidade import Entidade
+from Codigo.Geradores.Entidade import Entidade
 
 Vector2 = Tuple[float, float]
 

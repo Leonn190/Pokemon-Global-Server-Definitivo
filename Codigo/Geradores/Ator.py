@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Geradores.Entidade import Entidade
-from Codigo.Modulos.colisor import Colisor
+from Codigo.Modulos.Colisor import Colisor
 
 Vector2 = Tuple[float, float]
 

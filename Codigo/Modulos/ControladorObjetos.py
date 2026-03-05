@@ -21,6 +21,9 @@ class ControladorObjetos:
         self._fila_diffs_envio: List[Dict[str, object]] = []
         self._cache_nome_texto: Dict[str, Texto] = {}
         self._cache_sprites: Dict[str, pygame.Surface] = {}
+        self._chunk_tamanho_tiles = 32
+        self._objetos_colisao_por_chunk: Dict[Tuple[int, int], set[int]] = {}
+        self._chunk_por_objeto: Dict[int, Tuple[int, int]] = {}
 
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
@@ -72,23 +75,88 @@ class ControladorObjetos:
             return
         posicao_antes = tuple(self.PlayerLocal.Ator.Posicao)
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
-        self._resolver_colisao_player_local_estruturas(posicao_antes)
+        self._resolver_colisao_player_local(posicao_antes, dt)
         self._sincronizar_player_local()
 
-    def _iter_estruturas_colisiveis(self):
-        for estrutura in self._iter_tipos("estrutura"):
-            pos = estrutura.get("posicao")
-            if not isinstance(pos, (tuple, list)) or len(pos) != 2:
+    def _chunk_posicao(self, x: float, y: float) -> Tuple[int, int]:
+        return (int(math.floor(float(x) / self._chunk_tamanho_tiles)), int(math.floor(float(y) / self._chunk_tamanho_tiles)))
+
+    def _dados_colisao_objeto(self, obj: Dict[str, object]) -> Optional[Tuple[int, float, float, float, str, float, float]]:
+        pos = obj.get("posicao")
+        if not isinstance(pos, (tuple, list)) or len(pos) != 2:
+            return None
+
+        tipo = str(obj.get("tipo", ""))
+        if not (tipo.startswith("estrutura") or tipo.startswith("entidade")):
+            return None
+
+        try:
+            oid = int(obj.get("id"))
+            sx = float(pos[0])
+            sy = float(pos[1])
+            raio = max(0.0, float(obj.get("raio_colisao", 0.0)))
+        except (TypeError, ValueError):
+            return None
+
+        if raio <= 0.0:
+            return None
+
+        try:
+            campo = max(0.0, float(obj.get("campo", 0.0)))
+        except (TypeError, ValueError):
+            campo = 0.0
+        try:
+            intensidade = max(0.0, float(obj.get("intensidade", 0.0)))
+        except (TypeError, ValueError):
+            intensidade = 0.0
+
+        return (oid, sx, sy, raio, tipo, campo, intensidade)
+
+    def _atualizar_indice_objeto_colisivo(self, obj: Dict[str, object]) -> None:
+        dados = self._dados_colisao_objeto(obj)
+        obj_id_raw = obj.get("id")
+        if obj_id_raw is None:
+            return
+        oid = int(obj_id_raw)
+
+        chunk_antigo = self._chunk_por_objeto.pop(oid, None)
+        if chunk_antigo is not None:
+            bucket_antigo = self._objetos_colisao_por_chunk.get(chunk_antigo)
+            if bucket_antigo is not None:
+                bucket_antigo.discard(oid)
+                if not bucket_antigo:
+                    self._objetos_colisao_por_chunk.pop(chunk_antigo, None)
+
+        if dados is None:
+            return
+
+        _, sx, sy, _, _, _, _ = dados
+        chunk = self._chunk_posicao(sx, sy)
+        self._chunk_por_objeto[oid] = chunk
+        self._objetos_colisao_por_chunk.setdefault(chunk, set()).add(oid)
+
+    def _reindexar_objetos_colisivos(self) -> None:
+        self._objetos_colisao_por_chunk.clear()
+        self._chunk_por_objeto.clear()
+        for obj in self.ObjetosPorId.values():
+            if isinstance(obj, dict):
+                self._atualizar_indice_objeto_colisivo(obj)
+
+    def _iter_colisores_proximos(self, posicao_player: Tuple[float, float]):
+        px, py = posicao_player
+        chunk_cx, chunk_cy = self._chunk_posicao(px, py)
+        ids = set()
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                ids.update(self._objetos_colisao_por_chunk.get((chunk_cx + dx, chunk_cy + dy), set()))
+
+        for oid in ids:
+            obj = self.ObjetosPorId.get(oid)
+            if not isinstance(obj, dict):
                 continue
-            try:
-                sx = float(pos[0])
-                sy = float(pos[1])
-                raio = max(0.0, float(estrutura.get("raio_colisao", 0.4)))
-            except (TypeError, ValueError):
-                continue
-            if raio <= 0.0:
-                continue
-            yield (sx, sy, raio)
+            dados = self._dados_colisao_objeto(obj)
+            if dados is not None:
+                yield dados
 
     @staticmethod
     def _intersecao_segmento_circulo(
@@ -123,19 +191,22 @@ class ControladorObjetos:
             return None
         return min(candidatos)
 
-    def _resolver_colisao_player_local_estruturas(self, posicao_antes: Tuple[float, float]) -> None:
+    def _resolver_colisao_player_local(self, posicao_antes: Tuple[float, float], dt: float) -> None:
         if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
             return
         ator = self.PlayerLocal.Ator
         posicao_depois = tuple(ator.Posicao)
+        player_id = getattr(ator, "Id", None)
         raio_ator = max(0.0, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
 
         if raio_ator <= 0.0:
             return
 
         melhor_t = None
-        for sx, sy, raio_estrutura in self._iter_estruturas_colisiveis():
-            t = self._intersecao_segmento_circulo(posicao_antes, posicao_depois, (sx, sy), raio_ator + raio_estrutura)
+        colisores_proximos = [c for c in self._iter_colisores_proximos(posicao_depois) if c[0] != player_id]
+
+        for _, sx, sy, raio_obj, _, _, _ in colisores_proximos:
+            t = self._intersecao_segmento_circulo(posicao_antes, posicao_depois, (sx, sy), raio_ator + raio_obj)
             if t is None:
                 continue
             if melhor_t is None or t < melhor_t:
@@ -150,11 +221,11 @@ class ControladorObjetos:
         px, py = ator.Posicao
         for _ in range(3):
             ajustou = False
-            for sx, sy, raio_estrutura in self._iter_estruturas_colisiveis():
+            for _, sx, sy, raio_obj, _, _, _ in colisores_proximos:
                 vx = px - sx
                 vy = py - sy
                 dist = math.hypot(vx, vy)
-                limite = raio_ator + raio_estrutura
+                limite = raio_ator + raio_obj
                 if dist >= limite or limite <= 0.0:
                     continue
 
@@ -170,6 +241,31 @@ class ControladorObjetos:
 
             if not ajustou:
                 break
+
+        dt = max(0.0, float(dt))
+        if dt > 0.0:
+            for _, sx, sy, raio_obj, tipo_obj, campo, intensidade in colisores_proximos:
+                if not tipo_obj.startswith("estrutura"):
+                    continue
+                if campo <= 0.0 or intensidade <= 0.0:
+                    continue
+
+                vx = px - sx
+                vy = py - sy
+                dist = math.hypot(vx, vy)
+                limite = raio_ator + raio_obj + campo
+                if limite <= 0.0 or dist >= limite:
+                    continue
+
+                if dist <= 1e-8:
+                    vx, vy, dist = 1.0, 0.0, 1.0
+
+                dirx = vx / dist
+                diry = vy / dist
+                t = max(0.0, min(1.0, 1.0 - (dist / max(limite, 1e-6))))
+                push = intensidade * t * dt
+                px += dirx * push
+                py += diry * push
 
         ator.definir_posicao(px, py)
 
@@ -197,6 +293,7 @@ class ControladorObjetos:
             oid = int(dados_obj.get("id", objeto_id))
             dados_obj["id"] = oid
             self.ObjetosPorId[oid] = dados_obj
+            self._atualizar_indice_objeto_colisivo(dados_obj)
             return
 
         if objeto_id is None:
@@ -214,15 +311,24 @@ class ControladorObjetos:
                 if chave != "estado":
                     atual[chave] = valor
             self.ObjetosPorId[oid] = atual
+            self._atualizar_indice_objeto_colisivo(atual)
             return
 
         if tipo == "despawn":
             self.ObjetosPorId.pop(oid, None)
+            chunk = self._chunk_por_objeto.pop(oid, None)
+            if chunk is not None:
+                bucket = self._objetos_colisao_por_chunk.get(chunk)
+                if bucket is not None:
+                    bucket.discard(oid)
+                    if not bucket:
+                        self._objetos_colisao_por_chunk.pop(chunk, None)
 
     def sincronizar_objetos(self, objetos):
         if not isinstance(objetos, dict):
             return
         self.ObjetosPorId = {int(k): dict(v) for k, v in objetos.items()}
+        self._reindexar_objetos_colisivos()
 
     def _iter_tipos(self, prefixo):
         return [obj for obj in self.ObjetosPorId.values() if str(obj.get("tipo", "")).startswith(prefixo)]

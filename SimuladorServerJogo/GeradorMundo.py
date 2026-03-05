@@ -70,12 +70,16 @@ def _escolher_spawn_chunk(grid: List[List[int]]) -> List[int]:
 
     melhor = None
     melhor_dist2 = None
+    centro_cx = max_chunk_x / 2.0
+    centro_cy = max_chunk_y / 2.0
 
     for cy in range(max_chunk_y + 1):
         for cx in range(max_chunk_x + 1):
             if not _chunk_terra_firme(grid, cx, cy):
                 continue
-            dist2 = cx * cx + cy * cy
+            dx = cx - centro_cx
+            dy = cy - centro_cy
+            dist2 = dx * dx + dy * dy
             if melhor is None or dist2 < melhor_dist2:
                 melhor = [cx, cy]
                 melhor_dist2 = dist2

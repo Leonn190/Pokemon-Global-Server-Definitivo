@@ -15,7 +15,8 @@ class CenaMenu:
         self.ID = "Menu"
         self.TelaAtual = str(JOGO.INFO.pop("MenuTelaInicial", "MenuPrincipal"))
 
-        Musica(random.choice(["Menu1","Menu2","Menu3"]))
+        if not JOGO.INFO.pop("PreservarMusicaAtual", False):
+            Musica(random.choice(["Menu1","Menu2","Menu3"]))
 
     def DefinirTela(self, tela):
         if tela == "Config":

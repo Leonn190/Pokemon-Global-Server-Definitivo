@@ -56,7 +56,11 @@ def salvar_config_fixa(config):
     caminho.write_text("ConfigFixa = " + repr(dict(config)) + "\n", encoding="utf-8")
 
 
-def _voltar_menu(Cena):
+def _voltar_menu(Cena, JOGO):
+    retorno = JOGO.INFO.pop("ConfigRetorno", None)
+    if isinstance(retorno, dict) and retorno.get("Cena") == "Mundo":
+        JOGO.CenaAlvo = "Mundo"
+        return
     Cena.DefinirTela("MenuPrincipal")
 
 
@@ -78,12 +82,12 @@ def _executar_cancelar(Cena, JOGO, botao):
         botao_toggle.set_estado(JOGO.CONFIG[chave])
 
     VerificaSonoridade(JOGO.CONFIG)
-    _voltar_menu(Cena)
+    _voltar_menu(Cena, JOGO)
 
 
 def _executar_salvar(Cena, JOGO, botao):
     salvar_config_fixa(JOGO.CONFIG)
-    _voltar_menu(Cena)
+    _voltar_menu(Cena, JOGO)
 
 
 def _confirmar_deslogar(Cena, JOGO):

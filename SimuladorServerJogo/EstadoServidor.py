@@ -9,6 +9,8 @@ from SimuladorServerJogo.GeradorMundo import (
     obter_posicao_spawn,
     salvar_estado_mundo,
 )
+from SimuladorServerJogo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Ativador import resetar_estado_clientes
 
 _CHAVE_SEGURANCA = "1900"
 _ESTADO_MUNDO = carregar_ou_criar_estado_mundo()
@@ -33,8 +35,10 @@ def _clamp_posicao(posicao):
     except (TypeError, ValueError, IndexError):
         return (0.0, 0.0)
 
-    x = max(0.0, min(x, float(LARGURA_BLOCOS - 1)))
-    y = max(0.0, min(y, float(ALTURA_BLOCOS - 1)))
+    largura = max(1.0, float(LARGURA_BLOCOS))
+    altura = max(1.0, float(ALTURA_BLOCOS))
+    x = x % largura
+    y = y % altura
     return (x, y)
 
 
@@ -48,6 +52,8 @@ def _criar_novo_mundo():
     players = dict(_ESTADO.get("personagens", {}))
     _ESTADO_MUNDO = gerar_novo_estado_mundo(players=players)
     salvar_estado_mundo(_ESTADO_MUNDO)
+    BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
+    resetar_estado_clientes()
 
 
 def _apagar_mundo():
@@ -55,6 +61,10 @@ def _apagar_mundo():
     if ARQUIVO_MUNDO.exists():
         ARQUIVO_MUNDO.unlink()
     _ESTADO_MUNDO = {"meta": {}, "grid": [], "players": {}, "spawn": [0.0, 0.0]}
+    _ESTADO["personagens"].clear()
+    _ESTADO["jogadores_com_personagem"].clear()
+    BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
+    resetar_estado_clientes()
 
 
 def _sync_personagens_mundo():

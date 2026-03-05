@@ -169,9 +169,11 @@ class LeitorMundo:
                     except (TypeError, ValueError):
                         continue
                     chunks_atuais[(chunk_x, chunk_y)] = [list(linha) for linha in grid]
-            self.Chunks = chunks_atuais
-            self._cache_superficies_chunks.clear()
-            self._versao_chunks += 1
+            if chunks_atuais:
+                self.Chunks.update(chunks_atuais)
+                for chave_chunk in chunks_atuais:
+                    self._cache_superficies_chunks.pop(chave_chunk, None)
+                self._versao_chunks += 1
 
             for diff in pacote.get("diffs", []):
                 if not isinstance(diff, dict):

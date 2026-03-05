@@ -4,7 +4,7 @@ import pygame
 
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Mensagem import Mensagem
-from Codigo.Server.ServerMenu import definir_mundo_server, definir_server_ligado, operar_server
+from Codigo.Server.ServerMenu import definir_mundo_server, definir_server_ligado, obter_status_operacao, operar_server
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 from ServerList import SERVER_LIST
 
@@ -75,6 +75,8 @@ def _worker(tipo, ip, payload):
         resposta = definir_server_ligado(ip, payload)
     elif tipo == "mundo":
         resposta = definir_mundo_server(ip, payload)
+    elif tipo == "status":
+        resposta = obter_status_operacao(ip)
     else:
         resposta = operar_server(ip, payload)
 
@@ -171,7 +173,13 @@ def _processar_resposta(jogo):
         else:
             _BOTAO_MUNDO.set_estado(True)
 
-    _emitir_feedback(resposta.get("mensagem", "Falha de comunicação"), sucesso=sucesso)
+    elif tipo == "status":
+        if sucesso:
+            _BOTAO_LIGAR.set_estado(bool(resposta.get("ligado", False)))
+            _BOTAO_MUNDO.set_estado(bool(resposta.get("mundo_existente", False)))
+
+    if tipo != "status" or not sucesso:
+        _emitir_feedback(resposta.get("mensagem", "Falha de comunicação"), sucesso=sucesso)
     _atualizar_rotulos_botoes()
 
 
@@ -221,6 +229,7 @@ def _montar_layout(jogo):
     _TAMANHO_CACHE = (largura, altura)
     _TELA_CARREGADA = True
     _atualizar_rotulos_botoes()
+    _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "Carregando estado do servidor...")
 
 
 def TelaOperador(cena, jogo, eventos, dt):

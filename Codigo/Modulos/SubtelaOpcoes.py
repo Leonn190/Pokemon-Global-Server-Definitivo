@@ -17,13 +17,13 @@ class SubtelaOpcoes:
 
     def _recalcular_layout(self, jogo):
         w, h = jogo.TELA.get_size()
-        bw, bh = 360, 64
+        bw, bh = min(460, int(w * 0.44)), 82
         cx = w // 2 - bw // 2
-        y0 = h // 2 - 120
+        y0 = h // 2 - 150
         gap = 18
         self.Botoes = [
             (pygame.Rect(cx, y0 + (bh + gap) * 0, bw, bh), "Voltar ao jogo", self._acao_voltar),
-            (pygame.Rect(cx, y0 + (bh + gap) * 1, bw, bh), "Acessar tela de Config", self._acao_config),
+            (pygame.Rect(cx, y0 + (bh + gap) * 1, bw, bh), "Configurações", self._acao_config),
             (pygame.Rect(cx, y0 + (bh + gap) * 2, bw, bh), "Sair do mundo", self._acao_sair_mundo),
         ]
 
@@ -48,26 +48,30 @@ class SubtelaOpcoes:
         self._recalcular_layout(jogo)
 
         overlay = pygame.Surface(jogo.TELA.get_size(), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 140))
+        overlay.fill((0, 0, 0, 150))
         jogo.TELA.blit(overlay, (0, 0))
 
         mouse = pygame.mouse.get_pos()
-        fonte = pygame.font.SysFont(None, 34)
+        fonte = pygame.font.SysFont(None, 40)
 
         for rect, texto, _ in self.Botoes:
             hover = rect.collidepoint(mouse)
-            pygame.draw.rect(jogo.TELA, (55, 65, 85) if hover else (32, 38, 52), rect, border_radius=12)
-            pygame.draw.rect(jogo.TELA, (200, 210, 230), rect, 2, border_radius=12)
-            surf = fonte.render(texto, True, (235, 240, 252))
+            cor_bg = (34, 48, 84) if hover else (24, 34, 62)
+            cor_borda = (255, 220, 120) if hover else (16, 22, 42)
+            pygame.draw.rect(jogo.TELA, cor_bg, rect, border_radius=16)
+            pygame.draw.rect(jogo.TELA, cor_borda, rect, 2, border_radius=16)
+            surf = fonte.render(texto, True, (245, 246, 255))
             jogo.TELA.blit(surf, surf.get_rect(center=rect.center))
 
     def _acao_voltar(self, jogo):
         self.Ativa = False
 
     def _acao_config(self, jogo):
-        if hasattr(jogo, "FilaMensagensTecnicas"):
-            jogo.FilaMensagensTecnicas.append("Tela de Config ainda não conectada nesta subtela.")
+        self.Ativa = False
+        jogo.INFO["MenuTelaInicial"] = "Config"
+        jogo.CenaAlvo = "Menu"
 
     def _acao_sair_mundo(self, jogo):
         self.Ativa = False
+        jogo.INFO["MenuTelaInicial"] = "MenuPrincipal"
         jogo.CenaAlvo = "Menu"

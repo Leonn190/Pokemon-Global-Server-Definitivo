@@ -141,12 +141,32 @@ class LeitorMundo:
                     self.TamanhoChunkBlocos = max(1, int(chunk_tamanho))
 
             chunks_atuais: Dict[Tuple[int, int], List[List[int]]] = {}
-            for chunk in pacote.get("chunks", []):
-                pos = chunk.get("pos")
-                grid = chunk.get("grid", [])
-                if pos is None:
-                    continue
-                chunks_atuais[(int(pos[0]), int(pos[1]))] = [list(linha) for linha in grid]
+            chunks_recebidos = pacote.get("chunks", [])
+
+            if isinstance(chunks_recebidos, dict):
+                for chave, grid in chunks_recebidos.items():
+                    if not isinstance(chave, (list, tuple)) or len(chave) != 2:
+                        continue
+                    try:
+                        chunk_x = int(chave[0])
+                        chunk_y = int(chave[1])
+                    except (TypeError, ValueError):
+                        continue
+                    chunks_atuais[(chunk_x, chunk_y)] = [list(linha) for linha in (grid or [])]
+            else:
+                for chunk in chunks_recebidos:
+                    if not isinstance(chunk, dict):
+                        continue
+                    pos = chunk.get("pos")
+                    grid = chunk.get("grid", [])
+                    if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+                        continue
+                    try:
+                        chunk_x = int(pos[0])
+                        chunk_y = int(pos[1])
+                    except (TypeError, ValueError):
+                        continue
+                    chunks_atuais[(chunk_x, chunk_y)] = [list(linha) for linha in grid]
             self.Chunks = chunks_atuais
             self._versao_chunks += 1
 

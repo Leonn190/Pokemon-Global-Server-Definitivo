@@ -53,6 +53,7 @@ class Ator(Entidade):
         self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin)
 
         self.AnguloOlhar = 0.0
+        self.Nome = "Player"
         self._duracao_tapa = 0.16
         self._tempo_tapa = 0.0
         self._raio_mao_colisao = max(0.18, raio_colisao * 0.65)
@@ -98,7 +99,7 @@ class Ator(Entidade):
         fase = 1.0 - abs(1.0 - (progresso * 2.0))
         return max(0.0, fase) * 0.55
 
-    def desenhar(self, tela, mouse_pos=None, posicao_tela=None) -> None:
+    def desenhar(self, tela, mouse_pos=None, posicao_tela=None, respiracao_tempo=0.0) -> None:
         centro = self.Posicao if posicao_tela is None else posicao_tela
         dados_mao = self.Desenhador.desenhar(
             tela,
@@ -107,6 +108,7 @@ class Ator(Entidade):
             angulo_graus=self.AnguloOlhar,
             alcance_tapa=self._alcance_tapa_px(),
             progresso_tapa=self._progresso_tapa(),
+            respiracao_tempo=respiracao_tempo,
         )
 
         if self._tempo_tapa > 0.0:

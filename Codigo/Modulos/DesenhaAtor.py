@@ -22,9 +22,6 @@ def _cor_predominante(surface):
 
 
 def _clarear_cor(cor, fator=0.35):
-    """
-    fator: 0.0 = original, 1.0 = branco
-    """
     r, g, b = cor
     r = int(r + (255 - r) * fator)
     g = int(g + (255 - g) * fator)
@@ -40,7 +37,6 @@ class DesenhaAtor:
         self._skin_original = skin_surface.convert_alpha()
         self._skin = self._redimensionar_skin(self._skin_original)
 
-        # cor da mão: base + clareada (mais “fofinha”)
         base = _cor_predominante(self._skin_original)
         self._cor_maos = _clarear_cor(base, fator=0.40)
 
@@ -60,7 +56,7 @@ class DesenhaAtor:
         self.escala = max(0.2, float(escala))
         self._skin = self._redimensionar_skin(self._skin_original)
 
-    def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0, progresso_tapa=0.0):
+    def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0, progresso_tapa=0.0, respiracao_tempo=0.0):
         cx, cy = centro
 
         if angulo_graus is None:
@@ -77,36 +73,43 @@ class DesenhaAtor:
         vx = math.cos(rad)
         vy = -math.sin(rad)
 
-        # +180 pra não ficar de costas
         angulo = angulo_base + self.sprite_offset_graus + 180
 
         corpo = pygame.transform.rotate(self._skin, angulo)
         corpo_rect = corpo.get_rect(center=(int(cx), int(cy)))
 
-        # perpendicular (lado a lado do olhar)
         px = -vy
         py = vx
 
         base = min(self._skin.get_width(), self._skin.get_height())
-
         raio_mao = max(5, int(base * 0.14))
-
-        # MAIS ESPAÇADO:
-        # - percentual maior
-        # - +gap fixo em pixels pra nunca grudar
         dist_lateral = int(base * 0.76) + 7
-
-        # micro ajuste vertical se quiser
         dist_vertical = int(base * 0.02)
 
-        empurrao_tapa = max(0.0, float(alcance_tapa))
         progresso = max(0.0, min(1.0, float(progresso_tapa)))
-        desvio_lateral = math.sin(progresso * math.pi) * (base * 0.10)
-        mao_esq = (
-            int(cx - px * (dist_lateral - desvio_lateral) + vx * empurrao_tapa),
-            int(cy - py * (dist_lateral - desvio_lateral) + vy * empurrao_tapa - dist_vertical),
-        )
-        mao_dir = (int(cx + px * dist_lateral), int(cy + py * dist_lateral - dist_vertical))
+        empurrao_tapa = max(0.0, float(alcance_tapa))
+        respiracao = math.sin(max(0.0, float(respiracao_tempo)) * 3.4) * 3.0
+
+        mao_dir_base_x = cx + px * dist_lateral
+        mao_dir_base_y = cy + py * dist_lateral - dist_vertical
+        mao_esq_base_x = cx - px * dist_lateral
+        mao_esq_base_y = cy - py * dist_lateral - dist_vertical
+
+        if empurrao_tapa > 0.0:
+            arco = math.sin(progresso * math.pi)
+            curva_frente = 20.0 * arco
+            curva_esquerda = 5.0 * arco
+            mao_dir_x = mao_dir_base_x + vx * curva_frente - px * curva_esquerda
+            mao_dir_y = mao_dir_base_y + vy * curva_frente - py * curva_esquerda
+        else:
+            mao_dir_x = mao_dir_base_x + vx * respiracao
+            mao_dir_y = mao_dir_base_y + vy * respiracao
+
+        mao_esq_x = mao_esq_base_x + vx * respiracao
+        mao_esq_y = mao_esq_base_y + vy * respiracao
+
+        mao_dir = (int(mao_dir_x), int(mao_dir_y))
+        mao_esq = (int(mao_esq_x), int(mao_esq_y))
 
         tela.blit(corpo, corpo_rect)
 
@@ -117,7 +120,7 @@ class DesenhaAtor:
         pygame.draw.circle(tela, self._cor_maos, mao_dir, raio_mao)
 
         return {
-            "mao_tapa": mao_esq,
-            "mao_apoio": mao_dir,
+            "mao_tapa": mao_dir,
+            "mao_apoio": mao_esq,
             "raio_mao": raio_mao,
         }

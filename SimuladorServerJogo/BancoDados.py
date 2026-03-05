@@ -14,6 +14,7 @@ from SimuladorServerJogo.GeradorMundo import (
 )
 from SimuladorServerJogo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, GameObjetoServer
 from Codigo.Modulos.ConfigEstruturasNaturais import tipo_estrutura_natural_por_codigo
+from Codigo.Modulos.colisor import Colisor
 
 Vector2 = Tuple[float, float]
 
@@ -87,6 +88,8 @@ class BancoDadosMundo:
                     posicao=(float(x), float(y)),
                     raio_colisao=cfg["raio_colisao"],
                     raio_interacao=cfg["raio_interacao"],
+                    campo=float(cfg.get("campo", 0.0) or 0.0),
+                    intensidade=float(cfg.get("intensidade", 0.0) or 0.0),
                     codigo_natural=tile_nat,
                 )
                 obj.tipo_classe = "estrutura_natural"
@@ -131,6 +134,7 @@ class BancoDadosMundo:
                 return None
 
             celula_antiga = self._celula(obj.posicao)
+            posicao_anterior = obj.posicao
             if "posicao" in campos:
                 pos = campos["posicao"]
                 obj.definir_posicao(float(pos[0]), float(pos[1]))
@@ -143,12 +147,46 @@ class BancoDadosMundo:
             if isinstance(estado, dict):
                 obj.estado_extra.update(estado)
 
+            if "posicao" in campos and str(obj.tipo_classe).startswith("entidade"):
+                self._aplicar_campos_forca_em_entidade(obj, posicao_anterior)
+
             celula_nova = self._celula(obj.posicao)
             if celula_nova != celula_antiga:
                 self._indice_espacial[celula_antiga].discard(obj.Id)
                 self._indice_espacial[celula_nova].add(obj.Id)
 
             return obj
+
+    def _aplicar_campos_forca_em_entidade(self, entidade: GameObjetoServer, posicao_anterior: Vector2) -> None:
+        x0, y0 = float(posicao_anterior[0]), float(posicao_anterior[1])
+        x1, y1 = float(entidade.posicao[0]), float(entidade.posicao[1])
+        mvx, mvy = (x1 - x0), (y1 - y0)
+        px, py = x1, y1
+        raio_entidade = max(0.0, float(getattr(entidade, "raio_colisao", 0.0)))
+
+        estruturas = [o for o in self._objetos.values() if str(getattr(o, "tipo_classe", "")).startswith("estrutura")]
+        for estrutura in estruturas:
+            if estrutura.Id == entidade.Id:
+                continue
+            campo = max(0.0, float(getattr(estrutura, "campo", 0.0)))
+            intensidade = max(0.0, float(getattr(estrutura, "intensidade", 0.0)))
+            if campo <= 0.0 and intensidade <= 0.0:
+                continue
+
+            mvx, mvy = Colisor.aplicar_repulsao_circular(
+                posicao_entidade=(px, py),
+                movimento_entidade=(mvx, mvy),
+                centro_estrutura=estrutura.posicao,
+                raio_estrutura=float(getattr(estrutura, "raio_colisao", 0.0)),
+                campo=campo,
+                intensidade=intensidade,
+                delta_time=(1.0 / 60.0),
+                raio_entidade=raio_entidade,
+            )
+            px = x0 + mvx
+            py = y0 + mvy
+
+        entidade.definir_posicao(px, py)
 
     def obter_objeto(self, objeto_id: int) -> Optional[GameObjetoServer]:
         with self._lock:

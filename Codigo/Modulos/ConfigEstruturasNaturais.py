@@ -11,6 +11,8 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
         "sprite": "Recursos/Visual/Mundo/Objetos/Arvore.png",
         "raio_colisao": 0.55,
         "raio_interacao": 0.75,
+        "campo": 0.70,
+        "intensidade": 3.20,
     },
     2: {
         "subtipo": "pedra",
@@ -18,6 +20,8 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
         "sprite": "Recursos/Visual/Mundo/Objetos/Pedra.png",
         "raio_colisao": 0.45,
         "raio_interacao": 0.65,
+        "campo": 0.62,
+        "intensidade": 2.80,
     },
     3: {
         "subtipo": "arbusto",
@@ -25,6 +29,8 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
         "sprite": "Recursos/Visual/Mundo/Objetos/Arbusto.png",
         "raio_colisao": 0.35,
         "raio_interacao": 0.55,
+        "campo": 0.45,
+        "intensidade": 2.35,
     },
 }
 

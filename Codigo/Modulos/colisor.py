@@ -118,3 +118,51 @@ class Colisor:
         dx = cx - closest_x
         dy = cy - closest_y
         return (dx * dx + dy * dy) <= (raio * raio)
+
+    @staticmethod
+    def aplicar_repulsao_circular(
+        posicao_entidade: Vector2,
+        movimento_entidade: Vector2,
+        centro_estrutura: Vector2,
+        raio_estrutura: float,
+        campo: float,
+        intensidade: float,
+        delta_time: float,
+        raio_entidade: float = 0.0,
+    ) -> Vector2:
+        """Aplica repulsão circular em movimento da entidade (unidades de mundo/frame)."""
+        campo = max(0.0, float(campo))
+        intensidade = max(0.0, float(intensidade))
+        if campo <= 0.0 and intensidade <= 0.0:
+            return (float(movimento_entidade[0]), float(movimento_entidade[1]))
+
+        px, py = float(posicao_entidade[0]), float(posicao_entidade[1])
+        mvx, mvy = float(movimento_entidade[0]), float(movimento_entidade[1])
+        cx, cy = float(centro_estrutura[0]), float(centro_estrutura[1])
+        limite = max(0.0, float(raio_estrutura)) + campo + max(0.0, float(raio_entidade))
+        if limite <= 0.0:
+            return (mvx, mvy)
+
+        vx = px - cx
+        vy = py - cy
+        dist = math.hypot(vx, vy)
+        if dist == 0.0:
+            vx, vy, dist = 1.0, 0.0, 1.0
+        if dist > limite:
+            return (mvx, mvy)
+
+        dirx = vx / dist
+        diry = vy / dist
+        t = max(0.0, min(1.0, 1.0 - (dist / max(limite, 1e-6))))
+
+        towardx, towardy = -dirx, -diry
+        comp_toward = mvx * towardx + mvy * towardy
+        if comp_toward > 0.0:
+            atenuacao = 0.7 * t
+            mvx -= towardx * (comp_toward * atenuacao)
+            mvy -= towardy * (comp_toward * atenuacao)
+
+        push = intensidade * t * max(0.0, float(delta_time))
+        mvx += dirx * push
+        mvy += diry * push
+        return (mvx, mvy)

@@ -141,8 +141,8 @@ class ControladorObjetos:
         if ignorar_entidade_id is None and self.PlayerLocal is not None and getattr(self.PlayerLocal, "Ator", None) is not None:
             ignorar_entidade_id = getattr(self.PlayerLocal.Ator, "Id", None)
         self.RenderizarEntidades(tela, camera, ignorar_id=ignorar_entidade_id)
-        self.RenderizarEstruturas(tela, camera)
         self._renderizar_player_local(tela, camera)
+        self.RenderizarEstruturas(tela, camera)
 
     def _renderizar_player_local(self, tela, camera):
         if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:

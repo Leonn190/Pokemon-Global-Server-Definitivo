@@ -4,6 +4,7 @@ import time
 from SimuladorServerJogo.Ativador import registrar_diff, desconectar_client
 from SimuladorServerJogo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.EstadoServidor import adicionar_personagem, snapshot_estado
+from SimuladorServerJogo.GeradorMundo import obter_posicao_spawn
 
 
 def _resposta(status, mensagem, possui_personagem=None, personagem=None):
@@ -48,6 +49,17 @@ def processar_entrada_json(requisicao_json):
         if possui_personagem:
             personagem = dict(estado.get("personagens", {}).get(usuario, {}))
             personagem.setdefault("nome", usuario)
+            pos_personagem = personagem.get("posicao")
+            if not isinstance(pos_personagem, (list, tuple)) or len(pos_personagem) != 2:
+                from SimuladorServerJogo.EstadoServidor import _ESTADO_MUNDO, atualizar_posicao_personagem
+                spawn = obter_posicao_spawn(_ESTADO_MUNDO)
+                personagem["posicao"] = [float(spawn[0]), float(spawn[1])]
+                atualizar_posicao_personagem(usuario, personagem["posicao"])
+            elif float(pos_personagem[0]) == 0.0 and float(pos_personagem[1]) == 0.0:
+                from SimuladorServerJogo.EstadoServidor import _ESTADO_MUNDO, atualizar_posicao_personagem
+                spawn = obter_posicao_spawn(_ESTADO_MUNDO)
+                personagem["posicao"] = [float(spawn[0]), float(spawn[1])]
+                atualizar_posicao_personagem(usuario, personagem["posicao"])
             personagem.setdefault("posicao", (0.0, 0.0))
             ator = BANCO_DADOS.garantir_player(
                 usuario=usuario,

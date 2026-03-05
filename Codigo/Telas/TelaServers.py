@@ -178,12 +178,16 @@ def _abrir_subtela_criar_personagem(jogo):
         if not str(skin_val).lower().endswith(".png"):
             skin_val = f"{skin_val}.png"
 
-        jogo.INFO["PlayerDadosServer"] = {
-            "nome": usuario,
-            "skin": skin_val,
-            "pokemon_inicial": pokemon_nome or "Bulbasaur",
-            "posicao": (0.0, 0.0),
-        }
+        entrada = entrar_server(server.get("ip", ""), usuario)
+        personagem = entrada.get("personagem") if isinstance(entrada, dict) else None
+        if not isinstance(personagem, dict):
+            personagem = {}
+
+        personagem.setdefault("nome", usuario)
+        personagem.setdefault("skin", skin_val)
+        personagem.setdefault("pokemon_inicial", pokemon_nome or "Bulbasaur")
+
+        jogo.INFO["PlayerDadosServer"] = personagem
         jogo.CenaAlvo = "Carregamento"
 
     _SUBTELA_ATIVA = SubtelaCriarPersonagem(

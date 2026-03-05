@@ -70,11 +70,17 @@ class ControladorCenas:
         
         if self.Cena is not None:
             self.INFO.update({"UltimaCena": self.Cena.ID})
-            self.Cena.Finalizar(self)
+            preservando_mundo = self.Cena.ID == "Mundo" and self.CenaAlvo == "Menu" and self.INFO.get("MundoTelaSobreposta")
+            retornando_para_mundo = self.Cena.ID == "Menu" and self.CenaAlvo == "Mundo"
+            if not preservando_mundo and not retornando_para_mundo:
+                self.Cena.Finalizar(self)
         
-        self.Cena = self.Cenas[self.CenaAlvo]
+        alvo = self.CenaAlvo
+        cena_anterior = self.Cena
+        self.Cena = self.Cenas[alvo]
         self.CenaAlvo = None
-        self.Escuro = 100
+        if not (alvo == "Menu" and cena_anterior is not None and cena_anterior.ID == "Login"):
+            self.Escuro = 100
         self.Cena.Inicializar(self)
 
     def Rodar(self):

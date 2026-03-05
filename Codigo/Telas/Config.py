@@ -61,6 +61,9 @@ def _voltar_menu(Cena, JOGO):
     if isinstance(retorno, dict) and retorno.get("Cena") == "Mundo":
         JOGO.CenaAlvo = "Mundo"
         return
+    if getattr(JOGO.Cena, "ID", "") == "Mundo":
+        JOGO.Cena.TelaAtual = None
+        return
     Cena.DefinirTela("MenuPrincipal")
 
 

@@ -54,6 +54,17 @@ class ControladorCenas:
                 "shadow": False,
             },
         )
+        self.TextoCoords = Texto(
+            "",
+            pos=(self.TELA.get_width() - 16, 76),
+            style={
+                "size": 24,
+                "align": "topright",
+                "outline": True,
+                "outline_thickness": 1,
+                "shadow": False,
+            },
+        )
 
     def DefinirCena(self):
         
@@ -114,5 +125,15 @@ class ControladorCenas:
             self.TextoPing.set_pos((largura_tela - 16, 44))
             self.TextoPing.set_text("Ping: 5")
             self.TextoPing.draw(self.TELA)
+
+        if self.CONFIG.get("Cords Visiveis", False):
+            entidade_main = getattr(self.Cena, "EntidadeMain", None)
+            if entidade_main is not None and hasattr(entidade_main, "Posicao"):
+                x, y = entidade_main.Posicao
+                self.TextoCoords.set_text(f"Cords: X {x:.2f} | Y {y:.2f}")
+            else:
+                self.TextoCoords.set_text("Cords: --")
+            self.TextoCoords.set_pos((largura_tela - 16, 76))
+            self.TextoCoords.draw(self.TELA)
 
         aplicar_claridade(self.TELA, self.CONFIG.get("Claridade", 75))

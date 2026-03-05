@@ -35,6 +35,7 @@ class LeitorMundo:
         self._ativo = False
         self._fila_diffs_envio: List[Dict[str, object]] = []
         self._diffs_recebidas: List[Dict[str, object]] = []
+        self._versao_chunks = 0
 
     def conectar_servidor(self, link_servidor: str) -> None:
         self.ServerLink = str(link_servidor)
@@ -106,6 +107,7 @@ class LeitorMundo:
                 if pos is None:
                     continue
                 self.Chunks[(int(pos[0]), int(pos[1]))] = [list(linha) for linha in grid]
+                self._versao_chunks += 1
 
             for diff in pacote.get("diffs", []):
                 if not isinstance(diff, dict):
@@ -118,4 +120,5 @@ class LeitorMundo:
         with self._lock:
             return {
                 "chunks": dict(self.Chunks),
+                "versao_chunks": int(self._versao_chunks),
             }

@@ -15,6 +15,9 @@ class UnificadorInventario:
         self.Modo = "itens"
         self._rect = pygame.Rect(0, 0, 0, 0)
         self._botoes = []
+        self._tamanho_layout = None
+        self._overlay_cache = None
+        self._overlay_cache_size = None
 
         self.TelaPerfil = InventarioPerfil()
         self.TelaPokemons = InventarioPokemons()
@@ -24,6 +27,10 @@ class UnificadorInventario:
         self.Ativo = not self.Ativo
 
     def _recalcular_layout(self, tamanho_tela):
+        if self._tamanho_layout == tuple(tamanho_tela) and self._botoes:
+            return
+        self._tamanho_layout = tuple(tamanho_tela)
+
         largura, altura = tamanho_tela
         w = min(860, int(largura * 0.82))
         h = min(620, int(altura * 0.82))
@@ -47,15 +54,16 @@ class UnificadorInventario:
             return
         self._recalcular_layout(tamanho_tela)
 
-        for botao in self._botoes:
-            botao.render(pygame.display.get_surface(), eventos, dt, None)
 
     def desenhar(self, tela, eventos, dt):
         if not self.Ativo:
             return
-        overlay = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 160))
-        tela.blit(overlay, (0, 0))
+        tamanho_tela = tela.get_size()
+        if self._overlay_cache is None or self._overlay_cache_size != tamanho_tela:
+            self._overlay_cache = pygame.Surface(tamanho_tela, pygame.SRCALPHA)
+            self._overlay_cache.fill((0, 0, 0, 160))
+            self._overlay_cache_size = tamanho_tela
+        tela.blit(self._overlay_cache, (0, 0))
 
         pygame.draw.rect(tela, (30, 36, 54), self._rect, border_radius=14)
         pygame.draw.rect(tela, (100, 120, 170), self._rect, 2, border_radius=14)

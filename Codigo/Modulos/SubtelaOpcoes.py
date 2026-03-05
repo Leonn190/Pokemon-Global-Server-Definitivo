@@ -9,6 +9,10 @@ class SubtelaOpcoes:
     def __init__(self):
         self.Ativa = False
         self.Botoes = []
+        self._tamanho_layout = None
+        self._overlay_cache = None
+        self._overlay_cache_size = None
+        self._fonte = pygame.font.SysFont(None, 40)
 
     def toggle(self, jogo):
         self.Ativa = not self.Ativa
@@ -17,6 +21,11 @@ class SubtelaOpcoes:
 
     def _recalcular_layout(self, jogo):
         w, h = jogo.TELA.get_size()
+        tamanho = (w, h)
+        if self._tamanho_layout == tamanho and self.Botoes:
+            return
+
+        self._tamanho_layout = tamanho
         bw, bh = min(460, int(w * 0.44)), 82
         cx = w // 2 - bw // 2
         y0 = h // 2 - 150
@@ -47,12 +56,14 @@ class SubtelaOpcoes:
             return
         self._recalcular_layout(jogo)
 
-        overlay = pygame.Surface(jogo.TELA.get_size(), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 150))
-        jogo.TELA.blit(overlay, (0, 0))
+        tamanho_tela = jogo.TELA.get_size()
+        if self._overlay_cache is None or self._overlay_cache_size != tamanho_tela:
+            self._overlay_cache = pygame.Surface(tamanho_tela, pygame.SRCALPHA)
+            self._overlay_cache.fill((0, 0, 0, 150))
+            self._overlay_cache_size = tamanho_tela
+        jogo.TELA.blit(self._overlay_cache, (0, 0))
 
         mouse = pygame.mouse.get_pos()
-        fonte = pygame.font.SysFont(None, 40)
 
         for rect, texto, _ in self.Botoes:
             hover = rect.collidepoint(mouse)
@@ -60,7 +71,7 @@ class SubtelaOpcoes:
             cor_borda = (255, 220, 120) if hover else (16, 22, 42)
             pygame.draw.rect(jogo.TELA, cor_bg, rect, border_radius=16)
             pygame.draw.rect(jogo.TELA, cor_borda, rect, 2, border_radius=16)
-            surf = fonte.render(texto, True, (245, 246, 255))
+            surf = self._fonte.render(texto, True, (245, 246, 255))
             jogo.TELA.blit(surf, surf.get_rect(center=rect.center))
 
     def _acao_voltar(self, jogo):

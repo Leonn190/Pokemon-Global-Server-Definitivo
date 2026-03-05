@@ -6,6 +6,8 @@ import threading
 import time
 from typing import Callable, Dict, List, Optional, Tuple
 
+import pygame
+
 Vector2 = Tuple[float, float]
 PacoteMundo = Dict[str, object]
 
@@ -37,6 +39,14 @@ class LeitorMundo:
         self._diffs_recebidas: List[Dict[str, object]] = []
         self._versao_chunks = 0
         self.MetaMundo: Dict[str, object] = {}
+        self.TamanhoChunkBlocos = 32
+        self.CoresBlocos = {
+            0: (14, 40, 92),
+            1: (72, 162, 231),
+            2: (230, 210, 146),
+            3: (124, 204, 108),
+            4: (56, 128, 64),
+        }
 
     def conectar_servidor(self, link_servidor: str) -> None:
         self.ServerLink = str(link_servidor)
@@ -105,14 +115,18 @@ class LeitorMundo:
             meta = pacote.get("meta", {})
             if isinstance(meta, dict):
                 self.MetaMundo.update(meta)
+                if meta.get("chunk_tamanho") is not None:
+                    self.TamanhoChunkBlocos = max(1, int(meta.get("chunk_tamanho")))
 
+            chunks_atuais: Dict[Tuple[int, int], List[List[int]]] = {}
             for chunk in pacote.get("chunks", []):
                 pos = chunk.get("pos")
                 grid = chunk.get("grid", [])
                 if pos is None:
                     continue
-                self.Chunks[(int(pos[0]), int(pos[1]))] = [list(linha) for linha in grid]
-                self._versao_chunks += 1
+                chunks_atuais[(int(pos[0]), int(pos[1]))] = [list(linha) for linha in grid]
+            self.Chunks = chunks_atuais
+            self._versao_chunks += 1
 
             for diff in pacote.get("diffs", []):
                 if not isinstance(diff, dict):
@@ -128,3 +142,30 @@ class LeitorMundo:
                 "versao_chunks": int(self._versao_chunks),
                 "meta": dict(self.MetaMundo),
             }
+
+    def renderizar_mundo(self, tela) -> None:
+        estado = self.snapshot()
+        chunks = estado.get("chunks", {}) if isinstance(estado, dict) else {}
+        if not isinstance(chunks, dict):
+            return
+        tile_px = max(1, int(getattr(self.Camera, "TilePx", 1)))
+        tamanho_chunk = max(1, int(self.TamanhoChunkBlocos))
+
+        limites = getattr(self.Camera, "LimitesMundoTiles", None)
+        repeticoes_x = (0,)
+        repeticoes_y = (0,)
+        if limites:
+            largura, altura = limites
+            repeticoes_x = (-largura, 0, largura)
+            repeticoes_y = (-altura, 0, altura)
+
+        for (chunk_x, chunk_y), grid in chunks.items():
+            origem_x = int(chunk_x) * tamanho_chunk
+            origem_y = int(chunk_y) * tamanho_chunk
+            for by, linha in enumerate(grid):
+                for bx, bloco in enumerate(linha):
+                    cor = self.CoresBlocos.get(int(bloco), (255, 0, 255))
+                    for off_x in repeticoes_x:
+                        for off_y in repeticoes_y:
+                            px, py = self.Camera.mundo_para_tela_px((origem_x + bx + off_x, origem_y + by + off_y))
+                            pygame.draw.rect(tela, cor, (int(px), int(py), tile_px + 1, tile_px + 1))

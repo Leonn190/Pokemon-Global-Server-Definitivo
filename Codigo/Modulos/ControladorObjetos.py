@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, List
 
 import pygame
 
@@ -10,6 +10,29 @@ import pygame
 class ControladorObjetos:
     def __init__(self):
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
+        self.PlayerLocal = None
+        self._fila_diffs_envio: List[Dict[str, object]] = []
+
+
+    def definir_player_local(self, player) -> None:
+        self.PlayerLocal = player
+
+    def atualizar_player_local(self, eventos, dt, mouse_pos_mundo_tiles) -> None:
+        if self.PlayerLocal is None:
+            return
+        self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
+
+    def registrar_diff_local(self, diff) -> None:
+        if not isinstance(diff, dict):
+            return
+        self.aplicar_diff(diff)
+        self._fila_diffs_envio.append(dict(diff))
+
+    def enviar_diffs_pendentes(self, callback_envio) -> None:
+        if not callable(callback_envio):
+            return
+        while self._fila_diffs_envio:
+            callback_envio(self._fila_diffs_envio.pop(0))
 
     def aplicar_diff(self, diff):
         if not isinstance(diff, dict):

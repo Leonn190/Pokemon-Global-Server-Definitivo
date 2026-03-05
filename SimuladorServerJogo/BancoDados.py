@@ -4,17 +4,21 @@ from __future__ import annotations
 
 import math
 import threading
-import time
 from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
-from SimuladorServerJogo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, GameObjetoServer
+from SimuladorServerJogo.GeradorMundo import (
+    BLOCO_TAMANHO_PX,
+    CHUNK_BLOCOS,
+    carregar_ou_criar_estado_mundo,
+)
+from SimuladorServerJogo.ObjetosMundoServer import AtorServer, GameObjetoServer
 
 Vector2 = Tuple[float, float]
 
 
 class BancoDadosMundo:
-    def __init__(self, tamanho_celula: int = 256, chunk_tamanho_px: int = 512) -> None:
+    def __init__(self, tamanho_celula: int = 256, chunk_tamanho_px: int = CHUNK_BLOCOS * BLOCO_TAMANHO_PX) -> None:
         self._lock = threading.Lock()
         self._objetos: Dict[int, GameObjetoServer] = {}
         self._usuarios_para_objeto: Dict[str, int] = {}
@@ -22,7 +26,13 @@ class BancoDadosMundo:
         self._next_id = 1000
         self._tamanho_celula = max(64, int(tamanho_celula))
         self._chunk_tamanho_px = max(128, int(chunk_tamanho_px))
-        self._cache_chunks: Dict[Tuple[int, int], List[List[int]]] = {}
+
+        self._estado_mundo = carregar_ou_criar_estado_mundo()
+        self._grid = self._estado_mundo.get("grid", [])
+        meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
+        self._chunk_blocos = int(meta.get("chunk_blocos", CHUNK_BLOCOS))
+        self._largura_blocos = int(meta.get("largura_blocos", len(self._grid[0]) if self._grid else 0))
+        self._altura_blocos = int(meta.get("altura_blocos", len(self._grid)))
 
     def gerar_id(self) -> int:
         with self._lock:
@@ -81,6 +91,13 @@ class BancoDadosMundo:
         with self._lock:
             return self._objetos.get(int(objeto_id))
 
+    def usuario_por_objeto_id(self, objeto_id: int) -> Optional[str]:
+        with self._lock:
+            for usuario, oid in self._usuarios_para_objeto.items():
+                if oid == int(objeto_id):
+                    return usuario
+        return None
+
     def buscar_proximos(self, posicao: Vector2, raio: float) -> List[GameObjetoServer]:
         raio = max(0.0, float(raio))
         cx, cy = self._celula(posicao)
@@ -93,12 +110,7 @@ class BancoDadosMundo:
             objetos = [self._objetos[i] for i in ids if i in self._objetos]
 
         px, py = posicao
-        filtrados = [o for o in objetos if math.hypot(o.posicao[0] - px, o.posicao[1] - py) <= raio]
-        return filtrados
-
-    def listar_todos(self) -> List[GameObjetoServer]:
-        with self._lock:
-            return list(self._objetos.values())
+        return [o for o in objetos if math.hypot(o.posicao[0] - px, o.posicao[1] - py) <= raio]
 
     def garantir_player(self, usuario: str, skin: str, posicao: Vector2 = (0.0, 0.0)) -> AtorServer:
         with self._lock:
@@ -106,6 +118,8 @@ class BancoDadosMundo:
             if objeto_id and objeto_id in self._objetos:
                 obj = self._objetos[objeto_id]
                 if isinstance(obj, AtorServer):
+                    obj.estado_extra["skin"] = skin
+                    obj.definir_posicao(float(posicao[0]), float(posicao[1]))
                     return obj
 
             novo_id = self._next_id
@@ -116,33 +130,23 @@ class BancoDadosMundo:
             self._indice_espacial[self._celula(ator.posicao)].add(ator.Id)
             return ator
 
-    def garantir_estruturas_iniciais(self) -> List[EstruturaNaturalServer]:
-        estruturas: List[EstruturaNaturalServer] = []
-        with self._lock:
-            if any(obj.estado_extra.get("subtipo") == "arvore" for obj in self._objetos.values()):
-                return estruturas
-            for idx, pos in enumerate(((200.0, -120.0), (-160.0, 210.0), (420.0, 380.0)), start=1):
-                novo_id = self._next_id
-                self._next_id += 1
-                estrutura = EstruturaNaturalServer(id_objeto=novo_id, tipo="arvore", posicao=pos, recursos={"madeira": 4 + idx})
-                self._objetos[novo_id] = estrutura
-                self._indice_espacial[self._celula(estrutura.posicao)].add(novo_id)
-                estruturas.append(estrutura)
-        return estruturas
+    def chunk_em_grade(self, chunk_xy: Tuple[int, int]) -> List[List[int]]:
+        cx, cy = chunk_xy
+        x0 = cx * self._chunk_blocos
+        y0 = cy * self._chunk_blocos
 
-    def chunk_em_grade(self, chunk_xy: Tuple[int, int], tamanho: int = 8) -> List[List[int]]:
-        with self._lock:
-            if chunk_xy in self._cache_chunks:
-                return self._cache_chunks[chunk_xy]
-            cx, cy = chunk_xy
-            grid = []
-            for y in range(tamanho):
-                linha = []
-                for x in range(tamanho):
-                    linha.append((abs((cx * 31 + x * 7) ^ (cy * 17 + y * 13)) % 5))
-                grid.append(linha)
-            self._cache_chunks[chunk_xy] = grid
-            return grid
+        grid: List[List[int]] = []
+        for by in range(self._chunk_blocos):
+            gy = y0 + by
+            linha: List[int] = []
+            for bx in range(self._chunk_blocos):
+                gx = x0 + bx
+                if 0 <= gy < self._altura_blocos and 0 <= gx < self._largura_blocos:
+                    linha.append(int(self._grid[gy][gx]))
+                else:
+                    linha.append(0)
+            grid.append(linha)
+        return grid
 
     def chunks_proximos(self, posicao: Vector2, raio_chunks: int = 1) -> List[Tuple[int, int]]:
         cpx = int(math.floor(posicao[0] / self._chunk_tamanho_px))

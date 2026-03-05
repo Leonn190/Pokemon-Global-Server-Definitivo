@@ -1,6 +1,10 @@
 import threading
 
+from SimuladorServerJogo.GeradorMundo import carregar_ou_criar_estado_mundo, obter_posicao_spawn, salvar_estado_mundo
+
 _CHAVE_SEGURANCA = "1900"
+_ESTADO_MUNDO = carregar_ou_criar_estado_mundo()
+_POSICAO_SPAWN = obter_posicao_spawn(_ESTADO_MUNDO)
 
 _ESTADO = {
     "nome": "Servidor Indigo",
@@ -8,12 +12,16 @@ _ESTADO = {
     "ligado": True,
     "mundo_existente": True,
     "banidos": {"JogadorBanido"},
-    "jogadores_com_personagem": set(),
-    "personagens": {
-    },
+    "jogadores_com_personagem": set(_ESTADO_MUNDO.get("players", {}).keys()),
+    "personagens": dict(_ESTADO_MUNDO.get("players", {})),
 }
 
 _LOCK = threading.Lock()
+
+
+def _persistir_personagens() -> None:
+    _ESTADO_MUNDO["players"] = _ESTADO["personagens"]
+    salvar_estado_mundo(_ESTADO_MUNDO)
 
 
 def chave_seguranca():
@@ -50,9 +58,24 @@ def adicionar_personagem(usuario, skin, pokemon_inicial):
 
         _ESTADO["jogadores_com_personagem"].add(usuario)
         _ESTADO["personagens"][usuario] = {
+            "nome": usuario,
             "skin": skin,
             "pokemon_inicial": pokemon_inicial,
-            "posicao": (0.0, 0.0),
+            "posicao": [_POSICAO_SPAWN[0], _POSICAO_SPAWN[1]],
         }
+        _persistir_personagens()
 
     return True, "Personagem criado com sucesso"
+
+
+def atualizar_posicao_personagem(usuario, posicao):
+    if not usuario:
+        return
+
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(usuario)
+        if personagem is None:
+            return
+
+        personagem["posicao"] = [float(posicao[0]), float(posicao[1])]
+        _persistir_personagens()

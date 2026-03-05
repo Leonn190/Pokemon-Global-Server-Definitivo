@@ -26,6 +26,9 @@ class PlayerController:
         self._stamina_alpha = 0.0
         self.InventarioAberto = False
         self._tempo_respiracao = 0.0
+        self._tempo_diff_pos = 0.0
+        self._tempo_diff_angulo = 0
+        self._ultimo_angulo_emitido = None
 
         self.BarraStamina = Barra(pygame.Rect(0, 0, 52, 8), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
         self.BarraStamina.cor_fundo = (16, 22, 30)
@@ -67,7 +70,10 @@ class PlayerController:
         px, py = camera.mundo_para_tela_px(self.Ator.Posicao)
         self.BarraStamina.rect.midbottom = (int(px), int(py - 26))
         bar_surf = pygame.Surface(self.BarraStamina.rect.size, pygame.SRCALPHA)
+        rect_original = self.BarraStamina.rect.copy()
+        self.BarraStamina.rect.topleft = (0, 0)
         self.BarraStamina._desenhar_barra(bar_surf)
+        self.BarraStamina.rect = rect_original
         bar_surf.set_alpha(int(self._stamina_alpha))
         tela.blit(bar_surf, self.BarraStamina.rect.topleft)
 
@@ -80,6 +86,9 @@ class PlayerController:
             self.CallbackDiff({"tipo": tipo, "objeto_id": getattr(self.Ator, "Id", None), "payload": payload})
 
     def _emitir_diff_update_posicao(self):
+        if self._tempo_diff_pos < 0.05:
+            return
+        self._tempo_diff_pos = 0.0
         self._emitir_diff("update", {"posicao": [self.Ator.Posicao[0], self.Ator.Posicao[1]]})
 
     def _emitir_diff_update_perfil(self):
@@ -125,9 +134,10 @@ class PlayerController:
             return None
 
     def _em_agua_funda(self):
-        return self._tile_atual() in {0, 1}
+        return self._tile_atual() in {0, 1, 2}
 
     def _processar_movimento(self, dt):
+        self._tempo_diff_pos += dt
         teclas = pygame.key.get_pressed()
         eixo_x = 0.0
         eixo_y = 0.0
@@ -180,6 +190,7 @@ class PlayerController:
             self._emitir_diff_update_perfil()
 
     def _processar_rotacao(self, mouse_pos_mundo_tiles):
+        self._tempo_diff_angulo += 1
         px, py = self.Ator.Posicao
         mx, my = mouse_pos_mundo_tiles
 
@@ -195,6 +206,12 @@ class PlayerController:
             return
         angulo = math.degrees(math.atan2(-dy, dx))
         self.Ator.definir_angulo_olhar(angulo)
+        if self._tempo_diff_angulo < 3:
+            return
+        self._tempo_diff_angulo = 0
+        if self._ultimo_angulo_emitido is not None and abs(angulo - self._ultimo_angulo_emitido) < 0.5:
+            return
+        self._ultimo_angulo_emitido = angulo
         self._emitir_diff("update", {"estado": {"angulo": angulo}})
 
     def _atualizar_tapa_automatico(self):

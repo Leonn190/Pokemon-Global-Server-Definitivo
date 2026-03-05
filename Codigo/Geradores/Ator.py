@@ -55,6 +55,9 @@ class Ator(Entidade):
     def iniciar_tapa(self) -> None:
         self._tempo_tapa = self._duracao_tapa
 
+    def esta_tapando(self) -> bool:
+        return self._tempo_tapa > 0.0
+
     def Tapar(self) -> None:
         """Alias em PT para compatibilidade."""
         self.iniciar_tapa()
@@ -63,12 +66,16 @@ class Ator(Entidade):
         if self._tempo_tapa > 0.0:
             self._tempo_tapa = max(0.0, self._tempo_tapa - max(0.0, float(dt)))
 
+    def _progresso_tapa(self) -> float:
+        if self._tempo_tapa <= 0.0:
+            return 0.0
+        return 1.0 - (self._tempo_tapa / self._duracao_tapa)
+
     def _alcance_tapa_px(self) -> float:
         if self._tempo_tapa <= 0.0:
             return 0.0
 
-        progresso = 1.0 - (self._tempo_tapa / self._duracao_tapa)
-        # pico no meio (ida e volta)
+        progresso = self._progresso_tapa()
         fase = 1.0 - abs(1.0 - (progresso * 2.0))
         return max(0.0, fase) * 0.55
 
@@ -80,6 +87,7 @@ class Ator(Entidade):
             mouse_pos=mouse_pos,
             angulo_graus=self.AnguloOlhar,
             alcance_tapa=self._alcance_tapa_px(),
+            progresso_tapa=self._progresso_tapa(),
         )
 
         if self._tempo_tapa > 0.0:

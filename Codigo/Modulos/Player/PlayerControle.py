@@ -6,23 +6,67 @@ import math
 
 import pygame
 
+from Codigo.Prefabs.Barra import Barra
+
 
 class PlayerController:
-    def __init__(self, ator, velocidade_tiles=4.8, callback_diff=None):
+    def __init__(self, ator, perfil, inventario, velocidade_tiles=4.8, callback_diff=None):
         self.Ator = ator
+        self.Perfil = perfil
+        self.Inventario = inventario
         self.VelocidadeTiles = float(velocidade_tiles)
         self.CallbackDiff = callback_diff
         self.LimitesMundoTiles = None
+        self._grid_chunks = {}
+        self._chunk_blocos = 32
+        self._tempo_sem_gastar_stamina = 0.0
+        self._batendo = False
+        self._soltar_apos_tapa_atual = False
+        self._consumindo_stamina = False
+        self._stamina_alpha = 0.0
+
+        self.BarraStamina = Barra(pygame.Rect(0, 0, 52, 8), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
+        self.BarraStamina.cor_fundo = (16, 22, 30)
+        self.BarraStamina.cor_borda = (180, 210, 255)
+        self.BarraStamina.cor_preenchimento = (86, 220, 125)
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles):
         dt = max(0.0, float(dt))
+        self._processar_scroll_inventario(eventos)
         self._processar_input_tapa(eventos)
         self._processar_rotacao(mouse_pos_mundo_tiles)
-        moveu = self._processar_movimento(dt)
+        moveu, correndo, em_agua_funda = self._processar_movimento(dt)
+        self._atualizar_stamina(dt, correndo, em_agua_funda)
+        self._atualizar_tapa_automatico()
         self.Ator.atualizar(dt)
         self.Ator.atualizar_colisor_mao_mundo()
         if moveu:
             self._emitir_diff_update_posicao()
+
+    def renderizar_stamina(self, tela, camera, dt):
+        dt = max(0.0, float(dt))
+        self.BarraStamina.maximo = max(1.0, float(self.Perfil.StaminaMax))
+        self.BarraStamina.set_valor(float(self.Perfil.Stamina))
+        self.BarraStamina.atualizar(dt)
+
+        cheio = self.Perfil.Stamina >= (self.Perfil.StaminaMax - 0.001)
+        alvo_alpha = 255.0 if (self._consumindo_stamina or not cheio) else 0.0
+        velocidade = 10.0 if alvo_alpha > self._stamina_alpha else 6.0
+        self._stamina_alpha += (alvo_alpha - self._stamina_alpha) * min(1.0, dt * velocidade)
+
+        if self._stamina_alpha <= 1.0:
+            return
+
+        px, py = camera.mundo_para_tela_px(self.Ator.Posicao)
+        self.BarraStamina.rect.midbottom = (int(px), int(py - 26))
+        bar_surf = pygame.Surface(self.BarraStamina.rect.size, pygame.SRCALPHA)
+        self.BarraStamina._desenhar_barra(bar_surf)
+        bar_surf.set_alpha(int(self._stamina_alpha))
+        tela.blit(bar_surf, self.BarraStamina.rect.topleft)
+
+    def definir_grid_chunks(self, chunks, chunk_blocos=32):
+        self._grid_chunks = dict(chunks) if isinstance(chunks, dict) else {}
+        self._chunk_blocos = max(1, int(chunk_blocos))
 
     def _emitir_diff(self, tipo, payload):
         if callable(self.CallbackDiff):
@@ -31,6 +75,8 @@ class PlayerController:
     def _emitir_diff_update_posicao(self):
         self._emitir_diff("update", {"posicao": [self.Ator.Posicao[0], self.Ator.Posicao[1]]})
 
+    def _emitir_diff_update_perfil(self):
+        self._emitir_diff("update", {"perfil": self.Perfil.serializar()})
 
     def definir_limites_mundo(self, largura_tiles, altura_tiles):
         try:
@@ -55,6 +101,25 @@ class PlayerController:
         px, py = self.Ator.Posicao
         self.Ator.definir_posicao(px % largura, py % altura)
 
+    def _tile_atual(self):
+        x, y = self.Ator.Posicao
+        bx = int(math.floor(x))
+        by = int(math.floor(y))
+        cx = bx // self._chunk_blocos
+        cy = by // self._chunk_blocos
+        chunk = self._grid_chunks.get((cx, cy))
+        if chunk is None:
+            return None
+        lx = bx % self._chunk_blocos
+        ly = by % self._chunk_blocos
+        try:
+            return int(chunk[ly][lx])
+        except (IndexError, TypeError, ValueError):
+            return None
+
+    def _em_agua_funda(self):
+        return self._tile_atual() in {0, 1}
+
     def _processar_movimento(self, dt):
         teclas = pygame.key.get_pressed()
         eixo_x = 0.0
@@ -74,10 +139,38 @@ class PlayerController:
             eixo_x /= mag
             eixo_y /= mag
 
+        deslocando = mag > 0
+        em_agua_funda = self._em_agua_funda() and deslocando
+        shift = teclas[pygame.K_LSHIFT] or teclas[pygame.K_RSHIFT]
+        correndo = deslocando and shift and self.Perfil.Stamina > 0.0
+        mult = 1.4 if correndo else 1.0
+
         antes = self.Ator.Posicao
-        self.Ator.mover(eixo_x * self.VelocidadeTiles * dt, eixo_y * self.VelocidadeTiles * dt)
+        self.Ator.mover(eixo_x * self.VelocidadeTiles * mult * dt, eixo_y * self.VelocidadeTiles * mult * dt)
         self._aplicar_loop_mundo()
-        return self.Ator.Posicao != antes
+        return self.Ator.Posicao != antes, correndo, em_agua_funda
+
+    def _atualizar_stamina(self, dt, correndo, em_agua_funda):
+        stamina_antes = self.Perfil.Stamina
+
+        custo = 0.0
+        if correndo:
+            custo += 10.0
+        if em_agua_funda:
+            custo += 5.0
+
+        if custo > 0.0:
+            self.Perfil.consumir_stamina(custo * dt)
+            self._tempo_sem_gastar_stamina = 0.0
+            self._consumindo_stamina = True
+        else:
+            self._consumindo_stamina = False
+            self._tempo_sem_gastar_stamina += dt
+            if self._tempo_sem_gastar_stamina >= 1.5:
+                self.Perfil.regenerar_stamina(15.0 * dt)
+
+        if abs(self.Perfil.Stamina - stamina_antes) > 0.001:
+            self._emitir_diff_update_perfil()
 
     def _processar_rotacao(self, mouse_pos_mundo_tiles):
         px, py = self.Ator.Posicao
@@ -97,8 +190,33 @@ class PlayerController:
         self.Ator.definir_angulo_olhar(angulo)
         self._emitir_diff("update", {"estado": {"angulo": angulo}})
 
-    def _processar_input_tapa(self, eventos):
+    def _atualizar_tapa_automatico(self):
+        if self._batendo and not self.Ator.esta_tapando():
+            if self._soltar_apos_tapa_atual:
+                self._batendo = False
+                self._soltar_apos_tapa_atual = False
+                return
+            self.Ator.iniciar_tapa()
+            self._emitir_diff("update", {"estado": {"tapa": True}})
+
+    def _processar_scroll_inventario(self, eventos):
         for evento in eventos:
-            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                self.Ator.iniciar_tapa()
-                self._emitir_diff("update", {"estado": {"tapa": True}})
+            if evento.type == pygame.MOUSEWHEEL:
+                self.Inventario.mudar_slot_por_scroll(-evento.y)
+
+    def _processar_input_tapa(self, eventos):
+        sem_item_na_mao = self.Inventario.item_na_mao() is None
+        for evento in eventos:
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1 and sem_item_na_mao:
+                self._batendo = True
+                self._soltar_apos_tapa_atual = False
+                if not self.Ator.esta_tapando():
+                    self.Ator.iniciar_tapa()
+                    self._emitir_diff("update", {"estado": {"tapa": True}})
+
+            if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
+                if self.Ator.esta_tapando():
+                    self._soltar_apos_tapa_atual = True
+                else:
+                    self._batendo = False
+                    self._soltar_apos_tapa_atual = False

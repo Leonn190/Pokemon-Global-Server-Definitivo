@@ -42,6 +42,23 @@ def _clamp_posicao(posicao):
     return (x, y)
 
 
+def _normalizar_perfil(personagem: dict) -> dict:
+    dados = dict(personagem) if isinstance(personagem, dict) else {}
+    dados["nivel_mochila"] = int(dados.get("nivel_mochila", 1))
+    dados["batalhas_pvp_vencidas"] = int(dados.get("batalhas_pvp_vencidas", 0))
+    dados["batalhas_bot_vencidas"] = int(dados.get("batalhas_bot_vencidas", 0))
+    dados["ouro"] = int(dados.get("ouro", 0))
+    dados["passos_caminhados"] = int(dados.get("passos_caminhados", 0))
+    dados["insignias"] = list(dados.get("insignias", []))
+    dados["maestria"] = int(dados.get("maestria", 0))
+    dados["skins_liberadas"] = list(dados.get("skins_liberadas", []))
+    stamina_max = max(1.0, float(dados.get("stamina_max", 100.0)))
+    stamina = max(0.0, min(stamina_max, float(dados.get("stamina", stamina_max))))
+    dados["stamina_max"] = stamina_max
+    dados["stamina"] = stamina
+    return dados
+
+
 def _recarregar_mundo():
     global _ESTADO_MUNDO
     _ESTADO_MUNDO = carregar_ou_criar_estado_mundo()
@@ -119,12 +136,14 @@ def adicionar_personagem(usuario, skin, pokemon_inicial):
         _recarregar_mundo()
         spawn = obter_posicao_spawn(_ESTADO_MUNDO)
 
-        _ESTADO["personagens"][usuario] = {
-            "nome": usuario,
-            "skin": skin,
-            "pokemon_inicial": pokemon_inicial,
-            "posicao": [spawn[0], spawn[1]],
-        }
+        _ESTADO["personagens"][usuario] = _normalizar_perfil(
+            {
+                "nome": usuario,
+                "skin": skin,
+                "pokemon_inicial": pokemon_inicial,
+                "posicao": [spawn[0], spawn[1]],
+            }
+        )
         _persistir_personagens()
 
     return True, "Personagem criado com sucesso"
@@ -141,4 +160,16 @@ def atualizar_posicao_personagem(usuario, posicao):
 
         x, y = _clamp_posicao(posicao)
         personagem["posicao"] = [x, y]
+        _persistir_personagens()
+
+
+def atualizar_perfil_personagem(usuario, perfil):
+    if not usuario or not isinstance(perfil, dict):
+        return
+
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(usuario)
+        if personagem is None:
+            return
+        personagem.update(_normalizar_perfil(perfil))
         _persistir_personagens()

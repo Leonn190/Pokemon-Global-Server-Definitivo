@@ -60,7 +60,7 @@ class DesenhaAtor:
         self.escala = max(0.2, float(escala))
         self._skin = self._redimensionar_skin(self._skin_original)
 
-    def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0):
+    def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0, progresso_tapa=0.0):
         cx, cy = centro
 
         if angulo_graus is None:
@@ -100,9 +100,11 @@ class DesenhaAtor:
         dist_vertical = int(base * 0.02)
 
         empurrao_tapa = max(0.0, float(alcance_tapa))
+        progresso = max(0.0, min(1.0, float(progresso_tapa)))
+        desvio_lateral = math.sin(progresso * math.pi) * (base * 0.10)
         mao_esq = (
-            int(cx - px * dist_lateral + vx * empurrao_tapa),
-            int(cy - py * dist_lateral + vy * empurrao_tapa - dist_vertical),
+            int(cx - px * (dist_lateral - desvio_lateral) + vx * empurrao_tapa),
+            int(cy - py * (dist_lateral - desvio_lateral) + vy * empurrao_tapa - dist_vertical),
         )
         mao_dir = (int(cx + px * dist_lateral), int(cy + py * dist_lateral - dist_vertical))
 

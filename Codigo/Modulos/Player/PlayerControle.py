@@ -24,6 +24,7 @@ class PlayerController:
         self._soltar_apos_tapa_atual = False
         self._consumindo_stamina = False
         self._stamina_alpha = 0.0
+        self.InventarioAberto = False
 
         self.BarraStamina = Barra(pygame.Rect(0, 0, 52, 8), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
         self.BarraStamina.cor_fundo = (16, 22, 30)
@@ -32,6 +33,9 @@ class PlayerController:
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles):
         dt = max(0.0, float(dt))
+        self._processar_toggle_inventario(eventos)
+        if self.InventarioAberto:
+            return
         self._processar_scroll_inventario(eventos)
         self._processar_input_tapa(eventos)
         self._processar_rotacao(mouse_pos_mundo_tiles)
@@ -220,3 +224,9 @@ class PlayerController:
                 else:
                     self._batendo = False
                     self._soltar_apos_tapa_atual = False
+
+    def _processar_toggle_inventario(self, eventos):
+        for evento in eventos:
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_e:
+                self.InventarioAberto = not self.InventarioAberto
+                break

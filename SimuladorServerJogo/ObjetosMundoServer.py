@@ -82,10 +82,20 @@ class EstruturaNaturalServer(EstruturaServer):
         posicao: Vector2 = (0.0, 0.0),
         raio_colisao: float = 20.0,
         raio_interacao: float = 26.0,
+        campo: float = 0.0,
+        intensidade: float = 0.0,
         recursos: Optional[Dict[str, int]] = None,
         codigo_natural: int = 0,
     ):
         super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=raio_colisao, raio_interacao=raio_interacao)
+        super().__init__(
+            id_objeto=id_objeto,
+            posicao=posicao,
+            raio_colisao=raio_colisao,
+            raio_interacao=raio_interacao,
+            campo=campo,
+            intensidade=intensidade,
+        )
         self.estado_extra.update({"subtipo": tipo, "recursos": dict(recursos or {})})
         self.nome = str(nome)
         self.sprite = str(sprite)

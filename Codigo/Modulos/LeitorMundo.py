@@ -36,6 +36,7 @@ class LeitorMundo:
         self._fila_diffs_envio: List[Dict[str, object]] = []
         self._diffs_recebidas: List[Dict[str, object]] = []
         self._versao_chunks = 0
+        self.MetaMundo: Dict[str, object] = {}
 
     def conectar_servidor(self, link_servidor: str) -> None:
         self.ServerLink = str(link_servidor)
@@ -101,6 +102,10 @@ class LeitorMundo:
 
     def _aplicar_pacote(self, pacote: PacoteMundo) -> None:
         with self._lock:
+            meta = pacote.get("meta", {})
+            if isinstance(meta, dict):
+                self.MetaMundo.update(meta)
+
             for chunk in pacote.get("chunks", []):
                 pos = chunk.get("pos")
                 grid = chunk.get("grid", [])
@@ -121,4 +126,5 @@ class LeitorMundo:
             return {
                 "chunks": dict(self.Chunks),
                 "versao_chunks": int(self._versao_chunks),
+                "meta": dict(self.MetaMundo),
             }

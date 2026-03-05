@@ -146,13 +146,21 @@ def processar_ativador_json(requisicao_json: str) -> str:
 
         _prune_diff_log()
 
+    largura_blocos, altura_blocos = BANCO_DADOS.limites_mundo()
+
     resposta = {
         "status": "ok",
         "mensagem": "Ativador processado",
         "client_id": client_id,
         "chunks": chunks,
         "diffs": sorted(diffs, key=lambda d: d["seq"]),
-        "meta": {"total_diffs": len(diffs), "total_chunks": len(chunks)},
+        "meta": {
+            "total_diffs": len(diffs),
+            "total_chunks": len(chunks),
+            "largura_blocos": int(largura_blocos),
+            "altura_blocos": int(altura_blocos),
+            "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()),
+        },
     }
     return json.dumps(resposta, ensure_ascii=False)
 

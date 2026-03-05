@@ -21,25 +21,12 @@ class CenaMundo:
 
         self.Camera = None
         self.LeitorMundo = None
-        self._cache_chunks_surface = {}
-        self._cache_chunk_memoria = {}
-        self._ordem_chunk_memoria = []
-        self._limite_chunk_memoria = 320
         self.ControladorObjetos = ControladorObjetos()
         self.EntidadeMain = None
         self.Player = None
         self.SubtelaOpcoes = SubtelaOpcoes()
         self._desconectado = False
         self.TelaAtual = None
-
-        self.TamanhoChunkBlocos = 32
-        self.CoresBlocos = {
-            0: (14, 40, 92),
-            1: (72, 162, 231),
-            2: (230, 210, 146),
-            3: (124, 204, 108),
-            4: (56, 128, 64),
-        }
 
         self._montar_mundo(JOGO)
 
@@ -85,10 +72,12 @@ class CenaMundo:
 
         self.Player = Player(
             ator=self.EntidadeMain,
-            callback_diff=self.LeitorMundo.enfileirar_diff,
+            callback_diff=self.ControladorObjetos.registrar_diff_local,
             velocidade_tiles=4.8,
         )
         self.Player.Perfil.aplicar_serializado(dados)
+        self.ControladorObjetos.definir_player_local(self.Player)
+        self._sincronizar_player_no_controlador()
 
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
@@ -104,23 +93,21 @@ class CenaMundo:
         if not self.SubtelaOpcoes.Ativa and self.TelaAtual != "Config":
             mouse_tela = pygame.mouse.get_pos()
             mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)
-            self.Player.Controle.atualizar(EVENTOS, dt, mouse_mundo_tiles)
+            self.ControladorObjetos.atualizar_player_local(EVENTOS, dt, mouse_mundo_tiles)
 
         self.Camera.atualizar(dt)
+        self.ControladorObjetos.enviar_diffs_pendentes(self.LeitorMundo.enfileirar_diff)
 
         for diff in self.LeitorMundo.consumir_diffs_recebidas():
             self.ControladorObjetos.aplicar_diff(diff)
 
         self._atualizar_limites_loop_mundo()
-        self._atualizar_cache_mundo()
+        self._atualizar_grid_chunks_player()
+        self._sincronizar_player_no_controlador()
 
         JOGO.TELA.fill((20, 20, 28))
-        self._desenhar_mundo(JOGO)
-
-        pos_tela_main = self.Camera.mundo_para_tela_px(self.EntidadeMain.Posicao)
-        self.EntidadeMain.desenhar(JOGO.TELA, mouse_pos=pygame.mouse.get_pos(), posicao_tela=pos_tela_main)
-        ignorar_id_main = getattr(self.EntidadeMain, "Id", None)
-        self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera, ignorar_entidade_id=ignorar_id_main)
+        self.LeitorMundo.renderizar_mundo(JOGO.TELA)
+        self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera)
 
         self.Player.Controle.renderizar_stamina(JOGO.TELA, self.Camera, dt)
         self.Player.Hud.desenhar(JOGO.TELA, self.Player.Inventario)
@@ -145,75 +132,33 @@ class CenaMundo:
         if self.Camera:
             self.Camera.definir_limites_mundo(largura, altura)
 
-    def _atualizar_cache_mundo(self):
-        estado = self.LeitorMundo.snapshot() if self.LeitorMundo else {"chunks": {}}
-        chunks = estado.get("chunks", {})
+    def _atualizar_grid_chunks_player(self):
+        if not self.Player or not self.LeitorMundo:
+            return
+        estado = self.LeitorMundo.snapshot()
+        chunks = estado.get("chunks", {}) if isinstance(estado, dict) else {}
         if not isinstance(chunks, dict):
             chunks = {}
+        self.Player.Controle.definir_grid_chunks(chunks, self.LeitorMundo.TamanhoChunkBlocos)
 
-        for (chunk_x, chunk_y), grid in chunks.items():
-            assinatura_grid = tuple(tuple(int(bloco) for bloco in linha) for linha in grid)
-            pos = (int(chunk_x), int(chunk_y))
-            self._cache_chunk_memoria[pos] = assinatura_grid
-            if pos in self._ordem_chunk_memoria:
-                self._ordem_chunk_memoria.remove(pos)
-            self._ordem_chunk_memoria.append(pos)
-
-        while len(self._ordem_chunk_memoria) > self._limite_chunk_memoria:
-            remover = self._ordem_chunk_memoria.pop(0)
-            self._cache_chunk_memoria.pop(remover, None)
-            for chave in list(self._cache_chunks_surface.keys()):
-                if chave[:2] == remover:
-                    del self._cache_chunks_surface[chave]
-
-        for chave in list(self._cache_chunks_surface.keys()):
-            pos = (chave[0], chave[1])
-            if pos not in self._cache_chunk_memoria or chave[2] != self.Camera.TilePx:
-                del self._cache_chunks_surface[chave]
-
-        for (chunk_x, chunk_y), assinatura_grid in self._cache_chunk_memoria.items():
-            chave_cache = (chunk_x, chunk_y, self.Camera.TilePx, assinatura_grid)
-            if chave_cache in self._cache_chunks_surface:
-                continue
-
-            tamanho_chunk_px = self.TamanhoChunkBlocos * self.Camera.TilePx
-            surface = pygame.Surface((max(1, tamanho_chunk_px), max(1, tamanho_chunk_px))).convert()
-
-            for by, linha in enumerate(assinatura_grid):
-                for bx, bloco in enumerate(linha):
-                    cor = self.CoresBlocos.get(bloco, (255, 0, 255))
-                    pygame.draw.rect(
-                        surface,
-                        cor,
-                        (
-                            int(bx * self.Camera.TilePx),
-                            int(by * self.Camera.TilePx),
-                            self.Camera.TilePx + 1,
-                            self.Camera.TilePx + 1,
-                        ),
-                    )
-
-            self._cache_chunks_surface[chave_cache] = surface
-
-        if self.Player:
-            self.Player.Controle.definir_grid_chunks(self._cache_chunk_memoria, self.TamanhoChunkBlocos)
-
-    def _desenhar_mundo(self, JOGO):
-        limites = self.Camera.LimitesMundoTiles if self.Camera else None
-        repeticoes_x = (0,)
-        repeticoes_y = (0,)
-        if limites:
-            largura, altura = limites
-            repeticoes_x = (-largura, 0, largura)
-            repeticoes_y = (-altura, 0, altura)
-
-        for (chunk_x, chunk_y, _, _), chunk_surface in self._cache_chunks_surface.items():
-            origem_x_tile = chunk_x * self.TamanhoChunkBlocos
-            origem_y_tile = chunk_y * self.TamanhoChunkBlocos
-            for off_x in repeticoes_x:
-                for off_y in repeticoes_y:
-                    px, py = self.Camera.mundo_para_tela_px((origem_x_tile + off_x, origem_y_tile + off_y))
-                    JOGO.TELA.blit(chunk_surface, (int(px), int(py)))
+    def _sincronizar_player_no_controlador(self):
+        if not self.ControladorObjetos or not self.EntidadeMain:
+            return
+        player_id = getattr(self.EntidadeMain, "Id", None)
+        if player_id is None:
+            return
+        self.ControladorObjetos.aplicar_diff(
+            {
+                "tipo": "update",
+                "objeto_id": int(player_id),
+                "payload": {
+                    "id": int(player_id),
+                    "tipo": "entidade_player",
+                    "posicao": [self.EntidadeMain.Posicao[0], self.EntidadeMain.Posicao[1]],
+                    "raio_colisao": 0.5,
+                },
+            }
+        )
 
     def Finalizar(self, JOGO):
         if self.LeitorMundo:

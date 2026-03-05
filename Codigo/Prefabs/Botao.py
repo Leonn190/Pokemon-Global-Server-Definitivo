@@ -361,18 +361,18 @@ class BotaoAlavanca(Botao):
     def _estilo_estado(self):
         if self.estado:
             return {
-                "bg": (24, 128, 42),
-                "bg_hover": (35, 156, 54),
-                "bg_pressed": (20, 102, 34),
-                "border": (12, 60, 20),
-                "border_hover": (180, 255, 180),
+                "bg": (150, 32, 32),
+                "bg_hover": (186, 42, 42),
+                "bg_pressed": (118, 26, 26),
+                "border": (70, 16, 16),
+                "border_hover": (255, 180, 180),
             }
         return {
-            "bg": (150, 32, 32),
-            "bg_hover": (186, 42, 42),
-            "bg_pressed": (118, 26, 26),
-            "border": (70, 16, 16),
-            "border_hover": (255, 180, 180),
+            "bg": (24, 128, 42),
+            "bg_hover": (35, 156, 54),
+            "bg_pressed": (20, 102, 34),
+            "border": (12, 60, 20),
+            "border_hover": (180, 255, 180),
         }
 
     def set_estado(self, estado: bool):

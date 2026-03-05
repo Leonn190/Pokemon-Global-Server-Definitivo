@@ -89,6 +89,20 @@ class Mensagem:
             return
 
         item = self._fila[0]
+        if not isinstance(item, dict):
+            item = {
+                "texto": str(item),
+                "tipo": "info",
+                "duracao": float(self.style["duracao"]),
+                "tempo": 0.0,
+            }
+            self._fila[0] = item
+
+        item.setdefault("texto", "")
+        item.setdefault("tipo", "info")
+        item.setdefault("duracao", float(self.style["duracao"]))
+        item.setdefault("tempo", 0.0)
+
         fator_duracao = 0.55 if len(self._fila) > 1 else 1.0
         duracao_efetiva = max(0.45, item["duracao"] * fator_duracao)
 

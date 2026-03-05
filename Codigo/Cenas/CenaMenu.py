@@ -13,7 +13,7 @@ class CenaMenu:
         self.Abertura = Clarear
         self.Fechamento = Escurecer
         self.ID = "Menu"
-        self.TelaAtual = "MenuPrincipal"
+        self.TelaAtual = str(JOGO.INFO.pop("MenuTelaInicial", "MenuPrincipal"))
 
         Musica(random.choice(["Menu1","Menu2","Menu3"]))
 

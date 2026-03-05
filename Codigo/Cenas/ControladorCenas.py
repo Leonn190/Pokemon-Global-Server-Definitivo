@@ -74,6 +74,7 @@ class ControladorCenas:
         
         self.Cena = self.Cenas[self.CenaAlvo]
         self.CenaAlvo = None
+        self.Escuro = 100
         self.Cena.Inicializar(self)
 
     def Rodar(self):

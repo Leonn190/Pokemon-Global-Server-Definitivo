@@ -41,7 +41,8 @@ class CenaMundo:
     def _carregar_skin(self, nome_skin):
         if not nome_skin:
             nome_skin = "S1"
-        nome_skin = nome_skin + ".png"
+        if not nome_skin.endswith(".png"):
+            nome_skin = nome_skin + ".png"
         caminho = os.path.join("Recursos", "Visual", "Skins", "Liberadas", nome_skin)
         try:
             return pygame.image.load(caminho).convert_alpha()

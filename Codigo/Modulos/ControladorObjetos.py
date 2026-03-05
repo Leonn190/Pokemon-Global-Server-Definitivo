@@ -6,6 +6,9 @@ from typing import Dict, List
 
 import pygame
 
+from Codigo.Geradores.Ator import Ator
+from Codigo.Modulos.Player.Player import Player
+
 
 class ControladorObjetos:
     def __init__(self):
@@ -13,14 +16,55 @@ class ControladorObjetos:
         self.PlayerLocal = None
         self._fila_diffs_envio: List[Dict[str, object]] = []
 
-
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
+        self._sincronizar_player_local()
+
+    def montar_player_local(self, dados_player) -> Player:
+        dados = dados_player if isinstance(dados_player, dict) else {}
+        nome_skin = str(dados.get("skin", "S1.png"))
+        pos = dados.get("posicao", (0.0, 0.0))
+        if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            pos = (0.0, 0.0)
+
+        ator = Ator(nome_skin=nome_skin, posicao=(float(pos[0]), float(pos[1])), escala_skin=1.45)
+        if dados.get("id") is not None:
+            ator.Id = int(dados.get("id"))
+
+        player = Player(
+            ator=ator,
+            callback_diff=self.registrar_diff_local,
+            velocidade_tiles=4.8,
+        )
+        player.Perfil.aplicar_serializado(dados)
+        self.definir_player_local(player)
+        return player
+
+    def _sincronizar_player_local(self) -> None:
+        if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
+            return
+        ator = self.PlayerLocal.Ator
+        player_id = getattr(ator, "Id", None)
+        if player_id is None:
+            return
+        self.aplicar_diff(
+            {
+                "tipo": "update",
+                "objeto_id": int(player_id),
+                "payload": {
+                    "id": int(player_id),
+                    "tipo": "entidade_player",
+                    "posicao": [ator.Posicao[0], ator.Posicao[1]],
+                    "raio_colisao": getattr(ator, "RaioColisao", 0.35),
+                },
+            }
+        )
 
     def atualizar_player_local(self, eventos, dt, mouse_pos_mundo_tiles) -> None:
         if self.PlayerLocal is None:
             return
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
+        self._sincronizar_player_local()
 
     def registrar_diff_local(self, diff) -> None:
         if not isinstance(diff, dict):
@@ -87,8 +131,18 @@ class ControladorObjetos:
             self._desenhar_objeto_generico(tela, camera, obj, (125, 86, 54))
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
+        if ignorar_entidade_id is None and self.PlayerLocal is not None and getattr(self.PlayerLocal, "Ator", None) is not None:
+            ignorar_entidade_id = getattr(self.PlayerLocal.Ator, "Id", None)
         self.RenderizarEntidades(tela, camera, ignorar_id=ignorar_entidade_id)
         self.RenderizarEstruturas(tela, camera)
+        self._renderizar_player_local(tela, camera)
+
+    def _renderizar_player_local(self, tela, camera):
+        if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
+            return
+        ator = self.PlayerLocal.Ator
+        pos_tela = camera.mundo_para_tela_px(ator.Posicao)
+        ator.desenhar(tela, posicao_tela=pos_tela)
 
     def _desenhar_objeto_generico(self, tela, camera, obj, cor):
         pos = obj.get("posicao", [0.0, 0.0])

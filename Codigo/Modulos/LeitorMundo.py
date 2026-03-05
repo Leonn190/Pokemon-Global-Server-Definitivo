@@ -48,6 +48,27 @@ class LeitorMundo:
             4: (56, 128, 64),
         }
 
+    def atualizar_regras_mundo(self, player_controle=None) -> None:
+        estado = self.snapshot()
+        meta = estado.get("meta", {}) if isinstance(estado, dict) else {}
+        if not isinstance(meta, dict):
+            meta = {}
+
+        largura = meta.get("largura_blocos")
+        altura = meta.get("altura_blocos")
+
+        if largura is not None and altura is not None:
+            if player_controle is not None:
+                player_controle.definir_limites_mundo(largura, altura)
+            if self.Camera is not None:
+                self.Camera.definir_limites_mundo(largura, altura)
+
+        if player_controle is not None:
+            chunks = estado.get("chunks", {}) if isinstance(estado, dict) else {}
+            if not isinstance(chunks, dict):
+                chunks = {}
+            player_controle.definir_grid_chunks(chunks, self.TamanhoChunkBlocos)
+
     def conectar_servidor(self, link_servidor: str) -> None:
         self.ServerLink = str(link_servidor)
         if hasattr(self.JOGO, "INFO") and isinstance(self.JOGO.INFO, dict):
@@ -115,8 +136,9 @@ class LeitorMundo:
             meta = pacote.get("meta", {})
             if isinstance(meta, dict):
                 self.MetaMundo.update(meta)
-                if meta.get("chunk_tamanho") is not None:
-                    self.TamanhoChunkBlocos = max(1, int(meta.get("chunk_tamanho")))
+                chunk_tamanho = meta.get("chunk_tamanho", meta.get("chunk_blocos"))
+                if chunk_tamanho is not None:
+                    self.TamanhoChunkBlocos = max(1, int(chunk_tamanho))
 
             chunks_atuais: Dict[Tuple[int, int], List[List[int]]] = {}
             for chunk in pacote.get("chunks", []):

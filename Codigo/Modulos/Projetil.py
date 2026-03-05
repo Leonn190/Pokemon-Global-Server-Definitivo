@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Iterable, Optional, Tuple
 
-from .Entidade import Entidade
+from ..Geradores.Entidade import Entidade
 
 Vector2 = Tuple[float, float]
 

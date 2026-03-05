@@ -6,8 +6,8 @@ import math
 from typing import Optional, Tuple
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
-from Codigo.Modulos.Entidade import Entidade
-from Codigo.Modulos.colisor import Colisor
+from Codigo.Geradores.Entidade import Entidade
+from Codigo.Modulos.Colisor import Colisor
 
 Vector2 = Tuple[float, float]
 
@@ -22,7 +22,7 @@ class Ator(Entidade):
         velocidade: Vector2 = (0.0, 0.0),
         raio_colisao: float = 12.0,
         raio_interacao: Optional[float] = None,
-        escala_skin: float = 1.45,
+        escala_skin: float = 1.35,
     ) -> None:
         super().__init__(
             posicao=posicao,

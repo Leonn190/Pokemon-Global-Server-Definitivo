@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional, Tuple
 
-from Codigo.Modulos.Estrutura import Estrutura
+from Codigo.Geradores.Estrutura import Estrutura
 
 Vector2 = Tuple[float, float]
 

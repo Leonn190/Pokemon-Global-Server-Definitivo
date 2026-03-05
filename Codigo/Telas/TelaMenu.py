@@ -1,6 +1,7 @@
 import pygame
 from pathlib import Path
 from Codigo.Prefabs.Botao import Botao
+from Codigo.Prefabs.Imagem import Imagem
 
 _CAMINHO_FUNDO = Path("Recursos/Visual/Fundos/FundoMenu.jpg")
 _CAMINHO_LOGO = Path("Recursos/Visual/Icones/GlobalServer/Logo.png")
@@ -22,10 +23,11 @@ _BOTOES = None
 _OVERLAY = None
 _OVERLAY_SIZE = (0, 0)
 
-# -------- cache da logo (pra não smoothscale todo frame)
-_LOGO_CACHE = None
-_LOGO_CACHE_SIZE = (0, 0)
-_LOGO_CACHE_POS = (0, 0)
+# --- logo com efeito interno (cache)
+_LOGO_ESPECIAL = None
+_LOGO_ESPECIAL_SIZE = (0, 0)
+_LOGO_ESPECIAL_CENTER = (0, 0)
+_TEMPO_LOGO = 0.0
 
 _FUNDO_OFFSET_X = 0.0
 _FUNDO_DIRECAO = 1
@@ -37,11 +39,13 @@ def TelaMenu(Cena, JOGO, EVENTOS, dt):
     global _FUNDO, _FUNDO_LARGURA, _FUNDO_ALTURA, _LOGO_ORIGINAL
     global _FRAMES_HOVER, _TEXTURA_BASE, _ESTILO_BOTAO, _BOTOES
     global _OVERLAY, _OVERLAY_SIZE
-    global _LOGO_CACHE, _LOGO_CACHE_SIZE, _LOGO_CACHE_POS
+    global _LOGO_ESPECIAL, _LOGO_ESPECIAL_SIZE, _LOGO_ESPECIAL_CENTER, _TEMPO_LOGO
     global _FUNDO_OFFSET_X, _FUNDO_DIRECAO
 
     tela = JOGO.TELA
     largura_tela, altura_tela = tela.get_size()
+
+    _TEMPO_LOGO += dt
 
     if not _MENU_CARREGADO:
         _FUNDO = pygame.image.load(str(_CAMINHO_FUNDO)).convert()
@@ -119,6 +123,7 @@ def TelaMenu(Cena, JOGO, EVENTOS, dt):
 
         _MENU_CARREGADO = True
 
+    # ===== fundo com pan =====
     max_offset = max(0, _FUNDO_LARGURA - largura_tela)
     if max_offset > 0:
         _FUNDO_OFFSET_X += _FUNDO_VELOCIDADE * dt * _FUNDO_DIRECAO
@@ -131,6 +136,7 @@ def TelaMenu(Cena, JOGO, EVENTOS, dt):
 
     tela.blit(_FUNDO, (-int(_FUNDO_OFFSET_X), 0))
 
+    # overlay se precisar
     if _FUNDO_ALTURA != altura_tela:
         if _OVERLAY is None or _OVERLAY_SIZE != (largura_tela, altura_tela):
             _OVERLAY = pygame.Surface((largura_tela, altura_tela), pygame.SRCALPHA)
@@ -138,19 +144,24 @@ def TelaMenu(Cena, JOGO, EVENTOS, dt):
             _OVERLAY_SIZE = (largura_tela, altura_tela)
         tela.blit(_OVERLAY, (0, 0))
 
+    # ===== logo (somente efeito interno na própria imagem) =====
     largura_logo = min(int(largura_tela * 0.36), _LOGO_ORIGINAL.get_width())
     altura_logo = int(_LOGO_ORIGINAL.get_height() * (largura_logo / _LOGO_ORIGINAL.get_width()))
     alvo = (largura_logo, altura_logo)
+    centro_logo = (largura_tela // 2, int(altura_tela * 0.30))
 
-    if _LOGO_CACHE is None or _LOGO_CACHE_SIZE != alvo or _OVERLAY_SIZE != (largura_tela, altura_tela):
-        _LOGO_CACHE = pygame.transform.smoothscale(_LOGO_ORIGINAL, alvo).convert_alpha()
-        _LOGO_CACHE_SIZE = alvo
-        _LOGO_CACHE_POS = (
-            largura_tela // 2 - largura_logo // 2,
-            int(altura_tela * 0.30) - altura_logo // 2
+    if _LOGO_ESPECIAL is None or _LOGO_ESPECIAL_SIZE != alvo or _LOGO_ESPECIAL_CENTER != centro_logo:
+        _LOGO_ESPECIAL = Imagem(
+            str(_CAMINHO_LOGO),
+            center=centro_logo,
+            size=alvo,
+            effect_alpha=160,
         )
+        _LOGO_ESPECIAL_SIZE = alvo
+        _LOGO_ESPECIAL_CENTER = centro_logo
 
-    tela.blit(_LOGO_CACHE, _LOGO_CACHE_POS)
+    _LOGO_ESPECIAL.render(tela, _TEMPO_LOGO)
 
+    # ===== botões =====
     for botao in _BOTOES:
         botao.render(tela, EVENTOS, dt, JOGO=JOGO)

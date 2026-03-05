@@ -41,6 +41,13 @@ class PlayerController:
             return
         self.LimitesMundoTiles = (largura, altura)
 
+    @staticmethod
+    def _delta_toroidal(origem, destino, tamanho):
+        delta = float(destino) - float(origem)
+        if not tamanho or tamanho <= 0:
+            return delta
+        return delta - round(delta / tamanho) * tamanho
+
     def _aplicar_loop_mundo(self):
         if not self.LimitesMundoTiles:
             return
@@ -75,8 +82,15 @@ class PlayerController:
     def _processar_rotacao(self, mouse_pos_mundo_tiles):
         px, py = self.Ator.Posicao
         mx, my = mouse_pos_mundo_tiles
-        dx = mx - px
-        dy = my - py
+
+        if self.LimitesMundoTiles:
+            largura, altura = self.LimitesMundoTiles
+            dx = self._delta_toroidal(px, mx, largura)
+            dy = self._delta_toroidal(py, my, altura)
+        else:
+            dx = mx - px
+            dy = my - py
+
         if dx == 0 and dy == 0:
             return
         angulo = math.degrees(math.atan2(-dy, dx))

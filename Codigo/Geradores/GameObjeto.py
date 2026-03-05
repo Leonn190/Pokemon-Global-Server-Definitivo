@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import Optional, Tuple
 
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.Modulos.colisor import Colisor
 
 Vector2 = Tuple[float, float]
 

@@ -1,4 +1,4 @@
-"""Controlador de player local para cena de mundo."""
+"""Controlador de player local para cena de mundo (movimento em tiles)."""
 
 from __future__ import annotations
 
@@ -8,15 +8,15 @@ import pygame
 
 
 class PlayerController:
-    def __init__(self, ator, velocidade_px=220.0, callback_diff=None):
+    def __init__(self, ator, velocidade_tiles=4.8, callback_diff=None):
         self.Ator = ator
-        self.VelocidadePx = float(velocidade_px)
+        self.VelocidadeTiles = float(velocidade_tiles)
         self.CallbackDiff = callback_diff
 
-    def atualizar(self, eventos, dt, mouse_pos_mundo):
+    def atualizar(self, eventos, dt, mouse_pos_mundo_tiles):
         dt = max(0.0, float(dt))
         self._processar_input_tapa(eventos)
-        self._processar_rotacao(mouse_pos_mundo)
+        self._processar_rotacao(mouse_pos_mundo_tiles)
         moveu = self._processar_movimento(dt)
         self.Ator.atualizar(dt)
         self.Ator.atualizar_colisor_mao_mundo()
@@ -50,12 +50,12 @@ class PlayerController:
             eixo_y /= mag
 
         antes = self.Ator.Posicao
-        self.Ator.mover(eixo_x * self.VelocidadePx * dt, eixo_y * self.VelocidadePx * dt)
+        self.Ator.mover(eixo_x * self.VelocidadeTiles * dt, eixo_y * self.VelocidadeTiles * dt)
         return self.Ator.Posicao != antes
 
-    def _processar_rotacao(self, mouse_pos_mundo):
+    def _processar_rotacao(self, mouse_pos_mundo_tiles):
         px, py = self.Ator.Posicao
-        mx, my = mouse_pos_mundo
+        mx, my = mouse_pos_mundo_tiles
         dx = mx - px
         dy = my - py
         if dx == 0 and dy == 0:

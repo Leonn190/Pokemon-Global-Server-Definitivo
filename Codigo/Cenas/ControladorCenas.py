@@ -95,6 +95,9 @@ class ControladorCenas:
             AtualizarMusica()
             pygame.display.update()
 
+        if self.Cena is not None:
+            self.Cena.Finalizar(self)
+
     def SolicitarSair(self):
         self.CenaAlvo = None
         self.Saindo = True

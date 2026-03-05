@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Geradores.Entidade import Entidade
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.Modulos.colisor import Colisor
 
 Vector2 = Tuple[float, float]
 
@@ -20,7 +20,7 @@ class Ator(Entidade):
         skin_surface,
         posicao: Vector2 = (0.0, 0.0),
         velocidade: Vector2 = (0.0, 0.0),
-        raio_colisao: float = 12.0,
+        raio_colisao: float = 0.35,
         raio_interacao: Optional[float] = None,
         escala_skin: float = 1.35,
     ) -> None:
@@ -36,7 +36,7 @@ class Ator(Entidade):
         self.AnguloOlhar = 0.0
         self._duracao_tapa = 0.16
         self._tempo_tapa = 0.0
-        self._raio_mao_colisao = max(6.0, raio_colisao * 0.65)
+        self._raio_mao_colisao = max(0.18, raio_colisao * 0.65)
         self.ColisorMao = Colisor(
             x=self.Posicao[0],
             y=self.Posicao[1],
@@ -70,7 +70,7 @@ class Ator(Entidade):
         progresso = 1.0 - (self._tempo_tapa / self._duracao_tapa)
         # pico no meio (ida e volta)
         fase = 1.0 - abs(1.0 - (progresso * 2.0))
-        return max(0.0, fase) * 22.0
+        return max(0.0, fase) * 0.55
 
     def desenhar(self, tela, mouse_pos=None, posicao_tela=None) -> None:
         centro = self.Posicao if posicao_tela is None else posicao_tela

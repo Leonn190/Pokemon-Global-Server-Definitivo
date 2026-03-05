@@ -8,6 +8,7 @@ import pygame
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Modulos.Player.Player import Player
+from Codigo.Prefabs.Texto import Texto
 
 
 class ControladorObjetos:
@@ -15,6 +16,7 @@ class ControladorObjetos:
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
         self.PlayerLocal = None
         self._fila_diffs_envio: List[Dict[str, object]] = []
+        self._cache_nome_texto: Dict[str, Texto] = {}
 
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
@@ -30,6 +32,7 @@ class ControladorObjetos:
         ator = Ator(nome_skin=nome_skin, posicao=(float(pos[0]), float(pos[1])), escala_skin=1.45)
         if dados.get("id") is not None:
             ator.Id = int(dados.get("id"))
+        ator.Nome = str(dados.get("nome") or dados.get("usuario") or "Player")
 
         player = Player(
             ator=ator,
@@ -142,7 +145,9 @@ class ControladorObjetos:
             return
         ator = self.PlayerLocal.Ator
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
-        ator.desenhar(tela, posicao_tela=pos_tela)
+        respiracao_tempo = getattr(getattr(self.PlayerLocal, "Controle", None), "_tempo_respiracao", 0.0)
+        ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
+        self._desenhar_nome_jogador(tela, pos_tela, getattr(ator, "Nome", "Player"))
 
     def _desenhar_objeto_generico(self, tela, camera, obj, cor):
         pos = obj.get("posicao", [0.0, 0.0])
@@ -162,3 +167,28 @@ class ControladorObjetos:
 
         raio_px = max(3, min(80, raio_px))
         pygame.draw.circle(tela, cor, (int(px), int(py)), raio_px)
+        if str(obj.get("tipo", "")).startswith("entidade"):
+            nome_obj = obj.get("nome") or obj.get("usuario") or f"Player {obj.get('id', '')}"
+            self._desenhar_nome_jogador(tela, (px, py), nome_obj)
+
+    def _desenhar_nome_jogador(self, tela, pos_tela, nome):
+        nome_str = str(nome or "Player")
+        texto = self._cache_nome_texto.get(nome_str)
+        if texto is None:
+            texto = Texto(
+                nome_str,
+                pos=(0, 0),
+                style={
+                    "size": 16,
+                    "align": "midbottom",
+                    "outline": True,
+                    "outline_thickness": 1,
+                    "shadow": False,
+                    "color": (250, 250, 255),
+                },
+            )
+            self._cache_nome_texto[nome_str] = texto
+        else:
+            texto.set_text(nome_str)
+        texto.set_pos((int(pos_tela[0]), int(pos_tela[1]) - 40))
+        texto.draw(tela)

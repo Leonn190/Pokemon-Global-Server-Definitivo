@@ -25,6 +25,7 @@ class PlayerController:
         self._consumindo_stamina = False
         self._stamina_alpha = 0.0
         self.InventarioAberto = False
+        self._tempo_respiracao = 0.0
 
         self.BarraStamina = Barra(pygame.Rect(0, 0, 52, 8), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
         self.BarraStamina.cor_fundo = (16, 22, 30)
@@ -42,6 +43,7 @@ class PlayerController:
         moveu, correndo, em_agua_funda = self._processar_movimento(dt)
         self._atualizar_stamina(dt, correndo, em_agua_funda)
         self._atualizar_tapa_automatico()
+        self._tempo_respiracao += dt
         self.Ator.atualizar(dt)
         self.Ator.atualizar_colisor_mao_mundo()
         if moveu:
@@ -54,7 +56,8 @@ class PlayerController:
         self.BarraStamina.atualizar(dt)
 
         cheio = self.Perfil.Stamina >= (self.Perfil.StaminaMax - 0.001)
-        alvo_alpha = 255.0 if (self._consumindo_stamina or not cheio) else 0.0
+        tentando_correr = pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]
+        alvo_alpha = 255.0 if (self._consumindo_stamina or not cheio or tentando_correr) else 0.0
         velocidade = 10.0 if alvo_alpha > self._stamina_alpha else 6.0
         self._stamina_alpha += (alvo_alpha - self._stamina_alpha) * min(1.0, dt * velocidade)
 
@@ -147,7 +150,7 @@ class PlayerController:
         em_agua_funda = self._em_agua_funda() and deslocando
         shift = teclas[pygame.K_LSHIFT] or teclas[pygame.K_RSHIFT]
         correndo = deslocando and shift and self.Perfil.Stamina > 0.0
-        mult = 1.4 if correndo else 1.0
+        mult = 1.5 if correndo else 1.0
 
         antes = self.Ator.Posicao
         self.Ator.mover(eixo_x * self.VelocidadeTiles * mult * dt, eixo_y * self.VelocidadeTiles * mult * dt)

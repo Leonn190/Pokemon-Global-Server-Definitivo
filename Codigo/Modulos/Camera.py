@@ -8,7 +8,7 @@ Vector2 = Tuple[float, float]
 
 
 class Camera:
-    TILE_PX_PADRAO = 48
+    TILE_PX_PADRAO = 50
 
     def __init__(
         self,

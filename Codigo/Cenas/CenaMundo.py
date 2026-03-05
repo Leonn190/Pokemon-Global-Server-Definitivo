@@ -37,7 +37,7 @@ class CenaMundo:
         player_local = self.ControladorObjetos.montar_player_local(dados)
         self.EntidadeMain = player_local.Ator
 
-        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain)
+        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain, tile_px=50)
         self.LeitorMundo = LeitorMundo(
             jogo=JOGO,
             camera=self.Camera,

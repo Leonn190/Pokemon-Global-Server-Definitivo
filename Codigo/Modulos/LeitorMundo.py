@@ -47,6 +47,8 @@ class LeitorMundo:
             3: (124, 204, 108),
             4: (56, 128, 64),
         }
+        self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}
+        self._cache_tile_px: int = max(1, int(getattr(self.Camera, "TilePx", 50)))
 
     def atualizar_regras_mundo(self, player_controle=None) -> None:
         estado = self.snapshot()
@@ -168,6 +170,7 @@ class LeitorMundo:
                         continue
                     chunks_atuais[(chunk_x, chunk_y)] = [list(linha) for linha in grid]
             self.Chunks = chunks_atuais
+            self._cache_superficies_chunks.clear()
             self._versao_chunks += 1
 
             for diff in pacote.get("diffs", []):
@@ -185,13 +188,52 @@ class LeitorMundo:
                 "meta": dict(self.MetaMundo),
             }
 
+    def _obter_superficie_chunk(self, chave_chunk: Tuple[int, int], grid: List[List[int]], tile_px: int) -> Optional[pygame.Surface]:
+        if not grid:
+            return None
+
+        largura_chunk = max((len(linha) for linha in grid), default=0)
+        altura_chunk = len(grid)
+        if largura_chunk <= 0 or altura_chunk <= 0:
+            return None
+
+        if tile_px != self._cache_tile_px:
+            self._cache_superficies_chunks.clear()
+            self._cache_tile_px = tile_px
+
+        superficie = self._cache_superficies_chunks.get(chave_chunk)
+        if superficie is not None:
+            return superficie
+
+        largura_px = largura_chunk * tile_px
+        altura_px = altura_chunk * tile_px
+        superficie = pygame.Surface((largura_px, altura_px)).convert()
+
+        for by, linha in enumerate(grid):
+            for bx, bloco in enumerate(linha):
+                cor = self.CoresBlocos.get(int(bloco), (255, 0, 255))
+                pygame.draw.rect(superficie, cor, (bx * tile_px, by * tile_px, tile_px, tile_px))
+
+        self._cache_superficies_chunks[chave_chunk] = superficie
+        return superficie
+
     def renderizar_mundo(self, tela) -> None:
         estado = self.snapshot()
         chunks = estado.get("chunks", {}) if isinstance(estado, dict) else {}
-        if not isinstance(chunks, dict):
+        if not isinstance(chunks, dict) or not chunks:
             return
-        tile_px = max(1, int(getattr(self.Camera, "TilePx", 1)))
+
+        tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
         tamanho_chunk = max(1, int(self.TamanhoChunkBlocos))
+
+        player = getattr(self.Camera, "EntidadeMain", None)
+        pos_player = getattr(player, "Posicao", (0.0, 0.0))
+        try:
+            chunk_player_x = int(float(pos_player[0]) // tamanho_chunk)
+            chunk_player_y = int(float(pos_player[1]) // tamanho_chunk)
+        except Exception:
+            chunk_player_x = 0
+            chunk_player_y = 0
 
         limites = getattr(self.Camera, "LimitesMundoTiles", None)
         repeticoes_x = (0,)
@@ -201,13 +243,22 @@ class LeitorMundo:
             repeticoes_x = (-largura, 0, largura)
             repeticoes_y = (-altura, 0, altura)
 
-        for (chunk_x, chunk_y), grid in chunks.items():
-            origem_x = int(chunk_x) * tamanho_chunk
-            origem_y = int(chunk_y) * tamanho_chunk
-            for by, linha in enumerate(grid):
-                for bx, bloco in enumerate(linha):
-                    cor = self.CoresBlocos.get(int(bloco), (255, 0, 255))
-                    for off_x in repeticoes_x:
-                        for off_y in repeticoes_y:
-                            px, py = self.Camera.mundo_para_tela_px((origem_x + bx + off_x, origem_y + by + off_y))
-                            pygame.draw.rect(tela, cor, (int(px), int(py), tile_px + 1, tile_px + 1))
+        for dy in range(-4, 5):
+            chunk_y = chunk_player_y + dy
+            for dx in range(-4, 5):
+                chunk_x = chunk_player_x + dx
+                chave_chunk = (chunk_x, chunk_y)
+                grid = chunks.get(chave_chunk)
+                if not grid:
+                    continue
+
+                superficie_chunk = self._obter_superficie_chunk(chave_chunk, grid, tile_px)
+                if superficie_chunk is None:
+                    continue
+
+                origem_x = chunk_x * tamanho_chunk
+                origem_y = chunk_y * tamanho_chunk
+                for off_x in repeticoes_x:
+                    for off_y in repeticoes_y:
+                        px, py = self.Camera.mundo_para_tela_px((origem_x + off_x, origem_y + off_y))
+                        tela.blit(superficie_chunk, (int(px), int(py)))

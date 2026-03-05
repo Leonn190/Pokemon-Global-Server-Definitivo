@@ -88,6 +88,7 @@ class CenaMundo:
             callback_diff=self.LeitorMundo.enfileirar_diff,
             velocidade_tiles=4.8,
         )
+        self.Player.Perfil.aplicar_serializado(dados)
 
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
@@ -120,6 +121,10 @@ class CenaMundo:
         self.EntidadeMain.desenhar(JOGO.TELA, mouse_pos=pygame.mouse.get_pos(), posicao_tela=pos_tela_main)
         ignorar_id_main = getattr(self.EntidadeMain, "Id", None)
         self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera, ignorar_entidade_id=ignorar_id_main)
+
+        self.Player.Controle.renderizar_stamina(JOGO.TELA, self.Camera, dt)
+        self.Player.Hud.desenhar(JOGO.TELA, self.Player.Inventario)
+
         self.SubtelaOpcoes.desenhar(JOGO)
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt)
@@ -189,6 +194,9 @@ class CenaMundo:
                     )
 
             self._cache_chunks_surface[chave_cache] = surface
+
+        if self.Player:
+            self.Player.Controle.definir_grid_chunks(self._cache_chunk_memoria, self.TamanhoChunkBlocos)
 
     def _desenhar_mundo(self, JOGO):
         limites = self.Camera.LimitesMundoTiles if self.Camera else None

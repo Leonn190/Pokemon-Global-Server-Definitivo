@@ -7,20 +7,30 @@ def _clamp(valor, minimo, maximo):
 
 
 class Barra:
-    def __init__(self, rect, texto, valor, minimo, maximo, casas_decimais=0):
+    def __init__(
+        self,
+        rect,
+        texto="",
+        valor=0,
+        minimo=0,
+        maximo=100,
+        casas_decimais=0,
+        mostrar_rotulo=True,
+        suavizacao=14.0,
+    ):
         self.rect = pygame.Rect(rect)
         self.texto = texto
         self.minimo = float(minimo)
         self.maximo = float(maximo)
-        self.valor = float(valor)
+        self.valor = _clamp(float(valor), self.minimo, self.maximo)
+        self.valor_visual = self.valor
         self.casas_decimais = casas_decimais
-        self.arrastando = False
-        self._estava_arrastando = False
+        self.mostrar_rotulo = bool(mostrar_rotulo)
+        self.suavizacao = max(0.01, float(suavizacao))
 
         self.cor_fundo = (25, 28, 40)
         self.cor_preenchimento = (60, 170, 255)
         self.cor_borda = (180, 200, 255)
-        self.cor_manopla = (245, 245, 255)
 
         self.rotulo = Texto(
             "",
@@ -47,6 +57,46 @@ class Barra:
         self.valor = _clamp(float(valor), self.minimo, self.maximo)
         self._atualizar_rotulo()
 
+    def atualizar(self, dt):
+        dt = max(0.0, float(dt))
+        fator = min(1.0, dt * self.suavizacao)
+        self.valor_visual += (self.valor - self.valor_visual) * fator
+        if abs(self.valor_visual - self.valor) < 0.001:
+            self.valor_visual = self.valor
+
+    def percentual(self):
+        return (self.valor_visual - self.minimo) / float(max(self.maximo - self.minimo, 1))
+
+    def _desenhar_barra(self, tela):
+        percentual = _clamp(self.percentual(), 0.0, 1.0)
+        preenchimento = int(self.rect.width * percentual)
+
+        pygame.draw.rect(tela, self.cor_fundo, self.rect, border_radius=12)
+        if preenchimento > 0:
+            pygame.draw.rect(
+                tela,
+                self.cor_preenchimento,
+                pygame.Rect(self.rect.x, self.rect.y, preenchimento, self.rect.height),
+                border_radius=12,
+            )
+
+        pygame.draw.rect(tela, self.cor_borda, self.rect, width=2, border_radius=12)
+
+    def render(self, tela, eventos=None, dt=0.0):
+        self.atualizar(dt)
+        self._desenhar_barra(tela)
+        if self.mostrar_rotulo and self.texto:
+            self.rotulo.draw(tela)
+        return False
+
+
+class BarraEditavel(Barra):
+    def __init__(self, rect, texto, valor, minimo, maximo, casas_decimais=0):
+        super().__init__(rect, texto, valor, minimo, maximo, casas_decimais=casas_decimais, mostrar_rotulo=True)
+        self.arrastando = False
+        self._estava_arrastando = False
+        self.cor_manopla = (245, 245, 255)
+
     def _valor_por_mouse(self, mouse_x):
         proporcao = (mouse_x - self.rect.x) / float(max(self.rect.width, 1))
         proporcao = _clamp(proporcao, 0.0, 1.0)
@@ -63,7 +113,7 @@ class Barra:
         alvo = self.minimo + (idx * passo)
         self.set_valor(alvo)
 
-    def render(self, tela, eventos):
+    def render(self, tela, eventos, dt=0.0):
         mouse_pos = pygame.mouse.get_pos()
         alterou = False
 
@@ -88,21 +138,11 @@ class Barra:
                 self._valor_por_mouse(mouse_pos[0])
                 alterou = alterou or (self.valor != valor_antes)
 
-        percentual = (self.valor - self.minimo) / float(max(self.maximo - self.minimo, 1))
-        preenchimento = int(self.rect.width * percentual)
+        self.atualizar(dt)
+        self._desenhar_barra(tela)
 
-        pygame.draw.rect(tela, self.cor_fundo, self.rect, border_radius=12)
-        if preenchimento > 0:
-            pygame.draw.rect(
-                tela,
-                self.cor_preenchimento,
-                pygame.Rect(self.rect.x, self.rect.y, preenchimento, self.rect.height),
-                border_radius=12,
-            )
-
-        pygame.draw.rect(tela, self.cor_borda, self.rect, width=2, border_radius=12)
-
-        x_manopla = self.rect.x + preenchimento
+        percentual = _clamp(self.percentual(), 0.0, 1.0)
+        x_manopla = self.rect.x + int(self.rect.width * percentual)
         x_manopla = _clamp(x_manopla, self.rect.x, self.rect.right)
         pygame.draw.circle(tela, self.cor_manopla, (int(x_manopla), self.rect.centery), self.rect.height // 2 + 4)
         pygame.draw.circle(tela, (30, 30, 45), (int(x_manopla), self.rect.centery), self.rect.height // 2 + 4, 2)

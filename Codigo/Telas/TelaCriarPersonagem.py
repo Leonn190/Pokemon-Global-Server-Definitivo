@@ -4,7 +4,7 @@ import threading
 import pygame
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
-from Codigo.Prefabs.Barra import Barra
+from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Server.ServerMenu import criar_personagem
@@ -222,7 +222,7 @@ class SubtelaCriarPersonagem:
 
         barra_h = 32
         barra_y = self._quadro_skin.centery - (barra_h // 2)
-        self.barra_skin = Barra(
+        self.barra_skin = BarraEditavel(
             pygame.Rect(x0, barra_y, grid_w, barra_h),
             "Skin",
             self._skin_index + 1,

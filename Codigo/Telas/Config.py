@@ -1,7 +1,7 @@
 import pygame
 
 from Codigo.Modulos.Sonoridades import VerificaSonoridade
-from Codigo.Prefabs.Barra import Barra
+from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao
@@ -125,9 +125,9 @@ def _montar_layout(Cena, JOGO):
     espacamento = 110
 
     _BARRAS = {
-        "FPS": Barra(pygame.Rect(x_barra, y_inicial + espacamento * 0, largura_barra, 26), "FPS", JOGO.CONFIG["FPS"], 30, 300, 0),
-        "Claridade": Barra(pygame.Rect(x_barra, y_inicial + espacamento * 1, largura_barra, 26), "Claridade", JOGO.CONFIG["Claridade"], 0, 100, 0),
-        "Volume": Barra(pygame.Rect(x_barra, y_inicial + espacamento * 2, largura_barra, 26), "Volume", JOGO.CONFIG["Volume"] * 100, 0, 100, 0),
+        "FPS": BarraEditavel(pygame.Rect(x_barra, y_inicial + espacamento * 0, largura_barra, 26), "FPS", JOGO.CONFIG["FPS"], 30, 300, 0),
+        "Claridade": BarraEditavel(pygame.Rect(x_barra, y_inicial + espacamento * 1, largura_barra, 26), "Claridade", JOGO.CONFIG["Claridade"], 0, 100, 0),
+        "Volume": BarraEditavel(pygame.Rect(x_barra, y_inicial + espacamento * 2, largura_barra, 26), "Volume", JOGO.CONFIG["Volume"] * 100, 0, 100, 0),
     }
 
     largura_toggle = 320

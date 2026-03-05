@@ -8,6 +8,7 @@ from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import consultar_estado_mundo, enviar_diffs_mundo, desconectar_mundo
+from Codigo.Telas.Inventario.Unificador import UnificadorInventario
 
 
 class CenaMundo:
@@ -24,6 +25,7 @@ class CenaMundo:
         self.SubtelaOpcoes = SubtelaOpcoes()
         self._desconectado = False
         self.TelaAtual = None
+        self.SubtelaInventario = None
 
         self._montar_mundo(JOGO)
 
@@ -36,6 +38,7 @@ class CenaMundo:
         dados = JOGO.INFO.get("PlayerDadosServer") or {}
         player_local = self.ControladorObjetos.montar_player_local(dados)
         self.EntidadeMain = player_local.Ator
+        self.SubtelaInventario = UnificadorInventario(player_local.Inventario)
 
         self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain, tile_px=50)
         self.LeitorMundo = LeitorMundo(
@@ -62,6 +65,9 @@ class CenaMundo:
             mouse_tela = pygame.mouse.get_pos()
             mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)
             self.ControladorObjetos.atualizar_player_local(EVENTOS, dt, mouse_mundo_tiles)
+            if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaInventario is not None:
+                self.SubtelaInventario.Ativo = self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto
+                self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
 
         self.Camera.atualizar(dt)
         self.ControladorObjetos.enviar_diffs_pendentes(self.LeitorMundo.enfileirar_diff)
@@ -82,6 +88,8 @@ class CenaMundo:
             self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario)
 
         self.SubtelaOpcoes.desenhar(JOGO)
+        if self.SubtelaInventario is not None and self.SubtelaInventario.Ativo:
+            self.SubtelaInventario.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt)
 

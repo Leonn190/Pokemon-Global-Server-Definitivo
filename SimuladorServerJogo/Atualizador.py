@@ -9,6 +9,7 @@ from typing import Dict
 from SimuladorServerJogo.Ativador import registrar_diff
 from SimuladorServerJogo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.ObjetosMundoServer import GameObjetoServer
+from SimuladorServerJogo.EstadoServidor import atualizar_posicao_personagem
 
 
 def _ok(mensagem: str, **extras) -> str:
@@ -57,6 +58,10 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             if obj is None:
                 ignorados += 1
                 continue
+            if "posicao" in payload:
+                usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
+                if usuario:
+                    atualizar_posicao_personagem(usuario, obj.posicao)
             registrar_diff("update", payload=payload, escopo=_escopo_objeto(obj), objeto_id=obj.Id)
             aplicados += 1
             continue

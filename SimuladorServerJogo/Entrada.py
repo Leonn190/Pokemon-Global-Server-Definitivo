@@ -78,7 +78,10 @@ def processar_entrada_json(requisicao_json):
 
         criado, mensagem = adicionar_personagem(usuario, skin, pokemon)
         if criado:
-            ator = BANCO_DADOS.garantir_player(usuario=usuario, skin=skin, posicao=(0.0, 0.0))
+            estado = snapshot_estado()
+            personagem = estado.get("personagens", {}).get(usuario, {})
+            pos = personagem.get("posicao", (0.0, 0.0))
+            ator = BANCO_DADOS.garantir_player(usuario=usuario, skin=skin, posicao=(float(pos[0]), float(pos[1])))
             registrar_diff(
                 "spawn",
                 payload=ator.serializar(),

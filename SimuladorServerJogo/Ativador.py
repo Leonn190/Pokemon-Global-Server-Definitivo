@@ -85,7 +85,6 @@ def processar_ativador_json(requisicao_json: str) -> str:
     if not client_id:
         return json.dumps({"status": "erro", "mensagem": "client_id obrigatório"}, ensure_ascii=False)
 
-    BANCO_DADOS.garantir_estruturas_iniciais()
 
     with _DIFF_LOCK:
         _CLIENTS_CONHECIDOS.add(client_id)
@@ -130,7 +129,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
         for chunk in BANCO_DADOS.chunks_proximos(posicao_main, raio_chunks=1):
             if chunk in chunks_vistos:
                 continue
-            dados_chunk = {"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk)}
+            dados_chunk = {"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": 32}
             chunks.append(dados_chunk)
             diffs.append(
                 {

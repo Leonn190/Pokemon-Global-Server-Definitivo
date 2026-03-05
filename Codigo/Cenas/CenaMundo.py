@@ -21,6 +21,16 @@ class CenaMundo:
         self.EntidadeMain = None
         self.PlayerController = None
 
+        self.TamanhoBlocoPx = 24
+        self.TamanhoChunkBlocos = 32
+        self.CoresBlocos = {
+            0: (14, 40, 92),
+            1: (72, 162, 231),
+            2: (230, 210, 146),
+            3: (124, 204, 108),
+            4: (56, 128, 64),
+        }
+
         self._montar_mundo(JOGO)
 
     def _carregar_skin(self, nome_skin):
@@ -78,22 +88,30 @@ class CenaMundo:
         self.Camera.atualizar(dt)
 
         JOGO.TELA.fill((20, 20, 28))
-        self._desenhar_grade(JOGO)
+        self._desenhar_mundo(JOGO)
 
         pos_tela_main = self.Camera.mundo_para_tela(self.EntidadeMain.Posicao)
         self.EntidadeMain.desenhar(JOGO.TELA, mouse_pos=mouse_tela, posicao_tela=pos_tela_main)
 
-    def _desenhar_grade(self, JOGO):
-        espacamento = 64
-        largura, altura = JOGO.TELA.get_size()
-        off_x = int(self.Camera.Posicao[0]) % espacamento
-        off_y = int(self.Camera.Posicao[1]) % espacamento
+    def _desenhar_mundo(self, JOGO):
+        estado = self.LeitorMundo.snapshot() if self.LeitorMundo else {"chunks": {}}
+        chunks = estado.get("chunks", {})
+        tamanho_chunk_px = self.TamanhoChunkBlocos * self.TamanhoBlocoPx
 
-        cor_linha = (28, 30, 40)
-        for x in range(-off_x, largura + espacamento, espacamento):
-            pygame.draw.line(JOGO.TELA, cor_linha, (x, 0), (x, altura), 1)
-        for y in range(-off_y, altura + espacamento, espacamento):
-            pygame.draw.line(JOGO.TELA, cor_linha, (0, y), (largura, y), 1)
+        for (chunk_x, chunk_y), grid in chunks.items():
+            origem_x = chunk_x * tamanho_chunk_px - self.Camera.Posicao[0]
+            origem_y = chunk_y * tamanho_chunk_px - self.Camera.Posicao[1]
+
+            for by, linha in enumerate(grid):
+                py = origem_y + by * self.TamanhoBlocoPx
+                for bx, bloco in enumerate(linha):
+                    px = origem_x + bx * self.TamanhoBlocoPx
+                    cor = self.CoresBlocos.get(int(bloco), (255, 0, 255))
+                    pygame.draw.rect(
+                        JOGO.TELA,
+                        cor,
+                        (int(px), int(py), self.TamanhoBlocoPx + 1, self.TamanhoBlocoPx + 1),
+                    )
 
     def Finalizar(self, JOGO):
         if self.LeitorMundo:

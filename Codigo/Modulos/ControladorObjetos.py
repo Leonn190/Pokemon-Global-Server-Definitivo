@@ -70,6 +70,16 @@ class ControladorObjetos:
         if not isinstance(pos, (tuple, list)) or len(pos) != 2:
             return
         px, py = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
-        raio_tiles = float(obj.get("raio_colisao", 0.4))
-        raio_px = max(3, int(raio_tiles * camera.TilePx))
+
+        # Compatibilidade de unidade:
+        # - clientes novos usam raio em TILES
+        # - simulador antigo enviava raio em PIXELS (ex.: 12.0)
+        # Se tratarmos 12.0 como tile, viram círculos gigantes (12 * TilePx).
+        raio_raw = max(0.0, float(obj.get("raio_colisao", 0.4)))
+        if raio_raw > 4.0:
+            raio_px = int(raio_raw)
+        else:
+            raio_px = int(raio_raw * camera.TilePx)
+
+        raio_px = max(3, min(80, raio_px))
         pygame.draw.circle(tela, cor, (int(px), int(py)), raio_px)

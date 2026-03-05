@@ -53,16 +53,18 @@ class ControladorObjetos:
     def _iter_tipos(self, prefixo):
         return [obj for obj in self.ObjetosPorId.values() if str(obj.get("tipo", "")).startswith(prefixo)]
 
-    def RenderizarEntidades(self, tela, camera):
+    def RenderizarEntidades(self, tela, camera, ignorar_id=None):
         for obj in self._iter_tipos("entidade"):
+            if ignorar_id is not None and int(obj.get("id", -1)) == int(ignorar_id):
+                continue
             self._desenhar_objeto_generico(tela, camera, obj, (222, 233, 245))
 
     def RenderizarEstruturas(self, tela, camera):
         for obj in self._iter_tipos("estrutura"):
             self._desenhar_objeto_generico(tela, camera, obj, (125, 86, 54))
 
-    def renderizar(self, tela, camera):
-        self.RenderizarEntidades(tela, camera)
+    def renderizar(self, tela, camera, ignorar_entidade_id=None):
+        self.RenderizarEntidades(tela, camera, ignorar_id=ignorar_entidade_id)
         self.RenderizarEstruturas(tela, camera)
 
     def _desenhar_objeto_generico(self, tela, camera, obj, cor):

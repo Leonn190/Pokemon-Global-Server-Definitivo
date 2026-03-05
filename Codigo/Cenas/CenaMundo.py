@@ -20,6 +20,8 @@ class CenaMundo:
 
         self.Camera = None
         self.LeitorMundo = None
+        self._cache_mundo_surface = None
+        self._cache_mundo_rect = None
         self.ControladorObjetos = ControladorObjetos()
         self.EntidadeMain = None
         self.Player = None
@@ -98,32 +100,75 @@ class CenaMundo:
         for diff in self.LeitorMundo.consumir_diffs_recebidas():
             self.ControladorObjetos.aplicar_diff(diff)
 
+        self._atualizar_cache_mundo()
+
         JOGO.TELA.fill((20, 20, 28))
         self._desenhar_mundo(JOGO)
 
         pos_tela_main = self.Camera.mundo_para_tela_px(self.EntidadeMain.Posicao)
         self.EntidadeMain.desenhar(JOGO.TELA, mouse_pos=pygame.mouse.get_pos(), posicao_tela=pos_tela_main)
-        self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera)
+        ignorar_id_main = getattr(self.EntidadeMain, "Id", None)
+        self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera, ignorar_entidade_id=ignorar_id_main)
         self.SubtelaOpcoes.desenhar(JOGO)
 
-    def _desenhar_mundo(self, JOGO):
+    def _atualizar_cache_mundo(self):
         estado = self.LeitorMundo.snapshot() if self.LeitorMundo else {"chunks": {}}
         chunks = estado.get("chunks", {})
+        versao_chunks = int(estado.get("versao_chunks", 0))
+
+        if not chunks:
+            self._cache_mundo_surface = None
+            self._cache_mundo_rect = None
+            return
+
+        min_chunk_x = min(chunk_x for chunk_x, _ in chunks.keys())
+        max_chunk_x = max(chunk_x for chunk_x, _ in chunks.keys())
+        min_chunk_y = min(chunk_y for _, chunk_y in chunks.keys())
+        max_chunk_y = max(chunk_y for _, chunk_y in chunks.keys())
+
         tamanho_chunk_tiles = self.TamanhoChunkBlocos
+        largura_tiles = (max_chunk_x - min_chunk_x + 1) * tamanho_chunk_tiles
+        altura_tiles = (max_chunk_y - min_chunk_y + 1) * tamanho_chunk_tiles
+
+        largura_px = max(1, int(largura_tiles * self.Camera.TilePx))
+        altura_px = max(1, int(altura_tiles * self.Camera.TilePx))
+
+        rect_cache = (min_chunk_x, min_chunk_y, max_chunk_x, max_chunk_y, self.Camera.TilePx, versao_chunks)
+        if self._cache_mundo_surface is not None and self._cache_mundo_rect == rect_cache:
+            return
+
+        surface = pygame.Surface((largura_px, altura_px)).convert()
 
         for (chunk_x, chunk_y), grid in chunks.items():
-            origem_x_tile = chunk_x * tamanho_chunk_tiles
-            origem_y_tile = chunk_y * tamanho_chunk_tiles
-
+            base_chunk_px_x = (chunk_x - min_chunk_x) * tamanho_chunk_tiles * self.Camera.TilePx
+            base_chunk_px_y = (chunk_y - min_chunk_y) * tamanho_chunk_tiles * self.Camera.TilePx
             for by, linha in enumerate(grid):
                 for bx, bloco in enumerate(linha):
-                    px, py = self.Camera.mundo_para_tela_px((origem_x_tile + bx, origem_y_tile + by))
                     cor = self.CoresBlocos.get(int(bloco), (255, 0, 255))
                     pygame.draw.rect(
-                        JOGO.TELA,
+                        surface,
                         cor,
-                        (int(px), int(py), self.Camera.TilePx + 1, self.Camera.TilePx + 1),
+                        (
+                            int(base_chunk_px_x + bx * self.Camera.TilePx),
+                            int(base_chunk_px_y + by * self.Camera.TilePx),
+                            self.Camera.TilePx + 1,
+                            self.Camera.TilePx + 1,
+                        ),
                     )
+
+        self._cache_mundo_surface = surface
+        self._cache_mundo_rect = rect_cache
+
+    def _desenhar_mundo(self, JOGO):
+        if self._cache_mundo_surface is None or self._cache_mundo_rect is None:
+            return
+
+        min_chunk_x, min_chunk_y, _, _, _, _ = self._cache_mundo_rect
+        origem_x_tile = min_chunk_x * self.TamanhoChunkBlocos
+        origem_y_tile = min_chunk_y * self.TamanhoChunkBlocos
+
+        px, py = self.Camera.mundo_para_tela_px((origem_x_tile, origem_y_tile))
+        JOGO.TELA.blit(self._cache_mundo_surface, (int(px), int(py)))
 
     def Finalizar(self, JOGO):
         if self.LeitorMundo:

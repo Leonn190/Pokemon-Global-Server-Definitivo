@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 import math
 import os
 
@@ -70,8 +70,108 @@ class ControladorObjetos:
     def atualizar_player_local(self, eventos, dt, mouse_pos_mundo_tiles) -> None:
         if self.PlayerLocal is None:
             return
+        posicao_antes = tuple(self.PlayerLocal.Ator.Posicao)
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
+        self._resolver_colisao_player_local_estruturas(posicao_antes)
         self._sincronizar_player_local()
+
+    def _iter_estruturas_colisiveis(self):
+        for estrutura in self._iter_tipos("estrutura"):
+            pos = estrutura.get("posicao")
+            if not isinstance(pos, (tuple, list)) or len(pos) != 2:
+                continue
+            try:
+                sx = float(pos[0])
+                sy = float(pos[1])
+                raio = max(0.0, float(estrutura.get("raio_colisao", 0.4)))
+            except (TypeError, ValueError):
+                continue
+            if raio <= 0.0:
+                continue
+            yield (sx, sy, raio)
+
+    @staticmethod
+    def _intersecao_segmento_circulo(
+        origem: Tuple[float, float],
+        destino: Tuple[float, float],
+        centro: Tuple[float, float],
+        raio: float,
+    ) -> Optional[float]:
+        ox, oy = origem
+        dx = destino[0] - ox
+        dy = destino[1] - oy
+        fx = ox - centro[0]
+        fy = oy - centro[1]
+
+        a = dx * dx + dy * dy
+        if a <= 1e-10:
+            return None
+
+        b = 2.0 * (fx * dx + fy * dy)
+        c = (fx * fx + fy * fy) - (raio * raio)
+        delta = b * b - 4.0 * a * c
+        if delta < 0.0:
+            return None
+
+        raiz = math.sqrt(delta)
+        inv = 1.0 / (2.0 * a)
+        t1 = (-b - raiz) * inv
+        t2 = (-b + raiz) * inv
+
+        candidatos = [t for t in (t1, t2) if 0.0 <= t <= 1.0]
+        if not candidatos:
+            return None
+        return min(candidatos)
+
+    def _resolver_colisao_player_local_estruturas(self, posicao_antes: Tuple[float, float]) -> None:
+        if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
+            return
+        ator = self.PlayerLocal.Ator
+        posicao_depois = tuple(ator.Posicao)
+        raio_ator = max(0.0, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
+
+        if raio_ator <= 0.0:
+            return
+
+        melhor_t = None
+        for sx, sy, raio_estrutura in self._iter_estruturas_colisiveis():
+            t = self._intersecao_segmento_circulo(posicao_antes, posicao_depois, (sx, sy), raio_ator + raio_estrutura)
+            if t is None:
+                continue
+            if melhor_t is None or t < melhor_t:
+                melhor_t = t
+
+        if melhor_t is not None:
+            dx = posicao_depois[0] - posicao_antes[0]
+            dy = posicao_depois[1] - posicao_antes[1]
+            t_seguro = max(0.0, melhor_t - 0.02)
+            ator.definir_posicao(posicao_antes[0] + dx * t_seguro, posicao_antes[1] + dy * t_seguro)
+
+        px, py = ator.Posicao
+        for _ in range(3):
+            ajustou = False
+            for sx, sy, raio_estrutura in self._iter_estruturas_colisiveis():
+                vx = px - sx
+                vy = py - sy
+                dist = math.hypot(vx, vy)
+                limite = raio_ator + raio_estrutura
+                if dist >= limite or limite <= 0.0:
+                    continue
+
+                if dist <= 1e-8:
+                    vx, vy, dist = 1.0, 0.0, 1.0
+
+                nx = vx / dist
+                ny = vy / dist
+                sobreposicao = limite - dist
+                px += nx * (sobreposicao + 1e-4)
+                py += ny * (sobreposicao + 1e-4)
+                ajustou = True
+
+            if not ajustou:
+                break
+
+        ator.definir_posicao(px, py)
 
     def registrar_diff_local(self, diff) -> None:
         if not isinstance(diff, dict):

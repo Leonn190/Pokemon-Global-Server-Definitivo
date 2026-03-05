@@ -148,9 +148,14 @@ class BancoDadosMundo:
             grid.append(linha)
         return grid
 
+
+    def chunk_tamanho_unidade(self) -> int:
+        return max(1, int(self._chunk_blocos))
+
     def chunks_proximos(self, posicao: Vector2, raio_chunks: int = 1) -> List[Tuple[int, int]]:
-        cpx = int(math.floor(posicao[0] / self._chunk_tamanho_px))
-        cpy = int(math.floor(posicao[1] / self._chunk_tamanho_px))
+        chunk_tamanho = self.chunk_tamanho_unidade()
+        cpx = int(math.floor(posicao[0] / chunk_tamanho))
+        cpy = int(math.floor(posicao[1] / chunk_tamanho))
         coords = []
         for dx in range(-raio_chunks, raio_chunks + 1):
             for dy in range(-raio_chunks, raio_chunks + 1):

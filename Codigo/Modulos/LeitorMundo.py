@@ -6,40 +6,35 @@ import threading
 import time
 from typing import Callable, Dict, List, Optional, Tuple
 
-from Codigo.Geradores.EstruturaNaturais import EstruturaNatural
-
 Vector2 = Tuple[float, float]
 PacoteMundo = Dict[str, object]
 
 
 class LeitorMundo:
-    """Thread que busca atualizações do servidor e popula o mundo do cliente."""
-
     def __init__(
         self,
         jogo,
-        entidade_main,
-        callback_atualizacao: Callable[[str, str, Vector2], Optional[PacoteMundo]],
+        camera,
+        callback_atualizacao: Callable[[str, str, Vector2, int], Optional[PacoteMundo]],
         callback_envio_diffs: Optional[Callable[[str, str, List[Dict[str, object]]], Optional[Dict[str, object]]]] = None,
         intervalo_poll: float = 0.20,
+        raio_chunks: int = 5,
     ) -> None:
         self.JOGO = jogo
-        self.EntidadeMain = entidade_main
+        self.Camera = camera
         self.CallbackAtualizacao = callback_atualizacao
         self.CallbackEnvioDiffs = callback_envio_diffs
         self.IntervaloPoll = max(0.05, float(intervalo_poll))
+        self.RaioChunks = max(1, int(raio_chunks))
 
         self.ServerLink: Optional[str] = None
         self.ClientId = str(getattr(jogo, "INFO", {}).get("UsuarioLogado", "anon"))
         self.Chunks: Dict[Tuple[int, int], List[List[int]]] = {}
-        self.ObjetosMundo: Dict[int, Dict[str, object]] = {}
-        self.Entidades: List[Dict[str, object]] = []
-        self.Estruturas: List[Dict[str, object]] = []
-
         self._lock = threading.Lock()
         self._thread: Optional[threading.Thread] = None
         self._ativo = False
         self._fila_diffs_envio: List[Dict[str, object]] = []
+        self._diffs_recebidas: List[Dict[str, object]] = []
 
     def conectar_servidor(self, link_servidor: str) -> None:
         self.ServerLink = str(link_servidor)
@@ -63,6 +58,12 @@ class LeitorMundo:
             return
         with self._lock:
             self._fila_diffs_envio.append(diff)
+
+    def consumir_diffs_recebidas(self) -> List[Dict[str, object]]:
+        with self._lock:
+            diffs = list(self._diffs_recebidas)
+            self._diffs_recebidas.clear()
+            return diffs
 
     def _loop(self) -> None:
         while self._ativo:
@@ -91,9 +92,9 @@ class LeitorMundo:
                 self._fila_diffs_envio = diffs + self._fila_diffs_envio
 
     def _coletar_estado_servidor(self) -> Optional[PacoteMundo]:
-        pos_main = getattr(self.EntidadeMain, "Posicao", (0.0, 0.0))
+        pos_camera = getattr(self.Camera, "PosicaoTiles", (0.0, 0.0))
         try:
-            return self.CallbackAtualizacao(self.ServerLink, self.ClientId, pos_main)
+            return self.CallbackAtualizacao(self.ServerLink, self.ClientId, pos_camera, self.RaioChunks)
         except Exception:
             return None
 
@@ -107,47 +108,14 @@ class LeitorMundo:
                 self.Chunks[(int(pos[0]), int(pos[1]))] = [list(linha) for linha in grid]
 
             for diff in pacote.get("diffs", []):
-                self._aplicar_diff(diff)
-
-            self.Entidades = [o for o in self.ObjetosMundo.values() if str(o.get("tipo", "")).startswith("entidade")]
-            self.Estruturas = [o for o in self.ObjetosMundo.values() if str(o.get("tipo", "")).startswith("estrutura")]
-
-    def _aplicar_diff(self, diff: Dict[str, object]) -> None:
-        tipo = str(diff.get("tipo", "")).strip().lower()
-        objeto_id = diff.get("objeto_id")
-        payload = diff.get("payload", {}) if isinstance(diff.get("payload", {}), dict) else {}
-
-        if tipo == "spawn":
-            dados_obj = payload
-            oid = int(dados_obj.get("id", objeto_id))
-            self.ObjetosMundo[oid] = dict(dados_obj)
-            return
-
-        if objeto_id is None:
-            return
-
-        oid = int(objeto_id)
-        if tipo == "update":
-            atual = self.ObjetosMundo.get(oid, {"id": oid})
-            if "estado" in payload and isinstance(payload.get("estado"), dict):
-                base_estado = atual.get("estado", {}) if isinstance(atual.get("estado"), dict) else {}
-                base_estado.update(payload["estado"])
-                atual["estado"] = base_estado
-            for chave, valor in payload.items():
-                if chave == "estado":
+                if not isinstance(diff, dict):
                     continue
-                atual[chave] = valor
-            self.ObjetosMundo[oid] = atual
-            return
-
-        if tipo == "despawn":
-            self.ObjetosMundo.pop(oid, None)
+                if str(diff.get("tipo", "")).lower() == "chunk":
+                    continue
+                self._diffs_recebidas.append(dict(diff))
 
     def snapshot(self) -> Dict[str, object]:
         with self._lock:
             return {
                 "chunks": dict(self.Chunks),
-                "entidades": list(self.Entidades),
-                "estruturas": list(self.Estruturas),
-                "objetos": dict(self.ObjetosMundo),
             }

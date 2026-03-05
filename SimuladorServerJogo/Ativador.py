@@ -46,13 +46,13 @@ def _normalizar_posicao(valor) -> Vector2:
     return (float(valor[0]), float(valor[1]))
 
 
-def _diff_relevante(diff: Dict[str, object], posicao_main: Vector2, raio: float) -> bool:
+def _diff_relevante(diff: Dict[str, object], posicao_camera: Vector2, raio: float) -> bool:
     escopo = diff.get("escopo") or {}
     centro = escopo.get("centro")
     if not centro:
         return True
     cx, cy = _normalizar_posicao(centro)
-    return math.hypot(cx - posicao_main[0], cy - posicao_main[1]) <= raio
+    return math.hypot(cx - posicao_camera[0], cy - posicao_camera[1]) <= raio
 
 
 def _prune_diff_log() -> None:
@@ -79,8 +79,9 @@ def processar_ativador_json(requisicao_json: str) -> str:
 
     dados = pacote.get("dados", {})
     client_id = str(dados.get("client_id", "")).strip()
-    posicao_main = _normalizar_posicao(dados.get("posicao_main", [0.0, 0.0]))
-    raio = float(dados.get("raio", 640.0))
+    posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
+    raio_chunks = max(1, int(dados.get("raio_chunks", 5)))
+    raio = float(raio_chunks * BANCO_DADOS.chunk_tamanho_unidade())
 
     if not client_id:
         return json.dumps({"status": "erro", "mensagem": "client_id obrigatório"}, ensure_ascii=False)
@@ -92,7 +93,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
         vistos: Set[int] = state["objetos_vistos"]
         chunks_vistos: Set[Tuple[int, int]] = state["chunks_vistos"]
 
-        objetos_proximos = BANCO_DADOS.buscar_proximos(posicao_main, raio)
+        objetos_proximos = BANCO_DADOS.buscar_proximos(posicao_camera, raio)
         diffs: List[Dict[str, object]] = []
 
         for obj in objetos_proximos:
@@ -111,7 +112,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
         for diff in _DIFF_LOG:
             if client_id in diff["coletado_por"]:
                 continue
-            if not _diff_relevante(diff, posicao_main, raio):
+            if not _diff_relevante(diff, posicao_camera, raio):
                 continue
             diffs.append(
                 {
@@ -126,7 +127,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
             diff["coletado_por"].add(client_id)
 
         chunks = []
-        for chunk in BANCO_DADOS.chunks_proximos(posicao_main, raio_chunks=1):
+        for chunk in BANCO_DADOS.chunks_proximos(posicao_camera, raio_chunks=raio_chunks):
             if chunk in chunks_vistos:
                 continue
             dados_chunk = {"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": 32}
@@ -138,7 +139,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
                     "tipo": "chunk",
                     "objeto_id": None,
                     "payload": dados_chunk,
-                    "escopo": {"centro": [posicao_main[0], posicao_main[1]], "raio": raio},
+                    "escopo": {"centro": [posicao_camera[0], posicao_camera[1]], "raio": raio},
                 }
             )
             chunks_vistos.add(chunk)
@@ -154,3 +155,9 @@ def processar_ativador_json(requisicao_json: str) -> str:
         "meta": {"total_diffs": len(diffs), "total_chunks": len(chunks)},
     }
     return json.dumps(resposta, ensure_ascii=False)
+
+
+def desconectar_client(client_id: str) -> None:
+    with _DIFF_LOCK:
+        _CLIENTS_CONHECIDOS.discard(client_id)
+        _CLIENT_STATE.pop(client_id, None)

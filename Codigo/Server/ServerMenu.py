@@ -1,9 +1,7 @@
 import json
 
-from SimuladorServerJogo.Ativador import processar_ativador_json
 from SimuladorServerJogo.Entrada import processar_entrada_json
 from SimuladorServerJogo.ServerOperar import processar_operacao_json
-from SimuladorServerJogo.Atualizador import processar_atualizador_json
 
 
 def _erro_padrao(mensagem):
@@ -72,36 +70,3 @@ def criar_personagem(ip, usuario, skin, pokemon_inicial):
         return json.loads(resposta_json)
     except json.JSONDecodeError:
         return _erro_padrao("Falha ao interpretar resposta de criação de personagem")
-
-
-def consultar_estado_mundo(ip, client_id, posicao_main, raio=640.0):
-    pacote = {
-        "ip": ip,
-        "acao": "ativador",
-        "dados": {
-            "client_id": client_id,
-            "posicao_main": [float(posicao_main[0]), float(posicao_main[1])],
-            "raio": float(raio),
-        },
-    }
-    resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta do Ativador")
-
-
-def enviar_diffs_mundo(ip, client_id, diffs):
-    pacote = {
-        "ip": ip,
-        "acao": "atualizador",
-        "dados": {
-            "client_id": client_id,
-            "diffs": diffs,
-        },
-    }
-    resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta do Atualizador")

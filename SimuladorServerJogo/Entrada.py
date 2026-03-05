@@ -1,7 +1,7 @@
 import json
 import time
 
-from SimuladorServerJogo.Ativador import registrar_diff
+from SimuladorServerJogo.Ativador import registrar_diff, desconectar_client
 from SimuladorServerJogo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.EstadoServidor import adicionar_personagem, snapshot_estado
 
@@ -63,6 +63,13 @@ def processar_entrada_json(requisicao_json):
             _resposta("ok", mensagem, possui_personagem=possui_personagem, personagem=personagem),
             ensure_ascii=False,
         )
+
+    if acao == "sair_mundo":
+        client_id = str(dados.get("client_id", "")).strip()
+        if not client_id:
+            return json.dumps(_resposta("erro", "client_id obrigatório"), ensure_ascii=False)
+        desconectar_client(client_id)
+        return json.dumps(_resposta("ok", "Desconectado do mundo com sucesso"), ensure_ascii=False)
 
     if acao == "criar_personagem":
         usuario = str(dados.get("usuario", "")).strip()

@@ -3,11 +3,13 @@ import os
 import pygame
 
 from Codigo.Geradores.Ator import Ator
-from Codigo.Geradores.Camera import Camera
-from Codigo.Geradores.LeitorMundo import LeitorMundo
-from Codigo.Geradores.PlayerController import PlayerController
+from Codigo.Modulos.Camera import Camera
+from Codigo.Modulos.ControladorObjetos import ControladorObjetos
+from Codigo.Modulos.LeitorMundo import LeitorMundo
+from Codigo.Modulos.Player.Player import Player
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
-from Codigo.Server.ServerMenu import consultar_estado_mundo, enviar_diffs_mundo
+from Codigo.Modulos.SubtelaOpcoes import SubtelaOpcoes
+from Codigo.Server.ServerMundo import consultar_estado_mundo, enviar_diffs_mundo, desconectar_mundo
 
 
 class CenaMundo:
@@ -18,10 +20,12 @@ class CenaMundo:
 
         self.Camera = None
         self.LeitorMundo = None
+        self.ControladorObjetos = ControladorObjetos()
         self.EntidadeMain = None
-        self.PlayerController = None
+        self.Player = None
+        self.SubtelaOpcoes = SubtelaOpcoes()
+        self._desconectado = False
 
-        self.TamanhoBlocoPx = 24
         self.TamanhoChunkBlocos = 32
         self.CoresBlocos = {
             0: (14, 40, 92),
@@ -56,19 +60,21 @@ class CenaMundo:
         if dados.get("id") is not None:
             self.EntidadeMain.Id = int(dados.get("id"))
 
+        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain)
         self.LeitorMundo = LeitorMundo(
             jogo=JOGO,
-            entidade_main=self.EntidadeMain,
+            camera=self.Camera,
             callback_atualizacao=consultar_estado_mundo,
             callback_envio_diffs=enviar_diffs_mundo,
             intervalo_poll=0.20,
+            raio_chunks=5,
         )
-        self.PlayerController = PlayerController(
-            self.EntidadeMain,
-            velocidade_px=230.0,
+
+        self.Player = Player(
+            ator=self.EntidadeMain,
             callback_diff=self.LeitorMundo.enfileirar_diff,
+            velocidade_tiles=4.8,
         )
-        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain)
 
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
@@ -77,42 +83,58 @@ class CenaMundo:
             self.LeitorMundo.iniciar()
 
     def Tela(self, JOGO, EVENTOS, dt):
-        self.Camera.TamanhoTela = JOGO.TELA.get_size()
-        mouse_tela = pygame.mouse.get_pos()
-        mouse_mundo = (
-            mouse_tela[0] + self.Camera.Posicao[0],
-            mouse_tela[1] + self.Camera.Posicao[1],
-        )
+        self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
 
-        self.PlayerController.atualizar(EVENTOS, dt, mouse_mundo)
+        self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
+
+        if not self.SubtelaOpcoes.Ativa:
+            mouse_tela = pygame.mouse.get_pos()
+            mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)
+            self.Player.Controle.atualizar(EVENTOS, dt, mouse_mundo_tiles)
+
         self.Camera.atualizar(dt)
+
+        for diff in self.LeitorMundo.consumir_diffs_recebidas():
+            self.ControladorObjetos.aplicar_diff(diff)
 
         JOGO.TELA.fill((20, 20, 28))
         self._desenhar_mundo(JOGO)
 
-        pos_tela_main = self.Camera.mundo_para_tela(self.EntidadeMain.Posicao)
-        self.EntidadeMain.desenhar(JOGO.TELA, mouse_pos=mouse_tela, posicao_tela=pos_tela_main)
+        pos_tela_main = self.Camera.mundo_para_tela_px(self.EntidadeMain.Posicao)
+        self.EntidadeMain.desenhar(JOGO.TELA, mouse_pos=pygame.mouse.get_pos(), posicao_tela=pos_tela_main)
+        self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera)
+        self.SubtelaOpcoes.desenhar(JOGO)
 
     def _desenhar_mundo(self, JOGO):
         estado = self.LeitorMundo.snapshot() if self.LeitorMundo else {"chunks": {}}
         chunks = estado.get("chunks", {})
-        tamanho_chunk_px = self.TamanhoChunkBlocos * self.TamanhoBlocoPx
+        tamanho_chunk_tiles = self.TamanhoChunkBlocos
 
         for (chunk_x, chunk_y), grid in chunks.items():
-            origem_x = chunk_x * tamanho_chunk_px - self.Camera.Posicao[0]
-            origem_y = chunk_y * tamanho_chunk_px - self.Camera.Posicao[1]
+            origem_x_tile = chunk_x * tamanho_chunk_tiles
+            origem_y_tile = chunk_y * tamanho_chunk_tiles
 
             for by, linha in enumerate(grid):
-                py = origem_y + by * self.TamanhoBlocoPx
                 for bx, bloco in enumerate(linha):
-                    px = origem_x + bx * self.TamanhoBlocoPx
+                    px, py = self.Camera.mundo_para_tela_px((origem_x_tile + bx, origem_y_tile + by))
                     cor = self.CoresBlocos.get(int(bloco), (255, 0, 255))
                     pygame.draw.rect(
                         JOGO.TELA,
                         cor,
-                        (int(px), int(py), self.TamanhoBlocoPx + 1, self.TamanhoBlocoPx + 1),
+                        (int(px), int(py), self.Camera.TilePx + 1, self.Camera.TilePx + 1),
                     )
 
     def Finalizar(self, JOGO):
         if self.LeitorMundo:
             self.LeitorMundo.parar()
+        self._desconectar_do_mundo(JOGO)
+
+    def _desconectar_do_mundo(self, JOGO):
+        if self._desconectado:
+            return
+        server = JOGO.INFO.get("ServerSelecionado") or {}
+        link = server.get("ip")
+        client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+        if link:
+            desconectar_mundo(link, client_id)
+        self._desconectado = True

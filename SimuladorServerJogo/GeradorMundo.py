@@ -70,22 +70,18 @@ def _escolher_spawn_chunk(grid: List[List[int]]) -> List[int]:
 
     melhor = None
     melhor_dist2 = None
-    centro_cx = max_chunk_x / 2.0
-    centro_cy = max_chunk_y / 2.0
 
     for cy in range(max_chunk_y + 1):
         for cx in range(max_chunk_x + 1):
             if not _chunk_terra_firme(grid, cx, cy):
                 continue
-            dx = cx - centro_cx
-            dy = cy - centro_cy
-            dist2 = dx * dx + dy * dy
+            dist2 = (cx * cx) + (cy * cy)
             if melhor is None or dist2 < melhor_dist2:
                 melhor = [cx, cy]
                 melhor_dist2 = dist2
 
     if melhor is None:
-        return [max_chunk_x // 2, max_chunk_y // 2]
+        return [0, 0]
     return melhor
 
 
@@ -134,11 +130,55 @@ def _estado_base() -> Dict[str, object]:
     }
 
 
+def _normalizar_estado_carregado(estado: Dict[str, object]) -> Dict[str, object]:
+    if not isinstance(estado, dict):
+        return _estado_base()
+
+    grid = estado.get("grid")
+    if not isinstance(grid, list) or not grid:
+        return _estado_base()
+
+    meta = estado.get("meta", {}) if isinstance(estado.get("meta", {}), dict) else {}
+    largura = int(meta.get("largura_blocos", len(grid[0]) if grid else LARGURA_BLOCOS))
+    altura = int(meta.get("altura_blocos", len(grid) if grid else ALTURA_BLOCOS))
+
+    spawn_chunk = meta.get("spawn_chunk")
+    if not isinstance(spawn_chunk, (list, tuple)) or len(spawn_chunk) != 2:
+        spawn_chunk = _escolher_spawn_chunk(grid)
+
+    spawn = estado.get("spawn", [0.0, 0.0])
+    spawn_invalido = (
+        not isinstance(spawn, (list, tuple))
+        or len(spawn) != 2
+        or float(spawn[0]) < 0
+        or float(spawn[1]) < 0
+        or float(spawn[0]) >= float(max(1, largura))
+        or float(spawn[1]) >= float(max(1, altura))
+        or _tile_em(grid, int(float(spawn[0])), int(float(spawn[1])), fallback=0) in TILES_AGUA
+    )
+    if spawn_invalido:
+        spawn = _escolher_spawn_posicao(grid, [int(spawn_chunk[0]), int(spawn_chunk[1])])
+
+    meta["largura_blocos"] = largura
+    meta["altura_blocos"] = altura
+    meta["chunk_blocos"] = int(meta.get("chunk_blocos", CHUNK_BLOCOS))
+    meta["bloco_tamanho_px"] = int(meta.get("bloco_tamanho_px", BLOCO_TAMANHO_PX))
+    meta["spawn_chunk"] = [int(spawn_chunk[0]), int(spawn_chunk[1])]
+
+    estado["meta"] = meta
+    estado["spawn"] = [float(spawn[0]), float(spawn[1])]
+    estado["players"] = estado.get("players", {}) if isinstance(estado.get("players", {}), dict) else {}
+    return estado
+
+
 def carregar_ou_criar_estado_mundo() -> Dict[str, object]:
     if ARQUIVO_MUNDO.exists():
         try:
-            return json.loads(ARQUIVO_MUNDO.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+            estado = json.loads(ARQUIVO_MUNDO.read_text(encoding="utf-8"))
+            estado = _normalizar_estado_carregado(estado)
+            salvar_estado_mundo(estado)
+            return estado
+        except (json.JSONDecodeError, OSError, TypeError, ValueError):
             pass
 
     estado = _estado_base()

@@ -12,6 +12,7 @@ class PlayerController:
         self.Ator = ator
         self.VelocidadeTiles = float(velocidade_tiles)
         self.CallbackDiff = callback_diff
+        self.LimitesMundoTiles = None
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles):
         dt = max(0.0, float(dt))
@@ -29,6 +30,23 @@ class PlayerController:
 
     def _emitir_diff_update_posicao(self):
         self._emitir_diff("update", {"posicao": [self.Ator.Posicao[0], self.Ator.Posicao[1]]})
+
+
+    def definir_limites_mundo(self, largura_tiles, altura_tiles):
+        try:
+            largura = max(1.0, float(largura_tiles))
+            altura = max(1.0, float(altura_tiles))
+        except (TypeError, ValueError):
+            self.LimitesMundoTiles = None
+            return
+        self.LimitesMundoTiles = (largura, altura)
+
+    def _aplicar_loop_mundo(self):
+        if not self.LimitesMundoTiles:
+            return
+        largura, altura = self.LimitesMundoTiles
+        px, py = self.Ator.Posicao
+        self.Ator.definir_posicao(px % largura, py % altura)
 
     def _processar_movimento(self, dt):
         teclas = pygame.key.get_pressed()
@@ -51,6 +69,7 @@ class PlayerController:
 
         antes = self.Ator.Posicao
         self.Ator.mover(eixo_x * self.VelocidadeTiles * dt, eixo_y * self.VelocidadeTiles * dt)
+        self._aplicar_loop_mundo()
         return self.Ator.Posicao != antes
 
     def _processar_rotacao(self, mouse_pos_mundo_tiles):

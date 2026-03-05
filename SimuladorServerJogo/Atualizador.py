@@ -12,6 +12,18 @@ from SimuladorServerJogo.ObjetosMundoServer import GameObjetoServer
 from SimuladorServerJogo.EstadoServidor import atualizar_posicao_personagem
 
 
+def _normalizar_posicao_loop(posicao):
+    if not isinstance(posicao, (list, tuple)) or len(posicao) != 2:
+        return posicao
+    largura, altura = BANCO_DADOS.limites_mundo()
+    try:
+        x = float(posicao[0]) % max(1.0, float(largura))
+        y = float(posicao[1]) % max(1.0, float(altura))
+    except (TypeError, ValueError):
+        return posicao
+    return [x, y]
+
+
 def _ok(mensagem: str, **extras) -> str:
     payload = {"status": "ok", "mensagem": mensagem}
     payload.update(extras)
@@ -54,6 +66,9 @@ def processar_atualizador_json(requisicao_json: str) -> str:
         objeto_id = diff.get("objeto_id")
 
         if tipo == "update" and objeto_id is not None:
+            if "posicao" in payload:
+                payload = dict(payload)
+                payload["posicao"] = _normalizar_posicao_loop(payload.get("posicao"))
             obj = BANCO_DADOS.atualizar_objeto(int(objeto_id), payload)
             if obj is None:
                 ignorados += 1

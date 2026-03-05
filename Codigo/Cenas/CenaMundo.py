@@ -100,6 +100,7 @@ class CenaMundo:
         for diff in self.LeitorMundo.consumir_diffs_recebidas():
             self.ControladorObjetos.aplicar_diff(diff)
 
+        self._atualizar_limites_loop_mundo()
         self._atualizar_cache_mundo()
 
         JOGO.TELA.fill((20, 20, 28))
@@ -110,6 +111,20 @@ class CenaMundo:
         ignorar_id_main = getattr(self.EntidadeMain, "Id", None)
         self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera, ignorar_entidade_id=ignorar_id_main)
         self.SubtelaOpcoes.desenhar(JOGO)
+
+
+    def _atualizar_limites_loop_mundo(self):
+        if not self.Player or not self.LeitorMundo:
+            return
+        estado = self.LeitorMundo.snapshot()
+        meta = estado.get("meta", {}) if isinstance(estado, dict) else {}
+        if not isinstance(meta, dict):
+            return
+        largura = meta.get("largura_blocos")
+        altura = meta.get("altura_blocos")
+        if largura is None or altura is None:
+            return
+        self.Player.Controle.definir_limites_mundo(largura, altura)
 
     def _atualizar_cache_mundo(self):
         estado = self.LeitorMundo.snapshot() if self.LeitorMundo else {"chunks": {}}

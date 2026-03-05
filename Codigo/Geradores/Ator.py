@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import math
+import os
 from typing import Optional, Tuple
+
+import pygame
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Geradores.Entidade import Entidade
@@ -15,9 +18,23 @@ Vector2 = Tuple[float, float]
 class Ator(Entidade):
     """Entidade básica com skin de player e desenho via ``DesenhaAtor``."""
 
+    @staticmethod
+    def carregar_skin(nome_skin: str):
+        nome_base = str(nome_skin or "S1")
+        if not nome_base.endswith(".png"):
+            nome_base = f"{nome_base}.png"
+        caminho = os.path.join("Recursos", "Visual", "Skins", "Liberadas", nome_base)
+        try:
+            return pygame.image.load(caminho).convert_alpha()
+        except pygame.error:
+            fallback = pygame.Surface((32, 32), pygame.SRCALPHA)
+            fallback.fill((190, 220, 255))
+            return fallback
+
     def __init__(
         self,
-        skin_surface,
+        skin_surface=None,
+        nome_skin: str = "S1",
         posicao: Vector2 = (0.0, 0.0),
         velocidade: Vector2 = (0.0, 0.0),
         raio_colisao: float = 0.35,
@@ -30,6 +47,8 @@ class Ator(Entidade):
             raio_colisao=raio_colisao,
             raio_interacao=raio_interacao,
         )
+        if skin_surface is None:
+            skin_surface = self.carregar_skin(nome_skin)
         self.Skin = skin_surface
         self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin)
 

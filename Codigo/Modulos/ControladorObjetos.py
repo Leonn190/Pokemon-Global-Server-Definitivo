@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from typing import Dict, List
+import math
+import os
 
 import pygame
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Modulos.Player.Player import Player
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Modulos.ConfigEstruturasNaturais import tipo_estrutura_natural_por_codigo
 
 
 class ControladorObjetos:
@@ -17,6 +20,7 @@ class ControladorObjetos:
         self.PlayerLocal = None
         self._fila_diffs_envio: List[Dict[str, object]] = []
         self._cache_nome_texto: Dict[str, Texto] = {}
+        self._cache_sprites: Dict[str, pygame.Surface] = {}
 
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
@@ -155,21 +159,45 @@ class ControladorObjetos:
             return
         px, py = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
 
-        # Compatibilidade de unidade:
-        # - clientes novos usam raio em TILES
-        # - simulador antigo enviava raio em PIXELS (ex.: 12.0)
-        # Se tratarmos 12.0 como tile, viram círculos gigantes (12 * TilePx).
-        raio_raw = max(0.0, float(obj.get("raio_colisao", 0.4)))
-        if raio_raw > 4.0:
-            raio_px = int(raio_raw)
-        else:
-            raio_px = int(raio_raw * camera.TilePx)
+        codigo_natural = obj.get("codigo_natural")
+        if codigo_natural is None and isinstance(obj.get("estado"), dict):
+            codigo_natural = obj["estado"].get("codigo_natural")
+        cfg_natural = tipo_estrutura_natural_por_codigo(codigo_natural)
 
-        raio_px = max(3, min(80, raio_px))
-        pygame.draw.circle(tela, cor, (int(px), int(py)), raio_px)
+        sprite_path = str(obj.get("sprite", "")).strip()
+        if not sprite_path and cfg_natural:
+            sprite_path = str(cfg_natural.get("sprite", "")).strip()
+        sprite = self._obter_sprite(sprite_path)
+        if sprite is not None:
+            sprite_rect = sprite.get_rect(midbottom=(int(px), int(py) + int(camera.TilePx * 0.2)))
+            tela.blit(sprite, sprite_rect)
+        else:
+            raio_raw = max(0.0, float(obj.get("raio_colisao", 0.4)))
+            if raio_raw > 4.0:
+                raio_px = int(raio_raw)
+            else:
+                raio_px = int(raio_raw * camera.TilePx)
+            raio_px = max(3, min(80, raio_px))
+            pygame.draw.circle(tela, cor, (int(px), int(py)), raio_px)
+
         if str(obj.get("tipo", "")).startswith("entidade"):
             nome_obj = obj.get("nome") or obj.get("usuario") or f"Player {obj.get('id', '')}"
             self._desenhar_nome_jogador(tela, (px, py), nome_obj)
+
+    def _obter_sprite(self, caminho):
+        if not caminho:
+            return None
+        if caminho in self._cache_sprites:
+            return self._cache_sprites[caminho]
+        if not os.path.exists(caminho):
+            self._cache_sprites[caminho] = None
+            return None
+        try:
+            sprite = pygame.image.load(caminho).convert_alpha()
+        except pygame.error:
+            sprite = None
+        self._cache_sprites[caminho] = sprite
+        return sprite
 
     def _desenhar_nome_jogador(self, tela, pos_tela, nome):
         nome_str = str(nome or "Player")
@@ -190,5 +218,9 @@ class ControladorObjetos:
             self._cache_nome_texto[nome_str] = texto
         else:
             texto.set_text(nome_str)
-        texto.set_pos((int(pos_tela[0]), int(pos_tela[1]) - 40))
+
+        tempo = pygame.time.get_ticks() * 0.004
+        fase = (abs(hash(nome_str)) % 360) * 0.0174533
+        oscilacao = math.sin(tempo + fase) * 2.0
+        texto.set_pos((int(pos_tela[0]), int(pos_tela[1]) - 43 + int(round(oscilacao))))
         texto.draw(tela)

@@ -97,7 +97,7 @@ class DesenhaAtor:
 
         if empurrao_tapa > 0.0:
             arco = math.sin(progresso * math.pi)
-            curva_frente = 20.0 * arco
+            curva_frente = 40.0 * arco
             curva_esquerda = 5.0 * arco
             mao_dir_x = mao_dir_base_x + vx * curva_frente - px * curva_esquerda
             mao_dir_y = mao_dir_base_y + vy * curva_frente - py * curva_esquerda

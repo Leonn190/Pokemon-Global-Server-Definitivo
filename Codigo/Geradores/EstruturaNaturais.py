@@ -9,6 +9,12 @@ from Codigo.Geradores.Estrutura import Estrutura
 Vector2 = Tuple[float, float]
 
 
+from Codigo.Modulos.ConfigEstruturasNaturais import (
+    ESTRUTURAS_NATURAIS_TIPOS,
+    tipo_estrutura_natural_por_codigo,
+)
+
+
 class EstruturaNatural(Estrutura):
     """Estrutura fixa que pode fornecer recursos quando recebe um tapa."""
 

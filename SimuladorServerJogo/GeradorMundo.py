@@ -45,6 +45,27 @@ def _gerar_grid_teste() -> List[List[int]]:
     return grid
 
 
+def _gerar_grid_estruturas_naturais() -> List[List[int]]:
+    """Grid secundária de estruturas naturais (0=nada, 1=árvore, 2=pedra, 3=arbusto)."""
+    grid: List[List[int]] = [[0 for _ in range(LARGURA_BLOCOS)] for _ in range(ALTURA_BLOCOS)]
+
+    def posicionar(tipo_tile: int, quantidade: int, passo_x: int, passo_y: int, offset_x: int, offset_y: int) -> None:
+        colocados = 0
+        tentativas = 0
+        limite_tentativas = max(quantidade * 100, 1000)
+        while colocados < quantidade and tentativas < limite_tentativas:
+            tentativas += 1
+            x = (offset_x + (tentativas * passo_x)) % LARGURA_BLOCOS
+            y = (offset_y + (tentativas * passo_y)) % ALTURA_BLOCOS
+            if grid[y][x] != 0:
+                continue
+            grid[y][x] = tipo_tile
+            colocados += 1
+
+    posicionar(tipo_tile=1, quantidade=30, passo_x=17, passo_y=29, offset_x=11, offset_y=23)
+    posicionar(tipo_tile=2, quantidade=25, passo_x=31, passo_y=19, offset_x=7, offset_y=13)
+    posicionar(tipo_tile=3, quantidade=15, passo_x=23, passo_y=37, offset_x=3, offset_y=5)
+    return grid
 
 
 def _tile_em(grid: List[List[int]], x: int, y: int, fallback: int = 0) -> int:
@@ -114,6 +135,7 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None) -> Dict[st
 
 def _estado_base() -> Dict[str, object]:
     grid = _gerar_grid_teste()
+    grid_estruturas_naturais = _gerar_grid_estruturas_naturais()
     spawn_chunk = _escolher_spawn_chunk(grid)
     spawn_tile = _escolher_spawn_posicao(grid, spawn_chunk)
     return {
@@ -126,6 +148,7 @@ def _estado_base() -> Dict[str, object]:
         },
         "spawn": spawn_tile,
         "grid": grid,
+        "grid_estruturas_naturais": grid_estruturas_naturais,
         "players": {},
     }
 
@@ -167,6 +190,10 @@ def _normalizar_estado_carregado(estado: Dict[str, object]) -> Dict[str, object]
 
     estado["meta"] = meta
     estado["spawn"] = [float(spawn[0]), float(spawn[1])]
+    grid_estruturas = estado.get("grid_estruturas_naturais")
+    if not isinstance(grid_estruturas, list) or len(grid_estruturas) != altura:
+        grid_estruturas = _gerar_grid_estruturas_naturais()
+    estado["grid_estruturas_naturais"] = grid_estruturas
     estado["players"] = estado.get("players", {}) if isinstance(estado.get("players", {}), dict) else {}
     return estado
 

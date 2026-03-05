@@ -73,6 +73,27 @@ class AtorServer(EntidadeServer):
 
 
 class EstruturaNaturalServer(EstruturaServer):
-    def __init__(self, id_objeto: int, tipo: str, posicao: Vector2 = (0.0, 0.0), recursos: Optional[Dict[str, int]] = None):
-        super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=20.0, raio_interacao=26.0)
+    def __init__(
+        self,
+        id_objeto: int,
+        tipo: str,
+        nome: str,
+        sprite: str,
+        posicao: Vector2 = (0.0, 0.0),
+        raio_colisao: float = 20.0,
+        raio_interacao: float = 26.0,
+        recursos: Optional[Dict[str, int]] = None,
+        codigo_natural: int = 0,
+    ):
+        super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=raio_colisao, raio_interacao=raio_interacao)
         self.estado_extra.update({"subtipo": tipo, "recursos": dict(recursos or {})})
+        self.nome = str(nome)
+        self.sprite = str(sprite)
+        self.codigo_natural = int(codigo_natural)
+
+    def serializar(self) -> Dict[str, object]:
+        dados = super().serializar()
+        dados["nome"] = self.nome
+        dados["sprite"] = self.sprite
+        dados["codigo_natural"] = self.codigo_natural
+        return dados

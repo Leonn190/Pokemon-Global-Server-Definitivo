@@ -68,13 +68,9 @@ class SubtelaOpcoes:
 
     def _acao_config(self, jogo):
         self.Ativa = False
-        jogo.INFO["ConfigRetorno"] = {
-            "Cena": jogo.Cena.ID,
-            "TelaAtual": getattr(jogo.Cena, "TelaAtual", None),
-        }
-        jogo.INFO["MenuTelaInicial"] = "Config"
-        jogo.INFO["PreservarMusicaAtual"] = True
-        jogo.CenaAlvo = "Menu"
+        jogo.INFO["MundoTelaSobreposta"] = "Config"
+        if getattr(jogo, "Cena", None) is not None and getattr(jogo.Cena, "ID", "") == "Mundo":
+            jogo.Cena.TelaAtual = "Config"
 
     def _acao_sair_mundo(self, jogo):
         self.Ativa = False

@@ -230,9 +230,9 @@ def TelaConfig(Cena, JOGO, EVENTOS, dt):
     eventos_ativos = [] if _SUBTELA_ATIVA else EVENTOS
     mouse_pos = (-99999, -99999) if _SUBTELA_ATIVA else None
 
-    alterou_fps = _BARRAS["FPS"].render(JOGO.TELA, eventos_ativos)
-    alterou_claridade = _BARRAS["Claridade"].render(JOGO.TELA, eventos_ativos)
-    alterou_volume = _BARRAS["Volume"].render(JOGO.TELA, eventos_ativos)
+    alterou_fps = _BARRAS["FPS"].render(JOGO.TELA, eventos_ativos, dt)
+    alterou_claridade = _BARRAS["Claridade"].render(JOGO.TELA, eventos_ativos, dt)
+    alterou_volume = _BARRAS["Volume"].render(JOGO.TELA, eventos_ativos, dt)
 
     if alterou_fps:
         JOGO.CONFIG["FPS"] = int(round(_BARRAS["FPS"].valor))

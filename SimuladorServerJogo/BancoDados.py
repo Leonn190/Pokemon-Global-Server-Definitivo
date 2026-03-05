@@ -12,7 +12,8 @@ from SimuladorServerJogo.GeradorMundo import (
     CHUNK_BLOCOS,
     carregar_ou_criar_estado_mundo,
 )
-from SimuladorServerJogo.ObjetosMundoServer import AtorServer, GameObjetoServer
+from SimuladorServerJogo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, GameObjetoServer
+from Codigo.Modulos.ConfigEstruturasNaturais import tipo_estrutura_natural_por_codigo
 
 Vector2 = Tuple[float, float]
 
@@ -33,7 +34,7 @@ class BancoDadosMundo:
         self._chunk_blocos = int(meta.get("chunk_blocos", CHUNK_BLOCOS))
         self._largura_blocos = int(meta.get("largura_blocos", len(self._grid[0]) if self._grid else 0))
         self._altura_blocos = int(meta.get("altura_blocos", len(self._grid)))
-
+        self._gerar_estruturas_naturais_no_mapa()
 
     def recarregar_mundo(self, estado_mundo: Dict[str, object], limpar_objetos: bool = False) -> None:
         with self._lock:
@@ -48,6 +49,49 @@ class BancoDadosMundo:
                 self._objetos.clear()
                 self._usuarios_para_objeto.clear()
                 self._indice_espacial.clear()
+            self._gerar_estruturas_naturais_no_mapa()
+
+    def _gerar_estruturas_naturais_no_mapa(self) -> None:
+        grid_nat = self._estado_mundo.get("grid_estruturas_naturais", [])
+        if not isinstance(grid_nat, list) or not grid_nat:
+            return
+
+        ids_remover = [oid for oid, obj in self._objetos.items() if obj.tipo_classe == "estrutura_natural"]
+        for oid in ids_remover:
+            obj_antigo = self._objetos.pop(oid, None)
+            if obj_antigo is not None:
+                self._indice_espacial[self._celula(obj_antigo.posicao)].discard(oid)
+
+        for y, linha in enumerate(grid_nat):
+            if not isinstance(linha, list):
+                continue
+            for x, valor in enumerate(linha):
+                try:
+                    tile_nat = int(valor)
+                except (TypeError, ValueError):
+                    continue
+                cfg = tipo_estrutura_natural_por_codigo(tile_nat)
+                if not cfg:
+                    continue
+                oid = self._next_id
+                self._next_id += 1
+                while oid in self._objetos:
+                    oid = self._next_id
+                    self._next_id += 1
+
+                obj = EstruturaNaturalServer(
+                    id_objeto=oid,
+                    tipo=cfg["subtipo"],
+                    nome=cfg["nome"],
+                    sprite=cfg["sprite"],
+                    posicao=(float(x), float(y)),
+                    raio_colisao=cfg["raio_colisao"],
+                    raio_interacao=cfg["raio_interacao"],
+                    codigo_natural=tile_nat,
+                )
+                obj.tipo_classe = "estrutura_natural"
+                self._objetos[obj.Id] = obj
+                self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)
 
     def limites_mundo(self) -> Tuple[int, int]:
         with self._lock:
@@ -166,7 +210,6 @@ class BancoDadosMundo:
                     linha.append(0)
             grid.append(linha)
         return grid
-
 
     def chunk_tamanho_unidade(self) -> int:
         return max(1, int(self._chunk_blocos))

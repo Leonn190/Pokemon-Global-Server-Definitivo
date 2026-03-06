@@ -18,14 +18,12 @@ class LeitorMundo:
         jogo,
         camera,
         callback_atualizacao: Callable[[str, str, Vector2, int], Optional[PacoteMundo]],
-        callback_envio_diffs: Optional[Callable[[str, str, List[Dict[str, object]]], Optional[Dict[str, object]]]] = None,
         intervalo_poll: float = 0.20,
         raio_chunks: int = 2,
     ) -> None:
         self.JOGO = jogo
         self.Camera = camera
         self.CallbackAtualizacao = callback_atualizacao
-        self.CallbackEnvioDiffs = callback_envio_diffs
         self.IntervaloPoll = max(0.05, float(intervalo_poll))
         self.RaioChunks = max(1, int(raio_chunks))
 
@@ -35,7 +33,6 @@ class LeitorMundo:
         self._lock = threading.Lock()
         self._thread: Optional[threading.Thread] = None
         self._ativo = False
-        self._fila_diffs_envio: List[Dict[str, object]] = []
         self._diffs_recebidas: List[Dict[str, object]] = []
         self._versao_chunks = 0
         self.MetaMundo: Dict[str, object] = {}
@@ -90,12 +87,6 @@ class LeitorMundo:
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=timeout)
 
-    def enfileirar_diff(self, diff: Dict[str, object]) -> None:
-        if not isinstance(diff, dict):
-            return
-        with self._lock:
-            self._fila_diffs_envio.append(diff)
-
     def consumir_diffs_recebidas(self) -> List[Dict[str, object]]:
         with self._lock:
             diffs = list(self._diffs_recebidas)
@@ -108,25 +99,10 @@ class LeitorMundo:
                 time.sleep(self.IntervaloPoll)
                 continue
 
-            self._enviar_diffs_pendentes()
             pacote = self._coletar_estado_servidor()
             if pacote:
                 self._aplicar_pacote(pacote)
             time.sleep(self.IntervaloPoll)
-
-    def _enviar_diffs_pendentes(self) -> None:
-        if self.CallbackEnvioDiffs is None or self.ServerLink is None:
-            return
-        with self._lock:
-            if not self._fila_diffs_envio:
-                return
-            diffs = list(self._fila_diffs_envio)
-            self._fila_diffs_envio.clear()
-        try:
-            self.CallbackEnvioDiffs(self.ServerLink, self.ClientId, diffs)
-        except Exception:
-            with self._lock:
-                self._fila_diffs_envio = diffs + self._fila_diffs_envio
 
     def _coletar_estado_servidor(self) -> Optional[PacoteMundo]:
         pos_camera = getattr(self.Camera, "PosicaoTiles", (0.0, 0.0))

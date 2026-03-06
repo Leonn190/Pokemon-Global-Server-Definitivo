@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 import math
+import threading
+import time
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.GameObjeto import GameObjeto
@@ -19,9 +21,16 @@ class ControladorObjetos:
         self._chunk_tamanho_tiles = 32
         self._objetos_colisao_por_chunk: Dict[Tuple[int, int], set[int]] = {}
         self._chunk_por_objeto: Dict[int, Tuple[int, int]] = {}
+        self._lock_diffs = threading.Lock()
+        self._thread_envio: Optional[threading.Thread] = None
+        self._thread_envio_ativo = False
+        self._callback_envio_diffs: Optional[Callable[[List[Dict[str, object]]], None]] = None
+        self._intervalo_envio_diffs = 0.05
+        self._snapshot_player_anterior: Optional[Dict[str, object]] = None
 
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
+        self._snapshot_player_anterior = None
         self._sincronizar_player_local()
 
     def montar_player_local(self, dados_player) -> Player:
@@ -38,7 +47,6 @@ class ControladorObjetos:
 
         player = Player(
             ator=ator,
-            callback_diff=self.registrar_diff_local,
             velocidade_tiles=4.8,
         )
         player.Perfil.aplicar_serializado(dados)
@@ -181,17 +189,131 @@ class ControladorObjetos:
             gerenciador_fps.finalizar_trecho("sistema_colisao")
         ator.definir_posicao(px, py)
 
-    def registrar_diff_local(self, diff) -> None:
-        if not isinstance(diff, dict):
-            return
-        self.aplicar_diff(diff)
-        self._fila_diffs_envio.append(dict(diff))
+    def _snapshot_player_supervisao(self) -> Optional[Dict[str, object]]:
+        player = self.PlayerLocal
+        if player is None or getattr(player, "Ator", None) is None:
+            return None
 
-    def enviar_diffs_pendentes(self, callback_envio) -> None:
-        if not callable(callback_envio):
+        ator = player.Ator
+        controle = getattr(player, "Controle", None)
+        inventario = getattr(player, "Inventario", None)
+        perfil = getattr(player, "Perfil", None)
+        player_id = getattr(ator, "Id", None)
+        if player_id is None:
+            return None
+
+        estado = {
+            "angulo": float(getattr(ator, "AnguloOlhar", 0.0)),
+            "tapa": bool(ator.esta_tapando()),
+        }
+
+        snapshot = {
+            "objeto_id": int(player_id),
+            "nome": str(getattr(ator, "Nome", "")),
+            "tipo": "entidade_player",
+            "posicao": [float(ator.Posicao[0]), float(ator.Posicao[1])],
+            "raio_colisao": float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)),
+            "estado": estado,
+            "perfil": dict(perfil.serializar()) if perfil is not None else {},
+            "inventario": dict(inventario.serializar()) if inventario is not None else {},
+            "controle": {
+                "inventario_aberto": bool(getattr(controle, "InventarioAberto", False)),
+                "batendo": bool(getattr(controle, "_batendo", False)),
+            },
+        }
+        return snapshot
+
+    def _comparar_snapshot_player(self, anterior: Optional[Dict[str, object]], atual: Dict[str, object]) -> Optional[Dict[str, object]]:
+        if anterior is None:
+            payload = {k: v for k, v in atual.items() if k != "objeto_id"}
+            return {"tipo": "update", "objeto_id": int(atual["objeto_id"]), "payload": payload}
+
+        payload: Dict[str, object] = {}
+
+        for chave in ("nome", "tipo", "raio_colisao"):
+            if anterior.get(chave) != atual.get(chave):
+                payload[chave] = atual.get(chave)
+
+        pos_atual = atual.get("posicao")
+        pos_antiga = anterior.get("posicao")
+        if pos_atual != pos_antiga:
+            payload["posicao"] = list(pos_atual)
+
+        estado_novo = atual.get("estado") if isinstance(atual.get("estado"), dict) else {}
+        estado_antigo = anterior.get("estado") if isinstance(anterior.get("estado"), dict) else {}
+        estado_delta = {}
+        for chave, valor in estado_novo.items():
+            if estado_antigo.get(chave) != valor:
+                estado_delta[chave] = valor
+        if estado_delta:
+            payload["estado"] = estado_delta
+
+        if anterior.get("perfil") != atual.get("perfil"):
+            payload["perfil"] = dict(atual.get("perfil", {}))
+
+        if anterior.get("inventario") != atual.get("inventario"):
+            payload["inventario"] = dict(atual.get("inventario", {}))
+
+        if anterior.get("controle") != atual.get("controle"):
+            payload["controle"] = dict(atual.get("controle", {}))
+
+        if not payload:
+            return None
+        return {"tipo": "update", "objeto_id": int(atual["objeto_id"]), "payload": payload}
+
+    def _supervisionar_player_e_enfileirar_diffs(self) -> None:
+        snapshot_atual = self._snapshot_player_supervisao()
+        if snapshot_atual is None:
+            self._snapshot_player_anterior = None
             return
-        while self._fila_diffs_envio:
-            callback_envio(self._fila_diffs_envio.pop(0))
+
+        diff = self._comparar_snapshot_player(self._snapshot_player_anterior, snapshot_atual)
+        self._snapshot_player_anterior = snapshot_atual
+        if diff is None:
+            return
+
+        self.aplicar_diff(diff)
+        with self._lock_diffs:
+            self._fila_diffs_envio.append(diff)
+
+    def iniciar_thread_envio_diffs(self, callback_envio_diffs: Callable[[List[Dict[str, object]]], None], intervalo: float = 0.05) -> None:
+        if not callable(callback_envio_diffs):
+            return
+        self._callback_envio_diffs = callback_envio_diffs
+        self._intervalo_envio_diffs = max(0.02, float(intervalo))
+        if self._thread_envio and self._thread_envio.is_alive():
+            return
+        self._thread_envio_ativo = True
+        self._thread_envio = threading.Thread(target=self._loop_envio_diffs, name="ControladorObjetosDiffsThread", daemon=True)
+        self._thread_envio.start()
+
+    def parar_thread_envio_diffs(self, timeout: float = 2.0) -> None:
+        self._thread_envio_ativo = False
+        if self._thread_envio and self._thread_envio.is_alive():
+            self._thread_envio.join(timeout=timeout)
+
+    def _loop_envio_diffs(self) -> None:
+        while self._thread_envio_ativo:
+            self._supervisionar_player_e_enfileirar_diffs()
+            callback = self._callback_envio_diffs
+            if callback is None:
+                time.sleep(self._intervalo_envio_diffs)
+                continue
+
+            with self._lock_diffs:
+                lote = list(self._fila_diffs_envio)
+                self._fila_diffs_envio.clear()
+
+            if not lote:
+                time.sleep(self._intervalo_envio_diffs)
+                continue
+
+            try:
+                callback(lote)
+            except Exception:
+                with self._lock_diffs:
+                    self._fila_diffs_envio = lote + self._fila_diffs_envio
+                time.sleep(self._intervalo_envio_diffs)
 
     def aplicar_diff(self, diff):
         if not isinstance(diff, dict):

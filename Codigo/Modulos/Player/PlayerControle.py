@@ -10,12 +10,11 @@ from Codigo.Prefabs.Barra import Barra
 
 
 class PlayerController:
-    def __init__(self, ator, perfil, inventario, velocidade_tiles=4.8, callback_diff=None):
+    def __init__(self, ator, perfil, inventario, velocidade_tiles=4.8):
         self.Ator = ator
         self.Perfil = perfil
         self.Inventario = inventario
         self.VelocidadeTiles = float(velocidade_tiles)
-        self.CallbackDiff = callback_diff
         self.LimitesMundoTiles = None
         self._grid_chunks = {}
         self._chunk_blocos = 32
@@ -26,7 +25,6 @@ class PlayerController:
         self._stamina_alpha = 0.0
         self.InventarioAberto = False
         self._tempo_respiracao = 0.0
-        self._tempo_diff_pos = 0.0
         self._tempo_diff_angulo = 0
         self._ultimo_angulo_emitido = None
 
@@ -43,14 +41,12 @@ class PlayerController:
         self._processar_scroll_inventario(eventos)
         self._processar_input_tapa(eventos)
         self._processar_rotacao(mouse_pos_mundo_tiles)
-        moveu, correndo, em_agua_funda = self._processar_movimento(dt)
+        _, correndo, em_agua_funda = self._processar_movimento(dt)
         self._atualizar_stamina(dt, correndo, em_agua_funda)
         self._atualizar_tapa_automatico()
         self._tempo_respiracao += dt
         self.Ator.atualizar(dt)
         self.Ator.atualizar_colisor_mao_mundo()
-        if moveu:
-            self._emitir_diff_update_posicao()
 
     def renderizar_stamina(self, tela, camera, dt):
         dt = max(0.0, float(dt))
@@ -80,19 +76,6 @@ class PlayerController:
     def definir_grid_chunks(self, chunks, chunk_blocos=32):
         self._grid_chunks = dict(chunks) if isinstance(chunks, dict) else {}
         self._chunk_blocos = max(1, int(chunk_blocos))
-
-    def _emitir_diff(self, tipo, payload):
-        if callable(self.CallbackDiff):
-            self.CallbackDiff({"tipo": tipo, "objeto_id": getattr(self.Ator, "Id", None), "payload": payload})
-
-    def _emitir_diff_update_posicao(self):
-        if self._tempo_diff_pos < 0.05:
-            return
-        self._tempo_diff_pos = 0.0
-        self._emitir_diff("update", {"posicao": [self.Ator.Posicao[0], self.Ator.Posicao[1]]})
-
-    def _emitir_diff_update_perfil(self):
-        self._emitir_diff("update", {"perfil": self.Perfil.serializar()})
 
     def definir_limites_mundo(self, largura_tiles, altura_tiles):
         try:
@@ -137,7 +120,6 @@ class PlayerController:
         return self._tile_atual() in {0, 1, 2}
 
     def _processar_movimento(self, dt):
-        self._tempo_diff_pos += dt
         teclas = pygame.key.get_pressed()
         eixo_x = 0.0
         eixo_y = 0.0
@@ -168,8 +150,6 @@ class PlayerController:
         return self.Ator.Posicao != antes, correndo, em_agua_funda
 
     def _atualizar_stamina(self, dt, correndo, em_agua_funda):
-        stamina_antes = self.Perfil.Stamina
-
         custo = 0.0
         if correndo:
             custo += 10.0
@@ -186,8 +166,6 @@ class PlayerController:
             if self._tempo_sem_gastar_stamina >= 1.5:
                 self.Perfil.regenerar_stamina(15.0 * dt)
 
-        if abs(self.Perfil.Stamina - stamina_antes) > 0.001:
-            self._emitir_diff_update_perfil()
 
     def _processar_rotacao(self, mouse_pos_mundo_tiles):
         self._tempo_diff_angulo += 1
@@ -212,7 +190,6 @@ class PlayerController:
         if self._ultimo_angulo_emitido is not None and abs(angulo - self._ultimo_angulo_emitido) < 0.5:
             return
         self._ultimo_angulo_emitido = angulo
-        self._emitir_diff("update", {"estado": {"angulo": angulo}})
 
     def _atualizar_tapa_automatico(self):
         if self._batendo and not self.Ator.esta_tapando():
@@ -221,7 +198,6 @@ class PlayerController:
                 self._soltar_apos_tapa_atual = False
                 return
             self.Ator.iniciar_tapa()
-            self._emitir_diff("update", {"estado": {"tapa": True}})
 
     def _processar_scroll_inventario(self, eventos):
         for evento in eventos:
@@ -236,7 +212,6 @@ class PlayerController:
                 self._soltar_apos_tapa_atual = False
                 if not self.Ator.esta_tapando():
                     self.Ator.iniciar_tapa()
-                    self._emitir_diff("update", {"estado": {"tapa": True}})
 
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
                 if self.Ator.esta_tapando():

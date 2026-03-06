@@ -1,4 +1,5 @@
 import threading
+import time
 
 from SimuladorServerJogo.GeradorMundo import (
     ALTURA_BLOCOS,
@@ -26,6 +27,8 @@ _ESTADO = {
 }
 
 _LOCK = threading.Lock()
+_INTERVALO_PERSISTENCIA_SEGUNDOS = 1.0
+_ultimo_persistencia_ts = 0.0
 
 
 def _clamp_posicao(posicao):
@@ -59,6 +62,40 @@ def _normalizar_perfil(personagem: dict) -> dict:
     return dados
 
 
+def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> dict:
+    base = _normalizar_perfil(personagem_atual)
+    payload = dict(atualizacao) if isinstance(atualizacao, dict) else {}
+
+    campos_int = (
+        "nivel_mochila",
+        "batalhas_pvp_vencidas",
+        "batalhas_bot_vencidas",
+        "ouro",
+        "passos_caminhados",
+        "maestria",
+    )
+    for campo in campos_int:
+        if campo in payload:
+            base[campo] = int(payload.get(campo, base[campo]))
+
+    if "insignias" in payload:
+        base["insignias"] = list(payload.get("insignias", []))
+    if "skins_liberadas" in payload:
+        base["skins_liberadas"] = list(payload.get("skins_liberadas", []))
+
+    stamina_max = float(base.get("stamina_max", 100.0))
+    if "stamina_max" in payload:
+        stamina_max = max(1.0, float(payload.get("stamina_max", stamina_max)))
+
+    stamina = float(base.get("stamina", stamina_max))
+    if "stamina" in payload:
+        stamina = float(payload.get("stamina", stamina))
+
+    base["stamina_max"] = stamina_max
+    base["stamina"] = max(0.0, min(stamina_max, stamina))
+    return base
+
+
 def _recarregar_mundo():
     global _ESTADO_MUNDO
     _ESTADO_MUNDO = carregar_ou_criar_estado_mundo()
@@ -89,8 +126,13 @@ def _sync_personagens_mundo():
     salvar_estado_mundo(_ESTADO_MUNDO)
 
 
-def _persistir_personagens() -> None:
+def _persistir_personagens(force: bool = False) -> None:
+    global _ultimo_persistencia_ts
+    agora = time.monotonic()
+    if not force and (agora - _ultimo_persistencia_ts) < _INTERVALO_PERSISTENCIA_SEGUNDOS:
+        return
     _sync_personagens_mundo()
+    _ultimo_persistencia_ts = agora
 
 
 def chave_seguranca():
@@ -144,7 +186,7 @@ def adicionar_personagem(usuario, skin, pokemon_inicial):
                 "posicao": [spawn[0], spawn[1]],
             }
         )
-        _persistir_personagens()
+        _persistir_personagens(force=True)
 
     return True, "Personagem criado com sucesso"
 
@@ -171,5 +213,5 @@ def atualizar_perfil_personagem(usuario, perfil):
         personagem = _ESTADO["personagens"].get(usuario)
         if personagem is None:
             return
-        personagem.update(_normalizar_perfil(perfil))
+        personagem.update(_mesclar_perfil_atualizacao(personagem, perfil))
         _persistir_personagens()

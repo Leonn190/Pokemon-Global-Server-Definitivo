@@ -47,7 +47,6 @@ class CenaMundo:
             jogo=JOGO,
             camera=self.Camera,
             callback_atualizacao=consultar_estado_mundo,
-            callback_envio_diffs=enviar_diffs_mundo,
             intervalo_poll=0.20,
             raio_chunks=10,
         )
@@ -57,6 +56,10 @@ class CenaMundo:
         if link:
             self.LeitorMundo.conectar_servidor(link)
             self.LeitorMundo.iniciar()
+            self.ControladorObjetos.iniciar_thread_envio_diffs(
+                lambda diffs: enviar_diffs_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), diffs),
+                intervalo=0.05,
+            )
 
     def Tela(self, JOGO, EVENTOS, dt):
         gfps = self.GerenciadorFPS
@@ -76,7 +79,6 @@ class CenaMundo:
         gfps.finalizar_trecho("aplicacao_subtela")
 
         self.Camera.atualizar(dt)
-        self.ControladorObjetos.enviar_diffs_pendentes(self.LeitorMundo.enfileirar_diff)
 
         for diff in self.LeitorMundo.consumir_diffs_recebidas():
             self.ControladorObjetos.aplicar_diff(diff)
@@ -112,6 +114,7 @@ class CenaMundo:
 
 
     def Finalizar(self, JOGO):
+        self.ControladorObjetos.parar_thread_envio_diffs()
         if self.LeitorMundo:
             self.LeitorMundo.parar()
         self._desconectar_do_mundo(JOGO)

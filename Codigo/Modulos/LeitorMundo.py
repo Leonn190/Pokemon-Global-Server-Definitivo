@@ -259,16 +259,24 @@ class LeitorMundo:
         limites = getattr(self.Camera, "LimitesMundoTiles", None)
         repeticoes_x = (0.0,)
         repeticoes_y = (0.0,)
+
+        tela_w, tela_h = tela.get_size()
         if limites:
-            largura, altura = limites
-            repeticoes_x = (-float(largura), 0.0, float(largura))
-            repeticoes_y = (-float(altura), 0.0, float(altura))
+            largura_mundo, altura_mundo = (float(limites[0]), float(limites[1]))
+            largura_mundo_px = largura_mundo * tile_px
+            altura_mundo_px = altura_mundo * tile_px
+            # Repetição extra só é necessária quando a viewport enxerga o mundo inteiro
+            # em um eixo (mundo menor que a tela).
+            if largura_mundo_px <= tela_w:
+                repeticoes_x = (-largura_mundo, 0.0, largura_mundo)
+            if altura_mundo_px <= tela_h:
+                repeticoes_y = (-altura_mundo, 0.0, altura_mundo)
 
         draw_ops = []
-        for dy in range(-2, 3):
+        for dy in range(-1, 2):
             chunk_raw_y = chunk_player_y + dy
             chunk_busca_y = (chunk_raw_y % total_chunks_y) if total_chunks_y else chunk_raw_y
-            for dx in range(-2, 3):
+            for dx in range(-1, 2):
                 chunk_raw_x = chunk_player_x + dx
                 chunk_busca_x = (chunk_raw_x % total_chunks_x) if total_chunks_x else chunk_raw_x
 
@@ -289,13 +297,25 @@ class LeitorMundo:
             gerenciador_fps.finalizar_trecho("carregar_chunks")
             gerenciador_fps.iniciar_trecho("renderizar_tiles")
 
-        tela_w, tela_h = tela.get_size()
+        pos_camera = getattr(self.Camera, "PosicaoTiles", (0.0, 0.0))
+        cam_x = float(pos_camera[0])
+        cam_y = float(pos_camera[1])
+        limites_validos = bool(limites)
+        largura_mundo = float(limites[0]) if limites_validos else 0.0
+        altura_mundo = float(limites[1]) if limites_validos else 0.0
         for superficie_chunk, origem_x, origem_y in draw_ops:
             largura_px = superficie_chunk.get_width()
             altura_px = superficie_chunk.get_height()
             for off_x in repeticoes_x:
                 for off_y in repeticoes_y:
-                    px, py = self.Camera.mundo_para_tela_px((origem_x + off_x, origem_y + off_y))
+                    dx_tiles = (origem_x + off_x) - cam_x
+                    dy_tiles = (origem_y + off_y) - cam_y
+                    if limites_validos:
+                        dx_tiles -= round(dx_tiles / largura_mundo) * largura_mundo
+                        dy_tiles -= round(dy_tiles / altura_mundo) * altura_mundo
+
+                    px = dx_tiles * tile_px
+                    py = dy_tiles * tile_px
                     if px > tela_w or py > tela_h or (px + largura_px) < 0 or (py + altura_px) < 0:
                         continue
                     tela.blit(superficie_chunk, (int(px), int(py)))

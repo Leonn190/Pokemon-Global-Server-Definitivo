@@ -49,12 +49,17 @@ class LeitorMundo:
         }
         self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}
         self._cache_tile_px: int = max(1, int(getattr(self.Camera, "TilePx", 50)))
+        self._ultima_versao_chunks_regras = -1
 
     def atualizar_regras_mundo(self, player_controle=None) -> None:
-        estado = self.snapshot()
-        meta = estado.get("meta", {}) if isinstance(estado, dict) else {}
-        if not isinstance(meta, dict):
-            meta = {}
+        with self._lock:
+            meta = dict(self.MetaMundo)
+            versao_chunks = int(self._versao_chunks)
+            chunk_tamanho = int(self.TamanhoChunkBlocos)
+            chunks_atualizados = None
+            if player_controle is not None and versao_chunks != self._ultima_versao_chunks_regras:
+                chunks_atualizados = dict(self.Chunks)
+                self._ultima_versao_chunks_regras = versao_chunks
 
         largura = meta.get("largura_blocos")
         altura = meta.get("altura_blocos")
@@ -65,11 +70,8 @@ class LeitorMundo:
             if self.Camera is not None:
                 self.Camera.definir_limites_mundo(largura, altura)
 
-        if player_controle is not None:
-            chunks = estado.get("chunks", {}) if isinstance(estado, dict) else {}
-            if not isinstance(chunks, dict):
-                chunks = {}
-            player_controle.definir_grid_chunks(chunks, self.TamanhoChunkBlocos)
+        if player_controle is not None and chunks_atualizados is not None:
+            player_controle.definir_grid_chunks(chunks_atualizados, chunk_tamanho)
 
     def conectar_servidor(self, link_servidor: str) -> None:
         self.ServerLink = str(link_servidor)
@@ -223,18 +225,16 @@ class LeitorMundo:
         if gerenciador_fps is not None:
             gerenciador_fps.iniciar_trecho("carregar_chunks")
 
-        estado = self.snapshot()
-        chunks = estado.get("chunks", {}) if isinstance(estado, dict) else {}
-        if not isinstance(chunks, dict) or not chunks:
-            if gerenciador_fps is not None:
-                gerenciador_fps.finalizar_trecho("carregar_chunks")
-            return
-
         tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
-        tamanho_chunk = max(1, int(self.TamanhoChunkBlocos))
 
         player = getattr(self.Camera, "EntidadeMain", None)
         pos_player = getattr(player, "Posicao", (0.0, 0.0))
+
+        with self._lock:
+            tamanho_chunk = max(1, int(self.TamanhoChunkBlocos))
+            meta = dict(self.MetaMundo)
+            chunks_ref = self.Chunks
+
         try:
             chunk_player_x = int(float(pos_player[0]) // tamanho_chunk)
             chunk_player_y = int(float(pos_player[1]) // tamanho_chunk)
@@ -242,7 +242,11 @@ class LeitorMundo:
             chunk_player_x = 0
             chunk_player_y = 0
 
-        meta = estado.get("meta", {}) if isinstance(estado, dict) else {}
+        if not chunks_ref:
+            if gerenciador_fps is not None:
+                gerenciador_fps.finalizar_trecho("carregar_chunks")
+            return
+
         if not isinstance(meta, dict):
             meta = {}
         largura_blocos = meta.get("largura_blocos")
@@ -265,33 +269,33 @@ class LeitorMundo:
             largura_mundo, altura_mundo = (float(limites[0]), float(limites[1]))
             largura_mundo_px = largura_mundo * tile_px
             altura_mundo_px = altura_mundo * tile_px
-            # Repetição extra só é necessária quando a viewport enxerga o mundo inteiro
-            # em um eixo (mundo menor que a tela).
             if largura_mundo_px <= tela_w:
                 repeticoes_x = (-largura_mundo, 0.0, largura_mundo)
             if altura_mundo_px <= tela_h:
                 repeticoes_y = (-altura_mundo, 0.0, altura_mundo)
 
-        draw_ops = []
+        chaves_visiveis = []
         for dy in range(-1, 2):
             chunk_raw_y = chunk_player_y + dy
             chunk_busca_y = (chunk_raw_y % total_chunks_y) if total_chunks_y else chunk_raw_y
             for dx in range(-1, 2):
                 chunk_raw_x = chunk_player_x + dx
                 chunk_busca_x = (chunk_raw_x % total_chunks_x) if total_chunks_x else chunk_raw_x
+                chaves_visiveis.append(((chunk_busca_x, chunk_busca_y), chunk_raw_x, chunk_raw_y))
 
-                chave_chunk = (chunk_busca_x, chunk_busca_y)
-                grid = chunks.get(chave_chunk)
-                if not grid:
-                    continue
+        with self._lock:
+            grids_visiveis = [(chave, chunks_ref.get(chave), raw_x, raw_y) for chave, raw_x, raw_y in chaves_visiveis]
 
-                superficie_chunk = self._obter_superficie_chunk(chave_chunk, grid, tile_px)
-                if superficie_chunk is None:
-                    continue
-
-                origem_x = chunk_raw_x * tamanho_chunk
-                origem_y = chunk_raw_y * tamanho_chunk
-                draw_ops.append((superficie_chunk, origem_x, origem_y))
+        draw_ops = []
+        for chave_chunk, grid, chunk_raw_x, chunk_raw_y in grids_visiveis:
+            if not grid:
+                continue
+            superficie_chunk = self._obter_superficie_chunk(chave_chunk, grid, tile_px)
+            if superficie_chunk is None:
+                continue
+            origem_x = chunk_raw_x * tamanho_chunk
+            origem_y = chunk_raw_y * tamanho_chunk
+            draw_ops.append((superficie_chunk, origem_x, origem_y))
 
         if gerenciador_fps is not None:
             gerenciador_fps.finalizar_trecho("carregar_chunks")

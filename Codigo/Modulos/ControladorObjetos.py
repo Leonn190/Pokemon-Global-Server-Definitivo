@@ -72,8 +72,6 @@ class ControladorObjetos:
         posicao_antes = tuple(self.PlayerLocal.Ator.Posicao)
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
         self._resolver_colisao_player_local(posicao_antes, dt, gerenciador_fps=gerenciador_fps)
-        if tuple(self.PlayerLocal.Ator.Posicao) != posicao_antes:
-            self._sincronizar_player_local()
 
     def _chunk_posicao(self, x: float, y: float) -> Tuple[int, int]:
         return (int(math.floor(float(x) / self._chunk_tamanho_tiles)), int(math.floor(float(y) / self._chunk_tamanho_tiles)))

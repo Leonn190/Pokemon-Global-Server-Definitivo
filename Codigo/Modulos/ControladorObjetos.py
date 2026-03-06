@@ -72,7 +72,8 @@ class ControladorObjetos:
         posicao_antes = tuple(self.PlayerLocal.Ator.Posicao)
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
         self._resolver_colisao_player_local(posicao_antes, dt, gerenciador_fps=gerenciador_fps)
-        self._sincronizar_player_local()
+        if tuple(self.PlayerLocal.Ator.Posicao) != posicao_antes:
+            self._sincronizar_player_local()
 
     def _chunk_posicao(self, x: float, y: float) -> Tuple[int, int]:
         return (int(math.floor(float(x) / self._chunk_tamanho_tiles)), int(math.floor(float(y) / self._chunk_tamanho_tiles)))
@@ -246,23 +247,38 @@ class ControladorObjetos:
     def _iter_tipos(self, prefixo):
         return [obj for obj in self.ObjetosPorId.values() if str(obj.get("tipo", "")).startswith(prefixo)]
 
+    def _objeto_posicao_tela_se_visivel(self, obj: Dict[str, object], camera, margem_px: int = 120):
+        pos = obj.get("posicao", [0.0, 0.0])
+        if not isinstance(pos, (tuple, list)) or len(pos) != 2:
+            return None
+
+        px, py = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
+        tela_w, tela_h = getattr(camera, "TamanhoTelaPx", (1280.0, 720.0))
+        if px < -margem_px or py < -margem_px or px > (tela_w + margem_px) or py > (tela_h + margem_px):
+            return None
+        return px, py
+
     def RenderizarEntidades(self, tela, camera, ignorar_id=None):
         for obj in self._iter_tipos("entidade"):
             if ignorar_id is not None and int(obj.get("id", -1)) == int(ignorar_id):
                 continue
+            pos_tela = self._objeto_posicao_tela_se_visivel(obj, camera)
+            if pos_tela is None:
+                continue
             GameObjeto.desenhar_snapshot(tela, camera, obj, cor_fallback=(222, 233, 245))
             nome_obj = obj.get("nome") or obj.get("usuario")
             if nome_obj:
-                pos = obj.get("posicao", [0.0, 0.0])
-                if isinstance(pos, (tuple, list)) and len(pos) == 2:
-                    pos_tela = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
-                    Ator.desenhar_nome(tela, pos_tela, nome_obj)
+                Ator.desenhar_nome(tela, pos_tela, nome_obj)
 
     def RenderizarEstruturas(self, tela, camera):
         for obj in self._iter_tipos("estrutura"):
+            if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220) is None:
+                continue
             GameObjeto.desenhar_snapshot(tela, camera, obj, cor_fallback=(125, 86, 54))
 
     def renderizar_player(self, tela, camera, ignorar_entidade_id=None):
+        if ignorar_entidade_id is None and self.PlayerLocal is not None and getattr(self.PlayerLocal, "Ator", None) is not None:
+            ignorar_entidade_id = getattr(self.PlayerLocal.Ator, "Id", None)
         self.RenderizarEntidades(tela, camera, ignorar_id=ignorar_entidade_id)
         self._renderizar_player_local(tela, camera)
 

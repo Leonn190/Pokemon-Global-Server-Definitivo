@@ -87,12 +87,12 @@ class CenaMundo:
         JOGO.TELA.fill((20, 20, 28))
         self.LeitorMundo.renderizar_mundo(JOGO.TELA, gerenciador_fps=gfps)
 
-        if self.ControladorObjetos.PlayerLocal is not None:
-            self.ControladorObjetos.PlayerLocal.Controle.renderizar_stamina(JOGO.TELA, self.Camera, dt)
-
         gfps.iniciar_trecho("renderizar_player")
         self.ControladorObjetos.renderizar_player(JOGO.TELA, self.Camera)
         gfps.finalizar_trecho("renderizar_player")
+
+        if self.ControladorObjetos.PlayerLocal is not None:
+            self.ControladorObjetos.PlayerLocal.Controle.renderizar_stamina(JOGO.TELA, self.Camera, dt)
 
         gfps.iniciar_trecho("renderizar_estruturas")
         self.ControladorObjetos.renderizar_estruturas(JOGO.TELA, self.Camera)

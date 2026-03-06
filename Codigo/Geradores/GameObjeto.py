@@ -3,17 +3,22 @@
 from __future__ import annotations
 
 import math
-from typing import Optional, Tuple
+import os
+from typing import Dict, Optional, Tuple
 
-from Codigo.Modulos.Colisor import Colisor
+import pygame
+
+from Codigo.Modulos.colisor import Colisor
+from Codigo.Modulos.ConfigEstruturasNaturais import tipo_estrutura_natural_por_codigo
 
 Vector2 = Tuple[float, float]
 
 
 class GameObjeto:
-    """Base de objetos do jogo com id, posição, colisor e campo de força."""
+    """Base de objetos do jogo com id, posição, colisor, nome e visual."""
 
     _next_id = 1
+    _cache_sprites: Dict[str, Optional[pygame.Surface]] = {}
 
     def __init__(
         self,
@@ -24,6 +29,8 @@ class GameObjeto:
         intensidade: float = 0.0,
         hitbox=None,
         id_objeto: Optional[int] = None,
+        nome: Optional[str] = None,
+        sprite: Optional[str] = None,
     ) -> None:
         if id_objeto is None:
             id_objeto = GameObjeto._next_id
@@ -41,10 +48,57 @@ class GameObjeto:
         self.Campo = float(campo)
         self.Intensidade = float(intensidade)
         self.HitBox = hitbox
+        self.Nome = None if nome is None else str(nome)
+        self.Sprite = None if sprite is None else str(sprite)
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.Posicao = (float(x), float(y))
         self.Colisor.mover_para(*self.Posicao)
+
+    @classmethod
+    def _obter_sprite(cls, caminho):
+        caminho = str(caminho or "").strip()
+        if not caminho:
+            return None
+        if caminho in cls._cache_sprites:
+            return cls._cache_sprites[caminho]
+        if not os.path.exists(caminho):
+            cls._cache_sprites[caminho] = None
+            return None
+        try:
+            sprite = pygame.image.load(caminho).convert_alpha()
+        except pygame.error:
+            sprite = None
+        cls._cache_sprites[caminho] = sprite
+        return sprite
+
+    @classmethod
+    def desenhar_snapshot(cls, tela, camera, obj: Dict[str, object], cor_fallback=(222, 233, 245)):
+        pos = obj.get("posicao", [0.0, 0.0])
+        if not isinstance(pos, (tuple, list)) or len(pos) != 2:
+            return
+
+        px, py = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
+
+        codigo_natural = obj.get("codigo_natural")
+        if codigo_natural is None and isinstance(obj.get("estado"), dict):
+            codigo_natural = obj["estado"].get("codigo_natural")
+        cfg_natural = tipo_estrutura_natural_por_codigo(codigo_natural)
+
+        sprite_path = str(obj.get("sprite", "")).strip()
+        if not sprite_path and cfg_natural:
+            sprite_path = str(cfg_natural.get("sprite", "")).strip()
+
+        sprite = cls._obter_sprite(sprite_path)
+        if sprite is not None:
+            sprite_rect = sprite.get_rect(center=(int(px), int(py)))
+            tela.blit(sprite, sprite_rect)
+        else:
+            raio_raw = max(0.0, float(obj.get("raio_colisao", 0.4)))
+            raio_px = int(raio_raw if raio_raw > 4.0 else raio_raw * camera.TilePx)
+            raio_px = max(3, min(80, raio_px))
+            pygame.draw.circle(tela, cor_fallback, (int(px), int(py)), raio_px)
+
 
     @staticmethod
     def _rect_props(rect) -> Tuple[float, float, float, float, float, float]:

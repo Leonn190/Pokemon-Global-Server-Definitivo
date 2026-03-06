@@ -4,14 +4,11 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
 import math
-import os
-
-import pygame
 
 from Codigo.Geradores.Ator import Ator
+from Codigo.Geradores.GameObjeto import GameObjeto
+from Codigo.Modulos.colisor import Colisor
 from Codigo.Modulos.Player.Player import Player
-from Codigo.Prefabs.Texto import Texto
-from Codigo.Modulos.ConfigEstruturasNaturais import tipo_estrutura_natural_por_codigo
 
 
 class ControladorObjetos:
@@ -19,8 +16,6 @@ class ControladorObjetos:
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
         self.PlayerLocal = None
         self._fila_diffs_envio: List[Dict[str, object]] = []
-        self._cache_nome_texto: Dict[str, Texto] = {}
-        self._cache_sprites: Dict[str, pygame.Surface] = {}
         self._chunk_tamanho_tiles = 32
         self._objetos_colisao_por_chunk: Dict[Tuple[int, int], set[int]] = {}
         self._chunk_por_objeto: Dict[int, Tuple[int, int]] = {}
@@ -39,7 +34,7 @@ class ControladorObjetos:
         ator = Ator(nome_skin=nome_skin, posicao=(float(pos[0]), float(pos[1])), escala_skin=1.45)
         if dados.get("id") is not None:
             ator.Id = int(dados.get("id"))
-        ator.Nome = str(dados.get("nome") or dados.get("usuario") or "Player")
+        ator.Nome = str(dados.get("nome") or dados.get("usuario") or "")
 
         player = Player(
             ator=ator,
@@ -64,8 +59,9 @@ class ControladorObjetos:
                 "payload": {
                     "id": int(player_id),
                     "tipo": "entidade_player",
+                    "nome": getattr(ator, "Nome", ""),
                     "posicao": [ator.Posicao[0], ator.Posicao[1]],
-                    "raio_colisao": getattr(ator, "RaioColisao", 0.35),
+                    "raio_colisao": getattr(ator.Colisor, "raio_colisao", 0.35),
                 },
             }
         )
@@ -158,115 +154,23 @@ class ControladorObjetos:
             if dados is not None:
                 yield dados
 
-    @staticmethod
-    def _intersecao_segmento_circulo(
-        origem: Tuple[float, float],
-        destino: Tuple[float, float],
-        centro: Tuple[float, float],
-        raio: float,
-    ) -> Optional[float]:
-        ox, oy = origem
-        dx = destino[0] - ox
-        dy = destino[1] - oy
-        fx = ox - centro[0]
-        fy = oy - centro[1]
-
-        a = dx * dx + dy * dy
-        if a <= 1e-10:
-            return None
-
-        b = 2.0 * (fx * dx + fy * dy)
-        c = (fx * fx + fy * fy) - (raio * raio)
-        delta = b * b - 4.0 * a * c
-        if delta < 0.0:
-            return None
-
-        raiz = math.sqrt(delta)
-        inv = 1.0 / (2.0 * a)
-        t1 = (-b - raiz) * inv
-        t2 = (-b + raiz) * inv
-
-        candidatos = [t for t in (t1, t2) if 0.0 <= t <= 1.0]
-        if not candidatos:
-            return None
-        return min(candidatos)
-
     def _resolver_colisao_player_local(self, posicao_antes: Tuple[float, float], dt: float) -> None:
         if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
             return
+
         ator = self.PlayerLocal.Ator
         posicao_depois = tuple(ator.Posicao)
         player_id = getattr(ator, "Id", None)
         raio_ator = max(0.0, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
-
-        if raio_ator <= 0.0:
-            return
-
-        melhor_t = None
         colisores_proximos = [c for c in self._iter_colisores_proximos(posicao_depois) if c[0] != player_id]
 
-        for _, sx, sy, raio_obj, _, _, _ in colisores_proximos:
-            t = self._intersecao_segmento_circulo(posicao_antes, posicao_depois, (sx, sy), raio_ator + raio_obj)
-            if t is None:
-                continue
-            if melhor_t is None or t < melhor_t:
-                melhor_t = t
-
-        if melhor_t is not None:
-            dx = posicao_depois[0] - posicao_antes[0]
-            dy = posicao_depois[1] - posicao_antes[1]
-            t_seguro = max(0.0, melhor_t - 0.02)
-            ator.definir_posicao(posicao_antes[0] + dx * t_seguro, posicao_antes[1] + dy * t_seguro)
-
-        px, py = ator.Posicao
-        for _ in range(3):
-            ajustou = False
-            for _, sx, sy, raio_obj, _, _, _ in colisores_proximos:
-                vx = px - sx
-                vy = py - sy
-                dist = math.hypot(vx, vy)
-                limite = raio_ator + raio_obj
-                if dist >= limite or limite <= 0.0:
-                    continue
-
-                if dist <= 1e-8:
-                    vx, vy, dist = 1.0, 0.0, 1.0
-
-                nx = vx / dist
-                ny = vy / dist
-                sobreposicao = limite - dist
-                px += nx * (sobreposicao + 1e-4)
-                py += ny * (sobreposicao + 1e-4)
-                ajustou = True
-
-            if not ajustou:
-                break
-
-        dt = max(0.0, float(dt))
-        if dt > 0.0:
-            for _, sx, sy, raio_obj, tipo_obj, campo, intensidade in colisores_proximos:
-                if not tipo_obj.startswith("estrutura"):
-                    continue
-                if campo <= 0.0 or intensidade <= 0.0:
-                    continue
-
-                vx = px - sx
-                vy = py - sy
-                dist = math.hypot(vx, vy)
-                limite = raio_ator + raio_obj + campo
-                if limite <= 0.0 or dist >= limite:
-                    continue
-
-                if dist <= 1e-8:
-                    vx, vy, dist = 1.0, 0.0, 1.0
-
-                dirx = vx / dist
-                diry = vy / dist
-                t = max(0.0, min(1.0, 1.0 - (dist / max(limite, 1e-6))))
-                push = intensidade * t * dt
-                px += dirx * push
-                py += diry * push
-
+        px, py = Colisor.resolver_movimento_com_colisores(
+            posicao_antes=posicao_antes,
+            posicao_depois=posicao_depois,
+            raio_entidade=raio_ator,
+            colisores=colisores_proximos,
+            dt=dt,
+        )
         ator.definir_posicao(px, py)
 
     def registrar_diff_local(self, diff) -> None:
@@ -337,11 +241,17 @@ class ControladorObjetos:
         for obj in self._iter_tipos("entidade"):
             if ignorar_id is not None and int(obj.get("id", -1)) == int(ignorar_id):
                 continue
-            self._desenhar_objeto_generico(tela, camera, obj, (222, 233, 245))
+            GameObjeto.desenhar_snapshot(tela, camera, obj, cor_fallback=(222, 233, 245))
+            nome_obj = obj.get("nome") or obj.get("usuario")
+            if nome_obj:
+                pos = obj.get("posicao", [0.0, 0.0])
+                if isinstance(pos, (tuple, list)) and len(pos) == 2:
+                    pos_tela = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
+                    Ator.desenhar_nome(tela, pos_tela, nome_obj)
 
     def RenderizarEstruturas(self, tela, camera):
         for obj in self._iter_tipos("estrutura"):
-            self._desenhar_objeto_generico(tela, camera, obj, (125, 86, 54))
+            GameObjeto.desenhar_snapshot(tela, camera, obj, cor_fallback=(125, 86, 54))
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         if ignorar_entidade_id is None and self.PlayerLocal is not None and getattr(self.PlayerLocal, "Ator", None) is not None:
@@ -357,76 +267,5 @@ class ControladorObjetos:
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
         respiracao_tempo = getattr(getattr(self.PlayerLocal, "Controle", None), "_tempo_respiracao", 0.0)
         ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
-        self._desenhar_nome_jogador(tela, pos_tela, getattr(ator, "Nome", "Player"))
-
-    def _desenhar_objeto_generico(self, tela, camera, obj, cor):
-        pos = obj.get("posicao", [0.0, 0.0])
-        if not isinstance(pos, (tuple, list)) or len(pos) != 2:
-            return
-        px, py = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
-
-        codigo_natural = obj.get("codigo_natural")
-        if codigo_natural is None and isinstance(obj.get("estado"), dict):
-            codigo_natural = obj["estado"].get("codigo_natural")
-        cfg_natural = tipo_estrutura_natural_por_codigo(codigo_natural)
-
-        sprite_path = str(obj.get("sprite", "")).strip()
-        if not sprite_path and cfg_natural:
-            sprite_path = str(cfg_natural.get("sprite", "")).strip()
-        sprite = self._obter_sprite(sprite_path)
-        if sprite is not None:
-            sprite_rect = sprite.get_rect(midbottom=(int(px), int(py) + int(camera.TilePx * 0.2)))
-            tela.blit(sprite, sprite_rect)
-        else:
-            raio_raw = max(0.0, float(obj.get("raio_colisao", 0.4)))
-            if raio_raw > 4.0:
-                raio_px = int(raio_raw)
-            else:
-                raio_px = int(raio_raw * camera.TilePx)
-            raio_px = max(3, min(80, raio_px))
-            pygame.draw.circle(tela, cor, (int(px), int(py)), raio_px)
-
-        if str(obj.get("tipo", "")).startswith("entidade"):
-            nome_obj = obj.get("nome") or obj.get("usuario") or f"Player {obj.get('id', '')}"
-            self._desenhar_nome_jogador(tela, (px, py), nome_obj)
-
-    def _obter_sprite(self, caminho):
-        if not caminho:
-            return None
-        if caminho in self._cache_sprites:
-            return self._cache_sprites[caminho]
-        if not os.path.exists(caminho):
-            self._cache_sprites[caminho] = None
-            return None
-        try:
-            sprite = pygame.image.load(caminho).convert_alpha()
-        except pygame.error:
-            sprite = None
-        self._cache_sprites[caminho] = sprite
-        return sprite
-
-    def _desenhar_nome_jogador(self, tela, pos_tela, nome):
-        nome_str = str(nome or "Player")
-        texto = self._cache_nome_texto.get(nome_str)
-        if texto is None:
-            texto = Texto(
-                nome_str,
-                pos=(0, 0),
-                style={
-                    "size": 16,
-                    "align": "midbottom",
-                    "outline": True,
-                    "outline_thickness": 1,
-                    "shadow": False,
-                    "color": (250, 250, 255),
-                },
-            )
-            self._cache_nome_texto[nome_str] = texto
-        else:
-            texto.set_text(nome_str)
-
-        tempo = pygame.time.get_ticks() * 0.004
-        fase = (abs(hash(nome_str)) % 360) * 0.0174533
-        oscilacao = math.sin(tempo + fase) * 2.0
-        texto.set_pos((int(pos_tela[0]), int(pos_tela[1]) - 43 + int(round(oscilacao))))
-        texto.draw(tela)
+        if getattr(ator, "Nome", ""):
+            Ator.desenhar_nome(tela, pos_tela, ator.Nome)

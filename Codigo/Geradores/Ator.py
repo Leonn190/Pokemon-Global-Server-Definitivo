@@ -10,13 +10,16 @@ import pygame
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Geradores.Entidade import Entidade
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.Modulos.colisor import Colisor
+from Codigo.Prefabs.Texto import Texto
 
 Vector2 = Tuple[float, float]
 
 
 class Ator(Entidade):
     """Entidade básica com skin de player e desenho via ``DesenhaAtor``."""
+
+    _cache_nome_texto = {}
 
     @staticmethod
     def carregar_skin(nome_skin: str):
@@ -53,7 +56,7 @@ class Ator(Entidade):
         self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin)
 
         self.AnguloOlhar = 0.0
-        self.Nome = "Player"
+        self.Nome = ""
         self._duracao_tapa = 0.16
         self._tempo_tapa = 0.0
         self._raio_mao_colisao = max(0.18, raio_colisao * 0.65)
@@ -64,6 +67,37 @@ class Ator(Entidade):
             raio_interacao=self._raio_mao_colisao,
             ativo=False,
         )
+
+
+    @classmethod
+    def desenhar_nome(cls, tela, pos_tela, nome, deslocamento_y: int = 43):
+        nome_str = str(nome or "").strip()
+        if not nome_str:
+            return
+
+        texto = cls._cache_nome_texto.get(nome_str)
+        if texto is None:
+            texto = Texto(
+                nome_str,
+                pos=(0, 0),
+                style={
+                    "size": 16,
+                    "align": "midbottom",
+                    "outline": True,
+                    "outline_thickness": 1,
+                    "shadow": False,
+                    "color": (250, 250, 255),
+                },
+            )
+            cls._cache_nome_texto[nome_str] = texto
+        else:
+            texto.set_text(nome_str)
+
+        tempo = pygame.time.get_ticks() * 0.004
+        fase = (abs(hash(nome_str)) % 360) * 0.0174533
+        oscilacao = math.sin(tempo + fase) * 2.0
+        texto.set_pos((int(pos_tela[0]), int(pos_tela[1]) - int(deslocamento_y) + int(round(oscilacao))))
+        texto.draw(tela)
 
     def set_skin(self, skin_surface) -> None:
         self.Skin = skin_surface

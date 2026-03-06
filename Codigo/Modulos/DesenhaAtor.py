@@ -39,7 +39,9 @@ class DesenhaAtor:
 
         base = _cor_predominante(self._skin_original)
         self._cor_maos = _clarear_cor(base, fator=0.40)
-
+        self._cache_corpo_rotacionado = {}
+        self._cache_ordem_angulos = []
+        self._cache_limite_angulos = 120
     def _redimensionar_skin(self, surf):
         w = max(1, int(surf.get_width() * self.escala))
         h = max(1, int(surf.get_height() * self.escala))
@@ -51,10 +53,27 @@ class DesenhaAtor:
 
         base = _cor_predominante(self._skin_original)
         self._cor_maos = _clarear_cor(base, fator=0.40)
-
+        self._cache_corpo_rotacionado.clear()
+        self._cache_ordem_angulos.clear()
     def set_escala(self, escala):
         self.escala = max(0.2, float(escala))
         self._skin = self._redimensionar_skin(self._skin_original)
+        self._cache_corpo_rotacionado.clear()
+        self._cache_ordem_angulos.clear()
+
+    def _obter_corpo_rotacionado(self, angulo: float):
+        chave = int(round(float(angulo) * 0.5) * 2) % 360
+        corpo = self._cache_corpo_rotacionado.get(chave)
+        if corpo is not None:
+            return corpo
+
+        corpo = pygame.transform.rotate(self._skin, chave)
+        self._cache_corpo_rotacionado[chave] = corpo
+        self._cache_ordem_angulos.append(chave)
+        if len(self._cache_ordem_angulos) > self._cache_limite_angulos:
+            antigo = self._cache_ordem_angulos.pop(0)
+            self._cache_corpo_rotacionado.pop(antigo, None)
+        return corpo
 
     def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0, progresso_tapa=0.0, respiracao_tempo=0.0):
         cx, cy = centro
@@ -75,7 +94,7 @@ class DesenhaAtor:
 
         angulo = angulo_base + self.sprite_offset_graus + 180
 
-        corpo = pygame.transform.rotate(self._skin, angulo)
+        corpo = self._obter_corpo_rotacionado(angulo)
         corpo_rect = corpo.get_rect(center=(int(cx), int(cy)))
 
         px = -vy

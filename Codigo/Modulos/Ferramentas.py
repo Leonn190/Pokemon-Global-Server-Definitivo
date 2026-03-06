@@ -46,8 +46,10 @@ class GerenciadorFPS:
             execucoes = max(1, int(dados["execucoes"]))
             tempo_medio = dados["tempo_total"] / execucoes
             tempo_max = float(dados["tempo_max"])
-            perda_media = tempo_medio / self._tempo_quadro_ideal
-            perda_max = tempo_max / self._tempo_quadro_ideal
+            fps_medio = 1.0 / (self._tempo_quadro_ideal + tempo_medio)
+            fps_pico = 1.0 / (self._tempo_quadro_ideal + tempo_max)
+            perda_media = max(0.0, self.fps_alvo - fps_medio)
+            perda_max = max(0.0, self.fps_alvo - fps_pico)
 
             mensagem = (
                 f" - {nome}: medio={tempo_medio * 1000:.2f}ms "

@@ -242,20 +242,37 @@ class LeitorMundo:
             chunk_player_x = 0
             chunk_player_y = 0
 
+        meta = estado.get("meta", {}) if isinstance(estado, dict) else {}
+        if not isinstance(meta, dict):
+            meta = {}
+        largura_blocos = meta.get("largura_blocos")
+        altura_blocos = meta.get("altura_blocos")
+        try:
+            total_chunks_x = max(1, int(float(largura_blocos) / float(tamanho_chunk))) if largura_blocos is not None else None
+        except Exception:
+            total_chunks_x = None
+        try:
+            total_chunks_y = max(1, int(float(altura_blocos) / float(tamanho_chunk))) if altura_blocos is not None else None
+        except Exception:
+            total_chunks_y = None
+
         limites = getattr(self.Camera, "LimitesMundoTiles", None)
-        repeticoes_x = (0,)
-        repeticoes_y = (0,)
+        repeticoes_x = (0.0,)
+        repeticoes_y = (0.0,)
         if limites:
             largura, altura = limites
-            repeticoes_x = (-largura, 0, largura)
-            repeticoes_y = (-altura, 0, altura)
+            repeticoes_x = (-float(largura), 0.0, float(largura))
+            repeticoes_y = (-float(altura), 0.0, float(altura))
 
         draw_ops = []
-        for dy in range(-4, 5):
-            chunk_y = chunk_player_y + dy
-            for dx in range(-4, 5):
-                chunk_x = chunk_player_x + dx
-                chave_chunk = (chunk_x, chunk_y)
+        for dy in range(-2, 3):
+            chunk_raw_y = chunk_player_y + dy
+            chunk_busca_y = (chunk_raw_y % total_chunks_y) if total_chunks_y else chunk_raw_y
+            for dx in range(-2, 3):
+                chunk_raw_x = chunk_player_x + dx
+                chunk_busca_x = (chunk_raw_x % total_chunks_x) if total_chunks_x else chunk_raw_x
+
+                chave_chunk = (chunk_busca_x, chunk_busca_y)
                 grid = chunks.get(chave_chunk)
                 if not grid:
                     continue
@@ -264,18 +281,23 @@ class LeitorMundo:
                 if superficie_chunk is None:
                     continue
 
-                origem_x = chunk_x * tamanho_chunk
-                origem_y = chunk_y * tamanho_chunk
+                origem_x = chunk_raw_x * tamanho_chunk
+                origem_y = chunk_raw_y * tamanho_chunk
                 draw_ops.append((superficie_chunk, origem_x, origem_y))
 
         if gerenciador_fps is not None:
             gerenciador_fps.finalizar_trecho("carregar_chunks")
             gerenciador_fps.iniciar_trecho("renderizar_tiles")
 
+        tela_w, tela_h = tela.get_size()
         for superficie_chunk, origem_x, origem_y in draw_ops:
+            largura_px = superficie_chunk.get_width()
+            altura_px = superficie_chunk.get_height()
             for off_x in repeticoes_x:
                 for off_y in repeticoes_y:
                     px, py = self.Camera.mundo_para_tela_px((origem_x + off_x, origem_y + off_y))
+                    if px > tela_w or py > tela_h or (px + largura_px) < 0 or (py + altura_px) < 0:
+                        continue
                     tela.blit(superficie_chunk, (int(px), int(py)))
 
         if gerenciador_fps is not None:

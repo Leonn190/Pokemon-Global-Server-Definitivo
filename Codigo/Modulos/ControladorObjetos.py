@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 import math
+import threading
+import time
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.GameObjeto import GameObjeto
@@ -19,6 +21,11 @@ class ControladorObjetos:
         self._chunk_tamanho_tiles = 32
         self._objetos_colisao_por_chunk: Dict[Tuple[int, int], set[int]] = {}
         self._chunk_por_objeto: Dict[int, Tuple[int, int]] = {}
+        self._lock_diffs = threading.Lock()
+        self._thread_envio: Optional[threading.Thread] = None
+        self._thread_envio_ativo = False
+        self._callback_envio_diffs: Optional[Callable[[List[Dict[str, object]]], None]] = None
+        self._intervalo_envio_diffs = 0.05
 
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
@@ -185,13 +192,46 @@ class ControladorObjetos:
         if not isinstance(diff, dict):
             return
         self.aplicar_diff(diff)
-        self._fila_diffs_envio.append(dict(diff))
+        with self._lock_diffs:
+            self._fila_diffs_envio.append(dict(diff))
 
-    def enviar_diffs_pendentes(self, callback_envio) -> None:
-        if not callable(callback_envio):
+    def iniciar_thread_envio_diffs(self, callback_envio_diffs: Callable[[List[Dict[str, object]]], None], intervalo: float = 0.05) -> None:
+        if not callable(callback_envio_diffs):
             return
-        while self._fila_diffs_envio:
-            callback_envio(self._fila_diffs_envio.pop(0))
+        self._callback_envio_diffs = callback_envio_diffs
+        self._intervalo_envio_diffs = max(0.02, float(intervalo))
+        if self._thread_envio and self._thread_envio.is_alive():
+            return
+        self._thread_envio_ativo = True
+        self._thread_envio = threading.Thread(target=self._loop_envio_diffs, name="ControladorObjetosDiffsThread", daemon=True)
+        self._thread_envio.start()
+
+    def parar_thread_envio_diffs(self, timeout: float = 2.0) -> None:
+        self._thread_envio_ativo = False
+        if self._thread_envio and self._thread_envio.is_alive():
+            self._thread_envio.join(timeout=timeout)
+
+    def _loop_envio_diffs(self) -> None:
+        while self._thread_envio_ativo:
+            callback = self._callback_envio_diffs
+            if callback is None:
+                time.sleep(self._intervalo_envio_diffs)
+                continue
+
+            with self._lock_diffs:
+                lote = list(self._fila_diffs_envio)
+                self._fila_diffs_envio.clear()
+
+            if not lote:
+                time.sleep(self._intervalo_envio_diffs)
+                continue
+
+            try:
+                callback(lote)
+            except Exception:
+                with self._lock_diffs:
+                    self._fila_diffs_envio = lote + self._fila_diffs_envio
+                time.sleep(self._intervalo_envio_diffs)
 
     def aplicar_diff(self, diff):
         if not isinstance(diff, dict):

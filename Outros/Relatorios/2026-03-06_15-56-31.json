@@ -1,0 +1,262 @@
+{
+  "resumo": {
+    "pastas": 1132,
+    "arquivos": 67973,
+    "tamanho_bytes": 391831114,
+    "tamanho_gib": 0.364921
+  },
+  "python": {
+    "py_arquivos": 98,
+    "linhas_totais": 9636,
+    "classes_encontradas": 55,
+    "top5_maiores_py": [
+      {
+        "arquivo": "Codigo/Modulos/ControladorObjetos.py",
+        "tamanho_bytes": 18218,
+        "tamanho_kib": 17.79
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaCriarPersonagem.py",
+        "tamanho_bytes": 16274,
+        "tamanho_kib": 15.89
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaServers.py",
+        "tamanho_bytes": 15873,
+        "tamanho_kib": 15.5
+      },
+      {
+        "arquivo": "Outros/Mixer.py",
+        "tamanho_bytes": 15230,
+        "tamanho_kib": 14.87
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Botao.py",
+        "tamanho_bytes": 15068,
+        "tamanho_kib": 14.71
+      }
+    ]
+  },
+  "extensoes": {
+    "contagem": {
+      ".py": 98,
+      ".md": 1,
+      ".csv": 2,
+      ".json": 1,
+      ".ttf": 1,
+      ".jpg": 1,
+      ".png": 67850,
+      ".txt": 3,
+      ".wav": 2,
+      ".ogg": 14
+    },
+    "tamanho_bytes": {
+      ".py": 343652,
+      ".md": 1539,
+      ".csv": 0,
+      ".json": 616222,
+      ".ttf": 26828,
+      ".jpg": 638403,
+      ".png": 350989695,
+      ".txt": 0,
+      ".wav": 213152,
+      ".ogg": 39001623
+    },
+    "top_por_tamanho": [
+      {
+        "ext": ".png",
+        "tamanho_bytes": 350989695,
+        "tamanho_gib": 0.326885,
+        "arquivos": 67850
+      },
+      {
+        "ext": ".ogg",
+        "tamanho_bytes": 39001623,
+        "tamanho_gib": 0.036323,
+        "arquivos": 14
+      },
+      {
+        "ext": ".jpg",
+        "tamanho_bytes": 638403,
+        "tamanho_gib": 0.000595,
+        "arquivos": 1
+      },
+      {
+        "ext": ".json",
+        "tamanho_bytes": 616222,
+        "tamanho_gib": 0.000574,
+        "arquivos": 1
+      },
+      {
+        "ext": ".py",
+        "tamanho_bytes": 343652,
+        "tamanho_gib": 0.00032,
+        "arquivos": 98
+      },
+      {
+        "ext": ".wav",
+        "tamanho_bytes": 213152,
+        "tamanho_gib": 0.000199,
+        "arquivos": 2
+      },
+      {
+        "ext": ".ttf",
+        "tamanho_bytes": 26828,
+        "tamanho_gib": 2.5e-05,
+        "arquivos": 1
+      },
+      {
+        "ext": ".md",
+        "tamanho_bytes": 1539,
+        "tamanho_gib": 1e-06,
+        "arquivos": 1
+      },
+      {
+        "ext": ".csv",
+        "tamanho_bytes": 0,
+        "tamanho_gib": 0.0,
+        "arquivos": 2
+      },
+      {
+        "ext": ".txt",
+        "tamanho_bytes": 0,
+        "tamanho_gib": 0.0,
+        "arquivos": 3
+      }
+    ],
+    "top_por_quantidade": [
+      {
+        "ext": ".png",
+        "arquivos": 67850,
+        "tamanho_bytes": 350989695,
+        "tamanho_gib": 0.326885
+      },
+      {
+        "ext": ".py",
+        "arquivos": 98,
+        "tamanho_bytes": 343652,
+        "tamanho_gib": 0.00032
+      },
+      {
+        "ext": ".ogg",
+        "arquivos": 14,
+        "tamanho_bytes": 39001623,
+        "tamanho_gib": 0.036323
+      },
+      {
+        "ext": ".txt",
+        "arquivos": 3,
+        "tamanho_bytes": 0,
+        "tamanho_gib": 0.0
+      },
+      {
+        "ext": ".csv",
+        "arquivos": 2,
+        "tamanho_bytes": 0,
+        "tamanho_gib": 0.0
+      },
+      {
+        "ext": ".wav",
+        "arquivos": 2,
+        "tamanho_bytes": 213152,
+        "tamanho_gib": 0.000199
+      },
+      {
+        "ext": ".md",
+        "arquivos": 1,
+        "tamanho_bytes": 1539,
+        "tamanho_gib": 1e-06
+      },
+      {
+        "ext": ".json",
+        "arquivos": 1,
+        "tamanho_bytes": 616222,
+        "tamanho_gib": 0.000574
+      },
+      {
+        "ext": ".ttf",
+        "arquivos": 1,
+        "tamanho_bytes": 26828,
+        "tamanho_gib": 2.5e-05
+      },
+      {
+        "ext": ".jpg",
+        "arquivos": 1,
+        "tamanho_bytes": 638403,
+        "tamanho_gib": 0.000595
+      }
+    ]
+  },
+  "meta": {
+    "criado_em": "2026-03-06T15:56:37",
+    "repo": "Pokemon-Global-Server-Definitivo",
+    "arquivo": "2026-03-06_15-56-31.json",
+    "base_dir": "C:\\Users\\Leon\\Documents\\GitHub\\Pokemon-Global-Server-Definitivo",
+    "script": "Outros/GeradorRelatorios.py",
+    "relatorios_dir": "Outros/Relatorios",
+    "comparado_com": "2026-03-05_21-07-40.json"
+  },
+  "diff": {
+    "pastas": {
+      "anterior": 1138,
+      "atual": 1132,
+      "delta": -6
+    },
+    "arquivos": {
+      "anterior": 67972,
+      "atual": 67973,
+      "delta": 1
+    },
+    "tamanho_bytes": {
+      "anterior": 391816273,
+      "atual": 391831114,
+      "delta": 14841
+    },
+    "py_arquivos": {
+      "anterior": 97,
+      "atual": 98,
+      "delta": 1
+    },
+    "linhas_totais": {
+      "anterior": 9292,
+      "atual": 9636,
+      "delta": 344
+    },
+    "classes_encontradas": {
+      "anterior": 54,
+      "atual": 55,
+      "delta": 1
+    },
+    "extensoes": {
+      "mudancas": [
+        {
+          "ext": ".py",
+          "arquivos_anterior": 97,
+          "arquivos_atual": 98,
+          "delta_arquivos": 1,
+          "tamanho_bytes_anterior": 328854,
+          "tamanho_bytes_atual": 343652,
+          "delta_tamanho_bytes": 14798
+        },
+        {
+          "ext": ".md",
+          "arquivos_anterior": 1,
+          "arquivos_atual": 1,
+          "delta_arquivos": 0,
+          "tamanho_bytes_anterior": 1507,
+          "tamanho_bytes_atual": 1539,
+          "delta_tamanho_bytes": 32
+        },
+        {
+          "ext": ".json",
+          "arquivos_anterior": 1,
+          "arquivos_atual": 1,
+          "delta_arquivos": 0,
+          "tamanho_bytes_anterior": 616211,
+          "tamanho_bytes_atual": 616222,
+          "delta_tamanho_bytes": 11
+        }
+      ]
+    }
+  }
+}

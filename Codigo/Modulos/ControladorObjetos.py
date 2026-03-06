@@ -16,6 +16,7 @@ class ControladorObjetos:
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
         self.PlayerLocal = None
         self._fila_diffs_envio: List[Dict[str, object]] = []
+        self._callback_envio_diff = None
         self._chunk_tamanho_tiles = 32
         self._objetos_colisao_por_chunk: Dict[Tuple[int, int], set[int]] = {}
         self._chunk_por_objeto: Dict[int, Tuple[int, int]] = {}
@@ -23,6 +24,9 @@ class ControladorObjetos:
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
         self._sincronizar_player_local()
+
+    def definir_callback_envio_diff(self, callback_envio) -> None:
+        self._callback_envio_diff = callback_envio if callable(callback_envio) else None
 
     def montar_player_local(self, dados_player) -> Player:
         dados = dados_player if isinstance(dados_player, dict) else {}
@@ -185,7 +189,11 @@ class ControladorObjetos:
         if not isinstance(diff, dict):
             return
         self.aplicar_diff(diff)
-        self._fila_diffs_envio.append(dict(diff))
+        diff_copia = dict(diff)
+        if callable(self._callback_envio_diff):
+            self._callback_envio_diff(diff_copia)
+            return
+        self._fila_diffs_envio.append(diff_copia)
 
     def enviar_diffs_pendentes(self, callback_envio) -> None:
         if not callable(callback_envio):

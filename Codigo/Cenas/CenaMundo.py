@@ -49,11 +49,13 @@ class CenaMundo:
             callback_atualizacao=consultar_estado_mundo,
             callback_envio_diffs=enviar_diffs_mundo,
             intervalo_poll=0.20,
-            raio_chunks=10,
+            raio_chunks=3,
         )
 
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
+        self.ControladorObjetos.definir_callback_envio_diff(self.LeitorMundo.enfileirar_diff)
+
         if link:
             self.LeitorMundo.conectar_servidor(link)
             self.LeitorMundo.iniciar()
@@ -76,7 +78,6 @@ class CenaMundo:
         gfps.finalizar_trecho("aplicacao_subtela")
 
         self.Camera.atualizar(dt)
-        self.ControladorObjetos.enviar_diffs_pendentes(self.LeitorMundo.enfileirar_diff)
 
         for diff in self.LeitorMundo.consumir_diffs_recebidas():
             self.ControladorObjetos.aplicar_diff(diff)

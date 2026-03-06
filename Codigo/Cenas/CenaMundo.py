@@ -6,6 +6,7 @@ from Codigo.Modulos.LeitorMundo import LeitorMundo
 from Codigo.Modulos.Player.ElementosHud import ElementosHud
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.SubtelaOpcoes import SubtelaOpcoes
+from Codigo.Modulos.Ferramentas import GerenciadorFPS
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import consultar_estado_mundo, enviar_diffs_mundo, desconectar_mundo
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
@@ -26,6 +27,7 @@ class CenaMundo:
         self._desconectado = False
         self.TelaAtual = None
         self.SubtelaInventario = None
+        self.GerenciadorFPS = GerenciadorFPS((JOGO.CONFIG or {}).get("FPS", 60))
 
         self._montar_mundo(JOGO)
 
@@ -57,17 +59,21 @@ class CenaMundo:
             self.LeitorMundo.iniciar()
 
     def Tela(self, JOGO, EVENTOS, dt):
+        gfps = self.GerenciadorFPS
+
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
 
+        gfps.iniciar_trecho("aplicacao_subtela")
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
 
         if not self.SubtelaOpcoes.Ativa and self.TelaAtual != "Config":
             mouse_tela = pygame.mouse.get_pos()
             mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)
-            self.ControladorObjetos.atualizar_player_local(EVENTOS, dt, mouse_mundo_tiles)
+            self.ControladorObjetos.atualizar_player_local(EVENTOS, dt, mouse_mundo_tiles, gerenciador_fps=gfps)
             if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaInventario is not None:
                 self.SubtelaInventario.Ativo = self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto
                 self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
+        gfps.finalizar_trecho("aplicacao_subtela")
 
         self.Camera.atualizar(dt)
         self.ControladorObjetos.enviar_diffs_pendentes(self.LeitorMundo.enfileirar_diff)
@@ -79,12 +85,21 @@ class CenaMundo:
             self.LeitorMundo.atualizar_regras_mundo(self.ControladorObjetos.PlayerLocal.Controle)
 
         JOGO.TELA.fill((20, 20, 28))
-        self.LeitorMundo.renderizar_mundo(JOGO.TELA)
-        self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera)
+        self.LeitorMundo.renderizar_mundo(JOGO.TELA, gerenciador_fps=gfps)
+
+        if self.ControladorObjetos.PlayerLocal is not None:
+            self.ControladorObjetos.PlayerLocal.Controle.renderizar_stamina(JOGO.TELA, self.Camera, dt)
+
+        gfps.iniciar_trecho("renderizar_player")
+        self.ControladorObjetos.renderizar_player(JOGO.TELA, self.Camera)
+        gfps.finalizar_trecho("renderizar_player")
+
+        gfps.iniciar_trecho("renderizar_estruturas")
+        self.ControladorObjetos.renderizar_estruturas(JOGO.TELA, self.Camera)
+        gfps.finalizar_trecho("renderizar_estruturas")
 
         if self.ControladorObjetos.PlayerLocal is not None:
             player_local = self.ControladorObjetos.PlayerLocal
-            player_local.Controle.renderizar_stamina(JOGO.TELA, self.Camera, dt)
             self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario)
 
         self.SubtelaOpcoes.desenhar(JOGO)
@@ -92,6 +107,8 @@ class CenaMundo:
             self.SubtelaInventario.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt)
+
+        gfps.imprimir_relatorio()
 
 
     def Finalizar(self, JOGO):

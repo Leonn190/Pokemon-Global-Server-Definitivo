@@ -8,7 +8,7 @@ from typing import Dict, Optional, Tuple
 
 import pygame
 
-from Codigo.Modulos.colisor import Colisor
+from Codigo.Modulos.Colisor import Colisor
 from Codigo.Modulos.ConfigEstruturasNaturais import tipo_estrutura_natural_por_codigo
 
 Vector2 = Tuple[float, float]

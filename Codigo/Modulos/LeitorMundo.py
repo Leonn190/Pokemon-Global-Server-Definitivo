@@ -219,10 +219,15 @@ class LeitorMundo:
         self._cache_superficies_chunks[chave_chunk] = superficie
         return superficie
 
-    def renderizar_mundo(self, tela) -> None:
+    def renderizar_mundo(self, tela, gerenciador_fps=None) -> None:
+        if gerenciador_fps is not None:
+            gerenciador_fps.iniciar_trecho("carregar_chunks")
+
         estado = self.snapshot()
         chunks = estado.get("chunks", {}) if isinstance(estado, dict) else {}
         if not isinstance(chunks, dict) or not chunks:
+            if gerenciador_fps is not None:
+                gerenciador_fps.finalizar_trecho("carregar_chunks")
             return
 
         tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
@@ -245,6 +250,7 @@ class LeitorMundo:
             repeticoes_x = (-largura, 0, largura)
             repeticoes_y = (-altura, 0, altura)
 
+        draw_ops = []
         for dy in range(-4, 5):
             chunk_y = chunk_player_y + dy
             for dx in range(-4, 5):
@@ -260,7 +266,17 @@ class LeitorMundo:
 
                 origem_x = chunk_x * tamanho_chunk
                 origem_y = chunk_y * tamanho_chunk
-                for off_x in repeticoes_x:
-                    for off_y in repeticoes_y:
-                        px, py = self.Camera.mundo_para_tela_px((origem_x + off_x, origem_y + off_y))
-                        tela.blit(superficie_chunk, (int(px), int(py)))
+                draw_ops.append((superficie_chunk, origem_x, origem_y))
+
+        if gerenciador_fps is not None:
+            gerenciador_fps.finalizar_trecho("carregar_chunks")
+            gerenciador_fps.iniciar_trecho("renderizar_tiles")
+
+        for superficie_chunk, origem_x, origem_y in draw_ops:
+            for off_x in repeticoes_x:
+                for off_y in repeticoes_y:
+                    px, py = self.Camera.mundo_para_tela_px((origem_x + off_x, origem_y + off_y))
+                    tela.blit(superficie_chunk, (int(px), int(py)))
+
+        if gerenciador_fps is not None:
+            gerenciador_fps.finalizar_trecho("renderizar_tiles")

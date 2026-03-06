@@ -7,7 +7,7 @@ import math
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.GameObjeto import GameObjeto
-from Codigo.Modulos.colisor import Colisor
+from Codigo.Modulos.Colisor import Colisor
 from Codigo.Modulos.Player.Player import Player
 
 
@@ -66,12 +66,12 @@ class ControladorObjetos:
             }
         )
 
-    def atualizar_player_local(self, eventos, dt, mouse_pos_mundo_tiles) -> None:
+    def atualizar_player_local(self, eventos, dt, mouse_pos_mundo_tiles, gerenciador_fps=None) -> None:
         if self.PlayerLocal is None:
             return
         posicao_antes = tuple(self.PlayerLocal.Ator.Posicao)
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
-        self._resolver_colisao_player_local(posicao_antes, dt)
+        self._resolver_colisao_player_local(posicao_antes, dt, gerenciador_fps=gerenciador_fps)
         self._sincronizar_player_local()
 
     def _chunk_posicao(self, x: float, y: float) -> Tuple[int, int]:
@@ -154,7 +154,7 @@ class ControladorObjetos:
             if dados is not None:
                 yield dados
 
-    def _resolver_colisao_player_local(self, posicao_antes: Tuple[float, float], dt: float) -> None:
+    def _resolver_colisao_player_local(self, posicao_antes: Tuple[float, float], dt: float, gerenciador_fps=None) -> None:
         if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
             return
 
@@ -162,8 +162,15 @@ class ControladorObjetos:
         posicao_depois = tuple(ator.Posicao)
         player_id = getattr(ator, "Id", None)
         raio_ator = max(0.0, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
-        colisores_proximos = [c for c in self._iter_colisores_proximos(posicao_depois) if c[0] != player_id]
 
+        if gerenciador_fps is not None:
+            gerenciador_fps.iniciar_trecho("carregar_objetos_proximos_colidir")
+        colisores_proximos = [c for c in self._iter_colisores_proximos(posicao_depois) if c[0] != player_id]
+        if gerenciador_fps is not None:
+            gerenciador_fps.finalizar_trecho("carregar_objetos_proximos_colidir")
+
+        if gerenciador_fps is not None:
+            gerenciador_fps.iniciar_trecho("sistema_colisao")
         px, py = Colisor.resolver_movimento_com_colisores(
             posicao_antes=posicao_antes,
             posicao_depois=posicao_depois,
@@ -171,6 +178,8 @@ class ControladorObjetos:
             colisores=colisores_proximos,
             dt=dt,
         )
+        if gerenciador_fps is not None:
+            gerenciador_fps.finalizar_trecho("sistema_colisao")
         ator.definir_posicao(px, py)
 
     def registrar_diff_local(self, diff) -> None:
@@ -252,6 +261,13 @@ class ControladorObjetos:
     def RenderizarEstruturas(self, tela, camera):
         for obj in self._iter_tipos("estrutura"):
             GameObjeto.desenhar_snapshot(tela, camera, obj, cor_fallback=(125, 86, 54))
+
+    def renderizar_player(self, tela, camera, ignorar_entidade_id=None):
+        self.RenderizarEntidades(tela, camera, ignorar_id=ignorar_entidade_id)
+        self._renderizar_player_local(tela, camera)
+
+    def renderizar_estruturas(self, tela, camera):
+        self.RenderizarEstruturas(tela, camera)
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         if ignorar_entidade_id is None and self.PlayerLocal is not None and getattr(self.PlayerLocal, "Ator", None) is not None:

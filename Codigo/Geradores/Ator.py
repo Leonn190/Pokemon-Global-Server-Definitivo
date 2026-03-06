@@ -10,7 +10,7 @@ import pygame
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Geradores.Entidade import Entidade
-from Codigo.Modulos.colisor import Colisor
+from Codigo.Modulos.Colisor import Colisor
 from Codigo.Prefabs.Texto import Texto
 
 Vector2 = Tuple[float, float]

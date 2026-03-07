@@ -7,16 +7,20 @@ import math
 import threading
 import time
 
+import pygame
+
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.GameObjeto import GameObjeto
 from Codigo.Modulos.Colisor import Colisor
 from Codigo.Geradores.Player.Player import Player
+from Codigo.Geradores.PokemonMundo import PokemonMundo
 
 
 class ControladorObjetos:
     def __init__(self):
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
         self.PlayerLocal = None
+        self.PokemonsPorId: Dict[int, PokemonMundo] = {}
         self._fila_diffs_envio: List[Dict[str, object]] = []
         self._chunk_tamanho_tiles = 32
         self._objetos_colisao_por_chunk: Dict[Tuple[int, int], set[int]] = {}
@@ -27,6 +31,7 @@ class ControladorObjetos:
         self._callback_envio_diffs: Optional[Callable[[List[Dict[str, object]]], None]] = None
         self._intervalo_envio_diffs = 0.05
         self._snapshot_player_anterior: Optional[Dict[str, object]] = None
+        self._ultimo_render_pokemons_ms = pygame.time.get_ticks()
 
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
@@ -315,6 +320,29 @@ class ControladorObjetos:
                     self._fila_diffs_envio = lote + self._fila_diffs_envio
                 time.sleep(self._intervalo_envio_diffs)
 
+    def _eh_payload_pokemon(self, payload: Dict[str, object]) -> bool:
+        tipo = str(payload.get("tipo", "")).strip().lower()
+        if tipo in ("entidade_pokemon", "pokemon"):
+            return True
+        estado = payload.get("estado")
+        if isinstance(estado, dict):
+            subtipo = str(estado.get("subtipo", "")).strip().lower()
+            if subtipo == "pokemon":
+                return True
+        return False
+
+    def _sincronizar_pokemon(self, oid: int, payload: Dict[str, object], criar_se_ausente: bool = True) -> None:
+        if not self._eh_payload_pokemon(payload):
+            return
+
+        pokemon = self.PokemonsPorId.get(oid)
+        if pokemon is None:
+            if not criar_se_ausente:
+                return
+            pokemon = PokemonMundo(payload)
+            self.PokemonsPorId[oid] = pokemon
+        pokemon.aplicar_snapshot(payload)
+
     def aplicar_diff(self, diff):
         if not isinstance(diff, dict):
             return
@@ -328,6 +356,7 @@ class ControladorObjetos:
             dados_obj["id"] = oid
             self.ObjetosPorId[oid] = dados_obj
             self._atualizar_indice_objeto_colisivo(dados_obj)
+            self._sincronizar_pokemon(oid, dados_obj, criar_se_ausente=True)
             return
 
         if objeto_id is None:
@@ -346,10 +375,12 @@ class ControladorObjetos:
                     atual[chave] = valor
             self.ObjetosPorId[oid] = atual
             self._atualizar_indice_objeto_colisivo(atual)
+            self._sincronizar_pokemon(oid, atual, criar_se_ausente=True)
             return
 
         if tipo == "despawn":
             self.ObjetosPorId.pop(oid, None)
+            self.PokemonsPorId.pop(oid, None)
             chunk = self._chunk_por_objeto.pop(oid, None)
             if chunk is not None:
                 bucket = self._objetos_colisao_por_chunk.get(chunk)
@@ -363,6 +394,10 @@ class ControladorObjetos:
             return
         self.ObjetosPorId = {int(k): dict(v) for k, v in objetos.items()}
         self._reindexar_objetos_colisivos()
+        self.PokemonsPorId = {}
+        for oid, payload in self.ObjetosPorId.items():
+            if isinstance(payload, dict):
+                self._sincronizar_pokemon(int(oid), payload, criar_se_ausente=True)
 
     def _iter_tipos(self, prefixo):
         return [obj for obj in self.ObjetosPorId.values() if str(obj.get("tipo", "")).startswith(prefixo)]
@@ -379,9 +414,23 @@ class ControladorObjetos:
         return px, py
 
     def RenderizarEntidades(self, tela, camera, ignorar_id=None):
+        agora = pygame.time.get_ticks()
+        dt_pokemons = max(0.0, (agora - self._ultimo_render_pokemons_ms) / 1000.0)
+        self._ultimo_render_pokemons_ms = agora
+
         for obj in self._iter_tipos("entidade"):
-            if ignorar_id is not None and int(obj.get("id", -1)) == int(ignorar_id):
+            oid = int(obj.get("id", -1))
+            if ignorar_id is not None and oid == int(ignorar_id):
                 continue
+
+            pokemon = self.PokemonsPorId.get(oid)
+            if pokemon is not None:
+                if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
+                    continue
+                pokemon.desenhar(tela, camera, dt_pokemons)
+                obj["posicao"] = [float(pokemon.Posicao[0]), float(pokemon.Posicao[1])]
+                continue
+
             pos_tela = self._objeto_posicao_tela_se_visivel(obj, camera)
             if pos_tela is None:
                 continue

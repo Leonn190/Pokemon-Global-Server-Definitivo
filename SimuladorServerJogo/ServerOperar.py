@@ -9,6 +9,7 @@ from SimuladorServerJogo.EstadoServidor import (
 )
 
 
+# --------------------- Funções auxiliares ---------------------
 def _resposta(status, mensagem, **extras):
     pacote = {"status": status, "mensagem": mensagem}
     pacote.update(extras)
@@ -24,6 +25,8 @@ def _validar_chave(chave):
     return True, "Chave validada"
 
 
+# ============================= ROTA =============================
+# ROTA: processa operações administrativas do servidor.
 def processar_operacao_json(requisicao_json):
     time.sleep(0.25)
 
@@ -35,11 +38,13 @@ def processar_operacao_json(requisicao_json):
     acao = pacote.get("acao")
     dados = pacote.get("dados", {})
 
+    # ROTA: operar_server
     if acao == "operar_server":
         valido, mensagem = _validar_chave(dados.get("chave", ""))
         status = "ok" if valido else "negado"
         return json.dumps(_resposta(status, mensagem), ensure_ascii=False)
 
+    # ROTA: status_operacao
     if acao == "status_operacao":
         estado = snapshot_estado()
         return json.dumps(
@@ -52,6 +57,7 @@ def processar_operacao_json(requisicao_json):
             ensure_ascii=False,
         )
 
+    # ROTA: definir_ligado
     if acao == "definir_ligado":
         definir_ligado(dados.get("ligado", False))
         estado = snapshot_estado()
@@ -60,6 +66,7 @@ def processar_operacao_json(requisicao_json):
             ensure_ascii=False,
         )
 
+    # ROTA: definir_mundo
     if acao == "definir_mundo":
         definir_mundo_existente(dados.get("mundo_existente", False))
         estado = snapshot_estado()

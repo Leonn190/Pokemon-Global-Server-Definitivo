@@ -7,6 +7,7 @@ from SimuladorServerJogo.EstadoServidor import adicionar_personagem, atualizar_p
 from SimuladorServerJogo.GeradorMundo import obter_posicao_spawn
 
 
+# --------------------- Funções auxiliares ---------------------
 def _resposta(status, mensagem, possui_personagem=None, personagem=None):
     pacote = {"status": status, "mensagem": mensagem}
     if possui_personagem is not None:
@@ -16,6 +17,8 @@ def _resposta(status, mensagem, possui_personagem=None, personagem=None):
     return pacote
 
 
+# ============================= ROTA =============================
+# ROTA: processa requisições de entrada no servidor.
 def processar_entrada_json(requisicao_json):
     time.sleep(0.25)
 
@@ -27,6 +30,7 @@ def processar_entrada_json(requisicao_json):
     acao = pacote.get("acao")
     dados = pacote.get("dados", {})
 
+    # ROTA: entrar_server
     if acao == "entrar_server":
         usuario = str(dados.get("usuario", "")).strip()
 
@@ -87,6 +91,7 @@ def processar_entrada_json(requisicao_json):
             ensure_ascii=False,
         )
 
+    # ROTA: sair_mundo
     if acao == "sair_mundo":
         client_id = str(dados.get("client_id", "")).strip()
         if not client_id:
@@ -94,6 +99,7 @@ def processar_entrada_json(requisicao_json):
         desconectar_client(client_id)
         return json.dumps(_resposta("ok", "Desconectado do mundo com sucesso"), ensure_ascii=False)
 
+    # ROTA: criar_personagem
     if acao == "criar_personagem":
         usuario = str(dados.get("usuario", "")).strip()
         skin = str(dados.get("skin", "")).strip()

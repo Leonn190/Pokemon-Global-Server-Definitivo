@@ -3,6 +3,9 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.IOException;
+import java.io.BufferedWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -344,12 +347,71 @@ static final class Rules {
             long t5 = System.currentTimeMillis();
             System.out.println("Renderizando imagens...");
             renderBaseWorld(new File(dir, "01_blocos_biomas.png"));
-            renderNaturalStructures(new File(dir, "02_estruturas_naturais.png"));
-            renderPois(new File(dir, "03_pois.png"));
+            writeWorldGridsJson(new File(dir, "world_grids.json"));
             logTime("Render", t5);
 
             printSummary();
             logTime("Tempo total", t0);
+        }
+
+        private void writeWorldGridsJson(File file) throws IOException {
+            try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+                writer.write("{\n");
+                writer.write("  \"meta\": {\n");
+                writer.write("    \"width\": " + width + ",\n");
+                writer.write("    \"height\": " + height + ",\n");
+                writer.write("    \"seed\": " + rules.seed + "\n");
+                writer.write("  },\n");
+
+                writer.write("  \"grid_blocos\": ");
+                writeGridFromMap(writer, tileMap);
+                writer.write(",\n");
+
+                writer.write("  \"grid_biomas\": ");
+                writeGridFromMap(writer, biomeMap);
+                writer.write(",\n");
+
+                writer.write("  \"grid_estruturas\": ");
+                writeGridFromMap(writer, buildStructuresGrid());
+                writer.write("\n}");
+            }
+        }
+
+        private byte[] buildStructuresGrid() {
+            byte[] grid = Arrays.copyOf(naturalMap, naturalMap.length);
+            for (Poi poi : pois) {
+                int idx = index(poi.x, poi.y);
+                grid[idx] = (byte) poiCode(poi.type);
+            }
+            return grid;
+        }
+
+        private int poiCode(PoiType type) {
+            return switch (type) {
+                case GYM -> 101;
+                case DUNGEON -> 102;
+                case VILLAGE -> 103;
+            };
+        }
+
+        private void writeGridFromMap(BufferedWriter writer, byte[] map) throws IOException {
+            writer.write("[\n");
+            for (int y = 0; y < height; y++) {
+                writer.write("    [");
+                for (int x = 0; x < width; x++) {
+                    int idx = index(x, y);
+                    writer.write(Integer.toString(map[idx] & 0xFF));
+                    if (x < width - 1) {
+                        writer.write(',');
+                    }
+                }
+                writer.write("]");
+                if (y < height - 1) {
+                    writer.write(',');
+                }
+                writer.write('\n');
+            }
+            writer.write("  ]");
         }
 
         private void generateBaseTerrain() {

@@ -105,13 +105,47 @@ public class WorldGenerator {
 
     static final class BiomeRule {
         final Biome biome;
-        final double weight;
+        final double macroWeight;
         final double minimumLandPercent;
+        final double minTemperature;
+        final double maxTemperature;
+        final double minMoisture;
+        final double maxMoisture;
+        final double minPrimaryNoise;
+        final double maxPrimaryNoise;
 
-        BiomeRule(Biome biome, double weight, double minimumLandPercent) {
+        BiomeRule(
+                Biome biome,
+                double macroWeight,
+                double minimumLandPercent,
+                double minTemperature,
+                double maxTemperature,
+                double minMoisture,
+                double maxMoisture,
+                double minPrimaryNoise,
+                double maxPrimaryNoise
+        ) {
             this.biome = biome;
-            this.weight = weight;
+            this.macroWeight = macroWeight;
             this.minimumLandPercent = minimumLandPercent;
+            this.minTemperature = minTemperature;
+            this.maxTemperature = maxTemperature;
+            this.minMoisture = minMoisture;
+            this.maxMoisture = maxMoisture;
+            this.minPrimaryNoise = minPrimaryNoise;
+            this.maxPrimaryNoise = maxPrimaryNoise;
+        }
+
+        boolean matchesTemperature(double value) {
+            return value >= minTemperature && value <= maxTemperature;
+        }
+
+        boolean matchesMoisture(double value) {
+            return value >= minMoisture && value <= maxMoisture;
+        }
+
+        boolean matchesPrimaryNoise(double value) {
+            return value >= minPrimaryNoise && value <= maxPrimaryNoise;
         }
     }
 
@@ -121,16 +155,39 @@ public class WorldGenerator {
         long seed = 20260307L;
         String outputDirectory = "output_world";
 
+        // ===== Ocean / water borders =====
         int hardOceanBorder = 120;
         int softOceanBorder = 420;
+        double edgeWaterPenaltyStrength = 0.55;
         double seaLevel = 0.48;
+        double deepWaterExtraDepth = 0.04;
         double shallowWaterBand = 0.032;
+        int oceanDetectionRadius = 2;
+        int waterDetectionRadiusForBeach = 1;
+        int shallowWaterNearLandRadius = 1;
 
+        // ===== Lakes =====
+        double lakeElevationOffsetFromSeaLevel = 0.085;
+        double lakeMinMoisture = 0.68;
+        int lakeNoiseOctaves = 4;
+        double lakeNoisePersistence = 0.55;
+        double lakeNoiseLacunarity = 2.0;
+        double lakeNoiseScale = 130.0;
+        long lakeNoiseSeedOffset = 7777L;
+        double lakeNoiseThreshold = 0.76;
+        int lakeBorderBlockDistance = 420;
+
+        // ===== Rivers =====
         int riverSources = 850;
         int riverMaxLength = 650;
         int riverWidth = 1;
+        int riverTerminalExtraWidth = 1;
         double riverSourceMinHeight = 0.63;
+        int riverSourceMargin = 200;
+        int riverSourceNearWaterRadius = 8;
+        int riverMaxAttemptsPerSource = 50;
 
+        // ===== POIs =====
         int gymCount = 30;
         int dungeonCount = 30;
         int villageCount = 10;
@@ -138,9 +195,14 @@ public class WorldGenerator {
         int dungeonDistance = 220;
         int villageDistance = 300;
 
+        // ===== Natural structures =====
+        int naturalBlockNearPoiRadius = 3;
+        int naturalBlockNearWaterRadius = 1;
+        int naturalBoostPalmNearWaterRadius = 3;
+
+        // ===== Macro-biomes and region size =====
         BiomeRule[] biomeRules;
         StructureRule[] structureRules;
-
         int macroGridWidth = 250;
         int macroGridHeight = 250;
         int macroMajorityRadius = 2;
@@ -148,18 +210,54 @@ public class WorldGenerator {
         int macroMinRegionCells = 8;
         double macroLocalBlend = 0.08;
         double macroEdgeNoiseStrength = 0.04;
+        double macroWarpScaleFactor = 0.7;
+        double macroWarpStrength = 1.2;
+        double macroEdgeNoiseScaleFactor = 2.4;
+
+        int macroTemperatureOctaves = 4;
+        double macroTemperaturePersistence = 0.56;
+        double macroTemperatureLacunarity = 2.0;
+        double macroTemperatureScale = 3400.0;
+        long macroTemperatureSeedOffset = 811L;
+        double macroTemperatureNoiseWeight = 0.58;
+        double macroTemperatureLatitudeWeight = 0.42;
+
+        int macroMoistureOctaves = 4;
+        double macroMoisturePersistence = 0.56;
+        double macroMoistureLacunarity = 2.0;
+        double macroMoistureScale = 3200.0;
+        long macroMoistureSeedOffset = 821L;
+
+        int macroMagicOctaves = 3;
+        double macroMagicPersistence = 0.58;
+        double macroMagicLacunarity = 2.0;
+        double macroMagicScale = 3600.0;
+        long macroMagicSeedOffset = 831L;
+
+        int macroVolcanicOctaves = 3;
+        double macroVolcanicPersistence = 0.58;
+        double macroVolcanicLacunarity = 2.0;
+        double macroVolcanicScale = 3000.0;
+        long macroVolcanicSeedOffset = 841L;
+
+        int macroSwampOctaves = 3;
+        double macroSwampPersistence = 0.58;
+        double macroSwampLacunarity = 2.0;
+        double macroSwampScale = 2800.0;
+        long macroSwampSeedOffset = 851L;
 
         static Rules defaultRules() {
             Rules rules = new Rules();
             rules.biomeRules = new BiomeRule[]{
-                    new BiomeRule(Biome.FIELD, 1.00, 0.16),
-                    new BiomeRule(Biome.FOREST, 1.00, 0.12),
-                    new BiomeRule(Biome.DESERT, 0.75, 0.08),
-                    new BiomeRule(Biome.SNOW, 0.65, 0.08),
-                    new BiomeRule(Biome.MAGIC, 0.40, 0.05),
-                    new BiomeRule(Biome.VOLCANIC, 0.35, 0.04),
-                    new BiomeRule(Biome.SWAMP, 0.45, 0.05)
+                    new BiomeRule(Biome.FIELD, 1.00, 0.16, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0),
+                    new BiomeRule(Biome.FOREST, 1.00, 0.12, 0.0, 1.0, 0.57, 1.0, 0.0, 1.0),
+                    new BiomeRule(Biome.DESERT, 0.75, 0.08, 0.71, 1.0, 0.0, 0.40, 0.0, 1.0),
+                    new BiomeRule(Biome.SNOW, 0.65, 0.08, 0.0, 0.31, 0.0, 1.0, 0.0, 1.0),
+                    new BiomeRule(Biome.MAGIC, 0.40, 0.05, 0.0, 1.0, 0.0, 1.0, 0.79, 1.0),
+                    new BiomeRule(Biome.VOLCANIC, 0.35, 0.04, 0.48, 1.0, 0.0, 1.0, 0.73, 1.0),
+                    new BiomeRule(Biome.SWAMP, 0.45, 0.05, 0.0, 1.0, 0.62, 1.0, 0.64, 1.0)
             };
+            rules.lakeBorderBlockDistance = rules.softOceanBorder;
 
             EnumSet<Biome> land = EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.DESERT, Biome.SNOW, Biome.MAGIC, Biome.VOLCANIC, Biome.SWAMP);
             rules.structureRules = new StructureRule[]{
@@ -276,7 +374,7 @@ public class WorldGenerator {
                     double elevation = elevation(x, y) - edgePenalty;
                     double moisture = moisture(x, y);
 
-                    if (elevation < rules.seaLevel - 0.04) {
+                    if (elevation < rules.seaLevel - rules.deepWaterExtraDepth) {
                         biomeMap[idx] = (byte) Biome.OCEAN.ordinal();
                         tileMap[idx] = (byte) Tile.WATER_DEEP.ordinal();
                         biomeCounts[Biome.OCEAN.ordinal()]++;
@@ -310,10 +408,10 @@ public class WorldGenerator {
         private void generateRivers() {
             int created = 0;
             int attempts = 0;
-            while (created < rules.riverSources && attempts < rules.riverSources * 50) {
+            while (created < rules.riverSources && attempts < rules.riverSources * rules.riverMaxAttemptsPerSource) {
                 attempts++;
-                int x = boundedRandomInt(200, width - 200, rules.seed + 91L * attempts);
-                int y = boundedRandomInt(200, height - 200, rules.seed + 131L * attempts);
+                int x = boundedRandomInt(rules.riverSourceMargin, width - rules.riverSourceMargin, rules.seed + 91L * attempts);
+                int y = boundedRandomInt(rules.riverSourceMargin, height - rules.riverSourceMargin, rules.seed + 131L * attempts);
                 int idx = index(x, y);
                 if (!isLandBiome(Biome.values()[biomeMap[idx] & 0xFF])) {
                     continue;
@@ -322,7 +420,7 @@ public class WorldGenerator {
                 if (h < rules.riverSourceMinHeight) {
                     continue;
                 }
-                if (nearWater(x, y, 8)) {
+                if (nearWater(x, y, rules.riverSourceNearWaterRadius)) {
                     continue;
                 }
                 carveRiverFrom(x, y);
@@ -349,31 +447,78 @@ public class WorldGenerator {
 
         private Biome classifyMacroBiome(int x, int y) {
             double latitude = 1.0 - Math.abs((y / (double) (height - 1)) * 2.0 - 1.0);
-            double macroTemperature = clamp01(fbm(x, y, 4, 0.56, 2.0, 3400.0, 811L) * 0.58 + latitude * 0.42);
-            double macroMoisture = fbm(x, y, 4, 0.56, 2.0, 3200.0, 821L);
-            double macroMagic = ridgeFbm(x, y, 3, 0.58, 2.0, 3600.0, 831L);
-            double macroVolcanic = ridgeFbm(x, y, 3, 0.58, 2.0, 3000.0, 841L);
-            double macroSwamp = fbm(x, y, 3, 0.58, 2.0, 2800.0, 851L);
+            double macroTemperature = clamp01(
+                    fbm(x, y,
+                            rules.macroTemperatureOctaves,
+                            rules.macroTemperaturePersistence,
+                            rules.macroTemperatureLacunarity,
+                            rules.macroTemperatureScale,
+                            rules.macroTemperatureSeedOffset
+                    ) * rules.macroTemperatureNoiseWeight + latitude * rules.macroTemperatureLatitudeWeight
+            );
+            double macroMoisture = fbm(x, y,
+                    rules.macroMoistureOctaves,
+                    rules.macroMoisturePersistence,
+                    rules.macroMoistureLacunarity,
+                    rules.macroMoistureScale,
+                    rules.macroMoistureSeedOffset
+            );
+            double macroMagic = ridgeFbm(x, y,
+                    rules.macroMagicOctaves,
+                    rules.macroMagicPersistence,
+                    rules.macroMagicLacunarity,
+                    rules.macroMagicScale,
+                    rules.macroMagicSeedOffset
+            );
+            double macroVolcanic = ridgeFbm(x, y,
+                    rules.macroVolcanicOctaves,
+                    rules.macroVolcanicPersistence,
+                    rules.macroVolcanicLacunarity,
+                    rules.macroVolcanicScale,
+                    rules.macroVolcanicSeedOffset
+            );
+            double macroSwamp = fbm(x, y,
+                    rules.macroSwampOctaves,
+                    rules.macroSwampPersistence,
+                    rules.macroSwampLacunarity,
+                    rules.macroSwampScale,
+                    rules.macroSwampSeedOffset
+            );
 
-            if (macroVolcanic > 0.73 && macroTemperature > 0.48) {
+            BiomeRule volcanic = biomeRule(Biome.VOLCANIC);
+            if (volcanic != null && macroVolcanic > volcanic.minPrimaryNoise && macroTemperature > volcanic.minTemperature) {
                 return Biome.VOLCANIC;
             }
-            if (macroMagic > 0.79) {
+            BiomeRule magic = biomeRule(Biome.MAGIC);
+            if (magic != null && macroMagic > magic.minPrimaryNoise) {
                 return Biome.MAGIC;
             }
-            if (macroSwamp > 0.64 && macroMoisture > 0.62) {
+            BiomeRule swamp = biomeRule(Biome.SWAMP);
+            if (swamp != null && macroSwamp > swamp.minPrimaryNoise && macroMoisture > swamp.minMoisture) {
                 return Biome.SWAMP;
             }
-            if (macroTemperature < 0.31) {
+            BiomeRule snow = biomeRule(Biome.SNOW);
+            if (snow != null && macroTemperature < snow.maxTemperature) {
                 return Biome.SNOW;
             }
-            if (macroTemperature > 0.71 && macroMoisture < 0.40) {
+            BiomeRule desert = biomeRule(Biome.DESERT);
+            if (desert != null && macroTemperature > desert.minTemperature && macroMoisture < desert.maxMoisture) {
                 return Biome.DESERT;
             }
-            if (macroMoisture > 0.57) {
+            BiomeRule forest = biomeRule(Biome.FOREST);
+            if (forest != null && macroMoisture > forest.minMoisture) {
                 return Biome.FOREST;
             }
             return Biome.FIELD;
+        }
+
+        private BiomeRule biomeRule(Biome biome) {
+            for (BiomeRule rule : rules.biomeRules) {
+                if (rule.biome == biome) {
+                    return rule;
+                }
+            }
+            return null;
         }
 
         private void smoothMacroBiomeGrid(int radius) {
@@ -531,12 +676,12 @@ public class WorldGenerator {
         }
 
         private Biome macroBiomeForTile(int x, int y) {
-            double warpScale = macroCellWidth * 0.7;
+            double warpScale = macroCellWidth * rules.macroWarpScaleFactor;
             double warpX = fbm(x, y, 3, 0.55, 2.0, warpScale, 777L);
             double warpY = fbm(x + 2000, y + 2000, 3, 0.55, 2.0, warpScale, 888L);
 
-            double warpedX = x + (warpX - 0.5) * macroCellWidth * 1.2;
-            double warpedY = y + (warpY - 0.5) * macroCellHeight * 1.2;
+            double warpedX = x + (warpX - 0.5) * macroCellWidth * rules.macroWarpStrength;
+            double warpedY = y + (warpY - 0.5) * macroCellHeight * rules.macroWarpStrength;
 
             double gx = (warpedX + 0.5) / macroCellWidth - 0.5;
             double gy = (warpedY + 0.5) / macroCellHeight - 0.5;
@@ -567,7 +712,7 @@ public class WorldGenerator {
                 scores[currentMacroBiome.ordinal()] += rules.macroLocalBlend;
             }
 
-            double edgeNoise = (fbm(x, y, 2, 0.55, 2.0, macroCellWidth * 2.4, 913L) - 0.5)
+            double edgeNoise = (fbm(x, y, 2, 0.55, 2.0, macroCellWidth * rules.macroEdgeNoiseScaleFactor, 913L) - 0.5)
                     * rules.macroEdgeNoiseStrength;
             applyNeighborEdgeJitter(scores, edgeNoise, x, y, mx0, my0);
             applyNeighborEdgeJitter(scores, edgeNoise, x, y, mx1, my0);
@@ -625,8 +770,8 @@ public class WorldGenerator {
 
             for (int step = 0; step < rules.riverMaxLength; step++) {
                 paintCircleAsShallowWater(x, y, rules.riverWidth);
-                if (nearOcean(x, y, 2)) {
-                    paintCircleAsShallowWater(x, y, rules.riverWidth + 1);
+                if (nearOcean(x, y, rules.oceanDetectionRadius)) {
+                    paintCircleAsShallowWater(x, y, rules.riverWidth + rules.riverTerminalExtraWidth);
                     return;
                 }
 
@@ -655,7 +800,7 @@ public class WorldGenerator {
                 }
 
                 if (bestX == x && bestY == y) {
-                    paintCircleAsShallowWater(x, y, rules.riverWidth + 1);
+                    paintCircleAsShallowWater(x, y, rules.riverWidth + rules.riverTerminalExtraWidth);
                     return;
                 }
 
@@ -677,10 +822,10 @@ public class WorldGenerator {
                     if (!isLandBiome(biome)) {
                         continue;
                     }
-                    if (nearPoi(x, y, 3)) {
+                    if (nearPoi(x, y, rules.naturalBlockNearPoiRadius)) {
                         continue;
                     }
-                    if (nearWater(x, y, 1) && biome != Biome.DESERT && biome != Biome.SWAMP) {
+                    if (nearWater(x, y, rules.naturalBlockNearWaterRadius) && biome != Biome.DESERT && biome != Biome.SWAMP) {
                         continue;
                     }
                     long localSeed = tileSeed(x, y, 701);
@@ -716,7 +861,7 @@ public class WorldGenerator {
                     if (!rule.allows(biome)) {
                         continue;
                     }
-                    if (!isLandBiome(biome) || nearPoi(x, y, 3)) {
+                    if (!isLandBiome(biome) || nearPoi(x, y, rules.naturalBlockNearPoiRadius)) {
                         continue;
                     }
                     naturalMap[idx] = (byte) rule.structure.ordinal();
@@ -881,7 +1026,7 @@ public class WorldGenerator {
                     chance *= 0.6 + h * 0.9;
                 }
                 case PALM -> {
-                    if (nearWater(x, y, 3)) chance *= 1.8;
+                    if (nearWater(x, y, rules.naturalBoostPalmNearWaterRadius)) chance *= 1.8;
                 }
                 case PINE -> chance *= 1.4;
                 case AMETHYST, DIAMOND, RUBY, EMERALD -> chance *= 1.25;
@@ -892,9 +1037,9 @@ public class WorldGenerator {
             return chance;
         }
         private boolean isLakeCandidate(double elevation, double moisture, int x, int y) {
-            if (elevation < rules.seaLevel + 0.085 && moisture > 0.68) {
-                double lakeNoise = fbm(x, y, 4, 0.55, 2.0, 130.0, 7777L);
-                return lakeNoise > 0.76 && !nearBorder(x, y, rules.softOceanBorder);
+            if (elevation < rules.seaLevel + rules.lakeElevationOffsetFromSeaLevel && moisture > rules.lakeMinMoisture) {
+                double lakeNoise = fbm(x, y, rules.lakeNoiseOctaves, rules.lakeNoisePersistence, rules.lakeNoiseLacunarity, rules.lakeNoiseScale, rules.lakeNoiseSeedOffset);
+                return lakeNoise > rules.lakeNoiseThreshold && !nearBorder(x, y, rules.lakeBorderBlockDistance);
             }
             return false;
         }
@@ -907,7 +1052,7 @@ public class WorldGenerator {
                     if (!isLandBiome(biome)) {
                         continue;
                     }
-                    if (nearWater(x, y, 1)) {
+                    if (nearWater(x, y, rules.waterDetectionRadiusForBeach)) {
                         tileMap[idx] = (byte) Tile.BEACH_SAND.ordinal();
                     } else {
                         tileMap[idx] = (byte) tileForBiome(biome).ordinal();
@@ -921,7 +1066,7 @@ public class WorldGenerator {
                 for (int x = 1; x < width - 1; x++) {
                     int idx = index(x, y);
                     Tile tile = Tile.values()[tileMap[idx] & 0xFF];
-                    if (tile == Tile.WATER_DEEP && nearLand(x, y, 1)) {
+                    if (tile == Tile.WATER_DEEP && nearLand(x, y, rules.shallowWaterNearLandRadius)) {
                         tileMap[idx] = (byte) Tile.WATER_SHALLOW.ordinal();
                         biomeCounts[Biome.OCEAN.ordinal()]--;
                         biomeCounts[Biome.SHALLOW_WATER.ordinal()]++;
@@ -970,7 +1115,7 @@ public class WorldGenerator {
                 return 0.0;
             }
             double t = 1.0 - (double) min / rules.softOceanBorder;
-            return t * t * 0.55;
+            return t * t * rules.edgeWaterPenaltyStrength;
         }
 
         private boolean nearWater(int x, int y, int radius) {

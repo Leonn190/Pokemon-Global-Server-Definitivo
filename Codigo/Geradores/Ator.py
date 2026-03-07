@@ -42,7 +42,7 @@ class Ator(Entidade):
         velocidade: Vector2 = (0.0, 0.0),
         raio_colisao: float = 0.35,
         raio_interacao: Optional[float] = None,
-        escala_skin: float = 1.35,
+        escala_skin_tiles: float = 1.0,
     ) -> None:
         super().__init__(
             posicao=posicao,
@@ -53,11 +53,11 @@ class Ator(Entidade):
         if skin_surface is None:
             skin_surface = self.carregar_skin(nome_skin)
         self.Skin = skin_surface
-        self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin)
+        self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin_tiles)
 
         self.AnguloOlhar = 0.0
         self.Nome = ""
-        self._duracao_tapa = 0.16
+        self._duracao_tapa = 0.5
         self._tempo_tapa = 0.0
         self._raio_mao_colisao = max(0.18, raio_colisao * 0.65)
         self.ColisorMao = Colisor(
@@ -68,9 +68,8 @@ class Ator(Entidade):
             ativo=False,
         )
 
-
     @classmethod
-    def desenhar_nome(cls, tela, pos_tela, nome, deslocamento_y: int = 43):
+    def desenhar_nome(cls, tela, pos_tela, nome, deslocamento_y: int = 52):
         nome_str = str(nome or "").strip()
         if not nome_str:
             return
@@ -81,7 +80,7 @@ class Ator(Entidade):
                 nome_str,
                 pos=(0, 0),
                 style={
-                    "size": 16,
+                    "size": 17,
                     "align": "midbottom",
                     "outline": True,
                     "outline_thickness": 1,

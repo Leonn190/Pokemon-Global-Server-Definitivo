@@ -40,7 +40,7 @@ class ControladorObjetos:
         if not isinstance(pos, (list, tuple)) or len(pos) != 2:
             pos = (0.0, 0.0)
 
-        ator = Ator(nome_skin=nome_skin, posicao=(float(pos[0]), float(pos[1])), escala_skin=1.45)
+        ator = Ator(nome_skin=nome_skin, posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0)
         if dados.get("id") is not None:
             ator.Id = int(dados.get("id"))
         ator.Nome = str(dados.get("nome") or dados.get("usuario") or "")

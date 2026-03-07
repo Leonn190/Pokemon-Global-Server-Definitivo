@@ -18,7 +18,10 @@ class PlayerController:
         self.LimitesMundoTiles = None
         self._grid_chunks = {}
         self._chunk_blocos = 32
-        self._tempo_sem_gastar_stamina = 0.0
+        self._tempo_desde_ultima_corrida = 0.0
+        self._bloqueio_por_exaustao = False
+        self._tempo_shift_pressionado = 0.0
+        self._bonus_corrida_atual = 0.0
         self._batendo = False
         self._soltar_apos_tapa_atual = False
         self._consumindo_stamina = False
@@ -28,7 +31,7 @@ class PlayerController:
         self._tempo_diff_angulo = 0
         self._ultimo_angulo_emitido = None
 
-        self.BarraStamina = Barra(pygame.Rect(0, 0, 52, 8), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
+        self.BarraStamina = Barra(pygame.Rect(0, 0, 80, 10), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
         self.BarraStamina.cor_fundo = (16, 22, 30)
         self.BarraStamina.cor_borda = (180, 210, 255)
         self.BarraStamina.cor_preenchimento = (86, 220, 125)
@@ -41,8 +44,8 @@ class PlayerController:
         self._processar_scroll_inventario(eventos)
         self._processar_input_tapa(eventos)
         self._processar_rotacao(mouse_pos_mundo_tiles)
-        _, correndo, em_agua_funda = self._processar_movimento(dt)
-        self._atualizar_stamina(dt, correndo, em_agua_funda)
+        deslocando, correndo, tile_atual = self._processar_movimento(dt)
+        self._atualizar_stamina(dt, deslocando, correndo, tile_atual)
         self._atualizar_tapa_automatico()
         self._tempo_respiracao += dt
         self.Ator.atualizar(dt)
@@ -64,7 +67,7 @@ class PlayerController:
             return
 
         px, py = camera.mundo_para_tela_px(self.Ator.Posicao)
-        self.BarraStamina.rect.midbottom = (int(px), int(py - 34))
+        self.BarraStamina.rect.midbottom = (int(px), int(py - 42))
         bar_surf = pygame.Surface(self.BarraStamina.rect.size, pygame.SRCALPHA)
         rect_original = self.BarraStamina.rect.copy()
         self.BarraStamina.rect.topleft = (0, 0)
@@ -116,8 +119,12 @@ class PlayerController:
         except (IndexError, TypeError, ValueError):
             return None
 
-    def _em_agua_funda(self):
-        return self._tile_atual() in {0, 1, 2}
+    def _bonus_velocidade_alvo(self):
+        minimo = float(getattr(self.Perfil, "BonusVelocidadeCorridaMin", 0.30))
+        maximo = float(getattr(self.Perfil, "BonusVelocidadeCorridaMax", 0.60))
+        tempo_max = max(0.01, float(getattr(self.Perfil, "TempoAceleracaoCorrida", 3.0)))
+        passo = min(1.0, self._tempo_shift_pressionado / tempo_max)
+        return minimo + (maximo - minimo) * passo
 
     def _processar_movimento(self, dt):
         teclas = pygame.key.get_pressed()
@@ -139,33 +146,66 @@ class PlayerController:
             eixo_y /= mag
 
         deslocando = mag > 0
-        em_agua_funda = self._em_agua_funda() and deslocando
+        tile_atual = self._tile_atual()
         shift = teclas[pygame.K_LSHIFT] or teclas[pygame.K_RSHIFT]
-        correndo = deslocando and shift and self.Perfil.Stamina > 0.0
-        mult = 1.5 if correndo else 1.0
+
+        if self._bloqueio_por_exaustao and self.Perfil.Stamina >= (self.Perfil.StaminaMax - 0.001):
+            self._bloqueio_por_exaustao = False
+
+        pode_correr = not self._bloqueio_por_exaustao and self.Perfil.Stamina > 0.0
+        correndo = deslocando and shift and pode_correr
+
+        if correndo:
+            self._tempo_shift_pressionado += dt
+            self._bonus_corrida_atual = self._bonus_velocidade_alvo()
+        else:
+            self._tempo_shift_pressionado = 0.0
+            tempo_desacel = max(0.01, float(getattr(self.Perfil, "TempoDesaceleracaoCorrida", 3.0)))
+            self._bonus_corrida_atual = max(0.0, self._bonus_corrida_atual - (dt / tempo_desacel) * float(getattr(self.Perfil, "BonusVelocidadeCorridaMax", 0.60)))
+
+        mult = 1.0 + max(0.0, self._bonus_corrida_atual)
+        velocidade_base = float(getattr(self.Perfil, "VelocidadeBaseTiles", self.VelocidadeTiles))
 
         antes = self.Ator.Posicao
-        self.Ator.mover(eixo_x * self.VelocidadeTiles * mult * dt, eixo_y * self.VelocidadeTiles * mult * dt)
+        self.Ator.mover(eixo_x * velocidade_base * mult * dt, eixo_y * velocidade_base * mult * dt)
         self._aplicar_loop_mundo()
-        return self.Ator.Posicao != antes, correndo, em_agua_funda
+        return self.Ator.Posicao != antes, correndo, tile_atual
 
-    def _atualizar_stamina(self, dt, correndo, em_agua_funda):
+    def _atualizar_stamina(self, dt, deslocando, correndo, tile_atual):
         custo = 0.0
+        max_bonus = float(getattr(self.Perfil, "BonusVelocidadeCorridaMax", 0.60))
+        correndo_no_max = correndo and self._bonus_corrida_atual >= (max_bonus - 0.01)
+
         if correndo:
-            custo += 10.0
-        if em_agua_funda:
-            custo += 5.0
+            if correndo_no_max:
+                custo += float(getattr(self.Perfil, "CustoStaminaCorridaMax", 15.0))
+            else:
+                custo += float(getattr(self.Perfil, "CustoStaminaCorrida", 10.0))
+
+        if deslocando:
+            if tile_atual == 0:
+                custo += float(getattr(self.Perfil, "CustoStaminaAguaFunda", 16.0))
+            elif tile_atual == 2:
+                custo += float(getattr(self.Perfil, "CustoStaminaAguaRasa", 4.0))
+
+        if tile_atual == 2 and not correndo:
+            custo = 0.0
 
         if custo > 0.0:
             self.Perfil.consumir_stamina(custo * dt)
-            self._tempo_sem_gastar_stamina = 0.0
+            self._tempo_desde_ultima_corrida = 0.0
             self._consumindo_stamina = True
+            if self.Perfil.Stamina <= 0.001:
+                self._bloqueio_por_exaustao = True
         else:
             self._consumindo_stamina = False
-            self._tempo_sem_gastar_stamina += dt
-            if self._tempo_sem_gastar_stamina >= 1.5:
-                self.Perfil.regenerar_stamina(15.0 * dt)
-
+            self._tempo_desde_ultima_corrida += dt
+            if self._tempo_desde_ultima_corrida >= float(getattr(self.Perfil, "AtrasoRegeneracaoStamina", 2.0)):
+                if deslocando:
+                    regen = float(getattr(self.Perfil, "RegeneracaoStaminaAndando", 6.0))
+                else:
+                    regen = float(getattr(self.Perfil, "RegeneracaoStaminaParado", 12.0))
+                self.Perfil.regenerar_stamina(regen * dt)
 
     def _processar_rotacao(self, mouse_pos_mundo_tiles):
         self._tempo_diff_angulo += 1

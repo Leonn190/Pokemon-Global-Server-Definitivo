@@ -33,12 +33,12 @@ class CerebroServer:
             "anel_render_chunks": 7,
             "anel_simulado_chunks": 13,
             "chance_spawn_por_tick": 0.35,
-            "chance_mover_por_tick": 0.65,
+            "chance_mover_por_tick": 0.45,
             "max_pokemon_por_chunk_simulado": 3,
             "max_pokemon_por_chunk_carregado": 0.12,
             "maior_vetor_movimento_pokemon": 3.0,
-            "velocidade_pokemon_tiles_s": 9.0,
-            "raio_colisao_pokemon": 0.45,
+            "velocidade_pokemon_tiles_s": 5.5,
+            "raio_colisao_pokemon": 0.725,
             "tentativas_spawn_chunk": 12,
             "tiles_bloqueados": [0, 1, 2],
         }
@@ -173,7 +173,7 @@ class CerebroServer:
             if self._contar_pokemons_chunk(chunk) < max_por_chunk:
                 self._spawn_pokemon(chunk)
 
-        chance_mover = max(0.0, min(1.0, self._f("chance_mover_por_tick", 0.65)))
+        chance_mover = max(0.0, min(1.0, self._f("chance_mover_por_tick", 0.45)))
         for poke in pokemons:
             if random.random() < chance_mover:
                 self._mover_pokemon(poke, chunks_carregados)
@@ -183,7 +183,7 @@ class CerebroServer:
         return max(1, int(total_chunks_carregados * fator))
 
     def _mover_pokemon(self, poke: PokemonServer, chunks_carregados: Set[Chunk]) -> None:
-        max_step = max(0.2, self._f("maior_vetor_movimento_pokemon", 3.0) * 0.7)
+        max_step = max(0.08, self._f("maior_vetor_movimento_pokemon", 3.0) * 0.35)
         dx = random.uniform(-max_step, max_step)
         dy = random.uniform(-max_step, max_step)
         if abs(dx) < 1e-8 and abs(dy) < 1e-8:
@@ -195,7 +195,7 @@ class CerebroServer:
             return
 
         colisor = self._obter_colisor_global()
-        velocidade_base = max(0.1, self._f("velocidade_pokemon_tiles_s", 9.0) * 0.7)
+        velocidade_base = max(0.05, self._f("velocidade_pokemon_tiles_s", 5.5) * 0.45)
         if poke.mover((dx, dy), colisor_cb=colisor, velocidade_tiles_s=velocidade_base):
             BANCO_DADOS.atualizar_objeto(poke.Id, {"posicao": [poke.posicao[0], poke.posicao[1]]})
             from SimuladorServerJogo.Ativador import registrar_diff

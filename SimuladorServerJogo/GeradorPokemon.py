@@ -32,14 +32,19 @@ class GeradorPokemonServer:
             for row in csv.DictReader(f):
                 if not row.get("Nome"):
                     continue
-                raridade = max(1.0, self._fnum(row.get("Raridade"), 1.0))
+                raridade_raw = str(row.get("Raridade", "")).strip()
+                if not raridade_raw:
+                    continue
+                raridade = self._fnum(raridade_raw, 0.0)
+                if raridade < 1.0 or raridade > 10.0:
+                    continue
                 peso = 1.0 / raridade
                 linhas.append({"row": row, "peso_spawn": peso})
         return linhas
 
     def _escolher_especie(self) -> Dict[str, str]:
         if not self._base:
-            return {"Nome": "MissingNo", "Raridade": "1", "Altura": "1.0", "Peso": "1.0", **{k: "10" for k in STATS_BASE}}
+            return {"Nome": "MissingNo", "Raridade": "10", "Altura": "1.0", "Peso": "1.0", **{k: "10" for k in STATS_BASE}}
         item = random.choices(self._base, weights=[x["peso_spawn"] for x in self._base], k=1)[0]
         return item["row"]
 

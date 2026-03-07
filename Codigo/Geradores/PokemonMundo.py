@@ -31,10 +31,8 @@ class PokemonMundo(Entidade):
         self.Destino: Vector2 = pos
         self.Nome = "Pokemon"
         self.Especie = "Pokemon"
-        self.Stats: Dict[str, float] = {}
-        self.Vida = 0.0
-        self.Atk = 0.0
-        self.Def = 0.0
+        self.Info: Dict[str, object] = {"stats": {}}
+        self._velocidade_interp_tiles_s = 2.5
         self.aplicar_snapshot(snapshot)
 
     @staticmethod
@@ -95,13 +93,22 @@ class PokemonMundo(Entidade):
         self.Nome = str(estado.get("nome") or snapshot.get("nome") or self.Especie or "Pokemon")
 
         stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
-        self.Stats = {str(k): self._f(v) for k, v in stats.items()}
-        self.Vida = self._f(snapshot.get("vida"), self._f(self.Stats.get("Vida"), self.Vida))
-        self.Atk = self._f(snapshot.get("atk"), self._f(self.Stats.get("Atk"), self.Atk))
-        self.Def = self._f(snapshot.get("def"), self._f(self.Stats.get("Def"), self.Def))
+        stats_norm = {str(k): self._f(v) for k, v in stats.items()}
+        self.Info = {
+            "id": int(snapshot.get("id", self.Id)),
+            "nome": self.Nome,
+            "especie": self.Especie,
+            "stats": stats_norm,
+            "nivel": estado.get("nivel", 1),
+            "raridade": estado.get("raridade"),
+            "tipos": list(estado.get("tipos") or []),
+        }
 
         self.Colisor.raio_colisao = max(0.2, self._f(snapshot.get("raio_colisao"), self.Colisor.raio_colisao))
         destino = self._pos(snapshot.get("posicao"))
+        vel_stats = self._f(stats_norm.get("Vel"), 0.0)
+        self._velocidade_interp_tiles_s = max(1.2, min(3.2, 1.2 + (vel_stats / 220.0)))
+
         movimento = str(snapshot.get("movimento") or estado.get("movimento") or "mover").strip().lower()
         if movimento == "teleportar":
             self.Destino = destino
@@ -111,17 +118,25 @@ class PokemonMundo(Entidade):
 
     def atualizar(self, dt: float) -> None:
         dt = max(0.0, float(dt))
-        k = min(1.0, 8.0 * dt)
         px, py = self.Posicao
         dx, dy = self.Destino
+        dist = ((dx - px) ** 2 + (dy - py) ** 2) ** 0.5
+        if dist <= 1e-4:
+            self.definir_posicao(dx, dy)
+            return
+        passo = max(0.0, self._velocidade_interp_tiles_s * dt)
+        if passo >= dist:
+            self.definir_posicao(dx, dy)
+            return
+        k = passo / dist
         self.definir_posicao(px + (dx - px) * k, py + (dy - py) * k)
 
     def desenhar(self, tela, camera, dt: float) -> None:
         self.atualizar(dt)
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
         centro = (int(cx), int(cy))
-        base = max(6, int(getattr(camera, "TilePx", 50) * 0.40))
-        base = int(base * 1.8)
+        tile_px = int(getattr(camera, "TilePx", 50))
+        base = max(6, int(tile_px * self.Colisor.raio_colisao))
         t = pygame.time.get_ticks() * 0.008
         pulsar = 1.0 + math.sin(t + (abs(hash(self.Nome)) % 360) * 0.017) * 0.06
         r1 = max(5, int(base * pulsar))

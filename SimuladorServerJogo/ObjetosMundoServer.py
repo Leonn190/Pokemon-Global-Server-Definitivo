@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import time
 from typing import Dict, Optional, Tuple
 
 Vector2 = Tuple[float, float]
@@ -112,10 +113,34 @@ class EstruturaNaturalServer(EstruturaServer):
 class PokemonServer(EntidadeServer):
     def __init__(self, id_objeto: int, especie: str, posicao: Vector2 = (0.0, 0.0), **kwargs) -> None:
         super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=0.45, raio_interacao=1.2, **kwargs)
-        self.estado_extra.update({"subtipo": "pokemon", "especie": str(especie), "ativo": True})
+        self.estado_extra.update(
+            {
+                "subtipo": "pokemon",
+                "especie": str(especie),
+                "nome": str(especie),
+                "ativo": True,
+                "movendo": False,
+                "movendo_ate": 0.0,
+            }
+        )
 
-    def mover(self, deslocamento: Vector2, colisor_cb=None) -> bool:
+    def serializar(self) -> Dict[str, object]:
+        dados = super().serializar()
+        estado = dados.get("estado", {}) if isinstance(dados.get("estado", {}), dict) else {}
+        agora = time.monotonic()
+        estado["movendo"] = bool(agora < float(estado.get("movendo_ate", 0.0)))
+        dados["estado"] = estado
+        dados["nome"] = str(estado.get("nome") or estado.get("especie") or "Pokemon")
+        stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
+        dados["vida"] = float(stats.get("Vida", 0.0))
+        dados["atk"] = float(stats.get("Atk", 0.0))
+        dados["def"] = float(stats.get("Def", 0.0))
+        return dados
+
+    def mover(self, deslocamento: Vector2, colisor_cb=None, velocidade_tiles_s: float = 1.0) -> bool:
         if not bool(self.estado_extra.get("ativo", True)):
+            return False
+        if time.monotonic() < float(self.estado_extra.get("movendo_ate", 0.0)):
             return False
         dx = float(deslocamento[0]) if isinstance(deslocamento, (list, tuple)) and len(deslocamento) > 0 else 0.0
         dy = float(deslocamento[1]) if isinstance(deslocamento, (list, tuple)) and len(deslocamento) > 1 else 0.0
@@ -123,6 +148,12 @@ class PokemonServer(EntidadeServer):
         if callable(colisor_cb) and not bool(colisor_cb(destino, self.raio_colisao)):
             return False
         self.definir_posicao(destino[0], destino[1])
+        distancia = max(0.0, ((dx * dx) + (dy * dy)) ** 0.5)
+        velocidade = max(0.01, float(velocidade_tiles_s))
+        duracao_mov = distancia / velocidade
+        agora = time.monotonic()
+        self.estado_extra["movendo"] = bool(duracao_mov > 0.0)
+        self.estado_extra["movendo_ate"] = agora + duracao_mov
         self.estado_extra["ultimo_movimento"] = [dx, dy]
         return True
 

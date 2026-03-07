@@ -48,7 +48,7 @@ class CenaMundo:
             camera=self.Camera,
             callback_atualizacao=consultar_estado_mundo,
             intervalo_poll=0.20,
-            raio_chunks=10,
+            raio_chunks=4,
         )
 
         server = JOGO.INFO.get("ServerSelecionado") or {}

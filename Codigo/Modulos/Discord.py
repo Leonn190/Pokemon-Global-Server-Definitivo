@@ -12,7 +12,7 @@ except Exception:
 
 
 # Coloque aqui o seu Application ID do Discord Developer Portal.
-APP_ID = ""
+APP_ID = "1479683650697166848"
 
 
 class DiscordPresence:

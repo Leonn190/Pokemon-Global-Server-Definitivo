@@ -31,7 +31,7 @@ class PlayerController:
         self._tempo_diff_angulo = 0
         self._ultimo_angulo_emitido = None
 
-        self.BarraStamina = Barra(pygame.Rect(0, 0, 80, 10), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
+        self.BarraStamina = Barra(pygame.Rect(0, 0, 75, 9), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
         self.BarraStamina.cor_fundo = (16, 22, 30)
         self.BarraStamina.cor_borda = (180, 210, 255)
         self.BarraStamina.cor_preenchimento = (86, 220, 125)

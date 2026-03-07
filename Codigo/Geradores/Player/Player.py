@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from Codigo.Modulos.Player.PlayerControle import PlayerController
-from Codigo.Modulos.Player.PlayerInventario import PlayerInventario
-from Codigo.Modulos.Player.PlayerPerfil import PlayerPerfil
-from Codigo.Modulos.Player.ElementosHud import ElementosHud
+from Codigo.Geradores.Player.PlayerControle import PlayerController
+from Codigo.Geradores.Player.PlayerInventario import PlayerInventario
+from Codigo.Geradores.Player.PlayerPerfil import PlayerPerfil
+from Codigo.Modulos.ElementosHud import ElementosHud
 
 
 class Player:

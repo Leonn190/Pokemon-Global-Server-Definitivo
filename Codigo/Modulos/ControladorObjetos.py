@@ -10,7 +10,7 @@ import time
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.GameObjeto import GameObjeto
 from Codigo.Modulos.Colisor import Colisor
-from Codigo.Modulos.Player.Player import Player
+from Codigo.Geradores.Player.Player import Player
 
 
 class ControladorObjetos:

@@ -3,7 +3,7 @@ import pygame
 from Codigo.Modulos.Camera import Camera
 from Codigo.Modulos.ControladorObjetos import ControladorObjetos
 from Codigo.Modulos.LeitorMundo import LeitorMundo
-from Codigo.Modulos.Player.ElementosHud import ElementosHud
+from Codigo.Modulos.ElementosHud import ElementosHud
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Modulos.Ferramentas import GerenciadorFPS

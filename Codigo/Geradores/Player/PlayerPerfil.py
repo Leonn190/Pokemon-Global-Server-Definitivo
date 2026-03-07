@@ -16,16 +16,16 @@ class PlayerPerfil:
         self.StaminaMax = 100.0
         self.Stamina = 100.0
 
-        self.VelocidadeBaseTiles = 4.8
-        self.BonusVelocidadeCorridaMin = 0.30
-        self.BonusVelocidadeCorridaMax = 0.60
-        self.TempoAceleracaoCorrida = 3.0
-        self.TempoDesaceleracaoCorrida = 3.0
-        self.AtrasoRegeneracaoStamina = 2.0
+        self.VelocidadeBaseTiles = 5
+        self.BonusVelocidadeCorridaMin = 0.25
+        self.BonusVelocidadeCorridaMax = 0.5
+        self.TempoAceleracaoCorrida = 2.5
+        self.TempoDesaceleracaoCorrida = 2.0
+        self.AtrasoRegeneracaoStamina = 1.5
         self.RegeneracaoStaminaParado = 12.0
-        self.RegeneracaoStaminaAndando = 6.0
+        self.RegeneracaoStaminaAndando = 5.0
         self.CustoStaminaCorrida = 10.0
-        self.CustoStaminaCorridaMax = 15.0
+        self.CustoStaminaCorridaMax = 16.0
         self.CustoStaminaAguaRasa = 4.0
         self.CustoStaminaAguaFunda = 16.0
 

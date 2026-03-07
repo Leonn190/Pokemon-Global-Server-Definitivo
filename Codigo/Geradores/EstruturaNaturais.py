@@ -9,10 +9,44 @@ from Codigo.Geradores.Estrutura import Estrutura
 Vector2 = Tuple[float, float]
 
 
-from Codigo.Modulos.ConfigEstruturasNaturais import (
-    ESTRUTURAS_NATURAIS_TIPOS,
-    tipo_estrutura_natural_por_codigo,
-)
+ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
+    1: {
+        "subtipo": "arvore",
+        "nome": "Árvore",
+        "sprite": "Recursos/Visual/Mundo/Objetos/Arvore.png",
+        "raio_colisao": 0.75,
+        "raio_interacao": 0.75,
+        "campo": 0.70,
+        "intensidade": 3,
+    },
+    2: {
+        "subtipo": "pedra",
+        "nome": "Pedra",
+        "sprite": "Recursos/Visual/Mundo/Objetos/Pedra.png",
+        "raio_colisao": 1,
+        "raio_interacao": 0.7,
+        "campo": 0.75,
+        "intensidade": 3.5,
+    },
+    3: {
+        "subtipo": "arbusto",
+        "nome": "Arbusto",
+        "sprite": "Recursos/Visual/Mundo/Objetos/Arbusto.png",
+        "raio_colisao": 0.5,
+        "raio_interacao": 0.55,
+        "campo": 0.4,
+        "intensidade": 2.3,
+    },
+}
+
+
+def tipo_estrutura_natural_por_codigo(codigo: object) -> Optional[Dict[str, object]]:
+    try:
+        chave = int(codigo)
+    except (TypeError, ValueError):
+        return None
+    dados = ESTRUTURAS_NATURAIS_TIPOS.get(chave)
+    return dict(dados) if isinstance(dados, dict) else None
 
 
 class EstruturaNatural(Estrutura):

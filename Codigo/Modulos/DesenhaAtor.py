@@ -33,8 +33,8 @@ class DesenhaAtor:
     def __init__(self, skin_surface, escala=1.0, tile_px=50):
         self._escala_tiles = float(escala)
         self._tile_px = max(1, int(tile_px))
-        self._largura_tiles = 1.75
-        self._altura_tiles = 1.2
+        self._largura_tiles = 1.85
+        self._altura_tiles = 1.4
         self.sprite_offset_graus = -90
 
         self._skin_original = skin_surface.convert_alpha()
@@ -116,7 +116,7 @@ class DesenhaAtor:
 
         base = float(self._tile_px)
         raio_mao = max(5, int(base * 0.20 * max(1.0, self._escala_tiles)))
-        dist_lateral = int(base * 0.78 * max(1.0, self._escala_tiles))
+        dist_lateral = int(base * 1.15 * max(1.0, self._escala_tiles))
         dist_vertical = int(base * 0.03 * max(1.0, self._escala_tiles))
 
         progresso = max(0.0, min(1.0, float(progresso_tapa)))
@@ -131,7 +131,7 @@ class DesenhaAtor:
         if empurrao_tapa > 0.0:
             arco = math.sin(progresso * math.pi)
             curva_frente = 60.0 * arco
-            curva_esquerda = 15.0 * arco
+            curva_esquerda = 16.0 * arco
             mao_dir_x = mao_dir_base_x + vx * curva_frente - px * curva_esquerda
             mao_dir_y = mao_dir_base_y + vy * curva_frente - py * curva_esquerda
         else:

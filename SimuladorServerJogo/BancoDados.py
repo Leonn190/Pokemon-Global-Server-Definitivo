@@ -13,7 +13,7 @@ from SimuladorServerJogo.GeradorMundo import (
     carregar_ou_criar_estado_mundo,
 )
 from SimuladorServerJogo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, GameObjetoServer
-from Codigo.Modulos.ConfigEstruturasNaturais import tipo_estrutura_natural_por_codigo
+from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo
 from Codigo.Modulos.Colisor import Colisor
 
 Vector2 = Tuple[float, float]

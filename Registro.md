@@ -2,26 +2,26 @@
 
 **Repo:** `Pokemon-Global-Server-Definitivo`  
 
-**Gerado em:** 2026-03-06T15:56:37  
+**Gerado em:** 2026-03-07T01:12:50  
 
 ## Visão geral
 
-- **Pastas:** 1.132
-- **Arquivos:** 67.973
-- **Tamanho total:** 391.831.114 bytes (0.365 GiB)
+- **Pastas:** 1.137
+- **Arquivos:** 67.972
+- **Tamanho total:** 391.842.074 bytes (0.365 GiB)
 
 ## Python
 
-- **Arquivos `.py`:** 98
-- **Linhas totais:** 9.636
-- **Classes encontradas:** 55
+- **Arquivos `.py`:** 97
+- **Linhas totais:** 9.858
+- **Classes encontradas:** 56
 
 ### Top 5 maiores arquivos `.py`
 
 | Arquivo | Tamanho (KiB) |
 |---|---:|
-| `Codigo/Modulos/ControladorObjetos.py` | 17.79 |
-| `Codigo/Telas/TelaCriarPersonagem.py` | 15.89 |
+| `Codigo/Modulos/ControladorObjetos.py` | 17.87 |
+| `Codigo/Telas/TelaCriarPersonagem.py` | 15.85 |
 | `Codigo/Telas/TelaServers.py` | 15.50 |
 | `Outros/Mixer.py` | 14.87 |
 | `Codigo/Prefabs/Botao.py` | 14.71 |
@@ -34,7 +34,7 @@
 | `.ogg` | 0.036 | 14 |
 | `.jpg` | 0.001 | 1 |
 | `.json` | 0.001 | 1 |
-| `.py` | 0.000 | 98 |
+| `.py` | 0.000 | 97 |
 | `.wav` | 0.000 | 2 |
 | `.ttf` | 0.000 | 1 |
 | `.md` | 0.000 | 1 |
@@ -45,17 +45,18 @@
 
 | Métrica | Anterior | Atual | Δ |
 |---|---:|---:|---:|
-| pastas | 1.138 | 1.132 | -6 |
-| arquivos | 67.972 | 67.973 | 1 |
+| pastas | 1.132 | 1.137 | 5 |
+| arquivos | 67.973 | 67.972 | -1 |
 | tamanho_bytes | 0.365 GiB | 0.365 GiB | 0.000 GiB |
-| py_arquivos | 97 | 98 | 1 |
-| linhas_totais | 9.292 | 9.636 | 344 |
-| classes_encontradas | 54 | 55 | 1 |
+| py_arquivos | 98 | 97 | -1 |
+| linhas_totais | 9.636 | 9.858 | 222 |
+| classes_encontradas | 55 | 56 | 1 |
 
 **Maiores mudanças por extensão (top 12 por |Δ tamanho|):**
 
 | Ext | Δ arquivos | Δ tamanho (GiB) |
 |---:|---:|---:|
-| `.py` | 1 | 0.000 |
-| `.md` | 0 | 0.000 |
+| `.py` | -1 | 0.000 |
+| `.png` | 0 | 0.000 |
+| `.md` | 0 | -0.000 |
 | `.json` | 0 | 0.000 |

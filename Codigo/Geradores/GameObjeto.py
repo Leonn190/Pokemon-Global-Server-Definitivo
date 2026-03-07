@@ -9,7 +9,6 @@ from typing import Dict, Optional, Tuple
 import pygame
 
 from Codigo.Modulos.Colisor import Colisor
-from Codigo.Modulos.ConfigEstruturasNaturais import tipo_estrutura_natural_por_codigo
 
 Vector2 = Tuple[float, float]
 
@@ -83,6 +82,7 @@ class GameObjeto:
         codigo_natural = obj.get("codigo_natural")
         if codigo_natural is None and isinstance(obj.get("estado"), dict):
             codigo_natural = obj["estado"].get("codigo_natural")
+        from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo
         cfg_natural = tipo_estrutura_natural_por_codigo(codigo_natural)
 
         sprite_path = str(obj.get("sprite", "")).strip()

@@ -531,8 +531,15 @@ public class WorldGenerator {
         }
 
         private Biome macroBiomeForTile(int x, int y) {
-            double gx = (x + 0.5) / macroCellWidth - 0.5;
-            double gy = (y + 0.5) / macroCellHeight - 0.5;
+            double warpScale = macroCellWidth * 0.7;
+            double warpX = fbm(x, y, 3, 0.55, 2.0, warpScale, 777L);
+            double warpY = fbm(x + 2000, y + 2000, 3, 0.55, 2.0, warpScale, 888L);
+
+            double warpedX = x + (warpX - 0.5) * macroCellWidth * 1.2;
+            double warpedY = y + (warpY - 0.5) * macroCellHeight * 1.2;
+
+            double gx = (warpedX + 0.5) / macroCellWidth - 0.5;
+            double gy = (warpedY + 0.5) / macroCellHeight - 0.5;
 
             int mx0 = clamp(fastFloor(gx), 0, macroGridWidth - 1);
             int my0 = clamp(fastFloor(gy), 0, macroGridHeight - 1);
@@ -553,8 +560,8 @@ public class WorldGenerator {
             addMacroBiomeScore(scores, mx0, my1, w01);
             addMacroBiomeScore(scores, mx1, my1, w11);
 
-            int currentMx = clamp(x / macroCellWidth, 0, macroGridWidth - 1);
-            int currentMy = clamp(y / macroCellHeight, 0, macroGridHeight - 1);
+            int currentMx = clamp(fastFloor(warpedX / macroCellWidth), 0, macroGridWidth - 1);
+            int currentMy = clamp(fastFloor(warpedY / macroCellHeight), 0, macroGridHeight - 1);
             Biome currentMacroBiome = Biome.values()[macroBiomeGrid[macroIndex(currentMx, currentMy)] & 0xFF];
             if (isLandBiome(currentMacroBiome)) {
                 scores[currentMacroBiome.ordinal()] += rules.macroLocalBlend;

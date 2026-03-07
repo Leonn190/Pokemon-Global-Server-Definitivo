@@ -13,7 +13,7 @@ def _erro_padrao(mensagem):
     return {"status": "erro", "mensagem": mensagem}
 
 
-def consultar_estado_mundo(ip, client_id, posicao_camera, raio_chunks=3):
+def consultar_estado_mundo(ip, client_id, posicao_camera, raio_chunks=4):
     pacote = {
         "ip": ip,
         "acao": "ativador",

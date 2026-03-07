@@ -250,11 +250,16 @@ class LeitorMundo:
             if altura_mundo_px <= tela_h:
                 repeticoes_y = (-altura_mundo, 0.0, altura_mundo)
 
+        try:
+            raio_render_chunks = max(1, int(meta.get("raio_chunks_ativo", self.RaioChunks)))
+        except Exception:
+            raio_render_chunks = max(1, int(self.RaioChunks))
+
         chaves_visiveis = []
-        for dy in range(-3, 4):
+        for dy in range(-raio_render_chunks, raio_render_chunks + 1):
             chunk_raw_y = chunk_player_y + dy
             chunk_busca_y = (chunk_raw_y % total_chunks_y) if total_chunks_y else chunk_raw_y
-            for dx in range(-3, 4):
+            for dx in range(-raio_render_chunks, raio_render_chunks + 1):
                 chunk_raw_x = chunk_player_x + dx
                 chunk_busca_x = (chunk_raw_x % total_chunks_x) if total_chunks_x else chunk_raw_x
                 chaves_visiveis.append(((chunk_busca_x, chunk_busca_y), chunk_raw_x, chunk_raw_y))

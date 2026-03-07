@@ -72,11 +72,12 @@ def _obter_state_client(client_id: str) -> Dict[str, object]:
     return _CLIENT_STATE[client_id]
 
 
-def _chunks_anel_7x7(posicao_camera: Vector2):
+def _chunks_no_raio(posicao_camera: Vector2, raio_chunks: int):
     centro = BANCO_DADOS.chunk_da_posicao(posicao_camera)
     chunks = []
-    for dx in range(-3, 4):
-        for dy in range(-3, 4):
+    raio = max(0, int(raio_chunks))
+    for dx in range(-raio, raio + 1):
+        for dy in range(-raio, raio + 1):
             chunks.append(BANCO_DADOS.normalizar_chunk((centro[0] + dx, centro[1] + dy)))
     return chunks
 
@@ -90,7 +91,8 @@ def processar_ativador_json(requisicao_json: str) -> str:
     dados = pacote.get("dados", {})
     client_id = str(dados.get("client_id", "")).strip()
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
-    raio = float(6 * BANCO_DADOS.chunk_tamanho_unidade())
+    raio_chunks = max(1, int(dados.get("raio_chunks", 4)))
+    raio = float((raio_chunks + 2) * BANCO_DADOS.chunk_tamanho_unidade())
 
     if not client_id:
         return json.dumps({"status": "erro", "mensagem": "client_id obrigatório"}, ensure_ascii=False)
@@ -131,7 +133,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
             diff["coletado_por"].add(client_id)
 
         chunks = []
-        for chunk in _chunks_anel_7x7(posicao_camera):
+        for chunk in _chunks_no_raio(posicao_camera, raio_chunks):
             if chunk in chunks_vistos:
                 continue
             dados_chunk = {"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()}
@@ -158,6 +160,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
             "largura_blocos": int(largura_blocos),
             "altura_blocos": int(altura_blocos),
             "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()),
+            "raio_chunks_ativo": int(raio_chunks),
             "anel_render_chunks": int(meta_cerebro.get("anel_render_chunks", 7)),
             "anel_simulado_chunks": int(meta_cerebro.get("anel_simulado_chunks", 13)),
             "cerebro": meta_cerebro,

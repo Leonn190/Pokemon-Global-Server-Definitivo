@@ -67,7 +67,7 @@ class PlayerController:
             return
 
         px, py = camera.mundo_para_tela_px(self.Ator.Posicao)
-        self.BarraStamina.rect.midbottom = (int(px), int(py - 42))
+        self.BarraStamina.rect.midbottom = (int(px), int(py - 44))
         bar_surf = pygame.Surface(self.BarraStamina.rect.size, pygame.SRCALPHA)
         rect_original = self.BarraStamina.rect.copy()
         self.BarraStamina.rect.topleft = (0, 0)

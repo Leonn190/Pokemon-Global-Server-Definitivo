@@ -51,7 +51,7 @@ class Barra:
         if self.casas_decimais == 0:
             valor = int(valor)
         self.rotulo.set_text(f"{self.texto}: {valor}")
-        self.rotulo.set_pos((self.rect.x, self.rect.y - 34))
+        self.rotulo.set_pos((self.rect.x, self.rect.y - 36))
 
     def set_valor(self, valor):
         self.valor = _clamp(float(valor), self.minimo, self.maximo)
@@ -122,7 +122,7 @@ class BarraEditavel(Barra):
                 self.arrastando = True
                 self._estava_arrastando = True
                 valor_antes = self.valor
-                self._valor_por_mouse(mouse_pos[0])
+                self._valor_por_mouse(evento.pos[0])
                 alterou = alterou or (self.valor != valor_antes)
 
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
@@ -135,13 +135,13 @@ class BarraEditavel(Barra):
 
             if evento.type == pygame.MOUSEMOTION and self.arrastando:
                 valor_antes = self.valor
-                self._valor_por_mouse(mouse_pos[0])
+                self._valor_por_mouse(evento.pos[0])
                 alterou = alterou or (self.valor != valor_antes)
 
         self.atualizar(dt)
         self._desenhar_barra(tela)
 
-        percentual = _clamp(self.percentual(), 0.0, 1.0)
+        percentual = _clamp((self.valor - self.minimo) / float(max(self.maximo - self.minimo, 1)), 0.0, 1.0)
         x_manopla = self.rect.x + int(self.rect.width * percentual)
         x_manopla = _clamp(x_manopla, self.rect.x, self.rect.right)
         pygame.draw.circle(tela, self.cor_manopla, (int(x_manopla), self.rect.centery), self.rect.height // 2 + 4)

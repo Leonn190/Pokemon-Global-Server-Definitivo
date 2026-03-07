@@ -40,7 +40,7 @@ class ControladorObjetos:
         if not isinstance(pos, (list, tuple)) or len(pos) != 2:
             pos = (0.0, 0.0)
 
-        ator = Ator(nome_skin=nome_skin, posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0)
+        ator = Ator(nome_skin=nome_skin, posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0, tile_px=50)
         if dados.get("id") is not None:
             ator.Id = int(dados.get("id"))
         ator.Nome = str(dados.get("nome") or dados.get("usuario") or "")
@@ -416,6 +416,7 @@ class ControladorObjetos:
         if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
             return
         ator = self.PlayerLocal.Ator
+        ator.set_tile_px(getattr(camera, "TilePx", 50))
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
         respiracao_tempo = getattr(getattr(self.PlayerLocal, "Controle", None), "_tempo_respiracao", 0.0)
         ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)

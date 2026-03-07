@@ -387,14 +387,13 @@ class SubtelaCriarPersonagem:
         self._titulo.draw(tela)
         self._mensagem.draw(tela)
 
-        if self.barra_skin.render(tela, eventos):
-            novo_indice = int(round(self.barra_skin.valor)) - 1
-            novo_indice = max(0, min(novo_indice, len(self._skins) - 1))
-            if novo_indice != self._skin_index:
-                self._skin_index = novo_indice
-                self._desenhador.set_skin(self._skins[self._skin_index])
-        else:
-            self.barra_skin.set_valor(self._skin_index + 1)
+        self.barra_skin.render(tela, eventos)
+        novo_indice = int(round(self.barra_skin.valor)) - 1
+        novo_indice = max(0, min(novo_indice, len(self._skins) - 1))
+        if novo_indice != self._skin_index:
+            self._skin_index = novo_indice
+            self._desenhador.set_skin(self._skins[self._skin_index])
+        self.barra_skin.set_valor(self._skin_index + 1)
 
         pygame.draw.rect(tela, (20, 29, 52), self._quadro_skin, border_radius=14)
         pygame.draw.rect(tela, (95, 110, 150), self._quadro_skin, 2, border_radius=14)

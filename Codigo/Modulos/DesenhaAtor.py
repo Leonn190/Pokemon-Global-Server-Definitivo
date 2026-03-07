@@ -30,8 +30,11 @@ def _clarear_cor(cor, fator=0.35):
 
 
 class DesenhaAtor:
-    def __init__(self, skin_surface, escala=1.0):
+    def __init__(self, skin_surface, escala=1.0, tile_px=50):
         self._escala_tiles = float(escala)
+        self._tile_px = max(1, int(tile_px))
+        self._largura_tiles = 1.75
+        self._altura_tiles = 1.2
         self.sprite_offset_graus = -90
 
         self._skin_original = skin_surface.convert_alpha()
@@ -44,8 +47,9 @@ class DesenhaAtor:
         self._cache_limite_angulos = 120
 
     def _redimensionar_skin(self, surf):
-        lado_base = max(1, int(max(surf.get_width(), surf.get_height()) * self._escala_tiles))
-        return pygame.transform.smoothscale(surf, (lado_base, lado_base)).convert_alpha()
+        largura = max(1, int(self._tile_px * self._largura_tiles * self._escala_tiles))
+        altura = max(1, int(self._tile_px * self._altura_tiles * self._escala_tiles))
+        return pygame.transform.smoothscale(surf, (largura, altura)).convert_alpha()
 
     def set_skin(self, skin_surface):
         self._skin_original = skin_surface.convert_alpha()
@@ -58,6 +62,15 @@ class DesenhaAtor:
 
     def set_escala(self, escala):
         self._escala_tiles = max(0.2, float(escala))
+        self._skin = self._redimensionar_skin(self._skin_original)
+        self._cache_corpo_rotacionado.clear()
+        self._cache_ordem_angulos.clear()
+
+    def set_tile_px(self, tile_px):
+        tile_px = max(1, int(tile_px))
+        if tile_px == self._tile_px:
+            return
+        self._tile_px = tile_px
         self._skin = self._redimensionar_skin(self._skin_original)
         self._cache_corpo_rotacionado.clear()
         self._cache_ordem_angulos.clear()
@@ -101,10 +114,10 @@ class DesenhaAtor:
         px = -vy
         py = vx
 
-        base = min(self._skin.get_width(), self._skin.get_height())
-        raio_mao = max(5, int(base * 0.14))
-        dist_lateral = int(base * 0.76) + 7
-        dist_vertical = int(base * 0.02)
+        base = float(self._tile_px)
+        raio_mao = max(5, int(base * 0.20 * max(1.0, self._escala_tiles)))
+        dist_lateral = int(base * 0.78 * max(1.0, self._escala_tiles))
+        dist_vertical = int(base * 0.03 * max(1.0, self._escala_tiles))
 
         progresso = max(0.0, min(1.0, float(progresso_tapa)))
         empurrao_tapa = max(0.0, float(alcance_tapa))

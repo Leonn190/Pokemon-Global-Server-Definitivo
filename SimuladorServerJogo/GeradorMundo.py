@@ -9,7 +9,7 @@ from typing import Dict, List, Tuple
 
 LARGURA_BLOCOS = 320
 ALTURA_BLOCOS = 320
-CHUNK_BLOCOS = 32
+CHUNK_BLOCOS = 10
 BLOCO_TAMANHO_PX = 24
 ARQUIVO_MUNDO = Path(__file__).resolve().parent / "MundoEstado.json"
 TILES_AGUA = {0, 1, 2}
@@ -184,7 +184,7 @@ def _normalizar_estado_carregado(estado: Dict[str, object]) -> Dict[str, object]
 
     meta["largura_blocos"] = largura
     meta["altura_blocos"] = altura
-    meta["chunk_blocos"] = int(meta.get("chunk_blocos", CHUNK_BLOCOS))
+    meta["chunk_blocos"] = int(CHUNK_BLOCOS)
     meta["bloco_tamanho_px"] = int(meta.get("bloco_tamanho_px", BLOCO_TAMANHO_PX))
     meta["spawn_chunk"] = [int(spawn_chunk[0]), int(spawn_chunk[1])]
 

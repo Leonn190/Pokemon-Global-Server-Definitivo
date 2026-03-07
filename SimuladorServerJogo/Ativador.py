@@ -1,4 +1,4 @@
-"""Rota Ativador: entrega chunks e diffs ainda não coletados por client."""
+"""Rota Ativador: entrega chunks e diffs ainda não coletados por client + ativa cérebro do servidor."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import time
 from typing import Dict, List, Set, Tuple
 
 from SimuladorServerJogo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Cerebro import CEREBRO
 
 Vector2 = Tuple[float, float]
 
@@ -19,7 +20,6 @@ _CLIENTS_CONHECIDOS: Set[str] = set()
 _CLIENT_STATE: Dict[str, Dict[str, object]] = {}
 
 
-# --------------------- Funções auxiliares ---------------------
 def _next_seq() -> int:
     global _DIFF_SEQ
     _DIFF_SEQ += 1
@@ -72,8 +72,15 @@ def _obter_state_client(client_id: str) -> Dict[str, object]:
     return _CLIENT_STATE[client_id]
 
 
-# ============================= ROTA =============================
-# ROTA: entrega chunks e diffs ainda não coletados por client.
+def _chunks_anel_7x7(posicao_camera: Vector2):
+    centro = BANCO_DADOS.chunk_da_posicao(posicao_camera)
+    chunks = []
+    for dx in range(-3, 4):
+        for dy in range(-3, 4):
+            chunks.append(BANCO_DADOS.normalizar_chunk((centro[0] + dx, centro[1] + dy)))
+    return chunks
+
+
 def processar_ativador_json(requisicao_json: str) -> str:
     try:
         pacote = json.loads(requisicao_json)
@@ -83,12 +90,12 @@ def processar_ativador_json(requisicao_json: str) -> str:
     dados = pacote.get("dados", {})
     client_id = str(dados.get("client_id", "")).strip()
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
-    raio_chunks = max(1, int(dados.get("raio_chunks", 5)))
-    raio = float(raio_chunks * BANCO_DADOS.chunk_tamanho_unidade())
+    raio = float(6 * BANCO_DADOS.chunk_tamanho_unidade())
 
     if not client_id:
         return json.dumps({"status": "erro", "mensagem": "client_id obrigatório"}, ensure_ascii=False)
 
+    meta_cerebro = CEREBRO.processar_ativacao(client_id, posicao_camera)
 
     with _DIFF_LOCK:
         _CLIENTS_CONHECIDOS.add(client_id)
@@ -117,34 +124,22 @@ def processar_ativador_json(requisicao_json: str) -> str:
                 continue
             if not _diff_relevante(diff, posicao_camera, raio):
                 continue
-            diffs.append(
-                {
-                    "seq": diff["seq"],
-                    "timestamp": diff["timestamp"],
-                    "tipo": diff["tipo"],
-                    "objeto_id": diff.get("objeto_id"),
-                    "payload": diff.get("payload", {}),
-                    "escopo": diff.get("escopo", {}),
-                }
-            )
+            diffs.append({
+                "seq": diff["seq"], "timestamp": diff["timestamp"], "tipo": diff["tipo"],
+                "objeto_id": diff.get("objeto_id"), "payload": diff.get("payload", {}), "escopo": diff.get("escopo", {}),
+            })
             diff["coletado_por"].add(client_id)
 
         chunks = []
-        for chunk in BANCO_DADOS.chunks_proximos(posicao_camera, raio_chunks=raio_chunks):
+        for chunk in _chunks_anel_7x7(posicao_camera):
             if chunk in chunks_vistos:
                 continue
-            dados_chunk = {"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": 32}
+            dados_chunk = {"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()}
             chunks.append(dados_chunk)
-            diffs.append(
-                {
-                    "seq": _next_seq(),
-                    "timestamp": time.time(),
-                    "tipo": "chunk",
-                    "objeto_id": None,
-                    "payload": dados_chunk,
-                    "escopo": {"centro": [posicao_camera[0], posicao_camera[1]], "raio": raio},
-                }
-            )
+            diffs.append({
+                "seq": _next_seq(), "timestamp": time.time(), "tipo": "chunk", "objeto_id": None,
+                "payload": dados_chunk, "escopo": {"centro": [posicao_camera[0], posicao_camera[1]], "raio": raio},
+            })
             chunks_vistos.add(chunk)
 
         _prune_diff_log()
@@ -163,17 +158,19 @@ def processar_ativador_json(requisicao_json: str) -> str:
             "largura_blocos": int(largura_blocos),
             "altura_blocos": int(altura_blocos),
             "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()),
+            "anel_render_chunks": int(meta_cerebro.get("anel_render_chunks", 7)),
+            "anel_simulado_chunks": int(meta_cerebro.get("anel_simulado_chunks", 13)),
+            "cerebro": meta_cerebro,
         },
     }
     return json.dumps(resposta, ensure_ascii=False)
 
 
-
-# --------------------- Funções auxiliares públicas ---------------------
 def desconectar_client(client_id: str) -> None:
     with _DIFF_LOCK:
         _CLIENTS_CONHECIDOS.discard(client_id)
         _CLIENT_STATE.pop(client_id, None)
+    CEREBRO.remover_player(client_id)
 
 
 def resetar_estado_clientes() -> None:
@@ -181,4 +178,3 @@ def resetar_estado_clientes() -> None:
         _CLIENTS_CONHECIDOS.clear()
         _CLIENT_STATE.clear()
         _DIFF_LOG.clear()
-

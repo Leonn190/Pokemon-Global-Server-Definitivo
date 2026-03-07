@@ -32,7 +32,7 @@ class BancoDadosMundo:
         self._estado_mundo = carregar_ou_criar_estado_mundo()
         self._grid = self._estado_mundo.get("grid", [])
         meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
-        self._chunk_blocos = int(meta.get("chunk_blocos", CHUNK_BLOCOS))
+        self._chunk_blocos = int(CHUNK_BLOCOS)
         self._largura_blocos = int(meta.get("largura_blocos", len(self._grid[0]) if self._grid else 0))
         self._altura_blocos = int(meta.get("altura_blocos", len(self._grid)))
         self._gerar_estruturas_naturais_no_mapa()
@@ -42,7 +42,7 @@ class BancoDadosMundo:
             self._estado_mundo = estado_mundo if isinstance(estado_mundo, dict) else {}
             self._grid = self._estado_mundo.get("grid", [])
             meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
-            self._chunk_blocos = max(1, int(meta.get("chunk_blocos", CHUNK_BLOCOS)))
+            self._chunk_blocos = max(1, int(CHUNK_BLOCOS))
             self._largura_blocos = int(meta.get("largura_blocos", len(self._grid[0]) if self._grid else 0))
             self._altura_blocos = int(meta.get("altura_blocos", len(self._grid)))
 
@@ -251,6 +251,21 @@ class BancoDadosMundo:
 
     def chunk_tamanho_unidade(self) -> int:
         return max(1, int(self._chunk_blocos))
+
+
+
+    def total_chunks(self) -> Tuple[int, int]:
+        chunk_tamanho = self.chunk_tamanho_unidade()
+        largura, altura = self.limites_mundo()
+        return (max(1, int(math.ceil(largura / chunk_tamanho))), max(1, int(math.ceil(altura / chunk_tamanho))))
+
+    def normalizar_chunk(self, chunk_xy: Tuple[int, int]) -> Tuple[int, int]:
+        tx, ty = self.total_chunks()
+        return (int(chunk_xy[0]) % tx, int(chunk_xy[1]) % ty)
+
+    def chunk_da_posicao(self, posicao: Vector2) -> Tuple[int, int]:
+        chunk_tamanho = self.chunk_tamanho_unidade()
+        return self.normalizar_chunk((int(math.floor(float(posicao[0]) / chunk_tamanho)), int(math.floor(float(posicao[1]) / chunk_tamanho))))
 
     def chunks_proximos(self, posicao: Vector2, raio_chunks: int = 1) -> List[Tuple[int, int]]:
         chunk_tamanho = self.chunk_tamanho_unidade()

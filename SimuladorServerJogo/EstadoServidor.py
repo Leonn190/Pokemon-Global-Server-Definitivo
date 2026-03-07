@@ -12,6 +12,7 @@ from SimuladorServerJogo.GeradorMundo import (
 )
 from SimuladorServerJogo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Ativador import resetar_estado_clientes
+from SimuladorServerJogo.Cerebro import CEREBRO
 
 _CHAVE_SEGURANCA = "1900"
 _ESTADO_MUNDO = carregar_ou_criar_estado_mundo()
@@ -155,6 +156,8 @@ def snapshot_estado():
 def definir_ligado(ativo):
     with _LOCK:
         _ESTADO["ligado"] = bool(ativo)
+        if not _ESTADO["ligado"]:
+            CEREBRO.desligar_servidor()
 
 
 def definir_mundo_existente(ativo):

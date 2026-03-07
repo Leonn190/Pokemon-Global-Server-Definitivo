@@ -8,6 +8,7 @@ import pygame
 from Codigo.Modulos.Sonoridades import AtualizarMusica
 from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Modulos.Discord import DiscordPresence
 
 class ControladorCenas:
     def __init__(self, TELA, RELOGIO, CONFIG):
@@ -31,6 +32,9 @@ class ControladorCenas:
         self.Cena = None
         self.Rodando = True
         self.Saindo = False
+
+        self.Discord = DiscordPresence()
+        self.Discord.conectar()
 
         self.TextoFPS = Texto(
             "",
@@ -82,6 +86,7 @@ class ControladorCenas:
         if not (alvo == "Menu" and cena_anterior is not None and cena_anterior.ID == "Login"):
             self.Escuro = 100
         self.Cena.Inicializar(self)
+        self._atualizar_discord_presenca()
 
     def Rodar(self):
 
@@ -94,6 +99,7 @@ class ControladorCenas:
                     self.SolicitarSair()
 
             self.Cena.Tela(self, EVENTOS, dt)
+            self._atualizar_discord_presenca()
 
             if self.Saindo:
                 Escurecer(self, dt)
@@ -115,6 +121,22 @@ class ControladorCenas:
 
         if self.Cena is not None:
             self.Cena.Finalizar(self)
+        self.Discord.desconectar()
+
+    def _atualizar_discord_presenca(self):
+        cena_id = str(getattr(self.Cena, "ID", "Menu") or "Menu")
+        if cena_id == "Mundo":
+            local = "mundo"
+            if getattr(self.Cena, "TelaAtual", None) == "Config":
+                acao = "No mundo (configurações)"
+            else:
+                acao = "Explorando o mundo"
+        else:
+            local = "menu"
+            tela = str(getattr(self.Cena, "TelaAtual", "MenuPrincipal"))
+            acao = f"No menu ({tela})"
+
+        self.Discord.atualizar(local=local, acao=acao)
 
     def SolicitarSair(self):
         self.CenaAlvo = None

@@ -35,7 +35,6 @@ if ConfigFixa is not None:
     CONFIG = ConfigFixa
 
 CONFIG.update({"VERSÃO": 1.0})
-
 VerificaSonoridade(CONFIG)
 
 Game = ControladorCenas(TELA, RELOGIO, CONFIG)

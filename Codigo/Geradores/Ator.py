@@ -40,9 +40,10 @@ class Ator(Entidade):
         nome_skin: str = "S1",
         posicao: Vector2 = (0.0, 0.0),
         velocidade: Vector2 = (0.0, 0.0),
-        raio_colisao: float = 0.35,
+        raio_colisao: float = 0.55,
         raio_interacao: Optional[float] = None,
         escala_skin_tiles: float = 1.0,
+        tile_px: int = 50,
     ) -> None:
         super().__init__(
             posicao=posicao,
@@ -53,13 +54,13 @@ class Ator(Entidade):
         if skin_surface is None:
             skin_surface = self.carregar_skin(nome_skin)
         self.Skin = skin_surface
-        self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin_tiles)
+        self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin_tiles, tile_px=tile_px)
 
         self.AnguloOlhar = 0.0
         self.Nome = ""
         self._duracao_tapa = 0.5
         self._tempo_tapa = 0.0
-        self._raio_mao_colisao = max(0.18, raio_colisao * 0.65)
+        self._raio_mao_colisao = max(0.20, raio_colisao * 0.45)
         self.ColisorMao = Colisor(
             x=self.Posicao[0],
             y=self.Posicao[1],
@@ -69,7 +70,7 @@ class Ator(Entidade):
         )
 
     @classmethod
-    def desenhar_nome(cls, tela, pos_tela, nome, deslocamento_y: int = 52):
+    def desenhar_nome(cls, tela, pos_tela, nome, deslocamento_y: int = 54):
         nome_str = str(nome or "").strip()
         if not nome_str:
             return
@@ -97,6 +98,10 @@ class Ator(Entidade):
         oscilacao = math.sin(tempo + fase) * 2.0
         texto.set_pos((int(pos_tela[0]), int(pos_tela[1]) - int(deslocamento_y) + int(round(oscilacao))))
         texto.draw(tela)
+
+
+    def set_tile_px(self, tile_px: int) -> None:
+        self.Desenhador.set_tile_px(tile_px)
 
     def set_skin(self, skin_surface) -> None:
         self.Skin = skin_surface

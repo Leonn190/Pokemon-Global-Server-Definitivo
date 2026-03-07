@@ -3,16 +3,40 @@
 from __future__ import annotations
 
 import pygame
+from Codigo.Prefabs.Botao import Botao
 
 
 class SubtelaOpcoes:
     def __init__(self):
         self.Ativa = False
         self.Botoes = []
+        self._botoes_ui = []
         self._tamanho_layout = None
         self._overlay_cache = None
         self._overlay_cache_size = None
         self._fonte = pygame.font.SysFont("arial", 44, bold=True)
+        self._estilo_botao = {
+            "radius": 20,
+            "border_width": 2,
+            "border": (56, 76, 126),
+            "border_hover": (255, 224, 135),
+            "bg": (30, 44, 78),
+            "bg_hover": (60, 86, 146),
+            "bg_pressed": (22, 33, 62),
+            "hover_scale": 1.03,
+            "press_scale": 0.985,
+            "text_style": {
+                "size": 40,
+                "color": (247, 250, 255),
+                "hover_color": (255, 226, 120),
+                "outline": True,
+                "outline_color": (0, 0, 0),
+                "outline_thickness": 1,
+                "shadow": True,
+                "shadow_color": (0, 0, 0, 170),
+                "shadow_offset": (2, 2),
+            },
+        }
 
     def toggle(self, jogo):
         self.Ativa = not self.Ativa
@@ -34,6 +58,10 @@ class SubtelaOpcoes:
             (pygame.Rect(cx, y0 + (bh + gap) * 0, bw, bh), "Voltar ao jogo", self._acao_voltar),
             (pygame.Rect(cx, y0 + (bh + gap) * 1, bw, bh), "Configurações", self._acao_config),
             (pygame.Rect(cx, y0 + (bh + gap) * 2, bw, bh), "Sair do mundo", self._acao_sair_mundo),
+        ]
+        self._botoes_ui = [
+            Botao(rect, texto, execute=(lambda jogo, _botao, f=acao: f(jogo)), style=self._estilo_botao)
+            for rect, texto, acao in self.Botoes
         ]
 
     def processar_eventos(self, jogo, eventos):
@@ -63,21 +91,11 @@ class SubtelaOpcoes:
             self._overlay_cache_size = tamanho_tela
         jogo.TELA.blit(self._overlay_cache, (0, 0))
 
-        mouse = pygame.mouse.get_pos()
-
-        for rect, texto, _ in self.Botoes:
-            hover = rect.collidepoint(mouse)
-            cor_bg_topo = (60, 86, 146) if hover else (46, 66, 118)
-            cor_bg_base = (30, 44, 78) if hover else (22, 33, 62)
-            cor_borda = (255, 224, 135) if hover else (90, 118, 178)
+        for botao in self._botoes_ui:
+            rect = botao.rect
             sombra = pygame.Rect(rect.x + 2, rect.y + 4, rect.w, rect.h)
             pygame.draw.rect(jogo.TELA, (12, 16, 32, 120), sombra, border_radius=20)
-            faixa_topo = pygame.Rect(rect.x, rect.y, rect.w, int(rect.h * 0.55))
-            pygame.draw.rect(jogo.TELA, cor_bg_base, rect, border_radius=20)
-            pygame.draw.rect(jogo.TELA, cor_bg_topo, faixa_topo, border_top_left_radius=20, border_top_right_radius=20)
-            pygame.draw.rect(jogo.TELA, cor_borda, rect, 2, border_radius=20)
-            surf = self._fonte.render(texto, True, (247, 250, 255))
-            jogo.TELA.blit(surf, surf.get_rect(center=rect.center))
+            botao.render(jogo.TELA, [], 0.0, JOGO=jogo)
 
     def _acao_voltar(self, jogo):
         self.Ativa = False

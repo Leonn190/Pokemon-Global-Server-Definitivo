@@ -12,7 +12,7 @@ class SubtelaOpcoes:
         self._tamanho_layout = None
         self._overlay_cache = None
         self._overlay_cache_size = None
-        self._fonte = pygame.font.SysFont(None, 40)
+        self._fonte = pygame.font.SysFont("arial", 44, bold=True)
 
     def toggle(self, jogo):
         self.Ativa = not self.Ativa
@@ -26,10 +26,10 @@ class SubtelaOpcoes:
             return
 
         self._tamanho_layout = tamanho
-        bw, bh = min(460, int(w * 0.44)), 82
+        bw, bh = min(520, int(w * 0.50)), 94
         cx = w // 2 - bw // 2
         y0 = h // 2 - 150
-        gap = 18
+        gap = 20
         self.Botoes = [
             (pygame.Rect(cx, y0 + (bh + gap) * 0, bw, bh), "Voltar ao jogo", self._acao_voltar),
             (pygame.Rect(cx, y0 + (bh + gap) * 1, bw, bh), "Configurações", self._acao_config),
@@ -67,11 +67,16 @@ class SubtelaOpcoes:
 
         for rect, texto, _ in self.Botoes:
             hover = rect.collidepoint(mouse)
-            cor_bg = (34, 48, 84) if hover else (24, 34, 62)
-            cor_borda = (255, 220, 120) if hover else (16, 22, 42)
-            pygame.draw.rect(jogo.TELA, cor_bg, rect, border_radius=16)
-            pygame.draw.rect(jogo.TELA, cor_borda, rect, 2, border_radius=16)
-            surf = self._fonte.render(texto, True, (245, 246, 255))
+            cor_bg_topo = (60, 86, 146) if hover else (46, 66, 118)
+            cor_bg_base = (30, 44, 78) if hover else (22, 33, 62)
+            cor_borda = (255, 224, 135) if hover else (90, 118, 178)
+            sombra = pygame.Rect(rect.x + 2, rect.y + 4, rect.w, rect.h)
+            pygame.draw.rect(jogo.TELA, (12, 16, 32, 120), sombra, border_radius=20)
+            faixa_topo = pygame.Rect(rect.x, rect.y, rect.w, int(rect.h * 0.55))
+            pygame.draw.rect(jogo.TELA, cor_bg_base, rect, border_radius=20)
+            pygame.draw.rect(jogo.TELA, cor_bg_topo, faixa_topo, border_top_left_radius=20, border_top_right_radius=20)
+            pygame.draw.rect(jogo.TELA, cor_borda, rect, 2, border_radius=20)
+            surf = self._fonte.render(texto, True, (247, 250, 255))
             jogo.TELA.blit(surf, surf.get_rect(center=rect.center))
 
     def _acao_voltar(self, jogo):

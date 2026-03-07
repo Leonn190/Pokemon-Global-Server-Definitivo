@@ -30,8 +30,8 @@ def _clarear_cor(cor, fator=0.35):
 
 
 class DesenhaAtor:
-    def __init__(self, skin_surface, escala=1.45):
-        self.escala = float(escala)
+    def __init__(self, skin_surface, escala=1.0):
+        self._escala_tiles = float(escala)
         self.sprite_offset_graus = -90
 
         self._skin_original = skin_surface.convert_alpha()
@@ -42,10 +42,10 @@ class DesenhaAtor:
         self._cache_corpo_rotacionado = {}
         self._cache_ordem_angulos = []
         self._cache_limite_angulos = 120
+
     def _redimensionar_skin(self, surf):
-        w = max(1, int(surf.get_width() * self.escala))
-        h = max(1, int(surf.get_height() * self.escala))
-        return pygame.transform.smoothscale(surf, (w, h)).convert_alpha()
+        lado_base = max(1, int(max(surf.get_width(), surf.get_height()) * self._escala_tiles))
+        return pygame.transform.smoothscale(surf, (lado_base, lado_base)).convert_alpha()
 
     def set_skin(self, skin_surface):
         self._skin_original = skin_surface.convert_alpha()
@@ -55,8 +55,9 @@ class DesenhaAtor:
         self._cor_maos = _clarear_cor(base, fator=0.40)
         self._cache_corpo_rotacionado.clear()
         self._cache_ordem_angulos.clear()
+
     def set_escala(self, escala):
-        self.escala = max(0.2, float(escala))
+        self._escala_tiles = max(0.2, float(escala))
         self._skin = self._redimensionar_skin(self._skin_original)
         self._cache_corpo_rotacionado.clear()
         self._cache_ordem_angulos.clear()
@@ -116,8 +117,8 @@ class DesenhaAtor:
 
         if empurrao_tapa > 0.0:
             arco = math.sin(progresso * math.pi)
-            curva_frente = 40.0 * arco
-            curva_esquerda = 5.0 * arco
+            curva_frente = 60.0 * arco
+            curva_esquerda = 15.0 * arco
             mao_dir_x = mao_dir_base_x + vx * curva_frente - px * curva_esquerda
             mao_dir_y = mao_dir_base_y + vy * curva_frente - py * curva_esquerda
         else:

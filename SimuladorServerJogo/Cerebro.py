@@ -137,11 +137,9 @@ class CerebroServer:
                 return False
             gx = int(px)
             gy = int(py)
-            grid = BANCO_DADOS._grid
-            if 0 <= gy < len(grid) and 0 <= gx < len(grid[gy]):
-                tile = int(grid[gy][gx])
-                if tile in bloqueados:
-                    return False
+            tile = BANCO_DADOS.tile_em(gx, gy)
+            if tile in bloqueados:
+                return False
             proximos = BANCO_DADOS.buscar_proximos((px, py), max(0.25, float(raio) + 0.55))
             for obj in proximos:
                 if str(getattr(obj, "tipo_classe", "")).startswith("estrutura"):

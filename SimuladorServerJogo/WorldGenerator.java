@@ -157,6 +157,7 @@ static final class Rules {
     int height = 10_000;
     long seed = 20260307L;
     String outputDirectory = "output_world";
+    int diskChunkBlocos = 100;
 
     // ===== Ocean / water borders =====
     int hardOceanBorder = 120;
@@ -345,35 +346,71 @@ static final class Rules {
             logTime("POIs", t4);
 
             long t5 = System.currentTimeMillis();
-            System.out.println("Renderizando imagens...");
-            renderBaseWorld(new File(dir, "01_blocos_biomas.png"));
-            writeWorldGridsJson(new File(dir, "world_grids.json"));
-            logTime("Render", t5);
+            System.out.println("Exportando mundo em chunks...");
+            writeWorldChunks(dir);
+            logTime("Export", t5);
 
             printSummary();
             logTime("Tempo total", t0);
         }
 
-        private void writeWorldGridsJson(File file) throws IOException {
+        private void writeWorldChunks(File outputDir) throws IOException {
+            int chunkSize = Math.max(1, rules.diskChunkBlocos);
+            int chunksX = (int) Math.ceil(width / (double) chunkSize);
+            int chunksY = (int) Math.ceil(height / (double) chunkSize);
+
+            File chunksDir = new File(outputDir, "world_chunks");
+            if (!chunksDir.exists() && !chunksDir.mkdirs()) {
+                throw new IOException("Nao foi possivel criar pasta world_chunks: " + chunksDir.getAbsolutePath());
+            }
+
+            File metaFile = new File(outputDir, "world_meta.json");
+            try (BufferedWriter writer = Files.newBufferedWriter(metaFile.toPath(), StandardCharsets.UTF_8)) {
+                writer.write("{\n");
+                writer.write("  \"width\": " + width + ",\n");
+                writer.write("  \"height\": " + height + ",\n");
+                writer.write("  \"seed\": " + rules.seed + ",\n");
+                writer.write("  \"chunk_blocos\": " + chunkSize + ",\n");
+                writer.write("  \"chunks_x\": " + chunksX + ",\n");
+                writer.write("  \"chunks_y\": " + chunksY + "\n");
+                writer.write("}\n");
+            }
+
+            byte[] structuresMap = buildStructuresGrid();
+            for (int cy = 0; cy < chunksY; cy++) {
+                for (int cx = 0; cx < chunksX; cx++) {
+                    File chunkFile = new File(chunksDir, "chunk_" + cx + "_" + cy + ".json");
+                    writeChunkJson(chunkFile, cx, cy, chunkSize, structuresMap);
+                }
+            }
+        }
+
+        private void writeChunkJson(File file, int cx, int cy, int chunkSize, byte[] structuresMap) throws IOException {
+            int x0 = cx * chunkSize;
+            int y0 = cy * chunkSize;
+
             try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
                 writer.write("{\n");
                 writer.write("  \"meta\": {\n");
-                writer.write("    \"width\": " + width + ",\n");
-                writer.write("    \"height\": " + height + ",\n");
+                writer.write("    \"chunk_x\": " + cx + ",\n");
+                writer.write("    \"chunk_y\": " + cy + ",\n");
+                writer.write("    \"chunk_blocos\": " + chunkSize + ",\n");
+                writer.write("    \"world_width\": " + width + ",\n");
+                writer.write("    \"world_height\": " + height + ",\n");
                 writer.write("    \"seed\": " + rules.seed + "\n");
                 writer.write("  },\n");
 
                 writer.write("  \"grid_blocos\": ");
-                writeGridFromMap(writer, tileMap);
+                writeChunkGridFromMap(writer, tileMap, x0, y0, chunkSize);
                 writer.write(",\n");
 
                 writer.write("  \"grid_biomas\": ");
-                writeGridFromMap(writer, biomeMap);
+                writeChunkGridFromMap(writer, biomeMap, x0, y0, chunkSize);
                 writer.write(",\n");
 
                 writer.write("  \"grid_estruturas\": ");
-                writeGridFromMap(writer, buildStructuresGrid());
-                writer.write("\n}");
+                writeChunkGridFromMap(writer, structuresMap, x0, y0, chunkSize);
+                writer.write("\n}\n");
             }
         }
 
@@ -394,19 +431,25 @@ static final class Rules {
             };
         }
 
-        private void writeGridFromMap(BufferedWriter writer, byte[] map) throws IOException {
+        private void writeChunkGridFromMap(BufferedWriter writer, byte[] map, int x0, int y0, int chunkSize) throws IOException {
             writer.write("[\n");
-            for (int y = 0; y < height; y++) {
+            for (int by = 0; by < chunkSize; by++) {
+                int y = y0 + by;
                 writer.write("    [");
-                for (int x = 0; x < width; x++) {
-                    int idx = index(x, y);
-                    writer.write(Integer.toString(map[idx] & 0xFF));
-                    if (x < width - 1) {
+                for (int bx = 0; bx < chunkSize; bx++) {
+                    int x = x0 + bx;
+                    int value = 0;
+                    if (x >= 0 && y >= 0 && x < width && y < height) {
+                        int idx = index(x, y);
+                        value = map[idx] & 0xFF;
+                    }
+                    writer.write(Integer.toString(value));
+                    if (bx < chunkSize - 1) {
                         writer.write(',');
                     }
                 }
                 writer.write("]");
-                if (y < height - 1) {
+                if (by < chunkSize - 1) {
                     writer.write(',');
                 }
                 writer.write('\n');

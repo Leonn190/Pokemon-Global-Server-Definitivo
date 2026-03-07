@@ -146,6 +146,8 @@ public class WorldGenerator {
         int macroMajorityRadius = 2;
         int macroSmoothingPasses = 3;
         int macroMinRegionCells = 8;
+        double macroLocalBlend = 0.08;
+        double macroEdgeNoiseStrength = 0.04;
 
         static Rules defaultRules() {
             Rules rules = new Rules();
@@ -529,9 +531,79 @@ public class WorldGenerator {
         }
 
         private Biome macroBiomeForTile(int x, int y) {
-            int mx = clamp(x / macroCellWidth, 0, macroGridWidth - 1);
-            int my = clamp(y / macroCellHeight, 0, macroGridHeight - 1);
-            return Biome.values()[macroBiomeGrid[macroIndex(mx, my)] & 0xFF];
+            double gx = (x + 0.5) / macroCellWidth - 0.5;
+            double gy = (y + 0.5) / macroCellHeight - 0.5;
+
+            int mx0 = clamp(fastFloor(gx), 0, macroGridWidth - 1);
+            int my0 = clamp(fastFloor(gy), 0, macroGridHeight - 1);
+            int mx1 = clamp(mx0 + 1, 0, macroGridWidth - 1);
+            int my1 = clamp(my0 + 1, 0, macroGridHeight - 1);
+
+            double tx = smoothstep(clamp01(gx - mx0));
+            double ty = smoothstep(clamp01(gy - my0));
+
+            double w00 = (1.0 - tx) * (1.0 - ty);
+            double w10 = tx * (1.0 - ty);
+            double w01 = (1.0 - tx) * ty;
+            double w11 = tx * ty;
+
+            double[] scores = new double[Biome.values().length];
+            addMacroBiomeScore(scores, mx0, my0, w00);
+            addMacroBiomeScore(scores, mx1, my0, w10);
+            addMacroBiomeScore(scores, mx0, my1, w01);
+            addMacroBiomeScore(scores, mx1, my1, w11);
+
+            int currentMx = clamp(x / macroCellWidth, 0, macroGridWidth - 1);
+            int currentMy = clamp(y / macroCellHeight, 0, macroGridHeight - 1);
+            Biome currentMacroBiome = Biome.values()[macroBiomeGrid[macroIndex(currentMx, currentMy)] & 0xFF];
+            if (isLandBiome(currentMacroBiome)) {
+                scores[currentMacroBiome.ordinal()] += rules.macroLocalBlend;
+            }
+
+            double edgeNoise = (fbm(x, y, 2, 0.55, 2.0, macroCellWidth * 2.4, 913L) - 0.5)
+                    * rules.macroEdgeNoiseStrength;
+            applyNeighborEdgeJitter(scores, edgeNoise, x, y, mx0, my0);
+            applyNeighborEdgeJitter(scores, edgeNoise, x, y, mx1, my0);
+            applyNeighborEdgeJitter(scores, edgeNoise, x, y, mx0, my1);
+            applyNeighborEdgeJitter(scores, edgeNoise, x, y, mx1, my1);
+
+            return dominantLandBiome(scores, Biome.FIELD);
+        }
+
+        private void applyNeighborEdgeJitter(double[] scores, double edgeNoise, int x, int y, int mx, int my) {
+            Biome b = Biome.values()[macroBiomeGrid[macroIndex(mx, my)] & 0xFF];
+            if (!isLandBiome(b) || edgeNoise == 0.0) {
+                return;
+            }
+            long h = tileSeed(x + mx * 31, y + my * 17, 991L + b.ordinal() * 131L);
+            double tie = random01(h) - 0.5;
+            scores[b.ordinal()] += edgeNoise * tie;
+        }
+
+        private void addMacroBiomeScore(double[] scores, int mx, int my, double weight) {
+            if (weight <= 0.0) {
+                return;
+            }
+            Biome b = Biome.values()[macroBiomeGrid[macroIndex(mx, my)] & 0xFF];
+            if (isLandBiome(b)) {
+                scores[b.ordinal()] += weight;
+            }
+        }
+
+        private Biome dominantLandBiome(double[] scores, Biome fallback) {
+            Biome best = fallback;
+            double bestScore = Double.NEGATIVE_INFINITY;
+            for (Biome biome : Biome.values()) {
+                if (!isLandBiome(biome)) {
+                    continue;
+                }
+                double score = scores[biome.ordinal()];
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = biome;
+                }
+            }
+            return best;
         }
 
         private int macroIndex(int x, int y) {

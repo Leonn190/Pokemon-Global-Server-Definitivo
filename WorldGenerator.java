@@ -2,6 +2,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,27 +117,28 @@ public class WorldGenerator {
     }
 
     static final class Rules {
-        int width = 10_000;
-        int height = 10_000;
+        int width = 320;
+        int height = 320;
         long seed = 20260307L;
-        String outputDirectory = "output_world";
+        String outputDirectory = ".";
+        String outputJsonFilename = "world_grids.json";
 
-        int hardOceanBorder = 120;
-        int softOceanBorder = 420;
+        int hardOceanBorder = 12;
+        int softOceanBorder = 48;
         double seaLevel = 0.48;
         double shallowWaterBand = 0.032;
 
-        int riverSources = 850;
-        int riverMaxLength = 650;
+        int riverSources = 18;
+        int riverMaxLength = 140;
         int riverWidth = 1;
         double riverSourceMinHeight = 0.63;
 
-        int gymCount = 30;
-        int dungeonCount = 30;
-        int villageCount = 10;
-        int gymDistance = 230;
-        int dungeonDistance = 220;
-        int villageDistance = 300;
+        int gymCount = 8;
+        int dungeonCount = 8;
+        int villageCount = 0;
+        int gymDistance = 38;
+        int dungeonDistance = 34;
+        int villageDistance = 40;
 
         BiomeRule[] biomeRules;
         StructureRule[] structureRules;
@@ -155,18 +157,18 @@ public class WorldGenerator {
 
             EnumSet<Biome> land = EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.DESERT, Biome.SNOW, Biome.MAGIC, Biome.VOLCANIC, Biome.SWAMP);
             rules.structureRules = new StructureRule[]{
-                    new StructureRule(NaturalStructure.TREE, 0.0160, 130_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
-                    new StructureRule(NaturalStructure.ROCK, 0.0060, 55_000, land),
-                    new StructureRule(NaturalStructure.BUSH, 0.0075, 60_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
-                    new StructureRule(NaturalStructure.GOLD, 0.0011, 10_000, land),
-                    new StructureRule(NaturalStructure.AMETHYST, 0.0026, 14_000, EnumSet.of(Biome.MAGIC)),
-                    new StructureRule(NaturalStructure.DIAMOND, 0.0023, 12_000, EnumSet.of(Biome.SNOW)),
-                    new StructureRule(NaturalStructure.RUBY, 0.0025, 11_000, EnumSet.of(Biome.VOLCANIC)),
-                    new StructureRule(NaturalStructure.EMERALD, 0.0023, 11_000, EnumSet.of(Biome.DESERT)),
-                    new StructureRule(NaturalStructure.PALM, 0.0045, 16_000, EnumSet.of(Biome.DESERT)),
-                    new StructureRule(NaturalStructure.PINE, 0.0058, 18_000, EnumSet.of(Biome.SNOW)),
-                    new StructureRule(NaturalStructure.COPPER, 0.0024, 18_000, land),
-                    new StructureRule(NaturalStructure.LAVA_POOL, 0.0035, 10_000, EnumSet.of(Biome.VOLCANIC))
+                    new StructureRule(NaturalStructure.TREE, 0.0160, 400, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
+                    new StructureRule(NaturalStructure.ROCK, 0.0060, 240, land),
+                    new StructureRule(NaturalStructure.BUSH, 0.0075, 220, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
+                    new StructureRule(NaturalStructure.GOLD, 0.0011, 60, land),
+                    new StructureRule(NaturalStructure.AMETHYST, 0.0026, 50, EnumSet.of(Biome.MAGIC)),
+                    new StructureRule(NaturalStructure.DIAMOND, 0.0023, 50, EnumSet.of(Biome.SNOW)),
+                    new StructureRule(NaturalStructure.RUBY, 0.0025, 50, EnumSet.of(Biome.VOLCANIC)),
+                    new StructureRule(NaturalStructure.EMERALD, 0.0023, 50, EnumSet.of(Biome.DESERT)),
+                    new StructureRule(NaturalStructure.PALM, 0.0045, 50, EnumSet.of(Biome.DESERT)),
+                    new StructureRule(NaturalStructure.PINE, 0.0058, 50, EnumSet.of(Biome.SNOW)),
+                    new StructureRule(NaturalStructure.COPPER, 0.0024, 60, land),
+                    new StructureRule(NaturalStructure.LAVA_POOL, 0.0035, 50, EnumSet.of(Biome.VOLCANIC))
             };
             return rules;
         }
@@ -230,7 +232,7 @@ public class WorldGenerator {
             logTime("Estruturas naturais", t3);
 
             long t4 = System.currentTimeMillis();
-            System.out.println("Posicionando ginasios, dungeons e vilas...");
+            System.out.println("Posicionando ginasios e dungeons...");
             placePois();
             logTime("POIs", t4);
 
@@ -239,6 +241,7 @@ public class WorldGenerator {
             renderBaseWorld(new File(dir, "01_blocos_biomas.png"));
             renderNaturalStructures(new File(dir, "02_estruturas_naturais.png"));
             renderPois(new File(dir, "03_pois.png"));
+            exportWorldGridsJson(new File(dir, rules.outputJsonFilename));
             logTime("Render", t5);
 
             printSummary();
@@ -543,18 +546,95 @@ public class WorldGenerator {
 
         private void placePois() {
             pois.clear();
-            placePoiType(PoiType.VILLAGE, rules.villageCount, rules.villageDistance);
             placePoiType(PoiType.GYM, rules.gymCount, rules.gymDistance);
             placePoiType(PoiType.DUNGEON, rules.dungeonCount, rules.dungeonDistance);
+        }
+
+        private void exportWorldGridsJson(File file) throws IOException {
+            int[][] biomeGrid = buildGridFromByteMap(biomeMap);
+            int[][] blockGrid = buildGridFromByteMap(tileMap);
+            int[][] structureGrid = buildStructureGrid();
+
+            StringBuilder sb = new StringBuilder(area * 20);
+            sb.append("{\n");
+            sb.append("  \"meta\": {\n");
+            sb.append("    \"width\": ").append(width).append(",\n");
+            sb.append("    \"height\": ").append(height).append(",\n");
+            sb.append("    \"seed\": ").append(rules.seed).append("\n");
+            sb.append("  },\n");
+            sb.append("  \"grid_biomas\": ");
+            appendGridJson(sb, biomeGrid);
+            sb.append(",\n");
+            sb.append("  \"grid_blocos\": ");
+            appendGridJson(sb, blockGrid);
+            sb.append(",\n");
+            sb.append("  \"grid_estruturas\": ");
+            appendGridJson(sb, structureGrid);
+            sb.append("\n}\n");
+
+            try (FileWriter writer = new FileWriter(file, false)) {
+                writer.write(sb.toString());
+            }
+            System.out.println("JSON das grids salvo em: " + file.getAbsolutePath());
+        }
+
+        private int[][] buildGridFromByteMap(byte[] source) {
+            int[][] grid = new int[height][width];
+            for (int y = 0; y < height; y++) {
+                int rowOffset = y * width;
+                for (int x = 0; x < width; x++) {
+                    grid[y][x] = source[rowOffset + x] & 0xFF;
+                }
+            }
+            return grid;
+        }
+
+        private int[][] buildStructureGrid() {
+            int[][] grid = buildGridFromByteMap(naturalMap);
+            for (Poi poi : pois) {
+                int structureCode = switch (poi.type) {
+                    case GYM -> 100;
+                    case DUNGEON -> 200;
+                    case VILLAGE -> 0;
+                };
+                if (structureCode <= 0) {
+                    continue;
+                }
+                if (poi.y >= 0 && poi.y < height && poi.x >= 0 && poi.x < width) {
+                    grid[poi.y][poi.x] = structureCode;
+                }
+            }
+            return grid;
+        }
+
+        private void appendGridJson(StringBuilder sb, int[][] grid) {
+            sb.append("[\n");
+            for (int y = 0; y < grid.length; y++) {
+                sb.append("    [");
+                int[] row = grid[y];
+                for (int x = 0; x < row.length; x++) {
+                    if (x > 0) {
+                        sb.append(',');
+                    }
+                    sb.append(row[x]);
+                }
+                sb.append(']');
+                if (y < grid.length - 1) {
+                    sb.append(',');
+                }
+                sb.append('\n');
+            }
+            sb.append("  ]");
         }
 
         private void placePoiType(PoiType type, int target, int minDistance) {
             int placed = 0;
             int attempts = 0;
-            while (placed < target && attempts < target * 40_000) {
+            int margin = Math.max(8, Math.min(width, height) / 18);
+            while (placed < target && attempts < target * 8_000) {
                 attempts++;
-                int x = boundedRandomInt(140, width - 140, rules.seed + type.ordinal() * 10_000_000L + attempts * 53L);
-                int y = boundedRandomInt(140, height - 140, rules.seed + type.ordinal() * 10_000_000L + attempts * 67L);
+                int x = boundedRandomInt(margin, width - margin, rules.seed + type.ordinal() * 10_000_000L + attempts * 53L);
+                int y = boundedRandomInt(margin, height - margin, rules.seed + type.ordinal() * 10_000_000L + attempts * 67L);
                 if (!canPlacePoi(type, x, y, minDistance)) {
                     continue;
                 }

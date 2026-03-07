@@ -1,71 +1,87 @@
-"""Gerador e persistência do mundo de testes do simulador de servidor."""
+"""Integração com o gerador Java do mundo do servidor."""
 
 from __future__ import annotations
 
 import json
 import random
+import subprocess
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-LARGURA_BLOCOS = 320
-ALTURA_BLOCOS = 320
+LARGURA_BLOCOS = 10_000
+ALTURA_BLOCOS = 10_000
 CHUNK_BLOCOS = 10
 BLOCO_TAMANHO_PX = 24
 ARQUIVO_MUNDO = Path(__file__).resolve().parent / "MundoEstado.json"
-TILES_AGUA = {0, 1, 2}
+RAIZ_REPOSITORIO = Path(__file__).resolve().parent.parent
+ARQUIVO_GRID_JAVA = RAIZ_REPOSITORIO / "world_grids.json"
+JAVA_FONTE = RAIZ_REPOSITORIO / "WorldGenerator.java"
+JAVA_CLASSE = RAIZ_REPOSITORIO / "WorldGenerator.class"
+ARQUIVO_PREVIEW_BASE = RAIZ_REPOSITORIO / "01_blocos_biomas.png"
+ARQUIVO_PREVIEW_ESTRUTURAS = RAIZ_REPOSITORIO / "02_estruturas_naturais.png"
+ARQUIVO_PREVIEW_POIS = RAIZ_REPOSITORIO / "03_pois.png"
+TILES_AGUA = {0, 1}
 
 
-def _gerar_grid_teste() -> List[List[int]]:
-    """Mundinho fixo: ilha simples com anéis de biomas para teste de comunicação."""
-    cx = LARGURA_BLOCOS // 2
-    cy = ALTURA_BLOCOS // 2
+def _executar_gerador_java() -> None:
+    if not JAVA_FONTE.exists():
+        raise FileNotFoundError(f"Arquivo Java não encontrado: {JAVA_FONTE}")
 
-    grid: List[List[int]] = [[0 for _ in range(LARGURA_BLOCOS)] for _ in range(ALTURA_BLOCOS)]
+    if (not JAVA_CLASSE.exists()) or JAVA_CLASSE.stat().st_mtime < JAVA_FONTE.stat().st_mtime:
+        subprocess.run(
+            ["javac", JAVA_FONTE.name],
+            cwd=RAIZ_REPOSITORIO,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
 
-    for y in range(ALTURA_BLOCOS):
-        for x in range(LARGURA_BLOCOS):
-            dx = x - cx
-            dy = y - cy
-            dist = (dx * dx + dy * dy) ** 0.5
+    subprocess.run(
+        ["java", "WorldGenerator"],
+        cwd=RAIZ_REPOSITORIO,
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
 
-            if dist < 118:
-                tile = 3
-            elif dist < 132:
-                tile = 2
-            elif dist < 146:
-                tile = 1
-            else:
-                tile = 0
-
-            if tile == 3 and ((x + y) % 11 == 0 or (x * 3 + y * 2) % 17 == 0):
-                tile = 4
-
-            grid[y][x] = tile
-
-    return grid
+    if not ARQUIVO_GRID_JAVA.exists():
+        raise FileNotFoundError(f"Arquivo de grids não gerado: {ARQUIVO_GRID_JAVA}")
+    if not ARQUIVO_PREVIEW_BASE.exists():
+        raise FileNotFoundError(f"Imagem de preview não gerada: {ARQUIVO_PREVIEW_BASE}")
 
 
-def _gerar_grid_estruturas_naturais() -> List[List[int]]:
-    """Grid secundária de estruturas naturais (0=nada, 1=árvore, 2=pedra, 3=arbusto)."""
-    grid: List[List[int]] = [[0 for _ in range(LARGURA_BLOCOS)] for _ in range(ALTURA_BLOCOS)]
+def _carregar_world_grids() -> Dict[str, object]:
+    if not ARQUIVO_GRID_JAVA.exists():
+        raise FileNotFoundError(f"Arquivo world_grids.json não encontrado: {ARQUIVO_GRID_JAVA}")
 
-    def posicionar(tipo_tile: int, quantidade: int, passo_x: int, passo_y: int, offset_x: int, offset_y: int) -> None:
-        colocados = 0
-        tentativas = 0
-        limite_tentativas = max(quantidade * 100, 1000)
-        while colocados < quantidade and tentativas < limite_tentativas:
-            tentativas += 1
-            x = (offset_x + (tentativas * passo_x)) % LARGURA_BLOCOS
-            y = (offset_y + (tentativas * passo_y)) % ALTURA_BLOCOS
-            if grid[y][x] != 0:
-                continue
-            grid[y][x] = tipo_tile
-            colocados += 1
+    payload = json.loads(ARQUIVO_GRID_JAVA.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Formato inválido de world_grids.json")
+    return payload
 
-    posicionar(tipo_tile=1, quantidade=30, passo_x=17, passo_y=29, offset_x=11, offset_y=23)
-    posicionar(tipo_tile=2, quantidade=25, passo_x=31, passo_y=19, offset_x=7, offset_y=13)
-    posicionar(tipo_tile=3, quantidade=15, passo_x=23, passo_y=37, offset_x=3, offset_y=5)
-    return grid
+
+def _normalizar_grid(grid: object) -> List[List[int]]:
+    if not isinstance(grid, list) or not grid:
+        raise ValueError("Grid inválida: não é lista 2D")
+
+    altura = len(grid)
+    if altura <= 0:
+        raise ValueError("Grid inválida: altura 0")
+
+    primeira = grid[0]
+    if not isinstance(primeira, list) or not primeira:
+        raise ValueError("Grid inválida: primeira linha vazia")
+
+    largura = len(primeira)
+    resultado: List[List[int]] = []
+    for y in range(altura):
+        linha = grid[y]
+        if not isinstance(linha, list) or len(linha) != largura:
+            raise ValueError("Grid inválida: linhas com larguras diferentes")
+        resultado.append([int(v) for v in linha])
+    return resultado
 
 
 def _tile_em(grid: List[List[int]], x: int, y: int, fallback: int = 0) -> int:
@@ -79,15 +95,14 @@ def _chunk_terra_firme(grid: List[List[int]], chunk_x: int, chunk_y: int) -> boo
     y0 = chunk_y * CHUNK_BLOCOS
     for by in range(CHUNK_BLOCOS):
         for bx in range(CHUNK_BLOCOS):
-            tile = _tile_em(grid, x0 + bx, y0 + by, fallback=0)
-            if tile in TILES_AGUA:
+            if _tile_em(grid, x0 + bx, y0 + by, fallback=0) in TILES_AGUA:
                 return False
     return True
 
 
 def _escolher_spawn_chunk(grid: List[List[int]]) -> List[int]:
-    max_chunk_x = max(0, LARGURA_BLOCOS // CHUNK_BLOCOS - 1)
-    max_chunk_y = max(0, ALTURA_BLOCOS // CHUNK_BLOCOS - 1)
+    max_chunk_x = max(0, len(grid[0]) // CHUNK_BLOCOS - 1)
+    max_chunk_y = max(0, len(grid) // CHUNK_BLOCOS - 1)
 
     melhor = None
     melhor_dist2 = None
@@ -101,9 +116,7 @@ def _escolher_spawn_chunk(grid: List[List[int]]) -> List[int]:
                 melhor = [cx, cy]
                 melhor_dist2 = dist2
 
-    if melhor is None:
-        return [0, 0]
-    return melhor
+    return melhor if melhor is not None else [0, 0]
 
 
 def _escolher_spawn_posicao(grid: List[List[int]], spawn_chunk: List[int]) -> List[float]:
@@ -126,40 +139,57 @@ def _escolher_spawn_posicao(grid: List[List[int]], spawn_chunk: List[int]) -> Li
     return [float(gx), float(gy)]
 
 
+def _estado_a_partir_do_java() -> Dict[str, object]:
+    _executar_gerador_java()
+    payload = _carregar_world_grids()
+
+    meta = payload.get("meta", {}) if isinstance(payload.get("meta", {}), dict) else {}
+    grid_blocos = _normalizar_grid(payload.get("grid_blocos", []))
+    grid_biomas = _normalizar_grid(payload.get("grid_biomas", []))
+    grid_estruturas = _normalizar_grid(payload.get("grid_estruturas", []))
+
+    altura = len(grid_blocos)
+    largura = len(grid_blocos[0]) if altura else 0
+
+    if len(grid_biomas) != altura or len(grid_estruturas) != altura:
+        raise ValueError("Grids com alturas diferentes")
+    if any(len(r) != largura for r in grid_biomas) or any(len(r) != largura for r in grid_estruturas):
+        raise ValueError("Grids com larguras diferentes")
+
+    spawn_chunk = _escolher_spawn_chunk(grid_blocos)
+    spawn_tile = _escolher_spawn_posicao(grid_blocos, spawn_chunk)
+
+    return {
+        "meta": {
+            "largura_blocos": int(meta.get("width", largura)),
+            "altura_blocos": int(meta.get("height", altura)),
+            "chunk_blocos": int(CHUNK_BLOCOS),
+            "bloco_tamanho_px": int(BLOCO_TAMANHO_PX),
+            "spawn_chunk": spawn_chunk,
+            "seed": int(meta.get("seed", 0)),
+        },
+        "spawn": spawn_tile,
+        "grid": grid_blocos,
+        "grid_biomas": grid_biomas,
+        "grid_estruturas_naturais": grid_estruturas,
+        "players": {},
+    }
+
+
 def gerar_novo_estado_mundo(players: Dict[str, object] | None = None) -> Dict[str, object]:
-    estado = _estado_base()
+    estado = _estado_a_partir_do_java()
     if players:
         estado["players"] = players
     return estado
 
 
-def _estado_base() -> Dict[str, object]:
-    grid = _gerar_grid_teste()
-    grid_estruturas_naturais = _gerar_grid_estruturas_naturais()
-    spawn_chunk = _escolher_spawn_chunk(grid)
-    spawn_tile = _escolher_spawn_posicao(grid, spawn_chunk)
-    return {
-        "meta": {
-            "largura_blocos": LARGURA_BLOCOS,
-            "altura_blocos": ALTURA_BLOCOS,
-            "chunk_blocos": CHUNK_BLOCOS,
-            "bloco_tamanho_px": BLOCO_TAMANHO_PX,
-            "spawn_chunk": spawn_chunk,
-        },
-        "spawn": spawn_tile,
-        "grid": grid,
-        "grid_estruturas_naturais": grid_estruturas_naturais,
-        "players": {},
-    }
-
-
 def _normalizar_estado_carregado(estado: Dict[str, object]) -> Dict[str, object]:
     if not isinstance(estado, dict):
-        return _estado_base()
+        return _estado_a_partir_do_java()
 
     grid = estado.get("grid")
     if not isinstance(grid, list) or not grid:
-        return _estado_base()
+        return _estado_a_partir_do_java()
 
     meta = estado.get("meta", {}) if isinstance(estado.get("meta", {}), dict) else {}
     largura = int(meta.get("largura_blocos", len(grid[0]) if grid else LARGURA_BLOCOS))
@@ -182,19 +212,27 @@ def _normalizar_estado_carregado(estado: Dict[str, object]) -> Dict[str, object]
     if spawn_invalido:
         spawn = _escolher_spawn_posicao(grid, [int(spawn_chunk[0]), int(spawn_chunk[1])])
 
-    meta["largura_blocos"] = largura
-    meta["altura_blocos"] = altura
-    meta["chunk_blocos"] = int(CHUNK_BLOCOS)
-    meta["bloco_tamanho_px"] = int(meta.get("bloco_tamanho_px", BLOCO_TAMANHO_PX))
-    meta["spawn_chunk"] = [int(spawn_chunk[0]), int(spawn_chunk[1])]
-
-    estado["meta"] = meta
+    estado["meta"] = {
+        **meta,
+        "largura_blocos": largura,
+        "altura_blocos": altura,
+        "chunk_blocos": int(CHUNK_BLOCOS),
+        "bloco_tamanho_px": int(meta.get("bloco_tamanho_px", BLOCO_TAMANHO_PX)),
+        "spawn_chunk": [int(spawn_chunk[0]), int(spawn_chunk[1])],
+    }
     estado["spawn"] = [float(spawn[0]), float(spawn[1])]
-    grid_estruturas = estado.get("grid_estruturas_naturais")
-    if not isinstance(grid_estruturas, list) or len(grid_estruturas) != altura:
-        grid_estruturas = _gerar_grid_estruturas_naturais()
-    estado["grid_estruturas_naturais"] = grid_estruturas
     estado["players"] = estado.get("players", {}) if isinstance(estado.get("players", {}), dict) else {}
+
+    # grids já devem estar prontas do Java; se faltar, regenera via Java
+    try:
+        estado["grid"] = _normalizar_grid(estado.get("grid", []))
+        estado["grid_biomas"] = _normalizar_grid(estado.get("grid_biomas", []))
+        estado["grid_estruturas_naturais"] = _normalizar_grid(estado.get("grid_estruturas_naturais", []))
+    except Exception:
+        novo = _estado_a_partir_do_java()
+        novo["players"] = estado["players"]
+        return novo
+
     return estado
 
 
@@ -208,7 +246,7 @@ def carregar_ou_criar_estado_mundo() -> Dict[str, object]:
         except (json.JSONDecodeError, OSError, TypeError, ValueError):
             pass
 
-    estado = _estado_base()
+    estado = _estado_a_partir_do_java()
     salvar_estado_mundo(estado)
     return estado
 
@@ -222,6 +260,8 @@ def obter_posicao_spawn(estado_mundo: Dict[str, object]) -> Tuple[float, float]:
     if not isinstance(spawn, (list, tuple)) or len(spawn) != 2:
         return (0.0, 0.0)
 
-    x = max(0.0, min(float(spawn[0]), float(LARGURA_BLOCOS - 1)))
-    y = max(0.0, min(float(spawn[1]), float(ALTURA_BLOCOS - 1)))
+    largura = int(estado_mundo.get("meta", {}).get("largura_blocos", LARGURA_BLOCOS))
+    altura = int(estado_mundo.get("meta", {}).get("altura_blocos", ALTURA_BLOCOS))
+    x = max(0.0, min(float(spawn[0]), float(max(1, largura - 1))))
+    y = max(0.0, min(float(spawn[1]), float(max(1, altura - 1))))
     return (x, y)

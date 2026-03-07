@@ -17,7 +17,7 @@ class PlayerController:
         self.VelocidadeTiles = float(velocidade_tiles)
         self.LimitesMundoTiles = None
         self._grid_chunks = {}
-        self._chunk_blocos = 32
+        self._chunk_blocos = 10
         self._tempo_desde_ultima_corrida = 0.0
         self._bloqueio_por_exaustao = False
         self._tempo_shift_pressionado = 0.0
@@ -76,7 +76,7 @@ class PlayerController:
         bar_surf.set_alpha(int(self._stamina_alpha))
         tela.blit(bar_surf, self.BarraStamina.rect.topleft)
 
-    def definir_grid_chunks(self, chunks, chunk_blocos=32):
+    def definir_grid_chunks(self, chunks, chunk_blocos=10):
         self._grid_chunks = dict(chunks) if isinstance(chunks, dict) else {}
         self._chunk_blocos = max(1, int(chunk_blocos))
 

@@ -19,7 +19,7 @@ class LeitorMundo:
         camera,
         callback_atualizacao: Callable[[str, str, Vector2, int], Optional[PacoteMundo]],
         intervalo_poll: float = 0.20,
-        raio_chunks: int = 2,
+        raio_chunks: int = 3,
     ) -> None:
         self.JOGO = jogo
         self.Camera = camera
@@ -36,7 +36,7 @@ class LeitorMundo:
         self._diffs_recebidas: List[Dict[str, object]] = []
         self._versao_chunks = 0
         self.MetaMundo: Dict[str, object] = {}
-        self.TamanhoChunkBlocos = 32
+        self.TamanhoChunkBlocos = 10
         self.CoresBlocos = {
             0: (14, 40, 92),
             1: (72, 162, 231),
@@ -251,10 +251,10 @@ class LeitorMundo:
                 repeticoes_y = (-altura_mundo, 0.0, altura_mundo)
 
         chaves_visiveis = []
-        for dy in range(-1, 2):
+        for dy in range(-3, 4):
             chunk_raw_y = chunk_player_y + dy
             chunk_busca_y = (chunk_raw_y % total_chunks_y) if total_chunks_y else chunk_raw_y
-            for dx in range(-1, 2):
+            for dx in range(-3, 4):
                 chunk_raw_x = chunk_player_x + dx
                 chunk_busca_x = (chunk_raw_x % total_chunks_x) if total_chunks_x else chunk_raw_x
                 chaves_visiveis.append(((chunk_busca_x, chunk_busca_y), chunk_raw_x, chunk_raw_y))

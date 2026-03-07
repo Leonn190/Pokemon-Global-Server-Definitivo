@@ -107,3 +107,30 @@ class EstruturaNaturalServer(EstruturaServer):
         dados["sprite"] = self.sprite
         dados["codigo_natural"] = self.codigo_natural
         return dados
+
+
+class PokemonServer(EntidadeServer):
+    def __init__(self, id_objeto: int, especie: str, posicao: Vector2 = (0.0, 0.0), **kwargs) -> None:
+        super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=0.45, raio_interacao=1.2, **kwargs)
+        self.estado_extra.update({"subtipo": "pokemon", "especie": str(especie), "ativo": True})
+
+    def mover(self, deslocamento: Vector2, colisor_cb=None) -> bool:
+        if not bool(self.estado_extra.get("ativo", True)):
+            return False
+        dx = float(deslocamento[0]) if isinstance(deslocamento, (list, tuple)) and len(deslocamento) > 0 else 0.0
+        dy = float(deslocamento[1]) if isinstance(deslocamento, (list, tuple)) and len(deslocamento) > 1 else 0.0
+        destino = (float(self.posicao[0]) + dx, float(self.posicao[1]) + dy)
+        if callable(colisor_cb) and not bool(colisor_cb(destino, self.raio_colisao)):
+            return False
+        self.definir_posicao(destino[0], destino[1])
+        self.estado_extra["ultimo_movimento"] = [dx, dy]
+        return True
+
+    def sumir(self) -> None:
+        self.estado_extra["ativo"] = False
+        self.estado_extra["despawnado"] = True
+
+    def capturar(self, capturador: str = "") -> None:
+        self.estado_extra["ativo"] = False
+        self.estado_extra["capturado"] = True
+        self.estado_extra["capturador"] = str(capturador or "")

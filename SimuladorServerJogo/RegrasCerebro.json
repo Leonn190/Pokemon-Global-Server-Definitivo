@@ -3,11 +3,12 @@
   "anel_render_chunks": 7,
   "anel_simulado_chunks": 13,
   "chance_spawn_por_tick": 0.35,
-  "chance_mover_por_tick": 0.65,
+  "chance_mover_por_tick": 0.45,
   "max_pokemon_por_chunk_simulado": 3,
   "max_pokemon_por_chunk_carregado": 0.12,
-  "maior_vetor_movimento_pokemon": 3.0,
-  "raio_colisao_pokemon": 0.45,
+  "maior_vetor_movimento_pokemon": 2.4,
+  "raio_colisao_pokemon": 0.725,
+  "velocidade_pokemon_tiles_s": 5.5,
   "tentativas_spawn_chunk": 12,
   "tiles_bloqueados": [0, 1, 2]
 }

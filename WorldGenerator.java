@@ -179,6 +179,7 @@ public class WorldGenerator {
         private final int area;
 
         private final byte[] biomeMap;
+        private final byte[] macroBiomeMap;
         private final byte[] tileMap;
         private final byte[] naturalMap;
         private final List<Poi> pois = new ArrayList<>();
@@ -191,6 +192,7 @@ public class WorldGenerator {
             this.height = rules.height;
             this.area = width * height;
             this.biomeMap = new byte[area];
+            this.macroBiomeMap = new byte[area];
             this.tileMap = new byte[area];
             this.naturalMap = new byte[area];
         }
@@ -216,6 +218,7 @@ public class WorldGenerator {
             long t2 = System.currentTimeMillis();
             System.out.println("Ajustando minimo de biomas...");
             rebalanceBiomesMinimums();
+            smoothIsolatedLandBiomes();
             updateCoastsAndBeaches();
             updateShallowWaterNearLand();
             logTime("Ajuste de biomas", t2);
@@ -245,6 +248,7 @@ public class WorldGenerator {
         private void generateBaseTerrain() {
             Arrays.fill(naturalMap, (byte) NaturalStructure.NONE.ordinal());
             Arrays.fill(biomeCounts, 0);
+            buildMacroBiomeMap();
 
             for (int y = 0; y < height; y++) {
                 if (y % 500 == 0) {
@@ -288,7 +292,8 @@ public class WorldGenerator {
                         continue;
                     }
 
-                    Biome biome = classifyLandBiome(temperature, moisture, magic, volcanic, swamp, elevation);
+                    Biome macroBiome = Biome.values()[macroBiomeMap[idx] & 0xFF];
+                    Biome biome = classifyLandBiome(temperature, moisture, magic, volcanic, swamp, elevation, macroBiome);
                     Tile tile = tileForBiome(biome);
                     biomeMap[idx] = (byte) biome.ordinal();
                     tileMap[idx] = (byte) tile.ordinal();
@@ -297,6 +302,8 @@ public class WorldGenerator {
             }
             updateCoastsAndBeaches();
             updateShallowWaterNearLand();
+            smoothIsolatedLandBiomes();
+            updateCoastsAndBeaches();
         }
 
         private void generateRivers() {
@@ -321,6 +328,40 @@ public class WorldGenerator {
                 created++;
             }
             System.out.println("  fontes de rio criadas: " + created + " / " + rules.riverSources);
+        }
+
+        private void buildMacroBiomeMap() {
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    int idx = index(x, y);
+
+                    double latitude = 1.0 - Math.abs((y / (double) (height - 1)) * 2.0 - 1.0);
+                    double macroTemperature = clamp01(fbm(x, y, 4, 0.56, 2.0, 2200.0, 811L) * 0.60 + latitude * 0.40);
+                    double macroMoisture = fbm(x, y, 4, 0.56, 2.0, 2100.0, 821L);
+                    double macroMagic = ridgeFbm(x, y, 3, 0.58, 2.0, 2500.0, 831L);
+                    double macroVolcanic = ridgeFbm(x, y, 3, 0.58, 2.0, 2600.0, 841L);
+                    double macroSwamp = fbm(x, y, 3, 0.58, 2.0, 1900.0, 851L);
+
+                    Biome macroBiome;
+                    if (macroVolcanic > 0.76 && macroTemperature > 0.50) {
+                        macroBiome = Biome.VOLCANIC;
+                    } else if (macroMagic > 0.80) {
+                        macroBiome = Biome.MAGIC;
+                    } else if (macroSwamp > 0.66 && macroMoisture > 0.63) {
+                        macroBiome = Biome.SWAMP;
+                    } else if (macroTemperature < 0.32) {
+                        macroBiome = Biome.SNOW;
+                    } else if (macroTemperature > 0.72 && macroMoisture < 0.38) {
+                        macroBiome = Biome.DESERT;
+                    } else if (macroMoisture > 0.58) {
+                        macroBiome = Biome.FOREST;
+                    } else {
+                        macroBiome = Biome.FIELD;
+                    }
+
+                    macroBiomeMap[idx] = (byte) macroBiome.ordinal();
+                }
+            }
         }
 
         private void carveRiverFrom(int startX, int startY) {
@@ -402,11 +443,40 @@ public class WorldGenerator {
                     if (score < 0.55) {
                         continue;
                     }
-                    setLand(idx, biome, tileForBiome(biome));
-                    filled++;
+                    filled += paintBiomePatch(x, y, biome, 2, 0.50);
                 }
                 System.out.println("    convertidos: " + filled);
             }
+        }
+
+        private int paintBiomePatch(int centerX, int centerY, Biome biome, int radius, double minimumSuitability) {
+            int converted = 0;
+            for (int dy = -radius; dy <= radius; dy++) {
+                int y = centerY + dy;
+                if (y <= 0 || y >= height - 1) {
+                    continue;
+                }
+                for (int dx = -radius; dx <= radius; dx++) {
+                    int x = centerX + dx;
+                    if (x <= 0 || x >= width - 1) {
+                        continue;
+                    }
+                    if (dx * dx + dy * dy > radius * radius) {
+                        continue;
+                    }
+                    int idx = index(x, y);
+                    Biome current = Biome.values()[biomeMap[idx] & 0xFF];
+                    if (!isLandBiome(current) || current == biome || nearPoi(x, y, 6)) {
+                        continue;
+                    }
+                    if (suitabilityForBiome(biome, x, y) < minimumSuitability) {
+                        continue;
+                    }
+                    setLand(idx, biome, tileForBiome(biome));
+                    converted++;
+                }
+            }
+            return converted;
         }
 
         private void placeNaturalStructures() {
@@ -636,18 +706,26 @@ public class WorldGenerator {
             return chance;
         }
 
-        private Biome classifyLandBiome(double temperature, double moisture, double magic, double volcanic, double swamp, double elevation) {
+        private Biome classifyLandBiome(double temperature, double moisture, double magic, double volcanic, double swamp, double elevation, Biome macroBiome) {
             if (volcanic > 0.76 && elevation > 0.58) {
                 return Biome.VOLCANIC;
             }
             if (magic > 0.81) {
                 return Biome.MAGIC;
             }
-            if (temperature < 0.23) {
-                return Biome.SNOW;
-            }
             if (swamp > 0.67 && moisture > 0.65 && elevation < 0.64) {
                 return Biome.SWAMP;
+            }
+
+            if (isLandBiome(macroBiome)) {
+                double macroSuitability = suitabilityForBiome(macroBiome, temperature, moisture, magic, volcanic, swamp, elevation);
+                if (macroSuitability >= 0.48) {
+                    return macroBiome;
+                }
+            }
+
+            if (temperature < 0.28) {
+                return Biome.SNOW;
             }
             if (temperature > 0.73 && moisture < 0.34) {
                 return Biome.DESERT;
@@ -665,6 +743,10 @@ public class WorldGenerator {
             double volcanic = volcanic(x, y);
             double swamp = swamp(x, y);
             double elevation = elevation(x, y) - edgeWaterPenalty(x, y);
+            return suitabilityForBiome(biome, temperature, moisture, magic, volcanic, swamp, elevation);
+        }
+
+        private double suitabilityForBiome(Biome biome, double temperature, double moisture, double magic, double volcanic, double swamp, double elevation) {
             return switch (biome) {
                 case FIELD -> clamp01(0.5 + (0.5 - Math.abs(moisture - 0.45)) + (0.35 - Math.abs(temperature - 0.55)));
                 case FOREST -> clamp01(0.55 + moisture * 0.8 - Math.abs(temperature - 0.55));
@@ -683,6 +765,73 @@ public class WorldGenerator {
                 return lakeNoise > 0.76 && !nearBorder(x, y, rules.softOceanBorder);
             }
             return false;
+        }
+
+        private void smoothIsolatedLandBiomes() {
+            byte[] smoothed = Arrays.copyOf(biomeMap, area);
+            int[] counts = new int[Biome.values().length];
+
+            for (int y = 1; y < height - 1; y++) {
+                for (int x = 1; x < width - 1; x++) {
+                    if (nearWater(x, y, 1)) {
+                        continue;
+                    }
+
+                    int idx = index(x, y);
+                    Biome current = Biome.values()[biomeMap[idx] & 0xFF];
+                    if (!isLandBiome(current)) {
+                        continue;
+                    }
+
+                    Arrays.fill(counts, 0);
+                    int sameNeighbors = 0;
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dx = -1; dx <= 1; dx++) {
+                            if (dx == 0 && dy == 0) {
+                                continue;
+                            }
+                            Biome neighbor = Biome.values()[biomeMap[index(x + dx, y + dy)] & 0xFF];
+                            if (!isLandBiome(neighbor)) {
+                                continue;
+                            }
+                            counts[neighbor.ordinal()]++;
+                            if (neighbor == current) {
+                                sameNeighbors++;
+                            }
+                        }
+                    }
+
+                    if (sameNeighbors >= 2) {
+                        continue;
+                    }
+
+                    Biome dominant = current;
+                    int dominantCount = 0;
+                    for (Biome biome : Biome.values()) {
+                        if (!isLandBiome(biome)) {
+                            continue;
+                        }
+                        int count = counts[biome.ordinal()];
+                        if (count > dominantCount) {
+                            dominantCount = count;
+                            dominant = biome;
+                        }
+                    }
+
+                    if (dominant != current && dominantCount >= 4) {
+                        smoothed[idx] = (byte) dominant.ordinal();
+                    }
+                }
+            }
+
+            for (int i = 0; i < area; i++) {
+                Biome oldBiome = Biome.values()[biomeMap[i] & 0xFF];
+                Biome newBiome = Biome.values()[smoothed[i] & 0xFF];
+                if (oldBiome == newBiome || !isLandBiome(newBiome)) {
+                    continue;
+                }
+                setLand(i, newBiome, tileForBiome(newBiome));
+            }
         }
 
         private void updateCoastsAndBeaches() {
@@ -870,9 +1019,9 @@ public class WorldGenerator {
 
         private double temperature(int x, int y) {
             double latitude = 1.0 - Math.abs((y / (double) (height - 1)) * 2.0 - 1.0);
-            double base = 0.25 + latitude * 0.65;
+            double base = 0.12 + latitude * 0.78;
             double noise = fbm(x, y, 4, 0.55, 2.0, 420.0, 151L);
-            return clamp01(base * 0.68 + noise * 0.32);
+            return clamp01(base * 0.72 + noise * 0.28);
         }
 
         private double magic(int x, int y) {

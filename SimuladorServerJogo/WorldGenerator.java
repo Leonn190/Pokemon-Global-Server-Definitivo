@@ -149,134 +149,135 @@ public class WorldGenerator {
         }
     }
 
-    static final class Rules {
-        int width = 10_000;
-        int height = 10_000;
-        long seed = 20260307L;
-        String outputDirectory = "output_world";
+static final class Rules {
+    int width = 10_000;
+    int height = 10_000;
+    long seed = 20260307L;
+    String outputDirectory = "output_world";
 
-        // ===== Ocean / water borders =====
-        int hardOceanBorder = 120;
-        int softOceanBorder = 420;
-        double edgeWaterPenaltyStrength = 0.55;
-        double seaLevel = 0.48;
-        double deepWaterExtraDepth = 0.04;
-        double shallowWaterBand = 0.032;
-        int oceanDetectionRadius = 2;
-        int waterDetectionRadiusForBeach = 1;
-        int shallowWaterNearLandRadius = 1;
+    // ===== Ocean / water borders =====
+    int hardOceanBorder = 120;
+    int softOceanBorder = 500;
+    double edgeWaterPenaltyStrength = 0.55;
+    double seaLevel = 0.505;
+    double deepWaterExtraDepth = 0.04;
+    double shallowWaterBand = 0.020;
+    int oceanDetectionRadius = 2;
+    int waterDetectionRadiusForBeach = 2;
+    int shallowWaterNearLandRadius = 1;
 
-        // ===== Lakes =====
-        double lakeElevationOffsetFromSeaLevel = 0.085;
-        double lakeMinMoisture = 0.68;
-        int lakeNoiseOctaves = 4;
-        double lakeNoisePersistence = 0.55;
-        double lakeNoiseLacunarity = 2.0;
-        double lakeNoiseScale = 130.0;
-        long lakeNoiseSeedOffset = 7777L;
-        double lakeNoiseThreshold = 0.76;
-        int lakeBorderBlockDistance = 420;
+    // ===== Lakes =====
+    double lakeElevationOffsetFromSeaLevel = 0.085;
+    double lakeMinMoisture = 0.68;
+    int lakeNoiseOctaves = 4;
+    double lakeNoisePersistence = 0.55;
+    double lakeNoiseLacunarity = 2.0;
+    double lakeNoiseScale = 130.0;
+    long lakeNoiseSeedOffset = 7777L;
+    double lakeNoiseThreshold = 0.76;
+    int lakeBorderBlockDistance = 420;
 
-        // ===== Rivers =====
-        int riverSources = 850;
-        int riverMaxLength = 650;
-        int riverWidth = 1;
-        int riverTerminalExtraWidth = 1;
-        double riverSourceMinHeight = 0.63;
-        int riverSourceMargin = 200;
-        int riverSourceNearWaterRadius = 8;
-        int riverMaxAttemptsPerSource = 50;
+    // ===== Rivers =====
+    int riverSources = 420;
+    int riverMaxLength = 1100;
+    int riverWidth = 2;
+    int riverTerminalExtraWidth = 2;
+    double riverSourceMinHeight = 0.66;
+    int riverSourceMargin = 200;
+    int riverSourceNearWaterRadius = 10;
+    int riverMaxAttemptsPerSource = 50;
 
-        // ===== POIs =====
-        int gymCount = 30;
-        int dungeonCount = 30;
-        int villageCount = 10;
-        int gymDistance = 230;
-        int dungeonDistance = 220;
-        int villageDistance = 300;
+    // ===== POIs =====
+    int gymCount = 30;
+    int dungeonCount = 30;
+    int villageCount = 10;
+    int gymDistance = 230;
+    int dungeonDistance = 220;
+    int villageDistance = 300;
 
-        // ===== Natural structures =====
-        int naturalBlockNearPoiRadius = 3;
-        int naturalBlockNearWaterRadius = 1;
-        int naturalBoostPalmNearWaterRadius = 3;
+    // ===== Natural structures =====
+    int naturalBlockNearPoiRadius = 3;
+    int naturalBlockNearWaterRadius = 1;
+    int naturalBoostPalmNearWaterRadius = 3;
 
-        // ===== Macro-biomes and region size =====
-        BiomeRule[] biomeRules;
-        StructureRule[] structureRules;
-        int macroGridWidth = 250;
-        int macroGridHeight = 250;
-        int macroMajorityRadius = 2;
-        int macroSmoothingPasses = 3;
-        int macroMinRegionCells = 8;
-        double macroLocalBlend = 0.08;
-        double macroEdgeNoiseStrength = 0.04;
-        double macroWarpScaleFactor = 0.7;
-        double macroWarpStrength = 1.2;
-        double macroEdgeNoiseScaleFactor = 2.4;
+    // ===== Macro-biomes and region size =====
+    BiomeRule[] biomeRules;
+    StructureRule[] structureRules;
+    int macroGridWidth = 250;
+    int macroGridHeight = 250;
+    int macroMajorityRadius = 2;
+    int macroSmoothingPasses = 3;
+    int macroMinRegionCells = 8;
+    double macroLocalBlend = 0.08;
+    double macroEdgeNoiseStrength = 0.04;
+    double macroWarpScaleFactor = 0.7;
+    double macroWarpStrength = 1.2;
+    double macroEdgeNoiseScaleFactor = 2.4;
 
-        int macroTemperatureOctaves = 4;
-        double macroTemperaturePersistence = 0.56;
-        double macroTemperatureLacunarity = 2.0;
-        double macroTemperatureScale = 3400.0;
-        long macroTemperatureSeedOffset = 811L;
-        double macroTemperatureNoiseWeight = 0.58;
-        double macroTemperatureLatitudeWeight = 0.42;
+    int macroTemperatureOctaves = 4;
+    double macroTemperaturePersistence = 0.56;
+    double macroTemperatureLacunarity = 2.0;
+    double macroTemperatureScale = 3400.0;
+    long macroTemperatureSeedOffset = 811L;
+    double macroTemperatureNoiseWeight = 0.58;
+    double macroTemperatureLatitudeWeight = 0.42;
 
-        int macroMoistureOctaves = 4;
-        double macroMoisturePersistence = 0.56;
-        double macroMoistureLacunarity = 2.0;
-        double macroMoistureScale = 3200.0;
-        long macroMoistureSeedOffset = 821L;
+    int macroMoistureOctaves = 4;
+    double macroMoisturePersistence = 0.56;
+    double macroMoistureLacunarity = 2.0;
+    double macroMoistureScale = 3200.0;
+    long macroMoistureSeedOffset = 821L;
 
-        int macroMagicOctaves = 3;
-        double macroMagicPersistence = 0.58;
-        double macroMagicLacunarity = 2.0;
-        double macroMagicScale = 3600.0;
-        long macroMagicSeedOffset = 831L;
+    int macroMagicOctaves = 3;
+    double macroMagicPersistence = 0.58;
+    double macroMagicLacunarity = 2.0;
+    double macroMagicScale = 3600.0;
+    long macroMagicSeedOffset = 831L;
 
-        int macroVolcanicOctaves = 3;
-        double macroVolcanicPersistence = 0.58;
-        double macroVolcanicLacunarity = 2.0;
-        double macroVolcanicScale = 3000.0;
-        long macroVolcanicSeedOffset = 841L;
+    int macroVolcanicOctaves = 3;
+    double macroVolcanicPersistence = 0.58;
+    double macroVolcanicLacunarity = 2.0;
+    double macroVolcanicScale = 3000.0;
+    long macroVolcanicSeedOffset = 841L;
 
-        int macroSwampOctaves = 3;
-        double macroSwampPersistence = 0.58;
-        double macroSwampLacunarity = 2.0;
-        double macroSwampScale = 2800.0;
-        long macroSwampSeedOffset = 851L;
+    int macroSwampOctaves = 3;
+    double macroSwampPersistence = 0.58;
+    double macroSwampLacunarity = 2.0;
+    double macroSwampScale = 2800.0;
+    long macroSwampSeedOffset = 851L;
 
-        static Rules defaultRules() {
-            Rules rules = new Rules();
-            rules.biomeRules = new BiomeRule[]{
-                    new BiomeRule(Biome.FIELD, 1.00, 0.16, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0),
-                    new BiomeRule(Biome.FOREST, 1.00, 0.12, 0.0, 1.0, 0.57, 1.0, 0.0, 1.0),
-                    new BiomeRule(Biome.DESERT, 0.75, 0.08, 0.71, 1.0, 0.0, 0.40, 0.0, 1.0),
-                    new BiomeRule(Biome.SNOW, 0.65, 0.08, 0.0, 0.31, 0.0, 1.0, 0.0, 1.0),
-                    new BiomeRule(Biome.MAGIC, 0.40, 0.05, 0.0, 1.0, 0.0, 1.0, 0.79, 1.0),
-                    new BiomeRule(Biome.VOLCANIC, 0.35, 0.04, 0.48, 1.0, 0.0, 1.0, 0.73, 1.0),
-                    new BiomeRule(Biome.SWAMP, 0.45, 0.05, 0.0, 1.0, 0.62, 1.0, 0.64, 1.0)
-            };
-            rules.lakeBorderBlockDistance = rules.softOceanBorder;
+    static Rules defaultRules() {
+        Rules rules = new Rules();
+        rules.biomeRules = new BiomeRule[]{
+                new BiomeRule(Biome.FIELD,    0.82, 0.11, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0),
+                new BiomeRule(Biome.FOREST,   1.35, 0.22, 0.0, 1.0, 0.52, 1.0, 0.0, 1.0),
+                new BiomeRule(Biome.DESERT,   1.18, 0.13, 0.68, 1.0, 0.0, 0.42, 0.0, 1.0),
+                new BiomeRule(Biome.SNOW,     0.65, 0.07, 0.0, 0.30, 0.0, 1.0, 0.0, 1.0),
+                new BiomeRule(Biome.MAGIC,    0.10, 0.015, 0.0, 1.0, 0.0, 1.0, 0.88, 1.0),
+                new BiomeRule(Biome.VOLCANIC, 0.08, 0.01, 0.52, 1.0, 0.0, 1.0, 0.83, 1.0),
+                new BiomeRule(Biome.SWAMP,    0.65, 0.06, 0.0, 1.0, 0.62, 1.0, 0.60, 1.0)
+        };
 
-            EnumSet<Biome> land = EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.DESERT, Biome.SNOW, Biome.MAGIC, Biome.VOLCANIC, Biome.SWAMP);
-            rules.structureRules = new StructureRule[]{
-                    new StructureRule(NaturalStructure.TREE, 0.0160, 130_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
-                    new StructureRule(NaturalStructure.ROCK, 0.0060, 55_000, land),
-                    new StructureRule(NaturalStructure.BUSH, 0.0075, 60_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
-                    new StructureRule(NaturalStructure.GOLD, 0.0011, 10_000, land),
-                    new StructureRule(NaturalStructure.AMETHYST, 0.0026, 14_000, EnumSet.of(Biome.MAGIC)),
-                    new StructureRule(NaturalStructure.DIAMOND, 0.0023, 12_000, EnumSet.of(Biome.SNOW)),
-                    new StructureRule(NaturalStructure.RUBY, 0.0025, 11_000, EnumSet.of(Biome.VOLCANIC)),
-                    new StructureRule(NaturalStructure.EMERALD, 0.0023, 11_000, EnumSet.of(Biome.DESERT)),
-                    new StructureRule(NaturalStructure.PALM, 0.0045, 16_000, EnumSet.of(Biome.DESERT)),
-                    new StructureRule(NaturalStructure.PINE, 0.0058, 18_000, EnumSet.of(Biome.SNOW)),
-                    new StructureRule(NaturalStructure.COPPER, 0.0024, 18_000, land),
-                    new StructureRule(NaturalStructure.LAVA_POOL, 0.0035, 10_000, EnumSet.of(Biome.VOLCANIC))
-            };
-            return rules;
-        }
+        rules.lakeBorderBlockDistance = rules.softOceanBorder;
+
+        EnumSet<Biome> land = EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.DESERT, Biome.SNOW, Biome.MAGIC, Biome.VOLCANIC, Biome.SWAMP);
+        rules.structureRules = new StructureRule[]{
+                new StructureRule(NaturalStructure.TREE, 0.0160, 130_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
+                new StructureRule(NaturalStructure.ROCK, 0.0060, 55_000, land),
+                new StructureRule(NaturalStructure.BUSH, 0.0075, 60_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
+                new StructureRule(NaturalStructure.GOLD, 0.0011, 10_000, land),
+                new StructureRule(NaturalStructure.AMETHYST, 0.0026, 14_000, EnumSet.of(Biome.MAGIC)),
+                new StructureRule(NaturalStructure.DIAMOND, 0.0023, 12_000, EnumSet.of(Biome.SNOW)),
+                new StructureRule(NaturalStructure.RUBY, 0.0025, 11_000, EnumSet.of(Biome.VOLCANIC)),
+                new StructureRule(NaturalStructure.EMERALD, 0.0023, 11_000, EnumSet.of(Biome.DESERT)),
+                new StructureRule(NaturalStructure.PALM, 0.0045, 16_000, EnumSet.of(Biome.DESERT)),
+                new StructureRule(NaturalStructure.PINE, 0.0058, 18_000, EnumSet.of(Biome.SNOW)),
+                new StructureRule(NaturalStructure.COPPER, 0.0024, 18_000, land),
+                new StructureRule(NaturalStructure.LAVA_POOL, 0.0035, 10_000, EnumSet.of(Biome.VOLCANIC))
+        };
+        return rules;
     }
+}
 
     static final class Generator {
         private final Rules rules;

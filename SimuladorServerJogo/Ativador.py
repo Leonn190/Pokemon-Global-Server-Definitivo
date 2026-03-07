@@ -19,6 +19,7 @@ _CLIENTS_CONHECIDOS: Set[str] = set()
 _CLIENT_STATE: Dict[str, Dict[str, object]] = {}
 
 
+# --------------------- Funções auxiliares ---------------------
 def _next_seq() -> int:
     global _DIFF_SEQ
     _DIFF_SEQ += 1
@@ -71,6 +72,8 @@ def _obter_state_client(client_id: str) -> Dict[str, object]:
     return _CLIENT_STATE[client_id]
 
 
+# ============================= ROTA =============================
+# ROTA: entrega chunks e diffs ainda não coletados por client.
 def processar_ativador_json(requisicao_json: str) -> str:
     try:
         pacote = json.loads(requisicao_json)
@@ -165,6 +168,8 @@ def processar_ativador_json(requisicao_json: str) -> str:
     return json.dumps(resposta, ensure_ascii=False)
 
 
+
+# --------------------- Funções auxiliares públicas ---------------------
 def desconectar_client(client_id: str) -> None:
     with _DIFF_LOCK:
         _CLIENTS_CONHECIDOS.discard(client_id)

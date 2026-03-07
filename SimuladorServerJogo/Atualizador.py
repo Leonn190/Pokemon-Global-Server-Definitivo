@@ -12,6 +12,7 @@ from SimuladorServerJogo.ObjetosMundoServer import GameObjetoServer
 from SimuladorServerJogo.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem
 
 
+# --------------------- Funções auxiliares ---------------------
 def _normalizar_posicao_loop(posicao):
     if not isinstance(posicao, (list, tuple)) or len(posicao) != 2:
         return posicao
@@ -38,6 +39,8 @@ def _escopo_objeto(obj: GameObjetoServer) -> Dict[str, object]:
     return {"centro": [obj.posicao[0], obj.posicao[1]], "raio": 780.0}
 
 
+# ============================= ROTA =============================
+# ROTA: recebe diffs de clients e aplica no estado do servidor.
 def processar_atualizador_json(requisicao_json: str) -> str:
     try:
         pacote = json.loads(requisicao_json)

@@ -443,10 +443,40 @@ public class WorldGenerator {
                     if (score < 0.55) {
                         continue;
                     }
-                    filled += paintBiomePatch(x, y, biome, 2, 0.50);
+
+                    // Evita granulação: só reforça em regiões já conectadas ao bioma alvo.
+                    if (current > 0 && !nearBiome(x, y, biome, 24)) {
+                        continue;
+                    }
+
+                    int patchRadius = current > 0 ? 8 : 20;
+                    double minimumSuitability = current > 0 ? 0.46 : 0.42;
+                    filled += paintBiomePatch(x, y, biome, patchRadius, minimumSuitability);
                 }
                 System.out.println("    convertidos: " + filled);
             }
+        }
+
+        private boolean nearBiome(int x, int y, Biome biome, int radius) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                int ny = y + dy;
+                if (ny <= 0 || ny >= height - 1) {
+                    continue;
+                }
+                for (int dx = -radius; dx <= radius; dx++) {
+                    int nx = x + dx;
+                    if (nx <= 0 || nx >= width - 1) {
+                        continue;
+                    }
+                    if (dx * dx + dy * dy > radius * radius) {
+                        continue;
+                    }
+                    if (Biome.values()[biomeMap[index(nx, ny)] & 0xFF] == biome) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         private int paintBiomePatch(int centerX, int centerY, Biome biome, int radius, double minimumSuitability) {
@@ -707,21 +737,9 @@ public class WorldGenerator {
         }
 
         private Biome classifyLandBiome(double temperature, double moisture, double magic, double volcanic, double swamp, double elevation, Biome macroBiome) {
-            if (volcanic > 0.76 && elevation > 0.58) {
-                return Biome.VOLCANIC;
-            }
-            if (magic > 0.81) {
-                return Biome.MAGIC;
-            }
-            if (swamp > 0.67 && moisture > 0.65 && elevation < 0.64) {
-                return Biome.SWAMP;
-            }
-
+            // Sem granulação: em terra, prioriza sempre o macro-bioma contínuo.
             if (isLandBiome(macroBiome)) {
-                double macroSuitability = suitabilityForBiome(macroBiome, temperature, moisture, magic, volcanic, swamp, elevation);
-                if (macroSuitability >= 0.48) {
-                    return macroBiome;
-                }
+                return macroBiome;
             }
 
             if (temperature < 0.28) {

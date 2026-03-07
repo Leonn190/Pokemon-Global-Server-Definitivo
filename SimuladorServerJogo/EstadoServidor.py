@@ -115,7 +115,14 @@ def _apagar_mundo():
     global _ESTADO_MUNDO
     if ARQUIVO_MUNDO.exists():
         ARQUIVO_MUNDO.unlink()
-    _ESTADO_MUNDO = {"meta": {}, "grid": [], "players": {}, "spawn": [0.0, 0.0]}
+    _ESTADO_MUNDO = {
+        "meta": {},
+        "grid": [],
+        "grid_biomas": [],
+        "grid_estruturas_naturais": [],
+        "players": {},
+        "spawn": [0.0, 0.0],
+    }
     _ESTADO["personagens"].clear()
     _ESTADO["jogadores_com_personagem"].clear()
     BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)

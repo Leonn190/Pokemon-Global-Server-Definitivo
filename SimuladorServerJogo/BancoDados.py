@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 import threading
 from collections import defaultdict
+import json
+from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 from SimuladorServerJogo.GeradorMundo import (
@@ -21,7 +23,7 @@ Vector2 = Tuple[float, float]
 
 class BancoDadosMundo:
     def __init__(self, tamanho_celula: int = 256, chunk_tamanho_px: int = CHUNK_BLOCOS * BLOCO_TAMANHO_PX) -> None:
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._objetos: Dict[int, GameObjetoServer] = {}
         self._usuarios_para_objeto: Dict[str, int] = {}
         self._indice_espacial: Dict[Tuple[int, int], Set[int]] = defaultdict(set)
@@ -30,21 +32,28 @@ class BancoDadosMundo:
         self._chunk_tamanho_px = max(128, int(chunk_tamanho_px))
 
         self._estado_mundo = carregar_ou_criar_estado_mundo()
-        self._grid = self._estado_mundo.get("grid", [])
+        self._grid: List[List[int]] = []
+        self._chunks_cache: Dict[Tuple[int, int], Dict[str, List[List[int]]]] = {}
+        self._chunks_estruturas_carregados: Set[Tuple[int, int]] = set()
+        self._chunks_dir = Path(__file__).resolve().parent.parent / "world_chunks"
         meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
         self._chunk_blocos = int(CHUNK_BLOCOS)
-        self._largura_blocos = int(meta.get("largura_blocos", len(self._grid[0]) if self._grid else 0))
-        self._altura_blocos = int(meta.get("altura_blocos", len(self._grid)))
+        self._chunk_blocos_disco = max(1, int(meta.get("chunk_blocos_disco", meta.get("chunk_blocos", CHUNK_BLOCOS))))
+        self._largura_blocos = int(meta.get("largura_blocos", 0))
+        self._altura_blocos = int(meta.get("altura_blocos", 0))
         self._gerar_estruturas_naturais_no_mapa()
 
     def recarregar_mundo(self, estado_mundo: Dict[str, object], limpar_objetos: bool = False) -> None:
         with self._lock:
             self._estado_mundo = estado_mundo if isinstance(estado_mundo, dict) else {}
-            self._grid = self._estado_mundo.get("grid", [])
+            self._grid = []
+            self._chunks_cache.clear()
+            self._chunks_estruturas_carregados.clear()
             meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
             self._chunk_blocos = max(1, int(CHUNK_BLOCOS))
-            self._largura_blocos = int(meta.get("largura_blocos", len(self._grid[0]) if self._grid else 0))
-            self._altura_blocos = int(meta.get("altura_blocos", len(self._grid)))
+            self._chunk_blocos_disco = max(1, int(meta.get("chunk_blocos_disco", meta.get("chunk_blocos", CHUNK_BLOCOS))))
+            self._largura_blocos = int(meta.get("largura_blocos", 0))
+            self._altura_blocos = int(meta.get("altura_blocos", 0))
 
             if limpar_objetos:
                 self._objetos.clear()
@@ -53,48 +62,114 @@ class BancoDadosMundo:
             self._gerar_estruturas_naturais_no_mapa()
 
     def _gerar_estruturas_naturais_no_mapa(self) -> None:
-        grid_nat = self._estado_mundo.get("grid_estruturas_naturais", [])
-        if not isinstance(grid_nat, list) or not grid_nat:
-            return
+        with self._lock:
+            ids_remover = [oid for oid, obj in self._objetos.items() if obj.tipo_classe == "estrutura_natural"]
+            for oid in ids_remover:
+                obj_antigo = self._objetos.pop(oid, None)
+                if obj_antigo is not None:
+                    self._indice_espacial[self._celula(obj_antigo.posicao)].discard(oid)
+            self._chunks_estruturas_carregados.clear()
 
-        ids_remover = [oid for oid, obj in self._objetos.items() if obj.tipo_classe == "estrutura_natural"]
-        for oid in ids_remover:
-            obj_antigo = self._objetos.pop(oid, None)
-            if obj_antigo is not None:
-                self._indice_espacial[self._celula(obj_antigo.posicao)].discard(oid)
+    def _tile_estrutura_em(self, gx: int, gy: int) -> int:
+        dc = max(1, int(self._chunk_blocos_disco))
+        cx = gx // dc
+        cy = gy // dc
+        lx = gx % dc
+        ly = gy % dc
+        chunk = self._carregar_chunk(cx, cy)
+        grid = chunk.get("grid_estruturas", [])
+        if 0 <= ly < len(grid) and isinstance(grid[ly], list) and 0 <= lx < len(grid[ly]):
+            try:
+                return int(grid[ly][lx])
+            except (TypeError, ValueError):
+                return 0
+        return 0
 
-        for y, linha in enumerate(grid_nat):
-            if not isinstance(linha, list):
-                continue
-            for x, valor in enumerate(linha):
-                try:
-                    tile_nat = int(valor)
-                except (TypeError, ValueError):
-                    continue
-                cfg = tipo_estrutura_natural_por_codigo(tile_nat)
-                if not cfg:
-                    continue
-                oid = self._next_id
-                self._next_id += 1
-                while oid in self._objetos:
+    def _assegurar_estruturas_chunk(self, cx: int, cy: int) -> None:
+        with self._lock:
+            chave = self.normalizar_chunk((cx, cy))
+            if chave in self._chunks_estruturas_carregados:
+                return
+
+            x0 = chave[0] * self._chunk_blocos
+            y0 = chave[1] * self._chunk_blocos
+            x1 = min(self._largura_blocos - 1, x0 + self._chunk_blocos - 1)
+            y1 = min(self._altura_blocos - 1, y0 + self._chunk_blocos - 1)
+            if x1 < x0 or y1 < y0:
+                self._chunks_estruturas_carregados.add(chave)
+                return
+
+            for gy in range(y0, y1 + 1):
+                for gx in range(x0, x1 + 1):
+                    tile_nat = self._tile_estrutura_em(gx, gy)
+                    cfg = tipo_estrutura_natural_por_codigo(tile_nat)
+                    if not cfg:
+                        continue
                     oid = self._next_id
                     self._next_id += 1
+                    while oid in self._objetos:
+                        oid = self._next_id
+                        self._next_id += 1
 
-                obj = EstruturaNaturalServer(
-                    id_objeto=oid,
-                    tipo=cfg["subtipo"],
-                    nome=cfg["nome"],
-                    sprite=cfg["sprite"],
-                    posicao=(float(x), float(y)),
-                    raio_colisao=cfg["raio_colisao"],
-                    raio_interacao=cfg["raio_interacao"],
-                    campo=float(cfg.get("campo", 0.0) or 0.0),
-                    intensidade=float(cfg.get("intensidade", 0.0) or 0.0),
-                    codigo_natural=tile_nat,
-                )
-                obj.tipo_classe = "estrutura_natural"
-                self._objetos[obj.Id] = obj
-                self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)
+                    obj = EstruturaNaturalServer(
+                        id_objeto=oid,
+                        tipo=cfg["subtipo"],
+                        nome=cfg["nome"],
+                        sprite=cfg["sprite"],
+                        posicao=(float(gx), float(gy)),
+                        raio_colisao=cfg["raio_colisao"],
+                        raio_interacao=cfg["raio_interacao"],
+                        campo=float(cfg.get("campo", 0.0) or 0.0),
+                        intensidade=float(cfg.get("intensidade", 0.0) or 0.0),
+                        codigo_natural=tile_nat,
+                    )
+                    obj.tipo_classe = "estrutura_natural"
+                    self._objetos[obj.Id] = obj
+                    self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)
+
+            self._chunks_estruturas_carregados.add(chave)
+
+    def _carregar_chunk(self, cx: int, cy: int) -> Dict[str, List[List[int]]]:
+        with self._lock:
+            chave = (int(cx), int(cy))
+            cache = self._chunks_cache.get(chave)
+            if cache is not None:
+                return cache
+
+            arquivo = self._chunks_dir / f"chunk_{chave[0]}_{chave[1]}.json"
+            with arquivo.open("r", encoding="utf-8") as f:
+                payload = json.load(f)
+            if not isinstance(payload, dict):
+                raise ValueError(f"Chunk inválido: {arquivo}")
+
+            grid = payload.get("grid_blocos", [])
+            grid_biomas = payload.get("grid_biomas", [])
+            grid_estruturas = payload.get("grid_estruturas", [])
+            cache = {
+                "grid_blocos": grid if isinstance(grid, list) else [],
+                "grid_biomas": grid_biomas if isinstance(grid_biomas, list) else [],
+                "grid_estruturas": grid_estruturas if isinstance(grid_estruturas, list) else [],
+            }
+            self._chunks_cache[chave] = cache
+            return cache
+
+    def tile_em(self, gx: int, gy: int) -> int:
+        with self._lock:
+            if gx < 0 or gy < 0 or gx >= self._largura_blocos or gy >= self._altura_blocos:
+                return 0
+            dc = max(1, int(self._chunk_blocos_disco))
+            cx = gx // dc
+            cy = gy // dc
+            lx = gx % dc
+            ly = gy % dc
+            chunk = self._carregar_chunk(cx, cy)
+            grid = chunk.get("grid_blocos", [])
+            if 0 <= ly < len(grid) and isinstance(grid[ly], list) and 0 <= lx < len(grid[ly]):
+                try:
+                    return int(grid[ly][lx])
+                except (TypeError, ValueError):
+                    return 0
+            return 0
 
     def limites_mundo(self) -> Tuple[int, int]:
         with self._lock:
@@ -201,6 +276,11 @@ class BancoDadosMundo:
 
     def buscar_proximos(self, posicao: Vector2, raio: float) -> List[GameObjetoServer]:
         raio = max(0.0, float(raio))
+        chunk_tamanho = self.chunk_tamanho_unidade()
+        if chunk_tamanho > 0:
+            alcance_chunk = max(0, int(math.ceil(raio / chunk_tamanho)))
+            for c in self.chunks_proximos(posicao, raio_chunks=alcance_chunk):
+                self._assegurar_estruturas_chunk(c[0], c[1])
         cx, cy = self._celula(posicao)
         alcance = int(math.ceil(raio / self._tamanho_celula)) + 1
         ids: Set[int] = set()
@@ -232,7 +312,8 @@ class BancoDadosMundo:
             return ator
 
     def chunk_em_grade(self, chunk_xy: Tuple[int, int]) -> List[List[int]]:
-        cx, cy = chunk_xy
+        cx, cy = self.normalizar_chunk(chunk_xy)
+        self._assegurar_estruturas_chunk(cx, cy)
         x0 = cx * self._chunk_blocos
         y0 = cy * self._chunk_blocos
 
@@ -243,7 +324,7 @@ class BancoDadosMundo:
             for bx in range(self._chunk_blocos):
                 gx = x0 + bx
                 if 0 <= gy < self._altura_blocos and 0 <= gx < self._largura_blocos:
-                    linha.append(int(self._grid[gy][gx]))
+                    linha.append(self.tile_em(gx, gy))
                 else:
                     linha.append(0)
             grid.append(linha)

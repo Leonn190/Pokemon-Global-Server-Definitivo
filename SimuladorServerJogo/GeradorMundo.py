@@ -16,8 +16,8 @@ CHUNK_BLOCOS = 10
 PASTA_SERVIDOR = Path(__file__).resolve().parent
 RAIZ_REPOSITORIO = PASTA_SERVIDOR.parent
 ARQUIVO_MUNDO = PASTA_SERVIDOR / "MundoEstado.json"
-ARQUIVO_WORLD_META = RAIZ_REPOSITORIO / "world_meta.json"
-PASTA_WORLD_CHUNKS = RAIZ_REPOSITORIO / "world_chunks"
+ARQUIVO_WORLD_META = PASTA_SERVIDOR / "world_meta.json"
+PASTA_WORLD_CHUNKS = PASTA_SERVIDOR / "world_chunks"
 ARQUIVO_FOTO_MUNDO_JAVA = PASTA_SERVIDOR / "world_foto.png"
 ARQUIVO_JAVA = PASTA_SERVIDOR / "WorldGenerator.java"
 ARQUIVO_CLASS = PASTA_SERVIDOR / "WorldGenerator.class"
@@ -47,13 +47,13 @@ def _emitir_progresso(callback_progresso, percentual: int, mensagem: str) -> Non
 
 def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str], None] | None = None) -> None:
     _compilar_java_se_necessario()
-    cmd = ["java", "-cp", str(PASTA_SERVIDOR), "WorldGenerator", str(seed), str(RAIZ_REPOSITORIO)]
+    cmd = ["java", "-cp", str(PASTA_SERVIDOR), "WorldGenerator", str(seed), str(PASTA_SERVIDOR)]
 
     _emitir_progresso(callback_progresso, 1, "Preparando geração do mundo")
 
     proc = subprocess.Popen(
         cmd,
-        cwd=RAIZ_REPOSITORIO,
+        cwd=PASTA_SERVIDOR,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -139,6 +139,8 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
     saida = proc.wait()
     if saida != 0:
         raise subprocess.CalledProcessError(saida, cmd)
+    if not ARQUIVO_FOTO_MUNDO_JAVA.exists():
+        raise FileNotFoundError(f"Foto do mundo não foi gerada em {ARQUIVO_FOTO_MUNDO_JAVA}")
 
 
 def limpar_arquivos_mundo() -> None:

@@ -350,6 +350,11 @@ static final class Rules {
             writeWorldChunks(dir);
             logTime("Export", t5);
 
+            long t6 = System.currentTimeMillis();
+            System.out.println("Gerando foto do mundo...");
+            renderBaseWorld(new File(dir, "world_foto.png"));
+            logTime("Foto do mundo", t6);
+
             printSummary();
             logTime("Tempo total", t0);
         }

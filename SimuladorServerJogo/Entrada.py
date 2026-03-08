@@ -3,8 +3,7 @@ import time
 
 from SimuladorServerJogo.Ativador import registrar_diff, desconectar_client
 from SimuladorServerJogo.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.EstadoServidor import adicionar_personagem, atualizar_perfil_personagem, snapshot_estado
-from SimuladorServerJogo.GeradorMundo import obter_posicao_spawn
+from SimuladorServerJogo.EstadoServidor import adicionar_personagem, obter_personagem_para_entrada, snapshot_estado
 
 
 # --------------------- Funções auxiliares ---------------------
@@ -54,31 +53,8 @@ def processar_entrada_json(requisicao_json):
         possui_personagem = usuario in estado["jogadores_com_personagem"]
         personagem = None
         if possui_personagem:
-            personagem = dict(estado.get("personagens", {}).get(usuario, {}))
+            personagem = obter_personagem_para_entrada(usuario) or {}
             personagem.setdefault("nome", usuario)
-            pos_personagem = personagem.get("posicao")
-            if not isinstance(pos_personagem, (list, tuple)) or len(pos_personagem) != 2:
-                from SimuladorServerJogo.EstadoServidor import _ESTADO_MUNDO, atualizar_posicao_personagem
-                spawn = obter_posicao_spawn(_ESTADO_MUNDO)
-                personagem["posicao"] = [float(spawn[0]), float(spawn[1])]
-                atualizar_posicao_personagem(usuario, personagem["posicao"])
-            elif float(pos_personagem[0]) == 0.0 and float(pos_personagem[1]) == 0.0:
-                from SimuladorServerJogo.EstadoServidor import _ESTADO_MUNDO, atualizar_posicao_personagem
-                spawn = obter_posicao_spawn(_ESTADO_MUNDO)
-                personagem["posicao"] = [float(spawn[0]), float(spawn[1])]
-                atualizar_posicao_personagem(usuario, personagem["posicao"])
-            personagem.setdefault("posicao", (0.0, 0.0))
-            personagem.setdefault("nivel_mochila", 1)
-            personagem.setdefault("batalhas_pvp_vencidas", 0)
-            personagem.setdefault("batalhas_bot_vencidas", 0)
-            personagem.setdefault("ouro", 0)
-            personagem.setdefault("passos_caminhados", 0)
-            personagem.setdefault("insignias", [])
-            personagem.setdefault("maestria", 0)
-            personagem.setdefault("skins_liberadas", [])
-            personagem.setdefault("stamina_max", 100.0)
-            personagem.setdefault("stamina", personagem["stamina_max"])
-            atualizar_perfil_personagem(usuario, personagem)
             ator = BANCO_DADOS.garantir_player(
                 usuario=usuario,
                 skin=str(personagem.get("skin", "S1.png")),

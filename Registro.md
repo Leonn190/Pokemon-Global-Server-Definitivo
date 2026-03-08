@@ -2,38 +2,38 @@
 
 **Repo:** `Pokemon-Global-Server-Definitivo`  
 
-**Gerado em:** 2026-03-07T10:39:36  
+**Gerado em:** 2026-03-08T09:41:29  
 
 ## Visão geral
 
-- **Pastas:** 1.145
-- **Arquivos:** 68.150
-- **Tamanho total:** 454.901.553 bytes (0.424 GiB)
+- **Pastas:** 1.144
+- **Arquivos:** 78.148
+- **Tamanho total:** 1.020.013.032 bytes (0.950 GiB)
 
 ## Python
 
 - **Arquivos `.py`:** 95
-- **Linhas totais:** 10.275
+- **Linhas totais:** 10.593
 - **Classes encontradas:** 59
 
 ### Top 5 maiores arquivos `.py`
 
 | Arquivo | Tamanho (KiB) |
 |---|---:|
-| `Codigo/Modulos/ControladorObjetos.py` | 17.87 |
+| `Codigo/Modulos/ControladorObjetos.py` | 19.92 |
+| `SimuladorServerJogo/BancoDados.py` | 16.24 |
 | `Codigo/Telas/TelaCriarPersonagem.py` | 15.85 |
 | `Codigo/Telas/TelaServers.py` | 15.50 |
 | `Outros/Mixer.py` | 14.87 |
-| `Codigo/Prefabs/Botao.py` | 14.71 |
 
 ## Top extensões por tamanho
 
 | Ext | Tamanho (GiB) | Arquivos |
 |---:|---:|---:|
-| `.png` | 0.385 | 68.016 |
+| `.json` | 0.581 | 10.002 |
+| `.png` | 0.331 | 68.014 |
 | `.ogg` | 0.036 | 14 |
 | `.jpg` | 0.001 | 1 |
-| `.json` | 0.001 | 2 |
 | `.py` | 0.000 | 95 |
 | `.wav` | 0.000 | 2 |
 | `.csv` | 0.000 | 2 |
@@ -47,22 +47,20 @@
 
 | Métrica | Anterior | Atual | Δ |
 |---|---:|---:|---:|
-| pastas | 1.137 | 1.145 | 8 |
-| arquivos | 67.972 | 68.150 | 178 |
-| tamanho_bytes | 0.365 GiB | 0.424 GiB | 0.059 GiB |
-| py_arquivos | 97 | 95 | -2 |
-| linhas_totais | 9.858 | 10.275 | 417 |
-| classes_encontradas | 56 | 59 | 3 |
+| pastas | 1.145 | 1.144 | -1 |
+| arquivos | 68.150 | 78.148 | 9.998 |
+| tamanho_bytes | 0.424 GiB | 0.950 GiB | 0.526 GiB |
+| py_arquivos | 95 | 95 | 0 |
+| linhas_totais | 10.275 | 10.593 | 318 |
+| classes_encontradas | 59 | 59 | 0 |
 
 **Maiores mudanças por extensão (top 12 por |Δ tamanho|):**
 
 | Ext | Δ arquivos | Δ tamanho (GiB) |
 |---:|---:|---:|
-| `.png` | 166 | 0.059 |
-| `.csv` | 0 | 0.000 |
-| `.java` | 1 | 0.000 |
-| `.class` | 11 | 0.000 |
-| `.py` | -2 | 0.000 |
-| `.json` | 1 | 0.000 |
+| `.json` | 10.000 | 0.580 |
+| `.png` | -2 | -0.054 |
+| `.java` | 0 | 0.000 |
+| `.py` | 0 | 0.000 |
+| `.class` | 0 | 0.000 |
 | `.md` | 0 | 0.000 |
-| `.txt` | 1 | 0.000 |

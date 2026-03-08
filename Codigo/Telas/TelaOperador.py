@@ -178,7 +178,13 @@ def _processar_status_geracao(jogo, resposta):
                 _GERACAO_NOTIFICADA = True
         return
 
-    if operacao == "remocao" and not resposta.get("mundo_existente", True):
+    operacao_remocao = operacao == "remocao" or (
+        operacao == "nenhuma"
+        and isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
+        and not bool(resposta.get("mundo_existente", True))
+    )
+
+    if operacao_remocao and not resposta.get("mundo_existente", True):
         if isinstance(_SUBTELA_ATIVA, SubtelaCarregamento):
             _SUBTELA_ATIVA.encerrada = True
         if not _REMOCAO_NOTIFICADA:

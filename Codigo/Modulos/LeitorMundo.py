@@ -1,4 +1,8 @@
-"""Leitor de mundo do cliente para sincronizar chunks e objetos remotos via diffs."""
+"""Leitor de mundo do cliente para sincronizar chunks do anel ativo.
+
+Neste novo modelo, o LeitorMundo ficou responsável APENAS por chunks.
+As diffs de objetos agora ficam no ControladorObjetos.
+"""
 
 from __future__ import annotations
 
@@ -31,9 +35,14 @@ class LeitorMundo:
         self.ClientId = str(getattr(jogo, "INFO", {}).get("UsuarioLogado", "anon"))
         self.Chunks: Dict[Tuple[int, int], List[List[int]]] = {}
         self._lock = threading.Lock()
-        self._thread: Optional[threading.Thread] = None
-        self._ativo = False
+
+        # Thread dedicada SOMENTE ao fluxo de chunks.
+        self._thread_chunks: Optional[threading.Thread] = None
+        self._ativo_chunks = False
+
+        # Mantido por compatibilidade de API, mas sem uso no novo fluxo.
         self._diffs_recebidas: List[Dict[str, object]] = []
+
         self._versao_chunks = 0
         self.MetaMundo: Dict[str, object] = {}
         self.TamanhoChunkBlocos = 10
@@ -44,8 +53,13 @@ class LeitorMundo:
             3: (124, 204, 108),
             4: (56, 128, 64),
         }
+
+        # Cache visual por chunk: precisa ser limpo quando o anel muda.
         self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}
         self._cache_tile_px: int = max(1, int(getattr(self.Camera, "TilePx", 50)))
+
+        # Controle de mudança de chunk do player.
+        self._ultimo_chunk_player: Optional[Tuple[int, int]] = None
         self._ultima_versao_chunks_regras = -1
 
     def atualizar_regras_mundo(self, player_controle=None) -> None:
@@ -76,42 +90,78 @@ class LeitorMundo:
             self.JOGO.INFO["ServerLink"] = self.ServerLink
 
     def iniciar(self) -> None:
-        if self._thread and self._thread.is_alive():
+        if self._thread_chunks and self._thread_chunks.is_alive():
             return
-        self._ativo = True
-        self._thread = threading.Thread(target=self._loop, name="LeitorMundoThread", daemon=True)
-        self._thread.start()
+        self._ativo_chunks = True
+        self._thread_chunks = threading.Thread(target=self._loop_chunks, name="LeitorMundoChunksThread", daemon=True)
+        self._thread_chunks.start()
 
     def parar(self, timeout: float = 2.0) -> None:
-        self._ativo = False
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=timeout)
+        self._ativo_chunks = False
+        if self._thread_chunks and self._thread_chunks.is_alive():
+            self._thread_chunks.join(timeout=timeout)
 
     def consumir_diffs_recebidas(self) -> List[Dict[str, object]]:
+        """Compatibilidade com chamadas antigas; diffs ficam no ControladorObjetos."""
         with self._lock:
             diffs = list(self._diffs_recebidas)
             self._diffs_recebidas.clear()
             return diffs
 
-    def _loop(self) -> None:
-        while self._ativo:
+    def _chunk_atual_player(self) -> Tuple[int, int]:
+        pos_camera = getattr(self.Camera, "PosicaoTiles", (0.0, 0.0))
+        tamanho = max(1, int(self.TamanhoChunkBlocos))
+        try:
+            return (int(float(pos_camera[0]) // tamanho), int(float(pos_camera[1]) // tamanho))
+        except Exception:
+            return (0, 0)
+
+    def _loop_chunks(self) -> None:
+        """Loop condicional de chunks: só consulta quando o player muda de chunk."""
+        while self._ativo_chunks:
             if self.ServerLink is None:
                 time.sleep(self.IntervaloPoll)
                 continue
 
-            pacote = self._coletar_estado_servidor()
+            chunk_player = self._chunk_atual_player()
+            if self._ultimo_chunk_player is not None and chunk_player == self._ultimo_chunk_player:
+                time.sleep(self.IntervaloPoll)
+                continue
+
+            pacote = self._coletar_chunks_servidor()
             if pacote:
-                self._aplicar_pacote(pacote)
+                self.processar_pacote_chunks(pacote)
+                self._ultimo_chunk_player = chunk_player
+
             time.sleep(self.IntervaloPoll)
 
-    def _coletar_estado_servidor(self) -> Optional[PacoteMundo]:
+    def _coletar_chunks_servidor(self) -> Optional[PacoteMundo]:
         pos_camera = getattr(self.Camera, "PosicaoTiles", (0.0, 0.0))
         try:
             return self.CallbackAtualizacao(self.ServerLink, self.ClientId, pos_camera, self.RaioChunks)
         except Exception:
             return None
 
-    def _aplicar_pacote(self, pacote: PacoteMundo) -> None:
+    def _chaves_anel_atual(self) -> set[Tuple[int, int]]:
+        """Calcula o anel de chunks válido em volta do chunk atual do player."""
+        chunk_player_x, chunk_player_y = self._chunk_atual_player()
+        chaves = set()
+        for dy in range(-self.RaioChunks, self.RaioChunks + 1):
+            for dx in range(-self.RaioChunks, self.RaioChunks + 1):
+                chaves.add((chunk_player_x + dx, chunk_player_y + dy))
+        return chaves
+
+    def descartar_chunks_fora_do_anel(self) -> None:
+        """Remove chunks/caches fora do anel atual para evitar histórico acumulado."""
+        anel = self._chaves_anel_atual()
+        with self._lock:
+            for chave in list(self.Chunks.keys()):
+                if chave not in anel:
+                    self.Chunks.pop(chave, None)
+                    self._cache_superficies_chunks.pop(chave, None)
+
+    def processar_pacote_chunks(self, pacote: PacoteMundo) -> None:
+        """Aplica pacote de chunks descartando completamente o conjunto antigo."""
         with self._lock:
             meta = pacote.get("meta", {})
             if isinstance(meta, dict):
@@ -147,18 +197,14 @@ class LeitorMundo:
                     except (TypeError, ValueError):
                         continue
                     chunks_atuais[(chunk_x, chunk_y)] = [list(linha) for linha in grid]
-            if chunks_atuais:
-                self.Chunks.update(chunks_atuais)
-                for chave_chunk in chunks_atuais:
-                    self._cache_superficies_chunks.pop(chave_chunk, None)
-                self._versao_chunks += 1
 
-            for diff in pacote.get("diffs", []):
-                if not isinstance(diff, dict):
-                    continue
-                if str(diff.get("tipo", "")).lower() == "chunk":
-                    continue
-                self._diffs_recebidas.append(dict(diff))
+            # Troca total do conjunto carregado: sem histórico de chunks.
+            self.Chunks = chunks_atuais
+            self._cache_superficies_chunks.clear()
+            self._versao_chunks += 1
+
+        # Garantia extra: mantém somente o anel atual.
+        self.descartar_chunks_fora_do_anel()
 
     def snapshot(self) -> Dict[str, object]:
         with self._lock:
@@ -223,19 +269,6 @@ class LeitorMundo:
                 gerenciador_fps.finalizar_trecho("carregar_chunks")
             return
 
-        if not isinstance(meta, dict):
-            meta = {}
-        largura_blocos = meta.get("largura_blocos")
-        altura_blocos = meta.get("altura_blocos")
-        try:
-            total_chunks_x = max(1, int(float(largura_blocos) / float(tamanho_chunk))) if largura_blocos is not None else None
-        except Exception:
-            total_chunks_x = None
-        try:
-            total_chunks_y = max(1, int(float(altura_blocos) / float(tamanho_chunk))) if altura_blocos is not None else None
-        except Exception:
-            total_chunks_y = None
-
         limites = getattr(self.Camera, "LimitesMundoTiles", None)
         repeticoes_x = (0.0,)
         repeticoes_y = (0.0,)
@@ -258,11 +291,9 @@ class LeitorMundo:
         chaves_visiveis = []
         for dy in range(-raio_render_chunks, raio_render_chunks + 1):
             chunk_raw_y = chunk_player_y + dy
-            chunk_busca_y = (chunk_raw_y % total_chunks_y) if total_chunks_y else chunk_raw_y
             for dx in range(-raio_render_chunks, raio_render_chunks + 1):
                 chunk_raw_x = chunk_player_x + dx
-                chunk_busca_x = (chunk_raw_x % total_chunks_x) if total_chunks_x else chunk_raw_x
-                chaves_visiveis.append(((chunk_busca_x, chunk_busca_y), chunk_raw_x, chunk_raw_y))
+                chaves_visiveis.append(((chunk_raw_x, chunk_raw_y), chunk_raw_x, chunk_raw_y))
 
         with self._lock:
             grids_visiveis = [(chave, chunks_ref.get(chave), raw_x, raw_y) for chave, raw_x, raw_y in chaves_visiveis]

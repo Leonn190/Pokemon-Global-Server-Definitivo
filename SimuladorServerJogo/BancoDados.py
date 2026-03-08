@@ -239,7 +239,13 @@ class BancoDadosMundo:
         px, py = x1, y1
         raio_entidade = max(0.0, float(getattr(entidade, "raio_colisao", 0.0)))
 
-        estruturas = [o for o in self._objetos.values() if str(getattr(o, "tipo_classe", "")).startswith("estrutura")]
+        # Nova regra: colisão/repulsão local por raio fixo de 10 tiles para pokémons.
+        # Para demais entidades, mantém comportamento amplo atual.
+        is_pokemon = str(getattr(entidade, "tipo", "")).lower() in ("pokemon", "entidade_pokemon")
+        if is_pokemon:
+            estruturas = self._estruturas_proximas_por_raio((px, py), raio_tiles=10.0)
+        else:
+            estruturas = [o for o in self._objetos.values() if str(getattr(o, "tipo_classe", "")).startswith("estrutura")]
         for estrutura in estruturas:
             if estrutura.Id == entidade.Id:
                 continue
@@ -262,6 +268,30 @@ class BancoDadosMundo:
             py = y0 + mvy
 
         entidade.definir_posicao(px, py)
+
+    def _estruturas_proximas_por_raio(self, posicao: Vector2, raio_tiles: float = 10.0) -> List[GameObjetoServer]:
+        """Busca estruturas candidatas por raio fixo sem depender de chunks para colisão local."""
+        raio = max(0.1, float(raio_tiles))
+        cx, cy = self._celula(posicao)
+        alcance = int(math.ceil(raio / self._tamanho_celula)) + 1
+        ids: Set[int] = set()
+        with self._lock:
+            for ix in range(cx - alcance, cx + alcance + 1):
+                for iy in range(cy - alcance, cy + alcance + 1):
+                    ids.update(self._indice_espacial.get((ix, iy), set()))
+
+            candidatos = [self._objetos[i] for i in ids if i in self._objetos]
+
+        px, py = float(posicao[0]), float(posicao[1])
+        raio2 = raio * raio
+        saida = []
+        for obj in candidatos:
+            if not str(getattr(obj, "tipo_classe", "")).startswith("estrutura"):
+                continue
+            ox, oy = obj.posicao
+            if ((ox - px) ** 2 + (oy - py) ** 2) <= raio2:
+                saida.append(obj)
+        return saida
 
     def obter_objeto(self, objeto_id: int) -> Optional[GameObjetoServer]:
         with self._lock:

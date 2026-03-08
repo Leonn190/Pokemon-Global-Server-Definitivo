@@ -8,7 +8,13 @@ from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Modulos.Ferramentas import GerenciadorFPS
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
-from Codigo.Server.ServerMundo import consultar_estado_mundo, enviar_diffs_mundo, desconectar_mundo
+from Codigo.Server.ServerMundo import (
+    consultar_chunks_mundo,
+    consultar_estado_mundo,
+    enviar_diffs_mundo_categoria,
+    receber_diffs_mundo,
+    desconectar_mundo,
+)
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
 
 
@@ -46,7 +52,7 @@ class CenaMundo:
         self.LeitorMundo = LeitorMundo(
             jogo=JOGO,
             camera=self.Camera,
-            callback_atualizacao=consultar_estado_mundo,
+            callback_atualizacao=consultar_chunks_mundo,
             intervalo_poll=0.20,
             raio_chunks=4,
         )
@@ -56,10 +62,49 @@ class CenaMundo:
         if link:
             self.LeitorMundo.conectar_servidor(link)
             self.LeitorMundo.iniciar()
-            self.ControladorObjetos.iniciar_thread_envio_diffs(
-                lambda diffs: enviar_diffs_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), diffs),
-                intervalo=0.05,
+            client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+
+            # Bootstrap inicial de objetos remotos já existentes próximos ao player.
+            self._bootstrap_objetos_remotos_iniciais(link, client_id)
+
+            self.ControladorObjetos.iniciar_threads_diffs(
+                callback_loop_rapido=lambda diffs: self._loop_rede_diffs_rapidas(link, client_id, diffs),
+                callback_loop_lento=lambda diffs: self._loop_rede_diffs_lentas(link, client_id, diffs),
+                intervalo_rapido=0.05,
+                intervalo_lento=5.0,
             )
+
+    def _bootstrap_objetos_remotos_iniciais(self, link, client_id):
+        """Consulta única em modo estado para receber spawns iniciais próximos."""
+        resposta = consultar_estado_mundo(link, client_id, self.Camera.PosicaoTiles, raio_chunks=4)
+        if not isinstance(resposta, dict):
+            return
+
+        diffs = resposta.get("diffs", [])
+        if not isinstance(diffs, list):
+            return
+
+        for diff in diffs:
+            if isinstance(diff, dict):
+                self.ControladorObjetos.aplicar_diff(diff)
+
+    def _loop_rede_diffs_rapidas(self, link, client_id, diffs_locais):
+        """Canal rápido: envia e recebe apenas diffs visuais/dinâmicas."""
+        if diffs_locais:
+            enviar_diffs_mundo_categoria(link, client_id, "rapida", diffs_locais)
+        resposta = receber_diffs_mundo(link, client_id, self.Camera.PosicaoTiles, categoria="rapida", raio_chunks=4)
+        if not isinstance(resposta, dict):
+            return []
+        return resposta.get("diffs", []) if isinstance(resposta.get("diffs", []), list) else []
+
+    def _loop_rede_diffs_lentas(self, link, client_id, diffs_locais):
+        """Canal lento: envia e recebe apenas diffs persistentes."""
+        if diffs_locais:
+            enviar_diffs_mundo_categoria(link, client_id, "lenta", diffs_locais)
+        resposta = receber_diffs_mundo(link, client_id, self.Camera.PosicaoTiles, categoria="lenta", raio_chunks=4)
+        if not isinstance(resposta, dict):
+            return []
+        return resposta.get("diffs", []) if isinstance(resposta.get("diffs", []), list) else []
 
     def Tela(self, JOGO, EVENTOS, dt):
         gfps = self.GerenciadorFPS
@@ -79,9 +124,6 @@ class CenaMundo:
         gfps.finalizar_trecho("aplicacao_subtela")
 
         self.Camera.atualizar(dt)
-
-        for diff in self.LeitorMundo.consumir_diffs_recebidas():
-            self.ControladorObjetos.aplicar_diff(diff)
 
         if self.ControladorObjetos.PlayerLocal is not None:
             self.LeitorMundo.atualizar_regras_mundo(self.ControladorObjetos.PlayerLocal.Controle)
@@ -114,7 +156,7 @@ class CenaMundo:
 
 
     def Finalizar(self, JOGO):
-        self.ControladorObjetos.parar_thread_envio_diffs()
+        self.ControladorObjetos.parar_threads_diffs()
         if self.LeitorMundo:
             self.LeitorMundo.parar()
         self._desconectar_do_mundo(JOGO)

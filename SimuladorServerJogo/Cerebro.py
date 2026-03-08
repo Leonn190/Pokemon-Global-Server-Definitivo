@@ -93,6 +93,7 @@ class CerebroServer:
                     payload={"id": removido.Id},
                     escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 100},
                     objeto_id=removido.Id,
+                    categoria="rapida",
                 )
         self._pokemons_ids.clear()
 
@@ -198,7 +199,13 @@ class CerebroServer:
             BANCO_DADOS.atualizar_objeto(poke.Id, {"posicao": [poke.posicao[0], poke.posicao[1]]})
             from SimuladorServerJogo.Ativador import registrar_diff
 
-            registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 40}, objeto_id=poke.Id)
+            registrar_diff(
+                "update",
+                payload=poke.serializar(),
+                escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 40},
+                objeto_id=poke.Id,
+                categoria="rapida",
+            )
 
     def _spawn_pokemon(self, chunk: Chunk) -> None:
         chunk_sz = BANCO_DADOS.chunk_tamanho_unidade()
@@ -224,7 +231,13 @@ class CerebroServer:
         self._pokemons_ids.add(poke.Id)
         from SimuladorServerJogo.Ativador import registrar_diff
 
-        registrar_diff("spawn", payload=poke.serializar(), escopo={"centro": [escolhido[0], escolhido[1]], "raio": 80}, objeto_id=poke.Id)
+        registrar_diff(
+            "spawn",
+            payload=poke.serializar(),
+            escopo={"centro": [escolhido[0], escolhido[1]], "raio": 80},
+            objeto_id=poke.Id,
+            categoria="rapida",
+        )
 
     def _contar_pokemons_chunk(self, chunk: Chunk) -> int:
         c = 0

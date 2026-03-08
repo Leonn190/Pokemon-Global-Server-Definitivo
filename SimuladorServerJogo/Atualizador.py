@@ -49,6 +49,9 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
     dados = pacote.get("dados", {})
     diffs = dados.get("diffs", [])
+    categoria = str(dados.get("categoria", "rapida")).strip().lower()
+    if categoria not in ("rapida", "lenta"):
+        categoria = "rapida"
     client_id = str(dados.get("client_id", "")).strip()
 
     if not client_id:
@@ -81,7 +84,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 atualizar_posicao_personagem(usuario, obj.posicao)
             if "perfil" in payload and usuario and isinstance(payload.get("perfil"), dict):
                 atualizar_perfil_personagem(usuario, payload.get("perfil"))
-            registrar_diff("update", payload=payload, escopo=_escopo_objeto(obj), objeto_id=obj.Id)
+            registrar_diff("update", payload=payload, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria)
             aplicados += 1
             continue
 
@@ -93,7 +96,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 dados_obj["id"] = novo_id
                 obj = GameObjetoServer.de_dict(dados_obj)
                 BANCO_DADOS.inserir_objeto(obj)
-                registrar_diff("spawn", payload=obj.serializar(), escopo=_escopo_objeto(obj), objeto_id=obj.Id)
+                registrar_diff("spawn", payload=obj.serializar(), escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria)
                 aplicados += 1
             except Exception:
                 ignorados += 1
@@ -104,10 +107,17 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             if removido is None:
                 ignorados += 1
                 continue
-            registrar_diff("despawn", payload={"id": removido.Id}, escopo=_escopo_objeto(removido), objeto_id=removido.Id)
+            registrar_diff("despawn", payload={"id": removido.Id}, escopo=_escopo_objeto(removido), objeto_id=removido.Id, categoria=categoria)
             aplicados += 1
             continue
 
         ignorados += 1
 
-    return _ok("Diffs processados", client_id=client_id, aplicados=aplicados, ignorados=ignorados, servidor_ts=time.time())
+    return _ok(
+        "Diffs processados",
+        client_id=client_id,
+        categoria=categoria,
+        aplicados=aplicados,
+        ignorados=ignorados,
+        servidor_ts=time.time(),
+    )

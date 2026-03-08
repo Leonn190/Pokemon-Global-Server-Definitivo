@@ -57,16 +57,17 @@ def processar_operacao_json(requisicao_json):
                 progresso_mundo=estado.get("progresso_mundo", 0),
                 mensagem_geracao=estado.get("mensagem_geracao", ""),
                 erro_geracao=estado.get("erro_geracao", ""),
+                operacao_geracao=estado.get("operacao_geracao", "nenhuma"),
             ),
             ensure_ascii=False,
         )
 
     # ROTA: definir_ligado
     if acao == "definir_ligado":
-        definir_ligado(dados.get("ligado", False))
+        sucesso, mensagem = definir_ligado(dados.get("ligado", False))
         estado = snapshot_estado()
         return json.dumps(
-            _resposta("ok", "Estado do servidor atualizado", ligado=estado["ligado"]),
+            _resposta("ok" if sucesso else "negado", mensagem, ligado=estado["ligado"]),
             ensure_ascii=False,
         )
 
@@ -83,6 +84,7 @@ def processar_operacao_json(requisicao_json):
                 progresso_mundo=estado.get("progresso_mundo", 0),
                 mensagem_geracao=estado.get("mensagem_geracao", ""),
                 erro_geracao=estado.get("erro_geracao", ""),
+                operacao_geracao=estado.get("operacao_geracao", "nenhuma"),
             ),
             ensure_ascii=False,
         )

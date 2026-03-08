@@ -20,7 +20,7 @@ _ESTADO_MUNDO = carregar_estado_mundo()
 _ESTADO = {
     "nome": "Servidor Indigo",
     "ip": "203.0.113.77:8123",
-    "ligado": True,
+    "ligado": bool(_ESTADO_MUNDO.get("meta")),
     "mundo_existente": bool(_ESTADO_MUNDO.get("meta")),
     "banidos": {"JogadorBanido"},
     "jogadores_com_personagem": set(_ESTADO_MUNDO.get("players", {}).keys()),
@@ -32,6 +32,7 @@ _ESTADO_GERACAO = {
     "progresso": 0,
     "mensagem": "Aguardando operação",
     "erro": "",
+    "operacao": "nenhuma",
 }
 
 _LOCK = threading.Lock()
@@ -51,7 +52,7 @@ def _estado_mundo_vazio():
     }
 
 
-def _set_geracao(em_andamento=None, progresso=None, mensagem=None, erro=None):
+def _set_geracao(em_andamento=None, progresso=None, mensagem=None, erro=None, operacao=None):
     if em_andamento is not None:
         _ESTADO_GERACAO["em_andamento"] = bool(em_andamento)
     if progresso is not None:
@@ -60,6 +61,8 @@ def _set_geracao(em_andamento=None, progresso=None, mensagem=None, erro=None):
         _ESTADO_GERACAO["mensagem"] = str(mensagem)
     if erro is not None:
         _ESTADO_GERACAO["erro"] = str(erro)
+    if operacao is not None:
+        _ESTADO_GERACAO["operacao"] = str(operacao)
 
 
 def _clamp_posicao(posicao):
@@ -140,7 +143,7 @@ def _criar_novo_mundo_sync():
             _set_geracao(progresso=percentual, mensagem=mensagem)
 
     players = dict(_ESTADO.get("personagens", {}))
-    _set_geracao(em_andamento=True, progresso=1, mensagem="Preparando geração do mundo", erro="")
+    _set_geracao(em_andamento=True, progresso=1, mensagem="Preparando geração do mundo", erro="", operacao="criacao")
     _ESTADO_MUNDO = gerar_novo_estado_mundo(players=players, callback_progresso=_callback_progresso)
     _set_geracao(progresso=98, mensagem="Salvando estado do mundo")
     salvar_estado_mundo(_ESTADO_MUNDO)
@@ -155,13 +158,13 @@ def _worker_criacao_mundo():
         _criar_novo_mundo_sync()
         with _LOCK:
             _ESTADO["mundo_existente"] = True
-            _set_geracao(em_andamento=False, progresso=100, mensagem="Mundo pronto", erro="")
+            _set_geracao(em_andamento=False, progresso=100, mensagem="Mundo pronto", erro="", operacao="nenhuma")
     except Exception as exc:
         with _LOCK:
             _ESTADO_MUNDO.clear()
             _ESTADO_MUNDO.update(_estado_mundo_vazio())
             _ESTADO["mundo_existente"] = False
-            _set_geracao(em_andamento=False, progresso=0, mensagem="Falha ao criar mundo", erro=str(exc))
+            _set_geracao(em_andamento=False, progresso=0, mensagem="Falha ao criar mundo", erro=str(exc), operacao="nenhuma")
 
 
 def _apagar_mundo():
@@ -173,6 +176,27 @@ def _apagar_mundo():
     BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
     resetar_estado_clientes()
 
+
+
+
+def _worker_apagar_mundo():
+    try:
+        with _LOCK:
+            _set_geracao(em_andamento=True, progresso=1, mensagem="Apagando mundo", erro="", operacao="remocao")
+        with _LOCK:
+            _set_geracao(progresso=55, mensagem="Removendo arquivos do mundo")
+        _apagar_mundo()
+        with _LOCK:
+            _ESTADO["mundo_existente"] = False
+            _ESTADO["ligado"] = False
+            _set_geracao(em_andamento=False, progresso=100, mensagem="Finalizando remoção", erro="", operacao="nenhuma")
+            CEREBRO.desligar_servidor()
+    except Exception as exc:
+        with _LOCK:
+            _ESTADO["mundo_existente"] = False
+            _ESTADO["ligado"] = False
+            _set_geracao(em_andamento=False, progresso=0, mensagem="Falha ao apagar mundo", erro=str(exc), operacao="nenhuma")
+            CEREBRO.desligar_servidor()
 
 def _sync_personagens_mundo():
     if not _ESTADO_MUNDO.get("meta"):
@@ -208,14 +232,20 @@ def snapshot_estado():
             "progresso_mundo": int(_ESTADO_GERACAO["progresso"]),
             "mensagem_geracao": str(_ESTADO_GERACAO["mensagem"]),
             "erro_geracao": str(_ESTADO_GERACAO["erro"]),
+            "operacao_geracao": str(_ESTADO_GERACAO.get("operacao", "nenhuma")),
         }
 
 
 def definir_ligado(ativo):
     with _LOCK:
-        _ESTADO["ligado"] = bool(ativo)
+        desejado = bool(ativo)
+        if desejado and not _ESTADO["mundo_existente"]:
+            _ESTADO["ligado"] = False
+            return False, "Não é possível ligar o servidor sem mundo"
+        _ESTADO["ligado"] = desejado
         if not _ESTADO["ligado"]:
             CEREBRO.desligar_servidor()
+        return True, "Estado do servidor atualizado"
 
 
 def definir_mundo_existente(ativo):
@@ -225,7 +255,7 @@ def definir_mundo_existente(ativo):
             if _ESTADO_GERACAO["em_andamento"]:
                 return False, "A geração de mundo já está em andamento"
             _ESTADO["mundo_existente"] = False
-            _set_geracao(em_andamento=True, progresso=1, mensagem="Preparando criação do mundo...", erro="")
+            _set_geracao(em_andamento=True, progresso=1, mensagem="Preparando criação do mundo...", erro="", operacao="criacao")
             thread = threading.Thread(target=_worker_criacao_mundo, daemon=True)
             thread.start()
             return True, "Criação de mundo iniciada"
@@ -233,10 +263,10 @@ def definir_mundo_existente(ativo):
         if _ESTADO_GERACAO["em_andamento"]:
             return False, "Não é possível apagar o mundo enquanto a geração está em andamento"
 
-        _apagar_mundo()
-        _ESTADO["mundo_existente"] = False
-        _set_geracao(em_andamento=False, progresso=0, mensagem="Mundo apagado", erro="")
-        return True, "Mundo apagado"
+        _set_geracao(em_andamento=True, progresso=1, mensagem="Apagando mundo", erro="", operacao="remocao")
+        thread = threading.Thread(target=_worker_apagar_mundo, daemon=True)
+        thread.start()
+        return True, "Remoção de mundo iniciada"
 
 
 def adicionar_personagem(usuario, skin, pokemon_inicial):

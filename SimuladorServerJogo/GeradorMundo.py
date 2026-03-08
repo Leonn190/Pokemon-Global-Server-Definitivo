@@ -18,7 +18,7 @@ RAIZ_REPOSITORIO = PASTA_SERVIDOR.parent
 ARQUIVO_MUNDO = PASTA_SERVIDOR / "MundoEstado.json"
 ARQUIVO_WORLD_META = RAIZ_REPOSITORIO / "world_meta.json"
 PASTA_WORLD_CHUNKS = RAIZ_REPOSITORIO / "world_chunks"
-ARQUIVO_FOTO_MUNDO = RAIZ_REPOSITORIO / "world_foto.ppm"
+ARQUIVO_FOTO_MUNDO_JAVA = PASTA_SERVIDOR / "world_foto.png"
 ARQUIVO_JAVA = PASTA_SERVIDOR / "WorldGenerator.java"
 ARQUIVO_CLASS = PASTA_SERVIDOR / "WorldGenerator.class"
 
@@ -141,58 +141,13 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
         raise subprocess.CalledProcessError(saida, cmd)
 
 
-def _cor_tile(tile: int) -> Tuple[int, int, int]:
-    if tile == 0:
-        return (34, 99, 196)
-    if tile == 1:
-        return (52, 130, 232)
-    if tile == 2:
-        return (228, 212, 140)
-    if tile == 3:
-        return (74, 168, 86)
-    if tile == 4:
-        return (58, 135, 64)
-    return (120, 120, 120)
-
-
-def gerar_foto_mundo(meta: Dict[str, int]) -> None:
-    largura = max(1, int(meta.get("width", 1)))
-    altura = max(1, int(meta.get("height", 1)))
-    chunk_blocos = max(1, int(meta.get("chunk_blocos_disco", CHUNK_BLOCOS)))
-
-    total_chunks_x = max(1, int(meta.get("chunks_x", 1)))
-    total_chunks_y = max(1, int(meta.get("chunks_y", 1)))
-    linhas = [[(0, 0, 0) for _ in range(largura)] for _ in range(altura)]
-
-    for cy in range(total_chunks_y):
-        for cx in range(total_chunks_x):
-            grid = _carregar_chunk_blocos(meta, cx, cy)
-            x0 = cx * chunk_blocos
-            y0 = cy * chunk_blocos
-            for by, linha in enumerate(grid):
-                gy = y0 + by
-                if gy >= altura:
-                    continue
-                for bx, valor in enumerate(linha):
-                    gx = x0 + bx
-                    if gx >= largura:
-                        continue
-                    linhas[gy][gx] = _cor_tile(int(valor))
-
-    with ARQUIVO_FOTO_MUNDO.open("w", encoding="utf-8") as f:
-        f.write(f"P3\n{largura} {altura}\n255\n")
-        for linha in linhas:
-            f.write(" ".join(f"{r} {g} {b}" for r, g, b in linha))
-            f.write("\n")
-
-
 def limpar_arquivos_mundo() -> None:
     if ARQUIVO_MUNDO.exists():
         ARQUIVO_MUNDO.unlink()
     if ARQUIVO_WORLD_META.exists():
         ARQUIVO_WORLD_META.unlink()
-    if ARQUIVO_FOTO_MUNDO.exists():
-        ARQUIVO_FOTO_MUNDO.unlink()
+    if ARQUIVO_FOTO_MUNDO_JAVA.exists():
+        ARQUIVO_FOTO_MUNDO_JAVA.unlink()
     if PASTA_WORLD_CHUNKS.exists():
         for arquivo in PASTA_WORLD_CHUNKS.glob("*.json"):
             try:
@@ -365,8 +320,7 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
     _executar_world_generator(seed, callback_progresso=callback_progresso)
 
     meta_java = _carregar_world_meta()
-    _emitir_progresso(callback_progresso, 96, "Gerando foto do mundo")
-    gerar_foto_mundo(meta_java)
+    _emitir_progresso(callback_progresso, 96, "Finalizando mundo")
     spawn_chunk, spawn = _escolher_spawn_por_chunks(meta_java)
 
     estado = {

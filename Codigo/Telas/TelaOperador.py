@@ -140,6 +140,7 @@ def _validar_chave_apagar(jogo, chave):
     _iniciar_requisicao("validar_chave", _get_server_ip(jogo.Cena), chave, "Validando chave de segurança...")
 
 
+
 def _toggle_ligado(jogo, estado, botao):
     _iniciar_requisicao("ligado", _get_server_ip(jogo.Cena), estado, "Atualizando status do servidor...")
 
@@ -151,7 +152,7 @@ def _atualizar_rotulos_botoes():
         _BOTAO_MUNDO.set_text("Apagar Mundo" if _BOTAO_MUNDO.estado else "Criar Mundo")
 
 
-def _processar_status_geracao(resposta):
+def _processar_status_geracao(jogo, resposta):
     global _SUBTELA_ATIVA, _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA
     operacao = str(resposta.get("operacao_geracao", "nenhuma") or "nenhuma")
     em_andamento = bool(resposta.get("mundo_em_geracao", False))
@@ -192,6 +193,9 @@ def _processar_status_geracao(resposta):
             _emitir_feedback("Mundo criado e pronto para uso", sucesso=True)
             _GERACAO_NOTIFICADA = True
 
+        if not bool(resposta.get("ligado", False)) and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
+            _iniciar_requisicao("ligado", _get_server_ip(jogo.Cena), True, "Ligando servidor automaticamente...")
+
 
 def _processar_resposta(jogo):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _REQUISICAO_TIPO_ATUAL
@@ -221,7 +225,7 @@ def _processar_resposta(jogo):
                 _GERACAO_NOTIFICADA = False
             else:
                 _REMOCAO_NOTIFICADA = False
-            _processar_status_geracao(resposta)
+            _processar_status_geracao(jogo, resposta)
         else:
             _BOTAO_MUNDO.set_estado(not payload["payload"])
 
@@ -238,7 +242,7 @@ def _processar_resposta(jogo):
         if sucesso:
             _BOTAO_LIGAR.set_estado(bool(resposta.get("ligado", False)))
             _BOTAO_MUNDO.set_estado(bool(resposta.get("mundo_existente", False)))
-            _processar_status_geracao(resposta)
+            _processar_status_geracao(jogo, resposta)
 
     if tipo in ("ligado", "validar_chave") or not sucesso:
         _emitir_feedback(resposta.get("mensagem", "Falha de comunicação"), sucesso=sucesso)

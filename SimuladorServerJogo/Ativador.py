@@ -134,6 +134,52 @@ def _resposta_base(client_id: str, meta_cerebro: Dict[str, object], raio_chunks:
     }
 
 
+def _coletar_diffs_visibilidade(posicao_camera: Vector2, raio: float, vistos: Set[int]) -> List[Dict[str, object]]:
+    """Gera spawns/despawns de visibilidade para manter estruturas sincronizadas.
+
+    Sem isso, objetos estáticos (ex.: estruturas naturais) podem nunca aparecer
+    ao entrar em novas regiões, pois o cliente usa modo `diffs` continuamente.
+    """
+    objetos_proximos = BANCO_DADOS.buscar_proximos(posicao_camera, raio)
+    ids_proximos = {int(obj.Id) for obj in objetos_proximos}
+
+    diffs_visibilidade: List[Dict[str, object]] = []
+    agora = time.time()
+
+    for obj in objetos_proximos:
+        if obj.Id in vistos:
+            continue
+        diffs_visibilidade.append(
+            {
+                "seq": _next_seq(),
+                "timestamp": agora,
+                "tipo": "spawn",
+                "objeto_id": obj.Id,
+                "payload": obj.serializar(),
+                "escopo": {"centro": list(obj.posicao), "raio": raio},
+                "categoria": "rapida",
+            }
+        )
+        vistos.add(int(obj.Id))
+
+    ids_sairam = [oid for oid in list(vistos) if oid not in ids_proximos]
+    for oid in ids_sairam:
+        diffs_visibilidade.append(
+            {
+                "seq": _next_seq(),
+                "timestamp": agora,
+                "tipo": "despawn",
+                "objeto_id": int(oid),
+                "payload": {},
+                "escopo": {"centro": list(posicao_camera), "raio": raio},
+                "categoria": "rapida",
+            }
+        )
+        vistos.discard(int(oid))
+
+    return diffs_visibilidade
+
+
 def processar_ativador_json(requisicao_json: str) -> str:
     try:
         pacote = json.loads(requisicao_json)
@@ -175,21 +221,14 @@ def processar_ativador_json(requisicao_json: str) -> str:
         # Modo exclusivo de diffs: separa por categoria rápida/lenta.
         diffs: List[Dict[str, object]] = []
         if modo in ("diffs", "estado"):
-            if modo == "estado":
-                objetos_proximos = BANCO_DADOS.buscar_proximos(posicao_camera, raio)
-                for obj in objetos_proximos:
-                    if obj.Id not in vistos:
-                        spawn = {
-                            "seq": _next_seq(),
-                            "timestamp": time.time(),
-                            "tipo": "spawn",
-                            "objeto_id": obj.Id,
-                            "payload": obj.serializar(),
-                            "escopo": {"centro": list(obj.posicao), "raio": raio},
-                            "categoria": "rapida",
-                        }
-                        diffs.append(spawn)
-                        vistos.add(obj.Id)
+            # Garante materialização das estruturas naturais no anel atual.
+            for chunk in _chunks_no_raio(posicao_camera, raio_chunks):
+                BANCO_DADOS.chunk_em_grade(chunk)
+
+            # Mantém sincronização de visibilidade também no modo "diffs",
+            # para estruturas estáticas aparecerem ao cruzar chunks.
+            if categoria == "rapida" or modo == "estado":
+                diffs.extend(_coletar_diffs_visibilidade(posicao_camera, raio, vistos))
 
             for diff in _DIFF_LOG:
                 cat_diff = str(diff.get("categoria", "rapida")).strip().lower()

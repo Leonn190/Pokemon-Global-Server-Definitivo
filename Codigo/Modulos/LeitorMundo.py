@@ -56,6 +56,7 @@ class LeitorMundo:
 
         # Cache visual por chunk: precisa ser limpo quando o anel muda.
         self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}
+        self._cache_assinaturas_chunks: Dict[Tuple[int, int], Tuple[Tuple[int, ...], ...]] = {}
         self._cache_tile_px: int = max(1, int(getattr(self.Camera, "TilePx", 50)))
 
         # Controle de mudança de chunk do player.
@@ -159,16 +160,26 @@ class LeitorMundo:
                 if chave not in anel:
                     self.Chunks.pop(chave, None)
                     self._cache_superficies_chunks.pop(chave, None)
+                    self._cache_assinaturas_chunks.pop(chave, None)
 
     def processar_pacote_chunks(self, pacote: PacoteMundo) -> None:
-        """Aplica pacote de chunks descartando completamente o conjunto antigo."""
+        """Aplica pacote de chunks preservando cache de chunks inalterados."""
         with self._lock:
             meta = pacote.get("meta", {})
+            meta_alterada = False
             if isinstance(meta, dict):
-                self.MetaMundo.update(meta)
+                for chave_meta, valor_meta in meta.items():
+                    if self.MetaMundo.get(chave_meta) != valor_meta:
+                        meta_alterada = True
+                    self.MetaMundo[chave_meta] = valor_meta
                 chunk_tamanho = meta.get("chunk_tamanho", meta.get("chunk_blocos"))
                 if chunk_tamanho is not None:
-                    self.TamanhoChunkBlocos = max(1, int(chunk_tamanho))
+                    chunk_tamanho_novo = max(1, int(chunk_tamanho))
+                    if chunk_tamanho_novo != self.TamanhoChunkBlocos:
+                        self.TamanhoChunkBlocos = chunk_tamanho_novo
+                        self._cache_superficies_chunks.clear()
+                        self._cache_assinaturas_chunks.clear()
+                        meta_alterada = True
 
             chunks_atuais: Dict[Tuple[int, int], List[List[int]]] = {}
             chunks_recebidos = pacote.get("chunks", [])
@@ -198,10 +209,28 @@ class LeitorMundo:
                         continue
                     chunks_atuais[(chunk_x, chunk_y)] = [list(linha) for linha in grid]
 
-            # Troca total do conjunto carregado: sem histórico de chunks.
+            chaves_atuais = set(self.Chunks.keys())
+            chaves_novas = set(chunks_atuais.keys())
+
+            houve_alteracao_chunks = bool(chaves_atuais != chaves_novas)
+
+            for chave in (chaves_atuais - chaves_novas):
+                self._cache_superficies_chunks.pop(chave, None)
+                self._cache_assinaturas_chunks.pop(chave, None)
+
+            for chave in chaves_novas:
+                grid_novo = chunks_atuais[chave]
+                assinatura_nova = tuple(tuple(int(bloco) for bloco in linha) for linha in grid_novo)
+                assinatura_antiga = self._cache_assinaturas_chunks.get(chave)
+                if assinatura_antiga != assinatura_nova:
+                    self._cache_superficies_chunks.pop(chave, None)
+                    self._cache_assinaturas_chunks[chave] = assinatura_nova
+                    houve_alteracao_chunks = True
+
+            # Mantém apenas o anel atual, sem histórico infinito.
             self.Chunks = chunks_atuais
-            self._cache_superficies_chunks.clear()
-            self._versao_chunks += 1
+            if houve_alteracao_chunks or meta_alterada:
+                self._versao_chunks += 1
 
         # Garantia extra: mantém somente o anel atual.
         self.descartar_chunks_fora_do_anel()
@@ -225,6 +254,7 @@ class LeitorMundo:
 
         if tile_px != self._cache_tile_px:
             self._cache_superficies_chunks.clear()
+            self._cache_assinaturas_chunks.clear()
             self._cache_tile_px = tile_px
 
         superficie = self._cache_superficies_chunks.get(chave_chunk)

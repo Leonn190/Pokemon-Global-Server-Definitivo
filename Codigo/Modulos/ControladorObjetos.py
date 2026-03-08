@@ -26,6 +26,7 @@ class ControladorObjetos:
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
         self.PlayerLocal = None
         self.PokemonsPorId: Dict[int, PokemonMundo] = {}
+        self._lock_objetos = threading.RLock()
 
         # Índice espacial local para colisão de proximidade.
         self._chunk_tamanho_tiles = 32
@@ -167,11 +168,12 @@ class ControladorObjetos:
         self._objetos_colisao_por_chunk.setdefault(chunk, set()).add(oid)
 
     def _reindexar_objetos_colisivos(self) -> None:
-        self._objetos_colisao_por_chunk.clear()
-        self._chunk_por_objeto.clear()
-        for obj in self.ObjetosPorId.values():
-            if isinstance(obj, dict):
-                self._atualizar_indice_objeto_colisivo(obj)
+        with self._lock_objetos:
+            self._objetos_colisao_por_chunk.clear()
+            self._chunk_por_objeto.clear()
+            for obj in self.ObjetosPorId.values():
+                if isinstance(obj, dict):
+                    self._atualizar_indice_objeto_colisivo(obj)
 
     def _iter_colisores_proximos_por_raio(self, posicao_player: Tuple[float, float], raio_tiles: float = 10.0):
         """Busca colisores locais por raio fixo de 10 tiles (sem depender de chunks vizinhos fixos)."""
@@ -180,14 +182,15 @@ class ControladorObjetos:
         chunk_cx, chunk_cy = self._chunk_posicao(px, py)
         alcance_chunks = max(1, int(math.ceil(raio / float(self._chunk_tamanho_tiles))))
 
-        ids = set()
-        for dx in range(-alcance_chunks, alcance_chunks + 1):
-            for dy in range(-alcance_chunks, alcance_chunks + 1):
-                ids.update(self._objetos_colisao_por_chunk.get((chunk_cx + dx, chunk_cy + dy), set()))
+        with self._lock_objetos:
+            ids = set()
+            for dx in range(-alcance_chunks, alcance_chunks + 1):
+                for dy in range(-alcance_chunks, alcance_chunks + 1):
+                    ids.update(self._objetos_colisao_por_chunk.get((chunk_cx + dx, chunk_cy + dy), set()))
+            objetos_snapshot = [self.ObjetosPorId.get(oid) for oid in ids]
 
         raio2 = raio * raio
-        for oid in ids:
-            obj = self.ObjetosPorId.get(oid)
+        for obj in objetos_snapshot:
             if not isinstance(obj, dict):
                 continue
             dados = self._dados_colisao_objeto(obj)
@@ -461,13 +464,14 @@ class ControladorObjetos:
         if not self._eh_payload_pokemon(payload):
             return
 
-        pokemon = self.PokemonsPorId.get(oid)
-        if pokemon is None:
-            if not criar_se_ausente:
-                return
-            pokemon = PokemonMundo(payload)
-            self.PokemonsPorId[oid] = pokemon
-        pokemon.aplicar_snapshot(payload)
+        with self._lock_objetos:
+            pokemon = self.PokemonsPorId.get(oid)
+            if pokemon is None:
+                if not criar_se_ausente:
+                    return
+                pokemon = PokemonMundo(payload)
+                self.PokemonsPorId[oid] = pokemon
+            pokemon.aplicar_snapshot(payload)
 
     def aplicar_diff(self, diff):
         if not isinstance(diff, dict):
@@ -480,8 +484,9 @@ class ControladorObjetos:
             dados_obj = dict(payload)
             oid = int(dados_obj.get("id", objeto_id))
             dados_obj["id"] = oid
-            self.ObjetosPorId[oid] = dados_obj
-            self._atualizar_indice_objeto_colisivo(dados_obj)
+            with self._lock_objetos:
+                self.ObjetosPorId[oid] = dados_obj
+                self._atualizar_indice_objeto_colisivo(dados_obj)
             self._sincronizar_pokemon(oid, dados_obj, criar_se_ausente=True)
             return
 
@@ -490,43 +495,48 @@ class ControladorObjetos:
         oid = int(objeto_id)
 
         if tipo == "update":
-            atual = self.ObjetosPorId.get(oid, {"id": oid})
-            estado = payload.get("estado")
-            if isinstance(estado, dict):
-                base_estado = atual.get("estado", {}) if isinstance(atual.get("estado", {}), dict) else {}
-                base_estado.update(estado)
-                atual["estado"] = base_estado
-            for chave, valor in payload.items():
-                if chave != "estado":
-                    atual[chave] = valor
-            self.ObjetosPorId[oid] = atual
-            self._atualizar_indice_objeto_colisivo(atual)
+            with self._lock_objetos:
+                atual = self.ObjetosPorId.get(oid, {"id": oid})
+                estado = payload.get("estado")
+                if isinstance(estado, dict):
+                    base_estado = atual.get("estado", {}) if isinstance(atual.get("estado", {}), dict) else {}
+                    base_estado.update(estado)
+                    atual["estado"] = base_estado
+                for chave, valor in payload.items():
+                    if chave != "estado":
+                        atual[chave] = valor
+                self.ObjetosPorId[oid] = atual
+                self._atualizar_indice_objeto_colisivo(atual)
             self._sincronizar_pokemon(oid, atual, criar_se_ausente=True)
             return
 
         if tipo == "despawn":
-            self.ObjetosPorId.pop(oid, None)
-            self.PokemonsPorId.pop(oid, None)
-            chunk = self._chunk_por_objeto.pop(oid, None)
-            if chunk is not None:
-                bucket = self._objetos_colisao_por_chunk.get(chunk)
-                if bucket is not None:
-                    bucket.discard(oid)
-                    if not bucket:
-                        self._objetos_colisao_por_chunk.pop(chunk, None)
+            with self._lock_objetos:
+                self.ObjetosPorId.pop(oid, None)
+                self.PokemonsPorId.pop(oid, None)
+                chunk = self._chunk_por_objeto.pop(oid, None)
+                if chunk is not None:
+                    bucket = self._objetos_colisao_por_chunk.get(chunk)
+                    if bucket is not None:
+                        bucket.discard(oid)
+                        if not bucket:
+                            self._objetos_colisao_por_chunk.pop(chunk, None)
 
     def sincronizar_objetos(self, objetos):
         if not isinstance(objetos, dict):
             return
-        self.ObjetosPorId = {int(k): dict(v) for k, v in objetos.items()}
-        self._reindexar_objetos_colisivos()
-        self.PokemonsPorId = {}
-        for oid, payload in self.ObjetosPorId.items():
+        with self._lock_objetos:
+            self.ObjetosPorId = {int(k): dict(v) for k, v in objetos.items()}
+            self._reindexar_objetos_colisivos()
+            self.PokemonsPorId = {}
+            snapshot_objetos = list(self.ObjetosPorId.items())
+        for oid, payload in snapshot_objetos:
             if isinstance(payload, dict):
                 self._sincronizar_pokemon(int(oid), payload, criar_se_ausente=True)
 
     def _iter_tipos(self, prefixo):
-        return [obj for obj in self.ObjetosPorId.values() if str(obj.get("tipo", "")).startswith(prefixo)]
+        with self._lock_objetos:
+            return [dict(obj) for obj in self.ObjetosPorId.values() if str(obj.get("tipo", "")).startswith(prefixo)]
 
     def _objeto_posicao_tela_se_visivel(self, obj: Dict[str, object], camera, margem_px: int = 120):
         pos = obj.get("posicao", [0.0, 0.0])
@@ -549,12 +559,12 @@ class ControladorObjetos:
             if ignorar_id is not None and oid == int(ignorar_id):
                 continue
 
-            pokemon = self.PokemonsPorId.get(oid)
+            with self._lock_objetos:
+                pokemon = self.PokemonsPorId.get(oid)
             if pokemon is not None:
                 if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
                     continue
                 pokemon.desenhar(tela, camera, dt_pokemons)
-                obj["posicao"] = [float(pokemon.Posicao[0]), float(pokemon.Posicao[1])]
                 continue
 
             pos_tela = self._objeto_posicao_tela_se_visivel(obj, camera)

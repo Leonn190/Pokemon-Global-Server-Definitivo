@@ -295,6 +295,43 @@ def adicionar_personagem(usuario, skin, pokemon_inicial):
     return True, "Personagem criado com sucesso"
 
 
+def obter_personagem_para_entrada(usuario):
+    if not usuario:
+        return None
+
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(usuario)
+        if personagem is None:
+            return None
+
+        dados = _normalizar_perfil(personagem)
+        posicao = dados.get("posicao")
+        posicao_valida = isinstance(posicao, (list, tuple)) and len(posicao) == 2
+        if posicao_valida:
+            try:
+                x = float(posicao[0])
+                y = float(posicao[1])
+                largura = max(1.0, float(LARGURA_BLOCOS))
+                altura = max(1.0, float(ALTURA_BLOCOS))
+                if x < 0.0 or y < 0.0 or x >= largura or y >= altura:
+                    posicao_valida = False
+            except (TypeError, ValueError):
+                posicao_valida = False
+
+        if not posicao_valida:
+            spawn = obter_posicao_spawn(_ESTADO_MUNDO)
+            x, y = _clamp_posicao(spawn)
+            dados["posicao"] = [x, y]
+            _ESTADO["personagens"][usuario] = dados
+            _persistir_personagens(force=True)
+        else:
+            x, y = _clamp_posicao(posicao)
+            dados["posicao"] = [x, y]
+            _ESTADO["personagens"][usuario] = dados
+
+        return dict(dados)
+
+
 def atualizar_posicao_personagem(usuario, posicao):
     if not usuario:
         return

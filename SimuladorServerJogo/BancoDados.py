@@ -35,7 +35,7 @@ class BancoDadosMundo:
         self._grid: List[List[int]] = []
         self._chunks_cache: Dict[Tuple[int, int], Dict[str, List[List[int]]]] = {}
         self._chunks_estruturas_carregados: Set[Tuple[int, int]] = set()
-        self._chunks_dir = Path(__file__).resolve().parent.parent / "world_chunks"
+        self._chunks_dir = Path(__file__).resolve().parent / "world_chunks"
         meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
         self._chunk_blocos = int(CHUNK_BLOCOS)
         self._chunk_blocos_disco = max(1, int(meta.get("chunk_blocos_disco", meta.get("chunk_blocos", CHUNK_BLOCOS))))

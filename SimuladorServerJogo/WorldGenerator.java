@@ -377,11 +377,15 @@ static final class Rules {
             }
 
             byte[] structuresMap = buildStructuresGrid();
+            int totalChunks = chunksX * chunksY;
+            int chunksGerados = 0;
             for (int cy = 0; cy < chunksY; cy++) {
                 for (int cx = 0; cx < chunksX; cx++) {
                     File chunkFile = new File(chunksDir, "chunk_" + cx + "_" + cy + ".json");
                     writeChunkJson(chunkFile, cx, cy, chunkSize, structuresMap);
+                    chunksGerados++;
                 }
+                System.out.println("[PROGRESSO] ETAPA=CHUNKS ATUAL=" + chunksGerados + " TOTAL=" + totalChunks + " MSG=Salvando chunks");
             }
         }
 

@@ -53,6 +53,10 @@ def processar_operacao_json(requisicao_json):
                 "Status carregado",
                 ligado=estado["ligado"],
                 mundo_existente=estado["mundo_existente"],
+                mundo_em_geracao=estado.get("mundo_em_geracao", False),
+                progresso_mundo=estado.get("progresso_mundo", 0),
+                mensagem_geracao=estado.get("mensagem_geracao", ""),
+                erro_geracao=estado.get("erro_geracao", ""),
             ),
             ensure_ascii=False,
         )
@@ -68,10 +72,18 @@ def processar_operacao_json(requisicao_json):
 
     # ROTA: definir_mundo
     if acao == "definir_mundo":
-        definir_mundo_existente(dados.get("mundo_existente", False))
+        sucesso, mensagem = definir_mundo_existente(dados.get("mundo_existente", False))
         estado = snapshot_estado()
         return json.dumps(
-            _resposta("ok", "Estado do mundo atualizado", mundo_existente=estado["mundo_existente"]),
+            _resposta(
+                "ok" if sucesso else "negado",
+                mensagem,
+                mundo_existente=estado["mundo_existente"],
+                mundo_em_geracao=estado.get("mundo_em_geracao", False),
+                progresso_mundo=estado.get("progresso_mundo", 0),
+                mensagem_geracao=estado.get("mensagem_geracao", ""),
+                erro_geracao=estado.get("erro_geracao", ""),
+            ),
             ensure_ascii=False,
         )
 

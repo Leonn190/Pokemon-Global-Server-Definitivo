@@ -303,3 +303,141 @@ class SubtelaTexto(_BaseModal):
         self.botao_voltar.render(tela, eventos, dt, JOGO=JOGO)
         self.botao_enviar.render(tela, eventos, dt, JOGO=JOGO)
 
+
+
+class SubtelaCarregamento(_BaseModal):
+    def __init__(self, tela_size, titulo="Carregando"):
+        import os
+        from Codigo.Prefabs.Barra import Barra
+
+        largura, altura = tela_size
+        caixa = pygame.Rect(0, 0, min(820, int(largura * 0.70)), min(460, int(altura * 0.66)))
+        caixa.center = (largura // 2, altura // 2)
+
+        self.caixa = caixa
+        self.titulo_base = str(titulo)
+        self.encerrada = False
+        self._acumulado_pontos = 0.0
+        self._indice_pontos = 0
+        self._pontos = [".", "..", "...", ".", "..", "..."]
+
+        self._frames = []
+        self._frame_idx = 0
+        self._acumulado_frame = 0.0
+        self._intervalo_frame = 1.0 / 20.0
+        self._frame_escalado = None
+
+        super().__init__(tela_size, alpha_overlay=185)
+
+        self._texto_titulo = Texto(
+            "",
+            (self.caixa.centerx, self.caixa.top + 66),
+            style={"size": 40, "align": "center"},
+        )
+        self._texto_percentual = Texto(
+            "0%",
+            (self.caixa.centerx, self.caixa.top + 112),
+            style={"size": 32, "align": "center", "outline": True, "outline_color": (0, 0, 0)},
+        )
+        self._texto_mensagem = Texto(
+            "Preparando...",
+            (self.caixa.centerx, self.caixa.top + 148),
+            style={"size": 24, "align": "center", "outline": True, "outline_color": (0, 0, 0)},
+        )
+
+        self._barra = Barra(
+            pygame.Rect(self.caixa.left + 32, self.caixa.top + 26, self.caixa.width - 64, 28),
+            texto="",
+            valor=0,
+            minimo=0,
+            maximo=100,
+            mostrar_rotulo=False,
+        )
+
+        pasta_frames = "Recursos/Visual/Outros/Carregando_Frames"
+        if os.path.isdir(pasta_frames):
+            nomes = sorted([n for n in os.listdir(pasta_frames) if n.lower().endswith(".png")])
+            for nome in nomes:
+                caminho = os.path.join(pasta_frames, nome)
+                try:
+                    self._frames.append(pygame.image.load(caminho).convert_alpha())
+                except pygame.error:
+                    pass
+        self._atualizar_texto_titulo()
+        self._atualizar_frame_escalado()
+
+    def set_progresso(self, progresso):
+        self._barra.set_valor(float(progresso))
+        self._texto_percentual.set_text(f"{int(round(self._barra.valor))}%")
+
+    def set_mensagem(self, texto):
+        self._texto_mensagem.set_text(str(texto or "Carregando mundo"))
+
+    def _atualizar_texto_titulo(self):
+        self._texto_titulo.set_text(f"{self.titulo_base} {self._pontos[self._indice_pontos]}")
+
+    def _atualizar_frame_escalado(self):
+        self._frame_escalado = None
+        if not self._frames:
+            return
+        frame = self._frames[self._frame_idx]
+        max_largura = int(self.caixa.width * 0.38)
+        max_altura = int(self.caixa.height * 0.38)
+        escala = min(max_largura / max(1, frame.get_width()), max_altura / max(1, frame.get_height()))
+        escala = max(0.1, escala)
+        size = (max(1, int(frame.get_width() * escala)), max(1, int(frame.get_height() * escala)))
+        self._frame_escalado = pygame.transform.smoothscale(frame, size)
+
+    def _on_resize(self, tela_size):
+        largura, altura = tela_size
+        caixa = pygame.Rect(0, 0, min(820, int(largura * 0.70)), min(460, int(altura * 0.66)))
+        caixa.center = (largura // 2, altura // 2)
+        self.caixa = caixa
+
+        self._texto_titulo.set_pos((self.caixa.centerx, self.caixa.top + 66))
+        self._texto_percentual.set_pos((self.caixa.centerx, self.caixa.top + 112))
+        self._texto_mensagem.set_pos((self.caixa.centerx, self.caixa.top + 148))
+        self._barra.rect = pygame.Rect(self.caixa.left + 32, self.caixa.top + 26, self.caixa.width - 64, 28)
+
+        self._painel_surf = None
+        self._painel_size = (0, 0)
+        self._atualizar_frame_escalado()
+
+    def render(self, tela, eventos, dt, JOGO=None):
+        size = tela.get_size()
+        if size != self._overlay_size:
+            self._rebuild_cache(size)
+            self._on_resize(size)
+
+        self._acumulado_pontos += max(0.0, float(dt))
+        if self._acumulado_pontos >= 0.35:
+            self._acumulado_pontos = 0.0
+            self._indice_pontos = (self._indice_pontos + 1) % len(self._pontos)
+            self._atualizar_texto_titulo()
+
+        if self._frames:
+            self._acumulado_frame += max(0.0, float(dt))
+            if self._acumulado_frame >= self._intervalo_frame:
+                self._acumulado_frame = 0.0
+                self._frame_idx = (self._frame_idx + 1) % len(self._frames)
+                self._atualizar_frame_escalado()
+
+        self._blit_overlay(tela)
+
+        painel = self._get_painel(
+            self.caixa,
+            bg_color=(14, 20, 38),
+            border_color=(255, 220, 120),
+            border_w=2,
+            radius=20,
+        )
+        tela.blit(painel, self.caixa.topleft)
+
+        self._barra.render(tela, eventos, dt)
+        self._texto_titulo.draw(tela)
+        self._texto_percentual.draw(tela)
+        self._texto_mensagem.draw(tela)
+
+        if self._frame_escalado is not None:
+            rect = self._frame_escalado.get_rect(center=(self.caixa.centerx, self.caixa.centery + 28))
+            tela.blit(self._frame_escalado, rect)

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Callable, Dict, List, Sequence, Tuple
+
 
 BLOCO_TAMANHO_PX = 32
 CHUNK_BLOCOS = 10
@@ -16,6 +18,7 @@ RAIZ_REPOSITORIO = PASTA_SERVIDOR.parent
 ARQUIVO_MUNDO = PASTA_SERVIDOR / "MundoEstado.json"
 ARQUIVO_WORLD_META = RAIZ_REPOSITORIO / "world_meta.json"
 PASTA_WORLD_CHUNKS = RAIZ_REPOSITORIO / "world_chunks"
+ARQUIVO_FOTO_MUNDO = RAIZ_REPOSITORIO / "world_foto.ppm"
 ARQUIVO_JAVA = PASTA_SERVIDOR / "WorldGenerator.java"
 ARQUIVO_CLASS = PASTA_SERVIDOR / "WorldGenerator.class"
 
@@ -36,10 +39,170 @@ def _compilar_java_se_necessario() -> None:
     subprocess.run(cmd, check=True, cwd=PASTA_SERVIDOR)
 
 
-def _executar_world_generator(seed: int) -> None:
+def _emitir_progresso(callback_progresso, percentual: int, mensagem: str) -> None:
+    if not callable(callback_progresso):
+        return
+    callback_progresso(max(0, min(100, int(percentual))), str(mensagem))
+
+
+def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str], None] | None = None) -> None:
     _compilar_java_se_necessario()
     cmd = ["java", "-cp", str(PASTA_SERVIDOR), "WorldGenerator", str(seed), str(RAIZ_REPOSITORIO)]
-    subprocess.run(cmd, check=True, cwd=RAIZ_REPOSITORIO)
+
+    _emitir_progresso(callback_progresso, 1, "Preparando geração do mundo")
+
+    proc = subprocess.Popen(
+        cmd,
+        cwd=RAIZ_REPOSITORIO,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+
+    etapa = "inicio"
+    chunks_total = 0
+    for raw_line in iter(proc.stdout.readline, ""):
+        linha = raw_line.strip()
+        if not linha:
+            continue
+
+        if "Gerando terreno base" in linha:
+            etapa = "terreno"
+            _emitir_progresso(callback_progresso, 5, "Gerando linhas do terreno")
+            continue
+
+        if "Gerando rios" in linha:
+            etapa = "rios"
+            _emitir_progresso(callback_progresso, 45, "Gerando rios e lagos")
+            continue
+
+        if "Posicionando estruturas naturais" in linha:
+            etapa = "estruturas"
+            _emitir_progresso(callback_progresso, 60, "Posicionando estruturas naturais")
+            continue
+
+        if "Posicionando ginasios, dungeons e vilas" in linha:
+            etapa = "pois"
+            _emitir_progresso(callback_progresso, 75, "Posicionando ginasios, dungeons e vilas")
+            continue
+
+        if "Exportando mundo em chunks" in linha:
+            etapa = "chunks"
+            chunks_total = 0
+            if ARQUIVO_WORLD_META.exists():
+                try:
+                    meta = _carregar_world_meta()
+                    chunks_total = int(meta.get("chunks_x", 0)) * int(meta.get("chunks_y", 0))
+                except Exception:
+                    chunks_total = 0
+            _emitir_progresso(callback_progresso, 82, "Salvando chunks")
+            continue
+
+        m_linha = re.search(r"linha\s+(\d+)\s*/\s*(\d+)", linha)
+        if m_linha and etapa == "terreno":
+            atual = int(m_linha.group(1))
+            total = max(1, int(m_linha.group(2)))
+            pct = 5 + int((atual / total) * 40)
+            _emitir_progresso(callback_progresso, pct, f"Gerando linhas do terreno ({atual}/{total})")
+            continue
+
+        m_estrut = re.search(r"estruturas na linha\s+(\d+)\s*/\s*(\d+)", linha)
+        if m_estrut:
+            atual = int(m_estrut.group(1))
+            total = max(1, int(m_estrut.group(2)))
+            pct = 60 + int((atual / total) * 15)
+            _emitir_progresso(callback_progresso, pct, f"Posicionando estruturas naturais ({atual}/{total})")
+            continue
+
+        m_rios = re.search(r"fontes de rio criadas:\s*(\d+)\s*/\s*(\d+)", linha)
+        if m_rios:
+            atual = int(m_rios.group(1))
+            total = max(1, int(m_rios.group(2)))
+            pct = 45 + int((atual / total) * 15)
+            _emitir_progresso(callback_progresso, pct, f"Gerando rios e lagos ({atual}/{total})")
+            continue
+
+        m_prog = re.search(r"\[PROGRESSO\]\s+ETAPA=CHUNKS\s+ATUAL=(\d+)\s+TOTAL=(\d+)\s+MSG=(.+)", linha)
+        if m_prog:
+            atual = int(m_prog.group(1))
+            total = max(1, int(m_prog.group(2)))
+            pct = 82 + int((atual / total) * 13)
+            _emitir_progresso(callback_progresso, pct, f"Salvando chunks ({atual}/{total})")
+            continue
+
+        if etapa == "chunks" and PASTA_WORLD_CHUNKS.exists() and chunks_total > 0:
+            chunks_prontos = len(list(PASTA_WORLD_CHUNKS.glob("chunk_*.json")))
+            pct = 82 + int((chunks_prontos / max(1, chunks_total)) * 13)
+            _emitir_progresso(callback_progresso, pct, f"Salvando chunks ({chunks_prontos}/{chunks_total})")
+
+    saida = proc.wait()
+    if saida != 0:
+        raise subprocess.CalledProcessError(saida, cmd)
+
+
+def _cor_tile(tile: int) -> Tuple[int, int, int]:
+    if tile == 0:
+        return (34, 99, 196)
+    if tile == 1:
+        return (52, 130, 232)
+    if tile == 2:
+        return (228, 212, 140)
+    if tile == 3:
+        return (74, 168, 86)
+    if tile == 4:
+        return (58, 135, 64)
+    return (120, 120, 120)
+
+
+def gerar_foto_mundo(meta: Dict[str, int]) -> None:
+    largura = max(1, int(meta.get("width", 1)))
+    altura = max(1, int(meta.get("height", 1)))
+    chunk_blocos = max(1, int(meta.get("chunk_blocos_disco", CHUNK_BLOCOS)))
+
+    total_chunks_x = max(1, int(meta.get("chunks_x", 1)))
+    total_chunks_y = max(1, int(meta.get("chunks_y", 1)))
+    linhas = [[(0, 0, 0) for _ in range(largura)] for _ in range(altura)]
+
+    for cy in range(total_chunks_y):
+        for cx in range(total_chunks_x):
+            grid = _carregar_chunk_blocos(meta, cx, cy)
+            x0 = cx * chunk_blocos
+            y0 = cy * chunk_blocos
+            for by, linha in enumerate(grid):
+                gy = y0 + by
+                if gy >= altura:
+                    continue
+                for bx, valor in enumerate(linha):
+                    gx = x0 + bx
+                    if gx >= largura:
+                        continue
+                    linhas[gy][gx] = _cor_tile(int(valor))
+
+    with ARQUIVO_FOTO_MUNDO.open("w", encoding="utf-8") as f:
+        f.write(f"P3\n{largura} {altura}\n255\n")
+        for linha in linhas:
+            f.write(" ".join(f"{r} {g} {b}" for r, g, b in linha))
+            f.write("\n")
+
+
+def limpar_arquivos_mundo() -> None:
+    if ARQUIVO_MUNDO.exists():
+        ARQUIVO_MUNDO.unlink()
+    if ARQUIVO_WORLD_META.exists():
+        ARQUIVO_WORLD_META.unlink()
+    if ARQUIVO_FOTO_MUNDO.exists():
+        ARQUIVO_FOTO_MUNDO.unlink()
+    if PASTA_WORLD_CHUNKS.exists():
+        for arquivo in PASTA_WORLD_CHUNKS.glob("*.json"):
+            try:
+                arquivo.unlink()
+            except OSError:
+                pass
+        try:
+            PASTA_WORLD_CHUNKS.rmdir()
+        except OSError:
+            pass
 
 
 def _validar_grid_numerica(nome: str, grid: object, largura: int, altura: int) -> List[List[int]]:
@@ -197,11 +360,13 @@ def _escolher_spawn_por_chunks(meta: Dict[str, int]) -> Tuple[Tuple[int, int], T
     return melhor_chunk, (float(sx), float(sy))
 
 
-def gerar_novo_estado_mundo(players: Dict[str, object] | None = None) -> Dict[str, object]:
+def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_progresso: Callable[[int, str], None] | None = None) -> Dict[str, object]:
     seed = _gerar_seed()
-    _executar_world_generator(seed)
+    _executar_world_generator(seed, callback_progresso=callback_progresso)
 
     meta_java = _carregar_world_meta()
+    _emitir_progresso(callback_progresso, 96, "Gerando foto do mundo")
+    gerar_foto_mundo(meta_java)
     spawn_chunk, spawn = _escolher_spawn_por_chunks(meta_java)
 
     estado = {
@@ -234,7 +399,7 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
         json.dump(estado_mundo, f, ensure_ascii=False, indent=2)
 
 
-def carregar_ou_criar_estado_mundo() -> Dict[str, object]:
+def carregar_estado_mundo() -> Dict[str, object]:
     if ARQUIVO_MUNDO.exists():
         with ARQUIVO_MUNDO.open("r", encoding="utf-8") as f:
             estado = json.load(f)
@@ -274,13 +439,27 @@ def carregar_ou_criar_estado_mundo() -> Dict[str, object]:
                     estado.setdefault("grid_estruturas_naturais", [])
                     return estado
 
+    return {
+        "meta": {},
+        "grid": [],
+        "grid_biomas": [],
+        "grid_estruturas_naturais": [],
+        "players": {},
+        "spawn": [0.0, 0.0],
+    }
+
+
+def carregar_ou_criar_estado_mundo() -> Dict[str, object]:
+    estado = carregar_estado_mundo()
+    if estado.get("meta"):
+        return estado
     estado = gerar_novo_estado_mundo(players={})
     salvar_estado_mundo(estado)
     return estado
 
 
 def obter_posicao_spawn(estado_mundo: Dict[str, object] | None = None) -> Tuple[float, float]:
-    estado = estado_mundo if isinstance(estado_mundo, dict) else carregar_ou_criar_estado_mundo()
+    estado = estado_mundo if isinstance(estado_mundo, dict) else carregar_estado_mundo()
     spawn = estado.get("spawn", [0.0, 0.0])
     try:
         x = float(spawn[0])
@@ -295,7 +474,7 @@ def obter_posicao_spawn(estado_mundo: Dict[str, object] | None = None) -> Tuple[
 
 
 try:
-    _estado_existente = carregar_ou_criar_estado_mundo()
+    _estado_existente = carregar_estado_mundo()
     _meta = _estado_existente.get("meta", {}) if isinstance(_estado_existente, dict) else {}
     LARGURA_BLOCOS = int(_meta.get("largura_blocos", LARGURA_BLOCOS))
     ALTURA_BLOCOS = int(_meta.get("altura_blocos", ALTURA_BLOCOS))

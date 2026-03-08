@@ -3,10 +3,10 @@ import time
 
 from SimuladorServerJogo.GeradorMundo import (
     ALTURA_BLOCOS,
-    ARQUIVO_MUNDO,
     LARGURA_BLOCOS,
-    carregar_ou_criar_estado_mundo,
+    carregar_estado_mundo,
     gerar_novo_estado_mundo,
+    limpar_arquivos_mundo,
     obter_posicao_spawn,
     salvar_estado_mundo,
 )
@@ -15,21 +15,51 @@ from SimuladorServerJogo.Ativador import resetar_estado_clientes
 from SimuladorServerJogo.Cerebro import CEREBRO
 
 _CHAVE_SEGURANCA = "1900"
-_ESTADO_MUNDO = carregar_ou_criar_estado_mundo()
+_ESTADO_MUNDO = carregar_estado_mundo()
 
 _ESTADO = {
     "nome": "Servidor Indigo",
     "ip": "203.0.113.77:8123",
     "ligado": True,
-    "mundo_existente": ARQUIVO_MUNDO.exists(),
+    "mundo_existente": bool(_ESTADO_MUNDO.get("meta")),
     "banidos": {"JogadorBanido"},
     "jogadores_com_personagem": set(_ESTADO_MUNDO.get("players", {}).keys()),
     "personagens": dict(_ESTADO_MUNDO.get("players", {})),
 }
 
+_ESTADO_GERACAO = {
+    "em_andamento": False,
+    "progresso": 0,
+    "mensagem": "Aguardando operação",
+    "erro": "",
+}
+
 _LOCK = threading.Lock()
 _INTERVALO_PERSISTENCIA_SEGUNDOS = 1.0
 _ultimo_persistencia_ts = 0.0
+
+
+
+def _estado_mundo_vazio():
+    return {
+        "meta": {},
+        "grid": [],
+        "grid_biomas": [],
+        "grid_estruturas_naturais": [],
+        "players": {},
+        "spawn": [0.0, 0.0],
+    }
+
+
+def _set_geracao(em_andamento=None, progresso=None, mensagem=None, erro=None):
+    if em_andamento is not None:
+        _ESTADO_GERACAO["em_andamento"] = bool(em_andamento)
+    if progresso is not None:
+        _ESTADO_GERACAO["progresso"] = max(0, min(100, int(progresso)))
+    if mensagem is not None:
+        _ESTADO_GERACAO["mensagem"] = str(mensagem)
+    if erro is not None:
+        _ESTADO_GERACAO["erro"] = str(erro)
 
 
 def _clamp_posicao(posicao):
@@ -99,30 +129,45 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
 
 def _recarregar_mundo():
     global _ESTADO_MUNDO
-    _ESTADO_MUNDO = carregar_ou_criar_estado_mundo()
+    _ESTADO_MUNDO = carregar_estado_mundo()
 
 
-def _criar_novo_mundo():
+def _criar_novo_mundo_sync():
     global _ESTADO_MUNDO
+
+    def _callback_progresso(percentual: int, mensagem: str):
+        with _LOCK:
+            _set_geracao(progresso=percentual, mensagem=mensagem)
+
     players = dict(_ESTADO.get("personagens", {}))
-    _ESTADO_MUNDO = gerar_novo_estado_mundo(players=players)
+    _set_geracao(em_andamento=True, progresso=1, mensagem="Preparando geração do mundo", erro="")
+    _ESTADO_MUNDO = gerar_novo_estado_mundo(players=players, callback_progresso=_callback_progresso)
+    _set_geracao(progresso=98, mensagem="Salvando estado do mundo")
     salvar_estado_mundo(_ESTADO_MUNDO)
+    _set_geracao(progresso=99, mensagem="Carregando mundo no servidor")
     BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
     resetar_estado_clientes()
+    _set_geracao(progresso=100, mensagem="Mundo pronto")
+
+
+def _worker_criacao_mundo():
+    try:
+        _criar_novo_mundo_sync()
+        with _LOCK:
+            _ESTADO["mundo_existente"] = True
+            _set_geracao(em_andamento=False, progresso=100, mensagem="Mundo pronto", erro="")
+    except Exception as exc:
+        with _LOCK:
+            _ESTADO_MUNDO.clear()
+            _ESTADO_MUNDO.update(_estado_mundo_vazio())
+            _ESTADO["mundo_existente"] = False
+            _set_geracao(em_andamento=False, progresso=0, mensagem="Falha ao criar mundo", erro=str(exc))
 
 
 def _apagar_mundo():
     global _ESTADO_MUNDO
-    if ARQUIVO_MUNDO.exists():
-        ARQUIVO_MUNDO.unlink()
-    _ESTADO_MUNDO = {
-        "meta": {},
-        "grid": [],
-        "grid_biomas": [],
-        "grid_estruturas_naturais": [],
-        "players": {},
-        "spawn": [0.0, 0.0],
-    }
+    limpar_arquivos_mundo()
+    _ESTADO_MUNDO = _estado_mundo_vazio()
     _ESTADO["personagens"].clear()
     _ESTADO["jogadores_com_personagem"].clear()
     BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
@@ -130,6 +175,8 @@ def _apagar_mundo():
 
 
 def _sync_personagens_mundo():
+    if not _ESTADO_MUNDO.get("meta"):
+        return
     _ESTADO_MUNDO["players"] = _ESTADO["personagens"]
     salvar_estado_mundo(_ESTADO_MUNDO)
 
@@ -157,6 +204,10 @@ def snapshot_estado():
             "banidos": set(_ESTADO["banidos"]),
             "jogadores_com_personagem": set(_ESTADO["jogadores_com_personagem"]),
             "personagens": {k: dict(v) for k, v in _ESTADO["personagens"].items()},
+            "mundo_em_geracao": bool(_ESTADO_GERACAO["em_andamento"]),
+            "progresso_mundo": int(_ESTADO_GERACAO["progresso"]),
+            "mensagem_geracao": str(_ESTADO_GERACAO["mensagem"]),
+            "erro_geracao": str(_ESTADO_GERACAO["erro"]),
         }
 
 
@@ -171,16 +222,29 @@ def definir_mundo_existente(ativo):
     with _LOCK:
         ativo = bool(ativo)
         if ativo:
-            _criar_novo_mundo()
-            _ESTADO["mundo_existente"] = True
-            return
+            if _ESTADO_GERACAO["em_andamento"]:
+                return False, "A geração de mundo já está em andamento"
+            _ESTADO["mundo_existente"] = False
+            _set_geracao(em_andamento=True, progresso=1, mensagem="Preparando criação do mundo...", erro="")
+            thread = threading.Thread(target=_worker_criacao_mundo, daemon=True)
+            thread.start()
+            return True, "Criação de mundo iniciada"
+
+        if _ESTADO_GERACAO["em_andamento"]:
+            return False, "Não é possível apagar o mundo enquanto a geração está em andamento"
 
         _apagar_mundo()
         _ESTADO["mundo_existente"] = False
+        _set_geracao(em_andamento=False, progresso=0, mensagem="Mundo apagado", erro="")
+        return True, "Mundo apagado"
 
 
 def adicionar_personagem(usuario, skin, pokemon_inicial):
     with _LOCK:
+        if _ESTADO_GERACAO["em_andamento"]:
+            return False, "Aguarde a criação do mundo terminar"
+        if not _ESTADO["mundo_existente"]:
+            return False, "Este servidor ainda não possui mundo"
         if usuario in _ESTADO["jogadores_com_personagem"]:
             return False, "Sua conta já possui personagem neste servidor"
 

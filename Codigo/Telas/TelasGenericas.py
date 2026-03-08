@@ -329,24 +329,30 @@ class SubtelaCarregamento(_BaseModal):
 
         super().__init__(tela_size, alpha_overlay=185)
 
+        # Título no topo central
         self._texto_titulo = Texto(
             "",
-            (self.caixa.centerx, self.caixa.top + 66),
+            (self.caixa.centerx, self.caixa.top + 48),
             style={"size": 40, "align": "center"},
         )
-        self._texto_percentual = Texto(
-            "0%",
-            (self.caixa.centerx, self.caixa.top + 112),
-            style={"size": 32, "align": "center", "outline": True, "outline_color": (0, 0, 0)},
-        )
+
+        # Mensagem acima da barra
         self._texto_mensagem = Texto(
             "Preparando...",
-            (self.caixa.centerx, self.caixa.top + 148),
+            (self.caixa.centerx, self.caixa.bottom - 88),
             style={"size": 24, "align": "center", "outline": True, "outline_color": (0, 0, 0)},
         )
 
+        # Percentual logo acima da barra
+        self._texto_percentual = Texto(
+            "0%",
+            (self.caixa.centerx, self.caixa.bottom - 54),
+            style={"size": 30, "align": "center", "outline": True, "outline_color": (0, 0, 0)},
+        )
+
+        # Barra na parte inferior
         self._barra = Barra(
-            pygame.Rect(self.caixa.left + 32, self.caixa.top + 26, self.caixa.width - 64, 28),
+            pygame.Rect(self.caixa.left + 32, self.caixa.bottom - 34, self.caixa.width - 64, 22),
             texto="",
             valor=0,
             minimo=0,
@@ -354,7 +360,7 @@ class SubtelaCarregamento(_BaseModal):
             mostrar_rotulo=False,
         )
 
-        pasta_frames = "Recursos/Visual/Outros/Carregando_Frames"
+        pasta_frames = "Recursos/Visual/Outros/Conectando_Frames"
         if os.path.isdir(pasta_frames):
             nomes = sorted([n for n in os.listdir(pasta_frames) if n.lower().endswith(".png")])
             for nome in nomes:
@@ -363,6 +369,7 @@ class SubtelaCarregamento(_BaseModal):
                     self._frames.append(pygame.image.load(caminho).convert_alpha())
                 except pygame.error:
                     pass
+
         self._atualizar_texto_titulo()
         self._atualizar_frame_escalado()
 
@@ -374,18 +381,33 @@ class SubtelaCarregamento(_BaseModal):
         self._texto_mensagem.set_text(str(texto or "Carregando mundo"))
 
     def _atualizar_texto_titulo(self):
-        self._texto_titulo.set_text(f"{self.titulo_base} {self._pontos[self._indice_pontos]}")
+        self._texto_titulo.set_text(f"{self.titulo_base}{self._pontos[self._indice_pontos]}")
 
     def _atualizar_frame_escalado(self):
         self._frame_escalado = None
         if not self._frames:
             return
+
         frame = self._frames[self._frame_idx]
-        max_largura = int(self.caixa.width * 0.38)
-        max_altura = int(self.caixa.height * 0.38)
-        escala = min(max_largura / max(1, frame.get_width()), max_altura / max(1, frame.get_height()))
+
+        # Espaço central entre título e textos da barra
+        topo_area = self.caixa.top + 90
+        base_area = self.caixa.bottom - 125
+        altura_disponivel = max(80, base_area - topo_area)
+
+        max_largura = int(self.caixa.width * 0.42)
+        max_altura = int(altura_disponivel)
+
+        escala = min(
+            max_largura / max(1, frame.get_width()),
+            max_altura / max(1, frame.get_height())
+        )
         escala = max(0.1, escala)
-        size = (max(1, int(frame.get_width() * escala)), max(1, int(frame.get_height() * escala)))
+
+        size = (
+            max(1, int(frame.get_width() * escala)),
+            max(1, int(frame.get_height() * escala))
+        )
         self._frame_escalado = pygame.transform.smoothscale(frame, size)
 
     def _on_resize(self, tela_size):
@@ -394,10 +416,10 @@ class SubtelaCarregamento(_BaseModal):
         caixa.center = (largura // 2, altura // 2)
         self.caixa = caixa
 
-        self._texto_titulo.set_pos((self.caixa.centerx, self.caixa.top + 66))
-        self._texto_percentual.set_pos((self.caixa.centerx, self.caixa.top + 112))
-        self._texto_mensagem.set_pos((self.caixa.centerx, self.caixa.top + 148))
-        self._barra.rect = pygame.Rect(self.caixa.left + 32, self.caixa.top + 26, self.caixa.width - 64, 28)
+        self._texto_titulo.set_pos((self.caixa.centerx, self.caixa.top + 48))
+        self._texto_mensagem.set_pos((self.caixa.centerx, self.caixa.bottom - 88))
+        self._texto_percentual.set_pos((self.caixa.centerx, self.caixa.bottom - 54))
+        self._barra.rect = pygame.Rect(self.caixa.left + 32, self.caixa.bottom - 34, self.caixa.width - 64, 22)
 
         self._painel_surf = None
         self._painel_size = (0, 0)
@@ -433,11 +455,13 @@ class SubtelaCarregamento(_BaseModal):
         )
         tela.blit(painel, self.caixa.topleft)
 
-        self._barra.render(tela, eventos, dt)
         self._texto_titulo.draw(tela)
-        self._texto_percentual.draw(tela)
-        self._texto_mensagem.draw(tela)
 
         if self._frame_escalado is not None:
-            rect = self._frame_escalado.get_rect(center=(self.caixa.centerx, self.caixa.centery + 28))
+            rect = self._frame_escalado.get_rect(center=(self.caixa.centerx, self.caixa.centery - 8))
             tela.blit(self._frame_escalado, rect)
+
+        self._texto_mensagem.draw(tela)
+        self._texto_percentual.draw(tela)
+        self._barra.render(tela, eventos, dt)
+        

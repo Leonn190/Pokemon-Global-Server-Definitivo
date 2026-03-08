@@ -39,6 +39,9 @@ def processar_entrada_json(requisicao_json):
 
         estado = snapshot_estado()
 
+        if estado.get("mundo_em_geracao"):
+            return json.dumps(_resposta("negado", "O mundo está em criação. Aguarde o término."), ensure_ascii=False)
+
         if not estado["mundo_existente"]:
             return json.dumps(_resposta("negado", "Este servidor ainda não possui mundo"), ensure_ascii=False)
 

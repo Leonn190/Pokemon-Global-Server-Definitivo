@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from SimuladorServerJogo.GeradorMundo import (
     BLOCO_TAMANHO_PX,
     CHUNK_BLOCOS,
-    carregar_ou_criar_estado_mundo,
+    carregar_estado_mundo,
 )
 from SimuladorServerJogo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, GameObjetoServer
 from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo
@@ -31,7 +31,7 @@ class BancoDadosMundo:
         self._tamanho_celula = max(64, int(tamanho_celula))
         self._chunk_tamanho_px = max(128, int(chunk_tamanho_px))
 
-        self._estado_mundo = carregar_ou_criar_estado_mundo()
+        self._estado_mundo = carregar_estado_mundo()
         self._grid: List[List[int]] = []
         self._chunks_cache: Dict[Tuple[int, int], Dict[str, List[List[int]]]] = {}
         self._chunks_estruturas_carregados: Set[Tuple[int, int]] = set()

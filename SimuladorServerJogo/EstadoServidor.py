@@ -1,9 +1,8 @@
 import threading
 import time
 
+import SimuladorServerJogo.GeradorMundo as GERADOR_MUNDO
 from SimuladorServerJogo.GeradorMundo import (
-    ALTURA_BLOCOS,
-    LARGURA_BLOCOS,
     carregar_estado_mundo,
     gerar_novo_estado_mundo,
     limpar_arquivos_mundo,
@@ -72,8 +71,8 @@ def _clamp_posicao(posicao):
     except (TypeError, ValueError, IndexError):
         return (0.0, 0.0)
 
-    largura = max(1.0, float(LARGURA_BLOCOS))
-    altura = max(1.0, float(ALTURA_BLOCOS))
+    largura = max(1.0, float(GERADOR_MUNDO.LARGURA_BLOCOS))
+    altura = max(1.0, float(GERADOR_MUNDO.ALTURA_BLOCOS))
     x = x % largura
     y = y % altura
     return (x, y)
@@ -133,6 +132,15 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
 def _recarregar_mundo():
     global _ESTADO_MUNDO
     _ESTADO_MUNDO = carregar_estado_mundo()
+
+
+def _limites_mundo_atuais() -> tuple[float, float]:
+    meta = _ESTADO_MUNDO.get("meta", {}) if isinstance(_ESTADO_MUNDO, dict) else {}
+    largura_meta = float(meta.get("largura_blocos", 0)) if isinstance(meta, dict) else 0.0
+    altura_meta = float(meta.get("altura_blocos", 0)) if isinstance(meta, dict) else 0.0
+    largura = largura_meta if largura_meta > 0 else float(GERADOR_MUNDO.LARGURA_BLOCOS)
+    altura = altura_meta if altura_meta > 0 else float(GERADOR_MUNDO.ALTURA_BLOCOS)
+    return (max(1.0, largura), max(1.0, altura))
 
 
 def _criar_novo_mundo_sync():
@@ -311,8 +319,7 @@ def obter_personagem_para_entrada(usuario):
             try:
                 x = float(posicao[0])
                 y = float(posicao[1])
-                largura = max(1.0, float(LARGURA_BLOCOS))
-                altura = max(1.0, float(ALTURA_BLOCOS))
+                largura, altura = _limites_mundo_atuais()
                 if x < 0.0 or y < 0.0 or x >= largura or y >= altura:
                     posicao_valida = False
             except (TypeError, ValueError):

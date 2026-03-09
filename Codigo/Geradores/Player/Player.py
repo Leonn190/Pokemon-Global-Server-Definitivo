@@ -12,7 +12,7 @@ class Player:
     def __init__(self, ator, velocidade_tiles=None):
         self.Ator = ator
         self.Perfil = PlayerPerfil()
-        self.Inventario = PlayerInventario(limite_itens=self.Perfil.NivelMochila * 100)
+        self.Inventario = PlayerInventario(limite_itens=self.Perfil.NivelMochila * 100, limite_slots=getattr(self.Perfil, "LimiteSlotsInventario", 32))
         self.Controle = PlayerController(
             ator=ator,
             perfil=self.Perfil,

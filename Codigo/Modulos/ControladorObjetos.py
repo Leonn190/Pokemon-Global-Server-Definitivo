@@ -71,6 +71,9 @@ class ControladorObjetos:
 
         player = Player(ator=ator)
         player.Perfil.aplicar_serializado(dados)
+        if hasattr(player.Inventario, "definir_limite_itens"):
+            player.Inventario.definir_limite_itens(player.Perfil.NivelMochila * 100)
+            player.Inventario.definir_limite_slots(getattr(player.Perfil, "LimiteSlotsInventario", 32))
         inventario_serializado = dados.get("inventario", dados) if isinstance(dados.get("inventario", dados), dict) else {}
         player.Inventario.aplicar_serializado(inventario_serializado)
         self.definir_player_local(player)

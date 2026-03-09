@@ -41,6 +41,11 @@ class PlayerController:
         dt = max(0.0, float(dt))
         self._processar_toggle_inventario(eventos)
         if self.InventarioAberto:
+            tile_atual = self._tile_atual()
+            self._atualizar_stamina(dt, False, False, tile_atual)
+            self._tempo_respiracao += dt
+            self.Ator.atualizar(dt)
+            self.Ator.atualizar_colisor_mao_mundo()
             return
         self._processar_scroll_inventario(eventos)
         self._processar_input_tapa(eventos)

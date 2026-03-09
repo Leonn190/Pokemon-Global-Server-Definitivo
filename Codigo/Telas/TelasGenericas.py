@@ -2,6 +2,7 @@ import pygame
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.CaixaTexto import CaixaTexto
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Modulos.Auxiliares import carregar_frames
 
 
 _ESTILO_BOTAO_MODAL = {
@@ -307,7 +308,6 @@ class SubtelaTexto(_BaseModal):
 
 class SubtelaCarregamento(_BaseModal):
     def __init__(self, tela_size, titulo="Carregando"):
-        import os
         from Codigo.Prefabs.Barra import Barra
 
         largura, altura = tela_size
@@ -360,15 +360,7 @@ class SubtelaCarregamento(_BaseModal):
             mostrar_rotulo=False,
         )
 
-        pasta_frames = "Recursos/Visual/Outros/Conectando_Frames"
-        if os.path.isdir(pasta_frames):
-            nomes = sorted([n for n in os.listdir(pasta_frames) if n.lower().endswith(".png")])
-            for nome in nomes:
-                caminho = os.path.join(pasta_frames, nome)
-                try:
-                    self._frames.append(pygame.image.load(caminho).convert_alpha())
-                except pygame.error:
-                    pass
+        self._frames = carregar_frames("Recursos/Visual/Outros/Conectando_Frames")
 
         self._atualizar_texto_titulo()
         self._atualizar_frame_escalado()

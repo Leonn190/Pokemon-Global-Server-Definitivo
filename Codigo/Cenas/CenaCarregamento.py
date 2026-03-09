@@ -1,7 +1,6 @@
-import os
-
 import pygame
 
+from Codigo.Modulos.Auxiliares import carregar_frames
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 from Codigo.Prefabs.Botao import Botao
 
@@ -26,21 +25,7 @@ class CenaCarregamento:
         self._montar_layout(JOGO)
 
     def _carregar_frames(self):
-        pasta_frames = "Recursos/Visual/Outros/Carregando_Frames"
-        if not os.path.isdir(pasta_frames):
-            return
-
-        nomes = sorted(
-            [arquivo for arquivo in os.listdir(pasta_frames) if arquivo.lower().endswith(".png")]
-        )
-
-        for nome in nomes:
-            caminho = os.path.join(pasta_frames, nome)
-            try:
-                imagem = pygame.image.load(caminho).convert_alpha()
-            except pygame.error:
-                continue
-            self._frames.append(imagem)
+        self._frames = carregar_frames("Recursos/Visual/Outros/Carregando_Frames")
 
     def _voltar_menu(self, JOGO, _botao):
         JOGO.CenaAlvo = "Menu"

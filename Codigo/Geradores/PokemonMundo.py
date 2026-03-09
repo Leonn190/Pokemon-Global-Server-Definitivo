@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple
 import pygame
 
 from Codigo.Geradores.Entidade import Entidade
+from Codigo.Modulos.Auxiliares import carregar_frames
 
 Vector2 = Tuple[float, float]
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
@@ -64,15 +65,6 @@ class PokemonMundo(Entidade):
     # CARREGAMENTO DE FRAMES
     # ---------------------------------------------------------
 
-    @staticmethod
-    def _ordem_numerica(path: Path):
-        """Ordena arquivos pelo número do nome (1.png,2.png...)."""
-        nome = path.stem
-        try:
-            return int(nome)
-        except ValueError:
-            return nome.lower()
-
     @classmethod
     def _carregar_frames_nome(cls, especie: str) -> List[pygame.Surface]:
         chave = str(especie or "").strip().lower()
@@ -83,16 +75,7 @@ class PokemonMundo(Entidade):
             return cls._cache_frames[chave]
 
         pasta = _PASTA_ANIMACOES / chave
-        frames: List[pygame.Surface] = []
-
-        if pasta.exists() and pasta.is_dir():
-            arquivos = sorted(pasta.glob("*.png"), key=cls._ordem_numerica)
-
-            for arquivo in arquivos:
-                try:
-                    frames.append(pygame.image.load(str(arquivo)).convert_alpha())
-                except Exception:
-                    continue
+        frames = carregar_frames(pasta)
 
         cls._cache_frames[chave] = frames
         return frames

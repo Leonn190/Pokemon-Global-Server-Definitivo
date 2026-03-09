@@ -3,6 +3,7 @@ import threading
 
 import pygame
 
+from Codigo.Modulos.Auxiliares import carregar_frames
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao
@@ -147,27 +148,7 @@ class SubtelaCriarPersonagem:
         animacoes = {}
         for nome in _LISTA_INICIAIS:
             pasta = os.path.join("Recursos", "Visual", "Pokemons", "Animação", nome.lower())
-            frames = []
-
-            if os.path.isdir(pasta):
-                arquivos = [arq for arq in os.listdir(pasta) if arq.lower().endswith(".png")]
-
-                def _key(n):
-                    base = n.rsplit(".", 1)[0]
-                    if "_" in base:
-                        tail = base.rsplit("_", 1)[-1]
-                        if tail.isdigit():
-                            return int(tail)
-                    return 0
-
-                arquivos.sort(key=_key)
-
-                for arq in arquivos:
-                    caminho = os.path.join(pasta, arq)
-                    try:
-                        frames.append(pygame.image.load(caminho).convert_alpha())
-                    except pygame.error:
-                        pass
+            frames = carregar_frames(pasta)
 
             if not frames:
                 frames = [self._icones_pokemon[nome]]

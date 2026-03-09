@@ -7,6 +7,7 @@ import pygame
 
 from Codigo.Geradores.Entidade import Entidade
 from Codigo.Geradores.GameObjeto import GameObjeto
+from Codigo.Modulos.Auxiliares import carregar_frames
 
 
 class Bau(Entidade):
@@ -43,11 +44,7 @@ class Bau(Entidade):
             return cls._frames_por_tipo[tipo]
 
         base = Path("Recursos") / "Visual" / "Mundo" / "Baus" / f"Bau {tipo}"
-        frames: List[pygame.Surface] = []
-        for idx in range(4):
-            sprite = GameObjeto._obter_sprite(str(base / f"{idx}.png"))
-            if sprite is not None:
-                frames.append(sprite)
+        frames = carregar_frames(base, loader=GameObjeto._obter_sprite)
         cls._frames_por_tipo[tipo] = frames
         return frames
 

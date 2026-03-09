@@ -9,9 +9,10 @@ import time
 from pathlib import Path
 from typing import Callable, Dict, List, Sequence, Tuple
 
+from SimuladorServerJogo.Regras.Loader import carregar_regras_mundo
 
 BLOCO_TAMANHO_PX = 32
-CHUNK_BLOCOS = 10
+CHUNK_BLOCOS = max(1, int(carregar_regras_mundo().get("ChunkTiles", 10)))
 
 PASTA_SERVIDOR = Path(__file__).resolve().parent
 RAIZ_REPOSITORIO = PASTA_SERVIDOR.parent

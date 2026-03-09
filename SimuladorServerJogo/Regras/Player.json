@@ -1,0 +1,18 @@
+{
+  "NivelMochila": 1,
+  "Ouro": 0,
+  "Maestria": 0,
+  "StaminaMax": 100.0,
+  "VelocidadeBaseTiles": 5,
+  "BonusVelocidadeCorridaMin": 0.25,
+  "BonusVelocidadeCorridaMax": 0.5,
+  "TempoAceleracaoCorrida": 2.5,
+  "TempoDesaceleracaoCorrida": 2.0,
+  "AtrasoRegeneracaoStamina": 1.5,
+  "RegeneracaoStaminaParado": 12.0,
+  "RegeneracaoStaminaAndando": 5.0,
+  "CustoStaminaCorrida": 10.0,
+  "CustoStaminaCorridaMax": 16.0,
+  "CustoStaminaAguaRasa": 4.0,
+  "CustoStaminaAguaFunda": 16.0
+}

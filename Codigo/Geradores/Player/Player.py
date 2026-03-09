@@ -9,7 +9,7 @@ from Codigo.Modulos.ElementosHud import ElementosHud
 
 
 class Player:
-    def __init__(self, ator, velocidade_tiles=4.8):
+    def __init__(self, ator, velocidade_tiles=None):
         self.Ator = ator
         self.Perfil = PlayerPerfil()
         self.Inventario = PlayerInventario(limite_itens=32)
@@ -17,6 +17,6 @@ class Player:
             ator=ator,
             perfil=self.Perfil,
             inventario=self.Inventario,
-            velocidade_tiles=velocidade_tiles,
+            velocidade_tiles=(self.Perfil.VelocidadeBaseTiles if velocidade_tiles is None else velocidade_tiles),
         )
         self.Hud = ElementosHud()

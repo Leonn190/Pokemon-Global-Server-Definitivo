@@ -13,7 +13,6 @@ from Codigo.Modulos.Auxiliares import carregar_frames
 class Bau(Entidade):
     """Baú do mundo com animação por frames de sprites."""
 
-    DURACAO_VISUAL_ABERTO_MS = 1000
     _frames_por_tipo: Dict[str, List[pygame.Surface]] = {}
 
     def __init__(
@@ -64,7 +63,7 @@ class Bau(Entidade):
         self.AberturaLocalMs = int(pygame.time.get_ticks())
 
     def esta_visivel(self) -> bool:
-        return (not self.Aberto) or self.AberturaLocalMs <= 0 or (pygame.time.get_ticks() - self.AberturaLocalMs) < self.DURACAO_VISUAL_ABERTO_MS
+        return True
 
     def _frame_atual(self, frames: List[pygame.Surface]) -> pygame.Surface | None:
         if not frames:
@@ -74,8 +73,9 @@ class Bau(Entidade):
         if self.AberturaLocalMs <= 0:
             return frames[-1]
 
+        duracao_ms = 1000.0
         decorrido = max(0, pygame.time.get_ticks() - self.AberturaLocalMs)
-        progresso = min(1.0, decorrido / float(self.DURACAO_VISUAL_ABERTO_MS))
+        progresso = min(1.0, decorrido / duracao_ms)
         idx = min(len(frames) - 1, int(progresso * (len(frames) - 1)))
         return frames[idx]
 
@@ -91,3 +91,48 @@ class Bau(Entidade):
         escala = max(1, int(camera.TilePx * 0.95))
         sprite = pygame.transform.smoothscale(frame, (escala, escala))
         tela.blit(sprite, sprite.get_rect(center=(int(px), int(py))))
+
+    @classmethod
+    def from_snapshot(cls, snapshot: Dict[str, object]) -> "Bau":
+        estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
+        posicao = snapshot.get("posicao", [0.0, 0.0])
+        if not isinstance(posicao, (list, tuple)) or len(posicao) != 2:
+            posicao = [0.0, 0.0]
+        return cls(
+            id_objeto=int(snapshot.get("id", 0)),
+            posicao=(float(posicao[0]), float(posicao[1])),
+            tipo_bau=str(estado.get("tipo_bau", "Comum")),
+            itens=list(estado.get("itens", [])),
+            aberto=bool(estado.get("aberto", False)),
+            raio_colisao=float(snapshot.get("raio_colisao", 0.42)),
+        )
+
+    def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
+        estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
+        posicao = snapshot.get("posicao", [self.Posicao[0], self.Posicao[1]])
+        if isinstance(posicao, (list, tuple)) and len(posicao) == 2:
+            self.definir_posicao(float(posicao[0]), float(posicao[1]))
+        self.TipoBau = str(estado.get("tipo_bau", self.TipoBau)).strip() or "Comum"
+        self.Itens = [dict(i) for i in list(estado.get("itens", self.Itens)) if isinstance(i, dict)]
+        self.Colisor.raio_colisao = max(0.1, float(snapshot.get("raio_colisao", self.Colisor.raio_colisao)))
+        if bool(estado.get("aberto", False)):
+            self.marcar_aberto_por_sync()
+
+    def processar_interacao_player(self, player) -> Dict[str, object] | None:
+        ator = getattr(player, "Ator", None)
+        inventario = getattr(player, "Inventario", None)
+        if ator is None or inventario is None or self.Aberto:
+            return None
+
+        dx = float(self.Posicao[0]) - float(ator.Posicao[0])
+        dy = float(self.Posicao[1]) - float(ator.Posicao[1])
+        raio_player = max(0.1, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
+        limite = raio_player + float(getattr(self.Colisor, "raio_interacao", self.Colisor.raio_colisao)) + 0.02
+        if (dx * dx + dy * dy) > (limite * limite):
+            return None
+
+        for item in self.Itens:
+            inventario.adicionar_item(dict(item))
+        if not self.abrir_localmente():
+            return None
+        return {"tipo": "abrir_bau", "objeto_id": int(self.Id), "payload": {}}

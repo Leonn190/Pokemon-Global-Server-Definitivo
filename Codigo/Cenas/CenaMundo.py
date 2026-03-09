@@ -42,7 +42,20 @@ class CenaMundo:
             ResetTelaConfig()
             self.TelaAtual = "Config"
 
+
+    def _aplicar_regras_servidor(self, regras: dict | None) -> None:
+        if not isinstance(regras, dict):
+            return
+        mundo = regras.get("mundo") if isinstance(regras.get("mundo"), dict) else {}
+        chunk_tiles = mundo.get("chunk_tiles")
+        if chunk_tiles is not None:
+            try:
+                self.ControladorObjetos._chunk_tamanho_tiles = max(1, int(chunk_tiles))
+            except (TypeError, ValueError):
+                pass
+
     def _montar_mundo(self, JOGO):
+        self._aplicar_regras_servidor(JOGO.INFO.get("RegrasServer"))
         dados = JOGO.INFO.get("PlayerDadosServer") or {}
         player_local = self.ControladorObjetos.montar_player_local(dados)
         self.EntidadeMain = player_local.Ator
@@ -131,16 +144,12 @@ class CenaMundo:
         JOGO.TELA.fill((20, 20, 28))
         self.LeitorMundo.renderizar_mundo(JOGO.TELA, gerenciador_fps=gfps)
 
-        gfps.iniciar_trecho("renderizar_player")
-        self.ControladorObjetos.renderizar_player(JOGO.TELA, self.Camera)
-        gfps.finalizar_trecho("renderizar_player")
+        gfps.iniciar_trecho("renderizar_objetos")
+        self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera)
+        gfps.finalizar_trecho("renderizar_objetos")
 
         if self.ControladorObjetos.PlayerLocal is not None:
             self.ControladorObjetos.PlayerLocal.Controle.renderizar_stamina(JOGO.TELA, self.Camera, dt)
-
-        gfps.iniciar_trecho("renderizar_estruturas")
-        self.ControladorObjetos.renderizar_estruturas(JOGO.TELA, self.Camera)
-        gfps.finalizar_trecho("renderizar_estruturas")
 
         if self.ControladorObjetos.PlayerLocal is not None:
             player_local = self.ControladorObjetos.PlayerLocal

@@ -3,16 +3,18 @@ import time
 
 from SimuladorServerJogo.Rotas.Ativador import registrar_diff, desconectar_client
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.EstadoServidor import adicionar_personagem, obter_personagem_para_entrada, snapshot_estado
+from SimuladorServerJogo.Controle.EstadoServidor import adicionar_personagem, obter_personagem_para_entrada, snapshot_estado, obter_regras_cliente
 
 
 # --------------------- Funções auxiliares ---------------------
-def _resposta(status, mensagem, possui_personagem=None, personagem=None):
+def _resposta(status, mensagem, possui_personagem=None, personagem=None, regras=None):
     pacote = {"status": status, "mensagem": mensagem}
     if possui_personagem is not None:
         pacote["possui_personagem"] = bool(possui_personagem)
     if personagem is not None:
         pacote["personagem"] = personagem
+    if regras is not None:
+        pacote["regras"] = regras
     return pacote
 
 
@@ -66,7 +68,7 @@ def processar_entrada_json(requisicao_json):
             mensagem = "Entrada autorizada: nenhum personagem encontrado para sua conta."
 
         return json.dumps(
-            _resposta("ok", mensagem, possui_personagem=possui_personagem, personagem=personagem),
+            _resposta("ok", mensagem, possui_personagem=possui_personagem, personagem=personagem, regras=obter_regras_cliente()),
             ensure_ascii=False,
         )
 

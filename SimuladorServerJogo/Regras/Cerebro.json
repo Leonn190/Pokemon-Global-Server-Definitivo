@@ -6,18 +6,14 @@
   "chance_mover_por_tick": 0.45,
   "max_pokemon_por_chunk_simulado": 3,
   "max_pokemon_por_chunk_carregado": 0.12,
-  "maior_vetor_movimento_pokemon": 2.4,
-  "raio_colisao_pokemon": 0.725,
+  "maior_vetor_movimento_pokemon": 3.0,
   "velocidade_pokemon_tiles_s": 5.5,
+  "raio_colisao_pokemon": 0.725,
   "tentativas_spawn_chunk": 12,
-  "tiles_bloqueados": [
-    0,
-    1,
-    2
-  ],
-  "chance_spawn_bau_por_tick": 0.06,
-  "max_bau_por_chunk_simulado": 2,
-  "max_bau_por_chunk_carregado": 0.2,
-  "tentativas_spawn_bau_chunk": 20,
+  "tiles_bloqueados": [0, 1, 2],
+  "chance_spawn_bau_por_tick": 0.03,
+  "max_bau_por_chunk_simulado": 1,
+  "max_bau_por_chunk_carregado": 0.03,
+  "tentativas_spawn_bau_chunk": 8,
   "ttl_bau_aberto_segundos": 5.0
 }

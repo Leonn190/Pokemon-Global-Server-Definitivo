@@ -9,7 +9,7 @@ from typing import Dict
 from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import GameObjetoServer, BauServer
-from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem
+from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
 
 
 # --------------------- Funções auxiliares ---------------------
@@ -97,6 +97,8 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 atualizar_posicao_personagem(usuario, obj.posicao)
             if "perfil" in payload and usuario and isinstance(payload.get("perfil"), dict):
                 atualizar_perfil_personagem(usuario, payload.get("perfil"))
+            if "inventario" in payload and usuario and isinstance(payload.get("inventario"), dict):
+                atualizar_inventario_personagem(usuario, payload.get("inventario"))
             registrar_diff("update", payload=payload, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria)
             aplicados += 1
             continue

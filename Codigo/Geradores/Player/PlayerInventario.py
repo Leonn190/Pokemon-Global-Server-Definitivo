@@ -71,9 +71,20 @@ class PlayerInventario:
             return None
         return self.Itens[self.SlotSelecionado]
 
+
+    def serializar_itens(self):
+        itens = []
+        for item in self.Itens:
+            normalizado = self._normalizar_item(item)
+            if isinstance(normalizado, dict):
+                itens.append({str(k): normalizado[k] for k in sorted(normalizado.keys())})
+            else:
+                itens.append(normalizado)
+        return itens
+
     def serializar(self):
         return {
-            "itens": list(self.Itens),
+            "itens": self.serializar_itens(),
             "pokemons": list(self.Pokemons),
             "times_pokemon": list(self.TimesPokemon),
             "limite_itens": self.LimiteItens,

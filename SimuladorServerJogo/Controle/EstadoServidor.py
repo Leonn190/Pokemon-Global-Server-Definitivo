@@ -12,6 +12,7 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Rotas.Ativador import resetar_estado_clientes
 from SimuladorServerJogo.Controle.Cerebro import CEREBRO
+from SimuladorServerJogo.Regras.Loader import carregar_regras_player, carregar_regras_mundo
 
 _CHAVE_SEGURANCA = "1900"
 _ESTADO_MUNDO = carregar_estado_mundo()
@@ -79,20 +80,68 @@ def _clamp_posicao(posicao):
 
 
 def _normalizar_perfil(personagem: dict) -> dict:
+    regras = carregar_regras_player()
     dados = dict(personagem) if isinstance(personagem, dict) else {}
-    dados["nivel_mochila"] = int(dados.get("nivel_mochila", 1))
+    dados["nivel_mochila"] = int(dados.get("nivel_mochila", regras.get("NivelMochila", 1)))
     dados["batalhas_pvp_vencidas"] = int(dados.get("batalhas_pvp_vencidas", 0))
     dados["batalhas_bot_vencidas"] = int(dados.get("batalhas_bot_vencidas", 0))
-    dados["ouro"] = int(dados.get("ouro", 0))
+    dados["ouro"] = int(dados.get("ouro", regras.get("Ouro", 0)))
     dados["passos_caminhados"] = int(dados.get("passos_caminhados", 0))
     dados["insignias"] = list(dados.get("insignias", []))
-    dados["maestria"] = int(dados.get("maestria", 0))
+    dados["maestria"] = int(dados.get("maestria", regras.get("Maestria", 0)))
     dados["skins_liberadas"] = list(dados.get("skins_liberadas", []))
-    stamina_max = max(1.0, float(dados.get("stamina_max", 100.0)))
+
+    stamina_max = max(1.0, float(dados.get("stamina_max", regras.get("StaminaMax", 100.0))))
     stamina = max(0.0, min(stamina_max, float(dados.get("stamina", stamina_max))))
     dados["stamina_max"] = stamina_max
     dados["stamina"] = stamina
+
+    mapa_regras = {
+        "velocidade_base_tiles": "VelocidadeBaseTiles",
+        "bonus_velocidade_corrida_min": "BonusVelocidadeCorridaMin",
+        "bonus_velocidade_corrida_max": "BonusVelocidadeCorridaMax",
+        "tempo_aceleracao_corrida": "TempoAceleracaoCorrida",
+        "tempo_desaceleracao_corrida": "TempoDesaceleracaoCorrida",
+        "atraso_regeneracao_stamina": "AtrasoRegeneracaoStamina",
+        "regeneracao_stamina_parado": "RegeneracaoStaminaParado",
+        "regeneracao_stamina_andando": "RegeneracaoStaminaAndando",
+        "custo_stamina_corrida": "CustoStaminaCorrida",
+        "custo_stamina_corrida_max": "CustoStaminaCorridaMax",
+        "custo_stamina_agua_rasa": "CustoStaminaAguaRasa",
+        "custo_stamina_agua_funda": "CustoStaminaAguaFunda",
+    }
+    for campo, chave_regra in mapa_regras.items():
+        dados[campo] = float(dados.get(campo, regras.get(chave_regra)))
+
+    inv = dados.get("inventario") if isinstance(dados.get("inventario"), dict) else {}
+    dados["inventario"] = {
+        "itens": list(inv.get("itens", [])),
+        "pokemons": list(inv.get("pokemons", [])),
+        "times_pokemon": list(inv.get("times_pokemon", [])),
+        "limite_itens": int(max(1, inv.get("limite_itens", 32))),
+        "slot_selecionado": int(inv.get("slot_selecionado", 0)),
+    }
     return dados
+
+
+def _normalizar_inventario(payload: dict) -> dict:
+    base = payload if isinstance(payload, dict) else {}
+    itens = list(base.get("itens", []))
+    itens_norm = []
+    for item in itens:
+        if isinstance(item, dict):
+            d = dict(item)
+            d["quantidade"] = int(max(1, d.get("quantidade", 1)))
+            itens_norm.append({str(k): d[k] for k in sorted(d.keys())})
+        else:
+            itens_norm.append(item)
+    return {
+        "itens": itens_norm,
+        "pokemons": list(base.get("pokemons", [])),
+        "times_pokemon": list(base.get("times_pokemon", [])),
+        "limite_itens": int(max(1, base.get("limite_itens", 32))),
+        "slot_selecionado": int(base.get("slot_selecionado", 0)),
+    }
 
 
 def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> dict:
@@ -222,6 +271,16 @@ def _persistir_personagens(force: bool = False) -> None:
     _ultimo_persistencia_ts = agora
 
 
+
+
+def obter_regras_cliente() -> dict:
+    regras_player = carregar_regras_player()
+    regras_mundo = carregar_regras_mundo()
+    return {
+        "player": dict(regras_player),
+        "mundo": {"chunk_tiles": int(regras_mundo.get("ChunkTiles", 10))},
+    }
+
 def chave_seguranca():
     return _CHAVE_SEGURANCA
 
@@ -350,6 +409,20 @@ def atualizar_posicao_personagem(usuario, posicao):
 
         x, y = _clamp_posicao(posicao)
         personagem["posicao"] = [x, y]
+        _persistir_personagens()
+
+
+
+
+def atualizar_inventario_personagem(usuario, inventario):
+    if not usuario or not isinstance(inventario, dict):
+        return
+
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(usuario)
+        if personagem is None:
+            return
+        personagem["inventario"] = _normalizar_inventario(inventario)
         _persistir_personagens()
 
 

@@ -10,11 +10,12 @@ from Codigo.Prefabs.Barra import Barra
 
 
 class PlayerController:
-    def __init__(self, ator, perfil, inventario, velocidade_tiles=4.8):
+    def __init__(self, ator, perfil, inventario, velocidade_tiles=None):
         self.Ator = ator
         self.Perfil = perfil
         self.Inventario = inventario
-        self.VelocidadeTiles = float(velocidade_tiles)
+        base = getattr(perfil, "VelocidadeBaseTiles", 5.0) if velocidade_tiles is None else velocidade_tiles
+        self.VelocidadeTiles = float(base)
         self.LimitesMundoTiles = None
         self._grid_chunks = {}
         self._chunk_blocos = 10

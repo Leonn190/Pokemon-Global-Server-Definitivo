@@ -2,21 +2,19 @@
 
 from __future__ import annotations
 
-import json
 import random
 import threading
 import time
-from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Geradores.GeradorPokemon import GERADOR_POKEMON_SERVER
 from SimuladorServerJogo.Geradores.GeradorBaus import GERADOR_BAUS_SERVER
 from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer, BauServer
+from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]
-ARQUIVO_REGRAS = Path(__file__).resolve().parent / "RegrasCerebro.json"
 
 
 class CerebroServer:
@@ -30,34 +28,8 @@ class CerebroServer:
         self._regras = self._carregar_regras()
 
     def _carregar_regras(self) -> Dict[str, object]:
-        padrao = {
-            "tick_segundos": 0.2,
-            "anel_render_chunks": 7,
-            "anel_simulado_chunks": 13,
-            "chance_spawn_por_tick": 0.35,
-            "chance_mover_por_tick": 0.45,
-            "max_pokemon_por_chunk_simulado": 3,
-            "max_pokemon_por_chunk_carregado": 0.12,
-            "maior_vetor_movimento_pokemon": 3.0,
-            "velocidade_pokemon_tiles_s": 5.5,
-            "raio_colisao_pokemon": 0.725,
-            "tentativas_spawn_chunk": 12,
-            "tiles_bloqueados": [0, 1, 2],
-            "chance_spawn_bau_por_tick": 0.03,
-            "max_bau_por_chunk_simulado": 1,
-            "max_bau_por_chunk_carregado": 0.03,
-            "tentativas_spawn_bau_chunk": 8,
-            "ttl_bau_aberto_segundos": 5.0,
-        }
-        if not ARQUIVO_REGRAS.exists():
-            return padrao
-        try:
-            raw = json.loads(ARQUIVO_REGRAS.read_text(encoding="utf-8"))
-            if isinstance(raw, dict):
-                padrao.update(raw)
-        except Exception:
-            pass
-        return padrao
+        return carregar_regras_cerebro()
+
 
     def _i(self, k: str, d: int) -> int:
         try:

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 
-from SimuladorServerJogo.Ativador import processar_ativador_json
-from SimuladorServerJogo.Atualizador import processar_atualizador_json
-from SimuladorServerJogo.Entrada import processar_entrada_json
+from SimuladorServerJogo.Rotas.Ativador import processar_ativador_json
+from SimuladorServerJogo.Rotas.Atualizador import processar_atualizador_json
+from SimuladorServerJogo.Rotas.Entrada import processar_entrada_json
 
 
 def _erro_padrao(mensagem):

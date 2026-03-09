@@ -19,6 +19,7 @@ from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, Estrutur
 from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo
 from Codigo.Modulos.Colisor import Colisor
 
+
 Vector2 = Tuple[float, float]
 
 
@@ -384,8 +385,6 @@ class BancoDadosMundo:
 
     def chunk_tamanho_unidade(self) -> int:
         return max(1, int(self._chunk_blocos))
-
-
 
     def total_chunks(self) -> Tuple[int, int]:
         chunk_tamanho = self.chunk_tamanho_unidade()

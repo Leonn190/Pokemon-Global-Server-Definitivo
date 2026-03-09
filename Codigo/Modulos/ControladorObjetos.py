@@ -19,6 +19,7 @@ from Codigo.Geradores.GameObjeto import GameObjeto
 from Codigo.Modulos.Colisor import Colisor
 from Codigo.Geradores.Player.Player import Player
 from Codigo.Geradores.PokemonMundo import PokemonMundo
+from Codigo.Geradores.Baus import Bau
 
 
 class ControladorObjetos:
@@ -26,6 +27,7 @@ class ControladorObjetos:
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
         self.PlayerLocal = None
         self.PokemonsPorId: Dict[int, PokemonMundo] = {}
+        self.BausPorId: Dict[int, Bau] = {}
         self._lock_objetos = threading.RLock()
 
         # Índice espacial local para colisão de proximidade.
@@ -109,6 +111,7 @@ class ControladorObjetos:
         posicao_antes = tuple(self.PlayerLocal.Ator.Posicao)
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
         self._resolver_colisao_player_local(posicao_antes, dt, gerenciador_fps=gerenciador_fps)
+        self._processar_colisao_baus_local()
 
     def _chunk_posicao(self, x: float, y: float) -> Tuple[int, int]:
         return (int(math.floor(float(x) / self._chunk_tamanho_tiles)), int(math.floor(float(y) / self._chunk_tamanho_tiles)))
@@ -227,6 +230,34 @@ class ControladorObjetos:
         if gerenciador_fps is not None:
             gerenciador_fps.finalizar_trecho("sistema_colisao")
         ator.definir_posicao(px, py)
+
+    def _processar_colisao_baus_local(self) -> None:
+        if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
+            return
+        ator = self.PlayerLocal.Ator
+        player_pos = tuple(ator.Posicao)
+        raio_player = max(0.1, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
+        inventario = getattr(self.PlayerLocal, "Inventario", None)
+        if inventario is None:
+            return
+
+        with self._lock_objetos:
+            baus = list(self.BausPorId.values())
+
+        for bau in baus:
+            if bau.Aberto:
+                continue
+            dx = float(bau.Posicao[0]) - float(player_pos[0])
+            dy = float(bau.Posicao[1]) - float(player_pos[1])
+            limite = raio_player + float(bau.Colisor.raio_colisao)
+            if (dx * dx + dy * dy) > (limite * limite):
+                continue
+
+            for item in bau.Itens:
+                inventario.adicionar_item(dict(item))
+
+            if bau.abrir_localmente():
+                self.EnfileirarDiffRapida({"tipo": "abrir_bau", "objeto_id": int(bau.Id), "payload": {}})
 
     def _snapshot_player_supervisao(self) -> Optional[Dict[str, object]]:
         player = self.PlayerLocal
@@ -484,9 +515,23 @@ class ControladorObjetos:
             dados_obj = dict(payload)
             oid = int(dados_obj.get("id", objeto_id))
             dados_obj["id"] = oid
+            estado_spawn = dados_obj.get("estado") if isinstance(dados_obj.get("estado"), dict) else {}
+            eh_bau = str(estado_spawn.get("subtipo", "")).lower() == "bau" and str(dados_obj.get("tipo", "")).startswith("entidade")
+            if eh_bau and bool(estado_spawn.get("aberto", False)):
+                return
+
             with self._lock_objetos:
                 self.ObjetosPorId[oid] = dados_obj
                 self._atualizar_indice_objeto_colisivo(dados_obj)
+                if eh_bau:
+                    self.BausPorId[oid] = Bau(
+                        id_objeto=oid,
+                        posicao=tuple(dados_obj.get("posicao", [0.0, 0.0])),
+                        tipo_bau=str(estado_spawn.get("tipo_bau", "Comum")),
+                        itens=list(estado_spawn.get("itens", [])),
+                        aberto=bool(estado_spawn.get("aberto", False)),
+                        raio_colisao=float(dados_obj.get("raio_colisao", 0.42)),
+                    )
             self._sincronizar_pokemon(oid, dados_obj, criar_se_ausente=True)
             return
 
@@ -507,6 +552,25 @@ class ControladorObjetos:
                         atual[chave] = valor
                 self.ObjetosPorId[oid] = atual
                 self._atualizar_indice_objeto_colisivo(atual)
+
+                bau = self.BausPorId.get(oid)
+                estado_atual = atual.get("estado") if isinstance(atual.get("estado"), dict) else {}
+                eh_bau = str(estado_atual.get("subtipo", "")).lower() == "bau" and str(atual.get("tipo", "")).startswith("entidade")
+                if bau is None and eh_bau and not bool(estado_atual.get("aberto", False)):
+                    bau = Bau(
+                        id_objeto=oid,
+                        posicao=tuple(atual.get("posicao", [0.0, 0.0])),
+                        tipo_bau=str(estado_atual.get("tipo_bau", "Comum")),
+                        itens=list(estado_atual.get("itens", [])),
+                        aberto=False,
+                        raio_colisao=float(atual.get("raio_colisao", 0.42)),
+                    )
+                    self.BausPorId[oid] = bau
+                if bau is not None:
+                    pos = atual.get("posicao") if isinstance(atual.get("posicao"), (list, tuple)) else [bau.Posicao[0], bau.Posicao[1]]
+                    bau.definir_posicao(float(pos[0]), float(pos[1]))
+                    if bool(estado_atual.get("aberto", False)):
+                        bau.marcar_aberto_por_sync()
             self._sincronizar_pokemon(oid, atual, criar_se_ausente=True)
             return
 
@@ -514,6 +578,7 @@ class ControladorObjetos:
             with self._lock_objetos:
                 self.ObjetosPorId.pop(oid, None)
                 self.PokemonsPorId.pop(oid, None)
+                self.BausPorId.pop(oid, None)
                 chunk = self._chunk_por_objeto.pop(oid, None)
                 if chunk is not None:
                     bucket = self._objetos_colisao_por_chunk.get(chunk)
@@ -529,10 +594,21 @@ class ControladorObjetos:
             self.ObjetosPorId = {int(k): dict(v) for k, v in objetos.items()}
             self._reindexar_objetos_colisivos()
             self.PokemonsPorId = {}
+            self.BausPorId = {}
             snapshot_objetos = list(self.ObjetosPorId.items())
         for oid, payload in snapshot_objetos:
             if isinstance(payload, dict):
                 self._sincronizar_pokemon(int(oid), payload, criar_se_ausente=True)
+                estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+                if str(estado.get("subtipo", "")).lower() == "bau" and str(payload.get("tipo", "")).startswith("entidade") and not bool(estado.get("aberto", False)):
+                    self.BausPorId[int(oid)] = Bau(
+                        id_objeto=int(oid),
+                        posicao=tuple(payload.get("posicao", [0.0, 0.0])),
+                        tipo_bau=str(estado.get("tipo_bau", "Comum")),
+                        itens=list(estado.get("itens", [])),
+                        aberto=False,
+                        raio_colisao=float(payload.get("raio_colisao", 0.42)),
+                    )
 
     def _iter_tipos(self, prefixo):
         with self._lock_objetos:
@@ -561,10 +637,16 @@ class ControladorObjetos:
 
             with self._lock_objetos:
                 pokemon = self.PokemonsPorId.get(oid)
+                bau = self.BausPorId.get(oid)
             if pokemon is not None:
                 if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
                     continue
                 pokemon.desenhar(tela, camera, dt_pokemons)
+                continue
+            if bau is not None:
+                if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
+                    continue
+                bau.desenhar(tela, camera)
                 continue
 
             pos_tela = self._objeto_posicao_tela_se_visivel(obj, camera)

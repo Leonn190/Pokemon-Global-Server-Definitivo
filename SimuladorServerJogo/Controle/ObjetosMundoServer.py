@@ -67,6 +67,35 @@ class EstruturaServer(GameObjetoServer):
         super().__init__(id_objeto=id_objeto, tipo_classe="estrutura", posicao=posicao, **kwargs)
 
 
+class BauServer(EntidadeServer):
+    def __init__(
+        self,
+        id_objeto: int,
+        tipo_bau: str,
+        itens: list,
+        posicao: Vector2 = (0.0, 0.0),
+        aberto: bool = False,
+        **kwargs,
+    ) -> None:
+        super().__init__(id_objeto=id_objeto, posicao=posicao, **kwargs)
+        self.estado_extra.update(
+            {
+                "subtipo": "bau",
+                "tipo_bau": str(tipo_bau),
+                "itens": list(itens),
+                "aberto": bool(aberto),
+                "aberto_em": 0.0,
+            }
+        )
+
+    def abrir(self) -> bool:
+        if bool(self.estado_extra.get("aberto", False)):
+            return False
+        self.estado_extra["aberto"] = True
+        self.estado_extra["aberto_em"] = time.monotonic()
+        return True
+
+
 class AtorServer(EntidadeServer):
     def __init__(self, id_objeto: int, usuario: str, skin: str, posicao: Vector2 = (0.0, 0.0)) -> None:
         super().__init__(id_objeto=id_objeto, posicao=posicao)

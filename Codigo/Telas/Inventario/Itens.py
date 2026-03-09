@@ -49,19 +49,25 @@ class InventarioItens:
     def _capacidade_total(self):
         return max(1, int(getattr(self.Perfil, "NivelMochila", 1)) * 100)
 
+    def _limite_slots(self):
+        return max(1, int(getattr(self.Perfil, "LimiteSlotsInventario", 32)))
+
     def _quantidade_total_itens(self):
         return sum(1 for item in self.Inventario.Itens if item is not None)
 
     def _garantir_slots(self):
         capacidade = self._capacidade_total()
+        slots = self._limite_slots()
         if hasattr(self.Inventario, "definir_limite_itens"):
             self.Inventario.definir_limite_itens(capacidade)
+            self.Inventario.definir_limite_slots(slots)
         else:
             self.Inventario.LimiteItens = capacidade
-            if len(self.Inventario.Itens) < capacidade:
-                self.Inventario.Itens.extend([None] * (capacidade - len(self.Inventario.Itens)))
-            elif len(self.Inventario.Itens) > capacidade:
-                self.Inventario.Itens = self.Inventario.Itens[:capacidade]
+            self.Inventario.LimiteSlots = slots
+            if len(self.Inventario.Itens) < slots:
+                self.Inventario.Itens.extend([None] * (slots - len(self.Inventario.Itens)))
+            elif len(self.Inventario.Itens) > slots:
+                self.Inventario.Itens = self.Inventario.Itens[:slots]
 
     def _reconstruir(self, area):
         margem = 14

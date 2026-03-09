@@ -15,6 +15,7 @@ class PlayerPerfil:
         self.SkinsLiberadas = []
         self.StaminaMax = 100.0
         self.Stamina = 100.0
+        self.LimiteSlotsInventario = 32
 
         self.VelocidadeBaseTiles = 5
         self.BonusVelocidadeCorridaMin = 0.25
@@ -55,6 +56,7 @@ class PlayerPerfil:
         self.SkinsLiberadas = list(dados.get("skins_liberadas", self.SkinsLiberadas))
         self.StaminaMax = max(1.0, float(dados.get("stamina_max", self.StaminaMax)))
         self.Stamina = max(0.0, min(self.StaminaMax, float(dados.get("stamina", self.Stamina))))
+        self.LimiteSlotsInventario = int(max(1, dados.get("limite_slots_inventario", self.LimiteSlotsInventario)))
 
         self.VelocidadeBaseTiles = max(0.1, float(dados.get("velocidade_base_tiles", self.VelocidadeBaseTiles)))
         self.BonusVelocidadeCorridaMin = max(0.0, float(dados.get("bonus_velocidade_corrida_min", self.BonusVelocidadeCorridaMin)))
@@ -81,6 +83,7 @@ class PlayerPerfil:
             "skins_liberadas": list(self.SkinsLiberadas),
             "stamina": self.Stamina,
             "stamina_max": self.StaminaMax,
+            "limite_slots_inventario": self.LimiteSlotsInventario,
             "velocidade_base_tiles": self.VelocidadeBaseTiles,
             "bonus_velocidade_corrida_min": self.BonusVelocidadeCorridaMin,
             "bonus_velocidade_corrida_max": self.BonusVelocidadeCorridaMax,

@@ -1,5 +1,6 @@
 {
   "NivelMochila": 1,
+  "LimiteSlotsInventario": 32,
   "Ouro": 0,
   "Maestria": 0,
   "StaminaMax": 100.0,

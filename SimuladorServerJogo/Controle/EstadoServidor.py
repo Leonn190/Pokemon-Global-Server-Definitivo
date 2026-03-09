@@ -83,6 +83,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
     regras = carregar_regras_player()
     dados = dict(personagem) if isinstance(personagem, dict) else {}
     dados["nivel_mochila"] = int(dados.get("nivel_mochila", regras.get("NivelMochila", 1)))
+    dados["limite_slots_inventario"] = int(max(1, dados.get("limite_slots_inventario", regras.get("LimiteSlotsInventario", 32))))
     dados["batalhas_pvp_vencidas"] = int(dados.get("batalhas_pvp_vencidas", 0))
     dados["batalhas_bot_vencidas"] = int(dados.get("batalhas_bot_vencidas", 0))
     dados["ouro"] = int(dados.get("ouro", regras.get("Ouro", 0)))
@@ -118,7 +119,8 @@ def _normalizar_perfil(personagem: dict) -> dict:
         "itens": list(inv.get("itens", [])),
         "pokemons": list(inv.get("pokemons", [])),
         "times_pokemon": list(inv.get("times_pokemon", [])),
-        "limite_itens": int(max(1, inv.get("limite_itens", 32))),
+        "limite_itens": int(max(1, inv.get("limite_itens", 100))),
+        "limite_slots": int(max(1, inv.get("limite_slots", dados.get("limite_slots_inventario", 32)))),
         "slot_selecionado": int(inv.get("slot_selecionado", 0)),
     }
     return dados
@@ -139,7 +141,8 @@ def _normalizar_inventario(payload: dict) -> dict:
         "itens": itens_norm,
         "pokemons": list(base.get("pokemons", [])),
         "times_pokemon": list(base.get("times_pokemon", [])),
-        "limite_itens": int(max(1, base.get("limite_itens", 32))),
+        "limite_itens": int(max(1, base.get("limite_itens", 100))),
+        "limite_slots": int(max(1, base.get("limite_slots", 32))),
         "slot_selecionado": int(base.get("slot_selecionado", 0)),
     }
 
@@ -155,6 +158,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         "ouro",
         "passos_caminhados",
         "maestria",
+        "limite_slots_inventario",
     )
     for campo in campos_int:
         if campo in payload:

@@ -4,31 +4,44 @@ from __future__ import annotations
 
 
 class PlayerInventario:
-    def __init__(self, limite_itens=100):
+    def __init__(self, limite_itens=100, limite_slots=32):
         self.LimiteItens = int(max(1, limite_itens))
-        self.Itens = [None] * self.LimiteItens
+        self.LimiteSlots = int(max(1, limite_slots))
+        self.Itens = [None] * self.LimiteSlots
         self.Pokemons = []
         self.TimesPokemon = []
         self.SlotSelecionado = 0
 
     def definir_limite_itens(self, limite_itens, preservar=True):
-        novo_limite = int(max(1, limite_itens))
-        if novo_limite == self.LimiteItens:
+        self.LimiteItens = int(max(1, limite_itens))
+
+    def definir_limite_slots(self, limite_slots, preservar=True):
+        novo_limite = int(max(1, limite_slots))
+        if novo_limite == self.LimiteSlots:
             return
 
         itens_atuais = list(self.Itens) if preservar else []
-        self.LimiteItens = novo_limite
-        self.Itens = [None] * self.LimiteItens
+        self.LimiteSlots = novo_limite
+        self.Itens = [None] * self.LimiteSlots
 
         if preservar:
-            for i, item in enumerate(itens_atuais[: self.LimiteItens]):
+            for i, item in enumerate(itens_atuais[: self.LimiteSlots]):
                 self.Itens[i] = self._normalizar_item(item)
 
-        total_slots_mao = max(1, min(8, self.LimiteItens))
+        total_slots_mao = max(1, min(8, self.LimiteSlots))
         self.SlotSelecionado %= total_slots_mao
 
     def quantidade_slots_ocupados(self):
         return sum(1 for item in self.Itens if item is not None)
+
+    def quantidade_total_itens(self):
+        total = 0
+        for item in self.Itens:
+            if isinstance(item, dict):
+                total += int(max(1, item.get("quantidade", 1)))
+            elif item is not None:
+                total += 1
+        return total
 
     def primeiro_slot_livre(self):
         for i, item in enumerate(self.Itens):
@@ -55,6 +68,10 @@ class PlayerInventario:
         if item_copia is None:
             return False
 
+        quantidade_nova = int(item_copia.get("quantidade", 1)) if isinstance(item_copia, dict) else 1
+        if (self.quantidade_total_itens() + quantidade_nova) > self.LimiteItens:
+            return False
+
         if isinstance(item_copia, dict):
             chave_nova = self._chave_stack(item_copia)
             for atual in self.Itens:
@@ -74,20 +91,21 @@ class PlayerInventario:
             return
 
         self.LimiteItens = int(max(1, dados.get("limite_itens", self.LimiteItens)))
+        self.LimiteSlots = int(max(1, dados.get("limite_slots", self.LimiteSlots)))
         itens_brutos = list(dados.get("itens", []))
 
-        self.Itens = [None] * self.LimiteItens
-        for i in range(min(len(itens_brutos), self.LimiteItens)):
+        self.Itens = [None] * self.LimiteSlots
+        for i in range(min(len(itens_brutos), self.LimiteSlots)):
             self.Itens[i] = self._normalizar_item(itens_brutos[i])
 
         self.Pokemons = list(dados.get("pokemons", self.Pokemons))
         self.TimesPokemon = list(dados.get("times_pokemon", self.TimesPokemon))
 
-        total_slots_mao = max(1, min(8, self.LimiteItens))
+        total_slots_mao = max(1, min(8, self.LimiteSlots))
         self.SlotSelecionado = int(dados.get("slot_selecionado", self.SlotSelecionado)) % total_slots_mao
 
     def mudar_slot_por_scroll(self, direcao):
-        total = max(1, min(8, self.LimiteItens))
+        total = max(1, min(8, self.LimiteSlots))
         self.SlotSelecionado = (self.SlotSelecionado + int(direcao)) % total
         return self.SlotSelecionado
 
@@ -112,5 +130,6 @@ class PlayerInventario:
             "pokemons": list(self.Pokemons),
             "times_pokemon": list(self.TimesPokemon),
             "limite_itens": self.LimiteItens,
+            "limite_slots": self.LimiteSlots,
             "slot_selecionado": self.SlotSelecionado,
         }

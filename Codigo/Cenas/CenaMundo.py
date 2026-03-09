@@ -127,6 +127,9 @@ class CenaMundo:
         gfps.iniciar_trecho("aplicacao_subtela")
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
 
+        if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaOpcoes.Ativa:
+            self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto = False
+
         if not self.SubtelaOpcoes.Ativa and self.TelaAtual != "Config":
             mouse_tela = pygame.mouse.get_pos()
             mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)

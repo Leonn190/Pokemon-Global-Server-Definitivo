@@ -19,6 +19,7 @@ def _ler_json(nome: str) -> Dict[str, object]:
 def carregar_regras_player() -> Dict[str, object]:
     base = {
         "NivelMochila": 1,
+        "LimiteSlotsInventario": 32,
         "Ouro": 0,
         "Maestria": 0,
         "StaminaMax": 100.0,

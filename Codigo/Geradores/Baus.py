@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import pygame
 
 from Codigo.Geradores.Entidade import Entidade
+from Codigo.Geradores.GameObjeto import GameObjeto
 
 
 class Bau(Entidade):
-    """Baú simples do mundo: estado local e renderização."""
+    """Baú do mundo com animação por frames de sprites."""
 
     DURACAO_VISUAL_ABERTO_MS = 1000
+    _frames_por_tipo: Dict[str, List[pygame.Surface]] = {}
 
     def __init__(
         self,
@@ -27,14 +30,28 @@ class Bau(Entidade):
             raio_interacao=0.85,
             id_objeto=int(id_objeto),
         )
-        self.TipoBau = str(tipo_bau)
+        self.TipoBau = str(tipo_bau or "Comum").strip() or "Comum"
         self.Itens = [dict(i) for i in itens if isinstance(i, dict)]
         self.Aberto = bool(aberto)
         self.AberturaLocalMs = int(pygame.time.get_ticks()) if self.Aberto else 0
         self._ja_abriu_local = bool(aberto)
 
+    @classmethod
+    def _carregar_frames(cls, tipo_bau: str) -> List[pygame.Surface]:
+        tipo = str(tipo_bau or "Comum").strip() or "Comum"
+        if tipo in cls._frames_por_tipo:
+            return cls._frames_por_tipo[tipo]
+
+        base = Path("Recursos") / "Visual" / "Mundo" / "Baus" / f"Bau {tipo}"
+        frames: List[pygame.Surface] = []
+        for idx in range(4):
+            sprite = GameObjeto._obter_sprite(str(base / f"{idx}.png"))
+            if sprite is not None:
+                frames.append(sprite)
+        cls._frames_por_tipo[tipo] = frames
+        return frames
+
     def abrir_localmente(self) -> bool:
-        """Abre apenas uma vez no client."""
         if self._ja_abriu_local or self.Aberto:
             return False
         self.Aberto = True
@@ -43,7 +60,6 @@ class Bau(Entidade):
         return True
 
     def marcar_aberto_por_sync(self) -> None:
-        """Aplica abertura vinda do servidor preservando animação local."""
         if self.Aberto:
             return
         self.Aberto = True
@@ -51,34 +67,30 @@ class Bau(Entidade):
         self.AberturaLocalMs = int(pygame.time.get_ticks())
 
     def esta_visivel(self) -> bool:
-        if not self.Aberto:
-            return True
+        return (not self.Aberto) or self.AberturaLocalMs <= 0 or (pygame.time.get_ticks() - self.AberturaLocalMs) < self.DURACAO_VISUAL_ABERTO_MS
+
+    def _frame_atual(self, frames: List[pygame.Surface]) -> pygame.Surface | None:
+        if not frames:
+            return None
+        if not self.Aberto or len(frames) == 1:
+            return frames[0]
         if self.AberturaLocalMs <= 0:
-            return True
-        return (pygame.time.get_ticks() - self.AberturaLocalMs) < self.DURACAO_VISUAL_ABERTO_MS
+            return frames[-1]
+
+        decorrido = max(0, pygame.time.get_ticks() - self.AberturaLocalMs)
+        progresso = min(1.0, decorrido / float(self.DURACAO_VISUAL_ABERTO_MS))
+        idx = min(len(frames) - 1, int(progresso * (len(frames) - 1)))
+        return frames[idx]
 
     def desenhar(self, tela, camera) -> None:
         if not self.esta_visivel():
             return
 
-        px, py = camera.mundo_para_tela_px(self.Posicao)
-        base_w = max(12, int(camera.TilePx * 0.65))
-        base_h = max(10, int(camera.TilePx * 0.45))
-
-        corpo = pygame.Rect(0, 0, base_w, base_h)
-        corpo.center = (int(px), int(py))
-        pygame.draw.rect(tela, (210, 160, 70), corpo, border_radius=3)
-
-        if not self.Aberto:
-            # frame 0 (fechado)
-            tampa = pygame.Rect(corpo.left, corpo.top - int(corpo.height * 0.20), corpo.width, int(corpo.height * 0.25))
-            pygame.draw.rect(tela, (180, 130, 45), tampa, border_radius=2)
+        frame = self._frame_atual(self._carregar_frames(self.TipoBau))
+        if frame is None:
             return
 
-        # animação simples de abertura em 1s
-        decorrido = max(0, pygame.time.get_ticks() - self.AberturaLocalMs)
-        t = min(1.0, decorrido / float(self.DURACAO_VISUAL_ABERTO_MS))
-        altura_tampa = int(corpo.height * 0.25)
-        subida = int((corpo.height * 0.55) * t)
-        tampa = pygame.Rect(corpo.left, corpo.top - altura_tampa - subida, corpo.width, altura_tampa)
-        pygame.draw.rect(tela, (240, 220, 170), tampa, border_radius=2)
+        px, py = camera.mundo_para_tela_px(self.Posicao)
+        escala = max(1, int(camera.TilePx * 0.95))
+        sprite = pygame.transform.smoothscale(frame, (escala, escala))
+        tela.blit(sprite, sprite.get_rect(center=(int(px), int(py))))

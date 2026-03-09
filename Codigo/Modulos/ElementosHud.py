@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pygame
 
+from Codigo.Geradores.Itens.ItemInventario import ItemInventario
+
 
 class ElementosHud:
     def __init__(self):
@@ -23,8 +25,18 @@ class ElementosHud:
             pygame.draw.rect(tela, bg, rect, border_radius=6)
             pygame.draw.rect(tela, (20, 22, 30), rect, 2, border_radius=6)
 
-            if i < len(inventario.Itens):
-                item = inventario.Itens[i]
-                nome = str(item.get("nome", "item")) if isinstance(item, dict) else str(item)
+            if i >= len(inventario.Itens):
+                continue
+            item = inventario.Itens[i]
+            sprite = ItemInventario.surface_item(item, lado_px=28)
+            if sprite is not None:
+                tela.blit(sprite, sprite.get_rect(center=rect.center))
+            else:
+                nome = ItemInventario.nome_item(item)
                 txt = self.Fonte.render(nome[:6], True, (245, 245, 250))
                 tela.blit(txt, txt.get_rect(center=rect.center))
+
+            qtd = int(item.get("quantidade", 1)) if isinstance(item, dict) else 1
+            if qtd > 1:
+                txt_qtd = self.Fonte.render(str(qtd), True, (255, 255, 255))
+                tela.blit(txt_qtd, txt_qtd.get_rect(bottomright=(rect.right - 2, rect.bottom - 1)))

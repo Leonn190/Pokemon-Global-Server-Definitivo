@@ -81,6 +81,8 @@ class ControladorObjetos:
             velocidade_tiles=4.8,
         )
         player.Perfil.aplicar_serializado(dados)
+        inventario_serializado = dados.get("inventario", dados) if isinstance(dados.get("inventario", dados), dict) else {}
+        player.Inventario.aplicar_serializado(inventario_serializado)
         self.definir_player_local(player)
         return player
 

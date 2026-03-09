@@ -9,7 +9,7 @@ from typing import Dict, List
 
 from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer
 
-ARQUIVO_POKEMONS = Path(__file__).resolve().parents[1] / "Dados" / "Global server - Pokemons.csv"
+ARQUIVO_POKEMONS = Path(__file__).resolve().parents[2] / "Dados" / "Global server - Pokemons.csv"
 STATS_BASE = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "EnR", "CrD", "CrC"]
 
 

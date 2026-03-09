@@ -15,9 +15,9 @@
     1,
     2
   ],
-  "chance_spawn_bau_por_tick": 0.03,
-  "max_bau_por_chunk_simulado": 1,
-  "max_bau_por_chunk_carregado": 0.03,
-  "tentativas_spawn_bau_chunk": 8,
+  "chance_spawn_bau_por_tick": 0.06,
+  "max_bau_por_chunk_simulado": 2,
+  "max_bau_por_chunk_carregado": 0.2,
+  "tentativas_spawn_bau_chunk": 20,
   "ttl_bau_aberto_segundos": 5.0
 }

@@ -67,13 +67,18 @@ class Painel:
         tela.blit(tela_painel, self.rect.topleft)
 
 
+import pygame
+
+from Codigo.Prefabs.Painel import Painel
+
+
 class PainelRolavel(Painel):
     def __init__(self, rect, area_real=None, velocidade_scroll=36, **kwargs):
         super().__init__(rect, **kwargs)
         self.AreaReal = pygame.Rect(0, 0, rect[2], rect[3]) if area_real is None else pygame.Rect(area_real)
         self.ScrollX = 0
         self.ScrollY = 0
-        self.VelocidadeScroll = int(max(8, velocidade_scroll))
+        self.VelocidadeScroll = max(8, int(velocidade_scroll))
 
     def definir_area_real(self, largura, altura):
         self.AreaReal.width = max(self.rect.width, int(largura))
@@ -83,26 +88,30 @@ class PainelRolavel(Painel):
     def _clamp_scroll(self):
         max_x = max(0, self.AreaReal.width - self.rect.width)
         max_y = max(0, self.AreaReal.height - self.rect.height)
-        self.ScrollX = max(0, min(max_x, int(self.ScrollX)))
-        self.ScrollY = max(0, min(max_y, int(self.ScrollY)))
+        self.ScrollX = max(0, min(self.ScrollX, max_x))
+        self.ScrollY = max(0, min(self.ScrollY, max_y))
 
     def _processar_scroll(self, eventos):
         if not self.rect.collidepoint(pygame.mouse.get_pos()):
             return
+
         for evento in eventos:
             if evento.type != pygame.MOUSEWHEEL:
                 continue
-            mods = pygame.key.get_mods()
-            if mods & pygame.KMOD_SHIFT:
-                self.ScrollX -= int(evento.y) * self.VelocidadeScroll
+
+            if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                self.ScrollX -= evento.y * self.VelocidadeScroll
             else:
-                self.ScrollY -= int(evento.y) * self.VelocidadeScroll
+                self.ScrollY -= evento.y * self.VelocidadeScroll
+
         self._clamp_scroll()
 
     def render(self, tela, eventos, dt, jogo=None):
         if not self.Visivel:
             return
+
         self._processar_scroll(eventos)
+
         tela_conteudo = pygame.Surface(self.AreaReal.size, pygame.SRCALPHA)
         self.draw(tela_conteudo)
 
@@ -113,7 +122,8 @@ class PainelRolavel(Painel):
         )
         self.update(eventos, dt, jogo=jogo, tela_painel=tela_conteudo, mouse_local=mouse_local)
 
-        clip = pygame.Rect(self.ScrollX, self.ScrollY, self.rect.width, self.rect.height)
-        tela.blit(tela_conteudo, self.rect.topleft, area=clip)
+        area_clip = pygame.Rect(self.ScrollX, self.ScrollY, self.rect.width, self.rect.height)
+        tela.blit(tela_conteudo, self.rect.topleft, area=area_clip)
+
         if self.Borda > 0:
             pygame.draw.rect(tela, self.CorBorda, self.rect, self.Borda, border_radius=self.Raio)

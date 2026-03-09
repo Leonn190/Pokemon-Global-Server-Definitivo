@@ -251,8 +251,9 @@ class ControladorObjetos:
                 continue
             dx = float(bau.Posicao[0]) - float(player_pos[0])
             dy = float(bau.Posicao[1]) - float(player_pos[1])
-            limite = raio_player + float(bau.Colisor.raio_colisao)
-            if (dx * dx + dy * dy) > (limite * limite):
+            raio_bau_interacao = float(getattr(bau.Colisor, "raio_interacao", bau.Colisor.raio_colisao))
+            limite = raio_player + raio_bau_interacao
+            if (dx * dx + dy * dy) > ((limite + 0.02) * (limite + 0.02)):
                 continue
 
             for item in bau.Itens:

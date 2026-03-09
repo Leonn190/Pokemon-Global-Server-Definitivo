@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from SimuladorServerJogo.Geradores.GeradorMundo import (
     BLOCO_TAMANHO_PX,
     CHUNK_BLOCOS,
+    PASTA_WORLD_CHUNKS,
     carregar_estado_mundo,
 )
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, GameObjetoServer
@@ -35,13 +36,24 @@ class BancoDadosMundo:
         self._grid: List[List[int]] = []
         self._chunks_cache: Dict[Tuple[int, int], Dict[str, List[List[int]]]] = {}
         self._chunks_estruturas_carregados: Set[Tuple[int, int]] = set()
-        self._chunks_dir = Path(__file__).resolve().parent / "world_chunks"
+        self._chunks_dir = self._resolver_chunks_dir()
         meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
         self._chunk_blocos = int(CHUNK_BLOCOS)
         self._chunk_blocos_disco = max(1, int(meta.get("chunk_blocos_disco", meta.get("chunk_blocos", CHUNK_BLOCOS))))
         self._largura_blocos = int(meta.get("largura_blocos", 0))
         self._altura_blocos = int(meta.get("altura_blocos", 0))
         self._gerar_estruturas_naturais_no_mapa()
+
+    def _resolver_chunks_dir(self) -> Path:
+        candidatos = [
+            PASTA_WORLD_CHUNKS,
+            Path(__file__).resolve().parent / "world_chunks",
+            Path(__file__).resolve().parents[2] / "world_chunks",
+        ]
+        for pasta in candidatos:
+            if pasta.exists() and pasta.is_dir():
+                return pasta
+        return PASTA_WORLD_CHUNKS
 
     def recarregar_mundo(self, estado_mundo: Dict[str, object], limpar_objetos: bool = False) -> None:
         with self._lock:
@@ -137,8 +149,18 @@ class BancoDadosMundo:
                 return cache
 
             arquivo = self._chunks_dir / f"chunk_{chave[0]}_{chave[1]}.json"
-            with arquivo.open("r", encoding="utf-8") as f:
-                payload = json.load(f)
+            if not arquivo.exists():
+                self._chunks_dir = self._resolver_chunks_dir()
+                arquivo = self._chunks_dir / f"chunk_{chave[0]}_{chave[1]}.json"
+
+            if arquivo.exists():
+                with arquivo.open("r", encoding="utf-8") as f:
+                    payload = json.load(f)
+            else:
+                vazio = [[0 for _ in range(self._chunk_blocos_disco)] for _ in range(self._chunk_blocos_disco)]
+                cache = {"grid_blocos": vazio, "grid_biomas": vazio, "grid_estruturas": vazio}
+                self._chunks_cache[chave] = cache
+                return cache
             if not isinstance(payload, dict):
                 raise ValueError(f"Chunk inválido: {arquivo}")
 

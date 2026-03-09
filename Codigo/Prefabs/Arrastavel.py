@@ -2,60 +2,32 @@ import pygame
 
 
 class Arrastavel:
-    def __init__(self, rect, id_arrastavel=None, desenhar_callback=None):
-        self.rect = pygame.Rect(rect)
-        self.Id = id_arrastavel
-        self.DesenharCallback = desenhar_callback
-
-        self.Arrastando = False
+    def __init__(self):
+        self.Ativo = False
+        self.Item = None
+        self.Origem = None
+        self.Rect = pygame.Rect(0, 0, 0, 0)
         self._offset_mouse = (0, 0)
-        self.AreasAcao = []
 
-    def definir_posicao(self, pos):
-        self.rect.topleft = (int(pos[0]), int(pos[1]))
+    def iniciar(self, item, origem, rect_item, mouse_pos):
+        self.Ativo = True
+        self.Item = item
+        self.Origem = int(origem)
+        self.Rect = pygame.Rect(rect_item)
+        self._offset_mouse = (
+            mouse_pos[0] - self.Rect.x,
+            mouse_pos[1] - self.Rect.y,
+        )
 
-    def voltar_para_origem(self, pos_origem):
-        self.rect.topleft = (int(pos_origem[0]), int(pos_origem[1]))
-
-    def adicionar_area_acao(self, area_rect, callback=None, area_id=None):
-        self.AreasAcao.append((pygame.Rect(area_rect), callback, area_id))
-
-    def limpar_areas_acao(self):
-        self.AreasAcao.clear()
-
-    def update(self, eventos):
-        for evento in eventos:
-            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                if self.rect.collidepoint(evento.pos):
-                    self.Arrastando = True
-                    self._offset_mouse = (
-                        evento.pos[0] - self.rect.x,
-                        evento.pos[1] - self.rect.y,
-                    )
-
-            elif evento.type == pygame.MOUSEMOTION and self.Arrastando:
-                self.rect.x = evento.pos[0] - self._offset_mouse[0]
-                self.rect.y = evento.pos[1] - self._offset_mouse[1]
-
-            elif evento.type == pygame.MOUSEBUTTONUP and evento.button == 1 and self.Arrastando:
-                self.Arrastando = False
-                return self._executar_area_acao()
-
-        return None
-
-    def _executar_area_acao(self):
-        for area_rect, callback, area_id in self.AreasAcao:
-            if not self.rect.colliderect(area_rect):
-                continue
-            if callable(callback):
-                callback(self, area_id, area_rect)
-            return True
-        return False
-
-    def draw(self, tela):
-        if callable(self.DesenharCallback):
-            self.DesenharCallback(tela, self)
+    def atualizar(self, mouse_pos):
+        if not self.Ativo:
             return
+        self.Rect.x = int(mouse_pos[0] - self._offset_mouse[0])
+        self.Rect.y = int(mouse_pos[1] - self._offset_mouse[1])
 
-        pygame.draw.rect(tela, (95, 120, 175), self.rect, border_radius=6)
-        pygame.draw.rect(tela, (15, 22, 33), self.rect, 2, border_radius=6)
+    def cancelar(self):
+        self.Ativo = False
+        self.Item = None
+        self.Origem = None
+        self.Rect = pygame.Rect(0, 0, 0, 0)
+        self._offset_mouse = (0, 0)

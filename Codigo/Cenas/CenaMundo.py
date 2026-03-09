@@ -59,7 +59,7 @@ class CenaMundo:
         dados = JOGO.INFO.get("PlayerDadosServer") or {}
         player_local = self.ControladorObjetos.montar_player_local(dados)
         self.EntidadeMain = player_local.Ator
-        self.SubtelaInventario = UnificadorInventario(player_local.Inventario)
+        self.SubtelaInventario = UnificadorInventario(player_local)
 
         self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain, tile_px=50)
         self.LeitorMundo = LeitorMundo(

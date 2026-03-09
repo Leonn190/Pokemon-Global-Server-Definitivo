@@ -12,7 +12,7 @@ class Arrastavel:
     def iniciar(self, item, origem, rect_item, mouse_pos):
         self.Ativo = True
         self.Item = item
-        self.Origem = int(origem)
+        self.Origem = origem
         self.Rect = pygame.Rect(rect_item)
         self._offset_mouse = (
             mouse_pos[0] - self.Rect.x,

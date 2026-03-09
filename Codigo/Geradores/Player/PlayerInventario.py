@@ -4,12 +4,37 @@ from __future__ import annotations
 
 
 class PlayerInventario:
-    def __init__(self, limite_itens=32):
+    def __init__(self, limite_itens=100):
         self.LimiteItens = int(max(1, limite_itens))
         self.Itens = [None] * self.LimiteItens
         self.Pokemons = []
         self.TimesPokemon = []
         self.SlotSelecionado = 0
+
+    def definir_limite_itens(self, limite_itens, preservar=True):
+        novo_limite = int(max(1, limite_itens))
+        if novo_limite == self.LimiteItens:
+            return
+
+        itens_atuais = list(self.Itens) if preservar else []
+        self.LimiteItens = novo_limite
+        self.Itens = [None] * self.LimiteItens
+
+        if preservar:
+            for i, item in enumerate(itens_atuais[: self.LimiteItens]):
+                self.Itens[i] = self._normalizar_item(item)
+
+        total_slots_mao = max(1, min(8, self.LimiteItens))
+        self.SlotSelecionado %= total_slots_mao
+
+    def quantidade_slots_ocupados(self):
+        return sum(1 for item in self.Itens if item is not None)
+
+    def primeiro_slot_livre(self):
+        for i, item in enumerate(self.Itens):
+            if item is None:
+                return i
+        return None
 
     def _chave_stack(self, item):
         if not isinstance(item, dict):
@@ -37,12 +62,12 @@ class PlayerInventario:
                     atual["quantidade"] = int(max(1, atual.get("quantidade", 1))) + item_copia["quantidade"]
                     return True
 
-        for i in range(self.LimiteItens):
-            if self.Itens[i] is None:
-                self.Itens[i] = item_copia
-                return True
+        slot_livre = self.primeiro_slot_livre()
+        if slot_livre is None:
+            return False
 
-        return False
+        self.Itens[slot_livre] = item_copia
+        return True
 
     def aplicar_serializado(self, dados):
         if not isinstance(dados, dict):
@@ -70,7 +95,6 @@ class PlayerInventario:
         if self.SlotSelecionado < 0 or self.SlotSelecionado >= len(self.Itens):
             return None
         return self.Itens[self.SlotSelecionado]
-
 
     def serializar_itens(self):
         itens = []

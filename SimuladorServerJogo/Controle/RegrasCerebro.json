@@ -10,5 +10,14 @@
   "raio_colisao_pokemon": 0.725,
   "velocidade_pokemon_tiles_s": 5.5,
   "tentativas_spawn_chunk": 12,
-  "tiles_bloqueados": [0, 1, 2]
+  "tiles_bloqueados": [
+    0,
+    1,
+    2
+  ],
+  "chance_spawn_bau_por_tick": 0.03,
+  "max_bau_por_chunk_simulado": 1,
+  "max_bau_por_chunk_carregado": 0.03,
+  "tentativas_spawn_bau_chunk": 8,
+  "ttl_bau_aberto_segundos": 5.0
 }

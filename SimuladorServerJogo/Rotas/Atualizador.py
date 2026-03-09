@@ -8,7 +8,7 @@ from typing import Dict
 
 from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.ObjetosMundoServer import GameObjetoServer
+from SimuladorServerJogo.Controle.ObjetosMundoServer import GameObjetoServer, BauServer
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem
 
 
@@ -70,6 +70,19 @@ def processar_atualizador_json(requisicao_json: str) -> str:
         tipo = str(diff.get("tipo", "")).strip()
         payload = diff.get("payload", {}) if isinstance(diff.get("payload", {}), dict) else {}
         objeto_id = diff.get("objeto_id")
+
+        if tipo == "abrir_bau" and objeto_id is not None:
+            obj = BANCO_DADOS.obter_objeto(int(objeto_id))
+            if not isinstance(obj, BauServer):
+                ignorados += 1
+                continue
+            if not obj.abrir():
+                ignorados += 1
+                continue
+            payload_update = {"estado": {"aberto": True}}
+            registrar_diff("update", payload=payload_update, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria="rapida")
+            aplicados += 1
+            continue
 
         if tipo == "update" and objeto_id is not None:
             if "posicao" in payload:

@@ -12,7 +12,7 @@ class ElementosHud:
         self.SlotsVisiveis = 8
         self.TextoQtd = Texto("", style={"size": 14, "align": "bottomright", "outline_thickness": 1})
 
-    def desenhar(self, tela, inventario):
+    def desenhar(self, tela, inventario, terminal=None, eventos=None, dt=0.0):
         largura, altura = tela.get_size()
         slot = 42
         gap = 8
@@ -46,3 +46,6 @@ class ElementosHud:
                 self.TextoQtd.set_text(str(qtd))
                 self.TextoQtd.set_pos((rect.right - 2, rect.bottom - 1))
                 self.TextoQtd.draw(tela)
+
+        if terminal is not None:
+            terminal.desenhar(tela, eventos or [], dt)

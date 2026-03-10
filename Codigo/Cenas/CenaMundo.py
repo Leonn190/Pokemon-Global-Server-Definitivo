@@ -14,8 +14,11 @@ from Codigo.Server.ServerMundo import (
     enviar_diffs_mundo_categoria,
     receber_diffs_mundo,
     desconectar_mundo,
+    enviar_mensagem_terminal,
+    buscar_mensagens_terminal,
 )
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
+from Codigo.Prefabs.Terminal import Terminal
 
 
 class CenaMundo:
@@ -34,6 +37,7 @@ class CenaMundo:
         self.TelaAtual = None
         self.SubtelaInventario = None
         self.GerenciadorFPS = GerenciadorFPS((JOGO.CONFIG or {}).get("FPS", 60))
+        self.Terminal = None
 
         self._montar_mundo(JOGO)
 
@@ -72,6 +76,14 @@ class CenaMundo:
 
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
+        usuario = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+        self.Terminal = Terminal(
+            pygame.Rect(14, 14, 520, 220),
+            callback_enviar=lambda texto: enviar_mensagem_terminal(link, usuario, texto) if link else None,
+            callback_buscar=lambda ultimo_id: buscar_mensagens_terminal(link, ultimo_id=ultimo_id) if link else {"status": "ok", "mensagens": []},
+            autor_local=usuario,
+        )
+        self.Terminal.iniciar()
         if link:
             self.LeitorMundo.conectar_servidor(link)
             self.LeitorMundo.iniciar()
@@ -124,6 +136,9 @@ class CenaMundo:
 
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
 
+        if self.Terminal is not None:
+            EVENTOS = self.Terminal.processar_eventos(EVENTOS)
+
         gfps.iniciar_trecho("aplicacao_subtela")
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
 
@@ -156,7 +171,7 @@ class CenaMundo:
 
         if self.ControladorObjetos.PlayerLocal is not None:
             player_local = self.ControladorObjetos.PlayerLocal
-            self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario)
+            self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
 
         self.SubtelaOpcoes.desenhar(JOGO)
         if self.SubtelaInventario is not None and self.SubtelaInventario.Ativo:
@@ -169,6 +184,8 @@ class CenaMundo:
 
     def Finalizar(self, JOGO):
         self.ControladorObjetos.parar_threads_diffs()
+        if self.Terminal is not None:
+            self.Terminal.parar()
         if self.LeitorMundo:
             self.LeitorMundo.parar()
         self._desconectar_do_mundo(JOGO)

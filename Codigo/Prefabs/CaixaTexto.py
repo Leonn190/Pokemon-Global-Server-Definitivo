@@ -29,7 +29,9 @@ class CaixaTexto:
             "shadow": False,
         }
 
-        self._fonte = pygame.font.Font(str(CAMINHO_FONTE_PADRAO), int(self._estilo_texto["size"]))
+        self._fonte_tamanho = int(self._estilo_texto["size"])
+        self._fonte = pygame.font.Font(str(CAMINHO_FONTE_PADRAO), self._fonte_tamanho)
+        self._cursor_altura = max(12, int(self._fonte.get_height() * 0.9))
 
     def set_texto(self, texto):
         self.texto = str(texto)[: self.max_chars]
@@ -157,6 +159,12 @@ class CaixaTexto:
         self._processar_eventos(eventos)
         self._atualizar_backspace_continuo(dt)
 
+        estilo_tamanho = max(1, int(self._estilo_texto.get("size", 30)))
+        if self._fonte_tamanho != estilo_tamanho:
+            self._fonte_tamanho = estilo_tamanho
+            self._fonte = pygame.font.Font(str(CAMINHO_FONTE_PADRAO), estilo_tamanho)
+        self._cursor_altura = max(12, int(self._fonte.get_height() * 0.9))
+
         self._cursor_timer += dt
         if self._cursor_timer >= 0.5:
             self._cursor_visivel = not self._cursor_visivel
@@ -180,10 +188,13 @@ class CaixaTexto:
         if self.selecionada and self._cursor_visivel:
             largura_texto = self._fonte.size(self.texto[:self._cursor_indice])[0]
             x_cursor = min(self.rect.right - 14, self.rect.x + 16 + largura_texto + 2)
+            centro_y = self.rect.centery
+            y0 = max(self.rect.y + 8, centro_y - (self._cursor_altura // 2))
+            y1 = min(self.rect.bottom - 8, y0 + self._cursor_altura)
             pygame.draw.line(
                 tela,
                 (255, 255, 255),
-                (x_cursor, self.rect.y + 12),
-                (x_cursor, self.rect.bottom - 12),
+                (x_cursor, y0),
+                (x_cursor, y1),
                 2,
             )

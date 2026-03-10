@@ -169,7 +169,7 @@ class Ator(Entidade):
         inventario = getattr(self, "Inventario", None)
         item_mao = inventario.item_na_mao() if inventario is not None else None
         if item_mao is not None:
-            sprite_item = ItemInventario.surface_item(item_mao, lado_px=max(16, int(dados_mao["raio_mao"] * 2.4)))
+            sprite_item = ItemInventario.surface_item(item_mao, lado_px=max(19, int(dados_mao["raio_mao"] * 2.8)))
             if sprite_item is not None:
                 rect_item = sprite_item.get_rect(center=dados_mao["mao_tapa"])
                 tela.blit(sprite_item, rect_item)

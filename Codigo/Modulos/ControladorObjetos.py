@@ -27,6 +27,9 @@ class ControladorObjetos:
         # Entidades/estruturas especializadas (lógica interna de cada classe).
         self.PokemonsPorId: Dict[int, PokemonMundo] = {}
         self.BausPorId: Dict[int, Bau] = {}
+        self.AtoresRemotosPorId: Dict[int, Ator] = {}
+        self._origem_cliente = "client"
+        self._origem_servidor = "server"
 
         self._lock_objetos = threading.RLock()
         self._lock_diffs = threading.Lock()
@@ -61,27 +64,92 @@ class ControladorObjetos:
 
     def montar_player_local(self, dados_player):
         dados = dados_player if isinstance(dados_player, dict) else {}
-        nome_skin = str(dados.get("skin", "S1.png"))
-        pos = dados.get("posicao", (0.0, 0.0))
+        ator = self._hidratar_ator_payload(None, dados, com_controle=True)
+        self.definir_player_local(ator)
+        return ator
+
+    def _origem_diff(self, diff: Dict[str, object]) -> str:
+        if not isinstance(diff, dict):
+            return ""
+        meta = diff.get("meta") if isinstance(diff.get("meta"), dict) else {}
+        return str(meta.get("origem", "")).strip().lower()
+
+    def _marcar_diff_local(self, diff: Dict[str, object]) -> Dict[str, object]:
+        if not isinstance(diff, dict):
+            return diff
+        meta = dict(diff.get("meta", {})) if isinstance(diff.get("meta"), dict) else {}
+        meta["origem"] = self._origem_cliente
+        diff["meta"] = meta
+        return diff
+
+    def _deve_ignorar_diff(self, diff: Dict[str, object]) -> bool:
+        if self._origem_diff(diff) != self._origem_cliente or self.PlayerLocal is None:
+            return False
+        return int(diff.get("objeto_id", -1)) == int(getattr(self.PlayerLocal, "Id", -2))
+
+    def _hidratar_ator_payload(self, ator: Optional[Ator], dados: Dict[str, object], com_controle: bool = False) -> Ator:
+        payload = dados if isinstance(dados, dict) else {}
+        pos = payload.get("posicao", (0.0, 0.0))
         if not isinstance(pos, (list, tuple)) or len(pos) != 2:
             pos = (0.0, 0.0)
 
-        ator = Ator(nome_skin=nome_skin, posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0, tile_px=50)
-        if dados.get("id") is not None:
-            ator.Id = int(dados.get("id"))
-        ator.Nome = str(dados.get("nome") or dados.get("usuario") or "")
+        novo_ator = ator is None
+        if novo_ator:
+            ator = Ator(nome_skin=str(payload.get("skin", "S1")), posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0, tile_px=50)
 
-        ator.Perfil = Perfil()
-        ator.Perfil.aplicar_serializado(dados)
-        ator.Inventario = Inventario(limite_itens=ator.Perfil.NivelMochila * 100, limite_slots=getattr(ator.Perfil, "LimiteSlotsInventario", 32))
-        if hasattr(ator.Inventario, "definir_limite_itens"):
-            ator.Inventario.definir_limite_itens(ator.Perfil.NivelMochila * 100)
-            ator.Inventario.definir_limite_slots(getattr(ator.Perfil, "LimiteSlotsInventario", 32))
-        inventario_serializado = dados.get("inventario", dados) if isinstance(dados.get("inventario", dados), dict) else {}
-        ator.Inventario.aplicar_serializado(inventario_serializado)
-        ator.Controle = Controle(ator=ator, velocidade_tiles=ator.Perfil.VelocidadeBaseTiles)
-        self.definir_player_local(ator)
+        if payload.get("id") is not None:
+            ator.Id = int(payload.get("id"))
+        ator.definir_posicao(float(pos[0]), float(pos[1]))
+
+        nome = payload.get("nome") or payload.get("usuario")
+        if nome:
+            ator.Nome = str(nome)
+
+        skin = payload.get("skin")
+        if skin and str(skin) != str(getattr(ator, "NomeSkin", "")):
+            ator.set_nome_skin(str(skin))
+
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        if "angulo" in estado:
+            ator.definir_angulo_olhar(float(estado.get("angulo", 0.0)))
+        if "tapa" in estado and bool(estado.get("tapa")):
+            ator.iniciar_tapa()
+
+        perfil_dados = payload.get("perfil") if isinstance(payload.get("perfil"), dict) else (payload if novo_ator else None)
+        if isinstance(perfil_dados, dict):
+            if ator.Perfil is None:
+                ator.Perfil = Perfil()
+            ator.Perfil.aplicar_serializado(perfil_dados)
+
+        inventario_dados = payload.get("inventario") if isinstance(payload.get("inventario"), dict) else ((payload if novo_ator else None) if isinstance(payload, dict) else None)
+        if isinstance(inventario_dados, dict):
+            if ator.Inventario is None:
+                limite_slots = getattr(getattr(ator, "Perfil", None), "LimiteSlotsInventario", 32)
+                limite_itens = getattr(getattr(ator, "Perfil", None), "NivelMochila", 1) * 100
+                ator.Inventario = Inventario(limite_itens=limite_itens, limite_slots=limite_slots)
+            if hasattr(ator.Inventario, "definir_limite_itens") and getattr(ator, "Perfil", None) is not None:
+                ator.Inventario.definir_limite_itens(ator.Perfil.NivelMochila * 100)
+                ator.Inventario.definir_limite_slots(getattr(ator.Perfil, "LimiteSlotsInventario", 32))
+            ator.Inventario.aplicar_serializado(inventario_dados)
+
+        if com_controle:
+            if ator.Controle is None:
+                velocidade = getattr(getattr(ator, "Perfil", None), "VelocidadeBaseTiles", 5)
+                ator.Controle = Controle(ator=ator, velocidade_tiles=velocidade)
+        else:
+            ator.Controle = None
+
         return ator
+
+    def _upsert_ator_remoto(self, oid: int, payload: Dict[str, object]) -> None:
+        if str(payload.get("tipo", "")).strip().lower() != "entidade_player":
+            self.AtoresRemotosPorId.pop(oid, None)
+            return
+        if self.PlayerLocal is not None and int(getattr(self.PlayerLocal, "Id", -1)) == int(oid):
+            return
+        dados = dict(payload)
+        dados["id"] = oid
+        self.AtoresRemotosPorId[oid] = self._hidratar_ator_payload(self.AtoresRemotosPorId.get(oid), dados, com_controle=False)
 
     def _sincronizar_player_local(self) -> None:
         if self.PlayerLocal is None:
@@ -96,6 +164,7 @@ class ControladorObjetos:
                 "id": int(ator.Id),
                 "tipo": "entidade_player",
                 "nome": getattr(ator, "Nome", ""),
+                "skin": str(getattr(ator, "NomeSkin", "S1")),
                 "posicao": [ator.Posicao[0], ator.Posicao[1]],
                 "raio_colisao": getattr(ator.Colisor, "raio_colisao", 0.35),
             },
@@ -238,6 +307,7 @@ class ControladorObjetos:
             "objeto_id": int(ator.Id),
             "nome": str(getattr(ator, "Nome", "")),
             "tipo": "entidade_player",
+            "skin": str(getattr(ator, "NomeSkin", "S1")),
             "posicao": [float(ator.Posicao[0]), float(ator.Posicao[1])],
             "raio_colisao": float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)),
             "estado": {
@@ -263,7 +333,7 @@ class ControladorObjetos:
                 "estado": dict(atual.get("estado", {})),
             }
         else:
-            for chave in ("nome", "tipo", "raio_colisao"):
+            for chave in ("nome", "tipo", "raio_colisao", "skin"):
                 if anterior.get(chave) != atual.get(chave):
                     payload[chave] = atual.get(chave)
             if anterior.get("posicao") != atual.get("posicao"):
@@ -298,11 +368,11 @@ class ControladorObjetos:
 
     def EnfileirarDiffRapida(self, diff: Dict[str, object]) -> None:
         with self._lock_diffs:
-            self._fila_diffs_rapidas_envio.append(diff)
+            self._fila_diffs_rapidas_envio.append(self._marcar_diff_local(diff))
 
     def EnfileirarDiffLenta(self, diff: Dict[str, object]) -> None:
         with self._lock_diffs:
-            self._fila_diffs_lentas_envio.append(diff)
+            self._fila_diffs_lentas_envio.append(self._marcar_diff_local(diff))
 
     def ColetarDiffsRapidas(self) -> List[Dict[str, object]]:
         with self._lock_diffs:
@@ -400,7 +470,7 @@ class ControladorObjetos:
                         with self._lock_diffs:
                             self._fila_diffs_rapidas_envio = envio + self._fila_diffs_rapidas_envio
             for diff in remotas:
-                if isinstance(diff, dict):
+                if isinstance(diff, dict) and not self._deve_ignorar_diff(diff):
                     self.AplicarDiffRapida(diff)
             time.sleep(self._intervalo_rapido)
 
@@ -419,7 +489,7 @@ class ControladorObjetos:
                         with self._lock_diffs:
                             self._fila_diffs_lentas_envio = envio + self._fila_diffs_lentas_envio
             for diff in remotas:
-                if isinstance(diff, dict):
+                if isinstance(diff, dict) and not self._deve_ignorar_diff(diff):
                     self.AplicarDiffLenta(diff)
             time.sleep(self._intervalo_lento)
 
@@ -436,6 +506,8 @@ class ControladorObjetos:
         return tipo.startswith("entidade") and str(estado.get("subtipo", "")).strip().lower() == "bau"
 
     def _upsert_especializado(self, oid: int, payload: Dict[str, object]) -> None:
+        self._upsert_ator_remoto(oid, payload)
+
         if self._eh_payload_pokemon(payload):
             pokemon = self.PokemonsPorId.get(oid)
             if pokemon is None:
@@ -496,6 +568,7 @@ class ControladorObjetos:
                 self.ObjetosPorId.pop(oid, None)
                 self.PokemonsPorId.pop(oid, None)
                 self.BausPorId.pop(oid, None)
+                self.AtoresRemotosPorId.pop(oid, None)
                 chunk = self._chunk_por_objeto.pop(oid, None)
                 if chunk is not None:
                     bucket = self._objetos_colisao_por_chunk.get(chunk)
@@ -511,6 +584,7 @@ class ControladorObjetos:
             self.ObjetosPorId = {int(k): dict(v) for k, v in objetos.items()}
             self.PokemonsPorId = {}
             self.BausPorId = {}
+            self.AtoresRemotosPorId = {}
             self._reindexar_objetos_colisivos()
             snapshot = list(self.ObjetosPorId.items())
         for oid, payload in snapshot:
@@ -552,6 +626,16 @@ class ControladorObjetos:
                 continue
             if bau is not None:
                 bau.desenhar(tela, camera)
+                continue
+
+            with self._lock_objetos:
+                ator_remoto = self.AtoresRemotosPorId.get(oid)
+            if ator_remoto is not None:
+                ator_remoto.set_tile_px(getattr(camera, "TilePx", 50))
+                pos_tela = camera.mundo_para_tela_px(ator_remoto.Posicao)
+                ator_remoto.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=0.0)
+                if getattr(ator_remoto, "Nome", ""):
+                    Ator.desenhar_nome(tela, pos_tela, ator_remoto.Nome)
                 continue
 
             pos_tela = self._objeto_posicao_tela_se_visivel(obj, camera)

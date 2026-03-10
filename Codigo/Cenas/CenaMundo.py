@@ -136,8 +136,10 @@ class CenaMundo:
 
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
 
+        bloqueio_gameplay = False
         if self.Terminal is not None:
             EVENTOS = self.Terminal.processar_eventos(EVENTOS)
+            bloqueio_gameplay = bool(self.Terminal.esta_digitando)
 
         gfps.iniciar_trecho("aplicacao_subtela")
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
@@ -145,7 +147,7 @@ class CenaMundo:
         if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaOpcoes.Ativa:
             self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto = False
 
-        if not self.SubtelaOpcoes.Ativa and self.TelaAtual != "Config":
+        if not bloqueio_gameplay and not self.SubtelaOpcoes.Ativa and self.TelaAtual != "Config":
             mouse_tela = pygame.mouse.get_pos()
             mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)
             self.ControladorObjetos.atualizar_player_local(EVENTOS, dt, mouse_mundo_tiles, gerenciador_fps=gfps)
@@ -171,7 +173,7 @@ class CenaMundo:
 
         if self.ControladorObjetos.PlayerLocal is not None:
             player_local = self.ControladorObjetos.PlayerLocal
-            self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
+            self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario, terminal=self.Terminal, eventos=[] if bloqueio_gameplay else EVENTOS, dt=dt)
 
         self.SubtelaOpcoes.desenhar(JOGO)
         if self.SubtelaInventario is not None and self.SubtelaInventario.Ativo:

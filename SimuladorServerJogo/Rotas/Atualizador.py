@@ -70,6 +70,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
         tipo = str(diff.get("tipo", "")).strip()
         payload = diff.get("payload", {}) if isinstance(diff.get("payload", {}), dict) else {}
         objeto_id = diff.get("objeto_id")
+        meta_in = diff.get("meta", {}) if isinstance(diff.get("meta"), dict) else {}
 
         if tipo == "abrir_bau" and objeto_id is not None:
             obj = BANCO_DADOS.obter_objeto(int(objeto_id))
@@ -80,7 +81,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 ignorados += 1
                 continue
             payload_update = {"estado": {"aberto": True}}
-            registrar_diff("update", payload=payload_update, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria="rapida")
+            registrar_diff("update", payload=payload_update, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria="rapida", origem="server", autor=client_id)
             aplicados += 1
             continue
 
@@ -99,7 +100,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 atualizar_perfil_personagem(usuario, payload.get("perfil"))
             if "inventario" in payload and usuario and isinstance(payload.get("inventario"), dict):
                 atualizar_inventario_personagem(usuario, payload.get("inventario"))
-            registrar_diff("update", payload=payload, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria)
+            registrar_diff("update", payload=payload, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria, origem=str(meta_in.get("origem") or "client"), autor=str(meta_in.get("autor") or client_id))
             aplicados += 1
             continue
 
@@ -111,7 +112,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 dados_obj["id"] = novo_id
                 obj = GameObjetoServer.de_dict(dados_obj)
                 BANCO_DADOS.inserir_objeto(obj)
-                registrar_diff("spawn", payload=obj.serializar(), escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria)
+                registrar_diff("spawn", payload=obj.serializar(), escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria, origem=str(meta_in.get("origem") or "client"), autor=str(meta_in.get("autor") or client_id))
                 aplicados += 1
             except Exception:
                 ignorados += 1
@@ -122,7 +123,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             if removido is None:
                 ignorados += 1
                 continue
-            registrar_diff("despawn", payload={"id": removido.Id}, escopo=_escopo_objeto(removido), objeto_id=removido.Id, categoria=categoria)
+            registrar_diff("despawn", payload={"id": removido.Id}, escopo=_escopo_objeto(removido), objeto_id=removido.Id, categoria=categoria, origem=str(meta_in.get("origem") or "client"), autor=str(meta_in.get("autor") or client_id))
             aplicados += 1
             continue
 

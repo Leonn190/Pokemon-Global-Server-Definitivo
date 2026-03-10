@@ -316,6 +316,11 @@ class BancoDadosMundo:
                 saida.append(obj)
         return saida
 
+    def contar_subtipo_entidade(self, subtipo: str) -> int:
+        alvo = str(subtipo or "").strip().lower()
+        with self._lock:
+            return sum(1 for o in self._objetos.values() if str(getattr(o, "estado_extra", {}).get("subtipo", "")).strip().lower() == alvo)
+
     def obter_objeto(self, objeto_id: int) -> Optional[GameObjetoServer]:
         with self._lock:
             return self._objetos.get(int(objeto_id))

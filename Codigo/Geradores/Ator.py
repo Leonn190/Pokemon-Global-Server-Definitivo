@@ -55,6 +55,7 @@ class Ator(Entidade):
         )
         if skin_surface is None:
             skin_surface = self.carregar_skin(nome_skin)
+        self.NomeSkin = str(nome_skin or "S1")
         self.Skin = skin_surface
         self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin_tiles, tile_px=tile_px)
 
@@ -118,6 +119,10 @@ class Ator(Entidade):
     def set_skin(self, skin_surface) -> None:
         self.Skin = skin_surface
         self.Desenhador.set_skin(skin_surface)
+
+    def set_nome_skin(self, nome_skin: str) -> None:
+        self.NomeSkin = str(nome_skin or "S1")
+        self.set_skin(self.carregar_skin(self.NomeSkin))
 
     def definir_angulo_olhar(self, angulo_graus: float) -> None:
         self.AnguloOlhar = float(angulo_graus)

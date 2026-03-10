@@ -8,8 +8,8 @@ import time
 from typing import Dict, List, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Geradores.GeradorPokemon import GERADOR_POKEMON_SERVER
-from SimuladorServerJogo.Geradores.GeradorBaus import GERADOR_BAUS_SERVER
+from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
+from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer, BauServer
 from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 
@@ -197,7 +197,7 @@ class CerebroServer:
         if escolhido is None:
             return
 
-        dados = GERADOR_BAUS_SERVER.gerar_bau(random)
+        dados = gerar_bau_server(random)
         novo_id = BANCO_DADOS.gerar_id()
         bau = BauServer(
             id_objeto=novo_id,
@@ -295,7 +295,7 @@ class CerebroServer:
             return
 
         novo_id = BANCO_DADOS.gerar_id()
-        poke = GERADOR_POKEMON_SERVER.gerar(novo_id=novo_id, posicao=escolhido, chunk_xy=chunk)
+        poke = gerar_pokemon_server(novo_id=novo_id, posicao=escolhido, chunk_xy=chunk)
         poke.raio_colisao = raio
         BANCO_DADOS.inserir_objeto(poke)
         self._pokemons_ids.add(poke.Id)

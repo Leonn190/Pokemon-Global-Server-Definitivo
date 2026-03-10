@@ -13,11 +13,12 @@ class Terminal:
     def __init__(self, rect, callback_enviar=None, callback_buscar=None, autor_local="anon"):
         self.rect = pygame.Rect(rect)
         self.caixa = CaixaTexto(
-            pygame.Rect(self.rect.x + 8, self.rect.bottom - 44, self.rect.w - 16, 36),
+            pygame.Rect(self.rect.x + 8, self.rect.bottom - 34, self.rect.w - 16, 26),
             placeholder="ENTER para digitar...",
             max_chars=120,
             ativo=False,
         )
+        self.caixa._estilo_texto["size"] = 18
         self.callback_enviar = callback_enviar
         self.callback_buscar = callback_buscar
         self.autor_local = str(autor_local or "anon")
@@ -27,6 +28,9 @@ class Terminal:
         self._ultimo_novo_ts = 0.0
         self._ligado = False
         self._thread = None
+        self._scroll_linhas = 0
+        self._linhas_visiveis = 25
+        self._fonte_linhas = pygame.font.Font(None, 17)
 
     @property
     def esta_digitando(self):
@@ -69,8 +73,9 @@ class Terminal:
             self._mensagens.append(m)
             novo = True
         if novo:
-            self._mensagens = self._mensagens[-80:]
+            self._mensagens = self._mensagens[-180:]
             self._ultimo_novo_ts = time.time()
+            self._scroll_linhas = 0
 
     def processar_eventos(self, eventos):
         eventos_restantes = []
@@ -86,6 +91,10 @@ class Terminal:
 
             if self.digitando and evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
                 self._fechar_digitacao()
+                continue
+
+            if self.digitando and evento.type == pygame.MOUSEWHEEL:
+                self._scroll_linhas = max(0, self._scroll_linhas - int(evento.y))
                 continue
 
             if self.digitando and evento.type in (pygame.KEYDOWN, pygame.KEYUP, pygame.TEXTINPUT):
@@ -121,28 +130,62 @@ class Terminal:
         if msg_id > self._ultimo_id:
             self._ultimo_id = msg_id
             self._mensagens.append(msg)
-            self._mensagens = self._mensagens[-80:]
+            self._mensagens = self._mensagens[-180:]
             self._ultimo_novo_ts = time.time()
+            self._scroll_linhas = 0
+
+    def _quebrar_linhas(self, texto, largura_px):
+        texto = str(texto or "")
+        if not texto:
+            return [""]
+        palavras = texto.split(" ")
+        linhas = []
+        atual = ""
+        for p in palavras:
+            teste = p if not atual else f"{atual} {p}"
+            if self._fonte_linhas.size(teste)[0] <= largura_px:
+                atual = teste
+            else:
+                if atual:
+                    linhas.append(atual)
+                atual = p
+        if atual:
+            linhas.append(atual)
+        return linhas or [texto]
+
+    def _linhas_historico(self):
+        largura = max(80, self.rect.w - 22)
+        linhas = []
+        for m in self._mensagens:
+            prefixo = f"{m.get('autor', 'anon')}: "
+            texto = str(m.get("texto", ""))
+            quebradas = self._quebrar_linhas(prefixo + texto, largura)
+            linhas.extend(quebradas)
+        return linhas
 
     def desenhar(self, tela, eventos, dt):
         agora = time.time()
         if not self.digitando and agora > self._ultimo_novo_ts + 3.5:
             return
 
-        alpha = 220
+        alpha = 230
         if not self.digitando and agora > self._ultimo_novo_ts + 3.0:
-            alpha = int(220 * max(0.0, 1.0 - (agora - (self._ultimo_novo_ts + 3.0)) / 0.5))
+            alpha = int(230 * max(0.0, 1.0 - (agora - (self._ultimo_novo_ts + 3.0)) / 0.5))
 
         fundo = pygame.Surface(self.rect.size, pygame.SRCALPHA)
         fundo.fill((0, 0, 0, alpha))
         tela.blit(fundo, self.rect.topleft)
 
-        y = self.rect.y + 8
-        base = self._mensagens[-8:]
-        for m in base:
-            linha = f"{m.get('autor', 'anon')}: {m.get('texto', '')}"
-            Texto(linha[:85], (self.rect.x + 10, y), style={"size": 18, "outline": False, "shadow": False, "color": (235, 235, 235)}).draw(tela)
-            y += 20
+        linhas = self._linhas_historico()
+        total = len(linhas)
+        inicio = max(0, total - self._linhas_visiveis - self._scroll_linhas)
+        fim = max(0, total - self._scroll_linhas)
+        visiveis = linhas[inicio:fim]
+
+        y = self.rect.y + 6
+        for linha in visiveis:
+            Texto(linha, (self.rect.x + 10, y), style={"size": 15, "outline": False, "shadow": False, "color": (235, 235, 235)}).draw(tela)
+            y += 14
 
         if self.digitando:
             self.caixa.render(tela, eventos, dt)

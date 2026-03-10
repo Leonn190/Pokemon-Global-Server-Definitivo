@@ -89,7 +89,7 @@ class DesenhaAtor:
             self._cache_corpo_rotacionado.pop(antigo, None)
         return corpo
 
-    def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0, progresso_tapa=0.0, respiracao_tempo=0.0):
+    def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0, progresso_tapa=0.0, respiracao_tempo=0.0, recuo_mao=0.0):
         cx, cy = centro
 
         if angulo_graus is None:
@@ -135,8 +135,9 @@ class DesenhaAtor:
             mao_dir_x = mao_dir_base_x + vx * curva_frente - px * curva_esquerda
             mao_dir_y = mao_dir_base_y + vy * curva_frente - py * curva_esquerda
         else:
-            mao_dir_x = mao_dir_base_x + vx * respiracao
-            mao_dir_y = mao_dir_base_y + vy * respiracao
+            recuo = max(0.0, float(recuo_mao))
+            mao_dir_x = mao_dir_base_x + vx * (respiracao - recuo)
+            mao_dir_y = mao_dir_base_y + vy * (respiracao - recuo)
 
         mao_esq_x = mao_esq_base_x + vx * respiracao
         mao_esq_y = mao_esq_base_y + vy * respiracao

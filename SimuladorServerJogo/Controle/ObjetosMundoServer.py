@@ -150,12 +150,31 @@ class PokemonServer(EntidadeServer):
                 "ativo": True,
                 "movendo": False,
                 "movendo_ate": 0.0,
+                "dificuldade_captura": 50.0,
+                "tamanho_barra_captura": 0.32,
+                "velocidade_barra_captura": 90.0,
+                "tentativas_falhas_captura": 0,
+                "frutas_aplicadas": [],
+                "estado_frutificacao": {"multiplicador_doces": 1.0, "bonus_captura_frutas": 0.0, "bonus_captura_bioma": {}, "limite_frutas": 2},
+                "captura_fase": "nenhuma",
+                "captura": {
+                    "fase": "nenhuma",
+                    "ativa": False,
+                    "agenda": [],
+                    "inicio_ms_servidor": 0,
+                    "fase_inicio_ms": 0,
+                    "tremida_atual": 0,
+                    "bola_nome": "",
+                    "dono_id": 0,
+                },
             }
         )
 
     def serializar(self) -> Dict[str, object]:
         dados = super().serializar()
         estado = dados.get("estado", {}) if isinstance(dados.get("estado", {}), dict) else {}
+        captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
+        estado["captura_fase"] = str(captura.get("fase", estado.get("captura_fase", "nenhuma")))
         agora = time.monotonic()
         estado["movendo"] = bool(agora < float(estado.get("movendo_ate", 0.0)))
         dados["estado"] = estado
@@ -194,3 +213,73 @@ class PokemonServer(EntidadeServer):
         self.estado_extra["ativo"] = False
         self.estado_extra["capturado"] = True
         self.estado_extra["capturador"] = str(capturador or "")
+
+
+
+class ProjetilServer(EntidadeServer):
+    def __init__(
+        self,
+        id_objeto: int,
+        posicao: Vector2,
+        dono_id: int,
+        tipo_projetil: str,
+        subtipo: str,
+        item_base_id: str,
+        token_arremesso: str,
+        direcao: Vector2,
+        velocidade: float,
+        alcance: float,
+        raio_colisao: float = 0.18,
+    ) -> None:
+        super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=raio_colisao, raio_interacao=raio_colisao)
+        dx, dy = float(direcao[0]), float(direcao[1])
+        n = (dx * dx + dy * dy) ** 0.5 or 1.0
+        self.estado_extra.update(
+            {
+                "subtipo": "projetil",
+                "tipo_projetil": str(tipo_projetil or "item"),
+                "nome_item": str(subtipo or "item"),
+                "item_base_id": str(item_base_id or ""),
+                "dono_id": int(dono_id or 0),
+                "token_arremesso": str(token_arremesso or ""),
+                "direcao": [dx / n, dy / n],
+                "velocidade": max(0.1, float(velocidade or 10.0)),
+                "alcance": max(0.1, float(alcance or 6.0)),
+                "distancia": 0.0,
+                "tempo_vida": 0.0,
+                "rotacao": 0.0,
+                "terminado": False,
+                "autoritativo": True,
+            }
+        )
+
+    def atualizar(self, dt: float) -> None:
+        if bool(self.estado_extra.get("terminado", False)):
+            return
+        dt = max(0.0, float(dt))
+        direcao = self.estado_extra.get("direcao", [1.0, 0.0])
+        dx = float(direcao[0]) if isinstance(direcao, (list, tuple)) and len(direcao) == 2 else 1.0
+        dy = float(direcao[1]) if isinstance(direcao, (list, tuple)) and len(direcao) == 2 else 0.0
+        velocidade = float(self.estado_extra.get("velocidade", 10.0) or 10.0)
+        passo = velocidade * dt
+        self.definir_posicao(self.posicao[0] + dx * passo, self.posicao[1] + dy * passo)
+        self.estado_extra["distancia"] = float(self.estado_extra.get("distancia", 0.0) or 0.0) + passo
+        self.estado_extra["tempo_vida"] = float(self.estado_extra.get("tempo_vida", 0.0) or 0.0) + dt
+        self.estado_extra["rotacao"] = (float(self.estado_extra.get("rotacao", 0.0) or 0.0) + 560.0 * dt) % 360.0
+        if float(self.estado_extra.get("distancia", 0.0) or 0.0) >= float(self.estado_extra.get("alcance", 6.0) or 6.0):
+            self.estado_extra["terminado"] = True
+
+    def terminar(self, motivo: str = "") -> None:
+        self.estado_extra["terminado"] = True
+        if motivo:
+            self.estado_extra["motivo_termino"] = str(motivo)
+
+    def serializar(self) -> Dict[str, object]:
+        dados = super().serializar()
+        dados["tipo"] = "entidade_projetil"
+        dados["tipo_projetil"] = str(self.estado_extra.get("tipo_projetil", "item"))
+        dados["subtipo"] = str(self.estado_extra.get("nome_item", "item"))
+        dados["item_base_id"] = str(self.estado_extra.get("item_base_id", ""))
+        dados["dono_id"] = int(self.estado_extra.get("dono_id", 0) or 0)
+        dados["token_arremesso"] = str(self.estado_extra.get("token_arremesso", ""))
+        return dados

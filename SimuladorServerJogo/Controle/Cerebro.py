@@ -124,6 +124,7 @@ class CerebroServer:
     def registrar_spawn_manual(self, objeto) -> None:
         """Inclui objetos spawnados por comando no ciclo do cérebro."""
         if isinstance(objeto, PokemonServer):
+            objeto.estado_extra["forcar_movimento_ate"] = time.monotonic() + 8.0
             self._pokemons_ids.add(int(objeto.Id))
             return
         if isinstance(objeto, BauServer):
@@ -210,6 +211,56 @@ class CerebroServer:
             return "bloqueante"
         return "outro"
 
+    def _payload_pokemon_capturado(self, poke: PokemonServer) -> Dict[str, object]:
+        estado = poke.estado_extra if isinstance(poke.estado_extra, dict) else {}
+        return {
+            "Nome": str(estado.get("nome") or estado.get("especie") or "Pokemon"),
+            "Code": str(estado.get("code") or ""),
+            "Nivel": int(estado.get("nivel", 1) or 1),
+            "IV": int(estado.get("iv", 0) or 0),
+            "Raridade": int(estado.get("raridade", 1) or 1),
+            "Estagio": int(estado.get("estagio", 1) or 1),
+        }
+
+    def _registrar_captura_inventario_player(self, dono_id: int, poke: PokemonServer) -> None:
+        from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada, atualizar_inventario_personagem
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        usuario = BANCO_DADOS.usuario_por_objeto_id(int(dono_id or 0))
+        if not usuario:
+            return
+
+        dados_player = obter_personagem_para_entrada(usuario)
+        if not isinstance(dados_player, dict):
+            return
+
+        inventario = dict(dados_player.get("inventario", {})) if isinstance(dados_player.get("inventario"), dict) else {}
+        pokemons = list(inventario.get("pokemons", []))
+        pokemons.append(self._payload_pokemon_capturado(poke))
+        inventario["pokemons"] = pokemons
+
+        atualizar_inventario_personagem(usuario, inventario)
+        dados_player["inventario"] = inventario
+
+        obj = BANCO_DADOS.garantir_player(usuario, str(dados_player.get("skin", "S1")), tuple(dados_player.get("posicao", [0.0, 0.0])))
+        payload = {
+            "tipo": "entidade_player",
+            "nome": str(dados_player.get("nome", usuario)),
+            "skin": str(dados_player.get("skin", "S1")),
+            "posicao": [float(obj.posicao[0]), float(obj.posicao[1])],
+            "perfil": {k: v for k, v in dados_player.items() if k != "inventario"},
+            "inventario": inventario,
+        }
+        registrar_diff(
+            "update",
+            payload=payload,
+            escopo={"centro": [float(obj.posicao[0]), float(obj.posicao[1])], "raio": 780.0},
+            objeto_id=obj.Id,
+            categoria="rapida",
+            origem="server",
+            autor="server",
+        )
+
     def _executar_tick_capturas(self) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 
@@ -235,6 +286,7 @@ class CerebroServer:
 
             cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
             if str(cap.get("fase", "")) == "finalizada" and str(cap.get("resultado", "")) == "sucesso":
+                self._registrar_captura_inventario_player(int(cap.get("dono_id", 0) or 0), poke)
                 removido = BANCO_DADOS.remover_objeto(poke.Id)
                 self._pokemons_ids.discard(poke.Id)
                 if removido is not None:
@@ -267,8 +319,10 @@ class CerebroServer:
                 self._spawn_pokemon(chunk)
 
         chance_mover = max(0.0, min(1.0, self._f("chance_mover_por_tick", 0.45)))
+        agora = time.monotonic()
         for poke in pokemons:
-            if random.random() < chance_mover:
+            forcar = agora < float(poke.estado_extra.get("forcar_movimento_ate", 0.0) or 0.0)
+            if forcar or random.random() < chance_mover:
                 self._mover_pokemon(poke, chunks_carregados)
 
         self._executar_tick_baus(chunks_simulados, chunks_carregados)

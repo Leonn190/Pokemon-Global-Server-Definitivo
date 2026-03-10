@@ -31,6 +31,9 @@ class Terminal:
         self._scroll_linhas = 0
         self._linhas_visiveis = 25
         self._fonte_linhas = pygame.font.Font(None, 17)
+        self._cache_linhas_historico = []
+        self._cache_largura_historico = -1
+        self._historico_sujo = True
 
     @property
     def esta_digitando(self):
@@ -76,6 +79,7 @@ class Terminal:
             self._mensagens = self._mensagens[-180:]
             self._ultimo_novo_ts = time.time()
             self._scroll_linhas = 0
+            self._historico_sujo = True
 
     def processar_eventos(self, eventos):
         eventos_restantes = []
@@ -133,6 +137,7 @@ class Terminal:
             self._mensagens = self._mensagens[-180:]
             self._ultimo_novo_ts = time.time()
             self._scroll_linhas = 0
+            self._historico_sujo = True
 
     def _quebrar_linhas(self, texto, largura_px):
         texto = str(texto or "")
@@ -155,13 +160,20 @@ class Terminal:
 
     def _linhas_historico(self):
         largura = max(80, self.rect.w - 22)
+        if (not self._historico_sujo) and self._cache_largura_historico == largura:
+            return list(self._cache_linhas_historico)
+
         linhas = []
         for m in self._mensagens:
             prefixo = f"{m.get('autor', 'anon')}: "
             texto = str(m.get("texto", ""))
             quebradas = self._quebrar_linhas(prefixo + texto, largura)
             linhas.extend(quebradas)
-        return linhas
+
+        self._cache_linhas_historico = linhas
+        self._cache_largura_historico = largura
+        self._historico_sujo = False
+        return list(linhas)
 
     def desenhar(self, tela, eventos, dt):
         agora = time.time()

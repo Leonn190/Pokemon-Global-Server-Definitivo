@@ -21,6 +21,23 @@ _CLIENT_STATE: Dict[str, Dict[str, object]] = {}
 _CATEGORIAS_VALIDAS = {"rapida", "lenta"}
 
 
+def _forcar_categoria_rapida(tipo: str, payload: Dict[str, object], categoria: str) -> str:
+    cat = str(categoria or "rapida").strip().lower()
+    if cat != "lenta":
+        return cat
+    if str(tipo or "").strip().lower() != "update":
+        return cat
+    if not isinstance(payload, dict):
+        return cat
+
+    inventario = payload.get("inventario") if isinstance(payload.get("inventario"), dict) else {}
+    inventario_toca_pokemons = bool(inventario.get("pokemons") is not None or inventario.get("times_pokemon") is not None)
+    if "inventario" in payload or inventario_toca_pokemons:
+        return "rapida"
+    return cat
+
+
+
 def _next_seq() -> int:
     global _DIFF_SEQ
     _DIFF_SEQ += 1
@@ -35,6 +52,7 @@ def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, obje
     cat = str(categoria or "rapida").strip().lower()
     if cat not in _CATEGORIAS_VALIDAS:
         cat = "rapida"
+    cat = _forcar_categoria_rapida(tipo, payload, cat)
     with _DIFF_LOCK:
         diff = {
             "seq": _next_seq(),

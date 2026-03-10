@@ -301,7 +301,7 @@ class CerebroServer:
                     registrar_diff("evento", payload=fr["payload"], escopo={"centro": [colidiu.posicao[0], colidiu.posicao[1]], "raio": 120}, objeto_id=colidiu.Id, categoria="rapida", evento=fr.get("evento", "pokemon_frutificado"))
                 else:
                     dono_id = int(obj.estado_extra.get("dono_id", 0) or 0)
-                    _ = resolver_captura(colidiu, nome_item, contexto={
+                    ret_captura = resolver_captura(colidiu, nome_item, contexto={
                         "dono_id": dono_id,
                         "dono_posicao": [float(BANCO_DADOS.obter_objeto(dono_id).posicao[0]), float(BANCO_DADOS.obter_objeto(dono_id).posicao[1])] if BANCO_DADOS.obter_objeto(dono_id) is not None else [colidiu.posicao[0], colidiu.posicao[1]],
                         "distancia_arremesso_tiles": float(obj.estado_extra.get("distancia", 0.0) or 0.0),
@@ -310,6 +310,18 @@ class CerebroServer:
                         "servidor_agora_ms": int(time.time() * 1000),
                         "maestria": self._maestria_player(dono_id),
                     })
+                    if bool(ret_captura.get("iniciada", False)):
+                        BANCO_DADOS.atualizar_objeto(colidiu.Id, {"estado": colidiu.estado_extra})
+                        cap = dict(colidiu.estado_extra.get("captura", {}))
+                        cap["fase"] = "iniciada"
+                        registrar_diff(
+                            "evento",
+                            payload={"pokemon_id": int(colidiu.Id), "captura": cap},
+                            escopo={"centro": [colidiu.posicao[0], colidiu.posicao[1]], "raio": 120},
+                            objeto_id=colidiu.Id,
+                            categoria="rapida",
+                            evento="pokemon_captura_iniciada",
+                        )
             elif categoria in {"player", "estrutura_natural", "projetil", "bloqueante", "outro"}:
                 pass
 

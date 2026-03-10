@@ -39,13 +39,23 @@ class Projetil(Entidade):
         self.TokenArremesso = ""
         self.Autoritativo = False
         self.Estado = {}
+        self._offset_correcao = [0.0, 0.0]
+        self._tempo_correcao = 0.0
         self.aplicar_snapshot(snapshot)
 
     def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
         estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
         pos = snapshot.get("posicao") if isinstance(snapshot.get("posicao"), (list, tuple)) else None
         if pos is not None:
-            self.definir_posicao(float(pos[0]), float(pos[1]))
+            nx, ny = float(pos[0]), float(pos[1])
+            px, py = self.Posicao
+            if self.PreditoLocal or self.Autoritativo:
+                self._offset_correcao = [px - nx, py - ny]
+                self._tempo_correcao = 0.12
+            else:
+                self._offset_correcao = [0.0, 0.0]
+                self._tempo_correcao = 0.0
+            self.definir_posicao(nx, ny)
 
         self.TipoProjetil = str(snapshot.get("tipo_projetil") or estado.get("tipo_projetil") or self.TipoProjetil)
         self.Subtipo = str(snapshot.get("subtipo") or snapshot.get("nome_item") or estado.get("subtipo") or self.Subtipo)
@@ -83,14 +93,21 @@ class Projetil(Entidade):
         dt = max(0.0, float(dt))
         self.TempoVida += dt
 
-        if self.PreditoLocal and not self.Autoritativo:
+        if self.PreditoLocal or self.Autoritativo:
             passo = self.VelocidadeEscalar * dt
             self.mover(self.Direcao[0] * passo, self.Direcao[1] * passo)
             self.DistanciaPercorrida += passo
-            if self.TempoVida > 1.2 and self.DistanciaPercorrida >= self.AlcanceMaximo:
+            if self.PreditoLocal and self.TempoVida > 1.2 and self.DistanciaPercorrida >= self.AlcanceMaximo:
                 # fallback visual controlado até chegar o despawn autoritativo.
                 self.Terminado = True
                 self.Ativo = False
+
+        if self._tempo_correcao > 0.0:
+            fator = min(1.0, dt / self._tempo_correcao) if self._tempo_correcao > 1e-6 else 1.0
+            self.mover(self._offset_correcao[0] * fator, self._offset_correcao[1] * fator)
+            self._offset_correcao[0] *= (1.0 - fator)
+            self._offset_correcao[1] *= (1.0 - fator)
+            self._tempo_correcao = max(0.0, self._tempo_correcao - dt)
 
         self.RotacaoVisual = (self.RotacaoVisual + 560.0 * dt) % 360.0
 

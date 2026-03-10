@@ -233,11 +233,16 @@ class ControladorObjetos:
                 self._ids_por_chunk.pop(chunk, None)
 
     def _iter_objetos_visiveis_por_chunk(self, camera, margem_chunks: int = 1):
-        cx, cy = self._chunk_posicao(*camera.PosicaoTiles)
+        tela_w, tela_h = getattr(camera, "TamanhoTelaPx", (1280.0, 720.0))
+        tile_px = max(1.0, float(getattr(camera, "TilePx", 50) or 50))
+        centro_tiles = (float(camera.PosicaoTiles[0]) + (float(tela_w) * 0.5) / tile_px, float(camera.PosicaoTiles[1]) + (float(tela_h) * 0.5) / tile_px)
+        cx, cy = self._chunk_posicao(*centro_tiles)
+        alcance_x = max(1, int(math.ceil((float(tela_w) / tile_px) / (2.0 * self._chunk_tamanho_tiles)))) + int(margem_chunks)
+        alcance_y = max(1, int(math.ceil((float(tela_h) / tile_px) / (2.0 * self._chunk_tamanho_tiles)))) + int(margem_chunks)
         ids: set[int] = set()
         with self._lock_objetos:
-            for dx in range(-margem_chunks, margem_chunks + 1):
-                for dy in range(-margem_chunks, margem_chunks + 1):
+            for dx in range(-alcance_x, alcance_x + 1):
+                for dy in range(-alcance_y, alcance_y + 1):
                     ids.update(self._ids_por_chunk.get((cx + dx, cy + dy), set()))
             return [self.ObjetosPorId.get(oid) for oid in ids if oid in self.ObjetosPorId]
 
@@ -489,15 +494,36 @@ class ControladorObjetos:
             self.ProjeteisPorId.pop(oid, None)
 
     def _reconciliar_projetil_predito_por_token(self, token: str, oid_autoritativo: int) -> None:
+        alvo = self.ProjeteisPorId.get(int(oid_autoritativo))
         for oid_local, proj in list(self.ProjeteisPorId.items()):
+            if oid_local == int(oid_autoritativo):
+                continue
             if not proj.PreditoLocal:
                 continue
             if str(getattr(proj, "TokenArremesso", "")) != str(token):
                 continue
-            # remove preditivo local ao casar com autoritativo
-            self.ProjeteisPorId.pop(oid_local, None)
-            self.ObjetosPorId.pop(oid_local, None)
-            self._remover_indice_chunk_objeto(oid_local)
+            if alvo is None:
+                proj.Id = int(oid_autoritativo)
+                proj.Autoritativo = True
+                self.ProjeteisPorId[int(oid_autoritativo)] = proj
+                self.ProjeteisPorId.pop(oid_local, None)
+                payload = self.ObjetosPorId.pop(oid_local, None)
+                if isinstance(payload, dict):
+                    payload["id"] = int(oid_autoritativo)
+                    est = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+                    est["autoritativo"] = True
+                    est["predito_local"] = True
+                    payload["estado"] = est
+                    self.ObjetosPorId[int(oid_autoritativo)] = payload
+                    self._remover_indice_chunk_objeto(oid_local)
+                    self._upsert_indice_chunk_objeto(int(oid_autoritativo), payload)
+            else:
+                alvo.PreditoLocal = True
+                alvo.Autoritativo = True
+                alvo.TokenArremesso = str(token)
+                self.ProjeteisPorId.pop(oid_local, None)
+                self.ObjetosPorId.pop(oid_local, None)
+                self._remover_indice_chunk_objeto(oid_local)
             break
 
     def aplicar_diff(self, diff):
@@ -692,6 +718,10 @@ class ControladorObjetos:
         with self._lock_objetos:
             itens = list(self.PokemonsPorId.items())
         for oid, poke in itens:
+            fase = str(getattr(poke, "CapturaEstado", {}).get("fase", "nenhuma") or "nenhuma")
+            invalido = fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso", "finalizada"}
+            if invalido:
+                continue
             dxm, dym = float(poke.Posicao[0]) - mx, float(poke.Posicao[1]) - my
             dmouse = math.hypot(dxm, dym)
             if dmouse > 1.35:
@@ -727,7 +757,7 @@ class ControladorObjetos:
         dt_pokemons = max(0.0, (agora - self._ultimo_render_pokemons_ms) / 1000.0)
         self._ultimo_render_pokemons_ms = agora
 
-        for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=2):
+        for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
             if not isinstance(obj, dict):
                 continue
             oid = int(obj.get("id", -1))

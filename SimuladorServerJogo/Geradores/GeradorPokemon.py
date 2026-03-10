@@ -42,14 +42,20 @@ class GeradorPokemonServer:
                 linhas.append({"row": row, "peso_spawn": peso})
         return linhas
 
-    def _escolher_especie(self) -> Dict[str, str]:
+    def _escolher_especie(self, especie=None) -> Dict[str, str]:
         if not self._base:
             return {"Nome": "MissingNo", "Raridade": "10", "Altura": "1.0", "Peso": "1.0", **{k: "10" for k in STATS_BASE}}
+        alvo = str(especie or "").strip().lower()
+        if alvo:
+            for item in self._base:
+                row = item.get("row", {}) if isinstance(item, dict) else {}
+                if str(row.get("Code", "")).strip().lower() == alvo or str(row.get("Nome", "")).strip().lower() == alvo:
+                    return row
         item = random.choices(self._base, weights=[x["peso_spawn"] for x in self._base], k=1)[0]
         return item["row"]
 
-    def gerar(self, novo_id: int, posicao, chunk_xy) -> PokemonServer:
-        row = self._escolher_especie()
+    def gerar(self, novo_id: int, posicao, chunk_xy, especie=None) -> PokemonServer:
+        row = self._escolher_especie(especie)
         iv_global = random.randint(0, 100)
         nivel = max(1, min(100, int(1 + (iv_global / 100.0) * 99)))
 

@@ -10,6 +10,7 @@ from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import GameObjetoServer, BauServer
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
+from SimuladorServerJogo.Controle.Cerebro import CEREBRO
 
 
 # --------------------- Funções auxiliares ---------------------
@@ -83,6 +84,19 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             payload_update = {"estado": {"aberto": True}}
             registrar_diff("update", payload=payload_update, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria="rapida", origem="server", autor=client_id)
             aplicados += 1
+            continue
+
+
+        if tipo == "evento":
+            evento_nome = str(diff.get("evento", "")).strip().lower()
+            if evento_nome == "projetil_arremesso_intencao":
+                ok = CEREBRO.registrar_intencao_arremesso(client_id, payload)
+                if ok:
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            ignorados += 1
             continue
 
         if tipo == "update" and objeto_id is not None:

@@ -8,9 +8,11 @@ import time
 from typing import Dict, List, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
-from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer, BauServer
+from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer, BauServer, ProjetilServer
+from SimuladorServerJogo.Logica.AutoridadeCaptura import resolver_fruta, resolver_captura, coletar_eventos_captura_agendada
 from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 
 Vector2 = Tuple[float, float]
@@ -25,6 +27,7 @@ class CerebroServer:
         self._players_ativos: Dict[str, Vector2] = {}
         self._pokemons_ids: Set[int] = set()
         self._baus_ids: Set[int] = set()
+        self._projeteis_ids: Set[int] = set()
         self._regras = self._carregar_regras()
 
     def _carregar_regras(self) -> Dict[str, object]:
@@ -76,6 +79,45 @@ class CerebroServer:
                 )
         self._pokemons_ids.clear()
         self._baus_ids.clear()
+        self._projeteis_ids.clear()
+
+    def registrar_intencao_arremesso(self, client_id: str, payload: Dict[str, object]) -> bool:
+        item = payload.get("item") if isinstance(payload.get("item"), dict) else {}
+        origem = payload.get("origem") if isinstance(payload.get("origem"), (list, tuple)) and len(payload.get("origem")) == 2 else None
+        direcao = payload.get("direcao") if isinstance(payload.get("direcao"), (list, tuple)) and len(payload.get("direcao")) == 2 else None
+        if origem is None or direcao is None:
+            return False
+
+        dono_obj = BANCO_DADOS.obter_objeto(int(payload.get("dono_id", 0) or 0))
+        if dono_obj is None:
+            return False
+
+        estilo = str(item.get("Estilo") or item.get("estilo") or "item").lower()
+        nome_item = str(item.get("Nome") or "item")
+        token = str(payload.get("token_arremesso") or "")
+        velocidade = float(payload.get("velocidade", 11.0) or 11.0)
+        alcance = float(payload.get("alcance", 6.0) or 6.0)
+
+        pid = BANCO_DADOS.gerar_id()
+        proj = ProjetilServer(
+            id_objeto=pid,
+            posicao=(float(origem[0]), float(origem[1])),
+            dono_id=int(getattr(dono_obj, "Id", 0) or 0),
+            tipo_projetil=estilo,
+            subtipo=nome_item,
+            item_base_id=str(item.get("Code") or ""),
+            token_arremesso=token,
+            direcao=(float(direcao[0]), float(direcao[1])),
+            velocidade=velocidade,
+            alcance=alcance,
+            raio_colisao=0.18,
+        )
+        BANCO_DADOS.inserir_objeto(proj)
+        self._projeteis_ids.add(proj.Id)
+
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+        registrar_diff("spawn", payload=proj.serializar(), escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 80}, objeto_id=proj.Id, categoria="rapida")
+        return True
 
     def processar_ativacao(self, client_id: str, posicao_camera: Vector2) -> Dict[str, object]:
         with self._lock:
@@ -132,6 +174,53 @@ class CerebroServer:
 
         return _colide
 
+    def _maestria_player(self, objeto_player_id: int) -> float:
+        usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_player_id or 0))
+        if not usuario:
+            return 0.0
+        perfil = obter_personagem_para_entrada(usuario)
+        if not isinstance(perfil, dict):
+            return 0.0
+        return float(perfil.get("maestria", 0.0) or 0.0)
+
+    def _classificar_colisao(self, obj) -> str:
+        tipo = str(getattr(obj, "tipo_classe", "")).strip().lower()
+        subtipo = str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower()
+        if subtipo == "pokemon":
+            return "pokemon"
+        if subtipo == "player":
+            return "player"
+        if subtipo == "projetil":
+            return "projetil"
+        if tipo == "estrutura_natural":
+            return "estrutura_natural"
+        if tipo.startswith("estrutura"):
+            return "bloqueante"
+        return "outro"
+
+    def _executar_tick_capturas(self) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        agora_ms = int(time.time() * 1000)
+        for oid in list(self._pokemons_ids):
+            poke = BANCO_DADOS.obter_objeto(oid)
+            if not isinstance(poke, PokemonServer):
+                self._pokemons_ids.discard(oid)
+                continue
+            eventos = coletar_eventos_captura_agendada(poke, agora_ms)
+            if not eventos:
+                continue
+            BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": poke.estado_extra})
+            for e in eventos:
+                registrar_diff(
+                    "evento",
+                    payload=e["payload"],
+                    escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120},
+                    objeto_id=poke.Id,
+                    categoria="rapida",
+                    evento=e.get("evento", "pokemon_captura"),
+                )
+
     def _executar_tick(self) -> None:
         chunks_visiveis, chunks_simulados = self._calcular_chunks_carregados()
         chunks_carregados = chunks_visiveis | chunks_simulados
@@ -158,7 +247,73 @@ class CerebroServer:
                 self._mover_pokemon(poke, chunks_carregados)
 
         self._executar_tick_baus(chunks_simulados, chunks_carregados)
+        self._executar_tick_projeteis(chunks_carregados)
+        self._executar_tick_capturas()
         self._limpar_baus_abertos_expirados()
+
+    def _executar_tick_projeteis(self, chunks_carregados: Set[Chunk]) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        dt = max(0.02, self._f("tick_segundos", 0.2))
+        substeps = max(1, int(dt / 0.04))
+        dt_sub = dt / substeps
+
+        for oid in list(self._projeteis_ids):
+            obj = BANCO_DADOS.obter_objeto(oid)
+            if not isinstance(obj, ProjetilServer):
+                self._projeteis_ids.discard(oid)
+                continue
+
+            if bool(obj.estado_extra.get("terminado", False)):
+                removido = BANCO_DADOS.remover_objeto(obj.Id)
+                self._projeteis_ids.discard(obj.Id)
+                if removido is not None:
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": str(removido.estado_extra.get("motivo_termino", "fim"))}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, categoria="rapida")
+                continue
+
+            colidiu = None
+            for _ in range(substeps):
+                obj.atualizar(dt_sub)
+                proximos = BANCO_DADOS.buscar_proximos(obj.posicao, 4.0)
+                for outro in proximos:
+                    if outro.Id == obj.Id or outro.Id == int(obj.estado_extra.get("dono_id", 0) or 0):
+                        continue
+                    rr = float(getattr(outro, "raio_colisao", 0.2)) + float(getattr(obj, "raio_colisao", 0.18))
+                    if ((outro.posicao[0] - obj.posicao[0]) ** 2 + (outro.posicao[1] - obj.posicao[1]) ** 2) <= (rr * rr):
+                        colidiu = outro
+                        break
+                if colidiu is not None or bool(obj.estado_extra.get("terminado", False)):
+                    break
+
+            BANCO_DADOS.atualizar_objeto(obj.Id, {"posicao": [obj.posicao[0], obj.posicao[1]], "estado": obj.estado_extra})
+            registrar_diff("update", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 80}, objeto_id=obj.Id, categoria="rapida")
+
+            if colidiu is None:
+                continue
+
+            categoria = self._classificar_colisao(colidiu)
+            tipo_proj = str(obj.estado_extra.get("tipo_projetil", "item")).lower()
+            nome_item = str(obj.estado_extra.get("nome_item", "item"))
+
+            if categoria == "pokemon" and isinstance(colidiu, PokemonServer):
+                if tipo_proj == "fruta":
+                    fr = resolver_fruta(colidiu, nome_item, contexto={"dono_id": int(obj.estado_extra.get("dono_id", 0) or 0)})
+                    registrar_diff("evento", payload=fr["payload"], escopo={"centro": [colidiu.posicao[0], colidiu.posicao[1]], "raio": 120}, objeto_id=colidiu.Id, categoria="rapida", evento=fr.get("evento", "pokemon_frutificado"))
+                else:
+                    dono_id = int(obj.estado_extra.get("dono_id", 0) or 0)
+                    _ = resolver_captura(colidiu, nome_item, contexto={
+                        "dono_id": dono_id,
+                        "dono_posicao": [float(BANCO_DADOS.obter_objeto(dono_id).posicao[0]), float(BANCO_DADOS.obter_objeto(dono_id).posicao[1])] if BANCO_DADOS.obter_objeto(dono_id) is not None else [colidiu.posicao[0], colidiu.posicao[1]],
+                        "distancia_arremesso_tiles": float(obj.estado_extra.get("distancia", 0.0) or 0.0),
+                        "tentativas_falhas_anteriores": int(colidiu.estado_extra.get("tentativas_falhas_captura", 0) or 0),
+                        "bioma": str(colidiu.estado_extra.get("bioma", "")),
+                        "servidor_agora_ms": int(time.time() * 1000),
+                        "maestria": self._maestria_player(dono_id),
+                    })
+            elif categoria in {"player", "estrutura_natural", "projetil", "bloqueante", "outro"}:
+                pass
+
+            obj.terminar(f"colisao_{categoria}")
 
     def _executar_tick_baus(self, chunks_simulados: Set[Chunk], chunks_carregados: Set[Chunk]) -> None:
         baus = []

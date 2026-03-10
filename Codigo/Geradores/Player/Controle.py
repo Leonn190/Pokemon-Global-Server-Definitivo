@@ -27,6 +27,10 @@ class Controle:
         self._tempo_respiracao = 0.0
         self._tempo_diff_angulo = 0
         self._ultimo_angulo_emitido = None
+        self._mirando = False
+        self._tempo_mira = 0.0
+        self._item_arremesso_atual = None
+        self._acao_arremesso_pendente = None
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles):
         dt = max(0.0, float(dt))
@@ -40,14 +44,128 @@ class Controle:
             self.Ator.atualizar_colisor_mao_mundo()
             return
         self._processar_scroll_inventario(eventos)
-        self._processar_input_tapa(eventos)
+        self._processar_input_ataque(eventos, mouse_pos_mundo_tiles)
         self._processar_rotacao(mouse_pos_mundo_tiles)
         deslocando, correndo, tile_atual = self._processar_movimento(dt)
         self._atualizar_stamina(dt, deslocando, correndo, tile_atual)
         self._atualizar_tapa_automatico()
         self._tempo_respiracao += dt
+        self._tempo_mira = self._tempo_mira + dt if self._mirando else 0.0
         self.Ator.atualizar(dt)
         self.Ator.atualizar_colisor_mao_mundo()
+
+    def consumir_acao_arremesso(self):
+        acao = self._acao_arremesso_pendente
+        self._acao_arremesso_pendente = None
+        return acao
+
+    def estado_mira(self, mouse_pos_mundo_tiles):
+        if not self._mirando or self._item_arremesso_atual is None:
+            return None
+        max_alc = self._alcance_item(self._item_arremesso_atual)
+        px, py = self._ponto_mao_mundo()
+        mx, my = mouse_pos_mundo_tiles
+        dx, dy = mx - px, my - py
+        n = math.hypot(dx, dy)
+        if n <= 1e-6:
+            dx, dy, n = 1.0, 0.0, 1.0
+        ux, uy = dx / n, dy / n
+        fim = (px + ux * max_alc, py + uy * max_alc)
+        return {"inicio": (px, py), "fim": fim, "item": dict(self._item_arremesso_atual)}
+
+    def _lancamento_direto_mouse(self, mouse_pos_mundo_tiles):
+        if self._item_arremesso_atual is None:
+            return None
+        px, py = self._ponto_mao_mundo()
+        mx, my = mouse_pos_mundo_tiles
+        dx, dy = mx - px, my - py
+        n = math.hypot(dx, dy)
+        if n <= 1e-6:
+            dx, dy, n = 1.0, 0.0, 1.0
+        ux, uy = dx / n, dy / n
+        alc = self._alcance_item(self._item_arremesso_atual)
+        return {"inicio": (px, py), "fim": (px + ux * alc, py + uy * alc), "item": dict(self._item_arremesso_atual)}
+
+    def _ponto_mao_mundo(self):
+        ang = math.radians(float(getattr(self.Ator, "AnguloOlhar", 0.0)))
+        frente_x = math.cos(ang)
+        frente_y = -math.sin(ang)
+        lateral_x = -frente_y
+        lateral_y = frente_x
+        px, py = self.Ator.Posicao
+        return (px + lateral_x * 0.28 + frente_x * 0.22, py + lateral_y * 0.28 + frente_y * 0.22)
+
+    def _item_arremessavel_mao(self):
+        inv = getattr(self.Ator, "Inventario", None)
+        item = inv.item_na_mao() if inv is not None else None
+        if not isinstance(item, dict):
+            return None
+        estilo = str(item.get("Estilo") or item.get("estilo") or "").strip().lower()
+        if estilo in {"bola", "fruta"}:
+            return dict(item)
+        return None
+
+    def _alcance_item(self, item_info):
+        nome = str(item_info.get("Nome") or "").strip().lower()
+        estilo = str(item_info.get("Estilo") or "").strip().lower()
+        if estilo == "fruta":
+            return 5.0
+        if "sniperball" in nome:
+            return 8.0
+        return 6.0
+
+    def _consumir_item_na_mao(self):
+        inv = getattr(self.Ator, "Inventario", None)
+        if inv is None:
+            return False
+        idx = inv.SlotSelecionado
+        if idx < 0 or idx >= len(inv.Itens):
+            return False
+        item = inv.Itens[idx]
+        if not isinstance(item, dict):
+            inv.Itens[idx] = None
+            return True
+        qtd = int(item.get("quantidade", 1))
+        if qtd <= 1:
+            inv.Itens[idx] = None
+        else:
+            item["quantidade"] = qtd - 1
+        return True
+
+    def _processar_input_ataque(self, eventos, mouse_pos_mundo_tiles):
+        self._item_arremesso_atual = self._item_arremessavel_mao()
+        pode_arremessar = self._item_arremesso_atual is not None
+        for evento in eventos:
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
+                self._mirando = pode_arremessar
+            if evento.type == pygame.MOUSEBUTTONUP and evento.button == 3:
+                self._mirando = False
+
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                if pode_arremessar:
+                    if self._consumir_item_na_mao():
+                        estado = self.estado_mira(mouse_pos_mundo_tiles) if self._mirando else self._lancamento_direto_mouse(mouse_pos_mundo_tiles)
+                        self._acao_arremesso_pendente = {
+                            "item": dict(self._item_arremesso_atual),
+                            "origem": estado["inicio"] if estado else self._ponto_mao_mundo(),
+                            "destino": estado["fim"] if estado else mouse_pos_mundo_tiles,
+                        }
+                    self._batendo = False
+                    self._soltar_apos_tapa_atual = False
+                else:
+                    self._batendo = True
+                    self._soltar_apos_tapa_atual = False
+                    if not self.Ator.esta_tapando():
+                        self.Ator.iniciar_tapa()
+
+            if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
+                if self.Ator.esta_tapando():
+                    self._soltar_apos_tapa_atual = True
+                else:
+                    self._batendo = False
+                    self._soltar_apos_tapa_atual = False
+
+        self.Ator.EstadoMiraAtiva = bool(self._mirando and pode_arremessar)
 
     def definir_grid_chunks(self, chunks, chunk_blocos=10):
         self._grid_chunks = dict(chunks) if isinstance(chunks, dict) else {}
@@ -101,18 +219,8 @@ class Controle:
 
     def _processar_movimento(self, dt):
         teclas = pygame.key.get_pressed()
-        eixo_x = 0.0
-        eixo_y = 0.0
-
-        if teclas[pygame.K_a]:
-            eixo_x -= 1.0
-        if teclas[pygame.K_d]:
-            eixo_x += 1.0
-        if teclas[pygame.K_w]:
-            eixo_y -= 1.0
-        if teclas[pygame.K_s]:
-            eixo_y += 1.0
-
+        eixo_x = (1.0 if teclas[pygame.K_d] else 0.0) - (1.0 if teclas[pygame.K_a] else 0.0)
+        eixo_y = (1.0 if teclas[pygame.K_s] else 0.0) - (1.0 if teclas[pygame.K_w] else 0.0)
         mag = math.hypot(eixo_x, eixo_y)
         if mag > 0:
             eixo_x /= mag
@@ -122,12 +230,9 @@ class Controle:
         tile_atual = self._tile_atual()
         shift = teclas[pygame.K_LSHIFT] or teclas[pygame.K_RSHIFT]
         self._tentando_correr = bool(shift)
-
         if self._bloqueio_por_exaustao and self.Ator.Perfil.Stamina >= (self.Ator.Perfil.StaminaMax - 0.001):
             self._bloqueio_por_exaustao = False
-
-        pode_correr = not self._bloqueio_por_exaustao and self.Ator.Perfil.Stamina > 0.0
-        correndo = deslocando and shift and pode_correr
+        correndo = deslocando and shift and (not self._bloqueio_por_exaustao) and self.Ator.Perfil.Stamina > 0.0
 
         if correndo:
             self._tempo_shift_pressionado += dt
@@ -138,30 +243,22 @@ class Controle:
             self._bonus_corrida_atual = max(0.0, self._bonus_corrida_atual - (dt / tempo_desacel) * float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMax", 0.60)))
 
         mult = 1.0 + max(0.0, self._bonus_corrida_atual)
-        velocidade_base = float(getattr(self.Ator.Perfil, "VelocidadeBaseTiles", self.VelocidadeTiles))
-
+        vbase = float(getattr(self.Ator.Perfil, "VelocidadeBaseTiles", self.VelocidadeTiles))
         antes = self.Ator.Posicao
-        self.Ator.mover(eixo_x * velocidade_base * mult * dt, eixo_y * velocidade_base * mult * dt)
+        self.Ator.mover(eixo_x * vbase * mult * dt, eixo_y * vbase * mult * dt)
         self._aplicar_loop_mundo()
         return self.Ator.Posicao != antes, correndo, tile_atual
 
     def _atualizar_stamina(self, dt, deslocando, correndo, tile_atual):
         custo = 0.0
         max_bonus = float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMax", 0.60))
-        correndo_no_max = correndo and self._bonus_corrida_atual >= (max_bonus - 0.01)
-
         if correndo:
-            if correndo_no_max:
-                custo += float(getattr(self.Ator.Perfil, "CustoStaminaCorridaMax", 15.0))
-            else:
-                custo += float(getattr(self.Ator.Perfil, "CustoStaminaCorrida", 10.0))
-
+            custo += float(getattr(self.Ator.Perfil, "CustoStaminaCorridaMax" if self._bonus_corrida_atual >= (max_bonus - 0.01) else "CustoStaminaCorrida", 10.0))
         if deslocando:
             if tile_atual == 0:
                 custo += float(getattr(self.Ator.Perfil, "CustoStaminaAguaFunda", 16.0))
             elif tile_atual == 2:
                 custo += float(getattr(self.Ator.Perfil, "CustoStaminaAguaRasa", 4.0))
-
         if tile_atual == 2 and not correndo:
             custo = 0.0
 
@@ -175,25 +272,14 @@ class Controle:
             self._consumindo_stamina = False
             self._tempo_desde_ultima_corrida += dt
             if self._tempo_desde_ultima_corrida >= float(getattr(self.Ator.Perfil, "AtrasoRegeneracaoStamina", 2.0)):
-                if deslocando:
-                    regen = float(getattr(self.Ator.Perfil, "RegeneracaoStaminaAndando", 6.0))
-                else:
-                    regen = float(getattr(self.Ator.Perfil, "RegeneracaoStaminaParado", 12.0))
+                regen = float(getattr(self.Ator.Perfil, "RegeneracaoStaminaAndando" if deslocando else "RegeneracaoStaminaParado", 12.0))
                 self.Ator.Perfil.regenerar_stamina(regen * dt)
 
     def _processar_rotacao(self, mouse_pos_mundo_tiles):
         self._tempo_diff_angulo += 1
         px, py = self.Ator.Posicao
         mx, my = mouse_pos_mundo_tiles
-
-        if self.LimitesMundoTiles:
-            largura, altura = self.LimitesMundoTiles
-            dx = self._delta_toroidal(px, mx, largura)
-            dy = self._delta_toroidal(py, my, altura)
-        else:
-            dx = mx - px
-            dy = my - py
-
+        dx, dy = (self._delta_toroidal(px, mx, self.LimitesMundoTiles[0]), self._delta_toroidal(py, my, self.LimitesMundoTiles[1])) if self.LimitesMundoTiles else (mx - px, my - py)
         if dx == 0 and dy == 0:
             return
         angulo = math.degrees(math.atan2(-dy, dx))
@@ -217,21 +303,6 @@ class Controle:
         for evento in eventos:
             if evento.type == pygame.MOUSEWHEEL:
                 self.Ator.Inventario.mudar_slot_por_scroll(-evento.y)
-
-    def _processar_input_tapa(self, eventos):
-        for evento in eventos:
-            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                self._batendo = True
-                self._soltar_apos_tapa_atual = False
-                if not self.Ator.esta_tapando():
-                    self.Ator.iniciar_tapa()
-
-            if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
-                if self.Ator.esta_tapando():
-                    self._soltar_apos_tapa_atual = True
-                else:
-                    self._batendo = False
-                    self._soltar_apos_tapa_atual = False
 
     def _processar_toggle_inventario(self, eventos):
         for evento in eventos:

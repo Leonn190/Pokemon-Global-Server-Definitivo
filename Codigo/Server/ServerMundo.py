@@ -144,3 +144,10 @@ def desconectar_mundo(ip, client_id):
         return json.loads(resposta_json)
     except json.JSONDecodeError:
         return _erro_padrao("Falha ao interpretar resposta de desconexão do mundo")
+
+
+
+def enviar_evento_arremesso_mundo(ip, client_id, payload):
+    """Canal explícito de intenção de arremesso (resolução autoritativa no servidor)."""
+    diff = {"tipo": "evento", "evento": "projetil_arremesso_intencao", "payload": dict(payload or {})}
+    return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])

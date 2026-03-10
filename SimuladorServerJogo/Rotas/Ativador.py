@@ -27,7 +27,7 @@ def _next_seq() -> int:
     return _DIFF_SEQ
 
 
-def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, categoria: str = "rapida", origem: str = "server", autor: str = "") -> Dict[str, object]:
+def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, categoria: str = "rapida", origem: str = "server", autor: str = "", evento: str = "") -> Dict[str, object]:
     """Registra diff no log central com categoria de sincronização.
 
     Categoria rápida = visual/dinâmico; categoria lenta = dados persistentes.
@@ -40,6 +40,7 @@ def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, obje
             "seq": _next_seq(),
             "timestamp": time.time(),
             "tipo": tipo,
+            "evento": str(evento or ""),
             "objeto_id": objeto_id,
             "payload": payload,
             "escopo": escopo,
@@ -106,6 +107,7 @@ def _serializar_diff_registrada(diff: Dict[str, object]) -> Dict[str, object]:
         "seq": diff["seq"],
         "timestamp": diff["timestamp"],
         "tipo": diff["tipo"],
+        "evento": diff.get("evento", ""),
         "objeto_id": diff.get("objeto_id"),
         "payload": diff.get("payload", {}),
         "escopo": diff.get("escopo", {}),

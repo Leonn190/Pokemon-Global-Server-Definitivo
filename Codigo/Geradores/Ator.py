@@ -75,6 +75,7 @@ class Ator(Entidade):
         self.Perfil = None
         self.Inventario = None
         self.Controle = None
+        self.EstadoMiraAtiva = False
 
         self._stamina_alpha = 0.0
         self.BarraStamina = Barra(pygame.Rect(0, 0, 75, 9), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
@@ -164,6 +165,7 @@ class Ator(Entidade):
             alcance_tapa=self._alcance_tapa_px(),
             progresso_tapa=self._progresso_tapa(),
             respiracao_tempo=respiracao_tempo,
+            recuo_mao=(16.0 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0),
         )
 
         inventario = getattr(self, "Inventario", None)

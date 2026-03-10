@@ -100,9 +100,12 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             continue
 
         if tipo == "update" and objeto_id is not None:
+            houve_correcao_servidor = False
             if "posicao" in payload:
                 payload = dict(payload)
+                pos_original = payload.get("posicao")
                 payload["posicao"] = _normalizar_posicao_loop(payload.get("posicao"))
+                houve_correcao_servidor = payload.get("posicao") != pos_original
             obj = BANCO_DADOS.atualizar_objeto(int(objeto_id), payload)
             if obj is None:
                 ignorados += 1
@@ -114,7 +117,10 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 atualizar_perfil_personagem(usuario, payload.get("perfil"))
             if "inventario" in payload and usuario and isinstance(payload.get("inventario"), dict):
                 atualizar_inventario_personagem(usuario, payload.get("inventario"))
-            registrar_diff("update", payload=payload, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria, origem=str(meta_in.get("origem") or "client"), autor=str(meta_in.get("autor") or client_id))
+            origem_diff = str(meta_in.get("origem") or "client")
+            if houve_correcao_servidor:
+                origem_diff = "server"
+            registrar_diff("update", payload=payload, escopo=_escopo_objeto(obj), objeto_id=obj.Id, categoria=categoria, origem=origem_diff, autor=str(meta_in.get("autor") or client_id))
             aplicados += 1
             continue
 

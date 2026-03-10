@@ -58,7 +58,16 @@ def _normalizar_posicao(valor) -> Vector2:
     return (float(valor[0]), float(valor[1]))
 
 
-def _diff_relevante(diff: Dict[str, object], posicao_camera: Vector2, raio: float) -> bool:
+def _diff_relevante(diff: Dict[str, object], posicao_camera: Vector2, raio: float, client_id: str = "") -> bool:
+    objeto_id = diff.get("objeto_id")
+    if objeto_id is not None and client_id:
+        try:
+            dono = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
+        except Exception:
+            dono = None
+        if str(dono or "").strip() == str(client_id).strip():
+            return True
+
     escopo = diff.get("escopo") or {}
     centro = escopo.get("centro")
     if not centro:
@@ -242,7 +251,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
                 coletado_categoria = coletado.get(categoria, set())
                 if client_id in coletado_categoria:
                     continue
-                if not _diff_relevante(diff, posicao_camera, raio):
+                if not _diff_relevante(diff, posicao_camera, raio, client_id=client_id):
                     continue
                 diffs.append(_serializar_diff_registrada(diff))
                 coletado_categoria.add(client_id)

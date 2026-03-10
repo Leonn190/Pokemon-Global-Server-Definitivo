@@ -118,6 +118,16 @@ class CerebroServer:
         registrar_diff("spawn", payload=proj.serializar(), escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 80}, objeto_id=proj.Id, categoria="rapida")
         return True
 
+
+    def registrar_spawn_manual(self, objeto) -> None:
+        """Inclui objetos spawnados por comando no ciclo do cérebro."""
+        if isinstance(objeto, PokemonServer):
+            self._pokemons_ids.add(int(objeto.Id))
+            return
+        if isinstance(objeto, BauServer):
+            self._baus_ids.add(int(objeto.Id))
+            return
+
     def processar_ativacao(self, client_id: str, posicao_camera: Vector2) -> Dict[str, object]:
         with self._lock:
             client_id = str(client_id)
@@ -399,6 +409,8 @@ class CerebroServer:
         return c
 
     def _limpar_baus_abertos_expirados(self) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
         ttl = max(0.1, self._f("ttl_bau_aberto_segundos", 5.0))
         agora = time.monotonic()
         for oid in list(self._baus_ids):
@@ -411,8 +423,16 @@ class CerebroServer:
             aberto_em = float(obj.estado_extra.get("aberto_em", 0.0))
             if aberto_em <= 0.0 or (agora - aberto_em) < ttl:
                 continue
-            BANCO_DADOS.remover_objeto(oid)
+            removido = BANCO_DADOS.remover_objeto(oid)
             self._baus_ids.discard(oid)
+            if removido is not None:
+                registrar_diff(
+                    "despawn",
+                    payload={"id": removido.Id, "motivo": "bau_aberto_expirado"},
+                    escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80},
+                    objeto_id=removido.Id,
+                    categoria="rapida",
+                )
 
     def _max_pokemons_permitidos(self, total_chunks_carregados: int) -> int:
         fator = max(0.01, self._f("max_pokemon_por_chunk_carregado", 0.12))

@@ -32,23 +32,19 @@ def _evento_fase(pokemon_id: int, captura: Dict[str, object], fase: str) -> Dict
 
 
 def _agendar_desfecho(agenda: List[Dict[str, object]], base_ms: int, sucesso: bool) -> None:
-    agenda[:] = [item for item in agenda if not str(item.get("fase", "")).startswith("tremida")]
-    if sucesso:
-        agenda.extend(
-            [
-                {"fase": "sucesso", "at_ms": int(base_ms + 220)},
-                {"fase": "retorno_bola", "at_ms": int(base_ms + 460)},
-                {"fase": "finalizada", "at_ms": int(base_ms + 720)},
-            ]
-        )
-    else:
-        agenda.extend(
-            [
-                {"fase": "escape", "at_ms": int(base_ms + 220)},
-                {"fase": "escape_reaparecendo", "at_ms": int(base_ms + 460)},
-                {"fase": "finalizada", "at_ms": int(base_ms + 720)},
-            ]
-        )
+    agenda.extend(
+        [
+            {"fase": "sucesso", "at_ms": int(base_ms + 220)},
+            {"fase": "retorno_bola", "at_ms": int(base_ms + 460)},
+            {"fase": "finalizada", "at_ms": int(base_ms + 720)},
+        ]
+        if sucesso
+        else [
+            {"fase": "escape", "at_ms": int(base_ms + 220)},
+            {"fase": "escape_reaparecendo", "at_ms": int(base_ms + 460)},
+            {"fase": "finalizada", "at_ms": int(base_ms + 720)},
+        ]
+    )
 
 
 def resolver_captura(pokemon, nome_bola, contexto=None):
@@ -102,6 +98,19 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         {"fase": "tremida3", "at_ms": int(agora_ms + 1160)},
     ]
 
+    plano_tremidas: List[bool] = []
+    falhou = False
+    for _ in range(3):
+        if falhou:
+            plano_tremidas.append(False)
+            continue
+        passou = bool(garantida)
+        if not passou:
+            passou = random.uniform(0.0, 100.0) > chance_escape
+        plano_tremidas.append(bool(passou))
+        if not passou:
+            falhou = True
+
     captura.clear()
     captura.update(base)
     captura.update(
@@ -110,6 +119,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
             "ativa": True,
             "captura_garantida": garantida,
             "tentativas_tremida": [],
+            "plano_tremidas": plano_tremidas,
             "agenda": agenda,
         }
     )
@@ -146,20 +156,18 @@ def coletar_eventos_captura_agendada(pokemon, servidor_agora_ms: int):
             except Exception:
                 idx = 0
             captura["tremida_atual"] = idx
-
-            sucesso_tentativa = bool(captura.get("captura_garantida", False))
-            if not sucesso_tentativa:
-                chance_escape = float(captura.get("chance_escape", 50.0) or 50.0)
-                sucesso_tentativa = random.uniform(0.0, 100.0) > chance_escape
+            plano = captura.get("plano_tremidas") if isinstance(captura.get("plano_tremidas"), list) else []
+            sucesso_tentativa = bool(plano[idx - 1]) if 0 < idx <= len(plano) else False
 
             tentativas = captura.get("tentativas_tremida") if isinstance(captura.get("tentativas_tremida"), list) else []
             tentativas.append({"tremida": idx, "sucesso": bool(sucesso_tentativa)})
             captura["tentativas_tremida"] = tentativas
 
-            if sucesso_tentativa:
-                _agendar_desfecho(agenda, captura["fase_inicio_ms"], sucesso=True)
-            else:
+            if not sucesso_tentativa:
+                agenda[:] = [a for a in agenda if str(a.get("fase", "")).strip().lower() not in {"tremida2", "tremida3", "sucesso", "retorno_bola", "finalizada"}]
                 _agendar_desfecho(agenda, captura["fase_inicio_ms"], sucesso=False)
+            elif idx >= 3:
+                _agendar_desfecho(agenda, captura["fase_inicio_ms"], sucesso=True)
 
         if fase == "escape":
             pokemon.estado_extra["tentativas_falhas_captura"] = int(pokemon.estado_extra.get("tentativas_falhas_captura", 0) or 0) + 1

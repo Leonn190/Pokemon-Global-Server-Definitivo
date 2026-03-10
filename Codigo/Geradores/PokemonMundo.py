@@ -92,6 +92,9 @@ class PokemonMundo(Entidade):
         self.CapturaEstado.update(evento)
         self.CapturaEstado.setdefault("fase", "nenhuma")
         self.CapturaEstado.setdefault("fase_inicio_ms", pygame.time.get_ticks())
+        if str(self.CapturaEstado.get("fase", "")).strip().lower() == "finalizada":
+            self.CapturaEstado["fase"] = "nenhuma"
+            self._escala_visual = 1.0
 
     def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
         estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
@@ -124,16 +127,15 @@ class PokemonMundo(Entidade):
             k = (passo / dist) if dist > 0 else 0.0
             self.definir_posicao(px + (dx - px) * k, py + (dy - py) * k)
 
-        fase = str(self.CapturaEstado.get("fase", "nenhuma"))
+        fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
         if fase in {"iniciada", "absorcao"}:
             self._escala_visual = max(0.0, self._escala_visual - dt * 2.6)
-        elif fase in {"escape_reaparecendo"}:
-            self._escala_visual = min(1.0, self._escala_visual + dt * 2.3)
-        elif fase in {"sucesso", "retorno_bola", "finalizada", "bola_no_chao", "tremida1", "tremida2", "tremida3"}:
-            self._escala_visual = max(0.0, self._escala_visual - dt * 3.5)
+        elif fase == "escape_reaparecendo":
+            self._escala_visual = min(1.0, self._escala_visual + dt * 2.4)
+        elif fase in {"sucesso", "retorno_bola", "finalizada", "bola_no_chao", "tremida1", "tremida2", "tremida3", "escape"}:
+            self._escala_visual = max(0.0, self._escala_visual - dt * 3.2)
         else:
             self._escala_visual += (1.0 - self._escala_visual) * min(1.0, dt * 6.5)
-
     def _desenhar_barra_local(self, tela, centro, raio):
         decorrido_s = max(0.0, (pygame.time.get_ticks() - int(self._inicio_barra_local_ms)) / 1000.0)
         ang = (decorrido_s * self.VelocidadeBarraCaptura) % 360.0
@@ -154,10 +156,24 @@ class PokemonMundo(Entidade):
             pygame.draw.circle(tela, (70, 155, 245), centro, raio_corpo)
             pygame.draw.circle(tela, (24, 84, 190), centro, raio_corpo, 2)
 
-    def _desenhar_efeito_absorcao(self, tela, centro, raio_base):
-        t = (pygame.time.get_ticks() % 450) / 450.0
-        rr = max(4, int(raio_base * (0.5 + t * 1.5)))
-        pygame.draw.circle(tela, (78, 168, 255), centro, rr, 2)
+    def _desenhar_circulo_base(self, tela, centro, raio_base, fase):
+        escala = max(0.08, self._escala_visual)
+        pulso = 1.0 + math.sin(pygame.time.get_ticks() * 0.008) * 0.06
+        rr = max(3, int(raio_base * pulso * escala))
+        if fase in {"iniciada", "absorcao"}:
+            t = (pygame.time.get_ticks() % 420) / 420.0
+            rr = max(rr, int(raio_base * (0.7 + t * 1.5) * escala))
+            pygame.draw.circle(tela, (78, 168, 255), centro, rr, 2)
+            pygame.draw.circle(tela, (60, 130, 255), centro, max(2, rr - 2), 1)
+            return rr
+        pygame.draw.circle(tela, (70, 155, 245), centro, rr)
+        pygame.draw.circle(tela, (24, 84, 190), centro, rr, 2)
+        return rr
+
+    def _desenhar_absorcao(self, tela, centro, raio_base):
+        self._desenhar_circulo_base(tela, centro, raio_base, "absorcao")
+        raio_corpo = max(2, int(raio_base * max(0.08, self._escala_visual)))
+        self._desenhar_pokemon_normal(tela, centro, raio_corpo)
 
     def _centro_bola_captura(self, camera, centro_padrao, usar_posicao_captura=True):
         if not usar_posicao_captura:
@@ -195,20 +211,25 @@ class PokemonMundo(Entidade):
                 self._cache_rotacao_bola.clear()
         tela.blit(rot, rot.get_rect(center=(int(cx), int(cy))))
 
-    def _desenhar_retorno_ou_escape(self, tela, camera, centro, fase, raio_corpo, tile_px):
-        if fase == "retorno_bola":
-            ini = self.CapturaEstado.get("retorno_inicio") if isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)) else [self.Posicao[0], self.Posicao[1]]
-            fim = self.CapturaEstado.get("retorno_destino") if isinstance(self.CapturaEstado.get("retorno_destino"), (list, tuple)) else ini
-            ini_t = camera.mundo_para_tela_px((float(ini[0]), float(ini[1])))
-            fim_t = camera.mundo_para_tela_px((float(fim[0]), float(fim[1])))
-            t = min(1.0, max(0.0, (pygame.time.get_ticks() - int(self.CapturaEstado.get("fase_inicio_ms", 0))) / 320.0))
-            bx = int(ini_t[0] + (fim_t[0] - ini_t[0]) * t)
-            by = int(ini_t[1] + (fim_t[1] - ini_t[1]) * t)
-            self._desenhar_bola_captura(tela, camera, (bx, by), fase, tile_px, usar_posicao_captura=False)
-            return
+    def _desenhar_escape(self, tela, centro, base):
+        self._desenhar_circulo_base(tela, centro, base, "escape_reaparecendo")
+        self._desenhar_pokemon_normal(tela, centro, max(3, int(base * max(0.18, self._escala_visual))))
 
-        if fase == "escape_reaparecendo":
-            self._desenhar_pokemon_normal(tela, centro, max(3, int(raio_corpo * max(0.2, self._escala_visual))))
+    def _desenhar_retorno_ao_player(self, tela, camera, centro, fase, tile_px):
+        ini = self.CapturaEstado.get("retorno_inicio") if isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)) else [self.Posicao[0], self.Posicao[1]]
+        fim = self.CapturaEstado.get("retorno_destino") if isinstance(self.CapturaEstado.get("retorno_destino"), (list, tuple)) else ini
+        ini_t = camera.mundo_para_tela_px((float(ini[0]), float(ini[1])))
+        fim_t = camera.mundo_para_tela_px((float(fim[0]), float(fim[1])))
+        t = min(1.0, max(0.0, (pygame.time.get_ticks() - int(self.CapturaEstado.get("fase_inicio_ms", 0))) / 340.0))
+        bx = int(ini_t[0] + (fim_t[0] - ini_t[0]) * t)
+        by = int(ini_t[1] + (fim_t[1] - ini_t[1]) * t)
+        self._desenhar_bola_captura(tela, camera, (bx, by), fase, tile_px, usar_posicao_captura=False)
+
+    def _desenhar_pokebola_no_chao(self, tela, camera, centro, fase, tile_px):
+        self._desenhar_bola_captura(tela, camera, centro, fase, tile_px)
+
+    def _desenhar_tremida(self, tela, camera, centro, fase, tile_px):
+        self._desenhar_bola_captura(tela, camera, centro, fase, tile_px)
 
     def desenhar(self, tela, camera, dt: float) -> None:
         self.atualizar(dt)
@@ -216,24 +237,26 @@ class PokemonMundo(Entidade):
         centro = (int(cx), int(cy))
         tile_px = int(getattr(camera, "TilePx", 50))
         base = max(6, int(tile_px * self.Colisor.raio_colisao))
-        pulso = 1.0 + math.sin(pygame.time.get_ticks() * 0.008) * 0.06
-        raio_corpo = max(2, int(base * pulso * self._escala_visual))
-        fase = str(self.CapturaEstado.get("fase", ""))
+        fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
 
-        if self.FrutasAplicadas:
-            pygame.draw.circle(tela, (98, 212, 118), centro, raio_corpo + 8, 2)
+        if self.FrutasAplicadas and fase not in {"sucesso", "finalizada", "retorno_bola"}:
+            pygame.draw.circle(tela, (98, 212, 118), centro, base + 8, 2)
 
-        if self.AlvoLocalCaptura:
+        if self.AlvoLocalCaptura and fase in {"nenhuma", "escape_reaparecendo", "escape"}:
             self._desenhar_barra_local(tela, centro, base + 14)
 
         if fase in {"iniciada", "absorcao"}:
-            self._desenhar_efeito_absorcao(tela, centro, base + 10)
-            self._desenhar_pokemon_normal(tela, centro, raio_corpo)
-        elif fase in {"bola_no_chao", "tremida1", "tremida2", "tremida3"}:
-            self._desenhar_bola_captura(tela, camera, centro, fase, tile_px)
-        elif fase in {"retorno_bola", "escape_reaparecendo"}:
-            self._desenhar_retorno_ou_escape(tela, camera, centro, fase, raio_corpo, tile_px)
+            self._desenhar_absorcao(tela, centro, base)
+        elif fase == "bola_no_chao":
+            self._desenhar_pokebola_no_chao(tela, camera, centro, fase, tile_px)
+        elif fase in {"tremida1", "tremida2", "tremida3"}:
+            self._desenhar_tremida(tela, camera, centro, fase, tile_px)
+        elif fase == "retorno_bola":
+            self._desenhar_retorno_ao_player(tela, camera, centro, fase, tile_px)
+        elif fase in {"escape", "escape_reaparecendo"}:
+            self._desenhar_escape(tela, centro, base)
         elif fase in {"sucesso", "finalizada"}:
             self._desenhar_bola_captura(tela, camera, centro, fase, tile_px)
         else:
-            self._desenhar_pokemon_normal(tela, centro, raio_corpo)
+            self._desenhar_circulo_base(tela, centro, base, fase)
+            self._desenhar_pokemon_normal(tela, centro, max(2, int(base * self._escala_visual)))

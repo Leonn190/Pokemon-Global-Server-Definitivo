@@ -11,6 +11,7 @@ from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
 from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+from SimuladorServerJogo.Controle.Cerebro import CEREBRO
 
 _RAIZ = Path(__file__).resolve().parents[2]
 
@@ -283,6 +284,7 @@ def _cmd_spawn(autor, args):
     obj = gerar_pokemon_server(novo_id=novo_id, posicao=(x, y), chunk_xy=chunk, especie=especie_ref)
     _ajustar_stats_spawn(obj.estado_extra, nomeados)
     BANCO_DADOS.inserir_objeto(obj)
+    CEREBRO.registrar_spawn_manual(obj)
     registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=obj.Id, categoria="rapida", origem="server", autor=autor)
     return f"Pokémon {poke.get('Nome')} spawnado em ({int(x)}, {int(y)})"
 
@@ -307,6 +309,7 @@ def _cmd_chest(autor, args):
     novo_id = BANCO_DADOS.gerar_id()
     bau = BauServer(id_objeto=novo_id, tipo_bau=tipo, itens=list(dados.get("itens", [])), posicao=(x, y), raio_colisao=0.42, raio_interacao=0.85, aberto=False)
     BANCO_DADOS.inserir_objeto(bau)
+    CEREBRO.registrar_spawn_manual(bau)
     registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=bau.Id, categoria="rapida", origem="server", autor=autor)
     return f"Baú {tipo} criado em ({int(x)}, {int(y)})"
 

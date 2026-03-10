@@ -187,6 +187,7 @@ def _abrir_subtela_criar_personagem(jogo):
         personagem.setdefault("skin", skin_val)
         personagem.setdefault("pokemon_inicial", pokemon_nome or "Bulbasaur")
 
+        jogo.INFO["UsuarioLogado"] = usuario
         jogo.INFO["PlayerDadosServer"] = personagem
         jogo.INFO["RegrasServer"] = entrada.get("regras") if isinstance(entrada.get("regras"), dict) else {}
         jogo.CenaAlvo = "Carregamento"
@@ -438,6 +439,8 @@ def _processar_requisicao(Cena, JOGO):
 
         if resposta.get("possui_personagem", True):
             personagem = resposta.get("personagem") or {}
+            nome_personagem = str(personagem.get("nome") or JOGO.CONFIG.get("Usuario") or "Visitante").strip()
+            JOGO.INFO["UsuarioLogado"] = nome_personagem
             JOGO.INFO["PlayerDadosServer"] = personagem
             JOGO.INFO["RegrasServer"] = resposta.get("regras") if isinstance(resposta.get("regras"), dict) else {}
             JOGO.CenaAlvo = "Carregamento"

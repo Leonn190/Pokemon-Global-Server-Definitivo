@@ -61,6 +61,8 @@ class ControladorObjetos:
         self._ultimo_render_pokemons_ms = pygame.time.get_ticks()
         self._seq_id_projetil_predito = -1
         self._pokemon_alvo_local_id: Optional[int] = None
+        self._bloqueio_sync_autoritario_ate = 0.0
+        self._janela_bloqueio_sync_autoritario_s = 0.12
 
     # ---------------------------------------------------------------------
     # Player local
@@ -117,6 +119,13 @@ class ControladorObjetos:
 
     def atualizar_player_local(self, eventos, dt, mouse_pos_mundo_tiles, gerenciador_fps=None) -> None:
         if self.PlayerLocal is None:
+            return
+
+        if self._sync_autoritario_ativo():
+            if self.PlayerLocal.Controle is not None:
+                self.PlayerLocal.Controle.atualizar_bloqueado(dt)
+            self._atualizar_projeteis_visuais(dt)
+            self._fluxo_mira.atualizar(dt)
             return
 
         posicao_antes = tuple(self.PlayerLocal.Posicao)
@@ -252,6 +261,8 @@ class ControladorObjetos:
     def _marcar_diff_local(self, diff: Dict[str, object]) -> Dict[str, object]:
         meta = dict(diff.get("meta", {})) if isinstance(diff.get("meta"), dict) else {}
         meta["origem"] = self._origem_cliente
+        if self.PlayerLocal is not None:
+            meta["autor"] = str(getattr(self.PlayerLocal, "Nome", "") or "")
         diff["meta"] = meta
         return diff
 
@@ -259,10 +270,32 @@ class ControladorObjetos:
         meta = diff.get("meta") if isinstance(diff.get("meta"), dict) else {}
         return str(meta.get("origem", "")).strip().lower()
 
+    def _id_player_local(self) -> int:
+        if self.PlayerLocal is None:
+            return -1
+        return int(getattr(self.PlayerLocal, "Id", -1))
+
+    def _eh_diff_player_local(self, diff: Dict[str, object]) -> bool:
+        return int(diff.get("objeto_id", -1)) == self._id_player_local()
+
+    def _eh_diff_autoritativa_server(self, diff: Dict[str, object]) -> bool:
+        meta = diff.get("meta") if isinstance(diff.get("meta"), dict) else {}
+        if bool(meta.get("autoritativo", False)):
+            return True
+        return self._origem_diff(diff) == "server"
+
+    def _ativar_bloqueio_sync_autoritario(self) -> None:
+        self._bloqueio_sync_autoritario_ate = time.monotonic() + float(self._janela_bloqueio_sync_autoritario_s)
+
+    def _sync_autoritario_ativo(self) -> bool:
+        return time.monotonic() < float(self._bloqueio_sync_autoritario_ate)
+
     def _deve_ignorar_diff(self, diff: Dict[str, object]) -> bool:
-        if self._origem_diff(diff) != self._origem_cliente or self.PlayerLocal is None:
+        if self.PlayerLocal is None or not self._eh_diff_player_local(diff):
             return False
-        return int(diff.get("objeto_id", -1)) == int(getattr(self.PlayerLocal, "Id", -2))
+        if self._eh_diff_autoritativa_server(diff):
+            return False
+        return self._origem_diff(diff) == self._origem_cliente
 
     def EnfileirarDiffRapida(self, diff: Dict[str, object]) -> None:
         with self._lock_diffs:
@@ -351,6 +384,9 @@ class ControladorObjetos:
         return {"tipo": "update", "objeto_id": int(novo["objeto_id"]), "payload": payload}
 
     def _supervisionar_player_e_enfileirar_diff_rapida(self) -> None:
+        if self._sync_autoritario_ativo():
+            self._snapshot_player_anterior_rapido = self._snapshot_player_supervisao()
+            return
         snap = self._snapshot_player_supervisao()
         if snap is None:
             self._snapshot_player_anterior_rapido = None
@@ -362,6 +398,9 @@ class ControladorObjetos:
             self.EnfileirarDiffRapida(diff)
 
     def _supervisionar_player_e_enfileirar_diff_lenta(self) -> None:
+        if self._sync_autoritario_ativo():
+            self._snapshot_player_anterior_lento = self._snapshot_player_supervisao()
+            return
         snap = self._snapshot_player_supervisao()
         if snap is None:
             self._snapshot_player_anterior_lento = None
@@ -493,6 +532,36 @@ class ControladorObjetos:
         else:
             self.ProjeteisPorId.pop(oid, None)
 
+    def _aplicar_payload_no_player_local(self, payload: Dict[str, object]) -> None:
+        if self.PlayerLocal is None:
+            return
+        ator = self.PlayerLocal
+
+        pos = payload.get("posicao")
+        if isinstance(pos, (list, tuple)) and len(pos) == 2:
+            ator.definir_posicao(float(pos[0]), float(pos[1]))
+
+        nome = payload.get("nome") or payload.get("usuario")
+        if nome:
+            ator.Nome = str(nome)
+
+        skin = payload.get("skin")
+        if skin and str(skin) != str(getattr(ator, "NomeSkin", "")):
+            ator.set_nome_skin(str(skin))
+
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        if "angulo" in estado:
+            ator.definir_angulo_olhar(float(estado.get("angulo", 0.0)))
+        if bool(estado.get("tapa")):
+            ator.iniciar_tapa()
+
+        if ator.Perfil is not None and isinstance(payload.get("perfil"), dict):
+            ator.Perfil.aplicar_serializado(payload.get("perfil"))
+        if ator.Inventario is not None and isinstance(payload.get("inventario"), dict):
+            ator.Inventario.aplicar_serializado(payload.get("inventario"))
+
+        self._ativar_bloqueio_sync_autoritario()
+
     def _reconciliar_projetil_predito_por_token(self, token: str, oid_autoritativo: int) -> None:
         alvo = self.ProjeteisPorId.get(int(oid_autoritativo))
         for oid_local, proj in list(self.ProjeteisPorId.items()):
@@ -566,6 +635,9 @@ class ControladorObjetos:
                 self.ObjetosPorId[oid] = atual
                 self._upsert_indice_chunk_objeto(oid, atual)
                 self._upsert_especializado(oid, atual)
+
+            if self._eh_diff_player_local(diff) and self._eh_diff_autoritativa_server(diff):
+                self._aplicar_payload_no_player_local(atual)
             return
 
         if tipo == "despawn":

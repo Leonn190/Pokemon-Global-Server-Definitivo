@@ -54,6 +54,16 @@ class Controle:
         self.Ator.atualizar(dt)
         self.Ator.atualizar_colisor_mao_mundo()
 
+    def atualizar_bloqueado(self, dt):
+        dt = max(0.0, float(dt))
+        self._tentando_correr = False
+        tile_atual = self._tile_atual()
+        self._atualizar_stamina(dt, False, False, tile_atual)
+        self._tempo_respiracao += dt
+        self._mirando = False
+        self.Ator.atualizar(dt)
+        self.Ator.atualizar_colisor_mao_mundo()
+
     def consumir_acao_arremesso(self):
         acao = self._acao_arremesso_pendente
         self._acao_arremesso_pendente = None

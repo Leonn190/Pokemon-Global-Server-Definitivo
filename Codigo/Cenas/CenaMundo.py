@@ -147,13 +147,17 @@ class CenaMundo:
         if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaOpcoes.Ativa:
             self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto = False
 
-        if not bloqueio_gameplay and not self.SubtelaOpcoes.Ativa and self.TelaAtual != "Config":
+        player_bloqueado = bloqueio_gameplay or self.SubtelaOpcoes.Ativa or self.TelaAtual == "Config"
+        if not player_bloqueado:
             mouse_tela = pygame.mouse.get_pos()
             mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)
             self.ControladorObjetos.atualizar_player_local(EVENTOS, dt, mouse_mundo_tiles, gerenciador_fps=gfps)
-            if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaInventario is not None:
-                self.SubtelaInventario.Ativo = self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto
-                self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
+        elif self.ControladorObjetos.PlayerLocal is not None and self.ControladorObjetos.PlayerLocal.Controle is not None:
+            self.ControladorObjetos.PlayerLocal.Controle.atualizar_bloqueado(dt)
+
+        if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaInventario is not None:
+            self.SubtelaInventario.Ativo = self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto
+            self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
         gfps.finalizar_trecho("aplicacao_subtela")
 
         self.Camera.atualizar(dt)
@@ -173,7 +177,7 @@ class CenaMundo:
 
         if self.ControladorObjetos.PlayerLocal is not None:
             player_local = self.ControladorObjetos.PlayerLocal
-            self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario, terminal=self.Terminal, eventos=[] if bloqueio_gameplay else EVENTOS, dt=dt)
+            self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
 
         self.SubtelaOpcoes.desenhar(JOGO)
         if self.SubtelaInventario is not None and self.SubtelaInventario.Ativo:

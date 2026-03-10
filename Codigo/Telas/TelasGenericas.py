@@ -244,13 +244,17 @@ class SubtelaTexto(_BaseModal):
         )
 
     def _enviar(self, jogo, botao):
+        pode_fechar = True
         if callable(self.enviar_callback):
             valores = [barra.texto.strip() for barra in self.barras_texto]
             if len(valores) == 1:
-                self.enviar_callback(valores[0])
+                retorno = self.enviar_callback(valores[0])
             else:
-                self.enviar_callback(*valores)
-        self.encerrada = True
+                retorno = self.enviar_callback(*valores)
+            if retorno is False:
+                pode_fechar = False
+        if pode_fechar:
+            self.encerrada = True
 
     def _voltar(self, jogo, botao):
         if callable(self.voltar_callback):

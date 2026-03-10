@@ -137,7 +137,10 @@ def _abrir_subtela_chave_apagar(jogo):
 
 
 def _validar_chave_apagar(jogo, chave):
-    _iniciar_requisicao("validar_chave", _get_server_ip(jogo.Cena), chave, "Validando chave de segurança...")
+    if not _iniciar_requisicao("validar_chave", _get_server_ip(jogo.Cena), chave, "Validando chave de segurança..."):
+        _emitir_feedback("Já existe uma operação em andamento")
+        return False
+    return True
 
 
 
@@ -242,7 +245,7 @@ def _processar_resposta(jogo):
             _SUBTELA_ATIVA.set_mensagem("Apagando mundo")
             _iniciar_requisicao("mundo", _get_server_ip(jogo.Cena), False, "Apagando mundo do servidor...")
         else:
-            _BOTAO_MUNDO.set_estado(True)
+            _emitir_feedback(resposta.get("mensagem", "Chave inválida"))
 
     elif tipo == "status":
         if sucesso:
@@ -318,7 +321,7 @@ def TelaOperador(cena, jogo, eventos, dt):
     _processar_resposta(jogo)
 
     _STATUS_TIMER += max(0.0, float(dt))
-    if _STATUS_TIMER >= 0.35 and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
+    if _STATUS_TIMER >= 0.35 and _SUBTELA_ATIVA is None and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
         _STATUS_TIMER = 0.0
         _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "")
 

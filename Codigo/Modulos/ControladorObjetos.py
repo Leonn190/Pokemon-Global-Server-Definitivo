@@ -62,6 +62,7 @@ class ControladorObjetos:
         self._seq_id_projetil_predito = -1
         self._pokemon_alvo_local_id: Optional[int] = None
         self._bloqueio_sync_autoritario_ate = 0.0
+        self._tokens_colisao_candidata_enviados: set[str] = set()
         self._janela_bloqueio_sync_autoritario_s = 0.12
 
     # ---------------------------------------------------------------------
@@ -170,6 +171,7 @@ class ControladorObjetos:
                 "direcao": [direcao[0], direcao[1]],
                 "velocidade": 11.0,
                 "alcance": alcance,
+                "distancia_conferencia_inicial": 4.0,
                 "predito_local": True,
                 "autoritativo": False,
                 "token_arremesso": token,
@@ -191,16 +193,75 @@ class ControladorObjetos:
                 "direcao": [direcao[0], direcao[1]],
                 "alcance": alcance,
                 "velocidade": 11.0,
+                "distancia_conferencia_inicial": 4.0,
             },
         })
 
     def _atualizar_projeteis_visuais(self, dt: float) -> None:
         with self._lock_objetos:
             projeteis = list(self.ProjeteisPorId.values())
+            objetos_snapshot = dict(self.ObjetosPorId)
+
         for p in projeteis:
             p.atualizar_visual(dt)
+            if (not p.Terminado) and (not p.AguardandoConfirmacaoColisao) and (not p.ColisaoConfirmada):
+                alvo = self._detectar_colisao_candidata_local_projetil(p, objetos_snapshot)
+                if alvo is not None:
+                    p.AguardandoConfirmacaoColisao = True
+                    p.ColisaoCandidata = int(alvo.get("id", 0) or 0)
+                    self._enviar_colisao_candidata_projetil(p, p.ColisaoCandidata)
             if p.Terminado and p.PreditoLocal and not p.Autoritativo:
                 self.aplicar_diff({"tipo": "despawn", "objeto_id": int(p.Id)})
+
+    def _detectar_colisao_candidata_local_projetil(self, proj: Projetil, objetos_snapshot: Dict[int, Dict[str, object]]):
+        raio_busca = 4.0
+        for oid, obj in objetos_snapshot.items():
+            if not isinstance(obj, dict):
+                continue
+            if int(oid) == int(getattr(proj, "Id", 0) or 0):
+                continue
+            if int(oid) == int(getattr(proj, "DonoId", 0) or 0):
+                continue
+            pos = obj.get("posicao")
+            if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+                continue
+            dx = float(pos[0]) - float(proj.Posicao[0])
+            dy = float(pos[1]) - float(proj.Posicao[1])
+            d2 = (dx * dx) + (dy * dy)
+            if d2 > (raio_busca * raio_busca):
+                continue
+            tipo = str(obj.get("tipo", "")).strip().lower()
+            estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            subtipo = str(estado.get("subtipo", "")).strip().lower()
+            if subtipo == "pokemon":
+                cap = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
+                cap_fase = str(cap.get("fase", "nenhuma") or "nenhuma")
+                if bool(cap.get("captura_pendente", False)) or cap_fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso"}:
+                    continue
+            candidato = subtipo == "pokemon" or subtipo == "player" or subtipo == "bau" or tipo.startswith("estrutura")
+            if not candidato:
+                continue
+            raio_alvo = float(obj.get("raio_colisao", 0.2) or 0.2)
+            limite = float(getattr(proj, "Colisor", None).raio_colisao if getattr(proj, "Colisor", None) is not None else 0.18) + raio_alvo
+            if d2 <= (limite * limite):
+                return obj
+        return None
+
+    def _enviar_colisao_candidata_projetil(self, proj: Projetil, alvo_id: int) -> None:
+        token = str(getattr(proj, "TokenArremesso", "") or "")
+        if not token or token in self._tokens_colisao_candidata_enviados:
+            return
+        self._tokens_colisao_candidata_enviados.add(token)
+        self.EnfileirarDiffRapida({
+            "tipo": "evento",
+            "evento": "projetil_colisao_candidata",
+            "payload": {
+                "token_arremesso": token,
+                "projetil_id": int(getattr(proj, "Id", 0) or 0),
+                "alvo_id": int(alvo_id or 0),
+                "ponto_estimado": [float(proj.Posicao[0]), float(proj.Posicao[1])],
+            },
+        })
 
     # ---------------------------------------------------------------------
     # Índice espacial
@@ -650,8 +711,13 @@ class ControladorObjetos:
                 self._remover_indice_chunk_objeto(oid)
 
     def _aplicar_evento_rapido(self, evento: str, payload: Dict[str, object]) -> None:
+        if evento == "projetil_colisao_negada":
+            self._aplicar_evento_colisao_projetil(payload, confirmada=False)
+            return
+        if evento == "projetil_colisao_confirmada":
+            self._aplicar_evento_colisao_projetil(payload, confirmada=True)
+            return
         if evento.startswith("projetil_"):
-            # Projetil já chega via spawn/update/despawn; eventos são meta de animação/debug.
             return
 
         if evento == "pokemon_frutificado":
@@ -681,6 +747,29 @@ class ControladorObjetos:
         if "fase" not in captura:
             captura["fase"] = nome_evento.replace("pokemon_captura_", "")
         poke.capturar(captura)
+
+    def _aplicar_evento_colisao_projetil(self, payload: Dict[str, object], confirmada: bool) -> None:
+        token = str(payload.get("token_arremesso") or "")
+        if token:
+            self._tokens_colisao_candidata_enviados.discard(token)
+        proj = None
+        for p in self.ProjeteisPorId.values():
+            if token and str(getattr(p, "TokenArremesso", "")) == token:
+                proj = p
+                break
+        if proj is None:
+            pid = int(payload.get("projetil_id", -1) or -1)
+            proj = self.ProjeteisPorId.get(pid)
+        if proj is None:
+            return
+        proj.AguardandoConfirmacaoColisao = False
+        if confirmada:
+            proj.ColisaoConfirmada = True
+            proj.Colidiu = True
+            proj.Terminado = True
+            proj.Ativo = False
+        else:
+            proj.ColisaoCandidata = None
 
     def sincronizar_objetos(self, objetos):
         if not isinstance(objetos, dict):
@@ -791,7 +880,8 @@ class ControladorObjetos:
             itens = list(self.PokemonsPorId.items())
         for oid, poke in itens:
             fase = str(getattr(poke, "CapturaEstado", {}).get("fase", "nenhuma") or "nenhuma")
-            invalido = fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso", "finalizada"}
+            pendente = bool(getattr(poke, "CapturaEstado", {}).get("captura_pendente", False))
+            invalido = pendente or fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso", "finalizada"}
             if invalido:
                 continue
             dxm, dym = float(poke.Posicao[0]) - mx, float(poke.Posicao[1]) - my

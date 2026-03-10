@@ -39,6 +39,10 @@ class Projetil(Entidade):
         self.TokenArremesso = ""
         self.Autoritativo = False
         self.Estado = {}
+        self.AguardandoConfirmacaoColisao = False
+        self.ColisaoCandidata = None
+        self.ColisaoConfirmada = False
+        self.DistanciaConferenciaInicial = 4.0
         self._offset_correcao = [0.0, 0.0]
         self._tempo_correcao = 0.0
         self.aplicar_snapshot(snapshot)
@@ -85,6 +89,8 @@ class Projetil(Entidade):
         self.Colidiu = bool(snapshot.get("colidiu", estado.get("colidiu", self.Colidiu)))
         self.Terminado = bool(snapshot.get("terminado", estado.get("terminado", self.Terminado)))
         self.Ativo = not self.Terminado
+        self.ColisaoConfirmada = self.ColisaoConfirmada or self.Colidiu or self.Terminado
+        self.DistanciaConferenciaInicial = max(0.8, min(4.0, float(snapshot.get("distancia_conferencia_inicial", estado.get("distancia_conferencia_inicial", self.DistanciaConferenciaInicial)) or self.DistanciaConferenciaInicial)))
         self.Estado = dict(estado)
 
     def atualizar_visual(self, dt: float) -> None:
@@ -128,6 +134,7 @@ class Projetil(Entidade):
             "autoritativo": self.Autoritativo,
             "colidiu": self.Colidiu,
             "terminado": self.Terminado,
+            "distancia_conferencia_inicial": self.DistanciaConferenciaInicial,
         }
 
     def desenhar(self, tela, camera) -> None:

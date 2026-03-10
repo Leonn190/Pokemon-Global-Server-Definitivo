@@ -96,6 +96,7 @@ class CerebroServer:
         token = str(payload.get("token_arremesso") or "")
         velocidade = float(payload.get("velocidade", 11.0) or 11.0)
         alcance = float(payload.get("alcance", 6.0) or 6.0)
+        distancia_conferencia = max(0.8, min(4.0, float(payload.get("distancia_conferencia_inicial", 4.0) or 4.0)))
 
         pid = BANCO_DADOS.gerar_id()
         proj = ProjetilServer(
@@ -111,6 +112,7 @@ class CerebroServer:
             alcance=alcance,
             raio_colisao=0.18,
         )
+        proj.estado_extra["distancia_conferencia_inicial"] = distancia_conferencia
         BANCO_DADOS.inserir_objeto(proj)
         self._projeteis_ids.add(proj.Id)
 
@@ -231,6 +233,19 @@ class CerebroServer:
                     evento=e.get("evento", "pokemon_captura"),
                 )
 
+            cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
+            if str(cap.get("fase", "")) == "finalizada" and str(cap.get("resultado", "")) == "sucesso":
+                removido = BANCO_DADOS.remover_objeto(poke.Id)
+                self._pokemons_ids.discard(poke.Id)
+                if removido is not None:
+                    registrar_diff(
+                        "despawn",
+                        payload={"id": removido.Id, "motivo": "captura_sucesso"},
+                        escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 120},
+                        objeto_id=removido.Id,
+                        categoria="rapida",
+                    )
+
     def _executar_tick(self) -> None:
         chunks_visiveis, chunks_simulados = self._calcular_chunks_carregados()
         chunks_carregados = chunks_visiveis | chunks_simulados
@@ -260,6 +275,85 @@ class CerebroServer:
         self._executar_tick_projeteis(chunks_carregados)
         self._executar_tick_capturas()
         self._limpar_baus_abertos_expirados()
+
+    def validar_colisao_candidata_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
+        token = str(payload.get("token_arremesso") or "")
+        if not token:
+            return False
+
+        proj = None
+        for oid in list(self._projeteis_ids):
+            obj = BANCO_DADOS.obter_objeto(oid)
+            if isinstance(obj, ProjetilServer) and str(obj.estado_extra.get("token_arremesso", "")) == token:
+                proj = obj
+                break
+        if proj is None or bool(proj.estado_extra.get("terminado", False)):
+            return False
+
+        alvo_id = int(payload.get("alvo_id", 0) or 0)
+        alvo = BANCO_DADOS.obter_objeto(alvo_id) if alvo_id > 0 else None
+        if alvo is None or alvo.Id == proj.Id:
+            return False
+
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        raio_proj = float(getattr(proj, "raio_colisao", 0.18) or 0.18)
+        raio_alvo = float(getattr(alvo, "raio_colisao", 0.2) or 0.2)
+        dx = float(alvo.posicao[0]) - float(proj.posicao[0])
+        dy = float(alvo.posicao[1]) - float(proj.posicao[1])
+        limite = raio_proj + raio_alvo
+        colisao_confirmada = ((dx * dx) + (dy * dy)) <= (limite * limite)
+
+        pos_ini = proj.estado_extra.get("posicao_inicial") if isinstance(proj.estado_extra.get("posicao_inicial"), (list, tuple)) else [proj.posicao[0], proj.posicao[1]]
+        dpx = float(proj.posicao[0]) - float(pos_ini[0])
+        dpy = float(proj.posicao[1]) - float(pos_ini[1])
+        distancia_percorrida = (dpx * dpx + dpy * dpy) ** 0.5
+        distancia_conferencia = float(proj.estado_extra.get("distancia_conferencia_inicial", 4.0) or 4.0)
+
+        if colisao_confirmada and distancia_percorrida <= max(0.8, distancia_conferencia):
+            categoria = self._classificar_colisao(alvo)
+            if categoria == "pokemon" and isinstance(alvo, PokemonServer):
+                cap_alvo = alvo.estado_extra.get("captura") if isinstance(alvo.estado_extra.get("captura"), dict) else {}
+                if bool(cap_alvo.get("ativa", False)) or bool(cap_alvo.get("captura_pendente", False)):
+                    registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": False, "alvo_id": int(alvo.Id)}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_negada")
+                    return True
+            tipo_proj = str(proj.estado_extra.get("tipo_projetil", "item")).lower()
+            nome_item = str(proj.estado_extra.get("nome_item", "item"))
+
+            if categoria == "pokemon" and isinstance(alvo, PokemonServer):
+                if tipo_proj == "fruta":
+                    fr = resolver_fruta(alvo, nome_item, contexto={"dono_id": int(proj.estado_extra.get("dono_id", 0) or 0)})
+                    registrar_diff("evento", payload=fr["payload"], escopo={"centro": [alvo.posicao[0], alvo.posicao[1]], "raio": 120}, objeto_id=alvo.Id, categoria="rapida", evento=fr.get("evento", "pokemon_frutificado"))
+                else:
+                    dono_id = int(proj.estado_extra.get("dono_id", 0) or 0)
+                    dono_obj = BANCO_DADOS.obter_objeto(dono_id)
+                    dono_pos = [float(dono_obj.posicao[0]), float(dono_obj.posicao[1])] if dono_obj is not None else [alvo.posicao[0], alvo.posicao[1]]
+                    ret_captura = resolver_captura(alvo, nome_item, contexto={
+                        "dono_id": dono_id,
+                        "dono_posicao": dono_pos,
+                        "distancia_arremesso_tiles": float(proj.estado_extra.get("distancia", 0.0) or 0.0),
+                        "tentativas_falhas_anteriores": int(alvo.estado_extra.get("tentativas_falhas_captura", 0) or 0),
+                        "bioma": str(alvo.estado_extra.get("bioma", "")),
+                        "servidor_agora_ms": int(time.time() * 1000),
+                        "maestria": self._maestria_player(dono_id),
+                    })
+                    if bool(ret_captura.get("iniciada", False)):
+                        BANCO_DADOS.atualizar_objeto(alvo.Id, {"estado": alvo.estado_extra})
+                        cap = dict(alvo.estado_extra.get("captura", {}))
+                        cap["fase"] = "iniciada"
+                        cap.setdefault("checks_total", 3)
+                        cap.setdefault("resultado", "pendente")
+                        cap.setdefault("captura_pendente", True)
+                        registrar_diff("evento", payload={"pokemon_id": int(alvo.Id), "captura": cap}, escopo={"centro": [alvo.posicao[0], alvo.posicao[1]], "raio": 120}, objeto_id=alvo.Id, categoria="rapida", evento="pokemon_captura_iniciada")
+
+            proj.terminar(f"colisao_{categoria}")
+            BANCO_DADOS.atualizar_objeto(proj.Id, {"estado": proj.estado_extra})
+            registrar_diff("update", payload=proj.serializar(), escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 80}, objeto_id=proj.Id, categoria="rapida")
+            registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": True, "alvo_id": int(alvo.Id), "categoria": categoria, "ponto_impacto": [float(proj.posicao[0]), float(proj.posicao[1])]}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_confirmada")
+            return True
+
+        registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": False, "alvo_id": int(getattr(alvo, "Id", 0) or 0)}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_negada")
+        return True
 
     def _executar_tick_projeteis(self, chunks_carregados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
@@ -305,37 +399,12 @@ class CerebroServer:
             tipo_proj = str(obj.estado_extra.get("tipo_projetil", "item")).lower()
             nome_item = str(obj.estado_extra.get("nome_item", "item"))
 
-            if categoria == "pokemon" and isinstance(colidiu, PokemonServer):
-                if tipo_proj == "fruta":
-                    fr = resolver_fruta(colidiu, nome_item, contexto={"dono_id": int(obj.estado_extra.get("dono_id", 0) or 0)})
-                    registrar_diff("evento", payload=fr["payload"], escopo={"centro": [colidiu.posicao[0], colidiu.posicao[1]], "raio": 120}, objeto_id=colidiu.Id, categoria="rapida", evento=fr.get("evento", "pokemon_frutificado"))
-                else:
-                    dono_id = int(obj.estado_extra.get("dono_id", 0) or 0)
-                    ret_captura = resolver_captura(colidiu, nome_item, contexto={
-                        "dono_id": dono_id,
-                        "dono_posicao": [float(BANCO_DADOS.obter_objeto(dono_id).posicao[0]), float(BANCO_DADOS.obter_objeto(dono_id).posicao[1])] if BANCO_DADOS.obter_objeto(dono_id) is not None else [colidiu.posicao[0], colidiu.posicao[1]],
-                        "distancia_arremesso_tiles": float(obj.estado_extra.get("distancia", 0.0) or 0.0),
-                        "tentativas_falhas_anteriores": int(colidiu.estado_extra.get("tentativas_falhas_captura", 0) or 0),
-                        "bioma": str(colidiu.estado_extra.get("bioma", "")),
-                        "servidor_agora_ms": int(time.time() * 1000),
-                        "maestria": self._maestria_player(dono_id),
-                    })
-                    if bool(ret_captura.get("iniciada", False)):
-                        BANCO_DADOS.atualizar_objeto(colidiu.Id, {"estado": colidiu.estado_extra})
-                        cap = dict(colidiu.estado_extra.get("captura", {}))
-                        cap["fase"] = "iniciada"
-                        registrar_diff(
-                            "evento",
-                            payload={"pokemon_id": int(colidiu.Id), "captura": cap},
-                            escopo={"centro": [colidiu.posicao[0], colidiu.posicao[1]], "raio": 120},
-                            objeto_id=colidiu.Id,
-                            categoria="rapida",
-                            evento="pokemon_captura_iniciada",
-                        )
-            elif categoria in {"player", "estrutura_natural", "projetil", "bloqueante", "outro"}:
-                pass
+            if categoria == "pokemon":
+                # Captura/frutificação autoritativa de pokémon é conferida via evento candidato do client.
+                continue
 
-            obj.terminar(f"colisao_{categoria}")
+            if categoria in {"player", "estrutura_natural", "projetil", "bloqueante", "outro"}:
+                obj.terminar(f"colisao_{categoria}")
 
     def _executar_tick_baus(self, chunks_simulados: Set[Chunk], chunks_carregados: Set[Chunk]) -> None:
         baus = []

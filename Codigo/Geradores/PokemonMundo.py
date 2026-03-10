@@ -96,6 +96,12 @@ class PokemonMundo(Entidade):
             self.CapturaEstado["fase"] = "nenhuma"
             self._escala_visual = 1.0
 
+    def em_captura_pendente(self) -> bool:
+        fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
+        if bool(self.CapturaEstado.get("captura_pendente", False)):
+            return True
+        return fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso"}
+
     def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
         estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
         self.Especie = str(estado.get("especie") or snapshot.get("nome") or self.Especie)
@@ -111,6 +117,13 @@ class PokemonMundo(Entidade):
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
         if captura:
             self.capturar(captura)
+
+        if self.em_captura_pendente():
+            self.Colisor.raio_colisao = 0.0
+            self.Colisor.raio_interacao = 0.0
+        else:
+            self.Colisor.raio_colisao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
+            self.Colisor.raio_interacao = max(self.Colisor.raio_colisao, 1.2)
 
         destino = self._pos(snapshot.get("posicao"))
         self.Destino = destino
@@ -239,15 +252,14 @@ class PokemonMundo(Entidade):
         base = max(6, int(tile_px * self.Colisor.raio_colisao))
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
 
-        if self.FrutasAplicadas and fase not in {"sucesso", "finalizada", "retorno_bola"}:
+        em_pendente = self.em_captura_pendente()
+        if self.FrutasAplicadas and fase not in {"sucesso", "finalizada", "retorno_bola"} and not em_pendente:
             pygame.draw.circle(tela, (98, 212, 118), centro, base + 8, 2)
 
-        if self.AlvoLocalCaptura and fase in {"nenhuma", "escape_reaparecendo", "escape"}:
+        if self.AlvoLocalCaptura and fase in {"nenhuma", "escape_reaparecendo", "escape"} and not em_pendente:
             self._desenhar_barra_local(tela, centro, base + 14)
 
-        if fase in {"iniciada", "absorcao"}:
-            self._desenhar_absorcao(tela, centro, base)
-        elif fase == "bola_no_chao":
+        if fase in {"iniciada", "absorcao", "bola_no_chao"}:
             self._desenhar_pokebola_no_chao(tela, camera, centro, fase, tile_px)
         elif fase in {"tremida1", "tremida2", "tremida3"}:
             self._desenhar_tremida(tela, camera, centro, fase, tile_px)

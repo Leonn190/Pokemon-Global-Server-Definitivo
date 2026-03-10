@@ -37,86 +37,87 @@ Musicas = {
     "Menu1": {
         "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu1.ogg",
         "loop": 12.7,
-        "fimloop": 110.55,
-        "vol_mult": 1.0
+        "fimloop": 110.55
     },
     "Menu2": {
         "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu2.ogg",
         "loop": 1.34,
-        "fimloop": 146.92,
-        "vol_mult": 1.0
+        "fimloop": 146.92
     },
     "Menu3": {
         "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu3.ogg",
         "loop": 1.67,
         "fimloop": 134.19,
-        "vol_mult": 1.0
     },
     "Login": {
         "arquivo": "Recursos/Sonoridades/Musicas/Menu/Login.ogg",
         "loop": 7.03,
         "fimloop": 60.26,
-        "vol_mult": 0.6
+    },
+    "Carregamento": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Carregamento.ogg",
+        "loop": 1.28,
+        "fimloop": 109.43,
     },
     "ConfrontoDoVale": {
         "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVale.ogg",
         "loop": 2.34,
-        "fimloop": 83.6,
-        "vol_mult": 1.0
+        "fimloop": 83.6
     },
     "ConfrontoDaNeve": {
         "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaNeve.ogg",
         "loop": 2.32,
-        "fimloop": 83.65,
-        "vol_mult": 1.0
+        "fimloop": 83.65
     },
     "ConfrontoDoMar": {
         "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoMar.ogg",
         "loop": 2.27,
-        "fimloop": 83.64,
-        "vol_mult": 1.0
+        "fimloop": 83.64
     },
     "ConfrontoDoDeserto": {
         "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoDeserto.ogg",
         "loop": 2.33,
-        "fimloop": 83.655,
-        "vol_mult": 1.0
+        "fimloop": 83.655
     },
     "ConfrontoDoVulcao": {
         "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVulcao.ogg",
         "loop": 2.34,
-        "fimloop": 83.62,
-        "vol_mult": 1.0
+        "fimloop": 83.62
     },
     "ConfrontoDoMagia": {
         "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaMagia.ogg",
         "loop": 2.34,
-        "fimloop": 83.62,
-        "vol_mult": 1.0
+        "fimloop": 83.62
     },
     "ConfrontoDoPantano": {
         "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoPantano.ogg",
         "loop": 2.34,
-        "fimloop": 83.62,
-        "vol_mult": 1.0
+        "fimloop": 83.62
     },
     "Vale": {
         "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vale.ogg",
         "loop": 3.2,
-        "fimloop": 111.9,
-        "vol_mult": 1.0
+        "fimloop": 111.9
     },
     "Neve": {
         "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Neve.ogg",
         "loop": 4.2,
-        "fimloop": 68.35,
-        "vol_mult": 1.0
+        "fimloop": 68.35
     },
     "Deserto": {
         "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Deserto.ogg",
         "loop": 0.2,
-        "fimloop": 87.45,
-        "vol_mult": 1.0
+        "fimloop": 87.45
+    },
+    "Vulcão": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vulcão.ogg",
+        "loop": 10.19,
+        "fimloop": 62.23,
+    },
+    "Praia": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Praia.ogg",
+        "loop": 10.24,
+        "fimloop": 154.99,
     }
 }
 

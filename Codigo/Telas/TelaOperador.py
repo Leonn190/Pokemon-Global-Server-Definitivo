@@ -321,7 +321,8 @@ def TelaOperador(cena, jogo, eventos, dt):
     _processar_resposta(jogo)
 
     _STATUS_TIMER += max(0.0, float(dt))
-    if _STATUS_TIMER >= 0.35 and _SUBTELA_ATIVA is None and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
+    pode_atualizar_status = (_SUBTELA_ATIVA is None) or isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
+    if _STATUS_TIMER >= 0.35 and pode_atualizar_status and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
         _STATUS_TIMER = 0.0
         _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "")
 

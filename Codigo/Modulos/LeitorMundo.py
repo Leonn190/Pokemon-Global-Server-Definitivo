@@ -47,12 +47,17 @@ class LeitorMundo:
         self.MetaMundo: Dict[str, object] = {}
         self.TamanhoChunkBlocos = 10
         self.CoresBlocos = {
-            0: (14, 40, 92),
-            1: (72, 162, 231),
-            2: (230, 210, 146),
-            3: (124, 204, 108),
-            4: (56, 128, 64),
-        }
+                0: (24, 72, 145),    # WATER_DEEP
+                1: (64, 156, 255),   # WATER_SHALLOW
+                2: (106, 190, 48),   # FIELD_GRASS
+                3: (46, 125, 50),    # FOREST_GRASS
+                4: (230, 210, 140),  # BEACH_SAND
+                5: (217, 179, 92),   # DESERT_SAND
+                6: (245, 248, 252),  # SNOW
+                7: (140, 82, 255),   # MAGIC_SOIL
+                8: (88, 70, 70),     # VOLCANIC_ROCK
+                9: (110, 92, 68),    # DEAD_SOIL
+                }
 
         # Cache visual por chunk: precisa ser limpo quando o anel muda.
         self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}

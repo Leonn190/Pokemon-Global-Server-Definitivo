@@ -45,7 +45,7 @@ class ControladorObjetos:
         self._thread_lenta: Optional[threading.Thread] = None
         self._thread_rapida_ativa = False
         self._thread_lenta_ativa = False
-        self._intervalo_rapido = 0.05
+        self._intervalo_rapido = 0.025
         self._intervalo_lento = 5.0
 
         self._snapshot_player_anterior_rapido: Optional[Dict[str, object]] = None

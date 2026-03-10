@@ -14,7 +14,7 @@ class ElementosHud:
 
     def desenhar(self, tela, inventario, terminal=None, eventos=None, dt=0.0):
         largura, altura = tela.get_size()
-        slot = 42
+        slot = 50
         gap = 8
         total = (slot * self.SlotsVisiveis) + (gap * (self.SlotsVisiveis - 1))
         x0 = (largura - total) // 2

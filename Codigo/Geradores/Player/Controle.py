@@ -267,9 +267,9 @@ class Controle:
         if deslocando:
             if tile_atual == 0:
                 custo += float(getattr(self.Ator.Perfil, "CustoStaminaAguaFunda", 16.0))
-            elif tile_atual == 2:
+            elif tile_atual == 1:
                 custo += float(getattr(self.Ator.Perfil, "CustoStaminaAguaRasa", 4.0))
-        if tile_atual == 2 and not correndo:
+        if tile_atual == 1 and not correndo:
             custo = 0.0
 
         if custo > 0.0:

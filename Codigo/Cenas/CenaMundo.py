@@ -62,7 +62,7 @@ class CenaMundo:
         self._aplicar_regras_servidor(JOGO.INFO.get("RegrasServer"))
         dados = JOGO.INFO.get("PlayerDadosServer") or {}
         player_local = self.ControladorObjetos.montar_player_local(dados)
-        self.EntidadeMain = player_local.Ator
+        self.EntidadeMain = player_local
         self.SubtelaInventario = UnificadorInventario(player_local)
 
         self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain, tile_px=50)
@@ -167,7 +167,7 @@ class CenaMundo:
         gfps.finalizar_trecho("renderizar_objetos")
 
         if self.ControladorObjetos.PlayerLocal is not None:
-            self.ControladorObjetos.PlayerLocal.Controle.renderizar_stamina(JOGO.TELA, self.Camera, dt)
+            self.ControladorObjetos.PlayerLocal.renderizar_stamina(JOGO.TELA, self.Camera, dt)
 
         if self.ControladorObjetos.PlayerLocal is not None:
             player_local = self.ControladorObjetos.PlayerLocal

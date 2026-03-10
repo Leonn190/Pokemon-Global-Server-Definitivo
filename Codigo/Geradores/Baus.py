@@ -119,7 +119,7 @@ class Bau(Entidade):
             self.marcar_aberto_por_sync()
 
     def processar_interacao_player(self, player) -> Dict[str, object] | None:
-        ator = getattr(player, "Ator", None)
+        ator = getattr(player, "Ator", player)
         inventario = getattr(player, "Inventario", None)
         if ator is None or inventario is None or self.Aberto:
             return None

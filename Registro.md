@@ -2,13 +2,13 @@
 
 **Repo:** `Pokemon-Global-Server-Definitivo`  
 
-**Gerado em:** 2026-03-09T22:04:58  
+**Gerado em:** 2026-03-09T22:08:40  
 
 ## Visão geral
 
-- **Pastas:** 1.152
-- **Arquivos:** 78.185
-- **Tamanho total:** 1.020.033.355 bytes (0.950 GiB)
+- **Pastas:** 1.151
+- **Arquivos:** 68.182
+- **Tamanho total:** 394.618.987 bytes (0.368 GiB)
 
 ## Python
 
@@ -30,8 +30,7 @@
 
 | Ext | Tamanho (GiB) | Arquivos |
 |---:|---:|---:|
-| `.json` | 0.581 | 10.005 |
-| `.png` | 0.331 | 68.038 |
+| `.png` | 0.330 | 68.037 |
 | `.ogg` | 0.036 | 14 |
 | `.jpg` | 0.001 | 1 |
 | `.py` | 0.000 | 106 |
@@ -41,15 +40,16 @@
 | `.class` | 0.000 | 10 |
 | `.ttf` | 0.000 | 1 |
 | `.md` | 0.000 | 1 |
+| `.json` | 0.000 | 3 |
 | `.txt` | 0.000 | 3 |
 
 ## Diferenças vs último relatório
 
 | Métrica | Anterior | Atual | Δ |
 |---|---:|---:|---:|
-| pastas | 1.143 | 1.152 | 9 |
-| arquivos | 68.145 | 78.185 | 10.040 |
-| tamanho_bytes | 0.367 GiB | 0.950 GiB | 0.583 GiB |
+| pastas | 1.143 | 1.151 | 8 |
+| arquivos | 68.145 | 68.182 | 37 |
+| tamanho_bytes | 0.367 GiB | 0.368 GiB | 0.000 GiB |
 | py_arquivos | 95 | 106 | 11 |
 | linhas_totais | 11.722 | 13.607 | 1.885 |
 | classes_encontradas | 60 | 64 | 4 |
@@ -58,10 +58,10 @@
 
 | Ext | Δ arquivos | Δ tamanho (GiB) |
 |---:|---:|---:|
-| `.json` | 10.004 | 0.581 |
-| `.png` | 25 | 0.002 |
 | `.py` | 11 | 0.000 |
+| `.png` | 24 | 0.000 |
 | `.class` | -1 | -0.000 |
 | `.csv` | 1 | 0.000 |
+| `.json` | 2 | 0.000 |
 | `.md` | 0 | 0.000 |
 | `.java` | 0 | -0.000 |

@@ -1,9 +1,9 @@
 {
   "resumo": {
-    "pastas": 1152,
-    "arquivos": 78185,
-    "tamanho_bytes": 1020033355,
-    "tamanho_gib": 0.94998
+    "pastas": 1151,
+    "arquivos": 68182,
+    "tamanho_bytes": 394618987,
+    "tamanho_gib": 0.367518
   },
   "python": {
     "py_arquivos": 106,
@@ -42,42 +42,36 @@
       ".py": 106,
       ".md": 1,
       ".csv": 3,
-      ".json": 10005,
       ".class": 10,
       ".java": 1,
-      ".png": 68038,
+      ".json": 3,
       ".ttf": 1,
       ".jpg": 1,
+      ".png": 68037,
       ".txt": 3,
       ".wav": 2,
       ".ogg": 14
     },
     "tamanho_bytes": {
       ".py": 504070,
-      ".md": 1682,
+      ".md": 1732,
       ".csv": 143661,
-      ".json": 623479492,
       ".class": 47892,
       ".java": 64352,
-      ".png": 355912200,
+      ".json": 1165,
       ".ttf": 26828,
       ".jpg": 638403,
+      ".png": 353976109,
       ".txt": 0,
       ".wav": 213152,
       ".ogg": 39001623
     },
     "top_por_tamanho": [
       {
-        "ext": ".json",
-        "tamanho_bytes": 623479492,
-        "tamanho_gib": 0.580661,
-        "arquivos": 10005
-      },
-      {
         "ext": ".png",
-        "tamanho_bytes": 355912200,
-        "tamanho_gib": 0.331469,
-        "arquivos": 68038
+        "tamanho_bytes": 353976109,
+        "tamanho_gib": 0.329666,
+        "arquivos": 68037
       },
       {
         "ext": ".ogg",
@@ -129,9 +123,15 @@
       },
       {
         "ext": ".md",
-        "tamanho_bytes": 1682,
+        "tamanho_bytes": 1732,
         "tamanho_gib": 2e-06,
         "arquivos": 1
+      },
+      {
+        "ext": ".json",
+        "tamanho_bytes": 1165,
+        "tamanho_gib": 1e-06,
+        "arquivos": 3
       },
       {
         "ext": ".txt",
@@ -143,15 +143,9 @@
     "top_por_quantidade": [
       {
         "ext": ".png",
-        "arquivos": 68038,
-        "tamanho_bytes": 355912200,
-        "tamanho_gib": 0.331469
-      },
-      {
-        "ext": ".json",
-        "arquivos": 10005,
-        "tamanho_bytes": 623479492,
-        "tamanho_gib": 0.580661
+        "arquivos": 68037,
+        "tamanho_bytes": 353976109,
+        "tamanho_gib": 0.329666
       },
       {
         "ext": ".py",
@@ -178,6 +172,12 @@
         "tamanho_gib": 0.000134
       },
       {
+        "ext": ".json",
+        "arquivos": 3,
+        "tamanho_bytes": 1165,
+        "tamanho_gib": 1e-06
+      },
+      {
         "ext": ".txt",
         "arquivos": 3,
         "tamanho_bytes": 0,
@@ -192,7 +192,7 @@
       {
         "ext": ".md",
         "arquivos": 1,
-        "tamanho_bytes": 1682,
+        "tamanho_bytes": 1732,
         "tamanho_gib": 2e-06
       },
       {
@@ -216,9 +216,9 @@
     ]
   },
   "meta": {
-    "criado_em": "2026-03-09T22:04:58",
+    "criado_em": "2026-03-09T22:08:40",
     "repo": "Pokemon-Global-Server-Definitivo",
-    "arquivo": "2026-03-09_22-04-45.json",
+    "arquivo": "2026-03-09_22-08-33.json",
     "base_dir": "C:\\Users\\Leon\\Documents\\GitHub\\Pokemon-Global-Server-Definitivo",
     "script": "Outros/GeradorRelatorios.py",
     "relatorios_dir": "Outros/Relatorios",
@@ -227,18 +227,18 @@
   "diff": {
     "pastas": {
       "anterior": 1143,
-      "atual": 1152,
-      "delta": 9
+      "atual": 1151,
+      "delta": 8
     },
     "arquivos": {
       "anterior": 68145,
-      "atual": 78185,
-      "delta": 10040
+      "atual": 68182,
+      "delta": 37
     },
     "tamanho_bytes": {
       "anterior": 394496908,
-      "atual": 1020033355,
-      "delta": 625536447
+      "atual": 394618987,
+      "delta": 122079
     },
     "py_arquivos": {
       "anterior": 95,
@@ -258,24 +258,6 @@
     "extensoes": {
       "mudancas": [
         {
-          "ext": ".json",
-          "arquivos_anterior": 1,
-          "arquivos_atual": 10005,
-          "delta_arquivos": 10004,
-          "tamanho_bytes_anterior": 421,
-          "tamanho_bytes_atual": 623479492,
-          "delta_tamanho_bytes": 623479071
-        },
-        {
-          "ext": ".png",
-          "arquivos_anterior": 68013,
-          "arquivos_atual": 68038,
-          "delta_arquivos": 25,
-          "tamanho_bytes_anterior": 353926307,
-          "tamanho_bytes_atual": 355912200,
-          "delta_tamanho_bytes": 1985893
-        },
-        {
           "ext": ".py",
           "arquivos_anterior": 95,
           "arquivos_atual": 106,
@@ -283,6 +265,15 @@
           "tamanho_bytes_anterior": 430882,
           "tamanho_bytes_atual": 504070,
           "delta_tamanho_bytes": 73188
+        },
+        {
+          "ext": ".png",
+          "arquivos_anterior": 68013,
+          "arquivos_atual": 68037,
+          "delta_arquivos": 24,
+          "tamanho_bytes_anterior": 353926307,
+          "tamanho_bytes_atual": 353976109,
+          "delta_tamanho_bytes": 49802
         },
         {
           "ext": ".class",
@@ -303,13 +294,22 @@
           "delta_tamanho_bytes": 1087
         },
         {
+          "ext": ".json",
+          "arquivos_anterior": 1,
+          "arquivos_atual": 3,
+          "delta_arquivos": 2,
+          "tamanho_bytes_anterior": 421,
+          "tamanho_bytes_atual": 1165,
+          "delta_tamanho_bytes": 744
+        },
+        {
           "ext": ".md",
           "arquivos_anterior": 1,
           "arquivos_atual": 1,
           "delta_arquivos": 0,
           "tamanho_bytes_anterior": 1541,
-          "tamanho_bytes_atual": 1682,
-          "delta_tamanho_bytes": 141
+          "tamanho_bytes_atual": 1732,
+          "delta_tamanho_bytes": 191
         },
         {
           "ext": ".java",

@@ -22,11 +22,21 @@ def resolver_fruta(pokemon, nome_fruta, contexto=None):
 
 
 def _evento_fase(pokemon_id: int, captura: Dict[str, object], fase: str) -> Dict[str, object]:
+    checks_total = int(captura.get("checks_total", 3) or 3)
+    checks_executados = int(captura.get("tremida_atual", 0) or 0)
+    payload_captura = dict(captura) | {
+        "fase": fase,
+        "checks_total": checks_total,
+        "checks_executados": checks_executados,
+        "resultado": str(captura.get("resultado", "pendente") or "pendente"),
+        "captura_pendente": bool(captura.get("captura_pendente", False)),
+        "capturador_id": int(captura.get("dono_id", 0) or 0),
+    }
     return {
         "evento": f"pokemon_captura_{fase}",
         "payload": {
             "pokemon_id": int(pokemon_id),
-            "captura": dict(captura) | {"fase": fase},
+            "captura": payload_captura,
         },
     }
 
@@ -117,10 +127,17 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         {
             "fase": "iniciada",
             "ativa": True,
+            "captura_pendente": True,
             "captura_garantida": garantida,
             "tentativas_tremida": [],
             "plano_tremidas": plano_tremidas,
             "agenda": agenda,
+            "checks_total": 3,
+            "tremida_atual": 0,
+            "resultado": "pendente",
+            "pokemon_visivel": False,
+            "pokemon_colisao_ativa": False,
+            "pokemon_interacao_ativa": False,
         }
     )
     pokemon.estado_extra["captura_fase"] = "iniciada"
@@ -170,12 +187,31 @@ def coletar_eventos_captura_agendada(pokemon, servidor_agora_ms: int):
                 _agendar_desfecho(agenda, captura["fase_inicio_ms"], sucesso=True)
 
         if fase == "escape":
+            captura["resultado"] = "falha"
             pokemon.estado_extra["tentativas_falhas_captura"] = int(pokemon.estado_extra.get("tentativas_falhas_captura", 0) or 0) + 1
+        if fase == "escape_reaparecendo":
+            captura["captura_pendente"] = False
+            captura["pokemon_visivel"] = True
+            captura["pokemon_colisao_ativa"] = True
+            captura["pokemon_interacao_ativa"] = True
+            pokemon.estado_extra["ativo"] = True
         if fase == "sucesso":
+            captura["resultado"] = "sucesso"
             pokemon.estado_extra["capturado"] = True
             pokemon.estado_extra["ativo"] = False
+        if fase == "retorno_bola":
+            captura["captura_pendente"] = True
+            captura["pokemon_visivel"] = False
+            captura["pokemon_colisao_ativa"] = False
+            captura["pokemon_interacao_ativa"] = False
         if fase == "finalizada":
             captura["ativa"] = False
+            if str(captura.get("resultado", "pendente")) != "sucesso":
+                captura["captura_pendente"] = False
+                captura["pokemon_visivel"] = True
+                captura["pokemon_colisao_ativa"] = True
+                captura["pokemon_interacao_ativa"] = True
+                pokemon.estado_extra["ativo"] = True
 
         eventos.append(_evento_fase(pokemon_id, captura, fase))
 

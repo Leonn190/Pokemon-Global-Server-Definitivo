@@ -175,8 +175,15 @@ class PokemonServer(EntidadeServer):
         estado = dados.get("estado", {}) if isinstance(dados.get("estado", {}), dict) else {}
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
         estado["captura_fase"] = str(captura.get("fase", estado.get("captura_fase", "nenhuma")))
+        estado["captura_pendente"] = bool(captura.get("captura_pendente", False))
+        estado["captura_resultado"] = str(captura.get("resultado", "pendente") or "pendente")
         agora = time.monotonic()
         estado["movendo"] = bool(agora < float(estado.get("movendo_ate", 0.0)))
+
+        if bool(captura.get("captura_pendente", False)):
+            dados["raio_colisao"] = 0.0
+            dados["raio_interacao"] = 0.0
+
         dados["estado"] = estado
         dados["nome"] = str(estado.get("nome") or estado.get("especie") or "Pokemon")
         stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
@@ -242,6 +249,7 @@ class ProjetilServer(EntidadeServer):
                 "item_base_id": str(item_base_id or ""),
                 "dono_id": int(dono_id or 0),
                 "token_arremesso": str(token_arremesso or ""),
+                "posicao_inicial": [float(posicao[0]), float(posicao[1])],
                 "direcao": [dx / n, dy / n],
                 "velocidade": max(0.1, float(velocidade or 10.0)),
                 "alcance": max(0.1, float(alcance or 6.0)),

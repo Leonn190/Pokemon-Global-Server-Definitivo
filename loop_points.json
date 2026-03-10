@@ -1,0 +1,20 @@
+{
+  "Carregamento": {
+    "arquivo": "Recursos/Sonoridades/Musicas/Menu/Carregamento.ogg",
+    "loop": 3.450261574485085,
+    "fimloop": 110.15519505448775,
+    "dur": 233.84815979003906
+  },
+  "Vulcão": {
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vulcão.ogg",
+    "loop": 10.195490056818182,
+    "fimloop": 62.23574277935606,
+    "dur": 128.15673828125
+  },
+  "Praia": {
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Praia.ogg",
+    "loop": 11.242558288574218,
+    "fimloop": 154.99792472330728,
+    "dur": 321.1232604980469
+  }
+}

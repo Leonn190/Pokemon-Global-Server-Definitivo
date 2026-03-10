@@ -35,6 +35,11 @@ Musicas = {
         "loop": 7.03,
         "fimloop": 60.26,
     },
+    "Carregamento": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Carregamento.ogg",
+        "loop": 7.03,
+        "fimloop": 60.26,
+    },
     "ConfrontoDoVale": {
         "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVale.ogg",
         "loop": 2.34,
@@ -82,6 +87,16 @@ Musicas = {
     },
     "Deserto": {
         "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Deserto.ogg",
+        "loop": 0.2,
+        "fimloop": 87.45
+    },
+    "Vulcão": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vulcão.ogg",
+        "loop": 0.2,
+        "fimloop": 87.45
+    },
+    "Praia": {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Praia.ogg",
         "loop": 0.2,
         "fimloop": 87.45
     }

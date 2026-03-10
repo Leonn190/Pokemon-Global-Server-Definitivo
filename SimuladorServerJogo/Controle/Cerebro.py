@@ -8,7 +8,6 @@ import time
 from typing import Dict, List, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer, BauServer, ProjetilServer
@@ -175,6 +174,7 @@ class CerebroServer:
         return _colide
 
     def _maestria_player(self, objeto_player_id: int) -> float:
+        from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
         usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_player_id or 0))
         if not usuario:
             return 0.0

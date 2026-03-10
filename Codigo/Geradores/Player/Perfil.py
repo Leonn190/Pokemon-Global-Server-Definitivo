@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-class PlayerPerfil:
+class Perfil:
     def __init__(self):
         self.NivelMochila = 1
         self.BatalhasPVPVencidas = 0
@@ -97,3 +97,6 @@ class PlayerPerfil:
             "custo_stamina_agua_rasa": self.CustoStaminaAguaRasa,
             "custo_stamina_agua_funda": self.CustoStaminaAguaFunda,
         }
+
+
+PlayerPerfil = Perfil

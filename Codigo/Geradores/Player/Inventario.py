@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-class PlayerInventario:
+class Inventario:
     def __init__(self, limite_itens=100, limite_slots=32):
         self.LimiteItens = int(max(1, limite_itens))
         self.LimiteSlots = int(max(1, limite_slots))
@@ -133,3 +133,6 @@ class PlayerInventario:
             "limite_slots": self.LimiteSlots,
             "slot_selecionado": self.SlotSelecionado,
         }
+
+
+PlayerInventario = Inventario

@@ -9,10 +9,10 @@ from Codigo.Paineis.FichaItem import FichaItem
 
 
 class InventarioItens:
-    def __init__(self, player):
-        self.Player = player
-        self.Inventario = player.Inventario
-        self.Perfil = player.Perfil
+    def __init__(self, ator):
+        self.Ator = ator
+        self.Inventario = ator.Inventario
+        self.Perfil = ator.Perfil
 
         self.Colunas = 8
         self.SlotPx = 64

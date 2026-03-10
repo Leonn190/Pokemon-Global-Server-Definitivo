@@ -11,7 +11,9 @@ import pygame
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Geradores.Entidade import Entidade
 from Codigo.Modulos.Colisor import Colisor
+from Codigo.Geradores.Itens.ItemInventario import ItemInventario
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Prefabs.Barra import Barra
 
 Vector2 = Tuple[float, float]
 
@@ -68,6 +70,16 @@ class Ator(Entidade):
             raio_interacao=self._raio_mao_colisao,
             ativo=False,
         )
+
+        self.Perfil = None
+        self.Inventario = None
+        self.Controle = None
+
+        self._stamina_alpha = 0.0
+        self.BarraStamina = Barra(pygame.Rect(0, 0, 75, 9), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
+        self.BarraStamina.cor_fundo = (16, 22, 30)
+        self.BarraStamina.cor_borda = (180, 210, 255)
+        self.BarraStamina.cor_preenchimento = (86, 220, 125)
 
     @classmethod
     def desenhar_nome(cls, tela, pos_tela, nome, deslocamento_y: int = 54):
@@ -149,6 +161,14 @@ class Ator(Entidade):
             respiracao_tempo=respiracao_tempo,
         )
 
+        inventario = getattr(self, "Inventario", None)
+        item_mao = inventario.item_na_mao() if inventario is not None else None
+        if item_mao is not None:
+            sprite_item = ItemInventario.surface_item(item_mao, lado_px=max(16, int(dados_mao["raio_mao"] * 2.4)))
+            if sprite_item is not None:
+                rect_item = sprite_item.get_rect(center=dados_mao["mao_tapa"])
+                tela.blit(sprite_item, rect_item)
+
         if self._tempo_tapa > 0.0:
             mx, my = dados_mao["mao_tapa"]
             self.ColisorMao.mover_para(mx, my)
@@ -156,6 +176,37 @@ class Ator(Entidade):
         else:
             self.ColisorMao.mover_para(self.Posicao[0], self.Posicao[1])
             self.ColisorMao.ativo = False
+
+    def renderizar_stamina(self, tela, camera, dt):
+        perfil = getattr(self, "Perfil", None)
+        if perfil is None:
+            return
+
+        dt = max(0.0, float(dt))
+        self.BarraStamina.maximo = max(1.0, float(perfil.StaminaMax))
+        self.BarraStamina.set_valor(float(perfil.Stamina))
+        self.BarraStamina.atualizar(dt)
+
+        cheio = perfil.Stamina >= (perfil.StaminaMax - 0.001)
+        controle = getattr(self, "Controle", None)
+        tentando_correr = bool(getattr(controle, "_tentando_correr", False))
+        consumindo = bool(getattr(controle, "_consumindo_stamina", False))
+        alvo_alpha = 255.0 if (consumindo or not cheio or tentando_correr) else 0.0
+        velocidade = 10.0 if alvo_alpha > self._stamina_alpha else 6.0
+        self._stamina_alpha += (alvo_alpha - self._stamina_alpha) * min(1.0, dt * velocidade)
+
+        if self._stamina_alpha <= 1.0:
+            return
+
+        px, py = camera.mundo_para_tela_px(self.Posicao)
+        self.BarraStamina.rect.midbottom = (int(px), int(py - 44))
+        bar_surf = pygame.Surface(self.BarraStamina.rect.size, pygame.SRCALPHA)
+        rect_original = self.BarraStamina.rect.copy()
+        self.BarraStamina.rect.topleft = (0, 0)
+        self.BarraStamina._desenhar_barra(bar_surf)
+        self.BarraStamina.rect = rect_original
+        bar_surf.set_alpha(int(self._stamina_alpha))
+        tela.blit(bar_surf, self.BarraStamina.rect.topleft)
 
     def atualizar_colisor_mao_mundo(self) -> None:
         rad = math.radians(self.AnguloOlhar)

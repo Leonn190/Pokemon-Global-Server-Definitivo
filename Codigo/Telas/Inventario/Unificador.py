@@ -9,9 +9,9 @@ from Codigo.Telas.Inventario.Pokemons import InventarioPokemons
 
 
 class UnificadorInventario:
-    def __init__(self, player):
-        self.Player = player
-        self.Inventario = player.Inventario
+    def __init__(self, ator):
+        self.Ator = ator
+        self.Inventario = ator.Inventario
         self.Ativo = False
         self.Modo = "itens"
         self._rect = pygame.Rect(0, 0, 0, 0)
@@ -23,7 +23,7 @@ class UnificadorInventario:
 
         self.TelaPerfil = InventarioPerfil()
         self.TelaPokemons = InventarioPokemons()
-        self.TelaItens = InventarioItens(player)
+        self.TelaItens = InventarioItens(ator)
 
     def toggle(self):
         self.Ativo = not self.Ativo

@@ -12,7 +12,9 @@ import pygame
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.GameObjeto import GameObjeto
 from Codigo.Modulos.Colisor import Colisor
-from Codigo.Geradores.Player.Player import Player
+from Codigo.Geradores.Player.Controle import Controle
+from Codigo.Geradores.Player.Inventario import Inventario
+from Codigo.Geradores.Player.Perfil import Perfil
 from Codigo.Geradores.PokemonMundo import PokemonMundo
 from Codigo.Geradores.Baus import Bau
 
@@ -57,7 +59,7 @@ class ControladorObjetos:
         self._snapshot_player_anterior_lento = None
         self._sincronizar_player_local()
 
-    def montar_player_local(self, dados_player) -> Player:
+    def montar_player_local(self, dados_player):
         dados = dados_player if isinstance(dados_player, dict) else {}
         nome_skin = str(dados.get("skin", "S1.png"))
         pos = dados.get("posicao", (0.0, 0.0))
@@ -69,20 +71,22 @@ class ControladorObjetos:
             ator.Id = int(dados.get("id"))
         ator.Nome = str(dados.get("nome") or dados.get("usuario") or "")
 
-        player = Player(ator=ator)
-        player.Perfil.aplicar_serializado(dados)
-        if hasattr(player.Inventario, "definir_limite_itens"):
-            player.Inventario.definir_limite_itens(player.Perfil.NivelMochila * 100)
-            player.Inventario.definir_limite_slots(getattr(player.Perfil, "LimiteSlotsInventario", 32))
+        ator.Perfil = Perfil()
+        ator.Perfil.aplicar_serializado(dados)
+        ator.Inventario = Inventario(limite_itens=ator.Perfil.NivelMochila * 100, limite_slots=getattr(ator.Perfil, "LimiteSlotsInventario", 32))
+        if hasattr(ator.Inventario, "definir_limite_itens"):
+            ator.Inventario.definir_limite_itens(ator.Perfil.NivelMochila * 100)
+            ator.Inventario.definir_limite_slots(getattr(ator.Perfil, "LimiteSlotsInventario", 32))
         inventario_serializado = dados.get("inventario", dados) if isinstance(dados.get("inventario", dados), dict) else {}
-        player.Inventario.aplicar_serializado(inventario_serializado)
-        self.definir_player_local(player)
-        return player
+        ator.Inventario.aplicar_serializado(inventario_serializado)
+        ator.Controle = Controle(ator=ator, velocidade_tiles=ator.Perfil.VelocidadeBaseTiles)
+        self.definir_player_local(ator)
+        return ator
 
     def _sincronizar_player_local(self) -> None:
-        if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
+        if self.PlayerLocal is None:
             return
-        ator = self.PlayerLocal.Ator
+        ator = self.PlayerLocal
         if getattr(ator, "Id", None) is None:
             return
         self.aplicar_diff({
@@ -100,7 +104,7 @@ class ControladorObjetos:
     def atualizar_player_local(self, eventos, dt, mouse_pos_mundo_tiles, gerenciador_fps=None) -> None:
         if self.PlayerLocal is None:
             return
-        posicao_antes = tuple(self.PlayerLocal.Ator.Posicao)
+        posicao_antes = tuple(self.PlayerLocal.Posicao)
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
         self._resolver_colisao_player_local(posicao_antes, dt, gerenciador_fps=gerenciador_fps)
         self._processar_interacoes_player()
@@ -180,10 +184,10 @@ class ControladorObjetos:
                 yield dados
 
     def _resolver_colisao_player_local(self, posicao_antes: Tuple[float, float], dt: float, gerenciador_fps=None) -> None:
-        if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
+        if self.PlayerLocal is None:
             return
 
-        ator = self.PlayerLocal.Ator
+        ator = self.PlayerLocal
         posicao_depois = tuple(ator.Posicao)
         player_id = getattr(ator, "Id", None)
         raio_ator = max(0.0, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
@@ -219,10 +223,10 @@ class ControladorObjetos:
 
     def _snapshot_player_supervisao(self) -> Optional[Dict[str, object]]:
         player = self.PlayerLocal
-        if player is None or getattr(player, "Ator", None) is None:
+        if player is None:
             return None
 
-        ator = player.Ator
+        ator = player
         if getattr(ator, "Id", None) is None:
             return None
 
@@ -565,9 +569,9 @@ class ControladorObjetos:
             GameObjeto.desenhar_snapshot(tela, camera, obj, cor_fallback=(125, 86, 54))
 
     def _renderizar_player_local(self, tela, camera):
-        if self.PlayerLocal is None or getattr(self.PlayerLocal, "Ator", None) is None:
+        if self.PlayerLocal is None:
             return
-        ator = self.PlayerLocal.Ator
+        ator = self.PlayerLocal
         ator.set_tile_px(getattr(camera, "TilePx", 50))
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
         respiracao_tempo = getattr(getattr(self.PlayerLocal, "Controle", None), "_tempo_respiracao", 0.0)
@@ -582,8 +586,8 @@ class ControladorObjetos:
         self.RenderizarEstruturas(tela, camera)
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
-        if ignorar_entidade_id is None and self.PlayerLocal is not None and getattr(self.PlayerLocal, "Ator", None) is not None:
-            ignorar_entidade_id = getattr(self.PlayerLocal.Ator, "Id", None)
+        if ignorar_entidade_id is None and self.PlayerLocal is not None:
+            ignorar_entidade_id = getattr(self.PlayerLocal, "Id", None)
         self.RenderizarEntidades(tela, camera, ignorar_id=ignorar_entidade_id)
         self._renderizar_player_local(tela, camera)
         self.RenderizarEstruturas(tela, camera)

@@ -1,3 +1,5 @@
+import random
+
 import pygame
 pygame.mixer.init()
 
@@ -151,7 +153,7 @@ def TransicaoMusica(nome):
 
     # Nada tocando? Toca direto, sem transição
     if not pygame.mixer.music.get_busy():
-        Musica(nome)
+        _iniciar_musica(nome)
         pygame.mixer.music.set_volume(_volume_musica_alvo())
         _fade_state = "idle"
         _fade_target_music = None
@@ -186,7 +188,7 @@ def TransicaoMusica(nome):
     _fade_target_music = nome
 
 
-def Musica(nome):
+def _iniciar_musica(nome):
     """Inicia a música e define os pontos de loop."""
     global _musica_atual, _loop_point, _fimloop_point, _posicao_manual, _vol_mult_atual
     if nome not in Musicas:
@@ -205,8 +207,8 @@ def Musica(nome):
     _posicao_manual = 0.0  # zera a posição manual
 
 
-def AtualizarMusica():
-    """Chamar a cada frame: mantém o loop perfeito e aplica a transição suave."""
+def _atualizar_motor_musica():
+    """Mantém loop perfeito e aplica transições de volume."""
     global _fade_state, _fade_start_ms, _fade_from_vol, _fade_to_vol
     global _fade_target_music, _musica_atual, _loop_point, _fimloop_point, _posicao_manual
 
@@ -232,7 +234,7 @@ def AtualizarMusica():
         if t >= 1.0:
             if _fade_state == "out":
                 if _fade_target_music is not None:
-                    Musica(_fade_target_music)  # já seta volume com vol_mult
+                    _iniciar_musica(_fade_target_music)  # já seta volume com vol_mult
                     pygame.mixer.music.set_volume(_volume_musica_alvo())
                 _fade_state = "idle"
                 _fade_target_music = None
@@ -245,3 +247,83 @@ def AtualizarMusica():
         if pos >= _fimloop_point:
             pygame.mixer.music.play(-1, start=_loop_point)
             _posicao_manual = _loop_point
+
+class SistemaMusicas:
+    def __init__(self):
+        self._cena_anterior = None
+        self._menu_faixa_atual = None
+
+    def atualizar_musica(self, jogo=None):
+        if jogo is not None:
+            config = getattr(jogo, "CONFIG", None)
+            if isinstance(config, dict):
+                VerificaSonoridade(config)
+            alvo = self._resolver_musica_alvo(jogo)
+            if alvo:
+                atual = _musica_atual
+                if alvo != atual:
+                    if self._eh_musica_mundo(alvo) and self._eh_musica_mundo(atual):
+                        TransicaoMusica(alvo)
+                    else:
+                        _iniciar_musica(alvo)
+        _atualizar_motor_musica()
+
+    def _resolver_musica_alvo(self, jogo):
+        cena = getattr(jogo, "Cena", None)
+        cena_id = str(getattr(cena, "ID", "") or "")
+
+        if cena_id != self._cena_anterior and cena_id == "Menu":
+            self._menu_faixa_atual = random.choice(["Menu1", "Menu2", "Menu3"])
+        self._cena_anterior = cena_id
+
+        if cena_id == "Login":
+            return "Login"
+
+        if cena_id == "Carregamento":
+            return "Carregamento"
+
+        if cena_id == "Menu":
+            if self._menu_faixa_atual is None:
+                self._menu_faixa_atual = random.choice(["Menu1", "Menu2", "Menu3"])
+            if self._tem_subtela_carregamento_menu():
+                return "Carregamento"
+            return self._menu_faixa_atual
+
+        if cena_id == "Mundo":
+            return self._musica_mundo_por_bloco(cena)
+
+        return None
+
+    def _tem_subtela_carregamento_menu(self):
+        try:
+            from Codigo.Telas.TelaOperador import possui_subtela_carregamento_ativa
+            return bool(possui_subtela_carregamento_ativa())
+        except Exception:
+            return False
+
+    def _musica_mundo_por_bloco(self, cena_mundo):
+        player = getattr(cena_mundo, "ControladorObjetos", None)
+        player = getattr(player, "PlayerLocal", None)
+        controle = getattr(player, "Controle", None)
+        if controle is None:
+            return None
+
+        obter_tile = getattr(controle, "bloco_atual", None)
+        tile = obter_tile() if callable(obter_tile) else controle._tile_atual()
+
+        mapa = {
+            2: "Vale",
+            6: "Neve",
+            5: "Deserto",
+            4: "Praia",
+            8: "Vulcão",
+            9: "Vulcão",
+        }
+        return mapa.get(tile)
+
+    @staticmethod
+    def _eh_musica_mundo(nome):
+        return nome in {"Vale", "Neve", "Deserto", "Praia", "Vulcão"}
+
+
+SISTEMA_MUSICAS = SistemaMusicas()

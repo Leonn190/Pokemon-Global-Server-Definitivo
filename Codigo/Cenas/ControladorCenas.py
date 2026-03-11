@@ -5,7 +5,7 @@ from Codigo.Cenas.CenaCarregamento import CenaCarregamento
 from Codigo.Cenas.CenaLogin import CenaLogin
 import pygame
 
-from Codigo.Modulos.Sonoridades import AtualizarMusica
+from Codigo.Modulos.Sonoridades import SISTEMA_MUSICAS
 from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Modulos.Discord import DiscordPresence
@@ -116,7 +116,7 @@ class ControladorCenas:
                     self.DefinirCena()
 
             self.DesenhosAdicionais()
-            AtualizarMusica()
+            SISTEMA_MUSICAS.atualizar_musica(self)
             pygame.display.update()
 
         if self.Cena is not None:

@@ -252,21 +252,39 @@ class SistemaMusicas:
     def __init__(self):
         self._cena_anterior = None
         self._menu_faixa_atual = None
+        self._ultimo_tile_mundo = None
 
     def atualizar_musica(self, jogo=None):
         if jogo is not None:
             config = getattr(jogo, "CONFIG", None)
             if isinstance(config, dict):
                 VerificaSonoridade(config)
+            cena = getattr(jogo, "Cena", None)
+            cena_id = str(getattr(cena, "ID", "") or "")
+
+            if cena_id != "Mundo":
+                self._ultimo_tile_mundo = None
+
             alvo = self._resolver_musica_alvo(jogo)
             if alvo:
-                atual = _musica_atual
+                if cena_id == "Mundo":
+                    tile_atual = self._tile_mundo_atual(cena)
+                    if tile_atual is not None:
+                        self._ultimo_tile_mundo = tile_atual
+
+                atual = self._musica_corrente_ou_em_transicao()
                 if alvo != atual:
-                    if self._eh_musica_mundo(alvo) and self._eh_musica_mundo(atual):
+                    if self._eh_musica_mundo(alvo) and self._eh_musica_mundo(_musica_atual):
                         TransicaoMusica(alvo)
                     else:
                         _iniciar_musica(alvo)
         _atualizar_motor_musica()
+
+    @staticmethod
+    def _musica_corrente_ou_em_transicao():
+        if _fade_state == "out" and _fade_target_music is not None:
+            return _fade_target_music
+        return _musica_atual
 
     def _resolver_musica_alvo(self, jogo):
         cena = getattr(jogo, "Cena", None)
@@ -302,22 +320,33 @@ class SistemaMusicas:
             return False
 
     def _musica_mundo_por_bloco(self, cena_mundo):
+        tile = self._tile_mundo_atual(cena_mundo)
+        if tile is None:
+            return None
+
+        if self._ultimo_tile_mundo is not None and tile == self._ultimo_tile_mundo:
+            return self._musica_corrente_ou_em_transicao()
+
+        return self._mapa_musica_mundo_por_tile(tile)
+
+    def _tile_mundo_atual(self, cena_mundo):
         player = getattr(cena_mundo, "ControladorObjetos", None)
         player = getattr(player, "PlayerLocal", None)
         controle = getattr(player, "Controle", None)
         if controle is None:
             return None
 
-        obter_tile = getattr(controle, "bloco_atual", None)
-        tile = obter_tile() if callable(obter_tile) else controle._tile_atual()
+        return controle._tile_atual()
 
+    @staticmethod
+    def _mapa_musica_mundo_por_tile(tile):
         mapa = {
             2: "Vale",
+            3: "Vale",
             6: "Neve",
             5: "Deserto",
             4: "Praia",
             8: "Vulcão",
-            9: "Vulcão",
         }
         return mapa.get(tile)
 

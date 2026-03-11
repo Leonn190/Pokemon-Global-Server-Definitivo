@@ -2,38 +2,38 @@
 
 **Repo:** `Pokemon-Global-Server-Definitivo`  
 
-**Gerado em:** 2026-03-09T22:08:40  
+**Gerado em:** 2026-03-10T23:01:01  
 
 ## Visão geral
 
-- **Pastas:** 1.151
-- **Arquivos:** 68.182
-- **Tamanho total:** 394.618.987 bytes (0.368 GiB)
+- **Pastas:** 1.153
+- **Arquivos:** 68.192
+- **Tamanho total:** 405.583.923 bytes (0.378 GiB)
 
 ## Python
 
-- **Arquivos `.py`:** 106
-- **Linhas totais:** 13.607
-- **Classes encontradas:** 64
+- **Arquivos `.py`:** 112
+- **Linhas totais:** 15.479
+- **Classes encontradas:** 65
 
 ### Top 5 maiores arquivos `.py`
 
 | Arquivo | Tamanho (KiB) |
 |---|---:|
-| `Codigo/Modulos/ControladorObjetos.py` | 26.31 |
-| `SimuladorServerJogo/Controle/BancoDados.py` | 18.61 |
+| `Codigo/Modulos/ControladorObjetos.py` | 45.44 |
+| `SimuladorServerJogo/Controle/Cerebro.py` | 31.15 |
+| `SimuladorServerJogo/Controle/BancoDados.py` | 18.89 |
 | `SimuladorServerJogo/Geradores/GeradorMundo.py` | 17.14 |
-| `Codigo/Telas/Inventario/Itens.py` | 16.57 |
-| `SimuladorServerJogo/Controle/EstadoServidor.py` | 16.23 |
+| `Codigo/Telas/Inventario/Itens.py` | 16.56 |
 
 ## Top extensões por tamanho
 
 | Ext | Tamanho (GiB) | Arquivos |
 |---:|---:|---:|
-| `.png` | 0.330 | 68.037 |
-| `.ogg` | 0.036 | 14 |
+| `.png` | 0.331 | 68.038 |
+| `.ogg` | 0.045 | 17 |
 | `.jpg` | 0.001 | 1 |
-| `.py` | 0.000 | 106 |
+| `.py` | 0.001 | 112 |
 | `.wav` | 0.000 | 2 |
 | `.csv` | 0.000 | 3 |
 | `.java` | 0.000 | 1 |
@@ -47,21 +47,19 @@
 
 | Métrica | Anterior | Atual | Δ |
 |---|---:|---:|---:|
-| pastas | 1.143 | 1.151 | 8 |
-| arquivos | 68.145 | 68.182 | 37 |
-| tamanho_bytes | 0.367 GiB | 0.368 GiB | 0.000 GiB |
-| py_arquivos | 95 | 106 | 11 |
-| linhas_totais | 11.722 | 13.607 | 1.885 |
-| classes_encontradas | 60 | 64 | 4 |
+| pastas | 1.151 | 1.153 | 2 |
+| arquivos | 68.182 | 68.192 | 10 |
+| tamanho_bytes | 0.368 GiB | 0.378 GiB | 0.010 GiB |
+| py_arquivos | 106 | 112 | 6 |
+| linhas_totais | 13.607 | 15.479 | 1.872 |
+| classes_encontradas | 64 | 65 | 1 |
 
 **Maiores mudanças por extensão (top 12 por |Δ tamanho|):**
 
 | Ext | Δ arquivos | Δ tamanho (GiB) |
 |---:|---:|---:|
-| `.py` | 11 | 0.000 |
-| `.png` | 24 | 0.000 |
-| `.class` | -1 | -0.000 |
-| `.csv` | 1 | 0.000 |
-| `.json` | 2 | 0.000 |
-| `.md` | 0 | 0.000 |
-| `.java` | 0 | -0.000 |
+| `.ogg` | 3 | 0.009 |
+| `.png` | 1 | 0.001 |
+| `.py` | 6 | 0.000 |
+| `.csv` | 0 | 0.000 |
+| `.md` | 0 | -0.000 |

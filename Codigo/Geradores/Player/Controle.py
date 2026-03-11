@@ -204,9 +204,6 @@ class Controle:
         px, py = self.Ator.Posicao
         self.Ator.definir_posicao(px % largura, py % altura)
 
-    def bloco_atual(self):
-        return self._tile_atual()
-
     def _tile_atual(self):
         x, y = self.Ator.Posicao
         bx = int(math.floor(x))

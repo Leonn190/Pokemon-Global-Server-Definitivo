@@ -34,6 +34,8 @@ class Terminal:
         self._cache_linhas_historico = []
         self._cache_largura_historico = -1
         self._historico_sujo = True
+        self._historico_comandos = []
+        self._historico_indice = None
 
     @property
     def esta_digitando(self):
@@ -101,6 +103,14 @@ class Terminal:
                 self._scroll_linhas = max(0, self._scroll_linhas - int(evento.y))
                 continue
 
+            if self.digitando and evento.type == pygame.KEYDOWN and evento.key == pygame.K_UP:
+                self._navegar_historico_comandos(-1)
+                continue
+
+            if self.digitando and evento.type == pygame.KEYDOWN and evento.key == pygame.K_DOWN:
+                self._navegar_historico_comandos(1)
+                continue
+
             if self.digitando and evento.type in (pygame.KEYDOWN, pygame.KEYUP, pygame.TEXTINPUT):
                 eventos_restantes.append(evento)
                 continue
@@ -117,6 +127,9 @@ class Terminal:
         if not texto:
             self._fechar_digitacao()
             return
+        if (not self._historico_comandos) or self._historico_comandos[-1] != texto:
+            self._historico_comandos.append(texto)
+        self._historico_indice = None
         self.caixa.set_texto("")
         self._fechar_digitacao()
         if not self.callback_enviar:
@@ -138,6 +151,25 @@ class Terminal:
             self._ultimo_novo_ts = time.time()
             self._scroll_linhas = 0
             self._historico_sujo = True
+
+    def _navegar_historico_comandos(self, direcao):
+        if not self._historico_comandos:
+            return
+
+        if self._historico_indice is None:
+            if direcao < 0:
+                self._historico_indice = len(self._historico_comandos) - 1
+            else:
+                return
+        else:
+            self._historico_indice = max(0, min(len(self._historico_comandos), self._historico_indice + direcao))
+
+        if self._historico_indice >= len(self._historico_comandos):
+            self._historico_indice = None
+            self.caixa.set_texto("")
+            return
+
+        self.caixa.set_texto(self._historico_comandos[self._historico_indice])
 
     def _quebrar_linhas(self, texto, largura_px):
         texto = str(texto or "")
@@ -189,15 +221,24 @@ class Terminal:
         tela.blit(fundo, self.rect.topleft)
 
         linhas = self._linhas_historico()
+        altura_input = self.caixa.rect.h + 14
+        topo = self.rect.y + 8
+        base = self.rect.bottom - altura_input
+        altura_painel = max(28, base - topo)
+        altura_linha = 14
+        linhas_visiveis = max(1, altura_painel // altura_linha)
         total = len(linhas)
-        inicio = max(0, total - self._linhas_visiveis - self._scroll_linhas)
+        max_scroll = max(0, total - linhas_visiveis)
+        self._scroll_linhas = max(0, min(self._scroll_linhas, max_scroll))
+
+        inicio = max(0, total - linhas_visiveis - self._scroll_linhas)
         fim = max(0, total - self._scroll_linhas)
         visiveis = linhas[inicio:fim]
 
-        y = self.rect.y + 6
+        y = base - (len(visiveis) * altura_linha)
         for linha in visiveis:
             Texto(linha, (self.rect.x + 10, y), style={"size": 15, "outline": False, "shadow": False, "color": (235, 235, 235)}).draw(tela)
-            y += 14
+            y += altura_linha
 
         if self.digitando:
             self.caixa.render(tela, eventos, dt)

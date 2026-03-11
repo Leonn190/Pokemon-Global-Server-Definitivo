@@ -96,8 +96,8 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 else:
                     ignorados += 1
                 continue
-            if evento_nome == "projetil_colisao_candidata":
-                ok = CEREBRO.validar_colisao_candidata_projetil(client_id, payload)
+            if evento_nome in {"projetil_colisao_candidata", "projetil_conferencia_final"}:
+                ok = CEREBRO.validar_conferencia_final_projetil(client_id, payload)
                 if ok:
                     aplicados += 1
                 else:

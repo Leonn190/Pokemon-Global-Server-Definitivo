@@ -38,6 +38,7 @@ class PokemonMundo(Entidade):
         self.VelocidadeBarraCaptura = 90.0
         self._velocidade_interp_tiles_s = 2.5
         self._escala_visual = 1.0
+        self._diametro_efetivo_tiles = 1.0
         self.aplicar_snapshot(snapshot)
 
     @staticmethod
@@ -87,6 +88,25 @@ class PokemonMundo(Entidade):
             self._inicio_barra_local_ms = pygame.time.get_ticks()
         self.AlvoLocalCaptura = novo
 
+
+    def iniciar_captura_provisoria_local(self, bola_nome: str, bola_posicao) -> None:
+        self.capturar({
+            "fase": "iniciada",
+            "captura_pendente": True,
+            "bola_nome": str(bola_nome or "pokeball"),
+            "bola_posicao": [float(bola_posicao[0]), float(bola_posicao[1])] if isinstance(bola_posicao, (list, tuple)) and len(bola_posicao) == 2 else [float(self.Posicao[0]), float(self.Posicao[1])],
+            "fase_inicio_ms": pygame.time.get_ticks(),
+            "captura_provisoria_local": True,
+        })
+
+    def negar_captura_provisoria_local(self) -> None:
+        self.capturar({
+            "fase": "escape",
+            "captura_pendente": False,
+            "captura_provisoria_local": False,
+            "fase_inicio_ms": pygame.time.get_ticks(),
+        })
+
     def capturar(self, evento_captura: Dict[str, object]) -> None:
         evento = dict(evento_captura or {})
         self.CapturaEstado.update(evento)
@@ -118,12 +138,20 @@ class PokemonMundo(Entidade):
         if captura:
             self.capturar(captura)
 
+        tamanho_tiles = estado.get("tamanho", snapshot.get("tamanho"))
+        if tamanho_tiles is None:
+            altura = self._f(estado.get("altura", snapshot.get("altura", 1.0)), 1.0)
+            progresso = max(0.0, min(1.0, (altura - 0.5) / 2.5))
+            tamanho_tiles = 1.0 + (2.0 * progresso)
+        tamanho_tiles = self._f(tamanho_tiles, 1.0)
+        self._diametro_efetivo_tiles = max(1.0, min(3.0, tamanho_tiles))
+        raio_snapshot = self._f(snapshot.get("raio_colisao"), self._diametro_efetivo_tiles * 0.5)
         if self.em_captura_pendente():
             self.Colisor.raio_colisao = 0.0
             self.Colisor.raio_interacao = 0.0
         else:
-            self.Colisor.raio_colisao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
-            self.Colisor.raio_interacao = max(self.Colisor.raio_colisao, 1.2)
+            self.Colisor.raio_colisao = max(0.2, raio_snapshot)
+            self.Colisor.raio_interacao = max(self.Colisor.raio_colisao, self._diametro_efetivo_tiles * 0.75)
 
         destino = self._pos(snapshot.get("posicao"))
         self.Destino = destino
@@ -249,7 +277,8 @@ class PokemonMundo(Entidade):
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
         centro = (int(cx), int(cy))
         tile_px = int(getattr(camera, "TilePx", 50))
-        base = max(6, int(tile_px * self.Colisor.raio_colisao))
+        raio_base_ref = self.Colisor.raio_colisao if self.Colisor.raio_colisao > 0 else (self._diametro_efetivo_tiles * 0.5)
+        base = max(6, int(tile_px * raio_base_ref))
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
 
         em_pendente = self.em_captura_pendente()

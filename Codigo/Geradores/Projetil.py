@@ -43,6 +43,10 @@ class Projetil(Entidade):
         self.ColisaoCandidata = None
         self.ColisaoConfirmada = False
         self.DistanciaConferenciaInicial = 4.0
+        self.ConferenciaFinalEnviada = False
+        self.ConferenciaResultadoRecebido = False
+        self.TempoAposTermino = 0.0
+        self.ModoMovimento = "indo"
         self._offset_correcao = [0.0, 0.0]
         self._tempo_correcao = 0.0
         self.aplicar_snapshot(snapshot)
@@ -91,10 +95,12 @@ class Projetil(Entidade):
         self.Ativo = not self.Terminado
         self.ColisaoConfirmada = self.ColisaoConfirmada or self.Colidiu or self.Terminado
         self.DistanciaConferenciaInicial = max(0.8, min(4.0, float(snapshot.get("distancia_conferencia_inicial", estado.get("distancia_conferencia_inicial", self.DistanciaConferenciaInicial)) or self.DistanciaConferenciaInicial)))
+        self.ModoMovimento = str(snapshot.get("modo_movimento") or estado.get("modo_movimento") or self.ModoMovimento or "indo")
         self.Estado = dict(estado)
 
     def atualizar_visual(self, dt: float) -> None:
         if self.Terminado:
+            self.TempoAposTermino += max(0.0, float(dt))
             return
         dt = max(0.0, float(dt))
         self.TempoVida += dt
@@ -103,8 +109,7 @@ class Projetil(Entidade):
             passo = self.VelocidadeEscalar * dt
             self.mover(self.Direcao[0] * passo, self.Direcao[1] * passo)
             self.DistanciaPercorrida += passo
-            if self.PreditoLocal and self.TempoVida > 1.2 and self.DistanciaPercorrida >= self.AlcanceMaximo:
-                # fallback visual controlado até chegar o despawn autoritativo.
+            if self.DistanciaPercorrida >= self.AlcanceMaximo:
                 self.Terminado = True
                 self.Ativo = False
 
@@ -115,7 +120,8 @@ class Projetil(Entidade):
             self._offset_correcao[1] *= (1.0 - fator)
             self._tempo_correcao = max(0.0, self._tempo_correcao - dt)
 
-        self.RotacaoVisual = (self.RotacaoVisual + 560.0 * dt) % 360.0
+        if self.ModoMovimento == "indo":
+            self.RotacaoVisual = (self.RotacaoVisual + 560.0 * dt) % 360.0
 
     def serializar_estado(self) -> Dict[str, object]:
         return {
@@ -135,6 +141,7 @@ class Projetil(Entidade):
             "colidiu": self.Colidiu,
             "terminado": self.Terminado,
             "distancia_conferencia_inicial": self.DistanciaConferenciaInicial,
+            "modo_movimento": self.ModoMovimento,
         }
 
     def desenhar(self, tela, camera) -> None:

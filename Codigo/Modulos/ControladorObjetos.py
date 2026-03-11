@@ -62,7 +62,8 @@ class ControladorObjetos:
         self._seq_id_projetil_predito = -1
         self._pokemon_alvo_local_id: Optional[int] = None
         self._bloqueio_sync_autoritario_ate = 0.0
-        self._tokens_colisao_candidata_enviados: set[str] = set()
+        self._tokens_conferencia_final_enviados: set[str] = set()
+        self._token_para_pokemon_captura_provisoria: Dict[str, int] = {}
         self._janela_bloqueio_sync_autoritario_s = 0.12
 
     # ---------------------------------------------------------------------
@@ -175,6 +176,7 @@ class ControladorObjetos:
                 "predito_local": True,
                 "autoritativo": False,
                 "token_arremesso": token,
+                "modo_movimento": "indo",
             },
             "token_arremesso": token,
         }
@@ -204,16 +206,18 @@ class ControladorObjetos:
 
         for p in projeteis:
             p.atualizar_visual(dt)
-            if (not p.Terminado) and (not p.AguardandoConfirmacaoColisao) and (not p.ColisaoConfirmada):
-                alvo = self._detectar_colisao_candidata_local_projetil(p, objetos_snapshot)
-                if alvo is not None:
-                    p.AguardandoConfirmacaoColisao = True
+            if (not p.Terminado) and (not p.ColisaoConfirmada):
+                alvo = self._detectar_colisao_local_prevista_projetil(p, objetos_snapshot)
+                if alvo is not None and p.ColisaoCandidata is None:
                     p.ColisaoCandidata = int(alvo.get("id", 0) or 0)
-                    self._enviar_colisao_candidata_projetil(p, p.ColisaoCandidata)
+                    self._iniciar_captura_provisoria_se_pokemon(p, alvo)
+            if p.Terminado and not p.ConferenciaFinalEnviada:
+                self._enviar_conferencia_final_projetil(p)
             if p.Terminado and p.PreditoLocal and not p.Autoritativo:
-                self.aplicar_diff({"tipo": "despawn", "objeto_id": int(p.Id)})
+                if bool(getattr(p, "ConferenciaResultadoRecebido", False)) or float(getattr(p, "TempoAposTermino", 0.0)) >= 0.45:
+                    self.aplicar_diff({"tipo": "despawn", "objeto_id": int(p.Id)})
 
-    def _detectar_colisao_candidata_local_projetil(self, proj: Projetil, objetos_snapshot: Dict[int, Dict[str, object]]):
+    def _detectar_colisao_local_prevista_projetil(self, proj: Projetil, objetos_snapshot: Dict[int, Dict[str, object]]):
         raio_busca = 4.0
         for oid, obj in objetos_snapshot.items():
             if not isinstance(obj, dict):
@@ -247,21 +251,35 @@ class ControladorObjetos:
                 return obj
         return None
 
-    def _enviar_colisao_candidata_projetil(self, proj: Projetil, alvo_id: int) -> None:
+    def _enviar_conferencia_final_projetil(self, proj: Projetil) -> None:
         token = str(getattr(proj, "TokenArremesso", "") or "")
-        if not token or token in self._tokens_colisao_candidata_enviados:
+        if not token or token in self._tokens_conferencia_final_enviados:
             return
-        self._tokens_colisao_candidata_enviados.add(token)
+        self._tokens_conferencia_final_enviados.add(token)
+        proj.ConferenciaFinalEnviada = True
         self.EnfileirarDiffRapida({
             "tipo": "evento",
-            "evento": "projetil_colisao_candidata",
+            "evento": "projetil_conferencia_final",
             "payload": {
                 "token_arremesso": token,
                 "projetil_id": int(getattr(proj, "Id", 0) or 0),
-                "alvo_id": int(alvo_id or 0),
+                "alvo_id": int(getattr(proj, "ColisaoCandidata", 0) or 0),
                 "ponto_estimado": [float(proj.Posicao[0]), float(proj.Posicao[1])],
             },
         })
+
+
+    def _iniciar_captura_provisoria_se_pokemon(self, proj: Projetil, alvo: Dict[str, object]) -> None:
+        estado = alvo.get("estado") if isinstance(alvo.get("estado"), dict) else {}
+        if str(estado.get("subtipo", "")).strip().lower() != "pokemon":
+            return
+        token = str(getattr(proj, "TokenArremesso", "") or "")
+        poke = self.PokemonsPorId.get(int(alvo.get("id", 0) or 0))
+        if poke is None:
+            return
+        poke.iniciar_captura_provisoria_local(getattr(proj, "Subtipo", "pokeball"), tuple(proj.Posicao))
+        if token:
+            self._token_para_pokemon_captura_provisoria[token] = int(poke.Id)
 
     # ---------------------------------------------------------------------
     # Índice espacial
@@ -717,6 +735,9 @@ class ControladorObjetos:
         if evento == "projetil_colisao_confirmada":
             self._aplicar_evento_colisao_projetil(payload, confirmada=True)
             return
+        if evento == "projetil_conferencia_resultado":
+            self._aplicar_evento_colisao_projetil(payload, confirmada=bool(payload.get("colidiu", False)))
+            return
         if evento.startswith("projetil_"):
             return
 
@@ -751,7 +772,7 @@ class ControladorObjetos:
     def _aplicar_evento_colisao_projetil(self, payload: Dict[str, object], confirmada: bool) -> None:
         token = str(payload.get("token_arremesso") or "")
         if token:
-            self._tokens_colisao_candidata_enviados.discard(token)
+            self._tokens_conferencia_final_enviados.discard(token)
         proj = None
         for p in self.ProjeteisPorId.values():
             if token and str(getattr(p, "TokenArremesso", "")) == token:
@@ -763,6 +784,15 @@ class ControladorObjetos:
         if proj is None:
             return
         proj.AguardandoConfirmacaoColisao = False
+        proj.ConferenciaResultadoRecebido = True
+        if (not confirmada) and token:
+            poke_id = self._token_para_pokemon_captura_provisoria.pop(token, None)
+            if poke_id is not None:
+                poke = self.PokemonsPorId.get(int(poke_id))
+                if poke is not None:
+                    poke.negar_captura_provisoria_local()
+        elif confirmada and token:
+            self._token_para_pokemon_captura_provisoria.pop(token, None)
         if confirmada:
             proj.ColisaoConfirmada = True
             proj.Colidiu = True

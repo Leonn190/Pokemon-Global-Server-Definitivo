@@ -54,6 +54,17 @@ def _escolher_especie(especie=None) -> Dict[str, str]:
     return item["row"]
 
 
+def tamanho_tiles_por_altura(altura_m: float) -> float:
+    try:
+        altura = float(altura_m)
+    except (TypeError, ValueError):
+        altura = 1.0
+    progresso = (altura - 0.5) / 2.5
+    progresso = max(0.0, min(1.0, progresso))
+    diametro_linear = 1.0 + (2.0 * progresso)
+    return max(1.0, min(3.0, diametro_linear))
+
+
 def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> PokemonServer:
     row = _escolher_especie(especie)
     iv_global = random.randint(0, 100)
@@ -77,6 +88,9 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             tipos.append(tipo)
 
     poke = PokemonServer(id_objeto=novo_id, especie=str(row.get("Nome", "Desconhecido")), posicao=posicao)
+    tamanho_tiles = tamanho_tiles_por_altura(altura)
+    poke.raio_colisao = float(tamanho_tiles * 0.5)
+    poke.raio_interacao = max(poke.raio_colisao, tamanho_tiles * 0.75)
     poke.estado_extra.update(
         {
             "nivel": nivel,
@@ -85,6 +99,7 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "stats_base": stats_base,
             "stats": stats_final,
             "altura": altura,
+            "tamanho": float(tamanho_tiles),
             "peso": peso,
             "tipos": tipos,
             "grupo": str(row.get("Grupo", "")),

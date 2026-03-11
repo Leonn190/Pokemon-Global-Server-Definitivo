@@ -29,6 +29,7 @@ class GameObjetoServer:
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))
 
+
     def serializar(self) -> Dict[str, object]:
         return {
             "id": self.Id,
@@ -131,6 +132,7 @@ class EstruturaNaturalServer(EstruturaServer):
         self.sprite = str(sprite)
         self.codigo_natural = int(codigo_natural)
 
+
     def serializar(self) -> Dict[str, object]:
         dados = super().serializar()
         dados["nome"] = self.nome
@@ -170,6 +172,20 @@ class PokemonServer(EntidadeServer):
             }
         )
 
+
+    def aplicar_tamanho(self) -> None:
+        tamanho = self.estado_extra.get("tamanho")
+        try:
+            tamanho_tiles = float(tamanho)
+        except (TypeError, ValueError):
+            altura = float(self.estado_extra.get("altura", 1.0) or 1.0)
+            progresso = max(0.0, min(1.0, (altura - 0.5) / 2.5))
+            tamanho_tiles = max(1.0, min(3.0, 1.0 + (2.0 * progresso)))
+        tamanho_tiles = max(1.0, min(3.0, tamanho_tiles))
+        self.estado_extra["tamanho"] = float(tamanho_tiles)
+        self.raio_colisao = float(tamanho_tiles * 0.5)
+        self.raio_interacao = max(float(self.raio_colisao), float(tamanho_tiles) * 0.75)
+
     def serializar(self) -> Dict[str, object]:
         dados = super().serializar()
         estado = dados.get("estado", {}) if isinstance(dados.get("estado", {}), dict) else {}
@@ -179,6 +195,10 @@ class PokemonServer(EntidadeServer):
         estado["captura_resultado"] = str(captura.get("resultado", "pendente") or "pendente")
         agora = time.monotonic()
         estado["movendo"] = bool(agora < float(estado.get("movendo_ate", 0.0)))
+
+        self.aplicar_tamanho()
+        dados["raio_colisao"] = float(self.raio_colisao)
+        dados["raio_interacao"] = float(self.raio_interacao)
 
         if bool(captura.get("captura_pendente", False)):
             dados["raio_colisao"] = 0.0
@@ -281,6 +301,7 @@ class ProjetilServer(EntidadeServer):
         self.estado_extra["terminado"] = True
         if motivo:
             self.estado_extra["motivo_termino"] = str(motivo)
+
 
     def serializar(self) -> Dict[str, object]:
         dados = super().serializar()

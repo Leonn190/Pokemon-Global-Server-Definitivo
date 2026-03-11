@@ -330,7 +330,7 @@ class CerebroServer:
         self._executar_tick_capturas()
         self._limpar_baus_abertos_expirados()
 
-    def validar_colisao_candidata_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
+    def validar_conferencia_final_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
         token = str(payload.get("token_arremesso") or "")
         if not token:
             return False
@@ -362,14 +362,17 @@ class CerebroServer:
         dpx = float(proj.posicao[0]) - float(pos_ini[0])
         dpy = float(proj.posicao[1]) - float(pos_ini[1])
         distancia_percorrida = (dpx * dpx + dpy * dpy) ** 0.5
-        distancia_conferencia = float(proj.estado_extra.get("distancia_conferencia_inicial", 4.0) or 4.0)
 
-        if colisao_confirmada and distancia_percorrida <= max(0.8, distancia_conferencia):
+        alcance_total = float(proj.estado_extra.get("alcance", 6.0) or 6.0)
+        dentro_janela = distancia_percorrida <= (alcance_total + 0.8)
+
+        if colisao_confirmada and dentro_janela:
             categoria = self._classificar_colisao(alvo)
             if categoria == "pokemon" and isinstance(alvo, PokemonServer):
                 cap_alvo = alvo.estado_extra.get("captura") if isinstance(alvo.estado_extra.get("captura"), dict) else {}
                 if bool(cap_alvo.get("ativa", False)) or bool(cap_alvo.get("captura_pendente", False)):
-                    registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": False, "alvo_id": int(alvo.Id)}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_negada")
+                    payload_negado = {"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": False, "alvo_id": int(alvo.Id), "tipo_impacto": categoria, "captura_valida": False, "checks_log": []}
+                    registrar_diff("evento", payload=payload_negado, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_conferencia_resultado")
                     return True
             tipo_proj = str(proj.estado_extra.get("tipo_projetil", "item")).lower()
             nome_item = str(proj.estado_extra.get("nome_item", "item"))
@@ -398,16 +401,29 @@ class CerebroServer:
                         cap.setdefault("checks_total", 3)
                         cap.setdefault("resultado", "pendente")
                         cap.setdefault("captura_pendente", True)
+                        checks_log = [{"check": i + 1, "passou": bool(v)} for i, v in enumerate(cap.get("plano_tremidas", [False, False, False]))]
+                        cap["checks_log"] = checks_log
                         registrar_diff("evento", payload={"pokemon_id": int(alvo.Id), "captura": cap}, escopo={"centro": [alvo.posicao[0], alvo.posicao[1]], "raio": 120}, objeto_id=alvo.Id, categoria="rapida", evento="pokemon_captura_iniciada")
 
             proj.terminar(f"colisao_{categoria}")
             BANCO_DADOS.atualizar_objeto(proj.Id, {"estado": proj.estado_extra})
             registrar_diff("update", payload=proj.serializar(), escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 80}, objeto_id=proj.Id, categoria="rapida")
-            registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": True, "alvo_id": int(alvo.Id), "categoria": categoria, "ponto_impacto": [float(proj.posicao[0]), float(proj.posicao[1])]}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_confirmada")
+            captura_log = []
+            if categoria == "pokemon" and isinstance(alvo, PokemonServer):
+                cap_alvo = alvo.estado_extra.get("captura") if isinstance(alvo.estado_extra.get("captura"), dict) else {}
+                captura_log = [{"check": i + 1, "passou": bool(v)} for i, v in enumerate(cap_alvo.get("plano_tremidas", [False, False, False]))]
+            payload_evento = {"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": True, "alvo_id": int(alvo.Id), "tipo_impacto": categoria, "captura_valida": bool(categoria == "pokemon"), "checks_log": captura_log, "ponto_impacto": [float(proj.posicao[0]), float(proj.posicao[1])]}
+            registrar_diff("evento", payload=payload_evento, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_conferencia_resultado")
             return True
 
-        registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": False, "alvo_id": int(getattr(alvo, "Id", 0) or 0)}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_negada")
+        payload_negado = {"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": False, "alvo_id": int(getattr(alvo, "Id", 0) or 0), "tipo_impacto": self._classificar_colisao(alvo), "captura_valida": False, "checks_log": []}
+        registrar_diff("evento", payload=payload_negado, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_conferencia_resultado")
         return True
+
+
+    def validar_colisao_candidata_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
+        """Compat: mantém nome antigo apontando para conferência final."""
+        return self.validar_conferencia_final_projetil(client_id, payload)
 
     def _executar_tick_projeteis(self, chunks_carregados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
@@ -606,7 +622,6 @@ class CerebroServer:
 
         novo_id = BANCO_DADOS.gerar_id()
         poke = gerar_pokemon_server(novo_id=novo_id, posicao=escolhido, chunk_xy=chunk)
-        poke.raio_colisao = raio
         BANCO_DADOS.inserir_objeto(poke)
         self._pokemons_ids.add(poke.Id)
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff

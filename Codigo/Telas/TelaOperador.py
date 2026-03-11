@@ -25,6 +25,10 @@ _STATUS_TIMER = 0.0
 _GERACAO_NOTIFICADA = False
 _REMOCAO_NOTIFICADA = False
 
+def possui_subtela_carregamento_ativa():
+    return isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
+
+
 
 _ESTILO_BOTAO = {
     "radius": 18,

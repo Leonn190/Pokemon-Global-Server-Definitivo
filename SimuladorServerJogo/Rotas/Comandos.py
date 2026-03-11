@@ -154,7 +154,14 @@ def _carregar_itens():
             code = str(row.get("Code", "")).strip()
             if not nome:
                 continue
-            d = {"Nome": nome, "Code": code}
+            raridade_raw = str(row.get("Raridade", "")).strip()
+            d = {
+                "Nome": nome,
+                "Descrição": str(row.get("Descrição", "")).strip(),
+                "Raridade": int(raridade_raw) if raridade_raw.isdigit() else raridade_raw,
+                "Estilo": str(row.get("Estilo", "")).strip(),
+                "Code": code,
+            }
             itens.append(d)
             if code:
                 by_code[code] = d
@@ -241,7 +248,14 @@ def _cmd_give(autor, args):
             if idx_livre is None:
                 cheios.append(alvo)
                 continue
-            itens[idx_livre] = {"Nome": item.get("Nome", "Item"), "Code": item.get("Code", ""), "quantidade": qtd}
+            itens[idx_livre] = {
+                "Nome": item.get("Nome", "Item"),
+                "Descrição": item.get("Descrição", ""),
+                "Raridade": item.get("Raridade", ""),
+                "Estilo": item.get("Estilo", ""),
+                "Code": item.get("Code", ""),
+                "quantidade": qtd,
+            }
         inv["itens"] = itens
         atualizar_inventario_personagem(alvo, inv)
         payload = _payload_player(alvo)

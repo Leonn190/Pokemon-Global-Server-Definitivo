@@ -1,6 +1,3 @@
-import random
-
-from Codigo.Modulos.Sonoridades import Musica
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaMenu import TelaMenu
 from Codigo.Telas.TelaServers import TelaServers
@@ -15,8 +12,7 @@ class CenaMenu:
         self.ID = "Menu"
         self.TelaAtual = str(JOGO.INFO.pop("MenuTelaInicial", "MenuPrincipal"))
 
-        if not JOGO.INFO.pop("PreservarMusicaAtual", False):
-            Musica(random.choice(["Menu1","Menu2","Menu3"]))
+        JOGO.INFO.pop("PreservarMusicaAtual", False)
 
     def DefinirTela(self, tela):
         if tela == "Config":

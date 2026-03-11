@@ -15,7 +15,7 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
     PASTA_WORLD_CHUNKS,
     carregar_estado_mundo,
 )
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, GameObjetoServer
+from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer
 from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo
 from Codigo.Modulos.Colisor import Colisor
 
@@ -26,7 +26,7 @@ Vector2 = Tuple[float, float]
 class BancoDadosMundo:
     def __init__(self, tamanho_celula: int = 256, chunk_tamanho_px: int = CHUNK_BLOCOS * BLOCO_TAMANHO_PX) -> None:
         self._lock = threading.RLock()
-        self._objetos: Dict[int, GameObjetoServer] = {}
+        self._objetos: Dict[int, object] = {}
         self._usuarios_para_objeto: Dict[str, int] = {}
         self._indice_espacial: Dict[Tuple[int, int], Set[int]] = defaultdict(set)
         self._next_id = 1000
@@ -210,14 +210,14 @@ class BancoDadosMundo:
     def _celula(self, posicao: Vector2) -> Tuple[int, int]:
         return (int(math.floor(posicao[0] / self._tamanho_celula)), int(math.floor(posicao[1] / self._tamanho_celula)))
 
-    def inserir_objeto(self, obj: GameObjetoServer) -> None:
+    def inserir_objeto(self, obj) -> None:
         with self._lock:
             if obj.Id in self._objetos:
                 raise ValueError(f"ID já existe: {obj.Id}")
             self._objetos[obj.Id] = obj
             self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)
 
-    def remover_objeto(self, objeto_id: int) -> Optional[GameObjetoServer]:
+    def remover_objeto(self, objeto_id: int) -> Optional[object]:
         with self._lock:
             obj = self._objetos.pop(int(objeto_id), None)
             if obj is None:
@@ -225,7 +225,7 @@ class BancoDadosMundo:
             self._indice_espacial[self._celula(obj.posicao)].discard(obj.Id)
             return obj
 
-    def atualizar_objeto(self, objeto_id: int, campos: Dict[str, object]) -> Optional[GameObjetoServer]:
+    def atualizar_objeto(self, objeto_id: int, campos: Dict[str, object]) -> Optional[object]:
         with self._lock:
             obj = self._objetos.get(int(objeto_id))
             if obj is None:
@@ -240,6 +240,10 @@ class BancoDadosMundo:
             for campo in ("raio_colisao", "raio_interacao", "campo", "intensidade"):
                 if campo in campos:
                     setattr(obj, campo, float(campos[campo]))
+            if "raio_colisao" in campos and getattr(obj, "Colisor", None) is not None:
+                obj.Colisor.raio_colisao = float(getattr(obj, "raio_colisao", obj.Colisor.raio_colisao))
+            if "raio_interacao" in campos and getattr(obj, "Colisor", None) is not None:
+                obj.Colisor.raio_interacao = float(getattr(obj, "raio_interacao", obj.Colisor.raio_interacao))
 
             estado = campos.get("estado")
             if isinstance(estado, dict):
@@ -255,7 +259,7 @@ class BancoDadosMundo:
 
             return obj
 
-    def _aplicar_campos_forca_em_entidade(self, entidade: GameObjetoServer, posicao_anterior: Vector2) -> None:
+    def _aplicar_campos_forca_em_entidade(self, entidade, posicao_anterior: Vector2) -> None:
         x0, y0 = float(posicao_anterior[0]), float(posicao_anterior[1])
         x1, y1 = float(entidade.posicao[0]), float(entidade.posicao[1])
         mvx, mvy = (x1 - x0), (y1 - y0)
@@ -264,7 +268,7 @@ class BancoDadosMundo:
 
         # Nova regra: colisão/repulsão local por raio fixo de 10 tiles para pokémons.
         # Para demais entidades, mantém comportamento amplo atual.
-        is_pokemon = str(getattr(entidade, "tipo", "")).lower() in ("pokemon", "entidade_pokemon")
+        is_pokemon = str(getattr(entidade, "tipo_classe", "")).lower() in ("pokemon", "entidade_pokemon")
         if is_pokemon:
             estruturas = self._estruturas_proximas_por_raio((px, py), raio_tiles=10.0)
         else:
@@ -292,7 +296,7 @@ class BancoDadosMundo:
 
         entidade.definir_posicao(px, py)
 
-    def _estruturas_proximas_por_raio(self, posicao: Vector2, raio_tiles: float = 10.0) -> List[GameObjetoServer]:
+    def _estruturas_proximas_por_raio(self, posicao: Vector2, raio_tiles: float = 10.0) -> List[object]:
         """Busca estruturas candidatas por raio fixo sem depender de chunks para colisão local."""
         raio = max(0.1, float(raio_tiles))
         cx, cy = self._celula(posicao)
@@ -321,7 +325,7 @@ class BancoDadosMundo:
         with self._lock:
             return sum(1 for o in self._objetos.values() if str(getattr(o, "estado_extra", {}).get("subtipo", "")).strip().lower() == alvo)
 
-    def obter_objeto(self, objeto_id: int) -> Optional[GameObjetoServer]:
+    def obter_objeto(self, objeto_id: int) -> Optional[object]:
         with self._lock:
             return self._objetos.get(int(objeto_id))
 
@@ -332,7 +336,7 @@ class BancoDadosMundo:
                     return usuario
         return None
 
-    def buscar_proximos(self, posicao: Vector2, raio: float) -> List[GameObjetoServer]:
+    def buscar_proximos(self, posicao: Vector2, raio: float) -> List[object]:
         raio = max(0.0, float(raio))
         chunk_tamanho = self.chunk_tamanho_unidade()
         if chunk_tamanho > 0:

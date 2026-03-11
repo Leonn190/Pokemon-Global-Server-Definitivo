@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Dict, List, Optional, Tuple
 import math
+import os
 import threading
 import time
 import uuid
@@ -12,13 +13,13 @@ import pygame
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.Baus import Bau
-from Codigo.Geradores.GameObjeto import GameObjeto
 from Codigo.Geradores.Player.Controle import Controle
 from Codigo.Geradores.Player.Inventario import Inventario
 from Codigo.Geradores.Player.Perfil import Perfil
-from Codigo.Geradores.PokemonMundo import PokemonMundo
+from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
 from Codigo.Modulos.Colisor import Colisor
+from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo
 from Codigo.Prefabs.Fluxos import Fluxo
 
 
@@ -27,7 +28,7 @@ class ControladorObjetos:
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
         self.PlayerLocal = None
 
-        self.PokemonsPorId: Dict[int, PokemonMundo] = {}
+        self.PokemonsPorId: Dict[int, Pokemon] = {}
         self.BausPorId: Dict[int, Bau] = {}
         self.AtoresRemotosPorId: Dict[int, Ator] = {}
         self.ProjeteisPorId: Dict[int, Projetil] = {}
@@ -35,21 +36,13 @@ class ControladorObjetos:
         self._lock_objetos = threading.RLock()
         self._lock_diffs = threading.Lock()
 
-        self._fila_diffs_rapidas_envio: List[Dict[str, object]] = []
-        self._fila_diffs_lentas_envio: List[Dict[str, object]] = []
-
-        self._callback_loop_rapido: Optional[Callable[[List[Dict[str, object]]], List[Dict[str, object]] | None]] = None
-        self._callback_loop_lento: Optional[Callable[[List[Dict[str, object]]], List[Dict[str, object]] | None]] = None
-
-        self._thread_rapida: Optional[threading.Thread] = None
-        self._thread_lenta: Optional[threading.Thread] = None
-        self._thread_rapida_ativa = False
-        self._thread_lenta_ativa = False
-        self._intervalo_rapido = 0.025
-        self._intervalo_lento = 5.0
-
-        self._snapshot_player_anterior_rapido: Optional[Dict[str, object]] = None
-        self._snapshot_player_anterior_lento: Optional[Dict[str, object]] = None
+        self._fila_saida_envio: List[Dict[str, object]] = []
+        self._callback_loop_rede: Optional[Callable[[Dict[str, object]], Dict[str, object] | None]] = None
+        self._thread_rede: Optional[threading.Thread] = None
+        self._thread_rede_ativa = False
+        self._intervalo_rede = 0.05
+        self._tick_cliente = 0
+        self._ultimo_tick_recebido = 0
 
         # Índice espacial por chunk (performance de visibilidade/consulta local)
         self._chunk_tamanho_tiles = 10
@@ -64,14 +57,23 @@ class ControladorObjetos:
         self._bloqueio_sync_autoritario_ate = 0.0
         self._tokens_colisao_candidata_enviados: set[str] = set()
         self._janela_bloqueio_sync_autoritario_s = 0.12
+        self._cache_sprites_fallback: Dict[str, Optional[pygame.Surface]] = {}
+        self._snapshot_player_supervisao_rapida: Optional[Dict[str, object]] = None
+        self._snapshot_player_supervisao_lenta: Optional[Dict[str, object]] = None
+        self._ultimo_envio_supervisao_rapida = 0.0
+        self._ultimo_envio_supervisao_lenta = 0.0
+        self._intervalo_supervisao_rapida_s = 0.05
+        self._intervalo_supervisao_lenta_s = 1.5
 
     # ---------------------------------------------------------------------
     # Player local
     # ---------------------------------------------------------------------
     def definir_player_local(self, player) -> None:
         self.PlayerLocal = player
-        self._snapshot_player_anterior_rapido = None
-        self._snapshot_player_anterior_lento = None
+        self._snapshot_player_supervisao_rapida = None
+        self._snapshot_player_supervisao_lenta = None
+        self._ultimo_envio_supervisao_rapida = 0.0
+        self._ultimo_envio_supervisao_lenta = 0.0
         self._sincronizar_player_local()
 
     def montar_player_local(self, dados_player):
@@ -360,179 +362,81 @@ class ControladorObjetos:
 
     def EnfileirarDiffRapida(self, diff: Dict[str, object]) -> None:
         with self._lock_diffs:
-            self._fila_diffs_rapidas_envio.append(self._marcar_diff_local(diff))
+            self._fila_saida_envio.append(self._marcar_diff_local(diff))
 
     def EnfileirarDiffLenta(self, diff: Dict[str, object]) -> None:
-        with self._lock_diffs:
-            self._fila_diffs_lentas_envio.append(self._marcar_diff_local(diff))
+        self.EnfileirarDiffRapida(diff)
 
     def ColetarDiffsRapidas(self) -> List[Dict[str, object]]:
         with self._lock_diffs:
-            lote = self._fila_diffs_rapidas_envio
-            self._fila_diffs_rapidas_envio = []
+            lote = self._fila_saida_envio
+            self._fila_saida_envio = []
         return lote
 
     def ColetarDiffsLentas(self) -> List[Dict[str, object]]:
-        with self._lock_diffs:
-            lote = self._fila_diffs_lentas_envio
-            self._fila_diffs_lentas_envio = []
-        return lote
+        return self.ColetarDiffsRapidas()
 
-    def _snapshot_player_supervisao(self) -> Optional[Dict[str, object]]:
-        p = self.PlayerLocal
-        if p is None or getattr(p, "Id", None) is None:
-            return None
-        c = getattr(p, "Controle", None)
-        return {
-            "objeto_id": int(p.Id),
-            "nome": str(getattr(p, "Nome", "")),
-            "tipo": "entidade_player",
-            "skin": str(getattr(p, "NomeSkin", "S1")),
-            "posicao": [float(p.Posicao[0]), float(p.Posicao[1])],
-            "raio_colisao": float(getattr(getattr(p, "Colisor", None), "raio_colisao", 0.35)),
-            "estado": {
-                "angulo": float(getattr(p, "AnguloOlhar", 0.0)),
-                "tapa": bool(p.esta_tapando()),
-                "mirando": bool(getattr(c, "_mirando", False)),
-            },
-            "perfil": dict(p.Perfil.serializar()) if p.Perfil else {},
-            "inventario": dict(p.Inventario.serializar()) if p.Inventario else {},
-            "controle": {
-                "inventario_aberto": bool(getattr(c, "InventarioAberto", False)),
-                "batendo": bool(getattr(c, "_batendo", False)),
-            },
-        }
-
-    def _comparar_snapshot_rapido(self, ant: Optional[Dict[str, object]], novo: Dict[str, object]) -> Optional[Dict[str, object]]:
-        payload: Dict[str, object] = {}
-        if ant is None:
-            payload = {
-                "tipo": novo.get("tipo"),
-                "nome": novo.get("nome"),
-                "raio_colisao": novo.get("raio_colisao"),
-                "posicao": list(novo.get("posicao", [0.0, 0.0])),
-                "estado": dict(novo.get("estado", {})),
-            }
-        else:
-            for k in ("nome", "tipo", "raio_colisao", "skin"):
-                if ant.get(k) != novo.get(k):
-                    payload[k] = novo.get(k)
-            if ant.get("posicao") != novo.get("posicao"):
-                payload["posicao"] = list(novo.get("posicao", [0.0, 0.0]))
-            est_novo = novo.get("estado") if isinstance(novo.get("estado"), dict) else {}
-            est_ant = ant.get("estado") if isinstance(ant.get("estado"), dict) else {}
-            delta = {k: v for k, v in est_novo.items() if est_ant.get(k) != v}
-            if delta:
-                payload["estado"] = delta
-        if not payload:
-            return None
-        return {"tipo": "update", "objeto_id": int(novo["objeto_id"]), "payload": payload}
-
-    def _comparar_snapshot_lento(self, ant: Optional[Dict[str, object]], novo: Dict[str, object]) -> Optional[Dict[str, object]]:
-        payload: Dict[str, object] = {}
-        if ant is None:
-            payload = {
-                "perfil": dict(novo.get("perfil", {})),
-                "inventario": dict(novo.get("inventario", {})),
-                "controle": dict(novo.get("controle", {})),
-            }
-        else:
-            for k in ("perfil", "inventario", "controle"):
-                if ant.get(k) != novo.get(k):
-                    payload[k] = dict(novo.get(k, {}))
-        if not payload:
-            return None
-        return {"tipo": "update", "objeto_id": int(novo["objeto_id"]), "payload": payload}
-
-    def _supervisionar_player_e_enfileirar_diff_rapida(self) -> None:
-        if self._sync_autoritario_ativo():
-            self._snapshot_player_anterior_rapido = self._snapshot_player_supervisao()
+    def _supervisionar_player_e_enfileirar_saida(self) -> None:
+        if self.PlayerLocal is None:
             return
-        snap = self._snapshot_player_supervisao()
-        if snap is None:
-            self._snapshot_player_anterior_rapido = None
-            return
-        diff = self._comparar_snapshot_rapido(self._snapshot_player_anterior_rapido, snap)
-        self._snapshot_player_anterior_rapido = snap
-        if diff is not None:
-            self.aplicar_diff(diff)
-            self.EnfileirarDiffRapida(diff)
+        agora = time.monotonic()
+        if (agora - self._ultimo_envio_supervisao_rapida) >= self._intervalo_supervisao_rapida_s:
+            self._coletar_supervisao_player_local(rapida=True)
+            self._ultimo_envio_supervisao_rapida = agora
+        if (agora - self._ultimo_envio_supervisao_lenta) >= self._intervalo_supervisao_lenta_s:
+            self._coletar_supervisao_player_local(rapida=False)
+            self._ultimo_envio_supervisao_lenta = agora
 
-    def _supervisionar_player_e_enfileirar_diff_lenta(self) -> None:
-        if self._sync_autoritario_ativo():
-            self._snapshot_player_anterior_lento = self._snapshot_player_supervisao()
-            return
-        snap = self._snapshot_player_supervisao()
-        if snap is None:
-            self._snapshot_player_anterior_lento = None
-            return
-        diff = self._comparar_snapshot_lento(self._snapshot_player_anterior_lento, snap)
-        self._snapshot_player_anterior_lento = snap
-        if diff is not None:
-            self.aplicar_diff(diff)
-            self.EnfileirarDiffLenta(diff)
-
-    def iniciar_threads_diffs(self, callback_loop_rapido, callback_loop_lento, intervalo_rapido=0.05, intervalo_lento=5.0) -> None:
-        self._callback_loop_rapido = callback_loop_rapido if callable(callback_loop_rapido) else None
-        self._callback_loop_lento = callback_loop_lento if callable(callback_loop_lento) else None
-        self._intervalo_rapido = max(0.02, float(intervalo_rapido))
-        self._intervalo_lento = max(1.0, float(intervalo_lento))
-
-        if not (self._thread_rapida and self._thread_rapida.is_alive()):
-            self._thread_rapida_ativa = True
-            self._thread_rapida = threading.Thread(target=self._loop_diffs_rapidas, name="ControladorObjetosDiffRapidaThread", daemon=True)
-            self._thread_rapida.start()
-
-        if not (self._thread_lenta and self._thread_lenta.is_alive()):
-            self._thread_lenta_ativa = True
-            self._thread_lenta = threading.Thread(target=self._loop_diffs_lentas, name="ControladorObjetosDiffLentaThread", daemon=True)
-            self._thread_lenta.start()
+    def iniciar_threads_diffs(self, callback_loop_rapido=None, callback_loop_lento=None, intervalo_rapido=0.05, intervalo_lento=5.0, callback_loop_rede=None) -> None:
+        callback = callback_loop_rede if callable(callback_loop_rede) else (callback_loop_rapido if callable(callback_loop_rapido) else None)
+        self._callback_loop_rede = callback
+        self._intervalo_rede = max(0.02, float(intervalo_rapido))
+        if not (self._thread_rede and self._thread_rede.is_alive()):
+            self._thread_rede_ativa = True
+            self._thread_rede = threading.Thread(target=self._loop_rede, name="ControladorObjetosRedeThread", daemon=True)
+            self._thread_rede.start()
 
     def parar_threads_diffs(self, timeout=2.0) -> None:
-        self._thread_rapida_ativa = False
-        self._thread_lenta_ativa = False
-        if self._thread_rapida and self._thread_rapida.is_alive():
-            self._thread_rapida.join(timeout=timeout)
-        if self._thread_lenta and self._thread_lenta.is_alive():
-            self._thread_lenta.join(timeout=timeout)
+        self._thread_rede_ativa = False
+        if self._thread_rede and self._thread_rede.is_alive():
+            self._thread_rede.join(timeout=timeout)
 
-    def _loop_diffs_rapidas(self) -> None:
-        while self._thread_rapida_ativa:
-            self._supervisionar_player_e_enfileirar_diff_rapida()
+    def _loop_rede(self) -> None:
+        while self._thread_rede_ativa:
+            self._supervisionar_player_e_enfileirar_saida()
             envio = self.ColetarDiffsRapidas()
-            remotas: List[Dict[str, object]] = []
-            if self._callback_loop_rapido is not None:
+            eventos = [d for d in envio if str(d.get("tipo", "")).strip().lower() == "evento"]
+            updates = [d for d in envio if str(d.get("tipo", "")).strip().lower() != "evento"]
+            envelope = {
+                "tick_cliente": int(self._tick_cliente),
+                "ultimo_tick_recebido": int(self._ultimo_tick_recebido),
+                "eventos": eventos,
+                "updates": updates,
+            }
+            self._tick_cliente += 1
+            resposta = {}
+            if self._callback_loop_rede is not None:
                 try:
-                    resposta = self._callback_loop_rapido(envio)
-                    if isinstance(resposta, list):
-                        remotas = resposta
+                    resp = self._callback_loop_rede(envelope)
+                    if isinstance(resp, dict):
+                        resposta = resp
                 except Exception:
                     if envio:
                         with self._lock_diffs:
-                            self._fila_diffs_rapidas_envio = envio + self._fila_diffs_rapidas_envio
-            for diff in remotas:
-                if isinstance(diff, dict) and not self._deve_ignorar_diff(diff):
-                    self.AplicarDiffRapida(diff)
-            time.sleep(self._intervalo_rapido)
-
-    def _loop_diffs_lentas(self) -> None:
-        while self._thread_lenta_ativa:
-            self._supervisionar_player_e_enfileirar_diff_lenta()
-            envio = self.ColetarDiffsLentas()
-            remotas: List[Dict[str, object]] = []
-            if self._callback_loop_lento is not None:
-                try:
-                    resposta = self._callback_loop_lento(envio)
-                    if isinstance(resposta, list):
-                        remotas = resposta
-                except Exception:
-                    if envio:
-                        with self._lock_diffs:
-                            self._fila_diffs_lentas_envio = envio + self._fila_diffs_lentas_envio
-            for diff in remotas:
-                if isinstance(diff, dict) and not self._deve_ignorar_diff(diff):
-                    self.AplicarDiffLenta(diff)
-            time.sleep(self._intervalo_lento)
+                            self._fila_saida_envio = envio + self._fila_saida_envio
+            pacotes = resposta.get("pacotes", []) if isinstance(resposta.get("pacotes"), list) else []
+            for pacote in pacotes:
+                if not isinstance(pacote, dict):
+                    continue
+                tick = int(pacote.get("tick", 0) or 0)
+                if tick <= 0 or tick <= self._ultimo_tick_recebido:
+                    continue
+                diffs = pacote.get("diffs", []) if isinstance(pacote.get("diffs"), list) else []
+                for diff in diffs:
+                    if isinstance(diff, dict) and not self._deve_ignorar_diff(diff):
+                        self.aplicar_diff(diff)
+                self._ultimo_tick_recebido = tick
+            time.sleep(self._intervalo_rede)
 
     # ---------------------------------------------------------------------
     # Aplicação de snapshot/diff/evento
@@ -556,7 +460,7 @@ class ControladorObjetos:
         if self._eh_payload_pokemon(payload):
             poke = self.PokemonsPorId.get(oid)
             if poke is None:
-                self.PokemonsPorId[oid] = PokemonMundo(payload)
+                self.PokemonsPorId[oid] = Pokemon(payload)
             else:
                 poke.aplicar_snapshot(payload)
         else:
@@ -793,6 +697,73 @@ class ControladorObjetos:
     def AplicarDiffLenta(self, diff):
         self.aplicar_diff(diff)
 
+    def _snapshot_player_local_rapido(self) -> Dict[str, object]:
+        ator = self.PlayerLocal
+        controle = getattr(ator, "Controle", None)
+        return {
+            "id": int(getattr(ator, "Id", 0) or 0),
+            "tipo": "entidade_player",
+            "posicao": [float(ator.Posicao[0]), float(ator.Posicao[1])],
+            "raio_colisao": float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35) or 0.35),
+            "estado": {
+                "angulo": float(getattr(ator, "AnguloOlhar", 0.0) or 0.0),
+                "tapa": bool(ator.esta_tapando() if hasattr(ator, "esta_tapando") else False),
+                "mirando": bool(getattr(controle, "_mirando", False)) if controle is not None else False,
+                "inventario_aberto": bool(getattr(controle, "InventarioAberto", False)) if controle is not None else False,
+                "correndo": bool(getattr(controle, "_tentando_correr", False)) if controle is not None else False,
+            },
+        }
+
+    def _snapshot_player_local_lento(self) -> Dict[str, object]:
+        ator = self.PlayerLocal
+        perfil = getattr(ator, "Perfil", None)
+        inventario = getattr(ator, "Inventario", None)
+        return {
+            "id": int(getattr(ator, "Id", 0) or 0),
+            "tipo": "entidade_player",
+            "nome": str(getattr(ator, "Nome", "") or ""),
+            "skin": str(getattr(ator, "NomeSkin", "S1") or "S1"),
+            "perfil": perfil.serializar() if perfil is not None else {},
+            "inventario": inventario.serializar() if inventario is not None else {},
+        }
+
+    def _delta_snapshot(self, anterior: Optional[Dict[str, object]], atual: Dict[str, object]) -> Dict[str, object]:
+        if not isinstance(anterior, dict):
+            return dict(atual)
+        delta: Dict[str, object] = {}
+        for k, v in atual.items():
+            if k not in anterior:
+                delta[k] = v
+                continue
+            av = anterior.get(k)
+            if isinstance(v, dict) and isinstance(av, dict):
+                if v != av:
+                    delta[k] = dict(v)
+                continue
+            if v != av:
+                delta[k] = v
+        return delta
+
+    def _coletar_supervisao_player_local(self, rapida: bool) -> None:
+        if self.PlayerLocal is None:
+            return
+        ator_id = int(getattr(self.PlayerLocal, "Id", 0) or 0)
+        if ator_id <= 0:
+            return
+        if rapida:
+            snapshot = self._snapshot_player_local_rapido()
+            delta = self._delta_snapshot(self._snapshot_player_supervisao_rapida, snapshot)
+            self._snapshot_player_supervisao_rapida = snapshot
+        else:
+            snapshot = self._snapshot_player_local_lento()
+            delta = self._delta_snapshot(self._snapshot_player_supervisao_lenta, snapshot)
+            self._snapshot_player_supervisao_lenta = snapshot
+        if not delta:
+            return
+        delta.setdefault("id", ator_id)
+        delta.setdefault("tipo", "entidade_player")
+        self.EnfileirarDiffRapida({"tipo": "update", "objeto_id": ator_id, "payload": delta})
+
     def _sincronizar_player_local(self) -> None:
         if self.PlayerLocal is None:
             return
@@ -864,6 +835,9 @@ class ControladorObjetos:
         for obj in interativos:
             diff = obj.processar_interacao_player(self.PlayerLocal)
             if isinstance(diff, dict):
+                payload = diff.get("payload") if isinstance(diff.get("payload"), dict) else {}
+                payload["dono_id"] = int(getattr(self.PlayerLocal, "Id", 0) or 0)
+                diff["payload"] = payload
                 self.EnfileirarDiffRapida(diff)
 
     def _atualizar_alvo_local_captura(self, camera) -> None:
@@ -900,6 +874,49 @@ class ControladorObjetos:
         for oid, poke in itens:
             poke.definir_alvo_local_captura(int(oid) == int(melhor_id) if melhor_id is not None else False)
 
+
+    def _obter_sprite_fallback(self, caminho):
+        caminho = str(caminho or "").strip()
+        if not caminho:
+            return None
+        if caminho in self._cache_sprites_fallback:
+            return self._cache_sprites_fallback[caminho]
+        if not os.path.exists(caminho):
+            self._cache_sprites_fallback[caminho] = None
+            return None
+        try:
+            sprite = pygame.image.load(caminho).convert_alpha()
+        except pygame.error:
+            sprite = None
+        self._cache_sprites_fallback[caminho] = sprite
+        return sprite
+
+    def _render_fallback_objeto(self, tela, camera, obj: Dict[str, object], cor_fallback=(222, 233, 245)):
+        pos = obj.get("posicao", [0.0, 0.0])
+        if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            return
+        px, py = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
+
+        codigo_natural = obj.get("codigo_natural")
+        if codigo_natural is None and isinstance(obj.get("estado"), dict):
+            codigo_natural = obj["estado"].get("codigo_natural")
+        cfg_natural = tipo_estrutura_natural_por_codigo(codigo_natural)
+
+        sprite_path = str(obj.get("sprite", "")).strip()
+        if not sprite_path and cfg_natural:
+            sprite_path = str(cfg_natural.get("sprite", "")).strip()
+
+        sprite = self._obter_sprite_fallback(sprite_path)
+        if sprite is not None:
+            sprite_rect = sprite.get_rect(center=(int(px), int(py)))
+            tela.blit(sprite, sprite_rect)
+            return
+
+        raio_raw = max(0.0, float(obj.get("raio_colisao", 0.4)))
+        raio_px = int(raio_raw if raio_raw > 4.0 else raio_raw * camera.TilePx)
+        raio_px = max(3, min(80, raio_px))
+        pygame.draw.circle(tela, cor_fallback, (int(px), int(py)), raio_px)
+
     # ---------------------------------------------------------------------
     # Render
     # ---------------------------------------------------------------------
@@ -932,12 +949,12 @@ class ControladorObjetos:
 
             poke = self.PokemonsPorId.get(oid)
             if poke is not None:
-                poke.desenhar(tela, camera, dt_pokemons)
+                poke.render(tela, camera, dt_pokemons)
                 continue
 
             bau = self.BausPorId.get(oid)
             if bau is not None:
-                bau.desenhar(tela, camera)
+                bau.render(tela, camera)
                 continue
 
             proj = self.ProjeteisPorId.get(oid)
@@ -954,7 +971,7 @@ class ControladorObjetos:
                     Ator.desenhar_nome(tela, pos_tela, ator_remoto.Nome)
                 continue
 
-            GameObjeto.desenhar_snapshot(tela, camera, obj, cor_fallback=(222, 233, 245))
+            self._render_fallback_objeto(tela, camera, obj, cor_fallback=(222, 233, 245))
 
     def RenderizarEstruturas(self, tela, camera):
         for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
@@ -964,7 +981,7 @@ class ControladorObjetos:
                 continue
             if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220) is None:
                 continue
-            GameObjeto.desenhar_snapshot(tela, camera, obj, cor_fallback=(125, 86, 54))
+            self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54))
 
     def _renderizar_player_local(self, tela, camera):
         if self.PlayerLocal is None:

@@ -1,22 +1,13 @@
 import pygame
 
 from Codigo.Modulos.Camera import Camera
-from Codigo.Modulos.ControladorObjetos import ControladorObjetos
-from Codigo.Modulos.LeitorMundo import LeitorMundo
+from Codigo.Modulos.ControladorMundo.ControladorMundo import ControladorMundo
 from Codigo.Modulos.ElementosHud import ElementosHud
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Modulos.Ferramentas import GerenciadorFPS
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
-from Codigo.Server.ServerMundo import (
-    consultar_chunks_mundo,
-    consultar_estado_mundo,
-    enviar_diffs_mundo_categoria,
-    receber_diffs_mundo,
-    desconectar_mundo,
-    enviar_mensagem_terminal,
-    buscar_mensagens_terminal,
-)
+from Codigo.Server.ServerMundo import enviar_mensagem_terminal, buscar_mensagens_terminal
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
 from Codigo.Prefabs.Terminal import Terminal
 
@@ -28,8 +19,7 @@ class CenaMundo:
         self.ID = "Mundo"
 
         self.Camera = None
-        self.LeitorMundo = None
-        self.ControladorObjetos = ControladorObjetos()
+        self.ControladorMundo = None
         self.EntidadeMain = None
         self.ElementosHud = ElementosHud()
         self.SubtelaOpcoes = SubtelaOpcoes()
@@ -46,33 +36,23 @@ class CenaMundo:
             ResetTelaConfig()
             self.TelaAtual = "Config"
 
+    def _montar_mundo(self, JOGO):
+        dados = JOGO.INFO.get("PlayerDadosServer") or {}
+        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=None, tile_px=50)
+        self.ControladorMundo = ControladorMundo(jogo=JOGO, camera=self.Camera)
+        player_local = self.ControladorMundo.montar_player_local(dados)
+        self.EntidadeMain = player_local
+        self.Camera.definir_main(self.EntidadeMain)
+        self.SubtelaInventario = UnificadorInventario(player_local)
 
-    def _aplicar_regras_servidor(self, regras: dict | None) -> None:
-        if not isinstance(regras, dict):
-            return
+        regras = JOGO.INFO.get("RegrasServer") if isinstance(JOGO.INFO.get("RegrasServer"), dict) else {}
         mundo = regras.get("mundo") if isinstance(regras.get("mundo"), dict) else {}
         chunk_tiles = mundo.get("chunk_tiles")
         if chunk_tiles is not None:
             try:
-                self.ControladorObjetos._chunk_tamanho_tiles = max(1, int(chunk_tiles))
+                self.ControladorMundo.Objetos._chunk_tamanho_tiles = max(1, int(chunk_tiles))
             except (TypeError, ValueError):
                 pass
-
-    def _montar_mundo(self, JOGO):
-        self._aplicar_regras_servidor(JOGO.INFO.get("RegrasServer"))
-        dados = JOGO.INFO.get("PlayerDadosServer") or {}
-        player_local = self.ControladorObjetos.montar_player_local(dados)
-        self.EntidadeMain = player_local
-        self.SubtelaInventario = UnificadorInventario(player_local)
-
-        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=self.EntidadeMain, tile_px=50)
-        self.LeitorMundo = LeitorMundo(
-            jogo=JOGO,
-            camera=self.Camera,
-            callback_atualizacao=consultar_chunks_mundo,
-            intervalo_poll=0.20,
-            raio_chunks=4,
-        )
 
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
@@ -84,52 +64,10 @@ class CenaMundo:
             autor_local=usuario,
         )
         self.Terminal.iniciar()
+
         if link:
-            self.LeitorMundo.conectar_servidor(link)
-            self.LeitorMundo.iniciar()
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
-
-            # Bootstrap inicial de objetos remotos já existentes próximos ao player.
-            self._bootstrap_objetos_remotos_iniciais(link, client_id)
-
-            self.ControladorObjetos.iniciar_threads_diffs(
-                callback_loop_rapido=lambda diffs: self._loop_rede_diffs_rapidas(link, client_id, diffs),
-                callback_loop_lento=lambda diffs: self._loop_rede_diffs_lentas(link, client_id, diffs),
-                intervalo_rapido=0.05,
-                intervalo_lento=5.0,
-            )
-
-    def _bootstrap_objetos_remotos_iniciais(self, link, client_id):
-        """Consulta única em modo estado para receber spawns iniciais próximos."""
-        resposta = consultar_estado_mundo(link, client_id, self.Camera.PosicaoTiles, raio_chunks=4)
-        if not isinstance(resposta, dict):
-            return
-
-        diffs = resposta.get("diffs", [])
-        if not isinstance(diffs, list):
-            return
-
-        for diff in diffs:
-            if isinstance(diff, dict):
-                self.ControladorObjetos.aplicar_diff(diff)
-
-    def _loop_rede_diffs_rapidas(self, link, client_id, diffs_locais):
-        """Canal rápido: envia e recebe apenas diffs visuais/dinâmicas."""
-        if diffs_locais:
-            enviar_diffs_mundo_categoria(link, client_id, "rapida", diffs_locais)
-        resposta = receber_diffs_mundo(link, client_id, self.Camera.PosicaoTiles, categoria="rapida", raio_chunks=4)
-        if not isinstance(resposta, dict):
-            return []
-        return resposta.get("diffs", []) if isinstance(resposta.get("diffs", []), list) else []
-
-    def _loop_rede_diffs_lentas(self, link, client_id, diffs_locais):
-        """Canal lento: envia e recebe apenas diffs persistentes."""
-        if diffs_locais:
-            enviar_diffs_mundo_categoria(link, client_id, "lenta", diffs_locais)
-        resposta = receber_diffs_mundo(link, client_id, self.Camera.PosicaoTiles, categoria="lenta", raio_chunks=4)
-        if not isinstance(resposta, dict):
-            return []
-        return resposta.get("diffs", []) if isinstance(resposta.get("diffs", []), list) else []
+            self.ControladorMundo.conectar(link, client_id)
 
     def Tela(self, JOGO, EVENTOS, dt):
         gfps = self.GerenciadorFPS
@@ -144,40 +82,28 @@ class CenaMundo:
         gfps.iniciar_trecho("aplicacao_subtela")
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
 
-        if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaOpcoes.Ativa:
-            self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto = False
+        player = self.ControladorMundo.player_local
+        if player is not None and self.SubtelaOpcoes.Ativa:
+            player.Controle.InventarioAberto = False
 
         player_bloqueado = bloqueio_gameplay or self.SubtelaOpcoes.Ativa or self.TelaAtual == "Config"
-        if not player_bloqueado:
-            mouse_tela = pygame.mouse.get_pos()
-            mouse_mundo_tiles = self.Camera.tela_para_mundo_tiles(mouse_tela)
-            self.ControladorObjetos.atualizar_player_local(EVENTOS, dt, mouse_mundo_tiles, gerenciador_fps=gfps)
-        elif self.ControladorObjetos.PlayerLocal is not None and self.ControladorObjetos.PlayerLocal.Controle is not None:
-            self.ControladorObjetos.PlayerLocal.Controle.atualizar_bloqueado(dt)
+        self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
-        if self.ControladorObjetos.PlayerLocal is not None and self.SubtelaInventario is not None:
-            self.SubtelaInventario.Ativo = self.ControladorObjetos.PlayerLocal.Controle.InventarioAberto
+        if player is not None and self.SubtelaInventario is not None:
+            self.SubtelaInventario.Ativo = player.Controle.InventarioAberto
             self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
         gfps.finalizar_trecho("aplicacao_subtela")
 
         self.Camera.atualizar(dt)
 
-        if self.ControladorObjetos.PlayerLocal is not None:
-            self.LeitorMundo.atualizar_regras_mundo(self.ControladorObjetos.PlayerLocal.Controle)
-
         JOGO.TELA.fill((20, 20, 28))
-        self.LeitorMundo.renderizar_mundo(JOGO.TELA, gerenciador_fps=gfps)
-
         gfps.iniciar_trecho("renderizar_objetos")
-        self.ControladorObjetos.renderizar(JOGO.TELA, self.Camera)
+        self.ControladorMundo.renderizar(JOGO.TELA)
         gfps.finalizar_trecho("renderizar_objetos")
 
-        if self.ControladorObjetos.PlayerLocal is not None:
-            self.ControladorObjetos.PlayerLocal.renderizar_stamina(JOGO.TELA, self.Camera, dt)
-
-        if self.ControladorObjetos.PlayerLocal is not None:
-            player_local = self.ControladorObjetos.PlayerLocal
-            self.ElementosHud.desenhar(JOGO.TELA, player_local.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
+        if player is not None:
+            player.renderizar_stamina(JOGO.TELA, self.Camera, dt)
+            self.ElementosHud.desenhar(JOGO.TELA, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
 
         self.SubtelaOpcoes.desenhar(JOGO)
         if self.SubtelaInventario is not None and self.SubtelaInventario.Ativo:
@@ -187,21 +113,12 @@ class CenaMundo:
 
         gfps.imprimir_relatorio()
 
-
     def Finalizar(self, JOGO):
-        self.ControladorObjetos.parar_threads_diffs()
         if self.Terminal is not None:
             self.Terminal.parar()
-        if self.LeitorMundo:
-            self.LeitorMundo.parar()
-        self._desconectar_do_mundo(JOGO)
-
-    def _desconectar_do_mundo(self, JOGO):
-        if self._desconectado:
-            return
-        server = JOGO.INFO.get("ServerSelecionado") or {}
-        link = server.get("ip")
-        client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
-        if link:
-            desconectar_mundo(link, client_id)
+        if self.ControladorMundo is not None:
+            server = JOGO.INFO.get("ServerSelecionado") or {}
+            link = server.get("ip")
+            client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+            self.ControladorMundo.parar(link, client_id)
         self._desconectado = True

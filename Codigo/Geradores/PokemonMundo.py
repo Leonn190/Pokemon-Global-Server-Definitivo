@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple
 
 import pygame
 
-from Codigo.Geradores.Entidade import Entidade
+from Codigo.Modulos.Colisor import Colisor
 from Codigo.Geradores.Itens.ItemInventario import ItemInventario
 from Codigo.Modulos.Auxiliares import carregar_frames
 
@@ -16,15 +16,18 @@ Vector2 = Tuple[float, float]
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
 
 
-class PokemonMundo(Entidade):
+class Pokemon:
     _cache_frames: Dict[str, List[pygame.Surface]] = {}
     _cache_frames_escalados: Dict[Tuple[str, int], List[pygame.Surface]] = {}
     _cache_rotacao_bola: Dict[Tuple[int, int], pygame.Surface] = {}
 
     def __init__(self, snapshot: Dict[str, object]) -> None:
         pos = self._pos(snapshot.get("posicao"))
-        super().__init__(posicao=pos, raio_colisao=max(0.2, self._f(snapshot.get("raio_colisao"), 0.45)), raio_interacao=1.2, id_objeto=int(snapshot.get("id", 0)))
-        self.Destino: Vector2 = pos
+        self.Id = int(snapshot.get("id", 0) or 0)
+        self.id_objeto = self.Id
+        self.Posicao = (float(pos[0]), float(pos[1]))
+        self.Destino: Vector2 = self.Posicao
+        self.Colisor = Colisor(x=self.Posicao[0], y=self.Posicao[1], raio_colisao=max(0.2, self._f(snapshot.get("raio_colisao"), 0.45)), raio_interacao=1.2)
         self.Nome = "Pokemon"
         self.Especie = "Pokemon"
         self.Info: Dict[str, object] = {"stats": {}}
@@ -129,6 +132,25 @@ class PokemonMundo(Entidade):
         self.Destino = destino
         if str(snapshot.get("movimento") or "").strip().lower() == "teleportar":
             self.definir_posicao(*destino)
+
+    def definir_posicao(self, x: float, y: float) -> None:
+        self.Posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.Posicao)
+
+    def mover(self, dt: float) -> None:
+        self.atualizar(dt)
+
+    def animacaptura(self, tela, camera, centro, tile_px):
+        self._desenhar_pokebola_no_chao(tela, camera, centro, "absorcao", tile_px)
+
+    def animachecagem(self, tela, camera, centro, fase, tile_px):
+        self._desenhar_tremida(tela, camera, centro, fase, tile_px)
+
+    def animafuga(self, tela, centro, base):
+        self._desenhar_escape(tela, centro, base)
+
+    def animavolta(self, tela, camera, centro, tile_px):
+        self._desenhar_retorno_ao_player(tela, camera, centro, "retorno_bola", tile_px)
 
     def atualizar(self, dt: float) -> None:
         dt = max(0.0, float(dt))
@@ -244,7 +266,7 @@ class PokemonMundo(Entidade):
     def _desenhar_tremida(self, tela, camera, centro, fase, tile_px):
         self._desenhar_bola_captura(tela, camera, centro, fase, tile_px)
 
-    def desenhar(self, tela, camera, dt: float) -> None:
+    def render(self, tela, camera, dt: float) -> None:
         self.atualizar(dt)
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
         centro = (int(cx), int(cy))
@@ -272,3 +294,7 @@ class PokemonMundo(Entidade):
         else:
             self._desenhar_circulo_base(tela, centro, base, fase)
             self._desenhar_pokemon_normal(tela, centro, max(2, int(base * self._escala_visual)))
+
+
+Pokemon.desenhar = Pokemon.render
+PokemonMundo = Pokemon

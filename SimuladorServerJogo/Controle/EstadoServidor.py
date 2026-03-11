@@ -12,6 +12,7 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Rotas.Ativador import resetar_estado_clientes
 from SimuladorServerJogo.Controle.Cerebro import CEREBRO
+from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Regras.Loader import carregar_regras_player, carregar_regras_mundo
 
 _CHAVE_SEGURANCA = "1900"
@@ -314,8 +315,10 @@ def definir_ligado(ativo):
             _ESTADO["ligado"] = False
             return False, "Não é possível ligar o servidor sem mundo"
         _ESTADO["ligado"] = desejado
+        TIQUE_SERVIDOR.definir_ativo(_ESTADO["ligado"])
         if not _ESTADO["ligado"]:
             CEREBRO.desligar_servidor()
+            TIQUE_SERVIDOR.parar()
         return True, "Estado do servidor atualizado"
 
 

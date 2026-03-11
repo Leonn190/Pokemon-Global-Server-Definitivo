@@ -1,276 +1,171 @@
-"""Clones server-side das classes base de GameObject para simulação de mundo online."""
+"""Objetos concretos server-side do mundo."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import time
 from typing import Dict, Optional, Tuple
+
+from Codigo.Modulos.Colisor import Colisor
+from SimuladorServerJogo.Logica.AutoridadeCaptura import resolver_captura, resolver_fruta
 
 Vector2 = Tuple[float, float]
 
 
-@dataclass
-class GameObjetoServer:
-    """Clone simplificado da classe mãe GameObjeto para uso no servidor."""
-
-    id_objeto: int
-    tipo_classe: str
-    posicao: Vector2 = (0.0, 0.0)
-    raio_colisao: float = 12.0
-    raio_interacao: float = 12.0
-    campo: float = 0.0
-    intensidade: float = 0.0
-    estado_extra: Dict[str, object] = field(default_factory=dict)
-
-    @property
-    def Id(self) -> int:
-        return int(self.id_objeto)
+class AtorServer:
+    def __init__(self, id_objeto: int, usuario: str, skin: str, posicao: Vector2 = (0.0, 0.0)) -> None:
+        self.id_objeto = int(id_objeto)
+        self.Id = self.id_objeto
+        self.tipo_classe = "entidade_player"
+        self.posicao = (float(posicao[0]), float(posicao[1]))
+        self.raio_colisao = 0.55
+        self.raio_interacao = 0.75
+        self.campo = 0.0
+        self.intensidade = 0.0
+        self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
+        self.estado_extra = {"subtipo": "player", "usuario": str(usuario), "skin": str(skin), "angulo": 0.0}
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.posicao)
 
     def serializar(self) -> Dict[str, object]:
-        return {
-            "id": self.Id,
-            "tipo": self.tipo_classe,
-            "posicao": [float(self.posicao[0]), float(self.posicao[1])],
-            "raio_colisao": float(self.raio_colisao),
-            "raio_interacao": float(self.raio_interacao),
-            "campo": float(self.campo),
-            "intensidade": float(self.intensidade),
-            "estado": dict(self.estado_extra),
-        }
-
-    @classmethod
-    def de_dict(cls, dados: Dict[str, object]) -> "GameObjetoServer":
-        pos = dados.get("posicao", [0.0, 0.0])
-        return cls(
-            id_objeto=int(dados["id"]),
-            tipo_classe=str(dados.get("tipo", "objeto")),
-            posicao=(float(pos[0]), float(pos[1])),
-            raio_colisao=float(dados.get("raio_colisao", 12.0)),
-            raio_interacao=float(dados.get("raio_interacao", 12.0)),
-            campo=float(dados.get("campo", 0.0)),
-            intensidade=float(dados.get("intensidade", 0.0)),
-            estado_extra=dict(dados.get("estado", {})),
-        )
+        return {"id": self.Id, "tipo": self.tipo_classe, "posicao": [self.posicao[0], self.posicao[1]], "raio_colisao": self.raio_colisao, "raio_interacao": self.raio_interacao, "campo": self.campo, "intensidade": self.intensidade, "estado": dict(self.estado_extra)}
 
 
-class EntidadeServer(GameObjetoServer):
-    def __init__(self, id_objeto: int, posicao: Vector2 = (0.0, 0.0), velocidade: Vector2 = (0.0, 0.0), **kwargs) -> None:
-        super().__init__(id_objeto=id_objeto, tipo_classe="entidade", posicao=posicao, **kwargs)
-        self.estado_extra["velocidade"] = [float(velocidade[0]), float(velocidade[1])]
+class BauServer:
+    def __init__(self, id_objeto: int, tipo_bau: str, itens: list, posicao: Vector2 = (0.0, 0.0), aberto: bool = False, raio_colisao: float = 0.42, raio_interacao: float = 0.85, **kwargs) -> None:
+        self.id_objeto = int(id_objeto)
+        self.Id = self.id_objeto
+        self.tipo_classe = "entidade_bau"
+        self.posicao = (float(posicao[0]), float(posicao[1]))
+        self.raio_colisao = float(raio_colisao)
+        self.raio_interacao = float(raio_interacao)
+        self.campo = 0.0
+        self.intensidade = 0.0
+        self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
+        self.estado_extra = {"subtipo": "bau", "tipo_bau": str(tipo_bau), "itens": list(itens), "aberto": bool(aberto), "aberto_em": (time.monotonic() if aberto else 0.0)}
 
+    def definir_posicao(self, x: float, y: float) -> None:
+        self.posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.posicao)
 
-class EstruturaServer(GameObjetoServer):
-    def __init__(self, id_objeto: int, posicao: Vector2 = (0.0, 0.0), **kwargs) -> None:
-        super().__init__(id_objeto=id_objeto, tipo_classe="estrutura", posicao=posicao, **kwargs)
-
-
-class BauServer(EntidadeServer):
-    def __init__(
-        self,
-        id_objeto: int,
-        tipo_bau: str,
-        itens: list,
-        posicao: Vector2 = (0.0, 0.0),
-        aberto: bool = False,
-        **kwargs,
-    ) -> None:
-        super().__init__(id_objeto=id_objeto, posicao=posicao, **kwargs)
-        self.estado_extra.update(
-            {
-                "subtipo": "bau",
-                "tipo_bau": str(tipo_bau),
-                "itens": list(itens),
-                "aberto": bool(aberto),
-                "aberto_em": 0.0,
-            }
-        )
-
-    def abrir(self) -> bool:
+    def abrir(self, player=None, dono_id: int = 0) -> Dict[str, object] | None:
         if bool(self.estado_extra.get("aberto", False)):
-            return False
+            return None
         self.estado_extra["aberto"] = True
         self.estado_extra["aberto_em"] = time.monotonic()
-        return True
+        return {"dono_id": int(dono_id or 0), "itens": list(self.estado_extra.get("itens", []))}
+
+    def serializar(self) -> Dict[str, object]:
+        return {"id": self.Id, "tipo": self.tipo_classe, "posicao": [self.posicao[0], self.posicao[1]], "raio_colisao": self.raio_colisao, "raio_interacao": self.raio_interacao, "campo": self.campo, "intensidade": self.intensidade, "estado": dict(self.estado_extra)}
 
 
-class AtorServer(EntidadeServer):
-    def __init__(self, id_objeto: int, usuario: str, skin: str, posicao: Vector2 = (0.0, 0.0)) -> None:
-        super().__init__(id_objeto=id_objeto, posicao=posicao)
-        self.estado_extra.update({"subtipo": "player", "usuario": usuario, "skin": skin, "angulo": 0.0})
-
-
-class EstruturaNaturalServer(EstruturaServer):
-    def __init__(
-        self,
-        id_objeto: int,
-        tipo: str,
-        nome: str,
-        sprite: str,
-        posicao: Vector2 = (0.0, 0.0),
-        raio_colisao: float = 20.0,
-        raio_interacao: float = 26.0,
-        campo: float = 0.0,
-        intensidade: float = 0.0,
-        recursos: Optional[Dict[str, int]] = None,
-        codigo_natural: int = 0,
-    ):
-        super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=raio_colisao, raio_interacao=raio_interacao)
-        super().__init__(
-            id_objeto=id_objeto,
-            posicao=posicao,
-            raio_colisao=raio_colisao,
-            raio_interacao=raio_interacao,
-            campo=campo,
-            intensidade=intensidade,
-        )
-        self.estado_extra.update({"subtipo": tipo, "recursos": dict(recursos or {})})
+class EstruturaNaturalServer:
+    def __init__(self, id_objeto: int, tipo: str, nome: str, sprite: str, posicao: Vector2 = (0.0, 0.0), raio_colisao: float = 20.0, raio_interacao: float = 26.0, campo: float = 0.0, intensidade: float = 0.0, recursos: Optional[Dict[str, int]] = None, codigo_natural: int = 0):
+        self.id_objeto = int(id_objeto)
+        self.Id = self.id_objeto
+        self.tipo_classe = "estrutura_natural"
+        self.posicao = (float(posicao[0]), float(posicao[1]))
+        self.raio_colisao = float(raio_colisao)
+        self.raio_interacao = float(raio_interacao)
+        self.campo = float(campo)
+        self.intensidade = float(intensidade)
+        self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
+        self.estado_extra = {"subtipo": str(tipo), "recursos": dict(recursos or {})}
         self.nome = str(nome)
         self.sprite = str(sprite)
         self.codigo_natural = int(codigo_natural)
 
+    def definir_posicao(self, x: float, y: float) -> None:
+        self.posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.posicao)
+
     def serializar(self) -> Dict[str, object]:
-        dados = super().serializar()
-        dados["nome"] = self.nome
-        dados["sprite"] = self.sprite
-        dados["codigo_natural"] = self.codigo_natural
-        return dados
+        return {"id": self.Id, "tipo": self.tipo_classe, "posicao": [self.posicao[0], self.posicao[1]], "raio_colisao": self.raio_colisao, "raio_interacao": self.raio_interacao, "campo": self.campo, "intensidade": self.intensidade, "estado": dict(self.estado_extra), "nome": self.nome, "sprite": self.sprite, "codigo_natural": self.codigo_natural}
 
 
-class PokemonServer(EntidadeServer):
+class PokemonServer:
     def __init__(self, id_objeto: int, especie: str, posicao: Vector2 = (0.0, 0.0), **kwargs) -> None:
-        super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=0.45, raio_interacao=1.2, **kwargs)
-        self.estado_extra.update(
-            {
-                "subtipo": "pokemon",
-                "especie": str(especie),
-                "nome": str(especie),
-                "ativo": True,
-                "movendo": False,
-                "movendo_ate": 0.0,
-                "dificuldade_captura": 50.0,
-                "tamanho_barra_captura": 0.32,
-                "velocidade_barra_captura": 90.0,
-                "tentativas_falhas_captura": 0,
-                "frutas_aplicadas": [],
-                "estado_frutificacao": {"multiplicador_doces": 1.0, "bonus_captura_frutas": 0.0, "bonus_captura_bioma": {}, "limite_frutas": 2},
-                "captura_fase": "nenhuma",
-                "captura": {
-                    "fase": "nenhuma",
-                    "ativa": False,
-                    "agenda": [],
-                    "inicio_ms_servidor": 0,
-                    "fase_inicio_ms": 0,
-                    "tremida_atual": 0,
-                    "bola_nome": "",
-                    "dono_id": 0,
-                },
-            }
-        )
+        self.id_objeto = int(id_objeto)
+        self.Id = self.id_objeto
+        self.tipo_classe = "entidade_pokemon"
+        self.posicao = (float(posicao[0]), float(posicao[1]))
+        self.raio_colisao = float(kwargs.get("raio_colisao", 0.45))
+        self.raio_interacao = float(kwargs.get("raio_interacao", 1.2))
+        self.campo = float(kwargs.get("campo", 0.0))
+        self.intensidade = float(kwargs.get("intensidade", 0.0))
+        self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
+        self.estado_extra = {"subtipo": "pokemon", "especie": str(especie), "nome": str(especie), "ativo": True, "movendo": False, "movendo_ate": 0.0, "dificuldade_captura": 50.0, "tamanho_barra_captura": 0.32, "velocidade_barra_captura": 90.0, "tentativas_falhas_captura": 0, "frutas_aplicadas": [], "estado_frutificacao": {"multiplicador_doces": 1.0, "bonus_captura_frutas": 0.0, "bonus_captura_bioma": {}, "limite_frutas": 2}, "captura_fase": "nenhuma", "captura": {"fase": "nenhuma", "ativa": False, "agenda": [], "inicio_ms_servidor": 0, "fase_inicio_ms": 0, "tremida_atual": 0, "bola_nome": "", "dono_id": 0}}
 
-    def serializar(self) -> Dict[str, object]:
-        dados = super().serializar()
-        estado = dados.get("estado", {}) if isinstance(dados.get("estado", {}), dict) else {}
-        captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
-        estado["captura_fase"] = str(captura.get("fase", estado.get("captura_fase", "nenhuma")))
-        estado["captura_pendente"] = bool(captura.get("captura_pendente", False))
-        estado["captura_resultado"] = str(captura.get("resultado", "pendente") or "pendente")
-        agora = time.monotonic()
-        estado["movendo"] = bool(agora < float(estado.get("movendo_ate", 0.0)))
-
-        if bool(captura.get("captura_pendente", False)):
-            dados["raio_colisao"] = 0.0
-            dados["raio_interacao"] = 0.0
-
-        dados["estado"] = estado
-        dados["nome"] = str(estado.get("nome") or estado.get("especie") or "Pokemon")
-        stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
-        dados["vida"] = float(stats.get("Vida", 0.0))
-        dados["atk"] = float(stats.get("Atk", 0.0))
-        dados["def"] = float(stats.get("Def", 0.0))
-        return dados
+    def definir_posicao(self, x: float, y: float) -> None:
+        self.posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.posicao)
 
     def mover(self, deslocamento: Vector2, colisor_cb=None, velocidade_tiles_s: float = 1.0) -> bool:
-        if not bool(self.estado_extra.get("ativo", True)):
-            return False
-        if time.monotonic() < float(self.estado_extra.get("movendo_ate", 0.0)):
+        if not bool(self.estado_extra.get("ativo", True)) or time.monotonic() < float(self.estado_extra.get("movendo_ate", 0.0)):
             return False
         dx = float(deslocamento[0]) if isinstance(deslocamento, (list, tuple)) and len(deslocamento) > 0 else 0.0
         dy = float(deslocamento[1]) if isinstance(deslocamento, (list, tuple)) and len(deslocamento) > 1 else 0.0
-        destino = (float(self.posicao[0]) + dx, float(self.posicao[1]) + dy)
+        destino = (self.posicao[0] + dx, self.posicao[1] + dy)
         if callable(colisor_cb) and not bool(colisor_cb(destino, self.raio_colisao)):
             return False
-        self.definir_posicao(destino[0], destino[1])
-        distancia = max(0.0, ((dx * dx) + (dy * dy)) ** 0.5)
-        velocidade = max(0.01, float(velocidade_tiles_s))
-        duracao_mov = distancia / velocidade
-        agora = time.monotonic()
-        self.estado_extra["movendo"] = bool(duracao_mov > 0.0)
-        self.estado_extra["movendo_ate"] = agora + duracao_mov
+        self.definir_posicao(*destino)
+        distancia = max(0.0, (dx * dx + dy * dy) ** 0.5)
+        duracao = distancia / max(0.01, float(velocidade_tiles_s))
+        self.estado_extra["movendo"] = bool(duracao > 0)
+        self.estado_extra["movendo_ate"] = time.monotonic() + duracao
         self.estado_extra["ultimo_movimento"] = [dx, dy]
         return True
+
+    def frutificar(self, nome_item: str, contexto: Optional[Dict[str, object]] = None) -> Dict[str, object]:
+        return resolver_fruta(self, nome_item, contexto=contexto or {})
+
+    def capturar(self, nome_item: str, contexto: Optional[Dict[str, object]] = None) -> Dict[str, object]:
+        return resolver_captura(self, nome_item, contexto=contexto or {})
 
     def sumir(self) -> None:
         self.estado_extra["ativo"] = False
         self.estado_extra["despawnado"] = True
 
-    def capturar(self, capturador: str = "") -> None:
-        self.estado_extra["ativo"] = False
-        self.estado_extra["capturado"] = True
-        self.estado_extra["capturador"] = str(capturador or "")
+    def serializar(self) -> Dict[str, object]:
+        estado = dict(self.estado_extra)
+        captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
+        estado["captura_fase"] = str(captura.get("fase", estado.get("captura_fase", "nenhuma")))
+        estado["captura_pendente"] = bool(captura.get("captura_pendente", False))
+        estado["captura_resultado"] = str(captura.get("resultado", "pendente") or "pendente")
+        estado["movendo"] = bool(time.monotonic() < float(estado.get("movendo_ate", 0.0)))
+        raio_c = 0.0 if bool(captura.get("captura_pendente", False)) else self.raio_colisao
+        raio_i = 0.0 if bool(captura.get("captura_pendente", False)) else self.raio_interacao
+        stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
+        return {"id": self.Id, "tipo": self.tipo_classe, "posicao": [self.posicao[0], self.posicao[1]], "raio_colisao": raio_c, "raio_interacao": raio_i, "campo": self.campo, "intensidade": self.intensidade, "estado": estado, "nome": str(estado.get("nome") or estado.get("especie") or "Pokemon"), "vida": float(stats.get("Vida", 0.0)), "atk": float(stats.get("Atk", 0.0)), "def": float(stats.get("Def", 0.0))}
 
 
-
-class ProjetilServer(EntidadeServer):
-    def __init__(
-        self,
-        id_objeto: int,
-        posicao: Vector2,
-        dono_id: int,
-        tipo_projetil: str,
-        subtipo: str,
-        item_base_id: str,
-        token_arremesso: str,
-        direcao: Vector2,
-        velocidade: float,
-        alcance: float,
-        raio_colisao: float = 0.18,
-    ) -> None:
-        super().__init__(id_objeto=id_objeto, posicao=posicao, raio_colisao=raio_colisao, raio_interacao=raio_colisao)
+class ProjetilServer:
+    def __init__(self, id_objeto: int, posicao: Vector2, dono_id: int, tipo_projetil: str, subtipo: str, item_base_id: str, token_arremesso: str, direcao: Vector2, velocidade: float, alcance: float, raio_colisao: float = 0.18) -> None:
+        self.id_objeto = int(id_objeto)
+        self.Id = self.id_objeto
+        self.tipo_classe = "entidade_projetil"
+        self.posicao = (float(posicao[0]), float(posicao[1]))
+        self.raio_colisao = float(raio_colisao)
+        self.raio_interacao = float(raio_colisao)
+        self.campo = 0.0
+        self.intensidade = 0.0
+        self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
         dx, dy = float(direcao[0]), float(direcao[1])
         n = (dx * dx + dy * dy) ** 0.5 or 1.0
-        self.estado_extra.update(
-            {
-                "subtipo": "projetil",
-                "tipo_projetil": str(tipo_projetil or "item"),
-                "nome_item": str(subtipo or "item"),
-                "item_base_id": str(item_base_id or ""),
-                "dono_id": int(dono_id or 0),
-                "token_arremesso": str(token_arremesso or ""),
-                "posicao_inicial": [float(posicao[0]), float(posicao[1])],
-                "direcao": [dx / n, dy / n],
-                "velocidade": max(0.1, float(velocidade or 10.0)),
-                "alcance": max(0.1, float(alcance or 6.0)),
-                "distancia": 0.0,
-                "tempo_vida": 0.0,
-                "rotacao": 0.0,
-                "terminado": False,
-                "autoritativo": True,
-            }
-        )
+        self.estado_extra = {"subtipo": "projetil", "tipo_projetil": str(tipo_projetil or "item"), "nome_item": str(subtipo or "item"), "item_base_id": str(item_base_id or ""), "dono_id": int(dono_id or 0), "token_arremesso": str(token_arremesso or ""), "posicao_inicial": [self.posicao[0], self.posicao[1]], "direcao": [dx / n, dy / n], "velocidade": max(0.1, float(velocidade or 10.0)), "alcance": max(0.1, float(alcance or 6.0)), "distancia": 0.0, "tempo_vida": 0.0, "rotacao": 0.0, "terminado": False, "autoritativo": True}
+
+    def definir_posicao(self, x: float, y: float) -> None:
+        self.posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.posicao)
 
     def atualizar(self, dt: float) -> None:
         if bool(self.estado_extra.get("terminado", False)):
             return
         dt = max(0.0, float(dt))
-        direcao = self.estado_extra.get("direcao", [1.0, 0.0])
-        dx = float(direcao[0]) if isinstance(direcao, (list, tuple)) and len(direcao) == 2 else 1.0
-        dy = float(direcao[1]) if isinstance(direcao, (list, tuple)) and len(direcao) == 2 else 0.0
-        velocidade = float(self.estado_extra.get("velocidade", 10.0) or 10.0)
-        passo = velocidade * dt
-        self.definir_posicao(self.posicao[0] + dx * passo, self.posicao[1] + dy * passo)
+        dx, dy = self.estado_extra.get("direcao", [1.0, 0.0])
+        passo = float(self.estado_extra.get("velocidade", 10.0) or 10.0) * dt
+        self.definir_posicao(self.posicao[0] + float(dx) * passo, self.posicao[1] + float(dy) * passo)
         self.estado_extra["distancia"] = float(self.estado_extra.get("distancia", 0.0) or 0.0) + passo
         self.estado_extra["tempo_vida"] = float(self.estado_extra.get("tempo_vida", 0.0) or 0.0) + dt
         self.estado_extra["rotacao"] = (float(self.estado_extra.get("rotacao", 0.0) or 0.0) + 560.0 * dt) % 360.0
@@ -283,11 +178,24 @@ class ProjetilServer(EntidadeServer):
             self.estado_extra["motivo_termino"] = str(motivo)
 
     def serializar(self) -> Dict[str, object]:
-        dados = super().serializar()
-        dados["tipo"] = "entidade_projetil"
-        dados["tipo_projetil"] = str(self.estado_extra.get("tipo_projetil", "item"))
-        dados["subtipo"] = str(self.estado_extra.get("nome_item", "item"))
-        dados["item_base_id"] = str(self.estado_extra.get("item_base_id", ""))
-        dados["dono_id"] = int(self.estado_extra.get("dono_id", 0) or 0)
-        dados["token_arremesso"] = str(self.estado_extra.get("token_arremesso", ""))
-        return dados
+        return {"id": self.Id, "tipo": self.tipo_classe, "posicao": [self.posicao[0], self.posicao[1]], "raio_colisao": self.raio_colisao, "raio_interacao": self.raio_interacao, "campo": self.campo, "intensidade": self.intensidade, "estado": dict(self.estado_extra), "tipo_projetil": str(self.estado_extra.get("tipo_projetil", "item")), "subtipo": str(self.estado_extra.get("nome_item", "item")), "item_base_id": str(self.estado_extra.get("item_base_id", "")), "dono_id": int(self.estado_extra.get("dono_id", 0) or 0), "token_arremesso": str(self.estado_extra.get("token_arremesso", ""))}
+
+
+def criar_objeto_mundo_server(dados: Dict[str, object]):
+    dados = dict(dados or {})
+    tipo = str(dados.get("tipo", "")).strip().lower()
+    estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+    pos = dados.get("posicao") if isinstance(dados.get("posicao"), (list, tuple)) and len(dados.get("posicao")) == 2 else [0.0, 0.0]
+    oid = int(dados.get("id", 0) or 0)
+    if tipo == "entidade_player":
+        return AtorServer(id_objeto=oid, usuario=str(estado.get("usuario") or dados.get("usuario") or ""), skin=str(estado.get("skin") or dados.get("skin") or "S1"), posicao=(float(pos[0]), float(pos[1])))
+    if tipo in {"entidade_projetil", "projetil"}:
+        direcao = estado.get("direcao") if isinstance(estado.get("direcao"), (list, tuple)) else dados.get("direcao", [1.0, 0.0])
+        return ProjetilServer(id_objeto=oid, posicao=(float(pos[0]), float(pos[1])), dono_id=int(dados.get("dono_id", estado.get("dono_id", 0)) or 0), tipo_projetil=str(dados.get("tipo_projetil") or estado.get("tipo_projetil") or "item"), subtipo=str(dados.get("subtipo") or estado.get("nome_item") or "item"), item_base_id=str(dados.get("item_base_id") or estado.get("item_base_id") or ""), token_arremesso=str(dados.get("token_arremesso") or estado.get("token_arremesso") or ""), direcao=(float(direcao[0]), float(direcao[1])), velocidade=float(dados.get("velocidade") or estado.get("velocidade") or 10.0), alcance=float(dados.get("alcance") or estado.get("alcance") or 6.0), raio_colisao=float(dados.get("raio_colisao", 0.18) or 0.18))
+    if tipo in {"entidade_pokemon", "pokemon"}:
+        return PokemonServer(id_objeto=oid, especie=str(estado.get("especie") or dados.get("nome") or "Pokemon"), posicao=(float(pos[0]), float(pos[1])))
+    if str(estado.get("subtipo", "")).strip().lower() == "bau" or tipo == "entidade_bau":
+        return BauServer(id_objeto=oid, tipo_bau=str(estado.get("tipo_bau", "Comum")), itens=list(estado.get("itens", [])), posicao=(float(pos[0]), float(pos[1])), aberto=bool(estado.get("aberto", False)), raio_colisao=float(dados.get("raio_colisao", 0.42)), raio_interacao=float(dados.get("raio_interacao", 0.85) or 0.85))
+    if tipo.startswith("estrutura") or tipo == "estrutura_natural":
+        return EstruturaNaturalServer(id_objeto=oid, tipo=str(estado.get("subtipo") or "natural"), nome=str(dados.get("nome") or "Estrutura"), sprite=str(dados.get("sprite") or ""), posicao=(float(pos[0]), float(pos[1])), raio_colisao=float(dados.get("raio_colisao", 1.0)), raio_interacao=float(dados.get("raio_interacao", 1.0)), campo=float(dados.get("campo", 0.0)), intensidade=float(dados.get("intensidade", 0.0)), recursos=dict(estado.get("recursos", {})), codigo_natural=int(dados.get("codigo_natural", 0) or 0))
+    return None

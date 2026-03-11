@@ -131,6 +131,12 @@ class CerebroServer:
             self._baus_ids.add(int(objeto.Id))
             return
 
+
+    def executar_tick_servidor(self) -> None:
+        with self._lock:
+            self._executar_tick()
+            self._ultimo_tick = time.monotonic()
+
     def processar_ativacao(self, client_id: str, posicao_camera: Vector2) -> Dict[str, object]:
         with self._lock:
             client_id = str(client_id)
@@ -139,14 +145,8 @@ class CerebroServer:
             self._players_ativos[client_id] = (float(posicao_camera[0]), float(posicao_camera[1]))
             is_ativador = self._ativador_id == client_id
 
-            agora = time.monotonic()
-            tick_s = max(0.05, self._f("tick_segundos", 0.2))
+            tick_s = (1.0 / 30.0)
             tick_executado = False
-            if is_ativador and (agora - self._ultimo_tick) >= tick_s:
-                self._executar_tick()
-                self._ultimo_tick = agora
-                tick_executado = True
-
             chunks_visiveis, chunks_simulados = self._calcular_chunks_carregados()
             return {
                 "ativador": self._ativador_id,

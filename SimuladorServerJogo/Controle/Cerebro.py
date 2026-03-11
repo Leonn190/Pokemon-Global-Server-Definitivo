@@ -213,7 +213,7 @@ class CerebroServer:
 
     def _payload_pokemon_capturado(self, poke: PokemonServer) -> Dict[str, object]:
         estado = poke.estado_extra if isinstance(poke.estado_extra, dict) else {}
-        return {
+        payload = {
             "Nome": str(estado.get("nome") or estado.get("especie") or "Pokemon"),
             "Code": str(estado.get("code") or ""),
             "Nivel": int(estado.get("nivel", 1) or 1),
@@ -221,6 +221,11 @@ class CerebroServer:
             "Raridade": int(estado.get("raridade", 1) or 1),
             "Estagio": int(estado.get("estagio", 1) or 1),
         }
+        for chave, valor in estado.items():
+            if chave in {"captura"}:
+                continue
+            payload[chave] = valor
+        return payload
 
     def _registrar_captura_inventario_player(self, dono_id: int, poke: PokemonServer) -> None:
         from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada, atualizar_inventario_personagem

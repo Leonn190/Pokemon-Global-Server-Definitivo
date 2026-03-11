@@ -211,10 +211,19 @@ def _cmd_give(autor, args):
     if item is None:
         return "Erro no /give. Item inválido"
     qtd = max(1, _to_int(qtd_raw, 1))
+    entregues = 0
+    cheios = []
     for alvo in alvos:
         players = _estado_players()
         inv = dict((players.get(alvo, {}) if isinstance(players.get(alvo, {}), dict) else {}).get("inventario", {}))
         itens = list(inv.get("itens", []))
+        limite_slots = int(max(1, _to_int(inv.get("limite_slots", 32), 32)))
+
+        if len(itens) < limite_slots:
+            itens.extend([None] * (limite_slots - len(itens)))
+        elif len(itens) > limite_slots:
+            itens = itens[:limite_slots]
+
         achou = False
         for it in itens:
             if not isinstance(it, dict):
@@ -224,14 +233,28 @@ def _cmd_give(autor, args):
                 achou = True
                 break
         if not achou:
-            itens.append({"Nome": item.get("Nome", "Item"), "Code": item.get("Code", ""), "quantidade": qtd})
+            idx_livre = None
+            for i, it in enumerate(itens):
+                if not isinstance(it, dict):
+                    idx_livre = i
+                    break
+            if idx_livre is None:
+                cheios.append(alvo)
+                continue
+            itens[idx_livre] = {"Nome": item.get("Nome", "Item"), "Code": item.get("Code", ""), "quantidade": qtd}
         inv["itens"] = itens
         atualizar_inventario_personagem(alvo, inv)
         payload = _payload_player(alvo)
         payload["inventario"] = inv
         _registrar_update_player(alvo, payload)
+        entregues += 1
+    if entregues == 0 and cheios:
+        return f"Inventário cheio para: {', '.join(cheios)}"
     alvo_txt = "todos" if len(alvos) > 1 else alvos[0]
-    return f"Item {item.get('Code') or item.get('Nome')} x{qtd} enviado para {alvo_txt}"
+    msg = f"Item {item.get('Code') or item.get('Nome')} x{qtd} enviado para {alvo_txt}"
+    if cheios:
+        msg += f" | sem espaço: {', '.join(cheios)}"
+    return msg
 
 
 def _cmd_tp(autor, args):
@@ -318,8 +341,9 @@ def _cmd_count(args):
     _, livres = _split_args(args)
     alvo = str(livres[0] if livres else "").strip().lower()
     if alvo == "chunks":
-        tx, ty = BANCO_DADOS.total_chunks()
-        return f"Chunks conhecidos: {int(tx) * int(ty)} ({int(tx)}x{int(ty)})"
+        chunks_visiveis, chunks_simulados = CEREBRO._calcular_chunks_carregados()
+        total = len(chunks_visiveis | chunks_simulados)
+        return f"Chunks carregados: {total} (visíveis={len(chunks_visiveis)}, simulados={len(chunks_simulados)})"
     if alvo == "chests":
         return f"Baús existentes: {BANCO_DADOS.contar_subtipo_entidade('bau')}"
     if alvo == "pokemons":

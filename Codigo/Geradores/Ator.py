@@ -1,4 +1,4 @@
-"""Ator básico do mundo, derivado de Entidade."""
+"""Ator concreto do mundo, sem herança genérica."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ from typing import Optional, Tuple
 import pygame
 
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
-from Codigo.Geradores.Entidade import Entidade
 from Codigo.Modulos.Colisor import Colisor
 from Codigo.Geradores.Itens.ItemInventario import ItemInventario
 from Codigo.Prefabs.Texto import Texto
@@ -18,9 +17,7 @@ from Codigo.Prefabs.Barra import Barra
 Vector2 = Tuple[float, float]
 
 
-class Ator(Entidade):
-    """Entidade básica com skin de player e desenho via ``DesenhaAtor``."""
-
+class Ator:
     _cache_nome_texto = {}
 
     @staticmethod
@@ -46,11 +43,15 @@ class Ator(Entidade):
         raio_interacao: Optional[float] = None,
         escala_skin_tiles: float = 1.0,
         tile_px: int = 50,
+        id_objeto: int = 0,
     ) -> None:
-        super().__init__(
-            posicao=posicao,
-            velocidade=velocidade,
-            raio_colisao=raio_colisao,
+        self.Id = int(id_objeto)
+        self.Posicao = (float(posicao[0]), float(posicao[1]))
+        self.Velocidade = (float(velocidade[0]), float(velocidade[1]))
+        self.Colisor = Colisor(
+            x=self.Posicao[0],
+            y=self.Posicao[1],
+            raio_colisao=float(raio_colisao),
             raio_interacao=raio_interacao,
         )
         if skin_surface is None:
@@ -71,48 +72,40 @@ class Ator(Entidade):
             raio_interacao=self._raio_mao_colisao,
             ativo=False,
         )
-
         self.Perfil = None
         self.Inventario = None
         self.Controle = None
         self.EstadoMiraAtiva = False
-
         self._stamina_alpha = 0.0
         self.BarraStamina = Barra(pygame.Rect(0, 0, 75, 9), valor=100, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=20.0)
         self.BarraStamina.cor_fundo = (16, 22, 30)
         self.BarraStamina.cor_borda = (180, 210, 255)
         self.BarraStamina.cor_preenchimento = (86, 220, 125)
 
+    def definir_posicao(self, x: float, y: float) -> None:
+        self.Posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.Posicao)
+
+    def mover(self, dx: float, dy: float) -> None:
+        self.definir_posicao(self.Posicao[0] + float(dx), self.Posicao[1] + float(dy))
+
+
     @classmethod
     def desenhar_nome(cls, tela, pos_tela, nome, deslocamento_y: int = 54):
         nome_str = str(nome or "").strip()
         if not nome_str:
             return
-
         texto = cls._cache_nome_texto.get(nome_str)
         if texto is None:
-            texto = Texto(
-                nome_str,
-                pos=(0, 0),
-                style={
-                    "size": 17,
-                    "align": "midbottom",
-                    "outline": True,
-                    "outline_thickness": 1,
-                    "shadow": False,
-                    "color": (250, 250, 255),
-                },
-            )
+            texto = Texto(nome_str, pos=(0, 0), style={"size": 17, "align": "midbottom", "outline": True, "outline_thickness": 1, "shadow": False, "color": (250, 250, 255)})
             cls._cache_nome_texto[nome_str] = texto
         else:
             texto.set_text(nome_str)
-
         tempo = pygame.time.get_ticks() * 0.004
         fase = (abs(hash(nome_str)) % 360) * 0.0174533
         oscilacao = math.sin(tempo + fase) * 2.0
         texto.set_pos((int(pos_tela[0]), int(pos_tela[1]) - int(deslocamento_y) + int(round(oscilacao))))
         texto.draw(tela)
-
 
     def set_tile_px(self, tile_px: int) -> None:
         self.Desenhador.set_tile_px(tile_px)
@@ -131,12 +124,11 @@ class Ator(Entidade):
     def iniciar_tapa(self) -> None:
         self._tempo_tapa = self._duracao_tapa
 
+    def Tapar(self) -> None:
+        self.iniciar_tapa()
+
     def esta_tapando(self) -> bool:
         return self._tempo_tapa > 0.0
-
-    def Tapar(self) -> None:
-        """Alias em PT para compatibilidade."""
-        self.iniciar_tapa()
 
     def atualizar(self, dt: float) -> None:
         if self._tempo_tapa > 0.0:
@@ -150,24 +142,13 @@ class Ator(Entidade):
     def _alcance_tapa_px(self) -> float:
         if self._tempo_tapa <= 0.0:
             return 0.0
-
         progresso = self._progresso_tapa()
         fase = 1.0 - abs(1.0 - (progresso * 2.0))
         return max(0.0, fase) * 0.55
 
     def desenhar(self, tela, mouse_pos=None, posicao_tela=None, respiracao_tempo=0.0) -> None:
         centro = self.Posicao if posicao_tela is None else posicao_tela
-        dados_mao = self.Desenhador.desenhar(
-            tela,
-            centro,
-            mouse_pos=mouse_pos,
-            angulo_graus=self.AnguloOlhar,
-            alcance_tapa=self._alcance_tapa_px(),
-            progresso_tapa=self._progresso_tapa(),
-            respiracao_tempo=respiracao_tempo,
-            recuo_mao=(16.0 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0),
-        )
-
+        dados_mao = self.Desenhador.desenhar(tela, centro, mouse_pos=mouse_pos, angulo_graus=self.AnguloOlhar, alcance_tapa=self._alcance_tapa_px(), progresso_tapa=self._progresso_tapa(), respiracao_tempo=respiracao_tempo, recuo_mao=(16.0 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0))
         inventario = getattr(self, "Inventario", None)
         item_mao = inventario.item_na_mao() if inventario is not None else None
         if item_mao is not None:
@@ -175,7 +156,6 @@ class Ator(Entidade):
             if sprite_item is not None:
                 rect_item = sprite_item.get_rect(center=dados_mao["mao_tapa"])
                 tela.blit(sprite_item, rect_item)
-
         if self._tempo_tapa > 0.0:
             mx, my = dados_mao["mao_tapa"]
             self.ColisorMao.mover_para(mx, my)
@@ -188,12 +168,10 @@ class Ator(Entidade):
         perfil = getattr(self, "Perfil", None)
         if perfil is None:
             return
-
         dt = max(0.0, float(dt))
         self.BarraStamina.maximo = max(1.0, float(perfil.StaminaMax))
         self.BarraStamina.set_valor(float(perfil.Stamina))
         self.BarraStamina.atualizar(dt)
-
         cheio = perfil.Stamina >= (perfil.StaminaMax - 0.001)
         controle = getattr(self, "Controle", None)
         tentando_correr = bool(getattr(controle, "_tentando_correr", False))
@@ -201,10 +179,8 @@ class Ator(Entidade):
         alvo_alpha = 255.0 if (consumindo or not cheio or tentando_correr) else 0.0
         velocidade = 10.0 if alvo_alpha > self._stamina_alpha else 6.0
         self._stamina_alpha += (alvo_alpha - self._stamina_alpha) * min(1.0, dt * velocidade)
-
         if self._stamina_alpha <= 1.0:
             return
-
         px, py = camera.mundo_para_tela_px(self.Posicao)
         self.BarraStamina.rect.midbottom = (int(px), int(py - 44))
         bar_surf = pygame.Surface(self.BarraStamina.rect.size, pygame.SRCALPHA)
@@ -220,8 +196,5 @@ class Ator(Entidade):
         frente_x = math.cos(rad)
         frente_y = -math.sin(rad)
         alcance = self._alcance_tapa_px()
-        self.ColisorMao.mover_para(
-            self.Posicao[0] + frente_x * alcance,
-            self.Posicao[1] + frente_y * alcance,
-        )
+        self.ColisorMao.mover_para(self.Posicao[0] + frente_x * alcance, self.Posicao[1] + frente_y * alcance)
         self.ColisorMao.ativo = self._tempo_tapa > 0.0

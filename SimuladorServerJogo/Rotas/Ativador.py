@@ -1,4 +1,4 @@
-"""Rota Ativador: entrega chunks e diffs por canal separado + ativa cérebro do servidor."""
+"""Rota Ativador: entrega chunks e pacotes de tick para sincronização."""
 
 from __future__ import annotations
 
@@ -10,32 +10,15 @@ from typing import Dict, List, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.Cerebro import CEREBRO
+from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
+from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 
 Vector2 = Tuple[float, float]
 
-_DIFF_LOCK = threading.Lock()
+_LOCK = threading.Lock()
 _DIFF_SEQ = 0
-_DIFF_LOG: List[Dict[str, object]] = []
 _CLIENTS_CONHECIDOS: Set[str] = set()
 _CLIENT_STATE: Dict[str, Dict[str, object]] = {}
-_CATEGORIAS_VALIDAS = {"rapida", "lenta"}
-
-
-def _forcar_categoria_rapida(tipo: str, payload: Dict[str, object], categoria: str) -> str:
-    cat = str(categoria or "rapida").strip().lower()
-    if cat != "lenta":
-        return cat
-    if str(tipo or "").strip().lower() != "update":
-        return cat
-    if not isinstance(payload, dict):
-        return cat
-
-    inventario = payload.get("inventario") if isinstance(payload.get("inventario"), dict) else {}
-    inventario_toca_pokemons = bool(inventario.get("pokemons") is not None or inventario.get("times_pokemon") is not None)
-    if "inventario" in payload or inventario_toca_pokemons:
-        return "rapida"
-    return cat
-
 
 
 def _next_seq() -> int:
@@ -45,72 +28,25 @@ def _next_seq() -> int:
 
 
 def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, categoria: str = "rapida", origem: str = "server", autor: str = "", evento: str = "") -> Dict[str, object]:
-    """Registra diff no log central com categoria de sincronização.
-
-    Categoria rápida = visual/dinâmico; categoria lenta = dados persistentes.
-    """
-    cat = str(categoria or "rapida").strip().lower()
-    if cat not in _CATEGORIAS_VALIDAS:
-        cat = "rapida"
-    cat = _forcar_categoria_rapida(tipo, payload, cat)
-    with _DIFF_LOCK:
-        diff = {
-            "seq": _next_seq(),
-            "timestamp": time.time(),
-            "tipo": tipo,
-            "evento": str(evento or ""),
-            "objeto_id": objeto_id,
-            "payload": payload,
-            "escopo": escopo,
-            "categoria": cat,
-            "coletado_por": {"rapida": set(), "lenta": set()},
-            "meta": {"origem": str(origem or "server"), "autor": str(autor or "")},
-        }
-        _DIFF_LOG.append(diff)
-        return diff
+    diff = {
+        "seq": _next_seq(),
+        "timestamp": time.time(),
+        "tipo": str(tipo or ""),
+        "evento": str(evento or ""),
+        "objeto_id": objeto_id,
+        "payload": dict(payload or {}),
+        "escopo": dict(escopo or {}),
+        "categoria": str(categoria or "rapida"),
+        "meta": {"origem": str(origem or "server"), "autor": str(autor or "")},
+    }
+    PACOTES_TICK.registrar_diff_pendente(diff)
+    return diff
 
 
 def _normalizar_posicao(valor) -> Vector2:
     if not isinstance(valor, (list, tuple)) or len(valor) != 2:
         return (0.0, 0.0)
     return (float(valor[0]), float(valor[1]))
-
-
-def _diff_relevante(diff: Dict[str, object], posicao_camera: Vector2, raio: float, client_id: str = "") -> bool:
-    objeto_id = diff.get("objeto_id")
-    if objeto_id is not None and client_id:
-        try:
-            dono = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
-        except Exception:
-            dono = None
-        if str(dono or "").strip() == str(client_id).strip():
-            return True
-
-    escopo = diff.get("escopo") or {}
-    centro = escopo.get("centro")
-    if not centro:
-        return True
-    cx, cy = _normalizar_posicao(centro)
-    return math.hypot(cx - posicao_camera[0], cy - posicao_camera[1]) <= raio
-
-
-def _prune_diff_log() -> None:
-    if len(_DIFF_LOG) < 200:
-        return
-    ativos = set(_CLIENTS_CONHECIDOS)
-    if not ativos:
-        del _DIFF_LOG[:-120]
-        return
-
-    def _coletado_para_categoria_da_diff(diff) -> bool:
-        categoria = str(diff.get("categoria", "rapida")).strip().lower()
-        if categoria not in _CATEGORIAS_VALIDAS:
-            categoria = "rapida"
-        coletado = diff.get("coletado_por") or {}
-        coletado_categoria = set(coletado.get(categoria, set()))
-        return ativos.issubset(coletado_categoria)
-
-    _DIFF_LOG[:] = [d for d in _DIFF_LOG if not _coletado_para_categoria_da_diff(d) or (time.time() - d["timestamp"] < 10.0)]
 
 
 def _obter_state_client(client_id: str) -> Dict[str, object]:
@@ -129,86 +65,51 @@ def _chunks_no_raio(posicao_camera: Vector2, raio_chunks: int):
     return chunks
 
 
-def _serializar_diff_registrada(diff: Dict[str, object]) -> Dict[str, object]:
-    return {
-        "seq": diff["seq"],
-        "timestamp": diff["timestamp"],
-        "tipo": diff["tipo"],
-        "evento": diff.get("evento", ""),
-        "objeto_id": diff.get("objeto_id"),
-        "payload": diff.get("payload", {}),
-        "escopo": diff.get("escopo", {}),
-        "categoria": diff.get("categoria", "rapida"),
-        "meta": dict(diff.get("meta", {})) if isinstance(diff.get("meta"), dict) else {},
-    }
 
 
-def _resposta_base(client_id: str, meta_cerebro: Dict[str, object], raio_chunks: int, diffs: List[Dict[str, object]] | None = None, chunks: List[Dict[str, object]] | None = None):
-    largura_blocos, altura_blocos = BANCO_DADOS.limites_mundo()
-    return {
-        "status": "ok",
-        "mensagem": "Ativador processado",
-        "client_id": client_id,
-        "chunks": chunks or [],
-        "diffs": sorted((diffs or []), key=lambda d: d["seq"]) if diffs else [],
-        "meta": {
-            "total_diffs": len(diffs or []),
-            "total_chunks": len(chunks or []),
-            "largura_blocos": int(largura_blocos),
-            "altura_blocos": int(altura_blocos),
-            "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()),
-            "raio_chunks_ativo": int(raio_chunks),
-            "anel_render_chunks": int(meta_cerebro.get("anel_render_chunks", 7)),
-            "anel_simulado_chunks": int(meta_cerebro.get("anel_simulado_chunks", 13)),
-            "cerebro": meta_cerebro,
-        },
-    }
+def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float) -> bool:
+    if not isinstance(diff, dict):
+        return False
+    escopo = diff.get("escopo", {}) if isinstance(diff.get("escopo"), dict) else {}
+    centro = escopo.get("centro") if isinstance(escopo.get("centro"), (list, tuple)) else None
+    if centro is None:
+        return True
+    try:
+        cx, cy = float(centro[0]), float(centro[1])
+    except (TypeError, ValueError, IndexError):
+        return True
+    raio_diff = float(escopo.get("raio", 0.0) or 0.0)
+    return math.hypot(cx - posicao_camera[0], cy - posicao_camera[1]) <= (raio_visao + max(0.0, raio_diff))
 
+
+def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float):
+    saida = []
+    for pacote in pacotes if isinstance(pacotes, list) else []:
+        if not isinstance(pacote, dict):
+            continue
+        diffs = pacote.get("diffs", []) if isinstance(pacote.get("diffs"), list) else []
+        diffs_visiveis = [d for d in diffs if _diff_relevante_para_camera(d, posicao_camera, raio_visao)]
+        if not diffs_visiveis:
+            continue
+        novo = dict(pacote)
+        novo["diffs"] = diffs_visiveis
+        saida.append(novo)
+    return saida
 
 def _coletar_diffs_visibilidade(posicao_camera: Vector2, raio: float, vistos: Set[int]) -> List[Dict[str, object]]:
-    """Gera spawns/despawns de visibilidade para manter estruturas sincronizadas.
-
-    Sem isso, objetos estáticos (ex.: estruturas naturais) podem nunca aparecer
-    ao entrar em novas regiões, pois o cliente usa modo `diffs` continuamente.
-    """
     objetos_proximos = BANCO_DADOS.buscar_proximos(posicao_camera, raio)
     ids_proximos = {int(obj.Id) for obj in objetos_proximos}
-
-    diffs_visibilidade: List[Dict[str, object]] = []
+    diffs: List[Dict[str, object]] = []
     agora = time.time()
-
     for obj in objetos_proximos:
         if obj.Id in vistos:
             continue
-        diffs_visibilidade.append(
-            {
-                "seq": _next_seq(),
-                "timestamp": agora,
-                "tipo": "spawn",
-                "objeto_id": obj.Id,
-                "payload": obj.serializar(),
-                "escopo": {"centro": list(obj.posicao), "raio": raio},
-                "categoria": "rapida",
-            }
-        )
         vistos.add(int(obj.Id))
-
-    ids_sairam = [oid for oid in list(vistos) if oid not in ids_proximos]
-    for oid in ids_sairam:
-        diffs_visibilidade.append(
-            {
-                "seq": _next_seq(),
-                "timestamp": agora,
-                "tipo": "despawn",
-                "objeto_id": int(oid),
-                "payload": {},
-                "escopo": {"centro": list(posicao_camera), "raio": raio},
-                "categoria": "rapida",
-            }
-        )
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "meta": {"origem": "server", "autor": "server"}})
+    for oid in [oid for oid in list(vistos) if oid not in ids_proximos]:
         vistos.discard(int(oid))
-
-    return diffs_visibilidade
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "meta": {"origem": "server", "autor": "server"}})
+    return diffs
 
 
 def processar_ativador_json(requisicao_json: str) -> str:
@@ -219,80 +120,51 @@ def processar_ativador_json(requisicao_json: str) -> str:
 
     dados = pacote.get("dados", {})
     client_id = str(dados.get("client_id", "")).strip()
-    posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
-    raio_chunks = max(1, int(dados.get("raio_chunks", 4)))
-    raio = float((raio_chunks + 2) * BANCO_DADOS.chunk_tamanho_unidade())
-    modo = str(dados.get("modo", "estado")).strip().lower()
-    categoria = str(dados.get("categoria", "rapida")).strip().lower()
-    if categoria not in _CATEGORIAS_VALIDAS:
-        categoria = "rapida"
-
     if not client_id:
         return json.dumps({"status": "erro", "mensagem": "client_id obrigatório"}, ensure_ascii=False)
 
+    posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
+    raio_chunks = max(1, int(dados.get("raio_chunks", 4)))
+    raio = float((raio_chunks + 2) * BANCO_DADOS.chunk_tamanho_unidade())
+    modo = str(dados.get("modo", "pacotes")).strip().lower()
+    ultimo_tick_recebido = int(dados.get("ultimo_tick_recebido", 0) or 0)
+
+    info_tique = TIQUE_SERVIDOR.info()
+    if bool(info_tique.get("ativo", False)):
+        TIQUE_SERVIDOR.ativar_por_usuario(client_id)
     meta_cerebro = CEREBRO.processar_ativacao(client_id, posicao_camera)
 
-    with _DIFF_LOCK:
+    with _LOCK:
         _CLIENTS_CONHECIDOS.add(client_id)
         state = _obter_state_client(client_id)
         vistos: Set[int] = state["objetos_vistos"]
 
-        # Modo exclusivo de chunks: sempre retorna o anel completo atual.
         if modo == "chunks":
-            chunks = []
-            for chunk in _chunks_no_raio(posicao_camera, raio_chunks):
-                chunks.append({
-                    "pos": [chunk[0], chunk[1]],
-                    "grid": BANCO_DADOS.chunk_em_grade(chunk),
-                    "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade(),
-                })
-            resposta = _resposta_base(client_id, meta_cerebro, raio_chunks, diffs=[], chunks=chunks)
-            return json.dumps(resposta, ensure_ascii=False)
+            chunks = [{"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()} for chunk in _chunks_no_raio(posicao_camera, raio_chunks)]
+            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade())}}, ensure_ascii=False)
 
-        # Modo exclusivo de diffs: separa por categoria rápida/lenta.
-        diffs: List[Dict[str, object]] = []
-        if modo in ("diffs", "estado"):
-            # Garante materialização das estruturas naturais no anel atual.
-            for chunk in _chunks_no_raio(posicao_camera, raio_chunks):
-                BANCO_DADOS.chunk_em_grade(chunk)
+        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio)
+        diffs_vis = _coletar_diffs_visibilidade(posicao_camera, raio, vistos)
+        if diffs_vis:
+            if pacotes:
+                pacote_vis = pacotes[-1]
+                diffs_base = pacote_vis.get("diffs", []) if isinstance(pacote_vis.get("diffs"), list) else []
+                pacote_vis["diffs"] = list(diffs_base) + list(diffs_vis)
+            else:
+                # Sem pacote real no intervalo: envia pacote sintético de bootstrap/visibilidade.
+                pacotes.append({"tick": 0, "diffs": diffs_vis, "sintetico": True})
 
-            # Mantém sincronização de visibilidade também no modo "diffs",
-            # para estruturas estáticas aparecerem ao cruzar chunks.
-            if categoria == "rapida" or modo == "estado":
-                diffs.extend(_coletar_diffs_visibilidade(posicao_camera, raio, vistos))
-
-            for diff in _DIFF_LOG:
-                cat_diff = str(diff.get("categoria", "rapida")).strip().lower()
-                if cat_diff != categoria:
-                    continue
-                coletado = diff.get("coletado_por") or {}
-                coletado_categoria = coletado.get(categoria, set())
-                if client_id in coletado_categoria:
-                    continue
-                if not _diff_relevante(diff, posicao_camera, raio, client_id=client_id):
-                    continue
-                diffs.append(_serializar_diff_registrada(diff))
-                coletado_categoria.add(client_id)
-                coletado[categoria] = coletado_categoria
-                diff["coletado_por"] = coletado
-
-            _prune_diff_log()
-
-            resposta = _resposta_base(client_id, meta_cerebro, raio_chunks, diffs=diffs, chunks=[])
-            return json.dumps(resposta, ensure_ascii=False)
-
-    return json.dumps({"status": "erro", "mensagem": "modo inválido"}, ensure_ascii=False)
+        return json.dumps({"status": "ok", "mensagem": "Pacotes coletados", "client_id": client_id, "pacotes": pacotes, "tick_atual_servidor": PACOTES_TICK.tick_atual(), "meta": {"players_ativos": int(meta_cerebro.get("players_ativos", 0)), "chunks_visiveis": int(meta_cerebro.get("chunks_visiveis", 0))}}, ensure_ascii=False)
 
 
 def desconectar_client(client_id: str) -> None:
-    with _DIFF_LOCK:
+    with _LOCK:
         _CLIENTS_CONHECIDOS.discard(client_id)
         _CLIENT_STATE.pop(client_id, None)
     CEREBRO.remover_player(client_id)
 
 
 def resetar_estado_clientes() -> None:
-    with _DIFF_LOCK:
+    with _LOCK:
         _CLIENTS_CONHECIDOS.clear()
         _CLIENT_STATE.clear()
-        _DIFF_LOG.clear()

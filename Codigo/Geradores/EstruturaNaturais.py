@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional, Tuple
 
-from Codigo.Geradores.Estrutura import Estrutura
+from Codigo.Modulos.Colisor import Colisor
 
 Vector2 = Tuple[float, float]
 
@@ -130,7 +130,7 @@ def tipo_estrutura_natural_por_codigo(codigo: object) -> Optional[Dict[str, obje
     return dict(dados) if isinstance(dados, dict) else None
 
 
-class EstruturaNatural(Estrutura):
+class EstruturaNatural:
     """Estrutura fixa que pode fornecer recursos quando recebe um tapa."""
 
     def __init__(
@@ -145,17 +145,19 @@ class EstruturaNatural(Estrutura):
         hitbox=None,
         id_objeto: Optional[int] = None,
     ) -> None:
-        super().__init__(
-            posicao=posicao,
-            raio_colisao=raio_colisao,
-            raio_interacao=raio_interacao,
-            campo=campo,
-            intensidade=intensidade,
-            hitbox=hitbox,
-            id_objeto=id_objeto,
-        )
+        self.Id = int(id_objeto or 0)
+        self.id_objeto = self.Id
+        self.Posicao = (float(posicao[0]), float(posicao[1]))
+        self.Campo = float(campo)
+        self.Intensidade = float(intensidade)
+        self.HitBox = hitbox
+        self.Colisor = Colisor(x=self.Posicao[0], y=self.Posicao[1], raio_colisao=float(raio_colisao), raio_interacao=raio_interacao)
         self.Tipo = str(tipo)
         self.Recursos = {nome: max(0, int(qtd)) for nome, qtd in (recursos or {}).items()}
+
+    def definir_posicao(self, x: float, y: float) -> None:
+        self.Posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.Posicao)
 
     def vazio(self) -> bool:
         """Retorna ``True`` quando todos os recursos da estrutura acabaram."""

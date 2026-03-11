@@ -7,20 +7,19 @@ from typing import Dict
 
 import pygame
 
-from Codigo.Geradores.Entidade import Entidade
+from Codigo.Modulos.Colisor import Colisor
 from Codigo.Geradores.Itens.ItemInventario import ItemInventario
 
 
-class Projetil(Entidade):
+class Projetil:
     _cache_rotacao = {}
 
     def __init__(self, snapshot: Dict[str, object]):
         pos = snapshot.get("posicao") if isinstance(snapshot.get("posicao"), (list, tuple)) else (0.0, 0.0)
-        super().__init__(
-            posicao=(float(pos[0]), float(pos[1])),
-            raio_colisao=max(0.08, float(snapshot.get("raio_colisao", 0.16) or 0.16)),
-            id_objeto=int(snapshot.get("id", 0) or 0),
-        )
+        self.Id = int(snapshot.get("id", 0) or 0)
+        self.id_objeto = self.Id
+        self.Posicao = (float(pos[0]), float(pos[1]))
+        self.Colisor = Colisor(x=self.Posicao[0], y=self.Posicao[1], raio_colisao=max(0.08, float(snapshot.get("raio_colisao", 0.16) or 0.16)), raio_interacao=max(0.08, float(snapshot.get("raio_colisao", 0.16) or 0.16)) )
         self.TipoProjetil = "item"
         self.Subtipo = ""
         self.ItemBaseId = ""
@@ -46,6 +45,13 @@ class Projetil(Entidade):
         self._offset_correcao = [0.0, 0.0]
         self._tempo_correcao = 0.0
         self.aplicar_snapshot(snapshot)
+
+    def definir_posicao(self, x: float, y: float) -> None:
+        self.Posicao = (float(x), float(y))
+        self.Colisor.mover_para(*self.Posicao)
+
+    def mover(self, dx: float, dy: float) -> None:
+        self.definir_posicao(self.Posicao[0] + float(dx), self.Posicao[1] + float(dy))
 
     def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
         estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}

@@ -51,23 +51,14 @@ def consultar_chunks_mundo(ip, client_id, posicao_camera, raio_chunks=4):
 
 
 def receber_diffs_mundo(ip, client_id, posicao_camera, categoria="rapida", raio_chunks=4):
-    """Consulta exclusiva de diffs remotas por categoria (rápida/lenta)."""
-    pacote = {
-        "ip": ip,
-        "acao": "ativador_diffs",
-        "dados": {
-            "client_id": client_id,
-            "modo": "diffs",
-            "categoria": str(categoria),
-            "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
-            "raio_chunks": int(raio_chunks),
-        },
-    }
-    resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta de diffs")
+    resposta = receber_pacotes_tick_mundo(ip, client_id, 0, posicao_camera=posicao_camera, raio_chunks=raio_chunks)
+    if not isinstance(resposta, dict):
+        return resposta
+    diffs = []
+    for pacote in resposta.get("pacotes", []) if isinstance(resposta.get("pacotes"), list) else []:
+        diffs.extend(list(pacote.get("diffs", [])) if isinstance(pacote, dict) else [])
+    resposta["diffs"] = diffs
+    return resposta
 
 
 def enviar_diffs_mundo(ip, client_id, diffs):
@@ -87,21 +78,9 @@ def enviar_diffs_mundo(ip, client_id, diffs):
 
 
 def enviar_diffs_mundo_categoria(ip, client_id, categoria, diffs):
-    """Envia uma lista de diffs locais separada por categoria de sincronização."""
-    pacote = {
-        "ip": ip,
-        "acao": "atualizador",
-        "dados": {
-            "client_id": client_id,
-            "categoria": str(categoria),
-            "diffs": diffs,
-        },
-    }
-    resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta do Atualizador por categoria")
+    eventos = [d for d in (diffs or []) if isinstance(d, dict) and str(d.get("tipo", "")).strip().lower()=="evento"]
+    updates = [d for d in (diffs or []) if isinstance(d, dict) and str(d.get("tipo", "")).strip().lower()!="evento"]
+    return enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido=0, eventos=eventos, updates=updates, tick_cliente=0)
 
 
 def enviar_mensagem_terminal(ip, autor, texto):
@@ -151,3 +130,43 @@ def enviar_evento_arremesso_mundo(ip, client_id, payload):
     """Canal explícito de intenção de arremesso (resolução autoritativa no servidor)."""
     diff = {"tipo": "evento", "evento": "projetil_arremesso_intencao", "payload": dict(payload or {})}
     return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
+
+
+def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, eventos=None, updates=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
+    pacote = {
+        "ip": ip,
+        "acao": "atualizador",
+        "dados": {
+            "client_id": client_id,
+            "tick_cliente": int(tick_cliente or 0),
+            "ultimo_tick_recebido": int(ultimo_tick_recebido or 0),
+            "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
+            "raio_chunks": int(raio_chunks),
+            "eventos": list(eventos or []),
+            "updates": list(updates or []),
+        },
+    }
+    resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
+    try:
+        return json.loads(resposta_json)
+    except json.JSONDecodeError:
+        return _erro_padrao("Falha ao interpretar resposta de pacote cliente")
+
+
+def receber_pacotes_tick_mundo(ip, client_id, ultimo_tick_recebido, posicao_camera=(0.0,0.0), raio_chunks=4):
+    pacote = {
+        "ip": ip,
+        "acao": "ativador_pacotes",
+        "dados": {
+            "client_id": client_id,
+            "modo": "pacotes",
+            "ultimo_tick_recebido": int(ultimo_tick_recebido or 0),
+            "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
+            "raio_chunks": int(raio_chunks),
+        },
+    }
+    resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))
+    try:
+        return json.loads(resposta_json)
+    except json.JSONDecodeError:
+        return _erro_padrao("Falha ao interpretar resposta de pacotes por tick")

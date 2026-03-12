@@ -106,6 +106,29 @@ class ControladorObjetos:
                     ids.update(self._ids_por_chunk.get((cx + dx, cy + dy), set()))
             return [self.ObjetosPorId.get(oid) for oid in ids if oid in self.ObjetosPorId]
 
+    def _payload_tem_colisao_solida(self, payload: Dict[str, object]) -> bool:
+        if not isinstance(payload, dict):
+            return False
+        tipo = str(payload.get("tipo", "")).strip().lower()
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        subtipo = str(estado.get("subtipo", "")).strip().lower()
+
+        if tipo == "entidade_player":
+            return True
+        if self._eh_payload_pokemon(payload):
+            return True
+        if self._eh_payload_bau(payload):
+            return True
+        if self._eh_payload_estrutura(payload):
+            return True
+
+        # Itens no mundo, projéteis e demais criáveis não devem bloquear o player.
+        if tipo in {"entidade_item_mundo", "item_mundo", "entidade_projetil", "projetil"}:
+            return False
+        if subtipo in {"item_mundo", "projetil"}:
+            return False
+        return False
+
     def iter_colisores_proximos_por_raio(self, posicao: Tuple[float, float], raio_tiles: float = 10.0):
         px, py = float(posicao[0]), float(posicao[1])
         chunk_cx, chunk_cy = self._chunk_posicao(px, py)
@@ -121,6 +144,8 @@ class ControladorObjetos:
         r2 = raio_tiles * raio_tiles
         for obj in objs:
             if not isinstance(obj, dict):
+                continue
+            if not self._payload_tem_colisao_solida(obj):
                 continue
             pos = obj.get("posicao")
             if not isinstance(pos, (list, tuple)) or len(pos) != 2:
@@ -246,15 +271,6 @@ class ControladorObjetos:
             est.update(payload)
         else:
             self.EstruturasPorId.pop(oid, None)
-
-    def _resolver_posicao_alvo_item(self, alvo_id: int) -> Optional[Tuple[float, float]]:
-        obj = self.ObjetosPorId.get(int(alvo_id))
-        if not isinstance(obj, dict):
-            return None
-        pos = obj.get("posicao")
-        if not isinstance(pos, (list, tuple)) or len(pos) != 2:
-            return None
-        return (float(pos[0]), float(pos[1]))
 
     def aplicar_diff(self, diff):
         if not isinstance(diff, dict):
@@ -406,7 +422,6 @@ class ControladorObjetos:
             detectar_colisao_projetil_cb=self._detectar_colisao_visual_local_projetil,
             registrar_colisao_pokemon_cb=_registrar_colisao,
             aplicar_despawn_cb=lambda oid: self.aplicar_diff({"tipo": "despawn", "objeto_id": int(oid)}),
-            resolver_alvo_item_cb=self._resolver_posicao_alvo_item,
         )
 
     def _atualizar_alvo_local_captura(self, camera, player_pos: Optional[Tuple[float, float]] = None) -> None:

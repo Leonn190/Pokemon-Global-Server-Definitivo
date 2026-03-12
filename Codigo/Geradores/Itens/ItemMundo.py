@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 import pygame
 
@@ -27,11 +27,6 @@ class ItemMundo:
         self.PosicaoFinal = self.Posicao
         self.Velocidade = 3.0
         self.Voando = False
-
-        self._animando_evento = False
-        self._evento_alvo_id = 0
-        self._evento_tipo = ""
-        self._evento_velocidade = 6.0
 
         self.TempoRespirar = 0.0
         self.EscalaRespirar = 1.0
@@ -71,14 +66,7 @@ class ItemMundo:
         evento = estado.get("evento") if isinstance(estado.get("evento"), dict) else {}
         tipo_evento = str(evento.get("tipo") or "").strip().lower()
         if tipo_evento in {"coleta", "fusao"}:
-            self._animando_evento = True
-            self._evento_tipo = tipo_evento
-            self._evento_alvo_id = int(evento.get("alvo_id", 0) or 0)
-            self._evento_velocidade = max(3.0, float(evento.get("velocidade", 8.0) or 8.0))
-        elif tipo_evento == "cancelar":
-            self._animando_evento = False
-            self._evento_tipo = ""
-            self._evento_alvo_id = 0
+            self._despawn_local = True
 
     def reconciliar_autoritativo(self, snapshot: Dict[str, object]) -> None:
         self.aplicar_snapshot(snapshot)
@@ -97,14 +85,10 @@ class ItemMundo:
         self.Posicao = (self.Posicao[0] + (dx / dist) * passo, self.Posicao[1] + (dy / dist) * passo)
         return passo >= dist - 1e-6
 
-    def atualizar_visual(self, dt: float, resolver_alvo: Optional[Callable[[int], Optional[Vector2]]] = None) -> None:
+    def atualizar_visual(self, dt: float) -> None:
         dt = max(0.0, float(dt))
 
-        if self._animando_evento and self._evento_alvo_id > 0 and callable(resolver_alvo):
-            alvo = resolver_alvo(int(self._evento_alvo_id))
-            if alvo is not None and self._mover_para(alvo, self._evento_velocidade, dt):
-                self._despawn_local = True
-            self.EscalaRespirar = 1.0
+        if self._despawn_local:
             return
 
         if self.Voando:

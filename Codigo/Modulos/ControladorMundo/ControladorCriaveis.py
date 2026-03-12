@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List
 import math
 import time
 
@@ -125,7 +125,7 @@ class ControladorCriaveis:
 
         return False
 
-    def atualizar_visuais(self, dt: float, objetos_snapshot: Dict[int, Dict[str, object]], detectar_colisao_projetil_cb: Callable, registrar_colisao_pokemon_cb: Callable, aplicar_despawn_cb: Callable[[int], None], resolver_alvo_item_cb: Callable[[int], Optional[Tuple[float, float]]]) -> None:
+    def atualizar_visuais(self, dt: float, objetos_snapshot: Dict[int, Dict[str, object]], detectar_colisao_projetil_cb: Callable, registrar_colisao_pokemon_cb: Callable, aplicar_despawn_cb: Callable[[int], None]) -> None:
         for p in list(self.ProjeteisPorId.values()):
             p.atualizar_visual(dt)
             if (not p.Terminado) and (not p.Colidiu):
@@ -143,7 +143,7 @@ class ControladorCriaveis:
                 aplicar_despawn_cb(int(p.Id))
 
         for item in list(self.ItensMundoPorId.values()):
-            item.atualizar_visual(dt, resolver_alvo=resolver_alvo_item_cb)
+            item.atualizar_visual(dt)
             if item.deve_remover_local():
                 aplicar_despawn_cb(int(item.Id))
 

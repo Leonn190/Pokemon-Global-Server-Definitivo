@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import json
-import math
 import time
 from typing import Dict
 
-from SimuladorServerJogo.Rotas.Ativador import registrar_diff, _obter_state_client, _coletar_diffs_visibilidade
+from SimuladorServerJogo.Rotas.Ativador import registrar_diff, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, criar_objeto_mundo_server
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
@@ -41,44 +40,6 @@ def _escopo_objeto(obj) -> Dict[str, object]:
     return {"centro": [obj.posicao[0], obj.posicao[1]], "raio": 780.0}
 
 
-def _normalizar_posicao(valor):
-    if not isinstance(valor, (list, tuple)) or len(valor) != 2:
-        return (0.0, 0.0)
-    try:
-        return (float(valor[0]), float(valor[1]))
-    except (TypeError, ValueError):
-        return (0.0, 0.0)
-
-
-def _diff_relevante_para_camera(diff, posicao_camera, raio_visao):
-    if not isinstance(diff, dict):
-        return False
-    escopo = diff.get("escopo", {}) if isinstance(diff.get("escopo"), dict) else {}
-    centro = escopo.get("centro") if isinstance(escopo.get("centro"), (list, tuple)) else None
-    if centro is None:
-        return True
-    try:
-        cx, cy = float(centro[0]), float(centro[1])
-    except (TypeError, ValueError, IndexError):
-        return True
-    raio_diff = float(escopo.get("raio", 0.0) or 0.0)
-    return math.hypot(cx - posicao_camera[0], cy - posicao_camera[1]) <= (raio_visao + max(0.0, raio_diff))
-
-
-def _filtrar_pacotes_por_camera(pacotes, posicao_camera, raio_visao):
-    saida = []
-    for pacote in pacotes if isinstance(pacotes, list) else []:
-        if not isinstance(pacote, dict):
-            continue
-        diffs = pacote.get("diffs", []) if isinstance(pacote.get("diffs"), list) else []
-        diffs_visiveis = [d for d in diffs if _diff_relevante_para_camera(d, posicao_camera, raio_visao)]
-        if not diffs_visiveis:
-            continue
-        novo = dict(pacote)
-        novo["diffs"] = diffs_visiveis
-        saida.append(novo)
-    return saida
-
 
 def processar_atualizador_json(requisicao_json: str) -> str:
     try:
@@ -93,8 +54,8 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
     ultimo_tick_recebido = int(dados.get("ultimo_tick_recebido", 0) or 0)
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
-    raio_chunks = max(1, int(dados.get("raio_chunks", 4) or 4))
-    raio_visao = float((raio_chunks + 2) * BANCO_DADOS.chunk_tamanho_unidade())
+    chunks_carregados = _chunks_carregados_cliente(posicao_camera)
+    raio_visao = _raio_visao_por_regras()
 
     diffs = dados.get("diffs", []) if isinstance(dados.get("diffs"), list) else []
     updates = dados.get("updates", []) if isinstance(dados.get("updates"), list) else []
@@ -170,10 +131,10 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
         ignorados += 1
 
-    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao)
+    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados)
     state = _obter_state_client(client_id)
     vistos = state["objetos_vistos"]
-    diffs_vis = _coletar_diffs_visibilidade(posicao_camera, raio_visao, vistos)
+    diffs_vis = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos)
     if diffs_vis:
         if pacotes:
             pacote_vis = pacotes[-1]

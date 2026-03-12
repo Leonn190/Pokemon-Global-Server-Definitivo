@@ -241,3 +241,14 @@ class Ator:
         alcance = self._alcance_tapa_px()
         self.ColisorMao.mover_para(self.Posicao[0] + frente_x * alcance, self.Posicao[1] + frente_y * alcance)
         self.ColisorMao.ativo = self._tempo_tapa > 0.0
+
+    def ponto_mao_direita_mundo(self, usar_alcance_tapa: bool = False) -> Vector2:
+        rad = math.radians(float(self.AnguloOlhar))
+        frente_x = math.cos(rad)
+        frente_y = -math.sin(rad)
+        lateral_x = -frente_y
+        lateral_y = frente_x
+        alcance_tapa = self._alcance_tapa_px() if bool(usar_alcance_tapa) else 0.0
+        px = float(self.Posicao[0]) + (lateral_x * 0.28) + (frente_x * (0.22 + alcance_tapa))
+        py = float(self.Posicao[1]) + (lateral_y * 0.28) + (frente_y * (0.22 + alcance_tapa))
+        return (px, py)

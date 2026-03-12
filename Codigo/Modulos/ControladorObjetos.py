@@ -178,7 +178,8 @@ class ControladorObjetos:
         acao = dict(self._arremesso_pendente.get("acao") or {})
         self._arremesso_pendente = None
         item = dict(acao.get("item") or {})
-        origem = acao.get("origem") if isinstance(acao.get("origem"), (list, tuple)) else tuple(self.PlayerLocal.Posicao)
+        origem_acao = acao.get("origem") if isinstance(acao.get("origem"), (list, tuple)) else tuple(self.PlayerLocal.Posicao)
+        origem = self.PlayerLocal.ponto_mao_direita_mundo(usar_alcance_tapa=True) if hasattr(self.PlayerLocal, "ponto_mao_direita_mundo") else tuple(origem_acao)
         destino = acao.get("destino") if isinstance(acao.get("destino"), (list, tuple)) else tuple(self.PlayerLocal.Posicao)
 
         variante, velocidade, alcance = self._spec_projetil(item)
@@ -494,7 +495,12 @@ class ControladorObjetos:
             if self.PlayerLocal is None or int(getattr(self.PlayerLocal, "Id", -1)) != int(oid):
                 dados = dict(payload)
                 dados["id"] = oid
-                self.AtoresRemotosPorId[oid] = self._hidratar_ator_payload(self.AtoresRemotosPorId.get(oid), dados, com_controle=False)
+                remoto = self.AtoresRemotosPorId.get(oid)
+                if remoto is None:
+                    remoto = self._hidratar_ator_payload(None, dados, com_controle=False)
+                    self.AtoresRemotosPorId[oid] = remoto
+                else:
+                    remoto.update(dados)
         else:
             self.AtoresRemotosPorId.pop(oid, None)
 
@@ -525,29 +531,13 @@ class ControladorObjetos:
         if self.PlayerLocal is None:
             return
         ator = self.PlayerLocal
+        dados = dict(payload or {})
+        dados["hard"] = True
+        ator.update(dados)
 
         pos = payload.get("posicao")
         if isinstance(pos, (list, tuple)) and len(pos) == 2:
             ator.definir_posicao(float(pos[0]), float(pos[1]))
-
-        nome = payload.get("nome") or payload.get("usuario")
-        if nome:
-            ator.Nome = str(nome)
-
-        skin = payload.get("skin")
-        if skin and str(skin) != str(getattr(ator, "NomeSkin", "")):
-            ator.set_nome_skin(str(skin))
-
-        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
-        if "angulo" in estado:
-            ator.definir_angulo_olhar(float(estado.get("angulo", 0.0)))
-        if bool(estado.get("tapa")):
-            ator.iniciar_tapa()
-
-        if ator.Perfil is not None and isinstance(payload.get("perfil"), dict):
-            ator.Perfil.aplicar_serializado(payload.get("perfil"))
-        if ator.Inventario is not None and isinstance(payload.get("inventario"), dict):
-            ator.Inventario.aplicar_serializado(payload.get("inventario"))
 
         self._ativar_bloqueio_sync_autoritario()
 

@@ -357,7 +357,7 @@ def _cmd_count(args):
     if alvo == "chunks":
         chunks_visiveis, chunks_simulados = CEREBRO._calcular_chunks_carregados()
         total = len(chunks_visiveis | chunks_simulados)
-        return f"Chunks carregados: {total} (visíveis={len(chunks_visiveis)}, simulados={len(chunks_simulados)})"
+        return f"Chunks: carregados={len(chunks_visiveis)} | simulados={len(chunks_simulados)} | total={total}"
     if alvo == "chests":
         banco = BANCO_DADOS.contar_subtipo_entidade("bau")
         cerebro = CEREBRO.contagem_baus_registrados()

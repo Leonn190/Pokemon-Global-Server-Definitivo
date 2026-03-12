@@ -14,6 +14,7 @@ from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer, PokemonSe
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
 from SimuladorServerJogo.Logica.AutoridadeCaptura import coletar_eventos_captura_agendada, resolver_captura, resolver_fruta
+from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 
 Vector2 = Tuple[float, float]
@@ -442,11 +443,20 @@ class CerebroServer:
             registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon", base=False)
             return True
 
-        ret = resolver_captura(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id, "dono_posicao": [dono_obj.posicao[0], dono_obj.posicao[1]], "distancia_arremesso_tiles": dist_final, "tentativas_falhas_anteriores": int(impacto.estado_extra.get("tentativas_falhas_captura", 0) or 0), "bioma": str(impacto.estado_extra.get("bioma", "")), "servidor_agora_ms": agora_ms, "maestria": 0.0})
+        ret = resolver_captura(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id, "dono_posicao": [dono_obj.posicao[0], dono_obj.posicao[1]], "distancia_arremesso_tiles": dist_final, "tentativas_falhas_anteriores": int(impacto.estado_extra.get("tentativas_falhas_captura", 0) or 0), "bioma": str(impacto.estado_extra.get("bioma", "")), "servidor_agora_ms": agora_ms, "maestria": self._maestria_jogador(client_id)})
         if bool(ret.get("iniciada", False)):
             BANCO_DADOS.atualizar_objeto(impacto.Id, {"estado": impacto.estado_extra})
             registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon", base=False)
         return True
+
+    def _maestria_jogador(self, client_id: str) -> float:
+        dados = obter_personagem_para_entrada(str(client_id))
+        if not isinstance(dados, dict):
+            return 0.0
+        try:
+            return float(dados.get("maestria", 0.0) or 0.0)
+        except Exception:
+            return 0.0
 
     def _simular_lancamento_servidor(self, origem: Vector2, destino: Vector2, dono_id: int):
         passos = max(4, int(math.hypot(destino[0] - origem[0], destino[1] - origem[1]) * 12.0))

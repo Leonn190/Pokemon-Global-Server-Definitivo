@@ -82,6 +82,49 @@ class Ator:
         self.BarraStamina.cor_borda = (180, 210, 255)
         self.BarraStamina.cor_preenchimento = (86, 220, 125)
 
+        self._alvo_posicao = self.Posicao
+        self._alvo_angulo = self.AnguloOlhar
+
+    def update(self, payload: dict) -> None:
+        dados = payload if isinstance(payload, dict) else {}
+        pos = dados.get("posicao")
+        if isinstance(pos, (list, tuple)) and len(pos) == 2:
+            px, py = float(pos[0]), float(pos[1])
+            self._alvo_posicao = (px, py)
+            dx = px - float(self.Posicao[0])
+            dy = py - float(self.Posicao[1])
+            if (dx * dx + dy * dy) > (8.0 * 8.0) or bool(dados.get("hard", False)):
+                self.definir_posicao(px, py)
+
+        nome = dados.get("nome") or dados.get("usuario")
+        if nome:
+            self.Nome = str(nome)
+        skin = dados.get("skin")
+        if skin and str(skin) != str(self.NomeSkin):
+            self.set_nome_skin(str(skin))
+
+        estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+        if "angulo" in estado:
+            alvo_ang = float(estado.get("angulo", self.AnguloOlhar))
+            self._alvo_angulo = alvo_ang
+            if bool(dados.get("hard", False)):
+                self.definir_angulo_olhar(alvo_ang)
+        if bool(estado.get("tapa")):
+            self.iniciar_tapa()
+        if self.Perfil is not None and isinstance(dados.get("perfil"), dict):
+            self.Perfil.aplicar_serializado(dados.get("perfil"))
+        if self.Inventario is not None and isinstance(dados.get("inventario"), dict):
+            self.Inventario.aplicar_serializado(dados.get("inventario"))
+        if self.Inventario is not None and "slot_selecionado" in dados:
+            try:
+                self.Inventario.SlotSelecionado = int(dados.get("slot_selecionado"))
+            except Exception:
+                pass
+        if bool(estado.get("mirando", False)):
+            self.EstadoMiraAtiva = True
+        elif "mirando" in estado:
+            self.EstadoMiraAtiva = False
+
     def definir_posicao(self, x: float, y: float) -> None:
         self.Posicao = (float(x), float(y))
         self.Colisor.mover_para(*self.Posicao)
@@ -131,8 +174,24 @@ class Ator:
         return self._tempo_tapa > 0.0
 
     def atualizar(self, dt: float) -> None:
+        dt = max(0.0, float(dt))
         if self._tempo_tapa > 0.0:
-            self._tempo_tapa = max(0.0, self._tempo_tapa - max(0.0, float(dt)))
+            self._tempo_tapa = max(0.0, self._tempo_tapa - dt)
+
+        px, py = float(self.Posicao[0]), float(self.Posicao[1])
+        ax, ay = float(self._alvo_posicao[0]), float(self._alvo_posicao[1])
+        dx, dy = (ax - px), (ay - py)
+        dist = math.hypot(dx, dy)
+        if dist > 1e-4:
+            passo = min(dist, 10.0 * dt)
+            k = passo / dist
+            self.definir_posicao(px + dx * k, py + dy * k)
+
+        diff_ang = (float(self._alvo_angulo) - float(self.AnguloOlhar) + 540.0) % 360.0 - 180.0
+        if abs(diff_ang) > 0.05:
+            vel_ang = 540.0 * dt
+            inc = max(-vel_ang, min(vel_ang, diff_ang))
+            self.definir_angulo_olhar(float(self.AnguloOlhar) + inc)
 
     def _progresso_tapa(self) -> float:
         if self._tempo_tapa <= 0.0:
@@ -198,3 +257,14 @@ class Ator:
         alcance = self._alcance_tapa_px()
         self.ColisorMao.mover_para(self.Posicao[0] + frente_x * alcance, self.Posicao[1] + frente_y * alcance)
         self.ColisorMao.ativo = self._tempo_tapa > 0.0
+
+    def ponto_mao_direita_mundo(self, usar_alcance_tapa: bool = False) -> Vector2:
+        rad = math.radians(float(self.AnguloOlhar))
+        frente_x = math.cos(rad)
+        frente_y = -math.sin(rad)
+        lateral_x = -frente_y
+        lateral_y = frente_x
+        alcance_tapa = self._alcance_tapa_px() if bool(usar_alcance_tapa) else 0.0
+        px = float(self.Posicao[0]) + (lateral_x * 0.28) + (frente_x * (0.22 + alcance_tapa))
+        py = float(self.Posicao[1]) + (lateral_y * 0.28) + (frente_y * (0.22 + alcance_tapa))
+        return (px, py)

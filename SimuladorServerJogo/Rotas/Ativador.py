@@ -14,6 +14,7 @@ from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 
 Vector2 = Tuple[float, float]
+Chunk = Tuple[int, int]
 
 _LOCK = threading.Lock()
 _DIFF_SEQ = 0
@@ -27,18 +28,19 @@ def _next_seq() -> int:
     return _DIFF_SEQ
 
 
-def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, categoria: str = "rapida", origem: str = "server", autor: str = "", evento: str = "") -> Dict[str, object]:
+def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, autor: str = "server", categoria: str | None = None, base: bool = False) -> Dict[str, object]:
     diff = {
         "seq": _next_seq(),
         "timestamp": time.time(),
         "tipo": str(tipo or ""),
-        "evento": str(evento or ""),
         "objeto_id": objeto_id,
+        "autor": str(autor or "server"),
         "payload": dict(payload or {}),
         "escopo": dict(escopo or {}),
-        "categoria": str(categoria or "rapida"),
-        "meta": {"origem": str(origem or "server"), "autor": str(autor or "")},
+        "base": bool(base),
     }
+    if categoria is not None:
+        diff["categoria"] = str(categoria)
     PACOTES_TICK.registrar_diff_pendente(diff)
     return diff
 
@@ -55,19 +57,29 @@ def _obter_state_client(client_id: str) -> Dict[str, object]:
     return _CLIENT_STATE[client_id]
 
 
-def _chunks_no_raio(posicao_camera: Vector2, raio_chunks: int):
+def _chunks_carregados_cliente(posicao_camera: Vector2) -> Set[Chunk]:
     centro = BANCO_DADOS.chunk_da_posicao(posicao_camera)
-    chunks = []
-    raio = max(0, int(raio_chunks))
+    raio = max(0, int(CEREBRO._i("raio_chunks_carregados", 4)))
+    chunks: Set[Chunk] = set()
     for dx in range(-raio, raio + 1):
         for dy in range(-raio, raio + 1):
-            chunks.append(BANCO_DADOS.normalizar_chunk((centro[0] + dx, centro[1] + dy)))
+            chunks.add(BANCO_DADOS.normalizar_chunk((centro[0] + dx, centro[1] + dy)))
     return chunks
 
 
+def _raio_visao_por_regras() -> float:
+    chunk_u = float(BANCO_DADOS.chunk_tamanho_unidade())
+    raio_carregado = max(0, int(CEREBRO._i("raio_chunks_carregados", 4)))
+    return float((raio_carregado + 1) * chunk_u)
 
 
-def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float) -> bool:
+def _objeto_em_chunks(obj, chunks: Set[Chunk]) -> bool:
+    if not chunks:
+        return False
+    return BANCO_DADOS.chunk_da_posicao(getattr(obj, "posicao", (0.0, 0.0))) in chunks
+
+
+def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk] | None = None) -> bool:
     if not isinstance(diff, dict):
         return False
     escopo = diff.get("escopo", {}) if isinstance(diff.get("escopo"), dict) else {}
@@ -78,17 +90,27 @@ def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float
         cx, cy = float(centro[0]), float(centro[1])
     except (TypeError, ValueError, IndexError):
         return True
+    if chunks_carregados:
+        if BANCO_DADOS.chunk_da_posicao((cx, cy)) not in chunks_carregados:
+            return False
     raio_diff = float(escopo.get("raio", 0.0) or 0.0)
     return math.hypot(cx - posicao_camera[0], cy - posicao_camera[1]) <= (raio_visao + max(0.0, raio_diff))
 
 
-def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float):
+def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = ""):
     saida = []
+    alvo_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
     for pacote in pacotes if isinstance(pacotes, list) else []:
         if not isinstance(pacote, dict):
             continue
         diffs = pacote.get("diffs", []) if isinstance(pacote.get("diffs"), list) else []
-        diffs_visiveis = [d for d in diffs if _diff_relevante_para_camera(d, posicao_camera, raio_visao)]
+        diffs_visiveis = []
+        for d in diffs:
+            if not _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados):
+                continue
+            if alvo_id > 0 and bool(d.get("base", False)) and int(d.get("objeto_id", 0) or 0) == alvo_id:
+                continue
+            diffs_visiveis.append(d)
         if not diffs_visiveis:
             continue
         novo = dict(pacote)
@@ -96,20 +118,24 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
         saida.append(novo)
     return saida
 
-def _coletar_diffs_visibilidade(posicao_camera: Vector2, raio: float, vistos: Set[int]) -> List[Dict[str, object]]:
-    objetos_proximos = BANCO_DADOS.buscar_proximos(posicao_camera, raio)
+
+def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int]) -> List[Dict[str, object]]:
+    raio = _raio_visao_por_regras()
+    objetos_proximos = [obj for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio) if _objeto_em_chunks(obj, chunks_carregados)]
     ids_proximos = {int(obj.Id) for obj in objetos_proximos}
     diffs: List[Dict[str, object]] = []
     agora = time.time()
     for obj in objetos_proximos:
-        if obj.Id in vistos:
+        if int(obj.Id) in vistos:
             continue
         vistos.add(int(obj.Id))
-        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "meta": {"origem": "server", "autor": "server"}})
+        categoria = str(getattr(obj, "estado_extra", {}).get("subtipo", "outro") or "outro")
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "autor": "server", "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "categoria": categoria, "base": False})
     for oid in [oid for oid in list(vistos) if oid not in ids_proximos]:
         vistos.discard(int(oid))
-        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "meta": {"origem": "server", "autor": "server"}})
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "autor": "server", "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "categoria": "outro", "base": False})
     return diffs
+
 
 
 def processar_ativador_json(requisicao_json: str) -> str:
@@ -124,15 +150,14 @@ def processar_ativador_json(requisicao_json: str) -> str:
         return json.dumps({"status": "erro", "mensagem": "client_id obrigatório"}, ensure_ascii=False)
 
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
-    raio_chunks = max(1, int(dados.get("raio_chunks", 4)))
-    raio = float((raio_chunks + 2) * BANCO_DADOS.chunk_tamanho_unidade())
     modo = str(dados.get("modo", "pacotes")).strip().lower()
     ultimo_tick_recebido = int(dados.get("ultimo_tick_recebido", 0) or 0)
 
-    info_tique = TIQUE_SERVIDOR.info()
-    if bool(info_tique.get("ativo", False)):
-        TIQUE_SERVIDOR.ativar_por_usuario(client_id)
+    TIQUE_SERVIDOR.ativar_por_usuario(client_id)
     meta_cerebro = CEREBRO.processar_ativacao(client_id, posicao_camera)
+    chunks_carregados = _chunks_carregados_cliente(posicao_camera)
+    chunks_servidor_carregados, chunks_servidor_simulados = CEREBRO._calcular_chunks_carregados()
+    raio = _raio_visao_por_regras()
 
     with _LOCK:
         _CLIENTS_CONHECIDOS.add(client_id)
@@ -140,21 +165,31 @@ def processar_ativador_json(requisicao_json: str) -> str:
         vistos: Set[int] = state["objetos_vistos"]
 
         if modo == "chunks":
-            chunks = [{"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()} for chunk in _chunks_no_raio(posicao_camera, raio_chunks)]
+            chunks = [{"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()} for chunk in sorted(chunks_carregados)]
             return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade())}}, ensure_ascii=False)
 
-        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio)
-        diffs_vis = _coletar_diffs_visibilidade(posicao_camera, raio, vistos)
-        if diffs_vis:
+        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id)
+        diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos)
+        if diffs_extra:
             if pacotes:
                 pacote_vis = pacotes[-1]
                 diffs_base = pacote_vis.get("diffs", []) if isinstance(pacote_vis.get("diffs"), list) else []
-                pacote_vis["diffs"] = list(diffs_base) + list(diffs_vis)
+                pacote_vis["diffs"] = list(diffs_base) + list(diffs_extra)
             else:
-                # Sem pacote real no intervalo: envia pacote sintético de bootstrap/visibilidade.
-                pacotes.append({"tick": 0, "diffs": diffs_vis, "sintetico": True})
+                pacotes.append({"tick": 0, "diffs": diffs_extra, "sintetico": True})
 
-        return json.dumps({"status": "ok", "mensagem": "Pacotes coletados", "client_id": client_id, "pacotes": pacotes, "tick_atual_servidor": PACOTES_TICK.tick_atual(), "meta": {"players_ativos": int(meta_cerebro.get("players_ativos", 0)), "chunks_visiveis": int(meta_cerebro.get("chunks_visiveis", 0))}}, ensure_ascii=False)
+        return json.dumps({
+            "status": "ok",
+            "mensagem": "Pacotes coletados",
+            "client_id": client_id,
+            "pacotes": pacotes,
+            "tick_atual_servidor": PACOTES_TICK.tick_atual(),
+            "meta": {
+                "players_ativos": int(meta_cerebro.get("players_ativos", 0)),
+                "chunks_carregados": len(chunks_servidor_carregados),
+                "chunks_simulados": len(chunks_servidor_simulados),
+            },
+        }, ensure_ascii=False)
 
 
 def desconectar_client(client_id: str) -> None:

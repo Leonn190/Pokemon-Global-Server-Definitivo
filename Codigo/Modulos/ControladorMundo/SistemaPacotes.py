@@ -21,7 +21,7 @@ class SistemaPacotes:
         self._tick_cliente = 0
         self._thread: Optional[threading.Thread] = None
         self._ativo = False
-        self._intervalo_s = 0.05
+        self._intervalo_s = 1.0 / 30.0
         self._pendentes_reenvio: List[Dict[str, object]] = []
 
     def configurar_conexao(self, server_link: str, client_id: str) -> None:
@@ -65,16 +65,6 @@ class SistemaPacotes:
             acumulado["diffs"] = list(diffs_existentes) + list(diffs)
         return [por_tick[t] for t in sorted(por_tick.keys())] + sinteticos
 
-    def _obter_raio_chunks(self) -> int:
-        if hasattr(self._leitor, "RaioChunks"):
-            return max(1, int(getattr(self._leitor, "RaioChunks", 4) or 4))
-        return max(1, int(getattr(self._leitor, "raio_chunks", 4) or 4))
-
-    def _separar_eventos_updates(self, diffs: List[Dict[str, object]]):
-        eventos = [d for d in diffs if isinstance(d, dict) and str(d.get("tipo", "")).strip().lower() == "evento"]
-        updates = [d for d in diffs if isinstance(d, dict) and str(d.get("tipo", "")).strip().lower() != "evento"]
-        return eventos, updates
-
     def _loop_rede(self) -> None:
         while self._ativo:
             if not self._server_link:
@@ -84,7 +74,6 @@ class SistemaPacotes:
             self._player.supervisionar_envio()
             envio_atual = self._objetos.ColetarDiffsRapidas()
             lote_envio = list(self._pendentes_reenvio) + list(envio_atual)
-            eventos, updates = self._separar_eventos_updates(lote_envio)
 
             resposta = None
             sucesso_envio = False
@@ -93,11 +82,9 @@ class SistemaPacotes:
                     self._server_link,
                     self._client_id,
                     ultimo_tick_recebido=int(self._ultimo_tick_recebido),
-                    eventos=eventos,
-                    updates=updates,
+                    diffs=lote_envio,
                     tick_cliente=int(self._tick_cliente),
                     posicao_camera=tuple(self._camera.PosicaoTiles),
-                    raio_chunks=self._obter_raio_chunks(),
                 )
                 sucesso_envio = isinstance(resposta, dict) and str(resposta.get("status", "")).strip().lower() == "ok"
             except Exception:

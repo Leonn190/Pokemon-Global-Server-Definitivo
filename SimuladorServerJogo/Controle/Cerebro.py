@@ -1,37 +1,48 @@
-"""Cérebro do servidor: controla tick, chunks simulados/visíveis e ciclo de pokémons."""
+"""Cérebro do servidor: chunks carregados/simulados, spawn/movimento/despawn e validação autoritativa."""
 
 from __future__ import annotations
 
+import math
 import random
 import threading
 import time
-from typing import Dict, List, Set, Tuple
+from collections import deque
+from typing import Deque, Dict, List, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
+from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer, PokemonServer
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
-from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer, BauServer, ProjetilServer
-from SimuladorServerJogo.Logica.AutoridadeCaptura import resolver_fruta, resolver_captura, coletar_eventos_captura_agendada
+from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
+from SimuladorServerJogo.Logica.AutoridadeCaptura import coletar_eventos_captura_agendada, resolver_captura, resolver_fruta
+from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]
+
+_DIRECOES_8: Tuple[Vector2, ...] = (
+    (1.0, 0.0), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0),
+    (0.7071, 0.7071), (0.7071, -0.7071), (-0.7071, 0.7071), (-0.7071, -0.7071),
+)
 
 
 class CerebroServer:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._ultimo_tick = 0.0
+        self._tick_contador = 0
         self._ativador_id = ""
         self._players_ativos: Dict[str, Vector2] = {}
         self._pokemons_ids: Set[int] = set()
         self._baus_ids: Set[int] = set()
-        self._projeteis_ids: Set[int] = set()
         self._regras = self._carregar_regras()
+
+        self._spawns_pokemon_ultimos_100: Deque[int] = deque()
+        self._spawns_bau_ultimos_100: Deque[int] = deque()
+        self._movimento_estado: Dict[int, Dict[str, object]] = {}
 
     def _carregar_regras(self) -> Dict[str, object]:
         return carregar_regras_cerebro()
-
 
     def _i(self, k: str, d: int) -> int:
         try:
@@ -50,221 +61,277 @@ class CerebroServer:
             self._players_ativos.pop(str(client_id), None)
             if self._ativador_id == str(client_id):
                 self._ativador_id = next(iter(self._players_ativos.keys()), "")
-            if self._players_ativos:
-                return
-            self._limpar_pokemons_dinamicos()
 
     def desligar_servidor(self) -> None:
         with self._lock:
             self._players_ativos.clear()
             self._ativador_id = ""
-            self._limpar_pokemons_dinamicos()
-
-    def _limpar_pokemons_dinamicos(self) -> None:
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-
-        for oid in list(self._pokemons_ids):
-            obj = BANCO_DADOS.obter_objeto(oid)
-            if isinstance(obj, PokemonServer):
-                obj.sumir()
-            removido = BANCO_DADOS.remover_objeto(oid)
-            if removido is not None:
-                registrar_diff(
-                    "despawn",
-                    payload={"id": removido.Id},
-                    escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 100},
-                    objeto_id=removido.Id,
-                    categoria="rapida",
-                )
-        self._pokemons_ids.clear()
-        self._baus_ids.clear()
-        self._projeteis_ids.clear()
-
-    def registrar_intencao_arremesso(self, client_id: str, payload: Dict[str, object]) -> bool:
-        item = payload.get("item") if isinstance(payload.get("item"), dict) else {}
-        origem = payload.get("origem") if isinstance(payload.get("origem"), (list, tuple)) and len(payload.get("origem")) == 2 else None
-        direcao = payload.get("direcao") if isinstance(payload.get("direcao"), (list, tuple)) and len(payload.get("direcao")) == 2 else None
-        if origem is None or direcao is None:
-            return False
-
-        dono_obj = BANCO_DADOS.obter_objeto(int(payload.get("dono_id", 0) or 0))
-        if dono_obj is None:
-            return False
-
-        estilo = str(item.get("Estilo") or item.get("estilo") or "item").lower()
-        nome_item = str(item.get("Nome") or "item")
-        token = str(payload.get("token_arremesso") or "")
-        velocidade = float(payload.get("velocidade", 11.0) or 11.0)
-        alcance = float(payload.get("alcance", 6.0) or 6.0)
-        distancia_conferencia = max(0.8, min(4.0, float(payload.get("distancia_conferencia_inicial", 4.0) or 4.0)))
-
-        pid = BANCO_DADOS.gerar_id()
-        proj = ProjetilServer(
-            id_objeto=pid,
-            posicao=(float(origem[0]), float(origem[1])),
-            dono_id=int(getattr(dono_obj, "Id", 0) or 0),
-            tipo_projetil=estilo,
-            subtipo=nome_item,
-            item_base_id=str(item.get("Code") or ""),
-            token_arremesso=token,
-            direcao=(float(direcao[0]), float(direcao[1])),
-            velocidade=velocidade,
-            alcance=alcance,
-            raio_colisao=0.18,
-        )
-        proj.estado_extra["distancia_conferencia_inicial"] = distancia_conferencia
-        BANCO_DADOS.inserir_objeto(proj)
-        self._projeteis_ids.add(proj.Id)
-
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-        registrar_diff("spawn", payload=proj.serializar(), escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 80}, objeto_id=proj.Id, categoria="rapida")
-        return True
-
+            self._movimento_estado.clear()
 
     def registrar_spawn_manual(self, objeto) -> None:
-        """Inclui objetos spawnados por comando no ciclo do cérebro."""
         if isinstance(objeto, PokemonServer):
-            objeto.estado_extra["forcar_movimento_ate"] = time.monotonic() + 8.0
             self._pokemons_ids.add(int(objeto.Id))
             return
         if isinstance(objeto, BauServer):
             self._baus_ids.add(int(objeto.Id))
             return
 
-
     def executar_tick_servidor(self) -> None:
         with self._lock:
+            self._tick_contador += 1
             self._executar_tick()
             self._ultimo_tick = time.monotonic()
 
     def processar_ativacao(self, client_id: str, posicao_camera: Vector2) -> Dict[str, object]:
         with self._lock:
-            client_id = str(client_id)
+            cid = str(client_id)
             if not self._ativador_id:
-                self._ativador_id = client_id
-            self._players_ativos[client_id] = (float(posicao_camera[0]), float(posicao_camera[1]))
-            is_ativador = self._ativador_id == client_id
-
-            tick_s = (1.0 / 30.0)
-            tick_executado = False
-            chunks_visiveis, chunks_simulados = self._calcular_chunks_carregados()
+                self._ativador_id = cid
+            self._players_ativos[cid] = (float(posicao_camera[0]), float(posicao_camera[1]))
+            chunks_carregados, chunks_simulados = self._calcular_chunks_carregados()
             return {
                 "ativador": self._ativador_id,
-                "is_ativador": is_ativador,
-                "tick_executado": tick_executado,
-                "tick_intervalo_s": tick_s,
-                "chunks_visiveis": len(chunks_visiveis),
+                "is_ativador": self._ativador_id == cid,
+                "tick_executado": False,
+                "tick_intervalo_s": (1.0 / 30.0),
+                "chunks_visiveis": len(chunks_carregados),
                 "chunks_simulados": len(chunks_simulados),
                 "players_ativos": len(self._players_ativos),
-                "anel_render_chunks": self._i("anel_render_chunks", 7),
-                "anel_simulado_chunks": self._i("anel_simulado_chunks", 13),
-                "max_pokemons": self._max_pokemons_permitidos(len(chunks_visiveis | chunks_simulados)),
-                "maior_vetor_movimento_pokemon": self._f("maior_vetor_movimento_pokemon", 3.0),
+                "raio_chunks_carregados": self._i("raio_chunks_carregados", 4),
+                "raio_chunks_simulados": self._i("raio_chunks_simulados", 3),
             }
 
-    def _obter_colisor_global(self):
-        bloqueados = {int(v) for v in (self._regras.get("tiles_bloqueados") or [0, 1, 2])}
+    def _sincronizar_registries_com_banco(self) -> None:
+        for obj in BANCO_DADOS.listar_objetos():
+            subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower()
+            if subt == "pokemon":
+                self._pokemons_ids.add(int(obj.Id))
+            elif subt == "bau":
+                self._baus_ids.add(int(obj.Id))
 
-        def _colide(destino: Vector2, raio: float) -> bool:
-            px, py = float(destino[0]), float(destino[1])
-            largura, altura = BANCO_DADOS.limites_mundo()
-            if px < 0.0 or py < 0.0 or px >= float(largura) or py >= float(altura):
-                return False
-            gx = int(px)
-            gy = int(py)
-            tile = BANCO_DADOS.tile_em(gx, gy)
-            if tile in bloqueados:
-                return False
-            proximos = BANCO_DADOS.buscar_proximos((px, py), max(0.25, float(raio) + 0.55))
-            for obj in proximos:
-                if str(getattr(obj, "tipo_classe", "")).startswith("estrutura"):
-                    ox, oy = obj.posicao
-                    rr = float(getattr(obj, "raio_colisao", 0.5)) + float(raio)
-                    if ((px - ox) ** 2 + (py - oy) ** 2) <= (rr * rr):
-                        return False
-            return True
+        self._pokemons_ids = {oid for oid in self._pokemons_ids if isinstance(BANCO_DADOS.obter_objeto(oid), PokemonServer)}
+        self._baus_ids = {oid for oid in self._baus_ids if isinstance(BANCO_DADOS.obter_objeto(oid), BauServer)}
 
-        return _colide
+    def _limpar_janela_spawns(self) -> None:
+        limite = max(1, self._tick_contador - 100)
+        while self._spawns_pokemon_ultimos_100 and self._spawns_pokemon_ultimos_100[0] <= limite:
+            self._spawns_pokemon_ultimos_100.popleft()
+        while self._spawns_bau_ultimos_100 and self._spawns_bau_ultimos_100[0] <= limite:
+            self._spawns_bau_ultimos_100.popleft()
 
-    def _maestria_player(self, objeto_player_id: int) -> float:
-        from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
-        usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_player_id or 0))
-        if not usuario:
-            return 0.0
-        perfil = obter_personagem_para_entrada(usuario)
-        if not isinstance(perfil, dict):
-            return 0.0
-        return float(perfil.get("maestria", 0.0) or 0.0)
-
-    def _classificar_colisao(self, obj) -> str:
-        tipo = str(getattr(obj, "tipo_classe", "")).strip().lower()
-        subtipo = str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower()
-        if subtipo == "pokemon":
-            return "pokemon"
-        if subtipo == "player":
-            return "player"
-        if subtipo == "projetil":
-            return "projetil"
-        if tipo == "estrutura_natural":
-            return "estrutura_natural"
-        if tipo.startswith("estrutura"):
-            return "bloqueante"
-        return "outro"
-
-    def _payload_pokemon_capturado(self, poke: PokemonServer) -> Dict[str, object]:
-        estado = poke.estado_extra if isinstance(poke.estado_extra, dict) else {}
-        payload = {
-            "Nome": str(estado.get("nome") or estado.get("especie") or "Pokemon"),
-            "Code": str(estado.get("code") or ""),
-            "Nivel": int(estado.get("nivel", 1) or 1),
-            "IV": int(estado.get("iv", 0) or 0),
-            "Raridade": int(estado.get("raridade", 1) or 1),
-            "Estagio": int(estado.get("estagio", 1) or 1),
-        }
-        for chave, valor in estado.items():
-            if chave in {"captura"}:
-                continue
-            payload[chave] = valor
-        return payload
-
-    def _registrar_captura_inventario_player(self, dono_id: int, poke: PokemonServer) -> None:
-        from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada, atualizar_inventario_personagem
+    def _executar_tick(self) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 
-        usuario = BANCO_DADOS.usuario_por_objeto_id(int(dono_id or 0))
-        if not usuario:
+        self._sincronizar_registries_com_banco()
+        self._limpar_janela_spawns()
+
+        chunks_carregados, chunks_simulados = self._calcular_chunks_carregados()
+
+        if chunks_simulados:
+            self._tentar_spawn_pokemon(chunks_simulados)
+            self._tentar_spawn_bau(chunks_simulados)
+
+        self._atualizar_movimento_pokemons(chunks_carregados)
+        self._executar_tick_baus(chunks_simulados)
+        self._executar_tick_capturas()
+        self._despawn_simulado(chunks_simulados)
+
+        # limpeza de movimentos órfãos
+        for oid in list(self._movimento_estado.keys()):
+            if oid not in self._pokemons_ids:
+                self._movimento_estado.pop(oid, None)
+
+    def _tentar_spawn_pokemon(self, chunks_simulados: Set[Chunk]) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        if random.random() > self._f("chance_spawn_pokemon_por_tick", 0.02):
+            return
+        if len(self._spawns_pokemon_ultimos_100) >= self._i("limite_spawn_pokemon_100_ticks", 4):
+            return
+        if self.contagem_pokemons_registrados() >= self._i("limite_total_pokemons", 100):
             return
 
-        dados_player = obter_personagem_para_entrada(usuario)
-        if not isinstance(dados_player, dict):
+        tentativas = max(1, self._i("tentativas_spawn_pokemon", 5))
+        chunk_tamanho = BANCO_DADOS.chunk_tamanho_unidade()
+        chunk_list = list(chunks_simulados)
+        random.shuffle(chunk_list)
+
+        for _ in range(tentativas):
+            chunk = random.choice(chunk_list)
+            if self._contar_pokemons_chunk(chunk) >= self._i("limite_pokemons_chunk", 2):
+                continue
+            x0, y0 = chunk[0] * chunk_tamanho, chunk[1] * chunk_tamanho
+            px = random.uniform(x0 + 0.2, x0 + chunk_tamanho - 0.2)
+            py = random.uniform(y0 + 0.2, y0 + chunk_tamanho - 0.2)
+            if not self._posicao_spawn_valida((px, py), raio=0.45):
+                continue
+            novo_id = BANCO_DADOS.gerar_id()
+            poke = gerar_pokemon_server(novo_id=novo_id, posicao=(px, py), chunk_xy=chunk)
+            BANCO_DADOS.inserir_objeto(poke)
+            self._pokemons_ids.add(int(poke.Id))
+            self._spawns_pokemon_ultimos_100.append(self._tick_contador)
+            registrar_diff("spawn", payload=poke.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=poke.Id, autor="server", categoria="pokemon", base=False)
             return
 
-        inventario = dict(dados_player.get("inventario", {})) if isinstance(dados_player.get("inventario"), dict) else {}
-        pokemons = list(inventario.get("pokemons", []))
-        pokemons.append(self._payload_pokemon_capturado(poke))
-        inventario["pokemons"] = pokemons
+    def _tentar_spawn_bau(self, chunks_simulados: Set[Chunk]) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 
-        atualizar_inventario_personagem(usuario, inventario)
-        dados_player["inventario"] = inventario
+        if random.random() > self._f("chance_spawn_bau_por_tick", 0.015):
+            return
+        if len(self._spawns_bau_ultimos_100) >= self._i("limite_spawn_bau_100_ticks", 2):
+            return
+        if self.contagem_baus_registrados() >= self._i("limite_total_baus", 60):
+            return
 
-        obj = BANCO_DADOS.garantir_player(usuario, str(dados_player.get("skin", "S1")), tuple(dados_player.get("posicao", [0.0, 0.0])))
-        payload = {
-            "tipo": "entidade_player",
-            "nome": str(dados_player.get("nome", usuario)),
-            "skin": str(dados_player.get("skin", "S1")),
-            "posicao": [float(obj.posicao[0]), float(obj.posicao[1])],
-            "perfil": {k: v for k, v in dados_player.items() if k != "inventario"},
-            "inventario": inventario,
-        }
-        registrar_diff(
-            "update",
-            payload=payload,
-            escopo={"centro": [float(obj.posicao[0]), float(obj.posicao[1])], "raio": 780.0},
-            objeto_id=obj.Id,
-            categoria="rapida",
-            origem="server",
-            autor="server",
-        )
+        tentativas = max(1, self._i("tentativas_spawn_bau", 5))
+        chunk_tamanho = BANCO_DADOS.chunk_tamanho_unidade()
+        chunk_list = list(chunks_simulados)
+        random.shuffle(chunk_list)
+
+        for _ in range(tentativas):
+            chunk = random.choice(chunk_list)
+            if self._contar_baus_chunk(chunk) >= self._i("limite_baus_chunk", 1):
+                continue
+            x0, y0 = chunk[0] * chunk_tamanho, chunk[1] * chunk_tamanho
+            px = random.uniform(x0 + 0.2, x0 + chunk_tamanho - 0.2)
+            py = random.uniform(y0 + 0.2, y0 + chunk_tamanho - 0.2)
+            if not self._posicao_spawn_valida((px, py), raio=0.42):
+                continue
+            dados = gerar_bau_server(random)
+            novo_id = BANCO_DADOS.gerar_id()
+            bau = BauServer(id_objeto=novo_id, tipo_bau=str(dados.get("tipo_bau", "Comum")), itens=list(dados.get("itens", [])), posicao=(px, py), raio_colisao=0.42, raio_interacao=0.85, aberto=False)
+            BANCO_DADOS.inserir_objeto(bau)
+            self._baus_ids.add(int(bau.Id))
+            self._spawns_bau_ultimos_100.append(self._tick_contador)
+            registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau", base=False)
+            return
+
+    def _posicao_spawn_valida(self, pos: Vector2, raio: float) -> bool:
+        px, py = float(pos[0]), float(pos[1])
+        for obj in BANCO_DADOS.buscar_proximos((px, py), max(0.8, raio + 0.8)):
+            subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower()
+            tipo = str(getattr(obj, "tipo_classe", "")).strip().lower()
+            if subt in {"pokemon", "bau", "player"} or tipo.startswith("estrutura"):
+                rr = float(getattr(obj, "raio_colisao", 0.5) or 0.5) + float(raio)
+                if ((px - float(obj.posicao[0])) ** 2 + (py - float(obj.posicao[1])) ** 2) <= (rr * rr):
+                    return False
+        return True
+
+    def _atualizar_movimento_pokemons(self, chunks_carregados: Set[Chunk]) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        chance_inicio = self._f("chance_movimento_pokemon_por_tick", 0.008)
+        cooldown_min = self._i("intervalo_minimo_apos_movimento_ticks", 40)
+        duracao_max = self._i("tempo_maximo_movimento_ticks", 150)
+        velocidade = self._f("velocidade_base_pokemon_tiles_s", 3.0)
+        tps = 30.0
+        passo = velocidade / tps
+
+        for oid in list(self._pokemons_ids):
+            poke = BANCO_DADOS.obter_objeto(oid)
+            if not isinstance(poke, PokemonServer):
+                self._pokemons_ids.discard(oid)
+                continue
+
+            estado = self._movimento_estado.get(oid)
+            if not isinstance(estado, dict):
+                estado = {"dir": (0.0, 0.0), "restante": 0, "cooldown_ate": 0}
+                self._movimento_estado[oid] = estado
+
+            if int(estado.get("restante", 0) or 0) > 0:
+                dx, dy = estado.get("dir", (0.0, 0.0))
+                destino = (float(poke.posicao[0]) + float(dx) * passo, float(poke.posicao[1]) + float(dy) * passo)
+                if self._colisao_movimento_pokemon(oid, destino, poke.raio_colisao):
+                    estado["restante"] = 0
+                    estado["cooldown_ate"] = self._tick_contador + cooldown_min
+                    continue
+                poke.definir_posicao(destino[0], destino[1])
+                BANCO_DADOS.atualizar_objeto(poke.Id, {"posicao": [poke.posicao[0], poke.posicao[1]]})
+                estado["restante"] = int(estado.get("restante", 0) or 0) - 1
+                if int(estado.get("restante", 0) or 0) <= 0:
+                    estado["cooldown_ate"] = self._tick_contador + cooldown_min
+                registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 40}, objeto_id=poke.Id, autor="server", categoria="pokemon", base=False)
+                continue
+
+            if self._tick_contador < int(estado.get("cooldown_ate", 0) or 0):
+                continue
+
+            if BANCO_DADOS.chunk_da_posicao(poke.posicao) not in chunks_carregados:
+                continue
+            if random.random() > chance_inicio:
+                continue
+
+            estado["dir"] = random.choice(_DIRECOES_8)
+            estado["restante"] = random.randint(max(10, cooldown_min), max(10, duracao_max))
+
+    def _colisao_movimento_pokemon(self, pokemon_id: int, destino: Vector2, raio: float) -> bool:
+        px, py = float(destino[0]), float(destino[1])
+        for obj in BANCO_DADOS.buscar_proximos((px, py), max(0.8, float(raio) + 0.8)):
+            oid = int(getattr(obj, "Id", 0) or 0)
+            if oid == int(pokemon_id):
+                continue
+            subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower()
+            tipo = str(getattr(obj, "tipo_classe", "")).strip().lower()
+            if subt in {"player"} or tipo.startswith("estrutura"):
+                rr = float(getattr(obj, "raio_colisao", 0.5) or 0.5) + float(raio)
+                if ((px - float(obj.posicao[0])) ** 2 + (py - float(obj.posicao[1])) ** 2) <= (rr * rr):
+                    return True
+        return False
+
+    def _executar_tick_baus(self, chunks_simulados: Set[Chunk]) -> None:
+        from SimuladorServerJogo.Controle.EstadoServidor import atualizar_inventario_personagem, obter_personagem_para_entrada
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        players = [o for o in BANCO_DADOS.listar_objetos() if str(getattr(o, "estado_extra", {}).get("subtipo", "")) == "player"]
+        for oid in list(self._baus_ids):
+            bau = BANCO_DADOS.obter_objeto(oid)
+            if not isinstance(bau, BauServer):
+                self._baus_ids.discard(oid)
+                continue
+            if bool(bau.estado_extra.get("aberto", False)):
+                continue
+            for player in players:
+                dx = float(bau.posicao[0]) - float(player.posicao[0])
+                dy = float(bau.posicao[1]) - float(player.posicao[1])
+                limite = float(bau.raio_interacao) + float(player.raio_colisao)
+                if (dx * dx + dy * dy) > (limite * limite):
+                    continue
+                info = bau.abrir(player=player, dono_id=int(player.Id))
+                if info is None:
+                    break
+                BANCO_DADOS.atualizar_objeto(bau.Id, {"estado": bau.estado_extra})
+                usuario = BANCO_DADOS.usuario_por_objeto_id(int(player.Id))
+                if usuario:
+                    dados = obter_personagem_para_entrada(usuario) or {}
+                    inv = dict(dados.get("inventario", {})) if isinstance(dados.get("inventario"), dict) else {"itens": []}
+                    itens = list(inv.get("itens", []))
+                    for item in list(info.get("itens", [])):
+                        if isinstance(item, dict):
+                            itens.append(dict(item))
+                    inv["itens"] = itens
+                    atualizar_inventario_personagem(usuario, inv)
+                    registrar_diff("update", payload={"inventario": inv}, escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 780.0}, objeto_id=player.Id, autor="server", categoria="player", base=False)
+                registrar_diff("update", payload={"estado": {"aberto": True, "itens": []}}, escopo={"centro": [bau.posicao[0], bau.posicao[1]], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau", base=False)
+                break
+
+        ttl = int(100)
+        for oid in list(self._baus_ids):
+            bau = BANCO_DADOS.obter_objeto(oid)
+            if not isinstance(bau, BauServer):
+                self._baus_ids.discard(oid)
+                continue
+            if not bool(bau.estado_extra.get("aberto", False)):
+                continue
+            aberto_em = float(bau.estado_extra.get("aberto_em", 0.0) or 0.0)
+            if aberto_em <= 0.0:
+                continue
+            passou_ticks = int((time.monotonic() - aberto_em) * 30.0)
+            if passou_ticks < ttl:
+                continue
+            removido = BANCO_DADOS.remover_objeto(oid)
+            self._baus_ids.discard(oid)
+            if removido is not None:
+                registrar_diff("despawn", payload={"id": removido.Id, "motivo": "bau_aberto_expirado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="bau", base=False)
 
     def _executar_tick_capturas(self) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
@@ -279,381 +346,221 @@ class CerebroServer:
             if not eventos:
                 continue
             BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": poke.estado_extra})
-            for e in eventos:
-                registrar_diff(
-                    "evento",
-                    payload=e["payload"],
-                    escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120},
-                    objeto_id=poke.Id,
-                    categoria="rapida",
-                    evento=e.get("evento", "pokemon_captura"),
-                )
-
+            registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120}, objeto_id=poke.Id, autor="server", categoria="pokemon", base=False)
             cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
             if str(cap.get("fase", "")) == "finalizada" and str(cap.get("resultado", "")) == "sucesso":
-                self._registrar_captura_inventario_player(int(cap.get("dono_id", 0) or 0), poke)
+                self._adicionar_pokemon_capturado_inventario(int(cap.get("dono_id", 0) or 0), poke)
                 removido = BANCO_DADOS.remover_objeto(poke.Id)
                 self._pokemons_ids.discard(poke.Id)
                 if removido is not None:
-                    registrar_diff(
-                        "despawn",
-                        payload={"id": removido.Id, "motivo": "captura_sucesso"},
-                        escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 120},
-                        objeto_id=removido.Id,
-                        categoria="rapida",
-                    )
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "captura_sucesso"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 120}, objeto_id=removido.Id, autor="server", categoria="pokemon", base=False)
 
-    def _executar_tick(self) -> None:
-        chunks_visiveis, chunks_simulados = self._calcular_chunks_carregados()
-        chunks_carregados = chunks_visiveis | chunks_simulados
+    def _snapshot_pokemon_capturado(self, poke: PokemonServer) -> Dict[str, object]:
+        estado = poke.estado_extra if isinstance(getattr(poke, "estado_extra", None), dict) else {}
+        return {
+            "id": int(getattr(poke, "Id", 0) or 0),
+            "especie": str(estado.get("especie") or estado.get("nome") or "Pokemon"),
+            "nome": str(estado.get("nome") or estado.get("especie") or "Pokemon"),
+            "stats": dict(estado.get("stats", {})) if isinstance(estado.get("stats"), dict) else {},
+            "iv": int(estado.get("iv", 0) or 0),
+            "capturado_em_ms": int(time.time() * 1000),
+        }
 
-        pokemons: List[PokemonServer] = []
+    def _adicionar_pokemon_capturado_inventario(self, dono_id: int, poke: PokemonServer) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        usuario = BANCO_DADOS.usuario_por_objeto_id(int(dono_id))
+        if not usuario:
+            return
+        perfil = obter_personagem_para_entrada(str(usuario))
+        if not isinstance(perfil, dict):
+            return
+        inventario = perfil.get("inventario") if isinstance(perfil.get("inventario"), dict) else {}
+        pokemons = list(inventario.get("pokemons", []))
+        pokemons.append(self._snapshot_pokemon_capturado(poke))
+        inventario["pokemons"] = pokemons
+        atualizar_inventario_personagem(str(usuario), inventario)
+
+        player_id = int(BANCO_DADOS.objeto_id_por_usuario(str(usuario)) or 0)
+        player_obj = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
+        if player_obj is not None:
+            BANCO_DADOS.atualizar_objeto(player_id, {"estado": {"inventario": inventario}})
+            registrar_diff("update", payload={"inventario": inventario}, escopo={"centro": [float(player_obj.posicao[0]), float(player_obj.posicao[1])], "raio": 780.0}, objeto_id=player_id, autor="server", categoria="player", base=False)
+
+    def _despawn_simulado(self, chunks_simulados: Set[Chunk]) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
+        chance_poke = self._f("chance_despawn_pokemon_simulado_por_tick", 0.003)
+        chance_bau = self._f("chance_despawn_bau_simulado_por_tick", 0.002)
+
+        candidatos_poke = []
         for oid in list(self._pokemons_ids):
-            obj = BANCO_DADOS.obter_objeto(oid)
-            if isinstance(obj, PokemonServer):
-                pokemons.append(obj)
-            else:
+            poke = BANCO_DADOS.obter_objeto(oid)
+            if not isinstance(poke, PokemonServer):
                 self._pokemons_ids.discard(oid)
+                continue
+            if BANCO_DADOS.chunk_da_posicao(poke.posicao) in chunks_simulados:
+                candidatos_poke.append((oid, poke))
 
-        max_total = self._max_pokemons_permitidos(len(chunks_carregados))
-        chance_spawn = max(0.0, min(1.0, self._f("chance_spawn_por_tick", 0.35)))
-        if chunks_simulados and len(pokemons) < max_total and random.random() < chance_spawn:
-            chunk = random.choice(list(chunks_simulados))
-            max_por_chunk = max(1, self._i("max_pokemon_por_chunk_simulado", 3))
-            if self._contar_pokemons_chunk(chunk) < max_por_chunk:
-                self._spawn_pokemon(chunk)
+        if candidatos_poke:
+            oid, poke = random.choice(candidatos_poke)
+            if random.random() <= chance_poke:
+                removido = BANCO_DADOS.remover_objeto(oid)
+                self._pokemons_ids.discard(oid)
+                self._movimento_estado.pop(oid, None)
+                if removido is not None:
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="pokemon", base=False)
 
-        chance_mover = max(0.0, min(1.0, self._f("chance_mover_por_tick", 0.45)))
-        agora = time.monotonic()
-        for poke in pokemons:
-            forcar = agora < float(poke.estado_extra.get("forcar_movimento_ate", 0.0) or 0.0)
-            if forcar or random.random() < chance_mover:
-                self._mover_pokemon(poke, chunks_carregados)
+        candidatos_bau = []
+        for oid in list(self._baus_ids):
+            bau = BANCO_DADOS.obter_objeto(oid)
+            if not isinstance(bau, BauServer):
+                self._baus_ids.discard(oid)
+                continue
+            if bool(bau.estado_extra.get("aberto", False)):
+                continue
+            if BANCO_DADOS.chunk_da_posicao(bau.posicao) in chunks_simulados:
+                candidatos_bau.append((oid, bau))
 
-        self._executar_tick_baus(chunks_simulados, chunks_carregados)
-        self._executar_tick_projeteis(chunks_carregados)
-        self._executar_tick_capturas()
-        self._limpar_baus_abertos_expirados()
+        if candidatos_bau:
+            oid, bau = random.choice(candidatos_bau)
+            if random.random() <= chance_bau:
+                removido = BANCO_DADOS.remover_objeto(oid)
+                self._baus_ids.discard(oid)
+                if removido is not None:
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="bau", base=False)
 
-    def validar_colisao_candidata_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
-        token = str(payload.get("token_arremesso") or "")
+    def registrar_lancamento_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
+        token = str(payload.get("token") or "").strip()
         if not token:
             return False
-
-        proj = None
-        for oid in list(self._projeteis_ids):
-            obj = BANCO_DADOS.obter_objeto(oid)
-            if isinstance(obj, ProjetilServer) and str(obj.estado_extra.get("token_arremesso", "")) == token:
-                proj = obj
-                break
-        if proj is None or bool(proj.estado_extra.get("terminado", False)):
+        dono_id = int(payload.get("dono_id", 0) or 0)
+        dono_obj = BANCO_DADOS.obter_objeto(dono_id)
+        if dono_obj is None:
             return False
 
-        alvo_id = int(payload.get("alvo_id", 0) or 0)
-        alvo = BANCO_DADOS.obter_objeto(alvo_id) if alvo_id > 0 else None
-        if alvo is None or alvo.Id == proj.Id:
-            return False
+        subtipo = str(payload.get("subtipo_projetil") or "pokebola").strip().lower()
+        variante = str(payload.get("variante") or "pokebola").strip().lower()
+        if subtipo == "fruta":
+            velocidade, alcance = 6.0, 6.0
+        elif variante == "sniperball":
+            velocidade, alcance = 8.0, 9.0
+        elif variante == "fastball":
+            velocidade, alcance = 10.0, 7.0
+        else:
+            velocidade, alcance = 7.0, 7.0
+
+        p0 = payload.get("pos_inicial") if isinstance(payload.get("pos_inicial"), (list, tuple)) and len(payload.get("pos_inicial")) == 2 else [dono_obj.posicao[0], dono_obj.posicao[1]]
+        p1 = payload.get("pos_final") if isinstance(payload.get("pos_final"), (list, tuple)) and len(payload.get("pos_final")) == 2 else list(p0)
+        dx = float(p1[0]) - float(p0[0])
+        dy = float(p1[1]) - float(p0[1])
+        dist = math.hypot(dx, dy) or 1.0
+        ux, uy = dx / dist, dy / dist
+        dist_final = min(float(alcance), dist)
+        destino = [float(p0[0]) + ux * dist_final, float(p0[1]) + uy * dist_final]
+
+        cliente_ms = int(payload.get("instante_cliente_ms", 0) or 0)
+        agora_ms = int(time.time() * 1000)
+        tempo_total = max(0.05, dist_final / max(0.1, velocidade))
+        atraso = max(0.0, (agora_ms - cliente_ms) / 1000.0) if cliente_ms > 0 else 0.0
+        rewind = min(tempo_total * 0.15, atraso)
+
+        boost_remoto = min(0.05, (rewind / tempo_total) * 0.05 if tempo_total > 1e-6 else 0.0)
+        vel_remota = velocidade * (1.0 + boost_remoto)
 
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+        registrar_diff("spawn", payload={"token": token, "subtipo_projetil": subtipo, "variante": variante, "item": str(payload.get("item") or ""), "item_base_id": str(payload.get("item_base_id") or ""), "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": vel_remota, "dono_id": int(dono_id), "dono_nome": str(payload.get("dono_nome") or client_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(dono_id), autor="server", categoria="projetil_lancamento", base=False)
 
-        raio_proj = float(getattr(proj, "raio_colisao", 0.18) or 0.18)
-        raio_alvo = float(getattr(alvo, "raio_colisao", 0.2) or 0.2)
-        dx = float(alvo.posicao[0]) - float(proj.posicao[0])
-        dy = float(alvo.posicao[1]) - float(proj.posicao[1])
-        limite = raio_proj + raio_alvo
-        colisao_confirmada = ((dx * dx) + (dy * dy)) <= (limite * limite)
-
-        pos_ini = proj.estado_extra.get("posicao_inicial") if isinstance(proj.estado_extra.get("posicao_inicial"), (list, tuple)) else [proj.posicao[0], proj.posicao[1]]
-        dpx = float(proj.posicao[0]) - float(pos_ini[0])
-        dpy = float(proj.posicao[1]) - float(pos_ini[1])
-        distancia_percorrida = (dpx * dpx + dpy * dpy) ** 0.5
-        distancia_conferencia = float(proj.estado_extra.get("distancia_conferencia_inicial", 4.0) or 4.0)
-
-        if colisao_confirmada and distancia_percorrida <= max(0.8, distancia_conferencia):
-            categoria = self._classificar_colisao(alvo)
-            if categoria == "pokemon" and isinstance(alvo, PokemonServer):
-                cap_alvo = alvo.estado_extra.get("captura") if isinstance(alvo.estado_extra.get("captura"), dict) else {}
-                if bool(cap_alvo.get("ativa", False)) or bool(cap_alvo.get("captura_pendente", False)):
-                    registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": False, "alvo_id": int(alvo.Id)}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_negada")
-                    return True
-            tipo_proj = str(proj.estado_extra.get("tipo_projetil", "item")).lower()
-            nome_item = str(proj.estado_extra.get("nome_item", "item"))
-
-            if categoria == "pokemon" and isinstance(alvo, PokemonServer):
-                if tipo_proj == "fruta":
-                    fr = resolver_fruta(alvo, nome_item, contexto={"dono_id": int(proj.estado_extra.get("dono_id", 0) or 0)})
-                    registrar_diff("evento", payload=fr["payload"], escopo={"centro": [alvo.posicao[0], alvo.posicao[1]], "raio": 120}, objeto_id=alvo.Id, categoria="rapida", evento=fr.get("evento", "pokemon_frutificado"))
-                else:
-                    dono_id = int(proj.estado_extra.get("dono_id", 0) or 0)
-                    dono_obj = BANCO_DADOS.obter_objeto(dono_id)
-                    dono_pos = [float(dono_obj.posicao[0]), float(dono_obj.posicao[1])] if dono_obj is not None else [alvo.posicao[0], alvo.posicao[1]]
-                    ret_captura = resolver_captura(alvo, nome_item, contexto={
-                        "dono_id": dono_id,
-                        "dono_posicao": dono_pos,
-                        "distancia_arremesso_tiles": float(proj.estado_extra.get("distancia", 0.0) or 0.0),
-                        "tentativas_falhas_anteriores": int(alvo.estado_extra.get("tentativas_falhas_captura", 0) or 0),
-                        "bioma": str(alvo.estado_extra.get("bioma", "")),
-                        "servidor_agora_ms": int(time.time() * 1000),
-                        "maestria": self._maestria_player(dono_id),
-                    })
-                    if bool(ret_captura.get("iniciada", False)):
-                        BANCO_DADOS.atualizar_objeto(alvo.Id, {"estado": alvo.estado_extra})
-                        cap = dict(alvo.estado_extra.get("captura", {}))
-                        cap["fase"] = "iniciada"
-                        cap.setdefault("checks_total", 3)
-                        cap.setdefault("resultado", "pendente")
-                        cap.setdefault("captura_pendente", True)
-                        registrar_diff("evento", payload={"pokemon_id": int(alvo.Id), "captura": cap}, escopo={"centro": [alvo.posicao[0], alvo.posicao[1]], "raio": 120}, objeto_id=alvo.Id, categoria="rapida", evento="pokemon_captura_iniciada")
-
-            proj.terminar(f"colisao_{categoria}")
-            BANCO_DADOS.atualizar_objeto(proj.Id, {"estado": proj.estado_extra})
-            registrar_diff("update", payload=proj.serializar(), escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 80}, objeto_id=proj.Id, categoria="rapida")
-            registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": True, "alvo_id": int(alvo.Id), "categoria": categoria, "ponto_impacto": [float(proj.posicao[0]), float(proj.posicao[1])]}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_confirmada")
+        inicio_sim = [float(p0[0]) + ux * velocidade * rewind, float(p0[1]) + uy * velocidade * rewind]
+        impacto = self._simular_lancamento_servidor(tuple(inicio_sim), tuple(destino), dono_id=dono_id)
+        if impacto is None:
             return True
 
-        registrar_diff("evento", payload={"token_arremesso": token, "projetil_id": int(proj.Id), "colidiu": False, "alvo_id": int(getattr(alvo, "Id", 0) or 0)}, escopo={"centro": [proj.posicao[0], proj.posicao[1]], "raio": 120}, objeto_id=proj.Id, categoria="rapida", evento="projetil_colisao_negada")
+        if subtipo == "fruta":
+            resolver_fruta(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id})
+            BANCO_DADOS.atualizar_objeto(impacto.Id, {"estado": impacto.estado_extra})
+            registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon", base=False)
+            return True
+
+        ret = resolver_captura(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id, "dono_posicao": [dono_obj.posicao[0], dono_obj.posicao[1]], "distancia_arremesso_tiles": dist_final, "tentativas_falhas_anteriores": int(impacto.estado_extra.get("tentativas_falhas_captura", 0) or 0), "bioma": str(impacto.estado_extra.get("bioma", "")), "servidor_agora_ms": agora_ms, "maestria": self._maestria_jogador(client_id)})
+        if bool(ret.get("iniciada", False)):
+            BANCO_DADOS.atualizar_objeto(impacto.Id, {"estado": impacto.estado_extra})
+            registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon", base=False)
         return True
 
-    def _executar_tick_projeteis(self, chunks_carregados: Set[Chunk]) -> None:
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+    def _maestria_jogador(self, client_id: str) -> float:
+        dados = obter_personagem_para_entrada(str(client_id))
+        if not isinstance(dados, dict):
+            return 0.0
+        try:
+            return float(dados.get("maestria", 0.0) or 0.0)
+        except Exception:
+            return 0.0
 
-        dt = max(0.02, self._f("tick_segundos", 0.2))
-        substeps = max(1, int(dt / 0.04))
-        dt_sub = dt / substeps
+    def _simular_lancamento_servidor(self, origem: Vector2, destino: Vector2, dono_id: int):
+        raio_proj = 0.18
+        dist_total = max(0.001, math.hypot(destino[0] - origem[0], destino[1] - origem[1]))
+        passo_tiles = max(0.08, raio_proj * 0.5)
+        passos = max(8, int(math.ceil(dist_total / passo_tiles)))
 
-        for oid in list(self._projeteis_ids):
-            obj = BANCO_DADOS.obter_objeto(oid)
-            if not isinstance(obj, ProjetilServer):
-                self._projeteis_ids.discard(oid)
-                continue
+        for i in range(1, passos + 1):
+            t = float(i) / float(passos)
+            px = float(origem[0]) + (float(destino[0]) - float(origem[0])) * t
+            py = float(origem[1]) + (float(destino[1]) - float(origem[1])) * t
 
-            if bool(obj.estado_extra.get("terminado", False)):
-                removido = BANCO_DADOS.remover_objeto(obj.Id)
-                self._projeteis_ids.discard(obj.Id)
-                if removido is not None:
-                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": str(removido.estado_extra.get("motivo_termino", "fim"))}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, categoria="rapida")
-                continue
+            for obj in BANCO_DADOS.buscar_proximos((px, py), 2.2):
+                if int(getattr(obj, "Id", 0) or 0) == int(dono_id):
+                    continue
 
-            colidiu = None
-            for _ in range(substeps):
-                obj.atualizar(dt_sub)
-                proximos = BANCO_DADOS.buscar_proximos(obj.posicao, 4.0)
-                for outro in proximos:
-                    if outro.Id == obj.Id or outro.Id == int(obj.estado_extra.get("dono_id", 0) or 0):
-                        continue
-                    rr = float(getattr(outro, "raio_colisao", 0.2)) + float(getattr(obj, "raio_colisao", 0.18))
-                    if ((outro.posicao[0] - obj.posicao[0]) ** 2 + (outro.posicao[1] - obj.posicao[1]) ** 2) <= (rr * rr):
-                        colidiu = outro
-                        break
-                if colidiu is not None or bool(obj.estado_extra.get("terminado", False)):
-                    break
+                subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower()
+                tipo = str(getattr(obj, "tipo_classe", "")).strip().lower()
+                if subt not in {"pokemon", "bau", "player"} and not tipo.startswith("estrutura"):
+                    continue
 
-            BANCO_DADOS.atualizar_objeto(obj.Id, {"posicao": [obj.posicao[0], obj.posicao[1]], "estado": obj.estado_extra})
-            registrar_diff("update", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 80}, objeto_id=obj.Id, categoria="rapida")
+                raio_alvo = float(getattr(obj, "raio_colisao", 0.35) or 0.35)
+                limite = raio_proj + max(0.05, raio_alvo)
+                dx = float(getattr(obj, "posicao", (0.0, 0.0))[0]) - px
+                dy = float(getattr(obj, "posicao", (0.0, 0.0))[1]) - py
+                if (dx * dx + dy * dy) > (limite * limite):
+                    continue
 
-            if colidiu is None:
-                continue
-
-            categoria = self._classificar_colisao(colidiu)
-            tipo_proj = str(obj.estado_extra.get("tipo_projetil", "item")).lower()
-            nome_item = str(obj.estado_extra.get("nome_item", "item"))
-
-            if categoria == "pokemon":
-                # Captura/frutificação autoritativa de pokémon é conferida via evento candidato do client.
-                continue
-
-            if categoria in {"player", "estrutura_natural", "projetil", "bloqueante", "outro"}:
-                obj.terminar(f"colisao_{categoria}")
-
-    def _executar_tick_baus(self, chunks_simulados: Set[Chunk], chunks_carregados: Set[Chunk]) -> None:
-        baus = []
-        for oid in list(self._baus_ids):
-            obj = BANCO_DADOS.obter_objeto(oid)
-            if isinstance(obj, BauServer):
-                baus.append(obj)
-            else:
-                self._baus_ids.discard(oid)
-
-        max_total = self._max_baus_permitidos(len(chunks_carregados))
-        chance_spawn = max(0.0, min(1.0, self._f("chance_spawn_bau_por_tick", 0.03)))
-        if chunks_simulados and len(baus) < max_total and random.random() < chance_spawn:
-            chunk = random.choice(list(chunks_simulados))
-            max_por_chunk = max(1, self._i("max_bau_por_chunk_simulado", 1))
-            if self._contar_baus_chunk(chunk) < max_por_chunk:
-                self._spawn_bau(chunk)
-
-    def _max_baus_permitidos(self, total_chunks_carregados: int) -> int:
-        fator = max(0.005, self._f("max_bau_por_chunk_carregado", 0.03))
-        return max(1, int(total_chunks_carregados * fator))
-
-    def _spawn_bau(self, chunk: Chunk) -> None:
-        chunk_sz = BANCO_DADOS.chunk_tamanho_unidade()
-        x0, y0 = chunk[0] * chunk_sz, chunk[1] * chunk_sz
-        tentativas = max(1, self._i("tentativas_spawn_bau_chunk", 8))
-        escolhido = None
-        colisor = self._obter_colisor_global()
-        while tentativas > 0:
-            tentativas -= 1
-            px = random.uniform(x0 + 0.2, x0 + chunk_sz - 0.2)
-            py = random.uniform(y0 + 0.2, y0 + chunk_sz - 0.2)
-            if colisor((px, py), 0.42):
-                escolhido = (px, py)
-                break
-        if escolhido is None:
-            return
-
-        dados = gerar_bau_server(random)
-        novo_id = BANCO_DADOS.gerar_id()
-        bau = BauServer(
-            id_objeto=novo_id,
-            tipo_bau=str(dados.get("tipo_bau", "Comum")),
-            itens=list(dados.get("itens", [])),
-            posicao=escolhido,
-            raio_colisao=0.42,
-            raio_interacao=0.85,
-            aberto=False,
-        )
-        BANCO_DADOS.inserir_objeto(bau)
-        self._baus_ids.add(bau.Id)
-
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-
-        registrar_diff(
-            "spawn",
-            payload=bau.serializar(),
-            escopo={"centro": [escolhido[0], escolhido[1]], "raio": 80},
-            objeto_id=bau.Id,
-            categoria="rapida",
-        )
-
-    def _contar_baus_chunk(self, chunk: Chunk) -> int:
-        c = 0
-        for oid in self._baus_ids:
-            obj = BANCO_DADOS.obter_objeto(oid)
-            if not isinstance(obj, BauServer):
-                continue
-            if BANCO_DADOS.chunk_da_posicao(obj.posicao) == chunk:
-                c += 1
-        return c
-
-    def _limpar_baus_abertos_expirados(self) -> None:
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-
-        ttl = max(0.1, self._f("ttl_bau_aberto_segundos", 5.0))
-        agora = time.monotonic()
-        for oid in list(self._baus_ids):
-            obj = BANCO_DADOS.obter_objeto(oid)
-            if not isinstance(obj, BauServer):
-                self._baus_ids.discard(oid)
-                continue
-            if not bool(obj.estado_extra.get("aberto", False)):
-                continue
-            aberto_em = float(obj.estado_extra.get("aberto_em", 0.0))
-            if aberto_em <= 0.0 or (agora - aberto_em) < ttl:
-                continue
-            removido = BANCO_DADOS.remover_objeto(oid)
-            self._baus_ids.discard(oid)
-            if removido is not None:
-                registrar_diff(
-                    "despawn",
-                    payload={"id": removido.Id, "motivo": "bau_aberto_expirado"},
-                    escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80},
-                    objeto_id=removido.Id,
-                    categoria="rapida",
-                )
-
-    def _max_pokemons_permitidos(self, total_chunks_carregados: int) -> int:
-        fator = max(0.01, self._f("max_pokemon_por_chunk_carregado", 0.12))
-        return max(1, int(total_chunks_carregados * fator))
-
-    def _mover_pokemon(self, poke: PokemonServer, chunks_carregados: Set[Chunk]) -> None:
-        max_step = max(0.08, self._f("maior_vetor_movimento_pokemon", 3.0) * 0.35)
-        dx = random.uniform(-max_step, max_step)
-        dy = random.uniform(-max_step, max_step)
-        if abs(dx) < 1e-8 and abs(dy) < 1e-8:
-            return
-
-        destino = (float(poke.posicao[0]) + dx, float(poke.posicao[1]) + dy)
-        chunk_destino = BANCO_DADOS.chunk_da_posicao(destino)
-        if chunk_destino not in chunks_carregados:
-            return
-
-        colisor = self._obter_colisor_global()
-        velocidade_base = max(0.05, self._f("velocidade_pokemon_tiles_s", 5.5) * 0.45)
-        if poke.mover((dx, dy), colisor_cb=colisor, velocidade_tiles_s=velocidade_base):
-            BANCO_DADOS.atualizar_objeto(poke.Id, {"posicao": [poke.posicao[0], poke.posicao[1]]})
-            from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-
-            registrar_diff(
-                "update",
-                payload=poke.serializar(),
-                escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 40},
-                objeto_id=poke.Id,
-                categoria="rapida",
-            )
-
-    def _spawn_pokemon(self, chunk: Chunk) -> None:
-        chunk_sz = BANCO_DADOS.chunk_tamanho_unidade()
-        x0, y0 = chunk[0] * chunk_sz, chunk[1] * chunk_sz
-        tentativas = max(1, self._i("tentativas_spawn_chunk", 12))
-        raio = max(0.1, self._f("raio_colisao_pokemon", 0.45))
-        escolhido = None
-        colisor = self._obter_colisor_global()
-        while tentativas > 0:
-            tentativas -= 1
-            px = random.uniform(x0 + 0.2, x0 + chunk_sz - 0.2)
-            py = random.uniform(y0 + 0.2, y0 + chunk_sz - 0.2)
-            if colisor((px, py), raio):
-                escolhido = (px, py)
-                break
-        if escolhido is None:
-            return
-
-        novo_id = BANCO_DADOS.gerar_id()
-        poke = gerar_pokemon_server(novo_id=novo_id, posicao=escolhido, chunk_xy=chunk)
-        poke.raio_colisao = raio
-        BANCO_DADOS.inserir_objeto(poke)
-        self._pokemons_ids.add(poke.Id)
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-
-        registrar_diff(
-            "spawn",
-            payload=poke.serializar(),
-            escopo={"centro": [escolhido[0], escolhido[1]], "raio": 80},
-            objeto_id=poke.Id,
-            categoria="rapida",
-        )
+                if subt == "pokemon":
+                    return obj
+                return None
+        return None
 
     def _contar_pokemons_chunk(self, chunk: Chunk) -> int:
-        c = 0
-        for oid in self._pokemons_ids:
-            obj = BANCO_DADOS.obter_objeto(oid)
-            if not isinstance(obj, PokemonServer):
-                continue
-            if BANCO_DADOS.chunk_da_posicao(obj.posicao) == chunk:
-                c += 1
-        return c
+        return sum(1 for oid in self._pokemons_ids if isinstance(BANCO_DADOS.obter_objeto(oid), PokemonServer) and BANCO_DADOS.chunk_da_posicao(BANCO_DADOS.obter_objeto(oid).posicao) == chunk)
+
+    def _contar_baus_chunk(self, chunk: Chunk) -> int:
+        return sum(1 for oid in self._baus_ids if isinstance(BANCO_DADOS.obter_objeto(oid), BauServer) and BANCO_DADOS.chunk_da_posicao(BANCO_DADOS.obter_objeto(oid).posicao) == chunk)
 
     def _calcular_chunks_carregados(self):
-        chunks_visiveis: Set[Chunk] = set()
+        chunks_carregados: Set[Chunk] = set()
         chunks_simulados: Set[Chunk] = set()
 
-        render_half = max(0, self._i("anel_render_chunks", 7) // 2)
-        sim_half = max(render_half, self._i("anel_simulado_chunks", 13) // 2)
+        raio_carregado = max(0, self._i("raio_chunks_carregados", 4))
+        extra_sim = max(0, self._i("raio_chunks_simulados", 3))
+        raio_total = raio_carregado + extra_sim
 
         for pos in self._players_ativos.values():
             centro = BANCO_DADOS.chunk_da_posicao(pos)
-            for dx in range(-render_half, render_half + 1):
-                for dy in range(-render_half, render_half + 1):
-                    chunks_visiveis.add(BANCO_DADOS.normalizar_chunk((centro[0] + dx, centro[1] + dy)))
-
-            for dx in range(-sim_half, sim_half + 1):
-                for dy in range(-sim_half, sim_half + 1):
+            for dx in range(-raio_total, raio_total + 1):
+                for dy in range(-raio_total, raio_total + 1):
                     ch = BANCO_DADOS.normalizar_chunk((centro[0] + dx, centro[1] + dy))
-                    if ch not in chunks_visiveis:
+                    if abs(dx) <= raio_carregado and abs(dy) <= raio_carregado:
+                        chunks_carregados.add(ch)
+                    else:
                         chunks_simulados.add(ch)
 
-        return chunks_visiveis, chunks_simulados
+        chunks_simulados = {ch for ch in chunks_simulados if ch not in chunks_carregados}
+        return chunks_carregados, chunks_simulados
+
+    def contagem_pokemons_registrados(self) -> int:
+        return len([oid for oid in self._pokemons_ids if BANCO_DADOS.obter_objeto(oid) is not None])
+
+    def contagem_baus_registrados(self) -> int:
+        return len([oid for oid in self._baus_ids if BANCO_DADOS.obter_objeto(oid) is not None])
 
 
 CEREBRO = CerebroServer()

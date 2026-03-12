@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 
 from SimuladorServerJogo.Rotas.Ativador import processar_ativador_json
 from SimuladorServerJogo.Rotas.Atualizador import processar_atualizador_json
@@ -21,7 +22,7 @@ def consultar_estado_mundo(ip, client_id, posicao_camera, raio_chunks=4):
         "dados": {
             "client_id": client_id,
             "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
-            "raio_chunks": int(raio_chunks),
+            # Compatibilidade: servidor define os raios/chunks por regra.
         },
     }
     resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))
@@ -40,7 +41,7 @@ def consultar_chunks_mundo(ip, client_id, posicao_camera, raio_chunks=4):
             "client_id": client_id,
             "modo": "chunks",
             "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
-            "raio_chunks": int(raio_chunks),
+            # Compatibilidade: servidor define os raios/chunks por regra.
         },
     }
     resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))
@@ -78,9 +79,7 @@ def enviar_diffs_mundo(ip, client_id, diffs):
 
 
 def enviar_diffs_mundo_categoria(ip, client_id, categoria, diffs):
-    eventos = [d for d in (diffs or []) if isinstance(d, dict) and str(d.get("tipo", "")).strip().lower()=="evento"]
-    updates = [d for d in (diffs or []) if isinstance(d, dict) and str(d.get("tipo", "")).strip().lower()!="evento"]
-    return enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido=0, eventos=eventos, updates=updates, tick_cliente=0)
+    return enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido=0, diffs=diffs, tick_cliente=0)
 
 
 def enviar_mensagem_terminal(ip, autor, texto):
@@ -127,12 +126,35 @@ def desconectar_mundo(ip, client_id):
 
 
 def enviar_evento_arremesso_mundo(ip, client_id, payload):
-    """Canal explícito de intenção de arremesso (resolução autoritativa no servidor)."""
-    diff = {"tipo": "evento", "evento": "projetil_arremesso_intencao", "payload": dict(payload or {})}
+    """Mantido por compatibilidade: normaliza para spawn/categoria=projetil_lancamento."""
+    dados = dict(payload or {})
+    pos_inicial = dados.get("pos_inicial") if isinstance(dados.get("pos_inicial"), (list, tuple)) else dados.get("origem")
+    pos_final = dados.get("pos_final") if isinstance(dados.get("pos_final"), (list, tuple)) else dados.get("destino")
+    if not isinstance(pos_inicial, (list, tuple)) or len(pos_inicial) != 2:
+        pos_inicial = [0.0, 0.0]
+    if not isinstance(pos_final, (list, tuple)) or len(pos_final) != 2:
+        pos_final = [float(pos_inicial[0]), float(pos_inicial[1])]
+    diff = {
+        "tipo": "spawn",
+        "categoria": "projetil_lancamento",
+        "payload": {
+            "token": str(dados.get("token") or ""),
+            "subtipo_projetil": str(dados.get("subtipo_projetil") or "pokebola"),
+            "variante": str(dados.get("variante") or dados.get("item") or "pokebola"),
+            "item": str(dados.get("item") or ""),
+            "item_base_id": str(dados.get("item_base_id") or ""),
+            "pos_inicial": [float(pos_inicial[0]), float(pos_inicial[1])],
+            "pos_final": [float(pos_final[0]), float(pos_final[1])],
+            "velocidade_tiles_s": float(dados.get("velocidade_tiles_s", 7.0) or 7.0),
+            "dono_id": int(dados.get("dono_id", 0) or 0),
+            "dono_nome": str(dados.get("dono_nome") or client_id or ""),
+            "instante_cliente_ms": int(dados.get("instante_cliente_ms", int(time.time() * 1000)) or int(time.time() * 1000)),
+        },
+    }
     return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
 
 
-def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, eventos=None, updates=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
+def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, diffs=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
     pacote = {
         "ip": ip,
         "acao": "atualizador",
@@ -141,9 +163,8 @@ def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, eventos=Non
             "tick_cliente": int(tick_cliente or 0),
             "ultimo_tick_recebido": int(ultimo_tick_recebido or 0),
             "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
-            "raio_chunks": int(raio_chunks),
-            "eventos": list(eventos or []),
-            "updates": list(updates or []),
+            # Compatibilidade: servidor define os raios/chunks por regra.
+            "diffs": list(diffs or []),
         },
     }
     resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
@@ -162,7 +183,7 @@ def receber_pacotes_tick_mundo(ip, client_id, ultimo_tick_recebido, posicao_came
             "modo": "pacotes",
             "ultimo_tick_recebido": int(ultimo_tick_recebido or 0),
             "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
-            "raio_chunks": int(raio_chunks),
+            # Compatibilidade: servidor define os raios/chunks por regra.
         },
     }
     resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))

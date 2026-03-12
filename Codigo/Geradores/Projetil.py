@@ -38,7 +38,6 @@ class Projetil:
         self.Terminado = False
         self.Colidiu = False
         self.PreditoLocal = False
-        self.Autoritativo = False
         self.TempoVida = 0.0
         self._fade_total = 0.0
         self._fade_restante = 0.0
@@ -68,7 +67,6 @@ class Projetil:
         self.VelocidadeEscalar = max(0.1, float(estado.get("velocidade", snapshot.get("velocidade", self.VelocidadeEscalar)) or self.VelocidadeEscalar))
         self.AlcanceMaximo = max(0.1, float(estado.get("alcance", snapshot.get("alcance", self.AlcanceMaximo)) or self.AlcanceMaximo))
         self.PreditoLocal = bool(estado.get("predito_local", snapshot.get("predito_local", self.PreditoLocal)))
-        self.Autoritativo = bool(estado.get("autoritativo", snapshot.get("autoritativo", self.Autoritativo)))
 
     def encerrar_imediato(self) -> None:
         self.Terminado = True

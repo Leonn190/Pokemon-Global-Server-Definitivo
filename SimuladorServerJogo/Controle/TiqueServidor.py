@@ -1,4 +1,4 @@
-"""Loop de tick autoritativo (30 TPS)."""
+"""Loop de tick do servidor (30 TPS)."""
 
 from __future__ import annotations
 
@@ -36,24 +36,6 @@ class TiqueServidor:
         self._thread.start()
 
 
-    def _registrar_diffs_base_players_tick(self) -> None:
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-        from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-
-        for obj in BANCO_DADOS.listar_objetos():
-            subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower()
-            if subt != "player":
-                continue
-            registrar_diff(
-                "update",
-                payload=obj.serializar(),
-                escopo={"centro": [float(obj.posicao[0]), float(obj.posicao[1])], "raio": 780.0},
-                objeto_id=int(getattr(obj, "Id", 0) or 0),
-                autor="server",
-                categoria="player",
-                base=True,
-            )
-
     def _loop_ticks(self) -> None:
         from SimuladorServerJogo.Controle.Cerebro import CEREBRO
         while True:
@@ -69,7 +51,6 @@ class TiqueServidor:
 
             inicio = time.perf_counter()
             CEREBRO.executar_tick_servidor()
-            self._registrar_diffs_base_players_tick()
             PACOTES_TICK.fechar_tick()
             alvo = 1.0 / tps
             elapsed = time.perf_counter() - inicio

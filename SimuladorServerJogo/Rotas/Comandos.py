@@ -77,7 +77,6 @@ def _registrar_update_player(usuario, payload):
         objeto_id=obj.Id,
         autor="server",
         categoria="player",
-        base=False,
     )
 
 
@@ -322,7 +321,7 @@ def _cmd_spawn(autor, args):
     _ajustar_stats_spawn(obj.estado_extra, nomeados)
     BANCO_DADOS.inserir_objeto(obj)
     CEREBRO.registrar_spawn_manual(obj)
-    registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=obj.Id, autor="server", categoria="pokemon", base=False)
+    registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=obj.Id, autor="server", categoria="pokemon")
     return f"Pokémon {poke.get('Nome')} spawnado em ({int(x)}, {int(y)})"
 
 
@@ -347,7 +346,7 @@ def _cmd_chest(autor, args):
     bau = BauServer(id_objeto=novo_id, tipo_bau=tipo, itens=list(dados.get("itens", [])), posicao=(x, y), raio_colisao=0.42, raio_interacao=0.85, aberto=False)
     BANCO_DADOS.inserir_objeto(bau)
     CEREBRO.registrar_spawn_manual(bau)
-    registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau", base=False)
+    registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau")
     return f"Baú {tipo} criado em ({int(x)}, {int(y)})"
 
 

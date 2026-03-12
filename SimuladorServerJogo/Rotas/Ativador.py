@@ -28,7 +28,7 @@ def _next_seq() -> int:
     return _DIFF_SEQ
 
 
-def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, autor: str = "server", categoria: str | None = None, base: bool = False) -> Dict[str, object]:
+def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, autor: str = "server", categoria: str | None = None) -> Dict[str, object]:
     diff = {
         "seq": _next_seq(),
         "timestamp": time.time(),
@@ -37,7 +37,6 @@ def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, obje
         "autor": str(autor or "server"),
         "payload": dict(payload or {}),
         "escopo": dict(escopo or {}),
-        "base": bool(base),
     }
     if categoria is not None:
         diff["categoria"] = str(categoria)
@@ -99,7 +98,6 @@ def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float
 
 def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = ""):
     saida = []
-    alvo_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
     for pacote in pacotes if isinstance(pacotes, list) else []:
         if not isinstance(pacote, dict):
             continue
@@ -107,8 +105,6 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
         diffs_visiveis = []
         for d in diffs:
             if not _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados):
-                continue
-            if alvo_id > 0 and bool(d.get("base", False)) and int(d.get("objeto_id", 0) or 0) == alvo_id:
                 continue
             diffs_visiveis.append(d)
         if not diffs_visiveis:
@@ -130,10 +126,10 @@ def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[
             continue
         vistos.add(int(obj.Id))
         categoria = str(getattr(obj, "estado_extra", {}).get("subtipo", "outro") or "outro")
-        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "autor": "server", "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "categoria": categoria, "base": False})
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "autor": "server", "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "categoria": categoria})
     for oid in [oid for oid in list(vistos) if oid not in ids_proximos]:
         vistos.discard(int(oid))
-        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "autor": "server", "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "categoria": "outro", "base": False})
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "autor": "server", "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "categoria": "outro"})
     return diffs
 
 
@@ -173,8 +169,8 @@ def processar_ativador_json(requisicao_json: str) -> str:
         if diffs_extra:
             if pacotes:
                 pacote_vis = pacotes[-1]
-                diffs_base = pacote_vis.get("diffs", []) if isinstance(pacote_vis.get("diffs"), list) else []
-                pacote_vis["diffs"] = list(diffs_base) + list(diffs_extra)
+                diffs_atuais = pacote_vis.get("diffs", []) if isinstance(pacote_vis.get("diffs"), list) else []
+                pacote_vis["diffs"] = list(diffs_atuais) + list(diffs_extra)
             else:
                 pacotes.append({"tick": 0, "diffs": diffs_extra, "sintetico": True})
 

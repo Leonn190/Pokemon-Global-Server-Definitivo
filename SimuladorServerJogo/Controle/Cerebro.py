@@ -1,4 +1,4 @@
-"""Cérebro do servidor: chunks carregados/simulados, spawn/movimento/despawn e validação autoritativa."""
+"""Cérebro do servidor: chunks carregados/simulados, spawn/movimento/despawn e decisões oficiais do servidor."""
 
 from __future__ import annotations
 
@@ -173,7 +173,7 @@ class CerebroServer:
             BANCO_DADOS.inserir_objeto(poke)
             self._pokemons_ids.add(int(poke.Id))
             self._spawns_pokemon_ultimos_100.append(self._tick_contador)
-            registrar_diff("spawn", payload=poke.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=poke.Id, autor="server", categoria="pokemon", base=False)
+            registrar_diff("spawn", payload=poke.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=poke.Id, autor="server", categoria="pokemon")
             return
 
     def _tentar_spawn_bau(self, chunks_simulados: Set[Chunk]) -> None:
@@ -206,7 +206,7 @@ class CerebroServer:
             BANCO_DADOS.inserir_objeto(bau)
             self._baus_ids.add(int(bau.Id))
             self._spawns_bau_ultimos_100.append(self._tick_contador)
-            registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau", base=False)
+            registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau")
             return
 
     def _posicao_spawn_valida(self, pos: Vector2, raio: float) -> bool:
@@ -253,7 +253,7 @@ class CerebroServer:
                 estado["restante"] = int(estado.get("restante", 0) or 0) - 1
                 if int(estado.get("restante", 0) or 0) <= 0:
                     estado["cooldown_ate"] = self._tick_contador + cooldown_min
-                registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 40}, objeto_id=poke.Id, autor="server", categoria="pokemon", base=False)
+                registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 40}, objeto_id=poke.Id, autor="server", categoria="pokemon")
                 continue
 
             if self._tick_contador < int(estado.get("cooldown_ate", 0) or 0):
@@ -313,8 +313,8 @@ class CerebroServer:
                             itens.append(dict(item))
                     inv["itens"] = itens
                     atualizar_inventario_personagem(usuario, inv)
-                    registrar_diff("update", payload={"inventario": inv}, escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 780.0}, objeto_id=player.Id, autor="server", categoria="player", base=False)
-                registrar_diff("update", payload={"estado": {"aberto": True, "itens": []}}, escopo={"centro": [bau.posicao[0], bau.posicao[1]], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau", base=False)
+                    registrar_diff("update", payload={"inventario": inv}, escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 780.0}, objeto_id=player.Id, autor="server", categoria="player")
+                registrar_diff("update", payload={"estado": {"aberto": True, "itens": []}}, escopo={"centro": [bau.posicao[0], bau.posicao[1]], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau")
                 break
 
         ttl = int(100)
@@ -334,7 +334,7 @@ class CerebroServer:
             removido = BANCO_DADOS.remover_objeto(oid)
             self._baus_ids.discard(oid)
             if removido is not None:
-                registrar_diff("despawn", payload={"id": removido.Id, "motivo": "bau_aberto_expirado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="bau", base=False)
+                registrar_diff("despawn", payload={"id": removido.Id, "motivo": "bau_aberto_expirado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="bau")
 
     def _executar_tick_capturas(self) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
@@ -349,14 +349,14 @@ class CerebroServer:
             if not eventos:
                 continue
             BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": poke.estado_extra})
-            registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120}, objeto_id=poke.Id, autor="server", categoria="pokemon", base=False)
+            registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120}, objeto_id=poke.Id, autor="server", categoria="pokemon")
             cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
             if str(cap.get("fase", "")) == "finalizada" and str(cap.get("resultado", "")) == "sucesso":
                 self._adicionar_pokemon_capturado_inventario(int(cap.get("dono_id", 0) or 0), poke)
                 removido = BANCO_DADOS.remover_objeto(poke.Id)
                 self._pokemons_ids.discard(poke.Id)
                 if removido is not None:
-                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "captura_sucesso"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 120}, objeto_id=removido.Id, autor="server", categoria="pokemon", base=False)
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "captura_sucesso"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 120}, objeto_id=removido.Id, autor="server", categoria="pokemon")
 
     def _snapshot_pokemon_capturado(self, poke: PokemonServer) -> Dict[str, object]:
         estado = poke.estado_extra if isinstance(getattr(poke, "estado_extra", None), dict) else {}
@@ -400,7 +400,7 @@ class CerebroServer:
         player_obj = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
         if player_obj is not None:
             BANCO_DADOS.atualizar_objeto(player_id, {"estado": {"inventario": inventario}})
-            registrar_diff("update", payload={"inventario": inventario}, escopo={"centro": [float(player_obj.posicao[0]), float(player_obj.posicao[1])], "raio": 780.0}, objeto_id=player_id, autor="server", categoria="player", base=False)
+            registrar_diff("update", payload={"inventario": inventario}, escopo={"centro": [float(player_obj.posicao[0]), float(player_obj.posicao[1])], "raio": 780.0}, objeto_id=player_id, autor="server", categoria="player")
 
     def _despawn_simulado(self, chunks_simulados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
@@ -424,7 +424,7 @@ class CerebroServer:
                 self._pokemons_ids.discard(oid)
                 self._movimento_estado.pop(oid, None)
                 if removido is not None:
-                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="pokemon", base=False)
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="pokemon")
 
         candidatos_bau = []
         for oid in list(self._baus_ids):
@@ -443,7 +443,7 @@ class CerebroServer:
                 removido = BANCO_DADOS.remover_objeto(oid)
                 self._baus_ids.discard(oid)
                 if removido is not None:
-                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="bau", base=False)
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="bau")
 
     def registrar_lancamento_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
         token = str(payload.get("token") or "").strip()
@@ -484,7 +484,7 @@ class CerebroServer:
         vel_remota = velocidade * (1.0 + boost_remoto)
 
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-        registrar_diff("spawn", payload={"token": token, "subtipo_projetil": subtipo, "variante": variante, "item": str(payload.get("item") or ""), "item_base_id": str(payload.get("item_base_id") or ""), "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": vel_remota, "dono_id": int(dono_id), "dono_nome": str(payload.get("dono_nome") or client_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(dono_id), autor="server", categoria="projetil_lancamento", base=False)
+        registrar_diff("spawn", payload={"token": token, "subtipo_projetil": subtipo, "variante": variante, "item": str(payload.get("item") or ""), "item_base_id": str(payload.get("item_base_id") or ""), "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": vel_remota, "dono_id": int(dono_id), "dono_nome": str(payload.get("dono_nome") or client_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(dono_id), autor=client_id, categoria="projetil_lancamento")
 
         inicio_sim = [float(p0[0]) + ux * velocidade * rewind, float(p0[1]) + uy * velocidade * rewind]
         impacto = self._simular_lancamento_servidor(tuple(inicio_sim), tuple(destino), dono_id=dono_id)
@@ -494,13 +494,13 @@ class CerebroServer:
         if subtipo == "fruta":
             resolver_fruta(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id})
             BANCO_DADOS.atualizar_objeto(impacto.Id, {"estado": impacto.estado_extra})
-            registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon", base=False)
+            registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon")
             return True
 
         ret = resolver_captura(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id, "dono_posicao": [dono_obj.posicao[0], dono_obj.posicao[1]], "distancia_arremesso_tiles": dist_final, "tentativas_falhas_anteriores": int(impacto.estado_extra.get("tentativas_falhas_captura", 0) or 0), "bioma": str(impacto.estado_extra.get("bioma", "")), "servidor_agora_ms": agora_ms, "maestria": self._maestria_jogador(client_id)})
         if bool(ret.get("iniciada", False)):
             BANCO_DADOS.atualizar_objeto(impacto.Id, {"estado": impacto.estado_extra})
-            registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon", base=False)
+            registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon")
         return True
 
     def _maestria_jogador(self, client_id: str) -> float:

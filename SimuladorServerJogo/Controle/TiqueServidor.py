@@ -5,7 +5,6 @@ from __future__ import annotations
 import threading
 import time
 
-from SimuladorServerJogo.Controle.Cerebro import CEREBRO
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 
 
@@ -56,6 +55,7 @@ class TiqueServidor:
             )
 
     def _loop_ticks(self) -> None:
+        from SimuladorServerJogo.Controle.Cerebro import CEREBRO
         while True:
             with self._lock:
                 rodando = self._rodando

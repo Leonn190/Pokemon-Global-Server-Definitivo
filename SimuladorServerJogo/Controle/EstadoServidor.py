@@ -10,8 +10,6 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
     salvar_estado_mundo,
 )
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Rotas.Ativador import resetar_estado_clientes
-from SimuladorServerJogo.Controle.Cerebro import CEREBRO
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Regras.Loader import carregar_regras_player, carregar_regras_mundo
 
@@ -199,6 +197,7 @@ def _limites_mundo_atuais() -> tuple[float, float]:
 
 def _criar_novo_mundo_sync():
     global _ESTADO_MUNDO
+    from SimuladorServerJogo.Rotas.Ativador import resetar_estado_clientes
 
     def _callback_progresso(percentual: int, mensagem: str):
         with _LOCK:
@@ -231,6 +230,7 @@ def _worker_criacao_mundo():
 
 def _apagar_mundo():
     global _ESTADO_MUNDO
+    from SimuladorServerJogo.Rotas.Ativador import resetar_estado_clientes
     limpar_arquivos_mundo()
     _ESTADO_MUNDO = _estado_mundo_vazio()
     _ESTADO["personagens"].clear()
@@ -242,6 +242,7 @@ def _apagar_mundo():
 
 
 def _worker_apagar_mundo():
+    from SimuladorServerJogo.Controle.Cerebro import CEREBRO
     try:
         with _LOCK:
             _set_geracao(em_andamento=True, progresso=1, mensagem="Apagando mundo", erro="", operacao="remocao")
@@ -309,6 +310,7 @@ def snapshot_estado():
 
 
 def definir_ligado(ativo):
+    from SimuladorServerJogo.Controle.Cerebro import CEREBRO
     with _LOCK:
         desejado = bool(ativo)
         if desejado and not _ESTADO["mundo_existente"]:

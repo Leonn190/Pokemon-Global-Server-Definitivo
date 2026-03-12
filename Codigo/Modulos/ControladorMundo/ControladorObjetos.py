@@ -6,7 +6,6 @@ from typing import Dict, List, Optional, Tuple
 import math
 import os
 import threading
-import time
 
 import pygame
 
@@ -17,6 +16,7 @@ from Codigo.Geradores.Player.Inventario import Inventario
 from Codigo.Geradores.Player.Perfil import Perfil
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
+from Codigo.Modulos.ControladorMundo.ControladorCriaveis import ControladorCriaveis
 
 
 class ControladorObjetos:
@@ -25,7 +25,6 @@ class ControladorObjetos:
         self.PokemonsPorId: Dict[int, Pokemon] = {}
         self.BausPorId: Dict[int, Bau] = {}
         self.AtoresRemotosPorId: Dict[int, Ator] = {}
-        self.ProjeteisPorId: Dict[int, Projetil] = {}
         self.EstruturasPorId: Dict[int, EstruturaNatural] = {}
 
         self._player_local_id: Optional[int] = None
@@ -42,6 +41,15 @@ class ControladorObjetos:
         self._ultimo_render_pokemons_ms = pygame.time.get_ticks()
         self._pokemon_alvo_local_id: Optional[int] = None
         self._capturas_por_token: Dict[str, Dict[str, object]] = {}
+        self._criaveis = ControladorCriaveis(objetos_por_id=self.ObjetosPorId, remover_indice_cb=self._remover_indice_chunk_objeto)
+
+    @property
+    def ProjeteisPorId(self):
+        return self._criaveis.ProjeteisPorId
+
+    @property
+    def ItensMundoPorId(self):
+        return self._criaveis.ItensMundoPorId
 
     def definir_player_local_info(self, player) -> None:
         self._player_local_id = int(getattr(player, "Id", -1) or -1) if player is not None else None
@@ -156,7 +164,7 @@ class ControladorObjetos:
         return tipo.startswith("entidade") and str(estado.get("subtipo", "")).strip().lower() == "bau"
 
     def _eh_payload_projetil(self, payload: Dict[str, object]) -> bool:
-        return str(payload.get("tipo", "")).strip().lower() in {"entidade_projetil", "projetil"}
+        return self._criaveis.eh_payload_projetil(payload)
 
     def _eh_payload_estrutura(self, payload: Dict[str, object]) -> bool:
         return str(payload.get("tipo", "")).strip().lower() in {"estrutura_natural", "estrutura"}
@@ -201,23 +209,7 @@ class ControladorObjetos:
         return remoto
 
     def _reconciliar_projetil_predito_por_token(self, oid_oficial: int, payload: Dict[str, object]) -> None:
-        token = str(payload.get("token_arremesso") or (payload.get("estado") or {}).get("token_arremesso") or "")
-        if not token:
-            return
-        remover_ids: List[int] = []
-        for oid, proj in list(self.ProjeteisPorId.items()):
-            if int(oid) == int(oid_oficial):
-                continue
-            if str(getattr(proj, "TokenArremesso", "") or "") != token:
-                continue
-            if int(getattr(proj, "Id", 0) or 0) >= 0 and not bool(getattr(proj, "PreditoLocal", False)):
-                continue
-            remover_ids.append(int(oid))
-
-        for oid in remover_ids:
-            self.ProjeteisPorId.pop(oid, None)
-            self.ObjetosPorId.pop(oid, None)
-            self._remover_indice_chunk_objeto(oid)
+        self._criaveis.reconciliar_projetil_predito_por_token(oid_oficial, payload)
 
     def _upsert_especializado(self, oid: int, payload: Dict[str, object]) -> None:
         if self._eh_payload_pokemon(payload):
@@ -244,15 +236,7 @@ class ControladorObjetos:
         else:
             self.AtoresRemotosPorId.pop(oid, None)
 
-        if self._eh_payload_projetil(payload):
-            self._reconciliar_projetil_predito_por_token(oid, payload)
-            proj = self.ProjeteisPorId.get(oid)
-            if proj is None:
-                self.ProjeteisPorId[oid] = Projetil(payload)
-            else:
-                proj.aplicar_snapshot(payload)
-        else:
-            self.ProjeteisPorId.pop(oid, None)
+        self._criaveis.upsert_criavel(oid, payload)
 
         if self._eh_payload_estrutura(payload):
             est = self.EstruturasPorId.get(oid)
@@ -263,6 +247,15 @@ class ControladorObjetos:
         else:
             self.EstruturasPorId.pop(oid, None)
 
+    def _resolver_posicao_alvo_item(self, alvo_id: int) -> Optional[Tuple[float, float]]:
+        obj = self.ObjetosPorId.get(int(alvo_id))
+        if not isinstance(obj, dict):
+            return None
+        pos = obj.get("posicao")
+        if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            return None
+        return (float(pos[0]), float(pos[1]))
+
     def aplicar_diff(self, diff):
         if not isinstance(diff, dict):
             return
@@ -271,35 +264,9 @@ class ControladorObjetos:
         objeto_id = diff.get("objeto_id")
         payload = diff.get("payload", {}) if isinstance(diff.get("payload"), dict) else {}
 
-        if tipo == "spawn" and str(diff.get("categoria", "")).strip().lower() == "projetil_lancamento":
-            dados = payload if isinstance(payload, dict) else {}
-            pos_inicial = dados.get("pos_inicial") if isinstance(dados.get("pos_inicial"), (list, tuple)) else [0.0, 0.0]
-            pos_final = dados.get("pos_final") if isinstance(dados.get("pos_final"), (list, tuple)) else list(pos_inicial)
-            dx = float(pos_final[0]) - float(pos_inicial[0]); dy = float(pos_final[1]) - float(pos_inicial[1])
-            dist = math.hypot(dx, dy) or 1.0
-            direcao = [dx / dist, dy / dist]
-            token = str(dados.get("token") or "")
-            oid_vis = -abs(hash((token, time.time())))
-            fake = {
-                "id": int(oid_vis),
-                "tipo": "entidade_projetil",
-                "tipo_projetil": str(dados.get("subtipo_projetil", "pokebola")),
-                "subtipo": str(dados.get("variante") or dados.get("item") or "pokebola"),
-                "item_base_id": str(dados.get("item_base_id") or ""),
-                "item_nome": str(dados.get("item_nome") or dados.get("item") or dados.get("variante") or ""),
-                "dono_id": int(dados.get("dono_id", 0) or 0),
-                "posicao": [float(pos_inicial[0]), float(pos_inicial[1])],
-                "estado": {
-                    "direcao": direcao,
-                    "velocidade": float(dados.get("velocidade_tiles_s", 7.0) or 7.0),
-                    "alcance": float(dist),
-                    "token_arremesso": token,
-                    "predito_local": False,
-                    "pos_final": [float(pos_final[0]), float(pos_final[1])],
-                },
-                "token_arremesso": token,
-            }
-            self.aplicar_diff({"tipo": "spawn", "objeto_id": int(oid_vis), "payload": fake})
+        categoria = str(diff.get("categoria", "")).strip().lower()
+
+        if tipo == "spawn" and self._criaveis.aplicar_spawn_especial(categoria, payload, self.aplicar_diff):
             return
 
         if tipo == "spawn":
@@ -342,7 +309,7 @@ class ControladorObjetos:
                 self.PokemonsPorId.pop(oid, None)
                 self.BausPorId.pop(oid, None)
                 self.AtoresRemotosPorId.pop(oid, None)
-                self.ProjeteisPorId.pop(oid, None)
+                self._criaveis.remover_criavel(oid)
                 self.EstruturasPorId.pop(oid, None)
                 self._remover_indice_chunk_objeto(oid)
 
@@ -424,24 +391,23 @@ class ControladorObjetos:
 
     def atualizar_projeteis_visuais(self, dt: float) -> None:
         with self._lock_objetos:
-            projeteis = list(self.ProjeteisPorId.values())
             objetos_snapshot = dict(self.ObjetosPorId)
 
-        for p in projeteis:
-            p.atualizar_visual(dt)
-            if (not p.Terminado) and (not p.Colidiu):
-                alvo = self._detectar_colisao_visual_local_projetil(p, objetos_snapshot)
-                if alvo is not None:
-                    subtipo = str((alvo.get("estado") or {}).get("subtipo", "")).strip().lower() if isinstance(alvo, dict) else ""
-                    if subtipo == "pokemon":
-                        poke = self.PokemonsPorId.get(int(alvo.get("id", 0) or 0)) if isinstance(alvo, dict) else None
-                        p.encerrar_imediato()
-                        if str(getattr(p, "TipoProjetil", "")).lower() != "fruta" and poke is not None:
-                            self._registrar_colisao_local_projetil_pokemon(p, poke)
-                    else:
-                        p.encerrar_com_fade(0.5)
-            if p.deve_remover():
-                self.aplicar_diff({"tipo": "despawn", "objeto_id": int(p.Id)})
+        def _registrar_colisao(p, alvo_obj):
+            if not isinstance(alvo_obj, dict):
+                return
+            poke = self.PokemonsPorId.get(int(alvo_obj.get("id", 0) or 0))
+            if poke is not None:
+                self._registrar_colisao_local_projetil_pokemon(p, poke)
+
+        self._criaveis.atualizar_visuais(
+            dt=dt,
+            objetos_snapshot=objetos_snapshot,
+            detectar_colisao_projetil_cb=self._detectar_colisao_visual_local_projetil,
+            registrar_colisao_pokemon_cb=_registrar_colisao,
+            aplicar_despawn_cb=lambda oid: self.aplicar_diff({"tipo": "despawn", "objeto_id": int(oid)}),
+            resolver_alvo_item_cb=self._resolver_posicao_alvo_item,
+        )
 
     def _atualizar_alvo_local_captura(self, camera, player_pos: Optional[Tuple[float, float]] = None) -> None:
         if camera is None:
@@ -556,9 +522,7 @@ class ControladorObjetos:
                 bau.render(tela, camera)
                 continue
 
-            proj = self.ProjeteisPorId.get(oid)
-            if proj is not None:
-                proj.desenhar(tela, camera)
+            if self._criaveis.renderizar_criavel(oid, tela, camera):
                 continue
 
             ator_remoto = self.AtoresRemotosPorId.get(oid)

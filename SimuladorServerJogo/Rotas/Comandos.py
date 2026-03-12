@@ -11,7 +11,7 @@ from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
 from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-from SimuladorServerJogo.Controle.Cerebro import CEREBRO
+from SimuladorServerJogo.Controle.CerebroCentral import CEREBRO
 
 _RAIZ = Path(__file__).resolve().parents[2]
 

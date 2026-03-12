@@ -195,13 +195,73 @@ class ControladorPlayer:
                 "item": str(item.get("Nome") or ""),
                 "item_base_id": str(item.get("Code") or ""),
                 "item_nome": str(item.get("Nome") or ""),
-            "item_nome": str(item.get("Nome") or ""),
                 "pos_inicial": [float(origem[0]), float(origem[1])],
                 "pos_final": [float(destino[0]), float(destino[1])],
                 "velocidade_tiles_s": velocidade,
                 "instante_cliente_ms": int(time.time() * 1000),
                 "dono_id": int(getattr(self._player_local, "Id", 0) or 0),
                 "dono_nome": str(getattr(self._player_local, "Nome", "") or ""),
+            },
+        })
+
+    def _processar_intencao_drop_item_mundo(self) -> None:
+        if self._player_local is None or self._player_local.Controle is None:
+            return
+
+        acao = self._player_local.Controle.consumir_acao_drop_item_mundo()
+        if not isinstance(acao, dict):
+            return
+
+        item = dict(acao.get("item") or {})
+        if not item:
+            return
+
+        origem = acao.get("origem") if isinstance(acao.get("origem"), (list, tuple)) else tuple(self._player_local.Posicao)
+        ang = math.radians(float(getattr(self._player_local, "AnguloOlhar", 0.0) or 0.0))
+        direcao = (math.cos(ang), -math.sin(ang))
+        destino = (float(origem[0]) + direcao[0] * 1.0, float(origem[1]) + direcao[1] * 1.0)
+        velocidade = 3.0
+
+        token = str(uuid.uuid4())
+
+        self._seq_id_projetil_predito -= 1
+        oid = self._seq_id_projetil_predito
+        payload_pred = {
+            "id": oid,
+            "tipo": "entidade_item_mundo",
+            "item_nome": str(item.get("Nome") or "Item"),
+            "item_base_id": str(item.get("Code") or ""),
+            "quantidade": 1,
+            "dono_id": int(getattr(self._player_local, "Id", 0) or 0),
+            "token_drop": token,
+            "posicao": [float(origem[0]), float(origem[1])],
+            "estado": {
+                "subtipo": "item_mundo",
+                "pos_inicial": [float(origem[0]), float(origem[1])],
+                "pos_final": [float(destino[0]), float(destino[1])],
+                "velocidade": float(velocidade),
+                "voando": True,
+                "token_drop": token,
+                "predito_local": True,
+            },
+        }
+        self._objetos.aplicar_diff({"tipo": "spawn", "objeto_id": oid, "payload": payload_pred})
+
+        self._objetos.EnfileirarDiffRapida({
+            "tipo": "spawn",
+            "categoria": "item_mundo_drop",
+            "payload": {
+                "token": token,
+                "dono_id": int(getattr(self._player_local, "Id", 0) or 0),
+                "item": {
+                    "Code": str(item.get("Code") or ""),
+                    "Nome": str(item.get("Nome") or "Item"),
+                },
+                "quantidade": 1,
+                "pos_inicial": [float(origem[0]), float(origem[1])],
+                "pos_final": [float(destino[0]), float(destino[1])],
+                "velocidade_tiles_s": float(velocidade),
+                "instante_cliente_ms": int(time.time() * 1000),
             },
         })
 
@@ -222,6 +282,7 @@ class ControladorPlayer:
             self._player_local.Controle.atualizar(eventos, dt, mouse_mundo_tiles)
             self._resolver_colisao_player_local(posicao_antes, dt)
             self._processar_intencao_arremesso_local()
+            self._processar_intencao_drop_item_mundo()
         elif self._player_local.Controle is not None:
             self._player_local.Controle.atualizar_bloqueado(dt)
 

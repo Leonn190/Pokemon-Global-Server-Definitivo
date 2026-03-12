@@ -31,6 +31,7 @@ class Controle:
         self._tempo_mira = 0.0
         self._item_arremesso_atual = None
         self._acao_arremesso_pendente = None
+        self._acao_drop_item_mundo_pendente = None
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles):
         dt = max(0.0, float(dt))
@@ -68,6 +69,18 @@ class Controle:
         acao = self._acao_arremesso_pendente
         self._acao_arremesso_pendente = None
         return acao
+
+    def consumir_acao_drop_item_mundo(self):
+        acao = self._acao_drop_item_mundo_pendente
+        self._acao_drop_item_mundo_pendente = None
+        return acao
+
+    def _item_qualquer_na_mao(self):
+        inv = getattr(self.Ator, "Inventario", None)
+        item = inv.item_na_mao() if inv is not None else None
+        if not isinstance(item, dict):
+            return None
+        return dict(item)
 
     def estado_mira(self, mouse_pos_mundo_tiles):
         if not self._mirando or self._item_arremesso_atual is None:
@@ -146,6 +159,16 @@ class Controle:
         self._item_arremesso_atual = self._item_arremessavel_mao()
         pode_arremessar = self._item_arremesso_atual is not None
         for evento in eventos:
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_q:
+                item_mao = self._item_qualquer_na_mao()
+                if item_mao is not None and self._consumir_item_na_mao():
+                    item_drop = dict(item_mao)
+                    item_drop["quantidade"] = 1
+                    self._acao_drop_item_mundo_pendente = {
+                        "item": item_drop,
+                        "origem": self._ponto_mao_mundo(),
+                    }
+
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
                 self._mirando = pode_arremessar
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 3:

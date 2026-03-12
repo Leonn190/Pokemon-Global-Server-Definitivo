@@ -22,14 +22,29 @@ class AtorServer:
         self.campo = 0.0
         self.intensidade = 0.0
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
-        self.estado_extra = {"subtipo": "player", "usuario": str(usuario), "skin": str(skin), "angulo": 0.0}
+        self.estado_extra = {"subtipo": "player", "usuario": str(usuario), "skin": str(skin), "nome": str(usuario), "angulo": 0.0, "perfil": {}, "inventario": {}, "slot_selecionado": 0}
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))
         self.Colisor.mover_para(*self.posicao)
 
     def serializar(self) -> Dict[str, object]:
-        return {"id": self.Id, "tipo": self.tipo_classe, "posicao": [self.posicao[0], self.posicao[1]], "raio_colisao": self.raio_colisao, "raio_interacao": self.raio_interacao, "campo": self.campo, "intensidade": self.intensidade, "estado": dict(self.estado_extra)}
+        estado = dict(self.estado_extra)
+        return {
+            "id": self.Id,
+            "tipo": self.tipo_classe,
+            "nome": str(estado.get("nome") or estado.get("usuario") or ""),
+            "skin": str(estado.get("skin") or "S1"),
+            "perfil": dict(estado.get("perfil", {})) if isinstance(estado.get("perfil"), dict) else {},
+            "inventario": dict(estado.get("inventario", {})) if isinstance(estado.get("inventario"), dict) else {},
+            "slot_selecionado": int(estado.get("slot_selecionado", 0) or 0),
+            "posicao": [self.posicao[0], self.posicao[1]],
+            "raio_colisao": self.raio_colisao,
+            "raio_interacao": self.raio_interacao,
+            "campo": self.campo,
+            "intensidade": self.intensidade,
+            "estado": estado,
+        }
 
 
 class BauServer:

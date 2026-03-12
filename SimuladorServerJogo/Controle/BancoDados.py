@@ -249,6 +249,21 @@ class BancoDadosMundo:
             if isinstance(estado, dict):
                 obj.estado_extra.update(estado)
 
+            if str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower() == "player":
+                if "nome" in campos:
+                    obj.estado_extra["nome"] = str(campos.get("nome") or obj.estado_extra.get("usuario", ""))
+                if "skin" in campos:
+                    obj.estado_extra["skin"] = str(campos.get("skin") or obj.estado_extra.get("skin", "S1"))
+                if "perfil" in campos and isinstance(campos.get("perfil"), dict):
+                    obj.estado_extra["perfil"] = dict(campos.get("perfil") or {})
+                if "inventario" in campos and isinstance(campos.get("inventario"), dict):
+                    obj.estado_extra["inventario"] = dict(campos.get("inventario") or {})
+                if "slot_selecionado" in campos:
+                    try:
+                        obj.estado_extra["slot_selecionado"] = int(campos.get("slot_selecionado", 0) or 0)
+                    except Exception:
+                        pass
+
             if "posicao" in campos and str(obj.tipo_classe).startswith("entidade"):
                 self._aplicar_campos_forca_em_entidade(obj, posicao_anterior)
 
@@ -329,6 +344,14 @@ class BancoDadosMundo:
         with self._lock:
             return self._objetos.get(int(objeto_id))
 
+
+    def objeto_id_por_usuario(self, usuario: str) -> int:
+        with self._lock:
+            return int(self._usuarios_para_objeto.get(str(usuario), 0) or 0)
+
+    def listar_objetos(self) -> List[object]:
+        with self._lock:
+            return list(self._objetos.values())
     def usuario_por_objeto_id(self, objeto_id: int) -> Optional[str]:
         with self._lock:
             for usuario, oid in self._usuarios_para_objeto.items():

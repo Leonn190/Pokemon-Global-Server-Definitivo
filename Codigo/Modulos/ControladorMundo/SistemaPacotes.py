@@ -27,6 +27,8 @@ class SistemaPacotes:
     def configurar_conexao(self, server_link: str, client_id: str) -> None:
         self._server_link = str(server_link or "")
         self._client_id = str(client_id or "anon")
+        self._objetos.definir_autor_local(self._client_id)
+        self._player.definir_identidade_cliente(self._client_id)
 
     def iniciar(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -48,22 +50,42 @@ class SistemaPacotes:
                 continue
             diffs = p.get("diffs", []) if isinstance(p.get("diffs"), list) else []
             if bool(p.get("sintetico", False)):
-                base = dict(p)
-                base["diffs"] = list(diffs)
-                sinteticos.append(base)
+                pacote_norm = dict(p)
+                pacote_norm["diffs"] = list(diffs)
+                sinteticos.append(pacote_norm)
                 continue
             tick = int(p.get("tick", 0) or 0)
             if tick <= 0:
                 continue
             if tick not in por_tick:
-                base = dict(p)
-                base["diffs"] = list(diffs)
-                por_tick[tick] = base
+                pacote_norm = dict(p)
+                pacote_norm["diffs"] = list(diffs)
+                por_tick[tick] = pacote_norm
                 continue
             acumulado = por_tick[tick]
             diffs_existentes = acumulado.get("diffs", []) if isinstance(acumulado.get("diffs"), list) else []
             acumulado["diffs"] = list(diffs_existentes) + list(diffs)
         return [por_tick[t] for t in sorted(por_tick.keys())] + sinteticos
+
+    def _deve_aplicar_diff(self, diff: Dict[str, object]) -> bool:
+        autor = str(diff.get("autor", "")).strip()
+        if not autor:
+            return True
+        if autor.lower() == "server":
+            return True
+        return autor != self._client_id
+
+    def _distribuir_pacote_tick(self, pacote: Dict[str, object]) -> None:
+        diffs = pacote.get("diffs", []) if isinstance(pacote.get("diffs"), list) else []
+        for diff in diffs:
+            if not isinstance(diff, dict):
+                continue
+            if not self._deve_aplicar_diff(diff):
+                continue
+            if self._player.is_diff_player_local(diff):
+                self._player.aplicar_diff_player(diff)
+            else:
+                self._objetos.aplicar_diff(diff)
 
     def _loop_rede(self) -> None:
         while self._ativo:
@@ -99,15 +121,16 @@ class SistemaPacotes:
             self._pendentes_reenvio = []
             if isinstance(resposta.get("chunks"), list):
                 self._leitor.processar_pacote_chunks({"chunks": resposta.get("chunks", []), "meta": resposta.get("meta", {})})
+
             pacotes = resposta.get("pacotes", []) if isinstance(resposta.get("pacotes"), list) else []
             for pacote in self._deduplicar_pacotes(pacotes):
                 if bool(pacote.get("sintetico", False)):
-                    self._objetos.aplicar_pacote_tick(pacote)
+                    self._distribuir_pacote_tick(pacote)
                     continue
                 tick = int(pacote.get("tick", 0) or 0)
                 if tick <= 0 or tick <= self._ultimo_tick_recebido:
                     continue
-                self._objetos.aplicar_pacote_tick(pacote)
+                self._distribuir_pacote_tick(pacote)
                 self._ultimo_tick_recebido = tick
 
             time.sleep(self._intervalo_s)

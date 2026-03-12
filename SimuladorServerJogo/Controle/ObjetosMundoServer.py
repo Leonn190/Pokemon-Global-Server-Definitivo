@@ -168,7 +168,7 @@ class ProjetilServer:
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
         dx, dy = float(direcao[0]), float(direcao[1])
         n = (dx * dx + dy * dy) ** 0.5 or 1.0
-        self.estado_extra = {"subtipo": "projetil", "tipo_projetil": str(tipo_projetil or "item"), "nome_item": str(subtipo or "item"), "item_base_id": str(item_base_id or ""), "dono_id": int(dono_id or 0), "token_arremesso": str(token_arremesso or ""), "posicao_inicial": [self.posicao[0], self.posicao[1]], "direcao": [dx / n, dy / n], "velocidade": max(0.1, float(velocidade or 10.0)), "alcance": max(0.1, float(alcance or 6.0)), "distancia": 0.0, "tempo_vida": 0.0, "rotacao": 0.0, "terminado": False, "autoritativo": True}
+        self.estado_extra = {"subtipo": "projetil", "tipo_projetil": str(tipo_projetil or "item"), "nome_item": str(subtipo or "item"), "item_base_id": str(item_base_id or ""), "dono_id": int(dono_id or 0), "token_arremesso": str(token_arremesso or ""), "posicao_inicial": [self.posicao[0], self.posicao[1]], "direcao": [dx / n, dy / n], "velocidade": max(0.1, float(velocidade or 10.0)), "alcance": max(0.1, float(alcance or 6.0)), "distancia": 0.0, "tempo_vida": 0.0, "rotacao": 0.0, "terminado": False}
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))

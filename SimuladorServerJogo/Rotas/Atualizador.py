@@ -94,6 +94,14 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                     atualizar_perfil_personagem(usuario, payload_in.get("perfil"))
                 if "inventario" in payload_in and isinstance(payload_in.get("inventario"), dict):
                     atualizar_inventario_personagem(usuario, payload_in.get("inventario"))
+            registrar_diff(
+                "update",
+                payload=obj.serializar() if hasattr(obj, "serializar") else dict(payload_in),
+                escopo=_escopo_objeto(obj),
+                objeto_id=int(objeto_id),
+                autor=client_id,
+                categoria=str(getattr(obj, "estado_extra", {}).get("subtipo", "outro")),
+            )
             aplicados += 1
             continue
 
@@ -114,7 +122,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 if obj is None:
                     raise ValueError("tipo nao suportado")
                 BANCO_DADOS.inserir_objeto(obj)
-                registrar_diff("spawn", payload=obj.serializar(), escopo=_escopo_objeto(obj), objeto_id=obj.Id, autor=client_id, categoria=str(getattr(obj, "estado_extra", {}).get("subtipo", "outro")), base=False)
+                registrar_diff("spawn", payload=obj.serializar(), escopo=_escopo_objeto(obj), objeto_id=obj.Id, autor=client_id, categoria=str(getattr(obj, "estado_extra", {}).get("subtipo", "outro")))
                 aplicados += 1
             except Exception:
                 ignorados += 1
@@ -125,7 +133,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             if removido is None:
                 ignorados += 1
                 continue
-            registrar_diff("despawn", payload={"id": removido.Id}, escopo=_escopo_objeto(removido), objeto_id=removido.Id, autor="server", categoria=str(getattr(removido, "estado_extra", {}).get("subtipo", "outro")), base=False)
+            registrar_diff("despawn", payload={"id": removido.Id}, escopo=_escopo_objeto(removido), objeto_id=removido.Id, autor=client_id, categoria=str(getattr(removido, "estado_extra", {}).get("subtipo", "outro")))
             aplicados += 1
             continue
 
@@ -138,8 +146,8 @@ def processar_atualizador_json(requisicao_json: str) -> str:
     if diffs_extra:
         if pacotes:
             pacote_vis = pacotes[-1]
-            diffs_base = pacote_vis.get("diffs", []) if isinstance(pacote_vis.get("diffs"), list) else []
-            pacote_vis["diffs"] = list(diffs_base) + list(diffs_extra)
+            diffs_atuais = pacote_vis.get("diffs", []) if isinstance(pacote_vis.get("diffs"), list) else []
+            pacote_vis["diffs"] = list(diffs_atuais) + list(diffs_extra)
         else:
             pacotes.append({"tick": 0, "diffs": diffs_extra, "sintetico": True})
 

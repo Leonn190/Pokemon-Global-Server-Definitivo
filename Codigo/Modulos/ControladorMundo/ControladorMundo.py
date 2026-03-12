@@ -47,7 +47,7 @@ class ControladorMundo:
         for pacote_tick in pacotes:
             if not isinstance(pacote_tick, dict):
                 continue
-            self.Objetos.aplicar_pacote_tick(pacote_tick)
+            self.Pacotes._distribuir_pacote_tick(pacote_tick)
             if bool(pacote_tick.get("sintetico", False)):
                 continue
             tick = int(pacote_tick.get("tick", 0) or 0)
@@ -61,7 +61,11 @@ class ControladorMundo:
 
     def renderizar(self, tela) -> None:
         self.Leitor.renderizar_mundo(tela)
-        self.Objetos.renderizar(tela, self.Camera)
+        ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None
+        player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
+        self.Objetos.renderizar_entidades(tela, self.Camera, ignorar_id=ignorar_id, player_pos=player_pos)
+        self.Player.renderizar(tela, self.Camera)
+        self.Objetos.renderizar_estruturas(tela, self.Camera)
 
     def parar(self, server_link: str, client_id: str) -> None:
         self.Pacotes.parar()

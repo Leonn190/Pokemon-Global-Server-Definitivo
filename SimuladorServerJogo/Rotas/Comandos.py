@@ -216,6 +216,7 @@ def _cmd_give(autor, args):
     item = _resolver_item(item_raw) or _resolver_item("")
     if item is None:
         return "Erro no /give. Item inválido"
+    item = CEREBRO._servico_inventario.normalizar_item({"Code": item.get("Code"), "Nome": item.get("Nome"), "quantidade": 1})
     qtd = max(1, _to_int(qtd_raw, 1))
     entregues = 0
     cheios = []
@@ -235,7 +236,8 @@ def _cmd_give(autor, args):
             if not isinstance(it, dict):
                 continue
             if str(it.get("Code", "")) == str(item.get("Code", "")) or str(it.get("Nome", "")).lower() == str(item.get("Nome", "")).lower():
-                it["quantidade"] = int(max(1, _to_int(it.get("quantidade", 1), 1) + qtd))
+                nova_qtd = int(max(1, _to_int(it.get("quantidade", 1), 1) + qtd))
+                it.clear(); it.update(item); it["quantidade"] = nova_qtd
                 achou = True
                 break
         if not achou:
@@ -247,14 +249,7 @@ def _cmd_give(autor, args):
             if idx_livre is None:
                 cheios.append(alvo)
                 continue
-            itens[idx_livre] = {
-                "Nome": item.get("Nome", "Item"),
-                "Descrição": item.get("Descrição", ""),
-                "Raridade": item.get("Raridade", ""),
-                "Estilo": item.get("Estilo", ""),
-                "Code": item.get("Code", ""),
-                "quantidade": qtd,
-            }
+            itens[idx_livre] = dict(item); itens[idx_livre]["quantidade"] = qtd
         inv["itens"] = itens
         atualizar_inventario_personagem(alvo, inv)
         payload = _payload_player(alvo)

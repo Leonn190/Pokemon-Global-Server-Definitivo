@@ -2,21 +2,48 @@
 
 from __future__ import annotations
 
+import csv
+from pathlib import Path
 from typing import Dict, Optional
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_inventario_personagem
+
+_RAIZ = Path(__file__).resolve().parents[2]
+
+
+def _carregar_itens_por_code() -> Dict[str, Dict[str, object]]:
+    by_code: Dict[str, Dict[str, object]] = {}
+    with (_RAIZ / "Dados" / "Global server - Itens.csv").open("r", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            code = str(row.get("Code", "")).strip()
+            if not code:
+                continue
+            raridade_raw = str(row.get("Raridade", "")).strip()
+            by_code[code] = {
+                "Code": code,
+                "Nome": str(row.get("Nome", "")).strip(),
+                "Descrição": str(row.get("Descrição", "")).strip(),
+                "Estilo": str(row.get("Estilo", "")).strip(),
+                "Raridade": int(raridade_raw) if raridade_raw.isdigit() else raridade_raw,
+            }
+    return by_code
+
+
+_ITENS_POR_CODE = _carregar_itens_por_code()
 
 
 class ServicoInventario:
     @staticmethod
     def normalizar_item(item: Dict[str, object], quantidade_padrao: int = 1) -> Dict[str, object]:
         base = dict(item or {})
-        return {
-            "Code": str(base.get("Code") or ""),
-            "Nome": str(base.get("Nome") or "Item"),
-            "quantidade": max(1, int(base.get("quantidade", quantidade_padrao) or quantidade_padrao)),
-        }
+        code = str(base.get("Code") or "").strip()
+        qtd = max(1, int(base.get("quantidade", quantidade_padrao) or quantidade_padrao))
+        item_csv = dict(_ITENS_POR_CODE.get(code, {})) if code else {}
+        if item_csv:
+            item_csv["quantidade"] = qtd
+            return item_csv
+        return {"Code": code, "Nome": str(base.get("Nome") or "Item"), "quantidade": qtd}
 
     @staticmethod
     def limite_slots(inventario: Dict[str, object], dados_personagem: Optional[Dict[str, object]] = None) -> int:

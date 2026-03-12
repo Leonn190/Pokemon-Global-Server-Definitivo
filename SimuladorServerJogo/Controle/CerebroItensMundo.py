@@ -27,8 +27,10 @@ class CerebroItensMundo:
             return True
 
         item = payload.get("item") if isinstance(payload.get("item"), dict) else {}
-        item_nome = str(item.get("Nome") or payload.get("item_nome") or "Item")
         item_base_id = str(item.get("Code") or payload.get("item_base_id") or "")
+        item_dados = self._core._servico_inventario.normalizar_item({"Code": item_base_id, "Nome": item.get("Nome") or payload.get("item_nome") or "Item", "quantidade": 1})
+        item_nome = str(item_dados.get("Nome") or "Item")
+        item_base_id = str(item_dados.get("Code") or item_base_id)
         token = str(payload.get("token") or "").strip()
 
         p0 = payload.get("pos_inicial") if isinstance(payload.get("pos_inicial"), (list, tuple)) and len(payload.get("pos_inicial")) == 2 else [dono_obj.posicao[0], dono_obj.posicao[1]]
@@ -41,10 +43,10 @@ class CerebroItensMundo:
         atraso_ms = max(0, int(time.time() * 1000) - cliente_ms) if cliente_ms > 0 else 0
         velocidade_visual = min(9.0, velocidade + (atraso_ms / 1000.0) * 1.5)
 
-        registrar_diff("spawn", payload={"token": token, "item_nome": item_nome, "item_base_id": item_base_id, "quantidade": 1, "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": float(velocidade_visual), "dono_id": int(player_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(player_id), autor=usuario, categoria="item_mundo_lancamento")
+        registrar_diff("spawn", payload={"token": token, "item_nome": item_nome, "item_base_id": item_base_id, "item_dados": dict(item_dados), "quantidade": 1, "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": float(velocidade_visual), "dono_id": int(player_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(player_id), autor=usuario, categoria="item_mundo_lancamento")
 
         novo_id = BANCO_DADOS.gerar_id()
-        obj = ItemMundoServer(id_objeto=novo_id, posicao=(float(p0[0]), float(p0[1])), dono_id=player_id, item_nome=item_nome, item_base_id=item_base_id, quantidade=1, pos_inicial=(float(p0[0]), float(p0[1])), pos_final=(float(destino[0]), float(destino[1])), velocidade=velocidade, tick_spawn=int(self._core._tick_contador), token_drop=token)
+        obj = ItemMundoServer(id_objeto=novo_id, posicao=(float(p0[0]), float(p0[1])), dono_id=player_id, item_nome=item_nome, item_base_id=item_base_id, quantidade=1, pos_inicial=(float(p0[0]), float(p0[1])), pos_final=(float(destino[0]), float(destino[1])), velocidade=velocidade, tick_spawn=int(self._core._tick_contador), token_drop=token, item_dados=item_dados)
         BANCO_DADOS.inserir_objeto(obj)
         self._core._itens_mundo_ids.add(int(obj.Id))
         registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [float(obj.posicao[0]), float(obj.posicao[1])], "raio": 120}, objeto_id=obj.Id, autor="server", categoria="item_mundo")
@@ -141,7 +143,8 @@ class CerebroItensMundo:
                     continue
                 dados = obter_personagem_para_entrada(usuario) or {}
                 inv = dict(dados.get("inventario", {})) if isinstance(dados.get("inventario"), dict) else {"itens": []}
-                item_inv = {"Nome": str(estado.get("item_nome") or "Item"), "Code": str(estado.get("item_base_id") or ""), "quantidade": int(estado.get("quantidade", 1) or 1)}
+                item_inv = dict(estado.get("item_dados", {})) if isinstance(estado.get("item_dados"), dict) else self._core._servico_inventario.normalizar_item({"Code": str(estado.get("item_base_id") or ""), "Nome": str(estado.get("item_nome") or "Item"), "quantidade": 1})
+                item_inv["quantidade"] = int(estado.get("quantidade", item_inv.get("quantidade", 1)) or 1)
                 if not self._core._servico_inventario.adicionar_primeiro_slot_livre(inv, item_inv, dados_personagem=dados):
                     continue
                 self._core._servico_inventario.persistir_jogador(usuario, int(player.Id), inv, registrar_diff)

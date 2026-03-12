@@ -41,6 +41,8 @@ class Pokemon:
         self.VelocidadeBarraCaptura = 90.0
         self._velocidade_interp_tiles_s = 2.5
         self._escala_visual = 1.0
+        self._captura_fake_token = ""
+        self._captura_fake_inicio_ms = 0
         self.aplicar_snapshot(snapshot)
 
     @staticmethod
@@ -99,11 +101,33 @@ class Pokemon:
             self.CapturaEstado["fase"] = "nenhuma"
             self._escala_visual = 1.0
 
+
+    def iniciar_captura_fake(self, token: str) -> None:
+        self._captura_fake_token = str(token or "")
+        self._captura_fake_inicio_ms = pygame.time.get_ticks()
+        self.CapturaEstado["fase"] = "bola_no_chao"
+        self.CapturaEstado["captura_pendente"] = True
+
+    def _resolver_timeout_captura_fake(self) -> None:
+        if self._captura_fake_inicio_ms <= 0:
+            return
+        if (pygame.time.get_ticks() - self._captura_fake_inicio_ms) < 2000:
+            return
+        fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
+        if fase in {"bola_no_chao", "iniciada", "absorcao", "tremida1", "tremida2", "tremida3"}:
+            self.CapturaEstado["fase"] = "escape_reaparecendo"
+            self.CapturaEstado["captura_pendente"] = False
+        self._captura_fake_inicio_ms = 0
+
     def em_captura_pendente(self) -> bool:
+        self._resolver_timeout_captura_fake()
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
         if bool(self.CapturaEstado.get("captura_pendente", False)):
             return True
         return fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso"}
+
+    def update(self, snapshot: Dict[str, object]) -> None:
+        self.aplicar_snapshot(snapshot)
 
     def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
         estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
@@ -119,6 +143,7 @@ class Pokemon:
         self.EstadoFrutificacao = dict(estado.get("estado_frutificacao") or {"efeitos": {}})
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
         if captura:
+            self._captura_fake_inicio_ms = 0
             self.capturar(captura)
 
         if self.em_captura_pendente():
@@ -162,6 +187,7 @@ class Pokemon:
             k = (passo / dist) if dist > 0 else 0.0
             self.definir_posicao(px + (dx - px) * k, py + (dy - py) * k)
 
+        self._resolver_timeout_captura_fake()
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
         if fase in {"iniciada", "absorcao"}:
             self._escala_visual = max(0.0, self._escala_visual - dt * 2.6)
@@ -272,6 +298,7 @@ class Pokemon:
         centro = (int(cx), int(cy))
         tile_px = int(getattr(camera, "TilePx", 50))
         base = max(6, int(tile_px * self.Colisor.raio_colisao))
+        self._resolver_timeout_captura_fake()
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
 
         em_pendente = self.em_captura_pendente()

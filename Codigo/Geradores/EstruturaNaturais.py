@@ -159,6 +159,13 @@ class EstruturaNatural:
         self.Posicao = (float(x), float(y))
         self.Colisor.mover_para(*self.Posicao)
 
+
+    def update(self, payload: Dict[str, object]) -> None:
+        dados = payload if isinstance(payload, dict) else {}
+        pos = dados.get("posicao")
+        if isinstance(pos, (list, tuple)) and len(pos) == 2:
+            self.definir_posicao(float(pos[0]), float(pos[1]))
+
     def vazio(self) -> bool:
         """Retorna ``True`` quando todos os recursos da estrutura acabaram."""
         return all(quantidade <= 0 for quantidade in self.Recursos.values())

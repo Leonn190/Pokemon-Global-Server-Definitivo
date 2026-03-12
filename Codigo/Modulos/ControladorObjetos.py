@@ -244,7 +244,7 @@ class ControladorObjetos:
                     if subtipo == "pokemon":
                         poke = self.PokemonsPorId.get(int(alvo.get("id", 0) or 0)) if isinstance(alvo, dict) else None
                         if str(getattr(p, "TipoProjetil", "")).lower() == "fruta":
-                            p.encerrar_com_fade(0.18)
+                            p.encerrar_imediato()
                         else:
                             p.encerrar_imediato()
                             if poke is not None and hasattr(poke, "iniciar_captura_fake"):

@@ -367,6 +367,8 @@ class CerebroServer:
         }
 
     def _adicionar_pokemon_capturado_inventario(self, dono_id: int, poke: PokemonServer) -> None:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+
         usuario = BANCO_DADOS.usuario_por_objeto_id(int(dono_id))
         if not usuario:
             return
@@ -379,27 +381,37 @@ class CerebroServer:
         inventario["pokemons"] = pokemons
         atualizar_inventario_personagem(str(usuario), inventario)
 
+        player_id = int(BANCO_DADOS.objeto_id_por_usuario(str(usuario)) or 0)
+        player_obj = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
+        if player_obj is not None:
+            BANCO_DADOS.atualizar_objeto(player_id, {"estado": {"inventario": inventario}})
+            registrar_diff("update", payload={"inventario": inventario}, escopo={"centro": [float(player_obj.posicao[0]), float(player_obj.posicao[1])], "raio": 780.0}, objeto_id=player_id, autor="server", categoria="player", base=False)
+
     def _despawn_simulado(self, chunks_simulados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 
         chance_poke = self._f("chance_despawn_pokemon_simulado_por_tick", 0.003)
         chance_bau = self._f("chance_despawn_bau_simulado_por_tick", 0.002)
 
+        candidatos_poke = []
         for oid in list(self._pokemons_ids):
             poke = BANCO_DADOS.obter_objeto(oid)
             if not isinstance(poke, PokemonServer):
                 self._pokemons_ids.discard(oid)
                 continue
-            if BANCO_DADOS.chunk_da_posicao(poke.posicao) not in chunks_simulados:
-                continue
-            if random.random() > chance_poke:
-                continue
-            removido = BANCO_DADOS.remover_objeto(oid)
-            self._pokemons_ids.discard(oid)
-            self._movimento_estado.pop(oid, None)
-            if removido is not None:
-                registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="pokemon", base=False)
+            if BANCO_DADOS.chunk_da_posicao(poke.posicao) in chunks_simulados:
+                candidatos_poke.append((oid, poke))
 
+        if candidatos_poke:
+            oid, poke = random.choice(candidatos_poke)
+            if random.random() <= chance_poke:
+                removido = BANCO_DADOS.remover_objeto(oid)
+                self._pokemons_ids.discard(oid)
+                self._movimento_estado.pop(oid, None)
+                if removido is not None:
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="pokemon", base=False)
+
+        candidatos_bau = []
         for oid in list(self._baus_ids):
             bau = BANCO_DADOS.obter_objeto(oid)
             if not isinstance(bau, BauServer):
@@ -407,14 +419,16 @@ class CerebroServer:
                 continue
             if bool(bau.estado_extra.get("aberto", False)):
                 continue
-            if BANCO_DADOS.chunk_da_posicao(bau.posicao) not in chunks_simulados:
-                continue
-            if random.random() > chance_bau:
-                continue
-            removido = BANCO_DADOS.remover_objeto(oid)
-            self._baus_ids.discard(oid)
-            if removido is not None:
-                registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="bau", base=False)
+            if BANCO_DADOS.chunk_da_posicao(bau.posicao) in chunks_simulados:
+                candidatos_bau.append((oid, bau))
+
+        if candidatos_bau:
+            oid, bau = random.choice(candidatos_bau)
+            if random.random() <= chance_bau:
+                removido = BANCO_DADOS.remover_objeto(oid)
+                self._baus_ids.discard(oid)
+                if removido is not None:
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "simulado"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 80}, objeto_id=removido.Id, autor="server", categoria="bau", base=False)
 
     def registrar_lancamento_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
         token = str(payload.get("token") or "").strip()

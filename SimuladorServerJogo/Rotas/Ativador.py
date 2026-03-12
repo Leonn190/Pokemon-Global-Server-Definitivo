@@ -9,7 +9,7 @@ import time
 from typing import Dict, List, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.Cerebro import CEREBRO
+from SimuladorServerJogo.Controle.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 

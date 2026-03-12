@@ -11,7 +11,7 @@ from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, criar_objeto_mundo_server
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
-from SimuladorServerJogo.Controle.Cerebro import CEREBRO
+from SimuladorServerJogo.Controle.CerebroCentral import CEREBRO
 
 
 def _normalizar_posicao_loop(posicao):
@@ -112,6 +112,10 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                     aplicados += 1
                 else:
                     ignorados += 1
+                continue
+            if categoria == "item_mundo_drop":
+                CEREBRO.registrar_drop_item_mundo(client_id, payload)
+                aplicados += 1
                 continue
             dados_obj = payload.get("objeto") if isinstance(payload.get("objeto"), dict) else payload
             try:

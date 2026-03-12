@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 
 from SimuladorServerJogo.Rotas.Ativador import processar_ativador_json
 from SimuladorServerJogo.Rotas.Atualizador import processar_atualizador_json
@@ -145,6 +146,9 @@ def enviar_evento_arremesso_mundo(ip, client_id, payload):
             "pos_inicial": [float(pos_inicial[0]), float(pos_inicial[1])],
             "pos_final": [float(pos_final[0]), float(pos_final[1])],
             "velocidade_tiles_s": float(dados.get("velocidade_tiles_s", 7.0) or 7.0),
+            "dono_id": int(dados.get("dono_id", 0) or 0),
+            "dono_nome": str(dados.get("dono_nome") or client_id or ""),
+            "instante_cliente_ms": int(dados.get("instante_cliente_ms", int(time.time() * 1000)) or int(time.time() * 1000)),
         },
     }
     return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])

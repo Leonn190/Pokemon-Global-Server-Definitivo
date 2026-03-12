@@ -349,10 +349,35 @@ class CerebroServer:
             registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120}, objeto_id=poke.Id, autor="server", categoria="pokemon", base=False)
             cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
             if str(cap.get("fase", "")) == "finalizada" and str(cap.get("resultado", "")) == "sucesso":
+                self._adicionar_pokemon_capturado_inventario(int(cap.get("dono_id", 0) or 0), poke)
                 removido = BANCO_DADOS.remover_objeto(poke.Id)
                 self._pokemons_ids.discard(poke.Id)
                 if removido is not None:
                     registrar_diff("despawn", payload={"id": removido.Id, "motivo": "captura_sucesso"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 120}, objeto_id=removido.Id, autor="server", categoria="pokemon", base=False)
+
+    def _snapshot_pokemon_capturado(self, poke: PokemonServer) -> Dict[str, object]:
+        estado = poke.estado_extra if isinstance(getattr(poke, "estado_extra", None), dict) else {}
+        return {
+            "id": int(getattr(poke, "Id", 0) or 0),
+            "especie": str(estado.get("especie") or estado.get("nome") or "Pokemon"),
+            "nome": str(estado.get("nome") or estado.get("especie") or "Pokemon"),
+            "stats": dict(estado.get("stats", {})) if isinstance(estado.get("stats"), dict) else {},
+            "iv": int(estado.get("iv", 0) or 0),
+            "capturado_em_ms": int(time.time() * 1000),
+        }
+
+    def _adicionar_pokemon_capturado_inventario(self, dono_id: int, poke: PokemonServer) -> None:
+        usuario = BANCO_DADOS.usuario_por_objeto_id(int(dono_id))
+        if not usuario:
+            return
+        perfil = obter_personagem_para_entrada(str(usuario))
+        if not isinstance(perfil, dict):
+            return
+        inventario = perfil.get("inventario") if isinstance(perfil.get("inventario"), dict) else {}
+        pokemons = list(inventario.get("pokemons", []))
+        pokemons.append(self._snapshot_pokemon_capturado(poke))
+        inventario["pokemons"] = pokemons
+        atualizar_inventario_personagem(str(usuario), inventario)
 
     def _despawn_simulado(self, chunks_simulados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff

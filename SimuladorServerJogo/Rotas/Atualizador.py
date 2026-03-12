@@ -6,7 +6,7 @@ import json
 import time
 from typing import Dict
 
-from SimuladorServerJogo.Rotas.Ativador import registrar_diff, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
+from SimuladorServerJogo.Rotas.Ativador import registrar_diff, _obter_state_client, _coletar_diffs_visibilidade, _coletar_diffs_base_players, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, criar_objeto_mundo_server
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
@@ -134,13 +134,15 @@ def processar_atualizador_json(requisicao_json: str) -> str:
     pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados)
     state = _obter_state_client(client_id)
     vistos = state["objetos_vistos"]
+    diffs_base_players = _coletar_diffs_base_players(client_id, chunks_carregados)
     diffs_vis = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos)
-    if diffs_vis:
+    diffs_extra = list(diffs_base_players) + list(diffs_vis)
+    if diffs_extra:
         if pacotes:
             pacote_vis = pacotes[-1]
             diffs_base = pacote_vis.get("diffs", []) if isinstance(pacote_vis.get("diffs"), list) else []
-            pacote_vis["diffs"] = list(diffs_base) + list(diffs_vis)
+            pacote_vis["diffs"] = list(diffs_base) + list(diffs_extra)
         else:
-            pacotes.append({"tick": 0, "diffs": diffs_vis, "sintetico": True})
+            pacotes.append({"tick": 0, "diffs": diffs_extra, "sintetico": True})
 
     return _ok("Pacote cliente processado", client_id=client_id, aplicados=aplicados, ignorados=ignorados, pacotes=pacotes, tick_atual_servidor=PACOTES_TICK.tick_atual(), servidor_ts=time.time())

@@ -248,7 +248,10 @@ class ControladorObjetos:
                         else:
                             p.encerrar_imediato()
                             if poke is not None and hasattr(poke, "iniciar_captura_fake"):
-                                poke.iniciar_captura_fake(str(getattr(p, "TokenArremesso", "")))
+                                em_captura = bool(getattr(poke, "em_captura_pendente", lambda: False)()) if hasattr(poke, "em_captura_pendente") else bool(getattr(poke, "CapturaEstado", {}).get("captura_pendente", False))
+                                fase_cap = str(getattr(poke, "CapturaEstado", {}).get("fase", "nenhuma") or "nenhuma").strip().lower()
+                                if (not em_captura) and fase_cap not in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso"}:
+                                    poke.iniciar_captura_fake(str(getattr(p, "TokenArremesso", "")))
                     else:
                         p.encerrar_com_fade(0.5)
             if p.deve_remover():
@@ -530,15 +533,9 @@ class ControladorObjetos:
     def _aplicar_payload_no_player_local(self, payload: Dict[str, object]) -> None:
         if self.PlayerLocal is None:
             return
-        ator = self.PlayerLocal
         dados = dict(payload or {})
         dados["hard"] = True
-        ator.update(dados)
-
-        pos = payload.get("posicao")
-        if isinstance(pos, (list, tuple)) and len(pos) == 2:
-            ator.definir_posicao(float(pos[0]), float(pos[1]))
-
+        self.PlayerLocal.update(dados)
         self._ativar_bloqueio_sync_autoritario()
 
     def _reconciliar_projetil_predito_por_token(self, token: str, oid_autoritativo: int) -> None:

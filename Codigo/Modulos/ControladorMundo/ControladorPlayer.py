@@ -170,6 +170,7 @@ class ControladorPlayer:
             "tipo_projetil": "fruta" if variante == "fruta" else "pokebola",
             "subtipo": variante,
             "item_base_id": str(item.get("Code") or ""),
+            "item_nome": str(item.get("Nome") or ""),
             "dono_id": int(getattr(self._player_local, "Id", 0) or 0),
             "posicao": [float(origem[0]), float(origem[1])],
             "estado": {
@@ -193,6 +194,8 @@ class ControladorPlayer:
                 "variante": variante,
                 "item": str(item.get("Nome") or ""),
                 "item_base_id": str(item.get("Code") or ""),
+                "item_nome": str(item.get("Nome") or ""),
+            "item_nome": str(item.get("Nome") or ""),
                 "pos_inicial": [float(origem[0]), float(origem[1])],
                 "pos_final": [float(destino[0]), float(destino[1])],
                 "velocidade_tiles_s": velocidade,

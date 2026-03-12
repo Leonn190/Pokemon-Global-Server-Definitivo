@@ -41,6 +41,7 @@ class ControladorObjetos:
         self._cache_sprites_fallback: Dict[str, Optional[pygame.Surface]] = {}
         self._ultimo_render_pokemons_ms = pygame.time.get_ticks()
         self._pokemon_alvo_local_id: Optional[int] = None
+        self._capturas_por_token: Dict[str, Dict[str, object]] = {}
 
     def definir_player_local_info(self, player) -> None:
         self._player_local_id = int(getattr(player, "Id", -1) or -1) if player is not None else None
@@ -285,6 +286,7 @@ class ControladorObjetos:
                 "tipo_projetil": str(dados.get("subtipo_projetil", "pokebola")),
                 "subtipo": str(dados.get("variante") or dados.get("item") or "pokebola"),
                 "item_base_id": str(dados.get("item_base_id") or ""),
+                "item_nome": str(dados.get("item_nome") or dados.get("item") or dados.get("variante") or ""),
                 "dono_id": int(dados.get("dono_id", 0) or 0),
                 "posicao": [float(pos_inicial[0]), float(pos_inicial[1])],
                 "estado": {
@@ -328,6 +330,10 @@ class ControladorObjetos:
                 self.ObjetosPorId[oid] = atual
                 self._upsert_indice_chunk_objeto(oid, atual)
                 self._upsert_especializado(oid, atual)
+                estado_atual = atual.get("estado") if isinstance(atual.get("estado"), dict) else {}
+                captura_atual = estado_atual.get("captura") if isinstance(estado_atual.get("captura"), dict) else {}
+                if str(estado_atual.get("subtipo", "")).strip().lower() == "pokemon" and captura_atual:
+                    self._registrar_confirmacao_servidor_captura(atual)
             return
 
         if tipo == "despawn":
@@ -376,6 +382,46 @@ class ControladorObjetos:
                 return obj
         return None
 
+    def _token_info(self, token: str) -> Dict[str, object]:
+        token = str(token or "").strip()
+        if not token:
+            return {}
+        return self._capturas_por_token.setdefault(token, {
+            "server_confirmou": False,
+            "server_confirmou_ms": 0,
+            "colidiu_local": False,
+            "colidiu_local_ms": 0,
+        })
+
+    def _registrar_colisao_local_projetil_pokemon(self, proj: Projetil, poke: Pokemon) -> None:
+        token = str(getattr(proj, "TokenArremesso", "") or "").strip()
+        if not token:
+            return
+        info = self._token_info(token)
+        agora_ms = pygame.time.get_ticks()
+        info["colidiu_local"] = True
+        info["colidiu_local_ms"] = agora_ms
+        if hasattr(poke, "registrar_colisao_projetil_local"):
+            poke.registrar_colisao_projetil_local(token, nome_bola=str(getattr(proj, "ItemNome", "") or getattr(proj, "Subtipo", "pokeball")), tempo_espera_confirmacao_ms=1500)
+        if bool(info.get("server_confirmou", False)) and hasattr(poke, "confirmar_captura_por_token"):
+            poke.confirmar_captura_por_token(token, esperar_colisao=False, atraso_ms=0)
+
+    def _registrar_confirmacao_servidor_captura(self, payload: Dict[str, object]) -> None:
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
+        token = str(captura.get("token_arremesso") or "").strip()
+        if not token:
+            return
+        info = self._token_info(token)
+        info["server_confirmou"] = True
+        info["server_confirmou_ms"] = pygame.time.get_ticks()
+        poke = self.PokemonsPorId.get(int(payload.get("id", 0) or 0))
+        if poke is None:
+            return
+        if hasattr(poke, "confirmar_captura_por_token"):
+            colidiu_local = bool(info.get("colidiu_local", False))
+            poke.confirmar_captura_por_token(token, esperar_colisao=not colidiu_local, atraso_ms=(2000 if not colidiu_local else 0))
+
     def atualizar_projeteis_visuais(self, dt: float) -> None:
         with self._lock_objetos:
             projeteis = list(self.ProjeteisPorId.values())
@@ -390,11 +436,8 @@ class ControladorObjetos:
                     if subtipo == "pokemon":
                         poke = self.PokemonsPorId.get(int(alvo.get("id", 0) or 0)) if isinstance(alvo, dict) else None
                         p.encerrar_imediato()
-                        if str(getattr(p, "TipoProjetil", "")).lower() != "fruta" and poke is not None and hasattr(poke, "iniciar_captura_fake"):
-                            em_captura = bool(getattr(poke, "em_captura_pendente", lambda: False)()) if hasattr(poke, "em_captura_pendente") else bool(getattr(poke, "CapturaEstado", {}).get("captura_pendente", False))
-                            fase_cap = str(getattr(poke, "CapturaEstado", {}).get("fase", "nenhuma") or "nenhuma").strip().lower()
-                            if (not em_captura) and fase_cap not in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso"}:
-                                poke.iniciar_captura_fake(str(getattr(p, "TokenArremesso", "")))
+                        if str(getattr(p, "TipoProjetil", "")).lower() != "fruta" and poke is not None:
+                            self._registrar_colisao_local_projetil_pokemon(p, poke)
                     else:
                         p.encerrar_com_fade(0.5)
             if p.deve_remover():

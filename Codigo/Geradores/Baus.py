@@ -13,7 +13,7 @@ class Bau:
     _frames_por_tipo: Dict[str, List[pygame.Surface]] = {}
     _cache_sprites: Dict[str, pygame.Surface | None] = {}
 
-    def __init__(self, id_objeto: int, posicao: Tuple[float, float], tipo_bau: str, itens: List[Dict[str, object]], aberto: bool = False, raio_colisao: float = 0.42) -> None:
+    def __init__(self, id_objeto: int, posicao: Tuple[float, float], tipo_bau: str, itens: List[Dict[str, object]], aberto: bool = False, raio_colisao: float = 0.42, quantidade_itens: int = 1, tamanho_tiles: float = 1.10) -> None:
         self.Id = int(id_objeto)
         self.id_objeto = self.Id
         self.Posicao = (float(posicao[0]), float(posicao[1]))
@@ -21,7 +21,9 @@ class Bau:
         self.TipoBau = str(tipo_bau or "Comum").strip() or "Comum"
         self.Itens = [dict(i) for i in itens if isinstance(i, dict)]
         self.Aberto = bool(aberto)
-        self.Colisor = Colisor(x=self.Posicao[0], y=self.Posicao[1], raio_colisao=float(raio_colisao), raio_interacao=0.85)
+        self.QuantidadeItens = max(1, min(4, int(quantidade_itens or max(1, len(self.Itens) or 1))))
+        self.TamanhoTiles = max(1.10, float(tamanho_tiles or 1.10))
+        self.Colisor = Colisor(x=self.Posicao[0], y=self.Posicao[1], raio_colisao=float(raio_colisao), raio_interacao=max(0.85, float(raio_colisao) + 0.45))
         self.AberturaLocalMs = int(pygame.time.get_ticks()) if self.Aberto else 0
         self.AguardandoConfirmacaoAbertura = False
         self._aguardando_desde_ms = 0
@@ -83,7 +85,7 @@ class Bau:
         if frame is None:
             return
         px, py = camera.mundo_para_tela_px(self.Posicao)
-        escala = max(1, int(camera.TilePx * 0.95))
+        escala = max(1, int(camera.TilePx * self.TamanhoTiles))
         sprite = pygame.transform.smoothscale(frame, (escala, escala))
         tela.blit(sprite, sprite.get_rect(center=(int(px), int(py))))
 
@@ -95,7 +97,7 @@ class Bau:
         posicao = snapshot.get("posicao", [0.0, 0.0])
         if not isinstance(posicao, (list, tuple)) or len(posicao) != 2:
             posicao = [0.0, 0.0]
-        return cls(id_objeto=int(snapshot.get("id", 0)), posicao=(float(posicao[0]), float(posicao[1])), tipo_bau=str(estado.get("tipo_bau", "Comum")), itens=list(estado.get("itens", [])), aberto=bool(estado.get("aberto", False)), raio_colisao=float(snapshot.get("raio_colisao", 0.42)))
+        return cls(id_objeto=int(snapshot.get("id", 0)), posicao=(float(posicao[0]), float(posicao[1])), tipo_bau=str(estado.get("tipo_bau", "Comum")), itens=list(estado.get("itens", [])), aberto=bool(estado.get("aberto", False)), raio_colisao=float(snapshot.get("raio_colisao", 0.42)), quantidade_itens=int(estado.get("quantidade_itens", max(1, len(list(estado.get("itens", [])))))), tamanho_tiles=float(estado.get("tamanho_tiles", 1.10) or 1.10))
 
     def update(self, snapshot: Dict[str, object]) -> None:
         self.aplicar_snapshot(snapshot)
@@ -107,7 +109,10 @@ class Bau:
             self.definir_posicao(float(posicao[0]), float(posicao[1]))
         self.TipoBau = str(estado.get("tipo_bau", self.TipoBau)).strip() or "Comum"
         self.Itens = [dict(i) for i in list(estado.get("itens", self.Itens)) if isinstance(i, dict)]
+        self.QuantidadeItens = max(1, min(4, int(estado.get("quantidade_itens", self.QuantidadeItens or max(1, len(self.Itens) or 1)))))
+        self.TamanhoTiles = max(1.10, float(estado.get("tamanho_tiles", self.TamanhoTiles) or self.TamanhoTiles))
         self.Colisor.raio_colisao = max(0.1, float(snapshot.get("raio_colisao", self.Colisor.raio_colisao)))
+        self.Colisor.raio_interacao = max(self.Colisor.raio_colisao + 0.2, float(snapshot.get("raio_interacao", getattr(self.Colisor, "raio_interacao", self.Colisor.raio_colisao + 0.45)) or (self.Colisor.raio_colisao + 0.45)))
         if bool(estado.get("aberto", False)):
             self.abrir()
         elif self.AguardandoConfirmacaoAbertura and self._aguardando_desde_ms > 0:

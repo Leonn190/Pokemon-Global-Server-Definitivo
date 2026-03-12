@@ -85,6 +85,8 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     dono_pos = ctx.get("dono_posicao") if isinstance(ctx.get("dono_posicao"), (list, tuple)) and len(ctx.get("dono_posicao")) == 2 else None
     bola_pos = [float(pokemon.posicao[0]), float(pokemon.posicao[1])]
     retorno_destino = [float(dono_pos[0]), float(dono_pos[1])] if dono_pos else list(bola_pos)
+    tempo_impacto_ms = int(ctx.get("tempo_impacto_ms", 0) or 0)
+    atraso_inicio_ms = max(0, int(ctx.get("atraso_animacao_ms", 0) or 0))
 
     base = {
         "inicio_ms_servidor": agora_ms,
@@ -97,20 +99,25 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         "bola_posicao": list(bola_pos),
         "retorno_inicio": list(bola_pos),
         "retorno_destino": list(retorno_destino),
+        "token_arremesso": str(ctx.get("token_arremesso") or ""),
+        "tempo_impacto_ms": tempo_impacto_ms,
+        "atraso_animacao_ms": atraso_inicio_ms,
     }
 
+    inicio_anim_ms = agora_ms + atraso_inicio_ms
     agenda: List[Dict[str, object]] = [
-        {"fase": "iniciada", "at_ms": int(agora_ms)},
-        {"fase": "absorcao", "at_ms": int(agora_ms + 180)},
-        {"fase": "bola_no_chao", "at_ms": int(agora_ms + 420)},
-        {"fase": "tremida1", "at_ms": int(agora_ms + 700)},
-        {"fase": "tremida2", "at_ms": int(agora_ms + 930)},
-        {"fase": "tremida3", "at_ms": int(agora_ms + 1160)},
+        {"fase": "iniciada", "at_ms": int(inicio_anim_ms)},
+        {"fase": "absorcao", "at_ms": int(inicio_anim_ms + 220)},
+        {"fase": "bola_no_chao", "at_ms": int(inicio_anim_ms + 500)},
+        {"fase": "tremida1", "at_ms": int(inicio_anim_ms + 820)},
+        {"fase": "tremida2", "at_ms": int(inicio_anim_ms + 1100)},
+        {"fase": "tremida3", "at_ms": int(inicio_anim_ms + 1380)},
     ]
 
     plano_tremidas: List[bool] = []
     falhou = False
-    for _ in range(3):
+    falhou_em = 0
+    for idx in range(1, 4):
         if falhou:
             plano_tremidas.append(False)
             continue
@@ -120,12 +127,13 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         plano_tremidas.append(bool(passou))
         if not passou:
             falhou = True
+            falhou_em = idx
 
     captura.clear()
     captura.update(base)
     captura.update(
         {
-            "fase": "iniciada",
+            "fase": "aguardando_inicio",
             "ativa": True,
             "captura_pendente": True,
             "captura_garantida": garantida,
@@ -138,9 +146,10 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
             "pokemon_visivel": False,
             "pokemon_colisao_ativa": False,
             "pokemon_interacao_ativa": False,
+            "fuga_na_tremida": int(falhou_em or 0),
         }
     )
-    pokemon.estado_extra["captura_fase"] = "iniciada"
+    pokemon.estado_extra["captura_fase"] = "aguardando_inicio"
 
     return {"iniciada": True, "eventos": []}
 

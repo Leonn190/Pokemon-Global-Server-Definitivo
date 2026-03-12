@@ -28,6 +28,7 @@ class Projetil:
         self.TipoProjetil = "item"
         self.Subtipo = ""
         self.ItemBaseId = ""
+        self.ItemNome = ""
         self.DonoId = 0
         self.TokenArremesso = ""
         self.Direcao = (1.0, 0.0)
@@ -57,6 +58,7 @@ class Projetil:
         self.TipoProjetil = str(snapshot.get("tipo_projetil") or estado.get("tipo_projetil") or self.TipoProjetil)
         self.Subtipo = str(snapshot.get("subtipo") or snapshot.get("nome_item") or estado.get("subtipo") or self.Subtipo)
         self.ItemBaseId = str(snapshot.get("item_base_id") or estado.get("item_base_id") or self.ItemBaseId)
+        self.ItemNome = str(snapshot.get("item_nome") or snapshot.get("nome_item") or estado.get("item_nome") or estado.get("nome_item") or self.ItemNome or self.Subtipo or self.TipoProjetil)
         self.DonoId = int(snapshot.get("dono_id", estado.get("dono_id", self.DonoId)) or 0)
         self.TokenArremesso = str(snapshot.get("token_arremesso") or estado.get("token_arremesso") or self.TokenArremesso)
         direcao = estado.get("direcao") if isinstance(estado.get("direcao"), (list, tuple)) else snapshot.get("direcao")
@@ -110,7 +112,7 @@ class Projetil:
         if self.Terminado and self._alpha <= 0:
             return
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
-        item = {"Nome": self.Subtipo or self.TipoProjetil, "Code": self.ItemBaseId}
+        item = {"Nome": self.ItemNome or self.Subtipo or self.TipoProjetil, "Code": self.ItemBaseId}
         base = ItemInventario.surface_item(item, lado_px=max(14, int(getattr(camera, "TilePx", 50) * 0.55)))
         if base is None:
             surf = pygame.Surface((12, 12), pygame.SRCALPHA)

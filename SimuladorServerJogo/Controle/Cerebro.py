@@ -198,11 +198,12 @@ class CerebroServer:
             x0, y0 = chunk[0] * chunk_tamanho, chunk[1] * chunk_tamanho
             px = random.uniform(x0 + 0.2, x0 + chunk_tamanho - 0.2)
             py = random.uniform(y0 + 0.2, y0 + chunk_tamanho - 0.2)
-            if not self._posicao_spawn_valida((px, py), raio=0.42):
-                continue
             dados = gerar_bau_server(random)
+            raio_bau = float(dados.get("raio_colisao", 0.42) or 0.42)
+            if not self._posicao_spawn_valida((px, py), raio=raio_bau):
+                continue
             novo_id = BANCO_DADOS.gerar_id()
-            bau = BauServer(id_objeto=novo_id, tipo_bau=str(dados.get("tipo_bau", "Comum")), itens=list(dados.get("itens", [])), posicao=(px, py), raio_colisao=0.42, raio_interacao=0.85, aberto=False)
+            bau = BauServer(id_objeto=novo_id, tipo_bau=str(dados.get("tipo_bau", "Comum")), itens=list(dados.get("itens", [])), posicao=(px, py), raio_colisao=raio_bau, raio_interacao=float(dados.get("raio_interacao", 0.85) or 0.85), aberto=False, quantidade_itens=int(dados.get("quantidade_itens", max(1, len(list(dados.get("itens", [])))))), tamanho_tiles=float(dados.get("tamanho_tiles", 1.10) or 1.10))
             BANCO_DADOS.inserir_objeto(bau)
             self._baus_ids.add(int(bau.Id))
             self._spawns_bau_ultimos_100.append(self._tick_contador)
@@ -477,19 +478,17 @@ class CerebroServer:
         cliente_ms = int(payload.get("instante_cliente_ms", 0) or 0)
         agora_ms = int(time.time() * 1000)
         tempo_total = max(0.05, dist_final / max(0.1, velocidade))
-        atraso = max(0.0, (agora_ms - cliente_ms) / 1000.0) if cliente_ms > 0 else 0.0
-        rewind = min(tempo_total * 0.15, atraso)
-
-        boost_remoto = min(0.05, (rewind / tempo_total) * 0.05 if tempo_total > 1e-6 else 0.0)
-        vel_remota = velocidade * (1.0 + boost_remoto)
+        atraso_rede_ms = max(0, agora_ms - cliente_ms) if cliente_ms > 0 else 0
 
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-        registrar_diff("spawn", payload={"token": token, "subtipo_projetil": subtipo, "variante": variante, "item": str(payload.get("item") or ""), "item_base_id": str(payload.get("item_base_id") or ""), "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": vel_remota, "dono_id": int(dono_id), "dono_nome": str(payload.get("dono_nome") or client_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(dono_id), autor=client_id, categoria="projetil_lancamento")
+        registrar_diff("spawn", payload={"token": token, "subtipo_projetil": subtipo, "variante": variante, "item": str(payload.get("item") or ""), "item_nome": str(payload.get("item_nome") or payload.get("item") or variante), "item_base_id": str(payload.get("item_base_id") or ""), "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": float(velocidade), "dono_id": int(dono_id), "dono_nome": str(payload.get("dono_nome") or client_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(dono_id), autor=client_id, categoria="projetil_lancamento")
 
-        inicio_sim = [float(p0[0]) + ux * velocidade * rewind, float(p0[1]) + uy * velocidade * rewind]
-        impacto = self._simular_lancamento_servidor(tuple(inicio_sim), tuple(destino), dono_id=dono_id)
+        impacto = self._simular_lancamento_servidor(tuple(p0), tuple(destino), dono_id=dono_id)
         if impacto is None:
             return True
+
+        tempo_impacto_ms = int(max(0.0, (math.hypot(float(impacto.posicao[0]) - float(p0[0]), float(impacto.posicao[1]) - float(p0[1])) / max(0.1, velocidade)) * 1000.0))
+        agora_resolucao_ms = int(time.time() * 1000)
 
         if subtipo == "fruta":
             resolver_fruta(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id})
@@ -497,8 +496,25 @@ class CerebroServer:
             registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon")
             return True
 
-        ret = resolver_captura(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id, "dono_posicao": [dono_obj.posicao[0], dono_obj.posicao[1]], "distancia_arremesso_tiles": dist_final, "tentativas_falhas_anteriores": int(impacto.estado_extra.get("tentativas_falhas_captura", 0) or 0), "bioma": str(impacto.estado_extra.get("bioma", "")), "servidor_agora_ms": agora_ms, "maestria": self._maestria_jogador(client_id)})
+        atraso_animacao_ms = max(0, tempo_impacto_ms - atraso_rede_ms)
+        if atraso_animacao_ms <= 0:
+            atraso_animacao_ms = 2000
+
+        ret = resolver_captura(impacto, str(payload.get("item") or variante), contexto={
+            "dono_id": dono_id,
+            "dono_posicao": [dono_obj.posicao[0], dono_obj.posicao[1]],
+            "distancia_arremesso_tiles": dist_final,
+            "tentativas_falhas_anteriores": int(impacto.estado_extra.get("tentativas_falhas_captura", 0) or 0),
+            "bioma": str(impacto.estado_extra.get("bioma", "")),
+            "servidor_agora_ms": agora_resolucao_ms,
+            "maestria": self._maestria_jogador(client_id),
+            "token_arremesso": token,
+            "tempo_impacto_ms": tempo_impacto_ms,
+            "atraso_animacao_ms": atraso_animacao_ms,
+        })
         if bool(ret.get("iniciada", False)):
+            estado_captura = impacto.estado_extra.get("captura") if isinstance(impacto.estado_extra.get("captura"), dict) else {}
+            estado_captura["token_arremesso"] = token
             BANCO_DADOS.atualizar_objeto(impacto.Id, {"estado": impacto.estado_extra})
             registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon")
         return True

@@ -151,8 +151,12 @@ def TransicaoMusica(nome):
     global _fade_state, _fade_start_ms, _fade_from_vol, _fade_to_vol
     global _fade_target_music, _fade_prev_music, _musica_atual
 
-    # Nada tocando? Toca direto, sem transição
-    if not pygame.mixer.music.get_busy():
+    nome = str(nome or "").strip()
+    if not nome:
+        return
+
+    # Nada tocando? Toca direto, sem transição.
+    if not pygame.mixer.music.get_busy() or _musica_atual is None:
         _iniciar_musica(nome)
         pygame.mixer.music.set_volume(_volume_musica_alvo())
         _fade_state = "idle"
@@ -160,9 +164,18 @@ def TransicaoMusica(nome):
         _fade_prev_music = None
         return
 
+    # Se a faixa pedida já é a atual e não há transição, não faz nada.
+    if _fade_state == "idle" and nome == _musica_atual:
+        return
+
     # Se já está no meio de uma transição...
     if _fade_state != "idle":
-        # Cancelamento: pediram de volta a música que tocava antes do fade-out
+        # Pedido igual ao alvo já programado: mantém a transição em curso.
+        if nome == _fade_target_music:
+            return
+
+        # Voltou para a música original no meio do fade-out: reverte o fade
+        # a partir do volume atual, sem reiniciar a faixa.
         if nome == _fade_prev_music:
             _fade_state = "in"
             _fade_start_ms = pygame.time.get_ticks()
@@ -170,16 +183,18 @@ def TransicaoMusica(nome):
             _fade_to_vol = _volume_musica_alvo()
             _fade_target_music = None
             return
-        # Trocar alvo durante o fade-out: atualiza alvo e recomeça fade a partir do volume atual
+
+        # Trocar o alvo no meio da transição: reaproveita o volume atual.
         _fade_state = "out"
         _fade_start_ms = pygame.time.get_ticks()
         _fade_from_vol = pygame.mixer.music.get_volume()
         _fade_to_vol = 0.0
         _fade_target_music = nome
-        # _fade_prev_music mantém a referência da música original
+        if not _fade_prev_music:
+            _fade_prev_music = _musica_atual
         return
 
-    # Inicia um novo fade-out para trocar de faixa
+    # Inicia um novo fade-out para trocar de faixa.
     _fade_prev_music = _musica_atual
     _fade_state = "out"
     _fade_start_ms = pygame.time.get_ticks()
@@ -248,6 +263,15 @@ def _atualizar_motor_musica():
             pygame.mixer.music.play(-1, start=_loop_point)
             _posicao_manual = _loop_point
 
+
+class _DummyLock:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+
 class SistemaMusicas:
     def __init__(self):
         self._cena_anterior = None
@@ -284,6 +308,8 @@ class SistemaMusicas:
     def _musica_corrente_ou_em_transicao():
         if _fade_state == "out" and _fade_target_music is not None:
             return _fade_target_music
+        if _fade_state == "in" and _musica_atual is not None:
+            return _musica_atual
         return _musica_atual
 
     def _resolver_musica_alvo(self, jogo):
@@ -322,21 +348,64 @@ class SistemaMusicas:
     def _musica_mundo_por_bloco(self, cena_mundo):
         tile = self._tile_mundo_atual(cena_mundo)
         if tile is None:
-            return None
+            return self._musica_corrente_ou_em_transicao()
 
         if self._ultimo_tile_mundo is not None and tile == self._ultimo_tile_mundo:
             return self._musica_corrente_ou_em_transicao()
 
-        return self._mapa_musica_mundo_por_tile(tile)
+        musica = self._mapa_musica_mundo_por_tile(tile)
+        if musica is None:
+            return self._musica_corrente_ou_em_transicao()
+        return musica
 
     def _tile_mundo_atual(self, cena_mundo):
-        player = getattr(cena_mundo, "ControladorObjetos", None)
-        player = getattr(player, "PlayerLocal", None)
-        controle = getattr(player, "Controle", None)
-        if controle is None:
+        controlador_mundo = getattr(cena_mundo, "ControladorMundo", None)
+        if controlador_mundo is None:
             return None
 
-        return controle._tile_atual()
+        player = getattr(controlador_mundo, "player_local", None)
+        leitor = getattr(controlador_mundo, "Leitor", None)
+        if player is None or leitor is None:
+            return None
+
+        pos = getattr(player, "Posicao", None)
+        if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            return None
+
+        try:
+            px = float(pos[0])
+            py = float(pos[1])
+        except (TypeError, ValueError):
+            return None
+
+        with getattr(leitor, "_lock", None) or _DummyLock():
+            chunks = dict(getattr(leitor, "Chunks", {}) or {})
+            tamanho_chunk = int(getattr(leitor, "TamanhoChunkBlocos", 10) or 10)
+
+        if not chunks:
+            return None
+
+        tamanho_chunk = max(1, int(tamanho_chunk))
+        bloco_x = int(px // 1)
+        bloco_y = int(py // 1)
+        chunk_x = int(bloco_x // tamanho_chunk)
+        chunk_y = int(bloco_y // tamanho_chunk)
+        grid = chunks.get((chunk_x, chunk_y))
+        if not grid:
+            return None
+
+        local_x = int(bloco_x - (chunk_x * tamanho_chunk))
+        local_y = int(bloco_y - (chunk_y * tamanho_chunk))
+        if local_y < 0 or local_y >= len(grid):
+            return None
+        linha = grid[local_y]
+        if local_x < 0 or local_x >= len(linha):
+            return None
+
+        try:
+            return int(linha[local_x])
+        except (TypeError, ValueError):
+            return None
 
     @staticmethod
     def _mapa_musica_mundo_por_tile(tile):

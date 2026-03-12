@@ -48,7 +48,7 @@ class AtorServer:
 
 
 class BauServer:
-    def __init__(self, id_objeto: int, tipo_bau: str, itens: list, posicao: Vector2 = (0.0, 0.0), aberto: bool = False, raio_colisao: float = 0.42, raio_interacao: float = 0.85, **kwargs) -> None:
+    def __init__(self, id_objeto: int, tipo_bau: str, itens: list, posicao: Vector2 = (0.0, 0.0), aberto: bool = False, raio_colisao: float = 0.42, raio_interacao: float = 0.85, quantidade_itens: int = 1, tamanho_tiles: float = 1.10, **kwargs) -> None:
         self.id_objeto = int(id_objeto)
         self.Id = self.id_objeto
         self.tipo_classe = "entidade_bau"
@@ -58,7 +58,7 @@ class BauServer:
         self.campo = 0.0
         self.intensidade = 0.0
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
-        self.estado_extra = {"subtipo": "bau", "tipo_bau": str(tipo_bau), "itens": list(itens), "aberto": bool(aberto), "aberto_em": (time.monotonic() if aberto else 0.0)}
+        self.estado_extra = {"subtipo": "bau", "tipo_bau": str(tipo_bau), "itens": list(itens), "aberto": bool(aberto), "aberto_em": (time.monotonic() if aberto else 0.0), "quantidade_itens": max(1, min(4, int(quantidade_itens or max(1, len(list(itens)))))), "tamanho_tiles": float(tamanho_tiles or 1.10)}
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))
@@ -210,7 +210,7 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
     if tipo in {"entidade_pokemon", "pokemon"}:
         return PokemonServer(id_objeto=oid, especie=str(estado.get("especie") or dados.get("nome") or "Pokemon"), posicao=(float(pos[0]), float(pos[1])))
     if str(estado.get("subtipo", "")).strip().lower() == "bau" or tipo == "entidade_bau":
-        return BauServer(id_objeto=oid, tipo_bau=str(estado.get("tipo_bau", "Comum")), itens=list(estado.get("itens", [])), posicao=(float(pos[0]), float(pos[1])), aberto=bool(estado.get("aberto", False)), raio_colisao=float(dados.get("raio_colisao", 0.42)), raio_interacao=float(dados.get("raio_interacao", 0.85) or 0.85))
+        return BauServer(id_objeto=oid, tipo_bau=str(estado.get("tipo_bau", "Comum")), itens=list(estado.get("itens", [])), posicao=(float(pos[0]), float(pos[1])), aberto=bool(estado.get("aberto", False)), raio_colisao=float(dados.get("raio_colisao", 0.42)), raio_interacao=float(dados.get("raio_interacao", 0.85) or 0.85), quantidade_itens=int(estado.get("quantidade_itens", max(1, len(list(estado.get("itens", [])))))), tamanho_tiles=float(estado.get("tamanho_tiles", 1.10) or 1.10))
     if tipo.startswith("estrutura") or tipo == "estrutura_natural":
         return EstruturaNaturalServer(id_objeto=oid, tipo=str(estado.get("subtipo") or "natural"), nome=str(dados.get("nome") or "Estrutura"), sprite=str(dados.get("sprite") or ""), posicao=(float(pos[0]), float(pos[1])), raio_colisao=float(dados.get("raio_colisao", 1.0)), raio_interacao=float(dados.get("raio_interacao", 1.0)), campo=float(dados.get("campo", 0.0)), intensidade=float(dados.get("intensidade", 0.0)), recursos=dict(estado.get("recursos", {})), codigo_natural=int(dados.get("codigo_natural", 0) or 0))
     return None

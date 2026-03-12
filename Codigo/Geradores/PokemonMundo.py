@@ -34,6 +34,11 @@ class Pokemon:
         self.FrutasAplicadas: List[Dict[str, object]] = []
         self.EstadoFrutificacao: Dict[str, object] = {"efeitos": {}}
         self.CapturaEstado: Dict[str, object] = {"fase": "nenhuma", "fase_inicio_ms": 0, "bola_posicao": None, "retorno_inicio": None, "retorno_destino": None, "bola_nome": "pokeball"}
+        self._captura_aguardando_token = ""
+        self._captura_confirmada_token = ""
+        self._captura_confirmada_desde_ms = 0
+        self._captura_confirmada_espera_colisao = False
+        self._captura_confirmada_atraso_ms = 0
         self.AlvoLocalCaptura = False
         self._inicio_barra_local_ms = pygame.time.get_ticks()
         self.DificuldadeCaptura = 20.0
@@ -94,24 +99,64 @@ class Pokemon:
 
     def capturar(self, evento_captura: Dict[str, object]) -> None:
         evento = dict(evento_captura or {})
+        token_evento = str(evento.get("token_arremesso") or "")
+        if token_evento and self._captura_aguardando_token and token_evento == self._captura_aguardando_token:
+            self.confirmar_captura_por_token(token_evento, esperar_colisao=False, atraso_ms=0)
+
+        fase_evento = str(evento.get("fase", "nenhuma") or "nenhuma").strip().lower()
+        if self._captura_confirmada_token and token_evento and token_evento == self._captura_confirmada_token and self._captura_confirmada_espera_colisao:
+            return
+        if self._captura_confirmada_token and token_evento and token_evento == self._captura_confirmada_token and self._captura_confirmada_atraso_ms > 0:
+            agora = pygame.time.get_ticks()
+            if (agora - self._captura_confirmada_desde_ms) < self._captura_confirmada_atraso_ms and fase_evento in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3"}:
+                return
+
         self.CapturaEstado.update(evento)
         self.CapturaEstado.setdefault("fase", "nenhuma")
         self.CapturaEstado.setdefault("fase_inicio_ms", pygame.time.get_ticks())
-        if str(self.CapturaEstado.get("fase", "")).strip().lower() == "finalizada":
+        if token_evento:
+            self._captura_fake_token = token_evento
+        if fase_evento == "finalizada":
             self.CapturaEstado["fase"] = "nenhuma"
+            self.CapturaEstado["captura_pendente"] = False
             self._escala_visual = 1.0
+            self._captura_aguardando_token = ""
+            self._captura_confirmada_token = ""
+            self._captura_confirmada_desde_ms = 0
+            self._captura_confirmada_espera_colisao = False
+            self._captura_confirmada_atraso_ms = 0
 
+    def registrar_colisao_projetil_local(self, token: str, nome_bola: str = "pokeball", tempo_espera_confirmacao_ms: int = 1500) -> None:
+        self._captura_aguardando_token = str(token or "")
+        self._captura_fake_token = self._captura_aguardando_token
+        self._captura_fake_inicio_ms = pygame.time.get_ticks()
+        self.CapturaEstado["bola_nome"] = str(nome_bola or self.CapturaEstado.get("bola_nome") or "pokeball")
+        self.CapturaEstado["token_arremesso"] = self._captura_aguardando_token
+        self.CapturaEstado["captura_pendente"] = True
+        self.CapturaEstado["fase"] = "iniciada"
+        self.CapturaEstado["fase_inicio_ms"] = self._captura_fake_inicio_ms
+        self.CapturaEstado["tempo_espera_confirmacao_ms"] = int(tempo_espera_confirmacao_ms)
+        self._captura_confirmada_espera_colisao = False
+        if self._captura_confirmada_token == self._captura_aguardando_token:
+            self.confirmar_captura_por_token(self._captura_aguardando_token, esperar_colisao=False, atraso_ms=0)
+
+    def confirmar_captura_por_token(self, token: str, esperar_colisao: bool = False, atraso_ms: int = 0) -> None:
+        token = str(token or "")
+        if not token:
+            return
+        self._captura_confirmada_token = token
+        self._captura_confirmada_desde_ms = pygame.time.get_ticks()
+        self._captura_confirmada_espera_colisao = bool(esperar_colisao)
+        self._captura_confirmada_atraso_ms = max(0, int(atraso_ms or 0))
 
     def iniciar_captura_fake(self, token: str) -> None:
-        self._captura_fake_token = str(token or "")
-        self._captura_fake_inicio_ms = pygame.time.get_ticks()
-        self.CapturaEstado["fase"] = "bola_no_chao"
-        self.CapturaEstado["captura_pendente"] = True
+        self.registrar_colisao_projetil_local(token)
 
     def _resolver_timeout_captura_fake(self) -> None:
         if self._captura_fake_inicio_ms <= 0:
             return
-        if (pygame.time.get_ticks() - self._captura_fake_inicio_ms) < 2000:
+        tempo_limite = int(self.CapturaEstado.get("tempo_espera_confirmacao_ms", 1500) or 1500)
+        if (pygame.time.get_ticks() - self._captura_fake_inicio_ms) < tempo_limite:
             return
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
         if fase in {"bola_no_chao", "iniciada", "absorcao", "tremida1", "tremida2", "tremida3"}:
@@ -121,6 +166,12 @@ class Pokemon:
 
     def em_captura_pendente(self) -> bool:
         self._resolver_timeout_captura_fake()
+        agora_ms = pygame.time.get_ticks()
+        if self._captura_confirmada_token:
+            token_atual = str(self.CapturaEstado.get("token_arremesso") or self._captura_fake_token or "")
+            pronto_por_tempo = (agora_ms - self._captura_confirmada_desde_ms) >= self._captura_confirmada_atraso_ms
+            if token_atual == self._captura_confirmada_token and (not self._captura_confirmada_espera_colisao) and pronto_por_tempo:
+                self._captura_confirmada_atraso_ms = 0
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
         if bool(self.CapturaEstado.get("captura_pendente", False)):
             return True
@@ -188,6 +239,12 @@ class Pokemon:
             self.definir_posicao(px + (dx - px) * k, py + (dy - py) * k)
 
         self._resolver_timeout_captura_fake()
+        agora_ms = pygame.time.get_ticks()
+        if self._captura_confirmada_token:
+            token_atual = str(self.CapturaEstado.get("token_arremesso") or self._captura_fake_token or "")
+            pronto_por_tempo = (agora_ms - self._captura_confirmada_desde_ms) >= self._captura_confirmada_atraso_ms
+            if token_atual == self._captura_confirmada_token and (not self._captura_confirmada_espera_colisao) and pronto_por_tempo:
+                self._captura_confirmada_atraso_ms = 0
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
         if fase in {"iniciada", "absorcao"}:
             self._escala_visual = max(0.0, self._escala_visual - dt * 2.6)
@@ -231,10 +288,25 @@ class Pokemon:
         pygame.draw.circle(tela, (24, 84, 190), centro, rr, 2)
         return rr
 
-    def _desenhar_absorcao(self, tela, centro, raio_base):
-        self._desenhar_circulo_base(tela, centro, raio_base, "absorcao")
-        raio_corpo = max(2, int(raio_base * max(0.08, self._escala_visual)))
-        self._desenhar_pokemon_normal(tela, centro, raio_corpo)
+    def _desenhar_absorcao(self, tela, camera, centro, raio_base, tile_px, fase):
+        tempo = max(0.0, (pygame.time.get_ticks() - int(self.CapturaEstado.get("fase_inicio_ms", 0))) / 1000.0)
+        if fase == "iniciada":
+            prog = min(1.0, tempo / 0.22)
+        elif fase == "absorcao":
+            prog = 1.0 - min(1.0, tempo / 0.28)
+        else:
+            prog = 0.0
+        prog = max(0.0, min(1.0, prog))
+        raio_circulo = max(4, int(raio_base * (0.2 + 0.9 * prog)))
+        cor = (170, 225, 255)
+        aura = pygame.Surface((raio_circulo * 4, raio_circulo * 4), pygame.SRCALPHA)
+        pygame.draw.circle(aura, (cor[0], cor[1], cor[2], 78), (aura.get_width() // 2, aura.get_height() // 2), raio_circulo)
+        pygame.draw.circle(aura, (cor[0], cor[1], cor[2], 168), (aura.get_width() // 2, aura.get_height() // 2), raio_circulo, max(2, int(raio_base * 0.08)))
+        tela.blit(aura, aura.get_rect(center=centro))
+        raio_corpo = max(0, int(raio_base * (1.0 - prog)))
+        if raio_corpo > 1:
+            self._desenhar_pokemon_normal(tela, centro, raio_corpo)
+        self._desenhar_bola_captura(tela, camera, centro, "bola_no_chao", tile_px)
 
     def _centro_bola_captura(self, camera, centro_padrao, usar_posicao_captura=True):
         if not usar_posicao_captura:
@@ -255,8 +327,10 @@ class Pokemon:
         ang = 0.0
         if fase.startswith("tremida"):
             k = int(fase.replace("tremida", "") or 1)
-            cx += int(math.sin(pygame.time.get_ticks() * 0.024 * (1 + k * 0.3)) * (4 + k))
-            ang = math.sin(pygame.time.get_ticks() * 0.05 * (1 + k * 0.2)) * (12.0 + 2.0 * k)
+            amplitudes = {1: 11, 2: 7, 3: 4}
+            angulos = {1: 16.0, 2: 10.0, 3: 6.0}
+            cx += int(math.sin(pygame.time.get_ticks() * 0.026 * (1 + k * 0.18)) * amplitudes.get(k, 4))
+            ang = math.sin(pygame.time.get_ticks() * 0.05 * (1 + k * 0.12)) * angulos.get(k, 6.0)
 
         base = self._surface_bola_captura(tile_px)
         if base is None:
@@ -297,8 +371,14 @@ class Pokemon:
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
         centro = (int(cx), int(cy))
         tile_px = int(getattr(camera, "TilePx", 50))
-        base = max(6, int(tile_px * self.Colisor.raio_colisao))
+        base = max(6, int(tile_px * max(float(getattr(self.Colisor, "raio_colisao", 0.0) or 0.0), 0.42)))
         self._resolver_timeout_captura_fake()
+        agora_ms = pygame.time.get_ticks()
+        if self._captura_confirmada_token:
+            token_atual = str(self.CapturaEstado.get("token_arremesso") or self._captura_fake_token or "")
+            pronto_por_tempo = (agora_ms - self._captura_confirmada_desde_ms) >= self._captura_confirmada_atraso_ms
+            if token_atual == self._captura_confirmada_token and (not self._captura_confirmada_espera_colisao) and pronto_por_tempo:
+                self._captura_confirmada_atraso_ms = 0
         fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
 
         em_pendente = self.em_captura_pendente()
@@ -308,7 +388,9 @@ class Pokemon:
         if self.AlvoLocalCaptura and fase in {"nenhuma", "escape_reaparecendo", "escape"} and not em_pendente:
             self._desenhar_barra_local(tela, centro, base + 14)
 
-        if fase in {"iniciada", "absorcao", "bola_no_chao"}:
+        if fase in {"iniciada", "absorcao"}:
+            self._desenhar_absorcao(tela, camera, centro, max(base, int(tile_px * 0.50)), tile_px, fase)
+        elif fase == "bola_no_chao":
             self._desenhar_pokebola_no_chao(tela, camera, centro, fase, tile_px)
         elif fase in {"tremida1", "tremida2", "tremida3"}:
             self._desenhar_tremida(tela, camera, centro, fase, tile_px)

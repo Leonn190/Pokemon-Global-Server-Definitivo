@@ -370,23 +370,26 @@ class ControladorPlayer:
     def aplicar_diff_player(self, diff: dict) -> None:
         if self._player_local is None or not isinstance(diff, dict):
             return
+        tipo = str(diff.get("tipo", "")).strip().lower()
+        autor = str(diff.get("autor", "")).strip().lower()
         payload = diff.get("payload", {}) if isinstance(diff.get("payload"), dict) else {}
         if not payload:
             return
-        dados = dict(payload)
-        autor = str(diff.get("autor", "")).strip().lower()
-        if "posicao" in dados and autor == "server":
-            dados["hard"] = True
-            self._player_local.update(dados)
-            self._ativar_bloqueio_correcao()
+
+        # O player local ja existe no client e nao deve ser re-hidratado por snapshots
+        # sinteticos de visibilidade vindos do servidor (spawn autor=server).
+        # Para o player local, so updates/despawns explicitos do servidor fazem sentido.
+        if tipo == "spawn":
             return
-        estado = dados.get("estado")
-        if isinstance(estado, dict):
-            estado = dict(estado)
-            estado.pop("angulo", None)
-            dados["estado"] = estado
-        dados["hard"] = False
+        if autor and autor != "server":
+            return
+
+        dados = dict(payload)
+        if bool(dados.get("teleporte", False)):
+            dados["hard"] = True
         self._player_local.update(dados)
+        if bool(dados.get("hard", False)):
+            self._ativar_bloqueio_correcao()
 
     def _sincronizar_player_local(self) -> None:
         ator = self._player_local

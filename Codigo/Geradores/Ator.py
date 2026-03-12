@@ -130,7 +130,10 @@ class Ator:
         self.Colisor.mover_para(*self.Posicao)
 
     def mover(self, dx: float, dy: float) -> None:
-        self.definir_posicao(self.Posicao[0] + float(dx), self.Posicao[1] + float(dy))
+        nx = self.Posicao[0] + float(dx)
+        ny = self.Posicao[1] + float(dy)
+        self._alvo_posicao = (float(nx), float(ny))
+        self.definir_posicao(nx, ny)
 
 
     @classmethod
@@ -175,6 +178,11 @@ class Ator:
 
     def atualizar(self, dt: float) -> None:
         dt = max(0.0, float(dt))
+
+        # Player local não deve ser puxado por alvo antigo de interpolação.
+        if self.Controle is not None:
+            self._alvo_posicao = (float(self.Posicao[0]), float(self.Posicao[1]))
+
         if self._tempo_tapa > 0.0:
             self._tempo_tapa = max(0.0, self._tempo_tapa - dt)
 

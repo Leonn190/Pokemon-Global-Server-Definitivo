@@ -63,6 +63,7 @@ def _carregar_itens_validos(arquivo_itens: Path) -> Dict[int, List[Dict[str, obj
                         "Raridade": raridade,
                         "Estilo": str(linha.get("Estilo", "")).strip(),
                         "Code": str(linha.get("Code", "")).strip(),
+                        "quantidade": 1,
                     }
                 )
     return itens_por_raridade

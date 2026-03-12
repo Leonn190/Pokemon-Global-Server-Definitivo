@@ -14,7 +14,10 @@ from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer, PokemonSe
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
 from SimuladorServerJogo.Logica.AutoridadeCaptura import coletar_eventos_captura_agendada, resolver_captura, resolver_fruta
-from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
+from SimuladorServerJogo.Controle.EstadoServidor import (
+    obter_personagem_para_entrada,
+    atualizar_inventario_personagem,
+)
 from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 
 Vector2 = Tuple[float, float]
@@ -361,8 +364,20 @@ class CerebroServer:
             "id": int(getattr(poke, "Id", 0) or 0),
             "especie": str(estado.get("especie") or estado.get("nome") or "Pokemon"),
             "nome": str(estado.get("nome") or estado.get("especie") or "Pokemon"),
-            "stats": dict(estado.get("stats", {})) if isinstance(estado.get("stats"), dict) else {},
+            "nivel": int(estado.get("nivel", 1) or 1),
             "iv": int(estado.get("iv", 0) or 0),
+            "subivs": dict(estado.get("subivs", {})) if isinstance(estado.get("subivs"), dict) else {},
+            "stats_base": dict(estado.get("stats_base", {})) if isinstance(estado.get("stats_base"), dict) else {},
+            "stats": dict(estado.get("stats", {})) if isinstance(estado.get("stats"), dict) else {},
+            "altura": float(estado.get("altura", 1.0) or 1.0),
+            "peso": float(estado.get("peso", 1.0) or 1.0),
+            "tipos": list(estado.get("tipos", [])) if isinstance(estado.get("tipos"), list) else [],
+            "grupo": str(estado.get("grupo", "") or ""),
+            "raridade": int(estado.get("raridade", 1) or 1),
+            "estagio": int(estado.get("estagio", 1) or 1),
+            "code": str(estado.get("code", "") or ""),
+            "linhagem": str(estado.get("linhagem", "") or ""),
+            "chunk_origem": list(estado.get("chunk_origem", [])) if isinstance(estado.get("chunk_origem"), list) else [],
             "capturado_em_ms": int(time.time() * 1000),
         }
 

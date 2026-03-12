@@ -369,13 +369,32 @@ class ControladorObjetos:
     def _deve_ignorar_diff(self, diff: Dict[str, object]) -> bool:
         if self.PlayerLocal is None:
             return False
+
         oid_local = self._id_player_local()
-        if bool(diff.get("base", False)) and int(diff.get("objeto_id", -1)) == int(oid_local):
-            return True
+        oid_diff = int(diff.get("objeto_id", -1) or -1)
+        tipo = str(diff.get("tipo", "")).strip().lower()
+
+        if oid_diff == oid_local:
+            # base do próprio player
+            if bool(diff.get("base", False)):
+                return True
+
+            # spawn sintético de visibilidade do próprio player
+            if tipo == "spawn":
+                return True
+
+            # update autoritativa só de ângulo/estado leve do próprio player
+            if tipo == "update" and self._eh_diff_autoritativa_server(diff):
+                payload = diff.get("payload", {}) if isinstance(diff.get("payload"), dict) else {}
+                chaves = set(payload.keys())
+                if chaves and chaves.issubset({"id", "tipo", "estado"}):
+                    return True
+
         if str(diff.get("categoria", "")).strip().lower() == "projetil_lancamento":
             payload = diff.get("payload") if isinstance(diff.get("payload"), dict) else {}
             if int(payload.get("dono_id", 0) or 0) == int(oid_local):
                 return True
+
         return False
 
     def EnfileirarDiffRapida(self, diff: Dict[str, object]) -> None:
@@ -603,8 +622,27 @@ class ControladorObjetos:
                 self._upsert_especializado(oid, atual)
 
             if self._eh_diff_player_local(diff) and self._eh_diff_autoritativa_server(diff):
-                self._aplicar_payload_no_player_local(atual)
-            return
+                payload_player = dict(payload)
+
+                # não reaplicar snapshot inteiro do cache
+                if self.PlayerLocal is not None and payload_player:
+                    # correção forte só quando vier posição
+                    if "posicao" in payload_player:
+                        dados = dict(payload_player)
+                        dados["hard"] = True
+                        self.PlayerLocal.update(dados)
+                        self._ativar_bloqueio_sync_autoritario()
+                    else:
+                        # updates leves: inventário/perfil/slot etc., sem mexer no ângulo local
+                        payload_sem_estado = dict(payload_player)
+                        estado = payload_sem_estado.get("estado")
+                        if isinstance(estado, dict):
+                            estado = dict(estado)
+                            estado.pop("angulo", None)
+                            payload_sem_estado["estado"] = estado
+                        payload_sem_estado["hard"] = False
+                        self.PlayerLocal.update(payload_sem_estado)
+                return
 
         if tipo == "despawn":
             with self._lock_objetos:

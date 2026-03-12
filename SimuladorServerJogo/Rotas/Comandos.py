@@ -75,9 +75,9 @@ def _registrar_update_player(usuario, payload):
         payload=payload,
         escopo={"centro": [float(obj.posicao[0]), float(obj.posicao[1])], "raio": 780.0},
         objeto_id=obj.Id,
-        categoria="rapida",
-        origem="server",
         autor="server",
+        categoria="player",
+        base=False,
     )
 
 
@@ -322,7 +322,7 @@ def _cmd_spawn(autor, args):
     _ajustar_stats_spawn(obj.estado_extra, nomeados)
     BANCO_DADOS.inserir_objeto(obj)
     CEREBRO.registrar_spawn_manual(obj)
-    registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=obj.Id, categoria="rapida", origem="server", autor=autor)
+    registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=obj.Id, autor="server", categoria="pokemon", base=False)
     return f"Pokémon {poke.get('Nome')} spawnado em ({int(x)}, {int(y)})"
 
 
@@ -347,7 +347,7 @@ def _cmd_chest(autor, args):
     bau = BauServer(id_objeto=novo_id, tipo_bau=tipo, itens=list(dados.get("itens", [])), posicao=(x, y), raio_colisao=0.42, raio_interacao=0.85, aberto=False)
     BANCO_DADOS.inserir_objeto(bau)
     CEREBRO.registrar_spawn_manual(bau)
-    registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=bau.Id, categoria="rapida", origem="server", autor=autor)
+    registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [x, y], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau", base=False)
     return f"Baú {tipo} criado em ({int(x)}, {int(y)})"
 
 
@@ -359,9 +359,13 @@ def _cmd_count(args):
         total = len(chunks_visiveis | chunks_simulados)
         return f"Chunks carregados: {total} (visíveis={len(chunks_visiveis)}, simulados={len(chunks_simulados)})"
     if alvo == "chests":
-        return f"Baús existentes: {BANCO_DADOS.contar_subtipo_entidade('bau')}"
+        banco = BANCO_DADOS.contar_subtipo_entidade("bau")
+        cerebro = CEREBRO.contagem_baus_registrados()
+        return f"Baús existentes: banco={banco} | cerebro={cerebro}"
     if alvo == "pokemons":
-        return f"Pokémons existentes: {BANCO_DADOS.contar_subtipo_entidade('pokemon')}"
+        banco = BANCO_DADOS.contar_subtipo_entidade("pokemon")
+        cerebro = CEREBRO.contagem_pokemons_registrados()
+        return f"Pokémons existentes: banco={banco} | cerebro={cerebro}"
     return "Erro no /count. Ordem base: /count chunks|chests|pokemons"
 
 

@@ -1,4 +1,4 @@
-"""Projétil serializável com suporte a predição local e reconciliação autoritativa."""
+"""Projétil visual client-heavy: sem stream contínuo do servidor."""
 
 from __future__ import annotations
 
@@ -19,136 +19,105 @@ class Projetil:
         self.Id = int(snapshot.get("id", 0) or 0)
         self.id_objeto = self.Id
         self.Posicao = (float(pos[0]), float(pos[1]))
-        self.Colisor = Colisor(x=self.Posicao[0], y=self.Posicao[1], raio_colisao=max(0.08, float(snapshot.get("raio_colisao", 0.16) or 0.16)), raio_interacao=max(0.08, float(snapshot.get("raio_colisao", 0.16) or 0.16)) )
+        self.Colisor = Colisor(
+            x=self.Posicao[0],
+            y=self.Posicao[1],
+            raio_colisao=max(0.08, float(snapshot.get("raio_colisao", 0.16) or 0.16)),
+            raio_interacao=max(0.08, float(snapshot.get("raio_colisao", 0.16) or 0.16)),
+        )
         self.TipoProjetil = "item"
         self.Subtipo = ""
         self.ItemBaseId = ""
         self.DonoId = 0
-        self.PosicaoInicial = tuple(self.Posicao)
+        self.TokenArremesso = ""
         self.Direcao = (1.0, 0.0)
-        self.VelocidadeEscalar = 10.0
-        self.AlcanceMaximo = 6.0
+        self.VelocidadeEscalar = 7.0
+        self.AlcanceMaximo = 7.0
         self.DistanciaPercorrida = 0.0
-        self.TempoVida = 0.0
         self.RotacaoVisual = 0.0
-        self.Ativo = True
         self.Terminado = False
         self.Colidiu = False
         self.PreditoLocal = False
-        self.TokenArremesso = ""
         self.Autoritativo = False
-        self.Estado = {}
-        self.AguardandoConfirmacaoColisao = False
-        self.ColisaoCandidata = None
-        self.ColisaoConfirmada = False
-        self.DistanciaConferenciaInicial = 4.0
-        self._offset_correcao = [0.0, 0.0]
-        self._tempo_correcao = 0.0
+        self.TempoVida = 0.0
+        self._fade_total = 0.0
+        self._fade_restante = 0.0
+        self._parado = False
+        self._alpha = 255
         self.aplicar_snapshot(snapshot)
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.Posicao = (float(x), float(y))
         self.Colisor.mover_para(*self.Posicao)
 
-    def mover(self, dx: float, dy: float) -> None:
-        self.definir_posicao(self.Posicao[0] + float(dx), self.Posicao[1] + float(dy))
-
     def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
         estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
         pos = snapshot.get("posicao") if isinstance(snapshot.get("posicao"), (list, tuple)) else None
         if pos is not None:
-            nx, ny = float(pos[0]), float(pos[1])
-            px, py = self.Posicao
-            if self.PreditoLocal or self.Autoritativo:
-                self._offset_correcao = [px - nx, py - ny]
-                self._tempo_correcao = 0.12
-            else:
-                self._offset_correcao = [0.0, 0.0]
-                self._tempo_correcao = 0.0
-            self.definir_posicao(nx, ny)
-
+            self.definir_posicao(float(pos[0]), float(pos[1]))
         self.TipoProjetil = str(snapshot.get("tipo_projetil") or estado.get("tipo_projetil") or self.TipoProjetil)
         self.Subtipo = str(snapshot.get("subtipo") or snapshot.get("nome_item") or estado.get("subtipo") or self.Subtipo)
         self.ItemBaseId = str(snapshot.get("item_base_id") or estado.get("item_base_id") or self.ItemBaseId)
         self.DonoId = int(snapshot.get("dono_id", estado.get("dono_id", self.DonoId)) or 0)
         self.TokenArremesso = str(snapshot.get("token_arremesso") or estado.get("token_arremesso") or self.TokenArremesso)
-
-        p0 = snapshot.get("posicao_inicial") or estado.get("posicao_inicial") or self.PosicaoInicial
-        if isinstance(p0, (list, tuple)) and len(p0) == 2:
-            self.PosicaoInicial = (float(p0[0]), float(p0[1]))
-
-        direcao = snapshot.get("direcao") if isinstance(snapshot.get("direcao"), (list, tuple)) else estado.get("direcao")
+        direcao = estado.get("direcao") if isinstance(estado.get("direcao"), (list, tuple)) else snapshot.get("direcao")
         if isinstance(direcao, (list, tuple)) and len(direcao) == 2:
             dx, dy = float(direcao[0]), float(direcao[1])
-            n = math.hypot(dx, dy)
-            if n > 1e-6:
-                self.Direcao = (dx / n, dy / n)
+            n = math.hypot(dx, dy) or 1.0
+            self.Direcao = (dx / n, dy / n)
+        self.VelocidadeEscalar = max(0.1, float(estado.get("velocidade", snapshot.get("velocidade", self.VelocidadeEscalar)) or self.VelocidadeEscalar))
+        self.AlcanceMaximo = max(0.1, float(estado.get("alcance", snapshot.get("alcance", self.AlcanceMaximo)) or self.AlcanceMaximo))
+        self.PreditoLocal = bool(estado.get("predito_local", snapshot.get("predito_local", self.PreditoLocal)))
+        self.Autoritativo = bool(estado.get("autoritativo", snapshot.get("autoritativo", self.Autoritativo)))
 
-        self.VelocidadeEscalar = max(0.1, float(snapshot.get("velocidade", estado.get("velocidade", self.VelocidadeEscalar)) or self.VelocidadeEscalar))
-        self.AlcanceMaximo = max(0.1, float(snapshot.get("alcance", estado.get("alcance", self.AlcanceMaximo)) or self.AlcanceMaximo))
-        self.DistanciaPercorrida = max(0.0, float(snapshot.get("distancia", estado.get("distancia", self.DistanciaPercorrida)) or self.DistanciaPercorrida))
-        self.TempoVida = max(0.0, float(snapshot.get("tempo_vida", estado.get("tempo_vida", self.TempoVida)) or self.TempoVida))
-        self.RotacaoVisual = float(snapshot.get("rotacao", estado.get("rotacao", self.RotacaoVisual)) or self.RotacaoVisual)
+    def encerrar_imediato(self) -> None:
+        self.Terminado = True
+        self.Colidiu = True
+        self._fade_total = 0.0
+        self._fade_restante = 0.0
 
-        self.PreditoLocal = bool(snapshot.get("predito_local", estado.get("predito_local", self.PreditoLocal)))
-        self.Autoritativo = bool(snapshot.get("autoritativo", estado.get("autoritativo", self.Autoritativo)))
-        self.Colidiu = bool(snapshot.get("colidiu", estado.get("colidiu", self.Colidiu)))
-        self.Terminado = bool(snapshot.get("terminado", estado.get("terminado", self.Terminado)))
-        self.Ativo = not self.Terminado
-        self.ColisaoConfirmada = self.ColisaoConfirmada or self.Colidiu or self.Terminado
-        self.DistanciaConferenciaInicial = max(0.8, min(4.0, float(snapshot.get("distancia_conferencia_inicial", estado.get("distancia_conferencia_inicial", self.DistanciaConferenciaInicial)) or self.DistanciaConferenciaInicial)))
-        self.Estado = dict(estado)
+    def encerrar_com_fade(self, tempo_s: float = 0.5) -> None:
+        self.Colidiu = True
+        self._parado = True
+        self._fade_total = max(0.05, float(tempo_s))
+        self._fade_restante = self._fade_total
+
+    def deve_remover(self) -> bool:
+        return self.Terminado and self._fade_restante <= 0.0
 
     def atualizar_visual(self, dt: float) -> None:
-        if self.Terminado:
-            return
         dt = max(0.0, float(dt))
         self.TempoVida += dt
+        if self.Terminado and self._fade_restante <= 0.0:
+            return
 
-        if self.PreditoLocal or self.Autoritativo:
+        if not self._parado and not self.Terminado:
             passo = self.VelocidadeEscalar * dt
-            self.mover(self.Direcao[0] * passo, self.Direcao[1] * passo)
+            self.definir_posicao(self.Posicao[0] + self.Direcao[0] * passo, self.Posicao[1] + self.Direcao[1] * passo)
             self.DistanciaPercorrida += passo
-            if self.PreditoLocal and self.TempoVida > 1.2 and self.DistanciaPercorrida >= self.AlcanceMaximo:
-                # fallback visual controlado até chegar o despawn autoritativo.
-                self.Terminado = True
-                self.Ativo = False
+            if self.DistanciaPercorrida >= self.AlcanceMaximo:
+                self.encerrar_com_fade(0.5)
 
-        if self._tempo_correcao > 0.0:
-            fator = min(1.0, dt / self._tempo_correcao) if self._tempo_correcao > 1e-6 else 1.0
-            self.mover(self._offset_correcao[0] * fator, self._offset_correcao[1] * fator)
-            self._offset_correcao[0] *= (1.0 - fator)
-            self._offset_correcao[1] *= (1.0 - fator)
-            self._tempo_correcao = max(0.0, self._tempo_correcao - dt)
+        if self._fade_restante > 0.0:
+            self._fade_restante = max(0.0, self._fade_restante - dt)
+            k = (self._fade_restante / self._fade_total) if self._fade_total > 1e-6 else 0.0
+            self._alpha = max(0, min(255, int(255 * k)))
+            if self._fade_restante <= 0.0:
+                self.Terminado = True
+                self._alpha = 0
 
         self.RotacaoVisual = (self.RotacaoVisual + 560.0 * dt) % 360.0
 
-    def serializar_estado(self) -> Dict[str, object]:
-        return {
-            "tipo_projetil": self.TipoProjetil,
-            "subtipo": self.Subtipo,
-            "item_base_id": self.ItemBaseId,
-            "dono_id": self.DonoId,
-            "token_arremesso": self.TokenArremesso,
-            "direcao": [self.Direcao[0], self.Direcao[1]],
-            "velocidade": self.VelocidadeEscalar,
-            "alcance": self.AlcanceMaximo,
-            "distancia": self.DistanciaPercorrida,
-            "tempo_vida": self.TempoVida,
-            "rotacao": self.RotacaoVisual,
-            "predito_local": self.PreditoLocal,
-            "autoritativo": self.Autoritativo,
-            "colidiu": self.Colidiu,
-            "terminado": self.Terminado,
-            "distancia_conferencia_inicial": self.DistanciaConferenciaInicial,
-        }
-
     def desenhar(self, tela, camera) -> None:
+        if self.Terminado and self._alpha <= 0:
+            return
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
         item = {"Nome": self.Subtipo or self.TipoProjetil, "Code": self.ItemBaseId}
         base = ItemInventario.surface_item(item, lado_px=max(14, int(getattr(camera, "TilePx", 50) * 0.55)))
         if base is None:
-            pygame.draw.circle(tela, (255, 180, 90), (int(cx), int(cy)), max(3, int(camera.TilePx * 0.16)))
+            surf = pygame.Surface((12, 12), pygame.SRCALPHA)
+            pygame.draw.circle(surf, (255, 180, 90, self._alpha), (6, 6), 5)
+            tela.blit(surf, surf.get_rect(center=(int(cx), int(cy))))
             return
         chave = (id(base), int(self.RotacaoVisual) % 360)
         rot = self._cache_rotacao.get(chave)
@@ -157,4 +126,7 @@ class Projetil:
             self._cache_rotacao[chave] = rot
             if len(self._cache_rotacao) > 720:
                 self._cache_rotacao.clear()
-        tela.blit(rot, rot.get_rect(center=(int(cx), int(cy))))
+        sprite = rot.copy()
+        if self._alpha < 255:
+            sprite.set_alpha(self._alpha)
+        tela.blit(sprite, sprite.get_rect(center=(int(cx), int(cy))))

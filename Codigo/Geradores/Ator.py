@@ -82,6 +82,49 @@ class Ator:
         self.BarraStamina.cor_borda = (180, 210, 255)
         self.BarraStamina.cor_preenchimento = (86, 220, 125)
 
+        self._alvo_posicao = self.Posicao
+        self._alvo_angulo = self.AnguloOlhar
+
+    def update(self, payload: dict) -> None:
+        dados = payload if isinstance(payload, dict) else {}
+        pos = dados.get("posicao")
+        if isinstance(pos, (list, tuple)) and len(pos) == 2:
+            px, py = float(pos[0]), float(pos[1])
+            dx = px - float(self.Posicao[0])
+            dy = py - float(self.Posicao[1])
+            if (dx * dx + dy * dy) > (8.0 * 8.0) or bool(dados.get("hard", False)):
+                self.definir_posicao(px, py)
+            else:
+                self._alvo_posicao = (px, py)
+                self.definir_posicao(self.Posicao[0] + (px - self.Posicao[0]) * 0.35, self.Posicao[1] + (py - self.Posicao[1]) * 0.35)
+
+        nome = dados.get("nome") or dados.get("usuario")
+        if nome:
+            self.Nome = str(nome)
+        skin = dados.get("skin")
+        if skin and str(skin) != str(self.NomeSkin):
+            self.set_nome_skin(str(skin))
+
+        estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+        if "angulo" in estado:
+            self._alvo_angulo = float(estado.get("angulo", self.AnguloOlhar))
+            self.definir_angulo_olhar(self.AnguloOlhar + (self._alvo_angulo - self.AnguloOlhar) * 0.35)
+        if bool(estado.get("tapa")):
+            self.iniciar_tapa()
+        if self.Perfil is not None and isinstance(dados.get("perfil"), dict):
+            self.Perfil.aplicar_serializado(dados.get("perfil"))
+        if self.Inventario is not None and isinstance(dados.get("inventario"), dict):
+            self.Inventario.aplicar_serializado(dados.get("inventario"))
+        if self.Inventario is not None and "slot_selecionado" in dados:
+            try:
+                self.Inventario.SlotSelecionado = int(dados.get("slot_selecionado"))
+            except Exception:
+                pass
+        if bool(estado.get("mirando", False)):
+            self.EstadoMiraAtiva = True
+        elif "mirando" in estado:
+            self.EstadoMiraAtiva = False
+
     def definir_posicao(self, x: float, y: float) -> None:
         self.Posicao = (float(x), float(y))
         self.Colisor.mover_para(*self.Posicao)

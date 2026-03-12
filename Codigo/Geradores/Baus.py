@@ -97,6 +97,9 @@ class Bau:
             posicao = [0.0, 0.0]
         return cls(id_objeto=int(snapshot.get("id", 0)), posicao=(float(posicao[0]), float(posicao[1])), tipo_bau=str(estado.get("tipo_bau", "Comum")), itens=list(estado.get("itens", [])), aberto=bool(estado.get("aberto", False)), raio_colisao=float(snapshot.get("raio_colisao", 0.42)))
 
+    def update(self, snapshot: Dict[str, object]) -> None:
+        self.aplicar_snapshot(snapshot)
+
     def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
         estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
         posicao = snapshot.get("posicao", [self.Posicao[0], self.Posicao[1]])
@@ -113,21 +116,4 @@ class Bau:
                 self._aguardando_desde_ms = 0
 
     def processar_interacao_player(self, player) -> Dict[str, object] | None:
-        ator = getattr(player, "Ator", player)
-        if ator is None or self.Aberto:
-            return None
-        if self.AguardandoConfirmacaoAbertura:
-            if self._aguardando_desde_ms > 0 and (pygame.time.get_ticks() - self._aguardando_desde_ms) > 1800:
-                self.AguardandoConfirmacaoAbertura = False
-                self._aguardando_desde_ms = 0
-            else:
-                return None
-        dx = float(self.Posicao[0]) - float(ator.Posicao[0])
-        dy = float(self.Posicao[1]) - float(ator.Posicao[1])
-        raio_player = max(0.1, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
-        limite = raio_player + float(getattr(self.Colisor, "raio_interacao", self.Colisor.raio_colisao)) + 0.02
-        if (dx * dx + dy * dy) > (limite * limite):
-            return None
-        self.AguardandoConfirmacaoAbertura = True
-        self._aguardando_desde_ms = int(pygame.time.get_ticks())
-        return {"tipo": "abrir_bau", "objeto_id": int(self.Id), "payload": {}}
+        return None

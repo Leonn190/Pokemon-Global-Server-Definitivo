@@ -27,18 +27,19 @@ def _next_seq() -> int:
     return _DIFF_SEQ
 
 
-def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, categoria: str = "rapida", origem: str = "server", autor: str = "", evento: str = "") -> Dict[str, object]:
+def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, autor: str = "server", categoria: str | None = None, base: bool = False) -> Dict[str, object]:
     diff = {
         "seq": _next_seq(),
         "timestamp": time.time(),
         "tipo": str(tipo or ""),
-        "evento": str(evento or ""),
         "objeto_id": objeto_id,
+        "autor": str(autor or "server"),
         "payload": dict(payload or {}),
         "escopo": dict(escopo or {}),
-        "categoria": str(categoria or "rapida"),
-        "meta": {"origem": str(origem or "server"), "autor": str(autor or "")},
+        "base": bool(base),
     }
+    if categoria is not None:
+        diff["categoria"] = str(categoria)
     PACOTES_TICK.registrar_diff_pendente(diff)
     return diff
 
@@ -105,13 +106,39 @@ def _coletar_diffs_visibilidade(posicao_camera: Vector2, raio: float, vistos: Se
         if obj.Id in vistos:
             continue
         vistos.add(int(obj.Id))
-        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "meta": {"origem": "server", "autor": "server"}})
+        categoria = str(getattr(obj, "estado_extra", {}).get("subtipo", "outro") or "outro")
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "autor": "server", "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "categoria": categoria, "base": False})
     for oid in [oid for oid in list(vistos) if oid not in ids_proximos]:
         vistos.discard(int(oid))
-        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "meta": {"origem": "server", "autor": "server"}})
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "autor": "server", "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "categoria": "outro", "base": False})
     return diffs
 
 
+
+
+def _coletar_diffs_base_players(client_id: str, posicao_camera: Vector2, raio: float) -> List[Dict[str, object]]:
+    diffs: List[Dict[str, object]] = []
+    alvo_id = BANCO_DADOS.objeto_id_por_usuario(client_id)
+    agora = time.time()
+    for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio):
+        subtipo = str(getattr(obj, "estado_extra", {}).get("subtipo", ""))
+        if subtipo != "player":
+            continue
+        usuario_obj = BANCO_DADOS.usuario_por_objeto_id(int(obj.Id)) or ""
+        if int(obj.Id) == int(alvo_id) or str(usuario_obj) == str(client_id):
+            continue
+        diffs.append({
+            "seq": _next_seq(),
+            "timestamp": agora,
+            "tipo": "update",
+            "objeto_id": int(obj.Id),
+            "autor": str(usuario_obj or "server"),
+            "payload": obj.serializar(),
+            "escopo": {"centro": [obj.posicao[0], obj.posicao[1]], "raio": 780.0},
+            "categoria": "player",
+            "base": True,
+        })
+    return diffs
 def processar_ativador_json(requisicao_json: str) -> str:
     try:
         pacote = json.loads(requisicao_json)
@@ -129,9 +156,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
     modo = str(dados.get("modo", "pacotes")).strip().lower()
     ultimo_tick_recebido = int(dados.get("ultimo_tick_recebido", 0) or 0)
 
-    info_tique = TIQUE_SERVIDOR.info()
-    if bool(info_tique.get("ativo", False)):
-        TIQUE_SERVIDOR.ativar_por_usuario(client_id)
+    TIQUE_SERVIDOR.ativar_por_usuario(client_id)
     meta_cerebro = CEREBRO.processar_ativacao(client_id, posicao_camera)
 
     with _LOCK:
@@ -144,15 +169,17 @@ def processar_ativador_json(requisicao_json: str) -> str:
             return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade())}}, ensure_ascii=False)
 
         pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio)
+        diffs_base_players = _coletar_diffs_base_players(client_id, posicao_camera, raio)
         diffs_vis = _coletar_diffs_visibilidade(posicao_camera, raio, vistos)
-        if diffs_vis:
+        diffs_extra = list(diffs_base_players) + list(diffs_vis)
+        if diffs_extra:
             if pacotes:
                 pacote_vis = pacotes[-1]
                 diffs_base = pacote_vis.get("diffs", []) if isinstance(pacote_vis.get("diffs"), list) else []
-                pacote_vis["diffs"] = list(diffs_base) + list(diffs_vis)
+                pacote_vis["diffs"] = list(diffs_base) + list(diffs_extra)
             else:
                 # Sem pacote real no intervalo: envia pacote sintético de bootstrap/visibilidade.
-                pacotes.append({"tick": 0, "diffs": diffs_vis, "sintetico": True})
+                pacotes.append({"tick": 0, "diffs": diffs_extra, "sintetico": True})
 
         return json.dumps({"status": "ok", "mensagem": "Pacotes coletados", "client_id": client_id, "pacotes": pacotes, "tick_atual_servidor": PACOTES_TICK.tick_atual(), "meta": {"players_ativos": int(meta_cerebro.get("players_ativos", 0)), "chunks_visiveis": int(meta_cerebro.get("chunks_visiveis", 0))}}, ensure_ascii=False)
 

@@ -19,7 +19,7 @@ from Codigo.Geradores.Player.Perfil import Perfil
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
 from Codigo.Modulos.Colisor import Colisor
-from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo
+from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo, EstruturaNatural
 from Codigo.Prefabs.Fluxos import Fluxo
 
 
@@ -32,6 +32,7 @@ class ControladorObjetos:
         self.BausPorId: Dict[int, Bau] = {}
         self.AtoresRemotosPorId: Dict[int, Ator] = {}
         self.ProjeteisPorId: Dict[int, Projetil] = {}
+        self.EstruturasPorId: Dict[int, EstruturaNatural] = {}
 
         self._lock_objetos = threading.RLock()
         self._lock_diffs = threading.Lock()
@@ -55,8 +56,8 @@ class ControladorObjetos:
         self._seq_id_projetil_predito = -1
         self._pokemon_alvo_local_id: Optional[int] = None
         self._bloqueio_sync_autoritario_ate = 0.0
-        self._tokens_colisao_candidata_enviados: set[str] = set()
         self._janela_bloqueio_sync_autoritario_s = 0.12
+        self._arremesso_pendente: Optional[Dict[str, object]] = None
         self._cache_sprites_fallback: Dict[str, Optional[pygame.Surface]] = {}
         self._snapshot_player_supervisao_rapida: Optional[Dict[str, object]] = None
         self._snapshot_player_supervisao_lenta: Optional[Dict[str, object]] = None
@@ -134,68 +135,97 @@ class ControladorObjetos:
         posicao_antes = tuple(self.PlayerLocal.Posicao)
         self.PlayerLocal.Controle.atualizar(eventos, dt, mouse_pos_mundo_tiles)
         self._resolver_colisao_player_local(posicao_antes, dt)
-        self._processar_interacoes_player()
 
         self._processar_intencao_arremesso_local()
         self._atualizar_projeteis_visuais(dt)
         self._fluxo_mira.atualizar(dt)
 
+    def _spec_projetil(self, item: Dict[str, object]) -> Tuple[str, float, float]:
+        estilo = str(item.get("Estilo") or item.get("estilo") or "item").strip().lower()
+        nome = str(item.get("Nome") or "").strip().lower()
+        if estilo == "fruta":
+            return ("fruta", 6.0, 6.0)
+        variante = "pokebola"
+        velocidade = 7.0
+        alcance = 7.0
+        if "sniperball" in nome:
+            variante = "sniperball"
+            velocidade = 8.0
+            alcance = 9.0
+        elif "fastball" in nome:
+            variante = "fastball"
+            velocidade = 10.0
+            alcance = 7.0
+        return (variante, velocidade, alcance)
+
     def _processar_intencao_arremesso_local(self) -> None:
         if self.PlayerLocal is None or self.PlayerLocal.Controle is None:
             return
         acao = self.PlayerLocal.Controle.consumir_acao_arremesso()
-        if not isinstance(acao, dict):
+        if isinstance(acao, dict):
+            self.PlayerLocal.iniciar_tapa()
+            self._arremesso_pendente = {"acao": acao, "ts": time.monotonic()}
+
+        if not isinstance(self._arremesso_pendente, dict):
+            return
+        if not self.PlayerLocal.esta_tapando():
+            return
+        progresso = float(self.PlayerLocal._progresso_tapa()) if hasattr(self.PlayerLocal, "_progresso_tapa") else 0.5
+        atraso = time.monotonic() - float(self._arremesso_pendente.get("ts", time.monotonic()))
+        if progresso < 0.45 and atraso < 0.14:
             return
 
+        acao = dict(self._arremesso_pendente.get("acao") or {})
+        self._arremesso_pendente = None
         item = dict(acao.get("item") or {})
         origem = acao.get("origem") if isinstance(acao.get("origem"), (list, tuple)) else tuple(self.PlayerLocal.Posicao)
         destino = acao.get("destino") if isinstance(acao.get("destino"), (list, tuple)) else tuple(self.PlayerLocal.Posicao)
 
+        variante, velocidade, alcance = self._spec_projetil(item)
         dx, dy = float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1])
         n = math.hypot(dx, dy) or 1.0
         direcao = (dx / n, dy / n)
-        estilo = str(item.get("Estilo") or item.get("estilo") or "item").lower()
-        alcance = 5.0 if estilo == "fruta" else (8.0 if "sniperball" in str(item.get("Nome", "")).lower() else 6.0)
+        destino = (float(origem[0]) + direcao[0] * alcance, float(origem[1]) + direcao[1] * alcance)
         token = str(uuid.uuid4())
 
-        # Spawn preditivo local (somente visual)
         self._seq_id_projetil_predito -= 1
         oid = self._seq_id_projetil_predito
         payload_pred = {
             "id": oid,
             "tipo": "entidade_projetil",
-            "tipo_projetil": estilo,
-            "subtipo": str(item.get("Nome") or "item"),
+            "tipo_projetil": "fruta" if variante == "fruta" else "pokebola",
+            "subtipo": variante,
             "item_base_id": str(item.get("Code") or ""),
             "dono_id": int(getattr(self.PlayerLocal, "Id", 0) or 0),
             "posicao": [float(origem[0]), float(origem[1])],
             "estado": {
                 "direcao": [direcao[0], direcao[1]],
-                "velocidade": 11.0,
+                "velocidade": velocidade,
                 "alcance": alcance,
-                "distancia_conferencia_inicial": 4.0,
                 "predito_local": True,
                 "autoritativo": False,
                 "token_arremesso": token,
+                "pos_final": [float(destino[0]), float(destino[1])],
             },
             "token_arremesso": token,
         }
         self.aplicar_diff({"tipo": "spawn", "objeto_id": oid, "payload": payload_pred})
 
-        # Evento para servidor (server autoritativo resolve projétil/colisão/captura)
         self.EnfileirarDiffRapida({
-            "tipo": "evento",
-            "evento": "projetil_arremesso_intencao",
+            "tipo": "spawn",
+            "categoria": "projetil_lancamento",
             "payload": {
-                "token_arremesso": token,
+                "token": token,
+                "subtipo_projetil": "fruta" if variante == "fruta" else "pokebola",
+                "variante": variante,
+                "item": str(item.get("Nome") or ""),
+                "item_base_id": str(item.get("Code") or ""),
+                "pos_inicial": [float(origem[0]), float(origem[1])],
+                "pos_final": [float(destino[0]), float(destino[1])],
+                "velocidade_tiles_s": velocidade,
+                "instante_cliente_ms": int(time.time() * 1000),
                 "dono_id": int(getattr(self.PlayerLocal, "Id", 0) or 0),
-                "item": item,
-                "origem": [float(origem[0]), float(origem[1])],
-                "destino": [float(destino[0]), float(destino[1])],
-                "direcao": [direcao[0], direcao[1]],
-                "alcance": alcance,
-                "velocidade": 11.0,
-                "distancia_conferencia_inicial": 4.0,
+                "dono_nome": str(getattr(self.PlayerLocal, "Nome", "") or ""),
             },
         })
 
@@ -206,16 +236,24 @@ class ControladorObjetos:
 
         for p in projeteis:
             p.atualizar_visual(dt)
-            if (not p.Terminado) and (not p.AguardandoConfirmacaoColisao) and (not p.ColisaoConfirmada):
-                alvo = self._detectar_colisao_candidata_local_projetil(p, objetos_snapshot)
+            if (not p.Terminado) and (not p.Colidiu):
+                alvo = self._detectar_colisao_visual_local_projetil(p, objetos_snapshot)
                 if alvo is not None:
-                    p.AguardandoConfirmacaoColisao = True
-                    p.ColisaoCandidata = int(alvo.get("id", 0) or 0)
-                    self._enviar_colisao_candidata_projetil(p, p.ColisaoCandidata)
-            if p.Terminado and p.PreditoLocal and not p.Autoritativo:
+                    subtipo = str((alvo.get("estado") or {}).get("subtipo", "")).strip().lower() if isinstance(alvo, dict) else ""
+                    if subtipo == "pokemon":
+                        poke = self.PokemonsPorId.get(int(alvo.get("id", 0) or 0)) if isinstance(alvo, dict) else None
+                        if str(getattr(p, "TipoProjetil", "")).lower() == "fruta":
+                            p.encerrar_com_fade(0.18)
+                        else:
+                            p.encerrar_imediato()
+                            if poke is not None and hasattr(poke, "iniciar_captura_fake"):
+                                poke.iniciar_captura_fake(str(getattr(p, "TokenArremesso", "")))
+                    else:
+                        p.encerrar_com_fade(0.5)
+            if p.deve_remover():
                 self.aplicar_diff({"tipo": "despawn", "objeto_id": int(p.Id)})
 
-    def _detectar_colisao_candidata_local_projetil(self, proj: Projetil, objetos_snapshot: Dict[int, Dict[str, object]]):
+    def _detectar_colisao_visual_local_projetil(self, proj: Projetil, objetos_snapshot: Dict[int, Dict[str, object]]):
         raio_busca = 4.0
         for oid, obj in objetos_snapshot.items():
             if not isinstance(obj, dict):
@@ -235,36 +273,14 @@ class ControladorObjetos:
             tipo = str(obj.get("tipo", "")).strip().lower()
             estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
             subtipo = str(estado.get("subtipo", "")).strip().lower()
-            if subtipo == "pokemon":
-                cap = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
-                cap_fase = str(cap.get("fase", "nenhuma") or "nenhuma")
-                if bool(cap.get("captura_pendente", False)) or cap_fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso"}:
-                    continue
-            candidato = subtipo == "pokemon" or subtipo == "player" or subtipo == "bau" or tipo.startswith("estrutura")
+            candidato = subtipo in {"pokemon", "player", "bau"} or tipo.startswith("estrutura")
             if not candidato:
                 continue
             raio_alvo = float(obj.get("raio_colisao", 0.2) or 0.2)
-            limite = float(getattr(proj, "Colisor", None).raio_colisao if getattr(proj, "Colisor", None) is not None else 0.18) + raio_alvo
+            limite = float(getattr(getattr(proj, "Colisor", None), "raio_colisao", 0.18)) + raio_alvo
             if d2 <= (limite * limite):
                 return obj
         return None
-
-    def _enviar_colisao_candidata_projetil(self, proj: Projetil, alvo_id: int) -> None:
-        token = str(getattr(proj, "TokenArremesso", "") or "")
-        if not token or token in self._tokens_colisao_candidata_enviados:
-            return
-        self._tokens_colisao_candidata_enviados.add(token)
-        self.EnfileirarDiffRapida({
-            "tipo": "evento",
-            "evento": "projetil_colisao_candidata",
-            "payload": {
-                "token_arremesso": token,
-                "projetil_id": int(getattr(proj, "Id", 0) or 0),
-                "alvo_id": int(alvo_id or 0),
-                "ponto_estimado": [float(proj.Posicao[0]), float(proj.Posicao[1])],
-            },
-        })
-
     # ---------------------------------------------------------------------
     # Índice espacial
     # ---------------------------------------------------------------------
@@ -322,16 +338,12 @@ class ControladorObjetos:
     # Diffs e eventos
     # ---------------------------------------------------------------------
     def _marcar_diff_local(self, diff: Dict[str, object]) -> Dict[str, object]:
-        meta = dict(diff.get("meta", {})) if isinstance(diff.get("meta"), dict) else {}
-        meta["origem"] = self._origem_cliente
         if self.PlayerLocal is not None:
-            meta["autor"] = str(getattr(self.PlayerLocal, "Nome", "") or "")
-        diff["meta"] = meta
+            diff["autor"] = str(getattr(self.PlayerLocal, "Nome", "") or "")
         return diff
 
     def _origem_diff(self, diff: Dict[str, object]) -> str:
-        meta = diff.get("meta") if isinstance(diff.get("meta"), dict) else {}
-        return str(meta.get("origem", "")).strip().lower()
+        return str(diff.get("autor", "")).strip().lower()
 
     def _id_player_local(self) -> int:
         if self.PlayerLocal is None:
@@ -342,10 +354,7 @@ class ControladorObjetos:
         return int(diff.get("objeto_id", -1)) == self._id_player_local()
 
     def _eh_diff_autoritativa_server(self, diff: Dict[str, object]) -> bool:
-        meta = diff.get("meta") if isinstance(diff.get("meta"), dict) else {}
-        if bool(meta.get("autoritativo", False)):
-            return True
-        return self._origem_diff(diff) == "server"
+        return str(diff.get("autor", "")).strip().lower() == "server"
 
     def _ativar_bloqueio_sync_autoritario(self) -> None:
         self._bloqueio_sync_autoritario_ate = time.monotonic() + float(self._janela_bloqueio_sync_autoritario_s)
@@ -354,11 +363,16 @@ class ControladorObjetos:
         return time.monotonic() < float(self._bloqueio_sync_autoritario_ate)
 
     def _deve_ignorar_diff(self, diff: Dict[str, object]) -> bool:
-        if self.PlayerLocal is None or not self._eh_diff_player_local(diff):
+        if self.PlayerLocal is None:
             return False
-        if self._eh_diff_autoritativa_server(diff):
-            return False
-        return self._origem_diff(diff) == self._origem_cliente
+        oid_local = self._id_player_local()
+        if bool(diff.get("base", False)) and int(diff.get("objeto_id", -1)) == int(oid_local):
+            return True
+        if str(diff.get("categoria", "")).strip().lower() == "projetil_lancamento":
+            payload = diff.get("payload") if isinstance(diff.get("payload"), dict) else {}
+            if int(payload.get("dono_id", 0) or 0) == int(oid_local):
+                return True
+        return False
 
     def EnfileirarDiffRapida(self, diff: Dict[str, object]) -> None:
         with self._lock_diffs:
@@ -405,13 +419,10 @@ class ControladorObjetos:
         while self._thread_rede_ativa:
             self._supervisionar_player_e_enfileirar_saida()
             envio = self.ColetarDiffsRapidas()
-            eventos = [d for d in envio if str(d.get("tipo", "")).strip().lower() == "evento"]
-            updates = [d for d in envio if str(d.get("tipo", "")).strip().lower() != "evento"]
             envelope = {
                 "tick_cliente": int(self._tick_cliente),
                 "ultimo_tick_recebido": int(self._ultimo_tick_recebido),
-                "eventos": eventos,
-                "updates": updates,
+                "diffs": envio,
             }
             self._tick_cliente += 1
             resposta = {}
@@ -456,13 +467,17 @@ class ControladorObjetos:
     def _eh_payload_projetil(self, payload: Dict[str, object]) -> bool:
         return str(payload.get("tipo", "")).strip().lower() in {"entidade_projetil", "projetil"}
 
+
+    def _eh_payload_estrutura(self, payload: Dict[str, object]) -> bool:
+        return str(payload.get("tipo", "")).strip().lower() in {"estrutura_natural", "estrutura"}
+
     def _upsert_especializado(self, oid: int, payload: Dict[str, object]) -> None:
         if self._eh_payload_pokemon(payload):
             poke = self.PokemonsPorId.get(oid)
             if poke is None:
                 self.PokemonsPorId[oid] = Pokemon(payload)
             else:
-                poke.aplicar_snapshot(payload)
+                poke.update(payload) if hasattr(poke, "update") else poke.aplicar_snapshot(payload)
         else:
             self.PokemonsPorId.pop(oid, None)
 
@@ -471,7 +486,7 @@ class ControladorObjetos:
             if bau is None:
                 self.BausPorId[oid] = Bau.from_snapshot(payload)
             else:
-                bau.aplicar_snapshot(payload)
+                bau.update(payload) if hasattr(bau, "update") else bau.aplicar_snapshot(payload)
         else:
             self.BausPorId.pop(oid, None)
 
@@ -496,6 +511,15 @@ class ControladorObjetos:
                 proj.aplicar_snapshot(payload)
         else:
             self.ProjeteisPorId.pop(oid, None)
+
+        if self._eh_payload_estrutura(payload):
+            est = self.EstruturasPorId.get(oid)
+            if est is None:
+                est = EstruturaNatural(tipo=str((payload.get("estado") or {}).get("subtipo", "natural")), posicao=tuple(payload.get("posicao", [0.0, 0.0])), id_objeto=oid, raio_colisao=float(payload.get("raio_colisao", 0.8)), raio_interacao=float(payload.get("raio_interacao", 0.8)), campo=float(payload.get("campo", 0.0)), intensidade=float(payload.get("intensidade", 0.0)), recursos=dict((payload.get("estado") or {}).get("recursos", {})))
+                self.EstruturasPorId[oid] = est
+            est.update(payload)
+        else:
+            self.EstruturasPorId.pop(oid, None)
 
     def _aplicar_payload_no_player_local(self, payload: Dict[str, object]) -> None:
         if self.PlayerLocal is None:
@@ -568,8 +592,36 @@ class ControladorObjetos:
         objeto_id = diff.get("objeto_id")
         payload = diff.get("payload", {}) if isinstance(diff.get("payload"), dict) else {}
 
-        if tipo == "evento":
-            self._aplicar_evento_rapido(str(diff.get("evento", "")), payload)
+        if tipo == "spawn" and str(diff.get("categoria", "")).strip().lower() == "projetil_lancamento":
+            dados = payload if isinstance(payload, dict) else {}
+            pos_inicial = dados.get("pos_inicial") if isinstance(dados.get("pos_inicial"), (list, tuple)) else [0.0, 0.0]
+            pos_final = dados.get("pos_final") if isinstance(dados.get("pos_final"), (list, tuple)) else list(pos_inicial)
+            dx = float(pos_final[0]) - float(pos_inicial[0])
+            dy = float(pos_final[1]) - float(pos_inicial[1])
+            dist = math.hypot(dx, dy) or 1.0
+            direcao = [dx / dist, dy / dist]
+            token = str(dados.get("token") or "")
+            oid_vis = -abs(hash((token, time.time())))
+            fake = {
+                "id": int(oid_vis),
+                "tipo": "entidade_projetil",
+                "tipo_projetil": str(dados.get("subtipo_projetil", "pokebola")),
+                "subtipo": str(dados.get("variante") or dados.get("item") or "pokebola"),
+                "item_base_id": str(dados.get("item_base_id") or ""),
+                "dono_id": int(dados.get("dono_id", 0) or 0),
+                "posicao": [float(pos_inicial[0]), float(pos_inicial[1])],
+                "estado": {
+                    "direcao": direcao,
+                    "velocidade": float(dados.get("velocidade_tiles_s", 7.0) or 7.0),
+                    "alcance": float(dist),
+                    "token_arremesso": str(dados.get("token") or ""),
+                    "predito_local": False,
+                    "autoritativo": False,
+                    "pos_final": [float(pos_final[0]), float(pos_final[1])],
+                },
+                "token_arremesso": str(dados.get("token") or ""),
+            }
+            self.aplicar_diff({"tipo": "spawn", "objeto_id": int(oid_vis), "payload": fake})
             return
 
         if tipo == "spawn":
@@ -612,90 +664,9 @@ class ControladorObjetos:
                 self.BausPorId.pop(oid, None)
                 self.AtoresRemotosPorId.pop(oid, None)
                 self.ProjeteisPorId.pop(oid, None)
+                self.EstruturasPorId.pop(oid, None)
                 self._remover_indice_chunk_objeto(oid)
 
-    def _aplicar_evento_rapido(self, evento: str, payload: Dict[str, object]) -> None:
-        if evento == "projetil_colisao_negada":
-            self._aplicar_evento_colisao_projetil(payload, confirmada=False)
-            return
-        if evento == "projetil_colisao_confirmada":
-            self._aplicar_evento_colisao_projetil(payload, confirmada=True)
-            return
-        if evento.startswith("projetil_"):
-            return
-
-        if evento == "pokemon_frutificado":
-            self._aplicar_evento_pokemon_frutificado(payload)
-            return
-
-        if evento.startswith("pokemon_captura_"):
-            self._aplicar_evento_captura(payload, evento)
-            return
-
-    def _aplicar_evento_pokemon_frutificado(self, payload: Dict[str, object]) -> None:
-        poke = self.PokemonsPorId.get(int(payload.get("pokemon_id", -1)))
-        if poke is None:
-            return
-        estado = payload.get("estado_frutificacao") if isinstance(payload.get("estado_frutificacao"), dict) else None
-        frutas = payload.get("frutas_aplicadas") if isinstance(payload.get("frutas_aplicadas"), list) else None
-        if estado is not None:
-            poke.EstadoFrutificacao = dict(estado)
-        if frutas is not None:
-            poke.FrutasAplicadas = list(frutas)
-
-    def _aplicar_evento_captura(self, payload: Dict[str, object], nome_evento: str) -> None:
-        poke = self.PokemonsPorId.get(int(payload.get("pokemon_id", -1)))
-        if poke is None:
-            return
-        captura = payload.get("captura") if isinstance(payload.get("captura"), dict) else {}
-        if "fase" not in captura:
-            captura["fase"] = nome_evento.replace("pokemon_captura_", "")
-        poke.capturar(captura)
-
-    def _aplicar_evento_colisao_projetil(self, payload: Dict[str, object], confirmada: bool) -> None:
-        token = str(payload.get("token_arremesso") or "")
-        if token:
-            self._tokens_colisao_candidata_enviados.discard(token)
-        proj = None
-        for p in self.ProjeteisPorId.values():
-            if token and str(getattr(p, "TokenArremesso", "")) == token:
-                proj = p
-                break
-        if proj is None:
-            pid = int(payload.get("projetil_id", -1) or -1)
-            proj = self.ProjeteisPorId.get(pid)
-        if proj is None:
-            return
-        proj.AguardandoConfirmacaoColisao = False
-        if confirmada:
-            proj.ColisaoConfirmada = True
-            proj.Colidiu = True
-            proj.Terminado = True
-            proj.Ativo = False
-        else:
-            proj.ColisaoCandidata = None
-
-    def sincronizar_objetos(self, objetos):
-        if not isinstance(objetos, dict):
-            return
-        with self._lock_objetos:
-            self.ObjetosPorId = {int(k): dict(v) for k, v in objetos.items()}
-            self.PokemonsPorId = {}
-            self.BausPorId = {}
-            self.AtoresRemotosPorId = {}
-            self.ProjeteisPorId = {}
-            self._reindexar_tudo()
-            snapshot = list(self.ObjetosPorId.items())
-        for oid, payload in snapshot:
-            if isinstance(payload, dict):
-                with self._lock_objetos:
-                    self._upsert_especializado(int(oid), payload)
-
-    def AplicarDiffRapida(self, diff):
-        self.aplicar_diff(diff)
-
-    def AplicarDiffLenta(self, diff):
-        self.aplicar_diff(diff)
 
     def _snapshot_player_local_rapido(self) -> Dict[str, object]:
         ator = self.PlayerLocal
@@ -828,17 +799,7 @@ class ControladorObjetos:
         ator.definir_posicao(px, py)
 
     def _processar_interacoes_player(self) -> None:
-        if self.PlayerLocal is None:
-            return
-        with self._lock_objetos:
-            interativos = list(self.BausPorId.values())
-        for obj in interativos:
-            diff = obj.processar_interacao_player(self.PlayerLocal)
-            if isinstance(diff, dict):
-                payload = diff.get("payload") if isinstance(diff.get("payload"), dict) else {}
-                payload["dono_id"] = int(getattr(self.PlayerLocal, "Id", 0) or 0)
-                diff["payload"] = payload
-                self.EnfileirarDiffRapida(diff)
+        return
 
     def _atualizar_alvo_local_captura(self, camera) -> None:
         if self.PlayerLocal is None or camera is None:

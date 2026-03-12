@@ -329,6 +329,14 @@ class BancoDadosMundo:
         with self._lock:
             return self._objetos.get(int(objeto_id))
 
+
+    def objeto_id_por_usuario(self, usuario: str) -> int:
+        with self._lock:
+            return int(self._usuarios_para_objeto.get(str(usuario), 0) or 0)
+
+    def listar_objetos(self) -> List[object]:
+        with self._lock:
+            return list(self._objetos.values())
     def usuario_por_objeto_id(self, objeto_id: int) -> Optional[str]:
         with self._lock:
             for usuario, oid in self._usuarios_para_objeto.items():

@@ -78,9 +78,7 @@ def enviar_diffs_mundo(ip, client_id, diffs):
 
 
 def enviar_diffs_mundo_categoria(ip, client_id, categoria, diffs):
-    eventos = [d for d in (diffs or []) if isinstance(d, dict) and str(d.get("tipo", "")).strip().lower()=="evento"]
-    updates = [d for d in (diffs or []) if isinstance(d, dict) and str(d.get("tipo", "")).strip().lower()!="evento"]
-    return enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido=0, eventos=eventos, updates=updates, tick_cliente=0)
+    return enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido=0, diffs=diffs, tick_cliente=0)
 
 
 def enviar_mensagem_terminal(ip, autor, texto):
@@ -127,12 +125,12 @@ def desconectar_mundo(ip, client_id):
 
 
 def enviar_evento_arremesso_mundo(ip, client_id, payload):
-    """Canal explícito de intenção de arremesso (resolução autoritativa no servidor)."""
-    diff = {"tipo": "evento", "evento": "projetil_arremesso_intencao", "payload": dict(payload or {})}
+    """Mantido por compatibilidade: envia update no novo protocolo."""
+    diff = {"tipo": "update", "categoria": "projetil", "payload": dict(payload or {})}
     return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
 
 
-def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, eventos=None, updates=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
+def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, diffs=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
     pacote = {
         "ip": ip,
         "acao": "atualizador",
@@ -142,8 +140,7 @@ def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, eventos=Non
             "ultimo_tick_recebido": int(ultimo_tick_recebido or 0),
             "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
             "raio_chunks": int(raio_chunks),
-            "eventos": list(eventos or []),
-            "updates": list(updates or []),
+            "diffs": list(diffs or []),
         },
     }
     resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))

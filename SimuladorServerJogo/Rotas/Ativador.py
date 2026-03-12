@@ -97,13 +97,20 @@ def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float
     return math.hypot(cx - posicao_camera[0], cy - posicao_camera[1]) <= (raio_visao + max(0.0, raio_diff))
 
 
-def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk]):
+def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = ""):
     saida = []
+    alvo_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
     for pacote in pacotes if isinstance(pacotes, list) else []:
         if not isinstance(pacote, dict):
             continue
         diffs = pacote.get("diffs", []) if isinstance(pacote.get("diffs"), list) else []
-        diffs_visiveis = [d for d in diffs if _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados)]
+        diffs_visiveis = []
+        for d in diffs:
+            if not _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados):
+                continue
+            if alvo_id > 0 and bool(d.get("base", False)) and int(d.get("objeto_id", 0) or 0) == alvo_id:
+                continue
+            diffs_visiveis.append(d)
         if not diffs_visiveis:
             continue
         novo = dict(pacote)
@@ -129,30 +136,6 @@ def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[
         diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "autor": "server", "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "categoria": "outro", "base": False})
     return diffs
 
-
-def _coletar_diffs_base_players(client_id: str, chunks_carregados: Set[Chunk]) -> List[Dict[str, object]]:
-    diffs: List[Dict[str, object]] = []
-    alvo_id = BANCO_DADOS.objeto_id_por_usuario(client_id)
-    agora = time.time()
-    for obj in BANCO_DADOS.listar_objetos():
-        subtipo = str(getattr(obj, "estado_extra", {}).get("subtipo", ""))
-        if subtipo != "player" or not _objeto_em_chunks(obj, chunks_carregados):
-            continue
-        usuario_obj = BANCO_DADOS.usuario_por_objeto_id(int(obj.Id)) or ""
-        if int(obj.Id) == int(alvo_id) or str(usuario_obj) == str(client_id):
-            continue
-        diffs.append({
-            "seq": _next_seq(),
-            "timestamp": agora,
-            "tipo": "update",
-            "objeto_id": int(obj.Id),
-            "autor": str(usuario_obj or "server"),
-            "payload": obj.serializar(),
-            "escopo": {"centro": [obj.posicao[0], obj.posicao[1]], "raio": _raio_visao_por_regras()},
-            "categoria": "player",
-            "base": True,
-        })
-    return diffs
 
 
 def processar_ativador_json(requisicao_json: str) -> str:
@@ -185,10 +168,8 @@ def processar_ativador_json(requisicao_json: str) -> str:
             chunks = [{"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()} for chunk in sorted(chunks_carregados)]
             return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade())}}, ensure_ascii=False)
 
-        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados)
-        diffs_base_players = _coletar_diffs_base_players(client_id, chunks_carregados)
-        diffs_vis = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos)
-        diffs_extra = list(diffs_base_players) + list(diffs_vis)
+        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id)
+        diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos)
         if diffs_extra:
             if pacotes:
                 pacote_vis = pacotes[-1]

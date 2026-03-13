@@ -8,13 +8,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class WorldGenerator {
 
     public static void main(String[] args) throws Exception {
-        Rules rules = Rules.defaultRules();
+        String rulesFilePath = args.length >= 3 ? args[2] : Rules.DEFAULT_RULES_FILE;
+        Rules rules = Rules.loadOrCreate(rulesFilePath);
         if (args.length >= 1) {
             try {
                 rules.seed = Long.parseLong(args[0]);
@@ -153,6 +158,8 @@ public class WorldGenerator {
     }
 
 static final class Rules {
+    static final String DEFAULT_RULES_FILE = "Regras/Geracao.json";
+
     int width = 10_000;
     int height = 10_000;
     long seed = 20260307L;
@@ -207,6 +214,8 @@ static final class Rules {
     // ===== Macro-biomes and region size =====
     BiomeRule[] biomeRules;
     StructureRule[] structureRules;
+    Map<Biome, Map<NaturalStructure, BiomeStructureOverride>> biomeStructureOverrides = new EnumMap<>(Biome.class);
+
     int macroGridWidth = 250;
     int macroGridHeight = 250;
     int macroMajorityRadius = 2;
@@ -250,9 +259,630 @@ static final class Rules {
     double macroSwampScale = 2800.0;
     long macroSwampSeedOffset = 851L;
 
+    String rulesFileUsed = DEFAULT_RULES_FILE;
+
+    static final class BiomeStructureOverride {
+        final Double chancePerTile;
+        final Integer minimumAbsolute;
+        final Double minimumRelative;
+        final Double chanceMultiplier;
+        final Integer requireNearWaterRadius;
+        final Integer blockNearWaterRadius;
+        final Integer blockNearPoiRadius;
+        final Double minHeight;
+        final Double maxHeight;
+        final Double minMoisture;
+        final Double maxMoisture;
+
+        BiomeStructureOverride(Double chancePerTile,
+                               Integer minimumAbsolute,
+                               Double minimumRelative,
+                               Double chanceMultiplier,
+                               Integer requireNearWaterRadius,
+                               Integer blockNearWaterRadius,
+                               Integer blockNearPoiRadius,
+                               Double minHeight,
+                               Double maxHeight,
+                               Double minMoisture,
+                               Double maxMoisture) {
+            this.chancePerTile = chancePerTile;
+            this.minimumAbsolute = minimumAbsolute;
+            this.minimumRelative = minimumRelative;
+            this.chanceMultiplier = chanceMultiplier;
+            this.requireNearWaterRadius = requireNearWaterRadius;
+            this.blockNearWaterRadius = blockNearWaterRadius;
+            this.blockNearPoiRadius = blockNearPoiRadius;
+            this.minHeight = minHeight;
+            this.maxHeight = maxHeight;
+            this.minMoisture = minMoisture;
+            this.maxMoisture = maxMoisture;
+        }
+    }
+
     static Rules defaultRules() {
         Rules rules = new Rules();
-        rules.biomeRules = new BiomeRule[]{
+        rules.biomeRules = defaultBiomeRules();
+        rules.structureRules = defaultStructureRules();
+        rules.biomeStructureOverrides = rules.defaultBiomeStructureOverrides();
+        rules.lakeBorderBlockDistance = rules.softOceanBorder;
+        return rules;
+    }
+
+    static Rules loadOrCreate(String rulesFilePath) throws IOException {
+        Rules defaults = defaultRules();
+        File rulesFile = new File(rulesFilePath);
+        if (!rulesFile.exists()) {
+            File parent = rulesFile.getParentFile();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                throw new IOException("Nao foi possivel criar pasta de regras: " + parent.getAbsolutePath());
+            }
+            defaults.saveToJson(rulesFile);
+            System.out.println("Arquivo de regras default criado: " + rulesFile.getAbsolutePath());
+        }
+        String json = Files.readString(rulesFile.toPath(), StandardCharsets.UTF_8);
+        Rules loaded = defaults.copy();
+        loaded.rulesFileUsed = rulesFilePath;
+        Object parsed = SimpleJson.parse(json);
+        if (parsed instanceof Map<?, ?> root) {
+            loaded.readFromJsonMap(castStringObjectMap(root));
+        } else {
+            loaded.ensureBiomeStructureOverridesCompleto();
+        }
+        return loaded;
+    }
+
+    private Rules copy() {
+        Rules r = new Rules();
+        r.width = width;
+        r.height = height;
+        r.seed = seed;
+        r.outputDirectory = outputDirectory;
+        r.diskChunkBlocos = diskChunkBlocos;
+
+        r.hardOceanBorder = hardOceanBorder;
+        r.softOceanBorder = softOceanBorder;
+        r.edgeWaterPenaltyStrength = edgeWaterPenaltyStrength;
+        r.seaLevel = seaLevel;
+        r.deepWaterExtraDepth = deepWaterExtraDepth;
+        r.shallowWaterBand = shallowWaterBand;
+        r.oceanDetectionRadius = oceanDetectionRadius;
+        r.waterDetectionRadiusForBeach = waterDetectionRadiusForBeach;
+        r.shallowWaterNearLandRadius = shallowWaterNearLandRadius;
+
+        r.lakeElevationOffsetFromSeaLevel = lakeElevationOffsetFromSeaLevel;
+        r.lakeMinMoisture = lakeMinMoisture;
+        r.lakeNoiseOctaves = lakeNoiseOctaves;
+        r.lakeNoisePersistence = lakeNoisePersistence;
+        r.lakeNoiseLacunarity = lakeNoiseLacunarity;
+        r.lakeNoiseScale = lakeNoiseScale;
+        r.lakeNoiseSeedOffset = lakeNoiseSeedOffset;
+        r.lakeNoiseThreshold = lakeNoiseThreshold;
+        r.lakeBorderBlockDistance = lakeBorderBlockDistance;
+
+        r.riverSources = riverSources;
+        r.riverMaxLength = riverMaxLength;
+        r.riverWidth = riverWidth;
+        r.riverTerminalExtraWidth = riverTerminalExtraWidth;
+        r.riverSourceMinHeight = riverSourceMinHeight;
+        r.riverSourceMargin = riverSourceMargin;
+        r.riverSourceNearWaterRadius = riverSourceNearWaterRadius;
+        r.riverMaxAttemptsPerSource = riverMaxAttemptsPerSource;
+
+        r.gymCount = gymCount;
+        r.dungeonCount = dungeonCount;
+        r.villageCount = villageCount;
+        r.gymDistance = gymDistance;
+        r.dungeonDistance = dungeonDistance;
+        r.villageDistance = villageDistance;
+
+        r.naturalBlockNearPoiRadius = naturalBlockNearPoiRadius;
+        r.naturalBlockNearWaterRadius = naturalBlockNearWaterRadius;
+        r.naturalBoostPalmNearWaterRadius = naturalBoostPalmNearWaterRadius;
+
+        r.macroGridWidth = macroGridWidth;
+        r.macroGridHeight = macroGridHeight;
+        r.macroMajorityRadius = macroMajorityRadius;
+        r.macroSmoothingPasses = macroSmoothingPasses;
+        r.macroMinRegionCells = macroMinRegionCells;
+        r.macroLocalBlend = macroLocalBlend;
+        r.macroEdgeNoiseStrength = macroEdgeNoiseStrength;
+        r.macroWarpScaleFactor = macroWarpScaleFactor;
+        r.macroWarpStrength = macroWarpStrength;
+        r.macroEdgeNoiseScaleFactor = macroEdgeNoiseScaleFactor;
+
+        r.macroTemperatureOctaves = macroTemperatureOctaves;
+        r.macroTemperaturePersistence = macroTemperaturePersistence;
+        r.macroTemperatureLacunarity = macroTemperatureLacunarity;
+        r.macroTemperatureScale = macroTemperatureScale;
+        r.macroTemperatureSeedOffset = macroTemperatureSeedOffset;
+        r.macroTemperatureNoiseWeight = macroTemperatureNoiseWeight;
+        r.macroTemperatureLatitudeWeight = macroTemperatureLatitudeWeight;
+
+        r.macroMoistureOctaves = macroMoistureOctaves;
+        r.macroMoisturePersistence = macroMoisturePersistence;
+        r.macroMoistureLacunarity = macroMoistureLacunarity;
+        r.macroMoistureScale = macroMoistureScale;
+        r.macroMoistureSeedOffset = macroMoistureSeedOffset;
+
+        r.macroMagicOctaves = macroMagicOctaves;
+        r.macroMagicPersistence = macroMagicPersistence;
+        r.macroMagicLacunarity = macroMagicLacunarity;
+        r.macroMagicScale = macroMagicScale;
+        r.macroMagicSeedOffset = macroMagicSeedOffset;
+
+        r.macroVolcanicOctaves = macroVolcanicOctaves;
+        r.macroVolcanicPersistence = macroVolcanicPersistence;
+        r.macroVolcanicLacunarity = macroVolcanicLacunarity;
+        r.macroVolcanicScale = macroVolcanicScale;
+        r.macroVolcanicSeedOffset = macroVolcanicSeedOffset;
+
+        r.macroSwampOctaves = macroSwampOctaves;
+        r.macroSwampPersistence = macroSwampPersistence;
+        r.macroSwampLacunarity = macroSwampLacunarity;
+        r.macroSwampScale = macroSwampScale;
+        r.macroSwampSeedOffset = macroSwampSeedOffset;
+
+        r.biomeRules = Arrays.copyOf(biomeRules, biomeRules.length);
+        r.structureRules = Arrays.copyOf(structureRules, structureRules.length);
+        for (Map.Entry<Biome, Map<NaturalStructure, BiomeStructureOverride>> e : biomeStructureOverrides.entrySet()) {
+            r.biomeStructureOverrides.put(e.getKey(), new EnumMap<>(e.getValue()));
+        }
+        r.rulesFileUsed = rulesFileUsed;
+        return r;
+    }
+
+    private void saveToJson(File file) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+            writer.write(toJsonString());
+        }
+    }
+
+    private String toJsonString() {
+        Map<String, Object> root = new LinkedHashMap<>();
+
+        Map<String, Object> mapa = new LinkedHashMap<>();
+        mapa.put("seed", seed);
+        mapa.put("width", width);
+        mapa.put("height", height);
+        mapa.put("diskChunkBlocos", diskChunkBlocos);
+        root.put("mapa", mapa);
+        root.put("seed", seed);
+        root.put("width", width);
+        root.put("height", height);
+        root.put("diskChunkBlocos", diskChunkBlocos);
+
+        Map<String, Object> oceans = new LinkedHashMap<>();
+        oceans.put("hardOceanBorder", hardOceanBorder);
+        oceans.put("softOceanBorder", softOceanBorder);
+        oceans.put("edgeWaterPenaltyStrength", edgeWaterPenaltyStrength);
+        oceans.put("seaLevel", seaLevel);
+        oceans.put("deepWaterExtraDepth", deepWaterExtraDepth);
+        oceans.put("shallowWaterBand", shallowWaterBand);
+        oceans.put("oceanDetectionRadius", oceanDetectionRadius);
+        oceans.put("waterDetectionRadiusForBeach", waterDetectionRadiusForBeach);
+        oceans.put("shallowWaterNearLandRadius", shallowWaterNearLandRadius);
+        root.put("oceano", oceans);
+        root.put("oceans", oceans);
+
+        Map<String, Object> lakes = new LinkedHashMap<>();
+        lakes.put("lakeElevationOffsetFromSeaLevel", lakeElevationOffsetFromSeaLevel);
+        lakes.put("lakeMinMoisture", lakeMinMoisture);
+        lakes.put("lakeNoiseOctaves", lakeNoiseOctaves);
+        lakes.put("lakeNoisePersistence", lakeNoisePersistence);
+        lakes.put("lakeNoiseLacunarity", lakeNoiseLacunarity);
+        lakes.put("lakeNoiseScale", lakeNoiseScale);
+        lakes.put("lakeNoiseSeedOffset", lakeNoiseSeedOffset);
+        lakes.put("lakeNoiseThreshold", lakeNoiseThreshold);
+        lakes.put("lakeBorderBlockDistance", lakeBorderBlockDistance);
+        root.put("lagos", lakes);
+        root.put("lakes", lakes);
+
+        Map<String, Object> rivers = new LinkedHashMap<>();
+        rivers.put("riverSources", riverSources);
+        rivers.put("riverMaxLength", riverMaxLength);
+        rivers.put("riverWidth", riverWidth);
+        rivers.put("riverTerminalExtraWidth", riverTerminalExtraWidth);
+        rivers.put("riverSourceMinHeight", riverSourceMinHeight);
+        rivers.put("riverSourceMargin", riverSourceMargin);
+        rivers.put("riverSourceNearWaterRadius", riverSourceNearWaterRadius);
+        rivers.put("riverMaxAttemptsPerSource", riverMaxAttemptsPerSource);
+        root.put("rios", rivers);
+        root.put("rivers", rivers);
+
+        Map<String, Object> pois = new LinkedHashMap<>();
+        pois.put("gymCount", gymCount);
+        pois.put("dungeonCount", dungeonCount);
+        pois.put("villageCount", villageCount);
+        pois.put("gymDistance", gymDistance);
+        pois.put("dungeonDistance", dungeonDistance);
+        pois.put("villageDistance", villageDistance);
+        root.put("pois", pois);
+
+        Map<String, Object> structures = new LinkedHashMap<>();
+        structures.put("naturalBlockNearPoiRadius", naturalBlockNearPoiRadius);
+        structures.put("naturalBlockNearWaterRadius", naturalBlockNearWaterRadius);
+        structures.put("naturalBoostPalmNearWaterRadius", naturalBoostPalmNearWaterRadius);
+
+        Map<String, Object> macroBiomes = new LinkedHashMap<>();
+        macroBiomes.put("macroGridWidth", macroGridWidth);
+        macroBiomes.put("macroGridHeight", macroGridHeight);
+        macroBiomes.put("macroMajorityRadius", macroMajorityRadius);
+        macroBiomes.put("macroSmoothingPasses", macroSmoothingPasses);
+        macroBiomes.put("macroMinRegionCells", macroMinRegionCells);
+        macroBiomes.put("macroLocalBlend", macroLocalBlend);
+        macroBiomes.put("macroEdgeNoiseStrength", macroEdgeNoiseStrength);
+        macroBiomes.put("macroWarpScaleFactor", macroWarpScaleFactor);
+        macroBiomes.put("macroWarpStrength", macroWarpStrength);
+        macroBiomes.put("macroEdgeNoiseScaleFactor", macroEdgeNoiseScaleFactor);
+        macroBiomes.put("macroTemperatureOctaves", macroTemperatureOctaves);
+        macroBiomes.put("macroTemperaturePersistence", macroTemperaturePersistence);
+        macroBiomes.put("macroTemperatureLacunarity", macroTemperatureLacunarity);
+        macroBiomes.put("macroTemperatureScale", macroTemperatureScale);
+        macroBiomes.put("macroTemperatureSeedOffset", macroTemperatureSeedOffset);
+        macroBiomes.put("macroTemperatureNoiseWeight", macroTemperatureNoiseWeight);
+        macroBiomes.put("macroTemperatureLatitudeWeight", macroTemperatureLatitudeWeight);
+        macroBiomes.put("macroMoistureOctaves", macroMoistureOctaves);
+        macroBiomes.put("macroMoisturePersistence", macroMoisturePersistence);
+        macroBiomes.put("macroMoistureLacunarity", macroMoistureLacunarity);
+        macroBiomes.put("macroMoistureScale", macroMoistureScale);
+        macroBiomes.put("macroMoistureSeedOffset", macroMoistureSeedOffset);
+        macroBiomes.put("macroMagicOctaves", macroMagicOctaves);
+        macroBiomes.put("macroMagicPersistence", macroMagicPersistence);
+        macroBiomes.put("macroMagicLacunarity", macroMagicLacunarity);
+        macroBiomes.put("macroMagicScale", macroMagicScale);
+        macroBiomes.put("macroMagicSeedOffset", macroMagicSeedOffset);
+        macroBiomes.put("macroVolcanicOctaves", macroVolcanicOctaves);
+        macroBiomes.put("macroVolcanicPersistence", macroVolcanicPersistence);
+        macroBiomes.put("macroVolcanicLacunarity", macroVolcanicLacunarity);
+        macroBiomes.put("macroVolcanicScale", macroVolcanicScale);
+        macroBiomes.put("macroVolcanicSeedOffset", macroVolcanicSeedOffset);
+        macroBiomes.put("macroSwampOctaves", macroSwampOctaves);
+        macroBiomes.put("macroSwampPersistence", macroSwampPersistence);
+        macroBiomes.put("macroSwampLacunarity", macroSwampLacunarity);
+        macroBiomes.put("macroSwampScale", macroSwampScale);
+        macroBiomes.put("macroSwampSeedOffset", macroSwampSeedOffset);
+        root.put("macroBiomas", macroBiomes);
+        root.put("macroBiomes", macroBiomes);
+
+        List<Object> biomeRulesList = new ArrayList<>();
+        for (BiomeRule rule : biomeRules) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("biome", rule.biome.name());
+            item.put("macroWeight", rule.macroWeight);
+            item.put("minimumLandPercent", rule.minimumLandPercent);
+            item.put("minTemperature", rule.minTemperature);
+            item.put("maxTemperature", rule.maxTemperature);
+            item.put("minMoisture", rule.minMoisture);
+            item.put("maxMoisture", rule.maxMoisture);
+            item.put("minPrimaryNoise", rule.minPrimaryNoise);
+            item.put("maxPrimaryNoise", rule.maxPrimaryNoise);
+            biomeRulesList.add(item);
+        }
+        root.put("biomeRules", biomeRulesList);
+
+        List<Object> structureRulesList = new ArrayList<>();
+        for (StructureRule rule : structureRules) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("structure", rule.structure.name());
+            item.put("chancePerTile", rule.chancePerTile);
+            item.put("minimum", rule.minimum);
+            List<Object> allowed = new ArrayList<>();
+            for (Biome biome : rule.allowedBiomes) {
+                allowed.add(biome.name());
+            }
+            item.put("allowedBiomes", allowed);
+            structureRulesList.add(item);
+        }
+        root.put("structureRules", structureRulesList);
+
+        Map<String, Object> overrides = new LinkedHashMap<>();
+        for (Map.Entry<Biome, Map<NaturalStructure, BiomeStructureOverride>> e : biomeStructureOverrides.entrySet()) {
+            Map<String, Object> byBiome = new LinkedHashMap<>();
+            for (Map.Entry<NaturalStructure, BiomeStructureOverride> se : e.getValue().entrySet()) {
+                BiomeStructureOverride o = se.getValue();
+                Map<String, Object> item = new LinkedHashMap<>();
+                if (o.chancePerTile != null) { item.put("chancePerTile", o.chancePerTile); item.put("spawnRate", o.chancePerTile); }
+                if (o.minimumAbsolute != null) { item.put("minimumAbsolute", o.minimumAbsolute); item.put("minimum", o.minimumAbsolute); }
+                if (o.minimumRelative != null) item.put("minimumRelative", o.minimumRelative);
+                if (o.chanceMultiplier != null) item.put("chanceMultiplier", o.chanceMultiplier);
+                if (o.requireNearWaterRadius != null) item.put("requireNearWaterRadius", o.requireNearWaterRadius);
+                if (o.blockNearWaterRadius != null) item.put("blockNearWaterRadius", o.blockNearWaterRadius);
+                if (o.blockNearPoiRadius != null) item.put("blockNearPoiRadius", o.blockNearPoiRadius);
+                if (o.minHeight != null) item.put("minHeight", o.minHeight);
+                if (o.maxHeight != null) item.put("maxHeight", o.maxHeight);
+                if (o.minMoisture != null) item.put("minMoisture", o.minMoisture);
+                if (o.maxMoisture != null) item.put("maxMoisture", o.maxMoisture);
+                byBiome.put(se.getKey().name(), item);
+            }
+            overrides.put(e.getKey().name(), byBiome);
+        }
+        root.put("biomeStructureOverrides", overrides);
+
+        Map<String, Object> estruturasNaturais = new LinkedHashMap<>(structures);
+        estruturasNaturais.put("regrasGlobais", structureRulesList);
+        estruturasNaturais.put("porBioma", overrides);
+        root.put("estruturasNaturais", estruturasNaturais);
+        root.put("structures", structures);
+
+        root.put("spawn", Collections.singletonMap("requirePureFieldChunk", true));
+        root.put("exportacao", Collections.singletonMap("rulesFile", rulesFileUsed));
+        root.put("export", Collections.singletonMap("rulesFile", rulesFileUsed));
+        root.put("debug", Collections.singletonMap("enabled", false));
+        return SimpleJson.stringify(root);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> castStringObjectMap(Map<?, ?> map) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> e : map.entrySet()) {
+            if (e.getKey() != null) {
+                out.put(String.valueOf(e.getKey()), e.getValue());
+            }
+        }
+        return out;
+    }
+
+    private void readFromJsonMap(Map<String, Object> root) {
+        Map<String, Object> mapa = section(root, "mapa");
+        width = getInt(mapa, "width", getInt(root, "width", width));
+        height = getInt(mapa, "height", getInt(root, "height", height));
+        seed = getLong(mapa, "seed", getLong(root, "seed", seed));
+        diskChunkBlocos = getInt(mapa, "diskChunkBlocos", getInt(root, "diskChunkBlocos", diskChunkBlocos));
+
+        Map<String, Object> oceans = section(root, "oceano", "oceans");
+        hardOceanBorder = getInt(oceans, "hardOceanBorder", hardOceanBorder);
+        softOceanBorder = getInt(oceans, "softOceanBorder", softOceanBorder);
+        edgeWaterPenaltyStrength = getDouble(oceans, "edgeWaterPenaltyStrength", edgeWaterPenaltyStrength);
+        seaLevel = getDouble(oceans, "seaLevel", seaLevel);
+        deepWaterExtraDepth = getDouble(oceans, "deepWaterExtraDepth", deepWaterExtraDepth);
+        shallowWaterBand = getDouble(oceans, "shallowWaterBand", shallowWaterBand);
+        oceanDetectionRadius = getInt(oceans, "oceanDetectionRadius", oceanDetectionRadius);
+        waterDetectionRadiusForBeach = getInt(oceans, "waterDetectionRadiusForBeach", waterDetectionRadiusForBeach);
+        shallowWaterNearLandRadius = getInt(oceans, "shallowWaterNearLandRadius", shallowWaterNearLandRadius);
+
+        Map<String, Object> lakes = section(root, "lagos", "lakes");
+        lakeElevationOffsetFromSeaLevel = getDouble(lakes, "lakeElevationOffsetFromSeaLevel", lakeElevationOffsetFromSeaLevel);
+        lakeMinMoisture = getDouble(lakes, "lakeMinMoisture", lakeMinMoisture);
+        lakeNoiseOctaves = getInt(lakes, "lakeNoiseOctaves", lakeNoiseOctaves);
+        lakeNoisePersistence = getDouble(lakes, "lakeNoisePersistence", lakeNoisePersistence);
+        lakeNoiseLacunarity = getDouble(lakes, "lakeNoiseLacunarity", lakeNoiseLacunarity);
+        lakeNoiseScale = getDouble(lakes, "lakeNoiseScale", lakeNoiseScale);
+        lakeNoiseSeedOffset = getLong(lakes, "lakeNoiseSeedOffset", lakeNoiseSeedOffset);
+        lakeNoiseThreshold = getDouble(lakes, "lakeNoiseThreshold", lakeNoiseThreshold);
+        lakeBorderBlockDistance = getInt(lakes, "lakeBorderBlockDistance", lakeBorderBlockDistance);
+
+        Map<String, Object> rivers = section(root, "rios", "rivers");
+        riverSources = getInt(rivers, "riverSources", riverSources);
+        riverMaxLength = getInt(rivers, "riverMaxLength", riverMaxLength);
+        riverWidth = getInt(rivers, "riverWidth", riverWidth);
+        riverTerminalExtraWidth = getInt(rivers, "riverTerminalExtraWidth", riverTerminalExtraWidth);
+        riverSourceMinHeight = getDouble(rivers, "riverSourceMinHeight", riverSourceMinHeight);
+        riverSourceMargin = getInt(rivers, "riverSourceMargin", riverSourceMargin);
+        riverSourceNearWaterRadius = getInt(rivers, "riverSourceNearWaterRadius", riverSourceNearWaterRadius);
+        riverMaxAttemptsPerSource = getInt(rivers, "riverMaxAttemptsPerSource", riverMaxAttemptsPerSource);
+
+        Map<String, Object> pois = section(root, "pois");
+        gymCount = getInt(pois, "gymCount", gymCount);
+        dungeonCount = getInt(pois, "dungeonCount", dungeonCount);
+        villageCount = getInt(pois, "villageCount", villageCount);
+        gymDistance = getInt(pois, "gymDistance", gymDistance);
+        dungeonDistance = getInt(pois, "dungeonDistance", dungeonDistance);
+        villageDistance = getInt(pois, "villageDistance", villageDistance);
+
+        Map<String, Object> structures = section(root, "estruturasNaturais", "structures");
+        naturalBlockNearPoiRadius = getInt(structures, "naturalBlockNearPoiRadius", naturalBlockNearPoiRadius);
+        naturalBlockNearWaterRadius = getInt(structures, "naturalBlockNearWaterRadius", naturalBlockNearWaterRadius);
+        naturalBoostPalmNearWaterRadius = getInt(structures, "naturalBoostPalmNearWaterRadius", naturalBoostPalmNearWaterRadius);
+
+        Map<String, Object> macroBiomes = section(root, "macroBiomas", "macroBiomes");
+        macroGridWidth = getInt(macroBiomes, "macroGridWidth", macroGridWidth);
+        macroGridHeight = getInt(macroBiomes, "macroGridHeight", macroGridHeight);
+        macroMajorityRadius = getInt(macroBiomes, "macroMajorityRadius", macroMajorityRadius);
+        macroSmoothingPasses = getInt(macroBiomes, "macroSmoothingPasses", macroSmoothingPasses);
+        macroMinRegionCells = getInt(macroBiomes, "macroMinRegionCells", macroMinRegionCells);
+        macroLocalBlend = getDouble(macroBiomes, "macroLocalBlend", macroLocalBlend);
+        macroEdgeNoiseStrength = getDouble(macroBiomes, "macroEdgeNoiseStrength", macroEdgeNoiseStrength);
+        macroWarpScaleFactor = getDouble(macroBiomes, "macroWarpScaleFactor", macroWarpScaleFactor);
+        macroWarpStrength = getDouble(macroBiomes, "macroWarpStrength", macroWarpStrength);
+        macroEdgeNoiseScaleFactor = getDouble(macroBiomes, "macroEdgeNoiseScaleFactor", macroEdgeNoiseScaleFactor);
+
+        macroTemperatureOctaves = getInt(macroBiomes, "macroTemperatureOctaves", macroTemperatureOctaves);
+        macroTemperaturePersistence = getDouble(macroBiomes, "macroTemperaturePersistence", macroTemperaturePersistence);
+        macroTemperatureLacunarity = getDouble(macroBiomes, "macroTemperatureLacunarity", macroTemperatureLacunarity);
+        macroTemperatureScale = getDouble(macroBiomes, "macroTemperatureScale", macroTemperatureScale);
+        macroTemperatureSeedOffset = getLong(macroBiomes, "macroTemperatureSeedOffset", macroTemperatureSeedOffset);
+        macroTemperatureNoiseWeight = getDouble(macroBiomes, "macroTemperatureNoiseWeight", macroTemperatureNoiseWeight);
+        macroTemperatureLatitudeWeight = getDouble(macroBiomes, "macroTemperatureLatitudeWeight", macroTemperatureLatitudeWeight);
+
+        macroMoistureOctaves = getInt(macroBiomes, "macroMoistureOctaves", macroMoistureOctaves);
+        macroMoisturePersistence = getDouble(macroBiomes, "macroMoisturePersistence", macroMoisturePersistence);
+        macroMoistureLacunarity = getDouble(macroBiomes, "macroMoistureLacunarity", macroMoistureLacunarity);
+        macroMoistureScale = getDouble(macroBiomes, "macroMoistureScale", macroMoistureScale);
+        macroMoistureSeedOffset = getLong(macroBiomes, "macroMoistureSeedOffset", macroMoistureSeedOffset);
+
+        macroMagicOctaves = getInt(macroBiomes, "macroMagicOctaves", macroMagicOctaves);
+        macroMagicPersistence = getDouble(macroBiomes, "macroMagicPersistence", macroMagicPersistence);
+        macroMagicLacunarity = getDouble(macroBiomes, "macroMagicLacunarity", macroMagicLacunarity);
+        macroMagicScale = getDouble(macroBiomes, "macroMagicScale", macroMagicScale);
+        macroMagicSeedOffset = getLong(macroBiomes, "macroMagicSeedOffset", macroMagicSeedOffset);
+
+        macroVolcanicOctaves = getInt(macroBiomes, "macroVolcanicOctaves", macroVolcanicOctaves);
+        macroVolcanicPersistence = getDouble(macroBiomes, "macroVolcanicPersistence", macroVolcanicPersistence);
+        macroVolcanicLacunarity = getDouble(macroBiomes, "macroVolcanicLacunarity", macroVolcanicLacunarity);
+        macroVolcanicScale = getDouble(macroBiomes, "macroVolcanicScale", macroVolcanicScale);
+        macroVolcanicSeedOffset = getLong(macroBiomes, "macroVolcanicSeedOffset", macroVolcanicSeedOffset);
+
+        macroSwampOctaves = getInt(macroBiomes, "macroSwampOctaves", macroSwampOctaves);
+        macroSwampPersistence = getDouble(macroBiomes, "macroSwampPersistence", macroSwampPersistence);
+        macroSwampLacunarity = getDouble(macroBiomes, "macroSwampLacunarity", macroSwampLacunarity);
+        macroSwampScale = getDouble(macroBiomes, "macroSwampScale", macroSwampScale);
+        macroSwampSeedOffset = getLong(macroBiomes, "macroSwampSeedOffset", macroSwampSeedOffset);
+
+        parseBiomeRules(root.get("biomeRules"));
+        Map<String, Object> estruturasNaturais = section(root, "estruturasNaturais");
+        Object regrasEstruturas = firstPresent(root, "structureRules", "estruturasRegras");
+        if (regrasEstruturas == null) {
+            regrasEstruturas = estruturasNaturais.get("regrasGlobais");
+        }
+        parseStructureRules(regrasEstruturas);
+        Object porBioma = firstPresent(root, "biomeStructureOverrides", "estruturasPorBioma");
+        if (porBioma == null) {
+            porBioma = estruturasNaturais.get("porBioma");
+        }
+        parseBiomeStructureOverrides(porBioma);
+        ensureBiomeStructureOverridesCompleto();
+    }
+
+    private void parseBiomeRules(Object value) {
+        if (!(value instanceof List<?> list) || list.isEmpty()) {
+            return;
+        }
+        List<BiomeRule> out = new ArrayList<>();
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> raw)) continue;
+            Map<String, Object> map = castStringObjectMap(raw);
+            Biome biome = readEnum(Biome.class, map.get("biome"));
+            if (biome == null) continue;
+            out.add(new BiomeRule(
+                    biome,
+                    getDouble(map, "macroWeight", 1.0),
+                    getDouble(map, "minimumLandPercent", 0.0),
+                    getDouble(map, "minTemperature", 0.0),
+                    getDouble(map, "maxTemperature", 1.0),
+                    getDouble(map, "minMoisture", 0.0),
+                    getDouble(map, "maxMoisture", 1.0),
+                    getDouble(map, "minPrimaryNoise", 0.0),
+                    getDouble(map, "maxPrimaryNoise", 1.0)
+            ));
+        }
+        if (!out.isEmpty()) {
+            biomeRules = out.toArray(new BiomeRule[0]);
+        }
+    }
+
+    private void parseStructureRules(Object value) {
+        if (!(value instanceof List<?> list) || list.isEmpty()) {
+            return;
+        }
+        List<StructureRule> out = new ArrayList<>();
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> raw)) continue;
+            Map<String, Object> map = castStringObjectMap(raw);
+            NaturalStructure structure = readEnum(NaturalStructure.class, map.get("structure"));
+            if (structure == null || structure == NaturalStructure.NONE) continue;
+            EnumSet<Biome> allowed = EnumSet.noneOf(Biome.class);
+            Object allowedObj = map.get("allowedBiomes");
+            if (allowedObj instanceof List<?> biomes) {
+                for (Object b : biomes) {
+                    Biome biome = readEnum(Biome.class, b);
+                    if (biome != null && isLandBiomeStatic(biome)) {
+                        allowed.add(biome);
+                    }
+                }
+            }
+            if (allowed.isEmpty()) {
+                allowed = EnumSet.of(Biome.FIELD);
+            }
+            out.add(new StructureRule(
+                    structure,
+                    getDouble(map, "chancePerTile", 0.0),
+                    getInt(map, "minimum", 0),
+                    allowed
+            ));
+        }
+        if (!out.isEmpty()) {
+            structureRules = out.toArray(new StructureRule[0]);
+        }
+    }
+
+    private void parseBiomeStructureOverrides(Object value) {
+        biomeStructureOverrides.clear();
+        if (!(value instanceof Map<?, ?> rawBiomes)) {
+            return;
+        }
+        for (Map.Entry<?, ?> biomeEntry : rawBiomes.entrySet()) {
+            Biome biome = readEnum(Biome.class, biomeEntry.getKey());
+            if (biome == null) continue;
+            if (!(biomeEntry.getValue() instanceof Map<?, ?> rawStructures)) continue;
+            Map<NaturalStructure, BiomeStructureOverride> perStructure = new EnumMap<>(NaturalStructure.class);
+            for (Map.Entry<?, ?> structureEntry : rawStructures.entrySet()) {
+                NaturalStructure structure = readEnum(NaturalStructure.class, structureEntry.getKey());
+                if (structure == null || structure == NaturalStructure.NONE) continue;
+                if (!(structureEntry.getValue() instanceof Map<?, ?> rawOverride)) continue;
+                Map<String, Object> map = castStringObjectMap(rawOverride);
+                BiomeStructureOverride override = new BiomeStructureOverride(
+                        coalesceDouble(getDoubleObj(map, "chancePerTile"), getDoubleObj(map, "spawnRate")),
+                        coalesceInt(getIntObj(map, "minimumAbsolute"), getIntObj(map, "minimum")),
+                        getDoubleObj(map, "minimumRelative"),
+                        getDoubleObj(map, "chanceMultiplier"),
+                        getIntObj(map, "requireNearWaterRadius"),
+                        getIntObj(map, "blockNearWaterRadius"),
+                        getIntObj(map, "blockNearPoiRadius"),
+                        getDoubleObj(map, "minHeight"),
+                        getDoubleObj(map, "maxHeight"),
+                        getDoubleObj(map, "minMoisture"),
+                        getDoubleObj(map, "maxMoisture")
+                );
+                perStructure.put(structure, override);
+            }
+            if (!perStructure.isEmpty()) {
+                biomeStructureOverrides.put(biome, perStructure);
+            }
+        }
+    }
+
+    private void ensureBiomeStructureOverridesCompleto() {
+        Map<Biome, Map<NaturalStructure, BiomeStructureOverride>> defaults = defaultBiomeStructureOverrides();
+        for (Map.Entry<Biome, Map<NaturalStructure, BiomeStructureOverride>> entry : defaults.entrySet()) {
+            Map<NaturalStructure, BiomeStructureOverride> atual = biomeStructureOverrides.computeIfAbsent(entry.getKey(), k -> new EnumMap<>(NaturalStructure.class));
+            for (Map.Entry<NaturalStructure, BiomeStructureOverride> item : entry.getValue().entrySet()) {
+                atual.putIfAbsent(item.getKey(), item.getValue());
+            }
+        }
+    }
+
+    BiomeStructureOverride structureOverride(Biome biome, NaturalStructure structure) {
+        Map<NaturalStructure, BiomeStructureOverride> map = biomeStructureOverrides.get(biome);
+        if (map == null) {
+            return null;
+        }
+        return map.get(structure);
+    }
+
+    int resolveMinimum(StructureRule rule, Biome biome, int area) {
+        return rule.minimum;
+    }
+
+    private Map<Biome, Map<NaturalStructure, BiomeStructureOverride>> defaultBiomeStructureOverrides() {
+        Map<Biome, Map<NaturalStructure, BiomeStructureOverride>> out = new EnumMap<>(Biome.class);
+        for (Biome biome : Biome.values()) {
+            if (!isLandBiomeStatic(biome)) {
+                continue;
+            }
+            Map<NaturalStructure, BiomeStructureOverride> perStructure = new EnumMap<>(NaturalStructure.class);
+            for (StructureRule rule : structureRules) {
+                double chance = rule.allows(biome) ? rule.chancePerTile : 0.0;
+                perStructure.put(rule.structure, new BiomeStructureOverride(
+                        chance,
+                        0,
+                        null,
+                        1.0,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                ));
+            }
+            out.put(biome, perStructure);
+        }
+        return out;
+    }
+
+    private static BiomeRule[] defaultBiomeRules() {
+        return new BiomeRule[]{
                 new BiomeRule(Biome.FIELD,    0.82, 0.11, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0),
                 new BiomeRule(Biome.FOREST,   1.35, 0.22, 0.0, 1.0, 0.52, 1.0, 0.0, 1.0),
                 new BiomeRule(Biome.DESERT,   1.18, 0.13, 0.68, 1.0, 0.0, 0.42, 0.0, 1.0),
@@ -261,27 +891,373 @@ static final class Rules {
                 new BiomeRule(Biome.VOLCANIC, 0.08, 0.01, 0.52, 1.0, 0.0, 1.0, 0.83, 1.0),
                 new BiomeRule(Biome.SWAMP,    0.65, 0.06, 0.0, 1.0, 0.62, 1.0, 0.60, 1.0)
         };
+    }
 
-        rules.lakeBorderBlockDistance = rules.softOceanBorder;
-
+    private static StructureRule[] defaultStructureRules() {
         EnumSet<Biome> land = EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.DESERT, Biome.SNOW, Biome.MAGIC, Biome.VOLCANIC, Biome.SWAMP);
-        rules.structureRules = new StructureRule[]{
-    new StructureRule(NaturalStructure.TREE,      0.0080,  60_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
-    new StructureRule(NaturalStructure.ROCK,      0.0030,  25_000, land),
-    new StructureRule(NaturalStructure.BUSH,      0.0035,  25_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
-    new StructureRule(NaturalStructure.GOLD,      0.0006,   5_000, land),
-    new StructureRule(NaturalStructure.AMETHYST,  0.0013,   6_000, EnumSet.of(Biome.MAGIC)),
-    new StructureRule(NaturalStructure.DIAMOND,   0.0011,   5_000, EnumSet.of(Biome.SNOW)),
-    new StructureRule(NaturalStructure.RUBY,      0.0012,   5_000, EnumSet.of(Biome.VOLCANIC)),
-    new StructureRule(NaturalStructure.EMERALD,   0.0011,   5_000, EnumSet.of(Biome.DESERT)),
-    new StructureRule(NaturalStructure.PALM,      0.0022,   7_000, EnumSet.of(Biome.DESERT)),
-    new StructureRule(NaturalStructure.PINE,      0.0028,   8_000, EnumSet.of(Biome.SNOW)),
-    new StructureRule(NaturalStructure.COPPER,    0.0012,   8_000, land),
-    new StructureRule(NaturalStructure.LAVA_POOL, 0.0018,   1_000, EnumSet.of(Biome.VOLCANIC))
-};      
-        return rules;
+        return new StructureRule[]{
+                new StructureRule(NaturalStructure.TREE,      0.0080,  60_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
+                new StructureRule(NaturalStructure.ROCK,      0.0030,  25_000, land),
+                new StructureRule(NaturalStructure.BUSH,      0.0035,  25_000, EnumSet.of(Biome.FIELD, Biome.FOREST, Biome.SWAMP, Biome.MAGIC)),
+                new StructureRule(NaturalStructure.GOLD,      0.0006,   5_000, land),
+                new StructureRule(NaturalStructure.AMETHYST,  0.0013,   6_000, EnumSet.of(Biome.MAGIC)),
+                new StructureRule(NaturalStructure.DIAMOND,   0.0011,   5_000, EnumSet.of(Biome.SNOW)),
+                new StructureRule(NaturalStructure.RUBY,      0.0012,   5_000, EnumSet.of(Biome.VOLCANIC)),
+                new StructureRule(NaturalStructure.EMERALD,   0.0011,   5_000, EnumSet.of(Biome.DESERT)),
+                new StructureRule(NaturalStructure.PALM,      0.0022,   7_000, EnumSet.of(Biome.DESERT)),
+                new StructureRule(NaturalStructure.PINE,      0.0028,   8_000, EnumSet.of(Biome.SNOW)),
+                new StructureRule(NaturalStructure.COPPER,    0.0012,   8_000, land),
+                new StructureRule(NaturalStructure.LAVA_POOL, 0.0018,   1_000, EnumSet.of(Biome.VOLCANIC))
+        };
+    }
+
+    private static Object firstPresent(Map<String, Object> root, String... keys) {
+        for (String key : keys) {
+            if (root.containsKey(key)) {
+                return root.get(key);
+            }
+        }
+        return null;
+    }
+
+    private static Map<String, Object> section(Map<String, Object> root, String... keys) {
+        for (String key : keys) {
+            Object value = root.get(key);
+            if (value instanceof Map<?, ?> map) {
+                return castStringObjectMap(map);
+            }
+        }
+        return Collections.emptyMap();
+    }
+
+    private static int getInt(Map<String, Object> map, String key, int defaultValue) {
+        Object value = map.get(key);
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        if (value instanceof String s) {
+            try {
+                return Integer.parseInt(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return defaultValue;
+    }
+
+    private static Integer getIntObj(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value instanceof Number n) return n.intValue();
+        if (value instanceof String s) {
+            try {
+                return Integer.parseInt(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static long getLong(Map<String, Object> map, String key, long defaultValue) {
+        Object value = map.get(key);
+        if (value instanceof Number n) {
+            return n.longValue();
+        }
+        if (value instanceof String s) {
+            try {
+                return Long.parseLong(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return defaultValue;
+    }
+
+    private static double getDouble(Map<String, Object> map, String key, double defaultValue) {
+        Object value = map.get(key);
+        if (value instanceof Number n) {
+            return n.doubleValue();
+        }
+        if (value instanceof String s) {
+            try {
+                return Double.parseDouble(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return defaultValue;
+    }
+
+    private static Integer coalesceInt(Integer a, Integer b) {
+        return a != null ? a : b;
+    }
+
+    private static Double coalesceDouble(Double a, Double b) {
+        return a != null ? a : b;
+    }
+
+    private static Double getDoubleObj(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value instanceof Number n) return n.doubleValue();
+        if (value instanceof String s) {
+            try {
+                return Double.parseDouble(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static <E extends Enum<E>> E readEnum(Class<E> type, Object value) {
+        if (value == null) return null;
+        try {
+            return Enum.valueOf(type, String.valueOf(value).trim().toUpperCase());
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private static boolean isLandBiomeStatic(Biome biome) {
+        return biome != Biome.OCEAN && biome != Biome.SHALLOW_WATER;
     }
 }
+
+    static final class SimpleJson {
+        static Object parse(String text) {
+            return new Parser(text).parseValue();
+        }
+
+        static String stringify(Object value) {
+            StringBuilder sb = new StringBuilder(32768);
+            writeValue(sb, value, 0);
+            return sb.toString();
+        }
+
+        private static void writeValue(StringBuilder sb, Object value, int indent) {
+            if (value == null) {
+                sb.append("null");
+                return;
+            }
+            if (value instanceof String s) {
+                sb.append('"').append(escape(s)).append('"');
+                return;
+            }
+            if (value instanceof Number || value instanceof Boolean) {
+                sb.append(value);
+                return;
+            }
+            if (value instanceof Map<?, ?> map) {
+                sb.append("{\n");
+                int size = map.size();
+                int i = 0;
+                for (Map.Entry<?, ?> e : map.entrySet()) {
+                    indent(sb, indent + 2);
+                    sb.append('"').append(escape(String.valueOf(e.getKey()))).append("\": ");
+                    writeValue(sb, e.getValue(), indent + 2);
+                    if (++i < size) sb.append(',');
+                    sb.append('\n');
+                }
+                indent(sb, indent);
+                sb.append('}');
+                return;
+            }
+            if (value instanceof List<?> list) {
+                sb.append("[\n");
+                for (int i = 0; i < list.size(); i++) {
+                    indent(sb, indent + 2);
+                    writeValue(sb, list.get(i), indent + 2);
+                    if (i < list.size() - 1) sb.append(',');
+                    sb.append('\n');
+                }
+                indent(sb, indent);
+                sb.append(']');
+                return;
+            }
+            sb.append('"').append(escape(String.valueOf(value))).append('"');
+        }
+
+        private static void indent(StringBuilder sb, int n) {
+            for (int i = 0; i < n; i++) sb.append(' ');
+        }
+
+        private static String escape(String s) {
+            return s
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r")
+                    .replace("\t", "\\t");
+        }
+
+        static final class Parser {
+            private final String s;
+            private int i;
+
+            Parser(String s) {
+                this.s = s == null ? "" : s;
+            }
+
+            Object parseValue() {
+                skipWs();
+                if (i >= s.length()) return null;
+                char c = s.charAt(i);
+                if (c == '{') return parseObject();
+                if (c == '[') return parseArray();
+                if (c == '"') return parseString();
+                if (c == 't' || c == 'f') return parseBoolean();
+                if (c == 'n') return parseNull();
+                return parseNumber();
+            }
+
+            private Map<String, Object> parseObject() {
+                Map<String, Object> map = new LinkedHashMap<>();
+                i++;
+                skipWs();
+                if (peek('}')) {
+                    i++;
+                    return map;
+                }
+                while (i < s.length()) {
+                    skipWs();
+                    String key = parseString();
+                    skipWs();
+                    expect(':');
+                    Object value = parseValue();
+                    map.put(key, value);
+                    skipWs();
+                    if (peek(',')) {
+                        i++;
+                        continue;
+                    }
+                    expect('}');
+                    break;
+                }
+                return map;
+            }
+
+            private List<Object> parseArray() {
+                List<Object> list = new ArrayList<>();
+                i++;
+                skipWs();
+                if (peek(']')) {
+                    i++;
+                    return list;
+                }
+                while (i < s.length()) {
+                    list.add(parseValue());
+                    skipWs();
+                    if (peek(',')) {
+                        i++;
+                        continue;
+                    }
+                    expect(']');
+                    break;
+                }
+                return list;
+            }
+
+            private String parseString() {
+                expect('"');
+                StringBuilder out = new StringBuilder();
+                while (i < s.length()) {
+                    char c = s.charAt(i++);
+                    if (c == '"') break;
+                    if (c == '\\' && i < s.length()) {
+                        char esc = s.charAt(i++);
+                        switch (esc) {
+                            case '"' -> out.append('"');
+                            case '\\' -> out.append('\\');
+                            case '/' -> out.append('/');
+                            case 'b' -> out.append('\b');
+                            case 'f' -> out.append('\f');
+                            case 'n' -> out.append('\n');
+                            case 'r' -> out.append('\r');
+                            case 't' -> out.append('\t');
+                            case 'u' -> {
+                                if (i + 4 <= s.length()) {
+                                    String hex = s.substring(i, i + 4);
+                                    i += 4;
+                                    try {
+                                        out.append((char) Integer.parseInt(hex, 16));
+                                    } catch (NumberFormatException ignored) {
+                                    }
+                                }
+                            }
+                            default -> out.append(esc);
+                        }
+                    } else {
+                        out.append(c);
+                    }
+                }
+                return out.toString();
+            }
+
+            private Object parseBoolean() {
+                if (s.startsWith("true", i)) {
+                    i += 4;
+                    return Boolean.TRUE;
+                }
+                if (s.startsWith("false", i)) {
+                    i += 5;
+                    return Boolean.FALSE;
+                }
+                throw new IllegalArgumentException("JSON invalido na posicao " + i);
+            }
+
+            private Object parseNull() {
+                if (s.startsWith("null", i)) {
+                    i += 4;
+                    return null;
+                }
+                throw new IllegalArgumentException("JSON invalido na posicao " + i);
+            }
+
+            private Number parseNumber() {
+                int start = i;
+                if (peek('-')) i++;
+                while (i < s.length() && Character.isDigit(s.charAt(i))) i++;
+                if (peek('.')) {
+                    i++;
+                    while (i < s.length() && Character.isDigit(s.charAt(i))) i++;
+                }
+                if (peek('e') || peek('E')) {
+                    i++;
+                    if (peek('+') || peek('-')) i++;
+                    while (i < s.length() && Character.isDigit(s.charAt(i))) i++;
+                }
+                String token = s.substring(start, i);
+                if (token.isEmpty() || token.equals("-")) {
+                    throw new IllegalArgumentException("Numero JSON invalido na posicao " + start);
+                }
+                if (token.contains(".") || token.contains("e") || token.contains("E")) {
+                    return Double.parseDouble(token);
+                }
+                long v = Long.parseLong(token);
+                if (v >= Integer.MIN_VALUE && v <= Integer.MAX_VALUE) {
+                    return (int) v;
+                }
+                return v;
+            }
+
+            private void skipWs() {
+                while (i < s.length()) {
+                    char c = s.charAt(i);
+                    if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+                        i++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            private boolean peek(char c) {
+                return i < s.length() && s.charAt(i) == c;
+            }
+
+            private void expect(char c) {
+                if (!peek(c)) {
+                    throw new IllegalArgumentException("JSON invalido na posicao " + i + ", esperado '" + c + "'");
+                }
+                i++;
+            }
+        }
+    }
 
     static final class Generator {
         private final Rules rules;
@@ -300,6 +1276,10 @@ static final class Rules {
         private final List<Poi> pois = new ArrayList<>();
         private final int[] biomeCounts = new int[Biome.values().length];
         private final int[] naturalCounts = new int[NaturalStructure.values().length];
+        private int spawnChunkX = -1;
+        private int spawnChunkY = -1;
+        private int spawnX = -1;
+        private int spawnY = -1;
 
         Generator(Rules rules) {
             this.rules = rules;
@@ -338,6 +1318,7 @@ static final class Rules {
             System.out.println("Posicionando estruturas naturais...");
             placeNaturalStructures();
             ensureNaturalMinimums();
+            ensureNaturalMinimumsByBiome();
             logTime("Estruturas naturais", t3);
 
             long t4 = System.currentTimeMillis();
@@ -346,6 +1327,7 @@ static final class Rules {
             logTime("POIs", t4);
 
             long t5 = System.currentTimeMillis();
+            findSpawnChunk();
             System.out.println("Exportando mundo em chunks...");
             writeWorldChunks(dir);
             logTime("Export", t5);
@@ -357,6 +1339,67 @@ static final class Rules {
 
             printSummary();
             logTime("Tempo total", t0);
+        }
+
+        private void findSpawnChunk() {
+            int chunkSize = Math.max(1, rules.diskChunkBlocos);
+            int chunksX = (int) Math.ceil(width / (double) chunkSize);
+            int chunksY = (int) Math.ceil(height / (double) chunkSize);
+            int centerCx = chunksX / 2;
+            int centerCy = chunksY / 2;
+
+            for (int radius = 0; radius <= Math.max(chunksX, chunksY); radius++) {
+                for (int cy = Math.max(0, centerCy - radius); cy <= Math.min(chunksY - 1, centerCy + radius); cy++) {
+                    for (int cx = Math.max(0, centerCx - radius); cx <= Math.min(chunksX - 1, centerCx + radius); cx++) {
+                        if (Math.max(Math.abs(cx - centerCx), Math.abs(cy - centerCy)) != radius) {
+                            continue;
+                        }
+                        if (isValidSpawnChunk(cx, cy, chunkSize)) {
+                            spawnChunkX = cx;
+                            spawnChunkY = cy;
+                            spawnX = Math.min(width - 1, cx * chunkSize + chunkSize / 2);
+                            spawnY = Math.min(height - 1, cy * chunkSize + chunkSize / 2);
+                            System.out.println("Spawn encontrado no chunk (" + spawnChunkX + "," + spawnChunkY + ") em bloco (" + spawnX + "," + spawnY + ")");
+                            return;
+                        }
+                    }
+                }
+            }
+
+            spawnChunkX = centerCx;
+            spawnChunkY = centerCy;
+            spawnX = Math.min(width - 1, spawnChunkX * chunkSize + chunkSize / 2);
+            spawnY = Math.min(height - 1, spawnChunkY * chunkSize + chunkSize / 2);
+            System.out.println("[WARN] Nenhum chunk 100% FIELD encontrado, usando centro como fallback.");
+        }
+
+        private boolean isValidSpawnChunk(int cx, int cy, int chunkSize) {
+            int x0 = cx * chunkSize;
+            int y0 = cy * chunkSize;
+            int x1 = Math.min(width, x0 + chunkSize);
+            int y1 = Math.min(height, y0 + chunkSize);
+
+            for (Poi poi : pois) {
+                if (poi.x >= x0 && poi.x < x1 && poi.y >= y0 && poi.y < y1) {
+                    return false;
+                }
+            }
+
+            for (int y = y0; y < y1; y++) {
+                for (int x = x0; x < x1; x++) {
+                    int idx = index(x, y);
+                    if ((tileMap[idx] & 0xFF) != Tile.FIELD_GRASS.ordinal()) {
+                        return false;
+                    }
+                    if ((biomeMap[idx] & 0xFF) != Biome.FIELD.ordinal()) {
+                        return false;
+                    }
+                    if ((naturalMap[idx] & 0xFF) != NaturalStructure.NONE.ordinal()) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         private void writeWorldChunks(File outputDir) throws IOException {
@@ -372,12 +1415,17 @@ static final class Rules {
             File metaFile = new File(outputDir, "world_meta.json");
             try (BufferedWriter writer = Files.newBufferedWriter(metaFile.toPath(), StandardCharsets.UTF_8)) {
                 writer.write("{\n");
+                writer.write("  \"seed\": " + rules.seed + ",\n");
                 writer.write("  \"width\": " + width + ",\n");
                 writer.write("  \"height\": " + height + ",\n");
-                writer.write("  \"seed\": " + rules.seed + ",\n");
                 writer.write("  \"chunk_blocos\": " + chunkSize + ",\n");
                 writer.write("  \"chunks_x\": " + chunksX + ",\n");
-                writer.write("  \"chunks_y\": " + chunksY + "\n");
+                writer.write("  \"chunks_y\": " + chunksY + ",\n");
+                writer.write("  \"spawn_chunk_x\": " + spawnChunkX + ",\n");
+                writer.write("  \"spawn_chunk_y\": " + spawnChunkY + ",\n");
+                writer.write("  \"spawn_x\": " + spawnX + ",\n");
+                writer.write("  \"spawn_y\": " + spawnY + ",\n");
+                writer.write("  \"rules_file\": \"" + rules.rulesFileUsed.replace("\\", "\\\\") + "\"\n");
                 writer.write("}\n");
             }
 
@@ -954,13 +2002,87 @@ static final class Rules {
             }
         }
 
+        private void ensureNaturalMinimumsByBiome() {
+            for (Biome biome : Biome.values()) {
+                if (!isLandBiome(biome)) {
+                    continue;
+                }
+                Map<NaturalStructure, Rules.BiomeStructureOverride> perStructure = rules.biomeStructureOverrides.get(biome);
+                if (perStructure == null) {
+                    continue;
+                }
+                for (StructureRule rule : rules.structureRules) {
+                    Rules.BiomeStructureOverride override = perStructure.get(rule.structure);
+                    if (override == null) {
+                        continue;
+                    }
+                    int alvo = 0;
+                    if (override.minimumAbsolute != null) {
+                        alvo = Math.max(0, override.minimumAbsolute);
+                    } else if (override.minimumRelative != null) {
+                        alvo = Math.max(0, (int) Math.round(override.minimumRelative * area));
+                    }
+                    if (alvo <= 0) {
+                        continue;
+                    }
+                    int atual = contarEstruturasNoBioma(rule.structure, biome);
+                    if (atual >= alvo) {
+                        continue;
+                    }
+                    int faltam = alvo - atual;
+                    int colocadas = 0;
+                    int tentativas = 0;
+                    while (colocadas < faltam && tentativas < faltam * 80L) {
+                        tentativas++;
+                        int x = boundedRandomInt(1, width - 1, rules.seed + biome.ordinal() * 1_000_000L + rule.structure.ordinal() * 70_000L + tentativas * 31L);
+                        int y = boundedRandomInt(1, height - 1, rules.seed + biome.ordinal() * 1_000_000L + rule.structure.ordinal() * 70_000L + tentativas * 47L);
+                        int idx = index(x, y);
+                        if ((naturalMap[idx] & 0xFF) != NaturalStructure.NONE.ordinal()) {
+                            continue;
+                        }
+                        if ((biomeMap[idx] & 0xFF) != biome.ordinal()) {
+                            continue;
+                        }
+                        if (!rule.allows(biome)) {
+                            continue;
+                        }
+                        if (adjustChance(rule, biome, x, y) <= 0.0) {
+                            continue;
+                        }
+                        if (nearPoi(x, y, rules.naturalBlockNearPoiRadius)) {
+                            continue;
+                        }
+                        naturalMap[idx] = (byte) rule.structure.ordinal();
+                        naturalCounts[rule.structure.ordinal()]++;
+                        colocadas++;
+                    }
+                }
+            }
+        }
+
+        private int contarEstruturasNoBioma(NaturalStructure structure, Biome biome) {
+            int total = 0;
+            int structureOrd = structure.ordinal();
+            int biomeOrd = biome.ordinal();
+            for (int i = 0; i < area; i++) {
+                if ((biomeMap[i] & 0xFF) == biomeOrd && (naturalMap[i] & 0xFF) == structureOrd) {
+                    total++;
+                }
+            }
+            return total;
+        }
+
         private void ensureNaturalMinimums() {
             for (StructureRule rule : rules.structureRules) {
                 int current = naturalCounts[rule.structure.ordinal()];
-                if (current >= rule.minimum) {
+                int targetMinimum = rules.resolveMinimum(rule, Biome.FIELD, area);
+                if (current >= targetMinimum) {
                     continue;
                 }
-                int missing = rule.minimum - current;
+                int missing = targetMinimum - current;
+                if (missing <= 0) {
+                    continue;
+                }
                 System.out.println("  reforcando estrutura " + rule.structure + " -> faltam " + missing);
                 int placed = 0;
                 int attempts = 0;
@@ -1122,7 +2244,38 @@ static final class Rules {
         }
 
         private double adjustChance(StructureRule rule, Biome biome, int x, int y) {
-            double chance = rule.chancePerTile;
+            Rules.BiomeStructureOverride override = rules.structureOverride(biome, rule.structure);
+            double chance = override != null && override.chancePerTile != null ? override.chancePerTile : rule.chancePerTile;
+
+            if (override != null) {
+                if (override.chanceMultiplier != null) {
+                    chance *= override.chanceMultiplier;
+                }
+                if (override.requireNearWaterRadius != null && !nearWater(x, y, override.requireNearWaterRadius)) {
+                    return 0.0;
+                }
+                if (override.blockNearWaterRadius != null && nearWater(x, y, override.blockNearWaterRadius)) {
+                    return 0.0;
+                }
+                if (override.blockNearPoiRadius != null && nearPoi(x, y, override.blockNearPoiRadius)) {
+                    return 0.0;
+                }
+                double h = elevation(x, y);
+                if (override.minHeight != null && h < override.minHeight) {
+                    return 0.0;
+                }
+                if (override.maxHeight != null && h > override.maxHeight) {
+                    return 0.0;
+                }
+                double m = moisture(x, y);
+                if (override.minMoisture != null && m < override.minMoisture) {
+                    return 0.0;
+                }
+                if (override.maxMoisture != null && m > override.maxMoisture) {
+                    return 0.0;
+                }
+            }
+
             switch (rule.structure) {
                 case TREE -> {
                     if (biome == Biome.FOREST) chance *= 2.3;
@@ -1151,6 +2304,7 @@ static final class Rules {
             }
             return chance;
         }
+
         private boolean isLakeCandidate(double elevation, double moisture, int x, int y) {
             if (elevation < rules.seaLevel + rules.lakeElevationOffsetFromSeaLevel && moisture > rules.lakeMinMoisture) {
                 double lakeNoise = fbm(x, y, rules.lakeNoiseOctaves, rules.lakeNoisePersistence, rules.lakeNoiseLacunarity, rules.lakeNoiseScale, rules.lakeNoiseSeedOffset);

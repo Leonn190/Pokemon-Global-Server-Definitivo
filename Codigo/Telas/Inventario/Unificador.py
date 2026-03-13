@@ -4,7 +4,7 @@ import pygame
 
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Telas.Inventario.Estatisticas import InventarioPerfil
-from Codigo.Telas.Inventario.Itens import InventarioItens
+from Codigo.Telas.Inventario.InventarioItens import InventarioItens
 from Codigo.Telas.Inventario.Pokemons import InventarioPokemons
 
 

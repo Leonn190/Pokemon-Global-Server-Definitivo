@@ -12,281 +12,177 @@ from Codigo.Prefabs.Texto import Texto
 
 class FichaItem:
     _dados_csv = None
+    _raridades = {
+        1: ('Comum', (160, 170, 190)),
+        2: ('Incomum', (110, 205, 135)),
+        3: ('Raro', (90, 160, 255)),
+        4: ('Épico', (176, 117, 255)),
+        5: ('Lendário', (255, 178, 74)),
+        6: ('Mítico', (255, 110, 125)),
+    }
 
     def __init__(self):
         self._painel = None
         self._rect_cache = None
-
-        self.TxtTitulo = Texto(
-            "Ficha do item",
-            pos=(0, 0),
-            style={
-                "size": 20,
-                "color": (236, 241, 255),
-                "outline": True,
-                "outline_thickness": 2,
-                "outline_color": (8, 12, 20),
-            },
-        )
-
-        self.TxtVazio = Texto(
-            "Passe o mouse em um item para ver os detalhes.",
-            pos=(0, 0),
-            style={
-                "size": 17,
-                "color": (166, 178, 208),
-                "outline": True,
-                "outline_thickness": 2,
-                "outline_color": (8, 12, 20),
-            },
-        )
-
-        self.TxtNome = Texto(
-            "Item",
-            pos=(0, 0),
-            style={
-                "size": 24,
-                "color": (245, 247, 255),
-                "outline": True,
-                "outline_thickness": 2,
-                "outline_color": (8, 12, 20),
-            },
-        )
-
-        self.TxtTagRaridade = Texto(
-            "Raridade -",
-            pos=(0, 0),
-            style={
-                "size": 15,
-                "color": (250, 252, 255),
-                "align": "center",
-                "outline": True,
-                "outline_thickness": 2,
-                "outline_color": (8, 12, 20),
-            },
-        )
-
-        self.TxtMetaQuantidade = Texto(
-            "",
-            pos=(0, 0),
-            style={
-                "size": 17,
-                "color": (206, 216, 240),
-                "outline": True,
-                "outline_thickness": 2,
-                "outline_color": (8, 12, 20),
-            },
-        )
-        self.TxtMetaEstilo = Texto(
-            "",
-            pos=(0, 0),
-            style={
-                "size": 17,
-                "color": (206, 216, 240),
-                "outline": True,
-                "outline_thickness": 2,
-                "outline_color": (8, 12, 20),
-            },
-        )
-        self.TxtMetaCode = Texto(
-            "",
-            pos=(0, 0),
-            style={
-                "size": 17,
-                "color": (206, 216, 240),
-                "outline": True,
-                "outline_thickness": 2,
-                "outline_color": (8, 12, 20),
-            },
-        )
-
-        self.TxtSubtituloDescricao = Texto(
-            "Descrição",
-            pos=(0, 0),
-            style={
-                "size": 15,
-                "color": (236, 241, 255),
-                "outline": True,
-                "outline_thickness": 2,
-                "outline_color": (8, 12, 20),
-            },
-        )
-
-        self.TxtLinhasDescricao = [
-            Texto(
-                "",
-                pos=(0, 0),
-                style={
-                    "size": 17,
-                    "color": (181, 193, 220),
-                    "outline": True,
-                    "outline_thickness": 2,
-                    "outline_color": (8, 12, 20),
-                },
-            )
-            for _ in range(6)
-        ]
+        base = {
+            'outline': True,
+            'outline_thickness': 2,
+            'outline_color': (8, 12, 20),
+        }
+        self.TxtTitulo = Texto('Ficha do item', style={**base, 'size': 20, 'color': (236, 241, 255)})
+        self.TxtVazio = Texto('Passe o mouse em um item para ver os detalhes.', style={**base, 'size': 17, 'color': (166, 178, 208)})
+        self.TxtNome = Texto('Item', style={**base, 'size': 22, 'color': (245, 247, 255)})
+        self.TxtRaridade = Texto('-', style={**base, 'size': 16, 'color': (245, 247, 255)})
+        self.TxtEstilo = Texto('-', style={**base, 'size': 16, 'color': (214, 222, 242)})
+        self.TxtDescricao = Texto('', style={**base, 'size': 16, 'color': (181, 193, 220)})
 
     @classmethod
     def _carregar_csv(cls):
         if cls._dados_csv is not None:
             return cls._dados_csv
-
         cls._dados_csv = {}
-        caminho = Path("Global server - Itens.csv")
-        if not caminho.exists():
-            caminho = Path(__file__).resolve().parents[3] / "Global server - Itens.csv"
-
-        if not caminho.exists():
+        caminhos = [
+            Path('Global server - Itens.csv'),
+            Path(__file__).resolve().parents[3] / 'Global server - Itens.csv',
+        ]
+        caminho = next((p for p in caminhos if p.exists()), None)
+        if caminho is None:
             return cls._dados_csv
-
         try:
-            with caminho.open("r", encoding="utf-8-sig", newline="") as arquivo:
+            with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
                 leitor = csv.DictReader(arquivo)
                 for linha in leitor:
-                    nome = str(linha.get("Nome") or "").strip().lower()
-                    code = str(linha.get("Code") or "").strip()
+                    nome = str(linha.get('Nome') or '').strip().lower()
+                    code = str(linha.get('Code') or '').strip()
                     if nome:
-                        cls._dados_csv[("nome", nome)] = dict(linha)
+                        cls._dados_csv[('nome', nome)] = dict(linha)
                     if code:
-                        cls._dados_csv[("code", code)] = dict(linha)
+                        cls._dados_csv[('code', code)] = dict(linha)
         except OSError:
             pass
-
         return cls._dados_csv
 
     @classmethod
     def _info_item(cls, item):
         if not isinstance(item, dict):
             return {}
-
         base = cls._carregar_csv()
-        code = str(item.get("Code") or item.get("code") or "").strip()
-        nome = str(item.get("Nome") or item.get("nome") or "").strip().lower()
-
-        if code and ("code", code) in base:
-            return dict(base[("code", code)])
-        if nome and ("nome", nome) in base:
-            return dict(base[("nome", nome)])
+        code = str(item.get('Code') or item.get('code') or '').strip()
+        nome = str(item.get('Nome') or item.get('nome') or '').strip().lower()
+        if code and ('code', code) in base:
+            return dict(base[('code', code)])
+        if nome and ('nome', nome) in base:
+            return dict(base[('nome', nome)])
         return {}
 
-    @staticmethod
-    def _cor_raridade(valor):
+    @classmethod
+    def _dados_raridade(cls, valor):
         try:
             raridade = int(valor)
         except (TypeError, ValueError):
             raridade = 0
-
-        mapa = {
-            1: (160, 170, 190),
-            2: (110, 205, 135),
-            3: (90, 160, 255),
-            4: (176, 117, 255),
-            5: (255, 178, 74),
-            6: (255, 110, 125),
-        }
-        return mapa.get(raridade, (120, 136, 170))
-
-    @staticmethod
-    def _quebrar_texto(texto_obj: Texto, texto: str, largura: int):
-        palavras = str(texto or "").split()
-        if not palavras:
-            return []
-
-        linhas = []
-        atual = palavras[0]
-
-        for palavra in palavras[1:]:
-            teste = atual + " " + palavra
-            texto_obj.set_text(teste)
-            if texto_obj.get_rect().width <= largura:
-                atual = teste
-            else:
-                linhas.append(atual)
-                atual = palavra
-
-        linhas.append(atual)
-        return linhas
+        return cls._raridades.get(raridade, ('-', (120, 136, 170)))
 
     def _garantir_painel(self, rect):
         if self._painel is not None and self._rect_cache == tuple(rect):
             return
-
         self._rect_cache = tuple(rect)
-        self._painel = Painel(
-            rect,
-            cor_fundo=(20, 26, 42, 238),
-            cor_borda=(74, 98, 146),
-            borda=2,
-            raio=16,
-        )
+        self._painel = Painel(rect, cor_fundo=(20, 26, 42, 238), cor_borda=(74, 98, 146), borda=2, raio=16)
+
+    def _quebrar_em_linhas(self, texto: str, largura: int, max_linhas: int = 3):
+        palavras = str(texto or '').split()
+        if not palavras:
+            return []
+
+        linhas = []
+        atual = ''
+        medidor = self.TxtDescricao
+
+        for palavra in palavras:
+            teste = palavra if not atual else f'{atual} {palavra}'
+            medidor.set_text(teste)
+            medidor.set_pos((0, 0))
+            if medidor.get_rect().width <= largura or not atual:
+                atual = teste
+            else:
+                linhas.append(atual)
+                atual = palavra
+                if len(linhas) == max_linhas - 1:
+                    break
+
+        if atual and len(linhas) < max_linhas:
+            usadas = len(' '.join(linhas + [atual]).split())
+            restante = palavras[usadas:]
+            if restante:
+                atual = atual + ' ' + ' '.join(restante)
+            medidor.set_text(atual)
+            medidor.set_pos((0, 0))
+            while medidor.get_rect().width > largura and len(atual) > 1:
+                atual = atual[:-1]
+                medidor.set_text(atual + '...')
+                medidor.set_pos((0, 0))
+            if len(restante) > 0:
+                atual = atual.rstrip() + '...'
+            linhas.append(atual)
+
+        return linhas[:max_linhas]
 
     def renderizar(self, tela, rect, item):
         self._garantir_painel(rect)
         self._painel.rect = pygame.Rect(rect)
         self._painel.render(tela, [], 0)
-
         area = pygame.Rect(rect)
 
-        self.TxtTitulo.set_pos((area.x + 18, area.y + 14))
-        self.TxtTitulo.draw(tela)
-
         if item is None:
-            self.TxtVazio.set_pos((area.x + 18, area.y + 54))
+            self.TxtTitulo.set_text('Ficha do item')
+            self.TxtTitulo.set_pos((area.x + 18, area.y + 12))
+            self.TxtTitulo.draw(tela)
+            self.TxtVazio.set_pos((area.x + 18, area.y + 50))
             self.TxtVazio.draw(tela)
             return
 
         info = self._info_item(item)
-        nome = str(item.get("Nome") or item.get("nome") or info.get("Nome") or "Item")
-        descricao = str(item.get("Descrição") or item.get("descricao") or info.get("Descrição") or "Sem descrição cadastrada.")
-        estilo = str(item.get("Estilo") or item.get("estilo") or info.get("Estilo") or "-")
-        code = str(item.get("Code") or item.get("code") or info.get("Code") or "-")
-        raridade = str(item.get("Raridade") or item.get("raridade") or info.get("Raridade") or "-")
-        quantidade = int(item.get("quantidade", 1)) if isinstance(item, dict) else 1
+        nome = str(item.get('Nome') or item.get('nome') or info.get('Nome') or 'Item')
+        descricao = str(item.get('Descrição') or item.get('descricao') or info.get('Descrição') or 'Sem descrição cadastrada.')
+        estilo = str(item.get('Estilo') or item.get('estilo') or info.get('Estilo') or '-')
+        raridade = str(item.get('Raridade') or item.get('raridade') or info.get('Raridade') or '-')
+        raridade_texto, raridade_cor = self._dados_raridade(raridade)
 
-        box_icone = pygame.Rect(area.x + 18, area.y + 52, 78, 78)
-        pygame.draw.rect(tela, (46, 60, 96), box_icone, border_radius=12)
-        pygame.draw.rect(tela, (86, 110, 162), box_icone, 2, border_radius=12)
-        ItemInventario.desenhar_item_no_rect(tela, item, box_icone.inflate(-12, -12))
+        topo_y = area.y + 12
+        margem = 18
+        box_icone = pygame.Rect(area.x + margem, area.y + 50, 68, 68)
+        area_texto_x = box_icone.right + 14
+        area_texto_w = area.right - margem - area_texto_x
 
         self.TxtNome.set_text(nome)
-        self.TxtNome.set_pos((box_icone.right + 14, area.y + 54))
+        self.TxtNome.set_pos((area.x + margem, topo_y))
         self.TxtNome.draw(tela)
+        nome_rect = self.TxtNome.get_rect()
 
-        cor_tag = self._cor_raridade(raridade)
-        tag_rect = pygame.Rect(box_icone.right + 14, area.y + 88, 118, 26)
-        pygame.draw.rect(tela, (*cor_tag, 40), tag_rect, border_radius=10)
-        pygame.draw.rect(tela, cor_tag, tag_rect, 2, border_radius=10)
+        self.TxtEstilo.set_text(f'Estilo: {estilo}')
+        self.TxtEstilo.set_pos((0, 0))
+        estilo_w = self.TxtEstilo.get_rect().width
+        estilo_x = area.right - margem - estilo_w
+        self.TxtEstilo.set_pos((estilo_x, topo_y + 3))
+        self.TxtEstilo.draw(tela)
 
-        self.TxtTagRaridade.set_text(f"Raridade {raridade}")
-        self.TxtTagRaridade.set_pos(tag_rect.center)
-        self.TxtTagRaridade.draw(tela)
+        self.TxtRaridade.set_text(raridade_texto)
+        self.TxtRaridade.set_pos((0, 0))
+        rar_rect = self.TxtRaridade.get_rect()
+        pill_rect = pygame.Rect(0, 0, rar_rect.width + 24, rar_rect.height + 8)
+        pill_x = min(area.right - margem - estilo_w - 12 - pill_rect.width, max(nome_rect.right + 12, area.x + margem + 120))
+        pill_rect.topleft = (pill_x, topo_y)
+        pygame.draw.rect(tela, raridade_cor, pill_rect, border_radius=10)
+        pygame.draw.rect(tela, (8, 12, 20), pill_rect, 2, border_radius=10)
+        self.TxtRaridade.set_pos((pill_rect.x + (pill_rect.width - rar_rect.width) // 2, pill_rect.y + (pill_rect.height - rar_rect.height) // 2 - 1))
+        self.TxtRaridade.draw(tela)
 
-        meta_y = box_icone.bottom + 16
+        pygame.draw.rect(tela, (46, 60, 96), box_icone, border_radius=12)
+        pygame.draw.rect(tela, (86, 110, 162), box_icone, 2, border_radius=12)
+        ItemInventario.desenhar_item_no_rect(tela, item, box_icone.inflate(-10, -10))
 
-        self.TxtMetaQuantidade.set_text(f"Quantidade: {quantidade}")
-        self.TxtMetaQuantidade.set_pos((area.x + 18, meta_y))
-        self.TxtMetaQuantidade.draw(tela)
-
-        self.TxtMetaEstilo.set_text(f"Estilo: {estilo}")
-        self.TxtMetaEstilo.set_pos((area.x + 18, meta_y + 24))
-        self.TxtMetaEstilo.draw(tela)
-
-        self.TxtMetaCode.set_text(f"Code: {code}")
-        self.TxtMetaCode.set_pos((area.x + 18, meta_y + 48))
-        self.TxtMetaCode.draw(tela)
-
-        desc_y = meta_y + 82
-        self.TxtSubtituloDescricao.set_pos((area.x + 18, desc_y))
-        self.TxtSubtituloDescricao.draw(tela)
-
-        largura_texto = area.width - 36
-        linhas = self._quebrar_texto(self.TxtLinhasDescricao[0], descricao, largura_texto)
-
-        for i, texto_linha in enumerate(self.TxtLinhasDescricao):
-            if i < len(linhas[:6]):
-                texto_linha.set_text(linhas[i])
-                texto_linha.set_pos((area.x + 18, desc_y + 24 + i * 22))
-                texto_linha.draw(tela)
-            else:
-                texto_linha.set_text("")
+        linhas = self._quebrar_em_linhas(descricao, area_texto_w, max_linhas=3)
+        for i, linha in enumerate(linhas):
+            self.TxtDescricao.set_text(linha)
+            self.TxtDescricao.set_pos((area_texto_x, box_icone.y + 6 + i * 20))
+            self.TxtDescricao.draw(tela)

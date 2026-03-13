@@ -1,0 +1,658 @@
+{
+  "mapa": {
+    "seed": 20260307,
+    "width": 10000,
+    "height": 10000,
+    "diskChunkBlocos": 100
+  },
+  "seed": 20260307,
+  "width": 10000,
+  "height": 10000,
+  "diskChunkBlocos": 100,
+  "oceano": {
+    "hardOceanBorder": 120,
+    "softOceanBorder": 500,
+    "edgeWaterPenaltyStrength": 0.55,
+    "seaLevel": 0.505,
+    "deepWaterExtraDepth": 0.04,
+    "shallowWaterBand": 0.02,
+    "oceanDetectionRadius": 2,
+    "waterDetectionRadiusForBeach": 2,
+    "shallowWaterNearLandRadius": 1
+  },
+  "lagos": {
+    "lakeElevationOffsetFromSeaLevel": 0.085,
+    "lakeMinMoisture": 0.68,
+    "lakeNoiseOctaves": 4,
+    "lakeNoisePersistence": 0.55,
+    "lakeNoiseLacunarity": 2.0,
+    "lakeNoiseScale": 130.0,
+    "lakeNoiseSeedOffset": 7777,
+    "lakeNoiseThreshold": 0.76,
+    "lakeBorderBlockDistance": 420
+  },
+  "rios": {
+    "riverSources": 420,
+    "riverMaxLength": 1100,
+    "riverWidth": 2,
+    "riverTerminalExtraWidth": 2,
+    "riverSourceMinHeight": 0.66,
+    "riverSourceMargin": 200,
+    "riverSourceNearWaterRadius": 10,
+    "riverMaxAttemptsPerSource": 50
+  },
+  "pois": {
+    "gymCount": 30,
+    "dungeonCount": 30,
+    "villageCount": 10,
+    "gymDistance": 230,
+    "dungeonDistance": 220,
+    "villageDistance": 300
+  },
+  "macroBiomas": {
+    "macroGridWidth": 250,
+    "macroGridHeight": 250,
+    "macroMajorityRadius": 2,
+    "macroSmoothingPasses": 3,
+    "macroMinRegionCells": 8,
+    "macroLocalBlend": 0.08,
+    "macroEdgeNoiseStrength": 0.04,
+    "macroWarpScaleFactor": 0.7,
+    "macroWarpStrength": 1.2,
+    "macroEdgeNoiseScaleFactor": 2.4,
+    "macroTemperatureOctaves": 4,
+    "macroTemperaturePersistence": 0.56,
+    "macroTemperatureLacunarity": 2.0,
+    "macroTemperatureScale": 3400.0,
+    "macroTemperatureSeedOffset": 811,
+    "macroTemperatureNoiseWeight": 0.58,
+    "macroTemperatureLatitudeWeight": 0.42,
+    "macroMoistureOctaves": 4,
+    "macroMoisturePersistence": 0.56,
+    "macroMoistureLacunarity": 2.0,
+    "macroMoistureScale": 3200.0,
+    "macroMoistureSeedOffset": 821,
+    "macroMagicOctaves": 3,
+    "macroMagicPersistence": 0.58,
+    "macroMagicLacunarity": 2.0,
+    "macroMagicScale": 3600.0,
+    "macroMagicSeedOffset": 831,
+    "macroVolcanicOctaves": 3,
+    "macroVolcanicPersistence": 0.58,
+    "macroVolcanicLacunarity": 2.0,
+    "macroVolcanicScale": 3000.0,
+    "macroVolcanicSeedOffset": 841,
+    "macroSwampOctaves": 3,
+    "macroSwampPersistence": 0.58,
+    "macroSwampLacunarity": 2.0,
+    "macroSwampScale": 2800.0,
+    "macroSwampSeedOffset": 851
+  },
+  "biomeRules": [
+    {
+      "biome": "FIELD",
+      "macroWeight": 0.82,
+      "minimumLandPercent": 0.11,
+      "minTemperature": 0.0,
+      "maxTemperature": 1.0,
+      "minMoisture": 0.0,
+      "maxMoisture": 1.0,
+      "minPrimaryNoise": 0.0,
+      "maxPrimaryNoise": 1.0
+    },
+    {
+      "biome": "FOREST",
+      "macroWeight": 1.35,
+      "minimumLandPercent": 0.22,
+      "minTemperature": 0.0,
+      "maxTemperature": 1.0,
+      "minMoisture": 0.52,
+      "maxMoisture": 1.0,
+      "minPrimaryNoise": 0.0,
+      "maxPrimaryNoise": 1.0
+    },
+    {
+      "biome": "DESERT",
+      "macroWeight": 1.18,
+      "minimumLandPercent": 0.13,
+      "minTemperature": 0.68,
+      "maxTemperature": 1.0,
+      "minMoisture": 0.0,
+      "maxMoisture": 0.42,
+      "minPrimaryNoise": 0.0,
+      "maxPrimaryNoise": 1.0
+    },
+    {
+      "biome": "SNOW",
+      "macroWeight": 0.65,
+      "minimumLandPercent": 0.07,
+      "minTemperature": 0.0,
+      "maxTemperature": 0.3,
+      "minMoisture": 0.0,
+      "maxMoisture": 1.0,
+      "minPrimaryNoise": 0.0,
+      "maxPrimaryNoise": 1.0
+    },
+    {
+      "biome": "MAGIC",
+      "macroWeight": 0.1,
+      "minimumLandPercent": 0.015,
+      "minTemperature": 0.0,
+      "maxTemperature": 1.0,
+      "minMoisture": 0.0,
+      "maxMoisture": 1.0,
+      "minPrimaryNoise": 0.88,
+      "maxPrimaryNoise": 1.0
+    },
+    {
+      "biome": "VOLCANIC",
+      "macroWeight": 0.08,
+      "minimumLandPercent": 0.01,
+      "minTemperature": 0.52,
+      "maxTemperature": 1.0,
+      "minMoisture": 0.0,
+      "maxMoisture": 1.0,
+      "minPrimaryNoise": 0.83,
+      "maxPrimaryNoise": 1.0
+    },
+    {
+      "biome": "SWAMP",
+      "macroWeight": 0.65,
+      "minimumLandPercent": 0.06,
+      "minTemperature": 0.0,
+      "maxTemperature": 1.0,
+      "minMoisture": 0.62,
+      "maxMoisture": 1.0,
+      "minPrimaryNoise": 0.6,
+      "maxPrimaryNoise": 1.0
+    }
+  ],
+  "estruturasNaturais": {
+    "naturalBlockNearPoiRadius": 3,
+    "naturalBlockNearWaterRadius": 1,
+    "naturalBoostPalmNearWaterRadius": 3,
+    "regrasGlobais": [
+      {
+        "structure": "TREE",
+        "chancePerTile": 0.008,
+        "minimum": 60000,
+        "allowedBiomes": [
+          "FIELD",
+          "FOREST",
+          "SWAMP",
+          "MAGIC"
+        ]
+      },
+      {
+        "structure": "ROCK",
+        "chancePerTile": 0.003,
+        "minimum": 25000,
+        "allowedBiomes": [
+          "FIELD",
+          "FOREST",
+          "DESERT",
+          "SNOW",
+          "MAGIC",
+          "VOLCANIC",
+          "SWAMP"
+        ]
+      },
+      {
+        "structure": "BUSH",
+        "chancePerTile": 0.0035,
+        "minimum": 25000,
+        "allowedBiomes": [
+          "FIELD",
+          "FOREST",
+          "SWAMP",
+          "MAGIC"
+        ]
+      },
+      {
+        "structure": "GOLD",
+        "chancePerTile": 0.0006,
+        "minimum": 5000,
+        "allowedBiomes": [
+          "FIELD",
+          "FOREST",
+          "DESERT",
+          "SNOW",
+          "MAGIC",
+          "VOLCANIC",
+          "SWAMP"
+        ]
+      },
+      {
+        "structure": "AMETHYST",
+        "chancePerTile": 0.0013,
+        "minimum": 6000,
+        "allowedBiomes": [
+          "MAGIC"
+        ]
+      },
+      {
+        "structure": "DIAMOND",
+        "chancePerTile": 0.0011,
+        "minimum": 5000,
+        "allowedBiomes": [
+          "SNOW"
+        ]
+      },
+      {
+        "structure": "RUBY",
+        "chancePerTile": 0.0012,
+        "minimum": 5000,
+        "allowedBiomes": [
+          "VOLCANIC"
+        ]
+      },
+      {
+        "structure": "EMERALD",
+        "chancePerTile": 0.0011,
+        "minimum": 5000,
+        "allowedBiomes": [
+          "DESERT"
+        ]
+      },
+      {
+        "structure": "PALM",
+        "chancePerTile": 0.0022,
+        "minimum": 7000,
+        "allowedBiomes": [
+          "DESERT"
+        ]
+      },
+      {
+        "structure": "PINE",
+        "chancePerTile": 0.0028,
+        "minimum": 8000,
+        "allowedBiomes": [
+          "SNOW"
+        ]
+      },
+      {
+        "structure": "COPPER",
+        "chancePerTile": 0.0012,
+        "minimum": 8000,
+        "allowedBiomes": [
+          "FIELD",
+          "FOREST",
+          "DESERT",
+          "SNOW",
+          "MAGIC",
+          "VOLCANIC",
+          "SWAMP"
+        ]
+      },
+      {
+        "structure": "LAVA_POOL",
+        "chancePerTile": 0.0018,
+        "minimum": 1000,
+        "allowedBiomes": [
+          "VOLCANIC"
+        ]
+      }
+    ],
+    "porBioma": {
+      "FIELD": {
+        "TREE": {
+          "spawnRate": 0.008,
+          "minimum": 0
+        },
+        "ROCK": {
+          "spawnRate": 0.003,
+          "minimum": 0
+        },
+        "BUSH": {
+          "spawnRate": 0.0035,
+          "minimum": 0
+        },
+        "GOLD": {
+          "spawnRate": 0.0006,
+          "minimum": 0
+        },
+        "AMETHYST": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "DIAMOND": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "RUBY": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "EMERALD": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PALM": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PINE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "COPPER": {
+          "spawnRate": 0.0012,
+          "minimum": 0
+        },
+        "LAVA_POOL": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        }
+      },
+      "FOREST": {
+        "TREE": {
+          "spawnRate": 0.008,
+          "minimum": 0
+        },
+        "ROCK": {
+          "spawnRate": 0.003,
+          "minimum": 0
+        },
+        "BUSH": {
+          "spawnRate": 0.0035,
+          "minimum": 0
+        },
+        "GOLD": {
+          "spawnRate": 0.0006,
+          "minimum": 0
+        },
+        "AMETHYST": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "DIAMOND": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "RUBY": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "EMERALD": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PALM": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PINE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "COPPER": {
+          "spawnRate": 0.0012,
+          "minimum": 0
+        },
+        "LAVA_POOL": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        }
+      },
+      "DESERT": {
+        "TREE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "ROCK": {
+          "spawnRate": 0.003,
+          "minimum": 0
+        },
+        "BUSH": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "GOLD": {
+          "spawnRate": 0.0006,
+          "minimum": 0
+        },
+        "AMETHYST": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "DIAMOND": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "RUBY": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "EMERALD": {
+          "spawnRate": 0.0011,
+          "minimum": 0
+        },
+        "PALM": {
+          "spawnRate": 0.0022,
+          "minimum": 0
+        },
+        "PINE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "COPPER": {
+          "spawnRate": 0.0012,
+          "minimum": 0
+        },
+        "LAVA_POOL": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        }
+      },
+      "SNOW": {
+        "TREE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "ROCK": {
+          "spawnRate": 0.003,
+          "minimum": 0
+        },
+        "BUSH": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "GOLD": {
+          "spawnRate": 0.0006,
+          "minimum": 0
+        },
+        "AMETHYST": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "DIAMOND": {
+          "spawnRate": 0.0011,
+          "minimum": 0
+        },
+        "RUBY": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "EMERALD": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PALM": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PINE": {
+          "spawnRate": 0.0028,
+          "minimum": 0
+        },
+        "COPPER": {
+          "spawnRate": 0.0012,
+          "minimum": 0
+        },
+        "LAVA_POOL": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        }
+      },
+      "MAGIC": {
+        "TREE": {
+          "spawnRate": 0.008,
+          "minimum": 0
+        },
+        "ROCK": {
+          "spawnRate": 0.003,
+          "minimum": 0
+        },
+        "BUSH": {
+          "spawnRate": 0.0035,
+          "minimum": 0
+        },
+        "GOLD": {
+          "spawnRate": 0.0006,
+          "minimum": 0
+        },
+        "AMETHYST": {
+          "spawnRate": 0.0013,
+          "minimum": 0
+        },
+        "DIAMOND": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "RUBY": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "EMERALD": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PALM": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PINE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "COPPER": {
+          "spawnRate": 0.0012,
+          "minimum": 0
+        },
+        "LAVA_POOL": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        }
+      },
+      "VOLCANIC": {
+        "TREE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "ROCK": {
+          "spawnRate": 0.003,
+          "minimum": 0
+        },
+        "BUSH": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "GOLD": {
+          "spawnRate": 0.0006,
+          "minimum": 0
+        },
+        "AMETHYST": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "DIAMOND": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "RUBY": {
+          "spawnRate": 0.0012,
+          "minimum": 0
+        },
+        "EMERALD": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PALM": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PINE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "COPPER": {
+          "spawnRate": 0.0012,
+          "minimum": 0
+        },
+        "LAVA_POOL": {
+          "spawnRate": 0.0018,
+          "minimum": 0
+        }
+      },
+      "SWAMP": {
+        "TREE": {
+          "spawnRate": 0.008,
+          "minimum": 0
+        },
+        "ROCK": {
+          "spawnRate": 0.003,
+          "minimum": 0
+        },
+        "BUSH": {
+          "spawnRate": 0.0035,
+          "minimum": 0
+        },
+        "GOLD": {
+          "spawnRate": 0.0006,
+          "minimum": 0
+        },
+        "AMETHYST": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "DIAMOND": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "RUBY": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "EMERALD": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PALM": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "PINE": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        },
+        "COPPER": {
+          "spawnRate": 0.0012,
+          "minimum": 0
+        },
+        "LAVA_POOL": {
+          "spawnRate": 0.0,
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "spawn": {
+    "requirePureFieldChunk": true
+  },
+  "exportacao": {
+    "rulesFile": "Regras/Geracao.json"
+  },
+  "debug": {
+    "enabled": false
+  }
+}

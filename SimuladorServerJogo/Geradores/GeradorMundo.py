@@ -7,7 +7,7 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from typing import Callable, Dict, List, Sequence, Tuple
+from typing import Callable, Dict, Tuple
 
 from SimuladorServerJogo.Regras.Loader import carregar_regras_mundo
 
@@ -163,25 +163,7 @@ def limpar_arquivos_mundo() -> None:
             pass
 
 
-def _validar_grid_numerica(nome: str, grid: object, largura: int, altura: int) -> List[List[int]]:
-    if not isinstance(grid, list) or len(grid) != altura:
-        raise ValueError(f"{nome} inválida: altura diferente de meta.height")
-
-    grid_numerica: List[List[int]] = []
-    for y, linha in enumerate(grid):
-        if not isinstance(linha, list) or len(linha) != largura:
-            raise ValueError(f"{nome} inválida: largura incorreta na linha {y}")
-        nova_linha: List[int] = []
-        for x, valor in enumerate(linha):
-            try:
-                nova_linha.append(int(valor))
-            except (TypeError, ValueError) as exc:
-                raise ValueError(f"{nome} inválida: valor não numérico em [{y}][{x}]") from exc
-        grid_numerica.append(nova_linha)
-    return grid_numerica
-
-
-def _carregar_world_meta() -> Dict[str, int]:
+def _carregar_world_meta() -> Dict[str, int | float]:
     if not ARQUIVO_WORLD_META.exists():
         raise FileNotFoundError(f"Arquivo não encontrado: {ARQUIVO_WORLD_META}")
 
@@ -197,12 +179,18 @@ def _carregar_world_meta() -> Dict[str, int]:
     chunk_blocos_disco = int(payload.get("chunk_blocos_disco", payload.get("chunk_blocos", CHUNK_BLOCOS)))
     chunks_x = int(payload.get("chunks_x", 0))
     chunks_y = int(payload.get("chunks_y", 0))
+
     if largura <= 0 or altura <= 0:
         raise ValueError("world_meta.json inválido: width/height devem ser positivos")
     if chunk_blocos_disco <= 0:
         raise ValueError("world_meta.json inválido: chunk_blocos_disco deve ser positivo")
     if chunks_x <= 0 or chunks_y <= 0:
         raise ValueError("world_meta.json inválido: chunks_x/chunks_y devem ser positivos")
+
+    required_spawn = ("spawn_chunk_x", "spawn_chunk_y", "spawn_x", "spawn_y")
+    missing = [chave for chave in required_spawn if payload.get(chave) is None]
+    if missing:
+        raise ValueError("world_meta.json inválido: campos obrigatórios de spawn ausentes: " + ", ".join(missing))
 
     return {
         "width": largura,
@@ -211,111 +199,11 @@ def _carregar_world_meta() -> Dict[str, int]:
         "chunk_blocos_disco": chunk_blocos_disco,
         "chunks_x": chunks_x,
         "chunks_y": chunks_y,
+        "spawn_chunk_x": int(payload["spawn_chunk_x"]),
+        "spawn_chunk_y": int(payload["spawn_chunk_y"]),
+        "spawn_x": float(payload["spawn_x"]),
+        "spawn_y": float(payload["spawn_y"]),
     }
-
-
-def _carregar_chunk_blocos(meta: Dict[str, int], cx: int, cy: int) -> List[List[int]]:
-    arquivo_chunk = PASTA_WORLD_CHUNKS / f"chunk_{cx}_{cy}.json"
-    if not arquivo_chunk.exists():
-        raise FileNotFoundError(f"Chunk não encontrado: {arquivo_chunk}")
-
-    with arquivo_chunk.open("r", encoding="utf-8") as f:
-        payload = json.load(f)
-    if not isinstance(payload, dict):
-        raise ValueError(f"Chunk inválido (raiz não é objeto): {arquivo_chunk.name}")
-
-    chunk_meta = payload.get("meta", {})
-    if not isinstance(chunk_meta, dict):
-        raise ValueError(f"Chunk inválido (meta ausente): {arquivo_chunk.name}")
-
-    chunk_blocos_disco = int(chunk_meta.get("chunk_blocos", meta["chunk_blocos_disco"]))
-    grid_blocos = _validar_grid_numerica("grid_blocos", payload.get("grid_blocos"), chunk_blocos_disco, chunk_blocos_disco)
-    return grid_blocos
-
-
-def _chunk_totalmente_valido(chunk_grid: Sequence[Sequence[int]], chunk_blocos: int, cx: int, cy: int, largura: int, altura: int) -> bool:
-    x0 = cx * chunk_blocos
-    y0 = cy * chunk_blocos
-    for by, linha in enumerate(chunk_grid):
-        gy = y0 + by
-        for bx, valor in enumerate(linha):
-            gx = x0 + bx
-            if gx >= largura or gy >= altura:
-                continue
-            if int(valor) != 3:
-                return False
-    return True
-
-
-def _chunk_sem_agua(chunk_grid: Sequence[Sequence[int]], chunk_blocos: int, cx: int, cy: int, largura: int, altura: int) -> bool:
-    x0 = cx * chunk_blocos
-    y0 = cy * chunk_blocos
-    for by, linha in enumerate(chunk_grid):
-        gy = y0 + by
-        for bx, valor in enumerate(linha):
-            gx = x0 + bx
-            if gx >= largura or gy >= altura:
-                continue
-            tile = int(valor)
-            if tile == 0 or tile == 1:
-                return False
-    return True
-
-
-def _escolher_spawn_por_chunks(meta: Dict[str, int]) -> Tuple[Tuple[int, int], Tuple[float, float]]:
-    chunk_blocos = int(meta["chunk_blocos_disco"])
-    largura = int(meta["width"])
-    altura = int(meta["height"])
-    total_chunks_x = int(meta["chunks_x"])
-    total_chunks_y = int(meta["chunks_y"])
-
-    centro_chunk = (total_chunks_x // 2, total_chunks_y // 2)
-
-    melhor_chunk_bloco3 = None
-    melhor_dist_bloco3 = None
-    melhor_chunk_sem_agua = None
-    melhor_dist_sem_agua = None
-    for cy in range(total_chunks_y):
-        for cx in range(total_chunks_x):
-            grid_chunk = _carregar_chunk_blocos(meta, cx, cy)
-            dist = abs(cx - centro_chunk[0]) + abs(cy - centro_chunk[1])
-            if _chunk_totalmente_valido(grid_chunk, chunk_blocos, cx, cy, largura, altura):
-                if melhor_dist_bloco3 is None or dist < melhor_dist_bloco3:
-                    melhor_chunk_bloco3 = (cx, cy)
-                    melhor_dist_bloco3 = dist
-            if _chunk_sem_agua(grid_chunk, chunk_blocos, cx, cy, largura, altura):
-                if melhor_dist_sem_agua is None or dist < melhor_dist_sem_agua:
-                    melhor_chunk_sem_agua = (cx, cy)
-                    melhor_dist_sem_agua = dist
-
-    melhor_chunk = melhor_chunk_bloco3
-    if melhor_chunk is None:
-        melhor_chunk = melhor_chunk_sem_agua
-    if melhor_chunk is None:
-        melhor_chunk = centro_chunk
-
-    x0 = melhor_chunk[0] * chunk_blocos
-    y0 = melhor_chunk[1] * chunk_blocos
-
-    chunk_spawn = _carregar_chunk_blocos(meta, melhor_chunk[0], melhor_chunk[1])
-
-    candidatos = []
-    for by, linha in enumerate(chunk_spawn):
-        y = y0 + by
-        if y >= altura:
-            continue
-        for bx, valor in enumerate(linha):
-            x = x0 + bx
-            if x >= largura:
-                continue
-            candidatos.append((x, y, int(valor) == 3))
-
-    candidatos.sort(key=lambda item: (not item[2], abs(item[0] - (x0 + chunk_blocos / 2)), abs(item[1] - (y0 + chunk_blocos / 2))))
-    if not candidatos:
-        return melhor_chunk, (0.0, 0.0)
-
-    sx, sy, _ = candidatos[0]
-    return melhor_chunk, (float(sx), float(sy))
 
 
 def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_progresso: Callable[[int, str], None] | None = None) -> Dict[str, object]:
@@ -324,7 +212,8 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
 
     meta_java = _carregar_world_meta()
     _emitir_progresso(callback_progresso, 96, "Finalizando mundo")
-    spawn_chunk, spawn = _escolher_spawn_por_chunks(meta_java)
+    spawn_chunk = (int(meta_java["spawn_chunk_x"]), int(meta_java["spawn_chunk_y"]))
+    spawn = (float(meta_java["spawn_x"]), float(meta_java["spawn_y"]))
 
     estado = {
         "meta": {
@@ -421,12 +310,8 @@ def obter_posicao_spawn(estado_mundo: Dict[str, object] | None = None) -> Tuple[
     try:
         x = float(spawn[0])
         y = float(spawn[1])
-    except (TypeError, ValueError, IndexError):
-        try:
-            meta = _carregar_world_meta()
-            _, (x, y) = _escolher_spawn_por_chunks(meta)
-        except Exception:
-            return (0.0, 0.0)
+    except (TypeError, ValueError, IndexError) as exc:
+        raise ValueError("Estado do mundo inválido: spawn ausente ou inválido") from exc
     return (x, y)
 
 

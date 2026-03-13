@@ -15,11 +15,11 @@ from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Logica.AutoridadeCaptura import coletar_eventos_captura_agendada
 
-from SimuladorServerJogo.Controle.CerebroBaus import CerebroBaus
-from SimuladorServerJogo.Controle.CerebroPokemons import CerebroPokemons
-from SimuladorServerJogo.Controle.CerebroProjeteis import CerebroProjeteis
-from SimuladorServerJogo.Controle.CerebroItensMundo import CerebroItensMundo
-from SimuladorServerJogo.Controle.CerebroEstruturasNaturais import CerebroEstruturasNaturais
+from SimuladorServerJogo.Controle.Cerebros.CerebroBaus import CerebroBaus
+from SimuladorServerJogo.Controle.Cerebros.CerebroPokemons import CerebroPokemons
+from SimuladorServerJogo.Controle.Cerebros.CerebroProjeteis import CerebroProjeteis
+from SimuladorServerJogo.Controle.Cerebros.CerebroItensMundo import CerebroItensMundo
+from SimuladorServerJogo.Controle.Cerebros.CerebroEstruturasNaturais import CerebroEstruturasNaturais
 from SimuladorServerJogo.Controle.ServicoInventario import ServicoInventario
 
 Vector2 = Tuple[float, float]

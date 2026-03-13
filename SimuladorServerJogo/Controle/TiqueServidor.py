@@ -37,7 +37,7 @@ class TiqueServidor:
 
 
     def _loop_ticks(self) -> None:
-        from SimuladorServerJogo.Controle.CerebroCentral import CEREBRO
+        from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
         while True:
             with self._lock:
                 rodando = self._rodando

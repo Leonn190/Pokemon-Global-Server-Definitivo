@@ -11,7 +11,7 @@ from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, criar_objeto_mundo_server
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
-from SimuladorServerJogo.Controle.CerebroCentral import CEREBRO
+from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
 
 
 def _normalizar_posicao_loop(posicao):

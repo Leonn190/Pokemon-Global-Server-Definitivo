@@ -7,7 +7,7 @@ import math
 import time
 
 from Codigo.Geradores.Projetil import Projetil
-from Codigo.Geradores.Itens.ItemMundo import ItemMundo
+from Codigo.Geradores.ItemMundo import ItemMundo
 
 
 class ControladorCriaveis:

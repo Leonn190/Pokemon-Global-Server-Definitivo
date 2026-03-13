@@ -8,7 +8,7 @@ from typing import Dict
 import pygame
 
 from Codigo.Modulos.Colisor import Colisor
-from Codigo.Geradores.Itens.ItemInventario import ItemInventario
+from Codigo.Geradores.ItemInventario import ItemInventario
 
 
 class Projetil:

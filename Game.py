@@ -1,6 +1,5 @@
 import ctypes
 import pygame
-from pathlib import Path
 
 from Codigo.Cenas.ControladorCenas import ControladorCenas
 from Codigo.Modulos.Sonoridades import VerificaSonoridade

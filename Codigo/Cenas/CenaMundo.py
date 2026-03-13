@@ -4,7 +4,7 @@ from Codigo.Modulos.Camera import Camera
 from Codigo.Modulos.ControladorMundo.ControladorMundo import ControladorMundo
 from Codigo.Modulos.ElementosHud import ElementosHud
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
-from Codigo.Modulos.SubtelaOpcoes import SubtelaOpcoes
+from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Modulos.Ferramentas import GerenciadorFPS
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import enviar_mensagem_terminal, buscar_mensagens_terminal

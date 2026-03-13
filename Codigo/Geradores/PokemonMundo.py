@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Tuple
 import pygame
 
 from Codigo.Modulos.Colisor import Colisor
-from Codigo.Geradores.Itens.ItemInventario import ItemInventario
+from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Modulos.Auxiliares import carregar_frames
 
 Vector2 = Tuple[float, float]

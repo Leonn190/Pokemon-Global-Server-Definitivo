@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 TIPOS_ORDEM = ("Comum", "Incomum", "Raro", "Epico", "Lendario", "Mitico")
 _CHANCES_QTD_ITENS = {1: 30.0, 2: 25.0, 3: 25.0, 4: 20.0}
-_TAMANHO_BAU_POR_QTD = {1: 1.10, 2: 1.35, 3: 1.65, 4: 2.00}
+_TAMANHO_BAU_POR_QTD = {1: 1, 2: 1.25, 3: 1.55, 4: 1.90}
 _FALLBACK_ITENS = {
     1: [
         {"Nome": "Pokeball", "Descrição": "Esfera simples de captura.", "Raridade": 1, "Estilo": "bola", "Code": "pokeball", "quantidade": 1},

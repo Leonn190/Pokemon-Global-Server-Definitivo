@@ -5,7 +5,7 @@ from typing import Dict, Tuple
 
 import pygame
 
-from Codigo.Geradores.Itens.ItemInventario import ItemInventario
+from Codigo.Geradores.ItemInventario import ItemInventario
 
 Vector2 = Tuple[float, float]
 

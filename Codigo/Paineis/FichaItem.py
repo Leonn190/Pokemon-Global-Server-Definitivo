@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pygame
 
-from Codigo.Geradores.Itens.ItemInventario import ItemInventario
+from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
 

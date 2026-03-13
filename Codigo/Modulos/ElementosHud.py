@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import pygame
 
-from Codigo.Geradores.Itens.ItemInventario import ItemInventario
+from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Texto import Texto
 
 
 class ElementosHud:
     def __init__(self):
-        self.Fonte = pygame.font.SysFont("arial", 15)
         self.SlotsVisiveis = 8
         self.TextoQtd = Texto("", style={"size": 14, "align": "bottomright", "outline_thickness": 1})
 

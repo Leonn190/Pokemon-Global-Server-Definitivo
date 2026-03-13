@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pygame
 
-from Codigo.Geradores.Itens.ItemInventario import ItemInventario
+from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Arrastavel import Arrastavel
 from Codigo.Prefabs.Painel import Painel, PainelRolavel
 from Codigo.Paineis.FichaItem import FichaItem

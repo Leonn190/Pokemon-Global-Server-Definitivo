@@ -68,17 +68,21 @@ def _clamp_i(v, mn=0, mx=100):
     return max(int(mn), min(int(mx), _to_int(v, mn)))
 
 
-def _registrar_update_player(usuario, payload, forcar_clientes=None):
-    pos = payload.get("posicao", [0.0, 0.0]) if isinstance(payload.get("posicao", [0.0, 0.0]), (list, tuple)) else [0.0, 0.0]
+def _registrar_update_player(usuario, payload):
+    pos = payload.get("posicao", [0.0, 0.0]) if isinstance(payload, dict) else [0.0, 0.0]
     obj = BANCO_DADOS.garantir_player(usuario, str(payload.get("skin", "S1")), tuple(pos))
+    try:
+        px, py = float(pos[0]), float(pos[1])
+    except Exception:
+        px, py = float(obj.posicao[0]), float(obj.posicao[1])
     registrar_diff(
         "update",
         payload=payload,
-        escopo={"centro": [float(pos[0]), float(pos[1])], "raio": 780.0},
+        escopo={"centro": [px, py], "raio": 780.0},
         objeto_id=obj.Id,
         autor="server",
         categoria="player",
-        forcar_clientes=forcar_clientes,
+        extras={"cliente_alvo": str(usuario)},
     )
 
 
@@ -290,7 +294,7 @@ def _cmd_tp(autor, args):
         payload = _payload_player(alvo)
         payload["posicao"] = [px, py]
         payload["teleporte"] = True
-        _registrar_update_player(alvo, payload, forcar_clientes=[alvo])
+        _registrar_update_player(alvo, payload)
     alvo_txt = "todos" if len(alvos) > 1 else alvos[0]
     return f"Teleportado {alvo_txt} para ({int(px)}, {int(py)})"
 

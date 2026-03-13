@@ -28,7 +28,7 @@ def _next_seq() -> int:
     return _DIFF_SEQ
 
 
-def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, autor: str = "server", categoria: str | None = None, forcar_clientes: List[str] | None = None) -> Dict[str, object]:
+def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, autor: str = "server", categoria: str | None = None, extras: Dict[str, object] | None = None) -> Dict[str, object]:
     diff = {
         "seq": _next_seq(),
         "timestamp": time.time(),
@@ -40,8 +40,8 @@ def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, obje
     }
     if categoria is not None:
         diff["categoria"] = str(categoria)
-    if forcar_clientes:
-        diff["forcar_clientes"] = [str(cid).strip() for cid in forcar_clientes if str(cid).strip()]
+    if isinstance(extras, dict):
+        diff.update(extras)
     PACOTES_TICK.registrar_diff_pendente(diff)
     return diff
 
@@ -100,15 +100,15 @@ def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float
 
 def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = ""):
     saida = []
-    client_id_norm = str(client_id or "").strip()
+    client_id_norm = str(client_id or "").strip().lower()
     for pacote in pacotes if isinstance(pacotes, list) else []:
         if not isinstance(pacote, dict):
             continue
         diffs = pacote.get("diffs", []) if isinstance(pacote.get("diffs"), list) else []
         diffs_visiveis = []
         for d in diffs:
-            forcar_clientes = d.get("forcar_clientes", []) if isinstance(d.get("forcar_clientes"), list) else []
-            if client_id_norm and client_id_norm in {str(cid).strip() for cid in forcar_clientes}:
+            alvo = str(d.get("cliente_alvo", "") or "").strip().lower()
+            if client_id_norm and alvo and alvo == client_id_norm:
                 diffs_visiveis.append(d)
                 continue
             if not _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados):

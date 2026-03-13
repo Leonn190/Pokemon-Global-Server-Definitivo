@@ -1,10 +1,10 @@
-"""Representação de Pokémon no mundo com estados serializáveis de frutificação/captura."""
+"""Representação de Pokémon no mundo com animações locais de captura."""
 
 from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pygame
 
@@ -33,21 +33,45 @@ class Pokemon:
         self.Info: Dict[str, object] = {"stats": {}}
         self.FrutasAplicadas: List[Dict[str, object]] = []
         self.EstadoFrutificacao: Dict[str, object] = {"efeitos": {}}
-        self.CapturaEstado: Dict[str, object] = {"fase": "nenhuma", "fase_inicio_ms": 0, "bola_posicao": None, "retorno_inicio": None, "retorno_destino": None, "bola_nome": "pokeball"}
-        self._captura_aguardando_token = ""
+        self.DificuldadeCaptura = 20.0
+        self.TamanhoBarraCaptura = 0.32
+        self.VelocidadeBarraCaptura = 90.0
+        self._inicio_barra_local_ms = pygame.time.get_ticks()
+        self.AlvoLocalCaptura = False
+        self._velocidade_interp_tiles_s = 2.5
+        self._velocidade_recuperacao_tiles_s = 5.0
+        self._recuperacao_restante_s = 0.0
+
+        self.TempoAnimCapturaMs = 320
+        self.TempoAnimChecagemMs = 220
+        self.TempoIntervaloChecagemMs = 120
+        self.TempoAnimFugaMs = 340
+        self.TempoAnimVoltaMs = 420
+        self.TempoEsperaConfirmacaoMs = 1500
+        self.TempoRecuperacaoMovimentoMs = 180
+
+        self.CapturaEstado: Dict[str, object] = {
+            "fase": "normal",
+            "fase_inicio_ms": 0,
+            "bola_posicao": [self.Posicao[0], self.Posicao[1]],
+            "retorno_inicio": None,
+            "retorno_destino": None,
+            "bola_nome": "pokeball",
+            "token_arremesso": "",
+            "checagens": [],
+            "indice_checagem": 0,
+            "resultado_final": None,
+            "captura_pendente": False,
+        }
+        self._captura_fake_token = ""
+        self._captura_fake_inicio_ms = 0
         self._captura_confirmada_token = ""
         self._captura_confirmada_desde_ms = 0
         self._captura_confirmada_espera_colisao = False
         self._captura_confirmada_atraso_ms = 0
-        self.AlvoLocalCaptura = False
-        self._inicio_barra_local_ms = pygame.time.get_ticks()
-        self.DificuldadeCaptura = 20.0
-        self.TamanhoBarraCaptura = 0.32
-        self.VelocidadeBarraCaptura = 90.0
-        self._velocidade_interp_tiles_s = 2.5
-        self._escala_visual = 1.0
-        self._captura_fake_token = ""
-        self._captura_fake_inicio_ms = 0
+        self._despawn_pendente = False
+        self._pronto_para_remover = False
+        self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
         self.aplicar_snapshot(snapshot)
 
     @staticmethod
@@ -97,85 +121,211 @@ class Pokemon:
             self._inicio_barra_local_ms = pygame.time.get_ticks()
         self.AlvoLocalCaptura = novo
 
+    def _agora_ms(self) -> int:
+        return pygame.time.get_ticks()
+
+    def _fase(self) -> str:
+        return str(self.CapturaEstado.get("fase", "normal") or "normal").strip().lower()
+
+    def _fase_ms(self) -> int:
+        return int(self.CapturaEstado.get("fase_inicio_ms", 0) or 0)
+
+    def _tempo_fase_ms(self) -> int:
+        return max(0, self._agora_ms() - self._fase_ms())
+
+    def _trocar_fase(self, fase: str) -> None:
+        self.CapturaEstado["fase"] = str(fase or "normal")
+        self.CapturaEstado["fase_inicio_ms"] = self._agora_ms()
+
+    def _normalizar_log_checagens(self, evento: Dict[str, object]) -> List[bool]:
+        bruto = None
+        for chave in ("checagens", "log_checagens", "tremidas", "log"):
+            valor = evento.get(chave)
+            if isinstance(valor, list):
+                bruto = valor
+                break
+        resultado: List[bool] = []
+        if isinstance(bruto, list):
+            for item in bruto[:3]:
+                if isinstance(item, dict):
+                    v = item.get("capturou", item.get("sucesso", item.get("resultado", item.get("passou"))))
+                else:
+                    v = item
+                resultado.append(bool(v))
+        fim = evento.get("resultado_final")
+        if fim is None:
+            fim = evento.get("capturado", evento.get("sucesso", evento.get("capturou")))
+        resultado_final = None if fim is None else bool(fim)
+        if resultado_final is True and resultado and len(resultado) < 3:
+            resultado.extend([True] * (3 - len(resultado)))
+        if resultado_final is True and not resultado:
+            resultado = [True, True, True]
+        if resultado_final is False and not resultado:
+            resultado = [False]
+        return resultado[:3]
+
+    def _resultado_final_evento(self, evento: Dict[str, object]) -> Optional[bool]:
+        for chave in ("resultado_final", "capturado", "sucesso", "capturou"):
+            if chave in evento:
+                return bool(evento.get(chave))
+        return None
+
+    def _posicao_bola_mundo(self) -> Vector2:
+        pos = self.CapturaEstado.get("bola_posicao")
+        if isinstance(pos, (list, tuple)) and len(pos) == 2:
+            return (float(pos[0]), float(pos[1]))
+        return self.Posicao
+
+    def _fixar_bola_na_posicao_atual(self) -> None:
+        self.CapturaEstado["bola_posicao"] = [float(self.Posicao[0]), float(self.Posicao[1])]
+
     def capturar(self, evento_captura: Dict[str, object]) -> None:
         evento = dict(evento_captura or {})
-        token_evento = str(evento.get("token_arremesso") or "")
-        if token_evento and self._captura_aguardando_token and token_evento == self._captura_aguardando_token:
-            self.confirmar_captura_por_token(token_evento, esperar_colisao=False, atraso_ms=0)
-
-        fase_evento = str(evento.get("fase", "nenhuma") or "nenhuma").strip().lower()
-        if self._captura_confirmada_token and token_evento and token_evento == self._captura_confirmada_token and self._captura_confirmada_espera_colisao:
+        if not evento:
             return
-        if self._captura_confirmada_token and token_evento and token_evento == self._captura_confirmada_token and self._captura_confirmada_atraso_ms > 0:
-            agora = pygame.time.get_ticks()
-            if (agora - self._captura_confirmada_desde_ms) < self._captura_confirmada_atraso_ms and fase_evento in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3"}:
-                return
+        token = str(evento.get("token_arremesso") or self.CapturaEstado.get("token_arremesso") or self._captura_fake_token or "")
+        if token:
+            self.CapturaEstado["token_arremesso"] = token
+            self._captura_confirmada_token = token
+            self._captura_confirmada_desde_ms = self._agora_ms()
+            self._captura_fake_inicio_ms = 0
+        if "bola_nome" in evento or not self.CapturaEstado.get("bola_nome"):
+            self.CapturaEstado["bola_nome"] = str(evento.get("bola_nome") or self.CapturaEstado.get("bola_nome") or "pokeball")
+        if isinstance(evento.get("bola_posicao"), (list, tuple)) and len(evento.get("bola_posicao")) == 2:
+            self.CapturaEstado["bola_posicao"] = [float(evento["bola_posicao"][0]), float(evento["bola_posicao"][1])]
+        else:
+            self._fixar_bola_na_posicao_atual()
+        if isinstance(evento.get("retorno_inicio"), (list, tuple)) and len(evento.get("retorno_inicio")) == 2:
+            self.CapturaEstado["retorno_inicio"] = [float(evento["retorno_inicio"][0]), float(evento["retorno_inicio"][1])]
+        if isinstance(evento.get("retorno_destino"), (list, tuple)) and len(evento.get("retorno_destino")) == 2:
+            self.CapturaEstado["retorno_destino"] = [float(evento["retorno_destino"][0]), float(evento["retorno_destino"][1])]
 
-        self.CapturaEstado.update(evento)
-        self.CapturaEstado.setdefault("fase", "nenhuma")
-        self.CapturaEstado.setdefault("fase_inicio_ms", pygame.time.get_ticks())
-        if token_evento:
-            self._captura_fake_token = token_evento
-        if fase_evento == "finalizada":
-            self.CapturaEstado["fase"] = "nenhuma"
-            self.CapturaEstado["captura_pendente"] = False
-            self._escala_visual = 1.0
-            self._captura_aguardando_token = ""
-            self._captura_confirmada_token = ""
-            self._captura_confirmada_desde_ms = 0
-            self._captura_confirmada_espera_colisao = False
-            self._captura_confirmada_atraso_ms = 0
+        checagens = self._normalizar_log_checagens(evento)
+        if checagens:
+            self.CapturaEstado["checagens"] = checagens
+        resultado_final = self._resultado_final_evento(evento)
+        if resultado_final is not None:
+            self.CapturaEstado["resultado_final"] = resultado_final
+        self.CapturaEstado["captura_pendente"] = False
+
+        fase_evento = str(evento.get("fase", "") or "").strip().lower()
+        mapa_fases = {
+            "iniciada": "captura",
+            "absorcao": "captura",
+            "bola_no_chao": "captura",
+            "tremida1": "checagem",
+            "tremida2": "checagem",
+            "tremida3": "checagem",
+            "escape": "fuga",
+            "escape_reaparecendo": "fuga",
+            "retorno_bola": "volta",
+            "sucesso": "volta",
+            "finalizada": "normal",
+            "normal": "normal",
+        }
+        fase_normalizada = mapa_fases.get(fase_evento, "")
+        fase_atual = self._fase()
+
+        if fase_normalizada == "normal" and fase_atual == "volta":
+            return
+        if fase_normalizada == "captura" and fase_atual == "captura":
+            return
+        if fase_normalizada == "checagem":
+            if fase_atual != "checagem":
+                self.CapturaEstado["indice_checagem"] = 0
+                self._trocar_fase("checagem")
+            return
+        if fase_normalizada == "fuga":
+            self._iniciar_fuga()
+            return
+        if fase_normalizada == "volta":
+            self._iniciar_volta()
+            return
+        if fase_normalizada == "captura" or (not fase_normalizada and fase_atual == "captura"):
+            return
+        if resultado_final is not None and fase_atual in {"captura", "checagem"}:
+            if checagens:
+                self.CapturaEstado["indice_checagem"] = 0
+                self._trocar_fase("checagem")
+            elif resultado_final:
+                self.CapturaEstado["checagens"] = [True, True, True]
+                self.CapturaEstado["indice_checagem"] = 0
+                self._trocar_fase("checagem")
+            else:
+                self._iniciar_fuga()
 
     def registrar_colisao_projetil_local(self, token: str, nome_bola: str = "pokeball", tempo_espera_confirmacao_ms: int = 1500) -> None:
-        self._captura_aguardando_token = str(token or "")
-        self._captura_fake_token = self._captura_aguardando_token
-        self._captura_fake_inicio_ms = pygame.time.get_ticks()
+        self._captura_fake_token = str(token or "")
+        self._captura_fake_inicio_ms = self._agora_ms()
+        self.TempoEsperaConfirmacaoMs = max(200, int(tempo_espera_confirmacao_ms or self.TempoEsperaConfirmacaoMs))
         self.CapturaEstado["bola_nome"] = str(nome_bola or self.CapturaEstado.get("bola_nome") or "pokeball")
-        self.CapturaEstado["token_arremesso"] = self._captura_aguardando_token
+        self.CapturaEstado["token_arremesso"] = self._captura_fake_token
         self.CapturaEstado["captura_pendente"] = True
-        self.CapturaEstado["fase"] = "iniciada"
-        self.CapturaEstado["fase_inicio_ms"] = self._captura_fake_inicio_ms
-        self.CapturaEstado["tempo_espera_confirmacao_ms"] = int(tempo_espera_confirmacao_ms)
-        self._captura_confirmada_espera_colisao = False
-        if self._captura_confirmada_token == self._captura_aguardando_token:
-            self.confirmar_captura_por_token(self._captura_aguardando_token, esperar_colisao=False, atraso_ms=0)
+        self.CapturaEstado["checagens"] = []
+        self.CapturaEstado["indice_checagem"] = 0
+        self.CapturaEstado["resultado_final"] = None
+        self._fixar_bola_na_posicao_atual()
+        self._trocar_fase("captura")
 
     def confirmar_captura_por_token(self, token: str, esperar_colisao: bool = False, atraso_ms: int = 0) -> None:
         token = str(token or "")
         if not token:
             return
         self._captura_confirmada_token = token
-        self._captura_confirmada_desde_ms = pygame.time.get_ticks()
+        self._captura_confirmada_desde_ms = self._agora_ms()
         self._captura_confirmada_espera_colisao = bool(esperar_colisao)
         self._captura_confirmada_atraso_ms = max(0, int(atraso_ms or 0))
 
     def iniciar_captura_fake(self, token: str) -> None:
         self.registrar_colisao_projetil_local(token)
 
+    def _iniciar_fuga(self) -> None:
+        if self._fase() == "fuga":
+            return
+        self.CapturaEstado["captura_pendente"] = False
+        self.CapturaEstado["resultado_final"] = False
+        self._trocar_fase("fuga")
+        self._recuperacao_restante_s = max(self._recuperacao_restante_s, self.TempoRecuperacaoMovimentoMs / 1000.0)
+
+    def _iniciar_volta(self) -> None:
+        if self._fase() == "volta":
+            return
+        self.CapturaEstado["captura_pendente"] = False
+        self.CapturaEstado["resultado_final"] = True
+        if not isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)):
+            bola = self._posicao_bola_mundo()
+            self.CapturaEstado["retorno_inicio"] = [float(bola[0]), float(bola[1])]
+        self._trocar_fase("volta")
+
     def _resolver_timeout_captura_fake(self) -> None:
         if self._captura_fake_inicio_ms <= 0:
             return
-        tempo_limite = int(self.CapturaEstado.get("tempo_espera_confirmacao_ms", 1500) or 1500)
-        if (pygame.time.get_ticks() - self._captura_fake_inicio_ms) < tempo_limite:
+        if (self._agora_ms() - self._captura_fake_inicio_ms) < self.TempoEsperaConfirmacaoMs:
             return
-        fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
-        if fase in {"bola_no_chao", "iniciada", "absorcao", "tremida1", "tremida2", "tremida3"}:
-            self.CapturaEstado["fase"] = "escape_reaparecendo"
-            self.CapturaEstado["captura_pendente"] = False
+        if self._fase() in {"captura", "checagem"} and self.CapturaEstado.get("resultado_final") is None:
+            self._iniciar_fuga()
         self._captura_fake_inicio_ms = 0
 
     def em_captura_pendente(self) -> bool:
         self._resolver_timeout_captura_fake()
-        agora_ms = pygame.time.get_ticks()
-        if self._captura_confirmada_token:
-            token_atual = str(self.CapturaEstado.get("token_arremesso") or self._captura_fake_token or "")
-            pronto_por_tempo = (agora_ms - self._captura_confirmada_desde_ms) >= self._captura_confirmada_atraso_ms
-            if token_atual == self._captura_confirmada_token and (not self._captura_confirmada_espera_colisao) and pronto_por_tempo:
-                self._captura_confirmada_atraso_ms = 0
-        fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
+        fase = self._fase()
         if bool(self.CapturaEstado.get("captura_pendente", False)):
             return True
-        return fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso"}
+        return fase in {"captura", "checagem", "fuga", "volta"}
+
+    def deve_adiar_despawn(self) -> bool:
+        fase = self._fase()
+        if fase == "volta":
+            return True
+        if bool(self.CapturaEstado.get("resultado_final") is True) and fase in {"captura", "checagem"}:
+            return True
+        return False
+
+    def solicitar_despawn_apos_animacao(self) -> None:
+        self._despawn_pendente = True
+
+    def pronto_para_remover_local(self) -> bool:
+        return bool(self._pronto_para_remover)
 
     def update(self, snapshot: Dict[str, object]) -> None:
         self.aplicar_snapshot(snapshot)
@@ -194,14 +344,14 @@ class Pokemon:
         self.EstadoFrutificacao = dict(estado.get("estado_frutificacao") or {"efeitos": {}})
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
         if captura:
-            self._captura_fake_inicio_ms = 0
             self.capturar(captura)
 
-        if self.em_captura_pendente():
+        self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), self._raio_colisao_padrao))
+        if self.em_captura_pendente() or bool(self.CapturaEstado.get("resultado_final") is True):
             self.Colisor.raio_colisao = 0.0
             self.Colisor.raio_interacao = 0.0
         else:
-            self.Colisor.raio_colisao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
+            self.Colisor.raio_colisao = self._raio_colisao_padrao
             self.Colisor.raio_interacao = max(self.Colisor.raio_colisao, 1.2)
 
         destino = self._pos(snapshot.get("posicao"))
@@ -217,43 +367,75 @@ class Pokemon:
         self.atualizar(dt)
 
     def animacaptura(self, tela, camera, centro, tile_px):
-        self._desenhar_pokebola_no_chao(tela, camera, centro, "absorcao", tile_px)
+        self._desenhar_animacao_captura(tela, camera, centro, tile_px)
 
     def animachecagem(self, tela, camera, centro, fase, tile_px):
-        self._desenhar_tremida(tela, camera, centro, fase, tile_px)
+        self._desenhar_animacao_checagem(tela, camera, centro, tile_px)
 
     def animafuga(self, tela, centro, base):
-        self._desenhar_escape(tela, centro, base)
+        self._desenhar_animacao_fuga(tela, centro, base)
 
     def animavolta(self, tela, camera, centro, tile_px):
-        self._desenhar_retorno_ao_player(tela, camera, centro, "retorno_bola", tile_px)
+        self._desenhar_animacao_volta(tela, camera, tile_px)
 
     def atualizar(self, dt: float) -> None:
         dt = max(0.0, float(dt))
-        px, py = self.Posicao
-        dx, dy = self.Destino
-        dist = math.hypot(dx - px, dy - py)
-        if dist > 1e-4:
-            passo = min(dist, self._velocidade_interp_tiles_s * dt)
-            k = (passo / dist) if dist > 0 else 0.0
-            self.definir_posicao(px + (dx - px) * k, py + (dy - py) * k)
-
         self._resolver_timeout_captura_fake()
-        agora_ms = pygame.time.get_ticks()
-        if self._captura_confirmada_token:
-            token_atual = str(self.CapturaEstado.get("token_arremesso") or self._captura_fake_token or "")
-            pronto_por_tempo = (agora_ms - self._captura_confirmada_desde_ms) >= self._captura_confirmada_atraso_ms
-            if token_atual == self._captura_confirmada_token and (not self._captura_confirmada_espera_colisao) and pronto_por_tempo:
-                self._captura_confirmada_atraso_ms = 0
-        fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
-        if fase in {"iniciada", "absorcao"}:
-            self._escala_visual = max(0.0, self._escala_visual - dt * 2.6)
-        elif fase == "escape_reaparecendo":
-            self._escala_visual = min(1.0, self._escala_visual + dt * 2.4)
-        elif fase in {"sucesso", "retorno_bola", "finalizada", "bola_no_chao", "tremida1", "tremida2", "tremida3", "escape"}:
-            self._escala_visual = max(0.0, self._escala_visual - dt * 3.2)
+        fase = self._fase()
+        if fase not in {"captura", "checagem", "fuga", "volta"}:
+            px, py = self.Posicao
+            dx, dy = self.Destino
+            dist = math.hypot(dx - px, dy - py)
+            if dist > 1e-4:
+                vel = self._velocidade_interp_tiles_s
+                if self._recuperacao_restante_s > 0.0:
+                    vel = max(vel, self._velocidade_recuperacao_tiles_s)
+                    self._recuperacao_restante_s = max(0.0, self._recuperacao_restante_s - dt)
+                passo = min(dist, vel * dt)
+                k = (passo / dist) if dist > 0 else 0.0
+                self.definir_posicao(px + (dx - px) * k, py + (dy - py) * k)
         else:
-            self._escala_visual += (1.0 - self._escala_visual) * min(1.0, dt * 6.5)
+            self._fixar_bola_na_posicao_atual()
+
+        if fase == "captura":
+            if self._tempo_fase_ms() >= self.TempoAnimCapturaMs and self.CapturaEstado.get("resultado_final") is not None:
+                checagens = list(self.CapturaEstado.get("checagens") or [])
+                if not checagens:
+                    if self.CapturaEstado.get("resultado_final") is True:
+                        checagens = [True, True, True]
+                    else:
+                        checagens = [False]
+                    self.CapturaEstado["checagens"] = checagens
+                self.CapturaEstado["indice_checagem"] = 0
+                self._trocar_fase("checagem")
+        elif fase == "checagem":
+            total_ms = self.TempoAnimChecagemMs + self.TempoIntervaloChecagemMs
+            checagens = list(self.CapturaEstado.get("checagens") or [])
+            indice = max(0, int(self.CapturaEstado.get("indice_checagem", 0) or 0))
+            if total_ms > 0 and self._tempo_fase_ms() >= total_ms:
+                if indice < len(checagens) and not bool(checagens[indice]):
+                    self._iniciar_fuga()
+                elif indice + 1 < len(checagens):
+                    self.CapturaEstado["indice_checagem"] = indice + 1
+                    self._trocar_fase("checagem")
+                elif self.CapturaEstado.get("resultado_final") is True:
+                    self._iniciar_volta()
+                else:
+                    self._iniciar_fuga()
+        elif fase == "fuga":
+            if self._tempo_fase_ms() >= self.TempoAnimFugaMs:
+                self.CapturaEstado["checagens"] = []
+                self.CapturaEstado["indice_checagem"] = 0
+                self.CapturaEstado["resultado_final"] = None
+                self.CapturaEstado["captura_pendente"] = False
+                self._trocar_fase("normal")
+        elif fase == "volta":
+            if self._tempo_fase_ms() >= self.TempoAnimVoltaMs:
+                self.CapturaEstado["captura_pendente"] = False
+                self._trocar_fase("normal")
+                if self._despawn_pendente:
+                    self._pronto_para_remover = True
+
     def _desenhar_barra_local(self, tela, centro, raio):
         decorrido_s = max(0.0, (pygame.time.get_ticks() - int(self._inicio_barra_local_ms)) / 1000.0)
         ang = (decorrido_s * self.VelocidadeBarraCaptura) % 360.0
@@ -265,144 +447,141 @@ class Pokemon:
         pygame.draw.arc(tela, (255, 210, 76), rect, fim, ini, 4)
         pygame.draw.circle(tela, (36, 120, 255), centro, raio, 1)
 
-    def _desenhar_pokemon_normal(self, tela, centro, raio_corpo):
-        frames = self._obter_frames_escalados(self.Especie, max(12, int(raio_corpo * 1.8)))
-        if frames and raio_corpo > 2:
-            frame = frames[int((pygame.time.get_ticks() / 100) % len(frames))]
+    def _desenhar_pokemon_normal(self, tela, centro, raio_corpo, escala_extra: float = 1.0, alpha: int = 255):
+        raio = max(2, int(raio_corpo * max(0.05, float(escala_extra))))
+        frames = self._obter_frames_escalados(self.Especie, max(12, int(raio * 1.8)))
+        if frames and raio > 2:
+            frame = frames[int((pygame.time.get_ticks() / 100) % len(frames))].copy()
+            if alpha < 255:
+                frame.set_alpha(alpha)
             tela.blit(frame, frame.get_rect(center=centro))
         else:
-            pygame.draw.circle(tela, (70, 155, 245), centro, raio_corpo)
-            pygame.draw.circle(tela, (24, 84, 190), centro, raio_corpo, 2)
+            surf = pygame.Surface((raio * 2 + 8, raio * 2 + 8), pygame.SRCALPHA)
+            pygame.draw.circle(surf, (70, 155, 245, alpha), (surf.get_width() // 2, surf.get_height() // 2), raio)
+            pygame.draw.circle(surf, (24, 84, 190, alpha), (surf.get_width() // 2, surf.get_height() // 2), raio, 2)
+            tela.blit(surf, surf.get_rect(center=centro))
 
-    def _desenhar_circulo_base(self, tela, centro, raio_base, fase):
-        escala = max(0.08, self._escala_visual)
+    def _desenhar_circulo_base(self, tela, centro, raio_base):
         pulso = 1.0 + math.sin(pygame.time.get_ticks() * 0.008) * 0.06
-        rr = max(3, int(raio_base * pulso * escala))
-        if fase in {"iniciada", "absorcao"}:
-            t = (pygame.time.get_ticks() % 420) / 420.0
-            rr = max(rr, int(raio_base * (0.7 + t * 1.5) * escala))
-            pygame.draw.circle(tela, (78, 168, 255), centro, rr, 2)
-            pygame.draw.circle(tela, (60, 130, 255), centro, max(2, rr - 2), 1)
-            return rr
+        rr = max(3, int(raio_base * pulso))
         pygame.draw.circle(tela, (70, 155, 245), centro, rr)
         pygame.draw.circle(tela, (24, 84, 190), centro, rr, 2)
         return rr
-
-    def _desenhar_absorcao(self, tela, camera, centro, raio_base, tile_px, fase):
-        tempo = max(0.0, (pygame.time.get_ticks() - int(self.CapturaEstado.get("fase_inicio_ms", 0))) / 1000.0)
-        if fase == "iniciada":
-            prog = min(1.0, tempo / 0.22)
-        elif fase == "absorcao":
-            prog = 1.0 - min(1.0, tempo / 0.28)
-        else:
-            prog = 0.0
-        prog = max(0.0, min(1.0, prog))
-        raio_circulo = max(4, int(raio_base * (0.2 + 0.9 * prog)))
-        cor = (170, 225, 255)
-        aura = pygame.Surface((raio_circulo * 4, raio_circulo * 4), pygame.SRCALPHA)
-        pygame.draw.circle(aura, (cor[0], cor[1], cor[2], 78), (aura.get_width() // 2, aura.get_height() // 2), raio_circulo)
-        pygame.draw.circle(aura, (cor[0], cor[1], cor[2], 168), (aura.get_width() // 2, aura.get_height() // 2), raio_circulo, max(2, int(raio_base * 0.08)))
-        tela.blit(aura, aura.get_rect(center=centro))
-        raio_corpo = max(0, int(raio_base * (1.0 - prog)))
-        if raio_corpo > 1:
-            self._desenhar_pokemon_normal(tela, centro, raio_corpo)
-        self._desenhar_bola_captura(tela, camera, centro, "bola_no_chao", tile_px)
-
-    def _centro_bola_captura(self, camera, centro_padrao, usar_posicao_captura=True):
-        if not usar_posicao_captura:
-            return centro_padrao
-        pos = self.CapturaEstado.get("bola_posicao")
-        if isinstance(pos, (list, tuple)) and len(pos) == 2:
-            bx, by = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
-            return (int(bx), int(by))
-        return centro_padrao
 
     def _surface_bola_captura(self, tile_px: int):
         nome_bola = str(self.CapturaEstado.get("bola_nome") or "pokeball")
         item = {"Nome": nome_bola, "Code": ""}
         return ItemInventario.surface_item(item, lado_px=max(12, int(tile_px * 0.45)))
 
-    def _desenhar_bola_captura(self, tela, camera, centro, fase, tile_px, usar_posicao_captura=True):
-        cx, cy = self._centro_bola_captura(camera, centro, usar_posicao_captura=usar_posicao_captura)
-        ang = 0.0
-        if fase.startswith("tremida"):
-            k = int(fase.replace("tremida", "") or 1)
-            amplitudes = {1: 11, 2: 7, 3: 4}
-            angulos = {1: 16.0, 2: 10.0, 3: 6.0}
-            cx += int(math.sin(pygame.time.get_ticks() * 0.026 * (1 + k * 0.18)) * amplitudes.get(k, 4))
-            ang = math.sin(pygame.time.get_ticks() * 0.05 * (1 + k * 0.12)) * angulos.get(k, 6.0)
-
+    def _desenhar_bola(self, tela, centro, tile_px: int, rotacao: float = 0.0, escala: float = 1.0, alpha: int = 255):
         base = self._surface_bola_captura(tile_px)
         if base is None:
-            pygame.draw.circle(tela, (255, 180, 90), (int(cx), int(cy)), max(3, int(tile_px * 0.16)))
+            pygame.draw.circle(tela, (255, 180, 90), (int(centro[0]), int(centro[1])), max(3, int(tile_px * 0.16)))
             return
-
-        chave = (id(base), int(ang) % 360)
+        sprite = base
+        if abs(escala - 1.0) > 1e-3:
+            w, h = base.get_size()
+            sprite = pygame.transform.smoothscale(base, (max(1, int(w * escala)), max(1, int(h * escala))))
+        ang_i = int(rotacao) % 360
+        chave = (id(sprite), ang_i)
         rot = self._cache_rotacao_bola.get(chave)
         if rot is None:
-            rot = pygame.transform.rotate(base, ang)
+            rot = pygame.transform.rotate(sprite, rotacao)
             self._cache_rotacao_bola[chave] = rot
             if len(self._cache_rotacao_bola) > 720:
                 self._cache_rotacao_bola.clear()
-        tela.blit(rot, rot.get_rect(center=(int(cx), int(cy))))
+        if alpha < 255:
+            rot = rot.copy()
+            rot.set_alpha(alpha)
+        tela.blit(rot, rot.get_rect(center=(int(centro[0]), int(centro[1]))))
 
-    def _desenhar_escape(self, tela, centro, base):
-        self._desenhar_circulo_base(tela, centro, base, "escape_reaparecendo")
-        self._desenhar_pokemon_normal(tela, centro, max(3, int(base * max(0.18, self._escala_visual))))
+    def _desenhar_animacao_captura(self, tela, camera, centro, tile_px):
+        t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimCapturaMs))))
+        base = max(6, int(tile_px * max(self._raio_colisao_padrao, 0.42)))
+        aura_r = max(base + 4, int(base * (1.1 + 0.55 * t)))
+        aura = pygame.Surface((aura_r * 3, aura_r * 3), pygame.SRCALPHA)
+        c = (150, 220, 255, int(120 * (1.0 - t * 0.35)))
+        pygame.draw.circle(aura, c, (aura.get_width() // 2, aura.get_height() // 2), aura_r, max(2, int(base * 0.09)))
+        tela.blit(aura, aura.get_rect(center=centro))
+        for i in range(3):
+            ang = (t * math.pi * 2.2) + (i * math.pi * 2.0 / 3.0)
+            ox = int(math.cos(ang) * base * (0.5 + 0.2 * (1.0 - t)))
+            oy = int(math.sin(ang) * base * (0.35 + 0.2 * (1.0 - t)))
+            pygame.draw.circle(tela, (180, 235, 255), (centro[0] + ox, centro[1] + oy), max(2, int(base * 0.10)))
+        poke_scale = max(0.0, 1.0 - (t ** 1.35))
+        poke_y = int(centro[1] - tile_px * 0.12 * t)
+        if poke_scale > 0.02:
+            self._desenhar_pokemon_normal(tela, (centro[0], poke_y), max(2, int(base * 1.05)), escala_extra=poke_scale, alpha=max(20, int(255 * (1.0 - t * 0.55))))
+        bola_y = int(centro[1] - tile_px * 0.24 * (1.0 - t) * (1.0 - t))
+        bola_rot = -280.0 * (1.0 - t)
+        bola_squash = 1.0 + 0.12 * math.sin(t * math.pi)
+        self._desenhar_bola(tela, (centro[0], bola_y), tile_px, rotacao=bola_rot, escala=bola_squash)
 
-    def _desenhar_retorno_ao_player(self, tela, camera, centro, fase, tile_px):
-        ini = self.CapturaEstado.get("retorno_inicio") if isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)) else [self.Posicao[0], self.Posicao[1]]
+    def _desenhar_animacao_checagem(self, tela, camera, centro, tile_px):
+        base = max(6, int(tile_px * max(self._raio_colisao_padrao, 0.42)))
+        indice = max(0, int(self.CapturaEstado.get("indice_checagem", 0) or 0))
+        t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimChecagemMs))))
+        amplitudes = [13.0, 9.0, 6.0]
+        rotacoes = [18.0, 12.0, 7.0]
+        amp = amplitudes[min(indice, len(amplitudes) - 1)]
+        rot = rotacoes[min(indice, len(rotacoes) - 1)]
+        onda = math.sin(t * math.pi)
+        dx = int(math.sin(t * math.pi * 2.0) * amp * onda)
+        ang = math.sin(t * math.pi * 2.0) * rot * onda
+        sombra = pygame.Rect(0, 0, int(base * 1.8), max(4, int(base * 0.45)))
+        sombra.center = (centro[0], centro[1] + int(base * 0.72))
+        pygame.draw.ellipse(tela, (0, 0, 0, 90), sombra)
+        self._desenhar_bola(tela, (centro[0] + dx, centro[1]), tile_px, rotacao=ang)
+
+    def _desenhar_animacao_fuga(self, tela, centro, base):
+        t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimFugaMs))))
+        self._desenhar_circulo_base(tela, centro, base)
+        for i in range(5):
+            ang = (i / 5.0) * math.pi * 2.0 + (t * 2.4)
+            ox = int(math.cos(ang) * base * (0.45 + t * 0.85))
+            oy = int(math.sin(ang) * base * (0.25 + t * 0.65))
+            pygame.draw.circle(tela, (255, 225, 170), (centro[0] + ox, centro[1] + oy), max(2, int(base * 0.08)))
+        escala = min(1.0, 0.18 + (t ** 0.65) * 0.92)
+        alpha = max(50, int(255 * min(1.0, 0.4 + t * 0.9)))
+        self._desenhar_pokemon_normal(tela, centro, max(3, int(base * 1.05)), escala_extra=escala, alpha=alpha)
+
+    def _desenhar_animacao_volta(self, tela, camera, tile_px):
+        ini = self.CapturaEstado.get("retorno_inicio") if isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)) else list(self._posicao_bola_mundo())
         fim = self.CapturaEstado.get("retorno_destino") if isinstance(self.CapturaEstado.get("retorno_destino"), (list, tuple)) else ini
+        t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimVoltaMs))))
         ini_t = camera.mundo_para_tela_px((float(ini[0]), float(ini[1])))
         fim_t = camera.mundo_para_tela_px((float(fim[0]), float(fim[1])))
-        t = min(1.0, max(0.0, (pygame.time.get_ticks() - int(self.CapturaEstado.get("fase_inicio_ms", 0))) / 340.0))
-        bx = int(ini_t[0] + (fim_t[0] - ini_t[0]) * t)
-        by = int(ini_t[1] + (fim_t[1] - ini_t[1]) * t)
-        self._desenhar_bola_captura(tela, camera, (bx, by), fase, tile_px, usar_posicao_captura=False)
-
-    def _desenhar_pokebola_no_chao(self, tela, camera, centro, fase, tile_px):
-        self._desenhar_bola_captura(tela, camera, centro, fase, tile_px)
-
-    def _desenhar_tremida(self, tela, camera, centro, fase, tile_px):
-        self._desenhar_bola_captura(tela, camera, centro, fase, tile_px)
+        bx = ini_t[0] + (fim_t[0] - ini_t[0]) * t
+        by = ini_t[1] + (fim_t[1] - ini_t[1]) * t - math.sin(t * math.pi) * max(18.0, tile_px * 0.55)
+        rot = -540.0 * t
+        self._desenhar_bola(tela, (int(bx), int(by)), tile_px, rotacao=rot)
 
     def render(self, tela, camera, dt: float) -> None:
         self.atualizar(dt)
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
         centro = (int(cx), int(cy))
         tile_px = int(getattr(camera, "TilePx", 50))
-        base = max(6, int(tile_px * max(float(getattr(self.Colisor, "raio_colisao", 0.0) or 0.0), 0.42)))
-        self._resolver_timeout_captura_fake()
-        agora_ms = pygame.time.get_ticks()
-        if self._captura_confirmada_token:
-            token_atual = str(self.CapturaEstado.get("token_arremesso") or self._captura_fake_token or "")
-            pronto_por_tempo = (agora_ms - self._captura_confirmada_desde_ms) >= self._captura_confirmada_atraso_ms
-            if token_atual == self._captura_confirmada_token and (not self._captura_confirmada_espera_colisao) and pronto_por_tempo:
-                self._captura_confirmada_atraso_ms = 0
-        fase = str(self.CapturaEstado.get("fase", "nenhuma") or "nenhuma")
-
+        base = max(6, int(tile_px * max(float(getattr(self.Colisor, "raio_colisao", 0.0) or 0.0), self._raio_colisao_padrao, 0.42)))
+        fase = self._fase()
         em_pendente = self.em_captura_pendente()
-        if self.FrutasAplicadas and fase not in {"sucesso", "finalizada", "retorno_bola"} and not em_pendente:
+
+        if self.FrutasAplicadas and fase not in {"volta"} and not em_pendente:
             pygame.draw.circle(tela, (98, 212, 118), centro, base + 8, 2)
 
-        if self.AlvoLocalCaptura and fase in {"nenhuma", "escape_reaparecendo", "escape"} and not em_pendente:
+        if self.AlvoLocalCaptura and fase == "normal" and not em_pendente:
             self._desenhar_barra_local(tela, centro, base + 14)
 
-        if fase in {"iniciada", "absorcao"}:
-            self._desenhar_absorcao(tela, camera, centro, max(base, int(tile_px * 0.50)), tile_px, fase)
-        elif fase == "bola_no_chao":
-            self._desenhar_pokebola_no_chao(tela, camera, centro, fase, tile_px)
-        elif fase in {"tremida1", "tremida2", "tremida3"}:
-            self._desenhar_tremida(tela, camera, centro, fase, tile_px)
-        elif fase == "retorno_bola":
-            self._desenhar_retorno_ao_player(tela, camera, centro, fase, tile_px)
-        elif fase in {"escape", "escape_reaparecendo"}:
-            self._desenhar_escape(tela, centro, base)
-        elif fase in {"sucesso", "finalizada"}:
-            self._desenhar_bola_captura(tela, camera, centro, fase, tile_px)
+        if fase == "captura":
+            self._desenhar_animacao_captura(tela, camera, centro, tile_px)
+        elif fase == "checagem":
+            self._desenhar_animacao_checagem(tela, camera, centro, tile_px)
+        elif fase == "fuga":
+            self._desenhar_animacao_fuga(tela, centro, base)
+        elif fase == "volta":
+            self._desenhar_animacao_volta(tela, camera, tile_px)
         else:
-            self._desenhar_circulo_base(tela, centro, base, fase)
-            self._desenhar_pokemon_normal(tela, centro, max(2, int(base * self._escala_visual)))
+            self._desenhar_circulo_base(tela, centro, base)
+            self._desenhar_pokemon_normal(tela, centro, max(2, int(base)))
 
 
 Pokemon.desenhar = Pokemon.render

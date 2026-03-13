@@ -106,6 +106,7 @@ class ControladorObjetos:
                     ids.update(self._ids_por_chunk.get((cx + dx, cy + dy), set()))
             return [self.ObjetosPorId.get(oid) for oid in ids if oid in self.ObjetosPorId]
 
+
     def _payload_tem_colisao_solida(self, payload: Dict[str, object]) -> bool:
         if not isinstance(payload, dict):
             return False
@@ -122,7 +123,6 @@ class ControladorObjetos:
         if self._eh_payload_estrutura(payload):
             return True
 
-        # Itens no mundo, projéteis e demais criáveis não devem bloquear o player.
         if tipo in {"entidade_item_mundo", "item_mundo", "entidade_projetil", "projetil"}:
             return False
         if subtipo in {"item_mundo", "projetil"}:
@@ -272,6 +272,7 @@ class ControladorObjetos:
         else:
             self.EstruturasPorId.pop(oid, None)
 
+
     def aplicar_diff(self, diff):
         if not isinstance(diff, dict):
             return
@@ -321,6 +322,11 @@ class ControladorObjetos:
 
         if tipo == "despawn":
             with self._lock_objetos:
+                poke = self.PokemonsPorId.get(oid)
+                if poke is not None and hasattr(poke, "deve_adiar_despawn") and poke.deve_adiar_despawn():
+                    if hasattr(poke, "solicitar_despawn_apos_animacao"):
+                        poke.solicitar_despawn_apos_animacao()
+                    return
                 self.ObjetosPorId.pop(oid, None)
                 self.PokemonsPorId.pop(oid, None)
                 self.BausPorId.pop(oid, None)
@@ -403,7 +409,7 @@ class ControladorObjetos:
             return
         if hasattr(poke, "confirmar_captura_por_token"):
             colidiu_local = bool(info.get("colidiu_local", False))
-            poke.confirmar_captura_por_token(token, esperar_colisao=not colidiu_local, atraso_ms=(2000 if not colidiu_local else 0))
+            poke.confirmar_captura_por_token(token, esperar_colisao=not colidiu_local, atraso_ms=0)
 
     def atualizar_projeteis_visuais(self, dt: float) -> None:
         with self._lock_objetos:
@@ -439,7 +445,7 @@ class ControladorObjetos:
         for oid, poke in itens:
             fase = str(getattr(poke, "CapturaEstado", {}).get("fase", "nenhuma") or "nenhuma")
             pendente = bool(getattr(poke, "CapturaEstado", {}).get("captura_pendente", False))
-            invalido = pendente or fase in {"iniciada", "absorcao", "bola_no_chao", "tremida1", "tremida2", "tremida3", "retorno_bola", "sucesso", "finalizada"}
+            invalido = pendente or fase in {"captura", "checagem", "fuga", "volta"}
             if invalido:
                 continue
             dxm, dym = float(poke.Posicao[0]) - mx, float(poke.Posicao[1]) - my
@@ -516,6 +522,7 @@ class ControladorObjetos:
         dt_pokemons = max(0.0, (agora - self._ultimo_render_pokemons_ms) / 1000.0)
         self._ultimo_render_pokemons_ms = agora
 
+        remover_pokemons: List[int] = []
         for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
             if not isinstance(obj, dict):
                 continue
@@ -530,6 +537,8 @@ class ControladorObjetos:
             poke = self.PokemonsPorId.get(oid)
             if poke is not None:
                 poke.render(tela, camera, dt_pokemons)
+                if hasattr(poke, "pronto_para_remover_local") and poke.pronto_para_remover_local():
+                    remover_pokemons.append(oid)
                 continue
 
             bau = self.BausPorId.get(oid)
@@ -551,6 +560,12 @@ class ControladorObjetos:
                 continue
 
             self._render_fallback_objeto(tela, camera, obj, cor_fallback=(222, 233, 245))
+
+        for oid in remover_pokemons:
+            with self._lock_objetos:
+                self.ObjetosPorId.pop(int(oid), None)
+                self.PokemonsPorId.pop(int(oid), None)
+                self._remover_indice_chunk_objeto(int(oid))
 
     def renderizar_estruturas(self, tela, camera):
         for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):

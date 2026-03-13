@@ -122,13 +122,17 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
     return saida
 
 
-def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int]) -> List[Dict[str, object]]:
+def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int], client_id: str = "") -> List[Dict[str, object]]:
     raio = _raio_visao_por_regras()
+    client_id_norm = str(client_id or "").strip().lower()
     objetos_proximos = [obj for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio) if _objeto_em_chunks(obj, chunks_carregados)]
     ids_proximos = {int(obj.Id) for obj in objetos_proximos}
     diffs: List[Dict[str, object]] = []
     agora = time.time()
     for obj in objetos_proximos:
+        dono = str(BANCO_DADOS.usuario_por_objeto_id(int(obj.Id)) or "").strip().lower()
+        if client_id_norm and dono and dono == client_id_norm:
+            continue
         if int(obj.Id) in vistos:
             continue
         vistos.add(int(obj.Id))
@@ -172,7 +176,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
             return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade())}}, ensure_ascii=False)
 
         pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id)
-        diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos)
+        diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id)
         if diffs_extra:
             if pacotes:
                 pacote_vis = pacotes[-1]

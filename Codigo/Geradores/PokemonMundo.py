@@ -186,15 +186,11 @@ class Pokemon:
         token = str(evento.get("token_arremesso") or self.CapturaEstado.get("token_arremesso") or self._captura_fake_token or "")
         if token:
             self.CapturaEstado["token_arremesso"] = token
-            self._captura_confirmada_token = token
-            self._captura_confirmada_desde_ms = self._agora_ms()
             self._captura_fake_inicio_ms = 0
         if "bola_nome" in evento or not self.CapturaEstado.get("bola_nome"):
             self.CapturaEstado["bola_nome"] = str(evento.get("bola_nome") or self.CapturaEstado.get("bola_nome") or "pokeball")
         if isinstance(evento.get("bola_posicao"), (list, tuple)) and len(evento.get("bola_posicao")) == 2:
             self.CapturaEstado["bola_posicao"] = [float(evento["bola_posicao"][0]), float(evento["bola_posicao"][1])]
-        else:
-            self._fixar_bola_na_posicao_atual()
         if isinstance(evento.get("retorno_inicio"), (list, tuple)) and len(evento.get("retorno_inicio")) == 2:
             self.CapturaEstado["retorno_inicio"] = [float(evento["retorno_inicio"][0]), float(evento["retorno_inicio"][1])]
         if isinstance(evento.get("retorno_destino"), (list, tuple)) and len(evento.get("retorno_destino")) == 2:
@@ -206,53 +202,9 @@ class Pokemon:
         resultado_final = self._resultado_final_evento(evento)
         if resultado_final is not None:
             self.CapturaEstado["resultado_final"] = resultado_final
+            if not self.CapturaEstado.get("checagens"):
+                self.CapturaEstado["checagens"] = [True, True, True] if resultado_final else [False]
         self.CapturaEstado["captura_pendente"] = False
-
-        fase_evento = str(evento.get("fase", "") or "").strip().lower()
-        mapa_fases = {
-            "iniciada": "captura",
-            "absorcao": "captura",
-            "bola_no_chao": "captura",
-            "tremida1": "checagem",
-            "tremida2": "checagem",
-            "tremida3": "checagem",
-            "escape": "fuga",
-            "escape_reaparecendo": "fuga",
-            "retorno_bola": "volta",
-            "sucesso": "volta",
-            "finalizada": "normal",
-            "normal": "normal",
-        }
-        fase_normalizada = mapa_fases.get(fase_evento, "")
-        fase_atual = self._fase()
-
-        if fase_normalizada == "normal" and fase_atual == "volta":
-            return
-        if fase_normalizada == "captura" and fase_atual == "captura":
-            return
-        if fase_normalizada == "checagem":
-            if fase_atual != "checagem":
-                self.CapturaEstado["indice_checagem"] = 0
-                self._trocar_fase("checagem")
-            return
-        if fase_normalizada == "fuga":
-            self._iniciar_fuga()
-            return
-        if fase_normalizada == "volta":
-            self._iniciar_volta()
-            return
-        if fase_normalizada == "captura" or (not fase_normalizada and fase_atual == "captura"):
-            return
-        if resultado_final is not None and fase_atual in {"captura", "checagem"}:
-            if checagens:
-                self.CapturaEstado["indice_checagem"] = 0
-                self._trocar_fase("checagem")
-            elif resultado_final:
-                self.CapturaEstado["checagens"] = [True, True, True]
-                self.CapturaEstado["indice_checagem"] = 0
-                self._trocar_fase("checagem")
-            else:
-                self._iniciar_fuga()
 
     def registrar_colisao_projetil_local(self, token: str, nome_bola: str = "pokeball", tempo_espera_confirmacao_ms: int = 1500) -> None:
         self._captura_fake_token = str(token or "")
@@ -346,13 +298,15 @@ class Pokemon:
         if captura:
             self.capturar(captura)
 
+        fase_local = self._fase()
         self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), self._raio_colisao_padrao))
-        if self.em_captura_pendente() or bool(self.CapturaEstado.get("resultado_final") is True):
+        if fase_local in {"captura", "checagem", "fuga", "volta"} or bool(self.CapturaEstado.get("resultado_final") is True):
             self.Colisor.raio_colisao = 0.0
             self.Colisor.raio_interacao = 0.0
-        else:
-            self.Colisor.raio_colisao = self._raio_colisao_padrao
-            self.Colisor.raio_interacao = max(self.Colisor.raio_colisao, 1.2)
+            return
+
+        self.Colisor.raio_colisao = self._raio_colisao_padrao
+        self.Colisor.raio_interacao = max(self.Colisor.raio_colisao, 1.2)
 
         destino = self._pos(snapshot.get("posicao"))
         self.Destino = destino
@@ -366,17 +320,9 @@ class Pokemon:
     def mover(self, dt: float) -> None:
         self.atualizar(dt)
 
-    def animacaptura(self, tela, camera, centro, tile_px):
-        self._desenhar_animacao_captura(tela, camera, centro, tile_px)
 
-    def animachecagem(self, tela, camera, centro, fase, tile_px):
-        self._desenhar_animacao_checagem(tela, camera, centro, tile_px)
 
-    def animafuga(self, tela, centro, base):
-        self._desenhar_animacao_fuga(tela, centro, base)
 
-    def animavolta(self, tela, camera, centro, tile_px):
-        self._desenhar_animacao_volta(tela, camera, tile_px)
 
     def atualizar(self, dt: float) -> None:
         dt = max(0.0, float(dt))

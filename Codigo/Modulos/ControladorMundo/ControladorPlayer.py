@@ -376,20 +376,18 @@ class ControladorPlayer:
         if not payload:
             return
 
-        # O player local ja existe no client e nao deve ser re-hidratado por snapshots
-        # sinteticos de visibilidade vindos do servidor (spawn autor=server).
-        # Para o player local, so updates/despawns explicitos do servidor fazem sentido.
         if tipo == "spawn":
             return
-        if autor and autor != "server":
+        if autor != "server":
             return
 
         dados = dict(payload)
-        if bool(dados.get("teleporte", False)):
-            dados["hard"] = True
+        if not bool(dados.get("teleporte", False)):
+            return
+
+        dados["hard"] = True
         self._player_local.update(dados)
-        if bool(dados.get("hard", False)):
-            self._ativar_bloqueio_correcao()
+        self._ativar_bloqueio_correcao()
 
     def _sincronizar_player_local(self) -> None:
         ator = self._player_local

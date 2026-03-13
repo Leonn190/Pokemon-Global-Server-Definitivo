@@ -146,7 +146,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
     pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados, client_id=client_id)
     state = _obter_state_client(client_id)
     vistos = state["objetos_vistos"]
-    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos)
+    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id)
     if diffs_extra:
         if pacotes:
             pacote_vis = pacotes[-1]

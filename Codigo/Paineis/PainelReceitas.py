@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+import csv
 import json
 import unicodedata
 from pathlib import Path
@@ -7,6 +9,7 @@ from pathlib import Path
 import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.Paineis.PainelCraft import PainelCraft
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Painel import PainelRolavel
 from Codigo.Prefabs.Texto import Texto
@@ -14,15 +17,14 @@ from Codigo.Prefabs.Texto import Texto
 
 class PainelReceitas(PainelRolavel):
     _receitas_cache = None
+    _itens_cache = None
 
     def __init__(self, rect):
         super().__init__(rect, area_real=(0, 0, rect[2], rect[3]), cor_fundo=(18, 26, 44, 242), cor_borda=(66, 88, 136), borda=2, raio=16)
         self.Colunas = 5
-        self.LinhasVisiveis = 2
         self.SlotPx = 54
         self.Gap = 10
         self.Padding = 16
-        self.TopOffset = 48
         self.Receitas = self._carregar_receitas()
         self._hover = None
         self._visiveis = []
@@ -35,17 +37,103 @@ class PainelReceitas(PainelRolavel):
 
     @staticmethod
     def _norm(texto):
-        base = ''.join(
-            c for c in unicodedata.normalize('NFKD', str(texto or '').lower())
-            if not unicodedata.combining(c)
-        )
+        base = ''.join(c for c in unicodedata.normalize('NFKD', str(texto or '').lower()) if not unicodedata.combining(c))
         for ch in ('_', '-', "'", '.'):
             base = base.replace(ch, ' ')
         return ' '.join(base.split())
 
+    @classmethod
+    def _caminho_json(cls):
+        caminhos = [
+            Path('Dados') / 'Global server - Receitas.json',
+            Path('Global server - Receitas.json'),
+            Path(__file__).resolve().parents[3] / 'Dados' / 'Global server - Receitas.json',
+            Path(__file__).resolve().parents[3] / 'Global server - Receitas.json',
+        ]
+        return next((p for p in caminhos if p.exists()), None)
+
+    @classmethod
+    def _caminho_itens_csv(cls):
+        caminhos = [
+            Path('Dados') / 'Global server - Itens.csv',
+            Path('Global server - Itens.csv'),
+            Path(__file__).resolve().parents[3] / 'Dados' / 'Global server - Itens.csv',
+            Path(__file__).resolve().parents[3] / 'Global server - Itens.csv',
+        ]
+        return next((p for p in caminhos if p.exists()), None)
+
+    @classmethod
+    def _carregar_itens_csv(cls):
+        if cls._itens_cache is not None:
+            return cls._itens_cache
+        mapa = {}
+        caminho = cls._caminho_itens_csv()
+        if caminho is None:
+            cls._itens_cache = mapa
+            return mapa
+        try:
+            with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
+                for linha in csv.DictReader(arquivo):
+                    dado = dict(linha)
+                    nome = str(dado.get('Nome') or '').strip()
+                    code = str(dado.get('Code') or '').strip()
+                    if nome:
+                        mapa[('nome', cls._norm(nome))] = dado
+                    if code:
+                        mapa[('code', cls._norm(code))] = dado
+        except OSError:
+            pass
+        cls._itens_cache = mapa
+        return mapa
+
+    @classmethod
+    def _item_real_por_nome(cls, nome):
+        nome = str(nome or '').strip()
+        if not nome:
+            return None
+        base = cls._carregar_itens_csv()
+        chave_norm = cls._norm(nome)
+        dado = base.get(('nome', chave_norm)) or base.get(('code', chave_norm))
+        if dado is None:
+            return {'Nome': nome, 'quantidade': 1}
+        item = copy.deepcopy(dado)
+        item['Nome'] = item.get('Nome') or nome
+        item['quantidade'] = 1
+        return item
+
+    @classmethod
+    def _carregar_receitas(cls):
+        if cls._receitas_cache is not None:
+            return cls._receitas_cache
+        caminho = cls._caminho_json()
+        receitas = []
+        if caminho is None:
+            cls._receitas_cache = receitas
+            return receitas
+        try:
+            with caminho.open('r', encoding='utf-8-sig') as arquivo:
+                bruto = json.load(arquivo)
+        except (OSError, json.JSONDecodeError):
+            bruto = {}
+        if isinstance(bruto, dict):
+            for nome_saida, grade in bruto.items():
+                if not isinstance(grade, list):
+                    continue
+                receita = {'nome': str(nome_saida), 'saida': cls._item_real_por_nome(nome_saida), 'grade': [None] * 9}
+                idx = 0
+                for lin in range(3):
+                    linha = grade[lin] if lin < len(grade) and isinstance(grade[lin], list) else []
+                    for col in range(3):
+                        nome_item = linha[col] if col < len(linha) else None
+                        receita['grade'][idx] = cls._item_real_por_nome(nome_item) if nome_item else None
+                        idx += 1
+                receitas.append(receita)
+        cls._receitas_cache = receitas
+        return receitas
+
     def configurar_rect(self, rect):
         self.rect = pygame.Rect(rect)
-        self.definir_area_real(self.rect.width, max(self.rect.height, self.altura_conteudo()))
+        self.definir_area_real(self.rect.width, self.rect.height)
         for i, chave in enumerate(('verde', 'amarelo', 'vermelho')):
             novo = self._rect_filtro(i)
             self.BotoesFiltro[chave].base_rect = pygame.Rect(novo)
@@ -73,50 +161,10 @@ class PainelReceitas(PainelRolavel):
                     'border_hover': (230, 238, 250),
                     'hover_scale': 1.0,
                     'press_scale': 1.0,
-                    'text_style': {'size': 1, 'color': (255, 255, 255), 'hover_color': (255, 255, 255), 'align': 'center', 'outline': False, 'shadow': False},
+                    'text_style': {'size': 1, 'color': (255, 255, 255), 'align': 'center', 'outline': False, 'shadow': False},
                 },
             )
         return botoes
-
-    @classmethod
-    def _carregar_receitas(cls):
-        if cls._receitas_cache is not None:
-            return cls._receitas_cache
-
-        caminhos = [
-            Path('Dados') / 'Global server - Receitas.json',
-            Path('Global server - Receitas.json'),
-            Path(__file__).resolve().parents[3] / 'Global server - Receitas.json',
-        ]
-        caminho = next((p for p in caminhos if p.exists()), None)
-        receitas = []
-        if caminho is None:
-            cls._receitas_cache = receitas
-            return receitas
-
-        with caminho.open('r', encoding='utf-8-sig') as arquivo:
-            bruto = json.load(arquivo)
-
-        if isinstance(bruto, dict):
-            for nome_saida, grade in bruto.items():
-                grade_final = []
-                for linha in grade or []:
-                    for valor in linha or []:
-                        grade_final.append(None if valor is None or valor == '' else {'Nome': str(valor), 'quantidade': 1})
-                while len(grade_final) < 9:
-                    grade_final.append(None)
-                receitas.append({
-                    'nome': str(nome_saida),
-                    'saida': {'Nome': str(nome_saida), 'quantidade': 1},
-                    'grade': grade_final[:9],
-                })
-
-        cls._receitas_cache = receitas
-        return receitas
-
-    def altura_conteudo(self):
-        linhas = max(self.LinhasVisiveis, (max(1, len(self.Receitas)) + self.Colunas - 1) // self.Colunas)
-        return self.TopOffset + self.Padding + linhas * self.SlotPx + max(0, linhas - 1) * self.Gap + self.Padding
 
     def _rect_filtro(self, indice):
         tamanho = 20
@@ -130,93 +178,110 @@ class PainelReceitas(PainelRolavel):
         col = indice % self.Colunas
         lin = indice // self.Colunas
         x = self.rect.x + self.Padding + col * (self.SlotPx + self.Gap)
-        y = self.rect.y + self.TopOffset + lin * (self.SlotPx + self.Gap) - self.ScrollY
+        y = self.rect.y + 48 + lin * (self.SlotPx + self.Gap)
         return pygame.Rect(x, y, self.SlotPx, self.SlotPx)
 
-    def _chave_item(self, item):
-        if isinstance(item, dict):
-            return self._norm(item.get('Nome') or item.get('nome') or item.get('Code') or item.get('code') or '')
-        return self._norm(item)
+    def _nome_item(self, item):
+        if not isinstance(item, dict):
+            return self._norm(item)
+        nome = str(item.get('Nome') or item.get('nome') or '').strip()
+        if nome:
+            return self._norm(nome)
+        code = str(item.get('Code') or item.get('code') or '').strip()
+        if not code:
+            return ''
+        base = self._carregar_itens_csv()
+        dado = base.get(('code', self._norm(code)))
+        if dado:
+            return self._norm(dado.get('Nome'))
+        return self._norm(code)
+
+    def _quantidade_item(self, item):
+        if not isinstance(item, dict):
+            return 1 if item is not None else 0
+        try:
+            return max(0, int(item.get('quantidade', 1)))
+        except (TypeError, ValueError):
+            return 1
+
+    def _quantidades_inventario(self, inventario_container):
+        mapa = {}
+        if inventario_container is None:
+            return mapa
+        for item in getattr(inventario_container, 'Itens', []):
+            if item is None:
+                continue
+            nome = self._nome_item(item)
+            if nome:
+                mapa[nome] = mapa.get(nome, 0) + self._quantidade_item(item)
+        return mapa
 
     def _estado_receita(self, receita, quantidades):
         precisa = {}
         for item in receita['grade']:
             if item is None:
                 continue
-            chave = self._chave_item(item)
-            precisa[chave] = precisa.get(chave, 0) + 1
-        if precisa and all(quantidades.get(chave, 0) >= qtd for chave, qtd in precisa.items()):
+            chave = self._nome_item(item)
+            if chave:
+                precisa[chave] = precisa.get(chave, 0) + 1
+        if precisa and all(quantidades.get(ch, 0) >= qtd for ch, qtd in precisa.items()):
             return 'verde'
-        if any(quantidades.get(chave, 0) > 0 for chave in precisa):
+        if any(quantidades.get(ch, 0) > 0 for ch in precisa):
             return 'amarelo'
         return 'vermelho'
 
     def receitas_visiveis(self, inventario_container):
-        quantidades = inventario_container.quantidade_por_nome() if inventario_container is not None else {}
-        quantidades = {self._norm(chave): valor for chave, valor in quantidades.items()}
+        quantidades = self._quantidades_inventario(inventario_container)
         self._visiveis = []
         for receita in self.Receitas:
             estado = self._estado_receita(receita, quantidades)
             if self.Filtros.get(estado, False):
                 self._visiveis.append((receita, estado))
-        self.definir_area_real(self.rect.width, max(self.rect.height, self.altura_conteudo()))
         return self._visiveis
-
-    def _toggle_filtros(self, eventos):
-        for evento in eventos:
-            if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
-                for chave, botao in self.BotoesFiltro.items():
-                    if botao.rect.collidepoint(evento.pos):
-                        self.Filtros[chave] = not self.Filtros[chave]
 
     def processar_eventos(self, tela, eventos, dt, inventario_container):
         self._processar_scroll(eventos)
-        self._toggle_filtros(eventos)
+        self._hover = None
+        receita_clicada = None
+        mouse = pygame.mouse.get_pos()
 
         for chave, botao in self.BotoesFiltro.items():
             botao.set_style(border=(230, 238, 250) if self.Filtros[chave] else (20, 26, 40), border_hover=(230, 238, 250))
+            antes = botao.pressed
             botao.render(tela, eventos, dt, None)
+            if antes and not botao.pressed and botao.hover:
+                self.Filtros[chave] = not self.Filtros[chave]
 
-        mouse = pygame.mouse.get_pos()
         visiveis = self.receitas_visiveis(inventario_container)
-        self._hover = None
-        for i, (receita, _estado) in enumerate(visiveis):
-            rect = self._slot_rect(i)
-            if self.rect.colliderect(rect) and rect.collidepoint(mouse):
+        hover_estado = None
+        for i, (receita, estado) in enumerate(visiveis):
+            if self._slot_rect(i).collidepoint(mouse):
                 self._hover = receita
+                hover_estado = estado
                 break
 
-        clicada = None
         for evento in eventos:
-            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                for i, (receita, _estado) in enumerate(visiveis):
-                    rect = self._slot_rect(i)
-                    if self.rect.colliderect(rect) and rect.collidepoint(evento.pos):
-                        clicada = receita
-                        break
-        return clicada, self._hover
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1 and self._hover is not None:
+                receita_clicada = self._hover
+                craft = PainelCraft.instancia_ativa()
+                if craft is not None and hover_estado is not None:
+                    craft.preencher_receita(receita_clicada, inventario_container, hover_estado)
+                break
+        return receita_clicada, self._hover
 
-    def renderizar(self, tela, inventario_container, eventos=None, dt=0):
+    def renderizar(self, tela, inventario_container):
         self.render(tela, [], 0)
         self.TxtTitulo.set_pos((self.rect.x + 16, self.rect.y + 12))
         self.TxtTitulo.draw(tela)
 
         for chave, botao in self.BotoesFiltro.items():
             botao.set_style(border=(230, 238, 250) if self.Filtros[chave] else (20, 26, 40), border_hover=(230, 238, 250))
-            botao.render(tela, eventos or [], dt, None)
+            botao.render(tela, [], 0, None)
 
         visiveis = self.receitas_visiveis(inventario_container)
-        cores = {
-            'verde': ((65, 170, 90), (228, 239, 255)),
-            'amarelo': ((205, 175, 60), (228, 239, 255)),
-            'vermelho': ((186, 72, 72), (228, 239, 255)),
-        }
+        cores = {'verde': (70, 170, 90), 'amarelo': (205, 175, 60), 'vermelho': (186, 72, 72)}
         for i, (receita, estado) in enumerate(visiveis):
             rect = self._slot_rect(i)
-            if not self.rect.colliderect(rect):
-                continue
-            cor_bg, cor_hover = cores[estado]
-            pygame.draw.rect(tela, cor_bg, rect, border_radius=10)
-            pygame.draw.rect(tela, cor_hover if self._hover is receita else (20, 26, 40), rect, 2, border_radius=10)
+            pygame.draw.rect(tela, cores[estado], rect, border_radius=10)
+            pygame.draw.rect(tela, (228, 239, 255) if self._hover is receita else (20, 26, 40), rect, 2, border_radius=10)
             ItemInventario.desenhar_item_no_rect(tela, receita['saida'], rect.inflate(-6, -6))
-        return self._hover

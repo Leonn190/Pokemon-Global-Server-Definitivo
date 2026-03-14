@@ -1,6 +1,6 @@
 {
   "tick_segundos": 0.0333,
-  "chance_spawn_pokemon_por_tick": 0.02,
+  "chance_spawn_pokemon_por_tick": 0.0,
   "limite_spawn_pokemon_100_ticks": 4,
   "chance_spawn_bau_por_tick": 0.015,
   "limite_spawn_bau_100_ticks": 2,

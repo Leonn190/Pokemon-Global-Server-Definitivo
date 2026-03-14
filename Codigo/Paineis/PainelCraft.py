@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import copy
+import csv
 import unicodedata
+from pathlib import Path
+
 import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
@@ -10,6 +13,9 @@ from Codigo.Prefabs.Texto import Texto
 
 
 class PainelCraft:
+    _itens_cache = None
+    _instancia_ativa = None
+
     def __init__(self, rect=None):
         self.rect = pygame.Rect(rect or (0, 0, 0, 0))
         self.CraftSlots = [None] * 9
@@ -24,20 +30,57 @@ class PainelCraft:
         self.PaddingX = 24
         self.PaddingTop = 48
         self.RectSaida = pygame.Rect(0, 0, 0, 0)
+        PainelCraft._instancia_ativa = self
+
+    @classmethod
+    def instancia_ativa(cls):
+        return cls._instancia_ativa
 
     @staticmethod
     def _norm(texto):
-        base = ''.join(
-            c for c in unicodedata.normalize('NFKD', str(texto or '').lower())
-            if not unicodedata.combining(c)
-        )
+        base = ''.join(c for c in unicodedata.normalize('NFKD', str(texto or '').lower()) if not unicodedata.combining(c))
         for ch in ('_', '-', "'", '.'):
             base = base.replace(ch, ' ')
         return ' '.join(base.split())
 
+    @classmethod
+    def _caminho_itens_csv(cls):
+        caminhos = [
+            Path('Dados') / 'Global server - Itens.csv',
+            Path('Global server - Itens.csv'),
+            Path(__file__).resolve().parents[3] / 'Dados' / 'Global server - Itens.csv',
+            Path(__file__).resolve().parents[3] / 'Global server - Itens.csv',
+        ]
+        return next((p for p in caminhos if p.exists()), None)
+
+    @classmethod
+    def _carregar_itens_csv(cls):
+        if cls._itens_cache is not None:
+            return cls._itens_cache
+        mapa = {}
+        caminho = cls._caminho_itens_csv()
+        if caminho is None:
+            cls._itens_cache = mapa
+            return mapa
+        try:
+            with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
+                for linha in csv.DictReader(arquivo):
+                    dado = dict(linha)
+                    nome = str(dado.get('Nome') or '').strip()
+                    code = str(dado.get('Code') or '').strip()
+                    if nome:
+                        mapa[('nome', cls._norm(nome))] = dado
+                    if code:
+                        mapa[('code', cls._norm(code))] = dado
+        except OSError:
+            pass
+        cls._itens_cache = mapa
+        return mapa
+
     def configurar_rect(self, rect):
         self.rect = pygame.Rect(rect)
         self._painel.rect = pygame.Rect(rect)
+        PainelCraft._instancia_ativa = self
 
     def slot_rect(self, indice):
         col = indice % 3
@@ -53,13 +96,27 @@ class PainelCraft:
         return pygame.Rect(rect.x + 6, rect.y + 6, rect.width - 12, rect.height - 12)
 
     def slot_saida_rect(self):
-        self.RectSaida = pygame.Rect(self.rect.right - 96, self.rect.y + 102, self.SlotPx, self.SlotPx)
+        centro_y = self.slot_rect(4).centery
+        self.RectSaida = pygame.Rect(self.rect.right - 96, centro_y - self.SlotPx // 2, self.SlotPx, self.SlotPx)
         return self.RectSaida
 
+    def _nome_item(self, item):
+        if not isinstance(item, dict):
+            return self._norm(item)
+        nome = str(item.get('Nome') or item.get('nome') or '').strip()
+        if nome:
+            return self._norm(nome)
+        code = str(item.get('Code') or item.get('code') or '').strip()
+        if code:
+            base = self._carregar_itens_csv()
+            dado = base.get(('code', self._norm(code)))
+            if dado:
+                return self._norm(dado.get('Nome'))
+            return self._norm(code)
+        return ''
+
     def chave_item(self, item):
-        if isinstance(item, dict):
-            return self._norm(item.get('Nome') or item.get('nome') or item.get('Code') or item.get('code') or '')
-        return self._norm(item)
+        return self._nome_item(item)
 
     def quantidade(self, item):
         if not isinstance(item, dict):
@@ -91,6 +148,11 @@ class PainelCraft:
             return None
         return {i: item for i, item in enumerate(self.PreviewReceita['grade']) if item is not None and self.CraftSlots[i] is None}
 
+    def preview_saida(self):
+        if self.PreviewReceita is None:
+            return None
+        return self.PreviewReceita.get('saida')
+
     def set_preview(self, receita):
         self.PreviewReceita = receita
 
@@ -100,13 +162,13 @@ class PainelCraft:
     def colocar_no_slot(self, indice, item, origem=None):
         destino = self.CraftSlots[indice]
         if destino is None:
-            self.CraftSlots[indice] = copy.deepcopy(item)
+            self.CraftSlots[indice] = item
             self._origens[indice] = origem
             return None
         if self.pode_empilhar(item, destino):
             destino['quantidade'] = self.quantidade(destino) + self.quantidade(item)
             return None
-        self.CraftSlots[indice] = copy.deepcopy(item)
+        self.CraftSlots[indice] = item
         antiga_origem = self._origens[indice]
         self._origens[indice] = origem
         return destino, antiga_origem
@@ -131,6 +193,38 @@ class PainelCraft:
         else:
             item['quantidade'] = qtd - quantidade
         return retirado, origem
+
+    def _retirar_um_do_inventario(self, container, chave_desejada):
+        if container is None:
+            return None, None
+        for idx, item in enumerate(getattr(container, 'Itens', [])):
+            if item is None or self.chave_item(item) != chave_desejada:
+                continue
+            retirado = container.recolher_do_slot(idx, quantidade=1)
+            if retirado is not None:
+                return retirado, idx
+        return None, None
+
+    def preencher_receita(self, receita, container, estado='verde'):
+        if receita is None or estado == 'vermelho' or container is None:
+            return False
+        self.devolver_para_inventario(container)
+        colocou_algo = False
+        for i, esperado in enumerate(receita.get('grade', [])):
+            self.CraftSlots[i] = None
+            self._origens[i] = None
+            if esperado is None:
+                continue
+            retirado, origem = self._retirar_um_do_inventario(container, self.chave_item(esperado))
+            if retirado is None:
+                if estado == 'verde':
+                    # estado verde não deveria faltar; se faltar, só deixa vazio mesmo
+                    continue
+                continue
+            self.CraftSlots[i] = retirado
+            self._origens[i] = origem
+            colocou_algo = True
+        return colocou_algo
 
     def resultado(self, receitas):
         for receita in receitas:
@@ -162,84 +256,28 @@ class PainelCraft:
             else:
                 self.CraftSlots[i]['quantidade'] = qtd - 1
 
-    def _colocar_no_inventario(self, container, item):
-        if item is None:
-            return True
-        resto = copy.deepcopy(item)
-        for atual in container.Itens:
-            if atual is not None and container.pode_empilhar(resto, atual):
-                atual['quantidade'] = container.quantidade(atual) + self.quantidade(resto)
-                return True
-        for i, atual in enumerate(container.Itens):
-            if atual is None:
-                container.Itens[i] = resto
-                return True
-        return False
-
     def devolver_para_inventario(self, container):
         for i, item in enumerate(self.CraftSlots):
             if item is None:
                 self._origens[i] = None
                 continue
-            if self._colocar_no_inventario(container, item):
+            origem = self._origens[i]
+            resto = container.devolver_para_origem_ou_vazio(origem, item) if hasattr(container, 'devolver_para_origem_ou_vazio') else None
+            if resto is None:
                 self.CraftSlots[i] = None
                 self._origens[i] = None
-
-    def _retirar_um_do_inventario(self, container, chave):
-        for i, item in enumerate(container.Itens):
-            if item is None:
                 continue
-            if self._norm(item.get('Nome') or item.get('nome') or '') != chave:
-                continue
-            retirado = container.recolher_do_slot(i, quantidade=1)
-            if retirado is not None:
-                return retirado, ('inventario', i)
-        return None, None
-
-    def preencher_receita(self, receita, container, parcial=False):
-        if receita is None or container is None:
-            return False
-
-        self.devolver_para_inventario(container)
-        preenchido = False
-        quantidades = {self._norm(chave): valor for chave, valor in container.quantidade_por_nome().items()}
-
-        for i, esperado in enumerate(receita['grade']):
-            self.CraftSlots[i] = None
-            self._origens[i] = None
-            if esperado is None:
-                continue
-
-            chave = self.chave_item(esperado)
-            disponivel = quantidades.get(chave, 0)
-            if disponivel <= 0:
-                if parcial:
-                    continue
-                self.devolver_para_inventario(container)
-                return False
-
-            retirado, origem = self._retirar_um_do_inventario(container, chave)
-            if retirado is None:
-                if parcial:
-                    continue
-                self.devolver_para_inventario(container)
-                return False
-
-            self.CraftSlots[i] = retirado
-            self._origens[i] = origem
-            quantidades[chave] = disponivel - 1
-            preenchido = True
-
-        return preenchido
-
-    def coletar_resultado(self, container, receitas):
-        resultado, receita = self.resultado(receitas)
-        if resultado is None:
-            return None
-        if not self._colocar_no_inventario(container, resultado):
-            return None
-        self.consumir_para_craft(receita)
-        return resultado
+            # fallback: tenta voltar para o slot original e depois qualquer slot vazio/empilhável
+            if origem is not None:
+                resto = container.tentar_colocar_no_slot(origem, resto)
+            if resto is not None:
+                for j in range(len(getattr(container, 'Itens', []))):
+                    resto = container.tentar_colocar_no_slot(j, resto)
+                    if resto is None:
+                        break
+            if resto is None:
+                self.CraftSlots[i] = None
+                self._origens[i] = None
 
     def desenhar(self, tela, receitas, highlight=None):
         self._painel.render(tela, [], 0)
@@ -272,8 +310,10 @@ class PainelCraft:
         resultado, _ = self.resultado(receitas)
         if resultado is not None:
             ItemInventario.desenhar_item_no_rect(tela, resultado, self.item_rect_no_slot(rect_saida))
-        elif self.PreviewReceita is not None:
-            ghost = pygame.Surface(rect_saida.size, pygame.SRCALPHA)
-            ItemInventario.desenhar_item_no_rect(ghost, self.PreviewReceita['saida'], pygame.Rect(6, 6, rect_saida.width - 12, rect_saida.height - 12))
-            ghost.set_alpha(90)
-            tela.blit(ghost, rect_saida.topleft)
+        else:
+            preview_saida = self.preview_saida()
+            if preview_saida is not None:
+                ghost = pygame.Surface(rect_saida.size, pygame.SRCALPHA)
+                ItemInventario.desenhar_item_no_rect(ghost, preview_saida, pygame.Rect(6, 6, rect_saida.width - 12, rect_saida.height - 12))
+                ghost.set_alpha(105)
+                tela.blit(ghost, rect_saida.topleft)

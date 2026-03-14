@@ -99,7 +99,22 @@ class ControladorPlayer:
         depois = tuple(ator.Posicao)
         player_id = getattr(ator, "Id", None)
         raio_ator = max(0.0, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
-        colisores = [c for c in self._objetos.iter_colisores_proximos_por_raio(depois, raio_tiles=10.0) if c[0] != player_id]
+        colisores_brutos = [c for c in self._objetos.iter_colisores_proximos_por_raio(depois, raio_tiles=10.0) if c[0] != player_id]
+        if colisores_brutos:
+            margem = 0.25
+            filtrados = []
+            for c in colisores_brutos:
+                _, sx, sy, raio_obj, *_ = c
+                limite = float(raio_ator + raio_obj + margem)
+                if ((float(sx) - float(depois[0])) ** 2 + (float(sy) - float(depois[1])) ** 2) <= (limite * limite):
+                    filtrados.append(c)
+            if len(filtrados) > 24:
+                filtrados.sort(key=lambda c: ((float(c[1]) - float(depois[0])) ** 2 + (float(c[2]) - float(depois[1])) ** 2))
+                colisores = filtrados[:24]
+            else:
+                colisores = filtrados
+        else:
+            colisores = []
         px, py = Colisor.resolver_movimento_com_colisores(
             posicao_antes=posicao_antes,
             posicao_depois=depois,
@@ -378,16 +393,25 @@ class ControladorPlayer:
 
         if tipo == "spawn":
             return
+        if tipo != "update":
+            return
         if autor != "server":
             return
 
         dados = dict(payload)
-        if not bool(dados.get("teleporte", False)):
+        teleporte = bool(dados.get("teleporte", False))
+
+        if teleporte:
+            dados["hard"] = True
+            self._player_local.update(dados)
+            self._ativar_bloqueio_correcao()
             return
 
-        dados["hard"] = True
-        self._player_local.update(dados)
-        self._ativar_bloqueio_correcao()
+        # Sincronizações autoritativas (inventário/perfil/estado visual) do próprio
+        # player não devem mover posição local, mas precisam ser aplicadas na hora.
+        dados.pop("posicao", None)
+        if dados:
+            self._player_local.update(dados)
 
     def _sincronizar_player_local(self) -> None:
         ator = self._player_local

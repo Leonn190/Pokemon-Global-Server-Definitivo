@@ -3,12 +3,12 @@
     "seed": 20260307,
     "width": 10000,
     "height": 10000,
-    "diskChunkBlocos": 100
+    "diskChunkBlocos": 10
   },
   "seed": 20260307,
   "width": 10000,
   "height": 10000,
-  "diskChunkBlocos": 100,
+  "diskChunkBlocos": 10,
   "oceano": {
     "hardOceanBorder": 120,
     "softOceanBorder": 500,

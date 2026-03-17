@@ -182,8 +182,11 @@ def _carregar_world_meta() -> Dict[str, int | float]:
 
     if largura <= 0 or altura <= 0:
         raise ValueError("world_meta.json inválido: width/height devem ser positivos")
-    if chunk_blocos_disco <= 0:
-        raise ValueError("world_meta.json inválido: chunk_blocos_disco deve ser positivo")
+    if chunk_blocos_disco != int(CHUNK_BLOCOS):
+        raise ValueError(
+            "world_meta.json inválido: chunk_blocos_disco deve ser igual a "
+            f"{int(CHUNK_BLOCOS)} (10x10 tiles por chunk)"
+        )
     if chunks_x <= 0 or chunks_y <= 0:
         raise ValueError("world_meta.json inválido: chunks_x/chunks_y devem ser positivos")
 

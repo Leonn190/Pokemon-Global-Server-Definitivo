@@ -3,12 +3,12 @@
     "seed": 20260307,
     "width": 10000,
     "height": 10000,
-    "diskChunkBlocos": 100
+    "diskChunkBlocos": 10
   },
   "seed": 20260307,
   "width": 10000,
   "height": 10000,
-  "diskChunkBlocos": 100,
+  "diskChunkBlocos": 10,
   "oceano": {
     "hardOceanBorder": 120,
     "softOceanBorder": 500,
@@ -277,7 +277,7 @@
     },
     {
       "structure": "GOLD",
-      "chancePerTile": 6.0E-4,
+      "chancePerTile": 0.0006,
       "minimum": 5000,
       "allowedBiomes": [
         "FIELD",
@@ -384,8 +384,8 @@
         "chanceMultiplier": 1.0
       },
       "GOLD": {
-        "chancePerTile": 6.0E-4,
-        "spawnRate": 6.0E-4,
+        "chancePerTile": 0.0006,
+        "spawnRate": 0.0006,
         "minimumAbsolute": 0,
         "minimum": 0,
         "chanceMultiplier": 1.0
@@ -470,8 +470,8 @@
         "chanceMultiplier": 1.0
       },
       "GOLD": {
-        "chancePerTile": 6.0E-4,
-        "spawnRate": 6.0E-4,
+        "chancePerTile": 0.0006,
+        "spawnRate": 0.0006,
         "minimumAbsolute": 0,
         "minimum": 0,
         "chanceMultiplier": 1.0
@@ -556,8 +556,8 @@
         "chanceMultiplier": 1.0
       },
       "GOLD": {
-        "chancePerTile": 6.0E-4,
-        "spawnRate": 6.0E-4,
+        "chancePerTile": 0.0006,
+        "spawnRate": 0.0006,
         "minimumAbsolute": 0,
         "minimum": 0,
         "chanceMultiplier": 1.0
@@ -642,8 +642,8 @@
         "chanceMultiplier": 1.0
       },
       "GOLD": {
-        "chancePerTile": 6.0E-4,
-        "spawnRate": 6.0E-4,
+        "chancePerTile": 0.0006,
+        "spawnRate": 0.0006,
         "minimumAbsolute": 0,
         "minimum": 0,
         "chanceMultiplier": 1.0
@@ -728,8 +728,8 @@
         "chanceMultiplier": 1.0
       },
       "GOLD": {
-        "chancePerTile": 6.0E-4,
-        "spawnRate": 6.0E-4,
+        "chancePerTile": 0.0006,
+        "spawnRate": 0.0006,
         "minimumAbsolute": 0,
         "minimum": 0,
         "chanceMultiplier": 1.0
@@ -814,8 +814,8 @@
         "chanceMultiplier": 1.0
       },
       "GOLD": {
-        "chancePerTile": 6.0E-4,
-        "spawnRate": 6.0E-4,
+        "chancePerTile": 0.0006,
+        "spawnRate": 0.0006,
         "minimumAbsolute": 0,
         "minimum": 0,
         "chanceMultiplier": 1.0
@@ -900,8 +900,8 @@
         "chanceMultiplier": 1.0
       },
       "GOLD": {
-        "chancePerTile": 6.0E-4,
-        "spawnRate": 6.0E-4,
+        "chancePerTile": 0.0006,
+        "spawnRate": 0.0006,
         "minimumAbsolute": 0,
         "minimum": 0,
         "chanceMultiplier": 1.0
@@ -1007,7 +1007,7 @@
       },
       {
         "structure": "GOLD",
-        "chancePerTile": 6.0E-4,
+        "chancePerTile": 0.0006,
         "minimum": 5000,
         "allowedBiomes": [
           "FIELD",
@@ -1114,8 +1114,8 @@
           "chanceMultiplier": 1.0
         },
         "GOLD": {
-          "chancePerTile": 6.0E-4,
-          "spawnRate": 6.0E-4,
+          "chancePerTile": 0.0006,
+          "spawnRate": 0.0006,
           "minimumAbsolute": 0,
           "minimum": 0,
           "chanceMultiplier": 1.0
@@ -1200,8 +1200,8 @@
           "chanceMultiplier": 1.0
         },
         "GOLD": {
-          "chancePerTile": 6.0E-4,
-          "spawnRate": 6.0E-4,
+          "chancePerTile": 0.0006,
+          "spawnRate": 0.0006,
           "minimumAbsolute": 0,
           "minimum": 0,
           "chanceMultiplier": 1.0
@@ -1286,8 +1286,8 @@
           "chanceMultiplier": 1.0
         },
         "GOLD": {
-          "chancePerTile": 6.0E-4,
-          "spawnRate": 6.0E-4,
+          "chancePerTile": 0.0006,
+          "spawnRate": 0.0006,
           "minimumAbsolute": 0,
           "minimum": 0,
           "chanceMultiplier": 1.0
@@ -1372,8 +1372,8 @@
           "chanceMultiplier": 1.0
         },
         "GOLD": {
-          "chancePerTile": 6.0E-4,
-          "spawnRate": 6.0E-4,
+          "chancePerTile": 0.0006,
+          "spawnRate": 0.0006,
           "minimumAbsolute": 0,
           "minimum": 0,
           "chanceMultiplier": 1.0
@@ -1458,8 +1458,8 @@
           "chanceMultiplier": 1.0
         },
         "GOLD": {
-          "chancePerTile": 6.0E-4,
-          "spawnRate": 6.0E-4,
+          "chancePerTile": 0.0006,
+          "spawnRate": 0.0006,
           "minimumAbsolute": 0,
           "minimum": 0,
           "chanceMultiplier": 1.0
@@ -1544,8 +1544,8 @@
           "chanceMultiplier": 1.0
         },
         "GOLD": {
-          "chancePerTile": 6.0E-4,
-          "spawnRate": 6.0E-4,
+          "chancePerTile": 0.0006,
+          "spawnRate": 0.0006,
           "minimumAbsolute": 0,
           "minimum": 0,
           "chanceMultiplier": 1.0
@@ -1630,8 +1630,8 @@
           "chanceMultiplier": 1.0
         },
         "GOLD": {
-          "chancePerTile": 6.0E-4,
-          "spawnRate": 6.0E-4,
+          "chancePerTile": 0.0006,
+          "spawnRate": 0.0006,
           "minimumAbsolute": 0,
           "minimum": 0,
           "chanceMultiplier": 1.0

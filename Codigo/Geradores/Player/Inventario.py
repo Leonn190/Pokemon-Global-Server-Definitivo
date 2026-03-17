@@ -4,10 +4,12 @@ from __future__ import annotations
 
 
 class Inventario:
-    def __init__(self, limite_itens=100, limite_slots=32):
+    def __init__(self, limite_itens=100, limite_slots=32, limite_pokemons=64, limite_times_pokemon=6):
         self.LimiteItens = int(max(1, limite_itens))
         self.LimiteSlots = int(max(1, limite_slots))
         self.Itens = [None] * self.LimiteSlots
+        self.LimitePokemons = int(max(1, limite_pokemons))
+        self.LimiteTimesPokemon = int(max(1, limite_times_pokemon))
         self.Pokemons = []
         self.TimesPokemon = []
         self.SlotSelecionado = 0
@@ -98,7 +100,9 @@ class Inventario:
         for i in range(min(len(itens_brutos), self.LimiteSlots)):
             self.Itens[i] = self._normalizar_item(itens_brutos[i])
 
-        self.Pokemons = list(dados.get("pokemons", self.Pokemons))
+        self.LimitePokemons = int(max(1, dados.get("limite_pokemons", self.LimitePokemons)))
+        self.LimiteTimesPokemon = int(max(1, dados.get("limite_times_pokemon", self.LimiteTimesPokemon)))
+        self.Pokemons = list(dados.get("pokemons", self.Pokemons))[: self.LimitePokemons]
         self.TimesPokemon = list(dados.get("times_pokemon", self.TimesPokemon))
 
         total_slots_mao = max(1, min(8, self.LimiteSlots))
@@ -131,6 +135,8 @@ class Inventario:
             "times_pokemon": list(self.TimesPokemon),
             "limite_itens": self.LimiteItens,
             "limite_slots": self.LimiteSlots,
+            "limite_pokemons": self.LimitePokemons,
+            "limite_times_pokemon": self.LimiteTimesPokemon,
             "slot_selecionado": self.SlotSelecionado,
         }
 

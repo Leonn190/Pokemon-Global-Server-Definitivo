@@ -19,6 +19,7 @@ class Container(PainelRolavel):
         gap=12,
         titulo=None,
         stackable=True,
+        renderizador_item=None,
         **kwargs,
     ):
         super().__init__(rect, area_real=(0, 0, rect[2], rect[3]), **kwargs)
@@ -31,6 +32,7 @@ class Container(PainelRolavel):
         self.Titulo = titulo
         self.Stackable = bool(stackable)
         self.Padding = 18
+        self.RenderizadorItem = renderizador_item or ItemInventario
 
     def configurar_rect(self, rect):
         self.rect = pygame.Rect(rect)
@@ -227,6 +229,9 @@ class Container(PainelRolavel):
             mapa[chave] = mapa.get(chave, 0) + self.quantidade(item)
         return mapa
 
+    def _desenhar_item(self, tela, item, rect):
+        self.RenderizadorItem.desenhar_item_no_rect(tela, item, rect)
+
     def desenhar(self, tela, item_oculto=None, highlight=None, preview=None):
         self._normalizar_tamanho()
         self.atualizar_area_real()
@@ -239,7 +244,7 @@ class Container(PainelRolavel):
             item = self.Itens[i]
             if i == item_oculto or item is None:
                 continue
-            ItemInventario.desenhar_item_no_rect(tela, item, self.item_rect_no_slot(rect_slot))
+            self._desenhar_item(tela, item, self.item_rect_no_slot(rect_slot))
 
         if preview:
             for indice, item_preview in preview.items():
@@ -250,6 +255,6 @@ class Container(PainelRolavel):
                     continue
                 self.desenhar_slot(tela, rect_slot, transparente=True)
                 ghost = pygame.Surface(rect_slot.size, pygame.SRCALPHA)
-                ItemInventario.desenhar_item_no_rect(ghost, item_preview, pygame.Rect(6, 6, rect_slot.width - 12, rect_slot.height - 12))
+                self.RenderizadorItem.desenhar_item_no_rect(ghost, item_preview, pygame.Rect(6, 6, rect_slot.width - 12, rect_slot.height - 12))
                 ghost.set_alpha(110)
                 tela.blit(ghost, rect_slot.topleft)

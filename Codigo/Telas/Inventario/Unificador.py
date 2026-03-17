@@ -14,6 +14,7 @@ class UnificadorInventario:
         self.Inventario = ator.Inventario
         self.Ativo = False
         self.Modo = "itens"
+        self._modo_anterior = self.Modo
         self._rect = pygame.Rect(0, 0, 0, 0)
         self._botoes = []
         self._tamanho_layout = None
@@ -22,7 +23,7 @@ class UnificadorInventario:
         self._ativo_anterior = False
 
         self.TelaPerfil = InventarioPerfil()
-        self.TelaPokemons = InventarioPokemons()
+        self.TelaPokemons = InventarioPokemons(ator)
         self.TelaItens = InventarioItens(ator)
 
     def toggle(self):
@@ -52,15 +53,34 @@ class UnificadorInventario:
             botoes.append(botao)
         self._botoes = botoes
 
+    def _tela_por_modo(self, modo):
+        if modo == 'pokemons':
+            return self.TelaPokemons
+        if modo == 'itens':
+            return self.TelaItens
+        return self.TelaPerfil
+
+    def _chamar_se_existir(self, tela, nome):
+        metodo = getattr(tela, nome, None)
+        if callable(metodo):
+            metodo()
+
     def atualizar(self, eventos, dt, tamanho_tela):
         self._recalcular_layout(tamanho_tela)
 
+        tela_atual = self._tela_por_modo(self.Modo)
+        tela_anterior = self._tela_por_modo(self._modo_anterior)
+
         if self._ativo_anterior and not self.Ativo:
-            self.TelaItens.on_close()
+            self._chamar_se_existir(tela_anterior, 'on_close')
         elif self.Ativo and not self._ativo_anterior:
-            self.TelaItens.on_open()
+            self._chamar_se_existir(tela_atual, 'on_open')
+        elif self.Ativo and self.Modo != self._modo_anterior:
+            self._chamar_se_existir(tela_anterior, 'on_close')
+            self._chamar_se_existir(tela_atual, 'on_open')
 
         self._ativo_anterior = self.Ativo
+        self._modo_anterior = self.Modo
 
     def desenhar(self, tela, eventos, dt):
         if not self.Ativo:
@@ -92,7 +112,6 @@ class UnificadorInventario:
         if self.Modo == "perfil":
             self.TelaPerfil.renderizar(tela, area_conteudo, self.Inventario)
         elif self.Modo == "pokemons":
-            self.TelaPokemons.renderizar(tela, area_conteudo, self.Inventario)
+            self.TelaPokemons.renderizar(tela, area_conteudo, eventos, dt, ativo=self.Ativo)
         else:
             self.TelaItens.renderizar(tela, area_conteudo, eventos, dt, ativo=self.Ativo)
-            

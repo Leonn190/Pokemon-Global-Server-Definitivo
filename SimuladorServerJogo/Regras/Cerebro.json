@@ -1,9 +1,9 @@
 {
   "tick_segundos": 0.0333,
-  "chance_spawn_pokemon_por_tick": 0.0,
-  "limite_spawn_pokemon_100_ticks": 4,
+  "chance_spawn_pokemon_por_tick": 0.03,
+  "limite_spawn_pokemon_100_ticks": 3,
   "chance_spawn_bau_por_tick": 0.015,
-  "limite_spawn_bau_100_ticks": 2,
+  "limite_spawn_bau_100_ticks": 1,
   "limite_pokemons_chunk": 2,
   "limite_baus_chunk": 1,
   "limite_total_baus": 60,

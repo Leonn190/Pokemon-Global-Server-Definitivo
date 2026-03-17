@@ -7,6 +7,8 @@ from typing import Dict, Optional, Tuple
 
 import pygame
 
+from Codigo.Prefabs.Texto import Texto
+
 
 class PokemonInventario:
     PASTA_IMAGENS = Path("Recursos") / "Visual" / "Pokemons" / "Imagens"
@@ -14,9 +16,6 @@ class PokemonInventario:
     _mapa_por_nome: Dict[str, str] | None = None
     _mapa_por_numero: Dict[str, str] | None = None
     _cache_surface: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
-    _fonte_nome = None
-    _fonte_nivel = None
-    _fonte_fallback = None
 
     @staticmethod
     def _norm(texto: str) -> str:
@@ -148,38 +147,57 @@ class PokemonInventario:
         return surf
 
     @classmethod
-    def _garantir_fontes(cls):
-        if cls._fonte_nome is None:
-            cls._fonte_nome = pygame.font.SysFont("arial", 12, bold=True)
-        if cls._fonte_nivel is None:
-            cls._fonte_nivel = pygame.font.SysFont("arial", 11, bold=True)
-        if cls._fonte_fallback is None:
-            cls._fonte_fallback = pygame.font.SysFont("arial", 14, bold=True)
+    def _desenhar_sigla_fallback(cls, tela, pokemon, rect: pygame.Rect):
+        fundo = pygame.Surface(rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(fundo, (42, 58, 96, 235), fundo.get_rect(), border_radius=10)
+        pygame.draw.rect(fundo, (164, 186, 236), fundo.get_rect(), 2, border_radius=10)
+        tela.blit(fundo, rect.topleft)
+
+        nome = cls.nome_pokemon(pokemon)
+        sigla = "".join(parte[:1].upper() for parte in nome.split()[:2]) or nome[:2].upper() or "PK"
+        txt = Texto(
+            sigla[:3],
+            style={
+                'size': 15,
+                'color': (242, 246, 255),
+                'align': 'center',
+                'outline': True,
+                'outline_color': (8, 12, 20),
+                'outline_thickness': 2,
+            },
+        )
+        txt.set_pos(rect.center)
+        txt.draw(tela)
+
+    @classmethod
+    def _desenhar_nivel(cls, tela, pokemon, rect: pygame.Rect):
+        nivel = cls.nivel_pokemon(pokemon)
+        if nivel in (None, ""):
+            return
+
+        txt_nivel = Texto(
+            f"Lv {nivel}",
+            style={
+                'size': 11,
+                'color': (255, 255, 255),
+                'align': 'midright',
+                'outline': True,
+                'outline_color': (8, 12, 20),
+                'outline_thickness': 2,
+            },
+        )
+        txt_nivel.set_pos((rect.right - 3, rect.bottom - 7))
+        txt_nivel.draw(tela)
 
     @classmethod
     def desenhar_item_no_rect(cls, tela, pokemon, rect: pygame.Rect):
         if pokemon is None:
             return
 
-        cls._garantir_fontes()
         sprite = cls.surface_pokemon(pokemon, lado_px=max(20, rect.width - 10))
         if sprite is not None:
             tela.blit(sprite, sprite.get_rect(center=rect.center))
         else:
-            fundo = pygame.Surface(rect.size, pygame.SRCALPHA)
-            pygame.draw.rect(fundo, (42, 58, 96, 235), fundo.get_rect(), border_radius=10)
-            pygame.draw.rect(fundo, (164, 186, 236), fundo.get_rect(), 2, border_radius=10)
-            tela.blit(fundo, rect.topleft)
+            cls._desenhar_sigla_fallback(tela, pokemon, rect)
 
-            nome = cls.nome_pokemon(pokemon)
-            sigla = "".join(parte[:1].upper() for parte in nome.split()[:2]) or nome[:2].upper() or "PK"
-            txt = cls._fonte_fallback.render(sigla[:3], True, (242, 246, 255))
-            tela.blit(txt, txt.get_rect(center=rect.center))
-
-        nivel = cls.nivel_pokemon(pokemon)
-        if nivel not in (None, ""):
-            badge = cls._fonte_nivel.render(f"Lv {nivel}", True, (255, 255, 255))
-            sombra = cls._fonte_nivel.render(f"Lv {nivel}", True, (8, 12, 20))
-            badge_rect = badge.get_rect(bottomright=(rect.right - 3, rect.bottom - 2))
-            tela.blit(sombra, sombra.get_rect(bottomright=(badge_rect.right + 1, badge_rect.bottom + 1)))
-            tela.blit(badge, badge_rect)
+        cls._desenhar_nivel(tela, pokemon, rect)

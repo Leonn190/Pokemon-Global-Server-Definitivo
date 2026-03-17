@@ -6,7 +6,7 @@ import pygame
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.Container import Container
-from Codigo.Paineis.TimesPainel import TimesPainel
+from Codigo.Paineis.PainelTimes import PainelTimes
 from Codigo.Prefabs.Arrastavel import Arrastavel
 from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
@@ -98,12 +98,10 @@ class InventarioPokemons:
 
     def _slot_px_grid(self, area_grid):
         colunas = 8
-        linhas = self._linhas_grid_visiveis()
         gap = 10
         padding = 18
         max_por_largura = (area_grid.width - padding * 2 - gap * (colunas - 1)) // colunas
-        max_por_altura = (area_grid.height - padding * 2 - gap * max(0, linhas - 1)) // max(1, linhas)
-        return max(42, min(66, int(min(max_por_largura, max_por_altura))))
+        return max(42, min(70, int(max_por_largura)))
 
     def _reconstruir(self, area):
         self._area_total = pygame.Rect(area)
@@ -147,7 +145,7 @@ class InventarioPokemons:
             self._container.configurar_rect(self._area_grid)
 
         if self._painel_times is None:
-            self._painel_times = TimesPainel(self._area_times, times, slots_por_time=self._slots_por_time())
+            self._painel_times = PainelTimes(self._area_times, times, slots_por_time=self._slots_por_time())
         else:
             self._painel_times.definir_times(times)
             self._painel_times.definir_slots_por_time(self._slots_por_time())

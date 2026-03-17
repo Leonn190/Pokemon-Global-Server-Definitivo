@@ -7,7 +7,7 @@ from Codigo.Prefabs.Painel import PainelRolavel
 from Codigo.Prefabs.Texto import Texto
 
 
-class TimesPainel(PainelRolavel):
+class PainelTimes(PainelRolavel):
     def __init__(self, rect, times=None, slots_por_time=6):
         super().__init__(
             rect,
@@ -24,24 +24,37 @@ class TimesPainel(PainelRolavel):
         self.SlotGap = 8
         self.CabecalhoH = 54
 
-        estilo = {'outline': True, 'outline_thickness': 2, 'outline_color': (8, 12, 20)}
+        estilo = {
+            'outline': True,
+            'outline_thickness': 2,
+            'outline_color': (8, 12, 20),
+        }
         self.TxtTitulo = Texto('Times', style={**estilo, 'size': 19, 'color': (236, 241, 255)})
-        self.TxtSub = Texto('Arraste para montar equipes', style={**estilo, 'size': 13, 'color': (174, 190, 224)})
+
+        self._highlight_render = None
+        self._item_oculto_render = None
+        self._estado_visual = None
+
         self._normalizar_times()
+        self.atualizar_area_real()
+        self.marcar_sujo()
 
     def configurar_rect(self, rect):
         self.rect = pygame.Rect(rect)
         self.atualizar_area_real()
+        self.marcar_sujo()
 
     def definir_times(self, times):
         self.Times = times if times is not None else []
         self._normalizar_times()
         self.atualizar_area_real()
+        self.marcar_sujo()
 
     def definir_slots_por_time(self, slots_por_time):
         self.SlotsPorTime = max(1, int(slots_por_time))
         self._normalizar_times()
         self.atualizar_area_real()
+        self.marcar_sujo()
 
     def _slot_px(self):
         largura_util = max(40, self.rect.width - self.Padding * 2 - 22)
@@ -53,18 +66,22 @@ class TimesPainel(PainelRolavel):
 
     def _normalizar_time(self, time, indice):
         nome_padrao = f'Time {indice + 1}'
+
         if isinstance(time, dict):
             nome = str(time.get('Nome') or time.get('nome') or nome_padrao)
             slots = list(time.get('Slots') or time.get('slots') or [])
+
             if len(slots) < self.SlotsPorTime:
                 slots.extend([None] * (self.SlotsPorTime - len(slots)))
             elif len(slots) > self.SlotsPorTime:
                 slots = slots[:self.SlotsPorTime]
+
             time['Nome'] = nome
             time['Slots'] = slots
             if 'slots' in time:
                 time['slots'] = slots
             return time
+
         if isinstance(time, list):
             slots = list(time)
             if len(slots) < self.SlotsPorTime:
@@ -72,31 +89,44 @@ class TimesPainel(PainelRolavel):
             elif len(slots) > self.SlotsPorTime:
                 slots = slots[:self.SlotsPorTime]
             return {'Nome': nome_padrao, 'Slots': slots}
+
         return {'Nome': nome_padrao, 'Slots': [None] * self.SlotsPorTime}
 
     def _normalizar_times(self):
         if not isinstance(self.Times, list):
             self.Times = []
+
         for i in range(len(self.Times)):
             self.Times[i] = self._normalizar_time(self.Times[i], i)
-        self.atualizar_area_real()
 
     def atualizar_area_real(self):
         total = len(self.Times)
-        altura = self.Padding * 2 + self.CabecalhoH + total * self._card_h() + max(0, total - 1) * self.GapCards
+        altura = (
+            self.Padding * 2
+            + self.CabecalhoH
+            + total * self._card_h()
+            + max(0, total - 1) * self.GapCards
+        )
         self.definir_area_real(self.rect.width, max(self.rect.height, altura))
 
     def garantir_minimo_times(self, quantidade):
+        alterou = False
         while len(self.Times) < quantidade:
-            self.Times.append({'Nome': f'Time {len(self.Times) + 1}', 'Slots': [None] * self.SlotsPorTime})
-        self._normalizar_times()
+            self.Times.append({
+                'Nome': f'Time {len(self.Times) + 1}',
+                'Slots': [None] * self.SlotsPorTime
+            })
+            alterou = True
+
+        if alterou:
+            self._normalizar_times()
+            self.atualizar_area_real()
+            self.marcar_sujo()
 
     def nome_time(self, indice):
-        self._normalizar_times()
         return str(self.Times[indice].get('Nome') or f'Time {indice + 1}')
 
     def slots_time(self, indice):
-        self._normalizar_times()
         return self.Times[indice]['Slots']
 
     def pokemon_no_slot(self, indice_time, indice_slot):
@@ -104,6 +134,7 @@ class TimesPainel(PainelRolavel):
 
     def definir_slot(self, indice_time, indice_slot, pokemon, limpar_duplicados=False):
         slots = self.slots_time(indice_time)
+
         if limpar_duplicados and pokemon is not None:
             chave = PokemonInventario.chave_pokemon(pokemon)
             for i, atual in enumerate(slots):
@@ -111,22 +142,44 @@ class TimesPainel(PainelRolavel):
                     continue
                 if PokemonInventario.chave_pokemon(atual) == chave:
                     slots[i] = None
+
         anterior = slots[indice_slot]
         slots[indice_slot] = pokemon
+        self.marcar_sujo()
         return anterior
 
     def retirar_do_slot(self, indice_time, indice_slot):
         slots = self.slots_time(indice_time)
         pokemon = slots[indice_slot]
         slots[indice_slot] = None
+        self.marcar_sujo()
         return pokemon
 
-    def _card_rect(self, indice):
-        y = self.rect.y + self.Padding + self.CabecalhoH + indice * (self._card_h() + self.GapCards) - self.ScrollY
-        return pygame.Rect(self.rect.x + self.Padding, y, self.rect.width - self.Padding * 2, self._card_h())
+    def _mouse_global_para_local(self, mouse_pos):
+        return (
+            mouse_pos[0] - self.rect.x + self.ScrollX,
+            mouse_pos[1] - self.rect.y + self.ScrollY,
+        )
 
-    def slot_rect(self, indice_time, indice_slot):
-        card = self._card_rect(indice_time)
+    def _rect_local_para_tela(self, rect_local):
+        return pygame.Rect(
+            self.rect.x + rect_local.x - self.ScrollX,
+            self.rect.y + rect_local.y - self.ScrollY,
+            rect_local.width,
+            rect_local.height,
+        )
+
+    def _card_rect_local(self, indice):
+        y = self.Padding + self.CabecalhoH + indice * (self._card_h() + self.GapCards)
+        return pygame.Rect(
+            self.Padding,
+            y,
+            self.rect.width - self.Padding * 2,
+            self._card_h(),
+        )
+
+    def _slot_rect_local(self, indice_time, indice_slot):
+        card = self._card_rect_local(indice_time)
         slot_px = self._slot_px()
         total_largura = slot_px * self.SlotsPorTime + self.SlotGap * max(0, self.SlotsPorTime - 1)
         inicio_x = card.centerx - total_largura // 2
@@ -134,32 +187,47 @@ class TimesPainel(PainelRolavel):
         x = inicio_x + indice_slot * (slot_px + self.SlotGap)
         return pygame.Rect(x, y, slot_px, slot_px)
 
+    def _assinatura_visual(self, highlight, item_oculto):
+        return (highlight, item_oculto)
+
+    def slot_rect(self, indice_time, indice_slot):
+        return self._rect_local_para_tela(self._slot_rect_local(indice_time, indice_slot))
+
     def alvo_no_mouse(self, mouse_pos):
         if not self.rect.collidepoint(mouse_pos):
             return None
+
+        mouse_local = self._mouse_global_para_local(mouse_pos)
+
         for indice_time in range(len(self.Times)):
             for indice_slot in range(self.SlotsPorTime):
-                rect = self.slot_rect(indice_time, indice_slot)
-                if rect.collidepoint(mouse_pos) and self.rect.colliderect(rect):
+                rect = self._slot_rect_local(indice_time, indice_slot)
+                if rect.collidepoint(mouse_local):
                     return ('time', indice_time, indice_slot)
+
         return None
 
-    def desenhar(self, tela, highlight=None, item_oculto=None):
-        self._normalizar_times()
-        self.atualizar_area_real()
-        self.render(tela, [], 0)
+    def draw(self, tela):
+        tela.fill((0, 0, 0, 0))
+        tela.fill(self.CorFundo)
 
-        self.TxtTitulo.set_pos((self.rect.x + 16, self.rect.y + 12))
+        self.TxtTitulo.set_pos((16, 12))
         self.TxtTitulo.draw(tela)
-        self.TxtSub.set_pos((self.rect.x + 18, self.rect.y + 36))
-        self.TxtSub.draw(tela)
 
-        estilo_nome = {'size': 16, 'color': (240, 244, 255), 'outline': True, 'outline_color': (8, 12, 20), 'outline_thickness': 2}
+
+        estilo_nome = {
+            'size': 16,
+            'color': (240, 244, 255),
+            'outline': True,
+            'outline_color': (8, 12, 20),
+            'outline_thickness': 2,
+        }
+
+        highlight = self._highlight_render
+        item_oculto = self._item_oculto_render
 
         for indice_time in range(len(self.Times)):
-            card = self._card_rect(indice_time)
-            if not self.rect.colliderect(card):
-                continue
+            card = self._card_rect_local(indice_time)
 
             pygame.draw.rect(tela, (24, 34, 56), card, border_radius=14)
             pygame.draw.rect(tela, (58, 80, 128), card, 2, border_radius=14)
@@ -169,19 +237,44 @@ class TimesPainel(PainelRolavel):
             txt_nome.draw(tela)
 
             for indice_slot in range(self.SlotsPorTime):
-                rect_slot = self.slot_rect(indice_time, indice_slot)
+                rect_slot = self._slot_rect_local(indice_time, indice_slot)
                 destaque = highlight == ('time', indice_time, indice_slot)
+
                 surf = pygame.Surface(rect_slot.size, pygame.SRCALPHA)
                 pygame.draw.rect(surf, (76, 96, 140, 255), surf.get_rect(), border_radius=10)
-                pygame.draw.rect(surf, (228, 239, 255) if destaque else (20, 26, 40), surf.get_rect(), 2, border_radius=10)
+                pygame.draw.rect(
+                    surf,
+                    (228, 239, 255) if destaque else (20, 26, 40),
+                    surf.get_rect(),
+                    2,
+                    border_radius=10,
+                )
                 tela.blit(surf, rect_slot.topleft)
 
                 if item_oculto == (indice_time, indice_slot):
                     continue
+
                 pokemon = self.pokemon_no_slot(indice_time, indice_slot)
                 if pokemon is not None:
                     PokemonInventario.desenhar_item_no_rect(
                         tela,
                         pokemon,
-                        pygame.Rect(rect_slot.x + 5, rect_slot.y + 5, rect_slot.width - 10, rect_slot.height - 10),
+                        pygame.Rect(
+                            rect_slot.x + 5,
+                            rect_slot.y + 5,
+                            rect_slot.width - 10,
+                            rect_slot.height - 10,
+                        ),
                     )
+
+    def desenhar(self, tela, highlight=None, item_oculto=None, eventos=None, dt=0, jogo=None):
+        estado_visual = self._assinatura_visual(highlight, item_oculto)
+
+        if estado_visual != self._estado_visual:
+            self._highlight_render = highlight
+            self._item_oculto_render = item_oculto
+            self._estado_visual = estado_visual
+            self.marcar_sujo()
+
+        self.render(tela, eventos or [], dt, jogo=jogo)
+

@@ -66,64 +66,189 @@ class Painel:
         self.update(eventos, dt, jogo=jogo, tela_painel=tela_painel, mouse_local=mouse_local)
         tela.blit(tela_painel, self.rect.topleft)
 
-
-import pygame
-
-from Codigo.Prefabs.Painel import Painel
-
-
 class PainelRolavel(Painel):
     def __init__(self, rect, area_real=None, velocidade_scroll=36, **kwargs):
         super().__init__(rect, **kwargs)
-        self.AreaReal = pygame.Rect(0, 0, rect[2], rect[3]) if area_real is None else pygame.Rect(area_real)
+
+        self.AreaReal = (
+            pygame.Rect(0, 0, self.rect.width, self.rect.height)
+            if area_real is None
+            else pygame.Rect(area_real)
+        )
+
         self.ScrollX = 0
         self.ScrollY = 0
         self.VelocidadeScroll = max(8, int(velocidade_scroll))
 
-    def definir_area_real(self, largura, altura):
-        self.AreaReal.width = max(self.rect.width, int(largura))
-        self.AreaReal.height = max(self.rect.height, int(altura))
+        self._surface_conteudo = None
+        self._surface_viewport = None
+        self._mascara_viewport = None
+        self._mascara_chave = None
+
+        self._ultimo_scroll = (None, None)
+        self._conteudo_sujo = True
+        self._viewport_suja = True
+
         self._clamp_scroll()
+        self._garantir_surfaces()
+
+    def marcar_sujo(self):
+        self._conteudo_sujo = True
+        self._viewport_suja = True
+
+    def definir_area_real(self, largura, altura):
+        nova_largura = max(self.rect.width, int(largura))
+        nova_altura = max(self.rect.height, int(altura))
+
+        if self.AreaReal.width != nova_largura or self.AreaReal.height != nova_altura:
+            self.AreaReal.width = nova_largura
+            self.AreaReal.height = nova_altura
+            self._recriar_surface_conteudo()
+            self._conteudo_sujo = True
+            self._viewport_suja = True
+
+        self._clamp_scroll()
+
+    def obter_area_visivel_no_conteudo(self):
+        return pygame.Rect(self.ScrollX, self.ScrollY, self.rect.width, self.rect.height)
 
     def _clamp_scroll(self):
         max_x = max(0, self.AreaReal.width - self.rect.width)
         max_y = max(0, self.AreaReal.height - self.rect.height)
-        self.ScrollX = max(0, min(self.ScrollX, max_x))
-        self.ScrollY = max(0, min(self.ScrollY, max_y))
+
+        novo_x = max(0, min(int(self.ScrollX), max_x))
+        novo_y = max(0, min(int(self.ScrollY), max_y))
+
+        if novo_x != self.ScrollX or novo_y != self.ScrollY:
+            self.ScrollX = novo_x
+            self.ScrollY = novo_y
+            self._viewport_suja = True
+
+    def _recriar_surface_conteudo(self):
+        self._surface_conteudo = pygame.Surface(
+            (self.AreaReal.width, self.AreaReal.height),
+            pygame.SRCALPHA
+        )
+
+    def _recriar_surface_viewport(self):
+        self._surface_viewport = pygame.Surface(
+            (self.rect.width, self.rect.height),
+            pygame.SRCALPHA
+        )
+        self._mascara_viewport = None
+        self._mascara_chave = None
+
+    def _garantir_surfaces(self):
+        if (
+            self._surface_conteudo is None
+            or self._surface_conteudo.get_width() != self.AreaReal.width
+            or self._surface_conteudo.get_height() != self.AreaReal.height
+        ):
+            self._recriar_surface_conteudo()
+            self._conteudo_sujo = True
+            self._viewport_suja = True
+
+        if (
+            self._surface_viewport is None
+            or self._surface_viewport.get_width() != self.rect.width
+            or self._surface_viewport.get_height() != self.rect.height
+        ):
+            self._recriar_surface_viewport()
+            self._viewport_suja = True
 
     def _processar_scroll(self, eventos):
         if not self.rect.collidepoint(pygame.mouse.get_pos()):
-            return
+            return False
+
+        scrollou = False
 
         for evento in eventos:
             if evento.type != pygame.MOUSEWHEEL:
                 continue
+
+            scrollou = True
 
             if pygame.key.get_mods() & pygame.KMOD_SHIFT:
                 self.ScrollX -= evento.y * self.VelocidadeScroll
             else:
                 self.ScrollY -= evento.y * self.VelocidadeScroll
 
-        self._clamp_scroll()
+        if scrollou:
+            self._clamp_scroll()
+
+        return scrollou
+
+    def _aplicar_mascara_raio(self, surface):
+        if self.Raio <= 0:
+            return
+
+        chave = (surface.get_width(), surface.get_height(), self.Raio)
+
+        if self._mascara_chave != chave:
+            self._mascara_viewport = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+            self._mascara_viewport.fill((0, 0, 0, 0))
+            pygame.draw.rect(
+                self._mascara_viewport,
+                (255, 255, 255, 255),
+                self._mascara_viewport.get_rect(),
+                border_radius=self.Raio
+            )
+            self._mascara_chave = chave
+
+        surface.blit(self._mascara_viewport, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
 
     def render(self, tela, eventos, dt, jogo=None):
         if not self.Visivel:
             return
 
-        self._processar_scroll(eventos)
+        self._garantir_surfaces()
 
-        tela_conteudo = pygame.Surface(self.AreaReal.size, pygame.SRCALPHA)
-        self.draw(tela_conteudo)
+        scroll_antes = (self.ScrollX, self.ScrollY)
+        houve_scroll = self._processar_scroll(eventos)
+        scroll_depois = (self.ScrollX, self.ScrollY)
+
+        if scroll_antes != scroll_depois:
+            self._viewport_suja = True
 
         mouse_global = pygame.mouse.get_pos()
         mouse_local = (
             mouse_global[0] - self.rect.x + self.ScrollX,
             mouse_global[1] - self.rect.y + self.ScrollY,
         )
-        self.update(eventos, dt, jogo=jogo, tela_painel=tela_conteudo, mouse_local=mouse_local)
 
-        area_clip = pygame.Rect(self.ScrollX, self.ScrollY, self.rect.width, self.rect.height)
-        tela.blit(tela_conteudo, self.rect.topleft, area=area_clip)
+        # Mantém compatibilidade com o sistema atual
+        self.update(
+            eventos,
+            dt,
+            jogo=jogo,
+            tela_painel=self._surface_conteudo,
+            mouse_local=mouse_local
+        )
+
+        # Só redesenha o conteúdo inteiro quando ele estiver marcado como sujo
+        if self._conteudo_sujo:
+            self._surface_conteudo.fill((0, 0, 0, 0))
+            self.draw(self._surface_conteudo)
+            self._conteudo_sujo = False
+            self._viewport_suja = True
+
+        # Só recompõe a viewport quando scroll/tamanho/conteúdo mudar
+        if self._viewport_suja:
+            self._surface_viewport.fill((0, 0, 0, 0))
+            self._surface_viewport.blit(
+                self._surface_conteudo,
+                (-self.ScrollX, -self.ScrollY)
+            )
+            self._aplicar_mascara_raio(self._surface_viewport)
+            self._viewport_suja = False
+
+        tela.blit(self._surface_viewport, self.rect.topleft)
 
         if self.Borda > 0:
-            pygame.draw.rect(tela, self.CorBorda, self.rect, self.Borda, border_radius=self.Raio)
+            pygame.draw.rect(
+                tela,
+                self.CorBorda,
+                self.rect,
+                self.Borda,
+                border_radius=self.Raio
+            )

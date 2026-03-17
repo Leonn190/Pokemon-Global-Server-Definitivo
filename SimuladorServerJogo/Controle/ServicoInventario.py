@@ -57,6 +57,33 @@ class ServicoInventario:
             return limite_perfil
         return 32
 
+    @staticmethod
+    def limite_pokemons(inventario: Dict[str, object], dados_personagem: Optional[Dict[str, object]] = None) -> int:
+        inv = inventario if isinstance(inventario, dict) else {}
+        dados = dados_personagem if isinstance(dados_personagem, dict) else {}
+        limite_inv = int(inv.get("limite_pokemons", 0) or 0)
+        if limite_inv > 0:
+            return limite_inv
+        limite_perfil = int(dados.get("limite_pokemons", 0) or 0)
+        if limite_perfil > 0:
+            return limite_perfil
+        return 64
+
+
+    def adicionar_pokemon_capturado(self, inventario: Dict[str, object], pokemon: Dict[str, object], dados_personagem: Optional[Dict[str, object]] = None) -> bool:
+        inv = dict(inventario or {})
+        limite_pokes = self.limite_pokemons(inv, dados_personagem)
+        pokemons = list(inv.get("pokemons", []))
+        if len(pokemons) >= limite_pokes:
+            return False
+        pokemons.append(dict(pokemon or {}))
+        inv["pokemons"] = pokemons
+        inv["limite_pokemons"] = int(limite_pokes)
+
+
+        inventario.clear(); inventario.update(inv)
+        return True
+
     def adicionar_primeiro_slot_livre(self, inventario: Dict[str, object], item: Dict[str, object], dados_personagem: Optional[Dict[str, object]] = None) -> bool:
         inv = dict(inventario or {})
         lim = self.limite_slots(inv, dados_personagem)

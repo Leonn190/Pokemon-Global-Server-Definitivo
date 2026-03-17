@@ -20,6 +20,8 @@ def carregar_regras_player() -> Dict[str, object]:
     base = {
         "NivelMochila": 1,
         "LimiteSlotsInventario": 32,
+        "LimitePokemons": 64,
+        "LimiteTimesPokemon": 6,
         "Ouro": 0,
         "Maestria": 0,
         "StaminaMax": 100.0,

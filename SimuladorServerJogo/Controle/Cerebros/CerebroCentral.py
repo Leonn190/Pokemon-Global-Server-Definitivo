@@ -248,9 +248,9 @@ class CerebroCentral:
             return
         perfil = obter_personagem_para_entrada(str(usuario)) or {}
         inventario = perfil.get("inventario") if isinstance(perfil.get("inventario"), dict) else {}
-        pokemons = list(inventario.get("pokemons", []))
-        pokemons.append(self._snapshot_pokemon_capturado(poke))
-        inventario["pokemons"] = pokemons
+        pokemon_snapshot = self._snapshot_pokemon_capturado(poke)
+        if not self._servico_inventario.adicionar_pokemon_capturado(inventario, pokemon_snapshot, perfil):
+            return
 
         self._servico_inventario.persistir_jogador(str(usuario), int(BANCO_DADOS.objeto_id_por_usuario(str(usuario)) or 0), inventario, registrar_diff)
 

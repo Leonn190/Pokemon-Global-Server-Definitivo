@@ -164,7 +164,7 @@ static final class Rules {
     int height = 10_000;
     long seed = 20260307L;
     String outputDirectory = "output_world";
-    int diskChunkBlocos = 100;
+    int diskChunkBlocos = 10;
 
     // ===== Ocean / water borders =====
     int hardOceanBorder = 120;
@@ -627,7 +627,7 @@ static final class Rules {
         width = getInt(mapa, "width", getInt(root, "width", width));
         height = getInt(mapa, "height", getInt(root, "height", height));
         seed = getLong(mapa, "seed", getLong(root, "seed", seed));
-        diskChunkBlocos = getInt(mapa, "diskChunkBlocos", getInt(root, "diskChunkBlocos", diskChunkBlocos));
+        diskChunkBlocos = 10;
 
         Map<String, Object> oceans = section(root, "oceano", "oceans");
         hardOceanBorder = getInt(oceans, "hardOceanBorder", hardOceanBorder);

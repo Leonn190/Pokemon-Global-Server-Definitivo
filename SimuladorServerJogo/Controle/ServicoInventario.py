@@ -35,6 +35,11 @@ _ITENS_POR_CODE = _carregar_itens_por_code()
 
 class ServicoInventario:
     @staticmethod
+    def _lista_pokemons_ocupados(valor: object) -> list[Dict[str, object]]:
+        lista = valor if isinstance(valor, list) else []
+        return [dict(p) for p in lista if isinstance(p, dict)]
+
+    @staticmethod
     def normalizar_item(item: Dict[str, object], quantidade_padrao: int = 1) -> Dict[str, object]:
         base = dict(item or {})
         code = str(base.get("Code") or "").strip()
@@ -73,7 +78,7 @@ class ServicoInventario:
     def adicionar_pokemon_capturado(self, inventario: Dict[str, object], pokemon: Dict[str, object], dados_personagem: Optional[Dict[str, object]] = None) -> bool:
         inv = dict(inventario or {})
         limite_pokes = self.limite_pokemons(inv, dados_personagem)
-        pokemons = list(inv.get("pokemons", []))
+        pokemons = self._lista_pokemons_ocupados(inv.get("pokemons", []))
         if len(pokemons) >= limite_pokes:
             return False
         pokemons.append(dict(pokemon or {}))

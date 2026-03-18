@@ -34,6 +34,7 @@ class ControladorPlayer:
         self._ultimo_envio_supervisao_lenta = 0.0
         self._intervalo_supervisao_rapida_s = 0.05
         self._intervalo_supervisao_lenta_s = 1.5
+        self._ultimo_pivo_visual_local_tela: Optional[Tuple[float, float]] = None
 
     @property
     def player_local(self):
@@ -292,9 +293,22 @@ class ControladorPlayer:
             return
 
         if not bloqueado:
-            mouse_mundo_tiles = camera.tela_para_mundo_tiles(pygame.mouse.get_pos())
+            mouse_tela_px = pygame.mouse.get_pos()
+            mouse_mundo_tiles = camera.tela_para_mundo_tiles(mouse_tela_px)
+            # Usa exatamente o pivô visual real que foi usado no último render do ator local.
+            # Fallback no primeiro frame: mesma conversão usada no render.
+            ator_pos_tela_px = self._ultimo_pivo_visual_local_tela
+            if ator_pos_tela_px is None:
+                pivo = camera.mundo_para_tela_px(self._player_local.Posicao)
+                ator_pos_tela_px = (float(pivo[0]), float(pivo[1]))
             posicao_antes = tuple(self._player_local.Posicao)
-            self._player_local.Controle.atualizar(eventos, dt, mouse_mundo_tiles)
+            self._player_local.Controle.atualizar(
+                eventos,
+                dt,
+                mouse_mundo_tiles,
+                mouse_pos_tela_px=mouse_tela_px,
+                ator_pos_tela_px=ator_pos_tela_px,
+            )
             self._resolver_colisao_player_local(posicao_antes, dt)
             self._processar_intencao_arremesso_local()
             self._processar_intencao_drop_item_mundo()
@@ -410,6 +424,9 @@ class ControladorPlayer:
         # Sincronizações autoritativas (inventário/perfil/estado visual) do próprio
         # player não devem mover posição local, mas precisam ser aplicadas na hora.
         dados.pop("posicao", None)
+        # Para o próprio player, estado visual/entrada (ângulo, tapa, mirando etc.)
+        # é controlado localmente e não deve sobrescrever o input do cliente.
+        dados.pop("estado", None)
         if dados:
             self._player_local.update(dados)
 
@@ -436,6 +453,7 @@ class ControladorPlayer:
             return
         ator.set_tile_px(getattr(camera, "TilePx", 50))
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
+        self._ultimo_pivo_visual_local_tela = (float(pos_tela[0]), float(pos_tela[1]))
         respiracao_tempo = getattr(getattr(ator, "Controle", None), "_tempo_respiracao", 0.0)
         ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
         estado_mira = ator.Controle.estado_mira(camera.tela_para_mundo_tiles(pygame.mouse.get_pos())) if ator.Controle else None

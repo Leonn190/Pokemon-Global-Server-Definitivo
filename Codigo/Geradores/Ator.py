@@ -182,6 +182,7 @@ class Ator:
         # Player local não deve ser puxado por alvo antigo de interpolação.
         if self.Controle is not None:
             self._alvo_posicao = (float(self.Posicao[0]), float(self.Posicao[1]))
+            self._alvo_angulo = float(self.AnguloOlhar)
 
         if self._tempo_tapa > 0.0:
             self._tempo_tapa = max(0.0, self._tempo_tapa - dt)

@@ -1,25 +1,25 @@
 # Registro
 
-**Relatório:** #17  
+**Relatório:** #18  
 **Repo:** `Pokemon-Global-Server-Definitivo`  
-**Gerado em:** 2026-03-14T10:55:58  
+**Gerado em:** 2026-03-17T21:27:50  
 
 ## Visão geral
 
-- **Pastas:** 1.157
-- **Arquivos:** 68.202
-- **Tamanho total:** 405.835.605 bytes (0.378 GiB)
-- **Linhas totais gerais:** 23.917
+- **Pastas:** 1.155
+- **Arquivos:** 68.203
+- **Tamanho total:** 405.883.661 bytes (0.378 GiB)
+- **Linhas totais gerais:** 25.189
 
 ## Python
 
-- **Arquivos `.py`:** 115
-- **Linhas totais:** 17.319
-- **Classes encontradas:** 77
+- **Arquivos `.py`:** 117
+- **Linhas totais:** 18.524
+- **Classes encontradas:** 79
 - **Funções encontradas:** 263
-- **Métodos encontrados:** 699
-- **Total funções + métodos:** 962
-- **Média de linhas por arquivo `.py`:** 150.60
+- **Métodos encontrados:** 773
+- **Total funções + métodos:** 1.036
+- **Média de linhas por arquivo `.py`:** 158.32
 
 ### Top 15 maiores arquivos `.py`
 
@@ -27,17 +27,17 @@
 |---|---:|---:|
 | `Codigo/Modulos/ControladorMundo/ControladorObjetos.py` | 26.51 | 582 |
 | `Codigo/Geradores/PokemonMundo.py` | 26.08 | 534 |
+| `SimuladorServerJogo/Controle/BancoDados.py` | 23.86 | 516 |
 | `Outros/GeradorRelatorios.py` | 23.38 | 736 |
-| `SimuladorServerJogo/Controle/BancoDados.py` | 20.43 | 454 |
 | `SimuladorServerJogo/Controle/ObjetosMundoServer.py` | 19.94 | 275 |
 | `Codigo/Modulos/ControladorMundo/ControladorPlayer.py` | 19.57 | 445 |
-| `Codigo/Telas/Inventario/InventarioItens.py` | 17.01 | 383 |
-| `SimuladorServerJogo/Controle/EstadoServidor.py` | 16.56 | 447 |
+| `SimuladorServerJogo/Controle/EstadoServidor.py` | 17.54 | 461 |
+| `Codigo/Telas/Inventario/InventarioItens.py` | 16.63 | 383 |
 | `SimuladorServerJogo/Rotas/Comandos.py` | 16.37 | 408 |
 | `Codigo/Telas/TelaServers.py` | 15.93 | 502 |
 | `Codigo/Telas/TelasGenericas.py` | 15.83 | 463 |
+| `SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py` | 15.32 | 296 |
 | `Outros/Mixer.py` | 15.31 | 460 |
-| `SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py` | 15.29 | 296 |
 | `Codigo/Telas/TelaCriarPersonagem.py` | 15.19 | 417 |
 | `Codigo/Geradores/Player/Controle.py` | 14.73 | 347 |
 
@@ -45,7 +45,7 @@
 
 | Arquivo | Importado por |
 |---|---:|
-| `Codigo/Prefabs/Texto.py` | 16 |
+| `Codigo/Prefabs/Texto.py` | 19 |
 | `Codigo/Prefabs/Botao.py` | 12 |
 | `SimuladorServerJogo/Controle/BancoDados.py` | 11 |
 | `SimuladorServerJogo/Rotas/Ativador.py` | 10 |
@@ -55,11 +55,11 @@
 
 | Ext | Linhas |
 |---:|---:|
-| `.py` | 17.319 |
-| `.java` | 2.711 |
-| `.json` | 2.424 |
+| `.py` | 18.524 |
+| `.java` | 2.775 |
+| `.json` | 2.426 |
 | `.csv` | 1.364 |
-| `.md` | 99 |
+| `.md` | 100 |
 
 ## Top extensões por tamanho
 
@@ -67,12 +67,12 @@
 |---:|---:|---:|
 | `.png` | 0.331 | 68.038 |
 | `.ogg` | 0.045 | 17 |
-| `.py` | 0.001 | 115 |
+| `.py` | 0.001 | 117 |
 | `.jpg` | 0.001 | 1 |
 | `.wav` | 0.000 | 2 |
 | `.csv` | 0.000 | 3 |
 | `.java` | 0.000 | 1 |
-| `.class` | 0.000 | 14 |
+| `.class` | 0.000 | 13 |
 | `.json` | 0.000 | 6 |
 | `.ttf` | 0.000 | 1 |
 | `.md` | 0.000 | 1 |
@@ -82,19 +82,22 @@
 
 | Métrica | Anterior | Atual | Δ |
 |---|---:|---:|---:|
-| pastas | 1.154 | 1.157 | 3 |
-| arquivos | 68.196 | 68.202 | 6 |
+| pastas | 1.157 | 1.155 | -2 |
+| arquivos | 68.202 | 68.203 | 1 |
 | tamanho_bytes | 0.378 GiB | 0.378 GiB | 0.000 GiB |
-| py_arquivos | 116 | 115 | -1 |
-| linhas_totais | 15.365 | 17.319 | 1.954 |
-| classes_encontradas | 67 | 77 | 10 |
+| linhas_totais_geral | 23.917 | 25.189 | 1.272 |
+| py_arquivos | 115 | 117 | 2 |
+| linhas_totais | 17.319 | 18.524 | 1.205 |
+| classes_encontradas | 77 | 79 | 2 |
+| funcoes_encontradas | 263 | 263 | 0 |
+| metodos_encontrados | 699 | 773 | 74 |
 
 **Maiores mudanças por extensão (top 12 por |Δ tamanho|):**
 
 | Ext | Δ arquivos | Δ tamanho (GiB) |
 |---:|---:|---:|
-| `.py` | -1 | 0.000 |
-| `.json` | 3 | 0.000 |
+| `.py` | 2 | 0.000 |
 | `.java` | 0 | 0.000 |
-| `.class` | 4 | 0.000 |
+| `.class` | -1 | -0.000 |
+| `.json` | 0 | 0.000 |
 | `.md` | 0 | 0.000 |

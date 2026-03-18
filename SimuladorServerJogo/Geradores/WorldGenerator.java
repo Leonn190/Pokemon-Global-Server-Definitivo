@@ -1406,6 +1406,9 @@ static final class Rules {
             int chunkSize = Math.max(1, rules.diskChunkBlocos);
             int chunksX = (int) Math.ceil(width / (double) chunkSize);
             int chunksY = (int) Math.ceil(height / (double) chunkSize);
+            int chunksPorArquivo = 10;
+            int gruposX = (int) Math.ceil(chunksX / (double) chunksPorArquivo);
+            int gruposY = (int) Math.ceil(chunksY / (double) chunksPorArquivo);
 
             File chunksDir = new File(outputDir, "world_chunks");
             if (!chunksDir.exists() && !chunksDir.mkdirs()) {
@@ -1421,6 +1424,9 @@ static final class Rules {
                 writer.write("  \"chunk_blocos\": " + chunkSize + ",\n");
                 writer.write("  \"chunks_x\": " + chunksX + ",\n");
                 writer.write("  \"chunks_y\": " + chunksY + ",\n");
+                writer.write("  \"chunks_por_arquivo\": " + chunksPorArquivo + ",\n");
+                writer.write("  \"grupos_x\": " + gruposX + ",\n");
+                writer.write("  \"grupos_y\": " + gruposY + ",\n");
                 writer.write("  \"spawn_chunk_x\": " + spawnChunkX + ",\n");
                 writer.write("  \"spawn_chunk_y\": " + spawnChunkY + ",\n");
                 writer.write("  \"spawn_x\": " + spawnX + ",\n");
@@ -1430,15 +1436,72 @@ static final class Rules {
             }
 
             byte[] structuresMap = buildStructuresGrid();
-            int totalChunks = chunksX * chunksY;
-            int chunksGerados = 0;
-            for (int cy = 0; cy < chunksY; cy++) {
-                for (int cx = 0; cx < chunksX; cx++) {
-                    File chunkFile = new File(chunksDir, "chunk_" + cx + "_" + cy + ".json");
-                    writeChunkJson(chunkFile, cx, cy, chunkSize, structuresMap);
-                    chunksGerados++;
+            int totalArquivos = gruposX * gruposY;
+            int arquivosGerados = 0;
+            for (int gy = 0; gy < gruposY; gy++) {
+                for (int gx = 0; gx < gruposX; gx++) {
+                    File chunkFile = new File(chunksDir, "chunk_set_" + gx + "_" + gy + ".json");
+                    writeChunkSetJson(chunkFile, gx, gy, chunksPorArquivo, chunksX, chunksY, chunkSize, structuresMap);
+                    arquivosGerados++;
+                    System.out.println("[PROGRESSO] ETAPA=CHUNKS ATUAL=" + arquivosGerados + " TOTAL=" + totalArquivos + " MSG=Salvando chunks");
                 }
-                System.out.println("[PROGRESSO] ETAPA=CHUNKS ATUAL=" + chunksGerados + " TOTAL=" + totalChunks + " MSG=Salvando chunks");
+            }
+        }
+
+        private void writeChunkSetJson(
+            File file,
+            int groupX,
+            int groupY,
+            int chunksPorArquivo,
+            int chunksX,
+            int chunksY,
+            int chunkSize,
+            byte[] structuresMap
+        ) throws IOException {
+            int chunkStartX = groupX * chunksPorArquivo;
+            int chunkStartY = groupY * chunksPorArquivo;
+            int chunkEndX = Math.min(chunksX, chunkStartX + chunksPorArquivo);
+            int chunkEndY = Math.min(chunksY, chunkStartY + chunksPorArquivo);
+
+            try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+                writer.write("{\n");
+                writer.write("  \"meta\": {\n");
+                writer.write("    \"group_x\": " + groupX + ",\n");
+                writer.write("    \"group_y\": " + groupY + ",\n");
+                writer.write("    \"chunk_start_x\": " + chunkStartX + ",\n");
+                writer.write("    \"chunk_start_y\": " + chunkStartY + ",\n");
+                writer.write("    \"chunk_end_x\": " + (chunkEndX - 1) + ",\n");
+                writer.write("    \"chunk_end_y\": " + (chunkEndY - 1) + ",\n");
+                writer.write("    \"chunks_por_arquivo\": " + chunksPorArquivo + ",\n");
+                writer.write("    \"chunk_blocos\": " + chunkSize + ",\n");
+                writer.write("    \"world_width\": " + width + ",\n");
+                writer.write("    \"world_height\": " + height + ",\n");
+                writer.write("    \"seed\": " + rules.seed + "\n");
+                writer.write("  },\n");
+
+                writer.write("  \"chunks\": [\n");
+                boolean primeiroChunk = true;
+                for (int cy = chunkStartY; cy < chunkEndY; cy++) {
+                    for (int cx = chunkStartX; cx < chunkEndX; cx++) {
+                        if (!primeiroChunk) {
+                            writer.write(",\n");
+                        }
+                        writer.write("    {\n");
+                        writer.write("      \"chunk_x\": " + cx + ",\n");
+                        writer.write("      \"chunk_y\": " + cy + ",\n");
+                        writer.write("      \"grid_blocos\": ");
+                        writeChunkGridFromMap(writer, tileMap, cx * chunkSize, cy * chunkSize, chunkSize, "      ");
+                        writer.write(",\n");
+                        writer.write("      \"grid_biomas\": ");
+                        writeChunkGridFromMap(writer, biomeMap, cx * chunkSize, cy * chunkSize, chunkSize, "      ");
+                        writer.write(",\n");
+                        writer.write("      \"grid_estruturas\": ");
+                        writeChunkGridFromMap(writer, structuresMap, cx * chunkSize, cy * chunkSize, chunkSize, "      ");
+                        writer.write("\n    }");
+                        primeiroChunk = false;
+                    }
+                }
+                writer.write("\n  ]\n}\n");
             }
         }
 
@@ -1458,15 +1521,15 @@ static final class Rules {
                 writer.write("  },\n");
 
                 writer.write("  \"grid_blocos\": ");
-                writeChunkGridFromMap(writer, tileMap, x0, y0, chunkSize);
+                writeChunkGridFromMap(writer, tileMap, x0, y0, chunkSize, "  ");
                 writer.write(",\n");
 
                 writer.write("  \"grid_biomas\": ");
-                writeChunkGridFromMap(writer, biomeMap, x0, y0, chunkSize);
+                writeChunkGridFromMap(writer, biomeMap, x0, y0, chunkSize, "  ");
                 writer.write(",\n");
 
                 writer.write("  \"grid_estruturas\": ");
-                writeChunkGridFromMap(writer, structuresMap, x0, y0, chunkSize);
+                writeChunkGridFromMap(writer, structuresMap, x0, y0, chunkSize, "  ");
                 writer.write("\n}\n");
             }
         }
@@ -1488,11 +1551,12 @@ static final class Rules {
             };
         }
 
-        private void writeChunkGridFromMap(BufferedWriter writer, byte[] map, int x0, int y0, int chunkSize) throws IOException {
+        private void writeChunkGridFromMap(BufferedWriter writer, byte[] map, int x0, int y0, int chunkSize, String indent) throws IOException {
+            String rowIndent = indent + "  ";
             writer.write("[\n");
             for (int by = 0; by < chunkSize; by++) {
                 int y = y0 + by;
-                writer.write("    [");
+                writer.write(rowIndent + "[");
                 for (int bx = 0; bx < chunkSize; bx++) {
                     int x = x0 + bx;
                     int value = 0;
@@ -1511,7 +1575,7 @@ static final class Rules {
                 }
                 writer.write('\n');
             }
-            writer.write("  ]");
+            writer.write(indent + "]");
         }
 
         private void generateBaseTerrain() {

@@ -94,7 +94,12 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
             if ARQUIVO_WORLD_META.exists():
                 try:
                     meta = _carregar_world_meta()
-                    chunks_total = int(meta.get("chunks_x", 0)) * int(meta.get("chunks_y", 0))
+                    chunks_x = int(meta.get("chunks_x", 0))
+                    chunks_y = int(meta.get("chunks_y", 0))
+                    chunks_por_arquivo = max(1, int(meta.get("chunks_por_arquivo", 10)))
+                    grupos_x = max(1, int((chunks_x + chunks_por_arquivo - 1) // chunks_por_arquivo))
+                    grupos_y = max(1, int((chunks_y + chunks_por_arquivo - 1) // chunks_por_arquivo))
+                    chunks_total = grupos_x * grupos_y
                 except Exception:
                     chunks_total = 0
             _emitir_progresso(callback_progresso, 82, "Salvando chunks")
@@ -133,7 +138,9 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
             continue
 
         if etapa == "chunks" and PASTA_WORLD_CHUNKS.exists() and chunks_total > 0:
-            chunks_prontos = len(list(PASTA_WORLD_CHUNKS.glob("chunk_*.json")))
+            chunks_prontos = len(list(PASTA_WORLD_CHUNKS.glob("chunk_set_*.json")))
+            if chunks_prontos <= 0:
+                chunks_prontos = len(list(PASTA_WORLD_CHUNKS.glob("chunk_*.json")))
             pct = 82 + int((chunks_prontos / max(1, chunks_total)) * 13)
             _emitir_progresso(callback_progresso, pct, f"Salvando chunks ({chunks_prontos}/{chunks_total})")
 
@@ -179,6 +186,7 @@ def _carregar_world_meta() -> Dict[str, int | float]:
     chunk_blocos_disco = int(payload.get("chunk_blocos_disco", payload.get("chunk_blocos", CHUNK_BLOCOS)))
     chunks_x = int(payload.get("chunks_x", 0))
     chunks_y = int(payload.get("chunks_y", 0))
+    chunks_por_arquivo = max(1, int(payload.get("chunks_por_arquivo", 10)))
 
     if largura <= 0 or altura <= 0:
         raise ValueError("world_meta.json inválido: width/height devem ser positivos")
@@ -202,6 +210,7 @@ def _carregar_world_meta() -> Dict[str, int | float]:
         "chunk_blocos_disco": chunk_blocos_disco,
         "chunks_x": chunks_x,
         "chunks_y": chunks_y,
+        "chunks_por_arquivo": chunks_por_arquivo,
         "spawn_chunk_x": int(payload["spawn_chunk_x"]),
         "spawn_chunk_y": int(payload["spawn_chunk_y"]),
         "spawn_x": float(payload["spawn_x"]),
@@ -229,6 +238,7 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
             "spawn_chunk": [int(spawn_chunk[0]), int(spawn_chunk[1])],
             "chunks_x": int(meta_java["chunks_x"]),
             "chunks_y": int(meta_java["chunks_y"]),
+            "chunks_por_arquivo": int(meta_java.get("chunks_por_arquivo", 10)),
         },
         "spawn": [float(spawn[0]), float(spawn[1])],
         "grid": [],
@@ -281,6 +291,7 @@ def carregar_estado_mundo() -> Dict[str, object]:
                         "spawn_chunk": [0, 0],
                         "chunks_x": max(1, int((largura + CHUNK_BLOCOS - 1) // CHUNK_BLOCOS)),
                         "chunks_y": max(1, int((altura + CHUNK_BLOCOS - 1) // CHUNK_BLOCOS)),
+                        "chunks_por_arquivo": 10,
                     }
                     LARGURA_BLOCOS = int(largura)
                     ALTURA_BLOCOS = int(altura)

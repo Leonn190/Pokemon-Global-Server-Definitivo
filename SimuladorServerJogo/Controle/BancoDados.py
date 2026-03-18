@@ -36,11 +36,13 @@ class BancoDadosMundo:
         self._estado_mundo = carregar_estado_mundo()
         self._grid: List[List[int]] = []
         self._chunks_cache: Dict[Tuple[int, int], Dict[str, List[List[int]]]] = {}
+        self._chunk_sets_cache: Dict[Tuple[int, int], Dict[Tuple[int, int], Dict[str, List[List[int]]]]] = {}
         self._chunks_estruturas_carregados: Set[Tuple[int, int]] = set()
         self._chunks_dir = self._resolver_chunks_dir()
         meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
         self._chunk_blocos = int(CHUNK_BLOCOS)
         self._chunk_blocos_disco = max(1, int(meta.get("chunk_blocos_disco", meta.get("chunk_blocos", CHUNK_BLOCOS))))
+        self._chunks_por_arquivo = max(1, int(meta.get("chunks_por_arquivo", 10)))
         self._largura_blocos = int(meta.get("largura_blocos", 0))
         self._altura_blocos = int(meta.get("altura_blocos", 0))
         self._gerar_estruturas_naturais_no_mapa()
@@ -61,10 +63,12 @@ class BancoDadosMundo:
             self._estado_mundo = estado_mundo if isinstance(estado_mundo, dict) else {}
             self._grid = []
             self._chunks_cache.clear()
+            self._chunk_sets_cache.clear()
             self._chunks_estruturas_carregados.clear()
             meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta", {}), dict) else {}
             self._chunk_blocos = max(1, int(CHUNK_BLOCOS))
             self._chunk_blocos_disco = max(1, int(meta.get("chunk_blocos_disco", meta.get("chunk_blocos", CHUNK_BLOCOS))))
+            self._chunks_por_arquivo = max(1, int(meta.get("chunks_por_arquivo", 10)))
             self._largura_blocos = int(meta.get("largura_blocos", 0))
             self._altura_blocos = int(meta.get("altura_blocos", 0))
 
@@ -142,6 +146,49 @@ class BancoDadosMundo:
 
             self._chunks_estruturas_carregados.add(chave)
 
+    def _nova_grade_vazia(self) -> List[List[int]]:
+        return [[0 for _ in range(self._chunk_blocos_disco)] for _ in range(self._chunk_blocos_disco)]
+
+    def _carregar_chunk_set(self, chave: Tuple[int, int], chunks_dir_atual: Path) -> Optional[Dict[str, List[List[int]]]]:
+        grupo_x = chave[0] // self._chunks_por_arquivo
+        grupo_y = chave[1] // self._chunks_por_arquivo
+        cache_grupo = self._chunk_sets_cache.get((grupo_x, grupo_y))
+        if cache_grupo is None:
+            arquivo_grupo = self._chunks_dir / f"chunk_set_{grupo_x}_{grupo_y}.json"
+            if not arquivo_grupo.exists() and chunks_dir_atual != self._chunks_dir:
+                arquivo_grupo = chunks_dir_atual / f"chunk_set_{grupo_x}_{grupo_y}.json"
+            if arquivo_grupo.exists():
+                with arquivo_grupo.open("r", encoding="utf-8") as f:
+                    payload_grupo = json.load(f)
+                chunks_indexados: Dict[Tuple[int, int], Dict[str, List[List[int]]]] = {}
+                if isinstance(payload_grupo, dict):
+                    chunks = payload_grupo.get("chunks", [])
+                    if isinstance(chunks, list):
+                        for item in chunks:
+                            if not isinstance(item, dict):
+                                continue
+                            try:
+                                icx = int(item.get("chunk_x", -1))
+                                icy = int(item.get("chunk_y", -1))
+                            except (TypeError, ValueError):
+                                continue
+                            chunks_indexados[(icx, icy)] = {
+                                "grid_blocos": item.get("grid_blocos", []) if isinstance(item.get("grid_blocos", []), list) else [],
+                                "grid_biomas": item.get("grid_biomas", []) if isinstance(item.get("grid_biomas", []), list) else [],
+                                "grid_estruturas": item.get("grid_estruturas", []) if isinstance(item.get("grid_estruturas", []), list) else [],
+                            }
+                self._chunk_sets_cache[(grupo_x, grupo_y)] = chunks_indexados
+                for chave_chunk, dados_chunk in chunks_indexados.items():
+                    self._chunks_cache[chave_chunk] = dados_chunk
+                cache_grupo = chunks_indexados
+            else:
+                cache_grupo = {}
+        cache_chunk = cache_grupo.get(chave)
+        if cache_chunk is not None:
+            self._chunks_cache[chave] = cache_chunk
+            return cache_chunk
+        return None
+
     def _carregar_chunk(self, cx: int, cy: int) -> Dict[str, List[List[int]]]:
         with self._lock:
             chave = (int(cx), int(cy))
@@ -149,17 +196,32 @@ class BancoDadosMundo:
             if cache is not None:
                 return cache
 
+            chunks_dir_atual = self._chunks_dir
+            self._chunks_dir = self._resolver_chunks_dir()
+
+            if self._chunks_por_arquivo > 1:
+                cache_chunk = self._carregar_chunk_set(chave, chunks_dir_atual)
+                if cache_chunk is not None:
+                    return cache_chunk
+
             arquivo = self._chunks_dir / f"chunk_{chave[0]}_{chave[1]}.json"
-            if not arquivo.exists():
-                self._chunks_dir = self._resolver_chunks_dir()
-                arquivo = self._chunks_dir / f"chunk_{chave[0]}_{chave[1]}.json"
+            if not arquivo.exists() and chunks_dir_atual != self._chunks_dir:
+                arquivo = chunks_dir_atual / f"chunk_{chave[0]}_{chave[1]}.json"
+
+            if not arquivo.exists() and self._chunks_por_arquivo <= 1:
+                cache_chunk = self._carregar_chunk_set(chave, chunks_dir_atual)
+                if cache_chunk is not None:
+                    return cache_chunk
 
             if arquivo.exists():
                 with arquivo.open("r", encoding="utf-8") as f:
                     payload = json.load(f)
             else:
-                vazio = [[0 for _ in range(self._chunk_blocos_disco)] for _ in range(self._chunk_blocos_disco)]
-                cache = {"grid_blocos": vazio, "grid_biomas": vazio, "grid_estruturas": vazio}
+                cache = {
+                    "grid_blocos": self._nova_grade_vazia(),
+                    "grid_biomas": self._nova_grade_vazia(),
+                    "grid_estruturas": self._nova_grade_vazia(),
+                }
                 self._chunks_cache[chave] = cache
                 return cache
             if not isinstance(payload, dict):

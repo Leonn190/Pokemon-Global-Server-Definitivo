@@ -33,7 +33,7 @@ class Controle:
         self._acao_arremesso_pendente = None
         self._acao_drop_item_mundo_pendente = None
 
-    def atualizar(self, eventos, dt, mouse_pos_mundo_tiles):
+    def atualizar(self, eventos, dt, mouse_pos_mundo_tiles, mouse_pos_tela_px=None, ator_pos_tela_px=None):
         dt = max(0.0, float(dt))
         self._processar_toggle_inventario(eventos)
         if self.InventarioAberto:
@@ -46,7 +46,7 @@ class Controle:
             return
         self._processar_scroll_inventario(eventos)
         self._processar_input_ataque(eventos, mouse_pos_mundo_tiles)
-        self._processar_rotacao(mouse_pos_mundo_tiles)
+        self._processar_rotacao(mouse_pos_mundo_tiles, mouse_pos_tela_px=mouse_pos_tela_px, ator_pos_tela_px=ator_pos_tela_px)
         deslocando, correndo, tile_atual = self._processar_movimento(dt)
         self._atualizar_stamina(dt, deslocando, correndo, tile_atual)
         self._atualizar_tapa_automatico()
@@ -308,11 +308,16 @@ class Controle:
                 regen = float(getattr(self.Ator.Perfil, "RegeneracaoStaminaAndando" if deslocando else "RegeneracaoStaminaParado", 12.0))
                 self.Ator.Perfil.regenerar_stamina(regen * dt)
 
-    def _processar_rotacao(self, mouse_pos_mundo_tiles):
+    def _processar_rotacao(self, mouse_pos_mundo_tiles, mouse_pos_tela_px=None, ator_pos_tela_px=None):
         self._tempo_diff_angulo += 1
-        px, py = self.Ator.Posicao
-        mx, my = mouse_pos_mundo_tiles
-        dx, dy = (self._delta_toroidal(px, mx, self.LimitesMundoTiles[0]), self._delta_toroidal(py, my, self.LimitesMundoTiles[1])) if self.LimitesMundoTiles else (mx - px, my - py)
+        if mouse_pos_tela_px is not None and ator_pos_tela_px is not None:
+            mx, my = float(mouse_pos_tela_px[0]), float(mouse_pos_tela_px[1])
+            px, py = float(ator_pos_tela_px[0]), float(ator_pos_tela_px[1])
+            dx, dy = (mx - px), (my - py)
+        else:
+            px, py = self.Ator.Posicao
+            mx, my = mouse_pos_mundo_tiles
+            dx, dy = (self._delta_toroidal(px, mx, self.LimitesMundoTiles[0]), self._delta_toroidal(py, my, self.LimitesMundoTiles[1])) if self.LimitesMundoTiles else (mx - px, my - py)
         if dx == 0 and dy == 0:
             return
         angulo = math.degrees(math.atan2(-dy, dx))

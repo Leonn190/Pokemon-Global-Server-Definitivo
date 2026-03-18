@@ -292,9 +292,17 @@ class ControladorPlayer:
             return
 
         if not bloqueado:
-            mouse_mundo_tiles = camera.tela_para_mundo_tiles(pygame.mouse.get_pos())
+            mouse_tela_px = pygame.mouse.get_pos()
+            mouse_mundo_tiles = camera.tela_para_mundo_tiles(mouse_tela_px)
+            ator_pos_tela_px = camera.mundo_para_tela_px(self._player_local.Posicao)
             posicao_antes = tuple(self._player_local.Posicao)
-            self._player_local.Controle.atualizar(eventos, dt, mouse_mundo_tiles)
+            self._player_local.Controle.atualizar(
+                eventos,
+                dt,
+                mouse_mundo_tiles,
+                mouse_pos_tela_px=mouse_tela_px,
+                ator_pos_tela_px=ator_pos_tela_px,
+            )
             self._resolver_colisao_player_local(posicao_antes, dt)
             self._processar_intencao_arremesso_local()
             self._processar_intencao_drop_item_mundo()
@@ -410,6 +418,9 @@ class ControladorPlayer:
         # Sincronizações autoritativas (inventário/perfil/estado visual) do próprio
         # player não devem mover posição local, mas precisam ser aplicadas na hora.
         dados.pop("posicao", None)
+        # Para o próprio player, estado visual/entrada (ângulo, tapa, mirando etc.)
+        # é controlado localmente e não deve sobrescrever o input do cliente.
+        dados.pop("estado", None)
         if dados:
             self._player_local.update(dados)
 

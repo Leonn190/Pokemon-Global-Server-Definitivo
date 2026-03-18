@@ -32,6 +32,7 @@ class Controle:
         self._item_arremesso_atual = None
         self._acao_arremesso_pendente = None
         self._acao_drop_item_mundo_pendente = None
+        self._limiar_jitter_angulo_graus = 0.75
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles):
         dt = max(0.0, float(dt))
@@ -316,7 +317,10 @@ class Controle:
         if dx == 0 and dy == 0:
             return
         angulo = math.degrees(math.atan2(-dy, dx))
-        self.Ator.definir_angulo_olhar(angulo)
+        atual = float(getattr(self.Ator, "AnguloOlhar", 0.0) or 0.0)
+        diff_angular = ((float(angulo) - atual + 540.0) % 360.0) - 180.0
+        if abs(diff_angular) >= float(self._limiar_jitter_angulo_graus):
+            self.Ator.definir_angulo_olhar(angulo)
         if self._tempo_diff_angulo < 3:
             return
         self._tempo_diff_angulo = 0

@@ -435,7 +435,12 @@ class ControladorPlayer:
         if ator is None:
             return
         ator.set_tile_px(getattr(camera, "TilePx", 50))
-        pos_tela = camera.mundo_para_tela_px(ator.Posicao)
+        camera_main = getattr(camera, "EntidadeMain", None)
+        if camera_main is ator:
+            largura_tela, altura_tela = getattr(camera, "TamanhoTelaPx", tela.get_size())
+            pos_tela = (float(largura_tela) * 0.5, float(altura_tela) * 0.5)
+        else:
+            pos_tela = camera.mundo_para_tela_px(ator.Posicao)
         respiracao_tempo = getattr(getattr(ator, "Controle", None), "_tempo_respiracao", 0.0)
         ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
         estado_mira = ator.Controle.estado_mira(camera.tela_para_mundo_tiles(pygame.mouse.get_pos())) if ator.Controle else None

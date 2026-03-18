@@ -205,9 +205,7 @@ class LeitorMundo:
         self._cache_superficies_chunks[chave_chunk] = superficie
         return superficie
 
-    def renderizar_mundo(self, tela, gerenciador_fps=None) -> None:
-        if gerenciador_fps is not None:
-            gerenciador_fps.iniciar_trecho("carregar_chunks")
+    def renderizar_mundo(self, tela) -> None:
         tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
         player = getattr(self.Camera, "EntidadeMain", None)
         pos_player = getattr(player, "Posicao", (0.0, 0.0))
@@ -218,8 +216,6 @@ class LeitorMundo:
         except Exception:
             chunk_player_x = 0; chunk_player_y = 0
         if not chunks_ref:
-            if gerenciador_fps is not None:
-                gerenciador_fps.finalizar_trecho("carregar_chunks")
             return
         try:
             raio_render_chunks = max(1, int(meta.get("raio_chunks_ativo", self.RaioChunks)))
@@ -238,9 +234,6 @@ class LeitorMundo:
             if superficie is not None:
                 draw_ops.append((superficie, raw_x * tamanho_chunk, raw_y * tamanho_chunk))
 
-        if gerenciador_fps is not None:
-            gerenciador_fps.finalizar_trecho("carregar_chunks")
-            gerenciador_fps.iniciar_trecho("renderizar_tiles")
         cam_x, cam_y = map(float, getattr(self.Camera, "PosicaoTiles", (0.0, 0.0)))
         tela_w, tela_h = tela.get_size()
         for superficie_chunk, origem_x, origem_y in draw_ops:
@@ -249,5 +242,3 @@ class LeitorMundo:
             if px > tela_w or py > tela_h or (px + superficie_chunk.get_width()) < 0 or (py + superficie_chunk.get_height()) < 0:
                 continue
             tela.blit(superficie_chunk, (int(px), int(py)))
-        if gerenciador_fps is not None:
-            gerenciador_fps.finalizar_trecho("renderizar_tiles")

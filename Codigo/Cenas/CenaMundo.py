@@ -5,7 +5,6 @@ from Codigo.Modulos.ControladorMundo.ControladorMundo import ControladorMundo
 from Codigo.Modulos.ElementosHud import ElementosHud
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
-from Codigo.Modulos.Ferramentas import GerenciadorFPS
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import enviar_mensagem_terminal, buscar_mensagens_terminal
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
@@ -26,7 +25,6 @@ class CenaMundo:
         self._desconectado = False
         self.TelaAtual = None
         self.SubtelaInventario = None
-        self.GerenciadorFPS = GerenciadorFPS((JOGO.CONFIG or {}).get("FPS", 60))
         self.Terminal = None
 
         self._montar_mundo(JOGO)
@@ -70,8 +68,6 @@ class CenaMundo:
             self.ControladorMundo.conectar(link, client_id)
 
     def Tela(self, JOGO, EVENTOS, dt):
-        gfps = self.GerenciadorFPS
-
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
 
         bloqueio_gameplay = False
@@ -79,7 +75,6 @@ class CenaMundo:
             EVENTOS = self.Terminal.processar_eventos(EVENTOS)
             bloqueio_gameplay = bool(self.Terminal.esta_digitando)
 
-        gfps.iniciar_trecho("aplicacao_subtela")
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
 
         player = self.ControladorMundo.player_local
@@ -92,14 +87,10 @@ class CenaMundo:
         if player is not None and self.SubtelaInventario is not None:
             self.SubtelaInventario.Ativo = player.Controle.InventarioAberto
             self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
-        gfps.finalizar_trecho("aplicacao_subtela")
-
         self.Camera.atualizar(dt)
 
         JOGO.TELA.fill((20, 20, 28))
-        gfps.iniciar_trecho("renderizar_objetos")
         self.ControladorMundo.renderizar(JOGO.TELA)
-        gfps.finalizar_trecho("renderizar_objetos")
 
         if player is not None:
             player.renderizar_stamina(JOGO.TELA, self.Camera, dt)
@@ -110,8 +101,6 @@ class CenaMundo:
             self.SubtelaInventario.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt)
-
-        gfps.imprimir_relatorio()
 
     def Finalizar(self, JOGO):
         if self.Terminal is not None:

@@ -46,6 +46,7 @@ def _estado_mundo_vazio():
         "grid": [],
         "grid_biomas": [],
         "grid_estruturas_naturais": [],
+        "estruturas_naturais_tocadas": {},
         "players": {},
         "spawn": [0.0, 0.0],
     }
@@ -279,6 +280,7 @@ def _sync_personagens_mundo():
     if not _ESTADO_MUNDO.get("meta"):
         return
     _ESTADO_MUNDO["players"] = _ESTADO["personagens"]
+    _ESTADO_MUNDO["estruturas_naturais_tocadas"] = BANCO_DADOS.exportar_estruturas_tocadas()
     salvar_estado_mundo(_ESTADO_MUNDO)
 
 

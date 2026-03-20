@@ -44,3 +44,23 @@ Field Berry,Melhora a captura em campos abertos.,26,2,fruta,42
 Water Berry,Melhora a captura em ambientes aquáticos.,26,2,fruta,43
 Lava Berry,Melhora a captura em terras vulcanicas,26,2,fruta,44
 Magic Berry,Melhora a captura no bioma magico,26,2,fruta,45
+Madeira,Recurso básico usado em construções e na criação de ferramentas simples.,-,-,recurso,46
+Pedra,Recurso comum usado em construções e na criação de ferramentas mais resistentes.,-,-,recurso,47
+Cobre,Minério metálico usado na fabricação de itens e ferramentas intermediárias.,-,-,recurso,48
+Ouro,Minério valioso usado na criação de ferramentas leves e itens especiais.,-,-,recurso,49
+Diamante,Gema rara usada para fabricar ferramentas de alta durabilidade.,-,-,recurso,50
+Ametista,Cristal raro usado na criação de ferramentas refinadas e itens especiais.,-,-,recurso,51
+Esmeralda,"Gema valiosa usada em trocas, fabricação e itens raros.",-,-,recurso,52
+Rubi,Gema poderosa usada para criar ferramentas avançadas e itens de alto valor.,-,-,recurso,53
+Picareta de Madeira,Ferramenta simples usada para minerar recursos básicos.,1,-,ferramenta,54
+Picareta de Pedra,Ferramenta resistente usada para minerar com mais eficiência.,2,-,ferramenta,55
+Picareta de Ouro,Ferramenta leve usada para minerar rapidamente certos recursos.,3,-,ferramenta,56
+Picareta de Diamante,Ferramenta avançada usada para minerar recursos raros com alta eficiência.,4,-,ferramenta,57
+Picareta de Ametista,Ferramenta refinada usada para extrair minérios especiais.,5,-,ferramenta,58
+Picareta de Rubi,Ferramenta poderosa usada para mineração avançada.,6,-,ferramenta,59
+Machado de Madeira,Ferramenta simples usada para cortar árvores e coletar madeira.,2,-,ferramenta,60
+Machado de Pedra,Ferramenta resistente usada para cortar madeira com mais eficiência.,3,-,ferramenta,61
+Machado de Ouro,Ferramenta leve usada para cortes rápidos em recursos naturais.,4,-,ferramenta,62
+Machado de Diamante,Ferramenta avançada usada para extração eficiente de madeira.,5,-,ferramenta,63
+Machado de Ametista,Ferramenta refinada usada para coleta avançada de recursos naturais.,6,-,ferramenta,64
+Machado de Rubi,Ferramenta poderosa usada para corte e extração de alto nível.,7,-,ferramenta,65

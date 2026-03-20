@@ -1,8 +1,92 @@
 
 {
+    "Pokeball": [
+        [null, "Cobre", null],
+        ["Cobre", null, "Cobre"],
+        [null, "Cobre", null]
+    ],
+
     "Greatball": [
         [null, "Pokeball", null],
         ["Pokeball", null, "Pokeball"],
         [null, "Pokeball", null]
+    ],
+
+    "Ultraball": [
+        [null, "Greatball", null],
+        ["Greatball", null, "Greatball"],
+        [null, "Greatball", null]
+    ],
+
+    "Picareta de Madeira": [
+        ["Madeira", "Madeira", "Madeira"],
+        [null, "Madeira", null],
+        [null, "Madeira", null]
+    ],
+
+    "Picareta de Pedra": [
+        ["Pedra", "Picareta de Madeira", "Pedra"],
+        [null, "Madeira", null],
+        [null, "Madeira", null]
+    ],
+
+    "Picareta de Ouro": [
+        ["Ouro", "Picareta de Pedra", "Ouro"],
+        [null, "Madeira", null],
+        [null, "Madeira", null]
+    ],
+
+    "Picareta de Diamante": [
+        ["Diamante", "Picareta de Ouro", "Diamante"],
+        [null, "Madeira", null],
+        [null, "Madeira", null]
+    ],
+
+    "Picareta de Ametista": [
+        ["Ametista", "Picareta de Diamante", "Ametista"],
+        [null, "Madeira", null],
+        [null, "Madeira", null]
+    ],
+
+    "Picareta de Rubi": [
+        ["Rubi", "Picareta de Ametista", "Rubi"],
+        [null, "Madeira", null],
+        [null, "Madeira", null]
+    ],
+
+    "Machado de Madeira": [
+        [null, "Madeira", "Madeira"],
+        [null, "Madeira", "Madeira"],
+        [null, "Madeira", null]
+    ],
+
+    "Machado de Pedra": [
+        [null, "Machado de Madeira", "Pedra"],
+        [null, "Madeira", "Pedra"],
+        [null, "Madeira", null]
+    ],
+
+    "Machado de Ouro": [
+        [null, "Machado de Pedra", "Ouro"],
+        [null, "Madeira", "Ouro"],
+        [null, "Madeira", null]
+    ],
+
+    "Machado de Diamante": [
+        [null, "Machado de Ouro", "Diamante"],
+        [null, "Madeira", "Diamante"],
+        [null, "Madeira", null]
+    ],
+
+    "Machado de Ametista": [
+        [null, "Machado de Diamante", "Ametista"],
+        [null, "Madeira", "Ametista"],
+        [null, "Madeira", null]
+    ],
+
+    "Machado de Rubi": [
+        [null, "Machado de Ametista", "Rubi"],
+        [null, "Madeira", "Rubi"],
+        [null, "Madeira", null]
     ]
 }

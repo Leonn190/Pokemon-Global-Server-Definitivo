@@ -21,10 +21,13 @@ class PainelCraft:
         self.CraftSlots = [None] * 9
         self._origens = [None] * 9
         self._painel = Painel(self.rect, cor_fundo=(18, 26, 44, 242), cor_borda=(66, 88, 136), borda=2, raio=16)
+        self._painel_pai = None
         estilo = {'outline': True, 'outline_thickness': 2, 'outline_color': (8, 12, 20)}
         self.TxtTitulo = Texto('Craft', style={**estilo, 'size': 19, 'color': (236, 241, 255)})
         self.TxtSeta = Texto('→', style={**estilo, 'size': 28, 'color': (180, 194, 228), 'align': 'center'})
         self.PreviewReceita = None
+        self._receitas_cache = []
+        self._highlight_cache = None
         self.SlotPx = 68
         self.Gap = 12
         self.PaddingX = 24
@@ -35,6 +38,14 @@ class PainelCraft:
     @classmethod
     def instancia_ativa(cls):
         return cls._instancia_ativa
+
+    def vincular_painel_pai(self, painel):
+        self._painel_pai = painel
+        return self
+
+    def _marcar_sujo(self):
+        if hasattr(self._painel_pai, 'marcar_sujo'):
+            self._painel_pai.marcar_sujo()
 
     @staticmethod
     def _norm(texto):
@@ -81,6 +92,7 @@ class PainelCraft:
         self.rect = pygame.Rect(rect)
         self._painel.rect = pygame.Rect(rect)
         PainelCraft._instancia_ativa = self
+        self._marcar_sujo()
 
     def slot_rect(self, indice):
         col = indice % 3
@@ -155,22 +167,27 @@ class PainelCraft:
 
     def set_preview(self, receita):
         self.PreviewReceita = receita
+        self._marcar_sujo()
 
     def limpar_preview(self):
         self.PreviewReceita = None
+        self._marcar_sujo()
 
     def colocar_no_slot(self, indice, item, origem=None):
         destino = self.CraftSlots[indice]
         if destino is None:
             self.CraftSlots[indice] = item
             self._origens[indice] = origem
+            self._marcar_sujo()
             return None
         if self.pode_empilhar(item, destino):
             destino['quantidade'] = self.quantidade(destino) + self.quantidade(item)
+            self._marcar_sujo()
             return None
         self.CraftSlots[indice] = item
         antiga_origem = self._origens[indice]
         self._origens[indice] = origem
+        self._marcar_sujo()
         return destino, antiga_origem
 
     def retirar_do_slot(self, indice, quantidade=None):
@@ -181,6 +198,7 @@ class PainelCraft:
             self.CraftSlots[indice] = None
             origem = self._origens[indice]
             self._origens[indice] = None
+            self._marcar_sujo()
             return copy.deepcopy(item), origem
         qtd = self.quantidade(item)
         quantidade = max(1, min(qtd, int(quantidade)))
@@ -192,6 +210,7 @@ class PainelCraft:
             self._origens[indice] = None
         else:
             item['quantidade'] = qtd - quantidade
+        self._marcar_sujo()
         return retirado, origem
 
     def _retirar_um_do_inventario(self, container, chave_desejada):
@@ -218,12 +237,12 @@ class PainelCraft:
             retirado, origem = self._retirar_um_do_inventario(container, self.chave_item(esperado))
             if retirado is None:
                 if estado == 'verde':
-                    # estado verde não deveria faltar; se faltar, só deixa vazio mesmo
                     continue
                 continue
             self.CraftSlots[i] = retirado
             self._origens[i] = origem
             colocou_algo = True
+        self._marcar_sujo()
         return colocou_algo
 
     def resultado(self, receitas):
@@ -255,8 +274,10 @@ class PainelCraft:
                 self._origens[i] = None
             else:
                 self.CraftSlots[i]['quantidade'] = qtd - 1
+        self._marcar_sujo()
 
     def devolver_para_inventario(self, container):
+        houve_mudanca = False
         for i, item in enumerate(self.CraftSlots):
             if item is None:
                 self._origens[i] = None
@@ -266,8 +287,8 @@ class PainelCraft:
             if resto is None:
                 self.CraftSlots[i] = None
                 self._origens[i] = None
+                houve_mudanca = True
                 continue
-            # fallback: tenta voltar para o slot original e depois qualquer slot vazio/empilhável
             if origem is not None:
                 resto = container.tentar_colocar_no_slot(origem, resto)
             if resto is not None:
@@ -278,8 +299,21 @@ class PainelCraft:
             if resto is None:
                 self.CraftSlots[i] = None
                 self._origens[i] = None
+                houve_mudanca = True
+        if houve_mudanca:
+            self._marcar_sujo()
 
-    def desenhar(self, tela, receitas, highlight=None):
+    def desenhar(self, tela, receitas=None, highlight=None):
+        if receitas is None:
+            receitas = self._receitas_cache
+        else:
+            self._receitas_cache = receitas
+
+        if highlight is None:
+            highlight = self._highlight_cache
+        else:
+            self._highlight_cache = highlight
+
         self._painel.render(tela, [], 0)
         self.TxtTitulo.set_pos((self.rect.x + 18, self.rect.y + 12))
         self.TxtTitulo.draw(tela)

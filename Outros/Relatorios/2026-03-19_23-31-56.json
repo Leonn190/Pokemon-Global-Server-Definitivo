@@ -1,0 +1,534 @@
+{
+  "resumo": {
+    "pastas": 1157,
+    "arquivos": 68222,
+    "tamanho_bytes": 406573575,
+    "tamanho_gib": 0.378651,
+    "linhas_totais_geral": 25811
+  },
+  "python": {
+    "py_arquivos": 116,
+    "linhas_totais": 18879,
+    "classes_encontradas": 78,
+    "funcoes_encontradas": 266,
+    "metodos_encontrados": 788,
+    "total_funcoes_e_metodos": 1054,
+    "media_linhas_por_arquivo": 162.75,
+    "top15_maiores_py": [
+      {
+        "arquivo": "Codigo/Modulos/ControladorMundo/ControladorObjetos.py",
+        "tamanho_bytes": 28924,
+        "tamanho_kib": 28.25,
+        "linhas": 614
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/BancoDados.py",
+        "tamanho_bytes": 27154,
+        "tamanho_kib": 26.52,
+        "linhas": 570
+      },
+      {
+        "arquivo": "Codigo/Geradores/PokemonMundo.py",
+        "tamanho_bytes": 26703,
+        "tamanho_kib": 26.08,
+        "linhas": 534
+      },
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "tamanho_bytes": 23939,
+        "tamanho_kib": 23.38,
+        "linhas": 736
+      },
+      {
+        "arquivo": "Codigo/Modulos/ControladorMundo/ControladorPlayer.py",
+        "tamanho_bytes": 22363,
+        "tamanho_kib": 21.84,
+        "linhas": 495
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/ObjetosMundoServer.py",
+        "tamanho_bytes": 21725,
+        "tamanho_kib": 21.22,
+        "linhas": 305
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/EstadoServidor.py",
+        "tamanho_bytes": 18098,
+        "tamanho_kib": 17.67,
+        "linhas": 463
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioItens.py",
+        "tamanho_bytes": 17031,
+        "tamanho_kib": 16.63,
+        "linhas": 383
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Rotas/Comandos.py",
+        "tamanho_bytes": 16758,
+        "tamanho_kib": 16.37,
+        "linhas": 408
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaServers.py",
+        "tamanho_bytes": 16315,
+        "tamanho_kib": 15.93,
+        "linhas": 502
+      },
+      {
+        "arquivo": "Codigo/Telas/TelasGenericas.py",
+        "tamanho_bytes": 16211,
+        "tamanho_kib": 15.83,
+        "linhas": 463
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py",
+        "tamanho_bytes": 15859,
+        "tamanho_kib": 15.49,
+        "linhas": 299
+      },
+      {
+        "arquivo": "Outros/Mixer.py",
+        "tamanho_bytes": 15677,
+        "tamanho_kib": 15.31,
+        "linhas": 460
+      },
+      {
+        "arquivo": "Codigo/Geradores/Player/Controle.py",
+        "tamanho_bytes": 15644,
+        "tamanho_kib": 15.28,
+        "linhas": 354
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaCriarPersonagem.py",
+        "tamanho_bytes": 15558,
+        "tamanho_kib": 15.19,
+        "linhas": 417
+      }
+    ],
+    "top5_arquivos_mais_importados": [
+      {
+        "arquivo": "Codigo/Prefabs/Texto.py",
+        "importado_por_arquivos": 19
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/BancoDados.py",
+        "importado_por_arquivos": 12
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Botao.py",
+        "importado_por_arquivos": 12
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Rotas/Ativador.py",
+        "importado_por_arquivos": 11
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/EstadoServidor.py",
+        "importado_por_arquivos": 10
+      }
+    ]
+  },
+  "linhas_por_extensao": {
+    "itens": [
+      {
+        "ext": ".py",
+        "linhas": 18879
+      },
+      {
+        "ext": ".java",
+        "linhas": 2775
+      },
+      {
+        "ext": ".json",
+        "linhas": 2670
+      },
+      {
+        "ext": ".csv",
+        "linhas": 1384
+      },
+      {
+        "ext": ".md",
+        "linhas": 103
+      }
+    ]
+  },
+  "arquivos": {
+    "top15_maiores_geral": [
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu2.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 4950156,
+        "tamanho_kib": 4834.14
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Praia.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 4624258,
+        "tamanho_kib": 4515.88
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu3.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 4485841,
+        "tamanho_kib": 4380.7
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vale.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 3206751,
+        "tamanho_kib": 3131.59
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Carregamento.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 3199350,
+        "tamanho_kib": 3124.37
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu1.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 3137699,
+        "tamanho_kib": 3064.16
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Deserto.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2840430,
+        "tamanho_kib": 2773.86
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaNeve.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2615521,
+        "tamanho_kib": 2554.22
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoMar.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2586110,
+        "tamanho_kib": 2525.5
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVulcao.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2475599,
+        "tamanho_kib": 2417.58
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoDeserto.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2469696,
+        "tamanho_kib": 2411.81
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaMagia.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2459372,
+        "tamanho_kib": 2401.73
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoPantano.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2430796,
+        "tamanho_kib": 2373.82
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVale.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2393481,
+        "tamanho_kib": 2337.38
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Neve.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2139756,
+        "tamanho_kib": 2089.61
+      }
+    ]
+  },
+  "extensoes": {
+    "contagem": {
+      ".py": 116,
+      ".md": 1,
+      ".png": 68057,
+      ".csv": 3,
+      ".json": 7,
+      ".class": 13,
+      ".java": 1,
+      ".ttf": 1,
+      ".jpg": 1,
+      ".txt": 3,
+      ".wav": 2,
+      ".ogg": 17
+    },
+    "tamanho_bytes": {
+      ".py": 762886,
+      ".md": 3170,
+      ".png": 355937032,
+      ".csv": 146308,
+      ".json": 64340,
+      ".class": 82753,
+      ".java": 123500,
+      ".ttf": 26828,
+      ".jpg": 638403,
+      ".txt": 0,
+      ".wav": 213152,
+      ".ogg": 48575203
+    },
+    "top_por_tamanho": [
+      {
+        "ext": ".png",
+        "tamanho_bytes": 355937032,
+        "tamanho_gib": 0.331492,
+        "arquivos": 68057
+      },
+      {
+        "ext": ".ogg",
+        "tamanho_bytes": 48575203,
+        "tamanho_gib": 0.045239,
+        "arquivos": 17
+      },
+      {
+        "ext": ".py",
+        "tamanho_bytes": 762886,
+        "tamanho_gib": 0.00071,
+        "arquivos": 116
+      },
+      {
+        "ext": ".jpg",
+        "tamanho_bytes": 638403,
+        "tamanho_gib": 0.000595,
+        "arquivos": 1
+      },
+      {
+        "ext": ".wav",
+        "tamanho_bytes": 213152,
+        "tamanho_gib": 0.000199,
+        "arquivos": 2
+      },
+      {
+        "ext": ".csv",
+        "tamanho_bytes": 146308,
+        "tamanho_gib": 0.000136,
+        "arquivos": 3
+      },
+      {
+        "ext": ".java",
+        "tamanho_bytes": 123500,
+        "tamanho_gib": 0.000115,
+        "arquivos": 1
+      },
+      {
+        "ext": ".class",
+        "tamanho_bytes": 82753,
+        "tamanho_gib": 7.7e-05,
+        "arquivos": 13
+      },
+      {
+        "ext": ".json",
+        "tamanho_bytes": 64340,
+        "tamanho_gib": 6e-05,
+        "arquivos": 7
+      },
+      {
+        "ext": ".ttf",
+        "tamanho_bytes": 26828,
+        "tamanho_gib": 2.5e-05,
+        "arquivos": 1
+      },
+      {
+        "ext": ".md",
+        "tamanho_bytes": 3170,
+        "tamanho_gib": 3e-06,
+        "arquivos": 1
+      },
+      {
+        "ext": ".txt",
+        "tamanho_bytes": 0,
+        "tamanho_gib": 0.0,
+        "arquivos": 3
+      }
+    ],
+    "top_por_quantidade": [
+      {
+        "ext": ".png",
+        "arquivos": 68057,
+        "tamanho_bytes": 355937032,
+        "tamanho_gib": 0.331492
+      },
+      {
+        "ext": ".py",
+        "arquivos": 116,
+        "tamanho_bytes": 762886,
+        "tamanho_gib": 0.00071
+      },
+      {
+        "ext": ".ogg",
+        "arquivos": 17,
+        "tamanho_bytes": 48575203,
+        "tamanho_gib": 0.045239
+      },
+      {
+        "ext": ".class",
+        "arquivos": 13,
+        "tamanho_bytes": 82753,
+        "tamanho_gib": 7.7e-05
+      },
+      {
+        "ext": ".json",
+        "arquivos": 7,
+        "tamanho_bytes": 64340,
+        "tamanho_gib": 6e-05
+      },
+      {
+        "ext": ".csv",
+        "arquivos": 3,
+        "tamanho_bytes": 146308,
+        "tamanho_gib": 0.000136
+      },
+      {
+        "ext": ".txt",
+        "arquivos": 3,
+        "tamanho_bytes": 0,
+        "tamanho_gib": 0.0
+      },
+      {
+        "ext": ".wav",
+        "arquivos": 2,
+        "tamanho_bytes": 213152,
+        "tamanho_gib": 0.000199
+      },
+      {
+        "ext": ".md",
+        "arquivos": 1,
+        "tamanho_bytes": 3170,
+        "tamanho_gib": 3e-06
+      },
+      {
+        "ext": ".java",
+        "arquivos": 1,
+        "tamanho_bytes": 123500,
+        "tamanho_gib": 0.000115
+      },
+      {
+        "ext": ".ttf",
+        "arquivos": 1,
+        "tamanho_bytes": 26828,
+        "tamanho_gib": 2.5e-05
+      },
+      {
+        "ext": ".jpg",
+        "arquivos": 1,
+        "tamanho_bytes": 638403,
+        "tamanho_gib": 0.000595
+      }
+    ]
+  },
+  "meta": {
+    "numero_relatorio": 19,
+    "criado_em": "2026-03-19T23:32:06",
+    "repo": "Pokemon-Global-Server-Definitivo",
+    "arquivo": "2026-03-19_23-31-56.json",
+    "base_dir": "C:\\Users\\Leon\\Documents\\GitHub\\Pokemon-Global-Server-Definitivo",
+    "script": "Outros/GeradorRelatorios.py",
+    "relatorios_dir": "Outros/Relatorios",
+    "comparado_com": "2026-03-17_21-27-30.json"
+  },
+  "diff": {
+    "pastas": {
+      "anterior": 1155,
+      "atual": 1157,
+      "delta": 2
+    },
+    "arquivos": {
+      "anterior": 68203,
+      "atual": 68222,
+      "delta": 19
+    },
+    "tamanho_bytes": {
+      "anterior": 405883661,
+      "atual": 406573575,
+      "delta": 689914
+    },
+    "linhas_totais_geral": {
+      "anterior": 25189,
+      "atual": 25811,
+      "delta": 622
+    },
+    "py_arquivos": {
+      "anterior": 117,
+      "atual": 116,
+      "delta": -1
+    },
+    "linhas_totais": {
+      "anterior": 18524,
+      "atual": 18879,
+      "delta": 355
+    },
+    "classes_encontradas": {
+      "anterior": 79,
+      "atual": 78,
+      "delta": -1
+    },
+    "funcoes_encontradas": {
+      "anterior": 263,
+      "atual": 266,
+      "delta": 3
+    },
+    "metodos_encontrados": {
+      "anterior": 773,
+      "atual": 788,
+      "delta": 15
+    },
+    "extensoes": {
+      "mudancas": [
+        {
+          "ext": ".png",
+          "arquivos_anterior": 68038,
+          "arquivos_atual": 68057,
+          "delta_arquivos": 19,
+          "tamanho_bytes_anterior": 355272757,
+          "tamanho_bytes_atual": 355937032,
+          "delta_tamanho_bytes": 664275
+        },
+        {
+          "ext": ".py",
+          "arquivos_anterior": 117,
+          "arquivos_atual": 116,
+          "delta_arquivos": -1,
+          "tamanho_bytes_anterior": 745747,
+          "tamanho_bytes_atual": 762886,
+          "delta_tamanho_bytes": 17139
+        },
+        {
+          "ext": ".json",
+          "arquivos_anterior": 6,
+          "arquivos_atual": 7,
+          "delta_arquivos": 1,
+          "tamanho_bytes_anterior": 58029,
+          "tamanho_bytes_atual": 64340,
+          "delta_tamanho_bytes": 6311
+        },
+        {
+          "ext": ".csv",
+          "arquivos_anterior": 3,
+          "arquivos_atual": 3,
+          "delta_arquivos": 0,
+          "tamanho_bytes_anterior": 144299,
+          "tamanho_bytes_atual": 146308,
+          "delta_tamanho_bytes": 2009
+        },
+        {
+          "ext": ".md",
+          "arquivos_anterior": 1,
+          "arquivos_atual": 1,
+          "delta_arquivos": 0,
+          "tamanho_bytes_anterior": 2990,
+          "tamanho_bytes_atual": 3170,
+          "delta_tamanho_bytes": 180
+        }
+      ]
+    }
+  }
+}

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import csv
 import math
+import uuid
 from pathlib import Path
 from typing import Dict, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer
+from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, ItemMundoServer
 
 _RAIZ = Path(__file__).resolve().parents[3]
 
@@ -89,15 +90,8 @@ class CerebroEstruturasNaturais:
         if coletado <= 0:
             return False
 
-        material = str(estrutura.estado_extra.get("material", "") or "").strip()
-        adicionado = self._core._servico_inventario.adicionar_item_coleta(inventario, material, coletado, dados_personagem=perfil)
-        if adicionado <= 0:
-            return False
-
-        self._core._servico_inventario.persistir_jogador(usuario, int(player.Id), inventario, registrar_diff)
         restante = estrutura.quantidade_restante
         BANCO_DADOS.registrar_quantidade_estrutura(estrutura.Id, restante)
-
         if restante <= 0:
             removido = BANCO_DADOS.remover_objeto(estrutura.Id)
             if removido is not None:
@@ -105,4 +99,35 @@ class CerebroEstruturasNaturais:
         else:
             BANCO_DADOS.atualizar_objeto(estrutura.Id, {"estado": {"quantidade": restante}})
             registrar_diff("update", payload=estrutura.serializar(), escopo={"centro": [estrutura.posicao[0], estrutura.posicao[1]], "raio": 90.0}, objeto_id=estrutura.Id, autor="server", categoria="estrutura")
+
+        material = str(estrutura.estado_extra.get("material", "") or "").strip()
+        adicionado, sobra = self._core._servico_inventario.adicionar_item(inventario, {"Nome": material}, coletado, dados_personagem=perfil)
+        if adicionado > 0:
+            self._core._servico_inventario.persistir_jogador(usuario, int(player.Id), inventario, registrar_diff)
+        if sobra > 0:
+            self._spawn_item_mundo(material, sobra, player, estrutura, registrar_diff)
         return True
+
+    def _spawn_item_mundo(self, nome_material: str, quantidade: int, player: AtorServer, estrutura: EstruturaNaturalServer, registrar_diff) -> None:
+        qtd = max(1, int(quantidade or 1))
+        item = self._core._servico_inventario.normalizar_item({"Nome": str(nome_material or "Item"), "quantidade": qtd}, quantidade_padrao=qtd)
+        novo_id = BANCO_DADOS.gerar_id()
+        p0 = (float(player.posicao[0]), float(player.posicao[1]))
+        p1 = (float(estrutura.posicao[0]) + 0.22, float(estrutura.posicao[1]) + 0.08)
+        obj = ItemMundoServer(
+            id_objeto=novo_id,
+            posicao=p0,
+            dono_id=int(getattr(player, "Id", 0) or 0),
+            item_nome=str(item.get("Nome") or "Item"),
+            item_base_id=str(item.get("Code") or ""),
+            quantidade=qtd,
+            pos_inicial=p0,
+            pos_final=p1,
+            velocidade=4.2,
+            tick_spawn=int(self._core._tick_contador),
+            token_drop=str(uuid.uuid4()),
+            item_dados=item,
+        )
+        BANCO_DADOS.inserir_objeto(obj)
+        self._core.registrar_spawn_manual(obj)
+        registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [p1[0], p1[1]], "raio": 80.0}, objeto_id=obj.Id, autor="server", categoria="item_mundo")

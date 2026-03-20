@@ -558,7 +558,7 @@ class ControladorObjetos:
             oid = int(obj.get("id", -1))
             if ignorar_id is not None and oid == int(ignorar_id):
                 continue
-            if str(obj.get("tipo", "")).startswith("estrutura"):
+            if self._eh_payload_estrutura(obj):
                 continue
             if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
                 continue

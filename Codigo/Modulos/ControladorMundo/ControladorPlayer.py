@@ -303,8 +303,8 @@ class ControladorPlayer:
             return
         self._coleta_tapa_enviada = True
         self._objetos.EnfileirarDiffRapida({
-            "tipo": "spawn",
-            "categoria": "estrutura_natural_coleta",
+            "tipo": "evento",
+            "categoria": "coleta_estrutura_natural",
             "payload": {
                 "estrutura_id": int(alvo.get("id", 0) or 0),
                 "pos_mao": [float(colisor_mao.x), float(colisor_mao.y)],

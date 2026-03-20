@@ -289,7 +289,7 @@ class ControladorObjetos:
             est = self.EstruturasPorId.get(oid)
             if est is None:
                 estado_payload = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
-                est = EstruturaNatural(tipo=str(estado_payload.get("subtipo", "natural")), posicao=tuple(payload.get("posicao", [0.0, 0.0])), id_objeto=oid, raio_colisao=float(payload.get("raio_colisao", 0.8)), raio_interacao=float(payload.get("raio_interacao", 0.8)), campo=float(payload.get("campo", 0.0)), intensidade=float(payload.get("intensidade", 0.0)), recursos=dict(estado_payload.get("recursos", {})), quantidade=int(estado_payload.get("quantidade", 0) or 0), material=str(estado_payload.get("material", "") or ""), estilo=str(estado_payload.get("estilo", "") or ""), dureza=int(estado_payload.get("dureza", 1) or 1))
+                est = EstruturaNatural(tipo=str(estado_payload.get("subtipo", "natural")), posicao=tuple(payload.get("posicao", [0.0, 0.0])), id_objeto=oid, raio_colisao=float(payload.get("raio_colisao", 0.8)), raio_interacao=float(payload.get("raio_interacao", 0.8)), campo=float(payload.get("campo", 0.0)), intensidade=float(payload.get("intensidade", 0.0)), quantidade=int(estado_payload.get("quantidade", 0) or 0), material=str(estado_payload.get("material", "") or ""), estilo=str(estado_payload.get("estilo", "") or ""), dureza=int(estado_payload.get("dureza", 1) or 1))
                 self.EstruturasPorId[oid] = est
             est.update(payload)
         else:
@@ -503,7 +503,7 @@ class ControladorObjetos:
         self._cache_sprites_fallback[caminho] = sprite
         return sprite
 
-    def _render_fallback_objeto(self, tela, camera, obj: Dict[str, object], cor_fallback=(222, 233, 245)):
+    def _render_fallback_objeto(self, tela, camera, obj: Dict[str, object], cor_fallback=(222, 233, 245), escala: float = 1.0):
         pos = obj.get("posicao", [0.0, 0.0])
         if not isinstance(pos, (list, tuple)) or len(pos) != 2:
             return
@@ -520,12 +520,18 @@ class ControladorObjetos:
 
         sprite = self._obter_sprite_fallback(sprite_path)
         if sprite is not None:
+            escala = max(0.70, min(1.0, float(escala or 1.0)))
+            if escala < 0.999:
+                w = max(1, int(sprite.get_width() * escala))
+                h = max(1, int(sprite.get_height() * escala))
+                sprite = pygame.transform.smoothscale(sprite, (w, h))
             sprite_rect = sprite.get_rect(center=(int(px), int(py)))
             tela.blit(sprite, sprite_rect)
             return
 
         raio_raw = max(0.0, float(obj.get("raio_colisao", 0.4)))
         raio_px = int(raio_raw if raio_raw > 4.0 else raio_raw * camera.TilePx)
+        raio_px = int(max(1.0, raio_px * max(0.70, min(1.0, float(escala or 1.0)))))
         raio_px = max(3, min(80, raio_px))
         pygame.draw.circle(tela, cor_fallback, (int(px), int(py)), raio_px)
 
@@ -591,6 +597,7 @@ class ControladorObjetos:
                 self._remover_indice_chunk_objeto(int(oid))
 
     def renderizar_estruturas(self, tela, camera):
+        dt = 1.0 / 60.0
         for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
             if not isinstance(obj, dict):
                 continue
@@ -598,7 +605,9 @@ class ControladorObjetos:
                 continue
             if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220) is None:
                 continue
-            self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54))
+            est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))
+            escala = est.escala_render(dt) if est is not None else 1.0
+            self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala)
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         self.renderizar_entidades(tela, camera, ignorar_id=ignorar_entidade_id)

@@ -46,7 +46,7 @@ class BancoDadosMundo:
         self._largura_blocos = int(meta.get("largura_blocos", 0))
         self._altura_blocos = int(meta.get("altura_blocos", 0))
         self._regras_estruturas = self._carregar_regras_estruturas_naturais()
-        self._estado_estruturas_naturais: Dict[int, int] = {}
+        self._estado_estruturas_naturais: Dict[int, int] = self._carregar_estruturas_tocadas(self._estado_mundo)
         self._gerar_estruturas_naturais_no_mapa()
 
     def _carregar_regras_estruturas_naturais(self) -> Dict[int, Dict[str, object]]:
@@ -61,6 +61,21 @@ class BancoDadosMundo:
             if not isinstance(cfg, dict):
                 continue
             saida[codigo] = dict(cfg)
+        return saida
+
+    @staticmethod
+    def _carregar_estruturas_tocadas(estado_mundo: Dict[str, object]) -> Dict[int, int]:
+        bruto = estado_mundo.get("estruturas_naturais_tocadas", {}) if isinstance(estado_mundo, dict) else {}
+        if not isinstance(bruto, dict):
+            return {}
+        saida: Dict[int, int] = {}
+        for chave, valor in bruto.items():
+            try:
+                oid = int(chave)
+                qtd = max(0, int(valor))
+            except (TypeError, ValueError):
+                continue
+            saida[oid] = qtd
         return saida
 
     @staticmethod
@@ -95,7 +110,7 @@ class BancoDadosMundo:
             self._largura_blocos = int(meta.get("largura_blocos", 0))
             self._altura_blocos = int(meta.get("altura_blocos", 0))
             self._regras_estruturas = self._carregar_regras_estruturas_naturais()
-            self._estado_estruturas_naturais = {}
+            self._estado_estruturas_naturais = self._carregar_estruturas_tocadas(self._estado_mundo)
 
             if limpar_objetos:
                 self._objetos.clear()
@@ -440,6 +455,10 @@ class BancoDadosMundo:
             oid = int(estrutura_id)
             qtd = max(0, int(quantidade_restante or 0))
             self._estado_estruturas_naturais[oid] = qtd
+
+    def exportar_estruturas_tocadas(self) -> Dict[str, int]:
+        with self._lock:
+            return {str(oid): int(qtd) for oid, qtd in self._estado_estruturas_naturais.items()}
 
 
     def objeto_id_por_usuario(self, usuario: str) -> int:

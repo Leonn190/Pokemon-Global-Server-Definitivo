@@ -47,15 +47,13 @@ class CerebroEstruturasNaturais:
             return "", 1
         code = str(item.get("Code") or "").strip()
         meta = dict(_FERRAMENTAS.get(code, {})) if code else {}
-        nome = str(item.get("Nome") or meta.get("nome") or "").strip().lower()
-        estilo_item = str(item.get("Estilo") or meta.get("estilo") or "").strip().lower()
+        nome = str(item.get("Nome") or meta.get("nome") or "").strip()
         fator = int(item.get("Fator", meta.get("fator", 1)) or 1)
-        if estilo_item != "ferramenta":
-            return "", 1
-        if "picareta" in nome:
-            return "picareta", fator
-        if "machado" in nome:
+        primeira = nome.split(" ", 1)[0].strip().lower() if nome else ""
+        if primeira == "machado":
             return "machado", fator
+        if primeira in {"picarte", "picareta"}:
+            return "picareta", fator
         return "", 1
 
     def registrar_coleta(self, client_id: str, payload: Dict[str, object]) -> bool:

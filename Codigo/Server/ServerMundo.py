@@ -158,8 +158,8 @@ def enviar_evento_coleta_estrutura_mundo(ip, client_id, payload):
     dados = dict(payload or {})
     pos_mao = dados.get("pos_mao") if isinstance(dados.get("pos_mao"), (list, tuple)) and len(dados.get("pos_mao")) == 2 else [0.0, 0.0]
     diff = {
-        "tipo": "spawn",
-        "categoria": "estrutura_natural_coleta",
+        "tipo": "evento",
+        "categoria": "coleta_estrutura_natural",
         "payload": {
             "estrutura_id": int(dados.get("estrutura_id", 0) or 0),
             "pos_mao": [float(pos_mao[0]), float(pos_mao[1])],

@@ -70,7 +70,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             ignorados += 1
             continue
         tipo = str(diff.get("tipo", "")).strip().lower()
-        if tipo not in {"spawn", "update", "despawn"}:
+        if tipo not in {"spawn", "update", "despawn", "evento"}:
             ignorados += 1
             continue
 
@@ -105,8 +105,17 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             aplicados += 1
             continue
 
-        if tipo == "spawn":
+        if tipo in {"spawn", "evento"}:
             categoria = str(diff.get("categoria", "")).strip().lower()
+            if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
+                if CEREBRO.registrar_coleta_estrutura(client_id, payload):
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            if tipo == "evento":
+                ignorados += 1
+                continue
             if categoria == "projetil_lancamento":
                 if CEREBRO.registrar_lancamento_projetil(client_id, payload):
                     aplicados += 1

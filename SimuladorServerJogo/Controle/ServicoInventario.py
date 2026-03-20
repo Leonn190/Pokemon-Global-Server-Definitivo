@@ -12,25 +12,34 @@ from SimuladorServerJogo.Controle.EstadoServidor import atualizar_inventario_per
 _RAIZ = Path(__file__).resolve().parents[2]
 
 
-def _carregar_itens_por_code() -> Dict[str, Dict[str, object]]:
+def _carregar_itens() -> tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str, object]]]:
     by_code: Dict[str, Dict[str, object]] = {}
+    by_nome: Dict[str, Dict[str, object]] = {}
     with (_RAIZ / "Dados" / "Global server - Itens.csv").open("r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             code = str(row.get("Code", "")).strip()
+            nome = str(row.get("Nome", "")).strip()
             if not code:
                 continue
             raridade_raw = str(row.get("Raridade", "")).strip()
-            by_code[code] = {
+            try:
+                fator = int(float(row.get("Fator", 1) or 1))
+            except Exception:
+                fator = 1
+            item = {
                 "Code": code,
-                "Nome": str(row.get("Nome", "")).strip(),
+                "Nome": nome,
                 "Descrição": str(row.get("Descrição", "")).strip(),
                 "Estilo": str(row.get("Estilo", "")).strip(),
+                "Fator": fator,
                 "Raridade": int(raridade_raw) if raridade_raw.isdigit() else raridade_raw,
             }
-    return by_code
+            by_code[code] = item
+            by_nome[nome.strip().lower()] = item
+    return by_code, by_nome
 
 
-_ITENS_POR_CODE = _carregar_itens_por_code()
+_ITENS_POR_CODE, _ITENS_POR_NOME = _carregar_itens()
 
 
 class ServicoInventario:
@@ -90,21 +99,63 @@ class ServicoInventario:
         return True
 
     def adicionar_primeiro_slot_livre(self, inventario: Dict[str, object], item: Dict[str, object], dados_personagem: Optional[Dict[str, object]] = None) -> bool:
+        dados_item = dict(item or {})
+        quantidade = int(dados_item.get("quantidade", 1) or 1)
+        adicionado, sobra = self.adicionar_item(inventario, dados_item, quantidade, dados_personagem=dados_personagem)
+        return adicionado > 0 and sobra <= 0
+
+    def adicionar_item(self, inventario: Dict[str, object], item: Dict[str, object], quantidade: int, dados_personagem: Optional[Dict[str, object]] = None) -> tuple[int, int]:
+        qtd = max(0, int(quantidade or 0))
+        if qtd <= 0:
+            return (0, 0)
+        base = dict(item or {})
+        nome = str(base.get("Nome") or "").strip()
+        code = str(base.get("Code") or "").strip()
+        item_base = dict(_ITENS_POR_CODE.get(code, {})) if code else dict(_ITENS_POR_NOME.get(nome.lower(), {})) if nome else {}
+        if not item_base:
+            item_base = {"Code": code, "Nome": (nome or "Item")}
+        item_base["quantidade"] = qtd
         inv = dict(inventario or {})
         lim = self.limite_slots(inv, dados_personagem)
         inv["limite_slots"] = int(lim)
+        limite_itens = int(max(1, inv.get("limite_itens", 100) or 100))
         itens = list(inv.get("itens", []))
         if len(itens) < lim:
             itens.extend([None] * (lim - len(itens)))
-        for i in range(lim):
-            if i >= len(itens):
-                itens.append(None)
-            if itens[i] is None:
-                itens[i] = self.normalizar_item(item)
+        else:
+            itens = itens[:lim]
+
+        total_itens = 0
+        for atual in itens:
+            if isinstance(atual, dict):
+                total_itens += int(max(1, atual.get("quantidade", 1) or 1))
+        espaco = max(0, limite_itens - total_itens)
+        if espaco <= 0:
+            return (0, qtd)
+        adicionavel = min(qtd, espaco)
+        sobra = qtd - adicionavel
+
+        chave_code = str(item_base.get("Code") or "").strip().lower()
+        chave_nome = str(item_base.get("Nome") or "").strip().lower()
+        for i, atual in enumerate(itens):
+            if not isinstance(atual, dict):
+                continue
+            code_atual = str(atual.get("Code") or "").strip().lower()
+            nome_atual = str(atual.get("Nome") or "").strip().lower()
+            if (chave_code and code_atual == chave_code) or (not chave_code and nome_atual == chave_nome):
+                atual["quantidade"] = int(atual.get("quantidade", 1) or 1) + adicionavel
+                itens[i] = atual
                 inv["itens"] = itens
                 inventario.clear(); inventario.update(inv)
-                return True
-        return False
+                return (adicionavel, sobra)
+
+        for i, atual in enumerate(itens):
+            if atual is None:
+                itens[i] = self.normalizar_item(item_base, quantidade_padrao=adicionavel)
+                inv["itens"] = itens
+                inventario.clear(); inventario.update(inv)
+                return (adicionavel, sobra)
+        return (0, qtd)
 
     def consumir_um(self, inventario: Dict[str, object], item_base_id: str, item_nome: str) -> bool:
         inv = dict(inventario or {})

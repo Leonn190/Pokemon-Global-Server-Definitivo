@@ -16,7 +16,7 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
     carregar_estado_mundo,
 )
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer
-from Codigo.Geradores.EstruturaNaturais import tipo_estrutura_natural_por_codigo
+from SimuladorServerJogo.Regras.Loader import carregar_regras_estruturas_naturais
 from Codigo.Modulos.Colisor import Colisor
 
 
@@ -45,7 +45,30 @@ class BancoDadosMundo:
         self._chunks_por_arquivo = max(1, int(meta.get("chunks_por_arquivo", 10)))
         self._largura_blocos = int(meta.get("largura_blocos", 0))
         self._altura_blocos = int(meta.get("altura_blocos", 0))
+        self._regras_estruturas = self._carregar_regras_estruturas_naturais()
+        self._estado_estruturas_naturais: Dict[int, int] = {}
         self._gerar_estruturas_naturais_no_mapa()
+
+    def _carregar_regras_estruturas_naturais(self) -> Dict[int, Dict[str, object]]:
+        bruto = carregar_regras_estruturas_naturais()
+        tipos = bruto.get("tipos") if isinstance(bruto.get("tipos"), dict) else {}
+        saida: Dict[int, Dict[str, object]] = {}
+        for chave, cfg in tipos.items():
+            try:
+                codigo = int(chave)
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(cfg, dict):
+                continue
+            saida[codigo] = dict(cfg)
+        return saida
+
+    @staticmethod
+    def _id_estrutura_natural(codigo: int, gx: int, gy: int) -> int:
+        c = int(codigo) & 0xFF
+        x = int(gx) & 0x0FFFFF
+        y = int(gy) & 0xFFFFFF
+        return int((1 << 62) | (c << 44) | (x << 24) | y)
 
     def _resolver_chunks_dir(self) -> Path:
         candidatos = [
@@ -71,6 +94,8 @@ class BancoDadosMundo:
             self._chunks_por_arquivo = max(1, int(meta.get("chunks_por_arquivo", 10)))
             self._largura_blocos = int(meta.get("largura_blocos", 0))
             self._altura_blocos = int(meta.get("altura_blocos", 0))
+            self._regras_estruturas = self._carregar_regras_estruturas_naturais()
+            self._estado_estruturas_naturais = {}
 
             if limpar_objetos:
                 self._objetos.clear()
@@ -119,26 +144,30 @@ class BancoDadosMundo:
             for gy in range(y0, y1 + 1):
                 for gx in range(x0, x1 + 1):
                     tile_nat = self._tile_estrutura_em(gx, gy)
-                    cfg = tipo_estrutura_natural_por_codigo(tile_nat)
+                    cfg = self._regras_estruturas.get(int(tile_nat))
                     if not cfg:
                         continue
-                    oid = self._next_id
-                    self._next_id += 1
-                    while oid in self._objetos:
-                        oid = self._next_id
-                        self._next_id += 1
+                    oid = self._id_estrutura_natural(tile_nat, gx, gy)
+                    qtd_base = max(0, int(cfg.get("quantidade", 0) or 0))
+                    qtd_restante = int(self._estado_estruturas_naturais.get(oid, qtd_base))
+                    if qtd_restante <= 0:
+                        continue
 
                     obj = EstruturaNaturalServer(
                         id_objeto=oid,
-                        tipo=cfg["subtipo"],
-                        nome=cfg["nome"],
-                        sprite=cfg["sprite"],
+                        tipo=str(cfg.get("subtipo", "natural")),
+                        nome=str(cfg.get("nome", "Estrutura")),
+                        sprite=str(cfg.get("sprite", "")),
                         posicao=(float(gx), float(gy)),
-                        raio_colisao=cfg["raio_colisao"],
-                        raio_interacao=cfg["raio_interacao"],
+                        raio_colisao=float(cfg.get("raio_colisao", 0.8) or 0.8),
+                        raio_interacao=float(cfg.get("raio_interacao", cfg.get("raio_colisao", 0.8)) or 0.8),
                         campo=float(cfg.get("campo", 0.0) or 0.0),
                         intensidade=float(cfg.get("intensidade", 0.0) or 0.0),
                         codigo_natural=tile_nat,
+                        quantidade=qtd_restante,
+                        material=str(cfg.get("material", "") or ""),
+                        estilo=str(cfg.get("estilo", "") or ""),
+                        dureza=int(cfg.get("dureza", 1) or 1),
                     )
                     obj.tipo_classe = "estrutura_natural"
                     self._objetos[obj.Id] = obj
@@ -405,6 +434,12 @@ class BancoDadosMundo:
     def obter_objeto(self, objeto_id: int) -> Optional[object]:
         with self._lock:
             return self._objetos.get(int(objeto_id))
+
+    def registrar_quantidade_estrutura(self, estrutura_id: int, quantidade_restante: int) -> None:
+        with self._lock:
+            oid = int(estrutura_id)
+            qtd = max(0, int(quantidade_restante or 0))
+            self._estado_estruturas_naturais[oid] = qtd
 
 
     def objeto_id_por_usuario(self, usuario: str) -> int:

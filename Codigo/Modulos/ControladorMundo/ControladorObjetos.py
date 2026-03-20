@@ -158,6 +158,28 @@ class ControladorObjetos:
                 continue
             yield (int(obj.get("id", 0)), sx, sy, raio, str(obj.get("tipo", "")), float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0))
 
+    def estrutura_colidindo(self, posicao: Tuple[float, float], raio: float) -> Optional[Dict[str, object]]:
+        px, py = float(posicao[0]), float(posicao[1])
+        melhor: Optional[Dict[str, object]] = None
+        melhor_d2 = 10e9
+        with self._lock_objetos:
+            estruturas = [self.ObjetosPorId.get(oid) for oid in self.EstruturasPorId.keys()]
+        for obj in estruturas:
+            if not isinstance(obj, dict):
+                continue
+            pos = obj.get("posicao")
+            if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+                continue
+            sx, sy = float(pos[0]), float(pos[1])
+            rr = float(obj.get("raio_colisao", 0.0) or 0.0) + max(0.0, float(raio))
+            d2 = (sx - px) ** 2 + (sy - py) ** 2
+            if d2 > (rr * rr):
+                continue
+            if d2 < melhor_d2:
+                melhor = obj
+                melhor_d2 = d2
+        return melhor
+
     def _marcar_diff_local(self, diff: Dict[str, object]) -> Dict[str, object]:
         if "autor" not in diff:
             diff["autor"] = self.autor_local() or "anon"
@@ -266,7 +288,8 @@ class ControladorObjetos:
         if self._eh_payload_estrutura(payload):
             est = self.EstruturasPorId.get(oid)
             if est is None:
-                est = EstruturaNatural(tipo=str((payload.get("estado") or {}).get("subtipo", "natural")), posicao=tuple(payload.get("posicao", [0.0, 0.0])), id_objeto=oid, raio_colisao=float(payload.get("raio_colisao", 0.8)), raio_interacao=float(payload.get("raio_interacao", 0.8)), campo=float(payload.get("campo", 0.0)), intensidade=float(payload.get("intensidade", 0.0)), recursos=dict((payload.get("estado") or {}).get("recursos", {})))
+                estado_payload = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+                est = EstruturaNatural(tipo=str(estado_payload.get("subtipo", "natural")), posicao=tuple(payload.get("posicao", [0.0, 0.0])), id_objeto=oid, raio_colisao=float(payload.get("raio_colisao", 0.8)), raio_interacao=float(payload.get("raio_interacao", 0.8)), campo=float(payload.get("campo", 0.0)), intensidade=float(payload.get("intensidade", 0.0)), recursos=dict(estado_payload.get("recursos", {})), quantidade=int(estado_payload.get("quantidade", 0) or 0), material=str(estado_payload.get("material", "") or ""), estilo=str(estado_payload.get("estilo", "") or ""), dureza=int(estado_payload.get("dureza", 1) or 1))
                 self.EstruturasPorId[oid] = est
             est.update(payload)
         else:

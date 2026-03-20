@@ -117,6 +117,12 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 CEREBRO.registrar_drop_item_mundo(client_id, payload)
                 aplicados += 1
                 continue
+            if categoria == "estrutura_natural_coleta":
+                if CEREBRO.registrar_coleta_estrutura(client_id, payload):
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
             dados_obj = payload.get("objeto") if isinstance(payload.get("objeto"), dict) else payload
             try:
                 novo_id = BANCO_DADOS.gerar_id()

@@ -99,21 +99,10 @@ class ServicoInventario:
         return True
 
     def adicionar_primeiro_slot_livre(self, inventario: Dict[str, object], item: Dict[str, object], dados_personagem: Optional[Dict[str, object]] = None) -> bool:
-        inv = dict(inventario or {})
-        lim = self.limite_slots(inv, dados_personagem)
-        inv["limite_slots"] = int(lim)
-        itens = list(inv.get("itens", []))
-        if len(itens) < lim:
-            itens.extend([None] * (lim - len(itens)))
-        for i in range(lim):
-            if i >= len(itens):
-                itens.append(None)
-            if itens[i] is None:
-                itens[i] = self.normalizar_item(item)
-                inv["itens"] = itens
-                inventario.clear(); inventario.update(inv)
-                return True
-        return False
+        dados_item = dict(item or {})
+        quantidade = int(dados_item.get("quantidade", 1) or 1)
+        adicionado, sobra = self.adicionar_item(inventario, dados_item, quantidade, dados_personagem=dados_personagem)
+        return adicionado > 0 and sobra <= 0
 
     def adicionar_item(self, inventario: Dict[str, object], item: Dict[str, object], quantidade: int, dados_personagem: Optional[Dict[str, object]] = None) -> tuple[int, int]:
         qtd = max(0, int(quantidade or 0))

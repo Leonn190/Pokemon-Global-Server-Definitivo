@@ -11,28 +11,27 @@ from typing import Dict, Tuple
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, ItemMundoServer
+from SimuladorServerJogo.Geradores.GeradorMundo import carregar_estado_mundo, salvar_estado_mundo
 
 _RAIZ = Path(__file__).resolve().parents[3]
 
 
-def _carregar_ferramentas() -> Dict[str, Dict[str, object]]:
-    by_code: Dict[str, Dict[str, object]] = {}
+def _carregar_fatores_ferramenta() -> Dict[str, int]:
+    by_code: Dict[str, int] = {}
     with (_RAIZ / "Dados" / "Global server - Itens.csv").open("r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             code = str(row.get("Code", "")).strip()
             if not code:
                 continue
-            nome = str(row.get("Nome", "")).strip().lower()
-            estilo = str(row.get("Estilo", "")).strip().lower()
             try:
                 fator = int(float(row.get("Fator", 1) or 1))
             except Exception:
                 fator = 1
-            by_code[code] = {"nome": nome, "estilo": estilo, "fator": fator}
+            by_code[code] = fator
     return by_code
 
 
-_FERRAMENTAS = _carregar_ferramentas()
+_FATOR_POR_CODE = _carregar_fatores_ferramenta()
 
 
 class CerebroEstruturasNaturais:
@@ -47,9 +46,8 @@ class CerebroEstruturasNaturais:
         if not isinstance(item, dict):
             return "", 1
         code = str(item.get("Code") or "").strip()
-        meta = dict(_FERRAMENTAS.get(code, {})) if code else {}
-        nome = str(item.get("Nome") or meta.get("nome") or "").strip()
-        fator = int(item.get("Fator", meta.get("fator", 1)) or 1)
+        nome = str(item.get("Nome") or "").strip()
+        fator = int(item.get("Fator", (_FATOR_POR_CODE.get(code, 1) if code else 1)) or 1)
         primeira = nome.split(" ", 1)[0].strip().lower() if nome else ""
         if primeira == "machado":
             return "machado", fator
@@ -92,6 +90,7 @@ class CerebroEstruturasNaturais:
 
         restante = estrutura.quantidade_restante
         BANCO_DADOS.registrar_quantidade_estrutura(estrutura.Id, restante)
+        self._persistir_estrutura_tocada_imediato(estrutura.Id, restante)
         if restante <= 0:
             removido = BANCO_DADOS.remover_objeto(estrutura.Id)
             if removido is not None:
@@ -131,3 +130,15 @@ class CerebroEstruturasNaturais:
         BANCO_DADOS.inserir_objeto(obj)
         self._core.registrar_spawn_manual(obj)
         registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [p1[0], p1[1]], "raio": 80.0}, objeto_id=obj.Id, autor="server", categoria="item_mundo")
+
+    @staticmethod
+    def _persistir_estrutura_tocada_imediato(estrutura_id: int, quantidade_restante: int) -> None:
+        estado = carregar_estado_mundo()
+        if not isinstance(estado, dict) or not estado.get("meta"):
+            return
+        tocadas = estado.get("estruturas_naturais_tocadas")
+        if not isinstance(tocadas, dict):
+            tocadas = {}
+            estado["estruturas_naturais_tocadas"] = tocadas
+        tocadas[str(int(estrutura_id))] = max(0, int(quantidade_restante or 0))
+        salvar_estado_mundo(estado)

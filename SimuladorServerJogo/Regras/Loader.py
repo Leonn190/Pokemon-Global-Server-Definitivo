@@ -72,3 +72,12 @@ def carregar_regras_mundo() -> Dict[str, object]:
     base = {"ChunkTiles": 10}
     base.update(_ler_json("Mundo.json"))
     return base
+
+
+
+def carregar_regras_estruturas_naturais() -> Dict[str, object]:
+    base = {"tipos": {}}
+    base.update(_ler_json("EstruturasNaturais.json"))
+    tipos = base.get("tipos") if isinstance(base.get("tipos"), dict) else {}
+    base["tipos"] = tipos
+    return base

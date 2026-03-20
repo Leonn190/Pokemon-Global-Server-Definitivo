@@ -35,6 +35,7 @@ class ControladorPlayer:
         self._intervalo_supervisao_rapida_s = 0.05
         self._intervalo_supervisao_lenta_s = 1.5
         self._ultimo_pivo_visual_local_tela: Optional[Tuple[float, float]] = None
+        self._coleta_tapa_enviada = False
 
     @property
     def player_local(self):
@@ -281,6 +282,36 @@ class ControladorPlayer:
             },
         })
 
+    def _processar_intencao_coleta_estrutura(self) -> None:
+        ator = self._player_local
+        if ator is None:
+            return
+        if not bool(getattr(ator.ColisorMao, "ativo", False)):
+            self._coleta_tapa_enviada = False
+            return
+        if self._coleta_tapa_enviada:
+            return
+        progresso = float(ator._progresso_tapa()) if hasattr(ator, "_progresso_tapa") else 0.0
+        if progresso < 0.40:
+            return
+
+        colisor_mao = getattr(ator, "ColisorMao", None)
+        if colisor_mao is None:
+            return
+        alvo = self._objetos.estrutura_colidindo((float(colisor_mao.x), float(colisor_mao.y)), float(colisor_mao.raio_colisao))
+        if not isinstance(alvo, dict):
+            return
+        self._coleta_tapa_enviada = True
+        self._objetos.EnfileirarDiffRapida({
+            "tipo": "evento",
+            "categoria": "coleta_estrutura_natural",
+            "payload": {
+                "estrutura_id": int(alvo.get("id", 0) or 0),
+                "pos_mao": [float(colisor_mao.x), float(colisor_mao.y)],
+                "instante_cliente_ms": int(time.time() * 1000),
+            },
+        })
+
     def atualizar_frame(self, eventos, dt, camera, bloqueado: bool) -> None:
         if self._player_local is None:
             return
@@ -312,6 +343,7 @@ class ControladorPlayer:
             self._resolver_colisao_player_local(posicao_antes, dt)
             self._processar_intencao_arremesso_local()
             self._processar_intencao_drop_item_mundo()
+            self._processar_intencao_coleta_estrutura()
         elif self._player_local.Controle is not None:
             self._player_local.Controle.atualizar_bloqueado(dt)
 

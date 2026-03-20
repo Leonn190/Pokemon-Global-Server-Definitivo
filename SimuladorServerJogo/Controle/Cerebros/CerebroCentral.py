@@ -260,6 +260,9 @@ class CerebroCentral:
     def registrar_drop_item_mundo(self, client_id: str, payload: Dict[str, object]) -> bool:
         return self._cerebro_itens_mundo.registrar_drop(client_id, payload)
 
+    def registrar_coleta_estrutura(self, client_id: str, payload: Dict[str, object]) -> bool:
+        return self._cerebro_estruturas.registrar_coleta(client_id, payload)
+
     def _contar_pokemons_chunk(self, chunk: Chunk) -> int:
         return sum(1 for oid in self._pokemons_ids if isinstance(BANCO_DADOS.obter_objeto(oid), PokemonServer) and BANCO_DADOS.chunk_da_posicao(BANCO_DADOS.obter_objeto(oid).posicao) == chunk)
 

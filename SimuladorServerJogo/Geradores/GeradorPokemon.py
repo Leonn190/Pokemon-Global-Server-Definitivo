@@ -10,7 +10,7 @@ from typing import Dict, List
 from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer
 
 ARQUIVO_POKEMONS = Path(__file__).resolve().parents[2] / "Dados" / "Global server - Pokemons.csv"
-STATS_BASE = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "EnR", "CrD", "CrC"]
+STATS_BASE = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int", "CrD", "CrC"]
 
 
 def _fnum(v, default=0.0):

@@ -1,4 +1,4 @@
-Nome,Vida,Atk,Def,SpA,SpD,Vel,Mag,Per,Ene,EnR,CrD,CrC,Sinergia,Habilidades,Equipaveis,Total,Poder R1,Poder R2,Poder R3,Tipo1,%1,Tipo2,%2,Tipo3,%3,Altura,Peso,Grupo,Raridade,Estagio,FF,Code,Linhagem
+Nome,Vida,Atk,Def,SpA,SpD,Vel,Mag,Per,Ene,Int,CrD,CrC,Sinergia,Habilidades,Equipaveis,Total,Poder R1,Poder R2,Poder R3,Tipo1,%1,Tipo2,%2,Tipo3,%3,Altura,Peso,Grupo,Raridade,Estagio,FF,Code,Linhagem
 Bulbasaur,51,17,20,27,27,22,23,12,24,15,10,15,3,1,1,600,159,297,401,planta,100,venenoso,80,,,0.5,6.9,sapo,3,1,,1,1
 Ivysaur,68,22,26,40,40,32,39,15,36,16,10,16,3,1,1,780,238,442,570,planta,100,venenoso,80,,,0.95,14.0,sapo,6,2,,2,1
 Venusaur,102,28,36,58,58,38,43,25,65,18,12,16,3,1,2,1050,362,626,804,planta,100,venenoso,80,,,1.7,100.0,sapo,9,3,,3,1

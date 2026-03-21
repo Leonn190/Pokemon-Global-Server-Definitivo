@@ -78,3 +78,12 @@ class EstruturaNatural:
             self.Quantidade = max(0, int(estado.get("quantidade", self.Quantidade)))
             if self.Quantidade < anterior:
                 self._impacto_t = 0.12
+
+
+class EstruturaNaturalFake:
+    """Estrutura visual simplificada para cenários de batalha."""
+
+    def __init__(self, posicao: Vector2, sprite: str = "", codigo_natural: int = 0) -> None:
+        self.Posicao = (float(posicao[0]), float(posicao[1]))
+        self.Sprite = str(sprite or "")
+        self.CodigoNatural = int(codigo_natural or 0)

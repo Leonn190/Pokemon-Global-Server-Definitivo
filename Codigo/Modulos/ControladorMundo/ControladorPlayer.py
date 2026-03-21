@@ -36,6 +36,7 @@ class ControladorPlayer:
         self._intervalo_supervisao_lenta_s = 1.5
         self._ultimo_pivo_visual_local_tela: Optional[Tuple[float, float]] = None
         self._coleta_tapa_enviada = False
+        self._colisao_pokemon_pendente: Optional[Dict[str, object]] = None
 
     @property
     def player_local(self):
@@ -106,9 +107,15 @@ class ControladorPlayer:
             margem = 0.25
             filtrados = []
             for c in colisores_brutos:
-                _, sx, sy, raio_obj, *_ = c
+                oid, sx, sy, raio_obj, tipo_obj, *_ = c
+                d2 = ((float(sx) - float(depois[0])) ** 2 + (float(sy) - float(depois[1])) ** 2)
+                if str(tipo_obj).strip().lower() in {"entidade_pokemon", "pokemon"}:
+                    limite_real = float(raio_ator + raio_obj)
+                    if d2 <= (limite_real * limite_real):
+                        self._colisao_pokemon_pendente = {"id": int(oid), "posicao": [float(sx), float(sy)]}
+                    continue
                 limite = float(raio_ator + raio_obj + margem)
-                if ((float(sx) - float(depois[0])) ** 2 + (float(sy) - float(depois[1])) ** 2) <= (limite * limite):
+                if d2 <= (limite * limite):
                     filtrados.append(c)
             if len(filtrados) > 24:
                 filtrados.sort(key=lambda c: ((float(c[1]) - float(depois[0])) ** 2 + (float(c[2]) - float(depois[1])) ** 2))
@@ -125,6 +132,11 @@ class ControladorPlayer:
             dt=dt,
         )
         ator.definir_posicao(px, py)
+
+    def consumir_colisao_pokemon(self) -> Optional[Dict[str, object]]:
+        evento = dict(self._colisao_pokemon_pendente) if isinstance(self._colisao_pokemon_pendente, dict) else None
+        self._colisao_pokemon_pendente = None
+        return evento
 
     def _spec_projetil(self, item: Dict[str, object]) -> Tuple[str, float, float]:
         estilo = str(item.get("Estilo") or item.get("estilo") or "item").strip().lower()

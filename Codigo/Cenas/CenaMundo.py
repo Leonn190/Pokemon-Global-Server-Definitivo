@@ -6,7 +6,7 @@ from Codigo.Modulos.ElementosHud import ElementosHud
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
-from Codigo.Server.ServerMundo import enviar_mensagem_terminal, buscar_mensagens_terminal
+from Codigo.Server.ServerMundo import enviar_mensagem_terminal, buscar_mensagens_terminal, solicitar_contexto_batalha_mundo
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
 from Codigo.Prefabs.Terminal import Terminal
 
@@ -83,6 +83,21 @@ class CenaMundo:
 
         player_bloqueado = bloqueio_gameplay or self.SubtelaOpcoes.Ativa or self.TelaAtual == "Config"
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
+
+        if not player_bloqueado:
+            colisao_pokemon = self.ControladorMundo.Player.consumir_colisao_pokemon()
+            if isinstance(colisao_pokemon, dict):
+                server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
+                link = server.get("ip")
+                client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+                centro = tuple(player.Posicao) if player is not None else tuple(colisao_pokemon.get("posicao", [0.0, 0.0]))
+                ret = solicitar_contexto_batalha_mundo(link, client_id, int(colisao_pokemon.get("id", 0) or 0), centro) if link else {"status": "erro"}
+                contexto = ret.get("contexto_batalha") if isinstance(ret, dict) and isinstance(ret.get("contexto_batalha"), dict) else None
+                if isinstance(contexto, dict):
+                    contexto["pokemon_colisao"] = dict(colisao_pokemon)
+                    JOGO.INFO["CombateContexto"] = contexto
+                    JOGO.CenaAlvo = "Combate"
+                    return
 
         if player is not None and self.SubtelaInventario is not None:
             self.SubtelaInventario.Ativo = player.Controle.InventarioAberto

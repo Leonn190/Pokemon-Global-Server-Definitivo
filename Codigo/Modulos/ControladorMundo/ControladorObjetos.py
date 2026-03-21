@@ -159,9 +159,12 @@ class ControladorObjetos:
             yield (int(obj.get("id", 0)), sx, sy, raio, str(obj.get("tipo", "")), float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0))
 
     def estrutura_colidindo(self, posicao: Tuple[float, float], raio: float) -> Optional[Dict[str, object]]:
+        colisoes = self.estruturas_colidindo(posicao, raio)
+        return colisoes[0] if colisoes else None
+
+    def estruturas_colidindo(self, posicao: Tuple[float, float], raio: float) -> List[Dict[str, object]]:
         px, py = float(posicao[0]), float(posicao[1])
-        melhor: Optional[Dict[str, object]] = None
-        melhor_d2 = 10e9
+        encontrados: List[Tuple[float, Dict[str, object]]] = []
         with self._lock_objetos:
             estruturas = [self.ObjetosPorId.get(oid) for oid in self.EstruturasPorId.keys()]
         for obj in estruturas:
@@ -175,10 +178,9 @@ class ControladorObjetos:
             d2 = (sx - px) ** 2 + (sy - py) ** 2
             if d2 > (rr * rr):
                 continue
-            if d2 < melhor_d2:
-                melhor = obj
-                melhor_d2 = d2
-        return melhor
+            encontrados.append((d2, obj))
+        encontrados.sort(key=lambda par: par[0])
+        return [obj for _, obj in encontrados]
 
     def _marcar_diff_local(self, diff: Dict[str, object]) -> Dict[str, object]:
         if "autor" not in diff:

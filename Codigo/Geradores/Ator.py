@@ -64,7 +64,7 @@ class Ator:
         self.Nome = ""
         self._duracao_tapa = 0.5
         self._tempo_tapa = 0.0
-        self._raio_mao_colisao = max(0.20, raio_colisao * 0.45)
+        self._raio_mao_colisao = max(0.28, raio_colisao * 0.62)
         self.ColisorMao = Colisor(
             x=self.Posicao[0],
             y=self.Posicao[1],

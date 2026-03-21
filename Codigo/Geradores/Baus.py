@@ -12,6 +12,8 @@ from Codigo.Modulos.Colisor import Colisor
 class Bau:
     _frames_por_tipo: Dict[str, List[pygame.Surface]] = {}
     _cache_sprites: Dict[str, pygame.Surface | None] = {}
+    _duracao_abertura_ms: int = 700
+    _duracao_exibicao_total_ms: int = 1450
 
     def __init__(self, id_objeto: int, posicao: Tuple[float, float], tipo_bau: str, itens: List[Dict[str, object]], aberto: bool = False, raio_colisao: float = 0.42, quantidade_itens: int = 1, tamanho_tiles: float = 1.10) -> None:
         self.Id = int(id_objeto)
@@ -76,7 +78,9 @@ class Bau:
         if self.AberturaLocalMs <= 0:
             return frames[-1]
         decorrido = max(0, pygame.time.get_ticks() - self.AberturaLocalMs)
-        progresso = min(1.0, decorrido / 1000.0)
+        if decorrido >= self._duracao_exibicao_total_ms:
+            return None
+        progresso = min(1.0, decorrido / max(1.0, float(self._duracao_abertura_ms)))
         idx = min(len(frames) - 1, int(progresso * (len(frames) - 1)))
         return frames[idx]
 

@@ -310,19 +310,21 @@ class ControladorPlayer:
         colisor_mao = getattr(ator, "ColisorMao", None)
         if colisor_mao is None:
             return
-        alvo = self._objetos.estrutura_colidindo((float(colisor_mao.x), float(colisor_mao.y)), float(colisor_mao.raio_colisao))
-        if not isinstance(alvo, dict):
+        alvos = self._objetos.estruturas_colidindo((float(colisor_mao.x), float(colisor_mao.y)), float(colisor_mao.raio_colisao))
+        if not alvos:
             return
         self._coleta_tapa_enviada = True
-        self._objetos.EnfileirarDiffRapida({
-            "tipo": "evento",
-            "categoria": "coleta_estrutura_natural",
-            "payload": {
-                "estrutura_id": int(alvo.get("id", 0) or 0),
-                "pos_mao": [float(colisor_mao.x), float(colisor_mao.y)],
-                "instante_cliente_ms": int(time.time() * 1000),
-            },
-        })
+        instante = int(time.time() * 1000)
+        for alvo in alvos:
+            self._objetos.EnfileirarDiffRapida({
+                "tipo": "evento",
+                "categoria": "coleta_estrutura_natural",
+                "payload": {
+                    "estrutura_id": int(alvo.get("id", 0) or 0),
+                    "pos_mao": [float(colisor_mao.x), float(colisor_mao.y)],
+                    "instante_cliente_ms": instante,
+                },
+            })
 
     def atualizar_frame(self, eventos, dt, camera, bloqueado: bool) -> None:
         if self._player_local is None:

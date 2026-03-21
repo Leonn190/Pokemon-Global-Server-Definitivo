@@ -40,6 +40,81 @@ def _escopo_objeto(obj) -> Dict[str, object]:
     return {"centro": [obj.posicao[0], obj.posicao[1]], "raio": 780.0}
 
 
+def _bloco_mundo_em(wx: int, wy: int) -> int:
+    largura, altura = BANCO_DADOS.limites_mundo()
+    if largura <= 0 or altura <= 0:
+        return 0
+    gx = int(wx) % int(largura)
+    gy = int(wy) % int(altura)
+    chunk_tamanho = max(1, int(BANCO_DADOS.chunk_tamanho_unidade()))
+    cx = int(gx // chunk_tamanho)
+    cy = int(gy // chunk_tamanho)
+    grid = BANCO_DADOS.chunk_em_grade((cx, cy))
+    if not grid:
+        return 0
+    lx = int(gx - (cx * chunk_tamanho))
+    ly = int(gy - (cy * chunk_tamanho))
+    if ly < 0 or ly >= len(grid):
+        return 0
+    row = grid[ly]
+    if lx < 0 or lx >= len(row):
+        return 0
+    try:
+        return int(row[lx])
+    except (TypeError, ValueError):
+        return 0
+
+
+def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 50, ry: int = 30) -> Dict[str, object]:
+    cx, cy = float(centro[0]), float(centro[1])
+    x0, y0 = int(cx) - int(rx), int(cy) - int(ry)
+    largura_rect = int(rx) * 2
+    altura_rect = int(ry) * 2
+
+    tiles = []
+    for ly in range(altura_rect):
+        wy = y0 + ly
+        for lx in range(largura_rect):
+            wx = x0 + lx
+            tiles.append({"x": int(lx), "y": int(ly), "bloco": _bloco_mundo_em(wx, wy)})
+
+    largura_mundo, altura_mundo = BANCO_DADOS.limites_mundo()
+    estruturas = []
+    for obj in BANCO_DADOS.listar_objetos():
+        tipo = str(getattr(obj, "tipo_classe", "") or "")
+        if not tipo.startswith("estrutura"):
+            continue
+        ox, oy = float(obj.posicao[0]), float(obj.posicao[1])
+        dx = ox - cx
+        dy = oy - cy
+        if largura_mundo > 0:
+            dx = dx - round(dx / float(largura_mundo)) * float(largura_mundo)
+        if altura_mundo > 0:
+            dy = dy - round(dy / float(altura_mundo)) * float(altura_mundo)
+        if abs(dx) > float(rx) or abs(dy) > float(ry):
+            continue
+        local_x = float(rx) + dx
+        local_y = float(ry) + dy
+        estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+        estruturas.append({
+            "x": local_x,
+            "y": local_y,
+            "codigo_natural": int(getattr(obj, "codigo_natural", estado.get("codigo_natural", 0)) or 0),
+            "sprite": str(getattr(obj, "sprite", "") or ""),
+        })
+
+    return {
+        "origem": [x0, y0],
+        "centro": [int(rx), int(ry)],
+        "largura": int(largura_rect),
+        "altura": int(altura_rect),
+        "arena_largura": 50,
+        "arena_altura": 30,
+        "tiles": tiles,
+        "estruturas": estruturas,
+    }
+
+
 
 def processar_atualizador_json(requisicao_json: str) -> str:
     try:
@@ -107,6 +182,12 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
         if tipo in {"spawn", "evento"}:
             categoria = str(diff.get("categoria", "")).strip().lower()
+            if categoria in {"batalha_contexto_request", "combate_contexto_request"}:
+                centro = payload.get("centro") if isinstance(payload.get("centro"), (list, tuple)) and len(payload.get("centro")) == 2 else payload.get("player_pos")
+                if not isinstance(centro, (list, tuple)) or len(centro) != 2:
+                    centro = [0.0, 0.0]
+                contexto = _coletar_contexto_batalha_servidor((float(centro[0]), float(centro[1])), rx=50, ry=30)
+                return _ok("Contexto de batalha pronto", client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):
                     aplicados += 1

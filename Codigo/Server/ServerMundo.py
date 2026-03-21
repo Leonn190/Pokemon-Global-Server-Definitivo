@@ -169,6 +169,33 @@ def enviar_evento_coleta_estrutura_mundo(ip, client_id, payload):
     return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
 
 
+def solicitar_contexto_batalha_mundo(ip, client_id, pokemon_id, centro):
+    pos = centro if isinstance(centro, (list, tuple)) and len(centro) == 2 else [0.0, 0.0]
+    pacote = {
+        "ip": ip,
+        "acao": "atualizador",
+        "dados": {
+            "client_id": client_id,
+            "posicao_camera": [float(pos[0]), float(pos[1])],
+            "diffs": [
+                {
+                    "tipo": "evento",
+                    "categoria": "batalha_contexto_request",
+                    "payload": {
+                        "pokemon_id": int(pokemon_id or 0),
+                        "centro": [float(pos[0]), float(pos[1])],
+                    },
+                }
+            ],
+        },
+    }
+    resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
+    try:
+        return json.loads(resposta_json)
+    except json.JSONDecodeError:
+        return _erro_padrao("Falha ao interpretar contexto de batalha")
+
+
 def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, diffs=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
     pacote = {
         "ip": ip,

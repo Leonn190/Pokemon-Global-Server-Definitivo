@@ -26,7 +26,7 @@ class Arena:
             4: (230, 210, 140), 5: (217, 179, 92), 6: (245, 248, 252), 7: (140, 82, 255),
             8: (88, 70, 70), 9: (110, 92, 68),
         }
-        self._cache_sprites: Dict[str, pygame.Surface] = {}
+        self._cache_sprites: Dict[Tuple[str, int], pygame.Surface] = {}
         self._montar()
 
     def _retangulo_arena(self) -> pygame.Rect:
@@ -63,27 +63,34 @@ class Arena:
                     sprite = str(cfg.get("sprite", "") or "")
             self._estruturas_fundo.append(EstruturaNaturalFake(posicao=(x, y), sprite=sprite, codigo_natural=codigo))
 
-    def _carregar_sprite(self, caminho: str):
+    def _carregar_sprite(self, caminho: str, tile_px: int):
         caminho = str(caminho or "").strip()
         if not caminho:
             return None
-        if caminho in self._cache_sprites:
-            return self._cache_sprites[caminho]
+        chave = (caminho, int(tile_px))
+        if chave in self._cache_sprites:
+            return self._cache_sprites[chave]
         try:
-            self._cache_sprites[caminho] = pygame.image.load(caminho).convert_alpha()
+            base = pygame.image.load(caminho).convert_alpha()
+            escala = float(tile_px) / 40.0
+            if abs(escala - 1.0) > 0.001:
+                w = max(1, int(base.get_width() * escala))
+                h = max(1, int(base.get_height() * escala))
+                base = pygame.transform.smoothscale(base, (w, h))
+            self._cache_sprites[chave] = base
         except Exception:
-            self._cache_sprites[caminho] = None
-        return self._cache_sprites[caminho]
+            self._cache_sprites[chave] = None
+        return self._cache_sprites[chave]
 
     def renderizar(self, tela, camera) -> None:
         tile_px = max(1, int(getattr(camera, "TilePx", 40) or 40))
         for tx, ty, bloco in self._tiles:
             px, py = camera.mundo_para_tela_px((tx, ty))
-            pygame.draw.rect(tela, self._cores.get(bloco, (255, 0, 255)), (int(px), int(py), tile_px, tile_px))
+            pygame.draw.rect(tela, self._cores.get(bloco, (255, 0, 255)), (int(px), int(py), tile_px + 1, tile_px + 1))
 
         for estrutura in self._estruturas_fundo:
             px, py = camera.mundo_para_tela_px(estrutura.Posicao)
-            sprite = self._carregar_sprite(estrutura.Sprite)
+            sprite = self._carregar_sprite(estrutura.Sprite, tile_px)
             if sprite is None:
                 pygame.draw.circle(tela, (92, 72, 52), (int(px), int(py)), max(4, tile_px // 4))
                 continue

@@ -13,6 +13,7 @@ from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer, ItemMundo
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
+from SimuladorServerJogo.Geradores.GeradorPokemon import materializar_pokemon
 from SimuladorServerJogo.Logica.AutoridadeCaptura import coletar_eventos_captura_agendada
 
 from SimuladorServerJogo.Controle.Cerebros.CerebroBaus import CerebroBaus
@@ -219,7 +220,19 @@ class CerebroCentral:
     @staticmethod
     def _snapshot_pokemon_capturado(poke: PokemonServer) -> Dict[str, object]:
         estado = poke.estado_extra if isinstance(poke.estado_extra, dict) else {}
-        return {
+        captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
+        estado_fruta = estado.get("estado_frutificacao") if isinstance(estado.get("estado_frutificacao"), dict) else {}
+        efeitos_bola = captura.get("efeitos_bola") if isinstance(captura.get("efeitos_bola"), dict) else {}
+
+        iv_base = int(estado.get("iv", 0) or 0)
+        bonus_iv = int(efeitos_bola.get("bonus_iv", 0) or 0)
+        bonus_iv += int(round(iv_base * (float(efeitos_bola.get("bonus_iv_percentual", 0.0) or 0.0) / 100.0)))
+        bonus_iv += int(round(iv_base * (float(estado_fruta.get("bonus_iv_percentual_captura", 0.0) or 0.0) / 100.0)))
+
+        bonus_nivel = int(efeitos_bola.get("bonus_nivel", 0) or 0) + int(efeitos_bola.get("nivel_aumentado", 0) or 0)
+        bonus_amizade = int(efeitos_bola.get("bonus_amizade", 0) or 0) + int(estado_fruta.get("bonus_amizade_captura", 0) or 0)
+
+        bruto = {
             "id": int(getattr(poke, "Id", 0) or 0),
             "especie": str(estado.get("especie") or "Pokemon"),
             "nome": str(estado.get("nome") or estado.get("especie") or "Pokemon"),
@@ -238,7 +251,9 @@ class CerebroCentral:
             "linhagem": str(estado.get("linhagem") or ""),
             "chunk_origem": list(estado.get("chunk_origem", [])) if isinstance(estado.get("chunk_origem"), list) else [],
             "capturado_em_ms": int(time.time() * 1000),
+            "dados_csv": dict(estado.get("dados_csv", {})) if isinstance(estado.get("dados_csv"), dict) else {},
         }
+        return materializar_pokemon(bruto, efeitos_captura={"bonus_iv": bonus_iv, "bonus_nivel": bonus_nivel, "bonus_amizade": bonus_amizade})
 
     def _adicionar_pokemon_capturado_inventario(self, dono_id: int, poke: PokemonServer) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff

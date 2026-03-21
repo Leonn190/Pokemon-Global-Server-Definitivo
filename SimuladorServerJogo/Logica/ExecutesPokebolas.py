@@ -7,7 +7,10 @@ def _nome(v):
 
 def _stat(pokemon, chave, padrao=0.0):
     stats = pokemon.estado_extra.get("stats") if isinstance(pokemon.estado_extra.get("stats"), dict) else {}
-    return float(stats.get(chave, padrao) or padrao)
+    if chave in stats:
+        return float(stats.get(chave, padrao) or padrao)
+    dados_csv = pokemon.estado_extra.get("dados_csv") if isinstance(pokemon.estado_extra.get("dados_csv"), dict) else {}
+    return float(dados_csv.get(chave, padrao) or padrao)
 
 
 def executar_pokebola(nome_bola, pokemon, contexto=None):
@@ -19,8 +22,8 @@ def executar_pokebola(nome_bola, pokemon, contexto=None):
     if n == "ultraball": return {"poder_base": 60.0, "captura_garantida": False, "efeitos": {}}
     if n == "masterball": return {"poder_base": 1000.0, "captura_garantida": True, "efeitos": {}}
     if n == "levelball":
-        pokemon.estado_extra["nivel"] = max(1, min(100, int(pokemon.estado_extra.get("nivel", 1) or 1) + 5))
-        return {"poder_base": float(1 + pokemon.estado_extra["nivel"]), "captura_garantida": False, "efeitos": {"nivel_aumentado": 5}}
+        nivel_atual = max(1, min(100, int(pokemon.estado_extra.get("nivel", 1) or 1)))
+        return {"poder_base": float(1 + nivel_atual), "captura_garantida": False, "efeitos": {"nivel_aumentado": 5}}
     if n == "furyball":
         irritado = bool(pokemon.estado_extra.get("esta_irritado", False))
         return {"poder_base": 70.0 if irritado else 10.0, "captura_garantida": False, "efeitos": {"usou_estado_irritado": irritado}}

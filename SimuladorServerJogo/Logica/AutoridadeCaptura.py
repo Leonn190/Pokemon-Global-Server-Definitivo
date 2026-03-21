@@ -102,6 +102,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         "token_arremesso": str(ctx.get("token_arremesso") or ""),
         "tempo_impacto_ms": tempo_impacto_ms,
         "atraso_animacao_ms": atraso_inicio_ms,
+        "efeitos_bola": dict(bola.get("efeitos", {})) if isinstance(bola.get("efeitos"), dict) else {},
     }
 
     inicio_anim_ms = agora_ms + atraso_inicio_ms

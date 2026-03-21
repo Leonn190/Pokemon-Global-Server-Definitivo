@@ -84,6 +84,13 @@ class CenaMundo:
         player_bloqueado = bloqueio_gameplay or self.SubtelaOpcoes.Ativa or self.TelaAtual == "Config"
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
+        if not player_bloqueado:
+            colisao_pokemon = self.ControladorMundo.Player.consumir_colisao_pokemon()
+            if isinstance(colisao_pokemon, dict):
+                JOGO.INFO["CombateContexto"] = self._coletar_contexto_batalha(colisao_pokemon)
+                JOGO.CenaAlvo = "Combate"
+                return
+
         if player is not None and self.SubtelaInventario is not None:
             self.SubtelaInventario.Ativo = player.Controle.InventarioAberto
             self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
@@ -101,6 +108,69 @@ class CenaMundo:
             self.SubtelaInventario.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt)
+
+    def _coletar_contexto_batalha(self, colisao_pokemon: dict) -> dict:
+        player = self.ControladorMundo.player_local
+        centro = tuple(player.Posicao) if player is not None else tuple(colisao_pokemon.get("posicao", [0.0, 0.0]))
+
+        rx, ry = 50, 30
+        x0, x1 = int(centro[0]) - rx, int(centro[0]) + rx
+        y0, y1 = int(centro[1]) - ry, int(centro[1]) + ry
+
+        leitor = self.ControladorMundo.Leitor
+        chunks = dict(getattr(leitor, "Chunks", {}))
+        chunk_tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10) or 10))
+
+        tiles = []
+        for ty in range(y0, y1):
+            for tx in range(x0, x1):
+                cx = int(tx // chunk_tamanho)
+                cy = int(ty // chunk_tamanho)
+                grid = chunks.get((cx, cy))
+                if not grid:
+                    continue
+                lx = tx - (cx * chunk_tamanho)
+                ly = ty - (cy * chunk_tamanho)
+                if ly < 0 or ly >= len(grid):
+                    continue
+                row = grid[ly]
+                if lx < 0 or lx >= len(row):
+                    continue
+                tiles.append({"x": tx - x0, "y": ty - y0, "bloco": int(row[lx])})
+
+        estruturas = []
+        for payload in self.ControladorMundo.Objetos.ObjetosPorId.values():
+            if not isinstance(payload, dict):
+                continue
+            if not str(payload.get("tipo", "")).startswith("estrutura"):
+                continue
+            pos = payload.get("posicao")
+            if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+                continue
+            x, y = float(pos[0]), float(pos[1])
+            if x < x0 or x > x1 or y < y0 or y > y1:
+                continue
+            estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+            estruturas.append(
+                {
+                    "x": x - x0,
+                    "y": y - y0,
+                    "codigo_natural": int(payload.get("codigo_natural", estado.get("codigo_natural", 0)) or 0),
+                    "sprite": str(payload.get("sprite", "") or ""),
+                }
+            )
+
+        return {
+            "origem": [x0, y0],
+            "centro": [50, 30],
+            "largura": 100,
+            "altura": 60,
+            "arena_largura": 50,
+            "arena_altura": 30,
+            "tiles": tiles,
+            "estruturas": estruturas,
+            "pokemon_colisao": dict(colisao_pokemon),
+        }
 
     def Finalizar(self, JOGO):
         if self.Terminal is not None:

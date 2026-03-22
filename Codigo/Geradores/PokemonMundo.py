@@ -526,7 +526,7 @@ class Pokemon:
         elif fase == "volta":
             self._desenhar_animacao_volta(tela, camera, tile_px)
         else:
-            self._desenhar_circulo_base(tela, centro, base)
+            self._desenhar_circulo_base(tela, centro, int(base * 2))
             self._desenhar_pokemon_normal(tela, centro, max(2, int(base * 2.0)))
 
 

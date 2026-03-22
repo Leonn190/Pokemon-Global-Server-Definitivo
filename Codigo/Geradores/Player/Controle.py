@@ -182,6 +182,7 @@ class Controle:
                             "item": dict(self._item_arremesso_atual),
                             "origem": estado["inicio"] if estado else self._ponto_mao_mundo(),
                             "destino": estado["fim"] if estado else mouse_pos_mundo_tiles,
+                            "mirando": bool(self._mirando),
                         }
                     self._batendo = False
                     self._soltar_apos_tapa_atual = False

@@ -185,6 +185,9 @@ class ControladorPlayer:
         destino_click = acao.get("destino") if isinstance(acao.get("destino"), (list, tuple)) else tuple(self._player_local.Posicao)
 
         variante, velocidade, alcance = self._spec_projetil(item)
+        if bool(acao.get("mirando", False)):
+            velocidade *= 1.10
+            alcance += 1.0
         dx, dy = float(destino_click[0]) - float(origem[0]), float(destino_click[1]) - float(origem[1])
         n = math.hypot(dx, dy) or 1.0
         direcao = (dx / n, dy / n)
@@ -329,6 +332,10 @@ class ControladorPlayer:
     def atualizar_frame(self, eventos, dt, camera, bloqueado: bool) -> None:
         if self._player_local is None:
             return
+        dt = max(0.0, float(dt))
+        perfil = getattr(self._player_local, "Perfil", None)
+        if perfil is not None:
+            perfil.registrar_tempo_jogo(dt)
 
         if self._correcao_servidor_bloqueando():
             if self._player_local.Controle is not None:
@@ -355,6 +362,9 @@ class ControladorPlayer:
                 ator_pos_tela_px=ator_pos_tela_px,
             )
             self._resolver_colisao_player_local(posicao_antes, dt)
+            posicao_depois = tuple(self._player_local.Posicao)
+            if perfil is not None:
+                perfil.registrar_movimento(math.hypot(posicao_depois[0] - posicao_antes[0], posicao_depois[1] - posicao_antes[1]))
             self._processar_intencao_arremesso_local()
             self._processar_intencao_drop_item_mundo()
             self._processar_intencao_coleta_estrutura()

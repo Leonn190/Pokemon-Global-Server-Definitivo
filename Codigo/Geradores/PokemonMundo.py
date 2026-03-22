@@ -20,6 +20,7 @@ class Pokemon:
     _cache_frames: Dict[str, List[pygame.Surface]] = {}
     _cache_frames_escalados: Dict[Tuple[str, int], List[pygame.Surface]] = {}
     _cache_rotacao_bola: Dict[Tuple[int, int], pygame.Surface] = {}
+    _INTERVALO_FRAME_ANIM_MS = 85
 
     def __init__(self, snapshot: Dict[str, object]) -> None:
         pos = self._pos(snapshot.get("posicao"))
@@ -391,13 +392,12 @@ class Pokemon:
         ini = math.radians(-ang)
         fim = math.radians(-(ang + jan))
         pygame.draw.arc(tela, (255, 210, 76), rect, fim, ini, 4)
-        pygame.draw.circle(tela, (36, 120, 255), centro, raio, 1)
 
     def _desenhar_pokemon_normal(self, tela, centro, raio_corpo, escala_extra: float = 1.0, alpha: int = 255):
         raio = max(2, int(raio_corpo * max(0.05, float(escala_extra))))
         frames = self._obter_frames_escalados(self.Especie, max(12, int(raio * 1.8)))
         if frames and raio > 2:
-            frame = frames[int((pygame.time.get_ticks() / 100) % len(frames))].copy()
+            frame = frames[int((pygame.time.get_ticks() / self._INTERVALO_FRAME_ANIM_MS) % len(frames))].copy()
             if alpha < 255:
                 frame.set_alpha(alpha)
             tela.blit(frame, frame.get_rect(center=centro))
@@ -457,7 +457,7 @@ class Pokemon:
         poke_scale = max(0.0, 1.0 - (t ** 1.35))
         poke_y = int(centro[1] - tile_px * 0.12 * t)
         if poke_scale > 0.02:
-            self._desenhar_pokemon_normal(tela, (centro[0], poke_y), max(2, int(base * 1.05)), escala_extra=poke_scale, alpha=max(20, int(255 * (1.0 - t * 0.55))))
+            self._desenhar_pokemon_normal(tela, (centro[0], poke_y), max(2, int(base * 2.1)), escala_extra=poke_scale, alpha=max(20, int(255 * (1.0 - t * 0.55))))
         bola_y = int(centro[1] - tile_px * 0.24 * (1.0 - t) * (1.0 - t))
         bola_rot = -280.0 * (1.0 - t)
         bola_squash = 1.0 + 0.12 * math.sin(t * math.pi)
@@ -489,7 +489,7 @@ class Pokemon:
             pygame.draw.circle(tela, (255, 225, 170), (centro[0] + ox, centro[1] + oy), max(2, int(base * 0.08)))
         escala = min(1.0, 0.18 + (t ** 0.65) * 0.92)
         alpha = max(50, int(255 * min(1.0, 0.4 + t * 0.9)))
-        self._desenhar_pokemon_normal(tela, centro, max(3, int(base * 1.05)), escala_extra=escala, alpha=alpha)
+        self._desenhar_pokemon_normal(tela, centro, max(3, int(base * 2.1)), escala_extra=escala, alpha=alpha)
 
     def _desenhar_animacao_volta(self, tela, camera, tile_px):
         ini = self.CapturaEstado.get("retorno_inicio") if isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)) else list(self._posicao_bola_mundo())
@@ -527,7 +527,7 @@ class Pokemon:
             self._desenhar_animacao_volta(tela, camera, tile_px)
         else:
             self._desenhar_circulo_base(tela, centro, base)
-            self._desenhar_pokemon_normal(tela, centro, max(2, int(base)))
+            self._desenhar_pokemon_normal(tela, centro, max(2, int(base * 2.0)))
 
 
 Pokemon.desenhar = Pokemon.render

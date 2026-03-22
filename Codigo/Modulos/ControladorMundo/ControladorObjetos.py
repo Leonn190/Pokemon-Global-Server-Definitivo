@@ -28,6 +28,7 @@ class ControladorObjetos:
         self.EstruturasPorId: Dict[int, EstruturaNatural] = {}
 
         self._player_local_id: Optional[int] = None
+        self._player_local_ref = None
         self._autor_local_id: str = ""
         self._lock_objetos = threading.RLock()
         self._lock_diffs = threading.Lock()
@@ -53,6 +54,7 @@ class ControladorObjetos:
 
     def definir_player_local_info(self, player) -> None:
         self._player_local_id = int(getattr(player, "Id", -1) or -1) if player is not None else None
+        self._player_local_ref = player
 
     def definir_autor_local(self, autor_id: str) -> None:
         self._autor_local_id = str(autor_id or "").strip()
@@ -275,7 +277,12 @@ class ControladorObjetos:
             if bau is None:
                 self.BausPorId[oid] = Bau.from_snapshot(payload)
             else:
+                aberto_antes = bool(getattr(bau, "Aberto", False))
                 bau.update(payload) if hasattr(bau, "update") else bau.aplicar_snapshot(payload)
+                if (not aberto_antes) and bool(getattr(bau, "Aberto", False)):
+                    perfil = getattr(self._player_local_ref, "Perfil", None) if self._player_local_ref is not None else None
+                    if perfil is not None:
+                        perfil.registrar_bau_aberto(1)
         else:
             self.BausPorId.pop(oid, None)
 

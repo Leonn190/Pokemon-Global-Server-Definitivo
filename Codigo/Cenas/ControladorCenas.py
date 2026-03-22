@@ -159,9 +159,9 @@ class ControladorCenas:
             entidade_main = getattr(self.Cena, "EntidadeMain", None)
             if entidade_main is not None and hasattr(entidade_main, "Posicao"):
                 x, y = entidade_main.Posicao
-                self.TextoCoords.set_text(f"Cords: X {x:.2f} | Y {y:.2f}")
+                self.TextoCoords.set_text(f"X {x:.2f} | Y {y:.2f}")
             else:
-                self.TextoCoords.set_text("Cords: --")
+                self.TextoCoords.set_text("--")
             self.TextoCoords.set_pos((largura_tela - 16, 76))
             self.TextoCoords.draw(self.TELA)
 

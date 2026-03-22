@@ -9,7 +9,9 @@ class Perfil:
         self.BatalhasPVPVencidas = 0
         self.BatalhasBotVencidas = 0
         self.Ouro = 0
-        self.PassosCaminhados = 0
+        self.BausAbertos = 0
+        self.MetrosAndados = 0.0
+        self.TempoJogoSegundos = 0.0
         self.Insignias = []
         self.Maestria = 0
         self.SkinsLiberadas = []
@@ -30,8 +32,15 @@ class Perfil:
         self.CustoStaminaAguaRasa = 4.0
         self.CustoStaminaAguaFunda = 16.0
 
-    def adicionar_passos(self, quantidade: int) -> None:
-        self.PassosCaminhados += max(0, int(quantidade))
+    def registrar_bau_aberto(self, quantidade: int = 1) -> None:
+        self.BausAbertos += max(0, int(quantidade))
+
+    def registrar_movimento(self, distancia_tiles: float) -> None:
+        distancia = max(0.0, float(distancia_tiles))
+        self.MetrosAndados += distancia
+
+    def registrar_tempo_jogo(self, dt: float) -> None:
+        self.TempoJogoSegundos += max(0.0, float(dt))
 
     def consumir_stamina(self, quantidade: float) -> float:
         valor = max(0.0, float(quantidade))
@@ -50,7 +59,9 @@ class Perfil:
         self.BatalhasPVPVencidas = int(dados.get("batalhas_pvp_vencidas", self.BatalhasPVPVencidas))
         self.BatalhasBotVencidas = int(dados.get("batalhas_bot_vencidas", self.BatalhasBotVencidas))
         self.Ouro = int(dados.get("ouro", self.Ouro))
-        self.PassosCaminhados = int(dados.get("passos_caminhados", self.PassosCaminhados))
+        self.BausAbertos = max(0, int(dados.get("baus_abertos", self.BausAbertos)))
+        self.MetrosAndados = max(0.0, float(dados.get("metros_andados", self.MetrosAndados)))
+        self.TempoJogoSegundos = max(0.0, float(dados.get("tempo_jogo_segundos", self.TempoJogoSegundos)))
         self.Insignias = list(dados.get("insignias", self.Insignias))
         self.Maestria = int(dados.get("maestria", self.Maestria))
         self.SkinsLiberadas = list(dados.get("skins_liberadas", self.SkinsLiberadas))
@@ -77,7 +88,9 @@ class Perfil:
             "batalhas_pvp_vencidas": self.BatalhasPVPVencidas,
             "batalhas_bot_vencidas": self.BatalhasBotVencidas,
             "ouro": self.Ouro,
-            "passos_caminhados": self.PassosCaminhados,
+            "baus_abertos": self.BausAbertos,
+            "metros_andados": self.MetrosAndados,
+            "tempo_jogo_segundos": int(self.TempoJogoSegundos),
             "insignias": list(self.Insignias),
             "maestria": self.Maestria,
             "skins_liberadas": list(self.SkinsLiberadas),

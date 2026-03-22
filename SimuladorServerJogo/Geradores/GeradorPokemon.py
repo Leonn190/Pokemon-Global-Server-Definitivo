@@ -138,6 +138,7 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     estado["tipos"] = _sortear_tipos(dados_csv)
     estado["nivel"] = 0
     estado["total"] = _recalcular_total(stats_final)
+    estado["habilidades"] = [None,None,None,None,None]
 
     subir_nivel_pokemon(estado, vezes=max(0, min(100, nivel_original + bonus_nivel)))
     return bruto

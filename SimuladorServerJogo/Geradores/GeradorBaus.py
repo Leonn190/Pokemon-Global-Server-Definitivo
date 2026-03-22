@@ -126,8 +126,11 @@ def tamanho_bau_por_qtd(qtd_itens: int) -> float:
     return float(_TAMANHO_BAU_POR_QTD[qtd])
 
 
-def gerar_bau_server(rng: random.Random, dia_fixo: int = 1, tipo_forcado: str | None = None) -> Dict[str, object]:
-    bloco = _TABELA_BAUS[int(dia_fixo)]
+def gerar_bau_server(rng: random.Random, dia_fixo: int = 0, tipo_forcado: str | None = None) -> Dict[str, object]:
+    dia_fixo = int(dia_fixo)
+    dias_disponiveis = sorted(_TABELA_BAUS.keys())
+    dia_escolhido = max((d for d in dias_disponiveis if d <= dia_fixo), default=dias_disponiveis[0])
+    bloco = _TABELA_BAUS[dia_escolhido]
 
     tipo = str(tipo_forcado or "").strip().capitalize()
     if not tipo:

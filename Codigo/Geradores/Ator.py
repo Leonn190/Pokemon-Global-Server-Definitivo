@@ -64,7 +64,7 @@ class Ator:
         self.Nome = ""
         self._duracao_tapa = 0.5
         self._tempo_tapa = 0.0
-        self._raio_mao_colisao = max(0.28, raio_colisao * 0.62)
+        self._raio_mao_colisao = max(0.3, raio_colisao * 0.65)
         self.ColisorMao = Colisor(
             x=self.Posicao[0],
             y=self.Posicao[1],
@@ -135,7 +135,6 @@ class Ator:
         self._alvo_posicao = (float(nx), float(ny))
         self.definir_posicao(nx, ny)
 
-
     @classmethod
     def desenhar_nome(cls, tela, pos_tela, nome, deslocamento_y: int = 54):
         nome_str = str(nome or "").strip()
@@ -152,6 +151,14 @@ class Ator:
         oscilacao = math.sin(tempo + fase) * 2.0
         texto.set_pos((int(pos_tela[0]), int(pos_tela[1]) - int(deslocamento_y) + int(round(oscilacao))))
         texto.draw(tela)
+
+    @staticmethod
+    def _estilo_item(item) -> str:
+        if isinstance(item, dict):
+            valor = item.get("Estilo", item.get("estilo", ""))
+        else:
+            valor = getattr(item, "Estilo", getattr(item, "estilo", ""))
+        return str(valor or "").strip().lower()
 
     def set_tile_px(self, tile_px: int) -> None:
         self.Desenhador.set_tile_px(tile_px)
@@ -216,14 +223,85 @@ class Ator:
 
     def desenhar(self, tela, mouse_pos=None, posicao_tela=None, respiracao_tempo=0.0) -> None:
         centro = self.Posicao if posicao_tela is None else posicao_tela
-        dados_mao = self.Desenhador.desenhar(tela, centro, mouse_pos=mouse_pos, angulo_graus=self.AnguloOlhar, alcance_tapa=self._alcance_tapa_px(), progresso_tapa=self._progresso_tapa(), respiracao_tempo=respiracao_tempo, recuo_mao=(16.0 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0))
+        cx, cy = centro
         inventario = getattr(self, "Inventario", None)
         item_mao = inventario.item_na_mao() if inventario is not None else None
+
+        estilo = nome = ""
         if item_mao is not None:
+            if isinstance(item_mao, dict):
+                estilo = str(item_mao.get("Estilo", item_mao.get("estilo", "")) or "").strip().lower()
+                nome = str(item_mao.get("Nome", item_mao.get("nome", "")) or "").strip().lower()
+            else:
+                estilo = str(getattr(item_mao, "Estilo", getattr(item_mao, "estilo", "")) or "").strip().lower()
+                nome = str(getattr(item_mao, "Nome", getattr(item_mao, "nome", "")) or "").strip().lower()
+
+        if item_mao is not None and estilo == "ferramenta":
+            angulo_base = float(self.AnguloOlhar)
+            rad = math.radians(angulo_base)
+            vx, vy = math.cos(rad), -math.sin(rad)
+            px, py = -vy, vx
+
+            base = float(self.Desenhador._tile_px)
+            escala = max(1.0, float(self.Desenhador._escala_tiles))
+            dist_lateral = int(base * 1.15 * escala)
+            dist_vertical = int(base * 0.03 * escala)
+
+            progresso = max(0.0, min(1.0, float(self._progresso_tapa())))
+            empurrao_tapa = max(0.0, float(self._alcance_tapa_px()))
+            respiracao = math.sin(max(0.0, float(respiracao_tempo)) * 3.4) * 3.0
+
+            mao_x = cx + px * dist_lateral
+            mao_y = cy + py * dist_lateral - dist_vertical
+
+            if empurrao_tapa > 0.0:
+                arco = math.sin(progresso * math.pi)
+                mao_x += vx * (60.0 * arco) - px * (16.0 * arco)
+                mao_y += vy * (60.0 * arco) - py * (16.0 * arco)
+            else:
+                recuo = 16.0 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0
+                mao_x += vx * (respiracao - recuo)
+                mao_y += vy * (respiracao - recuo)
+
+            ang_mao = math.degrees(math.atan2(-(mao_y - cy), mao_x - cx))
+            eh_picareta = nome.startswith("picareta")
+
+            lado = max(62, int(base * (1.65 if eh_picareta else 1.95) * escala))
+            sprite = ItemInventario.surface_item(item_mao, lado_px=lado)
+
+            if sprite is not None:
+                if eh_picareta:
+                    sprite = pygame.transform.flip(sprite, True, False)
+                    ang_item = ang_mao - 24.0
+                    grip = (0.50, 0.52)
+                else:
+                    ang_item = ang_mao - 78.0
+                    grip = (0.46, 0.58)
+
+                w, h = sprite.get_size()
+                gx, gy = w * grip[0], h * grip[1]
+
+                sprite = pygame.transform.rotozoom(sprite, ang_item, 1.0)
+                offset = pygame.math.Vector2(gx - w / 2, gy - h / 2).rotate(ang_item)
+                rect = sprite.get_rect(center=(int(mao_x - offset.x), int(mao_y - offset.y)))
+                tela.blit(sprite, rect)
+
+        dados_mao = self.Desenhador.desenhar(
+            tela,
+            centro,
+            mouse_pos=mouse_pos,
+            angulo_graus=self.AnguloOlhar,
+            alcance_tapa=self._alcance_tapa_px(),
+            progresso_tapa=self._progresso_tapa(),
+            respiracao_tempo=respiracao_tempo,
+            recuo_mao=(16.0 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0),
+        )
+
+        if item_mao is not None and estilo != "ferramenta":
             sprite_item = ItemInventario.surface_item(item_mao, lado_px=max(19, int(dados_mao["raio_mao"] * 2.8)))
             if sprite_item is not None:
-                rect_item = sprite_item.get_rect(center=dados_mao["mao_tapa"])
-                tela.blit(sprite_item, rect_item)
+                tela.blit(sprite_item, sprite_item.get_rect(center=dados_mao["mao_tapa"]))
+
         if self._tempo_tapa > 0.0:
             mx, my = dados_mao["mao_tapa"]
             self.ColisorMao.mover_para(mx, my)
@@ -277,3 +355,4 @@ class Ator:
         px = float(self.Posicao[0]) + (lateral_x * 0.28) + (frente_x * (0.22 + alcance_tapa))
         py = float(self.Posicao[1]) + (lateral_y * 0.28) + (frente_y * (0.22 + alcance_tapa))
         return (px, py)
+    

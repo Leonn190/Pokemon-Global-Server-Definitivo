@@ -12,6 +12,8 @@ Vector2 = Tuple[float, float]
 
 
 class AtorServer:
+    NIVEL_MAXIMO = 50
+
     def __init__(self, id_objeto: int, usuario: str, skin: str, posicao: Vector2 = (0.0, 0.0)) -> None:
         self.id_objeto = int(id_objeto)
         self.Id = self.id_objeto
@@ -27,6 +29,45 @@ class AtorServer:
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))
         self.Colisor.mover_para(*self.posicao)
+
+    @classmethod
+    def _calcular_xp_alvo_por_nivel(cls, nivel: int) -> int:
+        nivel_atual = max(0, int(nivel))
+        if nivel_atual >= cls.NIVEL_MAXIMO:
+            return 0
+        faixa = nivel_atual // 10
+        incremento = (faixa + 1) * 100
+        base_faixa = 100 + (500 * faixa * faixa) + (600 * faixa)
+        return int(base_faixa + (nivel_atual - (faixa * 10)) * incremento)
+
+    def GanharXP(self, quantidade_xp) -> Dict[str, int]:
+        perfil = self.estado_extra.get("perfil")
+        if not isinstance(perfil, dict):
+            perfil = {}
+            self.estado_extra["perfil"] = perfil
+        nivel = max(0, min(self.NIVEL_MAXIMO, int(perfil.get("nivel", 0) or 0)))
+        xp = max(0, int(perfil.get("xp", 0) or 0))
+        ganho = max(0, int(quantidade_xp or 0))
+        if ganho > 0 and nivel < self.NIVEL_MAXIMO:
+            xp += ganho
+            while nivel < self.NIVEL_MAXIMO:
+                alvo = self._calcular_xp_alvo_por_nivel(nivel)
+                if xp < alvo:
+                    break
+                xp -= alvo
+                nivel += 1
+        if nivel >= self.NIVEL_MAXIMO:
+            nivel = self.NIVEL_MAXIMO
+            xp = 0
+            xp_alvo = 0
+            ganho_real = 0
+        else:
+            xp_alvo = self._calcular_xp_alvo_por_nivel(nivel)
+            ganho_real = ganho
+        perfil["nivel"] = int(nivel)
+        perfil["xp"] = int(xp)
+        perfil["xp_alvo"] = int(xp_alvo)
+        return {"xp_ganho": int(ganho_real), "nivel_atual": int(nivel), "xp_atual": int(xp), "xp_alvo": int(xp_alvo)}
 
     def serializar(self) -> Dict[str, object]:
         estado = dict(self.estado_extra)

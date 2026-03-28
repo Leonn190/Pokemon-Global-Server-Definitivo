@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.EstadoServidor import snapshot_estado, atualizar_inventario_personagem, atualizar_posicao_personagem
+from SimuladorServerJogo.Controle.EstadoServidor import snapshot_estado, atualizar_inventario_personagem, atualizar_perfil_personagem, atualizar_posicao_personagem
 from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Geradores.GeradorPokemon import gerar_pokemon_server
@@ -370,6 +370,45 @@ def _cmd_count(args):
     return "Erro no /count. Ordem base: /count chunks|chests|pokemons"
 
 
+def _cmd_xp(autor, args):
+    _, livres = _split_args(args)
+    if not livres:
+        return "Erro no /xp. Ordem base: /xp quantidade_xp [nome_do_jogador]"
+    qtd_xp = _to_int(livres.pop(0), -1)
+    if qtd_xp <= 0:
+        return "Erro no /xp. Quantidade de XP inválida"
+
+    alvo = autor
+    if livres:
+        alvo = str(" ".join(livres)).strip()
+    players = _estado_players()
+    if alvo not in players:
+        for nome in players.keys():
+            if str(nome).lower() == str(alvo).lower():
+                alvo = nome
+                break
+    if alvo not in players:
+        return f"Jogador não encontrado: {alvo}"
+
+    p = players.get(alvo, {}) if isinstance(players.get(alvo, {}), dict) else {}
+    pos = p.get("posicao", [0.0, 0.0]) if isinstance(p.get("posicao", [0.0, 0.0]), (list, tuple)) else [0.0, 0.0]
+    ator = BANCO_DADOS.garantir_player(alvo, str(p.get("skin", "S1")), (float(pos[0]), float(pos[1])))
+    if not isinstance(ator.estado_extra.get("perfil"), dict):
+        ator.estado_extra["perfil"] = {}
+    ator.estado_extra["perfil"].update({k: v for k, v in p.items() if k != "inventario"})
+    retorno = ator.GanharXP(qtd_xp)
+    atualizar_perfil_personagem(alvo, dict(ator.estado_extra.get("perfil", {})))
+
+    payload = _payload_player(alvo)
+    payload["perfil"] = dict(ator.estado_extra.get("perfil", {}))
+    _registrar_update_player(alvo, payload)
+
+    return (
+        f"XP aplicado em {alvo}: +{qtd_xp} | "
+        f"nível={retorno.get('nivel_atual', 0)} | xp={retorno.get('xp_atual', 0)}/{retorno.get('xp_alvo', 0)}"
+    )
+
+
 def executar_comando_terminal(autor: str, texto: str) -> dict:
     bruto = str(texto or "").strip()
     if not bruto.startswith("/"):
@@ -379,13 +418,14 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
         return {"ok": True, "feedback": "Comando inexistente: /"}
     cmd = partes[0].lower()
     args = partes[1:]
-    if cmd in {"give_args", "tp_args", "spawn_args", "chest_args", "count_args"}:
+    if cmd in {"give_args", "tp_args", "spawn_args", "chest_args", "count_args", "xp_args"}:
         base = {
             "give_args": "/give alvo item quantidade",
             "tp_args": "/tp alvo posx posy",
             "spawn_args": "/spawn pokemon posx posy",
             "chest_args": "/chest tipo posx posy",
             "count_args": "/count chunks|chests|pokemons",
+            "xp_args": "/xp quantidade_xp [nome_do_jogador]",
         }
         retorno = base[cmd]
     else:
@@ -400,9 +440,11 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
                 retorno = _cmd_chest(autor, args)
             elif cmd == "count":
                 retorno = _cmd_count(args)
+            elif cmd == "xp":
+                retorno = _cmd_xp(autor, args)
             else:
                 retorno = f"Comando inexistente: /{cmd}"
         except Exception:
-            ordem = {"give": "/give alvo item quantidade", "tp": "/tp alvo posx posy", "spawn": "/spawn pokemon posx posy", "chest": "/chest tipo posx posy", "count": "/count chunks|chests|pokemons"}.get(cmd, f"/{cmd}")
+            ordem = {"give": "/give alvo item quantidade", "tp": "/tp alvo posx posy", "spawn": "/spawn pokemon posx posy", "chest": "/chest tipo posx posy", "count": "/count chunks|chests|pokemons", "xp": "/xp quantidade_xp [nome_do_jogador]"}.get(cmd, f"/{cmd}")
             retorno = f"Erro no /{cmd}. Ordem base: {ordem}"
     return {"ok": True, "feedback": str(retorno).strip()[:220] or "Comando processado", "autor": "Servidor", "timestamp": time.time()}

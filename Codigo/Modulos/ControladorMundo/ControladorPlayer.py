@@ -441,12 +441,10 @@ class ControladorPlayer:
 
         if (agora - self._ultimo_envio_supervisao_lenta) >= self._intervalo_supervisao_lenta_s:
             s = self._snapshot_player_local_lento()
-            d = self._delta_snapshot(self._snapshot_player_supervisao_lenta, s)
             self._snapshot_player_supervisao_lenta = s
-            if d:
-                d.setdefault("id", ator_id)
-                d.setdefault("tipo", "entidade_player")
-                self._objetos.EnfileirarDiffRapida({"tipo": "update", "objeto_id": ator_id, "payload": d})
+            s.setdefault("id", ator_id)
+            s.setdefault("tipo", "entidade_player")
+            self._objetos.EnfileirarDiffRapida({"tipo": "update", "objeto_id": ator_id, "payload": s})
             self._ultimo_envio_supervisao_lenta = agora
 
     def is_diff_player_local(self, diff: Dict[str, object]) -> bool:

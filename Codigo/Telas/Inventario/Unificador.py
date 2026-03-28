@@ -22,7 +22,7 @@ class UnificadorInventario:
         self._overlay_cache_size = None
         self._ativo_anterior = False
 
-        self.TelaPerfil = InventarioPerfil()
+        self.TelaPerfil = InventarioPerfil(ator)
         self.TelaPokemons = InventarioPokemons(ator)
         self.TelaItens = InventarioItens(ator)
 
@@ -45,7 +45,7 @@ class UnificadorInventario:
         bx = self._rect.centerx - total // 2
 
         botoes = []
-        for i, (texto, modo) in enumerate((("Perfil", "perfil"), ("Pokemons", "pokemons"), ("Itens", "itens"))):
+        for i, (texto, modo) in enumerate((("Pokemons", "pokemons"), ("Itens", "itens"), ("Perfil", "perfil"))):
             def _acao(_jogo, _botao, m=modo):
                 self.Modo = m
 
@@ -102,7 +102,7 @@ class UnificadorInventario:
         pygame.draw.rect(tela, (20, 26, 42), header, border_radius=16)
         pygame.draw.rect(tela, (52, 70, 110), header, 1, border_radius=16)
 
-        for botao, modo in zip(self._botoes, ("perfil", "pokemons", "itens")):
+        for botao, modo in zip(self._botoes, ("pokemons", "itens", "perfil")):
             botao.set_selecionado(self.Modo == modo)
             botao.render(tela, eventos, dt, None)
 
@@ -111,7 +111,7 @@ class UnificadorInventario:
         pygame.draw.rect(tela, (58, 80, 128), area_conteudo, 2, border_radius=16)
 
         if self.Modo == "perfil":
-            self.TelaPerfil.renderizar(tela, area_conteudo, self.Inventario)
+            self.TelaPerfil.renderizar(tela, area_conteudo, self.Inventario, eventos=eventos, dt=dt)
         elif self.Modo == "pokemons":
             self.TelaPokemons.renderizar(tela, area_conteudo, eventos, dt, ativo=self.Ativo)
         else:

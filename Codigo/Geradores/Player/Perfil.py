@@ -5,6 +5,9 @@ from __future__ import annotations
 
 class Perfil:
     def __init__(self):
+        self.Nivel = 1
+        self.XP = 0
+        self.BatalhasTotais = 0
         self.NivelMochila = 1
         self.BatalhasPVPVencidas = 0
         self.BatalhasBotVencidas = 0
@@ -55,6 +58,9 @@ class Perfil:
     def aplicar_serializado(self, dados):
         if not isinstance(dados, dict):
             return
+        self.Nivel = int(dados.get("nivel", self.Nivel))
+        self.XP = int(dados.get("xp", self.XP))
+        self.BatalhasTotais = int(dados.get("batalhas_totais", self.BatalhasTotais))
         self.NivelMochila = int(dados.get("nivel_mochila", self.NivelMochila))
         self.BatalhasPVPVencidas = int(dados.get("batalhas_pvp_vencidas", self.BatalhasPVPVencidas))
         self.BatalhasBotVencidas = int(dados.get("batalhas_bot_vencidas", self.BatalhasBotVencidas))
@@ -84,6 +90,9 @@ class Perfil:
 
     def serializar(self):
         return {
+            "nivel": self.Nivel,
+            "xp": self.XP,
+            "batalhas_totais": self.BatalhasTotais,
             "nivel_mochila": self.NivelMochila,
             "batalhas_pvp_vencidas": self.BatalhasPVPVencidas,
             "batalhas_bot_vencidas": self.BatalhasBotVencidas,

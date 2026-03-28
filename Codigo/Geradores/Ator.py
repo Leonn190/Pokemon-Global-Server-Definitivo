@@ -175,6 +175,9 @@ class Ator:
         self.AnguloOlhar = float(angulo_graus)
 
     def iniciar_tapa(self) -> None:
+        perfil = getattr(self, "Perfil", None)
+        tapa_por_segundo = float(getattr(perfil, "TapaPorSegundo", 2.0) or 2.0)
+        self._duracao_tapa = 1.0 / max(0.1, tapa_por_segundo)
         self._tempo_tapa = self._duracao_tapa
 
     def Tapar(self) -> None:

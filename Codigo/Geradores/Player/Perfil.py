@@ -5,7 +5,7 @@ from __future__ import annotations
 
 class Perfil:
     def __init__(self):
-        self.Nivel = 1
+        self.Nivel = 0
         self.XP = 0
         self.BatalhasTotais = 0
         self.NivelMochila = 1
@@ -34,6 +34,7 @@ class Perfil:
         self.CustoStaminaCorridaMax = 16.0
         self.CustoStaminaAguaRasa = 4.0
         self.CustoStaminaAguaFunda = 16.0
+        self.TapaPorSegundo = 2.0
 
     def registrar_bau_aberto(self, quantidade: int = 1) -> None:
         self.BausAbertos += max(0, int(quantidade))
@@ -87,6 +88,7 @@ class Perfil:
         self.CustoStaminaCorridaMax = max(self.CustoStaminaCorrida, float(dados.get("custo_stamina_corrida_max", self.CustoStaminaCorridaMax)))
         self.CustoStaminaAguaRasa = max(0.0, float(dados.get("custo_stamina_agua_rasa", self.CustoStaminaAguaRasa)))
         self.CustoStaminaAguaFunda = max(0.0, float(dados.get("custo_stamina_agua_funda", self.CustoStaminaAguaFunda)))
+        self.TapaPorSegundo = max(0.1, float(dados.get("tapa_por_segundo", self.TapaPorSegundo)))
 
     def serializar(self):
         return {
@@ -118,6 +120,7 @@ class Perfil:
             "custo_stamina_corrida_max": self.CustoStaminaCorridaMax,
             "custo_stamina_agua_rasa": self.CustoStaminaAguaRasa,
             "custo_stamina_agua_funda": self.CustoStaminaAguaFunda,
+            "tapa_por_segundo": self.TapaPorSegundo,
         }
 
 

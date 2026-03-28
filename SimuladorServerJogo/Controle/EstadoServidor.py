@@ -82,7 +82,7 @@ def _clamp_posicao(posicao):
 def _normalizar_perfil(personagem: dict) -> dict:
     regras = carregar_regras_player()
     dados = dict(personagem) if isinstance(personagem, dict) else {}
-    dados["nivel"] = int(max(1, dados.get("nivel", 1)))
+    dados["nivel"] = int(max(0, dados.get("nivel", 0)))
     dados["xp"] = int(max(0, dados.get("xp", 0)))
     dados["batalhas_totais"] = int(max(0, dados.get("batalhas_totais", 0)))
     dados["nivel_mochila"] = int(dados.get("nivel_mochila", regras.get("NivelMochila", 1)))
@@ -117,6 +117,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
         "custo_stamina_corrida_max": "CustoStaminaCorridaMax",
         "custo_stamina_agua_rasa": "CustoStaminaAguaRasa",
         "custo_stamina_agua_funda": "CustoStaminaAguaFunda",
+        "tapa_por_segundo": "TapaPorSegundo",
     }
     for campo, chave_regra in mapa_regras.items():
         dados[campo] = float(dados.get(campo, regras.get(chave_regra)))
@@ -185,7 +186,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     for campo in campos_int:
         if campo in payload:
             base[campo] = int(payload.get(campo, base[campo]))
-    base["nivel"] = max(1, int(base.get("nivel", 1)))
+    base["nivel"] = max(0, int(base.get("nivel", 0)))
     base["xp"] = max(0, int(base.get("xp", 0)))
     base["batalhas_totais"] = max(0, int(base.get("batalhas_totais", 0)))
     base["baus_abertos"] = max(0, int(base.get("baus_abertos", 0)))
@@ -211,6 +212,8 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
 
     base["stamina_max"] = stamina_max
     base["stamina"] = max(0.0, min(stamina_max, stamina))
+    if "tapa_por_segundo" in payload:
+        base["tapa_por_segundo"] = max(0.1, float(payload.get("tapa_por_segundo", base.get("tapa_por_segundo", 2.0))))
     return base
 
 

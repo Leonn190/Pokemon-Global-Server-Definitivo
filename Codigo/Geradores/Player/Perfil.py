@@ -9,6 +9,8 @@ class Perfil:
         self.BatalhasPVPVencidas = 0
         self.BatalhasBotVencidas = 0
         self.Ouro = 0
+        self.Nivel = 0
+        self.Xp = 0
         self.BausAbertos = 0
         self.MetrosAndados = 0.0
         self.TempoJogoSegundos = 0.0
@@ -59,6 +61,8 @@ class Perfil:
         self.BatalhasPVPVencidas = int(dados.get("batalhas_pvp_vencidas", self.BatalhasPVPVencidas))
         self.BatalhasBotVencidas = int(dados.get("batalhas_bot_vencidas", self.BatalhasBotVencidas))
         self.Ouro = int(dados.get("ouro", self.Ouro))
+        self.Nivel = max(0, int(dados.get("nivel", self.Nivel)))
+        self.Xp = max(0, int(dados.get("xp", self.Xp)))
         self.BausAbertos = max(0, int(dados.get("baus_abertos", self.BausAbertos)))
         self.MetrosAndados = max(0.0, float(dados.get("metros_andados", self.MetrosAndados)))
         self.TempoJogoSegundos = max(0.0, float(dados.get("tempo_jogo_segundos", self.TempoJogoSegundos)))
@@ -88,6 +92,8 @@ class Perfil:
             "batalhas_pvp_vencidas": self.BatalhasPVPVencidas,
             "batalhas_bot_vencidas": self.BatalhasBotVencidas,
             "ouro": self.Ouro,
+            "nivel": self.Nivel,
+            "xp": self.Xp,
             "baus_abertos": self.BausAbertos,
             "metros_andados": self.MetrosAndados,
             "tempo_jogo_segundos": int(self.TempoJogoSegundos),

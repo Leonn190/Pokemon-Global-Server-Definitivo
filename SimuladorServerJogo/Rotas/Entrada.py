@@ -62,6 +62,15 @@ def processar_entrada_json(requisicao_json):
                 skin=str(personagem.get("skin", "S1.png")),
                 posicao=tuple(personagem.get("posicao", (0.0, 0.0))),
             )
+            BANCO_DADOS.atualizar_objeto(
+                ator.Id,
+                {
+                    "nome": str(personagem.get("nome", usuario)),
+                    "skin": str(personagem.get("skin", "S1")),
+                    "perfil": {k: v for k, v in personagem.items() if k != "inventario"},
+                    "inventario": dict(personagem.get("inventario", {})) if isinstance(personagem.get("inventario"), dict) else {},
+                },
+            )
             personagem["id"] = ator.Id
             mensagem = "Entrada autorizada: personagem já encontrado no servidor."
         else:
@@ -99,6 +108,15 @@ def processar_entrada_json(requisicao_json):
             personagem = estado.get("personagens", {}).get(usuario, {})
             pos = personagem.get("posicao", (0.0, 0.0))
             ator = BANCO_DADOS.garantir_player(usuario=usuario, skin=skin, posicao=(float(pos[0]), float(pos[1])))
+            BANCO_DADOS.atualizar_objeto(
+                ator.Id,
+                {
+                    "nome": str(personagem.get("nome", usuario)),
+                    "skin": str(personagem.get("skin", skin)),
+                    "perfil": {k: v for k, v in personagem.items() if k != "inventario"},
+                    "inventario": dict(personagem.get("inventario", {})) if isinstance(personagem.get("inventario"), dict) else {},
+                },
+            )
             registrar_diff(
                 "spawn",
                 payload=ator.serializar(),

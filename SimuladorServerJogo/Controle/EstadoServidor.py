@@ -37,6 +37,34 @@ _ESTADO_GERACAO = {
 _LOCK = threading.Lock()
 _INTERVALO_PERSISTENCIA_SEGUNDOS = 1.0
 _ultimo_persistencia_ts = 0.0
+_NIVEL_MAXIMO_JOGADOR = 50
+
+
+def _calcular_xp_alvo_por_nivel(nivel: int) -> int:
+    nivel_atual = max(0, int(nivel))
+    if nivel_atual >= _NIVEL_MAXIMO_JOGADOR:
+        return 0
+    faixa = nivel_atual // 10
+    incremento = (faixa + 1) * 100
+    base_faixa = 100 + (500 * faixa * faixa) + (600 * faixa)
+    return int(base_faixa + (nivel_atual - (faixa * 10)) * incremento)
+
+
+def _normalizar_progresso_xp(dados: dict) -> None:
+    nivel = max(0, min(_NIVEL_MAXIMO_JOGADOR, int(dados.get("nivel", 0) or 0)))
+    xp = max(0, int(dados.get("xp", 0) or 0))
+    while nivel < _NIVEL_MAXIMO_JOGADOR:
+        alvo = _calcular_xp_alvo_por_nivel(nivel)
+        if xp < alvo:
+            dados["nivel"] = int(nivel)
+            dados["xp"] = int(xp)
+            dados["xp_alvo"] = int(alvo)
+            return
+        xp -= alvo
+        nivel += 1
+    dados["nivel"] = _NIVEL_MAXIMO_JOGADOR
+    dados["xp"] = 0
+    dados["xp_alvo"] = 0
 
 
 
@@ -84,6 +112,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados = dict(personagem) if isinstance(personagem, dict) else {}
     dados["nivel"] = int(max(0, dados.get("nivel", 0)))
     dados["xp"] = int(max(0, dados.get("xp", 0)))
+    dados["xp_alvo"] = int(max(0, dados.get("xp_alvo", _calcular_xp_alvo_por_nivel(dados["nivel"]))))
     dados["batalhas_totais"] = int(max(0, dados.get("batalhas_totais", 0)))
     dados["nivel_mochila"] = int(dados.get("nivel_mochila", regras.get("NivelMochila", 1)))
     dados["limite_slots_inventario"] = int(max(1, dados.get("limite_slots_inventario", regras.get("LimiteSlotsInventario", 32))))
@@ -137,6 +166,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
         "limite_times_pokemon": limite_times_pokemon,
         "slot_selecionado": int(inv.get("slot_selecionado", 0)),
     }
+    _normalizar_progresso_xp(dados)
     return dados
 
 
@@ -172,6 +202,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     campos_int = (
         "nivel",
         "xp",
+        "xp_alvo",
         "batalhas_totais",
         "nivel_mochila",
         "batalhas_pvp_vencidas",
@@ -188,6 +219,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
             base[campo] = int(payload.get(campo, base[campo]))
     base["nivel"] = max(0, int(base.get("nivel", 0)))
     base["xp"] = max(0, int(base.get("xp", 0)))
+    base["xp_alvo"] = max(0, int(base.get("xp_alvo", _calcular_xp_alvo_por_nivel(base["nivel"]))))
     base["batalhas_totais"] = max(0, int(base.get("batalhas_totais", 0)))
     base["baus_abertos"] = max(0, int(base.get("baus_abertos", 0)))
     if "metros_andados" in payload:
@@ -214,6 +246,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     base["stamina"] = max(0.0, min(stamina_max, stamina))
     if "tapa_por_segundo" in payload:
         base["tapa_por_segundo"] = max(0.1, float(payload.get("tapa_por_segundo", base.get("tapa_por_segundo", 2.0))))
+    _normalizar_progresso_xp(base)
     return base
 
 

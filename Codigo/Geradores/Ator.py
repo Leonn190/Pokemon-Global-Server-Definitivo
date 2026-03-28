@@ -183,6 +183,25 @@ class Ator:
     def Tapar(self) -> None:
         self.iniciar_tapa()
 
+    def GanharXP(self, quantidade_xp) -> dict:
+        perfil = getattr(self, "Perfil", None)
+        if perfil is None:
+            return {"xp_ganho": 0, "niveis_ganhos": 0, "nivel_atual": 0, "xp_atual": 0, "xp_alvo": 0}
+        ganho = max(0, int(quantidade_xp or 0))
+        if ganho <= 0 or int(getattr(perfil, "Nivel", 0)) >= int(getattr(perfil, "NIVEL_MAXIMO", 50)):
+            perfil.normalizar_progresso_xp()
+            return {"xp_ganho": 0, "niveis_ganhos": 0, "nivel_atual": int(perfil.Nivel), "xp_atual": int(perfil.XP), "xp_alvo": int(perfil.XPAlvo)}
+        nivel_antes = int(perfil.Nivel)
+        perfil.XP = int(perfil.XP) + ganho
+        perfil.normalizar_progresso_xp()
+        return {
+            "xp_ganho": ganho,
+            "niveis_ganhos": max(0, int(perfil.Nivel) - nivel_antes),
+            "nivel_atual": int(perfil.Nivel),
+            "xp_atual": int(perfil.XP),
+            "xp_alvo": int(perfil.XPAlvo),
+        }
+
     def esta_tapando(self) -> bool:
         return self._tempo_tapa > 0.0
 

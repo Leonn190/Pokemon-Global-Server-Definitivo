@@ -4,9 +4,12 @@ from __future__ import annotations
 
 
 class Perfil:
+    NIVEL_MAXIMO = 50
+
     def __init__(self):
         self.Nivel = 0
         self.XP = 0
+        self.XPAlvo = self.calcular_xp_alvo_por_nivel(self.Nivel)
         self.BatalhasTotais = 0
         self.NivelMochila = 1
         self.BatalhasPVPVencidas = 0
@@ -36,6 +39,30 @@ class Perfil:
         self.CustoStaminaAguaFunda = 16.0
         self.TapaPorSegundo = 2.0
 
+    @classmethod
+    def calcular_xp_alvo_por_nivel(cls, nivel: int) -> int:
+        nivel_atual = max(0, int(nivel))
+        if nivel_atual >= cls.NIVEL_MAXIMO:
+            return 0
+        faixa = nivel_atual // 10
+        incremento = (faixa + 1) * 100
+        base_faixa = 100 + (500 * faixa * faixa) + (600 * faixa)
+        return int(base_faixa + (nivel_atual - (faixa * 10)) * incremento)
+
+    def normalizar_progresso_xp(self) -> None:
+        self.Nivel = max(0, min(self.NIVEL_MAXIMO, int(self.Nivel)))
+        self.XP = max(0, int(self.XP))
+        while self.Nivel < self.NIVEL_MAXIMO:
+            alvo = self.calcular_xp_alvo_por_nivel(self.Nivel)
+            if self.XP < alvo:
+                self.XPAlvo = alvo
+                return
+            self.XP -= alvo
+            self.Nivel += 1
+        self.Nivel = self.NIVEL_MAXIMO
+        self.XP = 0
+        self.XPAlvo = 0
+
     def registrar_bau_aberto(self, quantidade: int = 1) -> None:
         self.BausAbertos += max(0, int(quantidade))
 
@@ -61,6 +88,7 @@ class Perfil:
             return
         self.Nivel = int(dados.get("nivel", self.Nivel))
         self.XP = int(dados.get("xp", self.XP))
+        self.XPAlvo = int(dados.get("xp_alvo", self.XPAlvo))
         self.BatalhasTotais = int(dados.get("batalhas_totais", self.BatalhasTotais))
         self.NivelMochila = int(dados.get("nivel_mochila", self.NivelMochila))
         self.BatalhasPVPVencidas = int(dados.get("batalhas_pvp_vencidas", self.BatalhasPVPVencidas))
@@ -89,11 +117,13 @@ class Perfil:
         self.CustoStaminaAguaRasa = max(0.0, float(dados.get("custo_stamina_agua_rasa", self.CustoStaminaAguaRasa)))
         self.CustoStaminaAguaFunda = max(0.0, float(dados.get("custo_stamina_agua_funda", self.CustoStaminaAguaFunda)))
         self.TapaPorSegundo = max(0.1, float(dados.get("tapa_por_segundo", self.TapaPorSegundo)))
+        self.normalizar_progresso_xp()
 
     def serializar(self):
         return {
             "nivel": self.Nivel,
             "xp": self.XP,
+            "xp_alvo": self.XPAlvo,
             "batalhas_totais": self.BatalhasTotais,
             "nivel_mochila": self.NivelMochila,
             "batalhas_pvp_vencidas": self.BatalhasPVPVencidas,

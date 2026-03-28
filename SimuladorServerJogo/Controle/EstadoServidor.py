@@ -89,7 +89,6 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["batalhas_pvp_vencidas"] = int(dados.get("batalhas_pvp_vencidas", 0))
     dados["batalhas_bot_vencidas"] = int(dados.get("batalhas_bot_vencidas", 0))
     dados["ouro"] = int(dados.get("ouro", regras.get("Ouro", 0)))
-    dados["passos_caminhados"] = int(dados.get("passos_caminhados", 0))
     dados["insignias"] = list(dados.get("insignias", []))
     dados["maestria"] = int(dados.get("maestria", regras.get("Maestria", 0)))
     dados["skins_liberadas"] = list(dados.get("skins_liberadas", []))
@@ -168,7 +167,6 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         "batalhas_pvp_vencidas",
         "batalhas_bot_vencidas",
         "ouro",
-        "passos_caminhados",
         "maestria",
         "limite_slots_inventario",
         "limite_pokemons",

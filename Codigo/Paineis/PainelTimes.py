@@ -22,7 +22,7 @@ class PainelTimes(PainelRolavel):
         self.Padding = 16
         self.GapCards = 14
         self.SlotGap = 8
-        self.CabecalhoH = 54
+        self.CabecalhoH = 44
 
         estilo = {
             'outline': True,
@@ -277,4 +277,3 @@ class PainelTimes(PainelRolavel):
             self.marcar_sujo()
 
         self.render(tela, eventos or [], dt, jogo=jogo)
-

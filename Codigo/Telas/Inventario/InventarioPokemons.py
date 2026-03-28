@@ -222,7 +222,17 @@ class InventarioPokemons:
             return
         origem = self._arrastavel.Origem or ()
         if origem and origem[0] == 'time':
-            self._painel_times.definir_slot(origem[1], origem[2], self._arrastavel.Item)
+            rect = self._painel_times.slot_rect(origem[1], origem[2])
+            alvo = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+            def _finalizar():
+                self._painel_times.definir_slot(origem[1], origem[2], self._arrastavel.Item)
+                self._arrastavel.cancelar()
+            self._arrastavel.definir_pos_alvo(alvo.topleft, ao_final=_finalizar)
+            return
+        if origem and origem[0] == 'grid':
+            rect = self._container.slot_rect(origem[1])
+            self._arrastavel.definir_pos_alvo(self._container.item_rect_no_slot(rect).topleft, ao_final=self._arrastavel.cancelar)
+            return
         self._arrastavel.cancelar()
 
     def _soltar_no_alvo(self, alvo):
@@ -286,6 +296,7 @@ class InventarioPokemons:
         self._container._normalizar_tamanho()
         self._container._processar_scroll(eventos)
         self._painel_times._processar_scroll(eventos)
+        self._arrastavel.animar(dt)
 
         mouse = pygame.mouse.get_pos()
         alvo_mouse = self._alvo_no_mouse(mouse)
@@ -294,12 +305,14 @@ class InventarioPokemons:
             self._pokemon_hover = self._arrastavel.Item
 
         for evento in eventos:
-            if evento.type == pygame.MOUSEMOTION and self._arrastavel.Ativo:
+            if evento.type == pygame.MOUSEMOTION and self._arrastavel.Ativo and self._arrastavel.PosAlvo is None:
                 self._arrastavel.atualizar(evento.pos)
 
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 alvo = self._alvo_no_mouse(evento.pos)
                 if self._arrastavel.Ativo:
+                    if self._arrastavel.PosAlvo is not None:
+                        continue
                     if alvo is None:
                         self._retornar_para_origem()
                     else:

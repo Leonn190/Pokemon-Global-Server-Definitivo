@@ -33,7 +33,7 @@ class ControladorPlayer:
         self._ultimo_envio_supervisao_rapida = 0.0
         self._ultimo_envio_supervisao_lenta = 0.0
         self._intervalo_supervisao_rapida_s = 0.05
-        self._intervalo_supervisao_lenta_s = 1.5
+        self._intervalo_supervisao_lenta_s = 5.0
         self._ultimo_pivo_visual_local_tela: Optional[Tuple[float, float]] = None
         self._coleta_tapa_enviada = False
         self._colisao_pokemon_pendente: Optional[Dict[str, object]] = None
@@ -441,12 +441,10 @@ class ControladorPlayer:
 
         if (agora - self._ultimo_envio_supervisao_lenta) >= self._intervalo_supervisao_lenta_s:
             s = self._snapshot_player_local_lento()
-            d = self._delta_snapshot(self._snapshot_player_supervisao_lenta, s)
             self._snapshot_player_supervisao_lenta = s
-            if d:
-                d.setdefault("id", ator_id)
-                d.setdefault("tipo", "entidade_player")
-                self._objetos.EnfileirarDiffRapida({"tipo": "update", "objeto_id": ator_id, "payload": d})
+            s.setdefault("id", ator_id)
+            s.setdefault("tipo", "entidade_player")
+            self._objetos.EnfileirarDiffRapida({"tipo": "update", "objeto_id": ator_id, "payload": s})
             self._ultimo_envio_supervisao_lenta = agora
 
     def is_diff_player_local(self, diff: Dict[str, object]) -> bool:

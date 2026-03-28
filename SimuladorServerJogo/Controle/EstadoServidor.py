@@ -89,6 +89,11 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["batalhas_pvp_vencidas"] = int(dados.get("batalhas_pvp_vencidas", 0))
     dados["batalhas_bot_vencidas"] = int(dados.get("batalhas_bot_vencidas", 0))
     dados["ouro"] = int(dados.get("ouro", regras.get("Ouro", 0)))
+    dados["nivel"] = int(max(0, dados.get("nivel", 0)))
+    dados["xp"] = int(max(0, dados.get("xp", 0)))
+    dados["baus_abertos"] = int(max(0, dados.get("baus_abertos", 0)))
+    dados["metros_andados"] = float(max(0.0, dados.get("metros_andados", 0.0)))
+    dados["tempo_jogo_segundos"] = float(max(0.0, dados.get("tempo_jogo_segundos", 0.0)))
     dados["insignias"] = list(dados.get("insignias", []))
     dados["maestria"] = int(dados.get("maestria", regras.get("Maestria", 0)))
     dados["skins_liberadas"] = list(dados.get("skins_liberadas", []))
@@ -168,6 +173,9 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         "batalhas_bot_vencidas",
         "ouro",
         "maestria",
+        "nivel",
+        "xp",
+        "baus_abertos",
         "limite_slots_inventario",
         "limite_pokemons",
         "limite_times_pokemon",
@@ -175,6 +183,17 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     for campo in campos_int:
         if campo in payload:
             base[campo] = int(payload.get(campo, base[campo]))
+
+    campos_float = ("metros_andados", "tempo_jogo_segundos")
+    for campo in campos_float:
+        if campo in payload:
+            base[campo] = float(payload.get(campo, base[campo]))
+
+    base["baus_abertos"] = max(0, int(base.get("baus_abertos", 0)))
+    base["metros_andados"] = max(0.0, float(base.get("metros_andados", 0.0)))
+    base["tempo_jogo_segundos"] = max(0.0, float(base.get("tempo_jogo_segundos", 0.0)))
+    base["nivel"] = max(0, int(base.get("nivel", 0)))
+    base["xp"] = max(0, int(base.get("xp", 0)))
 
     if "insignias" in payload:
         base["insignias"] = list(payload.get("insignias", []))

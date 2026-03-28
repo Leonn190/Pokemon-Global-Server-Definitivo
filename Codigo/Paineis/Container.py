@@ -97,7 +97,9 @@ class Container(PainelRolavel):
     def slot_local_pos(self, slot_id):
         col = slot_id % self.Colunas
         lin = slot_id // self.Colunas
-        x = self.Padding + col * (self.SlotPx + self.Gap)
+        grid_w = self.Colunas * self.SlotPx + max(0, self.Colunas - 1) * self.Gap
+        x_base = max(self.Padding, (self.rect.width - grid_w) // 2)
+        x = x_base + col * (self.SlotPx + self.Gap)
         y = self.Padding + lin * (self.SlotPx + self.Gap)
         return x, y
 

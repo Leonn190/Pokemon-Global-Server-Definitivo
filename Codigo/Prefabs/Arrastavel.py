@@ -11,6 +11,9 @@ class Arrastavel:
         self.BotaoInicial = 1
         self.ModoDistribuidor = False
         self._slots_distribuidos = set()
+        self.PosAlvo = None
+        self._ao_final_animacao = None
+        self._velocidade_animacao = 16.0
 
     def iniciar(self, item, origem, rect_item, mouse_pos, botao=1):
         self.Ativo = True
@@ -26,10 +29,33 @@ class Arrastavel:
         )
 
     def atualizar(self, mouse_pos):
-        if not self.Ativo:
+        if not self.Ativo or self.PosAlvo is not None:
             return
         self.Rect.x = int(mouse_pos[0] - self._offset_mouse[0])
         self.Rect.y = int(mouse_pos[1] - self._offset_mouse[1])
+
+    def definir_pos_alvo(self, pos_alvo, ao_final=None, velocidade=16.0):
+        if not self.Ativo:
+            return
+        self.PosAlvo = (int(pos_alvo[0]), int(pos_alvo[1]))
+        self._ao_final_animacao = ao_final
+        self._velocidade_animacao = max(1.0, float(velocidade))
+
+    def animar(self, dt):
+        if not self.Ativo or self.PosAlvo is None:
+            return
+        fator = max(0.05, min(1.0, dt * self._velocidade_animacao))
+        nx = self.Rect.x + (self.PosAlvo[0] - self.Rect.x) * fator
+        ny = self.Rect.y + (self.PosAlvo[1] - self.Rect.y) * fator
+        self.Rect.x = int(nx)
+        self.Rect.y = int(ny)
+        if abs(self.Rect.x - self.PosAlvo[0]) <= 1 and abs(self.Rect.y - self.PosAlvo[1]) <= 1:
+            self.Rect.topleft = self.PosAlvo
+            self.PosAlvo = None
+            callback = self._ao_final_animacao
+            self._ao_final_animacao = None
+            if callable(callback):
+                callback()
 
     def ativar_distribuidor(self):
         self.ModoDistribuidor = True
@@ -61,3 +87,5 @@ class Arrastavel:
         self.BotaoInicial = 1
         self.ModoDistribuidor = False
         self._slots_distribuidos = set()
+        self.PosAlvo = None
+        self._ao_final_animacao = None

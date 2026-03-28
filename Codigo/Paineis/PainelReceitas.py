@@ -9,7 +9,6 @@ from pathlib import Path
 import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Paineis.PainelCraft import PainelCraft
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Painel import PainelRolavel
 from Codigo.Prefabs.Texto import Texto
@@ -343,22 +342,16 @@ class PainelReceitas(PainelRolavel):
         self._processar_scroll(eventos)
 
         area_lista = self._area_lista()
-        hover_estado = None
-
         if area_lista.collidepoint(mouse):
             for i, (receita, estado) in enumerate(visiveis):
                 rect = self._slot_rect(i)
                 if area_lista.colliderect(rect) and rect.collidepoint(mouse):
                     self._hover = receita
-                    hover_estado = estado
                     break
 
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1 and self._hover is not None:
                 receita_clicada = self._hover
-                craft = PainelCraft.instancia_ativa()
-                if craft is not None and hover_estado is not None:
-                    craft.preencher_receita(receita_clicada, inventario_container, hover_estado)
                 break
 
         return receita_clicada, self._hover

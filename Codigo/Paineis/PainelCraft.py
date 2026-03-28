@@ -224,7 +224,7 @@ class PainelCraft:
                 return retirado, idx
         return None, None
 
-    def preencher_receita(self, receita, container, estado='verde'):
+    def preencher_receita(self, receita, container, estado='verde', mover_callback=None):
         if receita is None or estado == 'vermelho' or container is None:
             return False
         self.devolver_para_inventario(container)
@@ -236,11 +236,11 @@ class PainelCraft:
                 continue
             retirado, origem = self._retirar_um_do_inventario(container, self.chave_item(esperado))
             if retirado is None:
-                if estado == 'verde':
-                    continue
                 continue
             self.CraftSlots[i] = retirado
             self._origens[i] = origem
+            if callable(mover_callback):
+                mover_callback(retirado, origem, i)
             colocou_algo = True
         self._marcar_sujo()
         return colocou_algo

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pygame
 
-from Codigo.Prefabs.Botao import Botao
+from Codigo.Prefabs.Botao import BotaoSelecao
 from Codigo.Telas.Inventario.Estatisticas import InventarioPerfil
 from Codigo.Telas.Inventario.InventarioItens import InventarioItens
 from Codigo.Telas.Inventario.InventarioPokemons import InventarioPokemons
@@ -49,7 +49,7 @@ class UnificadorInventario:
             def _acao(_jogo, _botao, m=modo):
                 self.Modo = m
 
-            botao = Botao(pygame.Rect(bx + i * (bw + gap), topo, bw, bh), texto, execute=_acao)
+            botao = BotaoSelecao(pygame.Rect(bx + i * (bw + gap), topo, bw, bh), texto, execute=_acao, selecionado=(self.Modo == modo))
             botoes.append(botao)
         self._botoes = botoes
 
@@ -102,7 +102,8 @@ class UnificadorInventario:
         pygame.draw.rect(tela, (20, 26, 42), header, border_radius=16)
         pygame.draw.rect(tela, (52, 70, 110), header, 1, border_radius=16)
 
-        for botao in self._botoes:
+        for botao, modo in zip(self._botoes, ("perfil", "pokemons", "itens")):
+            botao.set_selecionado(self.Modo == modo)
             botao.render(tela, eventos, dt, None)
 
         area_conteudo = pygame.Rect(self._rect.x + 16, self._rect.y + 84, self._rect.width - 32, self._rect.height - 100)

@@ -159,7 +159,7 @@ class FichaItem:
         self.TxtNome.draw(tela)
         nome_rect = self.TxtNome.get_rect()
 
-        self.TxtEstilo.set_text(f'Estilo: {estilo}')
+        self.TxtEstilo.set_text(estilo)
         self.TxtEstilo.set_pos((0, 0))
         estilo_w = self.TxtEstilo.get_rect().width
         estilo_x = area.right - margem - estilo_w

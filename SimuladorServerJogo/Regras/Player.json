@@ -17,5 +17,6 @@
   "CustoStaminaCorrida": 10.0,
   "CustoStaminaCorridaMax": 16.0,
   "CustoStaminaAguaRasa": 4.0,
-  "CustoStaminaAguaFunda": 16.0
+  "CustoStaminaAguaFunda": 16.0,
+  "TapaPorSegundo": 2.0
 }

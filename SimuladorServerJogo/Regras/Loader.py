@@ -37,6 +37,7 @@ def carregar_regras_player() -> Dict[str, object]:
         "CustoStaminaCorridaMax": 16.0,
         "CustoStaminaAguaRasa": 4.0,
         "CustoStaminaAguaFunda": 16.0,
+        "TapaPorSegundo": 2.0,
     }
     base.update(_ler_json("Player.json"))
     return base

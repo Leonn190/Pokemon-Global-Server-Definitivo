@@ -82,13 +82,19 @@ def _clamp_posicao(posicao):
 def _normalizar_perfil(personagem: dict) -> dict:
     regras = carregar_regras_player()
     dados = dict(personagem) if isinstance(personagem, dict) else {}
+    dados["nivel"] = int(max(1, dados.get("nivel", 1)))
+    dados["xp"] = int(max(0, dados.get("xp", 0)))
     dados["nivel_mochila"] = int(dados.get("nivel_mochila", regras.get("NivelMochila", 1)))
     dados["limite_slots_inventario"] = int(max(1, dados.get("limite_slots_inventario", regras.get("LimiteSlotsInventario", 32))))
     dados["limite_pokemons"] = int(max(1, dados.get("limite_pokemons", regras.get("LimitePokemons", 64))))
     dados["limite_times_pokemon"] = int(max(1, dados.get("limite_times_pokemon", regras.get("LimiteTimesPokemon", 6))))
     dados["batalhas_pvp_vencidas"] = int(dados.get("batalhas_pvp_vencidas", 0))
     dados["batalhas_bot_vencidas"] = int(dados.get("batalhas_bot_vencidas", 0))
+    dados["batalhas_totais"] = int(max(dados.get("batalhas_totais", 0), dados["batalhas_pvp_vencidas"] + dados["batalhas_bot_vencidas"]))
     dados["ouro"] = int(dados.get("ouro", regras.get("Ouro", 0)))
+    dados["baus_abertos"] = int(max(0, dados.get("baus_abertos", 0)))
+    dados["metros_andados"] = float(max(0.0, dados.get("metros_andados", 0.0)))
+    dados["tempo_jogo_segundos"] = float(max(0.0, dados.get("tempo_jogo_segundos", 0.0)))
     dados["insignias"] = list(dados.get("insignias", []))
     dados["maestria"] = int(dados.get("maestria", regras.get("Maestria", 0)))
     dados["skins_liberadas"] = list(dados.get("skins_liberadas", []))
@@ -163,10 +169,14 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     payload = dict(atualizacao) if isinstance(atualizacao, dict) else {}
 
     campos_int = (
+        "nivel",
+        "xp",
         "nivel_mochila",
         "batalhas_pvp_vencidas",
         "batalhas_bot_vencidas",
+        "batalhas_totais",
         "ouro",
+        "baus_abertos",
         "maestria",
         "limite_slots_inventario",
         "limite_pokemons",
@@ -175,6 +185,10 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     for campo in campos_int:
         if campo in payload:
             base[campo] = int(payload.get(campo, base[campo]))
+    if "metros_andados" in payload:
+        base["metros_andados"] = float(max(0.0, payload.get("metros_andados", base.get("metros_andados", 0.0))))
+    if "tempo_jogo_segundos" in payload:
+        base["tempo_jogo_segundos"] = float(max(0.0, payload.get("tempo_jogo_segundos", base.get("tempo_jogo_segundos", 0.0))))
 
     if "insignias" in payload:
         base["insignias"] = list(payload.get("insignias", []))

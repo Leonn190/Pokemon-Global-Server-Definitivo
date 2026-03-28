@@ -5,9 +5,12 @@ from __future__ import annotations
 
 class Perfil:
     def __init__(self):
+        self.Nivel = 1
+        self.XP = 0
         self.NivelMochila = 1
         self.BatalhasPVPVencidas = 0
         self.BatalhasBotVencidas = 0
+        self.BatalhasTotais = 0
         self.Ouro = 0
         self.BausAbertos = 0
         self.MetrosAndados = 0.0
@@ -56,8 +59,14 @@ class Perfil:
         if not isinstance(dados, dict):
             return
         self.NivelMochila = int(dados.get("nivel_mochila", self.NivelMochila))
+        self.Nivel = max(1, int(dados.get("nivel", self.Nivel)))
+        self.XP = max(0, int(dados.get("xp", self.XP)))
         self.BatalhasPVPVencidas = int(dados.get("batalhas_pvp_vencidas", self.BatalhasPVPVencidas))
         self.BatalhasBotVencidas = int(dados.get("batalhas_bot_vencidas", self.BatalhasBotVencidas))
+        self.BatalhasTotais = max(
+            int(dados.get("batalhas_totais", self.BatalhasTotais)),
+            self.BatalhasPVPVencidas + self.BatalhasBotVencidas,
+        )
         self.Ouro = int(dados.get("ouro", self.Ouro))
         self.BausAbertos = max(0, int(dados.get("baus_abertos", self.BausAbertos)))
         self.MetrosAndados = max(0.0, float(dados.get("metros_andados", self.MetrosAndados)))
@@ -84,9 +93,12 @@ class Perfil:
 
     def serializar(self):
         return {
+            "nivel": self.Nivel,
+            "xp": self.XP,
             "nivel_mochila": self.NivelMochila,
             "batalhas_pvp_vencidas": self.BatalhasPVPVencidas,
             "batalhas_bot_vencidas": self.BatalhasBotVencidas,
+            "batalhas_totais": max(self.BatalhasTotais, self.BatalhasPVPVencidas + self.BatalhasBotVencidas),
             "ouro": self.Ouro,
             "baus_abertos": self.BausAbertos,
             "metros_andados": self.MetrosAndados,

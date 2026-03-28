@@ -381,6 +381,19 @@ class ControladorPlayer:
     def _snapshot_player_local_rapido(self) -> Dict[str, object]:
         ator = self._player_local
         controle = getattr(ator, "Controle", None)
+        perfil = getattr(ator, "Perfil", None)
+        perfil_frequente = {}
+        if perfil is not None:
+            perfil_frequente = {
+                "nivel": int(getattr(perfil, "Nivel", 1) or 1),
+                "xp": int(getattr(perfil, "XP", 0) or 0),
+                "batalhas_pvp_vencidas": int(getattr(perfil, "BatalhasPVPVencidas", 0) or 0),
+                "batalhas_bot_vencidas": int(getattr(perfil, "BatalhasBotVencidas", 0) or 0),
+                "batalhas_totais": int(getattr(perfil, "BatalhasTotais", 0) or 0),
+                "baus_abertos": int(getattr(perfil, "BausAbertos", 0) or 0),
+                "metros_andados": float(getattr(perfil, "MetrosAndados", 0.0) or 0.0),
+                "tempo_jogo_segundos": float(getattr(perfil, "TempoJogoSegundos", 0.0) or 0.0),
+            }
         return {
             "id": int(getattr(ator, "Id", 0) or 0),
             "tipo": "entidade_player",
@@ -393,6 +406,7 @@ class ControladorPlayer:
                 "inventario_aberto": bool(getattr(controle, "InventarioAberto", False)) if controle is not None else False,
                 "correndo": bool(getattr(controle, "_tentando_correr", False)) if controle is not None else False,
             },
+            "perfil": perfil_frequente,
         }
 
     def _snapshot_player_local_lento(self) -> Dict[str, object]:

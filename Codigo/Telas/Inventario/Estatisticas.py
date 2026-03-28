@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import pygame
@@ -28,7 +29,7 @@ class InventarioPerfil:
 
         self._labels: list[Texto] = []
         self._values: list[Texto] = []
-        for _ in range(9):
+        for _ in range(12):
             self._labels.append(Texto("", style={"size": 24, "align": "topleft", "outline_thickness": 1, "shadow": False, "color": (183, 202, 236)}))
             self._values.append(Texto("", style={"size": 31, "align": "topleft", "outline_thickness": 1, "shadow": False, "color": (243, 248, 255)}))
 
@@ -117,7 +118,9 @@ class InventarioPerfil:
         nome = str(getattr(ator, "Nome", "") or "Treinador")
         vitorias_pvp = int(getattr(perfil, "BatalhasPVPVencidas", 0) or 0)
         vitorias_bot = int(getattr(perfil, "BatalhasBotVencidas", 0) or 0)
-        vitorias_totais = vitorias_pvp + vitorias_bot
+        vitorias_totais = max(int(getattr(perfil, "BatalhasTotais", 0) or 0), vitorias_pvp + vitorias_bot)
+        xp = int(getattr(perfil, "XP", 0) or 0)
+        nivel = int(getattr(perfil, "Nivel", 1) or 1)
 
         pokemons = [p for p in list(getattr(inventario, "Pokemons", []) or []) if isinstance(p, dict)]
         numero_pokemons = len(pokemons)
@@ -128,6 +131,9 @@ class InventarioPerfil:
 
         return [
             ("Nome", nome),
+            ("Nível", str(nivel)),
+            ("XP", str(xp)),
+            ("Batalhas", str(vitorias_totais)),
             ("Vitórias totais", str(vitorias_totais)),
             ("Vitórias vs BOT", str(vitorias_bot)),
             ("Vitórias vs Players", str(vitorias_pvp)),
@@ -178,7 +184,8 @@ class InventarioPerfil:
         pygame.draw.rect(tela, (78, 106, 160), area_skin, 1, border_radius=14)
 
         blocos = self._coletar_dados()
-        cols, rows = 3, 3
+        cols = 3
+        rows = max(1, int(math.ceil(len(blocos) / float(cols))))
         gap_x, gap_y = 16, 12
         bloco_w = max(150, (area_stats.width - gap_x * (cols - 1)) // cols)
         bloco_h = max(84, (area_stats.height - gap_y * (rows - 1)) // rows)

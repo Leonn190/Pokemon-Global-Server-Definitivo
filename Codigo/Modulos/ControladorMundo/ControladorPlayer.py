@@ -74,8 +74,8 @@ class ControladorPlayer:
             ator.Perfil = Perfil()
         if ator.Inventario is None:
             ator.Inventario = Inventario()
-        if isinstance(dados.get("perfil"), dict):
-            ator.Perfil.aplicar_serializado(dados.get("perfil"))
+        perfil_serializado = dados.get("perfil") if isinstance(dados.get("perfil"), dict) else dados
+        ator.Perfil.aplicar_serializado(perfil_serializado)
         if isinstance(dados.get("inventario"), dict):
             ator.Inventario.aplicar_serializado(dados.get("inventario"))
 

@@ -98,7 +98,7 @@ class InventarioPerfil:
         self._area_direita = pygame.Rect(self._area_stats.right + 24, topo, rect.right - self._area_stats.right - margem - 24, rect.height - 128)
         self._area_rotas = pygame.Rect(rect.x + 16, rect.bottom - 96, rect.width - 32, 82)
 
-        self._area_ator = pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 132, self._area_direita.width - 36, self._area_direita.height - 240)
+        self._area_ator = pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 144, self._area_direita.width - 36, self._area_direita.height - 252)
 
         barra_rect = pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 44, self._area_direita.width - 36, 22)
         self._barra_xp = Barra(barra_rect, texto="", valor=0, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=10.0)
@@ -125,7 +125,7 @@ class InventarioPerfil:
             self._arvore_aberta = True
 
         self._botao_skill = Botao(
-            pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 82, self._area_direita.width - 36, 48),
+            pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 94, self._area_direita.width - 36, 48),
             "Abrir árvore de habilidades",
             execute=_abrir,
             style={
@@ -153,7 +153,7 @@ class InventarioPerfil:
             bx = self._area_rotas.x + i * (largura_botao + gap)
             label = Texto("caminho do", style={**{"outline": True, "outline_thickness": 1, "outline_color": (0, 0, 0), "shadow": False}, "size": 14, "color": (154, 170, 204)})
             botao = Botao(
-                pygame.Rect(bx, self._area_rotas.y + 18, largura_botao, 58),
+                pygame.Rect(bx, self._area_rotas.y + 18, largura_botao, 60),
                 nome,
                 execute=None,
                 style={

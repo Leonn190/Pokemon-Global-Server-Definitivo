@@ -229,12 +229,39 @@ class PainelCraft:
             return False
         self.devolver_para_inventario(container)
         colocou_algo = False
+        reservas = {}
+        for idx, item in enumerate(getattr(container, 'Itens', [])):
+            chave = self.chave_item(item)
+            if item is None or not chave:
+                continue
+            reservas.setdefault(chave, []).append({
+                'indice': idx,
+                'quantidade': self.quantidade(item),
+            })
+
+        def _consumir_reserva(chave):
+            pilha = reservas.get(chave) or []
+            while pilha:
+                topo = pilha[0]
+                if topo['quantidade'] <= 0:
+                    pilha.pop(0)
+                    continue
+                retirado = container.recolher_do_slot(topo['indice'], quantidade=1)
+                if retirado is None:
+                    pilha.pop(0)
+                    continue
+                topo['quantidade'] -= 1
+                if topo['quantidade'] <= 0:
+                    pilha.pop(0)
+                return retirado, topo['indice']
+            return None, None
+
         for i, esperado in enumerate(receita.get('grade', [])):
             self.CraftSlots[i] = None
             self._origens[i] = None
             if esperado is None:
                 continue
-            retirado, origem = self._retirar_um_do_inventario(container, self.chave_item(esperado))
+            retirado, origem = _consumir_reserva(self.chave_item(esperado))
             if retirado is None:
                 continue
             self.CraftSlots[i] = retirado

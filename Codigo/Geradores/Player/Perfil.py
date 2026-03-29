@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 
 class Perfil:
     NIVEL_MAXIMO = 50
@@ -23,7 +25,7 @@ class Perfil:
         self.TempoJogoSegundos = 0.0
         self.Insignias = []
         self.Maestria = 0
-        self.SkinsLiberadas = []
+        self.SkinsLiberadas = self._skins_liberadas_padrao()
         self.HabilidadesAprendidas = []
         self.StaminaMax = 100.0
         self.Stamina = 100.0
@@ -41,6 +43,14 @@ class Perfil:
         self.CustoStaminaAguaRasa = 4.0
         self.CustoStaminaAguaFunda = 16.0
         self.TapaPorSegundo = 2.0
+
+    @staticmethod
+    def _skins_liberadas_padrao():
+        pasta = Path("Recursos") / "Visual" / "Skins" / "Liberadas"
+        if not pasta.exists():
+            return ["S1.png"]
+        skins = sorted({p.name for p in pasta.glob("*.png") if p.is_file()})
+        return skins or ["S1.png"]
 
     @classmethod
     def calcular_xp_alvo_por_nivel(cls, nivel: int) -> int:
@@ -110,7 +120,7 @@ class Perfil:
         self.TempoJogoSegundos = max(0.0, float(self._pegar(dados, "tempo_jogo_segundos", "TempoJogoSegundos", padrao=self.TempoJogoSegundos)))
         self.Insignias = list(self._pegar(dados, "insignias", "Insignias", padrao=self.Insignias) or [])
         self.Maestria = int(self._pegar(dados, "maestria", "Maestria", padrao=self.Maestria))
-        self.SkinsLiberadas = list(self._pegar(dados, "skins_liberadas", "SkinsLiberadas", padrao=self.SkinsLiberadas) or [])
+        self.SkinsLiberadas = list(self._pegar(dados, "skins_liberadas", "SkinsLiberadas", padrao=self.SkinsLiberadas) or self._skins_liberadas_padrao())
         self.HabilidadesAprendidas = list(self._pegar(dados, "habilidades_aprendidas", "HabilidadesAprendidas", padrao=self.HabilidadesAprendidas) or [])
         self.StaminaMax = max(1.0, float(self._pegar(dados, "stamina_max", "StaminaMax", padrao=self.StaminaMax)))
         self.Stamina = max(0.0, min(self.StaminaMax, float(self._pegar(dados, "stamina", "Stamina", padrao=self.Stamina))))

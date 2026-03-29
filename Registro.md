@@ -2,24 +2,24 @@
 
 **Relatório:** #21  
 **Repo:** `Pokemon-Global-Server-Definitivo`  
-**Gerado em:** 2026-03-22T16:16:49  
+**Gerado em:** 2026-03-29T00:34:54  
 
 ## Visão geral
 
-- **Pastas:** 1.159
-- **Arquivos:** 68.244
-- **Tamanho total:** 407.864.739 bytes (0.380 GiB)
-- **Linhas totais gerais:** 26.472
+- **Pastas:** 1.180
+- **Arquivos:** 68.900
+- **Tamanho total:** 421.384.828 bytes (0.392 GiB)
+- **Linhas totais gerais:** 27.921
 
 ## Python
 
-- **Arquivos `.py`:** 117
-- **Linhas totais:** 19.538
-- **Classes encontradas:** 83
-- **Funções encontradas:** 273
-- **Métodos encontrados:** 811
-- **Total funções + métodos:** 1.084
-- **Média de linhas por arquivo `.py`:** 166.99
+- **Arquivos `.py`:** 118
+- **Linhas totais:** 20.991
+- **Classes encontradas:** 87
+- **Funções encontradas:** 277
+- **Métodos encontrados:** 886
+- **Total funções + métodos:** 1.163
+- **Média de linhas por arquivo `.py`:** 177.89
 
 ### Top 15 maiores arquivos `.py`
 
@@ -28,26 +28,26 @@
 | `Codigo/Modulos/ControladorMundo/ControladorObjetos.py` | 28.92 | 623 |
 | `SimuladorServerJogo/Controle/BancoDados.py` | 26.52 | 570 |
 | `Codigo/Geradores/PokemonMundo.py` | 26.08 | 534 |
+| `Codigo/Paineis/PainelArvoreHabilidades.py` | 24.69 | 506 |
+| `Codigo/Modulos/ControladorMundo/ControladorPlayer.py` | 23.46 | 523 |
 | `Outros/GeradorRelatorios.py` | 23.38 | 736 |
-| `Codigo/Modulos/ControladorMundo/ControladorPlayer.py` | 23.12 | 519 |
-| `SimuladorServerJogo/Controle/ObjetosMundoServer.py` | 21.22 | 305 |
-| `SimuladorServerJogo/Controle/EstadoServidor.py` | 17.67 | 463 |
-| `Codigo/Telas/Inventario/InventarioItens.py` | 17.01 | 383 |
+| `SimuladorServerJogo/Controle/ObjetosMundoServer.py` | 22.82 | 346 |
+| `SimuladorServerJogo/Controle/EstadoServidor.py` | 20.76 | 529 |
+| `Codigo/Telas/Inventario/InventarioItens.py` | 18.22 | 405 |
+| `SimuladorServerJogo/Rotas/Comandos.py` | 18.16 | 450 |
 | `SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py` | 16.71 | 314 |
-| `SimuladorServerJogo/Rotas/Comandos.py` | 16.37 | 408 |
+| `Codigo/Prefabs/Botao.py` | 16.52 | 467 |
+| `Codigo/Geradores/Ator.py` | 16.04 | 380 |
+| `Codigo/Telas/Inventario/Estatisticas.py` | 15.98 | 358 |
 | `Codigo/Telas/TelaServers.py` | 15.93 | 502 |
-| `Codigo/Telas/TelasGenericas.py` | 15.83 | 463 |
-| `Codigo/Geradores/Player/Controle.py` | 15.34 | 355 |
-| `Outros/Mixer.py` | 15.31 | 460 |
-| `Codigo/Telas/TelaCriarPersonagem.py` | 15.19 | 417 |
 
 ### Top 5 arquivos Python mais importados
 
 | Arquivo | Importado por |
 |---|---:|
-| `Codigo/Prefabs/Texto.py` | 19 |
+| `Codigo/Prefabs/Texto.py` | 22 |
+| `Codigo/Prefabs/Botao.py` | 14 |
 | `SimuladorServerJogo/Controle/BancoDados.py` | 12 |
-| `Codigo/Prefabs/Botao.py` | 12 |
 | `SimuladorServerJogo/Rotas/Ativador.py` | 11 |
 | `SimuladorServerJogo/Controle/EstadoServidor.py` | 10 |
 
@@ -55,19 +55,20 @@
 
 | Ext | Linhas |
 |---:|---:|
-| `.py` | 19.538 |
+| `.py` | 20.991 |
 | `.java` | 2.775 |
-| `.json` | 2.670 |
-| `.csv` | 1.384 |
-| `.md` | 105 |
+| `.json` | 2.671 |
+| `.csv` | 1.385 |
+| `.md` | 99 |
 
 ## Top extensões por tamanho
 
 | Ext | Tamanho (GiB) | Arquivos |
 |---:|---:|---:|
-| `.png` | 0.333 | 68.077 |
+| `.png` | 0.334 | 68.133 |
 | `.ogg` | 0.045 | 17 |
-| `.py` | 0.001 | 117 |
+| `.webp` | 0.011 | 599 |
+| `.py` | 0.001 | 118 |
 | `.jpg` | 0.001 | 1 |
 | `.wav` | 0.000 | 3 |
 | `.csv` | 0.000 | 3 |
@@ -76,24 +77,28 @@
 | `.json` | 0.000 | 7 |
 | `.ttf` | 0.000 | 1 |
 | `.md` | 0.000 | 1 |
-| `.txt` | 0.000 | 2 |
 
 ## Diferenças vs último relatório
 
 | Métrica | Anterior | Atual | Δ |
 |---|---:|---:|---:|
-| pastas | 1.159 | 1.159 | 0 |
-| arquivos | 68.244 | 68.244 | 0 |
-| tamanho_bytes | 0.380 GiB | 0.380 GiB | 0.000 GiB |
-| linhas_totais_geral | 26.470 | 26.472 | 2 |
-| py_arquivos | 117 | 117 | 0 |
-| linhas_totais | 19.538 | 19.538 | 0 |
-| classes_encontradas | 83 | 83 | 0 |
-| funcoes_encontradas | 273 | 273 | 0 |
-| metodos_encontrados | 811 | 811 | 0 |
+| pastas | 1.159 | 1.180 | 21 |
+| arquivos | 68.244 | 68.900 | 656 |
+| tamanho_bytes | 0.380 GiB | 0.392 GiB | 0.013 GiB |
+| linhas_totais_geral | 26.470 | 27.921 | 1.451 |
+| py_arquivos | 117 | 118 | 1 |
+| linhas_totais | 19.538 | 20.991 | 1.453 |
+| classes_encontradas | 83 | 87 | 4 |
+| funcoes_encontradas | 273 | 277 | 4 |
+| metodos_encontrados | 811 | 886 | 75 |
 
 **Maiores mudanças por extensão (top 12 por |Δ tamanho|):**
 
 | Ext | Δ arquivos | Δ tamanho (GiB) |
 |---:|---:|---:|
-| `.md` | 0 | 0.000 |
+| `.webp` | 599 | 0.011 |
+| `.png` | 56 | 0.002 |
+| `.py` | 1 | 0.000 |
+| `.md` | 0 | -0.000 |
+| `.csv` | 0 | 0.000 |
+| `.json` | 0 | 0.000 |

@@ -65,6 +65,7 @@ class Ator:
         self._duracao_tapa = 0.5
         self._tempo_tapa = 0.0
         self._raio_mao_colisao = max(0.3, raio_colisao * 0.65)
+        self._raio_mao_colisao_base = float(self._raio_mao_colisao)
         self.ColisorMao = Colisor(
             x=self.Posicao[0],
             y=self.Posicao[1],
@@ -360,6 +361,22 @@ class Ator:
         tela.blit(bar_surf, self.BarraStamina.rect.topleft)
 
     def atualizar_colisor_mao_mundo(self) -> None:
+        item_mao = self.Inventario.item_na_mao() if self.Inventario is not None else None
+        estilo = ""
+        aplica_multiplicador = False
+        if isinstance(item_mao, dict):
+            estilo = str(item_mao.get("Estilo", item_mao.get("estilo", "")) or "").strip().lower()
+            aplica_multiplicador = bool(item_mao.get("usa_multiplicador_tapa_ferramenta", item_mao.get("UsaMultiplicadorTapaFerramenta", estilo == "ferramenta")))
+        elif item_mao is not None:
+            estilo = str(getattr(item_mao, "Estilo", getattr(item_mao, "estilo", "")) or "").strip().lower()
+            aplica_multiplicador = bool(getattr(item_mao, "usa_multiplicador_tapa_ferramenta", getattr(item_mao, "UsaMultiplicadorTapaFerramenta", estilo == "ferramenta")))
+        perfil = getattr(self, "Perfil", None)
+        raio_base = max(0.05, float(getattr(perfil, "RaioTapa", self._raio_mao_colisao_base) if perfil is not None else self._raio_mao_colisao_base))
+        multiplicador = max(1.0, float(getattr(perfil, "MultiplicadorFerramentaTapa", 1.5) if perfil is not None else 1.5))
+        raio_mao = raio_base * (multiplicador if aplica_multiplicador else 1.0)
+        self.ColisorMao.raio_colisao = float(raio_mao)
+        self.ColisorMao.raio_interacao = float(raio_mao)
+
         rad = math.radians(self.AnguloOlhar)
         frente_x = math.cos(rad)
         frente_y = -math.sin(rad)

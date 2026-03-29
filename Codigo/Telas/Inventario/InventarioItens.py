@@ -191,7 +191,7 @@ class InventarioItens:
         if not self._arrastavel.Ativo or self._arrastavel.Item is None:
             return
         grupo, indice, origem_aux = self._arrastavel.Origem
-        item = self._arrastavel.Item
+        item = copy.deepcopy(self._arrastavel.Item)
         if grupo == 'inventario':
             rect = self._container.item_rect_no_slot(self._container.slot_rect(indice))
         else:
@@ -199,7 +199,9 @@ class InventarioItens:
 
         def _finalizar():
             if grupo == 'inventario':
-                self._container.devolver_para_origem_ou_vazio(indice, item)
+                resto = self._container.restaurar_item_no_slot_origem(indice, item)
+                if resto is not None:
+                    self._container.devolver_para_origem_ou_vazio(indice, resto)
             else:
                 resto = self._painel_craft.colocar_no_slot(indice, item, origem=origem_aux)
                 if isinstance(resto, tuple):
@@ -271,10 +273,12 @@ class InventarioItens:
         self._arrastavel.iniciar(resultado, ('saida', 0, None), self._painel_craft.item_rect_no_slot(self._painel_craft.slot_saida_rect()), mouse_pos, botao=1)
         self._item_hover = resultado
 
-    def _aplicar_receita(self, receita):
+    def _aplicar_receita(self, receita, estado_receita=None):
         if receita is None:
             return
-        estado = self._painel_receitas._estado_receita(receita, self._container.quantidade_por_nome())
+        estado = str(estado_receita or "").strip().lower()
+        if not estado:
+            estado = self._painel_receitas._estado_receita(receita, self._painel_receitas._quantidades_inventario(self._container))
         if estado == 'vermelho':
             return
 
@@ -309,7 +313,7 @@ class InventarioItens:
         receita_clicada, receita_hover = self._painel_receitas.processar_eventos(tela, eventos, dt, self._container)
         self._painel_craft.set_preview(receita_hover)
         if receita_clicada is not None:
-            self._aplicar_receita(receita_clicada)
+            self._aplicar_receita(receita_clicada, estado_receita=self._painel_receitas.estado_atual_receita(receita_clicada, self._container))
         self._arrastavel.animar(dt)
         self._animacoes_receita = [a for a in self._animacoes_receita if a.Ativo]
         for anim in self._animacoes_receita:

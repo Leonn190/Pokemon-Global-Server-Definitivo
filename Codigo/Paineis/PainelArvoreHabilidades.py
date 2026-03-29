@@ -384,7 +384,7 @@ class PainelArvoreHabilidades:
         self._layout_chave = chave
         self._rect = pygame.Rect(rect)
         self._graph_rect = graph_rect
-        self._tooltip_pos = (self._rect.right - 380, self._rect.bottom - 122)
+        self._tooltip_pos = (self._rect.right - 365, self._rect.bottom - 122)
 
         def _fechar(_jogo, _botao):
             self._solicitou_fechar = True
@@ -403,8 +403,6 @@ class PainelArvoreHabilidades:
                 "text_style": {"size": 26, "outline_thickness": 1, "shadow": False},
             },
         )
-        self._botao_fechar.set_tooltip(Tooltip(titulo="Fechar", descricao="Fechar a árvore de habilidades.", pos_fixa=self._tooltip_pos, largura_max=240))
-
         lado = max(36, int(self._graph_rect.width * 0.028) + 2)
         self._botoes_nodos = {}
         for nodo in self._nodos:

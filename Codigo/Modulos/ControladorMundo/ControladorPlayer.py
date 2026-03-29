@@ -253,6 +253,7 @@ class ControladorPlayer:
         direcao = (math.cos(ang), -math.sin(ang))
         destino = (float(origem[0]) + direcao[0] * 1.0, float(origem[1]) + direcao[1] * 1.0)
         velocidade = 3.0
+        quantidade = max(1, int(item.get("quantidade", 1) or 1))
 
         token = str(uuid.uuid4())
 
@@ -263,7 +264,7 @@ class ControladorPlayer:
             "tipo": "entidade_item_mundo",
             "item_nome": str(item.get("Nome") or "Item"),
             "item_base_id": str(item.get("Code") or ""),
-            "quantidade": 1,
+            "quantidade": quantidade,
             "dono_id": int(getattr(self._player_local, "Id", 0) or 0),
             "token_drop": token,
             "posicao": [float(origem[0]), float(origem[1])],
@@ -288,8 +289,9 @@ class ControladorPlayer:
                 "item": {
                     "Code": str(item.get("Code") or ""),
                     "Nome": str(item.get("Nome") or "Item"),
+                    "quantidade": quantidade,
                 },
-                "quantidade": 1,
+                "quantidade": quantidade,
                 "pos_inicial": [float(origem[0]), float(origem[1])],
                 "pos_final": [float(destino[0]), float(destino[1])],
                 "velocidade_tiles_s": float(velocidade),

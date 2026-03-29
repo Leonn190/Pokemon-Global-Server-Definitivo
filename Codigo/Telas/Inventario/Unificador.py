@@ -69,6 +69,12 @@ class UnificadorInventario:
     def atualizar(self, eventos, dt, tamanho_tela):
         self._recalcular_layout(tamanho_tela)
 
+        if self.Ativo:
+            for evento in eventos:
+                if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1 and not self._rect.collidepoint(evento.pos):
+                    self.Ativo = False
+                    break
+
         tela_atual = self._tela_por_modo(self.Modo)
         tela_anterior = self._tela_por_modo(self._modo_anterior)
 

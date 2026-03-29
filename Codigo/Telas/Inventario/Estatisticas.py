@@ -98,7 +98,11 @@ class InventarioPerfil:
         self._area_direita = pygame.Rect(self._area_stats.right + 24, topo, rect.right - self._area_stats.right - margem - 24, rect.height - 128)
         self._area_rotas = pygame.Rect(rect.x + 16, rect.bottom - 96, rect.width - 32, 82)
 
-        self._area_ator = pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 144, self._area_direita.width - 36, self._area_direita.height - 252)
+        y_botao_skill = self._area_direita.y + 99
+        h_botao_skill = 48
+        gap_botao_ator = 10
+        y_ator = y_botao_skill + h_botao_skill + gap_botao_ator
+        self._area_ator = pygame.Rect(self._area_direita.x + 18, y_ator, self._area_direita.width - 36, self._area_direita.height - (y_ator - self._area_direita.y) - 108)
 
         barra_rect = pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 44, self._area_direita.width - 36, 22)
         self._barra_xp = Barra(barra_rect, texto="", valor=0, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=10.0)
@@ -125,7 +129,7 @@ class InventarioPerfil:
             self._arvore_aberta = True
 
         self._botao_skill = Botao(
-            pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 94, self._area_direita.width - 36, 48),
+            pygame.Rect(self._area_direita.x + 18, y_botao_skill, self._area_direita.width - 36, h_botao_skill),
             "Abrir árvore de habilidades",
             execute=_abrir,
             style={
@@ -167,6 +171,12 @@ class InventarioPerfil:
                 },
             )
             self._botoes_rotas.append((label, botao))
+
+    def on_open(self):
+        pass
+
+    def on_close(self):
+        self._arvore_aberta = False
 
     def _maior_poder(self, pokemons: list[dict]) -> int:
         maior = 0.0

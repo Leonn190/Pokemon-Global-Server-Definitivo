@@ -461,7 +461,12 @@ class BotaoSelecao(Botao):
 
     def set_selecionado(self, selecionado: bool):
         self.selecionado = bool(selecionado)
-        self.set_style(**self._estilo_atual())
+        estilo = self._estilo_atual()
+        text_style = dict(self.DEFAULT_STYLE.get("text_style", {}))
+        text_style.update(estilo.get("text_style", {}))
+        self.style = dict(self.DEFAULT_STYLE)
+        self.style.update({k: v for k, v in estilo.items() if k != "text_style"})
+        self.style["text_style"] = text_style
 
     def render(self, tela: pygame.Surface, eventos, dt: float, JOGO=None, mouse_pos=None):
         super().render(tela, eventos, dt, JOGO=JOGO, mouse_pos=mouse_pos)

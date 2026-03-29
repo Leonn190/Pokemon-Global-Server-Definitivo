@@ -244,6 +244,38 @@ class Container(PainelRolavel):
 
         return item
 
+    def restaurar_item_no_slot_origem(self, indice_origem, item):
+        if item is None:
+            return None
+
+        resto = self.devolver_para_origem_ou_vazio(indice_origem, item)
+        if resto is None:
+            return None
+
+        if indice_origem is None or not (0 <= int(indice_origem) < int(self.SlotsTotal)):
+            return resto
+
+        origem = int(indice_origem)
+        atual_origem = self.Itens[origem]
+        if atual_origem is None:
+            self.Itens[origem] = self.copiar_item(resto)
+            self.marcar_sujo()
+            return None
+
+        if self.pode_empilhar(resto, atual_origem):
+            atual_origem['quantidade'] = self.quantidade(atual_origem) + self.quantidade(resto)
+            self.marcar_sujo()
+            return None
+
+        indice_vazio = self.encontrar_primeiro_slot_vazio()
+        if indice_vazio is None:
+            return resto
+
+        self.Itens[indice_vazio] = self.copiar_item(atual_origem)
+        self.Itens[origem] = self.copiar_item(resto)
+        self.marcar_sujo()
+        return None
+
     def agrupar_todos_no_item(self, item_base):
         if item_base is None or not self.Stackable:
             return item_base

@@ -6,31 +6,40 @@ import pygame
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
-from Codigo.Prefabs.Barra import BarraEditavel
+from Codigo.Paineis.PainelArvoreHabilidades import PainelArvoreHabilidades
+from Codigo.Prefabs.Barra import Barra, BarraEditavel
+from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 
 
 class InventarioPerfil:
-    """Painel de perfil do jogador dentro do unificador do inventário."""
-
     def __init__(self, ator=None):
         self.Ator = ator
-
         self._layout_chave = None
-        self._slider_skin: BarraEditavel | None = None
         self._skins: list[tuple[str, pygame.Surface]] = []
         self._skin_index = 0
+        self._slider_skin: BarraEditavel | None = None
+        self._barra_xp: Barra | None = None
         self._desenhador: DesenhaAtor | None = None
+        self._painel_skill = PainelArvoreHabilidades(ator)
+        self._arvore_aberta = False
+        self._botao_skill: Botao | None = None
+        self._botoes_rotas: list[tuple[Texto, Botao]] = []
 
-        self._txt_titulo = Texto("Perfil do Jogador", style={"size": 34, "align": "topleft", "outline_thickness": 1, "shadow": False})
-        self._txt_hint = Texto("Use o slider para trocar a skin liberada.", style={"size": 20, "align": "topleft", "outline_thickness": 1, "shadow": False, "color": (190, 210, 245)})
-        self._txt_skin = Texto("", style={"size": 24, "align": "topleft", "outline_thickness": 1, "shadow": False, "color": (220, 238, 255)})
+        self._area_stats = pygame.Rect(0, 0, 0, 0)
+        self._area_direita = pygame.Rect(0, 0, 0, 0)
+        self._area_ator = pygame.Rect(0, 0, 0, 0)
+        self._area_rotas = pygame.Rect(0, 0, 0, 0)
 
-        self._labels: list[Texto] = []
-        self._values: list[Texto] = []
-        for _ in range(9):
-            self._labels.append(Texto("", style={"size": 24, "align": "topleft", "outline_thickness": 1, "shadow": False, "color": (183, 202, 236)}))
-            self._values.append(Texto("", style={"size": 31, "align": "topleft", "outline_thickness": 1, "shadow": False, "color": (243, 248, 255)}))
+        base = {"outline": True, "outline_thickness": 1, "outline_color": (0, 0, 0), "shadow": False}
+        self.txt_nome_bloco = Texto("", style={**base, "size": 32, "color": (245, 248, 255)})
+        self.txt_nivel = Texto("", style={**base, "size": 26, "color": (245, 248, 255)})
+        self.txt_xp = Texto("", style={**base, "size": 18, "color": (186, 205, 238)})
+        self.txt_skin_liberadas = Texto("", style={**base, "size": 18, "color": (193, 212, 244)})
+        self.txt_skin_atual = Texto("", style={**base, "size": 17, "color": (221, 234, 255), "align": "topright"})
+
+        self._labels = [Texto("", style={**base, "size": 18, "color": (164, 184, 221)}) for _ in range(12)]
+        self._values = [Texto("", style={**base, "size": 26, "color": (247, 250, 255)}) for _ in range(12)]
 
     @staticmethod
     def _formatar_tempo(segundos: float) -> str:
@@ -48,7 +57,6 @@ class InventarioPerfil:
     def _coletar_skins_liberadas(self) -> list[tuple[str, pygame.Surface]]:
         ator = self.Ator
         perfil = getattr(ator, "Perfil", None)
-
         liberadas = [self._normalizar_nome_skin(s) for s in list(getattr(perfil, "SkinsLiberadas", []) or [])]
         atual = self._normalizar_nome_skin(getattr(ator, "NomeSkin", "S1"))
         if not liberadas:
@@ -83,9 +91,24 @@ class InventarioPerfil:
                 self._skin_index = i
                 break
 
+        margem = 18
+        topo = rect.y + 16
+        largura_stats = int(rect.width * 0.63)
+        self._area_stats = pygame.Rect(rect.x + margem, topo, largura_stats, rect.height - 128)
+        self._area_direita = pygame.Rect(self._area_stats.right + 24, topo, rect.right - self._area_stats.right - margem - 24, rect.height - 128)
+        self._area_rotas = pygame.Rect(rect.x + 16, rect.bottom - 96, rect.width - 32, 82)
+
+        self._area_ator = pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 132, self._area_direita.width - 36, self._area_direita.height - 240)
+
+        barra_rect = pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 44, self._area_direita.width - 36, 22)
+        self._barra_xp = Barra(barra_rect, texto="", valor=0, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=10.0)
+        self._barra_xp.cor_fundo = (22, 29, 46)
+        self._barra_xp.cor_preenchimento = (126, 86, 224)
+        self._barra_xp.cor_borda = (216, 202, 255)
+
         self._slider_skin = BarraEditavel(
-            pygame.Rect(rect.x + 28, rect.bottom - 54, rect.width - 56, 22),
-            "Skin",
+            pygame.Rect(self._area_ator.x + 8, self._area_ator.bottom + 32, self._area_ator.width - 16, 18),
+            "",
             self._skin_index + 1,
             1,
             max(1, len(self._skins)),
@@ -96,10 +119,56 @@ class InventarioPerfil:
         self._slider_skin.cor_borda = (200, 228, 255)
         self._slider_skin.cor_manopla = (245, 250, 255)
 
-        self._desenhador = DesenhaAtor(self._skins[self._skin_index][1], escala=2.0)
+        self._desenhador = DesenhaAtor(self._skins[self._skin_index][1], escala=1.28)
+
+        def _abrir(_jogo, _botao):
+            self._arvore_aberta = True
+
+        self._botao_skill = Botao(
+            pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 82, self._area_direita.width - 36, 48),
+            "Abrir árvore de habilidades",
+            execute=_abrir,
+            style={
+                "radius": 16,
+                "bg": (44, 84, 154),
+                "bg_hover": (58, 103, 182),
+                "bg_pressed": (34, 67, 122),
+                "border": (188, 224, 255),
+                "border_hover": (235, 246, 255),
+                "text_style": {"size": 21, "outline_thickness": 1, "shadow": False},
+            },
+        )
+
+        rotas = [
+            ("Intelectual", (76, 108, 178), (108, 143, 216)),
+            ("Magnata", (155, 118, 33), (193, 149, 46)),
+            ("Herói", (45, 130, 88), (61, 160, 109)),
+            ("Campeão", (136, 52, 118), (168, 68, 146)),
+            ("Imperador", (142, 62, 42), (180, 79, 56)),
+        ]
+        self._botoes_rotas = []
+        gap = 12
+        largura_botao = (self._area_rotas.width - gap * 4) // 5
+        for i, (nome, cor, cor_hover) in enumerate(rotas):
+            bx = self._area_rotas.x + i * (largura_botao + gap)
+            label = Texto("caminho do", style={**{"outline": True, "outline_thickness": 1, "outline_color": (0, 0, 0), "shadow": False}, "size": 14, "color": (154, 170, 204)})
+            botao = Botao(
+                pygame.Rect(bx, self._area_rotas.y + 18, largura_botao, 58),
+                nome,
+                execute=None,
+                style={
+                    "radius": 18,
+                    "bg": cor,
+                    "bg_hover": cor_hover,
+                    "bg_pressed": cor,
+                    "border": (227, 235, 255),
+                    "border_hover": (255, 245, 214),
+                    "text_style": {"size": 21, "outline_thickness": 1, "shadow": False},
+                },
+            )
+            self._botoes_rotas.append((label, botao))
 
     def _maior_poder(self, pokemons: list[dict]) -> int:
-        """Formato oficial de pokemon materializado: chave `total`."""
         maior = 0.0
         for pokemon in pokemons:
             if not isinstance(pokemon, dict):
@@ -109,7 +178,34 @@ class InventarioPerfil:
                 maior = total
         return int(round(maior))
 
-    def _coletar_dados(self) -> list[tuple[str, str]]:
+    def _maior_poder_time(self) -> int:
+        inventario = getattr(self.Ator, "Inventario", None)
+        times = list(getattr(inventario, "TimesPokemons", []) or []) if inventario is not None else []
+        melhor = 0
+        for time in times:
+            if isinstance(time, dict):
+                slots = list(time.get("Slots") or time.get("slots") or [])
+            elif isinstance(time, list):
+                slots = list(time)
+            else:
+                continue
+            total = 0.0
+            for pokemon in slots:
+                if isinstance(pokemon, dict):
+                    total += float(pokemon.get("total", 0.0) or 0.0)
+            melhor = max(melhor, int(round(total)))
+        return melhor
+
+    def _quantidade_total_itens(self, itens):
+        total = 0
+        for item in itens:
+            if isinstance(item, dict):
+                total += max(1, int(item.get("quantidade", 1)))
+            elif item is not None:
+                total += 1
+        return total
+
+    def _coletar_dados(self):
         ator = self.Ator
         perfil = getattr(ator, "Perfil", None)
         inventario = getattr(ator, "Inventario", None)
@@ -118,35 +214,43 @@ class InventarioPerfil:
         vitorias_pvp = int(getattr(perfil, "BatalhasPVPVencidas", 0) or 0)
         vitorias_bot = int(getattr(perfil, "BatalhasBotVencidas", 0) or 0)
         vitorias_totais = vitorias_pvp + vitorias_bot
+        batalhas_totais = int(getattr(perfil, "BatalhasTotais", vitorias_totais) or vitorias_totais)
+        derrotas_totais = max(0, batalhas_totais - vitorias_totais)
+        tempo = self._formatar_tempo(getattr(perfil, "TempoJogoSegundos", 0.0) or 0.0)
+        baus = int(getattr(perfil, "BausAbertos", 0) or 0)
+        maestria = int(getattr(perfil, "Maestria", 0) or 0)
 
         pokemons = [p for p in list(getattr(inventario, "Pokemons", []) or []) if isinstance(p, dict)]
-        numero_pokemons = len(pokemons)
+        itens = list(getattr(inventario, "Itens", []) or [])
+        total_itens = self._quantidade_total_itens(itens)
+        capacidade_itens = max(1, int(getattr(perfil, "NivelMochila", 1) or 1) * 100)
+        limite_pokemons = int(getattr(perfil, "LimitePokemons", 64) or 64)
 
-        baus_abertos = int(getattr(perfil, "BausAbertos", 0) or 0)
-        tempo = self._formatar_tempo(getattr(perfil, "TempoJogoSegundos", 0.0) or 0.0)
-        metros = int(round(float(getattr(perfil, "MetrosAndados", 0.0) or 0.0)))
-
-        return [
-            ("Nome", nome),
+        esquerda = [
+            ("Batalhas totais", str(batalhas_totais)),
+            ("Derrotas totais", str(derrotas_totais)),
             ("Vitórias totais", str(vitorias_totais)),
+            ("Vitórias vs jogadores", str(vitorias_pvp)),
             ("Vitórias vs BOT", str(vitorias_bot)),
-            ("Vitórias vs Players", str(vitorias_pvp)),
-            ("Número de Pokémons", str(numero_pokemons)),
-            ("Baús abertos", str(baus_abertos)),
-            ("Maior poder Pokémon", str(self._maior_poder(pokemons))),
             ("Tempo de jogo", tempo),
-            ("Metros andados", f"{metros} m"),
         ]
+        direita = [
+            ("Baús abertos", str(baus)),
+            ("Itens no inventário", f"{total_itens} / {capacidade_itens}"),
+            ("Pokémons guardados", f"{len(pokemons)} / {limite_pokemons}"),
+            ("Maior poder Pokémon", str(self._maior_poder(pokemons))),
+            ("Maior poder Time", str(self._maior_poder_time())),
+            ("Maestria", str(maestria)),
+        ]
+        return nome, esquerda, direita
 
     def _aplicar_troca_skin(self):
         if self._slider_skin is None or self._desenhador is None or not self._skins:
             return
-
         novo_indice = max(0, min(len(self._skins) - 1, int(round(self._slider_skin.valor)) - 1))
         if novo_indice == self._skin_index:
             self._slider_skin.set_valor(self._skin_index + 1)
             return
-
         self._skin_index = novo_indice
         nome_skin, surface_skin = self._skins[self._skin_index]
         self._desenhador.set_skin(surface_skin)
@@ -154,63 +258,101 @@ class InventarioPerfil:
         self.Ator.set_skin(surface_skin)
         self._slider_skin.set_valor(self._skin_index + 1)
 
-    def renderizar(self, tela, rect, inventario=None, eventos=None, dt=0.0):
-        if self.Ator is None:
-            aviso = Texto("Perfil indisponível", pos=(rect.x + 18, rect.y + 22), style={"size": 24, "align": "topleft"})
-            aviso.draw(tela)
-            return
+    def _desenhar_stats(self, tela):
+        pygame.draw.rect(tela, (10, 16, 30), self._area_stats, border_radius=18)
+        pygame.draw.rect(tela, (67, 92, 148), self._area_stats, 1, border_radius=18)
 
-        eventos = eventos or []
-        self._reconstruir_layout(rect)
+        nome, esquerda, direita = self._coletar_dados()
+        self.txt_nome_bloco.set_text(nome)
+        self.txt_nome_bloco.set_pos((self._area_stats.x + 18, self._area_stats.y + 18))
+        self.txt_nome_bloco.draw(tela)
 
-        painel = pygame.Rect(rect.x + 10, rect.y + 10, rect.width - 20, rect.height - 20)
-        pygame.draw.rect(tela, (9, 13, 26), painel, border_radius=18)
-        pygame.draw.rect(tela, (52, 76, 128), painel, 2, border_radius=18)
+        col_w = (self._area_stats.width - 54) // 2
+        row_gap = 74
+        base_y = self._area_stats.y + 74
+        idx = 0
+        for c, bloco in enumerate((esquerda, direita)):
+            x = self._area_stats.x + 18 + c * (col_w + 18)
+            for i, (rotulo, valor) in enumerate(bloco):
+                y = base_y + i * row_gap
+                self._labels[idx].set_text(rotulo)
+                self._labels[idx].set_pos((x, y))
+                self._labels[idx].draw(tela)
+                self._values[idx].set_text(valor)
+                self._values[idx].set_pos((x, y + 24))
+                self._values[idx].draw(tela)
+                idx += 1
 
-        self._txt_titulo.set_pos((painel.x + 18, painel.y + 14))
-        self._txt_titulo.draw(tela)
+    def _desenhar_direita(self, tela, eventos, dt):
+        pygame.draw.rect(tela, (10, 16, 30), self._area_direita, border_radius=18)
+        pygame.draw.rect(tela, (67, 92, 148), self._area_direita, 1, border_radius=18)
 
-        area_conteudo = pygame.Rect(painel.x + 16, painel.y + 64, painel.width - 32, painel.height - 124)
-        area_stats = pygame.Rect(area_conteudo.x, area_conteudo.y, int(area_conteudo.width * 0.63), area_conteudo.height)
-        area_skin = pygame.Rect(area_stats.right + 14, area_conteudo.y, area_conteudo.right - (area_stats.right + 14), area_conteudo.height)
+        perfil = getattr(self.Ator, "Perfil", None)
+        nivel = int(getattr(perfil, "Nivel", 0) or 0)
+        xp = max(0, int(getattr(perfil, "XP", 0) or 0))
+        xp_alvo = max(0, int(getattr(perfil, "XPAlvo", 0) or 0))
+        pontos = self._painel_skill._pontos_disponiveis()
 
-        pygame.draw.rect(tela, (15, 22, 42), area_skin, border_radius=14)
-        pygame.draw.rect(tela, (78, 106, 160), area_skin, 1, border_radius=14)
+        self.txt_nivel.set_text(f"Nível {nivel}")
+        self.txt_nivel.set_pos((self._area_direita.x + 18, self._area_direita.y + 14))
+        self.txt_nivel.draw(tela)
 
-        blocos = self._coletar_dados()
-        cols, rows = 3, 3
-        gap_x, gap_y = 16, 12
-        bloco_w = max(150, (area_stats.width - gap_x * (cols - 1)) // cols)
-        bloco_h = max(84, (area_stats.height - gap_y * (rows - 1)) // rows)
+        max_barra = xp_alvo if xp_alvo > 0 else 1
+        valor_barra = min(xp, max_barra)
+        self._barra_xp.minimo = 0.0
+        self._barra_xp.maximo = float(max_barra)
+        self._barra_xp.set_valor(valor_barra)
+        self._barra_xp.render(tela, [], dt)
 
-        for i, (rotulo, valor) in enumerate(blocos):
-            c = i % cols
-            l = i // cols
-            card = pygame.Rect(area_stats.x + c * (bloco_w + gap_x), area_stats.y + l * (bloco_h + gap_y), bloco_w, bloco_h)
-            pygame.draw.rect(tela, (18, 27, 48), card, border_radius=12)
-            pygame.draw.rect(tela, (60, 87, 140), card, 1, border_radius=12)
+        self.txt_xp.set_text(f"XP: {xp} / {xp_alvo if xp_alvo > 0 else 'MAX'}")
+        self.txt_xp.set_pos((self._area_direita.x + 18, self._area_direita.y + 72))
+        self.txt_xp.draw(tela)
 
-            self._labels[i].set_text(rotulo)
-            self._labels[i].set_pos((card.x + 12, card.y + 10))
-            self._labels[i].draw(tela)
+        self._botao_skill.set_pulsando(pontos > 0, cor=(195, 132, 255), cor_borda=(232, 210, 255), velocidade=1.7, intensidade=0.48)
+        self._botao_skill.render(tela, eventos, dt, None)
 
-            self._values[i].set_text(valor)
-            self._values[i].set_pos((card.x + 12, card.y + 40))
-            self._values[i].draw(tela)
+        pygame.draw.rect(tela, (16, 24, 42), self._area_ator, border_radius=18)
+        pygame.draw.rect(tela, (83, 114, 177), self._area_ator, 2, border_radius=18)
+        centro = (self._area_ator.centerx, self._area_ator.centery - 8)
+        self._desenhador.desenhar(tela, centro, pygame.mouse.get_pos())
 
-        skin_nome = self._skins[self._skin_index][0].replace(".png", "") if self._skins else "S1"
-        self._txt_skin.set_text(f"Skin atual: {skin_nome}")
-        self._txt_skin.set_pos((area_skin.x + 14, area_skin.y + 12))
-        self._txt_skin.draw(tela)
+        nome_skin = self._skins[self._skin_index][0].replace(".png", "") if self._skins else "S1"
+        self.txt_skin_atual.set_text(nome_skin)
+        self.txt_skin_atual.set_pos((self._area_ator.right - 12, self._area_ator.y + 10))
+        self.txt_skin_atual.draw(tela)
 
-        quadro_ator = pygame.Rect(area_skin.x + 20, area_skin.y + 52, area_skin.width - 40, area_skin.height - 72)
-        pygame.draw.rect(tela, (22, 33, 57), quadro_ator, border_radius=14)
-        pygame.draw.rect(tela, (90, 126, 188), quadro_ator, 2, border_radius=14)
-        self._desenhador.desenhar(tela, quadro_ator.center, pygame.mouse.get_pos())
+        self.txt_skin_liberadas.set_text(f"{len(self._skins)} skins liberadas")
+        self.txt_skin_liberadas.set_pos((self._area_ator.x + 4, self._area_ator.bottom + 8))
+        self.txt_skin_liberadas.draw(tela)
 
         alterou = self._slider_skin.render(tela, eventos, dt)
         if alterou:
             self._aplicar_troca_skin()
 
-        self._txt_hint.set_pos((painel.x + 22, painel.bottom - 94))
-        self._txt_hint.draw(tela)
+    def _desenhar_rotas(self, tela, eventos, dt):
+        for label, botao in self._botoes_rotas:
+            label.set_pos((botao.base_rect.x + 18, botao.base_rect.y + 2))
+            label.draw(tela)
+            botao.render(tela, eventos, dt, None)
+
+    def renderizar(self, tela, rect, inventario=None, eventos=None, dt=0.0):
+        if self.Ator is None:
+            Texto("Perfil indisponível", pos=(rect.x + 18, rect.y + 22), style={"size": 24, "align": "topleft"}).draw(tela)
+            return
+
+        eventos = eventos or []
+        self._reconstruir_layout(pygame.Rect(rect))
+        self._painel_skill.Ator = self.Ator
+
+        fundo = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+        fundo.fill((8, 12, 24, 228))
+        tela.blit(fundo, rect.topleft)
+
+        if self._arvore_aberta:
+            if self._painel_skill.renderizar(tela, pygame.Rect(rect), eventos=eventos, dt=dt):
+                self._arvore_aberta = False
+            return
+
+        self._desenhar_stats(tela)
+        self._desenhar_direita(tela, eventos, dt)
+        self._desenhar_rotas(tela, eventos, dt)

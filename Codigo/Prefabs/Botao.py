@@ -1,6 +1,8 @@
+import math
 import pygame
 from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Prefabs.Tooltip import Tooltip
 
 
 def _lerp(a, b, t):
@@ -20,54 +22,50 @@ def _clamp(v, a, b):
 
 
 class Botao:
+    _adiar_tooltips = False
+    _fila_tooltips = []
+
     DEFAULT_STYLE = {
         "radius": 16,
         "border_width": 3,
-
         "bg": (45, 70, 140),
         "bg_hover": (70, 105, 200),
         "bg_pressed": (35, 55, 110),
-
         "border": (15, 18, 24),
         "border_hover": (230, 230, 255),
-
+        "bg_disabled": (38, 43, 58),
+        "border_disabled": (92, 103, 126),
+        "text_disabled": (165, 173, 196),
         "hover_scale": 1.06,
         "hover_speed": 12.0,
         "press_scale": 0.98,
-
         "bg_image": None,
         "bg_frames_hover": None,
         "bg_frames_fps": 12,
-
-        # ---- NOVO: frames como o antigo (ticks) + escolha de scale ----
-        # "ticks": usa pygame.time.get_ticks() e intervalo fixo (mais "gif vibe")
-        # "dt": usa dt e fps (modo anterior)
-        "bg_frames_mode": "ticks",        # "ticks" | "dt"
-        "bg_frames_interval_ms": 50,      # usado se mode == "ticks"
-        "bg_frames_scale_mode": "fast",   # "fast" (scale) | "smooth" (smoothscale)
-
-        # ---- NOVO: controle de FPS do texto ----
+        "bg_frames_mode": "ticks",
+        "bg_frames_interval_ms": 50,
+        "bg_frames_scale_mode": "fast",
         "text_color_steps": 12,
         "text_update_on_change": True,
-
         "som_clique": "Clique",
         "som_bloqueado": "Bloq",
-
+        "pulse": False,
+        "pulse_color": (255, 224, 134),
+        "pulse_border_color": (255, 244, 196),
+        "pulse_speed": 2.8,
+        "pulse_strength": 0.34,
         "text_style": {
             "size": 26,
             "color": (255, 255, 255),
             "hover_color": (255, 238, 90),
             "hover_speed": 24.0,
             "align": "center",
-
             "outline": True,
             "outline_color": (0, 0, 0),
             "outline_thickness": 2,
-
             "shadow": True,
             "shadow_color": (0, 0, 0, 160),
             "shadow_offset": (2, 2),
-
             "highlight": False,
             "highlight_color": (255, 235, 80, 200),
             "highlight_padding": (8, 4),
@@ -78,7 +76,6 @@ class Botao:
     def __init__(self, rect: pygame.Rect, text: str, execute=None, style=None):
         self.base_rect = pygame.Rect(rect)
         self.rect = pygame.Rect(rect)
-
         self.execute = execute
 
         self.style = dict(self.DEFAULT_STYLE)
@@ -94,28 +91,33 @@ class Botao:
         self.hover = False
         self.pressed = False
         self._hover_t = 0.0
-
         self._frame_idx = 0
         self._frame_acc = 0.0
         self._text_hover_t = 0.0
-
-        # caches de surface
         self._clip_cache_size = None
         self._clip_surf = None
-
         self._mask_cache = {}
         self._scaled_cache = {}
-
-        # ---- texto ----
         self._last_text_color = None
         self._last_text_step = None
-
-        # ---- frames (para modo ticks) ----
         self._last_tick_ms = 0
-
         self.habilitado = True
         self.som_clique = self.style.get("som_clique", "Clique")
         self.som_bloqueado = self.style.get("som_bloqueado", "Bloq")
+        self.tooltip = None
+
+    @classmethod
+    def iniciar_camada_tooltips(cls):
+        cls._adiar_tooltips = True
+        cls._fila_tooltips = []
+
+    @classmethod
+    def finalizar_camada_tooltips(cls, tela: pygame.Surface):
+        fila = list(cls._fila_tooltips)
+        cls._adiar_tooltips = False
+        cls._fila_tooltips = []
+        for tooltip, mouse_pos, forcar in fila:
+            tooltip.render(tela, mouse_pos=mouse_pos, forcar=forcar)
 
     def set_text(self, text: str):
         self.text.set_text(text)
@@ -142,6 +144,27 @@ class Botao:
     def set_habilitado(self, habilitado: bool):
         self.habilitado = bool(habilitado)
 
+    def set_pulsando(self, ativo: bool, cor=None, cor_borda=None, velocidade=None, intensidade=None):
+        self.style["pulse"] = bool(ativo)
+        if cor is not None:
+            self.style["pulse_color"] = cor
+        if cor_borda is not None:
+            self.style["pulse_border_color"] = cor_borda
+        if velocidade is not None:
+            self.style["pulse_speed"] = float(velocidade)
+        if intensidade is not None:
+            self.style["pulse_strength"] = float(intensidade)
+
+    def set_tooltip(self, tooltip, **kwargs):
+        if isinstance(tooltip, Tooltip):
+            self.tooltip = tooltip
+            return self.tooltip
+        self.tooltip = Tooltip(str(tooltip or ""), **kwargs)
+        return self.tooltip
+
+    def limpar_tooltip(self):
+        self.tooltip = None
+
     def _scaled_rect(self, scale: float):
         cx, cy = self.base_rect.center
         w = int(self.base_rect.width * scale)
@@ -150,19 +173,19 @@ class Botao:
         r.center = (cx, cy)
         return r
 
-    def _executar(self, JOGO):
+    def _executar(self, jogo):
         if self.som_clique:
             tocar(self.som_clique)
 
         if self.execute is None:
             return
         if callable(self.execute):
-            self.execute(JOGO, self)
+            self.execute(jogo, self)
             return
         if isinstance(self.execute, (list, tuple)):
             for acao in self.execute:
                 if callable(acao):
-                    acao(JOGO, self)
+                    acao(jogo, self)
 
     def _get_mask(self, w: int, h: int, radius: int) -> pygame.Surface:
         key = (w, h, radius)
@@ -174,7 +197,6 @@ class Botao:
         self._mask_cache[key] = mask
         return mask
 
-    # --------- MUDANÇA AQUI: escala com modo "fast" ou "smooth" ---------
     def _get_scaled(self, surf: pygame.Surface, w: int, h: int, scale_mode: str = "smooth") -> pygame.Surface:
         key = (id(surf), w, h, scale_mode)
         cached = self._scaled_cache.get(key)
@@ -195,9 +217,15 @@ class Botao:
             self._clip_surf = pygame.Surface((w, h), pygame.SRCALPHA)
 
     def _update_text_color_fast(self, text_style):
+        if not self.habilitado:
+            cor = self.style.get("text_disabled", (165, 173, 196))
+            if cor != self._last_text_color:
+                self.text.set_style(color=cor)
+                self._last_text_color = cor
+            return
+
         base = text_style.get("color", (255, 255, 255))
         hover = text_style.get("hover_color", (255, 238, 90))
-
         steps = int(self.style.get("text_color_steps", 12))
         update_on_change = bool(self.style.get("text_update_on_change", True))
 
@@ -210,17 +238,28 @@ class Botao:
 
         step = int(self._text_hover_t * steps)
         step = 0 if step < 0 else steps if step > steps else step
-
         if update_on_change and (step == self._last_text_step):
             return
 
         tq = step / steps
         color_now = _lerp_color(base, hover, tq)
-
         if (not update_on_change) or (color_now != self._last_text_color):
             self.text.set_style(color=color_now)
             self._last_text_color = color_now
             self._last_text_step = step
+
+    def _aplicar_pulso(self, bg_now, border_now):
+        if not self.habilitado or not self.style.get("pulse", False):
+            return bg_now, border_now
+
+        tempo = pygame.time.get_ticks() / 1000.0
+        velocidade = max(0.01, float(self.style.get("pulse_speed", 2.8)))
+        intensidade = _clamp(float(self.style.get("pulse_strength", 0.34)), 0.0, 1.0)
+        t = ((math.sin(tempo * velocidade * math.tau) + 1.0) * 0.5) * intensidade
+
+        bg_now = _lerp_color(bg_now, self.style.get("pulse_color", (255, 224, 134)), t)
+        border_now = _lerp_color(border_now, self.style.get("pulse_border_color", (255, 244, 196)), min(1.0, t * 1.3))
+        return bg_now, border_now
 
     def render(self, tela: pygame.Surface, eventos, dt: float, JOGO=None, mouse_pos=None):
         if mouse_pos is None:
@@ -243,28 +282,19 @@ class Botao:
 
         target = 1.0 if (self.hover and self.habilitado) else 0.0
         speed = float(self.style["hover_speed"])
-        self._hover_t = _clamp(
-            self._hover_t + (target - self._hover_t) * _clamp(speed * dt, 0.0, 1.0),
-            0.0,
-            1.0,
-        )
+        self._hover_t = _clamp(self._hover_t + (target - self._hover_t) * _clamp(speed * dt, 0.0, 1.0), 0.0, 1.0)
 
         text_style = self.style["text_style"]
         text_speed = float(text_style.get("hover_speed", 24.0))
-        self._text_hover_t = _clamp(
-            self._text_hover_t + (target - self._text_hover_t) * _clamp(text_speed * dt, 0.0, 1.0),
-            0.0,
-            1.0,
-        )
+        self._text_hover_t = _clamp(self._text_hover_t + (target - self._text_hover_t) * _clamp(text_speed * dt, 0.0, 1.0), 0.0, 1.0)
 
         scale = _lerp(1.0, float(self.style["hover_scale"]), self._hover_t)
         if self.pressed and self.habilitado:
             scale *= float(self.style["press_scale"])
         self.rect = self._scaled_rect(scale)
 
-        # --------- MUDANÇA AQUI: frames "ticks" (antigo) ou "dt" ---------
         frames = self.style["bg_frames_hover"] or []
-        if frames and self.hover:
+        if frames and self.hover and self.habilitado:
             mode = self.style.get("bg_frames_mode", "ticks")
             if mode == "ticks":
                 intervalo = int(self.style.get("bg_frames_interval_ms", 50))
@@ -285,29 +315,30 @@ class Botao:
             self._frame_acc = 0.0
             self._last_tick_ms = 0
 
-        # ----------------------------------------------------------------
-
         bg = self.style["bg"]
         bg_hover = self.style["bg_hover"]
         bg_pressed = self.style["bg_pressed"]
+        border_now = self.style["border_hover"] if (self.hover and self.habilitado) else self.style["border"]
 
         bg_now = _lerp_color(bg, bg_hover, self._hover_t)
         if self.pressed and self.habilitado:
             bg_now = bg_pressed
 
-        border_now = self.style["border_hover"] if (self.hover and self.habilitado) else self.style["border"]
+        if not self.habilitado:
+            bg_now = self.style.get("bg_disabled", (38, 43, 58))
+            border_now = self.style.get("border_disabled", (92, 103, 126))
+        else:
+            bg_now, border_now = self._aplicar_pulso(bg_now, border_now)
 
         radius = int(self.style["radius"])
         bw = int(self.style["border_width"])
-
         w, h = self.rect.width, self.rect.height
 
         self._ensure_clip(w, h)
         clip_surf = self._clip_surf
         clip_surf.fill((0, 0, 0, 0))
 
-        # --------- MUDANÇA AQUI: scale_mode pros frames ---------
-        if self.hover and frames:
+        if self.hover and frames and self.habilitado:
             frame = frames[self._frame_idx]
             scale_mode = self.style.get("bg_frames_scale_mode", "fast")
             frame_scaled = self._get_scaled(frame, w, h, scale_mode)
@@ -318,19 +349,24 @@ class Botao:
             clip_surf.blit(img_scaled, (0, 0))
         else:
             clip_surf.fill((*bg_now, 255))
-        # --------------------------------------------------------
 
         mask = self._get_mask(w, h, radius)
         clip_surf.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
 
         tela.blit(clip_surf, self.rect.topleft)
-
         if bw > 0:
             pygame.draw.rect(tela, border_now, self.rect, width=bw, border_radius=radius)
 
         self._update_text_color_fast(text_style)
         self.text.set_pos(self.rect.center)
         self.text.draw(tela)
+
+        if self.tooltip is not None:
+            self.tooltip.definir_area(self.rect)
+            if Botao._adiar_tooltips:
+                Botao._fila_tooltips.append((self.tooltip, mouse_pos, self.hover))
+            else:
+                self.tooltip.render(tela, mouse_pos=mouse_pos, forcar=self.hover)
 
         if clicou_bloqueado and self.som_bloqueado:
             tocar(self.som_bloqueado)
@@ -352,7 +388,6 @@ class BotaoAlavanca(Botao):
                 estilo_final["text_style"] = texto_style
 
         estilo_final.update(self._estilo_estado())
-
         super().__init__(rect, self._texto_estado(), execute=execute, style=estilo_final)
 
     def _texto_estado(self):
@@ -380,24 +415,24 @@ class BotaoAlavanca(Botao):
         self.set_text(self._texto_estado())
         self.set_style(**self._estilo_estado())
 
-    def alternar(self, JOGO=None):
+    def alternar(self, jogo=None):
         self.set_estado(not self.estado)
         return self.estado
 
-    def _executar(self, JOGO):
-        self.alternar(JOGO)
+    def _executar(self, jogo):
+        self.alternar(jogo)
 
         if self.execute is None:
             return
 
         if callable(self.execute):
-            self.execute(JOGO, self.estado, self)
+            self.execute(jogo, self.estado, self)
             return
 
         if isinstance(self.execute, (list, tuple)):
             for acao in self.execute:
                 if callable(acao):
-                    acao(JOGO, self.estado, self)
+                    acao(jogo, self.estado, self)
 
 
 class BotaoSelecao(Botao):

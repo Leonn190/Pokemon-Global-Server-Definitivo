@@ -50,7 +50,7 @@ class Barra:
         valor = round(self.valor, self.casas_decimais)
         if self.casas_decimais == 0:
             valor = int(valor)
-        self.rotulo.set_text(f"{self.texto}: {valor}")
+        self.rotulo.set_text("" if not self.texto else f"{self.texto}: {valor}")
         self.rotulo.set_pos((self.rect.x, self.rect.y - 36))
 
     def set_valor(self, valor):
@@ -147,5 +147,6 @@ class BarraEditavel(Barra):
         pygame.draw.circle(tela, self.cor_manopla, (int(x_manopla), self.rect.centery), self.rect.height // 2 + 4)
         pygame.draw.circle(tela, (30, 30, 45), (int(x_manopla), self.rect.centery), self.rect.height // 2 + 4, 2)
 
-        self.rotulo.draw(tela)
+        if self.texto:
+            self.rotulo.draw(tela)
         return alterou

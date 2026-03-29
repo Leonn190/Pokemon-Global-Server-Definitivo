@@ -88,6 +88,13 @@ class PainelRolavel(Painel):
         self._ultimo_scroll = (None, None)
         self._conteudo_sujo = True
         self._viewport_suja = True
+        self._scrollbar = Barra((0, 0, 8, 10), texto="", valor=0, minimo=0, maximo=1, mostrar_rotulo=False, suavizacao=20.0)
+        self._scrollbar.cor_fundo = (24, 32, 50)
+        self._scrollbar.cor_preenchimento = (152, 196, 255)
+        self._scrollbar.cor_borda = (205, 226, 255)
+        self._scrollbar_visivel_ate_ms = 0
+        self._scrollbar_alpha_max = 210
+        self._scrollbar_duracao_ms = 1800
 
         self._clamp_scroll()
         self._garantir_surfaces()
@@ -175,8 +182,43 @@ class PainelRolavel(Painel):
 
         if scrollou:
             self._clamp_scroll()
+            self._scrollbar_visivel_ate_ms = pygame.time.get_ticks() + self._scrollbar_duracao_ms
 
         return scrollou
+
+    def _desenhar_scrollbar(self, tela, dt):
+        excesso = max(0, self.AreaReal.height - self.rect.height)
+        if excesso <= 0:
+            return
+        agora = pygame.time.get_ticks()
+        if agora > self._scrollbar_visivel_ate_ms:
+            return
+        restante = max(0, self._scrollbar_visivel_ate_ms - agora)
+        alpha = int(self._scrollbar_alpha_max * (restante / float(self._scrollbar_duracao_ms)))
+        if alpha <= 0:
+            return
+
+        trilha_h = max(20, self.rect.height - 12)
+        trilha_y = self.rect.y + (self.rect.height - trilha_h) // 2
+        trilha_x = self.rect.right - 10
+        viewport_h = max(1, self.rect.height)
+        conteudo_h = max(viewport_h, self.AreaReal.height)
+        manopla_h = max(18, int((viewport_h / float(conteudo_h)) * trilha_h))
+        max_topo = trilha_h - manopla_h
+        progresso = 0.0 if excesso <= 0 else (self.ScrollY / float(excesso))
+        manopla_y = trilha_y + int(max_topo * max(0.0, min(1.0, progresso)))
+
+        self._scrollbar.rect = pygame.Rect(0, 0, 6, manopla_h)
+        self._scrollbar.minimo = 0.0
+        self._scrollbar.maximo = 1.0
+        self._scrollbar.set_valor(1.0)
+        self._scrollbar.valor_visual = 1.0
+        self._scrollbar.cor_fundo = (24, 32, 50, alpha // 3)
+        self._scrollbar.cor_preenchimento = (152, 196, 255, alpha)
+        self._scrollbar.cor_borda = (205, 226, 255, alpha)
+        overlay = pygame.Surface((6, manopla_h), pygame.SRCALPHA)
+        self._scrollbar.render(overlay, [], dt)
+        tela.blit(overlay, (trilha_x, manopla_y))
 
     def _aplicar_mascara_raio(self, surface):
         if self.Raio <= 0:
@@ -252,3 +294,4 @@ class PainelRolavel(Painel):
                 self.Borda,
                 border_radius=self.Raio
             )
+        self._desenhar_scrollbar(tela, dt)

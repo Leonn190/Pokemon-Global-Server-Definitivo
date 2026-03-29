@@ -428,6 +428,8 @@ class ControladorPlayer:
         ator_id = int(getattr(self._player_local, "Id", 0) or 0)
         if ator_id <= 0:
             return
+        perfil = getattr(self._player_local, "Perfil", None)
+        forcar_sync_perfil = bool(getattr(perfil, "_habilidades_aprendidas_dirty", False))
 
         if (agora - self._ultimo_envio_supervisao_rapida) >= self._intervalo_supervisao_rapida_s:
             s = self._snapshot_player_local_rapido()
@@ -439,7 +441,7 @@ class ControladorPlayer:
                 self._objetos.EnfileirarDiffRapida({"tipo": "update", "objeto_id": ator_id, "payload": d})
             self._ultimo_envio_supervisao_rapida = agora
 
-        if (agora - self._ultimo_envio_supervisao_lenta) >= self._intervalo_supervisao_lenta_s:
+        if forcar_sync_perfil or (agora - self._ultimo_envio_supervisao_lenta) >= self._intervalo_supervisao_lenta_s:
             s = self._snapshot_player_local_lento()
             d = self._delta_snapshot(self._snapshot_player_supervisao_lenta, s)
             self._snapshot_player_supervisao_lenta = s
@@ -447,6 +449,8 @@ class ControladorPlayer:
                 d.setdefault("id", ator_id)
                 d.setdefault("tipo", "entidade_player")
                 self._objetos.EnfileirarDiffRapida({"tipo": "update", "objeto_id": ator_id, "payload": d})
+            if forcar_sync_perfil and perfil is not None:
+                setattr(perfil, "_habilidades_aprendidas_dirty", False)
             self._ultimo_envio_supervisao_lenta = agora
 
     def is_diff_player_local(self, diff: Dict[str, object]) -> bool:

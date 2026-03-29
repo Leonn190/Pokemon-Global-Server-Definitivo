@@ -1,5 +1,6 @@
 import threading
 import time
+from pathlib import Path
 
 import SimuladorServerJogo.Geradores.GeradorMundo as GERADOR_MUNDO
 from SimuladorServerJogo.Geradores.GeradorMundo import (
@@ -38,6 +39,14 @@ _LOCK = threading.Lock()
 _INTERVALO_PERSISTENCIA_SEGUNDOS = 1.0
 _ultimo_persistencia_ts = 0.0
 _NIVEL_MAXIMO_JOGADOR = 50
+
+
+def _skins_liberadas_padrao() -> list[str]:
+    pasta = Path("Recursos") / "Visual" / "Skins" / "Liberadas"
+    if not pasta.exists():
+        return ["S1.png"]
+    skins = sorted({p.name for p in pasta.glob("*.png") if p.is_file()})
+    return skins or ["S1.png"]
 
 
 def _calcular_xp_alvo_por_nivel(nivel: int) -> int:
@@ -126,7 +135,8 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["ouro"] = int(dados.get("ouro", regras.get("Ouro", 0)))
     dados["insignias"] = list(dados.get("insignias", []))
     dados["maestria"] = int(dados.get("maestria", regras.get("Maestria", 0)))
-    dados["skins_liberadas"] = list(dados.get("skins_liberadas", []))
+    dados["skins_liberadas"] = list(dados.get("skins_liberadas", _skins_liberadas_padrao()) or _skins_liberadas_padrao())
+    dados["habilidades_aprendidas"] = list(dados.get("habilidades_aprendidas", []))
 
     stamina_max = max(1.0, float(dados.get("stamina_max", regras.get("StaminaMax", 100.0))))
     stamina = max(0.0, min(stamina_max, float(dados.get("stamina", stamina_max))))
@@ -233,6 +243,8 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         base["insignias"] = list(payload.get("insignias", []))
     if "skins_liberadas" in payload:
         base["skins_liberadas"] = list(payload.get("skins_liberadas", []))
+    if "habilidades_aprendidas" in payload:
+        base["habilidades_aprendidas"] = list(payload.get("habilidades_aprendidas", []))
 
     stamina_max = float(base.get("stamina_max", 100.0))
     if "stamina_max" in payload:

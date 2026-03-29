@@ -13,7 +13,7 @@ class UnificadorInventario:
         self.Ator = ator
         self.Inventario = ator.Inventario
         self.Ativo = False
-        self.Modo = "itens"
+        self.Modo = "perfil"
         self._modo_anterior = self.Modo
         self._rect = pygame.Rect(0, 0, 0, 0)
         self._botoes = []
@@ -45,7 +45,8 @@ class UnificadorInventario:
         bx = self._rect.centerx - total // 2
 
         botoes = []
-        for i, (texto, modo) in enumerate((("Pokemons", "pokemons"), ("Itens", "itens"), ("Perfil", "perfil"))):
+        ordem_abas = (("Perfil", "perfil"), ("Pokemons", "pokemons"), ("Itens", "itens"))
+        for i, (texto, modo) in enumerate(ordem_abas):
             def _acao(_jogo, _botao, m=modo):
                 self.Modo = m
 
@@ -102,7 +103,7 @@ class UnificadorInventario:
         pygame.draw.rect(tela, (20, 26, 42), header, border_radius=16)
         pygame.draw.rect(tela, (52, 70, 110), header, 1, border_radius=16)
 
-        for botao, modo in zip(self._botoes, ("pokemons", "itens", "perfil")):
+        for botao, modo in zip(self._botoes, ("perfil", "pokemons", "itens")):
             botao.set_selecionado(self.Modo == modo)
             botao.render(tela, eventos, dt, None)
 

@@ -301,6 +301,9 @@ class PainelArvoreHabilidades:
         aprendidas = self._lista_aprendidas()
         if nid not in aprendidas:
             aprendidas.append(nid)
+            perfil = self._perfil()
+            if perfil is not None:
+                setattr(perfil, "_habilidades_aprendidas_dirty", True)
         return True
 
     def _estilo_nodo(self, status: str):
@@ -381,7 +384,7 @@ class PainelArvoreHabilidades:
         self._layout_chave = chave
         self._rect = pygame.Rect(rect)
         self._graph_rect = graph_rect
-        self._tooltip_pos = (self._rect.x + 20, self._rect.y + 58)
+        self._tooltip_pos = (self._rect.right - 380, self._rect.bottom - 122)
 
         def _fechar(_jogo, _botao):
             self._solicitou_fechar = True
@@ -402,7 +405,7 @@ class PainelArvoreHabilidades:
         )
         self._botao_fechar.set_tooltip(Tooltip(titulo="Fechar", descricao="Fechar a árvore de habilidades.", pos_fixa=self._tooltip_pos, largura_max=240))
 
-        lado = max(34, int(self._graph_rect.width * 0.028))
+        lado = max(36, int(self._graph_rect.width * 0.028) + 2)
         self._botoes_nodos = {}
         for nodo in self._nodos:
             cx, cy = self._ponto_tela(nodo.id)

@@ -43,6 +43,8 @@ class Perfil:
         self.CustoStaminaAguaRasa = 4.0
         self.CustoStaminaAguaFunda = 16.0
         self.TapaPorSegundo = 2.0
+        self.RaioTapa = 0.36
+        self.MultiplicadorFerramentaTapa = 1.5
 
     @staticmethod
     def _skins_liberadas_padrao():
@@ -138,6 +140,8 @@ class Perfil:
         self.CustoStaminaAguaRasa = max(0.0, float(self._pegar(dados, "custo_stamina_agua_rasa", "CustoStaminaAguaRasa", padrao=self.CustoStaminaAguaRasa)))
         self.CustoStaminaAguaFunda = max(0.0, float(self._pegar(dados, "custo_stamina_agua_funda", "CustoStaminaAguaFunda", padrao=self.CustoStaminaAguaFunda)))
         self.TapaPorSegundo = max(0.1, float(self._pegar(dados, "tapa_por_segundo", "TapaPorSegundo", padrao=self.TapaPorSegundo)))
+        self.RaioTapa = max(0.05, float(self._pegar(dados, "raio_tapa", "RaioTapa", padrao=self.RaioTapa)))
+        self.MultiplicadorFerramentaTapa = max(1.0, float(self._pegar(dados, "multiplicador_ferramenta_tapa", "MultiplicadorFerramentaTapa", padrao=self.MultiplicadorFerramentaTapa)))
         self.normalizar_progresso_xp()
 
     def serializar(self):
@@ -175,6 +179,8 @@ class Perfil:
             "custo_stamina_agua_rasa": self.CustoStaminaAguaRasa,
             "custo_stamina_agua_funda": self.CustoStaminaAguaFunda,
             "tapa_por_segundo": self.TapaPorSegundo,
+            "raio_tapa": self.RaioTapa,
+            "multiplicador_ferramenta_tapa": self.MultiplicadorFerramentaTapa,
         }
 
 

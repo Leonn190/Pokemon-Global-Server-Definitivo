@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import atexit
 import time
 from typing import Optional
 
@@ -43,6 +44,7 @@ class DiscordPresence:
             self._rpc = Presence(self.client_id)
             self._rpc.connect()
             self._conectado = True
+            atexit.register(self.desconectar)
             return True
         except Exception:
             self._rpc = None

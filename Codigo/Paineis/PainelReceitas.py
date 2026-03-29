@@ -321,6 +321,13 @@ class PainelReceitas(PainelRolavel):
 
         return self._visiveis
 
+    def estado_atual_receita(self, receita, inventario_container):
+        for receita_visivel, estado in self._visiveis:
+            if receita_visivel is receita:
+                return estado
+        quantidades = self._quantidades_inventario(inventario_container)
+        return self._estado_receita(receita, quantidades)
+
     def processar_eventos(self, tela, eventos, dt, inventario_container):
         self._hover = None
         receita_clicada = None

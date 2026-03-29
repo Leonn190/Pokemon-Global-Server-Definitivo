@@ -141,6 +141,7 @@ class ControladorCenas:
     def SolicitarSair(self):
         self.CenaAlvo = None
         self.Saindo = True
+        self.Discord.desconectar()
 
     def DesenhosAdicionais(self):
         largura_tela = self.TELA.get_width()

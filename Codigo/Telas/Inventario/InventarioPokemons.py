@@ -385,5 +385,5 @@ class InventarioPokemons:
         self.TxtHover.draw(tela)
 
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
-            rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.2), int(self._arrastavel.Rect.height * 0.2))
+            rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.1), int(self._arrastavel.Rect.height * 0.1))
             PokemonInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, rect_drag, exibir_nivel=False)

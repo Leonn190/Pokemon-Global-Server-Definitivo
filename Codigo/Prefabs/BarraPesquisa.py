@@ -18,6 +18,7 @@ class BarraPesquisa(CaixaTexto):
         self._projecao_indices = []
         self._projecao_suja = True
         self._rect_cache = pygame.Rect(self.rect)
+        self._cache_nome_normalizado = {}
 
     @staticmethod
     def _norm(texto):
@@ -32,6 +33,7 @@ class BarraPesquisa(CaixaTexto):
         nova_lista = lista if isinstance(lista, list) else []
         if nova_lista is not self._lista_base:
             self._lista_base = nova_lista
+            self._cache_nome_normalizado.clear()
             self._projecao_suja = True
 
     def definir_acessor_nome(self, acessor_nome):
@@ -118,10 +120,19 @@ class BarraPesquisa(CaixaTexto):
         self._reconstruir_botoes()
 
     def _valor_nome(self, item):
+        chave_cache = id(item)
+        assinatura = (item.get('Nome'), item.get('nome'), item.get('Code'), item.get('code')) if isinstance(item, dict) else item
+        cache = self._cache_nome_normalizado.get(chave_cache)
+        if cache is not None and cache[0] == assinatura:
+            return cache[1]
+
         try:
-            return self._norm(self._acessor_nome(item))
+            valor = self._norm(self._acessor_nome(item))
         except Exception:
-            return ''
+            valor = ''
+
+        self._cache_nome_normalizado[chave_cache] = (assinatura, valor)
+        return valor
 
     def _valor_ordem(self, func, item):
         try:

@@ -217,7 +217,7 @@ class PokemonInventario:
         txt_nivel.draw(tela)
 
     @classmethod
-    def desenhar_item_no_rect(cls, tela, pokemon, rect: pygame.Rect):
+    def desenhar_item_no_rect(cls, tela, pokemon, rect: pygame.Rect, exibir_nivel: bool = True):
         if pokemon is None:
             return
 
@@ -227,4 +227,5 @@ class PokemonInventario:
         else:
             cls._desenhar_sigla_fallback(tela, pokemon, rect)
 
-        cls._desenhar_nivel(tela, pokemon, rect)
+        if exibir_nivel:
+            cls._desenhar_nivel(tela, pokemon, rect)

@@ -227,7 +227,6 @@ class PainelCraft:
     def preencher_receita(self, receita, container, estado='verde', mover_callback=None):
         if receita is None or estado == 'vermelho' or container is None:
             return False
-        self.devolver_para_inventario(container)
         colocou_algo = False
         reservas = {}
         for idx, item in enumerate(getattr(container, 'Itens', [])):
@@ -257,15 +256,20 @@ class PainelCraft:
             return None, None
 
         for i, esperado in enumerate(receita.get('grade', [])):
-            self.CraftSlots[i] = None
-            self._origens[i] = None
             if esperado is None:
+                continue
+            atual = self.CraftSlots[i]
+            chave_esperada = self.chave_item(esperado)
+            if atual is not None and self.chave_item(atual) != chave_esperada:
                 continue
             retirado, origem = _consumir_reserva(self.chave_item(esperado))
             if retirado is None:
                 continue
-            self.CraftSlots[i] = retirado
-            self._origens[i] = origem
+            if atual is None:
+                self.CraftSlots[i] = retirado
+                self._origens[i] = origem
+            else:
+                atual['quantidade'] = self.quantidade(atual) + self.quantidade(retirado)
             if callable(mover_callback):
                 mover_callback(retirado, origem, i)
             colocou_algo = True

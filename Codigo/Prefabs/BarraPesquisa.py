@@ -17,6 +17,7 @@ class BarraPesquisa(CaixaTexto):
         self._botoes_ordenacao = []
         self._projecao_indices = []
         self._projecao_suja = True
+        self._rect_cache = pygame.Rect(self.rect)
 
     @staticmethod
     def _norm(texto):
@@ -56,6 +57,9 @@ class BarraPesquisa(CaixaTexto):
 
     def tem_projecao_ativa(self):
         return bool(self.texto.strip())
+
+    def esta_editando(self):
+        return bool(self.selecionada)
 
     def set_texto(self, texto):
         texto_anterior = self.texto
@@ -106,7 +110,11 @@ class BarraPesquisa(CaixaTexto):
             x += largura + gap
 
     def configurar_rect(self, rect: pygame.Rect):
-        self.rect = pygame.Rect(rect)
+        novo_rect = pygame.Rect(rect)
+        if novo_rect == self._rect_cache:
+            return
+        self.rect = novo_rect
+        self._rect_cache = pygame.Rect(novo_rect)
         self._reconstruir_botoes()
 
     def _valor_nome(self, item):

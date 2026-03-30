@@ -78,6 +78,8 @@ class CenaMundo:
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
 
         player = self.ControladorMundo.player_local
+        if player is not None and getattr(player, "Controle", None) is not None and self.SubtelaInventario is not None:
+            player.Controle.BloquearToggleInventario = self.SubtelaInventario.bloquear_toggle_inventario()
         if player is not None and self.SubtelaOpcoes.Ativa:
             player.Controle.InventarioAberto = False
 

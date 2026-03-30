@@ -66,6 +66,13 @@ class UnificadorInventario:
         if callable(metodo):
             metodo()
 
+    def bloquear_toggle_inventario(self):
+        if not self.Ativo:
+            return False
+        tela_atual = self._tela_por_modo(self.Modo)
+        metodo = getattr(tela_atual, "bloqueia_toggle_inventario", None)
+        return bool(metodo()) if callable(metodo) else False
+
     def atualizar(self, eventos, dt, tamanho_tela):
         self._recalcular_layout(tamanho_tela)
 

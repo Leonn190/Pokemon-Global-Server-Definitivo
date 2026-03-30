@@ -8,6 +8,7 @@ from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.Container import Container
 from Codigo.Paineis.PainelTimes import PainelTimes
 from Codigo.Prefabs.Arrastavel import Arrastavel
+from Codigo.Prefabs.BarraPesquisa import BarraPesquisa
 from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
 
@@ -34,6 +35,7 @@ class InventarioPokemons:
         self.TxtResumo = Texto('', style={**estilo, 'size': 22, 'color': (239, 243, 255), 'align': 'midleft'})
         self.TxtHover = Texto('', style={**estilo, 'size': 15, 'color': (174, 190, 224), 'align': 'midright'})
         self._painel_info = Painel((0, 0, 0, 0), cor_fundo=(18, 26, 44, 242), cor_borda=(66, 88, 136), borda=2, raio=16)
+        self._barra_pesquisa = None
 
     def on_open(self):
         self._estava_ativo = True
@@ -41,6 +43,8 @@ class InventarioPokemons:
     def on_close(self):
         self._arrastavel.cancelar()
         self._pokemon_hover = None
+        if self._barra_pesquisa is not None:
+            self._barra_pesquisa.resetar_filtro()
         self._estava_ativo = False
 
     def _ler_limite(self, nomes, padrao):
@@ -134,6 +138,14 @@ class InventarioPokemons:
                 stackable=False,
                 renderizador_item=PokemonInventario,
             )
+            self._barra_pesquisa = BarraPesquisa(pygame.Rect(0, 0, 10, 10), placeholder='Buscar pokémon...')
+            self._barra_pesquisa.definir_acessor_nome(PokemonInventario.nome_pokemon)
+            self._barra_pesquisa.definir_ordenacoes([
+                ('Alfabética', PokemonInventario.nome_pokemon),
+                ('Poder', lambda p: -PokemonInventario.poder_total(p)),
+                ('Tipo', PokemonInventario.tipo_principal),
+            ])
+            self._container.configurar_barra_pesquisa(self._barra_pesquisa)
         else:
             self._container.Itens = pokemons
             self._container.SlotsTotal = self._limite_slots()
@@ -143,6 +155,7 @@ class InventarioPokemons:
             self._container.LinhasVisiveis = self._linhas_grid_visiveis()
             self._container.RenderizadorItem = PokemonInventario
             self._container.configurar_rect(self._area_grid)
+            self._container.configurar_barra_pesquisa(self._barra_pesquisa)
 
         if self._painel_times is None:
             self._painel_times = PainelTimes(self._area_times, times, slots_por_time=self._slots_por_time())
@@ -168,10 +181,7 @@ class InventarioPokemons:
         if alvo is None:
             return None
         if alvo[0] == 'grid':
-            indice = alvo[1]
-            if 0 <= indice < len(self._container.Itens):
-                return self._container.Itens[indice]
-            return None
+            return self._container.item_por_slot_visual(alvo[1])
         if alvo[0] == 'time':
             return self._painel_times.pokemon_no_slot(alvo[1], alvo[2])
         return None
@@ -194,10 +204,13 @@ class InventarioPokemons:
             return
 
         if alvo[0] == 'grid':
+            indice_real = self._container.indice_real_por_visual(alvo[1], exigir_item=True)
+            if indice_real is None:
+                return
             rect_base = self._container.slot_rect(alvo[1])
             self._arrastavel.iniciar(
                 pokemon,
-                ('grid', alvo[1]),
+                ('grid', alvo[1], indice_real),
                 self._container.item_rect_no_slot(rect_base),
                 mouse_pos,
                 botao=1,
@@ -243,9 +256,15 @@ class InventarioPokemons:
         pokemon_arrastado = self._arrastavel.Item
 
         if origem[0] == 'grid':
-            indice_origem = origem[1]
+            indice_origem = origem[2]
             if alvo[0] == 'grid':
-                indice_destino = alvo[1]
+                if not self._container.permite_interacao_por_slot():
+                    self._retornar_para_origem()
+                    return
+                indice_destino = self._container.indice_real_por_visual(alvo[1], exigir_item=False)
+                if indice_destino is None:
+                    self._retornar_para_origem()
+                    return
                 if indice_destino != indice_origem:
                     itens = self._container.Itens
                     itens[indice_origem], itens[indice_destino] = itens[indice_destino], itens[indice_origem]
@@ -272,6 +291,9 @@ class InventarioPokemons:
                 return
 
             if alvo[0] == 'grid':
+                if not self._container.permite_interacao_por_slot():
+                    self._retornar_para_origem()
+                    return
                 pokemon_grid = self._pokemon_do_alvo(alvo)
                 if pokemon_grid is not None and self._chave(pokemon_grid) != self._chave(pokemon_arrastado):
                     self._painel_times.definir_slot(indice_time_origem, indice_slot_origem, pokemon_grid, limpar_duplicados=True)

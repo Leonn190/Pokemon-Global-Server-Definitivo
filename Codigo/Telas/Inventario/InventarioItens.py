@@ -9,6 +9,7 @@ from Codigo.Paineis.FichaItem import FichaItem
 from Codigo.Paineis.PainelCraft import PainelCraft
 from Codigo.Paineis.PainelReceitas import PainelReceitas
 from Codigo.Prefabs.Arrastavel import Arrastavel
+from Codigo.Prefabs.BarraPesquisa import BarraPesquisa
 from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
 
@@ -40,6 +41,7 @@ class InventarioItens:
         estilo = {'outline': True, 'outline_thickness': 2, 'outline_color': (8, 12, 20)}
         self.TxtTotal = Texto('', style={**estilo, 'size': 23, 'color': (239, 243, 255), 'align': 'center'})
         self._painel_info = Painel((0, 0, 0, 0), cor_fundo=(18, 26, 44, 242), cor_borda=(66, 88, 136), borda=2, raio=16)
+        self._barra_pesquisa = None
 
     def on_open(self):
         self._estava_ativo = True
@@ -49,6 +51,8 @@ class InventarioItens:
             self._painel_craft.devolver_para_inventario(self._container)
         self._arrastavel.cancelar()
         self._item_hover = None
+        if self._barra_pesquisa is not None:
+            self._barra_pesquisa.resetar_filtro()
         self._estava_ativo = False
 
     def _capacidade_total(self):
@@ -108,11 +112,20 @@ class InventarioItens:
                 raio=16,
                 stackable=True,
             )
+            self._barra_pesquisa = BarraPesquisa(pygame.Rect(0, 0, 10, 10), placeholder='Buscar item...')
+            self._barra_pesquisa.definir_acessor_nome(ItemInventario.nome_item)
+            self._barra_pesquisa.definir_ordenacoes([
+                ('Alfabética', ItemInventario.nome_item),
+                ('Raridade', ItemInventario.raridade_item),
+                ('Estilo', ItemInventario.estilo_item),
+            ])
+            self._container.configurar_barra_pesquisa(self._barra_pesquisa)
         else:
             self._container.Itens = self.Inventario.Itens
             self._container.SlotsTotal = self._limite_slots()
             self._container.SlotPx = 68
             self._container.configurar_rect(self._area_grid)
+            self._container.configurar_barra_pesquisa(self._barra_pesquisa)
 
         if self._painel_craft is None:
             self._painel_craft = PainelCraft(self._area_craft)
@@ -146,7 +159,7 @@ class InventarioItens:
             return None
         grupo, indice = alvo
         if grupo == 'inventario':
-            return self.Inventario.Itens[indice]
+            return self._container.item_por_slot_visual(indice)
         if grupo == 'craft':
             return self._painel_craft.CraftSlots[indice]
         if grupo == 'saida':
@@ -173,9 +186,12 @@ class InventarioItens:
             return
         qtd = None if botao == 1 else max(1, self._quantidade(item) // 2)
         if alvo[0] == 'inventario':
-            item_pego = self._container.recolher_do_slot(alvo[1], quantidade=qtd)
+            indice_real = self._container.indice_real_por_visual(alvo[1], exigir_item=True)
+            if indice_real is None:
+                return
+            item_pego = self._container.recolher_do_slot(indice_real, quantidade=qtd)
             rect_base = self._container.slot_rect(alvo[1])
-            origem_aux = alvo[1]
+            origem_aux = indice_real
         else:
             item_pego, origem_aux = self._painel_craft.retirar_do_slot(alvo[1], quantidade=qtd)
             rect_base = self._painel_craft.slot_rect(alvo[1])
@@ -199,9 +215,9 @@ class InventarioItens:
 
         def _finalizar():
             if grupo == 'inventario':
-                resto = self._container.restaurar_item_no_slot_origem(indice, item)
+                resto = self._container.restaurar_item_no_slot_origem(origem_aux, item)
                 if resto is not None:
-                    self._container.devolver_para_origem_ou_vazio(indice, resto)
+                    self._container.devolver_para_origem_ou_vazio(origem_aux, resto)
             else:
                 resto = self._painel_craft.colocar_no_slot(indice, item, origem=origem_aux)
                 if isinstance(resto, tuple):
@@ -239,7 +255,12 @@ class InventarioItens:
             parte = copy.deepcopy(item)
             parte['quantidade'] = 1
             if alvo[0] == 'inventario':
-                resto = self._container.tentar_colocar_no_slot(alvo[1], parte)
+                if not self._container.permite_interacao_por_slot():
+                    return
+                indice_real_destino = self._container.indice_real_por_visual(alvo[1], exigir_item=False)
+                if indice_real_destino is None:
+                    return
+                resto = self._container.tentar_colocar_no_slot(indice_real_destino, parte)
                 if resto is None:
                     item['quantidade'] = self._quantidade(item) - 1
             elif alvo[0] == 'craft':
@@ -251,7 +272,14 @@ class InventarioItens:
             return
 
         if alvo[0] == 'inventario':
-            resto = self._container.tentar_colocar_no_slot(alvo[1], item)
+            if not self._container.permite_interacao_por_slot():
+                self._retornar_para_origem()
+                return
+            indice_real_destino = self._container.indice_real_por_visual(alvo[1], exigir_item=False)
+            if indice_real_destino is None:
+                self._retornar_para_origem()
+                return
+            resto = self._container.tentar_colocar_no_slot(indice_real_destino, item)
             if resto is None:
                 self._arrastavel.cancelar()
             else:
@@ -340,10 +368,11 @@ class InventarioItens:
                 alvo = self._alvo_no_mouse(evento.pos)
                 agora = pygame.time.get_ticks()
                 if not self._arrastavel.Ativo and evento.button == 1 and self._click_duplo(alvo, agora):
-                    item = self._container.recolher_do_slot(alvo[1])
+                    indice_real = self._container.indice_real_por_visual(alvo[1], exigir_item=True) if alvo is not None else None
+                    item = self._container.recolher_do_slot(indice_real) if indice_real is not None else None
                     if item is not None:
                         item = self._container.agrupar_todos_no_item(item)
-                        self._arrastavel.iniciar(item, ('inventario', alvo[1], alvo[1]), self._container.item_rect_no_slot(self._container.slot_rect(alvo[1])), evento.pos, botao=1)
+                        self._arrastavel.iniciar(item, ('inventario', alvo[1], indice_real), self._container.item_rect_no_slot(self._container.slot_rect(alvo[1])), evento.pos, botao=1)
                     continue
 
                 if self._arrastavel.Ativo:
@@ -388,9 +417,10 @@ class InventarioItens:
         highlight = self._alvo_no_mouse(pygame.mouse.get_pos())
         item_oculto = None
         if self._arrastavel.Ativo and self._arrastavel.Origem and self._arrastavel.Origem[0] == 'inventario':
-            origem = self._arrastavel.Origem[1]
-            if self.Inventario.Itens[origem] is None:
-                item_oculto = origem
+            origem_visual = self._arrastavel.Origem[1]
+            origem_real = self._arrastavel.Origem[2]
+            if origem_real is not None and self.Inventario.Itens[origem_real] is None:
+                item_oculto = origem_visual
         self._container.desenhar(tela, item_oculto=item_oculto, highlight=highlight[1] if highlight and highlight[0] == 'inventario' else None)
 
         self._painel_info.render(tela, [], 0)

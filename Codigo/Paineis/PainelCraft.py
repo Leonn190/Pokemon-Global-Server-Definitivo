@@ -224,7 +224,7 @@ class PainelCraft:
                 return retirado, idx
         return None, None
 
-    def preencher_receita(self, receita, container, estado='verde', mover_callback=None):
+    def preencher_receita(self, receita, container, estado='verde'):
         if receita is None or estado == 'vermelho' or container is None:
             return False
         colocou_algo = False
@@ -265,15 +265,11 @@ class PainelCraft:
             retirado, origem = _consumir_reserva(self.chave_item(esperado))
             if retirado is None:
                 continue
-            adiar_colocacao = False
-            if callable(mover_callback):
-                adiar_colocacao = bool(mover_callback(retirado, origem, i))
-            if not adiar_colocacao:
-                if atual is None:
-                    self.CraftSlots[i] = retirado
-                    self._origens[i] = origem
-                else:
-                    atual['quantidade'] = self.quantidade(atual) + self.quantidade(retirado)
+            if atual is None:
+                self.CraftSlots[i] = retirado
+                self._origens[i] = origem
+            else:
+                atual['quantidade'] = self.quantidade(atual) + self.quantidade(retirado)
             colocou_algo = True
         self._marcar_sujo()
         return colocou_algo

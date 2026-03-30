@@ -298,6 +298,7 @@ class InventarioItens:
         if resultado is None:
             return
         self._painel_craft.consumir_para_craft(receita)
+        self._painel_craft.limpar_preview()
         self._arrastavel.iniciar(resultado, ('saida', 0, None), self._painel_craft.item_rect_no_slot(self._painel_craft.slot_saida_rect()), mouse_pos, botao=1)
         self._item_hover = resultado
 
@@ -321,6 +322,7 @@ class InventarioItens:
             )
             self._animacoes_receita.append(anim)
 
+        self._painel_craft.limpar_preview()
         self._painel_craft.preencher_receita(receita, self._container, estado=estado, mover_callback=_mover)
 
     def atualizar(self, tela, eventos, dt, area, ativo=True):

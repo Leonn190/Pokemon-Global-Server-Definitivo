@@ -20,12 +20,13 @@ class Arrastavel:
         self.Item = item
         self.Origem = origem
         self.Rect = pygame.Rect(rect_item)
+        self.Rect.center = (int(mouse_pos[0]), int(mouse_pos[1]))
         self.BotaoInicial = botao
         self.ModoDistribuidor = False
         self._slots_distribuidos = set()
         self._offset_mouse = (
-            mouse_pos[0] - self.Rect.x,
-            mouse_pos[1] - self.Rect.y,
+            self.Rect.width // 2,
+            self.Rect.height // 2,
         )
 
     def atualizar(self, mouse_pos):

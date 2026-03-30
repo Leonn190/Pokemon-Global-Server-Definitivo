@@ -26,6 +26,7 @@ class PainelCraft:
         self.TxtTitulo = Texto('Craft', style={**estilo, 'size': 19, 'color': (236, 241, 255)})
         self.TxtSeta = Texto('→', style={**estilo, 'size': 28, 'color': (180, 194, 228), 'align': 'center'})
         self.PreviewReceita = None
+        self._slots_em_transito_receita = set()
         self._receitas_cache = []
         self._highlight_cache = None
         self.SlotPx = 68
@@ -158,20 +159,39 @@ class PainelCraft:
     def preview_dict(self):
         if self.PreviewReceita is None:
             return None
-        return {i: item for i, item in enumerate(self.PreviewReceita['grade']) if item is not None and self.CraftSlots[i] is None}
+        return {
+            i: item
+            for i, item in enumerate(self.PreviewReceita['grade'])
+            if item is not None and self.CraftSlots[i] is None and i not in self._slots_em_transito_receita
+        }
 
     def preview_saida(self):
-        if self.PreviewReceita is None:
+        if self.PreviewReceita is None or self._slots_em_transito_receita:
             return None
         return self.PreviewReceita.get('saida')
 
     def set_preview(self, receita):
+        if self._slots_em_transito_receita:
+            receita = None
         self.PreviewReceita = receita
         self._marcar_sujo()
 
     def limpar_preview(self):
         self.PreviewReceita = None
         self._marcar_sujo()
+
+    def iniciar_transito_receita(self, indice):
+        self._slots_em_transito_receita.add(indice)
+        self.PreviewReceita = None
+        self._marcar_sujo()
+
+    def finalizar_transito_receita(self, indice):
+        if indice in self._slots_em_transito_receita:
+            self._slots_em_transito_receita.remove(indice)
+            self._marcar_sujo()
+
+    def possui_transito_receita(self):
+        return bool(self._slots_em_transito_receita)
 
     def colocar_no_slot(self, indice, item, origem=None):
         destino = self.CraftSlots[indice]

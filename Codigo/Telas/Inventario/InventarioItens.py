@@ -343,6 +343,7 @@ class InventarioItens:
         def _animar_movimento(item, origem_idx, slot_craft):
             if origem_idx is None:
                 return False
+            self._painel_craft.iniciar_transito_receita(slot_craft)
             rect_origem = self._container.item_rect_no_slot(self._container.slot_rect(origem_idx))
             rect_destino = self._painel_craft.item_rect_no_slot(self._painel_craft.slot_rect(slot_craft))
             anim = Arrastavel()
@@ -362,8 +363,10 @@ class InventarioItens:
         self._painel_craft.preencher_receita(receita, self._container, estado=estado, mover_callback=_animar_movimento)
 
     def _finalizar_movimento_receita(self, animacao, item_movido, origem_idx, slot_craft):
-        if self._painel_craft is not None and item_movido is not None:
-            self._painel_craft.colocar_no_slot(slot_craft, item_movido, origem=origem_idx)
+        if self._painel_craft is not None:
+            if item_movido is not None:
+                self._painel_craft.colocar_no_slot(slot_craft, item_movido, origem=origem_idx)
+            self._painel_craft.finalizar_transito_receita(slot_craft)
         if animacao is not None:
             animacao.cancelar()
 
@@ -383,7 +386,11 @@ class InventarioItens:
         self._container._processar_scroll(eventos)
 
         receita_clicada, receita_hover = self._painel_receitas.processar_eventos(tela, eventos, dt, self._container)
-        self._painel_craft.set_preview(receita_hover)
+        tem_receita_em_transito = self._painel_craft.possui_transito_receita() or any(anim.Ativo for anim in self._animacoes_receita)
+        if tem_receita_em_transito:
+            self._painel_craft.limpar_preview()
+        else:
+            self._painel_craft.set_preview(receita_hover)
         if receita_clicada is not None:
             self._aplicar_receita(receita_clicada, estado_receita=self._painel_receitas.estado_atual_receita(receita_clicada, self._container))
         self._arrastavel.animar(dt)
@@ -394,7 +401,7 @@ class InventarioItens:
         mouse = pygame.mouse.get_pos()
         alvo_mouse = self._alvo_no_mouse(mouse)
         self._item_hover = self._item_do_alvo(alvo_mouse)
-        if self._item_hover is None and receita_hover is not None:
+        if self._item_hover is None and receita_hover is not None and not tem_receita_em_transito:
             self._item_hover = receita_hover.get('saida')
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
             self._item_hover = self._arrastavel.Item

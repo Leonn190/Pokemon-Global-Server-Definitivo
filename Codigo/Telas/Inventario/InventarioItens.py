@@ -58,15 +58,13 @@ class InventarioItens:
         self._animacoes_receita.clear()
 
     def _concluir_animacoes_receita(self):
-        if self._painel_craft is None:
-            self._animacoes_receita.clear()
-            return
         for anim in self._animacoes_receita:
-            if not anim.Ativo or anim.Item is None:
+            if not anim.Ativo:
                 continue
             origem = anim.Origem if isinstance(anim.Origem, tuple) else ()
-            if len(origem) >= 3 and origem[0] == 'receita':
-                self._painel_craft.colocar_no_slot(origem[2], anim.Item, origem=origem[1])
+            if len(origem) >= 3 and origem[0] == 'receita' and anim.Item is not None:
+                self._finalizar_movimento_receita(anim, anim.Item, origem[1], origem[2])
+                continue
             anim.cancelar()
         self._animacoes_receita.clear()
 
@@ -350,15 +348,24 @@ class InventarioItens:
             anim = Arrastavel()
             anim.iniciar(item, ('receita', origem_idx, slot_craft), rect_origem, rect_origem.center, botao=1)
 
-            def _finalizar_animacao():
-                self._painel_craft.colocar_no_slot(slot_craft, item, origem=origem_idx)
-                anim.cancelar()
+            def _ao_final(animacao=anim, item_movido=item, origem_item=origem_idx, slot_destino=slot_craft):
+                self._finalizar_movimento_receita(animacao, item_movido, origem_item, slot_destino)
 
-            anim.definir_pos_alvo(rect_destino.topleft, ao_final=_finalizar_animacao, velocidade=20.0)
+            anim.definir_pos_alvo(
+                rect_destino.topleft,
+                ao_final=_ao_final,
+                velocidade=20.0,
+            )
             self._animacoes_receita.append(anim)
             return True
 
         self._painel_craft.preencher_receita(receita, self._container, estado=estado, mover_callback=_animar_movimento)
+
+    def _finalizar_movimento_receita(self, animacao, item_movido, origem_idx, slot_craft):
+        if self._painel_craft is not None and item_movido is not None:
+            self._painel_craft.colocar_no_slot(slot_craft, item_movido, origem=origem_idx)
+        if animacao is not None:
+            animacao.cancelar()
 
     def atualizar(self, tela, eventos, dt, area, ativo=True):
         self._garantir_slots()

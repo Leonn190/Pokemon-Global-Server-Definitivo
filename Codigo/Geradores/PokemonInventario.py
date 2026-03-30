@@ -75,6 +75,33 @@ class PokemonInventario:
                 return valor
         return None
 
+    @staticmethod
+    def poder_total(pokemon: object) -> float:
+        if not isinstance(pokemon, dict):
+            return 0.0
+        valor = pokemon.get('total')
+        if valor in (None, ''):
+            return 0.0
+        try:
+            return float(valor)
+        except (TypeError, ValueError):
+            return 0.0
+
+    @classmethod
+    def tipo_principal(cls, pokemon: object) -> str:
+        if not isinstance(pokemon, dict):
+            return ''
+
+        tipos = pokemon.get('Tipos')
+        if isinstance(tipos, (list, tuple)) and tipos:
+            return str(tipos[0] or '')
+
+        tipo = pokemon.get('Tipo')
+        if tipo not in (None, ''):
+            return str(tipo)
+
+        return ''
+
     @classmethod
     def chave_pokemon(cls, pokemon: object) -> str:
         if isinstance(pokemon, dict):

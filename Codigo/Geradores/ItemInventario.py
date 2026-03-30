@@ -84,6 +84,24 @@ class ItemInventario:
             return str(item.get("Nome") or item.get("nome") or "Item")
         return str(item)
 
+    @staticmethod
+    def raridade_item(item: object) -> str:
+        if not isinstance(item, dict):
+            return ''
+        valor = item.get('Raridade')
+        if valor not in (None, ''):
+            return str(valor)
+        return ''
+
+    @staticmethod
+    def estilo_item(item: object) -> str:
+        if not isinstance(item, dict):
+            return ''
+        valor = item.get('Estilo')
+        if valor not in (None, ''):
+            return str(valor)
+        return ''
+
     @classmethod
     def _garantir_fontes(cls):
         if cls._fonte_nome is None:

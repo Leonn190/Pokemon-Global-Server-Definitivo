@@ -38,6 +38,9 @@ class Container(PainelRolavel):
         self._highlight_render = None
         self._preview_render = None
         self._estado_visual = None
+        self.BarraPesquisa = None
+        self._topo_slots = 0
+        self._mapeamento_visual_real = []
 
         self._normalizar_tamanho()
         self.atualizar_area_real()
@@ -45,8 +48,26 @@ class Container(PainelRolavel):
 
     def configurar_rect(self, rect):
         self.rect = pygame.Rect(rect)
+        self._atualizar_layout_barra()
         self.atualizar_area_real()
         self.marcar_sujo()
+
+    def configurar_barra_pesquisa(self, barra_pesquisa, altura_topo=58):
+        self.BarraPesquisa = barra_pesquisa
+        self._topo_slots = max(0, int(altura_topo)) if barra_pesquisa is not None else 0
+        self._atualizar_layout_barra()
+        self.atualizar_area_real()
+        self.marcar_sujo()
+
+    def _atualizar_layout_barra(self):
+        if self.BarraPesquisa is None:
+            return
+        altura = max(36, min(46, self._topo_slots - 12))
+        largura = max(140, int(self.rect.width * 0.42))
+        x = self.rect.x + 14
+        y = self.rect.y + 10
+        self.BarraPesquisa.configurar_rect(pygame.Rect(x, y, largura, altura))
+        self.BarraPesquisa.definir_lista_base(self.Itens)
 
     def _normalizar_tamanho(self):
         if len(self.Itens) < self.SlotsTotal:
@@ -59,7 +80,7 @@ class Container(PainelRolavel):
 
     def altura_conteudo(self):
         linhas = self._linhas_totais()
-        return self.Padding * 2 + linhas * self.SlotPx + max(0, linhas - 1) * self.Gap
+        return self.Padding * 2 + self._topo_slots + linhas * self.SlotPx + max(0, linhas - 1) * self.Gap
 
     def atualizar_area_real(self):
         self.definir_area_real(self.rect.width, self.altura_conteudo())
@@ -100,8 +121,54 @@ class Container(PainelRolavel):
         grid_w = self.Colunas * self.SlotPx + max(0, self.Colunas - 1) * self.Gap
         x_base = max(self.Padding, (self.rect.width - grid_w) // 2)
         x = x_base + col * (self.SlotPx + self.Gap)
-        y = self.Padding + lin * (self.SlotPx + self.Gap)
+        y = self.Padding + self._topo_slots + lin * (self.SlotPx + self.Gap)
         return x, y
+
+    def _indices_visiveis(self):
+        if self.BarraPesquisa is None:
+            return []
+        self.BarraPesquisa.definir_lista_base(self.Itens)
+        self.BarraPesquisa.atualizar_projecao()
+        if not self.BarraPesquisa.tem_projecao_ativa():
+            return []
+        return self.BarraPesquisa.lista_visivel()
+
+    def _atualizar_mapeamento_visual(self):
+        self._mapeamento_visual_real = [None] * self.SlotsTotal
+        visiveis = self._indices_visiveis()
+        if visiveis:
+            limite = min(self.SlotsTotal, len(visiveis))
+            for i in range(limite):
+                self._mapeamento_visual_real[i] = visiveis[i]
+            return
+        for i in range(self.SlotsTotal):
+            self._mapeamento_visual_real[i] = i
+
+    def indice_real_por_visual(self, indice_visual, exigir_item=False):
+        if indice_visual is None or not (0 <= int(indice_visual) < int(self.SlotsTotal)):
+            return None
+        indice_visual = int(indice_visual)
+        if len(self._mapeamento_visual_real) != self.SlotsTotal:
+            self._atualizar_mapeamento_visual()
+
+        indice_real = self._mapeamento_visual_real[indice_visual]
+        if indice_real is None:
+            return None
+        if exigir_item and self.Itens[indice_real] is None:
+            return None
+        return indice_real
+
+    def item_por_slot_visual(self, indice_visual):
+        indice_real = self.indice_real_por_visual(indice_visual, exigir_item=True)
+        if indice_real is None:
+            return None
+        return self.Itens[indice_real]
+
+    def projecao_ativa(self):
+        return self.BarraPesquisa is not None and self.BarraPesquisa.tem_projecao_ativa()
+
+    def permite_interacao_por_slot(self):
+        return not self.projecao_ativa()
 
     def slot_rect_local(self, slot_id):
         x, y = self.slot_local_pos(slot_id)
@@ -146,7 +213,10 @@ class Container(PainelRolavel):
         indice = self.indice_no_mouse(mouse_pos)
         if indice is None:
             return None, None
-        return indice, self.Itens[indice]
+        indice_real = self.indice_real_por_visual(indice, exigir_item=True)
+        if indice_real is None:
+            return None, None
+        return indice_real, self.Itens[indice_real]
 
     def pode_empilhar(self, item_a, item_b):
         return (
@@ -361,6 +431,8 @@ class Container(PainelRolavel):
 
         self._normalizar_tamanho()
 
+        self._atualizar_mapeamento_visual()
+
         item_oculto = self._item_oculto_render
         highlight = self._highlight_render
         preview = self._preview_render or {}
@@ -369,7 +441,8 @@ class Container(PainelRolavel):
             rect_slot = self.slot_rect_local(i)
             self.desenhar_slot(tela, rect_slot, destaque=(highlight == i))
 
-            item = self.Itens[i]
+            indice_real = self._mapeamento_visual_real[i] if i < len(self._mapeamento_visual_real) else i
+            item = self.Itens[indice_real] if indice_real is not None and 0 <= indice_real < len(self.Itens) else None
             if i == item_oculto or item is None:
                 continue
 
@@ -401,4 +474,7 @@ class Container(PainelRolavel):
             self._estado_visual = estado_visual
             self.marcar_sujo()
 
-        self.render(tela, eventos or [], dt, jogo=jogo)
+        eventos_render = eventos or []
+        self.render(tela, eventos_render, dt, jogo=jogo)
+        if self.BarraPesquisa is not None:
+            self.BarraPesquisa.render(tela, eventos_render, dt, jogo=jogo)

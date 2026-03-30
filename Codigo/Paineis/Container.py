@@ -129,7 +129,6 @@ class Container(PainelRolavel):
             return []
         if not self.BarraPesquisa.tem_projecao_ativa():
             return []
-        self.BarraPesquisa.definir_lista_base(self.Itens)
         self.BarraPesquisa.atualizar_projecao()
         return self.BarraPesquisa.lista_visivel()
 
@@ -198,6 +197,8 @@ class Container(PainelRolavel):
 
     def indice_no_mouse(self, mouse_pos):
         if not self.rect.collidepoint(mouse_pos):
+            return None
+        if self.BarraPesquisa is not None and self.BarraPesquisa.contem_ponto_interativo(mouse_pos):
             return None
 
         mouse_local = self._mouse_global_para_local(mouse_pos)

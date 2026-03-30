@@ -338,10 +338,10 @@ class PainelReceitas(PainelRolavel):
                 border=(230, 238, 250) if self.Filtros[chave] else (20, 26, 40),
                 border_hover=(230, 238, 250)
             )
-            antes = botao.pressed
-            botao.render(tela, eventos, dt, None)
-            if antes and not botao.pressed and botao.hover:
-                self.Filtros[chave] = not self.Filtros[chave]
+            for evento in eventos:
+                if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1 and botao.rect.collidepoint(evento.pos):
+                    self.Filtros[chave] = not self.Filtros[chave]
+                    break
 
         visiveis = self.receitas_visiveis(inventario_container)
         self._atualizar_area_rolagem(len(visiveis))

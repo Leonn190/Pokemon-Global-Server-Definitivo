@@ -32,6 +32,7 @@ class Controle:
         self._item_arremesso_atual = None
         self._acao_arremesso_pendente = None
         self._acao_drop_item_mundo_pendente = None
+        self.BloquearToggleInventario = False
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles, mouse_pos_tela_px=None, ator_pos_tela_px=None):
         dt = max(0.0, float(dt))
@@ -346,6 +347,8 @@ class Controle:
                 self.Ator.Inventario.mudar_slot_por_scroll(-evento.y)
 
     def _processar_toggle_inventario(self, eventos):
+        if self.BloquearToggleInventario:
+            return
         for evento in eventos:
             if evento.type == pygame.KEYDOWN and evento.key == pygame.K_e:
                 self.InventarioAberto = not self.InventarioAberto

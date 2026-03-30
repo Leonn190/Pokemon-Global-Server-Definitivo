@@ -403,7 +403,7 @@ class PainelArvoreHabilidades:
                 "text_style": {"size": 26, "outline_thickness": 1, "shadow": False},
             },
         )
-        lado = max(36, int(self._graph_rect.width * 0.028) + 2)
+        lado = max(38, int(self._graph_rect.width * 0.028) + 4)
         self._botoes_nodos = {}
         for nodo in self._nodos:
             cx, cy = self._ponto_tela(nodo.id)

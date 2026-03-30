@@ -47,6 +47,9 @@ class InventarioPokemons:
             self._barra_pesquisa.resetar_filtro()
         self._estava_ativo = False
 
+    def bloqueia_toggle_inventario(self):
+        return self._barra_pesquisa is not None and self._barra_pesquisa.esta_editando()
+
     def _ler_limite(self, nomes, padrao):
         for origem in (self.Inventario, self.Perfil):
             if origem is None:
@@ -362,6 +365,8 @@ class InventarioPokemons:
             tela,
             item_oculto=item_oculto_grid,
             highlight=highlight[1] if highlight and highlight[0] == 'grid' else None,
+            eventos=eventos,
+            dt=dt,
         )
         self._painel_times.desenhar(
             tela,
@@ -380,4 +385,5 @@ class InventarioPokemons:
         self.TxtHover.draw(tela)
 
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
-            PokemonInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, self._arrastavel.Rect)
+            rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.2), int(self._arrastavel.Rect.height * 0.2))
+            PokemonInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, rect_drag, exibir_nivel=False)

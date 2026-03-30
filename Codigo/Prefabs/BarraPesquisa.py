@@ -16,6 +16,7 @@ class BarraPesquisa(CaixaTexto):
         self._ordens = []
         self._botoes_ordenacao = []
         self._projecao_indices = []
+        self._projecao_suja = True
 
     @staticmethod
     def _norm(texto):
@@ -27,7 +28,10 @@ class BarraPesquisa(CaixaTexto):
         return ' '.join(base.split())
 
     def definir_lista_base(self, lista):
-        self._lista_base = lista if isinstance(lista, list) else []
+        nova_lista = lista if isinstance(lista, list) else []
+        if nova_lista is not self._lista_base:
+            self._lista_base = nova_lista
+            self._projecao_suja = True
 
     def definir_acessor_nome(self, acessor_nome):
         if callable(acessor_nome):
@@ -53,6 +57,12 @@ class BarraPesquisa(CaixaTexto):
     def tem_projecao_ativa(self):
         return bool(self.texto.strip())
 
+    def set_texto(self, texto):
+        texto_anterior = self.texto
+        super().set_texto(texto)
+        if self.texto != texto_anterior:
+            self._projecao_suja = True
+
     def _aplicar_ordenacao(self, indice):
         if not (0 <= int(indice) < len(self._ordens)):
             return
@@ -68,6 +78,7 @@ class BarraPesquisa(CaixaTexto):
             self._lista_base[i] = item
         for i in range(len(itens_com_idx), total):
             self._lista_base[i] = None
+        self._projecao_suja = True
 
     def _reconstruir_botoes(self):
         self._botoes_ordenacao = []
@@ -117,17 +128,28 @@ class BarraPesquisa(CaixaTexto):
         return valor
 
     def atualizar_projecao(self):
+        if not self._projecao_suja:
+            return
         termo = self._norm(self.texto)
         base = [(i, item) for i, item in enumerate(self._lista_base) if item is not None]
         if termo:
             base = [(i, item) for i, item in base if termo in self._valor_nome(item)]
 
         self._projecao_indices = [indice for indice, _item in base]
+        self._projecao_suja = False
 
     def lista_visivel(self):
         return list(self._projecao_indices)
 
+    def contem_ponto_interativo(self, pos):
+        if self.rect.collidepoint(pos):
+            return True
+        return any(botao.rect.collidepoint(pos) for botao in self._botoes_ordenacao)
+
     def render(self, tela, eventos, dt, jogo=None):
+        texto_anterior = self.texto
         super().render(tela, eventos, dt)
+        if self.texto != texto_anterior:
+            self._projecao_suja = True
         for botao in self._botoes_ordenacao:
             botao.render(tela, eventos, dt, jogo)

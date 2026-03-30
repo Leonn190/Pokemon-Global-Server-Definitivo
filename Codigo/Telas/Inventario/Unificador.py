@@ -72,6 +72,10 @@ class UnificadorInventario:
         if self.Ativo:
             for evento in eventos:
                 if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1 and not self._rect.collidepoint(evento.pos):
+                    if self.Modo == "itens":
+                        tratar_fora = getattr(self.TelaItens, "tratar_clique_fora", None)
+                        if callable(tratar_fora) and tratar_fora(evento):
+                            break
                     self.Ativo = False
                     controle = getattr(self.Ator, 'Controle', None)
                     if controle is not None and hasattr(controle, 'InventarioAberto'):

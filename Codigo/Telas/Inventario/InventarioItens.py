@@ -245,6 +245,17 @@ class InventarioItens:
         self._arrastavel.Item['quantidade'] = self._quantidade(self._arrastavel.Item) - quantidade
         self._item_hover = self._arrastavel.Item
 
+    def tratar_clique_fora(self, evento):
+        if evento.type != pygame.MOUSEBUTTONDOWN or evento.button not in (1, 3):
+            return False
+        if not self._arrastavel.Ativo or self._arrastavel.Item is None:
+            return False
+        if evento.button == 1:
+            self._dropar_fora()
+        else:
+            self._dropar_fora(quantidade=1)
+        return True
+
     def _soltar_no_alvo(self, alvo, botao):
         if not self._arrastavel.Ativo or self._arrastavel.Item is None:
             return
@@ -311,19 +322,8 @@ class InventarioItens:
         if estado == 'vermelho':
             return
 
-        def _mover(item, origem, indice_slot_craft):
-            rect_origem = self._container.item_rect_no_slot(self._container.slot_rect(origem))
-            anim = Arrastavel()
-            anim.iniciar(copy.deepcopy(item), ('inventario', origem), rect_origem, rect_origem.topleft, botao=1)
-            anim.definir_pos_alvo(
-                self._painel_craft.item_rect_no_slot(self._painel_craft.slot_rect(indice_slot_craft)).topleft,
-                ao_final=anim.cancelar,
-                velocidade=18.0,
-            )
-            self._animacoes_receita.append(anim)
-
         self._painel_craft.limpar_preview()
-        self._painel_craft.preencher_receita(receita, self._container, estado=estado, mover_callback=_mover)
+        self._painel_craft.preencher_receita(receita, self._container, estado=estado)
 
     def atualizar(self, tela, eventos, dt, area, ativo=True):
         self._garantir_slots()
@@ -345,9 +345,7 @@ class InventarioItens:
         if receita_clicada is not None:
             self._aplicar_receita(receita_clicada, estado_receita=self._painel_receitas.estado_atual_receita(receita_clicada, self._container))
         self._arrastavel.animar(dt)
-        self._animacoes_receita = [a for a in self._animacoes_receita if a.Ativo]
-        for anim in self._animacoes_receita:
-            anim.animar(dt)
+        self._animacoes_receita = []
 
         mouse = pygame.mouse.get_pos()
         alvo_mouse = self._alvo_no_mouse(mouse)
@@ -423,7 +421,13 @@ class InventarioItens:
             origem_real = self._arrastavel.Origem[2]
             if origem_real is not None and self.Inventario.Itens[origem_real] is None:
                 item_oculto = origem_visual
-        self._container.desenhar(tela, item_oculto=item_oculto, highlight=highlight[1] if highlight and highlight[0] == 'inventario' else None)
+        self._container.desenhar(
+            tela,
+            item_oculto=item_oculto,
+            highlight=highlight[1] if highlight and highlight[0] == 'inventario' else None,
+            eventos=eventos,
+            dt=dt,
+        )
 
         self._painel_info.render(tela, [], 0)
         self.TxtTotal.set_text(f'{self._quantidade_total_itens()} / {self._capacidade_total()} itens')
@@ -436,6 +440,3 @@ class InventarioItens:
 
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
             ItemInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, self._arrastavel.Rect)
-        for anim in self._animacoes_receita:
-            if anim.Ativo and anim.Item is not None:
-                ItemInventario.desenhar_item_no_rect(tela, anim.Item, anim.Rect)

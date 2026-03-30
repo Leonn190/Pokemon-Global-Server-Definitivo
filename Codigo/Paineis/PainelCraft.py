@@ -345,23 +345,16 @@ class PainelCraft:
         self.TxtTitulo.set_pos((self.rect.x + 18, self.rect.y + 12))
         self.TxtTitulo.draw(tela)
 
-        preview = self.preview_dict() or {}
         for i in range(9):
             rect = self.slot_rect(i)
             destaque = highlight == ('craft', i)
-            transparente = i in preview
             surf = pygame.Surface(rect.size, pygame.SRCALPHA)
-            pygame.draw.rect(surf, (76, 96, 140, 120 if transparente else 255), surf.get_rect(), border_radius=10)
+            pygame.draw.rect(surf, (76, 96, 140, 255), surf.get_rect(), border_radius=10)
             pygame.draw.rect(surf, (228, 239, 255) if destaque else (20, 26, 40), surf.get_rect(), 2, border_radius=10)
             tela.blit(surf, rect.topleft)
             item = self.CraftSlots[i]
             if item is not None:
                 ItemInventario.desenhar_item_no_rect(tela, item, self.item_rect_no_slot(rect))
-            elif transparente:
-                ghost = pygame.Surface(rect.size, pygame.SRCALPHA)
-                ItemInventario.desenhar_item_no_rect(ghost, preview[i], pygame.Rect(6, 6, rect.width - 12, rect.height - 12))
-                ghost.set_alpha(105)
-                tela.blit(ghost, rect.topleft)
 
         rect_saida = self.slot_saida_rect()
         self.TxtSeta.set_pos((rect_saida.x - 20, rect_saida.centery))
@@ -371,10 +364,3 @@ class PainelCraft:
         resultado, _ = self.resultado(receitas)
         if resultado is not None:
             ItemInventario.desenhar_item_no_rect(tela, resultado, self.item_rect_no_slot(rect_saida))
-        else:
-            preview_saida = self.preview_saida()
-            if preview_saida is not None:
-                ghost = pygame.Surface(rect_saida.size, pygame.SRCALPHA)
-                ItemInventario.desenhar_item_no_rect(ghost, preview_saida, pygame.Rect(6, 6, rect_saida.width - 12, rect_saida.height - 12))
-                ghost.set_alpha(105)
-                tela.blit(ghost, rect_saida.topleft)

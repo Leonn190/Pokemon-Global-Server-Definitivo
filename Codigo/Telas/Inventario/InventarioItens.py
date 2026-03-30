@@ -47,6 +47,7 @@ class InventarioItens:
         self._estava_ativo = True
 
     def on_close(self):
+        self._concluir_animacoes_receita()
         if self._painel_craft is not None and self._container is not None:
             self._painel_craft.devolver_para_inventario(self._container)
         self._arrastavel.cancelar()
@@ -54,6 +55,19 @@ class InventarioItens:
         if self._barra_pesquisa is not None:
             self._barra_pesquisa.resetar_filtro()
         self._estava_ativo = False
+        self._animacoes_receita.clear()
+
+    def _concluir_animacoes_receita(self):
+        if self._painel_craft is None:
+            self._animacoes_receita.clear()
+            return
+        for anim in self._animacoes_receita:
+            if not anim.Ativo or anim.Item is None:
+                continue
+            origem = anim.Origem if isinstance(anim.Origem, tuple) else ()
+            if len(origem) >= 3 and origem[0] == 'receita':
+                self._painel_craft.colocar_no_slot(origem[2], anim.Item, origem=origem[1])
+            anim.cancelar()
         self._animacoes_receita.clear()
 
     def bloqueia_toggle_inventario(self):
@@ -330,13 +344,19 @@ class InventarioItens:
 
         def _animar_movimento(item, origem_idx, slot_craft):
             if origem_idx is None:
-                return
+                return False
             rect_origem = self._container.item_rect_no_slot(self._container.slot_rect(origem_idx))
             rect_destino = self._painel_craft.item_rect_no_slot(self._painel_craft.slot_rect(slot_craft))
             anim = Arrastavel()
-            anim.iniciar(copy.deepcopy(item), ('receita', origem_idx, slot_craft), rect_origem, rect_origem.center, botao=1)
-            anim.definir_pos_alvo(rect_destino.topleft, ao_final=anim.cancelar, velocidade=20.0)
+            anim.iniciar(item, ('receita', origem_idx, slot_craft), rect_origem, rect_origem.center, botao=1)
+
+            def _finalizar_animacao():
+                self._painel_craft.colocar_no_slot(slot_craft, item, origem=origem_idx)
+                anim.cancelar()
+
+            anim.definir_pos_alvo(rect_destino.topleft, ao_final=_finalizar_animacao, velocidade=20.0)
             self._animacoes_receita.append(anim)
+            return True
 
         self._painel_craft.preencher_receita(receita, self._container, estado=estado, mover_callback=_animar_movimento)
 

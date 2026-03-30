@@ -265,13 +265,15 @@ class PainelCraft:
             retirado, origem = _consumir_reserva(self.chave_item(esperado))
             if retirado is None:
                 continue
-            if atual is None:
-                self.CraftSlots[i] = retirado
-                self._origens[i] = origem
-            else:
-                atual['quantidade'] = self.quantidade(atual) + self.quantidade(retirado)
+            adiar_colocacao = False
             if callable(mover_callback):
-                mover_callback(retirado, origem, i)
+                adiar_colocacao = bool(mover_callback(retirado, origem, i))
+            if not adiar_colocacao:
+                if atual is None:
+                    self.CraftSlots[i] = retirado
+                    self._origens[i] = origem
+                else:
+                    atual['quantidade'] = self.quantidade(atual) + self.quantidade(retirado)
             colocou_algo = True
         self._marcar_sujo()
         return colocou_algo

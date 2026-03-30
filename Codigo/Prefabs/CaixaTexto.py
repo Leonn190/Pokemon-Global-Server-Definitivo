@@ -1,5 +1,4 @@
 import pygame
-from Codigo.Prefabs.Texto import Texto
 from Codigo.Prefabs.Texto import CAMINHO_FONTE_PADRAO
 
 
@@ -180,10 +179,15 @@ class CaixaTexto:
         conteudo = self.placeholder if exibir_placeholder else self.texto
         cor = (160, 166, 190) if exibir_placeholder else (235, 238, 255)
 
-        estilo = dict(self._estilo_texto)
-        estilo["color"] = cor
-        label = Texto(conteudo, (self.rect.x + 16, self.rect.centery), style=estilo)
-        label.draw(tela)
+        surf_texto = self._fonte.render(conteudo, True, cor)
+        max_largura = max(8, self.rect.width - 28)
+        if surf_texto.get_width() > max_largura:
+            area = pygame.Rect(surf_texto.get_width() - max_largura, 0, max_largura, surf_texto.get_height())
+            surf_cortada = pygame.Surface((max_largura, surf_texto.get_height()), pygame.SRCALPHA)
+            surf_cortada.blit(surf_texto, (0, 0), area)
+            surf_texto = surf_cortada
+        pos_texto = (self.rect.x + 14, self.rect.centery - (surf_texto.get_height() // 2))
+        tela.blit(surf_texto, pos_texto)
 
         if self.selecionada and self._cursor_visivel:
             largura_texto = self._fonte.size(self.texto[:self._cursor_indice])[0]

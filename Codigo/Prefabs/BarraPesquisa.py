@@ -4,7 +4,7 @@ import unicodedata
 
 import pygame
 
-from Codigo.Prefabs.Botao import BotaoSelecao
+from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.CaixaTexto import CaixaTexto
 
 
@@ -14,7 +14,6 @@ class BarraPesquisa(CaixaTexto):
         self._lista_base = []
         self._acessor_nome = lambda item: str(item)
         self._ordens = []
-        self._indice_ordem = None
         self._botoes_ordenacao = []
         self._projecao_indices = []
 
@@ -36,7 +35,6 @@ class BarraPesquisa(CaixaTexto):
 
     def definir_ordenacoes(self, ordenacoes):
         self._ordens = []
-        self._indice_ordem = None
         self._botoes_ordenacao = []
 
         for item in list(ordenacoes or []):
@@ -53,7 +51,23 @@ class BarraPesquisa(CaixaTexto):
         self.set_texto('')
 
     def tem_projecao_ativa(self):
-        return bool(self.texto.strip()) or self._indice_ordem is not None
+        return bool(self.texto.strip())
+
+    def _aplicar_ordenacao(self, indice):
+        if not (0 <= int(indice) < len(self._ordens)):
+            return
+        if not isinstance(self._lista_base, list):
+            return
+
+        _rotulo, chave = self._ordens[int(indice)]
+        itens_com_idx = [(idx, item) for idx, item in enumerate(self._lista_base) if item is not None]
+        itens_com_idx.sort(key=lambda par: (self._valor_ordem(chave, par[1]), par[0]))
+
+        total = len(self._lista_base)
+        for i, (_idx_antigo, item) in enumerate(itens_com_idx):
+            self._lista_base[i] = item
+        for i in range(len(itens_com_idx), total):
+            self._lista_base[i] = None
 
     def _reconstruir_botoes(self):
         self._botoes_ordenacao = []
@@ -69,13 +83,12 @@ class BarraPesquisa(CaixaTexto):
             largura = min(largura_max, max(78, 20 + len(rotulo) * 8))
 
             def _acao(_jogo, _botao, idx=indice):
-                self._indice_ordem = idx
+                self._aplicar_ordenacao(idx)
 
-            botao = BotaoSelecao(
+            botao = Botao(
                 pygame.Rect(x, self.rect.centery - altura // 2, largura, altura),
                 rotulo,
                 execute=_acao,
-                selecionado=(indice == self._indice_ordem),
                 style={'text_style': {'size': 18, 'outline': False, 'shadow': False}},
             )
             self._botoes_ordenacao.append(botao)
@@ -109,10 +122,6 @@ class BarraPesquisa(CaixaTexto):
         if termo:
             base = [(i, item) for i, item in base if termo in self._valor_nome(item)]
 
-        if self._indice_ordem is not None and 0 <= self._indice_ordem < len(self._ordens):
-            _rotulo, chave = self._ordens[self._indice_ordem]
-            base.sort(key=lambda par: (self._valor_ordem(chave, par[1]), par[0]))
-
         self._projecao_indices = [indice for indice, _item in base]
 
     def lista_visivel(self):
@@ -120,6 +129,5 @@ class BarraPesquisa(CaixaTexto):
 
     def render(self, tela, eventos, dt, jogo=None):
         super().render(tela, eventos, dt)
-        for indice, botao in enumerate(self._botoes_ordenacao):
-            botao.set_selecionado(self._indice_ordem == indice)
+        for botao in self._botoes_ordenacao:
             botao.render(tela, eventos, dt, jogo)

@@ -127,10 +127,10 @@ class Container(PainelRolavel):
     def _indices_visiveis(self):
         if self.BarraPesquisa is None:
             return []
-        self.BarraPesquisa.definir_lista_base(self.Itens)
-        self.BarraPesquisa.atualizar_projecao()
         if not self.BarraPesquisa.tem_projecao_ativa():
             return []
+        self.BarraPesquisa.definir_lista_base(self.Itens)
+        self.BarraPesquisa.atualizar_projecao()
         return self.BarraPesquisa.lista_visivel()
 
     def _atualizar_mapeamento_visual(self):

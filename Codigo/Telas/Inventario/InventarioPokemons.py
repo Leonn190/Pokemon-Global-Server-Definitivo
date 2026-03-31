@@ -9,8 +9,10 @@ from Codigo.Paineis.Container import Container
 from Codigo.Paineis.PainelTimes import PainelTimes
 from Codigo.Prefabs.Arrastavel import Arrastavel
 from Codigo.Prefabs.BarraPesquisa import BarraPesquisa
+from Codigo.Prefabs.Opcoes import Opções
 from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 
 
 class InventarioPokemons:
@@ -36,6 +38,8 @@ class InventarioPokemons:
         self.TxtHover = Texto('', style={**estilo, 'size': 15, 'color': (174, 190, 224), 'align': 'midright'})
         self._painel_info = Painel((0, 0, 0, 0), cor_fundo=(18, 26, 44, 242), cor_borda=(66, 88, 136), borda=2, raio=16)
         self._barra_pesquisa = None
+        self._opcoes = Opções()
+        self._subtela_ativa = None
 
     def on_open(self):
         self._estava_ativo = True
@@ -43,6 +47,8 @@ class InventarioPokemons:
     def on_close(self):
         self._arrastavel.cancelar()
         self._pokemon_hover = None
+        self._opcoes.fechar()
+        self._subtela_ativa = None
         if self._barra_pesquisa is not None:
             self._barra_pesquisa.resetar_filtro()
         self._estava_ativo = False
@@ -201,6 +207,83 @@ class InventarioPokemons:
     def _chave(self, pokemon):
         return PokemonInventario.chave_pokemon(pokemon) if pokemon is not None else None
 
+    def _abrir_renomear_time(self, indice_time):
+        nome_atual = self._painel_times.nome_time(indice_time)
+
+        def _confirmar(novo_nome):
+            novo = str(novo_nome or '').strip()
+            if not novo:
+                return False
+            self._painel_times.Times[indice_time]['Nome'] = novo
+            self._painel_times.marcar_sujo()
+            return True
+
+        self._subtela_ativa = SubtelaTexto(
+            pygame.display.get_surface().get_size(),
+            'Renomear time',
+            nome_atual,
+            enviar_callback=_confirmar,
+            placeholders='Nome do time...',
+            max_chars=24,
+        )
+
+    def _abrir_confirmacao_doacao(self, pokemon, remover_time=None):
+        nome = self._nome_pokemon(pokemon) or 'este pokémon'
+
+        def _confirmar():
+            self._doar_pokemon(pokemon)
+
+        self._subtela_ativa = SubtelaConfirmacao(
+            pygame.display.get_surface().get_size(),
+            f'Tem certeza que deseja doar {nome}?',
+            confirmar_callback=_confirmar,
+            titulo='Confirmar doação',
+        )
+
+    def _doar_pokemon(self, pokemon):
+        if pokemon is None or self._container is None:
+            return
+        chave = self._chave(pokemon)
+        for i in range(len(self._container.Itens)):
+            atual = self._container.Itens[i]
+            if atual is not None and self._chave(atual) == chave:
+                self._container.Itens[i] = None
+                break
+        for i in range(len(self._painel_times.Times)):
+            slots = self._painel_times.slots_time(i)
+            for j, atual in enumerate(slots):
+                if atual is not None and self._chave(atual) == chave:
+                    slots[j] = None
+        self._container.marcar_sujo()
+        self._painel_times.marcar_sujo()
+
+    def _abrir_opcoes_time(self, pos, indice_time):
+        def _limpar_time():
+            slots = self._painel_times.slots_time(indice_time)
+            for i in range(len(slots)):
+                slots[i] = None
+            self._painel_times.marcar_sujo()
+
+        self._opcoes.abrir(
+            pos,
+            [
+                {'texto': 'Limpar', 'acao': _limpar_time},
+                {'texto': 'Renomear', 'acao': lambda: self._abrir_renomear_time(indice_time)},
+            ],
+            tela_rect=pygame.display.get_surface().get_rect(),
+        )
+
+    def _abrir_opcoes_pokemon(self, pos, pokemon, alvo_time=None):
+        if pokemon is None:
+            return
+        opcoes = [
+            {'texto': 'Analisar', 'acao': lambda: None},
+            {'texto': 'Doar', 'acao': lambda: self._abrir_confirmacao_doacao(pokemon)},
+        ]
+        if alvo_time is not None:
+            opcoes.append({'texto': 'Remover', 'acao': lambda: self._painel_times.retirar_do_slot(alvo_time[0], alvo_time[1])})
+        self._opcoes.abrir(pos, opcoes, tela_rect=pygame.display.get_surface().get_rect())
+
     def _iniciar_arrasto(self, alvo, mouse_pos):
         pokemon = self._pokemon_do_alvo(alvo)
         if pokemon is None:
@@ -318,10 +401,17 @@ class InventarioPokemons:
             self.on_open()
 
         self._reconstruir(area)
+        if self._subtela_ativa is not None:
+            if getattr(self._subtela_ativa, 'encerrada', False):
+                self._subtela_ativa = None
+            else:
+                return
+
         self._container._normalizar_tamanho()
         self._container._processar_scroll(eventos)
         self._painel_times._processar_scroll(eventos)
         self._arrastavel.animar(dt)
+        self._opcoes.processar_eventos(eventos)
 
         mouse = pygame.mouse.get_pos()
         alvo_mouse = self._alvo_no_mouse(mouse)
@@ -346,6 +436,24 @@ class InventarioPokemons:
 
                 if alvo is not None and self._pokemon_do_alvo(alvo) is not None:
                     self._iniciar_arrasto(alvo, evento.pos)
+            elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
+                alvo_ctx = self._painel_times.alvo_contexto_no_mouse(evento.pos) if self._painel_times is not None else None
+                if alvo_ctx is not None:
+                    if alvo_ctx[0] == 'time_card':
+                        self._abrir_opcoes_time(evento.pos, alvo_ctx[1])
+                    elif alvo_ctx[0] == 'time_slot':
+                        pokemon_time = self._painel_times.pokemon_no_slot(alvo_ctx[1], alvo_ctx[2])
+                        if pokemon_time is not None:
+                            self._abrir_opcoes_pokemon(evento.pos, pokemon_time, alvo_time=(alvo_ctx[1], alvo_ctx[2]))
+                        else:
+                            self._abrir_opcoes_time(evento.pos, alvo_ctx[1])
+                    continue
+
+                alvo = self._alvo_no_mouse(evento.pos)
+                if alvo is not None and alvo[0] == 'grid':
+                    pokemon = self._pokemon_do_alvo(alvo)
+                    if pokemon is not None:
+                        self._abrir_opcoes_pokemon(evento.pos, pokemon)
 
     def renderizar(self, tela, area, eventos, dt, ativo=True):
         self.atualizar(eventos, dt, area, ativo=ativo)
@@ -387,3 +495,6 @@ class InventarioPokemons:
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
             rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.1), int(self._arrastavel.Rect.height * 0.1))
             PokemonInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, rect_drag, exibir_nivel=False)
+        self._opcoes.render(tela, eventos, dt)
+        if self._subtela_ativa is not None:
+            self._subtela_ativa.render(tela, eventos, dt)

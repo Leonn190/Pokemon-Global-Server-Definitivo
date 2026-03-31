@@ -358,7 +358,11 @@ class Botao:
             pygame.draw.rect(tela, border_now, self.rect, width=bw, border_radius=radius)
 
         self._update_text_color_fast(text_style)
-        self.text.set_pos(self.rect.center)
+        ancora_texto = str(self.style.get("text_anchor", "center")).strip().lower()
+        if ancora_texto == "left":
+            self.text.set_pos((self.rect.x + 12, self.rect.centery))
+        else:
+            self.text.set_pos(self.rect.center)
         self.text.draw(tela)
 
         if self.tooltip is not None:

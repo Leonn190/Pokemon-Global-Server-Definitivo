@@ -54,7 +54,11 @@ class InventarioPokemons:
         self._estava_ativo = False
 
     def bloqueia_toggle_inventario(self):
-        return self._barra_pesquisa is not None and self._barra_pesquisa.esta_editando()
+        return (
+            (self._barra_pesquisa is not None and self._barra_pesquisa.esta_editando())
+            or self._subtela_ativa is not None
+            or self._opcoes.Ativa
+        )
 
     def _ler_limite(self, nomes, padrao):
         for origem in (self.Inventario, self.Perfil):
@@ -284,6 +288,14 @@ class InventarioPokemons:
             opcoes.append({'texto': 'Remover', 'acao': lambda: self._painel_times.retirar_do_slot(alvo_time[0], alvo_time[1])})
         self._opcoes.abrir(pos, opcoes, tela_rect=pygame.display.get_surface().get_rect())
 
+    def _processar_atalho_enter_pesquisa(self, eventos):
+        if self._barra_pesquisa is None or self._subtela_ativa is not None or self._opcoes.Ativa:
+            return
+        for evento in eventos:
+            if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                self._barra_pesquisa.selecionada = not self._barra_pesquisa.selecionada
+                break
+
     def _iniciar_arrasto(self, alvo, mouse_pos):
         pokemon = self._pokemon_do_alvo(alvo)
         if pokemon is None:
@@ -412,6 +424,11 @@ class InventarioPokemons:
         self._painel_times._processar_scroll(eventos)
         self._arrastavel.animar(dt)
         self._opcoes.processar_eventos(eventos)
+        self._processar_atalho_enter_pesquisa(eventos)
+
+        if self._opcoes.Ativa:
+            self._pokemon_hover = None
+            return
 
         mouse = pygame.mouse.get_pos()
         alvo_mouse = self._alvo_no_mouse(mouse)
@@ -460,7 +477,7 @@ class InventarioPokemons:
         if not ativo:
             return
 
-        highlight = self._alvo_no_mouse(pygame.mouse.get_pos())
+        highlight = None if (self._subtela_ativa is not None or self._opcoes.Ativa) else self._alvo_no_mouse(pygame.mouse.get_pos())
         item_oculto_grid = None
         item_oculto_time = None
         if self._arrastavel.Ativo and self._arrastavel.Origem:
@@ -494,7 +511,7 @@ class InventarioPokemons:
 
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
             rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.1), int(self._arrastavel.Rect.height * 0.1))
-            PokemonInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, rect_drag, exibir_nivel=False)
+            PokemonInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, rect_drag, exibir_nivel=False, escala_sprite=0.35)
         self._opcoes.render(tela, eventos, dt)
         if self._subtela_ativa is not None:
             self._subtela_ativa.render(tela, eventos, dt)

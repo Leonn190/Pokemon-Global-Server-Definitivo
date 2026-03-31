@@ -71,13 +71,18 @@ class CenaMundo:
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
 
         bloqueio_gameplay = False
+        player = self.ControladorMundo.player_local
+        inventario_aberto = bool(
+            player is not None
+            and getattr(player, "Controle", None) is not None
+            and bool(getattr(player.Controle, "InventarioAberto", False))
+        )
         if self.Terminal is not None:
-            EVENTOS = self.Terminal.processar_eventos(EVENTOS)
+            EVENTOS = self.Terminal.processar_eventos(EVENTOS, bloquear_atalho_enter=inventario_aberto)
             bloqueio_gameplay = bool(self.Terminal.esta_digitando)
 
         self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
 
-        player = self.ControladorMundo.player_local
         if player is not None and getattr(player, "Controle", None) is not None and self.SubtelaInventario is not None:
             player.Controle.BloquearToggleInventario = self.SubtelaInventario.bloquear_toggle_inventario()
         if player is not None and self.SubtelaOpcoes.Ativa:

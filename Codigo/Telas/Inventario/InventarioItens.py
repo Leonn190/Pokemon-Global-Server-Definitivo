@@ -115,6 +115,7 @@ class InventarioItens:
                 stackable=True,
             )
             self._barra_pesquisa = BarraPesquisa(pygame.Rect(0, 0, 10, 10), placeholder='Buscar item...')
+            self._barra_pesquisa.definir_prefixo_imutavel(8)
             self._barra_pesquisa.definir_acessor_nome(ItemInventario.nome_item)
             self._barra_pesquisa.definir_ordenacoes([
                 ('Alfabética', ItemInventario.nome_item),
@@ -122,12 +123,14 @@ class InventarioItens:
                 ('Estilo', ItemInventario.estilo_item),
             ])
             self._container.configurar_barra_pesquisa(self._barra_pesquisa)
+            self._container.configurar_slots_especiais(8)
         else:
             self._container.Itens = self.Inventario.Itens
             self._container.SlotsTotal = self._limite_slots()
             self._container.SlotPx = 68
             self._container.configurar_rect(self._area_grid)
             self._container.configurar_barra_pesquisa(self._barra_pesquisa)
+            self._container.configurar_slots_especiais(8)
 
         if self._painel_craft is None:
             self._painel_craft = PainelCraft(self._area_craft)

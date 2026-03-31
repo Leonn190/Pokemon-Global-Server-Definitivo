@@ -42,6 +42,8 @@ class Container(PainelRolavel):
         self._topo_slots = 0
         self._mapeamento_visual_real = []
         self._buffer_linhas_geradas = 3
+        self.SlotsEspeciaisFixos = 0
+        self._fonte_slots_especiais = pygame.font.SysFont('arial', 28, bold=True)
 
         self._normalizar_tamanho()
         self.atualizar_area_real()
@@ -58,6 +60,10 @@ class Container(PainelRolavel):
         self._topo_slots = max(0, int(altura_topo)) if barra_pesquisa is not None else 0
         self._atualizar_layout_barra()
         self.atualizar_area_real()
+        self.marcar_sujo()
+
+    def configurar_slots_especiais(self, quantidade):
+        self.SlotsEspeciaisFixos = max(0, int(quantidade))
         self.marcar_sujo()
 
     def _atualizar_layout_barra(self):
@@ -186,14 +192,21 @@ class Container(PainelRolavel):
             rect_slot.height - margem * 2,
         )
 
-    def desenhar_slot(self, tela, rect, destaque=False, transparente=False):
+    def desenhar_slot(self, tela, rect, destaque=False, transparente=False, indice_slot=None):
         alpha = 120 if transparente else 255
-        fundo = (76, 96, 140, alpha)
+        slot_especial = indice_slot is not None and int(indice_slot) < self.SlotsEspeciaisFixos
+        fundo = (98, 132, 196, alpha) if slot_especial else (76, 96, 140, alpha)
         borda = (228, 239, 255, alpha) if destaque else (20, 26, 40, alpha)
 
         surf = pygame.Surface(rect.size, pygame.SRCALPHA)
         pygame.draw.rect(surf, fundo, surf.get_rect(), border_radius=10)
         pygame.draw.rect(surf, borda, surf.get_rect(), 2, border_radius=10)
+
+        if slot_especial:
+            txt = self._fonte_slots_especiais.render(str(int(indice_slot) + 1), True, (230, 240, 255))
+            txt.set_alpha(70 if not transparente else 40)
+            surf.blit(txt, txt.get_rect(center=(rect.width // 2, rect.height // 2)))
+
         tela.blit(surf, rect.topleft)
 
     def indice_no_mouse(self, mouse_pos):
@@ -476,7 +489,7 @@ class Container(PainelRolavel):
 
         for i in range(slot_inicio, slot_fim):
             rect_slot = self.slot_rect_local(i)
-            self.desenhar_slot(tela, rect_slot, destaque=(highlight == i))
+            self.desenhar_slot(tela, rect_slot, destaque=(highlight == i), indice_slot=i)
 
             indice_real = self._mapeamento_visual_real[i] if i < len(self._mapeamento_visual_real) else i
             item = self.Itens[indice_real] if indice_real is not None and 0 <= indice_real < len(self.Itens) else None
@@ -492,7 +505,7 @@ class Container(PainelRolavel):
                 continue
 
             rect_slot = self.slot_rect_local(indice)
-            self.desenhar_slot(tela, rect_slot, transparente=True)
+            self.desenhar_slot(tela, rect_slot, transparente=True, indice_slot=indice)
 
             ghost = pygame.Surface(rect_slot.size, pygame.SRCALPHA)
             self.RenderizadorItem.desenhar_item_no_rect(

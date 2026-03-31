@@ -207,6 +207,27 @@ class PainelTimes(PainelRolavel):
 
         return None
 
+    def alvo_contexto_no_mouse(self, mouse_pos):
+        if not self.rect.collidepoint(mouse_pos):
+            return None
+        mouse_local = self._mouse_global_para_local(mouse_pos)
+        for indice_time in range(len(self.Times)):
+            card = self._card_rect_local(indice_time)
+            if not card.collidepoint(mouse_local):
+                continue
+            for indice_slot in range(self.SlotsPorTime):
+                rect = self._slot_rect_local(indice_time, indice_slot)
+                if rect.collidepoint(mouse_local):
+                    return ('time_slot', indice_time, indice_slot)
+            return ('time_card', indice_time, None)
+        return None
+
+    def poder_time(self, indice):
+        total = 0.0
+        for pokemon in self.slots_time(indice):
+            total += PokemonInventario.poder_total(pokemon)
+        return int(total)
+
     def draw(self, tela):
         tela.fill((0, 0, 0, 0))
         tela.fill(self.CorFundo)
@@ -232,8 +253,12 @@ class PainelTimes(PainelRolavel):
             pygame.draw.rect(tela, (24, 34, 56), card, border_radius=14)
             pygame.draw.rect(tela, (58, 80, 128), card, 2, border_radius=14)
 
+            txt_poder = Texto(f'Poder: {self.poder_time(indice_time)}', style={**estilo_nome, 'size': 13, 'color': (175, 196, 236)})
+            txt_poder.set_pos((card.x + 12, card.y + card.height - 12))
+            txt_poder.draw(tela)
+
             txt_nome = Texto(self.nome_time(indice_time), style=estilo_nome)
-            txt_nome.set_pos((card.x + 14, card.y + 12))
+            txt_nome.set_pos((card.x + 84, card.y + 12))
             txt_nome.draw(tela)
 
             for indice_slot in range(self.SlotsPorTime):

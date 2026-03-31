@@ -12,6 +12,7 @@ class BarraPesquisa(CaixaTexto):
     def __init__(self, rect: pygame.Rect, placeholder='Pesquisar...', max_chars=28):
         super().__init__(rect, texto_inicial='', placeholder=placeholder, max_chars=max_chars, ativo=True)
         self._lista_base = []
+        self._indices_fixos_imutaveis = 0
         self._acessor_nome = lambda item: str(item)
         self._ordens = []
         self._botoes_ordenacao = []
@@ -35,6 +36,10 @@ class BarraPesquisa(CaixaTexto):
             self._lista_base = nova_lista
             self._cache_nome_normalizado.clear()
             self._projecao_suja = True
+
+    def definir_prefixo_imutavel(self, quantidade):
+        self._indices_fixos_imutaveis = max(0, int(quantidade))
+        self._projecao_suja = True
 
     def definir_acessor_nome(self, acessor_nome):
         if callable(acessor_nome):
@@ -76,13 +81,14 @@ class BarraPesquisa(CaixaTexto):
             return
 
         _rotulo, chave = self._ordens[int(indice)]
-        itens_com_idx = [(idx, item) for idx, item in enumerate(self._lista_base) if item is not None]
+        prefixo = max(0, min(self._indices_fixos_imutaveis, len(self._lista_base)))
+        itens_com_idx = [(idx, item) for idx, item in enumerate(self._lista_base[prefixo:], start=prefixo) if item is not None]
         itens_com_idx.sort(key=lambda par: (self._valor_ordem(chave, par[1]), par[0]))
 
         total = len(self._lista_base)
-        for i, (_idx_antigo, item) in enumerate(itens_com_idx):
+        for i, (_idx_antigo, item) in enumerate(itens_com_idx, start=prefixo):
             self._lista_base[i] = item
-        for i in range(len(itens_com_idx), total):
+        for i in range(prefixo + len(itens_com_idx), total):
             self._lista_base[i] = None
         self._projecao_suja = True
 
@@ -150,11 +156,13 @@ class BarraPesquisa(CaixaTexto):
         if not self._projecao_suja:
             return
         termo = self._norm(self.texto)
-        base = [(i, item) for i, item in enumerate(self._lista_base) if item is not None]
+        prefixo = max(0, min(self._indices_fixos_imutaveis, len(self._lista_base)))
+        fixos = list(range(prefixo))
+        base = [(i, item) for i, item in enumerate(self._lista_base[prefixo:], start=prefixo) if item is not None]
         if termo:
             base = [(i, item) for i, item in base if termo in self._valor_nome(item)]
 
-        self._projecao_indices = [indice for indice, _item in base]
+        self._projecao_indices = fixos + [indice for indice, _item in base]
         self._projecao_suja = False
 
     def lista_visivel(self):

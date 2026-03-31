@@ -31,10 +31,14 @@ class CaixaTexto:
         self._fonte_tamanho = int(self._estilo_texto["size"])
         self._fonte = pygame.font.Font(str(CAMINHO_FONTE_PADRAO), self._fonte_tamanho)
         self._cursor_altura = max(12, int(self._fonte.get_height() * 0.9))
+        self._cache_render_chave = None
+        self._cache_render_surf = None
+        self._prefixos_largura = [0]
 
     def set_texto(self, texto):
         self.texto = str(texto)[: self.max_chars]
         self._cursor_indice = min(self._cursor_indice, len(self.texto))
+        self._invalidar_cache_texto()
 
     def set_ativo(self, ativo: bool):
         self.ativo = bool(ativo)
@@ -51,24 +55,41 @@ class CaixaTexto:
         trecho = conteudo[:espaco]
         self.texto = self.texto[:self._cursor_indice] + trecho + self.texto[self._cursor_indice:]
         self._cursor_indice += len(trecho)
+        self._invalidar_cache_texto()
 
     def _apagar_anterior(self):
         if self._cursor_indice <= 0:
             return
         self.texto = self.texto[:self._cursor_indice - 1] + self.texto[self._cursor_indice:]
         self._cursor_indice -= 1
+        self._invalidar_cache_texto()
 
     def _apagar_atual(self):
         if self._cursor_indice >= len(self.texto):
             return
         self.texto = self.texto[:self._cursor_indice] + self.texto[self._cursor_indice + 1:]
+        self._invalidar_cache_texto()
+
+    def _invalidar_cache_texto(self):
+        self._cache_render_chave = None
+        self._cache_render_surf = None
+        self._prefixos_largura = [0]
+
+    def _garantir_prefixos_largura(self):
+        if len(self._prefixos_largura) == len(self.texto) + 1:
+            return
+        self._prefixos_largura = [0]
+        acum = 0
+        for ch in self.texto:
+            acum += self._fonte.size(ch)[0]
+            self._prefixos_largura.append(acum)
 
     def _indice_cursor_por_mouse(self, pos_mouse_x):
         x_interno = pos_mouse_x - (self.rect.x + 16)
         if x_interno <= 0:
             return 0
-        for i in range(len(self.texto) + 1):
-            largura = self._fonte.size(self.texto[:i])[0]
+        self._garantir_prefixos_largura()
+        for i, largura in enumerate(self._prefixos_largura):
             if largura >= x_interno:
                 return i
         return len(self.texto)
@@ -162,6 +183,7 @@ class CaixaTexto:
         if self._fonte_tamanho != estilo_tamanho:
             self._fonte_tamanho = estilo_tamanho
             self._fonte = pygame.font.Font(str(CAMINHO_FONTE_PADRAO), estilo_tamanho)
+            self._invalidar_cache_texto()
         self._cursor_altura = max(12, int(self._fonte.get_height() * 0.9))
 
         self._cursor_timer += dt
@@ -179,7 +201,11 @@ class CaixaTexto:
         conteudo = self.placeholder if exibir_placeholder else self.texto
         cor = (160, 166, 190) if exibir_placeholder else (235, 238, 255)
 
-        surf_texto = self._fonte.render(conteudo, True, cor)
+        chave_render = (conteudo, cor, self._fonte_tamanho)
+        if self._cache_render_chave != chave_render:
+            self._cache_render_chave = chave_render
+            self._cache_render_surf = self._fonte.render(conteudo, True, cor)
+        surf_texto = self._cache_render_surf
         max_largura = max(8, self.rect.width - 28)
         if surf_texto.get_width() > max_largura:
             area = pygame.Rect(surf_texto.get_width() - max_largura, 0, max_largura, surf_texto.get_height())
@@ -190,7 +216,8 @@ class CaixaTexto:
         tela.blit(surf_texto, pos_texto)
 
         if self.selecionada and self._cursor_visivel:
-            largura_texto = self._fonte.size(self.texto[:self._cursor_indice])[0]
+            self._garantir_prefixos_largura()
+            largura_texto = self._prefixos_largura[min(self._cursor_indice, len(self._prefixos_largura) - 1)]
             x_cursor = min(self.rect.right - 14, self.rect.x + 16 + largura_texto + 2)
             centro_y = self.rect.centery
             y0 = max(self.rect.y + 8, centro_y - (self._cursor_altura // 2))

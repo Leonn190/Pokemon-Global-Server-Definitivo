@@ -41,6 +41,7 @@ class Container(PainelRolavel):
         self.BarraPesquisa = None
         self._topo_slots = 0
         self._mapeamento_visual_real = []
+        self._buffer_linhas_geradas = 3
 
         self._normalizar_tamanho()
         self.atualizar_area_real()
@@ -202,13 +203,27 @@ class Container(PainelRolavel):
             return None
 
         mouse_local = self._mouse_global_para_local(mouse_pos)
+        grid_w = self.Colunas * self.SlotPx + max(0, self.Colunas - 1) * self.Gap
+        x_base = max(self.Padding, (self.rect.width - grid_w) // 2)
+        y_base = self.Padding + self._topo_slots
 
-        for i in range(self.SlotsTotal):
-            rect = self.slot_rect_local(i)
-            if rect.collidepoint(mouse_local):
-                return i
+        x_rel = mouse_local[0] - x_base
+        y_rel = mouse_local[1] - y_base
+        if x_rel < 0 or y_rel < 0:
+            return None
 
-        return None
+        passo = self.SlotPx + self.Gap
+        col = int(x_rel // passo)
+        lin = int(y_rel // passo)
+        if col < 0 or col >= self.Colunas or lin < 0:
+            return None
+        if (x_rel % passo) >= self.SlotPx or (y_rel % passo) >= self.SlotPx:
+            return None
+
+        indice = lin * self.Colunas + col
+        if not (0 <= indice < self.SlotsTotal):
+            return None
+        return indice
 
     def item_no_mouse(self, mouse_pos):
         indice = self.indice_no_mouse(mouse_pos)
@@ -425,6 +440,26 @@ class Container(PainelRolavel):
     def _assinatura_visual(self, item_oculto, highlight, preview):
         return (item_oculto, highlight, self._assinatura_preview(preview))
 
+    def _intervalo_slots_gerados(self):
+        linhas_totais = self._linhas_totais()
+        passo = self.SlotPx + self.Gap
+        if passo <= 0:
+            return 0, self.SlotsTotal
+
+        topo_grid = self.Padding + self._topo_slots
+        y_inicio_visivel = self.ScrollY - topo_grid
+        y_fim_visivel = self.ScrollY + self.rect.height - topo_grid
+
+        lin_inicio = max(0, y_inicio_visivel // passo)
+        lin_fim = min(linhas_totais - 1, y_fim_visivel // passo)
+
+        lin_inicio = max(0, int(lin_inicio) - self._buffer_linhas_geradas)
+        lin_fim = min(linhas_totais - 1, int(lin_fim) + self._buffer_linhas_geradas)
+
+        slot_inicio = max(0, lin_inicio * self.Colunas)
+        slot_fim = min(self.SlotsTotal, (lin_fim + 1) * self.Colunas)
+        return slot_inicio, slot_fim
+
     def draw(self, tela):
         tela.fill((0, 0, 0, 0))
         if hasattr(self, 'CorFundo'):
@@ -437,8 +472,9 @@ class Container(PainelRolavel):
         item_oculto = self._item_oculto_render
         highlight = self._highlight_render
         preview = self._preview_render or {}
+        slot_inicio, slot_fim = self._intervalo_slots_gerados()
 
-        for i in range(self.SlotsTotal):
+        for i in range(slot_inicio, slot_fim):
             rect_slot = self.slot_rect_local(i)
             self.desenhar_slot(tela, rect_slot, destaque=(highlight == i))
 
@@ -451,6 +487,8 @@ class Container(PainelRolavel):
 
         for indice, item_preview in preview.items():
             if item_preview is None:
+                continue
+            if not (slot_inicio <= indice < slot_fim):
                 continue
 
             rect_slot = self.slot_rect_local(indice)

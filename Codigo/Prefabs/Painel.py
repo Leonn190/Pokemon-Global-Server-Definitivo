@@ -251,6 +251,9 @@ class PainelRolavel(Painel):
 
         if scroll_antes != scroll_depois:
             self._viewport_suja = True
+            # Alguns painéis virtualizam o conteúdo com base na área visível.
+            # Nesses casos, ao rolar, precisamos redesenhar o conteúdo.
+            self._conteudo_sujo = True
 
         mouse_global = pygame.mouse.get_pos()
         mouse_local = (

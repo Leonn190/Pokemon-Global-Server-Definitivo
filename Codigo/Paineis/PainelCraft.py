@@ -357,6 +357,13 @@ class PainelCraft:
             item = self.CraftSlots[i]
             if item is not None:
                 ItemInventario.desenhar_item_no_rect(tela, item, self.item_rect_no_slot(rect))
+            elif self.PreviewReceita is not None:
+                item_preview = self.PreviewReceita.get('grade', [None] * 9)[i]
+                if item_preview is not None:
+                    ghost = pygame.Surface(rect.size, pygame.SRCALPHA)
+                    ItemInventario.desenhar_item_no_rect(ghost, item_preview, pygame.Rect(6, 6, rect.width - 12, rect.height - 12))
+                    ghost.set_alpha(110)
+                    tela.blit(ghost, rect.topleft)
 
         rect_saida = self.slot_saida_rect()
         self.TxtSeta.set_pos((rect_saida.x - 20, rect_saida.centery))
@@ -366,3 +373,8 @@ class PainelCraft:
         resultado, _ = self.resultado(receitas)
         if resultado is not None:
             ItemInventario.desenhar_item_no_rect(tela, resultado, self.item_rect_no_slot(rect_saida))
+        elif self.PreviewReceita is not None and self.PreviewReceita.get('saida') is not None:
+            ghost = pygame.Surface(rect_saida.size, pygame.SRCALPHA)
+            ItemInventario.desenhar_item_no_rect(ghost, self.PreviewReceita['saida'], pygame.Rect(6, 6, rect_saida.width - 12, rect_saida.height - 12))
+            ghost.set_alpha(110)
+            tela.blit(ghost, rect_saida.topleft)

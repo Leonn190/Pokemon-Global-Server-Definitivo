@@ -217,11 +217,14 @@ class PokemonInventario:
         txt_nivel.draw(tela)
 
     @classmethod
-    def desenhar_item_no_rect(cls, tela, pokemon, rect: pygame.Rect, exibir_nivel: bool = True):
+    def desenhar_item_no_rect(cls, tela, pokemon, rect: pygame.Rect, exibir_nivel: bool = True, escala_sprite: float = 1.0):
         if pokemon is None:
             return
 
-        sprite = cls.surface_pokemon(pokemon, lado_px=max(20, rect.width - 10))
+        escala = max(0.1, float(escala_sprite))
+        lado_base = min(rect.width, rect.height)
+        lado_sprite = max(20, int(lado_base * escala))
+        sprite = cls.surface_pokemon(pokemon, lado_px=lado_sprite)
         if sprite is not None:
             tela.blit(sprite, sprite.get_rect(center=rect.center))
         else:

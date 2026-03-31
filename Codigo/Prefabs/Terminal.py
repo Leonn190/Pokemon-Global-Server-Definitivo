@@ -83,10 +83,13 @@ class Terminal:
             self._scroll_linhas = 0
             self._historico_sujo = True
 
-    def processar_eventos(self, eventos):
+    def processar_eventos(self, eventos, bloquear_atalho_enter=False):
         eventos_restantes = []
         for evento in eventos:
             if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                if bloquear_atalho_enter and not self.digitando:
+                    eventos_restantes.append(evento)
+                    continue
                 if not self.digitando:
                     self.digitando = True
                     self.caixa.set_ativo(True)

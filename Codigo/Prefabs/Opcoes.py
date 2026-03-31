@@ -23,6 +23,7 @@ _ESTILO_BOTAO_OPCOES = {
         "shadow": False,
         "align": "midleft",
     },
+    "text_anchor": "left",
 }
 
 
@@ -31,7 +32,7 @@ class Opções:
         self.Ativa = False
         self.Rect = pygame.Rect(0, 0, 0, 0)
         self._botoes = []
-        self._largura = 176
+        self._largura = 162
         self._altura_item = 28
 
     def abrir(self, origem_pos, opcoes, tela_rect=None):

@@ -57,6 +57,14 @@ class InventarioItens:
     def bloqueia_toggle_inventario(self):
         return self._barra_pesquisa is not None and self._barra_pesquisa.esta_editando()
 
+    def _processar_atalho_enter_pesquisa(self, eventos):
+        if self._barra_pesquisa is None:
+            return
+        for evento in eventos:
+            if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                self._barra_pesquisa.selecionada = not self._barra_pesquisa.selecionada
+                break
+
     def _capacidade_total(self):
         return max(1, int(getattr(self.Perfil, 'NivelMochila', 1)) * 100)
 
@@ -224,10 +232,7 @@ class InventarioItens:
                 if resto is not None:
                     self._container.devolver_para_origem_ou_vazio(origem_aux, resto)
             else:
-                resto = self._painel_craft.colocar_no_slot(indice, item, origem=origem_aux)
-                if isinstance(resto, tuple):
-                    trocado, _origem_trocada = resto
-                    self._container.devolver_para_origem_ou_vazio(origem_aux, trocado)
+                self._painel_craft.restaurar_no_slot_origem(indice, item, origem=origem_aux, container=self._container)
             self._arrastavel.cancelar()
         self._arrastavel.definir_pos_alvo(rect.topleft, ao_final=_finalizar)
 
@@ -344,6 +349,7 @@ class InventarioItens:
         self._reconstruir(area)
         self._container._normalizar_tamanho()
         self._container._processar_scroll(eventos)
+        self._processar_atalho_enter_pesquisa(eventos)
 
         receita_clicada, receita_hover = self._painel_receitas.processar_eventos(tela, eventos, dt, self._container)
         self._painel_craft.set_preview(receita_hover)

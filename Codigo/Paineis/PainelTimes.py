@@ -258,7 +258,7 @@ class PainelTimes(PainelRolavel):
             txt_poder.draw(tela)
 
             txt_nome = Texto(self.nome_time(indice_time), style=estilo_nome)
-            txt_nome.set_pos((card.x + 84, card.y + 12))
+            txt_nome.set_pos((card.x + 14, card.y + 12))
             txt_nome.draw(tela)
 
             for indice_slot in range(self.SlotsPorTime):

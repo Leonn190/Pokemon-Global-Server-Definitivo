@@ -190,6 +190,14 @@ class PainelCraft:
         self._marcar_sujo()
         return destino, antiga_origem
 
+    def restaurar_no_slot_origem(self, indice, item, origem=None, container=None):
+        resto = self.colocar_no_slot(indice, item, origem=origem)
+        if not isinstance(resto, tuple):
+            return
+        trocado, origem_trocada = resto
+        if container is not None and trocado is not None:
+            container.devolver_para_origem_ou_vazio(origem_trocada, trocado)
+
     def retirar_do_slot(self, indice, quantidade=None):
         item = self.CraftSlots[indice]
         if item is None:

@@ -207,6 +207,36 @@ def preencher_habilidades_iniciais(estado_pokemon: Dict[str, object], total_slot
     estado_pokemon["memorias"] = [None] * quantidade
 
 
+def normalizar_habilidades_memorias(estado_pokemon: Dict[str, object], total_slots: int = 5) -> None:
+    if not isinstance(estado_pokemon, dict):
+        return
+    quantidade = max(1, min(5, int(total_slots or 5)))
+    habilidades = estado_pokemon.get("habilidades")
+    memorias = estado_pokemon.get("memorias")
+    if not isinstance(habilidades, list):
+        habilidades = []
+    if not isinstance(memorias, list):
+        memorias = []
+    habilidades = list(habilidades[:quantidade]) + [None] * max(0, quantidade - len(habilidades))
+    memorias = [None] * quantidade
+
+    conhecidos = {
+        str(x.get("Ataque", "")).strip().lower()
+        for x in habilidades
+        if isinstance(x, dict) and str(x.get("Ataque", "")).strip()
+    }
+    opcoes = [atk for atk in _ATAQUES_DISPONIVEIS if str(atk.get("Ataque", "")).strip().lower() not in conhecidos]
+    for i, ataque in enumerate(habilidades):
+        if ataque is None and opcoes:
+            escolhido = random.choice(opcoes)
+            habilidades[i] = _ataque_com_nivel(escolhido)
+            chave = str(escolhido.get("Ataque", "")).strip().lower()
+            opcoes = [atk for atk in opcoes if str(atk.get("Ataque", "")).strip().lower() != chave]
+
+    estado_pokemon["habilidades"] = habilidades
+    estado_pokemon["memorias"] = memorias
+
+
 def subir_nivel_pokemon(pokemon: Dict[str, object], vezes: int = 1) -> Dict[str, object]:
     dados = pokemon if isinstance(pokemon, dict) else {}
     estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else dados
@@ -278,6 +308,7 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     estado["fruta_favorita"] = random.choice(_FRUTAS_DISPONIVEIS) if _FRUTAS_DISPONIVEIS else ""
 
     subir_nivel_pokemon(estado, vezes=max(0, min(100, nivel_original + bonus_nivel)))
+    normalizar_habilidades_memorias(estado, total_slots=5)
     return bruto
 
 

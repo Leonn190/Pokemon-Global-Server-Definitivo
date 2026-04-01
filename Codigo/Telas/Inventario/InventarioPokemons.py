@@ -294,7 +294,7 @@ class InventarioPokemons:
         fonte = pokemon.get('estado') if isinstance(pokemon.get('estado'), dict) else pokemon
         xp_atual = int(float(fonte.get('XP', fonte.get('xp', 0)) or 0))
         xp_alvo = int(float(fonte.get('XPAlvo', fonte.get('xp_alvo', 0)) or 0))
-        if xp_atual <= xp_alvo or xp_alvo <= 0:
+        if xp_atual < xp_alvo or xp_alvo <= 0:
             return
         fonte['XP'] = max(0, xp_atual - xp_alvo)
         fonte['xp'] = fonte['XP']
@@ -343,9 +343,21 @@ class InventarioPokemons:
     def _abrir_opcoes_pokemon(self, pos, pokemon, alvo_time=None):
         if pokemon is None:
             return
+        favorito = bool(pokemon.get('favorito', False)) if isinstance(pokemon, dict) else False
+
+        def _toggle_favorito(p=pokemon):
+            if not isinstance(p, dict):
+                return
+            p['favorito'] = not bool(p.get('favorito', False))
+            if self._container is not None:
+                self._container.marcar_sujo()
+            if self._painel_times is not None:
+                self._painel_times.marcar_sujo()
+
         opcoes = [
             {'texto': 'Analisar', 'acao': lambda p=pokemon: self._abrir_analise_pokemon(p)},
             {'texto': 'Renomear', 'acao': lambda p=pokemon: self._abrir_renomear_pokemon(p)},
+            {'texto': 'Desfavoritar' if favorito else 'Favoritar', 'acao': _toggle_favorito},
             {'texto': 'Doar', 'acao': lambda: self._abrir_confirmacao_doacao(pokemon)},
         ]
         if alvo_time is not None:
@@ -554,7 +566,11 @@ class InventarioPokemons:
 
                 alvo = self._alvo_no_mouse(evento.pos)
                 if alvo is not None and alvo[0] == 'grid':
-                    pokemon = self._pokemon_do_alvo(alvo)
+                    pokemon = None
+                    if self._container is not None:
+                        indice_real = self._container.indice_real_por_visual(alvo[1], exigir_item=True)
+                        if indice_real is not None and 0 <= indice_real < len(self._container.Itens):
+                            pokemon = self._container.Itens[indice_real]
                     if pokemon is not None:
                         self._abrir_opcoes_pokemon(evento.pos, pokemon)
 

@@ -67,20 +67,20 @@ class PainelReceitas(PainelRolavel):
     @classmethod
     def _caminho_json(cls):
         caminhos = [
-            Path('Dados') / 'Global server - Receitas.json',
-            Path('Global server - Receitas.json'),
-            Path(__file__).resolve().parents[3] / 'Dados' / 'Global server - Receitas.json',
-            Path(__file__).resolve().parents[3] / 'Global server - Receitas.json',
+            Path('Dados') / 'Pokemon Global Server - Receitas.json',
+            Path('Pokemon Global Server - Receitas.json'),
+            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Receitas.json',
+            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Receitas.json',
         ]
         return next((p for p in caminhos if p.exists()), None)
 
     @classmethod
     def _caminho_itens_csv(cls):
         caminhos = [
-            Path('Dados') / 'Global server - Itens.csv',
-            Path('Global server - Itens.csv'),
-            Path(__file__).resolve().parents[3] / 'Dados' / 'Global server - Itens.csv',
-            Path(__file__).resolve().parents[3] / 'Global server - Itens.csv',
+            Path('Dados') / 'Pokemon Global Server - Itens.csv',
+            Path('Pokemon Global Server - Itens.csv'),
+            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Itens.csv',
+            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Itens.csv',
         ]
         return next((p for p in caminhos if p.exists()), None)
 

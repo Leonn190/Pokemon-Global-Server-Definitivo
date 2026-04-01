@@ -6,12 +6,14 @@ from typing import Dict, Optional, Tuple
 
 import pygame
 
+from Codigo.Prefabs.Texto import Texto
+
 
 class ItemInventario:
     _mapa_por_nome: Dict[str, str] | None = None
     _cache_surface: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
-    _fonte_nome = None
-    _fonte_qtd = None
+    _txt_nome = None
+    _txt_qtd = None
 
     @staticmethod
     def _norm(texto: str) -> str:
@@ -104,10 +106,10 @@ class ItemInventario:
 
     @classmethod
     def _garantir_fontes(cls):
-        if cls._fonte_nome is None:
-            cls._fonte_nome = pygame.font.SysFont("arial", 14)
-        if cls._fonte_qtd is None:
-            cls._fonte_qtd = pygame.font.SysFont("arial", 13, bold=True)
+        if cls._txt_nome is None:
+            cls._txt_nome = Texto("", style={"size": 14, "align": "center", "outline": False, "shadow": False, "color": (244, 246, 255)})
+        if cls._txt_qtd is None:
+            cls._txt_qtd = Texto("", style={"size": 13, "align": "bottomright", "outline": True, "outline_thickness": 1, "shadow": False, "color": (255, 255, 255)})
 
     @classmethod
     def desenhar_item_no_rect(cls, tela, item, rect: pygame.Rect):
@@ -121,10 +123,12 @@ class ItemInventario:
             tela.blit(sprite, sprite.get_rect(center=rect.center))
         else:
             nome = cls.nome_item(item)[:9]
-            txt = cls._fonte_nome.render(nome, True, (244, 246, 255))
-            tela.blit(txt, txt.get_rect(center=rect.center))
+            cls._txt_nome.set_text(nome)
+            cls._txt_nome.set_pos(rect.center)
+            cls._txt_nome.draw(tela)
 
         qtd = int(item.get("quantidade", 1)) if isinstance(item, dict) else 1
         if qtd > 1:
-            txt_qtd = cls._fonte_qtd.render(str(qtd), True, (255, 255, 255))
-            tela.blit(txt_qtd, txt_qtd.get_rect(bottomright=(rect.right - 4, rect.bottom - 3)))
+            cls._txt_qtd.set_text(str(qtd))
+            cls._txt_qtd.set_pos((rect.right - 4, rect.bottom - 3))
+            cls._txt_qtd.draw(tela)

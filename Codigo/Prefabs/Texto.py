@@ -228,6 +228,9 @@ class Texto:
         setattr(rect, self.style["align"], self.pos)
         return rect
 
+    def medir_largura(self, texto: str) -> int:
+        return int(self._font.size(str(texto or ""))[0])
+
     def draw(self, tela: pygame.Surface):
         surf = self._render()
         rect = surf.get_rect()

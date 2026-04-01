@@ -30,7 +30,10 @@ class Terminal:
         self._thread = None
         self._scroll_linhas = 0
         self._linhas_visiveis = 25
-        self._fonte_linhas = pygame.font.Font(None, 17)
+        self._texto_linhas_medidor = Texto(
+            "",
+            style={"size": 15, "outline": False, "shadow": False, "color": (235, 235, 235)},
+        )
         self._cache_linhas_historico = []
         self._cache_largura_historico = -1
         self._historico_sujo = True
@@ -183,7 +186,7 @@ class Terminal:
         atual = ""
         for p in palavras:
             teste = p if not atual else f"{atual} {p}"
-            if self._fonte_linhas.size(teste)[0] <= largura_px:
+            if self._texto_linhas_medidor.medir_largura(teste) <= largura_px:
                 atual = teste
             else:
                 if atual:

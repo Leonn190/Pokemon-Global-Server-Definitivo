@@ -153,7 +153,7 @@ def _normalizar_xy(x, y):
 
 def _carregar_itens():
     itens, by_code, by_nome = [], {}, {}
-    with (_RAIZ / "Dados" / "Global server - Itens.csv").open("r", encoding="utf-8") as f:
+    with (_RAIZ / "Dados" / "Pokemon Global Server - Itens.csv").open("r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             nome = str(row.get("Nome", "")).strip()
             code = str(row.get("Code", "")).strip()
@@ -176,7 +176,7 @@ def _carregar_itens():
 
 def _carregar_pokemons():
     pokes, by_code, by_nome = [], {}, {}
-    with (_RAIZ / "Dados" / "Global server - Pokemons.csv").open("r", encoding="utf-8") as f:
+    with (_RAIZ / "Dados" / "Pokemon Global Server - Pokemons.csv").open("r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             nome = str(row.get("Nome", "")).strip()
             code = str(row.get("Code", "")).strip()

@@ -470,7 +470,7 @@ class InventarioPokemons:
                 self._arrastavel.atualizar(evento.pos)
 
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                if self._area_ficha.collidepoint(evento.pos):
+                if analisando and self._area_ficha.collidepoint(evento.pos):
                     continue
                 if analisando:
                     continue
@@ -487,7 +487,7 @@ class InventarioPokemons:
                 if alvo is not None and self._pokemon_do_alvo(alvo) is not None:
                     self._iniciar_arrasto(alvo, evento.pos)
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
-                if self._area_ficha.collidepoint(evento.pos):
+                if analisando and self._area_ficha.collidepoint(evento.pos):
                     continue
                 if analisando:
                     continue

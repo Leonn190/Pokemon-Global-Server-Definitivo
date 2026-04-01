@@ -6,11 +6,14 @@ def _nome(v):
 
 
 def _stat(pokemon, chave, padrao=0.0):
-    stats = pokemon.estado_extra.get("stats") if isinstance(pokemon.estado_extra.get("stats"), dict) else {}
+    estado = pokemon.estado_extra if isinstance(getattr(pokemon, "estado_extra", None), dict) else {}
+    stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
     if chave in stats:
         return float(stats.get(chave, padrao) or padrao)
-    dados_csv = pokemon.estado_extra.get("dados_csv") if isinstance(pokemon.estado_extra.get("dados_csv"), dict) else {}
-    return float(dados_csv.get(chave, padrao) or padrao)
+    stats_base = estado.get("stats_base") if isinstance(estado.get("stats_base"), dict) else {}
+    if chave in stats_base:
+        return float(stats_base.get(chave, padrao) or padrao)
+    return float(estado.get(chave, padrao) or padrao)
 
 
 def executar_pokebola(nome_bola, pokemon, contexto=None):

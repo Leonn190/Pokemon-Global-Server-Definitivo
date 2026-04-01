@@ -15,7 +15,7 @@ _RAIZ = Path(__file__).resolve().parents[2]
 def _carregar_itens() -> tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str, object]]]:
     by_code: Dict[str, Dict[str, object]] = {}
     by_nome: Dict[str, Dict[str, object]] = {}
-    with (_RAIZ / "Dados" / "Global server - Itens.csv").open("r", encoding="utf-8") as f:
+    with (_RAIZ / "Dados" / "Pokemon Global Server - Itens.csv").open("r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             code = str(row.get("Code", "")).strip()
             nome = str(row.get("Nome", "")).strip()

@@ -1,4 +1,4 @@
-"""Gerador de Pokémon do servidor (baseado em Dados/Global server - Pokemons.csv)."""
+"""Gerador de Pokémon do servidor (baseado em Dados/Pokemon Global Server - Pokemons.csv)."""
 
 from __future__ import annotations
 
@@ -9,7 +9,9 @@ from typing import Dict, List, Optional
 
 from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer
 
-ARQUIVO_POKEMONS = Path(__file__).resolve().parents[2] / "Dados" / "Global server - Pokemons.csv"
+ARQUIVO_POKEMONS = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Pokemons.csv"
+ARQUIVO_ATAQUES = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Ataques.csv"
+ARQUIVO_ITENS = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Itens.csv"
 STATS_BASE = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int", "CrD", "CrC"]
 STATS_VARIAVEIS_IV = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"]
 
@@ -33,12 +35,55 @@ def _nivel_baixo_comum(max_nivel: int = 60) -> int:
     return max(0, min(int(max_nivel), int(round(r * max_nivel))))
 
 
+def _xp_alvo_por_nivel(nivel: int) -> int:
+    nivel_ajustado = max(0, min(100, int(nivel)))
+    if nivel_ajustado >= 100:
+        return 0
+    return int((nivel_ajustado + 1) * 100)
+
+
 def _recalcular_total(stats: Dict[str, float]) -> float:
     vida = _fnum(stats.get("Vida"), 0.0)
     soma_basicos = sum(_fnum(stats.get(k), 0.0) for k in STATS_VARIAVEIS_IV if k != "Vida")
     crc = _fnum(stats.get("CrC"), 0.0)
     crd = _fnum(stats.get("CrD"), 0.0)
     return round(vida + (soma_basicos * 2.0) + ((crc + crd) * 3.0), 2)
+
+
+def _recalcular_poder(stats: Dict[str, float]) -> float:
+    vida = _fnum(stats.get("Vida"), 0.0)
+    demais = sum(_fnum(v, 0.0) for k, v in stats.items() if k != "Vida")
+    return round(vida + (demais * 2.0), 2)
+
+
+def _recalcular_poder_relativo(stats: Dict[str, float]) -> float:
+    if not isinstance(stats, dict):
+        return 0.0
+    ranking = []
+    for chave, valor in stats.items():
+        real = _fnum(valor, 0.0)
+        relativo = (real / 2.0) if chave == "Vida" else real
+        ranking.append((relativo, chave, real))
+    ranking.sort(key=lambda x: x[0], reverse=True)
+    total = 0.0
+    for _, chave, real in ranking[:6]:
+        total += real if chave == "Vida" else (real * 2.0)
+    return round(total * 2.0, 2)
+
+
+def _carregar_frutas() -> List[Dict[str, str]]:
+    if not ARQUIVO_ITENS.exists():
+        return []
+    frutas: List[Dict[str, str]] = []
+    with ARQUIVO_ITENS.open(encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            if str(row.get("Estilo", "")).strip().lower() != "fruta":
+                continue
+            nome = str(row.get("Nome", "")).strip()
+            code = str(row.get("Code", "")).strip()
+            if nome or code:
+                frutas.append({"nome": nome, "code": code})
+    return frutas
 
 
 def _gerar_subivs_media(iv_global: int) -> Dict[str, int]:
@@ -80,12 +125,66 @@ def _sortear_tipos(row: Dict[str, str]) -> List[str]:
     return tipos
 
 
+def _carregar_ataques() -> List[Dict[str, object]]:
+    if not ARQUIVO_ATAQUES.exists():
+        return []
+    ataques: List[Dict[str, object]] = []
+    with ARQUIVO_ATAQUES.open(encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            ataque = str(row.get("Ataque", "")).strip()
+            if not ataque:
+                continue
+            dados = dict(row)
+            dados["Ataque"] = ataque
+            dados["Custo"] = _inum(dados.get("Custo"), 0)
+            ataques.append(dados)
+    return ataques
+
+
+_ATAQUES_DISPONIVEIS = _carregar_ataques()
+_FRUTAS_DISPONIVEIS = _carregar_frutas()
+
+
+def aprender_ataque_aleatorio(estado_pokemon: Dict[str, object], forcar: bool = False) -> bool:
+    if not isinstance(estado_pokemon, dict) or not _ATAQUES_DISPONIVEIS:
+        return False
+    if (not forcar) and random.random() > 0.25:
+        return False
+
+    memorias = estado_pokemon.get("memorias")
+    if not isinstance(memorias, list):
+        memorias = [None, None, None, None, None]
+    if len(memorias) < 5:
+        memorias = list(memorias) + ([None] * (5 - len(memorias)))
+    memorias = memorias[:5]
+
+    indice_livre = next((i for i, valor in enumerate(memorias) if valor is None), None)
+    if indice_livre is None:
+        estado_pokemon["memorias"] = memorias
+        return False
+
+    conhecidos = {
+        str(x.get("Ataque", "")).strip().lower()
+        for x in memorias
+        if isinstance(x, dict) and str(x.get("Ataque", "")).strip()
+    }
+    opcoes = [atk for atk in _ATAQUES_DISPONIVEIS if str(atk.get("Ataque", "")).strip().lower() not in conhecidos]
+    if not opcoes:
+        estado_pokemon["memorias"] = memorias
+        return False
+    memorias[indice_livre] = dict(random.choice(opcoes))
+    estado_pokemon["memorias"] = memorias
+    return True
+
+
 def subir_nivel_pokemon(pokemon: Dict[str, object], vezes: int = 1) -> Dict[str, object]:
     dados = pokemon if isinstance(pokemon, dict) else {}
     estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else dados
     stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
     stats_base = estado.get("stats_base") if isinstance(estado.get("stats_base"), dict) else {}
     nivel_atual = max(0, min(100, _inum(estado.get("nivel", 0), 0)))
+    estado["XP"] = max(0, _inum(estado.get("XP", 0), 0))
+    estado["XPAlvo"] = _xp_alvo_por_nivel(nivel_atual)
 
     ordem = STATS_VARIAVEIS_IV[:]
     for _ in range(max(0, int(vezes))):
@@ -96,7 +195,11 @@ def subir_nivel_pokemon(pokemon: Dict[str, object], vezes: int = 1) -> Dict[str,
         stats[stat] = round(_fnum(stats.get(stat), base) + (base * 0.10), 2)
         nivel_atual += 1
         estado["nivel"] = nivel_atual
+        estado["XPAlvo"] = _xp_alvo_por_nivel(nivel_atual)
         estado["total"] = _recalcular_total(stats)
+        estado["poder"] = _recalcular_poder(stats)
+        estado["poder_relativo"] = _recalcular_poder_relativo(stats)
+        aprender_ataque_aleatorio(estado, forcar=False)
     estado["stats"] = stats
     return dados
 
@@ -112,11 +215,10 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     bonus_amizade = _inum(efeitos.get("bonus_amizade", 0), 0)
 
     iv = max(0, min(100, _inum(estado.get("iv", 0), 0) + bonus_iv))
-    dados_csv = estado.get("dados_csv", {}) if isinstance(estado.get("dados_csv"), dict) else {}
     stats_base = {}
     stats_base_origem = estado.get("stats_base") if isinstance(estado.get("stats_base"), dict) else {}
     for k in STATS_BASE:
-        stats_base[k] = _fnum(stats_base_origem.get(k), _fnum(dados_csv.get(k), _fnum(estado.get(k), 0.0)))
+        stats_base[k] = _fnum(stats_base_origem.get(k), _fnum(estado.get(k), 0.0))
 
     subivs = _gerar_subivs_media(iv)
     stats_final = {}
@@ -135,10 +237,21 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     estado["stats_base"] = stats_base
     estado["stats"] = stats_final
     estado["amizade"] = int(amizade)
-    estado["tipos"] = _sortear_tipos(dados_csv)
+    estado["tipos"] = list(estado.get("tipos", [])) if isinstance(estado.get("tipos"), list) else []
     estado["nivel"] = 0
+    estado["XP"] = 0
+    estado["XPAlvo"] = _xp_alvo_por_nivel(0)
     estado["total"] = _recalcular_total(stats_final)
-    estado["habilidades"] = [None,None,None,None,None]
+    estado["poder"] = _recalcular_poder(stats_final)
+    estado["poder_relativo"] = _recalcular_poder_relativo(stats_final)
+    estado["habilidades"] = [None, None, None, None, None]
+    estado["memorias"] = [None, None, None, None, None]
+    estado["fruta_favorita"] = random.choice(_FRUTAS_DISPONIVEIS) if _FRUTAS_DISPONIVEIS else {}
+    for i in range(5):
+        aprender_ataque_aleatorio(estado, forcar=True)
+        if isinstance(estado.get("memorias"), list):
+            estado["habilidades"][i] = estado["memorias"][i]
+    estado["memorias"] = [None, None, None, None, None]
 
     subir_nivel_pokemon(estado, vezes=max(0, min(100, nivel_original + bonus_nivel)))
     return bruto
@@ -197,6 +310,8 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
     peso = round(peso_base * coef_genetico * coef_peso, 3)
 
     total_csv = _fnum(row.get("Total"), 0.0)
+    stats_base = {k: _fnum(row.get(k), 0.0) for k in STATS_BASE}
+    tipos = _sortear_tipos(row)
     dificuldade = round(total_csv * (iv_global / 100.0) * (nivel / 10.0), 2)
     tamanho_barra = round(max(0.05, 0.46 - (nivel / 160.0)), 3)
     velocidade_barra = round(min(260.0, 40.0 + (iv_global * 1.7)), 2)
@@ -207,12 +322,14 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "nivel": nivel,
             "iv": iv_global,
             "subivs": {},
+            "stats_base": stats_base,
+            "stats": dict(stats_base),
             "altura": altura,
             "peso": peso,
             "coeficiente_genetico": round(coef_genetico, 5),
             "coeficiente_altura": round(coef_altura, 5),
             "coeficiente_peso": round(coef_peso, 5),
-            "tipos": [],
+            "tipos": tipos,
             "grupo": str(row.get("Grupo", "")),
             "raridade": int(_fnum(row.get("Raridade"), 1)),
             "estagio": int(_fnum(row.get("Estagio"), 1)),
@@ -224,7 +341,6 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "tamanho_barra_captura": tamanho_barra,
             "velocidade_barra_captura": velocidade_barra,
             "chunk_origem": [int(chunk_xy[0]), int(chunk_xy[1])],
-            "dados_csv": dict(row),
         }
     )
     return poke

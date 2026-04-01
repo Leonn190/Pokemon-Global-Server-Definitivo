@@ -18,7 +18,7 @@ _RAIZ = Path(__file__).resolve().parents[3]
 
 def _carregar_fatores_ferramenta() -> Dict[str, int]:
     by_code: Dict[str, int] = {}
-    with (_RAIZ / "Dados" / "Global server - Itens.csv").open("r", encoding="utf-8") as f:
+    with (_RAIZ / "Dados" / "Pokemon Global Server - Itens.csv").open("r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             code = str(row.get("Code", "")).strip()
             if not code:

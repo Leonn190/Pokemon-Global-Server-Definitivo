@@ -251,7 +251,6 @@ class CerebroCentral:
             "linhagem": str(estado.get("linhagem") or ""),
             "chunk_origem": list(estado.get("chunk_origem", [])) if isinstance(estado.get("chunk_origem"), list) else [],
             "capturado_em_ms": int(time.time() * 1000),
-            "dados_csv": dict(estado.get("dados_csv", {})) if isinstance(estado.get("dados_csv"), dict) else {},
         }
         return materializar_pokemon(bruto, efeitos_captura={"bonus_iv": bonus_iv, "bonus_nivel": bonus_nivel, "bonus_amizade": bonus_amizade})
 

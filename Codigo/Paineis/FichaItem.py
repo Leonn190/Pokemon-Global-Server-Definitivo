@@ -42,8 +42,10 @@ class FichaItem:
             return cls._dados_csv
         cls._dados_csv = {}
         caminhos = [
-            Path('Global server - Itens.csv'),
-            Path(__file__).resolve().parents[3] / 'Global server - Itens.csv',
+            Path('Dados') / 'Pokemon Global Server - Itens.csv',
+            Path('Pokemon Global Server - Itens.csv'),
+            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Itens.csv',
+            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Itens.csv',
         ]
         caminho = next((p for p in caminhos if p.exists()), None)
         if caminho is None:

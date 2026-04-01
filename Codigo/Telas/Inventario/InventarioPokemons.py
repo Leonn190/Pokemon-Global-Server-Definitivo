@@ -6,6 +6,7 @@ import pygame
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.Container import Container
+from Codigo.Paineis.FichaPokemon import FichaPokemon
 from Codigo.Paineis.PainelTimes import PainelTimes
 from Codigo.Prefabs.Arrastavel import Arrastavel
 from Codigo.Prefabs.BarraPesquisa import BarraPesquisa
@@ -29,6 +30,7 @@ class InventarioPokemons:
         self._layout_montado = False
 
         self._area_grid = pygame.Rect(0, 0, 0, 0)
+        self._area_ficha = pygame.Rect(0, 0, 0, 0)
         self._area_info = pygame.Rect(0, 0, 0, 0)
         self._area_times = pygame.Rect(0, 0, 0, 0)
         self._area_total = pygame.Rect(0, 0, 0, 0)
@@ -40,6 +42,8 @@ class InventarioPokemons:
         self._barra_pesquisa = None
         self._opcoes = Opções()
         self._subtela_ativa = None
+        self._ficha_pokemon = FichaPokemon()
+        self._pokemon_analisado = None
 
     def on_open(self):
         self._estava_ativo = True
@@ -47,6 +51,7 @@ class InventarioPokemons:
     def on_close(self):
         self._arrastavel.cancelar()
         self._pokemon_hover = None
+        self._pokemon_analisado = None
         self._opcoes.fechar()
         self._subtela_ativa = None
         if self._barra_pesquisa is not None:
@@ -127,7 +132,16 @@ class InventarioPokemons:
         largura_esquerda = min(int(area.width * 0.64), 760)
         largura_direita = area.width - largura_esquerda - margem * 3
 
-        self._area_grid = pygame.Rect(area.x + margem, area.y + topo, largura_esquerda, area.height - 112)
+        area_esquerda = pygame.Rect(area.x + margem, area.y + topo, largura_esquerda, area.height - 112)
+        self._area_ficha = pygame.Rect(0, 0, 0, 0)
+        self._area_grid = pygame.Rect(area_esquerda)
+        if self._pokemon_analisado is not None:
+            gap_ficha = 12
+            largura_ficha = int(max(340, min(530, area_esquerda.width * 0.46)))
+            largura_grid = area_esquerda.width - largura_ficha - gap_ficha
+            if largura_grid >= 250:
+                self._area_ficha = pygame.Rect(area_esquerda.x, area_esquerda.y, largura_ficha, area_esquerda.height)
+                self._area_grid = pygame.Rect(self._area_ficha.right + gap_ficha, area_esquerda.y, largura_grid, area_esquerda.height)
         self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 14, largura_esquerda, 72)
         self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, area.height - 20)
 
@@ -258,6 +272,9 @@ class InventarioPokemons:
             for j, atual in enumerate(slots):
                 if atual is not None and self._chave(atual) == chave:
                     slots[j] = None
+        if self._pokemon_analisado is not None and self._chave(self._pokemon_analisado) == chave:
+            self._pokemon_analisado = None
+            self._layout_montado = False
         self._container.marcar_sujo()
         self._painel_times.marcar_sujo()
 
@@ -281,12 +298,17 @@ class InventarioPokemons:
         if pokemon is None:
             return
         opcoes = [
-            {'texto': 'Analisar', 'acao': lambda: None},
+            {'texto': 'Analisar', 'acao': lambda p=pokemon: self._abrir_analise_pokemon(p)},
             {'texto': 'Doar', 'acao': lambda: self._abrir_confirmacao_doacao(pokemon)},
         ]
         if alvo_time is not None:
             opcoes.append({'texto': 'Remover', 'acao': lambda: self._painel_times.retirar_do_slot(alvo_time[0], alvo_time[1])})
         self._opcoes.abrir(pos, opcoes, tela_rect=pygame.display.get_surface().get_rect())
+
+    def _abrir_analise_pokemon(self, pokemon):
+        self._pokemon_analisado = pokemon
+        self._opcoes.fechar()
+        self._layout_montado = False
 
     def _processar_atalho_enter_pesquisa(self, eventos):
         if self._barra_pesquisa is None or self._subtela_ativa is not None or self._opcoes.Ativa:
@@ -441,6 +463,8 @@ class InventarioPokemons:
                 self._arrastavel.atualizar(evento.pos)
 
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                if self._area_ficha.collidepoint(evento.pos):
+                    continue
                 alvo = self._alvo_no_mouse(evento.pos)
                 if self._arrastavel.Ativo:
                     if self._arrastavel.PosAlvo is not None:
@@ -454,6 +478,8 @@ class InventarioPokemons:
                 if alvo is not None and self._pokemon_do_alvo(alvo) is not None:
                     self._iniciar_arrasto(alvo, evento.pos)
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
+                if self._area_ficha.collidepoint(evento.pos):
+                    continue
                 alvo_ctx = self._painel_times.alvo_contexto_no_mouse(evento.pos) if self._painel_times is not None else None
                 if alvo_ctx is not None:
                     if alvo_ctx[0] == 'time_card':
@@ -485,6 +511,12 @@ class InventarioPokemons:
                 item_oculto_grid = self._arrastavel.Origem[1]
             elif self._arrastavel.Origem[0] == 'time':
                 item_oculto_time = (self._arrastavel.Origem[1], self._arrastavel.Origem[2])
+
+        if self._pokemon_analisado is not None and self._area_ficha.width > 0:
+            self._ficha_pokemon.renderizar(tela, self._area_ficha, self._pokemon_analisado, eventos=eventos, dt=dt)
+            if self._ficha_pokemon.FecharSolicitado:
+                self._pokemon_analisado = None
+                self._layout_montado = False
 
         self._container.desenhar(
             tela,

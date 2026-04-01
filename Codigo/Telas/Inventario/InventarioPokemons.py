@@ -133,18 +133,15 @@ class InventarioPokemons:
         largura_direita = area.width - largura_esquerda - margem * 3
 
         area_esquerda = pygame.Rect(area.x + margem, area.y + topo, largura_esquerda, area.height - 112)
-        self._area_ficha = pygame.Rect(0, 0, 0, 0)
+        analisando = self._pokemon_analisado is not None
         self._area_grid = pygame.Rect(area_esquerda)
-        if self._pokemon_analisado is not None:
-            gap_ficha = 12
-            largura_ficha = int(max(340, min(530, area_esquerda.width * 0.46)))
-            largura_grid = area_esquerda.width - largura_ficha - gap_ficha
-            if largura_grid >= 250:
-                self._area_ficha = pygame.Rect(area_esquerda.x, area_esquerda.y, largura_ficha, area_esquerda.height)
-                self._area_grid = pygame.Rect(self._area_ficha.right + gap_ficha, area_esquerda.y, largura_grid, area_esquerda.height)
-        self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 14, largura_esquerda, 72)
+        if analisando:
+            self._area_ficha = pygame.Rect(area_esquerda)
+            self._area_info = pygame.Rect(0, 0, 0, 0)
+        else:
+            self._area_ficha = pygame.Rect(0, 0, 0, 0)
+            self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 14, largura_esquerda, 72)
         self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, area.height - 20)
-        self._area_ficha = pygame.Rect(self._area_grid.x, self._area_grid.y, self._area_grid.width, self._area_info.bottom - self._area_grid.y)
 
         pokemons = self._lista_pokemons()
         times = self._times_pokemons()
@@ -485,6 +482,9 @@ class InventarioPokemons:
                     continue
 
                 if alvo is not None and self._pokemon_do_alvo(alvo) is not None:
+                    if getattr(evento, 'clicks', 1) >= 2:
+                        self._abrir_analise_pokemon(self._pokemon_do_alvo(alvo))
+                        continue
                     self._iniciar_arrasto(alvo, evento.pos)
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
                 if analisando and self._area_ficha.collidepoint(evento.pos):

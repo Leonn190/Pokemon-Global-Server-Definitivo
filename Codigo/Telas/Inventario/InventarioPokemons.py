@@ -511,7 +511,7 @@ class InventarioPokemons:
 
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
             rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.1), int(self._arrastavel.Rect.height * 0.1))
-            PokemonInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, rect_drag, exibir_nivel=False, escala_sprite=0.35)
+            PokemonInventario.desenhar_item_no_rect(tela, self._arrastavel.Item, rect_drag, escala_sprite=0.86)
         self._opcoes.render(tela, eventos, dt)
         if self._subtela_ativa is not None:
             self._subtela_ativa.render(tela, eventos, dt)

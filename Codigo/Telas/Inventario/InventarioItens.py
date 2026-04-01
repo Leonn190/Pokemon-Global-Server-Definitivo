@@ -232,7 +232,7 @@ class InventarioItens:
                 if resto is not None:
                     self._container.devolver_para_origem_ou_vazio(origem_aux, resto)
             else:
-                self._painel_craft.restaurar_no_slot_origem(indice, item, origem=origem_aux, container=self._container)
+                self._painel_craft.restaurar_no_slot_origem(indice, item, origem=origem_aux)
             self._arrastavel.cancelar()
         self._arrastavel.definir_pos_alvo(rect.topleft, ao_final=_finalizar)
 

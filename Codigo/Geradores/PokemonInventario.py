@@ -197,27 +197,7 @@ class PokemonInventario:
         txt.draw(tela)
 
     @classmethod
-    def _desenhar_nivel(cls, tela, pokemon, rect: pygame.Rect):
-        nivel = cls.nivel_pokemon(pokemon)
-        if nivel in (None, ""):
-            return
-
-        txt_nivel = Texto(
-            f"Lv {nivel}",
-            style={
-                'size': 11,
-                'color': (255, 255, 255),
-                'align': 'midright',
-                'outline': True,
-                'outline_color': (8, 12, 20),
-                'outline_thickness': 2,
-            },
-        )
-        txt_nivel.set_pos((rect.right - 3, rect.bottom - 7))
-        txt_nivel.draw(tela)
-
-    @classmethod
-    def desenhar_item_no_rect(cls, tela, pokemon, rect: pygame.Rect, exibir_nivel: bool = True, escala_sprite: float = 1.0):
+    def desenhar_item_no_rect(cls, tela, pokemon, rect: pygame.Rect, escala_sprite: float = 1.0):
         if pokemon is None:
             return
 
@@ -229,6 +209,3 @@ class PokemonInventario:
             tela.blit(sprite, sprite.get_rect(center=rect.center))
         else:
             cls._desenhar_sigla_fallback(tela, pokemon, rect)
-
-        if exibir_nivel:
-            cls._desenhar_nivel(tela, pokemon, rect)

@@ -157,6 +157,8 @@ def _normalizar_perfil(personagem: dict) -> dict:
         "custo_stamina_agua_rasa": "CustoStaminaAguaRasa",
         "custo_stamina_agua_funda": "CustoStaminaAguaFunda",
         "tapa_por_segundo": "TapaPorSegundo",
+        "raio_tapa": "RaioTapa",
+        "multiplicador_ferramenta_tapa": "MultiplicadorFerramentaTapa",
     }
     for campo, chave_regra in mapa_regras.items():
         dados[campo] = float(dados.get(campo, regras.get(chave_regra)))
@@ -258,6 +260,10 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     base["stamina"] = max(0.0, min(stamina_max, stamina))
     if "tapa_por_segundo" in payload:
         base["tapa_por_segundo"] = max(0.1, float(payload.get("tapa_por_segundo", base.get("tapa_por_segundo", 2.0))))
+    if "raio_tapa" in payload:
+        base["raio_tapa"] = max(0.05, float(payload.get("raio_tapa", base.get("raio_tapa", 0.36))))
+    if "multiplicador_ferramenta_tapa" in payload:
+        base["multiplicador_ferramenta_tapa"] = max(1.0, float(payload.get("multiplicador_ferramenta_tapa", base.get("multiplicador_ferramenta_tapa", 1.5))))
     _normalizar_progresso_xp(base)
     return base
 

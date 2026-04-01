@@ -12,6 +12,7 @@ from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, criar_ob
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
+from SimuladorServerJogo.Geradores.GeradorPokemon import subir_nivel_pokemon
 
 
 def _normalizar_posicao_loop(posicao):
@@ -38,6 +39,25 @@ def _erro(mensagem: str) -> str:
 
 def _escopo_objeto(obj) -> Dict[str, object]:
     return {"centro": [obj.posicao[0], obj.posicao[1]], "raio": 780.0}
+
+
+def _processar_pendencias_pokemon_nivel(inventario: dict) -> dict:
+    inv = dict(inventario) if isinstance(inventario, dict) else {}
+    pokemons = list(inv.get("pokemons", [])) if isinstance(inv.get("pokemons"), list) else []
+    alterado = False
+    for pokemon in pokemons:
+        if not isinstance(pokemon, dict):
+            continue
+        alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+        pendente = int(float(alvo.get("__subir_nivel_pendente", 0) or 0))
+        if pendente <= 0:
+            continue
+        subir_nivel_pokemon(alvo, vezes=pendente)
+        alvo.pop("__subir_nivel_pendente", None)
+        alterado = True
+    if alterado:
+        inv["pokemons"] = pokemons
+    return inv
 
 
 def _bloco_mundo_em(wx: int, wy: int) -> int:
@@ -168,7 +188,9 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 if "perfil" in payload_in and isinstance(payload_in.get("perfil"), dict):
                     atualizar_perfil_personagem(usuario, payload_in.get("perfil"))
                 if "inventario" in payload_in and isinstance(payload_in.get("inventario"), dict):
-                    atualizar_inventario_personagem(usuario, payload_in.get("inventario"))
+                    inventario_sync = _processar_pendencias_pokemon_nivel(payload_in.get("inventario"))
+                    payload_in["inventario"] = inventario_sync
+                    atualizar_inventario_personagem(usuario, inventario_sync)
             registrar_diff(
                 "update",
                 payload=obj.serializar() if hasattr(obj, "serializar") else dict(payload_in),

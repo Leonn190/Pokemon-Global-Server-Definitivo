@@ -29,20 +29,20 @@ class FichaPokemon:
     _cache_listagem: dict[str, dict[str, Path]] = {}
     _cache_frames: dict[str, list[pygame.Surface]] = {}
     _cache_frames_escalados: dict[tuple[str, int], list[pygame.Surface]] = {}
-    _INTERVALO_FRAME_ANIM_MS = 85
+    _INTERVALO_FRAME_ANIM_MS = 70
 
-    _ordem_status = ('Vida', 'Atk', 'Def', 'SpA', 'SpD', 'Vel', 'Mag', 'Per', 'Ene', 'EnR')
+    _ordem_status = ('Vida', 'Atk', 'Def', 'SpA', 'SpD', 'Vel', 'Mag', 'Per', 'Ene', 'Int')
     _cores_status = {
         'Vida': (108, 201, 123),
         'Atk': (235, 109, 94),
         'Def': (227, 192, 92),
-        'SpA': (119, 169, 255),
-        'SpD': (154, 133, 255),
+        'SpA': (166, 104, 255),
+        'SpD': (121, 214, 255),
         'Vel': (255, 174, 82),
-        'Mag': (103, 207, 215),
-        'Per': (194, 128, 221),
-        'Ene': (242, 216, 96),
-        'EnR': (120, 210, 175),
+        'Mag': (255, 138, 206),
+        'Per': (155, 155, 155),
+        'Ene': (56, 104, 212),
+        'Int': (86, 229, 240),
     }
     _cores_tipo = {
         'normal': (166, 168, 181),
@@ -82,10 +82,14 @@ class FichaPokemon:
         self._ficha_ataque = FichaAtaque()
         self._arrastavel_ataque = Arrastavel()
         self._botao_fechar: Botao | None = None
+        self._botao_doar: Botao | None = None
+        self._botao_upar: Botao | None = None
         self._slots_ataque: dict[tuple[str, int], pygame.Rect] = {}
         self._slot_hover: tuple[str, int] | None = None
         self._slot_origem_oculto: tuple[str, int] | None = None
         self.FecharSolicitado = False
+        self.DoarSolicitado = False
+        self.UparNivelSolicitado = False
 
         base = {
             'outline': True,
@@ -102,7 +106,7 @@ class FichaPokemon:
         self.TxtInfo = Texto('', style={**base, 'size': 14, 'color': (196, 208, 232)})
         self.TxtSetor = Texto('', style={**base, 'size': 17, 'color': (238, 244, 255)})
         self.TxtMini = Texto('', style={**base, 'size': 13, 'color': (176, 190, 221)})
-        self.TxtSlot = Texto('+', style={**base, 'size': 28, 'color': (206, 216, 240), 'align': 'center'})
+        self.TxtSlot = Texto('', style={**base, 'size': 28, 'color': (206, 216, 240), 'align': 'center'})
         self.TxtStatus = Texto('', style={**base, 'size': 13, 'color': (245, 249, 255), 'align': 'center'})
         self.TxtIV = Texto('', style={**base, 'size': 12, 'color': (169, 186, 222), 'align': 'center'})
         self.TxtResumo = Texto('', style={**base, 'size': 16, 'color': (244, 248, 255)})
@@ -587,6 +591,31 @@ class FichaPokemon:
                 'text_style': {'size': 16, 'outline_thickness': 1, 'shadow': False},
             },
         )
+        self._botao_doar = Botao(
+            pygame.Rect(rect.x + 16, rect.bottom - 40, 112, 26),
+            'Doar',
+            execute=lambda _jogo, _botao: setattr(self, 'DoarSolicitado', True),
+            style={
+                'radius': 10, 'border_width': 2,
+                'bg': (102, 54, 54), 'bg_hover': (132, 66, 66), 'bg_pressed': (88, 43, 43),
+                'border': (242, 219, 219), 'border_hover': (255, 245, 245),
+                'hover_scale': 1.0, 'press_scale': 0.98,
+                'text_style': {'size': 15, 'outline_thickness': 1, 'shadow': False},
+            },
+        )
+        self._botao_upar = Botao(
+            pygame.Rect(rect.x + 136, rect.bottom - 40, 148, 26),
+            'Subir nível',
+            execute=lambda _jogo, _botao: setattr(self, 'UparNivelSolicitado', True),
+            style={
+                'radius': 10, 'border_width': 2,
+                'bg': (46, 78, 130), 'bg_hover': (60, 97, 162), 'bg_pressed': (37, 61, 101),
+                'border': (206, 224, 255), 'border_hover': (233, 241, 255),
+                'hover_scale': 1.0, 'press_scale': 0.98,
+                'text_style': {'size': 15, 'outline_thickness': 1, 'shadow': False},
+            },
+        )
+        self._botao_upar.set_tooltip('Disponível quando XP atual > XP alvo.')
 
     @staticmethod
     def calcular_rect_ancorado(area_host) -> pygame.Rect:
@@ -603,7 +632,7 @@ class FichaPokemon:
         gap = 12
         left = pygame.Rect(conteudo.x, conteudo.y, left_w, conteudo.height)
         right = pygame.Rect(left.right + gap, conteudo.y, conteudo.width - left_w - gap, conteudo.height)
-        top_h = max(165, int(right.height * 0.41))
+        top_h = max(190, int(right.height * 0.45))
         right_top = pygame.Rect(right.x, right.y, right.width, top_h)
         right_bottom = pygame.Rect(right.x, right_top.bottom + gap, right.width, right.height - top_h - gap)
         return left, right_top, right_bottom
@@ -630,7 +659,7 @@ class FichaPokemon:
         pygame.draw.circle(tela, (84, 146, 244), centro, raio)
         pygame.draw.circle(tela, (25, 74, 164), centro, raio, 2)
 
-    def _desenhar_tipos(self, tela: pygame.Surface, area: pygame.Rect, tipos: list[str], lado_max: int = 30):
+    def _desenhar_tipos(self, tela: pygame.Surface, area: pygame.Rect, tipos: list[str], lado_max: int = 34):
         lado = min(lado_max, area.height - 2)
         gap = 8
         x = area.x
@@ -670,10 +699,16 @@ class FichaPokemon:
         nome, _ = self._nome_especie(pokemon)
         tipos = self._tipos(pokemon)
         header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 32)
-        botao_x = self._botao_fechar.rect.x if self._botao_fechar is not None else header.right - 28
-        tipos_area = pygame.Rect(header.x + 12, header.y + 3, 120, header.height - 6)
-        self._desenhar_tipos(tela, tipos_area, tipos, lado_max=22)
-        centro_x = (tipos_area.right + botao_x - 10) // 2
+        botao_rect = self._botao_fechar.rect if self._botao_fechar is not None else pygame.Rect(header.right - 26, header.y + 3, 26, 26)
+        tipo_lado = min(26, header.height - 6)
+        gap_tipo = 8
+        tipos_w = (len(tipos) * tipo_lado) + (max(0, len(tipos) - 1) * gap_tipo)
+        tipos_area = pygame.Rect(header.x + 12, header.y + 3, tipos_w, header.height - 6)
+        if tipos_w > 0:
+            self._desenhar_tipos(tela, tipos_area, tipos, lado_max=tipo_lado)
+        esquerda_titulo = tipos_area.right + 10 if tipos_w > 0 else header.x + 12
+        direita_titulo = botao_rect.x - 10
+        centro_x = (esquerda_titulo + direita_titulo) // 2
         self.TxtTituloCentro.set_text(nome)
         self.TxtTituloCentro.set_pos((centro_x, header.y + 3))
         self.TxtTituloCentro.draw(tela)
@@ -738,9 +773,6 @@ class FichaPokemon:
         pygame.draw.rect(tela, (24, 33, 54) if ataque else (18, 24, 38), rect)
         pygame.draw.rect(tela, (232, 239, 255) if selecionado else (88, 110, 156), rect, 2)
         if ataque is None:
-            self.TxtMini.set_text('+')
-            self.TxtMini.set_pos(rect.center)
-            self.TxtMini.draw(tela)
             return
         icone = self._icone_ataque(ataque, min(rect.width, rect.height) - 12)
         if icone is not None:
@@ -758,13 +790,13 @@ class FichaPokemon:
         habilidades = self._habilidades_ref(pokemon)
         memoria = self._memoria_ref(pokemon)
         equipaveis = self._equipaveis(pokemon)
-        colunas_habilidades = max(1, max(len(habilidades), len(memoria)))
+        colunas_habilidades = max(1, max(len(habilidades), len(memoria), 5))
 
         padding = 14
         build_w = max(96, int(rect.width * 0.23))
         build_x = rect.x + padding
-        conteudo_y = rect.y + 38
-        conteudo_h = rect.height - 50
+        conteudo_y = rect.y + 34
+        conteudo_h = rect.height - 46
 
         self.TxtSetor.set_text('Build')
         self.TxtSetor.set_pos((build_x, rect.y + 12))
@@ -797,14 +829,14 @@ class FichaPokemon:
         gap = 8
         total_w_slots = colunas_habilidades * lado_slot + (colunas_habilidades - 1) * gap
         start_slots_x = area_slots.x + (area_slots.width - total_w_slots) // 2
-        y_hab = area_slots.y + 8
-        y_mem = area_slots.bottom - lado_slot - 8
+        y_hab = area_slots.y + 24
+        y_mem = area_slots.bottom - lado_slot - 14
 
-        self.TxtMini.set_text('Ativos')
-        self.TxtMini.set_pos((area_slots.x, y_hab - 18))
+        self.TxtMini.set_text('Habilidades')
+        self.TxtMini.set_pos((area_slots.x, y_hab - 20))
         self.TxtMini.draw(tela)
         self.TxtMini.set_text('Memória')
-        self.TxtMini.set_pos((area_slots.x, y_mem - 18))
+        self.TxtMini.set_pos((area_slots.x, y_mem - 20))
         self.TxtMini.draw(tela)
 
         origem_oculta = self._slot_origem_oculto if self._arrastavel_ataque.Ativo else None
@@ -828,26 +860,35 @@ class FichaPokemon:
         stats = self._stats_dict(pokemon)
         ivs = self._ivs_dict(pokemon)
 
-        resumo_x = rect.x + 14
-        resumo_y = rect.y + 10
-        for rotulo, valor in (
-            ('Poder', str(self._poder_total(pokemon))),
-            ('IV', f'{self._iv_medio(pokemon)}%'),
-            ('Rel.', str(self._poder_relativo(pokemon))),
-        ):
-            self.TxtMini.set_text(rotulo)
-            self.TxtMini.set_pos((resumo_x, resumo_y + 2))
-            self.TxtMini.draw(tela)
-            self.TxtResumo.set_text(valor)
-            self.TxtResumo.set_pos((resumo_x, resumo_y + 18))
-            self.TxtResumo.draw(tela)
-            resumo_x += 82
-
         self.TxtSetor.set_text('Atributos')
-        self.TxtSetor.set_pos((resumo_x + 4, rect.y + 18))
+        self.TxtSetor.set_pos((rect.x + 14, rect.y + 14))
         self.TxtSetor.draw(tela)
 
-        area_barras = pygame.Rect(rect.x + 12, rect.y + 56, rect.width - 24, rect.height - 68)
+        resumo_x = rect.right - 14
+        resumo_y = rect.y + 8
+        poder_total = int(round(sum(stats.get(status, 0.0) for status in self._ordem_status)))
+        if ivs:
+            iv_medio = int(round(sum((v * 100.0 if 0.0 <= v <= 1.0 else v) for v in ivs.values()) / max(1, len(ivs))))
+        else:
+            iv_bruto = float(self._valor_pokemon(pokemon, 'IV', 'Iv', 'iv', default=0) or 0)
+            iv_medio = int(round(iv_bruto * (100.0 if 0.0 <= iv_bruto <= 1.0 else 1.0)))
+        media = sum(stats.get(status, 0.0) for status in self._ordem_status) / float(len(self._ordem_status) or 1)
+        poder_rel = max(0, min(100, int(round((media / 255.0) * 100.0))))
+
+        for rotulo, valor in reversed((
+            ('Poder', str(poder_total)),
+            ('Rel.', str(poder_rel)),
+            ('IV', f'{iv_medio}%'),
+        )):
+            self.TxtMini.set_text(rotulo)
+            self.TxtMini.set_pos((resumo_x - 56, resumo_y + 2))
+            self.TxtMini.draw(tela)
+            self.TxtResumo.set_text(valor)
+            self.TxtResumo.set_pos((resumo_x - 56, resumo_y + 18))
+            self.TxtResumo.draw(tela)
+            resumo_x -= 82
+
+        area_barras = pygame.Rect(rect.x + 12, rect.y + 72, rect.width - 24, rect.height - 84)
         col_w = max(28, area_barras.width // len(self._ordem_status))
         barra_h = max(88, area_barras.height - 48)
         barra_w = max(16, min(22, col_w - 12))
@@ -939,8 +980,14 @@ class FichaPokemon:
     def _processar_eventos(self, tela: pygame.Surface, pokemon: dict | None, eventos, dt: float):
         eventos = eventos or []
         self.FecharSolicitado = False
+        self.DoarSolicitado = False
+        self.UparNivelSolicitado = False
         if self._botao_fechar is not None:
             self._botao_fechar.render(tela, eventos, dt, None)
+        if self._botao_doar is not None:
+            self._botao_doar.render(tela, eventos, dt, None)
+        if self._botao_upar is not None:
+            self._botao_upar.render(tela, eventos, dt, None)
 
         self._arrastavel_ataque.animar(dt)
         self._slot_hover = self._slot_no_mouse(pygame.mouse.get_pos())
@@ -985,6 +1032,15 @@ class FichaPokemon:
         if self._botao_fechar is not None:
             self._botao_fechar.base_rect.topleft = (rect.right - 40, rect.y + 10)
             self._botao_fechar.rect = pygame.Rect(self._botao_fechar.base_rect)
+        if self._botao_doar is not None:
+            self._botao_doar.base_rect.topleft = (rect.x + 16, rect.bottom - 40)
+            self._botao_doar.rect = pygame.Rect(self._botao_doar.base_rect)
+        if self._botao_upar is not None:
+            self._botao_upar.base_rect.topleft = (rect.x + 136, rect.bottom - 40)
+            self._botao_upar.rect = pygame.Rect(self._botao_upar.base_rect)
+            xp_atual, xp_alvo = self._xp(pokemon)
+            pode_upar = xp_atual > xp_alvo
+            self._botao_upar.set_habilitado(pode_upar)
 
         self._desenhar_cabecalho(tela, rect, pokemon)
         left, right_top, right_bottom = self._setores(rect)

@@ -144,6 +144,12 @@ _ATAQUES_DISPONIVEIS = _carregar_ataques()
 _FRUTAS_DISPONIVEIS = _carregar_frutas()
 
 
+def _ataque_com_nivel(ataque: Dict[str, object]) -> Dict[str, object]:
+    dados = dict(ataque or {})
+    dados["Nivel"] = int(dados.get("Nivel", 1) or 1)
+    return dados
+
+
 def aprender_ataque_aleatorio(estado_pokemon: Dict[str, object], forcar: bool = False) -> bool:
     if not isinstance(estado_pokemon, dict) or not _ATAQUES_DISPONIVEIS:
         return False
@@ -183,9 +189,22 @@ def aprender_ataque_aleatorio(estado_pokemon: Dict[str, object], forcar: bool = 
     if not opcoes:
         estado_pokemon["memorias"] = memorias
         return False
-    memorias[indice_livre] = dict(random.choice(opcoes))
+    memorias[indice_livre] = _ataque_com_nivel(random.choice(opcoes))
     estado_pokemon["memorias"] = memorias
     return True
+
+
+def preencher_habilidades_iniciais(estado_pokemon: Dict[str, object], total_slots: int = 5) -> None:
+    if not isinstance(estado_pokemon, dict):
+        return
+    quantidade = max(1, min(5, int(total_slots or 5)))
+    habilidades = [None] * quantidade
+    if _ATAQUES_DISPONIVEIS:
+        escolhidos = random.sample(_ATAQUES_DISPONIVEIS, k=min(quantidade, len(_ATAQUES_DISPONIVEIS)))
+        for i, ataque in enumerate(escolhidos):
+            habilidades[i] = _ataque_com_nivel(ataque)
+    estado_pokemon["habilidades"] = habilidades
+    estado_pokemon["memorias"] = [None] * quantidade
 
 
 def subir_nivel_pokemon(pokemon: Dict[str, object], vezes: int = 1) -> Dict[str, object]:
@@ -254,8 +273,8 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     estado["poder"] = _recalcular_poder(stats_final)
     estado["poder_relativo"] = _recalcular_poder_relativo(stats_final)
     estado["vida_atual"] = round(_fnum(stats_final.get("Vida"), 0.0), 2)
-    estado["habilidades"] = [None, None, None, None, None]
-    estado["memorias"] = [None, None, None, None, None]
+    estado["equipaveis"] = max(1, min(4, _inum(estado.get("equipaveis", 1), 1)))
+    preencher_habilidades_iniciais(estado, total_slots=5)
     estado["fruta_favorita"] = random.choice(_FRUTAS_DISPONIVEIS) if _FRUTAS_DISPONIVEIS else ""
 
     subir_nivel_pokemon(estado, vezes=max(0, min(100, nivel_original + bonus_nivel)))
@@ -285,6 +304,7 @@ def criar_pokemon_inicial_materializado(especie: str) -> Dict[str, object]:
         "estagio": int(_fnum(row.get("Estagio"), 1)),
         "code": str(row.get("Code", "")),
         "linhagem": str(row.get("Linhagem", "")),
+        "equipaveis": max(1, min(4, _inum(row.get("Equipaveis", 1), 1))),
         "chunk_origem": [0, 0],
     }
     return materializar_pokemon(bruto, efeitos_captura=None)
@@ -364,6 +384,7 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "estagio": int(_fnum(row.get("Estagio"), 1)),
             "code": str(row.get("Code", "")),
             "linhagem": str(row.get("Linhagem", "")),
+            "equipaveis": max(1, min(4, _inum(row.get("Equipaveis", 1), 1))),
             "poder": poder_base,
             "poder_relativo": _recalcular_poder_relativo(stats_base),
             "vida_atual": round(_fnum(stats_base.get("Vida"), 0.0), 2),

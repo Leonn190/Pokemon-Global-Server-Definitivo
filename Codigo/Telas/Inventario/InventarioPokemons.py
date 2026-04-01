@@ -487,10 +487,6 @@ class InventarioPokemons:
                         continue
                     self._iniciar_arrasto(alvo, evento.pos)
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
-                if analisando and self._area_ficha.collidepoint(evento.pos):
-                    continue
-                if analisando:
-                    continue
                 alvo_ctx = self._painel_times.alvo_contexto_no_mouse(evento.pos) if self._painel_times is not None else None
                 if alvo_ctx is not None:
                     if alvo_ctx[0] == 'time_card':
@@ -501,6 +497,10 @@ class InventarioPokemons:
                             self._abrir_opcoes_pokemon(evento.pos, pokemon_time, alvo_time=(alvo_ctx[1], alvo_ctx[2]))
                         else:
                             self._abrir_opcoes_time(evento.pos, alvo_ctx[1])
+                    continue
+                if analisando and self._area_ficha.collidepoint(evento.pos):
+                    continue
+                if analisando:
                     continue
 
                 alvo = self._alvo_no_mouse(evento.pos)

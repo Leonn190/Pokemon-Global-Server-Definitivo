@@ -12,6 +12,7 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
 )
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
+from SimuladorServerJogo.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
 from SimuladorServerJogo.Regras.Loader import carregar_regras_player, carregar_regras_mundo
 
 _CHAVE_SEGURANCA = "1900"
@@ -445,6 +446,7 @@ def adicionar_personagem(usuario, skin, pokemon_inicial):
         _ESTADO["jogadores_com_personagem"].add(usuario)
         _recarregar_mundo()
         spawn = obter_posicao_spawn(_ESTADO_MUNDO)
+        pokemon_inicial_materializado = criar_pokemon_inicial_materializado(pokemon_inicial)
 
         _ESTADO["personagens"][usuario] = _normalizar_perfil(
             {
@@ -452,6 +454,9 @@ def adicionar_personagem(usuario, skin, pokemon_inicial):
                 "skin": skin,
                 "pokemon_inicial": pokemon_inicial,
                 "posicao": [spawn[0], spawn[1]],
+                "inventario": {
+                    "pokemons": [pokemon_inicial_materializado],
+                },
             }
         )
         _persistir_personagens(force=True)

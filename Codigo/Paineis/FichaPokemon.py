@@ -98,7 +98,7 @@ class FichaPokemon:
             'shadow': False,
         }
         self.TxtTitulo = Texto('', style={**base, 'size': 25, 'color': (245, 249, 255)})
-        self.TxtTituloCentro = Texto('', style={**base, 'size': 22, 'color': (245, 249, 255), 'align': 'center'})
+        self.TxtTituloCentro = Texto('', style={**base, 'size': 24, 'color': (245, 249, 255), 'align': 'center'})
         self.TxtSub = Texto('', style={**base, 'size': 15, 'color': (176, 190, 224)})
         self.TxtSubCentro = Texto('', style={**base, 'size': 15, 'color': (176, 190, 224), 'align': 'center'})
         self.TxtNivel = Texto('', style={**base, 'size': 18, 'color': (245, 249, 255), 'align': 'center'})
@@ -339,7 +339,7 @@ class FichaPokemon:
     def _equipaveis(cls, pokemon: dict | None) -> int:
         bruto = cls._valor_pokemon(pokemon, 'Equipaveis', 'Equipáveis', 'Equipamentos', 'SlotsEquipaveis', 'SlotsEquipáveis', default=1)
         try:
-            return max(1, min(4, int(bruto)))
+            return max(1, min(3, int(bruto)))
         except (TypeError, ValueError):
             return 1
 
@@ -418,13 +418,11 @@ class FichaPokemon:
 
     @classmethod
     def _poder_total(cls, pokemon: dict | None) -> int:
-        bruto = cls._valor_pokemon(pokemon, 'Poder', 'power', 'Power', 'Total', 'total', default=None)
+        bruto = cls._valor_pokemon(pokemon, 'Poder', 'power', 'Power', default=0)
         try:
-            if bruto is not None:
-                return max(0, int(round(float(bruto))))
+            return max(0, int(round(float(bruto))))
         except (TypeError, ValueError):
-            pass
-        return int(round(sum(cls._stats_dict(pokemon).get(status, 0.0) for status in cls._ordem_status)))
+            return 0
 
     @classmethod
     def _iv_medio(cls, pokemon: dict | None) -> int:
@@ -448,20 +446,14 @@ class FichaPokemon:
 
     @classmethod
     def _poder_relativo(cls, pokemon: dict | None) -> int:
-        bruto = cls._valor_pokemon(pokemon, 'PoderRelativo', 'Poder Relativo', 'power_relative', 'power relativo', default=None)
+        bruto = cls._valor_pokemon(pokemon, 'PoderRelativo', 'Poder Relativo', 'power_relative', 'power relativo', default=0)
         try:
-            if bruto is not None:
-                numero = float(bruto)
-                if 0.0 <= numero <= 1.0:
-                    numero *= 100.0
-                return max(0, min(999, int(round(numero))))
+            numero = float(bruto)
+            if 0.0 <= numero <= 1.0:
+                numero *= 100.0
+            return max(0, min(999, int(round(numero))))
         except (TypeError, ValueError):
-            pass
-        stats = cls._stats_dict(pokemon)
-        if not stats:
             return 0
-        media = sum(stats.get(status, 0.0) for status in cls._ordem_status) / float(len(cls._ordem_status))
-        return max(0, min(100, int(round((media / 255.0) * 100.0))))
 
     @classmethod
     def _subiv_status(cls, pokemon: dict | None, status: str) -> float:
@@ -615,7 +607,7 @@ class FichaPokemon:
                 'text_style': {'size': 15, 'outline_thickness': 1, 'shadow': False},
             },
         )
-        self._botao_upar.set_tooltip('Disponível quando XP atual > XP alvo.')
+        self._botao_upar.limpar_tooltip()
 
     @staticmethod
     def calcular_rect_ancorado(area_host) -> pygame.Rect:
@@ -700,7 +692,7 @@ class FichaPokemon:
         tipos = self._tipos(pokemon)
         header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 32)
         botao_rect = self._botao_fechar.rect if self._botao_fechar is not None else pygame.Rect(header.right - 26, header.y + 3, 26, 26)
-        tipo_lado = min(26, header.height - 6)
+        tipo_lado = min(30, header.height - 2)
         gap_tipo = 8
         tipos_w = (len(tipos) * tipo_lado) + (max(0, len(tipos) - 1) * gap_tipo)
         tipos_area = pygame.Rect(header.x + 12, header.y + 3, tipos_w, header.height - 6)
@@ -710,7 +702,7 @@ class FichaPokemon:
         direita_titulo = botao_rect.x - 10
         centro_x = (esquerda_titulo + direita_titulo) // 2
         self.TxtTituloCentro.set_text(nome)
-        self.TxtTituloCentro.set_pos((centro_x, header.y + 3))
+        self.TxtTituloCentro.set_pos((centro_x, header.y + 6))
         self.TxtTituloCentro.draw(tela)
 
     def _bloco_infos_esquerda(self, tela: pygame.Surface, rect: pygame.Rect, pokemon: dict | None, dt: float):
@@ -756,7 +748,7 @@ class FichaPokemon:
             ('Crítico', crit_chance),
             ('D. crítico', crit_dano),
         ]
-        y = xp_label_y + 38
+        y = xp_label_y + 48
         for rotulo, valor in linhas:
             self.TxtInfo.set_text(f'{rotulo}: {valor}')
             self.TxtInfo.set_pos((rect.x + 16, y))
@@ -801,26 +793,12 @@ class FichaPokemon:
         self.TxtSetor.set_text('Build')
         self.TxtSetor.set_pos((build_x, rect.y + 12))
         self.TxtSetor.draw(tela)
-        self.TxtSetor.set_text('Habilidades / Memória')
-        self.TxtSetor.set_pos((build_x + build_w + 18, rect.y + 12))
-        self.TxtSetor.draw(tela)
-
-        lado_build = 44
-        gap_build = 8
-        linhas_build = 1 if equipaveis == 1 else 2
-        colunas_build = 1 if equipaveis <= 2 else 2
-        total_w = colunas_build * lado_build + (colunas_build - 1) * gap_build
-        total_h = linhas_build * lado_build + (linhas_build - 1) * gap_build
-        start_x = build_x + (build_w - total_w) // 2
-        start_y = conteudo_y + (conteudo_h - total_h) // 2
-        posicoes_3 = [(0, 0), (1, 0), (0, 1)]
+        lado_build = 50
+        gap_build = 10
+        start_x = build_x + (build_w - lado_build) // 2
+        start_y = conteudo_y + max(2, int(conteudo_h * 0.12))
         for i in range(equipaveis):
-            if equipaveis == 3:
-                col, lin = posicoes_3[i]
-            else:
-                col = i % colunas_build
-                lin = i // colunas_build
-            slot = pygame.Rect(start_x + col * (lado_build + gap_build), start_y + lin * (lado_build + gap_build), lado_build, lado_build)
+            slot = pygame.Rect(start_x, start_y + i * (lado_build + gap_build), lado_build, lado_build)
             self._desenhar_slot_build(tela, slot)
 
         self._slots_ataque = {}
@@ -866,14 +844,9 @@ class FichaPokemon:
 
         resumo_x = rect.right - 14
         resumo_y = rect.y + 8
-        poder_total = int(round(sum(stats.get(status, 0.0) for status in self._ordem_status)))
-        if ivs:
-            iv_medio = int(round(sum((v * 100.0 if 0.0 <= v <= 1.0 else v) for v in ivs.values()) / max(1, len(ivs))))
-        else:
-            iv_bruto = float(self._valor_pokemon(pokemon, 'IV', 'Iv', 'iv', default=0) or 0)
-            iv_medio = int(round(iv_bruto * (100.0 if 0.0 <= iv_bruto <= 1.0 else 1.0)))
-        media = sum(stats.get(status, 0.0) for status in self._ordem_status) / float(len(self._ordem_status) or 1)
-        poder_rel = max(0, min(100, int(round((media / 255.0) * 100.0))))
+        poder_total = self._poder_total(pokemon)
+        iv_medio = self._iv_medio(pokemon)
+        poder_rel = self._poder_relativo(pokemon)
 
         for rotulo, valor in reversed((
             ('Poder', str(poder_total)),
@@ -901,15 +874,9 @@ class FichaPokemon:
             if 0.0 <= iv <= 1.0:
                 iv *= 100.0
             cor = self._cores_status.get(status, (110, 170, 255))
-            bruto_max = self._valor_pokemon(pokemon, f'Max{status}', f'{status}Max', default=None)
-            try:
-                maximo = max(1.0, float(bruto_max)) if bruto_max is not None else 0.0
-            except (TypeError, ValueError):
-                maximo = 0.0
-            if maximo <= 0.0:
-                referencia = max(100.0, valor * 1.18)
-                passo = 25.0 if referencia <= 200 else 50.0
-                maximo = math.ceil(referencia / passo) * passo
+            maximo = self._max_barra_status(pokemon, status)
+            if status == 'Vida':
+                maximo *= 2.0
 
             self.TxtStatus.set_text(status)
             self.TxtStatus.set_pos((centro_x, area_barras.y))
@@ -1033,14 +1000,23 @@ class FichaPokemon:
             self._botao_fechar.base_rect.topleft = (rect.right - 40, rect.y + 10)
             self._botao_fechar.rect = pygame.Rect(self._botao_fechar.base_rect)
         if self._botao_doar is not None:
-            self._botao_doar.base_rect.topleft = (rect.x + 16, rect.bottom - 40)
+            left, _, _ = self._setores(rect)
+            btn_h = 30
+            btn_w = left.width - 32
+            base_y = left.bottom - ((btn_h * 2) + 8) - 10
+            self._botao_doar.base_rect = pygame.Rect(left.x + 16, base_y, btn_w, btn_h)
             self._botao_doar.rect = pygame.Rect(self._botao_doar.base_rect)
         if self._botao_upar is not None:
-            self._botao_upar.base_rect.topleft = (rect.x + 136, rect.bottom - 40)
+            left, _, _ = self._setores(rect)
+            btn_h = 30
+            btn_w = left.width - 32
+            base_y = left.bottom - ((btn_h * 2) + 8) - 10
+            self._botao_upar.base_rect = pygame.Rect(left.x + 16, base_y + btn_h + 8, btn_w, btn_h)
             self._botao_upar.rect = pygame.Rect(self._botao_upar.base_rect)
             xp_atual, xp_alvo = self._xp(pokemon)
-            pode_upar = xp_atual > xp_alvo
+            pode_upar = xp_atual >= xp_alvo
             self._botao_upar.set_habilitado(pode_upar)
+            self._botao_upar.set_pulsando(pode_upar, cor=(188, 227, 140), cor_borda=(227, 255, 191), velocidade=2.0, intensidade=0.44)
 
         self._desenhar_cabecalho(tela, rect, pokemon)
         left, right_top, right_bottom = self._setores(rect)

@@ -16,6 +16,7 @@ class PokemonInventario:
     _mapa_por_nome: Dict[str, str] | None = None
     _mapa_por_numero: Dict[str, str] | None = None
     _cache_surface: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
+    _cache_icone_coracao: Dict[int, Optional[pygame.Surface]] = {}
 
     @staticmethod
     def _norm(texto: str) -> str:
@@ -88,6 +89,38 @@ class PokemonInventario:
             return float(valor)
         except (TypeError, ValueError):
             return 0.0
+
+    @staticmethod
+    def favorito(pokemon: object) -> bool:
+        if not isinstance(pokemon, dict):
+            return False
+        return bool(pokemon.get('favorito', False))
+
+    @staticmethod
+    def pode_subir_nivel(pokemon: object) -> bool:
+        if not isinstance(pokemon, dict):
+            return False
+        fonte = pokemon.get('estado') if isinstance(pokemon.get('estado'), dict) else pokemon
+        try:
+            xp_atual = int(float(fonte.get('XP', fonte.get('xp', 0)) or 0))
+            xp_alvo = int(float(fonte.get('XPAlvo', fonte.get('xp_alvo', 0)) or 0))
+            return xp_alvo > 0 and xp_atual >= xp_alvo
+        except (TypeError, ValueError):
+            return False
+
+    @classmethod
+    def _icone_coracao(cls, lado_px: int) -> Optional[pygame.Surface]:
+        lado_px = int(max(8, lado_px))
+        if lado_px in cls._cache_icone_coracao:
+            return cls._cache_icone_coracao[lado_px]
+        caminho = Path("Recursos") / "Visual" / "Icones" / "Diversos" / "Coração.png"
+        try:
+            surf = pygame.image.load(str(caminho)).convert_alpha()
+            surf = pygame.transform.smoothscale(surf, (lado_px, lado_px))
+        except Exception:
+            surf = None
+        cls._cache_icone_coracao[lado_px] = surf
+        return surf
 
     @classmethod
     def tipo_principal(cls, pokemon: object) -> str:
@@ -211,3 +244,14 @@ class PokemonInventario:
             tela.blit(sprite, sprite.get_rect(center=rect.center))
         else:
             cls._desenhar_sigla_fallback(tela, pokemon, rect)
+
+        if cls.favorito(pokemon):
+            lado_icone = max(12, int(rect.height * 0.22))
+            coracao = cls._icone_coracao(lado_icone)
+            if coracao is not None:
+                tela.blit(coracao, coracao.get_rect(topright=(rect.right - 3, rect.y + 3)))
+
+        if cls.pode_subir_nivel(pokemon):
+            marcador = pygame.Rect(rect.x + 4, rect.y + 4, 12, 12)
+            pygame.draw.rect(tela, (176, 250, 170), marcador, border_radius=3)
+            pygame.draw.rect(tela, (236, 255, 234), marcador, 1, border_radius=3)

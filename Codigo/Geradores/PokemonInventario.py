@@ -79,7 +79,9 @@ class PokemonInventario:
     def poder_total(pokemon: object) -> float:
         if not isinstance(pokemon, dict):
             return 0.0
-        valor = pokemon.get('total')
+        valor = pokemon.get('poder')
+        if valor in (None, ''):
+            valor = pokemon.get('poder_relativo')
         if valor in (None, ''):
             return 0.0
         try:

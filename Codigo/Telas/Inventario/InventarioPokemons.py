@@ -132,8 +132,9 @@ class InventarioPokemons:
         largura_esquerda = min(int(area.width * 0.64), 760)
         largura_direita = area.width - largura_esquerda - margem * 3
 
-        area_esquerda = pygame.Rect(area.x + margem, area.y + topo, largura_esquerda, area.height - 112)
         analisando = self._pokemon_analisado is not None
+        altura_esquerda = area.height - (20 if analisando else 112)
+        area_esquerda = pygame.Rect(area.x + margem, area.y + topo, largura_esquerda, altura_esquerda)
         self._area_grid = pygame.Rect(area_esquerda)
         if analisando:
             self._area_ficha = pygame.Rect(area_esquerda)
@@ -215,10 +216,12 @@ class InventarioPokemons:
         if pokemon is None:
             return ''
         nome = PokemonInventario.nome_pokemon(pokemon)
+        especie = str(pokemon.get('Especie') or pokemon.get('especie') or nome) if isinstance(pokemon, dict) else nome
         nivel = PokemonInventario.nivel_pokemon(pokemon)
-        if nivel not in (None, ''):
-            return f'{nome}  •  Lv {nivel}'
-        return nome
+        poder = int(round(PokemonInventario.poder_total(pokemon)))
+        if nivel in (None, ''):
+            return f'Nome: {nome} | {especie} | Poder {poder}'
+        return f'Nome: {nome} | {especie} Lv {nivel} | Poder {poder}'
 
     def _chave(self, pokemon):
         return PokemonInventario.chave_pokemon(pokemon) if pokemon is not None else None
@@ -255,6 +258,51 @@ class InventarioPokemons:
             confirmar_callback=_confirmar,
             titulo='Confirmar doação',
         )
+
+    def _abrir_renomear_pokemon(self, pokemon):
+        if not isinstance(pokemon, dict):
+            return
+        atual = str(pokemon.get('Nome') or pokemon.get('nome') or pokemon.get('Especie') or pokemon.get('especie') or '').strip()
+        if not atual:
+            atual = PokemonInventario.nome_pokemon(pokemon)
+
+        def _confirmar(novo_nome):
+            novo = str(novo_nome or '').strip()
+            if not novo:
+                return False
+            pokemon['Nome'] = novo
+            pokemon['nome'] = novo
+            if self._container is not None:
+                self._container.marcar_sujo()
+            if self._painel_times is not None:
+                self._painel_times.marcar_sujo()
+            return True
+
+        self._subtela_ativa = SubtelaTexto(
+            pygame.display.get_surface().get_size(),
+            'Renomear pokémon',
+            atual,
+            enviar_callback=_confirmar,
+            placeholders='Novo nome...',
+            max_chars=24,
+        )
+
+    def _subir_nivel_pokemon_analisado(self):
+        pokemon = self._pokemon_analisado
+        if not isinstance(pokemon, dict):
+            return
+        fonte = pokemon.get('estado') if isinstance(pokemon.get('estado'), dict) else pokemon
+        xp_atual = int(float(fonte.get('XP', fonte.get('xp', 0)) or 0))
+        xp_alvo = int(float(fonte.get('XPAlvo', fonte.get('xp_alvo', 0)) or 0))
+        if xp_atual <= xp_alvo or xp_alvo <= 0:
+            return
+        fonte['XP'] = max(0, xp_atual - xp_alvo)
+        fonte['xp'] = fonte['XP']
+        fonte['__subir_nivel_pendente'] = int(float(fonte.get('__subir_nivel_pendente', 0)) or 0) + 1
+        if self._container is not None:
+            self._container.marcar_sujo()
+        if self._painel_times is not None:
+            self._painel_times.marcar_sujo()
 
     def _doar_pokemon(self, pokemon):
         if pokemon is None or self._container is None:
@@ -297,6 +345,7 @@ class InventarioPokemons:
             return
         opcoes = [
             {'texto': 'Analisar', 'acao': lambda p=pokemon: self._abrir_analise_pokemon(p)},
+            {'texto': 'Renomear', 'acao': lambda p=pokemon: self._abrir_renomear_pokemon(p)},
             {'texto': 'Doar', 'acao': lambda: self._abrir_confirmacao_doacao(pokemon)},
         ]
         if alvo_time is not None:
@@ -529,6 +578,10 @@ class InventarioPokemons:
             if self._ficha_pokemon.FecharSolicitado:
                 self._pokemon_analisado = None
                 self._layout_montado = False
+            elif self._ficha_pokemon.DoarSolicitado and self._pokemon_analisado is not None:
+                self._abrir_confirmacao_doacao(self._pokemon_analisado)
+            elif self._ficha_pokemon.UparNivelSolicitado and self._pokemon_analisado is not None:
+                self._subir_nivel_pokemon_analisado()
 
         if not analisando:
             self._container.desenhar(

@@ -162,7 +162,7 @@ class InventarioPokemons:
             self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 14, largura_esquerda, 72)
         if analisando:
             bottom_fixo = area.y + area.height - 22
-            area_times_y = area.y + topo - 2
+            area_times_y = area.y + topo + 3
             self._area_times = pygame.Rect(self._area_grid.right + margem, area_times_y, largura_direita, bottom_fixo - area_times_y)
         else:
             self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, area.height - 20)
@@ -214,7 +214,7 @@ class InventarioPokemons:
 
         if self._painel_times is None:
             self._painel_times = PainelTimes(self._area_times, times, slots_por_time=self._slots_por_time())
-        elif self._painel_times_ativo(analisando):
+        else:
             self._painel_times.definir_times(times)
             self._painel_times.definir_slots_por_time(self._slots_por_time())
             self._painel_times.configurar_rect(self._area_times)
@@ -358,6 +358,17 @@ class InventarioPokemons:
 
     def _chave(self, pokemon):
         return PokemonInventario.chave_pokemon(pokemon) if pokemon is not None else None
+
+    def _sincronizar_pokemon_analisado(self):
+        if self._pokemon_analisado is None:
+            return
+        chave = self._chave(self._pokemon_analisado)
+        if chave is None:
+            return
+        for pokemon in self._lista_pokemons():
+            if pokemon is not None and self._chave(pokemon) == chave:
+                self._pokemon_analisado = pokemon
+                return
 
     def _abrir_renomear_time(self, indice_time):
         nome_atual = self._painel_times.nome_time(indice_time)
@@ -738,6 +749,7 @@ class InventarioPokemons:
             self.on_open()
 
         self._reconstruir(area)
+        self._sincronizar_pokemon_analisado()
         if self._subtela_ativa is not None:
             if getattr(self._subtela_ativa, 'encerrada', False):
                 self._subtela_ativa = None
@@ -923,7 +935,7 @@ class InventarioPokemons:
             self.TxtResumo.set_pos((self._area_info.x + 18, self._area_info.centery))
             self.TxtResumo.draw(tela)
 
-            self.TxtHover.set_text(self._nome_pokemon(self._pokemon_hover) or 'Arraste pokémons para montar seus times')
+            self.TxtHover.set_text(self._nome_pokemon(self._pokemon_hover) or '')
             self.TxtHover.set_pos((self._area_info.x + 210, self._area_info.centery))
             self.TxtHover.draw(tela)
             self._desenhar_tipos_hover(tela, self._pokemon_hover)

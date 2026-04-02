@@ -66,7 +66,7 @@ class PainelAuxiliarPoke:
         gap = 8
         margem = 12
         largura = max(68, int((self.Rect.width - margem * 2 - gap * 3) / 4))
-        y = self.Rect.y
+        y = self.Rect.y + 2
         x = self.Rect.x + margem
         for nome in self.ABAS:
             rect = pygame.Rect(x, y, largura, 30)

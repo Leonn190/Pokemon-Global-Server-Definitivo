@@ -689,7 +689,7 @@ class FichaPokemon:
         tipos = self._tipos(pokemon)
         header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 32)
         botao_rect = self._botao_fechar.rect if self._botao_fechar is not None else pygame.Rect(header.right - 30, header.y + 1, 30, 30)
-        tipo_lado = min(78, int((header.height + 10) * 1.56))
+        tipo_lado = min(96, int((header.height + 10) * 1.95))
         gap_tipo = 8
         tipos_w = (len(tipos) * tipo_lado) + (max(0, len(tipos) - 1) * gap_tipo)
         tipos_area = pygame.Rect(header.x + 12, header.y + 3, tipos_w, header.height - 6)
@@ -833,7 +833,7 @@ class FichaPokemon:
 
         padding = 14
         build_w = max(96, int(rect.width * 0.23))
-        build_x = rect.x + padding
+        build_x = rect.x + padding + 4
         conteudo_y = rect.y + 34
         conteudo_h = rect.height - 46
 

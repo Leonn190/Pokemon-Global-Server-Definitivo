@@ -98,11 +98,11 @@ class InventarioPerfil:
         self._area_direita = pygame.Rect(self._area_stats.right + 24, topo, rect.right - self._area_stats.right - margem - 24, rect.height - 128)
         self._area_rotas = pygame.Rect(rect.x + 16, rect.bottom - 96, rect.width - 32, 82)
 
-        y_botao_skill = self._area_direita.y + 99
+        y_botao_skill = self._area_direita.y + 92
         h_botao_skill = 48
-        gap_botao_ator = 10
+        gap_botao_ator = 14
         y_ator = y_botao_skill + h_botao_skill + gap_botao_ator
-        self._area_ator = pygame.Rect(self._area_direita.x + 18, y_ator, self._area_direita.width - 36, self._area_direita.height - (y_ator - self._area_direita.y) - 108)
+        self._area_ator = pygame.Rect(self._area_direita.x + 18, y_ator, self._area_direita.width - 36, self._area_direita.height - (y_ator - self._area_direita.y) - 64)
 
         barra_rect = pygame.Rect(self._area_direita.x + 18, self._area_direita.y + 44, self._area_direita.width - 36, 22)
         self._barra_xp = Barra(barra_rect, texto="", valor=0, minimo=0, maximo=100, mostrar_rotulo=False, suavizacao=10.0)
@@ -111,7 +111,7 @@ class InventarioPerfil:
         self._barra_xp.cor_borda = (216, 202, 255)
 
         self._slider_skin = BarraEditavel(
-            pygame.Rect(self._area_ator.x + 8, self._area_ator.bottom + 32, self._area_ator.width - 16, 18),
+            pygame.Rect(self._area_ator.x + 8, self._area_direita.bottom - 30, self._area_ator.width - 16, 18),
             "",
             self._skin_index + 1,
             1,

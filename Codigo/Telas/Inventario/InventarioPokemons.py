@@ -152,7 +152,10 @@ class InventarioPokemons:
         else:
             self._area_ficha = pygame.Rect(0, 0, 0, 0)
             self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 14, largura_esquerda, 72)
-        self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, area.height - 20)
+        if analisando:
+            self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo + 16, largura_direita, area.height - 40)
+        else:
+            self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, area.height - 20)
 
         pokemons = self._lista_pokemons()
         times = self._times_pokemons()
@@ -322,8 +325,8 @@ class InventarioPokemons:
         y = self._area_info.centery - (lado // 2)
         for tipo in tipos:
             fundo = pygame.Rect(x, y, lado, lado)
-            pygame.draw.rect(tela, (250, 250, 255), fundo, border_radius=9)
-            icone = PokemonInventario.icone_tipo(tipo, lado - 2)
+            pygame.draw.circle(tela, (250, 250, 255), fundo.center, lado // 2)
+            icone = PokemonInventario.icone_tipo(tipo, lado)
             if icone is not None:
                 tela.blit(icone, icone.get_rect(center=fundo.center))
             x += lado + gap

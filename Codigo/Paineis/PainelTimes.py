@@ -280,8 +280,8 @@ class PainelTimes(PainelRolavel):
             y_tipo = card.y + 10
             for tipo, pct in tipagens:
                 fundo = pygame.Rect(x_tipo, y_tipo, lado_tipo, lado_tipo)
-                pygame.draw.rect(tela, (250, 250, 255), fundo, border_radius=8)
-                icone = PokemonInventario.icone_tipo(tipo, 15)
+                pygame.draw.circle(tela, (250, 250, 255), fundo.center, lado_tipo // 2)
+                icone = PokemonInventario.icone_tipo(tipo, lado_tipo)
                 if icone is not None:
                     tela.blit(icone, icone.get_rect(center=fundo.center))
                 cor_pct = (255, 224, 92) if int(round(pct)) >= 100 else (186, 202, 236)

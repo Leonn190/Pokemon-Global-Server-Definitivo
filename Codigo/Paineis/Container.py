@@ -160,6 +160,8 @@ class Container(PainelRolavel):
         indice_real = self._mapeamento_visual_real[indice_visual]
         if indice_real is None:
             return None
+        if not (0 <= int(indice_real) < len(self.Itens)):
+            return None
         if exigir_item and self.Itens[indice_real] is None:
             return None
         return indice_real

@@ -22,14 +22,16 @@ class PainelTimes(PainelRolavel):
         self.Padding = 16
         self.GapCards = 14
         self.SlotGap = 8
-        self.CabecalhoH = 44
+        self.CabecalhoH = 14
 
         estilo = {
             'outline': True,
             'outline_thickness': 2,
             'outline_color': (8, 12, 20),
         }
-        self.TxtTitulo = Texto('Times', style={**estilo, 'size': 19, 'color': (236, 241, 255)})
+        self.TxtTitulo = Texto('', style={**estilo, 'size': 19, 'color': (236, 241, 255)})
+        self.TxtTipoEquipe = Texto('', style={**estilo, 'size': 12, 'color': (186, 202, 236), 'align': 'midleft'})
+        self.TxtTipoEquipePct = Texto('', style={**estilo, 'size': 13, 'color': (186, 202, 236), 'align': 'midleft'})
 
         self._highlight_render = None
         self._item_oculto_render = None
@@ -187,6 +189,20 @@ class PainelTimes(PainelRolavel):
         x = inicio_x + indice_slot * (slot_px + self.SlotGap)
         return pygame.Rect(x, y, slot_px, slot_px)
 
+    def _tipagens_predominantes(self, indice_time):
+        contagem = {}
+        total = 0
+        for pokemon in self.slots_time(indice_time):
+            if pokemon is None:
+                continue
+            total += 1
+            for tipo in PokemonInventario.tipos_pokemon(pokemon):
+                contagem[tipo] = contagem.get(tipo, 0) + 1
+        if total <= 0:
+            return []
+        ordenado = sorted(contagem.items(), key=lambda par: (-par[1], PokemonInventario.normalizar_tipo(par[0])))
+        return [(tipo, (qtd / total) * 100.0) for tipo, qtd in ordenado[:3]]
+
     def _assinatura_visual(self, highlight, item_oculto):
         return (highlight, item_oculto)
 
@@ -232,10 +248,6 @@ class PainelTimes(PainelRolavel):
         tela.fill((0, 0, 0, 0))
         tela.fill(self.CorFundo)
 
-        self.TxtTitulo.set_pos((16, 12))
-        self.TxtTitulo.draw(tela)
-
-
         estilo_nome = {
             'size': 16,
             'color': (240, 244, 255),
@@ -258,8 +270,28 @@ class PainelTimes(PainelRolavel):
             txt_poder.draw(tela)
 
             txt_nome = Texto(self.nome_time(indice_time), style=estilo_nome)
-            txt_nome.set_pos((card.x + 14, card.y + 12))
+            txt_nome.set_pos((card.x + 14, card.y + 10))
             txt_nome.draw(tela)
+
+            tipagens = self._tipagens_predominantes(indice_time)
+            x_tipo = card.right - 128
+            y_tipo = card.y + 14
+            self.TxtTipoEquipe.set_text('Tipagens da equipe')
+            self.TxtTipoEquipe.set_pos((x_tipo, y_tipo))
+            self.TxtTipoEquipe.draw(tela)
+            y_tipo += 16
+            for tipo, pct in tipagens:
+                fundo = pygame.Rect(x_tipo, y_tipo, 16, 16)
+                pygame.draw.rect(tela, (250, 250, 255), fundo, border_radius=8)
+                icone = PokemonInventario.icone_tipo(tipo, 12)
+                if icone is not None:
+                    tela.blit(icone, icone.get_rect(center=fundo.center))
+                cor_pct = (255, 224, 92) if int(round(pct)) >= 100 else (186, 202, 236)
+                self.TxtTipoEquipePct.set_text(f'{int(round(pct))}%')
+                self.TxtTipoEquipePct.style['color'] = cor_pct
+                self.TxtTipoEquipePct.set_pos((fundo.right + 5, fundo.centery))
+                self.TxtTipoEquipePct.draw(tela)
+                y_tipo += 18
 
             for indice_slot in range(self.SlotsPorTime):
                 rect_slot = self._slot_rect_local(indice_time, indice_slot)

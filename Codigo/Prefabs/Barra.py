@@ -17,6 +17,7 @@ class Barra:
         casas_decimais=0,
         mostrar_rotulo=True,
         suavizacao=14.0,
+        vertical=False,
     ):
         self.rect = pygame.Rect(rect)
         self.texto = texto
@@ -27,6 +28,7 @@ class Barra:
         self.casas_decimais = casas_decimais
         self.mostrar_rotulo = bool(mostrar_rotulo)
         self.suavizacao = max(0.01, float(suavizacao))
+        self.vertical = bool(vertical)
 
         self.cor_fundo = (25, 28, 40)
         self.cor_preenchimento = (60, 170, 255)
@@ -53,9 +55,42 @@ class Barra:
         self.rotulo.set_text("" if not self.texto else f"{self.texto}: {valor}")
         self.rotulo.set_pos((self.rect.x, self.rect.y - 36))
 
-    def set_valor(self, valor):
+    def set_valor(self, valor, animar=True):
         self.valor = _clamp(float(valor), self.minimo, self.maximo)
+        if not animar:
+            self.valor_visual = self.valor
         self._atualizar_rotulo()
+
+    def reiniciar_animacao(self, origem=None):
+        if origem is None:
+            origem = self.minimo
+        self.valor_visual = _clamp(float(origem), self.minimo, self.maximo)
+
+    def configurar(
+        self,
+        *,
+        rect=None,
+        minimo=None,
+        maximo=None,
+        cor_fundo=None,
+        cor_borda=None,
+        cor_preenchimento=None,
+        vertical=None,
+    ):
+        if rect is not None:
+            self.rect = pygame.Rect(rect)
+        if minimo is not None:
+            self.minimo = float(minimo)
+        if maximo is not None:
+            self.maximo = float(maximo)
+        if cor_fundo is not None:
+            self.cor_fundo = tuple(cor_fundo)
+        if cor_borda is not None:
+            self.cor_borda = tuple(cor_borda)
+        if cor_preenchimento is not None:
+            self.cor_preenchimento = tuple(cor_preenchimento)
+        if vertical is not None:
+            self.vertical = bool(vertical)
 
     def atualizar(self, dt):
         dt = max(0.0, float(dt))
@@ -69,16 +104,26 @@ class Barra:
 
     def _desenhar_barra(self, tela):
         percentual = _clamp(self.percentual(), 0.0, 1.0)
-        preenchimento = int(self.rect.width * percentual)
 
         pygame.draw.rect(tela, self.cor_fundo, self.rect, border_radius=12)
-        if preenchimento > 0:
-            pygame.draw.rect(
-                tela,
-                self.cor_preenchimento,
-                pygame.Rect(self.rect.x, self.rect.y, preenchimento, self.rect.height),
-                border_radius=12,
-            )
+        if self.vertical:
+            preenchimento = int(self.rect.height * percentual)
+            if preenchimento > 0:
+                pygame.draw.rect(
+                    tela,
+                    self.cor_preenchimento,
+                    pygame.Rect(self.rect.x, self.rect.bottom - preenchimento, self.rect.width, preenchimento),
+                    border_radius=12,
+                )
+        else:
+            preenchimento = int(self.rect.width * percentual)
+            if preenchimento > 0:
+                pygame.draw.rect(
+                    tela,
+                    self.cor_preenchimento,
+                    pygame.Rect(self.rect.x, self.rect.y, preenchimento, self.rect.height),
+                    border_radius=12,
+                )
 
         pygame.draw.rect(tela, self.cor_borda, self.rect, width=2, border_radius=12)
 

@@ -236,3 +236,97 @@ class Texto:
         rect = surf.get_rect()
         setattr(rect, self.style["align"], self.pos)
         tela.blit(surf, rect)
+
+
+class SetorTexto:
+    _ALINHAMENTOS = {
+        "left": "topleft",
+        "esquerda": "topleft",
+        "right": "topright",
+        "direita": "topright",
+        "center": "midtop",
+        "centro": "midtop",
+        "justify": "topleft",
+        "justificado": "topleft",
+    }
+
+    def __init__(self, rect=(0, 0, 10, 10), texto: str = "", linhas: int = 3, caracteres_por_linha: int = 36, style=None):
+        self.Rect = pygame.Rect(rect)
+        self.TextoBruto = str(texto or "")
+        self.LinhasMax = max(1, int(linhas))
+        self.CaracteresPorLinha = max(1, int(caracteres_por_linha))
+        self._style = dict(Texto.DEFAULT_STYLE)
+        self._style.update({"align": "topleft"})
+        if style:
+            self._style.update(style)
+        self._estilo_setor = str(self._style.pop("setor_align", "left")).strip().lower()
+        self._texto = Texto("", style=self._style)
+
+    def configurar_rect(self, rect):
+        self.Rect = pygame.Rect(rect)
+
+    def set_texto(self, texto: str):
+        self.TextoBruto = str(texto or "")
+
+    def set_limites(self, linhas: int | None = None, caracteres_por_linha: int | None = None):
+        if linhas is not None:
+            self.LinhasMax = max(1, int(linhas))
+        if caracteres_por_linha is not None:
+            self.CaracteresPorLinha = max(1, int(caracteres_por_linha))
+
+    def set_style(self, **kwargs):
+        if "setor_align" in kwargs:
+            self._estilo_setor = str(kwargs.pop("setor_align")).strip().lower()
+        if kwargs:
+            self._texto.set_style(**kwargs)
+
+    def _alinhar_linha(self, linha: str, y: int):
+        alinhamento = self._ALINHAMENTOS.get(self._estilo_setor, "topleft")
+        if alinhamento == "topright":
+            self._texto.set_pos((self.Rect.right, y))
+        elif alinhamento == "midtop":
+            self._texto.set_pos((self.Rect.centerx, y))
+        else:
+            self._texto.set_pos((self.Rect.x, y))
+        self._texto.set_style(align=alinhamento)
+        self._texto.set_text(linha)
+
+    def _quebrar_linhas(self) -> list[str]:
+        palavras = self.TextoBruto.split()
+        if not palavras:
+            return []
+
+        linhas: list[str] = []
+        atual = ""
+        for palavra in palavras:
+            tentativa = palavra if not atual else f"{atual} {palavra}"
+            largura_ok = self._texto.medir_largura(tentativa) <= self.Rect.width
+            chars_ok = len(tentativa) <= self.CaracteresPorLinha
+            if (largura_ok and chars_ok) or not atual:
+                atual = tentativa
+            else:
+                linhas.append(atual)
+                atual = palavra
+            if len(linhas) >= self.LinhasMax:
+                break
+        if len(linhas) < self.LinhasMax and atual:
+            linhas.append(atual)
+
+        if len(linhas) > self.LinhasMax:
+            linhas = linhas[: self.LinhasMax]
+        if len(linhas) == self.LinhasMax and " ".join(palavras) != " ".join(linhas):
+            ultima = linhas[-1].rstrip(". ")
+            while ultima and self._texto.medir_largura(f"{ultima}...") > self.Rect.width:
+                ultima = ultima[:-1]
+            linhas[-1] = f"{ultima}..." if ultima else "..."
+        return linhas
+
+    def draw(self, tela: pygame.Surface):
+        linhas = self._quebrar_linhas()
+        if not linhas:
+            return
+        altura_linha = max(10, int(self._style.get("size", 14) * 1.08))
+        y = self.Rect.y
+        for i, linha in enumerate(linhas):
+            self._alinhar_linha(linha, y + i * altura_linha)
+            self._texto.draw(tela)

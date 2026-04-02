@@ -22,7 +22,7 @@ class PainelTimes(PainelRolavel):
         self.Padding = 16
         self.GapCards = 14
         self.SlotGap = 8
-        self.CabecalhoH = 14
+        self.CabecalhoH = 5
 
         estilo = {
             'outline': True,

@@ -40,6 +40,7 @@ class InventarioPokemons:
         self._area_grid = pygame.Rect(0, 0, 0, 0)
         self._area_ficha = pygame.Rect(0, 0, 0, 0)
         self._area_info = pygame.Rect(0, 0, 0, 0)
+        self._area_abas = pygame.Rect(0, 0, 0, 0)
         self._area_times = pygame.Rect(0, 0, 0, 0)
         self._area_total = pygame.Rect(0, 0, 0, 0)
 
@@ -162,10 +163,14 @@ class InventarioPokemons:
             self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 14, largura_esquerda, 72)
         if analisando:
             lateral_x = self._area_ficha.right + margem
-            lateral_y = self._area_ficha.y + 36
-            lateral_h = max(60, self._area_ficha.bottom - lateral_y)
-            self._area_times = pygame.Rect(lateral_x, lateral_y, largura_direita, lateral_h)
+            altura_abas = 34
+            gap_abas_conteudo = 8
+            self._area_abas = pygame.Rect(lateral_x, self._area_ficha.y, largura_direita, altura_abas)
+            conteudo_y = self._area_abas.bottom + gap_abas_conteudo
+            conteudo_h = max(60, self._area_ficha.bottom - conteudo_y)
+            self._area_times = pygame.Rect(lateral_x, conteudo_y, largura_direita, conteudo_h)
         else:
+            self._area_abas = pygame.Rect(0, 0, 0, 0)
             self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, area.height - 20)
 
         pokemons = self._lista_pokemons()
@@ -210,8 +215,9 @@ class InventarioPokemons:
 
         if self._painel_auxiliar is None:
             self._painel_auxiliar = PainelAuxiliarPoke(self._area_times)
+            self._painel_auxiliar.configurar_rects(self._area_abas, self._area_times)
         else:
-            self._painel_auxiliar.configurar_rect(self._area_times)
+            self._painel_auxiliar.configurar_rects(self._area_abas, self._area_times)
 
         if self._painel_times is None:
             self._painel_times = PainelTimes(self._area_times, times, slots_por_time=self._slots_por_time())
@@ -762,7 +768,7 @@ class InventarioPokemons:
             self._container._normalizar_tamanho()
             self._container._processar_scroll(eventos)
         elif self._painel_auxiliar is not None:
-            self._painel_auxiliar.sincronizar(self.Inventario, self._area_times)
+            self._painel_auxiliar.sincronizar(self.Inventario, self._area_times, self._area_abas)
             self._painel_auxiliar.processar_eventos(eventos)
         painel_times_ativo = self._painel_times_ativo(analisando)
         if painel_times_ativo:

@@ -17,6 +17,7 @@ class PainelAuxiliarPoke:
 
     def __init__(self, rect: pygame.Rect):
         self.Rect = pygame.Rect(rect)
+        self.RectAbas = pygame.Rect(rect.x, rect.y, rect.width, 32)
         self._aba_ativa = "times"
         self._botoes: dict[str, BotaoSelecao] = {}
         self._container: Container | None = None
@@ -56,8 +57,9 @@ class PainelAuxiliarPoke:
     def aba_ativa(self) -> str:
         return self._aba_ativa
 
-    def configurar_rect(self, rect: pygame.Rect):
-        self.Rect = pygame.Rect(rect)
+    def configurar_rects(self, rect_abas: pygame.Rect, rect_conteudo: pygame.Rect):
+        self.RectAbas = pygame.Rect(rect_abas)
+        self.Rect = pygame.Rect(rect_conteudo)
         self._configurar_layout()
 
     def _configurar_layout(self):
@@ -66,8 +68,8 @@ class PainelAuxiliarPoke:
         gap = 8
         margem = 12
         largura = max(68, int((self.Rect.width - margem * 2 - gap * 3) / 4))
-        y = self.Rect.y + 2
-        x = self.Rect.x + margem
+        y = self.RectAbas.y + max(0, (self.RectAbas.height - 30) // 2)
+        x = self.RectAbas.x + margem
         for nome in self.ABAS:
             rect = pygame.Rect(x, y, largura, 30)
             botao = antigos.get(nome)
@@ -127,8 +129,11 @@ class PainelAuxiliarPoke:
                 indices.append(idx)
         return saida, indices
 
-    def sincronizar(self, inventario, area_conteudo: pygame.Rect):
-        self.configurar_rect(area_conteudo)
+    def sincronizar(self, inventario, area_conteudo: pygame.Rect, area_abas: pygame.Rect | None = None):
+        if area_abas is not None:
+            self.configurar_rects(area_abas, area_conteudo)
+        else:
+            self.Rect = pygame.Rect(area_conteudo)
         if self._aba_ativa == "pokemons":
             self._itens_filtro = [p for p in list(getattr(inventario, "Pokemons", []) or []) if p is not None]
             self._indices_inventario = []
@@ -149,7 +154,7 @@ class PainelAuxiliarPoke:
             return
 
         slots_total = max(1, len(self._itens_filtro))
-        area_grid = pygame.Rect(self.Rect.x, self.Rect.y + 44, self.Rect.width, self.Rect.height - 44)
+        area_grid = pygame.Rect(self.Rect)
         linhas_visiveis = max(1, min(8, (slots_total + colunas - 1) // colunas))
 
         if self._container is None:

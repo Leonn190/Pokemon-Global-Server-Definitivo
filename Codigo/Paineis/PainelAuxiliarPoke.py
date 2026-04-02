@@ -8,6 +8,7 @@ import pygame
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.Container import Container
+from Codigo.Prefabs.Botao import BotaoSelecao
 from Codigo.Prefabs.Texto import Texto
 
 
@@ -17,7 +18,7 @@ class PainelAuxiliarPoke:
     def __init__(self, rect: pygame.Rect):
         self.Rect = pygame.Rect(rect)
         self._aba_ativa = "times"
-        self._botoes: dict[str, pygame.Rect] = {}
+        self._botoes: dict[str, BotaoSelecao] = {}
         self._container: Container | None = None
         self._itens_filtro: list = []
         self._indices_inventario: list[int | None] = []
@@ -60,15 +61,48 @@ class PainelAuxiliarPoke:
         self._configurar_layout()
 
     def _configurar_layout(self):
+        antigos = self._botoes
         self._botoes = {}
         gap = 8
         margem = 12
         largura = max(68, int((self.Rect.width - margem * 2 - gap * 3) / 4))
-        y = self.Rect.y + 8
+        y = self.Rect.y + 4
         x = self.Rect.x + margem
         for nome in self.ABAS:
-            self._botoes[nome] = pygame.Rect(x, y, largura, 30)
+            rect = pygame.Rect(x, y, largura, 30)
+            botao = antigos.get(nome)
+            if botao is None:
+                botao = BotaoSelecao(
+                    rect,
+                    self._titulo_aba(nome),
+                    execute=lambda _jogo, _botao, aba=nome: self._selecionar_aba(aba),
+                    style={
+                        "radius": 10,
+                        "border_width": 2,
+                        "bg": (31, 44, 72),
+                        "bg_hover": (46, 66, 108),
+                        "bg_pressed": (24, 35, 58),
+                        "border": (76, 102, 148),
+                        "border_hover": (185, 210, 255),
+                        "hover_scale": 1.0,
+                        "press_scale": 0.98,
+                        "text_style": {"size": 15, "outline_thickness": 1, "shadow": False},
+                    },
+                    selecionado=(nome == self._aba_ativa),
+                )
+            else:
+                botao.base_rect = pygame.Rect(rect)
+                botao.rect = pygame.Rect(rect)
+            botao.set_selecionado(nome == self._aba_ativa)
+            self._botoes[nome] = botao
             x += largura + gap
+
+    def _selecionar_aba(self, aba: str):
+        if aba not in self.ABAS:
+            return
+        self._aba_ativa = aba
+        for nome, botao in self._botoes.items():
+            botao.set_selecionado(nome == aba)
 
     def _titulo_aba(self, aba: str) -> str:
         return {
@@ -145,20 +179,11 @@ class PainelAuxiliarPoke:
             self._container.configurar_rect(area_grid)
 
     def processar_eventos(self, eventos):
-        for evento in eventos:
-            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                for aba, rect in self._botoes.items():
-                    if rect.collidepoint(evento.pos):
-                        self._aba_ativa = aba
-                        return True
         if self._aba_ativa != "times" and self._container is not None:
             self._container._processar_scroll(eventos)
         return False
 
     def alvo_no_mouse(self, pos):
-        for rect in self._botoes.values():
-            if rect.collidepoint(pos):
-                return None
         if self._container is None:
             return None
         idx = self._container.indice_no_mouse(pos)
@@ -174,17 +199,10 @@ class PainelAuxiliarPoke:
             return None
         return self._indices_inventario[int(indice_visual)]
 
-    def clique_em_botao(self, pos):
-        return any(rect.collidepoint(pos) for rect in self._botoes.values())
-
-    def desenhar(self, tela: pygame.Surface):
-        for aba, rect in self._botoes.items():
-            ativa = aba == self._aba_ativa
-            pygame.draw.rect(tela, (68, 105, 178) if ativa else (31, 44, 72), rect, border_radius=10)
-            pygame.draw.rect(tela, (230, 240, 255) if ativa else (76, 102, 148), rect, 2, border_radius=10)
-            self._fonte.set_text(self._titulo_aba(aba))
-            self._fonte.set_pos(rect.center)
-            self._fonte.draw(tela)
+    def desenhar(self, tela: pygame.Surface, eventos=None, dt: float = 0.0):
+        eventos = eventos or []
+        for botao in self._botoes.values():
+            botao.render(tela, eventos, dt, JOGO=None)
 
         if self._aba_ativa == "times":
             return

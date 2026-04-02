@@ -26,9 +26,9 @@ class FichaItem:
             'outline_thickness': 2,
             'outline_color': (8, 12, 20),
         }
-        self.TxtVazio = Texto('Passe o mouse em um item para ver os detalhes.', style={**base, 'size': 16, 'color': (166, 178, 208)})
+        self.TxtVazio = Texto('Passe o mouse em um item para ver os detalhes.', style={**base, 'size': 16, 'color': (166, 178, 208), 'align': 'center'})
         self.TxtNome = Texto('Item', style={**base, 'size': 19, 'color': (245, 247, 255), 'align': 'midleft'})
-        self.TxtRaridade = Texto('-', style={**base, 'size': 15, 'color': (236, 241, 255), 'align': 'midleft'})
+        self.TxtRaridade = Texto('-', style={**base, 'size': 15, 'color': (236, 241, 255), 'align': 'center'})
         self.TxtDescricao = Texto('', style={**base, 'size': 13, 'color': (181, 193, 220), 'align': 'midleft'})
 
     @classmethod
@@ -122,7 +122,7 @@ class FichaItem:
         area = pygame.Rect(rect)
 
         if item is None:
-            self.TxtVazio.set_pos((area.x + 8, area.centery))
+            self.TxtVazio.set_pos((area.centerx, area.centery))
             self.TxtVazio.draw(tela)
             return
 
@@ -134,9 +134,9 @@ class FichaItem:
 
         margem = 8
         box_icone = pygame.Rect(area.right - 58, area.y + (area.height - 52) // 2, 52, 52)
-        nome_x = area.x + margem
-        desc_x = area.x + 165
-        raridade_x = area.x + 326
+        nome_x = area.x + margem - 2
+        desc_x = area.x + 158
+        raridade_x = area.x + 330
         centro_y = area.centery
         self.TxtNome.set_text(nome)
         self.TxtNome.set_pos((nome_x, centro_y))
@@ -149,7 +149,7 @@ class FichaItem:
         pill_rect.center = (raridade_x + pill_rect.width // 2, centro_y)
         pygame.draw.rect(tela, raridade_cor, pill_rect, border_radius=10)
         pygame.draw.rect(tela, (8, 12, 20), pill_rect, 2, border_radius=10)
-        self.TxtRaridade.set_pos((pill_rect.x + (pill_rect.width - rar_rect.width) // 2, pill_rect.y + (pill_rect.height - rar_rect.height) // 2 - 1))
+        self.TxtRaridade.set_pos((pill_rect.centerx, pill_rect.centery))
         self.TxtRaridade.draw(tela)
         ItemInventario.desenhar_item_no_rect(tela, item, box_icone)
 

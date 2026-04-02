@@ -29,7 +29,7 @@ class PainelReceitas(PainelRolavel):
         )
 
         self.Colunas = 6
-        self.SlotPx = 48
+        self.SlotPx = 50
         self.Gap = 8
         self.Padding = 16
 
@@ -154,6 +154,20 @@ class PainelReceitas(PainelRolavel):
         item['quantidade'] = quantidade
         return item
 
+    @staticmethod
+    def _quantidade_saida_receita(grade):
+        if not isinstance(grade, list):
+            return 1
+        bruto = None
+        if len(grade) >= 10 and not isinstance(grade[9], list):
+            bruto = grade[9]
+        elif len(grade) >= 4 and not isinstance(grade[3], list):
+            bruto = grade[3]
+        try:
+            return max(1, int(bruto))
+        except (TypeError, ValueError):
+            return 1
+
     @classmethod
     def _carregar_receitas(cls):
         if cls._receitas_cache is not None:
@@ -182,6 +196,8 @@ class PainelReceitas(PainelRolavel):
                     'saida': cls._item_real_por_nome(nome_saida),
                     'grade': [None] * 9
                 }
+                if isinstance(receita['saida'], dict):
+                    receita['saida']['quantidade'] = cls._quantidade_saida_receita(grade)
 
                 idx = 0
                 for lin in range(3):

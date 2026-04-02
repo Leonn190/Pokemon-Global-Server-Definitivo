@@ -52,11 +52,12 @@ class BarraPesquisa(CaixaTexto):
         for item in list(ordenacoes or []):
             if not isinstance(item, (list, tuple)) or len(item) < 2:
                 continue
-            rotulo, chave = item[0], item[1]
-            if not callable(chave):
+            rotulo = str(item[0])
+            if len(item) >= 3 and callable(item[2]):
+                self._ordens.append((rotulo, 'acao', item[2]))
                 continue
-            self._ordens.append((str(rotulo), chave))
-
+            if callable(item[1]):
+                self._ordens.append((rotulo, 'ordem', item[1]))
         self._reconstruir_botoes()
 
     def resetar_filtro(self):
@@ -80,7 +81,7 @@ class BarraPesquisa(CaixaTexto):
         if not isinstance(self._lista_base, list):
             return
 
-        _rotulo, chave = self._ordens[int(indice)]
+        _rotulo, _tipo, chave = self._ordens[int(indice)]
         prefixo = max(0, min(self._indices_fixos_imutaveis, len(self._lista_base)))
         itens_com_idx = [(idx, item) for idx, item in enumerate(self._lista_base[prefixo:], start=prefixo) if item is not None]
         itens_com_idx.sort(key=lambda par: (self._valor_ordem(chave, par[1]), par[0]))
@@ -94,19 +95,21 @@ class BarraPesquisa(CaixaTexto):
 
     def _reconstruir_botoes(self):
         self._botoes_ordenacao = []
-        if not self._ordens:
-            return
 
         gap = 8
         largura_max = 128
         altura = max(30, self.rect.height - 10)
         x = self.rect.right + gap
 
-        for indice, (rotulo, _chave) in enumerate(self._ordens):
+        for indice, (rotulo, tipo, _fn) in enumerate(self._ordens):
             largura = min(largura_max, max(78, 20 + len(rotulo) * 8))
 
-            def _acao(_jogo, _botao, idx=indice):
-                self._aplicar_ordenacao(idx)
+            if tipo == 'ordem':
+                def _acao(_jogo, _botao, idx=indice):
+                    self._aplicar_ordenacao(idx)
+            else:
+                def _acao(_jogo, _botao, idx=indice):
+                    self._ordens[idx][2]()
 
             botao = Botao(
                 pygame.Rect(x, self.rect.centery - altura // 2, largura, altura),

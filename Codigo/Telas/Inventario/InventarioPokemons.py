@@ -170,6 +170,7 @@ class InventarioPokemons:
                 ('Alfabética', PokemonInventario.nome_pokemon),
                 ('Poder', lambda p: -PokemonInventario.poder_total(p)),
                 ('Tipo', PokemonInventario.tipo_principal),
+                ('Favoritos', None, self._favoritos_primeiro),
             ])
             self._container.configurar_barra_pesquisa(self._barra_pesquisa)
         else:
@@ -223,6 +224,37 @@ class InventarioPokemons:
             return f'Nome: {nome} | {especie} | Poder {poder}'
         return f'Nome: {nome} | {especie} Lv {nivel} | Poder {poder}'
 
+    def _desenhar_tipos_hover(self, tela, pokemon):
+        tipos = PokemonInventario.tipos_pokemon(pokemon)
+        if not tipos:
+            return
+        lado = 18
+        gap = 6
+        x = self._area_info.right - 18 - (len(tipos) * (lado + gap))
+        y = self._area_info.centery - (lado // 2)
+        for tipo in tipos:
+            fundo = pygame.Rect(x, y, lado, lado)
+            pygame.draw.rect(tela, (250, 250, 255), fundo, border_radius=9)
+            icone = PokemonInventario.icone_tipo(tipo, lado - 4)
+            if icone is not None:
+                tela.blit(icone, icone.get_rect(center=fundo.center))
+            x += lado + gap
+
+    def _favoritos_primeiro(self):
+        if self._barra_pesquisa is None or self._container is None:
+            return
+        prefixo = max(0, min(getattr(self._barra_pesquisa, '_indices_fixos_imutaveis', 0), len(self._container.Itens)))
+        itens = self._container.Itens
+        base = [item for item in itens[prefixo:] if item is not None]
+        favoritos = [item for item in base if PokemonInventario.favorito(item)]
+        comuns = [item for item in base if not PokemonInventario.favorito(item)]
+        for i, item in enumerate(favoritos + comuns, start=prefixo):
+            itens[i] = item
+        for i in range(prefixo + len(base), len(itens)):
+            itens[i] = None
+        self._barra_pesquisa._projecao_suja = True
+        self._container.marcar_sujo()
+
     def _chave(self, pokemon):
         return PokemonInventario.chave_pokemon(pokemon) if pokemon is not None else None
 
@@ -247,14 +279,14 @@ class InventarioPokemons:
         )
 
     def _abrir_confirmacao_doacao(self, pokemon, remover_time=None):
-        nome = self._nome_pokemon(pokemon) or 'este pokémon'
+        nome = PokemonInventario.nome_pokemon(pokemon) or 'este pokémon'
 
         def _confirmar():
             self._doar_pokemon(pokemon)
 
         self._subtela_ativa = SubtelaConfirmacao(
             pygame.display.get_surface().get_size(),
-            f'Tem certeza que deseja doar {nome}?',
+            f'Tem certeza que deseja doar o "{nome}"?',
             confirmar_callback=_confirmar,
             titulo='Confirmar doação',
         )
@@ -623,6 +655,7 @@ class InventarioPokemons:
             self.TxtHover.set_text(self._nome_pokemon(self._pokemon_hover) or 'Arraste pokémons para montar seus times')
             self.TxtHover.set_pos((self._area_info.right - 18, self._area_info.centery))
             self.TxtHover.draw(tela)
+            self._desenhar_tipos_hover(tela, self._pokemon_hover)
 
             if self._arrastavel.Ativo and self._arrastavel.Item is not None:
                 rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.1), int(self._arrastavel.Rect.height * 0.1))

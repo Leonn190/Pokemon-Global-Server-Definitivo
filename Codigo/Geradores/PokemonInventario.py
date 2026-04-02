@@ -17,6 +17,7 @@ class PokemonInventario:
     _mapa_por_numero: Dict[str, str] | None = None
     _cache_surface: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
     _cache_icone_coracao: Dict[int, Optional[pygame.Surface]] = {}
+    _cache_icone_tipo: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
 
     @staticmethod
     def _norm(texto: str) -> str:
@@ -63,6 +64,15 @@ class PokemonInventario:
         return str(pokemon or "Pokémon")
 
     @staticmethod
+    def especie_pokemon(pokemon: object) -> str:
+        if isinstance(pokemon, dict):
+            for chave in ("Especie", "especie", "Species", "species", "Pokemon", "pokemon", "Nome", "nome"):
+                valor = pokemon.get(chave)
+                if valor:
+                    return str(valor)
+        return PokemonInventario.nome_pokemon(pokemon)
+
+    @staticmethod
     def nivel_pokemon(pokemon: object):
         if not isinstance(pokemon, dict):
             return None
@@ -107,6 +117,44 @@ class PokemonInventario:
             return xp_alvo > 0 and xp_atual >= xp_alvo
         except (TypeError, ValueError):
             return False
+
+    @classmethod
+    def normalizar_tipo(cls, tipo: str) -> str:
+        return cls._norm(tipo)
+
+    @classmethod
+    def tipos_pokemon(cls, pokemon: object) -> list[str]:
+        if not isinstance(pokemon, dict):
+            return []
+        tipos = pokemon.get('Tipos')
+        if isinstance(tipos, (list, tuple)):
+            lista = [cls.normalizar_tipo(str(t)) for t in tipos if str(t).strip()]
+        else:
+            tipo = pokemon.get('Tipo')
+            lista = [cls.normalizar_tipo(str(tipo))] if str(tipo or '').strip() else []
+        unicos = []
+        for tipo in lista:
+            if tipo and tipo not in unicos:
+                unicos.append(tipo)
+        return unicos
+
+    @classmethod
+    def icone_tipo(cls, tipo: str, lado_px: int) -> Optional[pygame.Surface]:
+        lado_px = int(max(10, lado_px))
+        nome = cls.normalizar_tipo(tipo)
+        chave = (nome, lado_px)
+        if chave in cls._cache_icone_tipo:
+            return cls._cache_icone_tipo[chave]
+        caminho = Path('Recursos') / 'Visual' / 'Icones' / 'Tipos' / f'{nome}.png'
+        surf = None
+        if caminho.exists():
+            try:
+                surf = pygame.image.load(str(caminho)).convert_alpha()
+                surf = pygame.transform.smoothscale(surf, (lado_px, lado_px))
+            except Exception:
+                surf = None
+        cls._cache_icone_tipo[chave] = surf
+        return surf
 
     @classmethod
     def _icone_coracao(cls, lado_px: int) -> Optional[pygame.Surface]:
@@ -183,7 +231,7 @@ class PokemonInventario:
                 if achado:
                     return achado
 
-        nome = cls.nome_pokemon(pokemon)
+        nome = cls.especie_pokemon(pokemon)
         if nome:
             return cls._mapa_por_nome.get(cls._norm(nome))
         return None

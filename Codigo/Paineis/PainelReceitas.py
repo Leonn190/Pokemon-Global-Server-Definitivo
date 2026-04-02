@@ -28,9 +28,9 @@ class PainelReceitas(PainelRolavel):
             raio=16
         )
 
-        self.Colunas = 5
-        self.SlotPx = 54
-        self.Gap = 10
+        self.Colunas = 6
+        self.SlotPx = 48
+        self.Gap = 8
         self.Padding = 16
 
         self.Receitas = self._carregar_receitas()
@@ -132,6 +132,29 @@ class PainelReceitas(PainelRolavel):
         return item
 
     @classmethod
+    def _item_grade_para_slot(cls, entrada):
+        if entrada is None:
+            return None
+
+        quantidade = 1
+        nome_item = entrada
+        if isinstance(entrada, list):
+            if len(entrada) <= 0:
+                return None
+            nome_item = entrada[0]
+            if len(entrada) >= 2:
+                try:
+                    quantidade = max(1, int(entrada[1]))
+                except (TypeError, ValueError):
+                    quantidade = 1
+
+        item = cls._item_real_por_nome(nome_item)
+        if item is None:
+            return None
+        item['quantidade'] = quantidade
+        return item
+
+    @classmethod
     def _carregar_receitas(cls):
         if cls._receitas_cache is not None:
             return cls._receitas_cache
@@ -164,8 +187,8 @@ class PainelReceitas(PainelRolavel):
                 for lin in range(3):
                     linha = grade[lin] if lin < len(grade) and isinstance(grade[lin], list) else []
                     for col in range(3):
-                        nome_item = linha[col] if col < len(linha) else None
-                        receita['grade'][idx] = cls._item_real_por_nome(nome_item) if nome_item else None
+                        entrada = linha[col] if col < len(linha) else None
+                        receita['grade'][idx] = cls._item_grade_para_slot(entrada)
                         idx += 1
 
                 receitas.append(receita)
@@ -301,8 +324,9 @@ class PainelReceitas(PainelRolavel):
             if item is None:
                 continue
             chave = self._nome_item(item)
-            if chave:
-                precisa[chave] = precisa.get(chave, 0) + 1
+            if not chave:
+                continue
+            precisa[chave] = precisa.get(chave, 0) + max(1, self._quantidade_item(item))
 
         if precisa and all(quantidades.get(ch, 0) >= qtd for ch, qtd in precisa.items()):
             return 'verde'

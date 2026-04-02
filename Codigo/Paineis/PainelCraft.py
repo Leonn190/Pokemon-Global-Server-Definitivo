@@ -275,17 +275,30 @@ class PainelCraft:
                 continue
             atual = self.CraftSlots[i]
             chave_esperada = self.chave_item(esperado)
+            qtd_esperada = max(1, self.quantidade(esperado))
             if atual is not None and self.chave_item(atual) != chave_esperada:
                 continue
-            retirado, origem = _consumir_reserva(self.chave_item(esperado))
-            if retirado is None:
+            qtd_atual = self.quantidade(atual)
+            faltante = max(0, qtd_esperada - qtd_atual)
+            if faltante <= 0:
                 continue
-            if atual is None:
-                self.CraftSlots[i] = retirado
-                self._origens[i] = origem
-            else:
-                atual['quantidade'] = self.quantidade(atual) + self.quantidade(retirado)
-            colocou_algo = True
+            origem_slot = None
+            for _ in range(faltante):
+                retirado, origem = _consumir_reserva(chave_esperada)
+                if retirado is None:
+                    break
+                if atual is None:
+                    self.CraftSlots[i] = retirado
+                    self._origens[i] = origem
+                    atual = self.CraftSlots[i]
+                    origem_slot = origem
+                else:
+                    atual['quantidade'] = self.quantidade(atual) + self.quantidade(retirado)
+                if origem_slot is None:
+                    origem_slot = origem
+                colocou_algo = True
+            if atual is not None and self._origens[i] is None and origem_slot is not None:
+                self._origens[i] = origem_slot
         self._marcar_sujo()
         return colocou_algo
 
@@ -302,6 +315,9 @@ class PainelCraft:
                 if self.chave_item(esperado) != self.chave_item(atual):
                     ok = False
                     break
+                if self.quantidade(atual) < self.quantidade(esperado):
+                    ok = False
+                    break
             if ok:
                 return copy.deepcopy(receita['saida']), receita
         return None, None
@@ -313,11 +329,12 @@ class PainelCraft:
             if esperado is None or self.CraftSlots[i] is None:
                 continue
             qtd = self.quantidade(self.CraftSlots[i])
-            if qtd <= 1:
+            consumo = max(1, self.quantidade(esperado))
+            if qtd <= consumo:
                 self.CraftSlots[i] = None
                 self._origens[i] = None
             else:
-                self.CraftSlots[i]['quantidade'] = qtd - 1
+                self.CraftSlots[i]['quantidade'] = qtd - consumo
         self._marcar_sujo()
 
     def devolver_para_inventario(self, container):

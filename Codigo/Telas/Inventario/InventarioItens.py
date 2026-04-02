@@ -38,7 +38,7 @@ class InventarioItens:
         self._area_total = pygame.Rect(0, 0, 0, 0)
 
         estilo = {'outline': True, 'outline_thickness': 2, 'outline_color': (8, 12, 20)}
-        self.TxtTotal = Texto('', style={**estilo, 'size': 23, 'color': (239, 243, 255), 'align': 'center'})
+        self.TxtTotal = Texto('', style={**estilo, 'size': 23, 'color': (239, 243, 255), 'align': 'midleft'})
         self._painel_info = Painel((0, 0, 0, 0), cor_fundo=(18, 26, 44, 242), cor_borda=(66, 88, 136), borda=2, raio=16)
         self._barra_pesquisa = None
 
@@ -101,11 +101,11 @@ class InventarioItens:
         largura_esquerda = min(int(area.width * 0.64), 760)
         largura_direita = area.width - largura_esquerda - margem * 3
 
-        self._area_grid = pygame.Rect(area.x + margem, area.y + topo, largura_esquerda, area.height - 110)
-        self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 16, largura_esquerda, 65)
+        self._area_grid = pygame.Rect(area.x + margem, area.y + topo, largura_esquerda, area.height - 116)
+        self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 16, largura_esquerda, 72)
         self._area_craft = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, 290)
-        self._area_receitas = pygame.Rect(self._area_grid.right + margem, self._area_craft.bottom + 14, largura_direita, 173)
-        self._area_ficha = pygame.Rect(self._area_grid.right + margem, self._area_receitas.bottom + 18, largura_direita, 135)
+        self._area_receitas = pygame.Rect(self._area_grid.right + margem, self._area_craft.bottom + 14, largura_direita, area.bottom - (self._area_craft.bottom + 14) - 8)
+        self._area_ficha = pygame.Rect(self._area_info.right - 470, self._area_info.y + 4, 462, self._area_info.height - 8)
 
         if self._container is None:
             self._container = Container(
@@ -223,16 +223,17 @@ class InventarioItens:
         item = copy.deepcopy(self._arrastavel.Item)
         if grupo == 'inventario':
             rect = self._container.item_rect_no_slot(self._container.slot_rect(indice))
-        else:
+            resto = self._container.restaurar_item_no_slot_origem(origem_aux, item)
+            if resto is not None:
+                self._container.devolver_para_origem_ou_vazio(origem_aux, resto)
+        elif grupo == 'craft':
             rect = self._painel_craft.item_rect_no_slot(self._painel_craft.slot_rect(indice))
+            self._painel_craft.restaurar_no_slot_origem(indice, item, origem=origem_aux)
+        else:
+            rect = self._painel_craft.item_rect_no_slot(self._painel_craft.slot_saida_rect())
+            self._container.devolver_para_origem_ou_vazio(None, item)
 
         def _finalizar():
-            if grupo == 'inventario':
-                resto = self._container.restaurar_item_no_slot_origem(origem_aux, item)
-                if resto is not None:
-                    self._container.devolver_para_origem_ou_vazio(origem_aux, resto)
-            else:
-                self._painel_craft.restaurar_no_slot_origem(indice, item, origem=origem_aux)
             self._arrastavel.cancelar()
         self._arrastavel.definir_pos_alvo(rect.topleft, ao_final=_finalizar)
 
@@ -260,10 +261,7 @@ class InventarioItens:
             return False
         if not self._arrastavel.Ativo or self._arrastavel.Item is None:
             return False
-        if evento.button == 1:
-            self._dropar_fora()
-        else:
-            self._dropar_fora(quantidade=1)
+        self._retornar_para_origem()
         return True
 
     def _soltar_no_alvo(self, alvo, botao):
@@ -278,6 +276,9 @@ class InventarioItens:
             if alvo[0] == 'inventario':
                 if not self._container.permite_interacao_por_slot():
                     return
+                destino_atual = self._container.item_por_slot_visual(alvo[1])
+                if destino_atual is not None and self._chave(destino_atual) != self._chave(parte):
+                    return
                 indice_real_destino = self._container.indice_real_por_visual(alvo[1], exigir_item=False)
                 if indice_real_destino is None:
                     return
@@ -285,6 +286,9 @@ class InventarioItens:
                 if resto is None:
                     item['quantidade'] = self._quantidade(item) - 1
             elif alvo[0] == 'craft':
+                destino_atual = self._painel_craft.CraftSlots[alvo[1]]
+                if destino_atual is not None and self._chave(destino_atual) != self._chave(parte):
+                    return
                 resto = self._painel_craft.colocar_no_slot(alvo[1], parte, origem=indice_origem if grupo_origem == 'inventario' else origem_aux)
                 if not isinstance(resto, tuple) and resto is None:
                     item['quantidade'] = self._quantidade(item) - 1
@@ -368,11 +372,16 @@ class InventarioItens:
         for evento in eventos:
             if evento.type == pygame.MOUSEMOTION and self._arrastavel.Ativo and self._arrastavel.PosAlvo is None:
                 self._arrastavel.atualizar(evento.pos)
-                if self._arrastavel.ModoDistribuidor and pygame.mouse.get_pressed()[2]:
+                if self._arrastavel.ModoDistribuidor and (evento.buttons[2] if hasattr(evento, 'buttons') else pygame.mouse.get_pressed()[2]):
                     alvo = self._alvo_no_mouse(evento.pos)
                     if alvo is not None and alvo[0] != 'saida' and self._arrastavel.pode_distribuir_em(alvo):
                         self._soltar_no_alvo(alvo, 3)
                         self._arrastavel.registrar_distribuicao(alvo)
+            elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3 and self._arrastavel.Ativo and self._arrastavel.ModoDistribuidor and self._arrastavel.PosAlvo is None:
+                alvo = self._alvo_no_mouse(evento.pos)
+                if alvo is not None and alvo[0] != 'saida' and self._arrastavel.pode_distribuir_em(alvo):
+                    self._soltar_no_alvo(alvo, 3)
+                    self._arrastavel.registrar_distribuicao(alvo)
 
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button in (1, 3):
                 alvo = self._alvo_no_mouse(evento.pos)
@@ -389,16 +398,7 @@ class InventarioItens:
                     if self._arrastavel.PosAlvo is not None:
                         continue
                     if alvo is None:
-                        if self._area_total.collidepoint(evento.pos):
-                            if evento.button == 1:
-                                self._retornar_para_origem()
-                            else:
-                                pass
-                        else:
-                            if evento.button == 1:
-                                self._dropar_fora()
-                            else:
-                                self._dropar_fora(quantidade=1)
+                        self._retornar_para_origem()
                     elif alvo[0] == 'saida' and evento.button == 1:
                         self._coletar_saida_craft(evento.pos)
                     else:
@@ -441,7 +441,7 @@ class InventarioItens:
 
         self._painel_info.render(tela, [], 0)
         self.TxtTotal.set_text(f'{self._quantidade_total_itens()} / {self._capacidade_total()} itens')
-        self.TxtTotal.set_pos(self._area_info.center)
+        self.TxtTotal.set_pos((self._area_info.x + 14, self._area_info.centery))
         self.TxtTotal.draw(tela)
 
         self._painel_craft.desenhar(tela, self._painel_receitas.Receitas, highlight=highlight)

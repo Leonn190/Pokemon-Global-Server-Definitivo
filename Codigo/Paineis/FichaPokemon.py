@@ -12,7 +12,7 @@ try:
     from Codigo.Geradores.PokemonInventario import PokemonInventario
     from Codigo.Prefabs.Arrastavel import Arrastavel
     from Codigo.Prefabs.Barra import Barra
-    from Codigo.Prefabs.Botao import Botao, BotaoSelecao
+    from Codigo.Prefabs.Botao import Botao
     from Codigo.Prefabs.Painel import Painel
     from Codigo.Prefabs.Texto import Texto
     from Codigo.Paineis.FichaAtaque import FichaAtaque
@@ -20,7 +20,7 @@ except Exception:  # pragma: no cover
     from PokemonInventario import PokemonInventario
     from Arrastavel import Arrastavel
     from Barra import Barra
-    from Botao import Botao, BotaoSelecao
+    from Botao import Botao
     from Painel import Painel
     from Texto import Texto
     from FichaAtaque import FichaAtaque
@@ -580,7 +580,7 @@ class FichaPokemon:
         def _fechar(_jogo, _botao):
             self.FecharSolicitado = True
 
-        self._botao_fechar = BotaoSelecao(
+        self._botao_fechar = Botao(
             pygame.Rect(rect.right - 52, rect.y + 12, 36, 36),
             'X',
             execute=_fechar,
@@ -597,7 +597,7 @@ class FichaPokemon:
                 'text_style': {'size': 21, 'outline_thickness': 1, 'shadow': False},
             },
         )
-        self._botao_doar = BotaoSelecao(
+        self._botao_doar = Botao(
             pygame.Rect(rect.x + 16, rect.bottom - 40, 112, 26),
             'Doar',
             execute=lambda _jogo, _botao: setattr(self, 'DoarSolicitado', True),
@@ -609,7 +609,7 @@ class FichaPokemon:
                 'text_style': {'size': 15, 'outline_thickness': 1, 'shadow': False},
             },
         )
-        self._botao_upar = BotaoSelecao(
+        self._botao_upar = Botao(
             pygame.Rect(rect.x + 136, rect.bottom - 40, 148, 26),
             'Subir nível',
             execute=lambda _jogo, _botao: setattr(self, 'UparNivelSolicitado', True),

@@ -33,6 +33,7 @@ class Barra:
         self.cor_fundo = (25, 28, 40)
         self.cor_preenchimento = (60, 170, 255)
         self.cor_borda = (180, 200, 255)
+        self.border_radius = 12
 
         self.rotulo = Texto(
             "",
@@ -76,6 +77,7 @@ class Barra:
         cor_borda=None,
         cor_preenchimento=None,
         vertical=None,
+        border_radius=None,
     ):
         if rect is not None:
             self.rect = pygame.Rect(rect)
@@ -91,6 +93,8 @@ class Barra:
             self.cor_preenchimento = tuple(cor_preenchimento)
         if vertical is not None:
             self.vertical = bool(vertical)
+        if border_radius is not None:
+            self.border_radius = max(0, int(border_radius))
 
     def atualizar(self, dt):
         dt = max(0.0, float(dt))
@@ -105,7 +109,7 @@ class Barra:
     def _desenhar_barra(self, tela):
         percentual = _clamp(self.percentual(), 0.0, 1.0)
 
-        pygame.draw.rect(tela, self.cor_fundo, self.rect, border_radius=12)
+        pygame.draw.rect(tela, self.cor_fundo, self.rect, border_radius=self.border_radius)
         if self.vertical:
             preenchimento = int(self.rect.height * percentual)
             if preenchimento > 0:
@@ -113,7 +117,7 @@ class Barra:
                     tela,
                     self.cor_preenchimento,
                     pygame.Rect(self.rect.x, self.rect.bottom - preenchimento, self.rect.width, preenchimento),
-                    border_radius=12,
+                    border_radius=self.border_radius,
                 )
         else:
             preenchimento = int(self.rect.width * percentual)
@@ -122,10 +126,10 @@ class Barra:
                     tela,
                     self.cor_preenchimento,
                     pygame.Rect(self.rect.x, self.rect.y, preenchimento, self.rect.height),
-                    border_radius=12,
+                    border_radius=self.border_radius,
                 )
 
-        pygame.draw.rect(tela, self.cor_borda, self.rect, width=2, border_radius=12)
+        pygame.draw.rect(tela, self.cor_borda, self.rect, width=2, border_radius=self.border_radius)
 
     def render(self, tela, eventos=None, dt=0.0):
         self.atualizar(dt)

@@ -446,12 +446,8 @@ class InventarioPokemons:
             return
         origem = self._arrastavel.Origem or ()
         if origem and origem[0] == 'time':
-            rect = self._painel_times.slot_rect(origem[1], origem[2])
-            alvo = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
-            def _finalizar():
-                self._painel_times.definir_slot(origem[1], origem[2], self._arrastavel.Item)
-                self._arrastavel.cancelar()
-            self._arrastavel.definir_pos_alvo(alvo.topleft, ao_final=_finalizar)
+            self._painel_times.definir_slot(origem[1], origem[2], self._arrastavel.Item)
+            self._arrastavel.cancelar()
             return
         if origem and origem[0] == 'grid':
             rect = self._container.slot_rect(origem[1])

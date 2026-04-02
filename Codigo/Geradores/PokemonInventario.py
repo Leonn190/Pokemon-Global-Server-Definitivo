@@ -126,12 +126,13 @@ class PokemonInventario:
     def tipos_pokemon(cls, pokemon: object) -> list[str]:
         if not isinstance(pokemon, dict):
             return []
-        tipos = pokemon.get('Tipos')
+        tipos = pokemon.get('tipos')
         if isinstance(tipos, (list, tuple)):
             lista = [cls.normalizar_tipo(str(t)) for t in tipos if str(t).strip()]
         else:
-            tipo = pokemon.get('Tipo')
+            tipo = pokemon.get('tipo')
             lista = [cls.normalizar_tipo(str(tipo))] if str(tipo or '').strip() else []
+
         unicos = []
         for tipo in lista:
             if tipo and tipo not in unicos:
@@ -174,16 +175,8 @@ class PokemonInventario:
     def tipo_principal(cls, pokemon: object) -> str:
         if not isinstance(pokemon, dict):
             return ''
-
-        tipos = pokemon.get('Tipos')
-        if isinstance(tipos, (list, tuple)) and tipos:
-            return str(tipos[0] or '')
-
-        tipo = pokemon.get('Tipo')
-        if tipo not in (None, ''):
-            return str(tipo)
-
-        return ''
+        tipos = cls.tipos_pokemon(pokemon)
+        return tipos[0] if tipos else ''
 
     @classmethod
     def chave_pokemon(cls, pokemon: object) -> str:

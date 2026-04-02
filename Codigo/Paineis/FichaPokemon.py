@@ -33,6 +33,8 @@ class FichaPokemon:
     _cache_listagem: dict[str, dict[str, Path]] = {}
     _cache_frames: dict[str, list[pygame.Surface]] = {}
     _cache_frames_escalados: dict[tuple[str, int], list[pygame.Surface]] = {}
+    _cache_pastas_tipo_ataque: dict[str, list[Path]] = {}
+    _cache_icone_ataque_path: dict[tuple[str, str], Path | None] = {}
     _INTERVALO_FRAME_ANIM_MS = 70
 
     _ordem_status = ('Vida', 'Atk', 'Def', 'SpA', 'SpD', 'Vel', 'Mag', 'Per', 'Ene', 'Int')
@@ -97,7 +99,7 @@ class FichaPokemon:
             'shadow': False,
         }
         self.TxtTitulo = Texto('', style={**base, 'size': 25, 'color': (245, 249, 255)})
-        self.TxtTituloCentro = Texto('', style={**base, 'size': 26, 'color': (245, 249, 255), 'align': 'center'})
+        self.TxtTituloCentro = Texto('', style={**base, 'size': 29, 'color': (245, 249, 255), 'align': 'center'})
         self.TxtSub = Texto('', style={**base, 'size': 15, 'color': (176, 190, 224)})
         self.TxtSubCentro = Texto('', style={**base, 'size': 15, 'color': (176, 190, 224), 'align': 'center'})
         self.TxtNivel = Texto('', style={**base, 'size': 18, 'color': (245, 249, 255), 'align': 'center'})
@@ -519,8 +521,11 @@ class FichaPokemon:
 
     @classmethod
     def _pastas_tipo_ataque(cls, tipo: str) -> list[Path]:
+        chave = cls._normalizar(tipo)
+        if chave in cls._cache_pastas_tipo_ataque:
+            return cls._cache_pastas_tipo_ataque[chave]
         base_pastas = cls._pastas_existentes(Path('Recursos') / 'Visual' / 'Icones' / 'Ataques')
-        alvo_norm = cls._normalizar(tipo)
+        alvo_norm = chave
         encontradas: list[Path] = []
         for base in base_pastas:
             try:
@@ -531,20 +536,27 @@ class FichaPokemon:
                             encontradas.append(pasta)
             except OSError:
                 continue
+        cls._cache_pastas_tipo_ataque[chave] = encontradas
         return encontradas
 
     @classmethod
     def _icone_ataque_path(cls, nome_ataque: str, tipo: str) -> Path | None:
-        candidatos = [cls._normalizar(nome_ataque)]
+        chave = (cls._normalizar(nome_ataque), cls._normalizar(tipo))
+        if chave in cls._cache_icone_ataque_path:
+            return cls._cache_icone_ataque_path[chave]
+        candidatos = [chave[0]]
         for pasta in cls._pastas_tipo_ataque(tipo):
             mapa = cls._listar_arquivos(pasta)
             for nome in candidatos:
                 if nome in mapa:
+                    cls._cache_icone_ataque_path[chave] = mapa[nome]
                     return mapa[nome]
             for nome in candidatos:
-                for chave, arquivo in mapa.items():
-                    if chave == nome or chave.startswith(nome) or nome in chave:
+                for chave_mapa, arquivo in mapa.items():
+                    if chave_mapa == nome or chave_mapa.startswith(nome) or nome in chave_mapa:
+                        cls._cache_icone_ataque_path[chave] = arquivo
                         return arquivo
+        cls._cache_icone_ataque_path[chave] = None
         return None
 
     def _icone_ataque(self, ataque: dict | None, lado: int) -> pygame.Surface | None:
@@ -566,11 +578,11 @@ class FichaPokemon:
             self.FecharSolicitado = True
 
         self._botao_fechar = Botao(
-            pygame.Rect(rect.right - 44, rect.y + 8, 30, 30),
+            pygame.Rect(rect.right - 52, rect.y + 7, 36, 36),
             'X',
             execute=_fechar,
             style={
-                'radius': 10,
+                'radius': 12,
                 'border_width': 2,
                 'bg': (116, 54, 54),
                 'bg_hover': (150, 68, 68),
@@ -579,7 +591,7 @@ class FichaPokemon:
                 'border_hover': (255, 245, 245),
                 'hover_scale': 1.0,
                 'press_scale': 0.98,
-                'text_style': {'size': 18, 'outline_thickness': 1, 'shadow': False},
+                'text_style': {'size': 21, 'outline_thickness': 1, 'shadow': False},
             },
         )
         self._botao_doar = Botao(
@@ -674,7 +686,7 @@ class FichaPokemon:
         tipos = self._tipos(pokemon)
         header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 32)
         botao_rect = self._botao_fechar.rect if self._botao_fechar is not None else pygame.Rect(header.right - 30, header.y + 1, 30, 30)
-        tipo_lado = min(34, header.height - 1)
+        tipo_lado = min(38, header.height)
         gap_tipo = 8
         tipos_w = (len(tipos) * tipo_lado) + (max(0, len(tipos) - 1) * gap_tipo)
         tipos_area = pygame.Rect(header.x + 12, header.y + 3, tipos_w, header.height - 6)
@@ -684,7 +696,7 @@ class FichaPokemon:
         direita_titulo = botao_rect.x - 10
         centro_x = (esquerda_titulo + direita_titulo) // 2
         self.TxtTituloCentro.set_text(nome)
-        self.TxtTituloCentro.set_pos((centro_x, header.y + 8))
+        self.TxtTituloCentro.set_pos((centro_x, header.y + 14))
         self.TxtTituloCentro.draw(tela)
 
     def _preparar_animacao_barras(self, pokemon: dict | None):
@@ -812,8 +824,8 @@ class FichaPokemon:
         self.TxtSetor.set_text('Build')
         self.TxtSetor.set_pos((build_x, rect.y + 12))
         self.TxtSetor.draw(tela)
-        lado_build = 50
-        gap_build = 10
+        lado_build = 58
+        gap_build = 12
         start_x = build_x + (build_w - lado_build) // 2
         start_y = conteudo_y + max(2, int(conteudo_h * 0.12))
         for i in range(equipaveis):
@@ -915,6 +927,7 @@ class FichaPokemon:
                 cor_borda=(0, 0, 0),
                 cor_preenchimento=cor,
                 vertical=True,
+                border_radius=0,
             )
             barra_status.set_valor(float(valor), animar=True)
             barra_status.render(tela, [], dt)
@@ -995,20 +1008,18 @@ class FichaPokemon:
             if evento.type == pygame.MOUSEMOTION and self._arrastavel_ataque.Ativo and self._arrastavel_ataque.PosAlvo is None:
                 self._arrastavel_ataque.atualizar(evento.pos)
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                if self._arrastavel_ataque.Ativo:
-                    continue
-                slot = self._slot_no_mouse(evento.pos)
-                if slot is not None and self._ataque_no_slot(pokemon, slot) is not None:
-                    self._iniciar_arrasto_ataque(pokemon, slot, evento.pos)
-            elif evento.type == pygame.MOUSEBUTTONUP and evento.button == 1 and self._arrastavel_ataque.Ativo:
-                if self._arrastavel_ataque.PosAlvo is not None:
-                    continue
-                origem = self._arrastavel_ataque.Origem
                 destino = self._slot_no_mouse(evento.pos)
-                if origem is None or destino is None or origem == destino:
-                    self._retornar_arrasto()
+                if self._arrastavel_ataque.Ativo:
+                    if self._arrastavel_ataque.PosAlvo is not None:
+                        continue
+                    origem = self._arrastavel_ataque.Origem
+                    if origem is None or destino is None or origem == destino:
+                        self._retornar_arrasto()
+                    else:
+                        self._trocar_ataques(pokemon, origem, destino)
                 else:
-                    self._trocar_ataques(pokemon, origem, destino)
+                    if destino is not None and self._ataque_no_slot(pokemon, destino) is not None:
+                        self._iniciar_arrasto_ataque(pokemon, destino, evento.pos)
 
     def _desenhar_arrastavel(self, tela: pygame.Surface):
         if self._arrastavel_ataque.Ativo and self._arrastavel_ataque.Item is not None:
@@ -1023,13 +1034,13 @@ class FichaPokemon:
             self.TxtVazio.set_pos((rect.x + 18, rect.y + 18))
             self.TxtVazio.draw(tela)
             if self._botao_fechar is not None:
-                self._botao_fechar.base_rect.topleft = (rect.right - 44, rect.y + 8)
+                self._botao_fechar.base_rect.topleft = (rect.right - 52, rect.y + 7)
                 self._botao_fechar.rect = pygame.Rect(self._botao_fechar.base_rect)
                 self._botao_fechar.render(tela, eventos or [], dt, None)
             return
 
         if self._botao_fechar is not None:
-            self._botao_fechar.base_rect.topleft = (rect.right - 44, rect.y + 8)
+            self._botao_fechar.base_rect.topleft = (rect.right - 52, rect.y + 7)
             self._botao_fechar.rect = pygame.Rect(self._botao_fechar.base_rect)
         if self._botao_doar is not None:
             left, _, _ = self._setores(rect)

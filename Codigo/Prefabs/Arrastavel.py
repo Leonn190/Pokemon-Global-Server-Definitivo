@@ -24,6 +24,8 @@ class Arrastavel:
         self.BotaoInicial = botao
         self.ModoDistribuidor = False
         self._slots_distribuidos = set()
+        self.PosAlvo = None
+        self._ao_final_animacao = None
         self._offset_mouse = (
             self.Rect.width // 2,
             self.Rect.height // 2,

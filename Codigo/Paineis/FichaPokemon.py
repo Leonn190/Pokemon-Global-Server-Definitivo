@@ -689,7 +689,7 @@ class FichaPokemon:
         tipos = self._tipos(pokemon)
         header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 32)
         botao_rect = self._botao_fechar.rect if self._botao_fechar is not None else pygame.Rect(header.right - 30, header.y + 1, 30, 30)
-        tipo_lado = min(65, int((header.height + 10) * 1.3))
+        tipo_lado = min(78, int((header.height + 10) * 1.56))
         gap_tipo = 8
         tipos_w = (len(tipos) * tipo_lado) + (max(0, len(tipos) - 1) * gap_tipo)
         tipos_area = pygame.Rect(header.x + 12, header.y + 3, tipos_w, header.height - 6)
@@ -799,7 +799,14 @@ class FichaPokemon:
 
     @classmethod
     def _build_ref(cls, pokemon: dict | None) -> list:
-        return cls._lista_ref(pokemon, ('BuildEquipaveis', 'BuildEquipáveis', 'Build', 'EquipamentosBuild'), 'BuildEquipaveis')
+        if not isinstance(pokemon, dict):
+            return []
+        alvo = pokemon.get('estado') if isinstance(pokemon.get('estado'), dict) else pokemon
+        valor = alvo.get('BuildEquipaveis')
+        if isinstance(valor, list):
+            return valor
+        alvo['BuildEquipaveis'] = []
+        return alvo['BuildEquipaveis']
 
     def _desenhar_slot_ataque(self, tela: pygame.Surface, rect: pygame.Rect, ataque: dict | None, selecionado=False):
         pygame.draw.rect(tela, (24, 33, 54) if ataque else (18, 24, 38), rect)
@@ -836,7 +843,7 @@ class FichaPokemon:
         lado_build = 58
         gap_build = 12
         start_x = build_x + (build_w - lado_build) // 2
-        start_y = conteudo_y + max(2, int(conteudo_h * 0.12))
+        start_y = conteudo_y + max(2, int(conteudo_h * 0.12)) - 5
         self._slots_build = {}
         for i in range(equipaveis):
             slot = pygame.Rect(start_x, start_y + i * (lado_build + gap_build), lado_build, lado_build)
@@ -1069,7 +1076,7 @@ class FichaPokemon:
         if self._arrastavel_ataque.Ativo and self._arrastavel_ataque.Item is not None:
             self._desenhar_slot_ataque(tela, self._arrastavel_ataque.Rect, self._arrastavel_ataque.Item, selecionado=True)
 
-    def renderizar(self, tela: pygame.Surface, rect, pokemon: dict | None, eventos=None, dt: float = 0.0):
+    def renderizar(self, tela: pygame.Surface, rect, pokemon: dict | None, eventos=None, dt: float = 0.0, desenhar_arrastavel: bool = True):
         rect = pygame.Rect(rect)
         self._garantir_layout(rect)
         self._desenhar_base(tela, rect)
@@ -1112,7 +1119,8 @@ class FichaPokemon:
         self._desenhar_bloco_superior_direito(tela, right_top, pokemon)
         self._desenhar_bloco_status(tela, right_bottom, pokemon, dt)
         self._processar_eventos(tela, pokemon, eventos or [], dt)
-        self._desenhar_arrastavel(tela)
+        if desenhar_arrastavel:
+            self._desenhar_arrastavel(tela)
 
         ataque_hover = self._ataque_no_slot(pokemon, self._slot_hover)
         if self._arrastavel_ataque.Ativo and self._arrastavel_ataque.Item is not None:

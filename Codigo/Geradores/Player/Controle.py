@@ -32,6 +32,7 @@ class Controle:
         self._item_arremesso_atual = None
         self._acao_arremesso_pendente = None
         self._acao_drop_item_mundo_pendente = None
+        self._acao_subir_nivel_pokemon_pendente = None
         self.BloquearToggleInventario = False
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles, mouse_pos_tela_px=None, ator_pos_tela_px=None):
@@ -74,6 +75,17 @@ class Controle:
     def consumir_acao_drop_item_mundo(self):
         acao = self._acao_drop_item_mundo_pendente
         self._acao_drop_item_mundo_pendente = None
+        return acao
+
+    def solicitar_subir_nivel_pokemon(self, chave_pokemon: str):
+        chave = str(chave_pokemon or "").strip()
+        if not chave:
+            return
+        self._acao_subir_nivel_pokemon_pendente = {"chave_pokemon": chave}
+
+    def consumir_acao_subir_nivel_pokemon(self):
+        acao = self._acao_subir_nivel_pokemon_pendente
+        self._acao_subir_nivel_pokemon_pendente = None
         return acao
 
     def _item_qualquer_na_mao(self):

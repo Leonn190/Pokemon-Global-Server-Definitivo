@@ -161,7 +161,9 @@ class InventarioPokemons:
             self._area_ficha = pygame.Rect(0, 0, 0, 0)
             self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 14, largura_esquerda, 72)
         if analisando:
-            self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo + 8, largura_direita, area.height - 30)
+            bottom_fixo = area.y + area.height - 22
+            area_times_y = area.y + topo - 2
+            self._area_times = pygame.Rect(self._area_grid.right + margem, area_times_y, largura_direita, bottom_fixo - area_times_y)
         else:
             self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, area.height - 20)
 
@@ -427,9 +429,10 @@ class InventarioPokemons:
         xp_alvo = int(float(fonte.get('XPAlvo', fonte.get('xp_alvo', 0)) or 0))
         if xp_atual < xp_alvo or xp_alvo <= 0:
             return
-        fonte['XP'] = max(0, xp_atual - xp_alvo)
-        fonte['xp'] = fonte['XP']
-        fonte['__subir_nivel_pendente'] = int(float(fonte.get('__subir_nivel_pendente', 0)) or 0) + 1
+        controle = getattr(self.Ator, 'Controle', None)
+        chave = self._chave(pokemon)
+        if controle is not None and hasattr(controle, 'solicitar_subir_nivel_pokemon'):
+            controle.solicitar_subir_nivel_pokemon(chave)
         if self._container is not None:
             self._container.marcar_sujo()
         if self._painel_times is not None:
@@ -881,7 +884,7 @@ class InventarioPokemons:
 
         analisando = self._pokemon_analisado is not None
         if analisando and self._area_ficha.width > 0:
-            self._ficha_pokemon.renderizar(tela, self._area_ficha, self._pokemon_analisado, eventos=eventos, dt=dt)
+            self._ficha_pokemon.renderizar(tela, self._area_ficha, self._pokemon_analisado, eventos=eventos, dt=dt, desenhar_arrastavel=False)
             if self._ficha_pokemon.FecharSolicitado:
                 self._pokemon_analisado = None
                 self._layout_montado = False
@@ -931,6 +934,8 @@ class InventarioPokemons:
                 ItemInventario.desenhar_item_no_rect(tela, item_drag, rect_drag)
             else:
                 PokemonInventario.desenhar_item_no_rect(tela, item_drag, rect_drag, escala_sprite=0.86)
+        if analisando:
+            self._ficha_pokemon._desenhar_arrastavel(tela)
         self._opcoes.render(tela, eventos, dt)
         if self._subtela_ativa is not None:
             self._subtela_ativa.render(tela, eventos, dt)

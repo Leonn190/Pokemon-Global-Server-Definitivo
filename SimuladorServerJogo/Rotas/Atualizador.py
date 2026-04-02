@@ -135,6 +135,69 @@ def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 50
     }
 
 
+def _pokemon_casa_chave(pokemon: dict, chave_pokemon: str) -> bool:
+    if not isinstance(pokemon, dict):
+        return False
+    alvo = str(chave_pokemon or "").strip().lower()
+    if not alvo:
+        return False
+    for campo in ("UID", "uid", "Id", "id", "ID"):
+        valor = pokemon.get(campo)
+        if valor is not None and f"id:{valor}".lower() == alvo:
+            return True
+    nome = str(pokemon.get("Nome") or pokemon.get("nome") or "").strip().lower()
+    especie = str(pokemon.get("Especie") or pokemon.get("especie") or "").strip().lower()
+    if alvo.startswith("nome:"):
+        sufixo = alvo[5:]
+        return sufixo in {nome, especie, f"{nome}|{pokemon.get('nivel', '')}".strip("|"), f"{nome}|{pokemon.get('Nivel', '')}".strip("|")}
+    return False
+
+
+def _processar_evento_subir_nivel_pokemon(client_id: str, payload: Dict[str, object]) -> bool:
+    chave_pokemon = str(payload.get("chave_pokemon") or "").strip()
+    if not chave_pokemon:
+        return False
+    objeto_id = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+    if objeto_id <= 0:
+        return False
+    obj = BANCO_DADOS.obter_objeto(objeto_id)
+    if obj is None:
+        return False
+    inventario = {}
+    if isinstance(getattr(obj, "estado_extra", {}), dict):
+        inventario = dict(getattr(obj, "estado_extra", {}).get("inventario", {}))
+    pokemons = list(inventario.get("pokemons", [])) if isinstance(inventario.get("pokemons"), list) else []
+    alterado = False
+    for pokemon in pokemons:
+        if not _pokemon_casa_chave(pokemon, chave_pokemon):
+            continue
+        alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+        xp = int(float(alvo.get("XP", alvo.get("xp", 0)) or 0))
+        xp_alvo = int(float(alvo.get("XPAlvo", alvo.get("xp_alvo", 0)) or 0))
+        if xp_alvo <= 0 or xp < xp_alvo:
+            return False
+        alvo["XP"] = max(0, xp - xp_alvo)
+        alvo["xp"] = alvo["XP"]
+        subir_nivel_pokemon(alvo, vezes=1)
+        alterado = True
+        break
+    if not alterado:
+        return False
+    inventario["pokemons"] = pokemons
+    if isinstance(getattr(obj, "estado_extra", {}), dict):
+        obj.estado_extra["inventario"] = inventario
+    atualizar_inventario_personagem(client_id, inventario)
+    registrar_diff(
+        "update",
+        payload=obj.serializar() if hasattr(obj, "serializar") else {"inventario": inventario},
+        escopo=_escopo_objeto(obj),
+        objeto_id=int(objeto_id),
+        autor="server",
+        categoria=str(getattr(obj, "estado_extra", {}).get("subtipo", "player")),
+    )
+    return True
+
+
 
 def processar_atualizador_json(requisicao_json: str) -> str:
     try:
@@ -212,6 +275,12 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 return _ok("Contexto de batalha pronto", client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            if categoria == "pokemon_subir_nivel":
+                if _processar_evento_subir_nivel_pokemon(client_id, payload):
                     aplicados += 1
                 else:
                     ignorados += 1

@@ -647,7 +647,7 @@ class FichaPokemon:
         assert self._painel is not None
         self._painel.rect = rect
         self._painel.render(tela, [], 0)
-        header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 32)
+        header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 44)
         pygame.draw.rect(tela, (18, 24, 39), header, border_radius=12)
 
     def _desenhar_setor(self, tela: pygame.Surface, rect: pygame.Rect):
@@ -666,7 +666,7 @@ class FichaPokemon:
         pygame.draw.circle(tela, (25, 74, 164), centro, raio, 2)
 
     def _desenhar_tipos(self, tela: pygame.Surface, area: pygame.Rect, tipos: list[str], lado_max: int = 34):
-        lado = min(lado_max, area.height - 2)
+        lado = max(16, min(lado_max, area.height - 2))
         gap = 8
         x = area.x
         for tipo in tipos:
@@ -687,19 +687,19 @@ class FichaPokemon:
             return
         nome, _ = self._nome_especie(pokemon)
         tipos = self._tipos(pokemon)
-        header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 32)
+        header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 44)
         botao_rect = self._botao_fechar.rect if self._botao_fechar is not None else pygame.Rect(header.right - 30, header.y + 1, 30, 30)
-        tipo_lado = min(96, int((header.height + 10) * 1.95))
+        tipo_lado = min(96, int((header.height + 12) * 1.95))
         gap_tipo = 8
         tipos_w = (len(tipos) * tipo_lado) + (max(0, len(tipos) - 1) * gap_tipo)
-        tipos_area = pygame.Rect(header.x + 12, header.y + 3, tipos_w, header.height - 6)
+        tipos_area = pygame.Rect(header.x + 12, header.y + 2, tipos_w, header.height - 4)
         if tipos_w > 0:
             self._desenhar_tipos(tela, tipos_area, tipos, lado_max=tipo_lado)
         esquerda_titulo = tipos_area.right + 10 if tipos_w > 0 else header.x + 12
         direita_titulo = botao_rect.x - 10
         centro_x = (esquerda_titulo + direita_titulo) // 2
         self.TxtTituloCentro.set_text(nome)
-        self.TxtTituloCentro.set_pos((centro_x, header.y + 24))
+        self.TxtTituloCentro.set_pos((centro_x, header.y + 30))
         self.TxtTituloCentro.draw(tela)
 
     def _preparar_animacao_barras(self, pokemon: dict | None):
@@ -843,7 +843,7 @@ class FichaPokemon:
         lado_build = 58
         gap_build = 12
         start_x = build_x + (build_w - lado_build) // 2
-        start_y = conteudo_y + max(2, int(conteudo_h * 0.12)) - 5
+        start_y = conteudo_y + max(2, int(conteudo_h * 0.12)) - 10
         self._slots_build = {}
         for i in range(equipaveis):
             slot = pygame.Rect(start_x, start_y + i * (lado_build + gap_build), lado_build, lado_build)

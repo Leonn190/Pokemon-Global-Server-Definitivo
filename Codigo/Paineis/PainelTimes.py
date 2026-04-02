@@ -19,10 +19,12 @@ class PainelTimes(PainelRolavel):
         )
         self.Times = times if times is not None else []
         self.SlotsPorTime = max(1, int(slots_por_time))
-        self.Padding = 16
-        self.GapCards = 14
+        self.Padding = 12
+        self.CabecalhoY = 2
+        self.CabecalhoH = 30
+        self.GapAbaixoCabecalho = 12
+        self.GapCards = 10
         self.SlotGap = 8
-        self.CabecalhoH = 5
 
         estilo = {
             'outline': True,
@@ -58,12 +60,15 @@ class PainelTimes(PainelRolavel):
         self.marcar_sujo()
 
     def _slot_px(self):
-        largura_util = max(40, self.rect.width - self.Padding * 2 - 22)
+        largura_util = max(40, self.rect.width - self.Padding * 2 - 4)
         total_gap = self.SlotGap * max(0, self.SlotsPorTime - 1)
         return max(32, min(52, int((largura_util - total_gap) / max(1, self.SlotsPorTime))))
 
     def _card_h(self):
-        return 42 + self._slot_px() + 18
+        return 44 + self._slot_px() + 16
+
+    def _topo_util_conteudo(self):
+        return self.Padding + self.CabecalhoY + self.CabecalhoH + self.GapAbaixoCabecalho
 
     def _normalizar_time(self, time, indice):
         nome_padrao = f'Time {indice + 1}'
@@ -104,7 +109,9 @@ class PainelTimes(PainelRolavel):
         total = len(self.Times)
         altura = (
             self.Padding * 2
+            + self.CabecalhoY
             + self.CabecalhoH
+            + self.GapAbaixoCabecalho
             + total * self._card_h()
             + max(0, total - 1) * self.GapCards
         )
@@ -171,7 +178,7 @@ class PainelTimes(PainelRolavel):
         )
 
     def _card_rect_local(self, indice):
-        y = self.Padding + self.CabecalhoH + indice * (self._card_h() + self.GapCards)
+        y = self._topo_util_conteudo() + indice * (self._card_h() + self.GapCards)
         return pygame.Rect(
             self.Padding,
             y,

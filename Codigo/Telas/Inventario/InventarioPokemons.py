@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import copy
+import csv
+import importlib
 import math
+from pathlib import Path
 
 import pygame
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.Container import Container
+from Codigo.Paineis.PainelAuxiliarPoke import PainelAuxiliarPoke
 from Codigo.Paineis.FichaPokemon import FichaPokemon
 from Codigo.Paineis.PainelTimes import PainelTimes
 from Codigo.Prefabs.Arrastavel import Arrastavel
@@ -14,6 +19,8 @@ from Codigo.Prefabs.Opcoes import Opções
 from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
+
+_EXEC_POCAO = importlib.import_module("Codigo.Modulos.ExecutaveisPoção")
 
 
 class InventarioPokemons:
@@ -37,13 +44,16 @@ class InventarioPokemons:
 
         estilo = {'outline': True, 'outline_thickness': 2, 'outline_color': (8, 12, 20)}
         self.TxtResumo = Texto('', style={**estilo, 'size': 22, 'color': (239, 243, 255), 'align': 'midleft'})
-        self.TxtHover = Texto('', style={**estilo, 'size': 15, 'color': (174, 190, 224), 'align': 'midright'})
+        self.TxtHover = Texto('', style={**estilo, 'size': 15, 'color': (174, 190, 224), 'align': 'midleft'})
         self._painel_info = Painel((0, 0, 0, 0), cor_fundo=(18, 26, 44, 242), cor_borda=(66, 88, 136), borda=2, raio=16)
         self._barra_pesquisa = None
         self._opcoes = Opções()
         self._subtela_ativa = None
         self._ficha_pokemon = FichaPokemon()
         self._pokemon_analisado = None
+        self._painel_auxiliar = None
+        self._csv_itens = None
+        self._csv_equipaveis = None
 
     def on_open(self):
         self._estava_ativo = True
@@ -190,12 +200,20 @@ class InventarioPokemons:
             self._painel_times.definir_times(times)
             self._painel_times.definir_slots_por_time(self._slots_por_time())
             self._painel_times.configurar_rect(self._area_times)
+        if self._painel_auxiliar is None:
+            self._painel_auxiliar = PainelAuxiliarPoke(self._area_times)
 
         self._painel_times.garantir_minimo_times(self._quantidade_times())
         self._painel_info.rect = pygame.Rect(self._area_info)
         self._layout_montado = True
 
     def _alvo_no_mouse(self, mouse_pos):
+        analisando = self._pokemon_analisado is not None
+        if analisando and self._painel_auxiliar is not None and self._painel_auxiliar.aba_ativa != 'times':
+            alvo_aux = self._painel_auxiliar.alvo_no_mouse(mouse_pos)
+            if alvo_aux is not None:
+                return alvo_aux
+            return None
         alvo_time = self._painel_times.alvo_no_mouse(mouse_pos) if self._painel_times is not None else None
         if alvo_time is not None:
             return alvo_time
@@ -211,6 +229,8 @@ class InventarioPokemons:
             return self._container.item_por_slot_visual(alvo[1])
         if alvo[0] == 'time':
             return self._painel_times.pokemon_no_slot(alvo[1], alvo[2])
+        if alvo[0] == 'aux' and alvo[1] == 'pokemons':
+            return alvo[3]
         return None
 
     def _nome_pokemon(self, pokemon):
@@ -224,18 +244,86 @@ class InventarioPokemons:
             return f'Nome: {nome} | {especie} | Poder {poder}'
         return f'Nome: {nome} | {especie} Lv {nivel} | Poder {poder}'
 
+    def _caminho_csv(self, arquivo):
+        caminhos = [
+            Path('Dados') / arquivo,
+            Path(__file__).resolve().parents[3] / 'Dados' / arquivo,
+        ]
+        return next((p for p in caminhos if p.exists()), None)
+
+    def _base_itens(self):
+        if self._csv_itens is not None:
+            return self._csv_itens
+        self._csv_itens = {}
+        caminho = self._caminho_csv('Pokemon Global Server - Itens.csv')
+        if caminho is None:
+            return self._csv_itens
+        with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
+            for linha in csv.DictReader(arquivo):
+                nome = str(linha.get('Nome') or '').strip().lower()
+                code = str(linha.get('Code') or '').strip()
+                if nome:
+                    self._csv_itens[('nome', nome)] = dict(linha)
+                if code:
+                    self._csv_itens[('code', code)] = dict(linha)
+        return self._csv_itens
+
+    def _base_equipaveis(self):
+        if self._csv_equipaveis is not None:
+            return self._csv_equipaveis
+        self._csv_equipaveis = {}
+        caminho = self._caminho_csv('Pokemon Global Server - Equipaveis.csv')
+        if caminho is None:
+            return self._csv_equipaveis
+        with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
+            for linha in csv.DictReader(arquivo):
+                nome = str(linha.get('Nome') or '').strip().lower()
+                if nome:
+                    self._csv_equipaveis[nome] = dict(linha)
+        return self._csv_equipaveis
+
+    def _info_item(self, item):
+        if not isinstance(item, dict):
+            return None
+        base = self._base_itens()
+        nome = str(item.get('Nome') or item.get('nome') or '').strip().lower()
+        code = str(item.get('Code') or item.get('code') or '').strip()
+        return base.get(('code', code)) or base.get(('nome', nome))
+
+    def _estilo_item(self, item):
+        info = self._info_item(item)
+        return str((info or item).get('Estilo') or (info or item).get('estilo') or '').strip().lower()
+
+    def _equipavel_para_build(self, item):
+        if self._estilo_item(item) != 'equipavel':
+            return None
+        nome = str(item.get('Nome') or item.get('nome') or '').strip().lower()
+        registro = self._base_equipaveis().get(nome)
+        if registro is None:
+            return None
+        saida = dict(registro)
+        saida['Nome'] = str(registro.get('Nome') or item.get('Nome') or '').strip()
+        return saida
+
+    def _build_para_item(self, equipavel):
+        if not isinstance(equipavel, dict):
+            return None
+        nome = str(equipavel.get('Nome') or '').strip().lower()
+        registro = self._base_itens().get(('nome', nome))
+        return dict(registro) if registro is not None else None
+
     def _desenhar_tipos_hover(self, tela, pokemon):
         tipos = PokemonInventario.tipos_pokemon(pokemon)
         if not tipos:
             return
-        lado = 18
+        lado = 26
         gap = 6
         x = self._area_info.right - 18 - (len(tipos) * (lado + gap))
         y = self._area_info.centery - (lado // 2)
         for tipo in tipos:
             fundo = pygame.Rect(x, y, lado, lado)
             pygame.draw.rect(tela, (250, 250, 255), fundo, border_radius=9)
-            icone = PokemonInventario.icone_tipo(tipo, lado - 4)
+            icone = PokemonInventario.icone_tipo(tipo, lado - 2)
             if icone is not None:
                 tela.blit(icone, icone.get_rect(center=fundo.center))
             x += lado + gap
@@ -441,10 +529,92 @@ class InventarioPokemons:
             )
         self._pokemon_hover = pokemon
 
+    def _iniciar_arrasto_aux_item(self, alvo, mouse_pos):
+        if alvo is None or alvo[0] != 'aux' or alvo[1] not in {'pocoes', 'equipaveis'}:
+            return
+        indice_visual = int(alvo[2])
+        slot_inventario = self._painel_auxiliar.slot_inventario_por_visual(indice_visual) if self._painel_auxiliar is not None else None
+        if slot_inventario is None or self.Inventario is None:
+            return
+        if not (0 <= slot_inventario < len(self.Inventario.Itens)):
+            return
+        item_origem = self.Inventario.Itens[slot_inventario]
+        if not isinstance(item_origem, dict):
+            return
+        item_drag = copy.deepcopy(item_origem)
+        item_drag['quantidade'] = 1
+        qtd = int(item_origem.get('quantidade', 1) or 1)
+        if qtd <= 1:
+            self.Inventario.Itens[slot_inventario] = None
+        else:
+            item_origem['quantidade'] = qtd - 1
+        rect_slot = self._painel_auxiliar._container.slot_rect(indice_visual) if self._painel_auxiliar and self._painel_auxiliar._container else pygame.Rect(mouse_pos[0], mouse_pos[1], 42, 42)
+        self._arrastavel.iniciar(item_drag, ('aux_item', slot_inventario), rect_slot.inflate(-8, -8), mouse_pos, botao=1)
+
+    def _iniciar_arrasto_build(self, indice_slot, mouse_pos):
+        if self._pokemon_analisado is None:
+            return
+        equip = self._ficha_pokemon.retirar_equipavel_slot(self._pokemon_analisado, indice_slot)
+        if not isinstance(equip, dict):
+            return
+        rect = self._ficha_pokemon._slots_build.get(indice_slot)
+        if rect is None:
+            return
+        item = self._build_para_item(equip)
+        if not isinstance(item, dict):
+            item = {'Nome': str(equip.get('Nome') or 'Equipável'), 'Estilo': 'equipavel', 'quantidade': 1}
+        item['quantidade'] = 1
+        self._arrastavel.iniciar(item, ('build', indice_slot, equip), rect.inflate(-8, -8), mouse_pos, botao=1)
+
+    def _restaurar_origem_aux(self):
+        origem = self._arrastavel.Origem or ()
+        item = self._arrastavel.Item
+        if not origem or origem[0] != 'aux_item' or not isinstance(item, dict) or self.Inventario is None:
+            return
+        idx = int(origem[1])
+        if 0 <= idx < len(self.Inventario.Itens):
+            atual = self.Inventario.Itens[idx]
+            if isinstance(atual, dict) and str(atual.get('Nome')) == str(item.get('Nome')):
+                atual['quantidade'] = int(atual.get('quantidade', 1) or 1) + int(item.get('quantidade', 1) or 1)
+            elif atual is None:
+                self.Inventario.Itens[idx] = copy.deepcopy(item)
+
+    def _retornar_item_build(self, indice_slot, item):
+        equip = self._equipavel_para_build(item)
+        if equip is not None and self._pokemon_analisado is not None:
+            self._ficha_pokemon.definir_equipavel_slot(self._pokemon_analisado, indice_slot, equip)
+
+    def _devolver_build_para_inventario_ou_drop(self, equipavel):
+        item = self._build_para_item(equipavel)
+        if not isinstance(item, dict):
+            return False
+        item['quantidade'] = int(item.get('quantidade', 1) or 1)
+        if self.Inventario is not None and self.Inventario.adicionar_item(item):
+            return True
+        return self._dropar_item_mundo(item)
+
+    def _dropar_item_mundo(self, item):
+        controle = getattr(self.Ator, 'Controle', None)
+        if controle is None:
+            return False
+        controle._acao_drop_item_mundo_pendente = {
+            'item': copy.deepcopy(item),
+            'origem': tuple(getattr(self.Ator, 'Posicao', (0, 0))),
+        }
+        return True
+
     def _retornar_para_origem(self):
         if not self._arrastavel.Ativo or self._arrastavel.Item is None:
             return
         origem = self._arrastavel.Origem or ()
+        if origem and origem[0] == 'aux_item':
+            self._restaurar_origem_aux()
+            self._arrastavel.cancelar()
+            return
+        if origem and origem[0] == 'build':
+            self._retornar_item_build(origem[1], self._arrastavel.Item)
+            self._arrastavel.cancelar()
+            return
         if origem and origem[0] == 'time':
             self._painel_times.definir_slot(origem[1], origem[2], self._arrastavel.Item)
             self._arrastavel.cancelar()
@@ -461,6 +631,36 @@ class InventarioPokemons:
 
         origem = self._arrastavel.Origem or ()
         pokemon_arrastado = self._arrastavel.Item
+
+        if origem[0] in {'aux_item', 'build'}:
+            if self._pokemon_analisado is None:
+                self._retornar_para_origem()
+                return
+            item = self._arrastavel.Item
+            idx_build = self._ficha_pokemon.slot_build_no_mouse(pygame.mouse.get_pos())
+            if idx_build is not None and self._estilo_item(item) == 'equipavel':
+                equip = self._equipavel_para_build(item)
+                if equip is None:
+                    self._retornar_para_origem()
+                    return
+                anterior = self._ficha_pokemon.definir_equipavel_slot(self._pokemon_analisado, idx_build, equip)
+                if isinstance(anterior, dict):
+                    item_anterior = self._build_para_item(anterior)
+                    if isinstance(item_anterior, dict):
+                        if self.Inventario is None or not self.Inventario.adicionar_item(item_anterior):
+                            self._dropar_item_mundo(item_anterior)
+                self._arrastavel.cancelar()
+                return
+
+            if self._ficha_pokemon.area_animacao_rect().collidepoint(pygame.mouse.get_pos()) and self._estilo_item(item) == 'poção':
+                resultado = _EXEC_POCAO.executar_pocao(str(item.get('Nome') or ''), self._pokemon_analisado)
+                if not bool(resultado.get('ok', False)):
+                    self._retornar_para_origem()
+                    return
+                self._arrastavel.cancelar()
+                return
+            self._retornar_para_origem()
+            return
 
         if origem[0] == 'grid':
             indice_origem = origem[2]
@@ -532,7 +732,11 @@ class InventarioPokemons:
         if not analisando:
             self._container._normalizar_tamanho()
             self._container._processar_scroll(eventos)
-        self._painel_times._processar_scroll(eventos)
+        elif self._painel_auxiliar is not None:
+            self._painel_auxiliar.sincronizar(self.Inventario, self._area_times)
+            self._painel_auxiliar.processar_eventos(eventos)
+        if not analisando or (self._painel_auxiliar is not None and self._painel_auxiliar.aba_ativa == 'times'):
+            self._painel_times._processar_scroll(eventos)
         self._arrastavel.animar(dt)
         self._opcoes.processar_eventos(eventos)
         if not analisando:
@@ -549,7 +753,8 @@ class InventarioPokemons:
             if self._arrastavel.Ativo and self._arrastavel.Item is not None:
                 self._pokemon_hover = self._arrastavel.Item
         else:
-            self._pokemon_hover = self._pokemon_analisado
+            alvo_mouse = self._alvo_no_mouse(pygame.mouse.get_pos())
+            self._pokemon_hover = self._pokemon_do_alvo(alvo_mouse) or self._pokemon_analisado
 
         for evento in eventos:
             if evento.type == pygame.MOUSEMOTION and self._arrastavel.Ativo and self._arrastavel.PosAlvo is None:
@@ -557,8 +762,48 @@ class InventarioPokemons:
 
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 if analisando and self._area_ficha.collidepoint(evento.pos):
+                    if self._arrastavel.Ativo:
+                        alvo = self._alvo_no_mouse(evento.pos)
+                        if alvo is None:
+                            if (self._arrastavel.Origem or (None,))[0] == 'build':
+                                if self._devolver_build_para_inventario_ou_drop((self._arrastavel.Origem or (None, None, None))[2]):
+                                    self._arrastavel.cancelar()
+                                else:
+                                    self._retornar_para_origem()
+                            else:
+                                self._retornar_para_origem()
+                        else:
+                            self._soltar_no_alvo(alvo)
+                    else:
+                        idx_build = self._ficha_pokemon.slot_build_no_mouse(evento.pos)
+                        if idx_build is not None and self._ficha_pokemon.equipavel_no_slot(self._pokemon_analisado, idx_build) is not None:
+                            self._iniciar_arrasto_build(idx_build, evento.pos)
                     continue
                 if analisando:
+                    if self._painel_auxiliar is not None and self._painel_auxiliar.clique_em_botao(evento.pos):
+                        continue
+                    alvo_aux = self._alvo_no_mouse(evento.pos)
+                    if self._arrastavel.Ativo:
+                        if alvo_aux is None:
+                            if (self._arrastavel.Origem or (None,))[0] == 'build':
+                                if self._devolver_build_para_inventario_ou_drop((self._arrastavel.Origem or (None, None, None))[2]):
+                                    self._arrastavel.cancelar()
+                                else:
+                                    self._retornar_para_origem()
+                            else:
+                                self._retornar_para_origem()
+                        else:
+                            self._soltar_no_alvo(alvo_aux)
+                    elif alvo_aux is not None and alvo_aux[0] == 'aux':
+                        if alvo_aux[1] == 'pokemons':
+                            if getattr(evento, 'clicks', 1) >= 2:
+                                self._abrir_analise_pokemon(alvo_aux[3])
+                            else:
+                                self._pokemon_analisado = alvo_aux[3]
+                                self._pokemon_hover = alvo_aux[3]
+                                self._layout_montado = False
+                        else:
+                            self._iniciar_arrasto_aux_item(alvo_aux, evento.pos)
                     continue
                 alvo = self._alvo_no_mouse(evento.pos)
                 if self._arrastavel.Ativo:
@@ -576,6 +821,11 @@ class InventarioPokemons:
                         continue
                     self._iniciar_arrasto(alvo, evento.pos)
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
+                if analisando and self._painel_auxiliar is not None and self._painel_auxiliar.aba_ativa == 'pokemons':
+                    alvo_aux = self._alvo_no_mouse(evento.pos)
+                    if alvo_aux is not None and alvo_aux[0] == 'aux' and alvo_aux[1] == 'pokemons':
+                        self._abrir_opcoes_pokemon(evento.pos, alvo_aux[3])
+                        continue
                 alvo_ctx = self._painel_times.alvo_contexto_no_mouse(evento.pos) if self._painel_times is not None else None
                 if alvo_ctx is not None:
                     if alvo_ctx[0] == 'time_card':
@@ -635,11 +885,20 @@ class InventarioPokemons:
                 eventos=eventos,
                 dt=dt,
             )
-        self._painel_times.desenhar(
-            tela,
-            highlight=highlight if highlight and highlight[0] == 'time' else None,
-            item_oculto=item_oculto_time,
-        )
+        if analisando and self._painel_auxiliar is not None:
+            if self._painel_auxiliar.aba_ativa == 'times':
+                self._painel_times.desenhar(
+                    tela,
+                    highlight=highlight if highlight and highlight[0] == 'time' else None,
+                    item_oculto=item_oculto_time,
+                )
+            self._painel_auxiliar.desenhar(tela)
+        else:
+            self._painel_times.desenhar(
+                tela,
+                highlight=highlight if highlight and highlight[0] == 'time' else None,
+                item_oculto=item_oculto_time,
+            )
 
         if not analisando:
             self._painel_info.render(tela, [], 0)
@@ -649,7 +908,7 @@ class InventarioPokemons:
             self.TxtResumo.draw(tela)
 
             self.TxtHover.set_text(self._nome_pokemon(self._pokemon_hover) or 'Arraste pokémons para montar seus times')
-            self.TxtHover.set_pos((self._area_info.right - 18, self._area_info.centery))
+            self.TxtHover.set_pos((self._area_info.x + 210, self._area_info.centery))
             self.TxtHover.draw(tela)
             self._desenhar_tipos_hover(tela, self._pokemon_hover)
 

@@ -8,6 +8,7 @@ import pygame
 
 try:
     from Codigo.Modulos.Auxiliares import carregar_frames
+    from Codigo.Geradores.ItemInventario import ItemInventario
     from Codigo.Geradores.PokemonInventario import PokemonInventario
     from Codigo.Prefabs.Arrastavel import Arrastavel
     from Codigo.Prefabs.Barra import Barra
@@ -82,6 +83,8 @@ class FichaPokemon:
         self._botao_doar: Botao | None = None
         self._botao_upar: Botao | None = None
         self._slots_ataque: dict[tuple[str, int], pygame.Rect] = {}
+        self._slots_build: dict[int, pygame.Rect] = {}
+        self._area_animacao = pygame.Rect(0, 0, 0, 0)
         self._slot_hover: tuple[str, int] | None = None
         self._slot_origem_oculto: tuple[str, int] | None = None
         self._anim_barras_chave = None
@@ -578,7 +581,7 @@ class FichaPokemon:
             self.FecharSolicitado = True
 
         self._botao_fechar = Botao(
-            pygame.Rect(rect.right - 52, rect.y + 7, 36, 36),
+            pygame.Rect(rect.right - 52, rect.y + 12, 36, 36),
             'X',
             execute=_fechar,
             style={
@@ -686,7 +689,7 @@ class FichaPokemon:
         tipos = self._tipos(pokemon)
         header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 32)
         botao_rect = self._botao_fechar.rect if self._botao_fechar is not None else pygame.Rect(header.right - 30, header.y + 1, 30, 30)
-        tipo_lado = min(38, header.height)
+        tipo_lado = min(50, header.height + 10)
         gap_tipo = 8
         tipos_w = (len(tipos) * tipo_lado) + (max(0, len(tipos) - 1) * gap_tipo)
         tipos_area = pygame.Rect(header.x + 12, header.y + 3, tipos_w, header.height - 6)
@@ -696,7 +699,7 @@ class FichaPokemon:
         direita_titulo = botao_rect.x - 10
         centro_x = (esquerda_titulo + direita_titulo) // 2
         self.TxtTituloCentro.set_text(nome)
-        self.TxtTituloCentro.set_pos((centro_x, header.y + 14))
+        self.TxtTituloCentro.set_pos((centro_x, header.y + 24))
         self.TxtTituloCentro.draw(tela)
 
     def _preparar_animacao_barras(self, pokemon: dict | None):
@@ -727,6 +730,7 @@ class FichaPokemon:
         self.TxtSubCentro.draw(tela)
 
         anim_rect = pygame.Rect(rect.x + 16, rect.y + 28, rect.width - 32, 102)
+        self._area_animacao = pygame.Rect(anim_rect)
         self._desenhar_animacao_pokemon(tela, anim_rect, especie)
 
         self.TxtNivel.set_text(f'Lv {nivel}')
@@ -789,8 +793,13 @@ class FichaPokemon:
     def _desenhar_slot_build(self, tela: pygame.Surface, rect: pygame.Rect):
         pygame.draw.rect(tela, (20, 28, 46), rect)
         pygame.draw.rect(tela, (92, 122, 182), rect, 2)
+        self.TxtSlot.set_text('+')
         self.TxtSlot.set_pos(rect.center)
         self.TxtSlot.draw(tela)
+
+    @classmethod
+    def _build_ref(cls, pokemon: dict | None) -> list:
+        return cls._lista_ref(pokemon, ('BuildEquipaveis', 'BuildEquipáveis', 'Build', 'EquipamentosBuild'), 'BuildEquipaveis')
 
     def _desenhar_slot_ataque(self, tela: pygame.Surface, rect: pygame.Rect, ataque: dict | None, selecionado=False):
         pygame.draw.rect(tela, (24, 33, 54) if ataque else (18, 24, 38), rect)
@@ -828,9 +837,14 @@ class FichaPokemon:
         gap_build = 12
         start_x = build_x + (build_w - lado_build) // 2
         start_y = conteudo_y + max(2, int(conteudo_h * 0.12))
+        self._slots_build = {}
         for i in range(equipaveis):
             slot = pygame.Rect(start_x, start_y + i * (lado_build + gap_build), lado_build, lado_build)
+            self._slots_build[i] = slot
             self._desenhar_slot_build(tela, slot)
+            equip_item = self.equipavel_no_slot(pokemon, i)
+            if isinstance(equip_item, dict):
+                ItemInventario.desenhar_item_no_rect(tela, equip_item, slot.inflate(-8, -8))
 
         self._slots_ataque = {}
         area_slots = pygame.Rect(build_x + build_w + 18, conteudo_y, rect.right - (build_x + build_w + 18) - padding, conteudo_h)
@@ -938,10 +952,40 @@ class FichaPokemon:
             self.TxtIV.draw(tela)
 
     def _slot_no_mouse(self, pos) -> tuple[str, int] | None:
+        for idx, rect in self._slots_build.items():
+            if rect.collidepoint(pos):
+                return ('build', idx)
         for chave, rect in self._slots_ataque.items():
             if rect.collidepoint(pos):
                 return chave
         return None
+
+    def area_animacao_rect(self):
+        return pygame.Rect(self._area_animacao)
+
+    def slot_build_no_mouse(self, pos):
+        alvo = self._slot_no_mouse(pos)
+        if alvo is None or alvo[0] != 'build':
+            return None
+        return alvo[1]
+
+    def equipavel_no_slot(self, pokemon: dict | None, indice: int):
+        build = self._build_ref(pokemon)
+        if 0 <= int(indice) < len(build):
+            return build[int(indice)]
+        return None
+
+    def definir_equipavel_slot(self, pokemon: dict | None, indice: int, equipavel: dict | None):
+        if not isinstance(pokemon, dict):
+            return None
+        build = self._build_ref(pokemon)
+        self._garantir_tamanho_lista(build, int(indice))
+        anterior = build[int(indice)]
+        build[int(indice)] = equipavel
+        return anterior
+
+    def retirar_equipavel_slot(self, pokemon: dict | None, indice: int):
+        return self.definir_equipavel_slot(pokemon, indice, None)
 
     def _ataque_no_slot(self, pokemon: dict | None, slot: tuple[str, int] | None):
         if slot is None or not isinstance(pokemon, dict):
@@ -1034,13 +1078,13 @@ class FichaPokemon:
             self.TxtVazio.set_pos((rect.x + 18, rect.y + 18))
             self.TxtVazio.draw(tela)
             if self._botao_fechar is not None:
-                self._botao_fechar.base_rect.topleft = (rect.right - 52, rect.y + 7)
+                self._botao_fechar.base_rect.topleft = (rect.right - 52, rect.y + 12)
                 self._botao_fechar.rect = pygame.Rect(self._botao_fechar.base_rect)
                 self._botao_fechar.render(tela, eventos or [], dt, None)
             return
 
         if self._botao_fechar is not None:
-            self._botao_fechar.base_rect.topleft = (rect.right - 52, rect.y + 7)
+            self._botao_fechar.base_rect.topleft = (rect.right - 52, rect.y + 12)
             self._botao_fechar.rect = pygame.Rect(self._botao_fechar.base_rect)
         if self._botao_doar is not None:
             left, _, _ = self._setores(rect)

@@ -1,67 +1,131 @@
-Nome,Descrição,Fator,Raridade,Estilo,Code
-Poção,Um frasco básico que recupera um pouco da vida do Pokémon.,20,1,poção,1
-Super Poção,Uma versão aprimorada que restaura uma quantidade maior de vida.,50,2,poção,2
-Hiper Poção,Uma dose potente de cura para recuperar boa parte da vida do Pokémon.,120,4,poção,3
-Mega Poção,Um frasco avançado que restaura uma grande quantidade de vida.,250,5,poção,4
-Max Poção,Restaura completamente a vida do Pokémon em uma única aplicação.,1000,6,poção,5
-Revival,Traz um Pokémon derrotado de volta à batalha com parte da vida restaurada,25,3,poção,6
-Max Revival,Revive um Pokémon derrotado com toda a sua vida restaurada.,100,6,poção,7
-Elixir,Pequeno frasco que concede experiência extra ao seu Pokémon.,4,1,poção,8
-Super Elixir,Uma dose reforçada de experiência para acelerar o treino.,10,2,poção,9
-Hiper Elixir,Um concentrado de experiência que impulsiona rapidamente o nível.,25,4,poção,10
-Mega Elixir,A carga máxima de experiência em uma única dose.,60,6,poção,11
-Pokeball,A esfera clássica para capturar Pokémon comuns.,10,1,bola,12
-Greatball,Esfera aprimorada com maior taxa de captura.,25,2,bola,13
-Ultraball,Esfera de alta performance para capturas difíceis.,60,5,bola,14
-Masterball,A lendária esfera que garante captura 100%.,1000,e,bola,15
-Levelball,Aumenta 5 níveis do Pokémon e melhora a captura com base no nível.,1 + nivel,3,bola,16
-Furyball,Especializada para capturar Pokémon irritados instantaneamente.,10/70,4,bola,17
-Heavyball,Melhora a captura quanto mais pesado for o Pokémon.,1 + peso divido por 3 (max 100),3,bola,18
-Aquaball,Maior eficiência na captura de Pokémon aquáticos.,10/70,2,bola,19
-Attemptball,Aumenta a chance de captura a cada tentativa falha anterior.,5 + 10 por tentativa,4,bola,20
-Premierball,Melhora a captura durante batalhas ativas.,20/80,5,bola,21
-Candyball,Faz o Pokémon capturado dropar o triplo de doces.,10,3,bola,22
-Loveball,Aumenta a amizade do Pokémon após a captura.,10,3,bola,23
-Secretball,Aumenta 10% do IV do Pokémon ao capturar.,20,6,bola,24
-Fastball,Mais rápida e eficiente quanto maior a velocidade do Pokémon.,1 + vel,3,bola,25
-Fruitball,Aumenta as chances conforme a quantidade de frutas oferecidas.,5 + 20 por fruta,3,bola,26
-Tallball,Melhora a captura quanto mais alto for o Pokémon.,1 + altura (cm) divido por 5 (max 100),2,bola,27
-Sniperball,Arremessa mais longe e captura melhor à distância.,1  + 10 por metro,4,bola,28
-Beastball,Especializada para capturar Pokémon raros e não spawnáveis.,15/85,4,bola,29
-Caxi Berry,Dobra a quantidade de doces obtidos.,2,3,fruta,30
-Frambo Berry,Melhora levemente a chance de captura.,10,1,fruta,31
-Super Frambo Berry,Melhora muito a chance de captura.,25,4,fruta,32
-Simp Berry,Aumenta a amizade do Pokémon ao capturar.,10,1,fruta,33
-Secret Berry,Aumenta 5% o IV do Pokémon ao capturar.,5,6,fruta,34
-Lum Berry,Aumenta 3 níveis do Pokémon.,3,3,fruta,35
-Tomper Berry,Amplia a barra de captura crítica do Pokémon.,25,2,fruta,36
-Abbajuur Berry,Reduz a velocidade da barra de captura crítica.,25,2,fruta,37
-Jujuca Berry,Aumenta o número de frutas que um Pokémon pode consumir.,2,2,fruta,38
-Jungle Berry,Melhora a captura em áreas de floresta.,26,2,fruta,39
-Desert Berry,Melhora a captura em áreas desérticas.,26,2,fruta,40
-Frozen Berry,Melhora a captura em regiões geladas.,26,2,fruta,41
-Field Berry,Melhora a captura em campos abertos.,26,2,fruta,42
-Water Berry,Melhora a captura em ambientes aquáticos.,26,2,fruta,43
-Lava Berry,Melhora a captura em terras vulcanicas,26,2,fruta,44
-Magic Berry,Melhora a captura no bioma magico,26,2,fruta,45
-Madeira,Recurso básico usado em construções e na criação de ferramentas simples.,-,-,recurso,46
-Pedra,Recurso comum usado em construções e na criação de ferramentas mais resistentes.,-,-,recurso,47
-Cobre,Minério metálico usado na fabricação de itens e ferramentas intermediárias.,-,-,recurso,48
-Ouro,Minério valioso usado na criação de ferramentas leves e itens especiais.,-,-,recurso,49
-Diamante,Gema rara usada para fabricar ferramentas de alta durabilidade.,-,-,recurso,50
-Ametista,Cristal raro usado na criação de ferramentas refinadas e itens especiais.,-,-,recurso,51
-Esmeralda,"Gema valiosa usada em trocas, fabricação e itens raros.",-,-,recurso,52
-Rubi,Gema poderosa usada para criar ferramentas avançadas e itens de alto valor.,-,-,recurso,53
-Balde,,-,-,ferramenta,54
-Picareta de Madeira,Ferramenta simples usada para minerar recursos básicos.,2,-,ferramenta,55
-Picareta de Pedra,Ferramenta resistente usada para minerar com mais eficiência.,3,-,ferramenta,56
-Picareta de Ouro,Ferramenta leve usada para minerar rapidamente certos recursos.,4,-,ferramenta,57
-Picareta de Diamante,Ferramenta avançada usada para minerar recursos raros com alta eficiência.,5,-,ferramenta,58
-Picareta de Ametista,Ferramenta refinada usada para extrair minérios especiais.,6,-,ferramenta,59
-Picareta de Rubi,Ferramenta poderosa usada para mineração avançada.,7,-,ferramenta,60
-Machado de Madeira,Ferramenta simples usada para cortar árvores e coletar madeira.,2,-,ferramenta,61
-Machado de Pedra,Ferramenta resistente usada para cortar madeira com mais eficiência.,3,-,ferramenta,62
-Machado de Ouro,Ferramenta leve usada para cortes rápidos em recursos naturais.,4,-,ferramenta,63
-Machado de Diamante,Ferramenta avançada usada para extração eficiente de madeira.,5,-,ferramenta,64
-Machado de Ametista,Ferramenta refinada usada para coleta avançada de recursos naturais.,6,-,ferramenta,65
-Machado de Rubi,Ferramenta poderosa usada para corte e extração de alto nível.,7,-,ferramenta,66
+Nome,Descrição,Fator,Raridade,Bau,Stacks,Estilo,Code
+Poção,Um frasco básico que recupera um pouco da vida do Pokémon.,20,1,,50,poção,1
+Super Poção,Uma versão aprimorada que restaura uma quantidade maior de vida.,50,2,,50,poção,2
+Hiper Poção,Uma dose potente de cura para recuperar boa parte da vida do Pokémon.,120,4,,50,poção,3
+Mega Poção,Um frasco avançado que restaura uma grande quantidade de vida.,250,5,,50,poção,4
+Max Poção,Restaura completamente a vida do Pokémon em uma única aplicação.,1000,6,,10,poção,5
+Revival,Traz um Pokémon derrotado de volta à batalha com parte da vida restaurada,25,3,,50,poção,6
+Max Revival,Revive um Pokémon derrotado com toda a sua vida restaurada.,100,6,,10,poção,7
+Elixir,Pequeno frasco que concede experiência extra ao seu Pokémon.,40,1,,50,poção,8
+Super Elixir,Uma dose reforçada de experiência para acelerar o treino.,100,2,,50,poção,9
+Hiper Elixir,Um concentrado de experiência que impulsiona rapidamente o nível.,250,4,,50,poção,10
+Mega Elixir,A carga máxima de experiência em uma única dose.,600,6,,50,poção,11
+Pokeball,A esfera clássica para capturar Pokémon comuns.,10,1,,50,bola,12
+Greatball,Esfera aprimorada com maior taxa de captura.,25,2,,50,bola,13
+Ultraball,Esfera de alta performance para capturas difíceis.,60,5,,50,bola,14
+Masterball,A lendária esfera que garante captura 100%.,1000,e,,10,bola,15
+Levelball,Aumenta 5 níveis do Pokémon e melhora a captura com base no nível.,1 + nivel,3,,50,bola,16
+Furyball,Especializada para capturar Pokémon irritados instantaneamente.,10/70,4,,50,bola,17
+Heavyball,Melhora a captura quanto mais pesado for o Pokémon.,1 + peso divido por 3 (max 100),3,,50,bola,18
+Aquaball,Maior eficiência na captura de Pokémon aquáticos.,10/70,2,,50,bola,19
+Attemptball,Aumenta a chance de captura a cada tentativa falha anterior.,5 + 10 por tentativa,4,,50,bola,20
+Premierball,Melhora a captura durante batalhas ativas.,20/80,5,,50,bola,21
+Candyball,Faz o Pokémon capturado dropar o triplo de doces.,10,3,,50,bola,22
+Loveball,Aumenta a amizade do Pokémon após a captura.,10,3,,50,bola,23
+Secretball,Aumenta 10% do IV do Pokémon ao capturar.,20,6,,50,bola,24
+Fastball,Mais rápida e eficiente quanto maior a velocidade do Pokémon.,1 + vel,3,,50,bola,25
+Fruitball,Aumenta as chances conforme a quantidade de frutas oferecidas.,5 + 20 por fruta,3,,50,bola,26
+Tallball,Melhora a captura quanto mais alto for o Pokémon.,1 + altura (cm) divido por 5 (max 100),2,,50,bola,27
+Sniperball,Arremessa mais longe e captura melhor à distância.,1  + 10 por metro,4,,50,bola,28
+Beastball,Especializada para capturar Pokémon raros e não spawnáveis.,15/85,4,,50,bola,29
+Caxi Berry,Dobra a quantidade de doces obtidos.,2,3,,50,fruta,30
+Frambo Berry,Melhora levemente a chance de captura.,10,1,,50,fruta,31
+Super Frambo Berry,Melhora muito a chance de captura.,25,4,,50,fruta,32
+Simp Berry,Aumenta a amizade do Pokémon ao capturar.,10,1,,50,fruta,33
+Secret Berry,Aumenta 5% o IV do Pokémon ao capturar.,5,6,,10,fruta,34
+Lum Berry,Aumenta 3 níveis do Pokémon.,3,3,,50,fruta,35
+Tomper Berry,Amplia a barra de captura crítica do Pokémon.,25,2,,50,fruta,36
+Abbajuur Berry,Reduz a velocidade da barra de captura crítica.,25,2,,50,fruta,37
+Jujuca Berry,Aumenta o número de frutas que um Pokémon pode consumir.,2,2,,50,fruta,38
+Jungle Berry,Melhora a captura em áreas de floresta.,26,2,,50,fruta,39
+Desert Berry,Melhora a captura em áreas desérticas.,26,2,,50,fruta,40
+Frozen Berry,Melhora a captura em regiões geladas.,26,2,,50,fruta,41
+Field Berry,Melhora a captura em campos abertos.,26,2,,50,fruta,42
+Water Berry,Melhora a captura em ambientes aquáticos.,26,2,,50,fruta,43
+Lava Berry,Melhora a captura em terras vulcanicas,26,2,,50,fruta,44
+Magic Berry,Melhora a captura no bioma magico,26,2,,50,fruta,45
+Madeira,Recurso básico usado em construções e na criação de ferramentas simples.,-,-,,50,recurso,46
+Pedra,Recurso comum usado em construções e na criação de ferramentas mais resistentes.,-,-,,50,recurso,47
+Cobre,Minério metálico usado na fabricação de itens e ferramentas intermediárias.,-,-,,50,recurso,48
+Ouro,Minério valioso usado na criação de ferramentas leves e itens especiais.,-,-,,50,recurso,49
+Diamante,Gema rara usada para fabricar ferramentas de alta durabilidade.,-,-,,50,recurso,50
+Ametista,Cristal raro usado na criação de ferramentas refinadas e itens especiais.,-,-,,50,recurso,51
+Esmeralda,"Gema valiosa usada em trocas, fabricação e itens raros.",-,-,,50,recurso,52
+Rubi,Gema poderosa usada para criar ferramentas avançadas e itens de alto valor.,-,-,,50,recurso,53
+Balde,,-,-,,1,ferramenta,54
+Picareta de Madeira,Ferramenta simples usada para minerar recursos básicos.,2,-,,1,ferramenta,55
+Picareta de Pedra,Ferramenta resistente usada para minerar com mais eficiência.,3,-,,1,ferramenta,56
+Picareta de Ouro,Ferramenta leve usada para minerar rapidamente certos recursos.,4,-,,1,ferramenta,57
+Picareta de Diamante,Ferramenta avançada usada para minerar recursos raros com alta eficiência.,5,-,,1,ferramenta,58
+Picareta de Ametista,Ferramenta refinada usada para extrair minérios especiais.,6,-,,1,ferramenta,59
+Picareta de Rubi,Ferramenta poderosa usada para mineração avançada.,7,-,,1,ferramenta,60
+Machado de Madeira,Ferramenta simples usada para cortar árvores e coletar madeira.,2,-,,1,ferramenta,61
+Machado de Pedra,Ferramenta resistente usada para cortar madeira com mais eficiência.,3,-,,1,ferramenta,62
+Machado de Ouro,Ferramenta leve usada para cortes rápidos em recursos naturais.,4,-,,1,ferramenta,63
+Machado de Diamante,Ferramenta avançada usada para extração eficiente de madeira.,5,-,,1,ferramenta,64
+Machado de Ametista,Ferramenta refinada usada para coleta avançada de recursos naturais.,6,-,,1,ferramenta,65
+Machado de Rubi,Ferramenta poderosa usada para corte e extração de alto nível.,7,-,,1,ferramenta,66
+Lamina Fumegante,,-,,,1,equipavel,67
+Machadinha Ignea,,-,,,1,equipavel,68
+Emblema da Chama,,-,,,1,equipavel,69
+Capa Solari,,-,,,1,equipavel,70
+Fluxo Aquatico,,-,,,1,equipavel,71
+Gota Sagrada,,-,,,1,equipavel,72
+Semblante das Aguas,,-,,,1,equipavel,73
+Emblema da Semente,,-,,,1,equipavel,74
+Armadura Natural,,-,,,1,equipavel,75
+Estilingue das Folhas,,-,,,1,equipavel,76
+Trovao Encapsulado,,-,,,1,equipavel,77
+Semblante Congelado,,-,,,1,equipavel,78
+Coroa do Inverno Eterno,,-,,,1,equipavel,79
+Coração de Gelo,,-,,,1,equipavel,80
+Punho Congelado,,-,,,1,equipavel,81
+Amuleto sintilante,,-,,,1,equipavel,82
+Idolo Perdido,,-,,,1,equipavel,83
+Arco dos Ventos,,-,,,1,equipavel,84
+Espada Envenenada,,-,,,1,equipavel,85
+Dente do Fim,,-,,,1,equipavel,86
+Arco de Ossos,,-,,,1,equipavel,87
+Serra Toxica,,-,,,1,equipavel,88
+Mao Sinistra,,-,,,1,equipavel,89
+Maldição,,-,,,1,equipavel,90
+Capa Assombrada,,-,,,1,equipavel,91
+Machado Amaldiçoado,,-,,,1,equipavel,92
+Eternidade,,-,,,1,equipavel,93
+Elmo Cosmico,,-,,,1,equipavel,94
+Mascara do Mosquito Gigante,,-,,,1,equipavel,95
+Espada Mental,,-,,,1,equipavel,96
+Elmo Psionico,,-,,,1,equipavel,97
+Mao que Tudo Ve,,-,,,1,equipavel,98
+Coração de Ferro,,-,,,1,equipavel,99
+Elmo Abençoado,,-,,,1,equipavel,100
+Placa defensiva,,-,,,1,equipavel,101
+Botas Colossais,,-,,,1,equipavel,102
+Cinto do Gigante,,-,,,1,equipavel,103
+Faixa da Escolha,,-,,,1,equipavel,104
+Punho Robusto,,-,,,1,equipavel,105
+Estaca Terrestre,,-,,,1,equipavel,106
+Pedra Flutuante,,-,,,1,equipavel,107
+Sismitarra Marcada,,-,,,1,equipavel,108
+Cajado do Som,,-,,,1,equipavel,109
+Sino Dourado,,-,,,1,equipavel,110
+Emblema das Sombras,,-,,,1,equipavel,111
+Faca do Dragão,,-,,,1,equipavel,112
+Ombreira da Escama Ardente,,-,,,1,equipavel,113
+Capa Alheia,,-,,,1,equipavel,114
+Chapeu do Bruxo,,-,,,1,equipavel,115
+Espada Energizada,,-,,,1,equipavel,116
+Quebra Barreira,,-,,,1,equipavel,117
+Besta Afiada,,-,,,1,equipavel,118
+Anjo Guardião,,-,,,1,equipavel,119
+Bastião Inabalavel,,-,,,1,equipavel,120
+Botas do Sucesso,,-,,,1,equipavel,121
+Colete de Espinhos,,-,,,1,equipavel,122
+Tiara Encantada,,-,,,1,equipavel,123
+Coroa da Vitória,,-,,,1,equipavel,124
+Armadura Reforçada,,-,,,1,equipavel,125
+Centro Espiritual,,-,,,1,equipavel,126
+Essencia Radiante,,-,,,1,equipavel,127
+Pedra da Ultra Evolução,,-,,,1,equipavel,128
+Energia Gigantamax,,-,,,1,equipavel,129
+Pedra da Mega Evolução,,-,,,1,equipavel,130

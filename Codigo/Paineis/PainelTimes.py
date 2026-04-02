@@ -30,7 +30,6 @@ class PainelTimes(PainelRolavel):
             'outline_color': (8, 12, 20),
         }
         self.TxtTitulo = Texto('', style={**estilo, 'size': 19, 'color': (236, 241, 255)})
-        self.TxtTipoEquipe = Texto('', style={**estilo, 'size': 12, 'color': (186, 202, 236), 'align': 'midleft'})
         self.TxtTipoEquipePct = Texto('', style={**estilo, 'size': 13, 'color': (186, 202, 236), 'align': 'midleft'})
 
         self._highlight_render = None
@@ -274,16 +273,15 @@ class PainelTimes(PainelRolavel):
             txt_nome.draw(tela)
 
             tipagens = self._tipagens_predominantes(indice_time)
-            x_tipo = card.right - 128
-            y_tipo = card.y + 14
-            self.TxtTipoEquipe.set_text('Tipagens da equipe')
-            self.TxtTipoEquipe.set_pos((x_tipo, y_tipo))
-            self.TxtTipoEquipe.draw(tela)
-            y_tipo += 16
+            lado_tipo = 20
+            gap_tipo = 10
+            bloco_largura = len(tipagens) * (lado_tipo + 34 + gap_tipo)
+            x_tipo = card.right - 10 - bloco_largura
+            y_tipo = card.y + 10
             for tipo, pct in tipagens:
-                fundo = pygame.Rect(x_tipo, y_tipo, 16, 16)
+                fundo = pygame.Rect(x_tipo, y_tipo, lado_tipo, lado_tipo)
                 pygame.draw.rect(tela, (250, 250, 255), fundo, border_radius=8)
-                icone = PokemonInventario.icone_tipo(tipo, 12)
+                icone = PokemonInventario.icone_tipo(tipo, 15)
                 if icone is not None:
                     tela.blit(icone, icone.get_rect(center=fundo.center))
                 cor_pct = (255, 224, 92) if int(round(pct)) >= 100 else (186, 202, 236)
@@ -291,7 +289,7 @@ class PainelTimes(PainelRolavel):
                 self.TxtTipoEquipePct.style['color'] = cor_pct
                 self.TxtTipoEquipePct.set_pos((fundo.right + 5, fundo.centery))
                 self.TxtTipoEquipePct.draw(tela)
-                y_tipo += 18
+                x_tipo += lado_tipo + 34 + gap_tipo
 
             for indice_slot in range(self.SlotsPorTime):
                 rect_slot = self._slot_rect_local(indice_time, indice_slot)

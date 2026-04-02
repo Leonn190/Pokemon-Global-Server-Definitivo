@@ -1,0 +1,192 @@
+from __future__ import annotations
+
+import csv
+from pathlib import Path
+
+import pygame
+
+from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.Paineis.Container import Container
+from Codigo.Prefabs.Texto import Texto
+
+
+class PainelAuxiliarPoke:
+    ABAS = ("times", "pocoes", "pokemons", "equipaveis")
+
+    def __init__(self, rect: pygame.Rect):
+        self.Rect = pygame.Rect(rect)
+        self._aba_ativa = "times"
+        self._botoes: dict[str, pygame.Rect] = {}
+        self._container: Container | None = None
+        self._itens_filtro: list = []
+        self._indices_inventario: list[int | None] = []
+        self._fonte = Texto("", style={"size": 14, "outline": True, "outline_thickness": 1, "outline_color": (8, 12, 20)})
+        self._configurar_layout()
+        self._mapa_estilos = self._carregar_mapa_estilos()
+
+    @staticmethod
+    def _carregar_mapa_estilos():
+        caminhos = [
+            Path('Dados') / 'Pokemon Global Server - Itens.csv',
+            Path('Pokemon Global Server - Itens.csv'),
+            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Itens.csv',
+            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Itens.csv',
+        ]
+        caminho = next((p for p in caminhos if p.exists()), None)
+        base = {}
+        if caminho is None:
+            return base
+        try:
+            with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
+                for linha in csv.DictReader(arquivo):
+                    estilo = str(linha.get('Estilo') or '').strip().lower()
+                    nome = str(linha.get('Nome') or '').strip().lower()
+                    code = str(linha.get('Code') or '').strip()
+                    if nome:
+                        base[('nome', nome)] = estilo
+                    if code:
+                        base[('code', code)] = estilo
+        except OSError:
+            pass
+        return base
+
+    @property
+    def aba_ativa(self) -> str:
+        return self._aba_ativa
+
+    def configurar_rect(self, rect: pygame.Rect):
+        self.Rect = pygame.Rect(rect)
+        self._configurar_layout()
+
+    def _configurar_layout(self):
+        self._botoes = {}
+        gap = 8
+        margem = 12
+        largura = max(68, int((self.Rect.width - margem * 2 - gap * 3) / 4))
+        y = self.Rect.y + 8
+        x = self.Rect.x + margem
+        for nome in self.ABAS:
+            self._botoes[nome] = pygame.Rect(x, y, largura, 30)
+            x += largura + gap
+
+    def _titulo_aba(self, aba: str) -> str:
+        return {
+            "times": "Times",
+            "pocoes": "Poções",
+            "pokemons": "Pokémons",
+            "equipaveis": "Equipáveis",
+        }.get(aba, aba.title())
+
+    def _filtrar_itens(self, itens, estilo: str):
+        alvo = str(estilo or "").strip().lower()
+        saida = []
+        indices = []
+        for idx, item in enumerate(itens or []):
+            if not isinstance(item, dict):
+                continue
+            nome = str(item.get('Nome') or item.get('nome') or '').strip().lower()
+            code = str(item.get('Code') or item.get('code') or '').strip()
+            est = self._mapa_estilos.get(('code', code)) or self._mapa_estilos.get(('nome', nome)) or str(item.get("Estilo") or item.get("estilo") or "").strip().lower()
+            if (alvo == "pocoes" and est == "poção") or (alvo == "equipaveis" and est == "equipavel"):
+                saida.append(item)
+                indices.append(idx)
+        return saida, indices
+
+    def sincronizar(self, inventario, area_conteudo: pygame.Rect):
+        self.configurar_rect(area_conteudo)
+        if self._aba_ativa == "pokemons":
+            self._itens_filtro = [p for p in list(getattr(inventario, "Pokemons", []) or []) if p is not None]
+            self._indices_inventario = []
+            renderizador = PokemonInventario
+            colunas = 5
+            gap = 10
+            slot_px = 54
+        elif self._aba_ativa in ("pocoes", "equipaveis"):
+            self._itens_filtro, self._indices_inventario = self._filtrar_itens(getattr(inventario, "Itens", []), self._aba_ativa)
+            renderizador = ItemInventario
+            colunas = 5
+            gap = 10
+            slot_px = 54
+        else:
+            self._itens_filtro = []
+            self._indices_inventario = []
+            self._container = None
+            return
+
+        slots_total = max(1, len(self._itens_filtro))
+        area_grid = pygame.Rect(self.Rect.x, self.Rect.y + 44, self.Rect.width, self.Rect.height - 44)
+        linhas_visiveis = max(1, min(8, (slots_total + colunas - 1) // colunas))
+
+        if self._container is None:
+            self._container = Container(
+                area_grid,
+                self._itens_filtro,
+                slots_total=slots_total,
+                colunas=colunas,
+                linhas_visiveis=linhas_visiveis,
+                slot_px=slot_px,
+                gap=gap,
+                cor_fundo=(18, 26, 44, 242),
+                cor_borda=(66, 88, 136),
+                borda=2,
+                raio=16,
+                stackable=False,
+                renderizador_item=renderizador,
+            )
+        else:
+            self._container.Itens = self._itens_filtro
+            self._container.SlotsTotal = slots_total
+            self._container.Colunas = colunas
+            self._container.LinhasVisiveis = linhas_visiveis
+            self._container.SlotPx = slot_px
+            self._container.Gap = gap
+            self._container.RenderizadorItem = renderizador
+            self._container.configurar_rect(area_grid)
+
+    def processar_eventos(self, eventos):
+        for evento in eventos:
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                for aba, rect in self._botoes.items():
+                    if rect.collidepoint(evento.pos):
+                        self._aba_ativa = aba
+                        return True
+        if self._aba_ativa != "times" and self._container is not None:
+            self._container._processar_scroll(eventos)
+        return False
+
+    def alvo_no_mouse(self, pos):
+        for rect in self._botoes.values():
+            if rect.collidepoint(pos):
+                return None
+        if self._container is None:
+            return None
+        idx = self._container.indice_no_mouse(pos)
+        if idx is None:
+            return None
+        item = self._container.item_por_slot_visual(idx)
+        if item is None:
+            return None
+        return ("aux", self._aba_ativa, idx, item)
+
+    def slot_inventario_por_visual(self, indice_visual):
+        if indice_visual is None or not (0 <= int(indice_visual) < len(self._indices_inventario)):
+            return None
+        return self._indices_inventario[int(indice_visual)]
+
+    def clique_em_botao(self, pos):
+        return any(rect.collidepoint(pos) for rect in self._botoes.values())
+
+    def desenhar(self, tela: pygame.Surface):
+        for aba, rect in self._botoes.items():
+            ativa = aba == self._aba_ativa
+            pygame.draw.rect(tela, (68, 105, 178) if ativa else (31, 44, 72), rect, border_radius=10)
+            pygame.draw.rect(tela, (230, 240, 255) if ativa else (76, 102, 148), rect, 2, border_radius=10)
+            self._fonte.set_text(self._titulo_aba(aba))
+            self._fonte.set_pos(rect.center)
+            self._fonte.draw(tela)
+
+        if self._aba_ativa == "times":
+            return
+        if self._container is not None:
+            self._container.desenhar(tela)

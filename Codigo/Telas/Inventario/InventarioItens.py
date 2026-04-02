@@ -27,6 +27,7 @@ class InventarioItens:
         self._arrastavel = Arrastavel()
         self._item_hover = None
         self._ultimo_clique = {'tempo': 0, 'slot': None}
+        self._ultimo_slot_distribuido_no_arraste = None
         self._estava_ativo = False
         self._layout_montado = False
 
@@ -50,6 +51,7 @@ class InventarioItens:
             self._painel_craft.devolver_para_inventario(self._container)
         self._arrastavel.cancelar()
         self._item_hover = None
+        self._ultimo_slot_distribuido_no_arraste = None
         if self._barra_pesquisa is not None:
             self._barra_pesquisa.resetar_filtro()
         self._estava_ativo = False
@@ -105,7 +107,7 @@ class InventarioItens:
         self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 16, largura_esquerda, 72)
         self._area_craft = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, 290)
         self._area_receitas = pygame.Rect(self._area_grid.right + margem, self._area_craft.bottom + 9, largura_direita, area.bottom - (self._area_craft.bottom + 9) - 8)
-        self._area_ficha = pygame.Rect(self._area_info.right - 470, self._area_info.y + 4, 462, self._area_info.height - 8)
+        self._area_ficha = pygame.Rect(self._area_info.x + 118, self._area_info.y + 4, self._area_info.width - 126, self._area_info.height - 8)
 
         if self._container is None:
             self._container = Container(
@@ -193,6 +195,20 @@ class InventarioItens:
         self._ultimo_clique = {'tempo': agora, 'slot': alvo[1]}
         return anterior['slot'] == alvo[1] and agora - anterior['tempo'] <= 420
 
+    def _ativar_distribuidor_se_aplicavel(self, botao_direito_pressionado):
+        if (
+            not botao_direito_pressionado
+            or not self._arrastavel.Ativo
+            or self._arrastavel.Item is None
+            or self._arrastavel.PosAlvo is not None
+            or self._arrastavel.ModoDistribuidor
+            or not isinstance(self._arrastavel.Item, dict)
+            or 'quantidade' not in self._arrastavel.Item
+        ):
+            return
+        self._arrastavel.ativar_distribuidor()
+        self._ultimo_slot_distribuido_no_arraste = None
+
     def _iniciar_arrasto(self, alvo, mouse_pos, botao):
         item = self._item_do_alvo(alvo)
         if item is None or alvo is None or alvo[0] == 'saida':
@@ -212,6 +228,7 @@ class InventarioItens:
             return
         origem = (alvo[0], alvo[1], origem_aux)
         self._arrastavel.iniciar(item_pego, origem, self._painel_craft.item_rect_no_slot(rect_base) if alvo[0] == 'craft' else self._container.item_rect_no_slot(rect_base), mouse_pos, botao=botao)
+        self._ultimo_slot_distribuido_no_arraste = None
         if botao == 3:
             self._arrastavel.ativar_distribuidor()
         self._item_hover = item_pego
@@ -375,18 +392,28 @@ class InventarioItens:
             self._item_hover = self._arrastavel.Item
 
         for evento in eventos:
+            self._ativar_distribuidor_se_aplicavel(
+                (evento.buttons[2] if evento.type == pygame.MOUSEMOTION and hasattr(evento, 'buttons') else pygame.mouse.get_pressed()[2])
+            )
             if evento.type == pygame.MOUSEMOTION and self._arrastavel.Ativo and self._arrastavel.PosAlvo is None:
                 self._arrastavel.atualizar(evento.pos)
                 if self._arrastavel.ModoDistribuidor and (evento.buttons[2] if hasattr(evento, 'buttons') else pygame.mouse.get_pressed()[2]):
                     alvo = self._alvo_no_mouse(evento.pos)
-                    if alvo is not None and alvo[0] != 'saida' and self._arrastavel.pode_distribuir_em(alvo):
+                    if (
+                        alvo is not None
+                        and alvo[0] != 'saida'
+                        and alvo != self._ultimo_slot_distribuido_no_arraste
+                        and self._arrastavel.pode_distribuir_em(alvo)
+                    ):
                         self._soltar_no_alvo(alvo, 3)
                         self._arrastavel.registrar_distribuicao(alvo)
+                        self._ultimo_slot_distribuido_no_arraste = alvo
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3 and self._arrastavel.Ativo and self._arrastavel.ModoDistribuidor and self._arrastavel.PosAlvo is None:
                 alvo = self._alvo_no_mouse(evento.pos)
                 if alvo is not None and alvo[0] != 'saida' and self._arrastavel.pode_distribuir_em(alvo):
                     self._soltar_no_alvo(alvo, 3)
                     self._arrastavel.registrar_distribuicao(alvo)
+                    self._ultimo_slot_distribuido_no_arraste = alvo
 
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button in (1, 3):
                 alvo = self._alvo_no_mouse(evento.pos)
@@ -424,6 +451,7 @@ class InventarioItens:
 
             elif evento.type == pygame.MOUSEBUTTONUP and evento.button == 3 and self._arrastavel.Ativo:
                 self._arrastavel.limpar_distribuidor()
+                self._ultimo_slot_distribuido_no_arraste = None
                 if self._arrastavel.vazio():
                     self._arrastavel.cancelar()
 

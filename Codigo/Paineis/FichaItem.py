@@ -31,7 +31,7 @@ class FichaItem:
         self.TxtRaridade = Texto('-', style={**base, 'size': 15, 'color': (236, 241, 255), 'align': 'midleft'})
         self.TxtDescricao = SetorTexto(
             texto='',
-            linhas=3,
+            linhas=2,
             caracteres_por_linha=44,
             style={**base, 'size': 13, 'color': (181, 193, 220), 'setor_align': 'left'},
         )
@@ -101,28 +101,29 @@ class FichaItem:
         raridade_texto, raridade_cor = self._dados_raridade(raridade)
 
         margem = 8
+        gap = 10
         box_icone = pygame.Rect(area.right - 58, area.y + (area.height - 52) // 2, 52, 52)
-        nome_x = area.x + margem - 8
-        desc_x = area.x + 142
-        raridade_x = area.x + 292
+        nome_x = area.x + margem - 12
         centro_y = area.centery
         self.TxtNome.set_text(nome)
         self.TxtNome.set_pos((nome_x, centro_y))
         self.TxtNome.draw(tela)
+        nome_rect = self.TxtNome.get_rect()
+        gap_nome_desc = 14
+        desc_x = nome_rect.right + gap_nome_desc
 
         self.TxtRaridade.set_text(raridade_texto)
-        self.TxtRaridade.set_pos((raridade_x, centro_y))
         rar_rect = self.TxtRaridade.get_rect()
         pill_rect = pygame.Rect(0, 0, rar_rect.width + 20, rar_rect.height + 6)
-        pill_rect.midleft = (raridade_x, centro_y)
+        pill_rect.midleft = (box_icone.x - gap - pill_rect.width, centro_y)
         pygame.draw.rect(tela, raridade_cor, pill_rect, border_radius=10)
         pygame.draw.rect(tela, (8, 12, 20), pill_rect, 2, border_radius=10)
         self.TxtRaridade.set_pos((pill_rect.x + 10, pill_rect.centery))
         self.TxtRaridade.draw(tela)
         ItemInventario.desenhar_item_no_rect(tela, item, box_icone)
 
-        desc_rect = pygame.Rect(desc_x, area.y + 8, max(40, box_icone.x - desc_x - 12), area.height - 16)
+        desc_rect = pygame.Rect(desc_x, area.y + 8, max(36, pill_rect.x - gap - desc_x), area.height - 16)
         self.TxtDescricao.configurar_rect(desc_rect)
-        self.TxtDescricao.set_limites(linhas=3, caracteres_por_linha=48)
+        self.TxtDescricao.set_limites(linhas=2, caracteres_por_linha=42)
         self.TxtDescricao.set_texto(descricao)
         self.TxtDescricao.draw(tela)

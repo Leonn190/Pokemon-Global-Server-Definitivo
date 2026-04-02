@@ -161,9 +161,10 @@ class InventarioPokemons:
             self._area_ficha = pygame.Rect(0, 0, 0, 0)
             self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 14, largura_esquerda, 72)
         if analisando:
-            bottom_fixo = area.y + area.height - 22
-            area_times_y = area.y + topo + 3
-            self._area_times = pygame.Rect(self._area_grid.right + margem, area_times_y, largura_direita, bottom_fixo - area_times_y)
+            lateral_x = self._area_ficha.right + margem
+            lateral_y = self._area_ficha.y + 36
+            lateral_h = max(60, self._area_ficha.bottom - lateral_y)
+            self._area_times = pygame.Rect(lateral_x, lateral_y, largura_direita, lateral_h)
         else:
             self._area_times = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, area.height - 20)
 

@@ -635,7 +635,7 @@ class InventarioPokemons:
             return
         if origem and origem[0] == 'grid':
             rect = self._container.slot_rect(origem[1])
-            self._arrastavel.definir_pos_alvo(self._container.item_rect_no_slot(rect).topleft, ao_final=self._arrastavel.cancelar)
+            self._arrastavel.iniciar_retorno(self._container.item_rect_no_slot(rect).topleft)
             return
         self._arrastavel.cancelar()
 

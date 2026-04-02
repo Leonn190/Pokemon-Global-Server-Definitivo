@@ -220,22 +220,25 @@ class InventarioItens:
         if not self._arrastavel.Ativo or self._arrastavel.Item is None:
             return
         grupo, indice, origem_aux = self._arrastavel.Origem
-        item = copy.deepcopy(self._arrastavel.Item)
         if grupo == 'inventario':
             rect = self._container.item_rect_no_slot(self._container.slot_rect(indice))
-            resto = self._container.restaurar_item_no_slot_origem(origem_aux, item)
-            if resto is not None:
-                self._container.devolver_para_origem_ou_vazio(origem_aux, resto)
         elif grupo == 'craft':
             rect = self._painel_craft.item_rect_no_slot(self._painel_craft.slot_rect(indice))
-            self._painel_craft.restaurar_no_slot_origem(indice, item, origem=origem_aux)
         else:
             rect = self._painel_craft.item_rect_no_slot(self._painel_craft.slot_saida_rect())
-            self._container.devolver_para_origem_ou_vazio(None, item)
+        item = copy.deepcopy(self._arrastavel.Item)
 
-        def _finalizar():
-            self._arrastavel.cancelar()
-        self._arrastavel.definir_pos_alvo(rect.topleft, ao_final=_finalizar)
+        def _restaurar_logico():
+            if grupo == 'inventario':
+                resto = self._container.restaurar_item_no_slot_origem(origem_aux, item)
+                if resto is not None:
+                    self._container.devolver_para_origem_ou_vazio(origem_aux, resto)
+            elif grupo == 'craft':
+                self._painel_craft.restaurar_no_slot_origem(indice, item, origem=origem_aux)
+            else:
+                self._container.devolver_para_origem_ou_vazio(None, item)
+
+        self._arrastavel.iniciar_retorno(rect.topleft, ao_retorno_logico=_restaurar_logico)
 
     def _dropar_fora(self, quantidade=None):
         if not self._arrastavel.Ativo or self._arrastavel.Item is None:
@@ -261,7 +264,9 @@ class InventarioItens:
             return False
         if not self._arrastavel.Ativo or self._arrastavel.Item is None:
             return False
-        self._retornar_para_origem()
+        if self._area_total.collidepoint(evento.pos):
+            return False
+        self._dropar_fora(quantidade=1 if evento.button == 3 else None)
         return True
 
     def _soltar_no_alvo(self, alvo, botao):
@@ -398,7 +403,10 @@ class InventarioItens:
                     if self._arrastavel.PosAlvo is not None:
                         continue
                     if alvo is None:
-                        self._retornar_para_origem()
+                        if self._area_total.collidepoint(evento.pos):
+                            self._retornar_para_origem()
+                        else:
+                            self._dropar_fora(quantidade=1 if evento.button == 3 else None)
                     elif alvo[0] == 'saida' and evento.button == 1:
                         self._coletar_saida_craft(evento.pos)
                     else:

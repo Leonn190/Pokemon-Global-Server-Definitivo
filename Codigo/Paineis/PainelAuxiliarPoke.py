@@ -13,7 +13,7 @@ from Codigo.Prefabs.Texto import Texto
 
 
 class PainelAuxiliarPoke:
-    ABAS = ("times", "pocoes", "pokemons", "equipaveis")
+    ABAS = ("times", "pokemons", "equipaveis", "pocoes")
 
     def __init__(self, rect: pygame.Rect):
         self.Rect = pygame.Rect(rect)
@@ -66,7 +66,7 @@ class PainelAuxiliarPoke:
         gap = 8
         margem = 12
         largura = max(68, int((self.Rect.width - margem * 2 - gap * 3) / 4))
-        y = self.Rect.y + 4
+        y = self.Rect.y
         x = self.Rect.x + margem
         for nome in self.ABAS:
             rect = pygame.Rect(x, y, largura, 30)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+
 
 class Inventario:
     def __init__(self, limite_itens=100, limite_slots=32, limite_pokemons=64, limite_times_pokemon=6):
@@ -131,8 +133,8 @@ class Inventario:
     def serializar(self):
         return {
             "itens": self.serializar_itens(),
-            "pokemons": list(self.Pokemons),
-            "times_pokemon": list(self.TimesPokemon),
+            "pokemons": copy.deepcopy(list(self.Pokemons)),
+            "times_pokemon": copy.deepcopy(list(self.TimesPokemon)),
             "limite_itens": self.LimiteItens,
             "limite_slots": self.LimiteSlots,
             "limite_pokemons": self.LimitePokemons,

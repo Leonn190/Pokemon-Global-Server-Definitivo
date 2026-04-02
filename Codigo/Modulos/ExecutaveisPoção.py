@@ -36,31 +36,36 @@ def _dados_pocao(nome_pocao: str) -> dict:
 
 
 def _aplicar_xp(pokemon: dict, quantidade: float):
-    atual = int(_valor_vida(pokemon, "XP", _valor_vida(pokemon, "xp", 0)))
+    alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+    atual = int(_valor_vida(alvo, "XP", _valor_vida(alvo, "xp", 0)))
     ganho = int(max(0, round(float(quantidade))))
-    pokemon["XP"] = atual + ganho
-    pokemon["xp"] = pokemon["XP"]
+    alvo["XP"] = atual + ganho
+    alvo["xp"] = alvo["XP"]
 
 
 def _curar(pokemon: dict, cura: float):
-    vida_atual = _valor_vida(pokemon, "VidaAtual", _valor_vida(pokemon, "vida_atual", _valor_vida(pokemon, "Vida", 0)))
+    alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+    vida_atual = _valor_vida(alvo, "VidaAtual", _valor_vida(alvo, "vida_atual", _valor_vida(alvo, "Vida", 0)))
     if vida_atual <= 0:
         return False
-    vida_max = max(1.0, _valor_vida(pokemon, "Vida", vida_atual))
+    stats = alvo.get("stats") if isinstance(alvo.get("stats"), dict) else {}
+    vida_max = max(1.0, _valor_vida(alvo, "Vida", _valor_vida(stats, "Vida", vida_atual)))
     nova_vida = min(vida_max, vida_atual + max(0.0, float(cura)))
-    pokemon["VidaAtual"] = nova_vida
-    pokemon["vida_atual"] = nova_vida
+    alvo["VidaAtual"] = nova_vida
+    alvo["vida_atual"] = nova_vida
     return True
 
 
 def _reviver(pokemon: dict, percentual_vida: float):
-    vida_atual = _valor_vida(pokemon, "VidaAtual", _valor_vida(pokemon, "vida_atual", _valor_vida(pokemon, "Vida", 0)))
+    alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+    vida_atual = _valor_vida(alvo, "VidaAtual", _valor_vida(alvo, "vida_atual", _valor_vida(alvo, "Vida", 0)))
     if vida_atual > 0:
         return False
-    vida_max = max(1.0, _valor_vida(pokemon, "Vida", 1))
+    stats = alvo.get("stats") if isinstance(alvo.get("stats"), dict) else {}
+    vida_max = max(1.0, _valor_vida(alvo, "Vida", _valor_vida(stats, "Vida", 1)))
     revivido = max(1.0, vida_max * max(0.01, min(1.0, float(percentual_vida))))
-    pokemon["VidaAtual"] = revivido
-    pokemon["vida_atual"] = revivido
+    alvo["VidaAtual"] = revivido
+    alvo["vida_atual"] = revivido
     return True
 
 

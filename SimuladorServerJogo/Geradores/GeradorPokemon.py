@@ -322,7 +322,7 @@ def criar_pokemon_inicial_materializado(especie: str) -> Dict[str, object]:
         "id": 0,
         "especie": str(row.get("Nome", "Pokemon")),
         "nome": str(row.get("Nome", "Pokemon")),
-        "nivel": 5,
+        "nivel": 0,
         "iv": random.randint(10, 45),
         "subivs": {},
         "stats_base": {k: _fnum(row.get(k), 0.0) for k in STATS_BASE},

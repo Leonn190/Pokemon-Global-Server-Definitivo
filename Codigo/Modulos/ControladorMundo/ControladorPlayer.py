@@ -316,7 +316,8 @@ class ControladorPlayer:
         if colisor_mao is None:
             return
         alvos = self._objetos.estruturas_colidindo((float(colisor_mao.x), float(colisor_mao.y)), float(colisor_mao.raio_colisao))
-        if not alvos:
+        baus = self._objetos.baus_colidindo((float(colisor_mao.x), float(colisor_mao.y)), float(colisor_mao.raio_colisao))
+        if not alvos and not baus:
             return
         self._coleta_tapa_enviada = True
         instante = int(time.time() * 1000)
@@ -326,6 +327,16 @@ class ControladorPlayer:
                 "categoria": "coleta_estrutura_natural",
                 "payload": {
                     "estrutura_id": int(alvo.get("id", 0) or 0),
+                    "pos_mao": [float(colisor_mao.x), float(colisor_mao.y)],
+                    "instante_cliente_ms": instante,
+                },
+            })
+        for bau in baus:
+            self._objetos.EnfileirarDiffRapida({
+                "tipo": "evento",
+                "categoria": "interacao_bau",
+                "payload": {
+                    "bau_id": int(bau.get("id", 0) or 0),
                     "pos_mao": [float(colisor_mao.x), float(colisor_mao.y)],
                     "instante_cliente_ms": instante,
                 },

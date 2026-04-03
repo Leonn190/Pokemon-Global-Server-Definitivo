@@ -11,7 +11,7 @@ import pygame
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.Baus import Bau
-from Codigo.Geradores.EstruturaNaturais import EstruturaNatural, tipo_estrutura_natural_por_codigo
+from Codigo.Geradores.EstruturaNaturais import EstruturaNatural, prioridade_estrutura_natural, tipo_estrutura_natural_por_codigo
 from Codigo.Geradores.Player.Inventario import Inventario
 from Codigo.Geradores.Player.Perfil import Perfil
 from Codigo.Geradores.PokemonMundo import Pokemon
@@ -158,7 +158,10 @@ class ControladorObjetos:
             raio = float(obj.get("raio_colisao", 0.0) or 0.0)
             if raio <= 0.0:
                 continue
-            yield (int(obj.get("id", 0)), sx, sy, raio, str(obj.get("tipo", "")), float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0))
+            tipo_obj = str(obj.get("tipo", ""))
+            if self._eh_payload_bau(obj):
+                tipo_obj = "estrutura_bau"
+            yield (int(obj.get("id", 0)), sx, sy, raio, tipo_obj, float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0))
 
     def estrutura_colidindo(self, posicao: Tuple[float, float], raio: float) -> Optional[Dict[str, object]]:
         colisoes = self.estruturas_colidindo(posicao, raio)
@@ -171,6 +174,29 @@ class ControladorObjetos:
             estruturas = [self.ObjetosPorId.get(oid) for oid in self.EstruturasPorId.keys()]
         for obj in estruturas:
             if not isinstance(obj, dict):
+                continue
+            pos = obj.get("posicao")
+            if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+                continue
+            sx, sy = float(pos[0]), float(pos[1])
+            rr = float(obj.get("raio_colisao", 0.0) or 0.0) + max(0.0, float(raio))
+            d2 = (sx - px) ** 2 + (sy - py) ** 2
+            if d2 > (rr * rr):
+                continue
+            encontrados.append((d2, obj))
+        encontrados.sort(key=lambda par: par[0])
+        return [obj for _, obj in encontrados]
+
+    def baus_colidindo(self, posicao: Tuple[float, float], raio: float) -> List[Dict[str, object]]:
+        px, py = float(posicao[0]), float(posicao[1])
+        encontrados: List[Tuple[float, Dict[str, object]]] = []
+        with self._lock_objetos:
+            baus = [self.ObjetosPorId.get(oid) for oid in self.BausPorId.keys()]
+        for obj in baus:
+            if not isinstance(obj, dict):
+                continue
+            estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            if bool(estado.get("aberto", False)):
                 continue
             pos = obj.get("posicao")
             if not isinstance(pos, (list, tuple)) or len(pos) != 2:
@@ -612,11 +638,15 @@ class ControladorObjetos:
 
     def renderizar_estruturas(self, tela, camera):
         dt = 1.0 / 60.0
-        for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
-            if not isinstance(obj, dict):
-                continue
-            if not str(obj.get("tipo", "")).startswith("estrutura"):
-                continue
+        objs = [obj for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3) if isinstance(obj, dict) and str(obj.get("tipo", "")).startswith("estrutura")]
+        objs.sort(
+            key=lambda o: (
+                prioridade_estrutura_natural(codigo=o.get("codigo_natural"), subtipo=(o.get("estado", {}) if isinstance(o.get("estado"), dict) else {}).get("subtipo")),
+                float((o.get("posicao") or [0.0, 0.0])[1] if isinstance(o.get("posicao"), (list, tuple)) and len(o.get("posicao")) == 2 else 0.0),
+                int(o.get("id", 0) or 0),
+            )
+        )
+        for obj in objs:
             if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220) is None:
                 continue
             est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))

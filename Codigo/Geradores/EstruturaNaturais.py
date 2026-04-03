@@ -24,6 +24,11 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
     12: {"subtipo": "lava", "nome": "Lava", "sprite": "Recursos/Visual/Mundo/Objetos/Lava.png"},
 }
 
+ORDEM_CANONICA_ESTRUTURAS_NATURAIS: Tuple[str, ...] = (
+    "lava", "pedra", "cobre", "ouro", "diamante", "ametista", "rubi", "esmeralda", "pinheiro", "palmeira", "arvore", "arbusto",
+)
+_PRIORIDADE_SUBTIPO: Dict[str, int] = {nome: idx for idx, nome in enumerate(ORDEM_CANONICA_ESTRUTURAS_NATURAIS)}
+
 
 def tipo_estrutura_natural_por_codigo(codigo: object) -> Optional[Dict[str, object]]:
     try:
@@ -32,6 +37,14 @@ def tipo_estrutura_natural_por_codigo(codigo: object) -> Optional[Dict[str, obje
         return None
     dados = ESTRUTURAS_NATURAIS_TIPOS.get(chave)
     return dict(dados) if isinstance(dados, dict) else None
+
+
+def prioridade_estrutura_natural(codigo: object = None, subtipo: object = None) -> int:
+    nome = str(subtipo or "").strip().lower()
+    if not nome:
+        cfg = tipo_estrutura_natural_por_codigo(codigo)
+        nome = str(cfg.get("subtipo", "")).strip().lower() if isinstance(cfg, dict) else ""
+    return int(_PRIORIDADE_SUBTIPO.get(nome, len(_PRIORIDADE_SUBTIPO)))
 
 
 class EstruturaNatural:

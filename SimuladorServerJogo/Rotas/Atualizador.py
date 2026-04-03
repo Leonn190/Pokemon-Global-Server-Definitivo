@@ -13,6 +13,7 @@ from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_persona
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Geradores.GeradorPokemon import subir_nivel_pokemon
+from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 
 
 def _normalizar_posicao_loop(posicao):
@@ -122,6 +123,7 @@ def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 50
             "codigo_natural": int(getattr(obj, "codigo_natural", estado.get("codigo_natural", 0)) or 0),
             "sprite": str(getattr(obj, "sprite", "") or ""),
         })
+    estruturas.sort(key=lambda e: (prioridade_estrutura_natural(codigo=e.get("codigo_natural")), float(e.get("y", 0.0)), float(e.get("x", 0.0))))
 
     return {
         "origem": [x0, y0],
@@ -275,6 +277,12 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 return _ok("Contexto de batalha pronto", client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            if categoria == "interacao_bau":
+                if CEREBRO.registrar_interacao_bau(client_id, payload):
                     aplicados += 1
                 else:
                     ignorados += 1

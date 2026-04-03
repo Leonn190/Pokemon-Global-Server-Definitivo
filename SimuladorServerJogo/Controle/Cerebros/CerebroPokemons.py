@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+import math
 from typing import Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
@@ -26,10 +27,15 @@ class CerebroPokemons:
 
         if random.random() > self._core._f("chance_spawn_pokemon_por_tick", 0.02):
             return
-        if len(self._core._spawns_pokemon_ultimos_100) >= self._core._i("limite_spawn_pokemon_100_ticks", 4):
+        if len(self._core._spawns_pokemon_ultimos_200) >= self._core._i("limite_spawn_pokemon_200_ticks", 4):
             return
         if self._core.contagem_pokemons_registrados() >= self._core._i("limite_total_pokemons", 100):
             return
+        limite_por_chunk = self._core._f("limite_total_pokemons_por_chunk_existente", -1.0)
+        if limite_por_chunk >= 0.0:
+            chunks_existentes = len(set(chunks_simulados) | set(getattr(self._core, "_chunks_carregados_tick_atual", set())))
+            if self._core.contagem_pokemons_registrados() >= int(math.floor(max(0.0, limite_por_chunk) * max(0, chunks_existentes))):
+                return
 
         tentativas = max(1, self._core._i("tentativas_spawn_pokemon", 5))
         chunk_tamanho = BANCO_DADOS.chunk_tamanho_unidade()
@@ -50,7 +56,7 @@ class CerebroPokemons:
             poke = gerar_pokemon_server(novo_id=novo_id, posicao=(px, py), chunk_xy=chunk)
             BANCO_DADOS.inserir_objeto(poke)
             self._core._pokemons_ids.add(int(poke.Id))
-            self._core._spawns_pokemon_ultimos_100.append(self._core._tick_contador)
+            self._core._spawns_pokemon_ultimos_200.append(self._core._tick_contador)
             registrar_diff("spawn", payload=poke.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=poke.Id, autor="server", categoria="pokemon")
             return
 

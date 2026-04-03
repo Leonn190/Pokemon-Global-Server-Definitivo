@@ -96,8 +96,8 @@ class BauServer:
         self.posicao = (float(posicao[0]), float(posicao[1]))
         self.raio_colisao = float(raio_colisao)
         self.raio_interacao = float(raio_interacao)
-        self.campo = 0.0
-        self.intensidade = 0.0
+        self.campo = 0.35
+        self.intensidade = 1.4
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
         self.estado_extra = {"subtipo": "bau", "tipo_bau": str(tipo_bau), "itens": list(itens), "aberto": bool(aberto), "aberto_em": (time.monotonic() if aberto else 0.0), "quantidade_itens": max(1, min(4, int(quantidade_itens or max(1, len(list(itens)))))), "tamanho_tiles": float(tamanho_tiles or 1.10)}
 

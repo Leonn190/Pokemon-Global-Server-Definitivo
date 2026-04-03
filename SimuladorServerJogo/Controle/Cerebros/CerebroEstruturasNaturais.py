@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import math
+import random
 import uuid
 from pathlib import Path
 from typing import Dict, Tuple
@@ -12,6 +13,7 @@ from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, ItemMundoServer
 from SimuladorServerJogo.Geradores.GeradorMundo import carregar_estado_mundo, salvar_estado_mundo
+from SimuladorServerJogo.Regras.Loader import carregar_regras_estruturas_naturais
 
 _RAIZ = Path(__file__).resolve().parents[3]
 
@@ -32,6 +34,7 @@ def _carregar_fatores_ferramenta() -> Dict[str, int]:
 
 
 _FATOR_POR_CODE = _carregar_fatores_ferramenta()
+_REGRAS_ESTRUTURA = carregar_regras_estruturas_naturais().get("tipos", {})
 
 
 class CerebroEstruturasNaturais:
@@ -92,6 +95,17 @@ class CerebroEstruturasNaturais:
         BANCO_DADOS.registrar_quantidade_estrutura(estrutura.Id, restante)
         self._persistir_estrutura_tocada_imediato(estrutura.Id, restante)
         if restante <= 0:
+            regra_xp = _REGRAS_ESTRUTURA.get(str(int(getattr(estrutura, "codigo_natural", 0) or 0)), {}) if isinstance(_REGRAS_ESTRUTURA, dict) else {}
+            particulas_cfg = regra_xp.get("particulasXP") if isinstance(regra_xp.get("particulasXP"), list) else []
+            tamanhos_cfg = regra_xp.get("tamanhosXP") if isinstance(regra_xp.get("tamanhosXP"), list) else []
+            pool_particulas = [max(1, int(v)) for v in particulas_cfg if isinstance(v, (int, float, str)) and str(v).strip().lstrip("-").isdigit()]
+            pool_tamanhos = [str(v).strip().lower() for v in tamanhos_cfg if str(v).strip().lower() in {"pequeno", "medio", "grande"}]
+            self._core._cerebro_xp_mundo.agendar_burst(
+                origem=(float(estrutura.posicao[0]), float(estrutura.posicao[1])),
+                total_particulas=random.choice(pool_particulas) if pool_particulas else 3,
+                tamanhos_possiveis=(pool_tamanhos if pool_tamanhos else ["pequeno", "medio"]),
+                atraso_ticks=0,
+            )
             removido = BANCO_DADOS.remover_objeto(estrutura.Id)
             if removido is not None:
                 registrar_diff("despawn", payload={"id": removido.Id, "motivo": "estrutura_esgotada"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 90.0}, objeto_id=removido.Id, autor="server", categoria="estrutura")

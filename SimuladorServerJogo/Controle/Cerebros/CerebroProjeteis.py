@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import random
 from typing import Dict, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
@@ -79,6 +80,12 @@ class CerebroProjeteis:
                     dono_id=int(dono_id),
                     poke=impacto,
                     atraso_ticks=int(self._core._i("atraso_inventario_captura_ticks", 24)),
+                )
+                self._core._cerebro_xp_mundo.agendar_burst(
+                    origem=(float(impacto.posicao[0]), float(impacto.posicao[1])),
+                    total_particulas=random.randint(int(self._core._i("xp_captura_particulas_min", 3)), int(self._core._i("xp_captura_particulas_max", 4))),
+                    tamanhos_possiveis=["pequeno", "medio"],
+                    atraso_ticks=int(self._core._i("atraso_spawn_xp_captura_ticks", 16)),
                 )
                 removido = BANCO_DADOS.remover_objeto(int(impacto.Id))
                 self._core._pokemons_ids.discard(int(impacto.Id))

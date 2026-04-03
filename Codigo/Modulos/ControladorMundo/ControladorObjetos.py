@@ -125,9 +125,9 @@ class ControladorObjetos:
         if self._eh_payload_estrutura(payload):
             return True
 
-        if tipo in {"entidade_item_mundo", "item_mundo", "entidade_projetil", "projetil"}:
+        if tipo in {"entidade_item_mundo", "item_mundo", "entidade_projetil", "projetil", "entidade_xp_mundo", "xp_mundo"}:
             return False
-        if subtipo in {"item_mundo", "projetil"}:
+        if subtipo in {"item_mundo", "projetil", "xp_mundo"}:
             return False
         return False
 

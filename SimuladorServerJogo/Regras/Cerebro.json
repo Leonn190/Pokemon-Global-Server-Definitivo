@@ -18,6 +18,9 @@
   "chance_despawn_pokemon_simulado_por_tick": 0.003,
   "cooldown_movimento_apos_tentativa_captura_ticks": 36,
   "atraso_inventario_captura_ticks": 24,
+  "atraso_spawn_xp_captura_ticks": 16,
+  "xp_captura_particulas_min": 3,
+  "xp_captura_particulas_max": 4,
   "raio_chunks_simulados": 3,
   "raio_chunks_carregados": 4
 }

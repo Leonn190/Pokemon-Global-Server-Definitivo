@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import threading
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -20,6 +21,7 @@ class Pokemon:
     _cache_frames: Dict[str, List[pygame.Surface]] = {}
     _cache_frames_escalados: Dict[Tuple[str, int], List[pygame.Surface]] = {}
     _cache_rotacao_bola: Dict[Tuple[int, int], pygame.Surface] = {}
+    _carregamento_em_andamento: set[str] = set()
     _INTERVALO_FRAME_ANIM_MS = 85
 
     def __init__(self, snapshot: Dict[str, object]) -> None:
@@ -89,15 +91,40 @@ class Pokemon:
         return (0.0, 0.0)
 
     @classmethod
+    def _precarregar_frames_async(cls, especie: str) -> None:
+        chave = str(especie or "").strip().lower()
+        if not chave:
+            return
+        if chave in cls._cache_frames or chave in cls._carregamento_em_andamento:
+            return
+        cls._carregamento_em_andamento.add(chave)
+
+        def _worker() -> None:
+            frames = carregar_frames(_PASTA_ANIMACOES / chave)
+            cls._cache_frames[chave] = frames
+            cls._carregamento_em_andamento.discard(chave)
+            cls._cache_frames_escalados = {
+                k: v for k, v in cls._cache_frames_escalados.items()
+                if str(k[0]).strip().lower() != chave
+            }
+
+        thread = threading.Thread(
+            target=_worker,
+            name=f"PokemonFramesLoader-{chave}",
+            daemon=True,
+        )
+        thread.start()
+
+    @classmethod
     def _carregar_frames_nome(cls, especie: str) -> List[pygame.Surface]:
         chave = str(especie or "").strip().lower()
         if not chave:
             return []
-        if chave in cls._cache_frames:
-            return cls._cache_frames[chave]
-        frames = carregar_frames(_PASTA_ANIMACOES / chave)
-        cls._cache_frames[chave] = frames
-        return frames
+        frames = cls._cache_frames.get(chave)
+        if frames is not None:
+            return frames
+        cls._precarregar_frames_async(chave)
+        return []
 
     @classmethod
     def _obter_frames_escalados(cls, especie: str, tamanho_px: int) -> List[pygame.Surface]:
@@ -286,6 +313,7 @@ class Pokemon:
     def aplicar_snapshot(self, snapshot: Dict[str, object]) -> None:
         estado = snapshot.get("estado") if isinstance(snapshot.get("estado"), dict) else {}
         self.Especie = str(estado.get("especie") or snapshot.get("nome") or self.Especie)
+        self._precarregar_frames_async(self.Especie)
         self.Nome = str(estado.get("nome") or snapshot.get("nome") or self.Especie)
         stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
         stats_norm = {str(k): self._f(v) for k, v in stats.items()}

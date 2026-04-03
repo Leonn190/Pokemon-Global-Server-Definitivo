@@ -181,7 +181,7 @@ class PokemonServer:
         self.campo = float(kwargs.get("campo", 0.0))
         self.intensidade = float(kwargs.get("intensidade", 0.0))
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
-        self.estado_extra = {"subtipo": "pokemon", "especie": str(especie), "nome": str(especie), "ativo": True, "movendo": False, "movendo_ate": 0.0, "dificuldade_captura": 50.0, "tamanho_barra_captura": 0.32, "velocidade_barra_captura": 90.0, "tentativas_falhas_captura": 0, "frutas_aplicadas": [], "estado_frutificacao": {"multiplicador_doces": 1.0, "bonus_captura_frutas": 0.0, "bonus_captura_bioma": {}, "limite_frutas": 2}, "captura_fase": "nenhuma", "captura": {"fase": "nenhuma", "ativa": False, "agenda": [], "inicio_ms_servidor": 0, "fase_inicio_ms": 0, "tremida_atual": 0, "bola_nome": "", "dono_id": 0}}
+        self.estado_extra = {"subtipo": "pokemon", "especie": str(especie), "nome": str(especie), "ativo": True, "movendo": False, "movendo_ate": 0.0, "dificuldade_captura": 50.0, "tamanho_barra_captura": 0.32, "velocidade_barra_captura": 90.0, "tentativas_falhas_captura": 0, "frutas_aplicadas": [], "estado_frutificacao": {"multiplicador_doces": 1.0, "bonus_captura_frutas": 0.0, "bonus_captura_bioma": {}, "limite_frutas": 2}, "captura_fase": "nenhuma", "captura": {"captura_pendente": False, "checks_total": 3, "checagens": [], "resultado": "pendente", "bola_nome": "", "dono_id": 0, "token_arremesso": "", "liberar_movimento_tick": 0, "pokemon_colisao_ativa": True, "pokemon_interacao_ativa": True}, "cooldown_movimento_ate_tick": 0}
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))

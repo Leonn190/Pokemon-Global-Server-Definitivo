@@ -439,8 +439,11 @@ class ControladorObjetos:
         poke = self.PokemonsPorId.get(int(payload.get("id", 0) or 0))
         if poke is None:
             return
-        if hasattr(poke, "confirmar_captura_por_token"):
-            colidiu_local = bool(info.get("colidiu_local", False))
+        payload_captura = dict(captura)
+        colidiu_local = bool(info.get("colidiu_local", False))
+        if hasattr(poke, "aplicar_resultado_servidor_captura"):
+            poke.aplicar_resultado_servidor_captura(payload_captura, esperar_colisao=not colidiu_local)
+        elif hasattr(poke, "confirmar_captura_por_token"):
             poke.confirmar_captura_por_token(token, esperar_colisao=not colidiu_local, atraso_ms=0)
 
     def atualizar_projeteis_visuais(self, dt: float) -> None:

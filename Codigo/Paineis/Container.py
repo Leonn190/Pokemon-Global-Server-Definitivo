@@ -111,6 +111,18 @@ class Container(PainelRolavel):
         except (TypeError, ValueError):
             return 1
 
+    def limite_stack(self, item):
+        if not isinstance(item, dict):
+            return 1
+        for chave in ('Stacks', 'stacks', 'Stack', 'stack', 'limite_stack'):
+            try:
+                valor = int(item.get(chave, 0) or 0)
+                if valor > 0:
+                    return valor
+            except (TypeError, ValueError):
+                continue
+        return 999999
+
     def copiar_item(self, item):
         return copy.deepcopy(item) if isinstance(item, dict) else item
 
@@ -324,8 +336,18 @@ class Container(PainelRolavel):
             return None
 
         if self.pode_empilhar(carga, destino):
-            destino['quantidade'] = self.quantidade(destino) + self.quantidade(carga)
+            limite = self.limite_stack(destino)
+            qtd_destino = self.quantidade(destino)
+            qtd_carga_atual = self.quantidade(carga)
+            adicionavel = max(0, min(qtd_carga_atual, limite - qtd_destino))
+            if adicionavel <= 0:
+                return carga
+            destino['quantidade'] = qtd_destino + adicionavel
             self.marcar_sujo()
+            restante_merge = qtd_carga_atual - adicionavel
+            if restante_merge > 0 and isinstance(carga, dict):
+                carga['quantidade'] = restante_merge
+                return carga
 
             if self.Stackable and quantidade is not None and self.quantidade(item) > qtd_carga:
                 resto = self.copiar_item(item)
@@ -380,8 +402,18 @@ class Container(PainelRolavel):
             return None
 
         if self.pode_empilhar(resto, atual_origem):
-            atual_origem['quantidade'] = self.quantidade(atual_origem) + self.quantidade(resto)
+            limite = self.limite_stack(atual_origem)
+            qtd_atual = self.quantidade(atual_origem)
+            qtd_resto = self.quantidade(resto)
+            adicionavel = max(0, min(qtd_resto, limite - qtd_atual))
+            if adicionavel <= 0:
+                return resto
+            atual_origem['quantidade'] = qtd_atual + adicionavel
             self.marcar_sujo()
+            sobra = qtd_resto - adicionavel
+            if sobra > 0 and isinstance(resto, dict):
+                resto['quantidade'] = sobra
+                return resto
             return None
 
         indice_vazio = self.encontrar_primeiro_slot_vazio()
@@ -398,20 +430,38 @@ class Container(PainelRolavel):
             return item_base
 
         chave = self.chave_item(item_base)
-        total = self.quantidade(item_base)
-        alterou = False
-
-        for i, item in enumerate(self.Itens):
-            if item is None:
-                continue
-            if self.chave_item(item) == chave:
-                total += self.quantidade(item)
-                self.Itens[i] = None
-                alterou = True
-
         novo = self.copiar_item(item_base)
         if isinstance(novo, dict):
-            novo['quantidade'] = total
+            limite = self.limite_stack(novo)
+            atual = self.quantidade(novo)
+            capacidade = max(0, limite - atual)
+        else:
+            limite = 1
+            atual = self.quantidade(novo)
+            capacidade = max(0, limite - atual)
+        alterou = False
+
+        if capacidade <= 0:
+            return novo
+
+        for i, item in enumerate(self.Itens):
+            if item is None or self.chave_item(item) != chave:
+                continue
+            qtd_slot = self.quantidade(item)
+            mover = min(capacidade, qtd_slot)
+            if mover <= 0:
+                continue
+            capacidade -= mover
+            alterou = True
+            if isinstance(novo, dict):
+                novo['quantidade'] = self.quantidade(novo) + mover
+            if mover >= qtd_slot:
+                self.Itens[i] = None
+            else:
+                item['quantidade'] = qtd_slot - mover
+                self.Itens[i] = item
+            if capacidade <= 0:
+                break
 
         if alterou:
             self.marcar_sujo()
@@ -427,16 +477,31 @@ class Container(PainelRolavel):
             return
 
         chave = self.chave_item(item)
+        limite = self.limite_stack(item)
         total = self.quantidade(item)
+        capacidade = max(0, limite - total)
+        if capacidade <= 0:
+            return
         alterou = False
 
         for i, outro in enumerate(self.Itens):
             if i == indice or outro is None:
                 continue
             if self.chave_item(outro) == chave:
-                total += self.quantidade(outro)
-                self.Itens[i] = None
+                qtd_outro = self.quantidade(outro)
+                mover = min(capacidade, qtd_outro)
+                if mover <= 0:
+                    continue
+                capacidade -= mover
+                total += mover
                 alterou = True
+                if mover >= qtd_outro:
+                    self.Itens[i] = None
+                else:
+                    outro['quantidade'] = qtd_outro - mover
+                    self.Itens[i] = outro
+                if capacidade <= 0:
+                    break
 
         item['quantidade'] = total
 

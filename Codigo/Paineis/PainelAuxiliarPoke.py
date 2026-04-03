@@ -139,7 +139,14 @@ class PainelAuxiliarPoke:
         area_sig = (self.Rect.x, self.Rect.y, self.Rect.width, self.Rect.height, self.RectAbas.x, self.RectAbas.y, self.RectAbas.width, self.RectAbas.height)
         inventario_itens = getattr(inventario, "Itens", []) or []
         inventario_pokemons = getattr(inventario, "Pokemons", []) or []
-        assinatura = (self._aba_ativa, area_sig, id(inventario_itens), len(inventario_itens), id(inventario_pokemons), len(inventario_pokemons))
+        assinatura_itens = tuple(
+            (
+                str(item.get('Code') or item.get('Nome') or ''),
+                int(item.get('quantidade', 1) or 1),
+            )
+            for item in inventario_itens if isinstance(item, dict)
+        )
+        assinatura = (self._aba_ativa, area_sig, id(inventario_itens), len(inventario_itens), assinatura_itens, id(inventario_pokemons), len(inventario_pokemons))
         if assinatura == self._assinatura_sincronizada:
             return
         self._assinatura_sincronizada = assinatura
@@ -192,6 +199,9 @@ class PainelAuxiliarPoke:
             self._container.Gap = gap
             self._container.RenderizadorItem = renderizador
             self._container.configurar_rect(area_grid)
+
+    def marcar_sujo(self):
+        self._assinatura_sincronizada = None
 
     def processar_eventos(self, eventos):
         if self._aba_ativa != "times" and self._container is not None:

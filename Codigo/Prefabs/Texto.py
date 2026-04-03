@@ -334,7 +334,7 @@ class SetorTexto:
 
 
 class TextoAtaque(SetorTexto):
-    _REGEX_ESCALA = re.compile(r"(?P<pct>\d+(?:[.,]\d+)?)%\s+d[aeo]\s+(?P<attr>[A-Za-zÀ-ÿ]{2,4})", re.IGNORECASE)
+    _REGEX_ESCALA_PAREN = re.compile(r"\(\s*(?P<conteudo>(?P<pct>\d+(?:[.,]\d+)?)%\s+d[aeo]\s+(?P<attr>[A-Za-zÀ-ÿ]{2,4}))\s*\)", re.IGNORECASE)
     _CORES_ATRIBUTO = {
         "vida": (108, 201, 123),
         "atk": (235, 109, 94),
@@ -402,7 +402,7 @@ class TextoAtaque(SetorTexto):
     def _segmentos_linha(self, linha: str):
         segmentos = []
         inicio = 0
-        for match in self._REGEX_ESCALA.finditer(linha):
+        for match in self._REGEX_ESCALA_PAREN.finditer(linha):
             if match.start() > inicio:
                 segmentos.append({"tipo": "texto", "texto": linha[inicio:match.start()]})
             pct_txt = match.group("pct").replace(",", ".")
@@ -438,7 +438,7 @@ class TextoAtaque(SetorTexto):
         atual = ""
         for palavra in palavras:
             tentativa = palavra if not atual else f"{atual} {palavra}"
-            extras = len(self._REGEX_ESCALA.findall(tentativa)) * 2
+            extras = len(self._REGEX_ESCALA_PAREN.findall(tentativa)) * 2
             largura_ok = self._texto.medir_largura(tentativa + (" " * extras)) <= self.Rect.width
             chars_ok = (len(tentativa) + extras) <= self.CaracteresPorLinha
             if (largura_ok and chars_ok) or not atual:
@@ -456,7 +456,7 @@ class TextoAtaque(SetorTexto):
         if len(linhas) == self.LinhasMax and " ".join(palavras) != " ".join(linhas):
             ultima = linhas[-1].rstrip(". ")
             while ultima:
-                extras = len(self._REGEX_ESCALA.findall(ultima)) * 2
+                extras = len(self._REGEX_ESCALA_PAREN.findall(ultima)) * 2
                 if self._texto.medir_largura(f"{ultima}..." + (" " * extras)) <= self.Rect.width:
                     break
                 ultima = ultima[:-1]

@@ -249,11 +249,18 @@ class FichaAtaque:
         tipo_limpo = str(tipo or '').strip()
         tipo_norm = self._normalizar(tipo_limpo)
         base_nome = ''.join(ch for ch in tipo_limpo.title() if ch.isalnum())
-        alias = self._alias_fundo_tipo.get(tipo_norm, base_nome or 'Normal')
+        tipo_norm_title = ''.join(ch for ch in tipo_norm.title() if ch.isalnum())
+        alias = self._alias_fundo_tipo.get(tipo_norm, tipo_norm_title or base_nome or 'Normal')
         arquivo = self._achar_arquivo(
             Path('Recursos') / 'Visual' / 'Fundos' / 'Ataques',
             tipo_limpo,
             f'Fundo{tipo_limpo}',
+            tipo_norm,
+            f'Fundo{tipo_norm}',
+            tipo_norm_title,
+            f'Fundo{tipo_norm_title}',
+            base_nome,
+            f'Fundo{base_nome}',
             alias,
             f'Fundo{alias}',
         )

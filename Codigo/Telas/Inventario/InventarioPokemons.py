@@ -230,8 +230,8 @@ class InventarioPokemons:
                 self._painel_times.marcar_sujo()
 
         botao_lado = 30
-        botao_x = self._area_grid.right - 12 - botao_lado
-        botao_y = self._area_grid.y + 12
+        botao_x = self._area_grid.right - 10 - botao_lado
+        botao_y = self._area_grid.y + 15
         if self._botao_toggle_poder is None:
             self._botao_toggle_poder = BotaoAlavanca(
                 pygame.Rect(botao_x, botao_y, botao_lado, botao_lado),
@@ -635,6 +635,8 @@ class InventarioPokemons:
             self.Inventario.Itens[slot_inventario] = None
         else:
             item_origem['quantidade'] = qtd - 1
+        if self._painel_auxiliar is not None:
+            self._painel_auxiliar.marcar_sujo()
         rect_slot = self._painel_auxiliar._container.slot_rect(indice_visual) if self._painel_auxiliar and self._painel_auxiliar._container else pygame.Rect(mouse_pos[0], mouse_pos[1], 42, 42)
         self._arrastavel.iniciar(item_drag, ('aux_item', slot_inventario), rect_slot.inflate(-8, -8), mouse_pos, botao=1)
 
@@ -665,6 +667,8 @@ class InventarioPokemons:
                 atual['quantidade'] = int(atual.get('quantidade', 1) or 1) + int(item.get('quantidade', 1) or 1)
             elif atual is None:
                 self.Inventario.Itens[idx] = copy.deepcopy(item)
+        if self._painel_auxiliar is not None:
+            self._painel_auxiliar.marcar_sujo()
 
     def _retornar_item_build(self, indice_slot, item):
         equip = self._equipavel_para_build(item)
@@ -677,7 +681,19 @@ class InventarioPokemons:
             return False
         item['quantidade'] = int(item.get('quantidade', 1) or 1)
         if self.Inventario is not None and self.Inventario.adicionar_item(item):
-            return True
+            if int(item.get('quantidade', 0) or 0) <= 0:
+                return True
+            return self._dropar_item_mundo(item)
+        return self._dropar_item_mundo(item)
+
+    def _adicionar_item_inventario_ou_dropar_sobra(self, item):
+        if not isinstance(item, dict):
+            return False
+        item['quantidade'] = int(item.get('quantidade', 1) or 1)
+        if self.Inventario is not None and self.Inventario.adicionar_item(item):
+            if int(item.get('quantidade', 0) or 0) <= 0:
+                return True
+            return self._dropar_item_mundo(item)
         return self._dropar_item_mundo(item)
 
     def _dropar_item_mundo(self, item):
@@ -736,8 +752,7 @@ class InventarioPokemons:
                 if isinstance(anterior, dict):
                     item_anterior = self._build_para_item(anterior)
                     if isinstance(item_anterior, dict):
-                        if self.Inventario is None or not self.Inventario.adicionar_item(item_anterior):
-                            self._dropar_item_mundo(item_anterior)
+                        self._adicionar_item_inventario_ou_dropar_sobra(item_anterior)
                 self._arrastavel.cancelar()
                 return
 

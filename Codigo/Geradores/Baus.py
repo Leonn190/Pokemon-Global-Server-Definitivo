@@ -12,8 +12,8 @@ from Codigo.Modulos.Colisor import Colisor
 class Bau:
     _frames_por_tipo: Dict[str, List[pygame.Surface]] = {}
     _cache_sprites: Dict[str, pygame.Surface | None] = {}
-    _duracao_abertura_ms: int = 700
-    _duracao_exibicao_total_ms: int = 1450
+    _duracao_abertura_ms: int = 420
+    _duracao_exibicao_total_ms: int = 980
 
     def __init__(self, id_objeto: int, posicao: Tuple[float, float], tipo_bau: str, itens: List[Dict[str, object]], aberto: bool = False, raio_colisao: float = 0.42, quantidade_itens: int = 1, tamanho_tiles: float = 1.10) -> None:
         self.Id = int(id_objeto)

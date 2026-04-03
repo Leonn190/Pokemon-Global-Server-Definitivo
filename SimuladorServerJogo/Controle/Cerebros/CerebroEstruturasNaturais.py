@@ -35,6 +35,15 @@ def _carregar_fatores_ferramenta() -> Dict[str, int]:
 
 _FATOR_POR_CODE = _carregar_fatores_ferramenta()
 _REGRAS_ESTRUTURA = carregar_regras_estruturas_naturais().get("tipos", {})
+_BERRY_BIOMA_POR_TILE = {
+    2: "Field Berry",
+    3: "Jungle Berry",
+    5: "Desert Berry",
+    6: "Frozen Berry",
+    7: "Magic Berry",
+    8: "Lava Berry",
+    9: "Secret Berry",
+}
 
 
 class CerebroEstruturasNaturais:
@@ -56,7 +65,20 @@ class CerebroEstruturasNaturais:
             return "machado", fator
         if primeira in {"picarte", "picareta"}:
             return "picareta", fator
+        if primeira == "balde":
+            return "balde", 1
         return "", 1
+
+    @staticmethod
+    def _agrupar_drops_arbusto(estrutura: EstruturaNaturalServer, quantidade: int) -> Dict[str, int]:
+        qtd = max(1, int(quantidade or 1))
+        tile = BANCO_DADOS.tile_em(int(math.floor(float(estrutura.posicao[0]))), int(math.floor(float(estrutura.posicao[1]))))
+        berry_bioma = _BERRY_BIOMA_POR_TILE.get(int(tile), "Field Berry")
+        saida: Dict[str, int] = {}
+        for _ in range(qtd):
+            nome = "Simp Berry" if random.random() < 0.75 else berry_bioma
+            saida[nome] = int(saida.get(nome, 0)) + 1
+        return saida
 
     def registrar_coleta(self, client_id: str, payload: Dict[str, object]) -> bool:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
@@ -87,6 +109,7 @@ class CerebroEstruturasNaturais:
         item_mao = itens[slot] if 0 <= slot < len(itens) and isinstance(itens[slot], dict) else {}
 
         estilo_ferramenta, fator = self._estilo_ferramenta(item_mao)
+        subtipo = str(estrutura.estado_extra.get("subtipo", "")).strip().lower()
         coletado = estrutura.tentar_coleta(fator_ferramenta=fator, estilo_ferramenta=estilo_ferramenta)
         if coletado <= 0:
             return False
@@ -113,12 +136,22 @@ class CerebroEstruturasNaturais:
             BANCO_DADOS.atualizar_objeto(estrutura.Id, {"estado": {"quantidade": restante}})
             registrar_diff("update", payload=estrutura.serializar(), escopo={"centro": [estrutura.posicao[0], estrutura.posicao[1]], "raio": 90.0}, objeto_id=estrutura.Id, autor="server", categoria="estrutura")
 
-        material = str(estrutura.estado_extra.get("material", "") or "").strip()
-        adicionado, sobra = self._core._servico_inventario.adicionar_item(inventario, {"Nome": material}, coletado, dados_personagem=perfil)
-        if adicionado > 0:
+        drops: Dict[str, int]
+        if subtipo == "arbusto":
+            drops = self._agrupar_drops_arbusto(estrutura, coletado)
+        else:
+            material = str(estrutura.estado_extra.get("material", "") or "").strip()
+            drops = {material: int(max(1, coletado))}
+
+        houve_persistencia = False
+        for nome_material, qtd_drop in drops.items():
+            adicionado, sobra = self._core._servico_inventario.adicionar_item(inventario, {"Nome": str(nome_material)}, int(qtd_drop), dados_personagem=perfil)
+            if adicionado > 0:
+                houve_persistencia = True
+            if sobra > 0:
+                self._spawn_item_mundo(str(nome_material), sobra, player, estrutura, registrar_diff)
+        if houve_persistencia:
             self._core._servico_inventario.persistir_jogador(usuario, int(player.Id), inventario, registrar_diff)
-        if sobra > 0:
-            self._spawn_item_mundo(material, sobra, player, estrutura, registrar_diff)
         return True
 
     def _spawn_item_mundo(self, nome_material: str, quantidade: int, player: AtorServer, estrutura: EstruturaNaturalServer, registrar_diff) -> None:

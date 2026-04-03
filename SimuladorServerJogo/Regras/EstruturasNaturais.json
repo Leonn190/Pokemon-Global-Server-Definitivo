@@ -250,10 +250,10 @@
       "raio_interacao": 4,
       "campo": 4.25,
       "intensidade": 4.2,
-      "quantidade": 1,
-      "material": "",
-      "estilo": "nenhum",
-      "dureza": 99,
+      "quantidade": 30,
+      "material": "Lava",
+      "estilo": "balde",
+      "dureza": 1,
       "particulasXP": [
         1
       ],

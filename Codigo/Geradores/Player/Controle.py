@@ -301,13 +301,10 @@ class Controle:
         max_bonus = float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMax", 0.60))
         if correndo:
             custo += float(getattr(self.Ator.Perfil, "CustoStaminaCorridaMax" if self._bonus_corrida_atual >= (max_bonus - 0.01) else "CustoStaminaCorrida", 10.0))
-        if deslocando:
-            if tile_atual == 0:
-                custo += float(getattr(self.Ator.Perfil, "CustoStaminaAguaFunda", 16.0))
-            elif tile_atual == 1:
-                custo += float(getattr(self.Ator.Perfil, "CustoStaminaAguaRasa", 4.0))
-        if tile_atual == 1 and not correndo:
-            custo = 0.0
+        if tile_atual == 0:
+            custo += float(getattr(self.Ator.Perfil, "CustoStaminaAguaFunda", 16.0))
+        elif tile_atual == 1:
+            custo += float(getattr(self.Ator.Perfil, "CustoStaminaAguaRasa", 4.0))
 
         if custo > 0.0:
             self.Ator.Perfil.consumir_stamina(custo * dt)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 import threading
 import time
+import math
 from collections import deque
 from typing import Deque, Dict, Set, Tuple
 
@@ -40,8 +41,8 @@ class CerebroCentral:
         self._xp_mundo_ids: Set[int] = set()
         self._regras = carregar_regras_cerebro()
 
-        self._spawns_pokemon_ultimos_100: Deque[int] = deque()
-        self._spawns_bau_ultimos_100: Deque[int] = deque()
+        self._spawns_pokemon_ultimos_200: Deque[int] = deque()
+        self._spawns_bau_ultimos_200: Deque[int] = deque()
         self._movimento_estado: Dict[int, Dict[str, object]] = {}
         self._capturas_inventario_pendentes: Deque[Dict[str, object]] = deque()
 
@@ -130,16 +131,17 @@ class CerebroCentral:
         self._xp_mundo_ids = {oid for oid in self._xp_mundo_ids if isinstance(BANCO_DADOS.obter_objeto(oid), XpMundoServer)}
 
     def _limpar_janela_spawns(self) -> None:
-        limite = max(1, self._tick_contador - 100)
-        while self._spawns_pokemon_ultimos_100 and self._spawns_pokemon_ultimos_100[0] <= limite:
-            self._spawns_pokemon_ultimos_100.popleft()
-        while self._spawns_bau_ultimos_100 and self._spawns_bau_ultimos_100[0] <= limite:
-            self._spawns_bau_ultimos_100.popleft()
+        limite = max(1, self._tick_contador - 200)
+        while self._spawns_pokemon_ultimos_200 and self._spawns_pokemon_ultimos_200[0] <= limite:
+            self._spawns_pokemon_ultimos_200.popleft()
+        while self._spawns_bau_ultimos_200 and self._spawns_bau_ultimos_200[0] <= limite:
+            self._spawns_bau_ultimos_200.popleft()
 
     def _executar_tick(self) -> None:
         self._sincronizar_registries_com_banco()
         self._limpar_janela_spawns()
         chunks_carregados, chunks_simulados = self._calcular_chunks_carregados()
+        self._chunks_carregados_tick_atual = set(chunks_carregados)
 
         if chunks_simulados:
             self._cerebro_pokemons.tentar_spawn(chunks_simulados)
@@ -162,10 +164,15 @@ class CerebroCentral:
 
         if random.random() > self._f("chance_spawn_bau_por_tick", 0.015):
             return
-        if len(self._spawns_bau_ultimos_100) >= self._i("limite_spawn_bau_100_ticks", 2):
+        if len(self._spawns_bau_ultimos_200) >= self._i("limite_spawn_bau_200_ticks", 2):
             return
         if self.contagem_baus_registrados() >= self._i("limite_total_baus", 60):
             return
+        limite_por_chunk = self._f("limite_total_baus_por_chunk_existente", -1.0)
+        if limite_por_chunk >= 0.0:
+            chunks_existentes = len(set(chunks_simulados) | set(getattr(self, "_chunks_carregados_tick_atual", set())))
+            if self.contagem_baus_registrados() >= int(math.floor(max(0.0, limite_por_chunk) * max(0, chunks_existentes))):
+                return
 
         tentativas = max(1, self._i("tentativas_spawn_bau", 5))
         chunk_tamanho = BANCO_DADOS.chunk_tamanho_unidade()
@@ -188,7 +195,7 @@ class CerebroCentral:
             bau = BauServer(id_objeto=novo_id, tipo_bau=str(dados.get("tipo_bau", "Comum")), itens=list(dados.get("itens", [])), posicao=(px, py), raio_colisao=raio_bau, raio_interacao=float(dados.get("raio_interacao", 0.85) or 0.85), aberto=False, quantidade_itens=int(dados.get("quantidade_itens", max(1, len(list(dados.get("itens", [])))))), tamanho_tiles=float(dados.get("tamanho_tiles", 1.10) or 1.10))
             BANCO_DADOS.inserir_objeto(bau)
             self._baus_ids.add(int(bau.Id))
-            self._spawns_bau_ultimos_100.append(self._tick_contador)
+            self._spawns_bau_ultimos_200.append(self._tick_contador)
             registrar_diff("spawn", payload=bau.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=bau.Id, autor="server", categoria="bau")
             return
 
@@ -282,6 +289,9 @@ class CerebroCentral:
 
     def registrar_coleta_estrutura(self, client_id: str, payload: Dict[str, object]) -> bool:
         return self._cerebro_estruturas.registrar_coleta(client_id, payload)
+
+    def registrar_interacao_bau(self, client_id: str, payload: Dict[str, object]) -> bool:
+        return self._cerebro_baus.registrar_interacao(client_id, payload)
 
     def _contar_pokemons_chunk(self, chunk: Chunk) -> int:
         return sum(1 for oid in self._pokemons_ids if isinstance(BANCO_DADOS.obter_objeto(oid), PokemonServer) and BANCO_DADOS.chunk_da_posicao(BANCO_DADOS.obter_objeto(oid).posicao) == chunk)

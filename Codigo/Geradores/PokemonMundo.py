@@ -51,7 +51,6 @@ class Pokemon:
         self.TempoAnimFugaMs = 340
         self.TempoAnimVoltaMs = 420
         self.TempoEsperaConfirmacaoMs = 1500
-        self.TempoEsperaForcarCapturaServidorMs = 700
         self.TempoRecuperacaoMovimentoMs = 180
 
         self.CapturaEstado: Dict[str, object] = {
@@ -71,7 +70,9 @@ class Pokemon:
         self._captura_fake_inicio_ms = 0
         self._captura_servidor_pendente: Optional[Dict[str, object]] = None
         self._captura_servidor_forcar_em_ms = 0
+        self._captura_servidor_espera_colisao = False
         self._captura_autoritativa_aplicada = False
+        self._ultima_assinatura_captura = ""
         self._despawn_pendente = False
         self._pronto_para_remover = False
         self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
@@ -206,6 +207,12 @@ class Pokemon:
                 return bool(evento.get(chave))
         return None
 
+    def _assinatura_payload_captura(self, evento: Dict[str, object]) -> str:
+        token = str(evento.get("token_arremesso") or "").strip()
+        checagens = self._normalizar_log_checagens(evento)
+        resultado = self._resultado_final_evento(evento)
+        return f"{token}|{resultado}|{','.join('1' if bool(c) else '0' for c in checagens)}"
+
     def _posicao_bola_mundo(self) -> Vector2:
         pos = self.CapturaEstado.get("bola_posicao")
         if isinstance(pos, (list, tuple)) and len(pos) == 2:
@@ -275,11 +282,15 @@ class Pokemon:
         payload = dict(atual or {})
         payload["token_arremesso"] = token
         self._captura_servidor_pendente = payload
-        base_espera = self.TempoEsperaForcarCapturaServidorMs if bool(esperar_colisao) else 0
+        self._captura_servidor_espera_colisao = bool(esperar_colisao)
+        base_espera = self.TempoEsperaConfirmacaoMs if bool(esperar_colisao) else 0
         self._captura_servidor_forcar_em_ms = int(self._agora_ms() + base_espera + max(0, int(atraso_ms or 0)))
 
     def aplicar_resultado_servidor_captura(self, captura_payload: Dict[str, object], esperar_colisao: bool = False) -> None:
         payload = dict(captura_payload or {})
+        assinatura = self._assinatura_payload_captura(payload)
+        if assinatura and assinatura == self._ultima_assinatura_captura and self._captura_autoritativa_aplicada:
+            return
         token = str(payload.get("token_arremesso") or self.CapturaEstado.get("token_arremesso") or "")
         if token:
             payload["token_arremesso"] = token
@@ -287,7 +298,8 @@ class Pokemon:
             if token_atual and token != token_atual:
                 self._captura_autoritativa_aplicada = False
         self._captura_servidor_pendente = payload
-        self._captura_servidor_forcar_em_ms = int(self._agora_ms() + (self.TempoEsperaForcarCapturaServidorMs if bool(esperar_colisao) else 0))
+        self._captura_servidor_espera_colisao = bool(esperar_colisao)
+        self._captura_servidor_forcar_em_ms = int(self._agora_ms() + (self.TempoEsperaConfirmacaoMs if bool(esperar_colisao) else 0))
 
     def iniciar_captura_fake(self, token: str) -> None:
         self.registrar_colisao_projetil_local(token)
@@ -329,6 +341,8 @@ class Pokemon:
         if self._fase() != "captura":
             if agora < int(self._captura_servidor_forcar_em_ms):
                 return
+            if self._captura_servidor_espera_colisao and self._fase() in {"fuga", "volta"}:
+                return
             self.CapturaEstado["token_arremesso"] = token or token_local
             self.CapturaEstado["captura_pendente"] = True
             self.CapturaEstado["indice_checagem"] = 0
@@ -337,8 +351,10 @@ class Pokemon:
         self.capturar(payload)
         if ("resultado" in payload) or ("checagens" in payload) or ("resultado_final" in payload):
             self._captura_autoritativa_aplicada = True
+            self._ultima_assinatura_captura = self._assinatura_payload_captura(payload)
         self._captura_servidor_pendente = None
         self._captura_servidor_forcar_em_ms = 0
+        self._captura_servidor_espera_colisao = False
 
     def em_captura_pendente(self) -> bool:
         self._resolver_timeout_captura_fake()
@@ -468,9 +484,10 @@ class Pokemon:
         elif fase == "volta":
             if self._tempo_fase_ms() >= self.TempoAnimVoltaMs:
                 self.CapturaEstado["captura_pendente"] = False
-                self._trocar_fase("normal")
                 if self._despawn_pendente:
                     self._pronto_para_remover = True
+                else:
+                    self._trocar_fase("normal")
 
     def _desenhar_barra_local(self, tela, centro, raio):
         decorrido_s = max(0.0, (pygame.time.get_ticks() - int(self._inicio_barra_local_ms)) / 1000.0)
@@ -593,6 +610,8 @@ class Pokemon:
 
     def render(self, tela, camera, dt: float) -> None:
         self.atualizar(dt)
+        if self._pronto_para_remover:
+            return
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
         centro = (int(cx), int(cy))
         tile_px = int(getattr(camera, "TilePx", 50))

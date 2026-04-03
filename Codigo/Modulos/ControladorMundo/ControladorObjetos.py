@@ -430,6 +430,8 @@ class ControladorObjetos:
     def _registrar_confirmacao_servidor_captura(self, payload: Dict[str, object]) -> None:
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
+        if not bool(captura.get("captura_pendente", False)):
+            return
         token = str(captura.get("token_arremesso") or "").strip()
         if not token:
             return

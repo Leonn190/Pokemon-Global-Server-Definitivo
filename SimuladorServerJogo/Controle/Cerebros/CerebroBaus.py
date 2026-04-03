@@ -46,6 +46,28 @@ class CerebroBaus:
         nome = str(item_mao.get("Nome") or "").strip().lower()
         return bool(nome == "chave" or " key" in f" {nome}" or nome.startswith("chave "))
 
+    @staticmethod
+    def _consumir_chave_selecionada(inventario: Dict[str, object], player: AtorServer) -> bool:
+        inv = inventario if isinstance(inventario, dict) else {}
+        itens = inv.get("itens") if isinstance(inv.get("itens"), list) else []
+        slot = int(inv.get("slot_selecionado", player.estado_extra.get("slot_selecionado", 0)) or 0)
+        if not (0 <= slot < len(itens)):
+            return False
+        item_mao = itens[slot] if isinstance(itens[slot], dict) else None
+        if not isinstance(item_mao, dict):
+            return False
+        nome = str(item_mao.get("Nome") or "").strip().lower()
+        if not (nome == "chave" or " key" in f" {nome}" or nome.startswith("chave ")):
+            return False
+        qtd = max(1, int(item_mao.get("quantidade", 1) or 1))
+        if qtd <= 1:
+            itens[slot] = None
+        else:
+            item_mao["quantidade"] = qtd - 1
+            itens[slot] = item_mao
+        inv["itens"] = itens
+        return True
+
     def registrar_interacao(self, client_id: str, payload: Dict[str, object]) -> bool:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 
@@ -74,6 +96,8 @@ class CerebroBaus:
         if not self._tem_chave_na_mao(dados, player):
             return False
         inv = dict(dados.get("inventario", {})) if isinstance(dados.get("inventario"), dict) else {"itens": []}
+        if not self._consumir_chave_selecionada(inv, player):
+            return False
         for item in list(bau.estado_extra.get("itens", [])):
             if isinstance(item, dict):
                 self._core._servico_inventario.adicionar_primeiro_slot_livre(inv, dict(item), dados_personagem=dados)

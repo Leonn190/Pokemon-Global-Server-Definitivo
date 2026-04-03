@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 
 import pygame
+from Codigo.Modulos.Sonoridades import tocar
 
 
 class Controle:
@@ -181,6 +182,7 @@ class Controle:
                         "item": item_drop,
                         "origem": self._ponto_mao_mundo(),
                     }
+                    tocar("Dropar")
 
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
                 self._mirando = pode_arremessar
@@ -202,6 +204,10 @@ class Controle:
                 else:
                     self._batendo = True
                     self._soltar_apos_tapa_atual = False
+                    item_mao = self._item_qualquer_na_mao()
+                    estilo_item = str((item_mao or {}).get("Estilo") or "").strip().lower()
+                    if estilo_item == "ferramenta":
+                        tocar("BaterFerramenta")
                     if not self.Ator.esta_tapando():
                         self.Ator.iniciar_tapa()
 

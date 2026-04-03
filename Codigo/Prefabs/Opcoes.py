@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pygame
 
+from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao
 
 
@@ -57,6 +58,7 @@ class Opções:
 
         self.Rect = pygame.Rect(x, y, largura, altura_total)
         self._botoes = []
+        tocar("CliqueOpções")
 
         for i, opcao in enumerate(opcoes_validas):
             rect = pygame.Rect(x, y + i * altura_item, largura, altura_item)

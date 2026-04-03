@@ -5,6 +5,7 @@ from pathlib import Path
 import pygame
 
 from Codigo.Geradores.Ator import Ator
+from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Modulos.DesenhaAtor import DesenhaAtor
 from Codigo.Paineis.PainelArvoreHabilidades import PainelArvoreHabilidades
 from Codigo.Prefabs.Barra import Barra, BarraEditavel
@@ -183,7 +184,7 @@ class InventarioPerfil:
         for pokemon in pokemons:
             if not isinstance(pokemon, dict):
                 continue
-            total = float(pokemon.get("total", 0.0) or 0.0)
+            total = float(PokemonInventario.poder_total(pokemon))
             if total > maior:
                 maior = total
         return int(round(maior))
@@ -202,7 +203,7 @@ class InventarioPerfil:
             total = 0.0
             for pokemon in slots:
                 if isinstance(pokemon, dict):
-                    total += float(pokemon.get("total", 0.0) or 0.0)
+                    total += float(PokemonInventario.poder_total(pokemon))
             melhor = max(melhor, int(round(total)))
         return melhor
 

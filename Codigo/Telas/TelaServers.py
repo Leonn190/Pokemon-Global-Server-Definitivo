@@ -1,6 +1,7 @@
 import threading
 
 import pygame
+from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
@@ -104,6 +105,7 @@ def _renomear_server(novo_nome):
     SERVER_LIST[_SERVER_SELECIONADO]["nome"] = novo_nome
     _BOTOES_SERVERS[_SERVER_SELECIONADO].set_text(novo_nome)
     _emitir_feedback("Server Renomeado com sucesso", sucesso=True)
+    tocar("Salvou")
 
 
 def _adicionar_server(nome, link):
@@ -121,6 +123,7 @@ def _apagar_server():
     SERVER_LIST.pop(_SERVER_SELECIONADO)
     _limpar_selecao()
     _emitir_feedback("Server Apagado com Sucesso", sucesso=True)
+    tocar("Apagou")
 
 
 def _worker_requisicao(tipo, ip, payload):

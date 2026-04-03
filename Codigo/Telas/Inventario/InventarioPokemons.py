@@ -10,6 +10,7 @@ import pygame
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Paineis.Container import Container
 from Codigo.Paineis.PainelAuxiliarPoke import PainelAuxiliarPoke
 from Codigo.Paineis.FichaPokemon import FichaPokemon
@@ -441,6 +442,7 @@ class InventarioPokemons:
                 return False
             self._painel_times.Times[indice_time]['Nome'] = novo
             self._painel_times.marcar_sujo()
+            tocar("Salvou")
             return True
 
         self._subtela_ativa = SubtelaTexto(
@@ -482,6 +484,7 @@ class InventarioPokemons:
                 self._container.marcar_sujo()
             if self._painel_times is not None:
                 self._painel_times.marcar_sujo()
+            tocar("Salvou")
             return True
 
         self._subtela_ativa = SubtelaTexto(
@@ -530,6 +533,7 @@ class InventarioPokemons:
             self._layout_montado = False
         self._container.marcar_sujo()
         self._painel_times.marcar_sujo()
+        tocar("Apagou")
 
     def _abrir_opcoes_time(self, pos, indice_time):
         def _limpar_time():
@@ -704,6 +708,7 @@ class InventarioPokemons:
             'item': copy.deepcopy(item),
             'origem': tuple(getattr(self.Ator, 'Posicao', (0, 0))),
         }
+        tocar("Dropar")
         return True
 
     def _retornar_para_origem(self):

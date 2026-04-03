@@ -271,13 +271,14 @@ class Botao:
         clicou_bloqueado = False
         for e in eventos:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 and self.hover:
-                self.pressed = True
+                if self.habilitado:
+                    self.pressed = True
+                else:
+                    clicou_bloqueado = True
+                    self.pressed = False
             if e.type == pygame.MOUSEBUTTONUP and e.button == 1:
                 if self.pressed and self.hover:
-                    if self.habilitado:
-                        clicou = True
-                    else:
-                        clicou_bloqueado = True
+                    clicou = True
                 self.pressed = False
 
         target = 1.0 if (self.hover and self.habilitado) else 0.0

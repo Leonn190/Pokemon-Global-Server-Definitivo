@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pygame
+from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao
 
 
@@ -41,7 +42,10 @@ class SubtelaOpcoes:
     def toggle(self, jogo):
         self.Ativa = not self.Ativa
         if self.Ativa:
+            tocar("Abre")
             self._recalcular_layout(jogo)
+        else:
+            tocar("Fecha")
 
     def _recalcular_layout(self, jogo):
         w, h = jogo.TELA.get_size()
@@ -99,6 +103,7 @@ class SubtelaOpcoes:
 
     def _acao_voltar(self, jogo):
         self.Ativa = False
+        tocar("Fecha")
 
     def _acao_config(self, jogo):
         self.Ativa = False

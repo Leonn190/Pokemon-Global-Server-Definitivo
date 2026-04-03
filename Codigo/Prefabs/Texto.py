@@ -1,4 +1,5 @@
 import pygame
+import re
 from pathlib import Path
 
 CAMINHO_FONTE_PADRAO = Path("Recursos/Visual/Fontes/FontePadrão.ttf")
@@ -330,3 +331,181 @@ class SetorTexto:
         for i, linha in enumerate(linhas):
             self._alinhar_linha(linha, y + i * altura_linha)
             self._texto.draw(tela)
+
+
+class TextoAtaque(SetorTexto):
+    _REGEX_ESCALA = re.compile(r"(?P<pct>\d+(?:[.,]\d+)?)%\s+d[aeo]\s+(?P<attr>[A-Za-zÀ-ÿ]{2,4})", re.IGNORECASE)
+    _CORES_ATRIBUTO = {
+        "vida": (108, 201, 123),
+        "atk": (235, 109, 94),
+        "def": (227, 192, 92),
+        "spa": (166, 104, 255),
+        "spd": (121, 214, 255),
+        "vel": (255, 174, 82),
+        "mag": (255, 138, 206),
+        "per": (155, 155, 155),
+        "ene": (56, 104, 212),
+        "int": (86, 229, 240),
+        "crc": (235, 109, 94),
+        "crd": (235, 109, 94),
+    }
+    _NOME_ATRIBUTO = {
+        "vida": "Vida", "atk": "Atk", "def": "Def", "spa": "SpA", "spd": "SpD",
+        "vel": "Vel", "mag": "Mag", "per": "Per", "ene": "Ene", "int": "Int",
+        "crc": "CrC", "crd": "CrD",
+    }
+    _cache_icones: dict[str, pygame.Surface] = {}
+
+    def __init__(self, rect=(0, 0, 10, 10), texto: str = "", linhas: int = 4, caracteres_por_linha: int = 40, style=None):
+        super().__init__(rect=rect, texto=texto, linhas=linhas, caracteres_por_linha=caracteres_por_linha, style=style)
+        self._atributos: dict[str, float] = {}
+        self._areas_tooltip: list[tuple[pygame.Rect, str]] = []
+
+    @staticmethod
+    def _normalizar_attr(nome: str) -> str:
+        base = (nome or "").strip().lower()
+        return "".join(c for c in base if c.isalnum())
+
+    def set_atributos(self, atributos: dict | None):
+        self._atributos = {}
+        if not isinstance(atributos, dict):
+            return
+        for chave, valor in atributos.items():
+            n = self._normalizar_attr(str(chave))
+            if not n:
+                continue
+            try:
+                self._atributos[n] = float(valor)
+            except (TypeError, ValueError):
+                continue
+
+    @classmethod
+    def _carregar_icone_attr(cls, atributo: str, tamanho: int) -> pygame.Surface | None:
+        nome = cls._NOME_ATRIBUTO.get(atributo, atributo)
+        chave = f"{nome}:{tamanho}"
+        if chave in cls._cache_icones:
+            return cls._cache_icones[chave]
+        caminho = Path("Recursos") / "Visual" / "Icones" / "Atributos" / f"{nome}.png"
+        if not caminho.exists():
+            return None
+        try:
+            imagem = pygame.image.load(str(caminho)).convert_alpha()
+            img = pygame.transform.smoothscale(imagem, (tamanho, tamanho))
+            cls._cache_icones[chave] = img
+            return img
+        except Exception:
+            return None
+
+    def _valor_atributo(self, atributo: str) -> float:
+        return float(self._atributos.get(atributo, 0.0))
+
+    def _segmentos_linha(self, linha: str):
+        segmentos = []
+        inicio = 0
+        for match in self._REGEX_ESCALA.finditer(linha):
+            if match.start() > inicio:
+                segmentos.append({"tipo": "texto", "texto": linha[inicio:match.start()]})
+            pct_txt = match.group("pct").replace(",", ".")
+            atributo_n = self._normalizar_attr(match.group("attr"))
+            if atributo_n in self._NOME_ATRIBUTO:
+                try:
+                    pct = float(pct_txt)
+                except ValueError:
+                    pct = 0.0
+                base = self._valor_atributo(atributo_n)
+                calculado = int(round(base * (pct / 100.0)))
+                segmentos.append(
+                    {
+                        "tipo": "calc",
+                        "texto": str(calculado),
+                        "atributo": atributo_n,
+                        "tooltip": f"{int(round(pct))}% de {self._NOME_ATRIBUTO[atributo_n]}: {int(round(base))} × {pct / 100.0:.2f} = {calculado}",
+                    }
+                )
+            else:
+                segmentos.append({"tipo": "texto", "texto": match.group(0)})
+            inicio = match.end()
+        if inicio < len(linha):
+            segmentos.append({"tipo": "texto", "texto": linha[inicio:]})
+        return segmentos
+
+    def _quebrar_linhas(self) -> list[str]:
+        palavras = self.TextoBruto.split()
+        if not palavras:
+            return []
+
+        linhas: list[str] = []
+        atual = ""
+        for palavra in palavras:
+            tentativa = palavra if not atual else f"{atual} {palavra}"
+            extras = len(self._REGEX_ESCALA.findall(tentativa)) * 2
+            largura_ok = self._texto.medir_largura(tentativa + (" " * extras)) <= self.Rect.width
+            chars_ok = (len(tentativa) + extras) <= self.CaracteresPorLinha
+            if (largura_ok and chars_ok) or not atual:
+                atual = tentativa
+            else:
+                linhas.append(atual)
+                atual = palavra
+            if len(linhas) >= self.LinhasMax:
+                break
+        if len(linhas) < self.LinhasMax and atual:
+            linhas.append(atual)
+
+        if len(linhas) > self.LinhasMax:
+            linhas = linhas[: self.LinhasMax]
+        if len(linhas) == self.LinhasMax and " ".join(palavras) != " ".join(linhas):
+            ultima = linhas[-1].rstrip(". ")
+            while ultima:
+                extras = len(self._REGEX_ESCALA.findall(ultima)) * 2
+                if self._texto.medir_largura(f"{ultima}..." + (" " * extras)) <= self.Rect.width:
+                    break
+                ultima = ultima[:-1]
+            linhas[-1] = f"{ultima}..." if ultima else "..."
+        return linhas
+
+    def draw(self, tela: pygame.Surface):
+        from Codigo.Prefabs.Tooltip import Tooltip
+
+        self._areas_tooltip = []
+        linhas = self._quebrar_linhas()
+        if not linhas:
+            return
+        altura_linha = max(10, int(self._style.get("size", 14) * 1.1))
+        y = self.Rect.y
+        base_style = dict(self._style)
+        base_style["align"] = "topleft"
+        icon_lado = max(12, int(base_style.get("size", 14) * 0.88))
+        mouse_pos = pygame.mouse.get_pos()
+        for i, linha in enumerate(linhas):
+            x = self.Rect.x
+            for seg in self._segmentos_linha(linha):
+                if seg["tipo"] == "texto":
+                    txt = Texto(seg["texto"], pos=(x, y + i * altura_linha), style=base_style)
+                    txt.draw(tela)
+                    x += txt.get_rect().width
+                    continue
+
+                cor_attr = self._CORES_ATRIBUTO.get(seg["atributo"], base_style.get("color", (220, 230, 245)))
+                style_num = dict(base_style)
+                style_num["color"] = cor_attr
+                num = Texto(seg["texto"], pos=(x, y + i * altura_linha), style=style_num)
+                num.draw(tela)
+                rect_num = num.get_rect()
+                rect_num.topleft = (x, y + i * altura_linha)
+                x += rect_num.width
+
+                icone = self._carregar_icone_attr(seg["atributo"], icon_lado)
+                rect_total = pygame.Rect(rect_num)
+                if icone is not None:
+                    rect_i = icone.get_rect(midleft=(x + 4, rect_num.centery))
+                    tela.blit(icone, rect_i)
+                    rect_total.union_ip(rect_i)
+                    x = rect_i.right + 2
+
+                self._areas_tooltip.append((rect_total, seg["tooltip"]))
+
+        for area, texto in self._areas_tooltip:
+            if area.collidepoint(mouse_pos):
+                tip = Tooltip(texto=texto, area_ativacao=area, largura_max=220, padding=8, raio=9, style={"size": 13})
+                tip.definir_posicao_fixa((area.centerx - 96, area.y - 46))
+                tip.render(tela, mouse_pos=mouse_pos, forcar=True)

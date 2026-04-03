@@ -6,7 +6,7 @@ from pathlib import Path
 import pygame
 
 from Codigo.Prefabs.Painel import Painel
-from Codigo.Prefabs.Texto import Texto
+from Codigo.Prefabs.Texto import Texto, TextoAtaque
 
 class FichaAtaque:
     _cache_superficies: dict[tuple[str, tuple[int, int], str], pygame.Surface] = {}
@@ -44,6 +44,20 @@ class FichaAtaque:
         'luz': (255, 230, 130),
         'trevas': (108, 95, 118),
     }
+    _alias_fundo_tipo = {
+        'terra': 'Terrestre',
+        'terrestre': 'Terrestre',
+        'veneno': 'Venenoso',
+        'venenoso': 'Venenoso',
+        'aço': 'Metal',
+        'aco': 'Metal',
+        'metal': 'Metal',
+        'eletrico': 'Eletrico',
+        'elétrico': 'Eletrico',
+        'psiquico': 'Psiquico',
+        'psíquico': 'Psiquico',
+        'sombrio': 'Sombrio',
+    }
 
     def __init__(self):
         self._painel: Painel | None = None
@@ -56,10 +70,15 @@ class FichaAtaque:
             'shadow': False,
         }
         self.TxtNome = Texto('', style={**base, 'size': 22, 'color': (248, 251, 255)})
-        self.TxtTipo = Texto('', style={**base, 'size': 14, 'color': (248, 251, 255), 'align': 'center'})
         self.TxtEstilo = Texto('', style={**base, 'size': 14, 'color': (242, 246, 255), 'align': 'center'})
         self.TxtCusto = Texto('', style={**base, 'size': 14, 'color': (255, 244, 211), 'align': 'center'})
-        self.TxtDescricao = Texto('', style={**base, 'size': 15, 'color': (203, 214, 238)})
+        self.TxtDescricao = TextoAtaque(
+            rect=(0, 0, 10, 10),
+            texto='',
+            linhas=4,
+            caracteres_por_linha=62,
+            style={**base, 'size': 15, 'color': (203, 214, 238)},
+        )
         self.TxtVazio = Texto('Passe o mouse em um ataque.', style={**base, 'size': 16, 'color': (180, 194, 225)})
 
     @staticmethod
@@ -227,7 +246,17 @@ class FichaAtaque:
         self._painel = Painel(rect, cor_fundo=(13, 18, 31, 244), cor_borda=(78, 104, 160), borda=2, raio=16)
 
     def _fundo_tipo(self, tipo: str, tamanho: tuple[int, int]) -> pygame.Surface | None:
-        arquivo = self._achar_arquivo(Path('Recursos') / 'Visual' / 'Fundos' / 'Ataques', tipo)
+        tipo_limpo = str(tipo or '').strip()
+        tipo_norm = self._normalizar(tipo_limpo)
+        base_nome = ''.join(ch for ch in tipo_limpo.title() if ch.isalnum())
+        alias = self._alias_fundo_tipo.get(tipo_norm, base_nome or 'Normal')
+        arquivo = self._achar_arquivo(
+            Path('Recursos') / 'Visual' / 'Fundos' / 'Ataques',
+            tipo_limpo,
+            f'Fundo{tipo_limpo}',
+            alias,
+            f'Fundo{alias}',
+        )
         return self._carregar_surface(arquivo, tamanho, chave_extra='fill')
 
     def _retangulo_tooltip(self, tela: pygame.Surface, area_ancora=None, mouse_pos=None, largura=338, altura=186) -> pygame.Rect:
@@ -248,13 +277,26 @@ class FichaAtaque:
         y = max(tela_rect.top + 8, min(int(y), tela_rect.bottom - altura - 8))
         return pygame.Rect(x, y, largura, altura)
 
-    def renderizar_tooltip(self, tela: pygame.Surface, ataque: dict | None, area_ancora=None, mouse_pos=None):
+    @staticmethod
+    def _retangulo_sobre_status(area_ancora) -> pygame.Rect:
+        area = pygame.Rect(area_ancora)
+        largura = min(area.width - 16, max(332, int(area.width * 0.9)))
+        altura = min(178, max(154, int(area.height * 0.48)))
+        x = area.centerx - largura // 2
+        y = max(area.y + 94, area.bottom - altura - 8)
+        return pygame.Rect(x, y, largura, altura)
+
+    def renderizar_tooltip(self, tela: pygame.Surface, ataque: dict | None, area_ancora=None, mouse_pos=None, atributos: dict | None = None):
         if ataque is None:
             return
-        rect = self._retangulo_tooltip(tela, area_ancora=area_ancora, mouse_pos=mouse_pos)
-        self.renderizar(tela, rect, ataque)
+        if area_ancora is not None:
+            rect = self._retangulo_sobre_status(area_ancora)
+            self.renderizar(tela, rect, ataque, atributos=atributos)
+        else:
+            rect = self._retangulo_tooltip(tela, area_ancora=area_ancora, mouse_pos=mouse_pos)
+            self.renderizar(tela, rect, ataque, atributos=atributos)
 
-    def renderizar(self, tela: pygame.Surface, rect, ataque: dict | None):
+    def renderizar(self, tela: pygame.Surface, rect, ataque: dict | None, atributos: dict | None = None):
         rect = pygame.Rect(rect)
         self._garantir_painel(rect)
         assert self._painel is not None
@@ -289,21 +331,14 @@ class FichaAtaque:
         self.TxtNome.draw(tela)
 
         pill_h = 22
-        pill_gap = 8
         pill_custo = pygame.Rect(header.right - 78, header.y + 10, 64, pill_h)
         pill_estilo = pygame.Rect(header.right - 164, header.y + 10, 78, pill_h)
-        pill_tipo = pygame.Rect(header.x + 14, header.bottom - 28, 84, pill_h)
 
-        pygame.draw.rect(tela, (21, 28, 45), pill_tipo, border_radius=10)
-        pygame.draw.rect(tela, (244, 248, 255), pill_tipo, 1, border_radius=10)
         pygame.draw.rect(tela, (30, 39, 63), pill_estilo, border_radius=10)
         pygame.draw.rect(tela, (244, 248, 255), pill_estilo, 1, border_radius=10)
         pygame.draw.rect(tela, (76, 56, 18), pill_custo, border_radius=10)
         pygame.draw.rect(tela, (255, 235, 185), pill_custo, 1, border_radius=10)
 
-        self.TxtTipo.set_text(tipo)
-        self.TxtTipo.set_pos(pill_tipo.center)
-        self.TxtTipo.draw(tela)
         self.TxtEstilo.set_text(estilo)
         self.TxtEstilo.set_pos(pill_estilo.center)
         self.TxtEstilo.draw(tela)
@@ -311,12 +346,9 @@ class FichaAtaque:
         self.TxtCusto.set_pos(pill_custo.center)
         self.TxtCusto.draw(tela)
 
-        area_desc = pygame.Rect(rect.x + 16, header.bottom + 12, rect.width - 32, rect.bottom - header.bottom - 22)
-        pygame.draw.rect(tela, (16, 22, 38), area_desc, border_radius=12)
-        pygame.draw.rect(tela, (62, 84, 132), area_desc, 1, border_radius=12)
-
-        linhas = self._quebrar_linhas(self.TxtDescricao, descricao, area_desc.width - 22, max_linhas=6)
-        for i, linha in enumerate(linhas):
-            self.TxtDescricao.set_text(linha)
-            self.TxtDescricao.set_pos((area_desc.x + 12, area_desc.y + 12 + i * 21))
-            self.TxtDescricao.draw(tela)
+        area_desc = pygame.Rect(rect.x + 16, header.bottom + 10, rect.width - 32, rect.bottom - header.bottom - 16)
+        self.TxtDescricao.configurar_rect(area_desc)
+        self.TxtDescricao.set_limites(linhas=4, caracteres_por_linha=66)
+        self.TxtDescricao.set_atributos(atributos or {})
+        self.TxtDescricao.set_texto(descricao)
+        self.TxtDescricao.draw(tela)

@@ -1135,4 +1135,4 @@ class FichaPokemon:
         if self._arrastavel_ataque.Ativo and self._arrastavel_ataque.Item is not None:
             ataque_hover = self._arrastavel_ataque.Item
         if ataque_hover is not None:
-            self._ficha_ataque.renderizar_tooltip(tela, ataque_hover, area_ancora=right_bottom)
+            self._ficha_ataque.renderizar_tooltip(tela, ataque_hover, area_ancora=right_bottom, atributos=stats)

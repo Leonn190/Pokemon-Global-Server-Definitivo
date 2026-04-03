@@ -9,7 +9,7 @@ from collections import deque
 from typing import Deque, Dict, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer, ItemMundoServer, PokemonServer
+from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer, ItemMundoServer, PokemonServer, XpMundoServer
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
@@ -20,6 +20,7 @@ from SimuladorServerJogo.Controle.Cerebros.CerebroPokemons import CerebroPokemon
 from SimuladorServerJogo.Controle.Cerebros.CerebroProjeteis import CerebroProjeteis
 from SimuladorServerJogo.Controle.Cerebros.CerebroItensMundo import CerebroItensMundo
 from SimuladorServerJogo.Controle.Cerebros.CerebroEstruturasNaturais import CerebroEstruturasNaturais
+from SimuladorServerJogo.Controle.Cerebros.CerebroXpMundo import CerebroXpMundo
 from SimuladorServerJogo.Controle.ServicoInventario import ServicoInventario
 
 Vector2 = Tuple[float, float]
@@ -36,6 +37,7 @@ class CerebroCentral:
         self._pokemons_ids: Set[int] = set()
         self._baus_ids: Set[int] = set()
         self._itens_mundo_ids: Set[int] = set()
+        self._xp_mundo_ids: Set[int] = set()
         self._regras = carregar_regras_cerebro()
 
         self._spawns_pokemon_ultimos_100: Deque[int] = deque()
@@ -49,6 +51,7 @@ class CerebroCentral:
         self._cerebro_projeteis = CerebroProjeteis(self)
         self._cerebro_itens_mundo = CerebroItensMundo(self)
         self._cerebro_estruturas = CerebroEstruturasNaturais(self)
+        self._cerebro_xp_mundo = CerebroXpMundo(self)
 
     def _i(self, k: str, d: int) -> int:
         try:
@@ -81,6 +84,8 @@ class CerebroCentral:
             self._baus_ids.add(int(objeto.Id)); return
         if isinstance(objeto, ItemMundoServer):
             self._itens_mundo_ids.add(int(objeto.Id)); return
+        if isinstance(objeto, XpMundoServer):
+            self._xp_mundo_ids.add(int(objeto.Id)); return
 
     def executar_tick_servidor(self) -> None:
         with self._lock:
@@ -116,10 +121,13 @@ class CerebroCentral:
                 self._baus_ids.add(int(obj.Id))
             elif subt == "item_mundo":
                 self._itens_mundo_ids.add(int(obj.Id))
+            elif subt == "xp_mundo":
+                self._xp_mundo_ids.add(int(obj.Id))
 
         self._pokemons_ids = {oid for oid in self._pokemons_ids if isinstance(BANCO_DADOS.obter_objeto(oid), PokemonServer)}
         self._baus_ids = {oid for oid in self._baus_ids if isinstance(BANCO_DADOS.obter_objeto(oid), BauServer)}
         self._itens_mundo_ids = {oid for oid in self._itens_mundo_ids if isinstance(BANCO_DADOS.obter_objeto(oid), ItemMundoServer)}
+        self._xp_mundo_ids = {oid for oid in self._xp_mundo_ids if isinstance(BANCO_DADOS.obter_objeto(oid), XpMundoServer)}
 
     def _limpar_janela_spawns(self) -> None:
         limite = max(1, self._tick_contador - 100)
@@ -140,6 +148,7 @@ class CerebroCentral:
         self._cerebro_pokemons.atualizar_movimento(chunks_carregados)
         self._cerebro_baus.executar_tick(chunks_simulados)
         self._cerebro_itens_mundo.executar_tick(chunks_carregados, chunks_simulados)
+        self._cerebro_xp_mundo.executar_tick()
         self._executar_tick_capturas()
         self._cerebro_pokemons.despawn_simulado(chunks_simulados)
         self._cerebro_estruturas.executar_tick()

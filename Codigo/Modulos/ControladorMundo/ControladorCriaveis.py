@@ -8,6 +8,7 @@ import time
 
 from Codigo.Geradores.Projetil import Projetil
 from Codigo.Geradores.ItemMundo import ItemMundo
+from Codigo.Geradores.XpMundo import XpMundo
 
 
 class ControladorCriaveis:
@@ -16,6 +17,7 @@ class ControladorCriaveis:
         self._remover_indice = remover_indice_cb
         self.ProjeteisPorId: Dict[int, Projetil] = {}
         self.ItensMundoPorId: Dict[int, ItemMundo] = {}
+        self.XpMundoPorId: Dict[int, XpMundo] = {}
 
     @staticmethod
     def eh_payload_projetil(payload: Dict[str, object]) -> bool:
@@ -24,6 +26,10 @@ class ControladorCriaveis:
     @staticmethod
     def eh_payload_item_mundo(payload: Dict[str, object]) -> bool:
         return str(payload.get("tipo", "")).strip().lower() in {"entidade_item_mundo", "item_mundo"}
+
+    @staticmethod
+    def eh_payload_xp_mundo(payload: Dict[str, object]) -> bool:
+        return str(payload.get("tipo", "")).strip().lower() in {"entidade_xp_mundo", "xp_mundo"}
 
     def reconciliar_projetil_predito_por_token(self, oid_oficial: int, payload: Dict[str, object]) -> None:
         token = str(payload.get("token_arremesso") or (payload.get("estado") or {}).get("token_arremesso") or "")
@@ -82,9 +88,19 @@ class ControladorCriaveis:
         else:
             self.ItensMundoPorId.pop(oid, None)
 
+        if self.eh_payload_xp_mundo(payload):
+            xp_mundo = self.XpMundoPorId.get(oid)
+            if xp_mundo is None:
+                self.XpMundoPorId[oid] = XpMundo(payload)
+            else:
+                xp_mundo.aplicar_snapshot(payload)
+        else:
+            self.XpMundoPorId.pop(oid, None)
+
     def remover_criavel(self, oid: int) -> None:
         self.ProjeteisPorId.pop(int(oid), None)
         self.ItensMundoPorId.pop(int(oid), None)
+        self.XpMundoPorId.pop(int(oid), None)
 
     def aplicar_spawn_especial(self, categoria: str, payload: Dict[str, object], aplicar_diff_cb: Callable[[Dict[str, object]], None]) -> bool:
         categoria = str(categoria or "").strip().lower()
@@ -147,6 +163,9 @@ class ControladorCriaveis:
             if item.deve_remover_local():
                 aplicar_despawn_cb(int(item.Id))
 
+        for xp in list(self.XpMundoPorId.values()):
+            xp.atualizar_visual(dt)
+
     def renderizar_criavel(self, oid: int, tela, camera) -> bool:
         proj = self.ProjeteisPorId.get(int(oid))
         if proj is not None:
@@ -155,5 +174,9 @@ class ControladorCriaveis:
         item_mundo = self.ItensMundoPorId.get(int(oid))
         if item_mundo is not None:
             item_mundo.desenhar(tela, camera)
+            return True
+        xp_mundo = self.XpMundoPorId.get(int(oid))
+        if xp_mundo is not None:
+            xp_mundo.desenhar(tela, camera)
             return True
         return False

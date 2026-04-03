@@ -296,7 +296,7 @@
     "porBioma": {
       "FIELD": {
         "TREE": {
-          "spawnRate": 0.008,
+          "spawnRate": 0.0085,
           "minimum": 0
         },
         "ROCK": {
@@ -308,7 +308,7 @@
           "minimum": 0
         },
         "GOLD": {
-          "spawnRate": 0.0006,
+          "spawnRate": 0.0005,
           "minimum": 0
         },
         "AMETHYST": {
@@ -346,19 +346,19 @@
       },
       "FOREST": {
         "TREE": {
-          "spawnRate": 0.008,
+          "spawnRate": 0.01,
           "minimum": 0
         },
         "ROCK": {
-          "spawnRate": 0.003,
+          "spawnRate": 0.0025,
           "minimum": 0
         },
         "BUSH": {
-          "spawnRate": 0.0035,
+          "spawnRate": 0.0045,
           "minimum": 0
         },
         "GOLD": {
-          "spawnRate": 0.0006,
+          "spawnRate": 0.0004,
           "minimum": 0
         },
         "AMETHYST": {
@@ -386,7 +386,7 @@
           "minimum": 0
         },
         "COPPER": {
-          "spawnRate": 0.0012,
+          "spawnRate": 0.001,
           "minimum": 0
         },
         "LAVA_POOL": {
@@ -554,7 +554,7 @@
           "minimum": 0
         },
         "BUSH": {
-          "spawnRate": 0.0,
+          "spawnRate": 0.0001,
           "minimum": 0
         },
         "GOLD": {
@@ -590,7 +590,7 @@
           "minimum": 0
         },
         "LAVA_POOL": {
-          "spawnRate": 0.0018,
+          "spawnRate": 0.0015,
           "minimum": 0
         }
       },
@@ -604,7 +604,7 @@
           "minimum": 0
         },
         "BUSH": {
-          "spawnRate": 0.0035,
+          "spawnRate": 0.0005,
           "minimum": 0
         },
         "GOLD": {

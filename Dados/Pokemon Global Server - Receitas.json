@@ -1,92 +1,188 @@
-
 {
-    "Pokeball": [
-        [null, "Cobre", null],
-        ["Cobre", null, "Cobre"],
-        [null, "Cobre", null]
-    ],
+  "Pokeball": [
+    [null, "Cobre", null],
+    ["Cobre", null, "Cobre"],
+    [null, "Cobre", null]
+  ],
 
-    "Greatball": [
-        [null, "Pokeball", null],
-        ["Pokeball", null, "Pokeball"],
-        [null, "Pokeball", null]
-    ],
+  "Greatball": [
+    [null, "Pokeball", null],
+    ["Pokeball", null, "Pokeball"],
+    [null, "Pokeball", null]
+  ],
 
-    "Ultraball": [
-        [null, "Greatball", null],
-        ["Greatball", null, "Greatball"],
-        [null, "Greatball", null]
-    ],
+  "Ultraball": [
+    [null, "Greatball", null],
+    ["Greatball", null, "Greatball"],
+    [null, "Greatball", null]
+  ],
 
-    "Picareta de Madeira": [
-        ["Madeira", "Madeira", "Madeira"],
-        [null, "Madeira", null],
-        [null, "Madeira", null]
-    ],
+  "Premierball": [
+    [null, "Cobre", null],
+    ["Cobre", "Ultraball", "Cobre"],
+    [null, "Cobre", null]
+  ],
 
-    "Picareta de Pedra": [
-        ["Pedra", "Picareta de Madeira", "Pedra"],
-        [null, "Madeira", null],
-        [null, "Madeira", null]
-    ],
+  "Aquaball": [
+    ["Agua", "Agua", "Agua"],
+    ["Agua", "Greatball", "Agua"],
+    ["Agua", "Agua", "Agua"]
+  ],
 
-    "Picareta de Ouro": [
-        ["Ouro", "Picareta de Pedra", "Ouro"],
-        [null, "Madeira", null],
-        [null, "Madeira", null]
-    ],
+  "Furyball": [
+    [null, "Greatball", null],
+    ["Greatball", "Lava", "Greatball"],
+    [null, "Greatball", null],
+    4
+  ],
 
-    "Picareta de Diamante": [
-        ["Diamante", "Picareta de Ouro", "Diamante"],
-        [null, "Madeira", null],
-        [null, "Madeira", null]
-    ],
+  "Picareta de Madeira": [
+    [["Madeira", 2], "Madeira", ["Madeira", 2]],
+    [null, "Madeira", null],
+    [null, "Madeira", null]
+  ],
 
-    "Picareta de Ametista": [
-        ["Ametista", "Picareta de Diamante", "Ametista"],
-        [null, "Madeira", null],
-        [null, "Madeira", null]
-    ],
+  "Picareta de Pedra": [
+    [["Pedra", 2], "Picareta de Madeira", ["Pedra", 2]],
+    [null, "Madeira", null],
+    [null, "Madeira", null]
+  ],
 
-    "Picareta de Rubi": [
-        ["Rubi", "Picareta de Ametista", "Rubi"],
-        [null, "Madeira", null],
-        [null, "Madeira", null]
-    ],
+  "Picareta de Ouro": [
+    [["Ouro", 2], "Picareta de Pedra", ["Ouro", 2]],
+    [null, "Madeira", null],
+    [null, "Madeira", null]
+  ],
 
-    "Machado de Madeira": [
-        [null, "Madeira", "Madeira"],
-        [null, "Madeira", "Madeira"],
-        [null, "Madeira", null]
-    ],
+  "Picareta de Diamante": [
+    [["Diamante", 2], "Picareta de Ouro", ["Diamante", 2]],
+    [null, "Pedra", null],
+    [null, "Pedra", null]
+  ],
 
-    "Machado de Pedra": [
-        [null, "Machado de Madeira", "Pedra"],
-        [null, "Madeira", "Pedra"],
-        [null, "Madeira", null]
-    ],
+  "Picareta de Ametista": [
+    [["Ametista", 2], "Picareta de Diamante", ["Ametista", 2]],
+    [null, "Pedra", null],
+    [null, "Pedra", null]
+  ],
 
-    "Machado de Ouro": [
-        [null, "Machado de Pedra", "Ouro"],
-        [null, "Madeira", "Ouro"],
-        [null, "Madeira", null]
-    ],
+  "Picareta de Rubi": [
+    [["Rubi", 2], "Picareta de Ametista", ["Rubi", 2]],
+    [null, "Pedra", null],
+    [null, "Pedra", null]
+  ],
 
-    "Machado de Diamante": [
-        [null, "Machado de Ouro", "Diamante"],
-        [null, "Madeira", "Diamante"],
-        [null, "Madeira", null]
-    ],
+  "Machado de Madeira": [
+    [null, "Madeira", ["Madeira", 2]],
+    [null, "Madeira", ["Madeira", 2]],
+    [null, "Madeira", null]
+  ],
 
-    "Machado de Ametista": [
-        [null, "Machado de Diamante", "Ametista"],
-        [null, "Madeira", "Ametista"],
-        [null, "Madeira", null]
-    ],
+  "Machado de Pedra": [
+    [null, "Machado de Madeira", ["Pedra", 2]],
+    [null, "Madeira", ["Pedra", 2]],
+    [null, "Madeira", null]
+  ],
 
-    "Machado de Rubi": [
-        [null, "Machado de Ametista", "Rubi"],
-        [null, "Madeira", "Rubi"],
-        [null, "Madeira", null]
-    ]
+  "Machado de Ouro": [
+    [null, "Machado de Pedra", ["Ouro", 2]],
+    [null, "Madeira", ["Ouro", 2]],
+    [null, "Madeira", null]
+  ],
+
+  "Machado de Diamante": [
+    [null, "Machado de Ouro", ["Diamante", 2]],
+    [null, "Pedra", ["Diamante", 2]],
+    [null, "Pedra", null]
+  ],
+
+  "Machado de Ametista": [
+    [null, "Machado de Diamante", ["Ametista", 2]],
+    [null, "Pedra", ["Ametista", 2]],
+    [null, "Pedra", null]
+  ],
+
+  "Machado de Rubi": [
+    [null, "Machado de Ametista", ["Rubi", 2]],
+    [null, "Pedra", ["Rubi", 2]],
+    [null, "Pedra", null]
+  ],
+
+  "Poção": [
+    [null, "Agua", null],
+    ["Agua", "Simp Berry", "Agua"],
+    [null, "Agua", null]
+  ],
+
+  "Super Poção": [
+    [null, "Agua", null],
+    ["Poção", "Simp Berry", "Poção"],
+    [null, "Agua", null]
+  ],
+
+  "Hiper Poção": [
+    [null, "Agua", null],
+    ["Super Poção", "Simp Berry", "Super Poção"],
+    [null, "Agua", null]
+  ],
+
+  "Mega Poção": [
+    [null, "Agua", null],
+    ["Hiper Poção", "Simp Berry", "Hiper Poção"],
+    [null, "Agua", null]
+  ],
+
+  "Max Poção": [
+    ["Diamante", "Diamante", "Diamante"],
+    ["Diamante", "Mega Poção", "Diamante"],
+    ["Diamante", "Diamante", "Diamante"]
+  ],
+
+  "Revival": [
+    [null, "Ouro", null],
+    ["Ouro", "Poção", "Ouro"],
+    [null, "Ouro", null]
+  ],
+
+  "Max Revival": [
+    [["Ouro", 4], ["Ouro", 4], ["Ouro", 4]],
+    [["Ouro", 4], "Revival", ["Ouro", 4]],
+    [["Ouro", 4], ["Ouro", 4], ["Ouro", 4]]
+  ],
+
+  "Elixir": [
+    [null, "Agua", null],
+    ["Agua", "Poção", "Agua"],
+    [null, "Agua", null]
+  ],
+
+  "Super Elixir": [
+    [null, "Elixir", null],
+    ["Elixir", null, "Elixir"],
+    [null, "Elixir", null]
+  ],
+
+  "Hiper Elixir": [
+    ["Esmeralda", "Esmeralda", "Esmeralda"],
+    ["Esmeralda", "Super Elixir", "Esmeralda"],
+    ["Esmeralda", "Esmeralda", "Esmeralda"]
+  ],
+
+  "Mega Elixir": [
+    ["Ametista", "Esmeralda", "Ametista"],
+    ["Esmeralda", "Hiper Elixir", "Esmeralda"],
+    ["Ametista", "Esmeralda", "Ametista"]
+  ],
+
+  "Balde": [
+    [null, null, null],
+    ["Cobre", null, "Cobre"],
+    [null, "Cobre", null]
+  ],
+
+  "Chave": [
+    [null, "Ouro", null],
+    [null, "Ouro", null],
+    [null, "Ouro", null]
+  ]
 }

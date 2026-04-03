@@ -51,6 +51,7 @@ class Pokemon:
         self.TempoAnimFugaMs = 340
         self.TempoAnimVoltaMs = 420
         self.TempoEsperaConfirmacaoMs = 1500
+        self.TempoEsperaForcarCapturaServidorMs = 700
         self.TempoRecuperacaoMovimentoMs = 180
 
         self.CapturaEstado: Dict[str, object] = {
@@ -68,10 +69,9 @@ class Pokemon:
         }
         self._captura_fake_token = ""
         self._captura_fake_inicio_ms = 0
-        self._captura_confirmada_token = ""
-        self._captura_confirmada_desde_ms = 0
-        self._captura_confirmada_espera_colisao = False
-        self._captura_confirmada_atraso_ms = 0
+        self._captura_servidor_pendente: Optional[Dict[str, object]] = None
+        self._captura_servidor_forcar_em_ms = 0
+        self._captura_autoritativa_aplicada = False
         self._despawn_pendente = False
         self._pronto_para_remover = False
         self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
@@ -167,11 +167,13 @@ class Pokemon:
 
     def _normalizar_log_checagens(self, evento: Dict[str, object]) -> List[bool]:
         bruto = None
-        for chave in ("checagens", "log_checagens", "tremidas", "log"):
+        for chave in ("checagens", "log_checagens", "tremidas", "log", "plano_tremidas"):
             valor = evento.get(chave)
             if isinstance(valor, list):
                 bruto = valor
                 break
+        if bruto is None and isinstance(evento.get("tentativas_tremida"), list):
+            bruto = [item.get("sucesso") for item in list(evento.get("tentativas_tremida") or []) if isinstance(item, dict)]
         resultado: List[bool] = []
         if isinstance(bruto, list):
             for item in bruto[:3]:
@@ -193,6 +195,12 @@ class Pokemon:
         return resultado[:3]
 
     def _resultado_final_evento(self, evento: Dict[str, object]) -> Optional[bool]:
+        if "resultado" in evento:
+            r = str(evento.get("resultado") or "").strip().lower()
+            if r in {"sucesso", "capturado", "ok", "true"}:
+                return True
+            if r in {"falha", "falhou", "escape", "nao", "não", "false"}:
+                return False
         for chave in ("resultado_final", "capturado", "sucesso", "capturou"):
             if chave in evento:
                 return bool(evento.get(chave))
@@ -235,7 +243,17 @@ class Pokemon:
         self.CapturaEstado["captura_pendente"] = False
 
     def registrar_colisao_projetil_local(self, token: str, nome_bola: str = "pokeball", tempo_espera_confirmacao_ms: int = 1500) -> None:
-        self._captura_fake_token = str(token or "")
+        token = str(token or "")
+        fase = self._fase()
+        resultado_definido = self.CapturaEstado.get("resultado_final") is not None
+        if self._captura_autoritativa_aplicada:
+            return
+        if fase in {"captura", "checagem", "fuga", "volta"} and resultado_definido:
+            return
+        token_atual = str(self.CapturaEstado.get("token_arremesso") or "")
+        if token and token_atual and token != token_atual:
+            self._captura_autoritativa_aplicada = False
+        self._captura_fake_token = token
         self._captura_fake_inicio_ms = self._agora_ms()
         self.TempoEsperaConfirmacaoMs = max(200, int(tempo_espera_confirmacao_ms or self.TempoEsperaConfirmacaoMs))
         self.CapturaEstado["bola_nome"] = str(nome_bola or self.CapturaEstado.get("bola_nome") or "pokeball")
@@ -251,10 +269,25 @@ class Pokemon:
         token = str(token or "")
         if not token:
             return
-        self._captura_confirmada_token = token
-        self._captura_confirmada_desde_ms = self._agora_ms()
-        self._captura_confirmada_espera_colisao = bool(esperar_colisao)
-        self._captura_confirmada_atraso_ms = max(0, int(atraso_ms or 0))
+        atual = self._captura_servidor_pendente if isinstance(self._captura_servidor_pendente, dict) else None
+        if isinstance(atual, dict) and ("checagens" in atual or "resultado" in atual or "resultado_final" in atual):
+            return
+        payload = dict(atual or {})
+        payload["token_arremesso"] = token
+        self._captura_servidor_pendente = payload
+        base_espera = self.TempoEsperaForcarCapturaServidorMs if bool(esperar_colisao) else 0
+        self._captura_servidor_forcar_em_ms = int(self._agora_ms() + base_espera + max(0, int(atraso_ms or 0)))
+
+    def aplicar_resultado_servidor_captura(self, captura_payload: Dict[str, object], esperar_colisao: bool = False) -> None:
+        payload = dict(captura_payload or {})
+        token = str(payload.get("token_arremesso") or self.CapturaEstado.get("token_arremesso") or "")
+        if token:
+            payload["token_arremesso"] = token
+            token_atual = str(self.CapturaEstado.get("token_arremesso") or "")
+            if token_atual and token != token_atual:
+                self._captura_autoritativa_aplicada = False
+        self._captura_servidor_pendente = payload
+        self._captura_servidor_forcar_em_ms = int(self._agora_ms() + (self.TempoEsperaForcarCapturaServidorMs if bool(esperar_colisao) else 0))
 
     def iniciar_captura_fake(self, token: str) -> None:
         self.registrar_colisao_projetil_local(token)
@@ -286,6 +319,27 @@ class Pokemon:
             self._iniciar_fuga()
         self._captura_fake_inicio_ms = 0
 
+    def _aplicar_confirmacao_servidor_pendente(self) -> None:
+        payload = self._captura_servidor_pendente if isinstance(self._captura_servidor_pendente, dict) else None
+        if not payload:
+            return
+        token = str(payload.get("token_arremesso") or "")
+        token_local = str(self.CapturaEstado.get("token_arremesso") or "")
+        agora = self._agora_ms()
+        if self._fase() != "captura":
+            if agora < int(self._captura_servidor_forcar_em_ms):
+                return
+            self.CapturaEstado["token_arremesso"] = token or token_local
+            self.CapturaEstado["captura_pendente"] = True
+            self.CapturaEstado["indice_checagem"] = 0
+            self._fixar_bola_na_posicao_atual()
+            self._trocar_fase("captura")
+        self.capturar(payload)
+        if ("resultado" in payload) or ("checagens" in payload) or ("resultado_final" in payload):
+            self._captura_autoritativa_aplicada = True
+        self._captura_servidor_pendente = None
+        self._captura_servidor_forcar_em_ms = 0
+
     def em_captura_pendente(self) -> bool:
         self._resolver_timeout_captura_fake()
         fase = self._fase()
@@ -294,6 +348,8 @@ class Pokemon:
         return fase in {"captura", "checagem", "fuga", "volta"}
 
     def deve_adiar_despawn(self) -> bool:
+        if isinstance(self._captura_servidor_pendente, dict):
+            return True
         fase = self._fase()
         if fase == "volta":
             return True
@@ -324,10 +380,23 @@ class Pokemon:
         self.FrutasAplicadas = list(estado.get("frutas_aplicadas") or [])[:2]
         self.EstadoFrutificacao = dict(estado.get("estado_frutificacao") or {"efeitos": {}})
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
-        if captura:
-            self.capturar(captura)
-
         fase_local = self._fase()
+        token_local = str(self.CapturaEstado.get("token_arremesso") or "")
+        token_captura = str(captura.get("token_arremesso") or "") if captura else ""
+        if captura:
+            if fase_local == "normal":
+                self.aplicar_resultado_servidor_captura(captura, esperar_colisao=True)
+            else:
+                mesmo_token = bool(token_local and token_captura and token_local == token_captura)
+                if not (fase_local == "volta" and bool(self.CapturaEstado.get("resultado_final") is True) and mesmo_token):
+                    if mesmo_token:
+                        if (not self.CapturaEstado.get("bola_nome")) and str(captura.get("bola_nome") or ""):
+                            self.CapturaEstado["bola_nome"] = str(captura.get("bola_nome") or "")
+                        if (self.CapturaEstado.get("retorno_inicio") is None) and isinstance(captura.get("retorno_inicio"), (list, tuple)) and len(captura.get("retorno_inicio")) == 2:
+                            self.CapturaEstado["retorno_inicio"] = [float(captura["retorno_inicio"][0]), float(captura["retorno_inicio"][1])]
+                        if (self.CapturaEstado.get("retorno_destino") is None) and isinstance(captura.get("retorno_destino"), (list, tuple)) and len(captura.get("retorno_destino")) == 2:
+                            self.CapturaEstado["retorno_destino"] = [float(captura["retorno_destino"][0]), float(captura["retorno_destino"][1])]
+
         self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), self._raio_colisao_padrao))
         if fase_local in {"captura", "checagem", "fuga", "volta"} or bool(self.CapturaEstado.get("resultado_final") is True):
             self.Colisor.raio_colisao = 0.0
@@ -338,6 +407,10 @@ class Pokemon:
         self.Colisor.raio_interacao = max(self.Colisor.raio_colisao, 1.2)
 
         destino = self._pos(snapshot.get("posicao"))
+        if self._fase() in {"captura", "checagem"} and self.CapturaEstado.get("resultado_final") is None:
+            dist_mov = math.hypot(float(destino[0]) - float(self.Posicao[0]), float(destino[1]) - float(self.Posicao[1]))
+            if dist_mov > 0.12:
+                self._captura_fake_inicio_ms = min(self._captura_fake_inicio_ms, self._agora_ms() - max(50, int(self.TempoEsperaConfirmacaoMs * 0.8)))
         self.Destino = destino
         if str(snapshot.get("movimento") or "").strip().lower() == "teleportar":
             self.definir_posicao(*destino)
@@ -356,6 +429,7 @@ class Pokemon:
     def atualizar(self, dt: float) -> None:
         dt = max(0.0, float(dt))
         self._resolver_timeout_captura_fake()
+        self._aplicar_confirmacao_servidor_pendente()
         fase = self._fase()
         if fase not in {"captura", "checagem", "fuga", "volta"}:
             px, py = self.Posicao

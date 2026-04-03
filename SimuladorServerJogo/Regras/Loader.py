@@ -64,6 +64,8 @@ def carregar_regras_cerebro() -> Dict[str, object]:
         "velocidade_base_pokemon_tiles_s": 3.0,
         "chance_despawn_bau_simulado_por_tick": 0.002,
         "chance_despawn_pokemon_simulado_por_tick": 0.003,
+        "cooldown_movimento_apos_tentativa_captura_ticks": 36,
+        "atraso_inventario_captura_ticks": 24,
         "raio_chunks_simulados": 3,
         "raio_chunks_carregados": 4,
     }

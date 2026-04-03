@@ -443,9 +443,12 @@ class PainelReceitas(PainelRolavel):
                 2,
                 border_radius=10
             )
+            item_receita = copy.deepcopy(receita['saida']) if isinstance(receita.get('saida'), dict) else receita.get('saida')
+            if isinstance(item_receita, dict):
+                item_receita['quantidade'] = 1
             ItemInventario.desenhar_item_no_rect(
                 tela,
-                receita['saida'],
+                item_receita,
                 rect.inflate(-6, -6)
             )
 

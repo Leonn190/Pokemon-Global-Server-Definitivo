@@ -67,6 +67,19 @@ class Inventario:
             return item_copia
         return item
 
+    @staticmethod
+    def _limite_stack(item) -> int:
+        if not isinstance(item, dict):
+            return 1
+        for chave in ("Stacks", "stacks", "Stack", "stack", "limite_stack"):
+            try:
+                valor = int(item.get(chave, 0) or 0)
+                if valor > 0:
+                    return valor
+            except (TypeError, ValueError):
+                continue
+        return 999999
+
     def adicionar_item(self, item):
         item_copia = self._normalizar_item(item)
         if item_copia is None:
@@ -76,18 +89,38 @@ class Inventario:
         if (self.quantidade_total_itens() + quantidade_nova) > self.LimiteItens:
             return False
 
+        adicionado = 0
+
         if isinstance(item_copia, dict):
             chave_nova = self._chave_stack(item_copia)
             for atual in self.Itens:
                 if isinstance(atual, dict) and self._chave_stack(atual) == chave_nova:
-                    atual["quantidade"] = int(max(1, atual.get("quantidade", 1))) + item_copia["quantidade"]
-                    return True
+                    limite = self._limite_stack(atual)
+                    qtd_atual = int(max(1, atual.get("quantidade", 1)))
+                    adicionavel = max(0, min(item_copia["quantidade"], limite - qtd_atual))
+                    if adicionavel > 0:
+                        atual["quantidade"] = qtd_atual + adicionavel
+                        item_copia["quantidade"] -= adicionavel
+                        adicionado += adicionavel
+                    if item_copia["quantidade"] <= 0:
+                        if isinstance(item, dict):
+                            item["quantidade"] = 0
+                        return True
 
-        slot_livre = self.primeiro_slot_livre()
-        if slot_livre is None:
-            return False
-
-        self.Itens[slot_livre] = item_copia
+        while isinstance(item_copia, dict) and item_copia["quantidade"] > 0:
+            slot_livre = self.primeiro_slot_livre()
+            if slot_livre is None:
+                if isinstance(item, dict):
+                    item["quantidade"] = int(item_copia["quantidade"])
+                return adicionado > 0
+            novo = dict(item_copia)
+            limite = self._limite_stack(novo)
+            novo["quantidade"] = min(item_copia["quantidade"], limite)
+            item_copia["quantidade"] -= novo["quantidade"]
+            adicionado += novo["quantidade"]
+            self.Itens[slot_livre] = novo
+        if isinstance(item, dict):
+            item["quantidade"] = int(item_copia.get("quantidade", 0) if isinstance(item_copia, dict) else 0)
         return True
 
     def aplicar_serializado(self, dados):

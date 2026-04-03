@@ -33,6 +33,8 @@ def _carregar_itens() -> tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str,
                 "Estilo": str(row.get("Estilo", "")).strip(),
                 "Fator": fator,
                 "Raridade": int(raridade_raw) if raridade_raw.isdigit() else raridade_raw,
+                "Bau": str(row.get("Bau", "")).strip().lower(),
+                "Stacks": int(float(row.get("Stacks", 1) or 1)) if str(row.get("Stacks", "")).strip() else 1,
             }
             by_code[code] = item
             by_nome[nome.strip().lower()] = item
@@ -43,6 +45,18 @@ _ITENS_POR_CODE, _ITENS_POR_NOME = _carregar_itens()
 
 
 class ServicoInventario:
+    @staticmethod
+    def _limite_stack(item: Dict[str, object]) -> int:
+        if not isinstance(item, dict):
+            return 1
+        try:
+            valor = int(item.get("Stacks", 0) or 0)
+            if valor > 0:
+                return valor
+        except (TypeError, ValueError):
+            pass
+        return 999999
+
     @staticmethod
     def _lista_pokemons_ocupados(valor: object) -> list[Dict[str, object]]:
         lista = valor if isinstance(valor, list) else []
@@ -143,19 +157,32 @@ class ServicoInventario:
             code_atual = str(atual.get("Code") or "").strip().lower()
             nome_atual = str(atual.get("Nome") or "").strip().lower()
             if (chave_code and code_atual == chave_code) or (not chave_code and nome_atual == chave_nome):
-                atual["quantidade"] = int(atual.get("quantidade", 1) or 1) + adicionavel
-                itens[i] = atual
-                inv["itens"] = itens
-                inventario.clear(); inventario.update(inv)
-                return (adicionavel, sobra)
+                limite_stack = self._limite_stack(atual)
+                qtd_atual = int(atual.get("quantidade", 1) or 1)
+                pode_entrar = max(0, min(adicionavel, limite_stack - qtd_atual))
+                if pode_entrar > 0:
+                    atual["quantidade"] = qtd_atual + pode_entrar
+                    adicionavel -= pode_entrar
+                    itens[i] = atual
+                if adicionavel <= 0:
+                    inv["itens"] = itens
+                    inventario.clear(); inventario.update(inv)
+                    return (qtd - sobra, sobra)
 
-        for i, atual in enumerate(itens):
-            if atual is None:
-                itens[i] = self.normalizar_item(item_base, quantidade_padrao=adicionavel)
-                inv["itens"] = itens
-                inventario.clear(); inventario.update(inv)
-                return (adicionavel, sobra)
-        return (0, qtd)
+        while adicionavel > 0:
+            i = next((idx for idx, atual in enumerate(itens) if atual is None), None)
+            if i is None:
+                break
+            quantidade_slot = min(adicionavel, self._limite_stack(item_base))
+            itens[i] = self.normalizar_item(item_base, quantidade_padrao=quantidade_slot)
+            adicionavel -= quantidade_slot
+
+        adicionado_total = (qtd - sobra) - adicionavel
+        sobra_final = sobra + adicionavel
+        if adicionado_total > 0:
+            inv["itens"] = itens
+            inventario.clear(); inventario.update(inv)
+        return (adicionado_total, sobra_final)
 
     def consumir_um(self, inventario: Dict[str, object], item_base_id: str, item_nome: str) -> bool:
         inv = dict(inventario or {})

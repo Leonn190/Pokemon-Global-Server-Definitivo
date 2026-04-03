@@ -102,7 +102,7 @@ class FichaItem:
 
         margem = 8
         gap = 10
-        box_icone = pygame.Rect(area.right - 52, area.y + (area.height - 44) // 2, 44, 44)
+        box_icone = pygame.Rect(area.right - 58, area.y + (area.height - 50) // 2, 50, 50)
         nome_x = area.x + margem - 4
         centro_y = area.centery
         self.TxtNome.set_text(nome)
@@ -120,6 +120,9 @@ class FichaItem:
         pygame.draw.rect(tela, (8, 12, 20), pill_rect, 2, border_radius=10)
         self.TxtRaridade.set_pos((pill_rect.x + 10, pill_rect.centery))
         self.TxtRaridade.draw(tela)
+        fundo_slot = box_icone.inflate(8, 8)
+        pygame.draw.rect(tela, (52, 72, 114), fundo_slot, border_radius=10)
+        pygame.draw.rect(tela, (220, 232, 252), fundo_slot, 2, border_radius=10)
         ItemInventario.desenhar_item_no_rect(tela, item, box_icone)
 
         desc_rect = pygame.Rect(desc_x, area.y + 6, max(28, pill_rect.x - gap - desc_x - 8), area.height - 12)

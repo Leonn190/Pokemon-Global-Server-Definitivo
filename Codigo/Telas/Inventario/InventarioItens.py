@@ -46,6 +46,11 @@ class InventarioItens:
 
     def on_open(self):
         self._estava_ativo = True
+        self._layout_montado = False
+        self._ultima_chave_layout = None
+        if self._container is not None:
+            self._container.Itens = self.Inventario.Itens
+            self._container.marcar_sujo()
 
     def on_close(self):
         if self._painel_craft is not None and self._container is not None:
@@ -108,7 +113,7 @@ class InventarioItens:
         self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 16, largura_esquerda, 72)
         self._area_craft = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, 290)
         self._area_receitas = pygame.Rect(self._area_grid.right + margem, self._area_craft.bottom + 9, largura_direita, area.bottom - (self._area_craft.bottom + 9) - 8)
-        self._area_ficha = pygame.Rect(self._area_info.x + 182, self._area_info.y + 9, self._area_info.width - 236, self._area_info.height - 18)
+        self._area_ficha = pygame.Rect(self._area_info.x + 152, self._area_info.y + 3, self._area_info.width - 180, self._area_info.height - 6)
 
         if self._container is None:
             self._container = Container(
@@ -490,7 +495,7 @@ class InventarioItens:
         )
 
         self._painel_info.render(tela, [], 0)
-        self.TxtTotal.set_text(f'{self._quantidade_total_itens()} / {self._capacidade_total()} itens')
+        self.TxtTotal.set_text(f'{self._quantidade_total_itens()} / {self._capacidade_total()}')
         self.TxtTotal.set_pos((self._area_info.x + 14, self._area_info.centery))
         self.TxtTotal.draw(tela)
 

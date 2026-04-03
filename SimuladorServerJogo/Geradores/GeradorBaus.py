@@ -89,6 +89,9 @@ def _carregar_itens_validos() -> Dict[int, List[Dict[str, object]]]:
 
     with ARQUIVO_ITENS.open("r", encoding="utf-8") as f:
         for linha in csv.DictReader(f):
+            entra_bau = str(linha.get("Bau", "")).strip().lower()
+            if entra_bau and entra_bau != "s":
+                continue
             raridade = int(_fnum(linha.get("Raridade"), 0))
             if raridade < 1 or raridade > 6:
                 continue
@@ -106,6 +109,7 @@ def _carregar_itens_validos() -> Dict[int, List[Dict[str, object]]]:
                     "Raridade": raridade,
                     "Estilo": str(linha.get("Estilo", "")).strip(),
                     "Code": code,
+                    "Stacks": int(_fnum(linha.get("Stacks"), 1)),
                     "quantidade": 1,
                 }
             )

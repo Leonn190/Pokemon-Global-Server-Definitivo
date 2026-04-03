@@ -85,7 +85,7 @@ class CerebroProjeteis:
                     origem=(float(impacto.posicao[0]), float(impacto.posicao[1])),
                     total_particulas=random.randint(int(self._core._i("xp_captura_particulas_min", 3)), int(self._core._i("xp_captura_particulas_max", 4))),
                     tamanhos_possiveis=["pequeno", "medio"],
-                    atraso_ticks=int(self._core._i("atraso_spawn_xp_captura_ticks", 16)),
+                    atraso_ticks=int(self._core._i("atraso_spawn_xp_captura_ticks", 56)),
                 )
                 removido = BANCO_DADOS.remover_objeto(int(impacto.Id))
                 self._core._pokemons_ids.discard(int(impacto.Id))

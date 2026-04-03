@@ -24,7 +24,7 @@ class Arrastavel:
         self.Rect.center = (int(mouse_pos[0]), int(mouse_pos[1]))
         self.BotaoInicial = botao
         self.ModoDistribuidor = False
-        self._slots_distribuidos = set()
+        self._slots_distribuidos.clear()
         self.PosAlvo = None
         self._ao_final_animacao = None
         self._pos_anim = [float(self.Rect.x), float(self.Rect.y)]
@@ -81,11 +81,11 @@ class Arrastavel:
 
     def ativar_distribuidor(self):
         self.ModoDistribuidor = True
-        self._slots_distribuidos = set()
+        self._slots_distribuidos.clear()
 
     def limpar_distribuidor(self):
         self.ModoDistribuidor = False
-        self._slots_distribuidos = set()
+        self._slots_distribuidos.clear()
 
     def pode_distribuir_em(self, alvo):
         return alvo not in self._slots_distribuidos
@@ -108,7 +108,7 @@ class Arrastavel:
         self._offset_mouse = (0, 0)
         self.BotaoInicial = 1
         self.ModoDistribuidor = False
-        self._slots_distribuidos = set()
+        self._slots_distribuidos.clear()
         self.PosAlvo = None
         self._ao_final_animacao = None
         self._pos_anim = [0.0, 0.0]

@@ -18,6 +18,7 @@ class BarraPesquisa(CaixaTexto):
         self._botoes_ordenacao = []
         self._projecao_indices = []
         self._projecao_suja = True
+        self._versao_projecao = 0
         self._rect_cache = pygame.Rect(self.rect)
         self._cache_nome_normalizado = {}
 
@@ -92,6 +93,7 @@ class BarraPesquisa(CaixaTexto):
         for i in range(prefixo + len(itens_com_idx), total):
             self._lista_base[i] = None
         self._projecao_suja = True
+        self._versao_projecao += 1
 
     def _reconstruir_botoes(self):
         self._botoes_ordenacao = []
@@ -167,6 +169,10 @@ class BarraPesquisa(CaixaTexto):
 
         self._projecao_indices = fixos + [indice for indice, _item in base]
         self._projecao_suja = False
+        self._versao_projecao += 1
+
+    def versao_projecao(self):
+        return int(self._versao_projecao)
 
     def lista_visivel(self):
         return list(self._projecao_indices)

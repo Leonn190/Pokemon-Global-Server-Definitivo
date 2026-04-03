@@ -715,12 +715,12 @@ class FichaPokemon:
             for barra in self._barras_status.values():
                 barra.reiniciar_animacao(0.0)
 
-    def _bloco_infos_esquerda(self, tela: pygame.Surface, rect: pygame.Rect, pokemon: dict | None, dt: float):
+    def _bloco_infos_esquerda(self, tela: pygame.Surface, rect: pygame.Rect, pokemon: dict | None, dt: float, stats: dict[str, float] | None = None):
         self._desenhar_setor(tela, rect)
         _nome, especie = self._nome_especie(pokemon)
         nivel = self._nivel(pokemon)
         xp_atual, xp_alvo = self._xp(pokemon)
-        stats = self._stats_dict(pokemon)
+        stats = stats or self._stats_dict(pokemon)
         vida_max = max(1, int(round(stats.get('Vida', 0.0))))
         vida_atual = min(vida_max, int(round(self._vida_atual(pokemon))))
         crit_chance, crit_dano = self._criticos(pokemon)
@@ -884,10 +884,18 @@ class FichaPokemon:
             self._desenhar_slot_ataque(tela, rect_h, ataque_h, selecionado=self._slot_hover == ('habilidades', i))
             self._desenhar_slot_ataque(tela, rect_m, ataque_m, selecionado=self._slot_hover == ('memoria', i))
 
-    def _desenhar_bloco_status(self, tela: pygame.Surface, rect: pygame.Rect, pokemon: dict | None, dt: float):
+    def _desenhar_bloco_status(
+        self,
+        tela: pygame.Surface,
+        rect: pygame.Rect,
+        pokemon: dict | None,
+        dt: float,
+        stats: dict[str, float] | None = None,
+        ivs: dict[str, float] | None = None,
+    ):
         self._desenhar_setor(tela, rect)
-        stats = self._stats_dict(pokemon)
-        ivs = self._ivs_dict(pokemon)
+        stats = stats or self._stats_dict(pokemon)
+        ivs = ivs or self._ivs_dict(pokemon)
 
         self.TxtSetor.set_text('Atributos')
         self.TxtSetor.set_pos((rect.x + 14, rect.y + 14))
@@ -1093,15 +1101,15 @@ class FichaPokemon:
         if self._botao_fechar is not None:
             self._botao_fechar.base_rect.topleft = (rect.right - 52, rect.y + 12)
             self._botao_fechar.rect = pygame.Rect(self._botao_fechar.base_rect)
+        left, right_top, right_bottom = self._setores(rect)
+
         if self._botao_doar is not None:
-            left, _, _ = self._setores(rect)
             btn_h = 30
             btn_w = left.width - 32
             base_y = left.bottom - ((btn_h * 2) + 8) - 10
             self._botao_doar.base_rect = pygame.Rect(left.x + 16, base_y + btn_h + 8, btn_w, btn_h)
             self._botao_doar.rect = pygame.Rect(self._botao_doar.base_rect)
         if self._botao_upar is not None:
-            left, _, _ = self._setores(rect)
             btn_h = 30
             btn_w = left.width - 32
             base_y = left.bottom - ((btn_h * 2) + 8) - 10
@@ -1114,10 +1122,11 @@ class FichaPokemon:
 
         self._preparar_animacao_barras(pokemon)
         self._desenhar_cabecalho(tela, rect, pokemon)
-        left, right_top, right_bottom = self._setores(rect)
-        self._bloco_infos_esquerda(tela, left, pokemon, dt)
+        stats = self._stats_dict(pokemon)
+        ivs = self._ivs_dict(pokemon)
+        self._bloco_infos_esquerda(tela, left, pokemon, dt, stats=stats)
         self._desenhar_bloco_superior_direito(tela, right_top, pokemon)
-        self._desenhar_bloco_status(tela, right_bottom, pokemon, dt)
+        self._desenhar_bloco_status(tela, right_bottom, pokemon, dt, stats=stats, ivs=ivs)
         self._processar_eventos(tela, pokemon, eventos or [], dt)
         if desenhar_arrastavel:
             self._desenhar_arrastavel(tela)

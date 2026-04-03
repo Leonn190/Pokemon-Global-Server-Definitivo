@@ -30,6 +30,7 @@ class InventarioItens:
         self._ultimo_slot_distribuido_no_arraste = None
         self._estava_ativo = False
         self._layout_montado = False
+        self._ultima_chave_layout = None
 
         self._area_grid = pygame.Rect(0, 0, 0, 0)
         self._area_info = pygame.Rect(0, 0, 0, 0)
@@ -154,6 +155,14 @@ class InventarioItens:
 
         self._painel_info.rect = pygame.Rect(self._area_info)
         self._layout_montado = True
+
+    def _chave_layout(self, area):
+        area = pygame.Rect(area)
+        return (
+            area.x, area.y, area.width, area.height,
+            self._limite_slots(),
+            len(self.Inventario.Itens),
+        )
 
     def _item_ativo_ficha(self):
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
@@ -363,8 +372,10 @@ class InventarioItens:
 
     def atualizar(self, tela, eventos, dt, area, ativo=True):
         self._garantir_slots()
-        if not self._layout_montado:
+        chave_layout = self._chave_layout(area)
+        if not self._layout_montado or chave_layout != self._ultima_chave_layout:
             self._reconstruir(area)
+            self._ultima_chave_layout = chave_layout
         if not ativo:
             if self._estava_ativo:
                 self.on_close()
@@ -372,7 +383,10 @@ class InventarioItens:
         if not self._estava_ativo:
             self.on_open()
 
-        self._reconstruir(area)
+        chave_layout = self._chave_layout(area)
+        if chave_layout != self._ultima_chave_layout:
+            self._reconstruir(area)
+            self._ultima_chave_layout = chave_layout
         self._container._normalizar_tamanho()
         self._container._processar_scroll(eventos)
         self._processar_atalho_enter_pesquisa(eventos)

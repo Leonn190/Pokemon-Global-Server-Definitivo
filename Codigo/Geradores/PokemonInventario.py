@@ -18,7 +18,6 @@ class PokemonInventario:
     _cache_surface: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
     _cache_icone_coracao: Dict[int, Optional[pygame.Surface]] = {}
     _cache_icone_tipo: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
-    _cache_fonte_poder: Dict[int, pygame.font.Font] = {}
     _mostrar_poder_slots: bool = False
 
     @classmethod
@@ -96,9 +95,14 @@ class PokemonInventario:
     def poder_total(pokemon: object) -> float:
         if not isinstance(pokemon, dict):
             return 0.0
-        valor = pokemon.get('poder')
+        fonte = pokemon.get('estado') if isinstance(pokemon.get('estado'), dict) else pokemon
+        valor = fonte.get('poder')
         if valor in (None, ''):
-            valor = pokemon.get('poder_relativo')
+            valor = fonte.get('Poder')
+        if valor in (None, ''):
+            valor = fonte.get('poder_relativo')
+        if valor in (None, ''):
+            valor = fonte.get('PoderRelativo')
         if valor in (None, ''):
             return 0.0
         try:
@@ -299,19 +303,36 @@ class PokemonInventario:
                 tela.blit(coracao, coracao.get_rect(topright=(rect.right - 3, rect.y + 3)))
 
         if cls.pode_subir_nivel(pokemon):
-            marcador = pygame.Rect(rect.x + 4, rect.y + 4, 12, 12)
+            marcador = pygame.Rect(rect.x + 4, rect.y + 6, 12, 12)
             pygame.draw.rect(tela, (176, 250, 170), marcador, border_radius=3)
             pygame.draw.rect(tela, (236, 255, 234), marcador, 1, border_radius=3)
+            texto_p = Texto(
+                "P",
+                style={
+                    "size": 10,
+                    "color": (10, 22, 10),
+                    "align": "center",
+                    "outline": False,
+                    "shadow": False,
+                },
+            )
+            texto_p.set_pos(marcador.center)
+            texto_p.draw(tela)
 
         if cls._mostrar_poder_slots and rect.height >= 54:
             poder = int(round(cls.poder_total(pokemon)))
             fonte_size = max(10, int(rect.height * 0.20))
-            fonte = cls._cache_fonte_poder.get(fonte_size)
-            if fonte is None:
-                fonte = pygame.font.SysFont('arial', fonte_size, bold=True)
-                cls._cache_fonte_poder[fonte_size] = fonte
-            texto = fonte.render(str(poder), True, (244, 248, 255))
-            sombra = fonte.render(str(poder), True, (8, 12, 20))
-            pos = texto.get_rect(center=(rect.centerx, rect.bottom - max(7, int(rect.height * 0.12))))
-            tela.blit(sombra, (pos.x + 1, pos.y + 1))
-            tela.blit(texto, pos)
+            txt_poder = Texto(
+                str(poder),
+                style={
+                    "size": fonte_size,
+                    "color": (244, 248, 255),
+                    "align": "center",
+                    "outline": True,
+                    "outline_color": (8, 12, 20),
+                    "outline_thickness": 2,
+                    "shadow": False,
+                },
+            )
+            txt_poder.set_pos((rect.centerx, rect.bottom - max(7, int(rect.height * 0.12))))
+            txt_poder.draw(tela)

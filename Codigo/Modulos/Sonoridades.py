@@ -14,6 +14,46 @@ Sons = {
     "Bloq": {
         "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Bloq.wav"),
         "Volume": 0.85
+    },
+    "Abre": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Abre.wav"),
+        "Volume": 0.80
+    },
+    "AbrirBau": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/AbrirBau.mp3"),
+        "Volume": 0.85
+    },
+    "Apagou": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Apagou.wav"),
+        "Volume": 0.80
+    },
+    "BaterFerramenta": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/BaterFerramenta.mp3"),
+        "Volume": 0.85
+    },
+    "CliqueOpções": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/CliqueOpções.mp3"),
+        "Volume": 0.80
+    },
+    "Conseguiu": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Conseguiu.wav"),
+        "Volume": 0.85
+    },
+    "Dropar": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Dropar.wav"),
+        "Volume": 0.85
+    },
+    "Falhou": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Falhou.wav"),
+        "Volume": 0.85
+    },
+    "Fecha": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Fecha.wav"),
+        "Volume": 0.80
+    },
+    "Salvou": {
+        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Salvou.wav"),
+        "Volume": 0.85
     }
 }
 

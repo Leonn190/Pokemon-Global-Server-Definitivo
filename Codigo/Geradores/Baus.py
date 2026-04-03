@@ -7,6 +7,7 @@ import pygame
 
 from Codigo.Modulos.Auxiliares import carregar_frames
 from Codigo.Modulos.Colisor import Colisor
+from Codigo.Modulos.Sonoridades import tocar
 
 
 class Bau:
@@ -29,6 +30,7 @@ class Bau:
         self.AberturaLocalMs = int(pygame.time.get_ticks()) if self.Aberto else 0
         self.AguardandoConfirmacaoAbertura = False
         self._aguardando_desde_ms = 0
+        self._som_abertura_pendente = False
 
     @classmethod
     def _obter_sprite(cls, caminho):
@@ -64,10 +66,12 @@ class Bau:
     def abrir(self) -> bool:
         if self.Aberto:
             return False
+        abertura_local = bool(self.AguardandoConfirmacaoAbertura)
         self.Aberto = True
         self.AguardandoConfirmacaoAbertura = False
         self._aguardando_desde_ms = 0
         self.AberturaLocalMs = int(pygame.time.get_ticks())
+        self._som_abertura_pendente = abertura_local
         return True
 
     def _frame_atual(self, frames: List[pygame.Surface]) -> pygame.Surface | None:
@@ -80,6 +84,9 @@ class Bau:
         decorrido = max(0, pygame.time.get_ticks() - self.AberturaLocalMs)
         if decorrido >= self._duracao_exibicao_total_ms:
             return None
+        if self._som_abertura_pendente and decorrido >= self._duracao_abertura_ms:
+            tocar("AbrirBau")
+            self._som_abertura_pendente = False
         progresso = min(1.0, decorrido / max(1.0, float(self._duracao_abertura_ms)))
         idx = min(len(frames) - 1, int(progresso * (len(frames) - 1)))
         return frames[idx]

@@ -102,8 +102,9 @@ class FichaItem:
 
         margem = 8
         gap = 10
-        box_icone = pygame.Rect(area.right - 58, area.y + (area.height - 50) // 2, 50, 50)
-        nome_x = area.x + margem - 4
+        deslocamento_x = 15
+        box_icone = pygame.Rect(area.right - 58 + deslocamento_x, area.y + (area.height - 50) // 2, 50, 50)
+        nome_x = area.x + margem - 4 + deslocamento_x
         centro_y = area.centery
         self.TxtNome.set_text(nome)
         self.TxtNome.set_pos((nome_x, centro_y))

@@ -12,6 +12,7 @@ import pygame
 from Codigo.Modulos.Colisor import Colisor
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Modulos.Auxiliares import carregar_frames
+from Codigo.Modulos.Sonoridades import tocar
 
 Vector2 = Tuple[float, float]
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
@@ -73,6 +74,7 @@ class Pokemon:
         self._captura_servidor_espera_colisao = False
         self._captura_autoritativa_aplicada = False
         self._ultima_assinatura_captura = ""
+        self._ultima_assinatura_som_captura = ""
         self._despawn_pendente = False
         self._pronto_para_remover = False
         self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
@@ -213,6 +215,15 @@ class Pokemon:
         resultado = self._resultado_final_evento(evento)
         return f"{token}|{resultado}|{','.join('1' if bool(c) else '0' for c in checagens)}"
 
+    def _tocar_resultado_captura(self, resultado_final: Optional[bool], token: str) -> None:
+        if resultado_final is None:
+            return
+        assinatura = f"{token}|{bool(resultado_final)}"
+        if assinatura == self._ultima_assinatura_som_captura:
+            return
+        self._ultima_assinatura_som_captura = assinatura
+        tocar("Conseguiu" if bool(resultado_final) else "Falhou")
+
     def _posicao_bola_mundo(self) -> Vector2:
         pos = self.CapturaEstado.get("bola_posicao")
         if isinstance(pos, (list, tuple)) and len(pos) == 2:
@@ -309,6 +320,7 @@ class Pokemon:
             return
         self.CapturaEstado["captura_pendente"] = False
         self.CapturaEstado["resultado_final"] = False
+        self._tocar_resultado_captura(False, str(self.CapturaEstado.get("token_arremesso") or ""))
         self._trocar_fase("fuga")
         self._recuperacao_restante_s = max(self._recuperacao_restante_s, self.TempoRecuperacaoMovimentoMs / 1000.0)
 
@@ -317,6 +329,7 @@ class Pokemon:
             return
         self.CapturaEstado["captura_pendente"] = False
         self.CapturaEstado["resultado_final"] = True
+        self._tocar_resultado_captura(True, str(self.CapturaEstado.get("token_arremesso") or ""))
         if not isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)):
             bola = self._posicao_bola_mundo()
             self.CapturaEstado["retorno_inicio"] = [float(bola[0]), float(bola[1])]

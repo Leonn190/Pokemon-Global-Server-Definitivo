@@ -332,11 +332,16 @@ class ControladorPlayer:
                 },
             })
         for bau in baus:
+            bau_id = int(bau.get("id", 0) or 0)
+            bau_local = self._objetos.BausPorId.get(bau_id)
+            if bau_local is not None and (not bool(getattr(bau_local, "Aberto", False))):
+                bau_local.AguardandoConfirmacaoAbertura = True
+                bau_local._aguardando_desde_ms = int(pygame.time.get_ticks())
             self._objetos.EnfileirarDiffRapida({
                 "tipo": "evento",
                 "categoria": "interacao_bau",
                 "payload": {
-                    "bau_id": int(bau.get("id", 0) or 0),
+                    "bau_id": bau_id,
                     "pos_mao": [float(colisor_mao.x), float(colisor_mao.y)],
                     "instante_cliente_ms": instante,
                 },

@@ -4,6 +4,7 @@ import copy
 import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Paineis.Container import Container
 from Codigo.Paineis.FichaItem import FichaItem
 from Codigo.Paineis.PainelCraft import PainelCraft
@@ -284,6 +285,7 @@ class InventarioItens:
                 'item': item,
                 'origem': tuple(getattr(self.Ator, 'Posicao', (0, 0))),
             }
+            tocar("Dropar")
         if quantidade is None or self._quantidade(self._arrastavel.Item) <= quantidade:
             self._arrastavel.cancelar()
             return

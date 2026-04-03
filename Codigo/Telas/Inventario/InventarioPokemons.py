@@ -40,6 +40,7 @@ class InventarioPokemons:
         self._area_grid = pygame.Rect(0, 0, 0, 0)
         self._area_ficha = pygame.Rect(0, 0, 0, 0)
         self._area_info = pygame.Rect(0, 0, 0, 0)
+        self._area_abas = pygame.Rect(0, 0, 0, 0)
         self._area_times = pygame.Rect(0, 0, 0, 0)
         self._area_abas = pygame.Rect(0, 0, 0, 0)
         self._area_conteudo_lateral = pygame.Rect(0, 0, 0, 0)

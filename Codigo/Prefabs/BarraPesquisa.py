@@ -21,6 +21,7 @@ class BarraPesquisa(CaixaTexto):
         self._versao_projecao = 0
         self._rect_cache = pygame.Rect(self.rect)
         self._cache_nome_normalizado = {}
+        self._mudou_entrada = False
 
     @staticmethod
     def _norm(texto):
@@ -75,6 +76,7 @@ class BarraPesquisa(CaixaTexto):
         super().set_texto(texto)
         if self.texto != texto_anterior:
             self._projecao_suja = True
+            self._mudou_entrada = True
 
     def _aplicar_ordenacao(self, indice):
         if not (0 <= int(indice) < len(self._ordens)):
@@ -94,6 +96,12 @@ class BarraPesquisa(CaixaTexto):
             self._lista_base[i] = None
         self._projecao_suja = True
         self._versao_projecao += 1
+        self._mudou_entrada = True
+
+    def consumir_mudanca_entrada(self):
+        mudou = bool(self._mudou_entrada)
+        self._mudou_entrada = False
+        return mudou
 
     def _reconstruir_botoes(self):
         self._botoes_ordenacao = []
@@ -112,6 +120,9 @@ class BarraPesquisa(CaixaTexto):
             else:
                 def _acao(_jogo, _botao, idx=indice):
                     self._ordens[idx][2]()
+                    self._projecao_suja = True
+                    self._versao_projecao += 1
+                    self._mudou_entrada = True
 
             botao = Botao(
                 pygame.Rect(x, self.rect.centery - altura // 2, largura, altura),
@@ -187,5 +198,6 @@ class BarraPesquisa(CaixaTexto):
         super().render(tela, eventos, dt)
         if self.texto != texto_anterior:
             self._projecao_suja = True
+            self._mudou_entrada = True
         for botao in self._botoes_ordenacao:
             botao.render(tela, eventos, dt, jogo)

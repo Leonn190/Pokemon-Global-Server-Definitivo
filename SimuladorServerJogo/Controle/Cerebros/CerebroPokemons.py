@@ -68,6 +68,22 @@ class CerebroPokemons:
             if not isinstance(poke, PokemonServer):
                 self._core._pokemons_ids.discard(oid)
                 continue
+            cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
+            if cap:
+                liberar_tick = int(cap.get("liberar_movimento_tick", 0) or 0)
+                if bool(cap.get("captura_pendente", False)) and liberar_tick > 0 and int(self._core._tick_contador) >= liberar_tick:
+                    cap["captura_pendente"] = False
+                    cap["pokemon_colisao_ativa"] = True
+                    cap["pokemon_interacao_ativa"] = True
+                    poke.estado_extra["captura_fase"] = "nenhuma"
+                    BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": poke.estado_extra})
+                    registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120}, objeto_id=poke.Id, autor="server", categoria="pokemon")
+
+            cooldown_ate = int(poke.estado_extra.get("cooldown_movimento_ate_tick", 0) or 0)
+            if int(self._core._tick_contador) < cooldown_ate:
+                continue
+            if bool(cap.get("captura_pendente", False)):
+                continue
 
             estado = self._core._movimento_estado.get(oid)
             if not isinstance(estado, dict):

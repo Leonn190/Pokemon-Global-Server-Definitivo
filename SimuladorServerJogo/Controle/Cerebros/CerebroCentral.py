@@ -14,7 +14,6 @@ from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_en
 from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Geradores.GeradorPokemon import materializar_pokemon
-from SimuladorServerJogo.Logica.AutoridadeCaptura import coletar_eventos_captura_agendada
 
 from SimuladorServerJogo.Controle.Cerebros.CerebroBaus import CerebroBaus
 from SimuladorServerJogo.Controle.Cerebros.CerebroPokemons import CerebroPokemons
@@ -42,6 +41,7 @@ class CerebroCentral:
         self._spawns_pokemon_ultimos_100: Deque[int] = deque()
         self._spawns_bau_ultimos_100: Deque[int] = deque()
         self._movimento_estado: Dict[int, Dict[str, object]] = {}
+        self._capturas_inventario_pendentes: Deque[Dict[str, object]] = deque()
 
         self._servico_inventario = ServicoInventario()
         self._cerebro_baus = CerebroBaus(self)
@@ -196,26 +196,12 @@ class CerebroCentral:
         return True
 
     def _executar_tick_capturas(self) -> None:
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
-
-        agora_ms = int(time.time() * 1000)
-        for oid in list(self._pokemons_ids):
-            poke = BANCO_DADOS.obter_objeto(oid)
-            if not isinstance(poke, PokemonServer):
-                self._pokemons_ids.discard(oid)
-                continue
-            eventos = coletar_eventos_captura_agendada(poke, agora_ms)
-            if not eventos:
-                continue
-            BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": poke.estado_extra})
-            registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120}, objeto_id=poke.Id, autor="server", categoria="pokemon")
-            cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
-            if str(cap.get("fase", "")) == "finalizada" and str(cap.get("resultado", "")) == "sucesso":
-                self._adicionar_pokemon_capturado_inventario(int(cap.get("dono_id", 0) or 0), poke)
-                removido = BANCO_DADOS.remover_objeto(poke.Id)
-                self._pokemons_ids.discard(poke.Id)
-                if removido is not None:
-                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "captura_sucesso"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 120}, objeto_id=removido.Id, autor="server", categoria="pokemon")
+        while self._capturas_inventario_pendentes and int(self._capturas_inventario_pendentes[0].get("tick", 0) or 0) <= int(self._tick_contador):
+            item = self._capturas_inventario_pendentes.popleft()
+            self._adicionar_pokemon_capturado_inventario(
+                int(item.get("dono_id", 0) or 0),
+                item.get("pokemon_snapshot", {}) if isinstance(item.get("pokemon_snapshot"), dict) else {},
+            )
 
     @staticmethod
     def _snapshot_pokemon_capturado(poke: PokemonServer) -> Dict[str, object]:
@@ -254,7 +240,7 @@ class CerebroCentral:
         }
         return materializar_pokemon(bruto, efeitos_captura={"bonus_iv": bonus_iv, "bonus_nivel": bonus_nivel, "bonus_amizade": bonus_amizade})
 
-    def _adicionar_pokemon_capturado_inventario(self, dono_id: int, poke: PokemonServer) -> None:
+    def _adicionar_pokemon_capturado_inventario(self, dono_id: int, pokemon_snapshot: Dict[str, object]) -> None:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 
         usuario = BANCO_DADOS.usuario_por_objeto_id(int(dono_id))
@@ -262,11 +248,22 @@ class CerebroCentral:
             return
         perfil = obter_personagem_para_entrada(str(usuario)) or {}
         inventario = perfil.get("inventario") if isinstance(perfil.get("inventario"), dict) else {}
-        pokemon_snapshot = self._snapshot_pokemon_capturado(poke)
         if not self._servico_inventario.adicionar_pokemon_capturado(inventario, pokemon_snapshot, perfil):
             return
 
         self._servico_inventario.persistir_jogador(str(usuario), int(BANCO_DADOS.objeto_id_por_usuario(str(usuario)) or 0), inventario, registrar_diff)
+
+    def agendar_pokemon_capturado_inventario(self, dono_id: int, poke: PokemonServer, atraso_ticks: int = 24) -> None:
+        if not isinstance(poke, PokemonServer):
+            return
+        snapshot = self._snapshot_pokemon_capturado(poke)
+        self._capturas_inventario_pendentes.append(
+            {
+                "tick": int(self._tick_contador + max(1, int(atraso_ticks or 1))),
+                "dono_id": int(dono_id or 0),
+                "pokemon_snapshot": snapshot,
+            }
+        )
 
     def registrar_lancamento_projetil(self, client_id: str, payload: Dict[str, object]) -> bool:
         return self._cerebro_projeteis.registrar_lancamento(client_id, payload)

@@ -42,6 +42,8 @@ class Container(PainelRolavel):
         self._topo_slots = 0
         self._mapeamento_visual_real = []
         self._buffer_linhas_geradas = 3
+        self._assinatura_mapeamento = None
+        self._assinatura_tamanho = None
         self.SlotsEspeciaisFixos = 0
         self._fonte_slots_especiais = pygame.font.SysFont('arial', 28, bold=True)
 
@@ -53,6 +55,7 @@ class Container(PainelRolavel):
         self.rect = pygame.Rect(rect)
         self._atualizar_layout_barra()
         self.atualizar_area_real()
+        self._assinatura_mapeamento = None
         self.marcar_sujo()
 
     def configurar_barra_pesquisa(self, barra_pesquisa, altura_topo=58):
@@ -60,6 +63,7 @@ class Container(PainelRolavel):
         self._topo_slots = max(0, int(altura_topo)) if barra_pesquisa is not None else 0
         self._atualizar_layout_barra()
         self.atualizar_area_real()
+        self._assinatura_mapeamento = None
         self.marcar_sujo()
 
     def configurar_slots_especiais(self, quantidade):
@@ -79,8 +83,10 @@ class Container(PainelRolavel):
     def _normalizar_tamanho(self):
         if len(self.Itens) < self.SlotsTotal:
             self.Itens.extend([None] * (self.SlotsTotal - len(self.Itens)))
+            self._assinatura_mapeamento = None
         elif len(self.Itens) > self.SlotsTotal:
             del self.Itens[self.SlotsTotal:]
+            self._assinatura_mapeamento = None
 
     def _linhas_totais(self):
         return max(1, (self.SlotsTotal + self.Colunas - 1) // self.Colunas)
@@ -149,6 +155,16 @@ class Container(PainelRolavel):
             return
         for i in range(self.SlotsTotal):
             self._mapeamento_visual_real[i] = i
+
+    def _assinatura_mapeamento_atual(self):
+        if self.BarraPesquisa is None:
+            return (self.SlotsTotal, id(self.Itens), None, False)
+        return (
+            self.SlotsTotal,
+            id(self.Itens),
+            self.BarraPesquisa.versao_projecao(),
+            self.BarraPesquisa.tem_projecao_ativa(),
+        )
 
     def indice_real_por_visual(self, indice_visual, exigir_item=False):
         if indice_visual is None or not (0 <= int(indice_visual) < int(self.SlotsTotal)):
@@ -479,10 +495,15 @@ class Container(PainelRolavel):
         tela.fill((0, 0, 0, 0))
         if hasattr(self, 'CorFundo'):
             tela.fill(self.CorFundo)
+        assinatura_tamanho = (len(self.Itens), self.SlotsTotal)
+        if assinatura_tamanho != self._assinatura_tamanho:
+            self._assinatura_tamanho = assinatura_tamanho
+            self._normalizar_tamanho()
 
-        self._normalizar_tamanho()
-
-        self._atualizar_mapeamento_visual()
+        assinatura_mapeamento = self._assinatura_mapeamento_atual()
+        if assinatura_mapeamento != self._assinatura_mapeamento or len(self._mapeamento_visual_real) != self.SlotsTotal:
+            self._atualizar_mapeamento_visual()
+            self._assinatura_mapeamento = assinatura_mapeamento
 
         item_oculto = self._item_oculto_render
         highlight = self._highlight_render

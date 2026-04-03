@@ -109,7 +109,11 @@ class PainelArvoreHabilidades:
         self._tooltip_pos = (20, 20)
         self._botao_fechar: Botao | None = None
         self._botoes_nodos: dict[str, Botao] = {}
+        self._status_cache_nodos: dict[str, str] = {}
+        self._exec_por_nodo: dict[str, callable] = {}
         self._solicitou_fechar = False
+        self._surface_estatica: pygame.Surface | None = None
+        self._surface_estatica_chave = None
 
         base = {"outline": True, "outline_thickness": 1, "outline_color": (0, 0, 0), "shadow": False}
         self.txt_titulo = Texto("Árvore de habilidades", style={**base, "size": 32, "color": (246, 249, 255)})
@@ -118,8 +122,21 @@ class PainelArvoreHabilidades:
 
         self._nodos = self._montar_nodos_skills()
         self._decorativos = self._montar_nodos_decorativos()
+        self._decorativos_ids = {n.id for n in self._decorativos}
         self._todos_pontos = self._montar_pontos_unificados()
         self._nodos_por_id = {nodo.id: nodo for nodo in self._nodos}
+        self._aprendidas_frame = set()
+        self._txt_decorativo = Texto(
+            "?",
+            style={
+                "size": 22,
+                "align": "center",
+                "outline": True,
+                "outline_thickness": 1,
+                "outline_color": (0, 0, 0),
+                "shadow": False,
+            },
+        )
 
     def _montar_nodos_skills(self):
         P = self.POS
@@ -385,6 +402,9 @@ class PainelArvoreHabilidades:
         self._rect = pygame.Rect(rect)
         self._graph_rect = graph_rect
         self._tooltip_pos = (self._rect.right - 365, self._rect.bottom - 122)
+        self._status_cache_nodos = {}
+        self._surface_estatica = None
+        self._surface_estatica_chave = None
 
         def _fechar(_jogo, _botao):
             self._solicitou_fechar = True
@@ -405,6 +425,7 @@ class PainelArvoreHabilidades:
         )
         lado = max(38, int(self._graph_rect.width * 0.028) + 4)
         self._botoes_nodos = {}
+        self._exec_por_nodo = {}
         for nodo in self._nodos:
             cx, cy = self._ponto_tela(nodo.id)
             rect_botao = pygame.Rect(0, 0, lado, lado)
@@ -413,6 +434,7 @@ class PainelArvoreHabilidades:
             def _acao(_jogo, _botao, nid=nodo.id):
                 self.aprender(nid)
 
+            self._exec_por_nodo[nodo.id] = _acao
             botao = Botao(rect_botao, nodo.sigla, execute=_acao)
             botao.set_tooltip(self._tooltip_nodo(nodo))
             self._botoes_nodos[nodo.id] = botao
@@ -439,10 +461,8 @@ class PainelArvoreHabilidades:
         pygame.draw.circle(tela, (205, 227, 255), raiz, max(2, raio // 6))
 
     def _cor_aresta(self, origem_id: str, destino_id: str):
-        aprendidas = self._aprendidas_set()
-        decorativos = {n.id for n in self._decorativos}
-
-        if origem_id == "root" or destino_id == "root" or origem_id in decorativos or destino_id in decorativos:
+        aprendidas = self._aprendidas_frame
+        if origem_id == "root" or destino_id == "root" or origem_id in self._decorativos_ids or destino_id in self._decorativos_ids:
             return (86, 107, 152)
 
         if origem_id in aprendidas and destino_id in aprendidas:
@@ -450,43 +470,66 @@ class PainelArvoreHabilidades:
         return (86, 107, 152)
 
     def _desenhar_conexoes(self, tela):
-        # decorativos e skills usam a mesma regra: desenha linha para cada pai.
         for nodo in [*self._decorativos, *self._nodos]:
             origem = self._ponto_tela(nodo.id)
             for pai in nodo.pais:
+                if nodo.id in self._decorativos_ids or pai in self._decorativos_ids or pai == "root":
+                    continue
                 destino = self._ponto_tela(pai)
                 pygame.draw.line(tela, self._cor_aresta(nodo.id, pai), destino, origem, 5)
 
+    def _desenhar_conexoes_estaticas(self, tela):
+        for nodo in [*self._decorativos, *self._nodos]:
+            origem = self._ponto_tela(nodo.id)
+            for pai in nodo.pais:
+                if not (nodo.id in self._decorativos_ids or pai in self._decorativos_ids or pai == "root"):
+                    continue
+                destino = self._ponto_tela(pai)
+                pygame.draw.line(tela, (86, 107, 152), destino, origem, 5)
+
     def _desenhar_decorativos(self, tela):
         raio = max(14, int(self._graph_rect.width * 0.016))
-        estilo_txt = {
-            "size": 22,
-            "align": "center",
-            "outline": True,
-            "outline_thickness": 1,
-            "outline_color": (0, 0, 0),
-            "shadow": False,
-        }
         for nodo in self._decorativos:
             ponto = self._ponto_tela(nodo.id)
             pygame.draw.circle(tela, (48, 54, 74), ponto, raio)
             pygame.draw.circle(tela, (136, 145, 178), ponto, 2)
-            Texto(nodo.rotulo, pos=ponto, style=estilo_txt).draw(tela)
+            self._txt_decorativo.set_text(nodo.rotulo)
+            self._txt_decorativo.set_pos(ponto)
+            self._txt_decorativo.draw(tela)
 
         self.txt_centro.set_pos((self._graph_rect.centerx, self._graph_rect.centery + int(self._graph_rect.height * 0.22)))
         self.txt_centro.draw(tela)
+
+    def _garantir_camada_estatica(self):
+        chave = (self._rect.width, self._rect.height, self._graph_rect.x, self._graph_rect.y, self._graph_rect.width, self._graph_rect.height)
+        if self._surface_estatica is not None and self._surface_estatica_chave == chave:
+            return
+        self._surface_estatica_chave = chave
+        self._surface_estatica = pygame.Surface((self._rect.width, self._rect.height), pygame.SRCALPHA)
+        rect_original = pygame.Rect(self._rect)
+        graph_original = pygame.Rect(self._graph_rect)
+        self._rect = pygame.Rect(0, 0, rect_original.width, rect_original.height)
+        self._graph_rect = graph_original.move(-rect_original.x, -rect_original.y)
+        self._desenhar_fundo(self._surface_estatica)
+        self._desenhar_conexoes_estaticas(self._surface_estatica)
+        self._desenhar_raiz(self._surface_estatica)
+        self._desenhar_decorativos(self._surface_estatica)
+        self._rect = rect_original
+        self._graph_rect = graph_original
 
     def _desenhar_nodos(self, tela, eventos, dt):
         Botao.iniciar_camada_tooltips()
         for nodo in self._nodos:
             status = self._status_nodo(nodo)
             botao = self._botoes_nodos[nodo.id]
-            botao.set_style(**self._estilo_nodo(status))
-            botao.set_habilitado(status in {"aprendida", "disponivel"})
-            botao.set_execute(None if status == "aprendida" else (lambda _jogo, _botao, nid=nodo.id: self.aprender(nid)))
+            status_anterior = self._status_cache_nodos.get(nodo.id)
+            if status_anterior != status:
+                botao.set_style(**self._estilo_nodo(status))
+                botao.set_habilitado(status in {"aprendida", "disponivel"})
+                botao.set_execute(None if status == "aprendida" else self._exec_por_nodo.get(nodo.id))
+                self._status_cache_nodos[nodo.id] = status
             if botao.tooltip is not None:
                 botao.tooltip.definir_posicao_fixa(self._tooltip_pos)
-                botao.tooltip.definir_conteudo(titulo=nodo.nome, descricao=nodo.descricao)
             botao.render(tela, eventos, dt, None)
         self._botao_fechar.render(tela, eventos, dt, None)
         Botao.finalizar_camada_tooltips(tela)
@@ -494,11 +537,11 @@ class PainelArvoreHabilidades:
     def renderizar(self, tela, rect, eventos=None, dt=0.0):
         eventos = eventos or []
         self._solicitou_fechar = False
+        self._aprendidas_frame = self._aprendidas_set()
         self._reconstruir_layout(pygame.Rect(rect))
-        self._desenhar_fundo(tela)
+        self._garantir_camada_estatica()
+        tela.blit(self._surface_estatica, self._rect.topleft)
         self._desenhar_textos(tela)
         self._desenhar_conexoes(tela)
-        self._desenhar_raiz(tela)
-        self._desenhar_decorativos(tela)
         self._desenhar_nodos(tela, eventos, dt)
         return self._solicitou_fechar

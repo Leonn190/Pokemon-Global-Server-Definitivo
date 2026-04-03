@@ -36,6 +36,7 @@ class InventarioPokemons:
         self._pokemon_hover = None
         self._estava_ativo = False
         self._layout_montado = False
+        self._ultima_chave_layout = None
 
         self._area_grid = pygame.Rect(0, 0, 0, 0)
         self._area_ficha = pygame.Rect(0, 0, 0, 0)
@@ -229,6 +230,18 @@ class InventarioPokemons:
             self._painel_times.garantir_minimo_times(self._quantidade_times())
         self._painel_info.rect = pygame.Rect(self._area_info)
         self._layout_montado = True
+
+    def _chave_layout(self, area):
+        area = pygame.Rect(area)
+        return (
+            area.x, area.y, area.width, area.height,
+            bool(self._pokemon_analisado is not None),
+            self._limite_slots(),
+            self._linhas_grid_visiveis(),
+            self._quantidade_times(),
+            len(self._lista_pokemons()),
+            len(self._times_pokemons()),
+        )
 
     def _alvo_no_mouse(self, mouse_pos):
         analisando = self._pokemon_analisado is not None
@@ -746,8 +759,10 @@ class InventarioPokemons:
             self.Inventario = getattr(self.Ator, 'Inventario', None)
             self.Perfil = getattr(self.Ator, 'Perfil', None)
 
-        if not self._layout_montado:
+        chave_layout = self._chave_layout(area)
+        if not self._layout_montado or chave_layout != self._ultima_chave_layout:
             self._reconstruir(area)
+            self._ultima_chave_layout = chave_layout
         if not ativo:
             if self._estava_ativo:
                 self.on_close()
@@ -755,7 +770,10 @@ class InventarioPokemons:
         if not self._estava_ativo:
             self.on_open()
 
-        self._reconstruir(area)
+        chave_layout = self._chave_layout(area)
+        if chave_layout != self._ultima_chave_layout:
+            self._reconstruir(area)
+            self._ultima_chave_layout = chave_layout
         self._sincronizar_pokemon_analisado()
         if self._subtela_ativa is not None:
             if getattr(self._subtela_ativa, 'encerrada', False):

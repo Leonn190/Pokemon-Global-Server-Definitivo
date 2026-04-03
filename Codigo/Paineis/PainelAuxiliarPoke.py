@@ -23,6 +23,7 @@ class PainelAuxiliarPoke:
         self._container: Container | None = None
         self._itens_filtro: list = []
         self._indices_inventario: list[int | None] = []
+        self._assinatura_sincronizada = None
         self._fonte = Texto("", style={"size": 14, "outline": True, "outline_thickness": 1, "outline_color": (8, 12, 20)})
         self._configurar_layout()
         self._mapa_estilos = self._carregar_mapa_estilos()
@@ -103,6 +104,7 @@ class PainelAuxiliarPoke:
         if aba not in self.ABAS:
             return
         self._aba_ativa = aba
+        self._assinatura_sincronizada = None
         for nome, botao in self._botoes.items():
             botao.set_selecionado(nome == aba)
 
@@ -134,6 +136,14 @@ class PainelAuxiliarPoke:
             self.configurar_rects(area_abas, area_conteudo)
         else:
             self.Rect = pygame.Rect(area_conteudo)
+        area_sig = (self.Rect.x, self.Rect.y, self.Rect.width, self.Rect.height, self.RectAbas.x, self.RectAbas.y, self.RectAbas.width, self.RectAbas.height)
+        inventario_itens = getattr(inventario, "Itens", []) or []
+        inventario_pokemons = getattr(inventario, "Pokemons", []) or []
+        assinatura = (self._aba_ativa, area_sig, id(inventario_itens), len(inventario_itens), id(inventario_pokemons), len(inventario_pokemons))
+        if assinatura == self._assinatura_sincronizada:
+            return
+        self._assinatura_sincronizada = assinatura
+
         if self._aba_ativa == "pokemons":
             self._itens_filtro = [p for p in list(getattr(inventario, "Pokemons", []) or []) if p is not None]
             self._indices_inventario = []

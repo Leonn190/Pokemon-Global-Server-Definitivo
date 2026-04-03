@@ -16,6 +16,7 @@ from Codigo.Paineis.FichaPokemon import FichaPokemon
 from Codigo.Paineis.PainelTimes import PainelTimes
 from Codigo.Prefabs.Arrastavel import Arrastavel
 from Codigo.Prefabs.BarraPesquisa import BarraPesquisa
+from Codigo.Prefabs.Botao import BotaoAlavanca
 from Codigo.Prefabs.Opcoes import Opções
 from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
@@ -50,6 +51,8 @@ class InventarioPokemons:
         self.TxtHover = Texto('', style={**estilo, 'size': 15, 'color': (174, 190, 224), 'align': 'midleft'})
         self._painel_info = Painel((0, 0, 0, 0), cor_fundo=(18, 26, 44, 242), cor_borda=(66, 88, 136), borda=2, raio=16)
         self._barra_pesquisa = None
+        self._botao_toggle_poder = None
+        self._mostrar_poder_slots = False
         self._opcoes = Opções()
         self._subtela_ativa = None
         self._ficha_pokemon = FichaPokemon()
@@ -59,6 +62,7 @@ class InventarioPokemons:
         self._csv_equipaveis = None
 
     def on_open(self):
+        PokemonInventario.definir_mostrar_poder_slots(self._mostrar_poder_slots)
         self._estava_ativo = True
 
     def on_close(self):
@@ -69,6 +73,8 @@ class InventarioPokemons:
         self._subtela_ativa = None
         if self._barra_pesquisa is not None:
             self._barra_pesquisa.resetar_filtro()
+        PokemonInventario.definir_mostrar_poder_slots(False)
+        self._mostrar_poder_slots = False
         self._estava_ativo = False
 
     def bloqueia_toggle_inventario(self):
@@ -214,6 +220,39 @@ class InventarioPokemons:
             self._container.configurar_rect(self._area_grid)
             self._container.configurar_barra_pesquisa(self._barra_pesquisa)
 
+        def _toggle_poder(_jogo, ativo, _botao):
+            self._mostrar_poder_slots = bool(ativo)
+            PokemonInventario.definir_mostrar_poder_slots(self._mostrar_poder_slots)
+            self._sincronizar_visual_toggle_poder()
+            if self._container is not None:
+                self._container.marcar_sujo()
+            if self._painel_times is not None:
+                self._painel_times.marcar_sujo()
+
+        botao_lado = 30
+        botao_x = self._area_grid.right - 12 - botao_lado
+        botao_y = self._area_grid.y + 12
+        if self._botao_toggle_poder is None:
+            self._botao_toggle_poder = BotaoAlavanca(
+                pygame.Rect(botao_x, botao_y, botao_lado, botao_lado),
+                nome='P',
+                estado_inicial=self._mostrar_poder_slots,
+                execute=_toggle_poder,
+                style={
+                    'radius': 999,
+                    'border_width': 2,
+                    'hover_scale': 1.02,
+                    'press_scale': 0.98,
+                    'text_style': {'size': 16, 'outline': True, 'shadow': False},
+                },
+            )
+        else:
+            self._botao_toggle_poder.base_rect = pygame.Rect(botao_x, botao_y, botao_lado, botao_lado)
+            self._botao_toggle_poder.rect = pygame.Rect(self._botao_toggle_poder.base_rect)
+            self._botao_toggle_poder.set_execute(_toggle_poder)
+            self._botao_toggle_poder.set_estado(self._mostrar_poder_slots)
+        self._sincronizar_visual_toggle_poder()
+
         if self._painel_auxiliar is None:
             self._painel_auxiliar = PainelAuxiliarPoke(self._area_times)
             self._painel_auxiliar.configurar_rects(self._area_abas, self._area_times)
@@ -244,6 +283,8 @@ class InventarioPokemons:
         )
 
     def _alvo_no_mouse(self, mouse_pos):
+        if self._botao_toggle_poder is not None and self._botao_toggle_poder.rect.collidepoint(mouse_pos):
+            return None
         analisando = self._pokemon_analisado is not None
         if analisando and not self._painel_times_ativo(analisando):
             return self._painel_auxiliar.alvo_no_mouse(mouse_pos) if self._painel_auxiliar is not None else None
@@ -356,7 +397,7 @@ class InventarioPokemons:
         for tipo in tipos:
             fundo = pygame.Rect(x, y, lado, lado)
             pygame.draw.circle(tela, (250, 250, 255), fundo.center, lado // 2)
-            icone = PokemonInventario.icone_tipo(tipo, lado)
+            icone = PokemonInventario.icone_tipo(tipo, lado + 1)
             if icone is not None:
                 tela.blit(icone, icone.get_rect(center=fundo.center))
             x += lado + gap
@@ -374,6 +415,7 @@ class InventarioPokemons:
         for i in range(prefixo + len(base), len(itens)):
             itens[i] = None
         self._barra_pesquisa._projecao_suja = True
+        self._barra_pesquisa._mudou_entrada = True
         self._container.marcar_sujo()
 
     def _chave(self, pokemon):
@@ -961,9 +1003,11 @@ class InventarioPokemons:
             self.TxtResumo.draw(tela)
 
             self.TxtHover.set_text(self._nome_pokemon(self._pokemon_hover) or '')
-            self.TxtHover.set_pos((self._area_info.x + 210, self._area_info.centery))
+            self.TxtHover.set_pos((self._area_info.x + 232, self._area_info.centery))
             self.TxtHover.draw(tela)
             self._desenhar_tipos_hover(tela, self._pokemon_hover)
+            if self._botao_toggle_poder is not None:
+                self._botao_toggle_poder.render(tela, eventos, dt, None)
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
             rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.1), int(self._arrastavel.Rect.height * 0.1))
             item_drag = self._arrastavel.Item
@@ -976,3 +1020,25 @@ class InventarioPokemons:
         self._opcoes.render(tela, eventos, dt)
         if self._subtela_ativa is not None:
             self._subtela_ativa.render(tela, eventos, dt)
+    def _estilo_toggle_poder(self, ligado):
+        if ligado:
+            return {
+                'bg': (92, 130, 210),
+                'bg_hover': (112, 154, 232),
+                'bg_pressed': (76, 114, 188),
+                'border': (255, 252, 210),
+                'border_hover': (255, 255, 235),
+            }
+        return {
+            'bg': (52, 74, 132),
+            'bg_hover': (80, 112, 188),
+            'bg_pressed': (40, 58, 108),
+            'border': (235, 242, 255),
+            'border_hover': (255, 255, 255),
+        }
+
+    def _sincronizar_visual_toggle_poder(self):
+        if self._botao_toggle_poder is None:
+            return
+        self._botao_toggle_poder.set_style(**self._estilo_toggle_poder(self._mostrar_poder_slots))
+        self._botao_toggle_poder.set_text('P')

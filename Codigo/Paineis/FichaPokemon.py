@@ -699,7 +699,7 @@ class FichaPokemon:
         direita_titulo = botao_rect.x - 10
         centro_x = (esquerda_titulo + direita_titulo) // 2
         self.TxtTituloCentro.set_text(nome)
-        self.TxtTituloCentro.set_pos((centro_x, header.y + 30))
+        self.TxtTituloCentro.set_pos((centro_x, header.y + 27))
         self.TxtTituloCentro.draw(tela)
 
     def _preparar_animacao_barras(self, pokemon: dict | None):

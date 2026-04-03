@@ -18,6 +18,12 @@ class PokemonInventario:
     _cache_surface: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
     _cache_icone_coracao: Dict[int, Optional[pygame.Surface]] = {}
     _cache_icone_tipo: Dict[Tuple[str, int], Optional[pygame.Surface]] = {}
+    _cache_fonte_poder: Dict[int, pygame.font.Font] = {}
+    _mostrar_poder_slots: bool = False
+
+    @classmethod
+    def definir_mostrar_poder_slots(cls, ativo: bool):
+        cls._mostrar_poder_slots = bool(ativo)
 
     @staticmethod
     def _norm(texto: str) -> str:
@@ -296,3 +302,16 @@ class PokemonInventario:
             marcador = pygame.Rect(rect.x + 4, rect.y + 4, 12, 12)
             pygame.draw.rect(tela, (176, 250, 170), marcador, border_radius=3)
             pygame.draw.rect(tela, (236, 255, 234), marcador, 1, border_radius=3)
+
+        if cls._mostrar_poder_slots and rect.height >= 54:
+            poder = int(round(cls.poder_total(pokemon)))
+            fonte_size = max(10, int(rect.height * 0.20))
+            fonte = cls._cache_fonte_poder.get(fonte_size)
+            if fonte is None:
+                fonte = pygame.font.SysFont('arial', fonte_size, bold=True)
+                cls._cache_fonte_poder[fonte_size] = fonte
+            texto = fonte.render(str(poder), True, (244, 248, 255))
+            sombra = fonte.render(str(poder), True, (8, 12, 20))
+            pos = texto.get_rect(center=(rect.centerx, rect.bottom - max(7, int(rect.height * 0.12))))
+            tela.blit(sombra, (pos.x + 1, pos.y + 1))
+            tela.blit(texto, pos)

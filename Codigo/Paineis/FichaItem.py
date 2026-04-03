@@ -31,8 +31,8 @@ class FichaItem:
         self.TxtRaridade = Texto('-', style={**base, 'size': 15, 'color': (236, 241, 255), 'align': 'midleft'})
         self.TxtDescricao = SetorTexto(
             texto='',
-            linhas=2,
-            caracteres_por_linha=44,
+            linhas=3,
+            caracteres_por_linha=34,
             style={**base, 'size': 13, 'color': (181, 193, 220), 'setor_align': 'left'},
         )
         self.TxtVazio.set_text('')
@@ -102,8 +102,8 @@ class FichaItem:
 
         margem = 8
         gap = 10
-        box_icone = pygame.Rect(area.right - 58, area.y + (area.height - 52) // 2, 52, 52)
-        nome_x = area.x + margem - 12
+        box_icone = pygame.Rect(area.right - 52, area.y + (area.height - 44) // 2, 44, 44)
+        nome_x = area.x + margem - 4
         centro_y = area.centery
         self.TxtNome.set_text(nome)
         self.TxtNome.set_pos((nome_x, centro_y))
@@ -122,8 +122,8 @@ class FichaItem:
         self.TxtRaridade.draw(tela)
         ItemInventario.desenhar_item_no_rect(tela, item, box_icone)
 
-        desc_rect = pygame.Rect(desc_x, area.y + 8, max(36, pill_rect.x - gap - desc_x), area.height - 16)
+        desc_rect = pygame.Rect(desc_x, area.y + 6, max(28, pill_rect.x - gap - desc_x - 8), area.height - 12)
         self.TxtDescricao.configurar_rect(desc_rect)
-        self.TxtDescricao.set_limites(linhas=2, caracteres_por_linha=42)
+        self.TxtDescricao.set_limites(linhas=3, caracteres_por_linha=34)
         self.TxtDescricao.set_texto(descricao)
         self.TxtDescricao.draw(tela)

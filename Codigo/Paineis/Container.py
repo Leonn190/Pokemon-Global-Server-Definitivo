@@ -550,6 +550,23 @@ class Container(PainelRolavel):
             self.marcar_sujo()
 
         eventos_render = eventos or []
+        assinatura_barra_antes = None
+        if self.BarraPesquisa is not None:
+            assinatura_barra_antes = (
+                self.BarraPesquisa.versao_projecao(),
+                self.BarraPesquisa.tem_projecao_ativa(),
+            )
+
         self.render(tela, eventos_render, dt, jogo=jogo)
         if self.BarraPesquisa is not None:
             self.BarraPesquisa.render(tela, eventos_render, dt, jogo=jogo)
+            assinatura_barra_depois = (
+                self.BarraPesquisa.versao_projecao(),
+                self.BarraPesquisa.tem_projecao_ativa(),
+            )
+            mudou_interacao = self.BarraPesquisa.consumir_mudanca_entrada()
+            if assinatura_barra_depois != assinatura_barra_antes or mudou_interacao:
+                self._assinatura_mapeamento = None
+                self.marcar_sujo()
+                self.render(tela, [], dt, jogo=jogo)
+                self.BarraPesquisa.render(tela, [], dt, jogo=jogo)

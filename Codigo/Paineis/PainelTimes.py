@@ -20,9 +20,6 @@ class PainelTimes(PainelRolavel):
         self.Times = times if times is not None else []
         self.SlotsPorTime = max(1, int(slots_por_time))
         self.Padding = 12
-        self.CabecalhoY = 2
-        self.CabecalhoH = 30
-        self.GapAbaixoCabecalho = 12
         self.GapCards = 10
         self.SlotGap = 8
 
@@ -68,7 +65,7 @@ class PainelTimes(PainelRolavel):
         return 44 + self._slot_px() + 16
 
     def _topo_util_conteudo(self):
-        return self.Padding + self.CabecalhoY + self.CabecalhoH + self.GapAbaixoCabecalho
+        return self.Padding
 
     def _normalizar_time(self, time, indice):
         nome_padrao = f'Time {indice + 1}'
@@ -109,9 +106,6 @@ class PainelTimes(PainelRolavel):
         total = len(self.Times)
         altura = (
             self.Padding * 2
-            + self.CabecalhoY
-            + self.CabecalhoH
-            + self.GapAbaixoCabecalho
             + total * self._card_h()
             + max(0, total - 1) * self.GapCards
         )

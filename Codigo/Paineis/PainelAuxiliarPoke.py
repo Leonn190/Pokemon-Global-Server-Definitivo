@@ -15,8 +15,9 @@ from Codigo.Prefabs.Texto import Texto
 class PainelAuxiliarPoke:
     ABAS = ("times", "pokemons", "equipaveis", "pocoes")
 
-    def __init__(self, rect: pygame.Rect):
-        self.Rect = pygame.Rect(rect)
+    def __init__(self, rect_abas: pygame.Rect, rect_conteudo: pygame.Rect):
+        self.RectAbas = pygame.Rect(rect_abas)
+        self.RectConteudo = pygame.Rect(rect_conteudo)
         self._aba_ativa = "times"
         self._botoes: dict[str, BotaoSelecao] = {}
         self._container: Container | None = None
@@ -56,8 +57,9 @@ class PainelAuxiliarPoke:
     def aba_ativa(self) -> str:
         return self._aba_ativa
 
-    def configurar_rect(self, rect: pygame.Rect):
-        self.Rect = pygame.Rect(rect)
+    def configurar_rects(self, rect_abas: pygame.Rect, rect_conteudo: pygame.Rect):
+        self.RectAbas = pygame.Rect(rect_abas)
+        self.RectConteudo = pygame.Rect(rect_conteudo)
         self._configurar_layout()
 
     def _configurar_layout(self):
@@ -65,9 +67,9 @@ class PainelAuxiliarPoke:
         self._botoes = {}
         gap = 8
         margem = 12
-        largura = max(68, int((self.Rect.width - margem * 2 - gap * 3) / 4))
-        y = self.Rect.y + 2
-        x = self.Rect.x + margem
+        largura = max(68, int((self.RectAbas.width - margem * 2 - gap * 3) / 4))
+        y = self.RectAbas.y
+        x = self.RectAbas.x + margem
         for nome in self.ABAS:
             rect = pygame.Rect(x, y, largura, 30)
             botao = antigos.get(nome)
@@ -128,7 +130,7 @@ class PainelAuxiliarPoke:
         return saida, indices
 
     def sincronizar(self, inventario, area_conteudo: pygame.Rect):
-        self.configurar_rect(area_conteudo)
+        self.configurar_rects(self.RectAbas, area_conteudo)
         if self._aba_ativa == "pokemons":
             self._itens_filtro = [p for p in list(getattr(inventario, "Pokemons", []) or []) if p is not None]
             self._indices_inventario = []
@@ -149,7 +151,7 @@ class PainelAuxiliarPoke:
             return
 
         slots_total = max(1, len(self._itens_filtro))
-        area_grid = pygame.Rect(self.Rect.x, self.Rect.y + 44, self.Rect.width, self.Rect.height - 44)
+        area_grid = pygame.Rect(self.RectConteudo)
         linhas_visiveis = max(1, min(8, (slots_total + colunas - 1) // colunas))
 
         if self._container is None:
@@ -200,11 +202,12 @@ class PainelAuxiliarPoke:
         return self._indices_inventario[int(indice_visual)]
 
     def desenhar(self, tela: pygame.Surface, eventos=None, dt: float = 0.0):
-        eventos = eventos or []
-        for botao in self._botoes.values():
-            botao.render(tela, eventos, dt, JOGO=None)
-
         if self._aba_ativa == "times":
             return
         if self._container is not None:
             self._container.desenhar(tela)
+
+    def desenhar_abas(self, tela: pygame.Surface, eventos=None, dt: float = 0.0):
+        eventos = eventos or []
+        for botao in self._botoes.values():
+            botao.render(tela, eventos, dt, JOGO=None)

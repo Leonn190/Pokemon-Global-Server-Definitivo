@@ -107,7 +107,7 @@ class InventarioItens:
         self._area_info = pygame.Rect(area.x + margem, self._area_grid.bottom + 16, largura_esquerda, 72)
         self._area_craft = pygame.Rect(self._area_grid.right + margem, area.y + topo, largura_direita, 290)
         self._area_receitas = pygame.Rect(self._area_grid.right + margem, self._area_craft.bottom + 9, largura_direita, area.bottom - (self._area_craft.bottom + 9) - 8)
-        self._area_ficha = pygame.Rect(self._area_info.x + 118, self._area_info.y + 4, self._area_info.width - 126, self._area_info.height - 8)
+        self._area_ficha = pygame.Rect(self._area_info.x + 132, self._area_info.y + 6, self._area_info.width - 144, self._area_info.height - 12)
 
         if self._container is None:
             self._container = Container(

@@ -86,6 +86,7 @@ def _estado_mundo_vazio():
         "grid_estruturas_naturais": [],
         "estruturas_naturais_tocadas": {},
         "players": {},
+        "npcs_vendedores": {},
         "spawn": [0.0, 0.0],
     }
 
@@ -353,6 +354,7 @@ def _sync_personagens_mundo():
     if not _ESTADO_MUNDO.get("meta"):
         return
     _ESTADO_MUNDO["players"] = _ESTADO["personagens"]
+    _ESTADO_MUNDO.setdefault("npcs_vendedores", {})
     _ESTADO_MUNDO["estruturas_naturais_tocadas"] = BANCO_DADOS.exportar_estruturas_tocadas()
     salvar_estado_mundo(_ESTADO_MUNDO)
 
@@ -396,6 +398,18 @@ def snapshot_estado():
             "erro_geracao": str(_ESTADO_GERACAO["erro"]),
             "operacao_geracao": str(_ESTADO_GERACAO.get("operacao", "nenhuma")),
         }
+
+
+def carregar_npcs_vendedores_estado() -> dict:
+    with _LOCK:
+        bruto = _ESTADO_MUNDO.get("npcs_vendedores", {}) if isinstance(_ESTADO_MUNDO, dict) else {}
+        return {str(k): dict(v) for k, v in bruto.items()} if isinstance(bruto, dict) else {}
+
+
+def salvar_npcs_vendedores_estado(npcs: dict, force: bool = False) -> None:
+    with _LOCK:
+        _ESTADO_MUNDO["npcs_vendedores"] = {str(k): dict(v) for k, v in (npcs or {}).items() if isinstance(v, dict)}
+        _persistir_personagens(force=force)
 
 
 def definir_ligado(ativo):

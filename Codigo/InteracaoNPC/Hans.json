@@ -1,0 +1,39 @@
+{
+  "inicio": "entrada",
+  "nos": {
+    "entrada": {
+      "fala": "Ei! Sou Hans. Eu marco rotas e observo quem passa. Quer uma orientação rápida?",
+      "opcoes": [
+        {"texto": "Quero sim.", "proximo": "orientacao"},
+        {"texto": "Tem algum conselho pra iniciantes?", "proximo": "iniciante"},
+        {"texto": "Agora não.", "fim": true}
+      ]
+    },
+    "orientacao": {
+      "fala": "Se o destino for longe, divida em metas menores: ponto de descanso, coleta e retorno. Isso evita se perder.",
+      "opcoes": [
+        {"texto": "Faz sentido.", "proximo": "extra"},
+        {"texto": "Perfeito, já ajudou.", "fim": true}
+      ]
+    },
+    "iniciante": {
+      "fala": "Treine movimento e gestão de stamina. Jogador bom não é só quem bate forte, é quem controla o tempo da luta.",
+      "opcoes": [
+        {"texto": "Vou praticar isso.", "fim": true},
+        {"texto": "E sobre exploração?", "proximo": "exploracao"}
+      ]
+    },
+    "extra": {
+      "fala": "Também ajuda conversar com vendedores. A gente conhece os caminhos e os horários mais tranquilos das rotas.",
+      "opcoes": [
+        {"texto": "Boa, obrigado Hans.", "fim": true}
+      ]
+    },
+    "exploracao": {
+      "fala": "Quando entrar em área nova, anda em espiral curta: testa o entorno e amplia aos poucos. Menos risco, mais controle.",
+      "opcoes": [
+        {"texto": "Excelente dica.", "fim": true}
+      ]
+    }
+  }
+}

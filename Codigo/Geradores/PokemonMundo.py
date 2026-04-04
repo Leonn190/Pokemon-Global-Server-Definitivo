@@ -78,6 +78,7 @@ class Pokemon:
         self._despawn_pendente = False
         self._pronto_para_remover = False
         self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
+        self._diametro_tiles_visual = max(1.0, self._raio_colisao_padrao * 2.0)
         self.aplicar_snapshot(snapshot)
 
     @staticmethod
@@ -92,6 +93,16 @@ class Pokemon:
         if isinstance(v, (list, tuple)) and len(v) == 2:
             return (float(v[0]), float(v[1]))
         return (0.0, 0.0)
+
+    @staticmethod
+    def _diametro_por_tamanho(tamanho: object, default: float = 1.4) -> float:
+        try:
+            t = int(float(tamanho))
+        except (TypeError, ValueError):
+            t = 0
+        if t <= 0:
+            return float(default)
+        return 1.0 + (max(1, t) - 1) * 0.2
 
     @classmethod
     def _precarregar_frames_async(cls, especie: str) -> None:
@@ -412,8 +423,20 @@ class Pokemon:
         if captura:
             self.capturar(captura)
 
+        diametro_estado = self._f(estado.get("tamanho_tiles"), 0.0)
+        if diametro_estado <= 0.0:
+            diametro_estado = self._f(snapshot.get("tamanho_tiles"), 0.0)
+        if diametro_estado <= 0.0:
+            diametro_estado = self._diametro_por_tamanho(estado.get("tamanho", snapshot.get("tamanho")), default=self._diametro_tiles_visual)
+        self._diametro_tiles_visual = max(1.0, float(diametro_estado))
+        raio_por_tamanho = self._diametro_tiles_visual * 0.5
+        raio_snapshot = self._f(snapshot.get("raio_colisao"), -1.0)
+        if raio_snapshot > 0.0:
+            self._raio_colisao_padrao = max(0.2, raio_snapshot)
+        else:
+            self._raio_colisao_padrao = max(0.2, raio_por_tamanho)
+
         fase_local = self._fase()
-        self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), self._raio_colisao_padrao))
         if fase_local in {"captura", "checagem", "fuga", "volta"} or bool(self.CapturaEstado.get("resultado_final") is True):
             self.Colisor.raio_colisao = 0.0
             self.Colisor.raio_interacao = 0.0
@@ -562,7 +585,7 @@ class Pokemon:
 
     def _desenhar_animacao_captura(self, tela, camera, centro, tile_px):
         t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimCapturaMs))))
-        base = max(6, int(tile_px * max(self._raio_colisao_padrao, 0.42)))
+        base = max(6, int(tile_px * self._raio_colisao_padrao))
         aura_r = max(base + 4, int(base * (1.1 + 0.55 * t)))
         aura = pygame.Surface((aura_r * 3, aura_r * 3), pygame.SRCALPHA)
         c = (150, 220, 255, int(120 * (1.0 - t * 0.35)))
@@ -583,7 +606,7 @@ class Pokemon:
         self._desenhar_bola(tela, (centro[0], bola_y), tile_px, rotacao=bola_rot, escala=bola_squash)
 
     def _desenhar_animacao_checagem(self, tela, camera, centro, tile_px):
-        base = max(6, int(tile_px * max(self._raio_colisao_padrao, 0.42)))
+        base = max(6, int(tile_px * self._raio_colisao_padrao))
         indice = max(0, int(self.CapturaEstado.get("indice_checagem", 0) or 0))
         t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimChecagemMs))))
         amplitudes = [13.0, 9.0, 6.0]
@@ -628,7 +651,7 @@ class Pokemon:
         cx, cy = camera.mundo_para_tela_px(self.Posicao)
         centro = (int(cx), int(cy))
         tile_px = int(getattr(camera, "TilePx", 50))
-        base = max(6, int(tile_px * max(float(getattr(self.Colisor, "raio_colisao", 0.0) or 0.0), self._raio_colisao_padrao, 0.42)))
+        base = max(6, int(tile_px * max(float(getattr(self.Colisor, "raio_colisao", 0.0) or 0.0), self._raio_colisao_padrao)))
         fase = self._fase()
         em_pendente = self.em_captura_pendente()
 

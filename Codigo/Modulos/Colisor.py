@@ -310,6 +310,8 @@ class Colisor:
                 _, sx, sy, raio_obj, tipo_obj, campo, intensidade, *_ = col
                 if not str(tipo_obj).startswith("estrutura"):
                     continue
+                if str(tipo_obj).strip().lower() == "estrutura_estadio":
+                    continue
                 mvx, mvy = Colisor.aplicar_repulsao_circular(
                     posicao_entidade=(px, py),
                     movimento_entidade=(0.0, 0.0),

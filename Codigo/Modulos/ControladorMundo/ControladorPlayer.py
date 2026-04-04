@@ -578,6 +578,23 @@ class ControladorPlayer:
 
         dados = dict(payload)
         teleporte = bool(dados.get("teleporte", False))
+        estado_servidor = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+
+        estado_estrutural = {}
+        if estado_servidor:
+            ignorar_visual = {"angulo", "tapa", "mirando", "inventario_aberto", "correndo"}
+            estado_estrutural = {k: v for k, v in estado_servidor.items() if k not in ignorar_visual}
+
+        cache_payload = {"id": int(getattr(self._player_local, "Id", 0) or 0), "tipo": "entidade_player"}
+        if "posicao" in dados and isinstance(dados.get("posicao"), (list, tuple)):
+            cache_payload["posicao"] = list(dados.get("posicao"))
+        if estado_estrutural:
+            cache_payload["estado"] = estado_estrutural
+        for chave in ("dimensao", "estadio_atual_id"):
+            if chave in dados:
+                cache_payload[chave] = dados.get(chave)
+        if cache_payload.get("estado") or "posicao" in cache_payload or "dimensao" in cache_payload or "estadio_atual_id" in cache_payload:
+            self._objetos.aplicar_diff({"tipo": "update", "objeto_id": int(cache_payload["id"]), "payload": cache_payload})
 
         if teleporte:
             dados["hard"] = True

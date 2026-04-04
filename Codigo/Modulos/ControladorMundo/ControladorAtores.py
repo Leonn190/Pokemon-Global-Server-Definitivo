@@ -76,14 +76,18 @@ class ControladorAtores:
             Ator.desenhar_nome(tela, pos_tela, ator.Nome)
         return True
 
-    def npc_proximo(self, objetos: Dict[int, Dict[str, object]], posicao: Tuple[float, float], raio: float = 2.2) -> Optional[Dict[str, object]]:
+    def npc_proximo(self, objetos: Dict[int, Dict[str, object]], posicao: Tuple[float, float], raio: float = 2.2, dimensao_local: str = "Mundo") -> Optional[Dict[str, object]]:
         px, py = float(posicao[0]), float(posicao[1])
+        dim_local = str(dimensao_local or "Mundo")
         melhor = None
         melhor_d2 = None
         for oid, obj in objetos.items():
             if not isinstance(obj, dict):
                 continue
             estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            dim_obj = str(estado.get("dimensao") or obj.get("dimensao") or "Mundo")
+            if dim_obj != dim_local:
+                continue
             subtipo = str(estado.get("subtipo", "")).strip().lower()
             if subtipo not in {"npc_vendedor", "npc_combatente"}:
                 continue

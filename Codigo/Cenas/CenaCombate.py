@@ -3,6 +3,7 @@ from Codigo.Modulos.Camera import CameraBatalha
 from Codigo.Modulos.ControladorBatalha import ControladorBatalha
 from Codigo.Modulos.ElementosHudCombate import ElementosHudCombate
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
+from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo
 import pygame
 
 
@@ -47,4 +48,13 @@ class CenaCombate:
         self.SubtelaOpcoes.desenhar(JOGO)
 
     def Finalizar(self, JOGO):
-        pass
+        contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
+        npc_ctx = contexto.get("npc_contexto") if isinstance(contexto.get("npc_contexto"), dict) else {}
+        npc_id = int(npc_ctx.get("npc_id", 0) or 0)
+        if npc_id <= 0:
+            return
+        server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+        if link:
+            finalizar_interacao_npc_mundo(link, client_id, npc_id)

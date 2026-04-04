@@ -197,8 +197,11 @@ class Colisor:
 
         melhor_t = None
         for col in colisores:
-            _, sx, sy, raio_obj, _, _, _, *extra = col
+            _, sx, sy, raio_obj, tipo_obj, _, _, *extra = col
             formato = str(extra[0]).strip().lower() if extra else "circulo"
+            if str(tipo_obj).strip().lower() == "estrutura_estadio" and formato == "elipse":
+                # O estádio usa correção local contínua (normal da elipse), sem snap em t anterior.
+                continue
             if formato == "elipse" and len(extra) >= 3:
                 rx = float(extra[1]) + raio_entidade
                 ry = float(extra[2]) + raio_entidade

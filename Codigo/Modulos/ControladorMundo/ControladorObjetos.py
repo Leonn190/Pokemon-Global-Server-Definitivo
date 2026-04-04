@@ -69,12 +69,13 @@ class ControladorObjetos:
 
     def _dimensao_player_local(self) -> str:
         pid = int(self.id_player_local())
-        if pid > 0:
-            payload = self.ObjetosPorId.get(pid, {}) if isinstance(self.ObjetosPorId, dict) else {}
-            if isinstance(payload, dict):
-                estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
-                return str(estado.get("dimensao") or payload.get("dimensao") or "Mundo")
-        return "Mundo"
+        if pid <= 0:
+            return "Mundo"
+        payload = self.ObjetosPorId.get(pid, {}) if isinstance(self.ObjetosPorId, dict) else {}
+        if not isinstance(payload, dict):
+            return "Mundo"
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        return str(estado.get("dimensao") or payload.get("dimensao") or "Mundo")
 
     def _payload_na_dimensao_local(self, payload: Dict[str, object]) -> bool:
         dim_local = self._dimensao_player_local()
@@ -679,7 +680,7 @@ class ControladorObjetos:
             return
         player_payload = self.ObjetosPorId.get(int(self.id_player_local() or -1), {})
         estado_p = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
-        est_id = int(estado_p.get("estadio_atual_id", 0) or 0)
+        est_id = int(estado_p.get("estadio_atual_id", player_payload.get("estadio_atual_id", 0)) or 0)
         estadio_payload = self.EstadiosPorId.get(est_id, {})
         if not isinstance(estadio_payload, dict) or not estadio_payload:
             for candidato in self.EstadiosPorId.values():
@@ -694,9 +695,13 @@ class ControladorObjetos:
 
     def mensagem_interacao_estadio(self, pos_player: Tuple[float, float], dimensao_player: str, estadio_atual_id: int = 0) -> str:
         px, py = float(pos_player[0]), float(pos_player[1])
-        dim = str(dimensao_player or "Mundo")
+        player_payload = self.ObjetosPorId.get(int(self.id_player_local() or -1), {})
+        estado_p = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
+        dim_real = str(estado_p.get("dimensao") or player_payload.get("dimensao") or "")
+        dim = dim_real if dim_real else str(dimensao_player or "Mundo")
+        estadio_real_id = int(estado_p.get("estadio_atual_id", player_payload.get("estadio_atual_id", estadio_atual_id)) or 0)
         if dim != "Mundo":
-            estadio = self.EstadiosPorId.get(int(estadio_atual_id or 0), {})
+            estadio = self.EstadiosPorId.get(estadio_real_id, {})
             estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
             porta = estado.get("saida_interna_pos") if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2 else [30.0, 37.0]
             if (float(porta[0]) - px) ** 2 + (float(porta[1]) - py) ** 2 <= (2.0 * 2.0):

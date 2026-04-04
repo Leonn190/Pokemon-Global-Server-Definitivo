@@ -8,6 +8,7 @@ from typing import Callable, Dict, List, Optional
 import pygame
 
 from Codigo.Geradores.Ator import Ator
+from Codigo.Paineis.FichaItem import FichaItem
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto, TextoAnimado
 
@@ -33,8 +34,8 @@ class TelaDialogo:
         self._player_nome = str(player_nome or "Você")
         self._player_skin = str(player_skin or "1.png")
 
-        self._ator_player = Ator(nome_skin=self._player_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.0, tile_px=64)
-        self._ator_npc = Ator(nome_skin=self._npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.0, tile_px=64)
+        self._ator_player = Ator(nome_skin=self._player_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
+        self._ator_npc = Ator(nome_skin=self._npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
         self._ator_player.Nome = self._player_nome
         self._ator_npc.Nome = self._npc_nome
 
@@ -48,6 +49,7 @@ class TelaDialogo:
         self._botoes_loja: list[dict] = []
         self._tamanho_loja_montado: tuple[int, int] | None = None
         self._status_compra = ""
+        self._ficha_item_tooltip = FichaItem()
         self._hover_idx = -1
         self._tempo_respiracao = 0.0
         self._cache_tamanho: tuple[int, int] | None = None
@@ -179,18 +181,16 @@ class TelaDialogo:
                 ofertas = [dict(secreta)]
 
         w, h = tela_size
-        cols = min(3, max(1, len(ofertas)))
-        gap = 14
-        base_x = int(w * 0.10)
+        cols = 5
+        gap = 16
+        lado = max(72, min(110, int(w * 0.07)))
+        total_w = (cols * lado) + ((cols - 1) * gap)
+        base_x = int((w - total_w) * 0.5)
         base_y = int(h * 0.74)
-        area_w = int(w * 0.80)
-        bw = max(180, int((area_w - (gap * (cols - 1))) / cols))
-        bh = 66
 
         for i, oferta in enumerate(ofertas):
             c = i % cols
-            r = i // cols
-            rect = pygame.Rect(base_x + c * (bw + gap), base_y + r * 112, bw, bh)
+            rect = pygame.Rect(base_x + c * (lado + gap), base_y, lado, lado)
             nome_item = str(oferta.get("item_nome") or "")
             item = self._item_por_nome(nome_item)
 
@@ -199,7 +199,7 @@ class TelaDialogo:
 
             botao = Botao(
                 rect,
-                str(item.get("Nome") or "Item"),
+                "",
                 execute=_comprar,
                 style={
                     "radius": 12,
@@ -209,9 +209,10 @@ class TelaDialogo:
                     "bg_pressed": (25, 39, 62),
                     "border": (112, 138, 182),
                     "border_hover": (201, 224, 255),
-                    "text_style": {"size": 18, "outline_thickness": 1, "shadow": False, "align": "center"},
+                    "text_style": {"size": 1, "outline_thickness": 0, "shadow": False, "align": "center"},
                 },
             )
+            botao.set_tooltip(str(item.get("Nome") or "Item"), style={"size": 16})
             self._botoes_loja.append(
                 {
                     "botao": botao,
@@ -222,7 +223,7 @@ class TelaDialogo:
             )
 
         fechar = Botao(
-            pygame.Rect(base_x, base_y + max(1, (len(ofertas) + cols - 1) // cols) * 112, 220, 48),
+            pygame.Rect(int((w - 220) * 0.5), base_y + lado + 52, 220, 48),
             "Fechar conversa",
             execute=lambda _jogo, _botao: self._encerrar(),
             style={"radius": 12, "text_style": {"size": 18, "outline_thickness": 1, "shadow": False}},
@@ -305,9 +306,9 @@ class TelaDialogo:
 
     def _opcao_rects(self, tela_size) -> List[pygame.Rect]:
         w, h = tela_size
-        base_x = int(w * 0.10)
+        base_x = int(w * 0.20)
         base_y = int(h * 0.75)
-        bw = int(w * 0.80)
+        bw = int(w * 0.60)
         bh = 44
         gap = 8
         return [pygame.Rect(base_x, base_y + i * (bh + gap), bw, bh) for i in range(len(self._opcoes))]
@@ -357,14 +358,15 @@ class TelaDialogo:
         self._ator_npc.set_tile_px(64)
         self._ator_player.desenhar(tela, posicao_tela=(int(w * 0.12), int(h * 0.87)), respiracao_tempo=self._tempo_respiracao)
         self._ator_npc.desenhar(tela, posicao_tela=(int(w * 0.88), int(h * 0.87)), respiracao_tempo=self._tempo_respiracao)
-        Texto(self._player_nome, pos=(int(w * 0.12), int(h * 0.91)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
-        Texto(self._npc_nome, pos=(int(w * 0.88), int(h * 0.91)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
+        Texto(self._player_nome, pos=(int(w * 0.12), int(h * 0.92)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
+        Texto(self._npc_nome, pos=(int(w * 0.88), int(h * 0.92)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
 
         Texto(self._texto_animado.texto_visivel, pos=(int(w * 0.10), int(h * 0.61)), style={"size": 24, "align": "topleft", "outline": True}).draw(tela)
 
         if self._texto_animado.concluido and self._tipo_loja_atual() in {"padrao", "secreta"}:
             if self._tamanho_loja_montado != (w, h):
                 self._montar_botoes_loja((w, h))
+            hover_entrada = None
             for entrada in self._botoes_loja:
                 botao = entrada.get("botao")
                 if not isinstance(botao, Botao):
@@ -372,11 +374,23 @@ class TelaDialogo:
                 botao.render(tela, eventos, dt, None)
                 icone = entrada.get("icone")
                 if icone is not None:
-                    rect = icone.get_rect(center=(botao.rect.centerx, botao.rect.centery - 20))
+                    rect = icone.get_rect(center=botao.rect.center)
                     tela.blit(icone, rect)
                 preco = entrada.get("preco")
                 if isinstance(preco, int):
                     Texto(f"{preco} dinheiro", pos=(botao.rect.centerx, botao.rect.bottom + 8), style={"size": 18, "align": "midtop", "outline": True, "color": (255, 223, 120)}).draw(tela)
+                if bool(getattr(botao, "hover", False)) and isinstance(entrada.get("item"), dict):
+                    hover_entrada = entrada
+            if hover_entrada is not None:
+                botao = hover_entrada.get("botao")
+                if isinstance(botao, Botao):
+                    largura_ficha = max(280, int(w * 0.24))
+                    ficha_rect = pygame.Rect(0, 0, largura_ficha, 72)
+                    ficha_rect.midbottom = (botao.rect.centerx, botao.rect.top - 8)
+                    ficha_rect.clamp_ip(pygame.Rect(8, 8, w - 16, h - 16))
+                    pygame.draw.rect(tela, (11, 17, 28), ficha_rect, border_radius=12)
+                    pygame.draw.rect(tela, (103, 138, 198), ficha_rect, 2, border_radius=12)
+                    self._ficha_item_tooltip.renderizar(tela, ficha_rect.inflate(-8, -8), hover_entrada.get("item"))
             if self._status_compra:
                 Texto(self._status_compra, pos=(int(w * 0.5), int(h * 0.90)), style={"size": 18, "align": "midbottom", "outline": True, "color": (220, 235, 255)}).draw(tela)
             return

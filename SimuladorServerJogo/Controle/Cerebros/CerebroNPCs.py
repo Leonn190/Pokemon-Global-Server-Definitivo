@@ -56,11 +56,12 @@ class CerebroNPCs:
                     skin = f"{skin_raw[1:]}.png"
                 else:
                     skin = f"{skin_raw}.png"
-                offs = [(-2.4, -1.6), (1.8, -1.1), (0.5, 2.1)]
-                off = offs[(idx - 1) % len(offs)]
-                px = (spawn_x + off[0]) % max(1.0, float(largura))
-                py = (spawn_y + off[1]) % max(1.0, float(altura))
-                estatico = bool(idx == 1)
+                if nome.strip().lower() == "josefa":
+                    px, py = 0.0, 0.0
+                    estatico = True
+                else:
+                    px, py = self._encontrar_spawn_terrestre((spawn_x, spawn_y), idx)
+                    estatico = False
                 rota = [] if estatico else self._gerar_rota_grande((px, py), idx)
                 npc_id = int(900000 + int(code) if code.isdigit() else 900000 + idx)
                 base[str(code)] = {
@@ -86,8 +87,17 @@ class CerebroNPCs:
         for npc in self._npcs.values():
             nome = str(npc.get("nome") or "").strip().lower()
             if nome != "josefa":
+                if bool(npc.get("estatico", False)):
+                    npc["estatico"] = False
+                    if not isinstance(npc.get("rota"), list) or not npc.get("rota"):
+                        pos = npc.get("posicao", [spawn_x, spawn_y])
+                        origem = (float(pos[0]), float(pos[1])) if isinstance(pos, (list, tuple)) and len(pos) == 2 else (float(spawn_x), float(spawn_y))
+                        npc["rota"] = [[float(p[0]), float(p[1])] for p in self._gerar_rota_grande(origem, int(npc.get("id", 0) or 1))]
+                    mudou = True
                 continue
-            npc["posicao"] = [float(spawn_x), float(spawn_y)]
+            npc["posicao"] = [0.0, 0.0]
+            npc["estatico"] = True
+            npc["rota"] = []
             npc["rota_idx"] = 0
             mudou = True
         if mudou:
@@ -149,6 +159,23 @@ class CerebroNPCs:
         gy = int(math.floor(float(pos[1])))
         tile = int(BANCO_DADOS.tile_em(gx, gy) or 0)
         return tile in {0, 1}
+
+    def _encontrar_spawn_terrestre(self, origem: Vector2, semente: int) -> Vector2:
+        largura, altura = BANCO_DADOS.limites_mundo()
+        rnd = random.Random((int(semente) + 17) * 10657)
+        base_x, base_y = float(origem[0]), float(origem[1])
+        for _ in range(720):
+            dist = rnd.uniform(16.0, 220.0)
+            ang = rnd.uniform(0.0, math.tau)
+            x = (base_x + math.cos(ang) * dist) % max(1.0, float(largura))
+            y = (base_y + math.sin(ang) * dist) % max(1.0, float(altura))
+            pos = (x, y)
+            if self._tile_bloqueado_npc(pos):
+                continue
+            if self._colisao_objetos(0, pos, raio=0.95):
+                continue
+            return pos
+        return (base_x % max(1.0, float(largura)), base_y % max(1.0, float(altura)))
 
     def _colisao_objetos(self, npc_id: int, pos: Vector2, raio: float = 0.55) -> bool:
         for obj in BANCO_DADOS.buscar_proximos(pos, max(1.5, raio + 1.0)):

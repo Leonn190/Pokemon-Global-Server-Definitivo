@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-
 class Perfil:
     NIVEL_MAXIMO = 50
 
@@ -47,12 +44,19 @@ class Perfil:
         self.MultiplicadorFerramentaTapa = 1.5
 
     @staticmethod
-    def _skins_liberadas_padrao():
-        pasta = Path("Recursos") / "Visual" / "Skins"
-        if not pasta.exists():
-            return ["1.png"]
-        skins = sorted({p.name for p in pasta.glob("*.png") if p.is_file()})
-        return skins or ["1.png"]
+    def _ordem_skin(nome: str) -> tuple[int, str]:
+        base = str(nome or "").strip().lower()
+        if base.endswith(".png"):
+            base = base[:-4]
+        if base.startswith("s") and base[1:].isdigit():
+            base = base[1:]
+        if base.isdigit():
+            return (0, int(base))
+        return (1, base)
+
+    @classmethod
+    def _skins_liberadas_padrao(cls):
+        return [f"{i}.png" for i in range(1, 13)]
 
     @classmethod
     def calcular_xp_alvo_por_nivel(cls, nivel: int) -> int:
@@ -122,7 +126,18 @@ class Perfil:
         self.TempoJogoSegundos = max(0.0, float(self._pegar(dados, "tempo_jogo_segundos", "TempoJogoSegundos", padrao=self.TempoJogoSegundos)))
         self.Insignias = list(self._pegar(dados, "insignias", "Insignias", padrao=self.Insignias) or [])
         self.Maestria = int(self._pegar(dados, "maestria", "Maestria", padrao=self.Maestria))
-        self.SkinsLiberadas = list(self._pegar(dados, "skins_liberadas", "SkinsLiberadas", padrao=self.SkinsLiberadas) or self._skins_liberadas_padrao())
+        skins_raw = list(self._pegar(dados, "skins_liberadas", "SkinsLiberadas", padrao=self.SkinsLiberadas) or self._skins_liberadas_padrao())
+        normalizadas = []
+        for skin in skins_raw:
+            nome = str(skin or "").strip()
+            if not nome:
+                continue
+            if nome.lower().startswith("s") and nome[1:].isdigit():
+                nome = nome[1:]
+            if not nome.lower().endswith(".png"):
+                nome = f"{nome}.png"
+            normalizadas.append(nome)
+        self.SkinsLiberadas = sorted(dict.fromkeys(normalizadas), key=self._ordem_skin) or self._skins_liberadas_padrao()
         self.HabilidadesAprendidas = list(self._pegar(dados, "habilidades_aprendidas", "HabilidadesAprendidas", padrao=self.HabilidadesAprendidas) or [])
         self.StaminaMax = max(1.0, float(self._pegar(dados, "stamina_max", "StaminaMax", padrao=self.StaminaMax)))
         self.Stamina = max(0.0, min(self.StaminaMax, float(self._pegar(dados, "stamina", "Stamina", padrao=self.Stamina))))

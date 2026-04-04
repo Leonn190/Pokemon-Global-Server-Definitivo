@@ -86,6 +86,7 @@ class FichaPokemon:
         self._slots_build: dict[int, pygame.Rect] = {}
         self._area_animacao = pygame.Rect(0, 0, 0, 0)
         self._slot_hover: tuple[str, int] | None = None
+        self._mouse_slot_hover: tuple[int, int] | None = None
         self._slot_origem_oculto: tuple[str, int] | None = None
         self._anim_barras_chave = None
         self._barra_hp: Barra | None = None
@@ -1060,12 +1061,19 @@ class FichaPokemon:
         if self._botao_upar is not None:
             self._botao_upar.render(tela, eventos, dt, None)
 
-        self._arrastavel_ataque.animar(dt)
-        self._slot_hover = self._slot_no_mouse(pygame.mouse.get_pos())
+        if self._arrastavel_ataque.Ativo or self._arrastavel_ataque.PosAlvo is not None:
+            self._arrastavel_ataque.animar(dt)
+        mouse_now = pygame.mouse.get_pos()
+        if self._mouse_slot_hover != mouse_now:
+            self._mouse_slot_hover = mouse_now
+            self._slot_hover = self._slot_no_mouse(mouse_now)
 
         for evento in eventos:
             if evento.type == pygame.MOUSEMOTION and self._arrastavel_ataque.Ativo and self._arrastavel_ataque.PosAlvo is None:
                 self._arrastavel_ataque.atualizar(evento.pos)
+                if self._mouse_slot_hover != evento.pos:
+                    self._mouse_slot_hover = evento.pos
+                    self._slot_hover = self._slot_no_mouse(evento.pos)
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 destino = self._slot_no_mouse(evento.pos)
                 if self._arrastavel_ataque.Ativo:

@@ -2,39 +2,152 @@
   "inicio": "ola",
   "nos": {
     "ola": {
-      "fala": "Bem-vindo, viajante. Eu sou Josefa, vendedora da rota antiga. Está procurando algo ou só descansando um pouco?",
+      "fala": "Bem-vindo, viajante. Eu sou Josefa, vendedora da rota antiga. Meu estoque ajuda quem anda longe. Quer conversar um pouco antes de eu abrir minhas caixas?",
       "opcoes": [
-        {"texto": "Só queria conversar.", "proximo": "conversa"},
-        {"texto": "O que você sabe dessa região?", "proximo": "regiao"},
-        {"texto": "Até depois.", "fim": true}
+        {
+          "texto": "Quero entender a rota primeiro.",
+          "proximo": "rota_1"
+        },
+        {
+          "texto": "Quero ouvir uma história sua.",
+          "proximo": "hist_1"
+        },
+        {
+          "texto": "Mostra seus produtos.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Até depois.",
+          "fim": true
+        }
       ]
     },
-    "conversa": {
-      "fala": "Conversar faz bem. Quem anda muito por esse mundo precisa parar de vez em quando para ouvir histórias.",
+    "rota_1": {
+      "fala": "A rota antiga parece simples, mas engana. Quem olha só para o atalho gasta recurso dobrado. Quem observa terreno, clima e descanso economiza dinheiro.",
       "opcoes": [
-        {"texto": "Conta uma história curta.", "proximo": "historia"},
-        {"texto": "Verdade, vou descansar.", "fim": true}
+        {
+          "texto": "E qual é o primeiro sinal de erro?",
+          "proximo": "rota_2"
+        },
+        {
+          "texto": "Entendi, abre a loja.",
+          "proximo": "loja_padrao"
+        }
       ]
     },
-    "regiao": {
-      "fala": "Aqui tem trechos longos de trilha e áreas de água. Se você planeja viajar longe, vá por terra firme e leve itens de recuperação.",
+    "rota_2": {
+      "fala": "Quando o treinador corre sem plano. Depois fica sem poção no pior trecho. Por isso sempre separo três kits: combate, captura e retorno.",
       "opcoes": [
-        {"texto": "Boa dica, obrigado.", "fim": true},
-        {"texto": "Tem perigo por perto?", "proximo": "perigo"}
+        {
+          "texto": "Gostei dessa organização.",
+          "proximo": "rota_3"
+        },
+        {
+          "texto": "Tá, já pode vender.",
+          "proximo": "loja_padrao"
+        }
       ]
     },
-    "historia": {
-      "fala": "Quando eu era mais nova, tentei atravessar tudo correndo. Aprendi que quem respeita o ritmo chega mais longe.",
+    "rota_3": {
+      "fala": "Pouca gente pergunta isso. Se quiser, te mostro meus produtos comuns agora. Talvez, se continuar atento, eu também mostre algo que não deixo à vista.",
       "opcoes": [
-        {"texto": "Gostei disso.", "fim": true},
-        {"texto": "Vou lembrar dessa frase.", "fim": true}
+        {
+          "texto": "Quero os produtos comuns.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Quero merecer essa oferta escondida.",
+          "proximo": "secreto_1"
+        }
       ]
     },
-    "perigo": {
-      "fala": "Nada que um treinador atento não resolva. Evite lutar cansado e sempre observe o terreno antes de avançar.",
+    "hist_1": {
+      "fala": "No meu primeiro mês de viagem eu perdi tudo por pressa. Foi uma vendedora mais velha que me ensinou: lucro de verdade é voltar inteiro.",
       "opcoes": [
-        {"texto": "Entendi. Valeu!", "fim": true}
+        {
+          "texto": "E como você aplica isso hoje?",
+          "proximo": "hist_2"
+        },
+        {
+          "texto": "Bora ver a loja.",
+          "proximo": "loja_padrao"
+        }
       ]
+    },
+    "hist_2": {
+      "fala": "Eu separo estoque por tipo de risco. Quem vem da montanha leva cura e defesa. Quem vem do lago leva controle de stamina. Quem escuta, paga menos no final da viagem.",
+      "opcoes": [
+        {
+          "texto": "Quero comprar agora.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Me testa mais um pouco.",
+          "proximo": "secreto_1"
+        }
+      ]
+    },
+    "secreto_1": {
+      "fala": "Oferta secreta não vai para aventureiro ansioso. Responde: você compra pelo brilho do item ou pelo problema que ele resolve?",
+      "opcoes": [
+        {
+          "texto": "Pelo brilho.",
+          "proximo": "falha_secreto"
+        },
+        {
+          "texto": "Pelo problema que resolve.",
+          "proximo": "secreto_2"
+        }
+      ]
+    },
+    "secreto_2": {
+      "fala": "Boa resposta. Segunda pergunta: quando falta recurso, você força luta ou recua para reorganizar?",
+      "opcoes": [
+        {
+          "texto": "Forço luta.",
+          "proximo": "falha_secreto"
+        },
+        {
+          "texto": "Recuo e reorganizo.",
+          "proximo": "secreto_3"
+        }
+      ]
+    },
+    "secreto_3": {
+      "fala": "Última etapa. Você troca segurança por velocidade quando carrega itens raros?",
+      "opcoes": [
+        {
+          "texto": "Troco, velocidade sempre.",
+          "proximo": "falha_secreto"
+        },
+        {
+          "texto": "Não. Prioridade é chegar com tudo.",
+          "proximo": "loja_secreta"
+        }
+      ]
+    },
+    "falha_secreto": {
+      "fala": "Ainda falta prática de rota. Sem problema. Primeiro compra o básico, depois voltamos à oferta secreta.",
+      "opcoes": [
+        {
+          "texto": "Abrir loja comum.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "fim": true
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Estoque da rota antiga: escolha um item.",
+      "loja": "padrao",
+      "opcoes": []
+    },
+    "loja_secreta": {
+      "fala": "Você passou no labirinto. Oferta secreta liberada por tempo curto.",
+      "loja": "secreta",
+      "opcoes": []
     }
   }
 }

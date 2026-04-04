@@ -1,4 +1,4 @@
-Nome,vendedor,Categoria,Skin,Code
-Josefa,,,16,1
-Hans,,,6,2
-Kleber,,,13,3
+Nome,Nivel,Categoria,Skin,Item 1,Preço 1,Item 2,Preço 2,Item 3,Preço 3,Item 4,Preço 4,Item 5,Preço 5,Item S,Preço S,Code
+Josefa,12,Suprimentos,16,Poção,6,Super Poção,10,Elixir,14,Caxi Berry,9,Frambo Berry,12,Secretball,39,1
+Hans,14,Exploração,6,Pokeball,8,Greatball,13,Aquaball,15,Field Berry,9,Fastball,16,Beastball,42,2
+Kleber,18,Combate,13,Revival,7,Lum Berry,10,Candyball,15,Picareta de Madeira,20,Picareta de Ouro,24,Masterball,60,3

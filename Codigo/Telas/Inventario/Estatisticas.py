@@ -38,9 +38,20 @@ class InventarioPerfil:
         self.txt_xp = Texto("", style={**base, "size": 18, "color": (186, 205, 238)})
         self.txt_skin_liberadas = Texto("", style={**base, "size": 18, "color": (193, 212, 244)})
         self.txt_skin_atual = Texto("", style={**base, "size": 17, "color": (221, 234, 255), "align": "topright"})
-
+        self.txt_dinheiro = Texto("", style={**base, "size": 24, "color": (255, 223, 121), "align": "topright"})
+        self._icone_dinheiro = self._carregar_icone_dinheiro()
         self._labels = [Texto("", style={**base, "size": 18, "color": (164, 184, 221)}) for _ in range(12)]
         self._values = [Texto("", style={**base, "size": 26, "color": (247, 250, 255)}) for _ in range(12)]
+
+    @staticmethod
+    def _carregar_icone_dinheiro() -> pygame.Surface | None:
+        caminho = Path("Recursos") / "Visual" / "Icones" / "Diversos" / "Moeda.png"
+        if not caminho.exists():
+            return None
+        try:
+            return pygame.transform.smoothscale(pygame.image.load(str(caminho)).convert_alpha(), (24, 24))
+        except pygame.error:
+            return None
 
     @staticmethod
     def _formatar_tempo(segundos: float) -> str:
@@ -52,7 +63,9 @@ class InventarioPerfil:
 
     @staticmethod
     def _normalizar_nome_skin(nome_skin: str) -> str:
-        base = str(nome_skin or "S1").strip() or "S1"
+        base = str(nome_skin or "1").strip() or "1"
+        if base.lower().startswith("s") and base[1:].isdigit():
+            base = base[1:]
         return base if base.lower().endswith(".png") else f"{base}.png"
 
     def _coletar_skins_liberadas(self) -> list[tuple[str, pygame.Surface]]:
@@ -86,7 +99,7 @@ class InventarioPerfil:
         self._skins = self._coletar_skins_liberadas()
         self._skin_index = 0
 
-        nome_skin_atual = self._normalizar_nome_skin(getattr(self.Ator, "NomeSkin", "S1"))
+        nome_skin_atual = self._normalizar_nome_skin(getattr(self.Ator, "NomeSkin", "1"))
         for i, (nome, _) in enumerate(self._skins):
             if nome == nome_skin_atual:
                 self._skin_index = i
@@ -307,6 +320,15 @@ class InventarioPerfil:
         self.txt_nivel.set_text(f"Nível {nivel}")
         self.txt_nivel.set_pos((self._area_direita.x + 18, self._area_direita.y + 14))
         self.txt_nivel.draw(tela)
+        dinheiro = int(getattr(perfil, "Dinheiro", 0) or 0)
+        x_direita = self._area_direita.right - 18
+        self.txt_dinheiro.set_text(str(dinheiro))
+        self.txt_dinheiro.set_pos((x_direita, self._area_direita.y + 16))
+        self.txt_dinheiro.draw(tela)
+        if self._icone_dinheiro is not None:
+            rect_icone = self._icone_dinheiro.get_rect()
+            rect_icone.midright = (x_direita - 56, self._area_direita.y + 30)
+            tela.blit(self._icone_dinheiro, rect_icone)
 
         max_barra = xp_alvo if xp_alvo > 0 else 1
         valor_barra = min(xp, max_barra)
@@ -327,7 +349,7 @@ class InventarioPerfil:
         centro = (self._area_ator.centerx, self._area_ator.centery - 8)
         self._desenhador.desenhar(tela, centro, pygame.mouse.get_pos())
 
-        nome_skin = self._skins[self._skin_index][0].replace(".png", "") if self._skins else "S1"
+        nome_skin = self._skins[self._skin_index][0].replace(".png", "") if self._skins else "1"
         self.txt_skin_atual.set_text(nome_skin)
         self.txt_skin_atual.set_pos((self._area_ator.right - 12, self._area_ator.y + 10))
         self.txt_skin_atual.draw(tela)

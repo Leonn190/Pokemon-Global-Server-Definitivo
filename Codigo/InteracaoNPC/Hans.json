@@ -2,38 +2,109 @@
   "inicio": "entrada",
   "nos": {
     "entrada": {
-      "fala": "Ei! Sou Hans. Eu marco rotas e observo quem passa. Quer uma orientação rápida?",
+      "fala": "Ei! Sou Hans. Eu marco rotas e também vendo equipamento de exploração. Se quiser meus melhores preços, conversa direito comigo.",
       "opcoes": [
-        {"texto": "Quero sim.", "proximo": "orientacao"},
-        {"texto": "Tem algum conselho pra iniciantes?", "proximo": "iniciante"},
-        {"texto": "Agora não.", "fim": true}
+        {
+          "texto": "Me dá orientação.",
+          "proximo": "orientacao_1"
+        },
+        {
+          "texto": "Quero ver sua loja.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Tô com pressa.",
+          "fim": true
+        }
       ]
     },
-    "orientacao": {
-      "fala": "Se o destino for longe, divida em metas menores: ponto de descanso, coleta e retorno. Isso evita se perder.",
+    "orientacao_1": {
+      "fala": "Regra um: nunca gaste tudo no primeiro trecho. Regra dois: quem volta com recurso é quem mantém ritmo e leitura de mapa.",
       "opcoes": [
-        {"texto": "Faz sentido.", "proximo": "extra"},
-        {"texto": "Perfeito, já ajudou.", "fim": true}
+        {
+          "texto": "E a regra três?",
+          "proximo": "orientacao_2"
+        },
+        {
+          "texto": "Já quero comprar.",
+          "proximo": "loja_padrao"
+        }
       ]
     },
-    "iniciante": {
-      "fala": "Treine movimento e gestão de stamina. Jogador bom não é só quem bate forte, é quem controla o tempo da luta.",
+    "orientacao_2": {
+      "fala": "Regra três: esconda seu objetivo final. Vendedor bom guarda oferta secreta para quem demonstra disciplina.",
       "opcoes": [
-        {"texto": "Vou praticar isso.", "fim": true},
-        {"texto": "E sobre exploração?", "proximo": "exploracao"}
+        {
+          "texto": "Quero essa oferta secreta.",
+          "proximo": "secreto_1"
+        },
+        {
+          "texto": "Abre a loja comum.",
+          "proximo": "loja_padrao"
+        }
       ]
     },
-    "extra": {
-      "fala": "Também ajuda conversar com vendedores. A gente conhece os caminhos e os horários mais tranquilos das rotas.",
+    "secreto_1": {
+      "fala": "Certo. Primeiro passo: escolha entre visão curta e visão longa.",
       "opcoes": [
-        {"texto": "Boa, obrigado Hans.", "fim": true}
+        {
+          "texto": "Visão curta.",
+          "proximo": "erro_secreto"
+        },
+        {
+          "texto": "Visão longa.",
+          "proximo": "secreto_2"
+        }
       ]
     },
-    "exploracao": {
-      "fala": "Quando entrar em área nova, anda em espiral curta: testa o entorno e amplia aos poucos. Menos risco, mais controle.",
+    "secreto_2": {
+      "fala": "Segundo passo: você prefere loot rápido ou rota segura com retorno garantido?",
       "opcoes": [
-        {"texto": "Excelente dica.", "fim": true}
+        {
+          "texto": "Loot rápido.",
+          "proximo": "erro_secreto"
+        },
+        {
+          "texto": "Rota segura.",
+          "proximo": "secreto_3"
+        }
       ]
+    },
+    "secreto_3": {
+      "fala": "Último passo: segredo compartilhado se prova com constância. Confirma que vai seguir plano e não entrar em toda luta aleatória?",
+      "opcoes": [
+        {
+          "texto": "Confirmo.",
+          "proximo": "loja_secreta"
+        },
+        {
+          "texto": "Não prometo.",
+          "proximo": "erro_secreto"
+        }
+      ]
+    },
+    "erro_secreto": {
+      "fala": "Ainda não. Você quase chegou. Leva meus itens de base e depois tenta de novo o caminho secreto.",
+      "opcoes": [
+        {
+          "texto": "Fechou, mostra a loja.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Depois eu volto.",
+          "fim": true
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja de campo do Hans: escolha seu kit.",
+      "loja": "padrao",
+      "opcoes": []
+    },
+    "loja_secreta": {
+      "fala": "Oferta secreta liberada. Esses itens não ficam na prateleira comum.",
+      "loja": "secreta",
+      "opcoes": []
     }
   }
 }

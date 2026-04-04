@@ -40,6 +40,10 @@ _LOCK = threading.Lock()
 _INTERVALO_PERSISTENCIA_SEGUNDOS = 1.0
 _ultimo_persistencia_ts = 0.0
 _NIVEL_MAXIMO_JOGADOR = 50
+_TIPOS_ESTADIO_RESPEITO = (
+    "normal", "fogo", "agua", "planta", "eletrico", "gelo", "lutador", "venenoso", "terrestre", "voador",
+    "psiquico", "inseto", "pedra", "fantasma", "dragao", "sombrio", "metal", "fada", "cosmico", "sonoro",
+)
 
 
 def _skins_liberadas_padrao() -> list[str]:
@@ -139,6 +143,9 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["maestria"] = int(dados.get("maestria", regras.get("Maestria", 0)))
     dados["skins_liberadas"] = list(dados.get("skins_liberadas", _skins_liberadas_padrao()) or _skins_liberadas_padrao())
     dados["habilidades_aprendidas"] = list(dados.get("habilidades_aprendidas", []))
+    for tipo in _TIPOS_ESTADIO_RESPEITO:
+        chave = f"respeito_estadio_{tipo}"
+        dados[chave] = int(max(0, min(4, dados.get(chave, 0))))
 
     stamina_max = max(1.0, float(dados.get("stamina_max", regras.get("StaminaMax", 100.0))))
     stamina = max(0.0, min(stamina_max, float(dados.get("stamina", stamina_max))))
@@ -240,6 +247,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         "limite_slots_inventario",
         "limite_pokemons",
         "limite_times_pokemon",
+        *[f"respeito_estadio_{tipo}" for tipo in _TIPOS_ESTADIO_RESPEITO],
     )
     for campo in campos_int:
         if campo in payload:

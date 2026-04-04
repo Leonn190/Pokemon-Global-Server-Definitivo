@@ -4,6 +4,10 @@ from __future__ import annotations
 
 class Perfil:
     NIVEL_MAXIMO = 50
+    TIPOS_ESTADIO = (
+        "Normal", "Fogo", "Agua", "Planta", "Eletrico", "Gelo", "Lutador", "Venenoso", "Terrestre", "Voador",
+        "Psiquico", "Inseto", "Pedra", "Fantasma", "Dragao", "Sombrio", "Metal", "Fada", "Cosmico", "Sonoro",
+    )
 
     def __init__(self):
         self.Nivel = 0
@@ -42,6 +46,8 @@ class Perfil:
         self.TapaPorSegundo = 2.0
         self.RaioTapa = 0.36
         self.MultiplicadorFerramentaTapa = 1.5
+        for tipo in self.TIPOS_ESTADIO:
+            setattr(self, f"RespeitoEstadio{tipo}", 0)
 
     @staticmethod
     def _ordem_skin(nome: str) -> tuple[int, str]:
@@ -157,10 +163,15 @@ class Perfil:
         self.TapaPorSegundo = max(0.1, float(self._pegar(dados, "tapa_por_segundo", "TapaPorSegundo", padrao=self.TapaPorSegundo)))
         self.RaioTapa = max(0.05, float(self._pegar(dados, "raio_tapa", "RaioTapa", padrao=self.RaioTapa)))
         self.MultiplicadorFerramentaTapa = max(1.0, float(self._pegar(dados, "multiplicador_ferramenta_tapa", "MultiplicadorFerramentaTapa", padrao=self.MultiplicadorFerramentaTapa)))
+        for tipo in self.TIPOS_ESTADIO:
+            chave_snake = f"respeito_estadio_{tipo.lower()}"
+            chave_camel = f"RespeitoEstadio{tipo}"
+            valor = int(self._pegar(dados, chave_snake, chave_camel, padrao=getattr(self, chave_camel, 0)))
+            setattr(self, chave_camel, max(0, min(4, valor)))
         self.normalizar_progresso_xp()
 
     def serializar(self):
-        return {
+        dados = {
             "nivel": self.Nivel,
             "xp": self.XP,
             "xp_alvo": self.XPAlvo,
@@ -197,6 +208,9 @@ class Perfil:
             "raio_tapa": self.RaioTapa,
             "multiplicador_ferramenta_tapa": self.MultiplicadorFerramentaTapa,
         }
+        for tipo in self.TIPOS_ESTADIO:
+            dados[f"respeito_estadio_{tipo.lower()}"] = int(max(0, min(4, getattr(self, f"RespeitoEstadio{tipo}", 0))))
+        return dados
 
 
 PlayerPerfil = Perfil

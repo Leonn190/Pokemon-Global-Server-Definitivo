@@ -1,15 +1,73 @@
 {
   "inicio": "saudacao",
+  "inicio_por_respeito": {
+    "tipo_estadio": "Planta",
+    "mapa": {
+      "0": "respeito_0",
+      "1": "respeito_1",
+      "2": "respeito_2",
+      "3": "respeito_3",
+      "4": "respeito_4"
+    }
+  },
   "nos": {
-    "saudacao": {
-      "fala": "Eu sou Suneiva, líder do estádio Planta. Quer me desafiar agora?",
+    "respeito_0": {
+      "fala": "Sou Suneiva, líder do estádio Planta. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
       "opcoes": [
         {
-          "texto": "Quero batalhar!",
+          "texto": "Entendi, vou me preparar.",
+          "fim": true
+        }
+      ]
+    },
+    "respeito_1": {
+      "fala": "Então você venceu o Capitão do estádio Planta. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+      "opcoes": [
+        {
+          "texto": "Quero batalhar agora!",
           "acao": "batalhar"
         },
         {
-          "texto": "Agora não, volto depois.",
+          "texto": "Vou treinar mais um pouco.",
+          "fim": true
+        }
+      ]
+    },
+    "respeito_2": {
+      "fala": "Boa evolução. Você já me derrotou uma vez no Planta, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+      "opcoes": [
+        {
+          "texto": "Fechado, vamos nessa.",
+          "acao": "batalhar"
+        },
+        {
+          "texto": "Volto depois.",
+          "fim": true
+        }
+      ]
+    },
+    "respeito_3": {
+      "fala": "Agora sim. Seu respeito no estádio Planta permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+      "opcoes": [
+        {
+          "texto": "Perfeito, quero o desafio máximo!",
+          "acao": "batalhar"
+        },
+        {
+          "texto": "Melhor voltar outro dia.",
+          "fim": true
+        }
+      ]
+    },
+    "respeito_4": {
+      "fala": "Você já me superou no estádio Planta. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+      "opcoes": [
+        {
+          "texto": "Vamos batalhar de novo!",
+          "acao": "batalhar"
+        },
+        {
+          "texto": "Hoje não, campeão.",
           "fim": true
         }
       ]

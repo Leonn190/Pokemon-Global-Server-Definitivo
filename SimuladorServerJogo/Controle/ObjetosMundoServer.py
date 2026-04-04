@@ -21,8 +21,8 @@ class AtorServer:
         self.posicao = (float(posicao[0]), float(posicao[1]))
         self.raio_colisao = 0.55
         self.raio_interacao = 0.75
-        self.campo = 0.0
-        self.intensidade = 0.0
+        self.campo = 0.45
+        self.intensidade = 1.15
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
         self.estado_extra = {"subtipo": "player", "usuario": str(usuario), "skin": str(skin), "nome": str(usuario), "angulo": 0.0, "perfil": {}, "inventario": {}, "slot_selecionado": 0}
 

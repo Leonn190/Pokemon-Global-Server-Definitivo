@@ -232,7 +232,7 @@ class InventarioPokemons:
 
         botao_lado = 30
         botao_x = self._area_grid.right - 10 - botao_lado
-        botao_y = self._area_grid.y + 15
+        botao_y = self._area_grid.y + 17
         if self._botao_toggle_poder is None:
             self._botao_toggle_poder = BotaoAlavanca(
                 pygame.Rect(botao_x, botao_y, botao_lado, botao_lado),

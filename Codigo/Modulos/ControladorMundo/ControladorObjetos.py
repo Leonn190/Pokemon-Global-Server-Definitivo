@@ -119,6 +119,8 @@ class ControladorObjetos:
             return True
         if self._eh_payload_pokemon(payload):
             return True
+        if self._eh_payload_ator(payload):
+            return True
         if self._eh_payload_bau(payload):
             return True
         if self._eh_payload_estrutura(payload):
@@ -238,6 +240,14 @@ class ControladorObjetos:
         tipo = str(payload.get("tipo", ""))
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
         return tipo.startswith("entidade") and str(estado.get("subtipo", "")).strip().lower() == "bau"
+
+    def _eh_payload_ator(self, payload: Dict[str, object]) -> bool:
+        tipo = str(payload.get("tipo", "")).strip().lower()
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        subtipo = str(estado.get("subtipo", "")).strip().lower()
+        if tipo in {"entidade_player", "player"}:
+            return True
+        return subtipo in {"player", "npc_vendedor"}
 
     def _eh_payload_projetil(self, payload: Dict[str, object]) -> bool:
         return self._criaveis.eh_payload_projetil(payload)

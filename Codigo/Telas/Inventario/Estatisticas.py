@@ -68,6 +68,15 @@ class InventarioPerfil:
             base = base[1:]
         return base if base.lower().endswith(".png") else f"{base}.png"
 
+    @staticmethod
+    def _ordem_skin(nome_skin: str) -> tuple[int, int | str]:
+        base = str(nome_skin or "").strip().lower()
+        if base.endswith(".png"):
+            base = base[:-4]
+        if base.isdigit():
+            return (0, int(base))
+        return (1, base)
+
     def _coletar_skins_liberadas(self) -> list[tuple[str, pygame.Surface]]:
         ator = self.Ator
         perfil = getattr(ator, "Perfil", None)
@@ -76,10 +85,11 @@ class InventarioPerfil:
         if not liberadas:
             liberadas = [atual]
         elif atual not in liberadas:
-            liberadas.insert(0, atual)
+            liberadas.append(atual)
+        liberadas = sorted(dict.fromkeys(liberadas), key=self._ordem_skin)
 
         skins: list[tuple[str, pygame.Surface]] = []
-        for nome in dict.fromkeys(liberadas):
+        for nome in liberadas:
             caminho = Path("Recursos") / "Visual" / "Skins" / nome
             if caminho.exists():
                 try:
@@ -321,13 +331,13 @@ class InventarioPerfil:
         self.txt_nivel.set_pos((self._area_direita.x + 18, self._area_direita.y + 14))
         self.txt_nivel.draw(tela)
         dinheiro = int(getattr(perfil, "Dinheiro", 0) or 0)
-        x_direita = self._area_direita.right - 18
+        x_direita = self._area_stats.right - 18
         self.txt_dinheiro.set_text(str(dinheiro))
-        self.txt_dinheiro.set_pos((x_direita, self._area_direita.y + 16))
+        self.txt_dinheiro.set_pos((x_direita, self._area_stats.y + 16))
         self.txt_dinheiro.draw(tela)
         if self._icone_dinheiro is not None:
             rect_icone = self._icone_dinheiro.get_rect()
-            rect_icone.midright = (x_direita - 56, self._area_direita.y + 30)
+            rect_icone.midright = (x_direita - 56, self._area_stats.y + 30)
             tela.blit(self._icone_dinheiro, rect_icone)
 
         max_barra = xp_alvo if xp_alvo > 0 else 1

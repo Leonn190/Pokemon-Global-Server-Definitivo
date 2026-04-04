@@ -14,6 +14,19 @@ from Codigo.Prefabs.Texto import Texto, TextoAnimado
 
 
 class TelaDialogo:
+    @staticmethod
+    def _valor_coluna(row: Dict[str, object], *nomes: str) -> str:
+        if not isinstance(row, dict):
+            return ""
+        for nome in nomes:
+            if nome in row:
+                return str(row.get(nome) or "").strip()
+        alvo = {str(nome or "").strip().lower(): str(nome or "") for nome in nomes}
+        for chave, valor in row.items():
+            if str(chave or "").strip().lower() in alvo:
+                return str(valor or "").strip()
+        return ""
+
     def __init__(
         self,
         player_nome: str,
@@ -91,8 +104,8 @@ class TelaDialogo:
                     continue
                 padrao = []
                 for i in range(1, 6):
-                    item_nome = str(row.get(f"Item {i}") or "").strip()
-                    preco_raw = str(row.get(f"Preço {i}") or "0").strip()
+                    item_nome = self._valor_coluna(row, f"Item {i}")
+                    preco_raw = self._valor_coluna(row, f"Preço {i}") or "0"
                     if not item_nome:
                         continue
                     try:
@@ -212,7 +225,6 @@ class TelaDialogo:
                     "text_style": {"size": 1, "outline_thickness": 0, "shadow": False, "align": "center"},
                 },
             )
-            botao.set_tooltip(str(item.get("Nome") or "Item"), style={"size": 16})
             self._botoes_loja.append(
                 {
                     "botao": botao,
@@ -384,7 +396,7 @@ class TelaDialogo:
             if hover_entrada is not None:
                 botao = hover_entrada.get("botao")
                 if isinstance(botao, Botao):
-                    largura_ficha = max(280, int(w * 0.24))
+                    largura_ficha = max(320, int(w * 0.28))
                     ficha_rect = pygame.Rect(0, 0, largura_ficha, 72)
                     ficha_rect.midbottom = (botao.rect.centerx, botao.rect.top - 8)
                     ficha_rect.clamp_ip(pygame.Rect(8, 8, w - 16, h - 16))

@@ -409,6 +409,14 @@ class FichaPokemon:
         return cls._valor_pokemon(pokemon, 'Estagio', 'Estágio', 'Stage', 'stage', default='-')
 
     @classmethod
+    def _tamanho(cls, pokemon: dict | None):
+        valor = cls._valor_pokemon(pokemon, 'Tamanho', 'tamanho', default=3)
+        try:
+            return max(1, int(float(valor)))
+        except (TypeError, ValueError):
+            return 3
+
+    @classmethod
     def _criticos(cls, pokemon: dict | None) -> tuple[str, str]:
         stats = cls._stats_dict(pokemon)
         crc = stats.get('CrC', cls._valor_pokemon(pokemon, 'CrC', 'CriticoChance', 'ChanceCritico', default=None))
@@ -780,6 +788,7 @@ class FichaPokemon:
             ('Peso', self._formatar_numero(self._peso(pokemon), 2, ' kg')),
             ('Amizade', self._formatar_percentual(self._amizade(pokemon))),
             ('Fruta', str(self._fruta_favorita(pokemon) or '-')),
+            ('Tamanho', str(self._tamanho(pokemon))),
             ('Estágio', str(self._estagio(pokemon) or '-')),
             ('Crítico', crit_chance),
             ('D. crítico', crit_dano),

@@ -195,6 +195,72 @@ _ITENS, _ITENS_CODE, _ITENS_NOME = _carregar_itens()
 _POKES, _POKE_CODE, _POKE_NOME = _carregar_pokemons()
 
 
+_AJUDA_COMANDOS = {
+    "give": {
+        "uso": "/give alvo item quantidade",
+        "descricao": "Entrega item para um jogador específico, para você mesmo (y), aleatório (r) ou todos.",
+        "detalhes": [
+            "alvo: y, r, todos, ou nome do jogador.",
+            "item: code ou nome do item (se vazio, escolhe um item válido).",
+            "quantidade: inteiro maior que 0.",
+            "Também aceita argumentos nomeados: alvo=, item=, qtd=.",
+        ],
+    },
+    "tp": {
+        "uso": "/tp alvo posx posy",
+        "descricao": "Teleporta jogador(es) para uma posição do mundo.",
+        "detalhes": [
+            "alvo: y, r, todos, ou nome do jogador.",
+            "posx/posy: coordenadas em tiles; a posição é normalizada nos limites do mundo.",
+            "Também aceita argumentos nomeados: alvo=, x=, y=.",
+        ],
+    },
+    "spawn": {
+        "uso": "/spawn pokemon posx posy",
+        "descricao": "Cria um Pokémon no mundo usando espécie do CSV (com estágio, tamanho e stats).",
+        "detalhes": [
+            "pokemon: code ou nome do Pokémon.",
+            "posx/posy são opcionais; se faltar, spawn acontece perto do autor.",
+            "Não permite estágio FF.",
+            "Aceita ajustes de stats/iv no spawn (ex.: iv=80 atk=30 ivatk=50).",
+        ],
+    },
+    "chest": {
+        "uso": "/chest tipo posx posy",
+        "descricao": "Cria um baú de raridade específica no mundo.",
+        "detalhes": [
+            "tipo: 1..6 ou nome (comum, incomum, raro, epico, lendario, mitico).",
+            "posx/posy são opcionais; se faltar, cria perto do autor.",
+        ],
+    },
+    "count": {
+        "uso": "/count chunks|chests|pokemons",
+        "descricao": "Mostra contagens rápidas do estado atual do servidor.",
+        "detalhes": [
+            "chunks: carregados/simulados/total.",
+            "chests: total de baús no banco e no cérebro.",
+            "pokemons: total de pokémons no banco e no cérebro.",
+        ],
+    },
+    "xp": {
+        "uso": "/xp quantidade_xp [nome_do_jogador]",
+        "descricao": "Adiciona XP para você ou para um jogador alvo.",
+        "detalhes": [
+            "quantidade_xp precisa ser maior que 0.",
+            "Se nome_do_jogador não for informado, aplica no autor do comando.",
+        ],
+    },
+    "help": {
+        "uso": "/help [comando]",
+        "descricao": "Lista todos os comandos ou explica um comando específico.",
+        "detalhes": [
+            "Sem argumento: lista comandos disponíveis.",
+            "Com argumento: exibe uso e detalhes completos do comando.",
+        ],
+    },
+}
+
+
 def _resolver_item(raw):
     if not raw:
         return random.choice(_ITENS) if _ITENS else None
@@ -409,6 +475,26 @@ def _cmd_xp(autor, args):
     )
 
 
+def _cmd_help(args):
+    _, livres = _split_args(args)
+    if not livres:
+        comandos = sorted(_AJUDA_COMANDOS.keys())
+        return "Comandos disponíveis: " + ", ".join(f"/{c}" for c in comandos)
+    alvo = str(livres[0] or "").strip().lower().lstrip("/")
+    info = _AJUDA_COMANDOS.get(alvo)
+    if not isinstance(info, dict):
+        return f"Comando não encontrado: /{alvo}"
+    uso = str(info.get("uso") or f"/{alvo}")
+    descricao = str(info.get("descricao") or "")
+    detalhes = [str(d).strip() for d in list(info.get("detalhes") or []) if str(d).strip()]
+    msg = [f"Comando /{alvo}", f"Uso: {uso}"]
+    if descricao:
+        msg.append(descricao)
+    for det in detalhes:
+        msg.append(f"- {det}")
+    return " | ".join(msg)
+
+
 def executar_comando_terminal(autor: str, texto: str) -> dict:
     bruto = str(texto or "").strip()
     if not bruto.startswith("/"):
@@ -442,9 +528,19 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
                 retorno = _cmd_count(args)
             elif cmd == "xp":
                 retorno = _cmd_xp(autor, args)
+            elif cmd == "help":
+                retorno = _cmd_help(args)
             else:
                 retorno = f"Comando inexistente: /{cmd}"
         except Exception:
-            ordem = {"give": "/give alvo item quantidade", "tp": "/tp alvo posx posy", "spawn": "/spawn pokemon posx posy", "chest": "/chest tipo posx posy", "count": "/count chunks|chests|pokemons", "xp": "/xp quantidade_xp [nome_do_jogador]"}.get(cmd, f"/{cmd}")
+            ordem = {
+                "give": "/give alvo item quantidade",
+                "tp": "/tp alvo posx posy",
+                "spawn": "/spawn pokemon posx posy",
+                "chest": "/chest tipo posx posy",
+                "count": "/count chunks|chests|pokemons",
+                "xp": "/xp quantidade_xp [nome_do_jogador]",
+                "help": "/help [comando]",
+            }.get(cmd, f"/{cmd}")
             retorno = f"Erro no /{cmd}. Ordem base: {ordem}"
-    return {"ok": True, "feedback": str(retorno).strip()[:220] or "Comando processado", "autor": "Servidor", "timestamp": time.time()}
+    return {"ok": True, "feedback": str(retorno).strip()[:1200] or "Comando processado", "autor": "Servidor", "timestamp": time.time()}

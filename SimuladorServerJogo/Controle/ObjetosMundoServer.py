@@ -383,7 +383,26 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
         direcao = estado.get("direcao") if isinstance(estado.get("direcao"), (list, tuple)) else dados.get("direcao", [1.0, 0.0])
         return ProjetilServer(id_objeto=oid, posicao=(float(pos[0]), float(pos[1])), dono_id=int(dados.get("dono_id", estado.get("dono_id", 0)) or 0), tipo_projetil=str(dados.get("tipo_projetil") or estado.get("tipo_projetil") or "item"), subtipo=str(dados.get("subtipo") or estado.get("nome_item") or "item"), item_base_id=str(dados.get("item_base_id") or estado.get("item_base_id") or ""), token_arremesso=str(dados.get("token_arremesso") or estado.get("token_arremesso") or ""), direcao=(float(direcao[0]), float(direcao[1])), velocidade=float(dados.get("velocidade") or estado.get("velocidade") or 10.0), alcance=float(dados.get("alcance") or estado.get("alcance") or 6.0), raio_colisao=float(dados.get("raio_colisao", 0.18) or 0.18))
     if tipo in {"entidade_pokemon", "pokemon"}:
-        return PokemonServer(id_objeto=oid, especie=str(estado.get("especie") or dados.get("nome") or "Pokemon"), posicao=(float(pos[0]), float(pos[1])))
+        raio_colisao = float(dados.get("raio_colisao", 0.0) or 0.0)
+        if raio_colisao <= 0.0:
+            tamanho_tiles = float(estado.get("tamanho_tiles", dados.get("tamanho_tiles", 0.0)) or 0.0)
+            if tamanho_tiles <= 0.0:
+                try:
+                    tamanho = int(float(estado.get("tamanho", dados.get("tamanho", 3)) or 3))
+                except (TypeError, ValueError):
+                    tamanho = 3
+                tamanho_tiles = 1.0 + (max(1, tamanho) - 1) * 0.2
+            raio_colisao = max(0.2, tamanho_tiles * 0.5)
+        raio_interacao = float(dados.get("raio_interacao", 0.0) or 0.0)
+        if raio_interacao <= 0.0:
+            raio_interacao = max(raio_colisao, 1.2)
+        return PokemonServer(
+            id_objeto=oid,
+            especie=str(estado.get("especie") or dados.get("nome") or "Pokemon"),
+            posicao=(float(pos[0]), float(pos[1])),
+            raio_colisao=raio_colisao,
+            raio_interacao=raio_interacao,
+        )
     if tipo in {"entidade_item_mundo", "item_mundo"}:
         p0 = estado.get("pos_inicial") if isinstance(estado.get("pos_inicial"), (list, tuple)) else pos
         p1 = estado.get("pos_final") if isinstance(estado.get("pos_final"), (list, tuple)) else pos

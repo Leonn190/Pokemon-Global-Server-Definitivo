@@ -10,7 +10,7 @@ from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Server.ServerMenu import criar_personagem
 
-_SKINS_LIBERADAS = [f"S{i}.png" for i in range(1, 13)]
+_SKINS_LIBERADAS = [f"{i}.png" for i in range(1, 13)]
 
 _INICIAIS_FOGO = ["Charmander", "Torchic", "Fennekin", "Litten"]
 _INICIAIS_PLANTA = ["Bulbasaur", "Treecko", "Chespin", "Rowlet"]

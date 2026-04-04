@@ -22,7 +22,7 @@ def carregar_regras_player() -> Dict[str, object]:
         "LimiteSlotsInventario": 32,
         "LimitePokemons": 64,
         "LimiteTimesPokemon": 6,
-        "Ouro": 0,
+        "Dinheiro": 20,
         "Maestria": 0,
         "StaminaMax": 100.0,
         "VelocidadeBaseTiles": 5.0,

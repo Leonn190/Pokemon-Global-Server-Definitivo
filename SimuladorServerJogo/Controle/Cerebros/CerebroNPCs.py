@@ -50,7 +50,12 @@ class CerebroNPCs:
                 nome = str(row.get("Nome") or f"Vendedor {idx}").strip() or f"Vendedor {idx}"
                 code = str(row.get("Code") or idx).strip() or str(idx)
                 skin_raw = str(row.get("Skin") or "1").strip()
-                skin = f"S{skin_raw}.png" if skin_raw.isdigit() else (skin_raw if skin_raw.lower().endswith(".png") else f"{skin_raw}.png")
+                if skin_raw.lower().endswith(".png"):
+                    skin = skin_raw
+                elif skin_raw.lower().startswith("s") and skin_raw[1:].isdigit():
+                    skin = f"{skin_raw[1:]}.png"
+                else:
+                    skin = f"{skin_raw}.png"
                 offs = [(-2.4, -1.6), (1.8, -1.1), (0.5, 2.1)]
                 off = offs[(idx - 1) % len(offs)]
                 px = (spawn_x + off[0]) % max(1.0, float(largura))
@@ -171,7 +176,7 @@ class CerebroNPCs:
         ator = AtorServer(
             id_objeto=oid,
             usuario=f"npc:{npc.get('code', oid)}",
-            skin=str(npc.get("skin", "S1.png")),
+            skin=str(npc.get("skin", "1.png")),
             posicao=tuple(npc.get("posicao", [0.0, 0.0])),
         )
         ator.estado_extra["subtipo"] = "npc_vendedor"

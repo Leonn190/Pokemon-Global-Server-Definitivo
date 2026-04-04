@@ -6,7 +6,13 @@ from Codigo.Modulos.ElementosHud import ElementosHud
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
-from Codigo.Server.ServerMundo import enviar_mensagem_terminal, buscar_mensagens_terminal, solicitar_contexto_batalha_mundo, iniciar_interacao_npc_mundo, finalizar_interacao_npc_mundo
+from Codigo.Server.ServerMundo import (
+    buscar_mensagens_terminal,
+    enviar_mensagem_terminal,
+    finalizar_interacao_npc_mundo,
+    iniciar_interacao_npc_mundo,
+    solicitar_contexto_batalha_mundo,
+)
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
 from Codigo.Prefabs.Terminal import Terminal
 from Codigo.Telas.TelaDialogo import TelaDialogo
@@ -143,7 +149,7 @@ class CenaMundo:
 
         self.SubtelaOpcoes.desenhar(JOGO)
         if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
-            self.SubtelaDialogo.desenhar(JOGO.TELA)
+            self.SubtelaDialogo.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.SubtelaInventario is not None and self.SubtelaInventario.Ativo:
             self.SubtelaInventario.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.TelaAtual == "Config":
@@ -239,6 +245,7 @@ class CenaMundo:
             player_skin=str(getattr(player, "NomeSkin", "S1.png")),
             npc_payload=npc_obj,
             ao_encerrar=lambda: self._finalizar_dialogo_npc(jogo),
+            ator_local=player,
         )
 
     def _processar_estado_dialogo_npc(self, jogo) -> None:

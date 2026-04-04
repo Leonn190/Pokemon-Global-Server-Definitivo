@@ -21,10 +21,17 @@ class Ator:
     _cache_nome_texto = {}
 
     @staticmethod
+    def normalizar_nome_skin(nome_skin: str) -> str:
+        base = str(nome_skin or "1").strip() or "1"
+        if base.lower().endswith(".png"):
+            base = base[:-4]
+        if base.lower().startswith("s") and base[1:].isdigit():
+            base = base[1:]
+        return f"{base}.png"
+
+    @staticmethod
     def carregar_skin(nome_skin: str):
-        nome_base = str(nome_skin or "S1")
-        if not nome_base.endswith(".png"):
-            nome_base = f"{nome_base}.png"
+        nome_base = Ator.normalizar_nome_skin(nome_skin)
         caminho = os.path.join("Recursos", "Visual", "Skins", nome_base)
         try:
             return pygame.image.load(caminho).convert_alpha()
@@ -36,7 +43,7 @@ class Ator:
     def __init__(
         self,
         skin_surface=None,
-        nome_skin: str = "S1",
+        nome_skin: str = "1",
         posicao: Vector2 = (0.0, 0.0),
         velocidade: Vector2 = (0.0, 0.0),
         raio_colisao: float = 0.55,
@@ -56,7 +63,7 @@ class Ator:
         )
         if skin_surface is None:
             skin_surface = self.carregar_skin(nome_skin)
-        self.NomeSkin = str(nome_skin or "S1")
+        self.NomeSkin = self.normalizar_nome_skin(nome_skin)
         self.Skin = skin_surface
         self.Desenhador = DesenhaAtor(self.Skin, escala=escala_skin_tiles, tile_px=tile_px)
 
@@ -170,7 +177,7 @@ class Ator:
         self.Desenhador.set_skin(skin_surface)
 
     def set_nome_skin(self, nome_skin: str) -> None:
-        self.NomeSkin = str(nome_skin or "S1")
+        self.NomeSkin = self.normalizar_nome_skin(nome_skin)
         self.set_skin(self.carregar_skin(self.NomeSkin))
 
     def definir_angulo_olhar(self, angulo_graus: float) -> None:

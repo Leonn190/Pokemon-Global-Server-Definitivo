@@ -19,7 +19,7 @@ class Perfil:
         self.LimiteTimesPokemon = 6
         self.BatalhasPVPVencidas = 0
         self.BatalhasBotVencidas = 0
-        self.Ouro = 0
+        self.Dinheiro = 20
         self.BausAbertos = 0
         self.MetrosAndados = 0.0
         self.TempoJogoSegundos = 0.0
@@ -50,9 +50,9 @@ class Perfil:
     def _skins_liberadas_padrao():
         pasta = Path("Recursos") / "Visual" / "Skins"
         if not pasta.exists():
-            return ["S1.png"]
+            return ["1.png"]
         skins = sorted({p.name for p in pasta.glob("*.png") if p.is_file()})
-        return skins or ["S1.png"]
+        return skins or ["1.png"]
 
     @classmethod
     def calcular_xp_alvo_por_nivel(cls, nivel: int) -> int:
@@ -116,7 +116,7 @@ class Perfil:
         self.LimiteTimesPokemon = int(max(1, self._pegar(dados, "limite_times_pokemon", "LimiteTimesPokemon", padrao=self.LimiteTimesPokemon)))
         self.BatalhasPVPVencidas = int(self._pegar(dados, "batalhas_pvp_vencidas", "BatalhasPVPVencidas", padrao=self.BatalhasPVPVencidas))
         self.BatalhasBotVencidas = int(self._pegar(dados, "batalhas_bot_vencidas", "BatalhasBotVencidas", padrao=self.BatalhasBotVencidas))
-        self.Ouro = int(self._pegar(dados, "ouro", "Ouro", padrao=self.Ouro))
+        self.Dinheiro = int(self._pegar(dados, "dinheiro", "Dinheiro", padrao=self.Dinheiro))
         self.BausAbertos = max(0, int(self._pegar(dados, "baus_abertos", "BausAbertos", padrao=self.BausAbertos)))
         self.MetrosAndados = max(0.0, float(self._pegar(dados, "metros_andados", "MetrosAndados", padrao=self.MetrosAndados)))
         self.TempoJogoSegundos = max(0.0, float(self._pegar(dados, "tempo_jogo_segundos", "TempoJogoSegundos", padrao=self.TempoJogoSegundos)))
@@ -156,7 +156,7 @@ class Perfil:
             "limite_times_pokemon": self.LimiteTimesPokemon,
             "batalhas_pvp_vencidas": self.BatalhasPVPVencidas,
             "batalhas_bot_vencidas": self.BatalhasBotVencidas,
-            "ouro": self.Ouro,
+            "dinheiro": self.Dinheiro,
             "baus_abertos": self.BausAbertos,
             "metros_andados": self.MetrosAndados,
             "tempo_jogo_segundos": int(self.TempoJogoSegundos),

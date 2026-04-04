@@ -1,58 +1,68 @@
 import random
 import pygame
 
-pygame.mixer.init()
-
 silencio = False
 Volume = 0.0
 
 Sons = {
     "Clique": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Clique.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Clique.wav",
+        "Som": None,
         "Volume": 0.75
     },
     "Bloq": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Bloq.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Bloq.wav",
+        "Som": None,
         "Volume": 0.85
     },
     "Abre": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Abre.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Abre.wav",
+        "Som": None,
         "Volume": 0.80
     },
     "AbrirBau": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/AbrirBau.mp3"),
+        "Arquivo": "Recursos/Sonoridades/Sons/AbrirBau.mp3",
+        "Som": None,
         "Volume": 0.85
     },
     "Apagou": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Apagou.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Apagou.wav",
+        "Som": None,
         "Volume": 0.80
     },
     "BaterFerramenta": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/BaterFerramenta.mp3"),
+        "Arquivo": "Recursos/Sonoridades/Sons/BaterFerramenta.mp3",
+        "Som": None,
         "Volume": 0.85
     },
     "CliqueOpções": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/CliqueOpções.mp3"),
+        "Arquivo": "Recursos/Sonoridades/Sons/CliqueOpções.mp3",
+        "Som": None,
         "Volume": 0.80
     },
     "Conseguiu": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Conseguiu.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Conseguiu.wav",
+        "Som": None,
         "Volume": 0.85
     },
     "Dropar": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Dropar.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Dropar.wav",
+        "Som": None,
         "Volume": 0.85
     },
     "Falhou": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Falhou.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Falhou.wav",
+        "Som": None,
         "Volume": 0.85
     },
     "Fecha": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Fecha.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Fecha.wav",
+        "Som": None,
         "Volume": 0.80
     },
     "Salvou": {
-        "Som": pygame.mixer.Sound("Recursos/Sonoridades/Sons/Salvou.wav"),
+        "Arquivo": "Recursos/Sonoridades/Sons/Salvou.wav",
+        "Som": None,
         "Volume": 0.85
     }
 }
@@ -179,6 +189,27 @@ _ultima_troca_bioma = 0
 _cooldown_bioma_ms = 1200
 
 
+def _garantir_mixer():
+    if not pygame.mixer.get_init():
+        pygame.mixer.init()
+
+
+def _obter_som(nome):
+    dados = Sons.get(nome)
+    if not isinstance(dados, dict):
+        return None
+    som = dados.get("Som")
+    if som is not None:
+        return som
+    _garantir_mixer()
+    try:
+        som = pygame.mixer.Sound(dados["Arquivo"])
+    except Exception:
+        return None
+    dados["Som"] = som
+    return som
+
+
 def _volume_musica():
     if silencio:
         return 0.0
@@ -191,6 +222,7 @@ def VerificaSonoridade(config):
     silencio = bool(config.get("Mudo", False))
     Volume = max(0.0, min(1.0, float(config.get("Volume", 0.0))))
 
+    _garantir_mixer()
     if _fade_tipo is None:
         pygame.mixer.music.set_volume(_volume_musica())
 
@@ -199,7 +231,9 @@ def tocar(som):
     if som not in Sons:
         return
 
-    audio = Sons[som]["Som"]
+    audio = _obter_som(som)
+    if audio is None:
+        return
     volume = Sons[som]["Volume"] * Volume
 
     if silencio:
@@ -210,7 +244,9 @@ def tocar(som):
 
     # Mantido como você pediu
     if volume > 1.0:
-        audio2 = Sons[som]["Som"]
+        audio2 = _obter_som(som)
+        if audio2 is None:
+            return
         audio2.set_volume(min(volume - 1.0, 1.0))
         audio2.play()
 
@@ -229,6 +265,7 @@ def _iniciar_musica(nome, volume_inicial=None):
     _vol_mult_atual = float(dados.get("volume", 1.0))
     _posicao_manual = 0.0
 
+    _garantir_mixer()
     pygame.mixer.music.load(dados["arquivo"])
 
     if volume_inicial is None:

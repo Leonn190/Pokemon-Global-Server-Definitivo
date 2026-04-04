@@ -23,6 +23,7 @@ class DiscordPresence:
         self._conectado = False
         self._inicio_jogo = int(time.time())
         self._ultimo_payload = None
+        self._atexit_registrado = False
 
     def set_client_id(self, client_id: Optional[str]):
         novo = str(client_id or "").strip()
@@ -44,7 +45,9 @@ class DiscordPresence:
             self._rpc = Presence(self.client_id)
             self._rpc.connect()
             self._conectado = True
-            atexit.register(self.desconectar)
+            if not self._atexit_registrado:
+                atexit.register(self.desconectar)
+                self._atexit_registrado = True
             return True
         except Exception:
             self._rpc = None
@@ -85,6 +88,10 @@ class DiscordPresence:
 
     def desconectar(self):
         if self._rpc is not None:
+            try:
+                self._rpc.clear()
+            except Exception:
+                pass
             try:
                 self._rpc.close()
             except Exception:

@@ -1,10 +1,15 @@
+import os
 import ctypes
+
+os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+
 import pygame
 
 from Codigo.Cenas.ControladorCenas import ControladorCenas
 from Codigo.Modulos.Sonoridades import VerificaSonoridade
 
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("pokemon.global.server")
+if hasattr(ctypes, "windll") and hasattr(ctypes.windll, "shell32"):
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("pokemon.global.server")
 
 pygame.init()
 pygame.mixer.init()
@@ -39,4 +44,10 @@ VerificaSonoridade(CONFIG)
 Game = ControladorCenas(TELA, RELOGIO, CONFIG)
 Game.CenaAlvo = "Menu" if CONFIG.get("Usuario") else "Login"
 Game.DefinirCena()
-Game.Rodar()
+try:
+    Game.Rodar()
+finally:
+    Game.Encerrar()
+    pygame.mixer.music.stop()
+    pygame.mixer.stop()
+    pygame.quit()

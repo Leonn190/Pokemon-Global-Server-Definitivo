@@ -7,6 +7,8 @@ class GeradorEstadio:
     """Renderizador manual do visual externo do estádio com cache por tipo/escala."""
 
     _cache: dict[tuple[str, int], pygame.Surface] = {}
+    _CASCO_ESCALA_X = 0.90
+    _CASCO_ESCALA_Y = 0.60
 
     @classmethod
     def _cor_tipo(cls, tipo: str) -> tuple[int, int, int]:
@@ -53,7 +55,7 @@ class GeradorEstadio:
         sombra = pygame.Rect(0, 0, int(w * 0.96), int(h * 0.65)); sombra.center = (centro[0], int(centro[1] + h * 0.12))
         pygame.draw.ellipse(surf, (0, 0, 0, 70), sombra)
 
-        casco = pygame.Rect(0, 0, int(w * 0.9), int(h * 0.6)); casco.center = (centro[0], int(centro[1] - h * 0.02))
+        casco = pygame.Rect(0, 0, int(w * cls._CASCO_ESCALA_X), int(h * cls._CASCO_ESCALA_Y)); casco.center = (centro[0], int(centro[1] - h * 0.02))
         pygame.draw.ellipse(surf, (60, 60, 70), casco, width=max(3, int(min(w, h) * 0.06)))
 
         anel = casco.inflate(-int(w * 0.18), -int(h * 0.16))
@@ -65,10 +67,18 @@ class GeradorEstadio:
         pygame.draw.line(surf, (240, 240, 240), (campo.centerx, campo.top + 6), (campo.centerx, campo.bottom - 6), max(1, int(min(w, h) * 0.025)))
 
         porta = pygame.Rect(0, 0, int(w * 0.10), int(h * 0.18)); porta.midbottom = (centro[0], casco.bottom - 2)
-        pygame.draw.rect(surf, (34, 34, 40), porta, border_radius=max(3, int(min(w, h) * 0.02)))
+        pygame.draw.rect(surf, (92, 92, 104), porta, border_radius=max(3, int(min(w, h) * 0.02)))
+        pygame.draw.rect(surf, (54, 54, 64), porta, width=max(1, int(min(w, h) * 0.015)), border_radius=max(3, int(min(w, h) * 0.02)))
 
         cls._cache[chave] = surf
         return surf
+
+    @classmethod
+    def raios_casco_colisao(cls, raio_x: float, raio_y: float) -> tuple[float, float]:
+        """Raio elíptico do casco externo desenhado manualmente (em tiles)."""
+        rx = max(2.0, float(raio_x) * cls._CASCO_ESCALA_X)
+        ry = max(2.0, float(raio_y) * cls._CASCO_ESCALA_Y)
+        return (rx, ry)
 
     @classmethod
     def renderizar(cls, tela, camera, payload: dict) -> None:
@@ -97,19 +107,7 @@ class EstadioInterno:
         altura = float(estado.get("altura_interna", 40.0) or 40.0)
         centro = estado.get("arena_centro") if isinstance(estado.get("arena_centro"), (list, tuple)) and len(estado.get("arena_centro")) == 2 else [largura * 0.5, altura * 0.5]
         porta = estado.get("saida_interna_pos") if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2 else [largura * 0.5, altura - 3.0]
-
-        cam_x, cam_y = map(float, getattr(camera, "PosicaoTiles", (0.0, 0.0)))
-        tela_w, tela_h = map(int, getattr(camera, "TamanhoTelaPx", (1280, 720)))
-        inicio_x = max(0, int(cam_x) - 1)
-        inicio_y = max(0, int(cam_y) - 1)
-        fim_x = min(int(largura), int(cam_x + (tela_w / max(1.0, tile))) + 2)
-        fim_y = min(int(altura), int(cam_y + (tela_h / max(1.0, tile))) + 2)
         cor_a = (220, 233, 247)
-        cor_b = (206, 223, 241)
-        for ty in range(inicio_y, fim_y):
-            for tx in range(inicio_x, fim_x):
-                px_t, py_t = camera.mundo_para_tela_px((float(tx), float(ty)))
-                pygame.draw.rect(tela, cor_a if ((tx + ty) % 2 == 0) else cor_b, pygame.Rect(int(px_t), int(py_t), int(tile) + 1, int(tile) + 1))
 
         parede = pygame.Rect(0, 0, int(largura * tile), int(altura * tile))
         parede.topleft = tuple(map(int, camera.mundo_para_tela_px((0.0, 0.0))))

@@ -192,9 +192,7 @@ class ControladorObjetos:
                 estado_obj = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
                 rx_visual = float(estado_obj.get("raio_elipse_x", raio) or raio)
                 ry_visual = float(estado_obj.get("raio_elipse_y", raio) or raio)
-                # Colisão representa o casco branco sólido (menor que sombra/aro externo).
-                rx_casco = max(2.0, rx_visual * 0.96)
-                ry_casco = max(2.0, ry_visual * 0.92)
+                rx_casco, ry_casco = GeradorEstadio.raios_casco_colisao(rx_visual, ry_visual)
                 yield (
                     int(obj.get("id", 0)), sx, sy, raio, "estrutura_estadio",
                     float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0),
@@ -683,6 +681,14 @@ class ControladorObjetos:
         estado_p = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
         est_id = int(estado_p.get("estadio_atual_id", 0) or 0)
         estadio_payload = self.EstadiosPorId.get(est_id, {})
+        if not isinstance(estadio_payload, dict) or not estadio_payload:
+            for candidato in self.EstadiosPorId.values():
+                if not isinstance(candidato, dict):
+                    continue
+                estado_c = candidato.get("estado") if isinstance(candidato.get("estado"), dict) else {}
+                if str(estado_c.get("dimensao_destino") or "EstadioNormal") == dim_local:
+                    estadio_payload = candidato
+                    break
         estado_est = estadio_payload.get("estado") if isinstance(estadio_payload.get("estado"), dict) else {}
         EstadioInterno.renderizar(tela, camera, estado_estadio=estado_est)
 
@@ -716,4 +722,4 @@ class ControladorObjetos:
     def npc_interagivel_proximo(self, posicao: Tuple[float, float], raio: float = 2.2) -> Optional[Dict[str, object]]:
         with self._lock_objetos:
             snapshot = dict(self.ObjetosPorId)
-        return self._atores.npc_proximo(snapshot, posicao=posicao, raio=raio)
+        return self._atores.npc_proximo(snapshot, posicao=posicao, raio=raio, dimensao_local=self._dimensao_player_local())

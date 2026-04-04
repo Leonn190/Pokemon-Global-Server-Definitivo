@@ -86,22 +86,37 @@ class GeradorEstadio:
 
 
 class EstadioInterno:
-    """Desenhos internos padronizados para qualquer dimensão de estádio (5x5 chunks)."""
+    """Desenhos internos padronizados para qualquer dimensão de estádio."""
 
     @classmethod
     def renderizar(cls, tela, camera, estado_estadio: dict | None = None) -> None:
         estado = estado_estadio if isinstance(estado_estadio, dict) else {}
         tile = float(getattr(camera, "TilePx", 50) or 50)
 
-        centro = estado.get("arena_centro") if isinstance(estado.get("arena_centro"), (list, tuple)) and len(estado.get("arena_centro")) == 2 else [25.0, 25.0]
-        porta = estado.get("saida_interna_pos") if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2 else [25.0, 47.0]
+        largura = float(estado.get("largura_interna", 60.0) or 60.0)
+        altura = float(estado.get("altura_interna", 40.0) or 40.0)
+        centro = estado.get("arena_centro") if isinstance(estado.get("arena_centro"), (list, tuple)) and len(estado.get("arena_centro")) == 2 else [largura * 0.5, altura * 0.5]
+        porta = estado.get("saida_interna_pos") if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2 else [largura * 0.5, altura - 3.0]
+
+        cam_x, cam_y = map(float, getattr(camera, "PosicaoTiles", (0.0, 0.0)))
+        tela_w, tela_h = map(int, getattr(camera, "TamanhoTelaPx", (1280, 720)))
+        inicio_x = max(0, int(cam_x) - 1)
+        inicio_y = max(0, int(cam_y) - 1)
+        fim_x = min(int(largura), int(cam_x + (tela_w / max(1.0, tile))) + 2)
+        fim_y = min(int(altura), int(cam_y + (tela_h / max(1.0, tile))) + 2)
+        cor_a = (220, 233, 247)
+        cor_b = (206, 223, 241)
+        for ty in range(inicio_y, fim_y):
+            for tx in range(inicio_x, fim_x):
+                px_t, py_t = camera.mundo_para_tela_px((float(tx), float(ty)))
+                pygame.draw.rect(tela, cor_a if ((tx + ty) % 2 == 0) else cor_b, pygame.Rect(int(px_t), int(py_t), int(tile) + 1, int(tile) + 1))
 
         cx, cy = camera.mundo_para_tela_px((float(centro[0]), float(centro[1])))
         pw, ph = max(120, int(12 * tile)), max(90, int(7 * tile))
         arena = pygame.Rect(0, 0, pw, ph)
         arena.center = (int(cx), int(cy))
-        pygame.draw.rect(tela, (212, 226, 240), arena, border_radius=max(8, int(tile * 0.18)))
-        pygame.draw.rect(tela, (140, 165, 188), arena, max(3, int(tile * 0.12)), border_radius=max(8, int(tile * 0.18)))
+        pygame.draw.rect(tela, (202, 220, 238), arena, border_radius=max(8, int(tile * 0.18)))
+        pygame.draw.rect(tela, (126, 156, 186), arena, max(3, int(tile * 0.12)), border_radius=max(8, int(tile * 0.18)))
         pygame.draw.line(tela, (242, 246, 250), (arena.left + 12, arena.centery), (arena.right - 12, arena.centery), max(2, int(tile * 0.08)))
         pygame.draw.circle(tela, (242, 246, 250), (arena.centerx, arena.centery), max(8, int(tile * 0.35)), max(2, int(tile * 0.08)))
 

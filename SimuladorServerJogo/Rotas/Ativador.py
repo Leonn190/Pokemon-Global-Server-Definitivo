@@ -237,8 +237,8 @@ def processar_ativador_json(requisicao_json: str) -> str:
             for chunk in sorted(chunks_carregados):
                 grid = CEREBRO_ESTADIOS.chunk_em_grade(dimensao, chunk) if dimensao != "Mundo" else BANCO_DADOS.chunk_em_grade(chunk)
                 chunks.append({"pos": [chunk[0], chunk[1]], "grid": grid, "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()})
-            dim_largura = 5 * int(BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[0])
-            dim_altura = 5 * int(BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[1])
+            dim_largura = int(CEREBRO_ESTADIOS.chunks_largura * BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[0])
+            dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[1])
             return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, ensure_ascii=False)
 
         pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id, dimensao=dimensao)

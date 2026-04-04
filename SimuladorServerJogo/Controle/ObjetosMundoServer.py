@@ -179,8 +179,8 @@ class EstadioServer:
         self.posicao = (float(posicao[0]), float(posicao[1]))
         self.raio_colisao = max(0.4, float((raio_elipse_x + raio_elipse_y) * 0.5))
         self.raio_interacao = max(self.raio_colisao, float(raio_interacao))
-        self.campo = 0.0
-        self.intensidade = 0.0
+        self.campo = 0.35
+        self.intensidade = 1.15
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
         self.estado_extra = {
             "subtipo": "estadio",
@@ -193,9 +193,11 @@ class EstadioServer:
             "raio_elipse_interno_y": max(4.0, float(raio_elipse_y) * 0.72),
             "entrada_offset": [0.0, max(2.0, float(raio_elipse_y) + 1.0)],
             "entrada_pos": [float(self.posicao[0]), float(self.posicao[1] + max(2.0, float(raio_elipse_y) + 1.0))],
-            "saida_interna_pos": [25.0, 47.0],
-            "spawn_interno_pos": [25.0, 42.0],
-            "arena_centro": [25.0, 25.0],
+            "largura_interna": 60.0,
+            "altura_interna": 40.0,
+            "saida_interna_pos": [30.0, 37.0],
+            "spawn_interno_pos": [30.0, 34.0],
+            "arena_centro": [30.0, 20.0],
         }
 
     def serializar(self) -> Dict[str, object]:

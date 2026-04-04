@@ -37,7 +37,7 @@ class LeitorMundo:
         self._versao_chunks = 0
         self.MetaMundo: Dict[str, object] = {}
         self.TamanhoChunkBlocos = 10
-        self.CoresBlocos = {0: (24, 72, 145), 1: (64, 156, 255), 2: (106, 190, 48), 3: (46, 125, 50), 4: (230, 210, 140), 5: (217, 179, 92), 6: (245, 248, 252), 7: (140, 82, 255), 8: (88, 70, 70), 9: (110, 92, 68), 10: (236, 244, 255), 11: (224, 236, 248)}
+        self.CoresBlocos = {0: (24, 72, 145), 1: (64, 156, 255), 2: (106, 190, 48), 3: (46, 125, 50), 4: (230, 210, 140), 5: (217, 179, 92), 6: (245, 248, 252), 7: (140, 82, 255), 8: (88, 70, 70), 9: (110, 92, 68), 10: (226, 238, 252), 11: (206, 224, 243)}
 
         self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}
         self._cache_assinaturas_chunks: Dict[Tuple[int, int], Tuple[Tuple[int, ...], ...]] = {}

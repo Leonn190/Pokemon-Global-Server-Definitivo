@@ -71,8 +71,10 @@ class Camera:
             y = self.PosicaoTiles[1] + (alvo_y - self.PosicaoTiles[1]) * fator
             if self.LimitesMundoTiles and not self.LimitesToroidais:
                 largura, altura = self.LimitesMundoTiles
-                max_x = max(0.0, float(largura) - half_w_tiles)
-                max_y = max(0.0, float(altura) - half_h_tiles)
+                tela_w_tiles = float(self.TamanhoTelaPx[0]) / max(1.0, float(self.TilePx))
+                tela_h_tiles = float(self.TamanhoTelaPx[1]) / max(1.0, float(self.TilePx))
+                max_x = max(0.0, float(largura) - tela_w_tiles)
+                max_y = max(0.0, float(altura) - tela_h_tiles)
                 x = max(0.0, min(max_x, x))
                 y = max(0.0, min(max_y, y))
         self.PosicaoTiles = (x, y)

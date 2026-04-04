@@ -214,7 +214,8 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
     ultimo_tick_recebido = int(dados.get("ultimo_tick_recebido", 0) or 0)
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
-    chunks_carregados = _chunks_carregados_cliente(posicao_camera)
+    dimensao_cliente = CEREBRO.dimensao_player(client_id)
+    chunks_carregados = _chunks_carregados_cliente(posicao_camera) if str(dimensao_cliente) == "Mundo" else set()
     raio_visao = _raio_visao_por_regras()
 
     diffs = dados.get("diffs", []) if isinstance(dados.get("diffs"), list) else []
@@ -243,7 +244,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 ignorados += 1
                 continue
             payload_in = dict(payload)
-            if "posicao" in payload_in:
+            if "posicao" in payload_in and str(dimensao_cliente) == "Mundo":
                 payload_in["posicao"] = _normalizar_posicao_loop(payload_in.get("posicao"))
             obj = BANCO_DADOS.atualizar_objeto(int(objeto_id), payload_in)
             usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
@@ -283,6 +284,15 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 continue
             if categoria == "interacao_bau":
                 if CEREBRO.registrar_interacao_bau(client_id, payload):
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            if categoria in {"estadio_entrar", "estadio_sair", "estadio_interacao"}:
+                if categoria == "estadio_sair":
+                    payload = dict(payload or {})
+                    payload["acao"] = "sair"
+                if CEREBRO.registrar_interacao_estadio(client_id, payload):
                     aplicados += 1
                 else:
                     ignorados += 1
@@ -348,10 +358,10 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
         ignorados += 1
 
-    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados, client_id=client_id)
+    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados, client_id=client_id, dimensao=dimensao_cliente)
     state = _obter_state_client(client_id)
     vistos = state["objetos_vistos"]
-    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id)
+    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dimensao_cliente)
     if diffs_extra:
         if pacotes:
             pacote_vis = pacotes[-1]

@@ -22,10 +22,11 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
     10: {"subtipo": "pinheiro", "nome": "Pinheiro", "sprite": "Recursos/Visual/Mundo/Objetos/Pinheiro.png"},
     11: {"subtipo": "cobre", "nome": "Cobre", "sprite": "Recursos/Visual/Mundo/Objetos/Cobre.png"},
     12: {"subtipo": "lava", "nome": "Lava", "sprite": "Recursos/Visual/Mundo/Objetos/Lava.png"},
+    102: {"subtipo": "pedra_dungeon", "nome": "Pedra Dungeon", "sprite": "Recursos/Visual/Mundo/Objetos/PedraDungeon.png"},
 }
 
 ORDEM_CANONICA_ESTRUTURAS_NATURAIS: Tuple[str, ...] = (
-    "lava", "pedra", "cobre", "ouro", "diamante", "ametista", "rubi", "esmeralda", "pinheiro", "palmeira", "arvore", "arbusto",
+    "lava", "pedra_dungeon", "pedra", "cobre", "ouro", "diamante", "ametista", "rubi", "esmeralda", "pinheiro", "palmeira", "arvore", "arbusto",
 )
 _PRIORIDADE_SUBTIPO: Dict[str, int] = {nome: idx for idx, nome in enumerate(ORDEM_CANONICA_ESTRUTURAS_NATURAIS)}
 

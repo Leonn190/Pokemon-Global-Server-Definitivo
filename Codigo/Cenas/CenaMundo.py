@@ -128,7 +128,21 @@ class CenaMundo:
 
         if (not player_bloqueado) and player is not None and getattr(player, "Controle", None) is not None:
             for ev in EVENTOS:
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_q:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_f:
+                    if str(getattr(player, "Dimensao", "Mundo") or "Mundo") != "Mundo":
+                        self.ControladorMundo.Objetos.EnfileirarDiffRapida({"tipo": "evento", "categoria": "estadio_sair", "payload": {"acao": "sair", "instante_cliente_ms": int(pygame.time.get_ticks())}})
+                        break
+                    estadio = self.ControladorMundo.Objetos.estadio_interagivel_proximo(tuple(player.Posicao), raio=2.4)
+                    if estadio is not None:
+                        self.ControladorMundo.Objetos.EnfileirarDiffRapida({
+                            "tipo": "evento",
+                            "categoria": "estadio_entrar",
+                            "payload": {
+                                "estadio_id": int(estadio.get("estadio_id", 0) or 0),
+                                "instante_cliente_ms": int(pygame.time.get_ticks()),
+                            },
+                        })
+                        break
                     alvo = self.ControladorMundo.Objetos.npc_interagivel_proximo(tuple(player.Posicao), raio=2.3)
                     if alvo is not None:
                         npc_obj = dict(alvo.get("obj", {}))

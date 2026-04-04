@@ -54,7 +54,7 @@ def _normalizar_posicao(valor) -> Vector2:
 
 def _obter_state_client(client_id: str) -> Dict[str, object]:
     if client_id not in _CLIENT_STATE:
-        _CLIENT_STATE[client_id] = {"objetos_vistos": set()}
+        _CLIENT_STATE[client_id] = {"objetos_vistos": set(), "dimensao": "Mundo"}
     return _CLIENT_STATE[client_id]
 
 
@@ -80,6 +80,25 @@ def _objeto_em_chunks(obj, chunks: Set[Chunk]) -> bool:
     return BANCO_DADOS.chunk_da_posicao(getattr(obj, "posicao", (0.0, 0.0))) in chunks
 
 
+
+
+def _dimensao_payload(diff: Dict[str, object]) -> str:
+    payload = diff.get("payload", {}) if isinstance(diff.get("payload"), dict) else {}
+    estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+    return str(payload.get("dimensao") or estado.get("dimensao") or "Mundo")
+
+
+def _dimensao_cliente(client_id: str) -> str:
+    try:
+        oid = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
+    except Exception:
+        oid = 0
+    if oid > 0:
+        obj = BANCO_DADOS.obter_objeto(oid)
+        if obj is not None:
+            return str(getattr(obj, "Dimensao", "Mundo") or "Mundo")
+    return "Mundo"
+
 def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk] | None = None) -> bool:
     if not isinstance(diff, dict):
         return False
@@ -98,7 +117,7 @@ def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float
     return math.hypot(cx - posicao_camera[0], cy - posicao_camera[1]) <= (raio_visao + max(0.0, raio_diff))
 
 
-def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = ""):
+def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = "", dimensao: str = "Mundo"):
     saida = []
     client_id_norm = str(client_id or "").strip().lower()
     for pacote in pacotes if isinstance(pacotes, list) else []:
@@ -111,8 +130,11 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
             if client_id_norm and alvo and alvo == client_id_norm:
                 diffs_visiveis.append(d)
                 continue
-            if not _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados):
-                continue
+            if str(d.get("categoria", "")).strip().lower() != "dimensao_transicao":
+                if _dimensao_payload(d) != str(dimensao or "Mundo"):
+                    continue
+                if not _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados):
+                    continue
             diffs_visiveis.append(d)
         if not diffs_visiveis:
             continue
@@ -122,10 +144,11 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
     return saida
 
 
-def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int], client_id: str = "") -> List[Dict[str, object]]:
+def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int], client_id: str = "", dimensao: str = "Mundo") -> List[Dict[str, object]]:
     raio = _raio_visao_por_regras()
     client_id_norm = str(client_id or "").strip().lower()
-    objetos_proximos = [obj for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio) if _objeto_em_chunks(obj, chunks_carregados)]
+    objetos_proximos = [obj for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio) if (_objeto_em_chunks(obj, chunks_carregados) if str(dimensao)=="Mundo" else True)]
+    objetos_proximos = [obj for obj in objetos_proximos if str(getattr(obj, "Dimensao", "Mundo") or "Mundo") == str(dimensao or "Mundo")]
     ids_proximos = {int(obj.Id) for obj in objetos_proximos}
     diffs: List[Dict[str, object]] = []
     agora = time.time()
@@ -137,7 +160,8 @@ def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[
             continue
         vistos.add(int(obj.Id))
         categoria = str(getattr(obj, "estado_extra", {}).get("subtipo", "outro") or "outro")
-        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "autor": "server", "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "categoria": categoria})
+        payload = obj.serializar()
+        diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "autor": "server", "payload": payload, "escopo": {"centro": list(obj.posicao), "raio": raio}, "categoria": categoria})
     for oid in [oid for oid in list(vistos) if oid not in ids_proximos]:
         vistos.discard(int(oid))
         diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "autor": "server", "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "categoria": "outro"})
@@ -162,21 +186,27 @@ def processar_ativador_json(requisicao_json: str) -> str:
 
     TIQUE_SERVIDOR.ativar_por_usuario(client_id)
     meta_cerebro = CEREBRO.processar_ativacao(client_id, posicao_camera)
-    chunks_carregados = _chunks_carregados_cliente(posicao_camera)
+    dimensao_cliente = _dimensao_cliente(client_id)
+    chunks_carregados = _chunks_carregados_cliente(posicao_camera) if dimensao_cliente == "Mundo" else set()
     chunks_servidor_carregados, chunks_servidor_simulados = CEREBRO._calcular_chunks_carregados()
     raio = _raio_visao_por_regras()
 
     with _LOCK:
         _CLIENTS_CONHECIDOS.add(client_id)
         state = _obter_state_client(client_id)
+        state["dimensao"] = str(dimensao_cliente)
         vistos: Set[int] = state["objetos_vistos"]
 
         if modo == "chunks":
+            if dimensao_cliente != "Mundo":
+                chunks_dim = CEREBRO.chunks_dimensao(dimensao_cliente)
+                chunks = [{"pos": [int(ch[0]), int(ch[1])], "grid": [list(l) for l in grid], "chunk_blocos": 10} for ch, grid in sorted(chunks_dim.items())]
+                return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": 10, "largura_blocos": 50, "altura_blocos": 50, "dimensao": dimensao_cliente}}, ensure_ascii=False)
             chunks = [{"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()} for chunk in sorted(chunks_carregados)]
-            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade())}}, ensure_ascii=False)
+            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao_cliente}}, ensure_ascii=False)
 
-        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id)
-        diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id)
+        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id, dimensao=dimensao_cliente)
+        diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dimensao_cliente)
         if diffs_extra:
             if pacotes:
                 pacote_vis = pacotes[-1]

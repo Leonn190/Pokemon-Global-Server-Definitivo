@@ -69,6 +69,7 @@ class Ator:
 
         self.AnguloOlhar = 0.0
         self.Nome = ""
+        self.Dimensao = "Mundo"
         self._duracao_tapa = 0.5
         self._tempo_tapa = 0.0
         self._raio_mao_colisao = max(0.3, raio_colisao * 0.65)
@@ -113,6 +114,10 @@ class Ator:
             self.set_nome_skin(str(skin))
 
         estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+        dim = dados.get("dimensao") or estado.get("dimensao")
+        if dim is not None:
+            self.Dimensao = str(dim or "Mundo")
+
         if "angulo" in estado:
             alvo_ang = float(estado.get("angulo", self.AnguloOlhar))
             self._alvo_angulo = alvo_ang

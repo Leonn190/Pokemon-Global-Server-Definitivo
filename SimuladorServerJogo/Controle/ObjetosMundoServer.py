@@ -24,7 +24,8 @@ class AtorServer:
         self.campo = 0.45
         self.intensidade = 1.15
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
-        self.estado_extra = {"subtipo": "player", "usuario": str(usuario), "skin": str(skin), "nome": str(usuario), "angulo": 0.0, "perfil": {}, "inventario": {}, "slot_selecionado": 0}
+        self.Dimensao = "Mundo"
+        self.estado_extra = {"subtipo": "player", "usuario": str(usuario), "skin": str(skin), "nome": str(usuario), "angulo": 0.0, "perfil": {}, "inventario": {}, "slot_selecionado": 0, "dimensao": "Mundo"}
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))
@@ -85,6 +86,7 @@ class AtorServer:
             "campo": self.campo,
             "intensidade": self.intensidade,
             "estado": estado,
+            "dimensao": str(self.Dimensao or estado.get("dimensao") or "Mundo"),
         }
 
 
@@ -371,6 +373,59 @@ class XpMundoServer:
         }
 
 
+class EstadioServer:
+    def __init__(self, id_objeto: int, estadio_id: int, tipo: str, dimensao_destino: str, posicao: Vector2 = (0.0, 0.0), chunk_tamanho: int = 10, chunk_largura: int = 5, chunk_altura: int = 5) -> None:
+        self.id_objeto = int(id_objeto)
+        self.Id = self.id_objeto
+        self.tipo_classe = "entidade_estadio"
+        self.posicao = (float(posicao[0]), float(posicao[1]))
+        self.chunk_tamanho = max(1, int(chunk_tamanho or 10))
+        self.chunk_largura = max(1, int(chunk_largura or 5))
+        self.chunk_altura = max(1, int(chunk_altura or 5))
+        self.raio_colisao = max(1.0, (self.chunk_largura * self.chunk_tamanho) * 0.50)
+        self.raio_interacao = max(1.0, self.raio_colisao + 1.5)
+        self.campo = 0.0
+        self.intensidade = 0.0
+        self.Dimensao = "Mundo"
+        self.Colisor = Colisor(
+            x=self.posicao[0],
+            y=self.posicao[1],
+            raio_colisao=self.raio_colisao,
+            raio_interacao=self.raio_interacao,
+            tipo_colisao="elipse",
+            semi_eixo_x=(self.chunk_largura * self.chunk_tamanho) * 0.50,
+            semi_eixo_y=(self.chunk_altura * self.chunk_tamanho) * 0.50,
+            campo_semi_eixo_x=(self.chunk_largura * self.chunk_tamanho) * 0.50,
+            campo_semi_eixo_y=(self.chunk_altura * self.chunk_tamanho) * 0.50,
+        )
+        self.estado_extra = {
+            "subtipo": "estadio",
+            "estadio_id": int(estadio_id),
+            "tipo_estadio": str(tipo or "Normal"),
+            "dimensao_destino": str(dimensao_destino or "EstadioNormal"),
+            "chunk_largura": int(self.chunk_largura),
+            "chunk_altura": int(self.chunk_altura),
+            "chunk_tamanho": int(self.chunk_tamanho),
+            "entrada": [self.posicao[0], self.posicao[1] + max(1.0, (self.chunk_altura * self.chunk_tamanho) * 0.50 - 1.2)],
+            "colisao": {"tipo": "elipse", "semi_eixo_x": float((self.chunk_largura * self.chunk_tamanho) * 0.50), "semi_eixo_y": float((self.chunk_altura * self.chunk_tamanho) * 0.50)},
+            "dimensao": "Mundo",
+        }
+
+    def serializar(self) -> Dict[str, object]:
+        return {
+            "id": self.Id,
+            "tipo": self.tipo_classe,
+            "posicao": [self.posicao[0], self.posicao[1]],
+            "raio_colisao": self.raio_colisao,
+            "raio_interacao": self.raio_interacao,
+            "campo": self.campo,
+            "intensidade": self.intensidade,
+            "estado": dict(self.estado_extra),
+            "dimensao": "Mundo",
+            "nome": f"Estadio {self.estado_extra.get('tipo_estadio', 'Normal')}",
+        }
+
+
 def criar_objeto_mundo_server(dados: Dict[str, object]):
     dados = dict(dados or {})
     tipo = str(dados.get("tipo", "")).strip().lower()
@@ -413,6 +468,8 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
         return XpMundoServer(id_objeto=oid, posicao=(float(pos[0]), float(pos[1])), tamanho=str(dados.get("tamanho") or estado.get("tamanho") or "pequeno"), pos_inicial=(float(p0[0]), float(p0[1])), pos_final=(float(p1[0]), float(p1[1])), velocidade=float(dados.get("velocidade") or estado.get("velocidade") or 3.6), tick_spawn=int(estado.get("tick_spawn", 0) or 0), xp_valor=int(dados.get("xp_valor") or estado.get("xp_valor") or 0))
     if str(estado.get("subtipo", "")).strip().lower() == "bau" or tipo == "entidade_bau":
         return BauServer(id_objeto=oid, tipo_bau=str(estado.get("tipo_bau", "Comum")), itens=list(estado.get("itens", [])), posicao=(float(pos[0]), float(pos[1])), aberto=bool(estado.get("aberto", False)), raio_colisao=float(dados.get("raio_colisao", 0.42)), raio_interacao=float(dados.get("raio_interacao", 0.85) or 0.85), quantidade_itens=int(estado.get("quantidade_itens", max(1, len(list(estado.get("itens", [])))))), tamanho_tiles=float(estado.get("tamanho_tiles", 1.10) or 1.10))
+    if tipo in {"entidade_estadio", "estadio"} or str(estado.get("subtipo", "")).strip().lower() == "estadio":
+        return EstadioServer(id_objeto=oid, estadio_id=int(estado.get("estadio_id", dados.get("estadio_id", 0)) or 0), tipo=str(estado.get("tipo_estadio") or dados.get("tipo_estadio") or "Normal"), dimensao_destino=str(estado.get("dimensao_destino") or dados.get("dimensao_destino") or "EstadioNormal"), posicao=(float(pos[0]), float(pos[1])), chunk_tamanho=int(estado.get("chunk_tamanho", 10) or 10), chunk_largura=int(estado.get("chunk_largura", 5) or 5), chunk_altura=int(estado.get("chunk_altura", 5) or 5))
     if tipo.startswith("estrutura") or tipo == "estrutura_natural":
         return EstruturaNaturalServer(id_objeto=oid, tipo=str(estado.get("subtipo") or "natural"), nome=str(dados.get("nome") or "Estrutura"), sprite=str(dados.get("sprite") or ""), posicao=(float(pos[0]), float(pos[1])), raio_colisao=float(dados.get("raio_colisao", 1.0)), raio_interacao=float(dados.get("raio_interacao", 1.0)), campo=float(dados.get("campo", 0.0)), intensidade=float(dados.get("intensidade", 0.0)), codigo_natural=int(dados.get("codigo_natural", 0) or 0), quantidade=int(estado.get("quantidade", 0) or 0), material=str(estado.get("material", "") or ""), estilo=str(estado.get("estilo", "") or ""), dureza=int(estado.get("dureza", 1) or 1))
     return None

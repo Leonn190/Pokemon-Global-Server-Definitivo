@@ -26,6 +26,33 @@ ARQUIVO_CLASS = PASTA_SERVIDOR / "WorldGenerator.class"
 LARGURA_BLOCOS = 0
 ALTURA_BLOCOS = 0
 
+_TIPOS_ESTADIO_META = [
+    "Normal", "Fogo", "Agua", "Planta", "Eletrico", "Gelo", "Lutador", "Veneno", "Terra", "Voador",
+    "Psiquico", "Inseto", "Pedra", "Fantasma", "Dragao", "Sombrio", "Aco", "Fada", "Cosmico", "Sonoro",
+]
+
+
+def _manifesto_estadios_meta(largura: int, altura: int, chunk_tamanho: int) -> list[dict]:
+    largura = max(1, int(largura or 1))
+    altura = max(1, int(altura or 1))
+    chunk_tamanho = max(1, int(chunk_tamanho or 10))
+    passo = chunk_tamanho * 12
+    base_x = max(chunk_tamanho * 8, int(largura * 0.18))
+    base_y = max(chunk_tamanho * 8, int(altura * 0.18))
+    saida = []
+    idx = 0
+    for linha in range(4):
+        for col in range(5):
+            if idx >= len(_TIPOS_ESTADIO_META):
+                break
+            tipo = str(_TIPOS_ESTADIO_META[idx])
+            dimensao = f"Estadio{tipo}"
+            x = float((base_x + col * passo) % max(1, largura))
+            y = float((base_y + linha * passo) % max(1, altura))
+            saida.append({"estadio_id": int(idx + 1), "tipo": str(tipo), "dimensao": str(dimensao), "posicao": [x, y]})
+            idx += 1
+    return saida
+
 
 def _gerar_seed() -> int:
     return int(time.time_ns() % 9_000_000_000_000_000_000)
@@ -227,6 +254,12 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
     spawn_chunk = (int(meta_java["spawn_chunk_x"]), int(meta_java["spawn_chunk_y"]))
     spawn = (float(meta_java["spawn_x"]), float(meta_java["spawn_y"]))
 
+    estadios_meta = _manifesto_estadios_meta(
+        largura=int(meta_java["width"]),
+        altura=int(meta_java["height"]),
+        chunk_tamanho=int(CHUNK_BLOCOS),
+    )
+
     estado = {
         "meta": {
             "largura_blocos": int(meta_java["width"]),
@@ -239,6 +272,7 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
             "chunks_x": int(meta_java["chunks_x"]),
             "chunks_y": int(meta_java["chunks_y"]),
             "chunks_por_arquivo": int(meta_java.get("chunks_por_arquivo", 10)),
+            "estadios": list(estadios_meta),
         },
         "spawn": [float(spawn[0]), float(spawn[1])],
         "grid": [],

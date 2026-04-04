@@ -260,6 +260,28 @@
       "tamanhosXP": [
         "Pequeno"
       ]
+    },
+    "102": {
+      "subtipo": "pedra_dungeon",
+      "nome": "Pedra Dungeon",
+      "sprite": "Recursos/Visual/Mundo/Objetos/PedraDungeon.png",
+      "raio_colisao": 1.8,
+      "raio_interacao": 1.95,
+      "campo": 1.9,
+      "intensidade": 4.2,
+      "quantidade": 9999,
+      "material": "PedraDungeon",
+      "estilo": "picareta",
+      "dureza": 3,
+      "particulasXP": [
+        2,
+        3,
+        4
+      ],
+      "tamanhosXP": [
+        "Medio",
+        "Grande"
+      ]
     }
   }
 }

@@ -24,12 +24,32 @@ class Colisor:
     raio_colisao: float
     raio_interacao: Optional[float] = None
     ativo: bool = True
+    tipo_colisao: str = "circulo"
+    semi_eixo_x: Optional[float] = None
+    semi_eixo_y: Optional[float] = None
+    campo_semi_eixo_x: Optional[float] = None
+    campo_semi_eixo_y: Optional[float] = None
 
     def __post_init__(self) -> None:
         if self.raio_interacao is None:
             self.raio_interacao = self.raio_colisao
         self.raio_colisao = max(0.0, float(self.raio_colisao))
         self.raio_interacao = max(float(self.raio_colisao), float(self.raio_interacao))
+        self.tipo_colisao = str(self.tipo_colisao or "circulo").strip().lower()
+        if self.tipo_colisao not in {"circulo", "elipse"}:
+            self.tipo_colisao = "circulo"
+        if self.semi_eixo_x is None:
+            self.semi_eixo_x = float(self.raio_colisao)
+        if self.semi_eixo_y is None:
+            self.semi_eixo_y = float(self.raio_colisao)
+        self.semi_eixo_x = max(0.001, float(self.semi_eixo_x))
+        self.semi_eixo_y = max(0.001, float(self.semi_eixo_y))
+        if self.campo_semi_eixo_x is None:
+            self.campo_semi_eixo_x = float(self.semi_eixo_x)
+        if self.campo_semi_eixo_y is None:
+            self.campo_semi_eixo_y = float(self.semi_eixo_y)
+        self.campo_semi_eixo_x = max(float(self.semi_eixo_x), float(self.campo_semi_eixo_x))
+        self.campo_semi_eixo_y = max(float(self.semi_eixo_y), float(self.campo_semi_eixo_y))
 
     @property
     def centro(self) -> Vector2:
@@ -103,8 +123,20 @@ class Colisor:
 
     def dentro_da_area(self, ponto: Vector2, usar_interacao: bool = True) -> bool:
         px, py = ponto
+        if self.tipo_colisao == "elipse":
+            ex = float(self.campo_semi_eixo_x if usar_interacao else self.semi_eixo_x)
+            ey = float(self.campo_semi_eixo_y if usar_interacao else self.semi_eixo_y)
+            return Colisor.ponto_em_elipse((float(px), float(py)), self.centro, ex, ey)
         raio = self.raio_interacao if usar_interacao else self.raio_colisao
         return math.hypot(px - self.x, py - self.y) <= raio
+
+    @staticmethod
+    def ponto_em_elipse(ponto: Vector2, centro: Vector2, semi_eixo_x: float, semi_eixo_y: float, margem: float = 0.0) -> bool:
+        ex = max(0.001, float(semi_eixo_x) + max(0.0, float(margem)))
+        ey = max(0.001, float(semi_eixo_y) + max(0.0, float(margem)))
+        dx = float(ponto[0]) - float(centro[0])
+        dy = float(ponto[1]) - float(centro[1])
+        return ((dx * dx) / (ex * ex) + (dy * dy) / (ey * ey)) <= 1.0
 
     @staticmethod
     def circle_rect_collide(center: Vector2, raio: float, rect: RectData) -> bool:
@@ -157,7 +189,7 @@ class Colisor:
         posicao_antes: Vector2,
         posicao_depois: Vector2,
         raio_entidade: float,
-        colisores: list[tuple[int, float, float, float, str, float, float]],
+        colisores: list[tuple[int, float, float, float, str, float, float, dict | None]],
         dt: float,
     ) -> Vector2:
         """Resolve bloqueio por colisão e repulsão por campo para uma entidade móvel."""
@@ -166,13 +198,25 @@ class Colisor:
             return (float(posicao_depois[0]), float(posicao_depois[1]))
 
         melhor_t = None
-        for _, sx, sy, raio_obj, _, _, _ in colisores:
-            t = Colisor.intersecao_segmento_circulo(
-                posicao_antes,
-                posicao_depois,
-                (sx, sy),
-                raio_entidade + raio_obj,
-            )
+        for _, sx, sy, raio_obj, _, _, _, colisor_cfg in colisores:
+            cfg = colisor_cfg if isinstance(colisor_cfg, dict) else {}
+            tipo_cfg = str(cfg.get("tipo", "circulo")).strip().lower()
+            if tipo_cfg == "elipse":
+                ex = float(cfg.get("semi_eixo_x", raio_obj) or raio_obj)
+                ey = float(cfg.get("semi_eixo_y", raio_obj) or raio_obj)
+                t = Colisor.intersecao_segmento_circulo(
+                    ((float(posicao_antes[0]) - float(sx)) / max(0.001, ex + raio_entidade), (float(posicao_antes[1]) - float(sy)) / max(0.001, ey + raio_entidade)),
+                    ((float(posicao_depois[0]) - float(sx)) / max(0.001, ex + raio_entidade), (float(posicao_depois[1]) - float(sy)) / max(0.001, ey + raio_entidade)),
+                    (0.0, 0.0),
+                    1.0,
+                )
+            else:
+                t = Colisor.intersecao_segmento_circulo(
+                    posicao_antes,
+                    posicao_depois,
+                    (sx, sy),
+                    raio_entidade + raio_obj,
+                )
             if t is None:
                 continue
             if melhor_t is None or t < melhor_t:
@@ -188,29 +232,62 @@ class Colisor:
 
         for _ in range(3):
             ajustou = False
-            for _, sx, sy, raio_obj, _, _, _ in colisores:
-                vx = px - sx
-                vy = py - sy
-                dist = math.hypot(vx, vy)
-                limite = raio_entidade + raio_obj
-                if dist >= limite or limite <= 0.0:
-                    continue
-                if dist <= 1e-8:
-                    vx, vy, dist = 1.0, 0.0, 1.0
+            for _, sx, sy, raio_obj, _, _, _, colisor_cfg in colisores:
+                cfg = colisor_cfg if isinstance(colisor_cfg, dict) else {}
+                tipo_cfg = str(cfg.get("tipo", "circulo")).strip().lower()
+                if tipo_cfg == "elipse":
+                    ex = float(cfg.get("semi_eixo_x", raio_obj) or raio_obj)
+                    ey = float(cfg.get("semi_eixo_y", raio_obj) or raio_obj)
+                    if not Colisor.ponto_em_elipse((px, py), (sx, sy), ex, ey, margem=raio_entidade):
+                        continue
+                    vx = px - sx
+                    vy = py - sy
+                    dist = math.hypot(vx, vy)
+                    if dist <= 1e-8:
+                        vx, vy, dist = 1.0, 0.0, 1.0
+                    nx = vx / dist
+                    ny = vy / dist
+                    px += nx * 0.08
+                    py += ny * 0.08
+                    ajustou = True
+                else:
+                    vx = px - sx
+                    vy = py - sy
+                    dist = math.hypot(vx, vy)
+                    limite = raio_entidade + raio_obj
+                    if dist >= limite or limite <= 0.0:
+                        continue
+                    if dist <= 1e-8:
+                        vx, vy, dist = 1.0, 0.0, 1.0
 
-                nx = vx / dist
-                ny = vy / dist
-                sobreposicao = limite - dist
-                px += nx * (sobreposicao + 1e-4)
-                py += ny * (sobreposicao + 1e-4)
-                ajustou = True
+                    nx = vx / dist
+                    ny = vy / dist
+                    sobreposicao = limite - dist
+                    px += nx * (sobreposicao + 1e-4)
+                    py += ny * (sobreposicao + 1e-4)
+                    ajustou = True
             if not ajustou:
                 break
 
         dt = max(0.0, float(dt))
         if dt > 0.0:
-            for _, sx, sy, raio_obj, tipo_obj, campo, intensidade in colisores:
+            for _, sx, sy, raio_obj, tipo_obj, campo, intensidade, colisor_cfg in colisores:
                 if not tipo_obj.startswith("estrutura"):
+                    continue
+                cfg = colisor_cfg if isinstance(colisor_cfg, dict) else {}
+                if str(cfg.get("tipo", "circulo")).strip().lower() == "elipse":
+                    mvx, mvy = Colisor.aplicar_repulsao_eliptica(
+                        posicao_entidade=(px, py),
+                        movimento_entidade=(0.0, 0.0),
+                        centro_estrutura=(sx, sy),
+                        semi_eixo_x=float(cfg.get("campo_semi_eixo_x", cfg.get("semi_eixo_x", raio_obj)) or raio_obj),
+                        semi_eixo_y=float(cfg.get("campo_semi_eixo_y", cfg.get("semi_eixo_y", raio_obj)) or raio_obj),
+                        intensidade=intensidade,
+                        delta_time=dt,
+                        raio_entidade=raio_entidade,
+                    )
+                    px += mvx
+                    py += mvy
                     continue
                 mvx, mvy = Colisor.aplicar_repulsao_circular(
                     posicao_entidade=(px, py),
@@ -274,3 +351,33 @@ class Colisor:
         mvx += dirx * push
         mvy += diry * push
         return (mvx, mvy)
+
+    @staticmethod
+    def aplicar_repulsao_eliptica(
+        posicao_entidade: Vector2,
+        movimento_entidade: Vector2,
+        centro_estrutura: Vector2,
+        semi_eixo_x: float,
+        semi_eixo_y: float,
+        intensidade: float,
+        delta_time: float,
+        raio_entidade: float = 0.0,
+    ) -> Vector2:
+        intensidade = max(0.0, float(intensidade))
+        if intensidade <= 0.0:
+            return (float(movimento_entidade[0]), float(movimento_entidade[1]))
+        ex = max(0.001, float(semi_eixo_x) + max(0.0, float(raio_entidade)))
+        ey = max(0.001, float(semi_eixo_y) + max(0.0, float(raio_entidade)))
+        px, py = float(posicao_entidade[0]), float(posicao_entidade[1])
+        cx, cy = float(centro_estrutura[0]), float(centro_estrutura[1])
+        if not Colisor.ponto_em_elipse((px, py), (cx, cy), ex, ey):
+            return (float(movimento_entidade[0]), float(movimento_entidade[1]))
+        vx = px - cx
+        vy = py - cy
+        dist = math.hypot(vx, vy)
+        if dist <= 1e-8:
+            vx, vy, dist = 1.0, 0.0, 1.0
+        nx = vx / dist
+        ny = vy / dist
+        push = intensidade * max(0.0, float(delta_time))
+        return (float(movimento_entidade[0]) + nx * push, float(movimento_entidade[1]) + ny * push)

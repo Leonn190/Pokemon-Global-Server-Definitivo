@@ -354,6 +354,12 @@ class BancoDadosMundo:
             estado = campos.get("estado")
             if isinstance(estado, dict):
                 obj.estado_extra.update(estado)
+                if "dimensao" in estado and hasattr(obj, "Dimensao"):
+                    obj.Dimensao = str(estado.get("dimensao") or "Mundo")
+            if "dimensao" in campos and hasattr(obj, "Dimensao"):
+                obj.Dimensao = str(campos.get("dimensao") or "Mundo")
+                if isinstance(getattr(obj, "estado_extra", None), dict):
+                    obj.estado_extra["dimensao"] = str(obj.Dimensao)
 
             if str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower() == "player":
                 if "nome" in campos:

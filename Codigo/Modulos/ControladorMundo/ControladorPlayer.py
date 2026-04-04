@@ -425,6 +425,7 @@ class ControladorPlayer:
             "raio_colisao": float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35) or 0.35),
             "estado": {
                 "angulo": float(getattr(ator, "AnguloOlhar", 0.0) or 0.0),
+                "dimensao": str(getattr(ator, "Dimensao", "Mundo") or "Mundo"),
                 "tapa": bool(ator.esta_tapando() if hasattr(ator, "esta_tapando") else False),
                 "mirando": bool(getattr(controle, "_mirando", False)) if controle is not None else False,
                 "inventario_aberto": bool(getattr(controle, "InventarioAberto", False)) if controle is not None else False,
@@ -504,6 +505,10 @@ class ControladorPlayer:
 
         if tipo == "spawn":
             return
+        if tipo == "evento" and str(diff.get("categoria", "")).strip().lower() == "dimensao_transicao" and autor == "server":
+            dim = str(payload.get("dimensao") or "Mundo")
+            self._player_local.Dimensao = dim
+            return
         if tipo != "update":
             return
         if autor != "server":
@@ -523,6 +528,9 @@ class ControladorPlayer:
         dados.pop("posicao", None)
         # Para o próprio player, estado visual/entrada (ângulo, tapa, mirando etc.)
         # é controlado localmente e não deve sobrescrever o input do cliente.
+        estado_remoto = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+        if "dimensao" in estado_remoto:
+            self._player_local.Dimensao = str(estado_remoto.get("dimensao") or "Mundo")
         dados.pop("estado", None)
         if dados:
             self._player_local.update(dados)

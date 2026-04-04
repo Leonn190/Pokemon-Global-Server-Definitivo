@@ -23,6 +23,7 @@ from SimuladorServerJogo.Controle.Cerebros.CerebroItensMundo import CerebroItens
 from SimuladorServerJogo.Controle.Cerebros.CerebroEstruturasNaturais import CerebroEstruturasNaturais
 from SimuladorServerJogo.Controle.Cerebros.CerebroXpMundo import CerebroXpMundo
 from SimuladorServerJogo.Controle.Cerebros.CerebroNPCs import CerebroNPCs
+from SimuladorServerJogo.Controle.Cerebros.CerebroEstadios import CerebroEstadios
 from SimuladorServerJogo.Controle.ServicoInventario import ServicoInventario
 
 Vector2 = Tuple[float, float]
@@ -55,6 +56,7 @@ class CerebroCentral:
         self._cerebro_estruturas = CerebroEstruturasNaturais(self)
         self._cerebro_xp_mundo = CerebroXpMundo(self)
         self._cerebro_npcs = CerebroNPCs(self)
+        self._cerebro_estadios = CerebroEstadios(self)
 
     def _i(self, k: str, d: int) -> int:
         try:
@@ -145,12 +147,14 @@ class CerebroCentral:
         chunks_carregados, chunks_simulados = self._calcular_chunks_carregados()
         self._chunks_carregados_tick_atual = set(chunks_carregados)
 
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+        self._cerebro_estadios.garantir_objetos_mundo(registrar_diff)
+
         if chunks_simulados:
             self._cerebro_pokemons.tentar_spawn(chunks_simulados)
             self._tentar_spawn_bau(chunks_simulados)
 
         self._cerebro_pokemons.atualizar_movimento(chunks_carregados)
-        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
         self._cerebro_npcs.executar_tick(chunks_carregados, chunks_simulados, registrar_diff)
         self._cerebro_baus.executar_tick(chunks_simulados)
         self._cerebro_itens_mundo.executar_tick(chunks_carregados, chunks_simulados)
@@ -296,6 +300,20 @@ class CerebroCentral:
 
     def registrar_interacao_bau(self, client_id: str, payload: Dict[str, object]) -> bool:
         return self._cerebro_baus.registrar_interacao(client_id, payload)
+
+    def registrar_interacao_estadio(self, client_id: str, payload: Dict[str, object]) -> bool:
+        from SimuladorServerJogo.Rotas.Ativador import registrar_diff
+        return self._cerebro_estadios.processar_interacao(client_id, payload, registrar_diff)
+
+    def dimensao_player(self, client_id: str) -> str:
+        oid = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
+        return self._cerebro_estadios.dimensao_player(oid)
+
+    def dimensao_objeto(self, obj) -> str:
+        return self._cerebro_estadios.dimensao_de_objeto(obj)
+
+    def chunks_dimensao(self, dimensao: str):
+        return self._cerebro_estadios.chunks_dimensao(dimensao)
 
     def registrar_inicio_interacao_npc(self, client_id: str, npc_id: int) -> tuple[bool, str]:
         return self._cerebro_npcs.registrar_inicio_interacao(client_id, int(npc_id))

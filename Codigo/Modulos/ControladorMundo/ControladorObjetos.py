@@ -11,6 +11,7 @@ import pygame
 
 from Codigo.Geradores.Baus import Bau
 from Codigo.Geradores.EstruturaNaturais import EstruturaNatural, prioridade_estrutura_natural, tipo_estrutura_natural_por_codigo
+from Codigo.Geradores.GeradorEstadio import Estadio
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
 from Codigo.Modulos.ControladorMundo.ControladorAtores import ControladorAtores
@@ -25,6 +26,7 @@ class ControladorObjetos:
         self._atores = ControladorAtores()
         self.AtoresRemotosPorId = self._atores.AtoresRemotosPorId
         self.EstruturasPorId: Dict[int, EstruturaNatural] = {}
+        self.EstadiosPorId: Dict[int, Estadio] = {}
 
         self._player_local_id: Optional[int] = None
         self._player_local_ref = None
@@ -125,6 +127,8 @@ class ControladorObjetos:
             return True
         if self._eh_payload_estrutura(payload):
             return True
+        if self._eh_payload_estadio(payload):
+            return True
 
         if tipo in {"entidade_item_mundo", "item_mundo", "entidade_projetil", "projetil", "entidade_xp_mundo", "xp_mundo"}:
             return False
@@ -162,7 +166,18 @@ class ControladorObjetos:
             tipo_obj = str(obj.get("tipo", ""))
             if self._eh_payload_bau(obj):
                 tipo_obj = "estrutura_bau"
-            yield (int(obj.get("id", 0)), sx, sy, raio, tipo_obj, float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0))
+            estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            colisao_cfg = estado.get("colisao") if isinstance(estado.get("colisao"), dict) else {}
+            yield (
+                int(obj.get("id", 0)),
+                sx,
+                sy,
+                raio,
+                tipo_obj,
+                float(obj.get("campo", 0.0) or 0.0),
+                float(obj.get("intensidade", 0.0) or 0.0),
+                dict(colisao_cfg) if colisao_cfg else None,
+            )
 
     def estrutura_colidindo(self, posicao: Tuple[float, float], raio: float) -> Optional[Dict[str, object]]:
         colisoes = self.estruturas_colidindo(posicao, raio)
@@ -255,6 +270,12 @@ class ControladorObjetos:
     def _eh_payload_estrutura(self, payload: Dict[str, object]) -> bool:
         return str(payload.get("tipo", "")).strip().lower() in {"estrutura_natural", "estrutura"}
 
+
+    def _eh_payload_estadio(self, payload: Dict[str, object]) -> bool:
+        tipo = str(payload.get("tipo", "")).strip().lower()
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        return tipo in {"entidade_estadio", "estadio"} or str(estado.get("subtipo", "")).strip().lower() == "estadio"
+
     def _reconciliar_projetil_predito_por_token(self, oid_oficial: int, payload: Dict[str, object]) -> None:
         self._criaveis.reconciliar_projetil_predito_por_token(oid_oficial, payload)
 
@@ -295,6 +316,27 @@ class ControladorObjetos:
             est.update(payload)
         else:
             self.EstruturasPorId.pop(oid, None)
+
+        if self._eh_payload_estadio(payload):
+            estado_payload = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+            est = self.EstadiosPorId.get(oid)
+            if est is None:
+                est = Estadio(
+                    id_objeto=oid,
+                    estadio_id=int(estado_payload.get("estadio_id", 0) or 0),
+                    tipo=str(estado_payload.get("tipo_estadio") or "Normal"),
+                    dimensao_destino=str(estado_payload.get("dimensao_destino") or "EstadioNormal"),
+                    posicao=tuple(payload.get("posicao", [0.0, 0.0])),
+                    chunk_tamanho_tiles=int(estado_payload.get("chunk_tamanho", 10) or 10),
+                    chunk_largura=int(estado_payload.get("chunk_largura", 5) or 5),
+                    chunk_altura=int(estado_payload.get("chunk_altura", 5) or 5),
+                )
+                self.EstadiosPorId[oid] = est
+            else:
+                pos = payload.get("posicao") if isinstance(payload.get("posicao"), (list, tuple)) else est.posicao
+                est.posicao = (float(pos[0]), float(pos[1]))
+        else:
+            self.EstadiosPorId.pop(oid, None)
 
 
     def aplicar_diff(self, diff):
@@ -357,6 +399,7 @@ class ControladorObjetos:
                 self._atores.remover(oid)
                 self._criaveis.remover_criavel(oid)
                 self.EstruturasPorId.pop(oid, None)
+                self.EstadiosPorId.pop(oid, None)
                 self._remover_indice_chunk_objeto(oid)
 
     def aplicar_pacote_tick(self, pacote_tick: Dict[str, object]) -> None:
@@ -564,7 +607,7 @@ class ControladorObjetos:
             oid = int(obj.get("id", -1))
             if ignorar_id is not None and oid == int(ignorar_id):
                 continue
-            if self._eh_payload_estrutura(obj):
+            if self._eh_payload_estrutura(obj) or self._eh_payload_estadio(obj):
                 continue
             if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
                 continue
@@ -597,10 +640,10 @@ class ControladorObjetos:
 
     def renderizar_estruturas(self, tela, camera):
         dt = 1.0 / 60.0
-        objs = [obj for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3) if isinstance(obj, dict) and str(obj.get("tipo", "")).startswith("estrutura")]
+        objs = [obj for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=4) if isinstance(obj, dict) and (str(obj.get("tipo", "")).startswith("estrutura") or self._eh_payload_estadio(obj))]
         objs.sort(
             key=lambda o: (
-                prioridade_estrutura_natural(codigo=o.get("codigo_natural"), subtipo=(o.get("estado", {}) if isinstance(o.get("estado"), dict) else {}).get("subtipo")),
+                (999 if self._eh_payload_estadio(o) else prioridade_estrutura_natural(codigo=o.get("codigo_natural"), subtipo=(o.get("estado", {}) if isinstance(o.get("estado"), dict) else {}).get("subtipo"))),
                 float((o.get("posicao") or [0.0, 0.0])[1] if isinstance(o.get("posicao"), (list, tuple)) and len(o.get("posicao")) == 2 else 0.0),
                 int(o.get("id", 0) or 0),
             )
@@ -608,13 +651,35 @@ class ControladorObjetos:
         for obj in objs:
             if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220) is None:
                 continue
-            est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))
+            oid = int(obj.get("id", 0) or 0)
+            if self._eh_payload_estadio(obj):
+                estadio = self.EstadiosPorId.get(oid)
+                if estadio is not None:
+                    estadio.renderizar_mundo(tela, camera)
+                continue
+            est = self.EstruturasPorId.get(oid)
             escala = est.escala_render(dt) if est is not None else 1.0
             self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala)
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         self.renderizar_entidades(tela, camera, ignorar_id=ignorar_entidade_id)
         self.renderizar_estruturas(tela, camera)
+
+    def estadio_interagivel_proximo(self, posicao: Tuple[float, float], raio: float = 2.2):
+        px, py = float(posicao[0]), float(posicao[1])
+        melhores = []
+        with self._lock_objetos:
+            estadios = list(self.EstadiosPorId.values())
+        for est in estadios:
+            if est.pode_interagir_entrada((px, py), raio=raio):
+                ex, ey = est.entrada_posicao
+                d2 = (ex - px) ** 2 + (ey - py) ** 2
+                melhores.append((d2, est))
+        if not melhores:
+            return None
+        melhores.sort(key=lambda p: p[0])
+        est = melhores[0][1]
+        return {"id": int(est.id_objeto), "estadio_id": int(est.estadio_id or est.id_objeto), "tipo": str(est.tipo), "dimensao_destino": str(est.dimensao_destino)}
 
     def npc_interagivel_proximo(self, posicao: Tuple[float, float], raio: float = 2.2) -> Optional[Dict[str, object]]:
         with self._lock_objetos:

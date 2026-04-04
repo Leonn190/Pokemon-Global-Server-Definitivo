@@ -25,7 +25,7 @@ class Ator:
         nome_base = str(nome_skin or "S1")
         if not nome_base.endswith(".png"):
             nome_base = f"{nome_base}.png"
-        caminho = os.path.join("Recursos", "Visual", "Skins", "Liberadas", nome_base)
+        caminho = os.path.join("Recursos", "Visual", "Skins", nome_base)
         try:
             return pygame.image.load(caminho).convert_alpha()
         except pygame.error:
@@ -85,6 +85,7 @@ class Ator:
 
         self._alvo_posicao = self.Posicao
         self._alvo_angulo = self.AnguloOlhar
+        self._tempo_respiracao = 0.0
 
     def update(self, payload: dict) -> None:
         dados = payload if isinstance(payload, dict) else {}
@@ -208,6 +209,7 @@ class Ator:
 
     def atualizar(self, dt: float) -> None:
         dt = max(0.0, float(dt))
+        self._tempo_respiracao += dt
 
         # Player local não deve ser puxado por alvo antigo de interpolação.
         if self.Controle is not None:

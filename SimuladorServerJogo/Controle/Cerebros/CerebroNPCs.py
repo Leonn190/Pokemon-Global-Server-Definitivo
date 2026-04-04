@@ -23,16 +23,6 @@ class CerebroNPCs:
         self._carregar_ou_criar_estado()
 
     def _carregar_ou_criar_estado(self) -> None:
-        estado = carregar_npcs_vendedores_estado()
-        if estado:
-            self._npcs = {str(k): dict(v) for k, v in estado.items() if isinstance(v, dict)}
-            return
-
-        arquivo = Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv"
-        if not arquivo.exists():
-            self._npcs = {}
-            return
-
         largura, altura = BANCO_DADOS.limites_mundo()
         estado_mundo = carregar_estado_mundo()
         spawn = estado_mundo.get("spawn", [0.0, 0.0]) if isinstance(estado_mundo, dict) else [0.0, 0.0]
@@ -42,6 +32,18 @@ class CerebroNPCs:
         except Exception:
             spawn_x = max(4.0, float(largura) * 0.5)
             spawn_y = max(4.0, float(altura) * 0.5)
+
+        estado = carregar_npcs_vendedores_estado()
+        if estado:
+            self._npcs = {str(k): dict(v) for k, v in estado.items() if isinstance(v, dict)}
+            self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
+            return
+
+        arquivo = Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv"
+        if not arquivo.exists():
+            self._npcs = {}
+            return
+
         base: Dict[str, Dict[str, object]] = {}
         with arquivo.open("r", encoding="utf-8") as f:
             for idx, row in enumerate(csv.DictReader(f), start=1):
@@ -71,7 +73,20 @@ class CerebroNPCs:
                     "interacao": {"ativa": False, "cliente": ""},
                 }
         self._npcs = base
+        self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
         salvar_npcs_vendedores_estado(self._npcs, force=True)
+
+    def _forcar_josefa_chunk_inicial(self, spawn_x: float, spawn_y: float) -> None:
+        mudou = False
+        for npc in self._npcs.values():
+            nome = str(npc.get("nome") or "").strip().lower()
+            if nome != "josefa":
+                continue
+            npc["posicao"] = [float(spawn_x), float(spawn_y)]
+            npc["rota_idx"] = 0
+            mudou = True
+        if mudou:
+            salvar_npcs_vendedores_estado(self._npcs, force=True)
 
     def _segmento_terrestre(self, p0: Vector2, p1: Vector2, passo: float = 0.75) -> tuple[bool, float]:
         dx, dy = self._dist_toroidal(p0, p1)
@@ -165,6 +180,7 @@ class CerebroNPCs:
         ator.estado_extra["estilo"] = str(npc.get("estilo") or "vendedor")
         ator.estado_extra["estatico"] = bool(npc.get("estatico", False))
         ator.estado_extra["velocidade"] = float(npc.get("velocidade", 4.5) or 4.5)
+        ator.estado_extra["angulo"] = float(npc.get("angulo", 0.0) or 0.0)
         ator.estado_extra["interacao"] = dict(npc.get("interacao", {})) if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
         BANCO_DADOS.inserir_objeto(ator)
         self._ids_materializados.add(int(ator.Id))
@@ -258,6 +274,9 @@ class CerebroNPCs:
                                     candidato = atual
                             atual = candidato
                             npc["posicao"] = [float(atual[0]), float(atual[1])]
+                            if passo > 1e-6:
+                                angulo = (math.degrees(math.atan2(-dy, dx)) + 360.0) % 360.0
+                                npc["angulo"] = float(angulo)
 
             deve_materializar = self._chunk_in_qualquer(atual, chunks_carregados, chunks_simulados)
             oid = int(npc.get("id", 0) or 0)
@@ -271,6 +290,7 @@ class CerebroNPCs:
                     obj.estado_extra["nome"] = str(npc.get("nome") or obj.estado_extra.get("nome", "NPC"))
                     obj.estado_extra["estatico"] = bool(npc.get("estatico", False))
                     obj.estado_extra["interacao"] = dict(npc.get("interacao", {}))
+                    obj.estado_extra["angulo"] = float(npc.get("angulo", obj.estado_extra.get("angulo", 0.0)) or 0.0)
                     registrar_diff_cb("update", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria="npc_vendedor")
             else:
                 if isinstance(obj, AtorServer):

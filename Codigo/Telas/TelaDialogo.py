@@ -33,6 +33,7 @@ class TelaDialogo:
         player_skin: str,
         npc_payload: Dict[str, object],
         ao_encerrar: Optional[Callable[[], None]] = None,
+        ao_iniciar_batalha: Optional[Callable[[Dict[str, object]], None]] = None,
         ator_local=None,
     ):
         self.Ativa = True
@@ -44,8 +45,10 @@ class TelaDialogo:
         self._npc_skin = str(self._npc.get("skin") or estado.get("skin") or "1.png")
         self._npc_id = int(self._npc.get("id", 0) or 0)
         self._npc_code = str(estado.get("npc_code") or "")
+        self._npc_estilo = str(estado.get("estilo") or "vendedor").strip().lower()
         self._player_nome = str(player_nome or "Você")
         self._player_skin = str(player_skin or "1.png")
+        self._ao_iniciar_batalha = ao_iniciar_batalha
 
         self._ator_player = Ator(nome_skin=self._player_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
         self._ator_npc = Ator(nome_skin=self._npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
@@ -143,7 +146,8 @@ class TelaDialogo:
         return {"Code": "", "Nome": str(nome_item), "quantidade": 1}
 
     def _carregar_dialogo(self) -> Dict[str, object]:
-        caminho = Path("Codigo") / "InteracaoNPC" / f"{self._npc_nome}.json"
+        pasta = "Combatentes" if self._npc_estilo == "combatente" else "Vendedores"
+        caminho = Path("Dados") / "InteracoesNPC" / pasta / f"{self._npc_nome}.json"
         if not caminho.exists():
             return {
                 "inicio": "fallback",
@@ -285,6 +289,19 @@ class TelaDialogo:
         if idx < 0 or idx >= len(self._opcoes):
             return
         op = self._opcoes[idx]
+        acao = str(op.get("acao") or "").strip().lower()
+        if acao == "batalhar":
+            if callable(self._ao_iniciar_batalha):
+                self._ao_iniciar_batalha(
+                    {
+                        "npc_id": int(self._npc_id or 0),
+                        "npc_nome": str(self._npc_nome or "NPC"),
+                        "npc_code": str(self._npc_code or ""),
+                        "npc_estilo": str(self._npc_estilo or "combatente"),
+                    }
+                )
+            self._encerrar()
+            return
         if bool(op.get("fim", False)):
             self._encerrar()
             return

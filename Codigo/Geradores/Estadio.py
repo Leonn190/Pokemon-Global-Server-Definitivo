@@ -111,6 +111,11 @@ class EstadioInterno:
                 px_t, py_t = camera.mundo_para_tela_px((float(tx), float(ty)))
                 pygame.draw.rect(tela, cor_a if ((tx + ty) % 2 == 0) else cor_b, pygame.Rect(int(px_t), int(py_t), int(tile) + 1, int(tile) + 1))
 
+        parede = pygame.Rect(0, 0, int(largura * tile), int(altura * tile))
+        parede.topleft = tuple(map(int, camera.mundo_para_tela_px((0.0, 0.0))))
+        espessura = max(6, int(tile * 0.42))
+        pygame.draw.rect(tela, (54, 61, 77), parede, espessura, border_radius=max(10, int(tile * 0.2)))
+
         cx, cy = camera.mundo_para_tela_px((float(centro[0]), float(centro[1])))
         pw, ph = max(120, int(12 * tile)), max(90, int(7 * tile))
         arena = pygame.Rect(0, 0, pw, ph)
@@ -123,5 +128,7 @@ class EstadioInterno:
         px, py = camera.mundo_para_tela_px((float(porta[0]), float(porta[1])))
         porta_rect = pygame.Rect(0, 0, max(18, int(tile * 0.9)), max(24, int(tile * 1.25)))
         porta_rect.midbottom = (int(px), int(py))
+        recorte = pygame.Rect(porta_rect.left - 6, porta_rect.top - 2, porta_rect.width + 12, porta_rect.height + 8)
+        pygame.draw.rect(tela, cor_a, recorte)
         pygame.draw.rect(tela, (42, 48, 60), porta_rect, border_radius=max(4, int(tile * 0.08)))
         pygame.draw.rect(tela, (124, 188, 255), porta_rect.inflate(-max(4, int(tile * 0.2)), -max(4, int(tile * 0.2))), border_radius=max(3, int(tile * 0.06)))

@@ -1,7 +1,9 @@
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.Camera import CameraBatalha
 from Codigo.Modulos.ControladorBatalha import ControladorBatalha
+from Codigo.Modulos.ElementosHudCombate import ElementosHudCombate
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
+import pygame
 
 
 class CenaCombate:
@@ -24,6 +26,11 @@ class CenaCombate:
         self.Camera.definir_limites_mundo(largura, altura)
         self.Camera.atualizar(0.0)
         self.ControladorBatalha = ControladorBatalha(contexto)
+        self.ElementosHudCombate = ElementosHudCombate(ao_fugir=lambda: self._fugir_combate(JOGO))
+
+    def _fugir_combate(self, jogo) -> None:
+        jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
+        jogo.CenaAlvo = "Mundo"
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
@@ -36,6 +43,7 @@ class CenaCombate:
         JOGO.TELA.fill((20, 20, 28))
         self.ControladorBatalha.atualizar(EVENTOS, dt)
         self.ControladorBatalha.renderizar(JOGO.TELA, self.Camera)
+        self.ElementosHudCombate.desenhar(JOGO.TELA, EVENTOS, dt)
         self.SubtelaOpcoes.desenhar(JOGO)
 
     def Finalizar(self, JOGO):

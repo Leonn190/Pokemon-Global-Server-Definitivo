@@ -38,6 +38,7 @@ class CenaMundo:
         self._npc_interacao_id = 0
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
         self._texto_estadio = Texto("", style={"size": 22, "align": "center", "outline": True, "color": (230, 236, 245)})
+        self._imune_combate_ate_ms = int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0)
 
         self._montar_mundo(JOGO)
 
@@ -104,7 +105,7 @@ class CenaMundo:
         player_bloqueado = bloqueio_gameplay or self.SubtelaOpcoes.Ativa or self.TelaAtual == "Config" or dialogo_ativo
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
-        if not player_bloqueado:
+        if not player_bloqueado and int(pygame.time.get_ticks()) >= int(self._imune_combate_ate_ms or 0):
             colisao_pokemon = self.ControladorMundo.Player.consumir_colisao_pokemon()
             if isinstance(colisao_pokemon, dict):
                 server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
@@ -258,8 +259,24 @@ class CenaMundo:
             player_skin=str(getattr(player, "NomeSkin", "S1.png")),
             npc_payload=npc_obj,
             ao_encerrar=lambda: self._finalizar_dialogo_npc(jogo),
+            ao_iniciar_batalha=lambda contexto: self._iniciar_batalha_por_dialogo(jogo, contexto),
             ator_local=player,
         )
+
+    def _iniciar_batalha_por_dialogo(self, jogo, contexto_dialogo: dict) -> None:
+        player = self.ControladorMundo.player_local
+        centro = tuple(player.Posicao) if player is not None else (50.0, 30.0)
+        jogo.INFO["CombateContexto"] = {
+            "origem": [0.0, 0.0],
+            "centro": [float(centro[0]), float(centro[1])],
+            "largura": 100,
+            "altura": 60,
+            "arena_largura": 50,
+            "arena_altura": 30,
+            "tipo": "npc",
+            "npc_contexto": dict(contexto_dialogo or {}),
+        }
+        jogo.CenaAlvo = "Combate"
 
     def _processar_estado_dialogo_npc(self, jogo) -> None:
         if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):

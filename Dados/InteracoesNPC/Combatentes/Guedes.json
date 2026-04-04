@@ -1,0 +1,18 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala": "Eu sou Guedes, líder do estádio Lutador. Quer me desafiar agora?",
+      "opcoes": [
+        {
+          "texto": "Quero batalhar!",
+          "acao": "batalhar"
+        },
+        {
+          "texto": "Agora não, volto depois.",
+          "fim": true
+        }
+      ]
+    }
+  }
+}

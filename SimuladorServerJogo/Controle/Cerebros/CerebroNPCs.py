@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import math
 import random
+import unicodedata
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
@@ -36,19 +37,119 @@ class CerebroNPCs:
         estado = carregar_npcs_vendedores_estado()
         if estado:
             self._npcs = {str(k): dict(v) for k, v in estado.items() if isinstance(v, dict)}
+            self._normalizar_estado_npcs_legado()
+            self._injetar_combatentes_faltantes()
             self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
             return
 
-        arquivo = Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv"
-        if not arquivo.exists():
-            self._npcs = {}
-            return
-
         base: Dict[str, Dict[str, object]] = {}
-        with arquivo.open("r", encoding="utf-8") as f:
+        arquivo_vendedores = Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv"
+        if arquivo_vendedores.exists():
+            with arquivo_vendedores.open("r", encoding="utf-8") as f:
+                for idx, row in enumerate(csv.DictReader(f), start=1):
+                    nome = str(row.get("Nome") or f"Vendedor {idx}").strip() or f"Vendedor {idx}"
+                    code = str(row.get("Code") or idx).strip() or str(idx)
+                    skin_raw = str(row.get("Skin") or "1").strip()
+                    if skin_raw.lower().endswith(".png"):
+                        skin = skin_raw
+                    elif skin_raw.lower().startswith("s") and skin_raw[1:].isdigit():
+                        skin = f"{skin_raw[1:]}.png"
+                    else:
+                        skin = f"{skin_raw}.png"
+                    if nome.strip().lower() == "josefa":
+                        px, py = 0.0, 0.0
+                        estatico = True
+                    else:
+                        px, py = self._encontrar_spawn_terrestre((spawn_x, spawn_y), idx)
+                        estatico = False
+                    rota = [] if estatico else self._gerar_rota_grande((px, py), idx)
+                    npc_id = int(900000 + int(code) if code.isdigit() else 900000 + idx)
+                    base[f"vendedor:{code}"] = {
+                        "id": npc_id,
+                        "code": str(code),
+                        "nome": nome,
+                        "skin": skin,
+                        "velocidade": 4.5,
+                        "estilo": "vendedor",
+                        "estatico": bool(estatico),
+                        "dimensao": "Mundo",
+                        "posicao": [float(px), float(py)],
+                        "rota": [[float(p[0]), float(p[1])] for p in rota],
+                        "rota_idx": 0,
+                        "espera_ate_tick": 0,
+                        "interacao": {"ativa": False, "cliente": ""},
+                    }
+        mapa_estadios = self._mapa_dimensao_estadios()
+        arquivo_combatentes = Path("Dados") / "Pokemon Global Server - NPC Combatente.csv"
+        if arquivo_combatentes.exists():
+            with arquivo_combatentes.open("r", encoding="utf-8") as f:
+                for idx, row in enumerate(csv.DictReader(f), start=1):
+                    nivel = str(row.get("Nivel") or "").strip().lower()
+                    if nivel != "lider":
+                        continue
+                    nome = str(row.get("Nome") or f"Lider {idx}").strip() or f"Lider {idx}"
+                    code = str(row.get("Code") or idx).strip() or str(idx)
+                    estadio_tipo = self._normalizar_tipo_estadio(str(row.get("Estadio") or "normal"))
+                    dimensao = mapa_estadios.get(estadio_tipo, f"Estadio{estadio_tipo.title()}")
+                    skin_raw = str(row.get("Skin") or "1").strip()
+                    if skin_raw.lower().endswith(".png"):
+                        skin = skin_raw
+                    elif skin_raw.lower().startswith("s") and skin_raw[1:].isdigit():
+                        skin = f"{skin_raw[1:]}.png"
+                    else:
+                        skin = f"{skin_raw}.png"
+                    npc_id = int(910000 + int(code) if code.isdigit() else 910000 + idx)
+                    base[f"combatente:{code}"] = {
+                        "id": npc_id,
+                        "code": str(code),
+                        "nome": nome,
+                        "skin": skin,
+                        "velocidade": 0.0,
+                        "estilo": "combatente",
+                        "estatico": True,
+                        "dimensao": dimensao,
+                        "estadio_tipo": estadio_tipo,
+                        "posicao": [30.0, 20.0],
+                        "rota": [],
+                        "rota_idx": 0,
+                        "espera_ate_tick": 0,
+                        "interacao": {"ativa": False, "cliente": ""},
+                    }
+        self._npcs = base
+        self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
+        salvar_npcs_vendedores_estado(self._npcs, force=True)
+
+    def _normalizar_estado_npcs_legado(self) -> None:
+        novo: Dict[str, Dict[str, object]] = {}
+        for chave, npc in list(self._npcs.items()):
+            if not isinstance(npc, dict):
+                continue
+            estilo = str(npc.get("estilo") or "vendedor").strip().lower()
+            code = str(npc.get("code") or chave).strip() or chave
+            dim = "Mundo" if estilo != "combatente" else str(npc.get("dimensao") or "EstadioNormal")
+            npc["estilo"] = estilo
+            npc["dimensao"] = dim
+            prefixo = "combatente" if estilo == "combatente" else "vendedor"
+            novo[f"{prefixo}:{code}"] = npc
+        self._npcs = novo
+
+    def _injetar_combatentes_faltantes(self) -> None:
+        mapa_estadios = self._mapa_dimensao_estadios()
+        arquivo_combatentes = Path("Dados") / "Pokemon Global Server - NPC Combatente.csv"
+        if not arquivo_combatentes.exists():
+            return
+        adicionou = False
+        with arquivo_combatentes.open("r", encoding="utf-8") as f:
             for idx, row in enumerate(csv.DictReader(f), start=1):
-                nome = str(row.get("Nome") or f"Vendedor {idx}").strip() or f"Vendedor {idx}"
+                if str(row.get("Nivel") or "").strip().lower() != "lider":
+                    continue
                 code = str(row.get("Code") or idx).strip() or str(idx)
+                chave = f"combatente:{code}"
+                if chave in self._npcs:
+                    continue
+                nome = str(row.get("Nome") or f"Lider {idx}").strip() or f"Lider {idx}"
+                estadio_tipo = self._normalizar_tipo_estadio(str(row.get("Estadio") or "normal"))
+                dimensao = mapa_estadios.get(estadio_tipo, f"Estadio{estadio_tipo.title()}")
                 skin_raw = str(row.get("Skin") or "1").strip()
                 if skin_raw.lower().endswith(".png"):
                     skin = skin_raw
@@ -56,39 +157,51 @@ class CerebroNPCs:
                     skin = f"{skin_raw[1:]}.png"
                 else:
                     skin = f"{skin_raw}.png"
-                if nome.strip().lower() == "josefa":
-                    px, py = 0.0, 0.0
-                    estatico = True
-                else:
-                    px, py = self._encontrar_spawn_terrestre((spawn_x, spawn_y), idx)
-                    estatico = False
-                rota = [] if estatico else self._gerar_rota_grande((px, py), idx)
-                npc_id = int(900000 + int(code) if code.isdigit() else 900000 + idx)
-                base[str(code)] = {
+                npc_id = int(910000 + int(code) if code.isdigit() else 910000 + idx)
+                self._npcs[chave] = {
                     "id": npc_id,
                     "code": str(code),
                     "nome": nome,
                     "skin": skin,
-                    "velocidade": 4.5,
-                    "estilo": "vendedor",
-                    "estatico": bool(estatico),
-                    "posicao": [float(px), float(py)],
-                    "rota": [[float(p[0]), float(p[1])] for p in rota],
+                    "velocidade": 0.0,
+                    "estilo": "combatente",
+                    "estatico": True,
+                    "dimensao": dimensao,
+                    "estadio_tipo": estadio_tipo,
+                    "posicao": [30.0, 20.0],
+                    "rota": [],
                     "rota_idx": 0,
                     "espera_ate_tick": 0,
                     "interacao": {"ativa": False, "cliente": ""},
                 }
-        self._npcs = base
-        self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
-        salvar_npcs_vendedores_estado(self._npcs, force=True)
+                adicionou = True
+        if adicionou:
+            salvar_npcs_vendedores_estado(self._npcs, force=True)
 
     def _forcar_josefa_chunk_inicial(self, spawn_x: float, spawn_y: float) -> None:
         mudou = False
         for npc in self._npcs.values():
             nome = str(npc.get("nome") or "").strip().lower()
+            estilo = str(npc.get("estilo") or "vendedor").strip().lower()
+            if estilo == "combatente":
+                npc["estatico"] = True
+                npc["rota"] = []
+                npc["rota_idx"] = 0
+                mudou = True
+                continue
             if nome != "josefa":
-                if bool(npc.get("estatico", False)):
+                pos = npc.get("posicao", [spawn_x, spawn_y])
+                pos_ruim = (
+                    (not isinstance(pos, (list, tuple)))
+                    or len(pos) != 2
+                    or self._tile_bloqueado_npc((float(pos[0]), float(pos[1])))
+                    or (abs(float(pos[0])) < 0.05 and abs(float(pos[1])) < 0.05)
+                )
+                if bool(npc.get("estatico", False)) or pos_ruim:
                     npc["estatico"] = False
+                    if pos_ruim:
+                        sx, sy = self._encontrar_spawn_terrestre((spawn_x, spawn_y), int(npc.get("id", 0) or 1))
+                        npc["posicao"] = [float(sx), float(sy)]
                     if not isinstance(npc.get("rota"), list) or not npc.get("rota"):
                         pos = npc.get("posicao", [spawn_x, spawn_y])
                         origem = (float(pos[0]), float(pos[1])) if isinstance(pos, (list, tuple)) and len(pos) == 2 else (float(spawn_x), float(spawn_y))
@@ -183,7 +296,7 @@ class CerebroNPCs:
                 continue
             subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "") or "").strip().lower()
             tipo = str(getattr(obj, "tipo_classe", "") or "").strip().lower()
-            if subt not in {"player", "pokemon", "bau", "npc_vendedor"} and not tipo.startswith("estrutura"):
+            if subt not in {"player", "pokemon", "bau", "npc_vendedor", "npc_combatente"} and not tipo.startswith("estrutura"):
                 continue
             rr = float(getattr(obj, "raio_colisao", 0.5) or 0.5) + float(raio)
             dx, dy = self._dist_toroidal(pos, getattr(obj, "posicao", pos))
@@ -205,8 +318,10 @@ class CerebroNPCs:
             usuario=f"npc:{npc.get('code', oid)}",
             skin=str(npc.get("skin", "1.png")),
             posicao=tuple(npc.get("posicao", [0.0, 0.0])),
+            dimensao=str(npc.get("dimensao") or "Mundo"),
         )
-        ator.estado_extra["subtipo"] = "npc_vendedor"
+        estilo = str(npc.get("estilo") or "vendedor").strip().lower()
+        ator.estado_extra["subtipo"] = "npc_combatente" if estilo == "combatente" else "npc_vendedor"
         ator.estado_extra["nome"] = str(npc.get("nome") or "Vendedor")
         ator.estado_extra["npc_code"] = str(npc.get("code") or "")
         ator.estado_extra["estilo"] = str(npc.get("estilo") or "vendedor")
@@ -214,9 +329,27 @@ class CerebroNPCs:
         ator.estado_extra["velocidade"] = float(npc.get("velocidade", 4.5) or 4.5)
         ator.estado_extra["angulo"] = float(npc.get("angulo", 0.0) or 0.0)
         ator.estado_extra["interacao"] = dict(npc.get("interacao", {})) if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
+        ator.estado_extra["dimensao"] = str(npc.get("dimensao") or "Mundo")
         BANCO_DADOS.inserir_objeto(ator)
         self._ids_materializados.add(int(ator.Id))
         return ator
+
+    @staticmethod
+    def _normalizar_tipo_estadio(valor: str) -> str:
+        base = unicodedata.normalize("NFD", str(valor or "").strip().lower())
+        base = "".join(ch for ch in base if unicodedata.category(ch) != "Mn")
+        alias = {"eletrico": "eletrico", "psiquico": "psiquico", "terrestre": "terra", "agua": "agua", "dragao": "dragao"}
+        return alias.get(base, base or "normal")
+
+    def _mapa_dimensao_estadios(self) -> Dict[str, str]:
+        out: Dict[str, str] = {}
+        for obj in BANCO_DADOS.listar_objetos():
+            if str(getattr(obj, "tipo_classe", "") or "") != "entidade_estadio":
+                continue
+            estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+            tipo = self._normalizar_tipo_estadio(str(estado.get("tipo_estadio") or "normal"))
+            out[tipo] = str(estado.get("dimensao_destino") or "EstadioNormal")
+        return out
 
     def _desmaterializar_npc(self, npc_id: int):
         rem = BANCO_DADOS.remover_objeto(int(npc_id))
@@ -312,23 +445,25 @@ class CerebroNPCs:
 
             deve_materializar = self._chunk_in_qualquer(atual, chunks_carregados, chunks_simulados)
             oid = int(npc.get("id", 0) or 0)
+            categoria_npc = "npc_combatente" if str(npc.get("estilo") or "").strip().lower() == "combatente" else "npc_vendedor"
             obj = BANCO_DADOS.obter_objeto(oid)
             if deve_materializar:
                 if not isinstance(obj, AtorServer):
                     obj = self._materializar_npc(npc)
-                    registrar_diff_cb("spawn", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria="npc_vendedor")
+                    registrar_diff_cb("spawn", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria=categoria_npc)
                 else:
                     BANCO_DADOS.atualizar_objeto(int(obj.Id), {"posicao": [float(atual[0]), float(atual[1])]})
                     obj.estado_extra["nome"] = str(npc.get("nome") or obj.estado_extra.get("nome", "NPC"))
                     obj.estado_extra["estatico"] = bool(npc.get("estatico", False))
                     obj.estado_extra["interacao"] = dict(npc.get("interacao", {}))
                     obj.estado_extra["angulo"] = float(npc.get("angulo", obj.estado_extra.get("angulo", 0.0)) or 0.0)
-                    registrar_diff_cb("update", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria="npc_vendedor")
+                    obj.estado_extra["dimensao"] = str(npc.get("dimensao") or obj.estado_extra.get("dimensao", "Mundo"))
+                    registrar_diff_cb("update", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria=categoria_npc)
             else:
                 if isinstance(obj, AtorServer):
                     rem = BANCO_DADOS.remover_objeto(oid)
                     if rem is not None:
-                        registrar_diff_cb("despawn", payload={"id": oid}, escopo={"centro": [atual[0], atual[1]], "raio": 240.0}, objeto_id=oid, autor="server", categoria="npc_vendedor")
+                        registrar_diff_cb("despawn", payload={"id": oid}, escopo={"centro": [atual[0], atual[1]], "raio": 240.0}, objeto_id=oid, autor="server", categoria=categoria_npc)
 
         if tick % 60 == 0:
             salvar_npcs_vendedores_estado(self._npcs)

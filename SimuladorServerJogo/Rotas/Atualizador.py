@@ -231,7 +231,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
         pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
         saida_interna = estado_est.get("saida_interna_pos") if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) else [25.0, 47.0]
-        if not _dist_ok(player.posicao, saida_interna, 3.0):
+        if not _dist_ok(player.posicao, saida_interna, 2.0):
             return False
         entrada = estado_est.get("entrada_pos") if isinstance(estado_est.get("entrada_pos"), (list, tuple)) and len(estado_est.get("entrada_pos")) == 2 else [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
         player.estado_extra["dimensao"] = "Mundo"
@@ -248,7 +248,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     entrada = payload.get("entrada_pos") if isinstance(payload.get("entrada_pos"), (list, tuple)) and len(payload.get("entrada_pos")) == 2 else estado_est.get("entrada_pos")
     if not isinstance(entrada, (list, tuple)) or len(entrada) != 2:
         entrada = [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
-    if not _dist_ok(player.posicao, entrada, 3.0):
+    if not _dist_ok(player.posicao, entrada, 2.0):
         return False
 
     dim = str(estado_est.get("dimensao_destino") or "EstadioNormal")

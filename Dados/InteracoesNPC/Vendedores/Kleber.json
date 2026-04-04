@@ -1,0 +1,140 @@
+{
+  "inicio": "inicio",
+  "nos": {
+    "inicio": {
+      "fala": "Opa, sou Kleber. Rota comercial, dicas de combate e minha lojinha. Se quiser oferta secreta, vai ter que navegar no labirinto de perguntas.",
+      "opcoes": [
+        {
+          "texto": "Quero dica de rota.",
+          "proximo": "rota_1"
+        },
+        {
+          "texto": "Quero dica de combate.",
+          "proximo": "combate_1"
+        },
+        {
+          "texto": "Abrir loja agora.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Falou.",
+          "fim": true
+        }
+      ]
+    },
+    "rota_1": {
+      "fala": "Rota comercial exige cabeça fria. Comprar muito cedo trava mochila. Comprar tarde demais deixa você sem resposta quando aperta.",
+      "opcoes": [
+        {
+          "texto": "Como equilibrar isso?",
+          "proximo": "rota_2"
+        },
+        {
+          "texto": "Beleza, abre loja.",
+          "proximo": "loja_padrao"
+        }
+      ]
+    },
+    "rota_2": {
+      "fala": "Compra em ciclos: saída, meio e retorno. E sempre reserva moedas para emergência. Quem gasta tudo no brilho perde no caminho.",
+      "opcoes": [
+        {
+          "texto": "Curti. Quero desafio secreto.",
+          "proximo": "secreto_1"
+        },
+        {
+          "texto": "Só mostrar os itens normais.",
+          "proximo": "loja_padrao"
+        }
+      ]
+    },
+    "combate_1": {
+      "fala": "Luta boa nasce de posicionamento. Ataque é consequência. Quem lê distância e stamina vence sem depender de sorte.",
+      "opcoes": [
+        {
+          "texto": "Me dá um treino rápido.",
+          "proximo": "combate_2"
+        },
+        {
+          "texto": "Já quero comprar.",
+          "proximo": "loja_padrao"
+        }
+      ]
+    },
+    "combate_2": {
+      "fala": "Treino de três passos: aproxima, recua, gira. Só depois ataca. Repetiu isso cem vezes? Aí sim você entende ritmo.",
+      "opcoes": [
+        {
+          "texto": "Quero tentar oferta secreta.",
+          "proximo": "secreto_1"
+        },
+        {
+          "texto": "Abre a loja comum.",
+          "proximo": "loja_padrao"
+        }
+      ]
+    },
+    "secreto_1": {
+      "fala": "Primeira porta: em situação ruim, você protege item raro ou tenta finalizar batalha arriscada?",
+      "opcoes": [
+        {
+          "texto": "Finalizo arriscando.",
+          "proximo": "secreto_falha"
+        },
+        {
+          "texto": "Protejo o item raro.",
+          "proximo": "secreto_2"
+        }
+      ]
+    },
+    "secreto_2": {
+      "fala": "Segunda porta: dinheiro curto. Você compra só dano ou mantém utilidade de rota?",
+      "opcoes": [
+        {
+          "texto": "Só dano.",
+          "proximo": "secreto_falha"
+        },
+        {
+          "texto": "Utilidade de rota.",
+          "proximo": "secreto_3"
+        }
+      ]
+    },
+    "secreto_3": {
+      "fala": "Terceira porta: você revisa plano no meio da viagem?",
+      "opcoes": [
+        {
+          "texto": "Não reviso.",
+          "proximo": "secreto_falha"
+        },
+        {
+          "texto": "Reviso sempre.",
+          "proximo": "loja_secreta"
+        }
+      ]
+    },
+    "secreto_falha": {
+      "fala": "Ainda não foi dessa vez. Sem crise. Leva o básico comigo e volta quando estiver mais estratégico.",
+      "opcoes": [
+        {
+          "texto": "Fechado, abre loja padrão.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "fim": true
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja do Kleber: itens úteis para combate e rota.",
+      "loja": "padrao",
+      "opcoes": []
+    },
+    "loja_secreta": {
+      "fala": "Passou no labirinto. Tenho duas ofertas supimpas hoje.",
+      "loja": "secreta",
+      "opcoes": []
+    }
+  }
+}

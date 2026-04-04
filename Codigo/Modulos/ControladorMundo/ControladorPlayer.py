@@ -365,7 +365,7 @@ class ControladorPlayer:
             estado_est = estadio_atual.get("estado") if isinstance(estadio_atual.get("estado"), dict) else {}
             saida = estado_est.get("saida_interna_pos") if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) and len(estado_est.get("saida_interna_pos")) == 2 else [25.0, 47.0]
             dxs = float(pos[0]) - float(saida[0]); dys = float(pos[1]) - float(saida[1])
-            if (dxs * dxs + dys * dys) > (2.8 * 2.8):
+            if (dxs * dxs + dys * dys) > (2.0 * 2.0):
                 return
             self._objetos.EnfileirarDiffRapida({
                 "tipo": "evento",
@@ -392,7 +392,7 @@ class ControladorPlayer:
             dx = float(pos[0]) - float(entrada[0])
             dy = float(pos[1]) - float(entrada[1])
             d2 = dx * dx + dy * dy
-            lim = 2.6
+            lim = 2.0
             if d2 > (lim * lim):
                 continue
             if melhor_d2 is None or d2 < melhor_d2:

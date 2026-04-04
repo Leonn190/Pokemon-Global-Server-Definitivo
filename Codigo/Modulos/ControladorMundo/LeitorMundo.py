@@ -61,7 +61,7 @@ class LeitorMundo:
             dimensao = str(meta.get("dimensao") or "Mundo")
             eh_mundo = dimensao == "Mundo"
             if player_controle is not None:
-                player_controle.definir_limites_mundo(largura, altura)
+                player_controle.definir_limites_mundo(largura, altura, toroidal=eh_mundo)
             if self.Camera is not None:
                 self.Camera.definir_limites_mundo(largura, altura, toroidal=eh_mundo)
 
@@ -131,7 +131,7 @@ class LeitorMundo:
         with self._lock:
             meta_alterada = False
             meta = pacote.get("meta") if isinstance(pacote.get("meta"), dict) else {}
-            for chave_meta in ("largura_blocos", "altura_blocos", "raio_chunks_ativo"):
+            for chave_meta in ("largura_blocos", "altura_blocos", "raio_chunks_ativo", "dimensao"):
                 valor_meta = meta.get(chave_meta)
                 if valor_meta is not None and self.MetaMundo.get(chave_meta) != valor_meta:
                     self.MetaMundo[chave_meta] = valor_meta

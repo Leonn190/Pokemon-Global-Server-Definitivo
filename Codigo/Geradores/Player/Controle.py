@@ -14,6 +14,7 @@ class Controle:
         base = getattr(self.Ator.Perfil, "VelocidadeBaseTiles", 5.0) if velocidade_tiles is None else velocidade_tiles
         self.VelocidadeTiles = float(base)
         self.LimitesMundoTiles = None
+        self.LimitesToroidais = True
         self._grid_chunks = {}
         self._chunk_blocos = 10
         self._tempo_desde_ultima_corrida = 0.0
@@ -234,7 +235,7 @@ class Controle:
         self._grid_chunks = dict(chunks) if isinstance(chunks, dict) else {}
         self._chunk_blocos = max(1, int(chunk_blocos))
 
-    def definir_limites_mundo(self, largura_tiles, altura_tiles):
+    def definir_limites_mundo(self, largura_tiles, altura_tiles, toroidal=True):
         try:
             largura = max(1.0, float(largura_tiles))
             altura = max(1.0, float(altura_tiles))
@@ -242,6 +243,7 @@ class Controle:
             self.LimitesMundoTiles = None
             return
         self.LimitesMundoTiles = (largura, altura)
+        self.LimitesToroidais = bool(toroidal)
 
     @staticmethod
     def _delta_toroidal(origem, destino, tamanho):
@@ -255,7 +257,14 @@ class Controle:
             return
         largura, altura = self.LimitesMundoTiles
         px, py = self.Ator.Posicao
-        self.Ator.definir_posicao(px % largura, py % altura)
+        if self.LimitesToroidais:
+            self.Ator.definir_posicao(px % largura, py % altura)
+            return
+        margem = 1e-4
+        self.Ator.definir_posicao(
+            max(0.0, min(max(0.0, largura - margem), float(px))),
+            max(0.0, min(max(0.0, altura - margem), float(py))),
+        )
 
     def _tile_atual(self):
         x, y = self.Ator.Posicao
@@ -344,7 +353,10 @@ class Controle:
         else:
             px, py = self.Ator.Posicao
             mx, my = mouse_pos_mundo_tiles
-            dx, dy = (self._delta_toroidal(px, mx, self.LimitesMundoTiles[0]), self._delta_toroidal(py, my, self.LimitesMundoTiles[1])) if self.LimitesMundoTiles else (mx - px, my - py)
+            if self.LimitesMundoTiles and self.LimitesToroidais:
+                dx, dy = (self._delta_toroidal(px, mx, self.LimitesMundoTiles[0]), self._delta_toroidal(py, my, self.LimitesMundoTiles[1]))
+            else:
+                dx, dy = (mx - px, my - py)
         if dx == 0 and dy == 0:
             return
         angulo = (math.degrees(math.atan2(-dy, dx)) + 360.0) % 360.0

@@ -287,6 +287,22 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 else:
                     ignorados += 1
                 continue
+            if categoria == "npc_interacao_inicio":
+                npc_id = int(payload.get("npc_id", 0) or 0)
+                ok, _ = CEREBRO.registrar_inicio_interacao_npc(client_id, npc_id)
+                if ok:
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            if categoria == "npc_interacao_fim":
+                npc_id = int(payload.get("npc_id", 0) or 0)
+                ok, _ = CEREBRO.registrar_fim_interacao_npc(client_id, npc_id)
+                if ok:
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
             if categoria == "pokemon_subir_nivel":
                 if _processar_evento_subir_nivel_pokemon(client_id, payload):
                     aplicados += 1

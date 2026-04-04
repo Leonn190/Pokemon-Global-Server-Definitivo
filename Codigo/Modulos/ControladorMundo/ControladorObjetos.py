@@ -9,13 +9,11 @@ import threading
 
 import pygame
 
-from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.Baus import Bau
 from Codigo.Geradores.EstruturaNaturais import EstruturaNatural, prioridade_estrutura_natural, tipo_estrutura_natural_por_codigo
-from Codigo.Geradores.Player.Inventario import Inventario
-from Codigo.Geradores.Player.Perfil import Perfil
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
+from Codigo.Modulos.ControladorMundo.ControladorAtores import ControladorAtores
 from Codigo.Modulos.ControladorMundo.ControladorCriaveis import ControladorCriaveis
 
 
@@ -24,7 +22,8 @@ class ControladorObjetos:
         self.ObjetosPorId: Dict[int, Dict[str, object]] = {}
         self.PokemonsPorId: Dict[int, Pokemon] = {}
         self.BausPorId: Dict[int, Bau] = {}
-        self.AtoresRemotosPorId: Dict[int, Ator] = {}
+        self._atores = ControladorAtores()
+        self.AtoresRemotosPorId = self._atores.AtoresRemotosPorId
         self.EstruturasPorId: Dict[int, EstruturaNatural] = {}
 
         self._player_local_id: Optional[int] = None
@@ -246,45 +245,6 @@ class ControladorObjetos:
     def _eh_payload_estrutura(self, payload: Dict[str, object]) -> bool:
         return str(payload.get("tipo", "")).strip().lower() in {"estrutura_natural", "estrutura"}
 
-    def _hidratar_ator_remoto(self, oid: int, payload: Dict[str, object]) -> Ator:
-        dados = dict(payload)
-        dados["id"] = oid
-        pos = dados.get("posicao", (0.0, 0.0))
-        if not isinstance(pos, (list, tuple)) or len(pos) != 2:
-            pos = (0.0, 0.0)
-
-        remoto = self.AtoresRemotosPorId.get(oid)
-        if remoto is None:
-            remoto = Ator(nome_skin=str(dados.get("skin", "S1")), posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0, tile_px=50)
-            remoto.Id = oid
-            self.AtoresRemotosPorId[oid] = remoto
-
-        remoto.definir_posicao(float(pos[0]), float(pos[1]))
-        nome = dados.get("nome") or dados.get("usuario")
-        if nome:
-            remoto.Nome = str(nome)
-        skin = dados.get("skin")
-        if skin and str(skin) != str(getattr(remoto, "NomeSkin", "")):
-            remoto.set_nome_skin(str(skin))
-
-        estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
-        if "angulo" in estado:
-            remoto.definir_angulo_olhar(float(estado.get("angulo", 0.0)))
-        if bool(estado.get("tapa")):
-            remoto.iniciar_tapa()
-
-        if remoto.Perfil is None:
-            remoto.Perfil = Perfil()
-        if remoto.Inventario is None:
-            remoto.Inventario = Inventario()
-        if isinstance(dados.get("perfil"), dict):
-            remoto.Perfil.aplicar_serializado(dados.get("perfil"))
-        if isinstance(dados.get("inventario"), dict):
-            remoto.Inventario.aplicar_serializado(dados.get("inventario"))
-
-        remoto.update(dados)
-        return remoto
-
     def _reconciliar_projetil_predito_por_token(self, oid_oficial: int, payload: Dict[str, object]) -> None:
         self._criaveis.reconciliar_projetil_predito_por_token(oid_oficial, payload)
 
@@ -312,11 +272,7 @@ class ControladorObjetos:
         else:
             self.BausPorId.pop(oid, None)
 
-        if str(payload.get("tipo", "")).strip().lower() == "entidade_player":
-            if oid != self.id_player_local():
-                self._hidratar_ator_remoto(oid, payload)
-        else:
-            self.AtoresRemotosPorId.pop(oid, None)
+        self._atores.upsert(oid, payload, id_player_local=self.id_player_local())
 
         self._criaveis.upsert_criavel(oid, payload)
 
@@ -388,7 +344,7 @@ class ControladorObjetos:
                 self.ObjetosPorId.pop(oid, None)
                 self.PokemonsPorId.pop(oid, None)
                 self.BausPorId.pop(oid, None)
-                self.AtoresRemotosPorId.pop(oid, None)
+                self._atores.remover(oid)
                 self._criaveis.remover_criavel(oid)
                 self.EstruturasPorId.pop(oid, None)
                 self._remover_indice_chunk_objeto(oid)
@@ -618,14 +574,7 @@ class ControladorObjetos:
             if self._criaveis.renderizar_criavel(oid, tela, camera):
                 continue
 
-            ator_remoto = self.AtoresRemotosPorId.get(oid)
-            if ator_remoto is not None:
-                ator_remoto.atualizar(dt_pokemons)
-                ator_remoto.set_tile_px(getattr(camera, "TilePx", 50))
-                pos_tela = camera.mundo_para_tela_px(ator_remoto.Posicao)
-                ator_remoto.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=0.0)
-                if getattr(ator_remoto, "Nome", ""):
-                    Ator.desenhar_nome(tela, pos_tela, ator_remoto.Nome)
+            if self._atores.renderizar(oid, tela, camera, dt_pokemons):
                 continue
 
             self._render_fallback_objeto(tela, camera, obj, cor_fallback=(222, 233, 245))
@@ -656,3 +605,8 @@ class ControladorObjetos:
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         self.renderizar_entidades(tela, camera, ignorar_id=ignorar_entidade_id)
         self.renderizar_estruturas(tela, camera)
+
+    def npc_interagivel_proximo(self, posicao: Tuple[float, float], raio: float = 2.2) -> Optional[Dict[str, object]]:
+        with self._lock_objetos:
+            snapshot = dict(self.ObjetosPorId)
+        return self._atores.npc_proximo(snapshot, posicao=posicao, raio=raio)

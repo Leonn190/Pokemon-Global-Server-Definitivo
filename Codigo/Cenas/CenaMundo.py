@@ -6,9 +6,10 @@ from Codigo.Modulos.ElementosHud import ElementosHud
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
-from Codigo.Server.ServerMundo import enviar_mensagem_terminal, buscar_mensagens_terminal, solicitar_contexto_batalha_mundo
+from Codigo.Server.ServerMundo import enviar_mensagem_terminal, buscar_mensagens_terminal, solicitar_contexto_batalha_mundo, iniciar_interacao_npc_mundo, finalizar_interacao_npc_mundo
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
 from Codigo.Prefabs.Terminal import Terminal
+from Codigo.Telas.TelaDialogo import TelaDialogo
 
 
 class CenaMundo:
@@ -25,7 +26,10 @@ class CenaMundo:
         self._desconectado = False
         self.TelaAtual = None
         self.SubtelaInventario = None
+        self.SubtelaDialogo = None
         self.Terminal = None
+        self._npc_interacao_id = 0
+        self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
 
         self._montar_mundo(JOGO)
 
@@ -88,7 +92,8 @@ class CenaMundo:
         if player is not None and self.SubtelaOpcoes.Ativa:
             player.Controle.InventarioAberto = False
 
-        player_bloqueado = bloqueio_gameplay or self.SubtelaOpcoes.Ativa or self.TelaAtual == "Config"
+        dialogo_ativo = bool(self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False))
+        player_bloqueado = bloqueio_gameplay or self.SubtelaOpcoes.Ativa or self.TelaAtual == "Config" or dialogo_ativo
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
         if not player_bloqueado:
@@ -109,6 +114,24 @@ class CenaMundo:
         if player is not None and self.SubtelaInventario is not None:
             self.SubtelaInventario.Ativo = player.Controle.InventarioAberto
             self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
+        if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
+            self.SubtelaDialogo.processar_eventos(EVENTOS)
+            self.SubtelaDialogo.atualizar(dt)
+        elif self.SubtelaDialogo is not None and not getattr(self.SubtelaDialogo, "Ativa", False):
+            self.SubtelaDialogo = None
+
+        if (not player_bloqueado) and player is not None and getattr(player, "Controle", None) is not None:
+            for ev in EVENTOS:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_q:
+                    alvo = self.ControladorMundo.Objetos.npc_interagivel_proximo(tuple(player.Posicao), raio=2.3)
+                    if alvo is not None:
+                        npc_obj = dict(alvo.get("obj", {}))
+                        estado = npc_obj.get("estado") if isinstance(npc_obj.get("estado"), dict) else {}
+                        inter = estado.get("interacao") if isinstance(estado.get("interacao"), dict) else {}
+                        if not bool(inter.get("ativa", False)):
+                            self._solicitar_interacao_npc(JOGO, npc_obj)
+                    break
+        self._processar_estado_dialogo_npc(JOGO)
         self.Camera.atualizar(dt)
 
         JOGO.TELA.fill((20, 20, 28))
@@ -119,6 +142,8 @@ class CenaMundo:
             self.ElementosHud.desenhar(JOGO.TELA, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
 
         self.SubtelaOpcoes.desenhar(JOGO)
+        if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
+            self.SubtelaDialogo.desenhar(JOGO.TELA)
         if self.SubtelaInventario is not None and self.SubtelaInventario.Ativo:
             self.SubtelaInventario.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.TelaAtual == "Config":
@@ -187,7 +212,72 @@ class CenaMundo:
             "pokemon_colisao": dict(colisao_pokemon),
         }
 
+    def _solicitar_interacao_npc(self, jogo, npc_obj: dict) -> None:
+        if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
+            return
+        player = self.ControladorMundo.player_local
+        if player is None:
+            return
+        server = jogo.INFO.get("ServerSelecionado") if isinstance(jogo.INFO.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        client_id = str(jogo.INFO.get("UsuarioLogado", "anon"))
+        npc_id = int(npc_obj.get("id", 0) or 0)
+        if link and npc_id > 0:
+            iniciar_interacao_npc_mundo(link, client_id, npc_id)
+        self._npc_interacao_pendente = {"npc_id": npc_id, "desde_ms": int(pygame.time.get_ticks())}
+
+    def _abrir_dialogo_npc_autoritativo(self, jogo, npc_obj: dict) -> None:
+        player = self.ControladorMundo.player_local
+        if player is None:
+            return
+        client_id = str(jogo.INFO.get("UsuarioLogado", "anon"))
+        npc_id = int(npc_obj.get("id", 0) or 0)
+        self._npc_interacao_id = npc_id
+        self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
+        self.SubtelaDialogo = TelaDialogo(
+            player_nome=str(getattr(player, "Nome", "") or client_id),
+            player_skin=str(getattr(player, "NomeSkin", "S1.png")),
+            npc_payload=npc_obj,
+            ao_encerrar=lambda: self._finalizar_dialogo_npc(jogo),
+        )
+
+    def _processar_estado_dialogo_npc(self, jogo) -> None:
+        if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
+            return
+        pend = dict(self._npc_interacao_pendente or {})
+        npc_id = int(pend.get("npc_id", 0) or 0)
+        if npc_id <= 0:
+            return
+        obj = self.ControladorMundo.Objetos.ObjetosPorId.get(npc_id)
+        if not isinstance(obj, dict):
+            return
+        estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+        inter = estado.get("interacao") if isinstance(estado.get("interacao"), dict) else {}
+        dono = str(inter.get("cliente", "") or "")
+        ativo = bool(inter.get("ativa", False))
+        client_id = str(jogo.INFO.get("UsuarioLogado", "anon"))
+        if ativo and dono == client_id:
+            self._abrir_dialogo_npc_autoritativo(jogo, obj)
+            return
+        if ativo and dono != client_id:
+            self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
+            return
+        if int(pygame.time.get_ticks()) - int(pend.get("desde_ms", 0) or 0) > 1800:
+            self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
+
+    def _finalizar_dialogo_npc(self, jogo) -> None:
+        npc_id = int(self._npc_interacao_id or 0)
+        self._npc_interacao_id = 0
+        self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
+        server = jogo.INFO.get("ServerSelecionado") if isinstance(jogo.INFO.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        client_id = str(jogo.INFO.get("UsuarioLogado", "anon"))
+        if link and npc_id > 0:
+            finalizar_interacao_npc_mundo(link, client_id, npc_id)
+
     def Finalizar(self, JOGO):
+        if int(self._npc_interacao_id or 0) > 0:
+            self._finalizar_dialogo_npc(JOGO)
         if self.Terminal is not None:
             self.Terminal.parar()
         if self.ControladorMundo is not None:

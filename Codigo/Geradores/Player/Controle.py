@@ -173,7 +173,7 @@ class Controle:
         self._item_arremesso_atual = self._item_arremessavel_mao()
         pode_arremessar = self._item_arremesso_atual is not None
         for evento in eventos:
-            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_q:
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_g:
                 item_mao = self._item_qualquer_na_mao()
                 if item_mao is not None and self._consumir_item_na_mao():
                     item_drop = dict(item_mao)

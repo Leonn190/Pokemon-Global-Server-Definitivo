@@ -509,3 +509,40 @@ class TextoAtaque(SetorTexto):
                 tip = Tooltip(texto=texto, area_ativacao=area, largura_max=220, padding=8, raio=9, style={"size": 13})
                 tip.definir_posicao_fixa((area.centerx - 96, area.y - 46))
                 tip.render(tela, mouse_pos=mouse_pos, forcar=True)
+
+
+class TextoAnimado:
+    def __init__(self, texto: str = "", cps: float = 46.0):
+        self.TextoCompleto = str(texto or "")
+        self.Cps = max(1.0, float(cps))
+        self._tempo = 0.0
+        self._chars_visiveis = 0
+        self._concluido = False
+
+    def set_texto(self, texto: str) -> None:
+        self.TextoCompleto = str(texto or "")
+        self._tempo = 0.0
+        self._chars_visiveis = 0
+        self._concluido = False
+
+    def atualizar(self, dt: float) -> None:
+        if self._concluido:
+            return
+        self._tempo += max(0.0, float(dt))
+        alvo = int(self._tempo * self.Cps)
+        self._chars_visiveis = max(self._chars_visiveis, alvo)
+        if self._chars_visiveis >= len(self.TextoCompleto):
+            self._chars_visiveis = len(self.TextoCompleto)
+            self._concluido = True
+
+    def pular_animacao(self) -> None:
+        self._chars_visiveis = len(self.TextoCompleto)
+        self._concluido = True
+
+    @property
+    def concluido(self) -> bool:
+        return bool(self._concluido)
+
+    @property
+    def texto_visivel(self) -> str:
+        return self.TextoCompleto[: max(0, int(self._chars_visiveis))]

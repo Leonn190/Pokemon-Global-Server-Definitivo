@@ -1,0 +1,39 @@
+{
+  "inicio": "inicio",
+  "nos": {
+    "inicio": {
+      "fala": "Opa, sou Kleber. Se precisar de direção, eu te ajudo. Quer saber da rota comercial daqui?",
+      "opcoes": [
+        {"texto": "Quero saber.", "proximo": "rota"},
+        {"texto": "Prefiro ouvir uma dica de combate.", "proximo": "combate"},
+        {"texto": "Só passei pra dar oi.", "fim": true}
+      ]
+    },
+    "rota": {
+      "fala": "A rota comercial é longa. O segredo é manter constância: sem sprint o tempo todo, sem parar a cada minuto.",
+      "opcoes": [
+        {"texto": "Disciplina, entendi.", "proximo": "disciplina"},
+        {"texto": "Obrigado pela ajuda.", "fim": true}
+      ]
+    },
+    "combate": {
+      "fala": "Luta boa começa antes do golpe: posicionamento, stamina e leitura do inimigo. Força sem controle não dura.",
+      "opcoes": [
+        {"texto": "Vou focar nisso.", "fim": true},
+        {"texto": "Tem treino simples?", "proximo": "treino"}
+      ]
+    },
+    "disciplina": {
+      "fala": "É isso. Quem organiza a rota economiza recursos e chega pronto para qualquer encontro.",
+      "opcoes": [
+        {"texto": "Show. Até mais!", "fim": true}
+      ]
+    },
+    "treino": {
+      "fala": "Treino rápido: anda, para, gira câmera, reajusta posição e só então ataca. Repete até virar automático.",
+      "opcoes": [
+        {"texto": "Boa, vou testar.", "fim": true}
+      ]
+    }
+  }
+}

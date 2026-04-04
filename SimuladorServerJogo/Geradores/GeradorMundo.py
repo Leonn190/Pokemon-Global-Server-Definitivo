@@ -245,6 +245,7 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
         "grid_biomas": [],
         "grid_estruturas_naturais": [],
         "players": dict(players or {}),
+        "npcs_vendedores": {},
     }
 
     global LARGURA_BLOCOS, ALTURA_BLOCOS
@@ -297,6 +298,7 @@ def carregar_estado_mundo() -> Dict[str, object]:
                     ALTURA_BLOCOS = int(altura)
                     estado.setdefault("grid_biomas", [])
                     estado.setdefault("grid_estruturas_naturais", [])
+                    estado.setdefault("npcs_vendedores", {})
                     return estado
 
     return {
@@ -305,6 +307,7 @@ def carregar_estado_mundo() -> Dict[str, object]:
         "grid_biomas": [],
         "grid_estruturas_naturais": [],
         "players": {},
+        "npcs_vendedores": {},
         "spawn": [0.0, 0.0],
     }
 

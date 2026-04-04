@@ -1,0 +1,282 @@
+from __future__ import annotations
+
+import csv
+import math
+import random
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
+
+from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer
+from SimuladorServerJogo.Controle.EstadoServidor import carregar_npcs_vendedores_estado, salvar_npcs_vendedores_estado
+from SimuladorServerJogo.Geradores.GeradorMundo import carregar_estado_mundo
+
+Vector2 = Tuple[float, float]
+Chunk = Tuple[int, int]
+
+
+class CerebroNPCs:
+    def __init__(self, core) -> None:
+        self._core = core
+        self._npcs: Dict[str, Dict[str, object]] = {}
+        self._ids_materializados: Set[int] = set()
+        self._carregar_ou_criar_estado()
+
+    def _carregar_ou_criar_estado(self) -> None:
+        estado = carregar_npcs_vendedores_estado()
+        if estado:
+            self._npcs = {str(k): dict(v) for k, v in estado.items() if isinstance(v, dict)}
+            return
+
+        arquivo = Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv"
+        if not arquivo.exists():
+            self._npcs = {}
+            return
+
+        largura, altura = BANCO_DADOS.limites_mundo()
+        estado_mundo = carregar_estado_mundo()
+        spawn = estado_mundo.get("spawn", [0.0, 0.0]) if isinstance(estado_mundo, dict) else [0.0, 0.0]
+        try:
+            spawn_x = float(spawn[0])
+            spawn_y = float(spawn[1])
+        except Exception:
+            spawn_x = max(4.0, float(largura) * 0.5)
+            spawn_y = max(4.0, float(altura) * 0.5)
+        base: Dict[str, Dict[str, object]] = {}
+        with arquivo.open("r", encoding="utf-8") as f:
+            for idx, row in enumerate(csv.DictReader(f), start=1):
+                nome = str(row.get("Nome") or f"Vendedor {idx}").strip() or f"Vendedor {idx}"
+                code = str(row.get("Code") or idx).strip() or str(idx)
+                skin_raw = str(row.get("Skin") or "1").strip()
+                skin = f"S{skin_raw}.png" if skin_raw.isdigit() else (skin_raw if skin_raw.lower().endswith(".png") else f"{skin_raw}.png")
+                offs = [(-2.4, -1.6), (1.8, -1.1), (0.5, 2.1)]
+                off = offs[(idx - 1) % len(offs)]
+                px = (spawn_x + off[0]) % max(1.0, float(largura))
+                py = (spawn_y + off[1]) % max(1.0, float(altura))
+                estatico = bool(idx == 1)
+                rota = [] if estatico else self._gerar_rota_grande((px, py), idx)
+                npc_id = int(900000 + int(code) if code.isdigit() else 900000 + idx)
+                base[str(code)] = {
+                    "id": npc_id,
+                    "code": str(code),
+                    "nome": nome,
+                    "skin": skin,
+                    "velocidade": 4.5,
+                    "estilo": "vendedor",
+                    "estatico": bool(estatico),
+                    "posicao": [float(px), float(py)],
+                    "rota": [[float(p[0]), float(p[1])] for p in rota],
+                    "rota_idx": 0,
+                    "espera_ate_tick": 0,
+                    "interacao": {"ativa": False, "cliente": ""},
+                }
+        self._npcs = base
+        salvar_npcs_vendedores_estado(self._npcs, force=True)
+
+    def _segmento_terrestre(self, p0: Vector2, p1: Vector2, passo: float = 0.75) -> tuple[bool, float]:
+        dx, dy = self._dist_toroidal(p0, p1)
+        dist = math.hypot(dx, dy)
+        if dist <= 1e-6:
+            return (False, 0.0)
+        amostras = max(2, int(math.ceil(dist / max(0.2, float(passo)))))
+        for i in range(1, amostras + 1):
+            t = i / amostras
+            x = p0[0] + (dx * t)
+            y = p0[1] + (dy * t)
+            if self._tile_bloqueado_npc((x, y)):
+                return (False, dist)
+        return (True, dist)
+
+    def _gerar_rota_grande(self, inicio: Vector2, semente: int) -> List[Vector2]:
+        largura, altura = BANCO_DADOS.limites_mundo()
+        rnd = random.Random(int(semente) * 7919)
+        alvo_total = rnd.uniform(200.0, 1000.0)
+        pontos = [inicio]
+        atual = inicio
+        soma = 0.0
+        tentativas = 0
+        while soma < alvo_total and tentativas < 1200:
+            tentativas += 1
+            dist = rnd.uniform(24.0, 96.0)
+            ang = rnd.uniform(0.0, math.tau)
+            nx = (atual[0] + math.cos(ang) * dist) % max(1.0, float(largura))
+            ny = (atual[1] + math.sin(ang) * dist) % max(1.0, float(altura))
+            candidato = (nx, ny)
+            if self._tile_bloqueado_npc(candidato):
+                continue
+            ok, seg = self._segmento_terrestre(atual, candidato)
+            if not ok:
+                continue
+            pontos.append(candidato)
+            atual = candidato
+            soma += float(seg)
+        if len(pontos) <= 1:
+            return [inicio]
+        return pontos
+
+    def _dist_toroidal(self, p0: Vector2, p1: Vector2) -> Vector2:
+        largura, altura = BANCO_DADOS.limites_mundo()
+        dx = float(p1[0]) - float(p0[0])
+        dy = float(p1[1]) - float(p0[1])
+        if largura > 0:
+            dx -= round(dx / float(largura)) * float(largura)
+        if altura > 0:
+            dy -= round(dy / float(altura)) * float(altura)
+        return (dx, dy)
+
+    def _tile_bloqueado_npc(self, pos: Vector2) -> bool:
+        gx = int(math.floor(float(pos[0])))
+        gy = int(math.floor(float(pos[1])))
+        tile = int(BANCO_DADOS.tile_em(gx, gy) or 0)
+        return tile in {0, 1}
+
+    def _colisao_objetos(self, npc_id: int, pos: Vector2, raio: float = 0.55) -> bool:
+        for obj in BANCO_DADOS.buscar_proximos(pos, max(1.5, raio + 1.0)):
+            if int(getattr(obj, "Id", 0) or 0) == int(npc_id):
+                continue
+            subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "") or "").strip().lower()
+            tipo = str(getattr(obj, "tipo_classe", "") or "").strip().lower()
+            if subt not in {"player", "pokemon", "bau", "npc_vendedor"} and not tipo.startswith("estrutura"):
+                continue
+            rr = float(getattr(obj, "raio_colisao", 0.5) or 0.5) + float(raio)
+            dx, dy = self._dist_toroidal(pos, getattr(obj, "posicao", pos))
+            if (dx * dx + dy * dy) <= (rr * rr):
+                return True
+        return False
+
+    def _chunk_in_qualquer(self, pos: Vector2, carregados: Set[Chunk], simulados: Set[Chunk]) -> bool:
+        c = BANCO_DADOS.chunk_da_posicao(pos)
+        return c in carregados or c in simulados
+
+    def _materializar_npc(self, npc: Dict[str, object]) -> AtorServer:
+        oid = int(npc.get("id", 0) or 0)
+        obj = BANCO_DADOS.obter_objeto(oid)
+        if isinstance(obj, AtorServer):
+            return obj
+        ator = AtorServer(
+            id_objeto=oid,
+            usuario=f"npc:{npc.get('code', oid)}",
+            skin=str(npc.get("skin", "S1.png")),
+            posicao=tuple(npc.get("posicao", [0.0, 0.0])),
+        )
+        ator.estado_extra["subtipo"] = "npc_vendedor"
+        ator.estado_extra["nome"] = str(npc.get("nome") or "Vendedor")
+        ator.estado_extra["npc_code"] = str(npc.get("code") or "")
+        ator.estado_extra["estilo"] = str(npc.get("estilo") or "vendedor")
+        ator.estado_extra["estatico"] = bool(npc.get("estatico", False))
+        ator.estado_extra["velocidade"] = float(npc.get("velocidade", 4.5) or 4.5)
+        ator.estado_extra["interacao"] = dict(npc.get("interacao", {})) if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
+        BANCO_DADOS.inserir_objeto(ator)
+        self._ids_materializados.add(int(ator.Id))
+        return ator
+
+    def _desmaterializar_npc(self, npc_id: int):
+        rem = BANCO_DADOS.remover_objeto(int(npc_id))
+        if rem is not None:
+            self._ids_materializados.discard(int(npc_id))
+
+    def registrar_inicio_interacao(self, client_id: str, npc_id: int) -> tuple[bool, str]:
+        alvo = None
+        for npc in self._npcs.values():
+            if int(npc.get("id", 0) or 0) == int(npc_id):
+                alvo = npc
+                break
+        if alvo is None:
+            return (False, "NPC não encontrado")
+        inter = alvo.get("interacao") if isinstance(alvo.get("interacao"), dict) else {}
+        if bool(inter.get("ativa", False)) and str(inter.get("cliente", "")) != str(client_id):
+            return (False, "NPC já está em interação")
+        alvo["interacao"] = {"ativa": True, "cliente": str(client_id)}
+        obj = BANCO_DADOS.obter_objeto(int(alvo.get("id", 0) or 0))
+        if isinstance(obj, AtorServer):
+            obj.estado_extra["interacao"] = dict(alvo["interacao"])
+        salvar_npcs_vendedores_estado(self._npcs)
+        return (True, "Interação iniciada")
+
+    def registrar_fim_interacao(self, client_id: str, npc_id: int) -> tuple[bool, str]:
+        for npc in self._npcs.values():
+            if int(npc.get("id", 0) or 0) != int(npc_id):
+                continue
+            inter = npc.get("interacao") if isinstance(npc.get("interacao"), dict) else {}
+            if str(inter.get("cliente", "")) not in {"", str(client_id)}:
+                return (False, "NPC ocupado")
+            npc["interacao"] = {"ativa": False, "cliente": ""}
+            npc["espera_ate_tick"] = int(self._core._tick_contador + random.randint(90, 360))
+            obj = BANCO_DADOS.obter_objeto(int(npc.get("id", 0) or 0))
+            if isinstance(obj, AtorServer):
+                obj.estado_extra["interacao"] = dict(npc["interacao"])
+            salvar_npcs_vendedores_estado(self._npcs)
+            return (True, "Interação finalizada")
+        return (False, "NPC não encontrado")
+
+    def executar_tick(self, chunks_carregados: Set[Chunk], chunks_simulados: Set[Chunk], registrar_diff_cb) -> None:
+        tick = int(self._core._tick_contador)
+        for npc in self._npcs.values():
+            pos = npc.get("posicao", [0.0, 0.0])
+            if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+                pos = [0.0, 0.0]
+            atual = (float(pos[0]), float(pos[1]))
+            inter = npc.get("interacao") if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
+            esperando = int(npc.get("espera_ate_tick", 0) or 0) > tick
+            estatico = bool(npc.get("estatico", False))
+            materializado = isinstance(BANCO_DADOS.obter_objeto(int(npc.get("id", 0) or 0)), AtorServer)
+
+            if (not estatico) and (not inter.get("ativa", False)) and (not esperando):
+                rota = npc.get("rota", []) if isinstance(npc.get("rota"), list) else []
+                if rota:
+                    idx = int(npc.get("rota_idx", 0) or 0) % max(1, len(rota))
+                    alvo_raw = rota[idx]
+                    if isinstance(alvo_raw, (list, tuple)) and len(alvo_raw) == 2:
+                        alvo = (float(alvo_raw[0]), float(alvo_raw[1]))
+                        dx, dy = self._dist_toroidal(atual, alvo)
+                        dist = math.hypot(dx, dy)
+                        if dist < 0.75:
+                            npc["rota_idx"] = (idx + 1) % len(rota)
+                            npc["espera_ate_tick"] = tick + random.randint(30, 180)
+                        else:
+                            vel = float(npc.get("velocidade", 4.5) or 4.5)
+                            passo = min(dist, max(0.01, vel / 30.0))
+                            nx, ny = (atual[0] + (dx / max(1e-6, dist)) * passo, atual[1] + (dy / max(1e-6, dist)) * passo)
+                            nx += math.sin((tick + int(npc.get("id", 0))) * 0.03) * 0.04
+                            ny += math.cos((tick + int(npc.get("id", 0))) * 0.025) * 0.04
+                            largura, altura = BANCO_DADOS.limites_mundo()
+                            candidato = (nx % max(1.0, float(largura)), ny % max(1.0, float(altura)))
+                            colisao_obj = self._colisao_objetos(int(npc.get("id", 0) or 0), candidato) if materializado else False
+                            if self._tile_bloqueado_npc(candidato) or colisao_obj:
+                                ang = random.uniform(-1.2, 1.2)
+                                rx = (dx * math.cos(ang)) - (dy * math.sin(ang))
+                                ry = (dx * math.sin(ang)) + (dy * math.cos(ang))
+                                rdist = max(1e-6, math.hypot(rx, ry))
+                                candidato2 = (
+                                    (atual[0] + (rx / rdist) * passo) % max(1.0, float(largura)),
+                                    (atual[1] + (ry / rdist) * passo) % max(1.0, float(altura)),
+                                )
+                                colisao_obj_2 = self._colisao_objetos(int(npc.get("id", 0) or 0), candidato2) if materializado else False
+                                if (not self._tile_bloqueado_npc(candidato2)) and (not colisao_obj_2):
+                                    candidato = candidato2
+                                else:
+                                    candidato = atual
+                            atual = candidato
+                            npc["posicao"] = [float(atual[0]), float(atual[1])]
+
+            deve_materializar = self._chunk_in_qualquer(atual, chunks_carregados, chunks_simulados)
+            oid = int(npc.get("id", 0) or 0)
+            obj = BANCO_DADOS.obter_objeto(oid)
+            if deve_materializar:
+                if not isinstance(obj, AtorServer):
+                    obj = self._materializar_npc(npc)
+                    registrar_diff_cb("spawn", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria="npc_vendedor")
+                else:
+                    BANCO_DADOS.atualizar_objeto(int(obj.Id), {"posicao": [float(atual[0]), float(atual[1])]})
+                    obj.estado_extra["nome"] = str(npc.get("nome") or obj.estado_extra.get("nome", "NPC"))
+                    obj.estado_extra["estatico"] = bool(npc.get("estatico", False))
+                    obj.estado_extra["interacao"] = dict(npc.get("interacao", {}))
+                    registrar_diff_cb("update", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria="npc_vendedor")
+            else:
+                if isinstance(obj, AtorServer):
+                    rem = BANCO_DADOS.remover_objeto(oid)
+                    if rem is not None:
+                        registrar_diff_cb("despawn", payload={"id": oid}, escopo={"centro": [atual[0], atual[1]], "raio": 240.0}, objeto_id=oid, autor="server", categoria="npc_vendedor")
+
+        if tick % 60 == 0:
+            salvar_npcs_vendedores_estado(self._npcs)

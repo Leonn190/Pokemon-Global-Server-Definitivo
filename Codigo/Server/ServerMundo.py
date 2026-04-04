@@ -196,6 +196,16 @@ def solicitar_contexto_batalha_mundo(ip, client_id, pokemon_id, centro):
         return _erro_padrao("Falha ao interpretar contexto de batalha")
 
 
+def iniciar_interacao_npc_mundo(ip, client_id, npc_id):
+    diff = {"tipo": "evento", "categoria": "npc_interacao_inicio", "payload": {"npc_id": int(npc_id or 0)}}
+    return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
+
+
+def finalizar_interacao_npc_mundo(ip, client_id, npc_id):
+    diff = {"tipo": "evento", "categoria": "npc_interacao_fim", "payload": {"npc_id": int(npc_id or 0)}}
+    return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
+
+
 def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, diffs=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
     pacote = {
         "ip": ip,

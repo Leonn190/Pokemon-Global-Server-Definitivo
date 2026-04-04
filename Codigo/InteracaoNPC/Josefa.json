@@ -1,0 +1,40 @@
+{
+  "inicio": "ola",
+  "nos": {
+    "ola": {
+      "fala": "Bem-vindo, viajante. Eu sou Josefa, vendedora da rota antiga. Está procurando algo ou só descansando um pouco?",
+      "opcoes": [
+        {"texto": "Só queria conversar.", "proximo": "conversa"},
+        {"texto": "O que você sabe dessa região?", "proximo": "regiao"},
+        {"texto": "Até depois.", "fim": true}
+      ]
+    },
+    "conversa": {
+      "fala": "Conversar faz bem. Quem anda muito por esse mundo precisa parar de vez em quando para ouvir histórias.",
+      "opcoes": [
+        {"texto": "Conta uma história curta.", "proximo": "historia"},
+        {"texto": "Verdade, vou descansar.", "fim": true}
+      ]
+    },
+    "regiao": {
+      "fala": "Aqui tem trechos longos de trilha e áreas de água. Se você planeja viajar longe, vá por terra firme e leve itens de recuperação.",
+      "opcoes": [
+        {"texto": "Boa dica, obrigado.", "fim": true},
+        {"texto": "Tem perigo por perto?", "proximo": "perigo"}
+      ]
+    },
+    "historia": {
+      "fala": "Quando eu era mais nova, tentei atravessar tudo correndo. Aprendi que quem respeita o ritmo chega mais longe.",
+      "opcoes": [
+        {"texto": "Gostei disso.", "fim": true},
+        {"texto": "Vou lembrar dessa frase.", "fim": true}
+      ]
+    },
+    "perigo": {
+      "fala": "Nada que um treinador atento não resolva. Evite lutar cansado e sempre observe o terreno antes de avançar.",
+      "opcoes": [
+        {"texto": "Entendi. Valeu!", "fim": true}
+      ]
+    }
+  }
+}

@@ -358,7 +358,7 @@ class ControladorPlayer:
         pos = tuple(self._player_local.Posicao)
         player_payload = self._objetos.ObjetosPorId.get(int(getattr(self._player_local, "Id", 0) or 0), {}) if isinstance(self._objetos.ObjetosPorId, dict) else {}
         estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
-        dim = str(estado_player.get("dimensao") or player_payload.get("dimensao") or "Mundo")
+        dim = str(self._objetos._dimensao_player_local() or estado_player.get("dimensao") or player_payload.get("dimensao") or "Mundo")
 
         if dim != "Mundo":
             estadio_atual = self._objetos.EstadiosPorId.get(int(estado_player.get("estadio_atual_id", 0) or 0), {}) if isinstance(getattr(self._objetos, "EstadiosPorId", {}), dict) else {}
@@ -579,6 +579,10 @@ class ControladorPlayer:
         dados = dict(payload)
         teleporte = bool(dados.get("teleporte", False))
         estado_servidor = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+        payload_local = self._objetos.ObjetosPorId.get(int(getattr(self._player_local, "Id", 0) or 0), {}) if isinstance(self._objetos.ObjetosPorId, dict) else {}
+        estado_local = payload_local.get("estado") if isinstance(payload_local.get("estado"), dict) else {}
+        dim_antiga = str(estado_local.get("dimensao") or payload_local.get("dimensao") or "Mundo")
+        estadio_antigo = int(estado_local.get("estadio_atual_id", payload_local.get("estadio_atual_id", 0)) or 0)
 
         estado_estrutural = {}
         if estado_servidor:
@@ -595,8 +599,11 @@ class ControladorPlayer:
                 cache_payload[chave] = dados.get(chave)
         if cache_payload.get("estado") or "posicao" in cache_payload or "dimensao" in cache_payload or "estadio_atual_id" in cache_payload:
             self._objetos.aplicar_diff({"tipo": "update", "objeto_id": int(cache_payload["id"]), "payload": cache_payload})
+        dim_nova = str(estado_servidor.get("dimensao") or dados.get("dimensao") or dim_antiga)
+        estadio_novo = int(estado_servidor.get("estadio_atual_id", dados.get("estadio_atual_id", estadio_antigo)) or 0)
+        houve_transicao_estadio = (dim_nova != dim_antiga) or (estadio_novo != estadio_antigo)
 
-        if teleporte:
+        if teleporte or houve_transicao_estadio:
             dados["hard"] = True
             self._player_local.update(dados)
             self._ativar_bloqueio_correcao()

@@ -12,6 +12,7 @@ from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
+from SimuladorServerJogo.Controle.Cerebros.CerebroEstadios import CEREBRO_ESTADIOS
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]
@@ -54,13 +55,17 @@ def _normalizar_posicao(valor) -> Vector2:
 
 def _obter_state_client(client_id: str) -> Dict[str, object]:
     if client_id not in _CLIENT_STATE:
-        _CLIENT_STATE[client_id] = {"objetos_vistos": set()}
+        _CLIENT_STATE[client_id] = {"objetos_vistos": set(), "dimensao": "Mundo"}
     return _CLIENT_STATE[client_id]
 
 
-def _chunks_carregados_cliente(posicao_camera: Vector2) -> Set[Chunk]:
-    centro = BANCO_DADOS.chunk_da_posicao(posicao_camera)
+def _chunks_carregados_cliente(posicao_camera: Vector2, dimensao: str = "Mundo") -> Set[Chunk]:
     raio = max(0, int(CEREBRO._i("raio_chunks_carregados", 4)))
+    dimensao_norm = str(dimensao or "Mundo")
+    if dimensao_norm != "Mundo":
+        centro = (int(posicao_camera[0] // BANCO_DADOS.chunk_tamanho_unidade()), int(posicao_camera[1] // BANCO_DADOS.chunk_tamanho_unidade()))
+        return set(CEREBRO_ESTADIOS.chunks_proximos(dimensao_norm, centro, raio))
+    centro = BANCO_DADOS.chunk_da_posicao(posicao_camera)
     chunks: Set[Chunk] = set()
     for dx in range(-raio, raio + 1):
         for dy in range(-raio, raio + 1):
@@ -74,11 +79,41 @@ def _raio_visao_por_regras() -> float:
     return float((raio_carregado + 1) * chunk_u)
 
 
-def _objeto_em_chunks(obj, chunks: Set[Chunk]) -> bool:
+def _objeto_em_chunks(obj, chunks: Set[Chunk], dimensao: str = "Mundo") -> bool:
     if not chunks:
+        return False
+    if _dimensao_objeto(obj) != str(dimensao or "Mundo"):
         return False
     return BANCO_DADOS.chunk_da_posicao(getattr(obj, "posicao", (0.0, 0.0))) in chunks
 
+
+
+def _dimensao_objeto(obj) -> str:
+    estado = getattr(obj, "estado_extra", {}) if obj is not None and isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+    tipo = str(getattr(obj, "tipo_classe", "") or "")
+    if tipo == "entidade_estadio":
+        return "Mundo"
+    return str(estado.get("dimensao") or "Mundo")
+
+
+def _diff_na_dimensao(diff: Dict[str, object], dimensao: str) -> bool:
+    if not isinstance(diff, dict):
+        return False
+    payload = diff.get("payload") if isinstance(diff.get("payload"), dict) else {}
+    estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+    tipo = str(payload.get("tipo") or "")
+    if tipo == "entidade_estadio":
+        dim_payload = "Mundo"
+    else:
+        dim_payload = str(payload.get("dimensao") or estado.get("dimensao") or "")
+    if dim_payload:
+        return dim_payload == str(dimensao or "Mundo")
+    oid = diff.get("objeto_id")
+    if oid is not None:
+        obj = BANCO_DADOS.obter_objeto(int(oid))
+        if obj is not None:
+            return _dimensao_objeto(obj) == str(dimensao or "Mundo")
+    return True
 
 def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk] | None = None) -> bool:
     if not isinstance(diff, dict):
@@ -98,7 +133,7 @@ def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float
     return math.hypot(cx - posicao_camera[0], cy - posicao_camera[1]) <= (raio_visao + max(0.0, raio_diff))
 
 
-def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = ""):
+def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = "", dimensao: str = "Mundo"):
     saida = []
     client_id_norm = str(client_id or "").strip().lower()
     for pacote in pacotes if isinstance(pacotes, list) else []:
@@ -111,6 +146,8 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
             if client_id_norm and alvo and alvo == client_id_norm:
                 diffs_visiveis.append(d)
                 continue
+            if not _diff_na_dimensao(d, dimensao):
+                continue
             if not _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados):
                 continue
             diffs_visiveis.append(d)
@@ -122,10 +159,10 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
     return saida
 
 
-def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int], client_id: str = "") -> List[Dict[str, object]]:
+def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int], client_id: str = "", dimensao: str = "Mundo") -> List[Dict[str, object]]:
     raio = _raio_visao_por_regras()
     client_id_norm = str(client_id or "").strip().lower()
-    objetos_proximos = [obj for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio) if _objeto_em_chunks(obj, chunks_carregados)]
+    objetos_proximos = [obj for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio) if _objeto_em_chunks(obj, chunks_carregados, dimensao=dimensao)]
     ids_proximos = {int(obj.Id) for obj in objetos_proximos}
     diffs: List[Dict[str, object]] = []
     agora = time.time()
@@ -162,21 +199,29 @@ def processar_ativador_json(requisicao_json: str) -> str:
 
     TIQUE_SERVIDOR.ativar_por_usuario(client_id)
     meta_cerebro = CEREBRO.processar_ativacao(client_id, posicao_camera)
-    chunks_carregados = _chunks_carregados_cliente(posicao_camera)
+    state_cli = _obter_state_client(client_id)
+    obj_id = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+    obj_player = BANCO_DADOS.obter_objeto(obj_id) if obj_id > 0 else None
+    dimensao = str(getattr(obj_player, "estado_extra", {}).get("dimensao", state_cli.get("dimensao", "Mundo")) if obj_player is not None else state_cli.get("dimensao", "Mundo"))
+    chunks_carregados = _chunks_carregados_cliente(posicao_camera, dimensao=dimensao)
     chunks_servidor_carregados, chunks_servidor_simulados = CEREBRO._calcular_chunks_carregados()
     raio = _raio_visao_por_regras()
 
     with _LOCK:
         _CLIENTS_CONHECIDOS.add(client_id)
         state = _obter_state_client(client_id)
+        state["dimensao"] = dimensao
         vistos: Set[int] = state["objetos_vistos"]
 
         if modo == "chunks":
-            chunks = [{"pos": [chunk[0], chunk[1]], "grid": BANCO_DADOS.chunk_em_grade(chunk), "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()} for chunk in sorted(chunks_carregados)]
-            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade())}}, ensure_ascii=False)
+            chunks = []
+            for chunk in sorted(chunks_carregados):
+                grid = CEREBRO_ESTADIOS.chunk_em_grade(dimensao, chunk) if dimensao != "Mundo" else BANCO_DADOS.chunk_em_grade(chunk)
+                chunks.append({"pos": [chunk[0], chunk[1]], "grid": grid, "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()})
+            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao}}, ensure_ascii=False)
 
-        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id)
-        diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id)
+        pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id, dimensao=dimensao)
+        diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dimensao)
         if diffs_extra:
             if pacotes:
                 pacote_vis = pacotes[-1]

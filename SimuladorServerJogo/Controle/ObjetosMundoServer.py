@@ -14,7 +14,7 @@ Vector2 = Tuple[float, float]
 class AtorServer:
     NIVEL_MAXIMO = 50
 
-    def __init__(self, id_objeto: int, usuario: str, skin: str, posicao: Vector2 = (0.0, 0.0)) -> None:
+    def __init__(self, id_objeto: int, usuario: str, skin: str, posicao: Vector2 = (0.0, 0.0), dimensao: str = "Mundo") -> None:
         self.id_objeto = int(id_objeto)
         self.Id = self.id_objeto
         self.tipo_classe = "entidade_player"
@@ -24,7 +24,7 @@ class AtorServer:
         self.campo = 0.45
         self.intensidade = 1.15
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
-        self.estado_extra = {"subtipo": "player", "usuario": str(usuario), "skin": str(skin), "nome": str(usuario), "angulo": 0.0, "perfil": {}, "inventario": {}, "slot_selecionado": 0}
+        self.estado_extra = {"subtipo": "player", "usuario": str(usuario), "skin": str(skin), "nome": str(usuario), "angulo": 0.0, "perfil": {}, "inventario": {}, "slot_selecionado": 0, "dimensao": str(dimensao or "Mundo")}
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))
@@ -85,6 +85,7 @@ class AtorServer:
             "campo": self.campo,
             "intensidade": self.intensidade,
             "estado": estado,
+            "dimensao": str(estado.get("dimensao") or "Mundo"),
         }
 
 
@@ -168,6 +169,34 @@ class EstruturaNaturalServer:
 
     def serializar(self) -> Dict[str, object]:
         return {"id": self.Id, "tipo": self.tipo_classe, "posicao": [self.posicao[0], self.posicao[1]], "raio_colisao": self.raio_colisao, "raio_interacao": self.raio_interacao, "campo": self.campo, "intensidade": self.intensidade, "estado": dict(self.estado_extra), "nome": self.nome, "sprite": self.sprite, "codigo_natural": self.codigo_natural}
+
+
+class EstadioServer:
+    def __init__(self, id_objeto: int, tipo_estadio: str, dimensao: str, posicao: Vector2 = (0.0, 0.0), raio_elipse_x: float = 24.0, raio_elipse_y: float = 24.0, raio_interacao: float = 2.5):
+        self.id_objeto = int(id_objeto)
+        self.Id = self.id_objeto
+        self.tipo_classe = "entidade_estadio"
+        self.posicao = (float(posicao[0]), float(posicao[1]))
+        self.raio_colisao = max(0.4, float((raio_elipse_x + raio_elipse_y) * 0.5))
+        self.raio_interacao = max(self.raio_colisao, float(raio_interacao))
+        self.campo = 0.0
+        self.intensidade = 0.0
+        self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
+        self.estado_extra = {
+            "subtipo": "estadio",
+            "tipo_estadio": str(tipo_estadio or "normal"),
+            "dimensao": "Mundo",
+            "dimensao_destino": str(dimensao or "EstadioNormal"),
+            "raio_elipse_x": max(8.0, float(raio_elipse_x)),
+            "raio_elipse_y": max(8.0, float(raio_elipse_y)),
+            "entrada_offset": [0.0, max(2.0, float(raio_elipse_y) + 1.0)],
+            "entrada_pos": [float(self.posicao[0]), float(self.posicao[1] + max(2.0, float(raio_elipse_y) + 1.0))],
+            "saida_interna_pos": [25.0, 47.0],
+            "spawn_interno_pos": [25.0, 42.0],
+        }
+
+    def serializar(self) -> Dict[str, object]:
+        return {"id": self.Id, "tipo": self.tipo_classe, "posicao": [self.posicao[0], self.posicao[1]], "raio_colisao": self.raio_colisao, "raio_interacao": self.raio_interacao, "campo": self.campo, "intensidade": self.intensidade, "estado": dict(self.estado_extra)}
 
 
 class PokemonServer:
@@ -378,7 +407,7 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
     pos = dados.get("posicao") if isinstance(dados.get("posicao"), (list, tuple)) and len(dados.get("posicao")) == 2 else [0.0, 0.0]
     oid = int(dados.get("id", 0) or 0)
     if tipo == "entidade_player":
-        return AtorServer(id_objeto=oid, usuario=str(estado.get("usuario") or dados.get("usuario") or ""), skin=str(estado.get("skin") or dados.get("skin") or "S1"), posicao=(float(pos[0]), float(pos[1])))
+        return AtorServer(id_objeto=oid, usuario=str(estado.get("usuario") or dados.get("usuario") or ""), skin=str(estado.get("skin") or dados.get("skin") or "S1"), posicao=(float(pos[0]), float(pos[1])), dimensao=str(dados.get("dimensao") or estado.get("dimensao") or "Mundo"))
     if tipo in {"entidade_projetil", "projetil"}:
         direcao = estado.get("direcao") if isinstance(estado.get("direcao"), (list, tuple)) else dados.get("direcao", [1.0, 0.0])
         return ProjetilServer(id_objeto=oid, posicao=(float(pos[0]), float(pos[1])), dono_id=int(dados.get("dono_id", estado.get("dono_id", 0)) or 0), tipo_projetil=str(dados.get("tipo_projetil") or estado.get("tipo_projetil") or "item"), subtipo=str(dados.get("subtipo") or estado.get("nome_item") or "item"), item_base_id=str(dados.get("item_base_id") or estado.get("item_base_id") or ""), token_arremesso=str(dados.get("token_arremesso") or estado.get("token_arremesso") or ""), direcao=(float(direcao[0]), float(direcao[1])), velocidade=float(dados.get("velocidade") or estado.get("velocidade") or 10.0), alcance=float(dados.get("alcance") or estado.get("alcance") or 6.0), raio_colisao=float(dados.get("raio_colisao", 0.18) or 0.18))
@@ -402,6 +431,17 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
             posicao=(float(pos[0]), float(pos[1])),
             raio_colisao=raio_colisao,
             raio_interacao=raio_interacao,
+        )
+
+    if tipo in {"entidade_estadio", "estadio"}:
+        return EstadioServer(
+            id_objeto=oid,
+            tipo_estadio=str(estado.get("tipo_estadio") or dados.get("tipo_estadio") or "normal"),
+            dimensao=str(estado.get("dimensao_destino") or dados.get("dimensao") or "EstadioNormal"),
+            posicao=(float(pos[0]), float(pos[1])),
+            raio_elipse_x=float(estado.get("raio_elipse_x", dados.get("raio_elipse_x", 24.0)) or 24.0),
+            raio_elipse_y=float(estado.get("raio_elipse_y", dados.get("raio_elipse_y", 24.0)) or 24.0),
+            raio_interacao=float(dados.get("raio_interacao", 2.5) or 2.5),
         )
     if tipo in {"entidade_item_mundo", "item_mundo"}:
         p0 = estado.get("pos_inicial") if isinstance(estado.get("pos_inicial"), (list, tuple)) else pos

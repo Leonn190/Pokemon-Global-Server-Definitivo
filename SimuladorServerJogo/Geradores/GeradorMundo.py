@@ -203,6 +203,8 @@ def _carregar_world_meta() -> Dict[str, int | float]:
     if missing:
         raise ValueError("world_meta.json inválido: campos obrigatórios de spawn ausentes: " + ", ".join(missing))
 
+    estadios = payload.get("estadios", []) if isinstance(payload.get("estadios"), list) else []
+
     return {
         "width": largura,
         "height": altura,
@@ -215,6 +217,7 @@ def _carregar_world_meta() -> Dict[str, int | float]:
         "spawn_chunk_y": int(payload["spawn_chunk_y"]),
         "spawn_x": float(payload["spawn_x"]),
         "spawn_y": float(payload["spawn_y"]),
+        "estadios": estadios,
     }
 
 
@@ -239,6 +242,7 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
             "chunks_x": int(meta_java["chunks_x"]),
             "chunks_y": int(meta_java["chunks_y"]),
             "chunks_por_arquivo": int(meta_java.get("chunks_por_arquivo", 10)),
+            "estadios": list(meta_java.get("estadios", [])) if isinstance(meta_java.get("estadios", []), list) else [],
         },
         "spawn": [float(spawn[0]), float(spawn[1])],
         "grid": [],

@@ -347,6 +347,66 @@ class ControladorPlayer:
                 },
             })
 
+
+
+    def _processar_intencao_interacao_estadio(self) -> None:
+        if self._player_local is None or self._player_local.Controle is None:
+            return
+        acao = self._player_local.Controle.consumir_acao_interacao()
+        if not isinstance(acao, dict):
+            return
+        pos = tuple(self._player_local.Posicao)
+        player_payload = self._objetos.ObjetosPorId.get(int(getattr(self._player_local, "Id", 0) or 0), {}) if isinstance(self._objetos.ObjetosPorId, dict) else {}
+        estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
+        dim = str(estado_player.get("dimensao") or player_payload.get("dimensao") or "Mundo")
+
+        if dim != "Mundo":
+            self._objetos.EnfileirarDiffRapida({
+                "tipo": "evento",
+                "categoria": "interacao_estadio",
+                "payload": {
+                    "acao": "sair",
+                    "instante_cliente_ms": int(time.time() * 1000),
+                    "pos_player": [float(pos[0]), float(pos[1])],
+                },
+            })
+            return
+
+        melhor = None
+        melhor_d2 = None
+        for estadio in list(getattr(self._objetos, "EstadiosPorId", {}).values()):
+            if not isinstance(estadio, dict):
+                continue
+            estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
+            entrada = estado.get("entrada_pos") if isinstance(estado.get("entrada_pos"), (list, tuple)) and len(estado.get("entrada_pos")) == 2 else None
+            if entrada is None:
+                ep = estadio.get("posicao") if isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else [0.0, 0.0]
+                off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 25.0]
+                entrada = [float(ep[0]) + float(off[0]), float(ep[1]) + float(off[1])]
+            dx = float(pos[0]) - float(entrada[0])
+            dy = float(pos[1]) - float(entrada[1])
+            d2 = dx * dx + dy * dy
+            lim = 2.6
+            if d2 > (lim * lim):
+                continue
+            if melhor_d2 is None or d2 < melhor_d2:
+                melhor_d2 = d2
+                melhor = (estadio, entrada)
+        if melhor is None:
+            return
+        estadio, entrada = melhor
+        estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
+        self._objetos.EnfileirarDiffRapida({
+            "tipo": "evento",
+            "categoria": "interacao_estadio",
+            "payload": {
+                "acao": "entrar",
+                "estadio_id": int(estadio.get("id", 0) or 0),
+                "dimensao_destino": str(estado.get("dimensao_destino") or "EstadioNormal"),
+                "entrada_pos": [float(entrada[0]), float(entrada[1])],
+                "instante_cliente_ms": int(time.time() * 1000),
+            },
+        })
     def _processar_intencao_subir_nivel_pokemon(self) -> None:
         if self._player_local is None or self._player_local.Controle is None:
             return
@@ -405,6 +465,7 @@ class ControladorPlayer:
             self._processar_intencao_drop_item_mundo()
             self._processar_intencao_coleta_estrutura()
             self._processar_intencao_subir_nivel_pokemon()
+            self._processar_intencao_interacao_estadio()
         elif self._player_local.Controle is not None:
             self._player_local.Controle.atualizar_bloqueado(dt)
 

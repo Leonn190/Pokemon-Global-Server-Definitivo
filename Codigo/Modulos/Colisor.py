@@ -152,6 +152,30 @@ class Colisor:
             return None
         return min(candidatos)
 
+
+    @staticmethod
+    def _segmento_interseca_elipse(origem: Vector2, destino: Vector2, centro: Vector2, raio_x: float, raio_y: float) -> Optional[float]:
+        rx = max(1e-6, float(raio_x))
+        ry = max(1e-6, float(raio_y))
+        ox = (float(origem[0]) - float(centro[0])) / rx
+        oy = (float(origem[1]) - float(centro[1])) / ry
+        dx = (float(destino[0]) - float(origem[0])) / rx
+        dy = (float(destino[1]) - float(origem[1])) / ry
+        a = dx * dx + dy * dy
+        if a <= 1e-10:
+            return None
+        b = 2.0 * (ox * dx + oy * dy)
+        c = (ox * ox + oy * oy) - 1.0
+        delta = b * b - 4.0 * a * c
+        if delta < 0.0:
+            return None
+        raiz = math.sqrt(delta)
+        inv = 1.0 / (2.0 * a)
+        t1 = (-b - raiz) * inv
+        t2 = (-b + raiz) * inv
+        candidatos = [t for t in (t1, t2) if 0.0 <= t <= 1.0]
+        return min(candidatos) if candidatos else None
+
     @staticmethod
     def resolver_movimento_com_colisores(
         posicao_antes: Vector2,
@@ -166,13 +190,20 @@ class Colisor:
             return (float(posicao_depois[0]), float(posicao_depois[1]))
 
         melhor_t = None
-        for _, sx, sy, raio_obj, _, _, _ in colisores:
-            t = Colisor.intersecao_segmento_circulo(
-                posicao_antes,
-                posicao_depois,
-                (sx, sy),
-                raio_entidade + raio_obj,
-            )
+        for col in colisores:
+            _, sx, sy, raio_obj, _, _, _, *extra = col
+            formato = str(extra[0]).strip().lower() if extra else "circulo"
+            if formato == "elipse" and len(extra) >= 3:
+                rx = float(extra[1]) + raio_entidade
+                ry = float(extra[2]) + raio_entidade
+                t = Colisor._segmento_interseca_elipse(posicao_antes, posicao_depois, (sx, sy), rx, ry)
+            else:
+                t = Colisor.intersecao_segmento_circulo(
+                    posicao_antes,
+                    posicao_depois,
+                    (sx, sy),
+                    raio_entidade + raio_obj,
+                )
             if t is None:
                 continue
             if melhor_t is None or t < melhor_t:
@@ -188,7 +219,24 @@ class Colisor:
 
         for _ in range(3):
             ajustou = False
-            for _, sx, sy, raio_obj, _, _, _ in colisores:
+            for col in colisores:
+                _, sx, sy, raio_obj, _, _, _, *extra = col
+                formato = str(extra[0]).strip().lower() if extra else "circulo"
+                if formato == "elipse" and len(extra) >= 3:
+                    rx = max(1e-6, float(extra[1]) + raio_entidade)
+                    ry = max(1e-6, float(extra[2]) + raio_entidade)
+                    vx = px - sx
+                    vy = py - sy
+                    normalizado = (vx * vx) / (rx * rx) + (vy * vy) / (ry * ry)
+                    if normalizado >= 1.0:
+                        continue
+                    ang = math.atan2(vy / ry, vx / rx)
+                    nx = math.cos(ang)
+                    ny = math.sin(ang)
+                    px = sx + (rx + 1e-4) * nx
+                    py = sy + (ry + 1e-4) * ny
+                    ajustou = True
+                    continue
                 vx = px - sx
                 vy = py - sy
                 dist = math.hypot(vx, vy)
@@ -209,8 +257,9 @@ class Colisor:
 
         dt = max(0.0, float(dt))
         if dt > 0.0:
-            for _, sx, sy, raio_obj, tipo_obj, campo, intensidade in colisores:
-                if not tipo_obj.startswith("estrutura"):
+            for col in colisores:
+                _, sx, sy, raio_obj, tipo_obj, campo, intensidade, *_ = col
+                if not str(tipo_obj).startswith("estrutura"):
                     continue
                 mvx, mvy = Colisor.aplicar_repulsao_circular(
                     posicao_entidade=(px, py),

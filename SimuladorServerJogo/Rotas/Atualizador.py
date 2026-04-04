@@ -201,6 +201,58 @@ def _processar_evento_subir_nivel_pokemon(client_id: str, payload: Dict[str, obj
 
 
 
+
+def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, object]) -> bool:
+    obj_id = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+    if obj_id <= 0:
+        return False
+    player = BANCO_DADOS.obter_objeto(obj_id)
+    if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
+        return False
+
+    acao = str(payload.get("acao") or "entrar").strip().lower()
+    estadio_id = int(payload.get("estadio_id", 0) or int(player.estado_extra.get("estadio_atual_id", 0) or 0))
+    estadio = BANCO_DADOS.obter_objeto(estadio_id) if estadio_id > 0 else None
+
+    def _dist_ok(a, b, lim):
+        try:
+            dx = float(a[0]) - float(b[0]); dy = float(a[1]) - float(b[1])
+        except Exception:
+            return False
+        return (dx * dx + dy * dy) <= (float(lim) * float(lim))
+
+    if acao == "sair":
+        if estadio is None:
+            return False
+        estado_est = getattr(estadio, "estado_extra", {}) if isinstance(getattr(estadio, "estado_extra", {}), dict) else {}
+        saida_interna = estado_est.get("saida_interna_pos") if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) else [25.0, 47.0]
+        if not _dist_ok(player.posicao, saida_interna, 3.0):
+            return False
+        entrada = estado_est.get("entrada_pos") if isinstance(estado_est.get("entrada_pos"), (list, tuple)) and len(estado_est.get("entrada_pos")) == 2 else [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
+        player.estado_extra["dimensao"] = "Mundo"
+        player.estado_extra["estadio_atual_id"] = 0
+        player.definir_posicao(float(entrada[0]), float(entrada[1]))
+        registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
+        return True
+
+    if estadio is None:
+        return False
+    estado_est = getattr(estadio, "estado_extra", {}) if isinstance(getattr(estadio, "estado_extra", {}), dict) else {}
+    entrada = payload.get("entrada_pos") if isinstance(payload.get("entrada_pos"), (list, tuple)) and len(payload.get("entrada_pos")) == 2 else estado_est.get("entrada_pos")
+    if not isinstance(entrada, (list, tuple)) or len(entrada) != 2:
+        entrada = [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
+    if not _dist_ok(player.posicao, entrada, 3.0):
+        return False
+
+    dim = str(estado_est.get("dimensao_destino") or "EstadioNormal")
+    spawn = estado_est.get("spawn_interno_pos") if isinstance(estado_est.get("spawn_interno_pos"), (list, tuple)) and len(estado_est.get("spawn_interno_pos")) == 2 else [25.0, 42.0]
+    player.estado_extra["dimensao"] = dim
+    player.estado_extra["estadio_atual_id"] = int(estadio.Id)
+    player.definir_posicao(float(spawn[0]), float(spawn[1]))
+    registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
+    return True
+
+
 def processar_atualizador_json(requisicao_json: str) -> str:
     try:
         pacote = json.loads(requisicao_json)
@@ -214,7 +266,10 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
     ultimo_tick_recebido = int(dados.get("ultimo_tick_recebido", 0) or 0)
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
-    chunks_carregados = _chunks_carregados_cliente(posicao_camera)
+    obj_id_dim = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+    obj_dim = BANCO_DADOS.obter_objeto(obj_id_dim) if obj_id_dim > 0 else None
+    dim_atual = str(getattr(obj_dim, "estado_extra", {}).get("dimensao", "Mundo") if obj_dim is not None else "Mundo")
+    chunks_carregados = _chunks_carregados_cliente(posicao_camera, dimensao=dim_atual)
     raio_visao = _raio_visao_por_regras()
 
     diffs = dados.get("diffs", []) if isinstance(dados.get("diffs"), list) else []
@@ -287,6 +342,12 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 else:
                     ignorados += 1
                 continue
+            if categoria == "interacao_estadio":
+                if _processar_evento_interacao_estadio(client_id, payload):
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
             if categoria == "npc_interacao_inicio":
                 npc_id = int(payload.get("npc_id", 0) or 0)
                 ok, _ = CEREBRO.registrar_inicio_interacao_npc(client_id, npc_id)
@@ -348,10 +409,10 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
         ignorados += 1
 
-    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados, client_id=client_id)
+    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados, client_id=client_id, dimensao=dim_atual)
     state = _obter_state_client(client_id)
     vistos = state["objetos_vistos"]
-    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id)
+    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dim_atual)
     if diffs_extra:
         if pacotes:
             pacote_vis = pacotes[-1]

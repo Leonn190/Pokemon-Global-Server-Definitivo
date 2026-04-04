@@ -34,6 +34,7 @@ class Controle:
         self._acao_arremesso_pendente = None
         self._acao_drop_item_mundo_pendente = None
         self._acao_subir_nivel_pokemon_pendente = None
+        self._acao_interacao_pendente = None
         self.BloquearToggleInventario = False
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles, mouse_pos_tela_px=None, ator_pos_tela_px=None):
@@ -83,6 +84,15 @@ class Controle:
         if not chave:
             return
         self._acao_subir_nivel_pokemon_pendente = {"chave_pokemon": chave}
+
+
+    def registrar_acao_interacao(self, payload):
+        self._acao_interacao_pendente = dict(payload or {})
+
+    def consumir_acao_interacao(self):
+        acao = self._acao_interacao_pendente
+        self._acao_interacao_pendente = None
+        return acao
 
     def consumir_acao_subir_nivel_pokemon(self):
         acao = self._acao_subir_nivel_pokemon_pendente
@@ -368,6 +378,8 @@ class Controle:
             if evento.type == pygame.KEYDOWN and evento.key == pygame.K_e:
                 self.InventarioAberto = not self.InventarioAberto
                 break
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_f:
+                self.registrar_acao_interacao({"tecla": "F"})
 
 
 PlayerController = Controle

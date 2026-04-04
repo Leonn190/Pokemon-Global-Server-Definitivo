@@ -199,7 +199,7 @@ static final class Rules {
     int riverMaxAttemptsPerSource = 50;
 
     // ===== POIs =====
-    int gymCount = 30;
+    int gymCount = 20;
     int dungeonCount = 30;
     int villageCount = 10;
     int gymDistance = 230;
@@ -1431,7 +1431,21 @@ static final class Rules {
                 writer.write("  \"spawn_chunk_y\": " + spawnChunkY + ",\n");
                 writer.write("  \"spawn_x\": " + spawnX + ",\n");
                 writer.write("  \"spawn_y\": " + spawnY + ",\n");
-                writer.write("  \"rules_file\": \"" + rules.rulesFileUsed.replace("\\", "\\\\") + "\"\n");
+                writer.write("  \"rules_file\": \"" + rules.rulesFileUsed.replace("\\", "\\\\") + "\",\n");
+                writer.write("  \"estadios\": [\n");
+                String[] tiposEstadio = {"Normal","Fogo","Agua","Planta","Eletrico","Gelo","Lutador","Venenoso","Terra","Voador","Psiquico","Inseto","Pedra","Fantasma","Dragao","Sombrio","Metal","Fada","Cosmico","Sonoro"};
+                int gymIdx = 0;
+                for (int i = 0; i < pois.size(); i++) {
+                    Poi poi = pois.get(i);
+                    if (poi.type != PoiType.GYM) continue;
+                    String tipo = tiposEstadio[gymIdx % tiposEstadio.length];
+                    String dimensao = "Estadio" + tipo;
+                    writer.write("    {\"estadio_id\": " + (1900000000 + gymIdx) + ", \"tipo\": \"" + tipo + "\", \"dimensao\": \"" + dimensao + "\", \"posicao\": [" + poi.x + ", " + poi.y + "]}");
+                    gymIdx++;
+                    if (gymIdx < rules.gymCount) writer.write(",");
+                    writer.write("\n");
+                }
+                writer.write("  ]\n");
                 writer.write("}\n");
             }
 
@@ -2183,20 +2197,25 @@ static final class Rules {
         private void placePoiType(PoiType type, int target, int minDistance) {
             int placed = 0;
             int attempts = 0;
-            while (placed < target && attempts < target * 40_000) {
+            int chunkSize = Math.max(1, rules.diskChunkBlocos);
+            while (placed < target && attempts < target * 80_000) {
                 attempts++;
                 int x = boundedRandomInt(140, width - 140, rules.seed + type.ordinal() * 10_000_000L + attempts * 53L);
                 int y = boundedRandomInt(140, height - 140, rules.seed + type.ordinal() * 10_000_000L + attempts * 67L);
-                if (!canPlacePoi(type, x, y, minDistance)) {
+                if (!canPlacePoi(type, x, y, minDistance, chunkSize)) {
                     continue;
                 }
-                pois.add(new Poi(x, y, type));
+                Poi poi = new Poi(x, y, type);
+                pois.add(poi);
+                if (type == PoiType.GYM) {
+                    clearNaturalsNearGym(poi, chunkSize);
+                }
                 placed++;
             }
             System.out.println("  " + type + ": " + placed + " / " + target + " (tentativas: " + attempts + ")");
         }
 
-        private boolean canPlacePoi(PoiType type, int x, int y, int minDistance) {
+        private boolean canPlacePoi(PoiType type, int x, int y, int minDistance, int chunkSize) {
             int idx = index(x, y);
             Biome biome = Biome.values()[biomeMap[idx] & 0xFF];
             if (!isLandBiome(biome)) {
@@ -2218,7 +2237,46 @@ static final class Rules {
                     return false;
                 }
             }
+            if (type == PoiType.GYM && !isGymAreaValid(x, y, chunkSize)) {
+                return false;
+            }
             return true;
+        }
+
+        private boolean isGymAreaValid(int centerX, int centerY, int chunkSize) {
+            int half = (5 * chunkSize) / 2;
+            int x0 = centerX - half;
+            int y0 = centerY - half;
+            int x1 = x0 + (5 * chunkSize) - 1;
+            int y1 = y0 + (5 * chunkSize) - 1;
+            if (x0 < 2 || y0 < 2 || x1 >= width - 2 || y1 >= height - 2) {
+                return false;
+            }
+            for (int y = y0; y <= y1; y++) {
+                for (int x = x0; x <= x1; x++) {
+                    int idx = index(x, y);
+                    Biome biome = Biome.values()[biomeMap[idx] & 0xFF];
+                    if (!isLandBiome(biome) || nearWater(x, y, 2)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private void clearNaturalsNearGym(Poi gym, int chunkSize) {
+            int half = (5 * chunkSize) / 2;
+            int margem = Math.max(2, chunkSize / 2);
+            int x0 = Math.max(0, gym.x - half - margem);
+            int y0 = Math.max(0, gym.y - half - margem);
+            int x1 = Math.min(width - 1, gym.x + half + margem);
+            int y1 = Math.min(height - 1, gym.y + half + margem);
+            for (int y = y0; y <= y1; y++) {
+                for (int x = x0; x <= x1; x++) {
+                    int idx = index(x, y);
+                    naturalMap[idx] = (byte) NaturalStructure.NONE.ordinal();
+                }
+            }
         }
 
         private boolean preferredBiomeForPoi(PoiType type, Biome biome) {

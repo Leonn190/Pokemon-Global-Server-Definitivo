@@ -71,7 +71,7 @@ class ControladorAtores:
         ator.atualizar(dt)
         ator.set_tile_px(getattr(camera, "TilePx", 50))
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
-        ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=0.0)
+        ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=float(getattr(ator, "_tempo_respiracao", 0.0)))
         if getattr(ator, "Nome", ""):
             Ator.desenhar_nome(tela, pos_tela, ator.Nome)
         return True

@@ -31,6 +31,13 @@ class TelaDialogo:
         self._texto_animado = TextoAnimado("", cps=48.0)
         self._opcoes: List[Dict[str, object]] = []
         self._hover_idx = -1
+        self._tempo_respiracao = 0.0
+        self._cache_tamanho: tuple[int, int] | None = None
+        self._overlay: pygame.Surface | None = None
+        self._fade_top: pygame.Surface | None = None
+        self._fade_bottom: pygame.Surface | None = None
+        self._ator_player.definir_angulo_olhar(45.0)
+        self._ator_npc.definir_angulo_olhar(135.0)
         self._reconstruir_no_atual()
 
     def _carregar_dialogo(self) -> Dict[str, object]:
@@ -106,12 +113,32 @@ class TelaDialogo:
 
     def _opcao_rects(self, tela_size) -> List[pygame.Rect]:
         w, h = tela_size
-        base_x = int(w * 0.12)
-        base_y = int(h * 0.70)
-        bw = int(w * 0.76)
+        base_x = int(w * 0.10)
+        base_y = int(h * 0.75)
+        bw = int(w * 0.80)
         bh = 44
-        gap = 10
+        gap = 8
         return [pygame.Rect(base_x, base_y + i * (bh + gap), bw, bh) for i in range(len(self._opcoes))]
+
+    def _garantir_cache_fundos(self, tela_size: tuple[int, int]) -> None:
+        if self._cache_tamanho == tela_size:
+            return
+        w, h = tela_size
+        self._cache_tamanho = tela_size
+        self._overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+        self._overlay.fill((0, 0, 0, 130))
+
+        self._fade_top = pygame.Surface((w, int(h * 0.42)), pygame.SRCALPHA)
+        for y in range(self._fade_top.get_height()):
+            t = y / max(1, self._fade_top.get_height() - 1)
+            alpha = int(255 * (1.0 - t) ** 1.95)
+            pygame.draw.line(self._fade_top, (0, 0, 0, alpha), (0, y), (w, y))
+
+        self._fade_bottom = pygame.Surface((w, int(h * 0.58)), pygame.SRCALPHA)
+        for y in range(self._fade_bottom.get_height()):
+            t = y / max(1, self._fade_bottom.get_height() - 1)
+            alpha = int(248 * (t ** 1.75))
+            pygame.draw.line(self._fade_bottom, (0, 0, 0, alpha), (0, y), (w, y))
 
     def _opcao_no_mouse(self, mouse_pos) -> int:
         for i, r in enumerate(self._opcao_rects(pygame.display.get_surface().get_size() if pygame.display.get_surface() else (1280, 720))):
@@ -122,47 +149,38 @@ class TelaDialogo:
     def atualizar(self, dt: float) -> None:
         if self.Ativa:
             self._texto_animado.atualizar(dt)
+            self._tempo_respiracao += max(0.0, float(dt))
 
     def desenhar(self, tela: pygame.Surface) -> None:
         if not self.Ativa:
             return
         w, h = tela.get_size()
-        overlay = pygame.Surface((w, h), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 90))
-        tela.blit(overlay, (0, 0))
-
-        top_grad = pygame.Surface((w, int(h * 0.25)), pygame.SRCALPHA)
-        for y in range(top_grad.get_height()):
-            a = int(180 * (1.0 - (y / max(1, top_grad.get_height()))))
-            pygame.draw.line(top_grad, (0, 0, 0, a), (0, y), (w, y))
-        tela.blit(top_grad, (0, 0))
-
-        bot_grad = pygame.Surface((w, int(h * 0.30)), pygame.SRCALPHA)
-        for y in range(bot_grad.get_height()):
-            a = int(210 * (y / max(1, bot_grad.get_height())))
-            pygame.draw.line(bot_grad, (0, 0, 0, a), (0, y), (w, y))
-        tela.blit(bot_grad, (0, h - bot_grad.get_height()))
-
-        box = pygame.Rect(int(w * 0.08), int(h * 0.52), int(w * 0.84), int(h * 0.40))
-        pygame.draw.rect(tela, (18, 24, 36, 220), box, border_radius=16)
-        pygame.draw.rect(tela, (83, 123, 177), box, width=2, border_radius=16)
+        self._garantir_cache_fundos((w, h))
+        tela.blit(self._overlay, (0, 0))
+        tela.blit(self._fade_top, (0, 0))
+        tela.blit(self._fade_bottom, (0, h - self._fade_bottom.get_height()))
 
         self._ator_player.set_tile_px(64)
         self._ator_npc.set_tile_px(64)
-        self._ator_player.desenhar(tela, posicao_tela=(int(w * 0.12), int(h * 0.83)), respiracao_tempo=0.0)
-        self._ator_npc.desenhar(tela, posicao_tela=(int(w * 0.88), int(h * 0.83)), respiracao_tempo=0.0)
+        self._ator_player.desenhar(tela, posicao_tela=(int(w * 0.12), int(h * 0.87)), respiracao_tempo=self._tempo_respiracao)
+        self._ator_npc.desenhar(tela, posicao_tela=(int(w * 0.88), int(h * 0.87)), respiracao_tempo=self._tempo_respiracao)
         Texto(self._player_nome, pos=(int(w * 0.12), int(h * 0.91)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
         Texto(self._npc_nome, pos=(int(w * 0.88), int(h * 0.91)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
 
         fala = self._texto_animado.texto_visivel
-        Texto(fala, pos=(int(w * 0.12), int(h * 0.58)), style={"size": 24, "align": "topleft", "outline": True}).draw(tela)
+        Texto(fala, pos=(int(w * 0.10), int(h * 0.61)), style={"size": 24, "align": "topleft", "outline": True}).draw(tela)
 
         if self._texto_animado.concluido:
+            self._hover_idx = self._opcao_no_mouse(pygame.mouse.get_pos())
             for i, (op, rect) in enumerate(zip(self._opcoes, self._opcao_rects((w, h)))):
-                hover = i == self._hover_idx
-                cor = (46, 66, 96) if not hover else (72, 102, 148)
-                pygame.draw.rect(tela, cor, rect, border_radius=9)
-                pygame.draw.rect(tela, (130, 170, 226), rect, width=1, border_radius=9)
-                Texto(str(op.get("texto") or "..."), pos=(rect.x + 10, rect.centery), style={"size": 21, "align": "midleft", "outline": True}).draw(tela)
+                hover = (i == self._hover_idx)
+                tamanho = 24 if hover else 22
+                cor = (255, 241, 156) if hover else (228, 235, 248)
+                desloc_x = 4 if hover else 0
+                Texto(
+                    str(op.get("texto") or "..."),
+                    pos=(rect.x + 6 + desloc_x, rect.centery),
+                    style={"size": tamanho, "align": "midleft", "outline": True, "color": cor},
+                ).draw(tela)
         else:
             Texto("(clique para concluir o texto)", pos=(int(w * 0.5), int(h * 0.88)), style={"size": 18, "align": "midbottom", "outline": True, "color": (220, 220, 230)}).draw(tela)

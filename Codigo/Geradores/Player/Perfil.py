@@ -48,7 +48,7 @@ class Perfil:
 
     @staticmethod
     def _skins_liberadas_padrao():
-        pasta = Path("Recursos") / "Visual" / "Skins" / "Liberadas"
+        pasta = Path("Recursos") / "Visual" / "Skins"
         if not pasta.exists():
             return ["S1.png"]
         skins = sorted({p.name for p in pasta.glob("*.png") if p.is_file()})

@@ -67,7 +67,7 @@ class InventarioPerfil:
 
         skins: list[tuple[str, pygame.Surface]] = []
         for nome in dict.fromkeys(liberadas):
-            caminho = Path("Recursos") / "Visual" / "Skins" / "Liberadas" / nome
+            caminho = Path("Recursos") / "Visual" / "Skins" / nome
             if caminho.exists():
                 try:
                     skins.append((nome, pygame.image.load(str(caminho)).convert_alpha()))

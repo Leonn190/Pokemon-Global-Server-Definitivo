@@ -121,7 +121,7 @@ class SubtelaCriarPersonagem:
     def _carregar_skins(self):
         skins = []
         for nome in _SKINS_LIBERADAS:
-            caminho = os.path.join("Recursos", "Visual", "Skins", "Liberadas", nome)
+            caminho = os.path.join("Recursos", "Visual", "Skins", nome)
             try:
                 skins.append(pygame.image.load(caminho).convert_alpha())
             except pygame.error:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import unicodedata
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
@@ -75,6 +76,45 @@ class TelaDialogo:
         self._ator_player.definir_angulo_olhar(45.0)
         self._ator_npc.definir_angulo_olhar(135.0)
         self._reconstruir_no_atual()
+
+    @staticmethod
+    def _normalizar_tipo_estadio(valor: str) -> str:
+        texto = unicodedata.normalize("NFKD", str(valor or "")).encode("ascii", "ignore").decode("ascii")
+        texto = texto.strip().lower()
+        aliases = {"eletrico": "eletrico", "eletricoo": "eletrico", "terra": "terrestre", "dragao": "dragao"}
+        return aliases.get(texto, texto)
+
+    def _nivel_respeito_estadio(self, tipo_estadio: str) -> int:
+        ator = self._ator_local
+        perfil = getattr(ator, "Perfil", None) if ator is not None else None
+        if perfil is None:
+            return 0
+        tipo = self._normalizar_tipo_estadio(tipo_estadio)
+        mapa = {
+            "normal": "RespeitoEstadioNormal",
+            "fogo": "RespeitoEstadioFogo",
+            "agua": "RespeitoEstadioAgua",
+            "planta": "RespeitoEstadioPlanta",
+            "eletrico": "RespeitoEstadioEletrico",
+            "gelo": "RespeitoEstadioGelo",
+            "lutador": "RespeitoEstadioLutador",
+            "venenoso": "RespeitoEstadioVenenoso",
+            "terrestre": "RespeitoEstadioTerrestre",
+            "voador": "RespeitoEstadioVoador",
+            "psiquico": "RespeitoEstadioPsiquico",
+            "inseto": "RespeitoEstadioInseto",
+            "pedra": "RespeitoEstadioPedra",
+            "fantasma": "RespeitoEstadioFantasma",
+            "dragao": "RespeitoEstadioDragao",
+            "sombrio": "RespeitoEstadioSombrio",
+            "metal": "RespeitoEstadioMetal",
+            "fada": "RespeitoEstadioFada",
+            "cosmico": "RespeitoEstadioCosmico",
+            "sonoro": "RespeitoEstadioSonoro",
+        }
+        chave = mapa.get(tipo, "")
+        valor = int(getattr(perfil, chave, 0) if chave else 0)
+        return max(0, min(4, valor))
 
     @staticmethod
     def _mapear_icones_itens() -> dict[str, Path]:
@@ -266,6 +306,15 @@ class TelaDialogo:
         self._status_compra = f"Comprou {item.get('Nome', 'item')} por {int(preco)} dinheiro"
 
     def _reconstruir_no_atual(self) -> None:
+        if self._no_atual in {"", "saudacao"}:
+            cfg = self._dialogo.get("inicio_por_respeito") if isinstance(self._dialogo.get("inicio_por_respeito"), dict) else {}
+            if cfg:
+                tipo_estadio = str(cfg.get("tipo_estadio") or "")
+                mapa_nos = cfg.get("mapa") if isinstance(cfg.get("mapa"), dict) else {}
+                nivel = self._nivel_respeito_estadio(tipo_estadio)
+                no_cfg = mapa_nos.get(str(nivel))
+                if isinstance(no_cfg, str) and no_cfg:
+                    self._no_atual = no_cfg
         no = self._no_atual_obj()
         fala = str(no.get("fala") or "...")
         opcoes = list(no.get("opcoes", [])) if isinstance(no.get("opcoes"), list) else []

@@ -189,10 +189,13 @@ class EstadioServer:
             "dimensao_destino": str(dimensao or "EstadioNormal"),
             "raio_elipse_x": max(8.0, float(raio_elipse_x)),
             "raio_elipse_y": max(8.0, float(raio_elipse_y)),
+            "raio_elipse_interno_x": max(4.0, float(raio_elipse_x) * 0.72),
+            "raio_elipse_interno_y": max(4.0, float(raio_elipse_y) * 0.72),
             "entrada_offset": [0.0, max(2.0, float(raio_elipse_y) + 1.0)],
             "entrada_pos": [float(self.posicao[0]), float(self.posicao[1] + max(2.0, float(raio_elipse_y) + 1.0))],
             "saida_interna_pos": [25.0, 47.0],
             "spawn_interno_pos": [25.0, 42.0],
+            "arena_centro": [25.0, 25.0],
         }
 
     def serializar(self) -> Dict[str, object]:

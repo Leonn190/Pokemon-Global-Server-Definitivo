@@ -1435,14 +1435,16 @@ static final class Rules {
                 writer.write("  \"estadios\": [\n");
                 String[] tiposEstadio = {"Normal","Fogo","Agua","Planta","Eletrico","Gelo","Lutador","Venenoso","Terra","Voador","Psiquico","Inseto","Pedra","Fantasma","Dragao","Sombrio","Metal","Fada","Cosmico","Sonoro"};
                 int gymIdx = 0;
+                int gymsMax = Math.min(20, rules.gymCount);
                 for (int i = 0; i < pois.size(); i++) {
                     Poi poi = pois.get(i);
                     if (poi.type != PoiType.GYM) continue;
+                    if (gymIdx >= gymsMax) break;
                     String tipo = tiposEstadio[gymIdx % tiposEstadio.length];
                     String dimensao = "Estadio" + tipo;
                     writer.write("    {\"estadio_id\": " + (1900000000 + gymIdx) + ", \"tipo\": \"" + tipo + "\", \"dimensao\": \"" + dimensao + "\", \"posicao\": [" + poi.x + ", " + poi.y + "]}");
                     gymIdx++;
-                    if (gymIdx < rules.gymCount) writer.write(",");
+                    if (gymIdx < gymsMax) writer.write(",");
                     writer.write("\n");
                 }
                 writer.write("  ]\n");
@@ -2266,7 +2268,7 @@ static final class Rules {
 
         private void clearNaturalsNearGym(Poi gym, int chunkSize) {
             int half = (5 * chunkSize) / 2;
-            int margem = Math.max(2, chunkSize / 2);
+            int margem = Math.max(1, chunkSize / 3);
             int x0 = Math.max(0, gym.x - half - margem);
             int y0 = Math.max(0, gym.y - half - margem);
             int x1 = Math.min(width - 1, gym.x + half + margem);

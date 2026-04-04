@@ -204,6 +204,7 @@ class BancoDadosMundo:
 
             meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta"), dict) else {}
             estadios = meta.get("estadios", []) if isinstance(meta.get("estadios"), list) else []
+            estadios = list(estadios)[:20]
             for idx, item in enumerate(estadios):
                 if not isinstance(item, dict):
                     continue

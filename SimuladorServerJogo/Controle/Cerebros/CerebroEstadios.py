@@ -27,7 +27,15 @@ class CerebroEstadios:
         grid: Dict[Chunk, List[List[int]]] = {}
         for cy in range(self.chunks_por_lado):
             for cx in range(self.chunks_por_lado):
-                grid[(cx, cy)] = [[2 for _ in range(self.chunk_tiles)] for _ in range(self.chunk_tiles)]
+                chunk_grid: List[List[int]] = []
+                base_x = cx * self.chunk_tiles
+                base_y = cy * self.chunk_tiles
+                for ly in range(self.chunk_tiles):
+                    row: List[int] = []
+                    for lx in range(self.chunk_tiles):
+                        row.append(10 if ((base_x + lx + base_y + ly) % 2 == 0) else 11)
+                    chunk_grid.append(row)
+                grid[(cx, cy)] = chunk_grid
         self._grids[dimensao] = grid
         return grid
 
@@ -36,8 +44,10 @@ class CerebroEstadios:
         if d == "Mundo":
             return []
         grid = self._gerar_grid(d)
-        cx = int(chunk_xy[0]) % self.chunks_por_lado
-        cy = int(chunk_xy[1]) % self.chunks_por_lado
+        cx = int(chunk_xy[0])
+        cy = int(chunk_xy[1])
+        if cx < 0 or cy < 0 or cx >= self.chunks_por_lado or cy >= self.chunks_por_lado:
+            return []
         return [list(l) for l in grid.get((cx, cy), [])]
 
     def chunks_proximos(self, dimensao: str, centro: Chunk, raio: int) -> List[Chunk]:
@@ -47,7 +57,10 @@ class CerebroEstadios:
         out: List[Chunk] = []
         for dx in range(-raio, raio + 1):
             for dy in range(-raio, raio + 1):
-                out.append(((int(centro[0]) + dx) % self.chunks_por_lado, (int(centro[1]) + dy) % self.chunks_por_lado))
+                nx = int(centro[0]) + dx
+                ny = int(centro[1]) + dy
+                if 0 <= nx < self.chunks_por_lado and 0 <= ny < self.chunks_por_lado:
+                    out.append((nx, ny))
         return out
 
 

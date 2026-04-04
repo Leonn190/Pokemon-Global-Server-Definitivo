@@ -57,11 +57,16 @@ def processar_entrada_json(requisicao_json):
         if possui_personagem:
             personagem = obter_personagem_para_entrada(usuario) or {}
             personagem.setdefault("nome", usuario)
+            dimensao_atual = str(personagem.get("dimensao_atual") or "Mundo")
+            pos_dim = personagem.get("posicoes_por_dimensao") if isinstance(personagem.get("posicoes_por_dimensao"), dict) else {}
+            pos_dim_dim = pos_dim.get(dimensao_atual) if isinstance(pos_dim.get(dimensao_atual), (list, tuple)) and len(pos_dim.get(dimensao_atual)) == 2 else personagem.get("posicao", (0.0, 0.0))
             ator = BANCO_DADOS.garantir_player(
                 usuario=usuario,
                 skin=str(personagem.get("skin", "S1.png")),
-                posicao=tuple(personagem.get("posicao", (0.0, 0.0))),
+                posicao=tuple(pos_dim_dim),
             )
+            ator.estado_extra["dimensao"] = dimensao_atual
+            ator.estado_extra["posicoes_por_dimensao"] = {str(k): [float(v[0]), float(v[1])] for k, v in pos_dim.items() if isinstance(v, (list, tuple)) and len(v) == 2}
             personagem["id"] = ator.Id
             mensagem = "Entrada autorizada: personagem já encontrado no servidor."
         else:

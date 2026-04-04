@@ -26,8 +26,9 @@ class Camera:
         self.Suavizacao = max(0.1, float(suavizacao))
         self.TilePx = int(tile_px)
         self.LimitesMundoTiles: Optional[Vector2] = None
+        self.LimitesToroidais = True
 
-    def definir_limites_mundo(self, largura_tiles: float, altura_tiles: float) -> None:
+    def definir_limites_mundo(self, largura_tiles: float, altura_tiles: float, toroidal: bool = True) -> None:
         try:
             largura = max(1.0, float(largura_tiles))
             altura = max(1.0, float(altura_tiles))
@@ -35,6 +36,7 @@ class Camera:
             self.LimitesMundoTiles = None
             return
         self.LimitesMundoTiles = (largura, altura)
+        self.LimitesToroidais = bool(toroidal)
 
     @staticmethod
     def _delta_toroidal(origem: float, destino: float, tamanho: float) -> float:
@@ -56,7 +58,7 @@ class Camera:
         alvo_y = float(self.EntidadeMain.Posicao[1]) - half_h_tiles
 
         fator = min(1.0, max(0.0, float(delta_time)) * self.Suavizacao)
-        if self.LimitesMundoTiles:
+        if self.LimitesMundoTiles and self.LimitesToroidais:
             largura, altura = self.LimitesMundoTiles
             alvo_x %= largura
             alvo_y %= altura
@@ -67,13 +69,19 @@ class Camera:
         else:
             x = self.PosicaoTiles[0] + (alvo_x - self.PosicaoTiles[0]) * fator
             y = self.PosicaoTiles[1] + (alvo_y - self.PosicaoTiles[1]) * fator
+            if self.LimitesMundoTiles and not self.LimitesToroidais:
+                largura, altura = self.LimitesMundoTiles
+                max_x = max(0.0, float(largura) - half_w_tiles)
+                max_y = max(0.0, float(altura) - half_h_tiles)
+                x = max(0.0, min(max_x, x))
+                y = max(0.0, min(max_y, y))
         self.PosicaoTiles = (x, y)
         return self.PosicaoTiles
 
     def mundo_para_tela_px(self, posicao_mundo_tiles: Vector2) -> Vector2:
         dx = float(posicao_mundo_tiles[0]) - self.PosicaoTiles[0]
         dy = float(posicao_mundo_tiles[1]) - self.PosicaoTiles[1]
-        if self.LimitesMundoTiles:
+        if self.LimitesMundoTiles and self.LimitesToroidais:
             largura, altura = self.LimitesMundoTiles
             dx = self._delta_toroidal(0.0, dx, largura)
             dy = self._delta_toroidal(0.0, dy, altura)
@@ -82,7 +90,7 @@ class Camera:
     def tela_para_mundo_tiles(self, posicao_tela_px: Vector2) -> Vector2:
         wx = self.PosicaoTiles[0] + (float(posicao_tela_px[0]) / self.TilePx)
         wy = self.PosicaoTiles[1] + (float(posicao_tela_px[1]) / self.TilePx)
-        if self.LimitesMundoTiles:
+        if self.LimitesMundoTiles and self.LimitesToroidais:
             largura, altura = self.LimitesMundoTiles
             wx %= largura
             wy %= altura

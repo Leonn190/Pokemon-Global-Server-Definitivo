@@ -55,7 +55,7 @@ def _normalizar_posicao(valor) -> Vector2:
 
 def _obter_state_client(client_id: str) -> Dict[str, object]:
     if client_id not in _CLIENT_STATE:
-        _CLIENT_STATE[client_id] = {"objetos_vistos": set(), "dimensao": "Mundo"}
+        _CLIENT_STATE[client_id] = {"objetos_vistos": set(), "dimensao": "Mundo", "estadios_pre_enviados": False}
     return _CLIENT_STATE[client_id]
 
 
@@ -119,6 +119,9 @@ def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float
     if not isinstance(diff, dict):
         return False
     escopo = diff.get("escopo", {}) if isinstance(diff.get("escopo"), dict) else {}
+    payload = diff.get("payload", {}) if isinstance(diff.get("payload"), dict) else {}
+    if str(payload.get("tipo") or "").strip().lower() == "entidade_estadio":
+        return True
     centro = escopo.get("centro") if isinstance(escopo.get("centro"), (list, tuple)) else None
     if centro is None:
         return True
@@ -176,9 +179,25 @@ def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[
         categoria = str(getattr(obj, "estado_extra", {}).get("subtipo", "outro") or "outro")
         diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "autor": "server", "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": raio}, "categoria": categoria})
     for oid in [oid for oid in list(vistos) if oid not in ids_proximos]:
+        obj = BANCO_DADOS.obter_objeto(int(oid))
+        if obj is not None and str(getattr(obj, "tipo_classe", "") or "") == "entidade_estadio":
+            continue
         vistos.discard(int(oid))
         diffs.append({"seq": _next_seq(), "timestamp": agora, "tipo": "despawn", "objeto_id": int(oid), "autor": "server", "payload": {}, "escopo": {"centro": list(posicao_camera), "raio": raio}, "categoria": "outro"})
     return diffs
+
+
+def _coletar_preload_estadios(vistos: Set[int]) -> List[Dict[str, object]]:
+    agora = time.time()
+    saida: List[Dict[str, object]] = []
+    for obj in BANCO_DADOS.listar_objetos():
+        if str(getattr(obj, "tipo_classe", "") or "") != "entidade_estadio":
+            continue
+        if int(obj.Id) in vistos:
+            continue
+        vistos.add(int(obj.Id))
+        saida.append({"seq": _next_seq(), "timestamp": agora, "tipo": "spawn", "objeto_id": obj.Id, "autor": "server", "payload": obj.serializar(), "escopo": {"centro": list(obj.posicao), "raio": 999999.0}, "categoria": "estadio"})
+    return saida
 
 
 
@@ -218,10 +237,15 @@ def processar_ativador_json(requisicao_json: str) -> str:
             for chunk in sorted(chunks_carregados):
                 grid = CEREBRO_ESTADIOS.chunk_em_grade(dimensao, chunk) if dimensao != "Mundo" else BANCO_DADOS.chunk_em_grade(chunk)
                 chunks.append({"pos": [chunk[0], chunk[1]], "grid": grid, "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()})
-            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao}}, ensure_ascii=False)
+            dim_largura = 5 * int(BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[0])
+            dim_altura = 5 * int(BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[1])
+            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, ensure_ascii=False)
 
         pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id, dimensao=dimensao)
         diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dimensao)
+        if not bool(state.get("estadios_pre_enviados", False)):
+            diffs_extra.extend(_coletar_preload_estadios(vistos))
+            state["estadios_pre_enviados"] = True
         if diffs_extra:
             if pacotes:
                 pacote_vis = pacotes[-1]

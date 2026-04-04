@@ -177,6 +177,12 @@ class Colisor:
         return min(candidatos) if candidatos else None
 
     @staticmethod
+    def _ponto_dentro_elipse(p: Vector2, centro: Vector2, rx: float, ry: float) -> bool:
+        vx = (float(p[0]) - float(centro[0])) / max(1e-6, float(rx))
+        vy = (float(p[1]) - float(centro[1])) / max(1e-6, float(ry))
+        return (vx * vx + vy * vy) < 1.0
+
+    @staticmethod
     def resolver_movimento_com_colisores(
         posicao_antes: Vector2,
         posicao_depois: Vector2,
@@ -197,6 +203,19 @@ class Colisor:
                 rx = float(extra[1]) + raio_entidade
                 ry = float(extra[2]) + raio_entidade
                 t = Colisor._segmento_interseca_elipse(posicao_antes, posicao_depois, (sx, sy), rx, ry)
+            elif formato == "elipse_anel" and len(extra) >= 5:
+                rx = float(extra[1]) + raio_entidade
+                ry = float(extra[2]) + raio_entidade
+                rxi = max(1e-4, float(extra[3]) - raio_entidade)
+                ryi = max(1e-4, float(extra[4]) - raio_entidade)
+                t_ext = Colisor._segmento_interseca_elipse(posicao_antes, posicao_depois, (sx, sy), rx, ry)
+                t_int = Colisor._segmento_interseca_elipse(posicao_antes, posicao_depois, (sx, sy), rxi, ryi)
+                if t_ext is None:
+                    t = None
+                elif t_int is None:
+                    t = t_ext
+                else:
+                    t = min(t_ext, t_int)
             else:
                 t = Colisor.intersecao_segmento_circulo(
                     posicao_antes,
@@ -235,6 +254,30 @@ class Colisor:
                     ny = math.sin(ang)
                     px = sx + (rx + 1e-4) * nx
                     py = sy + (ry + 1e-4) * ny
+                    ajustou = True
+                    continue
+                if formato == "elipse_anel" and len(extra) >= 5:
+                    rx = max(1e-6, float(extra[1]) + raio_entidade)
+                    ry = max(1e-6, float(extra[2]) + raio_entidade)
+                    rxi = max(1e-6, float(extra[3]) - raio_entidade)
+                    ryi = max(1e-6, float(extra[4]) - raio_entidade)
+                    dentro_ext = Colisor._ponto_dentro_elipse((px, py), (sx, sy), rx, ry)
+                    dentro_int = Colisor._ponto_dentro_elipse((px, py), (sx, sy), rxi, ryi)
+                    if not dentro_ext or dentro_int:
+                        continue
+                    vx = px - sx
+                    vy = py - sy
+                    ang = math.atan2(vy / ry, vx / rx)
+                    nx = math.cos(ang)
+                    ny = math.sin(ang)
+                    px_out = sx + (rx + 1e-4) * nx
+                    py_out = sy + (ry + 1e-4) * ny
+                    px_in = sx + (rxi - 1e-4) * nx
+                    py_in = sy + (ryi - 1e-4) * ny
+                    if (px - px_in) ** 2 + (py - py_in) ** 2 <= (px - px_out) ** 2 + (py - py_out) ** 2:
+                        px, py = px_in, py_in
+                    else:
+                        px, py = px_out, py_out
                     ajustou = True
                     continue
                 vx = px - sx

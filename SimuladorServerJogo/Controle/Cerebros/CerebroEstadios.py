@@ -1,4 +1,4 @@
-"""Controle de estádios e dimensões internas (5x5 chunks de teste)."""
+"""Controle de estádios e dimensões internas (60x40 tiles = 6x4 chunks)."""
 
 from __future__ import annotations
 
@@ -18,15 +18,16 @@ DIMENSOES_ESTADIO = [
 class CerebroEstadios:
     def __init__(self, chunk_tiles: int = 10) -> None:
         self.chunk_tiles = max(1, int(chunk_tiles))
-        self.chunks_por_lado = 5
+        self.chunks_largura = 6
+        self.chunks_altura = 4
         self._grids: Dict[str, Dict[Chunk, List[List[int]]]] = {}
 
     def _gerar_grid(self, dimensao: str) -> Dict[Chunk, List[List[int]]]:
         if dimensao in self._grids:
             return self._grids[dimensao]
         grid: Dict[Chunk, List[List[int]]] = {}
-        for cy in range(self.chunks_por_lado):
-            for cx in range(self.chunks_por_lado):
+        for cy in range(self.chunks_altura):
+            for cx in range(self.chunks_largura):
                 chunk_grid: List[List[int]] = []
                 base_x = cx * self.chunk_tiles
                 base_y = cy * self.chunk_tiles
@@ -46,7 +47,7 @@ class CerebroEstadios:
         grid = self._gerar_grid(d)
         cx = int(chunk_xy[0])
         cy = int(chunk_xy[1])
-        if cx < 0 or cy < 0 or cx >= self.chunks_por_lado or cy >= self.chunks_por_lado:
+        if cx < 0 or cy < 0 or cx >= self.chunks_largura or cy >= self.chunks_altura:
             return []
         return [list(l) for l in grid.get((cx, cy), [])]
 
@@ -59,7 +60,7 @@ class CerebroEstadios:
             for dy in range(-raio, raio + 1):
                 nx = int(centro[0]) + dx
                 ny = int(centro[1]) + dy
-                if 0 <= nx < self.chunks_por_lado and 0 <= ny < self.chunks_por_lado:
+                if 0 <= nx < self.chunks_largura and 0 <= ny < self.chunks_altura:
                     out.append((nx, ny))
         return out
 

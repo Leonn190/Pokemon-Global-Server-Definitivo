@@ -249,11 +249,17 @@ class Colisor:
                     normalizado = (vx * vx) / (rx * rx) + (vy * vy) / (ry * ry)
                     if normalizado >= 1.0:
                         continue
+                    # Correção local e contínua: evita "snap" para a borda inteira da elipse.
+                    if abs(vx) <= 1e-8 and abs(vy) <= 1e-8:
+                        vx, vy = 1.0, 0.0
                     ang = math.atan2(vy / ry, vx / rx)
                     nx = math.cos(ang)
                     ny = math.sin(ang)
-                    px = sx + (rx + 1e-4) * nx
-                    py = sy + (ry + 1e-4) * ny
+                    dist_norm = max(0.0, math.sqrt(max(0.0, normalizado)))
+                    pen = max(0.0, 1.0 - dist_norm)
+                    passo = max(1e-4, min(0.35, pen * max(rx, ry) * 0.45))
+                    px += nx * passo
+                    py += ny * passo
                     ajustou = True
                     continue
                 if formato == "elipse_anel" and len(extra) >= 5:

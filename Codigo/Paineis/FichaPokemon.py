@@ -88,6 +88,10 @@ class FichaPokemon:
         self._slot_hover: tuple[str, int] | None = None
         self._mouse_slot_hover: tuple[int, int] | None = None
         self._slot_origem_oculto: tuple[str, int] | None = None
+        self._inicio_coluna_ataques = 0
+        self._total_colunas_ataque = 0
+        self._colunas_visiveis_ataque = 0
+        self._area_slots_ataque = pygame.Rect(0, 0, 0, 0)
         self._anim_barras_chave = None
         self._barra_hp: Barra | None = None
         self._barra_xp: Barra | None = None
@@ -818,6 +822,17 @@ class FichaPokemon:
         alvo['BuildEquipaveis'] = []
         return alvo['BuildEquipaveis']
 
+
+    @staticmethod
+    def _quantidade_slots_reais(lista: list | None) -> int:
+        if not isinstance(lista, list):
+            return 0
+        ultimo = 0
+        for idx, valor in enumerate(lista):
+            if valor not in (None, ''):
+                ultimo = idx + 1
+        return ultimo
+
     def _desenhar_slot_ataque(self, tela: pygame.Surface, rect: pygame.Rect, ataque: dict | None, selecionado=False):
         pygame.draw.rect(tela, (24, 33, 54) if ataque else (18, 24, 38), rect)
         pygame.draw.rect(tela, (232, 239, 255) if selecionado else (88, 110, 156), rect, 2)
@@ -839,7 +854,11 @@ class FichaPokemon:
         habilidades = self._habilidades_ref(pokemon)
         memoria = self._memoria_ref(pokemon)
         equipaveis = self._equipaveis(pokemon)
-        colunas_habilidades = max(1, max(len(habilidades), len(memoria), 5))
+        colunas_habilidades = max(
+            1,
+            max(self._quantidade_slots_reais(habilidades), self._quantidade_slots_reais(memoria), 5),
+        )
+        self._total_colunas_ataque = colunas_habilidades
 
         padding = 14
         build_w = max(96, int(rect.width * 0.23))
@@ -865,9 +884,16 @@ class FichaPokemon:
 
         self._slots_ataque = {}
         area_slots = pygame.Rect(build_x + build_w + 18, conteudo_y, rect.right - (build_x + build_w + 18) - padding, conteudo_h)
-        lado_slot = min(68, max(52, (area_slots.width - (colunas_habilidades - 1) * 8) // max(1, colunas_habilidades)))
+        self._area_slots_ataque = pygame.Rect(area_slots)
         gap = 8
-        total_w_slots = colunas_habilidades * lado_slot + (colunas_habilidades - 1) * gap
+        colunas_visiveis = max(1, min(colunas_habilidades, 6))
+        lado_slot = min(68, max(52, (area_slots.width - (colunas_visiveis - 1) * gap) // max(1, colunas_visiveis)))
+        max_visiveis_por_largura = max(1, (area_slots.width + gap) // (lado_slot + gap))
+        colunas_visiveis = max(1, min(colunas_habilidades, colunas_visiveis, max_visiveis_por_largura))
+        self._colunas_visiveis_ataque = colunas_visiveis
+        max_inicio = max(0, colunas_habilidades - colunas_visiveis)
+        self._inicio_coluna_ataques = max(0, min(self._inicio_coluna_ataques, max_inicio))
+        total_w_slots = colunas_visiveis * lado_slot + (colunas_visiveis - 1) * gap
         start_slots_x = area_slots.x + (area_slots.width - total_w_slots) // 2
         y_hab = area_slots.y + 24
         y_mem = area_slots.bottom - lado_slot - 14
@@ -880,19 +906,26 @@ class FichaPokemon:
         self.TxtMini.draw(tela)
 
         origem_oculta = self._slot_origem_oculto if self._arrastavel_ataque.Ativo else None
-        for i in range(colunas_habilidades):
-            rect_h = pygame.Rect(start_slots_x + i * (lado_slot + gap), y_hab, lado_slot, lado_slot)
-            rect_m = pygame.Rect(start_slots_x + i * (lado_slot + gap), y_mem, lado_slot, lado_slot)
-            self._slots_ataque[('habilidades', i)] = rect_h
-            self._slots_ataque[('memoria', i)] = rect_m
-            ataque_h = habilidades[i] if i < len(habilidades) else None
-            ataque_m = memoria[i] if i < len(memoria) else None
-            if origem_oculta == ('habilidades', i):
+        primeiro = self._inicio_coluna_ataques
+        ultimo = min(colunas_habilidades, primeiro + colunas_visiveis)
+        for ordem, indice_real in enumerate(range(primeiro, ultimo)):
+            rect_h = pygame.Rect(start_slots_x + ordem * (lado_slot + gap), y_hab, lado_slot, lado_slot)
+            rect_m = pygame.Rect(start_slots_x + ordem * (lado_slot + gap), y_mem, lado_slot, lado_slot)
+            self._slots_ataque[('habilidades', indice_real)] = rect_h
+            self._slots_ataque[('memoria', indice_real)] = rect_m
+            ataque_h = habilidades[indice_real] if indice_real < len(habilidades) else None
+            ataque_m = memoria[indice_real] if indice_real < len(memoria) else None
+            if origem_oculta == ('habilidades', indice_real):
                 ataque_h = None
-            if origem_oculta == ('memoria', i):
+            if origem_oculta == ('memoria', indice_real):
                 ataque_m = None
-            self._desenhar_slot_ataque(tela, rect_h, ataque_h, selecionado=self._slot_hover == ('habilidades', i))
-            self._desenhar_slot_ataque(tela, rect_m, ataque_m, selecionado=self._slot_hover == ('memoria', i))
+            self._desenhar_slot_ataque(tela, rect_h, ataque_h, selecionado=self._slot_hover == ('habilidades', indice_real))
+            self._desenhar_slot_ataque(tela, rect_m, ataque_m, selecionado=self._slot_hover == ('memoria', indice_real))
+
+        if colunas_habilidades > colunas_visiveis:
+            self.TxtMini.set_text(f'{primeiro + 1}-{ultimo}/{colunas_habilidades}')
+            self.TxtMini.set_pos((area_slots.centerx, area_slots.y + 4))
+            self.TxtMini.draw(tela)
 
     def _desenhar_bloco_status(
         self,
@@ -1083,6 +1116,11 @@ class FichaPokemon:
                 if self._mouse_slot_hover != evento.pos:
                     self._mouse_slot_hover = evento.pos
                     self._slot_hover = self._slot_no_mouse(evento.pos)
+            elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button in (4, 5):
+                if self._area_slots_ataque.collidepoint(evento.pos):
+                    delta = -1 if evento.button == 4 else 1
+                    max_inicio = max(0, self._total_colunas_ataque - self._colunas_visiveis_ataque)
+                    self._inicio_coluna_ataques = max(0, min(max_inicio, self._inicio_coluna_ataques + delta))
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 destino = self._slot_no_mouse(evento.pos)
                 if self._arrastavel_ataque.Ativo:

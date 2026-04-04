@@ -53,7 +53,17 @@ def contar_linhas_arquivo(path: Path) -> int:
     return total
 
 
-def analisar_python_ast(path: Path) -> Dict[str, int]:
+def span_linhas_no(no: ast.AST) -> int:
+    inicio = getattr(no, "lineno", None)
+    fim = getattr(no, "end_lineno", None)
+    if isinstance(inicio, int) and isinstance(fim, int):
+        return max(1, fim - inicio + 1)
+    if isinstance(inicio, int):
+        return 1
+    return 0
+
+
+def analisar_python_ast(path: Path) -> Dict[str, Any]:
     try:
         codigo = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
@@ -61,6 +71,8 @@ def analisar_python_ast(path: Path) -> Dict[str, int]:
             "classes": 0,
             "funcoes": 0,
             "metodos": 0,
+            "itens_funcoes_metodos": [],
+            "itens_classes": [],
         }
 
     try:
@@ -71,35 +83,59 @@ def analisar_python_ast(path: Path) -> Dict[str, int]:
             "classes": contar_classes_py(path),
             "funcoes": 0,
             "metodos": 0,
+            "itens_funcoes_metodos": [],
+            "itens_classes": [],
         }
 
     classes = 0
     funcoes = 0
     metodos = 0
+    itens_funcoes_metodos: List[Dict[str, Any]] = []
+    itens_classes: List[Dict[str, Any]] = []
 
-    def visitar(no: ast.AST, dentro_de_classe: bool = False) -> None:
+    def visitar(no: ast.AST, dentro_de_classe: bool = False, pilha_classes: Optional[List[str]] = None) -> None:
         nonlocal classes, funcoes, metodos
+
+        if pilha_classes is None:
+            pilha_classes = []
 
         if isinstance(no, ast.ClassDef):
             classes += 1
+            nome_classe = ".".join(pilha_classes + [no.name]) if pilha_classes else no.name
+            itens_classes.append({
+                "nome": nome_classe,
+                "linhas": span_linhas_no(no),
+            })
             for filho in no.body:
-                visitar(filho, dentro_de_classe=True)
+                visitar(filho, dentro_de_classe=True, pilha_classes=pilha_classes + [no.name])
             return
 
         if isinstance(no, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if dentro_de_classe:
                 metodos += 1
+                nome = ".".join(pilha_classes + [no.name]) if pilha_classes else no.name
+                tipo = "metodo"
             else:
                 funcoes += 1
+                nome = no.name
+                tipo = "funcao"
+
+            itens_funcoes_metodos.append({
+                "nome": nome,
+                "tipo": tipo,
+                "linhas": span_linhas_no(no),
+            })
 
         for filho in ast.iter_child_nodes(no):
-            visitar(filho, dentro_de_classe=dentro_de_classe)
+            visitar(filho, dentro_de_classe=dentro_de_classe, pilha_classes=pilha_classes)
 
     visitar(arvore)
     return {
         "classes": classes,
         "funcoes": funcoes,
         "metodos": metodos,
+        "itens_funcoes_metodos": itens_funcoes_metodos,
+        "itens_classes": itens_classes,
     }
 
 
@@ -268,8 +304,12 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
     linhas_por_ext: Counter[str] = Counter()
     total_linhas_geral = 0
 
-    maiores_py: List[Dict[str, Any]] = []  # top 15 maiores .py
+    maiores_py: List[Dict[str, Any]] = []  # top 30 maiores .py
     maiores_geral: List[Dict[str, Any]] = []
+    maiores_arquivos_por_linhas: List[Dict[str, Any]] = []
+    maiores_json_por_linhas: List[Dict[str, Any]] = []
+    maiores_funcoes_metodos: List[Dict[str, Any]] = []
+    maiores_classes_py: List[Dict[str, Any]] = []
 
     modulo_para_arquivo, arquivo_para_modulo = construir_mapa_modulos_py(repo_root, relatorios_dir)
     importado_por_count: Counter[str] = Counter()
@@ -294,8 +334,10 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
             ext_count[ext] += 1
             ext_size[ext] += size
 
+            rel = str(p.relative_to(repo_root)).replace("\\", "/")
+
             maiores_geral.append({
-                "arquivo": str(p.relative_to(repo_root)).replace("\\", "/"),
+                "arquivo": rel,
                 "ext": ext,
                 "tamanho_bytes": size,
             })
@@ -306,6 +348,16 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
                 if linhas > 0:
                     linhas_por_ext[ext] += linhas
                     total_linhas_geral += linhas
+                    maiores_arquivos_por_linhas.append({
+                        "arquivo": rel,
+                        "ext": ext,
+                        "linhas": linhas,
+                    })
+                    if ext == ".json":
+                        maiores_json_por_linhas.append({
+                            "arquivo": rel,
+                            "linhas": linhas,
+                        })
             else:
                 linhas = 0
 
@@ -321,16 +373,31 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
                 py_lines += linhas
 
                 analise_py = analisar_python_ast(p)
-                py_classes += analise_py["classes"]
-                py_funcoes += analise_py["funcoes"]
-                py_metodos += analise_py["metodos"]
+                py_classes += int(analise_py["classes"])
+                py_funcoes += int(analise_py["funcoes"])
+                py_metodos += int(analise_py["metodos"])
 
                 maiores_py.append({
-                    "arquivo": str(p.relative_to(repo_root)).replace("\\", "/"),
+                    "arquivo": rel,
                     "tamanho_bytes": size,
                     "tamanho_kib": round(bytes_para_kib(size), 2),
                     "linhas": linhas,
                 })
+
+                for item in analise_py.get("itens_funcoes_metodos", []):
+                    maiores_funcoes_metodos.append({
+                        "arquivo": rel,
+                        "nome": str(item["nome"]),
+                        "tipo": str(item["tipo"]),
+                        "linhas": int(item["linhas"]),
+                    })
+
+                for item in analise_py.get("itens_classes", []):
+                    maiores_classes_py.append({
+                        "arquivo": rel,
+                        "nome": str(item["nome"]),
+                        "linhas": int(item["linhas"]),
+                    })
 
                 for arq_importado in coletar_imports_internos_py(
                     p,
@@ -348,7 +415,7 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
     top_ext_por_qtd = ext_count.most_common()
 
     maiores_py.sort(key=lambda x: int(x["tamanho_bytes"]), reverse=True)
-    top15_maiores_py = maiores_py[:15]
+    top30_maiores_py = maiores_py[:30]
 
     maiores_geral.sort(key=lambda x: int(x["tamanho_bytes"]), reverse=True)
     top15_maiores_geral = maiores_geral[:15]
@@ -369,6 +436,18 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
         if linhas > 0
     ]
 
+    maiores_json_por_linhas.sort(key=lambda x: int(x["linhas"]), reverse=True)
+    top5_json_por_linhas = maiores_json_por_linhas[:5]
+
+    maiores_funcoes_metodos.sort(key=lambda x: int(x["linhas"]), reverse=True)
+    top10_funcoes_metodos = maiores_funcoes_metodos[:10]
+
+    maiores_classes_py.sort(key=lambda x: int(x["linhas"]), reverse=True)
+    top5_classes_py = maiores_classes_py[:5]
+
+    maiores_arquivos_por_linhas.sort(key=lambda x: int(x["linhas"]), reverse=True)
+    top5_arquivos_por_linhas = maiores_arquivos_por_linhas[:5]
+
     media_linhas_por_py = (py_lines / py_files) if py_files else 0.0
 
     return {
@@ -387,7 +466,9 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
             "metodos_encontrados": py_metodos,
             "total_funcoes_e_metodos": py_funcoes + py_metodos,
             "media_linhas_por_arquivo": round(media_linhas_por_py, 2),
-            "top15_maiores_py": top15_maiores_py,
+            "top30_maiores_py": top30_maiores_py,
+            "top10_maiores_funcoes_metodos": top10_funcoes_metodos,
+            "top5_maiores_classes": top5_classes_py,
             "top5_arquivos_mais_importados": top5_importados_py,
         },
         "linhas_por_extensao": {
@@ -395,6 +476,8 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
         },
         "arquivos": {
             "top15_maiores_geral": top15_maiores_geral,
+            "top5_json_por_linhas": top5_json_por_linhas,
+            "top5_maiores_por_linhas": top5_arquivos_por_linhas,
         },
         "extensoes": {
             "contagem": dict(ext_count),
@@ -532,8 +615,8 @@ def markdown_top_extensoes(atual: Dict[str, Any], limite: int = 12) -> str:
     return "\n".join(linhas)
 
 
-def markdown_top15_py(atual: Dict[str, Any]) -> str:
-    itens = (atual.get("python", {}).get("top15_maiores_py") or [])[:15]
+def markdown_top30_py(atual: Dict[str, Any]) -> str:
+    itens = (atual.get("python", {}).get("top30_maiores_py") or [])[:30]
     if not itens:
         return "_Nenhum arquivo `.py` encontrado._"
 
@@ -546,6 +629,68 @@ def markdown_top15_py(atual: Dict[str, Any]) -> str:
         kib = float(it.get("tamanho_kib", round(bytes_para_kib(int(it["tamanho_bytes"])), 2)))
         linhas_count = int(it.get("linhas", 0))
         linhas.append(f"| `{arq}` | {kib:.2f} | {fmt_int(linhas_count)} |")
+    return "\n".join(linhas)
+
+
+def markdown_top_funcoes_metodos(atual: Dict[str, Any]) -> str:
+    itens = (atual.get("python", {}).get("top10_maiores_funcoes_metodos") or [])[:10]
+    if not itens:
+        return "_Nenhuma função ou método Python encontrado._"
+
+    linhas = [
+        "| Arquivo | Nome | Tipo | Linhas |",
+        "|---|---|---:|---:|",
+    ]
+    for it in itens:
+        linhas.append(
+            f"| `{it['arquivo']}` | `{it['nome']}` | {it['tipo']} | {fmt_int(int(it['linhas']))} |"
+        )
+    return "\n".join(linhas)
+
+
+def markdown_top_classes(atual: Dict[str, Any]) -> str:
+    itens = (atual.get("python", {}).get("top5_maiores_classes") or [])[:5]
+    if not itens:
+        return "_Nenhuma classe Python encontrada._"
+
+    linhas = [
+        "| Arquivo | Classe | Linhas |",
+        "|---|---|---:|",
+    ]
+    for it in itens:
+        linhas.append(
+            f"| `{it['arquivo']}` | `{it['nome']}` | {fmt_int(int(it['linhas']))} |"
+        )
+    return "\n".join(linhas)
+
+
+def markdown_top_json_por_linhas(atual: Dict[str, Any]) -> str:
+    itens = (atual.get("arquivos", {}).get("top5_json_por_linhas") or [])[:5]
+    if not itens:
+        return "_Nenhum arquivo `.json` encontrado._"
+
+    linhas = [
+        "| Arquivo | Linhas |",
+        "|---|---:|",
+    ]
+    for it in itens:
+        linhas.append(f"| `{it['arquivo']}` | {fmt_int(int(it['linhas']))} |")
+    return "\n".join(linhas)
+
+
+def markdown_top_arquivos_por_linhas(atual: Dict[str, Any]) -> str:
+    itens = (atual.get("arquivos", {}).get("top5_maiores_por_linhas") or [])[:5]
+    if not itens:
+        return "_Nenhum arquivo textual encontrado._"
+
+    linhas = [
+        "| Arquivo | Ext | Linhas |",
+        "|---|---:|---:|",
+    ]
+    for it in itens:
+        linhas.append(
+            f"| `{it['arquivo']}` | `{it['ext']}` | {fmt_int(int(it['linhas']))} |"
+        )
     return "\n".join(linhas)
 
 
@@ -661,12 +806,29 @@ def gerar_markdown(atual: Dict[str, Any], diff: Optional[Dict[str, Any]]) -> str
     md.append(f"- **Total funções + métodos:** {fmt_int(int(py['total_funcoes_e_metodos']))}")
     md.append(f"- **Média de linhas por arquivo `.py`:** {py['media_linhas_por_arquivo']:.2f}\n")
 
-    md.append("### Top 15 maiores arquivos `.py`\n")
-    md.append(markdown_top15_py(atual))
+    md.append("### Top 30 maiores arquivos `.py`\n")
+    md.append(markdown_top30_py(atual))
+    md.append("")
+
+    md.append("### Top 10 maiores funções e métodos\n")
+    md.append(markdown_top_funcoes_metodos(atual))
+    md.append("")
+
+    md.append("### Top 5 maiores classes\n")
+    md.append(markdown_top_classes(atual))
     md.append("")
 
     md.append("### Top 5 arquivos Python mais importados\n")
     md.append(markdown_top_importados_py(atual))
+    md.append("")
+
+    md.append("## Arquivos por linhas\n")
+    md.append("### Top 5 arquivos `.json` por linhas\n")
+    md.append(markdown_top_json_por_linhas(atual))
+    md.append("")
+
+    md.append("### Top 5 maiores arquivos por linhas\n")
+    md.append(markdown_top_arquivos_por_linhas(atual))
     md.append("")
 
     md.append("## Linhas por extensão\n")

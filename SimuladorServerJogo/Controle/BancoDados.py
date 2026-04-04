@@ -15,7 +15,7 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
     PASTA_WORLD_CHUNKS,
     carregar_estado_mundo,
 )
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer
+from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, EstadioServer
 from SimuladorServerJogo.Regras.Loader import carregar_regras_estruturas_naturais
 from Codigo.Modulos.Colisor import Colisor
 
@@ -48,6 +48,7 @@ class BancoDadosMundo:
         self._regras_estruturas = self._carregar_regras_estruturas_naturais()
         self._estado_estruturas_naturais: Dict[int, int] = self._carregar_estruturas_tocadas(self._estado_mundo)
         self._gerar_estruturas_naturais_no_mapa()
+        self._gerar_estadios_do_meta()
 
     def _carregar_regras_estruturas_naturais(self) -> Dict[int, Dict[str, object]]:
         bruto = carregar_regras_estruturas_naturais()
@@ -117,6 +118,7 @@ class BancoDadosMundo:
                 self._usuarios_para_objeto.clear()
                 self._indice_espacial.clear()
             self._gerar_estruturas_naturais_no_mapa()
+            self._gerar_estadios_do_meta()
 
     def _gerar_estruturas_naturais_no_mapa(self) -> None:
         with self._lock:
@@ -189,6 +191,41 @@ class BancoDadosMundo:
                     self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)
 
             self._chunks_estruturas_carregados.add(chave)
+
+
+
+    def _gerar_estadios_do_meta(self) -> None:
+        with self._lock:
+            ids_remover = [oid for oid, obj in self._objetos.items() if getattr(obj, "tipo_classe", "") == "entidade_estadio"]
+            for oid in ids_remover:
+                obj = self._objetos.pop(oid, None)
+                if obj is not None:
+                    self._indice_espacial[self._celula(obj.posicao)].discard(oid)
+
+            meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta"), dict) else {}
+            estadios = meta.get("estadios", []) if isinstance(meta.get("estadios"), list) else []
+            for idx, item in enumerate(estadios):
+                if not isinstance(item, dict):
+                    continue
+                estadio_id = int(item.get("estadio_id", item.get("id", 0)) or 0)
+                pos = item.get("posicao") if isinstance(item.get("posicao"), (list, tuple)) and len(item.get("posicao")) == 2 else [0.0, 0.0]
+                if estadio_id <= 0:
+                    estadio_id = 1_900_000_000 + int(idx)
+                existente = self._objetos.get(estadio_id)
+                if existente is not None and getattr(existente, "tipo_classe", "") != "entidade_estadio":
+                    estadio_id = 1_900_000_000 + int(idx)
+                while estadio_id in self._objetos and getattr(self._objetos.get(estadio_id), "tipo_classe", "") != "entidade_estadio":
+                    estadio_id += 1
+                obj = EstadioServer(
+                    id_objeto=estadio_id,
+                    tipo_estadio=str(item.get("tipo") or "normal"),
+                    dimensao=str(item.get("dimensao") or "EstadioNormal"),
+                    posicao=(float(pos[0]), float(pos[1])),
+                    raio_elipse_x=float(item.get("raio_elipse_x", 24.0) or 24.0),
+                    raio_elipse_y=float(item.get("raio_elipse_y", 24.0) or 24.0),
+                )
+                self._objetos[obj.Id] = obj
+                self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)
 
     def _nova_grade_vazia(self) -> List[List[int]]:
         return [[0 for _ in range(self._chunk_blocos_disco)] for _ in range(self._chunk_blocos_disco)]
@@ -501,12 +538,13 @@ class BancoDadosMundo:
                 obj = self._objetos[objeto_id]
                 if isinstance(obj, AtorServer):
                     obj.estado_extra["skin"] = skin
+                    obj.estado_extra.setdefault("dimensao", "Mundo")
                     obj.definir_posicao(float(posicao[0]), float(posicao[1]))
                     return obj
 
             novo_id = self._next_id
             self._next_id += 1
-            ator = AtorServer(id_objeto=novo_id, usuario=usuario, skin=skin, posicao=posicao)
+            ator = AtorServer(id_objeto=novo_id, usuario=usuario, skin=skin, posicao=posicao, dimensao="Mundo")
             self._usuarios_para_objeto[usuario] = ator.Id
             self._objetos[ator.Id] = ator
             self._indice_espacial[self._celula(ator.posicao)].add(ator.Id)

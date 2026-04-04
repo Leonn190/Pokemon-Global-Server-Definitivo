@@ -181,6 +181,19 @@ def _normalizar_perfil(personagem: dict) -> dict:
         "slot_selecionado": int(inv.get("slot_selecionado", 0)),
     }
     _normalizar_progresso_xp(dados)
+    dimensao_atual = str(dados.get("dimensao_atual") or "Mundo")
+    pos_dim = dados.get("posicoes_por_dimensao") if isinstance(dados.get("posicoes_por_dimensao"), dict) else {}
+    pos_dim_norm = {}
+    for chave, valor in pos_dim.items():
+        if isinstance(valor, (list, tuple)) and len(valor) == 2:
+            try:
+                pos_dim_norm[str(chave)] = [float(valor[0]), float(valor[1])]
+            except (TypeError, ValueError):
+                continue
+    if "Mundo" not in pos_dim_norm:
+        pos_dim_norm["Mundo"] = [float(dados.get("posicao", [0.0, 0.0])[0]), float(dados.get("posicao", [0.0, 0.0])[1])]
+    dados["dimensao_atual"] = dimensao_atual
+    dados["posicoes_por_dimensao"] = pos_dim_norm
     return dados
 
 
@@ -514,7 +527,7 @@ def obter_personagem_para_entrada(usuario):
         return dict(dados)
 
 
-def atualizar_posicao_personagem(usuario, posicao):
+def atualizar_posicao_personagem(usuario, posicao, dimensao: str = "Mundo"):
     if not usuario:
         return
 
@@ -524,7 +537,12 @@ def atualizar_posicao_personagem(usuario, posicao):
             return
 
         x, y = _clamp_posicao(posicao)
+        dim = str(dimensao or "Mundo")
         personagem["posicao"] = [x, y]
+        personagem["dimensao_atual"] = dim
+        pos_dim = personagem.get("posicoes_por_dimensao") if isinstance(personagem.get("posicoes_por_dimensao"), dict) else {}
+        pos_dim[dim] = [x, y]
+        personagem["posicoes_por_dimensao"] = pos_dim
         _persistir_personagens()
 
 

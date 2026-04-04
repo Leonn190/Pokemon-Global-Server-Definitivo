@@ -11,7 +11,7 @@ import pygame
 
 from Codigo.Geradores.Baus import Bau
 from Codigo.Geradores.EstruturaNaturais import EstruturaNatural, prioridade_estrutura_natural, tipo_estrutura_natural_por_codigo
-from Codigo.Geradores.Estadio import GeradorEstadio
+from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
 from Codigo.Modulos.ControladorMundo.ControladorAtores import ControladorAtores
@@ -188,7 +188,9 @@ class ControladorObjetos:
                 estado_obj = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
                 rx = float(estado_obj.get("raio_elipse_x", raio) or raio)
                 ry = float(estado_obj.get("raio_elipse_y", raio) or raio)
-                yield (int(obj.get("id", 0)), sx, sy, raio, "entidade_estadio", float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0), "elipse", rx, ry)
+                rxi = float(estado_obj.get("raio_elipse_interno_x", max(1.0, rx * 0.72)) or max(1.0, rx * 0.72))
+                ryi = float(estado_obj.get("raio_elipse_interno_y", max(1.0, ry * 0.72)) or max(1.0, ry * 0.72))
+                yield (int(obj.get("id", 0)), sx, sy, raio, "estrutura_estadio", float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0), "elipse_anel", rx, ry, rxi, ryi)
                 continue
             yield (int(obj.get("id", 0)), sx, sy, raio, tipo_obj, float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0))
 
@@ -633,8 +635,13 @@ class ControladorObjetos:
                 self._remover_indice_chunk_objeto(int(oid))
 
     def renderizar_estruturas(self, tela, camera):
+        dim_local = self._dimensao_player_local()
         dt = 1.0 / 60.0
-        objs = [obj for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3) if isinstance(obj, dict) and (str(obj.get("tipo", "")).startswith("estrutura") or self._eh_payload_estadio(obj))]
+        objs = [obj for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3) if isinstance(obj, dict) and str(obj.get("tipo", "")).startswith("estrutura")]
+        if dim_local == "Mundo":
+            for estadio in list(self.EstadiosPorId.values()):
+                if isinstance(estadio, dict):
+                    objs.append(estadio)
         objs.sort(
             key=lambda o: (
                 prioridade_estrutura_natural(codigo=o.get("codigo_natural"), subtipo=(o.get("estado", {}) if isinstance(o.get("estado"), dict) else {}).get("subtipo")),
@@ -643,14 +650,50 @@ class ControladorObjetos:
             )
         )
         for obj in objs:
-            if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220) is None:
-                continue
             if self._eh_payload_estadio(obj):
+                estado_obj = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+                rx = float(estado_obj.get("raio_elipse_x", 24.0) or 24.0)
+                ry = float(estado_obj.get("raio_elipse_y", 24.0) or 24.0)
+                margem_estadio_px = int(max(220.0, max(rx, ry) * float(getattr(camera, "TilePx", 50) or 50) * 1.35))
+                if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=margem_estadio_px) is None:
+                    continue
                 GeradorEstadio.renderizar(tela, camera, obj)
+                continue
+            if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220) is None:
                 continue
             est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))
             escala = est.escala_render(dt) if est is not None else 1.0
             self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala)
+        if dim_local != "Mundo":
+            player_payload = self.ObjetosPorId.get(int(self.id_player_local() or -1), {})
+            estado_p = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
+            est_id = int(estado_p.get("estadio_atual_id", 0) or 0)
+            estadio_payload = self.EstadiosPorId.get(est_id, {})
+            estado_est = estadio_payload.get("estado") if isinstance(estadio_payload.get("estado"), dict) else {}
+            EstadioInterno.renderizar(tela, camera, estado_estadio=estado_est)
+
+    def mensagem_interacao_estadio(self, pos_player: Tuple[float, float], dimensao_player: str, estadio_atual_id: int = 0) -> str:
+        px, py = float(pos_player[0]), float(pos_player[1])
+        dim = str(dimensao_player or "Mundo")
+        if dim != "Mundo":
+            estadio = self.EstadiosPorId.get(int(estadio_atual_id or 0), {})
+            estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
+            porta = estado.get("saida_interna_pos") if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2 else [25.0, 47.0]
+            if (float(porta[0]) - px) ** 2 + (float(porta[1]) - py) ** 2 <= (2.8 * 2.8):
+                return "Clique F para sair"
+            return ""
+        for estadio in list(self.EstadiosPorId.values()):
+            if not isinstance(estadio, dict):
+                continue
+            estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
+            entrada = estado.get("entrada_pos") if isinstance(estado.get("entrada_pos"), (list, tuple)) and len(estado.get("entrada_pos")) == 2 else None
+            if entrada is None:
+                pos = estadio.get("posicao") if isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else [0.0, 0.0]
+                off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 25.0]
+                entrada = [float(pos[0]) + float(off[0]), float(pos[1]) + float(off[1])]
+            if (float(entrada[0]) - px) ** 2 + (float(entrada[1]) - py) ** 2 <= (2.8 * 2.8):
+                return "Clique F para entrar"
+        return ""
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         self.renderizar_entidades(tela, camera, ignorar_id=ignorar_entidade_id)

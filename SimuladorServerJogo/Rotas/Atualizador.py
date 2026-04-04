@@ -225,13 +225,20 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         if estadio is None:
             return False
         estado_est = getattr(estadio, "estado_extra", {}) if isinstance(getattr(estadio, "estado_extra", {}), dict) else {}
+        dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
+        if dim_atual == "Mundo":
+            return False
+        pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
+        pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
         saida_interna = estado_est.get("saida_interna_pos") if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) else [25.0, 47.0]
         if not _dist_ok(player.posicao, saida_interna, 3.0):
             return False
         entrada = estado_est.get("entrada_pos") if isinstance(estado_est.get("entrada_pos"), (list, tuple)) and len(estado_est.get("entrada_pos")) == 2 else [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
         player.estado_extra["dimensao"] = "Mundo"
         player.estado_extra["estadio_atual_id"] = 0
-        player.definir_posicao(float(entrada[0]), float(entrada[1]))
+        player.estado_extra["posicoes_por_dimensao"] = pos_dim
+        mundo_pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else entrada
+        player.definir_posicao(float(mundo_pos[0]), float(mundo_pos[1]))
         registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
         return True
 
@@ -246,9 +253,14 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
 
     dim = str(estado_est.get("dimensao_destino") or "EstadioNormal")
     spawn = estado_est.get("spawn_interno_pos") if isinstance(estado_est.get("spawn_interno_pos"), (list, tuple)) and len(estado_est.get("spawn_interno_pos")) == 2 else [25.0, 42.0]
+    pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
+    dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
+    pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
+    destino = pos_dim.get(dim) if isinstance(pos_dim.get(dim), (list, tuple)) and len(pos_dim.get(dim)) == 2 else spawn
     player.estado_extra["dimensao"] = dim
     player.estado_extra["estadio_atual_id"] = int(estadio.Id)
-    player.definir_posicao(float(spawn[0]), float(spawn[1]))
+    player.estado_extra["posicoes_por_dimensao"] = pos_dim
+    player.definir_posicao(float(destino[0]), float(destino[1]))
     registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
     return True
 
@@ -304,7 +316,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
             usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
             if usuario and isinstance(obj, AtorServer):
                 if "posicao" in payload_in:
-                    atualizar_posicao_personagem(usuario, obj.posicao)
+                    atualizar_posicao_personagem(usuario, obj.posicao, dimensao=str(getattr(obj, "estado_extra", {}).get("dimensao", "Mundo")))
                 if "perfil" in payload_in and isinstance(payload_in.get("perfil"), dict):
                     atualizar_perfil_personagem(usuario, payload_in.get("perfil"))
                 if "inventario" in payload_in and isinstance(payload_in.get("inventario"), dict):

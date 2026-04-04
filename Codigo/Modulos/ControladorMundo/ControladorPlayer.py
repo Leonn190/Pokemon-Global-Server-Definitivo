@@ -361,6 +361,12 @@ class ControladorPlayer:
         dim = str(estado_player.get("dimensao") or player_payload.get("dimensao") or "Mundo")
 
         if dim != "Mundo":
+            estadio_atual = self._objetos.EstadiosPorId.get(int(estado_player.get("estadio_atual_id", 0) or 0), {}) if isinstance(getattr(self._objetos, "EstadiosPorId", {}), dict) else {}
+            estado_est = estadio_atual.get("estado") if isinstance(estadio_atual.get("estado"), dict) else {}
+            saida = estado_est.get("saida_interna_pos") if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) and len(estado_est.get("saida_interna_pos")) == 2 else [25.0, 47.0]
+            dxs = float(pos[0]) - float(saida[0]); dys = float(pos[1]) - float(saida[1])
+            if (dxs * dxs + dys * dys) > (2.8 * 2.8):
+                return
             self._objetos.EnfileirarDiffRapida({
                 "tipo": "evento",
                 "categoria": "interacao_estadio",

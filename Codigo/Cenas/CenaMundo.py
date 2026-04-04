@@ -16,6 +16,7 @@ from Codigo.Server.ServerMundo import (
 from Codigo.Telas.Inventario.Unificador import UnificadorInventario
 from Codigo.Prefabs.Terminal import Terminal
 from Codigo.Telas.TelaDialogo import TelaDialogo
+from Codigo.Prefabs.Texto import Texto
 
 
 class CenaMundo:
@@ -36,6 +37,7 @@ class CenaMundo:
         self.Terminal = None
         self._npc_interacao_id = 0
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
+        self._texto_estadio = Texto("", style={"size": 22, "align": "center", "outline": True, "color": (230, 236, 245)})
 
         self._montar_mundo(JOGO)
 
@@ -146,6 +148,17 @@ class CenaMundo:
         if player is not None:
             player.renderizar_stamina(JOGO.TELA, self.Camera, dt)
             self.ElementosHud.desenhar(JOGO.TELA, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
+            player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
+            estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
+            dica_estadio = self.ControladorMundo.Objetos.mensagem_interacao_estadio(
+                pos_player=tuple(player.Posicao),
+                dimensao_player=str(estado_player.get("dimensao") or "Mundo"),
+                estadio_atual_id=int(estado_player.get("estadio_atual_id", 0) or 0),
+            )
+            if dica_estadio:
+                self._texto_estadio.set_text(dica_estadio)
+                self._texto_estadio.set_pos((JOGO.TELA.get_width() // 2, max(45, JOGO.TELA.get_height() - 118)))
+                self._texto_estadio.draw(JOGO.TELA)
 
         self.SubtelaOpcoes.desenhar(JOGO)
         if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):

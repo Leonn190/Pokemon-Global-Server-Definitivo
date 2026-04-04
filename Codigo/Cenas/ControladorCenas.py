@@ -32,9 +32,9 @@ class ControladorCenas:
         self.Cena = None
         self.Rodando = True
         self.Saindo = False
+        self._encerrado = False
 
         self.Discord = DiscordPresence()
-        self.Discord.conectar()
 
         self.TextoFPS = Texto(
             "",
@@ -119,9 +119,7 @@ class ControladorCenas:
             SISTEMA_MUSICAS.atualizar_musica(self)
             pygame.display.update()
 
-        if self.Cena is not None:
-            self.Cena.Finalizar(self)
-        self.Discord.desconectar()
+        self.Encerrar()
 
     def _atualizar_discord_presenca(self):
         cena_id = str(getattr(self.Cena, "ID", "Menu") or "Menu")
@@ -142,6 +140,14 @@ class ControladorCenas:
         self.CenaAlvo = None
         self.Saindo = True
         self.Discord.desconectar()
+
+    def Encerrar(self):
+        if self._encerrado:
+            return
+        if self.Cena is not None:
+            self.Cena.Finalizar(self)
+        self.Discord.desconectar()
+        self._encerrado = True
 
     def DesenhosAdicionais(self):
         largura_tela = self.TELA.get_width()

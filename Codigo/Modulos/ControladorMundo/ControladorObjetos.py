@@ -79,7 +79,9 @@ class ControladorObjetos:
     def _payload_na_dimensao_local(self, payload: Dict[str, object]) -> bool:
         dim_local = self._dimensao_player_local()
         if self._eh_payload_estadio(payload):
-            return dim_local == "Mundo"
+            estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+            dim_obj = str(estado.get("dimensao") or payload.get("dimensao") or "Mundo")
+            return dim_local == "Mundo" and dim_obj == "Mundo"
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
         dim = str(estado.get("dimensao") or payload.get("dimensao") or "Mundo")
         return dim == dim_local
@@ -170,6 +172,8 @@ class ControladorObjetos:
         for obj in objs:
             if not isinstance(obj, dict):
                 continue
+            if not self._payload_na_dimensao_local(obj):
+                continue
             if not self._payload_tem_colisao_solida(obj):
                 continue
             pos = obj.get("posicao")
@@ -188,9 +192,7 @@ class ControladorObjetos:
                 estado_obj = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
                 rx = float(estado_obj.get("raio_elipse_x", raio) or raio)
                 ry = float(estado_obj.get("raio_elipse_y", raio) or raio)
-                rxi = float(estado_obj.get("raio_elipse_interno_x", max(1.0, rx * 0.72)) or max(1.0, rx * 0.72))
-                ryi = float(estado_obj.get("raio_elipse_interno_y", max(1.0, ry * 0.72)) or max(1.0, ry * 0.72))
-                yield (int(obj.get("id", 0)), sx, sy, raio, "estrutura_estadio", float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0), "elipse_anel", rx, ry, rxi, ryi)
+                yield (int(obj.get("id", 0)), sx, sy, raio, "estrutura_estadio", float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0), "elipse", rx, ry)
                 continue
             yield (int(obj.get("id", 0)), sx, sy, raio, tipo_obj, float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0))
 

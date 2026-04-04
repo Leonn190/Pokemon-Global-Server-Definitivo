@@ -7,6 +7,7 @@ from Codigo.Server.ServerMundo import consultar_chunks_mundo, receber_pacotes_ti
 from .LeitorMundo import LeitorMundo
 from .ControladorObjetos import ControladorObjetos
 from .ControladorPlayer import ControladorPlayer
+from .ControladorDimensoes import ControladorDimensoes
 from .SistemaPacotes import SistemaPacotes
 
 
@@ -16,6 +17,7 @@ class ControladorMundo:
         self.Camera = camera
         self.Objetos = ControladorObjetos()
         self.Player = ControladorPlayer(self.Objetos)
+        self.Dimensoes = ControladorDimensoes()
         self.Leitor = LeitorMundo(jogo=jogo, camera=camera, callback_atualizacao=consultar_chunks_mundo, intervalo_poll=0.20, raio_chunks=4)
         self.Pacotes = SistemaPacotes(self.Objetos, self.Player, self.Leitor, camera)
         self._desconectado = False
@@ -56,8 +58,8 @@ class ControladorMundo:
         self.Pacotes._ultimo_tick_recebido = int(maior_tick_real)
 
     def atualizar_frame(self, eventos, dt, bloqueio_gameplay: bool) -> None:
+        self.Dimensoes.aplicar(self.Leitor, self.player_local)
         self.Player.atualizar_frame(eventos, dt, self.Camera, bloqueado=bloqueio_gameplay)
-        self.Player.sincronizar_regras_mundo(self.Leitor)
 
     def renderizar(self, tela) -> None:
         self.Leitor.renderizar_mundo(tela)

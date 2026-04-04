@@ -1,0 +1,18 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala": "Eu sou Suriane, líder do estádio Normal. Quer me desafiar agora?",
+      "opcoes": [
+        {
+          "texto": "Quero batalhar!",
+          "acao": "batalhar"
+        },
+        {
+          "texto": "Agora não, volto depois.",
+          "fim": true
+        }
+      ]
+    }
+  }
+}

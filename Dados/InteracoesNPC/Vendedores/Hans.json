@@ -1,0 +1,110 @@
+{
+  "inicio": "entrada",
+  "nos": {
+    "entrada": {
+      "fala": "Ei! Sou Hans. Eu marco rotas e também vendo equipamento de exploração. Se quiser meus melhores preços, conversa direito comigo.",
+      "opcoes": [
+        {
+          "texto": "Me dá orientação.",
+          "proximo": "orientacao_1"
+        },
+        {
+          "texto": "Quero ver sua loja.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Tô com pressa.",
+          "fim": true
+        }
+      ]
+    },
+    "orientacao_1": {
+      "fala": "Regra um: nunca gaste tudo no primeiro trecho. Regra dois: quem volta com recurso é quem mantém ritmo e leitura de mapa.",
+      "opcoes": [
+        {
+          "texto": "E a regra três?",
+          "proximo": "orientacao_2"
+        },
+        {
+          "texto": "Já quero comprar.",
+          "proximo": "loja_padrao"
+        }
+      ]
+    },
+    "orientacao_2": {
+      "fala": "Regra três: esconda seu objetivo final. Vendedor bom guarda oferta secreta para quem demonstra disciplina.",
+      "opcoes": [
+        {
+          "texto": "Quero essa oferta secreta.",
+          "proximo": "secreto_1"
+        },
+        {
+          "texto": "Abre a loja comum.",
+          "proximo": "loja_padrao"
+        }
+      ]
+    },
+    "secreto_1": {
+      "fala": "Certo. Primeiro passo: escolha entre visão curta e visão longa.",
+      "opcoes": [
+        {
+          "texto": "Visão curta.",
+          "proximo": "erro_secreto"
+        },
+        {
+          "texto": "Visão longa.",
+          "proximo": "secreto_2"
+        }
+      ]
+    },
+    "secreto_2": {
+      "fala": "Segundo passo: você prefere loot rápido ou rota segura com retorno garantido?",
+      "opcoes": [
+        {
+          "texto": "Loot rápido.",
+          "proximo": "erro_secreto"
+        },
+        {
+          "texto": "Rota segura.",
+          "proximo": "secreto_3"
+        }
+      ]
+    },
+    "secreto_3": {
+      "fala": "Último passo: segredo compartilhado se prova com constância. Confirma que vai seguir plano e não entrar em toda luta aleatória?",
+      "opcoes": [
+        {
+          "texto": "Confirmo.",
+          "proximo": "loja_secreta"
+        },
+        {
+          "texto": "Não prometo.",
+          "proximo": "erro_secreto"
+        }
+      ]
+    },
+    "erro_secreto": {
+      "fala": "Ainda não. Você quase chegou. Leva meus itens de base e depois tenta de novo o caminho secreto.",
+      "opcoes": [
+        {
+          "texto": "Fechou, mostra a loja.",
+          "proximo": "loja_padrao"
+        },
+        {
+          "texto": "Depois eu volto.",
+          "fim": true
+        }
+      ]
+    },
+    "loja_padrao": {
+      "fala": "Loja de campo do Hans: escolha seu kit.",
+      "loja": "padrao",
+      "opcoes": []
+    },
+    "loja_secreta": {
+      "fala": "Oferta secreta liberada. Esses itens não ficam na prateleira comum.",
+      "loja": "secreta",
+      "opcoes": []
+    }
+  }
+}

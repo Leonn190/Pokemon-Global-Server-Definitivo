@@ -193,8 +193,8 @@ class ControladorObjetos:
                 rx_visual = float(estado_obj.get("raio_elipse_x", raio) or raio)
                 ry_visual = float(estado_obj.get("raio_elipse_y", raio) or raio)
                 # Colisão representa o casco branco sólido (menor que sombra/aro externo).
-                rx_casco = max(2.0, rx_visual * 0.88)
-                ry_casco = max(2.0, ry_visual * 0.82)
+                rx_casco = max(2.0, rx_visual * 0.96)
+                ry_casco = max(2.0, ry_visual * 0.92)
                 yield (
                     int(obj.get("id", 0)), sx, sy, raio, "estrutura_estadio",
                     float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0),
@@ -286,7 +286,7 @@ class ControladorObjetos:
         subtipo = str(estado.get("subtipo", "")).strip().lower()
         if tipo in {"entidade_player", "player"}:
             return True
-        return subtipo in {"player", "npc_vendedor"}
+        return subtipo in {"player", "npc_vendedor", "npc_combatente"}
 
     def _eh_payload_projetil(self, payload: Dict[str, object]) -> bool:
         return self._criaveis.eh_payload_projetil(payload)
@@ -693,7 +693,7 @@ class ControladorObjetos:
             estadio = self.EstadiosPorId.get(int(estadio_atual_id or 0), {})
             estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
             porta = estado.get("saida_interna_pos") if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2 else [30.0, 37.0]
-            if (float(porta[0]) - px) ** 2 + (float(porta[1]) - py) ** 2 <= (2.8 * 2.8):
+            if (float(porta[0]) - px) ** 2 + (float(porta[1]) - py) ** 2 <= (2.0 * 2.0):
                 return "Clique F para sair"
             return ""
         for estadio in list(self.EstadiosPorId.values()):
@@ -705,7 +705,7 @@ class ControladorObjetos:
                 pos = estadio.get("posicao") if isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else [0.0, 0.0]
                 off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 25.0]
                 entrada = [float(pos[0]) + float(off[0]), float(pos[1]) + float(off[1])]
-            if (float(entrada[0]) - px) ** 2 + (float(entrada[1]) - py) ** 2 <= (2.8 * 2.8):
+            if (float(entrada[0]) - px) ** 2 + (float(entrada[1]) - py) ** 2 <= (2.0 * 2.0):
                 return "Clique F para entrar"
         return ""
 

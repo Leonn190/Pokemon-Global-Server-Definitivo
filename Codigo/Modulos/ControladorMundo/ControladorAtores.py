@@ -20,7 +20,7 @@ class ControladorAtores:
         tipo = str(payload.get("tipo", "")).strip().lower()
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
         subtipo = str(estado.get("subtipo", "")).strip().lower()
-        if tipo != "entidade_player" and subtipo not in {"npc_vendedor"}:
+        if tipo != "entidade_player" and subtipo not in {"npc_vendedor", "npc_combatente"}:
             self.AtoresRemotosPorId.pop(int(oid), None)
             return None
 
@@ -85,7 +85,7 @@ class ControladorAtores:
                 continue
             estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
             subtipo = str(estado.get("subtipo", "")).strip().lower()
-            if subtipo != "npc_vendedor":
+            if subtipo not in {"npc_vendedor", "npc_combatente"}:
                 continue
             inter = estado.get("interacao") if isinstance(estado.get("interacao"), dict) else {}
             if bool(inter.get("ativa", False)):

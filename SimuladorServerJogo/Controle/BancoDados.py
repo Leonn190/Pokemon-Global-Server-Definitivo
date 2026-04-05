@@ -87,14 +87,6 @@ class BancoDadosMundo:
         return int((1 << 62) | (c << 44) | (x << 24) | y)
 
     def _resolver_chunks_dir(self) -> Path:
-        candidatos = [
-            PASTA_WORLD_CHUNKS,
-            Path(__file__).resolve().parent / "world_chunks",
-            Path(__file__).resolve().parents[2] / "world_chunks",
-        ]
-        for pasta in candidatos:
-            if pasta.exists() and pasta.is_dir():
-                return pasta
         return PASTA_WORLD_CHUNKS
 
     def recarregar_mundo(self, estado_mundo: Dict[str, object], limpar_objetos: bool = False) -> None:

@@ -1410,9 +1410,9 @@ static final class Rules {
             int gruposX = (int) Math.ceil(chunksX / (double) chunksPorArquivo);
             int gruposY = (int) Math.ceil(chunksY / (double) chunksPorArquivo);
 
-            File chunksDir = new File(outputDir, "world_chunks");
+            File chunksDir = new File(outputDir, "chunks");
             if (!chunksDir.exists() && !chunksDir.mkdirs()) {
-                throw new IOException("Nao foi possivel criar pasta world_chunks: " + chunksDir.getAbsolutePath());
+                throw new IOException("Nao foi possivel criar pasta chunks: " + chunksDir.getAbsolutePath());
             }
 
             File metaFile = new File(outputDir, "world_meta.json");

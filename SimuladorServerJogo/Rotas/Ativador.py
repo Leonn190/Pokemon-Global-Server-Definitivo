@@ -139,20 +139,30 @@ def _diff_relevante_para_camera(diff, posicao_camera: Vector2, raio_visao: float
 def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: float, chunks_carregados: Set[Chunk], client_id: str = "", dimensao: str = "Mundo"):
     saida = []
     client_id_norm = str(client_id or "").strip().lower()
+    debug_estadio = str(dimensao or "Mundo") != "Mundo"
     for pacote in pacotes if isinstance(pacotes, list) else []:
         if not isinstance(pacote, dict):
             continue
         diffs = pacote.get("diffs", []) if isinstance(pacote.get("diffs"), list) else []
         diffs_visiveis = []
         for d in diffs:
+            eh_combatente = debug_estadio and _eh_npc_combatente(d)
             alvo = str(d.get("cliente_alvo", "") or "").strip().lower()
             if client_id_norm and alvo and alvo == client_id_norm:
+                if eh_combatente:
+                    print(f"[DEBUG_NPC_ESTADIO] motivo=cliente_alvo dimensao={dimensao} client={client_id} diff={json.dumps(d, ensure_ascii=False)}")
                 diffs_visiveis.append(d)
                 continue
             if not _diff_na_dimensao(d, dimensao):
+                if eh_combatente:
+                    print(f"[DEBUG_NPC_ESTADIO] motivo=filtrado_dimensao dimensao={dimensao} client={client_id} diff={json.dumps(d, ensure_ascii=False)}")
                 continue
             if not _diff_relevante_para_camera(d, posicao_camera, raio_visao, chunks_carregados):
+                if eh_combatente:
+                    print(f"[DEBUG_NPC_ESTADIO] motivo=filtrado_camera_chunk dimensao={dimensao} client={client_id} camera={list(posicao_camera)} diff={json.dumps(d, ensure_ascii=False)}")
                 continue
+            if eh_combatente:
+                print(f"[DEBUG_NPC_ESTADIO] motivo=incluido dimensao={dimensao} client={client_id} camera={list(posicao_camera)} diff={json.dumps(d, ensure_ascii=False)}")
             diffs_visiveis.append(d)
         if not diffs_visiveis:
             continue
@@ -160,6 +170,14 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
         novo["diffs"] = diffs_visiveis
         saida.append(novo)
     return saida
+
+
+def _eh_npc_combatente(diff: Dict[str, object]) -> bool:
+    if not isinstance(diff, dict):
+        return False
+    payload = diff.get("payload") if isinstance(diff.get("payload"), dict) else {}
+    estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+    return str(diff.get("categoria") or payload.get("subtipo") or estado.get("subtipo") or "").strip().lower() == "npc_combatente"
 
 
 def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int], client_id: str = "", dimensao: str = "Mundo") -> List[Dict[str, object]]:

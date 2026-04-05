@@ -1,4 +1,17 @@
-Nome,Nivel,Categoria,Skin,Item 1,Preço 1,item 2,Preço 2,Item 3,Preço 3,Item 4,Preço 4,Item 5,Preço 5,Item S,Preço S,Code
-Josefa,5,Moedas,16,Pokeball,5,Greatball,10,Poção,5,Super Poção,8,Elixir,6,Ultraball,16,1
-Hans,10,Moedas,6,Field Berry,3,Desert Berry,5,Frozen Berry,5,Jungle Berry,4,Lava Berry,7,Water berry,5,2
-Kleber,15,Moedas,13,Greatball,8,Ultraball,20,Attemptball,10,Fruitball,10,Sniperball,15,Secretball,24,3
+Nome,Nivel,Categoria,Skin,Item 1,Preço 1,Item 2,Preço 2,Item 3,Preço 3,Item 4,Preço 4,Item 5,Preço 5,Item 6,Preço 6,Item S1,Preço S1,Item S2,Preço S2,Code
+Josefa,5,Moedas,4,Pokeball,4,Greatball,10,Poção,5,Super Poção,10,Elixir,6,Frambo Berry,5,Ultraball,18,,,1
+Hans,10,Moedas,6,Field Berry,11,Desert Berry,9,Frozen Berry,9,Jungle Berry,9,Lava Berry,9,Magic Berry,9,Water Berry,10,,,2
+Marina,10,Moedas,14,Agua,1,Balde,2,Water Berry,11,Aquaball,17,Pokeball,4,Greatball,10,Loveball,12,,,3
+Kleber,15,Moedas,13,Greatball,9,Ultraball,19,Attemptball,15,Fruitball,24,Sniperball,17,Fastball,15,Secretball,36,,,4
+Danilo,20,Moedas,22,Poção,4,Super Poção,9,Hiper Poção,19,Mega Poção,29,Revival,14,Super Elixir,14,Max Poção,45,,,5
+Bruno,20,Moedas,15,Madeira,2,Pedra,3,Cobre,4,Machado de Madeira,4,Picareta de Pedra,5,Balde,2,Chave,4,,,6
+Vanessa,25,Moedas,7,Ouro,5,Diamante,15,Esmeralda,19,Ametista,17,Lava,3,Cobre,4,Rubi,16,,,7
+Tatiana,30,Moedas,8,Elixir,5,Super Elixir,14,Hiper Elixir,34,Mega Elixir,68,Max Poção,49,Revival,15,Max Revival,52,,,8
+Lia,30,Moedas,18,Greatball,10,Ultraball,19,Levelball,17,Attemptball,15,Loveball,14,Candyball,24,Premierball,20,,,9
+Mortis,35,Moedas,33,Machado de Ouro,10,Machado de Diamante,24,Machado de Ametista,27,Beastball,25,Furyball,17,Heavyball,18,Emblema das Sombras,30,,,10
+Michel,40,Moedas,12,Picareta de Ouro,10,Picareta de Diamante,23,Picareta de Ametista,27,Beastball,26,Levelball,17,Picareta de Rubi,29,Machadinha Ignea,30,Coração de Ferro,30,11
+Helena,40,Moedas,66,Ouro,5,Coração de Ferro,34,Placa Defensiva,34,Heavyball,17,Levelball,18,Botas Colossais,34,Punho Robusto,30,Quebra Barreira,30,12
+Rubiano,45,Moedas,92,Lava,3,Frozen Berry,9,Picareta de Diamante,23,Machado de Diamante,23,Diamante,14,Picareta de Ametista,27,Punho Congelado,30,Semblante Congelado,30,13
+Selena,50,Moedas,73,Pedra da Ultra Evolução,50,Energia Gigantamax,50,Pedra da Mega Evolução,50,Essencia Radiante,50,Centro Espiritual,34,Eternidade,35,Faixa da Escolha,30,Coroa da Vitória,30,14
+Ravena,50,Moedas,45,Emblema das Sombras,34,Capa Assombrada,34,Machado Amaldiçoado,34,Eternidade,34,Secretball,39,Beastball,24,Maldição,30,Mao Sinistra,30,15
+Edward Newgate,60,Moedas,80,Placa Defensiva,34,Coração de Ferro,34,Arco dos Ventos,35,Bastião Inabalavel,34,Quebra Barreira,34,Anjo Guardião,34,Masterball,80,Armadura Reforçada,30,16

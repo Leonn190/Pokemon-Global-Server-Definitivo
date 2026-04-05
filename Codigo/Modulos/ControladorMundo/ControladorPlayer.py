@@ -89,6 +89,7 @@ class ControladorPlayer:
         self._player_local = self._hidratar_ator_payload(None, dados, com_controle=True)
         setattr(self._player_local, "DimensaoAtual", dim_inicial)
         self._objetos.definir_player_local_info(self._player_local)
+        self._objetos.definir_dimensao_atual_client(dim_inicial)
         self._sincronizar_player_local()
         return self._player_local
 
@@ -361,7 +362,7 @@ class ControladorPlayer:
         pos = tuple(self._player_local.Posicao)
         player_payload = self._objetos.ObjetosPorId.get(int(getattr(self._player_local, "Id", 0) or 0), {}) if isinstance(self._objetos.ObjetosPorId, dict) else {}
         estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
-        dim = str(self._objetos._dimensao_player_local() or estado_player.get("dimensao") or player_payload.get("dimensao") or "Mundo")
+        dim = self._objetos._dimensao_player_local()
 
         if dim != "Mundo":
             estadio_atual = self._objetos.EstadiosPorId.get(int(estado_player.get("estadio_atual_id", 0) or 0), {}) if isinstance(getattr(self._objetos, "EstadiosPorId", {}), dict) else {}
@@ -605,6 +606,7 @@ class ControladorPlayer:
         dim_nova = str(estado_servidor.get("dimensao") or dados.get("dimensao") or dim_antiga)
         estadio_novo = int(estado_servidor.get("estadio_atual_id", dados.get("estadio_atual_id", estadio_antigo)) or 0)
         setattr(self._player_local, "DimensaoAtual", dim_nova)
+        self._objetos.definir_dimensao_atual_client(dim_nova)
         houve_transicao_estadio = (dim_nova != dim_antiga) or (estadio_novo != estadio_antigo)
 
         if teleporte or houve_transicao_estadio:

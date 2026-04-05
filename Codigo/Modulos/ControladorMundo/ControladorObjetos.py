@@ -692,31 +692,60 @@ class ControladorObjetos:
         estado_est = estadio_payload.get("estado") if isinstance(estadio_payload.get("estado"), dict) else {}
         EstadioInterno.renderizar(tela, camera, estado_estadio=estado_est)
 
-    def mensagem_interacao_estadio(self, pos_player: Tuple[float, float], dimensao_player: str, estadio_atual_id: int = 0) -> str:
+    @staticmethod
+    def _saida_interna_estadio(estado: dict) -> List[float]:
+        if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2:
+            return [float(estado.get("saida_interna_pos")[0]), float(estado.get("saida_interna_pos")[1])]
+        largura = float(estado.get("largura_interna", 60.0) or 60.0)
+        altura = float(estado.get("altura_interna", 40.0) or 40.0)
+        return [largura * 0.5, max(1.0, altura - 3.0)]
+
+    def alvo_interagivel_atual(self, pos_player: Tuple[float, float], dimensao_player: str, estadio_atual_id: int = 0) -> Optional[Dict[str, object]]:
         px, py = float(pos_player[0]), float(pos_player[1])
+        dim = str(dimensao_player or self._dimensao_player_local() or "Mundo")
         player_payload = self.ObjetosPorId.get(int(self.id_player_local() or -1), {})
         estado_p = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
-        dim = self._dimensao_player_local()
         estadio_real_id = int(estado_p.get("estadio_atual_id", player_payload.get("estadio_atual_id", estadio_atual_id)) or 0)
+
+        candidatos: List[Tuple[float, Dict[str, object]]] = []
+
         if dim != "Mundo":
             estadio = self.EstadiosPorId.get(estadio_real_id, {})
             estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
-            porta = estado.get("saida_interna_pos") if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2 else [30.0, 37.0]
-            if (float(porta[0]) - px) ** 2 + (float(porta[1]) - py) ** 2 <= (2.0 * 2.0):
-                return "Clique F para sair"
-            return ""
-        for estadio in list(self.EstadiosPorId.values()):
-            if not isinstance(estadio, dict):
-                continue
-            estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
-            entrada = estado.get("entrada_pos") if isinstance(estado.get("entrada_pos"), (list, tuple)) and len(estado.get("entrada_pos")) == 2 else None
-            if entrada is None:
-                pos = estadio.get("posicao") if isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else [0.0, 0.0]
-                off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 25.0]
-                entrada = [float(pos[0]) + float(off[0]), float(pos[1]) + float(off[1])]
-            if (float(entrada[0]) - px) ** 2 + (float(entrada[1]) - py) ** 2 <= (2.0 * 2.0):
-                return "Clique F para entrar"
-        return ""
+            porta = self._saida_interna_estadio(estado)
+            d2 = (float(porta[0]) - px) ** 2 + (float(porta[1]) - py) ** 2
+            if d2 <= (2.0 * 2.0):
+                candidatos.append((d2, {"tipo": "estadio_saida", "estadio": estadio, "posicao": porta}))
+        else:
+            for estadio in list(self.EstadiosPorId.values()):
+                if not isinstance(estadio, dict):
+                    continue
+                estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
+                entrada = estado.get("entrada_pos") if isinstance(estado.get("entrada_pos"), (list, tuple)) and len(estado.get("entrada_pos")) == 2 else None
+                if entrada is None:
+                    pos = estadio.get("posicao") if isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else [0.0, 0.0]
+                    off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 25.0]
+                    entrada = [float(pos[0]) + float(off[0]), float(pos[1]) + float(off[1])]
+                d2 = (float(entrada[0]) - px) ** 2 + (float(entrada[1]) - py) ** 2
+                if d2 <= (2.0 * 2.0):
+                    candidatos.append((d2, {"tipo": "estadio_entrada", "estadio": estadio, "posicao": [float(entrada[0]), float(entrada[1])] }))
+
+        npc_alvo = self.npc_interagivel_proximo((px, py), raio=2.3)
+        if isinstance(npc_alvo, dict):
+            npc_obj = npc_alvo.get("obj") if isinstance(npc_alvo.get("obj"), dict) else {}
+            npc_pos = npc_obj.get("posicao") if isinstance(npc_obj.get("posicao"), (list, tuple)) and len(npc_obj.get("posicao")) == 2 else None
+            if npc_pos is not None:
+                d2_npc = (float(npc_pos[0]) - px) ** 2 + (float(npc_pos[1]) - py) ** 2
+                candidatos.append((d2_npc, {"tipo": "npc", "npc": dict(npc_obj), "posicao": [float(npc_pos[0]), float(npc_pos[1])]}))
+
+        if not candidatos:
+            return None
+        candidatos.sort(key=lambda item: float(item[0]))
+        return candidatos[0][1]
+
+    def mensagem_interacao_estadio(self, pos_player: Tuple[float, float], dimensao_player: str, estadio_atual_id: int = 0) -> str:
+        alvo = self.alvo_interagivel_atual(pos_player=pos_player, dimensao_player=dimensao_player, estadio_atual_id=estadio_atual_id)
+        return "Clique F para interagir" if isinstance(alvo, dict) else ""
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         self.renderizar_entidades(tela, camera, ignorar_id=ignorar_entidade_id)

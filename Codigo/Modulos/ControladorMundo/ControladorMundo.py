@@ -68,7 +68,9 @@ class ControladorMundo:
         self.Player.atualizar_frame(eventos, dt, self.Camera, bloqueado=bloqueio_gameplay)
 
     def renderizar(self, tela) -> None:
-        self.Leitor.renderizar_mundo(tela)
+        dim_local = str(self.Objetos.dimensao_atual_client() or "Mundo")
+        if dim_local == "Mundo":
+            self.Leitor.renderizar_mundo(tela)
         self.Objetos.renderizar_estadio_interior(tela, self.Camera)
         ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None
         player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None

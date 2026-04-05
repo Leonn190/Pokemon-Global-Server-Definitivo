@@ -130,11 +130,17 @@ class CenaMundo:
             self.SubtelaDialogo = None
 
         if (not player_bloqueado) and player is not None and getattr(player, "Controle", None) is not None:
+            player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
+            estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
             for ev in EVENTOS:
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_q:
-                    alvo = self.ControladorMundo.Objetos.npc_interagivel_proximo(tuple(player.Posicao), raio=2.3)
-                    if alvo is not None:
-                        npc_obj = dict(alvo.get("obj", {}))
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_f:
+                    alvo = self.ControladorMundo.Objetos.alvo_interagivel_atual(
+                        pos_player=tuple(player.Posicao),
+                        dimensao_player=str(estado_player.get("dimensao") or "Mundo"),
+                        estadio_atual_id=int(estado_player.get("estadio_atual_id", 0) or 0),
+                    )
+                    if isinstance(alvo, dict) and str(alvo.get("tipo") or "") == "npc":
+                        npc_obj = dict(alvo.get("npc", {}))
                         estado = npc_obj.get("estado") if isinstance(npc_obj.get("estado"), dict) else {}
                         inter = estado.get("interacao") if isinstance(estado.get("interacao"), dict) else {}
                         if not bool(inter.get("ativa", False)):

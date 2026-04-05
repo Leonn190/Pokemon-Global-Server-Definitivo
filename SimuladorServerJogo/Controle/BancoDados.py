@@ -91,6 +91,7 @@ class BancoDadosMundo:
             PASTA_WORLD_CHUNKS,
             Path(__file__).resolve().parent / "world_chunks",
             Path(__file__).resolve().parents[2] / "world_chunks",
+            Path(__file__).resolve().parents[1] / "EstadoMundo" / "chunks",
         ]
         for pasta in candidatos:
             if pasta.exists() and pasta.is_dir():

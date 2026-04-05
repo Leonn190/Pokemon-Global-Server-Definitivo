@@ -21,6 +21,7 @@ _BOTAO_MUNDO = None
 _REQUISICAO_THREAD = None
 _REQUISICAO_RESULTADO = None
 _REQUISICAO_TIPO_ATUAL = None
+_REQUISICAO_PENDENTE = None
 _STATUS_TIMER = 0.0
 _GERACAO_NOTIFICADA = False
 _REMOCAO_NOTIFICADA = False
@@ -92,10 +93,14 @@ def _worker(tipo, ip, payload):
 
 
 def _iniciar_requisicao(tipo, ip, payload=None, mensagem="Comunicando com SimuladorServerJogo..."):
-    global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _REQUISICAO_TIPO_ATUAL
+    global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _REQUISICAO_TIPO_ATUAL, _REQUISICAO_PENDENTE
     if _REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive():
+        if _REQUISICAO_TIPO_ATUAL == "status" and tipo != "status":
+            _REQUISICAO_PENDENTE = (tipo, ip, payload, mensagem)
+            return True
         return False
 
+    _REQUISICAO_PENDENTE = None
     _REQUISICAO_RESULTADO = None
     _REQUISICAO_TIPO_ATUAL = tipo
     if mensagem:
@@ -103,6 +108,15 @@ def _iniciar_requisicao(tipo, ip, payload=None, mensagem="Comunicando com Simula
     _REQUISICAO_THREAD = threading.Thread(target=_worker, args=(tipo, ip, payload), daemon=True)
     _REQUISICAO_THREAD.start()
     return True
+
+
+def _iniciar_requisicao_pendente():
+    global _REQUISICAO_PENDENTE
+    if _REQUISICAO_PENDENTE is None:
+        return False
+    tipo, ip, payload, mensagem = _REQUISICAO_PENDENTE
+    _REQUISICAO_PENDENTE = None
+    return _iniciar_requisicao(tipo, ip, payload, mensagem)
 
 
 def _voltar(cena):
@@ -214,6 +228,8 @@ def _processar_resposta(jogo):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _REQUISICAO_TIPO_ATUAL
     global _SUBTELA_ATIVA, _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA
     if not _REQUISICAO_RESULTADO:
+        if not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
+            _iniciar_requisicao_pendente()
         return
 
     payload = _REQUISICAO_RESULTADO
@@ -260,6 +276,7 @@ def _processar_resposta(jogo):
     if tipo in ("ligado", "validar_chave") or not sucesso:
         _emitir_feedback(resposta.get("mensagem", "Falha de comunicação"), sucesso=sucesso)
     _atualizar_rotulos_botoes()
+    _iniciar_requisicao_pendente()
 
 
 def _montar_layout(jogo):
@@ -326,7 +343,7 @@ def TelaOperador(cena, jogo, eventos, dt):
 
     _STATUS_TIMER += max(0.0, float(dt))
     pode_atualizar_status = (_SUBTELA_ATIVA is None) or isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
-    if _STATUS_TIMER >= 0.35 and pode_atualizar_status and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
+    if _STATUS_TIMER >= 0.12 and pode_atualizar_status and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
         _STATUS_TIMER = 0.0
         _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "")
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import time
@@ -18,10 +19,16 @@ CHUNK_BLOCOS = max(1, int(carregar_regras_mundo().get("ChunkTiles", 10)))
 
 PASTA_SERVIDOR = Path(__file__).resolve().parent
 RAIZ_REPOSITORIO = PASTA_SERVIDOR.parent
-ARQUIVO_MUNDO = PASTA_SERVIDOR / "MundoEstado.json"
-ARQUIVO_WORLD_META = PASTA_SERVIDOR / "world_meta.json"
-PASTA_WORLD_CHUNKS = PASTA_SERVIDOR / "world_chunks"
-ARQUIVO_FOTO_MUNDO_JAVA = PASTA_SERVIDOR / "world_foto.png"
+PASTA_ESTADO_MUNDO = RAIZ_REPOSITORIO / "EstadoMundo"
+ARQUIVO_MUNDO = PASTA_ESTADO_MUNDO / "MundoEstado.json"
+ARQUIVO_WORLD_META = PASTA_ESTADO_MUNDO / "world_meta.json"
+PASTA_WORLD_CHUNKS = PASTA_ESTADO_MUNDO / "chunks"
+ARQUIVO_FOTO_MUNDO_JAVA = PASTA_ESTADO_MUNDO / "world_foto.png"
+ARQUIVO_REGRAS_GERACAO_FONTE = PASTA_SERVIDOR / "Regras" / "Geracao.json"
+_ARQUIVO_MUNDO_LEGADO = PASTA_SERVIDOR / "MundoEstado.json"
+_ARQUIVO_WORLD_META_LEGADO = PASTA_SERVIDOR / "world_meta.json"
+_PASTA_WORLD_CHUNKS_LEGADO = PASTA_SERVIDOR / "world_chunks"
+_ARQUIVO_FOTO_MUNDO_LEGADO = PASTA_SERVIDOR / "world_foto.png"
 ARQUIVO_JAVA = PASTA_SERVIDOR / "WorldGenerator.java"
 ARQUIVO_CLASS = PASTA_SERVIDOR / "WorldGenerator.class"
 
@@ -50,7 +57,10 @@ def _emitir_progresso(callback_progresso, percentual: int, mensagem: str) -> Non
 
 def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str], None] | None = None) -> None:
     _compilar_java_se_necessario()
-    cmd = ["java", "-cp", str(PASTA_SERVIDOR), "WorldGenerator", str(seed), str(PASTA_SERVIDOR)]
+    PASTA_ESTADO_MUNDO.mkdir(parents=True, exist_ok=True)
+    if not ARQUIVO_REGRAS_GERACAO_FONTE.exists():
+        raise FileNotFoundError(f"Arquivo de regras de geração não encontrado: {ARQUIVO_REGRAS_GERACAO_FONTE}")
+    cmd = ["java", "-cp", str(PASTA_SERVIDOR), "WorldGenerator", str(seed), str(PASTA_ESTADO_MUNDO), str(ARQUIVO_REGRAS_GERACAO_FONTE)]
 
     _emitir_progresso(callback_progresso, 1, "Preparando geração do mundo")
 
@@ -154,20 +164,20 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
 
 
 def limpar_arquivos_mundo() -> None:
-    if ARQUIVO_MUNDO.exists():
-        ARQUIVO_MUNDO.unlink()
-    if ARQUIVO_WORLD_META.exists():
-        ARQUIVO_WORLD_META.unlink()
-    if ARQUIVO_FOTO_MUNDO_JAVA.exists():
-        ARQUIVO_FOTO_MUNDO_JAVA.unlink()
-    if PASTA_WORLD_CHUNKS.exists():
-        for arquivo in PASTA_WORLD_CHUNKS.glob("*.json"):
+    if PASTA_ESTADO_MUNDO.exists():
+        try:
+            shutil.rmtree(PASTA_ESTADO_MUNDO)
+        except OSError:
+            pass
+    for legado in (_ARQUIVO_MUNDO_LEGADO, _ARQUIVO_WORLD_META_LEGADO, _ARQUIVO_FOTO_MUNDO_LEGADO):
+        if legado.exists():
             try:
-                arquivo.unlink()
+                legado.unlink()
             except OSError:
                 pass
+    if _PASTA_WORLD_CHUNKS_LEGADO.exists():
         try:
-            PASTA_WORLD_CHUNKS.rmdir()
+            shutil.rmtree(_PASTA_WORLD_CHUNKS_LEGADO)
         except OSError:
             pass
 
@@ -271,6 +281,28 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
 
 
 def carregar_estado_mundo() -> Dict[str, object]:
+    if not PASTA_ESTADO_MUNDO.exists():
+        PASTA_ESTADO_MUNDO.mkdir(parents=True, exist_ok=True)
+    if (not ARQUIVO_WORLD_META.exists()) and _ARQUIVO_WORLD_META_LEGADO.exists():
+        try:
+            shutil.move(str(_ARQUIVO_WORLD_META_LEGADO), str(ARQUIVO_WORLD_META))
+        except OSError:
+            pass
+    if (not ARQUIVO_FOTO_MUNDO_JAVA.exists()) and _ARQUIVO_FOTO_MUNDO_LEGADO.exists():
+        try:
+            shutil.move(str(_ARQUIVO_FOTO_MUNDO_LEGADO), str(ARQUIVO_FOTO_MUNDO_JAVA))
+        except OSError:
+            pass
+    if (not PASTA_WORLD_CHUNKS.exists()) and _PASTA_WORLD_CHUNKS_LEGADO.exists():
+        try:
+            shutil.move(str(_PASTA_WORLD_CHUNKS_LEGADO), str(PASTA_WORLD_CHUNKS))
+        except OSError:
+            pass
+    if (not ARQUIVO_MUNDO.exists()) and _ARQUIVO_MUNDO_LEGADO.exists():
+        try:
+            shutil.move(str(_ARQUIVO_MUNDO_LEGADO), str(ARQUIVO_MUNDO))
+        except OSError:
+            pass
     if ARQUIVO_MUNDO.exists():
         try:
             with ARQUIVO_MUNDO.open("r", encoding="utf-8") as f:

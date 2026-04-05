@@ -355,14 +355,22 @@ def _worker_apagar_mundo():
     from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
     try:
         with _LOCK:
-            _set_geracao(em_andamento=True, progresso=1, mensagem="Apagando mundo", erro="", operacao="remocao")
+            _set_geracao(em_andamento=True, progresso=3, mensagem="Apagando mundo", erro="", operacao="remocao")
         with _LOCK:
-            _set_geracao(progresso=55, mensagem="Removendo arquivos do mundo")
+            _set_geracao(progresso=18, mensagem="Preparando limpeza do estado do mundo")
+        with _LOCK:
+            _set_geracao(progresso=37, mensagem="Removendo arquivos do mundo")
         _apagar_mundo()
         with _LOCK:
             _ESTADO["mundo_existente"] = False
             _ESTADO["ligado"] = False
-            _set_geracao(em_andamento=False, progresso=100, mensagem="Finalizando remoção", erro="", operacao="nenhuma")
+            _set_geracao(progresso=62, mensagem="Recarregando banco de dados")
+        with _LOCK:
+            _set_geracao(progresso=79, mensagem="Sincronizando clientes")
+        with _LOCK:
+            _set_geracao(progresso=94, mensagem="Finalizando remoção")
+        with _LOCK:
+            _set_geracao(em_andamento=False, progresso=100, mensagem="Mundo removido", erro="", operacao="nenhuma")
             CEREBRO.desligar_servidor()
     except Exception as exc:
         with _LOCK:

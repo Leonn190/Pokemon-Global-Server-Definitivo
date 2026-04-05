@@ -45,6 +45,12 @@ class ControladorObjetos:
         self._capturas_por_token: Dict[str, Dict[str, object]] = {}
         self._criaveis = ControladorCriaveis(objetos_por_id=self.ObjetosPorId, remover_indice_cb=self._remover_indice_chunk_objeto)
 
+    def _eh_payload_npc_combatente(self, payload: Dict[str, object]) -> bool:
+        if not isinstance(payload, dict):
+            return False
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        return str(estado.get("subtipo", "")).strip().lower() == "npc_combatente"
+
     @property
     def ProjeteisPorId(self):
         return self._criaveis.ProjeteisPorId
@@ -85,6 +91,8 @@ class ControladorObjetos:
             return dim_local == "Mundo" and dim_obj == "Mundo"
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
         dim = str(estado.get("dimensao") or payload.get("dimensao") or "Mundo")
+        if self._eh_payload_npc_combatente(payload) and dim != dim_local:
+            print(f"[DEBUG_NPC_CLIENT] etapa=filtro_dimensao id={int(payload.get('id', 0) or 0)} dim_npc={dim} dim_local={dim_local} pos={payload.get('posicao')}")
         return dim == dim_local
 
     def _chunk_posicao(self, x: float, y: float) -> Tuple[int, int]:
@@ -360,6 +368,9 @@ class ControladorObjetos:
             oid = int(payload.get("id", objeto_id or 0))
             dados = dict(payload)
             dados["id"] = oid
+            if self._eh_payload_npc_combatente(dados):
+                estado_dbg = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+                print(f"[DEBUG_NPC_CLIENT] etapa=recebe_spawn id={oid} nome={estado_dbg.get('nome', dados.get('nome', ''))} dim={estado_dbg.get('dimensao', dados.get('dimensao', 'Mundo'))} pos={dados.get('posicao')}")
             with self._lock_objetos:
                 self.ObjetosPorId[oid] = dados
                 self._upsert_indice_chunk_objeto(oid, dados)
@@ -382,6 +393,9 @@ class ControladorObjetos:
                     if chave != "estado":
                         atual[chave] = valor
                 self.ObjetosPorId[oid] = atual
+                if self._eh_payload_npc_combatente(atual):
+                    estado_dbg = atual.get("estado") if isinstance(atual.get("estado"), dict) else {}
+                    print(f"[DEBUG_NPC_CLIENT] etapa=recebe_update id={oid} nome={estado_dbg.get('nome', atual.get('nome', ''))} dim={estado_dbg.get('dimensao', atual.get('dimensao', 'Mundo'))} pos={atual.get('posicao')}")
                 self._upsert_indice_chunk_objeto(oid, atual)
                 self._upsert_especializado(oid, atual)
                 estado_atual = atual.get("estado") if isinstance(atual.get("estado"), dict) else {}
@@ -614,6 +628,8 @@ class ControladorObjetos:
             if self._eh_payload_estrutura(obj) or self._eh_payload_estadio(obj):
                 continue
             if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
+                if self._eh_payload_npc_combatente(obj):
+                    print(f"[DEBUG_NPC_CLIENT] etapa=render_skip_fora_tela id={oid} pos={obj.get('posicao')} camera={list(getattr(camera, 'PosicaoTiles', (0.0, 0.0)))}")
                 continue
 
             poke = self.PokemonsPorId.get(oid)
@@ -632,7 +648,11 @@ class ControladorObjetos:
                 continue
 
             if self._atores.renderizar(oid, tela, camera, dt_pokemons):
+                if self._eh_payload_npc_combatente(obj):
+                    print(f"[DEBUG_NPC_CLIENT] etapa=render_ok id={oid} pos={obj.get('posicao')}")
                 continue
+            if self._eh_payload_npc_combatente(obj):
+                print(f"[DEBUG_NPC_CLIENT] etapa=render_falha_sem_ator id={oid} pos={obj.get('posicao')}")
 
             self._render_fallback_objeto(tela, camera, obj, cor_fallback=(222, 233, 245))
 

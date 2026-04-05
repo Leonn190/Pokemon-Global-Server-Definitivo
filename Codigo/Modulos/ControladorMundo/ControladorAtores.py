@@ -23,6 +23,7 @@ class ControladorAtores:
         if tipo != "entidade_player" and subtipo not in {"npc_vendedor", "npc_combatente"}:
             self.AtoresRemotosPorId.pop(int(oid), None)
             return None
+        debug_npc_combatente = subtipo == "npc_combatente"
 
         dados = dict(payload)
         dados["id"] = int(oid)
@@ -35,6 +36,8 @@ class ControladorAtores:
             remoto = Ator(nome_skin=str(dados.get("skin", "S1")), posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0, tile_px=50)
             remoto.Id = int(oid)
             self.AtoresRemotosPorId[int(oid)] = remoto
+            if debug_npc_combatente:
+                print(f"[DEBUG_NPC_CLIENT] etapa=ator_criado id={int(oid)} nome={dados.get('nome', '')} skin={dados.get('skin', '')} pos={list(pos)}")
 
         remoto.definir_posicao(float(pos[0]), float(pos[1]))
         nome = dados.get("nome") or dados.get("usuario")
@@ -59,6 +62,9 @@ class ControladorAtores:
             remoto.Inventario.aplicar_serializado(dados.get("inventario"))
 
         remoto.update(dados)
+        if debug_npc_combatente:
+            estado_dbg = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+            print(f"[DEBUG_NPC_CLIENT] etapa=ator_atualizado id={int(oid)} dim={estado_dbg.get('dimensao', dados.get('dimensao', 'Mundo'))} pos={dados.get('posicao')}")
         return remoto
 
     def remover(self, oid: int) -> None:

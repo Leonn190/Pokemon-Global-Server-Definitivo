@@ -207,12 +207,24 @@ _AJUDA_COMANDOS = {
         ],
     },
     "tp": {
-        "uso": "/tp alvo posx posy",
-        "descricao": "Teleporta jogador(es) para uma posição do mundo.",
+        "uso": "/tp alvo posx posy | /tp destino (nomes compostos com _)",
+        "descricao": "Teleporta jogador(es) para coordenadas ou teleporta você para player/NPC/estádio por nome.",
         "detalhes": [
             "alvo: y, r, todos, ou nome do jogador.",
             "posx/posy: coordenadas em tiles; a posição é normalizada nos limites do mundo.",
+            "destino: nome exato (case-insensitive) de player, NPC ou estádio (ex.: Edward_Newgate, EstadioPlanta).",
+            "Nomes compostos devem usar _ no lugar de espaço.",
+            "Se houver mais de um destino com o mesmo nome, o comando falha por ambiguidade.",
             "Também aceita argumentos nomeados: alvo=, x=, y=.",
+        ],
+    },
+    "locate": {
+        "uso": "/locate nome (nomes compostos com _)",
+        "descricao": "Retorna coordenadas de NPCs e estádios por nome.",
+        "detalhes": [
+            "nome: nome exato (case-insensitive), como Edward_Newgate, Josefa ou EstadioPlanta.",
+            "Nomes compostos devem usar _ no lugar de espaço.",
+            "Se houver mais de um resultado com o mesmo nome, o comando falha por ambiguidade.",
         ],
     },
     "spawn": {
@@ -273,6 +285,51 @@ def _resolver_pokemon(raw):
         return None
     s = str(raw).strip()
     return _POKE_CODE.get(s) or _POKE_NOME.get(s.lower())
+
+
+def _normalizar_nome_busca(raw):
+    return str(raw or "").strip().lower()
+
+
+def _locais_nomeados():
+    locais = []
+    players = _estado_players()
+    for nome, dados in players.items():
+        if not isinstance(dados, dict):
+            continue
+        pos = dados.get("posicao", [0.0, 0.0]) if isinstance(dados.get("posicao"), (list, tuple)) else [0.0, 0.0]
+        try:
+            px, py = float(pos[0]), float(pos[1])
+        except Exception:
+            px, py = 0.0, 0.0
+        locais.append({"categoria": "player", "nome": str(nome), "nome_busca": _normalizar_nome_busca(nome), "posicao": [px, py]})
+
+    for obj in BANCO_DADOS.listar_objetos():
+        estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+        categoria, nome = "", ""
+        subtipo = str(estado.get("subtipo") or "").strip().lower()
+        if subtipo in {"npc_vendedor", "npc_combatente"}:
+            categoria = "npc"
+            nome = str(estado.get("nome") or "").strip()
+        elif str(getattr(obj, "tipo_classe", "")).strip().lower() == "entidade_estadio":
+            categoria = "estadio"
+            nome = str(estado.get("dimensao_destino") or "").strip()
+            if not nome:
+                tipo_estadio = str(estado.get("tipo_estadio") or "normal").strip().title()
+                nome = f"Estadio{tipo_estadio}"
+        if not nome:
+            continue
+        locais.append(
+            {"categoria": categoria, "nome": nome, "nome_busca": _normalizar_nome_busca(nome), "posicao": [float(obj.posicao[0]), float(obj.posicao[1])]}
+        )
+    return locais
+
+
+def _buscar_locais_por_nome(raw):
+    termo = _normalizar_nome_busca(raw)
+    if not termo:
+        return []
+    return [loc for loc in _locais_nomeados() if loc.get("nome_busca") == termo]
 
 
 def _cmd_give(autor, args):
@@ -339,6 +396,22 @@ def _cmd_give(autor, args):
 
 def _cmd_tp(autor, args):
     nomeados, livres = _split_args(args)
+    if len(livres) == 1 and _to_float(livres[0]) is None and "x" not in nomeados and "y" not in nomeados:
+        destinos = _buscar_locais_por_nome(livres[0])
+        if not destinos:
+            return f"Destino não encontrado: {livres[0]}"
+        if len(destinos) > 1:
+            return f"Erro no /tp. Nome duplicado: {livres[0]}"
+        destino = destinos[0]
+        px, py = _normalizar_xy(destino["posicao"][0], destino["posicao"][1])
+        atualizar_posicao_personagem(autor, [px, py])
+        BANCO_DADOS.garantir_player(autor, str(_estado_players().get(autor, {}).get("skin", "S1")), (px, py))
+        payload = _payload_player(autor)
+        payload["posicao"] = [px, py]
+        payload["teleporte"] = True
+        _registrar_update_player(autor, payload)
+        return f"Teleportado {autor} para {destino.get('categoria')} {destino.get('nome')} em ({int(px)}, {int(py)})"
+
     alvo_raw = nomeados.get("alvo")
     if not alvo_raw and livres and not _to_float(livres[0]):
         alvo_raw = livres.pop(0)
@@ -349,10 +422,10 @@ def _cmd_tp(autor, args):
     if y is None and livres:
         y = _to_float(livres.pop(0))
     if x is None or y is None:
-        return "Erro no /tp. Ordem base: /tp alvo posx posy"
+        return "Erro no /tp. Ordem base: /tp alvo posx posy | /tp destino (nomes compostos com _)"
     alvos = _resolver_alvos(alvo_raw, autor, aceitar_todos=True)
     if not alvos:
-        return "Erro no /tp. Ordem base: /tp alvo posx posy"
+        return "Erro no /tp. Ordem base: /tp alvo posx posy | /tp destino (nomes compostos com _)"
     px, py = _normalizar_xy(x, y)
     for alvo in alvos:
         atualizar_posicao_personagem(alvo, [px, py])
@@ -363,6 +436,21 @@ def _cmd_tp(autor, args):
         _registrar_update_player(alvo, payload)
     alvo_txt = "todos" if len(alvos) > 1 else alvos[0]
     return f"Teleportado {alvo_txt} para ({int(px)}, {int(py)})"
+
+
+def _cmd_locate(args):
+    _, livres = _split_args(args)
+    if not livres:
+        return "Erro no /locate. Ordem base: /locate nome (nomes compostos com _)"
+    nome_raw = " ".join(livres).strip()
+    destinos = _buscar_locais_por_nome(nome_raw)
+    if not destinos:
+        return f"Destino não encontrado: {nome_raw}"
+    if len(destinos) > 1:
+        return f"Erro no /locate. Nome duplicado: {nome_raw}"
+    destino = destinos[0]
+    px, py = destino["posicao"][0], destino["posicao"][1]
+    return f"{destino.get('categoria').upper()} {destino.get('nome')} está em ({int(px)}, {int(py)})"
 
 
 def _cmd_spawn(autor, args):
@@ -504,14 +592,15 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
         return {"ok": True, "feedback": "Comando inexistente: /"}
     cmd = partes[0].lower()
     args = partes[1:]
-    if cmd in {"give_args", "tp_args", "spawn_args", "chest_args", "count_args", "xp_args"}:
+    if cmd in {"give_args", "tp_args", "spawn_args", "chest_args", "count_args", "xp_args", "locate_args"}:
         base = {
             "give_args": "/give alvo item quantidade",
-            "tp_args": "/tp alvo posx posy",
+            "tp_args": "/tp alvo posx posy | /tp destino (nomes compostos com _)",
             "spawn_args": "/spawn pokemon posx posy",
             "chest_args": "/chest tipo posx posy",
             "count_args": "/count chunks|chests|pokemons",
             "xp_args": "/xp quantidade_xp [nome_do_jogador]",
+            "locate_args": "/locate nome (nomes compostos com _)",
         }
         retorno = base[cmd]
     else:
@@ -528,6 +617,8 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
                 retorno = _cmd_count(args)
             elif cmd == "xp":
                 retorno = _cmd_xp(autor, args)
+            elif cmd == "locate":
+                retorno = _cmd_locate(args)
             elif cmd == "help":
                 retorno = _cmd_help(args)
             else:
@@ -535,11 +626,12 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
         except Exception:
             ordem = {
                 "give": "/give alvo item quantidade",
-                "tp": "/tp alvo posx posy",
+                "tp": "/tp alvo posx posy | /tp destino (nomes compostos com _)",
                 "spawn": "/spawn pokemon posx posy",
                 "chest": "/chest tipo posx posy",
                 "count": "/count chunks|chests|pokemons",
                 "xp": "/xp quantidade_xp [nome_do_jogador]",
+                "locate": "/locate nome (nomes compostos com _)",
                 "help": "/help [comando]",
             }.get(cmd, f"/{cmd}")
             retorno = f"Erro no /{cmd}. Ordem base: {ordem}"

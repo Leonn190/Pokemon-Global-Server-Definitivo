@@ -66,8 +66,11 @@ class ControladorObjetos:
     def id_player_local(self) -> int:
         return int(self._player_local_id or -1)
 
-
     def _dimensao_player_local(self) -> str:
+        ref = self._player_local_ref
+        dim_ref = str(getattr(ref, "DimensaoAtual", "") or "").strip() if ref is not None else ""
+        if dim_ref:
+            return dim_ref
         pid = int(self.id_player_local())
         if pid <= 0:
             return "Mundo"

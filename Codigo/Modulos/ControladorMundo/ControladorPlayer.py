@@ -363,14 +363,16 @@ class ControladorPlayer:
         player_payload = self._objetos.ObjetosPorId.get(int(getattr(self._player_local, "Id", 0) or 0), {}) if isinstance(self._objetos.ObjetosPorId, dict) else {}
         estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
         dim = self._objetos._dimensao_player_local()
+        alvo = self._objetos.alvo_interagivel_atual(
+            pos_player=pos,
+            dimensao_player=dim,
+            estadio_atual_id=int(estado_player.get("estadio_atual_id", 0) or 0),
+        )
+        if not isinstance(alvo, dict):
+            return
+        tipo_alvo = str(alvo.get("tipo") or "")
 
-        if dim != "Mundo":
-            estadio_atual = self._objetos.EstadiosPorId.get(int(estado_player.get("estadio_atual_id", 0) or 0), {}) if isinstance(getattr(self._objetos, "EstadiosPorId", {}), dict) else {}
-            estado_est = estadio_atual.get("estado") if isinstance(estadio_atual.get("estado"), dict) else {}
-            saida = estado_est.get("saida_interna_pos") if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) and len(estado_est.get("saida_interna_pos")) == 2 else [25.0, 47.0]
-            dxs = float(pos[0]) - float(saida[0]); dys = float(pos[1]) - float(saida[1])
-            if (dxs * dxs + dys * dys) > (2.0 * 2.0):
-                return
+        if tipo_alvo == "estadio_saida":
             self._objetos.EnfileirarDiffRapida({
                 "tipo": "evento",
                 "categoria": "interacao_estadio",
@@ -382,29 +384,10 @@ class ControladorPlayer:
             })
             return
 
-        melhor = None
-        melhor_d2 = None
-        for estadio in list(getattr(self._objetos, "EstadiosPorId", {}).values()):
-            if not isinstance(estadio, dict):
-                continue
-            estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
-            entrada = estado.get("entrada_pos") if isinstance(estado.get("entrada_pos"), (list, tuple)) and len(estado.get("entrada_pos")) == 2 else None
-            if entrada is None:
-                ep = estadio.get("posicao") if isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else [0.0, 0.0]
-                off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 25.0]
-                entrada = [float(ep[0]) + float(off[0]), float(ep[1]) + float(off[1])]
-            dx = float(pos[0]) - float(entrada[0])
-            dy = float(pos[1]) - float(entrada[1])
-            d2 = dx * dx + dy * dy
-            lim = 2.0
-            if d2 > (lim * lim):
-                continue
-            if melhor_d2 is None or d2 < melhor_d2:
-                melhor_d2 = d2
-                melhor = (estadio, entrada)
-        if melhor is None:
+        if tipo_alvo != "estadio_entrada":
             return
-        estadio, entrada = melhor
+        estadio = alvo.get("estadio") if isinstance(alvo.get("estadio"), dict) else {}
+        entrada = alvo.get("posicao") if isinstance(alvo.get("posicao"), (list, tuple)) and len(alvo.get("posicao")) == 2 else [0.0, 0.0]
         estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
         self._objetos.EnfileirarDiffRapida({
             "tipo": "evento",

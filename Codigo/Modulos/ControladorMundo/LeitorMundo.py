@@ -228,15 +228,24 @@ class LeitorMundo:
         except Exception:
             raio_render_chunks = max(1, int(self.RaioChunks))
 
+        largura_blocos = int(meta.get("largura_blocos", 0) or 0) if isinstance(meta, dict) else 0
+        altura_blocos = int(meta.get("altura_blocos", 0) or 0) if isinstance(meta, dict) else 0
+        chunks_x = max(1, int((largura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if largura_blocos > 0 else 0
+        chunks_y = max(1, int((altura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if altura_blocos > 0 else 0
+        toroidal = bool(getattr(self.Camera, "LimitesToroidais", False)) and chunks_x > 0 and chunks_y > 0
+
         chaves_visiveis = [((chunk_player_x + dx, chunk_player_y + dy), chunk_player_x + dx, chunk_player_y + dy)
                            for dy in range(-raio_render_chunks, raio_render_chunks + 1)
                            for dx in range(-raio_render_chunks, raio_render_chunks + 1)]
         draw_ops = []
         for chave, raw_x, raw_y in chaves_visiveis:
-            grid = chunks_ref.get(chave)
+            chave_real = chave
+            if toroidal:
+                chave_real = (int(raw_x) % chunks_x, int(raw_y) % chunks_y)
+            grid = chunks_ref.get(chave_real)
             if not grid:
                 continue
-            superficie = self._obter_superficie_chunk(chave, grid, tile_px)
+            superficie = self._obter_superficie_chunk(chave_real, grid, tile_px)
             if superficie is not None:
                 draw_ops.append((superficie, raw_x * tamanho_chunk, raw_y * tamanho_chunk))
 

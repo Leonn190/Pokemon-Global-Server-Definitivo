@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Callable, Dict, Tuple
@@ -259,14 +261,42 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
 
 
 def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
-    with ARQUIVO_MUNDO.open("w", encoding="utf-8") as f:
+    ARQUIVO_MUNDO.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(ARQUIVO_MUNDO.parent), delete=False, prefix="mundo_", suffix=".tmp") as f:
         json.dump(estado_mundo, f, ensure_ascii=False, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+        caminho_tmp = f.name
+    os.replace(caminho_tmp, ARQUIVO_MUNDO)
 
 
 def carregar_estado_mundo() -> Dict[str, object]:
     if ARQUIVO_MUNDO.exists():
-        with ARQUIVO_MUNDO.open("r", encoding="utf-8") as f:
-            estado = json.load(f)
+        try:
+            with ARQUIVO_MUNDO.open("r", encoding="utf-8") as f:
+                estado = json.load(f)
+        except json.JSONDecodeError:
+            bruto = ARQUIVO_MUNDO.read_text(encoding="utf-8", errors="ignore")
+            bruto_limpo = bruto.lstrip()
+            estado = None
+            if bruto_limpo.lower().startswith("git"):
+                idx = bruto_limpo.find("{")
+                if idx >= 0:
+                    try:
+                        estado = json.loads(bruto_limpo[idx:])
+                    except json.JSONDecodeError:
+                        estado = None
+            if not isinstance(estado, dict):
+                return {
+                    "meta": {},
+                    "grid": [],
+                    "grid_biomas": [],
+                    "grid_estruturas_naturais": [],
+                    "players": {},
+                    "npcs_vendedores": {},
+                    "spawn": [0.0, 0.0],
+                }
+            salvar_estado_mundo(estado)
         if isinstance(estado, dict) and isinstance(estado.get("meta"), dict):
             meta = estado.get("meta", {}) if isinstance(estado.get("meta"), dict) else {}
             global LARGURA_BLOCOS, ALTURA_BLOCOS

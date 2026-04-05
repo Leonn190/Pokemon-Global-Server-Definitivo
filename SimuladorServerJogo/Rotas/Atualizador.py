@@ -221,6 +221,20 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
             return False
         return (dx * dx + dy * dy) <= (float(lim) * float(lim))
 
+    def _saida_interna(estado_est):
+        if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) and len(estado_est.get("saida_interna_pos")) == 2:
+            return [float(estado_est.get("saida_interna_pos")[0]), float(estado_est.get("saida_interna_pos")[1])]
+        largura = float(estado_est.get("largura_interna", 60.0) or 60.0)
+        altura = float(estado_est.get("altura_interna", 40.0) or 40.0)
+        return [largura * 0.5, max(1.0, altura - 3.0)]
+
+    def _spawn_interno(estado_est):
+        if isinstance(estado_est.get("spawn_interno_pos"), (list, tuple)) and len(estado_est.get("spawn_interno_pos")) == 2:
+            return [float(estado_est.get("spawn_interno_pos")[0]), float(estado_est.get("spawn_interno_pos")[1])]
+        largura = float(estado_est.get("largura_interna", 60.0) or 60.0)
+        altura = float(estado_est.get("altura_interna", 40.0) or 40.0)
+        return [min(max(1.0, largura - 1.0), 5.0), min(max(1.0, altura - 1.0), 5.0)]
+
     if acao == "sair":
         if estadio is None:
             return False
@@ -230,7 +244,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
             return False
         pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
         pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
-        saida_interna = estado_est.get("saida_interna_pos") if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) else [25.0, 47.0]
+        saida_interna = _saida_interna(estado_est)
         if not _dist_ok(player.posicao, saida_interna, 2.0):
             return False
         entrada = estado_est.get("entrada_pos") if isinstance(estado_est.get("entrada_pos"), (list, tuple)) and len(estado_est.get("entrada_pos")) == 2 else [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
@@ -252,7 +266,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         return False
 
     dim = str(estado_est.get("dimensao_destino") or "EstadioNormal")
-    spawn = estado_est.get("spawn_interno_pos") if isinstance(estado_est.get("spawn_interno_pos"), (list, tuple)) and len(estado_est.get("spawn_interno_pos")) == 2 else [25.0, 42.0]
+    spawn = _spawn_interno(estado_est)
     pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
     dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
     pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]

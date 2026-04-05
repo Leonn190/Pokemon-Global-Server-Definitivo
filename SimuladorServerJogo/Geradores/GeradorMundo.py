@@ -25,10 +25,6 @@ ARQUIVO_WORLD_META = PASTA_ESTADO_MUNDO / "world_meta.json"
 PASTA_WORLD_CHUNKS = PASTA_ESTADO_MUNDO / "chunks"
 ARQUIVO_FOTO_MUNDO_JAVA = PASTA_ESTADO_MUNDO / "world_foto.png"
 ARQUIVO_REGRAS_GERACAO_FONTE = PASTA_SERVIDOR / "Regras" / "Geracao.json"
-_ARQUIVO_MUNDO_LEGADO = PASTA_SERVIDOR / "MundoEstado.json"
-_ARQUIVO_WORLD_META_LEGADO = PASTA_SERVIDOR / "world_meta.json"
-_PASTA_WORLD_CHUNKS_LEGADO = PASTA_SERVIDOR / "world_chunks"
-_ARQUIVO_FOTO_MUNDO_LEGADO = PASTA_SERVIDOR / "world_foto.png"
 ARQUIVO_JAVA = PASTA_SERVIDOR / "WorldGenerator.java"
 ARQUIVO_CLASS = PASTA_SERVIDOR / "WorldGenerator.class"
 
@@ -169,17 +165,6 @@ def limpar_arquivos_mundo() -> None:
             shutil.rmtree(PASTA_ESTADO_MUNDO)
         except OSError:
             pass
-    for legado in (_ARQUIVO_MUNDO_LEGADO, _ARQUIVO_WORLD_META_LEGADO, _ARQUIVO_FOTO_MUNDO_LEGADO):
-        if legado.exists():
-            try:
-                legado.unlink()
-            except OSError:
-                pass
-    if _PASTA_WORLD_CHUNKS_LEGADO.exists():
-        try:
-            shutil.rmtree(_PASTA_WORLD_CHUNKS_LEGADO)
-        except OSError:
-            pass
 
 
 def _carregar_world_meta() -> Dict[str, int | float]:
@@ -283,26 +268,6 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
 def carregar_estado_mundo() -> Dict[str, object]:
     if not PASTA_ESTADO_MUNDO.exists():
         PASTA_ESTADO_MUNDO.mkdir(parents=True, exist_ok=True)
-    if (not ARQUIVO_WORLD_META.exists()) and _ARQUIVO_WORLD_META_LEGADO.exists():
-        try:
-            shutil.move(str(_ARQUIVO_WORLD_META_LEGADO), str(ARQUIVO_WORLD_META))
-        except OSError:
-            pass
-    if (not ARQUIVO_FOTO_MUNDO_JAVA.exists()) and _ARQUIVO_FOTO_MUNDO_LEGADO.exists():
-        try:
-            shutil.move(str(_ARQUIVO_FOTO_MUNDO_LEGADO), str(ARQUIVO_FOTO_MUNDO_JAVA))
-        except OSError:
-            pass
-    if (not PASTA_WORLD_CHUNKS.exists()) and _PASTA_WORLD_CHUNKS_LEGADO.exists():
-        try:
-            shutil.move(str(_PASTA_WORLD_CHUNKS_LEGADO), str(PASTA_WORLD_CHUNKS))
-        except OSError:
-            pass
-    if (not ARQUIVO_MUNDO.exists()) and _ARQUIVO_MUNDO_LEGADO.exists():
-        try:
-            shutil.move(str(_ARQUIVO_MUNDO_LEGADO), str(ARQUIVO_MUNDO))
-        except OSError:
-            pass
     if ARQUIVO_MUNDO.exists():
         try:
             with ARQUIVO_MUNDO.open("r", encoding="utf-8") as f:

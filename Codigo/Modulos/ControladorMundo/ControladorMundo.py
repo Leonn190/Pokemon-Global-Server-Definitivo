@@ -16,7 +16,14 @@ class ControladorMundo:
         self.Camera = camera
         self.Objetos = ControladorObjetos()
         self.Player = ControladorPlayer(self.Objetos)
-        self.Leitor = LeitorMundo(jogo=jogo, camera=camera, callback_atualizacao=consultar_chunks_mundo, intervalo_poll=0.20, raio_chunks=4)
+        self.Leitor = LeitorMundo(
+            jogo=jogo,
+            camera=camera,
+            callback_atualizacao=consultar_chunks_mundo,
+            callback_dimensao_atual=self.Objetos.definir_dimensao_atual_client,
+            intervalo_poll=0.20,
+            raio_chunks=4,
+        )
         self.Pacotes = SistemaPacotes(self.Objetos, self.Player, self.Leitor, camera)
         self._desconectado = False
 

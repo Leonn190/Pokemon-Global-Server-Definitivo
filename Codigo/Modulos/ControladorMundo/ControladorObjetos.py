@@ -31,6 +31,7 @@ class ControladorObjetos:
         self._player_local_id: Optional[int] = None
         self._player_local_ref = None
         self._autor_local_id: str = ""
+        self._dimensao_atual_client: str = "Mundo"
         self._lock_objetos = threading.RLock()
         self._lock_diffs = threading.Lock()
         self._fila_saida_envio: List[Dict[str, object]] = []
@@ -66,19 +67,14 @@ class ControladorObjetos:
     def id_player_local(self) -> int:
         return int(self._player_local_id or -1)
 
+    def definir_dimensao_atual_client(self, dimensao: str) -> None:
+        self._dimensao_atual_client = str(dimensao or "Mundo")
+
+    def dimensao_atual_client(self) -> str:
+        return str(self._dimensao_atual_client or "Mundo")
+
     def _dimensao_player_local(self) -> str:
-        ref = self._player_local_ref
-        dim_ref = str(getattr(ref, "DimensaoAtual", "") or "").strip() if ref is not None else ""
-        if dim_ref:
-            return dim_ref
-        pid = int(self.id_player_local())
-        if pid <= 0:
-            return "Mundo"
-        payload = self.ObjetosPorId.get(pid, {}) if isinstance(self.ObjetosPorId, dict) else {}
-        if not isinstance(payload, dict):
-            return "Mundo"
-        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
-        return str(estado.get("dimensao") or payload.get("dimensao") or "Mundo")
+        return self.dimensao_atual_client()
 
     def _payload_na_dimensao_local(self, payload: Dict[str, object]) -> bool:
         dim_local = self._dimensao_player_local()
@@ -700,8 +696,7 @@ class ControladorObjetos:
         px, py = float(pos_player[0]), float(pos_player[1])
         player_payload = self.ObjetosPorId.get(int(self.id_player_local() or -1), {})
         estado_p = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
-        dim_real = str(estado_p.get("dimensao") or player_payload.get("dimensao") or "")
-        dim = dim_real if dim_real else str(dimensao_player or "Mundo")
+        dim = self._dimensao_player_local()
         estadio_real_id = int(estado_p.get("estadio_atual_id", player_payload.get("estadio_atual_id", estadio_atual_id)) or 0)
         if dim != "Mundo":
             estadio = self.EstadiosPorId.get(estadio_real_id, {})

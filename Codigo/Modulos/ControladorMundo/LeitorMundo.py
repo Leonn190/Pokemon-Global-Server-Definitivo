@@ -18,12 +18,14 @@ class LeitorMundo:
         jogo,
         camera,
         callback_atualizacao: Callable[[str, str, Vector2, int], Optional[PacoteMundo]],
+        callback_dimensao_atual: Optional[Callable[[str], None]] = None,
         intervalo_poll: float = 0.20,
         raio_chunks: int = 3,
     ) -> None:
         self.JOGO = jogo
         self.Camera = camera
         self.CallbackAtualizacao = callback_atualizacao
+        self.CallbackDimensaoAtual = callback_dimensao_atual
         self.IntervaloPoll = max(0.05, float(intervalo_poll))
         self.RaioChunks = max(1, int(raio_chunks))
 
@@ -136,6 +138,8 @@ class LeitorMundo:
                 if valor_meta is not None and self.MetaMundo.get(chave_meta) != valor_meta:
                     self.MetaMundo[chave_meta] = valor_meta
                     meta_alterada = True
+            if meta.get("dimensao") is not None and self.CallbackDimensaoAtual is not None:
+                self.CallbackDimensaoAtual(str(meta.get("dimensao") or "Mundo"))
             chunk_tamanho = meta.get("chunk_tamanho", meta.get("chunk_blocos"))
             if chunk_tamanho is not None:
                 chunk_tamanho_novo = max(1, int(chunk_tamanho))

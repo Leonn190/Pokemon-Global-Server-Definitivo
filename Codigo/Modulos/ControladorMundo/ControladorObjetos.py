@@ -16,6 +16,7 @@ from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
 from Codigo.Modulos.ControladorMundo.ControladorAtores import ControladorAtores
 from Codigo.Modulos.ControladorMundo.ControladorCriaveis import ControladorCriaveis
+from SimuladorServerJogo.Controle.DebugNpcEstadio import registrar_evento_npc_estadio, flush_debug_npc_estadio
 
 
 class ControladorObjetos:
@@ -85,10 +86,16 @@ class ControladorObjetos:
         if self._eh_payload_estadio(payload):
             estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
             dim_obj = str(estado.get("dimensao") or payload.get("dimensao") or "Mundo")
-            return dim_local == "Mundo" and dim_obj == "Mundo"
+            ok = dim_local == "Mundo" and dim_obj == "Mundo"
+            if not ok:
+                registrar_evento_npc_estadio("cliente_filtro_estadio_dimensao", dimensao_local=dim_local, dimensao_obj=dim_obj, estadio_id=int(payload.get("id", 0) or 0))
+            return ok
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
         dim = str(estado.get("dimensao") or payload.get("dimensao") or "Mundo")
-        return dim == dim_local
+        ok = dim == dim_local
+        if not ok and str(estado.get("subtipo", "")).strip().lower() == "npc_combatente":
+            registrar_evento_npc_estadio("cliente_filtro_npc_dimensao", npc_id=int(payload.get("id", 0) or 0), dimensao_local=dim_local, dimensao_npc=dim)
+        return ok
 
     def _chunk_posicao(self, x: float, y: float) -> Tuple[int, int]:
         return (int(math.floor(float(x) / self._chunk_tamanho_tiles)), int(math.floor(float(y) / self._chunk_tamanho_tiles)))
@@ -616,7 +623,13 @@ class ControladorObjetos:
                 continue
             if self._eh_payload_estrutura(obj) or self._eh_payload_estadio(obj):
                 continue
+            estado_obj = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            if str(estado_obj.get("subtipo", "")).strip().lower() == "npc_combatente":
+                registrar_evento_npc_estadio("cliente_npc_combatente_candidato_render", npc_id=oid, dimensao_local=self._dimensao_player_local(), dimensao_npc=str(estado_obj.get("dimensao") or obj.get("dimensao") or "Mundo"), posicao=list(obj.get("posicao") or []))
             if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
+                estado_obj = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+                if str(estado_obj.get("subtipo", "")).strip().lower() == "npc_combatente":
+                    registrar_evento_npc_estadio("cliente_npc_combatente_fora_tela", npc_id=oid, posicao=list(obj.get("posicao") or []))
                 continue
 
             poke = self.PokemonsPorId.get(oid)
@@ -680,6 +693,7 @@ class ControladorObjetos:
     def renderizar_estadio_interior(self, tela, camera):
         dim_local = self._dimensao_player_local()
         if dim_local == "Mundo":
+            registrar_evento_npc_estadio("cliente_estadio_interior_pulado", motivo="player_no_mundo")
             return
         player_payload = self.ObjetosPorId.get(int(self.id_player_local() or -1), {})
         estado_p = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
@@ -694,7 +708,9 @@ class ControladorObjetos:
                     estadio_payload = candidato
                     break
         estado_est = estadio_payload.get("estado") if isinstance(estadio_payload.get("estado"), dict) else {}
+        registrar_evento_npc_estadio("cliente_estadio_interior_render", dimensao_local=dim_local, estadio_id=int(estadio_payload.get("id", 0) or 0), encontrou_payload=bool(estadio_payload), tipo_estadio=str(estado_est.get("tipo_estadio") or ""))
         EstadioInterno.renderizar(tela, camera, estado_estadio=estado_est)
+        flush_debug_npc_estadio()
 
     def mensagem_interacao_estadio(self, pos_player: Tuple[float, float], dimensao_player: str, estadio_atual_id: int = 0) -> str:
         px, py = float(pos_player[0]), float(pos_player[1])

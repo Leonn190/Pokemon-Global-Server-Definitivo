@@ -12,6 +12,7 @@ from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, criar_ob
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
+from SimuladorServerJogo.Controle.DebugNpcEstadio import registrar_evento_npc_estadio, flush_debug_npc_estadio
 from SimuladorServerJogo.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 
@@ -205,12 +206,15 @@ def _processar_evento_subir_nivel_pokemon(client_id: str, payload: Dict[str, obj
 def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, object]) -> bool:
     obj_id = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
     if obj_id <= 0:
+        registrar_evento_npc_estadio("interacao_estadio_falha", motivo="player_sem_objeto", client_id=client_id)
         return False
     player = BANCO_DADOS.obter_objeto(obj_id)
     if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
+        registrar_evento_npc_estadio("interacao_estadio_falha", motivo="player_invalido", client_id=client_id, objeto_id=obj_id)
         return False
 
     acao = str(payload.get("acao") or "entrar").strip().lower()
+    registrar_evento_npc_estadio("interacao_estadio_recebida", client_id=client_id, acao=acao, payload=dict(payload or {}), player_id=int(getattr(player, "Id", 0) or 0), dimensao_atual=str(player.estado_extra.get("dimensao") or "Mundo"))
     estadio_id = int(payload.get("estadio_id", 0) or int(player.estado_extra.get("estadio_atual_id", 0) or 0))
     estadio = BANCO_DADOS.obter_objeto(estadio_id) if estadio_id > 0 else None
 
@@ -223,15 +227,18 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
 
     if acao == "sair":
         if estadio is None:
+            registrar_evento_npc_estadio("interacao_estadio_falha", motivo="saida_sem_estadio", client_id=client_id)
             return False
         estado_est = getattr(estadio, "estado_extra", {}) if isinstance(getattr(estadio, "estado_extra", {}), dict) else {}
         dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
         if dim_atual == "Mundo":
+            registrar_evento_npc_estadio("interacao_estadio_falha", motivo="saida_em_mundo", client_id=client_id, estadio_id=estadio_id)
             return False
         pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
         pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
         saida_interna = estado_est.get("saida_interna_pos") if isinstance(estado_est.get("saida_interna_pos"), (list, tuple)) else [25.0, 47.0]
         if not _dist_ok(player.posicao, saida_interna, 2.0):
+            registrar_evento_npc_estadio("interacao_estadio_falha", motivo="saida_longe_porta", client_id=client_id, player_pos=list(player.posicao), saida=list(saida_interna))
             return False
         entrada = estado_est.get("entrada_pos") if isinstance(estado_est.get("entrada_pos"), (list, tuple)) and len(estado_est.get("entrada_pos")) == 2 else [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
         player.estado_extra["dimensao"] = "Mundo"
@@ -239,16 +246,20 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         player.estado_extra["posicoes_por_dimensao"] = pos_dim
         mundo_pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else entrada
         player.definir_posicao(float(mundo_pos[0]), float(mundo_pos[1]))
-        registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
+        registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player", extras={"cliente_alvo": str(client_id)})
+        registrar_evento_npc_estadio("interacao_estadio_saida_ok", client_id=client_id, estadio_id=int(estadio.Id), nova_dimensao="Mundo", destino=list(player.posicao))
+        flush_debug_npc_estadio()
         return True
 
     if estadio is None:
+        registrar_evento_npc_estadio("interacao_estadio_falha", motivo="entrada_sem_estadio", client_id=client_id, estadio_id=estadio_id)
         return False
     estado_est = getattr(estadio, "estado_extra", {}) if isinstance(getattr(estadio, "estado_extra", {}), dict) else {}
     entrada = payload.get("entrada_pos") if isinstance(payload.get("entrada_pos"), (list, tuple)) and len(payload.get("entrada_pos")) == 2 else estado_est.get("entrada_pos")
     if not isinstance(entrada, (list, tuple)) or len(entrada) != 2:
         entrada = [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
     if not _dist_ok(player.posicao, entrada, 2.0):
+        registrar_evento_npc_estadio("interacao_estadio_falha", motivo="entrada_longe_porta", client_id=client_id, estadio_id=int(getattr(estadio, "Id", 0) or 0), player_pos=list(player.posicao), entrada=list(entrada))
         return False
 
     dim = str(estado_est.get("dimensao_destino") or "EstadioNormal")
@@ -261,7 +272,9 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     player.estado_extra["estadio_atual_id"] = int(estadio.Id)
     player.estado_extra["posicoes_por_dimensao"] = pos_dim
     player.definir_posicao(float(destino[0]), float(destino[1]))
-    registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
+    registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player", extras={"cliente_alvo": str(client_id)})
+    registrar_evento_npc_estadio("interacao_estadio_entrada_ok", client_id=client_id, estadio_id=int(estadio.Id), nova_dimensao=dim, destino=list(player.posicao))
+    flush_debug_npc_estadio()
     return True
 
 
@@ -421,10 +434,15 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
         ignorados += 1
 
-    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados, client_id=client_id, dimensao=dim_atual)
+    obj_id_dim = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+    obj_dim = BANCO_DADOS.obter_objeto(obj_id_dim) if obj_id_dim > 0 else None
+    dim_resposta = str(getattr(obj_dim, "estado_extra", {}).get("dimensao", dim_atual) if obj_dim is not None else dim_atual)
+    chunks_resposta = _chunks_carregados_cliente(posicao_camera, dimensao=dim_resposta)
+    registrar_evento_npc_estadio("atualizador_contexto_resposta", client_id=client_id, dimensao_entrada=dim_atual, dimensao_saida=dim_resposta, chunks_entrada=len(chunks_carregados), chunks_saida=len(chunks_resposta), aplicados=aplicados, ignorados=ignorados)
+    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_resposta, client_id=client_id, dimensao=dim_resposta)
     state = _obter_state_client(client_id)
     vistos = state["objetos_vistos"]
-    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dim_atual)
+    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_resposta, vistos, client_id=client_id, dimensao=dim_resposta)
     if diffs_extra:
         if pacotes:
             pacote_vis = pacotes[-1]
@@ -433,4 +451,5 @@ def processar_atualizador_json(requisicao_json: str) -> str:
         else:
             pacotes.append({"tick": 0, "diffs": diffs_extra, "sintetico": True})
 
+    flush_debug_npc_estadio()
     return _ok("Pacote cliente processado", client_id=client_id, aplicados=aplicados, ignorados=ignorados, pacotes=pacotes, tick_atual_servidor=PACOTES_TICK.tick_atual(), servidor_ts=time.time())

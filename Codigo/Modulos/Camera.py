@@ -37,6 +37,21 @@ class Camera:
             return
         self.LimitesMundoTiles = (largura, altura)
         self.LimitesToroidais = bool(toroidal)
+        self._normalizar_posicao_limites()
+
+    def _normalizar_posicao_limites(self) -> None:
+        if not self.LimitesMundoTiles:
+            return
+        largura, altura = self.LimitesMundoTiles
+        x, y = float(self.PosicaoTiles[0]), float(self.PosicaoTiles[1])
+        if self.LimitesToroidais:
+            self.PosicaoTiles = (x % largura, y % altura)
+            return
+        tela_w_tiles = float(self.TamanhoTelaPx[0]) / max(1.0, float(self.TilePx))
+        tela_h_tiles = float(self.TamanhoTelaPx[1]) / max(1.0, float(self.TilePx))
+        max_x = max(0.0, float(largura) - tela_w_tiles)
+        max_y = max(0.0, float(altura) - tela_h_tiles)
+        self.PosicaoTiles = (max(0.0, min(max_x, x)), max(0.0, min(max_y, y)))
 
     @staticmethod
     def _delta_toroidal(origem: float, destino: float, tamanho: float) -> float:
@@ -78,6 +93,7 @@ class Camera:
                 x = max(0.0, min(max_x, x))
                 y = max(0.0, min(max_y, y))
         self.PosicaoTiles = (x, y)
+        self._normalizar_posicao_limites()
         return self.PosicaoTiles
 
     def mundo_para_tela_px(self, posicao_mundo_tiles: Vector2) -> Vector2:

@@ -266,6 +266,9 @@ class Controle:
             max(0.0, min(max(0.0, altura - margem), float(py))),
         )
 
+    def normalizar_posicao_mundo(self):
+        self._aplicar_loop_mundo()
+
     def _tile_atual(self):
         x, y = self.Ator.Posicao
         bx = int(math.floor(x))

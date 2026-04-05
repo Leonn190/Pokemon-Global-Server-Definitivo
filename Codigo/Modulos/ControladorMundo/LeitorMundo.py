@@ -87,11 +87,47 @@ class LeitorMundo:
         if self._thread_chunks and self._thread_chunks.is_alive():
             self._thread_chunks.join(timeout=timeout)
 
-    def _chunk_atual_player(self) -> Tuple[int, int]:
+
+    def posicao_referencia(self) -> Vector2:
+        """Posição de referência para consulta de chunks.
+
+        Usa o player local quando disponível para evitar buracos visuais
+        nas bordas toroidais (a câmera pode ficar negativa/offset por
+        centralização antes do player realmente cruzar a borda).
+        """
+        entidade = getattr(self.Camera, "EntidadeMain", None)
+        pos_entidade = getattr(entidade, "Posicao", None)
+        if isinstance(pos_entidade, (list, tuple)) and len(pos_entidade) == 2:
+            try:
+                return (float(pos_entidade[0]), float(pos_entidade[1]))
+            except Exception:
+                pass
         pos_camera = getattr(self.Camera, "PosicaoTiles", (0.0, 0.0))
+        try:
+            return (float(pos_camera[0]), float(pos_camera[1]))
+        except Exception:
+            return (0.0, 0.0)
+
+    def _normalizar_chunk_referencia(self, chunk: Tuple[int, int]) -> Tuple[int, int]:
+        with self._lock:
+            meta = dict(self.MetaMundo)
+        largura_blocos = int(meta.get("largura_blocos", 0) or 0)
+        altura_blocos = int(meta.get("altura_blocos", 0) or 0)
+        tamanho = max(1, int(self.TamanhoChunkBlocos))
+        if largura_blocos <= 0 or altura_blocos <= 0:
+            return (int(chunk[0]), int(chunk[1]))
+        total_x = max(1, int((largura_blocos + tamanho - 1) // tamanho))
+        total_y = max(1, int((altura_blocos + tamanho - 1) // tamanho))
+        if bool(getattr(self.Camera, "LimitesToroidais", False)):
+            return (int(chunk[0]) % total_x, int(chunk[1]) % total_y)
+        return (max(0, min(total_x - 1, int(chunk[0]))), max(0, min(total_y - 1, int(chunk[1]))))
+
+    def _chunk_atual_player(self) -> Tuple[int, int]:
+        pos_ref = self.posicao_referencia()
         tamanho = max(1, int(self.TamanhoChunkBlocos))
         try:
-            return (int(float(pos_camera[0]) // tamanho), int(float(pos_camera[1]) // tamanho))
+            bruto = (int(float(pos_ref[0]) // tamanho), int(float(pos_ref[1]) // tamanho))
+            return self._normalizar_chunk_referencia(bruto)
         except Exception:
             return (0, 0)
 
@@ -111,9 +147,9 @@ class LeitorMundo:
             time.sleep(self.IntervaloPoll)
 
     def _coletar_chunks_servidor(self) -> Optional[PacoteMundo]:
-        pos_camera = getattr(self.Camera, "PosicaoTiles", (0.0, 0.0))
+        pos_ref = self.posicao_referencia()
         try:
-            return self.CallbackAtualizacao(self.ServerLink, self.ClientId, tuple(pos_camera), int(self.RaioChunks))
+            return self.CallbackAtualizacao(self.ServerLink, self.ClientId, tuple(pos_ref), int(self.RaioChunks))
         except Exception:
             return None
 
@@ -190,6 +226,7 @@ class LeitorMundo:
             self.Chunks = chunks_atuais
             if houve_alteracao_chunks or meta_alterada:
                 self._versao_chunks += 1
+                self._ultimo_chunk_player = None
         self.descartar_chunks_fora_do_anel()
 
     def _obter_superficie_chunk(self, chave_chunk: Tuple[int, int], grid: List[List[int]], tile_px: int) -> Optional[pygame.Surface]:
@@ -213,47 +250,54 @@ class LeitorMundo:
 
     def renderizar_mundo(self, tela) -> None:
         tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
-        player = getattr(self.Camera, "EntidadeMain", None)
-        pos_player = getattr(player, "Posicao", (0.0, 0.0))
         with self._lock:
             tamanho_chunk = max(1, int(self.TamanhoChunkBlocos)); meta = dict(self.MetaMundo); chunks_ref = self.Chunks
-        try:
-            chunk_player_x = int(float(pos_player[0]) // tamanho_chunk); chunk_player_y = int(float(pos_player[1]) // tamanho_chunk)
-        except Exception:
-            chunk_player_x = 0; chunk_player_y = 0
         if not chunks_ref:
             return
-        try:
-            raio_render_chunks = max(1, int(meta.get("raio_chunks_ativo", self.RaioChunks)))
-        except Exception:
-            raio_render_chunks = max(1, int(self.RaioChunks))
 
         largura_blocos = int(meta.get("largura_blocos", 0) or 0) if isinstance(meta, dict) else 0
         altura_blocos = int(meta.get("altura_blocos", 0) or 0) if isinstance(meta, dict) else 0
+        largura_mundo = float(largura_blocos)
+        altura_mundo = float(altura_blocos)
         chunks_x = max(1, int((largura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if largura_blocos > 0 else 0
         chunks_y = max(1, int((altura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if altura_blocos > 0 else 0
         toroidal = bool(getattr(self.Camera, "LimitesToroidais", False)) and chunks_x > 0 and chunks_y > 0
 
-        chaves_visiveis = [((chunk_player_x + dx, chunk_player_y + dy), chunk_player_x + dx, chunk_player_y + dy)
-                           for dy in range(-raio_render_chunks, raio_render_chunks + 1)
-                           for dx in range(-raio_render_chunks, raio_render_chunks + 1)]
-        draw_ops = []
-        for chave, raw_x, raw_y in chaves_visiveis:
-            chave_real = chave
-            if toroidal:
-                chave_real = (int(raw_x) % chunks_x, int(raw_y) % chunks_y)
-            grid = chunks_ref.get(chave_real)
+        cam_x, cam_y = map(float, getattr(self.Camera, "PosicaoTiles", (0.0, 0.0)))
+        if toroidal:
+            if largura_mundo > 0.0:
+                cam_x %= largura_mundo
+            if altura_mundo > 0.0:
+                cam_y %= altura_mundo
+
+        tela_w, tela_h = tela.get_size()
+        for chave_real, grid in chunks_ref.items():
             if not grid:
                 continue
             superficie = self._obter_superficie_chunk(chave_real, grid, tile_px)
-            if superficie is not None:
-                draw_ops.append((superficie, raw_x * tamanho_chunk, raw_y * tamanho_chunk))
-
-        cam_x, cam_y = map(float, getattr(self.Camera, "PosicaoTiles", (0.0, 0.0)))
-        tela_w, tela_h = tela.get_size()
-        for superficie_chunk, origem_x, origem_y in draw_ops:
-            px = (origem_x - cam_x) * tile_px
-            py = (origem_y - cam_y) * tile_px
-            if px > tela_w or py > tela_h or (px + superficie_chunk.get_width()) < 0 or (py + superficie_chunk.get_height()) < 0:
+            if superficie is None:
                 continue
-            tela.blit(superficie_chunk, (int(px), int(py)))
+
+            origem_base_x = int(chave_real[0]) * tamanho_chunk
+            origem_base_y = int(chave_real[1]) * tamanho_chunk
+            if toroidal and largura_mundo > 0.0 and altura_mundo > 0.0:
+                ciclo_x = int(round((cam_x - float(origem_base_x)) / largura_mundo))
+                ciclo_y = int(round((cam_y - float(origem_base_y)) / altura_mundo))
+                offs_x = (ciclo_x - 1, ciclo_x, ciclo_x + 1)
+                offs_y = (ciclo_y - 1, ciclo_y, ciclo_y + 1)
+                for ox in offs_x:
+                    for oy in offs_y:
+                        origem_x = float(origem_base_x) + (float(ox) * largura_mundo)
+                        origem_y = float(origem_base_y) + (float(oy) * altura_mundo)
+                        px = (origem_x - cam_x) * tile_px
+                        py = (origem_y - cam_y) * tile_px
+                        if px > tela_w or py > tela_h or (px + superficie.get_width()) < 0 or (py + superficie.get_height()) < 0:
+                            continue
+                        tela.blit(superficie, (int(px), int(py)))
+                continue
+
+            px = (float(origem_base_x) - cam_x) * tile_px
+            py = (float(origem_base_y) - cam_y) * tile_px
+            if px > tela_w or py > tela_h or (px + superficie.get_width()) < 0 or (py + superficie.get_height()) < 0:
+                continue
+            tela.blit(superficie, (int(px), int(py)))

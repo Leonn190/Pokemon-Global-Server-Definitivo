@@ -44,7 +44,8 @@ class ControladorMundo:
     def _bootstrap_objetos_remotos_iniciais(self, link, client_id):
         """Bootstrap one-shot usando o mesmo contrato de pacotes do loop contínuo."""
         raio_chunks = max(1, int(getattr(self.Leitor, "RaioChunks", getattr(self.Leitor, "raio_chunks", 4)) or 4))
-        resposta = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=self.Camera.PosicaoTiles, raio_chunks=raio_chunks)
+        pos_ref = self.Leitor.posicao_referencia()
+        resposta = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=pos_ref, raio_chunks=raio_chunks)
         if not isinstance(resposta, dict):
             return
         if isinstance(resposta.get("chunks"), list):

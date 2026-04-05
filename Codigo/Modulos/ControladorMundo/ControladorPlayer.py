@@ -37,6 +37,7 @@ class ControladorPlayer:
         self._ultimo_pivo_visual_local_tela: Optional[Tuple[float, float]] = None
         self._coleta_tapa_enviada = False
         self._colisao_pokemon_pendente: Optional[Dict[str, object]] = None
+        self._normalizacao_posicao_pendente = False
 
     @property
     def player_local(self):
@@ -136,6 +137,16 @@ class ControladorPlayer:
             dt=dt,
         )
         ator.definir_posicao(px, py)
+        self._normalizar_posicao_player_local()
+
+    def _normalizar_posicao_player_local(self) -> None:
+        ator = self._player_local
+        controle = getattr(ator, "Controle", None) if ator is not None else None
+        if controle is None:
+            return
+        normalizar = getattr(controle, "normalizar_posicao_mundo", None)
+        if callable(normalizar):
+            normalizar()
 
     def consumir_colisao_pokemon(self) -> Optional[Dict[str, object]]:
         evento = dict(self._colisao_pokemon_pendente) if isinstance(self._colisao_pokemon_pendente, dict) else None
@@ -421,6 +432,9 @@ class ControladorPlayer:
     def atualizar_frame(self, eventos, dt, camera, bloqueado: bool) -> None:
         if self._player_local is None:
             return
+        if self._normalizacao_posicao_pendente:
+            self._normalizar_posicao_player_local()
+            self._normalizacao_posicao_pendente = False
         dt = max(0.0, float(dt))
         perfil = getattr(self._player_local, "Perfil", None)
         if perfil is not None:
@@ -595,6 +609,7 @@ class ControladorPlayer:
         if teleporte or houve_transicao_estadio:
             dados["hard"] = True
             self._player_local.update(dados)
+            self._normalizacao_posicao_pendente = True
             self._ativar_bloqueio_correcao()
             return
 

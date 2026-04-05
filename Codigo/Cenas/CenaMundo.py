@@ -2,7 +2,7 @@ import pygame
 
 from Codigo.Modulos.Camera import Camera
 from Codigo.Modulos.ControladorMundo.ControladorMundo import ControladorMundo
-from Codigo.Modulos.ElementosHud import ElementosHud
+from Codigo.Modulos.ElementosHudMundo import ElementosHudMundo
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
@@ -28,7 +28,7 @@ class CenaMundo:
         self.Camera = None
         self.ControladorMundo = None
         self.EntidadeMain = None
-        self.ElementosHud = ElementosHud()
+        self.ElementosHud = ElementosHudMundo()
         self.SubtelaOpcoes = SubtelaOpcoes()
         self._desconectado = False
         self.TelaAtual = None
@@ -147,6 +147,7 @@ class CenaMundo:
                             self._solicitar_interacao_npc(JOGO, npc_obj)
                     break
         self._processar_estado_dialogo_npc(JOGO)
+        self.ElementosHud.atualizar(dt)
         self.Camera.atualizar(dt)
 
         JOGO.TELA.fill((20, 20, 28))
@@ -266,6 +267,7 @@ class CenaMundo:
             npc_payload=npc_obj,
             ao_encerrar=lambda: self._finalizar_dialogo_npc(jogo),
             ao_iniciar_batalha=lambda contexto: self._iniciar_batalha_por_dialogo(jogo, contexto),
+            ao_registrar_ganho=self.ElementosHud.registrar_ganho,
             ator_local=player,
         )
 

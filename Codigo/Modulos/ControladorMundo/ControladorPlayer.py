@@ -48,6 +48,14 @@ class ControladorPlayer:
     def client_id_local(self) -> str:
         return str(self._client_id_local or "")
 
+    def forcar_dimensao_local(self, dimensao: str) -> None:
+        if self._player_local is None:
+            return
+        dim = str(dimensao or "").strip()
+        if not dim:
+            return
+        setattr(self._player_local, "DimensaoAtual", dim)
+
     def _hidratar_ator_payload(self, ator: Optional[Ator], dados: Dict[str, object], com_controle: bool) -> Ator:
         pos = dados.get("posicao", (0.0, 0.0))
         if not isinstance(pos, (list, tuple)) or len(pos) != 2:

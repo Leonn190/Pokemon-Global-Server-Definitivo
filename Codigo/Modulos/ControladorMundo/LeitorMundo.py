@@ -42,7 +42,7 @@ class LeitorMundo:
         self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}
         self._cache_assinaturas_chunks: Dict[Tuple[int, int], Tuple[Tuple[int, ...], ...]] = {}
         self._cache_tile_px: int = max(1, int(getattr(self.Camera, "TilePx", 50)))
-        self._ultimo_chunk_player: Optional[Tuple[int, int]] = None
+        self._ultimo_chunk_player: Optional[Tuple[str, int, int]] = None
         self._ultima_versao_chunks_regras = -1
 
     def atualizar_regras_mundo(self, player_controle=None) -> None:
@@ -85,13 +85,15 @@ class LeitorMundo:
         if self._thread_chunks and self._thread_chunks.is_alive():
             self._thread_chunks.join(timeout=timeout)
 
-    def _chunk_atual_player(self) -> Tuple[int, int]:
+    def _chunk_atual_player(self) -> Tuple[str, int, int]:
         pos_camera = getattr(self.Camera, "PosicaoTiles", (0.0, 0.0))
         tamanho = max(1, int(self.TamanhoChunkBlocos))
+        player = getattr(self.Camera, "EntidadeMain", None)
+        dim = str(getattr(player, "DimensaoAtual", "") or self.MetaMundo.get("dimensao") or "Mundo")
         try:
-            return (int(float(pos_camera[0]) // tamanho), int(float(pos_camera[1]) // tamanho))
+            return (dim, int(float(pos_camera[0]) // tamanho), int(float(pos_camera[1]) // tamanho))
         except Exception:
-            return (0, 0)
+            return (dim, 0, 0)
 
     def _loop_chunks(self) -> None:
         while self._ativo_chunks:
@@ -136,6 +138,8 @@ class LeitorMundo:
                 if valor_meta is not None and self.MetaMundo.get(chave_meta) != valor_meta:
                     self.MetaMundo[chave_meta] = valor_meta
                     meta_alterada = True
+                    if chave_meta == "dimensao":
+                        self._ultimo_chunk_player = None
             chunk_tamanho = meta.get("chunk_tamanho", meta.get("chunk_blocos"))
             if chunk_tamanho is not None:
                 chunk_tamanho_novo = max(1, int(chunk_tamanho))

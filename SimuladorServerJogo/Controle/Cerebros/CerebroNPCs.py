@@ -11,6 +11,7 @@ from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer
 from SimuladorServerJogo.Controle.EstadoServidor import carregar_npcs_vendedores_estado, salvar_npcs_vendedores_estado
 from SimuladorServerJogo.Geradores.GeradorMundo import carregar_estado_mundo
+from SimuladorServerJogo.Controle.DebugNpcEstadio import registrar_evento_npc_estadio
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]
@@ -176,6 +177,7 @@ class CerebroNPCs:
                 }
                 adicionou = True
         if adicionou:
+            registrar_evento_npc_estadio("npcs_combatentes_injetados", quantidade=sum(1 for n in self._npcs.values() if str(n.get("estilo") or "") == "combatente"))
             salvar_npcs_vendedores_estado(self._npcs, force=True)
 
     def _forcar_josefa_chunk_inicial(self, spawn_x: float, spawn_y: float) -> None:
@@ -445,11 +447,16 @@ class CerebroNPCs:
 
             deve_materializar = self._chunk_in_qualquer(atual, chunks_carregados, chunks_simulados)
             oid = int(npc.get("id", 0) or 0)
-            categoria_npc = "npc_combatente" if str(npc.get("estilo") or "").strip().lower() == "combatente" else "npc_vendedor"
+            estilo_npc = str(npc.get("estilo") or "").strip().lower()
+            categoria_npc = "npc_combatente" if estilo_npc == "combatente" else "npc_vendedor"
+            if estilo_npc == "combatente":
+                registrar_evento_npc_estadio("npc_combatente_tick", npc_id=oid, nome=str(npc.get("nome") or ""), dimensao=str(npc.get("dimensao") or "Mundo"), posicao=[float(atual[0]), float(atual[1])], deve_materializar=bool(deve_materializar), chunk=BANCO_DADOS.chunk_da_posicao(atual), estatico=bool(npc.get("estatico", False)), interacao=bool(inter.get("ativa", False)), esperando=bool(esperando))
             obj = BANCO_DADOS.obter_objeto(oid)
             if deve_materializar:
                 if not isinstance(obj, AtorServer):
                     obj = self._materializar_npc(npc)
+                    if estilo_npc == "combatente":
+                        registrar_evento_npc_estadio("npc_combatente_spawn", npc_id=int(obj.Id), dimensao=str(npc.get("dimensao") or "Mundo"), posicao=[float(obj.posicao[0]), float(obj.posicao[1])])
                     registrar_diff_cb("spawn", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria=categoria_npc)
                 else:
                     BANCO_DADOS.atualizar_objeto(int(obj.Id), {"posicao": [float(atual[0]), float(atual[1])]})
@@ -458,11 +465,15 @@ class CerebroNPCs:
                     obj.estado_extra["interacao"] = dict(npc.get("interacao", {}))
                     obj.estado_extra["angulo"] = float(npc.get("angulo", obj.estado_extra.get("angulo", 0.0)) or 0.0)
                     obj.estado_extra["dimensao"] = str(npc.get("dimensao") or obj.estado_extra.get("dimensao", "Mundo"))
+                    if estilo_npc == "combatente":
+                        registrar_evento_npc_estadio("npc_combatente_update", npc_id=int(obj.Id), dimensao=str(npc.get("dimensao") or "Mundo"), posicao=[float(obj.posicao[0]), float(obj.posicao[1])])
                     registrar_diff_cb("update", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria=categoria_npc)
             else:
                 if isinstance(obj, AtorServer):
                     rem = BANCO_DADOS.remover_objeto(oid)
                     if rem is not None:
+                        if estilo_npc == "combatente":
+                            registrar_evento_npc_estadio("npc_combatente_despawn", npc_id=oid, dimensao=str(npc.get("dimensao") or "Mundo"), posicao=[float(atual[0]), float(atual[1])], motivo="fora_chunks")
                         registrar_diff_cb("despawn", payload={"id": oid}, escopo={"centro": [atual[0], atual[1]], "raio": 240.0}, objeto_id=oid, autor="server", categoria=categoria_npc)
 
         if tick % 60 == 0:

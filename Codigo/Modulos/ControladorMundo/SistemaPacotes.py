@@ -119,8 +119,12 @@ class SistemaPacotes:
                 continue
 
             self._pendentes_reenvio = []
+            meta_resposta = resposta.get("meta") if isinstance(resposta.get("meta"), dict) else {}
+            dimensao_meta = str(meta_resposta.get("dimensao") or "").strip()
+            if dimensao_meta:
+                self._player.forcar_dimensao_local(dimensao_meta)
             if isinstance(resposta.get("chunks"), list):
-                self._leitor.processar_pacote_chunks({"chunks": resposta.get("chunks", []), "meta": resposta.get("meta", {})})
+                self._leitor.processar_pacote_chunks({"chunks": resposta.get("chunks", []), "meta": meta_resposta})
 
             pacotes = resposta.get("pacotes", []) if isinstance(resposta.get("pacotes"), list) else []
             for pacote in self._deduplicar_pacotes(pacotes):

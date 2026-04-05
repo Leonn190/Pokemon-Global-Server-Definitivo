@@ -74,7 +74,7 @@
     "riverMaxAttemptsPerSource": 50
   },
   "pois": {
-    "gymCount": 30,
+    "gymCount": 20,
     "dungeonCount": 30,
     "villageCount": 10,
     "gymDistance": 230,

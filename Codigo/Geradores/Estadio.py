@@ -105,28 +105,209 @@ class EstadioInterno:
 
         largura = float(estado.get("largura_interna", 60.0) or 60.0)
         altura = float(estado.get("altura_interna", 40.0) or 40.0)
-        centro = estado.get("arena_centro") if isinstance(estado.get("arena_centro"), (list, tuple)) and len(estado.get("arena_centro")) == 2 else [largura * 0.5, altura * 0.5]
-        porta = estado.get("saida_interna_pos") if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2 else [largura * 0.5, altura - 3.0]
-        cor_a = (220, 233, 247)
+        centro = (
+            estado.get("arena_centro")
+            if isinstance(estado.get("arena_centro"), (list, tuple)) and len(estado.get("arena_centro")) == 2
+            else [largura * 0.5, altura * 0.5]
+        )
+        porta = (
+            estado.get("saida_interna_pos")
+            if isinstance(estado.get("saida_interna_pos"), (list, tuple)) and len(estado.get("saida_interna_pos")) == 2
+            else [largura * 0.5, altura - 2.0]
+        )
 
-        parede = pygame.Rect(0, 0, int(largura * tile), int(altura * tile))
-        parede.topleft = tuple(map(int, camera.mundo_para_tela_px((0.0, 0.0))))
-        espessura = max(6, int(tile * 0.42))
-        pygame.draw.rect(tela, (54, 61, 77), parede, espessura, border_radius=max(10, int(tile * 0.2)))
+        def px(v: float) -> int:
+            return max(1, int(v * tile))
 
-        cx, cy = camera.mundo_para_tela_px((float(centro[0]), float(centro[1])))
-        pw, ph = max(120, int(12 * tile)), max(90, int(7 * tile))
-        arena = pygame.Rect(0, 0, pw, ph)
-        arena.center = (int(cx), int(cy))
-        pygame.draw.rect(tela, (202, 220, 238), arena, border_radius=max(8, int(tile * 0.18)))
-        pygame.draw.rect(tela, (126, 156, 186), arena, max(3, int(tile * 0.12)), border_radius=max(8, int(tile * 0.18)))
-        pygame.draw.line(tela, (242, 246, 250), (arena.left + 12, arena.centery), (arena.right - 12, arena.centery), max(2, int(tile * 0.08)))
-        pygame.draw.circle(tela, (242, 246, 250), (arena.centerx, arena.centery), max(8, int(tile * 0.35)), max(2, int(tile * 0.08)))
+        def tela_px(pos):
+            x, y = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
+            return int(x), int(y)
 
-        px, py = camera.mundo_para_tela_px((float(porta[0]), float(porta[1])))
-        porta_rect = pygame.Rect(0, 0, max(18, int(tile * 0.9)), max(24, int(tile * 1.25)))
-        porta_rect.midbottom = (int(px), int(py))
-        recorte = pygame.Rect(porta_rect.left - 6, porta_rect.top - 2, porta_rect.width + 12, porta_rect.height + 8)
-        pygame.draw.rect(tela, cor_a, recorte)
-        pygame.draw.rect(tela, (42, 48, 60), porta_rect, border_radius=max(4, int(tile * 0.08)))
-        pygame.draw.rect(tela, (124, 188, 255), porta_rect.inflate(-max(4, int(tile * 0.2)), -max(4, int(tile * 0.2))), border_radius=max(3, int(tile * 0.06)))
+        # Paleta
+        cor_parede = (54, 61, 77)
+        cor_arena = (222, 232, 244)
+        cor_arena_borda = (120, 150, 184)
+        cor_arena_sombra = (160, 178, 198)
+        cor_arena_centro = (245, 248, 252)
+        cor_linha = (242, 246, 250)
+
+        cor_porta_moldura = (44, 50, 64)
+        cor_porta_arco = (68, 79, 100)
+        cor_porta_luz = (115, 185, 255)
+        cor_porta_luz_2 = (190, 230, 255)
+
+        cor_corredor = (184, 198, 216)
+        cor_corredor_borda = (132, 150, 174)
+
+        # Moldura externa da sala
+        sala = pygame.Rect(0, 0, int(largura * tile), int(altura * tile))
+        sala.topleft = tela_px((0.0, 0.0))
+        espessura = max(6, px(0.42))
+        pygame.draw.rect(
+            tela,
+            cor_parede,
+            sala,
+            espessura,
+            border_radius=max(12, px(0.22)),
+        )
+
+        # Arena principal
+        cx, cy = tela_px((float(centro[0]), float(centro[1])))
+
+        arena_w = max(px(18), int(12 * tile))
+        arena_h = max(px(10), int(7.5 * tile))
+        arena = pygame.Rect(0, 0, arena_w, arena_h)
+        arena.center = (cx, cy)
+
+        # Sombra da arena
+        arena_sombra = arena.inflate(px(1.0), px(0.9))
+        arena_sombra.y += px(0.16)
+        pygame.draw.rect(
+            tela,
+            cor_arena_sombra,
+            arena_sombra,
+            border_radius=max(18, px(0.30)),
+        )
+
+        # Corpo da arena
+        pygame.draw.rect(
+            tela,
+            cor_arena,
+            arena,
+            border_radius=max(18, px(0.30)),
+        )
+        pygame.draw.rect(
+            tela,
+            cor_arena_borda,
+            arena,
+            max(3, px(0.10)),
+            border_radius=max(18, px(0.30)),
+        )
+
+        # Campo interno
+        campo = arena.inflate(-px(2.0), -px(1.7))
+        pygame.draw.rect(
+            tela,
+            cor_arena_centro,
+            campo,
+            border_radius=max(14, px(0.22)),
+        )
+
+        # Linha central
+        pygame.draw.line(
+            tela,
+            cor_linha,
+            (campo.left + px(0.35), campo.centery),
+            (campo.right - px(0.35), campo.centery),
+            max(2, px(0.08)),
+        )
+
+        # Símbolo central estilo batalha/pokebola
+        raio_centro = max(12, px(0.60))
+        pygame.draw.circle(
+            tela,
+            cor_linha,
+            (campo.centerx, campo.centery),
+            raio_centro,
+            max(2, px(0.08)),
+        )
+        pygame.draw.circle(
+            tela,
+            cor_linha,
+            (campo.centerx, campo.centery),
+            max(3, px(0.12)),
+        )
+
+        # Marcas laterais de posição
+        raio_lateral = max(10, px(0.42))
+        dist_lateral = int(campo.width * 0.27)
+        for sx in (-1, 1):
+            bx = campo.centerx + sx * dist_lateral
+            by = campo.centery
+            pygame.draw.circle(tela, (232, 238, 246), (bx, by), raio_lateral)
+            pygame.draw.circle(tela, cor_arena_borda, (bx, by), raio_lateral, max(2, px(0.08)))
+
+        # Porta
+        px_porta, py_porta = tela_px((float(porta[0]), float(porta[1])))
+
+        porta_w = max(px(1.7), 34)
+        porta_h = max(px(2.4), 52)
+
+        porta_externa = pygame.Rect(0, 0, porta_w, porta_h)
+        porta_externa.midbottom = (px_porta, py_porta)
+
+        pygame.draw.rect(
+            tela,
+            cor_porta_moldura,
+            porta_externa,
+            border_radius=max(8, px(0.16)),
+        )
+
+        # Arco da porta
+        arco = pygame.Rect(
+            porta_externa.left - px(0.15),
+            porta_externa.top - px(0.75),
+            porta_externa.width + px(0.3),
+            max(px(1.0), int(porta_externa.height * 0.62)),
+        )
+        pygame.draw.ellipse(tela, cor_porta_arco, arco)
+        pygame.draw.ellipse(tela, cor_porta_moldura, arco, max(2, px(0.07)))
+
+        # Centro luminoso
+        porta_interna = porta_externa.inflate(-px(0.42), -px(0.42))
+        pygame.draw.rect(
+            tela,
+            cor_porta_luz,
+            porta_interna,
+            border_radius=max(6, px(0.12)),
+        )
+
+        brilho = porta_interna.inflate(-px(0.45), -px(0.55))
+        if brilho.width > 4 and brilho.height > 4:
+            pygame.draw.rect(
+                tela,
+                cor_porta_luz_2,
+                brilho,
+                border_radius=max(4, px(0.08)),
+            )
+
+        # Faixa superior da porta
+        faixa_topo = pygame.Rect(
+            porta_externa.left - px(0.25),
+            porta_externa.top - px(0.22),
+            porta_externa.width + px(0.5),
+            max(6, px(0.24)),
+        )
+        pygame.draw.rect(
+            tela,
+            (88, 100, 124),
+            faixa_topo,
+            border_radius=max(4, px(0.08)),
+        )
+
+        # Luzes pequenas laterais
+        luz_r = max(3, px(0.10))
+        pygame.draw.circle(tela, (255, 214, 95), (porta_externa.left + px(0.22), porta_externa.top + px(0.34)), luz_r)
+        pygame.draw.circle(tela, (255, 214, 95), (porta_externa.right - px(0.22), porta_externa.top + px(0.34)), luz_r)
+
+        # Corredor da porta até a arena
+        corredor_top = arena.bottom - px(0.2)
+        corredor_bottom = py_porta - px(0.55)
+        if corredor_bottom > corredor_top:
+            corredor_w = max(px(2.0), int(arena.width * 0.16))
+            corredor = pygame.Rect(0, 0, corredor_w, corredor_bottom - corredor_top)
+            corredor.midtop = (px_porta, corredor_top)
+
+            pygame.draw.rect(
+                tela,
+                cor_corredor,
+                corredor,
+                border_radius=max(8, px(0.16)),
+            )
+            pygame.draw.rect(
+                tela,
+                cor_corredor_borda,
+                corredor,
+                max(2, px(0.07)),
+                border_radius=max(8, px(0.16)),
+            )

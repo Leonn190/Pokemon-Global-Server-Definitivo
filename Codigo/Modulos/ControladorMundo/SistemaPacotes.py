@@ -10,11 +10,12 @@ from Codigo.Server.ServerMundo import enviar_pacote_cliente_mundo
 
 
 class SistemaPacotes:
-    def __init__(self, controlador_objetos, controlador_player, leitor_mundo, camera) -> None:
+    def __init__(self, controlador_objetos, controlador_player, leitor_mundo, camera, callback_ciclo=None) -> None:
         self._objetos = controlador_objetos
         self._player = controlador_player
         self._leitor = leitor_mundo
         self._camera = camera
+        self._callback_ciclo = callback_ciclo
         self._server_link: Optional[str] = None
         self._client_id = "anon"
         self._ultimo_tick_recebido = 0
@@ -119,6 +120,8 @@ class SistemaPacotes:
                 continue
 
             self._pendentes_reenvio = []
+            if callable(self._callback_ciclo):
+                self._callback_ciclo(resposta.get("ciclo"))
             if isinstance(resposta.get("chunks"), list):
                 self._leitor.processar_pacote_chunks({"chunks": resposta.get("chunks", []), "meta": resposta.get("meta", {})})
 

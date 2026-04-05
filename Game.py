@@ -27,6 +27,7 @@ CONFIG = {
     "Volume": 0.5,
     "Claridade": 75,
     "Mudo": False,
+    "GraficosBons": True,
     "FPS Visivel": True,
     "Cords Visiveis": False,
     "Ping Visivel": False,
@@ -38,6 +39,7 @@ from Outros.ConfigFixa import ConfigFixa
 if ConfigFixa is not None:
     CONFIG = ConfigFixa
 
+CONFIG.setdefault("GraficosBons", True)
 CONFIG.update({"VERSÃO": 1.0})
 VerificaSonoridade(CONFIG)
 

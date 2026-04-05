@@ -409,7 +409,7 @@ def _cmd_chest(autor, args):
     if x is None or y is None:
         x, y = _pos_aleatoria_perto(autor)
     x, y = _normalizar_xy(x, y)
-    dados = gerar_bau_server(random, tipo_forcado=tipo)
+    dados = gerar_bau_server(random, dia_fixo=int(CEREBRO.snapshot_ciclo().get("dia", 0)), tipo_forcado=tipo)
     novo_id = BANCO_DADOS.gerar_id()
     bau = BauServer(id_objeto=novo_id, tipo_bau=tipo, itens=list(dados.get("itens", [])), posicao=(x, y), raio_colisao=0.42, raio_interacao=0.85, aberto=False)
     BANCO_DADOS.inserir_objeto(bau)

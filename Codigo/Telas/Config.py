@@ -82,7 +82,7 @@ def _executar_cancelar(Cena, JOGO, botao):
     _BARRAS["Volume"].set_valor(JOGO.CONFIG["Volume"] * 100)
 
     for chave, botao_toggle in _BOTOES_TOGGLE.items():
-        botao_toggle.set_estado(JOGO.CONFIG[chave])
+        botao_toggle.set_estado(bool(JOGO.CONFIG.get(chave, chave == "GraficosBons")))
 
     VerificaSonoridade(JOGO.CONFIG)
     _voltar_menu(Cena, JOGO)
@@ -117,6 +117,7 @@ def _montar_layout(Cena, JOGO):
     largura_tela, altura_tela = JOGO.TELA.get_size()
     estilo = _estilo_base()
 
+    JOGO.CONFIG.setdefault("GraficosBons", True)
     _CONFIG_INICIAL = dict(JOGO.CONFIG)
 
     largura_barra = min(900, int(largura_tela * 0.68))
@@ -136,9 +137,15 @@ def _montar_layout(Cena, JOGO):
     y_toggles = y_inicial + espacamento * 3 + 20
     x_toggles = (largura_tela - (largura_toggle * 2 + espaco_x)) // 2
 
-    chaves = ["Mudo", "FPS Visivel", "Cords Visiveis", "Ping Visivel"]
+    opcoes_toggle = [
+        ("Mudo", "Mudo"),
+        ("FPS Visível", "FPS Visivel"),
+        ("Coordenadas", "Cords Visiveis"),
+        ("Ping Visível", "Ping Visivel"),
+        ("Gráficos Bons", "GraficosBons"),
+    ]
     _BOTOES_TOGGLE = {}
-    for i, chave in enumerate(chaves):
+    for i, (rotulo, chave) in enumerate(opcoes_toggle):
         coluna = i % 2
         linha = i // 2
         x = x_toggles + coluna * (largura_toggle + espaco_x)
@@ -149,8 +156,8 @@ def _montar_layout(Cena, JOGO):
 
         botao_toggle = BotaoAlavanca(
             pygame.Rect(x, y, largura_toggle, altura_toggle),
-            chave,
-            estado_inicial=JOGO.CONFIG[chave],
+            rotulo,
+            estado_inicial=bool(JOGO.CONFIG.get(chave, chave == "GraficosBons")),
             execute=lambda jogo, estado, botao, chave=chave: _ao_toggle(chave, jogo, estado),
             style=estilo_toggle,
         )

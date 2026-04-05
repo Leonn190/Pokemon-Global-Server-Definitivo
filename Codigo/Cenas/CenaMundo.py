@@ -144,7 +144,7 @@ class CenaMundo:
         self.Camera.atualizar(dt)
 
         JOGO.TELA.fill((20, 20, 28))
-        self.ControladorMundo.renderizar(JOGO.TELA)
+        self.ControladorMundo.renderizar(JOGO.TELA, dt=dt)
 
         if player is not None:
             player.renderizar_stamina(JOGO.TELA, self.Camera, dt)

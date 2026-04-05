@@ -23,6 +23,7 @@ from SimuladorServerJogo.Controle.Cerebros.CerebroItensMundo import CerebroItens
 from SimuladorServerJogo.Controle.Cerebros.CerebroEstruturasNaturais import CerebroEstruturasNaturais
 from SimuladorServerJogo.Controle.Cerebros.CerebroXpMundo import CerebroXpMundo
 from SimuladorServerJogo.Controle.Cerebros.CerebroNPCs import CerebroNPCs
+from SimuladorServerJogo.Controle.Cerebros.CerebroCiclo import CerebroCiclo
 from SimuladorServerJogo.Controle.ServicoInventario import ServicoInventario
 
 Vector2 = Tuple[float, float]
@@ -55,6 +56,7 @@ class CerebroCentral:
         self._cerebro_estruturas = CerebroEstruturasNaturais(self)
         self._cerebro_xp_mundo = CerebroXpMundo(self)
         self._cerebro_npcs = CerebroNPCs(self)
+        self._cerebro_ciclo = CerebroCiclo()
 
     def _i(self, k: str, d: int) -> int:
         try:
@@ -140,6 +142,7 @@ class CerebroCentral:
             self._spawns_bau_ultimos_200.popleft()
 
     def _executar_tick(self) -> None:
+        self._cerebro_ciclo.executar_tick()
         self._sincronizar_registries_com_banco()
         self._limpar_janela_spawns()
         chunks_carregados, chunks_simulados = self._calcular_chunks_carregados()
@@ -191,7 +194,7 @@ class CerebroCentral:
             x0, y0 = chunk[0] * chunk_tamanho, chunk[1] * chunk_tamanho
             px = random.uniform(x0 + 0.2, x0 + chunk_tamanho - 0.2)
             py = random.uniform(y0 + 0.2, y0 + chunk_tamanho - 0.2)
-            dados = gerar_bau_server(random)
+            dados = gerar_bau_server(random, dia_fixo=int(self._cerebro_ciclo.DiaServidor))
             raio_bau = float(dados.get("raio_colisao", 0.42) or 0.42)
             if not self._posicao_spawn_valida((px, py), raio=raio_bau):
                 continue
@@ -334,6 +337,9 @@ class CerebroCentral:
 
     def contagem_baus_registrados(self) -> int:
         return len([oid for oid in self._baus_ids if BANCO_DADOS.obter_objeto(oid) is not None])
+
+    def snapshot_ciclo(self) -> Dict[str, int]:
+        return self._cerebro_ciclo.snapshot()
 
 
 CEREBRO = CerebroCentral()

@@ -30,6 +30,7 @@ def _normalizar_posicao_loop(posicao):
 
 def _ok(mensagem: str, **extras) -> str:
     payload = {"status": "ok", "mensagem": mensagem}
+    payload["ciclo"] = CEREBRO.snapshot_ciclo()
     payload.update(extras)
     return json.dumps(payload, ensure_ascii=False)
 

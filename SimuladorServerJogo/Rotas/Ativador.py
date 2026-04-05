@@ -218,6 +218,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
 
     TIQUE_SERVIDOR.ativar_por_usuario(client_id)
     meta_cerebro = CEREBRO.processar_ativacao(client_id, posicao_camera)
+    ciclo = CEREBRO.snapshot_ciclo()
     state_cli = _obter_state_client(client_id)
     obj_id = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
     obj_player = BANCO_DADOS.obter_objeto(obj_id) if obj_id > 0 else None
@@ -239,7 +240,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
                 chunks.append({"pos": [chunk[0], chunk[1]], "grid": grid, "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()})
             dim_largura = int(CEREBRO_ESTADIOS.chunks_largura * BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[0])
             dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[1])
-            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, ensure_ascii=False)
+            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "ciclo": ciclo, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, ensure_ascii=False)
 
         pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id, dimensao=dimensao)
         diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dimensao)
@@ -260,6 +261,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
             "client_id": client_id,
             "pacotes": pacotes,
             "tick_atual_servidor": PACOTES_TICK.tick_atual(),
+            "ciclo": ciclo,
             "meta": {
                 "players_ativos": int(meta_cerebro.get("players_ativos", 0)),
                 "chunks_carregados": len(chunks_servidor_carregados),

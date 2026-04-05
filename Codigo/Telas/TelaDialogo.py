@@ -9,8 +9,7 @@ from typing import Callable, Dict, List, Optional
 import pygame
 
 from Codigo.Geradores.Ator import Ator
-from Codigo.Paineis.FichaItem import FichaItem
-from Codigo.Prefabs.Botao import Botao
+from Codigo.Modulos.Loja import Loja
 from Codigo.Prefabs.Texto import Texto, TextoAnimado
 
 
@@ -35,6 +34,7 @@ class TelaDialogo:
         npc_payload: Dict[str, object],
         ao_encerrar: Optional[Callable[[], None]] = None,
         ao_iniciar_batalha: Optional[Callable[[Dict[str, object]], None]] = None,
+        ao_registrar_ganho: Optional[Callable[[Dict[str, object]], None]] = None,
         ator_local=None,
     ):
         self.Ativa = True
@@ -50,6 +50,7 @@ class TelaDialogo:
         self._player_nome = str(player_nome or "Você")
         self._player_skin = str(player_skin or "1.png")
         self._ao_iniciar_batalha = ao_iniciar_batalha
+        self._ao_registrar_ganho = ao_registrar_ganho
 
         self._ator_player = Ator(nome_skin=self._player_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
         self._ator_npc = Ator(nome_skin=self._npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
@@ -57,16 +58,24 @@ class TelaDialogo:
         self._ator_npc.Nome = self._npc_nome
 
         self._dialogo = self._carregar_dialogo()
-        self._catalogo = self._carregar_catalogo_vendedor()
         self._mapa_icones = self._mapear_icones_itens()
+        self._npc_tipo_estadio = str(estado.get("estadio_tipo") or "").strip()
+        self._loja = Loja(
+            npc_nome=self._npc_nome,
+            npc_code=self._npc_code,
+            npc_estilo=self._npc_estilo,
+            ator_local=self._ator_local,
+            valor_coluna=self._valor_coluna,
+            item_por_nome=self._item_por_nome,
+            icone_item=self._icone_item,
+            nivel_respeito_estadio=self._nivel_respeito_estadio,
+            tipo_estadio_npc=self._npc_tipo_estadio,
+            callback_ganho=self._ao_registrar_ganho,
+        )
 
         self._no_atual = str(self._dialogo.get("inicio", ""))
         self._texto_animado = TextoAnimado("", cps=48.0)
         self._opcoes: List[Dict[str, object]] = []
-        self._botoes_loja: list[dict] = []
-        self._tamanho_loja_montado: tuple[int, int] | None = None
-        self._status_compra = ""
-        self._ficha_item_tooltip = FichaItem()
         self._hover_idx = -1
         self._tempo_respiracao = 0.0
         self._cache_tamanho: tuple[int, int] | None = None
@@ -135,39 +144,6 @@ class TelaDialogo:
         except pygame.error:
             return None
 
-    def _carregar_catalogo_vendedor(self) -> Dict[str, object]:
-        arquivo = Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv"
-        if not arquivo.exists():
-            return {"padrao": [], "secreta": None}
-        with arquivo.open("r", encoding="utf-8") as f:
-            for idx, row in enumerate(csv.DictReader(f), start=1):
-                code = str(row.get("Code") or idx).strip() or str(idx)
-                nome = str(row.get("Nome") or "").strip().lower()
-                if code != self._npc_code and nome != self._npc_nome.lower():
-                    continue
-                padrao = []
-                for i in range(1, 6):
-                    item_nome = self._valor_coluna(row, f"Item {i}")
-                    preco_raw = self._valor_coluna(row, f"Preço {i}") or "0"
-                    if not item_nome:
-                        continue
-                    try:
-                        preco = int(float(preco_raw or 0))
-                    except Exception:
-                        preco = 0
-                    padrao.append({"item_nome": item_nome, "preco": max(0, preco)})
-                item_s = str(row.get("Item S") or "").strip()
-                preco_s = str(row.get("Preço S") or "0").strip()
-                secreta = None
-                if item_s:
-                    try:
-                        preco_item_s = int(float(preco_s or 0))
-                    except Exception:
-                        preco_item_s = 0
-                    secreta = {"item_nome": item_s, "preco": max(0, preco_item_s)}
-                return {"padrao": padrao, "secreta": secreta}
-        return {"padrao": [], "secreta": None}
-
     @staticmethod
     def _item_por_nome(nome_item: str) -> Dict[str, object]:
         arquivo = Path("Dados") / "Pokemon Global Server - Itens.csv"
@@ -213,97 +189,7 @@ class TelaDialogo:
 
     def _tipo_loja_atual(self) -> str:
         no = self._no_atual_obj()
-        loja = str(no.get("loja") or "").strip().lower()
-        if loja in {"padrao", "secreta"}:
-            return loja
-        if self._no_atual == "loja_secreta":
-            return "secreta"
-        if self._no_atual == "loja_padrao":
-            return "padrao"
-        return ""
-
-    def _montar_botoes_loja(self, tela_size: tuple[int, int]) -> None:
-        tipo = self._tipo_loja_atual()
-        self._botoes_loja = []
-        self._tamanho_loja_montado = tela_size
-        if tipo not in {"padrao", "secreta"}:
-            return
-
-        ofertas = []
-        if tipo == "padrao":
-                ofertas = [o for o in list(self._catalogo.get("padrao") or []) if isinstance(o, dict)]
-        else:
-            secreta = self._catalogo.get("secreta") if isinstance(self._catalogo.get("secreta"), dict) else None
-            if secreta:
-                ofertas = [dict(secreta)]
-
-        w, h = tela_size
-        cols = 5
-        gap = 16
-        lado = max(72, min(110, int(w * 0.07)))
-        total_w = (cols * lado) + ((cols - 1) * gap)
-        base_x = int((w - total_w) * 0.5)
-        base_y = int(h * 0.74)
-
-        for i, oferta in enumerate(ofertas):
-            c = i % cols
-            rect = pygame.Rect(base_x + c * (lado + gap), base_y, lado, lado)
-            nome_item = str(oferta.get("item_nome") or "")
-            item = self._item_por_nome(nome_item)
-
-            def _comprar(_jogo, _botao, item_payload=dict(item), preco=int(oferta.get("preco", 0) or 0)):
-                self._acao_compra_local(item_payload, preco)
-
-            botao = Botao(
-                rect,
-                "",
-                execute=_comprar,
-                style={
-                    "radius": 12,
-                    "border_width": 2,
-                    "bg": (35, 52, 82),
-                    "bg_hover": (51, 74, 112),
-                    "bg_pressed": (25, 39, 62),
-                    "border": (112, 138, 182),
-                    "border_hover": (201, 224, 255),
-                    "text_style": {"size": 1, "outline_thickness": 0, "shadow": False, "align": "center"},
-                },
-            )
-            self._botoes_loja.append(
-                {
-                    "botao": botao,
-                    "item": item,
-                    "preco": int(oferta.get("preco", 0) or 0),
-                    "icone": self._icone_item(item.get("Nome", "")),
-                }
-            )
-
-        fechar = Botao(
-            pygame.Rect(int((w - 220) * 0.5), base_y + lado + 52, 220, 48),
-            "Fechar conversa",
-            execute=lambda _jogo, _botao: self._encerrar(),
-            style={"radius": 12, "text_style": {"size": 18, "outline_thickness": 1, "shadow": False}},
-        )
-        self._botoes_loja.append({"botao": fechar, "item": None, "preco": None, "icone": None})
-
-    def _acao_compra_local(self, item_payload: Dict[str, object], preco: int) -> None:
-        ator = self._ator_local
-        perfil = getattr(ator, "Perfil", None)
-        inventario = getattr(ator, "Inventario", None)
-        if perfil is None or inventario is None:
-            self._status_compra = "Falha: perfil ou inventário indisponível"
-            return
-        saldo = int(getattr(perfil, "Dinheiro", 0) or 0)
-        if saldo < int(preco):
-            self._status_compra = "Dinheiro insuficiente"
-            return
-        item = dict(item_payload or {})
-        item["quantidade"] = 1
-        if not inventario.adicionar_item(item):
-            self._status_compra = "Inventário sem espaço"
-            return
-        perfil.Dinheiro = max(0, saldo - int(preco))
-        self._status_compra = f"Comprou {item.get('Nome', 'item')} por {int(preco)} dinheiro"
+        return self._loja.tipo_loja_no(self._no_atual, no)
 
     def _reconstruir_no_atual(self) -> None:
         if self._no_atual in {"", "saudacao"}:
@@ -321,13 +207,10 @@ class TelaDialogo:
         self._texto_animado.set_texto(fala)
         self._opcoes = [o for o in opcoes if isinstance(o, dict)]
         self._hover_idx = -1
-        self._status_compra = ""
-        if self._tipo_loja_atual() in {"padrao", "secreta"}:
+        self._loja.limpar_status()
+        if self._tipo_loja_atual() in {"padrao", "secreta", "presente"}:
             tela = pygame.display.get_surface()
-            self._montar_botoes_loja(tela.get_size() if tela is not None else (1280, 720))
-        else:
-            self._botoes_loja = []
-            self._tamanho_loja_montado = None
+            self._loja.montar_botoes(self._tipo_loja_atual(), tela.get_size() if tela is not None else (1280, 720))
 
     def _encerrar(self) -> None:
         self.Ativa = False
@@ -338,6 +221,27 @@ class TelaDialogo:
         if idx < 0 or idx >= len(self._opcoes):
             return
         op = self._opcoes[idx]
+        prox_presente = op.get("proximo_presente")
+        if prox_presente is not None:
+            try:
+                presente_idx = int(prox_presente)
+            except Exception:
+                presente_idx = 0
+            if presente_idx > 0:
+                status = self._loja.status_presente(presente_idx)
+                if status == "ja_coletado":
+                    prox = str(op.get("proximo_ja_coletado") or "")
+                elif status == "sem_respeito":
+                    prox = str(op.get("proximo_sem_respeito") or "")
+                else:
+                    prox = ""
+                if prox:
+                    self._no_atual = prox
+                    self._reconstruir_no_atual()
+                    return
+                if status in {"ja_coletado", "sem_respeito"}:
+                    self._encerrar()
+                return
         acao = str(op.get("acao") or "").strip().lower()
         if acao == "batalhar":
             if callable(self._ao_iniciar_batalha):
@@ -368,7 +272,7 @@ class TelaDialogo:
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 self._encerrar()
                 return True
-            if self._tipo_loja_atual() in {"padrao", "secreta"}:
+            if self._tipo_loja_atual() in {"padrao", "secreta", "presente"}:
                 continue
             if ev.type == pygame.MOUSEMOTION:
                 self._hover_idx = self._opcao_no_mouse(ev.pos)
@@ -441,36 +345,8 @@ class TelaDialogo:
 
         Texto(self._texto_animado.texto_visivel, pos=(int(w * 0.10), int(h * 0.61)), style={"size": 24, "align": "topleft", "outline": True}).draw(tela)
 
-        if self._texto_animado.concluido and self._tipo_loja_atual() in {"padrao", "secreta"}:
-            if self._tamanho_loja_montado != (w, h):
-                self._montar_botoes_loja((w, h))
-            hover_entrada = None
-            for entrada in self._botoes_loja:
-                botao = entrada.get("botao")
-                if not isinstance(botao, Botao):
-                    continue
-                botao.render(tela, eventos, dt, None)
-                icone = entrada.get("icone")
-                if icone is not None:
-                    rect = icone.get_rect(center=botao.rect.center)
-                    tela.blit(icone, rect)
-                preco = entrada.get("preco")
-                if isinstance(preco, int):
-                    Texto(f"{preco} dinheiro", pos=(botao.rect.centerx, botao.rect.bottom + 8), style={"size": 18, "align": "midtop", "outline": True, "color": (255, 223, 120)}).draw(tela)
-                if bool(getattr(botao, "hover", False)) and isinstance(entrada.get("item"), dict):
-                    hover_entrada = entrada
-            if hover_entrada is not None:
-                botao = hover_entrada.get("botao")
-                if isinstance(botao, Botao):
-                    largura_ficha = max(320, int(w * 0.28))
-                    ficha_rect = pygame.Rect(0, 0, largura_ficha, 72)
-                    ficha_rect.midbottom = (botao.rect.centerx, botao.rect.top - 8)
-                    ficha_rect.clamp_ip(pygame.Rect(8, 8, w - 16, h - 16))
-                    pygame.draw.rect(tela, (11, 17, 28), ficha_rect, border_radius=12)
-                    pygame.draw.rect(tela, (103, 138, 198), ficha_rect, 2, border_radius=12)
-                    self._ficha_item_tooltip.renderizar(tela, ficha_rect.inflate(-8, -8), hover_entrada.get("item"))
-            if self._status_compra:
-                Texto(self._status_compra, pos=(int(w * 0.5), int(h * 0.90)), style={"size": 18, "align": "midbottom", "outline": True, "color": (220, 235, 255)}).draw(tela)
+        if self._texto_animado.concluido and self._tipo_loja_atual() in {"padrao", "secreta", "presente"}:
+            self._loja.renderizar(tela, eventos, dt, self._tipo_loja_atual(), fechar_callback=self._encerrar)
             return
 
         if self._texto_animado.concluido:

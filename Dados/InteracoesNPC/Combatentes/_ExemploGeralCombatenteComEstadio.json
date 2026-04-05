@@ -1,0 +1,70 @@
+{
+  "inicio": "saudacao",
+  "inicio_por_respeito": {
+    "tipo_estadio": "Agua",
+    "mapa": {
+      "0": "saudacao_respeito_baixo",
+      "1": "saudacao",
+      "2": "saudacao",
+      "3": "saudacao",
+      "4": "saudacao"
+    }
+  },
+  "nos": {
+    "saudacao_respeito_baixo": {
+      "fala": "Você ainda está no começo no estádio Agua. Posso conversar, mas o presente principal exige respeito maior.",
+      "opcoes": [
+        {"texto": "Quero desafiar batalha assim mesmo.", "acao": "batalhar"},
+        {
+          "texto": "Posso receber o presente do estádio?",
+          "proximo_presente": 1,
+          "proximo": "presente_liberado",
+          "proximo_sem_respeito": "presente_bloqueado_respeito",
+          "proximo_ja_coletado": "presente_ja_coletado"
+        },
+        {"texto": "Encerrar conversa.", "fim": true}
+      ]
+    },
+    "saudacao": {
+      "fala": "Bom te ver de novo. Este exemplo mostra batalha + presente com validação de respeito + presente já coletado.",
+      "opcoes": [
+        {"texto": "Iniciar batalha de treino.", "acao": "batalhar"},
+        {
+          "texto": "Quero receber o presente do estádio.",
+          "proximo_presente": 1,
+          "proximo": "presente_liberado",
+          "proximo_sem_respeito": "presente_bloqueado_respeito",
+          "proximo_ja_coletado": "presente_ja_coletado"
+        },
+        {"texto": "Prefiro só conversar.", "proximo": "conversa"},
+        {"texto": "Encerrar.", "fim": true}
+      ]
+    },
+    "conversa": {
+      "fala": "Em combate real, respeito abre portas. No diálogo, isso vira caminhos claros para liberar ou bloquear presentes.",
+      "opcoes": [
+        {"texto": "Voltar ao menu principal.", "proximo": "saudacao"},
+        {"texto": "Encerrar.", "fim": true}
+      ]
+    },
+    "presente_bloqueado_respeito": {
+      "fala": "Ainda falta respeito no estádio Agua para esse presente. Continue progredindo e volte depois.",
+      "opcoes": [
+        {"texto": "Voltar para opções.", "proximo": "saudacao"},
+        {"texto": "Encerrar.", "fim": true}
+      ]
+    },
+    "presente_ja_coletado": {
+      "fala": "Esse presente já foi resgatado antes por você. O registro fica salvo por NPC e por ID do presente.",
+      "opcoes": [
+        {"texto": "Voltar para opções.", "proximo": "saudacao"},
+        {"texto": "Encerrar.", "fim": true}
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Presente liberado! Este nó usa loja=presente e permite itens, moedas ou XP com quantidade.",
+      "loja": "presente",
+      "opcoes": []
+    }
+  }
+}

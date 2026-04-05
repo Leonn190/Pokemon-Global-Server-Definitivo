@@ -28,6 +28,7 @@ class Perfil:
         self.Maestria = 0
         self.SkinsLiberadas = self._skins_liberadas_padrao()
         self.HabilidadesAprendidas = []
+        self.PresentesResgatadosNPC = {}
         self.StaminaMax = 100.0
         self.Stamina = 100.0
 
@@ -145,6 +146,17 @@ class Perfil:
             normalizadas.append(nome)
         self.SkinsLiberadas = sorted(dict.fromkeys(normalizadas), key=self._ordem_skin) or self._skins_liberadas_padrao()
         self.HabilidadesAprendidas = list(self._pegar(dados, "habilidades_aprendidas", "HabilidadesAprendidas", padrao=self.HabilidadesAprendidas) or [])
+        presentes_raw = self._pegar(dados, "presentes_resgatados_npc", "PresentesResgatadosNPC", padrao=self.PresentesResgatadosNPC)
+        presentes_norm = {}
+        if isinstance(presentes_raw, dict):
+            for npc, presentes in presentes_raw.items():
+                chave_npc = str(npc or "").strip()
+                if not chave_npc:
+                    continue
+                lista = [str(p or "").strip() for p in list(presentes or []) if str(p or "").strip()]
+                if lista:
+                    presentes_norm[chave_npc] = sorted(dict.fromkeys(lista))
+        self.PresentesResgatadosNPC = presentes_norm
         self.StaminaMax = max(1.0, float(self._pegar(dados, "stamina_max", "StaminaMax", padrao=self.StaminaMax)))
         self.Stamina = max(0.0, min(self.StaminaMax, float(self._pegar(dados, "stamina", "Stamina", padrao=self.Stamina))))
 
@@ -190,6 +202,7 @@ class Perfil:
             "maestria": self.Maestria,
             "skins_liberadas": list(self.SkinsLiberadas),
             "habilidades_aprendidas": list(self.HabilidadesAprendidas),
+            "presentes_resgatados_npc": {str(npc): list(valores) for npc, valores in self.PresentesResgatadosNPC.items()},
             "stamina": self.Stamina,
             "stamina_max": self.StaminaMax,
             "velocidade_base_tiles": self.VelocidadeBaseTiles,
@@ -211,6 +224,22 @@ class Perfil:
         for tipo in self.TIPOS_ESTADIO:
             dados[f"respeito_estadio_{tipo.lower()}"] = int(max(0, min(4, getattr(self, f"RespeitoEstadio{tipo}", 0))))
         return dados
+
+    def presente_npc_ja_resgatado(self, npc_code: str, presente_id: str) -> bool:
+        npc = str(npc_code or "").strip()
+        presente = str(presente_id or "").strip()
+        if not npc or not presente:
+            return False
+        return presente in set(self.PresentesResgatadosNPC.get(npc, []))
+
+    def registrar_presente_npc(self, npc_code: str, presente_id: str) -> None:
+        npc = str(npc_code or "").strip()
+        presente = str(presente_id or "").strip()
+        if not npc or not presente:
+            return
+        atuais = set(self.PresentesResgatadosNPC.get(npc, []))
+        atuais.add(presente)
+        self.PresentesResgatadosNPC[npc] = sorted(atuais)
 
 
 PlayerPerfil = Perfil

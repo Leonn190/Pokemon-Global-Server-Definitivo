@@ -84,7 +84,10 @@ class ControladorPlayer:
 
     def montar_player_local(self, dados_player):
         dados = dados_player if isinstance(dados_player, dict) else {}
+        estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+        dim_inicial = str(estado.get("dimensao") or dados.get("dimensao") or "Mundo")
         self._player_local = self._hidratar_ator_payload(None, dados, com_controle=True)
+        setattr(self._player_local, "DimensaoAtual", dim_inicial)
         self._objetos.definir_player_local_info(self._player_local)
         self._sincronizar_player_local()
         return self._player_local
@@ -601,6 +604,7 @@ class ControladorPlayer:
             self._objetos.aplicar_diff({"tipo": "update", "objeto_id": int(cache_payload["id"]), "payload": cache_payload})
         dim_nova = str(estado_servidor.get("dimensao") or dados.get("dimensao") or dim_antiga)
         estadio_novo = int(estado_servidor.get("estadio_atual_id", dados.get("estadio_atual_id", estadio_antigo)) or 0)
+        setattr(self._player_local, "DimensaoAtual", dim_nova)
         houve_transicao_estadio = (dim_nova != dim_antiga) or (estadio_novo != estadio_antigo)
 
         if teleporte or houve_transicao_estadio:

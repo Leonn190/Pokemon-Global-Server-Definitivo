@@ -9,6 +9,7 @@ from Codigo.Modulos.Sonoridades import SISTEMA_MUSICAS
 from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Modulos.Discord import DiscordPresence
+from Codigo.Telas.Subtela import GerenciadorSubtelas
 
 class ControladorCenas:
     def __init__(self, TELA, RELOGIO, CONFIG):
@@ -35,6 +36,7 @@ class ControladorCenas:
         self._encerrado = False
 
         self.Discord = DiscordPresence()
+        self.GerenciadorSubtelas = GerenciadorSubtelas()
 
         self.TextoFPS = Texto(
             "",
@@ -89,6 +91,7 @@ class ControladorCenas:
             retornando_para_mundo = self.Cena.ID == "Menu" and self.CenaAlvo == "Mundo"
             if not preservando_mundo and not retornando_para_mundo:
                 self.Cena.Finalizar(self)
+        self.GerenciadorSubtelas.limpar()
         
         alvo = self.CenaAlvo
         cena_anterior = self.Cena
@@ -109,7 +112,9 @@ class ControladorCenas:
                 if e.type == pygame.QUIT:
                     self.SolicitarSair()
 
-            self.Cena.Tela(self, EVENTOS, dt)
+            eventos_cena = self.GerenciadorSubtelas.filtrar_eventos_fundo(EVENTOS)
+            self.Cena.Tela(self, eventos_cena, dt)
+            self.GerenciadorSubtelas.atualizar(self, EVENTOS, dt)
             self._atualizar_discord_presenca()
 
             if self.Saindo:
@@ -127,6 +132,7 @@ class ControladorCenas:
                     self.DefinirCena()
 
             self.DesenhosAdicionais()
+            self.GerenciadorSubtelas.render(self.TELA, EVENTOS, dt, JOGO=self)
             SISTEMA_MUSICAS.atualizar_musica(self)
             pygame.display.update()
 

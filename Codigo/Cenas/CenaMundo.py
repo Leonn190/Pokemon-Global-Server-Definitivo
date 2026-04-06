@@ -15,9 +15,9 @@ from Codigo.Server.ServerMundo import (
     iniciar_interacao_npc_mundo,
     solicitar_contexto_batalha_mundo,
 )
-from Codigo.Telas.Inventario.Unificador import UnificadorInventario
+from Codigo.Telas.Inventario.SubtelaInventario import SubtelaInventario
 from Codigo.Prefabs.Terminal import Terminal
-from Codigo.Telas.TelaDialogo import TelaDialogo
+from Codigo.Telas.SubtelaDialogo import SubtelaDialogo
 from Codigo.Prefabs.Texto import Texto
 
 
@@ -31,11 +31,8 @@ class CenaMundo:
         self.ControladorMundo = None
         self.EntidadeMain = None
         self.ElementosHud = ElementosHudMundo()
-        self.SubtelaOpcoes = SubtelaOpcoes()
         self._desconectado = False
         self.TelaAtual = None
-        self.SubtelaInventario = None
-        self.SubtelaDialogo = None
         self.Terminal = None
         self._npc_interacao_id = 0
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
@@ -67,8 +64,6 @@ class CenaMundo:
         player_local = self.ControladorMundo.montar_player_local(dados)
         self.EntidadeMain = player_local
         self.Camera.definir_main(self.EntidadeMain)
-        self.SubtelaInventario = UnificadorInventario(player_local)
-
         self.ModuladorRegras.aplicar_em_cena_mundo(self, JOGO)
 
         usuario = str(JOGO.INFO.get("UsuarioLogado", "anon"))
@@ -98,15 +93,33 @@ class CenaMundo:
             EVENTOS = self.Terminal.processar_eventos(EVENTOS, bloquear_atalho_enter=inventario_aberto)
             bloqueio_gameplay = bool(self.Terminal.esta_digitando)
 
-        self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
+        ger = JOGO.GerenciadorSubtelas
+        inventario_modal = ger.obter_por_tipo(SubtelaInventario)
+        opcoes_modal = ger.obter_por_tipo(SubtelaOpcoes)
+        dialogo_ativo = ger.contem(SubtelaDialogo)
 
-        if player is not None and getattr(player, "Controle", None) is not None and self.SubtelaInventario is not None:
-            player.Controle.BloquearToggleInventario = self.SubtelaInventario.bloquear_toggle_inventario()
-        if player is not None and self.SubtelaOpcoes.Ativa:
-            player.Controle.InventarioAberto = False
+        if player is not None and getattr(player, "Controle", None) is not None:
+            player.Controle.BloquearToggleInventario = inventario_modal.bloquear_toggle_inventario() if inventario_modal is not None else False
+            if opcoes_modal is not None:
+                player.Controle.InventarioAberto = False
 
-        dialogo_ativo = bool(self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False))
-        player_bloqueado = bloqueio_gameplay or self.SubtelaOpcoes.Ativa or self.TelaAtual == "Config" or dialogo_ativo
+        if opcoes_modal is None:
+            for ev in EVENTOS:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                    opcoes = SubtelaOpcoes()
+                    opcoes.toggle(JOGO)
+                    ger.abrir(opcoes)
+                    opcoes_modal = opcoes
+                    break
+
+        if player is not None and getattr(player, "Controle", None) is not None:
+            if player.Controle.InventarioAberto and inventario_modal is None:
+                inventario_modal = ger.abrir(SubtelaInventario(player))
+                inventario_modal.Ativo = True
+            elif not player.Controle.InventarioAberto and inventario_modal is not None:
+                ger.fechar(inventario_modal)
+
+        player_bloqueado = bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
         if not player_bloqueado and int(pygame.time.get_ticks()) >= int(self._imune_combate_ate_ms or 0):
@@ -123,15 +136,6 @@ class CenaMundo:
                     JOGO.INFO["CombateContexto"] = contexto
                     JOGO.CenaAlvo = "Combate"
                     return
-
-        if player is not None and self.SubtelaInventario is not None:
-            self.SubtelaInventario.Ativo = player.Controle.InventarioAberto
-            self.SubtelaInventario.atualizar(EVENTOS, dt, JOGO.TELA.get_size())
-        if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
-            self.SubtelaDialogo.processar_eventos(EVENTOS)
-            self.SubtelaDialogo.atualizar(dt)
-        elif self.SubtelaDialogo is not None and not getattr(self.SubtelaDialogo, "Ativa", False):
-            self.SubtelaDialogo = None
 
         if (not player_bloqueado) and player is not None and getattr(player, "Controle", None) is not None:
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
@@ -172,79 +176,11 @@ class CenaMundo:
                 self._texto_estadio.set_pos((JOGO.TELA.get_width() // 2, max(45, JOGO.TELA.get_height() - 118)))
                 self._texto_estadio.draw(JOGO.TELA)
 
-        self.SubtelaOpcoes.desenhar(JOGO)
-        if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
-            self.SubtelaDialogo.desenhar(JOGO.TELA, EVENTOS, dt)
-        if self.SubtelaInventario is not None and self.SubtelaInventario.Ativo:
-            self.SubtelaInventario.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt)
 
-    def _coletar_contexto_batalha(self, colisao_pokemon: dict) -> dict:
-        player = self.ControladorMundo.player_local
-        centro = tuple(player.Posicao) if player is not None else tuple(colisao_pokemon.get("posicao", [0.0, 0.0]))
-
-        rx, ry = 50, 30
-        x0, x1 = int(centro[0]) - rx, int(centro[0]) + rx
-        y0, y1 = int(centro[1]) - ry, int(centro[1]) + ry
-
-        leitor = self.ControladorMundo.Leitor
-        chunks = dict(getattr(leitor, "Chunks", {}))
-        chunk_tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10) or 10))
-
-        tiles = []
-        for ty in range(y0, y1):
-            for tx in range(x0, x1):
-                cx = int(tx // chunk_tamanho)
-                cy = int(ty // chunk_tamanho)
-                grid = chunks.get((cx, cy))
-                if not grid:
-                    continue
-                lx = tx - (cx * chunk_tamanho)
-                ly = ty - (cy * chunk_tamanho)
-                if ly < 0 or ly >= len(grid):
-                    continue
-                row = grid[ly]
-                if lx < 0 or lx >= len(row):
-                    continue
-                tiles.append({"x": tx - x0, "y": ty - y0, "bloco": int(row[lx])})
-
-        estruturas = []
-        for payload in self.ControladorMundo.Objetos.ObjetosPorId.values():
-            if not isinstance(payload, dict):
-                continue
-            if not str(payload.get("tipo", "")).startswith("estrutura"):
-                continue
-            pos = payload.get("posicao")
-            if not isinstance(pos, (list, tuple)) or len(pos) != 2:
-                continue
-            x, y = float(pos[0]), float(pos[1])
-            if x < x0 or x > x1 or y < y0 or y > y1:
-                continue
-            estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
-            estruturas.append(
-                {
-                    "x": x - x0,
-                    "y": y - y0,
-                    "codigo_natural": int(payload.get("codigo_natural", estado.get("codigo_natural", 0)) or 0),
-                    "sprite": str(payload.get("sprite", "") or ""),
-                }
-            )
-
-        return {
-            "origem": [x0, y0],
-            "centro": [50, 30],
-            "largura": 100,
-            "altura": 60,
-            "arena_largura": 50,
-            "arena_altura": 30,
-            "tiles": tiles,
-            "estruturas": estruturas,
-            "pokemon_colisao": dict(colisao_pokemon),
-        }
-
     def _solicitar_interacao_npc(self, jogo, npc_obj: dict) -> None:
-        if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
+        if jogo.GerenciadorSubtelas.contem(SubtelaDialogo):
             return
         player = self.ControladorMundo.player_local
         if player is None:
@@ -265,7 +201,7 @@ class CenaMundo:
         npc_id = int(npc_obj.get("id", 0) or 0)
         self._npc_interacao_id = npc_id
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
-        self.SubtelaDialogo = TelaDialogo(
+        jogo.GerenciadorSubtelas.abrir(SubtelaDialogo(
             player_nome=str(getattr(player, "Nome", "") or client_id),
             player_skin=str(getattr(player, "NomeSkin", "S1.png")),
             npc_payload=npc_obj,
@@ -273,7 +209,7 @@ class CenaMundo:
             ao_iniciar_batalha=lambda contexto: self._iniciar_batalha_por_dialogo(jogo, contexto),
             ao_registrar_ganho=self.ElementosHud.registrar_ganho,
             ator_local=player,
-        )
+        ))
 
     def _iniciar_batalha_por_dialogo(self, jogo, contexto_dialogo: dict) -> None:
         player = self.ControladorMundo.player_local
@@ -291,7 +227,7 @@ class CenaMundo:
         jogo.CenaAlvo = "Combate"
 
     def _processar_estado_dialogo_npc(self, jogo) -> None:
-        if self.SubtelaDialogo is not None and getattr(self.SubtelaDialogo, "Ativa", False):
+        if jogo.GerenciadorSubtelas.contem(SubtelaDialogo):
             return
         pend = dict(self._npc_interacao_pendente or {})
         npc_id = int(pend.get("npc_id", 0) or 0)

@@ -72,8 +72,14 @@ def _scale_to_fit_keep_ratio(img: pygame.Surface, max_w: int, max_h: int) -> pyg
     return pygame.transform.smoothscale(img, (nw, nh)).convert_alpha()
 
 
-class SubtelaCriarPersonagem:
+from Codigo.Telas.Subtela import Subtela
+
+
+class SubtelaCriarPersonagem(Subtela):
+    usar_overlay_gerenciador = False
+
     def __init__(self, tela_size, ip_server, usuario, concluir_callback=None, voltar_callback=None):
+        super().__init__()
         self.ip_server = ip_server
         self.usuario = usuario
         self.concluir_callback = concluir_callback

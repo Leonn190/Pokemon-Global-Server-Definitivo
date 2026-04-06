@@ -16,8 +16,6 @@ _BOTAO_CANCELAR = None
 _BOTAO_DESLOGAR = None
 _TITULO = None
 
-_SUBTELA_ATIVA = None
-
 _CONFIG_INICIAL = None
 
 
@@ -101,13 +99,12 @@ def _confirmar_deslogar(Cena, JOGO):
 
 
 def _abrir_confirmacao_deslogar(Cena, JOGO):
-    global _SUBTELA_ATIVA
-    _SUBTELA_ATIVA = SubtelaConfirmacao(
+    JOGO.GerenciadorSubtelas.abrir(SubtelaConfirmacao(
         JOGO.TELA.get_size(),
         "Você será desconectado da conta atual.",
         confirmar_callback=lambda: _confirmar_deslogar(Cena, JOGO),
         titulo="Confirmar logout",
-    )
+    ))
 
 
 def _montar_layout(Cena, JOGO):
@@ -212,14 +209,11 @@ def _montar_layout(Cena, JOGO):
 
 
 def ResetTelaConfig():
-    global _CONFIG_CARREGADA, _SUBTELA_ATIVA
+    global _CONFIG_CARREGADA
     _CONFIG_CARREGADA = False
-    _SUBTELA_ATIVA = None
 
 
 def TelaConfig(Cena, JOGO, EVENTOS, dt):
-    global _SUBTELA_ATIVA
-
     largura_tela, altura_tela = JOGO.TELA.get_size()
     if (not _CONFIG_CARREGADA) or _TAMANHO_CACHE != (largura_tela, altura_tela):
         _montar_layout(Cena, JOGO)
@@ -227,8 +221,8 @@ def TelaConfig(Cena, JOGO, EVENTOS, dt):
     JOGO.TELA.fill((10, 14, 28))
     _TITULO.draw(JOGO.TELA)
 
-    eventos_ativos = [] if _SUBTELA_ATIVA else EVENTOS
-    mouse_pos = (-99999, -99999) if _SUBTELA_ATIVA else None
+    eventos_ativos = [] if JOGO.GerenciadorSubtelas.ativa else EVENTOS
+    mouse_pos = (-99999, -99999) if JOGO.GerenciadorSubtelas.ativa else None
 
     alterou_fps = _BARRAS["FPS"].render(JOGO.TELA, eventos_ativos, dt)
     alterou_claridade = _BARRAS["Claridade"].render(JOGO.TELA, eventos_ativos, dt)
@@ -250,8 +244,3 @@ def TelaConfig(Cena, JOGO, EVENTOS, dt):
     _BOTAO_DESLOGAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
     _BOTAO_CANCELAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
     _BOTAO_SALVAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
-
-    if _SUBTELA_ATIVA:
-        _SUBTELA_ATIVA.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
-        if _SUBTELA_ATIVA.encerrada:
-            _SUBTELA_ATIVA = None

@@ -3,6 +3,7 @@ from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.CaixaTexto import CaixaTexto
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Modulos.Auxiliares import carregar_frames
+from Codigo.Telas.Subtela import Subtela
 
 
 _ESTILO_BOTAO_MODAL = {
@@ -42,11 +43,11 @@ def _normalizar_lista(valor, n, padrao):
     return lst
 
 
-class _BaseModal:
+class BaseGenerica(Subtela):
     def __init__(self, tela_size, alpha_overlay=180):
-        self._overlay_size = (0, 0)
-        self._overlay = None
-        self._alpha_overlay = int(alpha_overlay)
+        super().__init__()
+        self._cache_size = (0, 0)
+        self.alpha_overlay = int(alpha_overlay)
 
         self._painel_size = (0, 0)
         self._painel_surf = None
@@ -54,13 +55,7 @@ class _BaseModal:
         self._rebuild_cache(tela_size)
 
     def _rebuild_cache(self, tela_size):
-        w, h = tela_size
-        if (w, h) != self._overlay_size:
-            self._overlay_size = (w, h)
-            self._overlay = pygame.Surface((w, h), pygame.SRCALPHA)
-            self._overlay.fill((0, 0, 0, self._alpha_overlay))
-
-        # painel é dependente do tamanho/rect (cada classe define caixa), então aqui não desenha o painel
+        self._cache_size = tuple(tela_size)
 
     def _get_painel(self, caixa_rect, bg_color, border_color, border_w=2, radius=20):
         size = (caixa_rect.width, caixa_rect.height)
@@ -74,14 +69,7 @@ class _BaseModal:
 
         return self._painel_surf
 
-    def _blit_overlay(self, tela):
-        size = tela.get_size()
-        if size != self._overlay_size:
-            self._rebuild_cache(size)
-        tela.blit(self._overlay, (0, 0))
-
-
-class SubtelaConfirmacao(_BaseModal):
+class SubtelaConfirmacao(BaseGenerica):
     def __init__(self, tela_size, pergunta, confirmar_callback, cancelar_callback=None, titulo=None):
         largura, altura = tela_size
         caixa = pygame.Rect(0, 0, min(860, int(largura * 0.75)), min(340, int(altura * 0.46)))
@@ -150,11 +138,10 @@ class SubtelaConfirmacao(_BaseModal):
 
     def render(self, tela, eventos, dt, JOGO=None):
         size = tela.get_size()
-        if size != self._overlay_size:
+        if size != self._cache_size:
             self._rebuild_cache(size)
             self._on_resize(size)
 
-        self._blit_overlay(tela)
 
         painel = self._get_painel(
             self.caixa,
@@ -172,7 +159,7 @@ class SubtelaConfirmacao(_BaseModal):
         self.botao_confirmar.render(tela, eventos, dt, JOGO=JOGO)
 
 
-class SubtelaTexto(_BaseModal):
+class SubtelaTexto(BaseGenerica):
     def __init__(
         self,
         tela_size,
@@ -285,11 +272,10 @@ class SubtelaTexto(_BaseModal):
 
     def render(self, tela, eventos, dt, JOGO=None):
         size = tela.get_size()
-        if size != self._overlay_size:
+        if size != self._cache_size:
             self._rebuild_cache(size)
             self._on_resize(size)
 
-        self._blit_overlay(tela)
 
         painel = self._get_painel(
             self.caixa,
@@ -310,7 +296,7 @@ class SubtelaTexto(_BaseModal):
 
 
 
-class SubtelaCarregamento(_BaseModal):
+class SubtelaCarregamento(BaseGenerica):
     def __init__(self, tela_size, titulo="Carregando"):
         from Codigo.Prefabs.Barra import Barra
 
@@ -423,7 +409,7 @@ class SubtelaCarregamento(_BaseModal):
 
     def render(self, tela, eventos, dt, JOGO=None):
         size = tela.get_size()
-        if size != self._overlay_size:
+        if size != self._cache_size:
             self._rebuild_cache(size)
             self._on_resize(size)
 
@@ -440,7 +426,6 @@ class SubtelaCarregamento(_BaseModal):
                 self._frame_idx = (self._frame_idx + 1) % len(self._frames)
                 self._atualizar_frame_escalado()
 
-        self._blit_overlay(tela)
 
         painel = self._get_painel(
             self.caixa,

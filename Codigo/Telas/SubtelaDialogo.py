@@ -13,7 +13,12 @@ from Codigo.Modulos.Loja import Loja
 from Codigo.Prefabs.Texto import Texto, TextoAnimado
 
 
-class TelaDialogo:
+from Codigo.Telas.Subtela import Subtela
+
+
+class SubtelaDialogo(Subtela):
+    usar_overlay_gerenciador = False
+
     @staticmethod
     def _valor_coluna(row: Dict[str, object], *nomes: str) -> str:
         if not isinstance(row, dict):
@@ -37,6 +42,7 @@ class TelaDialogo:
         ao_registrar_ganho: Optional[Callable[[Dict[str, object]], None]] = None,
         ator_local=None,
     ):
+        super().__init__()
         self.Ativa = True
         self._ao_encerrar = ao_encerrar
         self._ator_local = ator_local

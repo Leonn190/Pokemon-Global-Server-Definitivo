@@ -13,7 +13,12 @@ from Codigo.Modulos.Loja import Loja
 from Codigo.Prefabs.Texto import Texto, TextoAnimado
 
 
-class TelaDialogo:
+from Codigo.Telas.Subtela import Subtela
+
+
+class SubtelaDialogo(Subtela):
+    usar_overlay_gerenciador = False
+
     @staticmethod
     def _valor_coluna(row: Dict[str, object], *nomes: str) -> str:
         if not isinstance(row, dict):
@@ -37,6 +42,7 @@ class TelaDialogo:
         ao_registrar_ganho: Optional[Callable[[Dict[str, object]], None]] = None,
         ator_local=None,
     ):
+        super().__init__()
         self.Ativa = True
         self._ao_encerrar = ao_encerrar
         self._ator_local = ator_local
@@ -271,7 +277,7 @@ class TelaDialogo:
         self._no_atual = prox
         self._reconstruir_no_atual()
 
-    def processar_eventos(self, eventos: List[pygame.event.Event]) -> bool:
+    def processar_eventos(self, _jogo, eventos: List[pygame.event.Event]) -> bool:
         if not self.Ativa:
             return False
         for ev in eventos:
@@ -385,3 +391,6 @@ class TelaDialogo:
                 Texto(str(op.get("texto") or "..."), pos=(rect.x + 6 + desloc_x, rect.centery), style={"size": tamanho, "align": "midleft", "outline": True, "color": cor}).draw(tela)
         else:
             Texto("(clique para concluir o texto)", pos=(int(w * 0.5), int(h * 0.88)), style={"size": 18, "align": "midbottom", "outline": True, "color": (220, 220, 230)}).draw(tela)
+
+    def render(self, tela, eventos, dt, JOGO=None):
+        self.desenhar(tela, eventos, dt)

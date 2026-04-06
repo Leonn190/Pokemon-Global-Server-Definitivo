@@ -27,7 +27,7 @@ _EXEC_POCAO = importlib.import_module("Codigo.Modulos.ExecutaveisPoção")
 
 
 class InventarioPokemons:
-    def __init__(self, ator=None):
+    def __init__(self, ator=None, abrir_modal=None, possui_modal=None):
         self.Ator = ator
         self.Inventario = getattr(ator, 'Inventario', None)
         self.Perfil = getattr(ator, 'Perfil', None)
@@ -55,7 +55,8 @@ class InventarioPokemons:
         self._botao_toggle_poder = None
         self._mostrar_poder_slots = False
         self._opcoes = Opções()
-        self._subtela_ativa = None
+        self._abrir_modal = abrir_modal
+        self._possui_modal = possui_modal
         self._ficha_pokemon = FichaPokemon()
         self._pokemon_analisado = None
         self._painel_auxiliar = None
@@ -71,7 +72,6 @@ class InventarioPokemons:
         self._pokemon_hover = None
         self._pokemon_analisado = None
         self._opcoes.fechar()
-        self._subtela_ativa = None
         if self._barra_pesquisa is not None:
             self._barra_pesquisa.resetar_filtro()
         PokemonInventario.definir_mostrar_poder_slots(False)
@@ -81,7 +81,7 @@ class InventarioPokemons:
     def bloqueia_toggle_inventario(self):
         return (
             (self._barra_pesquisa is not None and self._barra_pesquisa.esta_editando())
-            or self._subtela_ativa is not None
+            or (callable(self._possui_modal) and self._possui_modal())
             or self._opcoes.Ativa
         )
 
@@ -445,14 +445,15 @@ class InventarioPokemons:
             tocar("Salvou")
             return True
 
-        self._subtela_ativa = SubtelaTexto(
+        if callable(self._abrir_modal):
+            self._abrir_modal(SubtelaTexto(
             pygame.display.get_surface().get_size(),
             'Renomear time',
             nome_atual,
             enviar_callback=_confirmar,
             placeholders='Nome do time...',
             max_chars=24,
-        )
+            ))
 
     def _abrir_confirmacao_doacao(self, pokemon, remover_time=None):
         nome = PokemonInventario.nome_pokemon(pokemon) or 'este pokémon'
@@ -460,12 +461,13 @@ class InventarioPokemons:
         def _confirmar():
             self._doar_pokemon(pokemon)
 
-        self._subtela_ativa = SubtelaConfirmacao(
+        if callable(self._abrir_modal):
+            self._abrir_modal(SubtelaConfirmacao(
             pygame.display.get_surface().get_size(),
             f'Tem certeza que deseja doar o "{nome}"?',
             confirmar_callback=_confirmar,
             titulo='Confirmar doação',
-        )
+            ))
 
     def _abrir_renomear_pokemon(self, pokemon):
         if not isinstance(pokemon, dict):
@@ -487,14 +489,15 @@ class InventarioPokemons:
             tocar("Salvou")
             return True
 
-        self._subtela_ativa = SubtelaTexto(
+        if callable(self._abrir_modal):
+            self._abrir_modal(SubtelaTexto(
             pygame.display.get_surface().get_size(),
             'Renomear pokémon',
             atual,
             enviar_callback=_confirmar,
             placeholders='Novo nome...',
             max_chars=24,
-        )
+            ))
 
     def _subir_nivel_pokemon_analisado(self):
         pokemon = self._pokemon_analisado
@@ -581,7 +584,7 @@ class InventarioPokemons:
         self._layout_montado = False
 
     def _processar_atalho_enter_pesquisa(self, eventos):
-        if self._barra_pesquisa is None or self._subtela_ativa is not None or self._opcoes.Ativa:
+        if self._barra_pesquisa is None or (callable(self._possui_modal) and self._possui_modal()) or self._opcoes.Ativa:
             return
         for evento in eventos:
             if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
@@ -837,11 +840,8 @@ class InventarioPokemons:
             self._reconstruir(area)
             self._ultima_chave_layout = chave_layout
         self._sincronizar_pokemon_analisado()
-        if self._subtela_ativa is not None:
-            if getattr(self._subtela_ativa, 'encerrada', False):
-                self._subtela_ativa = None
-            else:
-                return
+        if callable(self._possui_modal) and self._possui_modal():
+            return
 
         analisando = self._pokemon_analisado is not None
         if not analisando:
@@ -972,7 +972,7 @@ class InventarioPokemons:
         if not ativo:
             return
 
-        highlight = None if (self._subtela_ativa is not None or self._opcoes.Ativa) else self._alvo_no_mouse(pygame.mouse.get_pos())
+        highlight = None if ((callable(self._possui_modal) and self._possui_modal()) or self._opcoes.Ativa) else self._alvo_no_mouse(pygame.mouse.get_pos())
         item_oculto_grid = None
         item_oculto_time = None
         if self._arrastavel.Ativo and self._arrastavel.Origem:
@@ -1038,8 +1038,6 @@ class InventarioPokemons:
         if analisando:
             self._ficha_pokemon._desenhar_arrastavel(tela)
         self._opcoes.render(tela, eventos, dt)
-        if self._subtela_ativa is not None:
-            self._subtela_ativa.render(tela, eventos, dt)
     def _estilo_toggle_poder(self, ligado):
         if ligado:
             return {

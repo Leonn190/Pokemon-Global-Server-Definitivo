@@ -12,7 +12,6 @@ _TELA_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)
 
 _MENSAGEM = None
-_SUBTELA_ATIVA = None
 
 _BOTAO_VOLTAR = None
 _BOTAO_LIGAR = None
@@ -27,11 +26,11 @@ _GERACAO_NOTIFICADA = False
 _REMOCAO_NOTIFICADA = False
 _AGUARDANDO_CRIACAO = False
 
-def possui_subtela_carregamento_ativa():
-    return isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
 
-
-
+def possui_subtela_carregamento_ativa(jogo=None):
+    if jogo is None:
+        return False
+    return isinstance(jogo.GerenciadorSubtelas.obter_por_tipo(SubtelaCarregamento), SubtelaCarregamento)
 _ESTILO_BOTAO = {
     "radius": 18,
     "border_width": 2,
@@ -127,33 +126,33 @@ def _voltar(cena):
 
 
 def _pedir_confirmacao_apagar_mundo(jogo, estado, botao):
-    global _SUBTELA_ATIVA, _AGUARDANDO_CRIACAO
+    global _AGUARDANDO_CRIACAO
     if estado:
         if _iniciar_requisicao("mundo", _get_server_ip(jogo.Cena), True, "Iniciando criação de mundo..."):
             _AGUARDANDO_CRIACAO = True
-            _SUBTELA_ATIVA = SubtelaCarregamento(jogo.TELA.get_size(), "Carregando")
-            _SUBTELA_ATIVA.set_progresso(0)
-            _SUBTELA_ATIVA.set_mensagem("Preparando geração do mundo")
+            jogo.GerenciadorSubtelas.abrir(SubtelaCarregamento(jogo.TELA.get_size(), "Carregando"))
+            modal = jogo.GerenciadorSubtelas.obter_por_tipo(SubtelaCarregamento)
+            modal.set_progresso(0)
+            modal.set_mensagem("Preparando geração do mundo")
         return
 
-    _SUBTELA_ATIVA = SubtelaConfirmacao(
+    jogo.GerenciadorSubtelas.abrir(SubtelaConfirmacao(
         jogo.TELA.get_size(),
         "Tem certeza que deseja apagar o mundo?",
         titulo="Decisão drástica",
         confirmar_callback=lambda: _abrir_subtela_chave_apagar(jogo),
-    )
+    ))
 
 
 def _abrir_subtela_chave_apagar(jogo):
-    global _SUBTELA_ATIVA
-    _SUBTELA_ATIVA = SubtelaTexto(
+    jogo.GerenciadorSubtelas.abrir(SubtelaTexto(
         jogo.TELA.get_size(),
         "Digite a chave de segurança novamente",
         "",
         enviar_callback=lambda chave: _validar_chave_apagar(jogo, chave),
         placeholders="Chave de 4 dígitos",
         max_chars=4,
-    )
+    ))
 
 
 def _validar_chave_apagar(jogo, chave):
@@ -161,9 +160,6 @@ def _validar_chave_apagar(jogo, chave):
         _emitir_feedback("Já existe uma operação em andamento")
         return False
     return True
-
-
-
 def _toggle_ligado(jogo, estado, botao):
     _iniciar_requisicao("ligado", _get_server_ip(jogo.Cena), estado, "Atualizando status do servidor...")
 
@@ -176,21 +172,22 @@ def _atualizar_rotulos_botoes():
 
 
 def _processar_status_geracao(jogo, resposta):
-    global _SUBTELA_ATIVA, _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
+    global _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
     operacao = str(resposta.get("operacao_geracao", "nenhuma") or "nenhuma")
     em_andamento = bool(resposta.get("mundo_em_geracao", False))
 
-    if isinstance(_SUBTELA_ATIVA, SubtelaCarregamento):
-        _SUBTELA_ATIVA.set_progresso(int(resposta.get("progresso_mundo", 0)))
-        _SUBTELA_ATIVA.set_mensagem(resposta.get("mensagem_geracao", "Carregando mundo"))
+    modal_carregamento = jogo.GerenciadorSubtelas.obter_por_tipo(SubtelaCarregamento)
+    if isinstance(modal_carregamento, SubtelaCarregamento):
+        modal_carregamento.set_progresso(int(resposta.get("progresso_mundo", 0)))
+        modal_carregamento.set_mensagem(resposta.get("mensagem_geracao", "Carregando mundo"))
 
     if em_andamento:
         return
 
     erro = str(resposta.get("erro_geracao", "")).strip()
     if erro:
-        if isinstance(_SUBTELA_ATIVA, SubtelaCarregamento):
-            _SUBTELA_ATIVA.encerrada = True
+        if isinstance(modal_carregamento, SubtelaCarregamento):
+            modal_carregamento.encerrada = True
         if operacao == "remocao":
             if not _REMOCAO_NOTIFICADA:
                 _emitir_feedback(f"Falha ao apagar mundo: {erro}")
@@ -203,27 +200,27 @@ def _processar_status_geracao(jogo, resposta):
         return
 
     if _AGUARDANDO_CRIACAO and not bool(resposta.get("mundo_existente", False)):
-        if isinstance(_SUBTELA_ATIVA, SubtelaCarregamento):
-            _SUBTELA_ATIVA.set_mensagem("Criando mundo...")
+        if isinstance(modal_carregamento, SubtelaCarregamento):
+            modal_carregamento.set_mensagem("Criando mundo...")
         return
 
     operacao_remocao = operacao == "remocao" or (
         operacao == "nenhuma"
-        and isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
+        and isinstance(modal_carregamento, SubtelaCarregamento)
         and not bool(resposta.get("mundo_existente", True))
     )
 
     if operacao_remocao and not resposta.get("mundo_existente", True):
-        if isinstance(_SUBTELA_ATIVA, SubtelaCarregamento):
-            _SUBTELA_ATIVA.encerrada = True
+        if isinstance(modal_carregamento, SubtelaCarregamento):
+            modal_carregamento.encerrada = True
         if not _REMOCAO_NOTIFICADA:
             _emitir_feedback("Mundo apagado", sucesso=True)
             _REMOCAO_NOTIFICADA = True
         return
 
     if resposta.get("mundo_existente", False):
-        if isinstance(_SUBTELA_ATIVA, SubtelaCarregamento):
-            _SUBTELA_ATIVA.encerrada = True
+        if isinstance(modal_carregamento, SubtelaCarregamento):
+            modal_carregamento.encerrada = True
         _AGUARDANDO_CRIACAO = False
         if not _GERACAO_NOTIFICADA:
             _emitir_feedback("Mundo criado e pronto para uso", sucesso=True)
@@ -235,7 +232,7 @@ def _processar_status_geracao(jogo, resposta):
 
 def _processar_resposta(jogo):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _REQUISICAO_TIPO_ATUAL
-    global _SUBTELA_ATIVA, _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
+    global _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
     if not _REQUISICAO_RESULTADO:
         if not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
             _iniciar_requisicao_pendente()
@@ -272,9 +269,10 @@ def _processar_resposta(jogo):
 
     elif tipo == "validar_chave":
         if sucesso:
-            _SUBTELA_ATIVA = SubtelaCarregamento(jogo.TELA.get_size(), "Carregando")
-            _SUBTELA_ATIVA.set_progresso(0)
-            _SUBTELA_ATIVA.set_mensagem("Apagando mundo")
+            jogo.GerenciadorSubtelas.abrir(SubtelaCarregamento(jogo.TELA.get_size(), "Carregando"))
+            modal = jogo.GerenciadorSubtelas.obter_por_tipo(SubtelaCarregamento)
+            modal.set_progresso(0)
+            modal.set_mensagem("Apagando mundo")
             _iniciar_requisicao("mundo", _get_server_ip(jogo.Cena), False, "Apagando mundo do servidor...")
         else:
             _emitir_feedback(resposta.get("mensagem", "Chave inválida"))
@@ -345,7 +343,7 @@ def _montar_layout(jogo):
 
 
 def TelaOperador(cena, jogo, eventos, dt):
-    global _SUBTELA_ATIVA, _STATUS_TIMER
+    global _STATUS_TIMER
 
     largura, altura = jogo.TELA.get_size()
 
@@ -355,18 +353,19 @@ def TelaOperador(cena, jogo, eventos, dt):
     _processar_resposta(jogo)
 
     _STATUS_TIMER += max(0.0, float(dt))
-    pode_atualizar_status = (_SUBTELA_ATIVA is None) or isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
+    modal = jogo.GerenciadorSubtelas.topo
+    pode_atualizar_status = (modal is None) or isinstance(modal, SubtelaCarregamento)
     if _STATUS_TIMER >= 0.12 and pode_atualizar_status and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
         _STATUS_TIMER = 0.0
         _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "")
 
     jogo.TELA.fill((7, 10, 20))
 
-    eventos_ativos = [] if _SUBTELA_ATIVA else eventos
-    mouse_pos = (-99999, -99999) if _SUBTELA_ATIVA else None
+    eventos_ativos = [] if modal else eventos
+    mouse_pos = (-99999, -99999) if modal else None
 
     requisicao_bloqueante = bool(_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive() and _REQUISICAO_TIPO_ATUAL != "status")
-    bloqueado = requisicao_bloqueante or isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
+    bloqueado = requisicao_bloqueante or isinstance(modal, SubtelaCarregamento)
     _BOTAO_LIGAR.set_habilitado((not bloqueado) and bool(_BOTAO_MUNDO.estado))
     _BOTAO_MUNDO.set_habilitado(not bloqueado)
 
@@ -374,9 +373,5 @@ def TelaOperador(cena, jogo, eventos, dt):
     _BOTAO_MUNDO.render(jogo.TELA, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
     _BOTAO_VOLTAR.render(jogo.TELA, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
 
-    if _SUBTELA_ATIVA:
-        _SUBTELA_ATIVA.render(jogo.TELA, eventos, dt, JOGO=jogo)
-        if _SUBTELA_ATIVA.encerrada:
-            _SUBTELA_ATIVA = None
 
     _MENSAGEM.render(jogo.TELA, dt)

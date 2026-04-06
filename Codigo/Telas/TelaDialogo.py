@@ -89,7 +89,8 @@ class TelaDialogo:
         self._intro_duracao = 0.72
         self._intro_t = 0.0
         self._intro_finalizada = False
-        self._zoom_dialogo = 1.5
+        self._encerrando = False
+        self._encerrado_callback = False
         self._reconstruir_no_atual()
 
     @staticmethod
@@ -219,9 +220,11 @@ class TelaDialogo:
             self._loja.montar_botoes(self._tipo_loja_atual(), tela.get_size() if tela is not None else (1280, 720))
 
     def _encerrar(self) -> None:
-        self.Ativa = False
-        if callable(self._ao_encerrar):
-            self._ao_encerrar()
+        if self._encerrando:
+            return
+        self._encerrando = True
+        self._intro_finalizada = False
+        self._hover_idx = -1
 
     def _selecionar_opcao(self, idx: int) -> None:
         if idx < 0 or idx >= len(self._opcoes):
@@ -275,6 +278,8 @@ class TelaDialogo:
         if not self.Ativa:
             return False
         for ev in eventos:
+            if self._encerrando:
+                break
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 self._encerrar()
                 return True
@@ -330,13 +335,26 @@ class TelaDialogo:
         return -1
 
     def atualizar(self, dt: float) -> None:
-        if self.Ativa:
-            self._intro_t += max(0.0, float(dt))
-            if self._intro_t >= self._intro_duracao:
-                self._intro_finalizada = True
-            if self._intro_finalizada:
-                self._texto_animado.atualizar(dt)
-            self._tempo_respiracao += max(0.0, float(dt))
+        if not self.Ativa:
+            return
+        passo = max(0.0, float(dt))
+        if self._encerrando:
+            self._intro_t -= passo
+            if self._intro_t <= 0.0:
+                self._intro_t = 0.0
+                self.Ativa = False
+                if (not self._encerrado_callback) and callable(self._ao_encerrar):
+                    self._encerrado_callback = True
+                    self._ao_encerrar()
+            return
+
+        self._intro_t += passo
+        if self._intro_t >= self._intro_duracao:
+            self._intro_t = self._intro_duracao
+            self._intro_finalizada = True
+        if self._intro_finalizada:
+            self._texto_animado.atualizar(dt)
+        self._tempo_respiracao += passo
 
     def desenhar(self, tela: pygame.Surface, eventos: Optional[List[pygame.event.Event]] = None, dt: float = 0.0) -> None:
         if not self.Ativa:
@@ -345,14 +363,6 @@ class TelaDialogo:
         w, h = tela.get_size()
         self._garantir_cache_fundos((w, h))
         progresso_intro = max(0.0, min(1.0, self._intro_t / max(0.001, float(self._intro_duracao))))
-        zoom = 1.0 + ((self._zoom_dialogo - 1.0) * progresso_intro)
-        if zoom > 1.001:
-            quadro = tela.copy()
-            zw = max(1, int(w * zoom))
-            zh = max(1, int(h * zoom))
-            # scale padrão reduz custo em diálogo/intro comparado ao smoothscale.
-            quadro_zoom = pygame.transform.scale(quadro, (zw, zh))
-            tela.blit(quadro_zoom, ((w - zw) // 2, (h - zh) // 2))
         self._overlay.set_alpha(int(78 + (92 * progresso_intro)))
         self._fade_top.set_alpha(int(255 * progresso_intro))
         self._fade_bottom.set_alpha(int(255 * progresso_intro))

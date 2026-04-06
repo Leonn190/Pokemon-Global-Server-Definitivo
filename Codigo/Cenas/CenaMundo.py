@@ -41,6 +41,10 @@ class CenaMundo:
         self._texto_estadio = Texto("", style={"size": 22, "align": "center", "outline": True, "color": (230, 236, 245)})
         self._imune_combate_ate_ms = int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0)
         self._filtro_camera = FiltroCamera()
+        self._dialogo_zoom_padrao_tile_px = 50
+        self._dialogo_zoom_minimo_fator = 0.75
+        self._dialogo_zoom_atual = 1.0
+        self._dialogo_zoom_velocidade = 5.8
 
         self._montar_mundo(JOGO)
 
@@ -52,6 +56,7 @@ class CenaMundo:
     def _montar_mundo(self, JOGO):
         dados = JOGO.INFO.get("PlayerDadosServer") or {}
         self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=None, tile_px=50)
+        self._dialogo_zoom_padrao_tile_px = max(1, int(getattr(self.Camera, "TilePx", 50) or 50))
         self.ControladorMundo = ControladorMundo(jogo=JOGO, camera=self.Camera)
         player_local = self.ControladorMundo.montar_player_local(dados)
         self.EntidadeMain = player_local
@@ -84,6 +89,7 @@ class CenaMundo:
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
+        self._aplicar_zoom_dialogo_camera(dt)
 
         bloqueio_gameplay = False
         player = self.ControladorMundo.player_local
@@ -177,6 +183,31 @@ class CenaMundo:
             self.SubtelaInventario.desenhar(JOGO.TELA, EVENTOS, dt)
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt)
+
+    def _aplicar_zoom_dialogo_camera(self, dt: float) -> None:
+        if self.Camera is None:
+            return
+        dialogo_ativo = bool(
+            self.SubtelaDialogo is not None
+            and getattr(self.SubtelaDialogo, "Ativa", False)
+            and (not bool(getattr(self.SubtelaDialogo, "_encerrando", False)))
+        )
+        alvo = float(self._dialogo_zoom_minimo_fator if dialogo_ativo else 1.0)
+        taxa = min(1.0, max(0.0, float(dt)) * float(self._dialogo_zoom_velocidade))
+        self._dialogo_zoom_atual = float(self._dialogo_zoom_atual + ((alvo - self._dialogo_zoom_atual) * taxa))
+
+        tile_base = max(1, int(self._dialogo_zoom_padrao_tile_px or getattr(self.Camera, "TilePx", 50) or 50))
+        novo_tile = max(1, int(round(tile_base * self._dialogo_zoom_atual)))
+        antigo_tile = max(1, int(getattr(self.Camera, "TilePx", tile_base) or tile_base))
+        if novo_tile == antigo_tile:
+            return
+        centro_x = float(self.Camera.PosicaoTiles[0]) + (float(self.Camera.TamanhoTelaPx[0]) / float(antigo_tile)) * 0.5
+        centro_y = float(self.Camera.PosicaoTiles[1]) + (float(self.Camera.TamanhoTelaPx[1]) / float(antigo_tile)) * 0.5
+        self.Camera.TilePx = int(novo_tile)
+        self.Camera.PosicaoTiles = (
+            centro_x - (float(self.Camera.TamanhoTelaPx[0]) / float(novo_tile)) * 0.5,
+            centro_y - (float(self.Camera.TamanhoTelaPx[1]) / float(novo_tile)) * 0.5,
+        )
 
     def _coletar_contexto_batalha(self, colisao_pokemon: dict) -> dict:
         player = self.ControladorMundo.player_local

@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 from typing import Callable, Dict, Tuple
 
-from SimuladorServerJogo.Regras.Loader import carregar_regras_mundo
+from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_mundo
 
 BLOCO_TAMANHO_PX = 32
 CHUNK_BLOCOS = max(1, int(carregar_regras_mundo().get("ChunkTiles", 10)))

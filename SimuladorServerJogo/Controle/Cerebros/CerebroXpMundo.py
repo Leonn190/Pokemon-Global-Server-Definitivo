@@ -46,7 +46,7 @@ class CerebroXpMundo:
         from SimuladorServerJogo.Rotas.Ativador import registrar_diff
 
         self._processar_spawns_pendentes(registrar_diff)
-        ttl_ticks = 600
+        ttl_ticks = int(self._core._i("xp_mundo_ttl_ticks", 600))
         ttl_fade_ticks = 10
         players = [o for o in BANCO_DADOS.listar_objetos() if isinstance(o, AtorServer)]
 

@@ -7,6 +7,7 @@ import random
 from typing import Dict, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Controle.LoaderRegras import calcular_parametros_projetil
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Logica.AutoridadeCaptura import resolver_captura, resolver_fruta
 
@@ -30,14 +31,8 @@ class CerebroProjeteis:
 
         subtipo = str(payload.get("subtipo_projetil") or "pokebola").strip().lower()
         variante = str(payload.get("variante") or "pokebola").strip().lower()
-        if subtipo == "fruta":
-            velocidade, alcance = 6.0, 6.0
-        elif variante == "sniperball":
-            velocidade, alcance = 8.0, 9.0
-        elif variante == "fastball":
-            velocidade, alcance = 10.0, 7.0
-        else:
-            velocidade, alcance = 7.0, 7.0
+        mirando = bool(payload.get("mirando", False))
+        velocidade, alcance = calcular_parametros_projetil(self._core._regras, subtipo, variante, mirando=mirando)
 
         p0 = payload.get("pos_inicial") if isinstance(payload.get("pos_inicial"), (list, tuple)) and len(payload.get("pos_inicial")) == 2 else [dono_obj.posicao[0], dono_obj.posicao[1]]
         p1 = payload.get("pos_final") if isinstance(payload.get("pos_final"), (list, tuple)) and len(payload.get("pos_final")) == 2 else list(p0)
@@ -54,7 +49,11 @@ class CerebroProjeteis:
             return True
 
         if subtipo == "fruta":
-            resolver_fruta(impacto, str(payload.get("item") or variante), contexto={"dono_id": dono_id})
+            resolver_fruta(
+                impacto,
+                str(payload.get("item") or variante),
+                contexto={"dono_id": dono_id, "limite_frutas": int(self._core._i("captura_limite_frutas", 2))},
+            )
             BANCO_DADOS.atualizar_objeto(impacto.Id, {"estado": impacto.estado_extra})
             registrar_diff("update", payload=impacto.serializar(), escopo={"centro": [impacto.posicao[0], impacto.posicao[1]], "raio": 120}, objeto_id=impacto.Id, autor="server", categoria="pokemon")
             return True
@@ -68,7 +67,10 @@ class CerebroProjeteis:
             "maestria": self._maestria_jogador(client_id),
             "token_arremesso": token,
             "tick_atual": int(self._core._tick_contador),
-            "cooldown_movimento_ticks": int(self._core._i("cooldown_movimento_apos_tentativa_captura_ticks", 36)),
+            "cooldown_movimento_ticks": int(self._core._i("captura_cooldown_movimento_ticks", 36)),
+            "captura_bonus_maestria": float(self._core._f("captura_bonus_maestria", 10.0)),
+            "captura_chance_min": float(self._core._f("captura_chance_min", 2.0)),
+            "captura_chance_max": float(self._core._f("captura_chance_max", 95.0)),
         })
         if bool(ret.get("iniciada", False)):
             cap = impacto.estado_extra.get("captura") if isinstance(impacto.estado_extra.get("captura"), dict) else {}
@@ -79,13 +81,13 @@ class CerebroProjeteis:
                 self._core.agendar_pokemon_capturado_inventario(
                     dono_id=int(dono_id),
                     poke=impacto,
-                    atraso_ticks=int(self._core._i("atraso_inventario_captura_ticks", 24)),
+                    atraso_ticks=int(self._core._i("captura_atraso_inventario_ticks", 24)),
                 )
                 self._core._cerebro_xp_mundo.agendar_burst(
                     origem=(float(impacto.posicao[0]), float(impacto.posicao[1])),
-                    total_particulas=random.randint(int(self._core._i("xp_captura_particulas_min", 3)), int(self._core._i("xp_captura_particulas_max", 4))),
+                    total_particulas=random.randint(int(self._core._i("captura_xp_particulas_min", 3)), int(self._core._i("captura_xp_particulas_max", 4))),
                     tamanhos_possiveis=["pequeno", "medio"],
-                    atraso_ticks=int(self._core._i("atraso_spawn_xp_captura_ticks", 56)),
+                    atraso_ticks=int(self._core._i("captura_atraso_spawn_xp_ticks", 16)),
                 )
                 removido = BANCO_DADOS.remover_objeto(int(impacto.Id))
                 self._core._pokemons_ids.discard(int(impacto.Id))

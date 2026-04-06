@@ -66,7 +66,7 @@ class CerebroNPCs:
                         "code": str(code),
                         "nome": nome,
                         "skin": skin,
-                        "velocidade": 4.5,
+                        "velocidade": float(self._core._f("npc_velocidade_base", 4.5)),
                         "estilo": "vendedor",
                         "estatico": bool(estatico),
                         "dimensao": "Mundo",
@@ -243,7 +243,10 @@ class CerebroNPCs:
     def _gerar_rota_grande(self, inicio: Vector2, semente: int) -> List[Vector2]:
         largura, altura = BANCO_DADOS.limites_mundo()
         rnd = random.Random(int(semente) * 7919)
-        alvo_total = rnd.uniform(200.0, 1000.0)
+        alvo_total = rnd.uniform(
+            float(self._core._f("npc_rota_tamanho_min", 200.0)),
+            float(self._core._f("npc_rota_tamanho_max", 1000.0)),
+        )
         pontos = [inicio]
         atual = inicio
         soma = 0.0
@@ -330,13 +333,15 @@ class CerebroNPCs:
             posicao=tuple(npc.get("posicao", [0.0, 0.0])),
             dimensao=str(npc.get("dimensao") or "Mundo"),
         )
+        ator.raio_interacao = max(ator.raio_colisao, float(self._core._f("npc_raio_interacao", 1.1)))
+        ator.Colisor.raio_interacao = ator.raio_interacao
         estilo = str(npc.get("estilo") or "vendedor").strip().lower()
         ator.estado_extra["subtipo"] = "npc_combatente" if estilo == "combatente" else "npc_vendedor"
         ator.estado_extra["nome"] = str(npc.get("nome") or "Vendedor")
         ator.estado_extra["npc_code"] = str(npc.get("code") or "")
         ator.estado_extra["estilo"] = str(npc.get("estilo") or "vendedor")
         ator.estado_extra["estatico"] = bool(npc.get("estatico", False))
-        ator.estado_extra["velocidade"] = float(npc.get("velocidade", 4.5) or 4.5)
+        ator.estado_extra["velocidade"] = float(npc.get("velocidade", self._core._f("npc_velocidade_base", 4.5)) or self._core._f("npc_velocidade_base", 4.5))
         ator.estado_extra["angulo"] = float(npc.get("angulo", 0.0) or 0.0)
         ator.estado_extra["interacao"] = dict(npc.get("interacao", {})) if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
         ator.estado_extra["dimensao"] = str(npc.get("dimensao") or "Mundo")
@@ -483,7 +488,7 @@ class CerebroNPCs:
                             npc["rota_idx"] = (idx + 1) % len(rota)
                             npc["espera_ate_tick"] = tick + random.randint(30, 180)
                         else:
-                            vel = float(npc.get("velocidade", 4.5) or 4.5)
+                            vel = float(npc.get("velocidade", self._core._f("npc_velocidade_base", 4.5)) or self._core._f("npc_velocidade_base", 4.5))
                             passo = min(dist, max(0.01, vel / 30.0))
                             nx, ny = (atual[0] + (dx / max(1e-6, dist)) * passo, atual[1] + (dy / max(1e-6, dist)) * passo)
                             nx += math.sin((tick + int(npc.get("id", 0))) * 0.03) * 0.04

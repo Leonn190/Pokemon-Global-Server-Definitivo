@@ -1,0 +1,42 @@
+[tempo]
+segundos_mundo_por_tick = 2.0
+ticks_por_ciclo = 1
+
+[iluminacao]
+# Horários usados para interpolar escurecimento/clariamento no filtro visual.
+inicio_escurecer_hora = 17
+inicio_escurecer_minuto = 0
+escuro_maximo_hora = 1
+escuro_maximo_minuto = 0
+inicio_clarear_hora = 1
+inicio_clarear_minuto = 0
+fim_clarear_hora = 8
+fim_clarear_minuto = 0
+
+[chuva]
+# Probabilidade por tick de iniciar chuva quando o mundo está seco e sem cooldown seco.
+chance_inicio_por_tick = 0.000025
+# Janela (em ticks) de "descanso" após a chuva, antes de uma nova tentativa de início.
+tempo_seco_min_ticks = 14400
+tempo_seco_max_ticks = 63000
+# Duração base (em ticks) do evento de chuva ativo.
+duracao_min_ticks = 7200
+duracao_max_ticks = 50400
+# Intervalo (em ticks) entre sorteios de novo alvo de intensidade durante a chuva.
+variacao_min_ticks = 450
+variacao_max_ticks = 2700
+# Faixas possíveis de intensidade e pesos de sorteio de cada faixa.
+intensidade_faixa1_min = 18
+intensidade_faixa1_max = 45
+intensidade_faixa2_min = 46
+intensidade_faixa2_max = 72
+intensidade_faixa3_min = 73
+intensidade_faixa3_max = 100
+faixa1_peso = 0.60
+faixa2_peso = 0.30
+faixa3_peso = 0.10
+# Passo_forte acelera a aproximação até o alvo; passo_suave finaliza sem saltos bruscos.
+passo_suave = 1
+passo_forte = 2
+# Quando |alvo - intensidade| <= limite, troca de passo_forte para passo_suave.
+delta_passo_suave_limite = 12

@@ -5,6 +5,7 @@ from Codigo.Modulos.ControladorMundo.ControladorMundo import ControladorMundo
 from Codigo.Modulos.ElementosHudMundo import ElementosHudMundo
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.FiltroCamera import FiltroCamera
+from Codigo.Modulos.ModuladorRegras import ModuladorRegras
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
@@ -41,6 +42,7 @@ class CenaMundo:
         self._texto_estadio = Texto("", style={"size": 22, "align": "center", "outline": True, "color": (230, 236, 245)})
         self._imune_combate_ate_ms = int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0)
         self._filtro_camera = FiltroCamera()
+        self.ModuladorRegras = ModuladorRegras()
 
         self._montar_mundo(JOGO)
 
@@ -50,25 +52,25 @@ class CenaMundo:
             self.TelaAtual = "Config"
 
     def _montar_mundo(self, JOGO):
+        server = JOGO.INFO.get("ServerSelecionado") or {}
+        link = server.get("ip")
+        regras_mundo = self.ModuladorRegras.coletar_regras(link) if link else {}
+        self.ModuladorRegras.definir_regras(regras_mundo or {})
+        JOGO.INFO["RegrasMundo"] = dict(regras_mundo or {})
+
+        gerais = regras_mundo.get("gerais") if isinstance(regras_mundo.get("gerais"), dict) else {}
+        tile_px = int(gerais.get("camera_px_por_tile", 50) or 50)
+
         dados = JOGO.INFO.get("PlayerDadosServer") or {}
-        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=None, tile_px=50)
+        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=None, tile_px=max(8, tile_px))
         self.ControladorMundo = ControladorMundo(jogo=JOGO, camera=self.Camera)
         player_local = self.ControladorMundo.montar_player_local(dados)
         self.EntidadeMain = player_local
         self.Camera.definir_main(self.EntidadeMain)
         self.SubtelaInventario = UnificadorInventario(player_local)
 
-        regras = JOGO.INFO.get("RegrasServer") if isinstance(JOGO.INFO.get("RegrasServer"), dict) else {}
-        mundo = regras.get("mundo") if isinstance(regras.get("mundo"), dict) else {}
-        chunk_tiles = mundo.get("chunk_tiles")
-        if chunk_tiles is not None:
-            try:
-                self.ControladorMundo.Objetos._chunk_tamanho_tiles = max(1, int(chunk_tiles))
-            except (TypeError, ValueError):
-                pass
+        self.ModuladorRegras.aplicar_em_cena_mundo(self, JOGO)
 
-        server = JOGO.INFO.get("ServerSelecionado") or {}
-        link = server.get("ip")
         usuario = str(JOGO.INFO.get("UsuarioLogado", "anon"))
         self.Terminal = Terminal(
             pygame.Rect(14, 14, 520, 220),

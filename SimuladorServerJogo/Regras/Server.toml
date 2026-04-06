@@ -1,0 +1,6 @@
+[ticks]
+segundos = 0.0333
+
+[chunks]
+raio_simulados = 3
+raio_carregados = 4

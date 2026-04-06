@@ -47,11 +47,13 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     poder += float(bonus_bioma.get(str(ctx.get("bioma", "")).lower(), 0.0) or 0.0)
 
     maestria = float(ctx.get("maestria", 0.0) or 0.0)
-    poder += maestria * 10.0
+    poder += maestria * float(ctx.get("captura_bonus_maestria", 10.0) or 10.0)
 
     dificuldade = float(pokemon.estado_extra.get("dificuldade_captura", 50.0) or 50.0)
     garantida = bool(bola.get("captura_garantida", False))
-    chance_escape = 0.0 if garantida else max(2.0, min(95.0, dificuldade - poder))
+    chance_min = float(ctx.get("captura_chance_min", 2.0) or 2.0)
+    chance_max = float(ctx.get("captura_chance_max", 95.0) or 95.0)
+    chance_escape = 0.0 if garantida else max(chance_min, min(chance_max, dificuldade - poder))
 
     dono_pos = ctx.get("dono_posicao") if isinstance(ctx.get("dono_posicao"), (list, tuple)) and len(ctx.get("dono_posicao")) == 2 else None
     bola_pos = [float(pokemon.posicao[0]), float(pokemon.posicao[1])]

@@ -14,7 +14,11 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
-from SimuladorServerJogo.Regras.Loader import carregar_regras_player, carregar_regras_mundo
+from SimuladorServerJogo.Controle.LoaderRegras import (
+    carregar_regras_cliente_mundo,
+    carregar_regras_mundo,
+    carregar_regras_player,
+)
 
 _CHAVE_SEGURANCA = "1900"
 _ESTADO_MUNDO = carregar_estado_mundo()
@@ -488,12 +492,10 @@ def _persistir_personagens(force: bool = False) -> None:
 
 
 def obter_regras_cliente() -> dict:
-    regras_player = carregar_regras_player()
-    regras_mundo = carregar_regras_mundo()
-    return {
-        "player": dict(regras_player),
-        "mundo": {"chunk_tiles": int(regras_mundo.get("ChunkTiles", 10))},
-    }
+    regras = carregar_regras_cliente_mundo()
+    regras["player"] = dict(carregar_regras_player())
+    regras["mundo"] = {"chunk_tiles": int(carregar_regras_mundo().get("ChunkTiles", 10) or 10)}
+    return regras
 
 def chave_seguranca():
     return _CHAVE_SEGURANCA

@@ -13,7 +13,7 @@ from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, ItemMundoServer
 from SimuladorServerJogo.Geradores.GeradorMundo import carregar_estado_mundo, salvar_estado_mundo
-from SimuladorServerJogo.Regras.Loader import carregar_regras_estruturas_naturais
+from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_estruturas_naturais
 
 _RAIZ = Path(__file__).resolve().parents[3]
 

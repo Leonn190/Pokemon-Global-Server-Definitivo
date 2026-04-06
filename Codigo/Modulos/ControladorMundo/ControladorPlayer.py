@@ -18,8 +18,9 @@ from Codigo.Prefabs.Fluxos import Fluxo
 
 
 class ControladorPlayer:
-    def __init__(self, controlador_objetos):
+    def __init__(self, controlador_objetos, jogo=None):
         self._objetos = controlador_objetos
+        self._jogo = jogo
         self._player_local = None
         self._client_id_local = ""
         self._fluxo_mira = Fluxo("bolinhas")
@@ -40,6 +41,15 @@ class ControladorPlayer:
         self._normalizacao_posicao_pendente = False
         self._dt_ultimo_frame = 1.0 / 60.0
 
+    def _regras(self) -> Dict[str, object]:
+        info = getattr(self._jogo, "INFO", {}) if self._jogo is not None else {}
+        return info.get("RegrasMundo") if isinstance(info.get("RegrasMundo"), dict) else {}
+
+    def _tile_px_base(self) -> int:
+        regras = self._regras()
+        gerais = regras.get("gerais") if isinstance(regras.get("gerais"), dict) else {}
+        return max(8, int(gerais.get("camera_px_por_tile", 50) or 50))
+
     @property
     def player_local(self):
         return self._player_local
@@ -55,7 +65,7 @@ class ControladorPlayer:
         if not isinstance(pos, (list, tuple)) or len(pos) != 2:
             pos = (0.0, 0.0)
         if ator is None:
-            ator = Ator(nome_skin=str(dados.get("skin", "S1")), posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0, tile_px=50)
+            ator = Ator(nome_skin=str(dados.get("skin", "S1")), posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0, tile_px=self._tile_px_base())
         if dados.get("id") is not None:
             ator.Id = int(dados.get("id"))
         ator.definir_posicao(float(pos[0]), float(pos[1]))
@@ -155,23 +165,50 @@ class ControladorPlayer:
         return evento
 
     def _spec_projetil(self, item: Dict[str, object]) -> Tuple[str, float, float]:
+        regras = self._regras()
+        proj = regras.get("projeteis") if isinstance(regras.get("projeteis"), dict) else {}
         estilo = str(item.get("Estilo") or item.get("estilo") or "item").strip().lower()
         nome = str(item.get("Nome") or "").strip().lower()
         if estilo == "fruta":
-            return ("fruta", 6.0, 6.0)
+            velocidade, alcance = self._calcular_parametros_projetil_client(proj, "fruta", "fruta", mirando=False)
+            return ("fruta", velocidade, alcance)
 
         variante = "pokebola"
-        velocidade = 7.0
-        alcance = 7.0
         if "sniperball" in nome:
             variante = "sniperball"
-            velocidade = 8.0
-            alcance = 9.0
         elif "fastball" in nome:
             variante = "fastball"
-            velocidade = 10.0
-            alcance = 7.0
+        velocidade, alcance = self._calcular_parametros_projetil_client(proj, "pokebola", variante, mirando=False)
         return (variante, velocidade, alcance)
+
+    @staticmethod
+    def _calcular_parametros_projetil_client(regras: Dict[str, object], subtipo: str, variante: str, mirando: bool = False) -> Tuple[float, float]:
+        d = dict(regras or {})
+
+        def _g(chave: str, default: float) -> float:
+            try:
+                return float(d.get(chave, default))
+            except Exception:
+                return float(default)
+
+        subtipo_norm = str(subtipo or "").strip().lower()
+        variante_norm = str(variante or "").strip().lower()
+        if subtipo_norm == "fruta":
+            velocidade = _g("velocidade_fruta_tiles_s", 6.0)
+            alcance = _g("alcance_fruta_tiles", 6.0)
+        elif variante_norm == "sniperball":
+            velocidade = _g("velocidade_sniperball_tiles_s", 8.0)
+            alcance = _g("alcance_sniperball_tiles", 9.0)
+        elif variante_norm == "fastball":
+            velocidade = _g("velocidade_fastball_tiles_s", 10.0)
+            alcance = _g("alcance_fastball_tiles", 7.0)
+        else:
+            velocidade = _g("velocidade_pokebola_tiles_s", 7.0)
+            alcance = _g("alcance_pokebola_tiles", 7.0)
+        if bool(mirando):
+            velocidade *= _g("mira_multiplicador_velocidade", 1.10)
+            alcance *= _g("mira_multiplicador_alcance", 1.15)
+        return (float(velocidade), float(alcance))
 
     def _processar_intencao_arremesso_local(self) -> None:
         if self._player_local is None or self._player_local.Controle is None:
@@ -200,10 +237,11 @@ class ControladorPlayer:
         origem = self._player_local.ponto_mao_direita_mundo(usar_alcance_tapa=True) if hasattr(self._player_local, "ponto_mao_direita_mundo") else tuple(origem_acao)
         destino_click = acao.get("destino") if isinstance(acao.get("destino"), (list, tuple)) else tuple(self._player_local.Posicao)
 
-        variante, velocidade, alcance = self._spec_projetil(item)
-        if bool(acao.get("mirando", False)):
-            velocidade *= 1.10
-            alcance += 1.0
+        variante, _, _ = self._spec_projetil(item)
+        regras = self._regras()
+        proj = regras.get("projeteis") if isinstance(regras.get("projeteis"), dict) else {}
+        subtipo = "fruta" if variante == "fruta" else "pokebola"
+        velocidade, alcance = self._calcular_parametros_projetil_client(proj, subtipo, variante, mirando=bool(acao.get("mirando", False)))
         dx, dy = float(destino_click[0]) - float(origem[0]), float(destino_click[1]) - float(origem[1])
         n = math.hypot(dx, dy) or 1.0
         direcao = (dx / n, dy / n)
@@ -243,6 +281,7 @@ class ControladorPlayer:
                 "item": str(item.get("Nome") or ""),
                 "item_base_id": str(item.get("Code") or ""),
                 "item_nome": str(item.get("Nome") or ""),
+                "mirando": bool(acao.get("mirando", False)),
                 "pos_inicial": [float(origem[0]), float(origem[1])],
                 "pos_final": [float(destino[0]), float(destino[1])],
                 "velocidade_tiles_s": velocidade,
@@ -268,7 +307,9 @@ class ControladorPlayer:
         ang = math.radians(float(getattr(self._player_local, "AnguloOlhar", 0.0) or 0.0))
         direcao = (math.cos(ang), -math.sin(ang))
         destino = (float(origem[0]) + direcao[0] * 1.0, float(origem[1]) + direcao[1] * 1.0)
-        velocidade = 3.0
+        regras = self._regras()
+        proj = regras.get("projeteis") if isinstance(regras.get("projeteis"), dict) else {}
+        velocidade = float(proj.get("velocidade_item_mundo_tiles_s", 3.0) or 3.0)
         quantidade = max(1, int(item.get("quantidade", 1) or 1))
 
         token = str(uuid.uuid4())

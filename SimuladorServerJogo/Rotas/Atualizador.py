@@ -16,6 +16,26 @@ from SimuladorServerJogo.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 
 
+JANELA_IGNORAR_POS_TRANSICAO_MS = 650
+
+
+def _movimento_posicao_bloqueado(obj) -> bool:
+    estado = getattr(obj, "estado_extra", {}) if obj is not None else {}
+    if not isinstance(estado, dict):
+        return False
+    try:
+        ate_ms = int(estado.get("_ignorar_posicao_ate_ms", 0) or 0)
+    except (TypeError, ValueError):
+        ate_ms = 0
+    if ate_ms <= 0:
+        return False
+    agora_ms = int(time.time() * 1000)
+    if agora_ms < ate_ms:
+        return True
+    estado.pop("_ignorar_posicao_ate_ms", None)
+    return False
+
+
 def _normalizar_posicao_loop(posicao):
     if not isinstance(posicao, (list, tuple)) or len(posicao) != 2:
         return posicao
@@ -257,6 +277,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         else:
             mundo_pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else entrada
         player.definir_posicao(float(mundo_pos[0]), float(mundo_pos[1]))
+        player.estado_extra["_ignorar_posicao_ate_ms"] = int(time.time() * 1000) + int(JANELA_IGNORAR_POS_TRANSICAO_MS)
         registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
         return True
 
@@ -282,6 +303,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     player.estado_extra["estadio_atual_id"] = int(estadio.Id)
     player.estado_extra["posicoes_por_dimensao"] = pos_dim
     player.definir_posicao(float(destino[0]), float(destino[1]))
+    player.estado_extra["_ignorar_posicao_ate_ms"] = int(time.time() * 1000) + int(JANELA_IGNORAR_POS_TRANSICAO_MS)
     registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
     return True
 
@@ -332,7 +354,12 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 continue
             payload_in = dict(payload)
             if "posicao" in payload_in:
-                payload_in["posicao"] = _normalizar_posicao_loop(payload_in.get("posicao"))
+                if _movimento_posicao_bloqueado(obj):
+                    payload_in.pop("posicao", None)
+                else:
+                    dim_obj = str(getattr(obj, "estado_extra", {}).get("dimensao", "Mundo") if isinstance(getattr(obj, "estado_extra", {}), dict) else "Mundo")
+                    if dim_obj == "Mundo":
+                        payload_in["posicao"] = _normalizar_posicao_loop(payload_in.get("posicao"))
             obj = BANCO_DADOS.atualizar_objeto(int(objeto_id), payload_in)
             usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
             if usuario and isinstance(obj, AtorServer):

@@ -24,12 +24,14 @@ class SistemaPacotes:
         self._intervalo_s = 1.0 / 30.0
         self._pendentes_reenvio: List[Dict[str, object]] = []
         self._tempo_mundo: Dict[str, object] = {}
+        self._ultima_dimensao_observada = "Mundo"
 
     def configurar_conexao(self, server_link: str, client_id: str) -> None:
         self._server_link = str(server_link or "")
         self._client_id = str(client_id or "anon")
         self._objetos.definir_autor_local(self._client_id)
         self._player.definir_identidade_cliente(self._client_id)
+        self._ultima_dimensao_observada = str(self._objetos.dimensao_atual_client() or "Mundo")
 
     def iniciar(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -134,6 +136,11 @@ class SistemaPacotes:
                     continue
                 self._distribuir_pacote_tick(pacote)
                 self._ultimo_tick_recebido = tick
+
+            dimensao_atual = str(self._objetos.dimensao_atual_client() or "Mundo")
+            if dimensao_atual != self._ultima_dimensao_observada:
+                self._ultima_dimensao_observada = dimensao_atual
+                self._leitor.invalidar_chunks_transicao()
 
             time.sleep(self._intervalo_s)
 

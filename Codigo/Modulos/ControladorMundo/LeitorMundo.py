@@ -150,6 +150,17 @@ class LeitorMundo:
         with self._lock:
             self._ultimo_chunk_player = None
 
+    def invalidar_chunks_transicao(self) -> None:
+        with self._lock:
+            self.Chunks.clear()
+            self._cache_superficies_chunks.clear()
+            self._cache_assinaturas_chunks.clear()
+            self._ultimo_chunk_player = None
+
+    def possui_chunks_carregados(self) -> bool:
+        with self._lock:
+            return bool(self.Chunks)
+
     def _coletar_chunks_servidor(self) -> Optional[PacoteMundo]:
         pos_ref = self.posicao_referencia()
         try:

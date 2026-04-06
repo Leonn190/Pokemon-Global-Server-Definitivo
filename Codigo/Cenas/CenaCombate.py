@@ -12,7 +12,6 @@ class CenaCombate:
         self.Abertura = AbrirIris
         self.Fechamento = FecharIris
         self.ID = "Combate"
-        self.SubtelaOpcoes = SubtelaOpcoes()
 
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
         regras_mundo = JOGO.INFO.get("RegrasMundo") if isinstance(JOGO.INFO.get("RegrasMundo"), dict) else {}
@@ -37,8 +36,15 @@ class CenaCombate:
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
-        self.SubtelaOpcoes.processar_eventos(JOGO, EVENTOS)
-        bloqueado = self.SubtelaOpcoes.Ativa
+        opcoes_modal = JOGO.GerenciadorSubtelas.obter_por_tipo(SubtelaOpcoes)
+        if opcoes_modal is None:
+            for ev in EVENTOS:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                    opcoes_modal = SubtelaOpcoes()
+                    opcoes_modal.toggle(JOGO)
+                    JOGO.GerenciadorSubtelas.abrir(opcoes_modal)
+                    break
+        bloqueado = opcoes_modal is not None
         if not bloqueado:
             self.Camera.processar_eventos(EVENTOS)
         self.Camera.atualizar(dt)
@@ -47,7 +53,6 @@ class CenaCombate:
         self.ControladorBatalha.atualizar(EVENTOS, dt)
         self.ControladorBatalha.renderizar(JOGO.TELA, self.Camera)
         self.ElementosHudCombate.desenhar(JOGO.TELA, EVENTOS, dt)
-        self.SubtelaOpcoes.desenhar(JOGO)
 
     def Finalizar(self, JOGO):
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}

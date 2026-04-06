@@ -23,6 +23,7 @@ class SistemaPacotes:
         self._ativo = False
         self._intervalo_s = 1.0 / 30.0
         self._pendentes_reenvio: List[Dict[str, object]] = []
+        self._tempo_mundo: Dict[str, object] = {}
 
     def configurar_conexao(self, server_link: str, client_id: str) -> None:
         self._server_link = str(server_link or "")
@@ -119,6 +120,7 @@ class SistemaPacotes:
                 continue
 
             self._pendentes_reenvio = []
+            self.aplicar_meta_servidor(resposta.get("meta"))
             if isinstance(resposta.get("chunks"), list):
                 self._leitor.processar_pacote_chunks({"chunks": resposta.get("chunks", []), "meta": resposta.get("meta", {})})
 
@@ -134,3 +136,12 @@ class SistemaPacotes:
                 self._ultimo_tick_recebido = tick
 
             time.sleep(self._intervalo_s)
+
+    def tempo_mundo_atual(self) -> Dict[str, object]:
+        return dict(self._tempo_mundo)
+
+    def aplicar_meta_servidor(self, meta: object) -> None:
+        dados = meta if isinstance(meta, dict) else {}
+        tempo_mundo = dados.get("tempo_mundo") if isinstance(dados.get("tempo_mundo"), dict) else None
+        if isinstance(tempo_mundo, dict):
+            self._tempo_mundo = dict(tempo_mundo)

@@ -54,6 +54,7 @@ class ControladorMundo:
             return
         if isinstance(resposta.get("chunks"), list):
             self.Leitor.processar_pacote_chunks({"chunks": resposta.get("chunks", []), "meta": resposta.get("meta", {})})
+        self.Pacotes.aplicar_meta_servidor(resposta.get("meta"))
         pacotes = resposta.get("pacotes", []) if isinstance(resposta.get("pacotes"), list) else []
         maior_tick_real = int(getattr(self.Pacotes, "_ultimo_tick_recebido", 0) or 0)
         for pacote_tick in pacotes:
@@ -82,6 +83,9 @@ class ControladorMundo:
         self.Objetos.renderizar_entidades(tela, self.Camera, ignorar_id=ignorar_id, player_pos=player_pos)
         self.Player.renderizar(tela, self.Camera)
         self.Objetos.renderizar_estruturas(tela, self.Camera)
+
+    def tempo_mundo_atual(self) -> dict:
+        return self.Pacotes.tempo_mundo_atual() if self.Pacotes is not None else {"dia": 0, "hora": 8, "minuto": 0, "chuva_intensidade": 0}
 
     def parar(self, server_link: str, client_id: str) -> None:
         self.Pacotes.parar()

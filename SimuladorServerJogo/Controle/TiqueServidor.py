@@ -48,6 +48,9 @@ class TiqueServidor:
             if not ativo:
                 time.sleep(0.05)
                 continue
+            if not CEREBRO.tem_players_ativos():
+                time.sleep(0.05)
+                continue
 
             inicio = time.perf_counter()
             CEREBRO.executar_tick_servidor()

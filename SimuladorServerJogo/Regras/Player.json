@@ -5,6 +5,8 @@
   "LimiteTimesPokemon": 6,
   "Dinheiro": 20,
   "Maestria": 0,
+  "SkinInicialMin": 1,
+  "SkinInicialMax": 12,
   "StaminaMax": 100.0,
   "VelocidadeBaseTiles": 5,
   "BonusVelocidadeCorridaMin": 0.25,

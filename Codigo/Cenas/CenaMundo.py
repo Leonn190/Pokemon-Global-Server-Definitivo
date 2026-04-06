@@ -4,6 +4,7 @@ from Codigo.Modulos.Camera import Camera
 from Codigo.Modulos.ControladorMundo.ControladorMundo import ControladorMundo
 from Codigo.Modulos.ElementosHudMundo import ElementosHudMundo
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
+from Codigo.Modulos.FiltroCamera import FiltroCamera
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
@@ -39,6 +40,7 @@ class CenaMundo:
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
         self._texto_estadio = Texto("", style={"size": 22, "align": "center", "outline": True, "color": (230, 236, 245)})
         self._imune_combate_ate_ms = int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0)
+        self._filtro_camera = FiltroCamera()
 
         self._montar_mundo(JOGO)
 
@@ -152,6 +154,7 @@ class CenaMundo:
 
         JOGO.TELA.fill((20, 20, 28))
         self.ControladorMundo.renderizar(JOGO.TELA)
+        self._filtro_camera.aplicar(JOGO.TELA, self.ControladorMundo.tempo_mundo_atual(), dt)
 
         if player is not None:
             self.ElementosHud.desenhar(JOGO.TELA, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)

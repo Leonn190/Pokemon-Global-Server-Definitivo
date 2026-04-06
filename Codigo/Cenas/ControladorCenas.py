@@ -69,6 +69,17 @@ class ControladorCenas:
                 "shadow": False,
             },
         )
+        self.TextoHorario = Texto(
+            "",
+            pos=(self.TELA.get_width() - 16, 108),
+            style={
+                "size": 24,
+                "align": "topright",
+                "outline": True,
+                "outline_thickness": 1,
+                "shadow": False,
+            },
+        )
 
     def DefinirCena(self):
         
@@ -151,16 +162,15 @@ class ControladorCenas:
 
     def DesenhosAdicionais(self):
         largura_tela = self.TELA.get_width()
+        itens_hud = []
 
         if self.CONFIG.get("FPS Visivel", False):
-            self.TextoFPS.set_pos((largura_tela - 16, 12))
             self.TextoFPS.set_text(f"FPS: {int(self.RELOGIO.get_fps())}")
-            self.TextoFPS.draw(self.TELA)
+            itens_hud.append(self.TextoFPS)
 
         if self.CONFIG.get("Ping Visivel", False):
-            self.TextoPing.set_pos((largura_tela - 16, 44))
             self.TextoPing.set_text("Ping: 5")
-            self.TextoPing.draw(self.TELA)
+            itens_hud.append(self.TextoPing)
 
         if self.CONFIG.get("Cords Visiveis", False):
             entidade_main = getattr(self.Cena, "EntidadeMain", None)
@@ -169,7 +179,26 @@ class ControladorCenas:
                 self.TextoCoords.set_text(f"X {x:.2f} | Y {y:.2f}")
             else:
                 self.TextoCoords.set_text("--")
-            self.TextoCoords.set_pos((largura_tela - 16, 76))
-            self.TextoCoords.draw(self.TELA)
+            itens_hud.append(self.TextoCoords)
+
+        if self.CONFIG.get("MostrarHorario", False):
+            if hasattr(self.Cena, "ControladorMundo") and getattr(self.Cena, "ControladorMundo", None) is not None:
+                tempo = self.Cena.ControladorMundo.tempo_mundo_atual()
+                if "dia" in tempo and "hora" in tempo and "minuto" in tempo:
+                    dia = int(tempo.get("dia", 0) or 0)
+                    hora = int(tempo.get("hora", 0) or 0)
+                    minuto = int(tempo.get("minuto", 0) or 0)
+                    self.TextoHorario.set_text(f"Dia {dia} | {hora:02d}:{minuto:02d}")
+                else:
+                    self.TextoHorario.set_text("Dia -- | --:--")
+            else:
+                self.TextoHorario.set_text("Dia -- | --:--")
+            itens_hud.append(self.TextoHorario)
+
+        y_base = 12
+        espaco = 32
+        for idx, texto in enumerate(itens_hud):
+            texto.set_pos((largura_tela - 16, y_base + idx * espaco))
+            texto.draw(self.TELA)
 
         aplicar_claridade(self.TELA, self.CONFIG.get("Claridade", 75))

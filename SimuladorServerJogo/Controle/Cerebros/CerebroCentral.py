@@ -23,6 +23,7 @@ from SimuladorServerJogo.Controle.Cerebros.CerebroItensMundo import CerebroItens
 from SimuladorServerJogo.Controle.Cerebros.CerebroEstruturasNaturais import CerebroEstruturasNaturais
 from SimuladorServerJogo.Controle.Cerebros.CerebroXpMundo import CerebroXpMundo
 from SimuladorServerJogo.Controle.Cerebros.CerebroNPCs import CerebroNPCs
+from SimuladorServerJogo.Controle.Cerebros.CerebroTempo import CerebroTempo
 from SimuladorServerJogo.Controle.ServicoInventario import ServicoInventario
 
 Vector2 = Tuple[float, float]
@@ -55,6 +56,8 @@ class CerebroCentral:
         self._cerebro_estruturas = CerebroEstruturasNaturais(self)
         self._cerebro_xp_mundo = CerebroXpMundo(self)
         self._cerebro_npcs = CerebroNPCs(self)
+        self._cerebro_tempo = CerebroTempo(self._regras)
+        self._snapshot_tempo = self._cerebro_tempo.snapshot()
 
     def _i(self, k: str, d: int) -> int:
         try:
@@ -79,6 +82,31 @@ class CerebroCentral:
             self._players_ativos.clear()
             self._ativador_id = ""
             self._movimento_estado.clear()
+
+    def tem_players_ativos(self) -> bool:
+        with self._lock:
+            return bool(self._players_ativos)
+
+    def obter_snapshot_tempo(self) -> Dict[str, object]:
+        with self._lock:
+            return dict(self._snapshot_tempo)
+
+    def alternar_chuva_global(self) -> bool:
+        with self._lock:
+            self._snapshot_tempo = self._cerebro_tempo.snapshot()
+            novo = self._cerebro_tempo.alternar_chuva_habilitada()
+            self._snapshot_tempo = self._cerebro_tempo.snapshot()
+            return bool(novo)
+
+    def definir_chuva_alvo_global(self, alvo: int) -> bool:
+        with self._lock:
+            ok = self._cerebro_tempo.definir_chuva_alvo_manual(int(alvo))
+            self._snapshot_tempo = self._cerebro_tempo.snapshot()
+            return bool(ok)
+
+    def chuva_habilitada(self) -> bool:
+        with self._lock:
+            return self._cerebro_tempo.chuva_habilitada()
 
     def registrar_spawn_manual(self, objeto) -> None:
         if isinstance(objeto, PokemonServer):
@@ -140,6 +168,7 @@ class CerebroCentral:
             self._spawns_bau_ultimos_200.popleft()
 
     def _executar_tick(self) -> None:
+        self._snapshot_tempo = self._cerebro_tempo.executar_tick(random)
         self._sincronizar_registries_com_banco()
         self._limpar_janela_spawns()
         chunks_carregados, chunks_simulados = self._calcular_chunks_carregados()
@@ -191,7 +220,7 @@ class CerebroCentral:
             x0, y0 = chunk[0] * chunk_tamanho, chunk[1] * chunk_tamanho
             px = random.uniform(x0 + 0.2, x0 + chunk_tamanho - 0.2)
             py = random.uniform(y0 + 0.2, y0 + chunk_tamanho - 0.2)
-            dados = gerar_bau_server(random)
+            dados = gerar_bau_server(random, dia_fixo=int(self._snapshot_tempo.get("dia", 0) or 0))
             raio_bau = float(dados.get("raio_colisao", 0.42) or 0.42)
             if not self._posicao_spawn_valida((px, py), raio=raio_bau):
                 continue

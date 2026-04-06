@@ -1,0 +1,824 @@
+{
+  "resumo": {
+    "pastas": 1184,
+    "arquivos": 69031,
+    "tamanho_bytes": 434920823,
+    "tamanho_gib": 0.405052,
+    "linhas_totais_geral": 40840,
+    "commits": 285
+  },
+  "python": {
+    "py_arquivos": 134,
+    "linhas_totais": 30768,
+    "classes_encontradas": 114,
+    "funcoes_encontradas": 347,
+    "metodos_encontrados": 1348,
+    "total_funcoes_e_metodos": 1695,
+    "media_linhas_por_arquivo": 229.61,
+    "top40_maiores_py_por_linhas": [
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemon.py",
+        "linhas": 1193,
+        "tamanho_bytes": 54563,
+        "tamanho_kib": 53.28
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioPokemons.py",
+        "linhas": 1064,
+        "tamanho_bytes": 49562,
+        "tamanho_kib": 48.4
+      },
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "linhas": 920,
+        "tamanho_bytes": 30778,
+        "tamanho_kib": 30.06
+      },
+      {
+        "arquivo": "Codigo/Modulos/ControladorMundo/ControladorObjetos.py",
+        "linhas": 765,
+        "tamanho_bytes": 39104,
+        "tamanho_kib": 38.19
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/EstadoServidor.py",
+        "linhas": 690,
+        "tamanho_bytes": 28463,
+        "tamanho_kib": 27.8
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Rotas/Comandos.py",
+        "linhas": 686,
+        "tamanho_bytes": 29205,
+        "tamanho_kib": 28.52
+      },
+      {
+        "arquivo": "Codigo/Geradores/PokemonMundo.py",
+        "linhas": 678,
+        "tamanho_bytes": 34251,
+        "tamanho_kib": 33.45
+      },
+      {
+        "arquivo": "Codigo/Modulos/ControladorMundo/ControladorPlayer.py",
+        "linhas": 658,
+        "tamanho_bytes": 31382,
+        "tamanho_kib": 30.65
+      },
+      {
+        "arquivo": "Codigo/Paineis/Container.py",
+        "linhas": 637,
+        "tamanho_bytes": 23893,
+        "tamanho_kib": 23.33
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/BancoDados.py",
+        "linhas": 601,
+        "tamanho_bytes": 29148,
+        "tamanho_kib": 28.46
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Texto.py",
+        "linhas": 548,
+        "tamanho_bytes": 20970,
+        "tamanho_kib": 20.48
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelArvoreHabilidades.py",
+        "linhas": 547,
+        "tamanho_bytes": 27453,
+        "tamanho_kib": 26.81
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/Cerebros/CerebroNPCs.py",
+        "linhas": 531,
+        "tamanho_bytes": 27996,
+        "tamanho_kib": 27.34
+      },
+      {
+        "arquivo": "Codigo/Modulos/Sonoridades.py",
+        "linhas": 525,
+        "tamanho_bytes": 13822,
+        "tamanho_kib": 13.5
+      },
+      {
+        "arquivo": "Outros/EditorSkins.py",
+        "linhas": 514,
+        "tamanho_bytes": 20452,
+        "tamanho_kib": 19.97
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioItens.py",
+        "linhas": 509,
+        "tamanho_bytes": 24328,
+        "tamanho_kib": 23.76
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaServers.py",
+        "linhas": 505,
+        "tamanho_bytes": 16403,
+        "tamanho_kib": 16.02
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Botao.py",
+        "linhas": 477,
+        "tamanho_bytes": 17918,
+        "tamanho_kib": 17.5
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/ObjetosMundoServer.py",
+        "linhas": 467,
+        "tamanho_bytes": 30809,
+        "tamanho_kib": 30.09
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Rotas/Atualizador.py",
+        "linhas": 466,
+        "tamanho_bytes": 22005,
+        "tamanho_kib": 21.49
+      },
+      {
+        "arquivo": "Codigo/Telas/TelasGenericas.py",
+        "linhas": 463,
+        "tamanho_bytes": 16211,
+        "tamanho_kib": 15.83
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Geradores/GeradorPokemon.py",
+        "linhas": 461,
+        "tamanho_bytes": 18479,
+        "tamanho_kib": 18.05
+      },
+      {
+        "arquivo": "Outros/Mixer.py",
+        "linhas": 460,
+        "tamanho_bytes": 15677,
+        "tamanho_kib": 15.31
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelReceitas.py",
+        "linhas": 455,
+        "tamanho_bytes": 15655,
+        "tamanho_kib": 15.29
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaCriarPersonagem.py",
+        "linhas": 417,
+        "tamanho_bytes": 15546,
+        "tamanho_kib": 15.18
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelCraft.py",
+        "linhas": 412,
+        "tamanho_bytes": 16423,
+        "tamanho_kib": 16.04
+      },
+      {
+        "arquivo": "Codigo/Geradores/Ator.py",
+        "linhas": 411,
+        "tamanho_bytes": 18439,
+        "tamanho_kib": 18.01
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/Estatisticas.py",
+        "linhas": 401,
+        "tamanho_bytes": 18252,
+        "tamanho_kib": 17.82
+      },
+      {
+        "arquivo": "Codigo/Geradores/Player/Controle.py",
+        "linhas": 400,
+        "tamanho_bytes": 17503,
+        "tamanho_kib": 17.09
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaDialogo.py",
+        "linhas": 387,
+        "tamanho_bytes": 18031,
+        "tamanho_kib": 17.61
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaOperador.py",
+        "linhas": 382,
+        "tamanho_bytes": 13560,
+        "tamanho_kib": 13.24
+      },
+      {
+        "arquivo": "Codigo/Modulos/Colisor.py",
+        "linhas": 379,
+        "tamanho_bytes": 14831,
+        "tamanho_kib": 14.48
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Geradores/GeradorMundo.py",
+        "linhas": 372,
+        "tamanho_bytes": 15721,
+        "tamanho_kib": 15.35
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py",
+        "linhas": 368,
+        "tamanho_bytes": 19586,
+        "tamanho_kib": 19.13
+      },
+      {
+        "arquivo": "Codigo/Paineis/FichaAtaque.py",
+        "linhas": 361,
+        "tamanho_bytes": 14844,
+        "tamanho_kib": 14.5
+      },
+      {
+        "arquivo": "Codigo/Geradores/PokemonInventario.py",
+        "linhas": 338,
+        "tamanho_bytes": 13123,
+        "tamanho_kib": 12.82
+      },
+      {
+        "arquivo": "Codigo/Modulos/Loja.py",
+        "linhas": 336,
+        "tamanho_bytes": 16261,
+        "tamanho_kib": 15.88
+      },
+      {
+        "arquivo": "Codigo/Cenas/CenaMundo.py",
+        "linhas": 335,
+        "tamanho_bytes": 16845,
+        "tamanho_kib": 16.45
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelTimes.py",
+        "linhas": 335,
+        "tamanho_bytes": 12857,
+        "tamanho_kib": 12.56
+      },
+      {
+        "arquivo": "Codigo/Modulos/ControladorMundo/LeitorMundo.py",
+        "linhas": 329,
+        "tamanho_bytes": 16559,
+        "tamanho_kib": 16.17
+      }
+    ],
+    "top15_maiores_funcoes_metodos": [
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "nome": "coletar_metricas",
+        "tipo": "funcao",
+        "linhas": 218
+      },
+      {
+        "arquivo": "Codigo/Geradores/Estadio.py",
+        "nome": "EstadioInterno.renderizar",
+        "tipo": "metodo",
+        "linhas": 212
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Rotas/Atualizador.py",
+        "nome": "processar_atualizador_json",
+        "tipo": "funcao",
+        "linhas": 178
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioPokemons.py",
+        "nome": "InventarioPokemons.atualizar",
+        "tipo": "metodo",
+        "linhas": 150
+      },
+      {
+        "arquivo": "Codigo/Modulos/Colisor.py",
+        "nome": "Colisor.resolver_movimento_com_colisores",
+        "tipo": "metodo",
+        "linhas": 146
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Fluxos.py",
+        "nome": "Fluxo.desenhar",
+        "tipo": "metodo",
+        "linhas": 141
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaMenu.py",
+        "nome": "TelaMenu",
+        "tipo": "funcao",
+        "linhas": 131
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioPokemons.py",
+        "nome": "InventarioPokemons._reconstruir",
+        "tipo": "metodo",
+        "linhas": 118
+      },
+      {
+        "arquivo": "Codigo/Prefabs/Botao.py",
+        "nome": "Botao.render",
+        "tipo": "metodo",
+        "linhas": 117
+      },
+      {
+        "arquivo": "Codigo/Telas/TelaCriarPersonagem.py",
+        "nome": "SubtelaCriarPersonagem._rebuild_layout",
+        "tipo": "metodo",
+        "linhas": 112
+      },
+      {
+        "arquivo": "Outros/Mixer.py",
+        "nome": "main",
+        "tipo": "funcao",
+        "linhas": 109
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Geradores/GeradorMundo.py",
+        "nome": "_executar_world_generator",
+        "tipo": "funcao",
+        "linhas": 106
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/Cerebros/CerebroItensMundo.py",
+        "nome": "CerebroItensMundo.executar_tick",
+        "tipo": "metodo",
+        "linhas": 101
+      },
+      {
+        "arquivo": "Codigo/Telas/Config.py",
+        "nome": "_montar_layout",
+        "tipo": "funcao",
+        "linhas": 99
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioItens.py",
+        "nome": "InventarioItens.atualizar",
+        "tipo": "metodo",
+        "linhas": 98
+      }
+    ],
+    "top15_maiores_classes": [
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemon.py",
+        "nome": "FichaPokemon",
+        "linhas": 1162
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioPokemons.py",
+        "nome": "InventarioPokemons",
+        "linhas": 1036
+      },
+      {
+        "arquivo": "Codigo/Modulos/ControladorMundo/ControladorObjetos.py",
+        "nome": "ControladorObjetos",
+        "linhas": 745
+      },
+      {
+        "arquivo": "Codigo/Geradores/PokemonMundo.py",
+        "nome": "Pokemon",
+        "linhas": 654
+      },
+      {
+        "arquivo": "Codigo/Modulos/ControladorMundo/ControladorPlayer.py",
+        "nome": "ControladorPlayer",
+        "linhas": 639
+      },
+      {
+        "arquivo": "Codigo/Paineis/Container.py",
+        "nome": "Container",
+        "linhas": 628
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/BancoDados.py",
+        "nome": "BancoDadosMundo",
+        "linhas": 573
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelArvoreHabilidades.py",
+        "nome": "PainelArvoreHabilidades",
+        "linhas": 517
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/Cerebros/CerebroNPCs.py",
+        "nome": "CerebroNPCs",
+        "linhas": 512
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioItens.py",
+        "nome": "InventarioItens",
+        "linhas": 492
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelReceitas.py",
+        "nome": "PainelReceitas",
+        "linhas": 439
+      },
+      {
+        "arquivo": "Codigo/Paineis/PainelCraft.py",
+        "nome": "PainelCraft",
+        "linhas": 398
+      },
+      {
+        "arquivo": "Codigo/Geradores/Ator.py",
+        "nome": "Ator",
+        "linhas": 391
+      },
+      {
+        "arquivo": "Codigo/Geradores/Player/Controle.py",
+        "nome": "Controle",
+        "linhas": 387
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/Estatisticas.py",
+        "nome": "InventarioPerfil",
+        "linhas": 386
+      }
+    ],
+    "top5_py_com_mais_imports": [
+      {
+        "arquivo": "SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py",
+        "imports": 25,
+        "linhas": 368
+      },
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemon.py",
+        "imports": 21,
+        "linhas": 1193
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioPokemons.py",
+        "imports": 21,
+        "linhas": 1064
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/EstadoServidor.py",
+        "imports": 14,
+        "linhas": 690
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/Cerebros/CerebroEstruturasNaturais.py",
+        "imports": 13,
+        "linhas": 191
+      }
+    ]
+  },
+  "linhas_por_extensao": {
+    "itens": [
+      {
+        "ext": ".py",
+        "linhas": 30768
+      },
+      {
+        "ext": ".json",
+        "linhas": 5413
+      },
+      {
+        "ext": ".java",
+        "linhas": 2835
+      },
+      {
+        "ext": ".csv",
+        "linhas": 1616
+      },
+      {
+        "ext": ".md",
+        "linhas": 208
+      }
+    ]
+  },
+  "arquivos": {
+    "top10_maiores_geral": [
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu2.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 4950156,
+        "tamanho_kib": 4834.14
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Praia.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 4624258,
+        "tamanho_kib": 4515.88
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu3.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 4485841,
+        "tamanho_kib": 4380.7
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vale.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 3206751,
+        "tamanho_kib": 3131.59
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Carregamento.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 3199350,
+        "tamanho_kib": 3124.37
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu1.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 3137699,
+        "tamanho_kib": 3064.16
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Deserto.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2840430,
+        "tamanho_kib": 2773.86
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaNeve.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2615521,
+        "tamanho_kib": 2554.22
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoMar.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2586110,
+        "tamanho_kib": 2525.5
+      },
+      {
+        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVulcao.ogg",
+        "ext": ".ogg",
+        "tamanho_bytes": 2475599,
+        "tamanho_kib": 2417.58
+      }
+    ],
+    "top10_json_por_linhas": [
+      {
+        "arquivo": "SimuladorServerJogo/Geradores/Regras/Geracao.json",
+        "linhas": 1715
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Regras/Geracao.json",
+        "linhas": 658
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Regras/EstruturasNaturais.json",
+        "linhas": 287
+      },
+      {
+        "arquivo": "Dados/Pokemon Global Server - Receitas.json",
+        "linhas": 188
+      },
+      {
+        "arquivo": "Dados/InteracoesNPC/Vendedores/Josefa.json",
+        "linhas": 153
+      },
+      {
+        "arquivo": "Codigo/InteracaoNPC/Josefa.json",
+        "linhas": 153
+      },
+      {
+        "arquivo": "Dados/InteracoesNPC/Vendedores/Kleber.json",
+        "linhas": 140
+      },
+      {
+        "arquivo": "Codigo/InteracaoNPC/Kleber.json",
+        "linhas": 140
+      },
+      {
+        "arquivo": "Dados/InteracoesNPC/Vendedores/Hans.json",
+        "linhas": 110
+      },
+      {
+        "arquivo": "Codigo/InteracaoNPC/Hans.json",
+        "linhas": 110
+      }
+    ],
+    "top10_maiores_por_linhas": [
+      {
+        "arquivo": "SimuladorServerJogo/Geradores/WorldGenerator.java",
+        "ext": ".java",
+        "linhas": 2835
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Geradores/Regras/Geracao.json",
+        "ext": ".json",
+        "linhas": 1715
+      },
+      {
+        "arquivo": "Dados/Pokemon Global Server - Pokemons.csv",
+        "ext": ".csv",
+        "linhas": 1277
+      },
+      {
+        "arquivo": "Codigo/Paineis/FichaPokemon.py",
+        "ext": ".py",
+        "linhas": 1193
+      },
+      {
+        "arquivo": "Codigo/Telas/Inventario/InventarioPokemons.py",
+        "ext": ".py",
+        "linhas": 1064
+      },
+      {
+        "arquivo": "Outros/GeradorRelatorios.py",
+        "ext": ".py",
+        "linhas": 920
+      },
+      {
+        "arquivo": "Codigo/Modulos/ControladorMundo/ControladorObjetos.py",
+        "ext": ".py",
+        "linhas": 765
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Controle/EstadoServidor.py",
+        "ext": ".py",
+        "linhas": 690
+      },
+      {
+        "arquivo": "SimuladorServerJogo/Rotas/Comandos.py",
+        "ext": ".py",
+        "linhas": 686
+      },
+      {
+        "arquivo": "Codigo/Geradores/PokemonMundo.py",
+        "ext": ".py",
+        "linhas": 678
+      }
+    ]
+  },
+  "extensoes": {
+    "contagem": {
+      ".py": 134,
+      ".md": 1,
+      ".png": 68782,
+      ".csv": 7,
+      ".json": 36,
+      ".class": 14,
+      ".java": 1,
+      ".ttf": 2,
+      ".jpg": 21,
+      ".txt": 2,
+      ".wav": 9,
+      ".mp3": 3,
+      ".ogg": 17,
+      ".frag": 1,
+      ".vert": 1
+    },
+    "tamanho_bytes": {
+      ".py": 1310998,
+      ".md": 9184,
+      ".png": 376861577,
+      ".csv": 167438,
+      ".json": 144480,
+      ".class": 87332,
+      ".java": 126491,
+      ".ttf": 201356,
+      ".jpg": 3292148,
+      ".txt": 0,
+      ".wav": 3998274,
+      ".mp3": 138969,
+      ".ogg": 48575203,
+      ".frag": 7236,
+      ".vert": 137
+    },
+    "top_por_tamanho": [
+      {
+        "ext": ".png",
+        "tamanho_bytes": 376861577,
+        "tamanho_gib": 0.35098,
+        "arquivos": 68782
+      },
+      {
+        "ext": ".ogg",
+        "tamanho_bytes": 48575203,
+        "tamanho_gib": 0.045239,
+        "arquivos": 17
+      },
+      {
+        "ext": ".wav",
+        "tamanho_bytes": 3998274,
+        "tamanho_gib": 0.003724,
+        "arquivos": 9
+      },
+      {
+        "ext": ".jpg",
+        "tamanho_bytes": 3292148,
+        "tamanho_gib": 0.003066,
+        "arquivos": 21
+      },
+      {
+        "ext": ".py",
+        "tamanho_bytes": 1310998,
+        "tamanho_gib": 0.001221,
+        "arquivos": 134
+      },
+      {
+        "ext": ".ttf",
+        "tamanho_bytes": 201356,
+        "tamanho_gib": 0.000188,
+        "arquivos": 2
+      },
+      {
+        "ext": ".csv",
+        "tamanho_bytes": 167438,
+        "tamanho_gib": 0.000156,
+        "arquivos": 7
+      },
+      {
+        "ext": ".json",
+        "tamanho_bytes": 144480,
+        "tamanho_gib": 0.000135,
+        "arquivos": 36
+      },
+      {
+        "ext": ".mp3",
+        "tamanho_bytes": 138969,
+        "tamanho_gib": 0.000129,
+        "arquivos": 3
+      },
+      {
+        "ext": ".java",
+        "tamanho_bytes": 126491,
+        "tamanho_gib": 0.000118,
+        "arquivos": 1
+      },
+      {
+        "ext": ".class",
+        "tamanho_bytes": 87332,
+        "tamanho_gib": 8.1e-05,
+        "arquivos": 14
+      },
+      {
+        "ext": ".md",
+        "tamanho_bytes": 9184,
+        "tamanho_gib": 9e-06,
+        "arquivos": 1
+      },
+      {
+        "ext": ".frag",
+        "tamanho_bytes": 7236,
+        "tamanho_gib": 7e-06,
+        "arquivos": 1
+      },
+      {
+        "ext": ".vert",
+        "tamanho_bytes": 137,
+        "tamanho_gib": 0.0,
+        "arquivos": 1
+      },
+      {
+        "ext": ".txt",
+        "tamanho_bytes": 0,
+        "tamanho_gib": 0.0,
+        "arquivos": 2
+      }
+    ]
+  },
+  "meta": {
+    "numero_relatorio": 28,
+    "criado_em": "2026-04-06T01:42:57",
+    "repo": "Pokemon-Global-Server-Definitivo",
+    "arquivo": "2026-04-06_01-42-47.json",
+    "base_dir": "C:\\Users\\euleo\\OneDrive\\Documentos\\GitHub\\Pokemon-Global-Server-Definitivo",
+    "script": "Outros/GeradorRelatorios.py",
+    "relatorios_dir": "Outros/Relatorios",
+    "comparado_com": "2026-04-05_18-17-34.json"
+  },
+  "diff": {
+    "pastas": {
+      "anterior": 1184,
+      "atual": 1184,
+      "delta": 0
+    },
+    "arquivos": {
+      "anterior": 69023,
+      "atual": 69031,
+      "delta": 8
+    },
+    "tamanho_bytes": {
+      "anterior": 434825706,
+      "atual": 434920823,
+      "delta": 95117
+    },
+    "linhas_totais_geral": {
+      "anterior": 38751,
+      "atual": 40840,
+      "delta": 2089
+    },
+    "py_arquivos": {
+      "anterior": 129,
+      "atual": 134,
+      "delta": 5
+    },
+    "linhas_totais": {
+      "anterior": 28917,
+      "atual": 30768,
+      "delta": 1851
+    },
+    "classes_encontradas": {
+      "anterior": 106,
+      "atual": 114,
+      "delta": 8
+    },
+    "funcoes_encontradas": {
+      "anterior": 331,
+      "atual": 347,
+      "delta": 16
+    },
+    "metodos_encontrados": {
+      "anterior": 1252,
+      "atual": 1348,
+      "delta": 96
+    }
+  }
+}

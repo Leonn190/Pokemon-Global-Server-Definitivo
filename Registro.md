@@ -1,26 +1,26 @@
 # Registro
 
-**Relatório:** #27  
+**Relatório:** #28  
 **Repo:** `Pokemon-Global-Server-Definitivo`  
-**Gerado em:** 2026-04-05T18:17:45  
+**Gerado em:** 2026-04-06T01:42:57  
 
 ## Visão geral
 
 - **Pastas:** 1.184
-- **Arquivos:** 69.023
-- **Tamanho total:** 434.825.706 bytes (0.405 GiB)
-- **Linhas totais gerais:** 38.751
-- **Commits (repo):** 274
+- **Arquivos:** 69.031
+- **Tamanho total:** 434.920.823 bytes (0.405 GiB)
+- **Linhas totais gerais:** 40.840
+- **Commits (repo):** 285
 
 ## Python
 
-- **Arquivos `.py`:** 129
-- **Linhas totais:** 28.917
-- **Classes encontradas:** 106
-- **Funções encontradas:** 331
-- **Métodos encontrados:** 1.252
-- **Total funções + métodos:** 1.583
-- **Média de linhas por arquivo `.py`:** 224.16
+- **Arquivos `.py`:** 134
+- **Linhas totais:** 30.768
+- **Classes encontradas:** 114
+- **Funções encontradas:** 347
+- **Métodos encontrados:** 1.348
+- **Total funções + métodos:** 1.695
+- **Média de linhas por arquivo `.py`:** 229.61
 
 ### Top 40 maiores arquivos `.py` por linhas
 
@@ -29,43 +29,43 @@
 | `Codigo/Paineis/FichaPokemon.py` | 1.193 | 53.28 |
 | `Codigo/Telas/Inventario/InventarioPokemons.py` | 1.064 | 48.40 |
 | `Outros/GeradorRelatorios.py` | 920 | 30.06 |
-| `Codigo/Modulos/ControladorMundo/ControladorObjetos.py` | 757 | 37.70 |
+| `Codigo/Modulos/ControladorMundo/ControladorObjetos.py` | 765 | 38.19 |
+| `SimuladorServerJogo/Controle/EstadoServidor.py` | 690 | 27.80 |
+| `SimuladorServerJogo/Rotas/Comandos.py` | 686 | 28.52 |
 | `Codigo/Geradores/PokemonMundo.py` | 678 | 33.45 |
-| `Codigo/Modulos/ControladorMundo/ControladorPlayer.py` | 640 | 29.83 |
+| `Codigo/Modulos/ControladorMundo/ControladorPlayer.py` | 658 | 30.65 |
 | `Codigo/Paineis/Container.py` | 637 | 23.33 |
-| `SimuladorServerJogo/Controle/BancoDados.py` | 609 | 28.77 |
-| `SimuladorServerJogo/Controle/EstadoServidor.py` | 580 | 23.59 |
+| `SimuladorServerJogo/Controle/BancoDados.py` | 601 | 28.46 |
 | `Codigo/Prefabs/Texto.py` | 548 | 20.48 |
 | `Codigo/Paineis/PainelArvoreHabilidades.py` | 547 | 26.81 |
-| `SimuladorServerJogo/Rotas/Comandos.py` | 546 | 21.79 |
+| `SimuladorServerJogo/Controle/Cerebros/CerebroNPCs.py` | 531 | 27.34 |
 | `Codigo/Modulos/Sonoridades.py` | 525 | 13.50 |
+| `Outros/EditorSkins.py` | 514 | 19.97 |
 | `Codigo/Telas/Inventario/InventarioItens.py` | 509 | 23.76 |
 | `Codigo/Telas/TelaServers.py` | 505 | 16.02 |
-| `Codigo/Telas/TelaDialogo.py` | 485 | 22.08 |
 | `Codigo/Prefabs/Botao.py` | 477 | 17.50 |
-| `SimuladorServerJogo/Controle/Cerebros/CerebroNPCs.py` | 469 | 24.65 |
 | `SimuladorServerJogo/Controle/ObjetosMundoServer.py` | 467 | 30.09 |
+| `SimuladorServerJogo/Rotas/Atualizador.py` | 466 | 21.49 |
 | `Codigo/Telas/TelasGenericas.py` | 463 | 15.83 |
 | `SimuladorServerJogo/Geradores/GeradorPokemon.py` | 461 | 18.05 |
 | `Outros/Mixer.py` | 460 | 15.31 |
 | `Codigo/Paineis/PainelReceitas.py` | 455 | 15.29 |
-| `SimuladorServerJogo/Rotas/Atualizador.py` | 450 | 21.11 |
 | `Codigo/Telas/TelaCriarPersonagem.py` | 417 | 15.18 |
 | `Codigo/Paineis/PainelCraft.py` | 412 | 16.04 |
-| `Codigo/Geradores/Ator.py` | 406 | 17.70 |
+| `Codigo/Geradores/Ator.py` | 411 | 18.01 |
 | `Codigo/Telas/Inventario/Estatisticas.py` | 401 | 17.82 |
-| `Codigo/Geradores/Player/Controle.py` | 397 | 17.02 |
+| `Codigo/Geradores/Player/Controle.py` | 400 | 17.09 |
+| `Codigo/Telas/TelaDialogo.py` | 387 | 17.61 |
+| `Codigo/Telas/TelaOperador.py` | 382 | 13.24 |
 | `Codigo/Modulos/Colisor.py` | 379 | 14.48 |
-| `SimuladorServerJogo/Geradores/GeradorMundo.py` | 375 | 15.21 |
+| `SimuladorServerJogo/Geradores/GeradorMundo.py` | 372 | 15.35 |
+| `SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py` | 368 | 19.13 |
 | `Codigo/Paineis/FichaAtaque.py` | 361 | 14.50 |
-| `Codigo/Telas/TelaOperador.py` | 352 | 11.98 |
-| `SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py` | 339 | 17.88 |
 | `Codigo/Geradores/PokemonInventario.py` | 338 | 12.82 |
+| `Codigo/Modulos/Loja.py` | 336 | 15.88 |
+| `Codigo/Cenas/CenaMundo.py` | 335 | 16.45 |
 | `Codigo/Paineis/PainelTimes.py` | 335 | 12.56 |
-| `Codigo/Cenas/CenaMundo.py` | 331 | 16.21 |
-| `Codigo/Geradores/Estadio.py` | 313 | 11.35 |
-| `Codigo/Prefabs/Painel.py` | 300 | 11.15 |
-| `SimuladorServerJogo/Rotas/Ativador.py` | 281 | 13.01 |
+| `Codigo/Modulos/ControladorMundo/LeitorMundo.py` | 329 | 16.17 |
 
 ### Top 15 maiores funções e métodos (linhas)
 
@@ -73,7 +73,7 @@
 |---|---|---:|---:|
 | `Outros/GeradorRelatorios.py` | `coletar_metricas` | funcao | 218 |
 | `Codigo/Geradores/Estadio.py` | `EstadioInterno.renderizar` | metodo | 212 |
-| `SimuladorServerJogo/Rotas/Atualizador.py` | `processar_atualizador_json` | funcao | 169 |
+| `SimuladorServerJogo/Rotas/Atualizador.py` | `processar_atualizador_json` | funcao | 178 |
 | `Codigo/Telas/Inventario/InventarioPokemons.py` | `InventarioPokemons.atualizar` | metodo | 150 |
 | `Codigo/Modulos/Colisor.py` | `Colisor.resolver_movimento_com_colisores` | metodo | 146 |
 | `Codigo/Prefabs/Fluxos.py` | `Fluxo.desenhar` | metodo | 141 |
@@ -82,7 +82,7 @@
 | `Codigo/Prefabs/Botao.py` | `Botao.render` | metodo | 117 |
 | `Codigo/Telas/TelaCriarPersonagem.py` | `SubtelaCriarPersonagem._rebuild_layout` | metodo | 112 |
 | `Outros/Mixer.py` | `main` | funcao | 109 |
-| `SimuladorServerJogo/Geradores/GeradorMundo.py` | `_executar_world_generator` | funcao | 103 |
+| `SimuladorServerJogo/Geradores/GeradorMundo.py` | `_executar_world_generator` | funcao | 106 |
 | `SimuladorServerJogo/Controle/Cerebros/CerebroItensMundo.py` | `CerebroItensMundo.executar_tick` | metodo | 101 |
 | `Codigo/Telas/Config.py` | `_montar_layout` | funcao | 99 |
 | `Codigo/Telas/Inventario/InventarioItens.py` | `InventarioItens.atualizar` | metodo | 98 |
@@ -93,28 +93,28 @@
 |---|---|---:|
 | `Codigo/Paineis/FichaPokemon.py` | `FichaPokemon` | 1.162 |
 | `Codigo/Telas/Inventario/InventarioPokemons.py` | `InventarioPokemons` | 1.036 |
-| `Codigo/Modulos/ControladorMundo/ControladorObjetos.py` | `ControladorObjetos` | 737 |
+| `Codigo/Modulos/ControladorMundo/ControladorObjetos.py` | `ControladorObjetos` | 745 |
 | `Codigo/Geradores/PokemonMundo.py` | `Pokemon` | 654 |
+| `Codigo/Modulos/ControladorMundo/ControladorPlayer.py` | `ControladorPlayer` | 639 |
 | `Codigo/Paineis/Container.py` | `Container` | 628 |
-| `Codigo/Modulos/ControladorMundo/ControladorPlayer.py` | `ControladorPlayer` | 621 |
-| `SimuladorServerJogo/Controle/BancoDados.py` | `BancoDadosMundo` | 581 |
+| `SimuladorServerJogo/Controle/BancoDados.py` | `BancoDadosMundo` | 573 |
 | `Codigo/Paineis/PainelArvoreHabilidades.py` | `PainelArvoreHabilidades` | 517 |
+| `SimuladorServerJogo/Controle/Cerebros/CerebroNPCs.py` | `CerebroNPCs` | 512 |
 | `Codigo/Telas/Inventario/InventarioItens.py` | `InventarioItens` | 492 |
-| `Codigo/Telas/TelaDialogo.py` | `TelaDialogo` | 469 |
-| `SimuladorServerJogo/Controle/Cerebros/CerebroNPCs.py` | `CerebroNPCs` | 451 |
 | `Codigo/Paineis/PainelReceitas.py` | `PainelReceitas` | 439 |
 | `Codigo/Paineis/PainelCraft.py` | `PainelCraft` | 398 |
-| `Codigo/Geradores/Ator.py` | `Ator` | 386 |
+| `Codigo/Geradores/Ator.py` | `Ator` | 391 |
+| `Codigo/Geradores/Player/Controle.py` | `Controle` | 387 |
 | `Codigo/Telas/Inventario/Estatisticas.py` | `InventarioPerfil` | 386 |
 
 ### Top 5 arquivos `.py` com mais imports
 
 | Arquivo | Imports | Linhas |
 |---|---:|---:|
-| `SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py` | 24 | 339 |
+| `SimuladorServerJogo/Controle/Cerebros/CerebroCentral.py` | 25 | 368 |
 | `Codigo/Paineis/FichaPokemon.py` | 21 | 1.193 |
 | `Codigo/Telas/Inventario/InventarioPokemons.py` | 21 | 1.064 |
-| `SimuladorServerJogo/Controle/EstadoServidor.py` | 13 | 580 |
+| `SimuladorServerJogo/Controle/EstadoServidor.py` | 14 | 690 |
 | `SimuladorServerJogo/Controle/Cerebros/CerebroEstruturasNaturais.py` | 13 | 191 |
 
 ## Arquivos por linhas
@@ -144,10 +144,10 @@
 | `Codigo/Paineis/FichaPokemon.py` | `.py` | 1.193 |
 | `Codigo/Telas/Inventario/InventarioPokemons.py` | `.py` | 1.064 |
 | `Outros/GeradorRelatorios.py` | `.py` | 920 |
-| `Codigo/Modulos/ControladorMundo/ControladorObjetos.py` | `.py` | 757 |
+| `Codigo/Modulos/ControladorMundo/ControladorObjetos.py` | `.py` | 765 |
+| `SimuladorServerJogo/Controle/EstadoServidor.py` | `.py` | 690 |
+| `SimuladorServerJogo/Rotas/Comandos.py` | `.py` | 686 |
 | `Codigo/Geradores/PokemonMundo.py` | `.py` | 678 |
-| `SimuladorServerJogo/Regras/Geracao.json` | `.json` | 658 |
-| `Codigo/Modulos/ControladorMundo/ControladorPlayer.py` | `.py` | 640 |
 
 ## Arquivos por tamanho
 
@@ -170,11 +170,11 @@
 
 | Ext | Linhas |
 |---:|---:|
-| `.py` | 28.917 |
-| `.json` | 5.229 |
+| `.py` | 30.768 |
+| `.json` | 5.413 |
 | `.java` | 2.835 |
-| `.csv` | 1.603 |
-| `.md` | 167 |
+| `.csv` | 1.616 |
+| `.md` | 208 |
 
 ## Top extensões por tamanho
 
@@ -184,25 +184,25 @@
 | `.ogg` | 0.045 | 17 |
 | `.wav` | 0.004 | 9 |
 | `.jpg` | 0.003 | 21 |
-| `.py` | 0.001 | 129 |
+| `.py` | 0.001 | 134 |
 | `.ttf` | 0.000 | 2 |
 | `.csv` | 0.000 | 7 |
+| `.json` | 0.000 | 36 |
 | `.mp3` | 0.000 | 3 |
-| `.json` | 0.000 | 33 |
 | `.java` | 0.000 | 1 |
 | `.class` | 0.000 | 14 |
-| `.frag` | 0.000 | 1 |
+| `.md` | 0.000 | 1 |
 
 ## Diferenças vs último relatório
 
 | Métrica | Anterior | Atual | Δ |
 |---|---:|---:|---:|
-| pastas | 1.183 | 1.184 | 1 |
-| arquivos | 69.022 | 69.023 | 1 |
+| pastas | 1.184 | 1.184 | 0 |
+| arquivos | 69.023 | 69.031 | 8 |
 | tamanho_bytes | 0.405 GiB | 0.405 GiB | 0.000 GiB |
-| linhas_totais_geral | 37.073 | 38.751 | 1.678 |
-| py_arquivos | 130 | 129 | -1 |
-| linhas_totais | 28.461 | 28.917 | 456 |
-| classes_encontradas | 106 | 106 | 0 |
-| funcoes_encontradas | 327 | 331 | 4 |
-| metodos_encontrados | 1.242 | 1.252 | 10 |
+| linhas_totais_geral | 38.751 | 40.840 | 2.089 |
+| py_arquivos | 129 | 134 | 5 |
+| linhas_totais | 28.917 | 30.768 | 1.851 |
+| classes_encontradas | 106 | 114 | 8 |
+| funcoes_encontradas | 331 | 347 | 16 |
+| metodos_encontrados | 1.252 | 1.348 | 96 |

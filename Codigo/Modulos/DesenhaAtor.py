@@ -33,8 +33,7 @@ class DesenhaAtor:
     def __init__(self, skin_surface, escala=1.0, tile_px=50):
         self._escala_tiles = float(escala)
         self._tile_px = max(1, int(tile_px))
-        self._largura_tiles = 1.85
-        self._altura_tiles = 1.4
+        self._tile_px_referencia = 50  # base usada para escalar proporcionalmente
         self.sprite_offset_graus = -90
 
         self._skin_original = skin_surface.convert_alpha()
@@ -47,9 +46,16 @@ class DesenhaAtor:
         self._cache_limite_angulos = 120
 
     def _redimensionar_skin(self, surf):
-        largura = max(1, int(self._tile_px * self._largura_tiles * self._escala_tiles))
-        altura = max(1, int(self._tile_px * self._altura_tiles * self._escala_tiles))
-        return pygame.transform.smoothscale(surf, (largura, altura)).convert_alpha()
+        largura_original = max(1, surf.get_width())
+        altura_original = max(1, surf.get_height())
+
+        fator_tile = self._tile_px / float(self._tile_px_referencia)
+        fator_escala = max(0.01, fator_tile * self._escala_tiles)
+
+        nova_largura = max(1, int(round(largura_original * fator_escala)))
+        nova_altura = max(1, int(round(altura_original * fator_escala)))
+
+        return pygame.transform.smoothscale(surf, (nova_largura, nova_altura)).convert_alpha()
 
     def set_skin(self, skin_surface):
         self._skin_original = skin_surface.convert_alpha()
@@ -89,7 +95,17 @@ class DesenhaAtor:
             self._cache_corpo_rotacionado.pop(antigo, None)
         return corpo
 
-    def desenhar(self, tela, centro, mouse_pos=None, angulo_graus=None, alcance_tapa=0.0, progresso_tapa=0.0, respiracao_tempo=0.0, recuo_mao=0.0):
+    def desenhar(
+        self,
+        tela,
+        centro,
+        mouse_pos=None,
+        angulo_graus=None,
+        alcance_tapa=0.0,
+        progresso_tapa=0.0,
+        respiracao_tempo=0.0,
+        recuo_mao=0.0
+    ):
         cx, cy = centro
 
         if angulo_graus is None:

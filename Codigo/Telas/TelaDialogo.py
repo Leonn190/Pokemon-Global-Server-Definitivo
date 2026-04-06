@@ -84,6 +84,9 @@ class TelaDialogo:
         self._fade_bottom: pygame.Surface | None = None
         self._ator_player.definir_angulo_olhar(45.0)
         self._ator_npc.definir_angulo_olhar(135.0)
+        self._intro_duracao = 0.72
+        self._intro_t = 0.0
+        self._intro_finalizada = False
         self._reconstruir_no_atual()
 
     @staticmethod
@@ -272,6 +275,8 @@ class TelaDialogo:
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 self._encerrar()
                 return True
+            if not self._intro_finalizada:
+                continue
             if self._tipo_loja_atual() in {"padrao", "secreta", "presente"}:
                 continue
             if ev.type == pygame.MOUSEMOTION:
@@ -323,7 +328,11 @@ class TelaDialogo:
 
     def atualizar(self, dt: float) -> None:
         if self.Ativa:
-            self._texto_animado.atualizar(dt)
+            self._intro_t += max(0.0, float(dt))
+            if self._intro_t >= self._intro_duracao:
+                self._intro_finalizada = True
+            if self._intro_finalizada:
+                self._texto_animado.atualizar(dt)
             self._tempo_respiracao += max(0.0, float(dt))
 
     def desenhar(self, tela: pygame.Surface, eventos: Optional[List[pygame.event.Event]] = None, dt: float = 0.0) -> None:
@@ -332,16 +341,29 @@ class TelaDialogo:
         eventos = eventos or []
         w, h = tela.get_size()
         self._garantir_cache_fundos((w, h))
+        progresso_intro = max(0.0, min(1.0, self._intro_t / max(0.001, float(self._intro_duracao))))
+        if progresso_intro < 1.0:
+            zoom = 1.0 + (0.06 * progresso_intro)
+            quadro = tela.copy()
+            zw = max(1, int(w * zoom))
+            zh = max(1, int(h * zoom))
+            quadro_zoom = pygame.transform.smoothscale(quadro, (zw, zh))
+            tela.blit(quadro_zoom, ((w - zw) // 2, (h - zh) // 2))
+        self._overlay.set_alpha(int(130 * progresso_intro))
+        self._fade_top.set_alpha(int(255 * progresso_intro))
+        self._fade_bottom.set_alpha(int(255 * progresso_intro))
         tela.blit(self._overlay, (0, 0))
         tela.blit(self._fade_top, (0, 0))
         tela.blit(self._fade_bottom, (0, h - self._fade_bottom.get_height()))
 
         self._ator_player.set_tile_px(64)
         self._ator_npc.set_tile_px(64)
-        self._ator_player.desenhar(tela, posicao_tela=(int(w * 0.12), int(h * 0.87)), respiracao_tempo=self._tempo_respiracao)
-        self._ator_npc.desenhar(tela, posicao_tela=(int(w * 0.88), int(h * 0.87)), respiracao_tempo=self._tempo_respiracao)
-        Texto(self._player_nome, pos=(int(w * 0.12), int(h * 0.92)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
-        Texto(self._npc_nome, pos=(int(w * 0.88), int(h * 0.92)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
+        pos_player_x = int((w * 0.12) + ((1.0 - progresso_intro) * (-w * 0.14)))
+        pos_npc_x = int((w * 0.88) + ((1.0 - progresso_intro) * (w * 0.14)))
+        self._ator_player.desenhar(tela, posicao_tela=(pos_player_x, int(h * 0.87)), respiracao_tempo=self._tempo_respiracao)
+        self._ator_npc.desenhar(tela, posicao_tela=(pos_npc_x, int(h * 0.87)), respiracao_tempo=self._tempo_respiracao)
+        Texto(self._player_nome, pos=(pos_player_x, int(h * 0.92)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
+        Texto(self._npc_nome, pos=(pos_npc_x, int(h * 0.92)), style={"size": 22, "align": "midbottom", "outline": True}).draw(tela)
 
         Texto(self._texto_animado.texto_visivel, pos=(int(w * 0.10), int(h * 0.61)), style={"size": 24, "align": "topleft", "outline": True}).draw(tela)
 

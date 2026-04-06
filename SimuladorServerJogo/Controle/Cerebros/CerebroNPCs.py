@@ -56,12 +56,8 @@ class CerebroNPCs:
                         skin = f"{skin_raw[1:]}.png"
                     else:
                         skin = f"{skin_raw}.png"
-                    if nome.strip().lower() == "josefa":
-                        px, py = 0.0, 0.0
-                        estatico = True
-                    else:
-                        px, py = self._encontrar_spawn_terrestre((spawn_x, spawn_y), idx)
-                        estatico = False
+                    px, py = self._encontrar_spawn_terrestre((spawn_x, spawn_y), idx)
+                    estatico = False
                     rota = [] if estatico else self._gerar_rota_grande((px, py), idx)
                     npc_id = int(900000 + int(code) if code.isdigit() else 900000 + idx)
                     base[f"vendedor:{code}"] = {
@@ -121,14 +117,34 @@ class CerebroNPCs:
 
     def _normalizar_estado_npcs_legado(self) -> None:
         novo: Dict[str, Dict[str, object]] = {}
-        for chave, npc in list(self._npcs.items()):
+        for idx, (chave, npc) in enumerate(list(self._npcs.items()), start=1):
             if not isinstance(npc, dict):
                 continue
             estilo = str(npc.get("estilo") or "vendedor").strip().lower()
-            code = str(npc.get("code") or chave).strip() or chave
+            code_bruto = str(npc.get("code") or chave).strip() or chave
+            code = code_bruto.split(":", 1)[1] if ":" in code_bruto else code_bruto
             dim = "Mundo" if estilo != "combatente" else str(npc.get("dimensao") or "EstadioNormal")
             npc["estilo"] = estilo
             npc["dimensao"] = dim
+            if not str(npc.get("nome") or "").strip():
+                npc["nome"] = "NPC"
+            skin_raw = str(npc.get("skin") or "1").strip() or "1"
+            if not skin_raw.lower().endswith(".png"):
+                skin_raw = f"{skin_raw}.png"
+            npc["skin"] = skin_raw
+            try:
+                npc_id = int(npc.get("id", 0) or 0)
+            except Exception:
+                npc_id = 0
+            if npc_id <= 0:
+                base_id = 910000 if estilo == "combatente" else 900000
+                if code.isdigit():
+                    npc_id = base_id + int(code)
+                else:
+                    npc_id = base_id + idx
+            npc["id"] = int(npc_id)
+            if not isinstance(npc.get("interacao"), dict):
+                npc["interacao"] = {"ativa": False, "cliente": ""}
             prefixo = "combatente" if estilo == "combatente" else "vendedor"
             novo[f"{prefixo}:{code}"] = npc
         self._npcs = novo
@@ -189,30 +205,23 @@ class CerebroNPCs:
                 npc["rota_idx"] = 0
                 mudou = True
                 continue
-            if nome != "josefa":
-                pos = npc.get("posicao", [spawn_x, spawn_y])
-                pos_ruim = (
-                    (not isinstance(pos, (list, tuple)))
-                    or len(pos) != 2
-                    or self._tile_bloqueado_npc((float(pos[0]), float(pos[1])))
-                    or (abs(float(pos[0])) < 0.05 and abs(float(pos[1])) < 0.05)
-                )
-                if bool(npc.get("estatico", False)) or pos_ruim:
-                    npc["estatico"] = False
-                    if pos_ruim:
-                        sx, sy = self._encontrar_spawn_terrestre((spawn_x, spawn_y), int(npc.get("id", 0) or 1))
-                        npc["posicao"] = [float(sx), float(sy)]
-                    if not isinstance(npc.get("rota"), list) or not npc.get("rota"):
-                        pos = npc.get("posicao", [spawn_x, spawn_y])
-                        origem = (float(pos[0]), float(pos[1])) if isinstance(pos, (list, tuple)) and len(pos) == 2 else (float(spawn_x), float(spawn_y))
-                        npc["rota"] = [[float(p[0]), float(p[1])] for p in self._gerar_rota_grande(origem, int(npc.get("id", 0) or 1))]
-                    mudou = True
-                continue
-            npc["posicao"] = [0.0, 0.0]
-            npc["estatico"] = True
-            npc["rota"] = []
-            npc["rota_idx"] = 0
-            mudou = True
+            pos = npc.get("posicao", [spawn_x, spawn_y])
+            pos_ruim = (
+                (not isinstance(pos, (list, tuple)))
+                or len(pos) != 2
+                or self._tile_bloqueado_npc((float(pos[0]), float(pos[1])))
+                or (abs(float(pos[0])) < 0.05 and abs(float(pos[1])) < 0.05)
+            )
+            if bool(npc.get("estatico", False)) or pos_ruim:
+                npc["estatico"] = False
+                if pos_ruim:
+                    sx, sy = self._encontrar_spawn_terrestre((spawn_x, spawn_y), int(npc.get("id", 0) or 1))
+                    npc["posicao"] = [float(sx), float(sy)]
+                if not isinstance(npc.get("rota"), list) or not npc.get("rota"):
+                    pos = npc.get("posicao", [spawn_x, spawn_y])
+                    origem = (float(pos[0]), float(pos[1])) if isinstance(pos, (list, tuple)) and len(pos) == 2 else (float(spawn_x), float(spawn_y))
+                    npc["rota"] = [[float(p[0]), float(p[1])] for p in self._gerar_rota_grande(origem, int(npc.get("id", 0) or 1))]
+                mudou = True
         if mudou:
             salvar_npcs_vendedores_estado(self._npcs, force=True)
 
@@ -397,6 +406,16 @@ class CerebroNPCs:
             if not isinstance(pos, (list, tuple)) or len(pos) != 2:
                 pos = [0.0, 0.0]
             atual = (float(pos[0]), float(pos[1]))
+            estilo = str(npc.get("estilo") or "vendedor").strip().lower()
+            if estilo != "combatente":
+                ruim = self._tile_bloqueado_npc(atual) or (abs(atual[0]) < 0.05 and abs(atual[1]) < 0.05)
+                if ruim:
+                    sx, sy = self._encontrar_spawn_terrestre(atual, int(npc.get("id", 0) or 1))
+                    atual = (float(sx), float(sy))
+                    npc["posicao"] = [float(atual[0]), float(atual[1])]
+                    npc["estatico"] = False
+                    npc["rota"] = [[float(p[0]), float(p[1])] for p in self._gerar_rota_grande(atual, int(npc.get("id", 0) or 1))]
+                    npc["rota_idx"] = 0
             inter = npc.get("interacao") if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
             esperando = int(npc.get("espera_ate_tick", 0) or 0) > tick
             estatico = bool(npc.get("estatico", False))

@@ -146,6 +146,10 @@ class LeitorMundo:
                 self._ultimo_chunk_player = chunk_player
             time.sleep(self.IntervaloPoll)
 
+    def forcar_refresh_chunks(self) -> None:
+        with self._lock:
+            self._ultimo_chunk_player = None
+
     def _coletar_chunks_servidor(self) -> Optional[PacoteMundo]:
         pos_ref = self.posicao_referencia()
         try:
@@ -166,6 +170,7 @@ class LeitorMundo:
     def processar_pacote_chunks(self, pacote: PacoteMundo) -> None:
         if not isinstance(pacote, dict):
             return
+        dimensao_callback: str | None = None
         with self._lock:
             meta_alterada = False
             meta = pacote.get("meta") if isinstance(pacote.get("meta"), dict) else {}
@@ -175,7 +180,7 @@ class LeitorMundo:
                     self.MetaMundo[chave_meta] = valor_meta
                     meta_alterada = True
             if meta.get("dimensao") is not None and self.CallbackDimensaoAtual is not None:
-                self.CallbackDimensaoAtual(str(meta.get("dimensao") or "Mundo"))
+                dimensao_callback = str(meta.get("dimensao") or "Mundo")
             chunk_tamanho = meta.get("chunk_tamanho", meta.get("chunk_blocos"))
             if chunk_tamanho is not None:
                 chunk_tamanho_novo = max(1, int(chunk_tamanho))
@@ -227,6 +232,8 @@ class LeitorMundo:
             if houve_alteracao_chunks or meta_alterada:
                 self._versao_chunks += 1
                 self._ultimo_chunk_player = None
+        if dimensao_callback is not None and self.CallbackDimensaoAtual is not None:
+            self.CallbackDimensaoAtual(dimensao_callback)
         self.descartar_chunks_fora_do_anel()
 
     def _obter_superficie_chunk(self, chave_chunk: Tuple[int, int], grid: List[List[int]], tile_px: int) -> Optional[pygame.Surface]:

@@ -1,0 +1,7 @@
+[camera]
+px_por_tile = 50
+
+[combate]
+camera_px_por_tile = 40
+camera_zoom_min = 25
+camera_zoom_max = 55

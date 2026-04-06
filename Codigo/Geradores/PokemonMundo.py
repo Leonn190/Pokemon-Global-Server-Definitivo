@@ -24,6 +24,7 @@ class Pokemon:
     _cache_rotacao_bola: Dict[Tuple[int, int], pygame.Surface] = {}
     _carregamento_em_andamento: set[str] = set()
     _INTERVALO_FRAME_ANIM_MS = 85
+    _INCREMENTO_DIAMETRO_POR_TAMANHO = 0.2
 
     def __init__(self, snapshot: Dict[str, object]) -> None:
         pos = self._pos(snapshot.get("posicao"))
@@ -102,7 +103,7 @@ class Pokemon:
             t = 0
         if t <= 0:
             return float(default)
-        return 1.0 + (max(1, t) - 1) * 0.2
+        return 1.0 + (max(1, t) - 1) * float(Pokemon._INCREMENTO_DIAMETRO_POR_TAMANHO)
 
     @classmethod
     def _precarregar_frames_async(cls, especie: str) -> None:

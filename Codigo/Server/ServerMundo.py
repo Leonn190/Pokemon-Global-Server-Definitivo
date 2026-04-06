@@ -124,6 +124,19 @@ def desconectar_mundo(ip, client_id):
         return _erro_padrao("Falha ao interpretar resposta de desconexão do mundo")
 
 
+def coletar_regras_mundo(ip):
+    pacote = {
+        "ip": ip,
+        "acao": "coletar_regras_mundo",
+        "dados": {},
+    }
+    resposta_json = processar_entrada_json(json.dumps(pacote, ensure_ascii=False))
+    try:
+        return json.loads(resposta_json)
+    except json.JSONDecodeError:
+        return _erro_padrao("Falha ao interpretar resposta de regras do mundo")
+
+
 
 def enviar_evento_arremesso_mundo(ip, client_id, payload):
     """Mantido por compatibilidade: normaliza para spawn/categoria=projetil_lancamento."""

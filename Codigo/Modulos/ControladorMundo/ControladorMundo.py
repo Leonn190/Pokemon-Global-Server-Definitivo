@@ -15,7 +15,7 @@ class ControladorMundo:
         self.JOGO = jogo
         self.Camera = camera
         self.Objetos = ControladorObjetos()
-        self.Player = ControladorPlayer(self.Objetos)
+        self.Player = ControladorPlayer(self.Objetos, jogo=jogo)
         self.Leitor = LeitorMundo(
             jogo=jogo,
             camera=camera,

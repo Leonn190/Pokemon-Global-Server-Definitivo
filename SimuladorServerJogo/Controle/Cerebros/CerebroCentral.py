@@ -12,7 +12,7 @@ from typing import Deque, Dict, Set, Tuple
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer, ItemMundoServer, PokemonServer, XpMundoServer
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
-from SimuladorServerJogo.Regras.Loader import carregar_regras_cerebro
+from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_runtime_servidor
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Geradores.GeradorPokemon import materializar_pokemon
 
@@ -41,7 +41,7 @@ class CerebroCentral:
         self._baus_ids: Set[int] = set()
         self._itens_mundo_ids: Set[int] = set()
         self._xp_mundo_ids: Set[int] = set()
-        self._regras = carregar_regras_cerebro()
+        self._regras = carregar_regras_runtime_servidor()
 
         self._spawns_pokemon_ultimos_200: Deque[int] = deque()
         self._spawns_bau_ultimos_200: Deque[int] = deque()
@@ -135,7 +135,7 @@ class CerebroCentral:
                 "ativador": self._ativador_id,
                 "is_ativador": self._ativador_id == cid,
                 "tick_executado": False,
-                "tick_intervalo_s": (1.0 / 30.0),
+                "tick_intervalo_s": float(self._f("tick_segundos", 1.0 / 30.0)),
                 "chunks_visiveis": len(chunks_carregados),
                 "chunks_simulados": len(chunks_simulados),
                 "players_ativos": len(self._players_ativos),

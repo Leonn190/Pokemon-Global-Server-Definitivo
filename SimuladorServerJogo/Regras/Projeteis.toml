@@ -1,0 +1,17 @@
+[velocidade]
+pokebola_tiles_s = 7.0
+fastball_tiles_s = 10.0
+sniperball_tiles_s = 8.0
+fruta_tiles_s = 6.0
+item_mundo_tiles_s = 3.0
+
+[alcance]
+pokebola_tiles = 7.0
+fastball_tiles = 7.0
+sniperball_tiles = 9.0
+fruta_tiles = 6.0
+
+[mira]
+# Multiplicadores diretos aplicados quando o player está mirando.
+multiplicador_velocidade = 1.10
+multiplicador_alcance = 1.15

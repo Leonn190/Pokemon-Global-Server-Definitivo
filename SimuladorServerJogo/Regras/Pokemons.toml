@@ -1,0 +1,22 @@
+[velocidade]
+base_tiles_s = 3.0
+
+[tamanho]
+# Diâmetro visual/físico no mundo: 1.0 + (tamanho - 1) * incremento_por_tamanho.
+incremento_por_tamanho = 0.2
+
+[animacao]
+intervalo_frame_ms = 85
+
+[captura]
+limite_frutas = 2
+cooldown_movimento_ticks = 36
+atraso_inventario_ticks = 24
+atraso_spawn_xp_ticks = 16
+xp_particulas_min = 3
+xp_particulas_max = 4
+# Poder final soma (maestria * bonus_maestria_por_ponto) antes de calcular chance de escape.
+bonus_maestria_por_ponto = 10.0
+# Clamp da chance de escape após a fórmula de dificuldade.
+chance_escape_min = 2.0
+chance_escape_max = 95.0

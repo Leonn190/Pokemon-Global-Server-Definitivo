@@ -113,4 +113,8 @@ def processar_entrada_json(requisicao_json):
         status = "ok" if criado else "negado"
         return json.dumps(_resposta(status, mensagem), ensure_ascii=False)
 
+    # ROTA: coletar_regras_mundo
+    if acao == "coletar_regras_mundo":
+        return json.dumps(_resposta("ok", "Regras do mundo coletadas", regras=obter_regras_cliente()), ensure_ascii=False)
+
     return json.dumps(_resposta("erro", "Ação de entrada não suportada"), ensure_ascii=False)

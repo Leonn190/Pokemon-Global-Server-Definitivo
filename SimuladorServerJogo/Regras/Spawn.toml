@@ -1,0 +1,23 @@
+[pokemons]
+chance_por_tick = 0.03
+limite_200_ticks = 3
+tentativas = 5
+limite_chunk = 2
+limite_total = 100
+limite_total_por_chunk_existente = 1.0
+chance_despawn_simulado_por_tick = 0.003
+
+[baus]
+chance_por_tick = 0.01
+limite_200_ticks = 1
+tentativas = 5
+limite_chunk = 1
+limite_total = 60
+limite_total_por_chunk_existente = 0.5
+chance_despawn_simulado_por_tick = 0.002
+
+[item_mundo]
+ttl_ticks = 5000
+
+[xp_mundo]
+ttl_ticks = 600

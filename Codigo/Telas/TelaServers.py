@@ -192,7 +192,6 @@ def _abrir_subtela_criar_personagem(jogo):
 
         jogo.INFO["UsuarioLogado"] = usuario
         jogo.INFO["PlayerDadosServer"] = personagem
-        jogo.INFO["RegrasServer"] = entrada.get("regras") if isinstance(entrada.get("regras"), dict) else {}
         jogo.CenaAlvo = "Carregamento"
 
     _SUBTELA_ATIVA = SubtelaCriarPersonagem(
@@ -445,7 +444,6 @@ def _processar_requisicao(Cena, JOGO):
             nome_personagem = str(personagem.get("nome") or JOGO.CONFIG.get("Usuario") or "Visitante").strip()
             JOGO.INFO["UsuarioLogado"] = nome_personagem
             JOGO.INFO["PlayerDadosServer"] = personagem
-            JOGO.INFO["RegrasServer"] = resposta.get("regras") if isinstance(resposta.get("regras"), dict) else {}
             JOGO.CenaAlvo = "Carregamento"
         else:
             _abrir_subtela_criar_personagem(JOGO)

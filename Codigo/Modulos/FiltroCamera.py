@@ -6,6 +6,23 @@ import pygame
 
 
 class FiltroCamera:
+    INICIO_ESCURECER_MIN = 17 * 60
+    ESCURO_MAXIMO_MIN = 25 * 60
+    INICIO_CLAREAR_MIN = 25 * 60
+    FIM_CLAREAR_MIN = 32 * 60
+
+    @classmethod
+    def reconfigurar_iluminacao(cls, dados: Dict[str, object]) -> None:
+        ini_escurecer = int(dados.get("inicio_escurecer_hora", 17) or 17) * 60 + int(dados.get("inicio_escurecer_minuto", 0) or 0)
+        escuro_max = int(dados.get("escuro_maximo_hora", 1) or 1) * 60 + int(dados.get("escuro_maximo_minuto", 0) or 0)
+        ini_clarear = int(dados.get("inicio_clarear_hora", 1) or 1) * 60 + int(dados.get("inicio_clarear_minuto", 0) or 0)
+        fim_clarear = int(dados.get("fim_clarear_hora", 8) or 8) * 60 + int(dados.get("fim_clarear_minuto", 0) or 0)
+
+        cls.INICIO_ESCURECER_MIN = max(0, ini_escurecer)
+        cls.ESCURO_MAXIMO_MIN = max(cls.INICIO_ESCURECER_MIN + 1, escuro_max + (1440 if escuro_max < cls.INICIO_ESCURECER_MIN else 0))
+        cls.INICIO_CLAREAR_MIN = max(cls.ESCURO_MAXIMO_MIN, ini_clarear + (1440 if ini_clarear < cls.INICIO_ESCURECER_MIN else 0))
+        cls.FIM_CLAREAR_MIN = max(cls.INICIO_CLAREAR_MIN + 1, fim_clarear + (1440 if fim_clarear < cls.INICIO_ESCURECER_MIN else 0))
+
     def __init__(self) -> None:
         self._tempo = 0.0
         self._overlay = None
@@ -18,13 +35,18 @@ class FiltroCamera:
     @staticmethod
     def _fator_noite(hora: int, minuto: int) -> float:
         m = int(hora) * 60 + int(minuto)
-        if 8 * 60 <= m < 17 * 60:
+        if m < FiltroCamera.INICIO_ESCURECER_MIN:
+            m += 1440
+        if FiltroCamera.FIM_CLAREAR_MIN <= m < (FiltroCamera.INICIO_ESCURECER_MIN + 1440):
             return 0.0
-        if m >= 17 * 60 or m < 60:
-            m_ext = m if m >= 17 * 60 else m + 1440
-            return max(0.0, min(1.0, (m_ext - (17 * 60)) / float(8 * 60)))
-        if 60 <= m < 8 * 60:
-            return max(0.0, min(1.0, 1.0 - ((m - 60) / float(7 * 60))))
+        if FiltroCamera.INICIO_ESCURECER_MIN <= m < FiltroCamera.ESCURO_MAXIMO_MIN:
+            dur = max(1, FiltroCamera.ESCURO_MAXIMO_MIN - FiltroCamera.INICIO_ESCURECER_MIN)
+            return max(0.0, min(1.0, (m - FiltroCamera.INICIO_ESCURECER_MIN) / float(dur)))
+        if FiltroCamera.ESCURO_MAXIMO_MIN <= m < FiltroCamera.INICIO_CLAREAR_MIN:
+            return 1.0
+        if FiltroCamera.INICIO_CLAREAR_MIN <= m < FiltroCamera.FIM_CLAREAR_MIN:
+            dur = max(1, FiltroCamera.FIM_CLAREAR_MIN - FiltroCamera.INICIO_CLAREAR_MIN)
+            return max(0.0, min(1.0, 1.0 - ((m - FiltroCamera.INICIO_CLAREAR_MIN) / float(dur))))
         return 0.0
 
     def _garantir_cache(self, largura: int, altura: int) -> None:

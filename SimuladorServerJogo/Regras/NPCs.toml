@@ -1,0 +1,11 @@
+[interacao]
+raio_padrao = 1.1
+
+[movimento]
+velocidade_base_tiles_s = 4.5
+
+[rotas]
+tamanho_min = 200.0
+tamanho_max = 1000.0
+tentativas_replanejamento = 3
+chance_variacao_por_tick = 0.04

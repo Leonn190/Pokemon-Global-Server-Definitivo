@@ -39,7 +39,7 @@ class CerebroItensMundo:
         dx = float(p1[0]) - float(p0[0]); dy = float(p1[1]) - float(p0[1])
         dist = math.hypot(dx, dy) or 1.0
         destino = [float(p0[0]) + (dx / dist) * min(1.0, dist), float(p0[1]) + (dy / dist) * min(1.0, dist)]
-        velocidade = 3.0
+        velocidade = float(self._core._f("projetil_velocidade_item_mundo_tiles_s", 3.0))
         cliente_ms = int(payload.get("instante_cliente_ms", 0) or 0)
         atraso_ms = max(0, int(time.time() * 1000) - cliente_ms) if cliente_ms > 0 else 0
         velocidade_visual = min(9.0, velocidade + (atraso_ms / 1000.0) * 1.5)
@@ -58,7 +58,7 @@ class CerebroItensMundo:
 
         chunks_validos = set(chunks_carregados) | set(chunks_simulados)
         players = [o for o in BANCO_DADOS.listar_objetos() if str(getattr(o, "estado_extra", {}).get("subtipo", "")).strip().lower() == "player"]
-        ttl_ticks = 5000
+        ttl_ticks = int(self._core._i("item_mundo_ttl_ticks", 5000))
 
         usados_no_tick: set[int] = set()
         for oid in sorted(list(self._core._itens_mundo_ids)):

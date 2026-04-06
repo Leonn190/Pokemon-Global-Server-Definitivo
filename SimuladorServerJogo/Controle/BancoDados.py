@@ -16,7 +16,7 @@ from SimuladorServerJogo.Geradores.GeradorMundo import (
     carregar_estado_mundo,
 )
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, EstadioServer
-from SimuladorServerJogo.Regras.Loader import carregar_regras_estruturas_naturais
+from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_estruturas_naturais
 from Codigo.Modulos.Colisor import Colisor
 
 

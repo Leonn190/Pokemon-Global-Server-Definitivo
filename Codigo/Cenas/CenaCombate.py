@@ -15,7 +15,9 @@ class CenaCombate:
         self.SubtelaOpcoes = SubtelaOpcoes()
 
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
-        tile_px = 40
+        regras_mundo = JOGO.INFO.get("RegrasMundo") if isinstance(JOGO.INFO.get("RegrasMundo"), dict) else {}
+        gerais = regras_mundo.get("gerais") if isinstance(regras_mundo.get("gerais"), dict) else {}
+        tile_px = max(8, int(gerais.get("combate_camera_px_por_tile", 40) or 40))
         largura = float(contexto.get("largura", 100) or 100)
         altura = float(contexto.get("altura", 60) or 60)
         centro = contexto.get("centro") if isinstance(contexto.get("centro"), (list, tuple)) and len(contexto.get("centro")) == 2 else [largura * 0.5, altura * 0.5]

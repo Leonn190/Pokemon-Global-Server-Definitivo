@@ -10,10 +10,10 @@ from SimuladorServerJogo.Controle.EstadoServidor import obter_tempo_mundo_estado
 
 class CerebroTempo:
     TPS = 30.0
-    SEGUNDOS_MUNDO_POR_TICK = 2.0  # 1 min jogo = 1s real
 
     def __init__(self, regras: Dict[str, object] | None = None) -> None:
         self._regras = dict(regras or {})
+        self._acumulador_tempo_ticks = 0
         inicial = obter_tempo_mundo_estado()
         self._estado: Dict[str, object] = {
             "total_segundos_mundo": int(inicial.get("total_segundos_mundo", 8 * 3600) or (8 * 3600)),
@@ -49,7 +49,12 @@ class CerebroTempo:
         return snap
 
     def _avancar_tempo(self) -> None:
-        total = float(self._estado.get("total_segundos_mundo", 0) or 0) + self.SEGUNDOS_MUNDO_POR_TICK
+        self._acumulador_tempo_ticks += 1
+        ticks_por_ciclo = max(1, self._i("tempo_ticks_por_ciclo", 1))
+        if self._acumulador_tempo_ticks < ticks_por_ciclo:
+            return
+        self._acumulador_tempo_ticks = 0
+        total = float(self._estado.get("total_segundos_mundo", 0) or 0) + float(self._f("tempo_segundos_mundo_por_tick", 2.0))
         total_int = int(max(0, total))
         self._estado["total_segundos_mundo"] = total_int
         self._estado["dia"] = int(total_int // 86400)

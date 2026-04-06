@@ -12,6 +12,7 @@ from Codigo.Geradores.Player.Perfil import Perfil
 class ControladorAtores:
     def __init__(self) -> None:
         self.AtoresRemotosPorId: Dict[int, Ator] = {}
+        self._dimensao_por_id: Dict[int, str] = {}
 
     @staticmethod
     def _eh_npc_estado(estado: Dict[str, object]) -> bool:
@@ -24,11 +25,13 @@ class ControladorAtores:
     def upsert(self, oid: int, payload: Dict[str, object], id_player_local: int = -1) -> Optional[Ator]:
         if int(oid) == int(id_player_local):
             self.AtoresRemotosPorId.pop(int(oid), None)
+            self._dimensao_por_id.pop(int(oid), None)
             return None
         tipo = str(payload.get("tipo", "")).strip().lower()
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
         if tipo != "entidade_player" and not self._eh_npc_estado(estado):
             self.AtoresRemotosPorId.pop(int(oid), None)
+            self._dimensao_por_id.pop(int(oid), None)
             return None
 
         dados = dict(payload)
@@ -42,8 +45,16 @@ class ControladorAtores:
             remoto = Ator(nome_skin=str(dados.get("skin", "S1")), posicao=(float(pos[0]), float(pos[1])), escala_skin_tiles=1.0, tile_px=50)
             remoto.Id = int(oid)
             self.AtoresRemotosPorId[int(oid)] = remoto
-
-        remoto.definir_posicao(float(pos[0]), float(pos[1]))
+            # Primeira aparição: posição autoritativa imediata.
+            remoto.definir_posicao(float(pos[0]), float(pos[1]))
+            dados["hard"] = True
+        dim_atual = str(estado.get("dimensao") or dados.get("dimensao") or "Mundo")
+        dim_antiga = self._dimensao_por_id.get(int(oid))
+        if dim_antiga is not None and dim_antiga != dim_atual:
+            dados["hard"] = True
+        if bool(dados.get("teleporte", False)):
+            dados["hard"] = True
+        self._dimensao_por_id[int(oid)] = dim_atual
         nome = dados.get("nome") or dados.get("usuario")
         if nome:
             remoto.Nome = str(nome)
@@ -70,6 +81,7 @@ class ControladorAtores:
 
     def remover(self, oid: int) -> None:
         self.AtoresRemotosPorId.pop(int(oid), None)
+        self._dimensao_por_id.pop(int(oid), None)
 
     def renderizar(self, oid: int, tela, camera, dt: float) -> bool:
         ator = self.AtoresRemotosPorId.get(int(oid))

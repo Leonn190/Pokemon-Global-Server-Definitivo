@@ -278,7 +278,26 @@ class LeitorMundo:
                 cam_y %= altura_mundo
 
         tela_w, tela_h = tela.get_size()
-        for chave_real, grid in chunks_ref.items():
+        raio_chunks_x = max(2, int((tela_w / max(1, (tile_px * tamanho_chunk))) + 3))
+        raio_chunks_y = max(2, int((tela_h / max(1, (tile_px * tamanho_chunk))) + 3))
+        centro_chunk_x = int(cam_x // max(1, tamanho_chunk))
+        centro_chunk_y = int(cam_y // max(1, tamanho_chunk))
+        if toroidal and chunks_x > 0 and chunks_y > 0:
+            chaves_visiveis = {
+                ((centro_chunk_x + dx) % chunks_x, (centro_chunk_y + dy) % chunks_y)
+                for dx in range(-raio_chunks_x, raio_chunks_x + 1)
+                for dy in range(-raio_chunks_y, raio_chunks_y + 1)
+            }
+        else:
+            chaves_visiveis = {
+                (centro_chunk_x + dx, centro_chunk_y + dy)
+                for dx in range(-raio_chunks_x, raio_chunks_x + 1)
+                for dy in range(-raio_chunks_y, raio_chunks_y + 1)
+                if (centro_chunk_x + dx, centro_chunk_y + dy) in chunks_ref
+            }
+
+        for chave_real in chaves_visiveis:
+            grid = chunks_ref.get(chave_real, [])
             if not grid:
                 continue
             superficie = self._obter_superficie_chunk(chave_real, grid, tile_px)

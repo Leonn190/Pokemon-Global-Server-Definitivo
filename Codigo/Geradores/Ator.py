@@ -92,6 +92,7 @@ class Ator:
 
         self._alvo_posicao = self.Posicao
         self._alvo_angulo = self.AnguloOlhar
+        self._velocidade_interp_alvo = 10.0
         self._tempo_respiracao = 0.0
 
     def update(self, payload: dict) -> None:
@@ -113,6 +114,9 @@ class Ator:
             self.set_nome_skin(str(skin))
 
         estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+        vel_estado = float(estado.get("velocidade", 0.0) or 0.0)
+        if vel_estado > 0.0:
+            self._velocidade_interp_alvo = max(4.0, min(18.0, vel_estado * 1.35))
         if "angulo" in estado:
             alvo_ang = float(estado.get("angulo", self.AnguloOlhar))
             self._alvo_angulo = alvo_ang
@@ -222,6 +226,7 @@ class Ator:
         if self.Controle is not None:
             self._alvo_posicao = (float(self.Posicao[0]), float(self.Posicao[1]))
             self._alvo_angulo = float(self.AnguloOlhar)
+            self._velocidade_interp_alvo = 10.0
 
         if self._tempo_tapa > 0.0:
             self._tempo_tapa = max(0.0, self._tempo_tapa - dt)
@@ -231,7 +236,7 @@ class Ator:
         dx, dy = (ax - px), (ay - py)
         dist = math.hypot(dx, dy)
         if dist > 1e-4:
-            passo = min(dist, 10.0 * dt)
+            passo = min(dist, max(4.0, float(self._velocidade_interp_alvo)) * dt)
             k = passo / dist
             self.definir_posicao(px + dx * k, py + dy * k)
 

@@ -54,6 +54,8 @@ class TelaDialogo:
 
         self._ator_player = Ator(nome_skin=self._player_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
         self._ator_npc = Ator(nome_skin=self._npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
+        self._ator_player.Desenhador._escala_tiles *= 1.10
+        self._ator_npc.Desenhador._escala_tiles *= 1.10
         self._ator_player.Nome = self._player_nome
         self._ator_npc.Nome = self._npc_nome
 
@@ -87,6 +89,7 @@ class TelaDialogo:
         self._intro_duracao = 0.72
         self._intro_t = 0.0
         self._intro_finalizada = False
+        self._zoom_dialogo = 1.5
         self._reconstruir_no_atual()
 
     @staticmethod
@@ -306,7 +309,7 @@ class TelaDialogo:
         w, h = tela_size
         self._cache_tamanho = tela_size
         self._overlay = pygame.Surface((w, h), pygame.SRCALPHA)
-        self._overlay.fill((0, 0, 0, 130))
+        self._overlay.fill((0, 0, 0, 78))
 
         self._fade_top = pygame.Surface((w, int(h * 0.42)), pygame.SRCALPHA)
         for y in range(self._fade_top.get_height()):
@@ -342,14 +345,15 @@ class TelaDialogo:
         w, h = tela.get_size()
         self._garantir_cache_fundos((w, h))
         progresso_intro = max(0.0, min(1.0, self._intro_t / max(0.001, float(self._intro_duracao))))
-        if progresso_intro < 1.0:
-            zoom = 1.0 + (0.06 * progresso_intro)
+        zoom = 1.0 + ((self._zoom_dialogo - 1.0) * progresso_intro)
+        if zoom > 1.001:
             quadro = tela.copy()
             zw = max(1, int(w * zoom))
             zh = max(1, int(h * zoom))
-            quadro_zoom = pygame.transform.smoothscale(quadro, (zw, zh))
+            # scale padrão reduz custo em diálogo/intro comparado ao smoothscale.
+            quadro_zoom = pygame.transform.scale(quadro, (zw, zh))
             tela.blit(quadro_zoom, ((w - zw) // 2, (h - zh) // 2))
-        self._overlay.set_alpha(int(130 * progresso_intro))
+        self._overlay.set_alpha(int(78 + (92 * progresso_intro)))
         self._fade_top.set_alpha(int(255 * progresso_intro))
         self._fade_bottom.set_alpha(int(255 * progresso_intro))
         tela.blit(self._overlay, (0, 0))

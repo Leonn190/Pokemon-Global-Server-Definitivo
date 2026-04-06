@@ -7,6 +7,7 @@ import unicodedata
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
+from Codigo.Modulos.Colisor import Colisor
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer
 from SimuladorServerJogo.Controle.EstadoServidor import carregar_npcs_vendedores_estado, salvar_npcs_vendedores_estado
@@ -365,6 +366,54 @@ class CerebroNPCs:
         if rem is not None:
             self._ids_materializados.discard(int(npc_id))
 
+    def listar_locais_nomeados(self) -> List[Dict[str, object]]:
+        locais: List[Dict[str, object]] = []
+        for npc in self._npcs.values():
+            if not isinstance(npc, dict):
+                continue
+            nome = str(npc.get("nome") or "").strip()
+            pos = npc.get("posicao")
+            if not nome or not isinstance(pos, (list, tuple)) or len(pos) != 2:
+                continue
+            try:
+                px, py = float(pos[0]), float(pos[1])
+            except Exception:
+                continue
+            locais.append({"id": int(npc.get("id", 0) or 0), "categoria": "npc", "nome": nome, "posicao": [px, py]})
+        return locais
+
+    def _resolver_movimento_npc_materializado(self, npc_id: int, origem: Vector2, destino: Vector2, raio: float = 0.55) -> Vector2:
+        colisores: List[tuple[int, float, float, float, str, float, float]] = []
+        for obj in BANCO_DADOS.buscar_proximos(origem, 2.2):
+            oid = int(getattr(obj, "Id", 0) or 0)
+            if oid == int(npc_id):
+                continue
+            subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "") or "").strip().lower()
+            tipo = str(getattr(obj, "tipo_classe", "") or "").strip().lower()
+            if subt not in {"player", "pokemon", "bau", "npc_vendedor", "npc_combatente"} and not tipo.startswith("estrutura"):
+                continue
+            colisores.append(
+                (
+                    oid,
+                    float(getattr(obj, "posicao", origem)[0]),
+                    float(getattr(obj, "posicao", origem)[1]),
+                    float(getattr(obj, "raio_colisao", 0.5) or 0.5),
+                    tipo,
+                    float(getattr(obj, "campo", 0.0) or 0.0),
+                    float(getattr(obj, "intensidade", 0.0) or 0.0),
+                )
+            )
+        if not colisores:
+            return destino
+        rx, ry = Colisor.resolver_movimento_com_colisores(
+            posicao_antes=origem,
+            posicao_depois=destino,
+            raio_entidade=float(raio),
+            colisores=colisores,
+            dt=(1.0 / 30.0),
+        )
+        return (float(rx), float(ry))
+
     def registrar_inicio_interacao(self, client_id: str, npc_id: int) -> tuple[bool, str]:
         alvo = None
         for npc in self._npcs.values():
@@ -441,21 +490,15 @@ class CerebroNPCs:
                             ny += math.cos((tick + int(npc.get("id", 0))) * 0.025) * 0.04
                             largura, altura = BANCO_DADOS.limites_mundo()
                             candidato = (nx % max(1.0, float(largura)), ny % max(1.0, float(altura)))
-                            colisao_obj = self._colisao_objetos(int(npc.get("id", 0) or 0), candidato) if materializado else False
-                            if self._tile_bloqueado_npc(candidato) or colisao_obj:
-                                ang = random.uniform(-1.2, 1.2)
-                                rx = (dx * math.cos(ang)) - (dy * math.sin(ang))
-                                ry = (dx * math.sin(ang)) + (dy * math.cos(ang))
-                                rdist = max(1e-6, math.hypot(rx, ry))
-                                candidato2 = (
-                                    (atual[0] + (rx / rdist) * passo) % max(1.0, float(largura)),
-                                    (atual[1] + (ry / rdist) * passo) % max(1.0, float(altura)),
+                            if self._tile_bloqueado_npc(candidato):
+                                candidato = atual
+                            elif materializado:
+                                candidato = self._resolver_movimento_npc_materializado(
+                                    int(npc.get("id", 0) or 0),
+                                    atual,
+                                    candidato,
+                                    raio=0.55,
                                 )
-                                colisao_obj_2 = self._colisao_objetos(int(npc.get("id", 0) or 0), candidato2) if materializado else False
-                                if (not self._tile_bloqueado_npc(candidato2)) and (not colisao_obj_2):
-                                    candidato = candidato2
-                                else:
-                                    candidato = atual
                             atual = candidato
                             npc["posicao"] = [float(atual[0]), float(atual[1])]
                             if passo > 1e-6:

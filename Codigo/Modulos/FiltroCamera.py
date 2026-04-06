@@ -10,10 +10,16 @@ class FiltroCamera:
         self._tempo = 0.0
         self._overlay = None
         self._camada_cor = None
+        self._camada_noite = None
         self._camada_nevoa = None
+        self._camada_chuva = None
         self._vinheta = None
         self._tamanho = (0, 0)
         self._gotas: List[Tuple[float, float, float, float, float, float]] = []
+        self._chave_noite_cache = None
+        self._alpha_nevoa_cache = -1
+        self._ultimo_redesenho_chuva = -1.0
+        self._chuva_n_cache = -1.0
 
     @staticmethod
     def _fator_noite(hora: int, minuto: int) -> float:
@@ -33,8 +39,14 @@ class FiltroCamera:
         self._tamanho = (largura, altura)
         self._overlay = pygame.Surface((largura, altura), pygame.SRCALPHA)
         self._camada_cor = pygame.Surface((largura, altura), pygame.SRCALPHA)
+        self._camada_noite = pygame.Surface((largura, altura), pygame.SRCALPHA)
         self._camada_nevoa = pygame.Surface((largura, altura), pygame.SRCALPHA)
+        self._camada_chuva = pygame.Surface((largura, altura), pygame.SRCALPHA)
         self._vinheta = pygame.Surface((largura, altura), pygame.SRCALPHA)
+        self._chave_noite_cache = None
+        self._alpha_nevoa_cache = -1
+        self._ultimo_redesenho_chuva = -1.0
+        self._chuva_n_cache = -1.0
         cx, cy = largura * 0.5, altura * 0.5
         raio_max = max(1.0, ((cx * cx) + (cy * cy)) ** 0.5)
         for y in range(altura):
@@ -71,21 +83,44 @@ class FiltroCamera:
         self._overlay.fill((0, 0, 0, 0))
 
         alpha_noite = int(170 * noite)
-        if alpha_noite > 0:
-            self._camada_cor.fill((5, 10, 24, alpha_noite))
-            self._overlay.blit(self._camada_cor, (0, 0))
-
         alpha_tonalidade = int(90 * min(1.0, noite + chuva_n * 0.45))
-        if alpha_tonalidade > 0:
-            self._camada_cor.fill((18, 34, 56, alpha_tonalidade))
-            self._overlay.blit(self._camada_cor, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
-            if self._vinheta is not None:
-                self._overlay.blit(self._vinheta, (0, 0))
+        chave_noite = (alpha_noite, alpha_tonalidade)
+        if self._camada_noite is not None and self._chave_noite_cache != chave_noite:
+            self._camada_noite.fill((0, 0, 0, 0))
+            if alpha_noite > 0:
+                self._camada_cor.fill((5, 10, 24, alpha_noite))
+                self._camada_noite.blit(self._camada_cor, (0, 0))
+            if alpha_tonalidade > 0:
+                self._camada_cor.fill((18, 34, 56, alpha_tonalidade))
+                self._camada_noite.blit(self._camada_cor, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+                if self._vinheta is not None:
+                    self._camada_noite.blit(self._vinheta, (0, 0))
+            self._chave_noite_cache = chave_noite
+        if self._camada_noite is not None and (alpha_noite > 0 or alpha_tonalidade > 0):
+            self._overlay.blit(self._camada_noite, (0, 0))
 
         if chuva > 0:
-            self._camada_nevoa.fill((90, 98, 118, int(60 * chuva_n)))
+            alpha_nevoa = int(60 * chuva_n)
+            if self._camada_nevoa is not None and self._alpha_nevoa_cache != alpha_nevoa:
+                self._camada_nevoa.fill((90, 98, 118, alpha_nevoa))
+                self._alpha_nevoa_cache = alpha_nevoa
             self._overlay.blit(self._camada_nevoa, (0, 0))
-            self._desenhar_chuva(self._overlay, chuva_n)
+            # Limita a taxa de atualização da chuva para evitar custo alto em FPS muito altos.
+            precisa_redesenhar = (
+                self._ultimo_redesenho_chuva < 0.0
+                or (self._tempo - self._ultimo_redesenho_chuva) >= (1.0 / 45.0)
+                or abs(self._chuva_n_cache - chuva_n) >= 0.05
+            )
+            if precisa_redesenhar and self._camada_chuva is not None:
+                self._camada_chuva.fill((0, 0, 0, 0))
+                self._desenhar_chuva(self._camada_chuva, chuva_n)
+                self._ultimo_redesenho_chuva = self._tempo
+                self._chuva_n_cache = chuva_n
+            if self._camada_chuva is not None:
+                self._overlay.blit(self._camada_chuva, (0, 0))
+        else:
+            self._alpha_nevoa_cache = -1
+            self._chuva_n_cache = -1.0
 
         tela.blit(self._overlay, (0, 0))
 

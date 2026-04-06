@@ -1,5 +1,6 @@
 import threading
 import time
+import re
 from pathlib import Path
 
 import SimuladorServerJogo.Geradores.GeradorMundo as GERADOR_MUNDO
@@ -47,11 +48,65 @@ _TIPOS_ESTADIO_RESPEITO = (
 
 
 def _skins_liberadas_padrao() -> list[str]:
+    regras = carregar_regras_player()
+    minimo = int(regras.get("SkinInicialMin", 1) or 1)
+    maximo = int(regras.get("SkinInicialMax", 12) or 12)
+    minimo, maximo = sorted((max(1, minimo), max(1, maximo)))
     pasta = Path("Recursos") / "Visual" / "Skins"
     if not pasta.exists():
         return ["1.png"]
     skins = sorted({p.name for p in pasta.glob("*.png") if p.is_file()})
-    return skins or ["1.png"]
+    if not skins:
+        return ["1.png"]
+
+    def _indice_skin(nome: str) -> int | None:
+        m = re.search(r"(\d+)", Path(nome).stem)
+        return int(m.group(1)) if m else None
+
+    filtradas = [s for s in skins if (_indice_skin(s) is not None and minimo <= int(_indice_skin(s)) <= maximo)]
+    return filtradas or skins[: min(12, len(skins))]
+
+
+def _tempo_mundo_padrao() -> dict:
+    total_segundos = int(8 * 3600)
+    return {
+        "total_segundos_mundo": total_segundos,
+        "dia": 0,
+        "hora": 8,
+        "minuto": 0,
+        "chuva_intensidade": 0,
+        "chuva_alvo": 0,
+        "chuva_estado": "seco",
+        "chuva_habilitada": True,
+    }
+
+
+def _normalizar_tempo_mundo(tempo: dict | None) -> dict:
+    base = _tempo_mundo_padrao()
+    bruto = dict(tempo) if isinstance(tempo, dict) else {}
+    total = int(bruto.get("total_segundos_mundo", base["total_segundos_mundo"]) or base["total_segundos_mundo"])
+    total = max(0, total)
+    dia = int(total // 86400)
+    segundos_dia = int(total % 86400)
+    hora = int(segundos_dia // 3600)
+    minuto = int((segundos_dia % 3600) // 60)
+    base.update(
+        {
+            "total_segundos_mundo": total,
+            "dia": dia,
+            "hora": hora,
+            "minuto": minuto,
+            "chuva_intensidade": int(max(0, min(100, int(bruto.get("chuva_intensidade", 0) or 0)))),
+            "chuva_alvo": int(max(0, min(100, int(bruto.get("chuva_alvo", 0) or 0)))),
+            "chuva_estado": str(bruto.get("chuva_estado", "seco") or "seco"),
+            "chuva_habilitada": bool(bruto.get("chuva_habilitada", True)),
+        }
+    )
+    return base
+
+
+if isinstance(_ESTADO_MUNDO, dict):
+    _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))
 
 
 def _calcular_xp_alvo_por_nivel(nivel: int) -> int:
@@ -92,6 +147,7 @@ def _estado_mundo_vazio():
         "players": {},
         "npcs_vendedores": {},
         "spawn": [0.0, 0.0],
+        "tempo_mundo": _tempo_mundo_padrao(),
     }
 
 
@@ -294,6 +350,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
 def _recarregar_mundo():
     global _ESTADO_MUNDO
     _ESTADO_MUNDO = carregar_estado_mundo()
+    _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))
 
 
 def _limites_mundo_atuais() -> tuple[float, float]:
@@ -316,6 +373,7 @@ def _criar_novo_mundo_sync():
     players = dict(_ESTADO.get("personagens", {}))
     _set_geracao(em_andamento=True, progresso=1, mensagem="Preparando geração do mundo", erro="", operacao="criacao")
     _ESTADO_MUNDO = gerar_novo_estado_mundo(players=players, callback_progresso=_callback_progresso)
+    _ESTADO_MUNDO["tempo_mundo"] = _tempo_mundo_padrao()
     _set_geracao(progresso=98, mensagem="Salvando estado do mundo")
     salvar_estado_mundo(_ESTADO_MUNDO)
     _set_geracao(progresso=99, mensagem="Carregando mundo no servidor")
@@ -384,6 +442,7 @@ def _sync_personagens_mundo():
         return
     _ESTADO_MUNDO["players"] = _ESTADO["personagens"]
     _ESTADO_MUNDO.setdefault("npcs_vendedores", {})
+    _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))
     _ESTADO_MUNDO["estruturas_naturais_tocadas"] = BANCO_DADOS.exportar_estruturas_tocadas()
     salvar_estado_mundo(_ESTADO_MUNDO)
 
@@ -426,7 +485,21 @@ def snapshot_estado():
             "mensagem_geracao": str(_ESTADO_GERACAO["mensagem"]),
             "erro_geracao": str(_ESTADO_GERACAO["erro"]),
             "operacao_geracao": str(_ESTADO_GERACAO.get("operacao", "nenhuma")),
+            "tempo_mundo": dict(_normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))),
         }
+
+
+def obter_tempo_mundo_estado() -> dict:
+    with _LOCK:
+        tempo = _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))
+        _ESTADO_MUNDO["tempo_mundo"] = tempo
+        return dict(tempo)
+
+
+def atualizar_tempo_mundo_estado(tempo: dict, force: bool = False) -> None:
+    with _LOCK:
+        _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(tempo)
+        _persistir_personagens(force=force)
 
 
 def carregar_npcs_vendedores_estado() -> dict:

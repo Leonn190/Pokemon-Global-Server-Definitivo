@@ -452,4 +452,13 @@ def processar_atualizador_json(requisicao_json: str) -> str:
         else:
             pacotes.append({"tick": 0, "diffs": diffs_extra, "sintetico": True})
 
-    return _ok("Pacote cliente processado", client_id=client_id, aplicados=aplicados, ignorados=ignorados, pacotes=pacotes, tick_atual_servidor=PACOTES_TICK.tick_atual(), servidor_ts=time.time())
+    return _ok(
+        "Pacote cliente processado",
+        client_id=client_id,
+        aplicados=aplicados,
+        ignorados=ignorados,
+        pacotes=pacotes,
+        tick_atual_servidor=PACOTES_TICK.tick_atual(),
+        servidor_ts=time.time(),
+        meta={"tempo_mundo": CEREBRO.obter_snapshot_tempo()},
+    )

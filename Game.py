@@ -30,6 +30,7 @@ CONFIG = {
     "FPS Visivel": True,
     "Cords Visiveis": False,
     "Ping Visivel": False,
+    "MostrarHorario": False,
     "Usuario": None
 }
 
@@ -39,6 +40,10 @@ if ConfigFixa is not None:
     CONFIG = ConfigFixa
 
 CONFIG.update({"VERSÃO": 1.0})
+CONFIG.setdefault("FPS Visivel", True)
+CONFIG.setdefault("Ping Visivel", False)
+CONFIG.setdefault("Cords Visiveis", False)
+CONFIG.setdefault("MostrarHorario", False)
 VerificaSonoridade(CONFIG)
 
 Game = ControladorCenas(TELA, RELOGIO, CONFIG)

@@ -136,7 +136,7 @@ def _montar_layout(Cena, JOGO):
     y_toggles = y_inicial + espacamento * 3 + 20
     x_toggles = (largura_tela - (largura_toggle * 2 + espaco_x)) // 2
 
-    chaves = ["Mudo", "FPS Visivel", "Cords Visiveis", "Ping Visivel"]
+    chaves = ["Mudo", "FPS Visivel", "Ping Visivel", "Cords Visiveis", "MostrarHorario"]
     _BOTOES_TOGGLE = {}
     for i, chave in enumerate(chaves):
         coluna = i % 2

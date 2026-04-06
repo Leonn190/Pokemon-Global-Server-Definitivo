@@ -264,6 +264,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
                 "players_ativos": int(meta_cerebro.get("players_ativos", 0)),
                 "chunks_carregados": len(chunks_servidor_carregados),
                 "chunks_simulados": len(chunks_servidor_simulados),
+                "tempo_mundo": CEREBRO.obter_snapshot_tempo(),
             },
         }, ensure_ascii=False)
 

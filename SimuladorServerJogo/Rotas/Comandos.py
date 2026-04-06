@@ -262,6 +262,15 @@ _AJUDA_COMANDOS = {
             "Se nome_do_jogador não for informado, aplica no autor do comando.",
         ],
     },
+    "chuva": {
+        "uso": "/chuva [intensidade]",
+        "descricao": "Alterna a chuva global ou define a chuva alvo (0..100).",
+        "detalhes": [
+            "Sem argumento: alterna chuva global entre ativa/desativada (persistente).",
+            "Com número: define chuva alvo para convergência (0..100).",
+            "Com número só funciona se a chuva estiver ativa.",
+        ],
+    },
     "help": {
         "uso": "/help [comando]",
         "descricao": "Lista todos os comandos ou explica um comando específico.",
@@ -583,6 +592,21 @@ def _cmd_help(args):
     return " | ".join(msg)
 
 
+def _cmd_chuva(args):
+    _, livres = _split_args(args)
+    if not livres:
+        ativo = CEREBRO.alternar_chuva_global()
+        return "Chuva global ativada" if ativo else "Chuva global desativada"
+    alvo = _to_int(livres[0], -1)
+    if alvo < 0 or alvo > 100:
+        return "Erro no /chuva. Intensidade deve estar entre 0 e 100"
+    if not CEREBRO.chuva_habilitada():
+        return "Erro no /chuva. A chuva está desativada no servidor"
+    if not CEREBRO.definir_chuva_alvo_global(alvo):
+        return "Erro no /chuva. Não foi possível atualizar a chuva alvo"
+    return f"Chuva alvo ajustada para {alvo}%"
+
+
 def executar_comando_terminal(autor: str, texto: str) -> dict:
     bruto = str(texto or "").strip()
     if not bruto.startswith("/"):
@@ -592,7 +616,7 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
         return {"ok": True, "feedback": "Comando inexistente: /"}
     cmd = partes[0].lower()
     args = partes[1:]
-    if cmd in {"give_args", "tp_args", "spawn_args", "chest_args", "count_args", "xp_args", "locate_args"}:
+    if cmd in {"give_args", "tp_args", "spawn_args", "chest_args", "count_args", "xp_args", "locate_args", "chuva_args"}:
         base = {
             "give_args": "/give alvo item quantidade",
             "tp_args": "/tp alvo posx posy | /tp destino (nomes compostos com _)",
@@ -601,6 +625,7 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
             "count_args": "/count chunks|chests|pokemons",
             "xp_args": "/xp quantidade_xp [nome_do_jogador]",
             "locate_args": "/locate nome (nomes compostos com _)",
+            "chuva_args": "/chuva [intensidade]",
         }
         retorno = base[cmd]
     else:
@@ -621,6 +646,8 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
                 retorno = _cmd_locate(args)
             elif cmd == "help":
                 retorno = _cmd_help(args)
+            elif cmd == "chuva":
+                retorno = _cmd_chuva(args)
             else:
                 retorno = f"Comando inexistente: /{cmd}"
         except Exception:
@@ -633,6 +660,7 @@ def executar_comando_terminal(autor: str, texto: str) -> dict:
                 "xp": "/xp quantidade_xp [nome_do_jogador]",
                 "locate": "/locate nome (nomes compostos com _)",
                 "help": "/help [comando]",
+                "chuva": "/chuva [intensidade]",
             }.get(cmd, f"/{cmd}")
             retorno = f"Erro no /{cmd}. Ordem base: {ordem}"
     return {"ok": True, "feedback": str(retorno).strip()[:1200] or "Comando processado", "autor": "Servidor", "timestamp": time.time()}

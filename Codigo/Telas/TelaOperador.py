@@ -25,6 +25,7 @@ _REQUISICAO_PENDENTE = None
 _STATUS_TIMER = 0.0
 _GERACAO_NOTIFICADA = False
 _REMOCAO_NOTIFICADA = False
+_AGUARDANDO_CRIACAO = False
 
 def possui_subtela_carregamento_ativa():
     return isinstance(_SUBTELA_ATIVA, SubtelaCarregamento)
@@ -126,9 +127,10 @@ def _voltar(cena):
 
 
 def _pedir_confirmacao_apagar_mundo(jogo, estado, botao):
-    global _SUBTELA_ATIVA
+    global _SUBTELA_ATIVA, _AGUARDANDO_CRIACAO
     if estado:
         if _iniciar_requisicao("mundo", _get_server_ip(jogo.Cena), True, "Iniciando criação de mundo..."):
+            _AGUARDANDO_CRIACAO = True
             _SUBTELA_ATIVA = SubtelaCarregamento(jogo.TELA.get_size(), "Carregando")
             _SUBTELA_ATIVA.set_progresso(0)
             _SUBTELA_ATIVA.set_mensagem("Preparando geração do mundo")
@@ -174,7 +176,7 @@ def _atualizar_rotulos_botoes():
 
 
 def _processar_status_geracao(jogo, resposta):
-    global _SUBTELA_ATIVA, _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA
+    global _SUBTELA_ATIVA, _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
     operacao = str(resposta.get("operacao_geracao", "nenhuma") or "nenhuma")
     em_andamento = bool(resposta.get("mundo_em_geracao", False))
 
@@ -197,6 +199,12 @@ def _processar_status_geracao(jogo, resposta):
             if not _GERACAO_NOTIFICADA:
                 _emitir_feedback(f"Falha ao criar mundo: {erro}")
                 _GERACAO_NOTIFICADA = True
+        _AGUARDANDO_CRIACAO = False
+        return
+
+    if _AGUARDANDO_CRIACAO and not bool(resposta.get("mundo_existente", False)):
+        if isinstance(_SUBTELA_ATIVA, SubtelaCarregamento):
+            _SUBTELA_ATIVA.set_mensagem("Criando mundo...")
         return
 
     operacao_remocao = operacao == "remocao" or (
@@ -216,6 +224,7 @@ def _processar_status_geracao(jogo, resposta):
     if resposta.get("mundo_existente", False):
         if isinstance(_SUBTELA_ATIVA, SubtelaCarregamento):
             _SUBTELA_ATIVA.encerrada = True
+        _AGUARDANDO_CRIACAO = False
         if not _GERACAO_NOTIFICADA:
             _emitir_feedback("Mundo criado e pronto para uso", sucesso=True)
             _GERACAO_NOTIFICADA = True
@@ -226,7 +235,7 @@ def _processar_status_geracao(jogo, resposta):
 
 def _processar_resposta(jogo):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _REQUISICAO_TIPO_ATUAL
-    global _SUBTELA_ATIVA, _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA
+    global _SUBTELA_ATIVA, _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
     if not _REQUISICAO_RESULTADO:
         if not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
             _iniciar_requisicao_pendente()
@@ -252,11 +261,14 @@ def _processar_resposta(jogo):
             _BOTAO_MUNDO.set_estado(bool(resposta.get("mundo_existente", False)))
             if payload["payload"]:
                 _GERACAO_NOTIFICADA = False
+                _AGUARDANDO_CRIACAO = True
             else:
                 _REMOCAO_NOTIFICADA = False
+                _AGUARDANDO_CRIACAO = False
             _processar_status_geracao(jogo, resposta)
         else:
             _BOTAO_MUNDO.set_estado(not payload["payload"])
+            _AGUARDANDO_CRIACAO = False
 
     elif tipo == "validar_chave":
         if sucesso:
@@ -282,7 +294,7 @@ def _processar_resposta(jogo):
 def _montar_layout(jogo):
     global _TELA_CARREGADA, _TAMANHO_CACHE
     global _BOTAO_VOLTAR, _BOTAO_LIGAR, _BOTAO_MUNDO, _MENSAGEM
-    global _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA
+    global _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
 
     largura, altura = jogo.TELA.get_size()
 
@@ -325,6 +337,7 @@ def _montar_layout(jogo):
 
     _GERACAO_NOTIFICADA = False
     _REMOCAO_NOTIFICADA = False
+    _AGUARDANDO_CRIACAO = False
     _TAMANHO_CACHE = (largura, altura)
     _TELA_CARREGADA = True
     _atualizar_rotulos_botoes()

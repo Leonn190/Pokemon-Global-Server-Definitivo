@@ -8,9 +8,16 @@ from Codigo.Telas.Inventario.InventarioItens import InventarioItens
 from Codigo.Telas.Inventario.InventarioPokemons import InventarioPokemons
 
 
-class UnificadorInventario:
+from Codigo.Telas.Subtela import Subtela
+
+
+class SubtelaInventario(Subtela):
+    alpha_overlay = 170
+
     def __init__(self, ator):
+        super().__init__()
         self.Ator = ator
+        self._jogo = None
         self.Inventario = ator.Inventario
         self.Ativo = False
         self.Modo = "perfil"
@@ -18,13 +25,25 @@ class UnificadorInventario:
         self._rect = pygame.Rect(0, 0, 0, 0)
         self._botoes = []
         self._tamanho_layout = None
-        self._overlay_cache = None
-        self._overlay_cache_size = None
         self._ativo_anterior = False
+        self._eventos_pendentes = []
+        self._tamanho_tela = None
 
         self.TelaPerfil = InventarioPerfil(ator)
-        self.TelaPokemons = InventarioPokemons(ator)
+        self.TelaPokemons = InventarioPokemons(
+            ator,
+            abrir_modal=self._abrir_modal,
+            possui_modal=self._possui_modal,
+        )
         self.TelaItens = InventarioItens(ator)
+
+    def _abrir_modal(self, modal):
+        if self._jogo is None or modal is None:
+            return
+        self._jogo.GerenciadorSubtelas.abrir(modal)
+
+    def _possui_modal(self):
+        return self._jogo is not None and self._jogo.GerenciadorSubtelas.topo is not self
 
     def toggle(self):
         self.Ativo = not self.Ativo
@@ -73,7 +92,18 @@ class UnificadorInventario:
         metodo = getattr(tela_atual, "bloqueia_toggle_inventario", None)
         return bool(metodo()) if callable(metodo) else False
 
-    def atualizar(self, eventos, dt, tamanho_tela):
+    def processar_eventos(self, jogo, eventos):
+        self._jogo = jogo
+        self._eventos_pendentes = list(eventos or [])
+        self._tamanho_tela = jogo.TELA.get_size() if jogo is not None else self._tamanho_tela
+        controle = getattr(self.Ator, "Controle", None)
+        if controle is not None and hasattr(controle, "InventarioAberto"):
+            self.Ativo = bool(controle.InventarioAberto)
+        return self.Ativo
+
+    def atualizar(self, dt):
+        eventos = self._eventos_pendentes
+        tamanho_tela = self._tamanho_tela or (0, 0)
         self._recalcular_layout(tamanho_tela)
 
         if self.Ativo:
@@ -107,13 +137,6 @@ class UnificadorInventario:
         if not self.Ativo:
             return
 
-        tamanho_tela = tela.get_size()
-        if self._overlay_cache is None or self._overlay_cache_size != tamanho_tela:
-            self._overlay_cache = pygame.Surface(tamanho_tela, pygame.SRCALPHA)
-            self._overlay_cache.fill((0, 0, 0, 170))
-            self._overlay_cache_size = tamanho_tela
-        tela.blit(self._overlay_cache, (0, 0))
-
         sombra = self._rect.inflate(12, 12)
         pygame.draw.rect(tela, (8, 12, 22, 90), sombra, border_radius=22)
         pygame.draw.rect(tela, (24, 32, 52), self._rect, border_radius=20)
@@ -137,3 +160,11 @@ class UnificadorInventario:
             self.TelaPokemons.renderizar(tela, area_conteudo, eventos, dt, ativo=self.Ativo)
         else:
             self.TelaItens.renderizar(tela, area_conteudo, eventos, dt, ativo=self.Ativo)
+
+    @property
+    def ativa(self):
+        return bool(self.Ativo) and not self.encerrada
+
+    def render(self, tela, eventos, dt, JOGO=None):
+        self._jogo = JOGO
+        self.desenhar(tela, eventos, dt)

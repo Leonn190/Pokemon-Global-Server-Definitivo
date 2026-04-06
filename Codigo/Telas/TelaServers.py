@@ -5,7 +5,7 @@ from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
-from Codigo.Telas.TelaCriarPersonagem import SubtelaCriarPersonagem
+from Codigo.Telas.SubtelaCriarPersonagem import SubtelaCriarPersonagem
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 from ServerList import SERVER_LIST
 
@@ -20,7 +20,6 @@ _BOTOES_SERVERS = []
 _BOTOES_ACOES = {}
 
 _SERVER_SELECIONADO = None
-_SUBTELA_ATIVA = None
 _MENSAGEM = None
 
 _REQUISICAO_THREAD = None
@@ -169,7 +168,6 @@ def _entrar_server(jogo):
 
 
 def _abrir_subtela_criar_personagem(jogo):
-    global _SUBTELA_ATIVA
     if _SERVER_SELECIONADO is None:
         return
 
@@ -194,12 +192,12 @@ def _abrir_subtela_criar_personagem(jogo):
         jogo.INFO["PlayerDadosServer"] = personagem
         jogo.CenaAlvo = "Carregamento"
 
-    _SUBTELA_ATIVA = SubtelaCriarPersonagem(
+    jogo.GerenciadorSubtelas.abrir(SubtelaCriarPersonagem(
         jogo.TELA.get_size(),
         ip_server=server.get("ip", ""),
         usuario=usuario,
         concluir_callback=_concluir,
-    )
+    ))
 
 
 def _enviar_chave_operacao(chave):
@@ -211,61 +209,56 @@ def _enviar_chave_operacao(chave):
 
 
 def _abrir_subtela_renomear(JOGO):
-    global _SUBTELA_ATIVA
     if _SERVER_SELECIONADO is None:
         return
     nome_atual = SERVER_LIST[_SERVER_SELECIONADO].get("nome", "")
-    _SUBTELA_ATIVA = SubtelaTexto(
+    JOGO.GerenciadorSubtelas.abrir(SubtelaTexto(
         JOGO.TELA.get_size(),
         "Renomear Servidor",
         nome_atual,
         enviar_callback=_renomear_server,
-    )
+    ))
 
 
 def _abrir_subtela_adicionar(JOGO):
-    global _SUBTELA_ATIVA
-    _SUBTELA_ATIVA = SubtelaTexto(
+    JOGO.GerenciadorSubtelas.abrir(SubtelaTexto(
         JOGO.TELA.get_size(),
         "Adicionar novo server",
         ["", ""],
         enviar_callback=_adicionar_server,
         placeholders=["Nome do servidor", "Link do servidor"],
         max_chars=[28, 50],
-    )
+    ))
 
 
 def _abrir_subtela_apagar(JOGO):
-    global _SUBTELA_ATIVA
     if _SERVER_SELECIONADO is None:
         return
     nome_server = SERVER_LIST[_SERVER_SELECIONADO].get("nome", "servidor")
-    _SUBTELA_ATIVA = SubtelaConfirmacao(
+    JOGO.GerenciadorSubtelas.abrir(SubtelaConfirmacao(
         JOGO.TELA.get_size(),
         f"Deseja apagar servidor {nome_server}?",
         confirmar_callback=_apagar_server,
         titulo="Deseja apagar servidor",
-    )
+    ))
 
 
 def _abrir_subtela_operar(JOGO):
-    global _SUBTELA_ATIVA
     if _SERVER_SELECIONADO is None:
         return
 
-    _SUBTELA_ATIVA = SubtelaTexto(
+    JOGO.GerenciadorSubtelas.abrir(SubtelaTexto(
         JOGO.TELA.get_size(),
         "Digite a chave de segurança",
         "",
         enviar_callback=_enviar_chave_operacao,
         placeholders="Chave de 4 dígitos",
         max_chars=4,
-    )
+    ))
 
 
 def _voltar_menu(Cena):
-    global _SUBTELA_ATIVA, _TELA_CARREGADA, _STATUS_CACHE
-    _SUBTELA_ATIVA = None
+    global _TELA_CARREGADA, _STATUS_CACHE
     _limpar_selecao()
     _STATUS_CACHE = {}
     _TELA_CARREGADA = False
@@ -450,7 +443,7 @@ def _processar_requisicao(Cena, JOGO):
 
 
 def TelaServers(Cena, JOGO, EVENTOS, dt):
-    global _SUBTELA_ATIVA, _TELA_CARREGADA, _STATUS_ACUMULADO
+    global _TELA_CARREGADA, _STATUS_ACUMULADO
 
     largura_tela, altura_tela = JOGO.TELA.get_size()
 
@@ -467,8 +460,8 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
 
     JOGO.TELA.fill((8, 12, 24))
 
-    eventos_ativos = [] if _SUBTELA_ATIVA else EVENTOS
-    mouse_pos = (-99999, -99999) if _SUBTELA_ATIVA else None
+    eventos_ativos = [] if JOGO.GerenciadorSubtelas.ativa else EVENTOS
+    mouse_pos = (-99999, -99999) if JOGO.GerenciadorSubtelas.ativa else None
 
     _BOTAO_ADICIONAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
@@ -493,11 +486,5 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
 
     for nome in ("Voltar", "Renomear", "Entrar", "Apagar", "Operar"):
         _render_acao(nome, JOGO.TELA, eventos_ativos, dt, JOGO, mouse_pos=mouse_pos)
-
-    if _SUBTELA_ATIVA:
-        _SUBTELA_ATIVA.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
-        if _SUBTELA_ATIVA.encerrada:
-            _SUBTELA_ATIVA = None
-            _TELA_CARREGADA = False
 
     _MENSAGEM.render(JOGO.TELA, dt)

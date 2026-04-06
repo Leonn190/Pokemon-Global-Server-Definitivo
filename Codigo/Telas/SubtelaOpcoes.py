@@ -5,16 +5,19 @@ from __future__ import annotations
 import pygame
 from Codigo.Modulos.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao
+from Codigo.Telas.Subtela import Subtela
 
 
-class SubtelaOpcoes:
+class SubtelaOpcoes(Subtela):
+    alpha_overlay = 150
+
     def __init__(self):
+        super().__init__()
         self.Ativa = False
         self.Botoes = []
         self._botoes_ui = []
         self._tamanho_layout = None
-        self._overlay_cache = None
-        self._overlay_cache_size = None
+        self._ignorar_esc = False
         self._fonte = pygame.font.SysFont("arial", 44, bold=True)
         self._estilo_botao = {
             "radius": 20,
@@ -43,6 +46,7 @@ class SubtelaOpcoes:
         self.Ativa = not self.Ativa
         if self.Ativa:
             tocar("Abre")
+            self._ignorar_esc = True
             self._recalcular_layout(jogo)
         else:
             tocar("Fecha")
@@ -71,6 +75,9 @@ class SubtelaOpcoes:
     def processar_eventos(self, jogo, eventos):
         for evento in eventos:
             if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
+                if self._ignorar_esc:
+                    self._ignorar_esc = False
+                    continue
                 self.toggle(jogo)
                 return True
             if not self.Ativa:
@@ -88,18 +95,16 @@ class SubtelaOpcoes:
             return
         self._recalcular_layout(jogo)
 
-        tamanho_tela = jogo.TELA.get_size()
-        if self._overlay_cache is None or self._overlay_cache_size != tamanho_tela:
-            self._overlay_cache = pygame.Surface(tamanho_tela, pygame.SRCALPHA)
-            self._overlay_cache.fill((0, 0, 0, 150))
-            self._overlay_cache_size = tamanho_tela
-        jogo.TELA.blit(self._overlay_cache, (0, 0))
-
         for botao in self._botoes_ui:
             rect = botao.rect
             sombra = pygame.Rect(rect.x + 2, rect.y + 4, rect.w, rect.h)
             pygame.draw.rect(jogo.TELA, (12, 16, 32, 120), sombra, border_radius=20)
             botao.render(jogo.TELA, [], 0.0, JOGO=jogo)
+
+    def render(self, tela, eventos, dt, JOGO=None):
+        if JOGO is None:
+            return
+        self.desenhar(JOGO)
 
     def _acao_voltar(self, jogo):
         self.Ativa = False

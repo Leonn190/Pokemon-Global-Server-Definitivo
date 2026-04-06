@@ -38,6 +38,7 @@ class ControladorPlayer:
         self._coleta_tapa_enviada = False
         self._colisao_pokemon_pendente: Optional[Dict[str, object]] = None
         self._normalizacao_posicao_pendente = False
+        self._dt_ultimo_frame = 1.0 / 60.0
 
     @property
     def player_local(self):
@@ -436,6 +437,7 @@ class ControladorPlayer:
             self._normalizar_posicao_player_local()
             self._normalizacao_posicao_pendente = False
         dt = max(0.0, float(dt))
+        self._dt_ultimo_frame = dt
         perfil = getattr(self._player_local, "Perfil", None)
         if perfil is not None:
             perfil.registrar_tempo_jogo(dt)
@@ -648,6 +650,7 @@ class ControladorPlayer:
         self._ultimo_pivo_visual_local_tela = (float(pos_tela[0]), float(pos_tela[1]))
         respiracao_tempo = getattr(getattr(ator, "Controle", None), "_tempo_respiracao", 0.0)
         ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
+        ator.renderizar_stamina(tela, camera, float(self._dt_ultimo_frame))
         estado_mira = ator.Controle.estado_mira(camera.tela_para_mundo_tiles(pygame.mouse.get_pos())) if ator.Controle else None
         if estado_mira:
             self._fluxo_mira.desenhar(tela, camera.mundo_para_tela_px(estado_mira["inicio"]), camera.mundo_para_tela_px(estado_mira["fim"]))

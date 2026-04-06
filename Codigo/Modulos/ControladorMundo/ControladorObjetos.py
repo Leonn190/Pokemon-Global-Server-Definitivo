@@ -711,6 +711,14 @@ class ControladorObjetos:
 
         if dim != "Mundo":
             estadio = self.EstadiosPorId.get(estadio_real_id, {})
+            if not isinstance(estadio, dict) or not estadio:
+                for candidato in self.EstadiosPorId.values():
+                    if not isinstance(candidato, dict):
+                        continue
+                    estado_c = candidato.get("estado") if isinstance(candidato.get("estado"), dict) else {}
+                    if str(estado_c.get("dimensao_destino") or "EstadioNormal") == dim:
+                        estadio = candidato
+                        break
             estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
             porta = self._saida_interna_estadio(estado)
             d2 = (float(porta[0]) - px) ** 2 + (float(porta[1]) - py) ** 2

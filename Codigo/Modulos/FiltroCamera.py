@@ -11,6 +11,7 @@ class FiltroCamera:
         self._overlay = None
         self._camada_cor = None
         self._camada_nevoa = None
+        self._vinheta = None
         self._tamanho = (0, 0)
         self._gotas: List[Tuple[float, float, float, float, float, float]] = []
 
@@ -33,8 +34,19 @@ class FiltroCamera:
         self._overlay = pygame.Surface((largura, altura), pygame.SRCALPHA)
         self._camada_cor = pygame.Surface((largura, altura), pygame.SRCALPHA)
         self._camada_nevoa = pygame.Surface((largura, altura), pygame.SRCALPHA)
+        self._vinheta = pygame.Surface((largura, altura), pygame.SRCALPHA)
+        cx, cy = largura * 0.5, altura * 0.5
+        raio_max = max(1.0, ((cx * cx) + (cy * cy)) ** 0.5)
+        for y in range(altura):
+            for x in range(largura):
+                dx = x - cx
+                dy = y - cy
+                t = min(1.0, (((dx * dx) + (dy * dy)) ** 0.5) / raio_max)
+                alpha = int(max(0.0, (t - 0.58) / 0.42) * 130)
+                if alpha > 0:
+                    self._vinheta.set_at((x, y), (0, 0, 0, min(180, alpha)))
         self._gotas = []
-        quantidade = max(48, int(largura / 10))
+        quantidade = max(24, int(largura / 18))
         for i in range(quantidade):
             seed = (i * 1103515245 + 12345) & 0xFFFFFFFF
             xf = float((seed % max(1, largura + 40)) - 20)
@@ -67,6 +79,8 @@ class FiltroCamera:
         if alpha_tonalidade > 0:
             self._camada_cor.fill((18, 34, 56, alpha_tonalidade))
             self._overlay.blit(self._camada_cor, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+            if self._vinheta is not None:
+                self._overlay.blit(self._vinheta, (0, 0))
 
         if chuva > 0:
             self._camada_nevoa.fill((90, 98, 118, int(60 * chuva_n)))

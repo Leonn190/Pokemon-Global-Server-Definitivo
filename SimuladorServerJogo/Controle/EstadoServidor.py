@@ -67,6 +67,35 @@ def _skins_liberadas_padrao() -> list[str]:
     return filtradas or skins[: min(12, len(skins))]
 
 
+def _normalizar_skins_liberadas(skins: list[str] | None) -> list[str]:
+    regras = carregar_regras_player()
+    minimo = int(regras.get("SkinInicialMin", 1) or 1)
+    maximo = int(regras.get("SkinInicialMax", 12) or 12)
+    minimo, maximo = sorted((max(1, minimo), max(1, maximo)))
+    padrao = _skins_liberadas_padrao()
+    bruto = list(skins or [])
+    if not bruto:
+        return padrao
+    normalizadas: list[str] = []
+    for skin in bruto:
+        nome = str(skin or "").strip()
+        if not nome:
+            continue
+        if nome.lower().startswith("s") and nome[1:].isdigit():
+            nome = nome[1:]
+        if not nome.lower().endswith(".png"):
+            nome = f"{nome}.png"
+        m = re.search(r"(\d+)", Path(nome).stem)
+        if m is None:
+            continue
+        idx = int(m.group(1))
+        if idx < minimo or idx > maximo:
+            continue
+        normalizadas.append(f"{idx}.png")
+    out = sorted(dict.fromkeys(normalizadas), key=lambda s: int(re.search(r"(\d+)", Path(s).stem).group(1)))
+    return out or padrao
+
+
 def _tempo_mundo_padrao() -> dict:
     total_segundos = int(8 * 3600)
     return {
@@ -197,7 +226,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["dinheiro"] = int(dados.get("dinheiro", regras.get("Dinheiro", 20)))
     dados["insignias"] = list(dados.get("insignias", []))
     dados["maestria"] = int(dados.get("maestria", regras.get("Maestria", 0)))
-    dados["skins_liberadas"] = list(dados.get("skins_liberadas", _skins_liberadas_padrao()) or _skins_liberadas_padrao())
+    dados["skins_liberadas"] = _normalizar_skins_liberadas(dados.get("skins_liberadas"))
     dados["habilidades_aprendidas"] = list(dados.get("habilidades_aprendidas", []))
     for tipo in _TIPOS_ESTADIO_RESPEITO:
         chave = f"respeito_estadio_{tipo}"
@@ -323,7 +352,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     if "insignias" in payload:
         base["insignias"] = list(payload.get("insignias", []))
     if "skins_liberadas" in payload:
-        base["skins_liberadas"] = list(payload.get("skins_liberadas", []))
+        base["skins_liberadas"] = _normalizar_skins_liberadas(payload.get("skins_liberadas", []))
     if "habilidades_aprendidas" in payload:
         base["habilidades_aprendidas"] = list(payload.get("habilidades_aprendidas", []))
 

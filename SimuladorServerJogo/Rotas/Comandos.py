@@ -302,6 +302,8 @@ def _normalizar_nome_busca(raw):
 
 def _locais_nomeados():
     locais = []
+    npc_ids_adicionados = set()
+    npc_chaves_adicionadas = set()
     players = _estado_players()
     for nome, dados in players.items():
         if not isinstance(dados, dict):
@@ -328,9 +330,27 @@ def _locais_nomeados():
                 nome = f"Estadio{tipo_estadio}"
         if not nome:
             continue
+        if categoria == "npc":
+            oid = int(getattr(obj, "Id", 0) or 0)
+            npc_ids_adicionados.add(oid)
+            npc_chaves_adicionadas.add((_normalizar_nome_busca(nome), int(round(float(obj.posicao[0]))), int(round(float(obj.posicao[1])))))
         locais.append(
             {"categoria": categoria, "nome": nome, "nome_busca": _normalizar_nome_busca(nome), "posicao": [float(obj.posicao[0]), float(obj.posicao[1])]}
         )
+    try:
+        npcs = CEREBRO._cerebro_npcs.listar_locais_nomeados()
+    except Exception:
+        npcs = []
+    for npc in npcs:
+        npc_id = int(npc.get("id", 0) or 0)
+        nome = str(npc.get("nome") or "").strip()
+        pos = npc.get("posicao")
+        if not nome or not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            continue
+        chave = (_normalizar_nome_busca(nome), int(round(float(pos[0]))), int(round(float(pos[1]))))
+        if (npc_id > 0 and npc_id in npc_ids_adicionados) or chave in npc_chaves_adicionadas:
+            continue
+        locais.append({"categoria": "npc", "nome": nome, "nome_busca": _normalizar_nome_busca(nome), "posicao": [float(pos[0]), float(pos[1])]})
     return locais
 
 

@@ -273,6 +273,8 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     spawn = _spawn_interno(estado_est)
     pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
     dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
+    if dim_atual != "Mundo":
+        return False
     pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
     player.estado_extra["ultima_pos_mundo"] = [float(player.posicao[0]), float(player.posicao[1])]
     destino = spawn

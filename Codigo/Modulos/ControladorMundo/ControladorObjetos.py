@@ -281,10 +281,10 @@ class ControladorObjetos:
     def _eh_payload_ator(self, payload: Dict[str, object]) -> bool:
         tipo = str(payload.get("tipo", "")).strip().lower()
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
-        subtipo = str(estado.get("subtipo", "")).strip().lower()
         if tipo in {"entidade_player", "player"}:
             return True
-        return subtipo in {"player", "npc_vendedor", "npc_combatente"}
+        subtipo = str(estado.get("subtipo", "")).strip().lower()
+        return subtipo == "player" or ControladorAtores._eh_npc_estado(estado)
 
     def _eh_payload_projetil(self, payload: Dict[str, object]) -> bool:
         return self._criaveis.eh_payload_projetil(payload)

@@ -154,7 +154,6 @@ class CenaMundo:
         self.ControladorMundo.renderizar(JOGO.TELA)
 
         if player is not None:
-            player.renderizar_stamina(JOGO.TELA, self.Camera, dt)
             self.ElementosHud.desenhar(JOGO.TELA, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
             estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}

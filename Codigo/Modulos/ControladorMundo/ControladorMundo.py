@@ -20,12 +20,16 @@ class ControladorMundo:
             jogo=jogo,
             camera=camera,
             callback_atualizacao=consultar_chunks_mundo,
-            callback_dimensao_atual=self.Objetos.definir_dimensao_atual_client,
+            callback_dimensao_atual=self._ao_dimensao_atualizada,
             intervalo_poll=0.20,
             raio_chunks=4,
         )
         self.Pacotes = SistemaPacotes(self.Objetos, self.Player, self.Leitor, camera)
         self._desconectado = False
+
+    def _ao_dimensao_atualizada(self, dimensao: str) -> None:
+        self.Objetos.definir_dimensao_atual_client(dimensao)
+        self.Leitor.forcar_refresh_chunks()
 
     @property
     def player_local(self):

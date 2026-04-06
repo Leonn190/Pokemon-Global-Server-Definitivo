@@ -146,6 +146,10 @@ class LeitorMundo:
                 self._ultimo_chunk_player = chunk_player
             time.sleep(self.IntervaloPoll)
 
+    def forcar_refresh_chunks(self) -> None:
+        with self._lock:
+            self._ultimo_chunk_player = None
+
     def _coletar_chunks_servidor(self) -> Optional[PacoteMundo]:
         pos_ref = self.posicao_referencia()
         try:

@@ -233,7 +233,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
             return [float(estado_est.get("spawn_interno_pos")[0]), float(estado_est.get("spawn_interno_pos")[1])]
         largura = float(estado_est.get("largura_interna", 60.0) or 60.0)
         altura = float(estado_est.get("altura_interna", 40.0) or 40.0)
-        return [min(max(1.0, largura - 1.0), 5.0), min(max(1.0, altura - 1.0), 5.0)]
+        return [largura * 0.5, max(1.0, altura - 3.0)]
 
     if acao == "sair":
         if estadio is None:
@@ -251,7 +251,11 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         player.estado_extra["dimensao"] = "Mundo"
         player.estado_extra["estadio_atual_id"] = 0
         player.estado_extra["posicoes_por_dimensao"] = pos_dim
-        mundo_pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else entrada
+        mundo_salvo = player.estado_extra.get("ultima_pos_mundo")
+        if isinstance(mundo_salvo, (list, tuple)) and len(mundo_salvo) == 2:
+            mundo_pos = [float(mundo_salvo[0]), float(mundo_salvo[1])]
+        else:
+            mundo_pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else entrada
         player.definir_posicao(float(mundo_pos[0]), float(mundo_pos[1]))
         registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
         return True
@@ -270,7 +274,8 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
     dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
     pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
-    destino = pos_dim.get(dim) if isinstance(pos_dim.get(dim), (list, tuple)) and len(pos_dim.get(dim)) == 2 else spawn
+    player.estado_extra["ultima_pos_mundo"] = [float(player.posicao[0]), float(player.posicao[1])]
+    destino = spawn
     player.estado_extra["dimensao"] = dim
     player.estado_extra["estadio_atual_id"] = int(estadio.Id)
     player.estado_extra["posicoes_por_dimensao"] = pos_dim

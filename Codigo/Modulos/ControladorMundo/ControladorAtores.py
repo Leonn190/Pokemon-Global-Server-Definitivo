@@ -13,14 +13,21 @@ class ControladorAtores:
     def __init__(self) -> None:
         self.AtoresRemotosPorId: Dict[int, Ator] = {}
 
+    @staticmethod
+    def _eh_npc_estado(estado: Dict[str, object]) -> bool:
+        subtipo = str(estado.get("subtipo", "")).strip().lower()
+        estilo = str(estado.get("estilo", "")).strip().lower()
+        if subtipo in {"npc_vendedor", "npc_combatente", "vendedor", "combatente"}:
+            return True
+        return estilo in {"vendedor", "combatente"}
+
     def upsert(self, oid: int, payload: Dict[str, object], id_player_local: int = -1) -> Optional[Ator]:
         if int(oid) == int(id_player_local):
             self.AtoresRemotosPorId.pop(int(oid), None)
             return None
         tipo = str(payload.get("tipo", "")).strip().lower()
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
-        subtipo = str(estado.get("subtipo", "")).strip().lower()
-        if tipo != "entidade_player" and subtipo not in {"npc_vendedor", "npc_combatente"}:
+        if tipo != "entidade_player" and not self._eh_npc_estado(estado):
             self.AtoresRemotosPorId.pop(int(oid), None)
             return None
 
@@ -88,8 +95,7 @@ class ControladorAtores:
             dim_obj = str(estado.get("dimensao") or obj.get("dimensao") or "Mundo")
             if dim_obj != dim_local:
                 continue
-            subtipo = str(estado.get("subtipo", "")).strip().lower()
-            if subtipo not in {"npc_vendedor", "npc_combatente"}:
+            if not self._eh_npc_estado(estado):
                 continue
             inter = estado.get("interacao") if isinstance(estado.get("interacao"), dict) else {}
             if bool(inter.get("ativa", False)):

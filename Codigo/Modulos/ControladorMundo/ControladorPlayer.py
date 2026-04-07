@@ -18,9 +18,10 @@ from Codigo.Prefabs.Fluxos import Fluxo
 
 
 class ControladorPlayer:
-    def __init__(self, controlador_objetos, jogo=None):
+    def __init__(self, controlador_objetos, jogo=None, callback_transicao_dimensao=None):
         self._objetos = controlador_objetos
         self._jogo = jogo
+        self._callback_transicao_dimensao = callback_transicao_dimensao
         self._player_local = None
         self._client_id_local = ""
         self._fluxo_mira = Fluxo("bolinhas")
@@ -658,6 +659,8 @@ class ControladorPlayer:
             self._player_local.update(dados)
             self._normalizacao_posicao_pendente = True
             self._ativar_bloqueio_correcao()
+            if callable(self._callback_transicao_dimensao):
+                self._callback_transicao_dimensao(dim_nova, True)
             return
 
         # Sincronizações autoritativas (inventário/perfil/estado visual) do próprio

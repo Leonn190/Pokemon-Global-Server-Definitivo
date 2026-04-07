@@ -236,6 +236,17 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         altura = float(estado_est.get("altura_interna", 40.0) or 40.0)
         return [largura * 0.5, max(1.0, altura - 3.0)]
 
+    def _entrada_externa(estado_est):
+        if isinstance(estado_est.get("entrada_pos"), (list, tuple)) and len(estado_est.get("entrada_pos")) == 2:
+            return [float(estado_est.get("entrada_pos")[0]), float(estado_est.get("entrada_pos")[1])]
+        if isinstance(estado_est.get("entrada_offset"), (list, tuple)) and len(estado_est.get("entrada_offset")) == 2:
+            return [
+                float(estadio.posicao[0]) + float(estado_est.get("entrada_offset")[0]),
+                float(estadio.posicao[1]) + float(estado_est.get("entrada_offset")[1]),
+            ]
+        offset_y = max(2.0, float(estado_est.get("raio_elipse_y", 24.0) or 24.0) - 3.0)
+        return [float(estadio.posicao[0]), float(estadio.posicao[1] + offset_y)]
+
     if acao == "sair":
         if estadio is None:
             return False
@@ -248,7 +259,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         saida_interna = _saida_interna(estado_est)
         if not _dist_ok(player.posicao, saida_interna, 2.0):
             return False
-        entrada = estado_est.get("entrada_pos") if isinstance(estado_est.get("entrada_pos"), (list, tuple)) and len(estado_est.get("entrada_pos")) == 2 else [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
+        entrada = _entrada_externa(estado_est)
         player.estado_extra["dimensao"] = "Mundo"
         player.estado_extra["estadio_atual_id"] = 0
         player.estado_extra["posicoes_por_dimensao"] = pos_dim
@@ -264,9 +275,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     if estadio is None:
         return False
     estado_est = getattr(estadio, "estado_extra", {}) if isinstance(getattr(estadio, "estado_extra", {}), dict) else {}
-    entrada = payload.get("entrada_pos") if isinstance(payload.get("entrada_pos"), (list, tuple)) and len(payload.get("entrada_pos")) == 2 else estado_est.get("entrada_pos")
-    if not isinstance(entrada, (list, tuple)) or len(entrada) != 2:
-        entrada = [estadio.posicao[0], estadio.posicao[1] + float(estado_est.get("raio_elipse_y", 24.0) or 24.0) + 1.0]
+    entrada = payload.get("entrada_pos") if isinstance(payload.get("entrada_pos"), (list, tuple)) and len(payload.get("entrada_pos")) == 2 else _entrada_externa(estado_est)
     if not _dist_ok(player.posicao, entrada, 2.0):
         return False
 
@@ -309,7 +318,8 @@ def processar_atualizador_json(requisicao_json: str) -> str:
     TIQUE_SERVIDOR.ativar_por_usuario(client_id)
     TIQUE_SERVIDOR.bombear_ate_agora()
     dim_atual = str(getattr(obj_dim, "estado_extra", {}).get("dimensao", "Mundo") if obj_dim is not None else "Mundo")
-    chunks_carregados = _chunks_carregados_cliente(posicao_camera, dimensao=dim_atual)
+    posicao_filtro = posicao_camera
+    chunks_carregados = _chunks_carregados_cliente(posicao_filtro, dimensao=dim_atual)
     raio_visao = _raio_visao_por_regras()
     seq_inicio_requisicao = diff_seq_atual()
 
@@ -453,14 +463,17 @@ def processar_atualizador_json(requisicao_json: str) -> str:
     obj_pos_final = BANCO_DADOS.obter_objeto(obj_id_dim) if obj_id_dim > 0 else None
     if isinstance(obj_pos_final, AtorServer):
         CEREBRO.atualizar_player_ativo(client_id, obj_pos_final.posicao)
+        posicao_filtro = (float(obj_pos_final.posicao[0]), float(obj_pos_final.posicao[1]))
+        dim_atual = str(getattr(obj_pos_final, "estado_extra", {}).get("dimensao", "Mundo") or "Mundo")
+        chunks_carregados = _chunks_carregados_cliente(posicao_filtro, dimensao=dim_atual)
 
-    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados, client_id=client_id, dimensao=dim_atual)
+    pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_filtro, raio_visao, chunks_carregados, client_id=client_id, dimensao=dim_atual)
     diffs_imediatos = PACOTES_TICK.snapshot_pendentes_desde_seq(seq_inicio_requisicao)
     if diffs_imediatos:
         pacotes.extend(
             _filtrar_pacotes_por_camera(
                 [{"tick": int(PACOTES_TICK.tick_atual()), "diffs": diffs_imediatos, "sintetico": True}],
-                posicao_camera,
+                posicao_filtro,
                 raio_visao,
                 chunks_carregados,
                 client_id=client_id,
@@ -469,7 +482,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
         )
     state = _obter_state_client(client_id)
     vistos = state["objetos_vistos"]
-    diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dim_atual)
+    diffs_extra = _coletar_diffs_visibilidade(posicao_filtro, chunks_carregados, vistos, client_id=client_id, dimensao=dim_atual)
     if diffs_extra:
         if pacotes:
             pacote_vis = pacotes[-1]

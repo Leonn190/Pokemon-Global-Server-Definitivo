@@ -186,6 +186,7 @@ class EstadioServer:
         altura_interna = 40.0
         saida_interna = [largura_interna * 0.5, max(1.0, altura_interna - 3.0)]
         spawn_interno = [5.0, 5.0]
+        entrada_offset_y = max(2.0, float(raio_elipse_y) - 3.0)
         self.estado_extra = {
             "subtipo": "estadio",
             "tipo_estadio": str(tipo_estadio or "normal"),
@@ -195,8 +196,8 @@ class EstadioServer:
             "raio_elipse_y": max(8.0, float(raio_elipse_y)),
             "raio_elipse_interno_x": max(4.0, float(raio_elipse_x) * 0.72),
             "raio_elipse_interno_y": max(4.0, float(raio_elipse_y) * 0.72),
-            "entrada_offset": [0.0, max(2.0, float(raio_elipse_y) + 1.0)],
-            "entrada_pos": [float(self.posicao[0]), float(self.posicao[1] + max(2.0, float(raio_elipse_y) + 1.0))],
+            "entrada_offset": [0.0, entrada_offset_y],
+            "entrada_pos": [float(self.posicao[0]), float(self.posicao[1] + entrada_offset_y)],
             "largura_interna": largura_interna,
             "altura_interna": altura_interna,
             "saida_interna_pos": saida_interna,

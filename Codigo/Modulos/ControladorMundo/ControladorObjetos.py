@@ -758,7 +758,7 @@ class ControladorObjetos:
                 entrada = estado.get("entrada_pos") if isinstance(estado.get("entrada_pos"), (list, tuple)) and len(estado.get("entrada_pos")) == 2 else None
                 if entrada is None:
                     pos = estadio.get("posicao") if isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else [0.0, 0.0]
-                    off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 25.0]
+                    off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 21.0]
                     entrada = [float(pos[0]) + float(off[0]), float(pos[1]) + float(off[1])]
                 d2 = (float(entrada[0]) - px) ** 2 + (float(entrada[1]) - py) ** 2
                 if d2 <= (2.0 * 2.0):
@@ -779,7 +779,16 @@ class ControladorObjetos:
 
     def mensagem_interacao_estadio(self, pos_player: Tuple[float, float], dimensao_player: str, estadio_atual_id: int = 0) -> str:
         alvo = self.alvo_interagivel_atual(pos_player=pos_player, dimensao_player=dimensao_player, estadio_atual_id=estadio_atual_id)
-        return "Clique F para interagir" if isinstance(alvo, dict) else ""
+        if not isinstance(alvo, dict):
+            return ""
+        tipo = str(alvo.get("tipo") or "").strip().lower()
+        if tipo == "estadio_entrada":
+            return "Pressione F para entrar no estádio"
+        if tipo == "estadio_saida":
+            return "Pressione F para sair do estádio"
+        if tipo == "npc":
+            return "Pressione F para interagir"
+        return "Pressione F para interagir"
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         self.renderizar_entidades(tela, camera, ignorar_id=ignorar_entidade_id)

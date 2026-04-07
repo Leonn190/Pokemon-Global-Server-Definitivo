@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 import unicodedata
 from pathlib import Path
@@ -96,6 +97,8 @@ class FichaPokemon:
         self._barra_hp: Barra | None = None
         self._barra_xp: Barra | None = None
         self._barras_status: dict[str, Barra] = {}
+        self._cache_render_key = None
+        self._cache_render_surface: pygame.Surface | None = None
         self.FecharSolicitado = False
         self.DoarSolicitado = False
         self.UparNivelSolicitado = False
@@ -588,6 +591,8 @@ class FichaPokemon:
         if self._painel is not None and self._rect_cache == chave:
             return
         self._rect_cache = chave
+        self._cache_render_key = None
+        self._cache_render_surface = None
         self._painel = Painel(rect, cor_fundo=(20, 26, 42, 238), cor_borda=(74, 98, 146), borda=2, raio=18)
 
         def _fechar(_jogo, _botao):
@@ -635,6 +640,66 @@ class FichaPokemon:
             },
         )
         self._botao_upar.limpar_tooltip()
+
+    @staticmethod
+    def _serializar_cache(valor) -> str:
+        try:
+            return json.dumps(valor, ensure_ascii=False, sort_keys=True, separators=(',', ':'), default=str)
+        except Exception:
+            return repr(valor)
+
+    def _chave_cache_render(self, rect: pygame.Rect, pokemon: dict | None):
+        return (
+            int(rect.x),
+            int(rect.y),
+            int(rect.width),
+            int(rect.height),
+            int(self._inicio_coluna_ataques),
+            self._serializar_cache(self._slot_hover),
+            self._serializar_cache(self._slot_origem_oculto),
+            self._serializar_cache(pokemon),
+        )
+
+    def _fixar_geometria_absoluta(self, deslocamento):
+        dx, dy = int(deslocamento[0]), int(deslocamento[1])
+        self._area_animacao = pygame.Rect(self._area_animacao).move(dx, dy)
+        self._area_slots_ataque = pygame.Rect(self._area_slots_ataque).move(dx, dy)
+        self._slots_build = {idx: pygame.Rect(slot).move(dx, dy) for idx, slot in self._slots_build.items()}
+        self._slots_ataque = {chave: pygame.Rect(slot).move(dx, dy) for chave, slot in self._slots_ataque.items()}
+
+    def _gerar_superficie_estatica(self, rect: pygame.Rect, pokemon: dict | None) -> pygame.Surface:
+        superficie = pygame.Surface(rect.size, pygame.SRCALPHA)
+        local_rect = pygame.Rect(0, 0, rect.width, rect.height)
+        base_rect_fechar = pygame.Rect(self._botao_fechar.base_rect) if self._botao_fechar is not None else None
+        rect_fechar = pygame.Rect(self._botao_fechar.rect) if self._botao_fechar is not None else None
+
+        try:
+            if self._botao_fechar is not None:
+                self._botao_fechar.base_rect.topleft = (local_rect.right - 52, local_rect.y + 12)
+                self._botao_fechar.rect = pygame.Rect(self._botao_fechar.base_rect)
+
+            left, right_top, right_bottom = self._setores(local_rect)
+            stats = self._stats_dict(pokemon)
+            ivs = self._ivs_dict(pokemon)
+
+            self._desenhar_base(superficie, local_rect)
+            self._desenhar_cabecalho(superficie, local_rect, pokemon)
+            self._bloco_infos_esquerda(superficie, left, pokemon, 0.0, stats=stats, desenhar_animacao=False)
+            self._desenhar_bloco_superior_direito(superficie, right_top, pokemon)
+            self._desenhar_bloco_status(superficie, right_bottom, pokemon, 0.0, stats=stats, ivs=ivs, animar_barras=False)
+            self._fixar_geometria_absoluta(rect.topleft)
+        finally:
+            if self._botao_fechar is not None and base_rect_fechar is not None and rect_fechar is not None:
+                self._botao_fechar.base_rect = pygame.Rect(base_rect_fechar)
+                self._botao_fechar.rect = pygame.Rect(rect_fechar)
+        return superficie
+
+    def _obter_superficie_estatica(self, rect: pygame.Rect, pokemon: dict | None) -> pygame.Surface:
+        chave = self._chave_cache_render(rect, pokemon)
+        if self._cache_render_surface is None or self._cache_render_key != chave:
+            self._cache_render_surface = self._gerar_superficie_estatica(rect, pokemon)
+            self._cache_render_key = chave
+        return self._cache_render_surface
 
     @staticmethod
     def calcular_rect_ancorado(area_host) -> pygame.Rect:
@@ -728,7 +793,15 @@ class FichaPokemon:
             for barra in self._barras_status.values():
                 barra.reiniciar_animacao(0.0)
 
-    def _bloco_infos_esquerda(self, tela: pygame.Surface, rect: pygame.Rect, pokemon: dict | None, dt: float, stats: dict[str, float] | None = None):
+    def _bloco_infos_esquerda(
+        self,
+        tela: pygame.Surface,
+        rect: pygame.Rect,
+        pokemon: dict | None,
+        dt: float,
+        stats: dict[str, float] | None = None,
+        desenhar_animacao: bool = True,
+    ):
         self._desenhar_setor(tela, rect)
         _nome, especie = self._nome_especie(pokemon)
         nivel = self._nivel(pokemon)
@@ -744,7 +817,8 @@ class FichaPokemon:
 
         anim_rect = pygame.Rect(rect.x + 16, rect.y + 28, rect.width - 32, 102)
         self._area_animacao = pygame.Rect(anim_rect)
-        self._desenhar_animacao_pokemon(tela, anim_rect, especie)
+        if desenhar_animacao:
+            self._desenhar_animacao_pokemon(tela, anim_rect, especie)
 
         self.TxtNivel.set_text(f'Lv {nivel}')
         self.TxtNivel.set_pos((rect.centerx, anim_rect.bottom + 4))
@@ -935,6 +1009,7 @@ class FichaPokemon:
         dt: float,
         stats: dict[str, float] | None = None,
         ivs: dict[str, float] | None = None,
+        animar_barras: bool = True,
     ):
         self._desenhar_setor(tela, rect)
         stats = stats or self._stats_dict(pokemon)
@@ -1001,7 +1076,7 @@ class FichaPokemon:
                 vertical=True,
                 border_radius=0,
             )
-            barra_status.set_valor(float(valor), animar=True)
+            barra_status.set_valor(float(valor), animar=animar_barras)
             barra_status.render(tela, [], dt)
             self._barras_status[status] = barra_status
 
@@ -1142,9 +1217,9 @@ class FichaPokemon:
     def renderizar(self, tela: pygame.Surface, rect, pokemon: dict | None, eventos=None, dt: float = 0.0, desenhar_arrastavel: bool = True):
         rect = pygame.Rect(rect)
         self._garantir_layout(rect)
-        self._desenhar_base(tela, rect)
 
         if pokemon is None:
+            self._desenhar_base(tela, rect)
             self.TxtVazio.set_pos((rect.x + 18, rect.y + 18))
             self.TxtVazio.draw(tela)
             if self._botao_fechar is not None:
@@ -1176,16 +1251,17 @@ class FichaPokemon:
             self._botao_upar.set_pulsando(pode_upar, cor=(188, 227, 140), cor_borda=(227, 255, 191), velocidade=2.0, intensidade=0.44)
 
         self._preparar_animacao_barras(pokemon)
-        self._desenhar_cabecalho(tela, rect, pokemon)
-        stats = self._stats_dict(pokemon)
-        ivs = self._ivs_dict(pokemon)
-        self._bloco_infos_esquerda(tela, left, pokemon, dt, stats=stats)
-        self._desenhar_bloco_superior_direito(tela, right_top, pokemon)
-        self._desenhar_bloco_status(tela, right_bottom, pokemon, dt, stats=stats, ivs=ivs)
+        mouse_now = pygame.mouse.get_pos()
+        if self._mouse_slot_hover != mouse_now:
+            self._mouse_slot_hover = mouse_now
+            self._slot_hover = self._slot_no_mouse(mouse_now)
+        tela.blit(self._obter_superficie_estatica(rect, pokemon), rect.topleft)
+        self._desenhar_animacao_pokemon(tela, self._area_animacao, self._nome_especie(pokemon)[1])
         self._processar_eventos(tela, pokemon, eventos or [], dt)
         if desenhar_arrastavel:
             self._desenhar_arrastavel(tela)
 
+        stats = self._stats_dict(pokemon)
         ataque_hover = self._ataque_no_slot(pokemon, self._slot_hover)
         if self._arrastavel_ataque.Ativo and self._arrastavel_ataque.Item is not None:
             ataque_hover = self._arrastavel_ataque.Item

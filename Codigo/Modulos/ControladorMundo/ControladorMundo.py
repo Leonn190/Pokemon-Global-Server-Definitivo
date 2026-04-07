@@ -15,7 +15,7 @@ class ControladorMundo:
         self.JOGO = jogo
         self.Camera = camera
         self.Objetos = ControladorObjetos()
-        self.Player = ControladorPlayer(self.Objetos, jogo=jogo)
+        self.Player = ControladorPlayer(self.Objetos, jogo=jogo, callback_transicao_dimensao=self._ao_dimensao_atualizada)
         self.Leitor = LeitorMundo(
             jogo=jogo,
             camera=camera,
@@ -30,9 +30,11 @@ class ControladorMundo:
         self.Pacotes.ativar_bombeamento_manual(True)
         self._desconectado = False
 
-    def _ao_dimensao_atualizada(self, dimensao: str) -> None:
+    def _ao_dimensao_atualizada(self, dimensao: str, forcar_imediato: bool = False) -> None:
         self.Objetos.definir_dimensao_atual_client(dimensao)
         self.Leitor.forcar_refresh_chunks()
+        if bool(forcar_imediato):
+            self.Leitor.bombear()
 
     @property
     def player_local(self):

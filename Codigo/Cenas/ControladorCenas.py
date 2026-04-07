@@ -114,6 +114,9 @@ class ControladorCenas:
                 if e.type == pygame.QUIT:
                     self.SolicitarSair()
 
+            if self.CenaAlvo is not None and self.Escuro == 100:
+                self.DefinirCena()
+
             eventos_cena = self.GerenciadorSubtelas.filtrar_eventos_fundo(EVENTOS)
             if callable(getattr(self.Cena, "atualizar_cena", None)):
                 self.Cena.atualizar_cena(self, eventos_cena, dt)
@@ -132,8 +135,6 @@ class ControladorCenas:
                 if self.CenaAlvo is not None and self.Escuro != 100:
                     efeito_transicao = self.Cena.Fechamento
 
-                if self.CenaAlvo is not None and self.Escuro == 100:
-                    self.DefinirCena()
 
             self.PipelineGrafica.renderizar_frame(
                 jogo=self,

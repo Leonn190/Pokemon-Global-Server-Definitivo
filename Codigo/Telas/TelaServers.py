@@ -282,7 +282,7 @@ def _processar_status():
     _STATUS_THREAD = None
 
 
-def _montar_layout(Cena, JOGO):
+def _montar_layout(Cena, JOGO, tela_destino=None):
     global _TELA_CARREGADA, _TAMANHO_CACHE
     global _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE
     global _BOTAO_ADICIONAR, _BOTOES_SERVERS, _BOTOES_ACOES, _MENSAGEM
@@ -450,7 +450,7 @@ def TelaServers(Cena, JOGO, EVENTOS, dt, tela_destino=None):
     largura_tela, altura_tela = tela.get_size()
 
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura_tela, altura_tela):
-        _montar_layout(Cena, JOGO)
+        _montar_layout(Cena, JOGO, tela_destino=tela)
 
     _processar_requisicao(Cena, JOGO)
     _processar_status()
@@ -468,7 +468,7 @@ def TelaServers(Cena, JOGO, EVENTOS, dt, tela_destino=None):
     _BOTAO_ADICIONAR.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
     if len(SERVER_LIST) != len(_BOTOES_SERVERS):
-        _montar_layout(Cena, JOGO)
+        _montar_layout(Cena, JOGO, tela_destino=tela)
 
     for i, botao in enumerate(_BOTOES_SERVERS):
         botao.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)

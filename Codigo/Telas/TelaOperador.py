@@ -289,7 +289,7 @@ def _processar_resposta(jogo):
     _iniciar_requisicao_pendente()
 
 
-def _montar_layout(jogo):
+def _montar_layout(jogo, tela_destino=None):
     global _TELA_CARREGADA, _TAMANHO_CACHE
     global _BOTAO_VOLTAR, _BOTAO_LIGAR, _BOTAO_MUNDO, _MENSAGEM
     global _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
@@ -350,7 +350,7 @@ def TelaOperador(cena, jogo, eventos, dt, tela_destino=None):
     largura, altura = tela.get_size()
 
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura, altura):
-        _montar_layout(jogo)
+        _montar_layout(jogo, tela_destino=tela)
 
     _processar_resposta(jogo)
 

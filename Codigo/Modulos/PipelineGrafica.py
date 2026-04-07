@@ -4,7 +4,7 @@ import pygame
 
 
 class PipelineGrafica:
-    """Compositor global de camadas de cena (sem lógica de update)."""
+    """Compositor global: tela da cena + topo global."""
 
     def __init__(self, tela: pygame.Surface):
         self._tela = tela
@@ -19,27 +19,45 @@ class PipelineGrafica:
         return self._scene_surface
 
     @staticmethod
-    def _tem_hook(cena, nome: str) -> bool:
-        return callable(getattr(cena, nome, None))
+    def _hook(cena, nome: str):
+        fn = getattr(cena, nome, None)
+        return fn if callable(fn) else None
 
-    def compor_cena(self, jogo, cena, eventos, dt) -> None:
+    def _compor_tela_cena(self, jogo, cena, eventos, dt) -> None:
         destino = self._tela
-        tem_base = self._tem_hook(cena, "render_base")
-        tem_post = self._tem_hook(cena, "render_post")
-        tem_hud = self._tem_hook(cena, "render_hud")
-        tem_overlay = self._tem_hook(cena, "render_overlay")
+        tela_complexa = self._hook(cena, "tela_atual_eh_complexa")
+        eh_complexa = bool(tela_complexa()) if tela_complexa is not None else False
 
-        if tem_base or tem_post:
+        if eh_complexa:
             scene_surface = self._garantir_scene_surface()
             scene_surface.fill((0, 0, 0))
-            if tem_base:
-                cena.render_base(scene_surface, jogo, eventos, dt)
-            if tem_post:
-                cena.render_post(scene_surface, jogo, eventos, dt)
+            render_base = self._hook(cena, "render_base")
+            render_post = self._hook(cena, "render_post")
+            render_hud = self._hook(cena, "render_hud")
+            if render_base is not None:
+                render_base(scene_surface, jogo, eventos, dt)
+            if render_post is not None:
+                render_post(scene_surface, jogo, eventos, dt)
             destino.blit(scene_surface, (0, 0))
+            if render_hud is not None:
+                render_hud(destino, jogo, eventos, dt)
+            return
 
-        if tem_hud:
-            cena.render_hud(destino, jogo, eventos, dt)
+        render_tela = self._hook(cena, "render_tela")
+        if render_tela is not None:
+            render_tela(destino, jogo, eventos, dt)
+            return
 
-        if tem_overlay:
-            cena.render_overlay(destino, jogo, eventos, dt)
+        render_hud = self._hook(cena, "render_hud")
+        if render_hud is not None:
+            render_hud(destino, jogo, eventos, dt)
+
+    def renderizar_frame(self, jogo, cena, eventos, dt, render_subtelas=None, render_adicionais=None, aplicar_claridade=None) -> None:
+        self._compor_tela_cena(jogo, cena, eventos, dt)
+
+        if callable(render_subtelas):
+            render_subtelas()
+        if callable(render_adicionais):
+            render_adicionais()
+        if callable(aplicar_claridade):
+            aplicar_claridade()

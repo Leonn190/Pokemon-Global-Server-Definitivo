@@ -6,7 +6,7 @@ from Codigo.Cenas.CenaLogin import CenaLogin
 import pygame
 
 from Codigo.Modulos.Sonoridades import SISTEMA_MUSICAS
-from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer
+from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer, Clarear, FecharIris, AbrirIris
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Modulos.Discord import DiscordPresence
 from Codigo.Telas.Subtela import GerenciadorSubtelas
@@ -124,27 +124,33 @@ class ControladorCenas:
 
             efeito_transicao = None
             if self.Saindo:
-                Escurecer(self, dt)
                 efeito_transicao = Escurecer
+                self._atualizar_estado_transicao(efeito_transicao, dt)
                 if self.Escuro >= 100:
                     self.Rodando = False
             else:
                 if self.CenaAlvo is None and self.Escuro != 0:
-                    self.Cena.Abertura(self, dt)
                     efeito_transicao = self.Cena.Abertura
+                    self._atualizar_estado_transicao(efeito_transicao, dt)
 
                 if self.CenaAlvo is not None and self.Escuro != 100:
-                    self.Cena.Fechamento(self, dt)
                     efeito_transicao = self.Cena.Fechamento
+                    self._atualizar_estado_transicao(efeito_transicao, dt)
 
                 if self.CenaAlvo is not None and self.Escuro == 100:
                     self.DefinirCena()
 
-            self.PipelineGrafica.compor_cena(self, self.Cena, eventos_cena, dt)
-            self.GerenciadorSubtelas.render(self.TELA, EVENTOS, dt, JOGO=self)
-            self.DesenhosAdicionais()
+            self.PipelineGrafica.renderizar_frame(
+                jogo=self,
+                cena=self.Cena,
+                eventos=eventos_cena,
+                dt=dt,
+                render_subtelas=lambda: self.GerenciadorSubtelas.render(self.TELA, EVENTOS, dt, JOGO=self),
+                render_adicionais=self.DesenharInfosAdicionais,
+                aplicar_claridade=self.AplicarClaridadeGlobal,
+            )
             if callable(efeito_transicao):
-                efeito_transicao(self, 0.0)
+                self._desenhar_transicao(efeito_transicao)
             SISTEMA_MUSICAS.atualizar_musica(self)
             pygame.display.update()
 
@@ -165,6 +171,23 @@ class ControladorCenas:
 
         self.Discord.atualizar(local=local, acao=acao)
 
+
+    def _atualizar_estado_transicao(self, efeito, dt: float) -> None:
+        dur = 0.25
+        direcao = 1.0
+        if efeito in (FecharIris, AbrirIris):
+            dur = 0.35
+        if efeito in (Clarear, AbrirIris):
+            direcao = -1.0
+        passo = 100.0 * (max(0.0, float(dt)) / max(dur, 0.001)) * direcao
+        self.Escuro = max(0.0, min(100.0, float(self.Escuro) + passo))
+
+    def _desenhar_transicao(self, efeito) -> None:
+        efeito(self, 0.0)
+
+    def AplicarClaridadeGlobal(self):
+        aplicar_claridade(self.TELA, self.CONFIG.get("Claridade", 75))
+
     def SolicitarSair(self):
         self.CenaAlvo = None
         self.Saindo = True
@@ -178,7 +201,7 @@ class ControladorCenas:
         self.Discord.desconectar()
         self._encerrado = True
 
-    def DesenhosAdicionais(self):
+    def DesenharInfosAdicionais(self):
         largura_tela = self.TELA.get_width()
         itens_hud = []
 
@@ -219,4 +242,6 @@ class ControladorCenas:
             texto.set_pos((largura_tela - 16, y_base + idx * espaco))
             texto.draw(self.TELA)
 
-        aplicar_claridade(self.TELA, self.CONFIG.get("Claridade", 75))
+
+    def DesenhosAdicionais(self):
+        self.DesenharInfosAdicionais()

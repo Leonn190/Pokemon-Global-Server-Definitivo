@@ -1,7 +1,7 @@
 from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaMenu import TelaMenu
 from Codigo.Telas.TelaServers import TelaServers
-from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
+from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Telas.TelaOperador import TelaOperador
 
 
@@ -49,7 +49,10 @@ class CenaMenu:
         finally:
             JOGO.TELA = tela_real
 
-    def render_hud(self, surface, JOGO, EVENTOS, dt):
+    def tela_atual_eh_complexa(self) -> bool:
+        return False
+
+    def render_tela(self, surface, JOGO, EVENTOS, dt):
         _ = (EVENTOS, dt)
         self._garantir_frame_surface(JOGO)
         surface.blit(self._frame_surface, (0, 0))

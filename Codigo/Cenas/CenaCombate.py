@@ -4,6 +4,7 @@ from Codigo.Modulos.ControladorBatalha import ControladorBatalha
 from Codigo.Modulos.ElementosHudCombate import ElementosHudCombate
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo
+from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 import pygame
 
 
@@ -12,6 +13,7 @@ class CenaCombate:
         self.Abertura = AbrirIris
         self.Fechamento = FecharIris
         self.ID = "Combate"
+        self.TelaAtual = str(getattr(self, "TelaAtual", "Combate"))
 
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
         regras_mundo = JOGO.INFO.get("RegrasMundo") if isinstance(JOGO.INFO.get("RegrasMundo"), dict) else {}
@@ -34,7 +36,14 @@ class CenaCombate:
         jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
         jogo.CenaAlvo = "Mundo"
 
+    def DefinirTela(self, tela):
+        if tela == "Config":
+            ResetTelaConfig()
+        self.TelaAtual = str(tela)
+
     def atualizar_cena(self, JOGO, EVENTOS, dt):
+        if self.TelaAtual == "Config":
+            return
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
         opcoes_modal = JOGO.GerenciadorSubtelas.obter_por_tipo(SubtelaOpcoes)
         if opcoes_modal is None:
@@ -50,6 +59,13 @@ class CenaCombate:
         self.Camera.atualizar(dt)
         self.ControladorBatalha.atualizar(EVENTOS, dt)
 
+    def tela_atual_eh_complexa(self) -> bool:
+        return self.TelaAtual != "Config"
+
+    def render_tela(self, surface, JOGO, EVENTOS, dt):
+        if self.TelaAtual == "Config":
+            TelaConfig(self, JOGO, EVENTOS, dt, tela_destino=surface)
+
     def render_base(self, surface, JOGO, EVENTOS, dt):
         _ = (JOGO, EVENTOS, dt)
         surface.fill((20, 20, 28))
@@ -63,8 +79,12 @@ class CenaCombate:
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.atualizar_cena(JOGO, EVENTOS, dt)
-        self.render_base(JOGO.TELA, JOGO, EVENTOS, dt)
-        self.render_hud(JOGO.TELA, JOGO, EVENTOS, dt)
+        if self.tela_atual_eh_complexa():
+            self.render_base(JOGO.TELA, JOGO, EVENTOS, dt)
+            self.render_post(JOGO.TELA, JOGO, EVENTOS, dt)
+            self.render_hud(JOGO.TELA, JOGO, EVENTOS, dt)
+        else:
+            self.render_tela(JOGO.TELA, JOGO, EVENTOS, dt)
 
     def Finalizar(self, JOGO):
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}

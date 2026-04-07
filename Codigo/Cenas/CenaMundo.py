@@ -7,7 +7,7 @@ from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.FiltroCamera import FiltroCamera
 from Codigo.Modulos.ModuladorRegras import ModuladorRegras
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
-from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
+from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
     buscar_mensagens_terminal,
     enviar_mensagem_terminal,
@@ -47,6 +47,11 @@ class CenaMundo:
         if tela_sobreposta == "Config":
             ResetTelaConfig()
             self.TelaAtual = "Config"
+
+    def DefinirTela(self, tela):
+        if tela == "Config":
+            ResetTelaConfig()
+        self.TelaAtual = tela
 
     def _montar_mundo(self, JOGO):
         server = JOGO.INFO.get("ServerSelecionado") or {}
@@ -181,16 +186,21 @@ class CenaMundo:
                 self._texto_estadio.set_pos((surface.get_width() // 2, max(45, surface.get_height() - 118)))
                 self._texto_estadio.draw(surface)
 
-    def render_overlay(self, surface, JOGO, EVENTOS, dt):
+    def tela_atual_eh_complexa(self) -> bool:
+        return self.TelaAtual != "Config"
+
+    def render_tela(self, surface, JOGO, EVENTOS, dt):
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt, tela_destino=surface)
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.atualizar_cena(JOGO, EVENTOS, dt)
-        self.render_base(JOGO.TELA, JOGO, EVENTOS, dt)
-        self.render_post(JOGO.TELA, JOGO, EVENTOS, dt)
-        self.render_hud(JOGO.TELA, JOGO, EVENTOS, dt)
-        self.render_overlay(JOGO.TELA, JOGO, EVENTOS, dt)
+        if self.tela_atual_eh_complexa():
+            self.render_base(JOGO.TELA, JOGO, EVENTOS, dt)
+            self.render_post(JOGO.TELA, JOGO, EVENTOS, dt)
+            self.render_hud(JOGO.TELA, JOGO, EVENTOS, dt)
+        else:
+            self.render_tela(JOGO.TELA, JOGO, EVENTOS, dt)
 
     def _solicitar_interacao_npc(self, jogo, npc_obj: dict) -> None:
         if jogo.GerenciadorSubtelas.contem(SubtelaDialogo):

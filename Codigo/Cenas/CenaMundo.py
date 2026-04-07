@@ -162,6 +162,7 @@ class CenaMundo:
         self._processar_estado_dialogo_npc(JOGO)
         self.ElementosHud.atualizar(dt)
         self.Camera.atualizar(dt)
+        return EVENTOS
 
     def render_base(self, surface, JOGO, EVENTOS, dt):
         surface.fill((20, 20, 28))

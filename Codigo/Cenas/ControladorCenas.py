@@ -118,8 +118,11 @@ class ControladorCenas:
                 self.DefinirCena()
 
             eventos_cena = self.GerenciadorSubtelas.filtrar_eventos_fundo(EVENTOS)
+            eventos_render = eventos_cena
             if callable(getattr(self.Cena, "atualizar_cena", None)):
-                self.Cena.atualizar_cena(self, eventos_cena, dt)
+                retorno_atualizacao = self.Cena.atualizar_cena(self, eventos_cena, dt)
+                if isinstance(retorno_atualizacao, list):
+                    eventos_render = retorno_atualizacao
             else:
                 self.Cena.Tela(self, eventos_cena, dt)
             self.GerenciadorSubtelas.atualizar(self, EVENTOS, dt)
@@ -139,7 +142,7 @@ class ControladorCenas:
             self.PipelineGrafica.renderizar_frame(
                 jogo=self,
                 cena=self.Cena,
-                eventos=eventos_cena,
+                eventos=eventos_render,
                 dt=dt,
                 render_subtelas=lambda: self.GerenciadorSubtelas.render(self.TELA, EVENTOS, dt, JOGO=self),
                 render_adicionais=self.DesenharInfosAdicionais,

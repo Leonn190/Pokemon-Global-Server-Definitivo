@@ -1,0 +1,8 @@
+Versão sem o efeito de bordas estilo Link's Awakening.
+Mantém: ciclo diário, chuva, biomas e toggle de shader.
+
+Dependências:
+pip install pygame moderngl
+
+Execute:
+python ciclo_diario_shader_teste_v5.py

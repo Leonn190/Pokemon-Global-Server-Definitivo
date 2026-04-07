@@ -31,6 +31,7 @@ class Bau:
         self.AguardandoConfirmacaoAbertura = False
         self._aguardando_desde_ms = 0
         self._som_abertura_pendente = False
+        self._frame_render_atual = None
 
     @classmethod
     def _obter_sprite(cls, caminho):
@@ -91,8 +92,15 @@ class Bau:
         idx = min(len(frames) - 1, int(progresso * (len(frames) - 1)))
         return frames[idx]
 
+    def atualizar_visual(self, dt: float = 0.0) -> None:
+        _ = dt
+        self._frame_render_atual = self._frame_atual(self._carregar_frames(self.TipoBau))
+
     def render(self, tela, camera) -> None:
-        frame = self._frame_atual(self._carregar_frames(self.TipoBau))
+        frame = self._frame_render_atual
+        if frame is None:
+            frame = self._frame_atual(self._carregar_frames(self.TipoBau))
+            self._frame_render_atual = frame
         if frame is None:
             return
         px, py = camera.mundo_para_tela_px(self.Posicao)

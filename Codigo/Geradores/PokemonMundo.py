@@ -645,8 +645,10 @@ class Pokemon:
         rot = -540.0 * t
         self._desenhar_bola(tela, (int(bx), int(by)), tile_px, rotacao=rot)
 
-    def render(self, tela, camera, dt: float) -> None:
+    def atualizar_visual(self, dt: float) -> None:
         self.atualizar(dt)
+
+    def render(self, tela, camera, dt: float = 0.0) -> None:
         if self._pronto_para_remover:
             return
         cx, cy = camera.mundo_para_tela_px(self.Posicao)

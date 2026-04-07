@@ -282,12 +282,13 @@ def _processar_status():
     _STATUS_THREAD = None
 
 
-def _montar_layout(Cena, JOGO):
+def _montar_layout(Cena, JOGO, tela_destino=None):
     global _TELA_CARREGADA, _TAMANHO_CACHE
     global _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE
     global _BOTAO_ADICIONAR, _BOTOES_SERVERS, _BOTOES_ACOES, _MENSAGEM
 
-    largura_tela, altura_tela = JOGO.TELA.get_size()
+    tela = tela_destino if tela_destino is not None else JOGO.TELA
+    largura_tela, altura_tela = tela.get_size()
 
     _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE = _gerar_estilos()
 
@@ -442,13 +443,14 @@ def _processar_requisicao(Cena, JOGO):
             _abrir_subtela_criar_personagem(JOGO)
 
 
-def TelaServers(Cena, JOGO, EVENTOS, dt):
+def TelaServers(Cena, JOGO, EVENTOS, dt, tela_destino=None):
     global _TELA_CARREGADA, _STATUS_ACUMULADO
 
-    largura_tela, altura_tela = JOGO.TELA.get_size()
+    tela = tela_destino if tela_destino is not None else JOGO.TELA
+    largura_tela, altura_tela = tela.get_size()
 
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura_tela, altura_tela):
-        _montar_layout(Cena, JOGO)
+        _montar_layout(Cena, JOGO, tela_destino=tela)
 
     _processar_requisicao(Cena, JOGO)
     _processar_status()
@@ -458,18 +460,18 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
         _STATUS_ACUMULADO = 0.0
         _iniciar_atualizacao_status()
 
-    JOGO.TELA.fill((8, 12, 24))
+    tela.fill((8, 12, 24))
 
     eventos_ativos = [] if JOGO.GerenciadorSubtelas.ativa else EVENTOS
     mouse_pos = (-99999, -99999) if JOGO.GerenciadorSubtelas.ativa else None
 
-    _BOTAO_ADICIONAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    _BOTAO_ADICIONAR.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
     if len(SERVER_LIST) != len(_BOTOES_SERVERS):
-        _montar_layout(Cena, JOGO)
+        _montar_layout(Cena, JOGO, tela_destino=tela)
 
     for i, botao in enumerate(_BOTOES_SERVERS):
-        botao.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+        botao.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
         ligado = _STATUS_CACHE.get(i)
         if ligado is None:
             cor = (230, 208, 88)
@@ -481,10 +483,10 @@ def TelaServers(Cena, JOGO, EVENTOS, dt):
         raio = 10
         x_bola = botao.rect.right + 24
         y_bola = botao.rect.centery
-        pygame.draw.circle(JOGO.TELA, (0, 0, 0), (x_bola, y_bola), raio + 2)
-        pygame.draw.circle(JOGO.TELA, cor, (x_bola, y_bola), raio)
+        pygame.draw.circle(tela, (0, 0, 0), (x_bola, y_bola), raio + 2)
+        pygame.draw.circle(tela, cor, (x_bola, y_bola), raio)
 
     for nome in ("Voltar", "Renomear", "Entrar", "Apagar", "Operar"):
-        _render_acao(nome, JOGO.TELA, eventos_ativos, dt, JOGO, mouse_pos=mouse_pos)
+        _render_acao(nome, tela, eventos_ativos, dt, JOGO, mouse_pos=mouse_pos)
 
-    _MENSAGEM.render(JOGO.TELA, dt)
+    _MENSAGEM.render(tela, dt)

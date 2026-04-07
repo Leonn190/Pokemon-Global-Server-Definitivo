@@ -59,8 +59,19 @@ def _voltar_menu(Cena, JOGO):
     if isinstance(retorno, dict) and retorno.get("Cena") == "Mundo":
         JOGO.CenaAlvo = "Mundo"
         return
-    if getattr(JOGO.Cena, "ID", "") == "Mundo":
-        JOGO.Cena.TelaAtual = None
+    cena_atual = getattr(JOGO, "Cena", None)
+    cena_id = str(getattr(cena_atual, "ID", "") or "")
+    if cena_id == "Mundo":
+        if callable(getattr(cena_atual, "DefinirTela", None)):
+            cena_atual.DefinirTela(None)
+        else:
+            cena_atual.TelaAtual = None
+        return
+    if cena_id == "Combate":
+        if callable(getattr(cena_atual, "DefinirTela", None)):
+            cena_atual.DefinirTela("Combate")
+        else:
+            cena_atual.TelaAtual = "Combate"
         return
     Cena.DefinirTela("MenuPrincipal")
 
@@ -213,20 +224,21 @@ def ResetTelaConfig():
     _CONFIG_CARREGADA = False
 
 
-def TelaConfig(Cena, JOGO, EVENTOS, dt):
+def TelaConfig(Cena, JOGO, EVENTOS, dt, tela_destino=None):
     largura_tela, altura_tela = JOGO.TELA.get_size()
     if (not _CONFIG_CARREGADA) or _TAMANHO_CACHE != (largura_tela, altura_tela):
         _montar_layout(Cena, JOGO)
 
-    JOGO.TELA.fill((10, 14, 28))
-    _TITULO.draw(JOGO.TELA)
+    tela = tela_destino if tela_destino is not None else JOGO.TELA
+    tela.fill((10, 14, 28))
+    _TITULO.draw(tela)
 
     eventos_ativos = [] if JOGO.GerenciadorSubtelas.ativa else EVENTOS
     mouse_pos = (-99999, -99999) if JOGO.GerenciadorSubtelas.ativa else None
 
-    alterou_fps = _BARRAS["FPS"].render(JOGO.TELA, eventos_ativos, dt)
-    alterou_claridade = _BARRAS["Claridade"].render(JOGO.TELA, eventos_ativos, dt)
-    alterou_volume = _BARRAS["Volume"].render(JOGO.TELA, eventos_ativos, dt)
+    alterou_fps = _BARRAS["FPS"].render(tela, eventos_ativos, dt)
+    alterou_claridade = _BARRAS["Claridade"].render(tela, eventos_ativos, dt)
+    alterou_volume = _BARRAS["Volume"].render(tela, eventos_ativos, dt)
 
     if alterou_fps:
         JOGO.CONFIG["FPS"] = int(round(_BARRAS["FPS"].valor))
@@ -239,8 +251,8 @@ def TelaConfig(Cena, JOGO, EVENTOS, dt):
         VerificaSonoridade(JOGO.CONFIG)
 
     for botao in _BOTOES_TOGGLE.values():
-        botao.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+        botao.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
-    _BOTAO_DESLOGAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
-    _BOTAO_CANCELAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
-    _BOTAO_SALVAR.render(JOGO.TELA, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    _BOTAO_DESLOGAR.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    _BOTAO_CANCELAR.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    _BOTAO_SALVAR.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)

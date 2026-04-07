@@ -83,11 +83,19 @@ class ControladorAtores:
         self.AtoresRemotosPorId.pop(int(oid), None)
         self._dimensao_por_id.pop(int(oid), None)
 
-    def renderizar(self, oid: int, tela, camera, dt: float) -> bool:
+    def atualizar_visual(self, oid: int, dt: float) -> bool:
         ator = self.AtoresRemotosPorId.get(int(oid))
         if ator is None:
             return False
         ator.atualizar(dt)
+        if hasattr(ator, "atualizar_visual"):
+            ator.atualizar_visual(dt)
+        return True
+
+    def renderizar(self, oid: int, tela, camera) -> bool:
+        ator = self.AtoresRemotosPorId.get(int(oid))
+        if ator is None:
+            return False
         ator.set_tile_px(getattr(camera, "TilePx", 50))
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
         ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=float(getattr(ator, "_tempo_respiracao", 0.0)))

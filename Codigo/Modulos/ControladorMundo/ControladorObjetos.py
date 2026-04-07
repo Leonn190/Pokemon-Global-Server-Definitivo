@@ -597,11 +597,38 @@ class ControladorObjetos:
             return None
         return px, py
 
-    def renderizar_entidades(self, tela, camera, ignorar_id=None, player_pos=None):
+    def atualizar_visuais(self, dt: float, camera, ignorar_id=None, player_pos=None):
+        dt = max(0.0, float(dt))
         self._atualizar_alvo_local_captura(camera, player_pos=player_pos)
-        agora = pygame.time.get_ticks()
-        dt_pokemons = max(0.0, (agora - self._ultimo_render_pokemons_ms) / 1000.0)
-        self._ultimo_render_pokemons_ms = agora
+        for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
+            if not isinstance(obj, dict):
+                continue
+            oid = int(obj.get("id", -1))
+            if ignorar_id is not None and oid == int(ignorar_id):
+                continue
+            if self._objeto_posicao_tela_se_visivel(obj, camera) is None:
+                continue
+            poke = self.PokemonsPorId.get(oid)
+            if poke is not None and hasattr(poke, "atualizar_visual"):
+                poke.atualizar_visual(dt)
+                continue
+            bau = self.BausPorId.get(oid)
+            if bau is not None and hasattr(bau, "atualizar_visual"):
+                bau.atualizar_visual(dt)
+                continue
+            self._atores.atualizar_visual(oid, dt)
+
+        for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
+            if not isinstance(obj, dict):
+                continue
+            if not str(obj.get("tipo", "")).startswith("estrutura"):
+                continue
+            est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))
+            if est is not None and hasattr(est, "atualizar_visual"):
+                est.atualizar_visual(dt)
+
+    def renderizar_entidades(self, tela, camera, ignorar_id=None, player_pos=None):
+        _ = player_pos
 
         remover_pokemons: List[int] = []
         for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
@@ -617,7 +644,7 @@ class ControladorObjetos:
 
             poke = self.PokemonsPorId.get(oid)
             if poke is not None:
-                poke.render(tela, camera, dt_pokemons)
+                poke.render(tela, camera)
                 if hasattr(poke, "pronto_para_remover_local") and poke.pronto_para_remover_local():
                     remover_pokemons.append(oid)
                 continue
@@ -630,7 +657,7 @@ class ControladorObjetos:
             if self._criaveis.renderizar_criavel(oid, tela, camera):
                 continue
 
-            if self._atores.renderizar(oid, tela, camera, dt_pokemons):
+            if self._atores.renderizar(oid, tela, camera):
                 continue
 
             self._render_fallback_objeto(tela, camera, obj, cor_fallback=(222, 233, 245))
@@ -643,7 +670,6 @@ class ControladorObjetos:
 
     def renderizar_estruturas(self, tela, camera):
         dim_local = self._dimensao_player_local()
-        dt = 1.0 / 60.0
         objs = [obj for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3) if isinstance(obj, dict) and str(obj.get("tipo", "")).startswith("estrutura")]
         if dim_local == "Mundo":
             for estadio in list(self.EstadiosPorId.values()):
@@ -669,7 +695,7 @@ class ControladorObjetos:
             if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220) is None:
                 continue
             est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))
-            escala = est.escala_render(dt) if est is not None else 1.0
+            escala = est.escala_render() if est is not None else 1.0
             self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala)
 
 

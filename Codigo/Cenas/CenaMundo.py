@@ -7,7 +7,7 @@ from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.FiltroCamera import FiltroCamera
 from Codigo.Modulos.ModuladorRegras import ModuladorRegras
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
-from Codigo.Telas.Config import TelaConfig, ResetTelaConfig
+from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
     buscar_mensagens_terminal,
     enviar_mensagem_terminal,
@@ -48,6 +48,11 @@ class CenaMundo:
             ResetTelaConfig()
             self.TelaAtual = "Config"
 
+    def DefinirTela(self, tela):
+        if tela == "Config":
+            ResetTelaConfig()
+        self.TelaAtual = tela
+
     def _montar_mundo(self, JOGO):
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
@@ -79,7 +84,7 @@ class CenaMundo:
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
             self.ControladorMundo.conectar(link, client_id)
 
-    def Tela(self, JOGO, EVENTOS, dt):
+    def atualizar_cena(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
 
         bloqueio_gameplay = False
@@ -103,7 +108,7 @@ class CenaMundo:
             if opcoes_modal is not None:
                 player.Controle.InventarioAberto = False
 
-        if opcoes_modal is None:
+        if opcoes_modal is None and self.TelaAtual != "Config":
             for ev in EVENTOS:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     opcoes = SubtelaOpcoes()
@@ -158,12 +163,17 @@ class CenaMundo:
         self.ElementosHud.atualizar(dt)
         self.Camera.atualizar(dt)
 
-        JOGO.TELA.fill((20, 20, 28))
-        self.ControladorMundo.renderizar(JOGO.TELA)
-        self._filtro_camera.aplicar(JOGO.TELA, self.ControladorMundo.tempo_mundo_atual(), dt)
+    def render_base(self, surface, JOGO, EVENTOS, dt):
+        surface.fill((20, 20, 28))
+        self.ControladorMundo.renderizar(surface)
 
+    def render_post(self, surface, JOGO, EVENTOS, dt):
+        self._filtro_camera.aplicar(surface, self.ControladorMundo.tempo_mundo_atual(), dt)
+
+    def render_hud(self, surface, JOGO, EVENTOS, dt):
+        player = self.ControladorMundo.player_local
         if player is not None:
-            self.ElementosHud.desenhar(JOGO.TELA, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
             estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
             dica_estadio = self.ControladorMundo.Objetos.mensagem_interacao_estadio(
@@ -173,11 +183,24 @@ class CenaMundo:
             )
             if dica_estadio:
                 self._texto_estadio.set_text(dica_estadio)
-                self._texto_estadio.set_pos((JOGO.TELA.get_width() // 2, max(45, JOGO.TELA.get_height() - 118)))
-                self._texto_estadio.draw(JOGO.TELA)
+                self._texto_estadio.set_pos((surface.get_width() // 2, max(45, surface.get_height() - 118)))
+                self._texto_estadio.draw(surface)
 
+    def tela_atual_eh_complexa(self) -> bool:
+        return self.TelaAtual != "Config"
+
+    def render_tela(self, surface, JOGO, EVENTOS, dt):
         if self.TelaAtual == "Config":
-            TelaConfig(self, JOGO, EVENTOS, dt)
+            TelaConfig(self, JOGO, EVENTOS, dt, tela_destino=surface)
+
+    def Tela(self, JOGO, EVENTOS, dt):
+        self.atualizar_cena(JOGO, EVENTOS, dt)
+        if self.tela_atual_eh_complexa():
+            self.render_base(JOGO.TELA, JOGO, EVENTOS, dt)
+            self.render_post(JOGO.TELA, JOGO, EVENTOS, dt)
+            self.render_hud(JOGO.TELA, JOGO, EVENTOS, dt)
+        else:
+            self.render_tela(JOGO.TELA, JOGO, EVENTOS, dt)
 
     def _solicitar_interacao_npc(self, jogo, npc_obj: dict) -> None:
         if jogo.GerenciadorSubtelas.contem(SubtelaDialogo):
@@ -261,6 +284,7 @@ class CenaMundo:
             finalizar_interacao_npc_mundo(link, client_id, npc_id)
 
     def Finalizar(self, JOGO):
+        JOGO.INFO.pop("MundoTelaSobreposta", None)
         if int(self._npc_interacao_id or 0) > 0:
             self._finalizar_dialogo_npc(JOGO)
         if self.Terminal is not None:

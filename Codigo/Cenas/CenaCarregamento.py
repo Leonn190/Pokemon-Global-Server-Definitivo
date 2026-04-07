@@ -90,11 +90,10 @@ class CenaCarregamento:
         )
         self._frame_escalado = pygame.transform.smoothscale(frame_base, tamanho)
 
-    def Tela(self, JOGO, EVENTOS, dt):
+    def atualizar_cena(self, JOGO, EVENTOS, dt):
+        _ = EVENTOS
         if self._ultimo_tamanho != JOGO.TELA.get_size():
             self._montar_layout(JOGO)
-
-        JOGO.TELA.fill((9, 12, 22))
 
         if self._frames:
             self._acumulado_frame += dt
@@ -103,19 +102,29 @@ class CenaCarregamento:
                 self._indice_frame = (self._indice_frame + 1) % len(self._frames)
                 self._atualizar_frame_escalado()
 
-            if self._frame_escalado:
-                rect = self._frame_escalado.get_rect(
-                    center=(JOGO.TELA.get_width() // 2, int(JOGO.TELA.get_height() * 0.45))
-                )
-                JOGO.TELA.blit(self._frame_escalado, rect)
-
-        if self._botao_cancelar:
-            self._botao_cancelar.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
-
         if JOGO.INFO.get("ServerSelecionado") and JOGO.INFO.get("PlayerDadosServer") is not None:
             self._tempo_espera_mundo += max(0.0, float(dt))
             if self._tempo_espera_mundo >= 3.0:
                 JOGO.CenaAlvo = "Mundo"
+
+    def tela_atual_eh_complexa(self) -> bool:
+        return False
+
+    def render_tela(self, surface, JOGO, EVENTOS, dt):
+        surface.fill((9, 12, 22))
+
+        if self._frame_escalado:
+            rect = self._frame_escalado.get_rect(
+                center=(surface.get_width() // 2, int(surface.get_height() * 0.45))
+            )
+            surface.blit(self._frame_escalado, rect)
+
+        if self._botao_cancelar:
+            self._botao_cancelar.render(surface, EVENTOS, dt, JOGO=JOGO)
+
+    def Tela(self, JOGO, EVENTOS, dt):
+        self.atualizar_cena(JOGO, EVENTOS, dt)
+        self.render_tela(JOGO.TELA, JOGO, EVENTOS, dt)
 
     def Finalizar(self, JOGO):
         pass

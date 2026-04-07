@@ -64,8 +64,7 @@ void main() {
     vec3 base_scene = scene_sample(v_uv);
 
     if (u_shader_enabled < 0.5) {
-        vec3 flat_color = mix(base_scene, hud.rgb, hud.a);
-        fragColor = vec4(clamp(flat_color, 0.0, 1.0), 1.0);
+        fragColor = vec4(clamp(base_scene, 0.0, 1.0), 1.0);
         return;
     }
 

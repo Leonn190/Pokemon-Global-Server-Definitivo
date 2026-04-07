@@ -7,6 +7,14 @@ GerouSurface = False
 surface = None
 
 
+def _obter_destino(jogo):
+    pipeline = getattr(jogo, "PipelineGrafica", None)
+    obter_hud = getattr(pipeline, "obter_surface_hud", None) if pipeline is not None else None
+    if callable(obter_hud):
+        return obter_hud()
+    return jogo.TELA
+
+
 def aplicar_claridade(tela, claridade):
     global GerouSurface, surface
 
@@ -47,10 +55,11 @@ def Escurecer(JOGO, dt, dur=0.25):
     _atualizar(JOGO, dt, dur, +1)
 
     alpha = int(255 * (JOGO.Escuro / 100.0))
-    w, h = JOGO.TELA.get_size()
+    tela = _obter_destino(JOGO)
+    w, h = tela.get_size()
     s = pygame.Surface((w, h), pygame.SRCALPHA)
     s.fill((0, 0, 0, alpha))
-    JOGO.TELA.blit(s, (0, 0))
+    tela.blit(s, (0, 0))
 
 
 def Clarear(JOGO, dt, dur=0.25):
@@ -58,17 +67,19 @@ def Clarear(JOGO, dt, dur=0.25):
     _atualizar(JOGO, dt, dur, -1)
 
     alpha = int(255 * (JOGO.Escuro / 100.0))
-    w, h = JOGO.TELA.get_size()
+    tela = _obter_destino(JOGO)
+    w, h = tela.get_size()
     s = pygame.Surface((w, h), pygame.SRCALPHA)
     s.fill((0, 0, 0, alpha))
-    JOGO.TELA.blit(s, (0, 0))
+    tela.blit(s, (0, 0))
 
 
 def FecharIris(JOGO, dt, dur=0.35):
     """0 -> 100 (íris fechando)"""
     _atualizar(JOGO, dt, dur, +1)
 
-    w, h = JOGO.TELA.get_size()
+    tela = _obter_destino(JOGO)
+    w, h = tela.get_size()
     cx, cy = w // 2, h // 2
     raio_max = int(math.hypot(w, h) / 2)
 
@@ -78,14 +89,15 @@ def FecharIris(JOGO, dt, dur=0.35):
     mask = pygame.Surface((w, h), pygame.SRCALPHA)
     mask.fill((0, 0, 0, 255))
     pygame.draw.circle(mask, (0, 0, 0, 0), (cx, cy), max(0, raio))
-    JOGO.TELA.blit(mask, (0, 0))
+    tela.blit(mask, (0, 0))
 
 
 def AbrirIris(JOGO, dt, dur=0.35):
     """100 -> 0 (íris abrindo)"""
     _atualizar(JOGO, dt, dur, -1)
 
-    w, h = JOGO.TELA.get_size()
+    tela = _obter_destino(JOGO)
+    w, h = tela.get_size()
     cx, cy = w // 2, h // 2
     raio_max = int(math.hypot(w, h) / 2)
 
@@ -94,5 +106,5 @@ def AbrirIris(JOGO, dt, dur=0.35):
     mask = pygame.Surface((w, h), pygame.SRCALPHA)
     mask.fill((0, 0, 0, 255))
     pygame.draw.circle(mask, (0, 0, 0, 0), (cx, cy), max(0, raio))
-    JOGO.TELA.blit(mask, (0, 0))
+    tela.blit(mask, (0, 0))
     

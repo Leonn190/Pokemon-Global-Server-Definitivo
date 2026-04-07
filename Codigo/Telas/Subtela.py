@@ -11,6 +11,7 @@ class Subtela:
     bloquear_input_fundo = True
     usar_overlay_gerenciador = True
     alpha_overlay = 170
+    camada_render = "hud"
 
     def __init__(self):
         self.encerrada = False
@@ -118,9 +119,13 @@ class GerenciadorSubtelas:
             self._overlay_alpha = int(alpha)
         tela.blit(self._overlay_cache, (0, 0))
 
-    def render(self, tela, eventos, dt, JOGO=None):
+    def render(self, tela, eventos, dt, JOGO=None, camada="hud"):
         topo = self.topo
         if topo is None:
+            return
+        camada_topo = str(getattr(topo, "camada_render", "hud") or "hud").strip().lower()
+        camada_atual = str(camada or "hud").strip().lower()
+        if camada_topo != camada_atual:
             return
         if bool(getattr(topo, "usar_overlay_gerenciador", True)):
             self._desenhar_overlay(tela, getattr(topo, "alpha_overlay", 170))

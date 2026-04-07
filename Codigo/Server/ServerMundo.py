@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 
+from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Rotas.Ativador import processar_ativador_json
 from SimuladorServerJogo.Rotas.Atualizador import processar_atualizador_json
 from SimuladorServerJogo.Rotas.Entrada import processar_entrada_json
@@ -13,6 +14,10 @@ from SimuladorServerJogo.Rotas.Terminal import processar_terminal_json
 
 def _erro_padrao(mensagem):
     return {"status": "erro", "mensagem": mensagem}
+
+
+def definir_bombeamento_local_manual(ativo: bool) -> None:
+    TIQUE_SERVIDOR.usar_bombeamento_manual(bool(ativo))
 
 
 def consultar_estado_mundo(ip, client_id, posicao_camera, raio_chunks=4):

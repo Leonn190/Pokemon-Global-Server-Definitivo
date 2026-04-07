@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from Codigo.Server.ServerMundo import consultar_chunks_mundo, receber_pacotes_tick_mundo, desconectar_mundo
+from Codigo.Server.ServerMundo import consultar_chunks_mundo, receber_pacotes_tick_mundo, desconectar_mundo, definir_bombeamento_local_manual
 
 from .LeitorMundo import LeitorMundo
 from .ControladorObjetos import ControladorObjetos
@@ -25,6 +25,9 @@ class ControladorMundo:
             raio_chunks=4,
         )
         self.Pacotes = SistemaPacotes(self.Objetos, self.Player, self.Leitor, camera)
+        definir_bombeamento_local_manual(True)
+        self.Leitor.ativar_bombeamento_manual(True)
+        self.Pacotes.ativar_bombeamento_manual(True)
         self._desconectado = False
 
     def _ao_dimensao_atualizada(self, dimensao: str) -> None:
@@ -72,6 +75,8 @@ class ControladorMundo:
         controle = getattr(self.player_local, "Controle", None) if self.player_local is not None else None
         self.Leitor.atualizar_regras_mundo(controle)
         self.Player.atualizar_frame(eventos, dt, self.Camera, bloqueado=bloqueio_gameplay)
+        self.Leitor.bombear()
+        self.Pacotes.bombear()
         ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None
         player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
         self.Objetos.atualizar_visuais(dt, self.Camera, ignorar_id=ignorar_id, player_pos=player_pos)

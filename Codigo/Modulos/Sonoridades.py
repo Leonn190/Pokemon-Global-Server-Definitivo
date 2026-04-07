@@ -415,6 +415,10 @@ def _tile_mundo_atual(cena_mundo):
         return None
 
 
+def tile_mundo_atual(cena_mundo):
+    return _tile_mundo_atual(cena_mundo)
+
+
 def _musica_por_tile(tile):
     return {
         2: "Vale",
@@ -424,6 +428,16 @@ def _musica_por_tile(tile):
         4: "Praia",
         8: "Vulcão",
     }.get(tile)
+
+
+def bioma_visual_por_tile(tile):
+    return {
+        5: "desert",
+        6: "snow",
+        7: "magic",
+        8: "volcanic",
+        9: "swamp",
+    }.get(tile, "normal")
 
 
 def _musica_mundo_estavel(cena_mundo):

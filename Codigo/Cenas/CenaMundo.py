@@ -6,6 +6,7 @@ from Codigo.Modulos.ElementosHudMundo import ElementosHudMundo
 from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
 from Codigo.Modulos.FiltroCamera import FiltroCamera
 from Codigo.Modulos.ModuladorRegras import ModuladorRegras
+from Codigo.Modulos.Sonoridades import tile_mundo_atual, bioma_visual_por_tile
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
@@ -169,7 +170,31 @@ class CenaMundo:
         self.ControladorMundo.renderizar(surface)
 
     def render_post(self, surface, JOGO, EVENTOS, dt):
-        self._filtro_camera.aplicar(surface, self.ControladorMundo.tempo_mundo_atual(), dt)
+        _ = EVENTOS
+        tempo = self.ControladorMundo.tempo_mundo_atual() if self.ControladorMundo is not None else {}
+        dentro_estadio = False
+        if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
+            dentro_estadio = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo") != "Mundo"
+        bloco_bioma = tile_mundo_atual(self)
+        biome_atual = bioma_visual_por_tile(bloco_bioma)
+        self._filtro_camera.coletar_uniformes(
+            tamanho_tela=surface.get_size(),
+            camera=self.Camera,
+            entidade_main=self.EntidadeMain,
+            tempo_mundo=tempo,
+            dt=dt,
+            dentro_estadio=dentro_estadio,
+            biome_atual=biome_atual,
+        )
+        if not dentro_estadio:
+            self._filtro_camera.desenhar_bioma_base(surface)
+            self._filtro_camera.desenhar_chuva_base(surface)
+
+    def coletar_efeito_shader(self, JOGO, dt, tamanho_tela):
+        _ = (JOGO, dt, tamanho_tela)
+        if self.TelaAtual == "Config":
+            return None
+        return self._filtro_camera.uniformes_atuais()
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         player = self.ControladorMundo.player_local

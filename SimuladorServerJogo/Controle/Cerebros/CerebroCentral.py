@@ -10,7 +10,7 @@ from collections import deque
 from typing import Deque, Dict, Set, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer, ItemMundoServer, PokemonServer, XpMundoServer
+from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, BauServer, ItemMundoServer, PokemonServer, XpMundoServer
 from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_runtime_servidor
 from SimuladorServerJogo.Geradores.GeradorBaus import gerar_bau_server
@@ -126,10 +126,7 @@ class CerebroCentral:
 
     def processar_ativacao(self, client_id: str, posicao_camera: Vector2) -> Dict[str, object]:
         with self._lock:
-            cid = str(client_id)
-            if not self._ativador_id:
-                self._ativador_id = cid
-            self._players_ativos[cid] = (float(posicao_camera[0]), float(posicao_camera[1]))
+            cid = self._atualizar_player_ativo_locked(client_id, posicao_camera)
             chunks_carregados, chunks_simulados = self._calcular_chunks_carregados()
             return {
                 "ativador": self._ativador_id,
@@ -142,6 +139,38 @@ class CerebroCentral:
                 "raio_chunks_carregados": self._i("raio_chunks_carregados", 4),
                 "raio_chunks_simulados": self._i("raio_chunks_simulados", 3),
             }
+
+    def atualizar_player_ativo(self, client_id: str, posicao_camera: Vector2) -> None:
+        with self._lock:
+            self._atualizar_player_ativo_locked(client_id, posicao_camera)
+
+    def _atualizar_player_ativo_locked(self, client_id: str, posicao_camera: Vector2) -> str:
+        cid = str(client_id or "")
+        if not cid:
+            return ""
+        if not self._ativador_id:
+            self._ativador_id = cid
+        self._players_ativos[cid] = (float(posicao_camera[0]), float(posicao_camera[1]))
+        return cid
+
+    def _posicao_central_cliente(self, client_id: str, fallback: Vector2) -> Vector2 | None:
+        usuario = str(client_id or "")
+        if not usuario:
+            return None
+        obj_id = int(BANCO_DADOS.objeto_id_por_usuario(usuario) or 0)
+        if obj_id > 0:
+            obj = BANCO_DADOS.obter_objeto(obj_id)
+            if isinstance(obj, AtorServer):
+                estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+                if str(estado.get("dimensao") or "Mundo") == "Mundo":
+                    try:
+                        return (float(obj.posicao[0]), float(obj.posicao[1]))
+                    except Exception:
+                        pass
+        try:
+            return (float(fallback[0]), float(fallback[1]))
+        except Exception:
+            return None
 
     def _sincronizar_registries_com_banco(self) -> None:
         for obj in BANCO_DADOS.listar_objetos():
@@ -345,7 +374,10 @@ class CerebroCentral:
         extra_sim = max(0, self._i("raio_chunks_simulados", 3))
         raio_total = raio_carregado + extra_sim
 
-        for pos in self._players_ativos.values():
+        for client_id, fallback_pos in self._players_ativos.items():
+            pos = self._posicao_central_cliente(client_id, fallback_pos)
+            if pos is None:
+                continue
             centro = BANCO_DADOS.chunk_da_posicao(pos)
             for dx in range(-raio_total, raio_total + 1):
                 for dy in range(-raio_total, raio_total + 1):

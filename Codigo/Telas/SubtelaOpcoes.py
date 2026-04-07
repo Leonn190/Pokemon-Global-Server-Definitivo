@@ -90,7 +90,7 @@ class SubtelaOpcoes(Subtela):
                         return True
         return self.Ativa
 
-    def desenhar(self, jogo):
+    def desenhar(self, tela, jogo, dt: float = 0.0):
         if not self.Ativa:
             return
         self._recalcular_layout(jogo)
@@ -98,13 +98,13 @@ class SubtelaOpcoes(Subtela):
         for botao in self._botoes_ui:
             rect = botao.rect
             sombra = pygame.Rect(rect.x + 2, rect.y + 4, rect.w, rect.h)
-            pygame.draw.rect(jogo.TELA, (12, 16, 32, 120), sombra, border_radius=20)
-            botao.render(jogo.TELA, [], 0.0, JOGO=jogo)
+            pygame.draw.rect(tela, (12, 16, 32, 120), sombra, border_radius=20)
+            botao.render(tela, [], dt, JOGO=jogo)
 
     def render(self, tela, eventos, dt, JOGO=None):
         if JOGO is None:
             return
-        self.desenhar(JOGO)
+        self.desenhar(tela, JOGO, dt)
 
     def _acao_voltar(self, jogo):
         self.Ativa = False

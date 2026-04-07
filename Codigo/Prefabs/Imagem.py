@@ -12,6 +12,8 @@ class Imagem:
       - Efeito interno (ondas/shimmer) recortado pelo alpha da própria imagem
     """
 
+    _FX_FPS = 24
+
     def __init__(
         self,
         path: str,
@@ -57,20 +59,19 @@ class Imagem:
 
         # efeito interno
         if self.effect_alpha > 0:
-            fx = self._get_fx_layer(t)
-            fx.blit(self.mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-            fx.set_alpha(self.effect_alpha)
-            surface.blit(fx, self.rect.topleft)
+            surface.blit(self._get_fx_layer(t), self.rect.topleft)
 
     def _get_fx_layer(self, t: float):
-        tkey = int(t * 60)  # ~60fps
+        tkey = int(t * self._FX_FPS)
         if self._fx_cache is not None and self._fx_cache_tkey == tkey:
-            return self._fx_cache.copy()
+            return self._fx_cache
 
         fx = self._make_logo_effect(self.image.get_size(), t)
+        fx.blit(self.mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        fx.set_alpha(self.effect_alpha)
         self._fx_cache = fx
         self._fx_cache_tkey = tkey
-        return fx.copy()
+        return fx
 
     def _make_logo_effect(self, size, t: float):
         w, h = size

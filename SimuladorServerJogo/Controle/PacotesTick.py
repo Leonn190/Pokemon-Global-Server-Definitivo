@@ -44,5 +44,10 @@ class ArmazenadorPacotesTick:
                 saida = saida[-int(limite):]
             return saida
 
+    def snapshot_pendentes_desde_seq(self, seq_exclusivo: int = 0) -> List[Dict[str, object]]:
+        with self._lock:
+            limite = int(seq_exclusivo or 0)
+            return [dict(diff) for diff in self._pendentes if int(diff.get("seq", 0) or 0) > limite]
+
 
 PACOTES_TICK = ArmazenadorPacotesTick(max_pacotes=900)

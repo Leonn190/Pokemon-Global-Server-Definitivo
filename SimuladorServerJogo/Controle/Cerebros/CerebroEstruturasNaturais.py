@@ -10,9 +10,8 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada
+from SimuladorServerJogo.Controle.EstadoServidor import obter_personagem_para_entrada, registrar_estrutura_natural_tocada_estado
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, ItemMundoServer
-from SimuladorServerJogo.Geradores.GeradorMundo import carregar_estado_mundo, salvar_estado_mundo
 from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_estruturas_naturais
 
 _RAIZ = Path(__file__).resolve().parents[3]
@@ -180,12 +179,4 @@ class CerebroEstruturasNaturais:
 
     @staticmethod
     def _persistir_estrutura_tocada_imediato(estrutura_id: int, quantidade_restante: int) -> None:
-        estado = carregar_estado_mundo()
-        if not isinstance(estado, dict) or not estado.get("meta"):
-            return
-        tocadas = estado.get("estruturas_naturais_tocadas")
-        if not isinstance(tocadas, dict):
-            tocadas = {}
-            estado["estruturas_naturais_tocadas"] = tocadas
-        tocadas[str(int(estrutura_id))] = max(0, int(quantidade_restante or 0))
-        salvar_estado_mundo(estado)
+        registrar_estrutura_natural_tocada_estado(int(estrutura_id), int(quantidade_restante or 0), force=False)

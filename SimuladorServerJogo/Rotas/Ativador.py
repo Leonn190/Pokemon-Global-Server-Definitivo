@@ -29,6 +29,10 @@ def _next_seq() -> int:
     return _DIFF_SEQ
 
 
+def diff_seq_atual() -> int:
+    return int(_DIFF_SEQ)
+
+
 def registrar_diff(tipo: str, payload: Dict[str, object], escopo: Dict[str, object], objeto_id=None, autor: str = "server", categoria: str | None = None, extras: Dict[str, object] | None = None) -> Dict[str, object]:
     diff = {
         "seq": _next_seq(),
@@ -216,8 +220,9 @@ def processar_ativador_json(requisicao_json: str) -> str:
     modo = str(dados.get("modo", "pacotes")).strip().lower()
     ultimo_tick_recebido = int(dados.get("ultimo_tick_recebido", 0) or 0)
 
-    TIQUE_SERVIDOR.ativar_por_usuario(client_id)
     meta_cerebro = CEREBRO.processar_ativacao(client_id, posicao_camera)
+    TIQUE_SERVIDOR.ativar_por_usuario(client_id)
+    TIQUE_SERVIDOR.bombear_ate_agora()
     state_cli = _obter_state_client(client_id)
     obj_id = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
     obj_player = BANCO_DADOS.obter_objeto(obj_id) if obj_id > 0 else None

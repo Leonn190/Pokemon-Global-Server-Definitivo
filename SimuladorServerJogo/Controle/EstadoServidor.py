@@ -1,3 +1,4 @@
+import copy
 import threading
 import time
 import re
@@ -44,6 +45,9 @@ _ESTADO_GERACAO = {
 _LOCK = threading.Lock()
 _INTERVALO_PERSISTENCIA_SEGUNDOS = 1.0
 _ultimo_persistencia_ts = 0.0
+_PERSISTENCIA_LOCK = threading.Lock()
+_persistencia_thread = None
+_persistencia_snapshot_pendente = None
 _NIVEL_MAXIMO_JOGADOR = 50
 _TIPOS_ESTADIO_RESPEITO = (
     "normal", "fogo", "agua", "planta", "eletrico", "gelo", "lutador", "venenoso", "terrestre", "voador",
@@ -182,6 +186,65 @@ def _estado_mundo_vazio():
         "spawn": [0.0, 0.0],
         "tempo_mundo": _tempo_mundo_padrao(),
     }
+
+
+def _worker_persistencia_estado_mundo() -> None:
+    global _persistencia_thread, _persistencia_snapshot_pendente
+    while True:
+        with _PERSISTENCIA_LOCK:
+            snapshot = _persistencia_snapshot_pendente
+            _persistencia_snapshot_pendente = None
+        if snapshot is None:
+            with _PERSISTENCIA_LOCK:
+                if _persistencia_snapshot_pendente is None:
+                    _persistencia_thread = None
+                    return
+            continue
+        try:
+            salvar_estado_mundo(snapshot)
+        except Exception as exc:
+            print(f"[EstadoServidor] falha ao persistir MundoEstado.json: {exc}")
+
+
+def _agendar_snapshot_persistencia(snapshot: dict | None) -> None:
+    global _persistencia_thread, _persistencia_snapshot_pendente
+    if not isinstance(snapshot, dict) or not snapshot.get("meta"):
+        return
+    with _PERSISTENCIA_LOCK:
+        _persistencia_snapshot_pendente = snapshot
+        if _persistencia_thread is not None and _persistencia_thread.is_alive():
+            return
+        _persistencia_thread = threading.Thread(target=_worker_persistencia_estado_mundo, name="PersistenciaEstadoMundo", daemon=True)
+        _persistencia_thread.start()
+
+
+def _snapshot_estado_mundo_para_persistencia_locked() -> dict | None:
+    if not isinstance(_ESTADO_MUNDO, dict) or not _ESTADO_MUNDO.get("meta"):
+        return None
+    snapshot = {
+        "meta": copy.deepcopy(_ESTADO_MUNDO.get("meta", {})),
+        "grid": _ESTADO_MUNDO.get("grid", []),
+        "grid_biomas": _ESTADO_MUNDO.get("grid_biomas", []),
+        "grid_estruturas_naturais": _ESTADO_MUNDO.get("grid_estruturas_naturais", []),
+        "estruturas_naturais_tocadas": BANCO_DADOS.exportar_estruturas_tocadas(),
+        "players": copy.deepcopy(_ESTADO.get("personagens", {})),
+        "npcs_vendedores": copy.deepcopy(_ESTADO_MUNDO.get("npcs_vendedores", {})),
+        "spawn": copy.deepcopy(_ESTADO_MUNDO.get("spawn", [0.0, 0.0])),
+        "tempo_mundo": _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo")),
+    }
+    return snapshot
+
+
+def _agendar_persistencia_locked(force: bool = False) -> None:
+    global _ultimo_persistencia_ts
+    agora = time.monotonic()
+    if not force and (agora - _ultimo_persistencia_ts) < _INTERVALO_PERSISTENCIA_SEGUNDOS:
+        return
+    snapshot = _snapshot_estado_mundo_para_persistencia_locked()
+    if snapshot is None:
+        return
+    _ultimo_persistencia_ts = agora
+    _agendar_snapshot_persistencia(snapshot)
 
 
 def _set_geracao(em_andamento=None, progresso=None, mensagem=None, erro=None, operacao=None):
@@ -471,22 +534,11 @@ def _worker_apagar_mundo():
             CEREBRO.desligar_servidor()
 
 def _sync_personagens_mundo():
-    if not _ESTADO_MUNDO.get("meta"):
-        return
-    _ESTADO_MUNDO["players"] = _ESTADO["personagens"]
-    _ESTADO_MUNDO.setdefault("npcs_vendedores", {})
-    _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))
-    _ESTADO_MUNDO["estruturas_naturais_tocadas"] = BANCO_DADOS.exportar_estruturas_tocadas()
-    salvar_estado_mundo(_ESTADO_MUNDO)
+    _agendar_persistencia_locked(force=True)
 
 
 def _persistir_personagens(force: bool = False) -> None:
-    global _ultimo_persistencia_ts
-    agora = time.monotonic()
-    if not force and (agora - _ultimo_persistencia_ts) < _INTERVALO_PERSISTENCIA_SEGUNDOS:
-        return
-    _sync_personagens_mundo()
-    _ultimo_persistencia_ts = agora
+    _agendar_persistencia_locked(force=force)
 
 
 
@@ -530,6 +582,16 @@ def obter_tempo_mundo_estado() -> dict:
 def atualizar_tempo_mundo_estado(tempo: dict, force: bool = False) -> None:
     with _LOCK:
         _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(tempo)
+        _persistir_personagens(force=force)
+
+
+def registrar_estrutura_natural_tocada_estado(estrutura_id: int, quantidade_restante: int, force: bool = False) -> None:
+    with _LOCK:
+        tocadas = _ESTADO_MUNDO.get("estruturas_naturais_tocadas")
+        if not isinstance(tocadas, dict):
+            tocadas = {}
+            _ESTADO_MUNDO["estruturas_naturais_tocadas"] = tocadas
+        tocadas[str(int(estrutura_id))] = max(0, int(quantidade_restante or 0))
         _persistir_personagens(force=force)
 
 

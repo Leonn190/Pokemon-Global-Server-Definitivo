@@ -18,6 +18,7 @@ from Codigo.Telas.Subtela import Subtela
 
 class SubtelaDialogo(Subtela):
     usar_overlay_gerenciador = False
+    camada_render = "scene"
 
     @staticmethod
     def _valor_coluna(row: Dict[str, object], *nomes: str) -> str:
@@ -96,6 +97,12 @@ class SubtelaDialogo(Subtela):
         self._intro_t = 0.0
         self._intro_finalizada = False
         self._zoom_dialogo = 1.5
+        self._encerrando = False
+        self._outro_t = 0.0
+        self._outro_duracao = 0.36
+        self._acao_pos_outro: Optional[Callable[[], None]] = None
+        self._fundo_zoom_cache: pygame.Surface | None = None
+        self._fundo_zoom_cache_tamanho: tuple[int, int] | None = None
         self._reconstruir_no_atual()
 
     @staticmethod
@@ -224,10 +231,22 @@ class SubtelaDialogo(Subtela):
             tela = pygame.display.get_surface()
             self._loja.montar_botoes(self._tipo_loja_atual(), tela.get_size() if tela is not None else (1280, 720))
 
-    def _encerrar(self) -> None:
+    def _finalizar_encerramento(self) -> None:
         self.Ativa = False
+        if callable(self._acao_pos_outro):
+            self._acao_pos_outro()
+            self._acao_pos_outro = None
         if callable(self._ao_encerrar):
             self._ao_encerrar()
+
+    def _encerrar(self, acao_pos_outro: Optional[Callable[[], None]] = None) -> None:
+        if self._encerrando:
+            return
+        self._encerrando = True
+        self._outro_t = 0.0
+        self._acao_pos_outro = acao_pos_outro
+        self._fundo_zoom_cache = None
+        self._fundo_zoom_cache_tamanho = None
 
     def _selecionar_opcao(self, idx: int) -> None:
         if idx < 0 or idx >= len(self._opcoes):
@@ -256,16 +275,15 @@ class SubtelaDialogo(Subtela):
                 return
         acao = str(op.get("acao") or "").strip().lower()
         if acao == "batalhar":
-            if callable(self._ao_iniciar_batalha):
-                self._ao_iniciar_batalha(
-                    {
-                        "npc_id": int(self._npc_id or 0),
-                        "npc_nome": str(self._npc_nome or "NPC"),
-                        "npc_code": str(self._npc_code or ""),
-                        "npc_estilo": str(self._npc_estilo or "combatente"),
-                    }
-                )
-            self._encerrar()
+            contexto_batalha = {
+                "npc_id": int(self._npc_id or 0),
+                "npc_nome": str(self._npc_nome or "NPC"),
+                "npc_code": str(self._npc_code or ""),
+                "npc_estilo": str(self._npc_estilo or "combatente"),
+            }
+            self._encerrar(
+                acao_pos_outro=(lambda: self._ao_iniciar_batalha(contexto_batalha)) if callable(self._ao_iniciar_batalha) else None
+            )
             return
         if bool(op.get("fim", False)):
             self._encerrar()
@@ -280,6 +298,8 @@ class SubtelaDialogo(Subtela):
     def processar_eventos(self, _jogo, eventos: List[pygame.event.Event]) -> bool:
         if not self.Ativa:
             return False
+        if self._encerrando:
+            return True
         for ev in eventos:
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 self._encerrar()
@@ -337,23 +357,36 @@ class SubtelaDialogo(Subtela):
 
     def atualizar(self, dt: float) -> None:
         if self.Ativa:
-            self._intro_t += max(0.0, float(dt))
-            if self._intro_t >= self._intro_duracao:
-                self._intro_finalizada = True
-            if self._intro_finalizada:
-                self._texto_animado.atualizar(dt)
-            self._tempo_respiracao += max(0.0, float(dt))
+            dt_n = max(0.0, float(dt))
+            if self._encerrando:
+                self._outro_t += dt_n
+                if self._outro_t >= self._outro_duracao:
+                    self._finalizar_encerramento()
+                    return
+            else:
+                self._intro_t += dt_n
+                if self._intro_t >= self._intro_duracao:
+                    self._intro_finalizada = True
+            if self._intro_finalizada and not self._encerrando:
+                self._texto_animado.atualizar(dt_n)
+            self._tempo_respiracao += dt_n
 
-    def desenhar(self, tela: pygame.Surface, eventos: Optional[List[pygame.event.Event]] = None, dt: float = 0.0) -> None:
+    def desenhar(self, tela: pygame.Surface, eventos: Optional[List[pygame.event.Event]] = None, dt: float = 0.0, JOGO=None) -> None:
         if not self.Ativa:
             return
         eventos = eventos or []
         w, h = tela.get_size()
         self._garantir_cache_fundos((w, h))
-        progresso_intro = max(0.0, min(1.0, self._intro_t / max(0.001, float(self._intro_duracao))))
+        if self._fundo_zoom_cache is None or self._fundo_zoom_cache_tamanho != (w, h):
+            self._fundo_zoom_cache = tela.copy()
+            self._fundo_zoom_cache_tamanho = (w, h)
+        if self._encerrando:
+            progresso_intro = max(0.0, min(1.0, 1.0 - (self._outro_t / max(0.001, float(self._outro_duracao)))))
+        else:
+            progresso_intro = max(0.0, min(1.0, self._intro_t / max(0.001, float(self._intro_duracao))))
         zoom = 1.0 + ((self._zoom_dialogo - 1.0) * progresso_intro)
         if zoom > 1.001:
-            quadro = tela.copy()
+            quadro = self._fundo_zoom_cache if isinstance(self._fundo_zoom_cache, pygame.Surface) else tela.copy()
             zw = max(1, int(w * zoom))
             zh = max(1, int(h * zoom))
             # scale padrão reduz custo em diálogo/intro comparado ao smoothscale.
@@ -377,11 +410,11 @@ class SubtelaDialogo(Subtela):
 
         Texto(self._texto_animado.texto_visivel, pos=(int(w * 0.10), int(h * 0.61)), style={"size": 24, "align": "topleft", "outline": True}).draw(tela)
 
-        if self._texto_animado.concluido and self._tipo_loja_atual() in {"padrao", "secreta", "presente"}:
+        if self._texto_animado.concluido and self._tipo_loja_atual() in {"padrao", "secreta", "presente"} and not self._encerrando:
             self._loja.renderizar(tela, eventos, dt, self._tipo_loja_atual(), fechar_callback=self._encerrar)
             return
 
-        if self._texto_animado.concluido:
+        if self._texto_animado.concluido and not self._encerrando:
             self._hover_idx = self._opcao_no_mouse(pygame.mouse.get_pos())
             for i, (op, rect) in enumerate(zip(self._opcoes, self._opcao_rects((w, h)))):
                 hover = i == self._hover_idx
@@ -389,8 +422,8 @@ class SubtelaDialogo(Subtela):
                 cor = (255, 241, 156) if hover else (228, 235, 248)
                 desloc_x = 4 if hover else 0
                 Texto(str(op.get("texto") or "..."), pos=(rect.x + 6 + desloc_x, rect.centery), style={"size": tamanho, "align": "midleft", "outline": True, "color": cor}).draw(tela)
-        else:
+        elif not self._encerrando:
             Texto("(clique para concluir o texto)", pos=(int(w * 0.5), int(h * 0.88)), style={"size": 18, "align": "midbottom", "outline": True, "color": (220, 220, 230)}).draw(tela)
 
     def render(self, tela, eventos, dt, JOGO=None):
-        self.desenhar(tela, eventos, dt)
+        self.desenhar(tela, eventos, dt, JOGO=JOGO)

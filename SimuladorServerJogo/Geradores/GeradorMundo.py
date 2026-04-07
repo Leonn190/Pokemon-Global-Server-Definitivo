@@ -262,7 +262,20 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
         f.flush()
         os.fsync(f.fileno())
         caminho_tmp = f.name
-    os.replace(caminho_tmp, ARQUIVO_MUNDO)
+    ultimo_erro = None
+    for tentativa in range(8):
+        try:
+            os.replace(caminho_tmp, ARQUIVO_MUNDO)
+            return
+        except PermissionError as exc:
+            ultimo_erro = exc
+            time.sleep(0.05 * (tentativa + 1))
+    try:
+        os.unlink(caminho_tmp)
+    except OSError:
+        pass
+    if ultimo_erro is not None:
+        raise ultimo_erro
 
 
 def carregar_estado_mundo() -> Dict[str, object]:

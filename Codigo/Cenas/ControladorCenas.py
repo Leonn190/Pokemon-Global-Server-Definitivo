@@ -4,6 +4,7 @@ from Codigo.Cenas.CenaCombate import CenaCombate
 from Codigo.Cenas.CenaCarregamento import CenaCarregamento
 from Codigo.Cenas.CenaLogin import CenaLogin
 import pygame
+import time
 
 from Codigo.Modulos.Sonoridades import SISTEMA_MUSICAS
 from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer
@@ -13,8 +14,10 @@ from Codigo.Telas.Subtela import GerenciadorSubtelas
 from Codigo.Modulos.PipelineGrafica import PipelineGrafica
 
 class ControladorCenas:
-    def __init__(self, TELA, RELOGIO, CONFIG):
+    def __init__(self, TELA, RELOGIO, CONFIG, tela_display=None, janela_opengl=False):
         self.TELA = TELA
+        self.TelaDisplay = tela_display if tela_display is not None else TELA
+        self.JanelaOpenGL = bool(janela_opengl)
         self.RELOGIO = RELOGIO
         self.CONFIG = CONFIG
         self.INFO = {
@@ -38,7 +41,13 @@ class ControladorCenas:
 
         self.Discord = DiscordPresence()
         self.GerenciadorSubtelas = GerenciadorSubtelas()
-        self.PipelineGrafica = PipelineGrafica(self.TELA)
+        self.PipelineGrafica = PipelineGrafica(self.TELA, tela_display=self.TelaDisplay)
+        if self.JanelaOpenGL and not self.PipelineGrafica.shader_disponivel():
+            self.TelaDisplay = pygame.display.set_mode(self.TELA.get_size(), pygame.NOFRAME)
+            self.JanelaOpenGL = False
+            self.PipelineGrafica = PipelineGrafica(self.TELA, tela_display=self.TelaDisplay)
+        self.INFO["ShaderSuportado"] = self.PipelineGrafica.shader_disponivel()
+        self.INFO["ShaderFallback"] = self.PipelineGrafica.motivo_fallback()
 
         self.TextoFPS = Texto(
             "",
@@ -123,8 +132,6 @@ class ControladorCenas:
                 retorno_atualizacao = self.Cena.atualizar_cena(self, eventos_cena, dt)
                 if isinstance(retorno_atualizacao, list):
                     eventos_render = retorno_atualizacao
-            else:
-                self.Cena.Tela(self, eventos_cena, dt)
             self.GerenciadorSubtelas.atualizar(self, EVENTOS, dt)
             self._atualizar_discord_presenca()
 
@@ -144,16 +151,17 @@ class ControladorCenas:
                 cena=self.Cena,
                 eventos=eventos_render,
                 dt=dt,
-                render_subtelas=lambda: self.GerenciadorSubtelas.render(self.TELA, EVENTOS, dt, JOGO=self),
+                render_subtelas_scene=lambda surface: self.GerenciadorSubtelas.render(surface, EVENTOS, dt, JOGO=self, camada="scene"),
+                render_subtelas_hud=lambda surface: self.GerenciadorSubtelas.render(surface, EVENTOS, dt, JOGO=self, camada="hud"),
                 render_adicionais=self.DesenharInfosAdicionais,
                 aplicar_claridade=self.AplicarClaridadeGlobal,
+                render_transicao=(lambda _surface: efeito_transicao(self, dt)) if callable(efeito_transicao) else None,
             )
-            if callable(efeito_transicao):
-                efeito_transicao(self, dt)
             if self.Saindo and self.Escuro >= 100:
                 self.Rodando = False
             SISTEMA_MUSICAS.atualizar_musica(self)
-            pygame.display.update()
+            pygame.display.flip()
+            time.sleep(0)
 
         self.Encerrar()
 
@@ -171,8 +179,9 @@ class ControladorCenas:
             acao = f"No menu ({tela})"
 
         self.Discord.atualizar(local=local, acao=acao)
-    def AplicarClaridadeGlobal(self):
-        aplicar_claridade(self.TELA, self.CONFIG.get("Claridade", 75))
+
+    def AplicarClaridadeGlobal(self, tela=None):
+        aplicar_claridade(self.TELA if tela is None else tela, self.CONFIG.get("Claridade", 75))
 
     def SolicitarSair(self):
         self.CenaAlvo = None
@@ -185,10 +194,12 @@ class ControladorCenas:
         if self.Cena is not None:
             self.Cena.Finalizar(self)
         self.Discord.desconectar()
+        self.PipelineGrafica.liberar()
         self._encerrado = True
 
-    def DesenharInfosAdicionais(self):
-        largura_tela = self.TELA.get_width()
+    def DesenharInfosAdicionais(self, tela=None):
+        destino = self.TELA if tela is None else tela
+        largura_tela = destino.get_width()
         itens_hud = []
 
         if self.CONFIG.get("FPS Visivel", False):
@@ -226,7 +237,7 @@ class ControladorCenas:
         espaco = 32
         for idx, texto in enumerate(itens_hud):
             texto.set_pos((largura_tela - 16, y_base + idx * espaco))
-            texto.draw(self.TELA)
+            texto.draw(destino)
 
 
     def DesenhosAdicionais(self):

@@ -36,6 +36,7 @@ class LeitorMundo:
 
         self._thread_chunks: Optional[threading.Thread] = None
         self._ativo_chunks = False
+        self._modo_manual = False
         self._versao_chunks = 0
         self.MetaMundo: Dict[str, object] = {}
         self.TamanhoChunkBlocos = 10
@@ -76,6 +77,9 @@ class LeitorMundo:
             self.JOGO.INFO["ServerLink"] = self.ServerLink
 
     def iniciar(self) -> None:
+        if self._modo_manual:
+            self._ativo_chunks = True
+            return
         if self._thread_chunks and self._thread_chunks.is_alive():
             return
         self._ativo_chunks = True
@@ -86,6 +90,19 @@ class LeitorMundo:
         self._ativo_chunks = False
         if self._thread_chunks and self._thread_chunks.is_alive():
             self._thread_chunks.join(timeout=timeout)
+
+    def ativar_bombeamento_manual(self, ativo: bool) -> None:
+        thread = None
+        self._modo_manual = bool(ativo)
+        if self._modo_manual:
+            self._ativo_chunks = False
+            thread = self._thread_chunks
+            self._thread_chunks = None
+            self._ultimo_chunk_player = None
+        if thread and thread.is_alive():
+            thread.join(timeout=0.2)
+        if self._modo_manual:
+            self._ativo_chunks = True
 
 
     def posicao_referencia(self) -> Vector2:
@@ -136,15 +153,24 @@ class LeitorMundo:
             if self.ServerLink is None:
                 time.sleep(self.IntervaloPoll)
                 continue
-            chunk_player = self._chunk_atual_player()
-            if self._ultimo_chunk_player is not None and chunk_player == self._ultimo_chunk_player:
-                time.sleep(self.IntervaloPoll)
-                continue
-            pacote = self._coletar_chunks_servidor()
-            if pacote:
-                self.processar_pacote_chunks(pacote)
-                self._ultimo_chunk_player = chunk_player
+            self._tentar_refresh_chunks()
             time.sleep(self.IntervaloPoll)
+
+    def bombear(self) -> None:
+        if not self._modo_manual or not self._ativo_chunks or self.ServerLink is None:
+            return
+        self._tentar_refresh_chunks()
+
+    def _tentar_refresh_chunks(self) -> bool:
+        chunk_player = self._chunk_atual_player()
+        if self._ultimo_chunk_player is not None and chunk_player == self._ultimo_chunk_player:
+            return False
+        pacote = self._coletar_chunks_servidor()
+        if not pacote:
+            return False
+        self.processar_pacote_chunks(pacote)
+        self._ultimo_chunk_player = chunk_player
+        return True
 
     def forcar_refresh_chunks(self) -> None:
         with self._lock:

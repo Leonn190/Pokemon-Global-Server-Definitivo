@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+import math
+import random
+from typing import Dict, Tuple
 
 import pygame
 
@@ -10,6 +12,25 @@ class FiltroCamera:
     ESCURO_MAXIMO_MIN = 25 * 60
     INICIO_CLAREAR_MIN = 25 * 60
     FIM_CLAREAR_MIN = 32 * 60
+
+    _BIOMA_POR_BLOCO = {
+        5: "desert",
+        6: "snow",
+        7: "magic",
+        8: "volcanic",
+        9: "swamp",
+    }
+    _BIOME_MODE_VALUE = {
+        "normal": 0.0,
+        "snow": 1.0,
+        "volcanic": 2.0,
+        "desert": 3.0,
+        "magic": 4.0,
+        "swamp": 5.0,
+    }
+    _BIOMAS_ESPECIAIS = ("snow", "volcanic", "desert", "magic", "swamp")
+    _BIOMA_GAIN_PER_SEC = 0.01 / 5.0
+    _BIOMA_DECAY_PER_SEC = 0.02
 
     @classmethod
     def reconfigurar_iluminacao(cls, dados: Dict[str, object]) -> None:
@@ -23,111 +44,417 @@ class FiltroCamera:
         cls.INICIO_CLAREAR_MIN = max(cls.ESCURO_MAXIMO_MIN, ini_clarear + (1440 if ini_clarear < cls.INICIO_ESCURECER_MIN else 0))
         cls.FIM_CLAREAR_MIN = max(cls.INICIO_CLAREAR_MIN + 1, fim_clarear + (1440 if fim_clarear < cls.INICIO_ESCURECER_MIN else 0))
 
+    @classmethod
+    def biome_por_bloco(cls, bloco: object) -> str:
+        try:
+            return cls._BIOMA_POR_BLOCO.get(int(bloco), "normal")
+        except Exception:
+            return "normal"
+
+    @classmethod
+    def biome_mode_value(cls, biome: str) -> float:
+        return float(cls._BIOME_MODE_VALUE.get(str(biome or "normal"), 0.0))
+
     def __init__(self) -> None:
         self._tempo = 0.0
-        self._overlay = None
-        self._camada_cor = None
-        self._camada_nevoa = None
-        self._vinheta = None
-        self._tamanho = (0, 0)
-        self._gotas: List[Tuple[float, float, float, float, float, float]] = []
+        self._rain_power = 0.0
+        self._lightning_flash = 0.0
+        self._rain_particles: list[Dict[str, float]] = []
+        self._rain_size = (0, 0)
+        self._rain_layer_cache: pygame.Surface | None = None
+        self._rain_layer_cache_size = (0, 0)
+
+        self._biome_type = "normal"
+        self._biome_powers: Dict[str, float] = {nome: 0.0 for nome in self._BIOMAS_ESPECIAIS}
+        self._fx_particles: list[Dict[str, float]] = []
+        self._fx_particles_biome = "normal"
+        self._biome_size = (0, 0)
+        self._biome_layer_cache: pygame.Surface | None = None
+        self._biome_layer_cache_size = (0, 0)
+
+        self._uniformes_atuais: Dict[str, object] = {
+            "tipo": "mundo",
+            "player_uv": (0.5, 0.5),
+            "tint": (1.0, 1.0, 1.0),
+            "darkness": 0.0,
+            "rain_power": 0.0,
+            "lightning": 0.0,
+            "star_strength": 0.0,
+            "inside": False,
+            "time": 0.0,
+            "biome_mode": 0.0,
+            "biome_power": 0.0,
+        }
 
     @staticmethod
-    def _fator_noite(hora: int, minuto: int) -> float:
+    def _clamp(v: float, a: float, b: float) -> float:
+        return a if v < a else b if v > b else v
+
+    @staticmethod
+    def _lerp(a: float, b: float, t: float) -> float:
+        return a + (b - a) * t
+
+    @classmethod
+    def _fator_noite(cls, hora: int, minuto: int) -> float:
         m = int(hora) * 60 + int(minuto)
-        if m < FiltroCamera.INICIO_ESCURECER_MIN:
+        if m < cls.INICIO_ESCURECER_MIN:
             m += 1440
-        if FiltroCamera.FIM_CLAREAR_MIN <= m < (FiltroCamera.INICIO_ESCURECER_MIN + 1440):
+        if cls.FIM_CLAREAR_MIN <= m < (cls.INICIO_ESCURECER_MIN + 1440):
             return 0.0
-        if FiltroCamera.INICIO_ESCURECER_MIN <= m < FiltroCamera.ESCURO_MAXIMO_MIN:
-            dur = max(1, FiltroCamera.ESCURO_MAXIMO_MIN - FiltroCamera.INICIO_ESCURECER_MIN)
-            return max(0.0, min(1.0, (m - FiltroCamera.INICIO_ESCURECER_MIN) / float(dur)))
-        if FiltroCamera.ESCURO_MAXIMO_MIN <= m < FiltroCamera.INICIO_CLAREAR_MIN:
+        if cls.INICIO_ESCURECER_MIN <= m < cls.ESCURO_MAXIMO_MIN:
+            dur = max(1, cls.ESCURO_MAXIMO_MIN - cls.INICIO_ESCURECER_MIN)
+            return cls._clamp((m - cls.INICIO_ESCURECER_MIN) / float(dur), 0.0, 1.0)
+        if cls.ESCURO_MAXIMO_MIN <= m < cls.INICIO_CLAREAR_MIN:
             return 1.0
-        if FiltroCamera.INICIO_CLAREAR_MIN <= m < FiltroCamera.FIM_CLAREAR_MIN:
-            dur = max(1, FiltroCamera.FIM_CLAREAR_MIN - FiltroCamera.INICIO_CLAREAR_MIN)
-            return max(0.0, min(1.0, 1.0 - ((m - FiltroCamera.INICIO_CLAREAR_MIN) / float(dur))))
+        if cls.INICIO_CLAREAR_MIN <= m < cls.FIM_CLAREAR_MIN:
+            dur = max(1, cls.FIM_CLAREAR_MIN - cls.INICIO_CLAREAR_MIN)
+            return cls._clamp(1.0 - ((m - cls.INICIO_CLAREAR_MIN) / float(dur)), 0.0, 1.0)
         return 0.0
 
-    def _garantir_cache(self, largura: int, altura: int) -> None:
-        if self._tamanho == (largura, altura) and self._overlay is not None:
+    def _player_uv(self, tamanho_tela: Tuple[int, int], camera, entidade_main) -> Tuple[float, float]:
+        largura = max(1, int(tamanho_tela[0]))
+        altura = max(1, int(tamanho_tela[1]))
+        if camera is None or entidade_main is None or not hasattr(entidade_main, "Posicao"):
+            return (0.5, 0.5)
+        if not callable(getattr(camera, "mundo_para_tela_px", None)):
+            return (0.5, 0.5)
+
+        px, py = camera.mundo_para_tela_px(tuple(entidade_main.Posicao))
+        return (
+            self._clamp(float(px) / float(largura), 0.0, 1.0),
+            self._clamp(float(py) / float(altura), 0.0, 1.0),
+        )
+
+    def _rain_profile(self) -> Dict[str, float]:
+        p = float(self._rain_power)
+        if p <= 0.0:
+            return {"target": 0, "speed": 0.0, "length": 0, "thickness": 0}
+        return {
+            "target": int(self._lerp(45, 680, p)),
+            "speed": self._lerp(380.0, 1800.0, p),
+            "length": int(self._lerp(10, 46, p)),
+            "thickness": 2 if p < 0.35 else 3 if p < 0.76 else 4,
+        }
+
+    @staticmethod
+    def _make_rain_particle(largura: int, altura: int) -> Dict[str, float]:
+        return {
+            "x": random.uniform(-180, largura + 180),
+            "y": random.uniform(-altura, altura),
+            "dx": random.uniform(165.0, 320.0),
+            "dy": random.uniform(0.92, 1.10),
+        }
+
+    def _ensure_rain_population(self, target: int, largura: int, altura: int) -> None:
+        while len(self._rain_particles) < target:
+            self._rain_particles.append(self._make_rain_particle(largura, altura))
+        if len(self._rain_particles) > target:
+            del self._rain_particles[target:]
+
+    def _atualizar_estado_chuva(self, chuva_n: float, dt: float, tamanho_tela: Tuple[int, int], dentro_estadio: bool) -> None:
+        largura = max(1, int(tamanho_tela[0]))
+        altura = max(1, int(tamanho_tela[1]))
+        if self._rain_size != (largura, altura):
+            self._rain_size = (largura, altura)
+            if self._rain_particles:
+                self._rain_particles = [self._make_rain_particle(largura, altura) for _ in range(len(self._rain_particles))]
+
+        self._rain_power = 0.0 if dentro_estadio else self._clamp(float(chuva_n), 0.0, 1.0)
+        profile = self._rain_profile()
+        self._ensure_rain_population(int(profile["target"]), largura, altura)
+
+        if int(profile["target"]) <= 0:
+            self._lightning_flash = max(0.0, self._lightning_flash - dt * 2.3)
             return
-        self._tamanho = (largura, altura)
-        self._overlay = pygame.Surface((largura, altura), pygame.SRCALPHA)
-        self._camada_cor = pygame.Surface((largura, altura), pygame.SRCALPHA)
-        self._camada_nevoa = pygame.Surface((largura, altura), pygame.SRCALPHA)
-        self._vinheta = pygame.Surface((largura, altura), pygame.SRCALPHA)
-        cx, cy = largura * 0.5, altura * 0.5
-        raio_max = max(1.0, ((cx * cx) + (cy * cy)) ** 0.5)
-        for y in range(altura):
-            for x in range(largura):
-                dx = x - cx
-                dy = y - cy
-                t = min(1.0, (((dx * dx) + (dy * dy)) ** 0.5) / raio_max)
-                alpha = int(max(0.0, (t - 0.58) / 0.42) * 130)
-                if alpha > 0:
-                    self._vinheta.set_at((x, y), (0, 0, 0, min(180, alpha)))
-        self._gotas = []
-        quantidade = max(24, int(largura / 18))
-        for i in range(quantidade):
-            seed = (i * 1103515245 + 12345) & 0xFFFFFFFF
-            xf = float((seed % max(1, largura + 40)) - 20)
-            yf = float(((seed >> 7) % max(1, altura + 240)) - 120)
-            sf = 0.70 + (((seed >> 13) % 100) / 200.0)
-            lf = 0.65 + (((seed >> 19) % 100) / 240.0)
-            df = 0.75 + (((seed >> 23) % 100) / 260.0)
-            af = 0.65 + (((seed >> 29) % 100) / 220.0)
-            self._gotas.append((xf, yf, sf, lf, df, af))
 
-    def aplicar(self, tela, tempo_mundo: Dict[str, object], dt: float) -> None:
+        for drop in self._rain_particles:
+            drop["x"] += float(drop["dx"]) * dt
+            drop["y"] += float(profile["speed"]) * float(drop["dy"]) * dt
+            if float(drop["y"]) > altura + float(profile["length"]) or float(drop["x"]) > largura + 220:
+                drop.update(self._make_rain_particle(largura, altura))
+                drop["x"] = random.uniform(-220, largura)
+                drop["y"] = random.uniform(-220, -20)
+
+        if self._rain_power >= 0.64:
+            self._lightning_flash = max(0.0, self._lightning_flash - dt * 2.0)
+            chance = self._lerp(0.12, 1.55, (self._rain_power - 0.64) / 0.36)
+            if self._lightning_flash <= 0.0 and random.random() < dt * chance:
+                self._lightning_flash = random.uniform(0.55, 1.25)
+        else:
+            self._lightning_flash = max(0.0, self._lightning_flash - dt * 2.6)
+
+    @staticmethod
+    def _make_fx_particle(mode: str, largura: int, altura: int) -> Dict[str, float]:
+        if mode == "snow":
+            return {
+                "x": random.uniform(-30, largura + 30),
+                "y": random.uniform(-altura, altura),
+                "sx": random.uniform(1.8, 4.8),
+                "sy": random.uniform(36.0, 160.0),
+                "phase": random.uniform(0.0, math.tau),
+                "size": random.uniform(1.4, 4.6),
+            }
+        if mode == "volcanic":
+            return {
+                "x": random.uniform(-40, largura + 40),
+                "y": random.uniform(altura * 0.52, altura + 40),
+                "sx": random.uniform(-22.0, 22.0),
+                "sy": random.uniform(-120.0, -44.0),
+                "phase": random.uniform(0.0, math.tau),
+                "size": random.uniform(1.4, 3.8),
+            }
+        if mode == "desert":
+            return {
+                "x": random.uniform(-60, largura + 60),
+                "y": random.uniform(40, altura - 20),
+                "sx": random.uniform(30.0, 96.0),
+                "sy": random.uniform(-6.0, 12.0),
+                "phase": random.uniform(0.0, math.tau),
+                "size": random.uniform(1.2, 3.0),
+            }
+        if mode == "magic":
+            return {
+                "x": random.uniform(-20, largura + 20),
+                "y": random.uniform(30, altura + 20),
+                "sx": random.uniform(-22.0, 22.0),
+                "sy": random.uniform(-18.0, 18.0),
+                "phase": random.uniform(0.0, math.tau),
+                "size": random.uniform(1.4, 3.5),
+            }
+        if mode == "swamp":
+            return {
+                "x": random.uniform(-40, largura + 40),
+                "y": random.uniform(altura * 0.30, altura + 20),
+                "sx": random.uniform(-10.0, 10.0),
+                "sy": random.uniform(-22.0, 10.0),
+                "phase": random.uniform(0.0, math.tau),
+                "size": random.uniform(6.0, 18.0),
+            }
+        return {
+            "x": random.uniform(-20, largura + 20),
+            "y": random.uniform(-20, altura + 20),
+            "sx": 0.0,
+            "sy": 0.0,
+            "phase": 0.0,
+            "size": 0.0,
+        }
+
+    def _biome_particle_target(self, mode: str, power: float) -> int:
+        p = self._clamp(float(power), 0.0, 1.0)
+        if mode == "normal" or p <= 0.0:
+            return 0
+        if mode == "snow":
+            return int(self._lerp(35, 260, p))
+        if mode == "volcanic":
+            return int(self._lerp(16, 150, p))
+        if mode == "desert":
+            return int(self._lerp(24, 180, p))
+        if mode == "magic":
+            return int(self._lerp(18, 120, p))
+        return int(self._lerp(12, 84, p))
+
+    def _ensure_fx_population(self, target: int, mode: str, largura: int, altura: int) -> None:
+        if self._fx_particles_biome != mode:
+            self._fx_particles_biome = mode
+            self._fx_particles = []
+        while len(self._fx_particles) < target:
+            self._fx_particles.append(self._make_fx_particle(mode, largura, altura))
+        if len(self._fx_particles) > target:
+            del self._fx_particles[target:]
+
+    def _atualizar_estado_bioma(self, biome_atual: str, dt: float, tamanho_tela: Tuple[int, int], dentro_estadio: bool) -> None:
+        largura = max(1, int(tamanho_tela[0]))
+        altura = max(1, int(tamanho_tela[1]))
+        if self._biome_size != (largura, altura):
+            self._biome_size = (largura, altura)
+            self._fx_particles = []
+            self._fx_particles_biome = "normal"
+
+        biome_norm = str(biome_atual or "normal")
+        if dentro_estadio or biome_norm not in self._BIOME_MODE_VALUE:
+            biome_norm = "normal"
+
+        ganho = max(0.0, float(dt)) * self._BIOMA_GAIN_PER_SEC
+        perda = max(0.0, float(dt)) * self._BIOMA_DECAY_PER_SEC
+        for nome in self._BIOMAS_ESPECIAIS:
+            atual = float(self._biome_powers.get(nome, 0.0) or 0.0)
+            if nome == biome_norm:
+                atual += ganho
+            else:
+                atual -= perda
+            self._biome_powers[nome] = self._clamp(atual, 0.0, 1.0)
+
+        if dentro_estadio:
+            self._biome_type = "normal"
+        elif biome_norm in self._BIOMAS_ESPECIAIS:
+            self._biome_type = biome_norm
+        else:
+            self._biome_type = max(self._biome_powers, key=self._biome_powers.get, default="normal")
+            if float(self._biome_powers.get(self._biome_type, 0.0) or 0.0) <= 0.0:
+                self._biome_type = "normal"
+
+        if self._biome_type == "normal":
+            self._fx_particles = []
+            self._fx_particles_biome = "normal"
+            return
+
+        target = self._biome_particle_target(self._biome_type, float(self._biome_powers.get(self._biome_type, 0.0) or 0.0))
+        self._ensure_fx_population(target, self._biome_type, largura, altura)
+        ticks = pygame.time.get_ticks() * 0.001
+
+        for part in self._fx_particles:
+            if self._biome_type == "snow":
+                part["phase"] += dt * 2.2
+                part["x"] += (math.sin(ticks * 1.7 + part["phase"]) * 18.0 + part["sx"]) * dt
+                part["y"] += part["sy"] * dt
+                if part["y"] > altura + 18 or part["x"] < -60 or part["x"] > largura + 60:
+                    part.update(self._make_fx_particle("snow", largura, altura))
+                    part["x"] = random.uniform(-20, largura + 20)
+                    part["y"] = random.uniform(-140, -12)
+            elif self._biome_type == "volcanic":
+                part["phase"] += dt * 4.0
+                part["x"] += (part["sx"] + math.sin(ticks * 3.2 + part["phase"]) * 12.0) * dt
+                part["y"] += part["sy"] * dt
+                if part["y"] < -20 or part["x"] < -60 or part["x"] > largura + 60:
+                    part.update(self._make_fx_particle("volcanic", largura, altura))
+            elif self._biome_type == "desert":
+                part["phase"] += dt * 2.4
+                part["x"] += (part["sx"] + math.sin(ticks * 2.0 + part["phase"]) * 20.0) * dt
+                part["y"] += (part["sy"] + math.sin(ticks * 1.7 + part["phase"]) * 5.0) * dt
+                if part["x"] > largura + 80 or part["y"] < -30 or part["y"] > altura + 30:
+                    part.update(self._make_fx_particle("desert", largura, altura))
+                    part["x"] = random.uniform(-100, -10)
+            elif self._biome_type == "magic":
+                part["phase"] += dt * 2.8
+                part["x"] += math.sin(ticks * 1.4 + part["phase"]) * 16.0 * dt + part["sx"] * dt
+                part["y"] += math.cos(ticks * 1.9 + part["phase"]) * 10.0 * dt + part["sy"] * dt
+                if part["x"] < -30 or part["x"] > largura + 30 or part["y"] < -30 or part["y"] > altura + 30:
+                    part.update(self._make_fx_particle("magic", largura, altura))
+            elif self._biome_type == "swamp":
+                part["phase"] += dt * 1.2
+                part["x"] += math.sin(ticks * 0.9 + part["phase"]) * 7.0 * dt + part["sx"] * dt
+                part["y"] += math.cos(ticks * 1.1 + part["phase"]) * 4.0 * dt + part["sy"] * dt
+                if part["x"] < -80 or part["x"] > largura + 80 or part["y"] < altura * 0.20 or part["y"] > altura + 50:
+                    part.update(self._make_fx_particle("swamp", largura, altura))
+
+    def coletar_uniformes(
+        self,
+        tamanho_tela: Tuple[int, int],
+        camera,
+        entidade_main,
+        tempo_mundo: Dict[str, object],
+        dt: float,
+        dentro_estadio: bool = False,
+        biome_atual: str = "normal",
+    ) -> Dict[str, object]:
         self._tempo += max(0.0, float(dt))
-        largura, altura = tela.get_size()
-        self._garantir_cache(largura, altura)
-
         hora = int(tempo_mundo.get("hora", 8) or 8)
         minuto = int(tempo_mundo.get("minuto", 0) or 0)
         chuva = int(max(0, min(100, int(tempo_mundo.get("chuva_intensidade", 0) or 0))))
+
         noite = self._fator_noite(hora, minuto)
-        chuva_n = chuva / 100.0
+        chuva_n = 0.0 if dentro_estadio else (chuva / 100.0)
+        self._atualizar_estado_chuva(chuva_n, max(0.0, float(dt)), tamanho_tela, dentro_estadio)
+        self._atualizar_estado_bioma(str(biome_atual or "normal"), max(0.0, float(dt)), tamanho_tela, dentro_estadio)
 
-        self._overlay.fill((0, 0, 0, 0))
+        brilho_azulado = self._clamp(noite * 0.82 + self._rain_power * 0.12, 0.0, 1.0)
+        tint_r = self._lerp(1.0, 106.0 / 255.0, brilho_azulado)
+        tint_g = self._lerp(1.0, 124.0 / 255.0, brilho_azulado)
+        tint_b = self._lerp(1.0, 168.0 / 255.0, brilho_azulado)
 
-        alpha_noite = int(170 * noite)
-        if alpha_noite > 0:
-            self._camada_cor.fill((5, 10, 24, alpha_noite))
-            self._overlay.blit(self._camada_cor, (0, 0))
+        dark = self._clamp((noite * 0.80) + (self._rain_power * 0.08), 0.0, 0.88)
+        if dentro_estadio:
+            dark *= 0.50
+        star_strength = 0.0 if dentro_estadio else self._clamp((noite - 0.36) / 0.64, 0.0, 1.0)
+        biome_power = float(self._biome_powers.get(self._biome_type, 0.0) or 0.0) if self._biome_type != "normal" else 0.0
 
-        alpha_tonalidade = int(90 * min(1.0, noite + chuva_n * 0.45))
-        if alpha_tonalidade > 0:
-            self._camada_cor.fill((18, 34, 56, alpha_tonalidade))
-            self._overlay.blit(self._camada_cor, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
-            if self._vinheta is not None:
-                self._overlay.blit(self._vinheta, (0, 0))
+        self._uniformes_atuais = {
+            "tipo": "mundo",
+            "player_uv": self._player_uv(tamanho_tela, camera, entidade_main),
+            "tint": (tint_r, tint_g, tint_b),
+            "darkness": dark,
+            "rain_power": float(self._rain_power),
+            "lightning": float(self._lightning_flash),
+            "star_strength": star_strength,
+            "inside": bool(dentro_estadio),
+            "time": self._tempo,
+            "biome_mode": self.biome_mode_value(self._biome_type),
+            "biome_power": biome_power,
+        }
+        return dict(self._uniformes_atuais)
 
-        if chuva > 0:
-            self._camada_nevoa.fill((90, 98, 118, int(60 * chuva_n)))
-            self._overlay.blit(self._camada_nevoa, (0, 0))
-            self._desenhar_chuva(self._overlay, chuva_n)
+    def uniformes_atuais(self) -> Dict[str, object]:
+        return dict(self._uniformes_atuais)
 
-        tela.blit(self._overlay, (0, 0))
-
-    def _desenhar_chuva(self, overlay, chuva_n: float) -> None:
-        largura, altura = self._tamanho
-        if largura <= 0 or altura <= 0:
+    def desenhar_bioma_base(self, surface: pygame.Surface) -> None:
+        if not isinstance(surface, pygame.Surface):
             return
-        quantidade = max(10, int(len(self._gotas) * chuva_n))
-        if quantidade <= 0:
+        if self._biome_type == "normal":
             return
-        comprimento_base = 8 + 16 * chuva_n
-        velocidade = 220.0 + 320.0 * chuva_n
+        biome_power = float(self._biome_powers.get(self._biome_type, 0.0) or 0.0)
+        if biome_power <= 0.0:
+            return
 
-        for i in range(quantidade):
-            x0, y0, sf, lf, df, af = self._gotas[i]
-            comp = int(comprimento_base * lf)
-            desloc = (self._tempo * velocidade * sf) % (altura + comp + 140)
-            y = int((y0 + desloc) - 120)
-            x = int(x0)
-            x2 = int(x - (2.5 + 5.0 * chuva_n) * df)
-            y2 = int(y + comp)
-            alpha = int((88 + 110 * chuva_n) * af)
-            pygame.draw.line(overlay, (180, 198, 220, max(40, min(255, alpha))), (x, y), (x2, y2), 1)
+        largura, altura = surface.get_size()
+        if self._biome_layer_cache is None or self._biome_layer_cache_size != (largura, altura):
+            self._biome_layer_cache = pygame.Surface((largura, altura), pygame.SRCALPHA)
+            self._biome_layer_cache_size = (largura, altura)
+
+        camada = self._biome_layer_cache
+        camada.fill((0, 0, 0, 0))
+        if self._biome_type == "snow":
+            alpha = int(self._lerp(80, 210, biome_power))
+            for part in self._fx_particles:
+                raio = max(1, int(part["size"] + biome_power * 1.2))
+                pygame.draw.circle(camada, (245, 248, 255, alpha), (int(part["x"]), int(part["y"])), raio)
+        elif self._biome_type == "volcanic":
+            alpha = int(self._lerp(90, 195, biome_power))
+            for part in self._fx_particles:
+                raio = max(1, int(part["size"]))
+                pygame.draw.circle(camada, (255, 165, 70, alpha), (int(part["x"]), int(part["y"])), raio)
+                if raio >= 2:
+                    pygame.draw.circle(camada, (255, 232, 150, max(40, alpha - 50)), (int(part["x"]), int(part["y"])), max(1, raio - 1))
+        elif self._biome_type == "desert":
+            alpha = int(self._lerp(28, 108, biome_power))
+            for part in self._fx_particles:
+                pygame.draw.circle(camada, (220, 200, 150, alpha), (int(part["x"]), int(part["y"])), max(1, int(part["size"])))
+        elif self._biome_type == "magic":
+            alpha = int(self._lerp(55, 165, biome_power))
+            for part in self._fx_particles:
+                raio = max(1, int(part["size"]))
+                pygame.draw.circle(camada, (225, 170, 255, alpha), (int(part["x"]), int(part["y"])), raio)
+                pygame.draw.circle(camada, (180, 220, 255, max(30, alpha - 45)), (int(part["x"]), int(part["y"])), max(1, raio - 1))
+        elif self._biome_type == "swamp":
+            alpha = int(self._lerp(20, 80, biome_power))
+            for part in self._fx_particles:
+                rect = pygame.Rect(0, 0, int(part["size"] * 2.2), int(part["size"]))
+                rect.center = (int(part["x"]), int(part["y"]))
+                pygame.draw.ellipse(camada, (160, 170, 156, alpha), rect)
+        surface.blit(camada, (0, 0))
+
+    def desenhar_chuva_base(self, surface: pygame.Surface) -> None:
+        if not isinstance(surface, pygame.Surface):
+            return
+        if self._rain_power <= 0.0:
+            return
+
+        largura, altura = surface.get_size()
+        if self._rain_layer_cache is None or self._rain_layer_cache_size != (largura, altura):
+            self._rain_layer_cache = pygame.Surface((largura, altura), pygame.SRCALPHA)
+            self._rain_layer_cache_size = (largura, altura)
+
+        profile = self._rain_profile()
+        alpha = int(self._lerp(66, 190, self._rain_power))
+        camada = self._rain_layer_cache
+        camada.fill((0, 0, 0, 0))
+        cor = (205, 223, 255, alpha)
+        for drop in self._rain_particles:
+            x1 = int(drop["x"])
+            y1 = int(drop["y"])
+            x2 = int(drop["x"] - float(profile["length"]) * 0.40)
+            y2 = int(drop["y"] - float(profile["length"]))
+            pygame.draw.line(camada, cor, (x1, y1), (x2, y2), int(profile["thickness"]))
+        surface.blit(camada, (0, 0))
+
+    def aplicar(self, _tela, _tempo_mundo: Dict[str, object], _dt: float) -> None:
+        return None

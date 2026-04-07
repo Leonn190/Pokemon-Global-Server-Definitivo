@@ -6,12 +6,13 @@ import json
 import time
 from typing import Dict
 
-from SimuladorServerJogo.Rotas.Ativador import registrar_diff, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
+from SimuladorServerJogo.Rotas.Ativador import registrar_diff, diff_seq_atual, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, criar_objeto_mundo_server
 from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
+from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 
@@ -301,9 +302,16 @@ def processar_atualizador_json(requisicao_json: str) -> str:
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
     obj_id_dim = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
     obj_dim = BANCO_DADOS.obter_objeto(obj_id_dim) if obj_id_dim > 0 else None
+    if isinstance(obj_dim, AtorServer):
+        CEREBRO.atualizar_player_ativo(client_id, obj_dim.posicao)
+    else:
+        CEREBRO.atualizar_player_ativo(client_id, posicao_camera)
+    TIQUE_SERVIDOR.ativar_por_usuario(client_id)
+    TIQUE_SERVIDOR.bombear_ate_agora()
     dim_atual = str(getattr(obj_dim, "estado_extra", {}).get("dimensao", "Mundo") if obj_dim is not None else "Mundo")
     chunks_carregados = _chunks_carregados_cliente(posicao_camera, dimensao=dim_atual)
     raio_visao = _raio_visao_por_regras()
+    seq_inicio_requisicao = diff_seq_atual()
 
     diffs = dados.get("diffs", []) if isinstance(dados.get("diffs"), list) else []
     updates = dados.get("updates", []) if isinstance(dados.get("updates"), list) else []
@@ -442,7 +450,23 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
         ignorados += 1
 
+    obj_pos_final = BANCO_DADOS.obter_objeto(obj_id_dim) if obj_id_dim > 0 else None
+    if isinstance(obj_pos_final, AtorServer):
+        CEREBRO.atualizar_player_ativo(client_id, obj_pos_final.posicao)
+
     pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=60), posicao_camera, raio_visao, chunks_carregados, client_id=client_id, dimensao=dim_atual)
+    diffs_imediatos = PACOTES_TICK.snapshot_pendentes_desde_seq(seq_inicio_requisicao)
+    if diffs_imediatos:
+        pacotes.extend(
+            _filtrar_pacotes_por_camera(
+                [{"tick": int(PACOTES_TICK.tick_atual()), "diffs": diffs_imediatos, "sintetico": True}],
+                posicao_camera,
+                raio_visao,
+                chunks_carregados,
+                client_id=client_id,
+                dimensao=dim_atual,
+            )
+        )
     state = _obter_state_client(client_id)
     vistos = state["objetos_vistos"]
     diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dim_atual)

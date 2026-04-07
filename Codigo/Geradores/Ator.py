@@ -339,19 +339,14 @@ class Ator:
             if sprite_item is not None:
                 tela.blit(sprite_item, sprite_item.get_rect(center=dados_mao["mao_tapa"]))
 
-        if self._tempo_tapa > 0.0:
-            mx, my = dados_mao["mao_tapa"]
-            self.ColisorMao.mover_para(mx, my)
-            self.ColisorMao.ativo = True
-        else:
-            self.ColisorMao.mover_para(self.Posicao[0], self.Posicao[1])
-            self.ColisorMao.ativo = False
 
-    def renderizar_stamina(self, tela, camera, dt):
+    def atualizar_visual(self, dt: float) -> None:
+        dt = max(0.0, float(dt))
+        self.atualizar_colisor_mao_mundo()
         perfil = getattr(self, "Perfil", None)
         if perfil is None:
+            self._stamina_alpha = 0.0
             return
-        dt = max(0.0, float(dt))
         self.BarraStamina.maximo = max(1.0, float(perfil.StaminaMax))
         self.BarraStamina.set_valor(float(perfil.Stamina))
         self.BarraStamina.atualizar(dt)
@@ -362,6 +357,9 @@ class Ator:
         alvo_alpha = 255.0 if (consumindo or not cheio or tentando_correr) else 0.0
         velocidade = 10.0 if alvo_alpha > self._stamina_alpha else 6.0
         self._stamina_alpha += (alvo_alpha - self._stamina_alpha) * min(1.0, dt * velocidade)
+
+    def renderizar_stamina(self, tela, camera, dt):
+        _ = dt
         if self._stamina_alpha <= 1.0:
             return
         px, py = camera.mundo_para_tela_px(self.Posicao)

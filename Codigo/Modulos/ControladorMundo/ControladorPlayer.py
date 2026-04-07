@@ -486,6 +486,8 @@ class ControladorPlayer:
         if self._correcao_servidor_bloqueando():
             if self._player_local.Controle is not None:
                 self._player_local.Controle.atualizar_bloqueado(dt)
+            if hasattr(self._player_local, "atualizar_visual"):
+                self._player_local.atualizar_visual(dt)
             self._objetos.atualizar_projeteis_visuais(dt)
             self._fluxo_mira.atualizar(dt)
             return
@@ -519,6 +521,8 @@ class ControladorPlayer:
         elif self._player_local.Controle is not None:
             self._player_local.Controle.atualizar_bloqueado(dt)
 
+        if hasattr(self._player_local, "atualizar_visual"):
+            self._player_local.atualizar_visual(dt)
         self._objetos.atualizar_projeteis_visuais(dt)
         self._fluxo_mira.atualizar(dt)
 

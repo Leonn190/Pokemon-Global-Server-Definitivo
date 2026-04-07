@@ -9,6 +9,7 @@ import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Painel import Painel
+from Codigo.Modulos.ServicoCraft import ServicoCraft
 from Codigo.Prefabs.Texto import Texto
 
 
@@ -240,101 +241,29 @@ class PainelCraft:
         return None, None
 
     def preencher_receita(self, receita, container, estado='verde'):
-        if receita is None or estado == 'vermelho' or container is None:
-            return False
-        colocou_algo = False
-        reservas = {}
-        for idx, item in enumerate(getattr(container, 'Itens', [])):
-            chave = self.chave_item(item)
-            if item is None or not chave:
-                continue
-            reservas.setdefault(chave, []).append({
-                'indice': idx,
-                'quantidade': self.quantidade(item),
-            })
-
-        def _consumir_reserva(chave):
-            pilha = reservas.get(chave) or []
-            while pilha:
-                topo = pilha[0]
-                if topo['quantidade'] <= 0:
-                    pilha.pop(0)
-                    continue
-                retirado = container.recolher_do_slot(topo['indice'], quantidade=1)
-                if retirado is None:
-                    pilha.pop(0)
-                    continue
-                topo['quantidade'] -= 1
-                if topo['quantidade'] <= 0:
-                    pilha.pop(0)
-                return retirado, topo['indice']
-            return None, None
-
-        for i, esperado in enumerate(receita.get('grade', [])):
-            if esperado is None:
-                continue
-            atual = self.CraftSlots[i]
-            chave_esperada = self.chave_item(esperado)
-            qtd_esperada = max(1, self.quantidade(esperado))
-            if atual is not None and self.chave_item(atual) != chave_esperada:
-                continue
-            qtd_atual = self.quantidade(atual)
-            faltante = max(0, qtd_esperada - qtd_atual)
-            if faltante <= 0:
-                continue
-            origem_slot = None
-            for _ in range(faltante):
-                retirado, origem = _consumir_reserva(chave_esperada)
-                if retirado is None:
-                    break
-                if atual is None:
-                    self.CraftSlots[i] = retirado
-                    self._origens[i] = origem
-                    atual = self.CraftSlots[i]
-                    origem_slot = origem
-                else:
-                    atual['quantidade'] = self.quantidade(atual) + self.quantidade(retirado)
-                if origem_slot is None:
-                    origem_slot = origem
-                colocou_algo = True
-            if atual is not None and self._origens[i] is None and origem_slot is not None:
-                self._origens[i] = origem_slot
+        colocou_algo = ServicoCraft.preencher_grade_receita(
+            self.CraftSlots,
+            self._origens,
+            receita,
+            estado,
+            container,
+            chave_item=self.chave_item,
+            quantidade_item=self.quantidade,
+        )
         self._marcar_sujo()
         return colocou_algo
 
     def resultado(self, receitas):
-        for receita in receitas:
-            ok = True
-            for i, esperado in enumerate(receita['grade']):
-                atual = self.CraftSlots[i]
-                if esperado is None and atual is None:
-                    continue
-                if esperado is None or atual is None:
-                    ok = False
-                    break
-                if self.chave_item(esperado) != self.chave_item(atual):
-                    ok = False
-                    break
-                if self.quantidade(atual) < self.quantidade(esperado):
-                    ok = False
-                    break
-            if ok:
-                return copy.deepcopy(receita['saida']), receita
-        return None, None
+        return ServicoCraft.resolver_resultado_grade(
+            self.CraftSlots,
+            receitas,
+            chave_item=self.chave_item,
+            quantidade_item=self.quantidade,
+        )
+
 
     def consumir_para_craft(self, receita):
-        if receita is None:
-            return
-        for i, esperado in enumerate(receita['grade']):
-            if esperado is None or self.CraftSlots[i] is None:
-                continue
-            qtd = self.quantidade(self.CraftSlots[i])
-            consumo = max(1, self.quantidade(esperado))
-            if qtd <= consumo:
-                self.CraftSlots[i] = None
-                self._origens[i] = None
-            else:
-                self.CraftSlots[i]['quantidade'] = qtd - consumo
+        ServicoCraft.consumir_receita(self.CraftSlots, self._origens, receita, quantidade_item=self.quantidade)
         self._marcar_sujo()
 
     def devolver_para_inventario(self, container):

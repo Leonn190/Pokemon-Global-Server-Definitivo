@@ -10,6 +10,7 @@ from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Modulos.Discord import DiscordPresence
 from Codigo.Telas.Subtela import GerenciadorSubtelas
+from Codigo.Modulos.PipelineGrafica import PipelineGrafica
 
 class ControladorCenas:
     def __init__(self, TELA, RELOGIO, CONFIG):
@@ -37,6 +38,7 @@ class ControladorCenas:
 
         self.Discord = DiscordPresence()
         self.GerenciadorSubtelas = GerenciadorSubtelas()
+        self.PipelineGrafica = PipelineGrafica(self.TELA)
 
         self.TextoFPS = Texto(
             "",
@@ -113,26 +115,36 @@ class ControladorCenas:
                     self.SolicitarSair()
 
             eventos_cena = self.GerenciadorSubtelas.filtrar_eventos_fundo(EVENTOS)
-            self.Cena.Tela(self, eventos_cena, dt)
+            if callable(getattr(self.Cena, "atualizar_cena", None)):
+                self.Cena.atualizar_cena(self, eventos_cena, dt)
+            else:
+                self.Cena.Tela(self, eventos_cena, dt)
             self.GerenciadorSubtelas.atualizar(self, EVENTOS, dt)
             self._atualizar_discord_presenca()
 
+            efeito_transicao = None
             if self.Saindo:
                 Escurecer(self, dt)
+                efeito_transicao = Escurecer
                 if self.Escuro >= 100:
                     self.Rodando = False
             else:
                 if self.CenaAlvo is None and self.Escuro != 0:
                     self.Cena.Abertura(self, dt)
+                    efeito_transicao = self.Cena.Abertura
 
                 if self.CenaAlvo is not None and self.Escuro != 100:
                     self.Cena.Fechamento(self, dt)
+                    efeito_transicao = self.Cena.Fechamento
 
                 if self.CenaAlvo is not None and self.Escuro == 100:
                     self.DefinirCena()
 
-            self.DesenhosAdicionais()
+            self.PipelineGrafica.compor_cena(self, self.Cena, eventos_cena, dt)
             self.GerenciadorSubtelas.render(self.TELA, EVENTOS, dt, JOGO=self)
+            self.DesenhosAdicionais()
+            if callable(efeito_transicao):
+                efeito_transicao(self, 0.0)
             SISTEMA_MUSICAS.atualizar_musica(self)
             pygame.display.update()
 

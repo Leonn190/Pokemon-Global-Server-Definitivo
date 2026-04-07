@@ -62,6 +62,7 @@ class EstruturaNatural:
         self.Dureza = max(1, int(dureza or 1))
         self._impacto_t = 0.0
         self._escala_impacto = 1.0
+        self._escala_render_atual = 1.0
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.Posicao = (float(x), float(y))
@@ -70,7 +71,7 @@ class EstruturaNatural:
     def vazio(self) -> bool:
         return self.Quantidade <= 0
 
-    def escala_render(self, dt: float = 0.0) -> float:
+    def atualizar_visual(self, dt: float) -> None:
         dt = max(0.0, float(dt))
         if self._impacto_t > 0.0:
             self._impacto_t = max(0.0, self._impacto_t - dt)
@@ -78,7 +79,12 @@ class EstruturaNatural:
             self._escala_impacto += (alvo - self._escala_impacto) * min(1.0, dt * 18.0)
         else:
             self._escala_impacto += (1.0 - self._escala_impacto) * min(1.0, dt * 12.0)
-        return self._escala_impacto
+        self._escala_render_atual = float(self._escala_impacto)
+
+    def escala_render(self, dt: float = 0.0) -> float:
+        if dt > 0.0:
+            self.atualizar_visual(dt)
+        return float(self._escala_render_atual)
 
     def update(self, payload: Dict[str, object]) -> None:
         dados = payload if isinstance(payload, dict) else {}

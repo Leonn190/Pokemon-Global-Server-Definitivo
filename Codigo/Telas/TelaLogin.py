@@ -180,24 +180,25 @@ def ReiniciarTelaLogin():
     _LOGIN_THREAD = None
     _LOGIN_RESULTADO = None
 
-def TelaLogin(Cena, JOGO, EVENTOS, dt):
-    largura, altura = JOGO.TELA.get_size()
+def TelaLogin(Cena, JOGO, EVENTOS, dt, tela_destino=None):
+    tela = tela_destino if tela_destino is not None else JOGO.TELA
+    largura, altura = tela.get_size()
 
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura, altura):
         _montar_layout(JOGO)
 
     _processar_resposta_login(JOGO)
 
-    JOGO.TELA.fill((9, 14, 30))
+    tela.fill((9, 14, 30))
 
-    JOGO.TELA.blit(_LOGO, _LOGO_POS)
-    _MSG.draw(JOGO.TELA)
+    tela.blit(_LOGO, _LOGO_POS)
+    _MSG.draw(tela)
 
-    _CAMPO_USUARIO.render(JOGO.TELA, EVENTOS, dt)
-    _CAMPO_SENHA.render(JOGO.TELA, EVENTOS, dt)
+    _CAMPO_USUARIO.render(tela, EVENTOS, dt)
+    _CAMPO_SENHA.render(tela, EVENTOS, dt)
 
     carregando = _LOGIN_THREAD is not None and _LOGIN_THREAD.is_alive()
     _BOTAO_ACESSAR.set_habilitado(not carregando)
 
-    _BOTAO_ACESSAR.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
-    _BOTAO_SAIR.render(JOGO.TELA, EVENTOS, dt, JOGO=JOGO)
+    _BOTAO_ACESSAR.render(tela, EVENTOS, dt, JOGO=JOGO)
+    _BOTAO_SAIR.render(tela, EVENTOS, dt, JOGO=JOGO)

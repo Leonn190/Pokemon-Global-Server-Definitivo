@@ -34,7 +34,7 @@ _FUNDO_DIRECAO = 1
 _FUNDO_VELOCIDADE = 32.0
 
 
-def TelaMenu(Cena, JOGO, EVENTOS, dt):
+def TelaMenu(Cena, JOGO, EVENTOS, dt, tela_destino=None):
     global _MENU_CARREGADO
     global _FUNDO, _FUNDO_LARGURA, _FUNDO_ALTURA, _LOGO_ORIGINAL
     global _FRAMES_HOVER, _TEXTURA_BASE, _ESTILO_BOTAO, _BOTOES
@@ -42,7 +42,7 @@ def TelaMenu(Cena, JOGO, EVENTOS, dt):
     global _LOGO_ESPECIAL, _LOGO_ESPECIAL_SIZE, _LOGO_ESPECIAL_CENTER, _TEMPO_LOGO
     global _FUNDO_OFFSET_X, _FUNDO_DIRECAO
 
-    tela = JOGO.TELA
+    tela = tela_destino if tela_destino is not None else JOGO.TELA
     largura_tela, altura_tela = tela.get_size()
 
     _TEMPO_LOGO += dt

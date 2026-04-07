@@ -108,7 +108,7 @@ class CenaMundo:
             if opcoes_modal is not None:
                 player.Controle.InventarioAberto = False
 
-        if opcoes_modal is None:
+        if opcoes_modal is None and self.TelaAtual != "Config":
             for ev in EVENTOS:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     opcoes = SubtelaOpcoes()
@@ -284,6 +284,7 @@ class CenaMundo:
             finalizar_interacao_npc_mundo(link, client_id, npc_id)
 
     def Finalizar(self, JOGO):
+        JOGO.INFO.pop("MundoTelaSobreposta", None)
         if int(self._npc_interacao_id or 0) > 0:
             self._finalizar_dialogo_npc(JOGO)
         if self.Terminal is not None:

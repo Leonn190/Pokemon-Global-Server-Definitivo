@@ -294,7 +294,8 @@ def _montar_layout(jogo):
     global _BOTAO_VOLTAR, _BOTAO_LIGAR, _BOTAO_MUNDO, _MENSAGEM
     global _GERACAO_NOTIFICADA, _REMOCAO_NOTIFICADA, _AGUARDANDO_CRIACAO
 
-    largura, altura = jogo.TELA.get_size()
+    tela = tela_destino if tela_destino is not None else jogo.TELA
+    largura, altura = tela.get_size()
 
     if _MENSAGEM is None:
         _MENSAGEM = Mensagem(
@@ -342,10 +343,11 @@ def _montar_layout(jogo):
     _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "Carregando estado do servidor...")
 
 
-def TelaOperador(cena, jogo, eventos, dt):
+def TelaOperador(cena, jogo, eventos, dt, tela_destino=None):
     global _STATUS_TIMER
 
-    largura, altura = jogo.TELA.get_size()
+    tela = tela_destino if tela_destino is not None else jogo.TELA
+    largura, altura = tela.get_size()
 
     if (not _TELA_CARREGADA) or _TAMANHO_CACHE != (largura, altura):
         _montar_layout(jogo)
@@ -359,7 +361,7 @@ def TelaOperador(cena, jogo, eventos, dt):
         _STATUS_TIMER = 0.0
         _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "")
 
-    jogo.TELA.fill((7, 10, 20))
+    tela.fill((7, 10, 20))
 
     eventos_ativos = [] if modal else eventos
     mouse_pos = (-99999, -99999) if modal else None
@@ -369,9 +371,9 @@ def TelaOperador(cena, jogo, eventos, dt):
     _BOTAO_LIGAR.set_habilitado((not bloqueado) and bool(_BOTAO_MUNDO.estado))
     _BOTAO_MUNDO.set_habilitado(not bloqueado)
 
-    _BOTAO_LIGAR.render(jogo.TELA, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
-    _BOTAO_MUNDO.render(jogo.TELA, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
-    _BOTAO_VOLTAR.render(jogo.TELA, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
+    _BOTAO_LIGAR.render(tela, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
+    _BOTAO_MUNDO.render(tela, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
+    _BOTAO_VOLTAR.render(tela, eventos_ativos, dt, JOGO=jogo, mouse_pos=mouse_pos)
 
 
-    _MENSAGEM.render(jogo.TELA, dt)
+    _MENSAGEM.render(tela, dt)

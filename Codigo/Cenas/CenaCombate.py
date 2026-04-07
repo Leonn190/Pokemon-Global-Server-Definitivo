@@ -13,7 +13,7 @@ class CenaCombate:
         self.Abertura = AbrirIris
         self.Fechamento = FecharIris
         self.ID = "Combate"
-        self.TelaAtual = str(getattr(self, "TelaAtual", "Combate"))
+        self.TelaAtual = "Combate"
 
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
         regras_mundo = JOGO.INFO.get("RegrasMundo") if isinstance(JOGO.INFO.get("RegrasMundo"), dict) else {}
@@ -46,7 +46,7 @@ class CenaCombate:
             return
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
         opcoes_modal = JOGO.GerenciadorSubtelas.obter_por_tipo(SubtelaOpcoes)
-        if opcoes_modal is None:
+        if opcoes_modal is None and self.TelaAtual != "Config":
             for ev in EVENTOS:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     opcoes_modal = SubtelaOpcoes()

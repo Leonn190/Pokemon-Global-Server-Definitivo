@@ -11,7 +11,6 @@ class CenaMenu:
         self.Fechamento = Escurecer
         self.ID = "Menu"
         self.TelaAtual = str(JOGO.INFO.pop("MenuTelaInicial", "MenuPrincipal"))
-        self._frame_surface = None
 
         JOGO.INFO.pop("PreservarMusicaAtual", False)
 
@@ -20,45 +19,32 @@ class CenaMenu:
             ResetTelaConfig()
         self.TelaAtual = tela
 
-    def _garantir_frame_surface(self, jogo):
-        tamanho = jogo.TELA.get_size()
-        if self._frame_surface is None or self._frame_surface.get_size() != tamanho:
-            self._frame_surface = jogo.TELA.copy()
-
-    def _desenhar_menu(self, JOGO, EVENTOS, dt):
+    def _desenhar_menu(self, JOGO, EVENTOS, dt, tela_destino=None):
         if self.TelaAtual == "Servers":
-            TelaServers(self, JOGO, EVENTOS, dt)
+            TelaServers(self, JOGO, EVENTOS, dt, tela_destino=tela_destino)
             return
 
         if self.TelaAtual == "Config":
-            TelaConfig(self, JOGO, EVENTOS, dt)
+            TelaConfig(self, JOGO, EVENTOS, dt, tela_destino=tela_destino)
             return
 
         if self.TelaAtual == "Operador":
-            TelaOperador(self, JOGO, EVENTOS, dt)
+            TelaOperador(self, JOGO, EVENTOS, dt, tela_destino=tela_destino)
             return
 
-        TelaMenu(self, JOGO, EVENTOS, dt)
+        TelaMenu(self, JOGO, EVENTOS, dt, tela_destino=tela_destino)
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
-        self._garantir_frame_surface(JOGO)
-        tela_real = JOGO.TELA
-        JOGO.TELA = self._frame_surface
-        try:
-            self._desenhar_menu(JOGO, EVENTOS, dt)
-        finally:
-            JOGO.TELA = tela_real
+        _ = (JOGO, EVENTOS, dt)
 
     def tela_atual_eh_complexa(self) -> bool:
         return False
 
     def render_tela(self, surface, JOGO, EVENTOS, dt):
-        _ = (EVENTOS, dt)
-        self._garantir_frame_surface(JOGO)
-        surface.blit(self._frame_surface, (0, 0))
+        self._desenhar_menu(JOGO, EVENTOS, dt, tela_destino=surface)
 
     def Tela(self, JOGO, EVENTOS, dt):
-        self._desenhar_menu(JOGO, EVENTOS, dt)
+        self._desenhar_menu(JOGO, EVENTOS, dt, tela_destino=JOGO.TELA)
 
     def Finalizar(self, JOGO):
         pass

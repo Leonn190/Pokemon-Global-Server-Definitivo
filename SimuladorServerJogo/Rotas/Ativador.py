@@ -63,10 +63,14 @@ def _obter_state_client(client_id: str) -> Dict[str, object]:
     return _CLIENT_STATE[client_id]
 
 
+def _eh_dimensao_estadio(dimensao: str) -> bool:
+    return str(dimensao or "").strip().startswith("Estadio")
+
+
 def _chunks_carregados_cliente(posicao_camera: Vector2, dimensao: str = "Mundo") -> Set[Chunk]:
     raio = max(0, int(CEREBRO._i("raio_chunks_carregados", 4)))
     dimensao_norm = str(dimensao or "Mundo")
-    if dimensao_norm != "Mundo":
+    if _eh_dimensao_estadio(dimensao_norm):
         centro = (int(posicao_camera[0] // BANCO_DADOS.chunk_tamanho_unidade()), int(posicao_camera[1] // BANCO_DADOS.chunk_tamanho_unidade()))
         return set(CEREBRO_ESTADIOS.chunks_proximos(dimensao_norm, centro, raio))
     centro = BANCO_DADOS.chunk_da_posicao(posicao_camera)
@@ -81,6 +85,12 @@ def _raio_visao_por_regras() -> float:
     chunk_u = float(BANCO_DADOS.chunk_tamanho_unidade())
     raio_carregado = max(0, int(CEREBRO._i("raio_chunks_carregados", 4)))
     return float((raio_carregado + 1) * chunk_u)
+
+
+def _grid_neutra_estadio() -> list[list[int]]:
+    """Grade neutra para estádios: mantém referência espacial sem tiles de terreno."""
+    lado = max(1, int(BANCO_DADOS.chunk_tamanho_unidade()))
+    return [[-1 for _ in range(lado)] for _ in range(lado)]
 
 
 def _objeto_em_chunks(obj, chunks: Set[Chunk], dimensao: str = "Mundo") -> bool:
@@ -240,10 +250,10 @@ def processar_ativador_json(requisicao_json: str) -> str:
         if modo == "chunks":
             chunks = []
             for chunk in sorted(chunks_carregados):
-                grid = CEREBRO_ESTADIOS.chunk_em_grade(dimensao, chunk) if dimensao != "Mundo" else BANCO_DADOS.chunk_em_grade(chunk)
+                grid = _grid_neutra_estadio() if _eh_dimensao_estadio(dimensao) else BANCO_DADOS.chunk_em_grade(chunk)
                 chunks.append({"pos": [chunk[0], chunk[1]], "grid": grid, "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()})
-            dim_largura = int(CEREBRO_ESTADIOS.chunks_largura * BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[0])
-            dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if dimensao != "Mundo" else int(BANCO_DADOS.limites_mundo()[1])
+            dim_largura = int(CEREBRO_ESTADIOS.chunks_largura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[0])
+            dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[1])
             return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, ensure_ascii=False)
 
         pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id, dimensao=dimensao)

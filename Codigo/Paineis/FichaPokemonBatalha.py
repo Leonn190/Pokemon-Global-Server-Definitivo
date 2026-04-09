@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -9,7 +10,7 @@ from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.FichaPokemon import FichaPokemon
 from Codigo.Prefabs.Barra import Barra
-from Codigo.Prefabs.Botao import BotaoAlavanca
+from Codigo.Prefabs.Botao import BotaoAlavanca, BotaoSelecao
 from Codigo.Prefabs.Texto import Texto
 
 
@@ -22,6 +23,11 @@ class FichaPokemonBatalha:
         self._barra_energia: Optional[Barra] = None
         self._icones_stats = self._mapa_icone_stats()
         self._cache_ataque_icones: dict[tuple[str, str, int], pygame.Surface | None] = {}
+        self._botoes_ataques: list[tuple[BotaoSelecao, dict]] = []
+        self._ataque_selecionado_idx: int = -1
+        self._custo_previsto: float = 0.0
+        self._custo_bloqueado: bool = False
+        self._energia_base_previsao: float | None = None
 
     def _mapa_icone_stats(self):
         pasta = Path("Recursos") / "Visual" / "Icones" / "Atributos"
@@ -114,27 +120,70 @@ class FichaPokemonBatalha:
                 Texto(texto, pos=(tx, y + 10), style={"size": 12, "align": "left", "outline": True}).draw(tela)
             y += linha_h
 
-    def _desenhar_ataques(self, tela: pygame.Surface, area: pygame.Rect, pokemon) -> None:
+    def definir_contexto_jogada(self, custo_previsto: float = 0.0, custo_bloqueado: bool = False, energia_base_previsao: float | None = None) -> None:
+        self._custo_previsto = max(0.0, float(custo_previsto or 0.0))
+        self._custo_bloqueado = bool(custo_bloqueado)
+        self._energia_base_previsao = None if energia_base_previsao is None else max(0.0, float(energia_base_previsao))
+
+    def _selecionar_ataque_idx(self, idx: int) -> None:
+        self._ataque_selecionado_idx = int(idx)
+        for i, (botao, _) in enumerate(self._botoes_ataques):
+            botao.set_selecionado(i == self._ataque_selecionado_idx)
+
+    def _nome_ataque(self, atk: dict) -> str:
+        return str(atk.get("Ataque") or atk.get("Nome") or atk.get("nome") or "Atk")
+
+    def _desenhar_ataques(self, tela: pygame.Surface, area: pygame.Rect, pokemon, eventos, dt: float) -> dict | None:
         ataques = list(getattr(pokemon, "ListaAtaques", []) or [])
-        extras = [{"nome": "Mover", "tipo": "Diversos"}, {"nome": "Trocar", "tipo": "Diversos"}]
+        extras = [{"nome": "Mover", "tipo": "Diversos", "Estilo": "movimento"}]
         botoes = [a if isinstance(a, dict) else {"nome": str(a), "tipo": "Normal"} for a in ataques] + extras
+        self._botoes_ataques = []
         total = max(1, len(botoes))
         gap = 8
         lado = min(area.height - 12, int((area.width - gap * (total - 1)) / total))
         x = area.x + (area.width - (lado * total + gap * (total - 1))) // 2
         y = area.y + (area.height - lado) // 2
+        selecionado = botoes[self._ataque_selecionado_idx] if 0 <= self._ataque_selecionado_idx < len(botoes) else None
 
-        for atk in botoes:
+        for idx, atk in enumerate(botoes):
             rect = pygame.Rect(x, y, lado, lado)
-            pygame.draw.rect(tela, (18, 24, 38), rect, border_radius=8)
+            botao = BotaoSelecao(
+                rect,
+                "",
+                execute=lambda _j, _b, i=idx: self._selecionar_ataque_idx(i),
+                selecionado=(idx == self._ataque_selecionado_idx),
+                style={
+                    "radius": 8,
+                    "border_width": 2,
+                    "bg": (18, 24, 38),
+                    "bg_hover": (29, 39, 58),
+                    "bg_pressed": (16, 22, 32),
+                    "border": (120, 144, 188),
+                    "border_hover": (188, 220, 255),
+                    "hover_scale": 1.0,
+                    "press_scale": 0.98,
+                    "text_style": {"size": 1, "outline_thickness": 0, "shadow": False},
+                },
+            )
+            botao.render(tela, eventos or [], dt, None)
             icone = self._icone_ataque(atk, lado)
             if icone is not None:
                 tela.blit(icone, icone.get_rect(center=rect.center))
             else:
                 pygame.draw.rect(tela, (35, 46, 70), rect.inflate(-4, -4), border_radius=8)
-                Texto(str(atk.get("nome") or "Atk")[:2], pos=rect.center, style={"size": 12, "align": "center", "outline": True}).draw(tela)
-            pygame.draw.rect(tela, (120, 144, 188), rect, 2, border_radius=8)
+                Texto(self._nome_ataque(atk)[:2], pos=rect.center, style={"size": 12, "align": "center", "outline": True}).draw(tela)
+            if idx == self._ataque_selecionado_idx:
+                pulso = 0.5 + 0.5 * math.sin((pygame.time.get_ticks() / 1000.0) * 5.4)
+                aura = pygame.Surface((rect.width + 8, rect.height + 8), pygame.SRCALPHA)
+                pygame.draw.rect(aura, (220, 255, 120, int(40 + pulso * 40)), aura.get_rect(), border_radius=10)
+                tela.blit(aura, (rect.x - 4, rect.y - 4))
+                selecionado = atk
+            self._botoes_ataques.append((botao, atk))
             x += lado + gap
+        if self._ataque_selecionado_idx >= len(botoes):
+            self._ataque_selecionado_idx = -1
+            selecionado = None
+        return selecionado
 
     def _desenhar_barras_e_itens(self, tela: pygame.Surface, area: pygame.Rect, pokemon, dt: float):
         barras_w = int(area.width * 0.62)
@@ -149,6 +198,20 @@ class FichaPokemonBatalha:
         self._barra_energia = Barra((bx, by + bh + 8, barras_w, bh), "", valor=float(pokemon.Energia), minimo=0, maximo=max(1.0, float(pokemon.EnergiaMax)), mostrar_rotulo=False)
         self._barra_energia.cor_preenchimento = (60, 150, 255)
         self._barra_energia.render(tela, [], dt)
+        if self._custo_previsto > 0.01:
+            maximo = max(1.0, float(pokemon.EnergiaMax))
+            atual_real = max(0.0, float(pokemon.Energia))
+            atual = max(0.0, min(atual_real, float(self._energia_base_previsao if self._energia_base_previsao is not None else atual_real)))
+            inicio = int((atual / maximo) * self._barra_energia.Rect.width)
+            fim_valor = max(0.0, atual - self._custo_previsto)
+            fim = int((fim_valor / maximo) * self._barra_energia.Rect.width)
+            rect_overlay = pygame.Rect(self._barra_energia.Rect.x + fim, self._barra_energia.Rect.y, max(1, inicio - fim), self._barra_energia.Rect.height)
+            t = 0.5 + 0.5 * math.sin((pygame.time.get_ticks() / 1000.0) * 6.0)
+            if self._custo_bloqueado:
+                cor = (255, 170, 170, int(120 + t * 90))
+            else:
+                cor = (245, 245, 255, int(90 + t * 80))
+            pygame.draw.rect(tela, cor, rect_overlay, border_radius=max(2, rect_overlay.height // 2))
 
         Texto(f"{int(pokemon.VidaAtual)}/{int(pokemon.VidaMax)}", pos=(bx + barras_w - 6, by + (bh // 2)), style={"size": 13, "align": "right", "outline": True}).draw(tela)
         Texto(f"{int(pokemon.Energia)}/{int(pokemon.EnergiaMax)}", pos=(bx + barras_w - 6, by + bh + 8 + (bh // 2)), style={"size": 13, "align": "right", "outline": True}).draw(tela)
@@ -217,9 +280,20 @@ class FichaPokemonBatalha:
         baixo_meio = pygame.Rect(area_meio.x + 4, topo_meio.bottom + 2, area_meio.width - 8, area_meio.bottom - topo_meio.bottom - 6)
         pygame.draw.line(painel, (72, 90, 128), (area_meio.x, topo_meio.bottom), (area_meio.right, topo_meio.bottom), 1)
 
-        self._desenhar_bloco_stats(painel, area_esq.inflate(-8, -6), pokemon, eventos, exibir_vamp_base=self._toggle_extra.estado)
-        self._desenhar_ataques(painel, topo_meio, pokemon)
+        eventos_locais = []
+        for ev in eventos or []:
+            if hasattr(ev, "pos"):
+                ex, ey = ev.pos
+                ev_dict = ev.dict.copy()
+                ev_dict["pos"] = (ex - rect.x, ey - rect.y)
+                eventos_locais.append(pygame.event.Event(ev.type, ev_dict))
+            else:
+                eventos_locais.append(ev)
+
+        self._desenhar_bloco_stats(painel, area_esq.inflate(-8, -6), pokemon, eventos_locais, exibir_vamp_base=self._toggle_extra.estado)
+        ataque_selecionado = self._desenhar_ataques(painel, topo_meio, pokemon, eventos_locais, dt)
         self._desenhar_barras_e_itens(painel, baixo_meio, pokemon, dt)
         self._desenhar_direita(painel, area_dir.inflate(-6, -6), pokemon)
 
         tela.blit(painel, rect.topleft)
+        return ataque_selecionado

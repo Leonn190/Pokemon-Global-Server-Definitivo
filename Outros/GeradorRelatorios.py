@@ -26,6 +26,23 @@ EXTENSOES_TEXTO_INTERESSE = {
 }
 
 
+# Pastas principais que devem compor o rank específico do projeto.
+# Observação: a contagem é recursiva, então cada pasta inclui todas as suas subpastas e arquivos internos.
+PASTAS_IMPORTANTES_RANK: List[Tuple[str, str]] = [
+    ("Codigo/Cenas", "Cenas"),
+    ("Codigo/Geradores", "Geradores"),
+    ("Codigo/ModulosBatalha", "ModulosBatalha"),
+    ("Codigo/ModulosGerais", "ModulosGerais"),
+    ("Codigo/ModulosMundo", "ModulosMundo"),
+    ("Codigo/Paineis", "Paineis"),
+    ("Codigo/Prefabs", "Prefabs"),
+    ("Codigo/Server", "Server"),
+    ("Codigo/Telas", "Telas"),
+    ("SimuladorServerJogo", "SimuladorServerJogo"),
+]
+
+
+
 def bytes_para_gib(num_bytes: int) -> float:
     return num_bytes / (1024 ** 3)
 
@@ -331,6 +348,98 @@ def tentar_contar_commits(repo_root: Path) -> Optional[int]:
         return None
 
 
+
+
+def coletar_metricas_pasta_importante(
+    pasta_base: Path,
+    relatorios_dir: Path,
+) -> Dict[str, Any]:
+    if not pasta_base.exists() or not pasta_base.is_dir():
+        return {
+            "existe": False,
+            "arquivos": 0,
+            "subpastas": 0,
+            "tamanho_bytes": 0,
+            "linhas_gerais": 0,
+            "linhas_por_extensao": {},
+        }
+
+    total_files = 0
+    total_dirs = 0
+    total_size = 0
+    total_linhas = 0
+    linhas_por_ext: Counter[str] = Counter()
+
+    for p in pasta_base.rglob("*"):
+        try:
+            if deve_ignorar(p, relatorios_dir):
+                continue
+
+            if p.is_dir():
+                total_dirs += 1
+                continue
+
+            if not p.is_file():
+                continue
+
+            total_files += 1
+            total_size += p.stat().st_size
+
+            ext = p.suffix.lower() if p.suffix else "(sem_ext)"
+            if ext in EXTENSOES_TEXTO_INTERESSE or ext == "(sem_ext)":
+                linhas = contar_linhas_arquivo(p)
+                if linhas > 0:
+                    total_linhas += linhas
+                    linhas_por_ext[ext] += linhas
+
+        except OSError:
+            continue
+
+    return {
+        "existe": True,
+        "arquivos": total_files,
+        "subpastas": total_dirs,
+        "tamanho_bytes": total_size,
+        "linhas_gerais": total_linhas,
+        "linhas_por_extensao": dict(linhas_por_ext),
+    }
+
+
+def coletar_rank_pastas_importantes(repo_root: Path, relatorios_dir: Path) -> List[Dict[str, Any]]:
+    itens: List[Dict[str, Any]] = []
+
+    for caminho_relativo, nome_exibicao in PASTAS_IMPORTANTES_RANK:
+        pasta = repo_root / caminho_relativo
+        metricas = coletar_metricas_pasta_importante(pasta, relatorios_dir)
+        linhas_por_ext = metricas.get("linhas_por_extensao", {}) or {}
+
+        linhas_py = int(linhas_por_ext.get(".py", 0))
+        linhas_json = int(linhas_por_ext.get(".json", 0))
+        linhas_toml = int(linhas_por_ext.get(".toml", 0))
+        linhas_gerais = int(metricas.get("linhas_gerais", 0))
+        outras_linhas = max(0, linhas_gerais - linhas_py - linhas_json - linhas_toml)
+
+        itens.append({
+            "pasta": nome_exibicao,
+            "caminho": caminho_relativo.replace("\\", "/"),
+            "existe": bool(metricas.get("existe", False)),
+            "arquivos": int(metricas.get("arquivos", 0)),
+            "subpastas": int(metricas.get("subpastas", 0)),
+            "tamanho_bytes": int(metricas.get("tamanho_bytes", 0)),
+            "linhas_gerais": linhas_gerais,
+            "linhas_py": linhas_py,
+            "linhas_json": linhas_json,
+            "linhas_toml": linhas_toml,
+            "outras_linhas": outras_linhas,
+        })
+
+    itens.sort(key=lambda x: int(x["linhas_gerais"]), reverse=True)
+    for i, item in enumerate(itens, start=1):
+        item["rank"] = i
+
+    return itens
+
+
 def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
     total_size = 0
     total_files = 0
@@ -463,9 +572,9 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
 
     # ===== ordenar e cortar tops =====
 
-    # Top 40 .py por linhas
+    # Top 50 .py por linhas
     maiores_py_por_linhas.sort(key=lambda x: int(x["linhas"]), reverse=True)
-    top40_maiores_py = maiores_py_por_linhas[:40]
+    top50_maiores_py = maiores_py_por_linhas[:50]
 
     # Top 15 maiores funções/métodos por linhas
     maiores_funcoes_metodos.sort(key=lambda x: int(x["linhas"]), reverse=True)
@@ -502,6 +611,7 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
     media_linhas_por_py = (py_lines / py_files) if py_files else 0.0
 
     commits = tentar_contar_commits(repo_root)
+    rank_pastas_importantes = coletar_rank_pastas_importantes(repo_root, relatorios_dir)
 
     return {
         "resumo": {
@@ -521,10 +631,15 @@ def coletar_metricas(repo_root: Path, relatorios_dir: Path) -> Dict[str, Any]:
             "total_funcoes_e_metodos": py_funcoes + py_metodos,
             "media_linhas_por_arquivo": round(media_linhas_por_py, 2),
 
-            "top40_maiores_py_por_linhas": top40_maiores_py,
+            "top50_maiores_py_por_linhas": top50_maiores_py,
+            "top40_maiores_py_por_linhas": top50_maiores_py,
             "top15_maiores_funcoes_metodos": top15_funcoes_metodos,
             "top15_maiores_classes": top15_classes_py,
             "top5_py_com_mais_imports": top5_py_mais_imports,
+        },
+        "pastas_importantes": {
+            "observacao": "Rank recursivo por linhas das 10 pastas principais, incluindo subpastas e arquivos internos.",
+            "itens": rank_pastas_importantes,
         },
         "linhas_por_extensao": {
             "itens": linhas_por_ext_lista,
@@ -628,8 +743,30 @@ def markdown_top_extensoes(atual: Dict[str, Any], limite: int = 12) -> str:
     return "\n".join(linhas)
 
 
-def markdown_top40_py_por_linhas(atual: Dict[str, Any]) -> str:
-    itens = (atual.get("python", {}).get("top40_maiores_py_por_linhas") or [])[:40]
+
+
+def markdown_rank_pastas_importantes(atual: Dict[str, Any]) -> str:
+    itens = (atual.get("pastas_importantes", {}).get("itens") or [])[:10]
+    if not itens:
+        return "_Nenhuma pasta importante encontrada para montar o rank._"
+
+    linhas = [
+        "| Rank | Pasta | Caminho | Subpastas | Arquivos | Linhas gerais | `.py` | `.json` | `.toml` | Outras |",
+        "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for it in itens:
+        linhas.append(
+            f"| {fmt_int(int(it['rank']))} | `{it['pasta']}` | `{it['caminho']}` | "
+            f"{fmt_int(int(it['subpastas']))} | {fmt_int(int(it['arquivos']))} | "
+            f"{fmt_int(int(it['linhas_gerais']))} | {fmt_int(int(it['linhas_py']))} | "
+            f"{fmt_int(int(it['linhas_json']))} | {fmt_int(int(it['linhas_toml']))} | "
+            f"{fmt_int(int(it['outras_linhas']))} |"
+        )
+    return "\n".join(linhas)
+
+
+def markdown_top50_py_por_linhas(atual: Dict[str, Any]) -> str:
+    itens = (atual.get("python", {}).get("top50_maiores_py_por_linhas") or atual.get("python", {}).get("top40_maiores_py_por_linhas") or [])[:50]
     if not itens:
         return "_Nenhum arquivo `.py` encontrado._"
 
@@ -824,8 +961,13 @@ def gerar_markdown(atual: Dict[str, Any], diff: Optional[Dict[str, Any]]) -> str
     md.append(f"- **Total funções + métodos:** {fmt_int(int(py['total_funcoes_e_metodos']))}")
     md.append(f"- **Média de linhas por arquivo `.py`:** {py['media_linhas_por_arquivo']:.2f}\n")
 
-    md.append("### Top 40 maiores arquivos `.py` por linhas\n")
-    md.append(markdown_top40_py_por_linhas(atual))
+    md.append("### Rank das 10 pastas mais importantes por linhas\n")
+    md.append("Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos internos.\n")
+    md.append(markdown_rank_pastas_importantes(atual))
+    md.append("")
+
+    md.append("### Top 50 maiores arquivos `.py` por linhas\n")
+    md.append(markdown_top50_py_por_linhas(atual))
     md.append("")
 
     md.append("### Top 15 maiores funções e métodos (linhas)\n")

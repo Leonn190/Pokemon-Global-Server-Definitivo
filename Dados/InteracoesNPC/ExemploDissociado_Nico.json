@@ -1,0 +1,224 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Nico. Nao respondo a estadio nenhum. Se quiser batalhar, fale direto. Se quiser conversar, tambem serve.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou, hein? Continuo sem bandeira e sem paciencia. O que voce quer agora?"
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Tem uma segunda batalha?",
+          "destino": "segunda_batalha"
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "segunda_batalha": {
+      "fala_condicional": {
+        "padrao": "Talvez. Primeiro me diga se voce aguenta o ritmo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "player.Nivel",
+                "op": ">=",
+                "valor": 12
+              }
+            ],
+            "valor": "Seu nivel ja passa do minimo que eu queria ver. Posso liberar a segunda luta."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda nao parece pronta. Melhor deixar para depois.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "player.Nivel",
+                    "op": ">=",
+                    "valor": 12
+                  }
+                ],
+                "valor": "Eu quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "saudacao",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "player.Nivel",
+                    "op": ">=",
+                    "valor": 12
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_2_liberada": {
+      "fala": "Beleza. Agora eu levo a serio.",
+      "opcoes": [
+        {
+          "texto": "Comecar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2
+        },
+        {
+          "texto": "Deixa para depois.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Eu sigo o que acho certo. Isso basta.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.DescobriuSegredoDosMares",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Entao voce conhece o Segredo dos Mares. Interessante... nao esperava isso de voce."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComNico": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quero saber por que voce e dissociado.",
+          "destino": "origem",
+          "ao_escolher": {
+            "setor": {
+              "PerguntouOrigemNico": true
+            }
+          }
+        },
+        {
+          "texto": "Batalhar agora.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Porque liberdade vale mais do que uniforme. So isso ja devia bastar.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuNico": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entendi.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuNico",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "player.TempoJogoSegundos",
+                "op": ">=",
+                "valor": 1800
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente? Ainda nao. Nem me conhece direito.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Voce ouviu e nao me julgou. Pegue isto.",
+      "saida": "presente",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ],
+      "metadados_presente": {
+        "presente_id": "nico_1"
+      }
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do dissociado.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

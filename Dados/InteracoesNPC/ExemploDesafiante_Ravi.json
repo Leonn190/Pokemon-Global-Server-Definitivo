@@ -1,0 +1,169 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Ravi, desafiante do estadio Fogo. Eu batalho com qualquer um, mas falo diferente com quem ja conquistou respeito.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Seu respeito no Fogo ja aparece no jeito que voce anda. Quero ver se a batalha acompanha."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou para mais uma? Gosto disso. Desafiantes nao recusam repeticao."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Quero conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voce tem alguma recompensa?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Nao preciso de respeito para lutar, mas respeito muda como eu olho para voce.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Agora eu ja te enxergo como alguem que entende o ritmo do estadio. Isso muda tudo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComRavi": true,
+          "RaviConversa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora quero batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Quero saber o que voce valoriza.",
+          "destino": "valor"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "valor": {
+      "fala": "Persistencia. Quem volta, aprende. Quem aprende, esquenta de verdade.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRavi": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Tem recompensa para isso?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vou batalhar.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuRavi",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.RaviConversa",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda nao. Primeiro me mostre que voce volta nao so para clicar em batalha.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Agora sim. Leve isso como sinal de que eu notei sua persistencia.",
+      "saida": "presente",
+      "opcoes": [
+        {
+          "texto": "Valeu.",
+          "acao": "fim"
+        }
+      ],
+      "metadados_presente": {
+        "presente_id": "ravi_1"
+      }
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do desafiante.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

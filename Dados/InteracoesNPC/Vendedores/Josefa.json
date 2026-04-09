@@ -1,153 +1,265 @@
 {
-  "inicio": "ola",
+  "inicio": "saudacao",
   "nos": {
-    "ola": {
-      "fala": "Bem-vindo, viajante. Eu sou Josefa, vendedora da rota antiga. Meu estoque ajuda quem anda longe. Quer conversar um pouco antes de eu abrir minhas caixas?",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Ola. Sou Josefa. Quer comprar alguma coisa ou prefere conversar primeiro?",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voce voltou, querido. Minha banca continua aberta. Vai querer loja, conversa ou algo mais reservado?"
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Quero entender a rota primeiro.",
-          "proximo": "rota_1"
+          "texto": "Abrir a loja.",
+          "destino": "loja_padrao"
         },
         {
-          "texto": "Quero ouvir uma história sua.",
-          "proximo": "hist_1"
+          "texto": "Conversar um pouco.",
+          "destino": "conversa"
         },
         {
-          "texto": "Mostra seus produtos.",
-          "proximo": "loja_padrao"
+          "texto": "Ouvi falar de um estoque secreto...",
+          "destino": "pergunta_segredo"
         },
         {
-          "texto": "Até depois.",
-          "fim": true
-        }
-      ]
-    },
-    "rota_1": {
-      "fala": "A rota antiga parece simples, mas engana. Quem olha só para o atalho gasta recurso dobrado. Quem observa terreno, clima e descanso economiza dinheiro.",
-      "opcoes": [
-        {
-          "texto": "E qual é o primeiro sinal de erro?",
-          "proximo": "rota_2"
-        },
-        {
-          "texto": "Entendi, abre a loja.",
-          "proximo": "loja_padrao"
-        }
-      ]
-    },
-    "rota_2": {
-      "fala": "Quando o treinador corre sem plano. Depois fica sem poção no pior trecho. Por isso sempre separo três kits: combate, captura e retorno.",
-      "opcoes": [
-        {
-          "texto": "Gostei dessa organização.",
-          "proximo": "rota_3"
-        },
-        {
-          "texto": "Tá, já pode vender.",
-          "proximo": "loja_padrao"
-        }
-      ]
-    },
-    "rota_3": {
-      "fala": "Pouca gente pergunta isso. Se quiser, te mostro meus produtos comuns agora. Talvez, se continuar atento, eu também mostre algo que não deixo à vista.",
-      "opcoes": [
-        {
-          "texto": "Quero os produtos comuns.",
-          "proximo": "loja_padrao"
-        },
-        {
-          "texto": "Quero merecer essa oferta escondida.",
-          "proximo": "secreto_1"
-        }
-      ]
-    },
-    "hist_1": {
-      "fala": "No meu primeiro mês de viagem eu perdi tudo por pressa. Foi uma vendedora mais velha que me ensinou: lucro de verdade é voltar inteiro.",
-      "opcoes": [
-        {
-          "texto": "E como você aplica isso hoje?",
-          "proximo": "hist_2"
-        },
-        {
-          "texto": "Bora ver a loja.",
-          "proximo": "loja_padrao"
-        }
-      ]
-    },
-    "hist_2": {
-      "fala": "Eu separo estoque por tipo de risco. Quem vem da montanha leva cura e defesa. Quem vem do lago leva controle de stamina. Quem escuta, paga menos no final da viagem.",
-      "opcoes": [
-        {
-          "texto": "Quero comprar agora.",
-          "proximo": "loja_padrao"
-        },
-        {
-          "texto": "Me testa mais um pouco.",
-          "proximo": "secreto_1"
-        }
-      ]
-    },
-    "secreto_1": {
-      "fala": "Oferta secreta não vai para aventureiro ansioso. Responde: você compra pelo brilho do item ou pelo problema que ele resolve?",
-      "opcoes": [
-        {
-          "texto": "Pelo brilho.",
-          "proximo": "falha_secreto"
-        },
-        {
-          "texto": "Pelo problema que resolve.",
-          "proximo": "secreto_2"
-        }
-      ]
-    },
-    "secreto_2": {
-      "fala": "Boa resposta. Segunda pergunta: quando falta recurso, você força luta ou recua para reorganizar?",
-      "opcoes": [
-        {
-          "texto": "Forço luta.",
-          "proximo": "falha_secreto"
-        },
-        {
-          "texto": "Recuo e reorganizo.",
-          "proximo": "secreto_3"
-        }
-      ]
-    },
-    "secreto_3": {
-      "fala": "Última etapa. Você troca segurança por velocidade quando carrega itens raros?",
-      "opcoes": [
-        {
-          "texto": "Troco, velocidade sempre.",
-          "proximo": "falha_secreto"
-        },
-        {
-          "texto": "Não. Prioridade é chegar com tudo.",
-          "proximo": "loja_secreta"
-        }
-      ]
-    },
-    "falha_secreto": {
-      "fala": "Ainda falta prática de rota. Sem problema. Primeiro compra o básico, depois voltamos à oferta secreta.",
-      "opcoes": [
-        {
-          "texto": "Abrir loja comum.",
-          "proximo": "loja_padrao"
-        },
-        {
-          "texto": "Encerrar conversa.",
-          "fim": true
+          "texto": "Tchau.",
+          "acao": "fim"
         }
       ]
     },
     "loja_padrao": {
-      "fala": "Estoque da rota antiga: escolha um item.",
-      "loja": "padrao",
+      "fala": "Fique a vontade. O basico esta sempre visivel para clientes educados.",
+      "saida": "loja",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Alguns clientes so compram. Outros prestam atencao no que eu digo. Qual dos dois voce quer ser?",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.PerguntouSobreSegredoJosefa",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Entao voce ainda esta pensando no que eu falei sobre discricao. Isso e bom."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Quero saber mais sobre segredos.",
+          "destino": "segredo_intro",
+          "ao_escolher": {
+            "setor": {
+              "PerguntouSobreSegredoJosefa": true
+            }
+          }
+        },
+        {
+          "texto": "Abrir a loja agora.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Nada mais.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "segredo_intro": {
+      "fala": "Segredo nao se entrega para qualquer um. Primeiro mostre que sabe ouvir e guardar informacao.",
+      "ao_entrar": {
+        "setor": {
+          "DescobriuSegredoDosMares": true,
+          "ConfiancaJosefa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entendi. Posso ver a loja normal.",
+          "destino": "loja_padrao"
+        },
+        {
+          "texto": "Quero ver o estoque secreto.",
+          "destino": "checar_loja_secreta"
+        },
+        {
+          "texto": "Tem algo para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pergunta_segredo": {
+      "fala_condicional": {
+        "padrao": "Quem te contou isso? Antes de qualquer coisa, eu preciso saber se voce merece essa pergunta.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.DescobriuSegredoDosMares",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ja que voce conhece o sinal dos mares, posso ser mais direta. O que voce quer: estoque secreto ou recompensa?"
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Quero descobrir esse segredo.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.DescobriuSegredoDosMares",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "Quero acessar o segredo."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "segredo_intro",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.DescobriuSegredoDosMares",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "checar_loja_secreta"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Deixa para la.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "checar_loja_secreta": {
+      "desvio_condicional": {
+        "padrao": "loja_secreta_bloqueada",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.DescobriuSegredoDosMares",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.ConfiancaJosefa",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "loja_secreta"
+          }
+        ]
+      },
       "opcoes": []
     },
+    "loja_secreta_bloqueada": {
+      "fala": "Ainda nao. Primeiro prove que sabe guardar o que escuta.",
+      "opcoes": [
+        {
+          "texto": "Tudo bem.",
+          "destino": "saudacao"
+        }
+      ]
+    },
     "loja_secreta": {
-      "fala": "Você passou no labirinto. Oferta secreta liberada por tempo curto.",
-      "loja": "secreta",
+      "fala": "Certo. Vou abrir a parte que eu nao mostro para qualquer um.",
+      "saida": "loja_secreta",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
+        }
+      ],
+      "metadados_loja": {
+        "categoria": "secreta"
+      }
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConfiancaJosefa",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
       "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda nao. Volte quando eu confiar mais em voce.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Voce ouviu mais do que a maioria. Pegue isto.",
+      "saida": "presente",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ],
+      "metadados_presente": {
+        "presente_id": "josefa_1"
+      }
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo da Josefa.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
     }
   }
 }

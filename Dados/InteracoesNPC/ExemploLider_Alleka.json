@@ -1,0 +1,227 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Alleka, Lider de Metal. Sem respeito suficiente, voce pode conversar, mas nao exigir minhas melhores lutas.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Seu respeito no estadio de Metal ja chegou longe. Posso oferecer as duas batalhas."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Voce conquistou respeito suficiente para a primeira batalha. A segunda ainda precisa de mais."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda nao tenho respeito suficiente para desafiar voce.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1 no estadio de Metal. Volte quando tiver subido a escadinha certa.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro vença o caminho anterior, depois volte para a subida completa.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_1_liberada": {
+      "fala": "Muito bem. A primeira batalha vai medir sua base.",
+      "opcoes": [
+        {
+          "texto": "Comecar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Alleka": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_2_liberada": {
+      "fala": "Agora sim. A segunda batalha e a verdadeira prova do meu estadio.",
+      "opcoes": [
+        {
+          "texto": "Comecar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Alleka": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Metal nao perdoa indecisao. Cada etapa importa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce ja entendeu que Metal e constancia. A segunda luta existe para provar isso."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quero a batalha 1.",
+          "destino": "batalha_1_liberada"
+        },
+        {
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          },
+          "texto": "Quero a batalha 2."
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo da Alleka.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

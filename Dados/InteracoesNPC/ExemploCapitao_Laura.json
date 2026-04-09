@@ -1,0 +1,195 @@
+{
+  "inicio": "saudacao",
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Laura, Capitao do estadio Eletrico. Sem respeito 2 eu nao libero batalha.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Seu respeito no Eletrico chegou ao ponto certo. Se quiser, posso liberar a batalha."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda nao tenho o respeito 2 necessario.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero batalhar."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Tem um presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Capitao nao improvisa regra. Volte quando o respeito Eletrico estiver em 2.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Entao vamos ver se sua energia acompanha sua vontade.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Seu respeito esta alto ate demais. Melhor ainda: vamos ver se acompanha a carga."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Comecar batalha.",
+          "acao": "batalha",
+          "batalha": 1
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala": "Disciplina vem antes de descarga. Quem sobe aqui entende ordem e ritmo.",
+      "ao_entrar": {
+        "setor": {
+          "FalouComLaura": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entendi. Quero tentar o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar agora.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComLaura",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "presente_liberado"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente vem depois de conversa e respeito. Ainda falta um pouco.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_liberado": {
+      "fala": "Voce ouviu, respeitou e voltou. Pegue isto.",
+      "saida": "presente",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ],
+      "metadados_presente": {
+        "presente_id": "laura_1"
+      }
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo da Laura.",
+      "opcoes": [
+        {
+          "texto": "Fechar",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

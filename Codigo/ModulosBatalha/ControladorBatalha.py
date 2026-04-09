@@ -56,8 +56,7 @@ class ControladorBatalha:
     def selecionar_por_mouse(self, mouse_tela_px, camera) -> PokemonBatalha | None:
         alvo = None
         if not isinstance(mouse_tela_px, (tuple, list)) or len(mouse_tela_px) != 2:
-            self.PokemonSelecionado = None
-            return None
+            return self.PokemonSelecionado
         mx, my = int(mouse_tela_px[0]), int(mouse_tela_px[1])
         for poke in (self.PokemonsAliados + self.PokemonsInimigos):
             cx, cy = poke.centro_tela(camera)
@@ -65,9 +64,7 @@ class ControladorBatalha:
             if (mx - cx) * (mx - cx) + (my - cy) * (my - cy) <= r * r:
                 alvo = poke
                 break
-        if alvo is self.PokemonSelecionado:
-            self.PokemonSelecionado = None
-        else:
+        if alvo is not None and alvo is not self.PokemonSelecionado:
             self.PokemonSelecionado = alvo
         return self.PokemonSelecionado
 

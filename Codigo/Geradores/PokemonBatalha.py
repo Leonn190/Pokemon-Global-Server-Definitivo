@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import math
+import unicodedata
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 import pygame
 
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
+from Codigo.Paineis.FichaPokemon import FichaPokemon
 
 Vector2 = Tuple[float, float]
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
@@ -15,101 +17,321 @@ _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
 class PokemonBatalha:
     _cache_frames: Dict[str, List[pygame.Surface]] = {}
 
+    _ORDEM_BASE = ("Atk", "Def", "Mag", "Vel", "SpA", "SpD", "Ene", "Per", "Int", "Vamp")
+    _EXTRAS_PREFERIDOS = (
+        "Vida",
+        "EnergiaMaxima",
+        "Peso",
+        "Escala",
+        "Amplificacao",
+        "Durabilidade",
+        "CrC",
+        "CrD",
+        "Barreira",
+        "Precisao",
+    )
+    _MAPA_LABELS = {
+        "vida": "Vida",
+        "atk": "Atk",
+        "def": "Def",
+        "spa": "SpA",
+        "spd": "SpD",
+        "vel": "Vel",
+        "mag": "Mag",
+        "per": "Per",
+        "ene": "Ene",
+        "int": "Int",
+        "vamp": "Vamp",
+        "vampirismo": "Vamp",
+        "peso": "Peso",
+        "escala": "Escala",
+        "energiamaxima": "EnergiaMaxima",
+        "energiamax": "EnergiaMaxima",
+        "amplificacao": "Amplificacao",
+        "durabilidade": "Durabilidade",
+        "crc": "CrC",
+        "crd": "CrD",
+        "barreira": "Barreira",
+        "precisao": "Precisao",
+    }
+
     def __init__(self, dados: Dict[str, object], posicao: Vector2, lado: str, regras: Dict[str, object] | None = None) -> None:
         self.Dados = dict(dados or {})
         self.Posicao = (float(posicao[0]), float(posicao[1]))
         self.Lado = str(lado or "jogador")
         self.Regras = dict(regras or {})
 
-        estado = self.Dados.get("estado") if isinstance(self.Dados.get("estado"), dict) else self.Dados
-        stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
+        self._fontes = FichaPokemon._coletar_fontes(self.Dados)
+        self._stats_brutos = self._coletar_stats_brutos()
 
-        self.Nome = str(estado.get("nome") or estado.get("especie") or self.Dados.get("nome") or "Pokemon")
-        self.Especie = str(estado.get("especie") or self.Nome)
-        self.Peso = float(estado.get("peso", 0.0) or 0.0)
-        self.Escala = int(estado.get("escala", self.Dados.get("escala", 3)) or 3)
-        self.CrC = float(stats.get("CrC", estado.get("CrC", 0.0)) or 0.0)
-        self.CrD = float(stats.get("CrD", estado.get("CrD", 0.0)) or 0.0)
-        base_tamanho = float(self.Regras.get("combate_pokemon_tamanho_diametro_base_tiles", 1.0) or 1.0)
-        incremento = float(self.Regras.get("combate_pokemon_tamanho_incremento_por_escala", 0.1) or 0.1)
+        self.Nome, self.Especie = FichaPokemon._nome_especie(self.Dados)
+        self.Peso = self._numero(self._valor('Peso', 'peso', default=0.0), 0.0)
+        self.Escala = max(0, int(round(self._numero(self._valor('Escala', 'escala', default=FichaPokemon._escala(self.Dados)), 3.0))))
+        self.CrC = self._numero(self._valor('CrC', 'CriticoChance', 'ChanceCritico', default=0.0), 0.0)
+        self.CrD = self._numero(self._valor('CrD', 'CriticoDano', 'DanoCritico', default=0.0), 0.0)
+        self.Tipos = list(FichaPokemon._tipos(self.Dados))
+        self.Nivel = max(1, int(FichaPokemon._nivel(self.Dados) or 1))
+
+        base_tamanho = self._numero(
+            self.Regras.get('combate_pokemon_tamanho_diametro_base_tiles', self.Regras.get('pokemon_tamanho_diametro_base_tiles', 1.0)),
+            1.0,
+        )
+        incremento = self._numero(
+            self.Regras.get('combate_pokemon_tamanho_incremento_por_escala', self.Regras.get('pokemon_tamanho_incremento_por_escala', 0.1)),
+            0.1,
+        )
         self.DiametroTiles = max(0.4, base_tamanho + max(0.0, float(self.Escala)) * max(0.01, incremento))
 
-        self.VidaMax = max(1.0, float(stats.get("Vida", estado.get("Vida", 1.0)) or 1.0))
-        self.VidaAtual = max(0.0, min(self.VidaMax, float(estado.get("vida_atual", self.VidaMax) or self.VidaMax)))
+        stats_principais = dict(FichaPokemon._stats_dict(self.Dados))
+        self.VidaMax = max(
+            1.0,
+            self._numero(
+                self._valor('VidaMax', 'Vida Máxima', 'MaxVida', 'MaxHP', default=stats_principais.get('Vida', 1.0)),
+                stats_principais.get('Vida', 1.0),
+            ),
+        )
+        self.VidaAtual = max(0.0, min(self.VidaMax, self._numero(FichaPokemon._vida_atual(self.Dados), self.VidaMax)))
 
-        ene_base = max(1.0, float(stats.get("Ene", estado.get("Ene", 1.0)) or 1.0))
-        self.EnergiaMax = ene_base * 3.0
-        energia_padrao = max(0.0, min(self.EnergiaMax, float(estado.get("energia", ene_base) or ene_base)))
-        self.Energia = energia_padrao
-        self.Nivel = int(estado.get("nivel", estado.get("Nivel", self.Dados.get("nivel", 1))) or 1)
-        self.Tipos = list(estado.get("tipos") or self.Dados.get("tipos") or ([] if not self.Dados.get("tipo") else [self.Dados.get("tipo")]))
-        self.ListaAtaques = self._extrair_lista_ataques(estado)
-        self.ItensBuild = list(estado.get("build") or estado.get("itens_build") or self.Dados.get("build") or [])
-        self.Stats = dict(stats)
-        for chave in ("Amplificacao", "Durabilidade", "Vamp", "Barreira"):
-            self.Stats.setdefault(chave, 0.0)
+        energia_base = max(1.0, self._numero(stats_principais.get('Ene', self._valor('Ene', 'EnergiaBase', default=1.0)), 1.0))
+        energia_max_extraida = self._valor('EnergiaMaxima', 'EnergiaMax', 'Energia Máxima', 'MaxEnergia', default=None)
+        self.EnergiaMax = max(1.0, self._numero(energia_max_extraida, energia_base * 3.0))
+        self.Energia = max(
+            0.0,
+            min(
+                self.EnergiaMax,
+                self._numero(self._valor('EnergiaAtual', 'Energia', 'energia_atual', 'energia', default=energia_base), energia_base),
+            ),
+        )
 
-
-    @staticmethod
-    def _extrair_lista_ataques(estado: Dict[str, object]) -> List[Dict[str, object]]:
-        candidatos = estado.get("ataques") or estado.get("moves") or estado.get("golpes") or []
-        saida: List[Dict[str, object]] = []
-        if isinstance(candidatos, (list, tuple)):
-            for item in candidatos:
-                if isinstance(item, dict):
-                    saida.append(dict(item))
-                elif item is not None:
-                    saida.append({"nome": str(item), "tipo": "normal"})
-        return saida
-
-    def raio_px(self, camera) -> int:
-        tile_px = max(16, int(getattr(camera, "TilePx", 40) or 40))
-        return max(12, int(tile_px * (self.DiametroTiles * 0.5)))
-
-    def centro_tela(self, camera) -> Tuple[int, int]:
-        px, py = camera.mundo_para_tela_px(self.Posicao)
-        return int(px), int(py)
-
+        self.Stats = self._montar_stats_publicos(stats_principais)
+        self.ListaAtaques = self._extrair_lista_ataques(self.Dados)
+        self.ItensBuild = self._extrair_itens_build(self.Dados)
+        self.VariacoesAtributos: dict[str, float] = {}
+        for chave in self.Stats.keys():
+            self.VariacoesAtributos[self._normalizar_chave_ficha(chave)] = 0.0
 
     @staticmethod
     def _normalizar_chave_ficha(chave: str) -> str:
-        return str(chave or "").strip().lower().replace("á", "a").replace("ã", "a").replace("ç", "c")
+        base = ''.join(
+            c for c in unicodedata.normalize('NFKD', str(chave or '').strip().lower())
+            if not unicodedata.combining(c)
+        )
+        for ch in (' ', '_', '-', '.', '/', '\\'):
+            base = base.replace(ch, '')
+        return base
+
+    @classmethod
+    def _label_publico(cls, chave: str) -> str:
+        normalizada = cls._normalizar_chave_ficha(chave)
+        if normalizada in cls._MAPA_LABELS:
+            return cls._MAPA_LABELS[normalizada]
+        bruto = str(chave or '').strip().replace('_', ' ')
+        return bruto[:1].upper() + bruto[1:] if bruto else '-'
+
+    @staticmethod
+    def _numero(valor, default=0.0) -> float:
+        try:
+            return float(valor)
+        except (TypeError, ValueError):
+            return float(default)
+
+    def _valor(self, *chaves, default=None):
+        return FichaPokemon._valor_pokemon(self.Dados, *chaves, default=default)
+
+    def _coletar_stats_brutos(self) -> dict[str, tuple[str, float]]:
+        ignorar = {
+            'nome', 'especie', 'nivel', 'xp', 'xpalvo', 'tipo', 'tipos', 'uid', 'id', 'estado', 'snapshot',
+            'build', 'buildequipaveis', 'itensbuild', 'habilidades', 'ataques', 'moves', 'golpes', 'memoria',
+            'altura', 'amizade', 'frutafavorita', 'grupo', 'estagio', 'tamanho', 'power', 'poder', 'poderrelativo',
+        }
+        saida: dict[str, tuple[str, float]] = {}
+        for fonte in self._fontes:
+            if not isinstance(fonte, dict):
+                continue
+            for chave, valor in fonte.items():
+                normalizada = self._normalizar_chave_ficha(chave)
+                if not normalizada or normalizada in ignorar:
+                    continue
+                if isinstance(valor, bool):
+                    continue
+                try:
+                    numero = float(valor)
+                except (TypeError, ValueError):
+                    continue
+                saida.setdefault(normalizada, (str(chave), numero))
+        return saida
+
+    def _montar_stats_publicos(self, stats_principais: dict[str, float]) -> dict[str, float]:
+        stats: dict[str, float] = {}
+        for chave, valor in stats_principais.items():
+            stats[self._label_publico(chave)] = float(valor)
+
+        complementos = {
+            'Vida': self.VidaMax,
+            'EnergiaMaxima': self.EnergiaMax,
+            'Peso': self.Peso,
+            'Escala': float(self.Escala),
+            'CrC': self.CrC,
+            'CrD': self.CrD,
+            'Amplificacao': self._numero(self._valor('Amplificacao', 'Amplificação', default=self._stats_brutos.get('amplificacao', ('', 0.0))[1] if 'amplificacao' in self._stats_brutos else 0.0), 0.0),
+            'Durabilidade': self._numero(self._valor('Durabilidade', default=self._stats_brutos.get('durabilidade', ('', 0.0))[1] if 'durabilidade' in self._stats_brutos else 0.0), 0.0),
+            'Barreira': self._numero(self._valor('Barreira', default=self._stats_brutos.get('barreira', ('', 0.0))[1] if 'barreira' in self._stats_brutos else 0.0), 0.0),
+            'Precisao': self._numero(self._valor('Precisao', 'Precisão', default=self._stats_brutos.get('precisao', ('', 0.0))[1] if 'precisao' in self._stats_brutos else 0.0), 0.0),
+        }
+        vamp = self._valor('Vamp', 'Vampirismo', default=self._stats_brutos.get('vamp', self._stats_brutos.get('vampirismo', ('', 0.0)))[1] if ('vamp' in self._stats_brutos or 'vampirismo' in self._stats_brutos) else 0.0)
+        complementos['Vamp'] = self._numero(vamp, 0.0)
+
+        for chave, valor in complementos.items():
+            stats[chave] = float(valor)
+
+        for normalizada, (original, valor) in self._stats_brutos.items():
+            label = self._label_publico(original)
+            stats.setdefault(label, float(valor))
+
+        return stats
+
+    @classmethod
+    def _normalizar_ataque(cls, item) -> dict[str, object] | None:
+        if item is None:
+            return None
+        if isinstance(item, dict):
+            ataque = dict(item)
+            nome = str(
+                ataque.get('Ataque')
+                or ataque.get('Nome')
+                or ataque.get('nome')
+                or ataque.get('Habilidade')
+                or ataque.get('habilidade')
+                or ataque.get('Move')
+                or ataque.get('move')
+                or ataque.get('Golpe')
+                or ataque.get('golpe')
+                or ''
+            ).strip()
+            if not nome:
+                return None
+            tipo = str(ataque.get('Tipo') or ataque.get('tipo') or 'Normal').strip() or 'Normal'
+            ataque.setdefault('Ataque', nome)
+            ataque.setdefault('Nome', nome)
+            ataque.setdefault('Tipo', tipo)
+            return ataque
+        nome = str(item).strip()
+        if not nome:
+            return None
+        return {'Ataque': nome, 'Nome': nome, 'Tipo': 'Normal'}
+
+    @classmethod
+    def _extrair_lista_ataques(cls, dados: Dict[str, object]) -> List[Dict[str, object]]:
+        candidatos = FichaPokemon._habilidades_ref(dados)
+        saida: List[Dict[str, object]] = []
+        for item in candidatos:
+            normalizado = cls._normalizar_ataque(item)
+            if normalizado is not None:
+                saida.append(normalizado)
+        return saida
+
+    @staticmethod
+    def _extrair_itens_build(dados: Dict[str, object]) -> List[object]:
+        build = FichaPokemon._build_ref(dados)
+        if isinstance(build, list) and build:
+            return list(build)
+        estado = dados.get('estado') if isinstance(dados.get('estado'), dict) else dados
+        candidatos = estado.get('build') or estado.get('itens_build') or dados.get('build') or []
+        return list(candidatos) if isinstance(candidatos, list) else []
+
+    def obter_valor_base_ficha(self, chave: str):
+        normalizada = self._normalizar_chave_ficha(chave)
+        mapa_direto = {
+            'peso': self.Peso,
+            'escala': self.Escala,
+            'energiamaxima': self.EnergiaMax,
+            'energiamax': self.EnergiaMax,
+            'energiaatual': self.Energia,
+            'energia': self.Energia,
+            'vida': self.VidaMax,
+            'vidaatual': self.VidaAtual,
+            'crc': self.CrC,
+            'crd': self.CrD,
+        }
+        if normalizada in mapa_direto:
+            return mapa_direto[normalizada]
+
+        for chave_publica, valor in self.Stats.items():
+            if self._normalizar_chave_ficha(chave_publica) == normalizada:
+                return valor
+        return 0.0
+
+    def obter_variacao_ficha(self, chave: str) -> float:
+        normalizada = self._normalizar_chave_ficha(chave)
+        return float(self.VariacoesAtributos.get(normalizada, 0.0))
+
+    def definir_variacao_ficha(self, chave: str, valor: float) -> None:
+        normalizada = self._normalizar_chave_ficha(chave)
+        self.VariacoesAtributos[normalizada] = float(valor)
+
+    def alterar_variacao_ficha(self, chave: str, delta: float) -> None:
+        normalizada = self._normalizar_chave_ficha(chave)
+        self.VariacoesAtributos[normalizada] = float(self.VariacoesAtributos.get(normalizada, 0.0) + float(delta))
 
     def obter_valor_ficha(self, chave: str):
-        c = self._normalizar_chave_ficha(chave)
-        mapa_direto = {
-            "peso": self.Peso,
-            "escala": self.Escala,
-            "energiamaxima": self.EnergiaMax,
-            "energiamax": self.EnergiaMax,
-            "crc": self.CrC,
-            "crd": self.CrD,
-            "vida": self.VidaMax,
-        }
-        if c in mapa_direto:
-            return mapa_direto[c]
+        base = self.obter_valor_base_ficha(chave)
+        try:
+            return float(base) + self.obter_variacao_ficha(chave)
+        except (TypeError, ValueError):
+            return base
 
-        for k, v in self.Stats.items():
-            if self._normalizar_chave_ficha(k) == c:
-                return v
-        return 0.0
+    def listar_atributos_extras_ficha(self, limite: int = 10) -> list[str]:
+        escolhidos: list[str] = []
+        usados = {self._normalizar_chave_ficha(ch) for ch in self._ORDEM_BASE}
+        usados.update({'vidaatual', 'energiaatual'})
+
+        for chave in self._EXTRAS_PREFERIDOS:
+            if len(escolhidos) >= limite:
+                break
+            if self._normalizar_chave_ficha(chave) in usados:
+                continue
+            valor = self.obter_valor_ficha(chave)
+            if valor not in (None, ''):
+                escolhidos.append(chave)
+                usados.add(self._normalizar_chave_ficha(chave))
+
+        for chave_publica in self.Stats.keys():
+            if len(escolhidos) >= limite:
+                break
+            normalizada = self._normalizar_chave_ficha(chave_publica)
+            if normalizada in usados:
+                continue
+            escolhidos.append(chave_publica)
+            usados.add(normalizada)
+
+        return escolhidos[:limite]
 
     def montar_dados_ficha(self) -> Dict[str, object]:
         return {
-            "nome": self.Nome,
-            "nivel": self.Nivel,
-            "tipos": list(self.Tipos),
-            "ataques": list(self.ListaAtaques),
-            "itens": list(self.ItensBuild),
-            "vida_atual": self.VidaAtual,
-            "vida_max": self.VidaMax,
-            "energia_atual": self.Energia,
-            "energia_max": self.EnergiaMax,
+            'nome': self.Nome,
+            'especie': self.Especie,
+            'nivel': self.Nivel,
+            'tipos': list(self.Tipos),
+            'ataques': list(self.ListaAtaques),
+            'itens': list(self.ItensBuild),
+            'vida_atual': self.VidaAtual,
+            'vida_max': self.VidaMax,
+            'energia_atual': self.Energia,
+            'energia_max': self.EnergiaMax,
+            'stats': dict(self.Stats),
         }
+
+    def obter_ataques_ficha(self, limite: int | None = None) -> list[dict[str, object]]:
+        ataques = list(self.ListaAtaques)
+        return ataques if limite is None else ataques[: max(0, int(limite))]
+
+    def obter_itens_ficha(self, limite: int | None = None) -> list[object]:
+        itens = list(self.ItensBuild)
+        return itens if limite is None else itens[: max(0, int(limite))]
 
     @classmethod
     def _frames_especie(cls, especie: str) -> List[pygame.Surface]:
-        chave = str(especie or "").strip().lower()
+        chave = str(especie or '').strip().lower()
         if not chave:
             return []
         if chave in cls._cache_frames:
@@ -129,21 +351,37 @@ class PokemonBatalha:
         k = float(tamanho_px) / float(max(w, h))
         return pygame.transform.smoothscale(base, (max(1, int(w * k)), max(1, int(h * k))))
 
+    def raio_px(self, camera) -> int:
+        tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
+        return max(12, int(tile_px * (self.DiametroTiles * 0.5)))
+
+    def centro_tela(self, camera) -> Tuple[int, int]:
+        px, py = camera.mundo_para_tela_px(self.Posicao)
+        return int(px), int(py)
+
     def renderizar(self, tela: pygame.Surface, camera, selecionado: bool = False) -> None:
         centro = self.centro_tela(camera)
-        tile_px = max(16, int(getattr(camera, "TilePx", 40) or 40))
+        tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
         raio = self.raio_px(camera)
 
-        cor_circulo = (56, 90, 145) if self.Lado == "jogador" else (144, 74, 74)
-        pygame.draw.circle(tela, (0, 0, 0, 80), (centro[0], centro[1] + max(4, raio // 8)), int(raio * 0.96))
+        cor_circulo = (56, 90, 145) if self.Lado == 'jogador' else (144, 74, 74)
         pygame.draw.circle(tela, cor_circulo, centro, raio)
-        pygame.draw.circle(tela, (22, 26, 34), centro, raio, max(2, int(tile_px * 0.06)))
+        cor_borda = (22, 26, 34)
+        largura_borda = max(2, int(tile_px * 0.06))
         if selecionado:
             pulso = (pygame.time.get_ticks() % 900) / 900.0
-            alpha = int(130 + 120 * abs(0.5 - pulso) * 2.0)
+            alpha = int(120 + 115 * abs(0.5 - pulso) * 2.0)
             brilho = pygame.Surface((raio * 3, raio * 3), pygame.SRCALPHA)
-            pygame.draw.circle(brilho, (255, 255, 190, alpha), (brilho.get_width() // 2, brilho.get_height() // 2), raio + max(2, int(tile_px * 0.16)), 3)
+            pygame.draw.circle(
+                brilho,
+                (255, 248, 190, alpha),
+                (brilho.get_width() // 2, brilho.get_height() // 2),
+                raio,
+                max(largura_borda + 2, 4),
+            )
             tela.blit(brilho, brilho.get_rect(center=centro))
+            cor_borda = (244, 238, 178)
+        pygame.draw.circle(tela, cor_borda, centro, raio, largura_borda)
 
         frame = self._frame_atual(int(raio * 1.40))
         if frame is not None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from typing import Dict, List, Optional, Tuple
 import math
 import os
@@ -265,6 +266,14 @@ class ControladorObjetos:
             lote = self._fila_saida_envio
             self._fila_saida_envio = []
         return lote
+
+    def snapshot_objeto_por_id(self, objeto_id: int) -> Optional[Dict[str, object]]:
+        oid = int(objeto_id or 0)
+        if oid <= 0:
+            return None
+        with self._lock_objetos:
+            payload = self.ObjetosPorId.get(oid)
+            return copy.deepcopy(payload) if isinstance(payload, dict) else None
 
     def _eh_payload_pokemon(self, payload: Dict[str, object]) -> bool:
         tipo = str(payload.get("tipo", "")).strip().lower()

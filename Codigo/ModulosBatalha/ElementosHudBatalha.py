@@ -6,6 +6,7 @@ from typing import Callable, List, Optional
 import pygame
 
 from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
+from Codigo.ModulosBatalha.ControladorFluxos import ControladorFluxos
 from Codigo.Prefabs.Botao import Botao
 
 
@@ -20,11 +21,14 @@ class ElementosHudBatalha:
         self._fuga_pressao = 0.0
         self._fuga_alvo = 8.0
         self._fuga_taxa_clique = 1.65
-        self._fuga_taxa_decay = 0.3
+        self._fuga_taxa_decay = 0.08
         self._fuga_disparada = False
         self._ficha = FichaPokemonBatalha()
+        self._fluxos = ControladorFluxos(controlador_batalha, camera) if controlador_batalha is not None and camera is not None else None
         self._anim_ficha = 0.0
         self._pokemon_exibido = None
+        self._botao_preparar: Optional[Botao] = None
+        self._botao_pronto: Optional[Botao] = None
 
     def _carregar_icone(self, lado: int) -> Optional[pygame.Surface]:
         caminho = Path("Recursos") / "Visual" / "Icones" / "Diversos" / "fugir.png"
@@ -61,6 +65,22 @@ class ElementosHudBatalha:
             },
         )
         self._icone_fugir = self._carregar_icone(max(24, int(lado * 0.68)))
+        bw = max(108, int(lado * 2.0))
+        bh = max(36, int(lado * 0.68))
+        bx = w - bw - margem
+        by = h - (bh * 2 + 10 + margem)
+        estilo_acao = {
+            "radius": 8,
+            "border_width": 2,
+            "bg": (24, 36, 52),
+            "bg_hover": (36, 52, 76),
+            "bg_pressed": (18, 28, 40),
+            "border": (153, 185, 224),
+            "border_hover": (218, 236, 255),
+            "text_style": {"size": 22, "outline_thickness": 2, "outline_color": (8, 12, 20)},
+        }
+        self._botao_preparar = Botao(pygame.Rect(bx, by, bw, bh), "Preparar", execute=lambda _jogo, _botao: self._preparar_jogada(), style=estilo_acao)
+        self._botao_pronto = Botao(pygame.Rect(bx, by + bh + 10, bw, bh), "Pronto", execute=lambda _jogo, _botao: self._confirmar_jogadas(), style=estilo_acao)
 
     def _pressionar_fuga(self) -> None:
         self._fuga_pressao = min(self._fuga_alvo, self._fuga_pressao + self._fuga_taxa_clique)
@@ -89,8 +109,20 @@ class ElementosHudBatalha:
             return
         for ev in eventos or []:
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                if self._ficha.contem_ponto(ev.pos):
+                    break
+                if (self._botao_preparar and self._botao_preparar.rect.collidepoint(ev.pos)) or (self._botao_pronto and self._botao_pronto.rect.collidepoint(ev.pos)):
+                    break
                 self._controlador.selecionar_por_mouse(ev.pos, self._camera)
                 break
+
+    def _preparar_jogada(self) -> None:
+        if self._fluxos is not None:
+            self._fluxos.preparar(self._ficha)
+
+    def _confirmar_jogadas(self) -> None:
+        if self._fluxos is not None:
+            self._fluxos.pronto()
 
     def _atualizar_animacao_ficha(self, dt: float):
         selecionado = getattr(self._controlador, "PokemonSelecionado", None)
@@ -107,10 +139,32 @@ class ElementosHudBatalha:
         self._processar_selecao(eventos or [])
         self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)
+        if self._fluxos is not None:
+            self._fluxos.atualizar_contexto(self._ficha.ataque_selecionado())
+            self._fluxos.processar_eventos(
+                eventos or [],
+                self._ficha,
+                [
+                    self._ficha.rect,
+                    self._botao_preparar.rect if self._botao_preparar else pygame.Rect(0, 0, 0, 0),
+                    self._botao_pronto.rect if self._botao_pronto else pygame.Rect(0, 0, 0, 0),
+                ],
+            )
         if self._botao_fugir is not None:
             self._botao_fugir.render(tela, eventos or [], dt, None)
             if self._icone_fugir is not None:
                 rect = self._icone_fugir.get_rect(center=self._botao_fugir.rect.center)
                 tela.blit(self._icone_fugir, rect)
+        if self._botao_preparar is not None:
+            self._botao_preparar.render(tela, eventos or [], dt, None)
+        if self._botao_pronto is not None:
+            self._botao_pronto.render(tela, eventos or [], dt, None)
+        if self._fluxos is not None and self._pokemon_exibido is not None:
+            custo, pode = self._fluxos.previsao_consumo(self._pokemon_exibido, self._ficha.ataque_selecionado())
+            self._ficha.atualizar_previsao(custo, pode)
+        else:
+            self._ficha.atualizar_previsao(0.0, True)
+        if self._fluxos is not None:
+            self._fluxos.desenhar(tela, dt)
         self._ficha.render(tela, self._pokemon_exibido, self._anim_ficha, eventos or [], dt)
         self._desenhar_overlay_fuga(tela)

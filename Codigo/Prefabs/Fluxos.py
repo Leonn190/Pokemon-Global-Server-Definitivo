@@ -155,3 +155,59 @@ class Fluxo:
             p += passo
 
         tela.blit(camada, (min_x, min_y))
+
+
+class FluxoTiro:
+    def desenhar(self, tela, inicio, angulo_rad: float, alcance_px: float, grossura_px: float, diametro_px: float = 0.0, *, alpha: int = 110):
+        alcance = max(4.0, float(alcance_px))
+        grossura = max(3.0, float(grossura_px))
+        fim = (inicio[0] + math.cos(angulo_rad) * alcance, inicio[1] + math.sin(angulo_rad) * alcance)
+        area = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
+        dx = fim[0] - inicio[0]
+        dy = fim[1] - inicio[1]
+        dist = max(1.0, math.hypot(dx, dy))
+        ux, uy = dx / dist, dy / dist
+        px, py = -uy, ux
+        a = (inicio[0] + px * grossura * 0.5, inicio[1] + py * grossura * 0.5)
+        b = (inicio[0] - px * grossura * 0.5, inicio[1] - py * grossura * 0.5)
+        c = (fim[0] - px * grossura * 0.5, fim[1] - py * grossura * 0.5)
+        d = (fim[0] + px * grossura * 0.5, fim[1] + py * grossura * 0.5)
+        pygame.draw.polygon(area, (230, 233, 238, max(36, alpha)), [a, b, c, d])
+        pygame.draw.polygon(area, (200, 206, 216, min(255, alpha + 45)), [a, b, c, d], 2)
+        diam = max(0.0, float(diametro_px))
+        if diam > 0.5:
+            pygame.draw.circle(area, (224, 230, 240, max(28, alpha - 10)), (int(fim[0]), int(fim[1])), int(diam * 0.5))
+            pygame.draw.circle(area, (210, 216, 228, min(255, alpha + 45)), (int(fim[0]), int(fim[1])), int(diam * 0.5), 2)
+        tela.blit(area, (0, 0))
+
+
+class FluxoArea:
+    def desenhar(self, tela, inicio, raio_px: float, angulo_rad: float, base_pct: float, altura_pct: float, teto_pct: float | None = None, *, alpha: int = 95):
+        raio = max(2.0, float(raio_px))
+        circ = 2.0 * math.pi * raio
+        base_ang = (max(0.0, float(base_pct)) / 100.0) * (circ / raio)
+        altura = (max(0.0, float(altura_pct)) / 100.0) * circ
+        teto_ang = None if teto_pct is None else (max(0.0, float(teto_pct)) / 100.0) * (circ / raio)
+
+        base_ang = max(math.radians(4.0), min(math.tau, base_ang))
+        topo_raio = raio + max(6.0, altura)
+        if teto_ang is None or teto_ang <= 0.0:
+            teto_ang = base_ang
+        teto_ang = max(math.radians(2.0), min(math.tau, teto_ang))
+
+        base_n = max(8, int(base_ang * raio / 4.0))
+        topo_n = max(8, int(teto_ang * topo_raio / 5.5))
+        pts = []
+        for i in range(base_n + 1):
+            t = i / max(1, base_n)
+            a = angulo_rad - base_ang * 0.5 + base_ang * t
+            pts.append((inicio[0] + math.cos(a) * raio, inicio[1] + math.sin(a) * raio))
+        for i in range(topo_n, -1, -1):
+            t = i / max(1, topo_n)
+            a = angulo_rad - teto_ang * 0.5 + teto_ang * t
+            pts.append((inicio[0] + math.cos(a) * topo_raio, inicio[1] + math.sin(a) * topo_raio))
+
+        area = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
+        pygame.draw.polygon(area, (255, 255, 255, alpha), pts)
+        pygame.draw.polygon(area, (245, 250, 255, min(255, alpha + 65)), pts, 2)
+        tela.blit(area, (0, 0))

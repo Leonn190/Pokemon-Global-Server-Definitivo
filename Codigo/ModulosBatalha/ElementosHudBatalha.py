@@ -20,7 +20,7 @@ class ElementosHudBatalha:
         self._fuga_pressao = 0.0
         self._fuga_alvo = 8.0
         self._fuga_taxa_clique = 1.65
-        self._fuga_taxa_decay = 0.3
+        self._fuga_taxa_decay = 0.08
         self._fuga_disparada = False
         self._ficha = FichaPokemonBatalha()
         self._anim_ficha = 0.0
@@ -89,6 +89,8 @@ class ElementosHudBatalha:
             return
         for ev in eventos or []:
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                if self._ficha.contem_ponto(ev.pos):
+                    break
                 self._controlador.selecionar_por_mouse(ev.pos, self._camera)
                 break
 

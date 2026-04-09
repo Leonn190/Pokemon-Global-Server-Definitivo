@@ -2,18 +2,24 @@ from __future__ import annotations
 
 import csv
 import random
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from SimuladorServerJogo.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
+from SimuladorServerJogo.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado, materializar_pokemon
 
-ARQUIVO_POKEMONS = Path("Dados") / "Pokemon Global Server - Pokemons.csv"
+ARQUIVO_POKEMONS = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Pokemons.csv"
 
 
 class InicializadorBatalha:
     def __init__(self, contexto: Dict[str, object] | None = None) -> None:
         self.Contexto = dict(contexto or {})
         self._base_pokemons = self._carregar_base_pokemons()
+        self._base_por_nome = {
+            self._normalizar_texto(row.get("Nome")): row
+            for row in self._base_pokemons
+            if self._normalizar_texto(row.get("Nome"))
+        }
 
     @staticmethod
     def _normalizar_time(bruto: object, slots_por_time: int = 6) -> Dict[str, object]:
@@ -121,6 +127,13 @@ class InicializadorBatalha:
         base: List[Dict[str, object]] = []
         with ARQUIVO_POKEMONS.open("r", encoding="utf-8-sig") as f:
             for row in csv.DictReader(f):
+                nome = str(row.get("Nome") or "").strip()
+                if not nome:
+                    continue
+                raridade = self._int(row.get("Raridade"), 0)
+                estagio = self._int(row.get("Estagio"), 0)
+                if raridade < 1 or raridade > 10 or estagio <= 0:
+                    continue
                 base.append(dict(row))
         return base
 
@@ -131,54 +144,105 @@ class InicializadorBatalha:
         except Exception:
             return int(default)
 
+    @staticmethod
+    def _normalizar_texto(v: object) -> str:
+        return str(v or "").strip().casefold()
+
+    def _buscar_row_por_especie(self, especie: object) -> Dict[str, object] | None:
+        return self._base_por_nome.get(self._normalizar_texto(especie))
+
     def _candidatos_linhagem(self, linhagem: str, estagio_max: int) -> List[Dict[str, object]]:
-        linhagem_norm = str(linhagem or "").strip().lower()
+        linhagem_norm = self._normalizar_texto(linhagem)
         if not linhagem_norm:
             return []
         out: List[Dict[str, object]] = []
         for row in self._base_pokemons:
-            if str(row.get("Linhagem") or "").strip().lower() != linhagem_norm:
+            if self._normalizar_texto(row.get("Linhagem")) != linhagem_norm:
                 continue
-            estagio = self._int(row.get("Estagio"), 1)
-            if estagio <= int(estagio_max):
+            if self._int(row.get("Estagio"), 1) <= int(estagio_max):
                 out.append(row)
         return out
 
-    def criar_bando(self, pokemon_base: Dict[str, object]) -> List[Dict[str, object]]:
+    @staticmethod
+    def _estado_pokemon(pokemon: Dict[str, object]) -> Dict[str, object]:
+        return pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+
+    def _especie_pokemon(self, pokemon: Dict[str, object]) -> str:
+        estado = self._estado_pokemon(pokemon)
+        return str(
+            estado.get("especie")
+            or estado.get("Especie")
+            or estado.get("nome")
+            or estado.get("Nome")
+            or pokemon.get("nome")
+            or pokemon.get("Nome")
+            or ""
+        ).strip()
+
+    def _metadados_confrontado(self, pokemon_base: Dict[str, object]) -> Dict[str, object]:
+        estado = self._estado_pokemon(pokemon_base)
+        especie = self._especie_pokemon(pokemon_base)
+        row = self._buscar_row_por_especie(especie)
+        linhagem = str(estado.get("linhagem") or estado.get("Linhagem") or (row or {}).get("Linhagem") or "").strip()
+        estagio = self._int(estado.get("estagio", estado.get("Estagio")), self._int((row or {}).get("Estagio"), 1))
+        return {"especie": especie, "linhagem": linhagem, "estagio": max(1, estagio)}
+
+    def _materializar_confrontado(self, pokemon_base: Dict[str, object]) -> Dict[str, object] | None:
         if not isinstance(pokemon_base, dict):
-            return []
-        estado = pokemon_base.get("estado") if isinstance(pokemon_base.get("estado"), dict) else pokemon_base
-        linhagem = str(estado.get("linhagem") or estado.get("Linhagem") or "").strip()
-        estagio = self._int(estado.get("estagio", estado.get("Estagio")), 1)
-        especie = str(estado.get("especie") or estado.get("Especie") or estado.get("nome") or estado.get("Nome") or "").strip()
+            return None
+        especie = self._especie_pokemon(pokemon_base)
+        if isinstance(pokemon_base.get("estado"), dict) and especie:
+            return materializar_pokemon(deepcopy(pokemon_base))
+        if especie:
+            return criar_pokemon_inicial_materializado(especie)
+        return None
 
-        candidatos = self._candidatos_linhagem(linhagem, estagio)
-        if not candidatos and especie:
-            candidatos = [r for r in self._base_pokemons if str(r.get("Nome") or "").strip().lower() == especie.lower()]
-        if not candidatos and especie:
-            candidatos = [{"Nome": especie}]
+    def _sortear_especies_extras(self, especie_base: str, linhagem: str, estagio_max: int) -> List[str]:
+        candidatos = self._candidatos_linhagem(linhagem, estagio_max)
         if not candidatos:
-            return []
+            row_base = self._buscar_row_por_especie(especie_base)
+            candidatos = [row_base] if isinstance(row_base, dict) else []
 
-        quantidade = random.choice((1, 6))
-        if quantidade == 1:
-            if not especie:
-                return []
-            return [criar_pokemon_inicial_materializado(especie)]
-        bando: List[Dict[str, object]] = []
-        repeticoes: Dict[str, int] = {}
-        tentativas = 0
-        while len(bando) < quantidade and tentativas < 80:
-            tentativas += 1
-            row = random.choice(candidatos)
+        contagem_inicial: Dict[str, int] = {}
+        especie_base_norm = self._normalizar_texto(especie_base)
+        if especie_base_norm:
+            contagem_inicial[especie_base_norm] = 1
+
+        pool: List[str] = []
+        for row in candidatos:
             nome = str(row.get("Nome") or "").strip()
             if not nome:
                 continue
-            if repeticoes.get(nome, 0) >= 3:
+            nome_norm = self._normalizar_texto(nome)
+            vagas = 3 - int(contagem_inicial.get(nome_norm, 0))
+            if vagas <= 0:
                 continue
-            repeticoes[nome] = repeticoes.get(nome, 0) + 1
-            bando.append(criar_pokemon_inicial_materializado(nome))
-        return bando
+            pool.extend([nome] * vagas)
+
+        if not pool:
+            return []
+
+        quantidade_extras = random.randint(0, min(5, len(pool)))
+        if quantidade_extras <= 0:
+            return []
+
+        random.shuffle(pool)
+        return pool[:quantidade_extras]
+
+    def criar_bando(self, pokemon_base: Dict[str, object]) -> List[Dict[str, object]]:
+        confrontado = self._materializar_confrontado(pokemon_base)
+        if not isinstance(confrontado, dict):
+            return []
+
+        metadados = self._metadados_confrontado(confrontado)
+        especie_base = str(metadados.get("especie") or "").strip()
+        linhagem = str(metadados.get("linhagem") or "").strip()
+        estagio = self._int(metadados.get("estagio"), 1)
+
+        inimigos = [confrontado]
+        for especie_extra in self._sortear_especies_extras(especie_base, linhagem, estagio):
+            inimigos.append(criar_pokemon_inicial_materializado(especie_extra))
+        return inimigos
 
 
 def pontos_lados_arena(centro: Tuple[float, float], largura: float, altura: float, total_aliados: int, total_inimigos: int):

@@ -129,7 +129,11 @@ class ControladorPlayer:
                 if str(tipo_obj).strip().lower() in {"entidade_pokemon", "pokemon"}:
                     limite_real = float(raio_ator + raio_obj)
                     if d2 <= (limite_real * limite_real):
-                        self._colisao_pokemon_pendente = {"id": int(oid), "posicao": [float(sx), float(sy)]}
+                        payload_pokemon = self._objetos.snapshot_objeto_por_id(int(oid))
+                        if isinstance(payload_pokemon, dict) and payload_pokemon:
+                            self._colisao_pokemon_pendente = payload_pokemon
+                        else:
+                            self._colisao_pokemon_pendente = {"id": int(oid), "posicao": [float(sx), float(sy)]}
                     continue
                 limite = float(raio_ator + raio_obj + margem)
                 if d2 <= (limite * limite):

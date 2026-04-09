@@ -417,9 +417,16 @@ class FichaPokemon:
 
     @classmethod
     def _tamanho(cls, pokemon: dict | None):
-        valor = cls._valor_pokemon(pokemon, 'Tamanho', 'tamanho', default=3)
+        valor = str(cls._valor_pokemon(pokemon, 'Tamanho', 'tamanho', default='M') or 'M').strip().upper()
+        if valor in {'S', 'M', 'G'}:
+            return valor
+        return 'M'
+
+    @classmethod
+    def _escala(cls, pokemon: dict | None) -> int:
+        valor = cls._valor_pokemon(pokemon, 'Escala', 'escala', default=3)
         try:
-            return max(1, int(float(valor)))
+            return max(0, int(float(valor)))
         except (TypeError, ValueError):
             return 3
 
@@ -866,6 +873,7 @@ class FichaPokemon:
             ('Peso', self._formatar_numero(self._peso(pokemon), 2, ' kg')),
             ('Amizade', self._formatar_percentual(self._amizade(pokemon))),
             ('Fruta', str(self._fruta_favorita(pokemon) or '-')),
+            ('Escala', str(self._escala(pokemon))),
             ('Tamanho', str(self._tamanho(pokemon))),
             ('Estágio', str(self._estagio(pokemon) or '-')),
             ('Crítico', crit_chance),

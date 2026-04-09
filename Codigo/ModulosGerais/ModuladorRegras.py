@@ -48,12 +48,15 @@ class ModuladorRegras:
 
         pokemons = regras.get("pokemons") if isinstance(regras.get("pokemons"), dict) else {}
         intervalo_anim = pokemons.get("animacao_intervalo_frame_ms")
-        incremento_tamanho = pokemons.get("tamanho_incremento_por_tamanho")
+        incremento_tamanho = pokemons.get("tamanho_incremento_por_escala", pokemons.get("tamanho_incremento_por_tamanho"))
+        diametro_base_tamanho = pokemons.get("tamanho_diametro_base_tiles")
         if intervalo_anim is not None:
             Pokemon._INTERVALO_FRAME_ANIM_MS = max(16, int(intervalo_anim))
             FichaPokemon._INTERVALO_FRAME_ANIM_MS = max(16, int(intervalo_anim))
         if incremento_tamanho is not None:
-            Pokemon._INCREMENTO_DIAMETRO_POR_TAMANHO = max(0.01, float(incremento_tamanho))
+            Pokemon._INCREMENTO_DIAMETRO_POR_ESCALA = max(0.01, float(incremento_tamanho))
+        if diametro_base_tamanho is not None:
+            Pokemon._DIAMETRO_BASE_TILES = max(0.1, float(diametro_base_tamanho))
 
         gerais = regras.get("gerais") if isinstance(regras.get("gerais"), dict) else {}
         zoom_min = gerais.get("combate_camera_zoom_min")

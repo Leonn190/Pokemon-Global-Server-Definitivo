@@ -24,7 +24,8 @@ class Pokemon:
     _cache_rotacao_bola: Dict[Tuple[int, int], pygame.Surface] = {}
     _carregamento_em_andamento: set[str] = set()
     _INTERVALO_FRAME_ANIM_MS = 85
-    _INCREMENTO_DIAMETRO_POR_TAMANHO = 0.2
+    _DIAMETRO_BASE_TILES = 0.6
+    _INCREMENTO_DIAMETRO_POR_ESCALA = 0.1
 
     def __init__(self, snapshot: Dict[str, object]) -> None:
         pos = self._pos(snapshot.get("posicao"))
@@ -96,14 +97,14 @@ class Pokemon:
         return (0.0, 0.0)
 
     @staticmethod
-    def _diametro_por_tamanho(tamanho: object, default: float = 1.4) -> float:
+    def _diametro_por_escala(escala: object, default: float = 1.4) -> float:
         try:
-            t = int(float(tamanho))
+            e = int(float(escala))
         except (TypeError, ValueError):
-            t = 0
-        if t <= 0:
+            e = 0
+        if e < 0:
             return float(default)
-        return 1.0 + (max(1, t) - 1) * float(Pokemon._INCREMENTO_DIAMETRO_POR_TAMANHO)
+        return float(Pokemon._DIAMETRO_BASE_TILES) + (e * float(Pokemon._INCREMENTO_DIAMETRO_POR_ESCALA))
 
     @classmethod
     def _precarregar_frames_async(cls, especie: str) -> None:
@@ -428,7 +429,10 @@ class Pokemon:
         if diametro_estado <= 0.0:
             diametro_estado = self._f(snapshot.get("tamanho_tiles"), 0.0)
         if diametro_estado <= 0.0:
-            diametro_estado = self._diametro_por_tamanho(estado.get("tamanho", snapshot.get("tamanho")), default=self._diametro_tiles_visual)
+            diametro_estado = self._diametro_por_escala(
+                estado.get("escala", snapshot.get("escala", estado.get("tamanho", snapshot.get("tamanho")))),
+                default=self._diametro_tiles_visual,
+            )
         self._diametro_tiles_visual = max(1.0, float(diametro_estado))
         raio_por_tamanho = self._diametro_tiles_visual * 0.5
         raio_snapshot = self._f(snapshot.get("raio_colisao"), -1.0)

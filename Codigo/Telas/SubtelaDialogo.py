@@ -12,9 +12,7 @@ from Codigo.Geradores.Ator import Ator
 from Codigo.Modulos.Loja import Loja
 from Codigo.Prefabs.Texto import Texto, TextoAnimado
 
-
 from Codigo.Telas.Subtela import Subtela
-
 
 class SubtelaDialogo(Subtela):
     usar_overlay_gerenciador = False

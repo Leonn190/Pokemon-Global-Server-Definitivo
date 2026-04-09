@@ -285,6 +285,9 @@ class LeitorMundo:
         tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
         with self._lock:
             tamanho_chunk = max(1, int(self.TamanhoChunkBlocos)); meta = dict(self.MetaMundo); chunks_ref = self.Chunks
+        dimensao_meta = str(meta.get("dimensao") or "Mundo")
+        if dimensao_meta.startswith("Estadio"):
+            return
         if not chunks_ref:
             return
 

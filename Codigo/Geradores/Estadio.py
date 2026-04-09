@@ -123,7 +123,19 @@ class EstadioInterno:
             x, y = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
             return int(x), int(y)
 
+        def clarear(cor: tuple[int, int, int], fator: float) -> tuple[int, int, int]:
+            fator_l = max(0.0, min(1.0, float(fator)))
+            return (
+                int(cor[0] + (255 - cor[0]) * fator_l),
+                int(cor[1] + (255 - cor[1]) * fator_l),
+                int(cor[2] + (255 - cor[2]) * fator_l),
+            )
+
         # Paleta
+        tipo = str(estado.get("tipo_estadio") or "normal")
+        cor_base_tipo = GeradorEstadio._cor_tipo(tipo)
+        cor_chao_a = clarear(cor_base_tipo, 0.66)
+        cor_chao_b = clarear(cor_base_tipo, 0.78)
         cor_parede = (54, 61, 77)
         cor_arena = (222, 232, 244)
         cor_arena_borda = (120, 150, 184)
@@ -143,6 +155,14 @@ class EstadioInterno:
         sala = pygame.Rect(0, 0, int(largura * tile), int(altura * tile))
         sala.topleft = tela_px((0.0, 0.0))
         espessura = max(6, px(0.42))
+        piso = sala.inflate(-espessura * 2, -espessura * 2)
+        passo = max(8, px(1.0))
+        for y in range(piso.top, piso.bottom, passo):
+            linha = (y - piso.top) // passo
+            for x in range(piso.left, piso.right, passo):
+                coluna = (x - piso.left) // passo
+                cor_tile = cor_chao_a if (linha + coluna) % 2 == 0 else cor_chao_b
+                pygame.draw.rect(tela, cor_tile, (x, y, passo, passo))
         pygame.draw.rect(
             tela,
             cor_parede,

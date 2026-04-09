@@ -15,10 +15,11 @@ _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
 class PokemonBatalha:
     _cache_frames: Dict[str, List[pygame.Surface]] = {}
 
-    def __init__(self, dados: Dict[str, object], posicao: Vector2, lado: str) -> None:
+    def __init__(self, dados: Dict[str, object], posicao: Vector2, lado: str, regras: Dict[str, object] | None = None) -> None:
         self.Dados = dict(dados or {})
         self.Posicao = (float(posicao[0]), float(posicao[1]))
         self.Lado = str(lado or "jogador")
+        self.Regras = dict(regras or {})
 
         estado = self.Dados.get("estado") if isinstance(self.Dados.get("estado"), dict) else self.Dados
         stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
@@ -29,13 +30,16 @@ class PokemonBatalha:
         self.Escala = int(estado.get("escala", self.Dados.get("escala", 3)) or 3)
         self.CrC = float(stats.get("CrC", estado.get("CrC", 0.0)) or 0.0)
         self.CrD = float(stats.get("CrD", estado.get("CrD", 0.0)) or 0.0)
+        base_tamanho = float(self.Regras.get("combate_pokemon_tamanho_diametro_base_tiles", 1.0) or 1.0)
+        incremento = float(self.Regras.get("combate_pokemon_tamanho_incremento_por_escala", 0.1) or 0.1)
+        self.DiametroTiles = max(0.4, base_tamanho + max(0.0, float(self.Escala)) * max(0.01, incremento))
 
         self.VidaMax = max(1.0, float(stats.get("Vida", estado.get("Vida", 1.0)) or 1.0))
         self.VidaAtual = max(0.0, min(self.VidaMax, float(estado.get("vida_atual", self.VidaMax) or self.VidaMax)))
 
         ene_base = max(1.0, float(stats.get("Ene", estado.get("Ene", 1.0)) or 1.0))
         self.EnergiaMax = ene_base * 3.0
-        energia_padrao = max(0.0, min(self.EnergiaMax, float(estado.get("energia", self.EnergiaMax) or self.EnergiaMax)))
+        energia_padrao = max(0.0, min(self.EnergiaMax, float(estado.get("energia", ene_base) or ene_base)))
         self.Energia = energia_padrao
 
     @classmethod
@@ -64,7 +68,7 @@ class PokemonBatalha:
         px, py = camera.mundo_para_tela_px(self.Posicao)
         centro = (int(px), int(py))
         tile_px = max(16, int(getattr(camera, "TilePx", 40) or 40))
-        raio = max(18, int(tile_px * 0.78))
+        raio = max(12, int(tile_px * (self.DiametroTiles * 0.5)))
 
         cor_circulo = (56, 90, 145) if self.Lado == "jogador" else (144, 74, 74)
         pygame.draw.circle(tela, (0, 0, 0, 80), (centro[0], centro[1] + max(4, raio // 8)), int(raio * 0.96))
@@ -75,36 +79,36 @@ class PokemonBatalha:
         if frame is not None:
             tela.blit(frame, frame.get_rect(center=(centro[0], centro[1] - int(raio * 0.08))))
 
-        self._desenhar_barras(tela, centro, raio)
+        self._desenhar_barras(tela, centro, raio, tile_px)
 
-    def _desenhar_barras(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int) -> None:
-        largura_arco = max(7, int(raio * 0.16))
-        energia_largura = max(2, int(largura_arco * 0.45))
-        r_vida = max(10, int(raio * 1.16))
-        r_energia = r_vida + max(3, int(largura_arco * 0.45))
-        ang_ini = math.radians(200)
-        ang_fim = math.radians(340)
+    def _desenhar_barras(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int) -> None:
+        largura = max(24, int(tile_px * self.DiametroTiles * 1.25))
+        vida_h = max(7, int(tile_px * 0.18))
+        ene_h = max(2, int(vida_h * 0.44))
+        espaco = max(1, int(tile_px * 0.05))
+        topo = int(centro[1] - raio - (tile_px * 0.38))
+        x = int(centro[0] - largura * 0.5)
 
-        rect_vida = pygame.Rect(centro[0] - r_vida, centro[1] - r_vida, r_vida * 2, r_vida * 2)
-        rect_ene = pygame.Rect(centro[0] - r_energia, centro[1] - r_energia, r_energia * 2, r_energia * 2)
+        rect_vida = pygame.Rect(x, topo, largura, vida_h)
+        rect_ene = pygame.Rect(x, topo + vida_h + espaco, largura, ene_h)
 
-        pygame.draw.arc(tela, (0, 0, 0), rect_vida, ang_ini, ang_fim, largura_arco)
+        pygame.draw.rect(tela, (0, 0, 0), rect_vida, border_radius=max(2, vida_h // 3))
+        inner_vida = rect_vida.inflate(-2, -2)
+        pygame.draw.rect(tela, (34, 44, 34), inner_vida, border_radius=max(2, inner_vida.height // 3))
         vida_t = 0.0 if self.VidaMax <= 0 else max(0.0, min(1.0, self.VidaAtual / self.VidaMax))
-        if vida_t > 0.001:
-            pygame.draw.arc(tela, (52, 205, 72), rect_vida, ang_ini, ang_ini + (ang_fim - ang_ini) * vida_t, max(1, largura_arco - 2))
+        if vida_t > 0.001 and inner_vida.width > 2:
+            fill_vida = pygame.Rect(inner_vida.x, inner_vida.y, max(1, int(inner_vida.width * vida_t)), inner_vida.height)
+            pygame.draw.rect(tela, (52, 205, 72), fill_vida, border_radius=max(2, inner_vida.height // 3))
 
-        marcas = max(0, int(self.VidaMax // 30) - 1)
-        if marcas > 0:
-            blocos = marcas + 1
-            for i in range(1, marcas + 1):
-                frac = i / blocos
-                ang = ang_ini + (ang_fim - ang_ini) * frac
-                c = math.cos(ang); s = math.sin(ang)
-                p1 = (int(centro[0] + c * (r_vida - largura_arco // 2)), int(centro[1] + s * (r_vida - largura_arco // 2)))
-                p2 = (int(centro[0] + c * (r_vida + largura_arco // 2)), int(centro[1] + s * (r_vida + largura_arco // 2)))
-                pygame.draw.line(tela, (0, 0, 0), p1, p2, 2)
+        blocos = max(1, int(math.ceil(self.VidaMax / 30.0)))
+        for i in range(1, blocos):
+            marca_x = inner_vida.x + int((inner_vida.width * i) / blocos)
+            pygame.draw.line(tela, (0, 0, 0), (marca_x, inner_vida.y), (marca_x, inner_vida.y + inner_vida.height), 1)
 
-        pygame.draw.arc(tela, (20, 46, 80), rect_ene, ang_ini, ang_fim, energia_largura)
+        pygame.draw.rect(tela, (0, 0, 0), rect_ene, border_radius=max(1, ene_h // 2))
+        inner_ene = rect_ene.inflate(-2, -2)
+        pygame.draw.rect(tela, (20, 46, 80), inner_ene, border_radius=max(1, inner_ene.height // 2))
         ene_t = 0.0 if self.EnergiaMax <= 0 else max(0.0, min(1.0, self.Energia / self.EnergiaMax))
-        if ene_t > 0.001:
-            pygame.draw.arc(tela, (60, 150, 255), rect_ene, ang_ini, ang_ini + (ang_fim - ang_ini) * ene_t, energia_largura)
+        if ene_t > 0.001 and inner_ene.width > 2:
+            fill_ene = pygame.Rect(inner_ene.x, inner_ene.y, max(1, int(inner_ene.width * ene_t)), inner_ene.height)
+            pygame.draw.rect(tela, (60, 150, 255), fill_ene, border_radius=max(1, inner_ene.height // 2))

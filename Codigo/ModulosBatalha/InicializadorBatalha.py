@@ -132,9 +132,12 @@ class InicializadorBatalha:
             return int(default)
 
     def _candidatos_linhagem(self, linhagem: str, estagio_max: int) -> List[Dict[str, object]]:
+        linhagem_norm = str(linhagem or "").strip().lower()
+        if not linhagem_norm:
+            return []
         out: List[Dict[str, object]] = []
         for row in self._base_pokemons:
-            if str(row.get("Linhagem") or "").strip() != str(linhagem or "").strip():
+            if str(row.get("Linhagem") or "").strip().lower() != linhagem_norm:
                 continue
             estagio = self._int(row.get("Estagio"), 1)
             if estagio <= int(estagio_max):
@@ -145,9 +148,9 @@ class InicializadorBatalha:
         if not isinstance(pokemon_base, dict):
             return []
         estado = pokemon_base.get("estado") if isinstance(pokemon_base.get("estado"), dict) else pokemon_base
-        linhagem = str(estado.get("linhagem") or "").strip()
-        estagio = self._int(estado.get("estagio"), 1)
-        especie = str(estado.get("especie") or estado.get("nome") or "").strip()
+        linhagem = str(estado.get("linhagem") or estado.get("Linhagem") or "").strip()
+        estagio = self._int(estado.get("estagio", estado.get("Estagio")), 1)
+        especie = str(estado.get("especie") or estado.get("Especie") or estado.get("nome") or estado.get("Nome") or "").strip()
 
         candidatos = self._candidatos_linhagem(linhagem, estagio)
         if not candidatos and especie:
@@ -157,7 +160,11 @@ class InicializadorBatalha:
         if not candidatos:
             return []
 
-        quantidade = random.randint(1, 6)
+        quantidade = random.choice((1, 6))
+        if quantidade == 1:
+            if not especie:
+                return []
+            return [criar_pokemon_inicial_materializado(especie)]
         bando: List[Dict[str, object]] = []
         repeticoes: Dict[str, int] = {}
         tentativas = 0

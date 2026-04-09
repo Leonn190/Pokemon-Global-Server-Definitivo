@@ -17,7 +17,7 @@ class ElementosHudBatalha:
         self._fuga_pressao = 0.0
         self._fuga_alvo = 8.0
         self._fuga_taxa_clique = 1.65
-        self._fuga_taxa_decay = 0.95
+        self._fuga_taxa_decay = 0.3
         self._fuga_disparada = False
 
     def _carregar_icone(self, lado: int) -> Optional[pygame.Surface]:

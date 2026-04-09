@@ -41,7 +41,9 @@ class CenaMundo:
         self._npc_interacao_id = 0
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
         self._texto_estadio = Texto("", style={"size": 22, "align": "center", "outline": True, "color": (230, 236, 245)})
-        self._imune_combate_ate_ms = int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0)
+        agora_ms = int(pygame.time.get_ticks())
+        self._imune_combate_ate_ms = max(int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0), agora_ms + 3000)
+        JOGO.INFO["ImuneCombateAteMs"] = int(self._imune_combate_ate_ms)
         self._filtro_camera = FiltroCamera()
         self.ModuladorRegras = ModuladorRegras()
 
@@ -282,15 +284,19 @@ class CenaMundo:
         dimensao = str(estado_p.get("dimensao") or "Mundo")
         estadio_atual_id = int(estado_p.get("estadio_atual_id", 0) or 0)
 
+        regras_mundo = jogo.INFO.get("RegrasMundo") if isinstance(jogo.INFO.get("RegrasMundo"), dict) else {}
+        pokemons_regras = regras_mundo.get("pokemons") if isinstance(regras_mundo.get("pokemons"), dict) else {}
         contexto_base = {
             "origem": [0.0, 0.0],
-            "centro": [50.0, 30.0],
-            "largura": 100,
-            "altura": 60,
-            "arena_largura": 50,
-            "arena_altura": 30,
+            "centro": [40.0, 20.0],
+            "largura": 80,
+            "altura": 40,
+            "arena_largura": 40,
+            "arena_altura": 20,
             "tiles": [],
             "estruturas": [],
+            "combate_pokemon_tamanho_diametro_base_tiles": float(pokemons_regras.get("combate_tamanho_diametro_base_tiles", 1.0) or 1.0),
+            "combate_pokemon_tamanho_incremento_por_escala": float(pokemons_regras.get("combate_tamanho_incremento_por_escala", 0.1) or 0.1),
         }
 
         if dimensao != "Mundo":

@@ -13,6 +13,7 @@ from SimuladorServerJogo.Controle.EstadoServidor import atualizar_perfil_persona
 from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
+from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_pokemons
 from SimuladorServerJogo.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 from Codigo.Geradores.Estadio import EstadioInterno
@@ -88,7 +89,8 @@ def _bloco_mundo_em(wx: int, wy: int) -> int:
         return 0
 
 
-def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 50, ry: int = 30) -> Dict[str, object]:
+def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 40, ry: int = 20) -> Dict[str, object]:
+    regras_pokemons = carregar_regras_pokemons()
     cx, cy = float(centro[0]), float(centro[1])
     x0, y0 = int(cx) - int(rx), int(cy) - int(ry)
     largura_rect = int(rx) * 2
@@ -132,8 +134,10 @@ def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 50
         "centro": [int(rx), int(ry)],
         "largura": int(largura_rect),
         "altura": int(altura_rect),
-        "arena_largura": 50,
-        "arena_altura": 30,
+        "arena_largura": 40,
+        "arena_altura": 20,
+        "combate_pokemon_tamanho_diametro_base_tiles": float(regras_pokemons.get("combate_tamanho_diametro_base_tiles", 1.0) or 1.0),
+        "combate_pokemon_tamanho_incremento_por_escala": float(regras_pokemons.get("combate_tamanho_incremento_por_escala", 0.1) or 0.1),
         "tiles": tiles,
         "estruturas": estruturas,
     }

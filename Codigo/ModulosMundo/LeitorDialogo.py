@@ -32,7 +32,7 @@ class LeitorDialogo:
 
         self._setor = self._garantir_setor_dialogo()
         self._npc_chave_setor = self._slug(self.npc_code or self.npc_nome)
-        self._visitas_anteriores = int(self._ler_valor("setor.NPCs.%s.visitas" % self._npc_chave_setor, 0) or 0)
+        self._visitas_anteriores = int(self._ler_caminho(self._setor, f"NPCs.{self._npc_chave_setor}.visitas", 0) or 0)
         self._registrar_visita_padrao()
 
         self.no_atual = ""
@@ -165,9 +165,10 @@ class LeitorDialogo:
         return self._nos().get(str(no_id), {})
 
     def _contexto_especial(self) -> Dict[str, Any]:
+        visitas = int(self._ler_caminho(self._setor, f"NPCs.{self._npc_chave_setor}.visitas", 0) or 0)
         return {
             "respeito_atual": self.nivel_respeito_estadio(self.npc_estadio),
-            "npc.visitas": int(self._ler_valor(f"setor.NPCs.{self._npc_chave_setor}.visitas", 0) or 0),
+            "npc.visitas": visitas,
             "npc.visitas_anteriores": self._visitas_anteriores,
             "npc.nome": self.npc_nome,
             "npc.code": self.npc_code,
@@ -220,8 +221,9 @@ class LeitorDialogo:
     def _ler_valor(self, alvo: object, padrao: Any = None) -> Any:
         if not isinstance(alvo, str):
             return alvo
-        if alvo in self._contexto_especial():
-            return self._contexto_especial()[alvo]
+        contexto_especial = self._contexto_especial()
+        if alvo in contexto_especial:
+            return contexto_especial[alvo]
         if alvo.startswith("setor."):
             return self._ler_caminho(self._setor, alvo[6:], padrao)
         if alvo.startswith("perfil."):
@@ -234,7 +236,7 @@ class LeitorDialogo:
             perfil = getattr(self._ator_local, "Perfil", None)
             return self._ler_caminho(perfil, alvo[7:], padrao)
         if alvo.startswith("npc."):
-            return self._contexto_especial().get(alvo, padrao)
+            return contexto_especial.get(alvo, padrao)
         if alvo.startswith("respeito."):
             return self.nivel_respeito_estadio(alvo[9:])
         return padrao

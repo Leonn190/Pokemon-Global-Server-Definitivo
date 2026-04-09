@@ -15,6 +15,7 @@ from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
+from Codigo.Geradores.Estadio import EstadioInterno
 
 
 def _normalizar_posicao_loop(posicao):
@@ -380,6 +381,16 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 if not isinstance(centro, (list, tuple)) or len(centro) != 2:
                     centro = [0.0, 0.0]
                 contexto = _coletar_contexto_batalha_servidor((float(centro[0]), float(centro[1])), rx=50, ry=30)
+                obj_id_ctx = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+                obj_ctx = BANCO_DADOS.obter_objeto(obj_id_ctx) if obj_id_ctx > 0 else None
+                estado_ctx = getattr(obj_ctx, "estado_extra", {}) if isinstance(getattr(obj_ctx, "estado_extra", {}), dict) else {}
+                dimensao = str(estado_ctx.get("dimensao") or "Mundo")
+                if dimensao != "Mundo":
+                    estadio_id = int(estado_ctx.get("estadio_atual_id", 0) or 0)
+                    estadio_obj = BANCO_DADOS.obter_objeto(estadio_id) if estadio_id > 0 else None
+                    estadio_estado = getattr(estadio_obj, "estado_extra", {}) if isinstance(getattr(estadio_obj, "estado_extra", {}), dict) else {}
+                    contexto = EstadioInterno.contexto_batalha(estadio_estado)
+                    contexto["centro"] = [float(contexto.get("largura", 60) * 0.5), float(contexto.get("altura", 40) * 0.5)]
                 return _ok("Contexto de batalha pronto", client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):

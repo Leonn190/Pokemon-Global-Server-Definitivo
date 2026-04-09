@@ -36,7 +36,6 @@ class Arena:
         return pygame.Rect(int(x0), int(y0), int(self.ArenaLargura), int(self.ArenaAltura))
 
     def _montar(self) -> None:
-        origem_x, origem_y = float(self.BlocoInicio[0]), float(self.BlocoInicio[1])
         for item in self.Contexto.get("tiles", []):
             if not isinstance(item, dict):
                 continue
@@ -82,6 +81,20 @@ class Arena:
             self._cache_sprites[chave] = None
         return self._cache_sprites[chave]
 
+    def _desenhar_grid_arena(self, tela: pygame.Surface, camera, tile_px: int) -> None:
+        rect = self._retangulo_arena()
+        x0_px, y0_px = camera.mundo_para_tela_px((rect.x, rect.y))
+        w_px = int(rect.w * tile_px)
+        h_px = int(rect.h * tile_px)
+        grid_surf = pygame.Surface((max(1, w_px), max(1, h_px)), pygame.SRCALPHA)
+        passo = max(6, tile_px)
+        cor = (245, 245, 255, 28)
+        for x in range(0, w_px, passo):
+            pygame.draw.line(grid_surf, cor, (x, 0), (x, h_px), 1)
+        for y in range(0, h_px, passo):
+            pygame.draw.line(grid_surf, cor, (0, y), (w_px, y), 1)
+        tela.blit(grid_surf, (int(x0_px), int(y0_px)))
+
     def renderizar(self, tela, camera) -> None:
         tile_px = max(1, int(getattr(camera, "TilePx", 40) or 40))
         for tx, ty, bloco in self._tiles:
@@ -100,3 +113,4 @@ class Arena:
         x0, y0 = camera.mundo_para_tela_px((rect.x, rect.y))
         border = pygame.Rect(int(x0), int(y0), int(rect.w * tile_px), int(rect.h * tile_px))
         pygame.draw.rect(tela, (245, 228, 130), border, width=max(2, tile_px // 10), border_radius=5)
+        self._desenhar_grid_arena(tela, camera, tile_px)

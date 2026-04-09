@@ -98,6 +98,31 @@ class GeradorEstadio:
 class EstadioInterno:
     """Desenhos internos padronizados para qualquer dimensão de estádio."""
 
+
+    @classmethod
+    def contexto_batalha(cls, estado_estadio: dict | None = None) -> dict:
+        estado = estado_estadio if isinstance(estado_estadio, dict) else {}
+        largura = int(float(estado.get("largura_interna", 60.0) or 60.0))
+        altura = int(float(estado.get("altura_interna", 40.0) or 40.0))
+        arena_largura = max(26, int(largura * 0.42))
+        arena_altura = max(16, int(altura * 0.34))
+        centro = [largura * 0.5, altura * 0.5]
+        tiles = []
+        for y in range(altura):
+            for x in range(largura):
+                bloco = 6 if (x + y) % 2 == 0 else 5
+                tiles.append({"x": int(x), "y": int(y), "bloco": int(bloco)})
+        return {
+            "origem": [0.0, 0.0],
+            "centro": centro,
+            "largura": largura,
+            "altura": altura,
+            "arena_largura": arena_largura,
+            "arena_altura": arena_altura,
+            "tiles": tiles,
+            "estruturas": [],
+            "contexto_estadio": True,
+        }
     @classmethod
     def renderizar(cls, tela, camera, estado_estadio: dict | None = None) -> None:
         estado = estado_estadio if isinstance(estado_estadio, dict) else {}

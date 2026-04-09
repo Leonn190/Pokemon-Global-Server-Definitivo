@@ -19,6 +19,9 @@ from Codigo.Server.ServerMundo import (
 from Codigo.Telas.Inventario.SubtelaInventario import SubtelaInventario
 from Codigo.Prefabs.Terminal import Terminal
 from Codigo.Telas.SubtelaDialogo import SubtelaDialogo
+from Codigo.Telas.SubtelaPreBatalha import SubtelaPreBatalha
+from Codigo.Geradores.Estadio import EstadioInterno
+from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
 from Codigo.Prefabs.Texto import Texto
 
 
@@ -139,6 +142,12 @@ class CenaMundo:
                 contexto = ret.get("contexto_batalha") if isinstance(ret, dict) and isinstance(ret.get("contexto_batalha"), dict) else None
                 if isinstance(contexto, dict):
                     contexto["pokemon_colisao"] = dict(colisao_pokemon)
+                    inventario = getattr(player, "Inventario", None)
+                    times = list(getattr(inventario, "TimesPokemon", []) or []) if inventario is not None else []
+                    contexto["times_jogador"] = times
+                    contexto["pokemons_jogador"] = list(getattr(inventario, "Pokemons", []) or []) if inventario is not None else []
+                    contexto["time_jogador"] = dict(times[0]) if times else {"Nome": "Time 1", "Slots": []}
+                    contexto["tipo"] = "confronto"
                     JOGO.INFO["CombateContexto"] = contexto
                     JOGO.CenaAlvo = "Combate"
                     return
@@ -262,18 +271,47 @@ class CenaMundo:
 
     def _iniciar_batalha_por_dialogo(self, jogo, contexto_dialogo: dict) -> None:
         player = self.ControladorMundo.player_local
-        centro = tuple(player.Posicao) if player is not None else (50.0, 30.0)
-        jogo.INFO["CombateContexto"] = {
+        inventario = getattr(player, "Inventario", None)
+        times = list(getattr(inventario, "TimesPokemon", []) or []) if inventario is not None else []
+        times_validos = InicializadorBatalha.times_completos(times, slots_por_time=6)
+        if not times_validos:
+            return
+
+        player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}) if player is not None else {}
+        estado_p = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
+        dimensao = str(estado_p.get("dimensao") or "Mundo")
+        estadio_atual_id = int(estado_p.get("estadio_atual_id", 0) or 0)
+
+        contexto_base = {
             "origem": [0.0, 0.0],
-            "centro": [float(centro[0]), float(centro[1])],
+            "centro": [50.0, 30.0],
             "largura": 100,
             "altura": 60,
             "arena_largura": 50,
             "arena_altura": 30,
-            "tipo": "npc",
-            "npc_contexto": dict(contexto_dialogo or {}),
+            "tiles": [],
+            "estruturas": [],
         }
-        jogo.CenaAlvo = "Combate"
+
+        if dimensao != "Mundo":
+            estadio_payload = self.ControladorMundo.Objetos.EstadiosPorId.get(estadio_atual_id, {})
+            estado_estadio = estadio_payload.get("estado") if isinstance(estadio_payload.get("estado"), dict) else {}
+            contexto_base = EstadioInterno.contexto_batalha(estado_estadio)
+
+        npc_ctx = dict(contexto_dialogo or {})
+
+        def _comecar_com_time(time_escolhido: dict):
+            jogo.INFO["CombateContexto"] = {
+                **contexto_base,
+                "tipo": "treinador",
+                "npc_contexto": npc_ctx,
+                "times_jogador": list(times_validos),
+                "time_jogador": dict(time_escolhido or {}),
+            }
+            jogo.CenaAlvo = "Combate"
+
+        if jogo.GerenciadorSubtelas.obter_por_tipo(SubtelaPreBatalha) is None:
+            jogo.GerenciadorSubtelas.abrir(SubtelaPreBatalha(times=times_validos, ao_confirmar=_comecar_com_time))
 
     def _processar_estado_dialogo_npc(self, jogo) -> None:
         if jogo.GerenciadorSubtelas.contem(SubtelaDialogo):

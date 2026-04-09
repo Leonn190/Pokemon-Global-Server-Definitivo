@@ -8,7 +8,7 @@ from Codigo.Prefabs.Texto import Texto
 
 
 class PainelTimes(PainelRolavel):
-    def __init__(self, rect, times=None, slots_por_time=6):
+    def __init__(self, rect, times=None, slots_por_time=6, modo_selecao=False, indice_selecionado=-1):
         super().__init__(
             rect,
             area_real=(0, 0, rect[2], rect[3]),
@@ -22,6 +22,8 @@ class PainelTimes(PainelRolavel):
         self.Padding = 12
         self.GapCards = 10
         self.SlotGap = 8
+        self.ModoSelecao = bool(modo_selecao)
+        self.IndiceSelecionado = int(indice_selecionado)
 
         estilo = {
             'outline': True,
@@ -244,6 +246,23 @@ class PainelTimes(PainelRolavel):
             total += PokemonInventario.poder_total(pokemon)
         return int(total)
 
+
+    def definir_modo_selecao(self, ativo: bool):
+        self.ModoSelecao = bool(ativo)
+        self.marcar_sujo()
+
+    def definir_indice_selecionado(self, indice: int):
+        self.IndiceSelecionado = int(indice)
+        self.marcar_sujo()
+
+    def indice_time_no_mouse(self, mouse_pos):
+        if not self.rect.collidepoint(mouse_pos):
+            return None
+        mouse_local = self._mouse_global_para_local(mouse_pos)
+        for indice_time in range(len(self.Times)):
+            if self._card_rect_local(indice_time).collidepoint(mouse_local):
+                return indice_time
+        return None
     def draw(self, tela):
         tela.fill((0, 0, 0, 0))
         tela.fill(self.CorFundo)
@@ -262,8 +281,11 @@ class PainelTimes(PainelRolavel):
         for indice_time in range(len(self.Times)):
             card = self._card_rect_local(indice_time)
 
-            pygame.draw.rect(tela, (24, 34, 56), card, border_radius=14)
-            pygame.draw.rect(tela, (58, 80, 128), card, 2, border_radius=14)
+            selecionado = self.ModoSelecao and indice_time == self.IndiceSelecionado
+            cor_card = (34, 48, 74) if selecionado else (24, 34, 56)
+            cor_borda = (255, 224, 104) if selecionado else (58, 80, 128)
+            pygame.draw.rect(tela, cor_card, card, border_radius=14)
+            pygame.draw.rect(tela, cor_borda, card, 2, border_radius=14)
 
             txt_poder = Texto(f'Poder: {self.poder_time(indice_time)}', style={**estilo_nome, 'size': 13, 'color': (175, 196, 236)})
             txt_poder.set_pos((card.x + 12, card.y + card.height - 12))

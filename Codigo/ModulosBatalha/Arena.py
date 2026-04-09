@@ -13,10 +13,10 @@ class Arena:
     def __init__(self, contexto: Dict[str, object]):
         self.Contexto = dict(contexto or {})
         self.Centro = tuple(self.Contexto.get("centro", (50.0, 30.0)))
-        self.Largura = int(self.Contexto.get("largura", 100) or 100)
-        self.Altura = int(self.Contexto.get("altura", 60) or 60)
-        self.ArenaLargura = int(self.Contexto.get("arena_largura", 50) or 50)
-        self.ArenaAltura = int(self.Contexto.get("arena_altura", 30) or 30)
+        self.Largura = int(self.Contexto.get("largura", 80) or 80)
+        self.Altura = int(self.Contexto.get("altura", 40) or 40)
+        self.ArenaLargura = int(self.Contexto.get("arena_largura", 40) or 40)
+        self.ArenaAltura = int(self.Contexto.get("arena_altura", 20) or 20)
         self.BlocoInicio = tuple(self.Contexto.get("origem", (0.0, 0.0)))
 
         self._tiles: List[Tuple[int, int, int]] = []

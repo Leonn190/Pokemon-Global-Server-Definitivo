@@ -116,8 +116,8 @@ class Camera:
 
 
 class CameraBatalha(Camera):
-    TILE_MIN = 25
-    TILE_MAX = 55
+    TILE_MIN = 30
+    TILE_MAX = 50
 
     def __init__(self, tamanho_tela_px: Vector2, posicao_inicial_tiles: Vector2 = (0.0, 0.0), tile_px: int = 40) -> None:
         super().__init__(tamanho_tela_px=tamanho_tela_px, entidade_main=None, posicao_inicial_tiles=posicao_inicial_tiles, suavizacao=100.0, tile_px=tile_px)

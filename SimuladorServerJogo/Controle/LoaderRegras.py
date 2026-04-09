@@ -78,6 +78,7 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     out = _flatten(dados)
     vel = dados.get("velocidade") if isinstance(dados.get("velocidade"), dict) else {}
     tamanho = dados.get("tamanho") if isinstance(dados.get("tamanho"), dict) else {}
+    batalha_tamanho = dados.get("batalha_tamanho") if isinstance(dados.get("batalha_tamanho"), dict) else {}
     anim = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
     captura = dados.get("captura") if isinstance(dados.get("captura"), dict) else {}
 
@@ -88,6 +89,8 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     out["tamanho_variacao_escala_max"] = int(tamanho.get("variacao_escala_max", 1) or 1)
     # Compat legado (cliente antigo ainda pode ler esta chave).
     out["tamanho_incremento_por_tamanho"] = float(out["tamanho_incremento_por_escala"])
+    out["combate_tamanho_diametro_base_tiles"] = float(batalha_tamanho.get("diametro_base_tiles", 1.0) or 1.0)
+    out["combate_tamanho_incremento_por_escala"] = float(batalha_tamanho.get("incremento_por_escala", 0.1) or 0.1)
     out["animacao_intervalo_frame_ms"] = int(anim.get("intervalo_frame_ms", 85) or 85)
     out["captura_limite_frutas"] = int(captura.get("limite_frutas", 2) or 2)
     out["captura_cooldown_movimento_ticks"] = int(captura.get("cooldown_movimento_ticks", 36) or 36)
@@ -226,8 +229,8 @@ def carregar_regras_gerais() -> Dict[str, object]:
     combate = dados.get("combate") if isinstance(dados.get("combate"), dict) else {}
     out["camera_px_por_tile"] = int(camera.get("px_por_tile", 50) or 50)
     out["combate_camera_px_por_tile"] = int(combate.get("camera_px_por_tile", 40) or 40)
-    out["combate_camera_zoom_min"] = int(combate.get("camera_zoom_min", 25) or 25)
-    out["combate_camera_zoom_max"] = int(combate.get("camera_zoom_max", 55) or 55)
+    out["combate_camera_zoom_min"] = int(combate.get("camera_zoom_min", 30) or 30)
+    out["combate_camera_zoom_max"] = int(combate.get("camera_zoom_max", 50) or 50)
     return out
 
 
@@ -288,6 +291,8 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
             "tamanho_diametro_base_tiles": float(regras_pokemons.get("tamanho_diametro_base_tiles", 0.6) or 0.6),
             "tamanho_incremento_por_escala": float(regras_pokemons.get("tamanho_incremento_por_escala", 0.1) or 0.1),
             "tamanho_incremento_por_tamanho": float(regras_pokemons.get("tamanho_incremento_por_tamanho", 0.1) or 0.1),
+            "combate_tamanho_diametro_base_tiles": float(regras_pokemons.get("combate_tamanho_diametro_base_tiles", 1.0) or 1.0),
+            "combate_tamanho_incremento_por_escala": float(regras_pokemons.get("combate_tamanho_incremento_por_escala", 0.1) or 0.1),
         },
         "projeteis": {
             "velocidade_pokebola_tiles_s": float(carregar_regras_projeteis().get("projetil_velocidade_pokebola_tiles_s", 7.0) or 7.0),
@@ -321,7 +326,7 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
         "gerais": {
             "camera_px_por_tile": int(carregar_regras_gerais().get("camera_px_por_tile", 50) or 50),
             "combate_camera_px_por_tile": int(carregar_regras_gerais().get("combate_camera_px_por_tile", 40) or 40),
-            "combate_camera_zoom_min": int(carregar_regras_gerais().get("combate_camera_zoom_min", 25) or 25),
-            "combate_camera_zoom_max": int(carregar_regras_gerais().get("combate_camera_zoom_max", 55) or 55),
+            "combate_camera_zoom_min": int(carregar_regras_gerais().get("combate_camera_zoom_min", 30) or 30),
+            "combate_camera_zoom_max": int(carregar_regras_gerais().get("combate_camera_zoom_max", 50) or 50),
         },
     }

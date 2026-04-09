@@ -8,8 +8,8 @@ from typing import Callable, Dict, List, Optional
 import pygame
 
 from Codigo.Geradores.Ator import Ator
-from Codigo.Modulos.LeitorDialogo import LeitorDialogo
-from Codigo.Modulos.Loja import Loja
+from Codigo.ModulosMundo.LeitorDialogo import LeitorDialogo
+from Codigo.ModulosMundo.Loja import Loja
 from Codigo.Prefabs.Texto import Texto, TextoAnimado
 from Codigo.Telas.Subtela import Subtela
 

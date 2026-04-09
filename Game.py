@@ -10,7 +10,7 @@ except ImportError:
     moderngl = None
 
 from Codigo.Cenas.ControladorCenas import ControladorCenas
-from Codigo.Modulos.Sonoridades import VerificaSonoridade
+from Codigo.ModulosGerais.Sonoridades import VerificaSonoridade
 
 if hasattr(ctypes, "windll") and hasattr(ctypes.windll, "shell32"):
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("pokemon.global.server")

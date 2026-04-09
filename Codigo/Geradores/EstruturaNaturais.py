@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional, Tuple
 
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.ModulosGerais.Colisor import Colisor
 
 Vector2 = Tuple[float, float]
 

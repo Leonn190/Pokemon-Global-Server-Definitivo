@@ -14,8 +14,8 @@ from Codigo.Geradores.EstruturaNaturais import EstruturaNatural, prioridade_estr
 from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
-from Codigo.Modulos.ControladorMundo.ControladorAtores import ControladorAtores
-from Codigo.Modulos.ControladorMundo.ControladorCriaveis import ControladorCriaveis
+from Codigo.ModulosMundo.ControladorAtores import ControladorAtores
+from Codigo.ModulosMundo.ControladorCriaveis import ControladorCriaveis
 
 
 class ControladorObjetos:

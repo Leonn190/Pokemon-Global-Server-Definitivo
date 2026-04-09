@@ -7,7 +7,7 @@ from typing import Dict
 
 import pygame
 
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.ModulosGerais.Colisor import Colisor
 from Codigo.Geradores.ItemInventario import ItemInventario
 
 

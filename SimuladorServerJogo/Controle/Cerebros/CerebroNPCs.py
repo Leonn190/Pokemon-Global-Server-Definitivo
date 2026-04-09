@@ -7,7 +7,7 @@ import unicodedata
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.ModulosGerais.Colisor import Colisor
 from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer
 from SimuladorServerJogo.Controle.EstadoServidor import carregar_npcs_vendedores_estado, salvar_npcs_vendedores_estado

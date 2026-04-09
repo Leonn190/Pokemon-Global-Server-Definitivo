@@ -1,6 +1,6 @@
 import math
 import pygame
-from Codigo.Modulos.Sonoridades import tocar
+from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Prefabs.Tooltip import Tooltip
 

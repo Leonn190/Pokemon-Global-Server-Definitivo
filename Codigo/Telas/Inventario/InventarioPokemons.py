@@ -10,7 +10,7 @@ import pygame
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Modulos.Sonoridades import tocar
+from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Paineis.Container import Container
 from Codigo.Paineis.PainelAuxiliarPoke import PainelAuxiliarPoke
 from Codigo.Paineis.FichaPokemon import FichaPokemon
@@ -23,7 +23,7 @@ from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 
-_EXEC_POCAO = importlib.import_module("Codigo.Modulos.ExecutaveisPoção")
+_EXEC_POCAO = importlib.import_module("Codigo.ModulosMundo.ExecutaveisPoção")
 
 
 class InventarioPokemons:

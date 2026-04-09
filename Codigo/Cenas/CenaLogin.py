@@ -1,4 +1,4 @@
-from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
+from Codigo.ModulosGerais.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaLogin import ReiniciarTelaLogin, TelaLogin
 
 

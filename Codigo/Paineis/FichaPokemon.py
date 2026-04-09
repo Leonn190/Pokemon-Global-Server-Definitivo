@@ -8,7 +8,7 @@ from pathlib import Path
 import pygame
 
 try:
-    from Codigo.Modulos.Auxiliares import carregar_frames
+    from Codigo.ModulosGerais.Auxiliares import carregar_frames
     from Codigo.Geradores.ItemInventario import ItemInventario
     from Codigo.Geradores.PokemonInventario import PokemonInventario
     from Codigo.Prefabs.Arrastavel import Arrastavel

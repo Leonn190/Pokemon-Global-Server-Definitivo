@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 import pygame
-from Codigo.Modulos.Sonoridades import tocar
+from Codigo.ModulosGerais.Sonoridades import tocar
 
 
 class Controle:

@@ -3,8 +3,8 @@ import threading
 
 import pygame
 
-from Codigo.Modulos.Auxiliares import carregar_frames
-from Codigo.Modulos.DesenhaAtor import DesenhaAtor
+from Codigo.ModulosGerais.Auxiliares import carregar_frames
+from Codigo.ModulosGerais.DesenhaAtor import DesenhaAtor
 from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto

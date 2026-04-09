@@ -1,6 +1,6 @@
 import pygame
 
-from Codigo.Modulos.Sonoridades import VerificaSonoridade
+from Codigo.ModulosGerais.Sonoridades import VerificaSonoridade
 from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto

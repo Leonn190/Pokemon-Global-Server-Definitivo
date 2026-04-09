@@ -2,7 +2,7 @@ import pygame
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.CaixaTexto import CaixaTexto
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Modulos.Auxiliares import carregar_frames
+from Codigo.ModulosGerais.Auxiliares import carregar_frames
 from Codigo.Telas.Subtela import Subtela
 
 

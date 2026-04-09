@@ -9,7 +9,7 @@ import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Painel import Painel
-from Codigo.Modulos.ServicoCraft import ServicoCraft
+from Codigo.ModulosMundo.ServicoCraft import ServicoCraft
 from Codigo.Prefabs.Texto import Texto
 
 

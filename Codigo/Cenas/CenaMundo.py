@@ -1,12 +1,12 @@
 import pygame
 
-from Codigo.Modulos.Camera import Camera
-from Codigo.Modulos.ControladorMundo.ControladorMundo import ControladorMundo
-from Codigo.Modulos.ElementosHudMundo import ElementosHudMundo
-from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
-from Codigo.Modulos.FiltroCamera import FiltroCamera
-from Codigo.Modulos.ModuladorRegras import ModuladorRegras
-from Codigo.Modulos.Sonoridades import tile_mundo_atual, bioma_visual_por_tile
+from Codigo.ModulosGerais.Camera import Camera
+from Codigo.ModulosMundo.ControladorMundo import ControladorMundo
+from Codigo.ModulosMundo.ElementosHudMundo import ElementosHudMundo
+from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
+from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
+from Codigo.ModulosGerais.ModuladorRegras import ModuladorRegras
+from Codigo.ModulosGerais.Sonoridades import tile_mundo_atual, bioma_visual_por_tile
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (

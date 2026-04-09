@@ -13,7 +13,7 @@ from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.Player.Controle import Controle
 from Codigo.Geradores.Player.Inventario import Inventario
 from Codigo.Geradores.Player.Perfil import Perfil
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.ModulosGerais.Colisor import Colisor
 from Codigo.Prefabs.Fluxos import Fluxo
 
 

@@ -1,7 +1,7 @@
-from Codigo.Modulos.EfeitosTela import FecharIris, AbrirIris
-from Codigo.Modulos.Camera import CameraBatalha
-from Codigo.Modulos.ControladorBatalha import ControladorBatalha
-from Codigo.Modulos.ElementosHudCombate import ElementosHudCombate
+from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
+from Codigo.ModulosGerais.Camera import CameraBatalha
+from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
+from Codigo.ModulosBatalha.ElementosHudCombate import ElementosHudCombate
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig

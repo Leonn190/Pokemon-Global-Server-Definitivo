@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from Codigo.Modulos.Arena import Arena
+from Codigo.ModulosBatalha.Arena import Arena
 
 
 class ControladorBatalha:

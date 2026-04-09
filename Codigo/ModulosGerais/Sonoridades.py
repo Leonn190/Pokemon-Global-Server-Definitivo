@@ -1,6 +1,8 @@
 import random
 import pygame
 
+from Codigo.ModulosGerais.Auxiliares import bioma_por_tile
+
 silencio = False
 Volume = 0.0
 
@@ -420,24 +422,31 @@ def tile_mundo_atual(cena_mundo):
 
 
 def _musica_por_tile(tile):
+    bioma = bioma_por_tile(tile)
     return {
-        2: "Vale",
-        3: "Vale",
-        6: "Neve",
-        5: "Deserto",
-        4: "Praia",
-        8: "Vulcão",
-    }.get(tile)
+        "Vale": "Vale",
+        "Floresta": "Vale",
+        "Neve": "Neve",
+        "Deserto": "Deserto",
+        "Praia": "Praia",
+        "Vulcão": "Vulcão",
+    }.get(bioma)
 
 
-def bioma_visual_por_tile(tile):
+def musica_confronto_por_tile(tile):
+    bioma = bioma_por_tile(tile)
     return {
-        5: "desert",
-        6: "snow",
-        7: "magic",
-        8: "volcanic",
-        9: "swamp",
-    }.get(tile, "normal")
+        "Vale": "ConfrontoDoVale",
+        "Floresta": "ConfrontoDoVale",
+        "Neve": "ConfrontoDaNeve",
+        "Deserto": "ConfrontoDoDeserto",
+        "Praia": "ConfrontoDoMar",
+        "Vulcão": "ConfrontoDoVulcao",
+        "Magico": "ConfrontoDoMagia",
+        "Pantano": "ConfrontoDoPantano",
+        "AguaFunda": "ConfrontoDoMar",
+        "AguaRasa": "ConfrontoDoMar",
+    }.get(bioma, "ConfrontoDoVale")
 
 
 def _musica_mundo_estavel(cena_mundo):
@@ -509,6 +518,11 @@ def _resolver_musica_alvo(jogo):
 
     if cena_id == "Mundo":
         return _musica_mundo_estavel(cena)
+
+    if cena_id == "Combate":
+        contexto = getattr(jogo, "INFO", {}).get("CombateContexto") if isinstance(getattr(jogo, "INFO", None), dict) else {}
+        tile_bioma = contexto.get("tile_bioma") if isinstance(contexto, dict) else None
+        return musica_confronto_por_tile(tile_bioma)
 
     return None
 

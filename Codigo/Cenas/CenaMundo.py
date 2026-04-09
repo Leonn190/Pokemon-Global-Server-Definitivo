@@ -6,7 +6,8 @@ from Codigo.ModulosMundo.ElementosHudMundo import ElementosHudMundo
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
 from Codigo.ModulosGerais.ModuladorRegras import ModuladorRegras
-from Codigo.ModulosGerais.Sonoridades import tile_mundo_atual, bioma_visual_por_tile
+from Codigo.ModulosGerais.Sonoridades import tile_mundo_atual
+from Codigo.ModulosGerais.Auxiliares import bioma_visual_por_tile
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
@@ -150,6 +151,7 @@ class CenaMundo:
                     contexto["pokemons_jogador"] = list(getattr(inventario, "Pokemons", []) or []) if inventario is not None else []
                     contexto["time_jogador"] = dict(times[0]) if times else {"Nome": "Time 1", "Slots": []}
                     contexto["tipo"] = "confronto"
+                    contexto["tile_bioma"] = tile_mundo_atual(self)
                     JOGO.INFO["CombateContexto"] = contexto
                     JOGO.CenaAlvo = "Combate"
                     return
@@ -313,6 +315,7 @@ class CenaMundo:
                 "npc_contexto": npc_ctx,
                 "times_jogador": list(times_validos),
                 "time_jogador": dict(time_escolhido or {}),
+                "tile_bioma": tile_mundo_atual(self),
             }
             jogo.CenaAlvo = "Combate"
 

@@ -8,6 +8,7 @@ from typing import Dict, Optional, Tuple
 import pygame
 
 from Codigo.Prefabs.Texto import Texto
+from Codigo.ModulosGerais.Auxiliares import construir_icone_tipo_com_fundo_branco
 
 
 class PokemonInventario:
@@ -156,14 +157,7 @@ class PokemonInventario:
         chave = (nome, lado_px)
         if chave in cls._cache_icone_tipo:
             return cls._cache_icone_tipo[chave]
-        caminho = Path('Recursos') / 'Visual' / 'Icones' / 'Tipos' / f'{nome}.png'
-        surf = None
-        if caminho.exists():
-            try:
-                surf = pygame.image.load(str(caminho)).convert_alpha()
-                surf = pygame.transform.smoothscale(surf, (lado_px, lado_px))
-            except Exception:
-                surf = None
+        surf = construir_icone_tipo_com_fundo_branco(nome, lado_px)
         cls._cache_icone_tipo[chave] = surf
         return surf
 

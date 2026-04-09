@@ -397,7 +397,6 @@ class InventarioPokemons:
         y = self._area_info.centery - (lado // 2)
         for tipo in tipos:
             fundo = pygame.Rect(x, y, lado, lado)
-            pygame.draw.circle(tela, (250, 250, 255), fundo.center, lado // 2)
             icone = PokemonInventario.icone_tipo(tipo, lado + 1)
             if icone is not None:
                 tela.blit(icone, icone.get_rect(center=fundo.center))

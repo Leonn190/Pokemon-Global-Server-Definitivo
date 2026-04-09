@@ -30,7 +30,7 @@ class CenaCombate:
         self.Camera.definir_limites_mundo(largura, altura)
         self.Camera.atualizar(0.0)
         self.ControladorBatalha = ControladorBatalha(contexto)
-        self.ElementosHudBatalha = ElementosHudBatalha(ao_fugir=lambda: self._fugir_combate(JOGO))
+        self.ElementosHudBatalha = ElementosHudBatalha(controlador_batalha=self.ControladorBatalha, camera=self.Camera, ao_fugir=lambda: self._fugir_combate(JOGO))
 
     def _fugir_combate(self, jogo) -> None:
         jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000

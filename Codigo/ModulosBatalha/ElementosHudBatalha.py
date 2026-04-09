@@ -5,12 +5,15 @@ from typing import Callable, List, Optional
 
 import pygame
 
+from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
 from Codigo.Prefabs.Botao import Botao
 
 
 class ElementosHudBatalha:
-    def __init__(self, ao_fugir: Optional[Callable[[], None]] = None) -> None:
+    def __init__(self, controlador_batalha=None, camera=None, ao_fugir: Optional[Callable[[], None]] = None) -> None:
         self._ao_fugir = ao_fugir
+        self._controlador = controlador_batalha
+        self._camera = camera
         self._botao_fugir: Optional[Botao] = None
         self._icone_fugir: Optional[pygame.Surface] = None
         self._cache_tamanho: Optional[tuple[int, int]] = None
@@ -19,6 +22,9 @@ class ElementosHudBatalha:
         self._fuga_taxa_clique = 1.65
         self._fuga_taxa_decay = 0.3
         self._fuga_disparada = False
+        self._ficha = FichaPokemonBatalha()
+        self._anim_ficha = 0.0
+        self._pokemon_exibido = None
 
     def _carregar_icone(self, lado: int) -> Optional[pygame.Surface]:
         caminho = Path("Recursos") / "Visual" / "Icones" / "Diversos" / "fugir.png"
@@ -78,12 +84,33 @@ class ElementosHudBatalha:
         overlay.fill((0, 0, 0, int(160 * t)))
         tela.blit(overlay, (0, 0))
 
+    def _processar_selecao(self, eventos: List[pygame.event.Event]):
+        if self._controlador is None or self._camera is None:
+            return
+        for ev in eventos or []:
+            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                self._controlador.selecionar_por_mouse(ev.pos, self._camera)
+                break
+
+    def _atualizar_animacao_ficha(self, dt: float):
+        selecionado = getattr(self._controlador, "PokemonSelecionado", None)
+        if selecionado is not None:
+            self._pokemon_exibido = selecionado
+        alvo = 1.0 if selecionado is not None else 0.0
+        vel = max(0.01, float(dt) * 8.0)
+        self._anim_ficha += (alvo - self._anim_ficha) * min(1.0, vel)
+        if self._anim_ficha <= 0.01 and selecionado is None:
+            self._pokemon_exibido = None
+
     def desenhar(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> None:
         self._garantir_layout(tela)
+        self._processar_selecao(eventos or [])
+        self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)
         if self._botao_fugir is not None:
             self._botao_fugir.render(tela, eventos or [], dt, None)
             if self._icone_fugir is not None:
                 rect = self._icone_fugir.get_rect(center=self._botao_fugir.rect.center)
                 tela.blit(self._icone_fugir, rect)
+        self._ficha.render(tela, self._pokemon_exibido, self._anim_ficha, eventos or [], dt)
         self._desenhar_overlay_fuga(tela)

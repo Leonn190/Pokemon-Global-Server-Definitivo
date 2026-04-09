@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import csv
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -14,6 +15,7 @@ _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
 
 class PokemonBatalha:
     _cache_frames: Dict[str, List[pygame.Surface]] = {}
+    _cache_ataques_csv: Dict[str, Dict[str, object]] | None = None
 
     def __init__(self, dados: Dict[str, object], posicao: Vector2, lado: str, regras: Dict[str, object] | None = None) -> None:
         self.Dados = dict(dados or {})
@@ -57,10 +59,41 @@ class PokemonBatalha:
         if isinstance(candidatos, (list, tuple)):
             for item in candidatos:
                 if isinstance(item, dict):
-                    saida.append(dict(item))
+                    saida.append(PokemonBatalha._completar_dados_ataque(item))
                 elif item is not None:
-                    saida.append({"nome": str(item), "tipo": "normal"})
+                    saida.append(PokemonBatalha._completar_dados_ataque({"nome": str(item), "tipo": "normal"}))
         return saida
+
+    @classmethod
+    def _csv_ataques(cls) -> Dict[str, Dict[str, object]]:
+        if cls._cache_ataques_csv is not None:
+            return cls._cache_ataques_csv
+        candidatos = [
+            Path("Dados") / "Pokemon Global Server - Ataques.csv",
+            Path("Pokemon Global Server - Ataques.csv"),
+            Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Ataques.csv",
+        ]
+        caminho = next((p for p in candidatos if p.exists()), None)
+        base: Dict[str, Dict[str, object]] = {}
+        if caminho is not None:
+            try:
+                with caminho.open("r", encoding="utf-8-sig", newline="") as arquivo:
+                    for linha in csv.DictReader(arquivo):
+                        nome = str(linha.get("Ataque") or linha.get("Nome") or "").strip().lower()
+                        if nome:
+                            base[nome] = dict(linha)
+            except OSError:
+                pass
+        cls._cache_ataques_csv = base
+        return base
+
+    @classmethod
+    def _completar_dados_ataque(cls, ataque: Dict[str, object]) -> Dict[str, object]:
+        base = dict(ataque or {})
+        nome = str(base.get("Ataque") or base.get("Nome") or base.get("nome") or "").strip().lower()
+        ref = dict(cls._csv_ataques().get(nome, {}))
+        ref.update(base)
+        return ref
 
     def raio_px(self, camera) -> int:
         tile_px = max(16, int(getattr(camera, "TilePx", 40) or 40))

@@ -12,6 +12,7 @@ from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer
 from SimuladorServerJogo.Controle.EstadoServidor import carregar_npcs_vendedores_estado, salvar_npcs_vendedores_estado
 from SimuladorServerJogo.Geradores.GeradorMundo import carregar_estado_mundo
+from SimuladorServerJogo.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]
@@ -38,8 +39,6 @@ class CerebroNPCs:
         estado = carregar_npcs_vendedores_estado()
         if estado:
             self._npcs = {str(k): dict(v) for k, v in estado.items() if isinstance(v, dict)}
-            self._normalizar_estado_npcs_legado()
-            self._injetar_combatentes_faltantes()
             self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
             return
 
@@ -96,6 +95,7 @@ class CerebroNPCs:
                     else:
                         skin = f"{skin_raw}.png"
                     npc_id = int(910000 + int(code) if code.isdigit() else 910000 + idx)
+                    pokemons_npc, times_npc = self._pokemon_npc_materializados(row)
                     base[f"combatente:{code}"] = {
                         "id": npc_id,
                         "code": str(code),
@@ -111,89 +111,12 @@ class CerebroNPCs:
                         "rota_idx": 0,
                         "espera_ate_tick": 0,
                         "interacao": {"ativa": False, "cliente": ""},
+                        "pokemons": list(pokemons_npc),
+                        "times_pokemon": list(times_npc),
                     }
         self._npcs = base
         self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
         salvar_npcs_vendedores_estado(self._npcs, force=True)
-
-    def _normalizar_estado_npcs_legado(self) -> None:
-        novo: Dict[str, Dict[str, object]] = {}
-        for idx, (chave, npc) in enumerate(list(self._npcs.items()), start=1):
-            if not isinstance(npc, dict):
-                continue
-            estilo = str(npc.get("estilo") or "vendedor").strip().lower()
-            code_bruto = str(npc.get("code") or chave).strip() or chave
-            code = code_bruto.split(":", 1)[1] if ":" in code_bruto else code_bruto
-            dim = "Mundo" if estilo != "combatente" else str(npc.get("dimensao") or "EstadioNormal")
-            npc["estilo"] = estilo
-            npc["dimensao"] = dim
-            if not str(npc.get("nome") or "").strip():
-                npc["nome"] = "NPC"
-            skin_raw = str(npc.get("skin") or "1").strip() or "1"
-            if not skin_raw.lower().endswith(".png"):
-                skin_raw = f"{skin_raw}.png"
-            npc["skin"] = skin_raw
-            try:
-                npc_id = int(npc.get("id", 0) or 0)
-            except Exception:
-                npc_id = 0
-            if npc_id <= 0:
-                base_id = 910000 if estilo == "combatente" else 900000
-                if code.isdigit():
-                    npc_id = base_id + int(code)
-                else:
-                    npc_id = base_id + idx
-            npc["id"] = int(npc_id)
-            if not isinstance(npc.get("interacao"), dict):
-                npc["interacao"] = {"ativa": False, "cliente": ""}
-            prefixo = "combatente" if estilo == "combatente" else "vendedor"
-            novo[f"{prefixo}:{code}"] = npc
-        self._npcs = novo
-
-    def _injetar_combatentes_faltantes(self) -> None:
-        mapa_estadios = self._mapa_dimensao_estadios()
-        arquivo_combatentes = Path("Dados") / "Pokemon Global Server - NPC Combatente.csv"
-        if not arquivo_combatentes.exists():
-            return
-        adicionou = False
-        with arquivo_combatentes.open("r", encoding="utf-8") as f:
-            for idx, row in enumerate(csv.DictReader(f), start=1):
-                if str(row.get("Nivel") or "").strip().lower() != "lider":
-                    continue
-                code = str(row.get("Code") or idx).strip() or str(idx)
-                chave = f"combatente:{code}"
-                if chave in self._npcs:
-                    continue
-                nome = str(row.get("Nome") or f"Lider {idx}").strip() or f"Lider {idx}"
-                estadio_tipo = self._normalizar_tipo_estadio(str(row.get("Estadio") or "normal"))
-                dimensao = mapa_estadios.get(estadio_tipo, f"Estadio{estadio_tipo.title()}")
-                skin_raw = str(row.get("Skin") or "1").strip()
-                if skin_raw.lower().endswith(".png"):
-                    skin = skin_raw
-                elif skin_raw.lower().startswith("s") and skin_raw[1:].isdigit():
-                    skin = f"{skin_raw[1:]}.png"
-                else:
-                    skin = f"{skin_raw}.png"
-                npc_id = int(910000 + int(code) if code.isdigit() else 910000 + idx)
-                self._npcs[chave] = {
-                    "id": npc_id,
-                    "code": str(code),
-                    "nome": nome,
-                    "skin": skin,
-                    "velocidade": 0.0,
-                    "estilo": "combatente",
-                    "estatico": True,
-                    "dimensao": dimensao,
-                    "estadio_tipo": estadio_tipo,
-                    "posicao": [30.0, 20.0],
-                    "rota": [],
-                    "rota_idx": 0,
-                    "espera_ate_tick": 0,
-                    "interacao": {"ativa": False, "cliente": ""},
-                }
-                adicionou = True
-        if adicionou:
-            salvar_npcs_vendedores_estado(self._npcs, force=True)
 
     def _forcar_josefa_chunk_inicial(self, spawn_x: float, spawn_y: float) -> None:
         mudou = False
@@ -345,9 +268,50 @@ class CerebroNPCs:
         ator.estado_extra["angulo"] = float(npc.get("angulo", 0.0) or 0.0)
         ator.estado_extra["interacao"] = dict(npc.get("interacao", {})) if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
         ator.estado_extra["dimensao"] = str(npc.get("dimensao") or "Mundo")
+        ator.estado_extra["pokemons"] = list(npc.get("pokemons", [])) if isinstance(npc.get("pokemons"), list) else []
+        ator.estado_extra["times_pokemon"] = list(npc.get("times_pokemon", [])) if isinstance(npc.get("times_pokemon"), list) else []
         BANCO_DADOS.inserir_objeto(ator)
         self._ids_materializados.add(int(ator.Id))
         return ator
+
+    @staticmethod
+    def _colunas_pokemon_npc(row: Dict[str, object]) -> List[tuple[int, str]]:
+        cols: List[tuple[int, str]] = []
+        for chave in list(row.keys()):
+            texto = str(chave or "").strip()
+            if not texto.lower().startswith("pokemon"):
+                continue
+            sufixo = texto[7:]
+            try:
+                indice = int(sufixo)
+            except Exception:
+                continue
+            cols.append((indice, texto))
+        cols.sort(key=lambda x: x[0])
+        return cols
+
+    def _pokemon_npc_materializados(self, row: Dict[str, object]) -> tuple[List[dict], List[dict]]:
+        pokemons: List[dict] = []
+        times: List[dict] = []
+        slots_atual: List[dict] = []
+        indice_time = 1
+        for _, coluna in self._colunas_pokemon_npc(row):
+            nome = str(row.get(coluna) or "").strip()
+            if nome:
+                try:
+                    poke = criar_pokemon_inicial_materializado(nome)
+                    if isinstance(poke, dict):
+                        pokemons.append(poke)
+                        slots_atual.append(poke)
+                except Exception:
+                    pass
+            if len(slots_atual) >= 6:
+                times.append({"Nome": f"Time {indice_time}", "Slots": list(slots_atual)})
+                indice_time += 1
+                slots_atual = []
+        if slots_atual:
+            times.append({"Nome": f"Time {indice_time}", "Slots": list(slots_atual)})
+        return pokemons, times
 
     @staticmethod
     def _normalizar_tipo_estadio(valor: str) -> str:

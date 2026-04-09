@@ -1,7 +1,7 @@
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
-from Codigo.ModulosBatalha.ElementosHudCombate import ElementosHudCombate
+from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
@@ -30,7 +30,7 @@ class CenaCombate:
         self.Camera.definir_limites_mundo(largura, altura)
         self.Camera.atualizar(0.0)
         self.ControladorBatalha = ControladorBatalha(contexto)
-        self.ElementosHudCombate = ElementosHudCombate(ao_fugir=lambda: self._fugir_combate(JOGO))
+        self.ElementosHudBatalha = ElementosHudBatalha(ao_fugir=lambda: self._fugir_combate(JOGO))
 
     def _fugir_combate(self, jogo) -> None:
         jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
@@ -75,7 +75,7 @@ class CenaCombate:
         _ = (surface, JOGO, EVENTOS, dt)
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
-        self.ElementosHudCombate.desenhar(surface, EVENTOS, dt)
+        self.ElementosHudBatalha.desenhar(surface, EVENTOS, dt)
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.atualizar_cena(JOGO, EVENTOS, dt)

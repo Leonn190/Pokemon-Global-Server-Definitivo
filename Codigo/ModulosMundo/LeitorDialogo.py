@@ -5,6 +5,8 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
+
 
 class LeitorDialogo:
     SAIDAS_INTERFACE = {
@@ -445,6 +447,12 @@ class LeitorDialogo:
             return {"tipo": "fim"}
 
         if acao == "batalha":
+            inventario = getattr(self._ator_local, "Inventario", None)
+            times_jogador = list(getattr(inventario, "TimesPokemon", []) or []) if inventario is not None else []
+            if not InicializadorBatalha.times_completos(times_jogador, slots_por_time=6):
+                self.fala_atual = "Você não possui nenhum time completo para batalhar."
+                self._opcoes_visiveis = [{"texto": "Entendi.", "acao": "fim"}]
+                return {"tipo": "navegou"}
             try:
                 numero = int(op.get("batalha") or 1)
             except Exception:
@@ -458,6 +466,7 @@ class LeitorDialogo:
                     "npc_cargo": self.npc_cargo,
                     "npc_estadio": self.npc_estadio,
                     "batalha_numero": max(1, numero),
+                    "times_pokemon": list(self._estado.get("times_pokemon", [])) if isinstance(self._estado.get("times_pokemon"), list) else [],
                 },
             }
 

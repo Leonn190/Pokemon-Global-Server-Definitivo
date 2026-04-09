@@ -82,7 +82,12 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     captura = dados.get("captura") if isinstance(dados.get("captura"), dict) else {}
 
     out["velocidade_base_pokemon_tiles_s"] = float(vel.get("base_tiles_s", 3.0) or 3.0)
-    out["tamanho_incremento_por_tamanho"] = float(tamanho.get("incremento_por_tamanho", 0.2) or 0.2)
+    out["tamanho_diametro_base_tiles"] = float(tamanho.get("diametro_base_tiles", 0.6) or 0.6)
+    out["tamanho_incremento_por_escala"] = float(tamanho.get("incremento_por_escala", tamanho.get("incremento_por_tamanho", 0.1)) or 0.1)
+    out["tamanho_variacao_escala_min"] = int(tamanho.get("variacao_escala_min", -1) or -1)
+    out["tamanho_variacao_escala_max"] = int(tamanho.get("variacao_escala_max", 1) or 1)
+    # Compat legado (cliente antigo ainda pode ler esta chave).
+    out["tamanho_incremento_por_tamanho"] = float(out["tamanho_incremento_por_escala"])
     out["animacao_intervalo_frame_ms"] = int(anim.get("intervalo_frame_ms", 85) or 85)
     out["captura_limite_frutas"] = int(captura.get("limite_frutas", 2) or 2)
     out["captura_cooldown_movimento_ticks"] = int(captura.get("cooldown_movimento_ticks", 36) or 36)
@@ -275,11 +280,14 @@ def carregar_regras_runtime_servidor() -> Dict[str, object]:
 
 
 def carregar_regras_cliente_mundo() -> Dict[str, object]:
+    regras_pokemons = carregar_regras_pokemons()
     return {
         "mundo": {"chunk_tiles": int(carregar_regras_mundo().get("ChunkTiles", 10) or 10)},
         "pokemons": {
-            "animacao_intervalo_frame_ms": int(carregar_regras_pokemons().get("animacao_intervalo_frame_ms", 85) or 85),
-            "tamanho_incremento_por_tamanho": float(carregar_regras_pokemons().get("tamanho_incremento_por_tamanho", 0.2) or 0.2),
+            "animacao_intervalo_frame_ms": int(regras_pokemons.get("animacao_intervalo_frame_ms", 85) or 85),
+            "tamanho_diametro_base_tiles": float(regras_pokemons.get("tamanho_diametro_base_tiles", 0.6) or 0.6),
+            "tamanho_incremento_por_escala": float(regras_pokemons.get("tamanho_incremento_por_escala", 0.1) or 0.1),
+            "tamanho_incremento_por_tamanho": float(regras_pokemons.get("tamanho_incremento_por_tamanho", 0.1) or 0.1),
         },
         "projeteis": {
             "velocidade_pokebola_tiles_s": float(carregar_regras_projeteis().get("projetil_velocidade_pokebola_tiles_s", 7.0) or 7.0),

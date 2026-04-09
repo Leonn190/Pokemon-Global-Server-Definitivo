@@ -6,9 +6,11 @@ import time
 from typing import Dict, Optional, Tuple
 
 from Codigo.ModulosGerais.Colisor import Colisor
+from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_pokemons
 from SimuladorServerJogo.Logica.AutoridadeCaptura import resolver_captura, resolver_fruta
 
 Vector2 = Tuple[float, float]
+_REGRAS_POKEMONS = carregar_regras_pokemons()
 
 
 class AtorServer:
@@ -427,10 +429,12 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
             tamanho_tiles = float(estado.get("tamanho_tiles", dados.get("tamanho_tiles", 0.0)) or 0.0)
             if tamanho_tiles <= 0.0:
                 try:
-                    tamanho = int(float(estado.get("tamanho", dados.get("tamanho", 3)) or 3))
+                    escala = int(float(estado.get("escala", dados.get("escala", estado.get("tamanho", dados.get("tamanho", 3)))) or 3))
                 except (TypeError, ValueError):
-                    tamanho = 3
-                tamanho_tiles = 1.0 + (max(1, tamanho) - 1) * 0.2
+                    escala = 3
+                diametro_base = float(_REGRAS_POKEMONS.get("tamanho_diametro_base_tiles", 0.6) or 0.6)
+                incremento = float(_REGRAS_POKEMONS.get("tamanho_incremento_por_escala", _REGRAS_POKEMONS.get("tamanho_incremento_por_tamanho", 0.1)) or 0.1)
+                tamanho_tiles = diametro_base + (max(0, escala) * incremento)
             raio_colisao = max(0.2, tamanho_tiles * 0.5)
         raio_interacao = float(dados.get("raio_interacao", 0.0) or 0.0)
         if raio_interacao <= 0.0:

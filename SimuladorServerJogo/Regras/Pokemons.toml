@@ -2,8 +2,12 @@
 base_tiles_s = 3.0
 
 [tamanho]
-# Diâmetro visual/físico no mundo: 1.0 + (tamanho - 1) * incremento_por_tamanho.
-incremento_por_tamanho = 0.2
+# Diâmetro visual/físico no mundo: diametro_base_tiles + (escala * incremento_por_escala).
+diametro_base_tiles = 0.6
+incremento_por_escala = 0.1
+# Variação aleatória aplicada na criação do pokémon (sobre a escala base do CSV).
+variacao_escala_min = -1
+variacao_escala_max = 1
 
 [animacao]
 intervalo_frame_ms = 85

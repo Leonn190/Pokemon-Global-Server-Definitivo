@@ -32,21 +32,54 @@ def _inum(v, default=0) -> int:
         return int(default)
 
 
-def _normalizar_tamanho_pokemon(v, default: int = 3) -> int:
+def _normalizar_escala_pokemon(v, default: int = 3) -> int:
     try:
         n = int(float(v))
     except (TypeError, ValueError):
         n = int(default)
-    return max(1, min(15, n))
+    return max(0, min(15, n))
 
 
-def _diametro_tiles_por_tamanho(tamanho: int) -> float:
-    incremento = float(_REGRAS_POKEMON.get("tamanho_incremento_por_tamanho", 0.2) or 0.2)
-    return 1.0 + (max(1, int(tamanho)) - 1) * incremento
+def _diametro_tiles_por_escala(escala: int) -> float:
+    base = float(_REGRAS_POKEMON.get("tamanho_diametro_base_tiles", 0.6) or 0.6)
+    incremento = float(_REGRAS_POKEMON.get("tamanho_incremento_por_escala", _REGRAS_POKEMON.get("tamanho_incremento_por_tamanho", 0.1)) or 0.1)
+    return base + (max(0, int(escala)) * incremento)
 
 
-def _raio_colisao_por_tamanho(tamanho: int) -> float:
-    return _diametro_tiles_por_tamanho(tamanho) * 0.5
+def _raio_colisao_por_escala(escala: int) -> float:
+    return _diametro_tiles_por_escala(escala) * 0.5
+
+
+def _normalizar_variacao_tamanho(v, default: int = 0) -> int:
+    try:
+        n = int(float(v))
+    except (TypeError, ValueError):
+        n = int(default)
+    if n > 0:
+        return 1
+    if n < 0:
+        return -1
+    return 0
+
+
+def _sigla_tamanho_por_variacao(variacao: int) -> str:
+    if int(variacao) > 0:
+        return "G"
+    if int(variacao) < 0:
+        return "S"
+    return "M"
+
+
+def _sortear_escala_e_tamanho(escala_base: int) -> tuple[int, int, str]:
+    base = _normalizar_escala_pokemon(escala_base, default=3)
+    var_min = int(_REGRAS_POKEMON.get("tamanho_variacao_escala_min", -1) or -1)
+    var_max = int(_REGRAS_POKEMON.get("tamanho_variacao_escala_max", 1) or 1)
+    if var_min > var_max:
+        var_min, var_max = var_max, var_min
+    pool = [v for v in range(var_min, var_max + 1) if v in (-1, 0, 1)] or [-1, 0, 1]
+    variacao = int(random.choice(pool))
+    escala = _normalizar_escala_pokemon(base + variacao, default=base)
+    return (escala, variacao, _sigla_tamanho_por_variacao(variacao))
 
 
 def _nivel_baixo_comum(max_nivel: int = 60) -> int:
@@ -291,7 +324,11 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     bonus_nivel = _inum(efeitos.get("bonus_nivel", 0), 0)
     bonus_iv = _inum(efeitos.get("bonus_iv", 0), 0)
     bonus_amizade = _inum(efeitos.get("bonus_amizade", 0), 0)
-    tamanho_pokemon = _normalizar_tamanho_pokemon(estado.get("tamanho", bruto.get("tamanho", 3)), default=3)
+    escala_pokemon = _normalizar_escala_pokemon(estado.get("escala", bruto.get("escala", estado.get("tamanho", bruto.get("tamanho", 3)))), default=3)
+    variacao_tamanho = _normalizar_variacao_tamanho(estado.get("variacao_tamanho", bruto.get("variacao_tamanho", 0)), default=0)
+    tamanho_sigla = str(estado.get("tamanho", bruto.get("tamanho", _sigla_tamanho_por_variacao(variacao_tamanho))) or _sigla_tamanho_por_variacao(variacao_tamanho)).strip().upper()
+    if tamanho_sigla not in {"S", "M", "G"}:
+        tamanho_sigla = _sigla_tamanho_por_variacao(variacao_tamanho)
 
     iv = max(0, min(100, _inum(estado.get("iv", 0), 0) + bonus_iv))
     stats_base = {}
@@ -326,9 +363,13 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     estado["equipaveis"] = max(1, min(4, _inum(estado.get("equipaveis", 1), 1)))
     preencher_habilidades_iniciais(estado, total_slots=5)
     estado["fruta_favorita"] = random.choice(_FRUTAS_DISPONIVEIS) if _FRUTAS_DISPONIVEIS else ""
-    estado["tamanho"] = int(tamanho_pokemon)
-    estado["tamanho_tiles"] = round(_diametro_tiles_por_tamanho(tamanho_pokemon), 2)
-    bruto["tamanho"] = int(tamanho_pokemon)
+    estado["escala"] = int(escala_pokemon)
+    estado["variacao_tamanho"] = int(variacao_tamanho)
+    estado["tamanho"] = str(tamanho_sigla)
+    estado["tamanho_tiles"] = round(_diametro_tiles_por_escala(escala_pokemon), 2)
+    bruto["escala"] = int(escala_pokemon)
+    bruto["variacao_tamanho"] = int(variacao_tamanho)
+    bruto["tamanho"] = str(tamanho_sigla)
 
     subir_nivel_pokemon(estado, vezes=max(0, min(100, nivel_original + bonus_nivel)))
     normalizar_habilidades_memorias(estado, total_slots=5)
@@ -341,7 +382,7 @@ SubirNivel = subir_nivel_pokemon
 
 def criar_pokemon_inicial_materializado(especie: str) -> Dict[str, object]:
     row = _escolher_especie(especie)
-    tamanho = _normalizar_tamanho_pokemon(row.get("Tamanho", 3), default=3)
+    escala, variacao_tamanho, tamanho_sigla = _sortear_escala_e_tamanho(_normalizar_escala_pokemon(row.get("Tamanho", 3), default=3))
     bruto = {
         "id": 0,
         "especie": str(row.get("Nome", "Pokemon")),
@@ -357,8 +398,10 @@ def criar_pokemon_inicial_materializado(especie: str) -> Dict[str, object]:
         "grupo": str(row.get("Grupo", "")),
         "raridade": int(_fnum(row.get("Raridade"), 1)),
         "estagio": int(_fnum(row.get("Estagio"), 1)),
-        "tamanho": int(tamanho),
-        "tamanho_tiles": round(_diametro_tiles_por_tamanho(tamanho), 2),
+        "escala": int(escala),
+        "variacao_tamanho": int(variacao_tamanho),
+        "tamanho": str(tamanho_sigla),
+        "tamanho_tiles": round(_diametro_tiles_por_escala(escala), 2),
         "code": str(row.get("Code", "")),
         "linhagem": str(row.get("Linhagem", "")),
         "equipaveis": max(1, min(4, _inum(row.get("Equipaveis", 1), 1))),
@@ -422,8 +465,8 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
     tamanho_barra = round(max(0.05, 0.46 - (nivel / 160.0)), 3)
     velocidade_barra = round(min(260.0, 40.0 + (iv_global * 1.7)), 2)
 
-    tamanho = _normalizar_tamanho_pokemon(row.get("Tamanho", 3), default=3)
-    raio_colisao = _raio_colisao_por_tamanho(tamanho)
+    escala, variacao_tamanho, tamanho_sigla = _sortear_escala_e_tamanho(_normalizar_escala_pokemon(row.get("Tamanho", 3), default=3))
+    raio_colisao = _raio_colisao_por_escala(escala)
     poke = PokemonServer(
         id_objeto=novo_id,
         especie=str(row.get("Nome", "Desconhecido")),
@@ -447,8 +490,10 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "grupo": str(row.get("Grupo", "")),
             "raridade": int(_fnum(row.get("Raridade"), 1)),
             "estagio": int(_fnum(row.get("Estagio"), 1)),
-            "tamanho": int(tamanho),
-            "tamanho_tiles": round(_diametro_tiles_por_tamanho(tamanho), 2),
+            "escala": int(escala),
+            "variacao_tamanho": int(variacao_tamanho),
+            "tamanho": str(tamanho_sigla),
+            "tamanho_tiles": round(_diametro_tiles_por_escala(escala), 2),
             "code": str(row.get("Code", "")),
             "linhagem": str(row.get("Linhagem", "")),
             "equipaveis": max(1, min(4, _inum(row.get("Equipaveis", 1), 1))),

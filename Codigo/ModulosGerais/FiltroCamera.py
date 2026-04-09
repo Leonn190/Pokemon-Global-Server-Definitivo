@@ -14,21 +14,21 @@ class FiltroCamera:
     FIM_CLAREAR_MIN = 32 * 60
 
     _BIOMA_POR_BLOCO = {
-        5: "desert",
-        6: "snow",
-        7: "magic",
-        8: "volcanic",
-        9: "swamp",
+        5: "deserto",
+        6: "neve",
+        7: "magico",
+        8: "vulcao",
+        9: "pantano",
     }
     _BIOME_MODE_VALUE = {
         "normal": 0.0,
-        "snow": 1.0,
-        "volcanic": 2.0,
-        "desert": 3.0,
-        "magic": 4.0,
-        "swamp": 5.0,
+        "neve": 1.0,
+        "vulcao": 2.0,
+        "deserto": 3.0,
+        "magico": 4.0,
+        "pantano": 5.0,
     }
-    _BIOMAS_ESPECIAIS = ("snow", "volcanic", "desert", "magic", "swamp")
+    _BIOMAS_ESPECIAIS = ("neve", "vulcao", "deserto", "magico", "pantano")
     _BIOMA_GAIN_PER_SEC = 0.01 / 5.0
     _BIOMA_DECAY_PER_SEC = 0.02
 
@@ -185,7 +185,7 @@ class FiltroCamera:
 
     @staticmethod
     def _make_fx_particle(mode: str, largura: int, altura: int) -> Dict[str, float]:
-        if mode == "snow":
+        if mode == "neve":
             return {
                 "x": random.uniform(-30, largura + 30),
                 "y": random.uniform(-altura, altura),
@@ -194,7 +194,7 @@ class FiltroCamera:
                 "phase": random.uniform(0.0, math.tau),
                 "size": random.uniform(1.4, 4.6),
             }
-        if mode == "volcanic":
+        if mode == "vulcao":
             return {
                 "x": random.uniform(-40, largura + 40),
                 "y": random.uniform(altura * 0.52, altura + 40),
@@ -203,7 +203,7 @@ class FiltroCamera:
                 "phase": random.uniform(0.0, math.tau),
                 "size": random.uniform(1.4, 3.8),
             }
-        if mode == "desert":
+        if mode == "deserto":
             return {
                 "x": random.uniform(-60, largura + 60),
                 "y": random.uniform(40, altura - 20),
@@ -212,7 +212,7 @@ class FiltroCamera:
                 "phase": random.uniform(0.0, math.tau),
                 "size": random.uniform(1.2, 3.0),
             }
-        if mode == "magic":
+        if mode == "magico":
             return {
                 "x": random.uniform(-20, largura + 20),
                 "y": random.uniform(30, altura + 20),
@@ -221,7 +221,7 @@ class FiltroCamera:
                 "phase": random.uniform(0.0, math.tau),
                 "size": random.uniform(1.4, 3.5),
             }
-        if mode == "swamp":
+        if mode == "pantano":
             return {
                 "x": random.uniform(-40, largura + 40),
                 "y": random.uniform(altura * 0.30, altura + 20),
@@ -243,13 +243,13 @@ class FiltroCamera:
         p = self._clamp(float(power), 0.0, 1.0)
         if mode == "normal" or p <= 0.0:
             return 0
-        if mode == "snow":
+        if mode == "neve":
             return int(self._lerp(35, 260, p))
-        if mode == "volcanic":
+        if mode == "vulcao":
             return int(self._lerp(16, 150, p))
-        if mode == "desert":
+        if mode == "deserto":
             return int(self._lerp(24, 180, p))
-        if mode == "magic":
+        if mode == "magico":
             return int(self._lerp(18, 120, p))
         return int(self._lerp(12, 84, p))
 
@@ -303,39 +303,39 @@ class FiltroCamera:
         ticks = pygame.time.get_ticks() * 0.001
 
         for part in self._fx_particles:
-            if self._biome_type == "snow":
+            if self._biome_type == "neve":
                 part["phase"] += dt * 2.2
                 part["x"] += (math.sin(ticks * 1.7 + part["phase"]) * 18.0 + part["sx"]) * dt
                 part["y"] += part["sy"] * dt
                 if part["y"] > altura + 18 or part["x"] < -60 or part["x"] > largura + 60:
-                    part.update(self._make_fx_particle("snow", largura, altura))
+                    part.update(self._make_fx_particle("neve", largura, altura))
                     part["x"] = random.uniform(-20, largura + 20)
                     part["y"] = random.uniform(-140, -12)
-            elif self._biome_type == "volcanic":
+            elif self._biome_type == "vulcao":
                 part["phase"] += dt * 4.0
                 part["x"] += (part["sx"] + math.sin(ticks * 3.2 + part["phase"]) * 12.0) * dt
                 part["y"] += part["sy"] * dt
                 if part["y"] < -20 or part["x"] < -60 or part["x"] > largura + 60:
-                    part.update(self._make_fx_particle("volcanic", largura, altura))
-            elif self._biome_type == "desert":
+                    part.update(self._make_fx_particle("vulcao", largura, altura))
+            elif self._biome_type == "deserto":
                 part["phase"] += dt * 2.4
                 part["x"] += (part["sx"] + math.sin(ticks * 2.0 + part["phase"]) * 20.0) * dt
                 part["y"] += (part["sy"] + math.sin(ticks * 1.7 + part["phase"]) * 5.0) * dt
                 if part["x"] > largura + 80 or part["y"] < -30 or part["y"] > altura + 30:
-                    part.update(self._make_fx_particle("desert", largura, altura))
+                    part.update(self._make_fx_particle("deserto", largura, altura))
                     part["x"] = random.uniform(-100, -10)
-            elif self._biome_type == "magic":
+            elif self._biome_type == "magico":
                 part["phase"] += dt * 2.8
                 part["x"] += math.sin(ticks * 1.4 + part["phase"]) * 16.0 * dt + part["sx"] * dt
                 part["y"] += math.cos(ticks * 1.9 + part["phase"]) * 10.0 * dt + part["sy"] * dt
                 if part["x"] < -30 or part["x"] > largura + 30 or part["y"] < -30 or part["y"] > altura + 30:
-                    part.update(self._make_fx_particle("magic", largura, altura))
-            elif self._biome_type == "swamp":
+                    part.update(self._make_fx_particle("magico", largura, altura))
+            elif self._biome_type == "pantano":
                 part["phase"] += dt * 1.2
                 part["x"] += math.sin(ticks * 0.9 + part["phase"]) * 7.0 * dt + part["sx"] * dt
                 part["y"] += math.cos(ticks * 1.1 + part["phase"]) * 4.0 * dt + part["sy"] * dt
                 if part["x"] < -80 or part["x"] > largura + 80 or part["y"] < altura * 0.20 or part["y"] > altura + 50:
-                    part.update(self._make_fx_particle("swamp", largura, altura))
+                    part.update(self._make_fx_particle("pantano", largura, altura))
 
     def coletar_uniformes(
         self,
@@ -402,29 +402,29 @@ class FiltroCamera:
 
         camada = self._biome_layer_cache
         camada.fill((0, 0, 0, 0))
-        if self._biome_type == "snow":
+        if self._biome_type == "neve":
             alpha = int(self._lerp(80, 210, biome_power))
             for part in self._fx_particles:
                 raio = max(1, int(part["size"] + biome_power * 1.2))
                 pygame.draw.circle(camada, (245, 248, 255, alpha), (int(part["x"]), int(part["y"])), raio)
-        elif self._biome_type == "volcanic":
+        elif self._biome_type == "vulcao":
             alpha = int(self._lerp(90, 195, biome_power))
             for part in self._fx_particles:
                 raio = max(1, int(part["size"]))
                 pygame.draw.circle(camada, (255, 165, 70, alpha), (int(part["x"]), int(part["y"])), raio)
                 if raio >= 2:
                     pygame.draw.circle(camada, (255, 232, 150, max(40, alpha - 50)), (int(part["x"]), int(part["y"])), max(1, raio - 1))
-        elif self._biome_type == "desert":
+        elif self._biome_type == "deserto":
             alpha = int(self._lerp(28, 108, biome_power))
             for part in self._fx_particles:
                 pygame.draw.circle(camada, (220, 200, 150, alpha), (int(part["x"]), int(part["y"])), max(1, int(part["size"])))
-        elif self._biome_type == "magic":
+        elif self._biome_type == "magico":
             alpha = int(self._lerp(55, 165, biome_power))
             for part in self._fx_particles:
                 raio = max(1, int(part["size"]))
                 pygame.draw.circle(camada, (225, 170, 255, alpha), (int(part["x"]), int(part["y"])), raio)
                 pygame.draw.circle(camada, (180, 220, 255, max(30, alpha - 45)), (int(part["x"]), int(part["y"])), max(1, raio - 1))
-        elif self._biome_type == "swamp":
+        elif self._biome_type == "pantano":
             alpha = int(self._lerp(20, 80, biome_power))
             for part in self._fx_particles:
                 rect = pygame.Rect(0, 0, int(part["size"] * 2.2), int(part["size"]))

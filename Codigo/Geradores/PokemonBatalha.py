@@ -41,6 +41,71 @@ class PokemonBatalha:
         self.EnergiaMax = ene_base * 3.0
         energia_padrao = max(0.0, min(self.EnergiaMax, float(estado.get("energia", ene_base) or ene_base)))
         self.Energia = energia_padrao
+        self.Nivel = int(estado.get("nivel", estado.get("Nivel", self.Dados.get("nivel", 1))) or 1)
+        self.Tipos = list(estado.get("tipos") or self.Dados.get("tipos") or ([] if not self.Dados.get("tipo") else [self.Dados.get("tipo")]))
+        self.ListaAtaques = self._extrair_lista_ataques(estado)
+        self.ItensBuild = list(estado.get("build") or estado.get("itens_build") or self.Dados.get("build") or [])
+        self.Stats = dict(stats)
+        for chave in ("Amplificacao", "Durabilidade", "Vamp", "Barreira"):
+            self.Stats.setdefault(chave, 0.0)
+
+
+    @staticmethod
+    def _extrair_lista_ataques(estado: Dict[str, object]) -> List[Dict[str, object]]:
+        candidatos = estado.get("ataques") or estado.get("moves") or estado.get("golpes") or []
+        saida: List[Dict[str, object]] = []
+        if isinstance(candidatos, (list, tuple)):
+            for item in candidatos:
+                if isinstance(item, dict):
+                    saida.append(dict(item))
+                elif item is not None:
+                    saida.append({"nome": str(item), "tipo": "normal"})
+        return saida
+
+    def raio_px(self, camera) -> int:
+        tile_px = max(16, int(getattr(camera, "TilePx", 40) or 40))
+        return max(12, int(tile_px * (self.DiametroTiles * 0.5)))
+
+    def centro_tela(self, camera) -> Tuple[int, int]:
+        px, py = camera.mundo_para_tela_px(self.Posicao)
+        return int(px), int(py)
+
+
+    @staticmethod
+    def _normalizar_chave_ficha(chave: str) -> str:
+        return str(chave or "").strip().lower().replace("á", "a").replace("ã", "a").replace("ç", "c")
+
+    def obter_valor_ficha(self, chave: str):
+        c = self._normalizar_chave_ficha(chave)
+        mapa_direto = {
+            "peso": self.Peso,
+            "escala": self.Escala,
+            "energiamaxima": self.EnergiaMax,
+            "energiamax": self.EnergiaMax,
+            "crc": self.CrC,
+            "crd": self.CrD,
+            "vida": self.VidaMax,
+        }
+        if c in mapa_direto:
+            return mapa_direto[c]
+
+        for k, v in self.Stats.items():
+            if self._normalizar_chave_ficha(k) == c:
+                return v
+        return 0.0
+
+    def montar_dados_ficha(self) -> Dict[str, object]:
+        return {
+            "nome": self.Nome,
+            "nivel": self.Nivel,
+            "tipos": list(self.Tipos),
+            "ataques": list(self.ListaAtaques),
+            "itens": list(self.ItensBuild),
+            "vida_atual": self.VidaAtual,
+            "vida_max": self.VidaMax,
+            "energia_atual": self.Energia,
+            "energia_max": self.EnergiaMax,
+        }
 
     @classmethod
     def _frames_especie(cls, especie: str) -> List[pygame.Surface]:
@@ -64,16 +129,21 @@ class PokemonBatalha:
         k = float(tamanho_px) / float(max(w, h))
         return pygame.transform.smoothscale(base, (max(1, int(w * k)), max(1, int(h * k))))
 
-    def renderizar(self, tela: pygame.Surface, camera) -> None:
-        px, py = camera.mundo_para_tela_px(self.Posicao)
-        centro = (int(px), int(py))
+    def renderizar(self, tela: pygame.Surface, camera, selecionado: bool = False) -> None:
+        centro = self.centro_tela(camera)
         tile_px = max(16, int(getattr(camera, "TilePx", 40) or 40))
-        raio = max(12, int(tile_px * (self.DiametroTiles * 0.5)))
+        raio = self.raio_px(camera)
 
         cor_circulo = (56, 90, 145) if self.Lado == "jogador" else (144, 74, 74)
         pygame.draw.circle(tela, (0, 0, 0, 80), (centro[0], centro[1] + max(4, raio // 8)), int(raio * 0.96))
         pygame.draw.circle(tela, cor_circulo, centro, raio)
         pygame.draw.circle(tela, (22, 26, 34), centro, raio, max(2, int(tile_px * 0.06)))
+        if selecionado:
+            pulso = (pygame.time.get_ticks() % 900) / 900.0
+            alpha = int(130 + 120 * abs(0.5 - pulso) * 2.0)
+            brilho = pygame.Surface((raio * 3, raio * 3), pygame.SRCALPHA)
+            pygame.draw.circle(brilho, (255, 255, 190, alpha), (brilho.get_width() // 2, brilho.get_height() // 2), raio + max(2, int(tile_px * 0.16)), 3)
+            tela.blit(brilho, brilho.get_rect(center=centro))
 
         frame = self._frame_atual(int(raio * 1.40))
         if frame is not None:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from typing import Dict, Optional, Tuple
 
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.ModulosGerais.Colisor import Colisor
 from SimuladorServerJogo.Logica.AutoridadeCaptura import resolver_captura, resolver_fruta
 
 Vector2 = Tuple[float, float]

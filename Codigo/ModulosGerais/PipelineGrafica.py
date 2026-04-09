@@ -4,7 +4,7 @@ from typing import Optional
 
 import pygame
 
-from Codigo.Modulos.CompositorModernGL import CompositorModernGL
+from Codigo.ModulosGerais.CompositorModernGL import CompositorModernGL
 
 
 class PipelineGrafica:

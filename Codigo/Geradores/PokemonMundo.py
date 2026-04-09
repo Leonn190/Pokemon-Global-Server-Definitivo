@@ -9,10 +9,10 @@ from typing import Dict, List, Optional, Tuple
 
 import pygame
 
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.ModulosGerais.Colisor import Colisor
 from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Modulos.Auxiliares import carregar_frames
-from Codigo.Modulos.Sonoridades import tocar
+from Codigo.ModulosGerais.Auxiliares import carregar_frames
+from Codigo.ModulosGerais.Sonoridades import tocar
 
 Vector2 = Tuple[float, float]
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"

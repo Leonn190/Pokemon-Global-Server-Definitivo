@@ -1,7 +1,7 @@
 import threading
 
 import pygame
-from Codigo.Modulos.Sonoridades import tocar
+from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server

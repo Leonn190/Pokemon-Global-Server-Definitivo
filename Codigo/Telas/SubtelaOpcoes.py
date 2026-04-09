@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pygame
-from Codigo.Modulos.Sonoridades import tocar
+from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Telas.Subtela import Subtela
 

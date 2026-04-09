@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Dict
 
 from Codigo.Geradores.PokemonMundo import Pokemon
-from Codigo.Modulos.Camera import CameraBatalha
-from Codigo.Modulos.FiltroCamera import FiltroCamera
+from Codigo.ModulosGerais.Camera import CameraBatalha
+from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
 from Codigo.Paineis.FichaPokemon import FichaPokemon
 from Codigo.Server.ServerMundo import coletar_regras_mundo
 

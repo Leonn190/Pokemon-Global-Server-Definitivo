@@ -8,8 +8,8 @@ from typing import Optional, Tuple
 
 import pygame
 
-from Codigo.Modulos.DesenhaAtor import DesenhaAtor
-from Codigo.Modulos.Colisor import Colisor
+from Codigo.ModulosGerais.DesenhaAtor import DesenhaAtor
+from Codigo.ModulosGerais.Colisor import Colisor
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Prefabs.Barra import Barra

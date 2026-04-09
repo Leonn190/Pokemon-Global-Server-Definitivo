@@ -5,9 +5,9 @@ from typing import Dict, List, Tuple
 
 import pygame
 
-from Codigo.Modulos.Auxiliares import carregar_frames
-from Codigo.Modulos.Colisor import Colisor
-from Codigo.Modulos.Sonoridades import tocar
+from Codigo.ModulosGerais.Auxiliares import carregar_frames
+from Codigo.ModulosGerais.Colisor import Colisor
+from Codigo.ModulosGerais.Sonoridades import tocar
 
 
 class Bau:

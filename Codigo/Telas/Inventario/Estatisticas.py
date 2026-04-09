@@ -6,7 +6,7 @@ import pygame
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.PokemonInventario import PokemonInventario
-from Codigo.Modulos.DesenhaAtor import DesenhaAtor
+from Codigo.ModulosGerais.DesenhaAtor import DesenhaAtor
 from Codigo.Paineis.PainelArvoreHabilidades import PainelArvoreHabilidades
 from Codigo.Prefabs.Barra import Barra, BarraEditavel
 from Codigo.Prefabs.Botao import Botao

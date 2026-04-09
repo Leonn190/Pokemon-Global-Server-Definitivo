@@ -6,12 +6,12 @@ from Codigo.Cenas.CenaLogin import CenaLogin
 import pygame
 import time
 
-from Codigo.Modulos.Sonoridades import SISTEMA_MUSICAS
-from Codigo.Modulos.EfeitosTela import aplicar_claridade, Escurecer
+from Codigo.ModulosGerais.Sonoridades import SISTEMA_MUSICAS
+from Codigo.ModulosGerais.EfeitosTela import aplicar_claridade, Escurecer
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Modulos.Discord import DiscordPresence
+from Codigo.ModulosGerais.Discord import DiscordPresence
 from Codigo.Telas.Subtela import GerenciadorSubtelas
-from Codigo.Modulos.PipelineGrafica import PipelineGrafica
+from Codigo.ModulosGerais.PipelineGrafica import PipelineGrafica
 
 class ControladorCenas:
     def __init__(self, TELA, RELOGIO, CONFIG, tela_display=None, janela_opengl=False):

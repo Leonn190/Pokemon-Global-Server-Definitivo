@@ -1,7 +1,7 @@
 import pygame
 
-from Codigo.Modulos.Auxiliares import carregar_frames
-from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
+from Codigo.ModulosGerais.Auxiliares import carregar_frames
+from Codigo.ModulosGerais.EfeitosTela import Clarear, Escurecer
 from Codigo.Prefabs.Botao import Botao
 
 

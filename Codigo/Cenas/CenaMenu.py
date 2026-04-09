@@ -1,4 +1,4 @@
-from Codigo.Modulos.EfeitosTela import Clarear, Escurecer
+from Codigo.ModulosGerais.EfeitosTela import Clarear, Escurecer
 from Codigo.Telas.TelaMenu import TelaMenu
 from Codigo.Telas.TelaServers import TelaServers
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig

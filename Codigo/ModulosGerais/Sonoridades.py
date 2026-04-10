@@ -96,37 +96,37 @@ Musicas = {
         "fimloop": 109.43
     },
     "ConfrontoDoVale": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVale.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoVale.ogg",
         "loop": 2.34,
         "fimloop": 83.6
     },
     "ConfrontoDaNeve": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaNeve.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDaNeve.ogg",
         "loop": 2.32,
         "fimloop": 83.65
     },
     "ConfrontoDoMar": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoMar.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoMar.ogg",
         "loop": 2.27,
         "fimloop": 83.64
     },
     "ConfrontoDoDeserto": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoDeserto.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoDeserto.ogg",
         "loop": 2.33,
         "fimloop": 83.655
     },
     "ConfrontoDoVulcao": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoVulcao.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoVulcao.ogg",
         "loop": 2.34,
         "fimloop": 83.62
     },
     "ConfrontoDoMagia": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDaMagia.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDaMagia.ogg",
         "loop": 2.34,
         "fimloop": 83.62
     },
     "ConfrontoDoPantano": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Combate/ConfrontoDoPantano.ogg",
+        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoPantano.ogg",
         "loop": 2.34,
         "fimloop": 83.62
     },

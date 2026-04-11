@@ -1,0 +1,44 @@
+{
+    "_meta": {
+        "gerado_por": "EditorFluxos",
+        "versao": 2
+    },
+    "fluxos": {
+        "Arranhar": {
+            "alcance_miravel": false,
+            "alcance_fixo_tiles": 7.2,
+            "alcance_min_tiles": 0.8,
+            "alcance_max_tiles": 30.0,
+            "origem_gap_tiles": 0.55,
+            "usar_corpo": false,
+            "usar_area_final": false,
+            "usar_area_extra": false,
+            "usar_setor": true,
+            "quantidade_ramos": 3,
+            "abertura_ramos_graus": 48.0,
+            "rotacao_ramos_graus": 0.0,
+            "passo_lateral_ramos_tiles": 1.85,
+            "largura_inicial_tiles": 0.85,
+            "largura_final_tiles": 0.9,
+            "offset_lateral_final_tiles": 0.0,
+            "offset_frontal_final_tiles": 0.0,
+            "curvatura_lateral_tiles": 1.6,
+            "curvatura_frontal_tiles": 0.0,
+            "segmentos_corpo": 28,
+            "arredondar_inicio": true,
+            "arredondar_fim": true,
+            "raio_area_final_tiles": 1.3,
+            "offset_area_final_tiles": 0.0,
+            "raio_area_extra_tiles": 0.95,
+            "offset_area_extra_tiles": 3.7,
+            "quantidade_setores": 1,
+            "abertura_setores_graus": 71.0,
+            "rotacao_setores_graus": 0.0,
+            "inicio_setor_tiles": 0.0,
+            "alcance_setor_tiles": 5.8,
+            "setor_usar_alcance_geral": false,
+            "angulo_setor_graus": 73.0,
+            "segmentos_setor": 43
+        }
+    }
+}

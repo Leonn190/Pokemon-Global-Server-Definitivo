@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import pygame
@@ -53,6 +54,7 @@ class PainelJogada:
         )
         self._comandos: List[Dict[str, object]] = []
         self._hover_jogada_id: int | None = None
+        self._cache_icones_diversos: dict[tuple[str, int], pygame.Surface | None] = {}
 
     @staticmethod
     def _cor_item(dados: Dict[str, object], selecionado: bool) -> tuple[tuple[int, int, int], tuple[int, int, int], tuple[int, int, int]]:
@@ -72,6 +74,8 @@ class PainelJogada:
 
     @staticmethod
     def _nome_item(dados: Dict[str, object]) -> str:
+        if dados.get("troca_reserva_id"):
+            return "Trocar"
         ataque = dados.get("ataque")
         if isinstance(ataque, dict):
             nome = str(ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome") or "").strip()
@@ -98,17 +102,13 @@ class PainelJogada:
             return None
         return FichaPokemon._carregar_surface(caminho, (lado, lado), chave_extra="contain")
 
-    @staticmethod
-    def _icone_movimento(lado: int) -> pygame.Surface:
-        surf = pygame.Surface((lado, lado), pygame.SRCALPHA)
-        centro = (lado // 2, lado // 2)
-        raio = max(8, lado // 2 - 3)
-        pygame.draw.circle(surf, (24, 34, 54, 210), centro, raio)
-        pygame.draw.circle(surf, (220, 235, 255, 230), centro, raio, 2)
-        ponta = (int(lado * 0.78), centro[1])
-        corpo_a = (int(lado * 0.28), int(lado * 0.34))
-        corpo_b = (int(lado * 0.28), int(lado * 0.66))
-        pygame.draw.polygon(surf, (235, 244, 255, 240), [ponta, corpo_a, corpo_b])
+    def _icone_diverso(self, nome: str, lado: int) -> Optional[pygame.Surface]:
+        chave = (str(nome), int(lado))
+        if chave in self._cache_icones_diversos:
+            return self._cache_icones_diversos[chave]
+        arquivo = FichaPokemon._achar_arquivo(Path("Recursos") / "Visual" / "Icones" / "Diversos", nome)
+        surf = FichaPokemon._carregar_surface(arquivo, (lado, lado), chave_extra="contain") if arquivo is not None else None
+        self._cache_icones_diversos[chave] = surf
         return surf
 
     def sincronizar(self, jogadas: List[Dict[str, object]], selecionado_id: object | None) -> None:
@@ -129,12 +129,12 @@ class PainelJogada:
                     execute=None,
                     style={
                         "radius": 9,
-                        "border_width": 2,
-                        "bg": (124, 28, 36),
-                        "bg_hover": (164, 40, 52),
-                        "bg_pressed": (92, 20, 28),
-                        "border": (255, 255, 255),
-                        "border_hover": (255, 255, 255),
+                        "border_width": 0,
+                        "bg": (220, 36, 36),
+                        "bg_hover": (236, 54, 54),
+                        "bg_pressed": (194, 28, 28),
+                        "border": (220, 36, 36),
+                        "border_hover": (236, 54, 54),
                         "hover_scale": 1.0,
                         "press_scale": 0.96,
                         "text_style": {
@@ -258,8 +258,9 @@ class PainelJogada:
             rect_icone = pygame.Rect(rect_poke.right + 8, item.rect.y + 11, lado_img - 6, lado_img - 6)
             icone = self._icone_ataque(item.dados, rect_icone.width)
             if icone is None:
-                icone = self._icone_movimento(rect_icone.width)
-            tela.blit(icone, icone.get_rect(center=rect_icone.center))
+                icone = self._icone_diverso("trocar" if item.dados.get("troca_reserva_id") else "mover", rect_icone.width)
+            if icone is not None:
+                tela.blit(icone, icone.get_rect(center=rect_icone.center))
 
             self._texto_nome.set_text(self._nome_item(item.dados))
             self._texto_nome.set_pos((rect_icone.right + 8, item.rect.y + 22))

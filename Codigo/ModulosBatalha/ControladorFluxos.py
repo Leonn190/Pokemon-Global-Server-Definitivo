@@ -108,6 +108,8 @@ class ControladorFluxos:
             return None
         if not getattr(self._controlador, "pokemon_eh_aliado", lambda _p: False)(selecionado):
             return None
+        if bool(getattr(selecionado, "EmReserva", False)):
+            return None
         return selecionado
 
     def _disponivel(self, pokemon) -> float:
@@ -162,6 +164,14 @@ class ControladorFluxos:
     def _pokemon_no_ponto(self, pos_tela):
         return self._controlador.pokemon_no_ponto(pos_tela, self._camera)
 
+    def _reserva_aliada_no_ponto(self, pos_tela):
+        pokemon = self._pokemon_no_ponto(pos_tela)
+        if pokemon is None:
+            return None
+        if getattr(self._controlador, "pokemon_eh_reserva_aliada", lambda _p: False)(pokemon):
+            return pokemon
+        return None
+
     def _assinatura(self, executor, ataque: Optional[dict]) -> tuple[str, str]:
         return self._id_combatente(executor), self._nome_ataque(ataque).casefold()
 
@@ -189,6 +199,8 @@ class ControladorFluxos:
             "alvos": [],
             "regra_alvo": self._regra_alvo(ataque),
             "tipo_movimento": estilo == "movimento",
+            "troca_reserva": None,
+            "troca_reserva_id": None,
             "custo_base": self._custo_ataque(executor, ataque, estilo),
             "origem_arrasto": ataque is None,
         }
@@ -222,6 +234,14 @@ class ControladorFluxos:
         if origem is not None:
             self._preparacao["origem_mundo"] = origem
         self._preparacao["destino_mundo"] = self._camera.tela_para_mundo_tiles(pos_tela)
+        self._preparacao["troca_reserva"] = None
+        self._preparacao["troca_reserva_id"] = None
+        if self._preparacao.get("ataque") is None and str(self._preparacao.get("estilo") or "") == "movimento":
+            alvo_reserva = self._reserva_aliada_no_ponto(pos_tela)
+            if alvo_reserva is not None:
+                self._preparacao["destino_mundo"] = tuple(alvo_reserva.Posicao)
+                self._preparacao["troca_reserva"] = alvo_reserva
+                self._preparacao["troca_reserva_id"] = self._id_combatente(alvo_reserva)
 
     def _alvos_validos(self, preparo: Dict[str, object]) -> List[object]:
         regra = preparo.get("regra_alvo") if isinstance(preparo.get("regra_alvo"), dict) else {}
@@ -321,7 +341,7 @@ class ControladorFluxos:
 
                 clicado = self._pokemon_no_ponto(evento.pos)
                 if executor is not None and self._ataque_atual is None and clicado is executor:
-                    self._clique_arrasto = {"executor": executor, "pos": tuple(evento.pos)}
+                    self._clique_arrasto = {"executor": executor, "pos": tuple(evento.pos), "clicado": executor}
                     continue
 
                 if clicado is not None:
@@ -334,9 +354,12 @@ class ControladorFluxos:
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
                 if self._clique_arrasto is None:
                     continue
+                clicado = self._clique_arrasto.get("clicado")
                 if self._preparacao is not None and self._preparacao.get("origem_arrasto"):
                     self._atualizar_destino_mouse(evento.pos)
                     self._preparacao["estado"] = "estabilizado"
+                elif clicado is not None and self._pokemon_no_ponto(evento.pos) is clicado:
+                    self._controlador.selecionar_pokemon(clicado)
                 self._clique_arrasto = None
 
     def preparar(self, ficha) -> None:
@@ -376,10 +399,14 @@ class ControladorFluxos:
             "estilo": estilo,
             "tipo_movimento": bool(preparo.get("tipo_movimento")),
             "destino_mundo": tuple(preparo.get("destino_mundo")) if isinstance(preparo.get("destino_mundo"), (tuple, list)) else None,
+            "troca_reserva": preparo.get("troca_reserva"),
+            "troca_reserva_id": preparo.get("troca_reserva_id"),
             "alvos": list(preparo.get("alvos") or []),
             "alvo_ids": [self._id_combatente(alvo) for alvo in list(preparo.get("alvos") or [])],
             "custo_base": self._custo_ataque(selecionado, ataque, estilo),
         }
+        if jogada.get("troca_reserva_id"):
+            jogada["acao_chave_manual"] = f"__troca_reserva__:{jogada.get('troca_reserva_id')}"
         self._montador.adicionar(jogada)
         self._preparacao = None
         self._clique_arrasto = None
@@ -462,6 +489,8 @@ class ControladorFluxos:
 
         preparo = self._criar_preparacao(executor, ataque, estilo)
         preparo["destino_mundo"] = tuple(jogada.get("destino_mundo")) if isinstance(jogada.get("destino_mundo"), (tuple, list)) else None
+        preparo["troca_reserva"] = jogada.get("troca_reserva")
+        preparo["troca_reserva_id"] = jogada.get("troca_reserva_id")
         preparo["alvos"] = list(jogada.get("alvos") or [])
         preparo["tipo_movimento"] = bool(jogada.get("tipo_movimento"))
         preparo["custo_base"] = float(jogada.get("custo_base") or preparo.get("custo_base") or 0.0)
@@ -502,6 +531,8 @@ class ControladorFluxos:
         estilo = str(jogada.get("estilo") or "movimento").casefold()
         ataque = jogada.get("ataque")
         if estilo == "movimento" and ataque is None:
+            if jogada.get("troca_reserva_id"):
+                return (244, 215, 76)
             return (58, 150, 255) if not preparada or selecionada else (80, 220, 120)
         if estilo == "movimento":
             return (235, 72, 72) if not preparada or selecionada else (255, 150, 54)
@@ -576,7 +607,7 @@ class ControladorFluxos:
             if pokemon is None:
                 continue
             pokemon.renderizar_construto(tela, self._camera, posicao, alpha=92)
-        if ativo and ativo.get("tipo_movimento") and isinstance(ativo.get("destino_mundo"), (tuple, list)):
+        if ativo and ativo.get("tipo_movimento") and not ativo.get("troca_reserva_id") and isinstance(ativo.get("destino_mundo"), (tuple, list)):
             pokemon = ativo.get("executor")
             if pokemon is not None:
                 pokemon.renderizar_construto(tela, self._camera, ativo.get("destino_mundo"), alpha=72)

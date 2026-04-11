@@ -123,9 +123,9 @@ class FichaPokemonBatalha:
             return
         self._cache_tela = tamanho
         w, h = tamanho
-        largura = min(900, max(660, int(w * 0.66)))
+        largura = min(820, max(600, int(w * 0.60)))
         altura = min(192, max(146, int(h * 0.20)))
-        self.rect = pygame.Rect((w - largura) // 2, h - altura - 18, largura, altura)
+        self.rect = pygame.Rect(((w - largura) // 2) + 15, h - altura - 18, largura, altura)
 
     def _atualizar_animacoes(self, dt: float):
         velocidade = min(1.0, max(0.0, float(dt)) * 9.0)
@@ -335,7 +335,7 @@ class FichaPokemonBatalha:
             self._ataque_selecionado = None
         total = len(habilidades)
         self._sincronizar_botoes_habilidade(total)
-        pode_interagir = str(getattr(pokemon, "Lado", "")) == "jogador"
+        pode_interagir = str(getattr(pokemon, "Lado", "")) == "jogador" and not bool(getattr(pokemon, "EmReserva", False))
 
         area_interna = area.inflate(-padding * 2, -padding * 2)
         area_skills = pygame.Rect(area_interna.x, area_interna.y, area_interna.width, area_interna.height)
@@ -527,11 +527,7 @@ class FichaPokemonBatalha:
         except Exception:
             img = None
         if img is not None:
-            moldura = pygame.Rect(0, 0, int(lado_img * 1.02), int(lado_img * 1.02))
-            moldura.center = (area.centerx, area.centery + 2)
-            pygame.draw.circle(tela, (18, 24, 36), moldura.center, moldura.width // 2)
-            pygame.draw.circle(tela, (228, 237, 252), moldura.center, moldura.width // 2, 2)
-            tela.blit(img, img.get_rect(center=moldura.center))
+            tela.blit(img, img.get_rect(center=(area.centerx, area.centery + 2)))
 
         self._desenhar_texto(self._txt_sub, tela, f"Lv {int(getattr(pokemon, 'Nivel', 1))}", (area.centerx, area.bottom - 26), align="center")
 
@@ -553,7 +549,7 @@ class FichaPokemonBatalha:
         rect = self.rect.move(0, offset)
 
         gap_setores = 10
-        side_w = max(170, int(rect.width * 0.24))
+        side_w = max(144, int(rect.width * 0.205))
         extra_max = side_w
         extra_w = int(round(extra_max * self._t_extra))
         direita_w = side_w
@@ -601,7 +597,7 @@ class FichaPokemonBatalha:
         return self._ataque_selecionado
 
     def selecionar_ataque_indice(self, indice: int, pokemon=None):
-        if pokemon is None or str(getattr(pokemon, "Lado", "")) != "jogador":
+        if pokemon is None or str(getattr(pokemon, "Lado", "")) != "jogador" or bool(getattr(pokemon, "EmReserva", False)):
             return None
         ataques = list(getattr(pokemon, "obter_ataques_ficha", lambda limite=None: getattr(pokemon, "ListaAtaques", []))(5) or [])[:5]
         idx = int(indice)
@@ -619,7 +615,7 @@ class FichaPokemonBatalha:
         ponto = (int(pos[0]), int(pos[1]))
         if self.rect.collidepoint(ponto):
             return True
-        extra_max = max(170, int(self.rect.width * 0.24))
+        extra_max = max(144, int(self.rect.width * 0.205))
         extra_w = int(round(extra_max * self._t_extra))
         if extra_w <= 0:
             return False

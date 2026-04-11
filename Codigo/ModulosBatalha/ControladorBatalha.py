@@ -22,10 +22,12 @@ class ControladorBatalha:
         self.PokemonsInimigos: List[PokemonBatalha] = []
         self.PokemonsReservaAliados: List[Dict[str, object]] = []
         self.PokemonsReservaInimigos: List[Dict[str, object]] = []
+        self.PokemonsReservaAliadosObj: List[PokemonBatalha] = []
         self.Jogador = PlayerBatalha("jogador", max_ativos=self._MAX_ATIVOS)
         self.Inimigo = PlayerBatalha("inimigo", max_ativos=self._MAX_ATIVOS)
         self.PokemonSelecionado: PokemonBatalha | None = None
         self._provedor_reservas = None
+        self._rodada_atual = 1
         self._inicializar_times()
 
     def _inicializar_times(self) -> None:
@@ -52,15 +54,32 @@ class ControladorBatalha:
 
         self.PokemonsAliados = [PokemonBatalha(poke, posicao=pos_aliados[i], lado="jogador", regras=self.Contexto) for i, poke in enumerate(aliados_ativos) if i < len(pos_aliados)]
         self.PokemonsInimigos = [PokemonBatalha(poke, posicao=pos_inimigos[i], lado="inimigo", regras=self.Contexto) for i, poke in enumerate(inimigos_ativos) if i < len(pos_inimigos)]
+        self.PokemonsReservaAliadosObj = self._criar_reservas_visuais(
+            self.PokemonsReservaAliados,
+            centro=(float(centro[0]), float(centro[1])),
+            arena_w=arena_w,
+            arena_h=arena_h,
+        )
         self.Jogador.definir_ativos(self.PokemonsAliados)
         self.Inimigo.definir_ativos(self.PokemonsInimigos)
         self.SistemaBatalha.definir_lados(self.PokemonsAliados, self.PokemonsInimigos)
+
+    def _criar_reservas_visuais(self, pokemons_reserva: List[Dict[str, object]], *, centro, arena_w: float, arena_h: float) -> List[PokemonBatalha]:
+        base_x = float(centro[0]) - (arena_w * 0.5) + 1.8
+        base_y = float(centro[1]) + (arena_h * 0.5) + 1.4
+        saida: List[PokemonBatalha] = []
+        for indice, poke in enumerate(list(pokemons_reserva or [])[:3]):
+            pos = (base_x + indice * 1.85, base_y)
+            reserva = PokemonBatalha(poke, posicao=pos, lado="jogador", regras=self.Contexto)
+            reserva.EmReserva = True
+            saida.append(reserva)
+        return saida
 
     def pokemon_no_ponto(self, mouse_tela_px, camera) -> PokemonBatalha | None:
         if not isinstance(mouse_tela_px, (tuple, list)) or len(mouse_tela_px) != 2:
             return None
         mx, my = int(mouse_tela_px[0]), int(mouse_tela_px[1])
-        for poke in (self.PokemonsAliados + self.PokemonsInimigos):
+        for poke in (self.PokemonsAliados + self.PokemonsInimigos + self.PokemonsReservaAliadosObj):
             cx, cy = poke.centro_tela(camera)
             r = poke.raio_px(camera)
             if (mx - cx) * (mx - cx) + (my - cy) * (my - cy) <= r * r:
@@ -68,7 +87,10 @@ class ControladorBatalha:
         return None
 
     def pokemon_eh_aliado(self, pokemon) -> bool:
-        return pokemon in self.PokemonsAliados
+        return pokemon in self.PokemonsAliados or pokemon in self.PokemonsReservaAliadosObj
+
+    def pokemon_eh_reserva_aliada(self, pokemon) -> bool:
+        return pokemon in self.PokemonsReservaAliadosObj
 
     def definir_provedor_reservas(self, provedor) -> None:
         self._provedor_reservas = provedor
@@ -99,6 +121,9 @@ class ControladorBatalha:
     def renderizar(self, tela, camera) -> None:
         self.Arena.renderizar(tela, camera)
         pokemon_hover = self.pokemon_no_ponto(pygame.mouse.get_pos(), camera)
+        for poke in self.PokemonsReservaAliadosObj:
+            reservado = float(self._provedor_reservas(poke)) if callable(self._provedor_reservas) else 0.0
+            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), hover=(poke is pokemon_hover), energia_reservada=reservado)
         for poke in self.PokemonsAliados:
             reservado = float(self._provedor_reservas(poke)) if callable(self._provedor_reservas) else 0.0
             poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), hover=(poke is pokemon_hover), energia_reservada=reservado)

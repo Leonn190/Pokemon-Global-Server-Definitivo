@@ -8,7 +8,9 @@ import pygame
 from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
 from Codigo.Paineis.PainelJogada import PainelJogada
 from Codigo.ModulosBatalha.ControladorFluxos import ControladorFluxos
+from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
+from Codigo.Prefabs.Texto import Texto
 
 
 class ElementosHudBatalha:
@@ -31,6 +33,9 @@ class ElementosHudBatalha:
         self._pokemon_exibido = None
         self._botao_preparar: Optional[Botao] = None
         self._botao_pronto: Optional[Botao] = None
+        self._barra_tempo = Barra((0, 0, 1, 1), texto="", valor=50, minimo=0, maximo=50, mostrar_rotulo=False, suavizacao=30.0)
+        self._texto_rodada = Texto("Rodada 1", style={"size": 20, "align": "topleft", "outline": True, "outline_thickness": 2, "outline_color": (8, 12, 20), "shadow": False, "color": (245, 249, 255)})
+        self._tempo_restante_rodada = 50.0
 
     def _carregar_icone(self, lado: int) -> Optional[pygame.Surface]:
         caminho = Path("Recursos") / "Visual" / "Icones" / "Diversos" / "fugir.png"
@@ -83,6 +88,16 @@ class ElementosHudBatalha:
         }
         self._botao_preparar = Botao(pygame.Rect(bx, by, bw, bh), "Preparar", execute=lambda _jogo, _botao: self._preparar_jogada(), style=estilo_acao)
         self._botao_pronto = Botao(pygame.Rect(bx, by + bh + 10, bw, bh), "Pronto", execute=lambda _jogo, _botao: self._confirmar_jogadas(), style=estilo_acao)
+        self._barra_tempo.configurar(
+            rect=pygame.Rect(18, 38, max(180, int(w * 0.20)), 18),
+            minimo=0.0,
+            maximo=50.0,
+            cor_fundo=(18, 25, 34),
+            cor_borda=(234, 242, 255),
+            cor_preenchimento=(235, 196, 72),
+            vertical=False,
+            border_radius=9,
+        )
 
     def _pressionar_fuga(self) -> None:
         self._fuga_pressao = min(self._fuga_alvo, self._fuga_pressao + self._fuga_taxa_clique)
@@ -97,6 +112,9 @@ class ElementosHudBatalha:
         fator = max(0.0, min(1.0, float(dt) * 60.0))
         queda = self._fuga_taxa_decay * fator
         self._fuga_pressao = max(0.0, self._fuga_pressao - queda)
+
+    def _atualizar_tempo_rodada(self, dt: float) -> None:
+        self._tempo_restante_rodada = max(0.0, float(self._tempo_restante_rodada) - max(0.0, float(dt)))
 
     def _desenhar_overlay_fuga(self, tela: pygame.Surface) -> None:
         if self._fuga_pressao <= 0.01:
@@ -140,6 +158,7 @@ class ElementosHudBatalha:
             self._controlador.Jogador.Controle.processar_eventos(eventos or [], self._controlador, self._ficha, self._fluxos)
         self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)
+        self._atualizar_tempo_rodada(dt)
 
         if self._fluxos is not None:
             self._painel_jogada.sincronizar(self._fluxos.listar_jogadas(), self._fluxos.jogada_selecionada_id())
@@ -185,6 +204,11 @@ class ElementosHudBatalha:
             self._botao_preparar.render(tela, eventos or [], dt, None)
         if self._botao_pronto is not None:
             self._botao_pronto.render(tela, eventos or [], dt, None)
+        self._texto_rodada.set_text(f"Rodada {int(getattr(self._controlador, '_rodada_atual', 1) or 1)}")
+        self._texto_rodada.set_pos((18, 14))
+        self._texto_rodada.draw(tela)
+        self._barra_tempo.set_valor(self._tempo_restante_rodada, animar=True)
+        self._barra_tempo.render(tela, [], dt)
         if self._fluxos is not None and self._pokemon_exibido is not None:
             custo, pode = self._fluxos.previsao_consumo(self._pokemon_exibido, self._ficha.ataque_selecionado())
             self._ficha.atualizar_previsao(custo, pode)

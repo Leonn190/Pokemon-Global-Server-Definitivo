@@ -14,7 +14,7 @@ intervalo_frame_ms = 85
 
 [batalha_tamanho]
 diametro_base_tiles = 1.0
-incremento_por_escala = 0.1
+incremento_por_escala = 0.15
 
 [captura]
 limite_frutas = 2

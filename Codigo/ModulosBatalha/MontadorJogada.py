@@ -18,6 +18,9 @@ class MontadorJogada:
 
     @staticmethod
     def _nome_acao(jogada: Dict[str, object]) -> str:
+        nome_manual = str(jogada.get("acao_chave_manual") or "").strip()
+        if nome_manual:
+            return nome_manual.casefold()
         ataque = jogada.get("ataque") if isinstance(jogada, dict) else None
         if isinstance(ataque, dict):
             nome = str(ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome") or "").strip()
@@ -164,7 +167,7 @@ class MontadorJogada:
             visual["origem_mundo"] = origem
             jogadas_visuais.append(visual)
 
-            if item.get("tipo_movimento") and isinstance(item.get("destino_mundo"), (tuple, list)) and len(item.get("destino_mundo")) == 2:
+            if item.get("tipo_movimento") and not item.get("troca_reserva_id") and isinstance(item.get("destino_mundo"), (tuple, list)) and len(item.get("destino_mundo")) == 2:
                 destino = item.get("destino_mundo")
                 posicoes[chave] = (float(destino[0]), float(destino[1]))
                 construtos[chave] = posicoes[chave]

@@ -6,7 +6,6 @@ import math
 
 import pygame
 
-
 class Fluxo:
     def __init__(self, estilo: str = "orb"):
         self.Estilo = str(estilo or "orb").strip().lower()
@@ -18,6 +17,10 @@ class Fluxo:
     @staticmethod
     def _limitar_alpha(alpha: int) -> int:
         return max(0, min(255, int(alpha)))
+
+    @staticmethod
+    def _lerp(a: float, b: float, t: float) -> float:
+        return a + (b - a) * t
 
     def desenhar(
         self,
@@ -37,6 +40,7 @@ class Fluxo:
         estilo: str | None = None,
     ) -> None:
         estilo_fluxo = str(estilo or self.Estilo or "orb").strip().lower()
+
         x1, y1 = float(inicio[0]), float(inicio[1])
         x2, y2 = float(fim[0]), float(fim[1])
 
@@ -51,115 +55,219 @@ class Fluxo:
         px = -uy
         py = ux
 
-        passo = max(10.0, float(espacamento))
-        vel = max(0.0, float(velocidade))
+        passo = max(12.0, float(espacamento))
         raio_base = max(1.0, float(tamanho))
 
-        min_x = int(min(x1, x2) - 48)
-        min_y = int(min(y1, y2) - 48)
-        max_x = int(max(x1, x2) + 48)
-        max_y = int(max(y1, y2) + 48)
+        # velocidades mais controladas por estilo
+        if estilo_fluxo == "seta":
+            vel = max(0.0, float(velocidade) * 0.38)
+        elif estilo_fluxo in ("linha", "faixa"):
+            vel = max(0.0, float(velocidade) * 0.55)
+        else:
+            vel = max(0.0, float(velocidade) * 0.75)
 
-        camada = pygame.Surface((max(2, max_x - min_x), max(2, max_y - min_y)), pygame.SRCALPHA)
+        margem = int(max(48, tamanho * 8))
+        min_x = int(min(x1, x2) - margem)
+        min_y = int(min(y1, y2) - margem)
+        max_x = int(max(x1, x2) + margem)
+        max_y = int(max(y1, y2) + margem)
+
+        camada = pygame.Surface(
+            (max(2, max_x - min_x), max(2, max_y - min_y)),
+            pygame.SRCALPHA,
+        )
 
         def local(x, y):
-            return int(x - min_x), int(y - min_y)
+            return int(round(x - min_x)), int(round(y - min_y))
 
         trilha_alpha = self._limitar_alpha(alpha_trilha)
+        alpha_base = self._limitar_alpha(alpha)
+
+        # fundo/trilha base
+        largura_fundo = max(1, int(largura_trilha + 4))
+        largura_miolo = max(1, int(largura_trilha))
+
         pygame.draw.line(
             camada,
-            (*cor_principal, max(16, trilha_alpha // 2)),
+            (*cor_principal, max(12, trilha_alpha // 2)),
             local(x1, y1),
             local(x2, y2),
-            max(1, int(largura_trilha + 4)),
+            largura_fundo,
         )
         pygame.draw.line(
             camada,
             (*cor_principal, trilha_alpha),
             local(x1, y1),
             local(x2, y2),
-            max(1, int(largura_trilha)),
+            largura_miolo,
         )
 
-        if not animado and estilo_fluxo == "linha":
-            pygame.draw.line(
-                camada,
-                (*cor_secundaria, self._limitar_alpha(alpha)),
-                local(x1, y1),
-                local(x2, y2),
-                max(1, int(max(2.0, raio_base))),
-            )
+        if not animado:
+            if estilo_fluxo in ("linha", "faixa"):
+                pygame.draw.line(
+                    camada,
+                    (*cor_secundaria, alpha_base),
+                    local(x1, y1),
+                    local(x2, y2),
+                    max(1, int(max(2.0, raio_base))),
+                )
+            else:
+                pygame.draw.line(
+                    camada,
+                    (*cor_secundaria, alpha_base),
+                    local(x1, y1),
+                    local(x2, y2),
+                    max(1, int(max(1.0, largura_trilha))),
+                )
             tela.blit(camada, (min_x, min_y))
             return
 
-        deslocamento = ((self._tempo * vel) % passo) if animado else 0.0
-        p = -deslocamento
-        idx = 0
+        # agora o deslocamento anda PARA FRENTE
+        deslocamento = (self._tempo * vel) % passo
 
-        while p <= dist + passo:
-            t = max(0.0, min(1.0, p / dist if dist > 0 else 0.0))
-            onda = math.sin(self._tempo * 5.0 + idx * 0.65) * 2.4 if animado else 0.0
-            tx = x1 + ux * p + px * onda
-            ty = y1 + uy * p + py * onda
+        # -------------------------
+        # ORB: bolinhas fixas
+        # -------------------------
+        if estilo_fluxo == "orb":
+            p = deslocamento - passo
+            while p <= dist + passo:
+                t = max(0.0, min(1.0, p / dist))
+                if 0.0 <= t <= 1.0:
+                    fade = math.sin(t * math.pi)
+                    fade = max(0.22, fade)
 
-            brilho = 0.55 + 0.45 * math.sin(self._tempo * 7.0 + idx * 0.45) if animado else 0.85
-            brilho = max(0.15, brilho)
-            raio = raio_base * (0.75 + 0.45 * brilho)
+                    tx = x1 + ux * p
+                    ty = y1 + uy * p
 
-            fade_borda = math.sin(t * math.pi)
-            fade_borda = max(0.18, fade_borda)
-            alpha_atual = self._limitar_alpha(alpha * fade_borda * (0.65 + 0.35 * brilho))
-            alpha_sec = self._limitar_alpha(alpha_atual * 0.55)
+                    a1 = self._limitar_alpha(alpha_base * fade * 0.45)
+                    a2 = self._limitar_alpha(alpha_base * fade)
 
-            if estilo_fluxo == "seta":
-                ponta_x = tx + ux * raio * 2.3
-                ponta_y = ty + uy * raio * 2.3
-                base_x = tx - ux * raio * 0.6
-                base_y = ty - uy * raio * 0.6
-                esq = (base_x + px * raio * 1.15, base_y + py * raio * 1.15)
-                dir_ = (base_x - px * raio * 1.15, base_y - py * raio * 1.15)
-                pygame.draw.polygon(camada, (*cor_principal, alpha_atual), [local(ponta_x, ponta_y), local(*esq), local(*dir_)])
-            elif estilo_fluxo == "linha":
-                seg = min(dist, p + passo * 0.85)
-                ex = x1 + ux * seg
-                ey = y1 + uy * seg
+                    # sem variar tamanho
+                    r_outer = max(1, int(raio_base * 1.9))
+                    r_inner = max(1, int(raio_base))
+
+                    pygame.draw.circle(camada, (*cor_principal, a1), local(tx, ty), r_outer)
+                    pygame.draw.circle(camada, (*cor_secundaria, a2), local(tx, ty), r_inner)
+
+                p += passo
+
+            tela.blit(camada, (min_x, min_y))
+            return
+
+        # -------------------------
+        # SETA: fundo contínuo + chevrons
+        # -------------------------
+        if estilo_fluxo == "seta":
+            # reforça uma faixa bonita por baixo
+            pygame.draw.line(
+                camada,
+                (*cor_principal, max(trilha_alpha, 36)),
+                local(x1, y1),
+                local(x2, y2),
+                max(1, int(largura_trilha + raio_base * 1.2)),
+            )
+            pygame.draw.line(
+                camada,
+                (*cor_secundaria, max(24, trilha_alpha // 2)),
+                local(x1, y1),
+                local(x2, y2),
+                max(1, int(largura_trilha)),
+            )
+
+            p = deslocamento - passo * 1.5
+            passo_seta = passo * 1.25
+            comprimento = max(10.0, raio_base * 3.4)
+            abertura = max(4.0, raio_base * 1.5)
+
+            while p <= dist + passo_seta:
+                t = max(0.0, min(1.0, p / dist))
+                if 0.0 <= t <= 1.0:
+                    fade = math.sin(t * math.pi)
+                    fade = max(0.12, fade)
+
+                    cx = x1 + ux * p
+                    cy = y1 + uy * p
+
+                    a = self._limitar_alpha(alpha_base * fade)
+
+                    # chevron tipo “aceleração”, não triângulo sólido
+                    ponta = (cx + ux * comprimento, cy + uy * comprimento)
+                    meio = (cx, cy)
+                    cima = (cx - ux * comprimento * 0.35 + px * abertura, cy - uy * comprimento * 0.35 + py * abertura)
+                    baixo = (cx - ux * comprimento * 0.35 - px * abertura, cy - uy * comprimento * 0.35 - py * abertura)
+
+                    espessura1 = max(1, int(raio_base * 0.95))
+                    espessura2 = max(1, int(raio_base * 0.55))
+
+                    pygame.draw.line(camada, (*cor_principal, int(a * 0.55)), local(*cima), local(*meio), espessura1)
+                    pygame.draw.line(camada, (*cor_principal, int(a * 0.55)), local(*baixo), local(*meio), espessura1)
+
+                    pygame.draw.line(camada, (*cor_secundaria, a), local(*cima), local(*ponta), espessura2)
+                    pygame.draw.line(camada, (*cor_secundaria, a), local(*baixo), local(*ponta), espessura2)
+
+                p += passo_seta
+
+            tela.blit(camada, (min_x, min_y))
+            return
+
+        # -------------------------
+        # LINHA / FAIXA: fluxo contínuo liso
+        # -------------------------
+        largura_fluxo_externo = max(1, int(max(largura_trilha + 3, raio_base * 2.2)))
+        largura_fluxo_interno = max(1, int(max(largura_trilha, raio_base * 1.1)))
+
+        # desenha o corpo inteiro do fluxo
+        pygame.draw.line(
+            camada,
+            (*cor_principal, max(alpha_base // 3, 40)),
+            local(x1, y1),
+            local(x2, y2),
+            largura_fluxo_externo,
+        )
+        pygame.draw.line(
+            camada,
+            (*cor_secundaria, max(alpha_base // 2, 70)),
+            local(x1, y1),
+            local(x2, y2),
+            largura_fluxo_interno,
+        )
+
+        # brilho correndo por cima, contínuo
+        comprimento_brilho = max(passo * 1.8, 24.0)
+        p = deslocamento - comprimento_brilho
+
+        while p <= dist + comprimento_brilho:
+            t0 = max(0.0, min(1.0, p / dist))
+            t1 = max(0.0, min(1.0, (p + comprimento_brilho) / dist))
+
+            if t1 > 0.0 and t0 < 1.0:
+                sx = self._lerp(x1, x2, t0)
+                sy = self._lerp(y1, y2, t0)
+                ex = self._lerp(x1, x2, t1)
+                ey = self._lerp(y1, y2, t1)
+
+                centro = (t0 + t1) * 0.5
+                fade = math.sin(centro * math.pi)
+                fade = max(0.18, fade)
+
+                a_outer = self._limitar_alpha(alpha_base * 0.38 * fade)
+                a_inner = self._limitar_alpha(alpha_base * 0.95 * fade)
+
                 pygame.draw.line(
                     camada,
-                    (*cor_principal, alpha_sec),
-                    local(tx, ty),
+                    (*cor_principal, a_outer),
+                    local(sx, sy),
                     local(ex, ey),
-                    max(1, int(max(2.0, raio * 1.8))),
+                    max(1, int(largura_fluxo_externo)),
                 )
                 pygame.draw.line(
                     camada,
-                    (*cor_secundaria, alpha_atual),
-                    local(tx, ty),
+                    (*cor_secundaria, a_inner),
+                    local(sx, sy),
                     local(ex, ey),
-                    max(1, int(max(1.0, raio * 0.8))),
+                    max(1, int(largura_fluxo_interno)),
                 )
-            elif estilo_fluxo == "faixa":
-                seg = min(dist, p + passo * 0.8)
-                ex = x1 + ux * seg
-                ey = y1 + uy * seg
-                pygame.draw.line(
-                    camada,
-                    (*cor_principal, alpha_sec),
-                    local(tx, ty),
-                    local(ex, ey),
-                    max(1, int(raio * 2.2)),
-                )
-                pygame.draw.line(
-                    camada,
-                    (*cor_secundaria, alpha_atual),
-                    local(tx, ty),
-                    local(ex, ey),
-                    max(1, int(raio)),
-                )
-            else:
-                pygame.draw.circle(camada, (*cor_principal, alpha_sec), local(tx, ty), max(1, int(raio * 1.9)))
-                pygame.draw.circle(camada, (*cor_secundaria, alpha_atual), local(tx, ty), max(1, int(raio)))
 
-            idx += 1
-            p += passo
+            p += passo * 0.55
 
         tela.blit(camada, (min_x, min_y))

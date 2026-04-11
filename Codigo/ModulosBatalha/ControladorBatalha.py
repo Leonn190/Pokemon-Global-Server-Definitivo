@@ -23,6 +23,7 @@ class ControladorBatalha:
         self.Jogador = PlayerBatalha("jogador", max_ativos=self._MAX_ATIVOS)
         self.Inimigo = PlayerBatalha("inimigo", max_ativos=self._MAX_ATIVOS)
         self.PokemonSelecionado: PokemonBatalha | None = None
+        self._provedor_reservas = None
         self._inicializar_times()
 
     def _inicializar_times(self) -> None:
@@ -67,6 +68,16 @@ class ControladorBatalha:
     def pokemon_eh_aliado(self, pokemon) -> bool:
         return pokemon in self.PokemonsAliados
 
+    def definir_provedor_reservas(self, provedor) -> None:
+        self._provedor_reservas = provedor
+
+    def selecionar_slot_aliado(self, indice: int) -> PokemonBatalha | None:
+        idx = int(indice)
+        if idx < 0 or idx >= len(self.PokemonsAliados):
+            return self.PokemonSelecionado
+        self.PokemonSelecionado = self.PokemonsAliados[idx]
+        return self.PokemonSelecionado
+
     def limpar_selecao(self) -> None:
         self.PokemonSelecionado = None
 
@@ -86,6 +97,8 @@ class ControladorBatalha:
     def renderizar(self, tela, camera) -> None:
         self.Arena.renderizar(tela, camera)
         for poke in self.PokemonsAliados:
-            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado))
+            reservado = float(self._provedor_reservas(poke)) if callable(self._provedor_reservas) else 0.0
+            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), energia_reservada=reservado)
         for poke in self.PokemonsInimigos:
-            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado))
+            reservado = float(self._provedor_reservas(poke)) if callable(self._provedor_reservas) else 0.0
+            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), energia_reservada=reservado)

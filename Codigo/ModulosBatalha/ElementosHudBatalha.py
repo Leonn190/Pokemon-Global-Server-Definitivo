@@ -6,6 +6,7 @@ from typing import Callable, List, Optional
 import pygame
 
 from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
+from Codigo.Paineis.PainelJogada import PainelJogada
 from Codigo.ModulosBatalha.ControladorFluxos import ControladorFluxos
 from Codigo.Prefabs.Botao import Botao
 
@@ -25,6 +26,7 @@ class ElementosHudBatalha:
         self._fuga_disparada = False
         self._ficha = FichaPokemonBatalha()
         self._fluxos = ControladorFluxos(controlador_batalha, camera) if controlador_batalha is not None and camera is not None else None
+        self._painel_jogada = PainelJogada()
         self._anim_ficha = 0.0
         self._pokemon_exibido = None
         self._botao_preparar: Optional[Botao] = None
@@ -104,14 +106,12 @@ class ElementosHudBatalha:
         overlay.fill((0, 0, 0, int(160 * t)))
         tela.blit(overlay, (0, 0))
 
-    def _processar_selecao(self, eventos: List[pygame.event.Event]):
+    def _processar_selecao(self, eventos: List[pygame.event.Event], rects_bloqueados: List[pygame.Rect]):
         if self._controlador is None or self._camera is None or self._fluxos is not None:
             return
         for ev in eventos or []:
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                if self._ficha.contem_ponto(ev.pos):
-                    break
-                if (self._botao_preparar and self._botao_preparar.rect.collidepoint(ev.pos)) or (self._botao_pronto and self._botao_pronto.rect.collidepoint(ev.pos)):
+                if any(rect.collidepoint(ev.pos) for rect in rects_bloqueados):
                     break
                 self._controlador.selecionar_por_mouse(ev.pos, self._camera)
                 break
@@ -136,20 +136,38 @@ class ElementosHudBatalha:
 
     def desenhar(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> None:
         self._garantir_layout(tela)
-        self._processar_selecao(eventos or [])
+        if self._controlador is not None and hasattr(self._controlador, "Jogador"):
+            self._controlador.Jogador.Controle.processar_eventos(eventos or [], self._controlador, self._ficha, self._fluxos)
         self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)
+
+        if self._fluxos is not None:
+            self._painel_jogada.sincronizar(self._fluxos.listar_jogadas(), self._fluxos.jogada_selecionada_id())
+            self._painel_jogada.recalcular_layout(tela)
+            self._painel_jogada.processar_eventos(eventos or [])
+            for comando in self._painel_jogada.coletar_comandos():
+                if comando.get("acao") == "remover":
+                    self._fluxos.remover_jogada(comando.get("id"))
+                elif comando.get("acao") == "selecionar":
+                    self._fluxos.selecionar_jogada(comando.get("id"))
+
+        rects_hud = [
+            self._ficha.rect,
+            self._botao_preparar.rect if self._botao_preparar else pygame.Rect(0, 0, 0, 0),
+            self._botao_pronto.rect if self._botao_pronto else pygame.Rect(0, 0, 0, 0),
+            self._botao_fugir.rect if self._botao_fugir else pygame.Rect(0, 0, 0, 0),
+        ]
+        rects_hud.extend(self._painel_jogada.retangulos_interativos())
+        if self._fluxos is not None:
+            for ev in eventos or []:
+                if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not any(rect.collidepoint(ev.pos) for rect in rects_hud):
+                    self._fluxos.selecionar_jogada(None)
+                    break
+        self._processar_selecao(eventos or [], rects_hud)
+
         if self._fluxos is not None:
             self._fluxos.atualizar_contexto(self._ficha.ataque_selecionado())
-            self._fluxos.processar_eventos(
-                eventos or [],
-                self._ficha,
-                [
-                    self._ficha.rect,
-                    self._botao_preparar.rect if self._botao_preparar else pygame.Rect(0, 0, 0, 0),
-                    self._botao_pronto.rect if self._botao_pronto else pygame.Rect(0, 0, 0, 0),
-                ],
-            )
+            self._fluxos.processar_eventos(eventos or [], self._ficha, rects_hud)
         selecionado_atual = getattr(self._controlador, "PokemonSelecionado", None)
         if selecionado_atual is None or str(getattr(selecionado_atual, "Lado", "")) != "jogador":
             self._ficha.limpar_ataque_selecionado()
@@ -169,5 +187,6 @@ class ElementosHudBatalha:
             self._ficha.atualizar_previsao(0.0, True)
         if self._fluxos is not None:
             self._fluxos.desenhar(tela, dt)
+        self._painel_jogada.desenhar(tela, dt)
         self._ficha.render(tela, self._pokemon_exibido, self._anim_ficha, eventos or [], dt)
         self._desenhar_overlay_fuga(tela)

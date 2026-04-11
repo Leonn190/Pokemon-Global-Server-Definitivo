@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import math
 import unicodedata
 from pathlib import Path
@@ -16,6 +17,7 @@ _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
 
 class PokemonBatalha:
     _cache_frames: Dict[str, List[pygame.Surface]] = {}
+    _cache_base_ataques: Dict[str, Dict[str, object]] | None = None
 
     _ORDEM_BASE = ("Atk", "Def", "Mag", "Vel", "SpA", "SpD", "Ene", "Per", "Int", "Vamp")
     _EXTRAS_PREFERIDOS = (
@@ -134,6 +136,54 @@ class PokemonBatalha:
         except (TypeError, ValueError):
             return float(default)
 
+    @classmethod
+    def _arquivo_base_ataques(cls) -> Path | None:
+        atual = Path(__file__).resolve()
+        candidatos = [
+            atual.parents[2] / "Dados" / "Pokemon Global Server - Ataques.csv",
+            atual.parents[2] / "Outros" / "Pokemon Global Server - Ataques.csv",
+            Path("Dados") / "Pokemon Global Server - Ataques.csv",
+            Path("Outros") / "Pokemon Global Server - Ataques.csv",
+        ]
+        for caminho in candidatos:
+            if caminho.exists():
+                return caminho
+        return None
+
+    @classmethod
+    def _base_ataques(cls) -> Dict[str, Dict[str, object]]:
+        if cls._cache_base_ataques is not None:
+            return cls._cache_base_ataques
+        cls._cache_base_ataques = {}
+        caminho = cls._arquivo_base_ataques()
+        if caminho is None:
+            return cls._cache_base_ataques
+        try:
+            with caminho.open("r", encoding="utf-8-sig", newline="") as arquivo:
+                leitor = csv.DictReader(arquivo)
+                for row in leitor:
+                    nome = str(row.get("Ataque") or row.get("Nome") or "").strip()
+                    if not nome:
+                        continue
+                    cls._cache_base_ataques[cls._normalizar_chave_ficha(nome)] = dict(row)
+        except Exception:
+            cls._cache_base_ataques = {}
+        return cls._cache_base_ataques
+
+    @classmethod
+    def _enriquecer_ataque(cls, ataque: dict[str, object]) -> dict[str, object]:
+        nome = str(ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome") or "").strip()
+        if not nome:
+            return ataque
+        base = dict(cls._base_ataques().get(cls._normalizar_chave_ficha(nome), {}))
+        if base:
+            base.update(ataque)
+            ataque = base
+        ataque.setdefault("Ataque", nome)
+        ataque.setdefault("Nome", nome)
+        ataque.setdefault("Tipo", str(ataque.get("Tipo") or ataque.get("tipo") or "Normal").strip() or "Normal")
+        return ataque
+
     def _valor(self, *chaves, default=None):
         return FichaPokemon._valor_pokemon(self.Dados, *chaves, default=default)
 
@@ -213,11 +263,11 @@ class PokemonBatalha:
             ataque.setdefault('Ataque', nome)
             ataque.setdefault('Nome', nome)
             ataque.setdefault('Tipo', tipo)
-            return ataque
+            return cls._enriquecer_ataque(ataque)
         nome = str(item).strip()
         if not nome:
             return None
-        return {'Ataque': nome, 'Nome': nome, 'Tipo': 'Normal'}
+        return cls._enriquecer_ataque({'Ataque': nome, 'Nome': nome, 'Tipo': 'Normal'})
 
     @classmethod
     def _extrair_lista_ataques(cls, dados: Dict[str, object]) -> List[Dict[str, object]]:
@@ -358,13 +408,11 @@ class PokemonBatalha:
         px, py = camera.mundo_para_tela_px(self.Posicao)
         return int(px), int(py)
 
-    def renderizar(self, tela: pygame.Surface, camera, selecionado: bool = False) -> None:
-        centro = self.centro_tela(camera)
-        tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
-        raio = self.raio_px(camera)
-
+    def _desenhar_corpo(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int, *, selecionado: bool = False, alpha_extra: int = 255) -> None:
         cor_circulo = (56, 90, 145) if self.Lado == 'jogador' else (144, 74, 74)
-        pygame.draw.circle(tela, cor_circulo, centro, raio)
+        camada = pygame.Surface((raio * 4, raio * 4), pygame.SRCALPHA)
+        centro_local = (camada.get_width() // 2, camada.get_height() // 2)
+        pygame.draw.circle(camada, (*cor_circulo, max(0, min(255, alpha_extra))), centro_local, raio)
         cor_borda = (22, 26, 34)
         largura_borda = max(2, int(tile_px * 0.06))
         if selecionado:
@@ -380,15 +428,39 @@ class PokemonBatalha:
             )
             tela.blit(brilho, brilho.get_rect(center=centro))
             cor_borda = (244, 238, 178)
-        pygame.draw.circle(tela, cor_borda, centro, raio, largura_borda)
+        pygame.draw.circle(camada, (*cor_borda, max(0, min(255, alpha_extra))), centro_local, raio, largura_borda)
 
         frame = self._frame_atual(int(raio * 1.40))
         if frame is not None:
-            tela.blit(frame, frame.get_rect(center=(centro[0], centro[1] - int(raio * 0.08))))
+            frame = frame.copy()
+            if alpha_extra < 255:
+                frame.fill((255, 255, 255, max(0, min(255, alpha_extra))), special_flags=pygame.BLEND_RGBA_MULT)
+            camada.blit(frame, frame.get_rect(center=(centro_local[0], centro_local[1] - int(raio * 0.08))))
 
-        self._desenhar_barras(tela, centro, raio, tile_px)
+        tela.blit(camada, camada.get_rect(center=centro))
 
-    def _desenhar_barras(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int) -> None:
+    def renderizar(self, tela: pygame.Surface, camera, selecionado: bool = False, energia_reservada: float = 0.0) -> None:
+        centro = self.centro_tela(camera)
+        tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
+        raio = self.raio_px(camera)
+        self._desenhar_corpo(tela, centro, raio, tile_px, selecionado=selecionado, alpha_extra=255)
+        self._desenhar_barras(tela, centro, raio, tile_px, energia_reservada=energia_reservada)
+
+    def renderizar_construto(self, tela: pygame.Surface, camera, posicao_mundo, *, alpha: int = 96) -> None:
+        if not isinstance(posicao_mundo, (tuple, list)) or len(posicao_mundo) != 2:
+            return
+        px, py = camera.mundo_para_tela_px((float(posicao_mundo[0]), float(posicao_mundo[1])))
+        centro = (int(px), int(py))
+        tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
+        raio = self.raio_px(camera)
+        sombra = pygame.Surface((raio * 5, raio * 5), pygame.SRCALPHA)
+        centro_local = (sombra.get_width() // 2, sombra.get_height() // 2)
+        pygame.draw.circle(sombra, (255, 255, 255, max(20, int(alpha * 0.18))), centro_local, int(raio * 1.08), 2)
+        pygame.draw.circle(sombra, (255, 255, 255, max(10, int(alpha * 0.10))), centro_local, int(raio * 0.90))
+        tela.blit(sombra, sombra.get_rect(center=centro))
+        self._desenhar_corpo(tela, centro, raio, tile_px, selecionado=False, alpha_extra=max(24, min(180, int(alpha))))
+
+    def _desenhar_barras(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int, energia_reservada: float = 0.0) -> None:
         largura = max(24, int(tile_px * self.DiametroTiles * 1.25))
         vida_h = max(8, int(tile_px * 0.20))
         ene_h = max(2, int(vida_h * 0.44))
@@ -419,3 +491,14 @@ class PokemonBatalha:
         if ene_t > 0.001 and inner_ene.width > 2:
             fill_ene = pygame.Rect(inner_ene.x, inner_ene.y, max(1, int(inner_ene.width * ene_t)), inner_ene.height)
             pygame.draw.rect(tela, (60, 150, 255), fill_ene, border_radius=max(1, inner_ene.height // 2))
+        reservado = max(0.0, min(float(energia_reservada or 0.0), max(0.0, self.Energia)))
+        if reservado > 0.001 and inner_ene.width > 2 and self.EnergiaMax > 0:
+            inicio_t = max(0.0, min(1.0, (self.Energia - reservado) / self.EnergiaMax))
+            fim_t = max(0.0, min(1.0, self.Energia / self.EnergiaMax))
+            x_inicio = inner_ene.x + int(inner_ene.width * inicio_t)
+            x_fim = inner_ene.x + int(inner_ene.width * fim_t)
+            largura_reserva = max(1, x_fim - x_inicio)
+            alpha_pulso = int(90 + 90 * (0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 120.0)))
+            overlay = pygame.Surface((largura_reserva, inner_ene.height), pygame.SRCALPHA)
+            overlay.fill((255, 255, 255, alpha_pulso))
+            tela.blit(overlay, (x_inicio, inner_ene.y))

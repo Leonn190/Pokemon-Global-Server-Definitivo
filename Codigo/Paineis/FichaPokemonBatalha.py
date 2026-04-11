@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -442,6 +443,19 @@ class FichaPokemonBatalha:
         )
         self._barra_energia.set_valor(float(getattr(pokemon, "Energia", 0.0)), animar=True)
         self._barra_energia.render(tela, [], dt)
+        if self._previsao_consumo > 0.001 and float(getattr(pokemon, "EnergiaMax", 0.0)) > 0.0:
+            energia_atual = max(0.0, float(getattr(pokemon, "Energia", 0.0)))
+            reservado = max(0.0, min(self._previsao_consumo, energia_atual))
+            inicio_t = max(0.0, min(1.0, (energia_atual - reservado) / float(getattr(pokemon, "EnergiaMax", 1.0))))
+            fim_t = max(0.0, min(1.0, energia_atual / float(getattr(pokemon, "EnergiaMax", 1.0))))
+            x_inicio = self._barra_energia.rect.x + int(self._barra_energia.rect.width * inicio_t)
+            x_fim = self._barra_energia.rect.x + int(self._barra_energia.rect.width * fim_t)
+            largura_overlay = max(1, x_fim - x_inicio)
+            alpha = int(88 + 96 * (0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 120.0)))
+            cor = (255, 255, 255, alpha) if self._previsao_pode else (255, 116, 116, alpha)
+            overlay = pygame.Surface((largura_overlay, self._barra_energia.rect.height), pygame.SRCALPHA)
+            overlay.fill(cor)
+            tela.blit(overlay, (x_inicio, self._barra_energia.rect.y))
         self._desenhar_texto(
             self._txt_barra,
             tela,
@@ -552,6 +566,29 @@ class FichaPokemonBatalha:
 
     def limpar_ataque_selecionado(self):
         self._ataque_selecionado = None
+
+    def selecionar_ataque(self, ataque, pokemon=None):
+        ataques = []
+        if pokemon is not None:
+            ataques = list(getattr(pokemon, "obter_ataques_ficha", lambda limite=None: getattr(pokemon, "ListaAtaques", []))(5) or [])[:5]
+        if ataque is None:
+            self._ataque_selecionado = None
+            return None
+        if ataques and ataque not in ataques:
+            return self._ataque_selecionado
+        self._ataque_selecionado = ataque
+        return self._ataque_selecionado
+
+    def selecionar_ataque_indice(self, indice: int, pokemon=None):
+        if pokemon is None or str(getattr(pokemon, "Lado", "")) != "jogador":
+            return None
+        ataques = list(getattr(pokemon, "obter_ataques_ficha", lambda limite=None: getattr(pokemon, "ListaAtaques", []))(5) or [])[:5]
+        idx = int(indice)
+        if idx < 0 or idx >= len(ataques):
+            return self._ataque_selecionado
+        ataque = ataques[idx]
+        self._ataque_selecionado = None if ataque == self._ataque_selecionado else ataque
+        return self._ataque_selecionado
 
     def contem_ponto(self, pos) -> bool:
         if not isinstance(pos, (tuple, list)) or len(pos) < 2:

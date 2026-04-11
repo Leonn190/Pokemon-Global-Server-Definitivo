@@ -1,0 +1,58 @@
+Efeito,Descrição
+Queimado,perde 5% da vida por turno e -30% de cura
+Dormindo,Não pode se mover ate sofrer algum dano
+Envenenado,perde 8% da vida por turno
+Intoxicado,perde 12% da vida por turno e faz com que aliados adjacentes percam 8% por turno
+Paralisado,nao pode atacar
+Incapacitado,nao pode usar habilidade
+Vampirico,inimigos que atacarem esse pokemon curam 25% do dano causado nele
+Encharcado,ataques gastam mais 25% de energia
+Quebrado,menos 50% da defesa
+Fragilizado,menos 50% da defesa especial
+Enfraquecido,menos 50% de ataque
+Neutralizado,menos 50% de ataque especial
+Confuso,metade da assertividade
+Congelado,nao pode fazer nada mas recebe menos 30% de dano
+Atordoado,Não pode usar passiva de item
+Enfeitiçado,menos 50% de magia
+Descarregado,menos 50% de recuperação de energia
+Bloqueado,nao pode receber efeitos positivos
+Amaldiçoado,efeitos negativos duram 50% a mais do tempo quando aplicados
+Enraizado,nao pode se mover
+Regeneração,cura 15% da vida perdida por turno
+Abençoado,cura 5% da vida perdida por turno e aumenta 30% de todas as fontes de cura
+Imortal,"nao pode ser morto, efeito perdido apos sofrer um dano mortal"
+Fortificado,mais 50% de defesa
+Reforçado,mais 50% de defesa especial
+Amplificado,mais 50% de dano 
+Aprimorado,mais 50% de dano especial
+Voando,todos os ataques mirados contra voce tem menos metade da assertividade
+Flutuando,ataques normais tem menos metade da assertividade
+Imune,nao pode receber efeitos negativos
+Energizado,mais 50% de recuperação de energia
+Preparado,recebe apenas 40% do dano e devolve dano equivalente a 40% da velocidade
+Provocando,é sempre o alvo de ataques unicos
+Furtivo,nao pode ser visto
+Ilimitado,esse pokemon não tem limite de energia
+Encantado,mais 50% de magia
+Refletido,"Ao tomar dano, recebe apenas 25% e devolve os outros 75%"
+Evasivo,Desvia do proximo dano
+Focado,sempre acerta o alvo
+Imparavel,nao pode recuar nem se mover por conta de algum ataque
+Chuva,"Agua +30% de dano, Fogo -30% de dano, pokemons encharcados aumentam o numero de turnos todos os turnos, pokemons queimados deixam de ficar queimados 2 vezes mais rapido, pokemons de gelo curam 5% da vida por turno"
+Sol Forte,"Agua -30% de dano, Fogo +30% de dano, pokemons queimados aumentam o numero de turnos todos os turnos, pokemons encharcados deixam de ficar queimados 2 vezes mais rapido, pokemons de gelo tomam 10% da vida por turno como dano"
+Nevasca,pokemons de gelo tem sua defesa aumentada em 40% 
+Tempestade de Areia,"Todos os pokemons que nao sao do tipo Terrestre, Metal e Pedra recebem 5% da vida como dano, pokemons do tipo terrestre ganham 20% de velocidade a mais"
+Nevoa,"ninguem sabe onde ninguem esta, pokemons do tipo fantasma ganham 30% de velocidade a mais"
+Gravidade Anomala,"Pokemons Cosmicos ganham mais 15% de velocidade, pokemons ganham mais 5% de defesa e defesa especial a cada 100kg, pokemons com o efeito Voar tomam 8% da vida como dano, ninguem pode se mover"
+Chuva Acida,"pokemons envenenados ou intoxicado so aumentam a quantidade de turnos, pokemons que nao sao venenosos recebem 7% da vida como dano, os venenosos curam 7% da vida"
+Tempestade de Raios,"Pokemons do tipo eletrico ficam energizados, 2 casas em cada campo sao aleatoriamente atingidas por um raio que da 50% da vida como dano"
+Noite densa,"todo os pokemons que nao sao do tipo sombrio tem menos 25% de assertividade, pokemons sombrios ficam 20% mais rapidos"
+Incendiado,perde 15% da vida por turno e recebe menos 50% de cura
+Contaminado,perde 5% da vida por turno e ganha o efeito envenenado que nunca termina enquanto estiver nesse terreno
+Amaldiçoado,efeitos negativos duram o dobro do tempo quando aplicados
+Destruido,Causa -20% de dano e recebe mais 20% de dano
+Energizado,dobro de recuperação de energia
+Sagrado,Causa mais 35% de dano
+Abençoado,cura 20% da vida perdida por turno e aumenta 50% de todas as fontes de cura
+Elevado,sempre tem mais 30% de assertividade e os inimigos que te atacam sempre tem mais 30% a menos

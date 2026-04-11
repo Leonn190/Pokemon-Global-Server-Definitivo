@@ -266,7 +266,7 @@ class FichaAtaque:
         )
         return self._carregar_surface(arquivo, tamanho, chave_extra='fill')
 
-    def _retangulo_tooltip(self, tela: pygame.Surface, area_ancora=None, mouse_pos=None, largura=368, altura=196) -> pygame.Rect:
+    def _retangulo_tooltip(self, tela: pygame.Surface, area_ancora=None, mouse_pos=None, largura=368, altura=176) -> pygame.Rect:
         tela_rect = tela.get_rect()
         if area_ancora is not None:
             area_ancora = pygame.Rect(area_ancora)

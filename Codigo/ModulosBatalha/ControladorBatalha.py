@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+import pygame
+
 from Codigo.Geradores.PokemonBatalha import PokemonBatalha
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha, pontos_lados_arena
@@ -96,9 +98,10 @@ class ControladorBatalha:
 
     def renderizar(self, tela, camera) -> None:
         self.Arena.renderizar(tela, camera)
+        pokemon_hover = self.pokemon_no_ponto(pygame.mouse.get_pos(), camera)
         for poke in self.PokemonsAliados:
             reservado = float(self._provedor_reservas(poke)) if callable(self._provedor_reservas) else 0.0
-            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), energia_reservada=reservado)
+            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), hover=(poke is pokemon_hover), energia_reservada=reservado)
         for poke in self.PokemonsInimigos:
             reservado = float(self._provedor_reservas(poke)) if callable(self._provedor_reservas) else 0.0
-            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), energia_reservada=reservado)
+            poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), hover=(poke is pokemon_hover), energia_reservada=reservado)

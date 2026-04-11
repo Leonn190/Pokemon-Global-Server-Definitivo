@@ -27,6 +27,7 @@ class ControladorFluxos:
         self._clique_arrasto: Optional[Dict[str, object]] = None
         self._limiar_arrasto_px = 12.0
         self._mouse_pos = (0, 0)
+        self._hover_jogada_id: Optional[int] = None
         if hasattr(self._controlador, "definir_provedor_reservas"):
             self._controlador.definir_provedor_reservas(self.energia_reservada_visual)
 
@@ -142,17 +143,21 @@ class ControladorFluxos:
     def previsao_consumo(self, pokemon, ataque: Optional[dict]) -> tuple[float, bool]:
         if pokemon is None:
             return 0.0, True
+        reservado = self._montador.custo_reservado(self._id_combatente(pokemon))
         if ataque is None:
             if self._preparacao is None:
-                return 0.0, True
+                return reservado, True
             if self._preparacao.get("executor") is not pokemon:
-                return 0.0, True
+                return reservado, True
             if self._preparacao.get("ataque") is not None:
-                return 0.0, True
+                return reservado, True
         estilo = self._estilo_ataque(ataque)
         if estilo == "habilidade":
-            return 0.0, False
-        return self._simular_adicao(pokemon, ataque, estilo)
+            return reservado, False
+        custo_novo, pode = self._simular_adicao(pokemon, ataque, estilo)
+        if custo_novo <= 0.0:
+            return reservado, pode
+        return reservado + custo_novo, pode
 
     def _pokemon_no_ponto(self, pos_tela):
         return self._controlador.pokemon_no_ponto(pos_tela, self._camera)
@@ -322,6 +327,9 @@ class ControladorFluxos:
                 if clicado is not None:
                     self._controlador.selecionar_pokemon(clicado)
                     continue
+                if self._preparacao is None:
+                    self._controlador.selecionar_pokemon(None)
+                    continue
 
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
                 if self._clique_arrasto is None:
@@ -377,7 +385,24 @@ class ControladorFluxos:
         self._clique_arrasto = None
 
     def remover_jogada(self, jogada_id: object) -> None:
-        self._montador.remover(jogada_id)
+        removida = self._montador.remover(jogada_id)
+        if removida is not None and self._hover_jogada_id == int(removida.get("id") or 0):
+            self._hover_jogada_id = None
+
+    def _jogada_selecionada(self) -> Optional[Dict[str, object]]:
+        selecionado_id = self._montador.selecionado_id()
+        if selecionado_id is None:
+            return None
+        for item in self._montador.listar_referencias():
+            if int(item.get("id") or 0) == int(selecionado_id):
+                return item
+        return None
+
+    def definir_hover_jogada(self, jogada_id: object | None) -> None:
+        try:
+            self._hover_jogada_id = int(jogada_id) if jogada_id not in (None, "") else None
+        except (TypeError, ValueError):
+            self._hover_jogada_id = None
 
     def selecionar_jogada(self, jogada_id: object | None) -> None:
         atual = self._montador.selecionado_id()
@@ -395,6 +420,69 @@ class ControladorFluxos:
 
     def listar_jogadas(self) -> List[Dict[str, object]]:
         return self._montador.listar()
+
+    def estado_botao_preparar(self, ficha) -> tuple[str, bool]:
+        if self._jogada_selecionada() is not None:
+            return "Editar", True
+
+        selecionado = self._selecionado_aliado()
+        ataque = ficha.ataque_selecionado() if ficha else self._ataque_atual
+        if selecionado is None:
+            return "Preparar", False
+
+        estilo = self._estilo_ataque(ataque)
+        if estilo == "habilidade":
+            return "Preparar", False
+        if estilo == "status":
+            custo_total, pode = self.previsao_consumo(selecionado, ataque)
+            return "Preparar", bool(ataque is not None and custo_total >= 0.0 and pode)
+
+        preparo = self._preparacao if isinstance(self._preparacao, dict) and self._preparacao.get("executor") is selecionado else None
+        pronto = self._preparo_pronto(preparo)
+        if not pronto:
+            return "Preparar", False
+        _custo_total, pode = self.previsao_consumo(selecionado, ataque)
+        return "Preparar", bool(pode)
+
+    def _restaurar_jogada_para_preparacao(self, jogada: Dict[str, object], ficha) -> None:
+        executor = jogada.get("executor")
+        if executor is None:
+            return
+        ataque = jogada.get("ataque") if isinstance(jogada.get("ataque"), dict) else None
+        estilo = str(jogada.get("estilo") or self._estilo_ataque(ataque)).casefold()
+        if hasattr(self._controlador, "PokemonSelecionado"):
+            self._controlador.PokemonSelecionado = executor
+        if ficha is not None:
+            ficha.selecionar_ataque(ataque, executor)
+        if estilo == "status":
+            self._preparacao = None
+            self._assinatura_contexto = self._assinatura(executor, ataque)
+            self._clique_arrasto = None
+            return
+
+        preparo = self._criar_preparacao(executor, ataque, estilo)
+        preparo["destino_mundo"] = tuple(jogada.get("destino_mundo")) if isinstance(jogada.get("destino_mundo"), (tuple, list)) else None
+        preparo["alvos"] = list(jogada.get("alvos") or [])
+        preparo["tipo_movimento"] = bool(jogada.get("tipo_movimento"))
+        preparo["custo_base"] = float(jogada.get("custo_base") or preparo.get("custo_base") or 0.0)
+        if estilo == "alvo":
+            preparo["estado"] = "estabilizado" if preparo.get("alvos") else "preparando"
+        else:
+            preparo["estado"] = "preparando"
+        self._preparacao = preparo
+        self._assinatura_contexto = self._assinatura(executor, ataque)
+        self._clique_arrasto = None
+
+    def acao_principal(self, ficha) -> None:
+        jogada = self._jogada_selecionada()
+        if jogada is not None:
+            jogada_id = jogada.get("id")
+            removida = self._montador.remover(jogada_id)
+            self._montador.selecionar(None)
+            if removida is not None:
+                self._restaurar_jogada_para_preparacao(removida, ficha)
+            return
+        self.preparar(ficha)
 
     def pronto(self) -> None:
         por_id = self._pokemon_por_id()
@@ -528,14 +616,16 @@ class ControladorFluxos:
         self._desenhar_alvos_possiveis(tela)
 
         for jogada in visuais:
-            selecionada = self._montador.selecionado_id() == int(jogada.get("id") or 0)
+            jogada_id = int(jogada.get("id") or 0)
+            selecionada = self._montador.selecionado_id() == jogada_id
+            destacada = selecionada or (self._hover_jogada_id == jogada_id)
             estilo = str(jogada.get("estilo") or "movimento").casefold()
             if estilo == "alvo":
-                self._desenhar_preparo_alvo(tela, jogada, preparada=True, selecionada=selecionada)
+                self._desenhar_preparo_alvo(tela, jogada, preparada=True, selecionada=destacada)
             elif estilo in {"area", "tiro", "zona"}:
-                self._desenhar_preparo_complexo(tela, jogada, preparada=True, selecionada=selecionada)
+                self._desenhar_preparo_complexo(tela, jogada, preparada=True, selecionada=destacada)
             else:
-                self._desenhar_preparo_direcao(tela, jogada, preparada=True, selecionada=selecionada)
+                self._desenhar_preparo_direcao(tela, jogada, preparada=True, selecionada=destacada)
 
         if not ativo:
             return

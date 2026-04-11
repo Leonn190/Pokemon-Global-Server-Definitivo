@@ -25,10 +25,10 @@ class InicializadorBatalha:
     def _normalizar_time(bruto: object, slots_por_time: int = 6) -> Dict[str, object]:
         if isinstance(bruto, dict):
             nome = str(bruto.get("Nome") or bruto.get("nome") or "Time")
-            slots = [p for p in list(bruto.get("Slots") or bruto.get("slots") or []) if isinstance(p, dict)]
+            slots = [deepcopy(p) for p in list(bruto.get("Slots") or bruto.get("slots") or []) if isinstance(p, dict)]
         elif isinstance(bruto, list):
             nome = "Time"
-            slots = [p for p in list(bruto) if isinstance(p, dict)]
+            slots = [deepcopy(p) for p in list(bruto) if isinstance(p, dict)]
         else:
             nome = "Time"
             slots = []
@@ -66,7 +66,7 @@ class InicializadorBatalha:
             if len(norm[idx_mais_completo].get("Slots", [])) > 0:
                 return norm[idx_mais_completo]
 
-        lista_pokemons = [p for p in list(pokemons_jogador or []) if isinstance(p, dict)]
+        lista_pokemons = [deepcopy(p) for p in list(pokemons_jogador or []) if isinstance(p, dict)]
         return {"Nome": "Time improvisado", "Slots": lista_pokemons[:alvo]}
 
     def inicializar(self) -> Dict[str, object]:
@@ -99,10 +99,10 @@ class InicializadorBatalha:
         time_inimigo = self._normalizar_time(times_npc[indice_time]) if times_npc else {"Nome": "Inimigo", "Slots": []}
         return {
             "tipo": "treinador",
-            "jogador": [p for p in time_jogador.get("Slots", []) if isinstance(p, dict)],
-            "inimigo": [p for p in time_inimigo.get("Slots", []) if isinstance(p, dict)],
-            "time_jogador": time_jogador,
-            "time_inimigo": time_inimigo,
+            "jogador": [deepcopy(p) for p in time_jogador.get("Slots", []) if isinstance(p, dict)],
+            "inimigo": [deepcopy(p) for p in time_inimigo.get("Slots", []) if isinstance(p, dict)],
+            "time_jogador": deepcopy(time_jogador),
+            "time_inimigo": deepcopy(time_inimigo),
         }
 
     def _inicializar_confronto(self) -> Dict[str, object]:
@@ -115,9 +115,9 @@ class InicializadorBatalha:
         inimigos = self.criar_bando(poke_mundo)
         return {
             "tipo": "confronto",
-            "jogador": [p for p in time_jogador.get("Slots", []) if isinstance(p, dict)],
+            "jogador": [deepcopy(p) for p in time_jogador.get("Slots", []) if isinstance(p, dict)],
             "inimigo": inimigos,
-            "time_jogador": time_jogador,
+            "time_jogador": deepcopy(time_jogador),
             "time_inimigo": {"Nome": "Bando", "Slots": inimigos},
         }
 

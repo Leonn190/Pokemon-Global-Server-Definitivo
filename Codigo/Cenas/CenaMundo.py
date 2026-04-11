@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pygame
 
 from Codigo.ModulosGerais.Camera import Camera
@@ -146,11 +148,18 @@ class CenaMundo:
                 if isinstance(contexto, dict):
                     contexto["pokemon_colisao"] = dict(colisao_pokemon)
                     inventario = getattr(player, "Inventario", None)
-                    times = list(getattr(inventario, "TimesPokemon", []) or []) if inventario is not None else []
+                    times = deepcopy(list(getattr(inventario, "TimesPokemon", []) or [])) if inventario is not None else []
+                    pokemons_jogador = deepcopy(list(getattr(inventario, "Pokemons", []) or [])) if inventario is not None else []
                     contexto["times_jogador"] = times
-                    contexto["pokemons_jogador"] = list(getattr(inventario, "Pokemons", []) or []) if inventario is not None else []
-                    contexto["time_jogador"] = dict(times[0]) if times else {"Nome": "Time 1", "Slots": []}
+                    contexto["pokemons_jogador"] = pokemons_jogador
+                    contexto["time_jogador"] = deepcopy(times[0]) if times else {"Nome": "Time 1", "Slots": []}
                     contexto["tipo"] = "confronto"
+                    contexto["origem"] = [0.0, 0.0]
+                    contexto["centro"] = [40.0, 20.0]
+                    contexto["largura"] = 80
+                    contexto["altura"] = 40
+                    contexto["arena_largura"] = 40
+                    contexto["arena_altura"] = 20
                     contexto["tile_bioma"] = tile_mundo_atual(self)
                     JOGO.INFO["CombateContexto"] = contexto
                     JOGO.CenaAlvo = "Combate"
@@ -313,8 +322,8 @@ class CenaMundo:
                 **contexto_base,
                 "tipo": "treinador",
                 "npc_contexto": npc_ctx,
-                "times_jogador": list(times_validos),
-                "time_jogador": dict(time_escolhido or {}),
+                "times_jogador": deepcopy(list(times_validos)),
+                "time_jogador": deepcopy(dict(time_escolhido or {})),
                 "tile_bioma": tile_mundo_atual(self),
             }
             jogo.CenaAlvo = "Combate"

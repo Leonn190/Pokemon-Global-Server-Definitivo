@@ -67,7 +67,7 @@ class MontadorJogada:
 
         self._proximo_id += 1
         self._jogadas.append(item)
-        self._selecionado_id = int(item["id"])
+        self._selecionado_id = None
         return dict(item), ""
 
     def listar(self) -> List[Dict[str, object]]:
@@ -90,11 +90,7 @@ class MontadorJogada:
                 continue
             removido = self._jogadas.pop(indice)
             if self._selecionado_id == alvo:
-                if self._jogadas:
-                    novo_indice = min(indice, len(self._jogadas) - 1)
-                    self._selecionado_id = int(self._jogadas[novo_indice].get("id") or 0)
-                else:
-                    self._selecionado_id = None
+                self._selecionado_id = None
             return dict(removido)
         return None
 

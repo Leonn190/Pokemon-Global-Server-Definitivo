@@ -96,13 +96,7 @@ class PokemonBatalha:
         energia_base = max(1.0, self._numero(stats_principais.get('Ene', self._valor('Ene', 'EnergiaBase', default=1.0)), 1.0))
         energia_max_extraida = self._valor('EnergiaMaxima', 'EnergiaMax', 'Energia Máxima', 'MaxEnergia', default=None)
         self.EnergiaMax = max(1.0, self._numero(energia_max_extraida, energia_base * 3.0))
-        self.Energia = max(
-            0.0,
-            min(
-                self.EnergiaMax,
-                self._numero(self._valor('EnergiaAtual', 'Energia', 'energia_atual', 'energia', default=energia_base), energia_base),
-            ),
-        )
+        self.Energia = max(0.0, min(self.EnergiaMax, self.EnergiaMax * 0.5))
 
         self.Stats = self._montar_stats_publicos(stats_principais)
         self.ListaAtaques = self._extrair_lista_ataques(self.Dados)
@@ -378,6 +372,9 @@ class PokemonBatalha:
         itens = list(self.ItensBuild)
         return itens if limite is None else itens[: max(0, int(limite))]
 
+    def atributos_texto_ataque(self) -> Dict[str, float]:
+        return {str(chave): float(self.obter_valor_ficha(chave)) for chave in self.Stats.keys()}
+
     @classmethod
     def _frames_especie(cls, especie: str) -> List[pygame.Surface]:
         chave = str(especie or '').strip().lower()
@@ -408,23 +405,23 @@ class PokemonBatalha:
         px, py = camera.mundo_para_tela_px(self.Posicao)
         return int(px), int(py)
 
-    def _desenhar_corpo(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int, *, selecionado: bool = False, alpha_extra: int = 255) -> None:
+    def _desenhar_corpo(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int, *, selecionado: bool = False, hover: bool = False, alpha_extra: int = 255) -> None:
         cor_circulo = (56, 90, 145) if self.Lado == 'jogador' else (144, 74, 74)
         camada = pygame.Surface((raio * 4, raio * 4), pygame.SRCALPHA)
         centro_local = (camada.get_width() // 2, camada.get_height() // 2)
         pygame.draw.circle(camada, (*cor_circulo, max(0, min(255, alpha_extra))), centro_local, raio)
         cor_borda = (22, 26, 34)
         largura_borda = max(2, int(tile_px * 0.06))
-        if selecionado:
+        if selecionado or hover:
             pulso = (pygame.time.get_ticks() % 900) / 900.0
-            alpha = int(120 + 115 * abs(0.5 - pulso) * 2.0)
+            alpha = int((120 if selecionado else 84) + (115 if selecionado else 78) * abs(0.5 - pulso) * 2.0)
             brilho = pygame.Surface((raio * 3, raio * 3), pygame.SRCALPHA)
             pygame.draw.circle(
                 brilho,
                 (255, 248, 190, alpha),
                 (brilho.get_width() // 2, brilho.get_height() // 2),
                 raio,
-                max(largura_borda + 2, 4),
+                max(largura_borda + (3 if selecionado else 2), 4),
             )
             tela.blit(brilho, brilho.get_rect(center=centro))
             cor_borda = (244, 238, 178)
@@ -439,11 +436,11 @@ class PokemonBatalha:
 
         tela.blit(camada, camada.get_rect(center=centro))
 
-    def renderizar(self, tela: pygame.Surface, camera, selecionado: bool = False, energia_reservada: float = 0.0) -> None:
+    def renderizar(self, tela: pygame.Surface, camera, selecionado: bool = False, hover: bool = False, energia_reservada: float = 0.0) -> None:
         centro = self.centro_tela(camera)
         tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
         raio = self.raio_px(camera)
-        self._desenhar_corpo(tela, centro, raio, tile_px, selecionado=selecionado, alpha_extra=255)
+        self._desenhar_corpo(tela, centro, raio, tile_px, selecionado=selecionado, hover=hover, alpha_extra=255)
         self._desenhar_barras(tela, centro, raio, tile_px, energia_reservada=energia_reservada)
 
     def renderizar_construto(self, tela: pygame.Surface, camera, posicao_mundo, *, alpha: int = 96) -> None:
@@ -459,6 +456,17 @@ class PokemonBatalha:
         pygame.draw.circle(sombra, (255, 255, 255, max(10, int(alpha * 0.10))), centro_local, int(raio * 0.90))
         tela.blit(sombra, sombra.get_rect(center=centro))
         self._desenhar_corpo(tela, centro, raio, tile_px, selecionado=False, alpha_extra=max(24, min(180, int(alpha))))
+
+    @staticmethod
+    def _desenhar_reserva_arredondada(tela: pygame.Surface, rect_barra: pygame.Rect, inicio_t: float, fim_t: float, cor_rgba: tuple[int, int, int, int]) -> None:
+        if rect_barra.width <= 2 or rect_barra.height <= 0:
+            return
+        x_inicio = rect_barra.x + int(rect_barra.width * max(0.0, min(1.0, inicio_t)))
+        x_fim = rect_barra.x + int(rect_barra.width * max(0.0, min(1.0, fim_t)))
+        largura = max(1, x_fim - x_inicio)
+        overlay = pygame.Surface((largura, rect_barra.height), pygame.SRCALPHA)
+        pygame.draw.rect(overlay, cor_rgba, overlay.get_rect(), border_radius=max(1, rect_barra.height // 2))
+        tela.blit(overlay, (x_inicio, rect_barra.y))
 
     def _desenhar_barras(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int, energia_reservada: float = 0.0) -> None:
         largura = max(24, int(tile_px * self.DiametroTiles * 1.25))
@@ -479,9 +487,12 @@ class PokemonBatalha:
             fill_vida = pygame.Rect(inner_vida.x, inner_vida.y, max(1, int(inner_vida.width * vida_t)), inner_vida.height)
             pygame.draw.rect(tela, (52, 205, 72), fill_vida, border_radius=max(2, inner_vida.height // 3))
 
-        blocos = max(1, int(math.ceil(self.VidaMax / 30.0)))
-        for i in range(1, blocos):
-            marca_x = inner_vida.x + int((inner_vida.width * i) / blocos)
+        total_marcas = max(0, int(self.VidaMax // 30.0))
+        for indice in range(1, total_marcas + 1):
+            vida_marca = float(indice * 30.0)
+            if vida_marca >= self.VidaMax:
+                break
+            marca_x = inner_vida.x + int(inner_vida.width * (vida_marca / self.VidaMax))
             pygame.draw.line(tela, (0, 0, 0), (marca_x, inner_vida.y), (marca_x, inner_vida.y + inner_vida.height), 1)
 
         pygame.draw.rect(tela, (0, 0, 0), rect_ene, border_radius=max(1, ene_h // 2))
@@ -495,10 +506,5 @@ class PokemonBatalha:
         if reservado > 0.001 and inner_ene.width > 2 and self.EnergiaMax > 0:
             inicio_t = max(0.0, min(1.0, (self.Energia - reservado) / self.EnergiaMax))
             fim_t = max(0.0, min(1.0, self.Energia / self.EnergiaMax))
-            x_inicio = inner_ene.x + int(inner_ene.width * inicio_t)
-            x_fim = inner_ene.x + int(inner_ene.width * fim_t)
-            largura_reserva = max(1, x_fim - x_inicio)
             alpha_pulso = int(90 + 90 * (0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 120.0)))
-            overlay = pygame.Surface((largura_reserva, inner_ene.height), pygame.SRCALPHA)
-            overlay.fill((255, 255, 255, alpha_pulso))
-            tela.blit(overlay, (x_inicio, inner_ene.y))
+            self._desenhar_reserva_arredondada(tela, inner_ene, inicio_t, fim_t, (255, 255, 255, alpha_pulso))

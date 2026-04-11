@@ -7,6 +7,7 @@ import pygame
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.FichaPokemon import FichaPokemon
+from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 
 
@@ -20,6 +21,7 @@ class _PainelItem:
     selecionado: bool = False
     rect: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
     rect_fechar: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
+    botao_fechar: Botao | None = None
 
 
 class PainelJogada:
@@ -50,6 +52,7 @@ class PainelJogada:
             },
         )
         self._comandos: List[Dict[str, object]] = []
+        self._hover_jogada_id: int | None = None
 
     @staticmethod
     def _cor_item(dados: Dict[str, object], selecionado: bool) -> tuple[tuple[int, int, int], tuple[int, int, int], tuple[int, int, int]]:
@@ -120,6 +123,32 @@ class PainelJogada:
             if item is None:
                 item = _PainelItem(jogada_id=jid, dados=dict(jogada))
                 item.animacao = 0.0
+                item.botao_fechar = Botao(
+                    pygame.Rect(0, 0, 18, 18),
+                    "X",
+                    execute=None,
+                    style={
+                        "radius": 9,
+                        "border_width": 2,
+                        "bg": (124, 28, 36),
+                        "bg_hover": (164, 40, 52),
+                        "bg_pressed": (92, 20, 28),
+                        "border": (255, 255, 255),
+                        "border_hover": (255, 255, 255),
+                        "hover_scale": 1.0,
+                        "press_scale": 0.96,
+                        "text_style": {
+                            "size": 12,
+                            "color": (255, 244, 244),
+                            "hover_color": (255, 255, 255),
+                            "align": "center",
+                            "outline": True,
+                            "outline_thickness": 2,
+                            "outline_color": (40, 6, 10),
+                            "shadow": False,
+                        },
+                    },
+                )
                 self._itens[jid] = item
             item.dados = dict(jogada)
             item.ordem = indice
@@ -158,18 +187,31 @@ class PainelJogada:
             deslocamento = int((1.0 - item.animacao) * (largura + 34))
             item.rect = pygame.Rect(base_x - deslocamento, y, largura, altura)
             item.rect_fechar = pygame.Rect(item.rect.right - 28, item.rect.y + 14, 16, 16)
+            if item.botao_fechar is not None:
+                item.botao_fechar.base_rect = pygame.Rect(item.rect.right - 30, item.rect.y + 12, 20, 20)
+                item.botao_fechar.rect = pygame.Rect(item.botao_fechar.base_rect)
+                item.rect_fechar = pygame.Rect(item.botao_fechar.rect)
 
     def recalcular_layout(self, tela: pygame.Surface) -> None:
         self._aplicar_layout(tela)
 
     def processar_eventos(self, eventos) -> None:
+        self._hover_jogada_id = None
+        mouse_pos = pygame.mouse.get_pos()
         for evento in eventos or []:
             if evento.type != pygame.MOUSEBUTTONDOWN or evento.button != 1:
+                break
+        for item in reversed(self._itens_ordenados()):
+            if item.animacao <= 0.15:
                 continue
-            for item in reversed(self._itens_ordenados()):
-                if item.animacao <= 0.15:
+            if item.rect.collidepoint(mouse_pos):
+                self._hover_jogada_id = item.jogada_id
+            if item.botao_fechar is not None and item.botao_fechar.rect.collidepoint(mouse_pos):
+                self._hover_jogada_id = item.jogada_id
+            for evento in eventos or []:
+                if evento.type != pygame.MOUSEBUTTONDOWN or evento.button != 1:
                     continue
-                if item.rect_fechar.collidepoint(evento.pos):
+                if item.botao_fechar is not None and item.botao_fechar.rect.collidepoint(evento.pos):
                     self._comandos.append({"acao": "remover", "id": item.jogada_id})
                     return
                 if item.rect.collidepoint(evento.pos):
@@ -184,6 +226,9 @@ class PainelJogada:
     def retangulos_interativos(self) -> List[pygame.Rect]:
         return [pygame.Rect(item.rect) for item in self._itens_ordenados() if item.animacao > 0.15]
 
+    def jogada_hover(self) -> int | None:
+        return self._hover_jogada_id
+
     def desenhar(self, tela: pygame.Surface, dt: float) -> None:
         self.atualizar(dt)
         self._aplicar_layout(tela)
@@ -196,7 +241,7 @@ class PainelJogada:
             base = pygame.Surface(item.rect.size, pygame.SRCALPHA)
             alpha_fundo = int(215 * item.animacao)
             pygame.draw.rect(base, (*fundo, alpha_fundo), base.get_rect(), border_radius=item.rect.height // 2)
-            pygame.draw.rect(base, (*borda, int(245 * item.animacao)), base.get_rect(), 2, border_radius=item.rect.height // 2)
+            pygame.draw.rect(base, (255, 255, 255, int(245 * item.animacao)), base.get_rect(), 2, border_radius=item.rect.height // 2)
             if item.selecionado:
                 pygame.draw.rect(base, (*brilho, int(88 * item.animacao)), base.get_rect().inflate(-10, -16), border_radius=item.rect.height // 2)
             tela.blit(base, item.rect.topleft)
@@ -223,8 +268,8 @@ class PainelJogada:
             self._texto_aux.set_pos((rect_icone.right + 8, item.rect.y + 39))
             self._texto_aux.draw(tela)
 
-            cor_x = (255, 232, 232) if item.selecionado else (225, 225, 230)
-            pygame.draw.circle(tela, (34, 22, 24), item.rect_fechar.center, item.rect_fechar.width // 2 + 2)
-            pygame.draw.circle(tela, cor_x, item.rect_fechar.center, item.rect_fechar.width // 2, 2)
-            pygame.draw.line(tela, cor_x, item.rect_fechar.topleft, item.rect_fechar.bottomright, 2)
-            pygame.draw.line(tela, cor_x, item.rect_fechar.topright, item.rect_fechar.bottomleft, 2)
+            if item.botao_fechar is not None:
+                item.botao_fechar.base_rect = pygame.Rect(item.rect.right - 28, item.rect.y + 13, 18, 18)
+                item.botao_fechar.rect = pygame.Rect(item.botao_fechar.base_rect)
+                item.rect_fechar = pygame.Rect(item.botao_fechar.rect)
+                item.botao_fechar.render(tela, [], dt, None)

@@ -61,6 +61,7 @@ class FichaPokemonBatalha:
         self._hover_atributo: tuple[str, str] | None = None
         self._hover_ataque: tuple[dict, pygame.Rect] | None = None
         self._hover_acao: tuple[str, str] | None = None
+        self._pokemon_render_atual = None
 
         self._cache_icones_stats: dict[tuple[str, int], pygame.Surface | None] = {}
         self._cache_icones_diversos: dict[tuple[str, int], pygame.Surface | None] = {}
@@ -122,7 +123,7 @@ class FichaPokemonBatalha:
             return
         self._cache_tela = tamanho
         w, h = tamanho
-        largura = min(960, max(700, int(w * 0.72)))
+        largura = min(900, max(660, int(w * 0.66)))
         altura = min(192, max(146, int(h * 0.20)))
         self.rect = pygame.Rect((w - largura) // 2, h - altura - 18, largura, altura)
 
@@ -252,7 +253,9 @@ class FichaPokemonBatalha:
     def _renderizar_tooltips(self, tela: pygame.Surface):
         if self._hover_ataque is not None:
             ataque, area = self._hover_ataque
-            self._ficha_ataque.renderizar_tooltip(tela, ataque, area_ancora=area, mouse_pos=self._mouse_pos)
+            pokemon = self._pokemon_em_contexto()
+            atributos = pokemon.atributos_texto_ataque() if pokemon is not None and hasattr(pokemon, "atributos_texto_ataque") else {}
+            self._ficha_ataque.renderizar_tooltip(tela, ataque, area_ancora=area, mouse_pos=self._mouse_pos, atributos=atributos)
             return
         if self._hover_atributo is not None:
             titulo, descricao = self._hover_atributo
@@ -352,21 +355,40 @@ class FichaPokemonBatalha:
                 botao.set_habilitado(pode_interagir)
                 selecionado = ataque == self._ataque_selecionado
                 botao.set_style(
-                    bg=(40, 115, 64) if selecionado else (20, 30, 48),
-                    bg_hover=(52, 132, 78) if selecionado else (34, 48, 74),
-                    bg_pressed=(30, 88, 52) if selecionado else (16, 24, 40),
-                    border=(214, 230, 255) if selecionado else (122, 152, 206),
-                    border_hover=(255, 255, 255) if selecionado else (224, 235, 255),
+                    radius=max(12, skill_lado // 4),
+                    border_width=3 if selecionado else 2,
+                    bg=(34, 106, 66) if selecionado else (18, 28, 44),
+                    bg_hover=(44, 128, 78) if selecionado else (28, 42, 64),
+                    bg_pressed=(26, 82, 52) if selecionado else (14, 22, 34),
+                    border=(245, 249, 255) if selecionado else (148, 176, 220),
+                    border_hover=(255, 255, 255),
+                    pulse=selecionado,
+                    pulse_color=(104, 194, 126),
+                    pulse_border_color=(255, 255, 255),
                 )
                 botao.render(tela, eventos or [], dt, None)
                 if pode_interagir and botao.clicado:
                     self._ataque_selecionado = None if selecionado else ataque
-                icone = self._icone_ataque(ataque, skill_lado - 10)
+                area_icone = botao.rect.inflate(-10, -10)
+                pygame.draw.rect(
+                    tela,
+                    (14, 20, 32),
+                    area_icone,
+                    border_radius=max(10, area_icone.height // 4),
+                )
+                pygame.draw.rect(
+                    tela,
+                    (255, 255, 255) if selecionado else (86, 108, 148),
+                    area_icone,
+                    width=1,
+                    border_radius=max(10, area_icone.height // 4),
+                )
+                icone = self._icone_ataque(ataque, max(18, area_icone.width - 8))
                 if icone is not None:
-                    tela.blit(icone, icone.get_rect(center=botao.rect.center))
+                    tela.blit(icone, icone.get_rect(center=area_icone.center))
                 else:
                     nome = str(ataque.get("Ataque") or ataque.get("Nome") or "Atk")[:2].upper()
-                    self._desenhar_texto(self._txt_centro, tela, nome, botao.rect.center, align="center")
+                    self._desenhar_texto(self._txt_centro, tela, nome, area_icone.center, align="center")
                 if botao.rect.collidepoint(self._mouse_pos):
                     self._hover_ataque = (ataque, pygame.Rect(botao.rect))
                 x += skill_lado + gap
@@ -407,7 +429,7 @@ class FichaPokemonBatalha:
         area_barras = pygame.Rect(area_interna.x, area_interna.y, area_interna.width - coluna_itens_w - (gap_setor if itens else 0), area_interna.height)
         area_itens = pygame.Rect(area_barras.right + (gap_setor if itens else 0), area_interna.y, coluna_itens_w, area_interna.height)
 
-        barra_h = max(14, min(20, int(area_barras.height * 0.27)))
+        barra_h = max(15, min(22, int(area_barras.height * 0.30)))
         gap_barras = max(8, int(area_barras.height * 0.12))
         y0 = area_barras.y + max(2, (area_barras.height - (barra_h * 2 + gap_barras)) // 2)
 
@@ -448,14 +470,9 @@ class FichaPokemonBatalha:
             reservado = max(0.0, min(self._previsao_consumo, energia_atual))
             inicio_t = max(0.0, min(1.0, (energia_atual - reservado) / float(getattr(pokemon, "EnergiaMax", 1.0))))
             fim_t = max(0.0, min(1.0, energia_atual / float(getattr(pokemon, "EnergiaMax", 1.0))))
-            x_inicio = self._barra_energia.rect.x + int(self._barra_energia.rect.width * inicio_t)
-            x_fim = self._barra_energia.rect.x + int(self._barra_energia.rect.width * fim_t)
-            largura_overlay = max(1, x_fim - x_inicio)
             alpha = int(88 + 96 * (0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 120.0)))
             cor = (255, 255, 255, alpha) if self._previsao_pode else (255, 116, 116, alpha)
-            overlay = pygame.Surface((largura_overlay, self._barra_energia.rect.height), pygame.SRCALPHA)
-            overlay.fill(cor)
-            tela.blit(overlay, (x_inicio, self._barra_energia.rect.y))
+            self._desenhar_reserva_arredondada(tela, self._barra_energia.rect.inflate(-2, -2), inicio_t, fim_t, cor)
         self._desenhar_texto(
             self._txt_barra,
             tela,
@@ -510,7 +527,11 @@ class FichaPokemonBatalha:
         except Exception:
             img = None
         if img is not None:
-            tela.blit(img, img.get_rect(center=(area.centerx, area.centery + 2)))
+            moldura = pygame.Rect(0, 0, int(lado_img * 1.02), int(lado_img * 1.02))
+            moldura.center = (area.centerx, area.centery + 2)
+            pygame.draw.circle(tela, (18, 24, 36), moldura.center, moldura.width // 2)
+            pygame.draw.circle(tela, (228, 237, 252), moldura.center, moldura.width // 2, 2)
+            tela.blit(img, img.get_rect(center=moldura.center))
 
         self._desenhar_texto(self._txt_sub, tela, f"Lv {int(getattr(pokemon, 'Nivel', 1))}", (area.centerx, area.bottom - 26), align="center")
 
@@ -522,6 +543,7 @@ class FichaPokemonBatalha:
         self._atualizar_animacoes(dt)
         self._atualizar_estilo_botao_extra()
         self._mouse_pos = pygame.mouse.get_pos()
+        self._pokemon_render_atual = pokemon
         self._hover_atributo = None
         self._hover_ataque = None
         self._hover_acao = None
@@ -531,10 +553,9 @@ class FichaPokemonBatalha:
         rect = self.rect.move(0, offset)
 
         gap_setores = 10
-        extra_max = max(132, int(rect.width * 0.15))
+        side_w = max(170, int(rect.width * 0.24))
+        extra_max = side_w
         extra_w = int(round(extra_max * self._t_extra))
-
-        side_w = max(174, int(rect.width * 0.25))
         direita_w = side_w
         esquerda_w = side_w
         meio_w = rect.width - esquerda_w - direita_w - gap_setores * 2
@@ -598,7 +619,7 @@ class FichaPokemonBatalha:
         ponto = (int(pos[0]), int(pos[1]))
         if self.rect.collidepoint(ponto):
             return True
-        extra_max = max(132, int(self.rect.width * 0.15))
+        extra_max = max(170, int(self.rect.width * 0.24))
         extra_w = int(round(extra_max * self._t_extra))
         if extra_w <= 0:
             return False
@@ -609,3 +630,17 @@ class FichaPokemonBatalha:
     def atualizar_previsao(self, custo: float, pode: bool) -> None:
         self._previsao_consumo = float(custo)
         self._previsao_pode = bool(pode)
+
+    def _pokemon_em_contexto(self):
+        return getattr(self, "_pokemon_render_atual", None)
+
+    @staticmethod
+    def _desenhar_reserva_arredondada(tela: pygame.Surface, rect_barra: pygame.Rect, inicio_t: float, fim_t: float, cor_rgba) -> None:
+        if rect_barra.width <= 1 or rect_barra.height <= 0:
+            return
+        x_inicio = rect_barra.x + int(rect_barra.width * max(0.0, min(1.0, inicio_t)))
+        x_fim = rect_barra.x + int(rect_barra.width * max(0.0, min(1.0, fim_t)))
+        largura = max(1, x_fim - x_inicio)
+        overlay = pygame.Surface((largura, rect_barra.height), pygame.SRCALPHA)
+        pygame.draw.rect(overlay, cor_rgba, overlay.get_rect(), border_radius=max(3, rect_barra.height // 2))
+        tela.blit(overlay, (x_inicio, rect_barra.y))

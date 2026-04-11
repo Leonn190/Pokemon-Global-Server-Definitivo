@@ -67,19 +67,19 @@ class ElementosHudBatalha:
             },
         )
         self._icone_fugir = self._carregar_icone(max(24, int(lado * 0.68)))
-        bw = max(108, int(lado * 2.0))
-        bh = max(36, int(lado * 0.68))
+        bw = max(138, int(lado * 2.2))
+        bh = max(44, int(lado * 0.82))
         bx = w - bw - margem
         by = h - (bh * 2 + 10 + margem)
         estilo_acao = {
-            "radius": 8,
+            "radius": 10,
             "border_width": 2,
             "bg": (24, 36, 52),
             "bg_hover": (36, 52, 76),
             "bg_pressed": (18, 28, 40),
             "border": (153, 185, 224),
             "border_hover": (218, 236, 255),
-            "text_style": {"size": 22, "outline_thickness": 2, "outline_color": (8, 12, 20)},
+            "text_style": {"size": 24, "outline_thickness": 2, "outline_color": (8, 12, 20)},
         }
         self._botao_preparar = Botao(pygame.Rect(bx, by, bw, bh), "Preparar", execute=lambda _jogo, _botao: self._preparar_jogada(), style=estilo_acao)
         self._botao_pronto = Botao(pygame.Rect(bx, by + bh + 10, bw, bh), "Pronto", execute=lambda _jogo, _botao: self._confirmar_jogadas(), style=estilo_acao)
@@ -118,7 +118,7 @@ class ElementosHudBatalha:
 
     def _preparar_jogada(self) -> None:
         if self._fluxos is not None:
-            self._fluxos.preparar(self._ficha)
+            self._fluxos.acao_principal(self._ficha)
 
     def _confirmar_jogadas(self) -> None:
         if self._fluxos is not None:
@@ -145,6 +145,7 @@ class ElementosHudBatalha:
             self._painel_jogada.sincronizar(self._fluxos.listar_jogadas(), self._fluxos.jogada_selecionada_id())
             self._painel_jogada.recalcular_layout(tela)
             self._painel_jogada.processar_eventos(eventos or [])
+            self._fluxos.definir_hover_jogada(self._painel_jogada.jogada_hover())
             for comando in self._painel_jogada.coletar_comandos():
                 if comando.get("acao") == "remover":
                     self._fluxos.remover_jogada(comando.get("id"))
@@ -177,6 +178,10 @@ class ElementosHudBatalha:
                 rect = self._icone_fugir.get_rect(center=self._botao_fugir.rect.center)
                 tela.blit(self._icone_fugir, rect)
         if self._botao_preparar is not None:
+            if self._fluxos is not None:
+                rotulo, habilitado = self._fluxos.estado_botao_preparar(self._ficha)
+                self._botao_preparar.set_text(rotulo)
+                self._botao_preparar.set_habilitado(habilitado)
             self._botao_preparar.render(tela, eventos or [], dt, None)
         if self._botao_pronto is not None:
             self._botao_pronto.render(tela, eventos or [], dt, None)

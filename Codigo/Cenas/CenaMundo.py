@@ -161,6 +161,8 @@ class CenaMundo:
                     contexto["arena_largura"] = 40
                     contexto["arena_altura"] = 20
                     contexto["tile_bioma"] = tile_mundo_atual(self)
+                    contexto["server_ip"] = str(link or "")
+                    contexto["client_id"] = client_id
                     JOGO.INFO["CombateContexto"] = contexto
                     JOGO.CenaAlvo = "Combate"
                     return
@@ -325,6 +327,8 @@ class CenaMundo:
                 "times_jogador": deepcopy(list(times_validos)),
                 "time_jogador": deepcopy(dict(time_escolhido or {})),
                 "tile_bioma": tile_mundo_atual(self),
+                "server_ip": str((jogo.INFO.get("ServerSelecionado") or {}).get("ip") or ""),
+                "client_id": str(jogo.INFO.get("UsuarioLogado", "anon")),
             }
             jogo.CenaAlvo = "Combate"
 

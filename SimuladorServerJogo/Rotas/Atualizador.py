@@ -14,6 +14,7 @@ from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Controle.LoaderRegras import carregar_regras_pokemons
+from SimuladorServerJogo.Batalha.GerenciadorBatalhas import GERENCIADOR_BATALHAS
 from SimuladorServerJogo.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 from Codigo.Geradores.Estadio import EstadioInterno
@@ -396,6 +397,21 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                     contexto = EstadioInterno.contexto_batalha(estadio_estado)
                     contexto["centro"] = [float(contexto.get("largura", 60) * 0.5), float(contexto.get("altura", 40) * 0.5)]
                 return _ok("Contexto de batalha pronto", client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
+            if categoria in {"batalha_iniciar", "combate_iniciar"}:
+                resposta = GERENCIADOR_BATALHAS.iniciar_batalha(
+                    client_id=client_id,
+                    contexto_batalha=payload.get("contexto_batalha") if isinstance(payload.get("contexto_batalha"), dict) else {},
+                )
+                resposta["client_id"] = client_id
+                return json.dumps(resposta, ensure_ascii=False)
+            if categoria in {"batalha_jogada", "combate_jogada"}:
+                resposta = GERENCIADOR_BATALHAS.receber_jogadas(
+                    client_id=client_id,
+                    batalha_id=str(payload.get("batalha_id") or ""),
+                    jogadas=payload.get("jogadas") if isinstance(payload.get("jogadas"), list) else [],
+                )
+                resposta["client_id"] = client_id
+                return json.dumps(resposta, ensure_ascii=False)
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):
                     aplicados += 1

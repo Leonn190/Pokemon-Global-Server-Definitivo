@@ -8,6 +8,7 @@ import pygame
 
 from Codigo.ModulosBatalha.LeitorFluxos import LeitorFluxos
 from Codigo.ModulosBatalha.MontadorJogada import MontadorJogada
+from Codigo.Server.ServerBatalha import enviar_jogada_batalha_server
 from Codigo.Prefabs.Fluxos import Fluxo
 
 
@@ -514,6 +515,23 @@ class ControladorFluxos:
         self.preparar(ficha)
 
     def pronto(self) -> None:
+        jogadas_rede = []
+        for item in self._montador.listar():
+            jogadas_rede.append(
+                {
+                    "id": int(item.get("id") or 0),
+                    "executor_id": str(item.get("executor_id") or ""),
+                    "estilo": str(item.get("estilo") or ""),
+                    "tipo_movimento": bool(item.get("tipo_movimento")),
+                    "destino_mundo": list(item.get("destino_mundo")) if isinstance(item.get("destino_mundo"), (tuple, list)) else None,
+                    "troca_reserva_id": str(item.get("troca_reserva_id") or ""),
+                    "alvo_ids": [str(aid) for aid in list(item.get("alvo_ids") or [])],
+                    "custo_base": self._numero(item.get("custo_base"), 0.0),
+                    "custo": self._numero(item.get("custo"), 0.0),
+                    "acao_chave": str(item.get("acao_chave") or ""),
+                    "ataque": dict(item.get("ataque")) if isinstance(item.get("ataque"), dict) else None,
+                }
+            )
         por_id = self._pokemon_por_id()
         for jogada in self._montador.listar_referencias():
             poke = por_id.get(str(jogada.get("executor_id") or ""))
@@ -521,8 +539,27 @@ class ControladorFluxos:
                 continue
             custo = self._numero(jogada.get("custo"), 0.0)
             poke.Energia = max(0.0, float(getattr(poke, "Energia", 0.0)) - custo)
+        contexto = getattr(self._controlador, "Contexto", {}) if self._controlador is not None else {}
+        if isinstance(contexto, dict):
+            ip = str(contexto.get("server_ip") or "")
+            client_id = str(contexto.get("client_id") or "")
+            if ip and client_id:
+                retorno = enviar_jogada_batalha_server(
+                    ip=ip,
+                    client_id=client_id,
+                    batalha_id=str(contexto.get("batalha_id_servidor") or ""),
+                    jogadas=jogadas_rede,
+                )
+                contexto["batalha_servidor_ultimo_envio"] = retorno
+                batalha = retorno.get("batalha") if isinstance(retorno, dict) else {}
+                if isinstance(batalha, dict):
+                    bid = str(batalha.get("batalha_id") or "")
+                    if bid:
+                        contexto["batalha_id_servidor"] = bid
         self._montador.limpar()
         self.cancelar_preparacao()
+        if hasattr(self._controlador, "avancar_turno_basico"):
+            self._controlador.avancar_turno_basico()
 
     def atualizar_contexto(self, ataque_atual: Optional[dict]) -> None:
         self._ataque_atual = ataque_atual

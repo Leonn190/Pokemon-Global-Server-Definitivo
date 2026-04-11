@@ -34,6 +34,8 @@ class ControladorBatalha:
         init = InicializadorBatalha(self.Contexto)
         batalha = init.inicializar()
         self.Contexto["batalha_inicializada"] = batalha
+        if hasattr(self.SistemaBatalha, "iniciar_batalha_server_async"):
+            self.SistemaBatalha.iniciar_batalha_server_async(batalha)
 
         centro = self.Contexto.get("centro") if isinstance(self.Contexto.get("centro"), (list, tuple)) and len(self.Contexto.get("centro")) == 2 else [40.0, 20.0]
         arena_w = float(self.Contexto.get("arena_largura", 40) or 40)
@@ -117,6 +119,9 @@ class ControladorBatalha:
 
     def atualizar(self, eventos, dt: float) -> None:
         self.SistemaBatalha.atualizar(eventos, dt)
+
+    def avancar_turno_basico(self) -> None:
+        self._rodada_atual = int(self._rodada_atual) + 1
 
     def renderizar(self, tela, camera) -> None:
         self.Arena.renderizar(tela, camera)

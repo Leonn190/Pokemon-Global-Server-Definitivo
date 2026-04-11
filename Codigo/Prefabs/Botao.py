@@ -90,6 +90,7 @@ class Botao:
 
         self.hover = False
         self.pressed = False
+        self.clicado = False
         self._hover_t = 0.0
         self._frame_idx = 0
         self._frame_acc = 0.0
@@ -266,6 +267,7 @@ class Botao:
             mouse_pos = pygame.mouse.get_pos()
 
         self.hover = self.rect.collidepoint(mouse_pos)
+        self.clicado = False
 
         clicou = False
         clicou_bloqueado = False
@@ -377,6 +379,7 @@ class Botao:
             tocar(self.som_bloqueado)
 
         if clicou:
+            self.clicado = True
             self._executar(JOGO)
 
 

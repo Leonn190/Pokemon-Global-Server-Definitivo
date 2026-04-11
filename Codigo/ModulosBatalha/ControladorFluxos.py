@@ -23,6 +23,8 @@ class ControladorFluxos:
         self._preparadas_visuais: List[dict] = []
         self._alvo_selecionado = None
         self._id_mira = 0
+        self._clique_pendente: Optional[dict] = None
+        self._limiar_arrasto_px = 12.0
 
     def _id_combatente(self, pokemon) -> str:
         if pokemon is None:
@@ -63,6 +65,14 @@ class ControladorFluxos:
         except (TypeError, ValueError):
             return float(padrao)
 
+    def _selecionado_aliado(self):
+        selecionado = getattr(self._controlador, "PokemonSelecionado", None)
+        if selecionado is None:
+            return None
+        if not getattr(self._controlador, "pokemon_eh_aliado", lambda _p: False)(selecionado):
+            return None
+        return selecionado
+
     def _custo_ataque(self, pokemon, ataque: Optional[dict], estilo: str) -> float:
         if estilo == "movimento" and not ataque:
             return max(1.0, float(getattr(pokemon, "EnergiaMax", 0.0)) * 0.25)
@@ -90,17 +100,9 @@ class ControladorFluxos:
         return custo, custo <= self._disponivel(pokemon)
 
     def _pokemon_no_ponto(self, pos_tela):
-        if not isinstance(pos_tela, (tuple, list)):
-            return None
-        mx, my = int(pos_tela[0]), int(pos_tela[1])
-        for poke in (self._controlador.PokemonsAliados + self._controlador.PokemonsInimigos):
-            cx, cy = poke.centro_tela(self._camera)
-            r = poke.raio_px(self._camera)
-            if (mx - cx) ** 2 + (my - cy) ** 2 <= r * r:
-                return poke
-        return None
+        return self._controlador.pokemon_no_ponto(pos_tela, self._camera)
 
-    def _criar_mira(self, executor, ataque: Optional[dict], mouse_pos) -> None:
+    def _criar_mira(self, executor, ataque: Optional[dict], mouse_pos, *, arrastando: bool) -> None:
         estilo = self._estilo_ataque(ataque)
         centro = executor.centro_tela(self._camera)
         self._mira_ativa = {
@@ -109,26 +111,24 @@ class ControladorFluxos:
             "estilo": estilo,
             "inicio": centro,
             "mouse": tuple(mouse_pos),
-            "arrastando": True,
+            "arrastando": bool(arrastando),
         }
 
-    def _finalizar_mira(self, pos) -> None:
-        if not self._mira_ativa:
-            return
-        executor = self._mira_ativa.get("executor")
-        inicio = self._mira_ativa.get("inicio")
-        ataque = self._mira_ativa.get("ataque")
-        estilo = self._mira_ativa.get("estilo")
+    def _preparo_da_mira(self, mira: Optional[dict], pos) -> Optional[dict]:
+        if not mira:
+            return None
+        executor = mira.get("executor")
+        inicio = mira.get("inicio")
+        ataque = mira.get("ataque")
+        estilo = mira.get("estilo")
         dx = float(pos[0] - inicio[0])
         dy = float(pos[1] - inicio[1])
         dist = math.hypot(dx, dy)
         intensidade = max(0.0, min(1.0, dist / 220.0))
         if dist < 12.0 or intensidade <= 0.01:
-            self._preparo_atual = None
-            self._mira_ativa = None
-            return
+            return None
         self._id_mira += 1
-        self._preparo_atual = {
+        return {
             "executor": executor,
             "executor_id": self._id_combatente(executor),
             "ataque": ataque,
@@ -139,41 +139,81 @@ class ControladorFluxos:
             "token_mira": self._id_mira,
             "alvo": self._alvo_selecionado,
         }
+
+    def _finalizar_mira(self, pos) -> None:
+        self._preparo_atual = self._preparo_da_mira(self._mira_ativa, pos)
         self._mira_ativa = None
 
     def processar_eventos(self, eventos: List[pygame.event.Event], ficha, hud_rects: List[pygame.Rect] | None = None) -> None:
-        selecionado = getattr(self._controlador, "PokemonSelecionado", None)
         ataque = ficha.ataque_selecionado() if ficha else None
         estilo = self._estilo_ataque(ataque)
         rects = list(hud_rects or [])
+        executor = self._selecionado_aliado()
+
+        if executor is None and self._mira_ativa and self._mira_ativa.get("ataque") is not None:
+            self._mira_ativa = None
 
         for ev in eventos or []:
-            if ev.type == pygame.MOUSEMOTION and self._mira_ativa:
-                self._mira_ativa["mouse"] = tuple(ev.pos)
+            if ev.type == pygame.MOUSEMOTION:
+                if self._mira_ativa and self._mira_ativa.get("arrastando"):
+                    self._mira_ativa["mouse"] = tuple(ev.pos)
+                if self._clique_pendente and self._clique_pendente.get("permite_arrasto") and not self._clique_pendente.get("arrastou"):
+                    origem = self._clique_pendente.get("pos", ev.pos)
+                    dx = float(ev.pos[0] - origem[0])
+                    dy = float(ev.pos[1] - origem[1])
+                    if math.hypot(dx, dy) >= self._limiar_arrasto_px:
+                        self._clique_pendente["arrastou"] = True
+                        if executor is not None and self._clique_pendente.get("pokemon") is executor:
+                            self._criar_mira(executor, None, ev.pos, arrastando=True)
+
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                 if any(rect.collidepoint(ev.pos) for rect in rects):
                     continue
-                if estilo == "alvo":
-                    alvo = self._pokemon_no_ponto(ev.pos)
-                    if alvo is not None and alvo is not selecionado:
-                        self._alvo_selecionado = alvo
-                        self._preparo_atual = {
-                            "executor": selecionado,
-                            "executor_id": self._id_combatente(selecionado),
-                            "ataque": ataque,
-                            "estilo": "alvo",
-                            "alvo": alvo,
-                        }
+                clicado = self._pokemon_no_ponto(ev.pos)
+                self._clique_pendente = {
+                    "pokemon": clicado,
+                    "pos": tuple(ev.pos),
+                    "arrastou": False,
+                    "permite_arrasto": executor is not None and ataque is None and clicado is executor,
+                }
+
+            if ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
+                if self._mira_ativa and self._mira_ativa.get("arrastando"):
+                    self._finalizar_mira(ev.pos)
+                    self._clique_pendente = None
                     continue
-                if estilo in {"movimento", "tiro", "area"} and selecionado is not None:
-                    clicado = self._pokemon_no_ponto(ev.pos)
-                    if clicado is selecionado:
-                        self._criar_mira(selecionado, ataque if estilo != "movimento" or (ataque and self._estilo_ataque(ataque) == "movimento") else None, ev.pos)
-            if ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and self._mira_ativa:
-                self._finalizar_mira(ev.pos)
+
+                pendente = dict(self._clique_pendente or {})
+                self._clique_pendente = None
+                if any(rect.collidepoint(ev.pos) for rect in rects):
+                    continue
+                if not pendente or pendente.get("arrastou"):
+                    continue
+
+                clicado = pendente.get("pokemon")
+                if estilo == "alvo" and executor is not None and ataque is not None and clicado is not None and clicado is not executor:
+                    self._alvo_selecionado = clicado
+                    self._preparo_atual = {
+                        "executor": executor,
+                        "executor_id": self._id_combatente(executor),
+                        "ataque": ataque,
+                        "estilo": "alvo",
+                        "alvo": clicado,
+                    }
+                    continue
+
+                if clicado is not None:
+                    self._controlador.selecionar_pokemon(clicado)
+
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_bloqueado = any(rect.collidepoint(mouse_pos) for rect in rects)
+        if executor is not None and ataque is not None and estilo in {"movimento", "tiro", "area"} and not mouse_bloqueado:
+            self._criar_mira(executor, ataque, mouse_pos, arrastando=False)
+        elif self._mira_ativa and not self._mira_ativa.get("arrastando"):
+            self._mira_ativa = None
 
     def preparar(self, ficha) -> None:
-        selecionado = getattr(self._controlador, "PokemonSelecionado", None)
+        selecionado = self._selecionado_aliado()
         if selecionado is None:
             return
         ataque = ficha.ataque_selecionado() if ficha else None
@@ -194,6 +234,8 @@ class ControladorFluxos:
             return
 
         preparo = dict(self._preparo_atual or {})
+        if not preparo and estilo in {"movimento", "tiro", "area"} and self._mira_ativa and self._mira_ativa.get("executor") is selecionado:
+            preparo = dict(self._preparo_da_mira(self._mira_ativa, self._mira_ativa.get("mouse") or pygame.mouse.get_pos()) or {})
         if not preparo or preparo.get("executor") is not selecionado:
             return
         if estilo in {"movimento", "tiro", "area"}:
@@ -237,6 +279,7 @@ class ControladorFluxos:
         self._preparo_atual = None
         self._mira_ativa = None
         self._alvo_selecionado = None
+        self._clique_pendente = None
 
     def _cor_intensidade(self, intensidade: float):
         if intensidade < 0.34:

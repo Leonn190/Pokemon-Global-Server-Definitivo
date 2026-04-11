@@ -105,7 +105,7 @@ class ElementosHudBatalha:
         tela.blit(overlay, (0, 0))
 
     def _processar_selecao(self, eventos: List[pygame.event.Event]):
-        if self._controlador is None or self._camera is None:
+        if self._controlador is None or self._camera is None or self._fluxos is not None:
             return
         for ev in eventos or []:
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
@@ -150,6 +150,9 @@ class ElementosHudBatalha:
                     self._botao_pronto.rect if self._botao_pronto else pygame.Rect(0, 0, 0, 0),
                 ],
             )
+        selecionado_atual = getattr(self._controlador, "PokemonSelecionado", None)
+        if selecionado_atual is None or str(getattr(selecionado_atual, "Lado", "")) != "jogador":
+            self._ficha.limpar_ataque_selecionado()
         if self._botao_fugir is not None:
             self._botao_fugir.render(tela, eventos or [], dt, None)
             if self._icone_fugir is not None:

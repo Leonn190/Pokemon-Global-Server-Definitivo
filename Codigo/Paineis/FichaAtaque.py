@@ -266,14 +266,14 @@ class FichaAtaque:
         )
         return self._carregar_surface(arquivo, tamanho, chave_extra='fill')
 
-    def _retangulo_tooltip(self, tela: pygame.Surface, area_ancora=None, mouse_pos=None, largura=338, altura=186) -> pygame.Rect:
+    def _retangulo_tooltip(self, tela: pygame.Surface, area_ancora=None, mouse_pos=None, largura=368, altura=196) -> pygame.Rect:
         tela_rect = tela.get_rect()
         if area_ancora is not None:
             area_ancora = pygame.Rect(area_ancora)
-            x = area_ancora.left - largura - 14
-            if x < tela_rect.left + 8:
-                x = area_ancora.right + 14
-            y = area_ancora.centery - altura // 2
+            x = area_ancora.centerx - largura // 2
+            y = area_ancora.y - altura - 14
+            if y < tela_rect.top + 8:
+                y = area_ancora.bottom + 14
         else:
             if mouse_pos is None:
                 mouse_pos = pygame.mouse.get_pos()
@@ -296,12 +296,8 @@ class FichaAtaque:
     def renderizar_tooltip(self, tela: pygame.Surface, ataque: dict | None, area_ancora=None, mouse_pos=None, atributos: dict | None = None):
         if ataque is None:
             return
-        if area_ancora is not None:
-            rect = self._retangulo_sobre_status(area_ancora)
-            self.renderizar(tela, rect, ataque, atributos=atributos)
-        else:
-            rect = self._retangulo_tooltip(tela, area_ancora=area_ancora, mouse_pos=mouse_pos)
-            self.renderizar(tela, rect, ataque, atributos=atributos)
+        rect = self._retangulo_tooltip(tela, area_ancora=area_ancora, mouse_pos=mouse_pos)
+        self.renderizar(tela, rect, ataque, atributos=atributos)
 
     def renderizar(self, tela: pygame.Surface, rect, ataque: dict | None, atributos: dict | None = None):
         rect = pygame.Rect(rect)

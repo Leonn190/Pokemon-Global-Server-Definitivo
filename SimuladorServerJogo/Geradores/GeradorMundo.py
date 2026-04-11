@@ -6,6 +6,7 @@ import json
 import os
 import re
 import shutil
+import struct
 import subprocess
 import tempfile
 import time
@@ -36,8 +37,53 @@ def _gerar_seed() -> int:
     return int(time.time_ns() % 9_000_000_000_000_000_000)
 
 
+def _obter_versao_major_class(arquivo_class: Path) -> int | None:
+    if not arquivo_class.exists():
+        return None
+
+    with arquivo_class.open("rb") as f:
+        cabecalho = f.read(8)
+
+    if len(cabecalho) < 8 or cabecalho[:4] != b"\xCA\xFE\xBA\xBE":
+        return None
+
+    _, _, major = struct.unpack(">IHH", cabecalho)
+    return int(major)
+
+
+def _obter_versao_java_local() -> int | None:
+    try:
+        proc = subprocess.run(
+            ["javac", "-version"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (FileNotFoundError, subprocess.SubprocessError):
+        return None
+
+    saida = (proc.stdout or proc.stderr or "").strip()
+    match = re.search(r"(\d+)(?:\.\d+)?", saida)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
 def _compilar_java_se_necessario() -> None:
-    precisa_compilar = (not ARQUIVO_CLASS.exists()) or (ARQUIVO_JAVA.stat().st_mtime > ARQUIVO_CLASS.stat().st_mtime)
+    versao_class = _obter_versao_major_class(ARQUIVO_CLASS)
+    versao_java_local = _obter_versao_java_local()
+    maior_compativel = (versao_java_local + 44) if versao_java_local else None
+
+    class_incompativel = (
+        versao_class is not None
+        and maior_compativel is not None
+        and versao_class > maior_compativel
+    )
+    precisa_compilar = (
+        (not ARQUIVO_CLASS.exists())
+        or (ARQUIVO_JAVA.stat().st_mtime > ARQUIVO_CLASS.stat().st_mtime)
+        or class_incompativel
+    )
     if not precisa_compilar:
         return
 
@@ -71,10 +117,12 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
 
     etapa = "inicio"
     chunks_total = 0
+    logs_execucao: list[str] = []
     for raw_line in iter(proc.stdout.readline, ""):
         linha = raw_line.strip()
         if not linha:
             continue
+        logs_execucao.append(linha)
 
         if "Gerando terreno base" in linha:
             etapa = "terreno"
@@ -154,7 +202,12 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
 
     saida = proc.wait()
     if saida != 0:
-        raise subprocess.CalledProcessError(saida, cmd)
+        erro = "\n".join(logs_execucao[-20:])
+        raise subprocess.CalledProcessError(
+            saida,
+            cmd,
+            output=erro,
+        )
     if not ARQUIVO_FOTO_MUNDO_JAVA.exists():
         raise FileNotFoundError(f"Foto do mundo não foi gerada em {ARQUIVO_FOTO_MUNDO_JAVA}")
 

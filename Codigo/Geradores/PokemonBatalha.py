@@ -21,14 +21,13 @@ class PokemonBatalha:
     _EXTRAS_PREFERIDOS = (
         "Vida",
         "EnergiaMaxima",
-        "Peso",
-        "Escala",
         "Amplificacao",
         "Durabilidade",
+        "Peso",
+        "Escala",
         "CrC",
         "CrD",
         "Barreira",
-        "Precisao",
     )
     _MAPA_LABELS = {
         "vida": "Vida",
@@ -391,7 +390,7 @@ class PokemonBatalha:
 
     def _desenhar_barras(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int) -> None:
         largura = max(24, int(tile_px * self.DiametroTiles * 1.25))
-        vida_h = max(7, int(tile_px * 0.18))
+        vida_h = max(8, int(tile_px * 0.20))
         ene_h = max(2, int(vida_h * 0.44))
         espaco = max(1, int(tile_px * 0.05))
         topo = int(centro[1] - raio - (tile_px * 0.38))

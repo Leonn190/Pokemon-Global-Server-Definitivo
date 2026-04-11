@@ -53,20 +53,32 @@ class ControladorBatalha:
         self.Inimigo.definir_ativos(self.PokemonsInimigos)
         self.SistemaBatalha.definir_lados(self.PokemonsAliados, self.PokemonsInimigos)
 
-    def selecionar_por_mouse(self, mouse_tela_px, camera) -> PokemonBatalha | None:
-        alvo = None
+    def pokemon_no_ponto(self, mouse_tela_px, camera) -> PokemonBatalha | None:
         if not isinstance(mouse_tela_px, (tuple, list)) or len(mouse_tela_px) != 2:
-            return self.PokemonSelecionado
+            return None
         mx, my = int(mouse_tela_px[0]), int(mouse_tela_px[1])
         for poke in (self.PokemonsAliados + self.PokemonsInimigos):
             cx, cy = poke.centro_tela(camera)
             r = poke.raio_px(camera)
             if (mx - cx) * (mx - cx) + (my - cy) * (my - cy) <= r * r:
-                alvo = poke
-                break
-        if alvo is not None and alvo is not self.PokemonSelecionado:
-            self.PokemonSelecionado = alvo
+                return poke
+        return None
+
+    def pokemon_eh_aliado(self, pokemon) -> bool:
+        return pokemon in self.PokemonsAliados
+
+    def limpar_selecao(self) -> None:
+        self.PokemonSelecionado = None
+
+    def selecionar_pokemon(self, pokemon) -> PokemonBatalha | None:
+        if pokemon is self.PokemonSelecionado:
+            self.PokemonSelecionado = None
+        elif pokemon is not None:
+            self.PokemonSelecionado = pokemon
         return self.PokemonSelecionado
+
+    def selecionar_por_mouse(self, mouse_tela_px, camera) -> PokemonBatalha | None:
+        return self.selecionar_pokemon(self.pokemon_no_ponto(mouse_tela_px, camera))
 
     def atualizar(self, eventos, dt: float) -> None:
         self.SistemaBatalha.atualizar(eventos, dt)

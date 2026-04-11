@@ -6,6 +6,13 @@ CAMINHO_FONTE_PADRAO = Path("Recursos/Visual/Fontes/FontePadrão.ttf")
 
 
 class Texto:
+    ALIGN_ALIASES = {
+        "left": "midleft",
+        "right": "midright",
+        "top": "midtop",
+        "bottom": "midbottom",
+    }
+
     DEFAULT_STYLE = {
         "size": 24,
         "color": (255, 255, 255),
@@ -226,7 +233,8 @@ class Texto:
     def get_rect(self):
         surf = self._render()
         rect = surf.get_rect()
-        setattr(rect, self.style["align"], self.pos)
+        align = self.ALIGN_ALIASES.get(str(self.style["align"]).strip().lower(), self.style["align"])
+        setattr(rect, align, self.pos)
         return rect
 
     def medir_largura(self, texto: str) -> int:
@@ -235,7 +243,8 @@ class Texto:
     def draw(self, tela: pygame.Surface):
         surf = self._render()
         rect = surf.get_rect()
-        setattr(rect, self.style["align"], self.pos)
+        align = self.ALIGN_ALIASES.get(str(self.style["align"]).strip().lower(), self.style["align"])
+        setattr(rect, align, self.pos)
         tela.blit(surf, rect)
 
 

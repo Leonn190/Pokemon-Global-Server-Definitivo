@@ -6,7 +6,6 @@ import random
 from pathlib import Path
 from typing import Dict, List
 
-from SimuladorServerJogo.Batalha.IA.BotBatalha import BotBatalha
 from SimuladorServerJogo.Batalha.PokemonBatalha import PokemonBatalha
 
 
@@ -39,7 +38,6 @@ class SistemaBatalha:
         self.JogadasPendentes: Dict[str, List[Dict[str, object]]] = {}
         self.LogsTurnos: List[Dict[str, object]] = []
         self.UltimoLogTurno: Dict[str, object] = {}
-        self.BotsIA: Dict[str, BotBatalha] = {}
 
         self.BibliotecaAtaques = self._carregar_ataques()
         self.BibliotecaEfeitos = self._carregar_efeitos()
@@ -260,7 +258,6 @@ class SistemaBatalha:
         )
 
     def coletar_jogadas_pendentes_turno(self, client_id: str) -> tuple[str, List[Dict[str, object]]]:
-        lado_cliente = self.lado_do_cliente(client_id)
         jogadas_cliente = [dict(item) for item in list(self.JogadasPendentes.get(str(client_id), []))]
         if self.Tipo in {"player", "pvp"}:
             outros = [uid for uid in self.JogadasPendentes.keys() if uid != str(client_id)]
@@ -270,20 +267,7 @@ class SistemaBatalha:
             for valor in self.JogadasPendentes.values():
                 jogadas.extend([dict(item) for item in list(valor or []) if isinstance(item, dict)])
             return ("pronto", jogadas)
-
-        jogadas = list(jogadas_cliente)
-        if lado_cliente == "jogador":
-            jogadas.extend(self._gerar_jogadas_ia("inimigo"))
-        else:
-            jogadas.extend(self._gerar_jogadas_ia("jogador"))
-        return ("pronto", jogadas)
-
-    def _gerar_jogadas_ia(self, lado: str) -> List[Dict[str, object]]:
-        bot = self.BotsIA.get(str(lado))
-        if bot is None:
-            bot = BotBatalha(rng=self.Rng)
-            self.BotsIA[str(lado)] = bot
-        return bot.escolher_jogadas(self, lado_controlado=lado)
+        return ("pronto", jogadas_cliente)
 
     def substituir_ativo_por_reserva(self, executor_id: str, reserva_id: str) -> Dict[str, object]:
         executor = self.obter_pokemon(executor_id)

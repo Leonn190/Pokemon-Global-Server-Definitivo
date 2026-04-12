@@ -5,6 +5,7 @@ import re
 from typing import Dict, List
 
 from SimuladorServerJogo.Batalha.FuncoesAtaques import executar_ponto_ataque
+from SimuladorServerJogo.Batalha.FraquezasResistencias import modificador_tipo as modificador_tipo_csv
 from SimuladorServerJogo.Batalha.ObjetoBatalha import ObjetoBatalha
 from SimuladorServerJogo.Batalha.SimuladorFisica import SimuladorFisica
 from SimuladorServerJogo.Batalha.SistemaBatalha import SistemaBatalha
@@ -16,27 +17,6 @@ class LeitorJogadas:
     _REGEX_CR = re.compile(r"\+(\d+(?:[.,]\d+)?)%\s+de\s+(CrC|CrD)", re.IGNORECASE)
     _REGEX_RECOIL = re.compile(r"usu[aá]rio\s+recebe\s+(\d+(?:[.,]\d+)?)%\s+do\s+dano\s+causado", re.IGNORECASE)
     _REGEX_RECUPERA_CUSTO = re.compile(r"recupera\s+(\d+(?:[.,]\d+)?)%\s+de\s+ene\s+gasta", re.IGNORECASE)
-
-    _TYPE_CHART = {
-        "normal": {"rock": 0.5, "ghost": 0.0, "steel": 0.5},
-        "fire": {"fire": 0.5, "water": 0.5, "grass": 2.0, "ice": 2.0, "bug": 2.0, "rock": 0.5, "dragon": 0.5, "steel": 2.0},
-        "water": {"fire": 2.0, "water": 0.5, "grass": 0.5, "ground": 2.0, "rock": 2.0, "dragon": 0.5},
-        "electric": {"water": 2.0, "electric": 0.5, "grass": 0.5, "ground": 0.0, "flying": 2.0, "dragon": 0.5},
-        "grass": {"fire": 0.5, "water": 2.0, "grass": 0.5, "poison": 0.5, "ground": 2.0, "flying": 0.5, "bug": 0.5, "rock": 2.0, "dragon": 0.5, "steel": 0.5},
-        "ice": {"fire": 0.5, "water": 0.5, "grass": 2.0, "ground": 2.0, "flying": 2.0, "dragon": 2.0, "steel": 0.5, "ice": 0.5},
-        "fighting": {"normal": 2.0, "ice": 2.0, "poison": 0.5, "flying": 0.5, "psychic": 0.5, "bug": 0.5, "rock": 2.0, "ghost": 0.0, "dark": 2.0, "steel": 2.0, "fairy": 0.5},
-        "poison": {"grass": 2.0, "poison": 0.5, "ground": 0.5, "rock": 0.5, "ghost": 0.5, "steel": 0.0, "fairy": 2.0},
-        "ground": {"fire": 2.0, "electric": 2.0, "grass": 0.5, "poison": 2.0, "flying": 0.0, "bug": 0.5, "rock": 2.0, "steel": 2.0},
-        "flying": {"electric": 0.5, "grass": 2.0, "fighting": 2.0, "bug": 2.0, "rock": 0.5, "steel": 0.5},
-        "psychic": {"fighting": 2.0, "poison": 2.0, "psychic": 0.5, "dark": 0.0, "steel": 0.5},
-        "bug": {"fire": 0.5, "grass": 2.0, "fighting": 0.5, "poison": 0.5, "flying": 0.5, "psychic": 2.0, "ghost": 0.5, "dark": 2.0, "steel": 0.5, "fairy": 0.5},
-        "rock": {"fire": 2.0, "ice": 2.0, "fighting": 0.5, "ground": 0.5, "flying": 2.0, "bug": 2.0, "steel": 0.5},
-        "ghost": {"normal": 0.0, "psychic": 2.0, "ghost": 2.0, "dark": 0.5},
-        "dragon": {"dragon": 2.0, "steel": 0.5, "fairy": 0.0},
-        "dark": {"fighting": 0.5, "psychic": 2.0, "ghost": 2.0, "dark": 0.5, "fairy": 0.5},
-        "steel": {"fire": 0.5, "water": 0.5, "electric": 0.5, "ice": 2.0, "rock": 2.0, "steel": 0.5, "fairy": 2.0},
-        "fairy": {"fire": 0.5, "fighting": 2.0, "poison": 0.5, "dragon": 2.0, "dark": 2.0, "steel": 0.5},
-    }
 
     def __init__(self) -> None:
         self._fisica: SimuladorFisica | None = None
@@ -186,11 +166,18 @@ class LeitorJogadas:
             "numero_ricochets": 0,
         }
 
-    def _duracao_estimativa(self, sistema: SistemaBatalha, executor, jogada: Dict[str, object], spec: Dict[str, object]) -> int:
+    def _duracao_estimativa(
+        self,
+        sistema: SistemaBatalha,
+        executor,
+        jogada: Dict[str, object],
+        spec: Dict[str, object],
+        fluxo_ref: Dict[str, object] | None = None,
+    ) -> int:
         estilo = str(jogada.get("estilo") or spec.get("estilo") or "").casefold()
         destino = jogada.get("destino_mundo")
         origem = executor.Posicao
-        fluxo = self._flow_principal(spec)
+        fluxo = dict(fluxo_ref or self._flow_principal(spec))
         if estilo == "movimento":
             destino = tuple(destino) if isinstance(destino, (list, tuple)) and len(destino) == 2 else origem
             distancia = math.hypot(float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1]))
@@ -229,6 +216,9 @@ class LeitorJogadas:
                     "ataque": ataque,
                     "spec": spec,
                     "inteligencia": executor.obter_atributo("Int"),
+                    "acertos_total": 0,
+                    "pendencias_execucao": 0,
+                    "finalizada": False,
                 }
             )
 
@@ -241,7 +231,7 @@ class LeitorJogadas:
 
         ordenadas = []
         for lista in por_executor.values():
-            base = max(1, int(round(max_int - float(lista[0]["inteligencia"]))) + 1)
+            base = int(sistema.TickGlobal) + max(1, int(round(max_int - float(lista[0]["inteligencia"]))) + 1)
             tick_cursor = base
             for item in lista:
                 duracao = self._duracao_estimativa(sistema, item["executor"], item, item["spec"])
@@ -255,11 +245,42 @@ class LeitorJogadas:
         return ordenadas
 
     def _modificador_tipo(self, tipo_ataque: str, tipos_alvo: List[str]) -> float:
-        modificador = 1.0
-        tabela = self._TYPE_CHART.get(self._norm(tipo_ataque), {})
-        for tipo in list(tipos_alvo or []):
-            modificador *= float(tabela.get(self._norm(tipo), 1.0))
-        return modificador
+        return float(modificador_tipo_csv(tipo_ataque, tipos_alvo))
+
+    @staticmethod
+    def _registrar_acerto_jogada(jogada: Dict[str, object] | None) -> None:
+        if not isinstance(jogada, dict):
+            return
+        jogada["acertos_total"] = int(jogada.get("acertos_total", 0) or 0) + 1
+
+    def _finalizar_jogada(self, sistema: SistemaBatalha, jogada: Dict[str, object], spec: Dict[str, object], log: Dict[str, object], tick: int, motivo: str) -> None:
+        if not isinstance(jogada, dict) or bool(jogada.get("finalizada", False)):
+            return
+        jogada["finalizada"] = True
+        hook_fim = executar_ponto_ataque(
+            spec.get("nome"),
+            "FIM",
+            {
+                "sistema": sistema,
+                "tick": int(tick),
+                "executor": jogada.get("executor"),
+                "jogada": jogada,
+                "spec": spec,
+                "log": log,
+                "acertos_total": int(jogada.get("acertos_total", 0) or 0),
+                "motivo_finalizacao": str(motivo or ""),
+            },
+        )
+        if hook_fim:
+            self._log_evento(log, tick, "hook_ataque", executor_id=getattr(jogada.get("executor"), "Uid", ""), detalhe=dict(hook_fim))
+
+    def _consumir_pendencia_jogada(self, sistema: SistemaBatalha, jogada: Dict[str, object], spec: Dict[str, object], log: Dict[str, object], tick: int, motivo: str) -> None:
+        if not isinstance(jogada, dict):
+            return
+        restante = max(0, int(jogada.get("pendencias_execucao", 0) or 0) - 1)
+        jogada["pendencias_execucao"] = restante
+        if restante <= 0:
+            self._finalizar_jogada(sistema, jogada, spec, log, tick, motivo)
 
     def _aplicar_defesa_lol(self, dano: float, defesa: float) -> float:
         defesa_real = float(defesa)
@@ -267,17 +288,34 @@ class LeitorJogadas:
             return dano * (100.0 / (100.0 + defesa_real))
         return dano * (2.0 - (100.0 / (100.0 - defesa_real)))
 
-    def _roll_critico(self, sistema: SistemaBatalha, atacante, spec: Dict[str, object]) -> tuple[bool, float]:
+    def _roll_critico(self, sistema: SistemaBatalha, atacante, alvo, spec: Dict[str, object], jogada: Dict[str, object], log: Dict[str, object], tick: int) -> tuple[bool, float]:
         chance = max(0.0, atacante.obter_atributo("CrC") + self._fnum(spec.get("critico_bonus", {}).get("CrC"), 0.0))
         chance *= atacante.MultiplicadoresTemporarios.get("critico_chance", 1.0)
-        critico = atacante.Flags.get("focado", False) or (sistema.Rng.random() <= min(1.0, chance / 100.0))
+        hook_crit = executar_ponto_ataque(
+            spec.get("nome"),
+            "CRI",
+            {
+                "sistema": sistema,
+                "tick": int(tick),
+                "atacante": atacante,
+                "alvo": alvo,
+                "spec": spec,
+                "jogada": jogada,
+                "log": log,
+                "chance_critica": chance,
+            },
+        )
+        chance += self._fnum((hook_crit or {}).get("chance_delta"), 0.0)
+        chance_max = self._fnum((hook_crit or {}).get("chance_maxima"), 100.0)
+        critico = bool((hook_crit or {}).get("forcar_critico", False)) or atacante.Flags.get("focado", False) or (sistema.Rng.random() <= min(1.0, max(0.0, min(chance, chance_max)) / 100.0))
         mult = 1.0
         if critico:
             bonus = max(0.0, atacante.obter_atributo("CrD") + self._fnum(spec.get("critico_bonus", {}).get("CrD"), 0.0))
             mult = (1.5 + (bonus / 100.0)) * atacante.MultiplicadoresTemporarios.get("critico_dano", 1.0)
+        mult += self._fnum((hook_crit or {}).get("multiplicador_delta"), 0.0)
         return (bool(critico), float(mult))
 
-    def _calcular_pacote_dano(self, sistema: SistemaBatalha, atacante, alvo, spec: Dict[str, object], fluxo: Dict[str, object], tick: int) -> Dict[str, object]:
+    def _calcular_pacote_dano(self, sistema: SistemaBatalha, atacante, alvo, spec: Dict[str, object], fluxo: Dict[str, object], tick: int, jogada: Dict[str, object], log: Dict[str, object]) -> Dict[str, object]:
         componentes = list(spec.get("dano_componentes") or [])
         dano_bruto = 0.0
         perfuracao = 0.0
@@ -294,7 +332,7 @@ class LeitorJogadas:
         dano_bruto *= float(fluxo.get("intensidade_dano", spec.get("fluxo", {}).get("intensidade_dano", 1.0)) or 1.0)
         dano_bruto *= float(atacante.MultiplicadoresTemporarios.get("dano_causado", 1.0))
 
-        critico, crit_mult = self._roll_critico(sistema, atacante, spec)
+        critico, crit_mult = self._roll_critico(sistema, atacante, alvo, spec, jogada, log, tick)
         dano_critico = dano_bruto * crit_mult
         defesa_chave = "SpD" if str(spec.get("dano_tipo") or "fisico").casefold() == "especial" else "Def"
         defesa = max(0.0, alvo.obter_atributo(defesa_chave) - (perfuracao * 0.5))
@@ -307,11 +345,15 @@ class LeitorJogadas:
             "tick": int(tick),
             "atacante": atacante,
             "alvo": alvo,
-            "spec": dict(spec),
+            "spec": spec,
+            "jogada": jogada,
+            "log": log,
             "dano_bruto": dano_bruto,
             "dano_final": dano_final,
+            "critico": bool(critico),
+            "fluxo": fluxo,
         }
-        alteracoes = executar_ponto_ataque(spec.get("nome"), "antes_aplicar_dano", contexto_hook)
+        alteracoes = executar_ponto_ataque(spec.get("nome"), "DMG", contexto_hook)
         if isinstance(alteracoes, dict):
             dano_final *= float(alteracoes.get("multiplicador_dano", 1.0) or 1.0)
             dano_final += float(alteracoes.get("delta_dano", 0.0) or 0.0)
@@ -332,6 +374,16 @@ class LeitorJogadas:
         }
 
     def _aplicar_componentes_auxiliares(self, sistema: SistemaBatalha, executor, alvo, jogada: Dict[str, object], spec: Dict[str, object], log: Dict[str, object], tick: int) -> None:
+        hook_aux = executar_ponto_ataque(
+            spec.get("nome"),
+            "AUX",
+            {"sistema": sistema, "tick": int(tick), "executor": executor, "alvo": alvo, "jogada": jogada, "spec": spec, "log": log},
+        )
+        bonus_cura_fixa = self._fnum((hook_aux or {}).get("cura_bonus_fixa"), 0.0)
+        bonus_barreira_fixa = self._fnum((hook_aux or {}).get("barreira_bonus_fixa"), 0.0)
+        efeitos_target_extra = list((hook_aux or {}).get("efeitos_target_extra") or [])
+        efeitos_self_extra = list((hook_aux or {}).get("efeitos_self_extra") or [])
+
         for componente in list(spec.get("cura_componentes") or []):
             escala = self._fnum(componente.get("escala"), 0.0) / 100.0
             atributo = str(componente.get("atributo") or "")
@@ -339,19 +391,20 @@ class LeitorJogadas:
                 valor = max(0.0, alvo.obter_atributo("Vida") - alvo.VidaAtual) * escala
             else:
                 valor = executor.obter_atributo(atributo) * escala
+            valor += bonus_cura_fixa
             cura = alvo.ReceberCura(valor, origem=executor, motivo=spec.get("nome"))
             self._log_evento(log, tick, "cura", executor_id=executor.Uid, alvo_id=alvo.Uid, detalhe=cura)
 
         for componente in list(spec.get("barreira_componentes") or []):
             escala = self._fnum(componente.get("escala"), 0.0) / 100.0
-            valor = executor.obter_atributo(str(componente.get("atributo") or "Mag")) * escala
+            valor = executor.obter_atributo(str(componente.get("atributo") or "Mag")) * escala + bonus_barreira_fixa
             barreira = alvo.ReceberBarreira(valor)
             self._log_evento(log, tick, "barreira", executor_id=executor.Uid, alvo_id=alvo.Uid, detalhe=barreira)
 
-        for efeito in list(spec.get("efeitos_target") or []):
+        for efeito in list(spec.get("efeitos_target") or []) + efeitos_target_extra:
             detalhe = executor.AplicarEfeito(alvo, efeito, origem=executor)
             self._log_evento(log, tick, "efeito_aplicado", executor_id=executor.Uid, alvo_id=alvo.Uid, detalhe=detalhe)
-        for efeito in list(spec.get("efeitos_self") or []):
+        for efeito in list(spec.get("efeitos_self") or []) + efeitos_self_extra:
             detalhe = executor.ReceberEfeito(efeito, origem=executor)
             self._log_evento(log, tick, "efeito_self", executor_id=executor.Uid, alvo_id=executor.Uid, detalhe=detalhe)
 
@@ -360,15 +413,16 @@ class LeitorJogadas:
             alvo.Verifica()
             self._log_evento(log, tick, "reset_variacoes", executor_id=executor.Uid, alvo_id=alvo.Uid)
 
-    def _executar_impacto(self, sistema: SistemaBatalha, executor, alvo, jogada: Dict[str, object], spec: Dict[str, object], fluxo: Dict[str, object], log: Dict[str, object], tick: int) -> None:
+    def _executar_impacto(self, sistema: SistemaBatalha, executor, alvo, jogada: Dict[str, object], spec: Dict[str, object], fluxo: Dict[str, object], log: Dict[str, object], tick: int) -> bool:
         if alvo is None or alvo.ForaDeCombate:
-            return
-        hook_pre = executar_ponto_ataque(spec.get("nome"), "antes_do_impacto", {"sistema": sistema, "tick": tick, "executor": executor, "alvo": alvo, "jogada": dict(jogada), "spec": dict(spec)})
+            return False
+        hook_pre = executar_ponto_ataque(spec.get("nome"), "PRE", {"sistema": sistema, "tick": tick, "executor": executor, "alvo": alvo, "jogada": jogada, "spec": spec, "log": log})
         if bool(dict(hook_pre or {}).get("cancelar", False)):
             self._log_evento(log, tick, "impacto_cancelado", executor_id=executor.Uid, alvo_id=alvo.Uid, ataque=spec.get("nome"))
-            return
+            return False
 
-        pacote = self._calcular_pacote_dano(sistema, executor, alvo, spec, fluxo, tick)
+        self._registrar_acerto_jogada(jogada)
+        pacote = self._calcular_pacote_dano(sistema, executor, alvo, spec, fluxo, tick, jogada, log)
         detalhe = executor.AplicarDano(alvo, pacote, sistema=sistema, tick=tick)
         self._log_evento(log, tick, "dano", executor_id=executor.Uid, alvo_id=alvo.Uid, ataque=spec.get("nome"), pacote=pacote, detalhe=detalhe)
         self._aplicar_componentes_auxiliares(sistema, executor, alvo, jogada, spec, log, tick)
@@ -384,16 +438,24 @@ class LeitorJogadas:
             detalhe_recoil = executor.TomarDano({"dano_final": dano_recoil, "origem": executor, "origem_id": executor.Uid}, sistema=sistema, tick=tick)
             self._log_evento(log, tick, "recoil", executor_id=executor.Uid, alvo_id=executor.Uid, detalhe=detalhe_recoil)
 
-        hook_pos = executar_ponto_ataque(spec.get("nome"), "apos_aplicar_dano", {"sistema": sistema, "tick": tick, "executor": executor, "alvo": alvo, "detalhe": detalhe, "spec": dict(spec)})
+        hook_pos = executar_ponto_ataque(
+            spec.get("nome"),
+            "POS",
+            {"sistema": sistema, "tick": tick, "executor": executor, "alvo": alvo, "detalhe": detalhe, "spec": spec, "jogada": jogada, "pacote": pacote, "log": log},
+        )
         if hook_pos:
             self._log_evento(log, tick, "hook_ataque", executor_id=executor.Uid, alvo_id=alvo.Uid, detalhe=dict(hook_pos))
+        return True
 
     def _alvos_padrao(self, sistema: SistemaBatalha, executor, spec: Dict[str, object], jogada: Dict[str, object]) -> List[object]:
         ids = [str(uid) for uid in list(jogada.get("alvo_ids") or []) if str(uid)]
         if ids:
             return [alvo for alvo in (sistema.obter_pokemon(uid) for uid in ids) if alvo is not None]
-        if str(spec.get("alvo_time") or "inimigo") == "aliado":
-            return [executor]
+        alvo_time = str(spec.get("alvo_time") or "inimigo").casefold()
+        if alvo_time == "aliado":
+            return [p for p in sistema.listar_ativos(executor.Lado) if not p.ForaDeCombate]
+        if alvo_time == "ambos":
+            return [p for p in sistema.listar_ativos() if not p.ForaDeCombate]
         return [p for p in sistema.listar_ativos("inimigo" if executor.Lado == "jogador" else "jogador") if not p.ForaDeCombate]
 
     def _criar_objeto_fluxo(self, executor, spec: Dict[str, object], jogada: Dict[str, object], fluxo: Dict[str, object], tick: int, indice: int) -> ObjetoBatalha:
@@ -423,7 +485,7 @@ class LeitorJogadas:
             Raio=max(0.2, self._fnum(fluxo.get("tamanho_elementos", fluxo.get("raio", 0.35)), 0.35)),
             InicioTick=int(tick),
             TickAtual=int(tick),
-            DuracaoTicks=max(1, int(self._duracao_estimativa(self._sistema_aux, executor, jogada, spec))),
+            DuracaoTicks=max(1, int(self._duracao_estimativa(self._sistema_aux, executor, jogada, spec, fluxo))),
             RicochetesRestantes=max(0, int(self._fnum(fluxo.get("numero_ricochets", 0), 0))),
             AtravessaObjetos=bool(fluxo.get("atravessa_objetos", fluxo.get("atravessa_paredes", False))),
             AtravessaPokemons=bool(fluxo.get("atravessa_pokemons", False)),
@@ -435,6 +497,7 @@ class LeitorJogadas:
                 "largura_teto": self._fnum(fluxo.get("largura_teto", 50.0), 50.0),
                 "raio_max": self._fnum(fluxo.get("raio", 1.25), 1.25),
                 "executor_id": executor.Uid,
+                "origem_execucao": [float(origem[0]), float(origem[1])],
             },
         )
 
@@ -457,7 +520,8 @@ class LeitorJogadas:
                 atingiu = self._fisica.segmento_intersecta_circulo(origem, destino, alvo.Posicao, alvo.RaioColisao + objeto.Raio)
             elif objeto.Subtipo == "area":
                 alcance_atual = min(self._fnum(objeto.DadosExtras.get("alcance"), 3.0), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
-                atingiu = self._fisica.pokemon_em_cone(alvo, executor.Posicao, objeto.Direcao, alcance_atual, self._fnum(objeto.DadosExtras.get("largura_teto"), 50.0))
+                origem_cone = tuple(objeto.DadosExtras.get("origem_execucao") or executor.Posicao)
+                atingiu = self._fisica.pokemon_em_cone(alvo, origem_cone, objeto.Direcao, alcance_atual, self._fnum(objeto.DadosExtras.get("largura_teto"), 50.0))
             elif objeto.Subtipo == "zona":
                 raio_atual = min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
                 atingiu = self._fisica.circulos_colidem(objeto.Posicao, raio_atual, alvo.Posicao, alvo.RaioColisao)
@@ -465,9 +529,17 @@ class LeitorJogadas:
             if not atingiu:
                 continue
             objeto.AlvosAtingidos.add(alvo.Uid)
-            self._executar_impacto(sistema, executor, alvo, jogada, spec, objeto.Fluxo, log, tick)
+            acertou = self._executar_impacto(sistema, executor, alvo, jogada, spec, objeto.Fluxo, log, tick)
+            if not acertou:
+                continue
             if objeto.Subtipo == "tiro" and not objeto.AtravessaPokemons:
-                objeto.Ativo = False
+                if objeto.RicochetesRestantes > 0 and bool(objeto.Fluxo.get("ricocheteia_pokemons", False)):
+                    normal = self._fisica._normalizar(self._fisica._sub(objeto.Posicao, alvo.Posicao))
+                    objeto.Direcao = self._fisica.refletir_vetor(objeto.Direcao, normal)
+                    objeto.RicochetesRestantes -= 1
+                    self._log_evento(log, tick, "ricochete_pokemon", objeto_id=objeto.Id, alvo_id=alvo.Uid, restante=int(objeto.RicochetesRestantes))
+                else:
+                    objeto.Ativo = False
                 break
 
         if objeto.Subtipo == "tiro":
@@ -501,6 +573,7 @@ class LeitorJogadas:
         executor = movimento["executor"]
         if executor.ForaDeCombate:
             movimento["ativo"] = False
+            self._consumir_pendencia_jogada(sistema, movimento["jogada"], movimento["spec"], log, tick, "executor_fora_de_combate")
             return
         detalhe = self._fisica.mover_pokemon_um_tick(executor, movimento["destino"], movimento["velocidade"], tick)
         self._log_evento(log, tick, "movimento", executor_id=executor.Uid, detalhe=detalhe)
@@ -515,6 +588,7 @@ class LeitorJogadas:
                 self._executar_impacto(sistema, executor, alvo, movimento["jogada"], spec, self._flow_principal(spec), log, tick)
         if detalhe.get("concluido"):
             movimento["ativo"] = False
+            self._consumir_pendencia_jogada(sistema, movimento["jogada"], spec, log, tick, "movimento_concluido")
 
     def executar_turno(self, sistema: SistemaBatalha, client_id: str, jogadas: List[Dict[str, object]] | None = None) -> Dict[str, object]:
         sistema.adicionar_jogadas(client_id, list(jogadas or []))
@@ -569,7 +643,7 @@ class LeitorJogadas:
                 custo = executor.gastar_energia(self._fnum(item.get("custo"), self._fnum(item.get("custo_base"), 0.0)))
                 self._log_evento(log, tick, "acao_iniciada", executor_id=executor.Uid, ataque=ataque_nome, estilo=spec.get("estilo"), custo_energia=round(custo, 4))
 
-                hook_inicio = executar_ponto_ataque(ataque_nome, "ao_iniciar_acao", {"sistema": sistema, "tick": tick, "executor": executor, "jogada": dict(item), "spec": dict(spec)})
+                hook_inicio = executar_ponto_ataque(ataque_nome, "INI", {"sistema": sistema, "tick": tick, "executor": executor, "jogada": item, "spec": spec, "log": log})
                 if hook_inicio:
                     self._log_evento(log, tick, "hook_ataque", executor_id=executor.Uid, detalhe=dict(hook_inicio))
 
@@ -595,16 +669,22 @@ class LeitorJogadas:
                         ganho = self._fnum(item.get("custo"), 0.0) * float(spec.get("recupera_energia_percentual_custo"))
                         detalhe = executor.GanharEnergia(ganho, motivo=str(ataque_nome or "status"))
                         self._log_evento(log, tick, "energia", executor_id=executor.Uid, detalhe=detalhe)
+                    self._finalizar_jogada(sistema, item, spec, log, tick, "status_imediato")
                     continue
 
                 if estilo == "alvo":
                     duracao = self._duracao_estimativa(sistema, executor, item, spec)
-                    for alvo in self._alvos_padrao(sistema, executor, spec, item):
+                    alvos = self._alvos_padrao(sistema, executor, spec, item)
+                    item["pendencias_execucao"] = max(1, len(alvos))
+                    for alvo in alvos:
                         acertos_alvo.append({"tick": tick + duracao, "executor": executor, "alvo": alvo, "jogada": item, "spec": spec})
+                    if not alvos:
+                        self._finalizar_jogada(sistema, item, spec, log, tick, "sem_alvos")
                     continue
 
                 if estilo == "movimento":
                     destino = tuple(item.get("destino_mundo")) if isinstance(item.get("destino_mundo"), (list, tuple)) and len(item.get("destino_mundo")) == 2 else executor.Posicao
+                    item["pendencias_execucao"] = 1
                     ativos_movimento.append(
                         {
                             "ativo": True,
@@ -620,6 +700,7 @@ class LeitorJogadas:
 
                 if estilo in {"tiro", "area", "zona"}:
                     subfluxos = list(spec.get("subfluxos") or [self._flow_principal(spec)])
+                    item["pendencias_execucao"] = max(1, len(subfluxos))
                     for indice, fluxo in enumerate(subfluxos):
                         objeto = self._criar_objeto_fluxo(executor, spec, item, fluxo, tick, indice)
                         objetos_ativos.append({"objeto": objeto, "executor": executor, "jogada": item, "spec": spec})
@@ -638,14 +719,17 @@ class LeitorJogadas:
                 objeto = objeto_pacote["objeto"]
                 if not objeto.Ativo:
                     objetos_ativos.remove(objeto_pacote)
+                    self._consumir_pendencia_jogada(sistema, objeto_pacote["jogada"], objeto_pacote["spec"], log, tick, "objeto_finalizado")
                     continue
                 self._resolver_objeto(sistema, objeto, objeto_pacote["executor"], objeto_pacote["jogada"], objeto_pacote["spec"], log, tick)
                 if not objeto.Ativo:
                     objetos_ativos.remove(objeto_pacote)
+                    self._consumir_pendencia_jogada(sistema, objeto_pacote["jogada"], objeto_pacote["spec"], log, tick, "objeto_finalizado")
 
             for pacote in [p for p in list(acertos_alvo) if int(p.get("tick", 0)) == tick]:
                 acertos_alvo.remove(pacote)
                 self._executar_impacto(sistema, pacote["executor"], pacote["alvo"], pacote["jogada"], pacote["spec"], self._flow_principal(pacote["spec"]), log, tick)
+                self._consumir_pendencia_jogada(sistema, pacote["jogada"], pacote["spec"], log, tick, "impacto_alvo")
 
             for pokemon in sistema.listar_pokemons():
                 for evento in pokemon.passar_ticks(1):

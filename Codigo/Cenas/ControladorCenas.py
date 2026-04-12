@@ -166,6 +166,10 @@ class ControladorCenas:
         self.Encerrar()
 
     def _atualizar_discord_presenca(self):
+        if self.Saindo or self.Cena is None:
+            self.Discord.desconectar()
+            return
+
         cena_id = str(getattr(self.Cena, "ID", "Menu") or "Menu")
         if cena_id == "Mundo":
             local = "mundo"

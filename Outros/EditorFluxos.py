@@ -97,7 +97,7 @@ FIELD_GROUPS = [
     {
         "title": "Ricochet",
         "keys": [
-            "ricocheteia_paredes", "ricocheteia_pokemons", "atravessa_paredes",
+            "ricocheteia_objetos", "ricocheteia_pokemons", "atravessa_objetos",
             "atravessa_pokemons", "numero_ricochets",
         ],
     },
@@ -122,31 +122,31 @@ FIELD_GROUPS = [
 ]
 
 FIELD_DEFS = {
-    "visible": {"label": "Visível", "kind": "bool"},
+    "visible": {"label": "VisÃ­vel", "kind": "bool"},
     "alcance": {"label": "Alcance", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
-    "ajustavel": {"label": "Ajustável", "kind": "bool"},
+    "ajustavel": {"label": "AjustÃ¡vel", "kind": "bool"},
     "alcance_min": {"label": "Alcance min", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
     "alcance_max": {"label": "Alcance max", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
     "largura_teto": {"label": "Largura teto", "kind": "float", "step": 0.10, "min": 0.0, "max": 40.0},
     "largura_base": {"label": "Largura base", "kind": "float", "step": 0.10, "min": 0.0, "max": 40.0},
     "grudado": {"label": "Grudado", "kind": "bool"},
     "offset": {"label": "Offset", "kind": "float", "step": 0.10, "min": -40.0, "max": 40.0},
-    "espacamento": {"label": "Espaçamento", "kind": "float", "step": 0.10, "min": -5.0, "max": 30.0},
+    "espacamento": {"label": "EspaÃ§amento", "kind": "float", "step": 0.10, "min": -5.0, "max": 30.0},
     "faixas": {"label": "Faixas", "kind": "int", "step": 1, "min": 0, "max": 24},
     "largura_faixa": {"label": "Largura faixa", "kind": "float", "step": 0.10, "min": 0.0, "max": 40.0},
-    "repeticao_faixas": {"label": "Repetição faixas", "kind": "bool"},
-    "faixas_ciclicas": {"label": "Faixas cíclicas", "kind": "bool"},
-    "distancia_faixa": {"label": "Distância faixa", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
-    "ricocheteia_paredes": {"label": "Ricocheteia paredes", "kind": "bool"},
-    "ricocheteia_pokemons": {"label": "Ricocheteia pokémons", "kind": "bool"},
-    "atravessa_paredes": {"label": "Atravessa paredes", "kind": "bool"},
-    "atravessa_pokemons": {"label": "Atravessa pokémons", "kind": "bool"},
-    "numero_ricochets": {"label": "Número ricochets", "kind": "int", "step": 1, "min": 0, "max": MAX_RICOCHETS},
+    "repeticao_faixas": {"label": "RepetiÃ§Ã£o faixas", "kind": "bool"},
+    "faixas_ciclicas": {"label": "Faixas cÃ­clicas", "kind": "bool"},
+    "distancia_faixa": {"label": "DistÃ¢ncia faixa", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
+    "ricocheteia_objetos": {"label": "Ricocheteia objetos", "kind": "bool"},
+    "ricocheteia_pokemons": {"label": "Ricocheteia pokÃ©mons", "kind": "bool"},
+    "atravessa_objetos": {"label": "Atravessa objetos", "kind": "bool"},
+    "atravessa_pokemons": {"label": "Atravessa pokÃ©mons", "kind": "bool"},
+    "numero_ricochets": {"label": "NÃºmero ricochets", "kind": "int", "step": 1, "min": 0, "max": MAX_RICOCHETS},
     "hastes": {"label": "Hastes", "kind": "choice", "options": HASTES_OPTIONS},
     "pontos_curvatura": {"label": "Pontos curvatura", "kind": "int", "step": 1, "min": 0, "max": 6},
     "curvatura_circular": {"label": "Curvatura circular", "kind": "bool"},
-    "curvaturas_ciclicas": {"label": "Curvaturas cíclicas", "kind": "bool"},
-    "distancia_entre_curvaturas": {"label": "Distância curvaturas", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
+    "curvaturas_ciclicas": {"label": "Curvaturas cÃ­clicas", "kind": "bool"},
+    "distancia_entre_curvaturas": {"label": "DistÃ¢ncia curvaturas", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
     "invertido": {"label": "Invertido", "kind": "bool"},
     "curvatura_1": {"label": "Curvatura 1", "kind": "float", "step": 0.10, "min": -30.0, "max": 30.0},
     "curvatura_2": {"label": "Curvatura 2", "kind": "float", "step": 0.10, "min": -30.0, "max": 30.0},
@@ -159,10 +159,10 @@ FIELD_DEFS = {
     "shape": {"label": "Shape", "kind": "choice", "options": SHAPE_OPTIONS},
     "tamanho_elementos": {"label": "Tamanho elementos", "kind": "float", "step": 0.10, "min": 0.0, "max": 12.0},
     "quantidade_elementos": {"label": "Qtd elementos", "kind": "int", "step": 1, "min": 0, "max": 128},
-    "escalonavel": {"label": "Escalonável", "kind": "bool"},
+    "escalonavel": {"label": "EscalonÃ¡vel", "kind": "bool"},
     "intensidade_dano": {"label": "Intensidade dano", "kind": "float", "step": 0.05, "min": 0.0, "max": 20.0},
     "subfluxo_atinge_a_si_mesmo": {"label": "Subfluxo atinge a si mesmo", "kind": "bool"},
-    "test_diameter": {"label": "Diâmetro pokémon teste", "kind": "float", "step": 0.10, "min": 0.3, "max": 8.0},
+    "test_diameter": {"label": "DiÃ¢metro pokÃ©mon teste", "kind": "float", "step": 0.10, "min": 0.3, "max": 8.0},
 }
 
 
@@ -539,7 +539,7 @@ class PreviewRenderer:
 
     def find_hit(self, start_px: Vec2, direction: Vec2, remaining_px: float, walls: List[WallPreview], enemies: List[EnemyPreview], enemy_origin_px: Vec2, origin_index: Optional[int], flow: Dict):
         best = None
-        if not flow.get("atravessa_paredes", False):
+        if not flow.get("atravessa_objetos", flow.get("atravessa_paredes", False)):
             for wall in walls:
                 hit = self.segment_intersection(start_px, direction, remaining_px, wall.a, wall.b)
                 if hit is None:
@@ -566,7 +566,7 @@ class PreviewRenderer:
         start_px, dir0, _ = self.base_start(center_px, aim_dir, flow, source_radius_tiles)
         remaining_px = total_tiles * self.tile_px
         ricochet_left = 0
-        if flow.get("ricocheteia_paredes", False) or flow.get("ricocheteia_pokemons", False):
+        if flow.get("ricocheteia_objetos", flow.get("ricocheteia_paredes", False)) or flow.get("ricocheteia_pokemons", False):
             ricochet_left = max(0, int(flow.get("numero_ricochets", 0)))
         segments: List[Tuple[Vec2, Vec2, Vec2, float]] = []
         current_start = start_px
@@ -582,7 +582,7 @@ class PreviewRenderer:
             end_px = hit_px
             segments.append((current_start, end_px, direction, dist_px / self.tile_px))
             remaining_px -= dist_px
-            can_reflect = (hit_type == "wall" and flow.get("ricocheteia_paredes", False)) or (hit_type == "enemy" and flow.get("ricocheteia_pokemons", False))
+            can_reflect = (hit_type == "wall" and flow.get("ricocheteia_objetos", flow.get("ricocheteia_paredes", False))) or (hit_type == "enemy" and flow.get("ricocheteia_pokemons", False))
             if ricochet_left <= 0 or not can_reflect:
                 break
             ricochet_left -= 1
@@ -726,9 +726,9 @@ def default_flow(is_subflow: bool = False) -> Dict:
         "shape": "normal",
         "tamanho_elementos": 0.6,
         "quantidade_elementos": 8,
-        "ricocheteia_paredes": False,
+        "ricocheteia_objetos": False,
         "ricocheteia_pokemons": False,
-        "atravessa_paredes": False,
+        "atravessa_objetos": False,
         "atravessa_pokemons": False,
         "numero_ricochets": 1,
         "escalonavel": False,
@@ -905,7 +905,7 @@ class EditorFluxos:
         if self.attacks:
             self.select_attack(0)
         else:
-            self.status("CSV de ataques não encontrado em Dados/ ou sem estilo tiro/area.", RED)
+            self.status("CSV de ataques nÃ£o encontrado em Dados/ ou sem estilo tiro/area.", RED)
 
     def status(self, text: str, color=TEXT_MID):
         self.status_text = text
@@ -955,7 +955,7 @@ class EditorFluxos:
             self.status("CSV/JSON recarregados.", GREEN)
         else:
             self.current_data = default_attack_entry()
-            self.status("Não foi possível recarregar ataques.", RED)
+            self.status("NÃ£o foi possÃ­vel recarregar ataques.", RED)
 
     def filtered_attacks(self) -> List[Dict]:
         token = self.filter_text.strip().lower()
@@ -1111,7 +1111,7 @@ class EditorFluxos:
             return
         flows = self.flows()
         if len(flows) >= MAX_FLOWS:
-            self.status("Máximo de 5 fluxos por ataque.", RED)
+            self.status("MÃ¡ximo de 5 fluxos por ataque.", RED)
             return
         flows.append(default_flow(False))
         self.normalize_current()
@@ -1122,7 +1122,7 @@ class EditorFluxos:
         if not (0 <= fidx < len(flows)):
             return
         if len(flows) >= MAX_FLOWS:
-            self.status("Máximo de 5 fluxos por ataque.", RED)
+            self.status("MÃ¡ximo de 5 fluxos por ataque.", RED)
             return
         clone = sanitize_flow(copy.deepcopy(flows[fidx]), False)
         clone["expanded"] = True
@@ -1136,7 +1136,7 @@ class EditorFluxos:
             return
         subs = flows[fidx].setdefault("subfluxos", [])
         if len(subs) >= MAX_SUBFLOWS:
-            self.status("Máximo de 5 subfluxos por fluxo.", RED)
+            self.status("MÃ¡ximo de 5 subfluxos por fluxo.", RED)
             return
         subs.append(default_flow(True))
         self.normalize_current()
@@ -1150,7 +1150,7 @@ class EditorFluxos:
         if not (0 <= sidx < len(subs)):
             return
         if len(subs) >= MAX_SUBFLOWS:
-            self.status("Máximo de 5 subfluxos por fluxo.", RED)
+            self.status("MÃ¡ximo de 5 subfluxos por fluxo.", RED)
             return
         clone = sanitize_flow(copy.deepcopy(subs[sidx]), True)
         clone["expanded"] = True
@@ -1270,7 +1270,7 @@ class EditorFluxos:
         hud = [
             f"Mouse: ({(mouse.x-self.preview_origin.x)/self.tile_px:.2f}t, {(mouse.y-self.preview_origin.y)/self.tile_px:.2f}t)",
             f"Zoom: {self.tile_px:.0f}px/tile",
-            f"Pokémon teste: {self.current_data.get('test_diameter', DEFAULT_TEST_DIAMETER):.2f} tiles",
+            f"PokÃ©mon teste: {self.current_data.get('test_diameter', DEFAULT_TEST_DIAMETER):.2f} tiles",
             f"Modo: {self.mode}",
         ]
         for i, line in enumerate(hud):
@@ -1419,7 +1419,7 @@ class EditorFluxos:
         test_rect = pygame.Rect(x0, y, PANEL_W - 32, 32)
         pygame.draw.rect(self.screen, PANEL_BG_2, test_rect, border_radius=8)
         pygame.draw.rect(self.screen, PANEL_STROKE, test_rect, 1, border_radius=8)
-        draw_text(self.screen, "Diâmetro do pokémon teste", self.font_sm, TEXT, (test_rect.x + 10, test_rect.y + 8))
+        draw_text(self.screen, "DiÃ¢metro do pokÃ©mon teste", self.font_sm, TEXT, (test_rect.x + 10, test_rect.y + 8))
         token = "test_diameter"
         minus_rect = pygame.Rect(test_rect.right - 124, test_rect.y + 4, 24, 24)
         value_rect = pygame.Rect(test_rect.right - 96, test_rect.y + 4, 64, 24)
@@ -1494,7 +1494,7 @@ class EditorFluxos:
                 continue
             if key in ("distancia_faixa",) and not flow.get("faixas_ciclicas", False):
                 continue
-            if key == "numero_ricochets" and not (flow.get("ricocheteia_paredes", False) or flow.get("ricocheteia_pokemons", False)):
+            if key == "numero_ricochets" and not (flow.get("ricocheteia_objetos", flow.get("ricocheteia_paredes", False)) or flow.get("ricocheteia_pokemons", False)):
                 continue
             if key in ("distancia_entre_curvaturas", "invertido") and not flow.get("curvaturas_ciclicas", False):
                 continue
@@ -1520,7 +1520,7 @@ class EditorFluxos:
         pygame.draw.rect(self.screen, PANEL_BG_3 if not is_subflow else (40, 44, 52), header, border_radius=8)
         pygame.draw.rect(self.screen, PANEL_STROKE, header, 1, border_radius=8)
         title = f"Subfluxo {parent_idx+1}.{fidx+1}" if is_subflow else f"Fluxo {fidx+1}"
-        draw_text(self.screen, ("▼ " if flow.get("expanded", True) else "▶ ") + title, self.font_sm, TEXT, (header.x + 8, header.y + 8))
+        draw_text(self.screen, ("â–¼ " if flow.get("expanded", True) else "â–¶ ") + title, self.font_sm, TEXT, (header.x + 8, header.y + 8))
 
         vis_rect = pygame.Rect(header.right - 178, header.y + 4, 26, 24)
         clone_rect = pygame.Rect(header.right - 148, header.y + 4, 50, 24)
@@ -1616,9 +1616,9 @@ class EditorFluxos:
         if self.mode == "add_enemy":
             if len(self.enemies) < MAX_ENEMIES:
                 self.enemies.append(EnemyPreview(self.preview_to_world(pos), self.current_data.get("test_diameter", DEFAULT_TEST_DIAMETER) * 0.5))
-                self.status("Pokémon inimigo adicionado.", GREEN)
+                self.status("PokÃ©mon inimigo adicionado.", GREEN)
             else:
-                self.status("Máximo de inimigos atingido.", RED)
+                self.status("MÃ¡ximo de inimigos atingido.", RED)
             return
         if self.mode == "add_wall":
             world_pos = self.preview_to_world(pos)
@@ -1630,7 +1630,7 @@ class EditorFluxos:
                     self.walls.append(WallPreview(self.wall_first_point, world_pos))
                     self.status("Parede adicionada.", GREEN)
                 else:
-                    self.status("Máximo de paredes atingido.", RED)
+                    self.status("MÃ¡ximo de objetos atingido.", RED)
                 self.wall_first_point = None
             return
         if self.mode == "remove":

@@ -1,26 +1,26 @@
 # Registro
 
-**Relatório:** #32  
+**Relatório:** #33  
 **Repo:** `Pokemon-Global-Server-Definitivo`  
-**Gerado em:** 2026-04-11T21:18:35  
+**Gerado em:** 2026-04-12T04:53:36  
 
 ## Visão geral
 
-- **Pastas:** 1.186
-- **Arquivos:** 69.073
-- **Tamanho total:** 477.225.598 bytes (0.444 GiB)
-- **Linhas totais gerais:** 47.996
-- **Commits (repo):** 320
+- **Pastas:** 1.188
+- **Arquivos:** 69.084
+- **Tamanho total:** 477.363.406 bytes (0.445 GiB)
+- **Linhas totais gerais:** 50.856
+- **Commits (repo):** 323
 
 ## Python
 
-- **Arquivos `.py`:** 148
-- **Linhas totais:** 39.115
-- **Classes encontradas:** 141
-- **Funções encontradas:** 406
-- **Métodos encontrados:** 1.827
-- **Total funções + métodos:** 2.233
-- **Média de linhas por arquivo `.py`:** 264.29
+- **Arquivos `.py`:** 159
+- **Linhas totais:** 41.958
+- **Classes encontradas:** 155
+- **Funções encontradas:** 420
+- **Métodos encontrados:** 1.963
+- **Total funções + métodos:** 2.383
+- **Média de linhas por arquivo `.py`:** 263.89
 
 ### Rank das 10 pastas mais importantes por linhas
 
@@ -28,7 +28,7 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 
 | Rank | Pasta | Caminho | Subpastas | Arquivos | Linhas gerais | `.py` | `.json` | `.toml` | Outras |
 |---:|---|---|---:|---:|---:|---:|---:|---:|---:|
-| 1 | `SimuladorServerJogo` | `SimuladorServerJogo` | 7 | 59 | 11.724 | 7.874 | 658 | 357 | 2.835 |
+| 1 | `SimuladorServerJogo` | `SimuladorServerJogo` | 8 | 70 | 14.567 | 10.717 | 658 | 357 | 2.835 |
 | 2 | `Telas` | `Codigo/Telas` | 1 | 18 | 5.309 | 5.309 | 0 | 0 | 0 |
 | 3 | `Paineis` | `Codigo/Paineis` | 1 | 15 | 5.256 | 5.256 | 0 | 0 | 0 |
 | 4 | `Geradores` | `Codigo/Geradores` | 1 | 16 | 3.845 | 3.845 | 0 | 0 | 0 |
@@ -43,7 +43,7 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 
 | Arquivo | Linhas | Tamanho (KiB) |
 |---|---:|---:|
-| `Outros/EditorFluxos.py` | 1.851 | 83.00 |
+| `Outros/EditorFluxos.py` | 1.851 | 83.18 |
 | `Codigo/Paineis/FichaPokemon.py` | 1.277 | 57.22 |
 | `Outros/GeradorRelatorios.py` | 1.062 | 35.20 |
 | `Codigo/Telas/Inventario/InventarioPokemons.py` | 1.061 | 48.38 |
@@ -53,9 +53,11 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 | `Codigo/ModulosBatalha/ControladorFluxos.py` | 706 | 32.82 |
 | `SimuladorServerJogo/Rotas/Comandos.py` | 686 | 28.52 |
 | `Codigo/Geradores/PokemonMundo.py` | 685 | 33.75 |
+| `SimuladorServerJogo/Batalha/LeitorJogadas.py` | 663 | 38.22 |
 | `Codigo/Paineis/FichaPokemonBatalha.py` | 642 | 30.32 |
 | `Codigo/Paineis/Container.py` | 637 | 23.33 |
 | `SimuladorServerJogo/Controle/BancoDados.py` | 601 | 28.48 |
+| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | 582 | 26.75 |
 | `Codigo/Prefabs/Texto.py` | 557 | 20.77 |
 | `Codigo/ModulosGerais/Sonoridades.py` | 553 | 14.59 |
 | `Codigo/Paineis/PainelArvoreHabilidades.py` | 547 | 26.81 |
@@ -87,12 +89,10 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 | `Codigo/ModulosMundo/LeitorMundo.py` | 358 | 17.13 |
 | `Codigo/Paineis/FichaAtaque.py` | 357 | 14.29 |
 | `Codigo/Paineis/PainelTimes.py` | 356 | 13.45 |
+| `SimuladorServerJogo/Batalha/SistemaBatalha.py` | 343 | 15.22 |
 | `Codigo/Paineis/PainelCraft.py` | 341 | 13.04 |
 | `Codigo/ModulosMundo/Loja.py` | 336 | 15.88 |
 | `SimuladorServerJogo/Controle/LoaderRegras.py` | 332 | 19.11 |
-| `Codigo/Geradores/PokemonInventario.py` | 332 | 12.61 |
-| `Codigo/ModulosBatalha/LeitorFluxos.py` | 310 | 14.08 |
-| `Codigo/Prefabs/Painel.py` | 300 | 11.15 |
 
 ### Top 15 maiores funções e métodos (linhas)
 
@@ -104,15 +104,15 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 | `Outros/GeradorRelatorios.py` | `coletar_metricas` | funcao | 224 |
 | `Codigo/Telas/Inventario/InventarioPokemons.py` | `InventarioPokemons.atualizar` | metodo | 147 |
 | `Codigo/ModulosGerais/Colisor.py` | `Colisor.resolver_movimento_com_colisores` | metodo | 146 |
+| `SimuladorServerJogo/Batalha/LeitorJogadas.py` | `LeitorJogadas.executar_turno` | metodo | 145 |
 | `Codigo/Telas/TelaMenu.py` | `TelaMenu` | funcao | 131 |
 | `Outros/EditorFluxos.py` | `EditorFluxos.draw_panel` | metodo | 127 |
 | `Codigo/Prefabs/Botao.py` | `Botao.render` | metodo | 119 |
 | `Codigo/Telas/Inventario/InventarioPokemons.py` | `InventarioPokemons._reconstruir` | metodo | 118 |
 | `SimuladorServerJogo/Geradores/GeradorMundo.py` | `_executar_world_generator` | funcao | 113 |
 | `Codigo/Telas/SubtelaCriarPersonagem.py` | `SubtelaCriarPersonagem._rebuild_layout` | metodo | 112 |
+| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | `PokemonBatalha.Verifica` | metodo | 110 |
 | `Outros/Mixer.py` | `main` | funcao | 109 |
-| `SimuladorServerJogo/Controle/Cerebros/CerebroItensMundo.py` | `CerebroItensMundo.executar_tick` | metodo | 101 |
-| `Codigo/Telas/TelaConfig.py` | `_montar_layout` | funcao | 99 |
 
 ### Top 15 maiores classes (linhas)
 
@@ -125,14 +125,14 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 | `Codigo/ModulosBatalha/ControladorFluxos.py` | `ControladorFluxos` | 692 |
 | `Codigo/ModulosMundo/ControladorPlayer.py` | `ControladorPlayer` | 691 |
 | `Codigo/Geradores/PokemonMundo.py` | `Pokemon` | 661 |
+| `SimuladorServerJogo/Batalha/LeitorJogadas.py` | `LeitorJogadas` | 651 |
 | `Codigo/Paineis/Container.py` | `Container` | 628 |
 | `Codigo/Paineis/FichaPokemonBatalha.py` | `FichaPokemonBatalha` | 624 |
 | `SimuladorServerJogo/Controle/BancoDados.py` | `BancoDadosMundo` | 573 |
+| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | `PokemonBatalha` | 551 |
 | `Codigo/Paineis/PainelArvoreHabilidades.py` | `PainelArvoreHabilidades` | 517 |
 | `Codigo/Geradores/PokemonBatalha.py` | `PokemonBatalha` | 493 |
 | `Codigo/Telas/Inventario/InventarioItens.py` | `InventarioItens` | 492 |
-| `SimuladorServerJogo/Controle/Cerebros/CerebroNPCs.py` | `CerebroNPCs` | 480 |
-| `Codigo/ModulosMundo/LeitorDialogo.py` | `LeitorDialogo` | 468 |
 
 ### Top 5 arquivos `.py` com mais imports
 
@@ -197,12 +197,12 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 
 | Ext | Linhas |
 |---:|---:|
-| `.py` | 39.115 |
-| `.json` | 3.773 |
+| `.py` | 41.958 |
+| `.json` | 3.789 |
 | `.java` | 2.835 |
 | `.csv` | 1.674 |
 | `.toml` | 357 |
-| `.md` | 236 |
+| `.md` | 237 |
 | `(sem_ext)` | 6 |
 
 ## Top extensões por tamanho
@@ -213,7 +213,7 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 | `.ogg` | 0.086 | 34 |
 | `.wav` | 0.004 | 9 |
 | `.jpg` | 0.003 | 21 |
-| `.py` | 0.002 | 148 |
+| `.py` | 0.002 | 159 |
 | `.ttf` | 0.000 | 2 |
 | `.csv` | 0.000 | 8 |
 | `.mp3` | 0.000 | 3 |
@@ -226,12 +226,12 @@ Contagem recursiva: cada pasta inclui todas as subpastas e todos os arquivos int
 
 | Métrica | Anterior | Atual | Δ |
 |---|---:|---:|---:|
-| pastas | 1.183 | 1.186 | 3 |
-| arquivos | 69.042 | 69.073 | 31 |
-| tamanho_bytes | 0.404 GiB | 0.444 GiB | 0.041 GiB |
-| linhas_totais_geral | 44.008 | 47.996 | 3.988 |
-| py_arquivos | 140 | 148 | 8 |
-| linhas_totais | 35.235 | 39.115 | 3.880 |
-| classes_encontradas | 130 | 141 | 11 |
-| funcoes_encontradas | 385 | 406 | 21 |
-| metodos_encontrados | 1.622 | 1.827 | 205 |
+| pastas | 1.186 | 1.188 | 2 |
+| arquivos | 69.073 | 69.084 | 11 |
+| tamanho_bytes | 0.444 GiB | 0.445 GiB | 0.000 GiB |
+| linhas_totais_geral | 47.996 | 50.856 | 2.860 |
+| py_arquivos | 148 | 159 | 11 |
+| linhas_totais | 39.115 | 41.958 | 2.843 |
+| classes_encontradas | 141 | 155 | 14 |
+| funcoes_encontradas | 406 | 420 | 14 |
+| metodos_encontrados | 1.827 | 1.963 | 136 |

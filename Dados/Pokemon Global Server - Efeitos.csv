@@ -4,7 +4,7 @@ Dormindo,Não pode se mover ate sofrer algum dano
 Envenenado,perde 8% da vida por turno
 Intoxicado,perde 12% da vida por turno e faz com que aliados adjacentes percam 8% por turno
 Paralisado,nao pode atacar
-Incapacitado,nao pode usar habilidade
+Incapacitado,nao pode usar passiva de habilidade
 Vampirico,inimigos que atacarem esse pokemon curam 25% do dano causado nele
 Encharcado,ataques gastam mais 25% de energia
 Quebrado,menos 50% da defesa
@@ -26,7 +26,7 @@ Fortificado,mais 50% de defesa
 Reforçado,mais 50% de defesa especial
 Amplificado,mais 50% de dano 
 Aprimorado,mais 50% de dano especial
-Voando,todos os ataques mirados contra voce tem menos metade da assertividade
+Voando,todos ataques que iriam te atingir tem 50% de chance de errar
 Flutuando,ataques normais tem menos metade da assertividade
 Imune,nao pode receber efeitos negativos
 Energizado,mais 50% de recuperação de energia

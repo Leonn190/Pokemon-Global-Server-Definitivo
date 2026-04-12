@@ -18,7 +18,7 @@ WINDOW_H = 920
 PREVIEW_W = 1020
 PANEL_X = PREVIEW_W
 PANEL_W = WINDOW_W - PREVIEW_W
-FPS = 60
+FPS = 90
 DEFAULT_TILE_PX = 52
 MIN_TILE_PX = 24
 MAX_TILE_PX = 100
@@ -112,7 +112,7 @@ FIELD_GROUPS = [
     {
         "title": "Circular",
         "keys": [
-            "circular", "raio", "shape", "tamanho_elementos", "quantidade_elementos",
+            "circular", "centralizar", "raio", "shape", "tamanho_elementos", "quantidade_elementos",
         ],
     },
     {
@@ -122,31 +122,31 @@ FIELD_GROUPS = [
 ]
 
 FIELD_DEFS = {
-    "visible": {"label": "VisÃ­vel", "kind": "bool"},
+    "visible": {"label": "Visível", "kind": "bool"},
     "alcance": {"label": "Alcance", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
-    "ajustavel": {"label": "AjustÃ¡vel", "kind": "bool"},
+    "ajustavel": {"label": "Ajustável", "kind": "bool"},
     "alcance_min": {"label": "Alcance min", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
     "alcance_max": {"label": "Alcance max", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
     "largura_teto": {"label": "Largura teto", "kind": "float", "step": 0.10, "min": 0.0, "max": 40.0},
     "largura_base": {"label": "Largura base", "kind": "float", "step": 0.10, "min": 0.0, "max": 40.0},
     "grudado": {"label": "Grudado", "kind": "bool"},
     "offset": {"label": "Offset", "kind": "float", "step": 0.10, "min": -40.0, "max": 40.0},
-    "espacamento": {"label": "EspaÃ§amento", "kind": "float", "step": 0.10, "min": -5.0, "max": 30.0},
+    "espacamento": {"label": "Espaçamento", "kind": "float", "step": 0.10, "min": -5.0, "max": 30.0},
     "faixas": {"label": "Faixas", "kind": "int", "step": 1, "min": 0, "max": 24},
     "largura_faixa": {"label": "Largura faixa", "kind": "float", "step": 0.10, "min": 0.0, "max": 40.0},
-    "repeticao_faixas": {"label": "RepetiÃ§Ã£o faixas", "kind": "bool"},
-    "faixas_ciclicas": {"label": "Faixas cÃ­clicas", "kind": "bool"},
-    "distancia_faixa": {"label": "DistÃ¢ncia faixa", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
+    "repeticao_faixas": {"label": "Repetição faixas", "kind": "bool"},
+    "faixas_ciclicas": {"label": "Faixas cíclicas", "kind": "bool"},
+    "distancia_faixa": {"label": "Distância faixa", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
     "ricocheteia_objetos": {"label": "Ricocheteia objetos", "kind": "bool"},
-    "ricocheteia_pokemons": {"label": "Ricocheteia pokÃ©mons", "kind": "bool"},
+    "ricocheteia_pokemons": {"label": "Ricocheteia pokémons", "kind": "bool"},
     "atravessa_objetos": {"label": "Atravessa objetos", "kind": "bool"},
-    "atravessa_pokemons": {"label": "Atravessa pokÃ©mons", "kind": "bool"},
-    "numero_ricochets": {"label": "NÃºmero ricochets", "kind": "int", "step": 1, "min": 0, "max": MAX_RICOCHETS},
+    "atravessa_pokemons": {"label": "Atravessa pokémons", "kind": "bool"},
+    "numero_ricochets": {"label": "Número ricochets", "kind": "int", "step": 1, "min": 0, "max": MAX_RICOCHETS},
     "hastes": {"label": "Hastes", "kind": "choice", "options": HASTES_OPTIONS},
     "pontos_curvatura": {"label": "Pontos curvatura", "kind": "int", "step": 1, "min": 0, "max": 6},
     "curvatura_circular": {"label": "Curvatura circular", "kind": "bool"},
-    "curvaturas_ciclicas": {"label": "Curvaturas cÃ­clicas", "kind": "bool"},
-    "distancia_entre_curvaturas": {"label": "DistÃ¢ncia curvaturas", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
+    "curvaturas_ciclicas": {"label": "Curvaturas cíclicas", "kind": "bool"},
+    "distancia_entre_curvaturas": {"label": "Distância curvaturas", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
     "invertido": {"label": "Invertido", "kind": "bool"},
     "curvatura_1": {"label": "Curvatura 1", "kind": "float", "step": 0.10, "min": -30.0, "max": 30.0},
     "curvatura_2": {"label": "Curvatura 2", "kind": "float", "step": 0.10, "min": -30.0, "max": 30.0},
@@ -155,14 +155,15 @@ FIELD_DEFS = {
     "curvatura_5": {"label": "Curvatura 5", "kind": "float", "step": 0.10, "min": -30.0, "max": 30.0},
     "curvatura_6": {"label": "Curvatura 6", "kind": "float", "step": 0.10, "min": -30.0, "max": 30.0},
     "circular": {"label": "Circular", "kind": "bool"},
+    "centralizar": {"label": "Centralizar", "kind": "bool"},
     "raio": {"label": "Raio", "kind": "float", "step": 0.10, "min": 0.10, "max": 40.0},
     "shape": {"label": "Shape", "kind": "choice", "options": SHAPE_OPTIONS},
     "tamanho_elementos": {"label": "Tamanho elementos", "kind": "float", "step": 0.10, "min": 0.0, "max": 12.0},
     "quantidade_elementos": {"label": "Qtd elementos", "kind": "int", "step": 1, "min": 0, "max": 128},
-    "escalonavel": {"label": "EscalonÃ¡vel", "kind": "bool"},
+    "escalonavel": {"label": "Escalonável", "kind": "bool"},
     "intensidade_dano": {"label": "Intensidade dano", "kind": "float", "step": 0.05, "min": 0.0, "max": 20.0},
     "subfluxo_atinge_a_si_mesmo": {"label": "Subfluxo atinge a si mesmo", "kind": "bool"},
-    "test_diameter": {"label": "DiÃ¢metro pokÃ©mon teste", "kind": "float", "step": 0.10, "min": 0.3, "max": 8.0},
+    "test_diameter": {"label": "Diâmetro pokémon teste", "kind": "float", "step": 0.10, "min": 0.3, "max": 8.0},
 }
 
 
@@ -526,6 +527,9 @@ class PreviewRenderer:
     def visible_circle_center(self, center_px: Vec2, mouse_px: Vec2, source_radius_tiles: float, flow: Dict, is_subflow: bool) -> Tuple[Vec2, float, Vec2]:
         aim_dir = self.safe_normalize(mouse_px - center_px)
         exit_dir = self.exit_direction(aim_dir, flow, source_radius_tiles)
+        if flow.get("centralizar", False):
+            radius_tiles = max(0.0, float(flow.get("raio", 2.0))) * self.scaled_factor(flow, source_radius_tiles)
+            return center_px, radius_tiles * self.tile_px, exit_dir
         perp = Vec2(-exit_dir.y, exit_dir.x)
         range_tiles = self.compute_effective_range_tiles(flow, center_px, mouse_px, source_radius_tiles, is_subflow)
         range_tiles *= self.scaled_factor(flow, source_radius_tiles)
@@ -722,6 +726,7 @@ def default_flow(is_subflow: bool = False) -> Dict:
         "curvatura_5": 0.0,
         "curvatura_6": 0.0,
         "circular": False,
+        "centralizar": False,
         "raio": 2.0,
         "shape": "normal",
         "tamanho_elementos": 0.6,
@@ -905,7 +910,7 @@ class EditorFluxos:
         if self.attacks:
             self.select_attack(0)
         else:
-            self.status("CSV de ataques nÃ£o encontrado em Dados/ ou sem estilo tiro/area.", RED)
+            self.status("CSV de ataques não encontrado em Dados/ ou sem estilo tiro/area.", RED)
 
     def status(self, text: str, color=TEXT_MID):
         self.status_text = text
@@ -955,7 +960,7 @@ class EditorFluxos:
             self.status("CSV/JSON recarregados.", GREEN)
         else:
             self.current_data = default_attack_entry()
-            self.status("NÃ£o foi possÃ­vel recarregar ataques.", RED)
+            self.status("Não foi possível recarregar ataques.", RED)
 
     def filtered_attacks(self) -> List[Dict]:
         token = self.filter_text.strip().lower()
@@ -1071,6 +1076,8 @@ class EditorFluxos:
             obj[field_key] = opts[(idx + direction) % len(opts)]
         else:
             step = field.get("step", 1)
+            if field_key in ("largura_base", "largura_teto") and obj.get("grudado", False):
+                step = 1.0
             value = obj.get(field_key, 0)
             mods = pygame.key.get_mods()
             mult = 1.0
@@ -1111,7 +1118,7 @@ class EditorFluxos:
             return
         flows = self.flows()
         if len(flows) >= MAX_FLOWS:
-            self.status("MÃ¡ximo de 5 fluxos por ataque.", RED)
+            self.status("Máximo de 5 fluxos por ataque.", RED)
             return
         flows.append(default_flow(False))
         self.normalize_current()
@@ -1122,7 +1129,7 @@ class EditorFluxos:
         if not (0 <= fidx < len(flows)):
             return
         if len(flows) >= MAX_FLOWS:
-            self.status("MÃ¡ximo de 5 fluxos por ataque.", RED)
+            self.status("Máximo de 5 fluxos por ataque.", RED)
             return
         clone = sanitize_flow(copy.deepcopy(flows[fidx]), False)
         clone["expanded"] = True
@@ -1136,7 +1143,7 @@ class EditorFluxos:
             return
         subs = flows[fidx].setdefault("subfluxos", [])
         if len(subs) >= MAX_SUBFLOWS:
-            self.status("MÃ¡ximo de 5 subfluxos por fluxo.", RED)
+            self.status("Máximo de 5 subfluxos por fluxo.", RED)
             return
         subs.append(default_flow(True))
         self.normalize_current()
@@ -1150,7 +1157,7 @@ class EditorFluxos:
         if not (0 <= sidx < len(subs)):
             return
         if len(subs) >= MAX_SUBFLOWS:
-            self.status("MÃ¡ximo de 5 subfluxos por fluxo.", RED)
+            self.status("Máximo de 5 subfluxos por fluxo.", RED)
             return
         clone = sanitize_flow(copy.deepcopy(subs[sidx]), True)
         clone["expanded"] = True
@@ -1227,6 +1234,16 @@ class EditorFluxos:
             for hit in hits:
                 enemy_hits_for_subflows.append((fidx, hit, flow, hit.enemy_index))
 
+        # subflows behind objects/pokémons, like the fluxo normal
+        for fidx, hit, flow, enemy_idx in enemy_hits_for_subflows:
+            subs = flow.get("subfluxos", [])
+            for sidx, sub in enumerate(subs):
+                if not sub.get("visible", True):
+                    continue
+                fill = SUBFLOW_FILL[sidx % len(SUBFLOW_FILL)]
+                border = SUBFLOW_STROKE[sidx % len(SUBFLOW_STROKE)]
+                self.draw_single_flow(sub, hit.enemy_center_px, hit.enemy_center_px + hit.direction * self.tile_px * 10, self.enemies[enemy_idx].radius_tiles, fill, border, True, enemy_idx)
+
         # walls
         for wall in self.walls:
             a = self.world_to_preview(wall.a)
@@ -1253,16 +1270,6 @@ class EditorFluxos:
             pygame.draw.circle(self.screen, (136, 166, 146) if hit else (152, 160, 180), (int(enemy_center.x), int(enemy_center.y)), int(radius_px * 0.58))
             draw_text(self.screen, f"Inimigo {idx+1}", self.font_xs, TEXT, (enemy_center.x, enemy_center.y + radius_px + 8), align="midtop")
 
-        # subflows after enemies so user sees context; draw on top for readability
-        for fidx, hit, flow, enemy_idx in enemy_hits_for_subflows:
-            subs = flow.get("subfluxos", [])
-            for sidx, sub in enumerate(subs):
-                if not sub.get("visible", True):
-                    continue
-                fill = SUBFLOW_FILL[sidx % len(SUBFLOW_FILL)]
-                border = SUBFLOW_STROKE[sidx % len(SUBFLOW_STROKE)]
-                self.draw_single_flow(sub, hit.enemy_center_px, hit.enemy_center_px + hit.direction * self.tile_px * 10, self.enemies[enemy_idx].radius_tiles, fill, border, True, enemy_idx)
-
         # temporary wall anchor
         if self.mode == "add_wall" and self.wall_first_point is not None:
             pygame.draw.line(self.screen, YELLOW, self.world_to_preview(self.wall_first_point), mouse, 2)
@@ -1270,7 +1277,7 @@ class EditorFluxos:
         hud = [
             f"Mouse: ({(mouse.x-self.preview_origin.x)/self.tile_px:.2f}t, {(mouse.y-self.preview_origin.y)/self.tile_px:.2f}t)",
             f"Zoom: {self.tile_px:.0f}px/tile",
-            f"PokÃ©mon teste: {self.current_data.get('test_diameter', DEFAULT_TEST_DIAMETER):.2f} tiles",
+            f"Pokémon teste: {self.current_data.get('test_diameter', DEFAULT_TEST_DIAMETER):.2f} tiles",
             f"Modo: {self.mode}",
         ]
         for i, line in enumerate(hud):
@@ -1419,7 +1426,7 @@ class EditorFluxos:
         test_rect = pygame.Rect(x0, y, PANEL_W - 32, 32)
         pygame.draw.rect(self.screen, PANEL_BG_2, test_rect, border_radius=8)
         pygame.draw.rect(self.screen, PANEL_STROKE, test_rect, 1, border_radius=8)
-        draw_text(self.screen, "DiÃ¢metro do pokÃ©mon teste", self.font_sm, TEXT, (test_rect.x + 10, test_rect.y + 8))
+        draw_text(self.screen, "Diâmetro do pokémon teste", self.font_sm, TEXT, (test_rect.x + 10, test_rect.y + 8))
         token = "test_diameter"
         minus_rect = pygame.Rect(test_rect.right - 124, test_rect.y + 4, 24, 24)
         value_rect = pygame.Rect(test_rect.right - 96, test_rect.y + 4, 64, 24)
@@ -1502,7 +1509,7 @@ class EditorFluxos:
                 count = int(flow.get("pontos_curvatura", 0))
                 if int(key.split("_")[-1]) > count:
                     continue
-            if key in ("raio", "shape") and not flow.get("circular", False):
+            if key in ("centralizar", "raio", "shape") and not flow.get("circular", False):
                 continue
             if key in ("tamanho_elementos", "quantidade_elementos") and not (flow.get("circular", False) and flow.get("shape", "normal") != "normal"):
                 continue
@@ -1616,9 +1623,9 @@ class EditorFluxos:
         if self.mode == "add_enemy":
             if len(self.enemies) < MAX_ENEMIES:
                 self.enemies.append(EnemyPreview(self.preview_to_world(pos), self.current_data.get("test_diameter", DEFAULT_TEST_DIAMETER) * 0.5))
-                self.status("PokÃ©mon inimigo adicionado.", GREEN)
+                self.status("Pokémon inimigo adicionado.", GREEN)
             else:
-                self.status("MÃ¡ximo de inimigos atingido.", RED)
+                self.status("Máximo de inimigos atingido.", RED)
             return
         if self.mode == "add_wall":
             world_pos = self.preview_to_world(pos)
@@ -1630,7 +1637,7 @@ class EditorFluxos:
                     self.walls.append(WallPreview(self.wall_first_point, world_pos))
                     self.status("Parede adicionada.", GREEN)
                 else:
-                    self.status("MÃ¡ximo de objetos atingido.", RED)
+                    self.status("Máximo de objetos atingido.", RED)
                 self.wall_first_point = None
             return
         if self.mode == "remove":

@@ -11,6 +11,11 @@ import pygame
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
 from Codigo.Paineis.FichaPokemon import FichaPokemon
 
+try:
+    from Codigo.ModulosGerais.PokemonAnimator import PokemonAnimator
+except Exception:
+    PokemonAnimator = None
+
 Vector2 = Tuple[float, float]
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
 
@@ -104,6 +109,7 @@ class PokemonBatalha:
         self.VariacoesAtributos: dict[str, float] = {}
         for chave in self.Stats.keys():
             self.VariacoesAtributos[self._normalizar_chave_ficha(chave)] = 0.0
+        self.Animador = PokemonAnimator(self) if PokemonAnimator is not None else None
 
     @staticmethod
     def _normalizar_chave_ficha(chave: str) -> str:
@@ -437,10 +443,14 @@ class PokemonBatalha:
         tela.blit(camada, camada.get_rect(center=centro))
 
     def renderizar(self, tela: pygame.Surface, camera, selecionado: bool = False, hover: bool = False, energia_reservada: float = 0.0) -> None:
+        if self.Animador is not None:
+            self.Animador.atualizar()
         centro = self.centro_tela(camera)
         tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
         raio = self.raio_px(camera)
         self._desenhar_corpo(tela, centro, raio, tile_px, selecionado=selecionado, hover=hover, alpha_extra=255)
+        if self.Animador is not None:
+            self.Animador.renderizar(tela, camera)
         self._desenhar_barras(tela, centro, raio, tile_px, energia_reservada=energia_reservada)
 
     def renderizar_construto(self, tela: pygame.Surface, camera, posicao_mundo, *, alpha: int = 96) -> None:

@@ -1,0 +1,497 @@
+{
+  "batalha_id": "bat-2a4429286f",
+  "tipo": "confronto",
+  "turno_atual": 4,
+  "clima": "",
+  "arena": {},
+  "ordem_logica": [
+    {
+      "executor_id": "P-F2FA98DA9A",
+      "estilo": "alvo",
+      "tipo_movimento": false,
+      "destino_mundo": null,
+      "troca_reserva_id": "",
+      "alvo_ids": [
+        "P-5AECB5B4B6"
+      ],
+      "custo_base": 30.0,
+      "custo": 30.0,
+      "acao_chave": "proteger",
+      "ataque": {
+        "Ataque": "Proteger",
+        "Tipo": "normal",
+        "Custo": 30,
+        "Estilo": "alvo",
+        "Velocidade": "8",
+        "Descrição Nivel 1": "O alvo fica Protegido.",
+        "Descrição Nivel 2": "O alvo remove 1 efeito negativo aleatório.",
+        "Descrição Nivel 3": "O alvo também ganha uma barreira equivalente a (40% de Mag).",
+        "Tiro": "-",
+        "Efeito": "-",
+        "Code": "5",
+        "Nivel": 1,
+        "Nome": "Proteger"
+      },
+      "executor_nome": "Kakuna",
+      "tick_inicio": 1,
+      "alvos": [
+        {
+          "id": "P-5AECB5B4B6",
+          "nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "executor_id": "P-855AEB6130",
+      "estilo": "movimento",
+      "tipo_movimento": true,
+      "destino_mundo": [
+        53.233,
+        17.7863
+      ],
+      "troca_reserva_id": "",
+      "alvo_ids": [],
+      "custo_base": 40.0,
+      "custo": 40.0,
+      "acao_chave": "investida",
+      "ataque": {
+        "Ataque": "Investida",
+        "Tipo": "normal",
+        "Custo": 40,
+        "Estilo": "movimento",
+        "Velocidade": "-",
+        "Descrição Nivel 1": "Causa (100% de Atk) como dano normal e avança com (120% de Vel). O usuário recebe 15% do dano causado.",
+        "Descrição Nivel 2": "Causa (110% de Atk) como dano normal e avança com (135% de Vel).",
+        "Descrição Nivel 3": "O usuário recebe apenas 5% do dano causado.",
+        "Tiro": "-",
+        "Efeito": "-",
+        "Code": "1",
+        "Nivel": 1,
+        "Nome": "Investida"
+      },
+      "executor_nome": "Kakuna",
+      "tick_inicio": 7
+    },
+    {
+      "executor_id": "P-8401F25F8D",
+      "estilo": "tiro",
+      "tipo_movimento": false,
+      "destino_mundo": [
+        53.233,
+        17.7863
+      ],
+      "troca_reserva_id": "",
+      "alvo_ids": [],
+      "custo_base": 30.0,
+      "custo": 30.0,
+      "acao_chave": "energia",
+      "ataque": {
+        "Ataque": "Energia",
+        "Tipo": "normal",
+        "Custo": 30,
+        "Estilo": "tiro",
+        "Velocidade": "0.32",
+        "Descrição Nivel 1": "Causa (120% de SpA) como dano especial.",
+        "Descrição Nivel 2": "Causa (135% de SpA) como dano especial.",
+        "Descrição Nivel 3": "Causa (150% de SpA) como dano especial.",
+        "Tiro": "-",
+        "Efeito": "-",
+        "Code": "8",
+        "Nivel": 1,
+        "Nome": "Energia"
+      },
+      "executor_nome": "Weedle",
+      "tick_inicio": 8
+    },
+    {
+      "id": 3,
+      "executor_id": "P-5AECB5B4B6",
+      "executor_nome": "Rowlet",
+      "estilo": "status",
+      "tipo_movimento": false,
+      "destino_mundo": null,
+      "troca_reserva_id": "",
+      "alvo_ids": [],
+      "custo_base": 20.0,
+      "custo": 20.0,
+      "acao_chave": "enraivecer",
+      "ataque": {
+        "Ataque": "Enraivecer",
+        "Tipo": "normal",
+        "Custo": 20,
+        "Estilo": "status",
+        "Velocidade": "5",
+        "Descrição Nivel 1": "Se a Vida estiver abaixo de 50%, o usuário ganha Aprimorado se SpA > Atk; caso contrário, ganha Amplificado.",
+        "Descrição Nivel 2": "Os efeitos passam a ser ativados com Vida abaixo de 70%.",
+        "Descrição Nivel 3": "Ao ativar o efeito, cura (20% da Vida) perdida.",
+        "Tiro": "-",
+        "Efeito": "-",
+        "Code": "3",
+        "Nivel": 1,
+        "Nome": "Enraivecer"
+      },
+      "tick_inicio": 11
+    }
+  ],
+  "historico": [
+    {
+      "tick": 1,
+      "inicializacao": [
+        {
+          "tipo": "acao",
+          "executor_id": "P-F2FA98DA9A",
+          "ataque": "Proteger",
+          "estilo": "alvo",
+          "posicao": [
+            47.2,
+            13.2
+          ],
+          "alvo_ids": [
+            "P-5AECB5B4B6"
+          ],
+          "executor_nome": "Kakuna",
+          "alvos": [
+            {
+              "id": "P-5AECB5B4B6",
+              "nome": "Rowlet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 2,
+      "segmentacao": [
+        {
+          "tipo": "dano",
+          "executor_id": "P-F2FA98DA9A",
+          "alvo_id": "P-5AECB5B4B6",
+          "dano": 0.0,
+          "morto": false,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 0.0,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 21.96,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 21.96,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 0.0,
+            "dano_pos_tipo": 0.0,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Kakuna",
+          "alvo_nome": "Rowlet"
+        },
+        {
+          "tipo": "efeito",
+          "executor_id": "P-F2FA98DA9A",
+          "alvo_id": "P-5AECB5B4B6",
+          "efeito": "Protegido",
+          "status": "ok",
+          "executor_nome": "Kakuna",
+          "alvo_nome": "Rowlet"
+        }
+      ],
+      "finalizacao": [
+        {
+          "tipo": "acao_finalizada",
+          "executor_id": "P-F2FA98DA9A",
+          "ataque": "Proteger",
+          "estilo": "alvo",
+          "motivo": "impacto_alvo",
+          "executor_nome": "Kakuna"
+        }
+      ]
+    },
+    {
+      "tick": 11,
+      "inicializacao": [
+        {
+          "tipo": "acao",
+          "executor_id": "P-5AECB5B4B6",
+          "ataque": "Enraivecer",
+          "estilo": "status",
+          "posicao": [
+            53.233,
+            17.7863
+          ],
+          "executor_nome": "Rowlet"
+        }
+      ],
+      "finalizacao": [
+        {
+          "tipo": "acao_finalizada",
+          "executor_id": "P-5AECB5B4B6",
+          "ataque": "Enraivecer",
+          "estilo": "status",
+          "motivo": "status_imediato",
+          "executor_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 17,
+      "segmentacao": [
+        {
+          "tipo": "dano",
+          "executor_id": "P-8401F25F8D",
+          "alvo_id": "P-5AECB5B4B6",
+          "dano": 15.0781,
+          "morto": false,
+          "critico": true,
+          "detalhes": {
+            "dano_bruto": 11.7,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.56,
+            "perfuracao": 0.0,
+            "defesa_base": 21.05,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 21.05,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 15.0781,
+            "dano_pos_tipo": 15.0781,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Weedle",
+          "alvo_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 21,
+      "passiva": [
+        {
+          "tipo": "efeito",
+          "executor_id": "P-5AECB5B4B6",
+          "alvo_id": "P-5AECB5B4B6",
+          "efeito": "Protegido",
+          "status": "ok",
+          "executor_nome": "Rowlet",
+          "alvo_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 162,
+      "segmentacao": [
+        {
+          "tipo": "colisao_movimento",
+          "pokemon_id": "P-855AEB6130",
+          "origem": [
+            52.521,
+            18.2584
+          ],
+          "posicao": [
+            52.5662,
+            18.2284
+          ],
+          "destino_planejado": [
+            53.233,
+            17.7863
+          ],
+          "colisoes": [
+            {
+              "tipo": "colisao_pokemon",
+              "tick": 472,
+              "a": "P-855AEB6130",
+              "b": "P-5AECB5B4B6",
+              "t": 0.5363,
+              "ponto": [
+                52.5662,
+                18.2284
+              ],
+              "normal": [
+                -0.8334,
+                0.5526
+              ],
+              "velocidade_relativa": 0.05,
+              "dano_em_a": 7.5743,
+              "dano_em_b": 12.3526,
+              "movimentos": [
+                {
+                  "pokemon_id": "P-855AEB6130",
+                  "origem": [
+                    52.5662,
+                    18.2284
+                  ],
+                  "destino": [
+                    52.5388,
+                    18.2466
+                  ],
+                  "velocidade": 0.03
+                },
+                {
+                  "pokemon_id": "P-5AECB5B4B6",
+                  "origem": [
+                    53.233,
+                    17.7863
+                  ],
+                  "destino": [
+                    53.4555,
+                    17.6387
+                  ],
+                  "velocidade": 0.0601
+                }
+              ]
+            }
+          ],
+          "pokemon_nome": "Kakuna"
+        },
+        {
+          "tipo": "dano",
+          "executor_id": "P-855AEB6130",
+          "alvo_id": "P-5AECB5B4B6",
+          "dano": 12.3526,
+          "morto": false,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 12.3526,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 0.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 0.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 12.3526,
+            "dano_pos_tipo": 12.3526,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Kakuna",
+          "alvo_nome": "Rowlet"
+        },
+        {
+          "tipo": "dano",
+          "executor_id": "P-5AECB5B4B6",
+          "alvo_id": "P-855AEB6130",
+          "dano": 7.5743,
+          "morto": false,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 7.5743,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 0.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 0.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 7.5743,
+            "dano_pos_tipo": 7.5743,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Rowlet",
+          "alvo_nome": "Kakuna"
+        }
+      ]
+    },
+    {
+      "tick": 168,
+      "passiva": [
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-5AECB5B4B6",
+          "energia": 15.3,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-F2FA98DA9A",
+          "energia": 41.4,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Kakuna"
+        },
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-855AEB6130",
+          "energia": 27.72,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Kakuna"
+        },
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-8401F25F8D",
+          "energia": 16.82,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Weedle"
+        }
+      ]
+    }
+  ],
+  "resultado": {
+    "batalha_id": "bat-2a4429286f",
+    "tipo": "confronto",
+    "turno_atual": 4,
+    "tick_global": 310,
+    "time_1": {
+      "ativos": {
+        "__tipo__": "lista_pokemon",
+        "itens": [
+          {
+            "uid": "P-5AECB5B4B6",
+            "posicao": [
+              53.4555,
+              17.6387
+            ],
+            "posicao_anterior": [
+              53.4333,
+              17.6534
+            ],
+            "velocidade_atual_tiles_tick": 0.0601,
+            "vida_atual": 27.7293,
+            "energia": 41.2,
+            "nome": "Rowlet"
+          }
+        ]
+      }
+    },
+    "time_2": {
+      "ativos": {
+        "__tipo__": "lista_pokemon",
+        "itens": [
+          {
+            "uid": "P-F2FA98DA9A",
+            "energia": 107.7,
+            "nome": "Kakuna"
+          },
+          {
+            "uid": "P-855AEB6130",
+            "posicao": [
+              52.5412,
+              18.245
+            ],
+            "posicao_anterior": [
+              52.5662,
+              18.2284
+            ],
+            "velocidade_atual_tiles_tick": 0.03,
+            "vida_atual": 21.3057,
+            "energia": 32.46,
+            "nome": "Kakuna"
+          },
+          {
+            "uid": "P-8401F25F8D",
+            "energia": 22.51,
+            "nome": "Weedle"
+          }
+        ]
+      }
+    }
+  }
+}

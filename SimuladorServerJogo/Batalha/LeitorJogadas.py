@@ -198,7 +198,14 @@ class LeitorJogadas:
                     "destino_planejado": self._round_pos(detalhe.get("destino_planejado")),
                 }
                 return ("finalizacao", {k: v for k, v in publico.items() if v not in (None, "", [])})
-            return (None, None)
+            publico = {
+                "tipo": "movimento",
+                "pokemon_id": executor_id,
+                "origem": self._round_pos(detalhe.get("origem")),
+                "posicao": self._round_pos(detalhe.get("destino")),
+                "destino_planejado": self._round_pos(detalhe.get("destino_planejado")),
+            }
+            return ("segmentacao", {k: v for k, v in publico.items() if v not in (None, "", [])})
 
         if tipo == "movimento_reacao_iniciado":
             publico = {

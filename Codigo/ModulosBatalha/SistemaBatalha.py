@@ -108,8 +108,8 @@ class SistemaBatalha:
         batalha = retorno.get("batalha") if isinstance(retorno.get("batalha"), dict) else {}
         if resultado_log:
             base = dict(self.ResultadoRecebido or {})
-            if not base and batalha:
-                base = dict(batalha)
+            if not base:
+                return dict(batalha)
             mesclado = self._aplicar_diff_estado(base, resultado_log)
             return mesclado if isinstance(mesclado, dict) else {}
         return dict(batalha)

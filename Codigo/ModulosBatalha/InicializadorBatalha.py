@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import random
+import uuid
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -166,18 +167,8 @@ class InicializadorBatalha:
         return str(v or "").strip().casefold()
 
     @staticmethod
-    def _fragmento_uid_batalha(valor: object) -> str:
-        texto = str(valor or "").strip()
-        if not texto or texto == "0":
-            return ""
-        partes = [parte for parte in texto.split(":") if parte]
-        if not partes:
-            return ""
-        if partes[0].casefold() in {"pokemon", "poke", "obj"}:
-            if len(partes) >= 3 and partes[1].casefold() in {"time", "mundo", "bando", "npc", "jogador", "inimigo"}:
-                return ":".join(partes[2:])
-            return ":".join(partes[1:]) if len(partes) > 1 else texto
-        return texto
+    def _gerar_uid_batalha() -> str:
+        return f"P-{uuid.uuid4().hex[:10].upper()}"
 
     @classmethod
     def _padronizar_uids_batalha(cls, pokemons: List[Dict[str, object]], origem: str) -> List[Dict[str, object]]:
@@ -189,21 +180,9 @@ class InicializadorBatalha:
                 continue
             bruto = deepcopy(pokemon)
             estado = bruto.get("estado") if isinstance(bruto.get("estado"), dict) else None
-            candidatos = [
-                bruto.get("uid"),
-                bruto.get("id"),
-                bruto.get("ID"),
-                estado.get("uid") if isinstance(estado, dict) else None,
-                estado.get("id") if isinstance(estado, dict) else None,
-                estado.get("ID") if isinstance(estado, dict) else None,
-            ]
-            fragmento = next((frag for frag in (cls._fragmento_uid_batalha(item) for item in candidatos) if frag), str(indice))
-            uid_base = f"pokemon:{origem_norm}:{fragmento}"
-            uid = uid_base
-            sufixo = 2
+            uid = cls._gerar_uid_batalha()
             while uid in usados:
-                uid = f"{uid_base}:{sufixo}"
-                sufixo += 1
+                uid = cls._gerar_uid_batalha()
             usados.add(uid)
             bruto["uid"] = uid
             bruto["origem_batalha"] = origem_norm

@@ -120,6 +120,38 @@ class LeitorJogadas:
             ]
         return saida
 
+    def _anexar_nomes_resultado(self, sistema: SistemaBatalha, valor: object) -> object:
+        if isinstance(valor, dict):
+            saida = {str(chave): self._anexar_nomes_resultado(sistema, item) for chave, item in valor.items()}
+            if str(saida.get("__tipo__") or "") == "lista_pokemon":
+                itens = []
+                for item in list(saida.get("itens") or []):
+                    if not isinstance(item, dict):
+                        itens.append(item)
+                        continue
+                    atual = dict(item)
+                    uid = str(atual.get("uid") or atual.get("id") or atual.get("ID") or "")
+                    if uid and not str(atual.get("nome") or ""):
+                        nome = self._nome_combatente(sistema, uid)
+                        if nome:
+                            atual["nome"] = nome
+                    itens.append(atual)
+                saida["itens"] = itens
+            return saida
+        if isinstance(valor, list):
+            return [self._anexar_nomes_resultado(sistema, item) for item in valor]
+        return valor
+
+    def _normalizar_resultado_publico(self, sistema: SistemaBatalha, resultado: Dict[str, object]) -> Dict[str, object]:
+        saida: Dict[str, object] = {}
+        mapa_lados = {
+            "jogador": "time_1",
+            "inimigo": "time_2",
+        }
+        for chave, valor in dict(resultado or {}).items():
+            saida[mapa_lados.get(str(chave), str(chave))] = self._anexar_nomes_resultado(sistema, valor)
+        return saida
+
     def _jogada_publica_ordem(self, sistema: SistemaBatalha, jogada: Dict[str, object], tick_base: int) -> Dict[str, object]:
         ignorar = {
             "indice_entrada",
@@ -153,6 +185,9 @@ class LeitorJogadas:
             return (None, None)
 
         if tipo == "acao_iniciada":
+            estilo = str(evento.get("estilo") or "").strip().casefold()
+            if estilo in {"movimento", "tiro", "area"}:
+                return (None, None)
             publico = {
                 "tipo": "acao",
                 "executor_id": executor_id,
@@ -189,39 +224,16 @@ class LeitorJogadas:
                     "colisoes": self._normalizar_valor_publico(colisoes),
                 }
                 return ("segmentacao", {k: v for k, v in publico.items() if v not in (None, "", [])})
-            if bool(detalhe.get("concluido", False)):
-                publico = {
-                    "tipo": "movimento_finalizado",
-                    "pokemon_id": executor_id,
-                    "origem": self._round_pos(detalhe.get("origem")),
-                    "posicao": self._round_pos(detalhe.get("destino")),
-                    "destino_planejado": self._round_pos(detalhe.get("destino_planejado")),
-                }
-                return ("finalizacao", {k: v for k, v in publico.items() if v not in (None, "", [])})
-            publico = {
-                "tipo": "movimento",
-                "pokemon_id": executor_id,
-                "origem": self._round_pos(detalhe.get("origem")),
-                "posicao": self._round_pos(detalhe.get("destino")),
-                "destino_planejado": self._round_pos(detalhe.get("destino_planejado")),
-            }
-            return ("segmentacao", {k: v for k, v in publico.items() if v not in (None, "", [])})
+            return (None, None)
 
         if tipo == "movimento_reacao_iniciado":
-            publico = {
-                "tipo": "movimento_reacao",
-                "pokemon_id": executor_id,
-                "colidiu_com": alvo_id,
-                "origem": self._round_pos(detalhe.get("origem")),
-                "destino": self._round_pos(detalhe.get("destino")),
-                "velocidade": self._round_num(detalhe.get("velocidade", 0.0)),
-                "causa": str(detalhe.get("causa") or "colisao_pokemon"),
-            }
-            return ("inicializacao", {k: v for k, v in publico.items() if v not in (None, "", [])})
+            return (None, None)
 
         if tipo in {"objeto_criado", "objeto_movimento", "objeto_finalizado"}:
             objeto = detalhe.get("objeto") if isinstance(detalhe.get("objeto"), dict) else (detalhe if detalhe else {})
             subtipo = str(objeto.get("subtipo") or detalhe.get("subtipo") or "objeto")
+            if subtipo.strip().casefold() in {"tiro", "area", "zona"}:
+                return (None, None)
             publico = {
                 "tipo": subtipo,
                 "objeto_id": str(objeto.get("id") or detalhe.get("objeto_id") or ""),
@@ -375,6 +387,9 @@ class LeitorJogadas:
             return ("passiva", publico)
 
         if tipo in {"impacto_cancelado", "acao_bloqueada", "acao_finalizada"}:
+            estilo = str(evento.get("estilo") or "").strip().casefold()
+            if estilo in {"movimento", "tiro", "area"}:
+                return (None, None)
             publico = {
                 "tipo": tipo,
                 "executor_id": executor_id,
@@ -471,7 +486,7 @@ class LeitorJogadas:
         }
         if isinstance(diff, dict):
             resultado.update(diff)
-        return resultado
+        return self._normalizar_resultado_publico(sistema, resultado)
 
     def _construir_log_publico(
         self,

@@ -589,10 +589,11 @@ class PokemonBatalha:
             elif nome == "abençoado" or nome == "abencoado":
                 eventos.append(self.ReceberCura(vida_perdida * 0.05 * 1.3, origem=self, motivo="Abencoado"))
 
-        energia_turno = self.obter_atributo("Ene")
-        detalhe_energia = self.GanharEnergia(energia_turno, motivo="FimTurno")
-        if float(detalhe_energia.get("ganho_final", 0.0) or 0.0) > 0.0:
-            eventos.append(detalhe_energia)
+        if bool(self.Ativo):
+            energia_turno = self.obter_atributo("Ene")
+            detalhe_energia = self.GanharEnergia(energia_turno, motivo="FimTurno")
+            if float(detalhe_energia.get("ganho_final", 0.0) or 0.0) > 0.0:
+                eventos.append(detalhe_energia)
         self.Verifica()
         return eventos
 

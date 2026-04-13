@@ -97,12 +97,20 @@ class InicializadorBatalha:
         batalha_numero = max(1, int(npc_ctx.get("batalha_numero", 1) or 1))
         indice_time = min(len(times_npc) - 1, batalha_numero - 1) if times_npc else 0
         time_inimigo = self._normalizar_time(times_npc[indice_time]) if times_npc else {"Nome": "Inimigo", "Slots": []}
+        jogador_slots = self._padronizar_uids_batalha(
+            [deepcopy(p) for p in time_jogador.get("Slots", []) if isinstance(p, dict)],
+            origem="time",
+        )
+        inimigo_slots = self._padronizar_uids_batalha(
+            [deepcopy(p) for p in time_inimigo.get("Slots", []) if isinstance(p, dict)],
+            origem="npc",
+        )
         return {
             "tipo": "treinador",
-            "jogador": [deepcopy(p) for p in time_jogador.get("Slots", []) if isinstance(p, dict)],
-            "inimigo": [deepcopy(p) for p in time_inimigo.get("Slots", []) if isinstance(p, dict)],
-            "time_jogador": deepcopy(time_jogador),
-            "time_inimigo": deepcopy(time_inimigo),
+            "jogador": jogador_slots,
+            "inimigo": inimigo_slots,
+            "time_jogador": {**deepcopy(time_jogador), "Slots": jogador_slots},
+            "time_inimigo": {**deepcopy(time_inimigo), "Slots": inimigo_slots},
         }
 
     def _inicializar_confronto(self) -> Dict[str, object]:
@@ -112,12 +120,21 @@ class InicializadorBatalha:
             slots_por_time=6,
         )
         poke_mundo = self.Contexto.get("pokemon_colisao") if isinstance(self.Contexto.get("pokemon_colisao"), dict) else {}
-        inimigos = self.criar_bando(poke_mundo)
+        jogador_slots = self._padronizar_uids_batalha(
+            [deepcopy(p) for p in time_jogador.get("Slots", []) if isinstance(p, dict)],
+            origem="time",
+        )
+        inimigos_brutos = self.criar_bando(poke_mundo)
+        inimigos = []
+        if inimigos_brutos:
+            inimigos.extend(self._padronizar_uids_batalha([inimigos_brutos[0]], origem="mundo"))
+            if len(inimigos_brutos) > 1:
+                inimigos.extend(self._padronizar_uids_batalha(inimigos_brutos[1:], origem="bando"))
         return {
             "tipo": "confronto",
-            "jogador": [deepcopy(p) for p in time_jogador.get("Slots", []) if isinstance(p, dict)],
+            "jogador": jogador_slots,
             "inimigo": inimigos,
-            "time_jogador": deepcopy(time_jogador),
+            "time_jogador": {**deepcopy(time_jogador), "Slots": jogador_slots},
             "time_inimigo": {"Nome": "Bando", "Slots": inimigos},
         }
 
@@ -147,6 +164,54 @@ class InicializadorBatalha:
     @staticmethod
     def _normalizar_texto(v: object) -> str:
         return str(v or "").strip().casefold()
+
+    @staticmethod
+    def _fragmento_uid_batalha(valor: object) -> str:
+        texto = str(valor or "").strip()
+        if not texto or texto == "0":
+            return ""
+        partes = [parte for parte in texto.split(":") if parte]
+        if not partes:
+            return ""
+        if partes[0].casefold() in {"pokemon", "poke", "obj"}:
+            if len(partes) >= 3 and partes[1].casefold() in {"time", "mundo", "bando", "npc", "jogador", "inimigo"}:
+                return ":".join(partes[2:])
+            return ":".join(partes[1:]) if len(partes) > 1 else texto
+        return texto
+
+    @classmethod
+    def _padronizar_uids_batalha(cls, pokemons: List[Dict[str, object]], origem: str) -> List[Dict[str, object]]:
+        saida: List[Dict[str, object]] = []
+        usados: set[str] = set()
+        origem_norm = str(origem or "time").strip().casefold() or "time"
+        for indice, pokemon in enumerate(list(pokemons or []), start=1):
+            if not isinstance(pokemon, dict):
+                continue
+            bruto = deepcopy(pokemon)
+            estado = bruto.get("estado") if isinstance(bruto.get("estado"), dict) else None
+            candidatos = [
+                bruto.get("uid"),
+                bruto.get("id"),
+                bruto.get("ID"),
+                estado.get("uid") if isinstance(estado, dict) else None,
+                estado.get("id") if isinstance(estado, dict) else None,
+                estado.get("ID") if isinstance(estado, dict) else None,
+            ]
+            fragmento = next((frag for frag in (cls._fragmento_uid_batalha(item) for item in candidatos) if frag), str(indice))
+            uid_base = f"pokemon:{origem_norm}:{fragmento}"
+            uid = uid_base
+            sufixo = 2
+            while uid in usados:
+                uid = f"{uid_base}:{sufixo}"
+                sufixo += 1
+            usados.add(uid)
+            bruto["uid"] = uid
+            bruto["origem_batalha"] = origem_norm
+            if isinstance(estado, dict):
+                estado["uid"] = uid
+                estado["origem_batalha"] = origem_norm
+            saida.append(bruto)
+        return saida
 
     def _buscar_row_por_especie(self, especie: object) -> Dict[str, object] | None:
         return self._base_por_nome.get(self._normalizar_texto(especie))

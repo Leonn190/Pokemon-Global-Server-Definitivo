@@ -64,6 +64,7 @@ class PokemonBatalha:
         dados: Dict[str, object] | None = None,
         lado: str = "",
         *,
+        contexto: Dict[str, object] | None = None,
         posicao: Vec2 = (0.0, 0.0),
         ativo: bool = True,
         slot_time: int = 0,
@@ -76,7 +77,16 @@ class PokemonBatalha:
 
         self.Dados = bruto
         self.Estado = estado
-        self.Uid = str(bruto.get("uid") or bruto.get("id") or bruto.get("ID") or estado.get("uid") or estado.get("id") or estado.get("ID") or f"poke:{id(self)}")
+        self.Contexto = dict(contexto or {})
+        self.Uid = str(
+            bruto.get("uid")
+            or bruto.get("id")
+            or bruto.get("ID")
+            or estado.get("uid")
+            or estado.get("id")
+            or estado.get("ID")
+            or f"pokemon:temp:{id(self)}"
+        )
         self.Nome = str(estado.get("nome") or estado.get("Nome") or bruto.get("nome") or bruto.get("Nome") or estado.get("especie") or bruto.get("especie") or "Pokemon")
         self.Especie = str(estado.get("especie") or estado.get("Especie") or bruto.get("especie") or bruto.get("Especie") or self.Nome)
         self.Lado = str(lado or bruto.get("lado") or estado.get("lado") or "")
@@ -89,7 +99,7 @@ class PokemonBatalha:
         self.VelocidadeAtualTilesTick = 0.0
         self.Peso = max(0.1, self._fnum(estado.get("peso", bruto.get("peso", 1.0)), 1.0))
         self.Escala = max(0, int(self._fnum(estado.get("escala", bruto.get("escala", 3)), 3)))
-        self.TamanhoTiles = max(0.4, self._fnum(estado.get("tamanho_tiles", bruto.get("tamanho_tiles", 0.6)), 0.6))
+        self.TamanhoTiles = self._calcular_tamanho_tiles(estado, bruto)
         self.RaioColisao = float(self.TamanhoTiles) * 0.5
         self.Tipos = [str(item).strip() for item in list(estado.get("tipos") or bruto.get("tipos") or []) if str(item).strip()]
         self.Habilidades = [deepcopy(item) for item in list(estado.get("habilidades") or bruto.get("habilidades") or bruto.get("ataques") or []) if item]
@@ -147,6 +157,13 @@ class PokemonBatalha:
         except (TypeError, ValueError):
             return float(default)
 
+    def _calcular_tamanho_tiles(self, estado: Dict[str, object], bruto: Dict[str, object]) -> float:
+        base_combate = self._fnum(self.Contexto.get("combate_pokemon_tamanho_diametro_base_tiles"), 1.0)
+        incremento_combate = self._fnum(self.Contexto.get("combate_pokemon_tamanho_incremento_por_escala"), 0.15)
+        tamanho_por_regra = max(0.4, base_combate + (max(0.0, float(self.Escala)) * max(0.01, incremento_combate)))
+        tamanho_bruto = self._fnum(estado.get("tamanho_tiles", bruto.get("tamanho_tiles", tamanho_por_regra)), tamanho_por_regra)
+        return max(0.4, tamanho_bruto if tamanho_bruto > 0.0 else tamanho_por_regra)
+
     @classmethod
     def _norm(cls, chave: object) -> str:
         base = "".join(ch for ch in str(chave or "").strip().lower() if ch.isalnum())
@@ -169,7 +186,10 @@ class PokemonBatalha:
             "slot_ativo": int(self.SlotAtivo),
             "fora_de_combate": bool(self.ForaDeCombate),
             "posicao": [round(self.Posicao[0], 4), round(self.Posicao[1], 4)],
+            "posicao_anterior": [round(self.PosicaoAnterior[0], 4), round(self.PosicaoAnterior[1], 4)],
+            "velocidade_atual_tiles_tick": round(self.VelocidadeAtualTilesTick, 4),
             "raio_colisao": round(self.RaioColisao, 4),
+            "tamanho_tiles": round(self.TamanhoTiles, 4),
             "peso": round(self.Peso, 4),
             "escala": int(self.Escala),
             "tipos": list(self.Tipos),
@@ -178,11 +198,15 @@ class PokemonBatalha:
             "energia": round(self.Energia, 4),
             "energia_max": round(self.EnergiaMax, 4),
             "barreira": round(self.Barreira, 4),
+            "atributos_base": {ch: round(float(v), 4) for ch, v in self.AtributosBase.items()},
             "atributos": {ch: round(float(v), 4) for ch, v in self.AtributosAtuais.items()},
             "variacoes_fixas": {ch: round(float(v), 4) for ch, v in self.VariacoesFixas.items() if abs(float(v)) > 1e-9},
+            "variacoes_temporarias": {ch: round(float(v), 4) for ch, v in self.VariacoesTemporarias.items() if abs(float(v)) > 1e-9},
+            "multiplicadores_temporarios": {ch: round(float(v), 4) for ch, v in self.MultiplicadoresTemporarios.items()},
             "efeitos": [dict(item) for item in self.Efeitos],
             "flags": dict(self.Flags),
             "habilidades": [deepcopy(item) for item in self.Habilidades],
+            "memorias": [deepcopy(item) for item in self.Memorias],
             "itens_build": [deepcopy(item) for item in self.ItensBuild],
         }
 
@@ -368,6 +392,8 @@ class PokemonBatalha:
         return {"status": "ok", "cura_bruta": round(bruto, 4), "cura_final": round(curado, 4), "vida_atual": round(self.VidaAtual, 4)}
 
     def GanharEnergia(self, valor: float, *, motivo: str = "") -> Dict[str, object]:
+        if self.ForaDeCombate or self.VidaAtual <= 0.0:
+            return {"status": "ignorado_morto", "ganho_bruto": 0.0, "ganho_final": 0.0, "energia": round(self.Energia, 4), "motivo": str(motivo or "")}
         ganho_bruto = max(0.0, float(valor))
         ganho_final = ganho_bruto * float(self.MultiplicadoresTemporarios.get("energia_ganho", 1.0))
         antes = self.Energia
@@ -544,6 +570,9 @@ class PokemonBatalha:
 
     def FimTurno(self, *, sistema=None, tick: int = 0) -> List[Dict[str, object]]:
         eventos: List[Dict[str, object]] = []
+        if self.ForaDeCombate or self.VidaAtual <= 0.0:
+            self.Verifica()
+            return eventos
         vida_max = max(1.0, self.AtributosAtuais.get("Vida", 1.0))
         vida_perdida = max(0.0, vida_max - self.VidaAtual)
 
@@ -561,7 +590,9 @@ class PokemonBatalha:
                 eventos.append(self.ReceberCura(vida_perdida * 0.05 * 1.3, origem=self, motivo="Abencoado"))
 
         energia_turno = self.obter_atributo("Ene")
-        eventos.append(self.GanharEnergia(energia_turno, motivo="FimTurno"))
+        detalhe_energia = self.GanharEnergia(energia_turno, motivo="FimTurno")
+        if float(detalhe_energia.get("ganho_final", 0.0) or 0.0) > 0.0:
+            eventos.append(detalhe_energia)
         self.Verifica()
         return eventos
 

@@ -30,6 +30,7 @@ class SistemaBatalha:
         self.Rng = random.Random(f"{self.BatalhaId}:{self.ClienteDono}")
 
         self.PokemonsPorId: Dict[str, PokemonBatalha] = {}
+        self.ApelidosPokemon: Dict[str, str] = {}
         self.Lados: Dict[str, Dict[str, object]] = {
             "jogador": {"todos": [], "ativos": [], "reservas": [], "cliente_id": str(client_id)},
             "inimigo": {"todos": [], "ativos": [], "reservas": [], "cliente_id": str(self.Contexto.get("client_id_inimigo") or "ia")},
@@ -201,12 +202,14 @@ class SistemaBatalha:
                 pokemon = PokemonBatalha(
                     bruto,
                     lado=lado,
+                    contexto=self.Contexto,
                     posicao=posicoes_ativos[indice] if indice < len(posicoes_ativos) else (0.0, 0.0),
                     ativo=True,
                     slot_time=indice,
                     slot_ativo=indice,
                 )
                 self.PokemonsPorId[pokemon.Uid] = pokemon
+                self._registrar_aliases_pokemon(pokemon, bruto)
                 lado_estado["todos"].append(pokemon.Uid)
                 lado_estado["ativos"].append(pokemon.Uid)
 
@@ -214,14 +217,32 @@ class SistemaBatalha:
                 pokemon = PokemonBatalha(
                     bruto,
                     lado=lado,
+                    contexto=self.Contexto,
                     posicao=(-10.0, -10.0),
                     ativo=False,
                     slot_time=indice,
                     slot_ativo=-1,
                 )
                 self.PokemonsPorId[pokemon.Uid] = pokemon
+                self._registrar_aliases_pokemon(pokemon, bruto)
                 lado_estado["todos"].append(pokemon.Uid)
                 lado_estado["reservas"].append(pokemon.Uid)
+
+    def _registrar_aliases_pokemon(self, pokemon: PokemonBatalha, bruto: Dict[str, object]) -> None:
+        estado = bruto.get("estado") if isinstance(bruto.get("estado"), dict) else {}
+        candidatos = {
+            pokemon.Uid,
+            bruto.get("uid"),
+            bruto.get("id"),
+            bruto.get("ID"),
+            estado.get("uid"),
+            estado.get("id"),
+            estado.get("ID"),
+        }
+        for candidato in candidatos:
+            chave = str(candidato or "").strip()
+            if chave:
+                self.ApelidosPokemon[chave] = pokemon.Uid
 
     def listar_pokemons(self) -> List[PokemonBatalha]:
         return list(self.PokemonsPorId.values())
@@ -235,7 +256,14 @@ class SistemaBatalha:
         return saida
 
     def obter_pokemon(self, pokemon_id: object) -> PokemonBatalha | None:
-        return self.PokemonsPorId.get(str(pokemon_id or ""))
+        chave = str(pokemon_id or "").strip()
+        if not chave:
+            return None
+        pokemon = self.PokemonsPorId.get(chave)
+        if pokemon is not None:
+            return pokemon
+        canonico = self.ApelidosPokemon.get(chave, "")
+        return self.PokemonsPorId.get(canonico)
 
     def lado_do_cliente(self, client_id: str) -> str:
         client = str(client_id or "")
@@ -295,11 +323,12 @@ class SistemaBatalha:
             reserva.Posicao = posicoes[indice]
         return {"status": "ok", "saiu": executor.Uid, "entrou": reserva.Uid, "slot": indice}
 
-    def avancar_turno(self, ultimo_log: Dict[str, object] | None = None) -> None:
+    def avancar_turno(self, ultimo_log: Dict[str, object] | None = None, *, tick_global_final: int | None = None) -> None:
         if isinstance(ultimo_log, dict):
             self.UltimoLogTurno = dict(ultimo_log)
             self.LogsTurnos.append(dict(ultimo_log))
-            self.TickGlobal = max(int(self.TickGlobal), int(ultimo_log.get("tick_final", self.TickGlobal)))
+        if tick_global_final is not None:
+            self.TickGlobal = max(int(self.TickGlobal), int(tick_global_final))
         self.TurnoAtual += 1
         self.JogadasPendentes.clear()
 
@@ -312,8 +341,8 @@ class SistemaBatalha:
             "todos_ids": [str(uid) for uid in list(dados.get("todos") or [])],
         }
 
-    def snapshot(self) -> Dict[str, object]:
-        return {
+    def snapshot(self, *, incluir_metadados: bool = True) -> Dict[str, object]:
+        snapshot = {
             "batalha_id": self.BatalhaId,
             "tipo": self.Tipo,
             "turno_atual": int(self.TurnoAtual),
@@ -322,6 +351,8 @@ class SistemaBatalha:
             "arena": dict(self.ArenaAtual),
             "jogador": self.estado_lado("jogador"),
             "inimigo": self.estado_lado("inimigo"),
-            "historico_tamanho": len(self.HistoricoJogadas),
-            "ultimo_log_turno": dict(self.UltimoLogTurno or {}),
         }
+        if incluir_metadados:
+            snapshot["historico_tamanho"] = len(self.HistoricoJogadas)
+            snapshot["ultimo_log_turno"] = dict(self.UltimoLogTurno or {})
+        return snapshot

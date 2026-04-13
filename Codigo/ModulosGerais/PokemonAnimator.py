@@ -1,11 +1,77 @@
 from __future__ import annotations
 
 import math
+import re
+import unicodedata
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import pygame
 
 Vector2 = Tuple[float, float]
+
+EFEITOS_ATAQUE_FPS: Dict[str, float] = {
+    'LabaredaMultipla': 31.25,
+    'Corte': 10.2,
+    'BolhasVerdes': 20,
+    'CorteDourado': 10.87,
+    'ChuvaVermelha': 31.25,
+    'ChuvaBrilhante': 33.33,
+    'Agua': 23.81,
+    'AtemporalRosa': 40,
+    'BarreiraCelular': 12.5,
+    'ChicoteMultiplo': 13.89,
+    'CorteDuploRoxo': 33.33,
+    'CorteMagico': 25,
+    'CorteRicocheteadoRoxo': 8.93,
+    'CorteRosa': 25,
+    'DomoVerde': 11.76,
+    'EnergiaAzul': 15.38,
+    'Engrenagem': 8.7,
+    'EspiralAzul': 22.22,
+    'Estouro': 10.31,
+    'EstouroMagico': 20,
+    'EstouroVermelho': 21.74,
+    'Explosao': 22.22,
+    'ExplosaoPedra': 10.87,
+    'ExplosaoVerde': 8.93,
+    'ExplosaoVermelha': 33.33,
+    'ExplosaoRoxa': 9.52,
+    'FacasAzuis': 35.71,
+    'FacasBrancas': 26.32,
+    'FacasColoridas': 31.25,
+    'FacasRosas': 40,
+    'FeixeMagenta': 23.81,
+    'FeixeRoxo': 10.42,
+    'FluxoAzul': 15.38,
+    'Fogo': 10.53,
+    'Fumaça': 28.57,
+    'GasRoxo': 12.82,
+    'Garra': 12.5,
+    'HexagonoLaminas': 27.78,
+    'ImpactoRochoso': 8.7,
+    'Karate': 11.11,
+    'LuaAmarela': 55.56,
+    'MagiaAzul': 38.46,
+    'MagiaMagenta': 20.83,
+    'MarcaBrilhosa': 26.32,
+    'MarcaAmarela': 19.23,
+    'MarcaAzul': 26.32,
+    'Mordida': 8.7,
+    'MultiplasFacas': 27.78,
+    'OrbesRoxos': 35.71,
+    'PedaçoColorido': 26.32,
+    'RaioAzul': 83.33,
+    'RajadaAmarela': 28.57,
+    'RasgoMagenta': 38.46,
+    'RasgosRosa': 35.71,
+    'RedemoinhoAzul': 26.32,
+    'RedemoinhoCosmico': 10.53,
+    'SuperDescarga': 12.2,
+    'SuperNova': 31.25,
+    'TirosAmarelos': 40,
+    'TornadoAgua': 25.64
+}
 
 
 def _clamp(valor: float, minimo: float, maximo: float) -> float:
@@ -18,13 +84,30 @@ def _ease_out_back(t: float) -> float:
     return 1.0 + c3 * ((t - 1.0) ** 3) + c1 * ((t - 1.0) ** 2)
 
 
+def _normalizar_nome_efeito(nome: str) -> str:
+    texto = unicodedata.normalize('NFKD', str(nome or '').strip().casefold())
+    texto = ''.join(caractere for caractere in texto if unicodedata.category(caractere) != 'Mn')
+    texto = ''.join(caractere for caractere in texto if caractere.isalnum())
+    for sufixo in ('frames', 'frame'):
+        if texto.endswith(sufixo) and len(texto) > len(sufixo):
+            texto = texto[:-len(sufixo)]
+            break
+    return texto
+
+
 class PokemonAnimator:
+    _PASTA_EFEITOS_ATAQUE: Path | None = None
+    _INDICE_EFEITOS_ATAQUE: Dict[str, Path] = {}
+    _CACHE_FRAMES_EFEITO: Dict[str, List[pygame.Surface]] = {}
+    _CACHE_FRAMES_ESCALADOS: Dict[Tuple[str, int], List[pygame.Surface]] = {}
+
     def __init__(self, pokemon) -> None:
         self.Pokemon = pokemon
         self._ultimo_tick = pygame.time.get_ticks()
         self._flashes: List[Dict[str, object]] = []
         self._cartuchos: List[Dict[str, object]] = []
         self._setas: List[Dict[str, object]] = []
+        self._efeitos_ataque: List[Dict[str, object]] = []
         self._movimento: Dict[str, object] | None = None
 
     def atualizar(self) -> None:
@@ -35,9 +118,11 @@ class PokemonAnimator:
         self._atualizar_flashes(dt)
         self._atualizar_cartuchos(dt)
         self._atualizar_setas(dt)
+        self._atualizar_efeitos_ataque(dt)
         self._atualizar_movimento(dt)
 
     def renderizar(self, tela: pygame.Surface, camera) -> None:
+        self._desenhar_efeitos_ataque(tela, camera)
         self._desenhar_flash(tela, camera)
         self._desenhar_setas(tela, camera)
         self._desenhar_cartuchos(tela, camera)
@@ -86,6 +171,46 @@ class PokemonAnimator:
             'velocidade': velocidade,
         }
 
+    def sofrer_ataque_efeito(
+        self,
+        nome_efeito: str,
+        *,
+        escala: float = 1.35,
+        loops: int = 1,
+        offset_tiles: Vector2 = (0.0, 0.0),
+    ) -> bool:
+        frames = self._obter_frames_efeito(nome_efeito)
+        if not frames:
+            return False
+
+        fps = float(EFEITOS_ATAQUE_FPS.get(nome_efeito, EFEITOS_ATAQUE_FPS.get(str(nome_efeito).strip(), 24.0)))
+        self._efeitos_ataque.append(
+            {
+                'nome': str(nome_efeito),
+                'tempo': 0.0,
+                'fps': max(1.0, fps),
+                'duracao': (len(frames) / max(1.0, fps)) * max(1, int(loops)),
+                'escala': max(0.05, float(escala)),
+                'offset_tiles': (float(offset_tiles[0]), float(offset_tiles[1])),
+            }
+        )
+        return True
+
+    def SofrerAtaqueEfeito(
+        self,
+        nome_efeito: str,
+        *,
+        escala: float = 1.35,
+        loops: int = 1,
+        offset_tiles: Vector2 = (0.0, 0.0),
+    ) -> bool:
+        return self.sofrer_ataque_efeito(
+            nome_efeito,
+            escala=escala,
+            loops=loops,
+            offset_tiles=offset_tiles,
+        )
+
     def esta_movendo(self) -> bool:
         return self._movimento is not None
 
@@ -115,6 +240,14 @@ class PokemonAnimator:
             if float(seta['tempo']) < float(seta['duracao']):
                 novos.append(seta)
         self._setas = novos
+
+    def _atualizar_efeitos_ataque(self, dt: float) -> None:
+        novos = []
+        for efeito in self._efeitos_ataque:
+            efeito['tempo'] = float(efeito['tempo']) + dt
+            if float(efeito['tempo']) < float(efeito['duracao']):
+                novos.append(efeito)
+        self._efeitos_ataque = novos
 
     def _atualizar_movimento(self, dt: float) -> None:
         if self._movimento is None:
@@ -160,6 +293,133 @@ class PokemonAnimator:
                     'offset_x_tiles': offset,
                 }
             )
+
+    @classmethod
+    def _resolver_pasta_efeitos_ataque(cls) -> Path | None:
+        if cls._PASTA_EFEITOS_ATAQUE is not None and cls._PASTA_EFEITOS_ATAQUE.exists():
+            return cls._PASTA_EFEITOS_ATAQUE
+
+        arquivo_atual = Path(__file__).resolve()
+        candidatos = []
+        for base in [arquivo_atual.parent, *arquivo_atual.parents]:
+            candidatos.append(base / 'Recursos' / 'Visual' / 'AtaquesGifs')
+        candidatos.append(Path(r'C:\Users\euleo\OneDrive\Documentos\GitHub\Pokemon-Global-Server-Definitivo\Recursos\Visual\AtaquesGifs'))
+
+        for candidato in candidatos:
+            if candidato.exists():
+                cls._PASTA_EFEITOS_ATAQUE = candidato
+                return candidato
+        return None
+
+    @staticmethod
+    def _chave_ordenacao_frame(caminho: Path) -> tuple:
+        partes = re.split(r'(\d+)', caminho.stem.casefold())
+        chave = []
+        for parte in partes:
+            if parte.isdigit():
+                chave.append((0, int(parte)))
+            else:
+                chave.append((1, parte))
+        return tuple(chave)
+
+    @classmethod
+    def _obter_pasta_efeito(cls, nome_efeito: str) -> Path | None:
+        pasta = cls._resolver_pasta_efeitos_ataque()
+        if pasta is None:
+            return None
+
+        if not cls._INDICE_EFEITOS_ATAQUE:
+            for subpasta in pasta.iterdir():
+                if subpasta.is_dir():
+                    cls._INDICE_EFEITOS_ATAQUE[_normalizar_nome_efeito(subpasta.name)] = subpasta
+
+        return cls._INDICE_EFEITOS_ATAQUE.get(_normalizar_nome_efeito(nome_efeito))
+
+    @classmethod
+    def _carregar_frames_efeito(cls, nome_efeito: str) -> List[pygame.Surface]:
+        chave = _normalizar_nome_efeito(nome_efeito)
+        if chave in cls._CACHE_FRAMES_EFEITO:
+            return cls._CACHE_FRAMES_EFEITO[chave]
+
+        pasta_efeito = cls._obter_pasta_efeito(nome_efeito)
+        if pasta_efeito is None:
+            cls._CACHE_FRAMES_EFEITO[chave] = []
+            return []
+
+        extensoes_validas = {'.png', '.webp', '.jpg', '.jpeg', '.bmp', '.gif'}
+        arquivos_frame = [
+            arquivo
+            for arquivo in pasta_efeito.iterdir()
+            if arquivo.is_file() and arquivo.suffix.casefold() in extensoes_validas
+        ]
+        arquivos_frame.sort(key=cls._chave_ordenacao_frame)
+
+        frames: List[pygame.Surface] = []
+        for arquivo in arquivos_frame:
+            try:
+                frames.append(pygame.image.load(str(arquivo)).convert_alpha())
+            except pygame.error:
+                continue
+
+        cls._CACHE_FRAMES_EFEITO[chave] = frames
+        return frames
+
+    @classmethod
+    def _obter_frames_efeito(cls, nome_efeito: str) -> List[pygame.Surface]:
+        return cls._carregar_frames_efeito(nome_efeito)
+
+    @classmethod
+    def _obter_frames_efeito_escalados(
+        cls,
+        nome_efeito: str,
+        tamanho_alvo_px: int,
+    ) -> List[pygame.Surface]:
+        chave_nome = _normalizar_nome_efeito(nome_efeito)
+        chave_cache = (chave_nome, int(tamanho_alvo_px))
+        if chave_cache in cls._CACHE_FRAMES_ESCALADOS:
+            return cls._CACHE_FRAMES_ESCALADOS[chave_cache]
+
+        frames_originais = cls._obter_frames_efeito(nome_efeito)
+        if not frames_originais:
+            cls._CACHE_FRAMES_ESCALADOS[chave_cache] = []
+            return []
+
+        frames_escalados: List[pygame.Surface] = []
+        tamanho_alvo_px = max(8, int(tamanho_alvo_px))
+        for frame in frames_originais:
+            largura, altura = frame.get_size()
+            maior_dimensao = max(1, largura, altura)
+            fator = tamanho_alvo_px / float(maior_dimensao)
+            nova_largura = max(1, int(round(largura * fator)))
+            nova_altura = max(1, int(round(altura * fator)))
+            frames_escalados.append(pygame.transform.smoothscale(frame, (nova_largura, nova_altura)))
+
+        cls._CACHE_FRAMES_ESCALADOS[chave_cache] = frames_escalados
+        return frames_escalados
+
+    def _desenhar_efeitos_ataque(self, tela: pygame.Surface, camera) -> None:
+        if not self._efeitos_ataque:
+            return
+
+        centro_x, centro_y = self.Pokemon.centro_tela(camera)
+        diametro_px = max(8, int(round(self.Pokemon.raio_px(camera) * 2)))
+
+        for efeito in self._efeitos_ataque:
+            nome = str(efeito['nome'])
+            fps = max(1.0, float(efeito['fps']))
+            tempo = float(efeito['tempo'])
+            escala = max(0.05, float(efeito['escala']))
+            offset_x_tiles, offset_y_tiles = efeito['offset_tiles']
+            tamanho_alvo_px = max(8, int(round(diametro_px * escala)))
+            frames = self._obter_frames_efeito_escalados(nome, tamanho_alvo_px)
+            if not frames:
+                continue
+
+            indice_frame = min(len(frames) - 1, int(tempo * fps) % len(frames))
+            frame = frames[indice_frame]
+            x = centro_x + int(float(offset_x_tiles) * getattr(camera, 'TilePx', 40))
+            y = centro_y + int(float(offset_y_tiles) * getattr(camera, 'TilePx', 40))
+            tela.blit(frame, frame.get_rect(center=(x, y)))
 
     def _desenhar_flash(self, tela: pygame.Surface, camera) -> None:
         if not self._flashes:

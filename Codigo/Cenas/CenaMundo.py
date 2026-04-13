@@ -29,6 +29,35 @@ from Codigo.Prefabs.Texto import Texto
 
 
 class CenaMundo:
+    def _snapshot_player_atual(self, jogo) -> dict | None:
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        if player is None:
+            return None
+        base = deepcopy(jogo.INFO.get("PlayerDadosServer")) if isinstance(jogo.INFO.get("PlayerDadosServer"), dict) else {}
+        estado_base = base.get("estado") if isinstance(base.get("estado"), dict) else {}
+        player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}) if self.ControladorMundo is not None else {}
+        estado_payload = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
+        estado = {
+            **estado_base,
+            **estado_payload,
+            "angulo": float(getattr(player, "AnguloOlhar", estado_payload.get("angulo", estado_base.get("angulo", 0.0))) or 0.0),
+        }
+        inventario = getattr(player, "Inventario", None)
+        perfil = getattr(player, "Perfil", None)
+        slot_selecionado = int(getattr(inventario, "SlotSelecionado", base.get("slot_selecionado", 0)) or 0) if inventario is not None else int(base.get("slot_selecionado", 0) or 0)
+        return {
+            **base,
+            "id": int(getattr(player, "Id", base.get("id", 0)) or 0),
+            "nome": str(getattr(player, "Nome", base.get("nome", base.get("usuario", ""))) or ""),
+            "usuario": str(getattr(player, "Nome", base.get("usuario", base.get("nome", ""))) or ""),
+            "skin": str(getattr(player, "NomeSkin", base.get("skin", "1.png")) or "1.png"),
+            "posicao": [float(player.Posicao[0]), float(player.Posicao[1])],
+            "estado": estado,
+            "perfil": perfil.serializar() if perfil is not None and hasattr(perfil, "serializar") else deepcopy(base.get("perfil", {})),
+            "inventario": inventario.serializar() if inventario is not None and hasattr(inventario, "serializar") else deepcopy(base.get("inventario", {})),
+            "slot_selecionado": slot_selecionado,
+        }
+
     def Inicializar(self, JOGO):
         self.Abertura = AbrirIris
         self.Fechamento = FecharIris
@@ -371,6 +400,9 @@ class CenaMundo:
 
     def Finalizar(self, JOGO):
         JOGO.INFO.pop("MundoTelaSobreposta", None)
+        snapshot_player = self._snapshot_player_atual(JOGO)
+        if isinstance(snapshot_player, dict):
+            JOGO.INFO["PlayerDadosServer"] = snapshot_player
         if int(self._npc_interacao_id or 0) > 0:
             self._finalizar_dialogo_npc(JOGO)
         if self.Terminal is not None:

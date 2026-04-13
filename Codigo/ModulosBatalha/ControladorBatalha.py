@@ -28,6 +28,8 @@ class ControladorBatalha:
         self.PokemonSelecionado: PokemonBatalha | None = None
         self._provedor_reservas = None
         self._rodada_atual = 1
+        self._ultima_resposta_inicio_servidor = None
+        self._ultima_resposta_turno_servidor = None
         self._inicializar_times()
 
     def _inicializar_times(self) -> None:
@@ -117,7 +119,130 @@ class ControladorBatalha:
     def selecionar_por_mouse(self, mouse_tela_px, camera) -> PokemonBatalha | None:
         return self.selecionar_pokemon(self.pokemon_no_ponto(mouse_tela_px, camera))
 
+    @staticmethod
+    def _uid_pokemon(pokemon) -> str:
+        if pokemon is None:
+            return ""
+        uid = str(getattr(pokemon, "Uid", "") or "")
+        if uid:
+            return uid
+        dados = getattr(pokemon, "Dados", {}) if hasattr(pokemon, "Dados") else {}
+        if isinstance(dados, dict):
+            return str(dados.get("uid") or dados.get("id") or dados.get("ID") or "")
+        return ""
+
+    def _mapa_existentes(self) -> Dict[str, PokemonBatalha]:
+        mapa: Dict[str, PokemonBatalha] = {}
+        for pokemon in self.PokemonsAliados + self.PokemonsInimigos + self.PokemonsReservaAliadosObj:
+            uid = self._uid_pokemon(pokemon)
+            if uid and uid not in mapa:
+                mapa[uid] = pokemon
+        return mapa
+
+    @staticmethod
+    def _posicao_dict(dados: Dict[str, object], fallback) -> tuple[float, float]:
+        pos = dados.get("posicao")
+        if isinstance(pos, (list, tuple)) and len(pos) == 2:
+            return float(pos[0]), float(pos[1])
+        return float(fallback[0]), float(fallback[1])
+
+    def _instanciar_ou_atualizar(self, dados: Dict[str, object], lado: str, posicao, existentes: Dict[str, PokemonBatalha], *, em_reserva: bool) -> PokemonBatalha:
+        uid = str(dados.get("uid") or dados.get("id") or dados.get("ID") or "")
+        pokemon = existentes.pop(uid, None) if uid else None
+        if pokemon is None:
+            pokemon = PokemonBatalha(dados, posicao=posicao, lado=lado, regras=self.Contexto)
+        pokemon.EmReserva = bool(em_reserva)
+        pokemon.atualizar(dados)
+        if em_reserva:
+            pokemon.Posicao = (float(posicao[0]), float(posicao[1]))
+        return pokemon
+
+    def atualizar_estado_servidor(self, retorno: Dict[str, object] | None = None) -> None:
+        if not isinstance(retorno, dict):
+            return
+        log = retorno.get("log") if isinstance(retorno.get("log"), dict) else {}
+        resultado = self.SistemaBatalha.resolver_estado_recebido(retorno, log)
+        if not resultado:
+            return
+
+        self.SistemaBatalha.atualizar(dados_servidor=resultado, log_servidor=log if isinstance(log, dict) else None)
+        self._rodada_atual = max(1, int(self.SistemaBatalha.TurnoAtual or self._rodada_atual))
+
+        selecionado_uid = self._uid_pokemon(self.PokemonSelecionado)
+        existentes = self._mapa_existentes()
+        centro = self.Contexto.get("centro") if isinstance(self.Contexto.get("centro"), (list, tuple)) and len(self.Contexto.get("centro")) == 2 else [40.0, 20.0]
+        arena_w = float(self.Contexto.get("arena_largura", 40) or 40)
+        arena_h = float(self.Contexto.get("arena_altura", 20) or 20)
+
+        dados_jogador = resultado.get("jogador") if isinstance(resultado.get("jogador"), dict) else {}
+        dados_inimigo = resultado.get("inimigo") if isinstance(resultado.get("inimigo"), dict) else {}
+        ativos_jogador = [dict(item) for item in list(dados_jogador.get("ativos") or []) if isinstance(item, dict)]
+        ativos_inimigo = [dict(item) for item in list(dados_inimigo.get("ativos") or []) if isinstance(item, dict)]
+        reservas_jogador = [dict(item) for item in list(dados_jogador.get("reservas") or []) if isinstance(item, dict)]
+        reservas_inimigo = [dict(item) for item in list(dados_inimigo.get("reservas") or []) if isinstance(item, dict)]
+
+        pos_aliados, pos_inimigos = pontos_lados_arena(
+            centro=(float(centro[0]), float(centro[1])),
+            largura=arena_w,
+            altura=arena_h,
+            total_aliados=len(ativos_jogador),
+            total_inimigos=len(ativos_inimigo),
+        )
+
+        self.PokemonsAliados = [
+            self._instanciar_ou_atualizar(
+                dados,
+                "jogador",
+                self._posicao_dict(dados, pos_aliados[indice] if indice < len(pos_aliados) else (0.0, 0.0)),
+                existentes,
+                em_reserva=False,
+            )
+            for indice, dados in enumerate(ativos_jogador)
+        ]
+        self.PokemonsInimigos = [
+            self._instanciar_ou_atualizar(
+                dados,
+                "inimigo",
+                self._posicao_dict(dados, pos_inimigos[indice] if indice < len(pos_inimigos) else (0.0, 0.0)),
+                existentes,
+                em_reserva=False,
+            )
+            for indice, dados in enumerate(ativos_inimigo)
+        ]
+
+        base_x = float(centro[0]) - (arena_w * 0.5) + 1.8
+        base_y = float(centro[1]) + (arena_h * 0.5) + 1.4
+        self.PokemonsReservaAliadosObj = []
+        for indice, dados in enumerate(reservas_jogador[:3]):
+            pos = (base_x + indice * 1.85, base_y)
+            self.PokemonsReservaAliadosObj.append(self._instanciar_ou_atualizar(dados, "jogador", pos, existentes, em_reserva=True))
+
+        self.PokemonsReservaAliados = list(reservas_jogador)
+        self.PokemonsReservaInimigos = list(reservas_inimigo)
+        self.Jogador.TimeCompleto = list(ativos_jogador) + list(reservas_jogador)
+        self.Inimigo.TimeCompleto = list(ativos_inimigo) + list(reservas_inimigo)
+        self.Jogador.PokemonsReserva = list(reservas_jogador)
+        self.Inimigo.PokemonsReserva = list(reservas_inimigo)
+        self.Jogador.definir_ativos(self.PokemonsAliados)
+        self.Inimigo.definir_ativos(self.PokemonsInimigos)
+        self.SistemaBatalha.definir_lados(self.PokemonsAliados, self.PokemonsInimigos)
+
+        mapa_atual = self._mapa_existentes()
+        self.PokemonSelecionado = mapa_atual.get(selecionado_uid) if selecionado_uid else None
+
+    def _sincronizar_respostas_servidor(self) -> None:
+        resposta_inicio = self.Contexto.get("batalha_servidor_inicio")
+        if isinstance(resposta_inicio, dict) and resposta_inicio is not self._ultima_resposta_inicio_servidor:
+            self._ultima_resposta_inicio_servidor = resposta_inicio
+            self.atualizar_estado_servidor(resposta_inicio)
+
+        resposta_turno = self.Contexto.get("batalha_servidor_ultimo_envio")
+        if isinstance(resposta_turno, dict) and resposta_turno is not self._ultima_resposta_turno_servidor:
+            self._ultima_resposta_turno_servidor = resposta_turno
+            self.atualizar_estado_servidor(resposta_turno)
+
     def atualizar(self, eventos, dt: float) -> None:
+        self._sincronizar_respostas_servidor()
         self.SistemaBatalha.atualizar(eventos, dt)
 
     def avancar_turno_basico(self) -> None:

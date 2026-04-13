@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from Codigo.Geradores.PokemonBatalha import PokemonBatalha
+from Codigo.ModulosGerais.PokemonAnimator import EFEITOS_ATAQUE_FPS
 
 
 class CameraEditor:
@@ -92,8 +93,17 @@ def desenhar_grade(tela: pygame.Surface, camera: CameraEditor) -> None:
     pygame.draw.line(tela, (62, 82, 118), (ox, 0), (ox, altura), 2)
 
 
-def criar_botoes(pokemon: PokemonBatalha) -> list[Botao]:
+def criar_botoes(pokemon: PokemonBatalha, estado_editor: dict) -> list[Botao]:
     animador = pokemon.Animador
+
+    def tocar_efeito_selecionado() -> None:
+        nome = estado_editor['efeitos'][estado_editor['indice_efeito']]
+        animador.SofrerAtaqueEfeito(nome)
+
+    def alterar_efeito(delta: int) -> None:
+        total = len(estado_editor['efeitos'])
+        estado_editor['indice_efeito'] = (estado_editor['indice_efeito'] + delta) % total
+
     return [
         Botao(pygame.Rect(24, 24, 170, 42), 'Tomar Dano', lambda: animador.tomar_dano(36)),
         Botao(pygame.Rect(204, 24, 170, 42), 'Tomar Cura', lambda: animador.tomar_cura(28)),
@@ -108,6 +118,9 @@ def criar_botoes(pokemon: PokemonBatalha) -> list[Botao]:
         Botao(pygame.Rect(744, 78, 170, 42), 'Mover Cima', lambda: animador.mover((0.0, -1.5), 3.2)),
         Botao(pygame.Rect(924, 78, 170, 42), 'Mover Baixo', lambda: animador.mover((0.0, 1.5), 3.2)),
         Botao(pygame.Rect(1104, 78, 120, 42), 'Centro', lambda: animador.mover((0.0, 0.0), 4.2)),
+        Botao(pygame.Rect(24, 132, 48, 42), '<', lambda: alterar_efeito(-1)),
+        Botao(pygame.Rect(82, 132, 270, 42), 'Tocar SofrerAtaqueEfeito', tocar_efeito_selecionado),
+        Botao(pygame.Rect(362, 132, 48, 42), '>', lambda: alterar_efeito(1)),
     ]
 
 
@@ -125,7 +138,11 @@ def main() -> None:
     if pokemon.Animador is None:
         raise RuntimeError('PokemonAnimator não foi carregado no PokemonBatalha.')
 
-    botoes = criar_botoes(pokemon)
+    estado_editor = {
+        'efeitos': sorted(EFEITOS_ATAQUE_FPS.keys()),
+        'indice_efeito': 0,
+    }
+    botoes = criar_botoes(pokemon, estado_editor)
     rodando = True
 
     while rodando:
@@ -145,6 +162,13 @@ def main() -> None:
                     pokemon.Animador.buffar()
                 elif evento.key == pygame.K_5:
                     pokemon.Animador.nerfar()
+                elif evento.key == pygame.K_6:
+                    nome = estado_editor['efeitos'][estado_editor['indice_efeito']]
+                    pokemon.Animador.SofrerAtaqueEfeito(nome)
+                elif evento.key == pygame.K_LEFT:
+                    estado_editor['indice_efeito'] = (estado_editor['indice_efeito'] - 1) % len(estado_editor['efeitos'])
+                elif evento.key == pygame.K_RIGHT:
+                    estado_editor['indice_efeito'] = (estado_editor['indice_efeito'] + 1) % len(estado_editor['efeitos'])
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 for botao in botoes:
                     if botao.clicar(evento.pos):
@@ -153,7 +177,7 @@ def main() -> None:
         tela.fill((18, 20, 28))
         desenhar_grade(tela, camera)
 
-        painel = pygame.Rect(16, 16, 1248, 118)
+        painel = pygame.Rect(16, 16, 1248, 172)
         pygame.draw.rect(tela, (24, 28, 38), painel, border_radius=14)
         pygame.draw.rect(tela, (64, 78, 106), painel, 2, border_radius=14)
 
@@ -163,12 +187,17 @@ def main() -> None:
 
         pokemon.renderizar(tela, camera, selecionado=True)
 
+        efeito_atual = estado_editor['efeitos'][estado_editor['indice_efeito']]
+        fps_atual = EFEITOS_ATAQUE_FPS.get(efeito_atual, 0.0)
+
         info_1 = fonte_info.render('Editor de animações do PokemonBatalha', True, (240, 244, 252))
-        info_2 = fonte.render('Teclas rápidas: 1 dano | 2 cura | 3 crítico | 4 buff | 5 nerf | ESC sair', True, (198, 206, 222))
+        info_2 = fonte.render('Teclas rápidas: 1 dano | 2 cura | 3 crítico | 4 buff | 5 nerf | 6 efeito | ← → troca efeito | ESC sair', True, (198, 206, 222))
         info_3 = fonte.render(f'Posição em tiles: ({pokemon.Posicao[0]:.2f}, {pokemon.Posicao[1]:.2f})  |  Diâmetro: {pokemon.DiametroTiles:.2f} tiles', True, (198, 206, 222))
-        tela.blit(info_1, (24, 136))
-        tela.blit(info_2, (24, 164))
-        tela.blit(info_3, (24, 188))
+        info_4 = fonte.render(f'Efeito atual: {efeito_atual}  |  FPS: {fps_atual:.2f}', True, (214, 220, 235))
+        tela.blit(info_1, (24, 196))
+        tela.blit(info_2, (24, 224))
+        tela.blit(info_3, (24, 248))
+        tela.blit(info_4, (24, 272))
 
         pygame.display.flip()
         relogio.tick(60)

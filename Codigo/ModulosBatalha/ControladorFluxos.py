@@ -41,14 +41,17 @@ class ControladorFluxos:
     def _id_combatente(self, pokemon) -> str:
         if pokemon is None:
             return ""
-        dados = getattr(pokemon, "Dados", {}) if hasattr(pokemon, "Dados") else {}
         bruto = None
+        uid_atual = getattr(pokemon, "Uid", None)
+        if uid_atual not in (None, ""):
+            bruto = uid_atual
+        dados = getattr(pokemon, "Dados", {}) if hasattr(pokemon, "Dados") else {}
         if isinstance(dados, dict):
-            bruto = dados.get("uid") or dados.get("id") or dados.get("ID")
+            bruto = bruto or dados.get("uid") or dados.get("id") or dados.get("ID")
         if bruto in (None, ""):
-            bruto = getattr(pokemon, "Uid", None) or getattr(pokemon, "Id", None)
+            bruto = getattr(pokemon, "Id", None)
         if bruto in (None, ""):
-            bruto = f"obj:{id(pokemon)}"
+            bruto = f"pokemon:temp:{id(pokemon)}"
         return str(bruto)
 
     @staticmethod
@@ -514,13 +517,14 @@ class ControladorFluxos:
             return
         self.preparar(ficha)
 
-    def pronto(self) -> None:
+    def pronto(self) -> str | None:
         jogadas_rede = []
         for item in self._montador.listar():
             jogadas_rede.append(
                 {
                     "id": int(item.get("id") or 0),
                     "executor_id": str(item.get("executor_id") or ""),
+                    "executor_nome": str(getattr(item.get("executor"), "Nome", "") or item.get("executor_nome") or ""),
                     "estilo": str(item.get("estilo") or ""),
                     "tipo_movimento": bool(item.get("tipo_movimento")),
                     "destino_mundo": list(item.get("destino_mundo")) if isinstance(item.get("destino_mundo"), (tuple, list)) else None,
@@ -532,14 +536,8 @@ class ControladorFluxos:
                     "ataque": dict(item.get("ataque")) if isinstance(item.get("ataque"), dict) else None,
                 }
             )
-        por_id = self._pokemon_por_id()
-        for jogada in self._montador.listar_referencias():
-            poke = por_id.get(str(jogada.get("executor_id") or ""))
-            if poke is None:
-                continue
-            custo = self._numero(jogada.get("custo"), 0.0)
-            poke.Energia = max(0.0, float(getattr(poke, "Energia", 0.0)) - custo)
         contexto = getattr(self._controlador, "Contexto", {}) if self._controlador is not None else {}
+        status = None
         if isinstance(contexto, dict):
             ip = str(contexto.get("server_ip") or "")
             client_id = str(contexto.get("client_id") or "")
@@ -551,15 +549,19 @@ class ControladorFluxos:
                     jogadas=jogadas_rede,
                 )
                 contexto["batalha_servidor_ultimo_envio"] = retorno
+                status = str(retorno.get("status") or "").strip().lower() if isinstance(retorno, dict) else None
                 batalha = retorno.get("batalha") if isinstance(retorno, dict) else {}
                 if isinstance(batalha, dict):
                     bid = str(batalha.get("batalha_id") or "")
                     if bid:
                         contexto["batalha_id_servidor"] = bid
+                if status == "erro":
+                    return status
+            else:
+                return None
         self._montador.limpar()
         self.cancelar_preparacao()
-        if hasattr(self._controlador, "avancar_turno_basico"):
-            self._controlador.avancar_turno_basico()
+        return status
 
     def atualizar_contexto(self, ataque_atual: Optional[dict]) -> None:
         self._ataque_atual = ataque_atual

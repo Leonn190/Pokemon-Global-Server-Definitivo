@@ -35,7 +35,10 @@ class ElementosHudBatalha:
         self._botao_pronto: Optional[Botao] = None
         self._barra_tempo = Barra((0, 0, 1, 1), texto="", valor=50, minimo=0, maximo=50, mostrar_rotulo=False, suavizacao=30.0)
         self._texto_rodada = Texto("Rodada 1", style={"size": 20, "align": "topleft", "outline": True, "outline_thickness": 2, "outline_color": (8, 12, 20), "shadow": False, "color": (245, 249, 255)})
-        self._tempo_restante_rodada = 50.0
+        self._tempo_total_rodada = 50.0
+        self._tempo_restante_rodada = self._tempo_total_rodada
+        self._rodada_referencia = int(getattr(self._controlador, "_rodada_atual", 1) or 1) if self._controlador is not None else 1
+        self._aguardando_resultado_rodada = False
 
     def _carregar_icone(self, lado: int) -> Optional[pygame.Surface]:
         caminho = Path("Recursos") / "Visual" / "Icones" / "Diversos" / "fugir.png"
@@ -114,7 +117,17 @@ class ElementosHudBatalha:
         self._fuga_pressao = max(0.0, self._fuga_pressao - queda)
 
     def _atualizar_tempo_rodada(self, dt: float) -> None:
+        if self._aguardando_resultado_rodada:
+            return
         self._tempo_restante_rodada = max(0.0, float(self._tempo_restante_rodada) - max(0.0, float(dt)))
+
+    def _sincronizar_tempo_rodada(self) -> None:
+        rodada_atual = int(getattr(self._controlador, "_rodada_atual", 1) or 1) if self._controlador is not None else 1
+        if rodada_atual == self._rodada_referencia:
+            return
+        self._rodada_referencia = rodada_atual
+        self._tempo_restante_rodada = self._tempo_total_rodada
+        self._aguardando_resultado_rodada = False
 
     def _desenhar_overlay_fuga(self, tela: pygame.Surface) -> None:
         if self._fuga_pressao <= 0.01:
@@ -140,7 +153,9 @@ class ElementosHudBatalha:
 
     def _confirmar_jogadas(self) -> None:
         if self._fluxos is not None:
-            self._fluxos.pronto()
+            status = self._fluxos.pronto()
+            if status in {"ok", "aguardando"}:
+                self._aguardando_resultado_rodada = True
 
     def _atualizar_animacao_ficha(self, dt: float):
         selecionado = getattr(self._controlador, "PokemonSelecionado", None)
@@ -156,9 +171,12 @@ class ElementosHudBatalha:
         self._garantir_layout(tela)
         if self._controlador is not None and hasattr(self._controlador, "Jogador"):
             self._controlador.Jogador.Controle.processar_eventos(eventos or [], self._controlador, self._ficha, self._fluxos)
+        self._sincronizar_tempo_rodada()
         self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)
         self._atualizar_tempo_rodada(dt)
+        if self._tempo_restante_rodada <= 0.0 and not self._aguardando_resultado_rodada:
+            self._confirmar_jogadas()
 
         if self._fluxos is not None:
             self._painel_jogada.sincronizar(self._fluxos.listar_jogadas(), self._fluxos.jogada_selecionada_id())

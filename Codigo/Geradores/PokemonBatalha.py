@@ -66,6 +66,25 @@ class PokemonBatalha:
         self.Posicao = (float(posicao[0]), float(posicao[1]))
         self.Lado = str(lado or "jogador")
         self.Regras = dict(regras or {})
+        self.Uid = str(self.Dados.get("uid") or self.Dados.get("id") or self.Dados.get("ID") or f"pokemon:temp:{id(self)}")
+        self.Ativo = True
+        self.SlotTime = 0
+        self.SlotAtivo = 0
+        self.ForaDeCombate = False
+        self.EmReserva = False
+        self.Barreira = 0.0
+        self.PosicaoAnterior = self.Posicao
+        self.VelocidadeAtualTilesTick = 0.0
+        self.TamanhoTiles = 0.0
+        self.RaioColisao = 0.0
+        self.AtributosBase: dict[str, float] = {}
+        self.AtributosAtuais: dict[str, float] = {}
+        self.VariacoesFixas: dict[str, float] = {}
+        self.VariacoesTemporarias: dict[str, float] = {}
+        self.MultiplicadoresTemporarios: dict[str, float] = {}
+        self.Flags: dict[str, object] = {}
+        self.Efeitos: List[Dict[str, object]] = []
+        self.Memorias: List[object] = []
 
         self._fontes = FichaPokemon._coletar_fontes(self.Dados)
         self._stats_brutos = self._coletar_stats_brutos()
@@ -110,6 +129,7 @@ class PokemonBatalha:
         for chave in self.Stats.keys():
             self.VariacoesAtributos[self._normalizar_chave_ficha(chave)] = 0.0
         self.Animador = PokemonAnimator(self) if PokemonAnimator is not None else None
+        self.atualizar(self.Dados)
 
     @staticmethod
     def _normalizar_chave_ficha(chave: str) -> str:
@@ -380,6 +400,94 @@ class PokemonBatalha:
 
     def atributos_texto_ataque(self) -> Dict[str, float]:
         return {str(chave): float(self.obter_valor_ficha(chave)) for chave in self.Stats.keys()}
+
+    def atualizar(self, dados_servidor: Dict[str, object] | None = None) -> None:
+        if not isinstance(dados_servidor, dict):
+            return
+
+        dados = dict(dados_servidor)
+        self.Dados.update(dados)
+        self.Uid = str(dados.get("uid") or dados.get("id") or dados.get("ID") or self.Uid or "")
+        self.Nome = str(dados.get("nome") or dados.get("Nome") or self.Nome)
+        self.Especie = str(dados.get("especie") or dados.get("Especie") or self.Especie)
+        self.Lado = str(dados.get("lado") or self.Lado)
+        self.Ativo = bool(dados.get("ativo", self.Ativo))
+        slot_time = dados.get("slot_time", self.SlotTime)
+        slot_ativo = dados.get("slot_ativo", self.SlotAtivo)
+        self.SlotTime = int(self.SlotTime if slot_time is None else slot_time)
+        self.SlotAtivo = int(self.SlotAtivo if slot_ativo is None else slot_ativo)
+        self.ForaDeCombate = bool(dados.get("fora_de_combate", self.ForaDeCombate))
+        self.Peso = self._numero(dados.get("peso", self.Peso), self.Peso)
+        self.Escala = max(0, int(round(self._numero(dados.get("escala", self.Escala), self.Escala))))
+        self.Barreira = self._numero(dados.get("barreira", self.Barreira), self.Barreira)
+        self.Tipos = [str(item).strip() for item in list(dados.get("tipos") or self.Tipos) if str(item).strip()]
+        self.ListaAtaques = [self._normalizar_ataque(item) or dict(item) for item in list(dados.get("habilidades") or dados.get("ataques") or self.ListaAtaques) if item]
+        self.ListaAtaques = [item for item in self.ListaAtaques if isinstance(item, dict)]
+        self.Habilidades = list(self.ListaAtaques)
+        self.ItensBuild = list(dados.get("itens_build") or dados.get("build") or self.ItensBuild or [])
+        self.Memorias = list(dados.get("memorias") or self.Memorias or [])
+        self.Efeitos = [dict(item) for item in list(dados.get("efeitos") or []) if isinstance(item, dict)]
+        self.Flags = dict(dados.get("flags") or self.Flags or {})
+        self.MultiplicadoresTemporarios = {
+            str(chave): float(valor)
+            for chave, valor in dict(dados.get("multiplicadores_temporarios") or self.MultiplicadoresTemporarios or {}).items()
+        }
+
+        posicao = dados.get("posicao")
+        if isinstance(posicao, (list, tuple)) and len(posicao) == 2:
+            self.Posicao = (float(posicao[0]), float(posicao[1]))
+        posicao_anterior = dados.get("posicao_anterior")
+        if isinstance(posicao_anterior, (list, tuple)) and len(posicao_anterior) == 2:
+            self.PosicaoAnterior = (float(posicao_anterior[0]), float(posicao_anterior[1]))
+
+        self.VelocidadeAtualTilesTick = self._numero(
+            dados.get("velocidade_atual_tiles_tick", self.VelocidadeAtualTilesTick),
+            self.VelocidadeAtualTilesTick,
+        )
+        base_tamanho = self._numero(
+            self.Regras.get('combate_pokemon_tamanho_diametro_base_tiles', self.Regras.get('pokemon_tamanho_diametro_base_tiles', 1.0)),
+            1.0,
+        )
+        incremento = self._numero(
+            self.Regras.get('combate_pokemon_tamanho_incremento_por_escala', self.Regras.get('pokemon_tamanho_incremento_por_escala', 0.1)),
+            0.1,
+        )
+        self.DiametroTiles = max(0.4, base_tamanho + max(0.0, float(self.Escala)) * max(0.01, incremento))
+        self.TamanhoTiles = max(0.0, self._numero(dados.get("tamanho_tiles", self.TamanhoTiles or self.DiametroTiles), self.DiametroTiles))
+        self.RaioColisao = max(0.0, self._numero(dados.get("raio_colisao", self.RaioColisao or (self.TamanhoTiles * 0.5)), self.TamanhoTiles * 0.5))
+
+        atributos_base_brutos = dict(dados.get("atributos_base") or {})
+        atributos_atuais_brutos = dict(dados.get("atributos") or {})
+        self.AtributosBase = {self._label_publico(chave): float(valor) for chave, valor in atributos_base_brutos.items()}
+        self.AtributosAtuais = {self._label_publico(chave): float(valor) for chave, valor in atributos_atuais_brutos.items()}
+        if self.AtributosBase:
+            self.Stats = dict(self.AtributosBase)
+        elif self.AtributosAtuais:
+            self.Stats = dict(self.AtributosAtuais)
+
+        self.VariacoesFixas = {self._label_publico(chave): float(valor) for chave, valor in dict(dados.get("variacoes_fixas") or {}).items()}
+        self.VariacoesTemporarias = {self._label_publico(chave): float(valor) for chave, valor in dict(dados.get("variacoes_temporarias") or {}).items()}
+        self.VariacoesAtributos = {}
+        for chave in set(self.Stats.keys()) | set(self.VariacoesFixas.keys()) | set(self.VariacoesTemporarias.keys()) | set(self.AtributosAtuais.keys()):
+            normalizada = self._normalizar_chave_ficha(chave)
+            if self.AtributosBase:
+                delta = float(self.VariacoesFixas.get(chave, 0.0)) + float(self.VariacoesTemporarias.get(chave, 0.0))
+            else:
+                delta = 0.0
+                self.Stats.setdefault(chave, float(self.AtributosAtuais.get(chave, self.Stats.get(chave, 0.0))))
+            self.VariacoesAtributos[normalizada] = delta
+
+        vida_max = dados.get("vida_max")
+        if vida_max is None and self.AtributosAtuais:
+            vida_max = self.AtributosAtuais.get("Vida")
+        self.VidaMax = max(1.0, self._numero(vida_max, self.VidaMax))
+        self.VidaAtual = max(0.0, min(self.VidaMax, self._numero(dados.get("vida_atual", self.VidaAtual), self.VidaAtual)))
+
+        energia_max = dados.get("energia_max")
+        if energia_max is None and self.AtributosAtuais:
+            energia_max = self.AtributosAtuais.get("Ene", self.EnergiaMax)
+        self.EnergiaMax = max(1.0, self._numero(energia_max, self.EnergiaMax))
+        self.Energia = max(0.0, min(self.EnergiaMax, self._numero(dados.get("energia", self.Energia), self.Energia)))
 
     @classmethod
     def _frames_especie(cls, especie: str) -> List[pygame.Surface]:

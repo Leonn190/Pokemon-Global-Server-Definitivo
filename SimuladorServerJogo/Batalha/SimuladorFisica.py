@@ -173,45 +173,107 @@ class SimuladorFisica:
         refletido = self._sub(direcao_n, self._mul(normal_n, 2.0 * produto))
         return self._normalizar(refletido)
 
-    def resolver_colisoes_pokemon(self, pokemon, velocidade_tiles_tick: float, tick: int) -> List[Dict[str, object]]:
+    def _vetor_velocidade_pokemon(self, pokemon) -> Vec2:
+        vetor = self._sub(getattr(pokemon, "Posicao", (0.0, 0.0)), getattr(pokemon, "PosicaoAnterior", (0.0, 0.0)))
+        magnitude = math.hypot(vetor[0], vetor[1])
+        if magnitude <= 1e-9:
+            return (0.0, 0.0)
+        return self._mul(self._normalizar(vetor), max(0.0, float(getattr(pokemon, "VelocidadeAtualTilesTick", magnitude) or magnitude)))
+
+    def _interseccao_segmento_circulo(self, inicio: Vec2, fim: Vec2, centro: Vec2, raio: float) -> Dict[str, object] | None:
+        d = self._sub(fim, inicio)
+        f = self._sub(inicio, centro)
+        a = self._dot(d, d)
+        if a <= 1e-9:
+            if self._dist(inicio, centro) <= float(raio):
+                normal = self._normalizar(self._sub(inicio, centro))
+                return {"t": 0.0, "ponto": inicio, "normal": normal}
+            return None
+
+        b = 2.0 * self._dot(f, d)
+        c = self._dot(f, f) - (float(raio) * float(raio))
+        discriminante = (b * b) - (4.0 * a * c)
+        if discriminante < 0.0:
+            return None
+
+        raiz = math.sqrt(max(0.0, discriminante))
+        candidatos = [(-b - raiz) / (2.0 * a), (-b + raiz) / (2.0 * a)]
+        for t in sorted(candidatos):
+            if 0.0 <= t <= 1.0:
+                ponto = self._somar(inicio, self._mul(d, t))
+                normal = self._normalizar(self._sub(ponto, centro))
+                return {"t": float(t), "ponto": ponto, "normal": normal}
+        return None
+
+    def resolver_colisoes_pokemon(self, pokemon, origem: Vec2, destino: Vec2, velocidade_tiles_tick: float, tick: int) -> List[Dict[str, object]]:
         eventos: List[Dict[str, object]] = []
+        melhor_evento: Dict[str, object] | None = None
         for outro in self._sistema.listar_pokemons():
             if outro is pokemon or outro.ForaDeCombate:
                 continue
-            if not self.circulos_colidem(pokemon.Posicao, pokemon.RaioColisao, outro.Posicao, outro.RaioColisao):
+            interseccao = self._interseccao_segmento_circulo(origem, destino, outro.Posicao, float(pokemon.RaioColisao) + float(outro.RaioColisao))
+            if interseccao is None:
                 continue
+            if melhor_evento is None or float(interseccao.get("t", 1.0)) < float(melhor_evento.get("t", 1.0)):
+                melhor_evento = {"outro": outro, **interseccao}
 
-            delta = self._sub(pokemon.Posicao, outro.Posicao)
-            dist = math.hypot(delta[0], delta[1])
-            normal = self._normalizar(delta if dist > 1e-9 else (1.0, 0.0))
-            sobreposicao = (pokemon.RaioColisao + outro.RaioColisao) - dist
-            if sobreposicao <= 0.0:
-                continue
+        if melhor_evento is None:
+            return eventos
 
-            momento_a = max(0.1, float(pokemon.Peso) * max(0.1, float(velocidade_tiles_tick)))
-            momento_b = max(0.1, float(outro.Peso) * max(0.1, float(getattr(outro, "VelocidadeAtualTilesTick", 0.05))))
-            total = max(0.1, momento_a + momento_b)
-            desloca_a = sobreposicao * (momento_b / total)
-            desloca_b = sobreposicao * (momento_a / total)
+        outro = melhor_evento["outro"]
+        normal = self._normalizar(tuple(melhor_evento.get("normal") or (1.0, 0.0)))
+        ponto = tuple(melhor_evento.get("ponto") or origem)
+        pokemon.Posicao = (float(ponto[0]), float(ponto[1]))
+        pokemon.PosicaoAnterior = origem
 
-            pokemon.Posicao = self._somar(pokemon.Posicao, self._mul(normal, desloca_a))
-            outro.Posicao = self._sub(outro.Posicao, self._mul(normal, desloca_b))
-            self.alinhar_pokemon_ao_campo(pokemon)
-            self.alinhar_pokemon_ao_campo(outro)
+        vetor_a = self._mul(self._normalizar(self._sub(destino, origem)), max(0.0, float(velocidade_tiles_tick)))
+        vetor_b = self._vetor_velocidade_pokemon(outro)
+        velocidade_relativa = max(0.05, abs(self._dot(self._sub(vetor_a, vetor_b), normal)))
 
-            dano_a = max(1.0, (float(outro.Peso) * max(0.1, float(getattr(outro, "VelocidadeAtualTilesTick", 0.05))) * 8.0) + (outro.obter_atributo("Atk") * 0.35))
-            dano_b = max(1.0, (float(pokemon.Peso) * max(0.1, float(velocidade_tiles_tick)) * 8.0) + (pokemon.obter_atributo("Atk") * 0.35))
-            eventos.append(
-                {
-                    "tipo": "colisao_pokemon",
-                    "tick": int(tick),
-                    "a": pokemon.Uid,
-                    "b": outro.Uid,
-                    "dano_a": round(dano_a, 2),
-                    "dano_b": round(dano_b, 2),
-                    "normal": [round(normal[0], 4), round(normal[1], 4)],
-                }
-            )
+        massa_a = max(0.2, float(getattr(pokemon, "Peso", 1.0) or 1.0))
+        massa_b = max(0.2, float(getattr(outro, "Peso", 1.0) or 1.0))
+        massa_total = max(0.4, massa_a + massa_b)
+        restitui = 0.35
+        deslocamento_base = max(0.25, velocidade_relativa * 6.0)
+        desloca_a = deslocamento_base * (massa_b / massa_total)
+        desloca_b = deslocamento_base * (massa_a / massa_total)
+        velocidade_a = max(0.03, velocidade_relativa * (massa_b / massa_total) * (1.0 + restitui))
+        velocidade_b = max(0.03, velocidade_relativa * (massa_a / massa_total) * (1.0 + restitui))
+
+        destino_a, _ = self.limitar_ao_campo(self._somar(pokemon.Posicao, self._mul(normal, desloca_a)), raio=pokemon.RaioColisao)
+        destino_b, _ = self.limitar_ao_campo(self._sub(outro.Posicao, self._mul(normal, desloca_b)), raio=outro.RaioColisao)
+
+        dano_em_b = max(1.0, (massa_a * max(0.1, float(velocidade_tiles_tick)) * 8.0) + (pokemon.obter_atributo("Atk") * 0.35))
+        dano_em_a = max(1.0, (massa_b * max(0.1, float(getattr(outro, "VelocidadeAtualTilesTick", 0.05) or 0.05)) * 8.0) + (outro.obter_atributo("Atk") * 0.35))
+
+        eventos.append(
+            {
+                "tipo": "colisao_pokemon",
+                "tick": int(tick),
+                "a": pokemon.Uid,
+                "b": outro.Uid,
+                "t": round(float(melhor_evento.get("t", 0.0)), 4),
+                "ponto": [round(pokemon.Posicao[0], 4), round(pokemon.Posicao[1], 4)],
+                "normal": [round(normal[0], 4), round(normal[1], 4)],
+                "velocidade_relativa": round(velocidade_relativa, 4),
+                "dano_em_a": round(dano_em_a, 4),
+                "dano_em_b": round(dano_em_b, 4),
+                "movimentos": [
+                    {
+                        "pokemon_id": pokemon.Uid,
+                        "origem": [round(pokemon.Posicao[0], 4), round(pokemon.Posicao[1], 4)],
+                        "destino": [round(destino_a[0], 4), round(destino_a[1], 4)],
+                        "velocidade": round(velocidade_a, 4),
+                    },
+                    {
+                        "pokemon_id": outro.Uid,
+                        "origem": [round(outro.Posicao[0], 4), round(outro.Posicao[1], 4)],
+                        "destino": [round(destino_b[0], 4), round(destino_b[1], 4)],
+                        "velocidade": round(velocidade_b, 4),
+                    },
+                ],
+            }
+        )
         return eventos
 
     def mover_pokemon_um_tick(self, pokemon, destino: Vec2, velocidade_tiles_tick: float, tick: int) -> Dict[str, object]:
@@ -230,10 +292,22 @@ class SimuladorFisica:
         passo = min(float(velocidade_tiles_tick), distancia_total)
         nova_posicao = self._somar(origem, self._mul(direcao, passo))
         pokemon.PosicaoAnterior = origem
-        pokemon.Posicao = nova_posicao
         pokemon.VelocidadeAtualTilesTick = float(velocidade_tiles_tick)
 
-        colisoes = []
+        colisoes = self.resolver_colisoes_pokemon(pokemon, origem, nova_posicao, velocidade_tiles_tick, tick)
+        if colisoes:
+            return {
+                "concluido": True,
+                "interrompido_por_colisao": True,
+                "origem": origem,
+                "destino_planejado": (float(destino[0]), float(destino[1])),
+                "destino": (float(pokemon.Posicao[0]), float(pokemon.Posicao[1])),
+                "distancia": round(self._dist(origem, pokemon.Posicao), 4),
+                "velocidade": round(float(velocidade_tiles_tick), 4),
+                "colisoes": colisoes,
+            }
+
+        pokemon.Posicao = nova_posicao
         normal_campo = self.alinhar_pokemon_ao_campo(pokemon)
         if abs(normal_campo[0]) > 1e-9 or abs(normal_campo[1]) > 1e-9:
             colisoes.append({"tipo": "parede_campo", "normal": [normal_campo[0], normal_campo[1]]})
@@ -247,13 +321,14 @@ class SimuladorFisica:
             pokemon.Posicao = self._somar(pokemon.Posicao, self._mul(normal, max(0.0, sobreposicao)))
             colisoes.append({"tipo": "objeto_campo", "objeto_id": objeto.get("id"), "normal": [normal[0], normal[1]]})
 
-        colisoes.extend(self.resolver_colisoes_pokemon(pokemon, velocidade_tiles_tick, tick))
         restante = self._dist(pokemon.Posicao, destino)
         return {
             "concluido": restante <= max(0.02, float(velocidade_tiles_tick) * 0.35),
             "origem": origem,
+            "destino_planejado": (float(destino[0]), float(destino[1])),
             "destino": (float(pokemon.Posicao[0]), float(pokemon.Posicao[1])),
             "distancia": round(passo, 4),
+            "velocidade": round(float(velocidade_tiles_tick), 4),
             "colisoes": colisoes,
         }
 

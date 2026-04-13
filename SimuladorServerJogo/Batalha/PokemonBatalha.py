@@ -4,8 +4,8 @@ import math
 from copy import deepcopy
 from typing import Dict, List, Tuple
 
-from SimuladorServerJogo.Batalha.PassivasEquipaveis import executar_passivas_equipaveis
-from SimuladorServerJogo.Batalha.PassivasHabilidades import executar_passivas_habilidades
+from SimuladorServerJogo.Logica.Executes.PassivasEquipaveis import executar_passivas_equipaveis
+from SimuladorServerJogo.Logica.Executes.PassivasHabilidades import executar_passivas_habilidades
 
 
 Vec2 = Tuple[float, float]

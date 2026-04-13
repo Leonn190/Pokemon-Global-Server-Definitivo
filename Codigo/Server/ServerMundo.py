@@ -6,10 +6,10 @@ import json
 import time
 
 from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
-from SimuladorServerJogo.Rotas.Ativador import processar_ativador_json
-from SimuladorServerJogo.Rotas.Atualizador import processar_atualizador_json
-from SimuladorServerJogo.Rotas.Entrada import processar_entrada_json
-from SimuladorServerJogo.Rotas.Terminal import processar_terminal_json
+from SimuladorServerJogo.Gerais.Rotas.Ativador import processar_ativador_json
+from SimuladorServerJogo.Gerais.Rotas.Atualizador import processar_atualizador_json
+from SimuladorServerJogo.Gerais.Rotas.Entrada import processar_entrada_json
+from SimuladorServerJogo.Gerais.Rotas.Terminal import processar_terminal_json
 
 
 def _erro_padrao(mensagem):

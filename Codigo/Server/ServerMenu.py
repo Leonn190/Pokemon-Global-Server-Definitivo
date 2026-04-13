@@ -1,7 +1,7 @@
 import json
 
-from SimuladorServerJogo.Rotas.Entrada import processar_entrada_json
-from SimuladorServerJogo.Rotas.ServerOperar import processar_operacao_json
+from SimuladorServerJogo.Gerais.Rotas.Entrada import processar_entrada_json
+from SimuladorServerJogo.Gerais.Rotas.ServerOperar import processar_operacao_json
 
 
 def _erro_padrao(mensagem):

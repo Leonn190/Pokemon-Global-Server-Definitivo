@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Dict, List
 
-from SimuladorServerJogo.Rotas.Atualizador import processar_atualizador_json
+from SimuladorServerJogo.Gerais.Rotas.Atualizador import processar_atualizador_json
 
 
 def _erro_padrao(mensagem: str) -> Dict[str, object]:

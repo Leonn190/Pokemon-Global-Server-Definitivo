@@ -6,7 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from SimuladorServerJogo.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado, materializar_pokemon
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado, materializar_pokemon
 
 ARQUIVO_POKEMONS = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Pokemons.csv"
 

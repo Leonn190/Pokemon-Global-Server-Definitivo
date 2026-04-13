@@ -4,7 +4,7 @@ import math
 import re
 from typing import Dict, List
 
-from SimuladorServerJogo.Batalha.FuncoesAtaques import executar_ponto_ataque
+from SimuladorServerJogo.Logica.Executes.FuncoesAtaques import executar_ponto_ataque
 from SimuladorServerJogo.Batalha.FraquezasResistencias import modificador_tipo as modificador_tipo_csv
 from SimuladorServerJogo.Batalha.IA.BotBatalha import BotBatalha
 from SimuladorServerJogo.Batalha.ObjetoBatalha import ObjetoBatalha

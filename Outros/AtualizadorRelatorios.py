@@ -1,39 +1,24 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 
 # ============================================================
 # CONFIGURAÇÃO MANUAL
 # ============================================================
-# Troque este valor sempre que quiser atualizar para um modelo novo.
-MODELO_ATUAL = "modelo_atual_v1"
-
-# Pasta dos relatórios antigos/originais.
+MODELO_ATUAL = 8
 PASTA_RELATORIOS_ORIGINAIS = "Outros/Relatorios"
-
-# Pasta onde serão gravados os relatórios regenerados.
 PASTA_RELATORIOS_ATUALIZADOS = "Outros/Relatorios atualizados"
-
-# Caminho do gerador moderno que será usado para regenerar tudo.
 CAMINHO_GERADOR_ATUAL = "Outros/GeradorRelatorios.py"
-
-# Se True, relatórios sem campo de modelo também serão atualizados.
 ATUALIZAR_SEM_MODELO = True
-
-# Se quiser limitar testes, coloque um número. Ex.: 3
-# None = sem limite.
 LIMITE_RELATORIOS: Optional[int] = None
-
-# Se True, mostra logs mais detalhados.
 MODO_VERBOSE = True
 
 
@@ -50,10 +35,13 @@ def vlog(msg: str) -> None:
 
 
 def agora_iso() -> str:
-    return datetime.now().isoformat(timespec="seconds")
+    return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
-def rodar(cmd: list[str], cwd: Path, check: bool = False) -> subprocess.CompletedProcess[str]:
+def rodar(cmd: list[str], cwd: Path, check: bool = False, env: Optional[Dict[str, str]] = None) -> subprocess.CompletedProcess[str]:
+    env_final = None
+    if env:
+        env_final = dict(**env)
     return subprocess.run(
         cmd,
         cwd=str(cwd),
@@ -61,6 +49,7 @@ def rodar(cmd: list[str], cwd: Path, check: bool = False) -> subprocess.Complete
         stderr=subprocess.PIPE,
         text=True,
         check=check,
+        env=env_final,
     )
 
 
@@ -79,6 +68,11 @@ def salvar_json(path: Path, data: Dict[str, Any]) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def salvar_texto(path: Path, texto: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(texto, encoding="utf-8")
+
+
 def parse_datetime_seguro(valor: str) -> Optional[datetime]:
     try:
         return datetime.fromisoformat(valor.replace("Z", "+00:00"))
@@ -89,7 +83,7 @@ def parse_datetime_seguro(valor: str) -> Optional[datetime]:
 # ============================================================
 # MODELO DO RELATÓRIO
 # ============================================================
-def extrair_modelo(relatorio: Optional[Dict[str, Any]]) -> Optional[str]:
+def extrair_modelo(relatorio: Optional[Dict[str, Any]]) -> Optional[Any]:
     if not isinstance(relatorio, dict):
         return None
 
@@ -112,12 +106,19 @@ def extrair_modelo(relatorio: Optional[Dict[str, Any]]) -> Optional[str]:
         )
 
     for item in candidatos:
+        if item is None:
+            continue
         if isinstance(item, str) and item.strip():
-            return item.strip()
+            texto = item.strip()
+            if texto.isdigit():
+                return int(texto)
+            return texto
+        if isinstance(item, (int, float)):
+            return int(item)
     return None
 
 
-def registrar_modelo(relatorio: Dict[str, Any], modelo: str) -> None:
+def registrar_modelo(relatorio: Dict[str, Any], modelo: Any) -> None:
     meta = relatorio.setdefault("meta", {})
     if not isinstance(meta, dict):
         meta = {}
@@ -131,24 +132,20 @@ def registrar_modelo(relatorio: Dict[str, Any], modelo: str) -> None:
 # DATA DO RELATÓRIO ANTIGO
 # ============================================================
 def extrair_data_relatorio(relatorio_path: Path, relatorio: Optional[Dict[str, Any]]) -> datetime:
-    # 1) tentar meta.criado_em
     if isinstance(relatorio, dict):
         meta = relatorio.get("meta")
         if isinstance(meta, dict):
-            criado_em = meta.get("criado_em")
-            if isinstance(criado_em, str):
-                dt = parse_datetime_seguro(criado_em)
-                if dt is not None:
-                    return dt
+            for chave in ("data_referencia", "criado_em", "data_relatorio_original"):
+                criado_em = meta.get(chave)
+                if isinstance(criado_em, str):
+                    dt = parse_datetime_seguro(criado_em)
+                    if dt is not None:
+                        return dt
 
-    # 2) tentar nome do arquivo: YYYY-MM-DD_HH-MM-SS.json
     try:
         return datetime.strptime(relatorio_path.stem, "%Y-%m-%d_%H-%M-%S")
     except Exception:
-        pass
-
-    # 3) fallback: mtime do arquivo
-    return datetime.fromtimestamp(relatorio_path.stat().st_mtime)
+        return datetime.fromtimestamp(relatorio_path.stat().st_mtime)
 
 
 # ============================================================
@@ -168,7 +165,6 @@ def validar_git(repo_root: Path) -> bool:
 
 
 def achar_commit_por_data(repo_root: Path, dt: datetime) -> Optional[str]:
-    # Usa o commit mais recente em ou antes do horário do relatório antigo.
     before = dt.strftime("%Y-%m-%d %H:%M:%S")
     proc = rodar(["git", "rev-list", "-n", "1", f"--before={before}", "HEAD"], cwd=repo_root)
     commit_hash = (proc.stdout or "").strip()
@@ -202,7 +198,7 @@ def info_commit(repo_root: Path, commit_hash: str) -> Dict[str, str]:
 # ============================================================
 # WORKTREE TEMPORÁRIO
 # ============================================================
-def criar_worktree_temporario(repo_root: Path, commit_hash: str) -> tuple[tempfile.TemporaryDirectory[str], Path]:
+def criar_worktree_temporario(repo_root: Path, commit_hash: str) -> Tuple[tempfile.TemporaryDirectory[str], Path]:
     tmp = tempfile.TemporaryDirectory(prefix="relatorio_rebuild_")
     worktree_dir = Path(tmp.name)
 
@@ -244,15 +240,33 @@ def localizar_json_gerado(relatorios_dir: Path, antes: set[str]) -> Optional[Pat
     return depois[0] if depois else None
 
 
+def localizar_md_gerado(relatorios_dir: Path, stem_json: str) -> Optional[Path]:
+    candidato = relatorios_dir / f"{stem_json}.md"
+    if candidato.exists():
+        return candidato
+    return None
+
+
+def localizar_pasta_imagens_gerada(relatorios_dir: Path, stem_json: str) -> Optional[Path]:
+    candidato = relatorios_dir / "Imagens" / stem_json
+    if candidato.exists() and candidato.is_dir():
+        return candidato
+    return None
+
+
 def rodar_gerador_moderno_no_snapshot(
     repo_root: Path,
     worktree_dir: Path,
-) -> Path:
+    data_referencia: datetime,
+) -> Tuple[Path, Optional[Path], Optional[Path]]:
     gerador_no_snapshot = copiar_gerador_moderno_para_snapshot(repo_root, worktree_dir)
     relatorios_dir_snapshot = worktree_dir / PASTA_RELATORIOS_ORIGINAIS
     relatorios_dir_snapshot.mkdir(parents=True, exist_ok=True)
 
     antes = {p.name for p in relatorios_dir_snapshot.glob("*.json")}
+
+    env = dict(os_environ_seguro())
+    env["RELATORIO_DATA_REFERENCIA_ISO"] = data_referencia.isoformat(timespec="seconds")
 
     proc = subprocess.run(
         [sys.executable, str(gerador_no_snapshot)],
@@ -261,6 +275,7 @@ def rodar_gerador_moderno_no_snapshot(
         stderr=subprocess.PIPE,
         text=True,
         check=False,
+        env=env,
     )
 
     if proc.returncode != 0:
@@ -273,7 +288,28 @@ def rodar_gerador_moderno_no_snapshot(
     if json_gerado is None:
         raise RuntimeError("O gerador rodou, mas nenhum JSON novo foi encontrado no snapshot.")
 
-    return json_gerado
+    md_gerado = localizar_md_gerado(relatorios_dir_snapshot, json_gerado.stem)
+    imagens_geradas = localizar_pasta_imagens_gerada(relatorios_dir_snapshot, json_gerado.stem)
+    return json_gerado, md_gerado, imagens_geradas
+
+
+def os_environ_seguro() -> Dict[str, str]:
+    import os
+    return dict(os.environ)
+
+
+# ============================================================
+# CÓPIA / AJUSTES DE ARTEFATOS
+# ============================================================
+def reescrever_referencias_imagens_md(texto: str, stem_original: str, stem_gerado: str) -> str:
+    return texto.replace(f"Imagens/{stem_gerado}/", f"Imagens/{stem_original}/")
+
+
+def copiar_pasta_imagens(origem: Path, destino: Path) -> None:
+    if destino.exists():
+        shutil.rmtree(destino)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(origem, destino)
 
 
 # ============================================================
@@ -282,8 +318,12 @@ def rodar_gerador_moderno_no_snapshot(
 def enriquecer_relatorio_atualizado(
     relatorio_gerado: Dict[str, Any],
     *,
+    repo_root: Path,
     nome_original: str,
-    modelo_original: Optional[str],
+    nome_md_original: str,
+    stem_original: str,
+    stem_gerado: str,
+    modelo_original: Optional[Any],
     data_original: datetime,
     commit_usado: Dict[str, str],
 ) -> Dict[str, Any]:
@@ -304,6 +344,26 @@ def enriquecer_relatorio_atualizado(
     meta["commit_reconstruido_autor"] = commit_usado.get("autor", "")
     meta["commit_reconstruido_mensagem"] = commit_usado.get("mensagem", "")
     meta["modo_reconstrucao"] = "commit_mais_recente_antes_da_data_do_relatorio"
+    meta["arquivo"] = nome_original
+    meta["arquivo_markdown"] = nome_md_original
+    meta["imagens_dir"] = f"Imagens/{stem_original}"
+    meta["repo"] = repo_root.name
+    meta["base_dir"] = str(repo_root)
+    meta["relatorios_dir"] = PASTA_RELATORIOS_ATUALIZADOS
+    meta["script"] = "Outros/AtualizadorRelatorios.py"
+    meta["script_gerador_modelo"] = CAMINHO_GERADOR_ATUAL
+
+    graficos = relatorio_gerado.get("graficos")
+    if isinstance(graficos, dict):
+        for chave, valor in list(graficos.items()):
+            if not isinstance(valor, str):
+                continue
+            valor = valor.replace(
+                f"Outros/Relatorios/Imagens/{stem_gerado}/",
+                f"Outros/Relatorios atualizados/Imagens/{stem_original}/",
+            )
+            valor = valor.replace(f"Imagens/{stem_gerado}/", f"Imagens/{stem_original}/")
+            graficos[chave] = valor
 
     return relatorio_gerado
 
@@ -318,7 +378,9 @@ def main() -> None:
 
     pasta_relatorios_origem = repo_root / PASTA_RELATORIOS_ORIGINAIS
     pasta_relatorios_atualizados = repo_root / PASTA_RELATORIOS_ATUALIZADOS
+    pasta_imagens_atualizadas = pasta_relatorios_atualizados / "Imagens"
     pasta_relatorios_atualizados.mkdir(parents=True, exist_ok=True)
+    pasta_imagens_atualizadas.mkdir(parents=True, exist_ok=True)
 
     if not validar_git(repo_root):
         return
@@ -378,23 +440,48 @@ def main() -> None:
         worktree_dir = None
         try:
             tmp, worktree_dir = criar_worktree_temporario(repo_root, commit_hash)
-            json_gerado = rodar_gerador_moderno_no_snapshot(repo_root, worktree_dir)
+            json_gerado, md_gerado, imagens_geradas = rodar_gerador_moderno_no_snapshot(repo_root, worktree_dir, data_relatorio)
+
             relatorio_novo = ler_json(json_gerado)
             if not isinstance(relatorio_novo, dict):
                 raise RuntimeError("JSON gerado é inválido ou não pôde ser lido.")
 
+            stem_original = relatorio_path.stem
+            nome_md_original = f"{stem_original}.md"
+
             relatorio_novo = enriquecer_relatorio_atualizado(
                 relatorio_novo,
+                repo_root=repo_root,
                 nome_original=relatorio_path.name,
+                nome_md_original=nome_md_original,
+                stem_original=stem_original,
+                stem_gerado=json_gerado.stem,
                 modelo_original=modelo_antigo,
                 data_original=data_relatorio,
                 commit_usado=commit_usado,
             )
 
-            destino = pasta_relatorios_atualizados / relatorio_path.name
-            salvar_json(destino, relatorio_novo)
+            destino_json = pasta_relatorios_atualizados / relatorio_path.name
+            salvar_json(destino_json, relatorio_novo)
+
+            if md_gerado and md_gerado.exists():
+                md_texto = md_gerado.read_text(encoding="utf-8", errors="ignore")
+                md_texto = reescrever_referencias_imagens_md(md_texto, stem_original=stem_original, stem_gerado=json_gerado.stem)
+                destino_md = pasta_relatorios_atualizados / nome_md_original
+                salvar_texto(destino_md, md_texto)
+                vlog(f"  - Markdown atualizado: {destino_md}")
+            else:
+                vlog("  - Aviso: markdown não foi encontrado no snapshot gerado.")
+
+            if imagens_geradas and imagens_geradas.exists():
+                destino_imagens = pasta_imagens_atualizadas / stem_original
+                copiar_pasta_imagens(imagens_geradas, destino_imagens)
+                vlog(f"  - Imagens atualizadas: {destino_imagens}")
+            else:
+                vlog("  - Aviso: pasta de imagens não foi encontrada no snapshot gerado.")
+
             atualizados += 1
-            vlog(f"  - Atualizado com sucesso em: {destino}")
+            vlog(f"  - Atualizado com sucesso em: {destino_json}")
 
         except Exception as e:
             falhas += 1

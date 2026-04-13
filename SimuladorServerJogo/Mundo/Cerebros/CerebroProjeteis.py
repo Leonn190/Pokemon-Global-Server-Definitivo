@@ -6,10 +6,10 @@ import math
 import random
 from typing import Dict, Tuple
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.LoaderRegras import calcular_parametros_projetil
 from SimuladorServerJogo.Gerais.EstadoServidor import obter_personagem_para_entrada
-from SimuladorServerJogo.Controle.AutoridadeCaptura import resolver_captura, resolver_fruta
+from SimuladorServerJogo.Mundo.AutoridadeCaptura import resolver_captura, resolver_fruta
 
 Vector2 = Tuple[float, float]
 

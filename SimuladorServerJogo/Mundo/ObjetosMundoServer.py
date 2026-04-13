@@ -7,7 +7,7 @@ from typing import Dict, Optional, Tuple
 
 from Codigo.ModulosGerais.Colisor import Colisor
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_pokemons
-from SimuladorServerJogo.Controle.AutoridadeCaptura import resolver_captura, resolver_fruta
+from SimuladorServerJogo.Mundo.AutoridadeCaptura import resolver_captura, resolver_fruta
 
 Vector2 = Tuple[float, float]
 _REGRAS_POKEMONS = carregar_regras_pokemons()

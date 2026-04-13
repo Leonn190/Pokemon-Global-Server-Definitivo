@@ -7,9 +7,9 @@ import random
 from collections import deque
 from typing import Deque, Dict, Iterable, Tuple
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, XpMundoServer
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, XpMundoServer
 
 Vector2 = Tuple[float, float]
 

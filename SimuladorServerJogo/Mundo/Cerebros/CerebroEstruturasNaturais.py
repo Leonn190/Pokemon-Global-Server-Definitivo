@@ -9,9 +9,9 @@ import uuid
 from pathlib import Path
 from typing import Dict, Tuple
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import obter_personagem_para_entrada, registrar_estrutura_natural_tocada_estado
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, ItemMundoServer
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, ItemMundoServer
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_estruturas_naturais
 
 _RAIZ = Path(__file__).resolve().parents[3]

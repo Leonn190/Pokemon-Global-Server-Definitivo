@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 import time
 
-from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
+from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 
 
 class TiqueServidor:
@@ -62,7 +62,7 @@ class TiqueServidor:
 
 
     def _loop_ticks(self) -> None:
-        from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
+        from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
         proximo_tick = time.perf_counter()
         while True:
             with self._lock:
@@ -102,7 +102,7 @@ class TiqueServidor:
             time.sleep(max(0.0, proximo_tick - time.perf_counter()))
 
     def bombear_ate_agora(self, max_ticks: int = 8) -> int:
-        from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
+        from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 
         with self._lock:
             if not self._modo_manual:

@@ -2,7 +2,7 @@ import json
 import time
 
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, desconectar_client
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import adicionar_personagem, obter_personagem_para_entrada, snapshot_estado, obter_regras_cliente
 
 

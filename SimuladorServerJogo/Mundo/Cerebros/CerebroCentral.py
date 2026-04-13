@@ -9,22 +9,22 @@ import math
 from collections import deque
 from typing import Deque, Dict, Set, Tuple
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, BauServer, ItemMundoServer, PokemonServer, XpMundoServer
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, BauServer, ItemMundoServer, PokemonServer, XpMundoServer
 from SimuladorServerJogo.Gerais.EstadoServidor import obter_personagem_para_entrada
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_runtime_servidor
 from SimuladorServerJogo.Gerais.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import materializar_pokemon
 
-from SimuladorServerJogo.Controle.Cerebros.CerebroBaus import CerebroBaus
-from SimuladorServerJogo.Controle.Cerebros.CerebroPokemons import CerebroPokemons
-from SimuladorServerJogo.Controle.Cerebros.CerebroProjeteis import CerebroProjeteis
-from SimuladorServerJogo.Controle.Cerebros.CerebroItensMundo import CerebroItensMundo
-from SimuladorServerJogo.Controle.Cerebros.CerebroEstruturasNaturais import CerebroEstruturasNaturais
-from SimuladorServerJogo.Controle.Cerebros.CerebroXpMundo import CerebroXpMundo
-from SimuladorServerJogo.Controle.Cerebros.CerebroNPCs import CerebroNPCs
-from SimuladorServerJogo.Controle.Cerebros.CerebroTempo import CerebroTempo
-from SimuladorServerJogo.Controle.ServicoInventario import ServicoInventario
+from SimuladorServerJogo.Mundo.Cerebros.CerebroBaus import CerebroBaus
+from SimuladorServerJogo.Mundo.Cerebros.CerebroPokemons import CerebroPokemons
+from SimuladorServerJogo.Mundo.Cerebros.CerebroProjeteis import CerebroProjeteis
+from SimuladorServerJogo.Mundo.Cerebros.CerebroItensMundo import CerebroItensMundo
+from SimuladorServerJogo.Mundo.Cerebros.CerebroEstruturasNaturais import CerebroEstruturasNaturais
+from SimuladorServerJogo.Mundo.Cerebros.CerebroXpMundo import CerebroXpMundo
+from SimuladorServerJogo.Mundo.Cerebros.CerebroNPCs import CerebroNPCs
+from SimuladorServerJogo.Mundo.Cerebros.CerebroTempo import CerebroTempo
+from SimuladorServerJogo.Mundo.ServicoInventario import ServicoInventario
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]

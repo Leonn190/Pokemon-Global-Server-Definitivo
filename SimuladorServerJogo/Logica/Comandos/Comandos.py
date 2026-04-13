@@ -5,13 +5,13 @@ import random
 import time
 from pathlib import Path
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import snapshot_estado, atualizar_inventario_personagem, atualizar_perfil_personagem, atualizar_posicao_personagem
-from SimuladorServerJogo.Controle.ObjetosMundoServer import BauServer
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import BauServer
 from SimuladorServerJogo.Gerais.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_server
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff
-from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
+from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 
 _RAIZ = Path(__file__).resolve().parents[2]
 

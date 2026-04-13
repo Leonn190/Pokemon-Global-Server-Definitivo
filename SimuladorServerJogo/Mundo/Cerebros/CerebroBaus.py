@@ -6,8 +6,8 @@ import time
 import math
 from typing import Dict, Set, Tuple
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, BauServer
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, BauServer
 from SimuladorServerJogo.Gerais.EstadoServidor import obter_personagem_para_entrada
 
 Chunk = Tuple[int, int]

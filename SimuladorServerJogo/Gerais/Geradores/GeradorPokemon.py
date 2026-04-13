@@ -7,7 +7,7 @@ import random
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import PokemonServer
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_pokemons
 
 ARQUIVO_POKEMONS = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Pokemons.csv"

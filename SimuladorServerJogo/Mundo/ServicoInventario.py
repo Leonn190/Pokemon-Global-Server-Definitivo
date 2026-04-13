@@ -6,7 +6,7 @@ import csv
 from pathlib import Path
 from typing import Dict, Optional
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_inventario_personagem
 
 _RAIZ = Path(__file__).resolve().parents[2]

@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from Codigo.ModulosGerais.Colisor import Colisor
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer
 from SimuladorServerJogo.Gerais.EstadoServidor import carregar_npcs_vendedores_estado, salvar_npcs_vendedores_estado
 from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import carregar_estado_mundo
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado

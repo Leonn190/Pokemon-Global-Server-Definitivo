@@ -6,8 +6,8 @@ import random
 import math
 from typing import Set, Tuple
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.ObjetosMundoServer import PokemonServer, BauServer
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import PokemonServer, BauServer
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_server
 
 Vector2 = Tuple[float, float]

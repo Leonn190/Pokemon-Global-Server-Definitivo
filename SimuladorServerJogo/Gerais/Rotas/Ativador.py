@@ -8,11 +8,11 @@ import threading
 import time
 from typing import Dict, List, Set, Tuple
 
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
-from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
-from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
-from SimuladorServerJogo.Controle.Cerebros.CerebroEstadios import CEREBRO_ESTADIOS
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
+from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
+from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
+from SimuladorServerJogo.Mundo.Cerebros.CerebroEstadios import CEREBRO_ESTADIOS
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]

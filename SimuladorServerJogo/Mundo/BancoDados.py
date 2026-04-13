@@ -15,7 +15,7 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import (
     PASTA_WORLD_CHUNKS,
     carregar_estado_mundo,
 )
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, EstadioServer
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, EstadioServer
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_estruturas_naturais
 from Codigo.ModulosGerais.Colisor import Colisor
 

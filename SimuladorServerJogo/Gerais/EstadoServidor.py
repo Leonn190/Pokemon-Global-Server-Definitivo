@@ -12,8 +12,8 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import (
     obter_posicao_spawn,
     salvar_estado_mundo,
 )
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
 from SimuladorServerJogo.Gerais.LoaderRegras import (
     carregar_regras_cliente_mundo,
@@ -506,7 +506,7 @@ def _apagar_mundo():
 
 
 def _worker_apagar_mundo():
-    from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
+    from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
     try:
         with _LOCK:
             _set_geracao(em_andamento=True, progresso=3, mensagem="Apagando mundo", erro="", operacao="remocao")
@@ -608,7 +608,7 @@ def salvar_npcs_vendedores_estado(npcs: dict, force: bool = False) -> None:
 
 
 def definir_ligado(ativo):
-    from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
+    from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
     with _LOCK:
         desejado = bool(ativo)
         if desejado and not _ESTADO["mundo_existente"]:

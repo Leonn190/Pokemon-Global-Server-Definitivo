@@ -7,12 +7,12 @@ import time
 from typing import Dict
 
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, diff_seq_atual, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
-from SimuladorServerJogo.Controle.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Controle.ObjetosMundoServer import AtorServer, criar_objeto_mundo_server
+from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, criar_objeto_mundo_server
 from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
-from SimuladorServerJogo.Controle.PacotesTick import PACOTES_TICK
-from SimuladorServerJogo.Controle.Cerebros.CerebroCentral import CEREBRO
-from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
+from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
+from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
+from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_pokemons
 from SimuladorServerJogo.Batalha.GerenciadorBatalhas import GERENCIADOR_BATALHAS
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import subir_nivel_pokemon

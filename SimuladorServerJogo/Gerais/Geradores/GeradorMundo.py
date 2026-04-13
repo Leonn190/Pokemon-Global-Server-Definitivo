@@ -19,13 +19,13 @@ BLOCO_TAMANHO_PX = 32
 CHUNK_BLOCOS = max(1, int(carregar_regras_mundo().get("ChunkTiles", 10)))
 
 PASTA_SERVIDOR = Path(__file__).resolve().parent
-RAIZ_REPOSITORIO = PASTA_SERVIDOR.parent
+RAIZ_REPOSITORIO = PASTA_SERVIDOR.parents[2]
 PASTA_ESTADO_MUNDO = RAIZ_REPOSITORIO / "EstadoMundo"
 ARQUIVO_MUNDO = PASTA_ESTADO_MUNDO / "MundoEstado.json"
 ARQUIVO_WORLD_META = PASTA_ESTADO_MUNDO / "world_meta.json"
 PASTA_WORLD_CHUNKS = PASTA_ESTADO_MUNDO / "chunks"
 ARQUIVO_FOTO_MUNDO_JAVA = PASTA_ESTADO_MUNDO / "world_foto.png"
-ARQUIVO_REGRAS_GERACAO_FONTE = RAIZ_REPOSITORIO / "Regras" / "Geracao.json"
+ARQUIVO_REGRAS_GERACAO_FONTE = RAIZ_REPOSITORIO / "SimuladorServerJogo" / "Logica" / "Regras" / "Geracao.json"
 ARQUIVO_JAVA = PASTA_SERVIDOR / "WorldGenerator.java"
 ARQUIVO_CLASS = PASTA_SERVIDOR / "WorldGenerator.class"
 

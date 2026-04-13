@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import tomllib
 
-_BASE_REGRAS = Path(__file__).resolve().parents[1] / "Regras"
+_BASE_REGRAS = Path(__file__).resolve().parents[1] / "Logica" / "Regras"
 
 
 def _ler_toml(nome: str) -> Dict[str, Any]:

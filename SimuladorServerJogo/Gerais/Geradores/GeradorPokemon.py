@@ -10,9 +10,9 @@ from typing import Dict, List, Optional
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import PokemonServer
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_pokemons
 
-ARQUIVO_POKEMONS = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Pokemons.csv"
-ARQUIVO_ATAQUES = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Ataques.csv"
-ARQUIVO_ITENS = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Itens.csv"
+ARQUIVO_POKEMONS = Path(__file__).resolve().parents[3] / "Dados" / "Pokemon Global Server - Pokemons.csv"
+ARQUIVO_ATAQUES = Path(__file__).resolve().parents[3] / "Dados" / "Pokemon Global Server - Ataques.csv"
+ARQUIVO_ITENS = Path(__file__).resolve().parents[3] / "Dados" / "Pokemon Global Server - Itens.csv"
 STATS_BASE = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int", "CrD", "CrC"]
 STATS_VARIAVEIS_IV = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"]
 _REGRAS_POKEMON = carregar_regras_pokemons()

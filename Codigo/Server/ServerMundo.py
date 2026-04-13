@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 
-from SimuladorServerJogo.Controle.TiqueServidor import TIQUE_SERVIDOR
+from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.Rotas.Ativador import processar_ativador_json
 from SimuladorServerJogo.Gerais.Rotas.Atualizador import processar_atualizador_json
 from SimuladorServerJogo.Gerais.Rotas.Entrada import processar_entrada_json

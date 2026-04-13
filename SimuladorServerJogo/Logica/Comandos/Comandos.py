@@ -13,7 +13,7 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_se
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 
-_RAIZ = Path(__file__).resolve().parents[2]
+_RAIZ = Path(__file__).resolve().parents[3]
 
 
 def _split_args(tokens):

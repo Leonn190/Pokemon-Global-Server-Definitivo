@@ -21,7 +21,7 @@ _TAMANHO_BAU_POR_QTD = {
     4: 1.50,
 }
 
-PASTA_DADOS = Path(__file__).resolve().parents[2] / "Dados"
+PASTA_DADOS = Path(__file__).resolve().parents[3] / "Dados"
 ARQUIVO_BAUS = PASTA_DADOS / "Pokemon Global Server - Baus.csv"
 ARQUIVO_ITENS = PASTA_DADOS / "Pokemon Global Server - Itens.csv"
 

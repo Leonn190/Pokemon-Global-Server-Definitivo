@@ -282,11 +282,7 @@ final class GeradorBiomas {
     }
 
     Biome classifyMacroBiome(int x, int y) {
-        double latitude = 1.0 - Math.abs((y / (double) (height - 1)) * 2.0 - 1.0);
-        double temperature = ctx.clamp01(
-            ctx.sampleNoise(rules.macroTemperature, x, y) * rules.macroTemperatureNoiseWeight
-                + latitude * rules.macroTemperatureLatitudeWeight
-        );
+        double temperature = climateTemperatureAt(x, y);
         double moisture = ctx.sampleNoise(rules.macroMoisture, x, y);
         double magic = ctx.sampleNoise(rules.macroMagic, x, y);
         double volcanic = ctx.sampleNoise(rules.macroVolcanic, x, y);
@@ -300,13 +296,47 @@ final class GeradorBiomas {
             if (!definition.matches(temperature, moisture, primary)) {
                 continue;
             }
-            double score = definition.score(temperature, moisture, primary);
+            double score = definition.score(temperature, moisture, primary)
+                + biomeRegionalBonus(biome, x, y, temperature, moisture, magic, volcanic, swamp);
             if (score > bestScore) {
                 bestScore = score;
                 best = biome;
             }
         }
         return best;
+    }
+
+    private double climateTemperatureAt(int x, int y) {
+        double northSouthPolar = Math.abs((y / (double) (height - 1)) * 2.0 - 1.0);
+        return ctx.clamp01(
+            ctx.sampleNoise(rules.macroTemperature, x, y) * rules.macroTemperatureNoiseWeight
+                + northSouthPolar * rules.macroTemperatureLatitudeWeight
+        );
+    }
+
+    private double biomeRegionalBonus(Biome biome, int x, int y, double temperature, double moisture, double magic, double volcanic, double swamp) {
+        double polar = polarBandFactor(y);
+        double central = centralBandFactor(y);
+        return switch (biome) {
+            case DESERT -> central * 0.55 + Math.max(0.0, temperature - 0.58) * 0.35 - moisture * 0.10;
+            case SNOW -> polar * 0.95 + Math.max(0.0, 0.40 - temperature) * 0.25;
+            case MAGIC -> Math.max(0.0, magic - 0.58) * 1.10;
+            case VOLCANIC -> Math.max(0.0, volcanic - 0.56) * 1.20 + Math.max(0.0, temperature - 0.60) * 0.20;
+            case SWAMP -> Math.max(0.0, swamp - 0.48) * 1.00 + Math.max(0.0, moisture - 0.64) * 0.55;
+            case FOREST -> Math.max(0.0, moisture - 0.45) * 0.10;
+            case FIELD -> 0.0;
+            default -> 0.0;
+        };
+    }
+
+    private double polarBandFactor(int y) {
+        double t = Math.abs((y / (double) (height - 1)) * 2.0 - 1.0);
+        return ctx.clamp01((t - 0.30) / 0.70);
+    }
+
+    private double centralBandFactor(int y) {
+        double t = Math.abs((y / (double) (height - 1)) * 2.0 - 1.0);
+        return ctx.clamp01(1.0 - t / 0.72);
     }
 
     private double selectPrimary(ClimateSource source, double temperature, double moisture, double magic, double volcanic, double swamp) {
@@ -392,7 +422,7 @@ final class GeradorBiomas {
                     if (cy < macroGridHeight - 1) visitNeighbor(cx, cy + 1, biome, visited, queue);
                 }
 
-                if (regionSize >= minCells) {
+                if (regionSize >= minCellsForBiome(biome, minCells)) {
                     continue;
                 }
 
@@ -402,6 +432,15 @@ final class GeradorBiomas {
                 }
             }
         }
+    }
+
+
+    private int minCellsForBiome(Biome biome, int defaultMinCells) {
+        return switch (biome) {
+            case MAGIC, VOLCANIC, SWAMP, SNOW -> Math.max(2, defaultMinCells / 2);
+            case DESERT -> Math.max(3, defaultMinCells - 1);
+            default -> defaultMinCells;
+        };
     }
 
     private void visitNeighbor(int mx, int my, Biome biome, boolean[] visited, ArrayDeque<Integer> queue) {

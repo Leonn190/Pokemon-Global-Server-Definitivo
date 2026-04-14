@@ -81,6 +81,7 @@ final class TerrainRules {
     final double riverSourceMinHeight;
     final int riverSourceMargin;
     final int riverSourceNearWaterRadius;
+    final int riverSourceMinDistance;
     final int riverMaxAttemptsPerSource;
     final double riverMomentum;
     final double riverDownhillBias;
@@ -133,6 +134,7 @@ final class TerrainRules {
         double riverSourceMinHeight,
         int riverSourceMargin,
         int riverSourceNearWaterRadius,
+        int riverSourceMinDistance,
         int riverMaxAttemptsPerSource,
         double riverMomentum,
         double riverDownhillBias,
@@ -181,6 +183,7 @@ final class TerrainRules {
         this.riverSourceMinHeight = riverSourceMinHeight;
         this.riverSourceMargin = riverSourceMargin;
         this.riverSourceNearWaterRadius = riverSourceNearWaterRadius;
+        this.riverSourceMinDistance = riverSourceMinDistance;
         this.riverMaxAttemptsPerSource = riverMaxAttemptsPerSource;
         this.riverMomentum = riverMomentum;
         this.riverDownhillBias = riverDownhillBias;
@@ -250,6 +253,7 @@ final class TerrainRules {
             rivers.reqDouble("source_min_height"),
             rivers.reqInt("source_margin"),
             rivers.reqInt("source_near_water_radius"),
+            rivers.reqInt("source_min_distance"),
             rivers.reqInt("max_attempts_per_source"),
             rivers.reqDouble("momentum"),
             rivers.reqDouble("downhill_bias"),
@@ -356,6 +360,7 @@ final class GeradorTerreno {
     void generateRivers() {
         int created = 0;
         int attempts = 0;
+        List<int[]> acceptedSources = new ArrayList<>();
         while (created < rules.riverSources && attempts < rules.riverSources * rules.riverMaxAttemptsPerSource) {
             attempts++;
             int x = ctx.boundedRandomInt(rules.riverSourceMargin, ctx.width - rules.riverSourceMargin, ctx.seed + 91L * attempts);
@@ -370,7 +375,11 @@ final class GeradorTerreno {
             if (ctx.nearWater(x, y, rules.riverSourceNearWaterRadius)) {
                 continue;
             }
+            if (nearRiverSource(acceptedSources, x, y, rules.riverSourceMinDistance)) {
+                continue;
+            }
             if (carveRiverFrom(x, y)) {
+                acceptedSources.add(new int[]{x, y});
                 created++;
             }
         }
@@ -437,6 +446,19 @@ final class GeradorTerreno {
             }
         }
         return touchedOcean || riverSteps > Math.max(12, rules.riverMaxLength / 14);
+    }
+
+
+    private boolean nearRiverSource(List<int[]> sources, int x, int y, int minDistance) {
+        long rr = (long) minDistance * minDistance;
+        for (int[] source : sources) {
+            long dx = x - source[0];
+            long dy = y - source[1];
+            if (dx * dx + dy * dy <= rr) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int[] chooseNextRiverStep(int x, int y, int prevDx, int prevDy, int step) {

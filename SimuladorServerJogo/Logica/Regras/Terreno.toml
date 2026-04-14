@@ -69,24 +69,25 @@ scale = 130.0
 seed_offset = 7777
 
 [rivers]
-sources = 420
-max_length = 1400
+sources = 120
+max_length = 1100
 width = 2
 min_width = 2
 max_width = 6
 terminal_extra_width = 3
 source_min_height = 0.66
 source_margin = 200
-source_near_water_radius = 10
-max_attempts_per_source = 50
-momentum = 0.85
+source_near_water_radius = 28
+source_min_distance = 260
+max_attempts_per_source = 120
+momentum = 0.80
 downhill_bias = 7.5
-meander_strength = 0.95
+meander_strength = 0.78
 uphill_penalty = 10.0
-search_radius = 10
-width_grow_every = 180
-bank_blend_radius = 2
-mouth_length = 4
+search_radius = 14
+width_grow_every = 260
+bank_blend_radius = 1
+mouth_length = 3
 
 [pois.gym]
 count = 20

@@ -19,15 +19,21 @@ BLOCO_TAMANHO_PX = 32
 PASTA_SERVIDOR = Path(__file__).resolve().parent
 PASTA_MODULO_SIMULADOR = PASTA_SERVIDOR.parents[1]
 RAIZ_REPOSITORIO = PASTA_SERVIDOR.parents[2]
-PASTA_MUNDO_SERVIDOR = PASTA_MODULO_SIMULADOR / "Mundo"
-PASTA_ESTADO_MUNDO = PASTA_MUNDO_SERVIDOR / "EstadoMundo"
-PASTA_ESTADO_MUNDO_LEGADO = RAIZ_REPOSITORIO / "EstadoMundo"
+PASTA_ESTADO_MUNDO = PASTA_MODULO_SIMULADOR / "EstadoMundo"
+PASTAS_ESTADO_MUNDO_LEGADAS = (
+    PASTA_MODULO_SIMULADOR / "Mundo" / "EstadoMundo",
+    RAIZ_REPOSITORIO / "EstadoMundo",
+)
 PASTA_WORLD_CHUNKS = PASTA_ESTADO_MUNDO / "chunks"
 PASTA_REGRAS = RAIZ_REPOSITORIO / "SimuladorServerJogo" / "Logica" / "Regras"
 ARQUIVO_REGRAS_TERRENO_FONTE = PASTA_REGRAS / "Terreno.toml"
 ARQUIVO_REGRAS_BIOMAS_FONTE = PASTA_REGRAS / "Biomas.toml"
 
 PASTA_JAVA = PASTA_SERVIDOR / "Java"
+PASTA_JAVA_CLASSES = PASTA_JAVA / "classes"
+PASTAS_JAVA_CLASSES_LEGADAS = (
+    PASTA_JAVA / ".class",
+)
 ARQUIVOS_JAVA = [
     PASTA_JAVA / "WorldGenerator.java",
     PASTA_JAVA / "GeradorTerreno.java",
@@ -35,7 +41,7 @@ ARQUIVOS_JAVA = [
     PASTA_JAVA / "GeradorObjetos.java",
     PASTA_JAVA / "GeradorImagens.java",
 ]
-ARQUIVO_CLASS_PRINCIPAL = PASTA_JAVA / "WorldGenerator.class"
+ARQUIVO_CLASS_PRINCIPAL = PASTA_JAVA_CLASSES / "WorldGenerator.class"
 
 LARGURA_BLOCOS = 0
 ALTURA_BLOCOS = 0
@@ -68,8 +74,9 @@ CHUNK_BLOCOS = _obter_chunk_blocos()
 def _pasta_estado_mundo_existente() -> Path:
     if PASTA_ESTADO_MUNDO.exists():
         return PASTA_ESTADO_MUNDO
-    if PASTA_ESTADO_MUNDO_LEGADO.exists():
-        return PASTA_ESTADO_MUNDO_LEGADO
+    for pasta_legada in PASTAS_ESTADO_MUNDO_LEGADAS:
+        if pasta_legada.exists():
+            return pasta_legada
     return PASTA_ESTADO_MUNDO
 
 
@@ -79,10 +86,14 @@ def _arquivo_estado_mundo(nome: str, *, preferir_novo: bool = True) -> Path:
 
 
 def _migrar_estado_mundo_legado_se_necessario() -> None:
-    if PASTA_ESTADO_MUNDO.exists() or not PASTA_ESTADO_MUNDO_LEGADO.exists():
+    if PASTA_ESTADO_MUNDO.exists():
         return
-    PASTA_ESTADO_MUNDO.parent.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(PASTA_ESTADO_MUNDO_LEGADO), str(PASTA_ESTADO_MUNDO))
+    for pasta_legada in PASTAS_ESTADO_MUNDO_LEGADAS:
+        if not pasta_legada.exists():
+            continue
+        PASTA_ESTADO_MUNDO.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(pasta_legada), str(PASTA_ESTADO_MUNDO))
+        return
 
 
 def _gerar_seed() -> int:
@@ -121,8 +132,48 @@ def _obter_versao_java_local() -> int | None:
     return int(match.group(1))
 
 
+def _migrar_classes_java_legadas_se_necessario() -> None:
+    PASTA_JAVA_CLASSES.mkdir(parents=True, exist_ok=True)
+    for pasta_legada in PASTAS_JAVA_CLASSES_LEGADAS:
+        if not pasta_legada.exists() or pasta_legada == PASTA_JAVA_CLASSES:
+            continue
+        if not pasta_legada.is_dir():
+            continue
+        for entrada in pasta_legada.iterdir():
+            destino = PASTA_JAVA_CLASSES / entrada.name
+            if destino.exists():
+                try:
+                    if entrada.stat().st_mtime <= destino.stat().st_mtime:
+                        if entrada.is_dir():
+                            shutil.rmtree(entrada, ignore_errors=True)
+                        else:
+                            entrada.unlink()
+                        continue
+                except OSError:
+                    pass
+                if destino.is_dir():
+                    shutil.rmtree(destino, ignore_errors=True)
+                else:
+                    destino.unlink()
+            shutil.move(str(entrada), str(destino))
+        shutil.rmtree(pasta_legada, ignore_errors=True)
+    for arquivo_class in PASTA_JAVA.glob("*.class"):
+        destino = PASTA_JAVA_CLASSES / arquivo_class.name
+        if destino.exists():
+            try:
+                if arquivo_class.stat().st_mtime <= destino.stat().st_mtime:
+                    arquivo_class.unlink()
+                    continue
+            except OSError:
+                pass
+            destino.unlink()
+        shutil.move(str(arquivo_class), str(destino))
+
+
 def _compilar_java_se_necessario() -> None:
     PASTA_JAVA.mkdir(parents=True, exist_ok=True)
+    PASTA_JAVA_CLASSES.mkdir(parents=True, exist_ok=True)
+    _migrar_classes_java_legadas_se_necessario()
     for arquivo in ARQUIVOS_JAVA:
         if not arquivo.exists():
             raise FileNotFoundError(f"Arquivo Java obrigatório ausente: {arquivo}")
@@ -145,7 +196,7 @@ def _compilar_java_se_necessario() -> None:
     if not precisa_compilar:
         return
 
-    cmd = ["javac"] + [arquivo.name for arquivo in ARQUIVOS_JAVA]
+    cmd = ["javac", "-d", str(PASTA_JAVA_CLASSES)] + [arquivo.name for arquivo in ARQUIVOS_JAVA]
     subprocess.run(cmd, check=True, cwd=PASTA_JAVA)
 
 
@@ -173,7 +224,7 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
     cmd = [
         "java",
         "-cp",
-        str(PASTA_JAVA),
+        str(PASTA_JAVA_CLASSES),
         "WorldGenerator",
         str(seed),
         str(pasta_estado_mundo),
@@ -290,7 +341,7 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
 
 
 def limpar_arquivos_mundo() -> None:
-    for pasta in (PASTA_ESTADO_MUNDO, PASTA_ESTADO_MUNDO_LEGADO):
+    for pasta in (PASTA_ESTADO_MUNDO, *PASTAS_ESTADO_MUNDO_LEGADAS):
         if not pasta.exists():
             continue
         try:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Prefabs.Mensagens import MensagensGanhosMundo
+from Codigo.Prefabs.Mensagem import MensagensGanhosMundo
 from Codigo.Prefabs.Texto import Texto
 
 

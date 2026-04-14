@@ -136,7 +136,9 @@ class CerebroEstruturasNaturais:
             registrar_diff("update", payload=estrutura.serializar(), escopo={"centro": [estrutura.posicao[0], estrutura.posicao[1]], "raio": 90.0}, objeto_id=estrutura.Id, autor="server", categoria="estrutura")
 
         drops: Dict[str, int]
-        if subtipo == "arbusto":
+        if not bool(estrutura.estado_extra.get("drop_ativo", True)):
+            drops = {}
+        elif subtipo == "arbusto":
             drops = self._agrupar_drops_arbusto(estrutura, coletado)
         else:
             material = str(estrutura.estado_extra.get("material", "") or "").strip()

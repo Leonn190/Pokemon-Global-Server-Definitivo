@@ -7,6 +7,7 @@ import pygame
 from Codigo.Geradores.PokemonBatalha import PokemonBatalha
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha, pontos_lados_arena
+from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.SistemaBatalha import SistemaBatalha
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
@@ -29,6 +30,7 @@ class ControladorBatalha:
         self.PokemonSelecionado: PokemonBatalha | None = None
         self._provedor_reservas = None
         self._rodada_atual = 1
+        self._leitor_logs = LeitorLogs(self)
         self._ultima_resposta_inicio_servidor = None
         self._ultima_resposta_turno_servidor = None
         self._inicializar_times()
@@ -170,14 +172,13 @@ class ControladorBatalha:
             pokemon.Posicao = (float(posicao[0]), float(posicao[1]))
         return pokemon
 
-    def atualizar_estado_servidor(self, retorno: Dict[str, object] | None = None) -> None:
-        if not isinstance(retorno, dict):
-            return
-        log = retorno.get("log") if isinstance(retorno.get("log"), dict) else {}
-        resultado = self.SistemaBatalha.resolver_estado_recebido(retorno, log)
-        if not resultado:
-            return
+    def mapa_pokemons(self) -> Dict[str, PokemonBatalha]:
+        return self._mapa_existentes()
 
+    def esta_reproduzindo_logs(self) -> bool:
+        return bool(self._leitor_logs.esta_ativo())
+
+    def _aplicar_estado_servidor(self, resultado: Dict[str, object], log: Dict[str, object] | None = None) -> None:
         self.SistemaBatalha.atualizar(dados_servidor=resultado, log_servidor=log if isinstance(log, dict) else None)
         self._rodada_atual = max(1, int(self.SistemaBatalha.TurnoAtual or self._rodada_atual))
 
@@ -243,6 +244,23 @@ class ControladorBatalha:
         mapa_atual = self._mapa_existentes()
         self.PokemonSelecionado = mapa_atual.get(selecionado_uid) if selecionado_uid else None
 
+    def atualizar_estado_servidor(self, retorno: Dict[str, object] | None = None) -> None:
+        if not isinstance(retorno, dict):
+            return
+        log = retorno.get("log") if isinstance(retorno.get("log"), dict) else {}
+        resultado = self.SistemaBatalha.resolver_estado_recebido(retorno, log)
+        if not resultado:
+            if log:
+                self.SistemaBatalha.atualizar(log_servidor=log)
+            return
+        if self._leitor_logs.reproduzir(
+            log,
+            resultado=resultado,
+            ao_finalizar=lambda final: self._aplicar_estado_servidor(final, log),
+        ):
+            return
+        self._aplicar_estado_servidor(resultado, log)
+
     def _sincronizar_respostas_servidor(self) -> None:
         resposta_inicio = self.Contexto.get("batalha_servidor_inicio")
         if isinstance(resposta_inicio, dict) and resposta_inicio is not self._ultima_resposta_inicio_servidor:
@@ -256,6 +274,7 @@ class ControladorBatalha:
 
     def atualizar(self, eventos, dt: float) -> None:
         self._sincronizar_respostas_servidor()
+        self._leitor_logs.atualizar(dt)
         self.SistemaBatalha.atualizar(eventos, dt)
 
     def avancar_turno_basico(self) -> None:

@@ -180,6 +180,156 @@ dureza = 1
 particulasXP = [1]
 tamanhosXP = ["Pequeno"]
 
+[tipos."13"]
+subtipo = "cacto"
+nome = "Cacto"
+sprite = "Recursos/Visual/Mundo/Objetos/Cacto.png"
+raio_colisao = 0.7
+raio_interacao = 0.8
+campo = 0.65
+intensidade = 2.2
+quantidade = 20
+estilo = "machado"
+dureza = 1
+drop_ativo = false
+particulasXP = [2, 3, 4]
+tamanhosXP = ["Pequeno", "Medio"]
+
+[tipos."14"]
+subtipo = "concha"
+nome = "Concha"
+sprite = "Recursos/Visual/Mundo/Objetos/Concha.png"
+raio_colisao = 0.45
+raio_interacao = 0.55
+campo = 0.4
+intensidade = 1.4
+quantidade = 8
+estilo = "picareta"
+dureza = 1
+drop_ativo = false
+particulasXP = [1, 2, 3]
+tamanhosXP = ["Pequeno"]
+
+[tipos."15"]
+subtipo = "aquamarine"
+nome = "Aquamarine"
+sprite = "Recursos/Visual/Mundo/Objetos/Aquamarine.png"
+raio_colisao = 0.95
+raio_interacao = 1.05
+campo = 1.0
+intensidade = 2.4
+quantidade = 45
+estilo = "picareta"
+dureza = 4
+drop_ativo = false
+particulasXP = [2, 3, 4]
+tamanhosXP = ["Pequeno", "Medio"]
+
+[tipos."16"]
+subtipo = "carvao"
+nome = "Carvão"
+sprite = "Recursos/Visual/Mundo/Objetos/Carvão.png"
+raio_colisao = 0.9
+raio_interacao = 1.0
+campo = 0.95
+intensidade = 2.2
+quantidade = 40
+estilo = "picareta"
+dureza = 2
+drop_ativo = false
+particulasXP = [2, 3, 4]
+tamanhosXP = ["Pequeno", "Medio"]
+
+[tipos."17"]
+subtipo = "ferro"
+nome = "Ferro"
+sprite = "Recursos/Visual/Mundo/Objetos/Ferro.png"
+raio_colisao = 0.95
+raio_interacao = 1.05
+campo = 1.0
+intensidade = 2.4
+quantidade = 55
+estilo = "picareta"
+dureza = 3
+drop_ativo = false
+particulasXP = [2, 3, 4]
+tamanhosXP = ["Pequeno", "Medio"]
+
+[tipos."18"]
+subtipo = "flor"
+nome = "Flor"
+sprite = "Recursos/Visual/Mundo/Objetos/Flor.png"
+raio_colisao = 0.35
+raio_interacao = 0.45
+campo = 0.3
+intensidade = 1.0
+quantidade = 6
+estilo = "machado"
+dureza = 1
+drop_ativo = false
+particulasXP = [1, 2]
+tamanhosXP = ["Pequeno"]
+
+[tipos."19"]
+subtipo = "jade"
+nome = "Jade"
+sprite = "Recursos/Visual/Mundo/Objetos/Jade.png"
+raio_colisao = 0.95
+raio_interacao = 1.05
+campo = 1.0
+intensidade = 2.4
+quantidade = 40
+estilo = "picareta"
+dureza = 4
+drop_ativo = false
+particulasXP = [2, 3, 4]
+tamanhosXP = ["Pequeno", "Medio"]
+
+[tipos."20"]
+subtipo = "planta"
+nome = "Planta"
+sprite = "Recursos/Visual/Mundo/Objetos/Planta.png"
+raio_colisao = 0.4
+raio_interacao = 0.5
+campo = 0.35
+intensidade = 1.1
+quantidade = 10
+estilo = "machado"
+dureza = 1
+drop_ativo = false
+particulasXP = [1, 2]
+tamanhosXP = ["Pequeno"]
+
+[tipos."21"]
+subtipo = "safira"
+nome = "Safira"
+sprite = "Recursos/Visual/Mundo/Objetos/Safira.png"
+raio_colisao = 0.95
+raio_interacao = 1.05
+campo = 1.0
+intensidade = 2.4
+quantidade = 45
+estilo = "picareta"
+dureza = 5
+drop_ativo = false
+particulasXP = [2, 3, 4]
+tamanhosXP = ["Pequeno", "Medio"]
+
+[tipos."22"]
+subtipo = "topazio"
+nome = "Topázio"
+sprite = "Recursos/Visual/Mundo/Objetos/Topazio.png"
+raio_colisao = 0.95
+raio_interacao = 1.05
+campo = 1.0
+intensidade = 2.4
+quantidade = 42
+estilo = "picareta"
+dureza = 4
+drop_ativo = false
+particulasXP = [2, 3, 4]
+tamanhosXP = ["Pequeno", "Medio"]
+
 [tipos."102"]
 subtipo = "pedra_dungeon"
 nome = "Pedra Dungeon"

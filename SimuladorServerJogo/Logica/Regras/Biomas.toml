@@ -1,0 +1,239 @@
+[macro]
+grid_width = 250
+grid_height = 250
+majority_radius = 2
+smoothing_passes = 3
+min_region_cells = 8
+local_blend = 0.08
+edge_noise_strength = 0.04
+warp_scale_factor = 0.7
+warp_strength = 1.2
+edge_noise_scale_factor = 2.4
+
+[climate.temperature]
+octaves = 4
+persistence = 0.56
+lacunarity = 2.0
+scale = 3400.0
+seed_offset = 811
+noise_weight = 0.58
+latitude_weight = 0.42
+ridge = false
+
+[climate.moisture]
+octaves = 4
+persistence = 0.56
+lacunarity = 2.0
+scale = 3200.0
+seed_offset = 821
+ridge = false
+
+[climate.magic]
+octaves = 3
+persistence = 0.58
+lacunarity = 2.0
+scale = 3600.0
+seed_offset = 831
+ridge = true
+
+[climate.volcanic]
+octaves = 3
+persistence = 0.58
+lacunarity = 2.0
+scale = 3000.0
+seed_offset = 841
+ridge = true
+
+[climate.swamp]
+octaves = 3
+persistence = 0.58
+lacunarity = 2.0
+scale = 2800.0
+seed_offset = 851
+ridge = false
+
+[objects]
+block_near_poi_radius = 3
+avoid_beach_tiles = true
+
+[biomes.FIELD]
+base_tile = "FIELD_GRASS"
+coast_tile = "BEACH_SAND"
+weight = 0.82
+temperature_min = 0.0
+temperature_max = 1.0
+moisture_min = 0.0
+moisture_max = 1.0
+primary_source = "NONE"
+primary_min = 0.0
+primary_max = 1.0
+
+[biomes.FIELD.objects]
+TREE = 0.0085
+ROCK = 0.0030
+BUSH = 0.0035
+GOLD = 0.0005
+AMETHYST = 0.0
+DIAMOND = 0.0
+RUBY = 0.0
+EMERALD = 0.0
+PALM = 0.0
+PINE = 0.0
+COPPER = 0.0012
+LAVA_POOL = 0.0
+
+[biomes.FOREST]
+base_tile = "FOREST_GRASS"
+coast_tile = "BEACH_SAND"
+weight = 1.35
+temperature_min = 0.0
+temperature_max = 1.0
+moisture_min = 0.52
+moisture_max = 1.0
+primary_source = "NONE"
+primary_min = 0.0
+primary_max = 1.0
+
+[biomes.FOREST.objects]
+TREE = 0.0100
+ROCK = 0.0025
+BUSH = 0.0045
+GOLD = 0.0004
+AMETHYST = 0.0
+DIAMOND = 0.0
+RUBY = 0.0
+EMERALD = 0.0
+PALM = 0.0
+PINE = 0.0
+COPPER = 0.0010
+LAVA_POOL = 0.0
+
+[biomes.DESERT]
+base_tile = "DESERT_SAND"
+coast_tile = "DESERT_SAND"
+weight = 1.18
+temperature_min = 0.68
+temperature_max = 1.0
+moisture_min = 0.0
+moisture_max = 0.42
+primary_source = "NONE"
+primary_min = 0.0
+primary_max = 1.0
+
+[biomes.DESERT.objects]
+TREE = 0.0
+ROCK = 0.0030
+BUSH = 0.0
+GOLD = 0.0006
+AMETHYST = 0.0
+DIAMOND = 0.0
+RUBY = 0.0
+EMERALD = 0.0011
+PALM = 0.0022
+PINE = 0.0
+COPPER = 0.0012
+LAVA_POOL = 0.0
+
+[biomes.SNOW]
+base_tile = "SNOW"
+coast_tile = "SNOW"
+weight = 0.65
+temperature_min = 0.0
+temperature_max = 0.30
+moisture_min = 0.0
+moisture_max = 1.0
+primary_source = "NONE"
+primary_min = 0.0
+primary_max = 1.0
+
+[biomes.SNOW.objects]
+TREE = 0.0
+ROCK = 0.0030
+BUSH = 0.0
+GOLD = 0.0006
+AMETHYST = 0.0
+DIAMOND = 0.0011
+RUBY = 0.0
+EMERALD = 0.0
+PALM = 0.0
+PINE = 0.0028
+COPPER = 0.0012
+LAVA_POOL = 0.0
+
+[biomes.MAGIC]
+base_tile = "MAGIC_SOIL"
+coast_tile = "MAGIC_SOIL"
+weight = 0.10
+temperature_min = 0.0
+temperature_max = 1.0
+moisture_min = 0.0
+moisture_max = 1.0
+primary_source = "MAGIC"
+primary_min = 0.88
+primary_max = 1.0
+
+[biomes.MAGIC.objects]
+TREE = 0.0080
+ROCK = 0.0030
+BUSH = 0.0035
+GOLD = 0.0006
+AMETHYST = 0.0013
+DIAMOND = 0.0
+RUBY = 0.0
+EMERALD = 0.0
+PALM = 0.0
+PINE = 0.0
+COPPER = 0.0012
+LAVA_POOL = 0.0
+
+[biomes.VOLCANIC]
+base_tile = "VOLCANIC_ROCK"
+coast_tile = "VOLCANIC_ROCK"
+weight = 0.08
+temperature_min = 0.52
+temperature_max = 1.0
+moisture_min = 0.0
+moisture_max = 1.0
+primary_source = "VOLCANIC"
+primary_min = 0.83
+primary_max = 1.0
+
+[biomes.VOLCANIC.objects]
+TREE = 0.0
+ROCK = 0.0030
+BUSH = 0.0001
+GOLD = 0.0006
+AMETHYST = 0.0
+DIAMOND = 0.0
+RUBY = 0.0012
+EMERALD = 0.0
+PALM = 0.0
+PINE = 0.0
+COPPER = 0.0012
+LAVA_POOL = 0.0015
+
+[biomes.SWAMP]
+base_tile = "DEAD_SOIL"
+coast_tile = "DEAD_SOIL"
+weight = 0.65
+temperature_min = 0.0
+temperature_max = 1.0
+moisture_min = 0.62
+moisture_max = 1.0
+primary_source = "SWAMP"
+primary_min = 0.60
+primary_max = 1.0
+
+[biomes.SWAMP.objects]
+TREE = 0.0080
+ROCK = 0.0030
+BUSH = 0.0005
+GOLD = 0.0006
+AMETHYST = 0.0
+DIAMOND = 0.0
+RUBY = 0.0
+EMERALD = 0.0
+PALM = 0.0
+PINE = 0.0
+COPPER = 0.0012
+LAVA_POOL = 0.0

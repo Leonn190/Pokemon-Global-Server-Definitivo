@@ -177,6 +177,7 @@ class BancoDadosMundo:
                         material=str(cfg.get("material", "") or ""),
                         estilo=str(cfg.get("estilo", "") or ""),
                         dureza=int(cfg.get("dureza", 1) or 1),
+                        drop_ativo=bool(cfg.get("drop_ativo", True)),
                     )
                     obj.tipo_classe = "estrutura_natural"
                     self._objetos[obj.Id] = obj

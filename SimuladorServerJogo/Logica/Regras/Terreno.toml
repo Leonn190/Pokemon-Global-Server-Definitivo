@@ -1,0 +1,121 @@
+[world]
+width = 10000
+height = 10000
+chunk_size = 10
+chunks_per_file = 10
+
+[ocean]
+hard_border = 120
+soft_border = 500
+edge_penalty_strength = 0.55
+sea_level = 0.505
+deep_water_extra_depth = 0.04
+shallow_water_band = 0.02
+ocean_detection_radius = 2
+water_detection_radius_for_beach = 2
+shallow_water_near_land_radius = 1
+
+[elevation.continents]
+octaves = 5
+persistence = 0.50
+lacunarity = 2.0
+scale = 1200.0
+seed_offset = 11
+weight = 0.62
+
+[elevation.detail]
+octaves = 4
+persistence = 0.55
+lacunarity = 2.0
+scale = 260.0
+seed_offset = 31
+weight = 0.20
+
+[elevation.ridges]
+octaves = 4
+persistence = 0.50
+lacunarity = 2.0
+scale = 340.0
+seed_offset = 53
+weight = 0.18
+
+[moisture.large]
+octaves = 4
+persistence = 0.56
+lacunarity = 2.0
+scale = 520.0
+seed_offset = 101
+weight = 0.72
+
+[moisture.detail]
+octaves = 3
+persistence = 0.55
+lacunarity = 2.0
+scale = 170.0
+seed_offset = 103
+weight = 0.28
+
+[lakes]
+elevation_offset_from_sea_level = 0.085
+min_moisture = 0.68
+border_block_distance = 420
+threshold = 0.76
+
+[lakes.noise]
+octaves = 4
+persistence = 0.55
+lacunarity = 2.0
+scale = 130.0
+seed_offset = 7777
+
+[rivers]
+sources = 420
+max_length = 1400
+width = 2
+min_width = 2
+max_width = 6
+terminal_extra_width = 3
+source_min_height = 0.66
+source_margin = 200
+source_near_water_radius = 10
+max_attempts_per_source = 50
+momentum = 0.85
+downhill_bias = 7.5
+meander_strength = 0.95
+uphill_penalty = 10.0
+search_radius = 10
+width_grow_every = 180
+bank_blend_radius = 2
+mouth_length = 4
+
+[pois.gym]
+count = 20
+min_distance = 230
+margin = 140
+near_water_radius = 5
+allowed_biomes = ["FIELD", "FOREST", "DESERT", "SNOW", "MAGIC", "VOLCANIC", "SWAMP"]
+area_chunks = 5
+clear_margin_tiles = 3
+
+[pois.dungeon]
+count = 30
+min_distance = 220
+margin = 140
+near_water_radius = 5
+allowed_biomes = ["FOREST", "SNOW", "MAGIC", "VOLCANIC", "SWAMP"]
+area_chunks = 0
+clear_margin_tiles = 0
+
+[pois.village]
+count = 10
+min_distance = 300
+margin = 140
+near_water_radius = 3
+allowed_biomes = ["FIELD", "FOREST", "DESERT"]
+area_chunks = 0
+clear_margin_tiles = 0
+
+[spawn]
+required_biome = "FIELD"
+require_no_objects = true
+require_no_pois = true

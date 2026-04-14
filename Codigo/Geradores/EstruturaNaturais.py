@@ -22,10 +22,20 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
     10: {"subtipo": "pinheiro", "nome": "Pinheiro", "sprite": "Recursos/Visual/Mundo/Objetos/Pinheiro.png"},
     11: {"subtipo": "cobre", "nome": "Cobre", "sprite": "Recursos/Visual/Mundo/Objetos/Cobre.png"},
     12: {"subtipo": "lava", "nome": "Lava", "sprite": "Recursos/Visual/Mundo/Objetos/Lava.png"},
+    13: {"subtipo": "cacto", "nome": "Cacto", "sprite": "Recursos/Visual/Mundo/Objetos/Cacto.png"},
+    14: {"subtipo": "concha", "nome": "Concha", "sprite": "Recursos/Visual/Mundo/Objetos/Concha.png"},
+    15: {"subtipo": "aquamarine", "nome": "Aquamarine", "sprite": "Recursos/Visual/Mundo/Objetos/Aquamarine.png"},
+    16: {"subtipo": "carvao", "nome": "Carvão", "sprite": "Recursos/Visual/Mundo/Objetos/Carvão.png"},
+    17: {"subtipo": "ferro", "nome": "Ferro", "sprite": "Recursos/Visual/Mundo/Objetos/Ferro.png"},
+    18: {"subtipo": "flor", "nome": "Flor", "sprite": "Recursos/Visual/Mundo/Objetos/Flor.png"},
+    19: {"subtipo": "jade", "nome": "Jade", "sprite": "Recursos/Visual/Mundo/Objetos/Jade.png"},
+    20: {"subtipo": "planta", "nome": "Planta", "sprite": "Recursos/Visual/Mundo/Objetos/Planta.png"},
+    21: {"subtipo": "safira", "nome": "Safira", "sprite": "Recursos/Visual/Mundo/Objetos/Safira.png"},
+    22: {"subtipo": "topazio", "nome": "Topázio", "sprite": "Recursos/Visual/Mundo/Objetos/Topazio.png"},
 }
 
 ORDEM_CANONICA_ESTRUTURAS_NATURAIS: Tuple[str, ...] = (
-    "lava", "pedra", "cobre", "ouro", "diamante", "ametista", "rubi", "esmeralda", "pinheiro", "palmeira", "arvore", "arbusto",
+    "lava", "pedra", "cobre", "ferro", "carvao", "ouro", "diamante", "ametista", "rubi", "esmeralda", "safira", "topazio", "aquamarine", "jade", "concha", "pinheiro", "palmeira", "cacto", "arvore", "planta", "flor", "arbusto",
 )
 _PRIORIDADE_SUBTIPO: Dict[str, int] = {nome: idx for idx, nome in enumerate(ORDEM_CANONICA_ESTRUTURAS_NATURAIS)}
 

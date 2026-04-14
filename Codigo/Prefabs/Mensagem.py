@@ -1,6 +1,6 @@
-import pygame
-
 from __future__ import annotations
+
+import pygame
 
 from pathlib import Path
 

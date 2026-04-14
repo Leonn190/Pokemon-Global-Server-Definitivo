@@ -10,13 +10,11 @@ import struct
 import subprocess
 import tempfile
 import time
+import tomllib
 from pathlib import Path
 from typing import Callable, Dict, Tuple
 
-from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_mundo
-
 BLOCO_TAMANHO_PX = 32
-CHUNK_BLOCOS = max(1, int(carregar_regras_mundo().get("ChunkTiles", 10)))
 
 PASTA_SERVIDOR = Path(__file__).resolve().parent
 PASTA_MODULO_SIMULADOR = PASTA_SERVIDOR.parents[1]
@@ -24,13 +22,47 @@ RAIZ_REPOSITORIO = PASTA_SERVIDOR.parents[2]
 PASTA_MUNDO_SERVIDOR = PASTA_MODULO_SIMULADOR / "Mundo"
 PASTA_ESTADO_MUNDO = PASTA_MUNDO_SERVIDOR / "EstadoMundo"
 PASTA_ESTADO_MUNDO_LEGADO = RAIZ_REPOSITORIO / "EstadoMundo"
-ARQUIVO_REGRAS_GERACAO_FONTE = RAIZ_REPOSITORIO / "SimuladorServerJogo" / "Logica" / "Regras" / "Geracao.json"
+PASTA_WORLD_CHUNKS = PASTA_ESTADO_MUNDO / "chunks"
+PASTA_REGRAS = RAIZ_REPOSITORIO / "SimuladorServerJogo" / "Logica" / "Regras"
+ARQUIVO_REGRAS_TERRENO_FONTE = PASTA_REGRAS / "Terreno.toml"
+ARQUIVO_REGRAS_BIOMAS_FONTE = PASTA_REGRAS / "Biomas.toml"
+
 PASTA_JAVA = PASTA_SERVIDOR / "Java"
-ARQUIVO_JAVA = PASTA_JAVA / "WorldGenerator.java"
-ARQUIVO_CLASS = PASTA_JAVA / "WorldGenerator.class"
+ARQUIVOS_JAVA = [
+    PASTA_JAVA / "WorldGenerator.java",
+    PASTA_JAVA / "GeradorTerreno.java",
+    PASTA_JAVA / "GeradorBiomas.java",
+    PASTA_JAVA / "GeradorObjetos.java",
+    PASTA_JAVA / "GeradorImagens.java",
+]
+ARQUIVO_CLASS_PRINCIPAL = PASTA_JAVA / "WorldGenerator.class"
 
 LARGURA_BLOCOS = 0
 ALTURA_BLOCOS = 0
+
+
+def _carregar_regras_terreno() -> dict:
+    if not ARQUIVO_REGRAS_TERRENO_FONTE.exists():
+        raise FileNotFoundError(f"Arquivo de regras de terreno não encontrado: {ARQUIVO_REGRAS_TERRENO_FONTE}")
+    with ARQUIVO_REGRAS_TERRENO_FONTE.open("rb") as f:
+        payload = tomllib.load(f)
+    if not isinstance(payload, dict):
+        raise ValueError("Terreno.toml inválido: conteúdo raiz não é objeto")
+    return payload
+
+
+def _obter_chunk_blocos() -> int:
+    payload = _carregar_regras_terreno()
+    world = payload.get("world")
+    if not isinstance(world, dict):
+        raise ValueError("Terreno.toml inválido: seção [world] ausente")
+    chunk_size = int(world.get("chunk_size", 0))
+    if chunk_size <= 0:
+        raise ValueError("Terreno.toml inválido: world.chunk_size deve ser positivo")
+    return chunk_size
+
+
+CHUNK_BLOCOS = _obter_chunk_blocos()
 
 
 def _pasta_estado_mundo_existente() -> Path:
@@ -91,7 +123,11 @@ def _obter_versao_java_local() -> int | None:
 
 def _compilar_java_se_necessario() -> None:
     PASTA_JAVA.mkdir(parents=True, exist_ok=True)
-    versao_class = _obter_versao_major_class(ARQUIVO_CLASS)
+    for arquivo in ARQUIVOS_JAVA:
+        if not arquivo.exists():
+            raise FileNotFoundError(f"Arquivo Java obrigatório ausente: {arquivo}")
+
+    versao_class = _obter_versao_major_class(ARQUIVO_CLASS_PRINCIPAL)
     versao_java_local = _obter_versao_java_local()
     maior_compativel = (versao_java_local + 44) if versao_java_local else None
 
@@ -100,15 +136,16 @@ def _compilar_java_se_necessario() -> None:
         and maior_compativel is not None
         and versao_class > maior_compativel
     )
+    ultima_fonte = max(arquivo.stat().st_mtime for arquivo in ARQUIVOS_JAVA)
     precisa_compilar = (
-        (not ARQUIVO_CLASS.exists())
-        or (ARQUIVO_JAVA.stat().st_mtime > ARQUIVO_CLASS.stat().st_mtime)
+        (not ARQUIVO_CLASS_PRINCIPAL.exists())
+        or (ultima_fonte > ARQUIVO_CLASS_PRINCIPAL.stat().st_mtime)
         or class_incompativel
     )
     if not precisa_compilar:
         return
 
-    cmd = ["javac", ARQUIVO_JAVA.name]
+    cmd = ["javac"] + [arquivo.name for arquivo in ARQUIVOS_JAVA]
     subprocess.run(cmd, check=True, cwd=PASTA_JAVA)
 
 
@@ -121,14 +158,28 @@ def _emitir_progresso(callback_progresso, percentual: int, mensagem: str) -> Non
 def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str], None] | None = None) -> None:
     _migrar_estado_mundo_legado_se_necessario()
     _compilar_java_se_necessario()
+
     pasta_estado_mundo = _arquivo_estado_mundo("", preferir_novo=True)
     arquivo_world_meta = _arquivo_estado_mundo("world_meta.json", preferir_novo=True)
     pasta_world_chunks = _arquivo_estado_mundo("chunks", preferir_novo=True)
     arquivo_foto_mundo_java = _arquivo_estado_mundo("world_foto.png", preferir_novo=True)
     pasta_estado_mundo.mkdir(parents=True, exist_ok=True)
-    if not ARQUIVO_REGRAS_GERACAO_FONTE.exists():
-        raise FileNotFoundError(f"Arquivo de regras de geração não encontrado: {ARQUIVO_REGRAS_GERACAO_FONTE}")
-    cmd = ["java", "-cp", str(PASTA_JAVA), "WorldGenerator", str(seed), str(pasta_estado_mundo), str(ARQUIVO_REGRAS_GERACAO_FONTE)]
+
+    if not ARQUIVO_REGRAS_TERRENO_FONTE.exists():
+        raise FileNotFoundError(f"Arquivo de regras de terreno não encontrado: {ARQUIVO_REGRAS_TERRENO_FONTE}")
+    if not ARQUIVO_REGRAS_BIOMAS_FONTE.exists():
+        raise FileNotFoundError(f"Arquivo de regras de biomas não encontrado: {ARQUIVO_REGRAS_BIOMAS_FONTE}")
+
+    cmd = [
+        "java",
+        "-cp",
+        str(PASTA_JAVA),
+        "WorldGenerator",
+        str(seed),
+        str(pasta_estado_mundo),
+        str(ARQUIVO_REGRAS_TERRENO_FONTE),
+        str(ARQUIVO_REGRAS_BIOMAS_FONTE),
+    ]
 
     _emitir_progresso(callback_progresso, 1, "Preparando geração do mundo")
 
@@ -272,7 +323,7 @@ def _carregar_world_meta() -> Dict[str, int | float]:
     if chunk_blocos_disco != int(CHUNK_BLOCOS):
         raise ValueError(
             "world_meta.json inválido: chunk_blocos_disco deve ser igual a "
-            f"{int(CHUNK_BLOCOS)} (10x10 tiles por chunk)"
+            f"{int(CHUNK_BLOCOS)}"
         )
     if chunks_x <= 0 or chunks_y <= 0:
         raise ValueError("world_meta.json inválido: chunks_x/chunks_y devem ser positivos")

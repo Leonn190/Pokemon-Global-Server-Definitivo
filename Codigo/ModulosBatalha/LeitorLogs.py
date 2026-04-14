@@ -50,8 +50,8 @@ class LeitorLogs:
         self.cancelar()
         self._resultado = dict(resultado or {})
         self._ao_finalizar = ao_finalizar
-        regras_batalha = {}
-        if hasattr(self._controlador, "obter_regras_batalha"):
+        regras_batalha = dict((log or {}).get("regras_batalha") or {}) if isinstance((log or {}).get("regras_batalha"), dict) else {}
+        if not regras_batalha and hasattr(self._controlador, "obter_regras_batalha"):
             regras_batalha = dict(self._controlador.obter_regras_batalha() or {})
         self._tick_segundos = max(0.01, self._numero(regras_batalha.get("tick_segundos"), 0.2))
         self._historico = historico

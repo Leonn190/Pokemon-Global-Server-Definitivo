@@ -556,6 +556,7 @@ class LeitorJogadas:
             "turno_atual": int(log.get("turno", sistema.TurnoAtual) or sistema.TurnoAtual),
             "clima": str(snapshot_inicial.get("clima") or sistema.ClimaAtual or ""),
             "arena": dict(snapshot_inicial.get("arena") or sistema.ArenaAtual or {}),
+            "regras_batalha": sistema.regras_batalha_publicas() if hasattr(sistema, "regras_batalha_publicas") else {},
             "ordem_logica": [self._jogada_publica_ordem(sistema, item, tick_base) for item in ([*list(descartadas or []), *list(ordenadas or [])]) if isinstance(item, dict)],
             "historico": self._construir_historico_publico(sistema, log, tick_base),
             "resultado": self._resultado_publico_diff(sistema, snapshot_inicial, snapshot_final),

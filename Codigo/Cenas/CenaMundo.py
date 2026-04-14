@@ -26,6 +26,7 @@ from Codigo.Telas.SubtelaPreBatalha import SubtelaPreBatalha
 from Codigo.Geradores.Estadio import EstadioInterno
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
 from Codigo.Prefabs.Texto import Texto
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
 class CenaMundo:
@@ -175,6 +176,7 @@ class CenaMundo:
                 ret = solicitar_contexto_batalha_mundo(link, client_id, int(colisao_pokemon.get("id", 0) or 0), centro) if link else {"status": "erro"}
                 contexto = ret.get("contexto_batalha") if isinstance(ret, dict) and isinstance(ret.get("contexto_batalha"), dict) else None
                 if isinstance(contexto, dict):
+                    contexto.setdefault("batalha", dict(carregar_regras_cliente_mundo().get("batalha") or {}))
                     contexto["pokemon_colisao"] = dict(colisao_pokemon)
                     inventario = getattr(player, "Inventario", None)
                     times = deepcopy(list(getattr(inventario, "TimesPokemon", []) or [])) if inventario is not None else []
@@ -351,6 +353,7 @@ class CenaMundo:
         def _comecar_com_time(time_escolhido: dict):
             jogo.INFO["CombateContexto"] = {
                 **contexto_base,
+                "batalha": dict(carregar_regras_cliente_mundo().get("batalha") or {}),
                 "tipo": "treinador",
                 "npc_contexto": npc_ctx,
                 "times_jogador": deepcopy(list(times_validos)),

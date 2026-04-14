@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from SimuladorServerJogo.Batalha.PokemonBatalha import PokemonBatalha
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publicas
 
 
 _BASE_DADOS = Path(__file__).resolve().parents[2] / "Dados"
@@ -27,6 +28,9 @@ class SistemaBatalha:
         self.TickGlobal = 0
         self.ClimaAtual = str(self.Contexto.get("clima") or "")
         self.ArenaAtual: Dict[str, object] = {}
+        self.RegrasBatalha = dict(self.Contexto.get("batalha") or {})
+        if not self.RegrasBatalha:
+            self.RegrasBatalha = carregar_regras_batalha_publicas()
         self.Rng = random.Random(f"{self.BatalhaId}:{self.ClienteDono}")
 
         self.PokemonsPorId: Dict[str, PokemonBatalha] = {}
@@ -341,6 +345,9 @@ class SistemaBatalha:
             "todos_ids": [str(uid) for uid in list(dados.get("todos") or [])],
         }
 
+    def regras_batalha_publicas(self) -> Dict[str, object]:
+        return dict(self.RegrasBatalha or {})
+
     def snapshot(self, *, incluir_metadados: bool = True) -> Dict[str, object]:
         snapshot = {
             "batalha_id": self.BatalhaId,
@@ -349,6 +356,7 @@ class SistemaBatalha:
             "tick_global": int(self.TickGlobal),
             "clima": self.ClimaAtual,
             "arena": dict(self.ArenaAtual),
+            "regras_batalha": self.regras_batalha_publicas(),
             "jogador": self.estado_lado("jogador"),
             "inimigo": self.estado_lado("inimigo"),
         }

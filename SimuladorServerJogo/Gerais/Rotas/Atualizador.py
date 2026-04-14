@@ -13,7 +13,7 @@ from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personage
 from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
-from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_pokemons
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publicas, carregar_regras_pokemons
 from SimuladorServerJogo.Batalha.GerenciadorBatalhas import GERENCIADOR_BATALHAS
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
@@ -92,6 +92,7 @@ def _bloco_mundo_em(wx: int, wy: int) -> int:
 
 def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 40, ry: int = 20) -> Dict[str, object]:
     regras_pokemons = carregar_regras_pokemons()
+    regras_batalha = carregar_regras_batalha_publicas()
     cx, cy = float(centro[0]), float(centro[1])
     x0, y0 = int(cx) - int(rx), int(cy) - int(ry)
     largura_rect = int(rx) * 2
@@ -139,6 +140,7 @@ def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 40
         "arena_altura": 20,
         "combate_pokemon_tamanho_diametro_base_tiles": float(regras_pokemons.get("combate_tamanho_diametro_base_tiles", 1.0) or 1.0),
         "combate_pokemon_tamanho_incremento_por_escala": float(regras_pokemons.get("combate_tamanho_incremento_por_escala", 0.1) or 0.1),
+        "batalha": dict(regras_batalha),
         "tiles": tiles,
         "estruturas": estruturas,
     }

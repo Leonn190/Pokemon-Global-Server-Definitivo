@@ -245,6 +245,27 @@ def carregar_regras_batalha() -> Dict[str, object]:
     return out
 
 
+def carregar_regras_batalha_publicas() -> Dict[str, object]:
+    regras_batalha = carregar_regras_batalha()
+    return {
+        "tick_segundos": float(regras_batalha.get("batalha_tick_segundos", 0.2) or 0.2),
+        "colisao": {
+            "restituicao": float(regras_batalha.get("batalha_colisao_restituicao", 0.35) or 0.35),
+            "deslocamento_base_min": float(regras_batalha.get("batalha_colisao_deslocamento_base_min", 0.25) or 0.25),
+            "deslocamento_por_velocidade_relativa": float(regras_batalha.get("batalha_colisao_deslocamento_por_velocidade_relativa", 6.0) or 6.0),
+            "velocidade_reacao_min": float(regras_batalha.get("batalha_colisao_velocidade_reacao_min", 0.03) or 0.03),
+            "dano_base_min": float(regras_batalha.get("batalha_colisao_dano_base_min", 1.0) or 1.0),
+            "velocidade_referencia_min": float(regras_batalha.get("batalha_colisao_velocidade_referencia_min", 0.1) or 0.1),
+            "dano_por_massa_velocidade": float(regras_batalha.get("batalha_colisao_dano_por_massa_velocidade", 8.0) or 8.0),
+            "dano_por_ataque": float(regras_batalha.get("batalha_colisao_dano_por_ataque", 0.35) or 0.35),
+        },
+        "multiplas_acoes": {
+            "multiplicador_base": float(regras_batalha.get("batalha_multiplas_acoes_multiplicador_base", 1.0) or 1.0),
+            "acrescimo_multiplicador_por_acao_extra": float(regras_batalha.get("batalha_multiplas_acoes_acrescimo_por_acao_extra", 0.2) or 0.2),
+        },
+    }
+
+
 def carregar_regras_gerais() -> Dict[str, object]:
     dados = _ler_toml("Gerais.toml")
     out = _flatten(dados)
@@ -312,7 +333,7 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
     regras_npcs = carregar_regras_npcs()
     regras_ciclo = carregar_regras_ciclo()
     regras_gerais = carregar_regras_gerais()
-    regras_batalha = carregar_regras_batalha()
+    regras_batalha = carregar_regras_batalha_publicas()
     return {
         "mundo": {"chunk_tiles": int(carregar_regras_mundo().get("ChunkTiles", 10) or 10)},
         "pokemons": {
@@ -358,21 +379,5 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
             "combate_camera_zoom_min": int(regras_gerais.get("combate_camera_zoom_min", 30) or 30),
             "combate_camera_zoom_max": int(regras_gerais.get("combate_camera_zoom_max", 50) or 50),
         },
-        "batalha": {
-            "tick_segundos": float(regras_batalha.get("batalha_tick_segundos", 0.2) or 0.2),
-            "colisao": {
-                "restituicao": float(regras_batalha.get("batalha_colisao_restituicao", 0.35) or 0.35),
-                "deslocamento_base_min": float(regras_batalha.get("batalha_colisao_deslocamento_base_min", 0.25) or 0.25),
-                "deslocamento_por_velocidade_relativa": float(regras_batalha.get("batalha_colisao_deslocamento_por_velocidade_relativa", 6.0) or 6.0),
-                "velocidade_reacao_min": float(regras_batalha.get("batalha_colisao_velocidade_reacao_min", 0.03) or 0.03),
-                "dano_base_min": float(regras_batalha.get("batalha_colisao_dano_base_min", 1.0) or 1.0),
-                "velocidade_referencia_min": float(regras_batalha.get("batalha_colisao_velocidade_referencia_min", 0.1) or 0.1),
-                "dano_por_massa_velocidade": float(regras_batalha.get("batalha_colisao_dano_por_massa_velocidade", 8.0) or 8.0),
-                "dano_por_ataque": float(regras_batalha.get("batalha_colisao_dano_por_ataque", 0.35) or 0.35),
-            },
-            "multiplas_acoes": {
-                "multiplicador_base": float(regras_batalha.get("batalha_multiplas_acoes_multiplicador_base", 1.0) or 1.0),
-                "acrescimo_multiplicador_por_acao_extra": float(regras_batalha.get("batalha_multiplas_acoes_acrescimo_por_acao_extra", 0.2) or 0.2),
-            },
-        },
+        "batalha": dict(regras_batalha),
     }

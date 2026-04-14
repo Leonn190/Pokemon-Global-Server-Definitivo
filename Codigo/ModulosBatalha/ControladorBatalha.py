@@ -9,6 +9,7 @@ from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha, pontos_lados_arena
 from Codigo.ModulosBatalha.SistemaBatalha import SistemaBatalha
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
 class ControladorBatalha:
@@ -31,6 +32,18 @@ class ControladorBatalha:
         self._ultima_resposta_inicio_servidor = None
         self._ultima_resposta_turno_servidor = None
         self._inicializar_times()
+
+    def obter_regras_batalha(self) -> Dict[str, object]:
+        regras = self.Contexto.get("batalha") if isinstance(self.Contexto.get("batalha"), dict) else {}
+        if not regras and hasattr(self.SistemaBatalha, "Contexto"):
+            regras = self.SistemaBatalha.Contexto.get("batalha") if isinstance(self.SistemaBatalha.Contexto.get("batalha"), dict) else {}
+        if not regras:
+            resposta_inicio = self.Contexto.get("batalha_servidor_inicio") if isinstance(self.Contexto, dict) else {}
+            batalha_inicio = resposta_inicio.get("batalha") if isinstance(resposta_inicio, dict) and isinstance(resposta_inicio.get("batalha"), dict) else {}
+            regras = batalha_inicio.get("regras_batalha") if isinstance(batalha_inicio.get("regras_batalha"), dict) else {}
+        if not regras:
+            regras = dict(carregar_regras_cliente_mundo().get("batalha") or {})
+        return dict(regras)
 
     def _inicializar_times(self) -> None:
         init = InicializadorBatalha(self.Contexto)

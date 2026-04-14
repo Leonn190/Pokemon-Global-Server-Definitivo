@@ -19,18 +19,38 @@ BLOCO_TAMANHO_PX = 32
 CHUNK_BLOCOS = max(1, int(carregar_regras_mundo().get("ChunkTiles", 10)))
 
 PASTA_SERVIDOR = Path(__file__).resolve().parent
+PASTA_MODULO_SIMULADOR = PASTA_SERVIDOR.parents[1]
 RAIZ_REPOSITORIO = PASTA_SERVIDOR.parents[2]
-PASTA_ESTADO_MUNDO = RAIZ_REPOSITORIO / "EstadoMundo"
-ARQUIVO_MUNDO = PASTA_ESTADO_MUNDO / "MundoEstado.json"
-ARQUIVO_WORLD_META = PASTA_ESTADO_MUNDO / "world_meta.json"
-PASTA_WORLD_CHUNKS = PASTA_ESTADO_MUNDO / "chunks"
-ARQUIVO_FOTO_MUNDO_JAVA = PASTA_ESTADO_MUNDO / "world_foto.png"
+PASTA_MUNDO_SERVIDOR = PASTA_MODULO_SIMULADOR / "Mundo"
+PASTA_ESTADO_MUNDO = PASTA_MUNDO_SERVIDOR / "EstadoMundo"
+PASTA_ESTADO_MUNDO_LEGADO = RAIZ_REPOSITORIO / "EstadoMundo"
 ARQUIVO_REGRAS_GERACAO_FONTE = RAIZ_REPOSITORIO / "SimuladorServerJogo" / "Logica" / "Regras" / "Geracao.json"
-ARQUIVO_JAVA = PASTA_SERVIDOR / "WorldGenerator.java"
-ARQUIVO_CLASS = PASTA_SERVIDOR / "WorldGenerator.class"
+PASTA_JAVA = PASTA_SERVIDOR / "Java"
+ARQUIVO_JAVA = PASTA_JAVA / "WorldGenerator.java"
+ARQUIVO_CLASS = PASTA_JAVA / "WorldGenerator.class"
 
 LARGURA_BLOCOS = 0
 ALTURA_BLOCOS = 0
+
+
+def _pasta_estado_mundo_existente() -> Path:
+    if PASTA_ESTADO_MUNDO.exists():
+        return PASTA_ESTADO_MUNDO
+    if PASTA_ESTADO_MUNDO_LEGADO.exists():
+        return PASTA_ESTADO_MUNDO_LEGADO
+    return PASTA_ESTADO_MUNDO
+
+
+def _arquivo_estado_mundo(nome: str, *, preferir_novo: bool = True) -> Path:
+    pasta_base = PASTA_ESTADO_MUNDO if preferir_novo else _pasta_estado_mundo_existente()
+    return pasta_base / nome
+
+
+def _migrar_estado_mundo_legado_se_necessario() -> None:
+    if PASTA_ESTADO_MUNDO.exists() or not PASTA_ESTADO_MUNDO_LEGADO.exists():
+        return
+    PASTA_ESTADO_MUNDO.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(PASTA_ESTADO_MUNDO_LEGADO), str(PASTA_ESTADO_MUNDO))
 
 
 def _gerar_seed() -> int:
@@ -70,6 +90,7 @@ def _obter_versao_java_local() -> int | None:
 
 
 def _compilar_java_se_necessario() -> None:
+    PASTA_JAVA.mkdir(parents=True, exist_ok=True)
     versao_class = _obter_versao_major_class(ARQUIVO_CLASS)
     versao_java_local = _obter_versao_java_local()
     maior_compativel = (versao_java_local + 44) if versao_java_local else None
@@ -88,7 +109,7 @@ def _compilar_java_se_necessario() -> None:
         return
 
     cmd = ["javac", ARQUIVO_JAVA.name]
-    subprocess.run(cmd, check=True, cwd=PASTA_SERVIDOR)
+    subprocess.run(cmd, check=True, cwd=PASTA_JAVA)
 
 
 def _emitir_progresso(callback_progresso, percentual: int, mensagem: str) -> None:
@@ -98,17 +119,22 @@ def _emitir_progresso(callback_progresso, percentual: int, mensagem: str) -> Non
 
 
 def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str], None] | None = None) -> None:
+    _migrar_estado_mundo_legado_se_necessario()
     _compilar_java_se_necessario()
-    PASTA_ESTADO_MUNDO.mkdir(parents=True, exist_ok=True)
+    pasta_estado_mundo = _arquivo_estado_mundo("", preferir_novo=True)
+    arquivo_world_meta = _arquivo_estado_mundo("world_meta.json", preferir_novo=True)
+    pasta_world_chunks = _arquivo_estado_mundo("chunks", preferir_novo=True)
+    arquivo_foto_mundo_java = _arquivo_estado_mundo("world_foto.png", preferir_novo=True)
+    pasta_estado_mundo.mkdir(parents=True, exist_ok=True)
     if not ARQUIVO_REGRAS_GERACAO_FONTE.exists():
         raise FileNotFoundError(f"Arquivo de regras de geração não encontrado: {ARQUIVO_REGRAS_GERACAO_FONTE}")
-    cmd = ["java", "-cp", str(PASTA_SERVIDOR), "WorldGenerator", str(seed), str(PASTA_ESTADO_MUNDO), str(ARQUIVO_REGRAS_GERACAO_FONTE)]
+    cmd = ["java", "-cp", str(PASTA_JAVA), "WorldGenerator", str(seed), str(pasta_estado_mundo), str(ARQUIVO_REGRAS_GERACAO_FONTE)]
 
     _emitir_progresso(callback_progresso, 1, "Preparando geração do mundo")
 
     proc = subprocess.Popen(
         cmd,
-        cwd=PASTA_SERVIDOR,
+        cwd=PASTA_JAVA,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -147,7 +173,7 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
         if "Exportando mundo em chunks" in linha:
             etapa = "chunks"
             chunks_total = 0
-            if ARQUIVO_WORLD_META.exists():
+            if arquivo_world_meta.exists():
                 try:
                     meta = _carregar_world_meta()
                     chunks_x = int(meta.get("chunks_x", 0))
@@ -193,10 +219,10 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
             _emitir_progresso(callback_progresso, pct, f"Salvando chunks ({atual}/{total})")
             continue
 
-        if etapa == "chunks" and PASTA_WORLD_CHUNKS.exists() and chunks_total > 0:
-            chunks_prontos = len(list(PASTA_WORLD_CHUNKS.glob("chunk_set_*.json")))
+        if etapa == "chunks" and pasta_world_chunks.exists() and chunks_total > 0:
+            chunks_prontos = len(list(pasta_world_chunks.glob("chunk_set_*.json")))
             if chunks_prontos <= 0:
-                chunks_prontos = len(list(PASTA_WORLD_CHUNKS.glob("chunk_*.json")))
+                chunks_prontos = len(list(pasta_world_chunks.glob("chunk_*.json")))
             pct = 82 + int((chunks_prontos / max(1, chunks_total)) * 13)
             _emitir_progresso(callback_progresso, pct, f"Salvando chunks ({chunks_prontos}/{chunks_total})")
 
@@ -208,23 +234,26 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
             cmd,
             output=erro,
         )
-    if not ARQUIVO_FOTO_MUNDO_JAVA.exists():
-        raise FileNotFoundError(f"Foto do mundo não foi gerada em {ARQUIVO_FOTO_MUNDO_JAVA}")
+    if not arquivo_foto_mundo_java.exists():
+        raise FileNotFoundError(f"Foto do mundo não foi gerada em {arquivo_foto_mundo_java}")
 
 
 def limpar_arquivos_mundo() -> None:
-    if PASTA_ESTADO_MUNDO.exists():
+    for pasta in (PASTA_ESTADO_MUNDO, PASTA_ESTADO_MUNDO_LEGADO):
+        if not pasta.exists():
+            continue
         try:
-            shutil.rmtree(PASTA_ESTADO_MUNDO)
+            shutil.rmtree(pasta)
         except OSError:
             pass
 
 
 def _carregar_world_meta() -> Dict[str, int | float]:
-    if not ARQUIVO_WORLD_META.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {ARQUIVO_WORLD_META}")
+    arquivo_world_meta = _arquivo_estado_mundo("world_meta.json", preferir_novo=False)
+    if not arquivo_world_meta.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {arquivo_world_meta}")
 
-    with ARQUIVO_WORLD_META.open("r", encoding="utf-8") as f:
+    with arquivo_world_meta.open("r", encoding="utf-8") as f:
         payload = json.load(f)
 
     if not isinstance(payload, dict):
@@ -309,8 +338,10 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
 
 
 def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
-    ARQUIVO_MUNDO.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(ARQUIVO_MUNDO.parent), delete=False, prefix="mundo_", suffix=".tmp") as f:
+    _migrar_estado_mundo_legado_se_necessario()
+    arquivo_mundo = _arquivo_estado_mundo("MundoEstado.json", preferir_novo=True)
+    arquivo_mundo.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(arquivo_mundo.parent), delete=False, prefix="mundo_", suffix=".tmp") as f:
         json.dump(estado_mundo, f, ensure_ascii=False, indent=2)
         f.flush()
         os.fsync(f.fileno())
@@ -318,7 +349,7 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
     ultimo_erro = None
     for tentativa in range(8):
         try:
-            os.replace(caminho_tmp, ARQUIVO_MUNDO)
+            os.replace(caminho_tmp, arquivo_mundo)
             return
         except PermissionError as exc:
             ultimo_erro = exc
@@ -332,14 +363,16 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
 
 
 def carregar_estado_mundo() -> Dict[str, object]:
-    if not PASTA_ESTADO_MUNDO.exists():
-        PASTA_ESTADO_MUNDO.mkdir(parents=True, exist_ok=True)
-    if ARQUIVO_MUNDO.exists():
+    pasta_estado_mundo = _pasta_estado_mundo_existente()
+    if not pasta_estado_mundo.exists():
+        pasta_estado_mundo.mkdir(parents=True, exist_ok=True)
+    arquivo_mundo = pasta_estado_mundo / "MundoEstado.json"
+    if arquivo_mundo.exists():
         try:
-            with ARQUIVO_MUNDO.open("r", encoding="utf-8") as f:
+            with arquivo_mundo.open("r", encoding="utf-8") as f:
                 estado = json.load(f)
         except json.JSONDecodeError:
-            bruto = ARQUIVO_MUNDO.read_text(encoding="utf-8", errors="ignore")
+            bruto = arquivo_mundo.read_text(encoding="utf-8", errors="ignore")
             bruto_limpo = bruto.lstrip()
             estado = None
             if bruto_limpo.lower().startswith("git"):

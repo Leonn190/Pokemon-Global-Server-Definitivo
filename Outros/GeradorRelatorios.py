@@ -657,16 +657,16 @@ def labels_datas_historico(historico: List[Dict[str, Any]]) -> List[str]:
 def gerar_graficos(
     atual: Dict[str, Any],
     historico: List[Dict[str, Any]],
-    relatorios_dir: Path,
+    imagens_base_dir: Path,
     report_stem: str,
 ) -> Dict[str, str]:
     disponivel, _, plt = preparar_plot()
     if not disponivel or plt is None:
         return {}
 
-    imagens_dir = relatorios_dir / "Imagens" / report_stem
+    imagens_dir = imagens_base_dir / report_stem
     imagens_rel_root = f"Outros/Relatorios/Imagens/{report_stem}"
-    imagens_rel_local = f"Imagens/{report_stem}"
+    imagens_rel_local = f"../Imagens/{report_stem}"
 
     graficos: Dict[str, str] = {}
 
@@ -1226,24 +1226,31 @@ def main() -> None:
     outros_dir = script_path.parent
     repo_root = outros_dir.parent
 
-    relatorios_dir = outros_dir / "Relatorios"
-    relatorios_dir.mkdir(parents=True, exist_ok=True)
+    relatorios_root_dir = outros_dir / "Relatorios"
+    imagens_base_dir = relatorios_root_dir / "Imagens"
+    registros_dir = relatorios_root_dir / "Registros"
+    relatorios_json_dir = relatorios_root_dir / "Relatorios"
+
+    relatorios_root_dir.mkdir(parents=True, exist_ok=True)
+    imagens_base_dir.mkdir(parents=True, exist_ok=True)
+    registros_dir.mkdir(parents=True, exist_ok=True)
+    relatorios_json_dir.mkdir(parents=True, exist_ok=True)
 
     agora_real = datetime.now().astimezone()
     data_referencia = obter_data_referencia()
 
-    numero_relatorio = len(list(relatorios_dir.glob("*.json"))) + 1
+    numero_relatorio = len(list(relatorios_json_dir.glob("*.json"))) + 1
     basename = agora_real.strftime("%Y-%m-%d_%H-%M-%S")
     json_name = f"{basename}.json"
     md_name = f"{basename}.md"
 
-    json_path = relatorios_dir / json_name
-    md_path = relatorios_dir / md_name
+    json_path = relatorios_json_dir / json_name
+    md_path = registros_dir / md_name
     registro_md_path = repo_root / "Registro.md"
 
-    horas_estimadas, relatorio_anterior_nome, horas_base = calcular_horas_estimadas(relatorios_dir, data_referencia)
+    horas_estimadas, relatorio_anterior_nome, horas_base = calcular_horas_estimadas(relatorios_json_dir, data_referencia)
 
-    atual = coletar_metricas(repo_root, relatorios_dir, data_referencia, horas_estimadas)
+    atual = coletar_metricas(repo_root, relatorios_root_dir, data_referencia, horas_estimadas)
     atual["meta"] = {
         "numero_relatorio": numero_relatorio,
         "criado_em": agora_real.isoformat(timespec="seconds"),
@@ -1253,19 +1260,21 @@ def main() -> None:
         "arquivo_markdown": md_name,
         "base_dir": str(repo_root),
         "script": str(script_path.relative_to(repo_root)).replace("\\", "/"),
-        "relatorios_dir": str(relatorios_dir.relative_to(repo_root)).replace("\\", "/"),
+        "relatorios_dir": str(relatorios_root_dir.relative_to(repo_root)).replace("\\", "/"),
+        "relatorios_json_dir": str(relatorios_json_dir.relative_to(repo_root)).replace("\\", "/"),
+        "registros_dir": str(registros_dir.relative_to(repo_root)).replace("\\", "/"),
         "modelo": MODELO_RELATORIO,
         "autor": AUTOR_RELATORIO,
         "incremento_horas": float(INCREMENTO_HORAS),
         "horas_base_anterior": float(horas_base),
         "relatorio_anterior": relatorio_anterior_nome,
-        "imagens_dir": f"Imagens/{basename}",
+        "imagens_dir": f"Outros/Relatorios/Imagens/{basename}",
     }
 
-    historico = coletar_historico_relatorios(relatorios_dir, atual, data_referencia, repo_root)
+    historico = coletar_historico_relatorios(relatorios_json_dir, atual, data_referencia, repo_root)
     atual["historico_crescimento"] = {"itens": historico}
 
-    graficos = gerar_graficos(atual, historico, relatorios_dir, basename)
+    graficos = gerar_graficos(atual, historico, imagens_base_dir, basename)
     atual["graficos"] = graficos
 
     with json_path.open("w", encoding="utf-8") as f:
@@ -1281,7 +1290,7 @@ def main() -> None:
     print(f"- Markdown do relatório: {md_path}")
     print(f"- Markdown da raiz: {registro_md_path}")
     if graficos:
-        print(f"- Pasta de imagens: {relatorios_dir / 'Imagens' / basename}")
+        print(f"- Pasta de imagens: {imagens_base_dir / basename}")
     else:
         print("- Gráficos: não gerados (matplotlib ausente ou falha durante a renderização)")
 

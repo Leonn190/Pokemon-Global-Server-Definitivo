@@ -106,13 +106,15 @@ class SistemaBatalha:
         log = log_servidor if isinstance(log_servidor, dict) else {}
         resultado_log = log.get("resultado") if isinstance(log.get("resultado"), dict) else {}
         batalha = retorno.get("batalha") if isinstance(retorno.get("batalha"), dict) else {}
+        if batalha:
+            return dict(batalha)
         if resultado_log:
             base = dict(self.ResultadoRecebido or {})
             if not base:
-                return dict(batalha)
+                return {}
             mesclado = self._aplicar_diff_estado(base, resultado_log)
             return mesclado if isinstance(mesclado, dict) else {}
-        return dict(batalha)
+        return {}
 
     def atualizar(self, _eventos=None, _dt: float = 0.0, *, dados_servidor: Dict[str, object] | None = None, log_servidor: Dict[str, object] | None = None) -> None:
         if isinstance(dados_servidor, dict):

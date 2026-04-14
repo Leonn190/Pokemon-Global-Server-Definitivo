@@ -7,10 +7,11 @@ class MontadorJogada:
     MAX_MOVIMENTOS = 5
     MAX_MOVIMENTOS_POR_POKEMON = 2
 
-    def __init__(self) -> None:
+    def __init__(self, regras_batalha: Dict[str, object] | None = None) -> None:
         self._jogadas: List[Dict[str, object]] = []
         self._selecionado_id: Optional[int] = None
         self._proximo_id = 1
+        self._regras_batalha = dict(regras_batalha or {})
 
     @staticmethod
     def _normalizar_id(executor_id: object) -> str:
@@ -32,9 +33,21 @@ class MontadorJogada:
         chave = self._normalizar_id(executor_id)
         return [item for item in self._jogadas if self._normalizar_id(item.get("executor_id")) == chave]
 
+    def _multiplicador_multiplas_acoes(self, quantidade_previa: int) -> float:
+        regras = self._regras_batalha.get("multiplas_acoes") if isinstance(self._regras_batalha.get("multiplas_acoes"), dict) else {}
+        try:
+            multiplicador_base = float(regras.get("multiplicador_base", 1.0))
+        except (TypeError, ValueError):
+            multiplicador_base = 1.0
+        try:
+            acrescimo = float(regras.get("acrescimo_multiplicador_por_acao_extra", 0.2))
+        except (TypeError, ValueError):
+            acrescimo = 0.2
+        return max(0.0, multiplicador_base + max(0, int(quantidade_previa)) * acrescimo)
+
     def _custo_total_para_executor(self, executor_id: object, custo_base: float) -> float:
         quantidade = len(self._jogadas_executor(executor_id))
-        multiplicador = 1.2 if quantidade >= 1 else 1.0
+        multiplicador = self._multiplicador_multiplas_acoes(quantidade)
         return max(0.0, float(custo_base) * multiplicador)
 
     def pode_adicionar(self, jogada: Dict[str, object]) -> Tuple[bool, str, float]:

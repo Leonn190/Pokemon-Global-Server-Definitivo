@@ -4,6 +4,7 @@ import math
 from typing import Dict, Iterable, List, Tuple
 
 from SimuladorServerJogo.Batalha.ObjetoBatalha import ObjetoBatalha
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha
 
 
 Vec2 = Tuple[float, float]
@@ -12,6 +13,7 @@ Vec2 = Tuple[float, float]
 class SimuladorFisica:
     def __init__(self, sistema) -> None:
         self._sistema = sistema
+        self._regras_batalha = carregar_regras_batalha()
 
     @staticmethod
     def _fnum(valor, default: float = 0.0) -> float:
@@ -60,6 +62,12 @@ class SimuladorFisica:
     @staticmethod
     def _clamp(valor: float, minimo: float, maximo: float) -> float:
         return max(float(minimo), min(float(maximo), float(valor)))
+
+    def _regra(self, chave: str, default: float) -> float:
+        try:
+            return float(self._regras_batalha.get(chave, default))
+        except (TypeError, ValueError, AttributeError):
+            return float(default)
 
     def velocidade_media_referencia(self) -> float:
         vivos = [p for p in self._sistema.listar_pokemons() if not p.ForaDeCombate]
@@ -233,18 +241,33 @@ class SimuladorFisica:
         massa_a = max(0.2, float(getattr(pokemon, "Peso", 1.0) or 1.0))
         massa_b = max(0.2, float(getattr(outro, "Peso", 1.0) or 1.0))
         massa_total = max(0.4, massa_a + massa_b)
-        restitui = 0.35
-        deslocamento_base = max(0.25, velocidade_relativa * 6.0)
+        restitui = self._regra("batalha_colisao_restituicao", 0.35)
+        deslocamento_base = max(
+            self._regra("batalha_colisao_deslocamento_base_min", 0.25),
+            velocidade_relativa * self._regra("batalha_colisao_deslocamento_por_velocidade_relativa", 6.0),
+        )
         desloca_a = deslocamento_base * (massa_b / massa_total)
         desloca_b = deslocamento_base * (massa_a / massa_total)
-        velocidade_a = max(0.03, velocidade_relativa * (massa_b / massa_total) * (1.0 + restitui))
-        velocidade_b = max(0.03, velocidade_relativa * (massa_a / massa_total) * (1.0 + restitui))
+        velocidade_reacao_min = self._regra("batalha_colisao_velocidade_reacao_min", 0.03)
+        velocidade_a = max(velocidade_reacao_min, velocidade_relativa * (massa_b / massa_total) * (1.0 + restitui))
+        velocidade_b = max(velocidade_reacao_min, velocidade_relativa * (massa_a / massa_total) * (1.0 + restitui))
 
         destino_a, _ = self.limitar_ao_campo(self._somar(pokemon.Posicao, self._mul(normal, desloca_a)), raio=pokemon.RaioColisao)
         destino_b, _ = self.limitar_ao_campo(self._sub(outro.Posicao, self._mul(normal, desloca_b)), raio=outro.RaioColisao)
 
-        dano_em_b = max(1.0, (massa_a * max(0.1, float(velocidade_tiles_tick)) * 8.0) + (pokemon.obter_atributo("Atk") * 0.35))
-        dano_em_a = max(1.0, (massa_b * max(0.1, float(getattr(outro, "VelocidadeAtualTilesTick", 0.05) or 0.05)) * 8.0) + (outro.obter_atributo("Atk") * 0.35))
+        dano_base_min = self._regra("batalha_colisao_dano_base_min", 1.0)
+        velocidade_ref_min = self._regra("batalha_colisao_velocidade_referencia_min", 0.1)
+        dano_por_massa_velocidade = self._regra("batalha_colisao_dano_por_massa_velocidade", 8.0)
+        dano_por_ataque = self._regra("batalha_colisao_dano_por_ataque", 0.35)
+        dano_em_b = max(
+            dano_base_min,
+            (massa_a * max(velocidade_ref_min, float(velocidade_tiles_tick)) * dano_por_massa_velocidade) + (pokemon.obter_atributo("Atk") * dano_por_ataque),
+        )
+        dano_em_a = max(
+            dano_base_min,
+            (massa_b * max(velocidade_ref_min, float(getattr(outro, "VelocidadeAtualTilesTick", 0.05) or 0.05)) * dano_por_massa_velocidade)
+            + (outro.obter_atributo("Atk") * dano_por_ataque),
+        )
 
         eventos.append(
             {

@@ -18,7 +18,10 @@ class ControladorFluxos:
     def __init__(self, controlador_batalha, camera) -> None:
         self._controlador = controlador_batalha
         self._camera = camera
-        self._montador = MontadorJogada()
+        regras_batalha = {}
+        if controlador_batalha is not None and hasattr(controlador_batalha, "obter_regras_batalha"):
+            regras_batalha = dict(controlador_batalha.obter_regras_batalha() or {})
+        self._montador = MontadorJogada(regras_batalha=regras_batalha)
         self._fluxo_setas = Fluxo(estilo="seta")
         self._fluxo_linha = Fluxo(estilo="linha")
         self._leitor_fluxos = LeitorFluxos()

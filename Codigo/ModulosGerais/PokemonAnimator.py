@@ -108,7 +108,11 @@ class PokemonAnimator:
         self._cartuchos: List[Dict[str, object]] = []
         self._setas: List[Dict[str, object]] = []
         self._efeitos_ataque: List[Dict[str, object]] = []
+        self._fluxos: List[Dict[str, object]] = []
+        self._projeteis: List[Dict[str, object]] = []
         self._movimento: Dict[str, object] | None = None
+        self._morte: Dict[str, object] | None = None
+        self._corpo_oculto = False
 
     def atualizar(self) -> None:
         agora = pygame.time.get_ticks()
@@ -119,9 +123,14 @@ class PokemonAnimator:
         self._atualizar_cartuchos(dt)
         self._atualizar_setas(dt)
         self._atualizar_efeitos_ataque(dt)
+        self._atualizar_fluxos(dt)
+        self._atualizar_projeteis(dt)
         self._atualizar_movimento(dt)
+        self._atualizar_morte(dt)
 
     def renderizar(self, tela: pygame.Surface, camera) -> None:
+        self._desenhar_fluxos(tela, camera)
+        self._desenhar_projeteis(tela, camera)
         self._desenhar_efeitos_ataque(tela, camera)
         self._desenhar_flash(tela, camera)
         self._desenhar_setas(tela, camera)
@@ -171,6 +180,65 @@ class PokemonAnimator:
             'velocidade': velocidade,
         }
 
+    def animar_morte(self) -> None:
+        if self._morte is not None:
+            return
+        self._morte = {
+            'tempo': 0.0,
+            'duracao': 0.6,
+        }
+        self._corpo_oculto = False
+
+    def restaurar_visual_corpo(self) -> None:
+        self._morte = None
+        self._corpo_oculto = False
+
+    def aplicar_fluxo(
+        self,
+        origem: Vector2,
+        destino: Vector2,
+        *,
+        alcance_tiles: float = 0.0,
+        raio_tiles: float = 0.0,
+        largura_graus: float = 60.0,
+        duracao_s: float = 0.35,
+        modo: str = 'area',
+    ) -> None:
+        self._fluxos.append(
+            {
+                'origem': (float(origem[0]), float(origem[1])),
+                'destino': (float(destino[0]), float(destino[1])),
+                'alcance_tiles': max(0.0, float(alcance_tiles)),
+                'raio_tiles': max(0.0, float(raio_tiles)),
+                'largura_graus': max(1.0, float(largura_graus)),
+                'duracao': max(0.08, float(duracao_s)),
+                'tempo': 0.0,
+                'modo': str(modo or 'area').casefold(),
+            }
+        )
+
+    def lancar_projetil(
+        self,
+        origem: Vector2,
+        destino: Vector2,
+        velocidade_tiles_por_seg: float,
+        *,
+        raio_tiles: float = 0.22,
+    ) -> None:
+        origem_t = (float(origem[0]), float(origem[1]))
+        destino_t = (float(destino[0]), float(destino[1]))
+        distancia = math.hypot(destino_t[0] - origem_t[0], destino_t[1] - origem_t[1])
+        velocidade = max(0.05, float(velocidade_tiles_por_seg))
+        self._projeteis.append(
+            {
+                'origem': origem_t,
+                'destino': destino_t,
+                'raio_tiles': max(0.08, float(raio_tiles)),
+                'duracao': max(0.08, distancia / velocidade if velocidade > 0.0 else 0.18),
+                'tempo': 0.0,
+            }
+        )
+
     def sofrer_ataque_efeito(
         self,
         nome_efeito: str,
@@ -214,6 +282,36 @@ class PokemonAnimator:
     def esta_movendo(self) -> bool:
         return self._movimento is not None
 
+    def preparar_corpo_visual(self, camada: pygame.Surface, camera) -> tuple[pygame.Surface, tuple[int, int], bool]:
+        if self._corpo_oculto:
+            return camada, (0, 0), True
+
+        superficie = camada
+        offset_tiles = (0.0, 0.0)
+        alpha = 255
+        angulo = 0.0
+        escala = 1.0
+        if self._morte is not None:
+            duracao = max(0.01, float(self._morte.get('duracao', 0.6)))
+            t = _clamp(float(self._morte.get('tempo', 0.0)) / duracao, 0.0, 1.0)
+            angulo = -900.0 * t
+            alpha = max(0, min(255, int(255 * (1.0 - t))))
+            escala = max(0.85, 1.0 - t * 0.08)
+            offset_tiles = (0.0, -0.05 * t)
+
+        if alpha < 255:
+            superficie = superficie.copy()
+            superficie.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
+        if abs(angulo) > 0.01 or abs(escala - 1.0) > 0.01:
+            superficie = pygame.transform.rotozoom(superficie, angulo, escala)
+
+        tile_px = max(1, int(getattr(camera, 'TilePx', 40) or 40))
+        offset_px = (
+            int(offset_tiles[0] * tile_px),
+            int(offset_tiles[1] * tile_px),
+        )
+        return superficie, offset_px, False
+
     def _adicionar_flash(self, cor: Tuple[int, int, int], duracao: float) -> None:
         self._flashes.append({'cor': tuple(cor), 'tempo': 0.0, 'duracao': float(duracao)})
 
@@ -249,6 +347,22 @@ class PokemonAnimator:
                 novos.append(efeito)
         self._efeitos_ataque = novos
 
+    def _atualizar_fluxos(self, dt: float) -> None:
+        novos = []
+        for fluxo in self._fluxos:
+            fluxo['tempo'] = float(fluxo['tempo']) + dt
+            if float(fluxo['tempo']) < float(fluxo['duracao']):
+                novos.append(fluxo)
+        self._fluxos = novos
+
+    def _atualizar_projeteis(self, dt: float) -> None:
+        novos = []
+        for projetil in self._projeteis:
+            projetil['tempo'] = float(projetil['tempo']) + dt
+            if float(projetil['tempo']) < float(projetil['duracao']):
+                novos.append(projetil)
+        self._projeteis = novos
+
     def _atualizar_movimento(self, dt: float) -> None:
         if self._movimento is None:
             return
@@ -272,6 +386,14 @@ class PokemonAnimator:
         nx = delta_x / distancia
         ny = delta_y / distancia
         self.Pokemon.Posicao = (atual_x + nx * passo, atual_y + ny * passo)
+
+    def _atualizar_morte(self, dt: float) -> None:
+        if self._morte is None:
+            return
+        self._morte['tempo'] = float(self._morte.get('tempo', 0.0)) + dt
+        if float(self._morte.get('tempo', 0.0)) >= float(self._morte.get('duracao', 0.6)):
+            self._corpo_oculto = True
+            self._morte = None
 
     def _gerar_setas(self, *, subindo: bool, intensidade: int = 1) -> None:
         total = max(1, min(6, int(intensidade) + 2))
@@ -420,6 +542,85 @@ class PokemonAnimator:
             x = centro_x + int(float(offset_x_tiles) * getattr(camera, 'TilePx', 40))
             y = centro_y + int(float(offset_y_tiles) * getattr(camera, 'TilePx', 40))
             tela.blit(frame, frame.get_rect(center=(x, y)))
+
+    def _desenhar_fluxos(self, tela: pygame.Surface, camera) -> None:
+        if not self._fluxos:
+            return
+        tile_px = max(1, int(getattr(camera, 'TilePx', 40) or 40))
+        for fluxo in self._fluxos:
+            duracao = max(0.01, float(fluxo['duracao']))
+            t = _clamp(float(fluxo['tempo']) / duracao, 0.0, 1.0)
+            alpha = int(145 * (1.0 - t))
+            if alpha <= 0:
+                continue
+
+            origem = fluxo['origem']
+            destino = fluxo['destino']
+            modo = str(fluxo.get('modo') or 'area').casefold()
+            if modo == 'zona':
+                centro = camera.mundo_para_tela_px(destino)
+                raio_atual_px = max(4, int(float(fluxo.get('raio_tiles', 0.0)) * tile_px * max(0.05, t)))
+                camada = pygame.Surface((raio_atual_px * 4, raio_atual_px * 4), pygame.SRCALPHA)
+                centro_local = (camada.get_width() // 2, camada.get_height() // 2)
+                pygame.draw.circle(camada, (122, 232, 255, int(alpha * 0.28)), centro_local, raio_atual_px)
+                pygame.draw.circle(camada, (235, 248, 255, alpha), centro_local, raio_atual_px, max(2, raio_atual_px // 8))
+                tela.blit(camada, camada.get_rect(center=(int(centro[0]), int(centro[1]))))
+                continue
+
+            origem_px = camera.mundo_para_tela_px(origem)
+            destino_px = camera.mundo_para_tela_px(destino)
+            dx = float(destino_px[0] - origem_px[0])
+            dy = float(destino_px[1] - origem_px[1])
+            distancia_px = math.hypot(dx, dy)
+            if distancia_px <= 1e-6:
+                continue
+            nx = dx / distancia_px
+            ny = dy / distancia_px
+            alcance_tiles = max(float(fluxo.get('alcance_tiles', 0.0)), math.hypot(destino[0] - origem[0], destino[1] - origem[1]))
+            alcance_px = max(2.0, alcance_tiles * tile_px * max(0.05, t))
+            largura = math.tan(math.radians(max(1.0, float(fluxo.get('largura_graus', 60.0))) * 0.5)) * alcance_px
+            ponta = (origem_px[0] + nx * alcance_px, origem_px[1] + ny * alcance_px)
+            perp = (-ny, nx)
+            pontos = [
+                (origem_px[0], origem_px[1]),
+                (ponta[0] + perp[0] * largura, ponta[1] + perp[1] * largura),
+                (ponta[0] - perp[0] * largura, ponta[1] - perp[1] * largura),
+            ]
+            camada = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
+            pygame.draw.polygon(camada, (112, 225, 255, int(alpha * 0.22)), pontos)
+            pygame.draw.polygon(camada, (236, 248, 255, alpha), pontos, 2)
+            tela.blit(camada, (0, 0))
+
+    def _desenhar_projeteis(self, tela: pygame.Surface, camera) -> None:
+        if not self._projeteis:
+            return
+        tile_px = max(1, int(getattr(camera, 'TilePx', 40) or 40))
+        for projetil in self._projeteis:
+            duracao = max(0.01, float(projetil['duracao']))
+            t = _clamp(float(projetil['tempo']) / duracao, 0.0, 1.0)
+            alpha = int(255 * (1.0 - t * 0.25))
+            origem = projetil['origem']
+            destino = projetil['destino']
+            atual = (
+                origem[0] + (destino[0] - origem[0]) * t,
+                origem[1] + (destino[1] - origem[1]) * t,
+            )
+            origem_px = camera.mundo_para_tela_px(origem)
+            atual_px = camera.mundo_para_tela_px(atual)
+            raio_px = max(3, int(float(projetil.get('raio_tiles', 0.22)) * tile_px))
+            camada = pygame.Surface((raio_px * 7, raio_px * 7), pygame.SRCALPHA)
+            centro_local = (camada.get_width() // 2, camada.get_height() // 2)
+            pygame.draw.circle(camada, (255, 249, 221, max(28, int(alpha * 0.28))), centro_local, max(2, int(raio_px * 1.5)))
+            pygame.draw.circle(camada, (255, 224, 120, alpha), centro_local, raio_px)
+            pygame.draw.circle(camada, (255, 255, 255, alpha), centro_local, max(1, int(raio_px * 0.4)))
+            pygame.draw.line(
+                tela,
+                (255, 224, 120, max(18, int(alpha * 0.3))),
+                (int(origem_px[0]), int(origem_px[1])),
+                (int(atual_px[0]), int(atual_px[1])),
+                max(1, int(raio_px * 0.6)),
+            )
+            tela.blit(camada, camada.get_rect(center=(int(atual_px[0]), int(atual_px[1]))))
 
     def _desenhar_flash(self, tela: pygame.Surface, camera) -> None:
         if not self._flashes:

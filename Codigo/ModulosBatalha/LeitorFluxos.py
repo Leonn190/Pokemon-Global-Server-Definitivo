@@ -3,17 +3,77 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
-import pygame
+try:
+    import pygame
+except ModuleNotFoundError:  # pragma: no cover - fallback para o simulador/headless.
+    pygame = None
 
-Vec2 = pygame.math.Vector2
+
+class _Vec2Fallback:
+    __slots__ = ("x", "y")
+
+    def __init__(self, x=0.0, y=0.0):
+        if isinstance(x, (tuple, list)) and len(x) >= 2:
+            self.x = float(x[0])
+            self.y = float(x[1])
+        elif hasattr(x, "x") and hasattr(x, "y") and y == 0.0:
+            self.x = float(getattr(x, "x"))
+            self.y = float(getattr(x, "y"))
+        else:
+            self.x = float(x)
+            self.y = float(y)
+
+    def __add__(self, other):
+        return self.__class__(self.x + float(other.x), self.y + float(other.y))
+
+    def __sub__(self, other):
+        return self.__class__(self.x - float(other.x), self.y - float(other.y))
+
+    def __mul__(self, escalar):
+        return self.__class__(self.x * float(escalar), self.y * float(escalar))
+
+    def __rmul__(self, escalar):
+        return self.__mul__(escalar)
+
+    def __truediv__(self, escalar):
+        valor = float(escalar) or 1.0
+        return self.__class__(self.x / valor, self.y / valor)
+
+    def __neg__(self):
+        return self.__class__(-self.x, -self.y)
+
+    def length_squared(self) -> float:
+        return (self.x * self.x) + (self.y * self.y)
+
+    def length(self) -> float:
+        return math.hypot(self.x, self.y)
+
+    def normalize(self):
+        tamanho = self.length()
+        if tamanho <= 1e-9:
+            return self.__class__(1.0, 0.0)
+        return self / tamanho
+
+    def dot(self, other) -> float:
+        return (self.x * float(other.x)) + (self.y * float(other.y))
+
+    def lerp(self, other, t: float):
+        return self.__class__(
+            self.x + (float(other.x) - self.x) * float(t),
+            self.y + (float(other.y) - self.y) * float(t),
+        )
+
+
+Vec2 = pygame.math.Vector2 if pygame is not None else _Vec2Fallback
 
 
 class LeitorFluxos:
     def __init__(self) -> None:
         self._tempo = 0.0
         self._fluxos = self._carregar_fluxos()
+        self._tile_px = 42.0
 
     def atualizar(self, dt: float) -> None:
         self._tempo += max(0.0, float(dt))
@@ -26,6 +86,19 @@ class LeitorFluxos:
             return float(str(valor).replace(",", "."))
         except (TypeError, ValueError):
             return float(padrao)
+
+    @staticmethod
+    def _safe_bool(valor, padrao: bool = False) -> bool:
+        if isinstance(valor, bool):
+            return valor
+        if valor in (None, ""):
+            return bool(padrao)
+        texto = str(valor).strip().casefold()
+        if texto in {"1", "true", "verdadeiro", "sim", "yes", "on"}:
+            return True
+        if texto in {"0", "false", "falso", "nao", "não", "no", "off"}:
+            return False
+        return bool(valor)
 
     @staticmethod
     def _clamp(valor: float, minimo: float, maximo: float) -> float:
@@ -66,6 +139,8 @@ class LeitorFluxos:
         return saida
 
     def obter_fluxo(self, ataque: object) -> Dict[str, object]:
+        if isinstance(ataque, dict) and isinstance(ataque.get("fluxos"), list):
+            return dict(ataque)
         if isinstance(ataque, dict):
             nome = ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome")
         else:
@@ -80,151 +155,458 @@ class LeitorFluxos:
 
     @staticmethod
     def _desenhar_poligono(area: pygame.Surface, pontos: Iterable[Vec2], cor_fill, cor_borda, largura_borda: int = 2) -> None:
+        if pygame is None:
+            return
         pts = [(float(pt.x), float(pt.y)) for pt in pontos]
         if len(pts) < 3:
             return
         pygame.draw.polygon(area, cor_fill, pts)
         pygame.draw.polygon(area, cor_borda, pts, max(1, int(largura_borda)))
 
-    def _construir_curva_ramo(
+    def point_in_polygon(self, point: Vec2, polygon: List[Vec2]) -> bool:
+        if len(polygon) < 3:
+            return False
+        inside = False
+        j = len(polygon) - 1
+        for i in range(len(polygon)):
+            xi, yi = polygon[i].x, polygon[i].y
+            xj, yj = polygon[j].x, polygon[j].y
+            if (yi > point.y) != (yj > point.y):
+                x_cross = (xj - xi) * (point.y - yi) / ((yj - yi) or 1e-8) + xi
+                if point.x < x_cross:
+                    inside = not inside
+            j = i
+        return inside
+
+    def circle_samples(self, center_px: Vec2, radius_px: float) -> List[Vec2]:
+        pts = [center_px]
+        for ang in range(0, 360, 24):
+            rad = math.radians(ang)
+            for mul in (0.48, 0.82, 1.0):
+                pts.append(center_px + Vec2(math.cos(rad), math.sin(rad)) * radius_px * mul)
+        return pts
+
+    def point_hit_circle_shape(self, point_px: Vec2, center_px: Vec2, radius_px: float, flow: Dict[str, object]) -> bool:
+        dist = (point_px - center_px).length()
+        shape = str(flow.get("shape") or "normal").strip().casefold() or "normal"
+        if shape == "normal":
+            return dist <= radius_px
+        count = max(1, int(self._safe_float(flow.get("quantidade_elementos"), 0)))
+        elem = max(0.0, self._safe_float(flow.get("tamanho_elementos"), 0.0)) * self._tile_px
+        if count <= 0 or elem <= 0.0:
+            return dist <= radius_px
+        ang = math.atan2(point_px.y - center_px.y, point_px.x - center_px.x)
+        wave = 0.5 * (1.0 + math.cos(ang * count))
+        mod = wave if shape == "espinhos" else wave * 0.55
+        return dist <= (radius_px + elem * mod)
+
+    def _pacote_fluxo(self, ataque: object) -> Dict[str, object]:
+        pacote = self.obter_fluxo(ataque)
+        if pacote:
+            return pacote
+        if isinstance(ataque, dict):
+            return dict(ataque)
+        return {}
+
+    def _fonte_radius_tiles(self, pacote: Dict[str, object], source_radius_tiles: Optional[float]) -> float:
+        if source_radius_tiles is not None:
+            return max(0.1, float(source_radius_tiles))
+        diametro = self._safe_float(pacote.get("test_diameter"), 1.5)
+        return max(0.1, diametro * 0.5)
+
+    def _fluxos_topo(self, pacote: Dict[str, object]) -> List[Dict[str, object]]:
+        fluxos = [dict(item) for item in list(pacote.get("fluxos") or []) if isinstance(item, dict)]
+        if fluxos:
+            return fluxos
+        if any(chave in pacote for chave in ("alcance", "largura_base", "largura_teto", "circular", "raio")):
+            return [dict(pacote)]
+        return []
+
+    def compute_effective_range_tiles(
         self,
-        inicio: Vec2,
-        direcao: Vec2,
-        perpendicular: Vec2,
-        alcance_px: float,
-        deslocamento_lateral_px: float,
-        fluxo: Dict[str, object],
-    ) -> List[Vec2]:
-        segmentos = max(10, int(self._safe_float(fluxo.get("segmentos_corpo"), 26)))
-        curvatura_lateral_px = self._safe_float(fluxo.get("curvatura_lateral_tiles"), 0.0) * (alcance_px / max(1.0, self._safe_float(fluxo.get("alcance_fixo_tiles"), 6.0)))
-        curvatura_frontal_px = self._safe_float(fluxo.get("curvatura_frontal_tiles"), 0.0) * (alcance_px / max(1.0, self._safe_float(fluxo.get("alcance_fixo_tiles"), 6.0)))
-        offset_lateral_final = self._safe_float(fluxo.get("offset_lateral_final_tiles"), 0.0)
-        offset_frontal_final = self._safe_float(fluxo.get("offset_frontal_final_tiles"), 0.0)
+        flow: Dict[str, object],
+        source_center_px: Vec2,
+        mouse_px: Vec2,
+        source_radius_tiles: float,
+        is_subflow: bool,
+        override_range_tiles: Optional[float] = None,
+    ) -> float:
+        if override_range_tiles is not None:
+            alcance = max(0.10, float(override_range_tiles))
+            if is_subflow or not self._safe_bool(flow.get("ajustavel"), False):
+                return alcance
+            minimo = max(0.10, self._safe_float(flow.get("alcance_min"), alcance))
+            maximo = max(minimo, self._safe_float(flow.get("alcance_max"), alcance))
+            return self._clamp(alcance, minimo, maximo)
+        if is_subflow or not self._safe_bool(flow.get("ajustavel"), False):
+            return max(0.10, self._safe_float(flow.get("alcance"), 4.0))
+        minimo = max(0.10, self._safe_float(flow.get("alcance_min"), 1.0))
+        maximo = max(minimo, self._safe_float(flow.get("alcance_max"), minimo))
+        mouse_dist_tiles = max(0.0, (mouse_px - source_center_px).length() / self._tile_px - source_radius_tiles)
+        return self._clamp(mouse_dist_tiles, minimo, maximo)
 
-        pontos: List[Vec2] = []
-        for indice in range(segmentos + 1):
-            t = indice / float(segmentos)
-            curva = math.sin(t * math.pi) * curvatura_lateral_px
-            frente = math.sin(t * math.pi) * curvatura_frontal_px
-            lateral = deslocamento_lateral_px * (1.0 - t) + offset_lateral_final * t
-            ponto = inicio + direcao * (alcance_px * t + frente + offset_frontal_final * t) + perpendicular * (lateral + curva)
-            pontos.append(ponto)
-        return pontos
+    def scaled_factor(self, flow: Dict[str, object], source_radius_tiles: float) -> float:
+        if not self._safe_bool(flow.get("escalonavel"), False):
+            return 1.0
+        return 1.0 + max(0.0, (source_radius_tiles * 2.0) - 1.5) * 0.08
 
-    @staticmethod
-    def _poligono_da_linha(pontos: List[Vec2], largura_inicio: float, largura_fim: float) -> List[Vec2]:
-        if len(pontos) < 2:
-            return []
-        esquerda: List[Vec2] = []
-        direita: List[Vec2] = []
-        total = max(1, len(pontos) - 1)
-        for indice, ponto in enumerate(pontos):
-            if indice == 0:
-                tangente = pontos[indice + 1] - ponto
-            elif indice == len(pontos) - 1:
-                tangente = ponto - pontos[indice - 1]
-            else:
-                tangente = pontos[indice + 1] - pontos[indice - 1]
-            if tangente.length_squared() <= 1e-9:
-                tangente = Vec2(1, 0)
-            tangente = tangente.normalize()
-            normal = Vec2(-tangente.y, tangente.x)
-            t = indice / float(total)
-            largura = largura_inicio + (largura_fim - largura_inicio) * t
-            metade = max(1.0, largura * 0.5)
-            esquerda.append(ponto + normal * metade)
-            direita.append(ponto - normal * metade)
-        return esquerda + list(reversed(direita))
+    def exit_direction(self, aim_dir: Vec2, flow: Dict[str, object]) -> Vec2:
+        offset_value = self._safe_float(flow.get("offset"), 0.0)
+        if abs(offset_value) <= 1e-9 or not self._safe_bool(flow.get("grudado"), False):
+            return aim_dir
+        base_ang = math.atan2(aim_dir.y, aim_dir.x)
+        ang = math.radians(offset_value)
+        return Vec2(math.cos(base_ang + ang), math.sin(base_ang + ang))
 
-    def _desenhar_ramos(self, area: pygame.Surface, inicio: Vec2, direcao: Vec2, alcance_px: float, fluxo: Dict[str, object], alpha: int, escala_px: float) -> None:
-        quantidade = max(1, int(self._safe_float(fluxo.get("quantidade_ramos"), 1)))
-        abertura = math.radians(self._safe_float(fluxo.get("abertura_ramos_graus"), 0.0))
-        rotacao = math.radians(self._safe_float(fluxo.get("rotacao_ramos_graus"), 0.0))
-        passo_lateral = self._safe_float(fluxo.get("passo_lateral_ramos_tiles"), 0.0)
-        largura_inicio = self._safe_float(fluxo.get("largura_inicial_tiles"), 0.75)
-        largura_fim = self._safe_float(fluxo.get("largura_final_tiles"), 0.9)
-        perpendicular = Vec2(-direcao.y, direcao.x)
+    def base_start(self, center_px: Vec2, aim_dir: Vec2, flow: Dict[str, object], source_radius_tiles: float) -> Tuple[Vec2, Vec2, Vec2]:
+        exit_dir = self.exit_direction(aim_dir, flow)
+        perp = Vec2(-exit_dir.y, exit_dir.x)
+        spacing_tiles = self._safe_float(flow.get("espacamento"), 0.0)
+        offset_tiles = self._safe_float(flow.get("offset"), 0.0)
+        if self._safe_bool(flow.get("grudado"), False):
+            start_center = center_px + exit_dir * (source_radius_tiles * self._tile_px)
+        else:
+            start_center = center_px + exit_dir * ((source_radius_tiles + spacing_tiles) * self._tile_px) + perp * (offset_tiles * self._tile_px)
+        return start_center, exit_dir, perp
 
-        for indice in range(quantidade):
-            t = 0.0 if quantidade <= 1 else (indice / float(quantidade - 1)) - 0.5
-            angulo = rotacao + abertura * t
-            dir_ramo = Vec2(
-                direcao.x * math.cos(angulo) - direcao.y * math.sin(angulo),
-                direcao.x * math.sin(angulo) + direcao.y * math.cos(angulo),
-            )
-            lateral = passo_lateral * t
-            curva = self._construir_curva_ramo(inicio, dir_ramo, perpendicular, alcance_px, lateral * escala_px, fluxo)
-            poligono = self._poligono_da_linha(curva, largura_inicio * escala_px, largura_fim * escala_px)
-            self._desenhar_poligono(
-                area,
-                poligono,
-                (255, 255, 255, max(18, int(alpha * 0.52))),
-                (255, 255, 255, max(46, int(alpha * 0.90))),
-                2,
-            )
-            if not curva:
-                continue
-            for ponto in curva[:: max(2, len(curva) // 7)]:
-                brilho = 0.5 + 0.5 * math.sin(self._tempo * 4.5 + ponto.x * 0.013 + ponto.y * 0.013)
-                pygame.draw.circle(
-                    area,
-                    (255, 255, 255, max(0, int(alpha * 0.20 * brilho))),
-                    (int(ponto.x), int(ponto.y)),
-                    max(1, int(5 + brilho * 4)),
+    def width_profile_tiles(self, flow: Dict[str, object], total_len_tiles: float) -> Tuple[List[float], List[float]]:
+        total_len_tiles = max(0.10, total_len_tiles)
+        base = max(0.0, self._safe_float(flow.get("largura_base"), 0.0))
+        teto = max(0.0, self._safe_float(flow.get("largura_teto"), 0.0))
+        dists = [0.0, total_len_tiles]
+        widths = [base, teto]
+        faixas = max(0, int(self._safe_float(flow.get("faixas"), 0)))
+        if faixas <= 0:
+            return dists, widths
+        largura_faixa = max(0.0, self._safe_float(flow.get("largura_faixa"), teto))
+        repeticao = self._safe_bool(flow.get("repeticao_faixas"), True)
+        ciclico = self._safe_bool(flow.get("faixas_ciclicas"), False)
+        if ciclico:
+            step = max(0.10, self._safe_float(flow.get("distancia_faixa"), 1.0))
+            pos = step
+            toggle = True
+            dists = [0.0]
+            widths = [base]
+            while pos < total_len_tiles - 1e-6:
+                dists.append(pos)
+                widths.append(teto if toggle else largura_faixa)
+                toggle = not toggle
+                pos += step
+            dists.append(total_len_tiles)
+            widths.append(teto if len(widths) % 2 == 1 else largura_faixa)
+            return dists, widths
+        segments = faixas + 2
+        step = total_len_tiles / max(1, segments - 1)
+        dists = [i * step for i in range(segments)]
+        widths = [base, teto]
+        if repeticao:
+            use_teto = False
+            for _ in range(faixas):
+                widths.append(teto if use_teto else largura_faixa)
+                use_teto = not use_teto
+        else:
+            widths.extend([largura_faixa for _ in range(faixas)])
+        return dists, widths[: len(dists)]
+
+    def curvature_anchors(self, flow: Dict[str, object], total_len_tiles: float) -> Tuple[List[float], List[float]]:
+        total_len_tiles = max(0.10, total_len_tiles)
+        points_n = max(0, int(self._safe_float(flow.get("pontos_curvatura"), 0)))
+        cyclic = self._safe_bool(flow.get("curvaturas_ciclicas"), False)
+        invertido = self._safe_bool(flow.get("invertido"), True)
+        vals = [self._safe_float(flow.get(f"curvatura_{i}"), 0.0) for i in range(1, 7)]
+        positions: List[float] = []
+        offsets: List[float] = []
+        if cyclic:
+            step = max(0.10, self._safe_float(flow.get("distancia_entre_curvaturas"), 1.0))
+            pos = step
+            idx = 0
+            while pos < total_len_tiles + 1e-6 and len(positions) < 24:
+                base = vals[idx % max(1, points_n if points_n > 0 else 1)] if points_n > 0 else vals[0]
+                if invertido and idx % 2 == 1:
+                    base = -base
+                positions.append(pos)
+                offsets.append(base)
+                pos += step
+                idx += 1
+            return positions, offsets
+        if points_n <= 0:
+            return positions, offsets
+        step = total_len_tiles / max(1, points_n + 1)
+        for i in range(points_n):
+            positions.append(step * (i + 1))
+            offsets.append(vals[i])
+        return positions, offsets
+
+    def catmull_rom(self, points: List[Vec2], segments_per_edge: int = 10) -> List[Vec2]:
+        if len(points) < 2:
+            return points[:]
+        out = [points[0]]
+        ext = [points[0]] + points + [points[-1]]
+        for i in range(1, len(ext) - 2):
+            p0, p1, p2, p3 = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+            for j in range(1, segments_per_edge + 1):
+                t = j / float(segments_per_edge)
+                t2 = t * t
+                t3 = t2 * t
+                point = 0.5 * (
+                    (2 * p1)
+                    + (-p0 + p2) * t
+                    + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
+                    + (-p0 + 3 * p1 - 3 * p2 + p3) * t3
                 )
+                out.append(point)
+        return out
 
-    def _desenhar_setores(self, area: pygame.Surface, inicio: Vec2, direcao: Vec2, alcance_px: float, fluxo: Dict[str, object], alpha: int, escala_px: float) -> None:
-        if not fluxo.get("usar_setor", False):
-            return
-        quantidade = max(1, int(self._safe_float(fluxo.get("quantidade_setores"), 1)))
-        abertura = math.radians(self._safe_float(fluxo.get("abertura_setores_graus"), 55.0))
-        rotacao = math.radians(self._safe_float(fluxo.get("rotacao_setores_graus"), 0.0))
-        inicio_setor = self._safe_float(fluxo.get("inicio_setor_tiles"), 0.0)
-        alcance_setor = self._safe_float(fluxo.get("alcance_setor_tiles"), 0.0)
-        usar_alcance_geral = bool(fluxo.get("setor_usar_alcance_geral", False))
-        angulo_setor = math.radians(self._safe_float(fluxo.get("angulo_setor_graus"), math.degrees(abertura)))
-        segmentos = max(8, int(self._safe_float(fluxo.get("segmentos_setor"), 28)))
+    def build_centerline(
+        self,
+        flow: Dict[str, object],
+        center_px: Vec2,
+        mouse_px: Vec2,
+        source_radius_tiles: float,
+        is_subflow: bool,
+        override_range_tiles: Optional[float] = None,
+    ) -> Tuple[List[Vec2], List[float], float, Vec2, Vec2]:
+        aim_dir = self._safe_normalize(mouse_px - center_px)
+        total_len_tiles = self.compute_effective_range_tiles(flow, center_px, mouse_px, source_radius_tiles, is_subflow, override_range_tiles=override_range_tiles)
+        scale = self.scaled_factor(flow, source_radius_tiles)
+        total_len_tiles *= scale
+        start_center_px, axis_dir, perp = self.base_start(center_px, aim_dir, flow, source_radius_tiles)
+        dists_nodes, widths_nodes = self.width_profile_tiles(flow, total_len_tiles)
+        curvature_pos, curvature_vals = self.curvature_anchors(flow, total_len_tiles)
+        anchor_map = {0.0: 0.0, total_len_tiles: 0.0}
+        for dist, curv in zip(curvature_pos, curvature_vals):
+            anchor_map[self._clamp(dist, 0.0, total_len_tiles)] = curv * scale
+        anchor_keys = sorted(anchor_map.keys())
+        anchor_points = [start_center_px + axis_dir * (dist * self._tile_px) + perp * (anchor_map[dist] * self._tile_px) for dist in anchor_keys]
+        if self._safe_bool(flow.get("curvatura_circular"), True) and len(anchor_points) >= 3:
+            smooth = self.catmull_rom(anchor_points, 10)
+        else:
+            smooth: List[Vec2] = []
+            for idx in range(len(anchor_points) - 1):
+                a = anchor_points[idx]
+                b = anchor_points[idx + 1]
+                steps = max(2, int((b - a).length() / max(6.0, self._tile_px * 0.25)))
+                for step in range(steps):
+                    smooth.append(a.lerp(b, step / float(steps)))
+            smooth.append(anchor_points[-1])
+        if len(smooth) < 2:
+            smooth = [start_center_px, start_center_px + axis_dir * (total_len_tiles * self._tile_px)]
+        widths_px: List[float] = []
+        cumulative_tiles = [0.0]
+        total_px_len = 0.0
+        for idx in range(1, len(smooth)):
+            total_px_len += (smooth[idx] - smooth[idx - 1]).length()
+            cumulative_tiles.append(total_px_len / self._tile_px)
+        haste = str(flow.get("hastes") or "reto").strip().casefold() or "reto"
+        for dist in cumulative_tiles:
+            idx = 0
+            while idx < len(dists_nodes) - 1 and dist > dists_nodes[idx + 1]:
+                idx += 1
+            if idx >= len(dists_nodes) - 1:
+                width = widths_nodes[-1]
+            else:
+                a_d, b_d = dists_nodes[idx], dists_nodes[idx + 1]
+                a_w, b_w = widths_nodes[idx], widths_nodes[idx + 1]
+                interp = 0.0 if abs(b_d - a_d) < 1e-8 else (dist - a_d) / (b_d - a_d)
+                if haste == "concavo":
+                    interp = 1 - (1 - interp) * (1 - interp)
+                elif haste == "convexo":
+                    interp = interp * interp
+                width = a_w + (b_w - a_w) * interp
+            widths_px.append(max(0.0, width * self._tile_px * scale))
+        return smooth, widths_px, total_len_tiles, axis_dir, start_center_px
 
-        comprimento = alcance_px if usar_alcance_geral or alcance_setor <= 0.0 else alcance_setor * escala_px
-        raio_interno = max(0.0, inicio_setor * escala_px)
-        ang_centro = math.atan2(direcao.y, direcao.x) + rotacao
-        abertura_real = max(abertura, angulo_setor)
+    def polygon_from_centerline(self, points: List[Vec2], widths_px: List[float], source_center_px: Vec2, source_radius_tiles: float, flow: Dict[str, object], axis_dir: Vec2) -> List[Vec2]:
+        if len(points) < 2:
+            return []
+        if self._safe_bool(flow.get("grudado"), False):
+            src_r_px = source_radius_tiles * self._tile_px
+            outer_r_px = max(src_r_px, max((point - source_center_px).length() for point in points))
+            center_ang = math.atan2(axis_dir.y, axis_dir.x)
+            base_half_ang = min(math.tau * 0.5 - 1e-6, math.radians(max(0.0, self._safe_float(flow.get("largura_base"), 0.0)) * 0.5))
+            teto_half_ang = min(math.tau * 0.5 - 1e-6, math.radians(max(0.0, self._safe_float(flow.get("largura_teto"), 0.0)) * 0.5))
+            outer_samples = max(1, int(max(1e-6, teto_half_ang) * 18))
+            inner_samples = max(1, int(max(1e-6, base_half_ang) * 18))
+            outer_pts = []
+            for idx in range(outer_samples + 1):
+                interp = idx / float(outer_samples)
+                ang = center_ang + teto_half_ang - 2.0 * teto_half_ang * interp
+                outer_pts.append(source_center_px + Vec2(math.cos(ang), math.sin(ang)) * outer_r_px)
+            inner_pts = []
+            for idx in range(inner_samples + 1):
+                interp = idx / float(inner_samples)
+                ang = center_ang - base_half_ang + 2.0 * base_half_ang * interp
+                inner_pts.append(source_center_px + Vec2(math.cos(ang), math.sin(ang)) * src_r_px)
+            return outer_pts + inner_pts
+        left: List[Vec2] = []
+        right: List[Vec2] = []
+        for idx, point in enumerate(points):
+            if idx == 0:
+                tangent = points[idx + 1] - points[idx]
+            elif idx == len(points) - 1:
+                tangent = points[idx] - points[idx - 1]
+            else:
+                tangent = points[idx + 1] - points[idx - 1]
+            tangent = self._safe_normalize(tangent)
+            normal = Vec2(-tangent.y, tangent.x)
+            half = widths_px[idx] * 0.5
+            left.append(point + normal * half)
+            right.append(point - normal * half)
+        return left + list(reversed(right))
 
-        for indice in range(quantidade):
-            t = 0.0 if quantidade <= 1 else (indice / float(quantidade - 1)) - 0.5
-            centro_atual = ang_centro + abertura * t
-            pontos: List[Vec2] = []
-            for passo in range(segmentos + 1):
-                f = passo / float(segmentos)
-                ang = centro_atual - abertura_real * 0.5 + abertura_real * f
-                pontos.append(inicio + Vec2(math.cos(ang), math.sin(ang)) * (raio_interno + comprimento))
-            for passo in range(segmentos, -1, -1):
-                f = passo / float(segmentos)
-                ang = centro_atual - abertura_real * 0.5 + abertura_real * f
-                pontos.append(inicio + Vec2(math.cos(ang), math.sin(ang)) * raio_interno)
-            self._desenhar_poligono(
-                area,
-                pontos,
-                (255, 255, 255, max(16, int(alpha * 0.38))),
-                (255, 255, 255, max(40, int(alpha * 0.78))),
-                2,
+    def circle_outline(self, center_px: Vec2, radius_px: float, flow: Dict[str, object]) -> List[Vec2]:
+        shape = str(flow.get("shape") or "normal").strip().casefold() or "normal"
+        elementos = max(1, int(self._safe_float(flow.get("quantidade_elementos"), 1)))
+        count = max(24, elementos * 6 if shape != "normal" else 48)
+        elem_px = max(0.0, self._safe_float(flow.get("tamanho_elementos"), 0.0)) * self._tile_px
+        pts = []
+        for idx in range(count):
+            ang = (math.tau * idx) / count
+            raio = radius_px
+            if shape != "normal" and elem_px > 0.0:
+                wave = 0.5 * (1.0 + math.cos(ang * elementos))
+                raio += elem_px * wave if shape == "espinhos" else elem_px * wave * 0.55
+            pts.append(center_px + Vec2(math.cos(ang), math.sin(ang)) * raio)
+        return pts
+
+    def visible_circle_center(
+        self,
+        center_px: Vec2,
+        mouse_px: Vec2,
+        source_radius_tiles: float,
+        flow: Dict[str, object],
+        is_subflow: bool,
+        override_range_tiles: Optional[float] = None,
+        override_circle_radius_tiles: Optional[float] = None,
+    ) -> Tuple[Vec2, float, Vec2]:
+        aim_dir = self._safe_normalize(mouse_px - center_px)
+        exit_dir = self.exit_direction(aim_dir, flow)
+        scale = self.scaled_factor(flow, source_radius_tiles)
+        radius_tiles = self._safe_float(flow.get("raio"), 2.0) * scale
+        if override_circle_radius_tiles is not None:
+            radius_tiles = max(0.0, float(override_circle_radius_tiles))
+        if self._safe_bool(flow.get("centralizar"), False):
+            return center_px, radius_tiles * self._tile_px, exit_dir
+        perp = Vec2(-exit_dir.y, exit_dir.x)
+        range_tiles = self.compute_effective_range_tiles(flow, center_px, mouse_px, source_radius_tiles, is_subflow, override_range_tiles=override_range_tiles)
+        range_tiles *= scale
+        spacing_tiles = self._safe_float(flow.get("espacamento"), 0.0)
+        if self._safe_bool(flow.get("grudado"), False):
+            circle_center = center_px + exit_dir * ((source_radius_tiles + range_tiles) * self._tile_px)
+        else:
+            circle_center = center_px + exit_dir * ((source_radius_tiles + spacing_tiles + range_tiles) * self._tile_px) + perp * (self._safe_float(flow.get("offset"), 0.0) * self._tile_px)
+        return circle_center, radius_tiles * self._tile_px, exit_dir
+
+    def _construir_formas_fluxo(
+        self,
+        flow: Dict[str, object],
+        center_px: Vec2,
+        mouse_px: Vec2,
+        source_radius_tiles: float,
+        *,
+        is_subflow: bool = False,
+        override_range_tiles: Optional[float] = None,
+        override_circle_radius_tiles: Optional[float] = None,
+    ) -> Tuple[List[Tuple[List[Vec2], Dict[str, object]]], List[List[Vec2]], List[Tuple[Vec2, float, Dict[str, object], bool]], Vec2]:
+        visiveis: List[Tuple[List[Vec2], Dict[str, object]]] = []
+        colidiveis: List[List[Vec2]] = []
+        circulos: List[Tuple[Vec2, float, Dict[str, object], bool]] = []
+        proxima_origem = Vec2(center_px)
+        direcao_mouse = self._safe_normalize(mouse_px - center_px)
+        distancia_mouse = max(self._tile_px, (mouse_px - center_px).length())
+
+        if self._safe_bool(flow.get("circular"), False):
+            circle_center, radius_px, exit_dir = self.visible_circle_center(
+                center_px,
+                mouse_px,
+                source_radius_tiles,
+                flow,
+                is_subflow,
+                override_range_tiles=override_range_tiles,
+                override_circle_radius_tiles=override_circle_radius_tiles,
             )
+            circulos.append((circle_center, radius_px, dict(flow), self._safe_bool(flow.get("visible"), True)))
+            if self._safe_bool(flow.get("visible"), True):
+                visiveis.append((self.circle_outline(circle_center, radius_px, flow), dict(flow)))
+            proxima_origem = circle_center if self._safe_bool(flow.get("centralizar"), False) else (circle_center + exit_dir * radius_px)
+        else:
+            pontos, larguras, _alcance, eixo, _inicio = self.build_centerline(
+                flow,
+                center_px,
+                mouse_px,
+                source_radius_tiles,
+                is_subflow,
+                override_range_tiles=override_range_tiles,
+            )
+            poligono = self.polygon_from_centerline(pontos, larguras, center_px, source_radius_tiles, flow, eixo)
+            if poligono:
+                colidiveis.append(poligono)
+                if self._safe_bool(flow.get("visible"), True):
+                    visiveis.append((poligono, dict(flow)))
+            if pontos:
+                proxima_origem = pontos[-1]
 
-    def _desenhar_circulos(self, area: pygame.Surface, inicio: Vec2, direcao: Vec2, alcance_px: float, fluxo: Dict[str, object], alpha: int, escala_px: float) -> None:
-        if fluxo.get("usar_area_final", False):
-            raio = max(4.0, self._safe_float(fluxo.get("raio_area_final_tiles"), 1.0) * escala_px)
-            offset = self._safe_float(fluxo.get("offset_area_final_tiles"), 0.0) * escala_px
-            centro = inicio + direcao * (alcance_px + offset)
-            pygame.draw.circle(area, (255, 255, 255, max(16, int(alpha * 0.35))), (int(centro.x), int(centro.y)), int(raio))
-            pygame.draw.circle(area, (255, 255, 255, max(44, int(alpha * 0.85))), (int(centro.x), int(centro.y)), int(raio), 2)
-        if fluxo.get("usar_area_extra", False):
-            raio = max(4.0, self._safe_float(fluxo.get("raio_area_extra_tiles"), 1.0) * escala_px)
-            offset = self._safe_float(fluxo.get("offset_area_extra_tiles"), 0.0) * escala_px
-            centro = inicio + direcao * offset
-            pygame.draw.circle(area, (255, 255, 255, max(12, int(alpha * 0.22))), (int(centro.x), int(centro.y)), int(raio))
-            pygame.draw.circle(area, (255, 255, 255, max(30, int(alpha * 0.68))), (int(centro.x), int(centro.y)), int(raio), 2)
+        for subfluxo in [dict(item) for item in list(flow.get("subfluxos") or []) if isinstance(item, dict)]:
+            alvo_subfluxo = proxima_origem + direcao_mouse * distancia_mouse
+            sub_visiveis, sub_colidiveis, sub_circulos, _ = self._construir_formas_fluxo(
+                subfluxo,
+                proxima_origem,
+                alvo_subfluxo,
+                source_radius_tiles,
+                is_subflow=True,
+            )
+            visiveis.extend(sub_visiveis)
+            colidiveis.extend(sub_colidiveis)
+            circulos.extend(sub_circulos)
+        return visiveis, colidiveis, circulos, proxima_origem
+
+    def _coletar_formas(
+        self,
+        ataque: object,
+        inicio,
+        fim,
+        *,
+        tile_px: float,
+        source_radius_tiles: Optional[float] = None,
+        override_range_tiles: Optional[float] = None,
+        override_circle_radius_tiles: Optional[float] = None,
+    ) -> Tuple[List[Tuple[List[Vec2], Dict[str, object]]], List[List[Vec2]], List[Tuple[Vec2, float, Dict[str, object], bool]]]:
+        self._tile_px = max(0.01, float(tile_px))
+        pacote = self._pacote_fluxo(ataque)
+        inicio_v = Vec2(float(inicio[0]), float(inicio[1]))
+        fim_v = Vec2(float(fim[0]), float(fim[1]))
+        raio_origem = self._fonte_radius_tiles(pacote, source_radius_tiles)
+        fluxos = self._fluxos_topo(pacote)
+        visiveis: List[Tuple[List[Vec2], Dict[str, object]]] = []
+        colidiveis: List[List[Vec2]] = []
+        circulos: List[Tuple[Vec2, float, Dict[str, object], bool]] = []
+        for fluxo in fluxos:
+            vis, col, cir, _ = self._construir_formas_fluxo(
+                fluxo,
+                inicio_v,
+                fim_v,
+                raio_origem,
+                is_subflow=False,
+                override_range_tiles=override_range_tiles,
+                override_circle_radius_tiles=override_circle_radius_tiles,
+            )
+            visiveis.extend(vis)
+            colidiveis.extend(col)
+            circulos.extend(cir)
+        return visiveis, colidiveis, circulos
+
+    def _desenhar_circulo(self, area: pygame.Surface, pontos: List[Vec2], alpha: int) -> None:
+        self._desenhar_poligono(
+            area,
+            pontos,
+            (255, 255, 255, max(14, int(alpha * 0.32))),
+            (255, 255, 255, max(40, int(alpha * 0.82))),
+            2,
+        )
 
     def _desenhar_animacao(self, area: pygame.Surface, inicio: Vec2, fim: Vec2, alpha: int) -> None:
+        if pygame is None:
+            return
         direcao = self._safe_normalize(fim - inicio)
         distancia = max(1.0, (fim - inicio).length())
         perpendicular = Vec2(-direcao.y, direcao.x)
@@ -254,57 +636,80 @@ class LeitorFluxos:
         alpha: int = 120,
         animado: bool = True,
         tile_px: float = 42.0,
+        source_radius_tiles: Optional[float] = None,
     ) -> None:
+        if pygame is None:
+            return
+        visiveis, _colidiveis, circulos = self._coletar_formas(
+            ataque,
+            inicio,
+            fim,
+            tile_px=tile_px,
+            source_radius_tiles=source_radius_tiles,
+        )
         inicio_v = Vec2(float(inicio[0]), float(inicio[1]))
         fim_v = Vec2(float(fim[0]), float(fim[1]))
-        direcao = self._safe_normalize(fim_v - inicio_v)
-        fluxo = self.obter_fluxo(ataque)
         area = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
 
-        if not fluxo:
-            alcance = max(24.0, (fim_v - inicio_v).length())
-            self._desenhar_setores(
-                area,
-                inicio_v,
-                direcao,
-                alcance,
-                {
-                    "usar_setor": True,
-                    "quantidade_setores": 1,
-                    "abertura_setores_graus": 0.0,
-                    "angulo_setor_graus": 65.0,
-                    "segmentos_setor": 26,
-                    "setor_usar_alcance_geral": True,
-                },
-                alpha,
-                42.0,
-            )
+        if not visiveis and not circulos:
+            direcao = self._safe_normalize(fim_v - inicio_v)
+            fallback = [
+                inicio_v + Vec2(-direcao.y, direcao.x) * 18.0,
+                fim_v,
+                inicio_v - Vec2(-direcao.y, direcao.x) * 18.0,
+            ]
+            self._desenhar_poligono(area, fallback, (255, 255, 255, max(18, int(alpha * 0.32))), (255, 255, 255, max(40, int(alpha * 0.82))), 2)
             if animado:
-                self._desenhar_animacao(area, inicio_v, inicio_v + direcao * alcance, alpha)
+                self._desenhar_animacao(area, inicio_v, fim_v, alpha)
             tela.blit(area, (0, 0))
             return
 
-        escala_px = max(18.0, float(tile_px))
-        alcance_miravel = bool(fluxo.get("alcance_miravel", False))
-        alcance_mouse = max(0.0, (fim_v - inicio_v).length() / escala_px)
-        alcance = self._safe_float(fluxo.get("alcance_fixo_tiles"), max(alcance_mouse, 1.0))
-        if alcance_miravel:
-            alcance = self._clamp(
-                alcance_mouse,
-                self._safe_float(fluxo.get("alcance_min_tiles"), 0.0),
-                max(self._safe_float(fluxo.get("alcance_max_tiles"), alcance_mouse), self._safe_float(fluxo.get("alcance_min_tiles"), 0.0)),
+        for poligono, _flow in visiveis:
+            self._desenhar_poligono(
+                area,
+                poligono,
+                (255, 255, 255, max(16, int(alpha * 0.34))),
+                (255, 255, 255, max(42, int(alpha * 0.84))),
+                2,
             )
-        origem_gap = self._safe_float(fluxo.get("origem_gap_tiles"), 0.0) * escala_px
-        alcance_px = max(18.0, alcance * escala_px)
-        inicio_fluxo = inicio_v + direcao * origem_gap
-        fim_fluxo = inicio_fluxo + direcao * alcance_px
-
-        if fluxo.get("usar_corpo", True) or int(self._safe_float(fluxo.get("quantidade_ramos"), 1)) > 0:
-            self._desenhar_ramos(area, inicio_fluxo, direcao, alcance_px, fluxo, alpha, escala_px)
-        self._desenhar_setores(area, inicio_fluxo, direcao, alcance_px, fluxo, alpha, escala_px)
-        self._desenhar_circulos(area, inicio_fluxo, direcao, alcance_px, fluxo, alpha, escala_px)
+        for centro, raio_px, flow, visivel in circulos:
+            if not visivel:
+                continue
+            self._desenhar_circulo(area, self.circle_outline(centro, raio_px, flow), alpha)
 
         if animado:
-            self._desenhar_animacao(area, inicio_fluxo, fim_fluxo, alpha)
-
+            self._desenhar_animacao(area, inicio_v, fim_v, alpha)
         tela.blit(area, (0, 0))
+
+    def flow_contains_target(
+        self,
+        ataque: object,
+        inicio,
+        fim,
+        alvo_pos,
+        alvo_raio_tiles: float,
+        *,
+        tile_px: float = 1.0,
+        source_radius_tiles: Optional[float] = None,
+        override_range_tiles: Optional[float] = None,
+        override_circle_radius_tiles: Optional[float] = None,
+    ) -> bool:
+        _visiveis, colidiveis, circulos = self._coletar_formas(
+            ataque,
+            inicio,
+            fim,
+            tile_px=tile_px,
+            source_radius_tiles=source_radius_tiles,
+            override_range_tiles=override_range_tiles,
+            override_circle_radius_tiles=override_circle_radius_tiles,
+        )
+        alvo_centro = Vec2(float(alvo_pos[0]), float(alvo_pos[1]))
+        alvo_raio_px = max(0.0, float(alvo_raio_tiles) * float(tile_px))
+        for ponto in self.circle_samples(alvo_centro, alvo_raio_px):
+            for poligono in colidiveis:
+                if self.point_in_polygon(ponto, poligono):
+                    return True
+            for centro, raio_px, flow, _visivel in circulos:
+                if self.point_hit_circle_shape(ponto, centro, raio_px, flow):
+                    return True
+        return False

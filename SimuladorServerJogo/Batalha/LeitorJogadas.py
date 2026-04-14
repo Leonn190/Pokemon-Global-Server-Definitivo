@@ -4,12 +4,14 @@ import math
 import re
 from typing import Dict, List
 
+from Codigo.ModulosBatalha.LeitorFluxos import LeitorFluxos
 from SimuladorServerJogo.Logica.Executes.FuncoesAtaques import executar_ponto_ataque
 from SimuladorServerJogo.Batalha.FraquezasResistencias import modificador_tipo as modificador_tipo_csv
 from SimuladorServerJogo.Batalha.IA.BotBatalha import BotBatalha
 from SimuladorServerJogo.Batalha.ObjetoBatalha import ObjetoBatalha
 from SimuladorServerJogo.Batalha.SimuladorFisica import SimuladorFisica
 from SimuladorServerJogo.Batalha.SistemaBatalha import SistemaBatalha
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha
 
 
 class LeitorJogadas:
@@ -23,6 +25,8 @@ class LeitorJogadas:
         self._fisica: SimuladorFisica | None = None
         self._sistema_aux: SistemaBatalha | None = None
         self._bot_ia = BotBatalha()
+        self._leitor_fluxos = LeitorFluxos()
+        self._regras_batalha = carregar_regras_batalha()
 
     @staticmethod
     def _fnum(valor, default: float = 0.0) -> float:
@@ -86,6 +90,52 @@ class LeitorJogadas:
         if isinstance(valor, float):
             return round(valor, 4)
         return valor
+
+    def _custo_jogada_multiplas_acoes(self, indice_executor: object, custo_base: object) -> float:
+        try:
+            indice = max(0, int(indice_executor))
+        except (TypeError, ValueError):
+            indice = 0
+        try:
+            base = max(0.0, float(custo_base))
+        except (TypeError, ValueError):
+            base = 0.0
+        try:
+            multiplicador_base = float(self._regras_batalha.get("batalha_multiplas_acoes_multiplicador_base", 1.0))
+        except (TypeError, ValueError):
+            multiplicador_base = 1.0
+        try:
+            acrescimo = float(self._regras_batalha.get("batalha_multiplas_acoes_acrescimo_por_acao_extra", 0.2))
+        except (TypeError, ValueError):
+            acrescimo = 0.2
+        return round(base * max(0.0, multiplicador_base + (indice * acrescimo)), 4)
+
+    def _publico_objeto_fluxo(self, evento: Dict[str, object], detalhe: Dict[str, object]) -> Dict[str, object]:
+        objeto = detalhe.get("objeto") if isinstance(detalhe.get("objeto"), dict) else (detalhe if detalhe else {})
+        extras = objeto.get("dados_extras") if isinstance(objeto.get("dados_extras"), dict) else {}
+        subtipo = str(objeto.get("subtipo") or detalhe.get("subtipo") or "objeto")
+        publico = {
+            "tipo": "objeto",
+            "subtipo": subtipo,
+            "objeto_id": str(objeto.get("id") or detalhe.get("objeto_id") or ""),
+            "executor_id": str(evento.get("executor_id") or objeto.get("dono_id") or extras.get("executor_id") or ""),
+            "posicao": self._round_pos(objeto.get("posicao")),
+            "origem": self._round_pos(detalhe.get("origem") or objeto.get("posicao_anterior") or extras.get("origem_execucao")),
+            "destino": self._round_pos(detalhe.get("destino") or extras.get("destino")),
+            "origem_execucao": self._round_pos(extras.get("origem_execucao")),
+            "velocidade": self._round_num(objeto.get("velocidade_tiles_tick", 0.0)),
+            "duracao_ticks": int(objeto.get("duracao_ticks", 0) or 0),
+            "raio": self._round_num(detalhe.get("raio_atual", objeto.get("raio"))),
+            "raio_max": self._round_num(extras.get("raio_max", objeto.get("raio"))),
+            "alcance": self._round_num(detalhe.get("alcance_atual", extras.get("alcance", 0.0))),
+            "alcance_max": self._round_num(extras.get("alcance", 0.0)),
+            "largura": self._round_num(extras.get("largura_teto", 0.0)),
+            "fluxo": self._normalizar_valor_publico(objeto.get("fluxo") if isinstance(objeto.get("fluxo"), dict) else {}),
+        }
+        angulo = self._angulo_graus(objeto.get("direcao"))
+        if angulo is not None:
+            publico["angulo"] = angulo
+        return {k: v for k, v in publico.items() if v not in (None, "", {})}
 
     def _anexar_nomes_publicos(self, sistema: SistemaBatalha, publico: Dict[str, object]) -> Dict[str, object]:
         saida = dict(publico or {})
@@ -185,15 +235,14 @@ class LeitorJogadas:
             return (None, None)
 
         if tipo == "acao_iniciada":
-            estilo = str(evento.get("estilo") or "").strip().casefold()
-            if estilo in {"movimento", "tiro", "area"}:
-                return (None, None)
             publico = {
                 "tipo": "acao",
                 "executor_id": executor_id,
                 "ataque": str(evento.get("ataque") or ""),
                 "estilo": str(evento.get("estilo") or ""),
                 "posicao": self._round_pos(evento.get("posicao_inicial")),
+                "custo_energia": self._round_num(evento.get("custo_energia", 0.0)),
+                "energia_restante": self._round_num(evento.get("energia_restante", 0.0)),
             }
             destino = self._round_pos(evento.get("destino"))
             if destino is not None:
@@ -214,47 +263,35 @@ class LeitorJogadas:
 
         if tipo == "movimento":
             colisoes = [dict(item) for item in list(detalhe.get("colisoes") or []) if isinstance(item, dict)]
-            if colisoes:
-                publico = {
-                    "tipo": "colisao_movimento",
-                    "pokemon_id": executor_id,
-                    "origem": self._round_pos(detalhe.get("origem")),
-                    "posicao": self._round_pos(detalhe.get("destino")),
-                    "destino_planejado": self._round_pos(detalhe.get("destino_planejado")),
-                    "colisoes": self._normalizar_valor_publico(colisoes),
-                }
-                return ("segmentacao", {k: v for k, v in publico.items() if v not in (None, "", [])})
-            return (None, None)
+            publico = {
+                "tipo": "movimento",
+                "pokemon_id": executor_id,
+                "origem": self._round_pos(detalhe.get("origem")),
+                "posicao": self._round_pos(detalhe.get("destino")),
+                "destino_planejado": self._round_pos(detalhe.get("destino_planejado")),
+                "velocidade": self._round_num(detalhe.get("velocidade", 0.0)),
+                "distancia": self._round_num(detalhe.get("distancia", 0.0)),
+                "colisoes": self._normalizar_valor_publico(colisoes),
+                "interrompido_por_colisao": bool(detalhe.get("interrompido_por_colisao", False)),
+            }
+            return ("segmentacao", {k: v for k, v in publico.items() if v not in (None, "", [])})
 
         if tipo == "movimento_reacao_iniciado":
             return (None, None)
 
         if tipo in {"objeto_criado", "objeto_movimento", "objeto_finalizado"}:
-            objeto = detalhe.get("objeto") if isinstance(detalhe.get("objeto"), dict) else (detalhe if detalhe else {})
-            subtipo = str(objeto.get("subtipo") or detalhe.get("subtipo") or "objeto")
-            if subtipo.strip().casefold() in {"tiro", "area", "zona"}:
-                return (None, None)
-            publico = {
-                "tipo": subtipo,
-                "objeto_id": str(objeto.get("id") or detalhe.get("objeto_id") or ""),
-                "executor_id": str(evento.get("executor_id") or objeto.get("dono_id") or ""),
-                "posicao": self._round_pos(objeto.get("posicao")),
-                "destino": self._round_pos((objeto.get("dados_extras") or {}).get("destino")) if isinstance(objeto.get("dados_extras"), dict) else None,
-                "velocidade": self._round_num(objeto.get("velocidade_tiles_tick", 0.0)),
-            }
-            angulo = self._angulo_graus(objeto.get("direcao"))
-            if angulo is not None and subtipo in {"tiro", "area"}:
-                publico["angulo"] = angulo
-            if "raio_atual" in detalhe:
-                publico["raio"] = self._round_num(detalhe.get("raio_atual"))
-            elif subtipo == "zona" and objeto.get("raio") is not None:
-                publico["raio"] = self._round_num(objeto.get("raio"))
-            if "alcance_atual" in detalhe:
-                publico["alcance"] = self._round_num(detalhe.get("alcance_atual"))
-            if tipo == "objeto_movimento":
-                return (None, None)
-            fase = "inicializacao" if tipo == "objeto_criado" else "finalizacao"
-            return (fase, {k: v for k, v in publico.items() if v not in (None, "")})
+            publico = self._publico_objeto_fluxo(evento, detalhe)
+            publico["fase_objeto"] = {
+                "objeto_criado": "criado",
+                "objeto_movimento": "movimento",
+                "objeto_finalizado": "finalizado",
+            }.get(tipo, tipo)
+            fase = "segmentacao"
+            if tipo == "objeto_criado":
+                fase = "inicializacao"
+            elif tipo == "objeto_finalizado":
+                fase = "finalizacao"
+            return (fase, publico)
 
         if tipo == "dano":
             publico = {
@@ -262,6 +299,10 @@ class LeitorJogadas:
                 "executor_id": executor_id,
                 "alvo_id": alvo_id,
                 "dano": self._round_num(detalhe.get("dano_hp", pacote.get("dano_final", 0.0))),
+                "vida_antes": self._round_num(detalhe.get("vida_antes", 0.0)),
+                "vida_depois": self._round_num(detalhe.get("vida_depois", 0.0)),
+                "barreira_antes": self._round_num(detalhe.get("barreira_antes", 0.0)),
+                "barreira_depois": self._round_num(detalhe.get("barreira_depois", 0.0)),
             }
             if float(detalhe.get("dano_barreira", 0.0) or 0.0) > 0.0:
                 publico["dano_barreira"] = self._round_num(detalhe.get("dano_barreira"))
@@ -296,6 +337,8 @@ class LeitorJogadas:
                     "executor_id": executor_id,
                     "alvo_id": alvo_id,
                     "valor": self._round_num(detalhe.get("cura_final", 0.0)),
+                    "vida_antes": self._round_num(detalhe.get("vida_antes", 0.0)),
+                    "vida_depois": self._round_num(detalhe.get("vida_depois", 0.0)),
                 },
             )
 
@@ -318,6 +361,9 @@ class LeitorJogadas:
                 "alvo_id": alvo_id or executor_id,
                 "efeito": str(detalhe.get("efeito") or evento.get("efeito") or ""),
                 "status": str(detalhe.get("status") or "ok"),
+                "positivo": bool(detalhe.get("positivo", False)),
+                "duracao_ticks": int(detalhe.get("duracao_ticks", 0) or 0),
+                "fase_efeito": "expirado" if tipo == "efeito_expirado" else "aplicado",
             }
             fase = "passiva" if tipo == "efeito_expirado" else "segmentacao"
             return (fase, {k: v for k, v in publico.items() if v not in (None, "")})
@@ -377,10 +423,15 @@ class LeitorJogadas:
             if detalhe:
                 if "dano_hp" in detalhe:
                     publico["dano"] = self._round_num(detalhe.get("dano_hp", 0.0))
+                    publico["vida_antes"] = self._round_num(detalhe.get("vida_antes", 0.0))
+                    publico["vida_depois"] = self._round_num(detalhe.get("vida_depois", 0.0))
                 if "cura_final" in detalhe:
                     publico["cura"] = self._round_num(detalhe.get("cura_final", 0.0))
+                    publico["vida_antes"] = self._round_num(detalhe.get("vida_antes", 0.0))
+                    publico["vida_depois"] = self._round_num(detalhe.get("vida_depois", 0.0))
                 if "ganho_final" in detalhe:
                     publico["energia"] = self._round_num(detalhe.get("ganho_final", 0.0))
+                    publico["energia_total"] = self._round_num(detalhe.get("energia", 0.0))
                 motivo = str(detalhe.get("motivo") or "")
                 if motivo:
                     publico["motivo"] = motivo
@@ -388,7 +439,7 @@ class LeitorJogadas:
 
         if tipo in {"impacto_cancelado", "acao_bloqueada", "acao_finalizada"}:
             estilo = str(evento.get("estilo") or "").strip().casefold()
-            if estilo in {"movimento", "tiro", "area"}:
+            if estilo in {"movimento", "tiro", "area", "zona"}:
                 return (None, None)
             publico = {
                 "tipo": tipo,
@@ -720,8 +771,9 @@ class LeitorJogadas:
         for lista in por_executor.values():
             base = int(sistema.TickGlobal) + max(1, int(round(max_int - float(lista[0]["inteligencia"]))) + 1)
             tick_cursor = base
-            for item in lista:
+            for indice_executor, item in enumerate(lista):
                 duracao = self._duracao_estimativa(sistema, item["executor"], item, item["spec"])
+                item["indice_executor_turno"] = int(indice_executor)
                 item["start_tick"] = int(tick_cursor)
                 item["duracao_estimada"] = int(duracao)
                 item["end_tick_estimada"] = int(tick_cursor + max(0, duracao - 1))
@@ -1040,16 +1092,18 @@ class LeitorJogadas:
             if alvo.Uid in objeto.AlvosAtingidos:
                 continue
 
-            atingiu = False
-            if objeto.Subtipo == "tiro":
-                atingiu = self._fisica.segmento_intersecta_circulo(origem, destino, alvo.Posicao, alvo.RaioColisao + objeto.Raio)
-            elif objeto.Subtipo == "area":
-                alcance_atual = min(self._fnum(objeto.DadosExtras.get("alcance"), 3.0), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
-                origem_cone = tuple(objeto.DadosExtras.get("origem_execucao") or executor.Posicao)
-                atingiu = self._fisica.pokemon_em_cone(alvo, origem_cone, objeto.Direcao, alcance_atual, self._fnum(objeto.DadosExtras.get("largura_teto"), 50.0))
-            elif objeto.Subtipo == "zona":
-                raio_atual = min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
-                atingiu = self._fisica.circulos_colidem(objeto.Posicao, raio_atual, alvo.Posicao, alvo.RaioColisao)
+            atingiu = self._objeto_atinge_alvo_por_fluxo(objeto, executor, alvo, origem, destino, elapsed)
+            if atingiu is None:
+                atingiu = False
+                if objeto.Subtipo == "tiro":
+                    atingiu = self._fisica.segmento_intersecta_circulo(origem, destino, alvo.Posicao, alvo.RaioColisao + objeto.Raio)
+                elif objeto.Subtipo == "area":
+                    alcance_atual = min(self._fnum(objeto.DadosExtras.get("alcance"), 3.0), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
+                    origem_cone = tuple(objeto.DadosExtras.get("origem_execucao") or executor.Posicao)
+                    atingiu = self._fisica.pokemon_em_cone(alvo, origem_cone, objeto.Direcao, alcance_atual, self._fnum(objeto.DadosExtras.get("largura_teto"), 50.0))
+                elif objeto.Subtipo == "zona":
+                    raio_atual = min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
+                    atingiu = self._fisica.circulos_colidem(objeto.Posicao, raio_atual, alvo.Posicao, alvo.RaioColisao)
 
             if not atingiu:
                 continue
@@ -1093,6 +1147,65 @@ class LeitorJogadas:
 
         if elapsed >= int(objeto.DuracaoTicks):
             objeto.Ativo = False
+
+    def _objeto_atinge_alvo_por_fluxo(self, objeto: ObjetoBatalha, executor, alvo, origem, destino, elapsed: int) -> bool | None:
+        fluxo = dict(objeto.Fluxo or {})
+        if not fluxo:
+            return None
+        source_radius_tiles = max(0.1, float(getattr(executor, "RaioColisao", 0.75) or 0.75))
+        subtipo = str(objeto.Subtipo or "").strip().casefold()
+
+        if subtipo == "tiro":
+            alcance_tick = math.hypot(float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1]))
+            return self._leitor_fluxos.flow_contains_target(
+                fluxo,
+                origem,
+                destino,
+                alvo.Posicao,
+                float(alvo.RaioColisao),
+                tile_px=1.0,
+                source_radius_tiles=source_radius_tiles,
+                override_range_tiles=alcance_tick,
+            )
+
+        if subtipo == "area":
+            alcance_atual = min(self._fnum(objeto.DadosExtras.get("alcance"), 3.0), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
+            origem_execucao = tuple(objeto.DadosExtras.get("origem_execucao") or executor.Posicao)
+            fim_area = (
+                float(origem_execucao[0]) + float(objeto.Direcao[0]) * float(alcance_atual),
+                float(origem_execucao[1]) + float(objeto.Direcao[1]) * float(alcance_atual),
+            )
+            return self._leitor_fluxos.flow_contains_target(
+                fluxo,
+                origem_execucao,
+                fim_area,
+                alvo.Posicao,
+                float(alvo.RaioColisao),
+                tile_px=1.0,
+                source_radius_tiles=source_radius_tiles,
+                override_range_tiles=alcance_atual,
+            )
+
+        if subtipo == "zona":
+            raio_atual = min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
+            origem_zona = tuple(objeto.Posicao)
+            fim_zona = (
+                float(origem_zona[0]) + float(objeto.Direcao[0]),
+                float(origem_zona[1]) + float(objeto.Direcao[1]),
+            )
+            return self._leitor_fluxos.flow_contains_target(
+                fluxo,
+                origem_zona,
+                fim_zona,
+                alvo.Posicao,
+                float(alvo.RaioColisao),
+                tile_px=1.0,
+                source_radius_tiles=source_radius_tiles,
+                override_range_tiles=raio_atual,
+                override_circle_radius_tiles=raio_atual,
+            )
+
+        return None
 
     def _criar_movimento_impulso(self, pokemon, origem: object, destino: object, velocidade: object, *, causa: str, colidiu_com: str) -> Dict[str, object]:
         origem_t = tuple(origem) if isinstance(origem, (list, tuple)) and len(origem) == 2 else tuple(pokemon.Posicao)
@@ -1279,7 +1392,10 @@ class LeitorJogadas:
                 executor = item["executor"]
                 spec = item["spec"]
                 ataque_nome = spec.get("nome")
-                custo = executor.gastar_energia(self._fnum(item.get("custo"), self._fnum(item.get("custo_base"), 0.0)))
+                custo_base = self._fnum(item.get("custo_base"), self._fnum(item.get("custo"), 0.0))
+                custo_planejado = self._custo_jogada_multiplas_acoes(item.get("indice_executor_turno", 0), custo_base)
+                item["custo"] = custo_planejado
+                custo = executor.gastar_energia(custo_planejado)
                 self._log_evento(
                     log,
                     tick,
@@ -1288,6 +1404,7 @@ class LeitorJogadas:
                     ataque=ataque_nome,
                     estilo=spec.get("estilo"),
                     custo_energia=round(custo, 4),
+                    energia_restante=round(float(executor.Energia), 4),
                     posicao_inicial=[round(executor.Posicao[0], 4), round(executor.Posicao[1], 4)],
                     destino=list(item.get("destino_mundo")) if isinstance(item.get("destino_mundo"), (list, tuple)) and len(item.get("destino_mundo")) == 2 else None,
                     alvo_ids=[str(uid) for uid in list(item.get("alvo_ids") or []) if str(uid)],

@@ -43,6 +43,7 @@ class Mensagem:
         if "font_size" in kwargs:
             self._fonte = pygame.font.Font(None, int(self.style["font_size"]))
 
+
     def emitir(self, texto, tipo="info", duracao=None):
         tipo_mensagem = self._normalizar_tipo(tipo)
         self._fila.append(

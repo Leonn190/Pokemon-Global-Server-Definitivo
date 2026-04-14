@@ -169,25 +169,28 @@ class ElementosHudBatalha:
 
     def desenhar(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> None:
         self._garantir_layout(tela)
-        if self._controlador is not None and hasattr(self._controlador, "Jogador"):
+        replay_ativo = bool(getattr(self._controlador, "esta_reproduzindo_logs", lambda: False)()) if self._controlador is not None else False
+        interacao_bloqueada = bool(self._aguardando_resultado_rodada or replay_ativo)
+        if not interacao_bloqueada and self._controlador is not None and hasattr(self._controlador, "Jogador"):
             self._controlador.Jogador.Controle.processar_eventos(eventos or [], self._controlador, self._ficha, self._fluxos)
         self._sincronizar_tempo_rodada()
         self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)
         self._atualizar_tempo_rodada(dt)
-        if self._tempo_restante_rodada <= 0.0 and not self._aguardando_resultado_rodada:
+        if self._tempo_restante_rodada <= 0.0 and not self._aguardando_resultado_rodada and not replay_ativo:
             self._confirmar_jogadas()
 
         if self._fluxos is not None:
             self._painel_jogada.sincronizar(self._fluxos.listar_jogadas(), self._fluxos.jogada_selecionada_id())
             self._painel_jogada.recalcular_layout(tela)
-            self._painel_jogada.processar_eventos(eventos or [])
-            self._fluxos.definir_hover_jogada(self._painel_jogada.jogada_hover())
-            for comando in self._painel_jogada.coletar_comandos():
-                if comando.get("acao") == "remover":
-                    self._fluxos.remover_jogada(comando.get("id"))
-                elif comando.get("acao") == "selecionar":
-                    self._fluxos.selecionar_jogada(comando.get("id"))
+            if not interacao_bloqueada:
+                self._painel_jogada.processar_eventos(eventos or [])
+                self._fluxos.definir_hover_jogada(self._painel_jogada.jogada_hover())
+                for comando in self._painel_jogada.coletar_comandos():
+                    if comando.get("acao") == "remover":
+                        self._fluxos.remover_jogada(comando.get("id"))
+                    elif comando.get("acao") == "selecionar":
+                        self._fluxos.selecionar_jogada(comando.get("id"))
 
         rects_hud = [
             self._ficha.rect,
@@ -196,16 +199,18 @@ class ElementosHudBatalha:
             self._botao_fugir.rect if self._botao_fugir else pygame.Rect(0, 0, 0, 0),
         ]
         rects_hud.extend(self._painel_jogada.retangulos_interativos())
-        if self._fluxos is not None:
+        if self._fluxos is not None and not interacao_bloqueada:
             for ev in eventos or []:
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not any(rect.collidepoint(ev.pos) for rect in rects_hud):
                     self._fluxos.selecionar_jogada(None)
                     break
-        self._processar_selecao(eventos or [], rects_hud)
+        if not interacao_bloqueada:
+            self._processar_selecao(eventos or [], rects_hud)
 
         if self._fluxos is not None:
             self._fluxos.atualizar_contexto(self._ficha.ataque_selecionado())
-            self._fluxos.processar_eventos(eventos or [], self._ficha, rects_hud)
+            if not interacao_bloqueada:
+                self._fluxos.processar_eventos(eventos or [], self._ficha, rects_hud)
         selecionado_atual = getattr(self._controlador, "PokemonSelecionado", None)
         if selecionado_atual is None or str(getattr(selecionado_atual, "Lado", "")) != "jogador":
             self._ficha.limpar_ataque_selecionado()

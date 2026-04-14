@@ -488,6 +488,8 @@ class PokemonBatalha:
             energia_max = self.AtributosAtuais.get("Ene", self.EnergiaMax)
         self.EnergiaMax = max(1.0, self._numero(energia_max, self.EnergiaMax))
         self.Energia = max(0.0, min(self.EnergiaMax, self._numero(dados.get("energia", self.Energia), self.Energia)))
+        if self.Animador is not None and not self.ForaDeCombate and self.VidaAtual > 0.0:
+            self.Animador.restaurar_visual_corpo()
 
     @classmethod
     def _frames_especie(cls, especie: str) -> List[pygame.Surface]:
@@ -519,7 +521,7 @@ class PokemonBatalha:
         px, py = camera.mundo_para_tela_px(self.Posicao)
         return int(px), int(py)
 
-    def _desenhar_corpo(self, tela: pygame.Surface, centro: Tuple[int, int], raio: int, tile_px: int, *, selecionado: bool = False, hover: bool = False, alpha_extra: int = 255) -> None:
+    def _desenhar_corpo(self, tela: pygame.Surface, camera, centro: Tuple[int, int], raio: int, tile_px: int, *, selecionado: bool = False, hover: bool = False, alpha_extra: int = 255) -> bool:
         cor_circulo = (56, 90, 145) if self.Lado == 'jogador' else (144, 74, 74)
         camada = pygame.Surface((raio * 4, raio * 4), pygame.SRCALPHA)
         centro_local = (camada.get_width() // 2, camada.get_height() // 2)
@@ -548,7 +550,15 @@ class PokemonBatalha:
                 frame.fill((255, 255, 255, max(0, min(255, alpha_extra))), special_flags=pygame.BLEND_RGBA_MULT)
             camada.blit(frame, frame.get_rect(center=(centro_local[0], centro_local[1] - int(raio * 0.08))))
 
-        tela.blit(camada, camada.get_rect(center=centro))
+        offset_px = (0, 0)
+        oculto = False
+        if self.Animador is not None:
+            camada, offset_px, oculto = self.Animador.preparar_corpo_visual(camada, camera)
+        if oculto:
+            return False
+        centro_final = (int(centro[0] + offset_px[0]), int(centro[1] + offset_px[1]))
+        tela.blit(camada, camada.get_rect(center=centro_final))
+        return True
 
     def renderizar(self, tela: pygame.Surface, camera, selecionado: bool = False, hover: bool = False, energia_reservada: float = 0.0) -> None:
         if self.Animador is not None:
@@ -556,10 +566,11 @@ class PokemonBatalha:
         centro = self.centro_tela(camera)
         tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
         raio = self.raio_px(camera)
-        self._desenhar_corpo(tela, centro, raio, tile_px, selecionado=selecionado, hover=hover, alpha_extra=255)
+        corpo_desenhado = self._desenhar_corpo(tela, camera, centro, raio, tile_px, selecionado=selecionado, hover=hover, alpha_extra=255)
         if self.Animador is not None:
             self.Animador.renderizar(tela, camera)
-        self._desenhar_barras(tela, centro, raio, tile_px, energia_reservada=energia_reservada)
+        if corpo_desenhado:
+            self._desenhar_barras(tela, centro, raio, tile_px, energia_reservada=energia_reservada)
 
     def renderizar_construto(self, tela: pygame.Surface, camera, posicao_mundo, *, alpha: int = 96) -> None:
         if not isinstance(posicao_mundo, (tuple, list)) or len(posicao_mundo) != 2:
@@ -573,7 +584,7 @@ class PokemonBatalha:
         pygame.draw.circle(sombra, (255, 255, 255, max(20, int(alpha * 0.18))), centro_local, int(raio * 1.08), 2)
         pygame.draw.circle(sombra, (255, 255, 255, max(10, int(alpha * 0.10))), centro_local, int(raio * 0.90))
         tela.blit(sombra, sombra.get_rect(center=centro))
-        self._desenhar_corpo(tela, centro, raio, tile_px, selecionado=False, alpha_extra=max(24, min(180, int(alpha))))
+        self._desenhar_corpo(tela, camera, centro, raio, tile_px, selecionado=False, alpha_extra=max(24, min(180, int(alpha))))
 
     @staticmethod
     def _desenhar_reserva_arredondada(tela: pygame.Surface, rect_barra: pygame.Rect, inicio_t: float, fim_t: float, cor_rgba: tuple[int, int, int, int]) -> None:

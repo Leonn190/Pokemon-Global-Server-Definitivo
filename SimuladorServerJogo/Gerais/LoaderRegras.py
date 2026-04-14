@@ -222,6 +222,29 @@ def carregar_regras_server() -> Dict[str, object]:
     return out
 
 
+def carregar_regras_batalha() -> Dict[str, object]:
+    dados = _ler_toml("Batalha.toml")
+    out = _flatten(dados)
+    timeline = dados.get("timeline") if isinstance(dados.get("timeline"), dict) else {}
+    colisao = dados.get("colisao_movimento") if isinstance(dados.get("colisao_movimento"), dict) else {}
+    multiplas_acoes = dados.get("multiplas_acoes") if isinstance(dados.get("multiplas_acoes"), dict) else {}
+
+    out["batalha_tick_segundos"] = float(timeline.get("tick_segundos", 0.2) or 0.2)
+
+    out["batalha_colisao_restituicao"] = float(colisao.get("restituicao", 0.35) or 0.35)
+    out["batalha_colisao_deslocamento_base_min"] = float(colisao.get("deslocamento_base_min", 0.25) or 0.25)
+    out["batalha_colisao_deslocamento_por_velocidade_relativa"] = float(colisao.get("deslocamento_por_velocidade_relativa", 6.0) or 6.0)
+    out["batalha_colisao_velocidade_reacao_min"] = float(colisao.get("velocidade_reacao_min", 0.03) or 0.03)
+    out["batalha_colisao_dano_base_min"] = float(colisao.get("dano_base_min", 1.0) or 1.0)
+    out["batalha_colisao_velocidade_referencia_min"] = float(colisao.get("velocidade_referencia_min", 0.1) or 0.1)
+    out["batalha_colisao_dano_por_massa_velocidade"] = float(colisao.get("dano_por_massa_velocidade", 8.0) or 8.0)
+    out["batalha_colisao_dano_por_ataque"] = float(colisao.get("dano_por_ataque", 0.35) or 0.35)
+
+    out["batalha_multiplas_acoes_multiplicador_base"] = float(multiplas_acoes.get("multiplicador_base", 1.0) or 1.0)
+    out["batalha_multiplas_acoes_acrescimo_por_acao_extra"] = float(multiplas_acoes.get("acrescimo_multiplicador_por_acao_extra", 0.2) or 0.2)
+    return out
+
+
 def carregar_regras_gerais() -> Dict[str, object]:
     dados = _ler_toml("Gerais.toml")
     out = _flatten(dados)
@@ -271,6 +294,7 @@ def carregar_regras_runtime_servidor() -> Dict[str, object]:
     regras: Dict[str, object] = {}
     for bloco in (
         carregar_regras_server(),
+        carregar_regras_batalha(),
         carregar_regras_spawn(),
         carregar_regras_pokemons(),
         carregar_regras_projeteis(),
@@ -284,6 +308,11 @@ def carregar_regras_runtime_servidor() -> Dict[str, object]:
 
 def carregar_regras_cliente_mundo() -> Dict[str, object]:
     regras_pokemons = carregar_regras_pokemons()
+    regras_projeteis = carregar_regras_projeteis()
+    regras_npcs = carregar_regras_npcs()
+    regras_ciclo = carregar_regras_ciclo()
+    regras_gerais = carregar_regras_gerais()
+    regras_batalha = carregar_regras_batalha()
     return {
         "mundo": {"chunk_tiles": int(carregar_regras_mundo().get("ChunkTiles", 10) or 10)},
         "pokemons": {
@@ -295,38 +324,55 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
             "combate_tamanho_incremento_por_escala": float(regras_pokemons.get("combate_tamanho_incremento_por_escala", 0.1) or 0.1),
         },
         "projeteis": {
-            "velocidade_pokebola_tiles_s": float(carregar_regras_projeteis().get("projetil_velocidade_pokebola_tiles_s", 7.0) or 7.0),
-            "velocidade_fastball_tiles_s": float(carregar_regras_projeteis().get("projetil_velocidade_fastball_tiles_s", 10.0) or 10.0),
-            "velocidade_sniperball_tiles_s": float(carregar_regras_projeteis().get("projetil_velocidade_sniperball_tiles_s", 8.0) or 8.0),
-            "velocidade_fruta_tiles_s": float(carregar_regras_projeteis().get("projetil_velocidade_fruta_tiles_s", 6.0) or 6.0),
-            "velocidade_item_mundo_tiles_s": float(carregar_regras_projeteis().get("projetil_velocidade_item_mundo_tiles_s", 3.0) or 3.0),
-            "alcance_pokebola_tiles": float(carregar_regras_projeteis().get("projetil_alcance_pokebola_tiles", 7.0) or 7.0),
-            "alcance_fastball_tiles": float(carregar_regras_projeteis().get("projetil_alcance_fastball_tiles", 7.0) or 7.0),
-            "alcance_sniperball_tiles": float(carregar_regras_projeteis().get("projetil_alcance_sniperball_tiles", 9.0) or 9.0),
-            "alcance_fruta_tiles": float(carregar_regras_projeteis().get("projetil_alcance_fruta_tiles", 6.0) or 6.0),
-            "mira_multiplicador_velocidade": float(carregar_regras_projeteis().get("projetil_mira_multiplicador_velocidade", 1.10) or 1.10),
-            "mira_multiplicador_alcance": float(carregar_regras_projeteis().get("projetil_mira_multiplicador_alcance", 1.15) or 1.15),
+            "velocidade_pokebola_tiles_s": float(regras_projeteis.get("projetil_velocidade_pokebola_tiles_s", 7.0) or 7.0),
+            "velocidade_fastball_tiles_s": float(regras_projeteis.get("projetil_velocidade_fastball_tiles_s", 10.0) or 10.0),
+            "velocidade_sniperball_tiles_s": float(regras_projeteis.get("projetil_velocidade_sniperball_tiles_s", 8.0) or 8.0),
+            "velocidade_fruta_tiles_s": float(regras_projeteis.get("projetil_velocidade_fruta_tiles_s", 6.0) or 6.0),
+            "velocidade_item_mundo_tiles_s": float(regras_projeteis.get("projetil_velocidade_item_mundo_tiles_s", 3.0) or 3.0),
+            "alcance_pokebola_tiles": float(regras_projeteis.get("projetil_alcance_pokebola_tiles", 7.0) or 7.0),
+            "alcance_fastball_tiles": float(regras_projeteis.get("projetil_alcance_fastball_tiles", 7.0) or 7.0),
+            "alcance_sniperball_tiles": float(regras_projeteis.get("projetil_alcance_sniperball_tiles", 9.0) or 9.0),
+            "alcance_fruta_tiles": float(regras_projeteis.get("projetil_alcance_fruta_tiles", 6.0) or 6.0),
+            "mira_multiplicador_velocidade": float(regras_projeteis.get("projetil_mira_multiplicador_velocidade", 1.10) or 1.10),
+            "mira_multiplicador_alcance": float(regras_projeteis.get("projetil_mira_multiplicador_alcance", 1.15) or 1.15),
         },
         "npcs": {
-            "raio_interacao": float(carregar_regras_npcs().get("npc_raio_interacao", 1.1) or 1.1),
-            "velocidade_base_tiles_s": float(carregar_regras_npcs().get("npc_velocidade_base", 4.5) or 4.5),
+            "raio_interacao": float(regras_npcs.get("npc_raio_interacao", 1.1) or 1.1),
+            "velocidade_base_tiles_s": float(regras_npcs.get("npc_velocidade_base", 4.5) or 4.5),
         },
         "ciclo": {
             "iluminacao": {
-                "inicio_escurecer_hora": int(carregar_regras_ciclo().get("iluminacao_inicio_escurecer_hora", 17) or 17),
-                "inicio_escurecer_minuto": int(carregar_regras_ciclo().get("iluminacao_inicio_escurecer_minuto", 0) or 0),
-                "escuro_maximo_hora": int(carregar_regras_ciclo().get("iluminacao_escuro_maximo_hora", 1) or 1),
-                "escuro_maximo_minuto": int(carregar_regras_ciclo().get("iluminacao_escuro_maximo_minuto", 0) or 0),
-                "inicio_clarear_hora": int(carregar_regras_ciclo().get("iluminacao_inicio_clarear_hora", 1) or 1),
-                "inicio_clarear_minuto": int(carregar_regras_ciclo().get("iluminacao_inicio_clarear_minuto", 0) or 0),
-                "fim_clarear_hora": int(carregar_regras_ciclo().get("iluminacao_fim_clarear_hora", 8) or 8),
-                "fim_clarear_minuto": int(carregar_regras_ciclo().get("iluminacao_fim_clarear_minuto", 0) or 0),
+                "inicio_escurecer_hora": int(regras_ciclo.get("iluminacao_inicio_escurecer_hora", 17) or 17),
+                "inicio_escurecer_minuto": int(regras_ciclo.get("iluminacao_inicio_escurecer_minuto", 0) or 0),
+                "escuro_maximo_hora": int(regras_ciclo.get("iluminacao_escuro_maximo_hora", 1) or 1),
+                "escuro_maximo_minuto": int(regras_ciclo.get("iluminacao_escuro_maximo_minuto", 0) or 0),
+                "inicio_clarear_hora": int(regras_ciclo.get("iluminacao_inicio_clarear_hora", 1) or 1),
+                "inicio_clarear_minuto": int(regras_ciclo.get("iluminacao_inicio_clarear_minuto", 0) or 0),
+                "fim_clarear_hora": int(regras_ciclo.get("iluminacao_fim_clarear_hora", 8) or 8),
+                "fim_clarear_minuto": int(regras_ciclo.get("iluminacao_fim_clarear_minuto", 0) or 0),
             }
         },
         "gerais": {
-            "camera_px_por_tile": int(carregar_regras_gerais().get("camera_px_por_tile", 50) or 50),
-            "combate_camera_px_por_tile": int(carregar_regras_gerais().get("combate_camera_px_por_tile", 40) or 40),
-            "combate_camera_zoom_min": int(carregar_regras_gerais().get("combate_camera_zoom_min", 30) or 30),
-            "combate_camera_zoom_max": int(carregar_regras_gerais().get("combate_camera_zoom_max", 50) or 50),
+            "camera_px_por_tile": int(regras_gerais.get("camera_px_por_tile", 50) or 50),
+            "combate_camera_px_por_tile": int(regras_gerais.get("combate_camera_px_por_tile", 40) or 40),
+            "combate_camera_zoom_min": int(regras_gerais.get("combate_camera_zoom_min", 30) or 30),
+            "combate_camera_zoom_max": int(regras_gerais.get("combate_camera_zoom_max", 50) or 50),
+        },
+        "batalha": {
+            "tick_segundos": float(regras_batalha.get("batalha_tick_segundos", 0.2) or 0.2),
+            "colisao": {
+                "restituicao": float(regras_batalha.get("batalha_colisao_restituicao", 0.35) or 0.35),
+                "deslocamento_base_min": float(regras_batalha.get("batalha_colisao_deslocamento_base_min", 0.25) or 0.25),
+                "deslocamento_por_velocidade_relativa": float(regras_batalha.get("batalha_colisao_deslocamento_por_velocidade_relativa", 6.0) or 6.0),
+                "velocidade_reacao_min": float(regras_batalha.get("batalha_colisao_velocidade_reacao_min", 0.03) or 0.03),
+                "dano_base_min": float(regras_batalha.get("batalha_colisao_dano_base_min", 1.0) or 1.0),
+                "velocidade_referencia_min": float(regras_batalha.get("batalha_colisao_velocidade_referencia_min", 0.1) or 0.1),
+                "dano_por_massa_velocidade": float(regras_batalha.get("batalha_colisao_dano_por_massa_velocidade", 8.0) or 8.0),
+                "dano_por_ataque": float(regras_batalha.get("batalha_colisao_dano_por_ataque", 0.35) or 0.35),
+            },
+            "multiplas_acoes": {
+                "multiplicador_base": float(regras_batalha.get("batalha_multiplas_acoes_multiplicador_base", 1.0) or 1.0),
+                "acrescimo_multiplicador_por_acao_extra": float(regras_batalha.get("batalha_multiplas_acoes_acrescimo_por_acao_extra", 0.2) or 0.2),
+            },
         },
     }

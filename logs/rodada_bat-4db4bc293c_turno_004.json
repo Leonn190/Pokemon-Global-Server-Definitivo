@@ -1,0 +1,2916 @@
+{
+  "batalha_id": "bat-4db4bc293c",
+  "tipo": "confronto",
+  "turno_atual": 4,
+  "clima": "",
+  "arena": {},
+  "regras_batalha": {
+    "tick_segundos": 0.1,
+    "colisao": {
+      "restituicao": 0.35,
+      "deslocamento_base_min": 0.25,
+      "deslocamento_por_velocidade_relativa": 6.0,
+      "velocidade_reacao_min": 0.03,
+      "dano_base_min": 1.0,
+      "velocidade_referencia_min": 0.1,
+      "dano_por_massa_velocidade": 8.0,
+      "dano_por_ataque": 0.35
+    },
+    "multiplas_acoes": {
+      "multiplicador_base": 1.0,
+      "acrescimo_multiplicador_por_acao_extra": 0.2
+    }
+  },
+  "ordem_logica": [
+    {
+      "executor_id": "P-94F9BB893E",
+      "estilo": "alvo",
+      "tipo_movimento": false,
+      "destino_mundo": null,
+      "troca_reserva_id": "",
+      "alvo_ids": [
+        "P-4196AC62D9"
+      ],
+      "custo_base": 30.0,
+      "custo": 30.0,
+      "acao_chave": "proteger",
+      "ataque": {
+        "Ataque": "Proteger",
+        "Tipo": "normal",
+        "Custo": 30,
+        "Estilo": "alvo",
+        "Velocidade": "8",
+        "Descrição Nivel 1": "O alvo fica Protegido.",
+        "Descrição Nivel 2": "O alvo remove 1 efeito negativo aleatório.",
+        "Descrição Nivel 3": "O alvo também ganha uma barreira equivalente a (40% de Mag).",
+        "Tiro": "-",
+        "Efeito": "-",
+        "Code": "5",
+        "Nivel": 1,
+        "Nome": "Proteger"
+      },
+      "executor_nome": "Kakuna",
+      "indice_executor_turno": 0,
+      "tick_inicio": 1,
+      "alvos": [
+        {
+          "id": "P-4196AC62D9",
+          "nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "executor_id": "P-4196AC62D9",
+      "executor_nome": "Rowlet",
+      "estilo": "movimento",
+      "tipo_movimento": true,
+      "destino_mundo": [
+        39.725,
+        26.1
+      ],
+      "troca_reserva_id": "",
+      "alvo_ids": [],
+      "custo_base": 12.4875,
+      "custo": 12.4875,
+      "acao_chave": "__movimento_nativo__",
+      "ataque": {},
+      "indice_executor_turno": 0,
+      "tick_inicio": 4
+    }
+  ],
+  "historico": [
+    {
+      "tick": 1,
+      "inicializacao": [
+        {
+          "tipo": "acao",
+          "executor_id": "P-94F9BB893E",
+          "ataque": "Proteger",
+          "estilo": "alvo",
+          "posicao": [
+            47.2,
+            20.0
+          ],
+          "custo_energia": 30.0,
+          "energia_restante": 1.5,
+          "alvo_ids": [
+            "P-4196AC62D9"
+          ],
+          "executor_nome": "Kakuna",
+          "alvos": [
+            {
+              "id": "P-4196AC62D9",
+              "nome": "Rowlet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 2,
+      "segmentacao": [
+        {
+          "tipo": "dano",
+          "executor_id": "P-94F9BB893E",
+          "alvo_id": "P-4196AC62D9",
+          "dano": 0.0,
+          "vida_antes": 52.64,
+          "vida_depois": 52.64,
+          "barreira_antes": 0.0,
+          "barreira_depois": 0.0,
+          "dano_tipo": "fisico",
+          "morto": false,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 0.0,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 18.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 18.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 0.0,
+            "dano_pos_tipo": 0.0,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Kakuna",
+          "alvo_nome": "Rowlet"
+        },
+        {
+          "tipo": "efeito",
+          "executor_id": "P-94F9BB893E",
+          "alvo_id": "P-4196AC62D9",
+          "efeito": "Protegido",
+          "status": "ok",
+          "positivo": false,
+          "duracao_ticks": 20,
+          "fase_efeito": "aplicado",
+          "executor_nome": "Kakuna",
+          "alvo_nome": "Rowlet"
+        }
+      ],
+      "finalizacao": [
+        {
+          "tipo": "acao_finalizada",
+          "executor_id": "P-94F9BB893E",
+          "ataque": "Proteger",
+          "estilo": "alvo",
+          "motivo": "impacto_alvo",
+          "executor_nome": "Kakuna"
+        }
+      ]
+    },
+    {
+      "tick": 4,
+      "inicializacao": [
+        {
+          "tipo": "acao",
+          "executor_id": "P-4196AC62D9",
+          "ataque": "__movimento_nativo__",
+          "estilo": "movimento",
+          "posicao": [
+            40.6173,
+            14.5304
+          ],
+          "custo_energia": 12.4875,
+          "energia_restante": 24.95,
+          "destino": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "executor_nome": "Rowlet"
+        }
+      ],
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.6173,
+            14.5304
+          ],
+          "posicao": [
+            40.6088,
+            14.641
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 5,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.6088,
+            14.641
+          ],
+          "posicao": [
+            40.6003,
+            14.7516
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 6,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.6003,
+            14.7516
+          ],
+          "posicao": [
+            40.5917,
+            14.8622
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ],
+      "passiva": [
+        {
+          "tipo": "efeito",
+          "executor_id": "P-4196AC62D9",
+          "alvo_id": "P-4196AC62D9",
+          "efeito": "Protegido",
+          "status": "ok",
+          "positivo": false,
+          "duracao_ticks": 0,
+          "fase_efeito": "expirado",
+          "executor_nome": "Rowlet",
+          "alvo_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 7,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5917,
+            14.8622
+          ],
+          "posicao": [
+            40.5832,
+            14.9728
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 8,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5832,
+            14.9728
+          ],
+          "posicao": [
+            40.5747,
+            15.0834
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 9,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5747,
+            15.0834
+          ],
+          "posicao": [
+            40.5661,
+            15.194
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 10,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5661,
+            15.194
+          ],
+          "posicao": [
+            40.5576,
+            15.3046
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 11,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5576,
+            15.3046
+          ],
+          "posicao": [
+            40.5491,
+            15.4153
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 12,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5491,
+            15.4153
+          ],
+          "posicao": [
+            40.5405,
+            15.5259
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 13,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5405,
+            15.5259
+          ],
+          "posicao": [
+            40.532,
+            15.6365
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 14,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.532,
+            15.6365
+          ],
+          "posicao": [
+            40.5235,
+            15.7471
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 15,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5235,
+            15.7471
+          ],
+          "posicao": [
+            40.515,
+            15.8577
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 16,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.515,
+            15.8577
+          ],
+          "posicao": [
+            40.5064,
+            15.9683
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 17,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.5064,
+            15.9683
+          ],
+          "posicao": [
+            40.4979,
+            16.0789
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 18,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4979,
+            16.0789
+          ],
+          "posicao": [
+            40.4894,
+            16.1895
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 19,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4894,
+            16.1895
+          ],
+          "posicao": [
+            40.4808,
+            16.3002
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ],
+      "passiva": [
+        {
+          "tipo": "efeito",
+          "executor_id": "P-4196AC62D9",
+          "alvo_id": "P-4196AC62D9",
+          "efeito": "Protegido",
+          "status": "ok",
+          "positivo": false,
+          "duracao_ticks": 0,
+          "fase_efeito": "expirado",
+          "executor_nome": "Rowlet",
+          "alvo_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 20,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4808,
+            16.3002
+          ],
+          "posicao": [
+            40.4723,
+            16.4108
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 21,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4723,
+            16.4108
+          ],
+          "posicao": [
+            40.4638,
+            16.5214
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ],
+      "passiva": [
+        {
+          "tipo": "efeito",
+          "executor_id": "P-4196AC62D9",
+          "alvo_id": "P-4196AC62D9",
+          "efeito": "Protegido",
+          "status": "ok",
+          "positivo": false,
+          "duracao_ticks": 0,
+          "fase_efeito": "expirado",
+          "executor_nome": "Rowlet",
+          "alvo_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 22,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4638,
+            16.5214
+          ],
+          "posicao": [
+            40.4552,
+            16.632
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 23,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4552,
+            16.632
+          ],
+          "posicao": [
+            40.4467,
+            16.7426
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 24,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4467,
+            16.7426
+          ],
+          "posicao": [
+            40.4382,
+            16.8532
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 25,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4382,
+            16.8532
+          ],
+          "posicao": [
+            40.4296,
+            16.9638
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 26,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4296,
+            16.9638
+          ],
+          "posicao": [
+            40.4211,
+            17.0744
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 27,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4211,
+            17.0744
+          ],
+          "posicao": [
+            40.4126,
+            17.185
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 28,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4126,
+            17.185
+          ],
+          "posicao": [
+            40.4041,
+            17.2957
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 29,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.4041,
+            17.2957
+          ],
+          "posicao": [
+            40.3955,
+            17.4063
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 30,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3955,
+            17.4063
+          ],
+          "posicao": [
+            40.387,
+            17.5169
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 31,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.387,
+            17.5169
+          ],
+          "posicao": [
+            40.3785,
+            17.6275
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 32,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3785,
+            17.6275
+          ],
+          "posicao": [
+            40.3699,
+            17.7381
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 33,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3699,
+            17.7381
+          ],
+          "posicao": [
+            40.3614,
+            17.8487
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 34,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3614,
+            17.8487
+          ],
+          "posicao": [
+            40.3529,
+            17.9593
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 35,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3529,
+            17.9593
+          ],
+          "posicao": [
+            40.3443,
+            18.0699
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 36,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3443,
+            18.0699
+          ],
+          "posicao": [
+            40.3358,
+            18.1805
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 37,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3358,
+            18.1805
+          ],
+          "posicao": [
+            40.3273,
+            18.2912
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 38,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3273,
+            18.2912
+          ],
+          "posicao": [
+            40.3187,
+            18.4018
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 39,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3187,
+            18.4018
+          ],
+          "posicao": [
+            40.3102,
+            18.5124
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 40,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3102,
+            18.5124
+          ],
+          "posicao": [
+            40.3017,
+            18.623
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 41,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.3017,
+            18.623
+          ],
+          "posicao": [
+            40.2931,
+            18.7336
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 42,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2931,
+            18.7336
+          ],
+          "posicao": [
+            40.2846,
+            18.8442
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 43,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2846,
+            18.8442
+          ],
+          "posicao": [
+            40.2761,
+            18.9548
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 44,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2761,
+            18.9548
+          ],
+          "posicao": [
+            40.2676,
+            19.0654
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 45,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2676,
+            19.0654
+          ],
+          "posicao": [
+            40.259,
+            19.176
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 46,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.259,
+            19.176
+          ],
+          "posicao": [
+            40.2505,
+            19.2867
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 47,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2505,
+            19.2867
+          ],
+          "posicao": [
+            40.242,
+            19.3973
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 48,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.242,
+            19.3973
+          ],
+          "posicao": [
+            40.2334,
+            19.5079
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 49,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2334,
+            19.5079
+          ],
+          "posicao": [
+            40.2249,
+            19.6185
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 50,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2249,
+            19.6185
+          ],
+          "posicao": [
+            40.2164,
+            19.7291
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 51,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2164,
+            19.7291
+          ],
+          "posicao": [
+            40.2078,
+            19.8397
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 52,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.2078,
+            19.8397
+          ],
+          "posicao": [
+            40.1993,
+            19.9503
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 53,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1993,
+            19.9503
+          ],
+          "posicao": [
+            40.1908,
+            20.0609
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 54,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1908,
+            20.0609
+          ],
+          "posicao": [
+            40.1822,
+            20.1716
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 55,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1822,
+            20.1716
+          ],
+          "posicao": [
+            40.1737,
+            20.2822
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 56,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1737,
+            20.2822
+          ],
+          "posicao": [
+            40.1652,
+            20.3928
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 57,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1652,
+            20.3928
+          ],
+          "posicao": [
+            40.1566,
+            20.5034
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 58,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1566,
+            20.5034
+          ],
+          "posicao": [
+            40.1481,
+            20.614
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 59,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1481,
+            20.614
+          ],
+          "posicao": [
+            40.1396,
+            20.7246
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 60,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1396,
+            20.7246
+          ],
+          "posicao": [
+            40.1311,
+            20.8352
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 61,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1311,
+            20.8352
+          ],
+          "posicao": [
+            40.1225,
+            20.9458
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 62,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1225,
+            20.9458
+          ],
+          "posicao": [
+            40.114,
+            21.0564
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 63,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.114,
+            21.0564
+          ],
+          "posicao": [
+            40.1055,
+            21.1671
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 64,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.1055,
+            21.1671
+          ],
+          "posicao": [
+            40.0969,
+            21.2777
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 65,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0969,
+            21.2777
+          ],
+          "posicao": [
+            40.0884,
+            21.3883
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 66,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0884,
+            21.3883
+          ],
+          "posicao": [
+            40.0799,
+            21.4989
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 67,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0799,
+            21.4989
+          ],
+          "posicao": [
+            40.0713,
+            21.6095
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 68,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0713,
+            21.6095
+          ],
+          "posicao": [
+            40.0628,
+            21.7201
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 69,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0628,
+            21.7201
+          ],
+          "posicao": [
+            40.0543,
+            21.8307
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 70,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0543,
+            21.8307
+          ],
+          "posicao": [
+            40.0457,
+            21.9413
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 71,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0457,
+            21.9413
+          ],
+          "posicao": [
+            40.0372,
+            22.0519
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 72,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0372,
+            22.0519
+          ],
+          "posicao": [
+            40.0287,
+            22.1626
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 73,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0287,
+            22.1626
+          ],
+          "posicao": [
+            40.0202,
+            22.2732
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 74,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0202,
+            22.2732
+          ],
+          "posicao": [
+            40.0116,
+            22.3838
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 75,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0116,
+            22.3838
+          ],
+          "posicao": [
+            40.0031,
+            22.4944
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 76,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            40.0031,
+            22.4944
+          ],
+          "posicao": [
+            39.9946,
+            22.605
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 77,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9946,
+            22.605
+          ],
+          "posicao": [
+            39.986,
+            22.7156
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 78,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.986,
+            22.7156
+          ],
+          "posicao": [
+            39.9775,
+            22.8262
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 79,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9775,
+            22.8262
+          ],
+          "posicao": [
+            39.969,
+            22.9368
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 80,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.969,
+            22.9368
+          ],
+          "posicao": [
+            39.9604,
+            23.0474
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 81,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9604,
+            23.0474
+          ],
+          "posicao": [
+            39.9519,
+            23.1581
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 82,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9519,
+            23.1581
+          ],
+          "posicao": [
+            39.9434,
+            23.2687
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 83,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9434,
+            23.2687
+          ],
+          "posicao": [
+            39.9348,
+            23.3793
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 84,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9348,
+            23.3793
+          ],
+          "posicao": [
+            39.9263,
+            23.4899
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 85,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9263,
+            23.4899
+          ],
+          "posicao": [
+            39.9178,
+            23.6005
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 86,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9178,
+            23.6005
+          ],
+          "posicao": [
+            39.9092,
+            23.7111
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 87,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9092,
+            23.7111
+          ],
+          "posicao": [
+            39.9007,
+            23.8217
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 88,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.9007,
+            23.8217
+          ],
+          "posicao": [
+            39.8922,
+            23.9323
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 89,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8922,
+            23.9323
+          ],
+          "posicao": [
+            39.8837,
+            24.0429
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 90,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8837,
+            24.0429
+          ],
+          "posicao": [
+            39.8751,
+            24.1536
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 91,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8751,
+            24.1536
+          ],
+          "posicao": [
+            39.8666,
+            24.2642
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 92,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8666,
+            24.2642
+          ],
+          "posicao": [
+            39.8581,
+            24.3748
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 93,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8581,
+            24.3748
+          ],
+          "posicao": [
+            39.8495,
+            24.4854
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 94,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8495,
+            24.4854
+          ],
+          "posicao": [
+            39.841,
+            24.596
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 95,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.841,
+            24.596
+          ],
+          "posicao": [
+            39.8325,
+            24.7066
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 96,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8325,
+            24.7066
+          ],
+          "posicao": [
+            39.8239,
+            24.8172
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 97,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8239,
+            24.8172
+          ],
+          "posicao": [
+            39.8154,
+            24.9278
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 98,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8154,
+            24.9278
+          ],
+          "posicao": [
+            39.8069,
+            25.0385
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 99,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.8069,
+            25.0385
+          ],
+          "posicao": [
+            39.7983,
+            25.1491
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 100,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7983,
+            25.1491
+          ],
+          "posicao": [
+            39.7898,
+            25.2597
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 101,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7898,
+            25.2597
+          ],
+          "posicao": [
+            39.7813,
+            25.3703
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 102,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7813,
+            25.3703
+          ],
+          "posicao": [
+            39.7727,
+            25.4809
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 103,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7727,
+            25.4809
+          ],
+          "posicao": [
+            39.7642,
+            25.5915
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 104,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7642,
+            25.5915
+          ],
+          "posicao": [
+            39.7557,
+            25.7021
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 105,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7557,
+            25.7021
+          ],
+          "posicao": [
+            39.7472,
+            25.8127
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 106,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7472,
+            25.8127
+          ],
+          "posicao": [
+            39.7386,
+            25.9233
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 107,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7386,
+            25.9233
+          ],
+          "posicao": [
+            39.7301,
+            26.034
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.1109,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 108,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-4196AC62D9",
+          "origem": [
+            39.7301,
+            26.034
+          ],
+          "posicao": [
+            39.725,
+            26.1
+          ],
+          "destino_planejado": [
+            39.725,
+            26.1
+          ],
+          "velocidade": 0.1109,
+          "distancia": 0.0662,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 109,
+      "passiva": [
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-4196AC62D9",
+          "energia": 16.65,
+          "energia_total": 41.6,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-94F9BB893E",
+          "energia": 27.0,
+          "energia_total": 28.5,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Kakuna"
+        }
+      ]
+    }
+  ],
+  "resultado": {
+    "batalha_id": "bat-4db4bc293c",
+    "tipo": "confronto",
+    "turno_atual": 4,
+    "tick_global": 107,
+    "time_1": {
+      "ativos": {
+        "__tipo__": "lista_pokemon",
+        "itens": [
+          {
+            "uid": "P-4196AC62D9",
+            "posicao": [
+              39.725,
+              26.1
+            ],
+            "posicao_anterior": [
+              39.7301,
+              26.034
+            ],
+            "energia": 41.6,
+            "efeitos": [],
+            "nome": "Rowlet"
+          }
+        ]
+      }
+    },
+    "time_2": {
+      "ativos": {
+        "__tipo__": "lista_pokemon",
+        "itens": [
+          {
+            "uid": "P-94F9BB893E",
+            "energia": 28.5,
+            "nome": "Kakuna"
+          }
+        ]
+      }
+    }
+  }
+}

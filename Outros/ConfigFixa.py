@@ -1,1 +1,1 @@
-ConfigFixa = {'FPS': 200, 'Volume': 0.15, 'Claridade': 75, 'Mudo': False, 'FPS Visivel': True, 'Cords Visiveis': True, 'Ping Visivel': True, 'MostrarHorario': True, 'Usuario': 'Leon19', 'VERSÃO': 1.0, 'Shader': True}
+ConfigFixa = {'FPS': 200, 'Volume': 0.0, 'Claridade': 75, 'Mudo': False, 'FPS Visivel': True, 'Cords Visiveis': True, 'Ping Visivel': True, 'MostrarHorario': True, 'Usuario': 'Leon19', 'VERSÃO': 1.0, 'Shader': True}

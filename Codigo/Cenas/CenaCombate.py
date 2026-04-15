@@ -55,7 +55,8 @@ class CenaCombate:
                     break
         bloqueado = opcoes_modal is not None
         if not bloqueado:
-            self.Camera.processar_eventos(EVENTOS)
+            eventos_camera = self.ElementosHudBatalha.filtrar_eventos_camera(JOGO.TELA, EVENTOS, dt)
+            self.Camera.processar_eventos(eventos_camera)
         self.Camera.atualizar(dt)
         self.ControladorBatalha.atualizar(EVENTOS, dt)
 

@@ -7,6 +7,7 @@ import pygame
 
 from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
 from Codigo.Paineis.PainelJogada import PainelJogada
+from Codigo.Paineis.VisualizadorLog import VisualizadorLog
 from Codigo.ModulosBatalha.ControladorFluxos import ControladorFluxos
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
@@ -29,6 +30,7 @@ class ElementosHudBatalha:
         self._ficha = FichaPokemonBatalha()
         self._fluxos = ControladorFluxos(controlador_batalha, camera) if controlador_batalha is not None and camera is not None else None
         self._painel_jogada = PainelJogada()
+        self._visualizador_log = VisualizadorLog(controlador_batalha)
         self._anim_ficha = 0.0
         self._pokemon_exibido = None
         self._botao_preparar: Optional[Botao] = None
@@ -39,6 +41,20 @@ class ElementosHudBatalha:
         self._tempo_restante_rodada = self._tempo_total_rodada
         self._rodada_referencia = int(getattr(self._controlador, "_rodada_atual", 1) or 1) if self._controlador is not None else 1
         self._aguardando_resultado_rodada = False
+
+    def filtrar_eventos_camera(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> List[pygame.event.Event]:
+        self._garantir_layout(tela)
+        self._visualizador_log.preparar(tela, dt)
+        if not self._visualizador_log.captura_scroll(pygame.mouse.get_pos()):
+            return list(eventos or [])
+        filtrados: List[pygame.event.Event] = []
+        for evento in eventos or []:
+            if evento.type == pygame.MOUSEWHEEL:
+                continue
+            if evento.type == pygame.MOUSEBUTTONDOWN and getattr(evento, "button", 0) in (4, 5):
+                continue
+            filtrados.append(evento)
+        return filtrados
 
     def _carregar_icone(self, lado: int) -> Optional[pygame.Surface]:
         caminho = Path("Recursos") / "Visual" / "Icones" / "Diversos" / "fugir.png"
@@ -169,6 +185,7 @@ class ElementosHudBatalha:
 
     def desenhar(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> None:
         self._garantir_layout(tela)
+        self._visualizador_log.preparar(tela, dt)
         replay_ativo = bool(getattr(self._controlador, "esta_reproduzindo_logs", lambda: False)()) if self._controlador is not None else False
         interacao_bloqueada = bool(self._aguardando_resultado_rodada or replay_ativo)
         if not interacao_bloqueada and self._controlador is not None and hasattr(self._controlador, "Jogador"):
@@ -199,6 +216,7 @@ class ElementosHudBatalha:
             self._botao_fugir.rect if self._botao_fugir else pygame.Rect(0, 0, 0, 0),
         ]
         rects_hud.extend(self._painel_jogada.retangulos_interativos())
+        rects_hud.extend(self._visualizador_log.retangulos_interativos())
         if self._fluxos is not None and not interacao_bloqueada:
             for ev in eventos or []:
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not any(rect.collidepoint(ev.pos) for rect in rects_hud):
@@ -241,4 +259,5 @@ class ElementosHudBatalha:
             self._fluxos.desenhar(tela, dt)
         self._painel_jogada.desenhar(tela, dt)
         self._ficha.render(tela, self._pokemon_exibido, self._anim_ficha, eventos or [], dt)
+        self._visualizador_log.desenhar(tela, eventos or [], dt)
         self._desenhar_overlay_fuga(tela)

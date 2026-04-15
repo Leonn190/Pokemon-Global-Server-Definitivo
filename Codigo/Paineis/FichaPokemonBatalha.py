@@ -8,6 +8,7 @@ import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosGerais.Auxiliares import criar_botao_expandir, configurar_estilo_botao_expandir, renderizar_botao_expandir
 from Codigo.Paineis.FichaAtaque import FichaAtaque
 from Codigo.Paineis.FichaPokemon import FichaPokemon
 from Codigo.Prefabs.Barra import Barra
@@ -42,7 +43,7 @@ class FichaPokemonBatalha:
         self._barra_vida: Optional[Barra] = None
         self._barra_energia: Optional[Barra] = None
 
-        self._botao_extra = self._criar_botao("+", self._alternar_extra)
+        self._botao_extra = criar_botao_expandir(execute=self._alternar_extra, rect=(0, 0, 10, 10))
         self._botoes_habilidade: list[Botao] = []
 
         self._txt_titulo = Texto("", style={**self._ESTILO_TEXTO_BASE, "size": 23, "align": "center", "color": self._COR_TITULO})
@@ -100,22 +101,7 @@ class FichaPokemonBatalha:
         self._atualizar_estilo_botao_extra()
 
     def _atualizar_estilo_botao_extra(self):
-        if self._extra_aberto:
-            self._botao_extra.set_style(
-                bg=(72, 100, 170),
-                bg_hover=(92, 122, 202),
-                bg_pressed=(58, 82, 144),
-                border=(214, 230, 255),
-                border_hover=(255, 255, 255),
-            )
-        else:
-            self._botao_extra.set_style(
-                bg=(20, 30, 48),
-                bg_hover=(34, 48, 74),
-                bg_pressed=(16, 24, 40),
-                border=(122, 152, 206),
-                border_hover=(224, 235, 255),
-            )
+        configurar_estilo_botao_expandir(self._botao_extra, self._extra_aberto)
 
     def _garantir_layout(self, tela: pygame.Surface):
         tamanho = tuple(tela.get_size())
@@ -323,10 +309,7 @@ class FichaPokemonBatalha:
 
         x = int(round(self._interpolar(destino_fechado.x, destino_aberto.x, self._t_extra)))
         y = int(round(self._interpolar(destino_fechado.y, destino_aberto.y, self._t_extra)))
-        self._botao_extra.base_rect = pygame.Rect(x, y, 28, 28)
-        self._botao_extra.rect = pygame.Rect(self._botao_extra.base_rect)
-        self._botao_extra.set_text("+")
-        self._botao_extra.render(tela, eventos or [], dt, None)
+        renderizar_botao_expandir(self._botao_extra, tela, eventos or [], dt, pygame.Rect(x, y, 28, 28), self._extra_aberto, None)
 
     def _desenhar_ataques(self, tela: pygame.Surface, area: pygame.Rect, pokemon, eventos, dt: float):
         padding = 8

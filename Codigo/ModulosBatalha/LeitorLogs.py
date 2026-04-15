@@ -29,15 +29,42 @@ class LeitorLogs:
     def cancelar(self) -> None:
         self._ativo = False
         self._historico: List[Dict[str, object]] = []
+        self._log_atual: Dict[str, object] = {}
         self._resultado: Dict[str, object] = {}
         self._indice_bloco = 0
         self._tempo_decorrido = 0.0
         self._tick_final = 0
+        self._tick_atual = 0
+        self._turno_atual = 0
+        self._eventos_processados = 0
+        self._total_eventos = 0
         self._tick_segundos = 0.2
         self._ao_finalizar: Callable[[Dict[str, object]], None] | None = None
 
     def esta_ativo(self) -> bool:
         return bool(self._ativo)
+
+    @classmethod
+    def _contar_eventos_historico(cls, historico: List[Dict[str, object]]) -> int:
+        total = 0
+        for bloco in list(historico or []):
+            if not isinstance(bloco, dict):
+                continue
+            for fase in cls._FASES:
+                total += len([item for item in list(bloco.get(fase) or []) if isinstance(item, dict)])
+        return int(total)
+
+    def estado_visualizacao(self) -> Dict[str, object]:
+        return {
+            "ativo": bool(self._ativo),
+            "turno_atual": int(self._turno_atual or 0),
+            "tick_atual": int(self._tick_atual or 0),
+            "tick_final": int(self._tick_final or 0),
+            "eventos_processados": int(self._eventos_processados or 0),
+            "eventos_totais": int(self._total_eventos or 0),
+            "tick_segundos": float(self._tick_segundos or 0.2),
+            "log": dict(self._log_atual or {}),
+        }
 
     def reproduzir(
         self,
@@ -48,13 +75,16 @@ class LeitorLogs:
     ) -> bool:
         historico = [dict(item) for item in list((log or {}).get("historico") or []) if isinstance(item, dict)]
         self.cancelar()
+        self._log_atual = dict(log or {})
         self._resultado = dict(resultado or {})
         self._ao_finalizar = ao_finalizar
+        self._turno_atual = max(1, int((log or {}).get("turno_atual", getattr(self._controlador, "_rodada_atual", 1)) or getattr(self._controlador, "_rodada_atual", 1)))
         regras_batalha = dict((log or {}).get("regras_batalha") or {}) if isinstance((log or {}).get("regras_batalha"), dict) else {}
         if not regras_batalha and hasattr(self._controlador, "obter_regras_batalha"):
             regras_batalha = dict(self._controlador.obter_regras_batalha() or {})
         self._tick_segundos = max(0.01, self._numero(regras_batalha.get("tick_segundos"), 0.2))
         self._historico = historico
+        self._total_eventos = self._contar_eventos_historico(historico)
         self._tick_final = max([int(item.get("tick", 0) or 0) for item in historico], default=0)
         if not historico:
             self._finalizar()
@@ -80,6 +110,7 @@ class LeitorLogs:
             callback(resultado)
 
     def _processar_blocos_ate_tick(self, tick_atual: int) -> None:
+        self._tick_atual = max(0, int(tick_atual))
         while self._indice_bloco < len(self._historico):
             bloco = self._historico[self._indice_bloco]
             if int(bloco.get("tick", 0) or 0) > int(tick_atual):
@@ -88,9 +119,11 @@ class LeitorLogs:
             self._indice_bloco += 1
 
     def _processar_bloco(self, bloco: Dict[str, object]) -> None:
+        self._tick_atual = max(self._tick_atual, int(bloco.get("tick", 0) or 0))
         for fase in self._FASES:
             for evento in [dict(item) for item in list(bloco.get(fase) or []) if isinstance(item, dict)]:
                 self._processar_evento(evento)
+                self._eventos_processados += 1
 
     def _mapa_pokemons(self) -> Dict[str, object]:
         return self._controlador.mapa_pokemons()

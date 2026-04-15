@@ -1,0 +1,1176 @@
+{
+  "batalha_id": "bat-b84094d157",
+  "tipo": "confronto",
+  "turno_atual": 4,
+  "clima": "",
+  "arena": {},
+  "regras_batalha": {
+    "tick_segundos": 0.1,
+    "colisao": {
+      "restituicao": 0.35,
+      "deslocamento_base_min": 0.25,
+      "deslocamento_por_velocidade_relativa": 6.0,
+      "velocidade_reacao_min": 0.03,
+      "dano_base_min": 1.0,
+      "velocidade_referencia_min": 0.1,
+      "dano_por_massa_velocidade": 8.0,
+      "dano_por_ataque": 0.35
+    },
+    "multiplas_acoes": {
+      "multiplicador_base": 1.0,
+      "acrescimo_multiplicador_por_acao_extra": 0.2
+    }
+  },
+  "ordem_logica": [
+    {
+      "executor_id": "P-88844255CF",
+      "estilo": "esperar",
+      "tipo_movimento": false,
+      "destino_mundo": null,
+      "troca_reserva_id": "",
+      "alvo_ids": [],
+      "custo_base": 0.0,
+      "custo": 0.0,
+      "acao_chave": "esperar",
+      "ataque": {},
+      "executor_nome": "Weedle",
+      "indice_executor_turno": 0,
+      "tick_inicio": 1
+    },
+    {
+      "executor_id": "P-4C40F1E0D2",
+      "estilo": "status",
+      "tipo_movimento": false,
+      "destino_mundo": null,
+      "troca_reserva_id": "",
+      "alvo_ids": [],
+      "custo_base": 20.0,
+      "custo": 20.0,
+      "acao_chave": "enraivecer",
+      "ataque": {
+        "Ataque": "Enraivecer",
+        "Tipo": "normal",
+        "Custo": 20,
+        "Estilo": "status",
+        "Velocidade": "5",
+        "Descrição Nivel 1": "Se a Vida estiver abaixo de 50%, o usuário ganha Aprimorado se SpA > Atk; caso contrário, ganha Amplificado.",
+        "Descrição Nivel 2": "Os efeitos passam a ser ativados com Vida abaixo de 70%.",
+        "Descrição Nivel 3": "Ao ativar o efeito, cura (20% da Vida) perdida.",
+        "Tiro": "-",
+        "Efeito": "-",
+        "Code": "3",
+        "Nivel": 1,
+        "Nome": "Enraivecer"
+      },
+      "executor_nome": "Weedle",
+      "indice_executor_turno": 0,
+      "tick_inicio": 1
+    },
+    {
+      "executor_id": "P-E009B2A790",
+      "estilo": "alvo",
+      "tipo_movimento": false,
+      "destino_mundo": null,
+      "troca_reserva_id": "",
+      "alvo_ids": [
+        "P-E067074C5C"
+      ],
+      "custo_base": 30.0,
+      "custo": 30.0,
+      "acao_chave": "proteger",
+      "ataque": {
+        "Ataque": "Proteger",
+        "Tipo": "normal",
+        "Custo": 30,
+        "Estilo": "alvo",
+        "Velocidade": "8",
+        "Descrição Nivel 1": "O alvo fica Protegido.",
+        "Descrição Nivel 2": "O alvo remove 1 efeito negativo aleatório.",
+        "Descrição Nivel 3": "O alvo também ganha uma barreira equivalente a (40% de Mag).",
+        "Tiro": "-",
+        "Efeito": "-",
+        "Code": "5",
+        "Nivel": 1,
+        "Nome": "Proteger"
+      },
+      "executor_nome": "Kakuna",
+      "indice_executor_turno": 0,
+      "tick_inicio": 2,
+      "alvos": [
+        {
+          "id": "P-E067074C5C",
+          "nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "executor_id": "P-E067074C5C",
+      "executor_nome": "Rowlet",
+      "estilo": "movimento",
+      "tipo_movimento": true,
+      "destino_mundo": [
+        49.525,
+        20.45
+      ],
+      "troca_reserva_id": "",
+      "alvo_ids": [],
+      "custo_base": 12.4875,
+      "custo": 12.4875,
+      "acao_chave": "__movimento_nativo__",
+      "ataque": {},
+      "indice_executor_turno": 0,
+      "tick_inicio": 4
+    }
+  ],
+  "historico": [
+    {
+      "tick": 1,
+      "inicializacao": [
+        {
+          "tipo": "acao",
+          "executor_id": "P-88844255CF",
+          "ataque": "esperar",
+          "estilo": "esperar",
+          "posicao": [
+            47.4248,
+            20.0262
+          ],
+          "custo_energia": 0.0,
+          "energia_restante": 17.805,
+          "executor_nome": "Weedle"
+        },
+        {
+          "tipo": "acao",
+          "executor_id": "P-4C40F1E0D2",
+          "ataque": "Enraivecer",
+          "estilo": "status",
+          "posicao": [
+            47.2,
+            26.8
+          ],
+          "custo_energia": 20.0,
+          "energia_restante": 1.37,
+          "executor_nome": "Weedle"
+        }
+      ],
+      "finalizacao": [
+        {
+          "tipo": "acao_finalizada",
+          "executor_id": "P-4C40F1E0D2",
+          "ataque": "Enraivecer",
+          "estilo": "status",
+          "motivo": "status_imediato",
+          "executor_nome": "Weedle"
+        }
+      ]
+    },
+    {
+      "tick": 2,
+      "inicializacao": [
+        {
+          "tipo": "acao",
+          "executor_id": "P-E009B2A790",
+          "ataque": "Proteger",
+          "estilo": "alvo",
+          "posicao": [
+            47.2,
+            13.2
+          ],
+          "custo_energia": 30.0,
+          "energia_restante": 1.5,
+          "alvo_ids": [
+            "P-E067074C5C"
+          ],
+          "executor_nome": "Kakuna",
+          "alvos": [
+            {
+              "id": "P-E067074C5C",
+              "nome": "Rowlet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 3,
+      "segmentacao": [
+        {
+          "tipo": "dano",
+          "executor_id": "P-E009B2A790",
+          "alvo_id": "P-E067074C5C",
+          "dano": 0.0,
+          "vida_antes": 45.0415,
+          "vida_depois": 45.0415,
+          "barreira_antes": 0.0,
+          "barreira_depois": 0.0,
+          "dano_tipo": "fisico",
+          "morto": false,
+          "critico": true,
+          "detalhes": {
+            "dano_bruto": 0.0,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.56,
+            "perfuracao": 0.0,
+            "defesa_base": 18.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 18.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 0.0,
+            "dano_pos_tipo": 0.0,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Kakuna",
+          "alvo_nome": "Rowlet"
+        },
+        {
+          "tipo": "efeito",
+          "executor_id": "P-E009B2A790",
+          "alvo_id": "P-E067074C5C",
+          "efeito": "Protegido",
+          "status": "ok",
+          "positivo": false,
+          "duracao_ticks": 20,
+          "fase_efeito": "aplicado",
+          "executor_nome": "Kakuna",
+          "alvo_nome": "Rowlet"
+        }
+      ],
+      "finalizacao": [
+        {
+          "tipo": "acao_finalizada",
+          "executor_id": "P-E009B2A790",
+          "ataque": "Proteger",
+          "estilo": "alvo",
+          "motivo": "impacto_alvo",
+          "executor_nome": "Kakuna"
+        }
+      ]
+    },
+    {
+      "tick": 4,
+      "inicializacao": [
+        {
+          "tipo": "acao",
+          "executor_id": "P-E067074C5C",
+          "ataque": "__movimento_nativo__",
+          "estilo": "movimento",
+          "posicao": [
+            45.9334,
+            19.8521
+          ],
+          "custo_energia": 12.4875,
+          "energia_restante": 37.4625,
+          "destino": [
+            49.525,
+            20.45
+          ],
+          "velocidade": 0.1178,
+          "executor_nome": "Rowlet"
+        }
+      ],
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            45.9334,
+            19.8521
+          ],
+          "posicao": [
+            46.0496,
+            19.8714
+          ],
+          "destino_planejado": [
+            49.525,
+            20.45
+          ],
+          "velocidade": 0.1178,
+          "distancia": 0.1178,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 5,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.0496,
+            19.8714
+          ],
+          "posicao": [
+            46.1658,
+            19.8908
+          ],
+          "destino_planejado": [
+            49.525,
+            20.45
+          ],
+          "velocidade": 0.1178,
+          "distancia": 0.1178,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 6,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.1658,
+            19.8908
+          ],
+          "posicao": [
+            46.2821,
+            19.9101
+          ],
+          "destino_planejado": [
+            49.525,
+            20.45
+          ],
+          "velocidade": 0.1178,
+          "distancia": 0.1178,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 7,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.2821,
+            19.9101
+          ],
+          "posicao": [
+            46.3983,
+            19.9295
+          ],
+          "destino_planejado": [
+            49.525,
+            20.45
+          ],
+          "velocidade": 0.1178,
+          "distancia": 0.1178,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 8,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.3983,
+            19.9295
+          ],
+          "posicao": [
+            46.5145,
+            19.9488
+          ],
+          "destino_planejado": [
+            49.525,
+            20.45
+          ],
+          "velocidade": 0.1178,
+          "distancia": 0.1178,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 9,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.5145,
+            19.9488
+          ],
+          "posicao": [
+            46.627,
+            19.9676
+          ],
+          "destino_planejado": [
+            49.525,
+            20.45
+          ],
+          "velocidade": 0.1178,
+          "distancia": 0.114,
+          "colisoes": [
+            {
+              "tipo": "colisao_pokemon",
+              "tick": 142,
+              "a": "P-E067074C5C",
+              "b": "P-88844255CF",
+              "t": 0.9677,
+              "ponto": [
+                46.627,
+                19.9676
+              ],
+              "normal": [
+                -0.9973,
+                -0.0733
+              ],
+              "velocidade_relativa": 0.0665,
+              "dano_em_a": 7.5985,
+              "dano_em_b": 7.3265,
+              "movimentos": [
+                {
+                  "pokemon_id": "P-E067074C5C",
+                  "origem": [
+                    46.627,
+                    19.9676
+                  ],
+                  "destino": [
+                    46.3575,
+                    19.9478
+                  ],
+                  "velocidade": 0.0608
+                },
+                {
+                  "pokemon_id": "P-88844255CF",
+                  "origem": [
+                    47.4248,
+                    20.0262
+                  ],
+                  "destino": [
+                    47.5531,
+                    20.0356
+                  ],
+                  "velocidade": 0.03
+                }
+              ]
+            }
+          ],
+          "interrompido_por_colisao": true,
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "dano",
+          "executor_id": "P-E067074C5C",
+          "alvo_id": "P-88844255CF",
+          "dano": 7.3265,
+          "vida_antes": 13.6735,
+          "vida_depois": 6.347,
+          "barreira_antes": 0.0,
+          "barreira_depois": 0.0,
+          "dano_tipo": "colisao",
+          "morto": false,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 7.3265,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 0.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 0.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 7.3265,
+            "dano_pos_tipo": 7.3265,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Rowlet",
+          "alvo_nome": "Weedle"
+        },
+        {
+          "tipo": "dano",
+          "executor_id": "P-88844255CF",
+          "alvo_id": "P-E067074C5C",
+          "dano": 7.5985,
+          "vida_antes": 45.0415,
+          "vida_depois": 37.443,
+          "barreira_antes": 0.0,
+          "barreira_depois": 0.0,
+          "dano_tipo": "colisao",
+          "morto": false,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 7.5985,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 0.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 0.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 7.5985,
+            "dano_pos_tipo": 7.5985,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Weedle",
+          "alvo_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 10,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.627,
+            19.9676
+          ],
+          "posicao": [
+            46.627,
+            19.9676
+          ],
+          "destino_planejado": [
+            46.3575,
+            19.9478
+          ],
+          "velocidade": 0.0608,
+          "distancia": 0.0,
+          "colisoes": [
+            {
+              "tipo": "colisao_pokemon",
+              "tick": 143,
+              "a": "P-E067074C5C",
+              "b": "P-88844255CF",
+              "t": 0.0,
+              "ponto": [
+                46.627,
+                19.9676
+              ],
+              "normal": [
+                -0.9973,
+                -0.0733
+              ],
+              "velocidade_relativa": 0.1117,
+              "dano_em_a": 7.5985,
+              "dano_em_b": 7.184,
+              "movimentos": [
+                {
+                  "pokemon_id": "P-E067074C5C",
+                  "origem": [
+                    46.627,
+                    19.9676
+                  ],
+                  "destino": [
+                    46.1744,
+                    19.9343
+                  ],
+                  "velocidade": 0.1021
+                },
+                {
+                  "pokemon_id": "P-88844255CF",
+                  "origem": [
+                    47.4248,
+                    20.0262
+                  ],
+                  "destino": [
+                    47.6403,
+                    20.042
+                  ],
+                  "velocidade": 0.0486
+                }
+              ]
+            }
+          ],
+          "interrompido_por_colisao": true,
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "dano",
+          "executor_id": "P-E067074C5C",
+          "alvo_id": "P-88844255CF",
+          "dano": 7.184,
+          "vida_antes": 6.347,
+          "vida_depois": 0.0,
+          "barreira_antes": 0.0,
+          "barreira_depois": 0.0,
+          "dano_tipo": "colisao",
+          "morto": true,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 7.184,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 0.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 0.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 7.184,
+            "dano_pos_tipo": 7.184,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Rowlet",
+          "alvo_nome": "Weedle"
+        },
+        {
+          "tipo": "dano",
+          "executor_id": "P-88844255CF",
+          "alvo_id": "P-E067074C5C",
+          "dano": 7.5985,
+          "vida_antes": 37.443,
+          "vida_depois": 29.8445,
+          "barreira_antes": 0.0,
+          "barreira_depois": 0.0,
+          "dano_tipo": "colisao",
+          "morto": false,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 7.5985,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 0.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 0.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 7.5985,
+            "dano_pos_tipo": 7.5985,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Weedle",
+          "alvo_nome": "Rowlet"
+        },
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-88844255CF",
+          "origem": [
+            47.4248,
+            20.0262
+          ],
+          "posicao": [
+            47.4248,
+            20.0262
+          ],
+          "destino_planejado": [
+            47.5531,
+            20.0356
+          ],
+          "velocidade": 0.03,
+          "distancia": 0.0,
+          "colisoes": [
+            {
+              "tipo": "colisao_pokemon",
+              "tick": 143,
+              "a": "P-88844255CF",
+              "b": "P-E067074C5C",
+              "t": 0.0,
+              "ponto": [
+                47.4248,
+                20.0262
+              ],
+              "normal": [
+                0.9973,
+                0.0733
+              ],
+              "velocidade_relativa": 0.05,
+              "dano_em_a": 7.184,
+              "dano_em_b": 7.5985,
+              "movimentos": [
+                {
+                  "pokemon_id": "P-88844255CF",
+                  "origem": [
+                    47.4248,
+                    20.0262
+                  ],
+                  "destino": [
+                    47.5213,
+                    20.0333
+                  ],
+                  "velocidade": 0.03
+                },
+                {
+                  "pokemon_id": "P-E067074C5C",
+                  "origem": [
+                    46.627,
+                    19.9676
+                  ],
+                  "destino": [
+                    46.4243,
+                    19.9527
+                  ],
+                  "velocidade": 0.0457
+                }
+              ]
+            }
+          ],
+          "interrompido_por_colisao": true,
+          "pokemon_nome": "Weedle"
+        },
+        {
+          "tipo": "dano",
+          "executor_id": "P-88844255CF",
+          "alvo_id": "P-E067074C5C",
+          "dano": 7.5985,
+          "vida_antes": 29.8445,
+          "vida_depois": 22.246,
+          "barreira_antes": 0.0,
+          "barreira_depois": 0.0,
+          "dano_tipo": "colisao",
+          "morto": false,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 7.5985,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 0.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 0.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 7.5985,
+            "dano_pos_tipo": 7.5985,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Weedle",
+          "alvo_nome": "Rowlet"
+        },
+        {
+          "tipo": "dano",
+          "executor_id": "P-E067074C5C",
+          "alvo_id": "P-88844255CF",
+          "dano": 7.184,
+          "vida_antes": 0.0,
+          "vida_depois": 0.0,
+          "barreira_antes": 0.0,
+          "barreira_depois": 0.0,
+          "dano_tipo": "colisao",
+          "morto": true,
+          "critico": false,
+          "detalhes": {
+            "dano_bruto": 7.184,
+            "bonus_intensidade": 1.0,
+            "multiplicador_dano_causado": 1.0,
+            "multiplicador_critico": 1.0,
+            "perfuracao": 0.0,
+            "defesa_base": 0.0,
+            "defesa_reduzida_por_perfuracao": 0.0,
+            "defesa_aplicada": 0.0,
+            "multiplicador_tipo": 1.0,
+            "multiplicador_hook": 1.0,
+            "delta_hook": 0.0,
+            "dano_pos_defesa": 7.184,
+            "dano_pos_tipo": 7.184,
+            "multiplicador_dano_recebido": 1.0
+          },
+          "executor_nome": "Rowlet",
+          "alvo_nome": "Weedle"
+        }
+      ]
+    },
+    {
+      "tick": 11,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.627,
+            19.9676
+          ],
+          "posicao": [
+            46.5251,
+            19.9601
+          ],
+          "destino_planejado": [
+            46.1744,
+            19.9343
+          ],
+          "velocidade": 0.1021,
+          "distancia": 0.1021,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-88844255CF",
+          "origem": [
+            47.4248,
+            20.0262
+          ],
+          "posicao": [
+            47.4733,
+            20.0298
+          ],
+          "destino_planejado": [
+            47.6403,
+            20.042
+          ],
+          "velocidade": 0.0486,
+          "distancia": 0.0486,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Weedle"
+        },
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-88844255CF",
+          "origem": [
+            47.4733,
+            20.0298
+          ],
+          "posicao": [
+            47.5032,
+            20.032
+          ],
+          "destino_planejado": [
+            47.5213,
+            20.0333
+          ],
+          "velocidade": 0.03,
+          "distancia": 0.03,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Weedle"
+        },
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.5251,
+            19.9601
+          ],
+          "posicao": [
+            46.4795,
+            19.9567
+          ],
+          "destino_planejado": [
+            46.4243,
+            19.9527
+          ],
+          "velocidade": 0.0457,
+          "distancia": 0.0457,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 12,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.4795,
+            19.9567
+          ],
+          "posicao": [
+            46.3777,
+            19.9493
+          ],
+          "destino_planejado": [
+            46.1744,
+            19.9343
+          ],
+          "velocidade": 0.1021,
+          "distancia": 0.1021,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-88844255CF",
+          "origem": [
+            47.5032,
+            20.032
+          ],
+          "posicao": [
+            47.5517,
+            20.0355
+          ],
+          "destino_planejado": [
+            47.6403,
+            20.042
+          ],
+          "velocidade": 0.0486,
+          "distancia": 0.0486,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Weedle"
+        },
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.3777,
+            19.9493
+          ],
+          "posicao": [
+            46.4233,
+            19.9526
+          ],
+          "destino_planejado": [
+            46.4243,
+            19.9527
+          ],
+          "velocidade": 0.0457,
+          "distancia": 0.0457,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 13,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.4233,
+            19.9526
+          ],
+          "posicao": [
+            46.3215,
+            19.9451
+          ],
+          "destino_planejado": [
+            46.1744,
+            19.9343
+          ],
+          "velocidade": 0.1021,
+          "distancia": 0.1021,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-88844255CF",
+          "origem": [
+            47.5517,
+            20.0355
+          ],
+          "posicao": [
+            47.6001,
+            20.0391
+          ],
+          "destino_planejado": [
+            47.6403,
+            20.042
+          ],
+          "velocidade": 0.0486,
+          "distancia": 0.0486,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Weedle"
+        }
+      ]
+    },
+    {
+      "tick": 14,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.3215,
+            19.9451
+          ],
+          "posicao": [
+            46.2197,
+            19.9376
+          ],
+          "destino_planejado": [
+            46.1744,
+            19.9343
+          ],
+          "velocidade": 0.1021,
+          "distancia": 0.1021,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-88844255CF",
+          "origem": [
+            47.6001,
+            20.0391
+          ],
+          "posicao": [
+            47.6403,
+            20.042
+          ],
+          "destino_planejado": [
+            47.6403,
+            20.042
+          ],
+          "velocidade": 0.0486,
+          "distancia": 0.0403,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Weedle"
+        }
+      ]
+    },
+    {
+      "tick": 15,
+      "segmentacao": [
+        {
+          "tipo": "movimento",
+          "pokemon_id": "P-E067074C5C",
+          "origem": [
+            46.2197,
+            19.9376
+          ],
+          "posicao": [
+            46.1744,
+            19.9343
+          ],
+          "destino_planejado": [
+            46.1744,
+            19.9343
+          ],
+          "velocidade": 0.1021,
+          "distancia": 0.0454,
+          "interrompido_por_colisao": false,
+          "pokemon_nome": "Rowlet"
+        }
+      ]
+    },
+    {
+      "tick": 16,
+      "passiva": [
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-E067074C5C",
+          "energia": 12.4875,
+          "energia_total": 49.95,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Rowlet"
+        },
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-E009B2A790",
+          "energia": 27.0,
+          "energia_total": 28.5,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Kakuna"
+        },
+        {
+          "tipo": "fim_turno",
+          "pokemon_id": "P-4C40F1E0D2",
+          "energia": 15.86,
+          "energia_total": 17.23,
+          "motivo": "FimTurno",
+          "pokemon_nome": "Weedle"
+        }
+      ]
+    }
+  ],
+  "resultado": {
+    "batalha_id": "bat-b84094d157",
+    "tipo": "confronto",
+    "turno_atual": 4,
+    "tick_global": 133,
+    "time_1": {
+      "ativos": {
+        "__tipo__": "lista_pokemon",
+        "itens": [
+          {
+            "uid": "P-E067074C5C",
+            "posicao": [
+              46.1744,
+              19.9343
+            ],
+            "posicao_anterior": [
+              46.2197,
+              19.9376
+            ],
+            "velocidade_atual_tiles_tick": 0.1021,
+            "vida_atual": 22.246,
+            "efeitos": [
+              {
+                "nome": "Protegido",
+                "positivo": false,
+                "duracao_ticks": 1,
+                "duracao_inicial_ticks": 20,
+                "origem_id": "P-E009B2A790"
+              },
+              {
+                "nome": "Protegido",
+                "positivo": false,
+                "duracao_ticks": 3,
+                "duracao_inicial_ticks": 20,
+                "origem_id": "P-4C40F1E0D2"
+              },
+              {
+                "nome": "Protegido",
+                "positivo": false,
+                "duracao_ticks": 4,
+                "duracao_inicial_ticks": 20,
+                "origem_id": "P-E009B2A790"
+              },
+              {
+                "nome": "Protegido",
+                "positivo": false,
+                "duracao_ticks": 7,
+                "duracao_inicial_ticks": 20,
+                "origem_id": "P-E009B2A790"
+              }
+            ],
+            "nome": "Rowlet"
+          }
+        ]
+      }
+    },
+    "time_2": {
+      "ativos": {
+        "__tipo__": "lista_pokemon",
+        "itens": [
+          {
+            "uid": "P-E009B2A790",
+            "energia": 28.5,
+            "nome": "Kakuna"
+          },
+          {
+            "uid": "P-88844255CF",
+            "fora_de_combate": true,
+            "posicao": [
+              47.6403,
+              20.042
+            ],
+            "posicao_anterior": [
+              47.6001,
+              20.0391
+            ],
+            "velocidade_atual_tiles_tick": 0.0486,
+            "vida_atual": 0.0,
+            "nome": "Weedle"
+          },
+          {
+            "uid": "P-4C40F1E0D2",
+            "energia": 17.23,
+            "nome": "Weedle"
+          }
+        ]
+      }
+    }
+  }
+}

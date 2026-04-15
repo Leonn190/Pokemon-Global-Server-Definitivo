@@ -4,7 +4,7 @@ import math
 from typing import Dict, Iterable, List, Tuple
 
 from SimuladorServerJogo.Batalha.ObjetoBatalha import ObjetoBatalha
-from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha, carregar_regras_pokemons
 
 
 Vec2 = Tuple[float, float]
@@ -14,6 +14,7 @@ class SimuladorFisica:
     def __init__(self, sistema) -> None:
         self._sistema = sistema
         self._regras_batalha = carregar_regras_batalha()
+        self._regras_pokemons = carregar_regras_pokemons()
 
     @staticmethod
     def _fnum(valor, default: float = 0.0) -> float:
@@ -79,8 +80,17 @@ class SimuladorFisica:
     def velocidade_pokemon_tiles_tick(self, pokemon, percentual: float = 100.0) -> float:
         referencia = self.velocidade_media_referencia()
         vel = max(1.0, pokemon.obter_atributo("Vel"))
-        base = 0.1 * (vel / referencia)
-        return max(0.01, base * max(0.0, float(percentual)) / 100.0)
+        escala_relativa = self._clamp(vel / referencia, 0.55, 1.85)
+        tick_segundos = max(0.01, self._regra("batalha_tick_segundos", 0.1))
+        base_tiles_s = max(
+            1.5,
+            self._fnum(
+                self._sistema.Contexto.get("velocidade_base_pokemon_tiles_s"),
+                self._fnum(self._regras_pokemons.get("velocidade_base_pokemon_tiles_s"), 3.0),
+            ),
+        )
+        base_tiles_tick = base_tiles_s * tick_segundos
+        return max(0.01, base_tiles_tick * escala_relativa * max(0.0, float(percentual)) / 100.0)
 
     def limitar_ao_campo(self, posicao: Vec2, raio: float = 0.0) -> tuple[Vec2, Vec2]:
         largura = max(1.0, self._fnum(self._sistema.Contexto.get("largura"), 80.0))
@@ -213,11 +223,21 @@ class SimuladorFisica:
                 return {"t": float(t), "ponto": ponto, "normal": normal}
         return None
 
-    def resolver_colisoes_pokemon(self, pokemon, origem: Vec2, destino: Vec2, velocidade_tiles_tick: float, tick: int) -> List[Dict[str, object]]:
+    def resolver_colisoes_pokemon(
+        self,
+        pokemon,
+        origem: Vec2,
+        destino: Vec2,
+        velocidade_tiles_tick: float,
+        tick: int,
+        *,
+        ignorar_ids: Iterable[str] | None = None,
+    ) -> List[Dict[str, object]]:
         eventos: List[Dict[str, object]] = []
         melhor_evento: Dict[str, object] | None = None
+        ignorados = {str(valor) for valor in list(ignorar_ids or []) if str(valor)}
         for outro in self._sistema.listar_pokemons():
-            if outro is pokemon or outro.ForaDeCombate:
+            if outro is pokemon or outro.ForaDeCombate or str(outro.Uid) in ignorados:
                 continue
             interseccao = self._interseccao_segmento_circulo(origem, destino, outro.Posicao, float(pokemon.RaioColisao) + float(outro.RaioColisao))
             if interseccao is None:
@@ -299,7 +319,15 @@ class SimuladorFisica:
         )
         return eventos
 
-    def mover_pokemon_um_tick(self, pokemon, destino: Vec2, velocidade_tiles_tick: float, tick: int) -> Dict[str, object]:
+    def mover_pokemon_um_tick(
+        self,
+        pokemon,
+        destino: Vec2,
+        velocidade_tiles_tick: float,
+        tick: int,
+        *,
+        ignorar_ids: Iterable[str] | None = None,
+    ) -> Dict[str, object]:
         origem = (float(pokemon.Posicao[0]), float(pokemon.Posicao[1]))
         distancia_total = self._dist(origem, destino)
         if distancia_total <= 1e-9:
@@ -317,7 +345,14 @@ class SimuladorFisica:
         pokemon.PosicaoAnterior = origem
         pokemon.VelocidadeAtualTilesTick = float(velocidade_tiles_tick)
 
-        colisoes = self.resolver_colisoes_pokemon(pokemon, origem, nova_posicao, velocidade_tiles_tick, tick)
+        colisoes = self.resolver_colisoes_pokemon(
+            pokemon,
+            origem,
+            nova_posicao,
+            velocidade_tiles_tick,
+            tick,
+            ignorar_ids=ignorar_ids,
+        )
         if colisoes:
             return {
                 "concluido": True,
@@ -343,6 +378,18 @@ class SimuladorFisica:
             sobreposicao = (pokemon.RaioColisao + self._fnum(objeto.get("raio"), 0.6)) - self._dist(pokemon.Posicao, self._vec(objeto.get("posicao")))
             pokemon.Posicao = self._somar(pokemon.Posicao, self._mul(normal, max(0.0, sobreposicao)))
             colisoes.append({"tipo": "objeto_campo", "objeto_id": objeto.get("id"), "normal": [normal[0], normal[1]]})
+
+        if colisoes:
+            return {
+                "concluido": True,
+                "interrompido_por_colisao": True,
+                "origem": origem,
+                "destino_planejado": (float(destino[0]), float(destino[1])),
+                "destino": (float(pokemon.Posicao[0]), float(pokemon.Posicao[1])),
+                "distancia": round(self._dist(origem, pokemon.Posicao), 4),
+                "velocidade": round(float(velocidade_tiles_tick), 4),
+                "colisoes": colisoes,
+            }
 
         restante = self._dist(pokemon.Posicao, destino)
         return {

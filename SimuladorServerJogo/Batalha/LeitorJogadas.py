@@ -304,6 +304,8 @@ class LeitorJogadas:
                 "barreira_antes": self._round_num(detalhe.get("barreira_antes", 0.0)),
                 "barreira_depois": self._round_num(detalhe.get("barreira_depois", 0.0)),
             }
+            if str(pacote.get("dano_tipo") or "").strip():
+                publico["dano_tipo"] = str(pacote.get("dano_tipo") or "").strip()
             if float(detalhe.get("dano_barreira", 0.0) or 0.0) > 0.0:
                 publico["dano_barreira"] = self._round_num(detalhe.get("dano_barreira"))
             if "morto" in detalhe:
@@ -1224,6 +1226,7 @@ class LeitorJogadas:
             "origem_movimento": (float(origem_t[0]), float(origem_t[1])),
             "causa_movimento": str(causa or "colisao_pokemon"),
             "colidiu_com": str(colidiu_com or ""),
+            "ignorar_colisao_com": str(colidiu_com or ""),
         }
 
     def _aplicar_dano_colisao(self, executor, alvo, dano: float, log: Dict[str, object], tick: int) -> None:
@@ -1296,7 +1299,16 @@ class LeitorJogadas:
             movimento["ativo"] = False
             self._consumir_pendencia_jogada(sistema, movimento["jogada"], movimento["spec"], log, tick, "executor_fora_de_combate")
             return
-        detalhe = self._fisica.mover_pokemon_um_tick(executor, movimento["destino"], movimento["velocidade"], tick)
+        ignorar_ids = []
+        if str(movimento.get("ignorar_colisao_com") or "").strip():
+            ignorar_ids.append(str(movimento.get("ignorar_colisao_com") or "").strip())
+        detalhe = self._fisica.mover_pokemon_um_tick(
+            executor,
+            movimento["destino"],
+            movimento["velocidade"],
+            tick,
+            ignorar_ids=ignorar_ids,
+        )
         self._log_evento(log, tick, "movimento", executor_id=executor.Uid, detalhe=detalhe)
         self._processar_colisoes_movimento(sistema, detalhe, ativos_movimento, log, tick)
         spec = movimento["spec"]

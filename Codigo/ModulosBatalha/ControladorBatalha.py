@@ -31,6 +31,7 @@ class ControladorBatalha:
         self._provedor_reservas = None
         self._rodada_atual = 1
         self._leitor_logs = LeitorLogs(self)
+        self._logs_publicos_por_turno: Dict[int, Dict[str, object]] = {}
         self._ultima_resposta_inicio_servidor = None
         self._ultima_resposta_turno_servidor = None
         self._inicializar_times()
@@ -178,6 +179,43 @@ class ControladorBatalha:
     def esta_reproduzindo_logs(self) -> bool:
         return bool(self._leitor_logs.esta_ativo())
 
+    @staticmethod
+    def _turno_log(log: Dict[str, object] | None, default: int = 0) -> int:
+        if not isinstance(log, dict):
+            return int(default)
+        try:
+            return max(0, int(log.get("turno_atual", default) or default))
+        except (TypeError, ValueError):
+            return int(default)
+
+    def _registrar_log_publico(self, log: Dict[str, object] | None) -> None:
+        turno = self._turno_log(log, default=0)
+        if turno <= 0 or not isinstance(log, dict):
+            return
+        self._logs_publicos_por_turno[turno] = dict(log)
+
+    def listar_logs_publicos(self) -> List[Dict[str, object]]:
+        return [dict(self._logs_publicos_por_turno[turno]) for turno in sorted(self._logs_publicos_por_turno.keys())]
+
+    def obter_log_publico(self, turno: int) -> Dict[str, object] | None:
+        try:
+            turno_i = int(turno)
+        except (TypeError, ValueError):
+            return None
+        log = self._logs_publicos_por_turno.get(turno_i)
+        return dict(log) if isinstance(log, dict) else None
+
+    def estado_visualizador_logs(self) -> Dict[str, object]:
+        replay = dict(self._leitor_logs.estado_visualizacao() or {})
+        turnos = sorted(self._logs_publicos_por_turno.keys())
+        ultimo_turno = max(turnos, default=0)
+        return {
+            "rodada_atual_batalha": int(self._rodada_atual or 1),
+            "turnos_disponiveis": list(turnos),
+            "ultimo_turno_com_log": int(ultimo_turno),
+            "replay": replay,
+        }
+
     def _aplicar_estado_servidor(self, resultado: Dict[str, object], log: Dict[str, object] | None = None) -> None:
         self.SistemaBatalha.atualizar(dados_servidor=resultado, log_servidor=log if isinstance(log, dict) else None)
         self._rodada_atual = max(1, int(self.SistemaBatalha.TurnoAtual or self._rodada_atual))
@@ -248,6 +286,8 @@ class ControladorBatalha:
         if not isinstance(retorno, dict):
             return
         log = retorno.get("log") if isinstance(retorno.get("log"), dict) else {}
+        if log:
+            self._registrar_log_publico(log)
         resultado = self.SistemaBatalha.resolver_estado_recebido(retorno, log)
         if not resultado:
             if log:

@@ -520,6 +520,211 @@ class TextoAtaque(SetorTexto):
                 tip.render(tela, mouse_pos=mouse_pos, forcar=True)
 
 
+class TextoRegistroLog(TextoAtaque):
+    def __init__(self, rect=(0, 0, 10, 10), texto: str = "", linhas: int = 8, caracteres_por_linha: int = 60, style=None):
+        super().__init__(rect=rect, texto=texto, linhas=linhas, caracteres_por_linha=caracteres_por_linha, style=style)
+        self._segmentos_registro: list[dict[str, object]] = []
+        self._linhas_cache: list[list[dict[str, object]]] = []
+        self._cache_layout_key = None
+
+    def set_texto(self, texto: str):
+        super().set_texto(texto)
+        self._segmentos_registro = []
+        self._cache_layout_key = None
+
+    def set_segmentos(self, segmentos: list[dict[str, object]] | None):
+        self._segmentos_registro = [dict(item) for item in list(segmentos or []) if isinstance(item, dict)]
+        if self._segmentos_registro:
+            self.TextoBruto = "".join(str(item.get("texto") or "") for item in self._segmentos_registro)
+        self._cache_layout_key = None
+
+    def obter_areas_tooltip(self) -> list[dict[str, object]]:
+        return [dict(item) for item in list(self._areas_tooltip or []) if isinstance(item, dict)]
+
+    def altura_linha(self) -> int:
+        return max(10, int(self._style.get("size", 14) * 1.14))
+
+    def medir_altura(self) -> int:
+        linhas = self._linhas_quebradas()
+        if not linhas:
+            return 0
+        return len(linhas) * self.altura_linha()
+
+    def _segmentos_fonte(self) -> list[dict[str, object]]:
+        if self._segmentos_registro:
+            return [dict(item) for item in self._segmentos_registro]
+        return [{"texto": self.TextoBruto}]
+
+    def _tokenizar_segmento(self, segmento: dict[str, object]) -> list[dict[str, object]]:
+        texto = str(segmento.get("texto") or "")
+        if not texto:
+            return []
+        base = {k: v for k, v in dict(segmento).items() if k != "texto"}
+        tokens: list[dict[str, object]] = []
+        for bloco in re.split(r"(\n)", texto):
+            if bloco == "":
+                continue
+            if bloco == "\n":
+                tokens.append({"tipo": "quebra"})
+                continue
+            for parte in re.split(r"(\s+)", bloco):
+                if parte == "":
+                    continue
+                tokens.append({"tipo": "texto", "texto": parte, **base})
+        return tokens
+
+    def _tokens(self) -> list[dict[str, object]]:
+        tokens: list[dict[str, object]] = []
+        for segmento in self._segmentos_fonte():
+            tokens.extend(self._tokenizar_segmento(segmento))
+        return tokens
+
+    def _medir_token(self, token: dict[str, object]) -> int:
+        return int(self._texto.medir_largura(str(token.get("texto") or "")))
+
+    @staticmethod
+    def _linha_vazia(tokens: list[dict[str, object]]) -> bool:
+        return not any(str(token.get("texto") or "").strip() for token in tokens if token.get("tipo") == "texto")
+
+    @staticmethod
+    def _remover_espacos_fim(tokens: list[dict[str, object]]) -> list[dict[str, object]]:
+        saida = list(tokens)
+        while saida and str(saida[-1].get("texto") or "").isspace():
+            saida.pop()
+        return saida
+
+    def _adicionar_ellipsis(self, linha: list[dict[str, object]]) -> list[dict[str, object]]:
+        ellipsis = {"tipo": "texto", "texto": "..."}
+        linha = self._remover_espacos_fim(linha)
+        while linha:
+            largura = sum(self._medir_token(token) for token in linha) + self._texto.medir_largura("...")
+            if largura <= self.Rect.width:
+                break
+            linha.pop()
+            linha = self._remover_espacos_fim(linha)
+        linha.append(ellipsis)
+        return linha
+
+    def _linhas_quebradas(self) -> list[list[dict[str, object]]]:
+        chave = (
+            self.Rect.width,
+            self.Rect.height,
+            self.LinhasMax,
+            self.CaracteresPorLinha,
+            self.TextoBruto,
+            tuple(
+                (
+                    str(item.get("texto") or ""),
+                    str(item.get("atributo") or ""),
+                    str(item.get("tooltip") or ""),
+                    str(item.get("titulo_tooltip") or ""),
+                    str(item.get("descricao_tooltip") or ""),
+                )
+                for item in self._segmentos_registro
+            ),
+        )
+        if self._cache_layout_key == chave:
+            return self._linhas_cache
+
+        linhas: list[list[dict[str, object]]] = []
+        linha_atual: list[dict[str, object]] = []
+        largura_atual = 0
+        chars_atual = 0
+        houve_corte = False
+
+        for token in self._tokens():
+            if token.get("tipo") == "quebra":
+                if linha_atual or not linhas:
+                    linhas.append(self._remover_espacos_fim(linha_atual))
+                linha_atual = []
+                largura_atual = 0
+                chars_atual = 0
+                if len(linhas) >= self.LinhasMax:
+                    houve_corte = True
+                    break
+                continue
+
+            texto_token = str(token.get("texto") or "")
+            if not texto_token:
+                continue
+
+            if texto_token.isspace() and not linha_atual:
+                continue
+
+            largura = self._medir_token(token)
+            novo_chars = chars_atual + len(texto_token)
+            excedeu_largura = bool(linha_atual) and (largura_atual + largura > self.Rect.width)
+            excedeu_chars = bool(linha_atual) and (novo_chars > self.CaracteresPorLinha)
+
+            if excedeu_largura or excedeu_chars:
+                linhas.append(self._remover_espacos_fim(linha_atual))
+                linha_atual = []
+                largura_atual = 0
+                chars_atual = 0
+                if len(linhas) >= self.LinhasMax:
+                    houve_corte = True
+                    break
+                if texto_token.isspace():
+                    continue
+
+            linha_atual.append(dict(token))
+            largura_atual += largura
+            chars_atual += len(texto_token)
+
+        if not houve_corte and (linha_atual or not linhas):
+            linhas.append(self._remover_espacos_fim(linha_atual))
+
+        linhas = [linha for linha in linhas if linha and not self._linha_vazia(linha)]
+        if houve_corte and linhas:
+            linhas[-1] = self._adicionar_ellipsis(linhas[-1])
+        if len(linhas) > self.LinhasMax:
+            linhas = linhas[: self.LinhasMax]
+            linhas[-1] = self._adicionar_ellipsis(linhas[-1])
+
+        self._linhas_cache = linhas
+        self._cache_layout_key = chave
+        return linhas
+
+    def draw(self, tela: pygame.Surface):
+        self._areas_tooltip = []
+        linhas = self._linhas_quebradas()
+        if not linhas:
+            return
+
+        base_style = dict(self._style)
+        base_style["align"] = "topleft"
+        altura_linha = self.altura_linha()
+
+        for indice_linha, linha in enumerate(linhas):
+            x = self.Rect.x
+            y = self.Rect.y + indice_linha * altura_linha
+            for token in linha:
+                texto_token = str(token.get("texto") or "")
+                if not texto_token:
+                    continue
+                atributo = self._normalizar_attr(str(token.get("atributo") or ""))
+                style_token = dict(base_style)
+                if atributo:
+                    style_token["color"] = self._CORES_ATRIBUTO.get(atributo, style_token.get("color", (220, 230, 245)))
+                txt = Texto(texto_token, pos=(x, y), style=style_token)
+                txt.draw(tela)
+                rect_token = txt.get_rect()
+                rect_token.topleft = (x, y)
+                tooltip = token.get("tooltip")
+                titulo_tooltip = str(token.get("titulo_tooltip") or "").strip()
+                descricao_tooltip = str(token.get("descricao_tooltip") or "").strip()
+                if (tooltip or titulo_tooltip or descricao_tooltip) and not texto_token.isspace():
+                    self._areas_tooltip.append(
+                        {
+                            "rect": pygame.Rect(rect_token),
+                            "tooltip": str(tooltip or ""),
+                            "titulo": titulo_tooltip,
+                            "descricao": descricao_tooltip,
+                        }
+                    )
+                x += rect_token.width
+
+
 class TextoAnimado:
     def __init__(self, texto: str = "", cps: float = 46.0):
         self.TextoCompleto = str(texto or "")

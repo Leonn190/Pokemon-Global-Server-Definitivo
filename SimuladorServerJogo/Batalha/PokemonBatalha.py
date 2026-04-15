@@ -146,6 +146,15 @@ class PokemonBatalha:
         energia_bruta = estado.get("energia_atual", estado.get("EnergiaAtual", estado.get("energia", bruto.get("energia_atual", bruto.get("EnergiaAtual", self.EnergiaMax * 0.5)))))
         self.Energia = max(0.0, min(self.EnergiaMax, self._fnum(energia_bruta, self.EnergiaMax * 0.5)))
         self.Barreira = max(0.0, self._fnum(estado.get("barreira", bruto.get("barreira", 0.0)), 0.0))
+        self.EstatisticasBatalha: Dict[str, object] = {
+            "dano": 0.0,
+            "abates": 0,
+            "energia_gasta": 0.0,
+            "rodadas": 0,
+            "xp_multiplicador": 1.0,
+            "xp_batalha": 0,
+        }
+        self._resultado_batalha_calculado = False
 
         self.AtributosAtuais = dict(self.AtributosBase)
         self.Verifica()
@@ -208,6 +217,15 @@ class PokemonBatalha:
             "habilidades": [deepcopy(item) for item in self.Habilidades],
             "memorias": [deepcopy(item) for item in self.Memorias],
             "itens_build": [deepcopy(item) for item in self.ItensBuild],
+            "estatisticas_batalha": {
+                "dano": round(float(self.EstatisticasBatalha.get("dano", 0.0) or 0.0), 4),
+                "abates": int(self.EstatisticasBatalha.get("abates", 0) or 0),
+                "energia_gasta": round(float(self.EstatisticasBatalha.get("energia_gasta", 0.0) or 0.0), 4),
+                "rodadas": int(self.EstatisticasBatalha.get("rodadas", 0) or 0),
+                "xp_multiplicador": round(float(self.EstatisticasBatalha.get("xp_multiplicador", 1.0) or 1.0), 4),
+                "xp_batalha": int(self.EstatisticasBatalha.get("xp_batalha", 0) or 0),
+            },
+            "xp_batalha": int(self.EstatisticasBatalha.get("xp_batalha", 0) or 0),
         }
 
     def Verifica(self) -> Dict[str, object]:
@@ -408,6 +426,7 @@ class PokemonBatalha:
                 custo *= float(efeito.get("multiplicador_custo_energia", 1.25) or 1.25)
         custo = round(custo, 4)
         self.Energia = max(0.0, self.Energia - custo)
+        self.EstatisticasBatalha["energia_gasta"] = round(float(self.EstatisticasBatalha.get("energia_gasta", 0.0) or 0.0) + custo, 4)
         return custo
 
     def AplicarEfeito(self, alvo, nome_efeito: str, *, origem=None, positivo: bool | None = None) -> Dict[str, object]:
@@ -560,7 +579,38 @@ class PokemonBatalha:
             "pacote": dict(pacote),
         }
         self._registrar_passivas("AoCausarDano", contexto)
-        return alvo.TomarDano({**dict(pacote), "origem": self, "origem_id": self.Uid}, sistema=sistema, tick=tick)
+        resultado = alvo.TomarDano({**dict(pacote), "origem": self, "origem_id": self.Uid}, sistema=sistema, tick=tick)
+        if str(resultado.get("status") or "").strip().casefold() == "ok":
+            dano_total = max(0.0, self._fnum(resultado.get("dano_hp"), 0.0) + self._fnum(resultado.get("dano_barreira"), 0.0))
+            self.EstatisticasBatalha["dano"] = round(float(self.EstatisticasBatalha.get("dano", 0.0) or 0.0) + dano_total, 4)
+            if bool(resultado.get("morto", False)):
+                self.EstatisticasBatalha["abates"] = int(self.EstatisticasBatalha.get("abates", 0) or 0) + 1
+        return resultado
+
+    def finalizar_resultado_batalha(self, rodadas_totais: int, multiplicador_aleatorio: float) -> Dict[str, object]:
+        rodadas = max(0, int(rodadas_totais or 0))
+        multiplicador = max(0.7, min(1.3, float(multiplicador_aleatorio or 1.0)))
+        if not self._resultado_batalha_calculado:
+            dano = max(0.0, self._fnum(self.EstatisticasBatalha.get("dano"), 0.0))
+            energia = max(0.0, self._fnum(self.EstatisticasBatalha.get("energia_gasta"), 0.0))
+            abates = max(0, int(self.EstatisticasBatalha.get("abates", 0) or 0))
+            xp_base = 10.0 + dano + energia + (abates * 10.0) + (rodadas * 10.0)
+            xp_total = max(0, int(round(xp_base * multiplicador)))
+            self.EstatisticasBatalha["rodadas"] = rodadas
+            self.EstatisticasBatalha["xp_multiplicador"] = round(multiplicador, 4)
+            self.EstatisticasBatalha["xp_batalha"] = xp_total
+            self._resultado_batalha_calculado = True
+        return {
+            "uid": self.Uid,
+            "nome": self.Nome,
+            "lado": self.Lado,
+            "dano": round(float(self.EstatisticasBatalha.get("dano", 0.0) or 0.0), 4),
+            "abates": int(self.EstatisticasBatalha.get("abates", 0) or 0),
+            "energia_gasta": round(float(self.EstatisticasBatalha.get("energia_gasta", 0.0) or 0.0), 4),
+            "rodadas": int(self.EstatisticasBatalha.get("rodadas", 0) or 0),
+            "xp_multiplicador": round(float(self.EstatisticasBatalha.get("xp_multiplicador", 1.0) or 1.0), 4),
+            "xp_batalha": int(self.EstatisticasBatalha.get("xp_batalha", 0) or 0),
+        }
 
     def AlterarClima(self, clima: str) -> Dict[str, object]:
         return {"status": "ok", "clima": str(clima or "")}

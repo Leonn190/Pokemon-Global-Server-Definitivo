@@ -1,14 +1,40 @@
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
+from Codigo.ModulosBatalha.FinalizadorBatalha import FinalizadorBatalha
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
-from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo
+from Codigo.Telas.SubtelaFinalizacao import SubtelaFinalizacao
+from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo, solicitar_contexto_batalha_mundo
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 import pygame
 
 
 class CenaCombate:
+    def PrepararTransicaoAssincrona(self, JOGO) -> None:
+        contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
+        if isinstance(contexto.get("tiles"), list):
+            return
+        pokemon_colisao = contexto.get("pokemon_colisao") if isinstance(contexto.get("pokemon_colisao"), dict) else {}
+        server_ip = str(contexto.get("server_ip") or "")
+        client_id = str(contexto.get("client_id") or JOGO.INFO.get("UsuarioLogado", "anon"))
+        pokemon_id = int(pokemon_colisao.get("id", 0) or 0)
+        centro = contexto.get("centro") if isinstance(contexto.get("centro"), (list, tuple)) and len(contexto.get("centro")) == 2 else [40.0, 20.0]
+        if not server_ip or pokemon_id <= 0:
+            return
+        ret = solicitar_contexto_batalha_mundo(server_ip, client_id, pokemon_id, centro)
+        contexto_servidor = ret.get("contexto_batalha") if isinstance(ret, dict) and isinstance(ret.get("contexto_batalha"), dict) else {}
+        if not contexto_servidor:
+            return
+        JOGO.INFO["CombateContexto"] = {
+            **dict(contexto),
+            **dict(contexto_servidor),
+            "pokemon_colisao": dict(pokemon_colisao),
+            "time_jogador": dict(contexto.get("time_jogador") or {}),
+            "times_jogador": list(contexto.get("times_jogador") or []),
+            "pokemons_jogador": list(contexto.get("pokemons_jogador") or []),
+        }
+
     def Inicializar(self, JOGO):
         self.Abertura = AbrirIris
         self.Fechamento = FecharIris
@@ -30,6 +56,7 @@ class CenaCombate:
         self.Camera.definir_limites_mundo(largura, altura)
         self.Camera.atualizar(0.0)
         self.ControladorBatalha = ControladorBatalha(contexto)
+        self.FinalizadorBatalha = FinalizadorBatalha(self.ControladorBatalha)
         self.ElementosHudBatalha = ElementosHudBatalha(controlador_batalha=self.ControladorBatalha, camera=self.Camera, ao_fugir=lambda: self._fugir_combate(JOGO))
 
     def _fugir_combate(self, jogo) -> None:
@@ -44,6 +71,10 @@ class CenaCombate:
     def atualizar_cena(self, JOGO, EVENTOS, dt):
         if self.TelaAtual == "Config":
             return
+        if self.FinalizadorBatalha.pronto() and JOGO.GerenciadorSubtelas.obter_por_tipo(SubtelaFinalizacao) is None:
+            subtela_final = self.FinalizadorBatalha.criar_subtela(JOGO)
+            if subtela_final is not None:
+                JOGO.GerenciadorSubtelas.abrir(subtela_final)
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
         opcoes_modal = JOGO.GerenciadorSubtelas.obter_por_tipo(SubtelaOpcoes)
         if opcoes_modal is None and self.TelaAtual != "Config":

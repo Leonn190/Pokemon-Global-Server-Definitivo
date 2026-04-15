@@ -43,18 +43,18 @@ class ControladorMundo:
     def montar_player_local(self, dados_player):
         return self.Player.montar_player_local(dados_player)
 
-    def conectar(self, link: str, client_id: str) -> None:
+    def conectar(self, link: str, client_id: str, bootstrap_inicial=None) -> None:
         self.Leitor.conectar_servidor(link)
         self.Leitor.iniciar()
         self.Pacotes.configurar_conexao(link, client_id)
-        self._bootstrap_objetos_remotos_iniciais(link, client_id)
+        self._bootstrap_objetos_remotos_iniciais(link, client_id, resposta_precarregada=bootstrap_inicial)
         self.Pacotes.iniciar()
 
-    def _bootstrap_objetos_remotos_iniciais(self, link, client_id):
+    def _bootstrap_objetos_remotos_iniciais(self, link, client_id, resposta_precarregada=None):
         """Bootstrap one-shot usando o mesmo contrato de pacotes do loop contínuo."""
         raio_chunks = max(1, int(getattr(self.Leitor, "RaioChunks", getattr(self.Leitor, "raio_chunks", 4)) or 4))
         pos_ref = self.Leitor.posicao_referencia()
-        resposta = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=pos_ref, raio_chunks=raio_chunks)
+        resposta = resposta_precarregada if isinstance(resposta_precarregada, dict) else receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=pos_ref, raio_chunks=raio_chunks)
         if not isinstance(resposta, dict):
             return
         if isinstance(resposta.get("chunks"), list):

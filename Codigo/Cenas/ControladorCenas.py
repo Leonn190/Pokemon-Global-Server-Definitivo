@@ -5,6 +5,7 @@ from Codigo.Cenas.CenaCarregamento import CenaCarregamento
 from Codigo.Cenas.CenaLogin import CenaLogin
 import pygame
 import time
+import threading
 
 from Codigo.ModulosGerais.Sonoridades import SISTEMA_MUSICAS
 from Codigo.ModulosGerais.EfeitosTela import aplicar_claridade, Escurecer
@@ -38,6 +39,8 @@ class ControladorCenas:
         self.Rodando = True
         self.Saindo = False
         self._encerrado = False
+        self._preparacao_alvo = None
+        self._preparacao_thread = None
 
         self.Discord = DiscordPresence()
         self.GerenciadorSubtelas = GerenciadorSubtelas()
@@ -108,10 +111,43 @@ class ControladorCenas:
         cena_anterior = self.Cena
         self.Cena = self.Cenas[alvo]
         self.CenaAlvo = None
+        self._preparacao_alvo = None
+        self._preparacao_thread = None
         if not (alvo == "Menu" and cena_anterior is not None and cena_anterior.ID == "Login"):
             self.Escuro = 100
         self.Cena.Inicializar(self)
         self._atualizar_discord_presenca()
+
+    def _garantir_preparacao_transicao(self):
+        alvo = self.CenaAlvo
+        if alvo is None:
+            self._preparacao_alvo = None
+            self._preparacao_thread = None
+            return
+        if self._preparacao_alvo == alvo:
+            return
+        self._preparacao_alvo = alvo
+        self._preparacao_thread = None
+        cena_alvo = self.Cenas.get(str(alvo))
+        preparar = getattr(cena_alvo, "PrepararTransicaoAssincrona", None) if cena_alvo is not None else None
+        if not callable(preparar):
+            return
+
+        def _worker():
+            try:
+                preparar(self)
+            except Exception as exc:
+                self.INFO["UltimoErroPreparacaoCena"] = str(exc)
+
+        self._preparacao_thread = threading.Thread(target=_worker, name=f"PreparacaoCena{alvo}", daemon=True)
+        self._preparacao_thread.start()
+
+    def _preparacao_transicao_concluida(self) -> bool:
+        if self.CenaAlvo is None:
+            return False
+        if self._preparacao_alvo != self.CenaAlvo:
+            return False
+        return self._preparacao_thread is None or (not self._preparacao_thread.is_alive())
 
     def Rodar(self):
 
@@ -123,7 +159,9 @@ class ControladorCenas:
                 if e.type == pygame.QUIT:
                     self.SolicitarSair()
 
-            if self.CenaAlvo is not None and self.Escuro == 100:
+            if self.CenaAlvo is not None:
+                self._garantir_preparacao_transicao()
+            if self.CenaAlvo is not None and self.Escuro == 100 and self._preparacao_transicao_concluida():
                 self.DefinirCena()
 
             eventos_cena = self.GerenciadorSubtelas.filtrar_eventos_fundo(EVENTOS)

@@ -14,9 +14,12 @@ from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
     buscar_mensagens_terminal,
+    enviar_diffs_mundo,
     enviar_mensagem_terminal,
     finalizar_interacao_npc_mundo,
     iniciar_interacao_npc_mundo,
+    notificar_pokemon_derrotado_batalha_mundo,
+    receber_pacotes_tick_mundo,
     solicitar_contexto_batalha_mundo,
 )
 from Codigo.Telas.Inventario.SubtelaInventario import SubtelaInventario
@@ -30,6 +33,49 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mund
 
 
 class CenaMundo:
+    def PrepararTransicaoAssincrona(self, JOGO) -> None:
+        server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        regras_mundo = {}
+        if link:
+            regras_mundo = ModuladorRegras().coletar_regras(link) or {}
+            self._aplicar_sincronizacao_pos_batalha_pendente(JOGO, link)
+        dados = JOGO.INFO.get("PlayerDadosServer") if isinstance(JOGO.INFO.get("PlayerDadosServer"), dict) else {}
+        posicao = dados.get("posicao") if isinstance(dados.get("posicao"), (list, tuple)) and len(dados.get("posicao")) == 2 else [0.0, 0.0]
+        client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+        bootstrap = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=posicao, raio_chunks=4) if link else None
+        JOGO.INFO["MundoPreparadoTransicao"] = {
+            "regras_mundo": dict(regras_mundo or {}),
+            "bootstrap": bootstrap if isinstance(bootstrap, dict) else None,
+        }
+
+    def _aplicar_sincronizacao_pos_batalha_pendente(self, jogo, link: str | None) -> None:
+        pendente = jogo.INFO.get("SincronizacaoPosBatalhaMundo") if isinstance(jogo.INFO.get("SincronizacaoPosBatalhaMundo"), dict) else None
+        if not isinstance(pendente, dict) or not link:
+            return
+        player_dados = jogo.INFO.get("PlayerDadosServer") if isinstance(jogo.INFO.get("PlayerDadosServer"), dict) else {}
+        inventario = pendente.get("inventario") if isinstance(pendente.get("inventario"), dict) else player_dados.get("inventario")
+        player_id = int(player_dados.get("id", 0) or 0)
+        client_id = str(jogo.INFO.get("UsuarioLogado", "anon"))
+        if player_id > 0 and isinstance(inventario, dict):
+            enviar_diffs_mundo(
+                link,
+                client_id,
+                [
+                    {
+                        "tipo": "update",
+                        "objeto_id": int(player_id),
+                        "payload": {
+                            "inventario": deepcopy(inventario),
+                        },
+                    }
+                ],
+            )
+        pokemon_mundo_id = int(pendente.get("pokemon_mundo_id", 0) or 0)
+        if pokemon_mundo_id > 0:
+            notificar_pokemon_derrotado_batalha_mundo(link, client_id, pokemon_mundo_id)
+        jogo.INFO.pop("SincronizacaoPosBatalhaMundo", None)
+
     def _snapshot_player_atual(self, jogo) -> dict | None:
         player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
         if player is None:
@@ -95,7 +141,12 @@ class CenaMundo:
     def _montar_mundo(self, JOGO):
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
-        regras_mundo = self.ModuladorRegras.coletar_regras(link) if link else {}
+        preparado = JOGO.INFO.pop("MundoPreparadoTransicao", None)
+        regras_mundo = preparado.get("regras_mundo") if isinstance(preparado, dict) and isinstance(preparado.get("regras_mundo"), dict) else {}
+        if not regras_mundo:
+            regras_mundo = self.ModuladorRegras.coletar_regras(link) if link else {}
+        if link:
+            self._aplicar_sincronizacao_pos_batalha_pendente(JOGO, link)
         self.ModuladorRegras.definir_regras(regras_mundo or {})
         JOGO.INFO["RegrasMundo"] = dict(regras_mundo or {})
 
@@ -121,7 +172,8 @@ class CenaMundo:
 
         if link:
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
-            self.ControladorMundo.conectar(link, client_id)
+            bootstrap = preparado.get("bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("bootstrap"), dict) else None
+            self.ControladorMundo.conectar(link, client_id, bootstrap_inicial=bootstrap)
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
@@ -169,34 +221,36 @@ class CenaMundo:
         if not player_bloqueado and int(pygame.time.get_ticks()) >= int(self._imune_combate_ate_ms or 0):
             colisao_pokemon = self.ControladorMundo.Player.consumir_colisao_pokemon()
             if isinstance(colisao_pokemon, dict):
+                inventario = getattr(player, "Inventario", None)
+                times = deepcopy(list(getattr(inventario, "TimesPokemon", []) or [])) if inventario is not None else []
+                pokemons_jogador = deepcopy(list(getattr(inventario, "Pokemons", []) or [])) if inventario is not None else []
+                indice_time, time_escolhido = InicializadorBatalha.escolher_time_confronto_com_indice(times, pokemons_jogador, slots_por_time=6)
+                if not InicializadorBatalha.time_tem_pokemon_vivo(time_escolhido):
+                    return EVENTOS
                 server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
                 link = server.get("ip")
                 client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
-                centro = tuple(player.Posicao) if player is not None else tuple(colisao_pokemon.get("posicao", [0.0, 0.0]))
-                ret = solicitar_contexto_batalha_mundo(link, client_id, int(colisao_pokemon.get("id", 0) or 0), centro) if link else {"status": "erro"}
-                contexto = ret.get("contexto_batalha") if isinstance(ret, dict) and isinstance(ret.get("contexto_batalha"), dict) else None
-                if isinstance(contexto, dict):
-                    contexto.setdefault("batalha", dict(carregar_regras_cliente_mundo().get("batalha") or {}))
-                    contexto["pokemon_colisao"] = dict(colisao_pokemon)
-                    inventario = getattr(player, "Inventario", None)
-                    times = deepcopy(list(getattr(inventario, "TimesPokemon", []) or [])) if inventario is not None else []
-                    pokemons_jogador = deepcopy(list(getattr(inventario, "Pokemons", []) or [])) if inventario is not None else []
-                    contexto["times_jogador"] = times
-                    contexto["pokemons_jogador"] = pokemons_jogador
-                    contexto["time_jogador"] = deepcopy(times[0]) if times else {"Nome": "Time 1", "Slots": []}
-                    contexto["tipo"] = "confronto"
-                    contexto["origem"] = [0.0, 0.0]
-                    contexto["centro"] = [40.0, 20.0]
-                    contexto["largura"] = 80
-                    contexto["altura"] = 40
-                    contexto["arena_largura"] = 40
-                    contexto["arena_altura"] = 20
-                    contexto["tile_bioma"] = tile_mundo_atual(self)
-                    contexto["server_ip"] = str(link or "")
-                    contexto["client_id"] = client_id
-                    JOGO.INFO["CombateContexto"] = contexto
-                    JOGO.CenaAlvo = "Combate"
-                    return
+                contexto = {
+                    "batalha": dict(carregar_regras_cliente_mundo().get("batalha") or {}),
+                    "pokemon_colisao": dict(colisao_pokemon),
+                    "times_jogador": times,
+                    "pokemons_jogador": pokemons_jogador,
+                    "time_jogador": deepcopy(time_escolhido),
+                    "time_jogador_indice": int(indice_time),
+                    "tipo": "confronto",
+                    "origem": [0.0, 0.0],
+                    "centro": [40.0, 20.0],
+                    "largura": 80,
+                    "altura": 40,
+                    "arena_largura": 40,
+                    "arena_altura": 20,
+                    "tile_bioma": tile_mundo_atual(self),
+                    "server_ip": str(link or ""),
+                    "client_id": client_id,
+                }
+                JOGO.INFO["CombateContexto"] = contexto
+                JOGO.CenaAlvo = "Combate"
+                return EVENTOS
 
         if (not player_bloqueado) and player is not None and getattr(player, "Controle", None) is not None:
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
@@ -351,6 +405,7 @@ class CenaMundo:
         npc_ctx = dict(contexto_dialogo or {})
 
         def _comecar_com_time(time_escolhido: dict):
+            indice_time = next((i for i, time_existente in enumerate(times_validos) if time_existente == time_escolhido), 0)
             jogo.INFO["CombateContexto"] = {
                 **contexto_base,
                 "batalha": dict(carregar_regras_cliente_mundo().get("batalha") or {}),
@@ -358,6 +413,7 @@ class CenaMundo:
                 "npc_contexto": npc_ctx,
                 "times_jogador": deepcopy(list(times_validos)),
                 "time_jogador": deepcopy(dict(time_escolhido or {})),
+                "time_jogador_indice": int(indice_time),
                 "tile_bioma": tile_mundo_atual(self),
                 "server_ip": str((jogo.INFO.get("ServerSelecionado") or {}).get("ip") or ""),
                 "client_id": str(jogo.INFO.get("UsuarioLogado", "anon")),

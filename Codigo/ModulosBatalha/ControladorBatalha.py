@@ -301,6 +301,19 @@ class ControladorBatalha:
             return
         self._aplicar_estado_servidor(resultado, log)
 
+    def aplicar_snapshot_replay(self, snapshot: Dict[str, object] | None = None) -> None:
+        if not isinstance(snapshot, dict) or not snapshot:
+            return
+        self._aplicar_estado_servidor(snapshot, None)
+
+    def batalha_encerrada(self) -> bool:
+        resultado = self.resultado_batalha_atual()
+        return bool(resultado.get("encerrada", False))
+
+    def resultado_batalha_atual(self) -> Dict[str, object]:
+        resultado = self.SistemaBatalha.ResultadoRecebido if isinstance(getattr(self.SistemaBatalha, "ResultadoRecebido", None), dict) else {}
+        return dict(resultado or {})
+
     def _sincronizar_respostas_servidor(self) -> None:
         resposta_inicio = self.Contexto.get("batalha_servidor_inicio")
         if isinstance(resposta_inicio, dict) and resposta_inicio is not self._ultima_resposta_inicio_servidor:

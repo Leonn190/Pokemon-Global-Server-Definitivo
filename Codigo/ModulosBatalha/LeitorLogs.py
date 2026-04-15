@@ -83,6 +83,9 @@ class LeitorLogs:
         if not regras_batalha and hasattr(self._controlador, "obter_regras_batalha"):
             regras_batalha = dict(self._controlador.obter_regras_batalha() or {})
         self._tick_segundos = max(0.01, self._numero(regras_batalha.get("tick_segundos"), 0.2))
+        snapshot_inicial = (log or {}).get("snapshot_inicial") if isinstance((log or {}).get("snapshot_inicial"), dict) else {}
+        if snapshot_inicial and hasattr(self._controlador, "aplicar_snapshot_replay"):
+            self._controlador.aplicar_snapshot_replay(snapshot_inicial)
         self._historico = historico
         self._total_eventos = self._contar_eventos_historico(historico)
         self._tick_final = max([int(item.get("tick", 0) or 0) for item in historico], default=0)

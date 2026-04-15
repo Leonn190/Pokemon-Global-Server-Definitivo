@@ -408,6 +408,16 @@ class LeitorJogadas:
             fase = "passiva" if motivo.casefold() == "fimturno" else "segmentacao"
             return (fase, publico)
 
+        if tipo == "batalha_encerrada":
+            publico = {
+                "tipo": "batalha_encerrada",
+                "vencedor_lado": str(evento.get("vencedor_lado") or ""),
+                "perdedor_lado": str(evento.get("perdedor_lado") or ""),
+            }
+            if isinstance(detalhe, dict):
+                publico["rodadas_totais"] = int(detalhe.get("rodadas_totais", 0) or 0)
+            return ("finalizacao", {k: v for k, v in publico.items() if v not in (None, "", 0)})
+
         if tipo == "jogada_descartada":
             publico = {
                 "tipo": "jogada_descartada",
@@ -476,6 +486,21 @@ class LeitorJogadas:
             if len(bloco) > 1:
                 historico.append(bloco)
         return historico
+
+    def _registrar_encerramento_batalha(self, sistema: SistemaBatalha, log: Dict[str, object], tick: int) -> Dict[str, object]:
+        estado = sistema.detectar_encerramento()
+        if not bool(estado.get("encerrada", False)):
+            return {}
+        resumo = sistema.finalizar_batalha(rodadas_totais=int(sistema.TurnoAtual or 1))
+        self._log_evento(
+            log,
+            tick,
+            "batalha_encerrada",
+            vencedor_lado=str(estado.get("vencedor") or ""),
+            perdedor_lado=str(estado.get("perdedor") or ""),
+            detalhe=dict(resumo or {}),
+        )
+        return dict(resumo or {})
 
     @staticmethod
     def _lista_pokemon_com_uid(lista: object) -> bool:
@@ -552,6 +577,7 @@ class LeitorJogadas:
         snapshot_inicial: Dict[str, object],
         snapshot_final: Dict[str, object],
     ) -> Dict[str, object]:
+        resumo_final = dict(getattr(sistema, "ResumoFinal", {}) or {})
         return {
             "batalha_id": str(snapshot_inicial.get("batalha_id") or sistema.BatalhaId),
             "tipo": str(snapshot_inicial.get("tipo") or sistema.Tipo),
@@ -559,9 +585,15 @@ class LeitorJogadas:
             "clima": str(snapshot_inicial.get("clima") or sistema.ClimaAtual or ""),
             "arena": dict(snapshot_inicial.get("arena") or sistema.ArenaAtual or {}),
             "regras_batalha": sistema.regras_batalha_publicas() if hasattr(sistema, "regras_batalha_publicas") else {},
+            "snapshot_inicial": dict(snapshot_inicial or {}),
             "ordem_logica": [self._jogada_publica_ordem(sistema, item, tick_base) for item in ([*list(descartadas or []), *list(ordenadas or [])]) if isinstance(item, dict)],
             "historico": self._construir_historico_publico(sistema, log, tick_base),
             "resultado": self._resultado_publico_diff(sistema, snapshot_inicial, snapshot_final),
+            "encerrada": bool(getattr(sistema, "Encerrada", False)),
+            "vencedor": str(getattr(sistema, "Vencedor", "") or ""),
+            "perdedor": str(getattr(sistema, "Perdedor", "") or ""),
+            "rodadas_totais": int(getattr(sistema, "RodadasTotais", 0) or 0),
+            "resumo_final": resumo_final if resumo_final else {},
         }
 
     def _descricao_ataque(self, ataque: Dict[str, object]) -> str:
@@ -1397,6 +1429,7 @@ class LeitorJogadas:
         acertos_alvo: List[Dict[str, object]] = []
         tick = int(sistema.TickGlobal)
         limite = int(max([item.get("end_tick_estimada", 0) for item in ordenadas], default=0) + 80)
+        batalha_encerrada = False
 
         while tick < limite and (pendentes or ativos_movimento or objetos_ativos or acertos_alvo):
             tick += 1
@@ -1523,11 +1556,19 @@ class LeitorJogadas:
                     self._log_evento(log, tick, str(evento.get("tipo") or "evento"), pokemon_id=pokemon.Uid, detalhe=dict(evento))
                 pokemon.Verifica()
 
+            if bool(sistema.detectar_encerramento().get("encerrada", False)):
+                self._registrar_encerramento_batalha(sistema, log, tick)
+                batalha_encerrada = True
+                break
+
         tick_final_turno = int(log.get("tick_final", sistema.TickGlobal))
-        for pokemon in sistema.listar_pokemons():
-            for evento in pokemon.FimTurno(sistema=sistema, tick=tick_final_turno + 1):
-                self._log_evento(log, tick_final_turno + 1, "fim_turno", pokemon_id=pokemon.Uid, detalhe=evento)
-            pokemon.Verifica()
+        if not batalha_encerrada:
+            for pokemon in sistema.listar_pokemons():
+                for evento in pokemon.FimTurno(sistema=sistema, tick=tick_final_turno + 1):
+                    self._log_evento(log, tick_final_turno + 1, "fim_turno", pokemon_id=pokemon.Uid, detalhe=evento)
+                pokemon.Verifica()
+            if bool(sistema.detectar_encerramento().get("encerrada", False)):
+                self._registrar_encerramento_batalha(sistema, log, tick_final_turno + 1)
 
         snapshot_final = sistema.snapshot(incluir_metadados=False)
         log["snapshot_final"] = dict(snapshot_final)

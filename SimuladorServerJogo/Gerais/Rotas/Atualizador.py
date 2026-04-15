@@ -414,6 +414,23 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                 )
                 resposta["client_id"] = client_id
                 return json.dumps(resposta, ensure_ascii=False)
+            if categoria == "pokemon_derrotado_batalha":
+                pokemon_id = int(payload.get("pokemon_id", 0) or 0)
+                if pokemon_id > 0:
+                    obj_derrotado = BANCO_DADOS.remover_objeto(pokemon_id)
+                    if obj_derrotado is not None:
+                        registrar_diff(
+                            "despawn",
+                            payload={"id": int(obj_derrotado.Id), "motivo": "batalha_derrotado"},
+                            escopo={"centro": [float(obj_derrotado.posicao[0]), float(obj_derrotado.posicao[1])], "raio": 120.0},
+                            objeto_id=int(obj_derrotado.Id),
+                            autor="server",
+                            categoria="pokemon",
+                        )
+                        aplicados += 1
+                        return _ok("Pokemon derrotado removido", client_id=client_id, aplicados=aplicados, ignorados=ignorados)
+                ignorados += 1
+                return _erro("Pokemon derrotado nao encontrado")
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):
                     aplicados += 1

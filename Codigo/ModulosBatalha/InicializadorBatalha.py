@@ -40,35 +40,57 @@ class InicializadorBatalha:
         return len([p for p in InicializadorBatalha._normalizar_time(time).get("Slots", []) if isinstance(p, dict)])
 
     @staticmethod
+    def _estado_pokemon(pokemon: Dict[str, object] | None) -> Dict[str, object]:
+        if not isinstance(pokemon, dict):
+            return {}
+        return pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+
+    @classmethod
+    def pokemon_tem_vida(cls, pokemon: Dict[str, object] | None) -> bool:
+        estado = cls._estado_pokemon(pokemon)
+        for chave in ("VidaAtual", "vida_atual", "vidaatual"):
+            try:
+                if float(estado.get(chave, 0) or 0) > 0.0:
+                    return True
+            except (TypeError, ValueError):
+                continue
+        return False
+
+    @classmethod
+    def time_tem_pokemon_vivo(cls, time: object) -> bool:
+        slots = cls._normalizar_time(time).get("Slots", [])
+        return any(cls.pokemon_tem_vida(pokemon) for pokemon in slots if isinstance(pokemon, dict))
+
+    @staticmethod
     def times_completos(times: List[object], slots_por_time: int = 6) -> List[Dict[str, object]]:
         alvo = max(1, int(slots_por_time))
         completos: List[Dict[str, object]] = []
         for time in list(times or []):
             normalizado = InicializadorBatalha._normalizar_time(time, slots_por_time=alvo)
-            if len(normalizado.get("Slots", [])) == alvo:
+            if len(normalizado.get("Slots", [])) == alvo and InicializadorBatalha.time_tem_pokemon_vivo(normalizado):
                 completos.append(normalizado)
         return completos
 
     @staticmethod
-    def escolher_time_confronto(times: List[object], pokemons_jogador: List[object], slots_por_time: int = 6) -> Dict[str, object]:
+    def escolher_time_confronto_com_indice(times: List[object], pokemons_jogador: List[object], slots_por_time: int = 6) -> Tuple[int, Dict[str, object]]:
         alvo = max(1, int(slots_por_time))
         norm = [InicializadorBatalha._normalizar_time(t, slots_por_time=alvo) for t in list(times or [])]
-        if norm and len(norm[0].get("Slots", [])) == alvo:
-            return norm[0]
+        completos_vivos = [(indice, time) for indice, time in enumerate(norm) if len(time.get("Slots", [])) == alvo and InicializadorBatalha.time_tem_pokemon_vivo(time)]
+        if completos_vivos:
+            return completos_vivos[0]
 
-        if norm:
-            idx_mais_completo = max(range(len(norm)), key=lambda i: len(norm[i].get("Slots", [])))
-            mais_completo = norm[idx_mais_completo]
-            if len(mais_completo.get("Slots", [])) == alvo:
-                return mais_completo
+        vivos = [(indice, time) for indice, time in enumerate(norm) if InicializadorBatalha.time_tem_pokemon_vivo(time)]
+        if vivos:
+            indice, escolhido = max(vivos, key=lambda item: len(item[1].get("Slots", [])))
+            return indice, escolhido
 
-        if norm:
-            idx_mais_completo = max(range(len(norm)), key=lambda i: len(norm[i].get("Slots", [])))
-            if len(norm[idx_mais_completo].get("Slots", [])) > 0:
-                return norm[idx_mais_completo]
+        lista_pokemons = [deepcopy(p) for p in list(pokemons_jogador or []) if isinstance(p, dict) and InicializadorBatalha.pokemon_tem_vida(p)]
+        return -1, {"Nome": "Time improvisado", "Slots": lista_pokemons[:alvo]}
 
-        lista_pokemons = [deepcopy(p) for p in list(pokemons_jogador or []) if isinstance(p, dict)]
-        return {"Nome": "Time improvisado", "Slots": lista_pokemons[:alvo]}
+    @staticmethod
+    def escolher_time_confronto(times: List[object], pokemons_jogador: List[object], slots_por_time: int = 6) -> Dict[str, object]:
+        _, escolhido = InicializadorBatalha.escolher_time_confronto_com_indice(times, pokemons_jogador, slots_por_time=slots_por_time)
+        return escolhido
 
     def inicializar(self) -> Dict[str, object]:
         tipo = str(self.Contexto.get("tipo") or "confronto").strip().lower()
@@ -180,15 +202,22 @@ class InicializadorBatalha:
                 continue
             bruto = deepcopy(pokemon)
             estado = bruto.get("estado") if isinstance(bruto.get("estado"), dict) else None
+            uid_original = str(bruto.get("uid") or bruto.get("id") or bruto.get("ID") or "")
             uid = cls._gerar_uid_batalha()
             while uid in usados:
                 uid = cls._gerar_uid_batalha()
             usados.add(uid)
             bruto["uid"] = uid
             bruto["origem_batalha"] = origem_norm
+            if uid_original:
+                bruto["uid_original"] = uid_original
+            bruto["indice_origem_batalha"] = int(indice - 1)
             if isinstance(estado, dict):
                 estado["uid"] = uid
                 estado["origem_batalha"] = origem_norm
+                if uid_original:
+                    estado["uid_original"] = uid_original
+                estado["indice_origem_batalha"] = int(indice - 1)
             saida.append(bruto)
         return saida
 
@@ -206,10 +235,6 @@ class InicializadorBatalha:
             if self._int(row.get("Estagio"), 1) <= int(estagio_max):
                 out.append(row)
         return out
-
-    @staticmethod
-    def _estado_pokemon(pokemon: Dict[str, object]) -> Dict[str, object]:
-        return pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
 
     def _especie_pokemon(self, pokemon: Dict[str, object]) -> str:
         estado = self._estado_pokemon(pokemon)

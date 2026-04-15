@@ -248,6 +248,50 @@ class Texto:
         tela.blit(surf, rect)
 
 
+class NumeroVariavel(Texto):
+    def __init__(self, valor_final: int | float = 0, *, prefixo: str = "", sufixo: str = "", duracao: float = 0.9, pos=(0, 0), style=None):
+        self._prefixo = str(prefixo or "")
+        self._sufixo = str(sufixo or "")
+        self._duracao = max(0.01, float(duracao or 0.9))
+        self._tempo = 0.0
+        self._valor_inicial = 0.0
+        self._valor_final = float(valor_final or 0.0)
+        self._finalizado = False
+        super().__init__(self._formatar(self._valor_inicial), pos=pos, style=style)
+
+    def _formatar(self, valor: float) -> str:
+        numero = int(round(float(valor or 0.0)))
+        return f"{self._prefixo}{numero}{self._sufixo}"
+
+    @property
+    def finalizado(self) -> bool:
+        return bool(self._finalizado)
+
+    @property
+    def valor_final(self) -> int:
+        return int(round(self._valor_final))
+
+    def reiniciar(self, valor_final: int | float | None = None, *, valor_inicial: int | float = 0, duracao: float | None = None) -> None:
+        if valor_final is not None:
+            self._valor_final = float(valor_final or 0.0)
+        self._valor_inicial = float(valor_inicial or 0.0)
+        if duracao is not None:
+            self._duracao = max(0.01, float(duracao or self._duracao))
+        self._tempo = 0.0
+        self._finalizado = False
+        self.set_text(self._formatar(self._valor_inicial))
+
+    def atualizar(self, dt: float) -> None:
+        if self._finalizado:
+            return
+        self._tempo = min(self._duracao, float(self._tempo) + max(0.0, float(dt)))
+        t = 1.0 if self._duracao <= 0.0 else min(1.0, self._tempo / self._duracao)
+        valor = self._valor_inicial + ((self._valor_final - self._valor_inicial) * t)
+        self.set_text(self._formatar(valor))
+        if t >= 1.0:
+            self._finalizado = True
+
+
 class SetorTexto:
     _ALINHAMENTOS = {
         "left": "topleft",

@@ -24,7 +24,9 @@ class GerenciadorBatalhas:
         chave = str(batalha_id or self._batalha_ativa_por_cliente.get(str(client_id), ""))
         sistema = self._batalhas_por_id.get(chave)
         if sistema is None:
-            return {"status": "erro", "mensagem": "Batalha não encontrada"}
+            return {"status": "erro", "mensagem": "Batalha nao encontrada"}
+        if bool(getattr(sistema, "Encerrada", False)):
+            return {"status": "finalizada", "mensagem": "Batalha ja encerrada", "batalha": sistema.snapshot()}
         return self._leitor.executar_turno(sistema, client_id, jogadas=jogadas)
 
 

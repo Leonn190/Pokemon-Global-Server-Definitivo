@@ -43,6 +43,11 @@ class SistemaBatalha:
         self.JogadasPendentes: Dict[str, List[Dict[str, object]]] = {}
         self.LogsTurnos: List[Dict[str, object]] = []
         self.UltimoLogTurno: Dict[str, object] = {}
+        self.Encerrada = False
+        self.Vencedor: str = ""
+        self.Perdedor: str = ""
+        self.RodadasTotais = 0
+        self.ResumoFinal: Dict[str, object] = {}
 
         self.BibliotecaAtaques = self._carregar_ataques()
         self.BibliotecaEfeitos = self._carregar_efeitos()
@@ -251,6 +256,10 @@ class SistemaBatalha:
     def listar_pokemons(self) -> List[PokemonBatalha]:
         return list(self.PokemonsPorId.values())
 
+    def listar_todos_lado(self, lado: str) -> List[PokemonBatalha]:
+        dados = self.Lados.get(str(lado), {})
+        return [self.PokemonsPorId[uid] for uid in list(dados.get("todos") or []) if uid in self.PokemonsPorId]
+
     def listar_ativos(self, lado: str | None = None) -> List[PokemonBatalha]:
         if lado is not None:
             return [self.PokemonsPorId[uid] for uid in list(self.Lados.get(str(lado), {}).get("ativos") or []) if uid in self.PokemonsPorId]
@@ -327,13 +336,63 @@ class SistemaBatalha:
             reserva.Posicao = posicoes[indice]
         return {"status": "ok", "saiu": executor.Uid, "entrou": reserva.Uid, "slot": indice}
 
+    def lado_tem_pokemon_vivo(self, lado: str) -> bool:
+        for pokemon in self.listar_todos_lado(lado):
+            if float(getattr(pokemon, "VidaAtual", 0.0) or 0.0) > 0.0 and not bool(getattr(pokemon, "ForaDeCombate", False)):
+                return True
+        return False
+
+    def detectar_encerramento(self) -> Dict[str, object]:
+        vivos_jogador = self.lado_tem_pokemon_vivo("jogador")
+        vivos_inimigo = self.lado_tem_pokemon_vivo("inimigo")
+        encerrada = (not vivos_jogador) or (not vivos_inimigo)
+        vencedor = ""
+        perdedor = ""
+        if encerrada:
+            if vivos_jogador and not vivos_inimigo:
+                vencedor, perdedor = "jogador", "inimigo"
+            elif vivos_inimigo and not vivos_jogador:
+                vencedor, perdedor = "inimigo", "jogador"
+            else:
+                perdedor = "ambos"
+        return {
+            "encerrada": bool(encerrada),
+            "vencedor": vencedor,
+            "perdedor": perdedor,
+        }
+
+    def finalizar_batalha(self, *, rodadas_totais: int) -> Dict[str, object]:
+        estado = self.detectar_encerramento()
+        if not bool(estado.get("encerrada", False)):
+            return {}
+        if self.Encerrada:
+            return dict(self.ResumoFinal or {})
+
+        self.Encerrada = True
+        self.Vencedor = str(estado.get("vencedor") or "")
+        self.Perdedor = str(estado.get("perdedor") or "")
+        self.RodadasTotais = max(1, int(rodadas_totais or self.TurnoAtual or 1))
+        resumo = {
+            "encerrada": True,
+            "vencedor": self.Vencedor,
+            "perdedor": self.Perdedor,
+            "rodadas_totais": int(self.RodadasTotais),
+            "pokemons": [],
+        }
+        for pokemon in self.listar_pokemons():
+            multiplicador = self.Rng.uniform(0.7, 1.3)
+            resumo["pokemons"].append(pokemon.finalizar_resultado_batalha(self.RodadasTotais, multiplicador))
+        self.ResumoFinal = resumo
+        return dict(resumo)
+
     def avancar_turno(self, ultimo_log: Dict[str, object] | None = None, *, tick_global_final: int | None = None) -> None:
         if isinstance(ultimo_log, dict):
             self.UltimoLogTurno = dict(ultimo_log)
             self.LogsTurnos.append(dict(ultimo_log))
         if tick_global_final is not None:
             self.TickGlobal = max(int(self.TickGlobal), int(tick_global_final))
-        self.TurnoAtual += 1
+        if not self.Encerrada:
+            self.TurnoAtual += 1
         self.JogadasPendentes.clear()
 
     def estado_lado(self, lado: str) -> Dict[str, object]:
@@ -359,7 +418,13 @@ class SistemaBatalha:
             "regras_batalha": self.regras_batalha_publicas(),
             "jogador": self.estado_lado("jogador"),
             "inimigo": self.estado_lado("inimigo"),
+            "encerrada": bool(self.Encerrada),
+            "vencedor": str(self.Vencedor or ""),
+            "perdedor": str(self.Perdedor or ""),
+            "rodadas_totais": int(self.RodadasTotais or 0),
         }
+        if self.Encerrada and isinstance(self.ResumoFinal, dict):
+            snapshot["resumo_final"] = dict(self.ResumoFinal)
         if incluir_metadados:
             snapshot["historico_tamanho"] = len(self.HistoricoJogadas)
             snapshot["ultimo_log_turno"] = dict(self.UltimoLogTurno or {})

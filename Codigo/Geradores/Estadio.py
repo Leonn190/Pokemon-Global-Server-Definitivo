@@ -9,6 +9,7 @@ class GeradorEstadio:
     _cache: dict[tuple[str, int], pygame.Surface] = {}
     _CASCO_ESCALA_X = 0.90
     _CASCO_ESCALA_Y = 0.60
+    _CASCO_DESLOCAMENTO_Y = -0.02
 
     @classmethod
     def _cor_tipo(cls, tipo: str) -> tuple[int, int, int]:
@@ -55,7 +56,7 @@ class GeradorEstadio:
         sombra = pygame.Rect(0, 0, int(w * 0.96), int(h * 0.65)); sombra.center = (centro[0], int(centro[1] + h * 0.12))
         pygame.draw.ellipse(surf, (0, 0, 0, 70), sombra)
 
-        casco = pygame.Rect(0, 0, int(w * cls._CASCO_ESCALA_X), int(h * cls._CASCO_ESCALA_Y)); casco.center = (centro[0], int(centro[1] - h * 0.02))
+        casco = pygame.Rect(0, 0, int(w * cls._CASCO_ESCALA_X), int(h * cls._CASCO_ESCALA_Y)); casco.center = (centro[0], int(centro[1] + h * cls._CASCO_DESLOCAMENTO_Y))
         pygame.draw.ellipse(surf, (60, 60, 70), casco, width=max(3, int(min(w, h) * 0.06)))
 
         anel = casco.inflate(-int(w * 0.18), -int(h * 0.16))
@@ -79,6 +80,19 @@ class GeradorEstadio:
         rx = max(2.0, float(raio_x) * cls._CASCO_ESCALA_X)
         ry = max(2.0, float(raio_y) * cls._CASCO_ESCALA_Y)
         return (rx, ry)
+
+    @classmethod
+    def deslocamento_casco_colisao(cls, raio_y: float) -> tuple[float, float]:
+        """Deslocamento do centro do casco externo em tiles."""
+        ry = max(2.0, float(raio_y))
+        return (0.0, (2.0 * ry) * cls._CASCO_DESLOCAMENTO_Y)
+
+    @classmethod
+    def offset_porta_externa(cls, raio_y: float) -> tuple[float, float]:
+        """Offset da porta externa real em relaÃ§Ã£o ao centro do estÃ¡dio."""
+        ry = max(2.0, float(raio_y))
+        _, off_casco_y = cls.deslocamento_casco_colisao(ry)
+        return (0.0, off_casco_y + (ry * cls._CASCO_ESCALA_Y))
 
     @classmethod
     def renderizar(cls, tela, camera, payload: dict) -> None:

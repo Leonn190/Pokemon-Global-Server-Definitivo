@@ -39,7 +39,10 @@ class CerebroNPCs:
         estado = carregar_npcs_vendedores_estado()
         if estado:
             self._npcs = {str(k): dict(v) for k, v in estado.items() if isinstance(v, dict)}
+            mudou = self._reconciliar_lideres_salvos()
             self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
+            if mudou:
+                salvar_npcs_vendedores_estado(self._npcs, force=True)
             return
 
         base: Dict[str, Dict[str, object]] = {}
@@ -75,48 +78,73 @@ class CerebroNPCs:
                         "espera_ate_tick": 0,
                         "interacao": {"ativa": False, "cliente": ""},
                     }
-        mapa_estadios = self._mapa_dimensao_estadios()
-        arquivo_combatentes = Path("Dados") / "Pokemon Global Server - NPC Combatente.csv"
-        if arquivo_combatentes.exists():
-            with arquivo_combatentes.open("r", encoding="utf-8") as f:
-                for idx, row in enumerate(csv.DictReader(f), start=1):
-                    nivel = str(row.get("Nivel") or "").strip().lower()
-                    if nivel != "lider":
-                        continue
-                    nome = str(row.get("Nome") or f"Lider {idx}").strip() or f"Lider {idx}"
-                    code = str(row.get("Code") or idx).strip() or str(idx)
-                    estadio_tipo = self._normalizar_tipo_estadio(str(row.get("Estadio") or "normal"))
-                    dimensao = mapa_estadios.get(estadio_tipo, f"Estadio{estadio_tipo.title()}")
-                    skin_raw = str(row.get("Skin") or "1").strip()
-                    if skin_raw.lower().endswith(".png"):
-                        skin = skin_raw
-                    elif skin_raw.lower().startswith("s") and skin_raw[1:].isdigit():
-                        skin = f"{skin_raw[1:]}.png"
-                    else:
-                        skin = f"{skin_raw}.png"
-                    npc_id = int(910000 + int(code) if code.isdigit() else 910000 + idx)
-                    pokemons_npc, times_npc = self._pokemon_npc_materializados(row)
-                    base[f"combatente:{code}"] = {
-                        "id": npc_id,
-                        "code": str(code),
-                        "nome": nome,
-                        "skin": skin,
-                        "velocidade": 0.0,
-                        "estilo": "combatente",
-                        "estatico": True,
-                        "dimensao": dimensao,
-                        "estadio_tipo": estadio_tipo,
-                        "posicao": [30.0, 20.0],
-                        "rota": [],
-                        "rota_idx": 0,
-                        "espera_ate_tick": 0,
-                        "interacao": {"ativa": False, "cliente": ""},
-                        "pokemons": list(pokemons_npc),
-                        "times_pokemon": list(times_npc),
-                    }
+        base.update(self._carregar_lideres_base())
         self._npcs = base
         self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
         salvar_npcs_vendedores_estado(self._npcs, force=True)
+
+    def _carregar_lideres_base(self) -> Dict[str, Dict[str, object]]:
+        base: Dict[str, Dict[str, object]] = {}
+        mapa_estadios = self._mapa_dimensao_estadios()
+        arquivo_combatentes = Path("Dados") / "Pokemon Global Server - NPC Combatente.csv"
+        if not arquivo_combatentes.exists():
+            return base
+        with arquivo_combatentes.open("r", encoding="utf-8") as f:
+            for idx, row in enumerate(csv.DictReader(f), start=1):
+                cargo = str(row.get("Cargo") or "").strip().lower()
+                nivel = str(row.get("Nivel") or "").strip().lower()
+                if cargo != "lider" and nivel != "lider":
+                    continue
+                nome = str(row.get("Nome") or f"Lider {idx}").strip() or f"Lider {idx}"
+                code = str(row.get("Code") or idx).strip() or str(idx)
+                estadio_tipo = self._normalizar_tipo_estadio(str(row.get("Estadio") or "normal"))
+                dimensao = mapa_estadios.get(estadio_tipo, f"Estadio{estadio_tipo.title()}")
+                skin_raw = str(row.get("Skin") or "1").strip()
+                if skin_raw.lower().endswith(".png"):
+                    skin = skin_raw
+                elif skin_raw.lower().startswith("s") and skin_raw[1:].isdigit():
+                    skin = f"{skin_raw[1:]}.png"
+                else:
+                    skin = f"{skin_raw}.png"
+                npc_id = int(910000 + int(code) if code.isdigit() else 910000 + idx)
+                pokemons_npc, times_npc = self._pokemon_npc_materializados(row)
+                base[f"combatente:{code}"] = {
+                    "id": npc_id,
+                    "code": str(code),
+                    "nome": nome,
+                    "skin": skin,
+                    "velocidade": 0.0,
+                    "estilo": "combatente",
+                    "estatico": True,
+                    "dimensao": dimensao,
+                    "estadio_tipo": estadio_tipo,
+                    "posicao": [30.0, 20.0],
+                    "rota": [],
+                    "rota_idx": 0,
+                    "espera_ate_tick": 0,
+                    "interacao": {"ativa": False, "cliente": ""},
+                    "pokemons": list(pokemons_npc),
+                    "times_pokemon": list(times_npc),
+                }
+        return base
+
+    def _reconciliar_lideres_salvos(self) -> bool:
+        mudou = False
+        for chave, lider in self._carregar_lideres_base().items():
+            atual = self._npcs.get(chave)
+            if not isinstance(atual, dict):
+                self._npcs[chave] = dict(lider)
+                mudou = True
+                continue
+            interacao = dict(atual.get("interacao", {})) if isinstance(atual.get("interacao"), dict) else {"ativa": False, "cliente": ""}
+            angulo = float(atual.get("angulo", 0.0) or 0.0)
+            atualizado = dict(lider)
+            atualizado["interacao"] = interacao
+            atualizado["angulo"] = angulo
+            if atual != atualizado:
+                self._npcs[chave] = atualizado
+                mudou = True
+        return mudou
 
     def _forcar_josefa_chunk_inicial(self, spawn_x: float, spawn_y: float) -> None:
         mudou = False

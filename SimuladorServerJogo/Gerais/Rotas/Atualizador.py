@@ -17,7 +17,7 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publ
 from SimuladorServerJogo.Batalha.GerenciadorBatalhas import GERENCIADOR_BATALHAS
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
-from Codigo.Geradores.Estadio import EstadioInterno
+from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
 
 
 def _normalizar_posicao_loop(posicao):
@@ -252,8 +252,8 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
                 float(estadio.posicao[0]) + float(estado_est.get("entrada_offset")[0]),
                 float(estadio.posicao[1]) + float(estado_est.get("entrada_offset")[1]),
             ]
-        offset_y = max(2.0, float(estado_est.get("raio_elipse_y", 24.0) or 24.0) - 3.0)
-        return [float(estadio.posicao[0]), float(estadio.posicao[1] + offset_y)]
+        offset_x, offset_y = GeradorEstadio.offset_porta_externa(float(estado_est.get("raio_elipse_y", 24.0) or 24.0))
+        return [float(estadio.posicao[0] + offset_x), float(estadio.posicao[1] + offset_y)]
 
     if acao == "sair":
         if estadio is None:

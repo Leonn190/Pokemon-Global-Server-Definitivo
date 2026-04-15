@@ -194,8 +194,9 @@ class ControladorObjetos:
                 rx_visual = float(estado_obj.get("raio_elipse_x", raio) or raio)
                 ry_visual = float(estado_obj.get("raio_elipse_y", raio) or raio)
                 rx_casco, ry_casco = GeradorEstadio.raios_casco_colisao(rx_visual, ry_visual)
+                off_casco_x, off_casco_y = GeradorEstadio.deslocamento_casco_colisao(ry_visual)
                 yield (
-                    int(obj.get("id", 0)), sx, sy, raio, "estrutura_estadio",
+                    int(obj.get("id", 0)), sx + off_casco_x, sy + off_casco_y, raio, "estrutura_estadio",
                     float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0),
                     "elipse", rx_casco, ry_casco,
                 )
@@ -735,6 +736,20 @@ class ControladorObjetos:
         altura = float(estado.get("altura_interna", 40.0) or 40.0)
         return [largura * 0.5, max(1.0, altura - 3.0)]
 
+    @staticmethod
+    def _entrada_externa_estadio(payload_estadio: dict) -> List[float]:
+        estado = payload_estadio.get("estado") if isinstance(payload_estadio.get("estado"), dict) else {}
+        pos = payload_estadio.get("posicao") if isinstance(payload_estadio.get("posicao"), (list, tuple)) and len(payload_estadio.get("posicao")) == 2 else None
+        if pos is not None:
+            raio_y = float(estado.get("raio_elipse_y", payload_estadio.get("raio_colisao", 24.0)) or 24.0)
+            off_x, off_y = GeradorEstadio.offset_porta_externa(raio_y)
+            return [float(pos[0]) + off_x, float(pos[1]) + off_y]
+        if isinstance(estado.get("entrada_pos"), (list, tuple)) and len(estado.get("entrada_pos")) == 2:
+            return [float(estado.get("entrada_pos")[0]), float(estado.get("entrada_pos")[1])]
+        if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2:
+            return [float(estado.get("entrada_offset")[0]), float(estado.get("entrada_offset")[1])]
+        return [0.0, 0.0]
+
     def alvo_interagivel_atual(self, pos_player: Tuple[float, float], dimensao_player: str, estadio_atual_id: int = 0) -> Optional[Dict[str, object]]:
         px, py = float(pos_player[0]), float(pos_player[1])
         dim = str(dimensao_player or self._dimensao_player_local() or "Mundo")
@@ -763,12 +778,7 @@ class ControladorObjetos:
             for estadio in list(self.EstadiosPorId.values()):
                 if not isinstance(estadio, dict):
                     continue
-                estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
-                entrada = estado.get("entrada_pos") if isinstance(estado.get("entrada_pos"), (list, tuple)) and len(estado.get("entrada_pos")) == 2 else None
-                if entrada is None:
-                    pos = estadio.get("posicao") if isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else [0.0, 0.0]
-                    off = estado.get("entrada_offset") if isinstance(estado.get("entrada_offset"), (list, tuple)) and len(estado.get("entrada_offset")) == 2 else [0.0, 21.0]
-                    entrada = [float(pos[0]) + float(off[0]), float(pos[1]) + float(off[1])]
+                entrada = self._entrada_externa_estadio(estadio)
                 d2 = (float(entrada[0]) - px) ** 2 + (float(entrada[1]) - py) ** 2
                 if d2 <= (2.0 * 2.0):
                     candidatos.append((d2, {"tipo": "estadio_entrada", "estadio": estadio, "posicao": [float(entrada[0]), float(entrada[1])] }))

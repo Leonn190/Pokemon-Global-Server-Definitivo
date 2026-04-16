@@ -1,5 +1,4 @@
 
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -16,8 +15,6 @@ final class GeradorObjetos {
     }
 
     void placeNaturalStructures() {
-        Arrays.fill(ctx.naturalMap, (byte) NaturalStructure.NONE.ordinal());
-
         for (int y = 0; y < ctx.height; y++) {
             if (y % 800 == 0) {
                 System.out.println("  estruturas na linha " + y + " / " + ctx.height);
@@ -31,7 +28,10 @@ final class GeradorObjetos {
                 if (biomeRules.objectAvoidBeachTiles && Tile.values()[ctx.tileMap[idx] & 0xFF] == Tile.BEACH_SAND) {
                     continue;
                 }
-                if (ctx.nearPoi(x, y, biomeRules.objectBlockNearPoiRadius)) {
+                if (ctx.naturalMap[idx] != (byte) NaturalStructure.NONE.ordinal()) {
+                    continue;
+                }
+                if (ctx.isReservedForNaturalStructure(x, y)) {
                     continue;
                 }
                 NaturalStructure structure = chooseNaturalStructure(biome, x, y);
@@ -44,10 +44,7 @@ final class GeradorObjetos {
         ctx.recountNaturals();
     }
 
-    void placePois() {
-        ctx.pois.clear();
-        placePoiType(PoiType.VILLAGE, terrainRules.villageConfig);
-        placePoiType(PoiType.GYM, terrainRules.gymConfig);
+    void placeDungeons() {
         placePoiType(PoiType.DUNGEON, terrainRules.dungeonConfig);
     }
 
@@ -61,11 +58,8 @@ final class GeradorObjetos {
             if (!canPlacePoi(type, config, x, y)) {
                 continue;
             }
-            Poi poi = new Poi(x, y, type);
+            Poi poi = new Poi(x, y, type, null, ctx.nearestRegion(x, y).id);
             ctx.pois.add(poi);
-            if (type == PoiType.GYM) {
-                clearNaturalsNearGym(poi, config);
-            }
             placed++;
         }
         System.out.println("  " + type + ": " + placed + " / " + config.count + " (tentativas: " + attempts + ")");
@@ -88,45 +82,7 @@ final class GeradorObjetos {
                 return false;
             }
         }
-        if (type == PoiType.GYM && !isGymAreaValid(x, y, config)) {
-            return false;
-        }
         return true;
-    }
-
-    private boolean isGymAreaValid(int centerX, int centerY, PoiConfig config) {
-        int half = (config.areaChunks * terrainRules.chunkSize) / 2;
-        int x0 = centerX - half;
-        int y0 = centerY - half;
-        int x1 = x0 + (config.areaChunks * terrainRules.chunkSize) - 1;
-        int y1 = y0 + (config.areaChunks * terrainRules.chunkSize) - 1;
-        if (x0 < 2 || y0 < 2 || x1 >= ctx.width - 2 || y1 >= ctx.height - 2) {
-            return false;
-        }
-        for (int y = y0; y <= y1; y++) {
-            for (int x = x0; x <= x1; x++) {
-                int idx = ctx.index(x, y);
-                Biome biome = Biome.values()[ctx.biomeMap[idx] & 0xFF];
-                if (!ctx.isLandBiome(biome) || ctx.nearWater(x, y, 2)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    private void clearNaturalsNearGym(Poi gym, PoiConfig config) {
-        int half = (config.areaChunks * terrainRules.chunkSize) / 2;
-        int x0 = Math.max(0, gym.x - half - config.clearMarginTiles);
-        int y0 = Math.max(0, gym.y - half - config.clearMarginTiles);
-        int x1 = Math.min(ctx.width - 1, gym.x + half + config.clearMarginTiles);
-        int y1 = Math.min(ctx.height - 1, gym.y + half + config.clearMarginTiles);
-        for (int y = y0; y <= y1; y++) {
-            for (int x = x0; x <= x1; x++) {
-                ctx.naturalMap[ctx.index(x, y)] = (byte) NaturalStructure.NONE.ordinal();
-            }
-        }
-        ctx.recountNaturals();
     }
 
     private NaturalStructure chooseNaturalStructure(Biome biome, int x, int y) {

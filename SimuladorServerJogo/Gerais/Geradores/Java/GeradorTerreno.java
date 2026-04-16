@@ -871,6 +871,17 @@ final class TomlTable {
         throw invalid(key, "double");
     }
 
+    double optDouble(String key, double defaultValue) {
+        Object value = map.get(key);
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        throw invalid(key, "double");
+    }
+
     boolean reqBoolean(String key) {
         Object value = require(key);
         if (value instanceof Boolean bool) {

@@ -17,8 +17,9 @@ import java.util.Map;
 
 public class WorldGenerator {
     public static void main(String[] args) throws Exception {
+        System.setProperty("java.awt.headless", "true");
         if (args.length < 4) {
-            throw new IllegalArgumentException("Uso: java WorldGenerator <seed> <outputDir> <regrasTerreno.toml> <regrasBiomas.toml>");
+            throw new IllegalArgumentException("Uso: java WorldGenerator <seed> <outputDir> <regrasTerreno.toml> <regrasBiomas.toml> [regrasLocalidades.toml]");
         }
 
         long seed;
@@ -30,7 +31,11 @@ public class WorldGenerator {
 
         TerrainRules terrainRules = TerrainRules.load(Path.of(args[2]));
         BiomeRules biomeRules = BiomeRules.load(Path.of(args[3]));
-        GeneratorContext generator = new GeneratorContext(seed, args[1], terrainRules, biomeRules);
+        Path localityPath = args.length >= 5
+            ? Path.of(args[4])
+            : Path.of(args[2]).getParent().resolve("Localidades.toml");
+        LocalityRules localityRules = LocalityRules.load(localityPath);
+        GeneratorContext generator = new GeneratorContext(seed, args[1], terrainRules, biomeRules, localityRules);
         generator.generate();
     }
 }
@@ -73,7 +78,8 @@ enum NaturalStructure {
     PALM,
     PINE,
     COPPER,
-    LAVA_POOL
+    LAVA_POOL,
+    HOUSE
 }
 
 enum PoiType {
@@ -95,11 +101,35 @@ final class Poi {
     final int x;
     final int y;
     final PoiType type;
+    final String name;
+    final int regionId;
 
     Poi(int x, int y, PoiType type) {
+        this(x, y, type, null, -1);
+    }
+
+    Poi(int x, int y, PoiType type, String name, int regionId) {
         this.x = x;
         this.y = y;
         this.type = type;
+        this.name = name;
+        this.regionId = regionId;
+    }
+}
+
+final class RegionData {
+    final int id;
+    final String name;
+    final int centerX;
+    final int centerY;
+    final int color;
+
+    RegionData(int id, String name, int centerX, int centerY, int color) {
+        this.id = id;
+        this.name = name;
+        this.centerX = centerX;
+        this.centerY = centerY;
+        this.color = color;
     }
 }
 
@@ -113,6 +143,7 @@ final class GeneratorContext {
     final String outputDirectory;
     final TerrainRules terrainRules;
     final BiomeRules biomeRules;
+    final LocalityRules localityRules;
     final int width;
     final int height;
     final int area;
@@ -124,6 +155,7 @@ final class GeneratorContext {
     final int[] biomeCounts;
     final int[] naturalCounts;
     final List<Poi> pois;
+    final List<RegionData> regions;
 
     final int macroGridWidth;
     final int macroGridHeight;
@@ -137,14 +169,16 @@ final class GeneratorContext {
 
     final GeradorBiomas geradorBiomas;
     final GeradorTerreno geradorTerreno;
+    final GeradorLocalidades geradorLocalidades;
     final GeradorObjetos geradorObjetos;
     final GeradorImagens geradorImagens;
 
-    GeneratorContext(long seed, String outputDirectory, TerrainRules terrainRules, BiomeRules biomeRules) {
+    GeneratorContext(long seed, String outputDirectory, TerrainRules terrainRules, BiomeRules biomeRules, LocalityRules localityRules) {
         this.seed = seed;
         this.outputDirectory = outputDirectory;
         this.terrainRules = terrainRules;
         this.biomeRules = biomeRules;
+        this.localityRules = localityRules;
         this.width = terrainRules.width;
         this.height = terrainRules.height;
         this.area = width * height;
@@ -154,6 +188,7 @@ final class GeneratorContext {
         this.biomeCounts = new int[Biome.values().length];
         this.naturalCounts = new int[NaturalStructure.values().length];
         this.pois = new ArrayList<>();
+        this.regions = new ArrayList<>();
         this.macroGridWidth = Math.max(1, biomeRules.macroGridWidth);
         this.macroGridHeight = Math.max(1, biomeRules.macroGridHeight);
         this.macroCellWidth = Math.max(1, (int) Math.ceil(width / (double) macroGridWidth));
@@ -161,6 +196,7 @@ final class GeneratorContext {
         this.macroBiomeGrid = new byte[macroGridWidth * macroGridHeight];
         this.geradorBiomas = new GeradorBiomas(this);
         this.geradorTerreno = new GeradorTerreno(this);
+        this.geradorLocalidades = new GeradorLocalidades(this);
         this.geradorObjetos = new GeradorObjetos(this);
         this.geradorImagens = new GeradorImagens(this);
     }
@@ -184,25 +220,30 @@ final class GeneratorContext {
         logTime("Rios", t1);
 
         long t2 = System.currentTimeMillis();
-        System.out.println("Posicionando estruturas naturais...");
-        geradorObjetos.placeNaturalStructures();
-        logTime("Estruturas naturais", t2);
+        System.out.println("Gerando localidades, vilas e ginasios...");
+        geradorLocalidades.generate();
+        logTime("Localidades", t2);
 
         long t3 = System.currentTimeMillis();
-        System.out.println("Posicionando ginasios, dungeons e vilas...");
-        geradorObjetos.placePois();
-        logTime("POIs", t3);
+        System.out.println("Posicionando estruturas naturais...");
+        geradorObjetos.placeNaturalStructures();
+        logTime("Estruturas naturais", t3);
 
         long t4 = System.currentTimeMillis();
+        System.out.println("Posicionando dungeons...");
+        geradorObjetos.placeDungeons();
+        logTime("Dungeons", t4);
+
+        long t5 = System.currentTimeMillis();
         findSpawnChunk();
         System.out.println("Exportando mundo em chunks...");
         writeWorldChunks(dir);
-        logTime("Export", t4);
+        logTime("Export", t5);
 
-        long t5 = System.currentTimeMillis();
+        long t6 = System.currentTimeMillis();
         System.out.println("Gerando fotos do mundo...");
         geradorImagens.gerarImagens(dir);
-        logTime("Fotos do mundo", t5);
+        logTime("Fotos do mundo", t6);
 
         printSummary();
         logTime("Tempo total", t0);
@@ -407,6 +448,15 @@ final class GeneratorContext {
         return minInclusive + (int) (random01(seedValue) * (maxExclusive - minInclusive));
     }
 
+    RegionData nearestRegion(int x, int y) {
+        return geradorLocalidades.nearestRegion(x, y);
+    }
+
+    boolean isReservedForNaturalStructure(int x, int y) {
+        return geradorLocalidades.isReservedForNaturalStructure(x, y)
+            || nearPoi(x, y, biomeRules.objectBlockNearPoiRadius);
+    }
+
     void recountBiomes() {
         Arrays.fill(biomeCounts, 0);
         for (int i = 0; i < area; i++) {
@@ -550,6 +600,36 @@ final class GeneratorContext {
             writer.write("  \"spawn_chunk_y\": " + spawnChunkY + ",\n");
             writer.write("  \"spawn_x\": " + spawnX + ",\n");
             writer.write("  \"spawn_y\": " + spawnY + ",\n");
+            writer.write("  \"regioes\": [\n");
+            for (int i = 0; i < regions.size(); i++) {
+                RegionData region = regions.get(i);
+                writer.write("    {\"id\": " + region.id
+                    + ", \"nome\": \"" + escapeJson(region.name) + "\""
+                    + ", \"centro\": [" + region.centerX + ", " + region.centerY + "]}");
+                if (i < regions.size() - 1) {
+                    writer.write(",");
+                }
+                writer.write("\n");
+            }
+            writer.write("  ],\n");
+            writer.write("  \"vilas\": [\n");
+            List<Poi> villages = new ArrayList<>();
+            for (Poi poi : pois) {
+                if (poi.type == PoiType.VILLAGE) {
+                    villages.add(poi);
+                }
+            }
+            for (int i = 0; i < villages.size(); i++) {
+                Poi poi = villages.get(i);
+                writer.write("    {\"nome\": \"" + escapeJson(poi.name == null ? ("Vila" + (i + 1)) : poi.name) + "\""
+                    + ", \"regiao_id\": " + poi.regionId
+                    + ", \"posicao\": [" + poi.x + ", " + poi.y + "]}");
+                if (i < villages.size() - 1) {
+                    writer.write(",");
+                }
+                writer.write("\n");
+            }
+            writer.write("  ],\n");
             writer.write("  \"estadios\": [\n");
             int gymIndex = 0;
             int totalGyms = 0;
@@ -568,6 +648,7 @@ final class GeneratorContext {
                 writer.write("    {\"estadio_id\": " + (1900000000 + gymIndex)
                     + ", \"tipo\": \"" + tipo + "\""
                     + ", \"dimensao\": \"" + dimensao + "\""
+                    + ", \"regiao_id\": " + poi.regionId
                     + ", \"posicao\": [" + poi.x + ", " + poi.y + "]}");
                 current++;
                 gymIndex++;
@@ -579,6 +660,10 @@ final class GeneratorContext {
             writer.write("  ]\n");
             writer.write("}\n");
         }
+    }
+
+    private String escapeJson(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     byte[] buildStructuresGrid() {
@@ -691,6 +776,7 @@ final class GeneratorContext {
         long gyms = pois.stream().filter(p -> p.type == PoiType.GYM).count();
         long dungeons = pois.stream().filter(p -> p.type == PoiType.DUNGEON).count();
         long villages = pois.stream().filter(p -> p.type == PoiType.VILLAGE).count();
+        System.out.println("Regioes: " + regions.size());
         System.out.println("POIs:");
         System.out.println("  GYM      " + gyms);
         System.out.println("  DUNGEON  " + dungeons);

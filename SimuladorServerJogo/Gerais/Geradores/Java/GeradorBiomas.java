@@ -178,7 +178,7 @@ final class BiomeRules {
                 if (structure == NaturalStructure.NONE) {
                     continue;
                 }
-                rates.put(structure, objectsTable.reqDouble(structure.name()));
+                rates.put(structure, objectsTable.optDouble(structure.name(), 0.0));
             }
             objectRates.put(biome, rates);
         }
@@ -317,14 +317,20 @@ final class GeradorBiomas {
     private double biomeRegionalBonus(Biome biome, int x, int y, double temperature, double moisture, double magic, double volcanic, double swamp) {
         double polar = polarBandFactor(y);
         double central = centralBandFactor(y);
+        double mildTemperature = 1.0 - Math.abs(temperature - 0.54);
+        double mildMoisture = 1.0 - Math.abs(moisture - 0.48);
         return switch (biome) {
-            case DESERT -> central * 0.55 + Math.max(0.0, temperature - 0.58) * 0.35 - moisture * 0.10;
-            case SNOW -> polar * 0.95 + Math.max(0.0, 0.40 - temperature) * 0.25;
-            case MAGIC -> Math.max(0.0, magic - 0.58) * 1.10;
-            case VOLCANIC -> Math.max(0.0, volcanic - 0.56) * 1.20 + Math.max(0.0, temperature - 0.60) * 0.20;
-            case SWAMP -> Math.max(0.0, swamp - 0.48) * 1.00 + Math.max(0.0, moisture - 0.64) * 0.55;
-            case FOREST -> Math.max(0.0, moisture - 0.45) * 0.10;
-            case FIELD -> 0.0;
+            case DESERT -> central * 0.52 + Math.max(0.0, temperature - 0.62) * 0.28 - moisture * 0.10;
+            case SNOW -> polar * 0.92 + Math.max(0.0, 0.34 - temperature) * 0.22;
+            case MAGIC -> Math.max(0.0, magic - 0.78) * 0.42;
+            case VOLCANIC -> Math.max(0.0, volcanic - 0.68) * 0.85 + Math.max(0.0, temperature - 0.66) * 0.16;
+            case SWAMP -> Math.max(0.0, swamp - 0.72) * 0.56 + Math.max(0.0, moisture - 0.78) * 0.20;
+            case FOREST -> Math.max(0.0, moisture - 0.58) * 0.07;
+            case FIELD -> Math.max(0.0, mildTemperature - 0.70) * 0.10
+                + Math.max(0.0, mildMoisture - 0.66) * 0.12
+                + Math.max(0.0, 0.78 - magic) * 0.08
+                + Math.max(0.0, 0.78 - swamp) * 0.06
+                + Math.max(0.0, 0.74 - volcanic) * 0.04;
             default -> 0.0;
         };
     }

@@ -28,6 +28,7 @@ PASTA_WORLD_CHUNKS = PASTA_ESTADO_MUNDO / "chunks"
 PASTA_REGRAS = RAIZ_REPOSITORIO / "SimuladorServerJogo" / "Logica" / "Regras"
 ARQUIVO_REGRAS_TERRENO_FONTE = PASTA_REGRAS / "Terreno.toml"
 ARQUIVO_REGRAS_BIOMAS_FONTE = PASTA_REGRAS / "Biomas.toml"
+ARQUIVO_REGRAS_LOCALIDADES_FONTE = PASTA_REGRAS / "Localidades.toml"
 
 PASTA_JAVA = PASTA_SERVIDOR / "Java"
 PASTA_JAVA_CLASSES = PASTA_JAVA / "classes"
@@ -40,6 +41,7 @@ ARQUIVOS_JAVA = [
     PASTA_JAVA / "GeradorBiomas.java",
     PASTA_JAVA / "GeradorObjetos.java",
     PASTA_JAVA / "GeradorImagens.java",
+    PASTA_JAVA / "GeradorLocalidades.java",
 ]
 ARQUIVO_CLASS_PRINCIPAL = PASTA_JAVA_CLASSES / "WorldGenerator.class"
 
@@ -220,6 +222,8 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
         raise FileNotFoundError(f"Arquivo de regras de terreno não encontrado: {ARQUIVO_REGRAS_TERRENO_FONTE}")
     if not ARQUIVO_REGRAS_BIOMAS_FONTE.exists():
         raise FileNotFoundError(f"Arquivo de regras de biomas não encontrado: {ARQUIVO_REGRAS_BIOMAS_FONTE}")
+    if not ARQUIVO_REGRAS_LOCALIDADES_FONTE.exists():
+        raise FileNotFoundError(f"Arquivo de regras de localidades não encontrado: {ARQUIVO_REGRAS_LOCALIDADES_FONTE}")
 
     cmd = [
         "java",
@@ -230,6 +234,7 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
         str(pasta_estado_mundo),
         str(ARQUIVO_REGRAS_TERRENO_FONTE),
         str(ARQUIVO_REGRAS_BIOMAS_FONTE),
+        str(ARQUIVO_REGRAS_LOCALIDADES_FONTE),
     ]
 
     _emitir_progresso(callback_progresso, 1, "Preparando geração do mundo")
@@ -262,14 +267,19 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
             _emitir_progresso(callback_progresso, 45, "Gerando rios e lagos")
             continue
 
-        if "Posicionando estruturas naturais" in linha:
-            etapa = "estruturas"
-            _emitir_progresso(callback_progresso, 60, "Posicionando estruturas naturais")
+        if "Gerando localidades, vilas e ginasios" in linha:
+            etapa = "localidades"
+            _emitir_progresso(callback_progresso, 58, "Gerando localidades, vilas e ginasios")
             continue
 
-        if "Posicionando ginasios, dungeons e vilas" in linha:
-            etapa = "pois"
-            _emitir_progresso(callback_progresso, 75, "Posicionando ginasios, dungeons e vilas")
+        if "Posicionando estruturas naturais" in linha:
+            etapa = "estruturas"
+            _emitir_progresso(callback_progresso, 68, "Posicionando estruturas naturais")
+            continue
+
+        if "Posicionando dungeons" in linha:
+            etapa = "dungeons"
+            _emitir_progresso(callback_progresso, 78, "Posicionando dungeons")
             continue
 
         if "Exportando mundo em chunks" in linha:

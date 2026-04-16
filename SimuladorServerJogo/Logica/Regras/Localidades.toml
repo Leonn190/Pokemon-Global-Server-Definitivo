@@ -1,0 +1,40 @@
+[regions]
+min_count = 5
+max_count = 7
+margin = 560
+min_center_distance = 1850
+name_candidates = [
+  "Aurora", "Boreal", "Celestia", "Draconia", "Esmeralda", "Fulgor", "Granito", "Horizonte",
+  "Íris", "Jade", "Luminária", "Monólito", "Neblina", "Orvalho", "Prisma", "Quartzo",
+  "Rubra", "Safira", "Tempestade", "Urbis", "Valora", "Wisteria", "Xisto", "Ygdria", "Zênite"
+]
+
+[villages]
+min_count = 15
+max_count = 21
+min_distance = 340
+margin = 180
+near_water_radius = 3
+clear_radius = 24
+allowed_biomes = ["FIELD", "FOREST", "DESERT", "SNOW", "SWAMP", "MAGIC"]
+name_candidates = [
+  "Alvorada", "Bosque Azul", "Brisamar", "Campofino", "Candeia", "Cedrália", "Estrela", "Jardim Alto",
+  "Lagoa Serena", "Laranjal", "Luar do Vale", "Montelume", "Névoa Alta", "Pedralva", "Ponte Velha",
+  "Porto Claro", "Pradaria", "Ribeirinha", "Rio Sereno", "Sol Nascente", "Valeverde", "Vila Rubra",
+  "Vista Clara", "Pinheiral", "Fonte Mansa", "Beira Lago", "Colina Branca", "Três Cedros"
+]
+
+[houses]
+min_per_village = 8
+max_per_village = 16
+radius = 28
+min_distance_from_center = 4
+
+[gyms]
+count = 20
+min_distance = 260
+margin = 180
+near_water_radius = 5
+allowed_biomes = ["FIELD", "FOREST", "DESERT", "SNOW", "MAGIC", "VOLCANIC", "SWAMP"]
+area_chunks = 5
+clear_margin_tiles = 3

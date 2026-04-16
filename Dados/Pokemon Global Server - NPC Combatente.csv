@@ -1,24 +1,24 @@
 Nome,Estadio,Cargo,Nivel,Skin,Batalhas,Pokemon1,Pokemon2,Pokemon3,Pokemon4,Pokemon5,Pokemon6,Pokemon7,Pokemon8,Pokemon9,Pokemon10,Pokemon11,Pokemon12,Presente 1,Quantidade 1,Presente 2,Quantidade 2,Presente 3,Quantidade 3,Code
-Alleka,Metal,Lider,,49,2,,,,,,,,,,,,,,,,,,,1
-Ph,Eletrico,Lider,,75,2,,,,,,,,,,,,,,,,,,,2
-Garcia,Psiquico,Lider,,38,2,,,,,,,,,,,,,,,,,,,3
-Paulo,Venenoso,Lider,,62,2,,,,,,,,,,,,,,,,,,,4
-Ramos,Sonoro,Lider,,77,2,,,,,,,,,,,,,,,,,,,5
-Guedes,Lutador,Lider,,89,2,,,,,,,,,,,,,,,,,,,6
-João,Gelo,Lider,,94,2,,,,,,,,,,,,,,,,,,,7
-Henrique,Fogo,Lider,,56,2,,,,,,,,,,,,,,,,,,,8
-Felps,Dragão,Lider,,80,2,,,,,,,,,,,,,,,,,,,9
-Ferraz,Fantasma,Lider,,79,2,,,,,,,,,,,,,,,,,,,10
-Vasques,Sombrio,Lider,,28,2,,,,,,,,,,,,,,,,,,,11
-Caio,Agua,Lider,,59,2,,,,,,,,,,,,,,,,,,,12
-Murilo,Inseto,Lider,,21,2,,,,,,,,,,,,,,,,,,,13
-Felipox,Cosmico,Lider,,51,2,,,,,,,,,,,,,,,,,,,14
-Lisciele,Voador,Lider,,57,2,,,,,,,,,,,,,,,,,,,15
-Suriane,Normal,Lider,,37,2,,,,,,,,,,,,,,,,,,,16
-Amable,Terrestre,Lider,,44,2,,,,,,,,,,,,,,,,,,,17
-Nathzinha,Fada,Lider,,54,2,,,,,,,,,,,,,,,,,,,18
-Suneiva,Planta,Lider,,25,2,,,,,,,,,,,,,,,,,,,19
-Sidney,Pedra,Lider,,76,2,,,,,,,,,,,,,,,,,,,20
+Alleka,Metal,Lider,,49,2,Excadrill,Durant,Lucario,Magnezone,Scizor,Aggron,Metagross,Archaludon,Kingambit,Kartana,Melmetal,Zacian,,,,,,,1
+Ph,Eletrico,Lider,,75,2,Raichu,Rotom Heat,Bellibolt,Vikavolt,Toxtricity,Ampharos,Eelektross,Luxray,Electivire,Xurkitree,Zeraora,Zekrom,,,,,,,2
+Garcia,Psiquico,Lider,,38,2,Hypno,Gothitelle,Slowking,Starmie,Espeon,Exeggutor,Alakazam,Gardevoir,Hatterene,Delphox,Celebi,Latios,,,,,,,3
+Paulo,Venenoso,Lider,,62,2,Salazzle,Victreebel,Weezing,Drapion,Gengar,Overqwil,Tentacruel,Venusaur,Roserade,Crobat,Naganadel,Nihilego,,,,,,,4
+Ramos,Sonoro,Lider,,77,2,Chatot,Wigglytuff,Kricketune,Altaria,Oricorio,Audino,Primarina,Rillaboom,Bronzong,Exploud,Noivern,Meloetta,,,,,,,5
+Guedes,Lutador,Lider,,89,2,Flamigo,Mienshao,Hawlucha,Quaquaval,Gallade,Chesnaught,Infernape,Blaziken,Buzzwole,Kommo-o,Marshadow,Zamazenta,,,,,,,6
+João,Gelo,Lider,,94,2,Crabominable,Weavile,Cloyster,Vanilluxe,Beartic,Empoleon,Aurorus,Avalugg,Mamoswine,Wailord,Regice,Kyuren,,,,,,,7
+Henrique,Fogo,Lider,,56,2,Houndoom,Emboar,Pyroar,Incineroar,Skelerdirge,Charizard,Magmortar,Volcarona,Arcanine,Blacephalon,Victini,Reshiram,,,,,,,8
+Felps,Dragão,Lider,,80,2,Appletun,Cyclizar,Druddigon,Altaria,Flygon,Kingdra,Haxorus,Tyrantrum,Goodra,Dragonite,Garchomp,Rayquaza,,,,,,,9
+Ferraz,Fantasma,Lider,,79,2,Driftbloon,Palossand,Golurk,Spiritomb,Mismagios,Dhelmise,Chandelure,Decidueye,Basculegion,Annihilape,Spectrier,Lunala,,,,,,,10
+Vasques,Sombrio,Lider,,28,2,Sharpedo,Cacturne,Absol,Malamar,Hounchkrow,Obstagoon,shiftry,Krookodile,Greninja,Guzzlord,Darkrai,Yvelta,,,,,,,11
+Caio,Agua,Lider,,59,2,Araquanid,Barraskewda,Seismitoad,Vaporeon,Feraligatr,Dondozo,Swampert,Milotic,Blastoise,Gyarados,Suicune,Kyogre,,,,,,,12
+Murilo,Inseto,Lider,,21,2,Ninjask,Leavanny,Armaldo,Centiskorch,Yanmega,Kleavor,Frosmoth,Scolipede,Heracross,Golisopod,Pheromosa,Genesect,,,,,,,13
+Felipox,Cosmico,Lider,,51,2,Crygonal,Musharna,Minior,Ultra Rapidash,Orbeetle,Clefable,Solrock,Lunatone,Togekiss,Porygon Z,Stakataka,Deoxys,,,,,,,14
+Lisciele,Voador,Lider,,57,2,Fearow,Pelipper,Cramorant,Talonflame,Pidgeot,Corviknight,Aerodactyl,Celesteela,Braviary,Salamance,Shaymin,Lugia,,,,,,,15
+Suriane,Normal,Lider,,37,2,Zangoose,Tauros,Noctowl,Wyrdeer,Bewer,Oranguru,Drampa,Staraptor,Blissey,Snorlax,Slaking,Regigigas,,,,,,,16
+Amable,Terrestre,Lider,,44,2,Marowak,Sandaconda,Torterra,Donphan,Runerigus,Nidoqueen,Nidoking,Mudsdale,Gliscor,Ursaluna,Landouros,Groudon,,,,,,,17
+Nathzinha,Fada,Lider,,54,2,Mawile,Granbull,Azumarill,Slurpuff,Mimikyu,Confey,Tinkaton,Grimmsnarl,Sylveon,Florges,Diancie,Xerneas,,,,,,,18
+Suneiva,Planta,Lider,,25,2,Liligant,Flapple,Belossom,Lurantis,Tangrowth,Trevenant,Vileplume,Leafon,Meowscarada,Serperior,Zarude,Virizion,,,,,,,19
+Sidney,Pedra,Lider,,76,2,Relicanth,Shuckle,Klawf,Stoujorner,Lycanrock,Barbanacle,Golem,Rampardos,Coalossal,Garganacl,Rhyperior,Terrakion,,,,,,,20
 Curi,,Capitão,,,,,,,,,,,,,,,,,,,,,,21
 Clara,,Capitão,,,,,,,,,,,,,,,,,,,,,,22
 Catarina,,Capitão,,,,,,,,,,,,,,,,,,,,,,23

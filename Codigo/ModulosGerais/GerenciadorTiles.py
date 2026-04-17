@@ -94,20 +94,42 @@ class AparenciaBaseTiles:
 
 
 class TilesTransicionais:
+    """
+    Transição por hierarquia fixa de camadas.
+    O tile menos dominante recebe overlay do grupo mais dominante vizinho.
+    Sem RNG. Sem bilateralidade.
+    """
+
     GRUPOS_PADRAO = {
-        "agua": frozenset({0, 1}),
-        "campo": frozenset({2, 3}),
-        "areia": frozenset({4, 5}),
+        "agua_funda": frozenset({0}),
+        "agua_rasa": frozenset({1}),
+        "campo": frozenset({2}),
+        "floresta": frozenset({3}),
+        "deserto": frozenset({4, 5}),
         "neve": frozenset({6, 10, 11}),
+        "vulcao": frozenset({8, 9}),
         "magico": frozenset({7}),
-        "vulcanico": frozenset({8, 9}),
+        "pantano": frozenset(),  # preencha com os ids reais do pantano quando existirem
     }
+
+    ORDEM_CAMADAS_PADRAO = (
+        "agua_funda",
+        "agua_rasa",
+        "campo",
+        "floresta",
+        "deserto",
+        "neve",
+        "vulcao",
+        "magico",
+        "pantano",
+    )
 
     def __init__(
         self,
         cores_blocos: Dict[int, Cor],
         callback_bloco_global: Callable[[int, int], Optional[int]],
         grupos_bioma: Optional[Dict[str, Iterable[int]]] = None,
+        ordem_camadas: Optional[Iterable[str]] = None,
         largura_borda_ratio: float = 0.46,
         alpha_borda: int = 205,
         alpha_canto: int = 235,
@@ -126,14 +148,20 @@ class TilesTransicionais:
             for nome, valores in grupos.items()
         }
 
+        ordem = tuple(str(v) for v in (ordem_camadas or self.ORDEM_CAMADAS_PADRAO))
+        self.OrdemCamadas = ordem
+        self._rank_por_grupo: Dict[str, int] = {nome: i for i, nome in enumerate(self.OrdemCamadas)}
+
         self._cache_tiles: Dict[Tuple[int, int, Tuple[bool, bool, bool, bool, bool, bool, bool, bool]], pygame.Surface] = {}
         self._mapa_grupos_por_bloco: Dict[int, str] = {}
-        self.SeedMundo = 0
+        self.SeedMundo = 0  # mantido só por compatibilidade com o gerenciador atual
+
         for nome, valores in self.GruposBioma.items():
             for bloco in valores:
                 self._mapa_grupos_por_bloco[int(bloco)] = nome
 
     def definir_seed(self, seed_mundo: int) -> None:
+        # compatibilidade; a nova regra não usa RNG
         novo_seed = int(seed_mundo or 0)
         if novo_seed != self.SeedMundo:
             self.SeedMundo = novo_seed
@@ -146,46 +174,23 @@ class TilesTransicionais:
     def limpar_cache(self) -> None:
         self._cache_tiles.clear()
 
-    @staticmethod
-    def _mix64(valor: int) -> int:
-        x = int(valor) & 0xFFFFFFFFFFFFFFFF
-        x ^= (x >> 30)
-        x = (x * 0xBF58476D1CE4E5B9) & 0xFFFFFFFFFFFFFFFF
-        x ^= (x >> 27)
-        x = (x * 0x94D049BB133111EB) & 0xFFFFFFFFFFFFFFFF
-        x ^= (x >> 31)
-        return x & 0xFFFFFFFFFFFFFFFF
-
-    def _grupo_recebe_transicao(self, mundo_x: int, mundo_y: int, dx: int, dy: int, grupo_central: str, grupo_vizinho: str) -> bool:
-        ax, ay = int(mundo_x), int(mundo_y)
-        bx, by = int(mundo_x + dx), int(mundo_y + dy)
-        if (bx, by) < (ax, ay):
-            ax, ay, bx, by = bx, by, ax, ay
-        g1, g2 = sorted((str(grupo_central), str(grupo_vizinho)))
-        g1_hash = sum((idx + 1) * ord(ch) for idx, ch in enumerate(g1))
-        g2_hash = sum((idx + 1) * ord(ch) for idx, ch in enumerate(g2))
-        h = (
-            int(self.SeedMundo)
-            ^ (ax * 0x9E3779B185EBCA87)
-            ^ (ay * 0xC2B2AE3D27D4EB4F)
-            ^ (bx * 0x165667B19E3779F9)
-            ^ (by * 0x85EBCA77C2B2AE63)
-            ^ (g1_hash & 0xFFFFFFFFFFFFFFFF)
-            ^ ((g2_hash << 1) & 0xFFFFFFFFFFFFFFFF)
-        ) & 0xFFFFFFFFFFFFFFFF
-        bit = self._mix64(h) & 1
-        return str(grupo_central) == (g1 if bit == 0 else g2)
-
     def _cor_bloco(self, bloco: int) -> Cor:
         return tuple(self.CoresBlocos.get(int(bloco), (255, 0, 255)))
 
     def _grupo(self, bloco: int | None) -> Optional[str]:
         if bloco is None:
             return None
-        return self._mapa_grupos_por_bloco.get(int(bloco), f"bloco_{int(bloco)}")
+        return self._mapa_grupos_por_bloco.get(int(bloco))
+
+    def _rank_grupo(self, grupo: str | None) -> int:
+        if grupo is None:
+            return -10_000
+        return self._rank_por_grupo.get(str(grupo), -10_000)
 
     def _mesmo_grupo(self, bloco_a: int | None, bloco_b: int | None) -> bool:
-        return self._grupo(bloco_a) == self._grupo(bloco_b)
+        ga = self._grupo(bloco_a)
+        gb = self._grupo(bloco_b)
+        return ga is not None and ga == gb
 
     def _coletar_vizinhanca(self, mundo_x: int, mundo_y: int) -> Vizinhanca:
         coords = (
@@ -199,42 +204,46 @@ class TilesTransicionais:
             valores.append(None if bloco is None else int(bloco))
         return tuple(valores)  # type: ignore[return-value]
 
-    def _escolher_bloco_dominante(self, mundo_x: int, mundo_y: int, bloco_central: int, vizinhanca: Vizinhanca) -> Optional[int]:
-        # considerar só cardinais para escolher quem domina a borda;
-        # diagonais servem só para arredondar canto depois
-        pesos = {1: 1.0, 3: 1.0, 5: 1.0, 7: 1.0}
-        offsets = {1: (0, -1), 3: (-1, 0), 5: (1, 0), 7: (0, 1)}
+    def _grupo_domina(self, grupo_a: str | None, grupo_b: str | None) -> bool:
+        return self._rank_grupo(grupo_a) > self._rank_grupo(grupo_b)
 
+    def _escolher_bloco_dominante(self, bloco_central: int, vizinhanca: Vizinhanca) -> Optional[int]:
         grupo_central = self._grupo(bloco_central)
         if grupo_central is None:
             return None
 
-        score_por_grupo: Dict[str, float] = {}
-        bloco_representante: Dict[str, int] = {}
+        # Só cardinais decidem dominância. Diagonais servem apenas para arredondar canto.
+        candidatos = (
+            vizinhanca[1],  # n
+            vizinhanca[5],  # e
+            vizinhanca[7],  # s
+            vizinhanca[3],  # w
+        )
 
-        for indice, bloco in enumerate(vizinhanca):
-            if indice not in offsets or bloco is None:
+        melhor_bloco: Optional[int] = None
+        melhor_grupo: Optional[str] = None
+        melhor_rank = -10_000
+
+        for bloco in candidatos:
+            if bloco is None:
                 continue
             grupo = self._grupo(bloco)
             if grupo is None or grupo == grupo_central:
                 continue
-
-            dx, dy = offsets[indice]
-            if not self._grupo_recebe_transicao(mundo_x, mundo_y, dx, dy, grupo_central, grupo):
+            rank = self._rank_grupo(grupo)
+            if rank <= self._rank_grupo(grupo_central):
                 continue
+            if rank > melhor_rank:
+                melhor_rank = rank
+                melhor_grupo = grupo
+                melhor_bloco = int(bloco)
 
-            score_por_grupo[grupo] = score_por_grupo.get(grupo, 0.0) + pesos[indice]
-            bloco_representante.setdefault(grupo, int(bloco))
-
-        if not score_por_grupo:
-            return None
-
-        grupo_vencedor = sorted(score_por_grupo.items(), key=lambda item: (-item[1], item[0]))[0][0]
-        return bloco_representante.get(grupo_vencedor)
+        return melhor_bloco
 
     def _construir_overlay(self, tile_px: int, cor_overlay: Cor, flags: Dict[str, bool]) -> Optional[pygame.Surface]:
         if not any(flags.values()):
             return None
+
         largura = max(1.0, float(tile_px) * self.LarguraBordaRatio)
         raio = max(largura * 1.15, float(tile_px) * 0.36)
         alpha_lado = self.AlphaBorda / 255.0
@@ -246,6 +255,7 @@ class TilesTransicionais:
             for px in range(tile_px):
                 u = (px + 0.5) / float(tile_px)
                 influencia = 0.0
+
                 if flags["n"]:
                     influencia = max(influencia, self._gradiente_lado(v * tile_px, largura) * alpha_lado)
                 if flags["s"]:
@@ -254,6 +264,7 @@ class TilesTransicionais:
                     influencia = max(influencia, self._gradiente_lado(u * tile_px, largura) * alpha_lado)
                 if flags["e"]:
                     influencia = max(influencia, self._gradiente_lado((1.0 - u) * tile_px, largura) * alpha_lado)
+
                 if flags["nw"] or (flags["n"] and flags["w"]):
                     influencia = max(influencia, self._gradiente_canto(math.hypot(u * tile_px, v * tile_px), raio) * alpha_canto)
                 if flags["ne"] or (flags["n"] and flags["e"]):
@@ -262,13 +273,19 @@ class TilesTransicionais:
                     influencia = max(influencia, self._gradiente_canto(math.hypot(u * tile_px, (1.0 - v) * tile_px), raio) * alpha_canto)
                 if flags["se"] or (flags["s"] and flags["e"]):
                     influencia = max(influencia, self._gradiente_canto(math.hypot((1.0 - u) * tile_px, (1.0 - v) * tile_px), raio) * alpha_canto)
+
                 if influencia <= 0.0:
                     continue
+
                 ruido = self._ruido_contextual(px, py, flags)
                 influencia = max(0.0, min(1.0, influencia + ((ruido - 0.5) * self.ForcaRuido)))
                 if influencia <= 0.0:
                     continue
-                superficie.set_at((px, py), (*cor_overlay, int(max(0, min(255, round(influencia * 255.0))))))
+
+                superficie.set_at(
+                    (px, py),
+                    (*cor_overlay, int(max(0, min(255, round(influencia * 255.0))))),
+                )
 
         return superficie
 
@@ -297,7 +314,7 @@ class TilesTransicionais:
 
     def renderizar_overlay_tile(self, mundo_x: int, mundo_y: int, bloco_central: int, tile_px: int) -> pygame.Surface:
         vizinhanca = self._coletar_vizinhanca(mundo_x, mundo_y)
-        bloco_dominante = self._escolher_bloco_dominante(mundo_x, mundo_y, bloco_central, vizinhanca)
+        bloco_dominante = self._escolher_bloco_dominante(bloco_central, vizinhanca)
 
         flags = (False, False, False, False, False, False, False, False)
 
@@ -310,26 +327,10 @@ class TilesTransicionais:
                 vizinhanca[7], vizinhanca[6], vizinhanca[3], vizinhanca[0],
             )
 
-            recebe_n = (
-                grupo_central is not None and grupo_dominante is not None
-                and self._mesmo_grupo(bloco_dominante, n)
-                and self._grupo_recebe_transicao(mundo_x, mundo_y, 0, -1, grupo_central, grupo_dominante)
-            )
-            recebe_e = (
-                grupo_central is not None and grupo_dominante is not None
-                and self._mesmo_grupo(bloco_dominante, e)
-                and self._grupo_recebe_transicao(mundo_x, mundo_y, 1, 0, grupo_central, grupo_dominante)
-            )
-            recebe_s = (
-                grupo_central is not None and grupo_dominante is not None
-                and self._mesmo_grupo(bloco_dominante, s)
-                and self._grupo_recebe_transicao(mundo_x, mundo_y, 0, 1, grupo_central, grupo_dominante)
-            )
-            recebe_w = (
-                grupo_central is not None and grupo_dominante is not None
-                and self._mesmo_grupo(bloco_dominante, w)
-                and self._grupo_recebe_transicao(mundo_x, mundo_y, -1, 0, grupo_central, grupo_dominante)
-            )
+            recebe_n = self._mesmo_grupo(bloco_dominante, n) and self._grupo_domina(grupo_dominante, grupo_central)
+            recebe_e = self._mesmo_grupo(bloco_dominante, e) and self._grupo_domina(grupo_dominante, grupo_central)
+            recebe_s = self._mesmo_grupo(bloco_dominante, s) and self._grupo_domina(grupo_dominante, grupo_central)
+            recebe_w = self._mesmo_grupo(bloco_dominante, w) and self._grupo_domina(grupo_dominante, grupo_central)
 
             flags = (
                 recebe_n,
@@ -348,6 +349,7 @@ class TilesTransicionais:
             return cache
 
         superficie = pygame.Surface((tile_px, tile_px), pygame.SRCALPHA)
+
         if bloco_dominante is not None:
             flags_dict = {
                 "n": flags[0],
@@ -366,7 +368,6 @@ class TilesTransicionais:
         resultado = superficie.convert_alpha()
         self._cache_tiles[chave] = resultado
         return resultado
-
 
 class GerenciadorTiles:
     """Compositor de aparência base + transição de bordas entre grupos."""

@@ -83,6 +83,7 @@ final class BiomeRules {
 
     final int objectBlockNearPoiRadius;
     final boolean objectAvoidBeachTiles;
+    final double objectAquamarineDeepWaterRate;
 
     final EnumMap<Biome, BiomeDefinition> biomeDefinitions;
     final EnumMap<Biome, EnumMap<NaturalStructure, Double>> objectRates;
@@ -107,6 +108,7 @@ final class BiomeRules {
         NoiseLayerConfig macroSwamp,
         int objectBlockNearPoiRadius,
         boolean objectAvoidBeachTiles,
+        double objectAquamarineDeepWaterRate,
         EnumMap<Biome, BiomeDefinition> biomeDefinitions,
         EnumMap<Biome, EnumMap<NaturalStructure, Double>> objectRates
     ) {
@@ -129,6 +131,7 @@ final class BiomeRules {
         this.macroSwamp = macroSwamp;
         this.objectBlockNearPoiRadius = objectBlockNearPoiRadius;
         this.objectAvoidBeachTiles = objectAvoidBeachTiles;
+        this.objectAquamarineDeepWaterRate = objectAquamarineDeepWaterRate;
         this.biomeDefinitions = biomeDefinitions;
         this.objectRates = objectRates;
     }
@@ -203,6 +206,7 @@ final class BiomeRules {
             macroSwamp,
             objects.reqInt("block_near_poi_radius"),
             objects.reqBoolean("avoid_beach_tiles"),
+            objects.optDouble("aquamarine_deep_water_rate", 0.00012),
             definitions,
             objectRates
         );

@@ -197,6 +197,17 @@ final class GeradorImagens {
             case PINE -> rgb(20, 74, 34);
             case COPPER -> rgb(197, 112, 70);
             case LAVA_POOL -> rgb(240, 88, 20);
+            case CACTUS -> rgb(34, 132, 50);
+            case SHELL -> rgb(238, 224, 202);
+            case AQUAMARINE -> rgb(70, 208, 220);
+            case COAL -> rgb(62, 62, 62);
+            case IRON -> rgb(176, 168, 156);
+            case FLOWER -> rgb(238, 92, 170);
+            case JADE -> rgb(90, 178, 120);
+            case PLANT -> rgb(84, 176, 74);
+            case SAPPHIRE -> rgb(72, 106, 226);
+            case TOPAZ -> rgb(236, 182, 72);
+            case TREE_TROMBOSA -> rgb(28, 112, 40);
             case HOUSE -> rgb(174, 84, 54);
             case NONE -> rgb(0, 0, 0);
         };

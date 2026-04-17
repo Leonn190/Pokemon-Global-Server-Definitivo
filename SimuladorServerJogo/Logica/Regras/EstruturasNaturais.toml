@@ -1,5 +1,11 @@
 # Regras de estruturas naturais por código.
 
+[variacao]
+escala_min = 0.90
+escala_max = 1.10
+subtipos_variantes = ["arvore", "arvore_trombosa"]
+total_variantes = 3
+
 [tipos."1"]
 subtipo = "arvore"
 nome = "Árvore"
@@ -327,6 +333,22 @@ quantidade = 42
 estilo = "picareta"
 dureza = 4
 drop_ativo = false
+particulasXP = [2, 3, 4]
+tamanhosXP = ["Pequeno", "Medio"]
+
+[tipos."23"]
+subtipo = "arvore_trombosa"
+nome = "Árvore Trombosa"
+sprite = "Recursos/Visual/Mundo/Objetos/ArvoreTrombosa.png"
+raio_colisao = 0.95
+raio_interacao = 1.05
+campo = 1.05
+intensidade = 3.2
+quantidade = 70
+material = "Madeira"
+estilo = "machado"
+dureza = 2
+drop_ativo = true
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
 

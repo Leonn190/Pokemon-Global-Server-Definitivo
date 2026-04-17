@@ -8,7 +8,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import pygame
 
-from Codigo.ModulosGerais.TilesTransicionais import TilesTransicionais
+from Codigo.ModulosGerais.GerenciadorTiles import GerenciadorTiles
+from Codigo.Geradores.EstruturaNaturais import definir_limites_escala_estrutura_natural
 
 Vector2 = Tuple[float, float]
 PacoteMundo = Dict[str, object]
@@ -49,7 +50,8 @@ class LeitorMundo:
         self._cache_tile_px: int = max(1, int(getattr(self.Camera, "TilePx", 50)))
         self._ultimo_chunk_player: Optional[Tuple[int, int]] = None
         self._ultima_versao_chunks_regras = -1
-        self.TilesTransicionais = TilesTransicionais(
+        self._ultimo_seed_transicao: Optional[int] = None
+        self.TilesTransicionais = GerenciadorTiles(
             cores_blocos=self.CoresBlocos,
             callback_bloco_global=self._obter_bloco_global,
             largura_borda_ratio=0.46,
@@ -80,6 +82,20 @@ class LeitorMundo:
 
         if player_controle is not None and chunks_atualizados is not None:
             player_controle.definir_grid_chunks(chunks_atualizados, chunk_tamanho)
+
+        regras_mundo = getattr(self.JOGO, "INFO", {}).get("RegrasMundo", {}) if isinstance(getattr(self.JOGO, "INFO", {}), dict) else {}
+        bloco_mundo = regras_mundo.get("mundo") if isinstance(regras_mundo.get("mundo"), dict) else {}
+        try:
+            seed_transicao = int(bloco_mundo.get("seed", 0) or 0)
+        except (TypeError, ValueError):
+            seed_transicao = 0
+        if self._ultimo_seed_transicao != seed_transicao:
+            self.TilesTransicionais.definir_seed(seed_transicao)
+            self._ultimo_seed_transicao = seed_transicao
+        definir_limites_escala_estrutura_natural(
+            bloco_mundo.get("escala_estrutura_min", 0.90),
+            bloco_mundo.get("escala_estrutura_max", 1.10),
+        )
 
     def conectar_servidor(self, link_servidor: str) -> None:
         self.ServerLink = str(link_servidor)

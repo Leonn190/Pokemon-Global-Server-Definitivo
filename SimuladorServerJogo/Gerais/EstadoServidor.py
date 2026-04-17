@@ -17,6 +17,7 @@ from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
 from SimuladorServerJogo.Gerais.LoaderRegras import (
     carregar_regras_cliente_mundo,
+    carregar_regras_estruturas_naturais,
     carregar_regras_mundo,
     carregar_regras_player,
 )
@@ -545,8 +546,21 @@ def _persistir_personagens(force: bool = False) -> None:
 
 def obter_regras_cliente() -> dict:
     regras = carregar_regras_cliente_mundo()
+    meta = _ESTADO_MUNDO.get("meta", {}) if isinstance(_ESTADO_MUNDO.get("meta"), dict) else {}
+    seed_mundo = int(meta.get("seed", 0) or 0)
+    variacao = carregar_regras_estruturas_naturais().get("variacao", {})
+    escala_min = float(variacao.get("escala_min", 0.90) or 0.90) if isinstance(variacao, dict) else 0.90
+    escala_max = float(variacao.get("escala_max", 1.10) or 1.10) if isinstance(variacao, dict) else 1.10
+    if escala_min > escala_max:
+        escala_min, escala_max = escala_max, escala_min
     regras["player"] = dict(carregar_regras_player())
-    regras["mundo"] = {"chunk_tiles": int(carregar_regras_mundo().get("ChunkTiles", 10) or 10)}
+    regras["mundo"] = {
+        "chunk_tiles": int(carregar_regras_mundo().get("ChunkTiles", 10) or 10),
+        "seed": int(seed_mundo),
+        "transicao_apenas_um_lado": True,
+        "escala_estrutura_min": float(escala_min),
+        "escala_estrutura_max": float(escala_max),
+    }
     return regras
 
 def chave_seguranca():

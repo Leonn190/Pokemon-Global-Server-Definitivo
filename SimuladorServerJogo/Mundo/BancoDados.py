@@ -45,6 +45,9 @@ class BancoDadosMundo:
         self._chunks_por_arquivo = max(1, int(meta.get("chunks_por_arquivo", 10)))
         self._largura_blocos = int(meta.get("largura_blocos", 0))
         self._altura_blocos = int(meta.get("altura_blocos", 0))
+        self._seed_mundo = int(meta.get("seed", 0) or 0)
+        self._regras_variacao_estruturas: Dict[str, object] = {}
+        self._cache_variantes_sprite: Dict[str, Dict[int, str]] = {}
         self._regras_estruturas = self._carregar_regras_estruturas_naturais()
         self._estado_estruturas_naturais: Dict[int, int] = self._carregar_estruturas_tocadas(self._estado_mundo)
         self._gerar_estruturas_naturais_no_mapa()
@@ -52,6 +55,7 @@ class BancoDadosMundo:
 
     def _carregar_regras_estruturas_naturais(self) -> Dict[int, Dict[str, object]]:
         bruto = carregar_regras_estruturas_naturais()
+        self._regras_variacao_estruturas = dict(bruto.get("variacao", {})) if isinstance(bruto.get("variacao"), dict) else {}
         tipos = bruto.get("tipos") if isinstance(bruto.get("tipos"), dict) else {}
         saida: Dict[int, Dict[str, object]] = {}
         for chave, cfg in tipos.items():
@@ -102,6 +106,8 @@ class BancoDadosMundo:
             self._chunks_por_arquivo = max(1, int(meta.get("chunks_por_arquivo", 10)))
             self._largura_blocos = int(meta.get("largura_blocos", 0))
             self._altura_blocos = int(meta.get("altura_blocos", 0))
+            self._seed_mundo = int(meta.get("seed", 0) or 0)
+            self._cache_variantes_sprite.clear()
             self._regras_estruturas = self._carregar_regras_estruturas_naturais()
             self._estado_estruturas_naturais = self._carregar_estruturas_tocadas(self._estado_mundo)
 
@@ -136,6 +142,50 @@ class BancoDadosMundo:
                 return 0
         return 0
 
+    @staticmethod
+    def _mix64(valor: int) -> int:
+        x = int(valor) & 0xFFFFFFFFFFFFFFFF
+        x ^= (x >> 30)
+        x = (x * 0xBF58476D1CE4E5B9) & 0xFFFFFFFFFFFFFFFF
+        x ^= (x >> 27)
+        x = (x * 0x94D049BB133111EB) & 0xFFFFFFFFFFFFFFFF
+        x ^= (x >> 31)
+        return x & 0xFFFFFFFFFFFFFFFF
+
+    def _rng01_estrutura(self, gx: int, gy: int, codigo: int, sal: int = 0) -> float:
+        h = (
+            int(self._seed_mundo)
+            ^ (int(gx) * 0x9E3779B185EBCA87)
+            ^ (int(gy) * 0xC2B2AE3D27D4EB4F)
+            ^ (int(codigo) * 0x165667B19E3779F9)
+            ^ (int(sal) * 0x85EBCA77C2B2AE63)
+        ) & 0xFFFFFFFFFFFFFFFF
+        v = self._mix64(h)
+        return float((v >> 11) & ((1 << 53) - 1)) / float(1 << 53)
+
+    def _limites_escala_estrutura(self) -> Tuple[float, float]:
+        variacao = dict(self._regras_variacao_estruturas)
+        escala_min = float(variacao.get("escala_min", 0.90) or 0.90)
+        escala_max = float(variacao.get("escala_max", 1.10) or 1.10)
+        if escala_min > escala_max:
+            escala_min, escala_max = escala_max, escala_min
+        return (max(0.1, escala_min), max(escala_min, escala_max))
+
+    def _sprite_variante(self, sprite_base: str, indice_variante: int, total_variantes: int) -> str:
+        caminho = Path(str(sprite_base or "").strip())
+        if not caminho.name or int(indice_variante) <= 1:
+            return str(sprite_base or "")
+        chave_base = str(caminho)
+        mapa = self._cache_variantes_sprite.get(chave_base)
+        if mapa is None:
+            mapa = {1: str(sprite_base or "")}
+            for idx in range(2, max(2, int(total_variantes) + 1)):
+                variante = caminho.with_name(f"{caminho.stem}{int(idx)}{caminho.suffix}")
+                if variante.exists():
+                    mapa[int(idx)] = str(variante)
+            self._cache_variantes_sprite[chave_base] = mapa
+        return str(mapa.get(int(indice_variante), sprite_base or ""))
+
     def _assegurar_estruturas_chunk(self, cx: int, cy: int) -> None:
         with self._lock:
             chave = self.normalizar_chunk((cx, cy))
@@ -161,15 +211,33 @@ class BancoDadosMundo:
                     qtd_restante = int(self._estado_estruturas_naturais.get(oid, qtd_base))
                     if qtd_restante <= 0:
                         continue
+                    variacao = dict(self._regras_variacao_estruturas)
+                    escala_min, escala_max = self._limites_escala_estrutura()
+                    escala_rng = self._rng01_estrutura(gx, gy, tile_nat, sal=1)
+                    escala_mundo = escala_min + (escala_max - escala_min) * escala_rng
+
+                    subtipo = str(cfg.get("subtipo", "natural") or "natural")
+                    variantes_subtipos = {str(v).strip().lower() for v in (variacao.get("subtipos_variantes") or [])}
+                    total_variantes = max(1, int(variacao.get("total_variantes", 1) or 1))
+                    variante_idx = 1
+                    if total_variantes > 1 and subtipo.strip().lower() in variantes_subtipos:
+                        variante_rng = self._rng01_estrutura(gx, gy, tile_nat, sal=2)
+                        variante_idx = 1 + int(variante_rng * total_variantes)
+                        variante_idx = max(1, min(total_variantes, variante_idx))
+                    sprite_base = str(cfg.get("sprite", ""))
+                    sprite_variante = self._sprite_variante(sprite_base, variante_idx, total_variantes=total_variantes)
+                    raio_colisao = float(cfg.get("raio_colisao", 0.8) or 0.8) * escala_mundo
+                    raio_interacao_base = float(cfg.get("raio_interacao", cfg.get("raio_colisao", 0.8)) or 0.8)
+                    raio_interacao = raio_interacao_base * escala_mundo
 
                     obj = EstruturaNaturalServer(
                         id_objeto=oid,
-                        tipo=str(cfg.get("subtipo", "natural")),
+                        tipo=subtipo,
                         nome=str(cfg.get("nome", "Estrutura")),
-                        sprite=str(cfg.get("sprite", "")),
+                        sprite=sprite_variante,
                         posicao=(float(gx), float(gy)),
-                        raio_colisao=float(cfg.get("raio_colisao", 0.8) or 0.8),
-                        raio_interacao=float(cfg.get("raio_interacao", cfg.get("raio_colisao", 0.8)) or 0.8),
+                        raio_colisao=raio_colisao,
+                        raio_interacao=raio_interacao,
                         campo=float(cfg.get("campo", 0.0) or 0.0),
                         intensidade=float(cfg.get("intensidade", 0.0) or 0.0),
                         codigo_natural=tile_nat,
@@ -179,6 +247,8 @@ class BancoDadosMundo:
                         dureza=int(cfg.get("dureza", 1) or 1),
                         drop_ativo=bool(cfg.get("drop_ativo", True)),
                     )
+                    obj.estado_extra["escala_mundo"] = float(round(escala_mundo, 5))
+                    obj.estado_extra["variante_sprite"] = int(variante_idx)
                     obj.tipo_classe = "estrutura_natural"
                     self._objetos[obj.Id] = obj
                     self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)

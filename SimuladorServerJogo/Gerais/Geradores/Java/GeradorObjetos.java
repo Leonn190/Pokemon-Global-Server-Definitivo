@@ -22,10 +22,15 @@ final class GeradorObjetos {
             for (int x = 0; x < ctx.width; x++) {
                 int idx = ctx.index(x, y);
                 Biome biome = Biome.values()[ctx.biomeMap[idx] & 0xFF];
-                if (!ctx.isLandBiome(biome)) {
+                Tile tile = Tile.values()[ctx.tileMap[idx] & 0xFF];
+                if (tile == Tile.WATER_DEEP) {
+                    double rollAqua = ctx.random01(ctx.tileSeed(x, y, 653L));
+                    if (rollAqua < biomeRules.objectAquamarineDeepWaterRate) {
+                        ctx.naturalMap[idx] = (byte) NaturalStructure.AQUAMARINE.ordinal();
+                    }
                     continue;
                 }
-                if (biomeRules.objectAvoidBeachTiles && Tile.values()[ctx.tileMap[idx] & 0xFF] == Tile.BEACH_SAND) {
+                if (!ctx.isLandBiome(biome)) {
                     continue;
                 }
                 if (ctx.naturalMap[idx] != (byte) NaturalStructure.NONE.ordinal()) {
@@ -34,7 +39,7 @@ final class GeradorObjetos {
                 if (ctx.isReservedForNaturalStructure(x, y)) {
                     continue;
                 }
-                NaturalStructure structure = chooseNaturalStructure(biome, x, y);
+                NaturalStructure structure = chooseNaturalStructure(biome, tile, x, y);
                 if (structure == NaturalStructure.NONE) {
                     continue;
                 }
@@ -85,13 +90,20 @@ final class GeradorObjetos {
         return true;
     }
 
-    private NaturalStructure chooseNaturalStructure(Biome biome, int x, int y) {
+    private NaturalStructure chooseNaturalStructure(Biome biome, Tile tile, int x, int y) {
         EnumMap<NaturalStructure, Double> rates = biomeRules.objectRates.get(biome);
         if (rates == null || rates.isEmpty()) {
             return NaturalStructure.NONE;
         }
+        if (tile == Tile.BEACH_SAND) {
+            return sortearEstruturaUnica(rates.getOrDefault(NaturalStructure.SHELL, 0.0), x, y, 709L, NaturalStructure.SHELL);
+        }
         double total = 0.0;
-        for (double rate : rates.values()) {
+        for (NaturalStructure structure : NaturalStructure.values()) {
+            if (structure == NaturalStructure.NONE || structure == NaturalStructure.SHELL || structure == NaturalStructure.AQUAMARINE) {
+                continue;
+            }
+            double rate = rates.getOrDefault(structure, 0.0);
             if (rate > 0.0) {
                 total += rate;
             }
@@ -107,7 +119,7 @@ final class GeradorObjetos {
 
         double acc = 0.0;
         for (NaturalStructure structure : NaturalStructure.values()) {
-            if (structure == NaturalStructure.NONE) {
+            if (structure == NaturalStructure.NONE || structure == NaturalStructure.SHELL || structure == NaturalStructure.AQUAMARINE) {
                 continue;
             }
             double rate = rates.getOrDefault(structure, 0.0);
@@ -120,5 +132,12 @@ final class GeradorObjetos {
             }
         }
         return NaturalStructure.NONE;
+    }
+
+    private NaturalStructure sortearEstruturaUnica(double chance, int x, int y, long salt, NaturalStructure estrutura) {
+        if (chance <= 0.0) {
+            return NaturalStructure.NONE;
+        }
+        return ctx.random01(ctx.tileSeed(x, y, salt)) < chance ? estrutura : NaturalStructure.NONE;
     }
 }

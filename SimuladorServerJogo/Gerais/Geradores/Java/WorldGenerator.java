@@ -79,6 +79,17 @@ enum NaturalStructure {
     PINE,
     COPPER,
     LAVA_POOL,
+    CACTUS,
+    SHELL,
+    AQUAMARINE,
+    COAL,
+    IRON,
+    FLOWER,
+    JADE,
+    PLANT,
+    SAPPHIRE,
+    TOPAZ,
+    TREE_TROMBOSA,
     HOUSE
 }
 
@@ -789,4 +800,3 @@ final class GeneratorContext {
         System.out.printf(Locale.US, "%s: %.2f s%n", label, ms / 1000.0);
     }
 }
-

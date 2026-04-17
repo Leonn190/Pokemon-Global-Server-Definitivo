@@ -11,7 +11,12 @@ import threading
 import pygame
 
 from Codigo.Geradores.Baus import Bau
-from Codigo.Geradores.EstruturaNaturais import EstruturaNatural, prioridade_estrutura_natural, tipo_estrutura_natural_por_codigo
+from Codigo.Geradores.EstruturaNaturais import (
+    EstruturaNatural,
+    limitar_escala_estrutura_natural,
+    prioridade_estrutura_natural,
+    tipo_estrutura_natural_por_codigo,
+)
 from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
@@ -582,8 +587,8 @@ class ControladorObjetos:
 
         sprite = self._obter_sprite_fallback(sprite_path)
         if sprite is not None:
-            escala = max(0.70, min(1.0, float(escala or 1.0)))
-            if escala < 0.999:
+            escala = limitar_escala_estrutura_natural(float(escala or 1.0))
+            if abs(escala - 1.0) > 0.001:
                 w = max(1, int(sprite.get_width() * escala))
                 h = max(1, int(sprite.get_height() * escala))
                 sprite = pygame.transform.smoothscale(sprite, (w, h))
@@ -593,7 +598,7 @@ class ControladorObjetos:
 
         raio_raw = max(0.0, float(obj.get("raio_colisao", 0.4)))
         raio_px = int(raio_raw if raio_raw > 4.0 else raio_raw * camera.TilePx)
-        raio_px = int(max(1.0, raio_px * max(0.70, min(1.0, float(escala or 1.0)))))
+        raio_px = int(max(1.0, raio_px * limitar_escala_estrutura_natural(float(escala or 1.0))))
         raio_px = max(3, min(80, raio_px))
         pygame.draw.circle(tela, cor_fallback, (int(px), int(py)), raio_px)
 

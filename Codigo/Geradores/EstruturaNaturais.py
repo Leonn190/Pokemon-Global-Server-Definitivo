@@ -32,12 +32,50 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
     20: {"subtipo": "planta", "nome": "Planta", "sprite": "Recursos/Visual/Mundo/Objetos/Planta.png"},
     21: {"subtipo": "safira", "nome": "Safira", "sprite": "Recursos/Visual/Mundo/Objetos/Safira.png"},
     22: {"subtipo": "topazio", "nome": "Topázio", "sprite": "Recursos/Visual/Mundo/Objetos/Topazio.png"},
+    23: {"subtipo": "arvore_trombosa", "nome": "Árvore Trombosa", "sprite": "Recursos/Visual/Mundo/Objetos/ArvoreTrombosa.png"},
 }
 
 ORDEM_CANONICA_ESTRUTURAS_NATURAIS: Tuple[str, ...] = (
-    "lava", "pedra", "cobre", "ferro", "carvao", "ouro", "diamante", "ametista", "rubi", "esmeralda", "safira", "topazio", "aquamarine", "jade", "concha", "pinheiro", "palmeira", "cacto", "arvore", "planta", "flor", "arbusto",
+    "lava", "pedra", "cobre", "ferro", "carvao", "ouro", "diamante", "ametista", "rubi", "esmeralda", "safira", "topazio", "aquamarine", "jade", "concha", "pinheiro", "palmeira", "cacto", "arvore_trombosa", "arvore", "planta", "flor", "arbusto",
 )
 _PRIORIDADE_SUBTIPO: Dict[str, int] = {nome: idx for idx, nome in enumerate(ORDEM_CANONICA_ESTRUTURAS_NATURAIS)}
+
+
+_LIMITE_ESCALA_ESTRUTURA_MIN = 0.90
+_LIMITE_ESCALA_ESTRUTURA_MAX = 1.10
+
+
+def definir_limites_escala_estrutura_natural(minimo: object, maximo: object) -> None:
+    global _LIMITE_ESCALA_ESTRUTURA_MIN, _LIMITE_ESCALA_ESTRUTURA_MAX
+    try:
+        min_val = float(minimo)
+    except (TypeError, ValueError):
+        min_val = 0.90
+    try:
+        max_val = float(maximo)
+    except (TypeError, ValueError):
+        max_val = 1.10
+    if min_val > max_val:
+        min_val, max_val = max_val, min_val
+    _LIMITE_ESCALA_ESTRUTURA_MIN = max(0.1, min_val)
+    _LIMITE_ESCALA_ESTRUTURA_MAX = max(_LIMITE_ESCALA_ESTRUTURA_MIN, max_val)
+
+
+def limites_escala_estrutura_natural() -> Tuple[float, float]:
+    minimo = float(_LIMITE_ESCALA_ESTRUTURA_MIN)
+    maximo = float(_LIMITE_ESCALA_ESTRUTURA_MAX)
+    if minimo > maximo:
+        minimo, maximo = maximo, minimo
+    return (max(0.1, minimo), max(minimo, maximo))
+
+
+def limitar_escala_estrutura_natural(valor: object) -> float:
+    minimo, maximo = limites_escala_estrutura_natural()
+    try:
+        escala = float(valor)
+    except (TypeError, ValueError):
+        return float(minimo)
+    return max(minimo, min(maximo, escala))
 
 
 def tipo_estrutura_natural_por_codigo(codigo: object) -> Optional[Dict[str, object]]:
@@ -72,6 +110,7 @@ class EstruturaNatural:
         self.Dureza = max(1, int(dureza or 1))
         self._impacto_t = 0.0
         self._escala_impacto = 1.0
+        self._escala_base = 1.0
         self._escala_render_atual = 1.0
 
     def definir_posicao(self, x: float, y: float) -> None:
@@ -89,7 +128,7 @@ class EstruturaNatural:
             self._escala_impacto += (alvo - self._escala_impacto) * min(1.0, dt * 18.0)
         else:
             self._escala_impacto += (1.0 - self._escala_impacto) * min(1.0, dt * 12.0)
-        self._escala_render_atual = float(self._escala_impacto)
+        self._escala_render_atual = float(self._escala_base * self._escala_impacto)
 
     def escala_render(self, dt: float = 0.0) -> float:
         if dt > 0.0:
@@ -107,6 +146,8 @@ class EstruturaNatural:
             self.Quantidade = max(0, int(estado.get("quantidade", self.Quantidade)))
             if self.Quantidade < anterior:
                 self._impacto_t = 0.12
+        if "escala_mundo" in estado:
+            self._escala_base = limitar_escala_estrutura_natural(estado.get("escala_mundo", 1.0))
 
 
 class EstruturaNaturalFake:

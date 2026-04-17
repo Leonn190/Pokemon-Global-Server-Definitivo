@@ -200,28 +200,35 @@ class TilesTransicionais:
         return tuple(valores)  # type: ignore[return-value]
 
     def _escolher_bloco_dominante(self, mundo_x: int, mundo_y: int, bloco_central: int, vizinhanca: Vizinhanca) -> Optional[int]:
-        pesos = {0: 1.10, 1: 2.60, 2: 1.10, 3: 2.60, 5: 2.60, 6: 1.10, 7: 2.60, 8: 1.10}
-        offsets = {0: (-1, -1), 1: (0, -1), 2: (1, -1), 3: (-1, 0), 5: (1, 0), 6: (-1, 1), 7: (0, 1), 8: (1, 1)}
+        # considerar só cardinais para escolher quem domina a borda;
+        # diagonais servem só para arredondar canto depois
+        pesos = {1: 1.0, 3: 1.0, 5: 1.0, 7: 1.0}
+        offsets = {1: (0, -1), 3: (-1, 0), 5: (1, 0), 7: (0, 1)}
+
         grupo_central = self._grupo(bloco_central)
         if grupo_central is None:
             return None
 
         score_por_grupo: Dict[str, float] = {}
         bloco_representante: Dict[str, int] = {}
+
         for indice, bloco in enumerate(vizinhanca):
-            if indice == 4 or bloco is None:
+            if indice not in offsets or bloco is None:
                 continue
             grupo = self._grupo(bloco)
             if grupo is None or grupo == grupo_central:
                 continue
-            dx, dy = offsets.get(indice, (0, 0))
+
+            dx, dy = offsets[indice]
             if not self._grupo_recebe_transicao(mundo_x, mundo_y, dx, dy, grupo_central, grupo):
                 continue
-            score_por_grupo[grupo] = score_por_grupo.get(grupo, 0.0) + pesos.get(indice, 1.0)
+
+            score_por_grupo[grupo] = score_por_grupo.get(grupo, 0.0) + pesos[indice]
             bloco_representante.setdefault(grupo, int(bloco))
 
         if not score_por_grupo:
             return None
+
         grupo_vencedor = sorted(score_por_grupo.items(), key=lambda item: (-item[1], item[0]))[0][0]
         return bloco_representante.get(grupo_vencedor)
 
@@ -291,22 +298,50 @@ class TilesTransicionais:
     def renderizar_overlay_tile(self, mundo_x: int, mundo_y: int, bloco_central: int, tile_px: int) -> pygame.Surface:
         vizinhanca = self._coletar_vizinhanca(mundo_x, mundo_y)
         bloco_dominante = self._escolher_bloco_dominante(mundo_x, mundo_y, bloco_central, vizinhanca)
+
         flags = (False, False, False, False, False, False, False, False)
+
         if bloco_dominante is not None:
+            grupo_central = self._grupo(bloco_central)
+            grupo_dominante = self._grupo(bloco_dominante)
+
             n, ne, e, se, s, sw, w, nw = (
                 vizinhanca[1], vizinhanca[2], vizinhanca[5], vizinhanca[8],
                 vizinhanca[7], vizinhanca[6], vizinhanca[3], vizinhanca[0],
             )
-            flags = (
-                self._mesmo_grupo(bloco_dominante, n),
-                self._mesmo_grupo(bloco_dominante, ne),
-                self._mesmo_grupo(bloco_dominante, e),
-                self._mesmo_grupo(bloco_dominante, se),
-                self._mesmo_grupo(bloco_dominante, s),
-                self._mesmo_grupo(bloco_dominante, sw),
-                self._mesmo_grupo(bloco_dominante, w),
-                self._mesmo_grupo(bloco_dominante, nw),
+
+            recebe_n = (
+                grupo_central is not None and grupo_dominante is not None
+                and self._mesmo_grupo(bloco_dominante, n)
+                and self._grupo_recebe_transicao(mundo_x, mundo_y, 0, -1, grupo_central, grupo_dominante)
             )
+            recebe_e = (
+                grupo_central is not None and grupo_dominante is not None
+                and self._mesmo_grupo(bloco_dominante, e)
+                and self._grupo_recebe_transicao(mundo_x, mundo_y, 1, 0, grupo_central, grupo_dominante)
+            )
+            recebe_s = (
+                grupo_central is not None and grupo_dominante is not None
+                and self._mesmo_grupo(bloco_dominante, s)
+                and self._grupo_recebe_transicao(mundo_x, mundo_y, 0, 1, grupo_central, grupo_dominante)
+            )
+            recebe_w = (
+                grupo_central is not None and grupo_dominante is not None
+                and self._mesmo_grupo(bloco_dominante, w)
+                and self._grupo_recebe_transicao(mundo_x, mundo_y, -1, 0, grupo_central, grupo_dominante)
+            )
+
+            flags = (
+                recebe_n,
+                recebe_n and recebe_e and self._mesmo_grupo(bloco_dominante, ne),
+                recebe_e,
+                recebe_e and recebe_s and self._mesmo_grupo(bloco_dominante, se),
+                recebe_s,
+                recebe_s and recebe_w and self._mesmo_grupo(bloco_dominante, sw),
+                recebe_w,
+                recebe_w and recebe_n and self._mesmo_grupo(bloco_dominante, nw),
+            )
+
         chave = (int(tile_px), int(bloco_dominante or -1), flags)
         cache = self._cache_tiles.get(chave)
         if cache is not None:

@@ -34,10 +34,19 @@ class FiltroCamera:
 
     @classmethod
     def reconfigurar_iluminacao(cls, dados: Dict[str, object]) -> None:
-        ini_escurecer = int(dados.get("inicio_escurecer_hora", 17) or 17) * 60 + int(dados.get("inicio_escurecer_minuto", 0) or 0)
-        escuro_max = int(dados.get("escuro_maximo_hora", 1) or 1) * 60 + int(dados.get("escuro_maximo_minuto", 0) or 0)
-        ini_clarear = int(dados.get("inicio_clarear_hora", 1) or 1) * 60 + int(dados.get("inicio_clarear_minuto", 0) or 0)
-        fim_clarear = int(dados.get("fim_clarear_hora", 8) or 8) * 60 + int(dados.get("fim_clarear_minuto", 0) or 0)
+        def _int_cfg(chave: str, padrao: int) -> int:
+            valor = dados.get(chave, padrao)
+            if valor in (None, ""):
+                return int(padrao)
+            try:
+                return int(valor)
+            except (TypeError, ValueError):
+                return int(padrao)
+
+        ini_escurecer = _int_cfg("inicio_escurecer_hora", 17) * 60 + _int_cfg("inicio_escurecer_minuto", 0)
+        escuro_max = _int_cfg("escuro_maximo_hora", 1) * 60 + _int_cfg("escuro_maximo_minuto", 0)
+        ini_clarear = _int_cfg("inicio_clarear_hora", 1) * 60 + _int_cfg("inicio_clarear_minuto", 0)
+        fim_clarear = _int_cfg("fim_clarear_hora", 8) * 60 + _int_cfg("fim_clarear_minuto", 0)
 
         cls.INICIO_ESCURECER_MIN = max(0, ini_escurecer)
         cls.ESCURO_MAXIMO_MIN = max(cls.INICIO_ESCURECER_MIN + 1, escuro_max + (1440 if escuro_max < cls.INICIO_ESCURECER_MIN else 0))

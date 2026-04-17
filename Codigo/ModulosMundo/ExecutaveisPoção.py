@@ -77,6 +77,8 @@ def executar_pocao(nome_pocao: str, pokemon: dict) -> dict:
     n = _normalizar_nome(nome)
 
     tipos = {
+        _normalizar_nome("Max Revival"): ("revival", 1.0),
+        _normalizar_nome("Revival"): ("revival", 0.5),
         _normalizar_nome("Revive Maximo"): ("revival", 1.0),
         _normalizar_nome("Revive"): ("revival", 0.5),
         _normalizar_nome("Elixir"): ("xp", None),

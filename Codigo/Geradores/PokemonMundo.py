@@ -628,15 +628,17 @@ class Pokemon:
 
     def _desenhar_animacao_fuga(self, tela, centro, base):
         t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimFugaMs))))
-        self._desenhar_circulo_base(tela, centro, base)
+        base_visual = max(6, int(base * 2))
+        corpo_visual = max(3, int(base_visual * 1.05))
+        self._desenhar_circulo_base(tela, centro, base_visual)
         for i in range(5):
             ang = (i / 5.0) * math.pi * 2.0 + (t * 2.4)
-            ox = int(math.cos(ang) * base * (0.45 + t * 0.85))
-            oy = int(math.sin(ang) * base * (0.25 + t * 0.65))
-            pygame.draw.circle(tela, (255, 225, 170), (centro[0] + ox, centro[1] + oy), max(2, int(base * 0.08)))
+            ox = int(math.cos(ang) * base_visual * (0.45 + t * 0.85))
+            oy = int(math.sin(ang) * base_visual * (0.25 + t * 0.65))
+            pygame.draw.circle(tela, (255, 225, 170), (centro[0] + ox, centro[1] + oy), max(2, int(base_visual * 0.08)))
         escala = min(1.0, 0.18 + (t ** 0.65) * 0.92)
         alpha = max(50, int(255 * min(1.0, 0.4 + t * 0.9)))
-        self._desenhar_pokemon_normal(tela, centro, max(3, int(base * 2.1)), escala_extra=escala, alpha=alpha)
+        self._desenhar_pokemon_normal(tela, centro, corpo_visual, escala_extra=escala, alpha=alpha)
 
     def _desenhar_animacao_volta(self, tela, camera, tile_px):
         ini = self.CapturaEstado.get("retorno_inicio") if isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)) else list(self._posicao_bola_mundo())

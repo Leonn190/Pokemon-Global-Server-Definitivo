@@ -41,6 +41,16 @@ class CerebroProjeteis:
         ux, uy = dx / dist, dy / dist
         dist_final = min(float(alcance), dist)
         destino = [float(p0[0]) + ux * dist_final, float(p0[1]) + uy * dist_final]
+        usuario = str(BANCO_DADOS.usuario_por_objeto_id(int(dono_id)) or client_id or "").strip()
+        if not usuario:
+            return False
+        dados_jogador = obter_personagem_para_entrada(usuario) or {}
+        inventario = dict(dados_jogador.get("inventario", {})) if isinstance(dados_jogador.get("inventario"), dict) else {}
+        item_base_id = str(payload.get("item_base_id") or "").strip()
+        item_nome = str(payload.get("item_nome") or payload.get("item") or variante).strip()
+        if not self._core._servico_inventario.consumir_um(inventario, item_base_id, item_nome):
+            return False
+        self._core._servico_inventario.persistir_jogador(usuario, int(dono_id), inventario, registrar_diff)
 
         registrar_diff("spawn", payload={"token": token, "subtipo_projetil": subtipo, "variante": variante, "item": str(payload.get("item") or ""), "item_nome": str(payload.get("item_nome") or payload.get("item") or variante), "item_base_id": str(payload.get("item_base_id") or ""), "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": float(velocidade), "dono_id": int(dono_id), "dono_nome": str(payload.get("dono_nome") or client_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(dono_id), autor=client_id, categoria="projetil_lancamento")
 

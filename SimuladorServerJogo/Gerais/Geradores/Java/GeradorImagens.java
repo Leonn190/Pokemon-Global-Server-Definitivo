@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 
 final class GeradorImagens {
-    private static final double REGION_ALPHA = 0.28;
     private static final int REGION_NAME_OUTLINE = rgb(255, 255, 255);
     private static final int REGION_NAME_FILL = rgb(20, 20, 20);
     private static final int VILLAGE_NAME_OUTLINE = rgb(255, 255, 255);
@@ -19,6 +18,8 @@ final class GeradorImagens {
     private static final int VILLAGE_POINT_COLOR = rgb(220, 28, 28);
     private static final int GYM_POINT_COLOR = rgb(255, 255, 255);
     private static final int DUNGEON_POINT_COLOR = rgb(0, 0, 0);
+    private static final int ROUTE_COLOR = rgb(150, 92, 48);
+    private static final int ROUTE_OUTLINE = rgb(245, 233, 196);
 
     private final GeneratorContext ctx;
 
@@ -31,6 +32,7 @@ final class GeradorImagens {
         renderWorldWithObjects(new File(outputDir, "world_foto_objetos.png"));
         renderWorldWithPois(new File(outputDir, "world_foto_estadios_dungeons.png"));
         renderWorldWithRegions(new File(outputDir, "world_foto_regioes.png"));
+        renderWorldWithRoutes(new File(outputDir, "world_foto_rotas.png"));
     }
 
     private void renderBaseWorld(File file) throws IOException {
@@ -76,39 +78,52 @@ final class GeradorImagens {
     }
 
     private void renderWorldWithRegions(File file) throws IOException {
-        BufferedImage image = createBaseImage();
+        BufferedImage image = new BufferedImage(ctx.width, ctx.height, BufferedImage.TYPE_INT_RGB);
         int[] buffer = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
         for (int y = 0; y < ctx.height; y++) {
             for (int x = 0; x < ctx.width; x++) {
                 int idx = ctx.index(x, y);
-                Biome biome = Biome.values()[ctx.biomeMap[idx] & 0xFF];
-                if (!ctx.isLandBiome(biome)) {
-                    continue;
+                Tile tile = Tile.values()[ctx.tileMap[idx] & 0xFF];
+                if (tile == Tile.WATER_DEEP || tile == Tile.WATER_SHALLOW) {
+                    buffer[idx] = tileColor(tile);
+                } else {
+                    buffer[idx] = ctx.nearestRegion(x, y).color;
                 }
-                RegionData region = ctx.nearestRegion(x, y);
-                buffer[idx] = blend(buffer[idx], region.color, REGION_ALPHA);
             }
         }
 
+        ImageIO.write(image, "png", file);
+        image.flush();
+    }
+
+    private void renderWorldWithRoutes(File file) throws IOException {
+        BufferedImage image = createBaseImage();
+        Graphics2D g = image.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int routeStroke = Math.max(2, Math.min(ctx.width, ctx.height) / 520);
+
+        g.setStroke(new BasicStroke(routeStroke + 2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.setColor(new Color(ROUTE_OUTLINE));
+        for (RouteData route : ctx.routes) {
+            drawRoute(g, route);
+        }
+
+        g.setStroke(new BasicStroke(routeStroke, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.setColor(new Color(ROUTE_COLOR));
+        for (RouteData route : ctx.routes) {
+            drawRoute(g, route);
+        }
+
+        int[] buffer = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
         for (Poi poi : ctx.pois) {
             if (poi.type == PoiType.VILLAGE) {
                 drawPoint(buffer, poi.x, poi.y, 7, VILLAGE_POINT_COLOR);
             }
         }
 
-        Graphics2D g = image.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        int regionFontSize = Math.max(28, Math.min(ctx.width, ctx.height) / 70);
-        int villageFontSize = Math.max(18, regionFontSize / 2);
-
-        g.setFont(new Font("SansSerif", Font.BOLD, regionFontSize));
-        for (RegionData region : ctx.regions) {
-            drawLabel(g, region.name, region.centerX, region.centerY, REGION_NAME_FILL, REGION_NAME_OUTLINE);
-        }
-
+        int villageFontSize = Math.max(18, Math.min(ctx.width, ctx.height) / 150);
         g.setFont(new Font("SansSerif", Font.BOLD, villageFontSize));
         for (Poi poi : ctx.pois) {
             if (poi.type == PoiType.VILLAGE && poi.name != null && !poi.name.isBlank()) {
@@ -119,6 +134,17 @@ final class GeradorImagens {
 
         ImageIO.write(image, "png", file);
         image.flush();
+    }
+
+    private void drawRoute(Graphics2D g, RouteData route) {
+        if (route.points == null || route.points.size() < 2) {
+            return;
+        }
+        for (int i = 1; i < route.points.size(); i++) {
+            int[] a = route.points.get(i - 1);
+            int[] b = route.points.get(i);
+            g.drawLine(a[0], a[1], b[0], b[1]);
+        }
     }
 
     private void drawLabel(Graphics2D g, String text, int centerX, int baselineY, int fillRgb, int outlineRgb) {
@@ -219,19 +245,6 @@ final class GeradorImagens {
             case DUNGEON -> DUNGEON_POINT_COLOR;
             case VILLAGE -> rgb(255, 236, 80);
         };
-    }
-
-    private int blend(int baseRgb, int overlayRgb, double alpha) {
-        int br = (baseRgb >> 16) & 0xFF;
-        int bg = (baseRgb >> 8) & 0xFF;
-        int bb = baseRgb & 0xFF;
-        int or = (overlayRgb >> 16) & 0xFF;
-        int og = (overlayRgb >> 8) & 0xFF;
-        int ob = overlayRgb & 0xFF;
-        int r = (int) Math.round(br * (1.0 - alpha) + or * alpha);
-        int g = (int) Math.round(bg * (1.0 - alpha) + og * alpha);
-        int b = (int) Math.round(bb * (1.0 - alpha) + ob * alpha);
-        return rgb(r, g, b);
     }
 
     private static int rgb(int r, int g, int b) {

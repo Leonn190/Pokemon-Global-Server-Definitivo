@@ -48,6 +48,7 @@ final class LocalityRules {
     final int houseMinDistanceFromCenter;
 
     final LocalityPoiConfig gymConfig;
+    final RouteRules routeConfig;
 
     final List<String> regionNames;
     final List<String> villageNames;
@@ -69,6 +70,7 @@ final class LocalityRules {
         int houseRadius,
         int houseMinDistanceFromCenter,
         LocalityPoiConfig gymConfig,
+        RouteRules routeConfig,
         List<String> regionNames,
         List<String> villageNames
     ) {
@@ -88,6 +90,7 @@ final class LocalityRules {
         this.houseRadius = houseRadius;
         this.houseMinDistanceFromCenter = houseMinDistanceFromCenter;
         this.gymConfig = gymConfig;
+        this.routeConfig = routeConfig;
         this.regionNames = regionNames;
         this.villageNames = villageNames;
     }
@@ -101,6 +104,7 @@ final class LocalityRules {
         TomlTable villages = root.table("villages");
         TomlTable houses = root.table("houses");
         TomlTable gyms = root.table("gyms");
+        TomlTable routes = root.table("routes");
 
         return new LocalityRules(
             regions.reqInt("min_count"),
@@ -119,6 +123,7 @@ final class LocalityRules {
             houses.reqInt("radius"),
             houses.reqInt("min_distance_from_center"),
             readPoiConfig(gyms),
+            readRouteConfig(routes),
             dedupeNames(regions.reqStringList("name_candidates")),
             dedupeNames(villages.reqStringList("name_candidates"))
         );
@@ -133,6 +138,20 @@ final class LocalityRules {
             SimpleToml.enumSet(Biome.class, table.reqStringList("allowed_biomes")),
             table.optInt("area_chunks", 0),
             table.optInt("clear_margin_tiles", 0)
+        );
+    }
+
+    private static RouteRules readRouteConfig(TomlTable table) {
+        return new RouteRules(
+            table.reqInt("min_count"),
+            table.reqInt("max_count"),
+            table.reqInt("min_village_links"),
+            table.reqInt("max_village_links"),
+            table.reqInt("min_distance"),
+            table.reqInt("max_distance"),
+            table.optInt("shallow_water_penalty", 10),
+            table.optInt("same_region_bonus_percent", 82) / 100.0,
+            table.optInt("route_brush_radius", 2)
         );
     }
 

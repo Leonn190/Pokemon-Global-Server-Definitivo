@@ -167,6 +167,7 @@ final class GeneratorContext {
     final int[] naturalCounts;
     final List<Poi> pois;
     final List<RegionData> regions;
+    final List<RouteData> routes;
 
     final int macroGridWidth;
     final int macroGridHeight;
@@ -181,6 +182,7 @@ final class GeneratorContext {
     final GeradorBiomas geradorBiomas;
     final GeradorTerreno geradorTerreno;
     final GeradorLocalidades geradorLocalidades;
+    final GeradorRotas geradorRotas;
     final GeradorObjetos geradorObjetos;
     final GeradorImagens geradorImagens;
 
@@ -200,6 +202,7 @@ final class GeneratorContext {
         this.naturalCounts = new int[NaturalStructure.values().length];
         this.pois = new ArrayList<>();
         this.regions = new ArrayList<>();
+        this.routes = new ArrayList<>();
         this.macroGridWidth = Math.max(1, biomeRules.macroGridWidth);
         this.macroGridHeight = Math.max(1, biomeRules.macroGridHeight);
         this.macroCellWidth = Math.max(1, (int) Math.ceil(width / (double) macroGridWidth));
@@ -208,6 +211,7 @@ final class GeneratorContext {
         this.geradorBiomas = new GeradorBiomas(this);
         this.geradorTerreno = new GeradorTerreno(this);
         this.geradorLocalidades = new GeradorLocalidades(this);
+        this.geradorRotas = new GeradorRotas(this);
         this.geradorObjetos = new GeradorObjetos(this);
         this.geradorImagens = new GeradorImagens(this);
     }
@@ -241,20 +245,25 @@ final class GeneratorContext {
         logTime("Estruturas naturais", t3);
 
         long t4 = System.currentTimeMillis();
-        System.out.println("Posicionando dungeons...");
-        geradorObjetos.placeDungeons();
-        logTime("Dungeons", t4);
+        System.out.println("Gerando rotas entre vilas...");
+        geradorRotas.generate();
+        logTime("Rotas", t4);
 
         long t5 = System.currentTimeMillis();
+        System.out.println("Posicionando dungeons...");
+        geradorObjetos.placeDungeons();
+        logTime("Dungeons", t5);
+
+        long t6 = System.currentTimeMillis();
         findSpawnChunk();
         System.out.println("Exportando mundo em chunks...");
         writeWorldChunks(dir);
-        logTime("Export", t5);
+        logTime("Export", t6);
 
-        long t6 = System.currentTimeMillis();
+        long t7 = System.currentTimeMillis();
         System.out.println("Gerando fotos do mundo...");
         geradorImagens.gerarImagens(dir);
-        logTime("Fotos do mundo", t6);
+        logTime("Fotos do mundo", t7);
 
         printSummary();
         logTime("Tempo total", t0);
@@ -611,6 +620,7 @@ final class GeneratorContext {
             writer.write("  \"spawn_chunk_y\": " + spawnChunkY + ",\n");
             writer.write("  \"spawn_x\": " + spawnX + ",\n");
             writer.write("  \"spawn_y\": " + spawnY + ",\n");
+
             writer.write("  \"regioes\": [\n");
             for (int i = 0; i < regions.size(); i++) {
                 RegionData region = regions.get(i);
@@ -623,13 +633,14 @@ final class GeneratorContext {
                 writer.write("\n");
             }
             writer.write("  ],\n");
-            writer.write("  \"vilas\": [\n");
+
             List<Poi> villages = new ArrayList<>();
             for (Poi poi : pois) {
                 if (poi.type == PoiType.VILLAGE) {
                     villages.add(poi);
                 }
             }
+            writer.write("  \"vilas\": [\n");
             for (int i = 0; i < villages.size(); i++) {
                 Poi poi = villages.get(i);
                 writer.write("    {\"nome\": \"" + escapeJson(poi.name == null ? ("Vila" + (i + 1)) : poi.name) + "\""
@@ -641,6 +652,31 @@ final class GeneratorContext {
                 writer.write("\n");
             }
             writer.write("  ],\n");
+
+            writer.write("  \"rotas\": [\n");
+            for (int i = 0; i < routes.size(); i++) {
+                RouteData route = routes.get(i);
+                writer.write("    {\"id\": " + route.id
+                    + ", \"origem\": \"" + escapeJson(route.fromVillage) + "\""
+                    + ", \"destino\": \"" + escapeJson(route.toVillage) + "\""
+                    + ", \"regiao_origem_id\": " + route.fromRegionId
+                    + ", \"regiao_destino_id\": " + route.toRegionId
+                    + ", \"pontos\": [");
+                for (int pointIndex = 0; pointIndex < route.points.size(); pointIndex++) {
+                    int[] point = route.points.get(pointIndex);
+                    writer.write("[" + point[0] + "," + point[1] + "]");
+                    if (pointIndex < route.points.size() - 1) {
+                        writer.write(",");
+                    }
+                }
+                writer.write("]}");
+                if (i < routes.size() - 1) {
+                    writer.write(",");
+                }
+                writer.write("\n");
+            }
+            writer.write("  ],\n");
+
             writer.write("  \"estadios\": [\n");
             int gymIndex = 0;
             int totalGyms = 0;
@@ -787,11 +823,13 @@ final class GeneratorContext {
         long gyms = pois.stream().filter(p -> p.type == PoiType.GYM).count();
         long dungeons = pois.stream().filter(p -> p.type == PoiType.DUNGEON).count();
         long villages = pois.stream().filter(p -> p.type == PoiType.VILLAGE).count();
+        long routesCount = routes.size();
         System.out.println("Regioes: " + regions.size());
         System.out.println("POIs:");
         System.out.println("  GYM      " + gyms);
         System.out.println("  DUNGEON  " + dungeons);
         System.out.println("  VILLAGE  " + villages);
+        System.out.println("Rotas: " + routesCount);
         System.out.println("Saida em: " + new File(outputDirectory).getAbsolutePath());
     }
 

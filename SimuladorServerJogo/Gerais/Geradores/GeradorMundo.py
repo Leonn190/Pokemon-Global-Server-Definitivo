@@ -42,6 +42,7 @@ ARQUIVOS_JAVA = [
     PASTA_JAVA / "GeradorObjetos.java",
     PASTA_JAVA / "GeradorImagens.java",
     PASTA_JAVA / "GeradorLocalidades.java",
+    PASTA_JAVA / "GeradorRotas.java",
 ]
 ARQUIVO_CLASS_PRINCIPAL = PASTA_JAVA_CLASSES / "WorldGenerator.class"
 
@@ -277,9 +278,14 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
             _emitir_progresso(callback_progresso, 68, "Posicionando estruturas naturais")
             continue
 
+        if "Gerando rotas entre vilas" in linha:
+            etapa = "rotas"
+            _emitir_progresso(callback_progresso, 76, "Gerando rotas entre vilas")
+            continue
+
         if "Posicionando dungeons" in linha:
             etapa = "dungeons"
-            _emitir_progresso(callback_progresso, 78, "Posicionando dungeons")
+            _emitir_progresso(callback_progresso, 84, "Posicionando dungeons")
             continue
 
         if "Exportando mundo em chunks" in linha:
@@ -296,7 +302,7 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
                     chunks_total = grupos_x * grupos_y
                 except Exception:
                     chunks_total = 0
-            _emitir_progresso(callback_progresso, 82, "Salvando chunks")
+            _emitir_progresso(callback_progresso, 90, "Salvando chunks")
             continue
 
         m_linha = re.search(r"linha\s+(\d+)\s*/\s*(\d+)", linha)
@@ -311,7 +317,7 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
         if m_estrut:
             atual = int(m_estrut.group(1))
             total = max(1, int(m_estrut.group(2)))
-            pct = 60 + int((atual / total) * 15)
+            pct = 68 + int((atual / total) * 8)
             _emitir_progresso(callback_progresso, pct, f"Posicionando estruturas naturais ({atual}/{total})")
             continue
 
@@ -327,7 +333,7 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
         if m_prog:
             atual = int(m_prog.group(1))
             total = max(1, int(m_prog.group(2)))
-            pct = 82 + int((atual / total) * 13)
+            pct = 90 + int((atual / total) * 6)
             _emitir_progresso(callback_progresso, pct, f"Salvando chunks ({atual}/{total})")
             continue
 
@@ -335,7 +341,7 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
             chunks_prontos = len(list(pasta_world_chunks.glob("chunk_set_*.json")))
             if chunks_prontos <= 0:
                 chunks_prontos = len(list(pasta_world_chunks.glob("chunk_*.json")))
-            pct = 82 + int((chunks_prontos / max(1, chunks_total)) * 13)
+            pct = 90 + int((chunks_prontos / max(1, chunks_total)) * 6)
             _emitir_progresso(callback_progresso, pct, f"Salvando chunks ({chunks_prontos}/{chunks_total})")
 
     saida = proc.wait()

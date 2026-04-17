@@ -1,27 +1,31 @@
 [regions]
-min_count = 5
-max_count = 7
+min_count = 6
+max_count = 8
 margin = 560
 min_center_distance = 1850
 name_candidates = [
-  "Aurora", "Boreal", "Celestia", "Draconia", "Esmeralda", "Fulgor", "Granito", "Horizonte",
-  "Íris", "Jade", "Luminária", "Monólito", "Neblina", "Orvalho", "Prisma", "Quartzo",
-  "Rubra", "Safira", "Tempestade", "Urbis", "Valora", "Wisteria", "Xisto", "Ygdria", "Zênite"
+  "Central", "Norte", "Sul", "Leste", "Oeste", "Alta", "Baixa", "Interior",
+  "Costa", "Vale", "Serra", "Campo", "Lago", "Planicie", "Planalto", "Bosque",
+  "Pedra", "Brisa", "Aurora", "Horizonte", "Verde", "Dourada", "Azul", "Neblina",
+  "Clara", "Fronteira", "Ribeira", "Mansa", "Nova", "Antiga", "Grande", "Pequena",
+  "Litoral", "Montanha", "Prado", "Cedro", "Jardim", "Riacho", "Ponte", "Portal"
 ]
 
 [villages]
-min_count = 15
-max_count = 21
+min_count = 22
+max_count = 28
 min_distance = 340
 margin = 180
 near_water_radius = 3
 clear_radius = 24
 allowed_biomes = ["FIELD", "FOREST", "DESERT", "SNOW", "SWAMP", "MAGIC"]
 name_candidates = [
-  "Alvorada", "Bosque Azul", "Brisamar", "Campofino", "Candeia", "Cedrália", "Estrela", "Jardim Alto",
-  "Lagoa Serena", "Laranjal", "Luar do Vale", "Montelume", "Névoa Alta", "Pedralva", "Ponte Velha",
-  "Porto Claro", "Pradaria", "Ribeirinha", "Rio Sereno", "Sol Nascente", "Valeverde", "Vila Rubra",
-  "Vista Clara", "Pinheiral", "Fonte Mansa", "Beira Lago", "Colina Branca", "Três Cedros"
+  "Vila Nova", "Boa Vista", "Santa Rosa", "Vale Verde", "Campo Belo", "Rio Claro", "Ponte Alta", "Pedra Branca",
+  "Lago Azul", "Monte Claro", "Jardim Novo", "Nova Esperanca", "Serra Alta", "Serra Verde", "Porto Novo", "Vila Alta",
+  "Vila Baixa", "Morro Alto", "Bela Agua", "Lagoa Alta", "Vista Alegre", "Riacho Doce", "Santa Luz", "Vale Novo",
+  "Campo Novo", "Colina Verde", "Colina Azul", "Ponte Nova", "Boa Agua", "Pedra Alta", "Pedra Nova", "Bosque Alto",
+  "Bosque Claro", "Prado Verde", "Prado Alto", "Vila Central", "Vila do Vale", "Vila do Lago", "Vila da Serra", "Vila do Campo",
+  "Ribeira Nova", "Ribeira Alta", "Costa Clara", "Costa Nova", "Fonte Clara", "Fonte Nova", "Brisa Alta", "Brisa Nova"
 ]
 
 [houses]
@@ -38,3 +42,14 @@ near_water_radius = 5
 allowed_biomes = ["FIELD", "FOREST", "DESERT", "SNOW", "MAGIC", "VOLCANIC", "SWAMP"]
 area_chunks = 5
 clear_margin_tiles = 3
+
+[routes]
+min_count = 45
+max_count = 60
+min_village_links = 2
+max_village_links = 5
+min_distance = 140
+max_distance = 2400
+shallow_water_penalty = 10
+same_region_bonus_percent = 82
+route_brush_radius = 2

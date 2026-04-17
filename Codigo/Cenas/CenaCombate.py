@@ -13,14 +13,21 @@ import pygame
 class CenaCombate:
     def PrepararTransicaoAssincrona(self, JOGO) -> None:
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
-        if isinstance(contexto.get("tiles"), list):
+        tiles = contexto.get("tiles")
+        if isinstance(tiles, list) and tiles:
             return
         pokemon_colisao = contexto.get("pokemon_colisao") if isinstance(contexto.get("pokemon_colisao"), dict) else {}
         server_ip = str(contexto.get("server_ip") or "")
         client_id = str(contexto.get("client_id") or JOGO.INFO.get("UsuarioLogado", "anon"))
-        pokemon_id = int(pokemon_colisao.get("id", 0) or 0)
-        centro = contexto.get("centro") if isinstance(contexto.get("centro"), (list, tuple)) and len(contexto.get("centro")) == 2 else [40.0, 20.0]
-        if not server_ip or pokemon_id <= 0:
+        pokemon_id = int(pokemon_colisao.get("id", pokemon_colisao.get("Id", pokemon_colisao.get("ID", 0))) or 0)
+        centro = contexto.get("posicao_referencia_mundo")
+        if not isinstance(centro, (list, tuple)) or len(centro) != 2:
+            centro = pokemon_colisao.get("posicao")
+        if not isinstance(centro, (list, tuple)) or len(centro) != 2:
+            centro = contexto.get("centro")
+        if not isinstance(centro, (list, tuple)) or len(centro) != 2:
+            centro = [40.0, 20.0]
+        if not server_ip:
             return
         ret = solicitar_contexto_batalha_mundo(server_ip, client_id, pokemon_id, centro)
         contexto_servidor = ret.get("contexto_batalha") if isinstance(ret, dict) and isinstance(ret.get("contexto_batalha"), dict) else {}
@@ -48,12 +55,18 @@ class CenaCombate:
         largura = float(contexto.get("largura", 80) or 80)
         altura = float(contexto.get("altura", 40) or 40)
         centro = contexto.get("centro") if isinstance(contexto.get("centro"), (list, tuple)) and len(contexto.get("centro")) == 2 else [largura * 0.5, altura * 0.5]
+        arena_w = float(contexto.get("arena_largura", 40) or 40)
+        arena_h = float(contexto.get("arena_altura", 20) or 20)
         half_w = (float(JOGO.TELA.get_size()[0]) / float(tile_px)) * 0.5
         half_h = (float(JOGO.TELA.get_size()[1]) / float(tile_px)) * 0.5
         pos_inicial = (float(centro[0]) - half_w, float(centro[1]) - half_h)
 
         self.Camera = CameraBatalha(JOGO.TELA.get_size(), posicao_inicial_tiles=pos_inicial, tile_px=tile_px)
         self.Camera.definir_limites_mundo(largura, altura)
+        self.Camera.definir_referencia_arena(
+            (float(centro[0]) - (arena_w * 0.5), float(centro[1]) - (arena_h * 0.5)),
+            (arena_w, arena_h),
+        )
         self.Camera.atualizar(0.0)
         self.ControladorBatalha = ControladorBatalha(contexto)
         self.FinalizadorBatalha = FinalizadorBatalha(self.ControladorBatalha)

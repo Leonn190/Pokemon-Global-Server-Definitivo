@@ -675,7 +675,8 @@ final class SimpleToml {
         Map<String, Object> root = new LinkedHashMap<>();
         Map<String, Object> current = root;
 
-        for (String rawLine : lines) {
+        for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+            String rawLine = lines.get(lineIndex);
             String line = stripComment(rawLine).trim();
             if (line.isEmpty()) {
                 continue;
@@ -691,6 +692,19 @@ final class SimpleToml {
             }
             String key = line.substring(0, eq).trim();
             String valueText = line.substring(eq + 1).trim();
+            if (valueText.startsWith("[") && !isBracketExpressionComplete(valueText)) {
+                StringBuilder builder = new StringBuilder(valueText);
+                while (++lineIndex < lines.size()) {
+                    String continued = stripComment(lines.get(lineIndex)).trim();
+                    if (!continued.isEmpty()) {
+                        builder.append('\n').append(continued);
+                    }
+                    if (isBracketExpressionComplete(builder.toString())) {
+                        break;
+                    }
+                }
+                valueText = builder.toString().trim();
+            }
             current.put(key, parseValue(valueText));
         }
 
@@ -724,6 +738,27 @@ final class SimpleToml {
             out.append(c);
         }
         return out.toString();
+    }
+
+    private static boolean isBracketExpressionComplete(String text) {
+        boolean inString = false;
+        int depth = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '"' && (i == 0 || text.charAt(i - 1) != '\\')) {
+                inString = !inString;
+                continue;
+            }
+            if (inString) {
+                continue;
+            }
+            if (c == '[') {
+                depth++;
+            } else if (c == ']') {
+                depth--;
+            }
+        }
+        return depth <= 0;
     }
 
     @SuppressWarnings("unchecked")

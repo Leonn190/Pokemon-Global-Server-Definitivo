@@ -67,6 +67,11 @@ class SistemaBatalha:
         except (TypeError, ValueError):
             return float(default)
 
+    def _centro_arena_local(self) -> tuple[float, float]:
+        largura = float(self.Contexto.get("arena_largura", 40) or 40)
+        altura = float(self.Contexto.get("arena_altura", 20) or 20)
+        return largura * 0.5, altura * 0.5
+
     @classmethod
     def _ler_csv(cls, nome_arquivo: str) -> List[Dict[str, object]]:
         caminho = _BASE_DADOS / nome_arquivo
@@ -187,10 +192,9 @@ class SistemaBatalha:
         return pokemon
 
     def _pontos_lado_arena(self, lado: str, total: int) -> List[tuple[float, float]]:
-        centro = self.Contexto.get("centro") if isinstance(self.Contexto.get("centro"), (list, tuple)) and len(self.Contexto.get("centro")) == 2 else [40.0, 20.0]
         largura = float(self.Contexto.get("arena_largura", 40) or 40)
         altura = float(self.Contexto.get("arena_altura", 20) or 20)
-        cx, cy = float(centro[0]), float(centro[1])
+        cx, cy = self._centro_arena_local()
         margem_x = largura * 0.18
         margem_y = altura * 0.34
         x = cx - margem_x if lado == "jogador" else cx + margem_x

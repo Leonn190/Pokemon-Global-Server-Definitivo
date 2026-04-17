@@ -14,13 +14,13 @@ from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
     buscar_mensagens_terminal,
+    desconectar_mundo,
     enviar_diffs_mundo,
     enviar_mensagem_terminal,
     finalizar_interacao_npc_mundo,
     iniciar_interacao_npc_mundo,
     notificar_pokemon_derrotado_batalha_mundo,
     receber_pacotes_tick_mundo,
-    solicitar_contexto_batalha_mundo,
 )
 from Codigo.Telas.Inventario.SubtelaInventario import SubtelaInventario
 from Codigo.Prefabs.Terminal import Terminal
@@ -74,6 +74,10 @@ class CenaMundo:
         pokemon_mundo_id = int(pendente.get("pokemon_mundo_id", 0) or 0)
         if pokemon_mundo_id > 0:
             notificar_pokemon_derrotado_batalha_mundo(link, client_id, pokemon_mundo_id)
+        # Essas chamadas passam pela rota de atualização, que sintetiza visibilidade.
+        # Como ainda não existe um cliente de mundo ativo para aplicar o retorno, limpamos
+        # o estado transitório antes do bootstrap real da cena.
+        desconectar_mundo(link, client_id)
         jogo.INFO.pop("SincronizacaoPosBatalhaMundo", None)
 
     def _snapshot_player_atual(self, jogo) -> dict | None:
@@ -218,7 +222,7 @@ class CenaMundo:
         player_bloqueado = bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
-        if not player_bloqueado and int(pygame.time.get_ticks()) >= int(self._imune_combate_ate_ms or 0):
+        if JOGO.CenaAlvo is None and (not player_bloqueado) and int(pygame.time.get_ticks()) >= int(self._imune_combate_ate_ms or 0):
             colisao_pokemon = self.ControladorMundo.Player.consumir_colisao_pokemon()
             if isinstance(colisao_pokemon, dict):
                 inventario = getattr(player, "Inventario", None)
@@ -230,6 +234,7 @@ class CenaMundo:
                 server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
                 link = server.get("ip")
                 client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+                posicao_referencia_mundo = colisao_pokemon.get("posicao") if isinstance(colisao_pokemon.get("posicao"), (list, tuple)) and len(colisao_pokemon.get("posicao")) == 2 else list(getattr(player, "Posicao", [0.0, 0.0]))
                 contexto = {
                     "batalha": dict(carregar_regras_cliente_mundo().get("batalha") or {}),
                     "pokemon_colisao": dict(colisao_pokemon),
@@ -245,6 +250,7 @@ class CenaMundo:
                     "arena_largura": 40,
                     "arena_altura": 20,
                     "tile_bioma": tile_mundo_atual(self),
+                    "posicao_referencia_mundo": [float(posicao_referencia_mundo[0]), float(posicao_referencia_mundo[1])],
                     "server_ip": str(link or ""),
                     "client_id": client_id,
                 }
@@ -415,6 +421,7 @@ class CenaMundo:
                 "time_jogador": deepcopy(dict(time_escolhido or {})),
                 "time_jogador_indice": int(indice_time),
                 "tile_bioma": tile_mundo_atual(self),
+                "posicao_referencia_mundo": [float(player.Posicao[0]), float(player.Posicao[1])] if player is not None else [0.0, 0.0],
                 "server_ip": str((jogo.INFO.get("ServerSelecionado") or {}).get("ip") or ""),
                 "client_id": str(jogo.INFO.get("UsuarioLogado", "anon")),
             }

@@ -123,6 +123,36 @@ class CameraBatalha(Camera):
         super().__init__(tamanho_tela_px=tamanho_tela_px, entidade_main=None, posicao_inicial_tiles=posicao_inicial_tiles, suavizacao=100.0, tile_px=tile_px)
         self._arrastando = False
         self._ultimo_mouse_px: Optional[Vector2] = None
+        self._origem_arena_mundo_tiles: Vector2 = (0.0, 0.0)
+        self._tamanho_arena_tiles: Optional[Vector2] = None
+
+    def definir_referencia_arena(self, origem_mundo_tiles: Vector2, tamanho_arena_tiles: Optional[Vector2] = None) -> None:
+        self._origem_arena_mundo_tiles = (float(origem_mundo_tiles[0]), float(origem_mundo_tiles[1]))
+        if isinstance(tamanho_arena_tiles, (tuple, list)) and len(tamanho_arena_tiles) == 2:
+            self._tamanho_arena_tiles = (float(tamanho_arena_tiles[0]), float(tamanho_arena_tiles[1]))
+        else:
+            self._tamanho_arena_tiles = None
+
+    def batalha_para_mundo_tiles(self, posicao_batalha_tiles: Vector2) -> Vector2:
+        return (
+            float(self._origem_arena_mundo_tiles[0]) + float(posicao_batalha_tiles[0]),
+            float(self._origem_arena_mundo_tiles[1]) + float(posicao_batalha_tiles[1]),
+        )
+
+    def batalha_para_tela_px(self, posicao_batalha_tiles: Vector2) -> Vector2:
+        return self.mundo_para_tela_px(self.batalha_para_mundo_tiles(posicao_batalha_tiles))
+
+    def tela_para_batalha_tiles(self, posicao_tela_px: Vector2) -> Vector2:
+        mundo = self.tela_para_mundo_tiles(posicao_tela_px)
+        local_x = float(mundo[0]) - float(self._origem_arena_mundo_tiles[0])
+        local_y = float(mundo[1]) - float(self._origem_arena_mundo_tiles[1])
+        if self._tamanho_arena_tiles is None:
+            return local_x, local_y
+        largura, altura = self._tamanho_arena_tiles
+        return (
+            max(0.0, min(float(largura), local_x)),
+            max(0.0, min(float(altura), local_y)),
+        )
 
     def processar_eventos(self, eventos) -> None:
         for evento in eventos:

@@ -64,6 +64,16 @@ class ControladorFluxos:
         except (TypeError, ValueError):
             return float(padrao)
 
+    def _batalha_para_tela_px(self, posicao) -> tuple[float, float]:
+        if hasattr(self._camera, "batalha_para_tela_px"):
+            return self._camera.batalha_para_tela_px((float(posicao[0]), float(posicao[1])))
+        return self._camera.mundo_para_tela_px((float(posicao[0]), float(posicao[1])))
+
+    def _tela_para_batalha_tiles(self, posicao_tela) -> tuple[float, float]:
+        if hasattr(self._camera, "tela_para_batalha_tiles"):
+            return self._camera.tela_para_batalha_tiles(posicao_tela)
+        return self._camera.tela_para_mundo_tiles(posicao_tela)
+
     @staticmethod
     def _nome_ataque(ataque: Optional[dict]) -> str:
         if not isinstance(ataque, dict):
@@ -240,7 +250,7 @@ class ControladorFluxos:
         origem = self._posicao_virtual_executor(self._preparacao.get("executor"))
         if origem is not None:
             self._preparacao["origem_mundo"] = origem
-        self._preparacao["destino_mundo"] = self._camera.tela_para_mundo_tiles(pos_tela)
+        self._preparacao["destino_mundo"] = self._tela_para_batalha_tiles(pos_tela)
         self._preparacao["troca_reserva"] = None
         self._preparacao["troca_reserva_id"] = None
         if self._preparacao.get("ataque") is None and str(self._preparacao.get("estilo") or "") == "movimento":
@@ -589,8 +599,8 @@ class ControladorFluxos:
         destino = jogada.get("destino_mundo")
         if not isinstance(origem, (tuple, list)) or not isinstance(destino, (tuple, list)):
             return
-        inicio = self._camera.mundo_para_tela_px((float(origem[0]), float(origem[1])))
-        fim = self._camera.mundo_para_tela_px((float(destino[0]), float(destino[1])))
+        inicio = self._batalha_para_tela_px(origem)
+        fim = self._batalha_para_tela_px(destino)
         cor = self._cor_preparo(jogada, preparada, selecionada)
         cor_sec = tuple(min(255, canal + 72) for canal in cor)
         self._fluxo_setas.desenhar(
@@ -609,7 +619,7 @@ class ControladorFluxos:
         alvos = list(jogada.get("alvos") or [])
         if not isinstance(origem, (tuple, list)) or not alvos:
             return
-        inicio = self._camera.mundo_para_tela_px((float(origem[0]), float(origem[1])))
+        inicio = self._batalha_para_tela_px(origem)
         cor = self._cor_preparo(jogada, preparada, selecionada)
         cor_sec = tuple(min(255, canal + 52) for canal in cor)
         for alvo in alvos:
@@ -630,8 +640,8 @@ class ControladorFluxos:
         destino = jogada.get("destino_mundo")
         if not isinstance(origem, (tuple, list)) or not isinstance(destino, (tuple, list)):
             return
-        inicio = self._camera.mundo_para_tela_px((float(origem[0]), float(origem[1])))
-        fim = self._camera.mundo_para_tela_px((float(destino[0]), float(destino[1])))
+        inicio = self._batalha_para_tela_px(origem)
+        fim = self._batalha_para_tela_px(destino)
         self._leitor_fluxos.desenhar(
             tela,
             jogada.get("ataque"),

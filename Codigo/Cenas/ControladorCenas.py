@@ -180,7 +180,7 @@ class ControladorCenas:
                 if self.CenaAlvo is None and self.Escuro != 0:
                     efeito_transicao = self.Cena.Abertura
 
-                if self.CenaAlvo is not None and self.Escuro != 100:
+                if self.CenaAlvo is not None:
                     efeito_transicao = self.Cena.Fechamento
 
 

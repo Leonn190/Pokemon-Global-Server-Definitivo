@@ -518,7 +518,10 @@ class PokemonBatalha:
         return max(12, int(tile_px * (self.DiametroTiles * 0.5)))
 
     def centro_tela(self, camera) -> Tuple[int, int]:
-        px, py = camera.mundo_para_tela_px(self.Posicao)
+        if hasattr(camera, "batalha_para_tela_px"):
+            px, py = camera.batalha_para_tela_px(self.Posicao)
+        else:
+            px, py = camera.mundo_para_tela_px(self.Posicao)
         return int(px), int(py)
 
     def _desenhar_corpo(self, tela: pygame.Surface, camera, centro: Tuple[int, int], raio: int, tile_px: int, *, selecionado: bool = False, hover: bool = False, alpha_extra: int = 255) -> bool:
@@ -575,7 +578,10 @@ class PokemonBatalha:
     def renderizar_construto(self, tela: pygame.Surface, camera, posicao_mundo, *, alpha: int = 96) -> None:
         if not isinstance(posicao_mundo, (tuple, list)) or len(posicao_mundo) != 2:
             return
-        px, py = camera.mundo_para_tela_px((float(posicao_mundo[0]), float(posicao_mundo[1])))
+        if hasattr(camera, "batalha_para_tela_px"):
+            px, py = camera.batalha_para_tela_px((float(posicao_mundo[0]), float(posicao_mundo[1])))
+        else:
+            px, py = camera.mundo_para_tela_px((float(posicao_mundo[0]), float(posicao_mundo[1])))
         centro = (int(px), int(py))
         tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
         raio = self.raio_px(camera)

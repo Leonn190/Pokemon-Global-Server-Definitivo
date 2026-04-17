@@ -95,6 +95,12 @@ def _normalizar_nome_efeito(nome: str) -> str:
     return texto
 
 
+def _batalha_para_tela_px(camera, posicao: Vector2) -> Vector2:
+    if hasattr(camera, 'batalha_para_tela_px'):
+        return camera.batalha_para_tela_px((float(posicao[0]), float(posicao[1])))
+    return camera.mundo_para_tela_px((float(posicao[0]), float(posicao[1])))
+
+
 class PokemonAnimator:
     _PASTA_EFEITOS_ATAQUE: Path | None = None
     _INDICE_EFEITOS_ATAQUE: Dict[str, Path] = {}
@@ -558,7 +564,7 @@ class PokemonAnimator:
             destino = fluxo['destino']
             modo = str(fluxo.get('modo') or 'area').casefold()
             if modo == 'zona':
-                centro = camera.mundo_para_tela_px(destino)
+                centro = _batalha_para_tela_px(camera, destino)
                 raio_atual_px = max(4, int(float(fluxo.get('raio_tiles', 0.0)) * tile_px * max(0.05, t)))
                 camada = pygame.Surface((raio_atual_px * 4, raio_atual_px * 4), pygame.SRCALPHA)
                 centro_local = (camada.get_width() // 2, camada.get_height() // 2)
@@ -567,8 +573,8 @@ class PokemonAnimator:
                 tela.blit(camada, camada.get_rect(center=(int(centro[0]), int(centro[1]))))
                 continue
 
-            origem_px = camera.mundo_para_tela_px(origem)
-            destino_px = camera.mundo_para_tela_px(destino)
+            origem_px = _batalha_para_tela_px(camera, origem)
+            destino_px = _batalha_para_tela_px(camera, destino)
             dx = float(destino_px[0] - origem_px[0])
             dy = float(destino_px[1] - origem_px[1])
             distancia_px = math.hypot(dx, dy)
@@ -605,8 +611,8 @@ class PokemonAnimator:
                 origem[0] + (destino[0] - origem[0]) * t,
                 origem[1] + (destino[1] - origem[1]) * t,
             )
-            origem_px = camera.mundo_para_tela_px(origem)
-            atual_px = camera.mundo_para_tela_px(atual)
+            origem_px = _batalha_para_tela_px(camera, origem)
+            atual_px = _batalha_para_tela_px(camera, atual)
             raio_px = max(3, int(float(projetil.get('raio_tiles', 0.22)) * tile_px))
             camada = pygame.Surface((raio_px * 7, raio_px * 7), pygame.SRCALPHA)
             centro_local = (camada.get_width() // 2, camada.get_height() // 2)

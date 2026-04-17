@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Dict, List
 
 import pygame
@@ -27,6 +28,7 @@ class ControladorBatalha:
         self.PokemonsReservaAliadosObj: List[PokemonBatalha] = []
         self.Jogador = PlayerBatalha("jogador", max_ativos=self._MAX_ATIVOS)
         self.Inimigo = PlayerBatalha("inimigo", max_ativos=self._MAX_ATIVOS)
+        self.TimeCompletoJogadorInicial: List[Dict[str, object]] = []
         self.PokemonSelecionado: PokemonBatalha | None = None
         self._provedor_reservas = None
         self._rodada_atual = 1
@@ -48,16 +50,22 @@ class ControladorBatalha:
             regras = dict(carregar_regras_cliente_mundo().get("batalha") or {})
         return dict(regras)
 
+    def _centro_arena_local(self) -> tuple[float, float]:
+        arena_w = float(self.Contexto.get("arena_largura", 40) or 40)
+        arena_h = float(self.Contexto.get("arena_altura", 20) or 20)
+        return arena_w * 0.5, arena_h * 0.5
+
     def _inicializar_times(self) -> None:
         init = InicializadorBatalha(self.Contexto)
         batalha = init.inicializar()
         self.Contexto["batalha_inicializada"] = batalha
+        self.TimeCompletoJogadorInicial = [deepcopy(poke) for poke in batalha.get("jogador", []) if isinstance(poke, dict)]
         if hasattr(self.SistemaBatalha, "iniciar_batalha_server_async"):
             self.SistemaBatalha.iniciar_batalha_server_async(batalha)
 
-        centro = self.Contexto.get("centro") if isinstance(self.Contexto.get("centro"), (list, tuple)) and len(self.Contexto.get("centro")) == 2 else [40.0, 20.0]
         arena_w = float(self.Contexto.get("arena_largura", 40) or 40)
         arena_h = float(self.Contexto.get("arena_altura", 20) or 20)
+        centro = self._centro_arena_local()
         self.Jogador.TimeCompleto = [poke for poke in batalha.get("jogador", []) if isinstance(poke, dict)]
         self.Inimigo.TimeCompleto = [poke for poke in batalha.get("inimigo", []) if isinstance(poke, dict)]
         aliados_ativos = self.Jogador.preparar_slots()
@@ -65,18 +73,18 @@ class ControladorBatalha:
         self.PokemonsReservaAliados = list(self.Jogador.PokemonsReserva)
         self.PokemonsReservaInimigos = list(self.Inimigo.PokemonsReserva)
         pos_aliados, pos_inimigos = pontos_lados_arena(
-            centro=(float(centro[0]), float(centro[1])),
+            centro=centro,
             largura=arena_w,
             altura=arena_h,
             total_aliados=len(aliados_ativos),
             total_inimigos=len(inimigos_ativos),
         )
 
-        self.PokemonsAliados = [PokemonBatalha(poke, posicao=pos_aliados[i], lado="jogador", regras=self.Contexto) for i, poke in enumerate(aliados_ativos) if i < len(pos_aliados)]
-        self.PokemonsInimigos = [PokemonBatalha(poke, posicao=pos_inimigos[i], lado="inimigo", regras=self.Contexto) for i, poke in enumerate(inimigos_ativos) if i < len(pos_inimigos)]
+        self.PokemonsAliados = [self._criar_pokemon_visual_inicial(poke, pos_aliados[i], "jogador") for i, poke in enumerate(aliados_ativos) if i < len(pos_aliados)]
+        self.PokemonsInimigos = [self._criar_pokemon_visual_inicial(poke, pos_inimigos[i], "inimigo") for i, poke in enumerate(inimigos_ativos) if i < len(pos_inimigos)]
         self.PokemonsReservaAliadosObj = self._criar_reservas_visuais(
             self.PokemonsReservaAliados,
-            centro=(float(centro[0]), float(centro[1])),
+            centro=centro,
             arena_w=arena_w,
             arena_h=arena_h,
         )
@@ -90,10 +98,16 @@ class ControladorBatalha:
         saida: List[PokemonBatalha] = []
         for indice, poke in enumerate(list(pokemons_reserva or [])[:3]):
             pos = (base_x + indice * 1.85, base_y)
-            reserva = PokemonBatalha(poke, posicao=pos, lado="jogador", regras=self.Contexto)
+            reserva = self._criar_pokemon_visual_inicial(poke, pos, "jogador")
             reserva.EmReserva = True
             saida.append(reserva)
         return saida
+
+    def _criar_pokemon_visual_inicial(self, dados: Dict[str, object], posicao, lado: str) -> PokemonBatalha:
+        pokemon = PokemonBatalha(dados, posicao=posicao, lado=lado, regras=self.Contexto)
+        pokemon.Posicao = (float(posicao[0]), float(posicao[1]))
+        pokemon.PosicaoAnterior = pokemon.Posicao
+        return pokemon
 
     def pokemon_no_ponto(self, mouse_tela_px, camera) -> PokemonBatalha | None:
         if not isinstance(mouse_tela_px, (tuple, list)) or len(mouse_tela_px) != 2:
@@ -222,9 +236,9 @@ class ControladorBatalha:
 
         selecionado_uid = self._uid_pokemon(self.PokemonSelecionado)
         existentes = self._mapa_existentes()
-        centro = self.Contexto.get("centro") if isinstance(self.Contexto.get("centro"), (list, tuple)) and len(self.Contexto.get("centro")) == 2 else [40.0, 20.0]
         arena_w = float(self.Contexto.get("arena_largura", 40) or 40)
         arena_h = float(self.Contexto.get("arena_altura", 20) or 20)
+        centro = self._centro_arena_local()
 
         dados_jogador = resultado.get("jogador") if isinstance(resultado.get("jogador"), dict) else {}
         dados_inimigo = resultado.get("inimigo") if isinstance(resultado.get("inimigo"), dict) else {}
@@ -234,7 +248,7 @@ class ControladorBatalha:
         reservas_inimigo = [dict(item) for item in list(dados_inimigo.get("reservas") or []) if isinstance(item, dict)]
 
         pos_aliados, pos_inimigos = pontos_lados_arena(
-            centro=(float(centro[0]), float(centro[1])),
+            centro=centro,
             largura=arena_w,
             altura=arena_h,
             total_aliados=len(ativos_jogador),

@@ -92,6 +92,7 @@ class FinalizadorBatalha:
         self._resumo_cache: Dict[str, object] | None = None
         self._aplicado_resultado_local = False
         self._notificou_derrotado = False
+        self._subtela_emitida = False
 
     def pronto(self) -> bool:
         if self._controlador is None:
@@ -101,9 +102,12 @@ class FinalizadorBatalha:
         return bool(getattr(self._controlador, "batalha_encerrada", lambda: False)())
 
     def criar_subtela(self, jogo):
+        if self._subtela_emitida:
+            return None
         resumo = self.preparar_resumo(jogo)
         if not isinstance(resumo, dict):
             return None
+        self._subtela_emitida = True
         return SubtelaFinalizacao(
             itens=list(resumo.get("itens") or []),
             rodadas_totais=int(resumo.get("rodadas_totais", 0) or 0),
@@ -125,7 +129,8 @@ class FinalizadorBatalha:
             return None
 
         mapa_resumo_final = self._mapa_resumo_final(resultado)
-        itens = self._montar_itens_lado("jogador", list(getattr(self._controlador.Jogador, "TimeCompleto", []) or []), resultado, mapa_resumo_final)
+        pokemons_base_jogador = list(getattr(self._controlador, "TimeCompletoJogadorInicial", []) or getattr(self._controlador.Jogador, "TimeCompleto", []) or [])
+        itens = self._montar_itens_lado("jogador", pokemons_base_jogador, resultado, mapa_resumo_final)
 
         self._resumo_cache = {
             "encerrada": bool(resultado.get("encerrada", False)),
@@ -141,7 +146,7 @@ class FinalizadorBatalha:
         resumo = self.preparar_resumo(jogo)
         contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
         pokemon_colisao = contexto.get("pokemon_colisao") if isinstance(contexto.get("pokemon_colisao"), dict) else {}
-        pokemon_mundo_id = int(pokemon_colisao.get("id", 0) or 0)
+        pokemon_mundo_id = int(pokemon_colisao.get("id", pokemon_colisao.get("Id", pokemon_colisao.get("ID", 0))) or 0)
         player_dados = jogo.INFO.get("PlayerDadosServer") if isinstance(jogo.INFO.get("PlayerDadosServer"), dict) else {}
         inventario = player_dados.get("inventario") if isinstance(player_dados.get("inventario"), dict) else {}
         pendencia = {

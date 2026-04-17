@@ -46,17 +46,24 @@ Water Berry,Melhora a captura em ambientes aquáticos.,26,2,s,12,50,fruta,44
 Lava Berry,Melhora a captura em terras vulcanicas,26,2,s,10,50,fruta,45
 Magic Berry,Melhora a captura no bioma magico,26,2,s,10,50,fruta,46
 Madeira,Recurso básico usado em construções e na criação de ferramentas simples.,-,1,n,2,50,recurso,47
+Carvão,,,2,n,2,50,recurso,47
 Pedra,Recurso comum usado em construções e na criação de ferramentas mais resistentes.,-,1,n,3,50,recurso,48
+Ferro,,,2,n,4,50,recurso,48
 Cobre,Minério metálico usado na fabricação de itens e ferramentas intermediárias.,-,1,s,4,50,recurso,49
 Ouro,Minério valioso usado na criação de ferramentas leves e itens especiais.,-,3,s,5,50,recurso,50
 Diamante,Gema rara usada para fabricar ferramentas de alta durabilidade.,-,5,s,15,50,recurso,51
 Ametista,Cristal raro usado na criação de ferramentas refinadas e itens especiais.,-,6,s,18,50,recurso,52
 Esmeralda,"Gema valiosa usada em trocas, fabricação e itens raros.",-,6,s,20,50,recurso,53
 Rubi,Gema poderosa usada para criar ferramentas avançadas e itens de alto valor.,-,6,s,20,50,recurso,54
+Jade,,,6,s,20,50,recurso,54
+Topazio,,,6,s,20,50,recurso,54
+Safira,,,6,s,20,50,recurso,54
+Aquamarine,,,6,s,20,50,recurso,54
 Agua,,-,1,n,1,50,recurso,55
 Lava,,-,3,n,3,50,recurso,56
 Chave ,,-,3,s,6,10,ferramenta,57
 Balde,,2,1,n,2,1,ferramenta,58
+Pá,,2,1,n,5,1,ferramenta,58
 Picareta de Madeira,Ferramenta simples usada para minerar recursos básicos.,2,1,n,4,1,ferramenta,59
 Picareta de Pedra,Ferramenta resistente usada para minerar com mais eficiência.,3,2,n,6,1,ferramenta,60
 Picareta de Ouro,Ferramenta leve usada para minerar rapidamente certos recursos.,4,3,n,10,1,ferramenta,61

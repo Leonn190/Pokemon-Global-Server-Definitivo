@@ -178,16 +178,22 @@ def carregar_regras_ciclo() -> Dict[str, object]:
     tempo = dados.get("tempo") if isinstance(dados.get("tempo"), dict) else {}
     iluminacao = dados.get("iluminacao") if isinstance(dados.get("iluminacao"), dict) else {}
 
+    def _int_cfg(origem: Dict[str, object], chave: str, padrao: int) -> int:
+        valor = origem.get(chave, padrao)
+        if valor in (None, ""):
+            return int(padrao)
+        return int(valor)
+
     out["tempo_segundos_mundo_por_tick"] = float(tempo.get("segundos_mundo_por_tick", 2.0) or 2.0)
     out["tempo_ticks_por_ciclo"] = int(tempo.get("ticks_por_ciclo", 1) or 1)
-    out["iluminacao_inicio_escurecer_hora"] = int(iluminacao.get("inicio_escurecer_hora", 17) or 17)
-    out["iluminacao_inicio_escurecer_minuto"] = int(iluminacao.get("inicio_escurecer_minuto", 0) or 0)
-    out["iluminacao_escuro_maximo_hora"] = int(iluminacao.get("escuro_maximo_hora", 1) or 1)
-    out["iluminacao_escuro_maximo_minuto"] = int(iluminacao.get("escuro_maximo_minuto", 0) or 0)
-    out["iluminacao_inicio_clarear_hora"] = int(iluminacao.get("inicio_clarear_hora", 1) or 1)
-    out["iluminacao_inicio_clarear_minuto"] = int(iluminacao.get("inicio_clarear_minuto", 0) or 0)
-    out["iluminacao_fim_clarear_hora"] = int(iluminacao.get("fim_clarear_hora", 8) or 8)
-    out["iluminacao_fim_clarear_minuto"] = int(iluminacao.get("fim_clarear_minuto", 0) or 0)
+    out["iluminacao_inicio_escurecer_hora"] = _int_cfg(iluminacao, "inicio_escurecer_hora", 17)
+    out["iluminacao_inicio_escurecer_minuto"] = _int_cfg(iluminacao, "inicio_escurecer_minuto", 0)
+    out["iluminacao_escuro_maximo_hora"] = _int_cfg(iluminacao, "escuro_maximo_hora", 1)
+    out["iluminacao_escuro_maximo_minuto"] = _int_cfg(iluminacao, "escuro_maximo_minuto", 0)
+    out["iluminacao_inicio_clarear_hora"] = _int_cfg(iluminacao, "inicio_clarear_hora", 1)
+    out["iluminacao_inicio_clarear_minuto"] = _int_cfg(iluminacao, "inicio_clarear_minuto", 0)
+    out["iluminacao_fim_clarear_hora"] = _int_cfg(iluminacao, "fim_clarear_hora", 8)
+    out["iluminacao_fim_clarear_minuto"] = _int_cfg(iluminacao, "fim_clarear_minuto", 0)
 
     out["chuva_chance_inicio_por_tick"] = float(chuva.get("chance_inicio_por_tick", 0.000025) or 0.000025)
     out["chuva_tempo_seco_min_ticks"] = int(chuva.get("tempo_seco_min_ticks", 14400) or 14400)
@@ -363,14 +369,14 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
         },
         "ciclo": {
             "iluminacao": {
-                "inicio_escurecer_hora": int(regras_ciclo.get("iluminacao_inicio_escurecer_hora", 17) or 17),
-                "inicio_escurecer_minuto": int(regras_ciclo.get("iluminacao_inicio_escurecer_minuto", 0) or 0),
-                "escuro_maximo_hora": int(regras_ciclo.get("iluminacao_escuro_maximo_hora", 1) or 1),
-                "escuro_maximo_minuto": int(regras_ciclo.get("iluminacao_escuro_maximo_minuto", 0) or 0),
-                "inicio_clarear_hora": int(regras_ciclo.get("iluminacao_inicio_clarear_hora", 1) or 1),
-                "inicio_clarear_minuto": int(regras_ciclo.get("iluminacao_inicio_clarear_minuto", 0) or 0),
-                "fim_clarear_hora": int(regras_ciclo.get("iluminacao_fim_clarear_hora", 8) or 8),
-                "fim_clarear_minuto": int(regras_ciclo.get("iluminacao_fim_clarear_minuto", 0) or 0),
+                "inicio_escurecer_hora": int(regras_ciclo.get("iluminacao_inicio_escurecer_hora", 17) if regras_ciclo.get("iluminacao_inicio_escurecer_hora", 17) not in (None, "") else 17),
+                "inicio_escurecer_minuto": int(regras_ciclo.get("iluminacao_inicio_escurecer_minuto", 0) if regras_ciclo.get("iluminacao_inicio_escurecer_minuto", 0) not in (None, "") else 0),
+                "escuro_maximo_hora": int(regras_ciclo.get("iluminacao_escuro_maximo_hora", 1) if regras_ciclo.get("iluminacao_escuro_maximo_hora", 1) not in (None, "") else 1),
+                "escuro_maximo_minuto": int(regras_ciclo.get("iluminacao_escuro_maximo_minuto", 0) if regras_ciclo.get("iluminacao_escuro_maximo_minuto", 0) not in (None, "") else 0),
+                "inicio_clarear_hora": int(regras_ciclo.get("iluminacao_inicio_clarear_hora", 1) if regras_ciclo.get("iluminacao_inicio_clarear_hora", 1) not in (None, "") else 1),
+                "inicio_clarear_minuto": int(regras_ciclo.get("iluminacao_inicio_clarear_minuto", 0) if regras_ciclo.get("iluminacao_inicio_clarear_minuto", 0) not in (None, "") else 0),
+                "fim_clarear_hora": int(regras_ciclo.get("iluminacao_fim_clarear_hora", 8) if regras_ciclo.get("iluminacao_fim_clarear_hora", 8) not in (None, "") else 8),
+                "fim_clarear_minuto": int(regras_ciclo.get("iluminacao_fim_clarear_minuto", 0) if regras_ciclo.get("iluminacao_fim_clarear_minuto", 0) not in (None, "") else 0),
             }
         },
         "gerais": {

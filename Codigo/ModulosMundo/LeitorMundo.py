@@ -8,6 +8,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import pygame
 
+from Codigo.ModulosGerais.TilesTransicionais import TilesTransicionais
+
 Vector2 = Tuple[float, float]
 PacoteMundo = Dict[str, object]
 
@@ -47,6 +49,14 @@ class LeitorMundo:
         self._cache_tile_px: int = max(1, int(getattr(self.Camera, "TilePx", 50)))
         self._ultimo_chunk_player: Optional[Tuple[int, int]] = None
         self._ultima_versao_chunks_regras = -1
+        self.TilesTransicionais = TilesTransicionais(
+            cores_blocos=self.CoresBlocos,
+            callback_bloco_global=self._obter_bloco_global,
+            largura_borda_ratio=0.46,
+            alpha_borda=205,
+            alpha_canto=235,
+            forca_ruido=0.11,
+        )
 
     def atualizar_regras_mundo(self, player_controle=None) -> None:
         with self._lock:
@@ -214,6 +224,7 @@ class LeitorMundo:
                     self.TamanhoChunkBlocos = chunk_tamanho_novo
                     self._cache_superficies_chunks.clear()
                     self._cache_assinaturas_chunks.clear()
+                    self.TilesTransicionais.limpar_cache()
                     meta_alterada = True
 
             chunks_atuais: Dict[Tuple[int, int], List[List[int]]] = {}
@@ -258,9 +269,46 @@ class LeitorMundo:
             if houve_alteracao_chunks or meta_alterada:
                 self._versao_chunks += 1
                 self._ultimo_chunk_player = None
+                self.TilesTransicionais.limpar_cache()
         if dimensao_callback is not None and self.CallbackDimensaoAtual is not None:
             self.CallbackDimensaoAtual(dimensao_callback)
         self.descartar_chunks_fora_do_anel()
+
+    def _obter_bloco_global(self, mundo_x: int, mundo_y: int) -> Optional[int]:
+        with self._lock:
+            meta = dict(self.MetaMundo)
+            chunks = self.Chunks
+            tamanho_chunk = max(1, int(self.TamanhoChunkBlocos))
+
+        largura_blocos = int(meta.get("largura_blocos", 0) or 0)
+        altura_blocos = int(meta.get("altura_blocos", 0) or 0)
+        toroidal = bool(getattr(self.Camera, "LimitesToroidais", False))
+
+        x = int(mundo_x)
+        y = int(mundo_y)
+
+        if toroidal and largura_blocos > 0 and altura_blocos > 0:
+            x %= largura_blocos
+            y %= altura_blocos
+        elif largura_blocos > 0 and altura_blocos > 0:
+            if x < 0 or y < 0 or x >= largura_blocos or y >= altura_blocos:
+                return None
+
+        chunk_x = int(x // tamanho_chunk)
+        chunk_y = int(y // tamanho_chunk)
+        local_x = int(x % tamanho_chunk)
+        local_y = int(y % tamanho_chunk)
+
+        grid = chunks.get((chunk_x, chunk_y))
+        if not grid or local_y < 0 or local_y >= len(grid):
+            return None
+        linha = grid[local_y]
+        if local_x < 0 or local_x >= len(linha):
+            return None
+        try:
+            return int(linha[local_x])
+        except (TypeError, ValueError):
+            return None
 
     def _obter_superficie_chunk(self, chave_chunk: Tuple[int, int], grid: List[List[int]], tile_px: int) -> Optional[pygame.Surface]:
         if not grid:
@@ -270,14 +318,21 @@ class LeitorMundo:
         if largura_chunk <= 0 or altura_chunk <= 0:
             return None
         if tile_px != self._cache_tile_px:
-            self._cache_superficies_chunks.clear(); self._cache_assinaturas_chunks.clear(); self._cache_tile_px = tile_px
+            self._cache_superficies_chunks.clear()
+            self._cache_assinaturas_chunks.clear()
+            self.TilesTransicionais.limpar_cache()
+            self._cache_tile_px = tile_px
         superficie = self._cache_superficies_chunks.get(chave_chunk)
         if superficie is not None:
             return superficie
-        superficie = pygame.Surface((largura_chunk * tile_px, altura_chunk * tile_px)).convert()
-        for by, linha in enumerate(grid):
-            for bx, bloco in enumerate(linha):
-                pygame.draw.rect(superficie, self.CoresBlocos.get(int(bloco), (255, 0, 255)), (bx * tile_px, by * tile_px, tile_px, tile_px))
+        superficie = self.TilesTransicionais.renderizar_chunk(
+            chave_chunk=chave_chunk,
+            grid=grid,
+            tile_px=tile_px,
+            tamanho_chunk=self.TamanhoChunkBlocos,
+        )
+        if superficie is None:
+            return None
         self._cache_superficies_chunks[chave_chunk] = superficie
         return superficie
 

@@ -217,7 +217,7 @@ def TelaMenuGL(Cena, JOGO, EVENTOS, dt, renderer):
         _LOGO_ESPECIAL = Imagem(str(_CAMINHO_LOGO), center=centro_logo, size=alvo, effect_alpha=160)
         _LOGO_ESPECIAL_SIZE = alvo
         _LOGO_ESPECIAL_CENTER = centro_logo
-    _LOGO_ESPECIAL._gl_efeito_habilitado = True
+    _LOGO_ESPECIAL._gl_efeito_habilitado = False
 
     _LOGO_ESPECIAL.render_gl(renderer, _TEMPO_LOGO)
     for botao in _BOTOES:

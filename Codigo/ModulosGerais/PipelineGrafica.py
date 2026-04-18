@@ -131,6 +131,58 @@ class PipelineGrafica:
             self._motivo_fallback = f"render_gl falhou: {exc}"
             return False
 
+    @staticmethod
+    def _adicionais_suportados_em_gl(jogo, render_adicionais) -> bool:
+        if not callable(render_adicionais):
+            return True
+        fn = getattr(render_adicionais, "__func__", None)
+        alvo = getattr(getattr(jogo, "DesenharInfosAdicionais", None), "__func__", None)
+        return fn is not None and alvo is not None and fn is alvo
+
+    def _desenhar_infos_adicionais_gl(self, jogo, cena) -> None:
+        if self._renderizador_gl2d is None:
+            return
+        cfg = getattr(jogo, "CONFIG", {}) if isinstance(getattr(jogo, "CONFIG", None), dict) else {}
+        largura_tela = int(self._tela_display.get_width())
+        itens_hud = []
+
+        if cfg.get("FPS Visivel", False):
+            jogo.TextoFPS.set_text(f"FPS: {int(jogo.RELOGIO.get_fps())}")
+            itens_hud.append(jogo.TextoFPS)
+
+        if cfg.get("Ping Visivel", False):
+            jogo.TextoPing.set_text("Ping: 5")
+            itens_hud.append(jogo.TextoPing)
+
+        if cfg.get("Cords Visiveis", False):
+            entidade_main = getattr(cena, "EntidadeMain", None)
+            if entidade_main is not None and hasattr(entidade_main, "Posicao"):
+                x, y = entidade_main.Posicao
+                jogo.TextoCoords.set_text(f"X {x:.2f} | Y {y:.2f}")
+            else:
+                jogo.TextoCoords.set_text("--")
+            itens_hud.append(jogo.TextoCoords)
+
+        if cfg.get("MostrarHorario", False):
+            if hasattr(cena, "ControladorMundo") and getattr(cena, "ControladorMundo", None) is not None:
+                tempo = cena.ControladorMundo.tempo_mundo_atual()
+                if "dia" in tempo and "hora" in tempo and "minuto" in tempo:
+                    dia = int(tempo.get("dia", 0) or 0)
+                    hora = int(tempo.get("hora", 0) or 0)
+                    minuto = int(tempo.get("minuto", 0) or 0)
+                    jogo.TextoHorario.set_text(f"Dia {dia} | {hora:02d}:{minuto:02d}")
+                else:
+                    jogo.TextoHorario.set_text("Dia -- | --:--")
+            else:
+                jogo.TextoHorario.set_text("Dia -- | --:--")
+            itens_hud.append(jogo.TextoHorario)
+
+        y_base = 12
+        espaco = 32
+        for idx, texto in enumerate(itens_hud):
+            texto.set_pos((largura_tela - 16, y_base + idx * espaco))
+            texto.draw_gl(self._renderizador_gl2d)
+
     def renderizar_frame(
         self,
         jogo,
@@ -143,9 +195,20 @@ class PipelineGrafica:
         aplicar_claridade=None,
         render_transicao=None,
     ) -> None:
-        if self._renderizar_cena_gl2d(jogo, cena, eventos, dt):
+        subtelas_hud_ativas = callable(render_subtelas_hud) and bool(getattr(getattr(jogo, "GerenciadorSubtelas", None), "ativa", False))
+        claridade_ativa = callable(aplicar_claridade) and int(getattr(jogo, "CONFIG", {}).get("Claridade", 75) or 75) != 75
+        transicao_ativa = callable(render_transicao)
+        adicionais_suportados = self._adicionais_suportados_em_gl(jogo, render_adicionais)
+
+        if subtelas_hud_ativas or claridade_ativa or transicao_ativa or (not adicionais_suportados):
+            self._compor_tela_cena(jogo, cena, eventos, dt, render_subtelas_scene=render_subtelas_scene)
+
+            if isinstance(getattr(jogo, "INFO", None), dict):
+                jogo.INFO["RenderPath"] = "surface_fallback"
+                jogo.INFO["_frame_scene_surface"] = self.obter_surface_scene()
+                jogo.INFO["_frame_hud_surface"] = self.obter_surface_hud()
+
             hud_surface = self.obter_surface_hud()
-            hud_surface.fill((0, 0, 0, 0))
             if callable(render_subtelas_hud):
                 render_subtelas_hud(hud_surface)
             if callable(render_adicionais):
@@ -155,17 +218,15 @@ class PipelineGrafica:
             if callable(render_transicao):
                 render_transicao(hud_surface)
 
-            if hud_surface.get_bounding_rect().width > 0 and hud_surface.get_bounding_rect().height > 0:
-                self._renderizador_gl2d.desenhar_surface_cacheada(
-                    "_hud_overlay_surface",
-                    hud_surface,
-                    pygame.Rect(0, 0, hud_surface.get_width(), hud_surface.get_height()),
-                    dirty=True,
-                    filtro="fast",
-                )
-                if isinstance(getattr(jogo, "INFO", None), dict):
-                    jogo.INFO["GLUploadsFrame"] = int(self._renderizador_gl2d.uploads_frame)
-                    jogo.INFO["GLDrawCallsFrame"] = int(self._renderizador_gl2d.draw_calls_frame)
+            self._apresentar(jogo, cena, dt)
+            return
+
+        if self._renderizar_cena_gl2d(jogo, cena, eventos, dt):
+            if callable(render_adicionais):
+                self._desenhar_infos_adicionais_gl(jogo, cena)
+            if isinstance(getattr(jogo, "INFO", None), dict):
+                jogo.INFO["GLUploadsFrame"] = int(self._renderizador_gl2d.uploads_frame)
+                jogo.INFO["GLDrawCallsFrame"] = int(self._renderizador_gl2d.draw_calls_frame)
             self._renderizador_gl2d.finalizar_frame()
             return
 

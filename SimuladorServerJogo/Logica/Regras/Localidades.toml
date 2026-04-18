@@ -12,8 +12,8 @@ name_candidates = [
 ]
 
 [villages]
-min_count = 22
-max_count = 28
+min_count = 24
+max_count = 30
 min_distance = 340
 margin = 180
 near_water_radius = 3
@@ -44,8 +44,8 @@ area_chunks = 5
 clear_margin_tiles = 3
 
 [routes]
-min_count = 45
-max_count = 60
+min_count = 49
+max_count = 64
 min_village_links = 2
 max_village_links = 5
 min_distance = 140

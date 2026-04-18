@@ -93,6 +93,33 @@ final class GeradorImagens {
             }
         }
 
+        for (Poi poi : ctx.pois) {
+            if (poi.type == PoiType.VILLAGE) {
+                drawPoint(buffer, poi.x, poi.y, 7, VILLAGE_POINT_COLOR);
+            }
+        }
+
+        Graphics2D g = image.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int regionFontSize = Math.max(24, Math.min(ctx.width, ctx.height) / 110);
+        g.setFont(new Font("SansSerif", Font.BOLD, regionFontSize));
+        for (RegionData region : ctx.regions) {
+            if (region.name != null && !region.name.isBlank()) {
+                drawLabel(g, region.name, region.centerX, region.centerY, REGION_NAME_FILL, REGION_NAME_OUTLINE);
+            }
+        }
+
+        int villageFontSize = Math.max(18, Math.min(ctx.width, ctx.height) / 150);
+        g.setFont(new Font("SansSerif", Font.BOLD, villageFontSize));
+        for (Poi poi : ctx.pois) {
+            if (poi.type == PoiType.VILLAGE && poi.name != null && !poi.name.isBlank()) {
+                drawLabel(g, poi.name, poi.x, poi.y - villageFontSize / 2 - 12, VILLAGE_NAME_FILL, VILLAGE_NAME_OUTLINE);
+            }
+        }
+        g.dispose();
+
         ImageIO.write(image, "png", file);
         image.flush();
     }

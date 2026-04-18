@@ -339,7 +339,7 @@ tamanhosXP = ["Pequeno", "Medio"]
 [tipos."23"]
 subtipo = "arvore_trombosa"
 nome = "Árvore Trombosa"
-sprite = "Recursos/Visual/Mundo/Objetos/ArvoreTrombosa.png"
+sprite = "Recursos/Visual/Mundo/Objetos/Arvore Frondosa.png"
 raio_colisao = 0.95
 raio_interacao = 1.05
 campo = 1.05

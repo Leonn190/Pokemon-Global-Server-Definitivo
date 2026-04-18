@@ -48,6 +48,7 @@ class ControladorMundo:
         self.Leitor.iniciar()
         self.Pacotes.configurar_conexao(link, client_id)
         self._bootstrap_objetos_remotos_iniciais(link, client_id, resposta_precarregada=bootstrap_inicial)
+        self.Leitor.preaquecer_chunks_visiveis()
         self.Pacotes.iniciar()
 
     def _bootstrap_objetos_remotos_iniciais(self, link, client_id, resposta_precarregada=None):

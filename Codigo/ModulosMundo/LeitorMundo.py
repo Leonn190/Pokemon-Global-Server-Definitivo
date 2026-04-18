@@ -352,6 +352,53 @@ class LeitorMundo:
         self._cache_superficies_chunks[chave_chunk] = superficie
         return superficie
 
+    def preaquecer_chunks_visiveis(self) -> None:
+        tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
+        with self._lock:
+            tamanho_chunk = max(1, int(self.TamanhoChunkBlocos))
+            meta = dict(self.MetaMundo)
+            chunks_ref = dict(self.Chunks)
+        dimensao_meta = str(meta.get("dimensao") or "Mundo")
+        if dimensao_meta.startswith("Estadio") or not chunks_ref:
+            return
+
+        largura_blocos = int(meta.get("largura_blocos", 0) or 0)
+        altura_blocos = int(meta.get("altura_blocos", 0) or 0)
+        chunks_x = max(1, int((largura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if largura_blocos > 0 else 0
+        chunks_y = max(1, int((altura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if altura_blocos > 0 else 0
+        toroidal = bool(getattr(self.Camera, "LimitesToroidais", False)) and chunks_x > 0 and chunks_y > 0
+
+        cam_x, cam_y = map(float, getattr(self.Camera, "PosicaoTiles", (0.0, 0.0)))
+        if toroidal:
+            if largura_blocos > 0:
+                cam_x %= float(largura_blocos)
+            if altura_blocos > 0:
+                cam_y %= float(altura_blocos)
+
+        tela_w, tela_h = getattr(self.Camera, "TamanhoTelaPx", (1280.0, 720.0))
+        raio_chunks_x = max(2, int((float(tela_w) / max(1, (tile_px * tamanho_chunk))) + 3))
+        raio_chunks_y = max(2, int((float(tela_h) / max(1, (tile_px * tamanho_chunk))) + 3))
+        centro_chunk_x = int(cam_x // max(1, tamanho_chunk))
+        centro_chunk_y = int(cam_y // max(1, tamanho_chunk))
+        if toroidal and chunks_x > 0 and chunks_y > 0:
+            chaves_visiveis = {
+                ((centro_chunk_x + dx) % chunks_x, (centro_chunk_y + dy) % chunks_y)
+                for dx in range(-raio_chunks_x, raio_chunks_x + 1)
+                for dy in range(-raio_chunks_y, raio_chunks_y + 1)
+            }
+        else:
+            chaves_visiveis = {
+                (centro_chunk_x + dx, centro_chunk_y + dy)
+                for dx in range(-raio_chunks_x, raio_chunks_x + 1)
+                for dy in range(-raio_chunks_y, raio_chunks_y + 1)
+                if (centro_chunk_x + dx, centro_chunk_y + dy) in chunks_ref
+            }
+
+        for chave_chunk in chaves_visiveis:
+            grid = chunks_ref.get(chave_chunk, [])
+            if grid:
+                self._obter_superficie_chunk(chave_chunk, grid, tile_px)
+
     def renderizar_mundo(self, tela) -> None:
         tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
         with self._lock:

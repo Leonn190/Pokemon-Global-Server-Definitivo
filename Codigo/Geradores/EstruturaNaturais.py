@@ -32,7 +32,7 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
     20: {"subtipo": "planta", "nome": "Planta", "sprite": "Recursos/Visual/Mundo/Objetos/Planta.png"},
     21: {"subtipo": "safira", "nome": "Safira", "sprite": "Recursos/Visual/Mundo/Objetos/Safira.png"},
     22: {"subtipo": "topazio", "nome": "Topázio", "sprite": "Recursos/Visual/Mundo/Objetos/Topazio.png"},
-    23: {"subtipo": "arvore_trombosa", "nome": "Árvore Trombosa", "sprite": "Recursos/Visual/Mundo/Objetos/ArvoreTrombosa.png"},
+    23: {"subtipo": "arvore_trombosa", "nome": "Arvore Frondosa", "sprite": "Recursos/Visual/Mundo/Objetos/Arvore Frondosa.png"},
 }
 
 ORDEM_CANONICA_ESTRUTURAS_NATURAIS: Tuple[str, ...] = (

@@ -33,52 +33,6 @@ _FUNDO_OFFSET_X = 0.0
 _FUNDO_DIRECAO = 1
 _FUNDO_VELOCIDADE = 32.0
 
-_SHADER_LOGO_MENU = """
-    #version 330
-    in vec2 v_uv;
-    out vec4 f_color;
-    uniform sampler2D u_texture;
-    uniform float u_time;
-    uniform float u_alpha;
-    uniform vec2 u_rect_size;
-
-    float clamp01(float v) { return clamp(v, 0.0, 1.0); }
-
-    void main() {
-        vec4 base = texture(u_texture, v_uv);
-        if (base.a <= 0.001) {
-            discard;
-        }
-
-        float yy = v_uv.y * 220.0;
-        float t = u_time;
-        float speed = 0.9;
-        float u = 0.5 + 0.25 * sin(yy * (6.283185307 / 220.0) + t * speed)
-                    + 0.25 * sin(yy * 0.02 - t * (speed * 1.2));
-        u = clamp01(u);
-
-        vec3 cA = vec3(70.0, 170.0, 255.0) / 255.0;
-        vec3 cB = vec3(255.0, 70.0, 140.0) / 255.0;
-        vec3 cC = vec3(140.0, 100.0, 255.0) / 255.0;
-        vec3 grad = mix(cA, cB, u);
-
-        float sh = 0.5 + 0.5 * sin(t * 2.4 + yy * 0.06);
-        grad *= (0.92 + 0.16 * sh);
-        float mixc = 0.18 * (0.5 + 0.5 * sin(t * 0.7 + yy * 0.01));
-        grad = mix(grad, cC, mixc);
-
-        float amp = 9.0;
-        float dx = sin(yy * 0.04 + t * 2.0) * amp + sin(yy * 0.013 - t * 1.6) * (amp * 0.55);
-        vec2 uv_warp = vec2(v_uv.x - (dx / max(1.0, u_rect_size.x)), v_uv.y);
-        vec4 mask = texture(u_texture, uv_warp);
-
-        float overlay_alpha = mask.a * clamp01(u_alpha);
-        vec3 out_rgb = mix(base.rgb, grad, overlay_alpha);
-        f_color = vec4(out_rgb, base.a);
-    }
-"""
-
-
 def _garantir_menu_carregado(Cena, altura_tela, largura_tela):
     global _MENU_CARREGADO
     global _FUNDO, _FUNDO_LARGURA, _FUNDO_ALTURA, _LOGO_ORIGINAL
@@ -248,6 +202,7 @@ def TelaMenuGL(Cena, JOGO, EVENTOS, dt, renderer):
         pygame.Rect(0, 0, tela_largura, vis_h),
         dirty=False,
         uv_rect=(uv_x0, 0.0, uv_x1, uv_y1),
+        filtro="fast",
     )
 
     if _FUNDO_ALTURA != tela_altura:
@@ -263,9 +218,6 @@ def TelaMenuGL(Cena, JOGO, EVENTOS, dt, renderer):
         _LOGO_ESPECIAL_SIZE = alvo
         _LOGO_ESPECIAL_CENTER = centro_logo
     _LOGO_ESPECIAL._gl_efeito_habilitado = True
-    _LOGO_ESPECIAL._gl_shader_key = "menu_logo_fx"
-    if hasattr(renderer, "registrar_shader_textura") and not renderer.possui_shader("menu_logo_fx"):
-        renderer.registrar_shader_textura("menu_logo_fx", _SHADER_LOGO_MENU)
 
     _LOGO_ESPECIAL.render_gl(renderer, _TEMPO_LOGO)
     for botao in _BOTOES:

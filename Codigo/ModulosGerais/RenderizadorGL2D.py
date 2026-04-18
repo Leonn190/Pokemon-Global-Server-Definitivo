@@ -148,7 +148,6 @@ class RenderizadorGL2D:
         self.draw_calls_frame = 0
 
         self._program_tex["u_texture"] = 0
-        self._custom_programs = {}
 
     def iniciar_frame(self, tamanho_tela: tuple[int, int] | None = None) -> None:
         if tamanho_tela is not None:
@@ -224,72 +223,6 @@ class RenderizadorGL2D:
         textura = self._cache.obter_textura(chave, surface, dirty=bool(dirty), filtro=filtro)
         self.desenhar_textura(textura, rect, alpha=alpha, uv_rect=uv_rect, radius=radius, borda=borda)
 
-    def registrar_shader_textura(self, chave_shader: str, fragment_shader: str, vertex_shader: str | None = None) -> None:
-        chave = str(chave_shader or "").strip()
-        if not chave:
-            return
-        if chave in self._custom_programs:
-            return
-        vert = vertex_shader or """
-            #version 330
-            in vec2 in_pos;
-            in vec2 in_uv;
-            out vec2 v_uv;
-            uniform vec2 u_resolution;
-            void main() {
-                vec2 ndc = vec2((in_pos.x / u_resolution.x) * 2.0 - 1.0,
-                                1.0 - (in_pos.y / u_resolution.y) * 2.0);
-                gl_Position = vec4(ndc, 0.0, 1.0);
-                v_uv = in_uv;
-            }
-        """
-        program = self._ctx.program(vertex_shader=vert, fragment_shader=str(fragment_shader))
-        vao = self._ctx.vertex_array(program, [(self._vbo, "2f 2f", "in_pos", "in_uv")])
-        try:
-            program["u_texture"] = 0
-        except KeyError:
-            pass
-        self._custom_programs[chave] = {"program": program, "vao": vao}
-
-    def possui_shader(self, chave_shader: str) -> bool:
-        return str(chave_shader or "").strip() in self._custom_programs
-
-    @staticmethod
-    def _atribuir_uniform(programa, nome: str, valor) -> None:
-        try:
-            programa[nome].value = valor
-        except Exception:
-            return
-
-    def desenhar_surface_com_shader(
-        self,
-        chave_shader: str,
-        chave_textura: str,
-        surface: pygame.Surface,
-        rect,
-        uniforms: dict | None = None,
-        dirty: bool = False,
-        uv_rect=None,
-        filtro: str = "smooth",
-    ) -> None:
-        info = self._custom_programs.get(str(chave_shader or "").strip())
-        if info is None:
-            return
-        rect = pygame.Rect(rect)
-        if rect.width <= 0 or rect.height <= 0:
-            return
-        textura = self._cache.obter_textura(chave_textura, surface, dirty=bool(dirty), filtro=filtro)
-        self._vbo.write(self._quad_data(rect))
-        program = info["program"]
-        vao = info["vao"]
-        self._atribuir_uniform(program, "u_resolution", self._tamanho_tela)
-        self._atribuir_uniform(program, "u_rect_size", (float(rect.width), float(rect.height)))
-        for nome, valor in dict(uniforms or {}).items():
-            self._atribuir_uniform(program, str(nome), valor)
-        textura.use(0)
-        vao.render(moderngl.TRIANGLES)
-        self.draw_calls_frame += 1
-
     def desenhar_retangulo(self, rect, cor, radius=0, borda=None) -> None:
         rect = pygame.Rect(rect)
         if rect.width <= 0 or rect.height <= 0:
@@ -321,13 +254,3 @@ class RenderizadorGL2D:
                 obj.release()
             except Exception:
                 pass
-        for info in self._custom_programs.values():
-            try:
-                info["vao"].release()
-            except Exception:
-                pass
-            try:
-                info["program"].release()
-            except Exception:
-                pass
-        self._custom_programs.clear()

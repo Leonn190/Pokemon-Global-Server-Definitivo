@@ -48,6 +48,8 @@ class Imagem:
         # cache do efeito pra não recalcular 100% todo frame
         self._fx_cache = None
         self._fx_cache_tkey = None
+        self._gl_efeito_habilitado = False
+        self._gl_shader_key = None
 
     def set_center(self, center):
         self.center = center
@@ -60,6 +62,31 @@ class Imagem:
         # efeito interno
         if self.effect_alpha > 0:
             surface.blit(self._get_fx_layer(t), self.rect.topleft)
+
+
+    def render_gl(self, renderer, t: float):
+        chave_base = f"imagem:{self.path}:{self.image.get_width()}x{self.image.get_height()}"
+        if self.effect_alpha <= 0 or not self._gl_efeito_habilitado:
+            renderer.desenhar_surface_cacheada(chave_base, self.image, self.rect, dirty=False)
+            return
+        alpha = max(0.0, min(1.0, float(self.effect_alpha) / 255.0))
+        if self._gl_shader_key and hasattr(renderer, "desenhar_surface_com_shader") and hasattr(renderer, "possui_shader") and renderer.possui_shader(self._gl_shader_key):
+            renderer.desenhar_surface_com_shader(
+                self._gl_shader_key,
+                chave_base,
+                self.image,
+                self.rect,
+                uniforms={
+                    "u_time": float(t),
+                    "u_alpha": float(alpha),
+                },
+                dirty=False,
+            )
+            return
+        # fallback de compatibilidade caso o renderer GL não suporte shader de efeito.
+        renderer.desenhar_surface_cacheada(chave_base, self.image, self.rect, dirty=False)
+        fx = self._get_fx_layer(t)
+        renderer.desenhar_surface_cacheada(f"{chave_base}:fx", fx, self.rect, dirty=True, alpha=alpha)
 
     def _get_fx_layer(self, t: float):
         tkey = int(t * self._FX_FPS)

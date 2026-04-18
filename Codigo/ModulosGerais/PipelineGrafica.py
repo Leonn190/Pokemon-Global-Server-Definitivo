@@ -5,6 +5,7 @@ from typing import Optional
 import pygame
 
 from Codigo.ModulosGerais.CompositorModernGL import CompositorModernGL
+from Codigo.ModulosGerais.RenderizadorGL2D import RenderizadorGL2D
 
 
 class PipelineGrafica:
@@ -15,6 +16,7 @@ class PipelineGrafica:
         self._hud_surface: Optional[pygame.Surface] = None
         self._scene_size = (0, 0)
         self._compositor_gl = None
+        self._renderizador_gl2d = None
         self._motivo_fallback = ""
         self._inicializar_compositor_gl()
 
@@ -25,9 +27,11 @@ class PipelineGrafica:
             return
         try:
             self._compositor_gl = CompositorModernGL()
+            self._renderizador_gl2d = RenderizadorGL2D(ctx=self._compositor_gl.contexto)
             self._motivo_fallback = ""
         except Exception as exc:  # pragma: no cover - depende do ambiente grafico
             self._compositor_gl = None
+            self._renderizador_gl2d = None
             self._motivo_fallback = str(exc)
 
     def shader_disponivel(self) -> bool:
@@ -108,6 +112,38 @@ class PipelineGrafica:
         self._tela_display.blit(scene_surface, (0, 0))
         self._tela_display.blit(hud_surface, (0, 0))
 
+
+    def _deve_forcar_fallback_surface(self, jogo, render_subtelas_hud=None, render_adicionais=None, aplicar_claridade=None, render_transicao=None) -> str:
+        if callable(render_transicao):
+            return "transicao_surface"
+        if callable(render_subtelas_hud) and bool(getattr(getattr(jogo, "GerenciadorSubtelas", None), "ativa", False)):
+            return "subtela_hud_surface"
+
+        cfg = getattr(jogo, "CONFIG", {}) if isinstance(getattr(jogo, "CONFIG", None), dict) else {}
+        if callable(aplicar_claridade) and int(cfg.get("Claridade", 75) or 75) != 75:
+            return "claridade_surface"
+        return ""
+
+    def _renderizar_cena_gl2d(self, jogo, cena, eventos, dt) -> bool:
+        render_gl = self._hook(cena, "render_gl")
+        if render_gl is None or self._renderizador_gl2d is None:
+            return False
+        try:
+            self._renderizador_gl2d.iniciar_frame(self._tela_display.get_size())
+            renderizado = bool(render_gl(self._renderizador_gl2d, jogo, eventos, dt))
+            if not renderizado:
+                return False
+            self._renderizador_gl2d.finalizar_frame()
+            if isinstance(getattr(jogo, "INFO", None), dict):
+                jogo.INFO["RenderPath"] = "menu_gl"
+                jogo.INFO["GLUploadsFrame"] = int(self._renderizador_gl2d.uploads_frame)
+                jogo.INFO["GLDrawCallsFrame"] = int(self._renderizador_gl2d.draw_calls_frame)
+                jogo.INFO["MotivoRenderFallback"] = ""
+            return True
+        except Exception as exc:
+            self._motivo_fallback = f"render_gl falhou: {exc}"
+            return False
+
     def renderizar_frame(
         self,
         jogo,
@@ -120,9 +156,21 @@ class PipelineGrafica:
         aplicar_claridade=None,
         render_transicao=None,
     ) -> None:
+        motivo_fallback = self._deve_forcar_fallback_surface(
+            jogo,
+            render_subtelas_hud=render_subtelas_hud,
+            render_adicionais=render_adicionais,
+            aplicar_claridade=aplicar_claridade,
+            render_transicao=render_transicao,
+        )
+        if (not motivo_fallback) and self._renderizar_cena_gl2d(jogo, cena, eventos, dt):
+            return
+
         self._compor_tela_cena(jogo, cena, eventos, dt, render_subtelas_scene=render_subtelas_scene)
 
         if isinstance(getattr(jogo, "INFO", None), dict):
+            jogo.INFO["RenderPath"] = "surface_fallback"
+            jogo.INFO["MotivoRenderFallback"] = motivo_fallback or self._motivo_fallback or "sem_render_gl"
             jogo.INFO["_frame_scene_surface"] = self.obter_surface_scene()
             jogo.INFO["_frame_hud_surface"] = self.obter_surface_hud()
 
@@ -139,6 +187,9 @@ class PipelineGrafica:
         self._apresentar(jogo, cena, dt)
 
     def liberar(self) -> None:
+        if self._renderizador_gl2d is not None:
+            self._renderizador_gl2d.liberar()
+            self._renderizador_gl2d = None
         if self._compositor_gl is not None:
             self._compositor_gl.liberar()
             self._compositor_gl = None

@@ -262,10 +262,7 @@ class Botao:
         border_now = _lerp_color(border_now, self.style.get("pulse_border_color", (255, 244, 196)), min(1.0, t * 1.3))
         return bg_now, border_now
 
-    def render(self, tela: pygame.Surface, eventos, dt: float, JOGO=None, mouse_pos=None):
-        if mouse_pos is None:
-            mouse_pos = pygame.mouse.get_pos()
-
+    def _atualizar_estado(self, eventos, dt: float, mouse_pos):
         self.hover = self.rect.collidepoint(mouse_pos)
         self.clicado = False
 
@@ -333,9 +330,29 @@ class Botao:
         else:
             bg_now, border_now = self._aplicar_pulso(bg_now, border_now)
 
+        return clicou, clicou_bloqueado, bg_now, border_now, text_style
+
+    def _desenhar_texto(self, destino):
+        ancora_texto = str(self.style.get("text_anchor", "center")).strip().lower()
+        if ancora_texto == "left":
+            self.text.set_pos((self.rect.x + 12, self.rect.centery))
+        else:
+            self.text.set_pos(self.rect.center)
+        if hasattr(destino, "desenhar_surface_cacheada"):
+            self.text.draw_gl(destino)
+        else:
+            self.text.draw(destino)
+
+    def render(self, tela: pygame.Surface, eventos, dt: float, JOGO=None, mouse_pos=None):
+        if mouse_pos is None:
+            mouse_pos = pygame.mouse.get_pos()
+
+        clicou, clicou_bloqueado, bg_now, border_now, text_style = self._atualizar_estado(eventos, dt, mouse_pos)
+
         radius = int(self.style["radius"])
         bw = int(self.style["border_width"])
         w, h = self.rect.width, self.rect.height
+        frames = self.style["bg_frames_hover"] or []
 
         self._ensure_clip(w, h)
         clip_surf = self._clip_surf
@@ -361,12 +378,7 @@ class Botao:
             pygame.draw.rect(tela, border_now, self.rect, width=bw, border_radius=radius)
 
         self._update_text_color_fast(text_style)
-        ancora_texto = str(self.style.get("text_anchor", "center")).strip().lower()
-        if ancora_texto == "left":
-            self.text.set_pos((self.rect.x + 12, self.rect.centery))
-        else:
-            self.text.set_pos(self.rect.center)
-        self.text.draw(tela)
+        self._desenhar_texto(tela)
 
         if self.tooltip is not None:
             self.tooltip.definir_area(self.rect)
@@ -378,6 +390,63 @@ class Botao:
         if clicou_bloqueado and self.som_bloqueado:
             tocar(self.som_bloqueado)
 
+        if clicou:
+            self.clicado = True
+            self._executar(JOGO)
+
+    def render_gl(self, renderer, eventos, dt: float, JOGO=None, mouse_pos=None):
+        if mouse_pos is None:
+            mouse_pos = pygame.mouse.get_pos()
+
+        clicou, clicou_bloqueado, bg_now, border_now, text_style = self._atualizar_estado(eventos, dt, mouse_pos)
+        radius = int(self.style["radius"])
+        bw = int(self.style["border_width"])
+        frames = self.style["bg_frames_hover"] or []
+
+        if self.hover and frames and self.habilitado:
+            frame = frames[self._frame_idx]
+            scale_mode = str(self.style.get("bg_frames_scale_mode", "fast")).strip().lower()
+            filtro = "fast" if scale_mode == "fast" else "smooth"
+            renderer.desenhar_surface_cacheada(
+                f"botao:{id(self)}:frame:{self._frame_idx}",
+                frame,
+                self.rect,
+                dirty=False,
+                radius=radius,
+                filtro=filtro,
+            )
+        elif self.style["bg_image"] is not None:
+            renderer.desenhar_surface_cacheada(
+                f"botao:{id(self)}:bg",
+                self.style["bg_image"],
+                self.rect,
+                dirty=False,
+                radius=radius,
+                filtro="smooth",
+            )
+        else:
+            renderer.desenhar_retangulo(
+                self.rect,
+                (*bg_now, 255),
+                radius=radius,
+                borda={"cor": (*border_now, 255), "largura": bw},
+            )
+        if bw > 0 and ((frames and self.hover and self.habilitado) or (self.style["bg_image"] is not None)):
+            renderer.desenhar_retangulo(
+                self.rect,
+                (0, 0, 0, 0),
+                radius=radius,
+                borda={"cor": (*border_now, 255), "largura": bw},
+            )
+
+        self._update_text_color_fast(text_style)
+        self._desenhar_texto(renderer)
+
+        if self.tooltip is not None:
+            self.tooltip.definir_area(self.rect)
+
+        if clicou_bloqueado and self.som_bloqueado:
+            tocar(self.som_bloqueado)
         if clicou:
             self.clicado = True
             self._executar(JOGO)

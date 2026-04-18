@@ -1,8 +1,10 @@
+import time
+
 from Codigo.ModulosGerais.EfeitosTela import Clarear, Escurecer
-from Codigo.Telas.TelaMenu import TelaMenu
-from Codigo.Telas.TelaServers import TelaServers
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
+from Codigo.Telas.TelaMenu import TelaMenu, TelaMenuGL
 from Codigo.Telas.TelaOperador import TelaOperador
+from Codigo.Telas.TelaServers import TelaServers
 
 
 class CenaMenu:
@@ -42,6 +44,17 @@ class CenaMenu:
 
     def render_tela(self, surface, JOGO, EVENTOS, dt):
         self._desenhar_menu(JOGO, EVENTOS, dt, tela_destino=surface)
+
+    def render_gl(self, renderer, JOGO, EVENTOS, dt):
+        if self.TelaAtual != "MenuPrincipal":
+            return False
+        inicio = time.perf_counter()
+        try:
+            TelaMenuGL(self, JOGO, EVENTOS, dt, renderer)
+            return True
+        finally:
+            if isinstance(getattr(JOGO, "INFO", None), dict):
+                JOGO.INFO["MenuRenderMs"] = round((time.perf_counter() - inicio) * 1000.0, 3)
 
     def Tela(self, JOGO, EVENTOS, dt):
         self._desenhar_menu(JOGO, EVENTOS, dt, tela_destino=JOGO.TELA)

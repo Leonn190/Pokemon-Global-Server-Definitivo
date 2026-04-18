@@ -94,8 +94,11 @@ final class GeradorRotas {
         }
 
         int target = rangedValue(rules.minCount, rules.maxCount, 340_001L);
+        int maxPairs = (villages.size() * (villages.size() - 1)) / 2;
+        int maxByDegree = (villages.size() * Math.max(0, rules.maxVillageLinks + 1)) / 2;
+        target = Math.min(target, Math.min(maxPairs, maxByDegree));
         int[] degree = new int[villages.size()];
-        Set<Long> usedPairs = new HashSet<>();
+        Set<Long> attemptedPairs = new HashSet<>();
         int routeId = 0;
         int attempts = 0;
 
@@ -121,7 +124,7 @@ final class GeradorRotas {
                 break;
             }
             attempts++;
-            if (tryCreateRoute(best, villages, degree, usedPairs, routeId)) {
+            if (tryCreateRoute(best, villages, degree, attemptedPairs, routeId)) {
                 routeId++;
                 connected.add(best.a);
                 connected.add(best.b);
@@ -149,7 +152,7 @@ final class GeradorRotas {
                 continue;
             }
             attempts++;
-            if (tryCreateRoute(cand, villages, degree, usedPairs, routeId)) {
+            if (tryCreateRoute(cand, villages, degree, attemptedPairs, routeId)) {
                 routeId++;
             }
         }
@@ -163,7 +166,7 @@ final class GeradorRotas {
                     continue;
                 }
                 attempts++;
-                if (tryCreateRoute(cand, villages, degree, usedPairs, routeId)) {
+                if (tryCreateRoute(cand, villages, degree, attemptedPairs, routeId)) {
                     routeId++;
                 }
             }
@@ -186,16 +189,16 @@ final class GeradorRotas {
         System.out.printf(Locale.US, "    conectividade vilas: min=%d max=%d media=%.2f%n", minDegree, maxDegree, avgDegree);
     }
 
-    private boolean tryCreateRoute(RouteCandidate cand, List<Poi> villages, int[] degree, Set<Long> usedPairs, int routeId) {
+    private boolean tryCreateRoute(RouteCandidate cand, List<Poi> villages, int[] degree, Set<Long> attemptedPairs, int routeId) {
         long key = pairKey(cand.a, cand.b);
-        if (usedPairs.contains(key)) {
+        if (attemptedPairs.contains(key)) {
             return false;
         }
+        attemptedPairs.add(key);
         List<int[]> path = findPath(villages.get(cand.a), villages.get(cand.b));
         if (path == null || path.size() < 2) {
             return false;
         }
-        usedPairs.add(key);
         degree[cand.a]++;
         degree[cand.b]++;
         ctx.routes.add(new RouteData(routeId, villages.get(cand.a), villages.get(cand.b), path));

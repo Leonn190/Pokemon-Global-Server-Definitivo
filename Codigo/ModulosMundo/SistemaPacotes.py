@@ -7,7 +7,7 @@ import time
 from collections import deque
 from typing import Dict, List, Optional
 
-from Codigo.Server.ServerMundo import enviar_pacote_cliente_mundo
+from Codigo.Server.ServerMundo import enviar_pacote_cliente_mundo, receber_pacotes_tick_mundo
 
 
 class SistemaPacotes:
@@ -188,19 +188,28 @@ class SistemaPacotes:
 
         resposta = None
         sucesso_envio = False
+        somente_receber = not lote_envio
         try:
-            resposta = enviar_pacote_cliente_mundo(
-                self._server_link,
-                self._client_id,
-                ultimo_tick_recebido=int(self._ultimo_tick_recebido),
-                diffs=lote_envio,
-                tick_cliente=int(self._tick_cliente),
-                posicao_camera=posicao_ref,
-            )
+            if somente_receber:
+                resposta = receber_pacotes_tick_mundo(
+                    self._server_link,
+                    self._client_id,
+                    ultimo_tick_recebido=int(self._ultimo_tick_recebido),
+                    posicao_camera=posicao_ref,
+                )
+            else:
+                resposta = enviar_pacote_cliente_mundo(
+                    self._server_link,
+                    self._client_id,
+                    ultimo_tick_recebido=int(self._ultimo_tick_recebido),
+                    diffs=lote_envio,
+                    tick_cliente=int(self._tick_cliente),
+                    posicao_camera=posicao_ref,
+                )
+                self._tick_cliente += 1
             sucesso_envio = isinstance(resposta, dict) and str(resposta.get("status", "")).strip().lower() == "ok"
         except Exception:
             sucesso_envio = False
-        self._tick_cliente += 1
 
         if not sucesso_envio:
             self._pendentes_reenvio = lote_envio

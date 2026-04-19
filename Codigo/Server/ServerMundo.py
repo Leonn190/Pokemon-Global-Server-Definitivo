@@ -20,10 +20,7 @@ def _processar_rota_local(processador, pacote, mensagem_erro):
     resposta = processador(pacote)
     if isinstance(resposta, dict):
         return resposta
-    try:
-        return json.loads(resposta)
-    except json.JSONDecodeError:
-        return _erro_padrao(mensagem_erro)
+    return _erro_padrao(mensagem_erro)
 
 
 def definir_bombeamento_local_manual(ativo: bool) -> None:

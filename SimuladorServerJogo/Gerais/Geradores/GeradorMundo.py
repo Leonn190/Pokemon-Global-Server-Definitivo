@@ -72,6 +72,13 @@ def _obter_chunk_blocos() -> int:
 
 
 CHUNK_BLOCOS = _obter_chunk_blocos()
+ARQUIVO_ESTADO_MUNDO_BASE = "MundoEstado.json"
+ARQUIVOS_ESTADO_MUTAVEL = {
+    "players": "MundoEstado.players.json",
+    "npcs_vendedores": "MundoEstado.npcs_vendedores.json",
+    "estruturas_naturais_tocadas": "MundoEstado.estruturas_naturais_tocadas.json",
+    "tempo_mundo": "MundoEstado.tempo_mundo.json",
+}
 
 
 def _pasta_estado_mundo_existente() -> Path:
@@ -455,19 +462,17 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
     return estado
 
 
-def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
-    _migrar_estado_mundo_legado_se_necessario()
-    arquivo_mundo = _arquivo_estado_mundo("MundoEstado.json", preferir_novo=True)
-    arquivo_mundo.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(arquivo_mundo.parent), delete=False, prefix="mundo_", suffix=".tmp") as f:
-        json.dump(estado_mundo, f, ensure_ascii=False, separators=(",", ":"))
+def _salvar_json_atomico(arquivo: Path, payload) -> None:
+    arquivo.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(arquivo.parent), delete=False, prefix="mundo_", suffix=".tmp") as f:
+        json.dump(payload, f, ensure_ascii=False, separators=(",", ":"), check_circular=False)
         f.flush()
         os.fsync(f.fileno())
         caminho_tmp = f.name
     ultimo_erro = None
     for tentativa in range(8):
         try:
-            os.replace(caminho_tmp, arquivo_mundo)
+            os.replace(caminho_tmp, arquivo)
             return
         except PermissionError as exc:
             ultimo_erro = exc
@@ -480,11 +485,67 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
         raise ultimo_erro
 
 
+def _estado_mundo_base(estado_mundo: Dict[str, object]) -> Dict[str, object]:
+    meta = estado_mundo.get("meta", {}) if isinstance(estado_mundo.get("meta"), dict) else {}
+    spawn = estado_mundo.get("spawn", [0.0, 0.0])
+    return {
+        "meta": dict(meta),
+        "grid": estado_mundo.get("grid", []),
+        "grid_biomas": estado_mundo.get("grid_biomas", []),
+        "grid_estruturas_naturais": estado_mundo.get("grid_estruturas_naturais", []),
+        "estruturas_naturais_tocadas": {},
+        "players": {},
+        "npcs_vendedores": {},
+        "spawn": list(spawn) if isinstance(spawn, (list, tuple)) else [0.0, 0.0],
+        "tempo_mundo": {},
+    }
+
+
+def _estado_mundo_secao_mutavel(estado_mundo: Dict[str, object], secao: str):
+    if secao == "players":
+        return dict(estado_mundo.get("players", {})) if isinstance(estado_mundo.get("players"), dict) else {}
+    if secao == "npcs_vendedores":
+        return dict(estado_mundo.get("npcs_vendedores", {})) if isinstance(estado_mundo.get("npcs_vendedores"), dict) else {}
+    if secao == "estruturas_naturais_tocadas":
+        return dict(estado_mundo.get("estruturas_naturais_tocadas", {})) if isinstance(estado_mundo.get("estruturas_naturais_tocadas"), dict) else {}
+    if secao == "tempo_mundo":
+        return dict(estado_mundo.get("tempo_mundo", {})) if isinstance(estado_mundo.get("tempo_mundo"), dict) else {}
+    raise KeyError(f"Secao de estado mutavel desconhecida: {secao}")
+
+
+def _normalizar_secoes_mutaveis(secoes) -> Tuple[str, ...]:
+    if secoes is None:
+        return tuple(ARQUIVOS_ESTADO_MUTAVEL.keys())
+    out = []
+    for secao in secoes:
+        secao_norm = str(secao or "").strip()
+        if secao_norm in ARQUIVOS_ESTADO_MUTAVEL and secao_norm not in out:
+            out.append(secao_norm)
+    return tuple(out)
+
+
+def salvar_estado_mundo(estado_mundo: Dict[str, object], secoes_mutaveis=None) -> None:
+    _migrar_estado_mundo_legado_se_necessario()
+    arquivo_base = _arquivo_estado_mundo(ARQUIVO_ESTADO_MUNDO_BASE, preferir_novo=True)
+    secoes_norm = _normalizar_secoes_mutaveis(secoes_mutaveis)
+    meta_valida = isinstance(estado_mundo.get("meta"), dict) and bool(estado_mundo.get("meta"))
+    if secoes_mutaveis is None or (not arquivo_base.exists() and meta_valida):
+        _salvar_json_atomico(arquivo_base, _estado_mundo_base(estado_mundo))
+    for secao in secoes_norm:
+        nome_arquivo = ARQUIVOS_ESTADO_MUTAVEL.get(secao)
+        if nome_arquivo is None:
+            continue
+        _salvar_json_atomico(
+            _arquivo_estado_mundo(nome_arquivo, preferir_novo=True),
+            _estado_mundo_secao_mutavel(estado_mundo, secao),
+        )
+
+
 def carregar_estado_mundo() -> Dict[str, object]:
     pasta_estado_mundo = _pasta_estado_mundo_existente()
     if not pasta_estado_mundo.exists():
         pasta_estado_mundo.mkdir(parents=True, exist_ok=True)
-    arquivo_mundo = pasta_estado_mundo / "MundoEstado.json"
+    arquivo_mundo = pasta_estado_mundo / ARQUIVO_ESTADO_MUNDO_BASE
     if arquivo_mundo.exists():
         try:
             with arquivo_mundo.open("r", encoding="utf-8") as f:
@@ -506,11 +567,24 @@ def carregar_estado_mundo() -> Dict[str, object]:
                     "grid": [],
                     "grid_biomas": [],
                     "grid_estruturas_naturais": [],
+                    "estruturas_naturais_tocadas": {},
                     "players": {},
                     "npcs_vendedores": {},
                     "spawn": [0.0, 0.0],
+                    "tempo_mundo": {},
                 }
             salvar_estado_mundo(estado)
+        for secao, nome_arquivo in ARQUIVOS_ESTADO_MUTAVEL.items():
+            arquivo_secao = pasta_estado_mundo / nome_arquivo
+            if not arquivo_secao.exists():
+                continue
+            try:
+                with arquivo_secao.open("r", encoding="utf-8") as f:
+                    payload_secao = json.load(f)
+            except (OSError, json.JSONDecodeError):
+                continue
+            if isinstance(payload_secao, dict):
+                estado[secao] = payload_secao
         if isinstance(estado, dict) and isinstance(estado.get("meta"), dict):
             meta = estado.get("meta", {}) if isinstance(estado.get("meta"), dict) else {}
             global LARGURA_BLOCOS, ALTURA_BLOCOS
@@ -522,6 +596,10 @@ def carregar_estado_mundo() -> Dict[str, object]:
                 estado.setdefault("grid", [])
                 estado.setdefault("grid_biomas", [])
                 estado.setdefault("grid_estruturas_naturais", [])
+                estado.setdefault("estruturas_naturais_tocadas", {})
+                estado.setdefault("players", {})
+                estado.setdefault("npcs_vendedores", {})
+                estado.setdefault("tempo_mundo", {})
                 return estado
 
         if isinstance(estado, dict) and isinstance(estado.get("grid"), list) and estado.get("grid"):
@@ -546,7 +624,10 @@ def carregar_estado_mundo() -> Dict[str, object]:
                     ALTURA_BLOCOS = int(altura)
                     estado.setdefault("grid_biomas", [])
                     estado.setdefault("grid_estruturas_naturais", [])
+                    estado.setdefault("estruturas_naturais_tocadas", {})
+                    estado.setdefault("players", {})
                     estado.setdefault("npcs_vendedores", {})
+                    estado.setdefault("tempo_mundo", {})
                     return estado
 
     return {
@@ -554,9 +635,11 @@ def carregar_estado_mundo() -> Dict[str, object]:
         "grid": [],
         "grid_biomas": [],
         "grid_estruturas_naturais": [],
+        "estruturas_naturais_tocadas": {},
         "players": {},
         "npcs_vendedores": {},
         "spawn": [0.0, 0.0],
+        "tempo_mundo": {},
     }
 
 

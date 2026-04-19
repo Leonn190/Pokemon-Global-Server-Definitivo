@@ -26,7 +26,7 @@ _CLIENT_STATE: Dict[str, Dict[str, object]] = {}
 def _serializar_resposta(payload: Dict[str, object], serializar: bool):
     if not serializar:
         return payload
-    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), check_circular=False)
 
 
 def _next_seq() -> int:

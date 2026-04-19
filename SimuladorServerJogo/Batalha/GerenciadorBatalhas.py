@@ -20,6 +20,22 @@ class GerenciadorBatalhas:
         self._batalha_ativa_por_cliente[str(client_id)] = batalha_id
         return {"status": "ok", "mensagem": "Batalha iniciada", "batalha": sistema.snapshot()}
 
+    def obter_batalha(self, batalha_id: str):
+        chave = str(batalha_id or "").strip()
+        if not chave:
+            return None
+        return self._batalhas_por_id.get(chave)
+
+    def obter_batalha_ativa(self, client_id: str):
+        chave = str(self._batalha_ativa_por_cliente.get(str(client_id), ""))
+        return self._batalhas_por_id.get(chave)
+
+    def snapshot_batalha_ativa(self, client_id: str) -> Dict[str, object] | None:
+        sistema = self.obter_batalha_ativa(client_id)
+        if sistema is None:
+            return None
+        return sistema.snapshot() if hasattr(sistema, "snapshot") else None
+
     def receber_jogadas(self, client_id: str, jogadas: List[Dict[str, object]] | None = None, batalha_id: str = "") -> Dict[str, object]:
         chave = str(batalha_id or self._batalha_ativa_por_cliente.get(str(client_id), ""))
         sistema = self._batalhas_por_id.get(chave)

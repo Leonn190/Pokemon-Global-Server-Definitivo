@@ -10,7 +10,7 @@ from Codigo.Prefabs.Texto import Texto
 
 
 class Terminal:
-    def __init__(self, rect, callback_enviar=None, callback_buscar=None, autor_local="anon"):
+    def __init__(self, rect, callback_enviar=None, callback_buscar=None, autor_local="anon", tecla_abrir=pygame.K_t):
         self.rect = pygame.Rect(rect)
         self.caixa = CaixaTexto(
             pygame.Rect(self.rect.x + 8, self.rect.bottom - 34, self.rect.w - 16, 26),
@@ -22,6 +22,7 @@ class Terminal:
         self.callback_enviar = callback_enviar
         self.callback_buscar = callback_buscar
         self.autor_local = str(autor_local or "anon")
+        self.tecla_abrir = int(tecla_abrir)
         self.digitando = False
         self._mensagens = []
         self._ultimo_id = 0
@@ -89,14 +90,16 @@ class Terminal:
     def processar_eventos(self, eventos, bloquear_atalho_enter=False):
         eventos_restantes = []
         for evento in eventos:
+            if evento.type == pygame.KEYDOWN and evento.key == self.tecla_abrir and not self.digitando:
+                self.digitando = True
+                self.caixa.set_ativo(True)
+                self.caixa.selecionada = True
+                continue
+
             if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                if bloquear_atalho_enter and not self.digitando:
-                    eventos_restantes.append(evento)
-                    continue
                 if not self.digitando:
-                    self.digitando = True
-                    self.caixa.set_ativo(True)
-                    self.caixa.selecionada = True
+                    if bloquear_atalho_enter:
+                        eventos_restantes.append(evento)
                     continue
                 self._enviar_local()
                 continue

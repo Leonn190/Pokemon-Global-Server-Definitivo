@@ -155,10 +155,10 @@ class CenaMundo:
         JOGO.INFO["RegrasMundo"] = dict(regras_mundo or {})
 
         gerais = regras_mundo.get("gerais") if isinstance(regras_mundo.get("gerais"), dict) else {}
-        tile_px = int(gerais.get("camera_px_por_tile", 50) or 50)
+        tile_px = int(gerais.get("camera_px_por_tile", 50))
 
         dados = JOGO.INFO.get("PlayerDadosServer") or {}
-        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=None, tile_px=max(8, tile_px))
+        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=None, tile_px=tile_px)
         self.ControladorMundo = ControladorMundo(jogo=JOGO, camera=self.Camera)
         player_local = self.ControladorMundo.montar_player_local(dados)
         self.EntidadeMain = player_local
@@ -399,8 +399,8 @@ class CenaMundo:
             "arena_altura": 20,
             "tiles": [],
             "estruturas": [],
-            "combate_pokemon_tamanho_diametro_base_tiles": float(pokemons_regras.get("combate_tamanho_diametro_base_tiles", 1.0) or 1.0),
-            "combate_pokemon_tamanho_incremento_por_escala": float(pokemons_regras.get("combate_tamanho_incremento_por_escala", 0.1) or 0.1),
+            "combate_pokemon_tamanho_diametro_base_tiles": float(pokemons_regras.get("combate_tamanho_diametro_base_tiles", 1.0)),
+            "combate_pokemon_tamanho_incremento_por_escala": float(pokemons_regras.get("combate_tamanho_incremento_por_escala", 0.1)),
         }
 
         if dimensao != "Mundo":

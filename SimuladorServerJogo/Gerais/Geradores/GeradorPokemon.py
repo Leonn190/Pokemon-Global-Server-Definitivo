@@ -41,8 +41,12 @@ def _normalizar_escala_pokemon(v, default: int = 3) -> int:
 
 
 def _diametro_tiles_por_escala(escala: int) -> float:
-    base = float(_REGRAS_POKEMON.get("tamanho_diametro_base_tiles", 0.6) or 0.6)
-    incremento = float(_REGRAS_POKEMON.get("tamanho_incremento_por_escala", _REGRAS_POKEMON.get("tamanho_incremento_por_tamanho", 0.1)) or 0.1)
+    base = float(_REGRAS_POKEMON.get("tamanho_diametro_base_tiles", 0.6))
+    incremento = float(
+        _REGRAS_POKEMON.get("tamanho_incremento_por_escala")
+        if _REGRAS_POKEMON.get("tamanho_incremento_por_escala") is not None
+        else _REGRAS_POKEMON.get("tamanho_incremento_por_tamanho", 0.1)
+    )
     return base + (max(0, int(escala)) * incremento)
 
 
@@ -72,11 +76,13 @@ def _sigla_tamanho_por_variacao(variacao: int) -> str:
 
 def _sortear_escala_e_tamanho(escala_base: int) -> tuple[int, int, str]:
     base = _normalizar_escala_pokemon(escala_base, default=3)
-    var_min = int(_REGRAS_POKEMON.get("tamanho_variacao_escala_min", -1) or -1)
-    var_max = int(_REGRAS_POKEMON.get("tamanho_variacao_escala_max", 1) or 1)
+    var_min = int(_REGRAS_POKEMON.get("tamanho_variacao_escala_min", -1))
+    var_max = int(_REGRAS_POKEMON.get("tamanho_variacao_escala_max", 1))
     if var_min > var_max:
         var_min, var_max = var_max, var_min
-    pool = [v for v in range(var_min, var_max + 1) if v in (-1, 0, 1)] or [-1, 0, 1]
+    pool = list(range(var_min, var_max + 1))
+    if not pool:
+        pool = [0]
     variacao = int(random.choice(pool))
     escala = _normalizar_escala_pokemon(base + variacao, default=base)
     return (escala, variacao, _sigla_tamanho_por_variacao(variacao))

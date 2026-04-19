@@ -25,7 +25,7 @@ class CerebroPokemons:
     def tentar_spawn(self, chunks_simulados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff
 
-        if random.random() > self._core._f("chance_spawn_pokemon_por_tick", 0.02):
+        if random.random() >= self._core._f("chance_spawn_pokemon_por_tick", 0.02):
             return
         if len(self._core._spawns_pokemon_ultimos_200) >= self._core._i("limite_spawn_pokemon_200_ticks", 4):
             return
@@ -37,7 +37,9 @@ class CerebroPokemons:
             if self._core.contagem_pokemons_registrados() >= int(math.floor(max(0.0, limite_por_chunk) * max(0, chunks_existentes))):
                 return
 
-        tentativas = max(1, self._core._i("tentativas_spawn_pokemon", 5))
+        tentativas = int(self._core._i("tentativas_spawn_pokemon", 5))
+        if tentativas <= 0:
+            return
         chunk_tamanho = BANCO_DADOS.chunk_tamanho_unidade()
         chunk_list = list(chunks_simulados)
         random.shuffle(chunk_list)
@@ -115,11 +117,15 @@ class CerebroPokemons:
                 continue
             if BANCO_DADOS.chunk_da_posicao(poke.posicao) not in chunks_carregados:
                 continue
-            if random.random() > chance_inicio:
+            if random.random() >= chance_inicio:
                 continue
 
             estado["dir"] = random.choice(_DIRECOES_8)
-            estado["restante"] = random.randint(max(10, cooldown_min), max(10, duracao_max))
+            restante_min = int(cooldown_min)
+            restante_max = int(duracao_max)
+            if restante_max < restante_min:
+                restante_min, restante_max = restante_max, restante_min
+            estado["restante"] = random.randint(restante_min, restante_max)
 
     @staticmethod
     def _colisao_movimento_pokemon(pokemon_id: int, destino: Vector2, raio: float) -> bool:
@@ -149,7 +155,7 @@ class CerebroPokemons:
                 self._core._pokemons_ids.discard(oid); continue
             if BANCO_DADOS.chunk_da_posicao(poke.posicao) in chunks_simulados:
                 candidatos_poke.append((oid, poke))
-        if candidatos_poke and random.random() <= chance_poke:
+        if candidatos_poke and random.random() < chance_poke:
             oid, _ = random.choice(candidatos_poke)
             rem = BANCO_DADOS.remover_objeto(oid)
             self._core._pokemons_ids.discard(oid)
@@ -166,7 +172,7 @@ class CerebroPokemons:
                 continue
             if BANCO_DADOS.chunk_da_posicao(bau.posicao) in chunks_simulados:
                 candidatos_bau.append((oid, bau))
-        if candidatos_bau and random.random() <= chance_bau:
+        if candidatos_bau and random.random() < chance_bau:
             oid, _ = random.choice(candidatos_bau)
             rem = BANCO_DADOS.remover_objeto(oid)
             self._core._baus_ids.discard(oid)

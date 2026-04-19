@@ -6,6 +6,7 @@ from typing import Any, Dict
 import tomllib
 
 _BASE_REGRAS = Path(__file__).resolve().parents[1] / "Logica" / "Regras"
+_AUSENTE = object()
 
 
 def _ler_toml(nome: str) -> Dict[str, Any]:
@@ -26,6 +27,23 @@ def _flatten(dados: Dict[str, Any], prefixo: str = "") -> Dict[str, Any]:
         else:
             saida[chave_norm] = valor
     return saida
+
+
+def _ler_valor(origem: Dict[str, Any], chave: str, padrao: Any) -> Any:
+    if not isinstance(origem, dict):
+        return padrao
+    valor = origem.get(chave, _AUSENTE)
+    if valor is _AUSENTE or valor in (None, ""):
+        return padrao
+    return valor
+
+
+def _int_cfg(origem: Dict[str, Any], chave: str, padrao: int) -> int:
+    return int(_ler_valor(origem, chave, padrao))
+
+
+def _float_cfg(origem: Dict[str, Any], chave: str, padrao: float) -> float:
+    return float(_ler_valor(origem, chave, padrao))
 
 
 def carregar_regras_player() -> Dict[str, object]:
@@ -82,25 +100,27 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     anim = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
     captura = dados.get("captura") if isinstance(dados.get("captura"), dict) else {}
 
-    out["velocidade_base_pokemon_tiles_s"] = float(vel.get("base_tiles_s", 3.0) or 3.0)
-    out["tamanho_diametro_base_tiles"] = float(tamanho.get("diametro_base_tiles", 0.6) or 0.6)
-    out["tamanho_incremento_por_escala"] = float(tamanho.get("incremento_por_escala", tamanho.get("incremento_por_tamanho", 0.1)) or 0.1)
-    out["tamanho_variacao_escala_min"] = int(tamanho.get("variacao_escala_min", -1) or -1)
-    out["tamanho_variacao_escala_max"] = int(tamanho.get("variacao_escala_max", 1) or 1)
+    out["velocidade_base_pokemon_tiles_s"] = _float_cfg(vel, "base_tiles_s", 3.0)
+    out["tamanho_diametro_base_tiles"] = _float_cfg(tamanho, "diametro_base_tiles", 0.6)
+    out["tamanho_incremento_por_escala"] = float(
+        _ler_valor(tamanho, "incremento_por_escala", _ler_valor(tamanho, "incremento_por_tamanho", 0.1))
+    )
+    out["tamanho_variacao_escala_min"] = _int_cfg(tamanho, "variacao_escala_min", -1)
+    out["tamanho_variacao_escala_max"] = _int_cfg(tamanho, "variacao_escala_max", 1)
     # Compat legado (cliente antigo ainda pode ler esta chave).
     out["tamanho_incremento_por_tamanho"] = float(out["tamanho_incremento_por_escala"])
-    out["combate_tamanho_diametro_base_tiles"] = float(batalha_tamanho.get("diametro_base_tiles", 1.0) or 1.0)
-    out["combate_tamanho_incremento_por_escala"] = float(batalha_tamanho.get("incremento_por_escala", 0.1) or 0.1)
-    out["animacao_intervalo_frame_ms"] = int(anim.get("intervalo_frame_ms", 85) or 85)
-    out["captura_limite_frutas"] = int(captura.get("limite_frutas", 2) or 2)
-    out["captura_cooldown_movimento_ticks"] = int(captura.get("cooldown_movimento_ticks", 36) or 36)
-    out["captura_atraso_inventario_ticks"] = int(captura.get("atraso_inventario_ticks", 24) or 24)
-    out["captura_atraso_spawn_xp_ticks"] = int(captura.get("atraso_spawn_xp_ticks", 16) or 16)
-    out["captura_xp_particulas_min"] = int(captura.get("xp_particulas_min", 3) or 3)
-    out["captura_xp_particulas_max"] = int(captura.get("xp_particulas_max", 4) or 4)
-    out["captura_bonus_maestria"] = float(captura.get("bonus_maestria_por_ponto", 10.0) or 10.0)
-    out["captura_chance_min"] = float(captura.get("chance_escape_min", 2.0) or 2.0)
-    out["captura_chance_max"] = float(captura.get("chance_escape_max", 95.0) or 95.0)
+    out["combate_tamanho_diametro_base_tiles"] = _float_cfg(batalha_tamanho, "diametro_base_tiles", 1.0)
+    out["combate_tamanho_incremento_por_escala"] = _float_cfg(batalha_tamanho, "incremento_por_escala", 0.1)
+    out["animacao_intervalo_frame_ms"] = _int_cfg(anim, "intervalo_frame_ms", 85)
+    out["captura_limite_frutas"] = _int_cfg(captura, "limite_frutas", 2)
+    out["captura_cooldown_movimento_ticks"] = _int_cfg(captura, "cooldown_movimento_ticks", 36)
+    out["captura_atraso_inventario_ticks"] = _int_cfg(captura, "atraso_inventario_ticks", 24)
+    out["captura_atraso_spawn_xp_ticks"] = _int_cfg(captura, "atraso_spawn_xp_ticks", 16)
+    out["captura_xp_particulas_min"] = _int_cfg(captura, "xp_particulas_min", 3)
+    out["captura_xp_particulas_max"] = _int_cfg(captura, "xp_particulas_max", 4)
+    out["captura_bonus_maestria"] = _float_cfg(captura, "bonus_maestria_por_ponto", 10.0)
+    out["captura_chance_min"] = _float_cfg(captura, "chance_escape_min", 2.0)
+    out["captura_chance_max"] = _float_cfg(captura, "chance_escape_max", 95.0)
     return out
 
 
@@ -112,24 +132,24 @@ def carregar_regras_spawn() -> Dict[str, object]:
     item_mundo = dados.get("item_mundo") if isinstance(dados.get("item_mundo"), dict) else {}
     xp_mundo = dados.get("xp_mundo") if isinstance(dados.get("xp_mundo"), dict) else {}
 
-    out["chance_spawn_pokemon_por_tick"] = float(pok.get("chance_por_tick", 0.02) or 0.02)
-    out["limite_spawn_pokemon_200_ticks"] = int(pok.get("limite_200_ticks", 4) or 4)
-    out["tentativas_spawn_pokemon"] = int(pok.get("tentativas", 5) or 5)
-    out["limite_pokemons_chunk"] = int(pok.get("limite_chunk", 2) or 2)
-    out["limite_total_pokemons"] = int(pok.get("limite_total", 100) or 100)
-    out["limite_total_pokemons_por_chunk_existente"] = float(pok.get("limite_total_por_chunk_existente", -1.0) or -1.0)
-    out["chance_despawn_pokemon_simulado_por_tick"] = float(pok.get("chance_despawn_simulado_por_tick", 0.003) or 0.003)
+    out["chance_spawn_pokemon_por_tick"] = _float_cfg(pok, "chance_por_tick", 0.02)
+    out["limite_spawn_pokemon_200_ticks"] = _int_cfg(pok, "limite_200_ticks", 4)
+    out["tentativas_spawn_pokemon"] = _int_cfg(pok, "tentativas", 5)
+    out["limite_pokemons_chunk"] = _int_cfg(pok, "limite_chunk", 2)
+    out["limite_total_pokemons"] = _int_cfg(pok, "limite_total", 100)
+    out["limite_total_pokemons_por_chunk_existente"] = _float_cfg(pok, "limite_total_por_chunk_existente", -1.0)
+    out["chance_despawn_pokemon_simulado_por_tick"] = _float_cfg(pok, "chance_despawn_simulado_por_tick", 0.003)
 
-    out["chance_spawn_bau_por_tick"] = float(bau.get("chance_por_tick", 0.010) or 0.010)
-    out["limite_spawn_bau_200_ticks"] = int(bau.get("limite_200_ticks", 2) or 2)
-    out["tentativas_spawn_bau"] = int(bau.get("tentativas", 5) or 5)
-    out["limite_baus_chunk"] = int(bau.get("limite_chunk", 1) or 1)
-    out["limite_total_baus"] = int(bau.get("limite_total", 60) or 60)
-    out["limite_total_baus_por_chunk_existente"] = float(bau.get("limite_total_por_chunk_existente", -1.0) or -1.0)
-    out["chance_despawn_bau_simulado_por_tick"] = float(bau.get("chance_despawn_simulado_por_tick", 0.002) or 0.002)
+    out["chance_spawn_bau_por_tick"] = _float_cfg(bau, "chance_por_tick", 0.010)
+    out["limite_spawn_bau_200_ticks"] = _int_cfg(bau, "limite_200_ticks", 2)
+    out["tentativas_spawn_bau"] = _int_cfg(bau, "tentativas", 5)
+    out["limite_baus_chunk"] = _int_cfg(bau, "limite_chunk", 1)
+    out["limite_total_baus"] = _int_cfg(bau, "limite_total", 60)
+    out["limite_total_baus_por_chunk_existente"] = _float_cfg(bau, "limite_total_por_chunk_existente", -1.0)
+    out["chance_despawn_bau_simulado_por_tick"] = _float_cfg(bau, "chance_despawn_simulado_por_tick", 0.002)
 
-    out["item_mundo_ttl_ticks"] = int(item_mundo.get("ttl_ticks", 5000) or 5000)
-    out["xp_mundo_ttl_ticks"] = int(xp_mundo.get("ttl_ticks", 600) or 600)
+    out["item_mundo_ttl_ticks"] = _int_cfg(item_mundo, "ttl_ticks", 5000)
+    out["xp_mundo_ttl_ticks"] = _int_cfg(xp_mundo, "ttl_ticks", 600)
     return out
 
 
@@ -140,11 +160,12 @@ def carregar_regras_npcs() -> Dict[str, object]:
     rotas = dados.get("rotas") if isinstance(dados.get("rotas"), dict) else {}
     movimento = dados.get("movimento") if isinstance(dados.get("movimento"), dict) else {}
 
-    out["npc_raio_interacao"] = float(interacao.get("raio_padrao", 1.1) or 1.1)
-    out["npc_rota_tamanho_min"] = float(rotas.get("tamanho_min", 200.0) or 200.0)
-    out["npc_rota_tamanho_max"] = float(rotas.get("tamanho_max", 1000.0) or 1000.0)
-    out["npc_rota_tentativas_replanejamento"] = int(rotas.get("tentativas_replanejamento", 3) or 3)
-    out["npc_velocidade_base"] = float(movimento.get("velocidade_base_tiles_s", 4.5) or 4.5)
+    out["npc_raio_interacao"] = _float_cfg(interacao, "raio_padrao", 1.1)
+    out["npc_rota_tamanho_min"] = _float_cfg(rotas, "tamanho_min", 200.0)
+    out["npc_rota_tamanho_max"] = _float_cfg(rotas, "tamanho_max", 1000.0)
+    out["npc_rota_tentativas_replanejamento"] = _int_cfg(rotas, "tentativas_replanejamento", 3)
+    out["npc_rota_chance_variacao_por_tick"] = _float_cfg(rotas, "chance_variacao_por_tick", 0.04)
+    out["npc_velocidade_base"] = _float_cfg(movimento, "velocidade_base_tiles_s", 4.5)
     return out
 
 
@@ -155,19 +176,19 @@ def carregar_regras_projeteis() -> Dict[str, object]:
     alcance = dados.get("alcance") if isinstance(dados.get("alcance"), dict) else {}
     mira = dados.get("mira") if isinstance(dados.get("mira"), dict) else {}
 
-    out["projetil_velocidade_pokebola_tiles_s"] = float(vel.get("pokebola_tiles_s", 7.0) or 7.0)
-    out["projetil_velocidade_fastball_tiles_s"] = float(vel.get("fastball_tiles_s", 10.0) or 10.0)
-    out["projetil_velocidade_sniperball_tiles_s"] = float(vel.get("sniperball_tiles_s", 8.0) or 8.0)
-    out["projetil_velocidade_fruta_tiles_s"] = float(vel.get("fruta_tiles_s", 6.0) or 6.0)
-    out["projetil_velocidade_item_mundo_tiles_s"] = float(vel.get("item_mundo_tiles_s", 3.0) or 3.0)
+    out["projetil_velocidade_pokebola_tiles_s"] = _float_cfg(vel, "pokebola_tiles_s", 7.0)
+    out["projetil_velocidade_fastball_tiles_s"] = _float_cfg(vel, "fastball_tiles_s", 10.0)
+    out["projetil_velocidade_sniperball_tiles_s"] = _float_cfg(vel, "sniperball_tiles_s", 8.0)
+    out["projetil_velocidade_fruta_tiles_s"] = _float_cfg(vel, "fruta_tiles_s", 6.0)
+    out["projetil_velocidade_item_mundo_tiles_s"] = _float_cfg(vel, "item_mundo_tiles_s", 3.0)
 
-    out["projetil_alcance_pokebola_tiles"] = float(alcance.get("pokebola_tiles", 7.0) or 7.0)
-    out["projetil_alcance_fastball_tiles"] = float(alcance.get("fastball_tiles", 7.0) or 7.0)
-    out["projetil_alcance_sniperball_tiles"] = float(alcance.get("sniperball_tiles", 9.0) or 9.0)
-    out["projetil_alcance_fruta_tiles"] = float(alcance.get("fruta_tiles", 6.0) or 6.0)
+    out["projetil_alcance_pokebola_tiles"] = _float_cfg(alcance, "pokebola_tiles", 7.0)
+    out["projetil_alcance_fastball_tiles"] = _float_cfg(alcance, "fastball_tiles", 7.0)
+    out["projetil_alcance_sniperball_tiles"] = _float_cfg(alcance, "sniperball_tiles", 9.0)
+    out["projetil_alcance_fruta_tiles"] = _float_cfg(alcance, "fruta_tiles", 6.0)
 
-    out["projetil_mira_multiplicador_velocidade"] = float(mira.get("multiplicador_velocidade", 1.10) or 1.10)
-    out["projetil_mira_multiplicador_alcance"] = float(mira.get("multiplicador_alcance", 1.15) or 1.15)
+    out["projetil_mira_multiplicador_velocidade"] = _float_cfg(mira, "multiplicador_velocidade", 1.10)
+    out["projetil_mira_multiplicador_alcance"] = _float_cfg(mira, "multiplicador_alcance", 1.15)
     return out
 
 
@@ -178,14 +199,8 @@ def carregar_regras_ciclo() -> Dict[str, object]:
     tempo = dados.get("tempo") if isinstance(dados.get("tempo"), dict) else {}
     iluminacao = dados.get("iluminacao") if isinstance(dados.get("iluminacao"), dict) else {}
 
-    def _int_cfg(origem: Dict[str, object], chave: str, padrao: int) -> int:
-        valor = origem.get(chave, padrao)
-        if valor in (None, ""):
-            return int(padrao)
-        return int(valor)
-
-    out["tempo_segundos_mundo_por_tick"] = float(tempo.get("segundos_mundo_por_tick", 2.0) or 2.0)
-    out["tempo_ticks_por_ciclo"] = int(tempo.get("ticks_por_ciclo", 1) or 1)
+    out["tempo_segundos_mundo_por_tick"] = _float_cfg(tempo, "segundos_mundo_por_tick", 2.0)
+    out["tempo_ticks_por_ciclo"] = _int_cfg(tempo, "ticks_por_ciclo", 1)
     out["iluminacao_inicio_escurecer_hora"] = _int_cfg(iluminacao, "inicio_escurecer_hora", 17)
     out["iluminacao_inicio_escurecer_minuto"] = _int_cfg(iluminacao, "inicio_escurecer_minuto", 0)
     out["iluminacao_escuro_maximo_hora"] = _int_cfg(iluminacao, "escuro_maximo_hora", 1)
@@ -195,25 +210,25 @@ def carregar_regras_ciclo() -> Dict[str, object]:
     out["iluminacao_fim_clarear_hora"] = _int_cfg(iluminacao, "fim_clarear_hora", 8)
     out["iluminacao_fim_clarear_minuto"] = _int_cfg(iluminacao, "fim_clarear_minuto", 0)
 
-    out["chuva_chance_inicio_por_tick"] = float(chuva.get("chance_inicio_por_tick", 0.000025) or 0.000025)
-    out["chuva_tempo_seco_min_ticks"] = int(chuva.get("tempo_seco_min_ticks", 14400) or 14400)
-    out["chuva_tempo_seco_max_ticks"] = int(chuva.get("tempo_seco_max_ticks", 63000) or 63000)
-    out["chuva_duracao_min_ticks"] = int(chuva.get("duracao_min_ticks", 7200) or 7200)
-    out["chuva_duracao_max_ticks"] = int(chuva.get("duracao_max_ticks", 50400) or 50400)
-    out["chuva_variacao_min_ticks"] = int(chuva.get("variacao_min_ticks", 450) or 450)
-    out["chuva_variacao_max_ticks"] = int(chuva.get("variacao_max_ticks", 2700) or 2700)
-    out["chuva_intensidade_faixa1_min"] = int(chuva.get("intensidade_faixa1_min", 18) or 18)
-    out["chuva_intensidade_faixa1_max"] = int(chuva.get("intensidade_faixa1_max", 45) or 45)
-    out["chuva_intensidade_faixa2_min"] = int(chuva.get("intensidade_faixa2_min", 46) or 46)
-    out["chuva_intensidade_faixa2_max"] = int(chuva.get("intensidade_faixa2_max", 72) or 72)
-    out["chuva_intensidade_faixa3_min"] = int(chuva.get("intensidade_faixa3_min", 73) or 73)
-    out["chuva_intensidade_faixa3_max"] = int(chuva.get("intensidade_faixa3_max", 100) or 100)
-    out["chuva_faixa1_peso"] = float(chuva.get("faixa1_peso", 0.60) or 0.60)
-    out["chuva_faixa2_peso"] = float(chuva.get("faixa2_peso", 0.30) or 0.30)
-    out["chuva_faixa3_peso"] = float(chuva.get("faixa3_peso", 0.10) or 0.10)
-    out["chuva_passo_suave"] = int(chuva.get("passo_suave", 1) or 1)
-    out["chuva_passo_forte"] = int(chuva.get("passo_forte", 2) or 2)
-    out["chuva_delta_passo_suave_limite"] = int(chuva.get("delta_passo_suave_limite", 12) or 12)
+    out["chuva_chance_inicio_por_tick"] = _float_cfg(chuva, "chance_inicio_por_tick", 0.000025)
+    out["chuva_tempo_seco_min_ticks"] = _int_cfg(chuva, "tempo_seco_min_ticks", 14400)
+    out["chuva_tempo_seco_max_ticks"] = _int_cfg(chuva, "tempo_seco_max_ticks", 63000)
+    out["chuva_duracao_min_ticks"] = _int_cfg(chuva, "duracao_min_ticks", 7200)
+    out["chuva_duracao_max_ticks"] = _int_cfg(chuva, "duracao_max_ticks", 50400)
+    out["chuva_variacao_min_ticks"] = _int_cfg(chuva, "variacao_min_ticks", 450)
+    out["chuva_variacao_max_ticks"] = _int_cfg(chuva, "variacao_max_ticks", 2700)
+    out["chuva_intensidade_faixa1_min"] = _int_cfg(chuva, "intensidade_faixa1_min", 18)
+    out["chuva_intensidade_faixa1_max"] = _int_cfg(chuva, "intensidade_faixa1_max", 45)
+    out["chuva_intensidade_faixa2_min"] = _int_cfg(chuva, "intensidade_faixa2_min", 46)
+    out["chuva_intensidade_faixa2_max"] = _int_cfg(chuva, "intensidade_faixa2_max", 72)
+    out["chuva_intensidade_faixa3_min"] = _int_cfg(chuva, "intensidade_faixa3_min", 73)
+    out["chuva_intensidade_faixa3_max"] = _int_cfg(chuva, "intensidade_faixa3_max", 100)
+    out["chuva_faixa1_peso"] = _float_cfg(chuva, "faixa1_peso", 0.60)
+    out["chuva_faixa2_peso"] = _float_cfg(chuva, "faixa2_peso", 0.30)
+    out["chuva_faixa3_peso"] = _float_cfg(chuva, "faixa3_peso", 0.10)
+    out["chuva_passo_suave"] = _int_cfg(chuva, "passo_suave", 1)
+    out["chuva_passo_forte"] = _int_cfg(chuva, "passo_forte", 2)
+    out["chuva_delta_passo_suave_limite"] = _int_cfg(chuva, "delta_passo_suave_limite", 12)
     return out
 
 
@@ -222,9 +237,9 @@ def carregar_regras_server() -> Dict[str, object]:
     out = _flatten(dados)
     ticks = dados.get("ticks") if isinstance(dados.get("ticks"), dict) else {}
     chunks = dados.get("chunks") if isinstance(dados.get("chunks"), dict) else {}
-    out["tick_segundos"] = float(ticks.get("segundos", 0.0333) or 0.0333)
-    out["raio_chunks_simulados"] = int(chunks.get("raio_simulados", 3) or 3)
-    out["raio_chunks_carregados"] = int(chunks.get("raio_carregados", 4) or 4)
+    out["tick_segundos"] = _float_cfg(ticks, "segundos", 0.0333)
+    out["raio_chunks_simulados"] = _int_cfg(chunks, "raio_simulados", 3)
+    out["raio_chunks_carregados"] = _int_cfg(chunks, "raio_carregados", 4)
     return out
 
 
@@ -235,39 +250,39 @@ def carregar_regras_batalha() -> Dict[str, object]:
     colisao = dados.get("colisao_movimento") if isinstance(dados.get("colisao_movimento"), dict) else {}
     multiplas_acoes = dados.get("multiplas_acoes") if isinstance(dados.get("multiplas_acoes"), dict) else {}
 
-    out["batalha_tick_segundos"] = float(timeline.get("tick_segundos", 0.2) or 0.2)
+    out["batalha_tick_segundos"] = _float_cfg(timeline, "tick_segundos", 0.2)
 
-    out["batalha_colisao_restituicao"] = float(colisao.get("restituicao", 0.35) or 0.35)
-    out["batalha_colisao_deslocamento_base_min"] = float(colisao.get("deslocamento_base_min", 0.25) or 0.25)
-    out["batalha_colisao_deslocamento_por_velocidade_relativa"] = float(colisao.get("deslocamento_por_velocidade_relativa", 6.0) or 6.0)
-    out["batalha_colisao_velocidade_reacao_min"] = float(colisao.get("velocidade_reacao_min", 0.03) or 0.03)
-    out["batalha_colisao_dano_base_min"] = float(colisao.get("dano_base_min", 1.0) or 1.0)
-    out["batalha_colisao_velocidade_referencia_min"] = float(colisao.get("velocidade_referencia_min", 0.1) or 0.1)
-    out["batalha_colisao_dano_por_massa_velocidade"] = float(colisao.get("dano_por_massa_velocidade", 8.0) or 8.0)
-    out["batalha_colisao_dano_por_ataque"] = float(colisao.get("dano_por_ataque", 0.35) or 0.35)
+    out["batalha_colisao_restituicao"] = _float_cfg(colisao, "restituicao", 0.35)
+    out["batalha_colisao_deslocamento_base_min"] = _float_cfg(colisao, "deslocamento_base_min", 0.25)
+    out["batalha_colisao_deslocamento_por_velocidade_relativa"] = _float_cfg(colisao, "deslocamento_por_velocidade_relativa", 6.0)
+    out["batalha_colisao_velocidade_reacao_min"] = _float_cfg(colisao, "velocidade_reacao_min", 0.03)
+    out["batalha_colisao_dano_base_min"] = _float_cfg(colisao, "dano_base_min", 1.0)
+    out["batalha_colisao_velocidade_referencia_min"] = _float_cfg(colisao, "velocidade_referencia_min", 0.1)
+    out["batalha_colisao_dano_por_massa_velocidade"] = _float_cfg(colisao, "dano_por_massa_velocidade", 8.0)
+    out["batalha_colisao_dano_por_ataque"] = _float_cfg(colisao, "dano_por_ataque", 0.35)
 
-    out["batalha_multiplas_acoes_multiplicador_base"] = float(multiplas_acoes.get("multiplicador_base", 1.0) or 1.0)
-    out["batalha_multiplas_acoes_acrescimo_por_acao_extra"] = float(multiplas_acoes.get("acrescimo_multiplicador_por_acao_extra", 0.2) or 0.2)
+    out["batalha_multiplas_acoes_multiplicador_base"] = _float_cfg(multiplas_acoes, "multiplicador_base", 1.0)
+    out["batalha_multiplas_acoes_acrescimo_por_acao_extra"] = _float_cfg(multiplas_acoes, "acrescimo_multiplicador_por_acao_extra", 0.2)
     return out
 
 
 def carregar_regras_batalha_publicas() -> Dict[str, object]:
     regras_batalha = carregar_regras_batalha()
     return {
-        "tick_segundos": float(regras_batalha.get("batalha_tick_segundos", 0.2) or 0.2),
+        "tick_segundos": float(_ler_valor(regras_batalha, "batalha_tick_segundos", 0.2)),
         "colisao": {
-            "restituicao": float(regras_batalha.get("batalha_colisao_restituicao", 0.35) or 0.35),
-            "deslocamento_base_min": float(regras_batalha.get("batalha_colisao_deslocamento_base_min", 0.25) or 0.25),
-            "deslocamento_por_velocidade_relativa": float(regras_batalha.get("batalha_colisao_deslocamento_por_velocidade_relativa", 6.0) or 6.0),
-            "velocidade_reacao_min": float(regras_batalha.get("batalha_colisao_velocidade_reacao_min", 0.03) or 0.03),
-            "dano_base_min": float(regras_batalha.get("batalha_colisao_dano_base_min", 1.0) or 1.0),
-            "velocidade_referencia_min": float(regras_batalha.get("batalha_colisao_velocidade_referencia_min", 0.1) or 0.1),
-            "dano_por_massa_velocidade": float(regras_batalha.get("batalha_colisao_dano_por_massa_velocidade", 8.0) or 8.0),
-            "dano_por_ataque": float(regras_batalha.get("batalha_colisao_dano_por_ataque", 0.35) or 0.35),
+            "restituicao": float(_ler_valor(regras_batalha, "batalha_colisao_restituicao", 0.35)),
+            "deslocamento_base_min": float(_ler_valor(regras_batalha, "batalha_colisao_deslocamento_base_min", 0.25)),
+            "deslocamento_por_velocidade_relativa": float(_ler_valor(regras_batalha, "batalha_colisao_deslocamento_por_velocidade_relativa", 6.0)),
+            "velocidade_reacao_min": float(_ler_valor(regras_batalha, "batalha_colisao_velocidade_reacao_min", 0.03)),
+            "dano_base_min": float(_ler_valor(regras_batalha, "batalha_colisao_dano_base_min", 1.0)),
+            "velocidade_referencia_min": float(_ler_valor(regras_batalha, "batalha_colisao_velocidade_referencia_min", 0.1)),
+            "dano_por_massa_velocidade": float(_ler_valor(regras_batalha, "batalha_colisao_dano_por_massa_velocidade", 8.0)),
+            "dano_por_ataque": float(_ler_valor(regras_batalha, "batalha_colisao_dano_por_ataque", 0.35)),
         },
         "multiplas_acoes": {
-            "multiplicador_base": float(regras_batalha.get("batalha_multiplas_acoes_multiplicador_base", 1.0) or 1.0),
-            "acrescimo_multiplicador_por_acao_extra": float(regras_batalha.get("batalha_multiplas_acoes_acrescimo_por_acao_extra", 0.2) or 0.2),
+            "multiplicador_base": float(_ler_valor(regras_batalha, "batalha_multiplas_acoes_multiplicador_base", 1.0)),
+            "acrescimo_multiplicador_por_acao_extra": float(_ler_valor(regras_batalha, "batalha_multiplas_acoes_acrescimo_por_acao_extra", 0.2)),
         },
     }
 
@@ -277,10 +292,10 @@ def carregar_regras_gerais() -> Dict[str, object]:
     out = _flatten(dados)
     camera = dados.get("camera") if isinstance(dados.get("camera"), dict) else {}
     combate = dados.get("combate") if isinstance(dados.get("combate"), dict) else {}
-    out["camera_px_por_tile"] = int(camera.get("px_por_tile", 50) or 50)
-    out["combate_camera_px_por_tile"] = int(combate.get("camera_px_por_tile", 40) or 40)
-    out["combate_camera_zoom_min"] = int(combate.get("camera_zoom_min", 30) or 30)
-    out["combate_camera_zoom_max"] = int(combate.get("camera_zoom_max", 50) or 50)
+    out["camera_px_por_tile"] = _int_cfg(camera, "px_por_tile", 50)
+    out["combate_camera_px_por_tile"] = _int_cfg(combate, "camera_px_por_tile", 40)
+    out["combate_camera_zoom_min"] = _int_cfg(combate, "camera_zoom_min", 30)
+    out["combate_camera_zoom_max"] = _int_cfg(combate, "camera_zoom_max", 50)
     return out
 
 
@@ -341,31 +356,31 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
     regras_gerais = carregar_regras_gerais()
     regras_batalha = carregar_regras_batalha_publicas()
     return {
-        "mundo": {"chunk_tiles": int(carregar_regras_mundo().get("ChunkTiles", 10) or 10)},
+        "mundo": {"chunk_tiles": int(_ler_valor(carregar_regras_mundo(), "ChunkTiles", 10))},
         "pokemons": {
-            "animacao_intervalo_frame_ms": int(regras_pokemons.get("animacao_intervalo_frame_ms", 85) or 85),
-            "tamanho_diametro_base_tiles": float(regras_pokemons.get("tamanho_diametro_base_tiles", 0.6) or 0.6),
-            "tamanho_incremento_por_escala": float(regras_pokemons.get("tamanho_incremento_por_escala", 0.1) or 0.1),
-            "tamanho_incremento_por_tamanho": float(regras_pokemons.get("tamanho_incremento_por_tamanho", 0.1) or 0.1),
-            "combate_tamanho_diametro_base_tiles": float(regras_pokemons.get("combate_tamanho_diametro_base_tiles", 1.0) or 1.0),
-            "combate_tamanho_incremento_por_escala": float(regras_pokemons.get("combate_tamanho_incremento_por_escala", 0.1) or 0.1),
+            "animacao_intervalo_frame_ms": int(_ler_valor(regras_pokemons, "animacao_intervalo_frame_ms", 85)),
+            "tamanho_diametro_base_tiles": float(_ler_valor(regras_pokemons, "tamanho_diametro_base_tiles", 0.6)),
+            "tamanho_incremento_por_escala": float(_ler_valor(regras_pokemons, "tamanho_incremento_por_escala", 0.1)),
+            "tamanho_incremento_por_tamanho": float(_ler_valor(regras_pokemons, "tamanho_incremento_por_tamanho", 0.1)),
+            "combate_tamanho_diametro_base_tiles": float(_ler_valor(regras_pokemons, "combate_tamanho_diametro_base_tiles", 1.0)),
+            "combate_tamanho_incremento_por_escala": float(_ler_valor(regras_pokemons, "combate_tamanho_incremento_por_escala", 0.1)),
         },
         "projeteis": {
-            "velocidade_pokebola_tiles_s": float(regras_projeteis.get("projetil_velocidade_pokebola_tiles_s", 7.0) or 7.0),
-            "velocidade_fastball_tiles_s": float(regras_projeteis.get("projetil_velocidade_fastball_tiles_s", 10.0) or 10.0),
-            "velocidade_sniperball_tiles_s": float(regras_projeteis.get("projetil_velocidade_sniperball_tiles_s", 8.0) or 8.0),
-            "velocidade_fruta_tiles_s": float(regras_projeteis.get("projetil_velocidade_fruta_tiles_s", 6.0) or 6.0),
-            "velocidade_item_mundo_tiles_s": float(regras_projeteis.get("projetil_velocidade_item_mundo_tiles_s", 3.0) or 3.0),
-            "alcance_pokebola_tiles": float(regras_projeteis.get("projetil_alcance_pokebola_tiles", 7.0) or 7.0),
-            "alcance_fastball_tiles": float(regras_projeteis.get("projetil_alcance_fastball_tiles", 7.0) or 7.0),
-            "alcance_sniperball_tiles": float(regras_projeteis.get("projetil_alcance_sniperball_tiles", 9.0) or 9.0),
-            "alcance_fruta_tiles": float(regras_projeteis.get("projetil_alcance_fruta_tiles", 6.0) or 6.0),
-            "mira_multiplicador_velocidade": float(regras_projeteis.get("projetil_mira_multiplicador_velocidade", 1.10) or 1.10),
-            "mira_multiplicador_alcance": float(regras_projeteis.get("projetil_mira_multiplicador_alcance", 1.15) or 1.15),
+            "velocidade_pokebola_tiles_s": float(_ler_valor(regras_projeteis, "projetil_velocidade_pokebola_tiles_s", 7.0)),
+            "velocidade_fastball_tiles_s": float(_ler_valor(regras_projeteis, "projetil_velocidade_fastball_tiles_s", 10.0)),
+            "velocidade_sniperball_tiles_s": float(_ler_valor(regras_projeteis, "projetil_velocidade_sniperball_tiles_s", 8.0)),
+            "velocidade_fruta_tiles_s": float(_ler_valor(regras_projeteis, "projetil_velocidade_fruta_tiles_s", 6.0)),
+            "velocidade_item_mundo_tiles_s": float(_ler_valor(regras_projeteis, "projetil_velocidade_item_mundo_tiles_s", 3.0)),
+            "alcance_pokebola_tiles": float(_ler_valor(regras_projeteis, "projetil_alcance_pokebola_tiles", 7.0)),
+            "alcance_fastball_tiles": float(_ler_valor(regras_projeteis, "projetil_alcance_fastball_tiles", 7.0)),
+            "alcance_sniperball_tiles": float(_ler_valor(regras_projeteis, "projetil_alcance_sniperball_tiles", 9.0)),
+            "alcance_fruta_tiles": float(_ler_valor(regras_projeteis, "projetil_alcance_fruta_tiles", 6.0)),
+            "mira_multiplicador_velocidade": float(_ler_valor(regras_projeteis, "projetil_mira_multiplicador_velocidade", 1.10)),
+            "mira_multiplicador_alcance": float(_ler_valor(regras_projeteis, "projetil_mira_multiplicador_alcance", 1.15)),
         },
         "npcs": {
-            "raio_interacao": float(regras_npcs.get("npc_raio_interacao", 1.1) or 1.1),
-            "velocidade_base_tiles_s": float(regras_npcs.get("npc_velocidade_base", 4.5) or 4.5),
+            "raio_interacao": float(_ler_valor(regras_npcs, "npc_raio_interacao", 1.1)),
+            "velocidade_base_tiles_s": float(_ler_valor(regras_npcs, "npc_velocidade_base", 4.5)),
         },
         "ciclo": {
             "iluminacao": {
@@ -380,10 +395,10 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
             }
         },
         "gerais": {
-            "camera_px_por_tile": int(regras_gerais.get("camera_px_por_tile", 50) or 50),
-            "combate_camera_px_por_tile": int(regras_gerais.get("combate_camera_px_por_tile", 40) or 40),
-            "combate_camera_zoom_min": int(regras_gerais.get("combate_camera_zoom_min", 30) or 30),
-            "combate_camera_zoom_max": int(regras_gerais.get("combate_camera_zoom_max", 50) or 50),
+            "camera_px_por_tile": int(_ler_valor(regras_gerais, "camera_px_por_tile", 50)),
+            "combate_camera_px_por_tile": int(_ler_valor(regras_gerais, "combate_camera_px_por_tile", 40)),
+            "combate_camera_zoom_min": int(_ler_valor(regras_gerais, "combate_camera_zoom_min", 30)),
+            "combate_camera_zoom_max": int(_ler_valor(regras_gerais, "combate_camera_zoom_max", 50)),
         },
         "batalha": dict(regras_batalha),
     }

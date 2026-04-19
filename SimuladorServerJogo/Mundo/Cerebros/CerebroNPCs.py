@@ -221,6 +221,24 @@ class CerebroNPCs:
             return [inicio]
         return pontos
 
+    def _replanejar_rota(self, npc: Dict[str, object], origem: Vector2) -> bool:
+        tentativas = max(0, int(self._core._i("npc_rota_tentativas_replanejamento", 3)))
+        base_seed = int(npc.get("id", 0) or 1) + int(self._core._tick_contador)
+        for tentativa in range(tentativas + 1):
+            nova_rota = self._gerar_rota_grande(origem, base_seed + (tentativa * 997))
+            if isinstance(nova_rota, list) and nova_rota:
+                npc["rota"] = [[float(p[0]), float(p[1])] for p in nova_rota]
+                npc["rota_idx"] = 0
+                return True
+        npc["rota"] = [[float(origem[0]), float(origem[1])]]
+        npc["rota_idx"] = 0
+        return False
+
+    def _velocidade_npc(self, npc: Dict[str, object]) -> float:
+        if "velocidade" in npc and npc.get("velocidade") not in (None, ""):
+            return float(npc.get("velocidade"))
+        return float(self._core._f("npc_velocidade_base", 4.5))
+
     def _dist_toroidal(self, p0: Vector2, p1: Vector2) -> Vector2:
         largura, altura = BANCO_DADOS.limites_mundo()
         dx = float(p1[0]) - float(p0[0])
@@ -284,7 +302,7 @@ class CerebroNPCs:
             posicao=tuple(npc.get("posicao", [0.0, 0.0])),
             dimensao=str(npc.get("dimensao") or "Mundo"),
         )
-        ator.raio_interacao = max(ator.raio_colisao, float(self._core._f("npc_raio_interacao", 1.1)))
+        ator.raio_interacao = float(self._core._f("npc_raio_interacao", 1.1))
         ator.Colisor.raio_interacao = ator.raio_interacao
         estilo = str(npc.get("estilo") or "vendedor").strip().lower()
         ator.estado_extra["subtipo"] = "npc_combatente" if estilo == "combatente" else "npc_vendedor"
@@ -292,7 +310,7 @@ class CerebroNPCs:
         ator.estado_extra["npc_code"] = str(npc.get("code") or "")
         ator.estado_extra["estilo"] = str(npc.get("estilo") or "vendedor")
         ator.estado_extra["estatico"] = bool(npc.get("estatico", False))
-        ator.estado_extra["velocidade"] = float(npc.get("velocidade", self._core._f("npc_velocidade_base", 4.5)) or self._core._f("npc_velocidade_base", 4.5))
+        ator.estado_extra["velocidade"] = self._velocidade_npc(npc)
         ator.estado_extra["angulo"] = float(npc.get("angulo", 0.0) or 0.0)
         ator.estado_extra["interacao"] = dict(npc.get("interacao", {})) if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
         ator.estado_extra["dimensao"] = str(npc.get("dimensao") or "Mundo")
@@ -468,19 +486,36 @@ class CerebroNPCs:
             materializado = isinstance(BANCO_DADOS.obter_objeto(int(npc.get("id", 0) or 0)), AtorServer)
 
             if (not estatico) and (not inter.get("ativa", False)) and (not esperando):
+                chance_variacao = float(self._core._f("npc_rota_chance_variacao_por_tick", 0.04))
+                if chance_variacao > 0.0 and random.random() < chance_variacao:
+                    self._replanejar_rota(npc, atual)
                 rota = npc.get("rota", []) if isinstance(npc.get("rota"), list) else []
+                if not rota:
+                    self._replanejar_rota(npc, atual)
+                    rota = npc.get("rota", []) if isinstance(npc.get("rota"), list) else []
                 if rota:
                     idx = int(npc.get("rota_idx", 0) or 0) % max(1, len(rota))
                     alvo_raw = rota[idx]
                     if isinstance(alvo_raw, (list, tuple)) and len(alvo_raw) == 2:
                         alvo = (float(alvo_raw[0]), float(alvo_raw[1]))
+                        if self._tile_bloqueado_npc(alvo):
+                            if not self._replanejar_rota(npc, atual):
+                                continue
+                            rota = npc.get("rota", []) if isinstance(npc.get("rota"), list) else []
+                            if not rota:
+                                continue
+                            idx = int(npc.get("rota_idx", 0) or 0) % max(1, len(rota))
+                            alvo_raw = rota[idx]
+                            if not (isinstance(alvo_raw, (list, tuple)) and len(alvo_raw) == 2):
+                                continue
+                            alvo = (float(alvo_raw[0]), float(alvo_raw[1]))
                         dx, dy = self._dist_toroidal(atual, alvo)
                         dist = math.hypot(dx, dy)
                         if dist < 0.75:
                             npc["rota_idx"] = (idx + 1) % len(rota)
                             npc["espera_ate_tick"] = tick + random.randint(30, 180)
                         else:
-                            vel = float(npc.get("velocidade", self._core._f("npc_velocidade_base", 4.5)) or self._core._f("npc_velocidade_base", 4.5))
+                            vel = self._velocidade_npc(npc)
                             passo = min(dist, max(0.01, vel / 30.0))
                             nx, ny = (atual[0] + (dx / max(1e-6, dist)) * passo, atual[1] + (dy / max(1e-6, dist)) * passo)
                             nx += math.sin((tick + int(npc.get("id", 0))) * 0.03) * 0.04

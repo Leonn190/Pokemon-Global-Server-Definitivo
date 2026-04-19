@@ -46,97 +46,97 @@ Water Berry,Melhora a captura em ambientes aquáticos.,26,2,s,12,50,fruta,44
 Lava Berry,Melhora a captura em terras vulcanicas,26,2,s,10,50,fruta,45
 Magic Berry,Melhora a captura no bioma magico,26,2,s,10,50,fruta,46
 Madeira,Recurso básico usado em construções e na criação de ferramentas simples.,-,1,n,2,50,recurso,47
-Carvão,,,2,n,2,50,recurso,47
-Pedra,Recurso comum usado em construções e na criação de ferramentas mais resistentes.,-,1,n,3,50,recurso,48
-Ferro,,,2,n,4,50,recurso,48
-Cobre,Minério metálico usado na fabricação de itens e ferramentas intermediárias.,-,1,s,4,50,recurso,49
-Ouro,Minério valioso usado na criação de ferramentas leves e itens especiais.,-,3,s,5,50,recurso,50
-Diamante,Gema rara usada para fabricar ferramentas de alta durabilidade.,-,5,s,15,50,recurso,51
-Ametista,Cristal raro usado na criação de ferramentas refinadas e itens especiais.,-,6,s,18,50,recurso,52
-Esmeralda,"Gema valiosa usada em trocas, fabricação e itens raros.",-,6,s,20,50,recurso,53
-Rubi,Gema poderosa usada para criar ferramentas avançadas e itens de alto valor.,-,6,s,20,50,recurso,54
-Jade,,,6,s,20,50,recurso,54
-Topazio,,,6,s,20,50,recurso,54
-Safira,,,6,s,20,50,recurso,54
-Aquamarine,,,6,s,20,50,recurso,54
-Agua,,-,1,n,1,50,recurso,55
-Lava,,-,3,n,3,50,recurso,56
-Chave ,,-,3,s,6,10,ferramenta,57
-Balde,,2,1,n,2,1,ferramenta,58
-Pá,,2,1,n,5,1,ferramenta,58
-Picareta de Madeira,Ferramenta simples usada para minerar recursos básicos.,2,1,n,4,1,ferramenta,59
-Picareta de Pedra,Ferramenta resistente usada para minerar com mais eficiência.,3,2,n,6,1,ferramenta,60
-Picareta de Ouro,Ferramenta leve usada para minerar rapidamente certos recursos.,4,3,n,10,1,ferramenta,61
-Picareta de Diamante,Ferramenta avançada usada para minerar recursos raros com alta eficiência.,5,4,n,24,1,ferramenta,62
-Picareta de Ametista,Ferramenta refinada usada para extrair minérios especiais.,6,5,n,28,1,ferramenta,63
-Picareta de Rubi,Ferramenta poderosa usada para mineração avançada.,7,6,n,30,1,ferramenta,64
-Machado de Madeira,Ferramenta simples usada para cortar árvores e coletar madeira.,2,1,n,4,1,ferramenta,65
-Machado de Pedra,Ferramenta resistente usada para cortar madeira com mais eficiência.,3,2,n,6,1,ferramenta,66
-Machado de Ouro,Ferramenta leve usada para cortes rápidos em recursos naturais.,4,3,n,10,1,ferramenta,67
-Machado de Diamante,Ferramenta avançada usada para extração eficiente de madeira.,5,4,n,24,1,ferramenta,68
-Machado de Ametista,Ferramenta refinada usada para coleta avançada de recursos naturais.,6,5,n,28,1,ferramenta,69
-Machado de Rubi,Ferramenta poderosa usada para corte e extração de alto nível.,7,6,n,30,1,ferramenta,70
-Lamina Fumegante,,-,,n,35,1,equipavel,71
-Machadinha Ignea,,-,,n,35,1,equipavel,72
-Emblema da Chama,,-,,n,35,1,equipavel,73
-Capa Solari,,-,,n,35,1,equipavel,74
-Fluxo Aquatico,,-,,n,35,1,equipavel,75
-Gota Sagrada,,-,,n,35,1,equipavel,76
-Semblante das Aguas,,-,,n,35,1,equipavel,77
-Emblema da Semente,,-,,n,35,1,equipavel,78
-Armadura Natural,,-,,n,35,1,equipavel,79
-Estilingue das Folhas,,-,,n,35,1,equipavel,80
-Trovao Encapsulado,,-,,n,35,1,equipavel,81
-Semblante Congelado,,-,,n,35,1,equipavel,82
-Coroa do Inverno Eterno,,-,,n,35,1,equipavel,83
-Coração de Gelo,,-,,n,35,1,equipavel,84
-Punho Congelado,,-,,n,35,1,equipavel,85
-Amuleto sintilante,,-,,n,35,1,equipavel,86
-Idolo Perdido,,-,,n,35,1,equipavel,87
-Arco dos Ventos,,-,,n,35,1,equipavel,88
-Espada Envenenada,,-,,n,35,1,equipavel,89
-Dente do Fim,,-,,n,35,1,equipavel,90
-Arco de Ossos,,-,,n,35,1,equipavel,91
-Serra Toxica,,-,,n,35,1,equipavel,92
-Mao Sinistra,,-,,n,35,1,equipavel,93
-Maldição,,-,,n,35,1,equipavel,94
-Capa Assombrada,,-,,n,35,1,equipavel,95
-Machado Amaldiçoado,,-,,n,35,1,equipavel,96
-Eternidade,,-,,n,35,1,equipavel,97
-Elmo Cosmico,,-,,n,35,1,equipavel,98
-Mascara do Mosquito Gigante,,-,,n,35,1,equipavel,99
-Espada Mental,,-,,n,35,1,equipavel,100
-Elmo Psionico,,-,,n,35,1,equipavel,101
-Mao que Tudo Ve,,-,,n,35,1,equipavel,102
-Coração de Ferro,,-,,n,35,1,equipavel,103
-Elmo Abençoado,,-,,n,35,1,equipavel,104
-Placa defensiva,,-,,n,35,1,equipavel,105
-Botas Colossais,,-,,n,35,1,equipavel,106
-Cinto do Gigante,,-,,n,35,1,equipavel,107
-Faixa da Escolha,,-,,n,35,1,equipavel,108
-Punho Robusto,,-,,n,35,1,equipavel,109
-Estaca Terrestre,,-,,n,35,1,equipavel,110
-Pedra Flutuante,,-,,n,35,1,equipavel,111
-Sismitarra Marcada,,-,,n,35,1,equipavel,112
-Cajado do Som,,-,,n,35,1,equipavel,113
-Sino Dourado,,-,,n,35,1,equipavel,114
-Emblema das Sombras,,-,,n,35,1,equipavel,115
-Faca do Dragão,,-,,n,35,1,equipavel,116
-Ombreira da Escama Ardente,,-,,n,35,1,equipavel,117
-Capa Alheia,,-,,n,35,1,equipavel,118
-Chapeu do Bruxo,,-,,n,35,1,equipavel,119
-Espada Energizada,,-,,n,35,1,equipavel,120
-Quebra Barreira,,-,,n,35,1,equipavel,121
-Besta Afiada,,-,,n,35,1,equipavel,122
-Anjo Guardião,,-,,n,35,1,equipavel,123
-Bastião Inabalavel,,-,,n,35,1,equipavel,124
-Botas do Sucesso,,-,,n,35,1,equipavel,125
-Colete de Espinhos,,-,,n,35,1,equipavel,126
-Tiara Encantada,,-,,n,35,1,equipavel,127
-Coroa da Vitória,,-,,n,35,1,equipavel,128
-Armadura Reforçada,,-,,n,35,1,equipavel,129
-Centro Espiritual,,-,,n,35,1,equipavel,130
-Essencia Radiante,,-,,n,50,1,equipavel,131
-Pedra da Ultra Evolução,,-,,n,50,1,equipavel,132
-Energia Gigantamax,,-,,n,50,1,equipavel,133
-Pedra da Mega Evolução,,-,,n,50,1,equipavel,134
+Carvão,,,2,n,2,50,recurso,48
+Pedra,Recurso comum usado em construções e na criação de ferramentas mais resistentes.,-,1,n,3,50,recurso,49
+Ferro,,,2,n,4,50,recurso,50
+Cobre,Minério metálico usado na fabricação de itens e ferramentas intermediárias.,-,1,s,4,50,recurso,51
+Ouro,Minério valioso usado na criação de ferramentas leves e itens especiais.,-,3,s,5,50,recurso,52
+Diamante,Gema rara usada para fabricar ferramentas de alta durabilidade.,-,5,s,15,50,recurso,53
+Ametista,Cristal raro usado na criação de ferramentas refinadas e itens especiais.,-,6,s,18,50,recurso,54
+Esmeralda,"Gema valiosa usada em trocas, fabricação e itens raros.",-,6,s,20,50,recurso,55
+Rubi,Gema poderosa usada para criar ferramentas avançadas e itens de alto valor.,-,6,s,20,50,recurso,56
+Jade,,,6,s,20,50,recurso,57
+Topazio,,,6,s,20,50,recurso,58
+Safira,,,6,s,20,50,recurso,59
+Aquamarine,,,6,s,20,50,recurso,60
+Agua,,-,1,n,1,50,recurso,61
+Lava,,-,3,n,3,50,recurso,62
+Chave ,,-,3,s,6,10,ferramenta,63
+Balde,,2,1,n,2,1,ferramenta,64
+Pá,,2,1,n,5,1,ferramenta,65
+Picareta de Madeira,Ferramenta simples usada para minerar recursos básicos.,2,1,n,4,1,ferramenta,66
+Picareta de Pedra,Ferramenta resistente usada para minerar com mais eficiência.,3,2,n,6,1,ferramenta,67
+Picareta de Ouro,Ferramenta leve usada para minerar rapidamente certos recursos.,4,3,n,10,1,ferramenta,68
+Picareta de Diamante,Ferramenta avançada usada para minerar recursos raros com alta eficiência.,5,4,n,24,1,ferramenta,69
+Picareta de Ametista,Ferramenta refinada usada para extrair minérios especiais.,6,5,n,28,1,ferramenta,70
+Picareta de Rubi,Ferramenta poderosa usada para mineração avançada.,7,6,n,30,1,ferramenta,71
+Machado de Madeira,Ferramenta simples usada para cortar árvores e coletar madeira.,2,1,n,4,1,ferramenta,72
+Machado de Pedra,Ferramenta resistente usada para cortar madeira com mais eficiência.,3,2,n,6,1,ferramenta,73
+Machado de Ouro,Ferramenta leve usada para cortes rápidos em recursos naturais.,4,3,n,10,1,ferramenta,74
+Machado de Diamante,Ferramenta avançada usada para extração eficiente de madeira.,5,4,n,24,1,ferramenta,75
+Machado de Ametista,Ferramenta refinada usada para coleta avançada de recursos naturais.,6,5,n,28,1,ferramenta,76
+Machado de Rubi,Ferramenta poderosa usada para corte e extração de alto nível.,7,6,n,30,1,ferramenta,77
+Lamina Fumegante,,-,,n,35,1,equipavel,78
+Machadinha Ignea,,-,,n,35,1,equipavel,79
+Emblema da Chama,,-,,n,35,1,equipavel,80
+Capa Solari,,-,,n,35,1,equipavel,81
+Fluxo Aquatico,,-,,n,35,1,equipavel,82
+Gota Sagrada,,-,,n,35,1,equipavel,83
+Semblante das Aguas,,-,,n,35,1,equipavel,84
+Emblema da Semente,,-,,n,35,1,equipavel,85
+Armadura Natural,,-,,n,35,1,equipavel,86
+Estilingue das Folhas,,-,,n,35,1,equipavel,87
+Trovao Encapsulado,,-,,n,35,1,equipavel,88
+Semblante Congelado,,-,,n,35,1,equipavel,89
+Coroa do Inverno Eterno,,-,,n,35,1,equipavel,90
+Coração de Gelo,,-,,n,35,1,equipavel,91
+Punho Congelado,,-,,n,35,1,equipavel,92
+Amuleto sintilante,,-,,n,35,1,equipavel,93
+Idolo Perdido,,-,,n,35,1,equipavel,94
+Arco dos Ventos,,-,,n,35,1,equipavel,95
+Espada Envenenada,,-,,n,35,1,equipavel,96
+Dente do Fim,,-,,n,35,1,equipavel,97
+Arco de Ossos,,-,,n,35,1,equipavel,98
+Serra Toxica,,-,,n,35,1,equipavel,99
+Mao Sinistra,,-,,n,35,1,equipavel,100
+Maldição,,-,,n,35,1,equipavel,101
+Capa Assombrada,,-,,n,35,1,equipavel,102
+Machado Amaldiçoado,,-,,n,35,1,equipavel,103
+Eternidade,,-,,n,35,1,equipavel,104
+Elmo Cosmico,,-,,n,35,1,equipavel,105
+Mascara do Mosquito Gigante,,-,,n,35,1,equipavel,106
+Espada Mental,,-,,n,35,1,equipavel,107
+Elmo Psionico,,-,,n,35,1,equipavel,108
+Mao que Tudo Ve,,-,,n,35,1,equipavel,109
+Coração de Ferro,,-,,n,35,1,equipavel,110
+Elmo Abençoado,,-,,n,35,1,equipavel,111
+Placa defensiva,,-,,n,35,1,equipavel,112
+Botas Colossais,,-,,n,35,1,equipavel,113
+Cinto do Gigante,,-,,n,35,1,equipavel,114
+Faixa da Escolha,,-,,n,35,1,equipavel,115
+Punho Robusto,,-,,n,35,1,equipavel,116
+Estaca Terrestre,,-,,n,35,1,equipavel,117
+Pedra Flutuante,,-,,n,35,1,equipavel,118
+Sismitarra Marcada,,-,,n,35,1,equipavel,119
+Cajado do Som,,-,,n,35,1,equipavel,120
+Sino Dourado,,-,,n,35,1,equipavel,121
+Emblema das Sombras,,-,,n,35,1,equipavel,122
+Faca do Dragão,,-,,n,35,1,equipavel,123
+Ombreira da Escama Ardente,,-,,n,35,1,equipavel,124
+Capa Alheia,,-,,n,35,1,equipavel,125
+Chapeu do Bruxo,,-,,n,35,1,equipavel,126
+Espada Energizada,,-,,n,35,1,equipavel,127
+Quebra Barreira,,-,,n,35,1,equipavel,128
+Besta Afiada,,-,,n,35,1,equipavel,129
+Anjo Guardião,,-,,n,35,1,equipavel,130
+Bastião Inabalavel,,-,,n,35,1,equipavel,131
+Botas do Sucesso,,-,,n,35,1,equipavel,132
+Colete de Espinhos,,-,,n,35,1,equipavel,133
+Tiara Encantada,,-,,n,35,1,equipavel,134
+Coroa da Vitória,,-,,n,35,1,equipavel,135
+Armadura Reforçada,,-,,n,35,1,equipavel,136
+Centro Espiritual,,-,,n,35,1,equipavel,137
+Essencia Radiante,,-,,n,50,1,equipavel,138
+Pedra da Ultra Evolução,,-,,n,50,1,equipavel,139
+Energia Gigantamax,,-,,n,50,1,equipavel,140
+Pedra da Mega Evolução,,-,,n,50,1,equipavel,141

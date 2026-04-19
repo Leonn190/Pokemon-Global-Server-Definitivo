@@ -7,20 +7,20 @@ import copy
 
 class Inventario:
     def __init__(self, limite_itens=100, limite_slots=32, limite_pokemons=64, limite_times_pokemon=6):
-        self.LimiteItens = int(max(1, limite_itens))
-        self.LimiteSlots = int(max(1, limite_slots))
+        self.LimiteItens = int(limite_itens)
+        self.LimiteSlots = int(limite_slots)
         self.Itens = [None] * self.LimiteSlots
-        self.LimitePokemons = int(max(1, limite_pokemons))
-        self.LimiteTimesPokemon = int(max(1, limite_times_pokemon))
+        self.LimitePokemons = int(limite_pokemons)
+        self.LimiteTimesPokemon = int(limite_times_pokemon)
         self.Pokemons = []
         self.TimesPokemon = []
         self.SlotSelecionado = 0
 
     def definir_limite_itens(self, limite_itens, preservar=True):
-        self.LimiteItens = int(max(1, limite_itens))
+        self.LimiteItens = int(limite_itens)
 
     def definir_limite_slots(self, limite_slots, preservar=True):
-        novo_limite = int(max(1, limite_slots))
+        novo_limite = int(limite_slots)
         if novo_limite == self.LimiteSlots:
             return
 
@@ -127,16 +127,16 @@ class Inventario:
         if not isinstance(dados, dict):
             return
 
-        self.LimiteItens = int(max(1, dados.get("limite_itens", self.LimiteItens)))
-        self.LimiteSlots = int(max(1, dados.get("limite_slots", self.LimiteSlots)))
+        self.LimiteItens = int(dados.get("limite_itens", self.LimiteItens))
+        self.LimiteSlots = int(dados.get("limite_slots", self.LimiteSlots))
         itens_brutos = list(dados.get("itens", []))
 
         self.Itens = [None] * self.LimiteSlots
         for i in range(min(len(itens_brutos), self.LimiteSlots)):
             self.Itens[i] = self._normalizar_item(itens_brutos[i])
 
-        self.LimitePokemons = int(max(1, dados.get("limite_pokemons", self.LimitePokemons)))
-        self.LimiteTimesPokemon = int(max(1, dados.get("limite_times_pokemon", self.LimiteTimesPokemon)))
+        self.LimitePokemons = int(dados.get("limite_pokemons", self.LimitePokemons))
+        self.LimiteTimesPokemon = int(dados.get("limite_times_pokemon", self.LimiteTimesPokemon))
         self.Pokemons = list(dados.get("pokemons", self.Pokemons))[: self.LimitePokemons]
         self.TimesPokemon = list(dados.get("times_pokemon", self.TimesPokemon))
 

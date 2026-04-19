@@ -46,13 +46,14 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     bonus_bioma = estado_fruta.get("bonus_captura_bioma") if isinstance(estado_fruta.get("bonus_captura_bioma"), dict) else {}
     poder += float(bonus_bioma.get(str(ctx.get("bioma", "")).lower(), 0.0) or 0.0)
 
-    maestria = float(ctx.get("maestria", 0.0) or 0.0)
-    poder += maestria * float(ctx.get("captura_bonus_maestria", 10.0) or 10.0)
+    maestria = float(ctx.get("maestria", 0.0) if ctx.get("maestria", 0.0) not in (None, "") else 0.0)
+    bonus_maestria = float(ctx.get("captura_bonus_maestria", 10.0) if ctx.get("captura_bonus_maestria", 10.0) not in (None, "") else 10.0)
+    poder += maestria * bonus_maestria
 
     dificuldade = float(pokemon.estado_extra.get("dificuldade_captura", 50.0) or 50.0)
     garantida = bool(bola.get("captura_garantida", False))
-    chance_min = float(ctx.get("captura_chance_min", 2.0) or 2.0)
-    chance_max = float(ctx.get("captura_chance_max", 95.0) or 95.0)
+    chance_min = float(ctx.get("captura_chance_min", 2.0) if ctx.get("captura_chance_min", 2.0) not in (None, "") else 2.0)
+    chance_max = float(ctx.get("captura_chance_max", 95.0) if ctx.get("captura_chance_max", 95.0) not in (None, "") else 95.0)
     chance_escape = 0.0 if garantida else max(chance_min, min(chance_max, dificuldade - poder))
 
     dono_pos = ctx.get("dono_posicao") if isinstance(ctx.get("dono_posicao"), (list, tuple)) and len(ctx.get("dono_posicao")) == 2 else None
@@ -76,7 +77,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     sucesso = bool(all(checks))
     resultado = "sucesso" if sucesso else "falha"
     tick_atual = int(ctx.get("tick_atual", 0) or 0)
-    cooldown_ticks = max(1, int(ctx.get("cooldown_movimento_ticks", 36) or 36))
+    cooldown_ticks = int(ctx.get("cooldown_movimento_ticks", 36) if ctx.get("cooldown_movimento_ticks", 36) not in (None, "") else 36)
     liberar_tick = int(tick_atual + cooldown_ticks)
 
     captura.clear()

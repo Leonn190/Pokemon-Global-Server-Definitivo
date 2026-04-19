@@ -56,11 +56,16 @@ _TIPOS_ESTADIO_RESPEITO = (
 )
 
 
+def _valor_regra(regras: dict, chave: str, padrao):
+    valor = regras.get(chave, padrao) if isinstance(regras, dict) else padrao
+    return padrao if valor in (None, "") else valor
+
+
 def _skins_liberadas_padrao() -> list[str]:
     regras = carregar_regras_player()
-    minimo = int(regras.get("SkinInicialMin", 1) or 1)
-    maximo = int(regras.get("SkinInicialMax", 12) or 12)
-    minimo, maximo = sorted((max(1, minimo), max(1, maximo)))
+    minimo = int(_valor_regra(regras, "SkinInicialMin", 1))
+    maximo = int(_valor_regra(regras, "SkinInicialMax", 12))
+    minimo, maximo = sorted((minimo, maximo))
     pasta = Path("Recursos") / "Visual" / "Skins"
     if not pasta.exists():
         return ["1.png"]
@@ -78,9 +83,9 @@ def _skins_liberadas_padrao() -> list[str]:
 
 def _normalizar_skins_liberadas(skins: list[str] | None) -> list[str]:
     regras = carregar_regras_player()
-    minimo = int(regras.get("SkinInicialMin", 1) or 1)
-    maximo = int(regras.get("SkinInicialMax", 12) or 12)
-    minimo, maximo = sorted((max(1, minimo), max(1, maximo)))
+    minimo = int(_valor_regra(regras, "SkinInicialMin", 1))
+    maximo = int(_valor_regra(regras, "SkinInicialMax", 12))
+    minimo, maximo = sorted((minimo, maximo))
     padrao = _skins_liberadas_padrao()
     bruto = list(skins or [])
     if not bruto:
@@ -282,25 +287,25 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["xp"] = int(max(0, dados.get("xp", 0)))
     dados["xp_alvo"] = int(max(0, dados.get("xp_alvo", _calcular_xp_alvo_por_nivel(dados["nivel"]))))
     dados["batalhas_totais"] = int(max(0, dados.get("batalhas_totais", 0)))
-    dados["nivel_mochila"] = int(dados.get("nivel_mochila", regras.get("NivelMochila", 1)))
-    dados["limite_slots_inventario"] = int(max(1, dados.get("limite_slots_inventario", regras.get("LimiteSlotsInventario", 32))))
-    dados["limite_pokemons"] = int(max(1, dados.get("limite_pokemons", regras.get("LimitePokemons", 64))))
-    dados["limite_times_pokemon"] = int(max(1, dados.get("limite_times_pokemon", regras.get("LimiteTimesPokemon", 6))))
+    dados["nivel_mochila"] = int(dados.get("nivel_mochila", _valor_regra(regras, "NivelMochila", 1)))
+    dados["limite_slots_inventario"] = int(dados.get("limite_slots_inventario", _valor_regra(regras, "LimiteSlotsInventario", 32)))
+    dados["limite_pokemons"] = int(dados.get("limite_pokemons", _valor_regra(regras, "LimitePokemons", 64)))
+    dados["limite_times_pokemon"] = int(dados.get("limite_times_pokemon", _valor_regra(regras, "LimiteTimesPokemon", 6)))
     dados["batalhas_pvp_vencidas"] = int(dados.get("batalhas_pvp_vencidas", 0))
     dados["batalhas_bot_vencidas"] = int(dados.get("batalhas_bot_vencidas", 0))
     dados["baus_abertos"] = int(max(0, dados.get("baus_abertos", 0)))
     dados["metros_andados"] = float(max(0.0, dados.get("metros_andados", 0.0)))
     dados["tempo_jogo_segundos"] = float(max(0.0, dados.get("tempo_jogo_segundos", 0.0)))
-    dados["dinheiro"] = int(dados.get("dinheiro", regras.get("Dinheiro", 20)))
+    dados["dinheiro"] = int(dados.get("dinheiro", _valor_regra(regras, "Dinheiro", 20)))
     dados["insignias"] = list(dados.get("insignias", []))
-    dados["maestria"] = int(dados.get("maestria", regras.get("Maestria", 0)))
+    dados["maestria"] = int(dados.get("maestria", _valor_regra(regras, "Maestria", 0)))
     dados["skins_liberadas"] = _normalizar_skins_liberadas(dados.get("skins_liberadas"))
     dados["habilidades_aprendidas"] = list(dados.get("habilidades_aprendidas", []))
     for tipo in _TIPOS_ESTADIO_RESPEITO:
         chave = f"respeito_estadio_{tipo}"
         dados[chave] = int(max(0, min(4, dados.get(chave, 0))))
 
-    stamina_max = max(1.0, float(dados.get("stamina_max", regras.get("StaminaMax", 100.0))))
+    stamina_max = float(dados.get("stamina_max", _valor_regra(regras, "StaminaMax", 100.0)))
     stamina = max(0.0, min(stamina_max, float(dados.get("stamina", stamina_max))))
     dados["stamina_max"] = stamina_max
     dados["stamina"] = stamina
@@ -326,8 +331,8 @@ def _normalizar_perfil(personagem: dict) -> dict:
         dados[campo] = float(dados.get(campo, regras.get(chave_regra)))
 
     inv = dados.get("inventario") if isinstance(dados.get("inventario"), dict) else {}
-    limite_pokemons = int(max(1, inv.get("limite_pokemons", dados.get("limite_pokemons", regras.get("LimitePokemons", 64)))))
-    limite_times_pokemon = int(max(1, inv.get("limite_times_pokemon", dados.get("limite_times_pokemon", regras.get("LimiteTimesPokemon", 6)))))
+    limite_pokemons = int(inv.get("limite_pokemons", dados.get("limite_pokemons", _valor_regra(regras, "LimitePokemons", 64))))
+    limite_times_pokemon = int(inv.get("limite_times_pokemon", dados.get("limite_times_pokemon", _valor_regra(regras, "LimiteTimesPokemon", 6))))
     pokemons = list(inv.get("pokemons", []))[:limite_pokemons]
     times_pokemon = list(inv.get("times_pokemon", []))
     dados["inventario"] = {
@@ -555,7 +560,7 @@ def obter_regras_cliente() -> dict:
         escala_min, escala_max = escala_max, escala_min
     regras["player"] = dict(carregar_regras_player())
     regras["mundo"] = {
-        "chunk_tiles": int(carregar_regras_mundo().get("ChunkTiles", 10) or 10),
+        "chunk_tiles": int(_valor_regra(carregar_regras_mundo(), "ChunkTiles", 10)),
         "seed": int(seed_mundo),
         "transicao_apenas_um_lado": True,
         "escala_estrutura_min": float(escala_min),

@@ -224,7 +224,7 @@ class CerebroCentral:
     def _tentar_spawn_bau(self, chunks_simulados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff
 
-        if random.random() > self._f("chance_spawn_bau_por_tick", 0.015):
+        if random.random() >= self._f("chance_spawn_bau_por_tick", 0.015):
             return
         if len(self._spawns_bau_ultimos_200) >= self._i("limite_spawn_bau_200_ticks", 2):
             return
@@ -236,7 +236,9 @@ class CerebroCentral:
             if self.contagem_baus_registrados() >= int(math.floor(max(0.0, limite_por_chunk) * max(0, chunks_existentes))):
                 return
 
-        tentativas = max(1, self._i("tentativas_spawn_bau", 5))
+        tentativas = int(self._i("tentativas_spawn_bau", 5))
+        if tentativas <= 0:
+            return
         chunk_tamanho = BANCO_DADOS.chunk_tamanho_unidade()
         chunk_list = list(chunks_simulados)
         random.shuffle(chunk_list)

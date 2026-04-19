@@ -81,16 +81,13 @@ class SimuladorFisica:
         referencia = self.velocidade_media_referencia()
         vel = max(1.0, pokemon.obter_atributo("Vel"))
         escala_relativa = self._clamp(vel / referencia, 0.55, 1.85)
-        tick_segundos = max(0.01, self._regra("batalha_tick_segundos", 0.1))
-        base_tiles_s = max(
-            1.5,
-            self._fnum(
-                self._sistema.Contexto.get("velocidade_base_pokemon_tiles_s"),
-                self._fnum(self._regras_pokemons.get("velocidade_base_pokemon_tiles_s"), 3.0),
-            ),
+        tick_segundos = self._regra("batalha_tick_segundos", 0.1)
+        base_tiles_s = self._fnum(
+            self._sistema.Contexto.get("velocidade_base_pokemon_tiles_s"),
+            self._fnum(self._regras_pokemons.get("velocidade_base_pokemon_tiles_s"), 3.0),
         )
         base_tiles_tick = base_tiles_s * tick_segundos
-        return max(0.01, base_tiles_tick * escala_relativa * max(0.0, float(percentual)) / 100.0)
+        return base_tiles_tick * escala_relativa * max(0.0, float(percentual)) / 100.0
 
     def limitar_ao_campo(self, posicao: Vec2, raio: float = 0.0) -> tuple[Vec2, Vec2]:
         largura = max(1.0, self._fnum(self._sistema.Contexto.get("largura"), 80.0))

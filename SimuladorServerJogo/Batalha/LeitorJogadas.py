@@ -108,7 +108,7 @@ class LeitorJogadas:
             acrescimo = float(self._regras_batalha.get("batalha_multiplas_acoes_acrescimo_por_acao_extra", 0.2))
         except (TypeError, ValueError):
             acrescimo = 0.2
-        return round(base * max(0.0, multiplicador_base + (indice * acrescimo)), 4)
+        return round(base * (multiplicador_base + (indice * acrescimo)), 4)
 
     def _publico_objeto_fluxo(self, evento: Dict[str, object], detalhe: Dict[str, object]) -> Dict[str, object]:
         objeto = detalhe.get("objeto") if isinstance(detalhe.get("objeto"), dict) else (detalhe if detalhe else {})

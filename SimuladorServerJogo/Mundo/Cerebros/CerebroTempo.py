@@ -50,7 +50,9 @@ class CerebroTempo:
 
     def _avancar_tempo(self) -> None:
         self._acumulador_tempo_ticks += 1
-        ticks_por_ciclo = max(1, self._i("tempo_ticks_por_ciclo", 1))
+        ticks_por_ciclo = int(self._i("tempo_ticks_por_ciclo", 1))
+        if ticks_por_ciclo <= 0:
+            return
         if self._acumulador_tempo_ticks < ticks_por_ciclo:
             return
         self._acumulador_tempo_ticks = 0
@@ -72,7 +74,7 @@ class CerebroTempo:
             return
 
         intensidade = int(self._estado.get("chuva_intensidade", 0) or 0)
-        alvo = int(max(0, min(100, int(self._estado.get("chuva_alvo", 0) or 0))))
+        alvo = int(self._estado.get("chuva_alvo", 0) or 0)
 
         if intensidade <= 0:
             seco_rest = int(self._estado.get("ticks_seco_restantes", 0) or 0)
@@ -120,8 +122,8 @@ class CerebroTempo:
         elif intensidade > 0:
             self._estado["chuva_estado"] = "chovendo"
 
-        self._estado["chuva_intensidade"] = int(max(0, min(100, intensidade)))
-        self._estado["chuva_alvo"] = int(max(0, min(100, int(self._estado.get("chuva_alvo", 0) or 0))))
+        self._estado["chuva_intensidade"] = int(intensidade)
+        self._estado["chuva_alvo"] = int(self._estado.get("chuva_alvo", 0) or 0)
 
     def _iniciar_evento_chuva(self, rng: random.Random) -> None:
         self._estado["ticks_chuva_restantes"] = rng.randint(
@@ -133,15 +135,17 @@ class CerebroTempo:
             self._i("chuva_variacao_max_ticks", 2700),
         )
         self._estado["chuva_alvo"] = self._novo_alvo_chuva(rng)
-        self._estado["chuva_intensidade"] = max(1, int(self._estado.get("chuva_intensidade", 0) or 0))
+        self._estado["chuva_intensidade"] = int(self._estado.get("chuva_intensidade", 0) or 0)
         self._estado["chuva_estado"] = "iniciando"
         self._estado["ticks_seco_restantes"] = 0
 
     def _novo_alvo_chuva(self, rng: random.Random) -> int:
-        p1 = max(0.0, self._f("chuva_faixa1_peso", 0.60))
-        p2 = max(0.0, self._f("chuva_faixa2_peso", 0.30))
-        p3 = max(0.0, self._f("chuva_faixa3_peso", 0.10))
-        total = max(0.0001, p1 + p2 + p3)
+        p1 = self._f("chuva_faixa1_peso", 0.60)
+        p2 = self._f("chuva_faixa2_peso", 0.30)
+        p3 = self._f("chuva_faixa3_peso", 0.10)
+        total = p1 + p2 + p3
+        if total <= 0.0:
+            return 0
         rol = rng.random()
         c1 = p1 / total
         c2 = (p1 + p2) / total

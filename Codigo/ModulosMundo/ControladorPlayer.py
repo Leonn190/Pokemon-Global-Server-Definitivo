@@ -49,7 +49,7 @@ class ControladorPlayer:
     def _tile_px_base(self) -> int:
         regras = self._regras()
         gerais = regras.get("gerais") if isinstance(regras.get("gerais"), dict) else {}
-        return max(8, int(gerais.get("camera_px_por_tile", 50) or 50))
+        return int(gerais.get("camera_px_por_tile", 50))
 
     @property
     def player_local(self):

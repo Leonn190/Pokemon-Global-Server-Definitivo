@@ -136,7 +136,7 @@ class EstruturaNaturalServer:
             "quantidade": max(0, int(quantidade or 0)),
             "material": str(material or ""),
             "estilo": str(estilo or ""),
-            "dureza": max(1, int(dureza or 1)),
+            "dureza": int(dureza if dureza not in (None, "") else 1),
             "drop_ativo": bool(drop_ativo),
         }
         self.nome = str(nome)
@@ -156,7 +156,7 @@ class EstruturaNaturalServer:
         if restante <= 0:
             return 0
 
-        dureza = max(1, int(self.estado_extra.get("dureza", 1) or 1))
+        dureza = int(self.estado_extra.get("dureza", 1) if self.estado_extra.get("dureza", 1) not in (None, "") else 1)
         estilo_estrutura = str(self.estado_extra.get("estilo", "") or "").strip().lower()
         estilo_ferramenta = str(estilo_ferramenta or "").strip().lower()
         fator = max(1, int(fator_ferramenta or 1))
@@ -282,7 +282,7 @@ class ProjetilServer:
         self.Colisor = Colisor(x=self.posicao[0], y=self.posicao[1], raio_colisao=self.raio_colisao, raio_interacao=self.raio_interacao)
         dx, dy = float(direcao[0]), float(direcao[1])
         n = (dx * dx + dy * dy) ** 0.5 or 1.0
-        self.estado_extra = {"subtipo": "projetil", "tipo_projetil": str(tipo_projetil or "item"), "nome_item": str(subtipo or "item"), "item_base_id": str(item_base_id or ""), "dono_id": int(dono_id or 0), "token_arremesso": str(token_arremesso or ""), "posicao_inicial": [self.posicao[0], self.posicao[1]], "direcao": [dx / n, dy / n], "velocidade": max(0.1, float(velocidade or 10.0)), "alcance": max(0.1, float(alcance or 6.0)), "distancia": 0.0, "tempo_vida": 0.0, "rotacao": 0.0, "terminado": False}
+        self.estado_extra = {"subtipo": "projetil", "tipo_projetil": str(tipo_projetil or "item"), "nome_item": str(subtipo or "item"), "item_base_id": str(item_base_id or ""), "dono_id": int(dono_id or 0), "token_arremesso": str(token_arremesso or ""), "posicao_inicial": [self.posicao[0], self.posicao[1]], "direcao": [dx / n, dy / n], "velocidade": float(velocidade if velocidade not in (None, "") else 10.0), "alcance": float(alcance if alcance not in (None, "") else 6.0), "distancia": 0.0, "tempo_vida": 0.0, "rotacao": 0.0, "terminado": False}
 
     def definir_posicao(self, x: float, y: float) -> None:
         self.posicao = (float(x), float(y))
@@ -293,12 +293,14 @@ class ProjetilServer:
             return
         dt = max(0.0, float(dt))
         dx, dy = self.estado_extra.get("direcao", [1.0, 0.0])
-        passo = float(self.estado_extra.get("velocidade", 10.0) or 10.0) * dt
+        velocidade = float(self.estado_extra.get("velocidade", 10.0) if self.estado_extra.get("velocidade", 10.0) not in (None, "") else 10.0)
+        passo = velocidade * dt
         self.definir_posicao(self.posicao[0] + float(dx) * passo, self.posicao[1] + float(dy) * passo)
         self.estado_extra["distancia"] = float(self.estado_extra.get("distancia", 0.0) or 0.0) + passo
         self.estado_extra["tempo_vida"] = float(self.estado_extra.get("tempo_vida", 0.0) or 0.0) + dt
         self.estado_extra["rotacao"] = (float(self.estado_extra.get("rotacao", 0.0) or 0.0) + 560.0 * dt) % 360.0
-        if float(self.estado_extra.get("distancia", 0.0) or 0.0) >= float(self.estado_extra.get("alcance", 6.0) or 6.0):
+        alcance = float(self.estado_extra.get("alcance", 6.0) if self.estado_extra.get("alcance", 6.0) not in (None, "") else 6.0)
+        if float(self.estado_extra.get("distancia", 0.0) or 0.0) >= alcance:
             self.estado_extra["terminado"] = True
 
     def terminar(self, motivo: str = "") -> None:
@@ -326,6 +328,10 @@ class ItemMundoServer:
         item_meta_code = str(item_meta.get("Code") or item_base_id or "")
         item_meta_qtd = max(1, int(item_meta.get("quantidade", quantidade) or quantidade or 1))
         item_meta = {**item_meta, "Nome": item_meta_nome, "Code": item_meta_code, "quantidade": item_meta_qtd}
+        velocidade_real = float(velocidade if velocidade not in (None, "") else 5.5)
+        distancia_voo = ((float(pos_final[0]) - float(pos_inicial[0])) ** 2 + (float(pos_final[1]) - float(pos_inicial[1])) ** 2) ** 0.5
+        voando = bool(distancia_voo > 0.0009 and velocidade_real > 0.0)
+        duracao_voo_ticks = 0 if not voando else max(1, round((distancia_voo / velocidade_real) * 30.0))
         self.estado_extra = {
             "subtipo": "item_mundo",
             "dono_id": int(dono_id or 0),
@@ -335,11 +341,11 @@ class ItemMundoServer:
             "quantidade": item_meta_qtd,
             "pos_inicial": [float(pos_inicial[0]), float(pos_inicial[1])],
             "pos_final": [float(pos_final[0]), float(pos_final[1])],
-            "velocidade": max(0.1, float(velocidade or 5.5)),
-            "voando": bool((float(pos_final[0]) - float(pos_inicial[0])) ** 2 + (float(pos_final[1]) - float(pos_inicial[1])) ** 2 > 0.0009),
+            "velocidade": velocidade_real,
+            "voando": voando,
             "tick_spawn": int(tick_spawn),
             "token_drop": str(token_drop or ""),
-            "voando_ate_tick": int(tick_spawn + max(1, round((((float(pos_final[0]) - float(pos_inicial[0])) ** 2 + (float(pos_final[1]) - float(pos_inicial[1])) ** 2) ** 0.5) / max(0.1, float(velocidade or 3.0)) * 30.0))),
+            "voando_ate_tick": int(tick_spawn + duracao_voo_ticks),
         }
 
     def definir_posicao(self, x: float, y: float) -> None:
@@ -424,20 +430,30 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
         return AtorServer(id_objeto=oid, usuario=str(estado.get("usuario") or dados.get("usuario") or ""), skin=str(estado.get("skin") or dados.get("skin") or "S1"), posicao=(float(pos[0]), float(pos[1])), dimensao=str(dados.get("dimensao") or estado.get("dimensao") or "Mundo"))
     if tipo in {"entidade_projetil", "projetil"}:
         direcao = estado.get("direcao") if isinstance(estado.get("direcao"), (list, tuple)) else dados.get("direcao", [1.0, 0.0])
-        return ProjetilServer(id_objeto=oid, posicao=(float(pos[0]), float(pos[1])), dono_id=int(dados.get("dono_id", estado.get("dono_id", 0)) or 0), tipo_projetil=str(dados.get("tipo_projetil") or estado.get("tipo_projetil") or "item"), subtipo=str(dados.get("subtipo") or estado.get("nome_item") or "item"), item_base_id=str(dados.get("item_base_id") or estado.get("item_base_id") or ""), token_arremesso=str(dados.get("token_arremesso") or estado.get("token_arremesso") or ""), direcao=(float(direcao[0]), float(direcao[1])), velocidade=float(dados.get("velocidade") or estado.get("velocidade") or 10.0), alcance=float(dados.get("alcance") or estado.get("alcance") or 6.0), raio_colisao=float(dados.get("raio_colisao", 0.18) or 0.18))
+        velocidade = dados.get("velocidade") if dados.get("velocidade") not in (None, "") else estado.get("velocidade", 10.0)
+        alcance = dados.get("alcance") if dados.get("alcance") not in (None, "") else estado.get("alcance", 6.0)
+        return ProjetilServer(id_objeto=oid, posicao=(float(pos[0]), float(pos[1])), dono_id=int(dados.get("dono_id", estado.get("dono_id", 0)) or 0), tipo_projetil=str(dados.get("tipo_projetil") or estado.get("tipo_projetil") or "item"), subtipo=str(dados.get("subtipo") or estado.get("nome_item") or "item"), item_base_id=str(dados.get("item_base_id") or estado.get("item_base_id") or ""), token_arremesso=str(dados.get("token_arremesso") or estado.get("token_arremesso") or ""), direcao=(float(direcao[0]), float(direcao[1])), velocidade=float(velocidade), alcance=float(alcance), raio_colisao=float(dados.get("raio_colisao", 0.18) if dados.get("raio_colisao", 0.18) not in (None, "") else 0.18))
     if tipo in {"entidade_pokemon", "pokemon"}:
-        raio_colisao = float(dados.get("raio_colisao", 0.0) or 0.0)
+        raio_colisao = float(dados.get("raio_colisao", 0.0) if dados.get("raio_colisao", 0.0) not in (None, "") else 0.0)
         if raio_colisao <= 0.0:
-            tamanho_tiles = float(estado.get("tamanho_tiles", dados.get("tamanho_tiles", 0.0)) or 0.0)
+            tamanho_bruto = estado.get("tamanho_tiles") if estado.get("tamanho_tiles") not in (None, "") else dados.get("tamanho_tiles", 0.0)
+            tamanho_tiles = float(tamanho_bruto if tamanho_bruto not in (None, "") else 0.0)
             if tamanho_tiles <= 0.0:
                 try:
-                    escala = int(float(estado.get("escala", dados.get("escala", estado.get("tamanho", dados.get("tamanho", 3)))) or 3))
+                    escala_bruta = estado.get("escala")
+                    if escala_bruta in (None, ""):
+                        escala_bruta = dados.get("escala", estado.get("tamanho", dados.get("tamanho", 3)))
+                    escala = int(float(escala_bruta))
                 except (TypeError, ValueError):
                     escala = 3
-                diametro_base = float(_REGRAS_POKEMONS.get("tamanho_diametro_base_tiles", 0.6) or 0.6)
-                incremento = float(_REGRAS_POKEMONS.get("tamanho_incremento_por_escala", _REGRAS_POKEMONS.get("tamanho_incremento_por_tamanho", 0.1)) or 0.1)
+                diametro_base = float(_REGRAS_POKEMONS.get("tamanho_diametro_base_tiles", 0.6))
+                incremento = float(
+                    _REGRAS_POKEMONS.get("tamanho_incremento_por_escala")
+                    if _REGRAS_POKEMONS.get("tamanho_incremento_por_escala") is not None
+                    else _REGRAS_POKEMONS.get("tamanho_incremento_por_tamanho", 0.1)
+                )
                 tamanho_tiles = diametro_base + (max(0, escala) * incremento)
-            raio_colisao = max(0.2, tamanho_tiles * 0.5)
+            raio_colisao = tamanho_tiles * 0.5
         raio_interacao = float(dados.get("raio_interacao", 0.0) or 0.0)
         if raio_interacao <= 0.0:
             raio_interacao = max(raio_colisao, 1.2)
@@ -462,7 +478,8 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
     if tipo in {"entidade_item_mundo", "item_mundo"}:
         p0 = estado.get("pos_inicial") if isinstance(estado.get("pos_inicial"), (list, tuple)) else pos
         p1 = estado.get("pos_final") if isinstance(estado.get("pos_final"), (list, tuple)) else pos
-        return ItemMundoServer(id_objeto=oid, posicao=(float(pos[0]), float(pos[1])), dono_id=int(dados.get("dono_id", estado.get("dono_id", 0)) or 0), item_nome=str(dados.get("item_nome") or estado.get("item_nome") or "Item"), item_base_id=str(dados.get("item_base_id") or estado.get("item_base_id") or ""), quantidade=int(dados.get("quantidade") or estado.get("quantidade") or 1), pos_inicial=(float(p0[0]), float(p0[1])), pos_final=(float(p1[0]), float(p1[1])), velocidade=float(dados.get("velocidade") or estado.get("velocidade") or 5.5), tick_spawn=int(estado.get("tick_spawn", 0) or 0), token_drop=str(dados.get("token_drop") or estado.get("token_drop") or ""), item_dados=(dados.get("item_dados") if isinstance(dados.get("item_dados"), dict) else estado.get("item_dados") if isinstance(estado.get("item_dados"), dict) else None))
+        velocidade_item = dados.get("velocidade") if dados.get("velocidade") not in (None, "") else estado.get("velocidade", 5.5)
+        return ItemMundoServer(id_objeto=oid, posicao=(float(pos[0]), float(pos[1])), dono_id=int(dados.get("dono_id", estado.get("dono_id", 0)) or 0), item_nome=str(dados.get("item_nome") or estado.get("item_nome") or "Item"), item_base_id=str(dados.get("item_base_id") or estado.get("item_base_id") or ""), quantidade=int(dados.get("quantidade") or estado.get("quantidade") or 1), pos_inicial=(float(p0[0]), float(p0[1])), pos_final=(float(p1[0]), float(p1[1])), velocidade=float(velocidade_item), tick_spawn=int(estado.get("tick_spawn", 0) or 0), token_drop=str(dados.get("token_drop") or estado.get("token_drop") or ""), item_dados=(dados.get("item_dados") if isinstance(dados.get("item_dados"), dict) else estado.get("item_dados") if isinstance(estado.get("item_dados"), dict) else None))
     if tipo in {"entidade_xp_mundo", "xp_mundo"}:
         p0 = estado.get("pos_inicial") if isinstance(estado.get("pos_inicial"), (list, tuple)) else pos
         p1 = estado.get("pos_final") if isinstance(estado.get("pos_final"), (list, tuple)) else pos

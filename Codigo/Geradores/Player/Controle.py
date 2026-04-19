@@ -288,7 +288,9 @@ class Controle:
     def _bonus_velocidade_alvo(self):
         minimo = float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMin", 0.30))
         maximo = float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMax", 0.60))
-        tempo_max = max(0.01, float(getattr(self.Ator.Perfil, "TempoAceleracaoCorrida", 3.0)))
+        tempo_max = float(getattr(self.Ator.Perfil, "TempoAceleracaoCorrida", 3.0))
+        if tempo_max <= 0.0:
+            return maximo
         passo = min(1.0, self._tempo_shift_pressionado / tempo_max)
         return minimo + (maximo - minimo) * passo
 
@@ -314,8 +316,14 @@ class Controle:
             self._bonus_corrida_atual = self._bonus_velocidade_alvo()
         else:
             self._tempo_shift_pressionado = 0.0
-            tempo_desacel = max(0.01, float(getattr(self.Ator.Perfil, "TempoDesaceleracaoCorrida", 3.0)))
-            self._bonus_corrida_atual = max(0.0, self._bonus_corrida_atual - (dt / tempo_desacel) * float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMax", 0.60)))
+            tempo_desacel = float(getattr(self.Ator.Perfil, "TempoDesaceleracaoCorrida", 3.0))
+            if tempo_desacel <= 0.0:
+                self._bonus_corrida_atual = 0.0
+            else:
+                self._bonus_corrida_atual = max(
+                    0.0,
+                    self._bonus_corrida_atual - (dt / tempo_desacel) * float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMax", 0.60)),
+                )
 
         mult = 1.0 + max(0.0, self._bonus_corrida_atual)
         vbase = float(getattr(self.Ator.Perfil, "VelocidadeBaseTiles", self.VelocidadeTiles))

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import math
 import pygame
 
 from Codigo.Prefabs.Botao import BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
+from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
 
 
 class TelaMapa:
@@ -73,6 +73,9 @@ class TelaMapa:
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 self.fechar()
                 return
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_m:
+                self.fechar()
+                return
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:
                 self.dragging = True
             if ev.type == pygame.MOUSEBUTTONUP and ev.button == 3:
@@ -136,6 +139,14 @@ class TelaMapa:
 
         if self._cache_frame is not None:
             tela.blit(self._cache_frame, (0, 0))
+        largura_m, altura_m = ger.mundo_tamanho_px()
+        borda = pygame.Rect(
+            int(self.offset[0]),
+            int(self.offset[1]),
+            max(1, int(largura_m * self.zoom)),
+            max(1, int(altura_m * self.zoom)),
+        )
+        pygame.draw.rect(tela, (190, 196, 212), borda, 2)
 
         if self._botoes["Vilas"].estado:
             for vila in servico_mapa.vilas:
@@ -184,11 +195,7 @@ class TelaMapa:
 
         tx, ty = self._mundo_para_tela(pos_player_mundo)
         angulo = float(angulo_olhar if angulo_olhar is not None else (estado_player.get("angulo", 0.0) if isinstance(estado_player, dict) else 0.0))
-        r = max(8, int(12 * self.zoom / 2.0))
-        ponta = (tx + int(math.cos(math.radians(angulo)) * r), ty - int(math.sin(math.radians(angulo)) * r))
-        esq = (tx + int(math.cos(math.radians(angulo + 140)) * (r * 0.55)), ty - int(math.sin(math.radians(angulo + 140)) * (r * 0.55)))
-        dire = (tx + int(math.cos(math.radians(angulo - 140)) * (r * 0.55)), ty - int(math.sin(math.radians(angulo - 140)) * (r * 0.55)))
-        pygame.draw.polygon(tela, (255, 255, 255), [ponta, esq, dire])
+        desenhar_seta_player(tela, (tx, ty), angulo, tamanho=max(8, min(22, int(8 + (self.zoom * 2.0)))))
 
         for botao in self._botoes.values():
             botao.render(tela, eventos, 0.0, JOGO=jogo)

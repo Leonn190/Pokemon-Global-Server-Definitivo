@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import math
 import pygame
+from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
 
 
 class MinimapaMundo:
@@ -14,8 +14,8 @@ class MinimapaMundo:
             return
         ger = servico_mapa.gerenciador
         chunk_blocos = int(ger.meta.get("chunk_blocos", 10) or 10)
-        raio_chunks = 2
-        lado_px_logico = (raio_chunks * 2 + 1) * chunk_blocos
+        lado_chunks = 6
+        lado_px_logico = lado_chunks * chunk_blocos
         area = pygame.Rect(tela.get_width() - self.tamanho - self.margem, self.margem, self.tamanho, self.tamanho)
 
         base = pygame.Surface((lado_px_logico, lado_px_logico))
@@ -40,9 +40,4 @@ class MinimapaMundo:
         tela.blit(mini, area)
         pygame.draw.rect(tela, (8, 8, 8), area, 2)
 
-        cx, cy = area.center
-        r = 9
-        ponta = (cx + int(math.cos(math.radians(angulo)) * r), cy - int(math.sin(math.radians(angulo)) * r))
-        esq = (cx + int(math.cos(math.radians(angulo + 140)) * (r * 0.55)), cy - int(math.sin(math.radians(angulo + 140)) * (r * 0.55)))
-        dire = (cx + int(math.cos(math.radians(angulo - 140)) * (r * 0.55)), cy - int(math.sin(math.radians(angulo - 140)) * (r * 0.55)))
-        pygame.draw.polygon(tela, (255, 255, 255), [ponta, esq, dire])
+        desenhar_seta_player(tela, area.center, angulo, tamanho=10)

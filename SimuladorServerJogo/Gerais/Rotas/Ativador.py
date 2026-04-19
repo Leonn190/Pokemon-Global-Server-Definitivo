@@ -61,10 +61,21 @@ def _poi_mapa() -> tuple[list, list, list]:
     estadios = list(meta.get("estadios", []) if isinstance(meta.get("estadios"), list) else [])
     regioes_raw = list(meta.get("regioes", []) if isinstance(meta.get("regioes"), list) else [])
     regioes = []
+    prox_id = 1
     for reg in regioes_raw:
         if not isinstance(reg, dict):
             continue
         item = dict(reg)
+        rid = item.get("id")
+        if rid in (None, ""):
+            rid = prox_id
+            prox_id += 1
+        item["id"] = int(rid)
+        item["nome"] = str(item.get("nome") or f"Região {int(item['id'])}")
+        centro = item.get("centro")
+        if not (isinstance(centro, (list, tuple)) and len(centro) == 2):
+            centro = [0, 0]
+        item["centro"] = [float(centro[0]), float(centro[1])]
         cor = item.get("cor") if isinstance(item.get("cor"), list) else item.get("cor_rgb")
         if not (isinstance(cor, list) and len(cor) == 3):
             item["cor"] = _cor_regiao_fallback(int(item.get("id", 0) or 0))
@@ -89,12 +100,41 @@ def _resolver_posicao_mundo_referencia(obj_player, posicao_camera: Vector2) -> V
     return (float(posicao_camera[0]), float(posicao_camera[1]))
 
 
+def _objetos_no_chunk_mapa(chunk: Chunk) -> list[dict]:
+    saida: list[dict] = []
+    for obj in BANCO_DADOS.listar_objetos():
+        try:
+            if BANCO_DADOS.chunk_da_posicao(getattr(obj, "posicao", (0.0, 0.0))) != chunk:
+                continue
+        except Exception:
+            continue
+        estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+        tipo_classe = str(getattr(obj, "tipo_classe", "") or "")
+        subtipo = str(estado.get("subtipo") or "")
+        if tipo_classe in {"ator", "entidade_estadio"}:
+            continue
+        if str(estado.get("dimensao") or "Mundo") != "Mundo":
+            continue
+        pos = getattr(obj, "posicao", (0.0, 0.0))
+        saida.append({
+            "pos": [float(pos[0]), float(pos[1])],
+            "tipo": tipo_classe,
+            "subtipo": subtipo,
+            "categoria": str(estado.get("categoria") or subtipo or tipo_classe),
+        })
+    return saida
+
+
 def _atlas_do_conjunto(chunks: set[Chunk]) -> list[dict]:
     grupos: Dict[Tuple[int, int], list[dict]] = {}
     for chunk in sorted(chunks):
         ax = int(chunk[0]) // 100
         ay = int(chunk[1]) // 100
-        grupos.setdefault((ax, ay), []).append({"pos": [int(chunk[0]), int(chunk[1])], "grid": BANCO_DADOS.chunk_em_grade(chunk)})
+        grupos.setdefault((ax, ay), []).append({
+            "pos": [int(chunk[0]), int(chunk[1])],
+            "grid": BANCO_DADOS.chunk_em_grade(chunk),
+            "objetos": _objetos_no_chunk_mapa(chunk),
+        })
     out = []
     for (ax, ay), lista in grupos.items():
         if not lista:

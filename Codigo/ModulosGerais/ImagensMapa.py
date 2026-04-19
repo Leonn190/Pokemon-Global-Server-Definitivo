@@ -22,6 +22,12 @@ TILE_COLORS: Dict[int, Tuple[int, int, int]] = {
     9: (132, 132, 132), # DEAD_SOIL
 }
 WATER_TILES = {0, 1}
+OBJETO_CORES = {
+    "vegetacao": (24, 96, 38),
+    "mineral": (126, 112, 92),
+    "bau": (230, 164, 34),
+    "estrutura": (158, 104, 58),
+}
 
 
 @dataclass
@@ -62,6 +68,9 @@ class GerenciadorImagensMapa:
             self._atlas.clear()
             self._explorados_mundo = self._normalizar_explorados(explorados)
             self._regioes = [dict(r) for r in (regioes or []) if isinstance(r, dict)]
+            for idx, reg in enumerate(self._regioes):
+                if reg.get("id") in (None, ""):
+                    reg["id"] = int(idx + 1)
             self._regioes_idx = {int(r.get("id", -1)): r for r in self._regioes if r.get("id") is not None}
             self._prepared = True
 
@@ -175,11 +184,19 @@ class GerenciadorImagensMapa:
     def _cor_regiao(self, regiao_id: int) -> Tuple[int, int, int]:
         reg = self._regioes_idx.get(int(regiao_id))
         if not isinstance(reg, dict):
-            return (90, 90, 90)
+            return self._cor_fallback_regiao(int(regiao_id))
         cor = reg.get("cor") if isinstance(reg.get("cor"), (list, tuple)) else reg.get("cor_rgb")
         if isinstance(cor, (list, tuple)) and len(cor) == 3:
             return (int(cor[0]), int(cor[1]), int(cor[2]))
-        return (90, 90, 90)
+        return self._cor_fallback_regiao(int(regiao_id), nome=str(reg.get("nome") or ""))
+
+    @staticmethod
+    def _cor_fallback_regiao(regiao_id: int, nome: str = "") -> Tuple[int, int, int]:
+        h = (int(regiao_id) * 1103515245 + 12345 + (sum(ord(c) for c in str(nome)) * 97)) & 0xFFFFFFFF
+        r = 70 + ((h >> 16) & 0x7F)
+        g = 70 + ((h >> 8) & 0x7F)
+        b = 70 + (h & 0x7F)
+        return (int(r), int(g), int(b))
 
     def _regiao_mais_proxima(self, gx: int, gy: int) -> int:
         melhor_id = -1
@@ -194,7 +211,16 @@ class GerenciadorImagensMapa:
             d2 = (dx * dx) + (dy * dy)
             if d2 < melhor_d2:
                 melhor_d2 = d2
-                melhor_id = int(reg.get("id", -1) or -1)
+                rid = reg.get("id", -1)
+                try:
+                    melhor_id = int(rid)
+                except Exception:
+                    melhor_id = -1
+        if melhor_id < 0 and self._regioes:
+            try:
+                melhor_id = int(self._regioes[0].get("id", 1) or 1)
+            except Exception:
+                melhor_id = 1
         return melhor_id
 
     def ponto_explorado_regiao(self, regiao_id: int, preferencia: Tuple[float, float], area_visivel: pygame.Rect | None = None) -> Tuple[float, float] | None:
@@ -249,13 +275,14 @@ class GerenciadorImagensMapa:
                         continue
                     cx, cy = int(pos[0]), int(pos[1])
                     atlas = self._atlas_for_chunk(cx, cy)
-                    self._desenhar_chunk_no_atlas(atlas, cx, cy, grid)
+                    objetos = chunk.get("objetos") if isinstance(chunk.get("objetos"), list) else []
+                    self._desenhar_chunk_no_atlas(atlas, cx, cy, grid, objetos=objetos)
                     atlas.chunks_explorados.add((cx, cy))
                     self._explorados_mundo.setdefault(cx, set()).add(cy)
                     alterados += 1
         return alterados
 
-    def _desenhar_chunk_no_atlas(self, atlas: AtlasMapa, cx: int, cy: int, grid: List[List[int]]) -> None:
+    def _desenhar_chunk_no_atlas(self, atlas: AtlasMapa, cx: int, cy: int, grid: List[List[int]], objetos: list | None = None) -> None:
         inicio_x = (int(cx) % self.atlas_chunks_lado) * self.chunk_blocos
         inicio_y = (int(cy) % self.atlas_chunks_lado) * self.chunk_blocos
         for ly, linha in enumerate(grid[: self.chunk_blocos]):
@@ -272,9 +299,42 @@ class GerenciadorImagensMapa:
                     rid = self._regiao_mais_proxima(gx, gy)
                     cor_reg = self._cor_regiao(rid)
                 atlas.surface_regioes.set_at((inicio_x + lx, inicio_y + ly), cor_reg)
+        self._desenhar_objetos_chunk(atlas, cx, cy, objetos or [])
         atlas.dirty_base = True
         atlas.dirty_regioes = True
         atlas.versao += 1
+
+    def _desenhar_objetos_chunk(self, atlas: AtlasMapa, cx: int, cy: int, objetos: list) -> None:
+        if not objetos:
+            return
+        inicio_x = (int(cx) % self.atlas_chunks_lado) * self.chunk_blocos
+        inicio_y = (int(cy) % self.atlas_chunks_lado) * self.chunk_blocos
+        for obj in objetos:
+            if not isinstance(obj, dict):
+                continue
+            pos = obj.get("pos")
+            if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
+                continue
+            lx = int(float(pos[0])) - (int(cx) * self.chunk_blocos)
+            ly = int(float(pos[1])) - (int(cy) * self.chunk_blocos)
+            if lx < 0 or ly < 0 or lx >= self.chunk_blocos or ly >= self.chunk_blocos:
+                continue
+            categoria = str(obj.get("categoria") or obj.get("subtipo") or obj.get("tipo") or "").lower()
+            if any(ch in categoria for ch in ("tree", "arvore", "bush", "planta", "folha", "veget")):
+                cor = OBJETO_CORES["vegetacao"]
+            elif any(ch in categoria for ch in ("rock", "pedra", "ore", "miner", "metal", "crist")):
+                cor = OBJETO_CORES["mineral"]
+            elif any(ch in categoria for ch in ("bau", "chest", "loot", "item")):
+                cor = OBJETO_CORES["bau"]
+            else:
+                cor = OBJETO_CORES["estrutura"]
+            px = inicio_x + lx
+            py = inicio_y + ly
+            atlas.surface_base.set_at((px, py), cor)
+            atlas.surface_regioes.set_at((px, py), cor)
+
+    def salvar_debug_atlas(self) -> None:
+        self.flush()
 
     def atlas_visiveis(self, camera_rect_mundo_px: pygame.Rect) -> List[AtlasMapa]:
         if camera_rect_mundo_px.width <= 0 or camera_rect_mundo_px.height <= 0:

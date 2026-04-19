@@ -20,6 +20,7 @@ class TelaMapa:
         self._cache_frame = None
         self._txt_regiao = Texto("", style={"size": 34, "outline": True, "align": "center"})
         self._txt_poi = Texto("", style={"size": 20, "outline": True, "align": "center"})
+        self._txt_loading = Texto("Carregando mapa...", style={"size": 30, "outline": True, "align": "center"})
         self._botoes = {}
 
     def abrir(self, jogo, servico_mapa, pos_player_mundo):
@@ -100,6 +101,12 @@ class TelaMapa:
         _ = dt
         tela.fill((0, 0, 0))
         self.processar_eventos(jogo, eventos, servico_mapa)
+        if not bool(getattr(servico_mapa, "pronto", False)):
+            self._txt_loading.set_pos((tela.get_width() // 2, tela.get_height() // 2))
+            self._txt_loading.draw(tela)
+            for botao in self._botoes.values():
+                botao.render(tela, eventos, 0.0, JOGO=jogo)
+            return
         ger = servico_mapa.gerenciador
         mostrar_regioes = bool(self._botoes["Regiões"].estado)
 

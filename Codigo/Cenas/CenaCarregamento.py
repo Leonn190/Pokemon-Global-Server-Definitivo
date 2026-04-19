@@ -20,6 +20,7 @@ class CenaCarregamento:
         self._frame_escalado = None
         self._botao_cancelar = None
         self._tempo_espera_mundo = 0.0
+        self._fallback_timeout_disparado = False
 
         self._carregar_frames()
         self._montar_layout(JOGO)
@@ -104,6 +105,15 @@ class CenaCarregamento:
 
         if JOGO.INFO.get("ServerSelecionado") and JOGO.INFO.get("PlayerDadosServer") is not None:
             self._tempo_espera_mundo += max(0.0, float(dt))
+            if self._tempo_espera_mundo >= 12.0 and not isinstance(JOGO.INFO.get("MundoPreparadoTransicao"), dict):
+                self._fallback_timeout_disparado = True
+                JOGO.INFO["MundoPreparadoTransicao"] = {
+                    "regras_mundo": {},
+                    "bootstrap": None,
+                    "mapa_bootstrap": None,
+                    "erros": ["timeout_preparacao_mundo"],
+                }
+                print("[CenaCarregamento] fallback timeout_preparacao_mundo aplicado.")
             pronto_preparo = bool(isinstance(JOGO.INFO.get("MundoPreparadoTransicao"), dict))
             if self._tempo_espera_mundo >= 2.0 and pronto_preparo:
                 JOGO.CenaAlvo = "Mundo"

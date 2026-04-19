@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 import shutil
 import threading
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -36,8 +35,6 @@ class AtlasMapa:
     chunks_explorados: set[Tuple[int, int]] = field(default_factory=set)
     dirty_base: bool = False
     dirty_regioes: bool = False
-    dirty_at: float = 0.0
-    save_pending: bool = False
     versao: int = 0
 
 
@@ -54,9 +51,6 @@ class GerenciadorImagensMapa:
         self._regioes: List[dict] = []
         self._regioes_idx: Dict[int, dict] = {}
         self._prepared = False
-        self._worker_ativo = False
-        self._worker_save: threading.Thread | None = None
-        self._save_debounce_s = 0.9
 
     def preparar(self, meta: dict, explorados: dict | None = None, regioes: list | None = None) -> None:
         with self._lock:
@@ -70,17 +64,12 @@ class GerenciadorImagensMapa:
             self._regioes = [dict(r) for r in (regioes or []) if isinstance(r, dict)]
             self._regioes_idx = {int(r.get("id", -1)): r for r in self._regioes if r.get("id") is not None}
             self._prepared = True
-            self._iniciar_worker_save()
 
     def limpar(self) -> None:
         with self._lock:
             self._atlas.clear()
             self._explorados_mundo.clear()
             self._prepared = False
-            self._worker_ativo = False
-        if self._worker_save is not None and self._worker_save.is_alive():
-            self._worker_save.join(timeout=1.5)
-        self._worker_save = None
         try:
             if self.pasta_ram.exists():
                 shutil.rmtree(self.pasta_ram, ignore_errors=True)
@@ -93,12 +82,11 @@ class GerenciadorImagensMapa:
             for atlas in self._atlas.values():
                 if not atlas.chunks_explorados:
                     continue
-                if not (atlas.dirty_base or atlas.dirty_regioes or atlas.save_pending):
+                if not (atlas.dirty_base or atlas.dirty_regioes):
                     continue
                 payloads.append((atlas.surface_base.copy(), atlas.path_base, atlas.surface_regioes.copy(), atlas.path_regioes))
                 atlas.dirty_base = False
                 atlas.dirty_regioes = False
-                atlas.save_pending = False
         for base, path_base, reg, path_reg in payloads:
             pygame.image.save(base, str(path_base))
             pygame.image.save(reg, str(path_reg))
@@ -265,7 +253,6 @@ class GerenciadorImagensMapa:
                     atlas.chunks_explorados.add((cx, cy))
                     self._explorados_mundo.setdefault(cx, set()).add(cy)
                     alterados += 1
-            self._agendar_save_dirty_locked()
         return alterados
 
     def _desenhar_chunk_no_atlas(self, atlas: AtlasMapa, cx: int, cy: int, grid: List[List[int]]) -> None:
@@ -287,47 +274,7 @@ class GerenciadorImagensMapa:
                 atlas.surface_regioes.set_at((inicio_x + lx, inicio_y + ly), cor_reg)
         atlas.dirty_base = True
         atlas.dirty_regioes = True
-        atlas.dirty_at = time.monotonic()
         atlas.versao += 1
-
-    def _iniciar_worker_save(self) -> None:
-        if self._worker_save is not None and self._worker_save.is_alive():
-            return
-        self._worker_ativo = True
-        self._worker_save = threading.Thread(target=self._loop_save_worker, name="MapaAtlasSaveWorker", daemon=True)
-        self._worker_save.start()
-
-    def _agendar_save_dirty_locked(self) -> None:
-        for atlas in self._atlas.values():
-            if atlas.dirty_base or atlas.dirty_regioes:
-                atlas.save_pending = True
-
-    def _coletar_payload_save_locked(self) -> list[tuple[pygame.Surface, Path, pygame.Surface, Path]]:
-        agora = time.monotonic()
-        out: list[tuple[pygame.Surface, Path, pygame.Surface, Path]] = []
-        for atlas in self._atlas.values():
-            if not atlas.save_pending or not atlas.chunks_explorados:
-                continue
-            if (agora - float(atlas.dirty_at or 0.0)) < self._save_debounce_s:
-                continue
-            out.append((atlas.surface_base.copy(), atlas.path_base, atlas.surface_regioes.copy(), atlas.path_regioes))
-            atlas.dirty_base = False
-            atlas.dirty_regioes = False
-            atlas.save_pending = False
-        return out
-
-    def _loop_save_worker(self) -> None:
-        while self._worker_ativo:
-            payloads: list[tuple[pygame.Surface, Path, pygame.Surface, Path]] = []
-            with self._lock:
-                payloads = self._coletar_payload_save_locked()
-            for base, path_base, reg, path_reg in payloads:
-                try:
-                    pygame.image.save(base, str(path_base))
-                    pygame.image.save(reg, str(path_reg))
-                except Exception:
-                    continue
-            time.sleep(0.25)
 
     def atlas_visiveis(self, camera_rect_mundo_px: pygame.Rect) -> List[AtlasMapa]:
         if camera_rect_mundo_px.width <= 0 or camera_rect_mundo_px.height <= 0:

@@ -64,7 +64,7 @@ class ElementosHudMundo:
                 self.TextoQtd.set_pos((rect.right - 2, rect.bottom - 1))
                 self.TextoQtd.draw(tela)
 
-        if bool(mostrar_minimapa) and servico_mapa is not None:
+        if bool(mostrar_minimapa) and servico_mapa is not None and bool(getattr(servico_mapa, "pronto", False)):
             self._minimapa.desenhar(tela, servico_mapa, pos_player_mundo, float(angulo_olhar or 0.0))
 
         if terminal is not None:

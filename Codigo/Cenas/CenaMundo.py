@@ -36,22 +36,68 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mund
 
 class CenaMundo:
     def PrepararTransicaoAssincrona(self, JOGO) -> None:
+        print("[CenaMundo] PrepararTransicaoAssincrona: inicio")
+        preparado = {
+            "regras_mundo": {},
+            "bootstrap": None,
+            "mapa_bootstrap": None,
+            "erros": [],
+        }
         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
         regras_mundo = {}
         if link:
-            regras_mundo = ModuladorRegras().coletar_regras(link) or {}
-            self._aplicar_sincronizacao_pos_batalha_pendente(JOGO, link)
+            try:
+                regras_mundo = ModuladorRegras().coletar_regras(link) or {}
+            except Exception as exc:
+                preparado["erros"].append(f"falha_regras:{exc}")
+            try:
+                self._aplicar_sincronizacao_pos_batalha_pendente(JOGO, link)
+            except Exception as exc:
+                preparado["erros"].append(f"falha_sincronizacao:{exc}")
         dados = JOGO.INFO.get("PlayerDadosServer") if isinstance(JOGO.INFO.get("PlayerDadosServer"), dict) else {}
         posicao = dados.get("posicao") if isinstance(dados.get("posicao"), (list, tuple)) and len(dados.get("posicao")) == 2 else [0.0, 0.0]
         client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
-        bootstrap = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=posicao, raio_chunks=4) if link else None
-        mapa_bootstrap = coletar_mapa_mundo(link, client_id, posicao) if link else None
-        JOGO.INFO["MundoPreparadoTransicao"] = {
-            "regras_mundo": dict(regras_mundo or {}),
-            "bootstrap": bootstrap if isinstance(bootstrap, dict) else None,
-            "mapa_bootstrap": mapa_bootstrap if isinstance(mapa_bootstrap, dict) else None,
-        }
+        bootstrap = None
+        if link:
+            try:
+                bootstrap = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=posicao, raio_chunks=4)
+            except Exception as exc:
+                preparado["erros"].append(f"falha_bootstrap_mundo:{exc}")
+
+        mapa_bootstrap = None
+        if link:
+            try:
+                import threading
+                resultado = {"payload": None}
+
+                def _worker_bootstrap_mapa():
+                    try:
+                        resultado["payload"] = coletar_mapa_mundo(link, client_id, posicao)
+                    except Exception as exc:
+                        resultado["payload"] = {"status": "erro", "mensagem": str(exc)}
+
+                t = threading.Thread(target=_worker_bootstrap_mapa, daemon=True)
+                t.start()
+                t.join(timeout=2.5)
+                if t.is_alive():
+                    mapa_bootstrap = {"status": "erro", "mensagem": "timeout_bootstrap_mapa"}
+                    preparado["erros"].append("timeout_bootstrap_mapa")
+                    print("[CenaMundo] mapa_bootstrap timeout; seguindo sem bloquear mundo.")
+                else:
+                    mapa_bootstrap = resultado.get("payload")
+                    if isinstance(mapa_bootstrap, dict) and str(mapa_bootstrap.get("status", "")).lower() == "erro":
+                        print(f"[CenaMundo] mapa_bootstrap erro: {mapa_bootstrap.get('mensagem', 'desconhecido')}")
+            except Exception as exc:
+                mapa_bootstrap = {"status": "erro", "mensagem": str(exc)}
+                preparado["erros"].append(f"falha_bootstrap_mapa:{exc}")
+                print(f"[CenaMundo] erro em mapa_bootstrap: {exc}")
+
+        preparado["regras_mundo"] = dict(regras_mundo or {})
+        preparado["bootstrap"] = bootstrap if isinstance(bootstrap, dict) else None
+        preparado["mapa_bootstrap"] = mapa_bootstrap if isinstance(mapa_bootstrap, dict) else None
+        JOGO.INFO["MundoPreparadoTransicao"] = preparado
+        print("[CenaMundo] PrepararTransicaoAssincrona: fim")
 
     def _aplicar_sincronizacao_pos_batalha_pendente(self, jogo, link: str | None) -> None:
         pendente = jogo.INFO.get("SincronizacaoPosBatalhaMundo") if isinstance(jogo.INFO.get("SincronizacaoPosBatalhaMundo"), dict) else None
@@ -186,7 +232,10 @@ class CenaMundo:
             self.ControladorMundo.conectar(link, client_id, bootstrap_inicial=bootstrap)
             self.ServicoMapa = ServicoMapaMundo(JOGO, link, client_id)
             mapa_bootstrap = preparado.get("mapa_bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("mapa_bootstrap"), dict) else None
-            self.ServicoMapa.preparar_bootstrap(mapa_bootstrap)
+            try:
+                self.ServicoMapa.preparar_bootstrap(mapa_bootstrap if str((mapa_bootstrap or {}).get("status", "ok")).lower() == "ok" else None)
+            except Exception as exc:
+                print(f"[CenaMundo] falha ao preparar serviço de mapa: {exc}")
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()

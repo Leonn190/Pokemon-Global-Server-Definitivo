@@ -47,6 +47,7 @@ class ControladorObjetos:
         self._chunk_por_objeto: Dict[int, Tuple[int, int]] = {}
 
         self._cache_sprites_fallback: Dict[str, Optional[pygame.Surface]] = {}
+        self._cache_sprites_fallback_escalados: Dict[Tuple[str, int, int], pygame.Surface] = {}
         self._ultimo_render_pokemons_ms = pygame.time.get_ticks()
         self._pokemon_alvo_local_id: Optional[int] = None
         self._capturas_por_token: Dict[str, Dict[str, object]] = {}
@@ -570,6 +571,17 @@ class ControladorObjetos:
         self._cache_sprites_fallback[caminho] = sprite
         return sprite
 
+    def _obter_sprite_fallback_escalado(self, caminho: str, sprite: pygame.Surface, escala: float) -> pygame.Surface:
+        largura = max(1, int(sprite.get_width() * escala))
+        altura = max(1, int(sprite.get_height() * escala))
+        chave = (str(caminho or ""), largura, altura)
+        sprite_escalado = self._cache_sprites_fallback_escalados.get(chave)
+        if sprite_escalado is not None:
+            return sprite_escalado
+        sprite_escalado = pygame.transform.smoothscale(sprite, (largura, altura))
+        self._cache_sprites_fallback_escalados[chave] = sprite_escalado
+        return sprite_escalado
+
     def _render_fallback_objeto(self, tela, camera, obj: Dict[str, object], cor_fallback=(222, 233, 245), escala: float = 1.0):
         pos = obj.get("posicao", [0.0, 0.0])
         if not isinstance(pos, (list, tuple)) or len(pos) != 2:
@@ -589,9 +601,7 @@ class ControladorObjetos:
         if sprite is not None:
             escala = limitar_escala_estrutura_natural(float(escala or 1.0))
             if abs(escala - 1.0) > 0.001:
-                w = max(1, int(sprite.get_width() * escala))
-                h = max(1, int(sprite.get_height() * escala))
-                sprite = pygame.transform.smoothscale(sprite, (w, h))
+                sprite = self._obter_sprite_fallback_escalado(sprite_path, sprite, escala)
             sprite_rect = sprite.get_rect(center=(int(px), int(py)))
             tela.blit(sprite, sprite_rect)
             return

@@ -460,7 +460,7 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object]) -> None:
     arquivo_mundo = _arquivo_estado_mundo("MundoEstado.json", preferir_novo=True)
     arquivo_mundo.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(arquivo_mundo.parent), delete=False, prefix="mundo_", suffix=".tmp") as f:
-        json.dump(estado_mundo, f, ensure_ascii=False, indent=2)
+        json.dump(estado_mundo, f, ensure_ascii=False, separators=(",", ":"))
         f.flush()
         os.fsync(f.fileno())
         caminho_tmp = f.name

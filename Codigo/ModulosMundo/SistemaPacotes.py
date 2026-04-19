@@ -179,7 +179,11 @@ class SistemaPacotes:
     def _executar_ciclo_rede(self) -> bool:
         self._player.supervisionar_envio()
         envio_atual = self._objetos.ColetarDiffsRapidas()
-        lote_envio = list(self._pendentes_reenvio) + list(envio_atual)
+        pendentes = self._pendentes_reenvio
+        if pendentes:
+            lote_envio = pendentes + envio_atual if envio_atual else pendentes
+        else:
+            lote_envio = envio_atual
         posicao_ref = self._posicao_referencia_envio()
 
         resposta = None

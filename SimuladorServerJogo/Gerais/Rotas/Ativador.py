@@ -23,6 +23,12 @@ _CLIENTS_CONHECIDOS: Set[str] = set()
 _CLIENT_STATE: Dict[str, Dict[str, object]] = {}
 
 
+def _serializar_resposta(payload: Dict[str, object], serializar: bool):
+    if not serializar:
+        return payload
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+
 def _next_seq() -> int:
     global _DIFF_SEQ
     _DIFF_SEQ += 1
@@ -215,16 +221,20 @@ def _coletar_preload_estadios(vistos: Set[int]) -> List[Dict[str, object]]:
 
 
 
-def processar_ativador_json(requisicao_json: str) -> str:
-    try:
-        pacote = json.loads(requisicao_json)
-    except json.JSONDecodeError:
-        return json.dumps({"status": "erro", "mensagem": "JSON inválido"}, ensure_ascii=False)
+def processar_ativador_json(requisicao_json: str | Dict[str, object]):
+    serializar_resposta = not isinstance(requisicao_json, dict)
+    if serializar_resposta:
+        try:
+            pacote = json.loads(requisicao_json)
+        except json.JSONDecodeError:
+            return _serializar_resposta({"status": "erro", "mensagem": "JSON inválido"}, serializar_resposta)
+    else:
+        pacote = requisicao_json
 
     dados = pacote.get("dados", {})
     client_id = str(dados.get("client_id", "")).strip()
     if not client_id:
-        return json.dumps({"status": "erro", "mensagem": "client_id obrigatório"}, ensure_ascii=False)
+        return _serializar_resposta({"status": "erro", "mensagem": "client_id obrigatório"}, serializar_resposta)
 
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
     modo = str(dados.get("modo", "pacotes")).strip().lower()
@@ -254,7 +264,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
                 chunks.append({"pos": [chunk[0], chunk[1]], "grid": grid, "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()})
             dim_largura = int(CEREBRO_ESTADIOS.chunks_largura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[0])
             dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[1])
-            return json.dumps({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, ensure_ascii=False)
+            return _serializar_resposta({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, serializar_resposta)
 
         pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id, dimensao=dimensao)
         diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dimensao)
@@ -269,7 +279,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
             else:
                 pacotes.append({"tick": 0, "diffs": diffs_extra, "sintetico": True})
 
-        return json.dumps({
+        return _serializar_resposta({
             "status": "ok",
             "mensagem": "Pacotes coletados",
             "client_id": client_id,
@@ -281,7 +291,7 @@ def processar_ativador_json(requisicao_json: str) -> str:
                 "chunks_simulados": len(chunks_servidor_simulados),
                 "tempo_mundo": CEREBRO.obter_snapshot_tempo(),
             },
-        }, ensure_ascii=False)
+        }, serializar_resposta)
 
 
 def desconectar_client(client_id: str) -> None:

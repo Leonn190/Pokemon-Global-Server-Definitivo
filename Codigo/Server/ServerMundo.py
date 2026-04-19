@@ -16,6 +16,16 @@ def _erro_padrao(mensagem):
     return {"status": "erro", "mensagem": mensagem}
 
 
+def _processar_rota_local(processador, pacote, mensagem_erro):
+    resposta = processador(pacote)
+    if isinstance(resposta, dict):
+        return resposta
+    try:
+        return json.loads(resposta)
+    except json.JSONDecodeError:
+        return _erro_padrao(mensagem_erro)
+
+
 def definir_bombeamento_local_manual(ativo: bool) -> None:
     TIQUE_SERVIDOR.usar_bombeamento_manual(bool(ativo))
 
@@ -30,11 +40,7 @@ def consultar_estado_mundo(ip, client_id, posicao_camera, raio_chunks=4):
             # Compatibilidade: servidor define os raios/chunks por regra.
         },
     }
-    resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta do Ativador")
+    return _processar_rota_local(processar_ativador_json, pacote, "Falha ao interpretar resposta do Ativador")
 
 
 def consultar_chunks_mundo(ip, client_id, posicao_camera, raio_chunks=4):
@@ -49,11 +55,7 @@ def consultar_chunks_mundo(ip, client_id, posicao_camera, raio_chunks=4):
             # Compatibilidade: servidor define os raios/chunks por regra.
         },
     }
-    resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta de chunks")
+    return _processar_rota_local(processar_ativador_json, pacote, "Falha ao interpretar resposta de chunks")
 
 
 def receber_diffs_mundo(ip, client_id, posicao_camera, categoria="rapida", raio_chunks=4):
@@ -76,11 +78,7 @@ def enviar_diffs_mundo(ip, client_id, diffs):
             "diffs": diffs,
         },
     }
-    resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta do Atualizador")
+    return _processar_rota_local(processar_atualizador_json, pacote, "Falha ao interpretar resposta do Atualizador")
 
 
 def enviar_diffs_mundo_categoria(ip, client_id, categoria, diffs):
@@ -207,11 +205,7 @@ def solicitar_contexto_batalha_mundo(ip, client_id, pokemon_id, centro):
             ],
         },
     }
-    resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar contexto de batalha")
+    return _processar_rota_local(processar_atualizador_json, pacote, "Falha ao interpretar contexto de batalha")
 
 
 def iniciar_interacao_npc_mundo(ip, client_id, npc_id):
@@ -239,14 +233,10 @@ def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, diffs=None,
             "ultimo_tick_recebido": int(ultimo_tick_recebido or 0),
             "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
             # Compatibilidade: servidor define os raios/chunks por regra.
-            "diffs": list(diffs or []),
+            "diffs": diffs if isinstance(diffs, list) else list(diffs or []),
         },
     }
-    resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta de pacote cliente")
+    return _processar_rota_local(processar_atualizador_json, pacote, "Falha ao interpretar resposta de pacote cliente")
 
 
 def receber_pacotes_tick_mundo(ip, client_id, ultimo_tick_recebido, posicao_camera=(0.0,0.0), raio_chunks=4):
@@ -261,8 +251,4 @@ def receber_pacotes_tick_mundo(ip, client_id, ultimo_tick_recebido, posicao_came
             # Compatibilidade: servidor define os raios/chunks por regra.
         },
     }
-    resposta_json = processar_ativador_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta de pacotes por tick")
+    return _processar_rota_local(processar_ativador_json, pacote, "Falha ao interpretar resposta de pacotes por tick")

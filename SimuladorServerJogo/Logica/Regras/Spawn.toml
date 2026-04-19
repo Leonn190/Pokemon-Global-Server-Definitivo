@@ -1,6 +1,6 @@
 [pokemons]
-chance_por_tick = 0.0
-limite_200_ticks = 3
+chance_por_tick = 0.025
+limite_200_ticks = 2
 tentativas = 5
 limite_chunk = 2
 limite_total = 100
@@ -8,7 +8,7 @@ limite_total_por_chunk_existente = 1.0
 chance_despawn_simulado_por_tick = 0.003
 
 [baus]
-chance_por_tick = 0.0
+chance_por_tick = 0.01
 limite_200_ticks = 1
 tentativas = 5
 limite_chunk = 1

@@ -227,15 +227,17 @@ def _agendar_snapshot_persistencia(snapshot: dict | None) -> None:
 def _snapshot_estado_mundo_para_persistencia_locked() -> dict | None:
     if not isinstance(_ESTADO_MUNDO, dict) or not _ESTADO_MUNDO.get("meta"):
         return None
+    meta_mundo = _ESTADO_MUNDO.get("meta", {})
+    spawn_mundo = _ESTADO_MUNDO.get("spawn", [0.0, 0.0])
     snapshot = {
-        "meta": copy.deepcopy(_ESTADO_MUNDO.get("meta", {})),
+        "meta": dict(meta_mundo) if isinstance(meta_mundo, dict) else {},
         "grid": _ESTADO_MUNDO.get("grid", []),
         "grid_biomas": _ESTADO_MUNDO.get("grid_biomas", []),
         "grid_estruturas_naturais": _ESTADO_MUNDO.get("grid_estruturas_naturais", []),
         "estruturas_naturais_tocadas": BANCO_DADOS.exportar_estruturas_tocadas(),
         "players": copy.deepcopy(_ESTADO.get("personagens", {})),
         "npcs_vendedores": copy.deepcopy(_ESTADO_MUNDO.get("npcs_vendedores", {})),
-        "spawn": copy.deepcopy(_ESTADO_MUNDO.get("spawn", [0.0, 0.0])),
+        "spawn": list(spawn_mundo) if isinstance(spawn_mundo, (list, tuple)) else [0.0, 0.0],
         "tempo_mundo": _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo")),
     }
     return snapshot

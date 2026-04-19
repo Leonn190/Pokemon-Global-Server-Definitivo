@@ -32,14 +32,20 @@ def _normalizar_posicao_loop(posicao):
     return [x, y]
 
 
-def _ok(mensagem: str, **extras) -> str:
+def _serializar_resposta(payload: Dict[str, object], serializar: bool):
+    if not serializar:
+        return payload
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+
+def _ok(mensagem: str, serializar: bool = True, **extras):
     payload = {"status": "ok", "mensagem": mensagem}
     payload.update(extras)
-    return json.dumps(payload, ensure_ascii=False)
+    return _serializar_resposta(payload, serializar)
 
 
-def _erro(mensagem: str) -> str:
-    return json.dumps({"status": "erro", "mensagem": mensagem}, ensure_ascii=False)
+def _erro(mensagem: str, serializar: bool = True):
+    return _serializar_resposta({"status": "erro", "mensagem": mensagem}, serializar)
 
 
 def _escopo_objeto(obj) -> Dict[str, object]:
@@ -304,16 +310,20 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     return True
 
 
-def processar_atualizador_json(requisicao_json: str) -> str:
-    try:
-        pacote = json.loads(requisicao_json)
-    except json.JSONDecodeError:
-        return _erro("JSON inválido")
+def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
+    serializar_resposta = not isinstance(requisicao_json, dict)
+    if serializar_resposta:
+        try:
+            pacote = json.loads(requisicao_json)
+        except json.JSONDecodeError:
+            return _erro("JSON inválido", serializar=serializar_resposta)
+    else:
+        pacote = requisicao_json
 
     dados = pacote.get("dados", {})
     client_id = str(dados.get("client_id", "")).strip()
     if not client_id:
-        return _erro("client_id obrigatório")
+        return _erro("client_id obrigatório", serializar=serializar_resposta)
 
     ultimo_tick_recebido = int(dados.get("ultimo_tick_recebido", 0) or 0)
     posicao_camera = _normalizar_posicao(dados.get("posicao_camera", [0.0, 0.0]))
@@ -398,14 +408,14 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                     estadio_estado = getattr(estadio_obj, "estado_extra", {}) if isinstance(getattr(estadio_obj, "estado_extra", {}), dict) else {}
                     contexto = EstadioInterno.contexto_batalha(estadio_estado)
                     contexto["centro"] = [float(contexto.get("largura", 60) * 0.5), float(contexto.get("altura", 40) * 0.5)]
-                return _ok("Contexto de batalha pronto", client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
+                return _ok("Contexto de batalha pronto", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
             if categoria in {"batalha_iniciar", "combate_iniciar"}:
                 resposta = GERENCIADOR_BATALHAS.iniciar_batalha(
                     client_id=client_id,
                     contexto_batalha=payload.get("contexto_batalha") if isinstance(payload.get("contexto_batalha"), dict) else {},
                 )
                 resposta["client_id"] = client_id
-                return json.dumps(resposta, ensure_ascii=False)
+                return _serializar_resposta(resposta, serializar_resposta)
             if categoria in {"batalha_jogada", "combate_jogada"}:
                 resposta = GERENCIADOR_BATALHAS.receber_jogadas(
                     client_id=client_id,
@@ -413,7 +423,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                     jogadas=payload.get("jogadas") if isinstance(payload.get("jogadas"), list) else [],
                 )
                 resposta["client_id"] = client_id
-                return json.dumps(resposta, ensure_ascii=False)
+                return _serializar_resposta(resposta, serializar_resposta)
             if categoria == "pokemon_derrotado_batalha":
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
                 if pokemon_id > 0:
@@ -428,9 +438,9 @@ def processar_atualizador_json(requisicao_json: str) -> str:
                             categoria="pokemon",
                         )
                         aplicados += 1
-                        return _ok("Pokemon derrotado removido", client_id=client_id, aplicados=aplicados, ignorados=ignorados)
+                        return _ok("Pokemon derrotado removido", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
                 ignorados += 1
-                return _erro("Pokemon derrotado nao encontrado")
+                return _erro("Pokemon derrotado nao encontrado", serializar=serializar_resposta)
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):
                     aplicados += 1
@@ -543,6 +553,7 @@ def processar_atualizador_json(requisicao_json: str) -> str:
 
     return _ok(
         "Pacote cliente processado",
+        serializar=serializar_resposta,
         client_id=client_id,
         aplicados=aplicados,
         ignorados=ignorados,

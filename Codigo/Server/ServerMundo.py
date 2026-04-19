@@ -223,3 +223,32 @@ def receber_pacotes_tick_mundo(ip, client_id, ultimo_tick_recebido, posicao_came
         },
     }
     return _processar_rota_local(processar_ativador_json, pacote, "Falha ao interpretar resposta de pacotes por tick")
+
+
+def coletar_mapa_mundo(ip, client_id, posicao_camera):
+    pacote = {
+        "ip": ip,
+        "acao": "ativador_mapa_bootstrap",
+        "dados": {
+            "client_id": client_id,
+            "modo": "mapa_bootstrap",
+            "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
+        },
+    }
+    return _processar_rota_local(processar_ativador_json, pacote, "Falha ao interpretar resposta de mapa bootstrap")
+
+
+def atualizar_mapa_mundo(ip, client_id, posicao_camera, conhecidos=None):
+    dados = {
+        "client_id": client_id,
+        "modo": "mapa_delta",
+        "posicao_camera": [float(posicao_camera[0]), float(posicao_camera[1])],
+    }
+    if isinstance(conhecidos, dict):
+        dados["conhecidos"] = conhecidos
+    pacote = {
+        "ip": ip,
+        "acao": "ativador_mapa_delta",
+        "dados": dados,
+    }
+    return _processar_rota_local(processar_ativador_json, pacote, "Falha ao interpretar resposta de mapa delta")

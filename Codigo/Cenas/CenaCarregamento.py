@@ -104,7 +104,8 @@ class CenaCarregamento:
 
         if JOGO.INFO.get("ServerSelecionado") and JOGO.INFO.get("PlayerDadosServer") is not None:
             self._tempo_espera_mundo += max(0.0, float(dt))
-            if self._tempo_espera_mundo >= 3.0:
+            pronto_preparo = bool(isinstance(JOGO.INFO.get("MundoPreparadoTransicao"), dict))
+            if self._tempo_espera_mundo >= 2.0 and pronto_preparo:
                 JOGO.CenaAlvo = "Mundo"
 
     def tela_atual_eh_complexa(self) -> bool:

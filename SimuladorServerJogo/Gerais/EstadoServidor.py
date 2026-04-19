@@ -366,7 +366,64 @@ def _normalizar_perfil(personagem: dict) -> dict:
         pos_dim_norm["Mundo"] = [float(dados.get("posicao", [0.0, 0.0])[0]), float(dados.get("posicao", [0.0, 0.0])[1])]
     dados["dimensao_atual"] = dimensao_atual
     dados["posicoes_por_dimensao"] = pos_dim_norm
+    dados["exploracao_chunks"] = _normalizar_exploracao_chunks(dados.get("exploracao_chunks"))
     return dados
+
+
+
+
+def _normalizar_exploracao_chunks(valor: dict | None) -> dict:
+    bruto = valor if isinstance(valor, dict) else {}
+    mundo = bruto.get("Mundo") if isinstance(bruto.get("Mundo"), dict) else {}
+    out_mundo: dict[str, list[int]] = {}
+    for sx, ys in mundo.items():
+        try:
+            x = int(sx)
+        except (TypeError, ValueError):
+            continue
+        conjunto: set[int] = set()
+        if isinstance(ys, (list, tuple, set)):
+            for y in ys:
+                try:
+                    conjunto.add(int(y))
+                except (TypeError, ValueError):
+                    continue
+        if conjunto:
+            out_mundo[str(x)] = sorted(conjunto)
+    return {"Mundo": out_mundo}
+
+
+def obter_exploracao_chunks(usuario: str) -> dict:
+    if not usuario:
+        return {"Mundo": {}}
+    with _LOCK:
+        personagem = _ESTADO.get("personagens", {}).get(usuario)
+        if not isinstance(personagem, dict):
+            return {"Mundo": {}}
+        return _normalizar_exploracao_chunks(personagem.get("exploracao_chunks"))
+
+
+def registrar_chunks_explorados(usuario: str, chunks: list[tuple[int, int]] | set[tuple[int, int]], dimensao: str = "Mundo") -> None:
+    if not usuario or str(dimensao or "Mundo") != "Mundo" or not chunks:
+        return
+    with _LOCK:
+        personagem = _ESTADO.get("personagens", {}).get(usuario)
+        if not isinstance(personagem, dict):
+            return
+        explor = _normalizar_exploracao_chunks(personagem.get("exploracao_chunks"))
+        mundo = explor.setdefault("Mundo", {})
+        alterou = False
+        for cx, cy in chunks:
+            sx = str(int(cx))
+            y = int(cy)
+            arr = set(mundo.get(sx, []))
+            if y not in arr:
+                arr.add(y)
+                mundo[sx] = sorted(arr)
+                alterou = True
+        if alterou:
+            personagem["exploracao_chunks"] = explor
+            _persistir_personagens()
 
 
 def _normalizar_inventario(payload: dict) -> dict:
@@ -435,6 +492,8 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         base["skins_liberadas"] = _normalizar_skins_liberadas(payload.get("skins_liberadas", []))
     if "habilidades_aprendidas" in payload:
         base["habilidades_aprendidas"] = list(payload.get("habilidades_aprendidas", []))
+    if "exploracao_chunks" in payload:
+        base["exploracao_chunks"] = _normalizar_exploracao_chunks(payload.get("exploracao_chunks"))
 
     stamina_max = float(base.get("stamina_max", 100.0))
     if "stamina_max" in payload:

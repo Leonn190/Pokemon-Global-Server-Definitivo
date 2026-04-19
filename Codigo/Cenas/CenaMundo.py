@@ -5,6 +5,8 @@ import pygame
 from Codigo.ModulosGerais.Camera import Camera
 from Codigo.ModulosMundo.ControladorMundo import ControladorMundo
 from Codigo.ModulosMundo.ElementosHudMundo import ElementosHudMundo
+from Codigo.ModulosMundo.ServicoMapaMundo import ServicoMapaMundo
+from Codigo.Telas.TelaMapa import TelaMapa
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
 from Codigo.ModulosGerais.ModuladorRegras import ModuladorRegras
@@ -19,6 +21,7 @@ from Codigo.Server.ServerMundo import (
     iniciar_interacao_npc_mundo,
     notificar_pokemon_derrotado_batalha_mundo,
     receber_pacotes_tick_mundo,
+    coletar_mapa_mundo,
 )
 from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.Inventario.SubtelaInventario import SubtelaInventario
@@ -43,9 +46,11 @@ class CenaMundo:
         posicao = dados.get("posicao") if isinstance(dados.get("posicao"), (list, tuple)) and len(dados.get("posicao")) == 2 else [0.0, 0.0]
         client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
         bootstrap = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=posicao, raio_chunks=4) if link else None
+        mapa_bootstrap = coletar_mapa_mundo(link, client_id, posicao) if link else None
         JOGO.INFO["MundoPreparadoTransicao"] = {
             "regras_mundo": dict(regras_mundo or {}),
             "bootstrap": bootstrap if isinstance(bootstrap, dict) else None,
+            "mapa_bootstrap": mapa_bootstrap if isinstance(mapa_bootstrap, dict) else None,
         }
 
     def _aplicar_sincronizacao_pos_batalha_pendente(self, jogo, link: str | None) -> None:
@@ -119,6 +124,8 @@ class CenaMundo:
         self.ElementosHud = ElementosHudMundo()
         self._desconectado = False
         self.TelaAtual = None
+        self.ServicoMapa = None
+        self.TelaMapa = TelaMapa()
         self.Terminal = None
         self._npc_interacao_id = 0
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
@@ -177,6 +184,9 @@ class CenaMundo:
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
             bootstrap = preparado.get("bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("bootstrap"), dict) else None
             self.ControladorMundo.conectar(link, client_id, bootstrap_inicial=bootstrap)
+            self.ServicoMapa = ServicoMapaMundo(JOGO, link, client_id)
+            mapa_bootstrap = preparado.get("mapa_bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("mapa_bootstrap"), dict) else None
+            self.ServicoMapa.preparar_bootstrap(mapa_bootstrap)
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
@@ -202,7 +212,7 @@ class CenaMundo:
             if opcoes_modal is not None:
                 player.Controle.InventarioAberto = False
 
-        if opcoes_modal is None and self.TelaAtual != "Config":
+        if opcoes_modal is None and self.TelaAtual not in ("Config", "Mapa"):
             for ev in EVENTOS:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     opcoes = SubtelaOpcoes()
@@ -218,7 +228,21 @@ class CenaMundo:
             elif not player.Controle.InventarioAberto and inventario_modal is not None:
                 ger.fechar(inventario_modal)
 
-        player_bloqueado = bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
+        if self.ServicoMapa is not None:
+            self.ServicoMapa.tick()
+
+        bloqueio_mapa = bloqueio_gameplay or (opcoes_modal is not None) or dialogo_ativo or inventario_modal is not None or self.TelaAtual == "Config" or ger.ativa
+        if self.TelaAtual is None and not bloqueio_mapa:
+            for ev in EVENTOS:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_m:
+                    estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {}) if player is not None else {}
+                    pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if (self.ServicoMapa is not None and player is not None) else tuple(getattr(player, "Posicao", (0.0, 0.0)))
+                    if self.ServicoMapa is not None:
+                        self.TelaMapa.abrir(JOGO, self.ServicoMapa, pos_player_mundo)
+                        self.TelaAtual = "Mapa"
+                    break
+
+        player_bloqueado = (self.TelaAtual == "Mapa") or bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
         if JOGO.CenaAlvo is None and (not player_bloqueado) and int(pygame.time.get_ticks()) >= int(self._imune_combate_ate_ms or 0):
@@ -313,7 +337,9 @@ class CenaMundo:
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         player = self.ControladorMundo.player_local
         if player is not None:
-            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
+            estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {})
+            pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if (self.ServicoMapa is not None and isinstance(estado_player, dict)) else tuple(getattr(player, "Posicao", (0.0, 0.0)))
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)))
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
             estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
             dica_estadio = self.ControladorMundo.Objetos.mensagem_interacao_estadio(
@@ -327,11 +353,28 @@ class CenaMundo:
                 self._texto_estadio.draw(surface)
 
     def tela_atual_eh_complexa(self) -> bool:
-        return self.TelaAtual != "Config"
+        return self.TelaAtual not in ("Config", "Mapa")
 
     def render_tela(self, surface, JOGO, EVENTOS, dt):
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt, tela_destino=surface)
+            return
+        if self.TelaAtual == "Mapa" and self.ServicoMapa is not None:
+            player = self.ControladorMundo.player_local
+            estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {}) if player is not None else {}
+            pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if player is not None else (0.0, 0.0)
+            self.TelaMapa.desenhar(
+                surface,
+                JOGO,
+                EVENTOS,
+                dt,
+                self.ServicoMapa,
+                estado_player if isinstance(estado_player, dict) else {},
+                pos_player_mundo,
+                angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0) if player is not None else 0.0,
+            )
+            if not self.TelaMapa.ativo:
+                self.TelaAtual = None
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.atualizar_cena(JOGO, EVENTOS, dt)
@@ -477,4 +520,7 @@ class CenaMundo:
             link = server.get("ip")
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
             self.ControladorMundo.parar(link, client_id)
+        if self.ServicoMapa is not None:
+            self.ServicoMapa.encerrar()
+            self.ServicoMapa = None
         self._desconectado = True

@@ -125,6 +125,50 @@ class SimuladorFisica:
             )
         return objetos
 
+    def limites_fluxo(self) -> tuple[float, float, float, float]:
+        largura = max(
+            1.0,
+            self._fnum(
+                self._sistema.Contexto.get("arena_largura"),
+                self._fnum(self._sistema.Contexto.get("largura"), 80.0),
+            ),
+        )
+        altura = max(
+            1.0,
+            self._fnum(
+                self._sistema.Contexto.get("arena_altura"),
+                self._fnum(self._sistema.Contexto.get("altura"), 40.0),
+            ),
+        )
+        return (0.0, 0.0, largura, altura)
+
+    def paredes_fluxo(self) -> List[Dict[str, object]]:
+        x0, y0, x1, y1 = self.limites_fluxo()
+        return [
+            {"id": "arena:topo", "a": (x0, y0), "b": (x1, y0)},
+            {"id": "arena:direita", "a": (x1, y0), "b": (x1, y1)},
+            {"id": "arena:baixo", "a": (x1, y1), "b": (x0, y1)},
+            {"id": "arena:esquerda", "a": (x0, y1), "b": (x0, y0)},
+        ]
+
+    def pokemons_para_fluxo(self, *, ignorar_ids: Iterable[str] | None = None) -> List[Dict[str, object]]:
+        ignorados = {str(valor) for valor in list(ignorar_ids or []) if str(valor)}
+        saida: List[Dict[str, object]] = []
+        for pokemon in self._sistema.listar_pokemons():
+            if pokemon is None or pokemon.ForaDeCombate:
+                continue
+            pokemon_id = str(getattr(pokemon, "Uid", ""))
+            if pokemon_id in ignorados:
+                continue
+            saida.append(
+                {
+                    "id": pokemon_id,
+                    "pos": (float(pokemon.Posicao[0]), float(pokemon.Posicao[1])),
+                    "raio_tiles": float(getattr(pokemon, "RaioColisao", 0.0) or 0.0),
+                }
+            )
+        return saida
+
     def alinhar_objeto_ao_campo(self, objeto: ObjetoBatalha) -> Vec2:
         posicao, normal = self.limitar_ao_campo(objeto.Posicao, raio=objeto.Raio)
         objeto.Posicao = posicao

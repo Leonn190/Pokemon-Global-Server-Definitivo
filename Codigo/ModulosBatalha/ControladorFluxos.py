@@ -74,6 +74,48 @@ class ControladorFluxos:
             return self._camera.tela_para_batalha_tiles(posicao_tela)
         return self._camera.tela_para_mundo_tiles(posicao_tela)
 
+    def _paredes_fluxo_tela(self) -> List[Dict[str, tuple[float, float]]]:
+        contexto = getattr(self._controlador, "Contexto", {}) if self._controlador is not None else {}
+        largura = max(1.0, self._numero(contexto.get("arena_largura"), 40.0))
+        altura = max(1.0, self._numero(contexto.get("arena_altura"), 20.0))
+        cantos = [
+            (0.0, 0.0),
+            (largura, 0.0),
+            (largura, altura),
+            (0.0, altura),
+        ]
+        segmentos = []
+        for indice in range(len(cantos)):
+            a = cantos[indice]
+            b = cantos[(indice + 1) % len(cantos)]
+            segmentos.append({"a": self._batalha_para_tela_px(a), "b": self._batalha_para_tela_px(b)})
+        return segmentos
+
+    def _pokemons_fluxo_tela(self) -> List[Dict[str, object]]:
+        saida: List[Dict[str, object]] = []
+        for pokemon in self._todos_pokemons():
+            if pokemon is None or getattr(pokemon, "ForaDeCombate", False):
+                continue
+            diametro = self._numero(getattr(pokemon, "DiametroTiles", 0.0), 0.0)
+            raio_tiles = max(0.1, diametro * 0.5)
+            saida.append(
+                {
+                    "id": self._id_combatente(pokemon),
+                    "pos": self._batalha_para_tela_px(getattr(pokemon, "Posicao", (0.0, 0.0))),
+                    "raio_tiles": raio_tiles,
+                }
+            )
+        return saida
+
+    def _raio_executor_tiles(self, jogada: Dict[str, object]) -> float | None:
+        executor = jogada.get("executor") if isinstance(jogada, dict) else None
+        if executor is None:
+            return None
+        diametro = self._numero(getattr(executor, "DiametroTiles", 0.0), 0.0)
+        if diametro <= 0.0:
+            return None
+        return max(0.1, diametro * 0.5)
+
     @staticmethod
     def _nome_ataque(ataque: Optional[dict]) -> str:
         if not isinstance(ataque, dict):
@@ -642,6 +684,7 @@ class ControladorFluxos:
             return
         inicio = self._batalha_para_tela_px(origem)
         fim = self._batalha_para_tela_px(destino)
+        executor_id = self._id_combatente(jogada.get("executor"))
         self._leitor_fluxos.desenhar(
             tela,
             jogada.get("ataque"),
@@ -650,6 +693,10 @@ class ControladorFluxos:
             alpha=180 if (selecionada or not preparada) else 92,
             animado=(selecionada or not preparada),
             tile_px=max(16.0, float(getattr(self._camera, "TilePx", 40) or 40)),
+            source_radius_tiles=self._raio_executor_tiles(jogada),
+            paredes=self._paredes_fluxo_tela(),
+            pokemons=self._pokemons_fluxo_tela(),
+            ignorar_pokemon_ids=[executor_id] if executor_id else None,
         )
 
     def _desenhar_construtos(self, tela: pygame.Surface, construtos: Dict[str, tuple[float, float]], ativo: Optional[Dict[str, object]]) -> None:

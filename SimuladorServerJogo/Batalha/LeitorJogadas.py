@@ -1108,6 +1108,37 @@ class LeitorJogadas:
         origem = tuple(avancado.get("origem") or objeto.PosicaoAnterior)
         destino = tuple(avancado.get("destino") or objeto.Posicao)
         elapsed = max(1, int(tick - objeto.InicioTick + 1))
+        paredes_fluxo = self._fisica.paredes_fluxo()
+        pokemons_fluxo = self._fisica.pokemons_para_fluxo(ignorar_ids=[executor.Uid])
+        trace_fluxo = None
+        if objeto.Subtipo == "tiro":
+            source_radius_tiles = max(0.1, float(getattr(executor, "RaioColisao", 0.75) or 0.75))
+            alcance_tick = math.hypot(float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1]))
+            trace_fluxo = self._leitor_fluxos.rastrear_fluxo(
+                objeto.Fluxo,
+                origem,
+                destino,
+                tile_px=1.0,
+                source_radius_tiles=source_radius_tiles,
+                paredes=paredes_fluxo,
+                pokemons=pokemons_fluxo,
+                override_range_tiles=alcance_tick,
+                override_ricochets=objeto.RicochetesRestantes,
+            )
+            segmentos = list(trace_fluxo.get("segments") or [])
+            if segmentos:
+                ultimo_fim = segmentos[-1][1]
+                destino = (float(ultimo_fim[0]), float(ultimo_fim[1]))
+                objeto.Posicao = destino
+            direcao_final = trace_fluxo.get("direcao_final")
+            if direcao_final is not None:
+                objeto.Direcao = (float(direcao_final.x), float(direcao_final.y))
+        eventos_trace_fluxo = list(trace_fluxo.get("eventos") or []) if isinstance(trace_fluxo, dict) else []
+        pokemon_colisoes_fluxo = {
+            str(evento.get("pokemon_id") or "")
+            for evento in eventos_trace_fluxo
+            if str(evento.get("tipo") or "") == "pokemon"
+        }
         detalhe_objeto = {
             "objeto": objeto.serializar(),
             "origem": [round(origem[0], 4), round(origem[1], 4)],
@@ -1127,7 +1158,16 @@ class LeitorJogadas:
             if alvo.Uid in objeto.AlvosAtingidos:
                 continue
 
-            atingiu = self._objeto_atinge_alvo_por_fluxo(objeto, executor, alvo, origem, destino, elapsed)
+            atingiu = self._objeto_atinge_alvo_por_fluxo(
+                objeto,
+                executor,
+                alvo,
+                origem,
+                destino,
+                elapsed,
+                paredes=paredes_fluxo,
+                pokemons=pokemons_fluxo,
+            )
             if atingiu is None:
                 atingiu = False
                 if objeto.Subtipo == "tiro":
@@ -1139,6 +1179,8 @@ class LeitorJogadas:
                 elif objeto.Subtipo == "zona":
                     raio_atual = min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
                     atingiu = self._fisica.circulos_colidem(objeto.Posicao, raio_atual, alvo.Posicao, alvo.RaioColisao)
+            if not atingiu and str(alvo.Uid) in pokemon_colisoes_fluxo:
+                atingiu = True
 
             if not atingiu:
                 continue
@@ -1146,17 +1188,43 @@ class LeitorJogadas:
             acertou = self._executar_impacto(sistema, executor, alvo, jogada, spec, objeto.Fluxo, log, tick)
             if not acertou:
                 continue
-            if objeto.Subtipo == "tiro" and not objeto.AtravessaPokemons:
-                if objeto.RicochetesRestantes > 0 and bool(objeto.Fluxo.get("ricocheteia_pokemons", False)):
-                    normal = self._fisica._normalizar(self._fisica._sub(objeto.Posicao, alvo.Posicao))
-                    objeto.Direcao = self._fisica.refletir_vetor(objeto.Direcao, normal)
-                    objeto.RicochetesRestantes -= 1
-                    self._log_evento(log, tick, "ricochete_pokemon", objeto_id=objeto.Id, alvo_id=alvo.Uid, restante=int(objeto.RicochetesRestantes))
-                else:
-                    objeto.Ativo = False
-                break
 
         if objeto.Subtipo == "tiro":
+            ricochetes_log_restante = int(objeto.RicochetesRestantes)
+            for evento_fluxo in eventos_trace_fluxo:
+                normal = evento_fluxo.get("normal")
+                normal_lista = [
+                    round(float(getattr(normal, "x", 0.0)), 4),
+                    round(float(getattr(normal, "y", 0.0)), 4),
+                ]
+                if not bool(evento_fluxo.get("ricochete")):
+                    if str(evento_fluxo.get("tipo") or "") == "pokemon" and not objeto.AtravessaPokemons:
+                        objeto.Ativo = False
+                    elif str(evento_fluxo.get("tipo") or "") == "wall" and not objeto.AtravessaObjetos:
+                        objeto.Ativo = False
+                    continue
+                ricochetes_log_restante = max(0, ricochetes_log_restante - 1)
+                if str(evento_fluxo.get("tipo") or "") == "pokemon":
+                    self._log_evento(
+                        log,
+                        tick,
+                        "ricochete_pokemon",
+                        objeto_id=objeto.Id,
+                        alvo_id=str(evento_fluxo.get("pokemon_id") or ""),
+                        normal=normal_lista,
+                        restante=ricochetes_log_restante,
+                    )
+                else:
+                    self._log_evento(
+                        log,
+                        tick,
+                        "ricochete_campo",
+                        objeto_id=objeto.Id,
+                        normal=normal_lista,
+                        restante=ricochetes_log_restante,
+                    )
+            if isinstance(trace_fluxo, dict):
+                objeto.RicochetesRestantes = int(trace_fluxo.get("ricochetes_restantes", objeto.RicochetesRestantes))
             for estatico in self._fisica.objetos_estaticos():
                 if not self._fisica.segmento_intersecta_circulo(origem, destino, tuple(estatico.get("posicao") or (0.0, 0.0)), float(estatico.get("raio") or 0.6) + objeto.Raio):
                     continue
@@ -1171,19 +1239,21 @@ class LeitorJogadas:
                     objeto.Ativo = False
                 break
 
-            normal_campo = tuple(avancado.get("normal_campo") or (0.0, 0.0))
-            if abs(normal_campo[0]) > 1e-9 or abs(normal_campo[1]) > 1e-9:
-                if objeto.RicochetesRestantes > 0 and bool(objeto.Fluxo.get("ricocheteia_objetos", objeto.Fluxo.get("ricocheteia_paredes", False))):
-                    objeto.Direcao = self._fisica.refletir_vetor(objeto.Direcao, normal_campo)
-                    objeto.RicochetesRestantes -= 1
-                    self._log_evento(log, tick, "ricochete_campo", objeto_id=objeto.Id, normal=[round(normal_campo[0], 4), round(normal_campo[1], 4)], restante=int(objeto.RicochetesRestantes))
-                elif not objeto.AtravessaObjetos:
-                    objeto.Ativo = False
-
         if elapsed >= int(objeto.DuracaoTicks):
             objeto.Ativo = False
 
-    def _objeto_atinge_alvo_por_fluxo(self, objeto: ObjetoBatalha, executor, alvo, origem, destino, elapsed: int) -> bool | None:
+    def _objeto_atinge_alvo_por_fluxo(
+        self,
+        objeto: ObjetoBatalha,
+        executor,
+        alvo,
+        origem,
+        destino,
+        elapsed: int,
+        *,
+        paredes=None,
+        pokemons=None,
+    ) -> bool | None:
         fluxo = dict(objeto.Fluxo or {})
         if not fluxo:
             return None
@@ -1200,7 +1270,10 @@ class LeitorJogadas:
                 float(alvo.RaioColisao),
                 tile_px=1.0,
                 source_radius_tiles=source_radius_tiles,
+                paredes=paredes,
+                pokemons=pokemons,
                 override_range_tiles=alcance_tick,
+                override_ricochets=objeto.RicochetesRestantes,
             )
 
         if subtipo == "area":
@@ -1218,7 +1291,10 @@ class LeitorJogadas:
                 float(alvo.RaioColisao),
                 tile_px=1.0,
                 source_radius_tiles=source_radius_tiles,
+                paredes=paredes,
+                pokemons=pokemons,
                 override_range_tiles=alcance_atual,
+                override_ricochets=objeto.RicochetesRestantes,
             )
 
         if subtipo == "zona":
@@ -1236,8 +1312,11 @@ class LeitorJogadas:
                 float(alvo.RaioColisao),
                 tile_px=1.0,
                 source_radius_tiles=source_radius_tiles,
+                paredes=paredes,
+                pokemons=pokemons,
                 override_range_tiles=raio_atual,
                 override_circle_radius_tiles=raio_atual,
+                override_ricochets=objeto.RicochetesRestantes,
             )
 
         return None

@@ -86,6 +86,7 @@ class CenaCombate:
             tecla_abrir=pygame.K_t,
         )
         self.Terminal.iniciar()
+        self._eventos_ui_atual = []
 
     def _meta_terminal_batalha(self, jogo) -> dict:
         contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
@@ -124,11 +125,12 @@ class CenaCombate:
             if subtela_final is not None:
                 JOGO.GerenciadorSubtelas.abrir(subtela_final)
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
+        eventos_ui = list(EVENTOS or [])
         if self.Terminal is not None:
-            EVENTOS = self.Terminal.processar_eventos(EVENTOS)
+            eventos_ui = self.Terminal.processar_eventos(eventos_ui)
         opcoes_modal = JOGO.GerenciadorSubtelas.obter_por_tipo(SubtelaOpcoes)
         if opcoes_modal is None and self.TelaAtual != "Config":
-            for ev in EVENTOS:
+            for ev in eventos_ui:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     opcoes_modal = SubtelaOpcoes()
                     opcoes_modal.toggle(JOGO)
@@ -137,9 +139,10 @@ class CenaCombate:
         terminal_digitando = bool(self.Terminal is not None and self.Terminal.esta_digitando)
         bloqueado = opcoes_modal is not None or terminal_digitando
         if not bloqueado:
-            eventos_camera = self.ElementosHudBatalha.filtrar_eventos_camera(JOGO.TELA, EVENTOS, dt)
+            eventos_camera = self.ElementosHudBatalha.filtrar_eventos_camera(JOGO.TELA, eventos_ui, dt)
             self.Camera.processar_eventos(eventos_camera)
-        eventos_batalha = [] if terminal_digitando else EVENTOS
+        eventos_batalha = [] if terminal_digitando else eventos_ui
+        self._eventos_ui_atual = list(eventos_ui)
         self.Camera.atualizar(dt)
         self.ControladorBatalha.atualizar(eventos_batalha, dt)
 
@@ -159,9 +162,10 @@ class CenaCombate:
         _ = (surface, JOGO, EVENTOS, dt)
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
-        self.ElementosHudBatalha.desenhar(surface, EVENTOS, dt)
+        eventos_ui = list(getattr(self, "_eventos_ui_atual", EVENTOS) or [])
+        self.ElementosHudBatalha.desenhar(surface, eventos_ui, dt)
         if self.Terminal is not None:
-            self.Terminal.desenhar(surface, EVENTOS, dt)
+            self.Terminal.desenhar(surface, eventos_ui, dt)
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.atualizar_cena(JOGO, EVENTOS, dt)

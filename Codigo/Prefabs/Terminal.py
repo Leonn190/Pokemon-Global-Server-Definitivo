@@ -10,7 +10,7 @@ from Codigo.Prefabs.Texto import Texto
 
 
 class Terminal:
-    def __init__(self, rect, callback_enviar=None, callback_buscar=None, autor_local="anon"):
+    def __init__(self, rect, callback_enviar=None, callback_buscar=None, autor_local="anon", tecla_abrir=pygame.K_t):
         self.rect = pygame.Rect(rect)
         self.caixa = CaixaTexto(
             pygame.Rect(self.rect.x + 8, self.rect.bottom - 34, self.rect.w - 16, 26),
@@ -22,6 +22,7 @@ class Terminal:
         self.callback_enviar = callback_enviar
         self.callback_buscar = callback_buscar
         self.autor_local = str(autor_local or "anon")
+        self.tecla_abrir = int(tecla_abrir)
         self.digitando = False
         self._mensagens = []
         self._ultimo_id = 0
@@ -39,6 +40,7 @@ class Terminal:
         self._historico_sujo = True
         self._historico_comandos = []
         self._historico_indice = None
+        self._ignorar_textinput_abertura = ""
 
     @property
     def esta_digitando(self):
@@ -86,17 +88,26 @@ class Terminal:
             self._scroll_linhas = 0
             self._historico_sujo = True
 
+    def _abrir_digitacao(self, texto_bloqueado: str = ""):
+        self.digitando = True
+        self.caixa.set_ativo(True)
+        self.caixa.selecionada = True
+        self._ignorar_textinput_abertura = str(texto_bloqueado or "")
+
     def processar_eventos(self, eventos, bloquear_atalho_enter=False):
         eventos_restantes = []
         for evento in eventos:
+            if evento.type == pygame.KEYDOWN and evento.key == self.tecla_abrir and not self.digitando:
+                texto_tecla = pygame.key.name(int(self.tecla_abrir or 0))
+                self._abrir_digitacao(texto_bloqueado=texto_tecla)
+                continue
+
             if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                if bloquear_atalho_enter and not self.digitando:
-                    eventos_restantes.append(evento)
-                    continue
                 if not self.digitando:
-                    self.digitando = True
-                    self.caixa.set_ativo(True)
-                    self.caixa.selecionada = True
+                    if bloquear_atalho_enter:
+                        eventos_restantes.append(evento)
+                    else:
+                        self._abrir_digitacao()
                     continue
                 self._enviar_local()
                 continue
@@ -117,6 +128,13 @@ class Terminal:
                 self._navegar_historico_comandos(1)
                 continue
 
+            if self.digitando and evento.type == pygame.TEXTINPUT and self._ignorar_textinput_abertura:
+                texto_evt = str(getattr(evento, "text", "") or "")
+                if texto_evt.casefold() == self._ignorar_textinput_abertura.casefold():
+                    self._ignorar_textinput_abertura = ""
+                    continue
+                self._ignorar_textinput_abertura = ""
+
             if self.digitando and evento.type in (pygame.KEYDOWN, pygame.KEYUP, pygame.TEXTINPUT):
                 eventos_restantes.append(evento)
                 continue
@@ -126,6 +144,7 @@ class Terminal:
 
     def _fechar_digitacao(self):
         self.digitando = False
+        self._ignorar_textinput_abertura = ""
         self.caixa.set_ativo(False)
 
     def _enviar_local(self):
@@ -136,6 +155,7 @@ class Terminal:
         if (not self._historico_comandos) or self._historico_comandos[-1] != texto:
             self._historico_comandos.append(texto)
         self._historico_indice = None
+        self._ignorar_textinput_abertura = ""
         self.caixa.set_texto("")
         self._fechar_digitacao()
         if not self.callback_enviar:
@@ -172,6 +192,7 @@ class Terminal:
 
         if self._historico_indice >= len(self._historico_comandos):
             self._historico_indice = None
+            self._ignorar_textinput_abertura = ""
             self.caixa.set_texto("")
             return
 

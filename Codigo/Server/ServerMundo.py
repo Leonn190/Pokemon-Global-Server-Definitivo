@@ -9,7 +9,6 @@ from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.Rotas.Ativador import processar_ativador_json
 from SimuladorServerJogo.Gerais.Rotas.Atualizador import processar_atualizador_json
 from SimuladorServerJogo.Gerais.Rotas.Entrada import processar_entrada_json
-from SimuladorServerJogo.Gerais.Rotas.Terminal import processar_terminal_json
 
 
 def _erro_padrao(mensagem):
@@ -81,31 +80,6 @@ def enviar_diffs_mundo(ip, client_id, diffs):
 def enviar_diffs_mundo_categoria(ip, client_id, categoria, diffs):
     return enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido=0, diffs=diffs, tick_cliente=0)
 
-
-def enviar_mensagem_terminal(ip, autor, texto):
-    pacote = {
-        "ip": ip,
-        "acao": "terminal_enviar",
-        "dados": {"autor": str(autor or "anon"), "texto": str(texto or "")},
-    }
-    resposta_json = processar_terminal_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta de envio do terminal")
-
-
-def buscar_mensagens_terminal(ip, ultimo_id=0, limite=16):
-    pacote = {
-        "ip": ip,
-        "acao": "terminal_buscar",
-        "dados": {"ultimo_id": int(ultimo_id), "limite": int(limite)},
-    }
-    resposta_json = processar_terminal_json(json.dumps(pacote, ensure_ascii=False))
-    try:
-        return json.loads(resposta_json)
-    except json.JSONDecodeError:
-        return _erro_padrao("Falha ao interpretar resposta de busca do terminal")
 
 
 def desconectar_mundo(ip, client_id):

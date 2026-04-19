@@ -13,15 +13,14 @@ from Codigo.ModulosGerais.Auxiliares import bioma_visual_por_tile
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
-    buscar_mensagens_terminal,
     desconectar_mundo,
     enviar_diffs_mundo,
-    enviar_mensagem_terminal,
     finalizar_interacao_npc_mundo,
     iniciar_interacao_npc_mundo,
     notificar_pokemon_derrotado_batalha_mundo,
     receber_pacotes_tick_mundo,
 )
+from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.Inventario.SubtelaInventario import SubtelaInventario
 from Codigo.Prefabs.Terminal import Terminal
 from Codigo.Telas.SubtelaDialogo import SubtelaDialogo
@@ -168,8 +167,8 @@ class CenaMundo:
         usuario = str(JOGO.INFO.get("UsuarioLogado", "anon"))
         self.Terminal = Terminal(
             pygame.Rect(14, 14, 520, 220),
-            callback_enviar=lambda texto: enviar_mensagem_terminal(link, usuario, texto) if link else None,
-            callback_buscar=lambda ultimo_id: buscar_mensagens_terminal(link, ultimo_id=ultimo_id) if link else {"status": "ok", "mensagens": []},
+            callback_enviar=lambda texto: enviar_mensagem_terminal(link, usuario, texto, contexto="mundo") if link else None,
+            callback_buscar=lambda ultimo_id: buscar_mensagens_terminal(link, ultimo_id=ultimo_id, contexto="mundo") if link else {"status": "ok", "mensagens": []},
             autor_local=usuario,
         )
         self.Terminal.iniciar()

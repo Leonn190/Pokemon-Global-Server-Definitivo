@@ -74,6 +74,8 @@ class TelaMapa:
                 self.fechar()
                 return
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_m:
+                if (pygame.time.get_ticks() - int(self.aberto_ms or 0)) < 120:
+                    continue
                 self.fechar()
                 return
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:

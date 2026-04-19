@@ -133,7 +133,8 @@ class ControladorBatalha:
         idx = int(indice)
         if idx < 0 or idx >= len(self.PokemonsAliados):
             return self.PokemonSelecionado
-        self.PokemonSelecionado = self.PokemonsAliados[idx]
+        alvo = self.PokemonsAliados[idx]
+        self.PokemonSelecionado = None if self.PokemonSelecionado is alvo else alvo
         return self.PokemonSelecionado
 
     def limpar_selecao(self) -> None:

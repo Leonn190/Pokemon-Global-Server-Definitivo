@@ -163,7 +163,8 @@ class CenaCombate:
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         eventos_ui = list(getattr(self, "_eventos_ui_atual", EVENTOS) or [])
-        self.ElementosHudBatalha.desenhar(surface, eventos_ui, dt)
+        terminal_digitando = bool(self.Terminal is not None and self.Terminal.esta_digitando)
+        self.ElementosHudBatalha.desenhar(surface, [] if terminal_digitando else eventos_ui, dt)
         if self.Terminal is not None:
             self.Terminal.desenhar(surface, eventos_ui, dt)
 

@@ -10,6 +10,8 @@ from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
 class TelaMapa:
     def __init__(self):
         self.ativo = False
+        self._fechando = False
+        self._fechamento_ms = 0
         self.zoom = 1.0
         self.zoom_max = 10.0
         self.offset = [0.0, 0.0]
@@ -25,6 +27,8 @@ class TelaMapa:
 
     def abrir(self, jogo, servico_mapa, pos_player_mundo):
         self.ativo = True
+        self._fechando = False
+        self._fechamento_ms = 0
         self.aberto_ms = pygame.time.get_ticks()
         self._cache_chave = None
         self._cache_frame = None
@@ -37,7 +41,18 @@ class TelaMapa:
         self._clamp_offset(jogo, servico_mapa)
 
     def fechar(self):
+        if not self.ativo:
+            return
+        if self._fechando:
+            return
+        self._fechando = True
+        self._fechamento_ms = pygame.time.get_ticks()
+        self.dragging = False
+
+    def _concluir_fechamento(self):
         self.ativo = False
+        self._fechando = False
+        self._fechamento_ms = 0
         self.dragging = False
 
     def _garantir_botoes(self, jogo):
@@ -69,6 +84,8 @@ class TelaMapa:
 
     def processar_eventos(self, jogo, eventos, servico_mapa):
         self._garantir_botoes(jogo)
+        if self._fechando:
+            return
         for ev in eventos:
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 self.fechar()
@@ -208,3 +225,13 @@ class TelaMapa:
             fade = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
             fade.fill((0, 0, 0, alpha))
             tela.blit(fade, (0, 0))
+
+        if self._fechando:
+            tempo_saida = pygame.time.get_ticks() - int(self._fechamento_ms or 0)
+            if tempo_saida >= self.fade_ms:
+                self._concluir_fechamento()
+                return
+            alpha_saida = int(255 * (tempo_saida / self.fade_ms))
+            fade_saida = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
+            fade_saida.fill((0, 0, 0, max(0, min(255, alpha_saida))))
+            tela.blit(fade_saida, (0, 0))

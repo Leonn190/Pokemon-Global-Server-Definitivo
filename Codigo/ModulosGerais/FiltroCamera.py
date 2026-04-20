@@ -103,6 +103,15 @@ class FiltroCamera:
     def _lerp(a: float, b: float, t: float) -> float:
         return a + (b - a) * t
 
+    @staticmethod
+    def _int_valor(valor: object, padrao: int) -> int:
+        if valor in (None, ""):
+            return int(padrao)
+        try:
+            return int(valor)
+        except (TypeError, ValueError):
+            return int(padrao)
+
     @classmethod
     def _fator_noite(cls, hora: int, minuto: int) -> float:
         m = int(hora) * 60 + int(minuto)
@@ -357,9 +366,9 @@ class FiltroCamera:
         biome_atual: str = "normal",
     ) -> Dict[str, object]:
         self._tempo += max(0.0, float(dt))
-        hora = int(tempo_mundo.get("hora", 8) or 8)
-        minuto = int(tempo_mundo.get("minuto", 0) or 0)
-        chuva = int(max(0, min(100, int(tempo_mundo.get("chuva_intensidade", 0) or 0))))
+        hora = self._int_valor(tempo_mundo.get("hora", 8), 8) % 24
+        minuto = self._int_valor(tempo_mundo.get("minuto", 0), 0) % 60
+        chuva = max(0, min(100, self._int_valor(tempo_mundo.get("chuva_intensidade", 0), 0)))
 
         noite = self._fator_noite(hora, minuto)
         chuva_n = 0.0 if dentro_estadio else (chuva / 100.0)

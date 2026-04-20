@@ -485,7 +485,7 @@ class CenaMundo:
             "tiles": [],
             "estruturas": [],
             "combate_pokemon_tamanho_diametro_base_tiles": float(pokemons_regras.get("combate_tamanho_diametro_base_tiles", 1.0)),
-            "combate_pokemon_tamanho_incremento_por_escala": float(pokemons_regras.get("combate_tamanho_incremento_por_escala", 0.1)),
+            "combate_pokemon_tamanho_incremento_por_escala": float(pokemons_regras.get("combate_tamanho_incremento_por_escala", 0.15)),
         }
 
         if dimensao != "Mundo":

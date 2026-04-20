@@ -110,7 +110,7 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     # Compat legado (cliente antigo ainda pode ler esta chave).
     out["tamanho_incremento_por_tamanho"] = float(out["tamanho_incremento_por_escala"])
     out["combate_tamanho_diametro_base_tiles"] = _float_cfg(batalha_tamanho, "diametro_base_tiles", 1.0)
-    out["combate_tamanho_incremento_por_escala"] = _float_cfg(batalha_tamanho, "incremento_por_escala", 0.1)
+    out["combate_tamanho_incremento_por_escala"] = _float_cfg(batalha_tamanho, "incremento_por_escala", 0.15)
     out["animacao_intervalo_frame_ms"] = _int_cfg(anim, "intervalo_frame_ms", 85)
     out["captura_limite_frutas"] = _int_cfg(captura, "limite_frutas", 2)
     out["captura_cooldown_movimento_ticks"] = _int_cfg(captura, "cooldown_movimento_ticks", 36)
@@ -363,7 +363,7 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
             "tamanho_incremento_por_escala": float(_ler_valor(regras_pokemons, "tamanho_incremento_por_escala", 0.1)),
             "tamanho_incremento_por_tamanho": float(_ler_valor(regras_pokemons, "tamanho_incremento_por_tamanho", 0.1)),
             "combate_tamanho_diametro_base_tiles": float(_ler_valor(regras_pokemons, "combate_tamanho_diametro_base_tiles", 1.0)),
-            "combate_tamanho_incremento_por_escala": float(_ler_valor(regras_pokemons, "combate_tamanho_incremento_por_escala", 0.1)),
+            "combate_tamanho_incremento_por_escala": float(_ler_valor(regras_pokemons, "combate_tamanho_incremento_por_escala", 0.15)),
         },
         "projeteis": {
             "velocidade_pokebola_tiles_s": float(_ler_valor(regras_projeteis, "projetil_velocidade_pokebola_tiles_s", 7.0)),

@@ -206,6 +206,12 @@ class VisualizadorLog:
         "efeito": ((36, 24, 62, 238), (168, 114, 232), (202, 147, 255)),
         "fim_turno": ((36, 36, 46, 238), (154, 164, 184), (190, 198, 216)),
         "troca": ((36, 44, 54, 238), (154, 184, 212), (191, 220, 250)),
+        "colisao_projetil_pokemon": ((58, 34, 26, 238), (214, 138, 88), (246, 176, 120)),
+        "colisao_projetil_campo": ((38, 38, 54, 238), (152, 166, 194), (188, 204, 230)),
+        "colisao_projetil_objeto": ((44, 36, 58, 238), (168, 142, 208), (201, 174, 236)),
+        "ricochete_pokemon": ((48, 28, 24, 238), (224, 132, 112), (248, 170, 148)),
+        "ricochete_campo": ((36, 44, 60, 238), (130, 176, 220), (162, 204, 246)),
+        "ricochete_objeto": ((46, 34, 58, 238), (178, 142, 220), (212, 172, 244)),
     }
 
     def __init__(self, controlador=None) -> None:
@@ -514,6 +520,20 @@ class VisualizadorLog:
             saiu = str(evento.get("saiu_nome") or evento.get("saiu") or "alguém")
             entrou = str(evento.get("entrou_nome") or evento.get("entrou") or "alguém")
             segmentos = [self._segmento(executor), self._segmento(" trocou "), self._segmento(saiu), self._segmento(" por "), self._segmento(entrou), self._segmento(".")]
+        elif tipo == "colisao_projetil_pokemon":
+            alvo_real = alvo if alvo != "Combatente" else "o alvo"
+            segmentos = [self._segmento("Tiro"), self._segmento(" colidiu com "), self._segmento(alvo_real), self._segmento(".")]
+        elif tipo == "colisao_projetil_campo":
+            segmentos = [self._segmento("Tiro"), self._segmento(" colidiu com a parede da arena.")]
+        elif tipo == "colisao_projetil_objeto":
+            segmentos = [self._segmento("Tiro"), self._segmento(" colidiu com objeto.")]
+        elif tipo == "ricochete_pokemon":
+            alvo_real = alvo if alvo != "Combatente" else "o alvo"
+            segmentos = [self._segmento("Tiro"), self._segmento(" ricocheteou em "), self._segmento(alvo_real), self._segmento(".")]
+        elif tipo == "ricochete_campo":
+            segmentos = [self._segmento("Tiro"), self._segmento(" ricocheteou na parede da arena.")]
+        elif tipo == "ricochete_objeto":
+            segmentos = [self._segmento("Tiro"), self._segmento(" ricocheteou em objeto.")]
         elif tipo == "fim_turno":
             motivo = str(evento.get("motivo") or "efeito de rodada")
             segmentos = [self._segmento(pokemon), self._segmento(f" sofreu {motivo}: ")]

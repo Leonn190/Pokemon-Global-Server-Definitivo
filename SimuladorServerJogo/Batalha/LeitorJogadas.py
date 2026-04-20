@@ -4,7 +4,7 @@ import math
 import re
 from typing import Dict, List
 
-from Codigo.ModulosBatalha.LeitorFluxos import LeitorFluxos
+from SimuladorServerJogo.Batalha.RastreadorFluxos import RastreadorFluxos
 from SimuladorServerJogo.Logica.Executes.FuncoesAtaques import executar_ponto_ataque
 from SimuladorServerJogo.Batalha.FraquezasResistencias import modificador_tipo as modificador_tipo_csv
 from SimuladorServerJogo.Batalha.IA.BotBatalha import BotBatalha
@@ -25,7 +25,7 @@ class LeitorJogadas:
         self._fisica: SimuladorFisica | None = None
         self._sistema_aux: SistemaBatalha | None = None
         self._bot_ia = BotBatalha()
-        self._leitor_fluxos = LeitorFluxos()
+        self._leitor_fluxos = RastreadorFluxos()
         self._regras_batalha = carregar_regras_batalha()
 
     @staticmethod
@@ -373,7 +373,7 @@ class LeitorJogadas:
         if tipo == "reset_variacoes":
             return ("segmentacao", {"tipo": "reset_variacoes", "executor_id": executor_id, "alvo_id": alvo_id})
 
-        if tipo in {"ricochete", "ricochete_pokemon", "ricochete_campo"}:
+        if tipo in {"ricochete", "ricochete_pokemon", "ricochete_campo", "ricochete_objeto"}:
             publico = {
                 "tipo": tipo,
                 "objeto_id": str(evento.get("objeto_id") or ""),
@@ -381,6 +381,13 @@ class LeitorJogadas:
             }
             if "restante" in evento:
                 publico["ricochetes_restantes"] = int(evento.get("restante") or 0)
+            return ("segmentacao", {k: v for k, v in publico.items() if v not in (None, "")})
+        if tipo in {"colisao_projetil_pokemon", "colisao_projetil_campo", "colisao_projetil_objeto"}:
+            publico = {
+                "tipo": tipo,
+                "objeto_id": str(evento.get("objeto_id") or ""),
+                "alvo_id": alvo_id,
+            }
             return ("segmentacao", {k: v for k, v in publico.items() if v not in (None, "")})
 
         if tipo in {"recoil", "execucao"}:
@@ -1104,41 +1111,17 @@ class LeitorJogadas:
         )
 
     def _resolver_objeto(self, sistema: SistemaBatalha, objeto: ObjetoBatalha, executor, jogada: Dict[str, object], spec: Dict[str, object], log: Dict[str, object], tick: int) -> None:
-        avancado = self._fisica.avancar_objeto_um_tick(objeto)
+        detector = self._fisica.detector_colisoes()
+        if objeto.Subtipo == "tiro":
+            avancado = detector.simular_projetil_tick(objeto)
+        else:
+            avancado = self._fisica.avancar_objeto_um_tick(objeto)
         origem = tuple(avancado.get("origem") or objeto.PosicaoAnterior)
         destino = tuple(avancado.get("destino") or objeto.Posicao)
         elapsed = max(1, int(tick - objeto.InicioTick + 1))
         paredes_fluxo = self._fisica.paredes_fluxo()
         pokemons_fluxo = self._fisica.pokemons_para_fluxo(ignorar_ids=[executor.Uid])
-        trace_fluxo = None
-        if objeto.Subtipo == "tiro":
-            source_radius_tiles = max(0.1, float(getattr(executor, "RaioColisao", 0.75) or 0.75))
-            alcance_tick = math.hypot(float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1]))
-            trace_fluxo = self._leitor_fluxos.rastrear_fluxo(
-                objeto.Fluxo,
-                origem,
-                destino,
-                tile_px=1.0,
-                source_radius_tiles=source_radius_tiles,
-                paredes=paredes_fluxo,
-                pokemons=pokemons_fluxo,
-                override_range_tiles=alcance_tick,
-                override_ricochets=objeto.RicochetesRestantes,
-            )
-            segmentos = list(trace_fluxo.get("segments") or [])
-            if segmentos:
-                ultimo_fim = segmentos[-1][1]
-                destino = (float(ultimo_fim[0]), float(ultimo_fim[1]))
-                objeto.Posicao = destino
-            direcao_final = trace_fluxo.get("direcao_final")
-            if direcao_final is not None:
-                objeto.Direcao = (float(direcao_final.x), float(direcao_final.y))
-        eventos_trace_fluxo = list(trace_fluxo.get("eventos") or []) if isinstance(trace_fluxo, dict) else []
-        pokemon_colisoes_fluxo = {
-            str(evento.get("pokemon_id") or "")
-            for evento in eventos_trace_fluxo
-            if str(evento.get("tipo") or "") == "pokemon"
-        }
+        eventos_trace_fluxo = list(avancado.get("eventos") or []) if isinstance(avancado, dict) else []
         detalhe_objeto = {
             "objeto": objeto.serializar(),
             "origem": [round(origem[0], 4), round(origem[1], 4)],
@@ -1150,7 +1133,7 @@ class LeitorJogadas:
             detalhe_objeto["raio_atual"] = round(min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick)), 4)
         self._log_evento(log, tick, "objeto_movimento", executor_id=executor.Uid, detalhe=detalhe_objeto)
 
-        for alvo in self._alvos_padrao(sistema, executor, spec, jogada):
+        for alvo in ([] if objeto.Subtipo == "tiro" else self._alvos_padrao(sistema, executor, spec, jogada)):
             if alvo is None or alvo.ForaDeCombate:
                 continue
             if alvo.Uid == executor.Uid and not objeto.AtingeSiMesmo:
@@ -1179,9 +1162,6 @@ class LeitorJogadas:
                 elif objeto.Subtipo == "zona":
                     raio_atual = min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
                     atingiu = self._fisica.circulos_colidem(objeto.Posicao, raio_atual, alvo.Posicao, alvo.RaioColisao)
-            if not atingiu and str(alvo.Uid) in pokemon_colisoes_fluxo:
-                atingiu = True
-
             if not atingiu:
                 continue
             objeto.AlvosAtingidos.add(alvo.Uid)
@@ -1190,54 +1170,57 @@ class LeitorJogadas:
                 continue
 
         if objeto.Subtipo == "tiro":
-            ricochetes_log_restante = int(objeto.RicochetesRestantes)
             for evento_fluxo in eventos_trace_fluxo:
-                normal = evento_fluxo.get("normal")
-                normal_lista = [
-                    round(float(getattr(normal, "x", 0.0)), 4),
-                    round(float(getattr(normal, "y", 0.0)), 4),
-                ]
-                if not bool(evento_fluxo.get("ricochete")):
-                    if str(evento_fluxo.get("tipo") or "") == "pokemon" and not objeto.AtravessaPokemons:
-                        objeto.Ativo = False
-                    elif str(evento_fluxo.get("tipo") or "") == "wall" and not objeto.AtravessaObjetos:
-                        objeto.Ativo = False
-                    continue
-                ricochetes_log_restante = max(0, ricochetes_log_restante - 1)
-                if str(evento_fluxo.get("tipo") or "") == "pokemon":
+                normal = evento_fluxo.get("normal") if isinstance(evento_fluxo.get("normal"), (list, tuple)) else (0.0, 0.0)
+                normal_lista = [round(float(normal[0]), 4), round(float(normal[1]), 4)]
+                tipo_evento = str(evento_fluxo.get("tipo_evento") or "")
+                alvo_evento = evento_fluxo.get("alvo")
+                if tipo_evento == "colisao_projetil_pokemon" and alvo_evento is not None:
+                    alvo = sistema.obter_pokemon(getattr(alvo_evento, "Uid", ""))
+                    if alvo is not None and alvo.Uid not in objeto.AlvosAtingidos:
+                        objeto.AlvosAtingidos.add(alvo.Uid)
+                        self._executar_impacto(sistema, executor, alvo, jogada, spec, objeto.Fluxo, log, tick)
+                if tipo_evento == "ricochete_pokemon":
                     self._log_evento(
                         log,
                         tick,
                         "ricochete_pokemon",
                         objeto_id=objeto.Id,
-                        alvo_id=str(evento_fluxo.get("pokemon_id") or ""),
+                        alvo_id=str(evento_fluxo.get("alvo_id") or ""),
                         normal=normal_lista,
-                        restante=ricochetes_log_restante,
+                        restante=int(evento_fluxo.get("ricochetes_restantes") or objeto.RicochetesRestantes),
                     )
-                else:
+                elif tipo_evento == "ricochete_campo":
                     self._log_evento(
                         log,
                         tick,
                         "ricochete_campo",
                         objeto_id=objeto.Id,
                         normal=normal_lista,
-                        restante=ricochetes_log_restante,
+                        restante=int(evento_fluxo.get("ricochetes_restantes") or objeto.RicochetesRestantes),
                     )
-            if isinstance(trace_fluxo, dict):
-                objeto.RicochetesRestantes = int(trace_fluxo.get("ricochetes_restantes", objeto.RicochetesRestantes))
-            for estatico in self._fisica.objetos_estaticos():
-                if not self._fisica.segmento_intersecta_circulo(origem, destino, tuple(estatico.get("posicao") or (0.0, 0.0)), float(estatico.get("raio") or 0.6) + objeto.Raio):
-                    continue
-                if objeto.AtravessaObjetos:
-                    break
-                if objeto.RicochetesRestantes > 0 and bool(objeto.Fluxo.get("ricocheteia_objetos", objeto.Fluxo.get("ricocheteia_paredes", False))):
-                    normal = self._fisica._normalizar(self._fisica._sub(objeto.Posicao, tuple(estatico.get("posicao") or (0.0, 0.0))))
-                    objeto.Direcao = self._fisica.refletir_vetor(objeto.Direcao, normal)
-                    objeto.RicochetesRestantes -= 1
-                    self._log_evento(log, tick, "ricochete", objeto_id=objeto.Id, normal=[round(normal[0], 4), round(normal[1], 4)], restante=int(objeto.RicochetesRestantes))
-                else:
-                    objeto.Ativo = False
-                break
+                elif tipo_evento == "ricochete_objeto":
+                    self._log_evento(
+                        log,
+                        tick,
+                        "ricochete_objeto",
+                        objeto_id=objeto.Id,
+                        normal=normal_lista,
+                        restante=int(evento_fluxo.get("ricochetes_restantes") or objeto.RicochetesRestantes),
+                    )
+                elif tipo_evento in {"colisao_projetil_pokemon", "colisao_projetil_campo", "colisao_projetil_objeto"}:
+                    kwargs = {
+                        "objeto_id": objeto.Id,
+                        "normal": normal_lista,
+                        "ricochetes_restantes": int(objeto.RicochetesRestantes),
+                        "ponto": [round(float(evento_fluxo.get("ponto")[0]), 4), round(float(evento_fluxo.get("ponto")[1]), 4)]
+                        if isinstance(evento_fluxo.get("ponto"), (list, tuple))
+                        else None,
+                    }
+                    if tipo_evento == "colisao_projetil_pokemon":
+                        kwargs["alvo_id"] = str(evento_fluxo.get("alvo_id") or "")
+                        kwargs["alvo_nome"] = self._nome_combatente(sistema, kwargs["alvo_id"])
+                    self._log_evento(log, tick, tipo_evento, **{k: v for k, v in kwargs.items() if v is not None})
 
         if elapsed >= int(objeto.DuracaoTicks):
             objeto.Ativo = False

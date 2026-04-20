@@ -214,7 +214,8 @@ class TelaMapa:
 
         tx, ty = self._mundo_para_tela(pos_player_mundo)
         angulo = float(angulo_olhar if angulo_olhar is not None else (estado_player.get("angulo", 0.0) if isinstance(estado_player, dict) else 0.0))
-        desenhar_seta_player(tela, (tx, ty), angulo, tamanho=max(8, min(22, int(8 + (self.zoom * 2.0)))))
+        tamanho_seta = max(3, int(round(max(8, min(22, int(8 + (self.zoom * 2.0)))) * 0.4)))
+        desenhar_seta_player(tela, (tx, ty), angulo, tamanho=tamanho_seta)
 
         for botao in self._botoes.values():
             botao.render(tela, eventos, 0.0, JOGO=jogo)

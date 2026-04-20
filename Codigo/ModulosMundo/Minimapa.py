@@ -40,4 +40,4 @@ class MinimapaMundo:
         tela.blit(mini, area)
         pygame.draw.rect(tela, (8, 8, 8), area, 2)
 
-        desenhar_seta_player(tela, area.center, angulo, tamanho=10)
+        desenhar_seta_player(tela, area.center, angulo, tamanho=4)

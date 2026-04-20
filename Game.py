@@ -52,6 +52,7 @@ CONFIG = {
     "Cords Visiveis": False,
     "Ping Visivel": False,
     "MostrarHorario": False,
+    "MostrarMinimapa": False,
     "Shader": True,
     "Usuario": None
 }
@@ -66,6 +67,7 @@ CONFIG.setdefault("FPS Visivel", True)
 CONFIG.setdefault("Ping Visivel", False)
 CONFIG.setdefault("Cords Visiveis", False)
 CONFIG.setdefault("MostrarHorario", False)
+CONFIG.setdefault("MostrarMinimapa", False)
 CONFIG.setdefault("Shader", True)
 VerificaSonoridade(CONFIG)
 

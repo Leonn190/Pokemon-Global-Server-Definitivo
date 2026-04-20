@@ -5,6 +5,7 @@ import pygame
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Mensagem import MensagensGanhosMundo
 from Codigo.Prefabs.Texto import Texto
+from Codigo.ModulosMundo.Minimapa import MinimapaMundo
 
 
 class ElementosHudMundo:
@@ -12,6 +13,7 @@ class ElementosHudMundo:
         self.SlotsVisiveis = 8
         self.TextoQtd = Texto("", style={"size": 14, "align": "bottomright", "outline_thickness": 1})
         self._mensagens_ganhos = MensagensGanhosMundo()
+        self._minimapa = MinimapaMundo()
 
     def registrar_ganho(self, ganho: dict | None) -> None:
         if not isinstance(ganho, dict):
@@ -32,7 +34,7 @@ class ElementosHudMundo:
     def atualizar(self, dt: float) -> None:
         self._mensagens_ganhos.atualizar(dt)
 
-    def desenhar(self, tela, inventario, terminal=None, eventos=None, dt=0.0):
+    def desenhar(self, tela, inventario, terminal=None, eventos=None, dt=0.0, servico_mapa=None, pos_player_mundo=(0.0, 0.0), angulo_olhar=0.0, mostrar_minimapa=False):
         largura, altura = tela.get_size()
         slot = 50
         gap = 8
@@ -61,6 +63,9 @@ class ElementosHudMundo:
                 self.TextoQtd.set_text(str(qtd))
                 self.TextoQtd.set_pos((rect.right - 2, rect.bottom - 1))
                 self.TextoQtd.draw(tela)
+
+        if bool(mostrar_minimapa) and servico_mapa is not None and bool(getattr(servico_mapa, "pronto", False)):
+            self._minimapa.desenhar(tela, servico_mapa, pos_player_mundo, float(angulo_olhar or 0.0))
 
         if terminal is not None:
             terminal.desenhar(tela, eventos or [], dt)

@@ -6,6 +6,8 @@ from Codigo.Cenas.CenaLogin import CenaLogin
 import pygame
 import time
 import threading
+import shutil
+from pathlib import Path
 
 from Codigo.ModulosGerais.Sonoridades import SISTEMA_MUSICAS
 from Codigo.ModulosGerais.EfeitosTela import aplicar_claridade, Escurecer
@@ -237,11 +239,18 @@ class ControladorCenas:
             self.Cena.Finalizar(self)
         self.Discord.desconectar()
         self.PipelineGrafica.liberar()
+        try:
+            shutil.rmtree(Path("RAM") / "ImagensMapa", ignore_errors=True)
+        except Exception:
+            pass
         self._encerrado = True
 
     def DesenharInfosAdicionais(self, tela=None):
         destino = self.TELA if tela is None else tela
         largura_tela = destino.get_width()
+        deslocamento_direita = 0
+        if bool(self.CONFIG.get("MostrarMinimapa", False)) and str(getattr(self.Cena, "ID", "")) == "Mundo":
+            deslocamento_direita = 210
         itens_hud = []
 
         if self.CONFIG.get("FPS Visivel", False):
@@ -278,7 +287,7 @@ class ControladorCenas:
         y_base = 12
         espaco = 32
         for idx, texto in enumerate(itens_hud):
-            texto.set_pos((largura_tela - 16, y_base + idx * espaco))
+            texto.set_pos((largura_tela - 16 - deslocamento_direita, y_base + idx * espaco))
             texto.draw(destino)
 
 

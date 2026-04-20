@@ -5,6 +5,8 @@ import pygame
 from Codigo.ModulosGerais.Camera import Camera
 from Codigo.ModulosMundo.ControladorMundo import ControladorMundo
 from Codigo.ModulosMundo.ElementosHudMundo import ElementosHudMundo
+from Codigo.ModulosMundo.ServicoMapaMundo import ServicoMapaMundo
+from Codigo.Telas.TelaMapa import TelaMapa
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
 from Codigo.ModulosGerais.ModuladorRegras import ModuladorRegras
@@ -19,6 +21,7 @@ from Codigo.Server.ServerMundo import (
     iniciar_interacao_npc_mundo,
     notificar_pokemon_derrotado_batalha_mundo,
     receber_pacotes_tick_mundo,
+    coletar_mapa_mundo,
 )
 from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.Inventario.SubtelaInventario import SubtelaInventario
@@ -33,20 +36,68 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mund
 
 class CenaMundo:
     def PrepararTransicaoAssincrona(self, JOGO) -> None:
+        print("[CenaMundo] PrepararTransicaoAssincrona: inicio")
+        preparado = {
+            "regras_mundo": {},
+            "bootstrap": None,
+            "mapa_bootstrap": None,
+            "erros": [],
+        }
         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
         regras_mundo = {}
         if link:
-            regras_mundo = ModuladorRegras().coletar_regras(link) or {}
-            self._aplicar_sincronizacao_pos_batalha_pendente(JOGO, link)
+            try:
+                regras_mundo = ModuladorRegras().coletar_regras(link) or {}
+            except Exception as exc:
+                preparado["erros"].append(f"falha_regras:{exc}")
+            try:
+                self._aplicar_sincronizacao_pos_batalha_pendente(JOGO, link)
+            except Exception as exc:
+                preparado["erros"].append(f"falha_sincronizacao:{exc}")
         dados = JOGO.INFO.get("PlayerDadosServer") if isinstance(JOGO.INFO.get("PlayerDadosServer"), dict) else {}
         posicao = dados.get("posicao") if isinstance(dados.get("posicao"), (list, tuple)) and len(dados.get("posicao")) == 2 else [0.0, 0.0]
         client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
-        bootstrap = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=posicao, raio_chunks=4) if link else None
-        JOGO.INFO["MundoPreparadoTransicao"] = {
-            "regras_mundo": dict(regras_mundo or {}),
-            "bootstrap": bootstrap if isinstance(bootstrap, dict) else None,
-        }
+        bootstrap = None
+        if link:
+            try:
+                bootstrap = receber_pacotes_tick_mundo(link, client_id, 0, posicao_camera=posicao, raio_chunks=4)
+            except Exception as exc:
+                preparado["erros"].append(f"falha_bootstrap_mundo:{exc}")
+
+        mapa_bootstrap = None
+        if link:
+            try:
+                import threading
+                resultado = {"payload": None}
+
+                def _worker_bootstrap_mapa():
+                    try:
+                        resultado["payload"] = coletar_mapa_mundo(link, client_id, posicao)
+                    except Exception as exc:
+                        resultado["payload"] = {"status": "erro", "mensagem": str(exc)}
+
+                t = threading.Thread(target=_worker_bootstrap_mapa, daemon=True)
+                t.start()
+                t.join(timeout=2.5)
+                if t.is_alive():
+                    mapa_bootstrap = {"status": "erro", "mensagem": "timeout_bootstrap_mapa"}
+                    preparado["erros"].append("timeout_bootstrap_mapa")
+                    print("[CenaMundo] mapa_bootstrap timeout; seguindo sem bloquear mundo.")
+                else:
+                    mapa_bootstrap = resultado.get("payload")
+                    if isinstance(mapa_bootstrap, dict) and str(mapa_bootstrap.get("status", "")).lower() == "erro":
+                        print(f"[CenaMundo] mapa_bootstrap erro: {mapa_bootstrap.get('mensagem', 'desconhecido')}")
+            except Exception as exc:
+                mapa_bootstrap = {"status": "erro", "mensagem": str(exc)}
+                preparado["erros"].append(f"falha_bootstrap_mapa:{exc}")
+                print(f"[CenaMundo] erro em mapa_bootstrap: {exc}")
+
+        preparado["regras_mundo"] = dict(regras_mundo or {})
+        preparado["bootstrap"] = bootstrap if isinstance(bootstrap, dict) else None
+        preparado["mapa_bootstrap"] = mapa_bootstrap if isinstance(mapa_bootstrap, dict) else None
+        JOGO.INFO["MundoPreparadoTransicao"] = preparado
+        print("[CenaMundo] PrepararTransicaoAssincrona: fim")
 
     def _aplicar_sincronizacao_pos_batalha_pendente(self, jogo, link: str | None) -> None:
         pendente = jogo.INFO.get("SincronizacaoPosBatalhaMundo") if isinstance(jogo.INFO.get("SincronizacaoPosBatalhaMundo"), dict) else None
@@ -119,6 +170,8 @@ class CenaMundo:
         self.ElementosHud = ElementosHudMundo()
         self._desconectado = False
         self.TelaAtual = None
+        self.ServicoMapa = None
+        self.TelaMapa = TelaMapa()
         self.Terminal = None
         self._npc_interacao_id = 0
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
@@ -177,6 +230,12 @@ class CenaMundo:
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
             bootstrap = preparado.get("bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("bootstrap"), dict) else None
             self.ControladorMundo.conectar(link, client_id, bootstrap_inicial=bootstrap)
+            self.ServicoMapa = ServicoMapaMundo(JOGO, link, client_id)
+            mapa_bootstrap = preparado.get("mapa_bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("mapa_bootstrap"), dict) else None
+            try:
+                self.ServicoMapa.preparar_bootstrap(mapa_bootstrap if str((mapa_bootstrap or {}).get("status", "ok")).lower() == "ok" else None)
+            except Exception as exc:
+                print(f"[CenaMundo] falha ao preparar serviço de mapa: {exc}")
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
@@ -202,7 +261,7 @@ class CenaMundo:
             if opcoes_modal is not None:
                 player.Controle.InventarioAberto = False
 
-        if opcoes_modal is None and self.TelaAtual != "Config":
+        if opcoes_modal is None and self.TelaAtual not in ("Config", "Mapa"):
             for ev in EVENTOS:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                     opcoes = SubtelaOpcoes()
@@ -218,7 +277,21 @@ class CenaMundo:
             elif not player.Controle.InventarioAberto and inventario_modal is not None:
                 ger.fechar(inventario_modal)
 
-        player_bloqueado = bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
+        if self.ServicoMapa is not None:
+            self.ServicoMapa.tick()
+
+        bloqueio_mapa = bloqueio_gameplay or (opcoes_modal is not None) or dialogo_ativo or inventario_modal is not None or self.TelaAtual == "Config" or ger.ativa
+        if self.TelaAtual is None and not bloqueio_mapa:
+            for ev in EVENTOS:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_m:
+                    estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {}) if player is not None else {}
+                    pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if (self.ServicoMapa is not None and player is not None) else tuple(getattr(player, "Posicao", (0.0, 0.0)))
+                    if self.ServicoMapa is not None:
+                        self.TelaMapa.abrir(JOGO, self.ServicoMapa, pos_player_mundo)
+                        self.TelaAtual = "Mapa"
+                    break
+
+        player_bloqueado = (self.TelaAtual == "Mapa") or bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
         if JOGO.CenaAlvo is None and (not player_bloqueado) and int(pygame.time.get_ticks()) >= int(self._imune_combate_ate_ms or 0):
@@ -313,7 +386,9 @@ class CenaMundo:
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         player = self.ControladorMundo.player_local
         if player is not None:
-            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt)
+            estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {})
+            pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if (self.ServicoMapa is not None and isinstance(estado_player, dict)) else tuple(getattr(player, "Posicao", (0.0, 0.0)))
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)))
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
             estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
             dica_estadio = self.ControladorMundo.Objetos.mensagem_interacao_estadio(
@@ -327,11 +402,28 @@ class CenaMundo:
                 self._texto_estadio.draw(surface)
 
     def tela_atual_eh_complexa(self) -> bool:
-        return self.TelaAtual != "Config"
+        return self.TelaAtual not in ("Config", "Mapa")
 
     def render_tela(self, surface, JOGO, EVENTOS, dt):
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt, tela_destino=surface)
+            return
+        if self.TelaAtual == "Mapa" and self.ServicoMapa is not None:
+            player = self.ControladorMundo.player_local
+            estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {}) if player is not None else {}
+            pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if player is not None else (0.0, 0.0)
+            self.TelaMapa.desenhar(
+                surface,
+                JOGO,
+                EVENTOS,
+                dt,
+                self.ServicoMapa,
+                estado_player if isinstance(estado_player, dict) else {},
+                pos_player_mundo,
+                angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0) if player is not None else 0.0,
+            )
+            if not self.TelaMapa.ativo:
+                self.TelaAtual = None
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.atualizar_cena(JOGO, EVENTOS, dt)
@@ -477,4 +569,7 @@ class CenaMundo:
             link = server.get("ip")
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
             self.ControladorMundo.parar(link, client_id)
+        if self.ServicoMapa is not None:
+            self.ServicoMapa.encerrar()
+            self.ServicoMapa = None
         self._desconectado = True

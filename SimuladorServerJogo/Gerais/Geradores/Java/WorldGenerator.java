@@ -624,9 +624,13 @@ final class GeneratorContext {
             writer.write("  \"regioes\": [\n");
             for (int i = 0; i < regions.size(); i++) {
                 RegionData region = regions.get(i);
+                int rr = (region.color >> 16) & 0xFF;
+                int rg = (region.color >> 8) & 0xFF;
+                int rb = region.color & 0xFF;
                 writer.write("    {\"id\": " + region.id
                     + ", \"nome\": \"" + escapeJson(region.name) + "\""
-                    + ", \"centro\": [" + region.centerX + ", " + region.centerY + "]}");
+                    + ", \"centro\": [" + region.centerX + ", " + region.centerY + "]"
+                    + ", \"cor\": [" + rr + ", " + rg + ", " + rb + "]}");
                 if (i < regions.size() - 1) {
                     writer.write(",");
                 }

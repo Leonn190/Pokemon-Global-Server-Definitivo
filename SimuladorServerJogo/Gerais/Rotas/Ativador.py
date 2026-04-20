@@ -13,6 +13,7 @@ from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Mundo.Cerebros.CerebroEstadios import CEREBRO_ESTADIOS
+from SimuladorServerJogo.Gerais.EstadoServidor import obter_exploracao_chunks, registrar_chunks_explorados
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]
@@ -22,6 +23,141 @@ _DIFF_SEQ = 0
 _CLIENTS_CONHECIDOS: Set[str] = set()
 _CLIENT_STATE: Dict[str, Dict[str, object]] = {}
 
+
+
+
+def _cor_regiao_fallback(regiao_id: int) -> list[int]:
+    base = int(regiao_id or 0) * 1103515245 + 12345
+    r = 60 + ((base >> 16) & 0x7F)
+    g = 60 + ((base >> 9) & 0x7F)
+    b = 60 + ((base >> 2) & 0x7F)
+    return [int(r), int(g), int(b)]
+
+
+def _meta_mundo_para_mapa() -> dict:
+    meta = BANCO_DADOS._estado_mundo.get("meta", {}) if isinstance(getattr(BANCO_DADOS, "_estado_mundo", {}), dict) else {}
+    largura, altura = BANCO_DADOS.limites_mundo()
+    chunk = int(BANCO_DADOS.chunk_tamanho_unidade())
+    cores = {
+        "0": [18, 74, 156], "1": [95, 176, 232], "2": [110, 186, 72], "3": [48, 126, 54],
+        "4": [228, 214, 149], "5": [218, 188, 100], "6": [235, 242, 248], "7": [138, 72, 192],
+        "8": [112, 74, 44], "9": [132, 132, 132],
+    }
+    return {
+        "largura_blocos": int(largura),
+        "altura_blocos": int(altura),
+        "chunk_blocos": int(chunk),
+        "chunks_x": int(meta.get("chunks_x", BANCO_DADOS.total_chunks()[0])),
+        "chunks_y": int(meta.get("chunks_y", BANCO_DADOS.total_chunks()[1])),
+        "atlas_chunks_lado": 100,
+        "atlas_px": 1000,
+        "cores_blocos": cores,
+    }
+
+
+def _poi_mapa() -> tuple[list, list, list]:
+    meta = BANCO_DADOS._estado_mundo.get("meta", {}) if isinstance(getattr(BANCO_DADOS, "_estado_mundo", {}), dict) else {}
+    vilas = list(meta.get("vilas", []) if isinstance(meta.get("vilas"), list) else [])
+    estadios = list(meta.get("estadios", []) if isinstance(meta.get("estadios"), list) else [])
+    regioes_raw = list(meta.get("regioes", []) if isinstance(meta.get("regioes"), list) else [])
+    regioes = []
+    prox_id = 1
+    for reg in regioes_raw:
+        if not isinstance(reg, dict):
+            continue
+        item = dict(reg)
+        rid = item.get("id")
+        if rid in (None, ""):
+            rid = prox_id
+            prox_id += 1
+        item["id"] = int(rid)
+        item["nome"] = str(item.get("nome") or f"Região {int(item['id'])}")
+        centro = item.get("centro")
+        if not (isinstance(centro, (list, tuple)) and len(centro) == 2):
+            centro = [0, 0]
+        item["centro"] = [float(centro[0]), float(centro[1])]
+        cor = item.get("cor") if isinstance(item.get("cor"), list) else item.get("cor_rgb")
+        if not (isinstance(cor, list) and len(cor) == 3):
+            item["cor"] = _cor_regiao_fallback(int(item.get("id", 0) or 0))
+        regioes.append(item)
+    return vilas, estadios, regioes
+
+
+def _resolver_posicao_mundo_referencia(obj_player, posicao_camera: Vector2) -> Vector2:
+    estado = getattr(obj_player, "estado_extra", {}) if obj_player is not None and isinstance(getattr(obj_player, "estado_extra", {}), dict) else {}
+    ultima = estado.get("ultima_pos_mundo")
+    if isinstance(ultima, (list, tuple)) and len(ultima) == 2:
+        return (float(ultima[0]), float(ultima[1]))
+    estadio_id = int(estado.get("estadio_atual_id", 0) or 0)
+    if estadio_id > 0:
+        estadio = BANCO_DADOS.obter_objeto(estadio_id)
+        if estadio is not None:
+            return (float(getattr(estadio, "posicao", [0.0, 0.0])[0]), float(getattr(estadio, "posicao", [0.0, 0.0])[1]))
+    pos_dim = estado.get("posicoes_por_dimensao") if isinstance(estado.get("posicoes_por_dimensao"), dict) else {}
+    pos_mundo = pos_dim.get("Mundo")
+    if isinstance(pos_mundo, (list, tuple)) and len(pos_mundo) == 2:
+        return (float(pos_mundo[0]), float(pos_mundo[1]))
+    return (float(posicao_camera[0]), float(posicao_camera[1]))
+
+
+def _objetos_no_chunk_mapa(chunk: Chunk) -> list[dict]:
+    saida: list[dict] = []
+    for obj in BANCO_DADOS.listar_objetos():
+        try:
+            if BANCO_DADOS.chunk_da_posicao(getattr(obj, "posicao", (0.0, 0.0))) != chunk:
+                continue
+        except Exception:
+            continue
+        estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+        tipo_classe = str(getattr(obj, "tipo_classe", "") or "")
+        subtipo = str(estado.get("subtipo") or "")
+        if tipo_classe in {"ator", "entidade_estadio"}:
+            continue
+        if str(estado.get("dimensao") or "Mundo") != "Mundo":
+            continue
+        pos = getattr(obj, "posicao", (0.0, 0.0))
+        saida.append({
+            "pos": [float(pos[0]), float(pos[1])],
+            "tipo": tipo_classe,
+            "subtipo": subtipo,
+            "categoria": str(estado.get("categoria") or subtipo or tipo_classe),
+        })
+    return saida
+
+
+def _atlas_do_conjunto(chunks: set[Chunk]) -> list[dict]:
+    grupos: Dict[Tuple[int, int], list[dict]] = {}
+    for chunk in sorted(chunks):
+        ax = int(chunk[0]) // 100
+        ay = int(chunk[1]) // 100
+        grupos.setdefault((ax, ay), []).append({
+            "pos": [int(chunk[0]), int(chunk[1])],
+            "grid": BANCO_DADOS.chunk_em_grade(chunk),
+            "objetos": _objetos_no_chunk_mapa(chunk),
+        })
+    out = []
+    for (ax, ay), lista in grupos.items():
+        if not lista:
+            continue
+        out.append({"atlas_x": ax, "atlas_y": ay, "chunks": lista})
+    return out
+
+
+def _chunks_explorados_para_set(explorados: dict) -> set[Chunk]:
+    mundo = explorados.get("Mundo") if isinstance(explorados.get("Mundo"), dict) else {}
+    out: set[Chunk] = set()
+    for sx, ys in mundo.items():
+        try:
+            x = int(sx)
+        except Exception:
+            continue
+        if isinstance(ys, list):
+            for y in ys:
+                try:
+                    out.add((x, int(y)))
+                except Exception:
+                    continue
+    return out
 
 def _serializar_resposta(payload: Dict[str, object], serializar: bool):
     if not serializar:
@@ -65,7 +201,7 @@ def _normalizar_posicao(valor) -> Vector2:
 
 def _obter_state_client(client_id: str) -> Dict[str, object]:
     if client_id not in _CLIENT_STATE:
-        _CLIENT_STATE[client_id] = {"objetos_vistos": set(), "dimensao": "Mundo", "estadios_pre_enviados": False}
+        _CLIENT_STATE[client_id] = {"objetos_vistos": set(), "dimensao": "Mundo", "estadios_pre_enviados": False, "mapa_chunks_enviados": set()}
     return _CLIENT_STATE[client_id]
 
 
@@ -256,15 +392,42 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
         state = _obter_state_client(client_id)
         state["dimensao"] = dimensao
         vistos: Set[int] = state["objetos_vistos"]
+        mapa_chunks_enviados: Set[Chunk] = state.get("mapa_chunks_enviados", set()) if isinstance(state.get("mapa_chunks_enviados", set()), set) else set()
 
         if modo == "chunks":
             chunks = []
             for chunk in sorted(chunks_carregados):
                 grid = _grid_neutra_estadio() if _eh_dimensao_estadio(dimensao) else BANCO_DADOS.chunk_em_grade(chunk)
                 chunks.append({"pos": [chunk[0], chunk[1]], "grid": grid, "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()})
+            if obj_player is not None:
+                chunks_mundo = {BANCO_DADOS.normalizar_chunk(ch) for ch in (_chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo") if _eh_dimensao_estadio(dimensao) else chunks_carregados)}
+                registrar_chunks_explorados(client_id, list(chunks_mundo), dimensao="Mundo")
             dim_largura = int(CEREBRO_ESTADIOS.chunks_largura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[0])
             dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[1])
             return _serializar_resposta({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, serializar_resposta)
+
+        if modo == "mapa_bootstrap":
+            chunks_base = _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")
+            registrar_chunks_explorados(client_id, list(chunks_base), dimensao="Mundo")
+            explorados = obter_exploracao_chunks(client_id)
+            chunks_explorados = _chunks_explorados_para_set(explorados)
+            mapa_chunks_enviados.update(chunks_explorados)
+            state["mapa_chunks_enviados"] = mapa_chunks_enviados
+            atlas = _atlas_do_conjunto(chunks_explorados)
+            vilas, estadios, regioes = _poi_mapa()
+            return _serializar_resposta({"status": "ok", "meta": _meta_mundo_para_mapa(), "explorados": explorados, "atlas": atlas, "vilas": vilas, "estadios": estadios, "regioes": regioes}, serializar_resposta)
+
+        if modo == "mapa_delta":
+            chunks_base = _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")
+            novos = {BANCO_DADOS.normalizar_chunk(ch) for ch in chunks_base}
+            registrar_chunks_explorados(client_id, list(novos), dimensao="Mundo")
+            explorados_depois = obter_exploracao_chunks(client_id)
+            todos_explorados = _chunks_explorados_para_set(explorados_depois)
+            chunks_nunca_enviados = {ch for ch in todos_explorados if ch not in mapa_chunks_enviados}
+            mapa_chunks_enviados.update(chunks_nunca_enviados)
+            state["mapa_chunks_enviados"] = mapa_chunks_enviados
+            atlas = _atlas_do_conjunto(chunks_nunca_enviados)
+            return _serializar_resposta({"status": "ok", "meta": _meta_mundo_para_mapa(), "atlas": atlas, "explorados": explorados_depois}, serializar_resposta)
 
         pacotes = _filtrar_pacotes_por_camera(PACOTES_TICK.obter_pacotes_desde(ultimo_tick_recebido, limite=90), posicao_camera, raio, chunks_carregados, client_id=client_id, dimensao=dimensao)
         diffs_extra = _coletar_diffs_visibilidade(posicao_camera, chunks_carregados, vistos, client_id=client_id, dimensao=dimensao)

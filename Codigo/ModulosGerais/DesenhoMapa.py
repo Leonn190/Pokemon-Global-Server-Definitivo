@@ -22,15 +22,21 @@ def _carregar_cursor() -> pygame.Surface | None:
     return None
 
 
-def desenhar_seta_player(surface: pygame.Surface, centro: tuple[int, int], angulo: float, tamanho: int) -> None:
+def desenhar_seta_player(
+    surface: pygame.Surface,
+    centro: tuple[int, int],
+    angulo: float,
+    tamanho: int,
+    escala_extra: float = 1.0,
+) -> None:
     t = max(7, min(16, int(tamanho)))
     cx, cy = int(centro[0]), int(centro[1])
     cursor = _carregar_cursor()
     if cursor is None:
         return
-    escala = max(0.1, float(t) / max(1.0, float(max(cursor.get_width(), cursor.get_height()))))
+    escala = max(0.05, (float(t) / max(1.0, float(max(cursor.get_width(), cursor.get_height())))) * float(escala_extra))
     # imagem base aponta para cima; angulo jogo 0 aponta para direita.
-    rot = 90.0 - float(angulo)
+    rot = float(angulo) - 90.0
     sprite = pygame.transform.rotozoom(cursor, rot, escala)
     rect = sprite.get_rect(center=(cx, cy))
     surface.blit(sprite, rect)

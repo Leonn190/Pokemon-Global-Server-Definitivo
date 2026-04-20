@@ -128,6 +128,10 @@ class ControladorCenas:
             return
         if self._preparacao_alvo == alvo:
             return
+        if alvo == "Mundo" and isinstance(self.INFO.get("MundoPreparadoTransicao"), dict):
+            self._preparacao_alvo = alvo
+            self._preparacao_thread = None
+            return
         self._preparacao_alvo = alvo
         self._preparacao_thread = None
         cena_alvo = self.Cenas.get(str(alvo))

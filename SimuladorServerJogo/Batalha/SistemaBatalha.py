@@ -24,6 +24,7 @@ class SistemaBatalha:
         self.ClienteDono = str(client_id)
         self.Contexto = dict(contexto or {})
         self.Tipo = str(self.Contexto.get("tipo") or "confronto").strip().lower()
+        self.ModoTeste = bool(self.Contexto.get("modo_teste", False))
         self.TurnoAtual = 1
         self.TickGlobal = 0
         self.ClimaAtual = str(self.Contexto.get("clima") or "")
@@ -411,10 +412,20 @@ class SistemaBatalha:
     def regras_batalha_publicas(self) -> Dict[str, object]:
         return dict(self.RegrasBatalha or {})
 
+    def definir_modo_teste(self, habilitado: bool) -> None:
+        self.ModoTeste = bool(habilitado)
+        self.Contexto["modo_teste"] = bool(habilitado)
+        if self.ModoTeste:
+            cliente = str(self.ClienteDono or self.Lados.get("jogador", {}).get("cliente_id") or "")
+            if cliente:
+                self.Lados["jogador"]["cliente_id"] = cliente
+                self.Lados["inimigo"]["cliente_id"] = cliente
+
     def snapshot(self, *, incluir_metadados: bool = True) -> Dict[str, object]:
         snapshot = {
             "batalha_id": self.BatalhaId,
             "tipo": self.Tipo,
+            "modo_teste": bool(self.ModoTeste),
             "turno_atual": int(self.TurnoAtual),
             "tick_global": int(self.TickGlobal),
             "clima": self.ClimaAtual,

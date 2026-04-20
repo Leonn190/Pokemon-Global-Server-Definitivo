@@ -184,6 +184,36 @@ def executar_comando_batalha(autor: str, texto: str, meta: dict | None = None) -
     if sistema is None:
         return {"ok": True, "feedback": "Nenhuma batalha ativa para este jogador.", "autor": "Servidor", "timestamp": time.time()}
 
+    if cmd == "test":
+        if sistema.Tipo != "confronto":
+            return {
+                "ok": True,
+                "feedback": "/Test só pode ser usado em batalhas de confronto.",
+                "autor": "Servidor",
+                "timestamp": time.time(),
+                "batalha_atualizacao": {"batalha": sistema.snapshot(), "motivo": "test_indisponivel"},
+            }
+        ligar = True
+        if args:
+            chave = _normalizar(args[0])
+            if chave in {"off", "0", "nao", "não", "false", "desativar"}:
+                ligar = False
+            elif chave in {"on", "1", "sim", "true", "ativar"}:
+                ligar = True
+        if hasattr(sistema, "definir_modo_teste"):
+            sistema.definir_modo_teste(ligar)
+        else:
+            sistema.Contexto["modo_teste"] = bool(ligar)
+        snapshot = sistema.snapshot() if hasattr(sistema, "snapshot") else {}
+        estado_txt = "ativado" if ligar else "desativado"
+        return {
+            "ok": True,
+            "feedback": f"/Test {estado_txt}: energia infinita e sem bot (você controla aliados/inimigos).",
+            "autor": "Servidor",
+            "timestamp": time.time(),
+            "batalha_atualizacao": {"batalha": snapshot, "motivo": "comando_test"},
+        }
+
     if cmd != "atk":
         return {"ok": True, "feedback": f"Comando de batalha inexistente: /{cmd}", "autor": "Servidor", "timestamp": time.time(), "batalha_atualizacao": {"batalha": sistema.snapshot(), "motivo": "comando_desconhecido"}}
 

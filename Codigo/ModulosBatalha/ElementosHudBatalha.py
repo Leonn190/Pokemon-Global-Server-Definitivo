@@ -229,8 +229,9 @@ class ElementosHudBatalha:
             self._fluxos.atualizar_contexto(self._ficha.ataque_selecionado())
             if not interacao_bloqueada:
                 self._fluxos.processar_eventos(eventos or [], self._ficha, rects_hud)
+        pode_controlar = getattr(self._controlador, "pokemon_eh_controlavel", lambda _p: False)
         selecionado_atual = getattr(self._controlador, "PokemonSelecionado", None)
-        if selecionado_atual is None or str(getattr(selecionado_atual, "Lado", "")) != "jogador":
+        if selecionado_atual is None or not bool(pode_controlar(selecionado_atual)):
             self._ficha.limpar_ataque_selecionado()
         if self._botao_fugir is not None:
             self._botao_fugir.render(tela, eventos or [], dt, None)
@@ -258,6 +259,7 @@ class ElementosHudBatalha:
         if self._fluxos is not None:
             self._fluxos.desenhar(tela, dt)
         self._painel_jogada.desenhar(tela, dt)
+        self._ficha.definir_controle_inimigo(bool(getattr(self._controlador, "modo_teste_ativo", lambda: False)()))
         self._ficha.render(tela, self._pokemon_exibido, self._anim_ficha, eventos or [], dt)
         self._visualizador_log.desenhar(tela, eventos or [], dt)
         self._desenhar_overlay_fuga(tela)

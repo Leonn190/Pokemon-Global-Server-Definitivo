@@ -454,6 +454,7 @@ class PokemonBatalha:
         )
         self.DiametroTiles = max(0.4, base_tamanho + max(0.0, float(self.Escala)) * max(0.01, incremento))
         self.TamanhoTiles = max(0.0, self._numero(dados.get("tamanho_tiles", self.TamanhoTiles or self.DiametroTiles), self.DiametroTiles))
+        self.DiametroTiles = self.TamanhoTiles
         self.RaioColisao = max(0.0, self._numero(dados.get("raio_colisao", self.RaioColisao or (self.TamanhoTiles * 0.5)), self.TamanhoTiles * 0.5))
 
         atributos_base_brutos = dict(dados.get("atributos_base") or {})
@@ -515,7 +516,8 @@ class PokemonBatalha:
 
     def raio_px(self, camera) -> int:
         tile_px = max(16, int(getattr(camera, 'TilePx', 40) or 40))
-        return max(12, int(tile_px * (self.DiametroTiles * 0.5)))
+        raio_tiles = self.RaioColisao or (self.DiametroTiles * 0.5)
+        return max(12, int(tile_px * raio_tiles))
 
     def centro_tela(self, camera) -> Tuple[int, int]:
         if hasattr(camera, "batalha_para_tela_px"):

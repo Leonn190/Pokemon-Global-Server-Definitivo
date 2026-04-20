@@ -100,7 +100,8 @@ class ControladorFluxos:
             if pokemon is None or getattr(pokemon, "ForaDeCombate", False):
                 continue
             diametro = self._numero(getattr(pokemon, "DiametroTiles", 0.0), 0.0)
-            raio_tiles = max(0.1, diametro * 0.5)
+            raio_colisao = self._numero(getattr(pokemon, "RaioColisao", 0.0), 0.0)
+            raio_tiles = max(0.1, raio_colisao if raio_colisao > 0.0 else diametro * 0.5)
             saida.append(
                 {
                     "id": self._id_combatente(pokemon),
@@ -114,6 +115,9 @@ class ControladorFluxos:
         executor = jogada.get("executor") if isinstance(jogada, dict) else None
         if executor is None:
             return None
+        raio_colisao = self._numero(getattr(executor, "RaioColisao", 0.0), 0.0)
+        if raio_colisao > 0.0:
+            return max(0.1, raio_colisao)
         diametro = self._numero(getattr(executor, "DiametroTiles", 0.0), 0.0)
         if diametro <= 0.0:
             return None

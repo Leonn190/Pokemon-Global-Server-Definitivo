@@ -169,9 +169,7 @@ class PokemonBatalha:
     def _calcular_tamanho_tiles(self, estado: Dict[str, object], bruto: Dict[str, object]) -> float:
         base_combate = self._fnum(self.Contexto.get("combate_pokemon_tamanho_diametro_base_tiles"), 1.0)
         incremento_combate = self._fnum(self.Contexto.get("combate_pokemon_tamanho_incremento_por_escala"), 0.15)
-        tamanho_por_regra = max(0.4, base_combate + (max(0.0, float(self.Escala)) * max(0.01, incremento_combate)))
-        tamanho_bruto = self._fnum(estado.get("tamanho_tiles", bruto.get("tamanho_tiles", tamanho_por_regra)), tamanho_por_regra)
-        return max(0.4, tamanho_bruto if tamanho_bruto > 0.0 else tamanho_por_regra)
+        return max(0.4, base_combate + (max(0.0, float(self.Escala)) * max(0.01, incremento_combate)))
 
     @classmethod
     def _norm(cls, chave: object) -> str:

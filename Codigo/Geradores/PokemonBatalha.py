@@ -98,12 +98,12 @@ class PokemonBatalha:
         self.Nivel = max(1, int(FichaPokemon._nivel(self.Dados) or 1))
 
         base_tamanho = self._numero(
-            self.Regras.get('combate_pokemon_tamanho_diametro_base_tiles', self.Regras.get('pokemon_tamanho_diametro_base_tiles', 1.0)),
+            self.Regras.get('combate_pokemon_tamanho_diametro_base_tiles', 1.0),
             1.0,
         )
         incremento = self._numero(
-            self.Regras.get('combate_pokemon_tamanho_incremento_por_escala', self.Regras.get('pokemon_tamanho_incremento_por_escala', 0.1)),
-            0.1,
+            self.Regras.get('combate_pokemon_tamanho_incremento_por_escala', 0.15),
+            0.15,
         )
         self.DiametroTiles = max(0.4, base_tamanho + max(0.0, float(self.Escala)) * max(0.01, incremento))
 
@@ -445,12 +445,12 @@ class PokemonBatalha:
             self.VelocidadeAtualTilesTick,
         )
         base_tamanho = self._numero(
-            self.Regras.get('combate_pokemon_tamanho_diametro_base_tiles', self.Regras.get('pokemon_tamanho_diametro_base_tiles', 1.0)),
+            self.Regras.get('combate_pokemon_tamanho_diametro_base_tiles', 1.0),
             1.0,
         )
         incremento = self._numero(
-            self.Regras.get('combate_pokemon_tamanho_incremento_por_escala', self.Regras.get('pokemon_tamanho_incremento_por_escala', 0.1)),
-            0.1,
+            self.Regras.get('combate_pokemon_tamanho_incremento_por_escala', 0.15),
+            0.15,
         )
         self.DiametroTiles = max(0.4, base_tamanho + max(0.0, float(self.Escala)) * max(0.01, incremento))
         self.TamanhoTiles = max(0.0, self._numero(dados.get("tamanho_tiles", self.TamanhoTiles or self.DiametroTiles), self.DiametroTiles))

@@ -11,11 +11,13 @@ class TelaMapa:
     def __init__(self):
         self.ativo = False
         self.zoom = 1.0
-        self.zoom_max = 10.0
+        self.zoom_max = 6.0
         self.offset = [0.0, 0.0]
         self.dragging = False
         self.fade_ms = 250
         self.aberto_ms = 0
+        self.fechando = False
+        self.fechando_ms = 0
         self._cache_chave = None
         self._cache_frame = None
         self._txt_regiao = Texto("", style={"size": 34, "outline": True, "align": "center"})
@@ -25,20 +27,31 @@ class TelaMapa:
 
     def abrir(self, jogo, servico_mapa, pos_player_mundo):
         self.ativo = True
+        self.fechando = False
+        self.fechando_ms = 0
         self.aberto_ms = pygame.time.get_ticks()
         self._cache_chave = None
         self._cache_frame = None
         mundo_w, mundo_h = servico_mapa.gerenciador.mundo_tamanho_px()
         tela_w, tela_h = jogo.TELA.get_size()
-        self.zoom = max(float(tela_h) / max(1.0, float(mundo_h)), 2.0)
+        self.zoom = max(self._zoom_minimo(jogo, servico_mapa), 2.0)
         self.zoom = min(self.zoom, self.zoom_max)
         self.offset = [tela_w * 0.5 - float(pos_player_mundo[0]) * self.zoom, tela_h * 0.5 - float(pos_player_mundo[1]) * self.zoom]
         self._garantir_botoes(jogo)
         self._clamp_offset(jogo, servico_mapa)
 
     def fechar(self):
-        self.ativo = False
         self.dragging = False
+        if not self.fechando:
+            self.fechando = True
+            self.fechando_ms = pygame.time.get_ticks()
+
+    def _zoom_minimo(self, jogo, servico_mapa) -> float:
+        tela_w, tela_h = jogo.TELA.get_size()
+        mundo_w, mundo_h = servico_mapa.gerenciador.mundo_tamanho_px()
+        fit_h = float(tela_h) / max(1.0, float(mundo_h))
+        fit_w = float(tela_w) / max(1.0, float(mundo_w))
+        return max(fit_h, fit_w, 0.05)
 
     def _garantir_botoes(self, jogo):
         if self._botoes:
@@ -69,6 +82,8 @@ class TelaMapa:
 
     def processar_eventos(self, jogo, eventos, servico_mapa):
         self._garantir_botoes(jogo)
+        if self.fechando:
+            return
         for ev in eventos:
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
                 self.fechar()
@@ -79,7 +94,8 @@ class TelaMapa:
                 self.fechar()
                 return
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:
-                self.dragging = True
+                min_zoom = self._zoom_minimo(jogo, servico_mapa)
+                self.dragging = self.zoom > (min_zoom + 1e-6)
             if ev.type == pygame.MOUSEBUTTONUP and ev.button == 3:
                 self.dragging = False
             if ev.type == pygame.MOUSEMOTION and self.dragging:
@@ -89,9 +105,8 @@ class TelaMapa:
             if ev.type == pygame.MOUSEWHEEL:
                 mouse = pygame.mouse.get_pos()
                 old_zoom = self.zoom
-                mundo_h = servico_mapa.gerenciador.mundo_tamanho_px()[1]
-                min_zoom = max(float(jogo.TELA.get_height()) / max(1.0, float(mundo_h)), 0.05)
-                self.zoom = max(min_zoom, min(self.zoom_max, self.zoom + (0.25 * ev.y)))
+                min_zoom = self._zoom_minimo(jogo, servico_mapa)
+                self.zoom = max(min_zoom, min(self.zoom_max, self.zoom + (0.2 * ev.y)))
                 if abs(self.zoom - old_zoom) > 1e-6:
                     self.offset[0] = mouse[0] - ((mouse[0] - self.offset[0]) * (self.zoom / old_zoom))
                     self.offset[1] = mouse[1] - ((mouse[1] - self.offset[1]) * (self.zoom / old_zoom))
@@ -202,9 +217,20 @@ class TelaMapa:
         for botao in self._botoes.values():
             botao.render(tela, eventos, 0.0, JOGO=jogo)
 
-        tempo = pygame.time.get_ticks() - self.aberto_ms
-        if tempo < self.fade_ms:
-            alpha = int(255 * (1.0 - (tempo / self.fade_ms)))
+        agora = pygame.time.get_ticks()
+        alpha = None
+        tempo_aberto = agora - self.aberto_ms
+        if tempo_aberto < self.fade_ms:
+            alpha = int(255 * (1.0 - (tempo_aberto / self.fade_ms)))
+        if self.fechando:
+            tempo_fechando = agora - self.fechando_ms
+            if tempo_fechando >= self.fade_ms:
+                self.fechando = False
+                self.ativo = False
+                return
+            alpha_fechando = int(255 * (tempo_fechando / self.fade_ms))
+            alpha = max(alpha or 0, alpha_fechando)
+        if alpha is not None and alpha > 0:
             fade = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
             fade.fill((0, 0, 0, alpha))
             tela.blit(fade, (0, 0))

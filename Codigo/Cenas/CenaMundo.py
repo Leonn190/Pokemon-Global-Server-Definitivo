@@ -551,6 +551,7 @@ class CenaMundo:
 
     def Finalizar(self, JOGO):
         JOGO.INFO.pop("MundoTelaSobreposta", None)
+        preservando_imagens_mapa = str(getattr(JOGO, "CenaAlvo", "") or "") == "Combate"
         snapshot_player = self._snapshot_player_atual(JOGO)
         if isinstance(snapshot_player, dict):
             JOGO.INFO["PlayerDadosServer"] = snapshot_player
@@ -564,6 +565,7 @@ class CenaMundo:
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
             self.ControladorMundo.parar(link, client_id)
         if self.ServicoMapa is not None:
-            self.ServicoMapa.encerrar()
-            self.ServicoMapa = None
+            self.ServicoMapa.encerrar(limpar_imagens=not preservando_imagens_mapa)
+            if not preservando_imagens_mapa:
+                self.ServicoMapa = None
         self._desconectado = True

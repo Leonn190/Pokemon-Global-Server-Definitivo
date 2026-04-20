@@ -145,7 +145,7 @@ class ServicoMapaMundo:
         if isinstance(atlas, list) and atlas:
             self.gerenciador.aplicar_chunks(atlas)
 
-    def encerrar(self) -> None:
+    def encerrar(self, limpar_imagens: bool = True) -> None:
         self._consumir_delta_pronto()
         with self._lock:
             self._ativo = False
@@ -154,5 +154,6 @@ class ServicoMapaMundo:
             self._worker.join(timeout=1.5)
         self._worker = None
         self.gerenciador.flush()
-        with self._lock:
-            self.gerenciador.limpar()
+        if bool(limpar_imagens):
+            with self._lock:
+                self.gerenciador.limpar()

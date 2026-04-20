@@ -4,11 +4,11 @@ import math
 import re
 from typing import Dict, List
 
-from Codigo.ModulosBatalha.LeitorFluxos import LeitorFluxos
 from SimuladorServerJogo.Logica.Executes.FuncoesAtaques import executar_ponto_ataque
 from SimuladorServerJogo.Batalha.FraquezasResistencias import modificador_tipo as modificador_tipo_csv
 from SimuladorServerJogo.Batalha.IA.BotBatalha import BotBatalha
 from SimuladorServerJogo.Batalha.ObjetoBatalha import ObjetoBatalha
+from SimuladorServerJogo.Batalha.RastreadorFluxos import RastreadorFluxos
 from SimuladorServerJogo.Batalha.SimuladorFisica import SimuladorFisica
 from SimuladorServerJogo.Batalha.SistemaBatalha import SistemaBatalha
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha
@@ -25,7 +25,7 @@ class LeitorJogadas:
         self._fisica: SimuladorFisica | None = None
         self._sistema_aux: SistemaBatalha | None = None
         self._bot_ia = BotBatalha()
-        self._leitor_fluxos = LeitorFluxos()
+        self._rastreador_fluxos: RastreadorFluxos | None = None
         self._regras_batalha = carregar_regras_batalha()
 
     @staticmethod
@@ -715,15 +715,27 @@ class LeitorJogadas:
         if subfluxos:
             return dict(subfluxos[0])
         return {
+            "tipo_fluxo": str(spec.get("estilo") or "tiro"),
             "alcance": 3.0,
-            "largura_teto": 50.0,
+            "velocidade": 1.0,
+            "aceleracao": 0.0,
+            "diametro_projetil": 0.5,
             "raio": 1.25,
-            "tamanho_elementos": 0.55,
             "intensidade_dano": 1.0,
             "ricocheteia_objetos": False,
+            "ricocheteia_pokemons": False,
             "atravessa_objetos": False,
             "atravessa_pokemons": False,
             "numero_ricochets": 0,
+            "numero_atravessadas": 0,
+            "quantidade_tiros": 1,
+            "angulo_abertura_tiros": 0.0,
+            "multiplicador_dano_por_ricochet": 1.0,
+            "multiplicador_dano_por_atravessada": 1.0,
+            "multiplicador_dano_por_tile_movido": 1.0,
+            "aumento_alcance_por_ricochet": 0.0,
+            "aumento_alcance_por_atravessada": 0.0,
+            "subfluxos": [],
         }
 
     def _duracao_estimativa(
@@ -738,20 +750,21 @@ class LeitorJogadas:
         destino = jogada.get("destino_mundo")
         origem = executor.Posicao
         fluxo = dict(fluxo_ref or self._flow_principal(spec))
+        tipo_fluxo = str(fluxo.get("tipo_fluxo") or estilo or "tiro").casefold()
         if estilo == "movimento":
             destino = tuple(destino) if isinstance(destino, (list, tuple)) and len(destino) == 2 else origem
             distancia = math.hypot(float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1]))
             velocidade = self._fisica.velocidade_pokemon_tiles_tick(executor, spec.get("velocidade_movimento_percentual", 100.0))
             return max(1, int(math.ceil(distancia / max(0.01, velocidade))))
-        if estilo in {"tiro", "area"}:
+        if estilo in {"tiro", "area"} or tipo_fluxo in {"tiro", "area"}:
             destino = tuple(destino) if isinstance(destino, (list, tuple)) and len(destino) == 2 else origem
             distancia = math.hypot(float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1]))
-            velocidade = max(0.1, self._fnum(fluxo.get("velocidade_tiles_tick", fluxo.get("velocidade", 1.0)), 1.0))
+            velocidade = max(0.1, self._fnum(fluxo.get("velocidade", 1.0), 1.0))
             alcance = max(distancia, self._fnum(fluxo.get("alcance"), distancia))
             return max(1, int(math.ceil(alcance / velocidade)))
-        if estilo == "zona":
+        if estilo == "zona" or tipo_fluxo == "zona":
             raio = max(0.5, self._fnum(fluxo.get("raio"), 1.25))
-            velocidade = max(0.1, self._fnum(fluxo.get("velocidade_tiles_tick", fluxo.get("velocidade", raio * 4.0)), raio * 4.0))
+            velocidade = max(0.1, self._fnum(fluxo.get("velocidade", raio * 4.0), raio * 4.0))
             return max(1, int(math.ceil(raio / velocidade)))
         if estilo == "alvo":
             return max(1, int(self._fnum(fluxo.get("tempo_ticks", fluxo.get("delay_ticks", 1)), 1)))
@@ -914,8 +927,14 @@ class LeitorJogadas:
             if self._norm(atributo) == "per":
                 perfuracao += float(valor_attr) * escala
         bonus_intensidade = float(fluxo.get("intensidade_dano", spec.get("fluxo", {}).get("intensidade_dano", 1.0)) or 1.0)
+        bonus_fluxo_dinamico = float(fluxo.get("multiplicador_dano_atual", 1.0) or 1.0)
+        mult_por_tile = float(fluxo.get("multiplicador_dano_por_tile_movido", 1.0) or 1.0)
+        distancia_percorrida = max(0.0, self._fnum(fluxo.get("distancia_percorrida", 0.0), 0.0))
+        if abs(mult_por_tile - 1.0) > 1e-9:
+            bonus_fluxo_dinamico *= mult_por_tile ** distancia_percorrida
         mult_dano_causado = float(atacante.MultiplicadoresTemporarios.get("dano_causado", 1.0))
         dano_bruto *= bonus_intensidade
+        dano_bruto *= bonus_fluxo_dinamico
         dano_bruto *= mult_dano_causado
 
         critico, crit_mult = self._roll_critico(sistema, atacante, alvo, spec, jogada, log, tick)
@@ -957,6 +976,7 @@ class LeitorJogadas:
             "tick": int(tick),
             "dano_bruto": round(dano_bruto, 4),
             "bonus_intensidade": round(bonus_intensidade, 4),
+            "multiplicador_fluxo_dinamico": round(bonus_fluxo_dinamico, 4),
             "multiplicador_dano_causado": round(mult_dano_causado, 4),
             "dano_critico": round(dano_critico, 4),
             "multiplicador_critico": round(crit_mult, 4),
@@ -1068,10 +1088,14 @@ class LeitorJogadas:
         else:
             vetor = (1.0, 0.0)
         direcao = self._fisica._normalizar(vetor)
-        subtipo = str(spec.get("estilo") or "")
-        velocidade = max(0.1, self._fnum(fluxo.get("velocidade_tiles_tick", fluxo.get("velocidade", 1.0)), 1.0))
+        subtipo = str(fluxo.get("tipo_fluxo") or spec.get("estilo") or "tiro").casefold()
+        velocidade = max(0.01, self._fnum(fluxo.get("velocidade", 1.0), 1.0))
+        aceleracao = self._fnum(fluxo.get("aceleracao", 0.0), 0.0)
+        diametro_projetil = max(0.05, self._fnum(fluxo.get("diametro_projetil", 0.5), 0.5))
+        raio_projetil = diametro_projetil * 0.5
         if subtipo == "zona":
             origem = tuple(destino) if isinstance(destino, (list, tuple)) and len(destino) == 2 else origem
+        atravessa_default = subtipo in {"area", "zona"}
         return ObjetoBatalha(
             Id=f"{executor.Uid}:{tick}:{indice}",
             Tipo="ataque",
@@ -1084,15 +1108,30 @@ class LeitorJogadas:
             PosicaoAnterior=(float(origem[0]), float(origem[1])),
             Direcao=direcao,
             VelocidadeTilesTick=velocidade,
-            Raio=max(0.2, self._fnum(fluxo.get("tamanho_elementos", fluxo.get("raio", 0.35)), 0.35)),
+            VelocidadeAtualTilesTick=velocidade,
+            AceleracaoTilesTick2=aceleracao,
+            DiametroProjetil=diametro_projetil,
+            Raio=raio_projetil if subtipo == "tiro" else max(0.2, self._fnum(fluxo.get("raio", 0.35), 0.35)),
             InicioTick=int(tick),
             TickAtual=int(tick),
             DuracaoTicks=max(1, int(self._duracao_estimativa(self._sistema_aux, executor, jogada, spec, fluxo))),
             RicochetesRestantes=max(0, int(self._fnum(fluxo.get("numero_ricochets", 0), 0))),
-            AtravessaObjetos=bool(fluxo.get("atravessa_objetos", fluxo.get("atravessa_paredes", False))),
-            AtravessaPokemons=bool(fluxo.get("atravessa_pokemons", False)),
+            AtravessadasRestantes=max(0, int(self._fnum(fluxo.get("numero_atravessadas", 0), 0))),
+            AtravessaObjetos=bool(fluxo.get("atravessa_objetos", atravessa_default)),
+            AtravessaPokemons=bool(fluxo.get("atravessa_pokemons", atravessa_default)),
+            RicocheteiaObjetos=bool(fluxo.get("ricocheteia_objetos", False)),
+            RicocheteiaPokemons=bool(fluxo.get("ricocheteia_pokemons", False)),
             AtingeSiMesmo=bool(fluxo.get("subfluxo_atinge_a_si_mesmo", False)),
             IntensidadeDano=float(fluxo.get("intensidade_dano", 1.0) or 1.0),
+            MultiplicadorDanoAtual=float(jogada.get("multiplicador_dano_fluxo", 1.0) or 1.0),
+            MultiplicadorDanoPorRicochet=float(fluxo.get("multiplicador_dano_por_ricochet", 1.0) or 1.0),
+            MultiplicadorDanoPorAtravessada=float(fluxo.get("multiplicador_dano_por_atravessada", 1.0) or 1.0),
+            MultiplicadorDanoPorTileMovido=float(fluxo.get("multiplicador_dano_por_tile_movido", 1.0) or 1.0),
+            AumentoAlcancePorRicochet=float(fluxo.get("aumento_alcance_por_ricochet", 0.0) or 0.0),
+            AumentoAlcancePorAtravessada=float(fluxo.get("aumento_alcance_por_atravessada", 0.0) or 0.0),
+            AlcanceRestante=max(0.0, self._fnum(fluxo.get("alcance", 3.0), 3.0)),
+            TipoFluxo=subtipo,
+            Subfluxos=[dict(item) for item in list(fluxo.get("subfluxos") or []) if isinstance(item, dict)],
             DadosExtras={
                 "destino": list(destino) if isinstance(destino, (list, tuple)) and len(destino) == 2 else None,
                 "alcance": self._fnum(fluxo.get("alcance", 3.0), 3.0),
@@ -1100,226 +1139,180 @@ class LeitorJogadas:
                 "raio_max": self._fnum(fluxo.get("raio", 1.25), 1.25),
                 "executor_id": executor.Uid,
                 "origem_execucao": [float(origem[0]), float(origem[1])],
+                "source_radius_tiles": float(getattr(executor, "RaioColisao", 0.75) or 0.75),
             },
         )
 
-    def _resolver_objeto(self, sistema: SistemaBatalha, objeto: ObjetoBatalha, executor, jogada: Dict[str, object], spec: Dict[str, object], log: Dict[str, object], tick: int) -> None:
-        avancado = self._fisica.avancar_objeto_um_tick(objeto)
-        origem = tuple(avancado.get("origem") or objeto.PosicaoAnterior)
-        destino = tuple(avancado.get("destino") or objeto.Posicao)
-        elapsed = max(1, int(tick - objeto.InicioTick + 1))
-        paredes_fluxo = self._fisica.paredes_fluxo()
-        pokemons_fluxo = self._fisica.pokemons_para_fluxo(ignorar_ids=[executor.Uid])
-        trace_fluxo = None
-        if objeto.Subtipo == "tiro":
-            source_radius_tiles = max(0.1, float(getattr(executor, "RaioColisao", 0.75) or 0.75))
-            alcance_tick = math.hypot(float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1]))
-            trace_fluxo = self._leitor_fluxos.rastrear_fluxo(
-                objeto.Fluxo,
-                origem,
-                destino,
-                tile_px=1.0,
-                source_radius_tiles=source_radius_tiles,
-                paredes=paredes_fluxo,
-                pokemons=pokemons_fluxo,
-                override_range_tiles=alcance_tick,
-                override_ricochets=objeto.RicochetesRestantes,
+    def _executar_subfluxos(self, sistema: SistemaBatalha, executor, jogada: Dict[str, object], spec: Dict[str, object], objeto: ObjetoBatalha, ponto: tuple[float, float], tick: int, log: Dict[str, object], objetos_ativos: List[Dict[str, object]], direcao_impacto: tuple[float, float] | None = None, multiplicador_impacto: float | None = None) -> None:
+        direcao_base = tuple(direcao_impacto or objeto.Direcao)
+        mult_base = float(objeto.MultiplicadorDanoAtual if multiplicador_impacto is None else multiplicador_impacto)
+
+        def _criar_subobjeto(fluxo_sub: Dict[str, object], indice: int) -> ObjetoBatalha:
+            destino_virtual = [ponto[0] + direcao_base[0], ponto[1] + direcao_base[1]]
+            novo_obj = self._criar_objeto_fluxo(
+                executor,
+                spec,
+                {**jogada, "multiplicador_dano_fluxo": mult_base, "destino_mundo": destino_virtual},
+                fluxo_sub,
+                tick,
+                indice,
             )
-            segmentos = list(trace_fluxo.get("segments") or [])
-            if segmentos:
-                ultimo_fim = segmentos[-1][1]
-                destino = (float(ultimo_fim[0]), float(ultimo_fim[1]))
-                objeto.Posicao = destino
-            direcao_final = trace_fluxo.get("direcao_final")
-            if direcao_final is not None:
-                objeto.Direcao = (float(direcao_final.x), float(direcao_final.y))
-        eventos_trace_fluxo = list(trace_fluxo.get("eventos") or []) if isinstance(trace_fluxo, dict) else []
-        pokemon_colisoes_fluxo = {
-            str(evento.get("pokemon_id") or "")
-            for evento in eventos_trace_fluxo
-            if str(evento.get("tipo") or "") == "pokemon"
-        }
+            novo_obj.Posicao = (float(ponto[0]), float(ponto[1]))
+            novo_obj.PosicaoAnterior = (float(ponto[0]), float(ponto[1]))
+            novo_obj.Direcao = direcao_base
+            novo_obj.DadosExtras["origem_execucao"] = [float(ponto[0]), float(ponto[1])]
+            return novo_obj
+
+        for indice, subfluxo in enumerate(list(objeto.Subfluxos or [])):
+            fluxo_sub = dict(subfluxo)
+            tipo_sub = str(fluxo_sub.get("tipo_fluxo") or "").casefold()
+            self._log_evento(log, tick, "subfluxo_gerado", objeto_id=objeto.Id, executor_id=executor.Uid, posicao=[round(ponto[0], 4), round(ponto[1], 4)], direcao=[round(direcao_base[0], 4), round(direcao_base[1], 4)], multiplicador_dano=float(mult_base), tipo_fluxo=tipo_sub)
+            if tipo_sub == "tiro":
+                novo = _criar_subobjeto(fluxo_sub, indice)
+                objetos_ativos.append({"objeto": novo, "executor": executor, "jogada": jogada, "spec": spec, "consumir_pendencia": False})
+                self._log_evento(log, tick, "subfluxo_executado", objeto_id=objeto.Id, subobjeto_id=novo.Id, executor_id=executor.Uid)
+            elif tipo_sub in {"area", "zona"}:
+                novo = _criar_subobjeto(fluxo_sub, indice)
+                objetos_ativos.append({"objeto": novo, "executor": executor, "jogada": jogada, "spec": spec, "consumir_pendencia": False})
+                self._log_evento(log, tick, "subfluxo_executado", objeto_id=objeto.Id, subobjeto_id=novo.Id, executor_id=executor.Uid)
+
+    def _resolver_objeto(self, sistema: SistemaBatalha, objeto: ObjetoBatalha, executor, jogada: Dict[str, object], spec: Dict[str, object], log: Dict[str, object], tick: int, objetos_ativos: List[Dict[str, object]]) -> None:
+        tipo_fluxo = str(objeto.TipoFluxo or objeto.Subtipo or "").casefold()
+        origem_atual = tuple(objeto.Posicao)
+        if tipo_fluxo == "tiro" and self._rastreador_fluxos is not None:
+            pokemons_fluxo = self._fisica.pokemons_para_fluxo(ignorar_ids=[executor.Uid])
+            objetos_fluxo = self._fisica.objetos_estaticos()
+            avancado = self._rastreador_fluxos.avancar_projetil_um_tick(
+                objeto,
+                pokemons_fluxo,
+                objetos=objetos_fluxo,
+                ignorar_ids=[executor.Uid],
+            )
+        else:
+            avancado = self._fisica.avancar_objeto_um_tick(objeto)
+            pokemons_fluxo = []
+        origem = tuple(avancado.get("origem") or origem_atual)
+        destino = tuple(avancado.get("destino") or objeto.Posicao)
+        eventos_trace_fluxo = list(avancado.get("eventos") or [])
+        pokemon_colisoes_fluxo = {str(evento.get("alvo_id") or "") for evento in eventos_trace_fluxo if str(evento.get("tipo") or "") == "pokemon"}
+
+        elapsed = max(1, int(tick - objeto.InicioTick + 1))
         detalhe_objeto = {
             "objeto": objeto.serializar(),
             "origem": [round(origem[0], 4), round(origem[1], 4)],
             "destino": [round(destino[0], 4), round(destino[1], 4)],
         }
-        if objeto.Subtipo == "area":
+        if tipo_fluxo == "area":
             detalhe_objeto["alcance_atual"] = round(min(self._fnum(objeto.DadosExtras.get("alcance"), 3.0), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick)), 4)
-        elif objeto.Subtipo == "zona":
+        elif tipo_fluxo == "zona":
             detalhe_objeto["raio_atual"] = round(min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick)), 4)
         self._log_evento(log, tick, "objeto_movimento", executor_id=executor.Uid, detalhe=detalhe_objeto)
+
+        alvos_por_id = {str(alvo.Uid): alvo for alvo in self._alvos_padrao(sistema, executor, spec, jogada) if alvo is not None and not alvo.ForaDeCombate}
+        impactos_processados: set[tuple[str, float, float]] = set()
+        if tipo_fluxo == "tiro":
+            for evento_fluxo in eventos_trace_fluxo:
+                if str(evento_fluxo.get("tipo") or "") != "pokemon":
+                    continue
+                alvo_id = str(evento_fluxo.get("alvo_id") or "")
+                alvo = alvos_por_id.get(alvo_id)
+                if alvo is None:
+                    continue
+                ponto = evento_fluxo.get("ponto") or [destino[0], destino[1]]
+                chave = (alvo_id, round(float(ponto[0]), 3), round(float(ponto[1]), 3))
+                if chave in impactos_processados:
+                    continue
+                impactos_processados.add(chave)
+                fluxo_impacto = dict(objeto.Fluxo or {})
+                fluxo_impacto["multiplicador_dano_atual"] = float(evento_fluxo.get("multiplicador_dano_no_impacto", objeto.MultiplicadorDanoAtual))
+                fluxo_impacto["multiplicador_dano_por_tile_movido"] = float(objeto.MultiplicadorDanoPorTileMovido)
+                fluxo_impacto["distancia_percorrida"] = float(evento_fluxo.get("distancia_percorrida_no_impacto", objeto.DistanciaPercorrida))
+                acertou = self._executar_impacto(sistema, executor, alvo, jogada, spec, fluxo_impacto, log, tick)
+                if not acertou:
+                    continue
+                self._log_evento(log, tick, "projetil_colidiu_pokemon", objeto_id=objeto.Id, executor_id=executor.Uid, alvo_id=alvo.Uid, posicao=[round(float(ponto[0]), 4), round(float(ponto[1]), 4)], multiplicador_dano=float(objeto.MultiplicadorDanoAtual))
+                dir_evento = evento_fluxo.get("direcao_no_impacto") or objeto.Direcao
+                mult_evento = evento_fluxo.get("multiplicador_dano_no_impacto", objeto.MultiplicadorDanoAtual)
+                self._executar_subfluxos(
+                    sistema,
+                    executor,
+                    jogada,
+                    spec,
+                    objeto,
+                    (float(ponto[0]), float(ponto[1])),
+                    tick,
+                    log,
+                    objetos_ativos,
+                    direcao_impacto=(float(dir_evento[0]), float(dir_evento[1])),
+                    multiplicador_impacto=float(mult_evento),
+                )
 
         for alvo in self._alvos_padrao(sistema, executor, spec, jogada):
             if alvo is None or alvo.ForaDeCombate:
                 continue
             if alvo.Uid == executor.Uid and not objeto.AtingeSiMesmo:
                 continue
+            if tipo_fluxo == "tiro":
+                continue
             if alvo.Uid in objeto.AlvosAtingidos:
                 continue
 
-            atingiu = self._objeto_atinge_alvo_por_fluxo(
-                objeto,
-                executor,
-                alvo,
-                origem,
-                destino,
-                elapsed,
-                paredes=paredes_fluxo,
-                pokemons=pokemons_fluxo,
-            )
-            if atingiu is None:
-                atingiu = False
-                if objeto.Subtipo == "tiro":
-                    atingiu = self._fisica.segmento_intersecta_circulo(origem, destino, alvo.Posicao, alvo.RaioColisao + objeto.Raio)
-                elif objeto.Subtipo == "area":
-                    alcance_atual = min(self._fnum(objeto.DadosExtras.get("alcance"), 3.0), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
-                    origem_cone = tuple(objeto.DadosExtras.get("origem_execucao") or executor.Posicao)
-                    atingiu = self._fisica.pokemon_em_cone(alvo, origem_cone, objeto.Direcao, alcance_atual, self._fnum(objeto.DadosExtras.get("largura_teto"), 50.0))
-                elif objeto.Subtipo == "zona":
-                    raio_atual = min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
-                    atingiu = self._fisica.circulos_colidem(objeto.Posicao, raio_atual, alvo.Posicao, alvo.RaioColisao)
+            atingiu = False
+            if tipo_fluxo == "area":
+                origem_area = tuple(objeto.DadosExtras.get("origem_execucao") or executor.Posicao)
+                atingiu = self._rastreador_fluxos.alvo_atingido_area(objeto, tuple(alvo.Posicao), float(alvo.RaioColisao), origem_area, elapsed)
+            elif tipo_fluxo == "zona":
+                atingiu = self._rastreador_fluxos.alvo_atingido_zona(objeto, tuple(alvo.Posicao), float(alvo.RaioColisao), elapsed)
             if not atingiu and str(alvo.Uid) in pokemon_colisoes_fluxo:
                 atingiu = True
-
             if not atingiu:
                 continue
-            objeto.AlvosAtingidos.add(alvo.Uid)
-            acertou = self._executar_impacto(sistema, executor, alvo, jogada, spec, objeto.Fluxo, log, tick)
+
+            fluxo_impacto = dict(objeto.Fluxo or {})
+            fluxo_impacto["multiplicador_dano_atual"] = float(objeto.MultiplicadorDanoAtual)
+            fluxo_impacto["multiplicador_dano_por_tile_movido"] = float(objeto.MultiplicadorDanoPorTileMovido)
+            fluxo_impacto["distancia_percorrida"] = float(objeto.DistanciaPercorrida)
+            acertou = self._executar_impacto(sistema, executor, alvo, jogada, spec, fluxo_impacto, log, tick)
             if not acertou:
                 continue
+            objeto.AlvosAtingidos.add(alvo.Uid)
+            self._log_evento(log, tick, "projetil_colidiu_pokemon", objeto_id=objeto.Id, executor_id=executor.Uid, alvo_id=alvo.Uid, posicao=[round(destino[0], 4), round(destino[1], 4)], multiplicador_dano=float(objeto.MultiplicadorDanoAtual))
 
-        if objeto.Subtipo == "tiro":
-            ricochetes_log_restante = int(objeto.RicochetesRestantes)
+        if tipo_fluxo == "tiro":
             for evento_fluxo in eventos_trace_fluxo:
-                normal = evento_fluxo.get("normal")
-                normal_lista = [
-                    round(float(getattr(normal, "x", 0.0)), 4),
-                    round(float(getattr(normal, "y", 0.0)), 4),
-                ]
-                if not bool(evento_fluxo.get("ricochete")):
-                    if str(evento_fluxo.get("tipo") or "") == "pokemon" and not objeto.AtravessaPokemons:
-                        objeto.Ativo = False
-                    elif str(evento_fluxo.get("tipo") or "") == "wall" and not objeto.AtravessaObjetos:
-                        objeto.Ativo = False
-                    continue
-                ricochetes_log_restante = max(0, ricochetes_log_restante - 1)
-                if str(evento_fluxo.get("tipo") or "") == "pokemon":
-                    self._log_evento(
-                        log,
+                tipo_evento = str(evento_fluxo.get("tipo") or "")
+                if tipo_evento == "parede":
+                    self._log_evento(log, tick, "projetil_colidiu_objeto", objeto_id=objeto.Id, executor_id=executor.Uid, posicao=evento_fluxo.get("ponto"), normal=evento_fluxo.get("normal"))
+                if bool(evento_fluxo.get("ricochete")):
+                    self._log_evento(log, tick, "projetil_ricocheteou", objeto_id=objeto.Id, executor_id=executor.Uid, alvo_id=str(evento_fluxo.get("alvo_id") or ""), normal=evento_fluxo.get("normal"), ricochets_restantes=int(objeto.RicochetesRestantes), alcance_restante=round(float(objeto.AlcanceRestante), 4))
+                if bool(evento_fluxo.get("atravessou")):
+                    self._log_evento(log, tick, "projetil_atravessou", objeto_id=objeto.Id, executor_id=executor.Uid, alvo_id=str(evento_fluxo.get("alvo_id") or ""), atravessadas_restantes=int(objeto.AtravessadasRestantes))
+                if tipo_evento in {"parede", "objeto"}:
+                    ponto = evento_fluxo.get("ponto") or [destino[0], destino[1]]
+                    dir_evento = evento_fluxo.get("direcao_no_impacto") or objeto.Direcao
+                    mult_evento = evento_fluxo.get("multiplicador_dano_no_impacto", objeto.MultiplicadorDanoAtual)
+                    self._executar_subfluxos(
+                        sistema,
+                        executor,
+                        jogada,
+                        spec,
+                        objeto,
+                        (float(ponto[0]), float(ponto[1])),
                         tick,
-                        "ricochete_pokemon",
-                        objeto_id=objeto.Id,
-                        alvo_id=str(evento_fluxo.get("pokemon_id") or ""),
-                        normal=normal_lista,
-                        restante=ricochetes_log_restante,
-                    )
-                else:
-                    self._log_evento(
                         log,
-                        tick,
-                        "ricochete_campo",
-                        objeto_id=objeto.Id,
-                        normal=normal_lista,
-                        restante=ricochetes_log_restante,
+                        objetos_ativos,
+                        direcao_impacto=(float(dir_evento[0]), float(dir_evento[1])),
+                        multiplicador_impacto=float(mult_evento),
                     )
-            if isinstance(trace_fluxo, dict):
-                objeto.RicochetesRestantes = int(trace_fluxo.get("ricochetes_restantes", objeto.RicochetesRestantes))
-            for estatico in self._fisica.objetos_estaticos():
-                if not self._fisica.segmento_intersecta_circulo(origem, destino, tuple(estatico.get("posicao") or (0.0, 0.0)), float(estatico.get("raio") or 0.6) + objeto.Raio):
-                    continue
-                if objeto.AtravessaObjetos:
-                    break
-                if objeto.RicochetesRestantes > 0 and bool(objeto.Fluxo.get("ricocheteia_objetos", objeto.Fluxo.get("ricocheteia_paredes", False))):
-                    normal = self._fisica._normalizar(self._fisica._sub(objeto.Posicao, tuple(estatico.get("posicao") or (0.0, 0.0))))
-                    objeto.Direcao = self._fisica.refletir_vetor(objeto.Direcao, normal)
-                    objeto.RicochetesRestantes -= 1
-                    self._log_evento(log, tick, "ricochete", objeto_id=objeto.Id, normal=[round(normal[0], 4), round(normal[1], 4)], restante=int(objeto.RicochetesRestantes))
-                else:
-                    objeto.Ativo = False
-                break
+
+        if not objeto.Ativo:
+            if objeto.AlcanceRestante <= 0.0:
+                self._log_evento(log, tick, "projetil_expirou_alcance", objeto_id=objeto.Id, executor_id=executor.Uid)
+            else:
+                self._log_evento(log, tick, "projetil_desativado", objeto_id=objeto.Id, executor_id=executor.Uid, alcance_restante=round(float(objeto.AlcanceRestante), 4))
 
         if elapsed >= int(objeto.DuracaoTicks):
             objeto.Ativo = False
-
-    def _objeto_atinge_alvo_por_fluxo(
-        self,
-        objeto: ObjetoBatalha,
-        executor,
-        alvo,
-        origem,
-        destino,
-        elapsed: int,
-        *,
-        paredes=None,
-        pokemons=None,
-    ) -> bool | None:
-        fluxo = dict(objeto.Fluxo or {})
-        if not fluxo:
-            return None
-        source_radius_tiles = max(0.1, float(getattr(executor, "RaioColisao", 0.75) or 0.75))
-        subtipo = str(objeto.Subtipo or "").strip().casefold()
-
-        if subtipo == "tiro":
-            alcance_tick = math.hypot(float(destino[0]) - float(origem[0]), float(destino[1]) - float(origem[1]))
-            return self._leitor_fluxos.flow_contains_target(
-                fluxo,
-                origem,
-                destino,
-                alvo.Posicao,
-                float(alvo.RaioColisao),
-                tile_px=1.0,
-                source_radius_tiles=source_radius_tiles,
-                paredes=paredes,
-                pokemons=pokemons,
-                override_range_tiles=alcance_tick,
-                override_ricochets=objeto.RicochetesRestantes,
-            )
-
-        if subtipo == "area":
-            alcance_atual = min(self._fnum(objeto.DadosExtras.get("alcance"), 3.0), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
-            origem_execucao = tuple(objeto.DadosExtras.get("origem_execucao") or executor.Posicao)
-            fim_area = (
-                float(origem_execucao[0]) + float(objeto.Direcao[0]) * float(alcance_atual),
-                float(origem_execucao[1]) + float(objeto.Direcao[1]) * float(alcance_atual),
-            )
-            return self._leitor_fluxos.flow_contains_target(
-                fluxo,
-                origem_execucao,
-                fim_area,
-                alvo.Posicao,
-                float(alvo.RaioColisao),
-                tile_px=1.0,
-                source_radius_tiles=source_radius_tiles,
-                paredes=paredes,
-                pokemons=pokemons,
-                override_range_tiles=alcance_atual,
-                override_ricochets=objeto.RicochetesRestantes,
-            )
-
-        if subtipo == "zona":
-            raio_atual = min(self._fnum(objeto.DadosExtras.get("raio_max"), 1.25), float(elapsed) * max(0.1, objeto.VelocidadeTilesTick))
-            origem_zona = tuple(objeto.Posicao)
-            fim_zona = (
-                float(origem_zona[0]) + float(objeto.Direcao[0]),
-                float(origem_zona[1]) + float(objeto.Direcao[1]),
-            )
-            return self._leitor_fluxos.flow_contains_target(
-                fluxo,
-                origem_zona,
-                fim_zona,
-                alvo.Posicao,
-                float(alvo.RaioColisao),
-                tile_px=1.0,
-                source_radius_tiles=source_radius_tiles,
-                paredes=paredes,
-                pokemons=pokemons,
-                override_range_tiles=raio_atual,
-                override_circle_radius_tiles=raio_atual,
-                override_ricochets=objeto.RicochetesRestantes,
-            )
-
-        return None
 
     def _criar_movimento_impulso(self, pokemon, origem: object, destino: object, velocidade: object, *, causa: str, colidiu_com: str) -> Dict[str, object]:
         origem_t = tuple(origem) if isinstance(origem, (list, tuple)) and len(origem) == 2 else tuple(pokemon.Posicao)
@@ -1462,6 +1455,7 @@ class LeitorJogadas:
 
         self._sistema_aux = sistema
         self._fisica = SimuladorFisica(sistema)
+        self._rastreador_fluxos = RastreadorFluxos(self._fisica.limites_fluxo())
         for pokemon in sistema.listar_pokemons():
             pokemon.Verifica()
 
@@ -1608,11 +1602,22 @@ class LeitorJogadas:
 
                 if estilo in {"tiro", "area", "zona"}:
                     subfluxos = list(spec.get("subfluxos") or [self._flow_principal(spec)])
-                    item["pendencias_execucao"] = max(1, len(subfluxos))
+                    total_criados = 0
                     for indice, fluxo in enumerate(subfluxos):
-                        objeto = self._criar_objeto_fluxo(executor, spec, item, fluxo, tick, indice)
-                        objetos_ativos.append({"objeto": objeto, "executor": executor, "jogada": item, "spec": spec})
-                        self._log_evento(log, tick, "objeto_criado", executor_id=executor.Uid, detalhe=objeto.serializar())
+                        fluxo_base = dict(fluxo)
+                        quantidade = max(1, int(self._fnum(fluxo_base.get("quantidade_tiros", 1), 1))) if str(fluxo_base.get("tipo_fluxo") or estilo).casefold() == "tiro" else 1
+                        abertura = float(fluxo_base.get("angulo_abertura_tiros", 0.0) or 0.0)
+                        for i_tiro in range(quantidade):
+                            objeto = self._criar_objeto_fluxo(executor, spec, item, fluxo_base, tick, (indice * 100) + i_tiro)
+                            if quantidade > 1 and str(fluxo_base.get("tipo_fluxo") or estilo).casefold() == "tiro":
+                                offset = (i_tiro - ((quantidade - 1) / 2.0))
+                                ang = math.radians(offset * (abertura / max(1.0, quantidade - 1)))
+                                dx, dy = objeto.Direcao
+                                objeto.Direcao = (math.cos(ang) * dx - math.sin(ang) * dy, math.sin(ang) * dx + math.cos(ang) * dy)
+                            objetos_ativos.append({"objeto": objeto, "executor": executor, "jogada": item, "spec": spec})
+                            self._log_evento(log, tick, "projetil_criado", executor_id=executor.Uid, detalhe=objeto.serializar())
+                            total_criados += 1
+                    item["pendencias_execucao"] = max(1, total_criados)
                     continue
 
             for movimento in list(ativos_movimento):
@@ -1628,13 +1633,15 @@ class LeitorJogadas:
                 if not objeto.Ativo:
                     objetos_ativos.remove(objeto_pacote)
                     self._log_evento(log, tick, "objeto_finalizado", executor_id=objeto_pacote["executor"].Uid, detalhe={"objeto": objeto.serializar()})
-                    self._consumir_pendencia_jogada(sistema, objeto_pacote["jogada"], objeto_pacote["spec"], log, tick, "objeto_finalizado")
+                    if bool(objeto_pacote.get("consumir_pendencia", True)):
+                        self._consumir_pendencia_jogada(sistema, objeto_pacote["jogada"], objeto_pacote["spec"], log, tick, "objeto_finalizado")
                     continue
-                self._resolver_objeto(sistema, objeto, objeto_pacote["executor"], objeto_pacote["jogada"], objeto_pacote["spec"], log, tick)
+                self._resolver_objeto(sistema, objeto, objeto_pacote["executor"], objeto_pacote["jogada"], objeto_pacote["spec"], log, tick, objetos_ativos)
                 if not objeto.Ativo:
                     objetos_ativos.remove(objeto_pacote)
                     self._log_evento(log, tick, "objeto_finalizado", executor_id=objeto_pacote["executor"].Uid, detalhe={"objeto": objeto.serializar()})
-                    self._consumir_pendencia_jogada(sistema, objeto_pacote["jogada"], objeto_pacote["spec"], log, tick, "objeto_finalizado")
+                    if bool(objeto_pacote.get("consumir_pendencia", True)):
+                        self._consumir_pendencia_jogada(sistema, objeto_pacote["jogada"], objeto_pacote["spec"], log, tick, "objeto_finalizado")
 
             for pacote in [p for p in list(acertos_alvo) if int(p.get("tick", 0)) == tick]:
                 acertos_alvo.remove(pacote)

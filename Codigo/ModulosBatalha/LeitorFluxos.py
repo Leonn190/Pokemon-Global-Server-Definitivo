@@ -326,11 +326,35 @@ class LeitorFluxos:
 
     def _fluxos_topo(self, pacote: Dict[str, object]) -> List[Dict[str, object]]:
         fluxos = [dict(item) for item in list(pacote.get("fluxos") or []) if isinstance(item, dict)]
-        if fluxos:
-            return fluxos
-        if any(chave in pacote for chave in ("alcance", "largura_base", "largura_teto", "circular", "raio")):
-            return [dict(pacote)]
-        return []
+        if not fluxos and isinstance(pacote, dict) and pacote.get("tipo_fluxo"):
+            fluxos = [dict(pacote)]
+        if not fluxos:
+            return []
+        normalizados: List[Dict[str, object]] = []
+        for fluxo in fluxos:
+            tipo = str(fluxo.get("tipo_fluxo") or "").strip().casefold()
+            if tipo not in {"tiro", "area", "zona"}:
+                continue
+            atual = dict(fluxo)
+            atual["tipo_fluxo"] = tipo
+            if tipo == "tiro":
+                diametro = self._safe_float(atual.get("diametro_projetil"), 0.5)
+                atual["raio"] = max(0.05, diametro * 0.5)
+                atual["circular"] = True
+                atual["centralizar"] = False
+            elif tipo == "zona":
+                atual["circular"] = True
+                atual["centralizar"] = True
+            else:
+                atual["circular"] = False
+                largura_base = atual.get("largura_base")
+                largura_teto = atual.get("largura_teto")
+                if largura_base is None or largura_teto is None:
+                    largura = self._safe_float(atual.get("largura"), 2.0)
+                    atual["largura_teto"] = largura
+                    atual["largura_base"] = largura
+            normalizados.append(atual)
+        return normalizados
 
     def compute_effective_range_tiles(
         self,

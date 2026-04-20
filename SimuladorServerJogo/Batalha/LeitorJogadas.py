@@ -4,7 +4,7 @@ import math
 import re
 from typing import Dict, List
 
-from Codigo.ModulosBatalha.LeitorFluxos import LeitorFluxos
+from SimuladorServerJogo.Batalha.RastreadorFluxos import RastreadorFluxos
 from SimuladorServerJogo.Logica.Executes.FuncoesAtaques import executar_ponto_ataque
 from SimuladorServerJogo.Batalha.FraquezasResistencias import modificador_tipo as modificador_tipo_csv
 from SimuladorServerJogo.Batalha.IA.BotBatalha import BotBatalha
@@ -25,7 +25,7 @@ class LeitorJogadas:
         self._fisica: SimuladorFisica | None = None
         self._sistema_aux: SistemaBatalha | None = None
         self._bot_ia = BotBatalha()
-        self._leitor_fluxos = LeitorFluxos()
+        self._leitor_fluxos = RastreadorFluxos()
         self._regras_batalha = carregar_regras_batalha()
 
     @staticmethod

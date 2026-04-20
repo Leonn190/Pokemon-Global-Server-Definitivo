@@ -38,6 +38,9 @@ class ControladorFluxos:
     def _todos_pokemons(self):
         return list(getattr(self._controlador, "PokemonsAliados", [])) + list(getattr(self._controlador, "PokemonsInimigos", []))
 
+    def _modo_teste_ativo(self) -> bool:
+        return bool(getattr(self._controlador, "modo_teste_ativo", lambda: False)())
+
     def _pokemon_por_id(self) -> Dict[str, object]:
         return {self._id_combatente(pokemon): pokemon for pokemon in self._todos_pokemons()}
 
@@ -161,19 +164,19 @@ class ControladorFluxos:
             "time": (time_raw or "").upper() or None,
         }
 
-    def _selecionado_aliado(self):
+    def _selecionado_controlavel(self):
         selecionado = getattr(self._controlador, "PokemonSelecionado", None)
         if selecionado is None:
             return None
-        if not getattr(self._controlador, "pokemon_eh_aliado", lambda _p: False)(selecionado):
-            return None
-        if bool(getattr(selecionado, "EmReserva", False)):
+        if not getattr(self._controlador, "pokemon_eh_controlavel", lambda _p: False)(selecionado):
             return None
         return selecionado
 
     def _disponivel(self, pokemon) -> float:
         if pokemon is None:
             return 0.0
+        if self._modo_teste_ativo():
+            return float("inf")
         reservado = self._montador.custo_reservado(self._id_combatente(pokemon))
         return max(0.0, float(getattr(pokemon, "Energia", 0.0)) - reservado)
 
@@ -265,7 +268,7 @@ class ControladorFluxos:
         }
 
     def _garantir_preparacao_contextual(self) -> None:
-        executor = self._selecionado_aliado()
+        executor = self._selecionado_controlavel()
         assinatura = self._assinatura(executor, self._ataque_atual)
         if assinatura == self._assinatura_contexto:
             if self._preparacao is not None and self._preparacao.get("executor") is executor:
@@ -360,7 +363,7 @@ class ControladorFluxos:
     def processar_eventos(self, eventos: List[pygame.event.Event], ficha, hud_rects: List[pygame.Rect] | None = None) -> None:
         self._garantir_preparacao_contextual()
         rects = [pygame.Rect(rect) for rect in (hud_rects or []) if isinstance(rect, pygame.Rect)]
-        executor = self._selecionado_aliado()
+        executor = self._selecionado_controlavel()
 
         for evento in eventos or []:
             if evento.type == pygame.MOUSEMOTION:
@@ -422,7 +425,7 @@ class ControladorFluxos:
                 self._clique_arrasto = None
 
     def preparar(self, ficha) -> None:
-        selecionado = self._selecionado_aliado()
+        selecionado = self._selecionado_controlavel()
         if selecionado is None:
             return
         ataque = ficha.ataque_selecionado() if ficha else self._ataque_atual
@@ -511,7 +514,7 @@ class ControladorFluxos:
         if self._jogada_selecionada() is not None:
             return "Editar", True
 
-        selecionado = self._selecionado_aliado()
+        selecionado = self._selecionado_controlavel()
         ataque = ficha.ataque_selecionado() if ficha else self._ataque_atual
         if selecionado is None:
             return "Preparar", False

@@ -126,6 +126,19 @@ class ControladorBatalha:
     def pokemon_eh_reserva_aliada(self, pokemon) -> bool:
         return pokemon in self.PokemonsReservaAliadosObj
 
+    def modo_teste_ativo(self) -> bool:
+        resultado = self.resultado_batalha_atual()
+        if isinstance(resultado, dict) and "modo_teste" in resultado:
+            return bool(resultado.get("modo_teste"))
+        return bool(self.Contexto.get("modo_teste", False))
+
+    def pokemon_eh_controlavel(self, pokemon) -> bool:
+        if pokemon is None or bool(getattr(pokemon, "EmReserva", False)):
+            return False
+        if self.pokemon_eh_aliado(pokemon):
+            return True
+        return bool(self.modo_teste_ativo() and pokemon in self.PokemonsInimigos)
+
     def definir_provedor_reservas(self, provedor) -> None:
         self._provedor_reservas = provedor
 
@@ -234,6 +247,7 @@ class ControladorBatalha:
     def _aplicar_estado_servidor(self, resultado: Dict[str, object], log: Dict[str, object] | None = None) -> None:
         self.SistemaBatalha.atualizar(dados_servidor=resultado, log_servidor=log if isinstance(log, dict) else None)
         self._rodada_atual = max(1, int(self.SistemaBatalha.TurnoAtual or self._rodada_atual))
+        self.Contexto["modo_teste"] = bool(resultado.get("modo_teste", self.Contexto.get("modo_teste", False)))
 
         selecionado_uid = self._uid_pokemon(self.PokemonSelecionado)
         existentes = self._mapa_existentes()

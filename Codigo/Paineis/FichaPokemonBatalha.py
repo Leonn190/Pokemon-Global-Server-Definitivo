@@ -59,6 +59,7 @@ class FichaPokemonBatalha:
         self._ataque_selecionado: dict | None = None
         self._previsao_consumo: float = 0.0
         self._previsao_pode: bool = True
+        self._permitir_controle_inimigo: bool = False
         self._hover_atributo: tuple[str, str] | None = None
         self._hover_ataque: tuple[dict, pygame.Rect] | None = None
         self._hover_acao: tuple[str, str] | None = None
@@ -318,7 +319,8 @@ class FichaPokemonBatalha:
             self._ataque_selecionado = None
         total = len(habilidades)
         self._sincronizar_botoes_habilidade(total)
-        pode_interagir = str(getattr(pokemon, "Lado", "")) == "jogador" and not bool(getattr(pokemon, "EmReserva", False))
+        lado = str(getattr(pokemon, "Lado", ""))
+        pode_interagir = (lado == "jogador" or bool(self._permitir_controle_inimigo and lado == "inimigo")) and not bool(getattr(pokemon, "EmReserva", False))
 
         area_interna = area.inflate(-padding * 2, -padding * 2)
         area_skills = pygame.Rect(area_interna.x, area_interna.y, area_interna.width, area_interna.height)
@@ -580,7 +582,9 @@ class FichaPokemonBatalha:
         return self._ataque_selecionado
 
     def selecionar_ataque_indice(self, indice: int, pokemon=None):
-        if pokemon is None or str(getattr(pokemon, "Lado", "")) != "jogador" or bool(getattr(pokemon, "EmReserva", False)):
+        lado = str(getattr(pokemon, "Lado", "")) if pokemon is not None else ""
+        pode_controlar = lado == "jogador" or bool(self._permitir_controle_inimigo and lado == "inimigo")
+        if pokemon is None or not pode_controlar or bool(getattr(pokemon, "EmReserva", False)):
             return None
         ataques = list(getattr(pokemon, "obter_ataques_ficha", lambda limite=None: getattr(pokemon, "ListaAtaques", []))(5) or [])[:5]
         idx = int(indice)
@@ -609,6 +613,9 @@ class FichaPokemonBatalha:
     def atualizar_previsao(self, custo: float, pode: bool) -> None:
         self._previsao_consumo = float(custo)
         self._previsao_pode = bool(pode)
+
+    def definir_controle_inimigo(self, ativo: bool) -> None:
+        self._permitir_controle_inimigo = bool(ativo)
 
     def _pokemon_em_contexto(self):
         return getattr(self, "_pokemon_render_atual", None)

@@ -1438,6 +1438,8 @@ class LeitorJogadas:
                 self._consumir_pendencia_jogada(sistema, movimento["jogada"], spec, log, tick, motivo)
 
     def _gerar_jogadas_ia(self, sistema: SistemaBatalha, client_id: str, log: Dict[str, object]) -> List[Dict[str, object]]:
+        if bool(getattr(sistema, "ModoTeste", False)):
+            return []
         if sistema.Tipo in {"player", "pvp"}:
             return []
         lado_cliente = sistema.lado_do_cliente(client_id)
@@ -1518,9 +1520,18 @@ class LeitorJogadas:
                 spec = item["spec"]
                 ataque_nome = spec.get("nome")
                 custo_base = self._fnum(item.get("custo_base"), self._fnum(item.get("custo"), 0.0))
-                custo_planejado = self._custo_jogada_multiplas_acoes(item.get("indice_executor_turno", 0), custo_base)
+                if bool(getattr(sistema, "ModoTeste", False)):
+                    custo_planejado = 0.0
+                    try:
+                        executor.Energia = max(float(getattr(executor, "Energia", 0.0) or 0.0), float(getattr(executor, "EnergiaMax", 0.0) or 0.0))
+                    except (TypeError, ValueError):
+                        pass
+                    if isinstance(getattr(executor, "Estado", None), dict):
+                        executor.Estado["energia_atual"] = float(getattr(executor, "Energia", 0.0) or 0.0)
+                else:
+                    custo_planejado = self._custo_jogada_multiplas_acoes(item.get("indice_executor_turno", 0), custo_base)
                 item["custo"] = custo_planejado
-                custo = executor.gastar_energia(custo_planejado)
+                custo = 0.0 if bool(getattr(sistema, "ModoTeste", False)) else executor.gastar_energia(custo_planejado)
                 self._log_evento(
                     log,
                     tick,

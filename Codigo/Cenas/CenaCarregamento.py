@@ -1,4 +1,5 @@
 import pygame
+import threading
 
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
 from Codigo.ModulosGerais.EfeitosTela import Clarear, Escurecer
@@ -21,6 +22,10 @@ class CenaCarregamento:
         self._botao_cancelar = None
         self._tempo_espera_mundo = 0.0
         self._fallback_timeout_disparado = False
+        self._thread_preparo_mundo = None
+        self._preparo_mundo_iniciado = False
+        self._preparo_mundo_erro = None
+        JOGO.INFO.pop("MundoPreparadoTransicao", None)
 
         self._carregar_frames()
         self._montar_layout(JOGO)
@@ -104,8 +109,13 @@ class CenaCarregamento:
                 self._atualizar_frame_escalado()
 
         if JOGO.INFO.get("ServerSelecionado") and JOGO.INFO.get("PlayerDadosServer") is not None:
+            self._iniciar_preparo_mundo(JOGO)
             self._tempo_espera_mundo += max(0.0, float(dt))
-            if self._tempo_espera_mundo >= 12.0 and not isinstance(JOGO.INFO.get("MundoPreparadoTransicao"), dict):
+            if (
+                self._preparo_mundo_iniciado
+                and self._tempo_espera_mundo >= 12.0
+                and not isinstance(JOGO.INFO.get("MundoPreparadoTransicao"), dict)
+            ):
                 self._fallback_timeout_disparado = True
                 JOGO.INFO["MundoPreparadoTransicao"] = {
                     "regras_mundo": {},
@@ -113,10 +123,32 @@ class CenaCarregamento:
                     "mapa_bootstrap": None,
                     "erros": ["timeout_preparacao_mundo"],
                 }
-                print("[CenaCarregamento] fallback timeout_preparacao_mundo aplicado.")
-            pronto_preparo = bool(isinstance(JOGO.INFO.get("MundoPreparadoTransicao"), dict))
-            if self._tempo_espera_mundo >= 2.0 and pronto_preparo:
+            if isinstance(JOGO.INFO.get("MundoPreparadoTransicao"), dict):
                 JOGO.CenaAlvo = "Mundo"
+
+    def _iniciar_preparo_mundo(self, JOGO):
+        if self._preparo_mundo_iniciado:
+            return
+        self._preparo_mundo_iniciado = True
+
+        def _worker():
+            try:
+                JOGO.Cenas["Mundo"].PrepararTransicaoAssincrona(JOGO)
+            except Exception as exc:
+                self._preparo_mundo_erro = str(exc)
+                JOGO.INFO["MundoPreparadoTransicao"] = {
+                    "regras_mundo": {},
+                    "bootstrap": None,
+                    "mapa_bootstrap": None,
+                    "erros": [f"erro_preparacao_mundo:{exc}"],
+                }
+
+        self._thread_preparo_mundo = threading.Thread(
+            target=_worker,
+            name="PreparacaoMundoCenaCarregamento",
+            daemon=True,
+        )
+        self._thread_preparo_mundo.start()
 
     def tela_atual_eh_complexa(self) -> bool:
         return False

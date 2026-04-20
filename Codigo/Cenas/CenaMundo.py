@@ -36,7 +36,6 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mund
 
 class CenaMundo:
     def PrepararTransicaoAssincrona(self, JOGO) -> None:
-        print("[CenaMundo] PrepararTransicaoAssincrona: inicio")
         preparado = {
             "regras_mundo": {},
             "bootstrap": None,
@@ -79,25 +78,20 @@ class CenaMundo:
 
                 t = threading.Thread(target=_worker_bootstrap_mapa, daemon=True)
                 t.start()
-                t.join(timeout=2.5)
+                t.join(timeout=6.0)
                 if t.is_alive():
                     mapa_bootstrap = {"status": "erro", "mensagem": "timeout_bootstrap_mapa"}
                     preparado["erros"].append("timeout_bootstrap_mapa")
-                    print("[CenaMundo] mapa_bootstrap timeout; seguindo sem bloquear mundo.")
                 else:
                     mapa_bootstrap = resultado.get("payload")
-                    if isinstance(mapa_bootstrap, dict) and str(mapa_bootstrap.get("status", "")).lower() == "erro":
-                        print(f"[CenaMundo] mapa_bootstrap erro: {mapa_bootstrap.get('mensagem', 'desconhecido')}")
             except Exception as exc:
                 mapa_bootstrap = {"status": "erro", "mensagem": str(exc)}
                 preparado["erros"].append(f"falha_bootstrap_mapa:{exc}")
-                print(f"[CenaMundo] erro em mapa_bootstrap: {exc}")
 
         preparado["regras_mundo"] = dict(regras_mundo or {})
         preparado["bootstrap"] = bootstrap if isinstance(bootstrap, dict) else None
         preparado["mapa_bootstrap"] = mapa_bootstrap if isinstance(mapa_bootstrap, dict) else None
         JOGO.INFO["MundoPreparadoTransicao"] = preparado
-        print("[CenaMundo] PrepararTransicaoAssincrona: fim")
 
     def _aplicar_sincronizacao_pos_batalha_pendente(self, jogo, link: str | None) -> None:
         pendente = jogo.INFO.get("SincronizacaoPosBatalhaMundo") if isinstance(jogo.INFO.get("SincronizacaoPosBatalhaMundo"), dict) else None

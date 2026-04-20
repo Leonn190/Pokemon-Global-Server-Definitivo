@@ -48,7 +48,6 @@ class ServicoMapaMundo:
             self._aplicar_bootstrap(resp)
             self._pronto = True
         else:
-            print("[ServicoMapaMundo] iniciou pendente (bootstrap lazy).")
             with self._worker_lock:
                 self._request_bootstrap = True
         with self._lock:
@@ -134,7 +133,6 @@ class ServicoMapaMundo:
         if str(resp.get("status", "")) == "ok":
             self._aplicar_bootstrap(resp)
             self._pronto = True
-            print("[ServicoMapaMundo] bootstrap lazy ok.")
             return
         print(f"[ServicoMapaMundo] bootstrap lazy erro: {resp.get('mensagem', 'desconhecido')}")
 

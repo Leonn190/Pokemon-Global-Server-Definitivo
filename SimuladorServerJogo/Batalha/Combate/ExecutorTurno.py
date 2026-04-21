@@ -79,7 +79,7 @@ class ExecutorTurno:
 
                 eventos_colisao = [e for e in resultado_forma.eventos if str(getattr(e, "alvo_id", "") or "") == alvo.Uid]
                 for colisao in eventos_colisao:
-                    log.adicionar_historico("colisao_detectada", executor_id=executor.Uid, alvo_id=alvo.Uid, tipo=str(getattr(colisao, "tipo", "")))
+                    log.adicionar_historico("colisao_detectada", executor_id=executor.Uid, alvo_id=alvo.Uid, tipo_colisao=str(getattr(colisao, "tipo", "")))
                     dano_colisao = calcular_dano_colisao(executor, alvo, colisao, contexto=contexto_batalha)
                     aplicacao_colisao = self.aplicador_efeitos.aplicar_resultado_dano(dano_colisao, {"atacante": executor, "alvo": alvo})
                     eventos.append({"tipo": "dano_colisao", "executor_id": executor.Uid, "alvo_id": alvo.Uid, "valor": float(dano_colisao.dano_vida)})

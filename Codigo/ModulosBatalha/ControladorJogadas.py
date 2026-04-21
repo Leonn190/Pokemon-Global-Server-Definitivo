@@ -344,6 +344,8 @@ class ControladorJogadas:
         self._drag_origem = None
         self._drag_destino = None
         if not foi_drag or pokemon is None:
+            if pokemon is not None and self._controlador is not None and hasattr(self._controlador, "selecionar_pokemon"):
+                self._controlador.selecionar_pokemon(pokemon)
             return False
         jogada = self._montar_jogada_movimento(pokemon, self._json_seguro(origem), self._json_seguro(destino))
         adicionada, erro = self._montador.adicionar(jogada)
@@ -424,6 +426,8 @@ class ControladorJogadas:
         resposta = enviar_jogada_batalha_server(ip=ip, client_id=client_id, jogadas=jogadas, batalha_id=batalha_id)
         dbg_combate("ControladorJogadas", "retorno recebido", status=str((resposta or {}).get("status")))
         resposta_dict = resposta if isinstance(resposta, dict) else {"status": "erro"}
+        if isinstance(resposta_dict, dict) and self._controlador is not None and hasattr(self._controlador, "atualizar_estado_servidor"):
+            self._controlador.atualizar_estado_servidor(resposta_dict)
         salvou_controlador = False
         salvou_sistema = False
         if isinstance(getattr(self._controlador, "Contexto", None), dict):

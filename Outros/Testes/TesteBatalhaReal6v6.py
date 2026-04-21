@@ -228,16 +228,28 @@ class _ServidorLocalBatalha:
             else:
                 por_cliente[self._client_jogador].append(jogada)
 
-        dbg_combate("TesteBatalhaReal6v6", "split por lado", jogador=len(por_cliente[self._client_jogador]), inimigo=len(por_cliente[self._client_inimigo]))
+        dbg_combate(
+            "TesteBatalhaReal6v6",
+            "split por lado",
+            solicitante=client_resolvido,
+            jogador=len(por_cliente[self._client_jogador]),
+            inimigo=len(por_cliente[self._client_inimigo]),
+        )
+        if client_resolvido == self._client_inimigo:
+            jogadas_solicitante = por_cliente[self._client_inimigo]
+            jogadas_oponente = por_cliente[self._client_jogador]
+            cliente_oponente = self._client_jogador
+        else:
+            jogadas_solicitante = por_cliente[self._client_jogador]
+            jogadas_oponente = por_cliente[self._client_inimigo]
+            cliente_oponente = self._client_inimigo
+        sistema.adicionar_jogadas(cliente_oponente, jogadas_oponente)
+        if not jogadas_oponente:
+            dbg_combate("TesteBatalhaReal6v6", "auto-complete lado vazio", lado=cliente_oponente)
+
         respostas: List[Dict[str, object]] = []
-        resposta_jogador = self._leitor.executar_turno(sistema, client_id=self._client_jogador, jogadas=por_cliente[self._client_jogador])
-        respostas.append(resposta_jogador)
-        if not por_cliente[self._client_inimigo]:
-            dbg_combate("TesteBatalhaReal6v6", "auto-complete lado vazio", lado="inimigo")
-        resposta_inimigo = self._leitor.executar_turno(sistema, client_id=self._client_inimigo, jogadas=por_cliente[self._client_inimigo])
-        respostas.append(resposta_inimigo)
-        if not por_cliente[self._client_jogador]:
-            dbg_combate("TesteBatalhaReal6v6", "auto-complete lado vazio", lado="jogador")
+        resposta_turno = self._leitor.executar_turno(sistema, client_id=client_resolvido, jogadas=jogadas_solicitante)
+        respostas.append(resposta_turno)
         final = _mesclar_respostas_turno(respostas)
         historico = list((((final or {}).get("log") or {}).get("historico") or []))
         dbg_combate(

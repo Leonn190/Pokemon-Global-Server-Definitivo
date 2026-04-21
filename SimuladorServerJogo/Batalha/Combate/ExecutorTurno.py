@@ -88,6 +88,20 @@ class ExecutorTurno:
             resultado_forma = self.resolvedor_formas.resolver(spec, jogada, executor, corpos, contexto=contexto_batalha)
             dbg_combate("ExecutorTurno", "resultado da forma", forma=jogada.get("forma"), impactos=len(resultado_forma.impactos), eventos=len(resultado_forma.eventos))
             log.adicionar_historico("forma_resolvida", executor_id=executor.Uid, ataque=jogada.get("ataque_nome"), forma=jogada.get("forma"), impactos=len(resultado_forma.impactos), eventos_colisao=len(resultado_forma.eventos))
+            forma_jogada = str(jogada.get("forma") or "").strip().casefold()
+            if forma_jogada in {"impulso", "dash"}:
+                origem_mov = list(getattr(executor, "Posicao", (0.0, 0.0)))
+                destino_mov = None
+                for objeto in list(getattr(resultado_forma, "objetos_criados", []) or []):
+                    if str(getattr(objeto, "dono_id", "") or "") == str(executor.Uid):
+                        pos = getattr(objeto, "posicao", None)
+                        if pos is not None and hasattr(pos, "x") and hasattr(pos, "y"):
+                            destino_mov = [float(pos.x), float(pos.y)]
+                        break
+                if isinstance(destino_mov, list) and len(destino_mov) == 2:
+                    setattr(executor, "Posicao", (float(destino_mov[0]), float(destino_mov[1])))
+                    log.adicionar_historico("movimento_resolvido", executor_id=executor.Uid, origem=origem_mov, posicao=destino_mov, forma=forma_jogada)
+                    eventos.append({"tipo": "movimento", "executor_id": executor.Uid, "origem": origem_mov, "posicao": destino_mov, "forma": forma_jogada})
 
             alvos = self._resolver_alvos(jogada, resultado_forma, mapa)
             dbg_combate("ExecutorTurno", "alvos resolvidos", quantidade=len(alvos))

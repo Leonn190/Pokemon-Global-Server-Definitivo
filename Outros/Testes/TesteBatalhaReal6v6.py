@@ -207,7 +207,7 @@ class _ServidorLocalBatalha:
         **kwargs,
     ) -> Dict[str, object]:
         _ = ip
-        dbg_combate("TesteBatalhaReal6v6", "iniciar chamado", client_id=client_id)
+        dbg_combate("TesteBatalhaReal6v6", "enviar_jogadas entrada", client_id=client_id)
         client_resolvido = str(client_id or self._client_jogador)
         batalha_resolvida = str(batalha_id or kwargs.get("batalha_id_servidor") or "debug_6v6_novo_combate")
         bid = batalha_resolvida
@@ -229,15 +229,65 @@ class _ServidorLocalBatalha:
                 por_cliente[self._client_jogador].append(jogada)
 
         dbg_combate("TesteBatalhaReal6v6", "split por lado", jogador=len(por_cliente[self._client_jogador]), inimigo=len(por_cliente[self._client_inimigo]))
-        ultima_resposta: Dict[str, object] = {"status": "aguardando", "mensagem": "Aguardando jogadas"}
-        ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_jogador, jogadas=por_cliente[self._client_jogador])
+        respostas: List[Dict[str, object]] = []
+        resposta_jogador = self._leitor.executar_turno(sistema, client_id=self._client_jogador, jogadas=por_cliente[self._client_jogador])
+        respostas.append(resposta_jogador)
         if not por_cliente[self._client_inimigo]:
             dbg_combate("TesteBatalhaReal6v6", "auto-complete lado vazio", lado="inimigo")
-        ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_inimigo, jogadas=por_cliente[self._client_inimigo])
+        resposta_inimigo = self._leitor.executar_turno(sistema, client_id=self._client_inimigo, jogadas=por_cliente[self._client_inimigo])
+        respostas.append(resposta_inimigo)
         if not por_cliente[self._client_jogador]:
             dbg_combate("TesteBatalhaReal6v6", "auto-complete lado vazio", lado="jogador")
-        dbg_combate("TesteBatalhaReal6v6", "resposta final", resposta=ultima_resposta)
-        return ultima_resposta
+        final = _mesclar_respostas_turno(respostas)
+        historico = list((((final or {}).get("log") or {}).get("historico") or []))
+        dbg_combate(
+            "TesteBatalhaReal6v6",
+            "resposta final resumo",
+            status=str((final or {}).get("status")),
+            rodada=int((final or {}).get("rodada") or 0),
+            historico=len(historico),
+            eventos=len(list((final or {}).get("eventos") or [])),
+        )
+        return final
+
+
+def _mesclar_respostas_turno(respostas: List[Dict[str, object]]) -> Dict[str, object]:
+    validas = [dict(r) for r in list(respostas or []) if isinstance(r, dict)]
+    if not validas:
+        return {"status": "erro", "mensagem": "sem_respostas"}
+    base = dict(validas[-1])
+    logs = [dict(r.get("log") or {}) for r in validas if isinstance(r.get("log"), dict)]
+    eventos: List[Dict[str, object]] = []
+    for r in validas:
+        eventos.extend([dict(e) for e in list(r.get("eventos") or []) if isinstance(e, dict)])
+    log_final = {
+        "sumario": [],
+        "historico": [],
+        "resultados": [],
+        "alertas": [],
+    }
+    for log in logs:
+        for chave in ("sumario", "historico", "resultados", "alertas"):
+            log_final[chave].extend([dict(item) for item in list(log.get(chave) or []) if isinstance(item, dict)])
+    base["eventos"] = eventos
+    if logs:
+        base["log"] = log_final
+    escolhida = max(validas, key=lambda r: len(list(((r.get("log") or {}).get("historico") or [])) + list(r.get("eventos") or [])))
+    if len(list((log_final.get("historico") or []))) <= 0 and isinstance(escolhida.get("log"), dict):
+        base["log"] = dict(escolhida.get("log") or {})
+    if isinstance(escolhida.get("batalha"), dict):
+        base["batalha"] = dict(escolhida.get("batalha") or {})
+    base["status"] = str(base.get("status") or escolhida.get("status") or "ok")
+    base["rodada"] = max([int(r.get("rodada") or 0) for r in validas], default=int(base.get("rodada") or 0))
+    base["tick"] = max([int(r.get("tick") or 0) for r in validas], default=int(base.get("tick") or 0))
+    dbg_combate(
+        "TesteBatalhaReal6v6",
+        "resposta escolhida/mesclada",
+        status=base.get("status"),
+        historico=len(list(((base.get("log") or {}).get("historico") or []))),
+        eventos=len(list(base.get("eventos") or [])),
+    )
+    return base
 
 
 def _aplicar_patch_servidor_local(servidor_local: _ServidorLocalBatalha):

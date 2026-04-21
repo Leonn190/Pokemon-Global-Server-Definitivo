@@ -42,6 +42,7 @@ class ElementosHudBatalha:
         self._tempo_restante_rodada = self._tempo_total_rodada
         self._rodada_referencia = int(getattr(self._controlador, "_rodada_atual", 1) or 1) if self._controlador is not None else 1
         self._aguardando_resultado_rodada = False
+        self._ultima_resposta_turno = None
 
     def filtrar_eventos_camera(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> List[pygame.event.Event]:
         self._garantir_layout(tela)
@@ -146,6 +147,18 @@ class ElementosHudBatalha:
         self._tempo_restante_rodada = self._tempo_total_rodada
         self._aguardando_resultado_rodada = False
 
+    def _sincronizar_retorno_turno(self) -> None:
+        if self._controlador is None or not isinstance(getattr(self._controlador, "Contexto", None), dict):
+            return
+        resposta = self._controlador.Contexto.get("batalha_servidor_ultimo_envio")
+        if not isinstance(resposta, dict) or resposta is self._ultima_resposta_turno:
+            return
+        self._ultima_resposta_turno = resposta
+        status = str(resposta.get("status") or "")
+        if status in {"ok", "finalizada"}:
+            self._aguardando_resultado_rodada = False
+            dbg_combate("ElementosHudBatalha", "aguardando_resultado_rodada desligado", motivo=f"resposta:{status}")
+
     def _desenhar_overlay_fuga(self, tela: pygame.Surface) -> None:
         if self._fuga_pressao <= 0.01:
             return
@@ -176,6 +189,7 @@ class ElementosHudBatalha:
             dbg_combate("ElementosHudBatalha", "status pronto", status=status)
             if status in {"ok", "aguardando"}:
                 self._aguardando_resultado_rodada = True
+                dbg_combate("ElementosHudBatalha", "aguardando_resultado_rodada ligado", motivo=f"envio:{status}")
 
     def _atualizar_animacao_ficha(self, dt: float):
         selecionado = getattr(self._controlador, "PokemonSelecionado", None)
@@ -194,6 +208,7 @@ class ElementosHudBatalha:
         interacao_bloqueada = bool(self._aguardando_resultado_rodada or replay_ativo)
         if not interacao_bloqueada and self._controlador is not None and hasattr(self._controlador, "Jogador"):
             self._controlador.Jogador.Controle.processar_eventos(eventos or [], self._controlador, self._ficha, self._fluxos)
+        self._sincronizar_retorno_turno()
         self._sincronizar_tempo_rodada()
         self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)

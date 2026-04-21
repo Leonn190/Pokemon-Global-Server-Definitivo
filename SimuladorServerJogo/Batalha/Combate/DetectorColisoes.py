@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from SimuladorServerJogo.Batalha.Combate.DebugCombate import dbg_combate
 from SimuladorServerJogo.Batalha.Combate.MotorFisica import (
     Vetor2,
     colisao_circulo_arena,

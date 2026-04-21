@@ -63,6 +63,18 @@ class ExecutorTurno:
             executor = mapa.get(str(jogada.get("executor_id") or ""))
             if executor is None:
                 continue
+            if str(jogada.get("forma") or "") == "movimento":
+                ok_mover, motivo_mover = pode_mover(executor)
+                if not ok_mover:
+                    log.adicionar_historico("movimento_cancelado", executor_id=executor.Uid, motivo=motivo_mover)
+                    continue
+                origem = list(getattr(executor, "Posicao", (0.0, 0.0)))
+                destino = list(jogada.get("destino_mundo") or origem)
+                setattr(executor, "Posicao", (float(destino[0]), float(destino[1])))
+                log.adicionar_historico("movimento_iniciado", executor_id=executor.Uid, origem=origem, destino=destino)
+                log.adicionar_historico("movimento_resolvido", executor_id=executor.Uid, posicao=destino)
+                eventos.append({"tipo": "movimento", "executor_id": executor.Uid, "origem": origem, "posicao": destino})
+                continue
             bloqueada, motivo = self._validar_bloqueios(executor, jogada)
             if bloqueada:
                 log.adicionar_sumario("jogada_cancelada", executor_id=executor.Uid, motivo=motivo)
@@ -153,6 +165,29 @@ class ExecutorTurno:
             executor = mapa_pokemons.get(executor_id)
             if executor is None:
                 log.adicionar_alerta("jogada_sem_executor", indice=indice, executor_id=executor_id)
+                continue
+            if bool(bruto.get("tipo_movimento")) or str(bruto.get("forma") or "").strip().casefold() == "movimento":
+                saida.append(
+                    {
+                        "id": bruto.get("id", indice),
+                        "indice_entrada": indice,
+                        "executor_id": executor.Uid,
+                        "ataque_nome": "Mover",
+                        "ataque_id": "",
+                        "tipo_movimento": True,
+                        "tipo_preparo": "movimento",
+                        "forma": "movimento",
+                        "origem_mundo": bruto.get("origem_mundo") or list(getattr(executor, "Posicao", (0.0, 0.0))),
+                        "destino_mundo": bruto.get("destino_mundo") or list(getattr(executor, "Posicao", (0.0, 0.0))),
+                        "alvo_ids": [],
+                        "intensidade": float(bruto.get("intensidade") or 1.0),
+                        "custo": 0.0,
+                        "prioridade": int(float(bruto.get("prioridade") or 0)),
+                        "inteligencia": float(getattr(executor, "obter_atributo")("Int") if hasattr(executor, "obter_atributo") else 0.0),
+                        "velocidade": float(getattr(executor, "obter_atributo")("Vel") if hasattr(executor, "obter_atributo") else 0.0),
+                        "spec": {"execucao": {"forma": "movimento"}},
+                    }
+                )
                 continue
             ataque_nome = self._extrair_nome_ataque(bruto)
             spec_obj = self.catalogo.obter(ataque_nome)

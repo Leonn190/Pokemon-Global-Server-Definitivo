@@ -27,11 +27,14 @@ class ControladorJogadas:
         self._ataque_atual = None
         self._ultimo_ataque_nome = ""
         self._hover_jogada_id = None
-        self._drag_pokemon = None
+
+        self._drag_ativo = False
+        self._drag_candidato = None
         self._drag_origem = None
         self._drag_destino = None
-        self._drag_ativo = False
+        self._drag_inicio_tela = None
         self._fluxo_movimento = Fluxo("seta")
+        self._limiar_drag_px = 6.0
         dbg_combate("ControladorJogadas", "init")
 
     @staticmethod
@@ -68,6 +71,8 @@ class ControladorJogadas:
             return "status"
         if tipo_preparo == "alvo":
             return "alvo"
+        if tipo_preparo == "movimento":
+            return "movimento"
         if tipo_preparo in {"direcao", "direcao_intensidade", "linha", "laser", "cone", "area"}:
             return "movimento" if ataque is None else "ataque"
         return "movimento"
@@ -79,16 +84,11 @@ class ControladorJogadas:
         if isinstance(valor, (set, tuple, list)):
             return [ControladorJogadas._json_seguro(v) for v in list(valor)]
         if isinstance(valor, dict):
-            saida = {}
-            for k, v in valor.items():
-                chave = str(k)
-                convertido = ControladorJogadas._json_seguro(v)
-                saida[chave] = convertido
-            return saida
+            return {str(k): ControladorJogadas._json_seguro(v) for k, v in valor.items()}
         if hasattr(valor, "x") and hasattr(valor, "y"):
             try:
                 return [float(getattr(valor, "x")), float(getattr(valor, "y"))]
-            except (TypeError, ValueError):
+            except Exception:
                 pass
         if hasattr(valor, "Uid"):
             return str(getattr(valor, "Uid"))
@@ -116,6 +116,12 @@ class ControladorJogadas:
             return self._controlador.pokemon_no_ponto(pos_tela, self._camera)
         return None
 
+    def _eh_controlavel(self, pokemon) -> bool:
+        if pokemon is None or self._controlador is None:
+            return False
+        fn = getattr(self._controlador, "pokemon_eh_controlavel", None)
+        return bool(fn(pokemon)) if callable(fn) else True
+
     def _custo_base(self, executor, ataque) -> float:
         if executor is None or not isinstance(ataque, dict):
             return 0.0
@@ -134,10 +140,10 @@ class ControladorJogadas:
         dados = dict(execucao.get("dados") or {})
         for valor in (preparo.get("alcance"), execucao.get("alcance"), dados.get("alcance")):
             try:
-                alcance = float(valor)
-                if alcance > 0:
-                    return alcance
-            except (TypeError, ValueError):
+                f = float(valor)
+                if f > 0:
+                    return f
+            except Exception:
                 continue
         return 1.0
 
@@ -149,100 +155,25 @@ class ControladorJogadas:
         dx, dy = mx - ox, my - oy
         norma = (dx * dx + dy * dy) ** 0.5
         if norma <= 1e-8:
-            prev = (self._preparacao or {}).get("destino_mundo")
-            if isinstance(prev, (tuple, list)) and len(prev) == 2:
-                dx, dy = float(prev[0]) - ox, float(prev[1]) - oy
-                norma = (dx * dx + dy * dy) ** 0.5
-        if norma <= 1e-8:
-            dx, dy = 1.0, 0.0
-            norma = 1.0
+            dx, dy, norma = 1.0, 0.0, 1.0
         alcance = self._alcance_da_spec(spec)
         destino = (ox + (dx / norma) * alcance, oy + (dy / norma) * alcance)
-        dbg_combate("ControladorJogadas", "destino projetil fixo", origem_mundo=[ox, oy], mouse_mundo=[mx, my], alcance=alcance, destino=list(destino))
         return destino
-
-    def _eh_controlavel(self, pokemon) -> bool:
-        if pokemon is None or self._controlador is None:
-            return False
-        fn = getattr(self._controlador, "pokemon_eh_controlavel", None)
-        return bool(fn(pokemon)) if callable(fn) else True
-
-    def _iniciar_arrasto(self, pokemon, pos_tela) -> None:
-        if not self._eh_controlavel(pokemon):
-            return
-        self._drag_pokemon = pokemon
-        origem = tuple(getattr(pokemon, "Posicao", (0.0, 0.0)))
-        self._drag_origem = origem
-        self._drag_destino = self._mouse_para_mundo(pos_tela)
-        self._drag_ativo = True
-        dbg_combate("ControladorJogadas", "arrasto iniciado", executor_id=self._uid_pokemon(pokemon), origem_mundo=self._json_seguro(origem))
-
-    def _atualizar_arrasto(self, pos_tela) -> None:
-        if not self._drag_ativo:
-            return
-        self._drag_destino = self._mouse_para_mundo(pos_tela)
-
-    def _encerrar_arrasto(self, pos_tela) -> bool:
-        if not self._drag_ativo:
-            return False
-        self._drag_destino = self._mouse_para_mundo(pos_tela)
-        poke = self._drag_pokemon
-        origem = self._drag_origem
-        destino = self._drag_destino
-        self._drag_ativo = False
-        self._drag_pokemon = None
-        self._drag_origem = None
-        self._drag_destino = None
-        if poke is None or not (isinstance(origem, (tuple, list)) and isinstance(destino, (tuple, list))):
-            return False
-        dx = float(destino[0]) - float(origem[0])
-        dy = float(destino[1]) - float(origem[1])
-        if (dx * dx + dy * dy) ** 0.5 < 0.2:
-            return False
-        jogada = {
-            "executor_id": self._uid_pokemon(poke),
-            "executor_nome": str(getattr(poke, "Nome", "") or getattr(poke, "Especie", "") or ""),
-            "ataque": None,
-            "ataque_id": "",
-            "tipo_movimento": True,
-            "tipo_preparo": "linha",
-            "forma": "movimento",
-            "origem_mundo": self._json_seguro(origem),
-            "destino_mundo": self._json_seguro(destino),
-            "alvo_ids": [],
-            "intensidade": 1.0,
-            "custo_base": 0.0,
-            "custo": 0.0,
-            "estilo": "movimento",
-        }
-        adicionada, erro = self._montador.adicionar(jogada)
-        if adicionada is None:
-            dbg_combate("ControladorJogadas", "movimento arrasto ignorado", erro=erro)
-            return False
-        dbg_combate("ControladorJogadas", "movimento por arrasto adicionado", jogada=adicionada)
-        return True
 
     def _nova_preparacao(self, ficha):
         executor = getattr(self._controlador, "PokemonSelecionado", None)
-        if executor is None:
-            dbg_combate("ControladorJogadas", "preview nao criado", motivo="sem executor")
-            return None
         ataque = self._ataque_em_contexto(ficha)
         nome = self._nome_ataque(ataque)
-        if not nome:
-            dbg_combate("ControladorJogadas", "preview nao criado", motivo="sem ataque")
+        if executor is None or not nome:
             return None
         spec = self._leitor.obter(ataque)
-        dbg_combate("ControladorJogadas", "spec carregada", ataque=nome, encontrou=bool(spec))
         if not spec:
             return None
-
         preparo = dict(spec.get("preparo") or {})
         execucao = dict(spec.get("execucao") or {})
         tipo_preparo = str(preparo.get("tipo") or "").strip()
         if not tipo_preparo:
             return None
-
         origem = tuple(getattr(executor, "Posicao", (0.0, 0.0)))
         destino = None
         if tipo_preparo in self.TIPOS_PREPARO_DIRECIONAIS:
@@ -272,11 +203,37 @@ class ControladorJogadas:
             },
             "spec": spec,
         }
-        dbg_combate("ControladorJogadas", "preview criado", ataque=nome, tipo_preparo=tipo_preparo, forma=prep["forma"]) 
+        dbg_combate("ControladorJogadas", "preview criado", ataque=nome, forma=prep.get("forma"))
         return prep
+
+    def _fixar_mira(self, pos_tela) -> bool:
+        if not isinstance(self._preparacao, dict):
+            return False
+        tipo = str(self._preparacao.get("tipo_preparo") or "")
+        if tipo not in self.TIPOS_PREPARO_DIRECIONAIS:
+            return False
+        origem = self._preparacao.get("origem_mundo")
+        mouse_mundo = self._mouse_para_mundo(pos_tela)
+        forma = str(self._preparacao.get("forma") or "")
+        destino = self._destino_por_alcance_fixo(origem, mouse_mundo, self._preparacao.get("spec") or {}) if forma in self.FORMAS_PROJETIL else mouse_mundo
+        self._preparacao["destino_mundo"] = destino
+        self._preparacao["estado"] = "estabilizado"
+        if tipo == "direcao_intensidade" and isinstance(origem, (tuple, list)) and isinstance(destino, (tuple, list)):
+            dx = float(destino[0]) - float(origem[0])
+            dy = float(destino[1]) - float(origem[1])
+            distancia = (dx * dx + dy * dy) ** 0.5
+            spec_preparo = dict((self._preparacao.get("spec") or {}).get("preparo") or {})
+            alcance = float(spec_preparo.get("alcance") or 1.0)
+            minimo = float(spec_preparo.get("intensidade_min") or 0.2)
+            maximo = float(spec_preparo.get("intensidade_max") or 1.0)
+            self._preparacao["intensidade"] = max(minimo, min(maximo, distancia / max(0.0001, alcance)))
+        dbg_combate("ControladorJogadas", "mira fixada", tipo=tipo, destino=self._json_seguro(destino))
+        return True
 
     def _atualizar_destino_mouse(self):
         if not isinstance(self._preparacao, dict):
+            return
+        if str(self._preparacao.get("estado") or "preview") != "preview":
             return
         tipo = str(self._preparacao.get("tipo_preparo") or "")
         if tipo not in self.TIPOS_PREPARO_DIRECIONAIS:
@@ -287,19 +244,9 @@ class ControladorJogadas:
         destino = self._destino_por_alcance_fixo(origem, mouse_mundo, self._preparacao.get("spec") or {}) if forma in self.FORMAS_PROJETIL else mouse_mundo
         anterior = self._preparacao.get("destino_mundo")
         self._preparacao["destino_mundo"] = destino
-
-        if tipo == "direcao_intensidade" and isinstance(origem, (tuple, list)) and isinstance(destino, (tuple, list)):
-            dx = float(destino[0]) - float(origem[0])
-            dy = float(destino[1]) - float(origem[1])
-            distancia = (dx * dx + dy * dy) ** 0.5
-            spec_preparo = dict((self._preparacao.get("spec") or {}).get("preparo") or {})
-            alcance = float(spec_preparo.get("alcance") or 1.0)
-            minimo = float(spec_preparo.get("intensidade_min") or 0.2)
-            maximo = float(spec_preparo.get("intensidade_max") or 1.0)
-            self._preparacao["intensidade"] = max(minimo, min(maximo, distancia / max(0.0001, alcance)))
         if isinstance(anterior, (tuple, list)) and isinstance(destino, (tuple, list)):
             delta = ((float(destino[0]) - float(anterior[0])) ** 2 + (float(destino[1]) - float(anterior[1])) ** 2) ** 0.5
-            if delta < 0.25:
+            if delta < 0.30:
                 return
         dbg_combate("ControladorJogadas", "preview atualizado", destino=self._json_seguro(destino), forma=forma)
 
@@ -327,59 +274,112 @@ class ControladorJogadas:
         }
         return self._json_seguro(jogada)
 
+    def _montar_jogada_movimento(self, pokemon, origem, destino):
+        return self._json_seguro(
+            {
+                "executor_id": self._uid_pokemon(pokemon),
+                "executor_nome": str(getattr(pokemon, "Nome", "") or getattr(pokemon, "Especie", "") or ""),
+                "tipo_movimento": True,
+                "tipo_preparo": "movimento",
+                "forma": "movimento",
+                "origem_mundo": origem,
+                "destino_mundo": destino,
+                "alvo_ids": [],
+                "intensidade": 1.0,
+                "custo_base": 0.0,
+                "custo": 0.0,
+                "estilo": "movimento",
+            }
+        )
+
     def _confirmar_preparacao(self) -> bool:
         if not isinstance(self._preparacao, dict):
-            dbg_combate("ControladorJogadas", "confirmar ignorado", motivo="sem preparacao")
             return False
+        estado = str(self._preparacao.get("estado") or "preview")
         jogada_json = self._montar_jogada_serializavel(self._preparacao)
         jogada, erro = self._montador.adicionar(jogada_json)
         if jogada is None:
             dbg_combate("ControladorJogadas", "jogada nao adicionada", erro=erro)
             return False
-        dbg_combate("ControladorJogadas", "jogada adicionada", jogada=jogada)
+        dbg_combate("ControladorJogadas", f"preparar confirmou {estado}", jogada_id=jogada.get("id"))
         self._preparacao = self._nova_preparacao(None)
         return True
 
     def _hud_clicado(self, pos, hud_rects) -> bool:
         return any(rect.collidepoint(pos) for rect in list(hud_rects or []))
 
+    def _iniciar_drag_candidato(self, pokemon, pos_tela):
+        self._drag_candidato = pokemon
+        self._drag_inicio_tela = tuple(pos_tela)
+        self._drag_origem = tuple(getattr(pokemon, "Posicao", (0.0, 0.0)))
+        self._drag_destino = self._drag_origem
+        self._drag_ativo = False
+
+    def _atualizar_drag(self, pos_tela):
+        if self._drag_candidato is None or self._drag_inicio_tela is None:
+            return
+        dx = float(pos_tela[0]) - float(self._drag_inicio_tela[0])
+        dy = float(pos_tela[1]) - float(self._drag_inicio_tela[1])
+        if not self._drag_ativo and (dx * dx + dy * dy) ** 0.5 >= self._limiar_drag_px:
+            self._drag_ativo = True
+            dbg_combate("ControladorJogadas", "arrasto iniciado", executor_id=self._uid_pokemon(self._drag_candidato))
+        if self._drag_ativo:
+            self._drag_destino = self._mouse_para_mundo(pos_tela)
+
+    def _encerrar_drag(self, pos_tela) -> bool:
+        if self._drag_candidato is None:
+            return False
+        pokemon = self._drag_candidato
+        origem = self._drag_origem
+        self._atualizar_drag(pos_tela)
+        destino = self._drag_destino if self._drag_ativo else origem
+        foi_drag = bool(self._drag_ativo)
+        self._drag_candidato = None
+        self._drag_inicio_tela = None
+        self._drag_ativo = False
+        self._drag_origem = None
+        self._drag_destino = None
+        if not foi_drag or pokemon is None:
+            return False
+        jogada = self._montar_jogada_movimento(pokemon, self._json_seguro(origem), self._json_seguro(destino))
+        adicionada, erro = self._montador.adicionar(jogada)
+        if adicionada is None:
+            dbg_combate("ControladorJogadas", "movimento por arrasto ignorado", erro=erro)
+            return True
+        dbg_combate("ControladorJogadas", "movimento por arrasto adicionado", jogada_id=adicionada.get("id"))
+        return True
+
     def processar_eventos(self, eventos, ficha, hud_rects=None):
         self._atualizar_destino_mouse()
         for evento in eventos or []:
+            if evento.type == pygame.MOUSEMOTION:
+                self._atualizar_drag(getattr(evento, "pos", pygame.mouse.get_pos()))
+                self._atualizar_destino_mouse()
+                continue
+
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 if self._hud_clicado(evento.pos, hud_rects):
                     continue
                 poke_click = self._pokemon_no_mouse(evento.pos)
                 if self._eh_controlavel(poke_click):
-                    self._iniciar_arrasto(poke_click, evento.pos)
+                    self._iniciar_drag_candidato(poke_click, evento.pos)
                     continue
-            if evento.type == pygame.MOUSEMOTION:
-                self._atualizar_arrasto(getattr(evento, "pos", pygame.mouse.get_pos()))
-                self._atualizar_destino_mouse()
+                if isinstance(self._preparacao, dict):
+                    if str(self._preparacao.get("tipo_preparo") or "") == "alvo" and poke_click is not None:
+                        uid = self._uid_pokemon(poke_click)
+                        if uid:
+                            self._preparacao["alvos"] = [poke_click]
+                            self._preparacao["alvo_ids"] = [uid]
+                            self._preparacao["destino_mundo"] = tuple(getattr(poke_click, "Posicao", self._preparacao.get("origem_mundo") or (0.0, 0.0)))
+                            self._preparacao["estado"] = "estabilizado"
+                            dbg_combate("ControladorJogadas", "mira fixada", tipo="alvo", alvo_id=uid)
+                    else:
+                        self._fixar_mira(evento.pos)
                 continue
+
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
-                if self._encerrar_arrasto(getattr(evento, "pos", pygame.mouse.get_pos())):
+                if self._encerrar_drag(getattr(evento, "pos", pygame.mouse.get_pos())):
                     continue
-            if evento.type != pygame.MOUSEBUTTONDOWN or evento.button != 1:
-                continue
-            if self._hud_clicado(evento.pos, hud_rects):
-                continue
-            if not isinstance(self._preparacao, dict):
-                continue
-            tipo = str(self._preparacao.get("tipo_preparo") or "")
-            poke = self._pokemon_no_mouse(evento.pos)
-            if tipo == "alvo":
-                if poke is None:
-                    dbg_combate("ControladorJogadas", "evento ignorado", motivo="alvo ausente")
-                    continue
-                uid = self._uid_pokemon(poke)
-                if uid:
-                    self._preparacao["alvos"] = [poke]
-                    self._preparacao["alvo_ids"] = [uid]
-                    self._preparacao["destino_mundo"] = tuple(getattr(poke, "Posicao", self._preparacao.get("origem_mundo") or (0.0, 0.0)))
-                    dbg_combate("ControladorJogadas", "evento consumido por preparacao", tipo=tipo, alvo_id=uid)
-                    self._confirmar_preparacao()
-                continue
 
     def preparar(self, ficha):
         dbg_combate("ControladorJogadas", "preparar clicado")
@@ -391,8 +391,7 @@ class ControladorJogadas:
         if tipo == "alvo" and not self._preparacao.get("alvo_ids"):
             dbg_combate("ControladorJogadas", "jogada nao adicionada", motivo="falta alvo")
             return "falta_alvo"
-        self._confirmar_preparacao()
-        return "ok"
+        return "ok" if self._confirmar_preparacao() else "erro"
 
     def acao_principal(self, ficha):
         return self.preparar(ficha)
@@ -400,7 +399,7 @@ class ControladorJogadas:
     def pronto(self):
         dbg_combate("ControladorJogadas", "pronto clicado")
         jogadas = [self._json_seguro(j) for j in self._montador.listar()]
-        dbg_combate("ControladorJogadas", "payload antes de enviar", quantidade=len(jogadas), jogadas=jogadas)
+        dbg_combate("ControladorJogadas", "payload antes de enviar", quantidade=len(jogadas))
         if not jogadas:
             return "vazio"
         contexto = getattr(getattr(self._controlador, "SistemaBatalha", None), "Contexto", {})
@@ -413,14 +412,9 @@ class ControladorJogadas:
         batalha_id = str(contexto.get("batalha_id_servidor") or "")
         if not ip or not client_id:
             return "aguardando"
-        try:
-            json.dumps(jogadas, ensure_ascii=False)
-            dbg_combate("ControladorJogadas", "json serializavel ok")
-        except TypeError as exc:
-            print("[DBG-COMBATE][ControladorJogadas] payload nao serializavel", exc, jogadas)
-            raise
+        json.dumps(jogadas, ensure_ascii=False)
         resposta = enviar_jogada_batalha_server(ip=ip, client_id=client_id, jogadas=jogadas, batalha_id=batalha_id)
-        dbg_combate("ControladorJogadas", "retorno recebido", retorno=resposta)
+        dbg_combate("ControladorJogadas", "retorno recebido", status=str((resposta or {}).get("status")))
         contexto["batalha_servidor_ultimo_envio"] = resposta if isinstance(resposta, dict) else {"status": "erro"}
         self._montador.limpar()
         self._preparacao = None
@@ -443,16 +437,16 @@ class ControladorJogadas:
     def atualizar_contexto(self, ataque_atual):
         self._ataque_atual = ataque_atual
         nome = self._nome_ataque(ataque_atual)
-        if nome != self._ultimo_ataque_nome:
+        mudou = nome != self._ultimo_ataque_nome
+        if mudou:
             self._ultimo_ataque_nome = nome
             dbg_combate("ControladorJogadas", "ataque selecionado mudou", ataque=nome)
-            self._preparacao = self._nova_preparacao(None) if nome else None
-            return
-        if nome and self._preparacao is None and getattr(self._controlador, "PokemonSelecionado", None) is not None:
+        if nome and (mudou or self._preparacao is None) and getattr(self._controlador, "PokemonSelecionado", None) is not None:
             self._preparacao = self._nova_preparacao(None)
+        elif not nome and mudou:
+            self._preparacao = None
 
     def cancelar_preparacao(self):
-        dbg_combate("ControladorJogadas", "cancelar preparacao")
         self._preparacao = None
 
     def previsao_consumo(self, pokemon, ataque):
@@ -489,5 +483,4 @@ class ControladorJogadas:
         ataque = self._ataque_em_contexto(ficha)
         if not ataque:
             return "Preparar", False
-        existe = self._leitor.existe(ataque)
-        return "Preparar jogada", bool(existe)
+        return "Preparar jogada", bool(self._leitor.existe(ataque))

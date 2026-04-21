@@ -41,6 +41,7 @@ class ElementosHudBatalha:
         self._tempo_restante_rodada = self._tempo_total_rodada
         self._rodada_referencia = int(getattr(self._controlador, "_rodada_atual", 1) or 1) if self._controlador is not None else 1
         self._aguardando_resultado_rodada = False
+        self._ultima_resposta_turno = None
 
     def filtrar_eventos_camera(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> List[pygame.event.Event]:
         self._garantir_layout(tela)
@@ -145,6 +146,22 @@ class ElementosHudBatalha:
         self._tempo_restante_rodada = self._tempo_total_rodada
         self._aguardando_resultado_rodada = False
 
+    def _sincronizar_retorno_turno(self) -> None:
+        if self._controlador is None or not isinstance(getattr(self._controlador, "Contexto", None), dict):
+            return
+        resposta = self._controlador.Contexto.get("batalha_servidor_ultimo_envio")
+        if not isinstance(resposta, dict) or resposta is self._ultima_resposta_turno:
+            return
+        self._ultima_resposta_turno = resposta
+        status = str(resposta.get("status") or "")
+        if status in {"ok", "finalizada"}:
+            self._aguardando_resultado_rodada = False
+            self._resetar_para_proxima_rodada()
+
+    def _resetar_para_proxima_rodada(self) -> None:
+        self._tempo_restante_rodada = self._tempo_total_rodada
+        self._rodada_referencia = int(getattr(self._controlador, "_rodada_atual", self._rodada_referencia) or self._rodada_referencia)
+
     def _desenhar_overlay_fuga(self, tela: pygame.Surface) -> None:
         if self._fuga_pressao <= 0.01:
             return
@@ -154,7 +171,7 @@ class ElementosHudBatalha:
         tela.blit(overlay, (0, 0))
 
     def _processar_selecao(self, eventos: List[pygame.event.Event], rects_bloqueados: List[pygame.Rect]):
-        if self._controlador is None or self._camera is None or self._fluxos is not None:
+        if self._controlador is None or self._camera is None:
             return
         for ev in eventos or []:
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
@@ -165,13 +182,19 @@ class ElementosHudBatalha:
 
     def _preparar_jogada(self) -> None:
         if self._fluxos is not None:
-            self._fluxos.acao_principal(self._ficha)
+            status = self._fluxos.acao_principal(self._ficha)
+            if status in {"ok", True}:
+                self._ficha.limpar_ataque_selecionado()
 
-    def _confirmar_jogadas(self) -> None:
+    def _confirmar_jogadas(self, forcar_envio_vazio: bool = False) -> None:
         if self._fluxos is not None:
-            status = self._fluxos.pronto()
-            if status in {"ok", "aguardando"}:
+            status = self._fluxos.pronto(forcar_envio_vazio=forcar_envio_vazio)
+            if status == "aguardando":
                 self._aguardando_resultado_rodada = True
+            elif status in {"ok", "finalizada"}:
+                self._aguardando_resultado_rodada = False
+                self._sincronizar_retorno_turno()
+                self._resetar_para_proxima_rodada()
 
     def _atualizar_animacao_ficha(self, dt: float):
         selecionado = getattr(self._controlador, "PokemonSelecionado", None)
@@ -190,12 +213,13 @@ class ElementosHudBatalha:
         interacao_bloqueada = bool(self._aguardando_resultado_rodada or replay_ativo)
         if not interacao_bloqueada and self._controlador is not None and hasattr(self._controlador, "Jogador"):
             self._controlador.Jogador.Controle.processar_eventos(eventos or [], self._controlador, self._ficha, self._fluxos)
+        self._sincronizar_retorno_turno()
         self._sincronizar_tempo_rodada()
         self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)
         self._atualizar_tempo_rodada(dt)
         if self._tempo_restante_rodada <= 0.0 and not self._aguardando_resultado_rodada and not replay_ativo:
-            self._confirmar_jogadas()
+            self._confirmar_jogadas(forcar_envio_vazio=True)
 
         if self._fluxos is not None:
             self._painel_jogada.sincronizar(self._fluxos.listar_jogadas(), self._fluxos.jogada_selecionada_id())
@@ -222,7 +246,7 @@ class ElementosHudBatalha:
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not any(rect.collidepoint(ev.pos) for rect in rects_hud):
                     self._fluxos.selecionar_jogada(None)
                     break
-        if not interacao_bloqueada:
+        if not interacao_bloqueada and self._fluxos is None:
             self._processar_selecao(eventos or [], rects_hud)
 
         if self._fluxos is not None:

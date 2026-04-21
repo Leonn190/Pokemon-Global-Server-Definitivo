@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Callable, Dict, List
 
-
 class LeitorLogs:
     _FASES = ("inicializacao", "segmentacao", "passiva", "finalizacao")
 

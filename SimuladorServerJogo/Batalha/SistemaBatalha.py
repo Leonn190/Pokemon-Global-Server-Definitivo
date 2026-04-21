@@ -70,6 +70,25 @@ class SistemaBatalha:
         altura = float(self.Contexto.get("arena_altura", 20) or 20)
         return largura * 0.5, altura * 0.5
 
+    def _max_ativos_por_lado(self) -> int:
+        regras = self.RegrasBatalha if isinstance(self.RegrasBatalha, dict) else {}
+        candidatos = [
+            self.Contexto.get("max_ativos"),
+            self.Contexto.get("ativos_iniciais"),
+            self.Contexto.get("slots_ativos"),
+            regras.get("max_ativos"),
+            regras.get("ativos_iniciais"),
+            regras.get("slots_ativos"),
+        ]
+        for valor in candidatos:
+            try:
+                qtd = int(float(valor))
+            except (TypeError, ValueError):
+                continue
+            if qtd > 0:
+                return qtd
+        return 3
+
     @classmethod
     def _ler_csv(cls, nome_arquivo: str) -> List[Dict[str, object]]:
         caminho = _BASE_DADOS / nome_arquivo
@@ -176,10 +195,11 @@ class SistemaBatalha:
         return [(x, cy - margem_y + (indice * passo)) for indice in range(total)]
 
     def _inicializar_pokemons(self) -> None:
+        max_ativos = self._max_ativos_por_lado()
         for lado in ("jogador", "inimigo"):
             todos_brutos = [self._copiar_pokemon_dict(item) for item in list(self.Contexto.get(lado) or []) if isinstance(item, dict)]
-            ativos_brutos = todos_brutos[:3]
-            reservas_brutas = todos_brutos[3:]
+            ativos_brutos = todos_brutos[:max_ativos]
+            reservas_brutas = todos_brutos[max_ativos:]
             posicoes_ativos = self._pontos_lado_arena(lado, len(ativos_brutos))
 
             lado_estado = self.Lados[lado]

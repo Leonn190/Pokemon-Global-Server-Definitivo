@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import os
+import random
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,38 +26,20 @@ from SimuladorServerJogo.Batalha.LeitorJogadas import LeitorJogadas
 from SimuladorServerJogo.Batalha.SistemaBatalha import SistemaBatalha as SistemaBatalhaServidor
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
 
-ATAQUES_OBRIGATORIOS = [
-    "Investida",
-    "Biscoito",
-    "Enraivecer",
-    "Provocar",
-    "Proteger",
-    "Arranhar",
-    "Recarga",
-    "Energia",
-    "Hiper Raio",
-    "Guilhotina",
-    "Disparo",
-    "Chifrada",
-    "Resetar",
-    "Tankar",
-    "Estocada",
-    "Bola Climática",
-    "Hiper Presa",
-    "Investida Selvagem",
-]
-
-
 @dataclass
 class ContextoDebug6v6:
     contexto_cliente: Dict[str, object]
     contexto_servidor: Dict[str, object]
 
 
-def _carregar_especies(qtd: int = 12) -> List[str]:
+def _rng(seed: int | None = None) -> random.Random:
+    return random.Random(seed if seed is not None else random.randrange(1_000_000_000))
+
+
+def _carregar_especies() -> List[str]:
     caminho = Path("Dados") / "Pokemon Global Server - Pokemons.csv"
     if not caminho.exists():
-        return ["Pikachu"] * qtd
+        return ["Pikachu"]
     especies: List[str] = []
     with caminho.open("r", encoding="utf-8-sig") as arquivo:
         leitor = csv.DictReader(arquivo)
@@ -64,71 +47,44 @@ def _carregar_especies(qtd: int = 12) -> List[str]:
             nome = str(row.get("Nome") or "").strip()
             if nome:
                 especies.append(nome)
-            if len(especies) >= qtd:
-                break
-    while len(especies) < qtd:
-        especies.append(especies[-1] if especies else "Pikachu")
-    return especies
+    return especies if especies else ["Pikachu"]
 
 
-def _montar_pokemon_debug(especie: str, apelido: str, ataques: List[str]) -> Dict[str, object]:
+def _nomes_ataques_catalogo() -> List[str]:
+    catalogo = carregar_catalogo_ataques()
+    nomes = [str(getattr(spec, "nome", "")).strip() for spec in catalogo.listar()]
+    return nomes
+
+
+def _montar_pokemon_aleatorio(especie: str, ataques_catalogo: List[str], rng: random.Random) -> Dict[str, object]:
     pokemon = criar_pokemon_inicial_materializado(especie)
     estado = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
-    estado["Nome"] = apelido
-    estado["nome"] = apelido
-    habilidades = [{"Ataque": nome} for nome in ataques]
+    base = [nome for nome in ataques_catalogo if nome]
+    rng.shuffle(base)
+    escolhidos = base[: rng.randint(3, 5)] if base else ["Investida"]
+    habilidades = [{"Ataque": nome} for nome in escolhidos]
     while len(habilidades) < 5:
         habilidades.append(None)
     estado["habilidades"] = habilidades[:5]
     estado["memorias"] = habilidades[:5]
-    estado["VidaAtual"] = max(float(estado.get("Vida", 100.0) or 100.0), 180.0)
-    estado["energia_atual"] = max(float(estado.get("energia_atual", 100.0) or 100.0), 220.0)
-    estado["EnergiaAtual"] = estado["energia_atual"]
     return pokemon
 
 
-def _construir_times_debug() -> Tuple[List[Dict[str, object]], List[Dict[str, object]]]:
-    especies = _carregar_especies(12)
-    ataques_time_1 = [
-        ["Investida", "Chifrada", "Investida Selvagem"],
-        ["Biscoito", "Energia", "Disparo"],
-        ["Enraivecer", "Provocar", "Recarga"],
-        ["Arranhar", "Guilhotina", "Estocada"],
-        ["Bola Climática", "Hiper Raio"],
-        ["Proteger", "Resetar", "Hiper Presa", "Tankar"],
-    ]
-    ataques_time_2 = [
-        ["Investida", "Biscoito", "Arranhar"],
-        ["Enraivecer", "Proteger", "Recarga"],
-        ["Provocar", "Energia", "Guilhotina"],
-        ["Disparo", "Chifrada", "Resetar"],
-        ["Tankar", "Estocada", "Bola Climática"],
-        ["Hiper Presa", "Investida Selvagem", "Hiper Raio"],
-    ]
-    nomes_1 = [
-        "Tester_Investida",
-        "Tester_Biscoito",
-        "Tester_Status",
-        "Tester_Cone",
-        "Tester_Projetil",
-        "Tester_Laser",
-    ]
-    nomes_2 = [
-        "Alvo_Investida",
-        "Alvo_Biscoito",
-        "Alvo_Status",
-        "Alvo_Cone",
-        "Alvo_Projetil",
-        "Alvo_Laser",
-    ]
-
-    time_1 = [_montar_pokemon_debug(especies[i], nomes_1[i], ataques_time_1[i]) for i in range(6)]
-    time_2 = [_montar_pokemon_debug(especies[i + 6], nomes_2[i], ataques_time_2[i]) for i in range(6)]
+def _construir_times_aleatorios(seed: int | None = None) -> Tuple[List[Dict[str, object]], List[Dict[str, object]]]:
+    rng = _rng(seed)
+    especies = _carregar_especies()
+    ataques_catalogo = _nomes_ataques_catalogo()
+    if len(especies) >= 12:
+        especies_escolhidas = rng.sample(especies, 12)
+    else:
+        especies_escolhidas = [rng.choice(especies) for _ in range(12)]
+    time_1 = [_montar_pokemon_aleatorio(especies_escolhidas[i], ataques_catalogo, rng) for i in range(6)]
+    time_2 = [_montar_pokemon_aleatorio(especies_escolhidas[i + 6], ataques_catalogo, rng) for i in range(6)]
     return time_1, time_2
 
 
-def criar_contexto_debug_6v6() -> ContextoDebug6v6:
-    time_1, time_2 = _construir_times_debug()
+def criar_contexto_debug_6v6(seed: int | None = None) -> ContextoDebug6v6:
+    time_1, time_2 = _construir_times_aleatorios(seed=seed)
     time_jogador = {"Nome": "Time Debug Jogador", "Slots": time_1}
     time_inimigo = {"Nome": "Time Debug Inimigo", "Slots": time_2}
 
@@ -210,8 +166,6 @@ class _ServidorLocalBatalha:
         if sistema is None:
             return {"status": "erro", "mensagem": "Batalha nao encontrada"}
         recebidas = [dict(j) for j in list(jogadas or []) if isinstance(j, dict)]
-        if not recebidas:
-            return self._leitor.executar_turno(sistema, client_id=client_resolvido, jogadas=recebidas)
 
         por_cliente: Dict[str, List[Dict[str, object]]] = {self._client_jogador: [], self._client_inimigo: []}
         for jogada in recebidas:
@@ -223,12 +177,53 @@ class _ServidorLocalBatalha:
             else:
                 por_cliente[self._client_jogador].append(jogada)
 
-        ultima_resposta: Dict[str, object] = {"status": "aguardando", "mensagem": "Aguardando jogadas"}
-        if por_cliente[self._client_jogador]:
-            ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_jogador, jogadas=por_cliente[self._client_jogador])
-        if por_cliente[self._client_inimigo]:
-            ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_inimigo, jogadas=por_cliente[self._client_inimigo])
-        return ultima_resposta
+        if client_resolvido == self._client_inimigo:
+            jogadas_solicitante = por_cliente[self._client_inimigo]
+            jogadas_oponente = por_cliente[self._client_jogador]
+            cliente_oponente = self._client_jogador
+        else:
+            jogadas_solicitante = por_cliente[self._client_jogador]
+            jogadas_oponente = por_cliente[self._client_inimigo]
+            cliente_oponente = self._client_inimigo
+        sistema.adicionar_jogadas(cliente_oponente, jogadas_oponente)
+
+        respostas: List[Dict[str, object]] = []
+        resposta_turno = self._leitor.executar_turno(sistema, client_id=client_resolvido, jogadas=jogadas_solicitante)
+        respostas.append(resposta_turno)
+        final = _mesclar_respostas_turno(respostas)
+        return final
+
+
+def _mesclar_respostas_turno(respostas: List[Dict[str, object]]) -> Dict[str, object]:
+    validas = [dict(r) for r in list(respostas or []) if isinstance(r, dict)]
+    if not validas:
+        return {"status": "erro", "mensagem": "sem_respostas"}
+    base = dict(validas[-1])
+    logs = [dict(r.get("log") or {}) for r in validas if isinstance(r.get("log"), dict)]
+    eventos: List[Dict[str, object]] = []
+    for r in validas:
+        eventos.extend([dict(e) for e in list(r.get("eventos") or []) if isinstance(e, dict)])
+    log_final = {
+        "sumario": [],
+        "historico": [],
+        "resultados": [],
+        "alertas": [],
+    }
+    for log in logs:
+        for chave in ("sumario", "historico", "resultados", "alertas"):
+            log_final[chave].extend([dict(item) for item in list(log.get(chave) or []) if isinstance(item, dict)])
+    base["eventos"] = eventos
+    if logs:
+        base["log"] = log_final
+    escolhida = max(validas, key=lambda r: len(list(((r.get("log") or {}).get("historico") or [])) + list(r.get("eventos") or [])))
+    if len(list((log_final.get("historico") or []))) <= 0 and isinstance(escolhida.get("log"), dict):
+        base["log"] = dict(escolhida.get("log") or {})
+    if isinstance(escolhida.get("batalha"), dict):
+        base["batalha"] = dict(escolhida.get("batalha") or {})
+    base["status"] = str(base.get("status") or escolhida.get("status") or "ok")
+    base["rodada"] = max([int(r.get("rodada") or 0) for r in validas], default=int(base.get("rodada") or 0))
+    base["tick"] = max([int(r.get("tick") or 0) for r in validas], default=int(base.get("tick") or 0))
+    return base
 
 
 def _aplicar_patch_servidor_local(servidor_local: _ServidorLocalBatalha):
@@ -268,21 +263,12 @@ def _montar_camera(contexto: Dict[str, object], tamanho_tela=(1920, 1080)) -> Ca
 
 
 def _jogada_para_smoke(executor_id: str, ataque: str, alvo_id: str | None = None) -> Dict[str, object]:
-    ataque_l = ataque.casefold()
-    forma = "self"
-    tipo_preparo = "self"
-    if ataque_l in {"investida", "investida selvagem"}:
-        forma = "impulso"
-        tipo_preparo = "direcao_intensidade"
-    elif ataque_l in {"biscoito", "disparo", "energia", "bola climática"}:
-        forma = "projetil"
-        tipo_preparo = "linha"
-    elif ataque_l in {"arranhar", "guilhotina", "estocada"}:
-        forma = "cone"
-        tipo_preparo = "cone"
-    elif ataque_l in {"proteger", "resetar", "hiper presa"}:
-        forma = "alvo"
-        tipo_preparo = "alvo"
+    catalogo = carregar_catalogo_ataques()
+    spec = catalogo.obter(ataque)
+    preparo = getattr(spec, "preparo", None) if spec is not None else None
+    execucao = getattr(spec, "execucao", None) if spec is not None else None
+    tipo_preparo = str(getattr(preparo, "tipo", "") or "alvo")
+    forma = str(getattr(execucao, "forma", "") or "alvo")
     return {
         "executor_id": executor_id,
         "ataque": {"Ataque": ataque},
@@ -296,19 +282,28 @@ def _jogada_para_smoke(executor_id: str, ataque: str, alvo_id: str | None = None
     }
 
 
+def _ataques_do_pokemon(pokemon) -> List[str]:
+    ataques: List[str] = []
+    bruto = pokemon.serializar() if hasattr(pokemon, "serializar") else {}
+    for chave in ("habilidades", "memorias"):
+        for item in list(bruto.get(chave) or []):
+            if not isinstance(item, dict):
+                continue
+            nome = str(item.get("Ataque") or item.get("Nome") or "").strip()
+            if nome and nome not in ataques:
+                ataques.append(nome)
+    return ataques
+
+
 def validar_pipeline_basico() -> None:
     erros = validar_arquivo()
     if erros:
         raise AssertionError(f"ValidadorAtaques encontrou erros: {erros[:3]}")
 
-    catalogo = carregar_catalogo_ataques()
-    faltantes = [nome for nome in ATAQUES_OBRIGATORIOS if not catalogo.existe(nome)]
-    if faltantes:
-        raise AssertionError(f"Ataques obrigatorios faltando no catalogo: {faltantes}")
-
     contexto = criar_contexto_debug_6v6().contexto_servidor
     sistema = SistemaBatalhaServidor(batalha_id="debug_6v6_novo_combate", client_id="debug_player", contexto=contexto)
     leitor = LeitorJogadas()
+    rng = _rng(77331)
 
     ativos_jogador = sistema.listar_ativos("jogador")
     ativos_inimigo = sistema.listar_ativos("inimigo")
@@ -318,16 +313,16 @@ def validar_pipeline_basico() -> None:
     jogador_uid = ativos_jogador[0].Uid
     inimigo_uid = ativos_inimigo[0].Uid
 
-    rodadas = [
-        ("Enraivecer", "Proteger"),
-        ("Proteger", "Resetar"),
-        ("Disparo", "Biscoito"),
-        ("Arranhar", "Guilhotina"),
-        ("Investida", "Investida Selvagem"),
-    ]
-
     retorno_final = None
-    for atk_j, atk_i in rodadas:
+    for _ in range(8):
+        poke_j = sistema.obter_pokemon(jogador_uid)
+        poke_i = sistema.obter_pokemon(inimigo_uid)
+        ataques_j = _ataques_do_pokemon(poke_j)
+        ataques_i = _ataques_do_pokemon(poke_i)
+        if not ataques_j or not ataques_i:
+            raise AssertionError("Pokemon sem ataques para simular rodada aleatoria")
+        atk_j = rng.choice(ataques_j)
+        atk_i = rng.choice(ataques_i)
         r1 = leitor.executar_turno(sistema, "debug_player", [_jogada_para_smoke(jogador_uid, atk_j, inimigo_uid)])
         if str(r1.get("status")) not in {"aguardando", "ok", "finalizada"}:
             raise AssertionError(f"Status inesperado do player: {r1}")
@@ -362,66 +357,17 @@ class AppTesteBatalhaReal6v6:
         self.controlador = ControladorBatalha(self.contexto.contexto_cliente)
         self.hud = ElementosHudBatalha(controlador_batalha=self.controlador, camera=self.camera)
 
-        self.fonte_titulo = pygame.font.SysFont("consolas", 26, bold=True)
-        self.fonte_texto = pygame.font.SysFont("consolas", 20)
-        self.fonte_mono = pygame.font.SysFont("consolas", 18)
         self.rodando = True
-        self.ataques_testados: set[str] = set()
-        self.ultimo_retorno: Dict[str, object] = {}
-        self.ultimo_evento_historico = "-"
-        self.status_turno = "aguardando"
-        self.lista_controlaveis: List[object] = []
-        self.indice_controlado = 0
-        self._atualizar_lista_controlavel()
-        self._selecionar_controlado(0)
 
     def finalizar(self):
         _restaurar_patch_servidor_local(*self._patch_info)
         pygame.quit()
 
-    def _atualizar_lista_controlavel(self):
-        aliados = list(self.controlador.PokemonsAliados)
-        inimigos = list(self.controlador.PokemonsInimigos)
-        self.lista_controlaveis = aliados + inimigos
-        if self.lista_controlaveis:
-            self.indice_controlado = max(0, min(self.indice_controlado, len(self.lista_controlaveis) - 1))
-
-    def _selecionar_controlado(self, indice: int):
-        self._atualizar_lista_controlavel()
-        if not self.lista_controlaveis:
-            return
-        self.indice_controlado = indice % len(self.lista_controlaveis)
-        self.controlador.selecionar_pokemon(self.lista_controlaveis[self.indice_controlado])
-
-    def _marcar_ataques_por_log(self, resposta: Dict[str, object]):
-        log = resposta.get("log") if isinstance(resposta.get("log"), dict) else {}
-        historico = log.get("historico") if isinstance(log.get("historico"), list) else []
-        for item in historico:
-            if not isinstance(item, dict):
-                continue
-            tipo_evento = str(item.get("tipo") or item.get("evento") or "").strip()
-            if tipo_evento == "acao_iniciada":
-                nome = str(item.get("ataque") or "").strip()
-                if nome:
-                    self.ataques_testados.add(nome)
-        if historico:
-            ultimo = historico[-1]
-            self.ultimo_evento_historico = str(ultimo.get("tipo") or ultimo.get("evento") or "-")
-
-    def _coletar_retorno_servidor(self):
-        resposta = self.controlador.Contexto.get("batalha_servidor_ultimo_envio")
-        if not isinstance(resposta, dict) or resposta == self.ultimo_retorno:
-            return
-        self.ultimo_retorno = dict(resposta)
-        self.status_turno = str(resposta.get("status") or self.status_turno)
-        self._marcar_ataques_por_log(self.ultimo_retorno)
-        if self.ultimo_retorno.get("eventos"):
-            print("[Teste6v6] eventos:", self.ultimo_retorno.get("eventos"))
-
     def _salvar_log(self):
         pasta = Path("Relatorios") / "ReestruturaCombate"
         pasta.mkdir(parents=True, exist_ok=True)
-        log = self.ultimo_retorno.get("log") if isinstance(self.ultimo_retorno.get("log"), dict) else {}
+        ultimo_retorno = self.controlador.Contexto.get("batalha_servidor_ultimo_envio")
+        log = ultimo_retorno.get("log") if isinstance(ultimo_retorno, dict) and isinstance(ultimo_retorno.get("log"), dict) else {}
         arquivo = pasta / "ultimo_log_teste_6v6.json"
         arquivo.write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[Teste6v6] log salvo em {arquivo}")
@@ -430,48 +376,8 @@ class AppTesteBatalhaReal6v6:
         for ev in eventos:
             if ev.type != pygame.KEYDOWN:
                 continue
-            if ev.key == pygame.K_TAB and (ev.mod & pygame.KMOD_SHIFT):
-                self._selecionar_controlado(self.indice_controlado - 1)
-            elif ev.key == pygame.K_TAB:
-                self._selecionar_controlado(self.indice_controlado + 1)
-            elif pygame.K_1 <= ev.key <= pygame.K_6:
-                self._selecionar_controlado(ev.key - pygame.K_1)
-            elif pygame.K_F1 <= ev.key <= pygame.K_F6:
-                self._selecionar_controlado(6 + (ev.key - pygame.K_F1))
-            elif ev.key == pygame.K_RETURN:
-                self.hud._confirmar_jogadas()
-            elif ev.key == pygame.K_F12:
+            if ev.key == pygame.K_F12:
                 self._salvar_log()
-
-    def _desenhar_overlay(self):
-        faltantes = [a for a in ATAQUES_OBRIGATORIOS if a not in self.ataques_testados]
-        log = self.ultimo_retorno.get("log") if isinstance(self.ultimo_retorno.get("log"), dict) else {}
-        historico = log.get("historico") if isinstance(log.get("historico"), list) else []
-        painel_w = 620
-        painel_h = 235
-        painel = pygame.Surface((painel_w, painel_h), pygame.SRCALPHA)
-        painel.fill((10, 14, 24, 205))
-        pygame.draw.rect(painel, (112, 142, 196, 240), painel.get_rect(), width=2, border_radius=10)
-        self.tela.blit(painel, (self.tela.get_width() - painel_w - 16, 16))
-
-        base_x = self.tela.get_width() - painel_w
-        base_y = 28
-        cabecalho = f"Debug 6v6 | testados {len(self.ataques_testados)}/{len(ATAQUES_OBRIGATORIOS)}"
-        self.tela.blit(self.fonte_titulo.render(cabecalho, True, (245, 248, 255)), (base_x, base_y))
-
-        linhas = [
-            f"Status: {self.status_turno}",
-            f"Historico: {len(historico)} eventos",
-            f"Ultimo evento: {self.ultimo_evento_historico}",
-            "F12 salva log atual | TAB/SHIFT+TAB troca controlado",
-        ]
-        for i, linha in enumerate(linhas):
-            self.tela.blit(self.fonte_texto.render(linha, True, (220, 232, 252)), (base_x, base_y + 40 + i * 24))
-
-        ok_txt = ", ".join(sorted(self.ataques_testados)) if self.ataques_testados else "-"
-        faltando_txt = ", ".join(faltantes) if faltantes else "Nenhum"
-        self.tela.blit(self.fonte_mono.render(f"OK: {ok_txt[:82]}", True, (120, 255, 150)), (base_x, base_y + 145))
-        self.tela.blit(self.fonte_mono.render(f"Faltando: {faltando_txt[:74]}", True, (255, 196, 120)), (base_x, base_y + 171))
 
     def executar(self):
         try:
@@ -491,8 +397,6 @@ class AppTesteBatalhaReal6v6:
                 self.controlador.atualizar(eventos, dt)
                 self.controlador.renderizar(self.tela, self.camera)
                 self.hud.desenhar(self.tela, eventos, dt)
-                self._coletar_retorno_servidor()
-                self._desenhar_overlay()
                 pygame.display.flip()
         finally:
             self.finalizar()

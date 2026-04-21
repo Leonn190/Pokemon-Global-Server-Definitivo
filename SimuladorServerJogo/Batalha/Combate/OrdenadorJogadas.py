@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
+
 def _fnum(valor: object, padrao: float = 0.0) -> float:
     try:
         return float(valor)
@@ -20,15 +21,8 @@ class OrdenadorJogadas:
         custo = _fnum(jogada.get("custo", jogada.get("custo_base", 0.0)), 0.0)
         executor_id = str(jogada.get("executor_id") or "")
         jogada_id = str(jogada.get("id") or "")
-        return (
-            -prioridade,
-            -inteligencia,
-            -velocidade,
-            custo,
-            indice_entrada,
-            executor_id,
-            jogada_id,
-        )
+        chave = (-prioridade, -inteligencia, -velocidade, custo, indice_entrada, executor_id, jogada_id)
+        return chave
 
     def ordenar(self, jogadas, contexto: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         normalizadas = [dict(j) for j in list(jogadas or []) if isinstance(j, dict)]

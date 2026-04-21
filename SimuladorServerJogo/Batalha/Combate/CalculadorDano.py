@@ -5,6 +5,7 @@ import random
 from typing import Any
 
 
+
 FATOR_DANO_COLISAO = 0.08
 FATOR_MASSA_COLISAO = 0.03
 FATOR_VELOCIDADE_COLISAO = 0.15

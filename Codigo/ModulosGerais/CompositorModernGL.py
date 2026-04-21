@@ -58,6 +58,10 @@ class CompositorModernGL:
     def disponivel() -> bool:
         return moderngl is not None
 
+    @property
+    def contexto(self):
+        return self._ctx
+
     def _recriar_texturas(self, size: Tuple[int, int]) -> None:
         if self._scene_tex is not None:
             self._scene_tex.release()
@@ -128,6 +132,9 @@ class CompositorModernGL:
     def renderizar(self, scene_surface: pygame.Surface, hud_surface: pygame.Surface, efeito: Dict[str, object] | None, shader_ativo: bool) -> None:
         largura, altura = scene_surface.get_size()
         self._garantir_texturas((largura, altura))
+        self._ctx.disable(moderngl.DEPTH_TEST)
+        self._ctx.disable(moderngl.CULL_FACE)
+        self._ctx.disable(moderngl.BLEND)
 
         dados = dict(efeito or {})
         player_uv = dados.get("player_uv", (0.5, 0.5))

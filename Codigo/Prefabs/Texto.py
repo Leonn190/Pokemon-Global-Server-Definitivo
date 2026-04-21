@@ -53,6 +53,7 @@ class Texto:
         # cache final (último frame)
         self._final_key = None
         self._final_surf = None
+        self._gl_cache_token = None
 
         self._load_font()
         self._invalidate_all()
@@ -65,10 +66,12 @@ class Texto:
         self._structure_surf = None
         self._final_key = None
         self._final_surf = None
+        self._gl_cache_token = None
 
     def _invalidate_final(self):
         self._final_key = None
         self._final_surf = None
+        self._gl_cache_token = None
 
     # --- API ---
     def set_style(self, **kwargs):
@@ -246,6 +249,16 @@ class Texto:
         align = self.ALIGN_ALIASES.get(str(self.style["align"]).strip().lower(), self.style["align"])
         setattr(rect, align, self.pos)
         tela.blit(surf, rect)
+
+    def draw_gl(self, renderer):
+        surf = self._render()
+        rect = surf.get_rect()
+        align = self.ALIGN_ALIASES.get(str(self.style["align"]).strip().lower(), self.style["align"])
+        setattr(rect, align, self.pos)
+        token = (self._final_key, surf.get_size())
+        dirty = token != self._gl_cache_token
+        renderer.desenhar_surface_cacheada(f"texto:{id(self)}", surf, rect, dirty=dirty)
+        self._gl_cache_token = token
 
 
 class NumeroVariavel(Texto):

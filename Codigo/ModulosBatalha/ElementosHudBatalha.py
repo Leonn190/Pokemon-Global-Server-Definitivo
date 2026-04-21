@@ -8,7 +8,7 @@ import pygame
 from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
 from Codigo.Paineis.PainelJogada import PainelJogada
 from Codigo.Paineis.VisualizadorLog import VisualizadorLog
-from Codigo.ModulosBatalha.ControladorFluxos import ControladorFluxos
+from Codigo.ModulosBatalha.ControladorJogadas import ControladorJogadas
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
@@ -28,7 +28,7 @@ class ElementosHudBatalha:
         self._fuga_taxa_decay = 0.08
         self._fuga_disparada = False
         self._ficha = FichaPokemonBatalha()
-        self._fluxos = ControladorFluxos(controlador_batalha, camera) if controlador_batalha is not None and camera is not None else None
+        self._fluxos = ControladorJogadas(controlador_batalha, camera) if controlador_batalha is not None and camera is not None else None
         self._painel_jogada = PainelJogada()
         self._visualizador_log = VisualizadorLog(controlador_batalha)
         self._anim_ficha = 0.0

@@ -184,7 +184,9 @@ def validar_dados(dados: dict) -> list[str]:
             erros.append(f"{contexto}: campo 'preparo' ausente ou inválido")
         else:
             tipo_preparo = str(preparo.get("tipo") or "").strip()
-            if tipo_preparo and tipo_preparo not in TIPOS_PREPARO_PERMITIDOS:
+            if not tipo_preparo:
+                erros.append(f"{contexto}: preparo sem 'tipo'")
+            elif tipo_preparo not in TIPOS_PREPARO_PERMITIDOS:
                 erros.append(f"{contexto}: tipo de preparo inválido '{tipo_preparo}'")
 
             indicador = str(preparo.get("indicador") or "").strip()

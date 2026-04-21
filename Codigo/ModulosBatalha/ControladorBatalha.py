@@ -317,6 +317,7 @@ class ControladorBatalha:
     def atualizar_estado_servidor(self, retorno: Dict[str, object] | None = None) -> None:
         if not isinstance(retorno, dict):
             return
+        status = str(retorno.get("status") or "")
         log = retorno.get("log") if isinstance(retorno.get("log"), dict) else {}
         if log:
             self._registrar_log_publico(log)
@@ -325,6 +326,13 @@ class ControladorBatalha:
             if log:
                 self.SistemaBatalha.atualizar(log_servidor=log)
             return
+        dbg_combate(
+            "ControladorBatalha",
+            "resposta de turno aplicada",
+            status=status,
+            rodada=int(retorno.get("rodada") or self._rodada_atual),
+            historico=len(list(log.get("historico") or [])) if isinstance(log, dict) else 0,
+        )
         if self._leitor_logs.reproduzir(
             log,
             resultado=resultado,
@@ -332,6 +340,7 @@ class ControladorBatalha:
         ):
             return
         self._aplicar_estado_servidor(resultado, log)
+        dbg_combate("ControladorBatalha", "snapshot aplicado", rodada=int(self._rodada_atual or 1))
 
     def aplicar_snapshot_replay(self, snapshot: Dict[str, object] | None = None) -> None:
         if not isinstance(snapshot, dict) or not snapshot:

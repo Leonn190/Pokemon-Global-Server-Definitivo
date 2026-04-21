@@ -292,7 +292,7 @@ class ControladorJogadas:
             }
         )
 
-    def _confirmar_preparacao(self) -> bool:
+    def _confirmar_preparacao(self, ficha=None) -> bool:
         if not isinstance(self._preparacao, dict):
             return False
         estado = str(self._preparacao.get("estado") or "preview")
@@ -302,7 +302,11 @@ class ControladorJogadas:
             dbg_combate("ControladorJogadas", "jogada nao adicionada", erro=erro)
             return False
         dbg_combate("ControladorJogadas", f"preparar confirmou {estado}", jogada_id=jogada.get("id"))
-        self._preparacao = self._nova_preparacao(None)
+        self._preparacao = None
+        self._ataque_atual = None
+        self._ultimo_ataque_nome = ""
+        if ficha is not None and hasattr(ficha, "limpar_ataque_selecionado"):
+            ficha.limpar_ataque_selecionado()
         return True
 
     def _hud_clicado(self, pos, hud_rects) -> bool:
@@ -391,17 +395,21 @@ class ControladorJogadas:
         if tipo == "alvo" and not self._preparacao.get("alvo_ids"):
             dbg_combate("ControladorJogadas", "jogada nao adicionada", motivo="falta alvo")
             return "falta_alvo"
-        return "ok" if self._confirmar_preparacao() else "erro"
+        return "ok" if self._confirmar_preparacao(ficha) else "erro"
 
     def acao_principal(self, ficha):
         return self.preparar(ficha)
 
-    def pronto(self):
+    def pronto(self, forcar_envio_vazio: bool = False):
         dbg_combate("ControladorJogadas", "pronto clicado")
         jogadas = [self._json_seguro(j) for j in self._montador.listar()]
         dbg_combate("ControladorJogadas", "payload antes de enviar", quantidade=len(jogadas))
         if not jogadas:
-            return "vazio"
+            if forcar_envio_vazio:
+                dbg_combate("ControladorJogadas", "pronto forçado enviou vazio")
+            else:
+                dbg_combate("ControladorJogadas", "pronto manual sem jogadas retornou vazio")
+                return "vazio"
         contexto = getattr(getattr(self._controlador, "SistemaBatalha", None), "Contexto", {})
         if not isinstance(contexto, dict) or not contexto:
             contexto = getattr(self._controlador, "Contexto", {})
@@ -415,8 +423,19 @@ class ControladorJogadas:
         json.dumps(jogadas, ensure_ascii=False)
         resposta = enviar_jogada_batalha_server(ip=ip, client_id=client_id, jogadas=jogadas, batalha_id=batalha_id)
         dbg_combate("ControladorJogadas", "retorno recebido", status=str((resposta or {}).get("status")))
-        contexto["batalha_servidor_ultimo_envio"] = resposta if isinstance(resposta, dict) else {"status": "erro"}
+        resposta_dict = resposta if isinstance(resposta, dict) else {"status": "erro"}
+        salvou_controlador = False
+        salvou_sistema = False
+        if isinstance(getattr(self._controlador, "Contexto", None), dict):
+            self._controlador.Contexto["batalha_servidor_ultimo_envio"] = resposta_dict
+            salvou_controlador = True
+        ctx_sistema = getattr(getattr(self._controlador, "SistemaBatalha", None), "Contexto", None)
+        if isinstance(ctx_sistema, dict):
+            ctx_sistema["batalha_servidor_ultimo_envio"] = resposta_dict
+            salvou_sistema = True
+        dbg_combate("ControladorJogadas", "resposta salva nos contextos", controlador=salvou_controlador, sistema=salvou_sistema)
         self._montador.limpar()
+        dbg_combate("ControladorJogadas", "montador limpo")
         self._preparacao = None
         return "ok"
 

@@ -358,7 +358,6 @@ class ControladorBatalha:
             self.atualizar_estado_servidor(resposta_turno)
 
     def atualizar(self, eventos, dt: float) -> None:
-        dbg_combate("ControladorBatalha", "atualizacao de contexto de batalha", eventos=len(eventos or []), dt=dt)
         self._sincronizar_respostas_servidor()
         self._leitor_logs.atualizar(dt)
         self.SistemaBatalha.atualizar(eventos, dt)

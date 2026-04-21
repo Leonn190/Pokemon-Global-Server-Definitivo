@@ -34,7 +34,7 @@ class ResolvedorFormasAtaque:
         jog = jogada if isinstance(jogada, dict) else {}
         execucao = spec.get("execucao") if isinstance(spec.get("execucao"), dict) else {}
         forma = str(jog.get("forma") or execucao.get("forma") or "").strip()
-        dbg_combate("FormasAtaque", "forma recebida", forma=forma, origem=jog.get("origem_mundo"), destino=jog.get("destino_mundo"))
+        dbg_combate("FormasAtaque", "forma recebida", forma=forma, origem_mundo=jog.get("origem_mundo"), destino_mundo=jog.get("destino_mundo"))
 
         corpo_executor = criar_corpo_de_pokemon(executor)
         lista_corpos = [c for c in list(corpos or []) if c.id != corpo_executor.id]

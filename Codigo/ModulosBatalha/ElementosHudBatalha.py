@@ -230,7 +230,6 @@ class ElementosHudBatalha:
             self._processar_selecao(eventos or [], rects_hud)
 
         if self._fluxos is not None:
-            dbg_combate("ElementosHudBatalha", "ataque atual detectado", ataque=self._ficha.ataque_selecionado())
             self._fluxos.atualizar_contexto(self._ficha.ataque_selecionado())
             if not interacao_bloqueada:
                 self._fluxos.processar_eventos(eventos or [], self._ficha, rects_hud)
@@ -246,7 +245,6 @@ class ElementosHudBatalha:
         if self._botao_preparar is not None:
             if self._fluxos is not None:
                 rotulo, habilitado = self._fluxos.estado_botao_preparar(self._ficha)
-                dbg_combate("ElementosHudBatalha", "estado botao preparar", rotulo=rotulo, habilitado=habilitado)
                 self._botao_preparar.set_text(rotulo)
                 self._botao_preparar.set_habilitado(habilitado)
             self._botao_preparar.render(tela, eventos or [], dt, None)
@@ -264,8 +262,6 @@ class ElementosHudBatalha:
             self._ficha.atualizar_previsao(0.0, True)
         if self._fluxos is not None:
             self._fluxos.desenhar(tela, dt)
-        if self._fluxos is not None:
-            dbg_combate("ElementosHudBatalha", "quantidade de jogadas no painel", quantidade=len(self._fluxos.listar_jogadas()))
         self._painel_jogada.desenhar(tela, dt)
         self._ficha.definir_controle_inimigo(bool(getattr(self._controlador, "modo_teste_ativo", lambda: False)()))
         self._ficha.render(tela, self._pokemon_exibido, self._anim_ficha, eventos or [], dt)

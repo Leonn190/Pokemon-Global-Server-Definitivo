@@ -9,6 +9,7 @@ from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
 from Codigo.Paineis.PainelJogada import PainelJogada
 from Codigo.Paineis.VisualizadorLog import VisualizadorLog
 from Codigo.ModulosBatalha.ControladorJogadas import ControladorJogadas
+from Codigo.ModulosBatalha.DebugCombate import dbg_combate
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
@@ -154,7 +155,7 @@ class ElementosHudBatalha:
         tela.blit(overlay, (0, 0))
 
     def _processar_selecao(self, eventos: List[pygame.event.Event], rects_bloqueados: List[pygame.Rect]):
-        if self._controlador is None or self._camera is None or self._fluxos is not None:
+        if self._controlador is None or self._camera is None:
             return
         for ev in eventos or []:
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
@@ -164,12 +165,15 @@ class ElementosHudBatalha:
                 break
 
     def _preparar_jogada(self) -> None:
+        dbg_combate("ElementosHudBatalha", "botao preparar clicado")
         if self._fluxos is not None:
             self._fluxos.acao_principal(self._ficha)
 
     def _confirmar_jogadas(self) -> None:
+        dbg_combate("ElementosHudBatalha", "botao pronto clicado")
         if self._fluxos is not None:
             status = self._fluxos.pronto()
+            dbg_combate("ElementosHudBatalha", "status pronto", status=status)
             if status in {"ok", "aguardando"}:
                 self._aguardando_resultado_rodada = True
 
@@ -226,6 +230,7 @@ class ElementosHudBatalha:
             self._processar_selecao(eventos or [], rects_hud)
 
         if self._fluxos is not None:
+            dbg_combate("ElementosHudBatalha", "ataque atual detectado", ataque=self._ficha.ataque_selecionado())
             self._fluxos.atualizar_contexto(self._ficha.ataque_selecionado())
             if not interacao_bloqueada:
                 self._fluxos.processar_eventos(eventos or [], self._ficha, rects_hud)
@@ -241,6 +246,7 @@ class ElementosHudBatalha:
         if self._botao_preparar is not None:
             if self._fluxos is not None:
                 rotulo, habilitado = self._fluxos.estado_botao_preparar(self._ficha)
+                dbg_combate("ElementosHudBatalha", "estado botao preparar", rotulo=rotulo, habilitado=habilitado)
                 self._botao_preparar.set_text(rotulo)
                 self._botao_preparar.set_habilitado(habilitado)
             self._botao_preparar.render(tela, eventos or [], dt, None)
@@ -258,6 +264,8 @@ class ElementosHudBatalha:
             self._ficha.atualizar_previsao(0.0, True)
         if self._fluxos is not None:
             self._fluxos.desenhar(tela, dt)
+        if self._fluxos is not None:
+            dbg_combate("ElementosHudBatalha", "quantidade de jogadas no painel", quantidade=len(self._fluxos.listar_jogadas()))
         self._painel_jogada.desenhar(tela, dt)
         self._ficha.definir_controle_inimigo(bool(getattr(self._controlador, "modo_teste_ativo", lambda: False)()))
         self._ficha.render(tela, self._pokemon_exibido, self._anim_ficha, eventos or [], dt)

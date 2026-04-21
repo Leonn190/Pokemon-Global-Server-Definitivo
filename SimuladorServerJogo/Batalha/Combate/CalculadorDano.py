@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 import random
 from typing import Any
 
+from SimuladorServerJogo.Batalha.Combate.DebugCombate import dbg_combate
+
 
 FATOR_DANO_COLISAO = 0.08
 FATOR_MASSA_COLISAO = 0.03
@@ -219,6 +221,7 @@ def calcular_dano_ataque(atacante, defensor, ataque_spec, contexto=None) -> Resu
     atk = atributo_total(atacante, "Atk") if _norm(categoria) != "especial" else atributo_total(atacante, "SpA")
     poder = _fnum(spec.get("poder", 1.0), 1.0)
     r.dano_base = max(0.0, atk * poder)
+    dbg_combate("CalculadorDano", "dano base", valor=r.dano_base)
 
     foi_critico, mult_crit = resolver_critico(atacante, defensor, spec, contexto=contexto)
     r.foi_critico = foi_critico
@@ -235,6 +238,7 @@ def calcular_dano_ataque(atacante, defensor, ataque_spec, contexto=None) -> Resu
     r.dano_apos_durabilidade = max(0.0, r.dano_apos_defesa * _multiplicador_durabilidade(defensor))
     r.dano_final = r.dano_apos_durabilidade
     _aplicar_barreira(r, defensor)
+    dbg_combate("CalculadorDano", "dano final", dano_final=r.dano_final, dano_vida=r.dano_vida, critico=r.foi_critico)
     return r
 
 

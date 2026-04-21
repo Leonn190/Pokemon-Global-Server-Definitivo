@@ -11,6 +11,7 @@ from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha, pon
 from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.SistemaBatalha import SistemaBatalha
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
+from Codigo.ModulosBatalha.DebugCombate import dbg_combate
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
@@ -154,6 +155,7 @@ class ControladorBatalha:
         self.PokemonSelecionado = None
 
     def selecionar_pokemon(self, pokemon) -> PokemonBatalha | None:
+        dbg_combate("ControladorBatalha", "selecao de pokemon", pokemon=str(getattr(pokemon, "Uid", "")))
         if pokemon is self.PokemonSelecionado:
             self.PokemonSelecionado = None
         elif pokemon is not None:
@@ -161,6 +163,7 @@ class ControladorBatalha:
         return self.PokemonSelecionado
 
     def selecionar_por_mouse(self, mouse_tela_px, camera) -> PokemonBatalha | None:
+        dbg_combate("ControladorBatalha", "mouse down/move/up drag", evento="mouse", pos=mouse_tela_px)
         return self.selecionar_pokemon(self.pokemon_no_ponto(mouse_tela_px, camera))
 
     @staticmethod
@@ -355,6 +358,7 @@ class ControladorBatalha:
             self.atualizar_estado_servidor(resposta_turno)
 
     def atualizar(self, eventos, dt: float) -> None:
+        dbg_combate("ControladorBatalha", "atualizacao de contexto de batalha", eventos=len(eventos or []), dt=dt)
         self._sincronizar_respostas_servidor()
         self._leitor_logs.atualizar(dt)
         self.SistemaBatalha.atualizar(eventos, dt)

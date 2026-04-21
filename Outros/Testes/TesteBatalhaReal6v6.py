@@ -21,6 +21,7 @@ from Codigo.ModulosGerais.Camera import CameraBatalha
 from SimuladorServerJogo.Batalha.Combate.CatalogoAtaques import carregar_catalogo_ataques
 from SimuladorServerJogo.Batalha.Combate.ValidadorAtaques import validar_arquivo
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
+from Codigo.ModulosBatalha.DebugCombate import dbg_combate
 from SimuladorServerJogo.Batalha.LeitorJogadas import LeitorJogadas
 from SimuladorServerJogo.Batalha.SistemaBatalha import SistemaBatalha as SistemaBatalhaServidor
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
@@ -128,7 +129,9 @@ def _construir_times_debug() -> Tuple[List[Dict[str, object]], List[Dict[str, ob
 
 
 def criar_contexto_debug_6v6() -> ContextoDebug6v6:
+    dbg_combate("TesteBatalhaReal6v6", "criacao do contexto")
     time_1, time_2 = _construir_times_debug()
+    dbg_combate("TesteBatalhaReal6v6", "pokemons criados", jogador=len(time_1), inimigo=len(time_2))
     time_jogador = {"Nome": "Time Debug Jogador", "Slots": time_1}
     time_inimigo = {"Nome": "Time Debug Inimigo", "Slots": time_2}
 
@@ -185,6 +188,7 @@ class _ServidorLocalBatalha:
             contexto_batalha = dict(kwargs.get("contexto") or {})
         if contexto_batalha is None and isinstance(kwargs.get("contexto_batalha"), dict):
             contexto_batalha = dict(kwargs.get("contexto_batalha") or {})
+        dbg_combate("TesteBatalhaReal6v6", "iniciar chamado", client_id=client_id)
         client_resolvido = str(client_id or self._client_jogador)
         contexto = dict(self._contexto_servidor)
         if isinstance(contexto_batalha, dict):
@@ -203,15 +207,16 @@ class _ServidorLocalBatalha:
         **kwargs,
     ) -> Dict[str, object]:
         _ = ip
+        dbg_combate("TesteBatalhaReal6v6", "iniciar chamado", client_id=client_id)
         client_resolvido = str(client_id or self._client_jogador)
         batalha_resolvida = str(batalha_id or kwargs.get("batalha_id_servidor") or "debug_6v6_novo_combate")
         bid = batalha_resolvida
         sistema = self._sistema_por_batalha.get(bid)
         if sistema is None:
             return {"status": "erro", "mensagem": "Batalha nao encontrada"}
+        dbg_combate("TesteBatalhaReal6v6", "enviar_jogadas chamado", client_id=client_resolvido, batalha_id=bid)
         recebidas = [dict(j) for j in list(jogadas or []) if isinstance(j, dict)]
-        if not recebidas:
-            return self._leitor.executar_turno(sistema, client_id=client_resolvido, jogadas=recebidas)
+        dbg_combate("TesteBatalhaReal6v6", "servidor local recebeu jogadas", quantidade=len(recebidas))
 
         por_cliente: Dict[str, List[Dict[str, object]]] = {self._client_jogador: [], self._client_inimigo: []}
         for jogada in recebidas:
@@ -223,11 +228,15 @@ class _ServidorLocalBatalha:
             else:
                 por_cliente[self._client_jogador].append(jogada)
 
+        dbg_combate("TesteBatalhaReal6v6", "split por lado", jogador=len(por_cliente[self._client_jogador]), inimigo=len(por_cliente[self._client_inimigo]))
         ultima_resposta: Dict[str, object] = {"status": "aguardando", "mensagem": "Aguardando jogadas"}
-        if por_cliente[self._client_jogador]:
-            ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_jogador, jogadas=por_cliente[self._client_jogador])
-        if por_cliente[self._client_inimigo]:
-            ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_inimigo, jogadas=por_cliente[self._client_inimigo])
+        ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_jogador, jogadas=por_cliente[self._client_jogador])
+        if not por_cliente[self._client_inimigo]:
+            dbg_combate("TesteBatalhaReal6v6", "auto-complete lado vazio", lado="inimigo")
+        ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_inimigo, jogadas=por_cliente[self._client_inimigo])
+        if not por_cliente[self._client_jogador]:
+            dbg_combate("TesteBatalhaReal6v6", "auto-complete lado vazio", lado="jogador")
+        dbg_combate("TesteBatalhaReal6v6", "resposta final", resposta=ultima_resposta)
         return ultima_resposta
 
 
@@ -238,6 +247,7 @@ def _aplicar_patch_servidor_local(servidor_local: _ServidorLocalBatalha):
     original_iniciar = modulo_sistema_cliente.iniciar_batalha_server
     original_enviar = modulo_jogadas.enviar_jogada_batalha_server
 
+    dbg_combate("TesteBatalhaReal6v6", "patch de rede aplicado")
     modulo_sistema_cliente.iniciar_batalha_server = servidor_local.iniciar
     modulo_jogadas.enviar_jogada_batalha_server = servidor_local.enviar_jogadas
 

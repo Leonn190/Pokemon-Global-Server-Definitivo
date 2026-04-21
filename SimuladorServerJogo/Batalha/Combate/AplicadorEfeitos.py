@@ -5,6 +5,8 @@ from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Any
 
+from SimuladorServerJogo.Batalha.Combate.DebugCombate import dbg_combate
+
 from SimuladorServerJogo.Batalha.Combate.CalculadorDano import (
     ResultadoDano,
     atributo_total,
@@ -169,6 +171,7 @@ class AplicadorEfeitos:
         handler = self._handlers.get(tipo)
         if not callable(handler):
             return ResultadoAplicacao(aplicado=False, motivo="tipo_nao_suportado", logs=[f"efeito:{tipo}"])
+        dbg_combate("AplicadorEfeitos", "efeito recebido", tipo=tipo)
         return handler(ef, contexto or {})
 
     def aplicar_estado(self, alvo, nome_efeito, aplicador=None, contexto=None, positivo=None) -> ResultadoAplicacao:
@@ -283,6 +286,7 @@ class AplicadorEfeitos:
                 self.aplicar_cura(atacante, atacante, dano * 0.25)
 
         _setar(alvo, "Efeitos", efeitos_alvo)
+        dbg_combate("AplicadorEfeitos", "dano/vida/barreira antes e depois", dano=dano, vida_pos=vida_pos)
         return ResultadoAplicacao(aplicado=True, eventos=eventos, dados={"dano_aplicado": dano})
 
     def aplicar_cura(self, aplicador, alvo, valor, contexto=None) -> ResultadoAplicacao:

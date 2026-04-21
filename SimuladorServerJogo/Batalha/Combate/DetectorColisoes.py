@@ -79,6 +79,7 @@ class DetectorColisoes:
             )
 
         eventos.sort(key=lambda e: (e.distancia, e.alvo_id or "", e.tipo))
+        dbg_combate("DetectorColisoes", "colisoes detectadas", quantidade=len(eventos))
         if objeto.atravessa_pokemons:
             return eventos
         for evento in eventos:

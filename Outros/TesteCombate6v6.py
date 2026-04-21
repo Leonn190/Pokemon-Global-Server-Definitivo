@@ -297,34 +297,56 @@ def rodar_smoke_tests() -> int:
     sistema = SistemaBatalhaTeste()
     leitor = LeitorJogadas()
 
-    pokemons = sistema.listar_pokemons()
-    atacante = next(p for p in pokemons if p.Lado == "jogador")
-    alvo = next(p for p in pokemons if p.Lado == "inimigo")
+    aliados = [p for p in sistema.listar_pokemons() if p.Lado == "jogador"]
+    inimigos = [p for p in sistema.listar_pokemons() if p.Lado == "inimigo"]
+    if not aliados or not inimigos:
+        raise RuntimeError("Sistema de teste sem times completos.")
 
-    jogadas = []
-    for nome in ATAQUES_OBRIGATORIOS:
-        spec = catalogo.obter(nome)
-        forma = str((spec.bruto.get("execucao") or {}).get("forma") or "")
-        alvo_ids = [alvo.Uid] if forma in FORMAS_ALVO else []
-        destino = alvo.Posicao if forma not in FORMAS_SELF else atacante.Posicao
-        jogadas.append(_montar_jogada(atacante, spec, destino, alvo_ids))
+    resultados = []
+    ataques_executados: set[str] = set()
+    lotes = [ATAQUES_OBRIGATORIOS[i : i + 6] for i in range(0, len(ATAQUES_OBRIGATORIOS), 6)]
+    for idx_lote, lote in enumerate(lotes):
+        jogadas_lote: list[dict[str, Any]] = []
+        for idx_ataque, nome in enumerate(lote):
+            executor = aliados[idx_ataque % len(aliados)]
+            alvo = inimigos[idx_ataque % len(inimigos)]
+            spec = catalogo.obter(nome)
+            forma = str((spec.bruto.get("execucao") or {}).get("forma") or "")
+            alvo_ids = [alvo.Uid] if forma in FORMAS_ALVO else []
+            destino = alvo.Posicao if forma not in FORMAS_SELF else executor.Posicao
+            jogadas_lote.append(_montar_jogada(executor, spec, destino, alvo_ids))
+            ataques_executados.add(nome)
 
-    resultado = leitor.executar_turno(sistema, client_id="teste", jogadas=jogadas[:6])
+        resultado = leitor.executar_turno(sistema, client_id="teste", jogadas=jogadas_lote)
+        resultados.append(resultado)
+        if resultado.get("status") not in {"ok", "finalizada"}:
+            raise RuntimeError(f"Turno smoke {idx_lote+1} retornou status inesperado: {resultado.get('status')}")
+
+        for pokemon in sistema.listar_pokemons():
+            if pokemon.VidaAtual > 0:
+                pokemon.ForaDeCombate = False
+            pokemon.Energia = max(float(pokemon.Energia), 100.0)
 
     campos_obrigatorios = ["status", "rodada", "tick", "log", "eventos", "batalha"]
-    faltando = [c for c in campos_obrigatorios if c not in resultado]
-    if faltando:
-        raise RuntimeError(f"Retorno sem campos obrigatórios: {faltando}")
+    for idx, resultado in enumerate(resultados, start=1):
+        faltando = [c for c in campos_obrigatorios if c not in resultado]
+        if faltando:
+            raise RuntimeError(f"Retorno do turno {idx} sem campos obrigatórios: {faltando}")
+        log = resultado.get("log") if isinstance(resultado.get("log"), dict) else {}
+        for campo in ["sumario", "historico", "resultados", "alertas"]:
+            if campo not in log:
+                raise RuntimeError(f"Log do turno {idx} sem campo obrigatório: {campo}")
 
-    log = resultado.get("log") if isinstance(resultado.get("log"), dict) else {}
-    for campo in ["sumario", "historico", "resultados"]:
-        if campo not in log:
-            raise RuntimeError(f"Log sem campo obrigatório: {campo}")
+    faltaram_no_smoke = [nome for nome in ATAQUES_OBRIGATORIOS if nome not in ataques_executados]
+    if faltaram_no_smoke:
+        raise RuntimeError(f"Smoke não cobriu todos os 18 ataques: {faltaram_no_smoke}")
 
     print("SMOKE OK")
     print(f"- ataques validados: {len(ATAQUES_OBRIGATORIOS)}")
-    print(f"- status: {resultado.get('status')}")
-    print(f"- eventos: {len(resultado.get('eventos') or [])}")
+    print(f"- turnos executados: {len(resultados)}")
+    print(f"- cobertura de ataques: {len(ataques_executados)}")
+    print(f"- status final: {resultados[-1].get('status')}")
+    print(f"- eventos totais: {sum(len(r.get('eventos') or []) for r in resultados)}")
     return 0
 
 
@@ -337,13 +359,13 @@ def _mundo_para_tela(pos: list[float], arena: tuple[int, int, int, int], tamanho
 
 
 def executar_visual() -> int:
-    import importlib
+    from importlib.util import find_spec
 
-    if importlib.util.find_spec("pygame") is None:
+    if find_spec("pygame") is None:
         print("ERRO: pygame não está instalado. Rode o modo smoke: python Outros/TesteCombate6v6.py --smoke")
         return 2
 
-    pygame = importlib.import_module("pygame")
+    import pygame
     pygame.init()
 
     tela = pygame.display.set_mode((1920, 1080))

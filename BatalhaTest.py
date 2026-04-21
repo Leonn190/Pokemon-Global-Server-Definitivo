@@ -1,12 +1,50 @@
 from __future__ import annotations
 
 import csv
+import sys
+import types
 import unicodedata
 import uuid
 from pathlib import Path
 from typing import Dict, List
 
 import pygame
+
+
+def _instalar_stub_server_batalha_offline() -> None:
+    """
+    Evita dependência acidental do servidor real durante o teste visual.
+    Deve rodar antes de qualquer import de módulos de batalha que importam
+    Codigo.Server.ServerBatalha.
+    """
+    nome_modulo = "Codigo.Server.ServerBatalha"
+    if nome_modulo in sys.modules:
+        return
+
+    stub = types.ModuleType(nome_modulo)
+
+    def iniciar_batalha_server(ip: str, client_id: str, contexto_batalha: Dict[str, object] | None = None) -> Dict[str, object]:
+        _ = (ip, client_id, contexto_batalha)
+        return {
+            "status": "offline_stub",
+            "modo_teste": True,
+            "mensagem": "BatalhaTest offline: servidor desabilitado.",
+        }
+
+    def enviar_jogada_batalha_server(ip: str, client_id: str, jogadas: List[Dict[str, object]] | None = None, batalha_id: str = "") -> Dict[str, object]:
+        _ = (ip, client_id, jogadas, batalha_id)
+        return {
+            "status": "offline_stub",
+            "modo_teste": True,
+            "mensagem": "BatalhaTest offline: jogadas não enviadas.",
+        }
+
+    stub.iniciar_batalha_server = iniciar_batalha_server
+    stub.enviar_jogada_batalha_server = enviar_jogada_batalha_server
+    sys.modules[nome_modulo] = stub
+
+
+_instalar_stub_server_batalha_offline()
 
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha

@@ -6,7 +6,6 @@ from typing import Any
 from SimuladorServerJogo.Batalha.Combate.AplicadorEfeitos import AplicadorEfeitos
 from SimuladorServerJogo.Batalha.Combate.CalculadorDano import calcular_dano_colisao, calcular_dano_por_efeito
 from SimuladorServerJogo.Batalha.Combate.CatalogoAtaques import carregar_catalogo_ataques
-from SimuladorServerJogo.Batalha.Combate.DebugCombate import dbg_combate
 from SimuladorServerJogo.Batalha.Combate.FormasAtaque import ResolvedorFormasAtaque
 from SimuladorServerJogo.Batalha.Combate.LogCombate import LogCombate, comparar_snapshots, snapshot_batalha
 from SimuladorServerJogo.Batalha.Combate.ObjetosCombate import criar_corpos_de_pokemons
@@ -37,12 +36,9 @@ class ExecutorTurno:
         self.aplicador_efeitos = aplicador_efeitos or AplicadorEfeitos()
 
     def executar_turno(self, sistema, client_id=None, jogadas=None) -> dict:
-        dbg_combate("ExecutorTurno", "entrada executar_turno", client_id=client_id)
         recebidas = [dict(item) for item in list(jogadas or []) if isinstance(item, dict)]
-        dbg_combate("ExecutorTurno", "jogadas recebidas", quantidade=len(recebidas))
         sistema.adicionar_jogadas(str(client_id or ""), recebidas)
         status_coleta, jogadas_turno = sistema.coletar_jogadas_pendentes_turno(str(client_id or ""))
-        dbg_combate("ExecutorTurno", "status coleta", status=status_coleta, quantidade=len(jogadas_turno or []))
         if status_coleta != "pronto":
             return {"status": status_coleta, "mensagem": "Aguardando jogadas dos outros participantes"}
 
@@ -54,7 +50,6 @@ class ExecutorTurno:
 
         normalizadas = self._normalizar_jogadas(jogadas_turno, mapa, log)
         ordenadas = self.ordenador.ordenar(normalizadas, contexto=contexto_batalha)
-        dbg_combate("ExecutorTurno", "normalizacao/ordenacao", normalizadas=len(normalizadas), ordenadas=len(ordenadas))
         for item in ordenadas:
             log.adicionar_sumario("jogada_ordenada", **dict(item.get("dados_ordenacao") or {}), ataque=str(item.get("ataque_nome") or ""), custo=float(item.get("custo", 0.0)))
 
@@ -86,7 +81,6 @@ class ExecutorTurno:
             corpos = criar_corpos_de_pokemons(pokemons_ativos)
             spec = jogada.get("spec") if isinstance(jogada.get("spec"), dict) else {}
             resultado_forma = self.resolvedor_formas.resolver(spec, jogada, executor, corpos, contexto=contexto_batalha)
-            dbg_combate("ExecutorTurno", "resultado da forma", forma=jogada.get("forma"), impactos=len(resultado_forma.impactos), eventos=len(resultado_forma.eventos))
             log.adicionar_historico("forma_resolvida", executor_id=executor.Uid, ataque=jogada.get("ataque_nome"), forma=jogada.get("forma"), impactos=len(resultado_forma.impactos), eventos_colisao=len(resultado_forma.eventos))
             forma_jogada = str(jogada.get("forma") or "").strip().casefold()
             if forma_jogada in {"impulso", "dash"}:
@@ -104,7 +98,6 @@ class ExecutorTurno:
                     eventos.append({"tipo": "movimento", "executor_id": executor.Uid, "origem": origem_mov, "posicao": destino_mov, "forma": forma_jogada})
 
             alvos = self._resolver_alvos(jogada, resultado_forma, mapa)
-            dbg_combate("ExecutorTurno", "alvos resolvidos", quantidade=len(alvos))
             houve_dano_tentado = False
             houve_dano_com_acerto = False
             for alvo in alvos:
@@ -155,7 +148,6 @@ class ExecutorTurno:
             "eventos": eventos,
             "batalha": sistema.snapshot(),
         }
-        dbg_combate("ExecutorTurno", "retorno final", status=resultado.get("status"))
         return resultado
 
     def obter_pokemons_ativos(self, sistema) -> list:

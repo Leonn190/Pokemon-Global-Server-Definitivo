@@ -11,7 +11,6 @@ from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha, pon
 from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.SistemaBatalha import SistemaBatalha
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
-from Codigo.ModulosBatalha.DebugCombate import dbg_combate
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
@@ -175,7 +174,6 @@ class ControladorBatalha:
         self.PokemonSelecionado = None
 
     def selecionar_pokemon(self, pokemon) -> PokemonBatalha | None:
-        dbg_combate("ControladorBatalha", "selecao de pokemon", pokemon=str(getattr(pokemon, "Uid", "")))
         if pokemon is self.PokemonSelecionado:
             self.PokemonSelecionado = None
         elif pokemon is not None:
@@ -183,7 +181,6 @@ class ControladorBatalha:
         return self.PokemonSelecionado
 
     def selecionar_por_mouse(self, mouse_tela_px, camera) -> PokemonBatalha | None:
-        dbg_combate("ControladorBatalha", "mouse down/move/up drag", evento="mouse", pos=mouse_tela_px)
         return self.selecionar_pokemon(self.pokemon_no_ponto(mouse_tela_px, camera))
 
     @staticmethod
@@ -346,13 +343,6 @@ class ControladorBatalha:
             if log:
                 self.SistemaBatalha.atualizar(log_servidor=log)
             return
-        dbg_combate(
-            "ControladorBatalha",
-            "resposta de turno aplicada",
-            status=status,
-            rodada=int(retorno.get("rodada") or self._rodada_atual),
-            historico=len(list(log.get("historico") or [])) if isinstance(log, dict) else 0,
-        )
         if self._leitor_logs.reproduzir(
             log,
             resultado=resultado,
@@ -360,7 +350,6 @@ class ControladorBatalha:
         ):
             return
         self._aplicar_estado_servidor(resultado, log)
-        dbg_combate("ControladorBatalha", "snapshot aplicado", rodada=int(self._rodada_atual or 1))
 
     def aplicar_snapshot_replay(self, snapshot: Dict[str, object] | None = None) -> None:
         if not isinstance(snapshot, dict) or not snapshot:

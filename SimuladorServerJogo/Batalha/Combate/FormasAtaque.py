@@ -3,8 +3,6 @@ from __future__ import annotations
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from SimuladorServerJogo.Batalha.Combate.DebugCombate import dbg_combate
-
 from SimuladorServerJogo.Batalha.Combate.DetectorColisoes import DetectorColisoes
 from SimuladorServerJogo.Batalha.Combate.MotorFisica import (
     Vetor2,
@@ -34,7 +32,6 @@ class ResolvedorFormasAtaque:
         jog = jogada if isinstance(jogada, dict) else {}
         execucao = spec.get("execucao") if isinstance(spec.get("execucao"), dict) else {}
         forma = str(jog.get("forma") or execucao.get("forma") or "").strip()
-        dbg_combate("FormasAtaque", "forma recebida", forma=forma, origem_mundo=jog.get("origem_mundo"), destino_mundo=jog.get("destino_mundo"))
 
         corpo_executor = criar_corpo_de_pokemon(executor)
         lista_corpos = [c for c in list(corpos or []) if c.id != corpo_executor.id]
@@ -129,7 +126,6 @@ class ResolvedorFormasAtaque:
                 primeiro.dados["ricochete"] = "pokemon"
             elif not obj.atravessa_pokemons:
                 obj.marcar_morto()
-        dbg_combate("FormasAtaque", "objetos/eventos criados", forma="projetil", eventos=len(eventos))
         return ResultadoForma(eventos=eventos, objetos_criados=[obj], impactos=[{"tipo": "projetil", "alvo": e.alvo_id} for e in eventos])
 
     def _resolver_projetil_explosivo(self, executor: CorpoCombate, corpos: list[CorpoCombate], spec: dict[str, Any], jogada: dict[str, Any]) -> ResultadoForma:

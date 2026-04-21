@@ -9,7 +9,6 @@ from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
 from Codigo.Paineis.PainelJogada import PainelJogada
 from Codigo.Paineis.VisualizadorLog import VisualizadorLog
 from Codigo.ModulosBatalha.ControladorJogadas import ControladorJogadas
-from Codigo.ModulosBatalha.DebugCombate import dbg_combate
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
@@ -157,13 +156,11 @@ class ElementosHudBatalha:
         status = str(resposta.get("status") or "")
         if status in {"ok", "finalizada"}:
             self._aguardando_resultado_rodada = False
-            dbg_combate("ElementosHudBatalha", "aguardando_resultado_rodada desligado", motivo=f"resposta:{status}")
             self._resetar_para_proxima_rodada()
 
     def _resetar_para_proxima_rodada(self) -> None:
         self._tempo_restante_rodada = self._tempo_total_rodada
         self._rodada_referencia = int(getattr(self._controlador, "_rodada_atual", self._rodada_referencia) or self._rodada_referencia)
-        dbg_combate("ElementosHudBatalha", "nova rodada iniciada", rodada=self._rodada_referencia)
 
     def _desenhar_overlay_fuga(self, tela: pygame.Surface) -> None:
         if self._fuga_pressao <= 0.01:
@@ -184,20 +181,16 @@ class ElementosHudBatalha:
                 break
 
     def _preparar_jogada(self) -> None:
-        dbg_combate("ElementosHudBatalha", "botao preparar clicado")
         if self._fluxos is not None:
             status = self._fluxos.acao_principal(self._ficha)
             if status in {"ok", True}:
                 self._ficha.limpar_ataque_selecionado()
 
     def _confirmar_jogadas(self, forcar_envio_vazio: bool = False) -> None:
-        dbg_combate("ElementosHudBatalha", "botao pronto clicado")
         if self._fluxos is not None:
             status = self._fluxos.pronto(forcar_envio_vazio=forcar_envio_vazio)
-            dbg_combate("ElementosHudBatalha", "status pronto", status=status)
             if status == "aguardando":
                 self._aguardando_resultado_rodada = True
-                dbg_combate("ElementosHudBatalha", "aguardando_resultado_rodada ligado", motivo=f"envio:{status}")
             elif status in {"ok", "finalizada"}:
                 self._aguardando_resultado_rodada = False
                 self._sincronizar_retorno_turno()
@@ -226,7 +219,6 @@ class ElementosHudBatalha:
         self._atualizar_fuga(dt)
         self._atualizar_tempo_rodada(dt)
         if self._tempo_restante_rodada <= 0.0 and not self._aguardando_resultado_rodada and not replay_ativo:
-            dbg_combate("ElementosHudBatalha", "timeout enviou lista vazia")
             self._confirmar_jogadas(forcar_envio_vazio=True)
 
         if self._fluxos is not None:

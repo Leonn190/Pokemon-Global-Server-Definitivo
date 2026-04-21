@@ -5,7 +5,6 @@ from typing import Dict, Optional
 
 import pygame
 
-from Codigo.ModulosBatalha.DebugCombate import dbg_combate
 from Codigo.ModulosBatalha.IndicadorAtaque import IndicadorAtaque
 from Codigo.ModulosBatalha.LeitorAtaquesCombate import LeitorAtaquesCombate
 from Codigo.ModulosBatalha.MontadorJogada import MontadorJogada
@@ -35,7 +34,6 @@ class ControladorJogadas:
         self._drag_inicio_tela = None
         self._fluxo_movimento = Fluxo("seta")
         self._limiar_drag_px = 6.0
-        dbg_combate("ControladorJogadas", "init")
 
     @staticmethod
     def _uid_pokemon(pokemon) -> str:
@@ -203,7 +201,6 @@ class ControladorJogadas:
             },
             "spec": spec,
         }
-        dbg_combate("ControladorJogadas", "preview criado", ataque=nome, forma=prep.get("forma"))
         return prep
 
     def _fixar_mira(self, pos_tela) -> bool:
@@ -227,7 +224,6 @@ class ControladorJogadas:
             minimo = float(spec_preparo.get("intensidade_min") or 0.2)
             maximo = float(spec_preparo.get("intensidade_max") or 1.0)
             self._preparacao["intensidade"] = max(minimo, min(maximo, distancia / max(0.0001, alcance)))
-        dbg_combate("ControladorJogadas", "mira fixada", tipo=tipo, destino=self._json_seguro(destino))
         return True
 
     def _atualizar_destino_mouse(self):
@@ -248,7 +244,6 @@ class ControladorJogadas:
             delta = ((float(destino[0]) - float(anterior[0])) ** 2 + (float(destino[1]) - float(anterior[1])) ** 2) ** 0.5
             if delta < 0.30:
                 return
-        dbg_combate("ControladorJogadas", "preview atualizado", destino=self._json_seguro(destino), forma=forma)
 
     def _montar_jogada_serializavel(self, preparacao: Dict[str, object]) -> Dict[str, object]:
         executor = preparacao.get("executor")
@@ -299,9 +294,7 @@ class ControladorJogadas:
         jogada_json = self._montar_jogada_serializavel(self._preparacao)
         jogada, erro = self._montador.adicionar(jogada_json)
         if jogada is None:
-            dbg_combate("ControladorJogadas", "jogada nao adicionada", erro=erro)
             return False
-        dbg_combate("ControladorJogadas", f"preparar confirmou {estado}", jogada_id=jogada.get("id"))
         self._preparacao = None
         self._ataque_atual = None
         self._ultimo_ataque_nome = ""
@@ -326,7 +319,6 @@ class ControladorJogadas:
         dy = float(pos_tela[1]) - float(self._drag_inicio_tela[1])
         if not self._drag_ativo and (dx * dx + dy * dy) ** 0.5 >= self._limiar_drag_px:
             self._drag_ativo = True
-            dbg_combate("ControladorJogadas", "arrasto iniciado", executor_id=self._uid_pokemon(self._drag_candidato))
         if self._drag_ativo:
             self._drag_destino = self._mouse_para_mundo(pos_tela)
 
@@ -350,9 +342,7 @@ class ControladorJogadas:
         jogada = self._montar_jogada_movimento(pokemon, self._json_seguro(origem), self._json_seguro(destino))
         adicionada, erro = self._montador.adicionar(jogada)
         if adicionada is None:
-            dbg_combate("ControladorJogadas", "movimento por arrasto ignorado", erro=erro)
             return True
-        dbg_combate("ControladorJogadas", "movimento por arrasto adicionado", jogada_id=adicionada.get("id"))
         return True
 
     def processar_eventos(self, eventos, ficha, hud_rects=None):
@@ -378,7 +368,6 @@ class ControladorJogadas:
                             self._preparacao["alvo_ids"] = [uid]
                             self._preparacao["destino_mundo"] = tuple(getattr(poke_click, "Posicao", self._preparacao.get("origem_mundo") or (0.0, 0.0)))
                             self._preparacao["estado"] = "estabilizado"
-                            dbg_combate("ControladorJogadas", "mira fixada", tipo="alvo", alvo_id=uid)
                     else:
                         self._fixar_mira(evento.pos)
                 continue
@@ -388,14 +377,12 @@ class ControladorJogadas:
                     continue
 
     def preparar(self, ficha):
-        dbg_combate("ControladorJogadas", "preparar clicado")
         if not isinstance(self._preparacao, dict):
             self._preparacao = self._nova_preparacao(ficha)
         if not isinstance(self._preparacao, dict):
             return "sem_ataque"
         tipo = str(self._preparacao.get("tipo_preparo") or "")
         if tipo == "alvo" and not self._preparacao.get("alvo_ids"):
-            dbg_combate("ControladorJogadas", "jogada nao adicionada", motivo="falta alvo")
             return "falta_alvo"
         return "ok" if self._confirmar_preparacao(ficha) else "erro"
 
@@ -403,14 +390,9 @@ class ControladorJogadas:
         return self.preparar(ficha)
 
     def pronto(self, forcar_envio_vazio: bool = False):
-        dbg_combate("ControladorJogadas", "pronto clicado")
         jogadas = [self._json_seguro(j) for j in self._montador.listar()]
-        dbg_combate("ControladorJogadas", "payload antes de enviar", quantidade=len(jogadas))
         if not jogadas:
-            if forcar_envio_vazio:
-                dbg_combate("ControladorJogadas", "pronto forçado enviou vazio")
-            else:
-                dbg_combate("ControladorJogadas", "pronto manual sem jogadas retornou vazio")
+            if not forcar_envio_vazio:
                 return "vazio"
         contexto = getattr(getattr(self._controlador, "SistemaBatalha", None), "Contexto", {})
         if not isinstance(contexto, dict) or not contexto:
@@ -424,7 +406,6 @@ class ControladorJogadas:
             return "aguardando"
         json.dumps(jogadas, ensure_ascii=False)
         resposta = enviar_jogada_batalha_server(ip=ip, client_id=client_id, jogadas=jogadas, batalha_id=batalha_id)
-        dbg_combate("ControladorJogadas", "retorno recebido", status=str((resposta or {}).get("status")))
         resposta_dict = resposta if isinstance(resposta, dict) else {"status": "erro"}
         if isinstance(resposta_dict, dict) and self._controlador is not None and hasattr(self._controlador, "atualizar_estado_servidor"):
             self._controlador.atualizar_estado_servidor(resposta_dict)
@@ -437,9 +418,7 @@ class ControladorJogadas:
         if isinstance(ctx_sistema, dict):
             ctx_sistema["batalha_servidor_ultimo_envio"] = resposta_dict
             salvou_sistema = True
-        dbg_combate("ControladorJogadas", "resposta salva nos contextos", controlador=salvou_controlador, sistema=salvou_sistema)
         self._montador.limpar()
-        dbg_combate("ControladorJogadas", "montador limpo")
         self._preparacao = None
         return "ok"
 
@@ -463,7 +442,6 @@ class ControladorJogadas:
         mudou = nome != self._ultimo_ataque_nome
         if mudou:
             self._ultimo_ataque_nome = nome
-            dbg_combate("ControladorJogadas", "ataque selecionado mudou", ataque=nome)
         if nome and (mudou or self._preparacao is None) and getattr(self._controlador, "PokemonSelecionado", None) is not None:
             self._preparacao = self._nova_preparacao(None)
         elif not nome and mudou:
@@ -490,7 +468,6 @@ class ControladorJogadas:
         return self._montador.listar()
 
     def remover_jogada(self, jogada_id):
-        dbg_combate("ControladorJogadas", "remover jogada", jogada_id=jogada_id)
         return self._montador.remover(jogada_id)
 
     def definir_hover_jogada(self, jogada_id):

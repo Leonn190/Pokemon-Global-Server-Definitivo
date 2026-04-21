@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Callable, Dict, List
 
-from Codigo.ModulosBatalha.DebugCombate import dbg_combate
-
 class LeitorLogs:
     _FASES = ("inicializacao", "segmentacao", "passiva", "finalizacao")
 
@@ -75,7 +73,6 @@ class LeitorLogs:
         ao_finalizar: Callable[[Dict[str, object]], None] | None = None,
     ) -> bool:
         historico = [dict(item) for item in list((log or {}).get("historico") or []) if isinstance(item, dict)]
-        dbg_combate("LeitorLogs", "historico recebido", blocos=len(historico))
         self.cancelar()
         self._log_atual = dict(log or {})
         self._resultado = dict(resultado or {})

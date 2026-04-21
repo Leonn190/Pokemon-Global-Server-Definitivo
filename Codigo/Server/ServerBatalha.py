@@ -30,8 +30,6 @@ def _enviar_evento_batalha(ip: str, client_id: str, categoria: str, payload: Dic
     try:
         json.dumps(pacote, ensure_ascii=False)
     except TypeError as exc:
-        print("[DBG-COMBATE][ServerBatalha] pacote nao serializavel", exc)
-        print("[DBG-COMBATE][ServerBatalha] pacote=", pacote)
         raise
     resposta_json = processar_atualizador_json(json.dumps(pacote, ensure_ascii=False))
     try:

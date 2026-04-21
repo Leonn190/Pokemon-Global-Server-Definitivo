@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from SimuladorServerJogo.Batalha.Combate.DebugCombate import dbg_combate
 from SimuladorServerJogo.Batalha.Combate.MotorFisica import (
     Vetor2,
     colisao_circulo_arena,
@@ -80,7 +79,6 @@ class DetectorColisoes:
             )
 
         eventos.sort(key=lambda e: (e.distancia, e.alvo_id or "", e.tipo))
-        dbg_combate("DetectorColisoes", "colisoes detectadas", quantidade=len(eventos))
         if objeto.atravessa_pokemons:
             return eventos
         for evento in eventos:

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from SimuladorServerJogo.Batalha.Combate.DebugCombate import dbg_combate
 
 
 def _fnum(valor: object, padrao: float = 0.0) -> float:
@@ -23,13 +22,11 @@ class OrdenadorJogadas:
         executor_id = str(jogada.get("executor_id") or "")
         jogada_id = str(jogada.get("id") or "")
         chave = (-prioridade, -inteligencia, -velocidade, custo, indice_entrada, executor_id, jogada_id)
-        dbg_combate("OrdenadorJogadas", "chave de ordenacao por jogada", executor_id=executor_id, chave=chave)
         return chave
 
     def ordenar(self, jogadas, contexto: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         normalizadas = [dict(j) for j in list(jogadas or []) if isinstance(j, dict)]
         ordenadas = sorted(normalizadas, key=lambda item: self.chave_ordenacao_jogada(item, contexto=contexto))
-        dbg_combate("OrdenadorJogadas", "ordem final", total=len(ordenadas))
         for ordem, jogada in enumerate(ordenadas):
             jogada["dados_ordenacao"] = {
                 "ordem": ordem,

@@ -170,6 +170,8 @@ class _ServidorLocalBatalha:
         self._contexto_servidor = dict(contexto_servidor)
         self._leitor = LeitorJogadas()
         self._sistema_por_batalha: Dict[str, SistemaBatalhaServidor] = {}
+        self._client_jogador = str(self._contexto_servidor.get("client_id") or "debug_player")
+        self._client_inimigo = str(self._contexto_servidor.get("client_id_inimigo") or "debug_enemy")
 
     def iniciar(self, _ip: str, client_id: str, contexto_batalha: Dict[str, object] | None = None) -> Dict[str, object]:
         contexto = dict(self._contexto_servidor)
@@ -185,7 +187,26 @@ class _ServidorLocalBatalha:
         sistema = self._sistema_por_batalha.get(bid)
         if sistema is None:
             return {"status": "erro", "mensagem": "Batalha nao encontrada"}
-        return self._leitor.executar_turno(sistema, client_id=str(client_id), jogadas=jogadas)
+        recebidas = [dict(j) for j in list(jogadas or []) if isinstance(j, dict)]
+        if not recebidas:
+            return self._leitor.executar_turno(sistema, client_id=str(client_id), jogadas=recebidas)
+
+        por_cliente: Dict[str, List[Dict[str, object]]] = {self._client_jogador: [], self._client_inimigo: []}
+        for jogada in recebidas:
+            executor_id = str(jogada.get("executor_id") or "")
+            pokemon = sistema.obter_pokemon(executor_id) if executor_id else None
+            lado = str(getattr(pokemon, "Lado", "") or "").strip().casefold()
+            if lado == "inimigo":
+                por_cliente[self._client_inimigo].append(jogada)
+            else:
+                por_cliente[self._client_jogador].append(jogada)
+
+        ultima_resposta: Dict[str, object] = {"status": "aguardando", "mensagem": "Aguardando jogadas"}
+        if por_cliente[self._client_jogador]:
+            ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_jogador, jogadas=por_cliente[self._client_jogador])
+        if por_cliente[self._client_inimigo]:
+            ultima_resposta = self._leitor.executar_turno(sistema, client_id=self._client_inimigo, jogadas=por_cliente[self._client_inimigo])
+        return ultima_resposta
 
 
 def _aplicar_patch_servidor_local(servidor_local: _ServidorLocalBatalha):
@@ -319,7 +340,9 @@ class AppTesteBatalhaReal6v6:
         self.controlador = ControladorBatalha(self.contexto.contexto_cliente)
         self.hud = ElementosHudBatalha(controlador_batalha=self.controlador, camera=self.camera)
 
-        self.fonte = pygame.font.SysFont("consolas", 18)
+        self.fonte_titulo = pygame.font.SysFont("consolas", 26, bold=True)
+        self.fonte_texto = pygame.font.SysFont("consolas", 20)
+        self.fonte_mono = pygame.font.SysFont("consolas", 18)
         self.rodando = True
         self.ataques_testados: set[str] = set()
         self.ultimo_retorno: Dict[str, object] = {}
@@ -328,6 +351,7 @@ class AppTesteBatalhaReal6v6:
         self.lista_controlaveis: List[object] = []
         self.indice_controlado = 0
         self._atualizar_lista_controlavel()
+        self._selecionar_controlado(0)
 
     def finalizar(self):
         _restaurar_patch_servidor_local(*self._patch_info)
@@ -353,13 +377,14 @@ class AppTesteBatalhaReal6v6:
         for item in historico:
             if not isinstance(item, dict):
                 continue
-            if str(item.get("evento") or "") == "acao_iniciada":
+            tipo_evento = str(item.get("tipo") or item.get("evento") or "").strip()
+            if tipo_evento == "acao_iniciada":
                 nome = str(item.get("ataque") or "").strip()
                 if nome:
                     self.ataques_testados.add(nome)
         if historico:
             ultimo = historico[-1]
-            self.ultimo_evento_historico = str(ultimo.get("evento") or "-")
+            self.ultimo_evento_historico = str(ultimo.get("tipo") or ultimo.get("evento") or "-")
 
     def _coletar_retorno_servidor(self):
         resposta = self.controlador.Contexto.get("batalha_servidor_ultimo_envio")
@@ -400,21 +425,31 @@ class AppTesteBatalhaReal6v6:
         faltantes = [a for a in ATAQUES_OBRIGATORIOS if a not in self.ataques_testados]
         log = self.ultimo_retorno.get("log") if isinstance(self.ultimo_retorno.get("log"), dict) else {}
         historico = log.get("historico") if isinstance(log.get("historico"), list) else []
-        titulo = [
-            f"Status turno: {self.status_turno}",
-            f"Ataques testados: {len(self.ataques_testados)}/{len(ATAQUES_OBRIGATORIOS)}",
-            f"Historico itens: {len(historico)}",
-            f"Ultimo evento: {self.ultimo_evento_historico}",
-        ]
-        for i, linha in enumerate(titulo):
-            surf = self.fonte.render(linha, True, (240, 240, 255))
-            self.tela.blit(surf, (14, 14 + i * 20))
+        painel_w = 620
+        painel_h = 235
+        painel = pygame.Surface((painel_w, painel_h), pygame.SRCALPHA)
+        painel.fill((10, 14, 24, 205))
+        pygame.draw.rect(painel, (112, 142, 196, 240), painel.get_rect(), width=2, border_radius=10)
+        self.tela.blit(painel, (self.tela.get_width() - painel_w - 16, 16))
 
-        surf_ok = self.fonte.render(f"OK: {', '.join(sorted(self.ataques_testados))[:120]}", True, (120, 255, 140))
-        self.tela.blit(surf_ok, (14, 100))
+        base_x = self.tela.get_width() - painel_w
+        base_y = 28
+        cabecalho = f"Debug 6v6 | testados {len(self.ataques_testados)}/{len(ATAQUES_OBRIGATORIOS)}"
+        self.tela.blit(self.fonte_titulo.render(cabecalho, True, (245, 248, 255)), (base_x, base_y))
+
+        linhas = [
+            f"Status: {self.status_turno}",
+            f"Historico: {len(historico)} eventos",
+            f"Ultimo evento: {self.ultimo_evento_historico}",
+            "F12 salva log atual | TAB/SHIFT+TAB troca controlado",
+        ]
+        for i, linha in enumerate(linhas):
+            self.tela.blit(self.fonte_texto.render(linha, True, (220, 232, 252)), (base_x, base_y + 40 + i * 24))
+
+        ok_txt = ", ".join(sorted(self.ataques_testados)) if self.ataques_testados else "-"
         faltando_txt = ", ".join(faltantes) if faltantes else "Nenhum"
-        surf_no = self.fonte.render(f"Faltando: {faltando_txt[:140]}", True, (255, 190, 120))
-        self.tela.blit(surf_no, (14, 124))
+        self.tela.blit(self.fonte_mono.render(f"OK: {ok_txt[:82]}", True, (120, 255, 150)), (base_x, base_y + 145))
+        self.tela.blit(self.fonte_mono.render(f"Faltando: {faltando_txt[:74]}", True, (255, 196, 120)), (base_x, base_y + 171))
 
     def executar(self):
         try:
@@ -430,6 +465,7 @@ class AppTesteBatalhaReal6v6:
                 self.camera.processar_eventos(eventos_camera)
                 self.camera.atualizar(dt)
 
+                self.tela.fill((20, 20, 28))
                 self.controlador.atualizar(eventos, dt)
                 self.controlador.renderizar(self.tela, self.camera)
                 self.hud.desenhar(self.tela, eventos, dt)

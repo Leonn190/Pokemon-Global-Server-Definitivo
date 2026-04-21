@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import json
 import random
 from pathlib import Path
 from typing import Dict, List
@@ -17,7 +16,6 @@ class SistemaBatalha:
     _CACHE_ATAQUES: Dict[str, Dict[str, object]] | None = None
     _CACHE_EFEITOS: Dict[str, Dict[str, object]] | None = None
     _CACHE_EQUIPAVEIS: Dict[str, Dict[str, object]] | None = None
-    _CACHE_FLUXOS: Dict[str, Dict[str, object]] | None = None
 
     def __init__(self, batalha_id: str, client_id: str, contexto: Dict[str, object] | None = None) -> None:
         self.BatalhaId = str(batalha_id)
@@ -53,7 +51,6 @@ class SistemaBatalha:
         self.BibliotecaAtaques = self._carregar_ataques()
         self.BibliotecaEfeitos = self._carregar_efeitos()
         self.BibliotecaEquipaveis = self._carregar_equipaveis()
-        self.BibliotecaFluxos = self._carregar_fluxos()
 
         self._inicializar_pokemons()
 
@@ -127,32 +124,6 @@ class SistemaBatalha:
                 continue
             saida[cls._norm(nome)] = dict(row)
         cls._CACHE_EQUIPAVEIS = saida
-        return saida
-
-    @classmethod
-    def _normalizar_fluxo(cls, fluxo: Dict[str, object]) -> Dict[str, object]:
-        dado = dict(fluxo or {})
-        if "ricocheteia_objetos" not in dado:
-            dado["ricocheteia_objetos"] = bool(dado.get("ricocheteia_paredes", False))
-        if "atravessa_objetos" not in dado:
-            dado["atravessa_objetos"] = bool(dado.get("atravessa_paredes", False))
-        return dado
-
-    @classmethod
-    def _carregar_fluxos(cls) -> Dict[str, Dict[str, object]]:
-        if cls._CACHE_FLUXOS is not None:
-            return cls._CACHE_FLUXOS
-        caminho = _BASE_DADOS / "Pokemon Global Server - Fluxos.json"
-        saida: Dict[str, Dict[str, object]] = {}
-        if caminho.exists():
-            bruto = json.loads(caminho.read_text(encoding="utf-8-sig"))
-            for nome, dados in dict(bruto.get("fluxos") or {}).items():
-                if not isinstance(dados, dict):
-                    continue
-                pacote = dict(dados)
-                pacote["fluxos"] = [cls._normalizar_fluxo(item) for item in list(pacote.get("fluxos") or []) if isinstance(item, dict)]
-                saida[cls._norm(nome)] = pacote
-        cls._CACHE_FLUXOS = saida
         return saida
 
     def _enriquecer_ataque(self, ataque: Dict[str, object] | None) -> Dict[str, object]:

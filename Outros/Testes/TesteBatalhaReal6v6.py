@@ -173,23 +173,45 @@ class _ServidorLocalBatalha:
         self._client_jogador = str(self._contexto_servidor.get("client_id") or "debug_player")
         self._client_inimigo = str(self._contexto_servidor.get("client_id_inimigo") or "debug_enemy")
 
-    def iniciar(self, _ip: str, client_id: str, contexto_batalha: Dict[str, object] | None = None) -> Dict[str, object]:
+    def iniciar(
+        self,
+        ip: str = "",
+        client_id: str = "",
+        contexto_batalha: Dict[str, object] | None = None,
+        **kwargs,
+    ) -> Dict[str, object]:
+        _ = ip
+        if contexto_batalha is None and isinstance(kwargs.get("contexto"), dict):
+            contexto_batalha = dict(kwargs.get("contexto") or {})
+        if contexto_batalha is None and isinstance(kwargs.get("contexto_batalha"), dict):
+            contexto_batalha = dict(kwargs.get("contexto_batalha") or {})
+        client_resolvido = str(client_id or self._client_jogador)
         contexto = dict(self._contexto_servidor)
         if isinstance(contexto_batalha, dict):
             contexto.update(contexto_batalha)
         batalha_id = str(contexto.get("batalha_id") or "debug_6v6_novo_combate")
-        sistema = SistemaBatalhaServidor(batalha_id=batalha_id, client_id=str(client_id), contexto=contexto)
+        sistema = SistemaBatalhaServidor(batalha_id=batalha_id, client_id=client_resolvido, contexto=contexto)
         self._sistema_por_batalha[batalha_id] = sistema
         return {"status": "ok", "mensagem": "Batalha iniciada", "batalha": sistema.snapshot()}
 
-    def enviar_jogadas(self, _ip: str, client_id: str, jogadas: List[Dict[str, object]] | None = None, batalha_id: str = "") -> Dict[str, object]:
-        bid = str(batalha_id or "debug_6v6_novo_combate")
+    def enviar_jogadas(
+        self,
+        ip: str = "",
+        client_id: str = "",
+        jogadas: List[Dict[str, object]] | None = None,
+        batalha_id: str = "",
+        **kwargs,
+    ) -> Dict[str, object]:
+        _ = ip
+        client_resolvido = str(client_id or self._client_jogador)
+        batalha_resolvida = str(batalha_id or kwargs.get("batalha_id_servidor") or "debug_6v6_novo_combate")
+        bid = batalha_resolvida
         sistema = self._sistema_por_batalha.get(bid)
         if sistema is None:
             return {"status": "erro", "mensagem": "Batalha nao encontrada"}
         recebidas = [dict(j) for j in list(jogadas or []) if isinstance(j, dict)]
         if not recebidas:
-            return self._leitor.executar_turno(sistema, client_id=str(client_id), jogadas=recebidas)
+            return self._leitor.executar_turno(sistema, client_id=client_resolvido, jogadas=recebidas)
 
         por_cliente: Dict[str, List[Dict[str, object]]] = {self._client_jogador: [], self._client_inimigo: []}
         for jogada in recebidas:

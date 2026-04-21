@@ -40,6 +40,7 @@ def _normalizar_escala_pokemon(v, default: int = 3) -> int:
     return max(0, min(15, n))
 
 
+
 def _diametro_tiles_por_escala(escala: int) -> float:
     base = float(_REGRAS_POKEMON.get("tamanho_diametro_base_tiles", 0.6))
     incremento = float(

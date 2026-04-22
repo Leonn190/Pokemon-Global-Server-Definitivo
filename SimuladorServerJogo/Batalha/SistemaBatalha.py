@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import random
 from pathlib import Path
 from typing import Dict, List
@@ -16,6 +17,7 @@ class SistemaBatalha:
     _CACHE_ATAQUES: Dict[str, Dict[str, object]] | None = None
     _CACHE_EFEITOS: Dict[str, Dict[str, object]] | None = None
     _CACHE_EQUIPAVEIS: Dict[str, Dict[str, object]] | None = None
+    _CACHE_FLUXOS: Dict[str, Dict[str, object]] | None = None
 
     def __init__(self, batalha_id: str, client_id: str, contexto: Dict[str, object] | None = None) -> None:
         self.BatalhaId = str(batalha_id)
@@ -51,6 +53,7 @@ class SistemaBatalha:
         self.BibliotecaAtaques = self._carregar_ataques()
         self.BibliotecaEfeitos = self._carregar_efeitos()
         self.BibliotecaEquipaveis = self._carregar_equipaveis()
+        self.BibliotecaFluxos = self._carregar_fluxos()
 
         self._inicializar_pokemons()
 
@@ -69,25 +72,6 @@ class SistemaBatalha:
         largura = float(self.Contexto.get("arena_largura", 40) or 40)
         altura = float(self.Contexto.get("arena_altura", 20) or 20)
         return largura * 0.5, altura * 0.5
-
-    def _max_ativos_por_lado(self) -> int:
-        regras = self.RegrasBatalha if isinstance(self.RegrasBatalha, dict) else {}
-        candidatos = [
-            self.Contexto.get("max_ativos"),
-            self.Contexto.get("ativos_iniciais"),
-            self.Contexto.get("slots_ativos"),
-            regras.get("max_ativos"),
-            regras.get("ativos_iniciais"),
-            regras.get("slots_ativos"),
-        ]
-        for valor in candidatos:
-            try:
-                qtd = int(float(valor))
-            except (TypeError, ValueError):
-                continue
-            if qtd > 0:
-                return qtd
-        return 3
 
     @classmethod
     def _ler_csv(cls, nome_arquivo: str) -> List[Dict[str, object]]:
@@ -145,6 +129,32 @@ class SistemaBatalha:
         cls._CACHE_EQUIPAVEIS = saida
         return saida
 
+    @classmethod
+    def _normalizar_fluxo(cls, fluxo: Dict[str, object]) -> Dict[str, object]:
+        dado = dict(fluxo or {})
+        if "ricocheteia_objetos" not in dado:
+            dado["ricocheteia_objetos"] = bool(dado.get("ricocheteia_paredes", False))
+        if "atravessa_objetos" not in dado:
+            dado["atravessa_objetos"] = bool(dado.get("atravessa_paredes", False))
+        return dado
+
+    @classmethod
+    def _carregar_fluxos(cls) -> Dict[str, Dict[str, object]]:
+        if cls._CACHE_FLUXOS is not None:
+            return cls._CACHE_FLUXOS
+        caminho = _BASE_DADOS / "Pokemon Global Server - Fluxos.json"
+        saida: Dict[str, Dict[str, object]] = {}
+        if caminho.exists():
+            bruto = json.loads(caminho.read_text(encoding="utf-8-sig"))
+            for nome, dados in dict(bruto.get("fluxos") or {}).items():
+                if not isinstance(dados, dict):
+                    continue
+                pacote = dict(dados)
+                pacote["fluxos"] = [cls._normalizar_fluxo(item) for item in list(pacote.get("fluxos") or []) if isinstance(item, dict)]
+                saida[cls._norm(nome)] = pacote
+        cls._CACHE_FLUXOS = saida
+        return saida
+
     def _enriquecer_ataque(self, ataque: Dict[str, object] | None) -> Dict[str, object]:
         if not isinstance(ataque, dict):
             return {}
@@ -195,11 +205,10 @@ class SistemaBatalha:
         return [(x, cy - margem_y + (indice * passo)) for indice in range(total)]
 
     def _inicializar_pokemons(self) -> None:
-        max_ativos = self._max_ativos_por_lado()
         for lado in ("jogador", "inimigo"):
             todos_brutos = [self._copiar_pokemon_dict(item) for item in list(self.Contexto.get(lado) or []) if isinstance(item, dict)]
-            ativos_brutos = todos_brutos[:max_ativos]
-            reservas_brutas = todos_brutos[max_ativos:]
+            ativos_brutos = todos_brutos[:3]
+            reservas_brutas = todos_brutos[3:]
             posicoes_ativos = self._pontos_lado_arena(lado, len(ativos_brutos))
 
             lado_estado = self.Lados[lado]

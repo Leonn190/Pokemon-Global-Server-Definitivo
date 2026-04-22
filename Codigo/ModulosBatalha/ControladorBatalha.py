@@ -26,9 +26,8 @@ class ControladorBatalha:
         self.PokemonsReservaAliados: List[Dict[str, object]] = []
         self.PokemonsReservaInimigos: List[Dict[str, object]] = []
         self.PokemonsReservaAliadosObj: List[PokemonBatalha] = []
-        max_ativos = self._max_ativos_contexto()
-        self.Jogador = PlayerBatalha("jogador", max_ativos=max_ativos)
-        self.Inimigo = PlayerBatalha("inimigo", max_ativos=max_ativos)
+        self.Jogador = PlayerBatalha("jogador", max_ativos=self._MAX_ATIVOS)
+        self.Inimigo = PlayerBatalha("inimigo", max_ativos=self._MAX_ATIVOS)
         self.TimeCompletoJogadorInicial: List[Dict[str, object]] = []
         self.PokemonSelecionado: PokemonBatalha | None = None
         self._provedor_reservas = None
@@ -38,25 +37,6 @@ class ControladorBatalha:
         self._ultima_resposta_inicio_servidor = None
         self._ultima_resposta_turno_servidor = None
         self._inicializar_times()
-
-    def _max_ativos_contexto(self) -> int:
-        regras = self.Contexto.get("batalha") if isinstance(self.Contexto.get("batalha"), dict) else {}
-        candidatos = [
-            self.Contexto.get("max_ativos"),
-            self.Contexto.get("ativos_iniciais"),
-            self.Contexto.get("slots_ativos"),
-            regras.get("max_ativos"),
-            regras.get("ativos_iniciais"),
-            regras.get("slots_ativos"),
-        ]
-        for valor in candidatos:
-            try:
-                qtd = int(float(valor))
-            except (TypeError, ValueError):
-                continue
-            if qtd > 0:
-                return qtd
-        return self._MAX_ATIVOS
 
     def obter_regras_batalha(self) -> Dict[str, object]:
         regras = self.Contexto.get("batalha") if isinstance(self.Contexto.get("batalha"), dict) else {}
@@ -334,7 +314,6 @@ class ControladorBatalha:
     def atualizar_estado_servidor(self, retorno: Dict[str, object] | None = None) -> None:
         if not isinstance(retorno, dict):
             return
-        status = str(retorno.get("status") or "")
         log = retorno.get("log") if isinstance(retorno.get("log"), dict) else {}
         if log:
             self._registrar_log_publico(log)

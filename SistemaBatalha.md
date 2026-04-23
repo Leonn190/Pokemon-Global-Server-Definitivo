@@ -140,6 +140,7 @@ Ela deve concentrar pelo menos:
 - clima;
 - `TickGlobal`;
 - turno atual;
+- `SeedPartida`, que é a seed-base autoritativa usada para todo o RNG da batalha;
 - Pokémon ativos e reservas;
 - objetos de batalha existentes;
 - log geral da partida;
@@ -167,6 +168,9 @@ A inicialização real da batalha também existe no servidor. Ela inclui pelo me
 - definição dos ativos e reservas.
 
 Os Pokémon usados dentro da batalha devem ser cópias de batalha independentes do estado fora da batalha.
+
+Além disso, a partida deve nascer já com uma **SeedPartida** definida no servidor.
+Essa seed é a base autoritativa de todo o RNG da batalha e deve ser registrada de forma estável para histórico, replay, depuração e reprodutibilidade.
 
 ### 2.5. Pipeline oficial repetido
 
@@ -212,9 +216,13 @@ Devem existir dois conceitos:
 - **tick:** representa o tick local do turno atual e começa sempre em 0.
 
 O log público do turno usa tick local começando em 0.  
-O servidor pode manter `TickGlobal` internamente para estado, depuração, seed, replay e sincronização geral.
+O servidor pode manter a contagem local do turno durante a simulação e, ao final, consolidar isso em `TickGlobal` para estado, depuração, seed, replay e sincronização geral.
 
-`TickGlobal` avança 1 a cada tick processado ao longo de toda a partida.
+Leitura fechada atual:
+
+- durante a simulação do turno, o motor trabalha com o `tick` local daquele turno;
+- ao final do turno, `finalizar_turno()` soma ao `TickGlobal` a quantidade de ticks realmente processada naquele turno;
+- portanto, `TickGlobal` **não** precisa ficar sendo incrementado publicamente tick a tick durante a resolução local do turno.
 
 ### 3.2. Ordenação inicial por Inteligência
 Cada ação do turno possui apenas **dois momentos temporais formais** na timeline:
@@ -245,8 +253,18 @@ Pokémon com Int 200 nasce no tick 30
 Pokémon com Int 15 nasce no tick 215
 ```
 
-A ação já existe como objeto Python na fila desde o seu `tick_nascimento_acao`.  
-A ativação real dela acontece no `tick_ativacao`.
+Leitura padronizada oficial:
+
+- `tick_nascimento_acao` = momento em que a ação **nasce** na timeline do turno;
+- `tick_ativacao` = momento em que a ação **começa de fato**.
+
+A ação nasce no `tick_nascimento_acao` e só começa de fato no `tick_ativacao`.
+
+Exceção já fechada para múltiplas ações do mesmo Pokémon:
+
+- a primeira ação segue normalmente a regra da Inteligência;
+- a segunda ação só **nasce de fato** depois que a primeira terminar ou for interrompida;
+- depois desse nascimento efetivo, ela ainda respeita seu intervalo normal até o `tick_ativacao`.
 
 Inteligência pode ser negativa.  
 Não existe limite máximo oficial de Inteligência.
@@ -481,9 +499,11 @@ Ataques ainda se subdividem por estilo, podendo existir classes próprias por es
 - alvo;
 - status;
 - laser;
-- dash;
-- impulso;
 - outros.
+
+**Observação de implementação:** dash e impulso **não entram nessa subdivisão de ataque**.
+Eles são filhos de deslocamento (`Mover`), funcionando como movimento com execute ofensivo embutido.
+Além disso, o **impulso** não trabalha com posição alvo fixa: ele funciona por direção + velocidade inicial + desaceleração até parar.
 
 Ações também podem criar objetos de batalha durante a simulação, quando a regra do estilo ou do execute pedir.
 
@@ -541,18 +561,26 @@ Movimento deve respeitar a cobrança especial por deslocamento real.
 
 As ações do mesmo Pokémon são executadas na ordem em que foram criadas no cliente.
 
-A segunda ação começa **1 tick depois** da primeira ação terminar.  
-Se a primeira ação for interrompida antes do fim esperado, a segunda ação começa 1 tick depois da interrupção.
+A segunda ação é uma exceção explícita à regra geral de nascimento por Inteligência:
+
+- ela só **nasce de fato** 1 tick depois de a primeira ação terminar;
+- se a primeira ação for interrompida antes do fim esperado, a segunda nasce 1 tick depois da interrupção;
+- depois desse nascimento efetivo, a segunda ação ainda aplica normalmente seu próprio intervalo até chegar ao `tick_ativacao`.
 
 ### 5.7. Intervalo de ativação
 
-A timeline formal da ação usa apenas estes dois momentos:
+A timeline formal da ação usa apenas estes dois momentos padronizados:
 
-- `tick_nascimento_acao`
-- `tick_ativacao`
+- `tick_nascimento_acao` = momento em que a ação nasce;
+- `tick_ativacao` = momento em que a ação começa de fato.
 
-A ação nasce no `tick_nascimento_acao` definido pela Inteligência.  
-A ativação real dela acontece no `tick_ativacao`, que é o resultado de `tick_nascimento_acao + intervalo`.
+A regra geral é:
+
+- a ação nasce no `tick_nascimento_acao`;
+- a ação começa de fato no `tick_ativacao`;
+- `tick_ativacao = tick_nascimento_acao + intervalo`.
+
+Exceção já fechada: quando for a segunda ação do mesmo Pokémon, o `tick_nascimento_acao` efetivo dela só existe depois do fim/interrupção da primeira ação, e só então o intervalo passa a contar.
 
 Exemplo:
 
@@ -594,7 +622,7 @@ Troca:
 - não custa energia;
 - usa a Inteligência do Pokémon que está saindo;
 - tem duração de 5 ticks;
-- é concluída **no tick 5**;
+- é concluída **5 ticks depois do próprio nascimento da troca**;
 - deve ser cancelada se o Pokémon que sairia morrer antes de executar a troca;
 - deve ser logada com início, execução/final e diff dos ativos/reservas.
 
@@ -608,10 +636,22 @@ Durante a janela da troca, o Pokémon que está saindo:
 Se ele sofrer empurrão/impulso no meio da troca, a troca **não** é cancelada por isso.  
 O que acontece é o intervalo efetivo aumentar até o empurrão acabar, e a conclusão da troca ocorre no pós-empurrão.
 
+Exemplo fechado de leitura:
+
+- se a troca nascer no tick 30 do turno;
+- e nada atrasar sua conclusão;
+- ela termina no tick 35 daquele mesmo turno.
+
 O Pokémon que entra aparece na mesma posição final deixada pelo anterior, no próprio momento em que a troca se conclui, durante o **prosseguir ações já iniciadas** e antes da `Verifica()`.  
 Como o efeito de tile pertence ao tile, e não ao Pokémon, o Pokémon que entrar já passa a sofrer normalmente o tile daquela posição.
 
 Ao sair por troca, os efeitos do Pokémon anterior são zerados na reserva.
+
+Regras fechadas de montagem e cadeia de ações da troca:
+
+- se uma troca for preparada para um Pokémon ativo, ela encerra a cadeia de ações daquele Pokémon no turno; nenhuma ação posterior desse Pokémon deve ser permitida;
+- o Pokémon que entra pela troca não pode agir no mesmo turno em que entrou; ele só poderá preparar/realizar ações a partir do próximo turno;
+- se a tentativa de troca mirar um Pokémon inválido do banco, como morto, indisponível ou bloqueado por regra de troca, a ação não é preparada.
 
 ### 5.10. Injeção de novas ações durante o turno
 
@@ -1091,7 +1131,9 @@ Exceção fechada para **deslocamentos**, especialmente:
 Nesses casos, a energia deve ser descontada **ao longo do deslocamento**, acompanhando o movimento real.
 
 Se o Pokémon não tiver energia suficiente para iniciar o deslocamento, ele não inicia.  
-Mas, se a energia acabar no meio do movimento/dash depois que ele já começou, o deslocamento continua até sua resolução normal.
+Se, durante o deslocamento, chegar o momento de cobrar o próximo passo e não houver energia suficiente para pagar esse passo, o deslocamento para imediatamente **antes** do passo não pago.
+
+Na prática, isso tende a ser raro no fluxo normal, porque o client já deve impedir a preparação de um deslocamento que ultrapasse a energia disponível. O caso mais provável é a energia ser removida durante o percurso por algum efeito externo.
 
 ### 8.4. Movimento normal
 Movimento cobra energia pelo deslocamento real feito, não pelo deslocamento planejado.
@@ -1114,7 +1156,7 @@ custo = 20
 
 Se o movimento foi planejado para 5 tiles, mas colisões fizeram o Pokémon mover só 2, cobra apenas o que moveu.
 
-No modelo atual, esse custo é descontado **ao longo do movimento**, e não em um pacote único no começo. A cobrança ocorre **antes do passo** de cada avanço do deslocamento.  
+No modelo atual, esse custo é descontado **ao longo do movimento**, e não em um pacote único no começo. A cobrança ocorre **antes do passo** de cada avanço do deslocamento. Se o próximo passo não puder ser pago, o movimento para imediatamente antes dele.  
 Além disso, **movimento normal como segunda ação não recebe o acréscimo de 10%**.
 
 ### 8.5. Validação client/server
@@ -1273,6 +1315,8 @@ Leitura prática:
 - **tile Gelado:** quase não freia; reduz bastante a desaceleração;
 - **tile Destruído:** freia mais que o normal;
 - movimento normal e dash não usam desaceleração gradual por padrão enquanto estão no seu deslocamento “puro”, mas essa física entra quando o deslocamento vira impulso, empurrão ou deslizamento.
+
+## 10. OBJETOS DE BATALHA
 
 ### 10.1. Definição fixa
 
@@ -1879,7 +1923,11 @@ A duração total de um mesmo efeito não pode passar de:
 500 ticks
 ```
 
-Efeitos incompatíveis podem coexistir, salvo regra futura específica.
+Efeitos incompatíveis podem coexistir por padrão, salvo exceções específicas definidas pelo sistema.
+
+Exceção já fechada neste momento:
+
+- **Provocando** e **Furtivo** não podem coexistir no mesmo Pokémon.
 
 ### 14.4. Expiração
 Efeitos perdem duração depois de aplicar seu comportamento daquele tick.
@@ -2233,7 +2281,8 @@ Tile Incendiado:
 - quem está nele ganha **Queimado por 30 ticks**;
 - durante a permanência no tile, o efeito Queimado **não perde duração**;
 - se o Pokémon já estiver Queimado ao entrar, a duração soma e o contador fica segurado enquanto ele permanecer ali;
-- em clima de Chuva, tiles Incendiados ficam normais enquanto esse clima durar.
+- em clima de Chuva, tiles Incendiados são **removidos de fato** e viram tiles normais;
+- quando a Chuva acabar, esses tiles não voltam sozinhos ao estado Incendiado anterior.
 
 ### 16.9. Tile Contaminado
 
@@ -2254,7 +2303,8 @@ Tile Gelado:
 - ao alcançar o alvo planejado, o Pokémon continua se movendo até desacelerar completamente;
 - reduz a desaceleração;
 - impulso sobre gelo também sofre essa redução de desaceleração;
-- em clima de Sol Forte, tiles Gelados ficam normais enquanto esse clima durar.
+- em clima de Sol Forte, tiles Gelados são **removidos de fato** e viram tiles normais;
+- quando o Sol Forte acabar, esses tiles não voltam sozinhos ao estado Gelado anterior.
 
 Se um Pokémon congelado ficar num tile Gelado, ele pode continuar com o contador travado indefinidamente enquanto permanecer lá.
 
@@ -2351,7 +2401,7 @@ Sol Forte:
 - Pokémon de gelo ficam com **-20 Durabilidade**;
 - ataques de fogo dão **25% a mais de dano**;
 - ataques de água dão **25% a menos de dano**;
-- tiles Gelados ficam normais.
+- remove de fato os tiles Gelados, transformando-os em tiles normais.
 
 ### 17.7. Chuva
 
@@ -2361,7 +2411,7 @@ Chuva:
 - Encharcado demora 2 vezes mais para passar;
 - ataques de fogo dão **25% a menos de dano**;
 - ataques de água dão **25% a mais de dano**;
-- tiles Incendiados ficam normais.
+- remove de fato os tiles Incendiados, transformando-os em tiles normais.
 
 ### 17.8. Nevasca
 
@@ -2600,6 +2650,25 @@ Ele reage a flags/métodos apropriados.
 No modelo atual, passivo não precisa ter uma classe própria obrigatória.  
 Em muitos casos ele pode viver como executes/passivas reagindo às flags corretas ao longo do percurso.
 
+### 19.10. Irregular
+
+Ataque irregular exige classe/caso próprio.
+
+Caso já fechado para a implementação atual: **Parede**.
+
+Leitura operacional da montagem do ataque Parede:
+
+- o jogador seleciona o ataque;
+- escolhe o primeiro ponto da parede;
+- depois escolhe o segundo ponto;
+- os dois pontos são ligados e formam a parede no mapa;
+- o segundo ponto só pode ser escolhido dentro de um limite de **4 tiles** a partir do primeiro;
+- durante a montagem, o preview já deve mostrar a área válida para escolher o segundo ponto e também o fluxo/segmento previsto da parede;
+- a parede gerada possui largura fixa de **0.25 tile**;
+- trata-se de um ataque totalmente irregular que cria um objeto fixo de parede na arena.
+
+## 20. MONTAGEM VISUAL E PREVIEW
+
 ### 20.1. Preparação visual
 
 Ao selecionar um ataque, o preview aparece imediatamente.
@@ -2623,7 +2692,20 @@ Impulso é exceção visual:
 
 Movimento normal é feito arrastando o Pokémon.  
 Enquanto arrasta, aparece construto/fantasma.  
-Ao soltar, prepara movimento.
+Ao soltar dentro da arena, prepara movimento.
+
+Essa regra é diferente da montagem de ataques:
+
+- ataques são preparados selecionando o ataque na ficha e depois clicando/concluindo conforme o estilo;
+- movimento normal é preparado arrastando o próprio Pokémon ativo;
+- troca também nasce do arrasto: se o jogador arrastar o Pokémon ativo até um Pokémon da reserva/banco desenhado fora da arena, o sistema deve interpretar isso como intenção de troca, não como movimento.
+
+Como os Pokémon da reserva ficam desenhados fora da arena, deve existir um bloqueador visual/físico para impedir que o fantasma do movimento simplesmente saia da arena como destino comum.  
+Exceção: quando o arrasto atingir um Pokémon válido do banco, o preview deve “conectar” ou estabilizar visualmente nesse Pokémon da reserva e preparar uma ação de troca ao soltar.
+
+Se o arrasto sair da arena sem atingir um Pokémon válido do banco, ele não deve preparar movimento fora da arena nem troca inválida.
+
+Se o arrasto atingir um Pokémon do banco inválido para troca, por exemplo morto, indisponível, bloqueado ou inviável pelas regras de ações do turno, o preview deve indicar bloqueio/invalidade e nenhuma troca deve ser preparada.
 
 ### 20.4. Posição fantasma
 
@@ -2892,7 +2974,14 @@ Esse log é:
 
 ### 22.10. RNG e replay
 
-O log deve incluir seed/rolls aleatórios relevantes.  
+Toda partida deve possuir uma **SeedPartida** autoritativa definida já na inicialização.
+Essa seed é a base do RNG da batalha inteira.
+
+O log deve incluir, quando relevante:
+- a `SeedPartida`;
+- rolls aleatórios efetivamente usados;
+- contexto mínimo do roll quando isso for necessário para debug/replay.
+
 O servidor manda o resultado real de qualquer rolagem.
 
 ---
@@ -3751,7 +3840,7 @@ Mas alguns eventos devem aparecer como registros próprios:
 
 ## 25. ANIMAÇÃO
 
-### 24.1. Fonte da animação
+### 25.1. Fonte da animação
 
 A animação do turno deve ler o histórico.  
 Ela precisa ser extremamente fiel ao que realmente ocorreu no servidor.
@@ -3759,12 +3848,12 @@ Ela precisa ser extremamente fiel ao que realmente ocorreu no servidor.
 Leitura importante: o leitor/animação não recalcula dano, cura, energia ou barreira.  
 Ele apenas aplica os valores finais já calculados pelo servidor.
 
-### 24.2. Movimento visual
+### 25.2. Movimento visual
 
 Mesmo que a simulação seja por tick, o visual não deve parecer travado.  
 O client deve interpolar/deslizar entre a posição de um tick e a posição do próximo tick.
 
-### 24.3. PokemonAnimator
+### 25.3. PokemonAnimator
 
 `PokemonAnimator` deve continuar existindo como base de animações prontas.
 
@@ -3781,7 +3870,7 @@ Animações necessárias incluem:
 - aplicar dano em laser;
 - mostrar efeito ativo abaixo do Pokémon.
 
-### 24.4. Efeito visual ativo
+### 25.4. Efeito visual ativo
 
 Efeitos ativos devem aparecer como círculos abaixo do Pokémon, até 3 visíveis.
 
@@ -3789,7 +3878,7 @@ Efeitos ativos devem aparecer como círculos abaixo do Pokémon, até 3 visívei
 - fundo vermelho claro para negativo;
 - borda circular como timer girando conforme a duração restante.
 
-### 24.5. Visual dos tiles
+### 25.5. Visual dos tiles
 
 Os tiles precisam comunicar visualmente seus efeitos sem depender de texto.
 
@@ -3797,7 +3886,7 @@ Os tiles precisam comunicar visualmente seus efeitos sem depender de texto.
 
 ## 26. PONTOS IMPORTANTES DE MIGRAÇÃO DO LEGADO
 
-### 25.1. Fórmulas atuais a substituir
+### 26.1. Fórmulas atuais a substituir
 
 O código atual usa fórmulas que não são mais oficiais, por exemplo:
 
@@ -3814,22 +3903,22 @@ O código atual usa fórmulas que não são mais oficiais, por exemplo:
 
 Essas partes devem ser substituídas pelo modelo deste documento.
 
-### 25.2. Fluxos antigos
+### 26.2. Fluxos antigos
 
 O modelo de `Fluxos.json` e `LeitorFluxos.py` não deve ser a base da batalha nova.  
 As novas formas devem nascer do JSON técnico dos ataques.
 
 Fluxos antigos podem continuar existindo fora da batalha se algum módulo externo ainda precisar deles.
 
-### 25.3. Logs antigos
+### 26.3. Logs antigos
 
 O formato atual de log em blocos pode inspirar a reprodução visual, mas deve ser trocado por histórico rico de eventos com tick local e trajetórias agregadas.
 
-### 25.4. IA atual
+### 26.4. IA atual
 
 A IA atual pode inspirar heurísticas, mas o contrato novo é: IA no client monta ações e envia ao servidor como se fosse jogador.
 
-### 25.5. Falhas arquiteturais que este documento tenta evitar
+### 26.5. Falhas arquiteturais que este documento tenta evitar
 
 As seguintes falhas devem ser evitadas como diretriz:
 
@@ -3845,7 +3934,7 @@ As seguintes falhas devem ser evitadas como diretriz:
 ## 27. CONSTANTES OFICIAIS ATUAIS
 
 - tick local do turno começa em 0.
-- `TickGlobal` representa a partida inteira.
+- `TickGlobal` representa a partida inteira e é atualizado ao final de cada turno somando os ticks realmente processados naquele turno.
 - `tick_nascimento_acao = maior_Int_da_partida - Int_do_pokemon`.
 - `tick_ativacao = tick_nascimento_acao + intervalo`.
 - timeout do turno = 1000 ticks.
@@ -3855,12 +3944,12 @@ As seguintes falhas devem ser evitadas como diretriz:
 - movimento normal como segunda ação não recebe o acréscimo de 10%.
 - não existe terceira ação por Pokémon.
 - troca dura 5 ticks.
-- troca é concluída no tick 5.
+- troca é concluída 5 ticks depois do próprio nascimento da troca.
 - troca não custa energia.
 - movimento normal usa `velocidade_de_movimento = max(0, Vel + 50)`.
 - movimento normal usa `tiles_por_tick = velocidade_de_movimento / 400`.
 - custo por tile movido = `min(30, round(Peso / 20)) + 5`.
-- deslocamentos como movimento normal e dash descontam energia ao longo do deslocamento.
+- deslocamentos como movimento normal e dash descontam energia ao longo do deslocamento, cobrando antes de cada passo; se o próximo passo não puder ser pago, o deslocamento para antes dele.
 - velocidade real da física = velocidade de movimento.
 - potência física = `(Peso / 10) * velocidade_de_movimento`.
 - dano de colisão usa impacto compartilhado: `impacto = potencia_a + potencia_b`; depois `dano_a_em_b = impacto * 0.10 + Atk_a * 0.06` e `dano_b_em_a = impacto * 0.10 + Atk_b * 0.06`.
@@ -3875,6 +3964,7 @@ As seguintes falhas devem ser evitadas como diretriz:
 - Dur não pode passar de 100.
 - Amp não pode passar de -100 para baixo.
 - efeitos possuem duração em ticks e pausam durante preparação.
+- Provocando e Furtivo não podem coexistir no mesmo Pokémon.
 - reaplicação do mesmo efeito soma duração.
 - duração máxima total de um mesmo efeito = 500 ticks.
 - duração mínima de efeito = 50% da base.
@@ -3885,7 +3975,7 @@ As seguintes falhas devem ser evitadas como diretriz:
 - clima tem 25% de chance de sair ao final de cada turno.
 - clima criado ou substituído durante o turno atual não rola saída nesse mesmo fim de turno.
 - após Energizado acabar, energia excedente acima de EneM persiste, mas não pode continuar aumentando acima desse excedente sem o efeito ativo.
-- tiles de efeito persistem na arena.
+- tiles de efeito persistem na arena, mas certos climas podem removê-los de fato.
 - tile não acumula múltiplos efeitos: o último substitui o anterior.
 - parede é objeto fixo e usa colisão retangular.
 - atrito base = `0.15`.
@@ -3899,11 +3989,13 @@ As seguintes falhas devem ser evitadas como diretriz:
 - objetos criados durante um tick só passam a agir no próximo tick.
 - projéteis não são afetados por tiles neste modelo.
 - IDs usam primeiro dígito para representar a classe do identificador.
+- toda partida possui uma `SeedPartida` autoritativa como base do RNG.
 - Pokémon usam ID fixo de 3 dígitos no formato `0LS`, com lado e slot embutidos.
 - projétil usa prefixo `1`; construto usa prefixo `2`; parede usa prefixo `3`; ação usa prefixo `4`; evento usa prefixo `5`; turno usa prefixo `6`; ataque usa prefixo `7`.
 - estado `ENCERRADA` representa a fase final de conferência entre resultado/log e estado real da partida antes do fechamento definitivo.
 - coordenada interna da arena é contínua, `0`-based e baseada em float; a leitura `(1,1)` é apenas visual para o jogador.
 - verificação formal de vitória/derrota ocorre em `finalizar_turno()`.
+- o ataque Parede é um caso irregular montado em dois pontos, com limite de 4 tiles entre eles e largura fixa de 0.25 tile.
 
 ---
 
@@ -3939,7 +4031,7 @@ Estas pendências ainda precisam ser fechadas depois:
 
 ---
 
-## 1. Critério usado para esta arquitetura
+## 29. Critério usado para esta arquitetura
 
 Esta arquitetura foi montada cruzando:
 
@@ -3951,16 +4043,16 @@ A ideia é manter uma árvore **compacta, implementável e fiel às diretrizes**
 
 ---
 
-## 2. Arquivos extras que valem a pena existir
+## 30. Arquivos extras que valem a pena existir
 
 A estrutura proposta por você já está boa. Eu só julgo que **2 arquivos extras** melhoram bastante a clareza sem burocratizar:
 
-### 2.1. `SimuladorServerJogo/Batalha/FisicaBatalha.py`
+### 30.1. `SimuladorServerJogo/Batalha/FisicaBatalha.py`
 
 **Motivo:** a física da nova batalha é relevante demais para ficar espalhada entre `MotorAcoes` e `DetectorColisoes`.  
 O projeto atual já tem `SimuladorFisica.py`, então faz sentido manter um arquivo equivalente no novo modelo, mas mais limpo e com as fórmulas oficiais novas.
 
-### 2.2. `SimuladorServerJogo/Batalha/EstadosPartida.py`
+### 30.2. `SimuladorServerJogo/Batalha/EstadosPartida.py`
 
 **Motivo:** as diretrizes exigem estado macro formal da partida (`montando`, `aguardando`, `rodando`, `animando`, `encerrada`).  
 Centralizar isso evita string solta espalhada no client e no server.
@@ -3969,7 +4061,7 @@ Fora esses dois, **eu não adicionaria mais nada agora**.
 
 ---
 
-## 3. Visão geral da árvore final
+## 31. Visão geral da árvore final
 
 ```text
 Dados/
@@ -4028,25 +4120,25 @@ SimuladorServerJogo/
 
 ---
 
-## 4. Regras de fronteira entre os arquivos
+## 32. Regras de fronteira entre os arquivos
 
 Antes de listar classe e método, estas fronteiras precisam ficar fechadas:
 
-### 4.1. Ataque não é Ação
+### 32.1. Ataque não é Ação
 - **Ataque** é a definição técnica lida do JSON.
 - **Ação** é a ocorrência concreta daquele uso dentro do turno.
 
-### 4.2. Partida é dona do estado
+### 32.2. Partida é dona do estado
 - `Partida` guarda estado vivo.
 - `ExecutorTurnos` só roda o ciclo.
 - `LogBatalha` só registra.
 
-### 4.3. Cliente não decide resultado
+### 32.3. Cliente não decide resultado
 - cliente prepara;
 - servidor valida e simula;
 - cliente anima e aplica diff final.
 
-### 4.4. Execute é ponte obrigatória
+### 32.4. Execute é ponte obrigatória
 - ação dispara execute;
 - existem apenas **execute principal**, **execute de estado** e **executes periféricos**;
 - execute principal resolve o núcleo do ataque, inclusive colisão com Pokémon quando for o caso;
@@ -4056,16 +4148,16 @@ Antes de listar classe e método, estas fronteiras precisam ficar fechadas:
 - execute chama métodos do pokémon/objeto;
 - método altera estado.
 
-### 4.5. Fluxos antigos deixam de ser base da batalha
+### 32.5. Fluxos antigos deixam de ser base da batalha
 - `LeitorFluxos.py` e `Fluxos.json` deixam de ser base do combate;
 - preview nasce do JSON técnico do ataque;
 - o legado de fluxo só pode sobreviver fora do núcleo da nova batalha.
 
 ---
 
-# 5. DADOS
+## 33. DADOS
 
-## 5.1. `Dados/Pokemon Global Server - Ataques.csv`
+## 33.1. `Dados/Pokemon Global Server - Ataques.csv`
 
 ### Papel
 Arquivo humano e informativo para leitura do jogador e UI.
@@ -4083,7 +4175,7 @@ Este arquivo **não** decide a execução real do golpe.
 
 ---
 
-## 5.2. `Dados/Pokemon Global Server - PropriedadesAtaque.json`
+## 33.2. `Dados/Pokemon Global Server - PropriedadesAtaque.json`
 
 ### Papel
 Fonte de verdade das propriedades técnicas que entram no construtor dos ataques.
@@ -4118,9 +4210,9 @@ O construtor continua responsável por ler os nomes declarados no dado técnico 
 O construtor monta a ação com seu `tick_nascimento_acao`, soma o intervalo e define o `tick_ativacao` antes de colocá-la na fila simples do turno.  
 Quando a ação roda, os executes podem chamar métodos, mutar a própria ação, criar novas ações e criar objetos.
 
-# 6. CLIENTE
+## 34. CLIENTE
 
-## 6.1. `Codigo/ModulosGerais/PokemonAnimator.py`
+## 34.1. `Codigo/ModulosGerais/PokemonAnimator.py`
 
 ### Classe: `PokemonAnimator`
 Responsável por animar o pokémon visual a partir do histórico da batalha.
@@ -4148,7 +4240,7 @@ Este arquivo já existe e deve sobreviver.
 
 ---
 
-## 6.2. `Codigo/Geradores/PokemonBatalha.py`
+## 34.2. `Codigo/Geradores/PokemonBatalha.py`
 
 ### Classe: `PokemonBatalha`
 Representação visual do pokémon em campo no client.
@@ -4174,7 +4266,7 @@ Representação visual do pokémon em campo no client.
 
 ---
 
-## 6.3. `Codigo/ModulosBatalha/Arena.py`
+## 34.3. `Codigo/ModulosBatalha/Arena.py`
 
 ### Classe: `Arena`
 Responsável pela arena visual do client.
@@ -4194,7 +4286,7 @@ Responsável pela arena visual do client.
 
 ---
 
-## 6.4. `Codigo/ModulosBatalha/ElementosHudBatalha.py`
+## 34.4. `Codigo/ModulosBatalha/ElementosHudBatalha.py`
 
 ### Classe: `ElementosHudBatalha`
 Camada de HUD específica da batalha.
@@ -4215,7 +4307,7 @@ Camada de HUD específica da batalha.
 
 ---
 
-## 6.5. `Codigo/ModulosBatalha/InicializadorBatalha.py`
+## 34.5. `Codigo/ModulosBatalha/InicializadorBatalha.py`
 
 ### Classe: `InicializadorBatalha`
 Cria o estado local inicial da batalha a partir do snapshot autoritativo.
@@ -4242,7 +4334,7 @@ Cria o estado local inicial da batalha a partir do snapshot autoritativo.
 
 ---
 
-## 6.6. `Codigo/ModulosBatalha/FinalizadorBatalha.py`
+## 34.6. `Codigo/ModulosBatalha/FinalizadorBatalha.py`
 
 ### Classe: `FinalizadorBatalha`
 Fecha o turno ou a batalha do lado do client aplicando o resultado recebido.
@@ -4265,7 +4357,7 @@ Fecha o turno ou a batalha do lado do client aplicando o resultado recebido.
 
 ---
 
-## 6.7. `Codigo/ModulosBatalha/ControladorBatalha.py`
+## 34.7. `Codigo/ModulosBatalha/ControladorBatalha.py`
 
 ### Classe: `ControladorBatalha`
 Maestro do lado client.
@@ -4298,7 +4390,7 @@ Maestro do lado client.
 
 ---
 
-## 6.8. `Codigo/ModulosBatalha/MontadorJogada.py`
+## 34.8. `Codigo/ModulosBatalha/MontadorJogada.py`
 
 ### Classe: `MontadorJogada`
 Responsável por montar a intenção local de jogadas do turno.
@@ -4327,7 +4419,7 @@ Responsável por montar a intenção local de jogadas do turno.
 
 ---
 
-## 6.9. `Codigo/ModulosBatalha/LeitorLogs.py`
+## 34.9. `Codigo/ModulosBatalha/LeitorLogs.py`
 
 ### Classe: `LeitorLogs`
 Lê o histórico técnico enviado pelo servidor e transforma isso em animação local.
@@ -4359,7 +4451,7 @@ Lê o histórico técnico enviado pelo servidor e transforma isso em animação 
 
 ---
 
-## 6.10. `Codigo/ModulosBatalha/PlayerBatalha.py`
+## 34.10. `Codigo/ModulosBatalha/PlayerBatalha.py`
 
 ### Classe: `PlayerBatalha`
 Representa o lado local na fase de preparação.
@@ -4378,7 +4470,7 @@ Este arquivo deve permanecer simples. Não deve virar controlador geral da batal
 
 ---
 
-## 6.11. `Codigo/ModulosBatalha/ExecutorAnimacao.py`
+## 34.11. `Codigo/ModulosBatalha/ExecutorAnimacao.py`
 
 ### Classe: `ExecutorAnimacao`
 Arquivo novo do client para isolar a timeline visual do turno.
@@ -4399,7 +4491,7 @@ Arquivo novo do client para isolar a timeline visual do turno.
 
 ---
 
-## 6.12. `Codigo/ModulosBatalha/IndicadoresAcoes.py`
+## 34.12. `Codigo/ModulosBatalha/IndicadoresAcoes.py`
 
 ### Classe: `IndicadoresAcoes`
 Arquivo novo do client para centralizar previews e indicadores.
@@ -4430,7 +4522,7 @@ Arquivo novo do client para centralizar previews e indicadores.
 
 ---
 
-## 6.13. `Codigo/ModulosBatalha/IA/BotBatalha.py`
+## 34.13. `Codigo/ModulosBatalha/IA/BotBatalha.py`
 
 ### Classe: `BotBatalha`
 Camada principal da IA local.
@@ -4442,7 +4534,7 @@ Camada principal da IA local.
 
 ---
 
-## 6.14. `Codigo/ModulosBatalha/IA/AvaliadorAcoesIA.py`
+## 34.14. `Codigo/ModulosBatalha/IA/AvaliadorAcoesIA.py`
 
 ### Classe: `AvaliadorAcoesIA`
 Avalia o valor relativo de cada ação possível.
@@ -4455,7 +4547,7 @@ Avalia o valor relativo de cada ação possível.
 
 ---
 
-## 6.15. `Codigo/ModulosBatalha/IA/GeradorJogadasIA.py`
+## 34.15. `Codigo/ModulosBatalha/IA/GeradorJogadasIA.py`
 
 ### Classe: `GeradorJogadasIA`
 Transforma as escolhas da IA em ações no mesmo formato do jogador humano.
@@ -4469,7 +4561,7 @@ Transforma as escolhas da IA em ações no mesmo formato do jogador humano.
 
 ---
 
-## 6.16. `Codigo/Paineis/FichaPokemonBatalha.py`
+## 34.16. `Codigo/Paineis/FichaPokemonBatalha.py`
 
 ### Classe: `FichaPokemonBatalha`
 Ficha detalhada do pokémon em batalha.
@@ -4491,7 +4583,7 @@ Ficha detalhada do pokémon em batalha.
 
 ---
 
-## 6.17. `Codigo/Paineis/PainelAcoes.py`
+## 34.17. `Codigo/Paineis/PainelAcoes.py`
 
 ### Classe: `PainelAcoes`
 Painel lateral das ações preparadas.
@@ -4516,9 +4608,9 @@ O legado atual usa `PainelJogada.py`; no alvo novo ele pode ser renomeado ou ada
 
 ---
 
-# 7. SERVIDOR
+## 35. SERVIDOR
 
-## 7.1. `SimuladorServerJogo/Batalha/EstadosPartida.py`
+## 35.1. `SimuladorServerJogo/Batalha/EstadosPartida.py`
 
 ### Classe/Enum: `EstadosPartida`
 Arquivo extra recomendado.
@@ -4541,7 +4633,7 @@ Este estado deve ser lido pela `Partida`, pelo `GerenciadorPartidas` e pelo clie
 
 ---
 
-## 7.2. `SimuladorServerJogo/Batalha/GerenciadorPartidas.py`
+## 35.2. `SimuladorServerJogo/Batalha/GerenciadorPartidas.py`
 
 ### Classe: `GerenciadorPartidas`
 Camada externa de ciclo de vida das partidas.
@@ -4565,7 +4657,7 @@ Camada externa de ciclo de vida das partidas.
 
 ---
 
-## 7.3. `SimuladorServerJogo/Batalha/Partida.py`
+## 35.3. `SimuladorServerJogo/Batalha/Partida.py`
 
 ### Classe: `Partida`
 Coração do servidor de batalha.
@@ -4574,7 +4666,7 @@ Coração do servidor de batalha.
 - ser dona do estado vivo da batalha;
 - guardar a arena como grid de tiles dentro da própria `Partida`, normalmente `40 x 20`;
 - guardar o clima como atributo próprio da `Partida`, iniciando em `None` quando não houver clima ativo;
-- guardar turno, `TickGlobal`, ativos, reservas, objetos e log geral;
+- guardar turno, `TickGlobal`, `SeedPartida`, ativos, reservas, objetos e log geral;
 - receber jogadas;
 - finalizar turno;
 - verificar encerramento.
@@ -4596,14 +4688,16 @@ Coração do servidor de batalha.
 - `finalizar_turno()`: fecha turno, resolve rotinas de fim de turno como chance de saída do clima e recuperação de energia, atualiza `TickGlobal`, consolida diff e prepara o próximo ciclo.
 - `finalizar_batalha()`: fecha estado final da partida.
 - `snapshot()`: devolve snapshot público autoritativo.
+- `gerar_seed_partida()`: define ou registra a `SeedPartida` autoritativa usada no RNG da batalha.
 - `gerar_id_global()`: gera id único de entidade ou evento respeitando o primeiro dígito de classe (`1` projétil, `2` construto, `3` parede, `4` ação, `5` evento, `6` turno, `7` ataque).
+- `rolar_rng()`: centraliza rolls aleatórios derivados da `SeedPartida`, registrando o resultado quando necessário no log.
 
 ### Observação de ids
 Os Pokémon usam esquema fixo de 3 dígitos no formato `0LS`, onde `L` representa o lado e `S` o slot normal daquele lado.
 
 ---
 
-## 7.4. `SimuladorServerJogo/Batalha/InicializadorPartida.py`
+## 35.4. `SimuladorServerJogo/Batalha/InicializadorPartida.py`
 
 ### Classe: `InicializadorPartida`
 Cria a `Partida` inicial já com tudo preparado.
@@ -4612,12 +4706,13 @@ Cria a `Partida` inicial já com tudo preparado.
 - carregar ataques, efeitos e dados necessários;
 - copiar pokémons para o estado de batalha;
 - posicionar ativos iniciais;
-- montar arena e clima inicial.
+- montar arena e clima inicial;
+- definir a `SeedPartida` inicial.
 
 ### Métodos principais
 - `criar_partida()`: cria a partida completa.
 - `_carregar_ataques()`: carrega ataques base do dado técnico.
-- `_carregar_efeitos()`: carrega a base de efeitos a partir do CSV já existente do jogo.
+- `_carregar_efeitos()`: carrega a base de efeitos a partir do CSV já existente do jogo, sem editar esse CSV.
 - `_copiar_pokemon_dict()`: cria cópia de batalha do pokémon.
 - `_inicializar_pokemons()`: cria `PokemonBatalha` autoritativos.
 - `_registrar_aliases_pokemon()`: registra ids/aliases úteis.
@@ -4626,7 +4721,7 @@ Cria a `Partida` inicial já com tudo preparado.
 
 ---
 
-## 7.5. `SimuladorServerJogo/Batalha/ObjetoBatalha.py`
+## 35.5. `SimuladorServerJogo/Batalha/ObjetoBatalha.py`
 
 ### Classe: `ObjetoBatalha`
 Classe base de tudo que existe na batalha e participa do ciclo do turno.
@@ -4650,7 +4745,7 @@ Classe base de tudo que existe na batalha e participa do ciclo do turno.
 
 ---
 
-## 7.6. `SimuladorServerJogo/Batalha/PokemonBatalha.py`
+## 35.6. `SimuladorServerJogo/Batalha/PokemonBatalha.py`
 
 ### Classe: `PokemonBatalha`
 Objeto autoritativo do pokémon dentro da partida.
@@ -4689,7 +4784,7 @@ Este arquivo deve continuar forte, mas as fórmulas internas precisam obedecer t
 
 ---
 
-## 7.7. `SimuladorServerJogo/Batalha/ProjetilBatalha.py`
+## 35.7. `SimuladorServerJogo/Batalha/ProjetilBatalha.py`
 
 ### Classe: `ProjetilBatalha`
 Objeto de batalha com vida própria após criação.
@@ -4710,7 +4805,7 @@ Objeto de batalha com vida própria após criação.
 - `finalizar()`: encerra o projétil.
 - `serializar()`: devolve estado público útil para histórico e replay.
 
-## 7.8. `SimuladorServerJogo/Batalha/ParedeBatalha.py`
+## 35.8. `SimuladorServerJogo/Batalha/ParedeBatalha.py`
 
 ### Classe: `ParedeBatalha`
 Objeto fixo da arena.
@@ -4726,7 +4821,7 @@ Objeto fixo da arena.
 
 ---
 
-## 7.9. `SimuladorServerJogo/Batalha/ConstrutoBatalha.py`
+## 35.9. `SimuladorServerJogo/Batalha/ConstrutoBatalha.py`
 
 ### Classe: `ConstrutoBatalha`
 Objeto de batalha irregular criado por ataques, passivas ou regras da arena.
@@ -4745,7 +4840,7 @@ Objeto de batalha irregular criado por ataques, passivas ou regras da arena.
 
 ---
 
-## 7.10. `SimuladorServerJogo/Batalha/FraquezasResistencias.py`
+## 35.10. `SimuladorServerJogo/Batalha/FraquezasResistencias.py`
 
 ### Papel
 Utilitário de multiplicador de tipo.
@@ -4760,7 +4855,7 @@ Este arquivo pode continuar **sem classe**, pois é naturalmente utilitário.
 
 ---
 
-## 7.11. `SimuladorServerJogo/Batalha/FisicaBatalha.py`
+## 35.11. `SimuladorServerJogo/Batalha/FisicaBatalha.py`
 
 ### Classe: `FisicaBatalha`
 Arquivo extra recomendado, derivado da necessidade hoje atendida parcialmente por `SimuladorFisica.py`.
@@ -4789,7 +4884,7 @@ Arquivo extra recomendado, derivado da necessidade hoje atendida parcialmente po
 
 ---
 
-## 7.12. `SimuladorServerJogo/Batalha/MotorAcoes.py`
+## 35.12. `SimuladorServerJogo/Batalha/MotorAcoes.py`
 
 ### Classe: `MotorAcoes`
 Executor das ações em andamento.
@@ -4811,7 +4906,7 @@ Executor das ações em andamento.
 
 ---
 
-## 7.13. `SimuladorServerJogo/Batalha/DetectorColisoes.py`
+## 35.13. `SimuladorServerJogo/Batalha/DetectorColisoes.py`
 
 ### Classe: `DetectorColisoes`
 Responsável por detectar pares que colidem no tick e encaminhar a resolução.
@@ -4837,7 +4932,7 @@ Eles usam detecção própria dentro das próprias classes.
 - `marcar_atravessando()`: registra pares em travessia quando a propriedade permitir.
 - `limpar_tick()`: limpa memória local da deduplicação para o próximo tick.
 
-## 7.14. `SimuladorServerJogo/Batalha/ExecutorTurnos.py`
+## 35.14. `SimuladorServerJogo/Batalha/ExecutorTurnos.py`
 
 ### Classe: `ExecutorTurnos`
 Rodador oficial do turno.
@@ -4861,7 +4956,7 @@ Rodador oficial do turno.
 
 ---
 
-## 7.15. `SimuladorServerJogo/Batalha/ColetorJogadas.py`
+## 35.15. `SimuladorServerJogo/Batalha/ColetorJogadas.py`
 
 ### Classe: `ColetorJogadas`
 Recebe e organiza as jogadas do turno antes da simulação.
@@ -4880,7 +4975,7 @@ Recebe e organiza as jogadas do turno antes da simulação.
 - `custo_jogada_multiplas_acoes()`: calcula custo com regra da segunda ação.
 - `jogadas_prontas()`: devolve jogadas prontas para o executor do turno.
 
-## 7.16. `SimuladorServerJogo/Batalha/LogBatalha.py`
+## 35.16. `SimuladorServerJogo/Batalha/LogBatalha.py`
 
 ### Classe: `LogBatalha`
 Responsável pelo histórico técnico, histórico público e diff final.
@@ -4889,7 +4984,8 @@ Responsável pelo histórico técnico, histórico público e diff final.
 - registrar eventos por tick;
 - consolidar histórico do turno;
 - gerar diff final;
-- manter log geral da partida.
+- manter log geral da partida;
+- registrar `SeedPartida` e rolls relevantes do RNG.
 
 ### Métodos principais
 - `registrar_evento()`: registra evento técnico bruto.
@@ -4911,9 +5007,9 @@ Responsável pelo histórico técnico, histórico público e diff final.
 
 ---
 
-# 8. `SimuladorServerJogo/Batalha/ConstrutorAcao.py`
+## 36. `SimuladorServerJogo/Batalha/ConstrutorAcao.py`
 
-## 8.1. Papel
+### 36.1. Papel
 Arquivo que concentra a hierarquia principal das ações do turno.
 
 ### Observação arquitetural
@@ -4953,15 +5049,17 @@ As ações são criadas por pokémons ou construtos por método próprio e já e
 - `converter_para_impulso()`: converte deslocamento em impulso após colisão.
 - `chegou_destino()`: informa se terminou.
 
-# 9. `SimuladorServerJogo/Batalha/ConstrutorAtaque.py`
+## 37. `SimuladorServerJogo/Batalha/ConstrutorAtaque.py`
 
-## 9.1. Papel
+### 37.1. Papel
 Arquivo que recebe `PropriedadesAtaque` e os dados enviados pelo jogador para construir a ação concreta do estilo correto.
 
 ### Leitura arquitetural
 `PropriedadesAtaque` + envio do jogador (direção, alvo quando couber, intensidade quando couber) entram no construtor.  
 O construtor escolhe a classe correta do estilo, acopla automaticamente execute principal, execute de estado e executes periféricos quando necessário, define a lista de imunes ao ataque quando couber, e devolve a ação pronta para a fila do turno.  
 Todas as classes de estilo herdam de `AcaoAtaque`, **exceto dash e impulso**, que herdam de `AcaoMover`.
+
+Caso irregular já fechado: o ataque **Parede** deve ter classe/caso próprio de montagem, recebendo dois pontos, respeitando o limite de 4 tiles entre eles, gerando uma parede de largura fixa de 0.25 tile e permitindo preview da área válida do segundo ponto ainda no client.
 
 ### Classes principais
 - `AtaqueBase`: base comum carregada pelo construtor.
@@ -4988,9 +5086,9 @@ Todas as classes de estilo herdam de `AcaoAtaque`, **exceto dash e impulso**, qu
 - `resolver_impacto_movimento()`: resolve dash/impulso quando a colisão disparar execute.
 - `resolver_comportamento_fim_colisao()`: aplica destruir/ricochetear/atravessar após colisão relevante, especialmente em projéteis.
 
-# 10. EXECUTES
+## 38. EXECUTES
 
-## 10.1. `SimuladorServerJogo/Logica/Executes/ExecuteAtaques.py`
+### 38.1. `SimuladorServerJogo/Logica/Executes/ExecuteAtaques.py`
 
 ### Classe: `ExecuteAtaques`
 Dispatcher das execuções dos ataques.
@@ -5013,9 +5111,9 @@ Passivas de item e habilidade não dependem de JSON nem de um novo dispatcher de
 
 ---
 
-# 11. O que acontece com os arquivos legados atuais
+## 39. O que acontece com os arquivos legados atuais
 
-## 11.1. Arquivos que sobrevivem quase com o mesmo nome
+### 39.1. Arquivos que sobrevivem quase com o mesmo nome
 - `Arena.py`
 - `ControladorBatalha.py`
 - `ElementosHudBatalha.py`
@@ -5031,7 +5129,7 @@ Passivas de item e habilidade não dependem de JSON nem de um novo dispatcher de
 - `ObjetoBatalha.py`
 - `PokemonBatalha.py`
 
-## 11.2. Arquivos legados que devem ser absorvidos ou sumir do núcleo
+### 39.2. Arquivos legados que devem ser absorvidos ou sumir do núcleo
 - `ControladorFluxos.py` deve ser absorvido por `IndicadoresAcoes.py` + `MontadorJogada.py`.
 - `LeitorFluxos.py` sai do núcleo da batalha nova.
 - `PlayerControleBat.py` pode ser absorvido por `PlayerBatalha.py` ou `ControladorBatalha.py`.
@@ -5043,7 +5141,7 @@ Passivas de item e habilidade não dependem de JSON nem de um novo dispatcher de
 
 ---
 
-# 12. Fechamento
+## 40. Fechamento
 
 Esta arquitetura tenta equilibrar três coisas ao mesmo tempo:
 
@@ -5078,9 +5176,9 @@ O resultado é um núcleo onde:
 
 ---
 
-## 1. Objetivo deste documento
+## 41. Objetivo deste documento
 
-Este arquivo define **como o novo modelo de batalha será implementado na prática**, em uma sequência de **9 fases**, com uso controlado do Codex, arquivos de teste por fase e validação prática contínua dentro de um simulador de batalha separado do jogo principal.
+Este arquivo define **como o novo modelo de batalha será implementado na prática**, em uma sequência de **10 fases**, com uso controlado do Codex, arquivos de teste por fase e validação prática contínua dentro de um simulador de batalha separado do jogo principal.
 
 A intenção aqui não é apenas listar fases bonitas.  
 A intenção é fechar um **guia operacional real** de implementação, revisão, teste, correção e avanço.
@@ -5095,14 +5193,14 @@ Este plano existe para garantir cinco coisas ao mesmo tempo:
 
 ---
 
-## 2. Princípios do processo de implementação
+## 42. Princípios do processo de implementação
 
-### 2.1. Diretrizes acima da arquitetura
+### 42.1. Diretrizes acima da arquitetura
 
 A arquitetura serve como mapa de arquivos, classes e responsabilidades.  
 Mas, em caso de conflito, a referência mais autoritária é sempre a seção de **diretrizes** deste mesmo arquivo.
 
-### 2.2. Implementação por fatias testáveis
+### 42.2. Implementação por fatias testáveis
 
 As fases não serão organizadas apenas por “tema técnico”, e sim por **fatias que possam ser testadas** logo após o patch.
 
@@ -5113,13 +5211,13 @@ Ou seja: uma fase só é considerada concluída quando:
 - o `BatalhaTeste.py` não quebrou;
 - a parte implementada pode ser observada de maneira prática.
 
-### 2.3. O legado não some de uma vez
+### 42.3. O legado não some de uma vez
 
 Arquivos legados como `LeitorJogadas.py`, `SistemaBatalha.py`, `ControladorFluxos.py` e `LeitorFluxos.py` não devem ser destruídos cedo demais se ainda forem necessários para manter a capacidade de teste durante a migração.
 
 A remoção real do núcleo legado acontece apenas nas fases finais.
 
-### 2.4. Nada de prompt gigante definitivo do Codex
+### 42.4. Nada de prompt gigante definitivo do Codex
 
 O projeto **não** deve começar com 9 prompts completos e fechados do Codex.  
 O correto é:
@@ -5131,7 +5229,7 @@ O correto é:
 
 Isso evita que prompts futuros fiquem desatualizados quando o código real mudar no caminho.
 
-### 2.5. Teste técnico + teste prático
+### 42.5. Teste técnico + teste prático
 
 Cada fase terá dois tipos de validação:
 
@@ -5151,9 +5249,9 @@ Feito no `Codigo/Outros/BatalhaTeste.py`, que funciona como um simulador de bata
 
 ---
 
-## 3. Estratégia oficial de uso do Codex
+## 43. Estratégia oficial de uso do Codex
 
-## 3.1. Fluxo por fase
+### 43.1. Fluxo por fase
 
 Cada fase seguirá este fluxo:
 
@@ -5193,9 +5291,9 @@ Roda o arquivo `TesteFaseXX.py`.
 
 ---
 
-## 4. Base de testes do projeto
+## 44. Base de testes do projeto
 
-## 4.1. `Codigo/Outros/BatalhaTeste.py`
+### 44.1. `Codigo/Outros/BatalhaTeste.py`
 
 ### Papel
 Arquivo de uso contínuo durante toda a migração.
@@ -5211,7 +5309,11 @@ Permitir abrir uma batalha **sem entrar pelo fluxo normal do jogo**, apenas para
 - deve manter o comportamento normal de geração dos pokémons;
 - os ataques dos pokémons continuam sendo escolhidos do jeito normal/aleatório do jogo;
 - a arena pode ser mais simples e sem cenário elaborado;
-- o objetivo dele é testar a batalha, não o fluxo completo do jogo.
+- o objetivo dele é testar a batalha, não o fluxo completo do jogo;
+- deve manter um **modo de teste** já previsto no modelo legado;
+- esse modo de teste deve poder ser **ligado e desligado por botão** no próprio `BatalhaTeste.py`;
+- com o modo de teste ligado, o jogador pode **controlar os inimigos** e fica com **energia infinita**;
+- com o modo de teste desligado, o comportamento volta ao fluxo normal de teste daquela batalha.
 
 ### Observação importante
 O fato de este arquivo continuar gerando pokémons normalmente, com ataques normais/aleatórios, **não substitui** os testes dirigidos por fase.
@@ -5220,7 +5322,7 @@ Logo:
 - `BatalhaTeste.py` é a validação prática contínua;
 - `TesteFaseXX.py` é a validação técnica dirigida.
 
-## 4.2. Pasta de testes por fase
+### 44.2. Pasta de testes por fase
 
 Estrutura recomendada:
 
@@ -5238,7 +5340,8 @@ Codigo/
         ├── TesteFase06.py
         ├── TesteFase07.py
         ├── TesteFase08.py
-        └── TesteFase09.py
+        ├── TesteFase09.py
+        └── TesteFase10.py
 ```
 
 ### `UtilTesteBatalha.py`
@@ -5253,9 +5356,9 @@ Pode concentrar helpers como:
 
 ---
 
-## 5. Ataques de teste já incorporados ao plano
+## 45. Ataques de teste já incorporados ao plano
 
-### 5.1. Observação geral
+### 45.1. Observação geral
 A lista atual de ataques já deve ser usada como **roteiro de validação da implementação**, e não só como conteúdo futuro.
 
 Para este plano:
@@ -5263,7 +5366,7 @@ Para este plano:
 - os nomes e estilos atuais são usados como referência prática de teste;
 - ataques com dependências ainda não fechadas entram mais tarde, em fases compatíveis com sua complexidade.
 
-### 5.2. Ataques atualmente listados para validação
+### 45.2. Ataques atualmente listados para validação
 
 #### Já presentes na lista atual
 - Investida
@@ -5289,8 +5392,9 @@ Para este plano:
 - Dança da chuva
 - Bomba de lama
 - Parede
+- Acumulador
 
-### 5.3. Ataques que exigem atenção especial
+### 45.3. Ataques que exigem atenção especial
 
 #### Enraivecer
 Hoje menciona um efeito legado (`Aprimorado`) e um efeito atual (`Amplificado`).  
@@ -5316,13 +5420,27 @@ Por isso entra depois da base de energia estar estável.
 #### Parede
 É um ótimo caso para validar:
 - ataque irregular;
+- montagem em dois pontos;
+- limite de 4 tiles entre o primeiro e o segundo ponto;
+- preview do fluxo/segmento da parede ainda na preparação;
 - criação de objeto fixo;
 - colisão com parede;
 - interação com projétil, dash e impulso.
 
+#### Acumulador
+É o caso principal e, neste momento, **único ataque de validação explícita de passiva** no plano.
+
+Leitura atual:
+- tipo: normal;
+- custo: 0;
+- estilo: passiva;
+- efeito: toda vez que esse Pokémon sofre qualquer instância de dano, aumenta seu `Atk` e `SpA` em **5%**.
+
+Esse ataque deve ser usado como caso oficial de teste das passivas reativas do sistema.
+
 ---
 
-## 6. Mapa dos ataques por fase
+## 46. Mapa dos ataques por fase
 
 A tabela abaixo define **em que fase cada ataque entra como caso de implementação real**.
 
@@ -5349,8 +5467,9 @@ A tabela abaixo define **em que fase cada ataque entra como caso de implementaç
 | Parede | irregular | 7 | cria objeto fixo irregular |
 | Recarga | status | 8 | energia/excedente pós-Energizado |
 | Enraivecer | status | 8 | depende de acerto final dos efeitos envolvidos |
+| Acumulador | passiva | 8 | único caso explícito de validação de passiva reativa |
 
-### 6.1. Observação sobre as fases 2 e 4
+### 46.1. Observação sobre as fases 2 e 4
 Mesmo quando um ataque ainda não está implementado de verdade no servidor, ele pode aparecer parcialmente antes:
 
 - na **fase 2**, como preview/indicador;
@@ -5358,7 +5477,7 @@ Mesmo quando um ataque ainda não está implementado de verdade no servidor, ele
 
 ---
 
-# 7. Plano de implementação em 9 fases
+## 47. Plano de implementação em 10 fases
 
 ---
 
@@ -5374,10 +5493,13 @@ Fechar a base contratual do novo modelo e criar o ambiente de teste contínuo.
 - `Codigo/Outros/TestesBatalha/TesteFase01.py`
 
 ### Arquivos a editar
-- `Dados/Pokemon Global Server - Ataques.csv`
 - pontos de entrada de batalha no client/server
 - `Codigo/ModulosBatalha/ControladorBatalha.py`
 - `Codigo/Cenas/CenaCombate.py`
+
+### Observação de dados desta fase
+- os CSVs já existentes do projeto, incluindo `Pokemon Global Server - Ataques.csv` e `Pokemon Global Server - Efeitos.csv`, podem ser lidos e citados como referência, mas **não devem ser editados pela IA**;
+- o foco de edição de dados desta fase fica no `PropriedadesAtaque.json` e nos contratos novos do sistema.
 
 ### O que deve ser entregue nesta fase
 1. estrutura base do JSON técnico de ataques, já incluindo os campos de execute principal, execute de estado e executes periféricos;
@@ -5387,7 +5509,12 @@ Fechar a base contratual do novo modelo e criar o ambiente de teste contínuo.
    - histórico do turno;
    - diff final;
 4. criação do `BatalhaTeste.py`;
-5. primeira leitura dos ataques da lista atual para o JSON técnico.
+5. primeira leitura dos ataques da lista atual para o JSON técnico;
+6. esquema base de IDs globais já fechado no contrato inicial, com teste cedo;
+7. contrato inicial da `SeedPartida` como base autoritativa do RNG;
+8. criação do **modo de teste** do `BatalhaTeste.py`, com botão para ligar/desligar:
+   - controle dos inimigos;
+   - energia infinita.
 
 ### Ataques que já entram aqui
 Nesta fase, os ataques não entram pela lógica real ainda.  
@@ -5403,8 +5530,9 @@ Prioridade imediata de cadastro técnico:
 - Dança da chuva
 - Bomba de lama
 - Parede
+- Acumulador
 
-Esses ataques cobrem cedo vários estilos que o sistema terá de suportar.
+Esses ataques cobrem cedo vários estilos que o sistema terá de suportar, incluindo o caso inicial de passiva reativa.
 
 ### Teste técnico da fase
 `TesteFase01.py`
@@ -5416,19 +5544,25 @@ Casos mínimos:
 - estados macro válidos;
 - payload base de jogada válido;
 - histórico base válido;
-- diff base válido.
+- diff base válido;
+- esquema de IDs globais válido;
+- contrato base de `SeedPartida` válido.
 
 ### Teste prático no `BatalhaTeste.py`
 - abrir batalha fake;
 - carregar times 6v6;
 - materializar pokémons;
 - exibir arena simples;
-- permitir inicialização sem entrar no fluxo inteiro do jogo.
+- permitir inicialização sem entrar no fluxo inteiro do jogo;
+- validar botão de ligar/desligar o **modo de teste**;
+- com o modo de teste ligado, controlar inimigos e usar energia infinita;
+- com o modo de teste desligado, voltar ao comportamento normal.
 
 ### Critério de aceite
 - a batalha fake abre;
 - os contratos básicos existem;
-- os ataques priorizados já existem no JSON técnico inicial.
+- os ataques priorizados já existem no JSON técnico inicial;
+- o modo de teste do `BatalhaTeste.py` já funciona.
 
 ---
 
@@ -5446,10 +5580,16 @@ Implementar a camada visual de preparação de jogadas, previews e indicadores.
 - `Codigo/ModulosBatalha/MontadorJogada.py`
 - `Codigo/ModulosBatalha/ControladorBatalha.py`
 - `Codigo/ModulosBatalha/ElementosHudBatalha.py`
+- `Codigo/ModulosBatalha/Arena.py`
+- `Codigo/Geradores/PokemonBatalha.py`
 - `Codigo/Paineis/FichaPokemonBatalha.py`
 - `Codigo/ModulosBatalha/PlayerBatalha.py`
-- `Codigo/ModulosBatalha/PlayerControleBat.py`
-- `Codigo/Paineis/PainelJogada.py` (se for reaproveitado como base)
+- `Codigo/Paineis/PainelAcoes.py` (inclusive se nascer por extração/renome de código vindo de `PainelJogada.py`)
+
+### Observação de transição desta fase
+- `PlayerControleBat.py` e `PainelJogada.py` **não** são alvos arquiteturais do modelo novo.
+- Se algum trecho legado desses arquivos for reaproveitado nesta fase, isso deve acontecer apenas como **migração de código**, deixando o resultado final concentrado em `PlayerBatalha.py` e `PainelAcoes.py`.
+- Nenhuma lógica nova central da montagem de jogadas deve permanecer em `PlayerControleBat.py` ou `PainelJogada.py` ao final da fase.
 
 ### O que deve ser entregue nesta fase
 1. preview imediato ao selecionar ataque;
@@ -5461,7 +5601,12 @@ Implementar a camada visual de preparação de jogadas, previews e indicadores.
 7. energia visual reservada;
 8. botão de pronto;
 9. ausência de botão separado de “preparar”;
-10. início da absorção do legado de `ControladorFluxos.py`.
+10. distinção clara entre montagem de ataque por ficha/clique e montagem de movimento/troca por arrasto;
+11. arrasto do Pokémon ativo até um Pokémon válido da reserva/banco fora da arena preparando troca;
+12. bloqueador impedindo que o destino comum de movimento saia da arena, com exceção visual controlada para conectar o arrasto ao Pokémon da reserva quando for troca válida;
+13. bloqueio visual e lógico para arrasto até Pokémon inválido do banco, sem preparar troca inválida;
+14. início da absorção do legado de `ControladorFluxos.py`;
+15. absorção explícita do que ainda existir de `PlayerControleBat.py` e `PainelJogada.py` para os alvos finais `PlayerBatalha.py` e `PainelAcoes.py`.
 
 ### Ataques usados como caso visual nesta fase
 - Proteger — preview de alvo
@@ -5472,6 +5617,7 @@ Implementar a camada visual de preparação de jogadas, previews e indicadores.
 - Chifrada — preview de dash
 - Investida — preview de impulso
 - Provocar / Tankar — preview de status autouso
+- Parede — preview irregular com seleção em dois pontos
 
 ### Teste técnico da fase
 `TesteFase02.py`
@@ -5482,7 +5628,11 @@ Casos mínimos:
 - proibição de repetir ação idêntica no turno;
 - ordem local das ações;
 - recalculo da posição fantasma;
-- estrutura de indicador gerada por estilo.
+- estrutura de indicador gerada por estilo;
+- arrasto para dentro da arena gerando movimento;
+- arrasto até Pokémon válido do banco fora da arena gerando troca;
+- arrasto até Pokémon inválido do banco sendo bloqueado sem preparar troca;
+- arrasto para fora da arena sem alvo de banco válido sendo bloqueado.
 
 ### Teste prático no `BatalhaTeste.py`
 - selecionar pokémon;
@@ -5521,7 +5671,9 @@ Criar a casca real do servidor novo, com `Partida` como dona do estado.
 4. arena e clima iniciais;
 5. estado macro da partida;
 6. fechamento básico de turno;
-7. log geral inicial.
+7. log geral inicial;
+8. `SeedPartida` autoritativa inicializada no servidor;
+9. gerador central de IDs globais já funcionando dentro da `Partida`.
 
 ### Ataques usados como caso nesta fase
 Ainda não entram pela lógica real.  
@@ -5536,11 +5688,16 @@ Casos mínimos:
 - receber turno vazio;
 - fechar turno vazio;
 - atualizar `TickGlobal`;
+- inicializar e expor `SeedPartida`;
+- gerar IDs globais básicos corretamente;
 - transicionar estados corretamente.
 
 ### Teste prático no `BatalhaTeste.py`
 - abrir batalha fake já usando a nova `Partida`;
 - confirmar que a batalha inicia sem depender do motor velho para existir.
+
+### Observação sobre PvP nesta fase
+A infraestrutura de espera/envio do PvP já deve nascer de forma compatível com o modelo novo, mas **PvP ainda não é foco de teste neste plano**.
 
 ### Critério de aceite
 - existe um dono claro do estado da batalha;
@@ -5572,9 +5729,11 @@ Colocar o novo rodador para funcionar com a menor fatia jogável possível.
 4. movimento normal;
 5. custo por tile;
 6. troca de 5 ticks;
-7. segunda ação começar 1 tick após a primeira terminar;
-8. log básico de movimento/troca;
-9. condição de parada do turno.
+7. troca encerrando a cadeia de ações do Pokémon que sai;
+8. Pokémon que entra por troca só podendo agir no próximo turno;
+9. segunda ação começar 1 tick após a primeira terminar;
+10. log básico de movimento/troca;
+11. condição de parada do turno.
 
 ### Ataques/casos usados nesta fase
 Aqui o foco é deslocamento e troca.  
@@ -5788,7 +5947,8 @@ Fechar os estilos com física própria e timeline mais complexa.
 4. laser contínuo por tick;
 5. colisão com parede;
 6. criação de parede como objeto fixo;
-7. logs de avanço e impacto.
+7. montagem irregular da Parede em dois pontos, com limite de 4 tiles e preview da área válida do segundo ponto;
+8. logs de avanço e impacto.
 
 ### Ataques implementados/testados aqui
 - Chifrada
@@ -5812,6 +5972,13 @@ Valida ataque laser contínuo.
 
 #### Parede
 Valida ataque irregular que cria objeto fixo de colisão.
+
+A montagem fechada deste ataque é:
+- selecionar o ataque;
+- selecionar o primeiro ponto;
+- selecionar o segundo ponto dentro de um limite de 4 tiles;
+- visualizar durante a montagem o fluxo/segmento previsto da parede;
+- gerar uma parede de largura fixa de 0.25 tile no mapa.
 
 ### Teste técnico da fase
 `TesteFase07.py`
@@ -5849,6 +6016,10 @@ Fechar a camada de fidelidade do sistema: `Verifica()`, clima, tile, energia ava
 - `SimuladorServerJogo/Batalha/ConstrutorAtaque.py`
 - `SimuladorServerJogo/Batalha/MotorAcoes.py`
 
+### Observação de dados desta fase
+- `Pokemon Global Server - Efeitos.csv` entra aqui como **fonte pronta de referência/carga**, mas **não deve ser editado pela IA**;
+- a implementação desta fase deve consumir a base já existente e encaixá-la no motor novo.
+
 ### O que deve ser entregue nesta fase
 1. `Verifica()` completa;
 2. reaplicação de efeitos;
@@ -5866,6 +6037,7 @@ Fechar a camada de fidelidade do sistema: `Verifica()`, clima, tile, energia ava
 - Bola Climática
 - Recarga
 - Enraivecer
+- Acumulador
 
 ### Observações por ataque
 #### Dança da chuva
@@ -5883,6 +6055,10 @@ Valida recuperação de energia e a regra de excedente persistente após Energiz
 #### Enraivecer
 Só deve ser fechado nesta fase se o mapeamento do efeito legado estiver resolvido de forma oficial.
 
+#### Acumulador
+Valida ataque de estilo passiva.
+Toda vez que o Pokémon sofrer qualquer instância de dano, ele deve aumentar seu `Atk` e `SpA` em **5%**.
+
 ### Teste técnico da fase
 `TesteFase08.py`
 
@@ -5894,30 +6070,80 @@ Casos mínimos:
 - energia recuperada corretamente;
 - Bola Climática mudando comportamento conforme clima;
 - Recarga respeitando as regras atuais de energia;
-- Enraivecer só ativando a condição certa.
+- Enraivecer só ativando a condição certa;
+- Acumulador ativando a passiva ao sofrer instância de dano.
 
 ### Teste prático no `BatalhaTeste.py`
 - batalhas com clima ativo;
 - validação visual de tile e efeitos;
-- ver interação entre ataques, clima e arena.
+- ver interação entre ataques, clima e arena;
+- validar Acumulador reagindo a instâncias de dano em batalha real.
 
 ### Critério de aceite
-- o sistema novo já está fiel à maior parte das diretrizes, não só funcional.
+- o sistema novo já está fiel à maior parte das diretrizes, não só funcional;
+- o caso de passiva reativa já está coberto por `Acumulador`.
 
 ---
 
-## Fase 9 — Leitura de logs, animação, reconciliamento final e remoção do núcleo legado
+## Fase 9 — IA de batalha no client
+
+### Objetivo
+Criar a fase própria da IA local, separada do resto do motor, usando o mesmo contrato de montagem do jogador humano.
+
+### Arquivos a criar
+- `Codigo/ModulosBatalha/IA/BotBatalha.py`
+- `Codigo/ModulosBatalha/IA/AvaliadorAcoesIA.py`
+- `Codigo/ModulosBatalha/IA/GeradorJogadasIA.py`
+- `Codigo/Outros/TestesBatalha/TesteFase09.py`
+
+### Arquivos a editar
+- `Codigo/ModulosBatalha/ControladorBatalha.py`
+- `Codigo/ModulosBatalha/MontadorJogada.py`
+- `Codigo/ModulosBatalha/PlayerBatalha.py`
+- `Codigo/ModulosBatalha/InicializadorBatalha.py`
+
+### O que deve ser entregue nesta fase
+1. camada de IA separada do resto da batalha;
+2. leitura do estado atual da partida para tomada de decisão;
+3. geração de jogadas no mesmo formato do jogador humano;
+4. respeito aos limites por lado, por pokémon, energia, alcance e ordem local;
+5. integração da IA ao fluxo de confronto/batalha contra treinador no client.
+
+### Ataques usados como validação nesta fase
+Nesta fase, a IA deve conseguir escolher entre os ataques e ações já implementados nas fases anteriores, sem criar contratos paralelos.
+
+### Teste técnico da fase
+`TesteFase09.py`
+
+Casos mínimos:
+- IA monta jogadas válidas no formato esperado;
+- IA respeita limite de ações;
+- IA não tenta usar ação inválida por energia ou alcance;
+- IA consegue escolher entre atacar, mover e trocar em cenários simples.
+
+### Teste prático no `BatalhaTeste.py`
+- confronto/batalha contra treinador usando a IA local no fluxo novo;
+- validação básica de que a IA prepara e envia jogadas sem quebrar o turno.
+
+### Critério de aceite
+- a IA já existe como camada própria do client e usa exatamente o mesmo contrato de jogada do jogador humano.
+
+---
+
+## Fase 10 — Leitura de logs, animação, reconciliamento final e remoção do núcleo legado
 
 ### Objetivo
 Completar a virada final do client e aposentar o núcleo velho.
 
 ### Arquivos a criar
 - `Codigo/ModulosBatalha/ExecutorAnimacao.py`
-- `Codigo/Outros/TestesBatalha/TesteFase09.py`
+- `Codigo/Outros/TestesBatalha/TesteFase10.py`
 
 ### Arquivos a editar
 - `Codigo/ModulosBatalha/LeitorLogs.py`
 - `Codigo/ModulosGerais/PokemonAnimator.py`
+- `Codigo/ModulosBatalha/Arena.py`
+- `Codigo/Geradores/PokemonBatalha.py`
 - `Codigo/ModulosBatalha/InicializadorBatalha.py`
 - `Codigo/ModulosBatalha/FinalizadorBatalha.py`
 - `Codigo/ModulosBatalha/ControladorBatalha.py`
@@ -5954,7 +6180,7 @@ Nesta fase, todos os ataques já implementados devem ser validados em fluxo comp
 - irregular.
 
 ### Teste técnico da fase
-`TesteFase09.py`
+`TesteFase10.py`
 
 Casos mínimos:
 - leitura do histórico do turno;
@@ -5977,9 +6203,9 @@ Casos mínimos:
 
 ---
 
-# 8. Regras de revisão após cada patch
+## 48. Regras de revisão após cada patch
 
-## 8.1. O que revisar sempre
+### 48.1. O que revisar sempre
 Depois de cada patch do Codex, revisar no mínimo:
 
 1. se respeitou as diretrizes;
@@ -5990,7 +6216,7 @@ Depois de cada patch do Codex, revisar no mínimo:
 6. se o teste técnico da fase está bom;
 7. se o `BatalhaTeste.py` continua funcional.
 
-## 8.2. Quando criar subfase
+### 48.2. Quando criar subfase
 Subfase deve existir quando:
 
 - o patch principal ficou quase bom, mas ainda precisa ajustes locais;
@@ -6006,7 +6232,7 @@ Exemplos:
 
 ---
 
-# 9. Critério oficial para avançar de fase
+## 49. Critério oficial para avançar de fase
 
 Uma fase só pode ser considerada concluída quando:
 
@@ -6018,9 +6244,9 @@ Uma fase só pode ser considerada concluída quando:
 
 ---
 
-# 10. Resumo executivo do plano
+## 50. Resumo executivo do plano
 
-## Sequência final fechada
+### Sequência final fechada
 1. **Contratos, dados-base e estrutura de teste**
 2. **Montagem de jogadas e indicadores visuais**
 3. **Server estrutural autoritativo**
@@ -6029,14 +6255,16 @@ Uma fase só pode ser considerada concluída quando:
 6. **Objetos persistentes, projéteis e colisão rica**
 7. **Dash, impulso, laser e ataque irregular com parede**
 8. **Efeitos, clima, tile, energia e passivas**
-9. **Leitura de logs, animação, reconciliamento final e remoção do núcleo legado**
+9. **IA de batalha no client**
+10. **Leitura de logs, animação, reconciliamento final e remoção do núcleo legado**
 
-## Ataques novos destacados no plano
+### Ataques novos destacados no plano
 - **Dança da chuva** — valida clima
 - **Bomba de lama** — valida zona + tile
 - **Parede** — valida ataque irregular + objeto fixo
+- **Acumulador** — valida passiva reativa
 
-## Regra final do processo
+### Regra final do processo
 O plano não será executado como uma sequência cega de prompts gigantes.  
 Ele será executado como:
 

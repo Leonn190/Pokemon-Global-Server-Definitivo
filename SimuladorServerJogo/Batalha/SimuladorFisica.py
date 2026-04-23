@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from typing import Dict, Iterable, List, Tuple
 
+from SimuladorServerJogo.Batalha.DetectorColisoes import DetectorColisoes
 from SimuladorServerJogo.Batalha.ObjetoBatalha import ObjetoBatalha
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha, carregar_regras_pokemons
 
@@ -15,6 +16,10 @@ class SimuladorFisica:
         self._sistema = sistema
         self._regras_batalha = carregar_regras_batalha()
         self._regras_pokemons = carregar_regras_pokemons()
+        self._detector_colisoes = DetectorColisoes(self)
+
+    def detector_colisoes(self) -> DetectorColisoes:
+        return self._detector_colisoes
 
     @staticmethod
     def _fnum(valor, default: float = 0.0) -> float:
@@ -277,10 +282,16 @@ class SimuladorFisica:
         eventos: List[Dict[str, object]] = []
         melhor_evento: Dict[str, object] | None = None
         ignorados = {str(valor) for valor in list(ignorar_ids or []) if str(valor)}
-        for outro in self._sistema.listar_pokemons():
-            if outro is pokemon or outro.ForaDeCombate or str(outro.Uid) in ignorados:
+        for evento in self._detector_colisoes.detectar_colisoes_pokemon_pokemon(
+            pokemon,
+            origem,
+            destino,
+            ignorar_ids=ignorados,
+        ):
+            outro = evento.get("outro")
+            interseccao = evento.get("interseccao")
+            if outro is None or not isinstance(interseccao, dict):
                 continue
-            interseccao = self._interseccao_segmento_circulo(origem, destino, outro.Posicao, float(pokemon.RaioColisao) + float(outro.RaioColisao))
             if interseccao is None:
                 continue
             if melhor_evento is None or float(interseccao.get("t", 1.0)) < float(melhor_evento.get("t", 1.0)):
@@ -407,18 +418,15 @@ class SimuladorFisica:
             }
 
         pokemon.Posicao = nova_posicao
-        normal_campo = self.alinhar_pokemon_ao_campo(pokemon)
-        if abs(normal_campo[0]) > 1e-9 or abs(normal_campo[1]) > 1e-9:
-            colisoes.append({"tipo": "parede_campo", "normal": [normal_campo[0], normal_campo[1]]})
-
-        for objeto in self.objetos_estaticos():
-            if not self.circulos_colidem(pokemon.Posicao, pokemon.RaioColisao, self._vec(objeto.get("posicao")), self._fnum(objeto.get("raio"), 0.6)):
-                continue
-            delta = self._sub(pokemon.Posicao, self._vec(objeto.get("posicao")))
-            normal = self._normalizar(delta if self._dist(pokemon.Posicao, self._vec(objeto.get("posicao"))) > 1e-9 else (1.0, 0.0))
-            sobreposicao = (pokemon.RaioColisao + self._fnum(objeto.get("raio"), 0.6)) - self._dist(pokemon.Posicao, self._vec(objeto.get("posicao")))
+        for evento_campo in self._detector_colisoes.detectar_colisoes_pokemon_campo(pokemon):
+            normal = tuple(evento_campo.get("normal") or (0.0, 0.0))
+            if abs(normal[0]) > 1e-9 or abs(normal[1]) > 1e-9:
+                colisoes.append({"tipo": "parede_campo", "normal": [normal[0], normal[1]]})
+        for evento_objeto in self._detector_colisoes.detectar_colisoes_pokemon_objetos(pokemon):
+            normal = tuple(evento_objeto.get("normal") or (1.0, 0.0))
+            sobreposicao = float(evento_objeto.get("penetracao") or 0.0)
             pokemon.Posicao = self._somar(pokemon.Posicao, self._mul(normal, max(0.0, sobreposicao)))
-            colisoes.append({"tipo": "objeto_campo", "objeto_id": objeto.get("id"), "normal": [normal[0], normal[1]]})
+            colisoes.append({"tipo": "objeto_campo", "objeto_id": evento_objeto.get("objeto_id"), "normal": [normal[0], normal[1]]})
 
         if colisoes:
             return {

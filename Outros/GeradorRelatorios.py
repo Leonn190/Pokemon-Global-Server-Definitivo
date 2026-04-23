@@ -14,10 +14,11 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 # ============================================================
 # CONFIGURAÇÃO MANUAL
 # ============================================================
-MODELO_RELATORIO = 8
+MODELO_RELATORIO = 9
 AUTOR_RELATORIO = "Leon Cunha Alvaro Lopez Soto"
 INCREMENTO_HORAS = 0.0
 HORAS_PADRAO_SEM_HISTORICO = 313.0
+DATA_CRIACAO_OFICIAL = datetime(2025, 6, 1)
 
 CLASS_RE = re.compile(r"^\s*class\s+[A-Za-z_]\w*\s*(\(|:)")
 
@@ -25,6 +26,7 @@ IGNORAR_PASTAS = {
     ".git",
     "__pycache__",
     "Relatorios",
+    "RelatoriosLegado",
     "Relatorios atualizados",
 }
 IGNORAR_EXTENSOES = {".pyc"}
@@ -37,6 +39,10 @@ EXTENSOES_TEXTO_INTERESSE = {
     ".h", ".hpp", ".cs", ".lua", ".rs", ".go", ".php", ".rb", ".vue", ".vhd", ".vhdl",
 }
 
+EXTENSOES_LINHAS_INTERESSE = {".toml", ".csv", ".java", ".py", ".json", ".md"}
+EXTENSOES_IMAGEM = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".ico"}
+EXTENSOES_AUDIO = {".ogg", ".mp3", ".wav", ".flac", ".midi", ".mid"}
+
 # 15 itens fixos conforme pedido.
 PASTAS_IMPORTANTES_RANK: List[Tuple[str, str]] = [
     ("Codigo/Cenas", "Cenas"),
@@ -48,10 +54,10 @@ PASTAS_IMPORTANTES_RANK: List[Tuple[str, str]] = [
     ("Codigo/Prefabs", "Prefabs"),
     ("Codigo/Server", "Server"),
     ("Codigo/Telas", "Telas"),
-    ("SimuladorServerJogo/Logica", "SimuladorServerJogo/Logica"),
-    ("SimuladorServerJogo/Gerais", "SimuladorServerJogo/Gerais"),
-    ("SimuladorServerJogo/Mundo", "SimuladorServerJogo/Mundo"),
-    ("SimuladorServerJogo/Batalha", "SimuladorServerJogo/Batalha"),
+    ("SimuladorServerJogo/Logica", "ServerLogica"),
+    ("SimuladorServerJogo/Gerais", "ServerGerais"),
+    ("SimuladorServerJogo/Mundo", "ServerMundo"),
+    ("SimuladorServerJogo/Batalha", "ServerBatalha"),
     ("Outros", "Outros"),
     ("Dados", "Dados"),
 ]
@@ -89,6 +95,16 @@ def fmt_tamanho_gb_com_bytes(num_bytes: int) -> str:
     return f"{fmt_num(bytes_para_gb(num_bytes), 3)} GB ({fmt_int(num_bytes)} bytes)"
 
 
+def fmt_tamanho_curto(num_bytes: int) -> str:
+    if num_bytes >= 1024 ** 3:
+        return f"{fmt_num(bytes_para_gb(num_bytes), 3)} GB"
+    if num_bytes >= 1024 ** 2:
+        return f"{fmt_num(bytes_para_mb(num_bytes), 2)} MB"
+    if num_bytes >= 1024:
+        return f"{fmt_num(bytes_para_kb(num_bytes), 2)} KB"
+    return f"{fmt_int(num_bytes)} bytes"
+
+
 # ============================================================
 # DATAS / GIT
 # ============================================================
@@ -96,9 +112,14 @@ def parse_datetime_seguro(valor: str) -> Optional[datetime]:
     if not valor or not isinstance(valor, str):
         return None
     try:
-        return datetime.fromisoformat(valor.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(valor.replace("Z", "+00:00"))
+        return dt.astimezone().replace(tzinfo=None) if dt.tzinfo is not None else dt
     except Exception:
         return None
+
+
+def iso_sem_timezone(dt: datetime) -> str:
+    return dt.replace(tzinfo=None).isoformat(timespec="seconds")
 
 
 def obter_data_referencia() -> datetime:
@@ -106,7 +127,7 @@ def obter_data_referencia() -> datetime:
     dt = parse_datetime_seguro(valor)
     if dt is not None:
         return dt
-    return datetime.now().astimezone()
+    return datetime.now().astimezone().replace(tzinfo=None)
 
 
 def rodar_git(repo_root: Path, args: Sequence[str]) -> Optional[str]:
@@ -150,6 +171,91 @@ def tentar_primeiro_commit_data(repo_root: Path) -> Optional[datetime]:
         return None
     primeira_linha = out.splitlines()[0].strip()
     return parse_datetime_seguro(primeira_linha)
+
+
+def tentar_commit_por_data(repo_root: Path, dt: Optional[datetime]) -> Optional[str]:
+    if dt is None or not (repo_root / ".git").exists():
+        return None
+    before = dt.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S")
+    out = rodar_git(repo_root, ["rev-list", "-n", "1", f"--before={before}", "HEAD"])
+    return out.strip() if out else None
+
+
+def somar_numstat(numstat: str) -> Dict[str, int]:
+    arquivos = 0
+    adicoes = 0
+    reducoes = 0
+    binarios = 0
+
+    for linha in (numstat or "").splitlines():
+        partes = linha.split("\t")
+        if len(partes) < 3:
+            continue
+        arquivos += 1
+        add, rem = partes[0].strip(), partes[1].strip()
+        if add == "-" or rem == "-":
+            binarios += 1
+            continue
+        try:
+            adicoes += int(add)
+            reducoes += int(rem)
+        except ValueError:
+            continue
+
+    return {
+        "arquivos_alterados": arquivos,
+        "adicoes": adicoes,
+        "reducoes": reducoes,
+        "binarios": binarios,
+        "tamanho_diff": adicoes + reducoes,
+    }
+
+
+def coletar_diff_entre_commits(repo_root: Path, commit_anterior: Optional[str], commit_atual: Optional[str]) -> Dict[str, Any]:
+    if not commit_anterior or not commit_atual or commit_anterior == commit_atual:
+        return {"disponivel": False}
+    out = rodar_git(repo_root, ["diff", "--numstat", f"{commit_anterior}..{commit_atual}"])
+    if out is None:
+        return {"disponivel": False}
+    dados = somar_numstat(out)
+    dados.update({
+        "disponivel": True,
+        "commit_anterior": commit_anterior,
+        "commit_atual": commit_atual,
+    })
+    return dados
+
+
+def coletar_top_commits_por_diff(repo_root: Path, commit_anterior: Optional[str], commit_atual: Optional[str]) -> List[Dict[str, Any]]:
+    if not commit_anterior or not commit_atual or commit_anterior == commit_atual:
+        return []
+
+    commits_out = rodar_git(repo_root, ["rev-list", "--reverse", f"{commit_anterior}..{commit_atual}"])
+    if not commits_out:
+        return []
+
+    itens: List[Dict[str, Any]] = []
+    for commit_hash in [linha.strip() for linha in commits_out.splitlines() if linha.strip()]:
+        meta_out = rodar_git(repo_root, ["show", "-s", "--date=iso-strict", "--format=%H|%cI|%an|%s", commit_hash]) or ""
+        partes = meta_out.split("|", 3)
+        if len(partes) != 4:
+            partes = [commit_hash, "", "", ""]
+
+        numstat = rodar_git(repo_root, ["show", "--format=", "--numstat", commit_hash]) or ""
+        dados = somar_numstat(numstat)
+        itens.append({
+            "hash": partes[0],
+            "hash_curto": partes[0][:12],
+            "data": partes[1],
+            "autor": partes[2],
+            "mensagem": partes[3],
+            **dados,
+        })
+
+    itens.sort(key=lambda x: int(x.get("tamanho_diff", 0)), reverse=True)
+    for i, item in enumerate(itens, start=1):
+        item["rank"] = i
+    return itens[:3]
 
 
 # ============================================================
@@ -516,6 +622,51 @@ def extrair_metricas_historicas(relatorio: Dict[str, Any]) -> Dict[str, Optional
     }
 
 
+def extrair_metricas_comparacao(relatorio: Dict[str, Any]) -> Dict[str, Optional[float]]:
+    return {
+        "arquivos": extrair_primeiro_numero(relatorio, [("resumo", "arquivos"), ("visao_geral", "arquivos")]),
+        "linhas": extrair_primeiro_numero(relatorio, [("resumo", "linhas_totais_geral"), ("resumo", "linhas_totais")]),
+        "linhas_py": extrair_primeiro_numero(relatorio, [("python", "linhas_totais"), ("python", "linhas_py")]),
+        "metodos_funcoes": extrair_primeiro_numero(relatorio, [("python", "total_funcoes_e_metodos")]),
+        "classes": extrair_primeiro_numero(relatorio, [("python", "classes_encontradas")]),
+        "commits": extrair_primeiro_numero(relatorio, [("resumo", "commits"), ("meta", "commits")]),
+        "tamanho": extrair_primeiro_numero(relatorio, [("resumo", "tamanho_bytes")]),
+    }
+
+
+def montar_comparativo_ultimo_relatorio(atual: Dict[str, Any], anterior: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not isinstance(anterior, dict):
+        return {"disponivel": False, "itens": []}
+
+    atual_metricas = extrair_metricas_comparacao(atual)
+    anterior_metricas = extrair_metricas_comparacao(anterior)
+    nomes = {
+        "arquivos": "Arquivos",
+        "linhas": "Linhas",
+        "linhas_py": "Linhas .py",
+        "metodos_funcoes": "Métodos/funções",
+        "classes": "Classes",
+        "commits": "Commits",
+        "tamanho": "Tamanho",
+    }
+
+    itens: List[Dict[str, Any]] = []
+    for chave in ("arquivos", "linhas", "linhas_py", "metodos_funcoes", "classes", "commits", "tamanho"):
+        valor_atual = atual_metricas.get(chave)
+        valor_anterior = anterior_metricas.get(chave)
+        if valor_atual is None or valor_anterior is None:
+            continue
+        itens.append({
+            "metrica": chave,
+            "nome": nomes[chave],
+            "anterior": valor_anterior,
+            "atual": valor_atual,
+            "diferenca": valor_atual - valor_anterior,
+        })
+
+    return {"disponivel": bool(itens), "itens": itens}
+
+
 def coletar_historico_relatorios(
     relatorios_dir: Path,
     atual: Dict[str, Any],
@@ -698,6 +849,14 @@ def gerar_graficos(
         graficos["linhas_por_extensao_pizza"] = f"{imagens_rel_local}/{destino.name}"
         graficos["linhas_por_extensao_pizza_root"] = f"{imagens_rel_root}/{destino.name}"
 
+    peso_cat = atual.get("peso_por_categoria", {}).get("itens", []) or []
+    labels_peso_cat = [str(it.get("categoria", "")) for it in peso_cat]
+    valores_peso_cat = [float(it.get("tamanho_bytes", 0)) for it in peso_cat]
+    destino = imagens_dir / "peso_por_categoria_pizza.png"
+    if salvar_grafico_pizza(plt, labels_peso_cat, valores_peso_cat, "Peso por categoria de arquivo", destino):
+        graficos["peso_por_categoria_pizza"] = f"{imagens_rel_local}/{destino.name}"
+        graficos["peso_por_categoria_pizza_root"] = f"{imagens_rel_root}/{destino.name}"
+
     labels_hist = labels_datas_historico(historico)
     series = [
         ("linhas_totais_geral", "Crescimento de linhas gerais", "Linhas", "crescimento_linhas_totais.png"),
@@ -815,6 +974,10 @@ def coletar_metricas(
     bibliotecas_diferentes: set[str] = set()
 
     linhas_por_ext: Counter[str] = Counter()
+    tamanho_por_ext: Counter[str] = Counter()
+    arquivos_por_ext: Counter[str] = Counter()
+    tamanho_por_categoria: Counter[str] = Counter()
+    arquivos_por_categoria: Counter[str] = Counter()
     total_linhas_geral = 0
 
     top_py_por_linhas: List[Dict[str, Any]] = []
@@ -845,12 +1008,26 @@ def coletar_metricas(
             ext = p.suffix.lower() if p.suffix else ""
             rel = str(p.relative_to(repo_root)).replace("\\", "/")
 
+            if ext:
+                tamanho_por_ext[ext] += size
+                arquivos_por_ext[ext] += 1
+
+            if ext in EXTENSOES_IMAGEM:
+                categoria_peso = "Imagens"
+            elif ext in EXTENSOES_AUDIO:
+                categoria_peso = "Áudio"
+            else:
+                categoria_peso = "Texto"
+            tamanho_por_categoria[categoria_peso] += size
+            arquivos_por_categoria[categoria_peso] += 1
+
             if eh_arquivo_texto_por_extensao(ext) or ext == "":
                 total_text_files += 1
                 total_text_bytes += size
                 linhas = contar_linhas_arquivo(p)
                 if linhas > 0:
-                    linhas_por_ext[ext or "(sem_ext)"] += linhas
+                    if ext in EXTENSOES_LINHAS_INTERESSE:
+                        linhas_por_ext[ext] += linhas
                     total_linhas_geral += linhas
                     top_arquivos_por_linhas.append({
                         "arquivo": rel,
@@ -928,12 +1105,39 @@ def coletar_metricas(
     if primeira_data is not None:
         dias_desde_criacao = max(0, (data_referencia.date() - primeira_data.date()).days)
 
+    dias_desde_criacao_oficial = max(0, (data_referencia.date() - DATA_CRIACAO_OFICIAL.date()).days)
+
     commits = tentar_contar_commits(repo_root, data_referencia)
     rank_pastas = coletar_rank_pastas_importantes(repo_root, relatorios_dir)
     linhas_por_ext_lista = [
         {"ext": ext, "linhas": linhas}
         for ext, linhas in sorted(linhas_por_ext.items(), key=lambda kv: kv[1], reverse=True)
         if linhas > 0
+    ]
+
+    peso_por_ext_lista = [
+        {
+            "ext": ext,
+            "arquivos": int(arquivos_por_ext.get(ext, 0)),
+            "tamanho_bytes": int(tamanho),
+            "tamanho_kb": round(bytes_para_kb(int(tamanho)), 2),
+            "tamanho_mb": round(bytes_para_mb(int(tamanho)), 4),
+            "percentual_total": round((int(tamanho) / total_size * 100.0), 4) if total_size else 0.0,
+        }
+        for ext, tamanho in sorted(tamanho_por_ext.items(), key=lambda kv: kv[1], reverse=True)
+        if tamanho > 0
+    ]
+
+    peso_por_categoria_lista = [
+        {
+            "categoria": categoria,
+            "arquivos": int(arquivos_por_categoria.get(categoria, 0)),
+            "tamanho_bytes": int(tamanho_por_categoria.get(categoria, 0)),
+            "tamanho_kb": round(bytes_para_kb(int(tamanho_por_categoria.get(categoria, 0))), 2),
+            "tamanho_mb": round(bytes_para_mb(int(tamanho_por_categoria.get(categoria, 0))), 4),
+            "percentual_total": round((int(tamanho_por_categoria.get(categoria, 0)) / total_size * 100.0), 4) if total_size else 0.0,
+        }
+        for categoria in ("Imagens", "Áudio", "Texto")
     ]
 
     return {
@@ -947,6 +1151,8 @@ def coletar_metricas(
             "tamanho_gb": round(bytes_para_gb(total_size), 6),
             "linhas_totais_geral": total_linhas_geral,
             "dias_desde_criacao_repo": dias_desde_criacao,
+            "dias_desde_criacao_oficial": dias_desde_criacao_oficial,
+            "data_criacao_oficial": DATA_CRIACAO_OFICIAL.date().isoformat(),
             "horas_estimadas": round(horas_estimadas, 2),
             "commits": commits,
         },
@@ -972,7 +1178,15 @@ def coletar_metricas(
             "itens": rank_pastas,
         },
         "linhas_por_extensao": {
+            "observacao": "Contabiliza apenas .toml, .csv, .java, .py, .json e .md.",
             "itens": linhas_por_ext_lista,
+        },
+        "peso_por_extensao": {
+            "itens": peso_por_ext_lista,
+        },
+        "peso_por_categoria": {
+            "observacao": "Pizza de peso dividida em imagens, áudio e texto.",
+            "itens": peso_por_categoria_lista,
         },
         "arquivos": {
             "top10_maiores_por_linhas": top_arquivos_por_linhas[:10],
@@ -989,12 +1203,12 @@ def markdown_rank_pastas_importantes(atual: Dict[str, Any]) -> str:
         return "_Nenhuma pasta importante encontrada para montar o rank._"
 
     linhas = [
-        "| Rank | Pasta | Caminho | Subpastas | Arquivos | Linhas gerais | Tamanho (KB) |",
-        "|---:|---|---|---:|---:|---:|---:|",
+        "| Rank | Pasta | Subpastas | Arquivos | Linhas gerais | Tamanho (KB) |",
+        "|---:|---|---:|---:|---:|---:|",
     ]
     for it in itens:
         linhas.append(
-            f"| {fmt_int(int(it['rank']))} | `{it['pasta']}` | `{it['caminho']}` | "
+            f"| {fmt_int(int(it['rank']))} | `{it['pasta']}` | "
             f"{fmt_int(int(it['subpastas']))} | {fmt_int(int(it['arquivos']))} | "
             f"{fmt_int(int(it['linhas_gerais']))} | {fmt_num(float(it.get('tamanho_kb', 0.0)), 2)} |"
         )
@@ -1106,6 +1320,79 @@ def markdown_linhas_por_extensao(atual: Dict[str, Any]) -> str:
     return "\n".join(linhas)
 
 
+
+def markdown_peso_por_extensao(atual: Dict[str, Any]) -> str:
+    itens = atual.get("peso_por_extensao", {}).get("itens", []) or []
+    if not itens:
+        return "_Nenhum peso contabilizado por extensão._"
+
+    linhas = [
+        "| Ext | Arquivos | Peso | % do jogo |",
+        "|---:|---:|---:|---:|",
+    ]
+    for it in itens:
+        linhas.append(
+            f"| `{it['ext']}` | {fmt_int(int(it.get('arquivos', 0)))} | "
+            f"{fmt_tamanho_curto(int(it.get('tamanho_bytes', 0)))} | {fmt_num(float(it.get('percentual_total', 0.0)), 2)}% |"
+        )
+    return "\n".join(linhas)
+
+
+def formatar_valor_comparativo(chave: str, valor: float) -> str:
+    if chave == "tamanho":
+        return fmt_tamanho_curto(int(valor))
+    return fmt_int(int(valor))
+
+
+def formatar_delta_comparativo(chave: str, valor: float) -> str:
+    sinal = "+" if valor > 0 else ""
+    if chave == "tamanho":
+        if valor < 0:
+            return f"-{fmt_tamanho_curto(abs(int(valor)))}"
+        return f"{sinal}{fmt_tamanho_curto(int(valor))}"
+    return f"{sinal}{fmt_int(int(valor))}"
+
+
+def markdown_comparativo_ultimo_relatorio(atual: Dict[str, Any]) -> str:
+    comp = atual.get("comparativo_ultimo_relatorio", {}) or {}
+    itens = comp.get("itens", []) or []
+    if not itens:
+        return "_Sem relatório anterior compatível para montar comparativo._"
+
+    linhas = [
+        "| Métrica | Relatório anterior | Relatório atual | Diferença |",
+        "|---|---:|---:|---:|",
+    ]
+    for it in itens:
+        chave = str(it.get("metrica", ""))
+        linhas.append(
+            f"| {it.get('nome', chave)} | {formatar_valor_comparativo(chave, float(it.get('anterior', 0)))} | "
+            f"{formatar_valor_comparativo(chave, float(it.get('atual', 0)))} | "
+            f"{formatar_delta_comparativo(chave, float(it.get('diferenca', 0)))} |"
+        )
+    return "\n".join(linhas)
+
+
+def markdown_top_commits_por_diff(atual: Dict[str, Any]) -> str:
+    itens = atual.get("top_commits_por_diff", {}).get("itens", []) or []
+    if not itens:
+        return "_Sem commits suficientes entre os relatórios para montar top por diff._"
+
+    linhas = [
+        "| Rank | Commit | Mensagem | Arquivos | Adições | Reduções | Diff total |",
+        "|---:|---|---|---:|---:|---:|---:|",
+    ]
+    for it in itens:
+        mensagem = str(it.get("mensagem", "")).replace("|", "\\|")
+        linhas.append(
+            f"| {fmt_int(int(it.get('rank', 0)))} | `{it.get('hash_curto', '')}` | {mensagem} | "
+            f"{fmt_int(int(it.get('arquivos_alterados', 0)))} | "
+            f"{fmt_int(int(it.get('adicoes', 0)))} | "
+            f"{fmt_int(int(it.get('reducoes', 0)))} | "
+            f"{fmt_int(int(it.get('tamanho_diff', 0)))} |"
+        )
+    return "\n".join(linhas)
+
 def bloco_imagem(rel_path: Optional[str], titulo: str) -> List[str]:
     if not rel_path:
         return [f"_Imagem não gerada: {titulo}._", ""]
@@ -1147,10 +1434,16 @@ def gerar_markdown(atual: Dict[str, Any], imagem_key_suffix: str = "") -> str:
     md.append(f"- **Tamanho total:** {fmt_tamanho_gb_com_bytes(int(resumo['tamanho_bytes']))}")
     if resumo.get("dias_desde_criacao_repo") is not None:
         md.append(f"- **Dias desde a criação do repo:** {fmt_int(int(resumo['dias_desde_criacao_repo']))}")
+    if resumo.get("dias_desde_criacao_oficial") is not None:
+        md.append(f"- **Dias desde a criação oficial:** {fmt_int(int(resumo['dias_desde_criacao_oficial']))}")
     md.append(f"- **Horas estimadas:** {fmt_num(float(resumo['horas_estimadas']), 2)}")
     md.append(f"- **Linhas totais gerais:** {fmt_int(int(resumo['linhas_totais_geral']))}")
     if resumo.get("commits") is not None:
         md.append(f"- **Commits (repo):** {fmt_int(int(resumo['commits']))}")
+    diff = atual.get("diff_desde_ultimo_relatorio", {}) or {}
+    if diff.get("disponivel"):
+        md.append(f"- **Adições desde o último relatório:** <span style='color: green'>+{fmt_int(int(diff.get('adicoes', 0)))}</span>")
+        md.append(f"- **Reduções desde o último relatório:** <span style='color: red'>-{fmt_int(int(diff.get('reducoes', 0)))}</span>")
     md.append("")
 
     md.append("## Python")
@@ -1208,6 +1501,22 @@ def gerar_markdown(atual: Dict[str, Any], imagem_key_suffix: str = "") -> str:
     md.append(markdown_linhas_por_extensao(atual))
     md.append("")
 
+    md.append("## Peso por extensão")
+    md.append("")
+    md.extend(bloco_imagem(g("peso_por_categoria_pizza"), "Gráfico de pizza do peso por categoria"))
+    md.append(markdown_peso_por_extensao(atual))
+    md.append("")
+
+    md.append("## Comparativo com o último relatório")
+    md.append("")
+    md.append(markdown_comparativo_ultimo_relatorio(atual))
+    md.append("")
+
+    md.append("### Top 3 commits por tamanho de diff")
+    md.append("")
+    md.append(markdown_top_commits_por_diff(atual))
+    md.append("")
+
     md.append("## Gráficos de crescimento")
     md.append("")
     md.extend(bloco_imagem(g("linhas_totais_geral"), "Crescimento de linhas gerais"))
@@ -1248,13 +1557,24 @@ def main() -> None:
     md_path = registros_dir / md_name
     registro_md_path = repo_root / "Registro.md"
 
+    relatorio_anterior_path = encontrar_ultimo_relatorio_anterior(relatorios_json_dir, data_referencia)
+    relatorio_anterior = ler_json(relatorio_anterior_path) if relatorio_anterior_path else None
+
     horas_estimadas, relatorio_anterior_nome, horas_base = calcular_horas_estimadas(relatorios_json_dir, data_referencia)
 
     atual = coletar_metricas(repo_root, relatorios_root_dir, data_referencia, horas_estimadas)
+
+    data_anterior = obter_data_relatorio_de_dict(relatorio_anterior or {}, None) if relatorio_anterior else None
+    commit_anterior = tentar_commit_por_data(repo_root, data_anterior)
+    commit_atual = tentar_commit_por_data(repo_root, data_referencia)
+    atual["comparativo_ultimo_relatorio"] = montar_comparativo_ultimo_relatorio(atual, relatorio_anterior)
+    atual["diff_desde_ultimo_relatorio"] = coletar_diff_entre_commits(repo_root, commit_anterior, commit_atual)
+    atual["top_commits_por_diff"] = {"itens": coletar_top_commits_por_diff(repo_root, commit_anterior, commit_atual)}
+
     atual["meta"] = {
         "numero_relatorio": numero_relatorio,
-        "criado_em": agora_real.isoformat(timespec="seconds"),
-        "data_referencia": data_referencia.isoformat(timespec="seconds"),
+        "criado_em": iso_sem_timezone(agora_real),
+        "data_referencia": iso_sem_timezone(data_referencia),
         "repo": repo_root.name,
         "arquivo": json_name,
         "arquivo_markdown": md_name,

@@ -13,9 +13,9 @@ from typing import Any, Dict, Optional, Tuple
 # ============================================================
 # CONFIGURAÇÃO MANUAL
 # ============================================================
-MODELO_ATUAL = 8
-PASTA_RELATORIOS_ORIGINAIS = "Outros/Relatorios"
-PASTA_RELATORIOS_ATUALIZADOS = "Outros/Relatorios atualizados"
+MODELO_ATUAL = 9
+PASTA_RELATORIOS_ORIGINAIS = "Outros/RelatoriosLegado"
+PASTA_RELATORIOS_ATUALIZADOS = "Outros/Relatorios"
 CAMINHO_GERADOR_ATUAL = "Outros/GeradorRelatorios.py"
 ATUALIZAR_SEM_MODELO = True
 LIMITE_RELATORIOS: Optional[int] = None
@@ -75,9 +75,71 @@ def salvar_texto(path: Path, texto: str) -> None:
 
 def parse_datetime_seguro(valor: str) -> Optional[datetime]:
     try:
-        return datetime.fromisoformat(valor.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(valor.replace("Z", "+00:00"))
+        return dt.astimezone().replace(tzinfo=None) if dt.tzinfo is not None else dt
     except Exception:
         return None
+
+
+def extrair_primeiro_numero(relatorio: Optional[Dict[str, Any]], caminhos: tuple[tuple[str, ...], ...]) -> Optional[float]:
+    if not isinstance(relatorio, dict):
+        return None
+    for caminho in caminhos:
+        cur: Any = relatorio
+        ok = True
+        for chave in caminho:
+            if not isinstance(cur, dict) or chave not in cur:
+                ok = False
+                break
+            cur = cur[chave]
+        if ok and isinstance(cur, (int, float)):
+            return float(cur)
+    return None
+
+
+def extrair_horas_estimadas_relatorio(relatorio: Optional[Dict[str, Any]]) -> Optional[float]:
+    return extrair_primeiro_numero(
+        relatorio,
+        (
+            ("resumo", "horas_estimadas"),
+            ("visao_geral", "horas_estimadas"),
+            ("meta", "horas_estimadas"),
+        ),
+    )
+
+
+def aplicar_horas_preservadas(relatorio: Dict[str, Any], horas: Optional[float]) -> None:
+    if horas is None:
+        return
+    resumo = relatorio.setdefault("resumo", {})
+    if not isinstance(resumo, dict):
+        resumo = {}
+        relatorio["resumo"] = resumo
+    resumo["horas_estimadas"] = horas
+
+    meta = relatorio.setdefault("meta", {})
+    if not isinstance(meta, dict):
+        meta = {}
+        relatorio["meta"] = meta
+    meta["horas_preservadas_do_relatorio_original"] = horas
+
+
+def aplicar_horas_preservadas_markdown(texto: str, horas: Optional[float]) -> str:
+    if horas is None:
+        return texto
+    valor = f"{horas:.2f}"
+    linhas = []
+    trocou = False
+    for linha in texto.splitlines():
+        if linha.startswith("- **Horas estimadas:**"):
+            linhas.append(f"- **Horas estimadas:** {valor}")
+            trocou = True
+        else:
+            linhas.append(linha)
+    resultado = "\n".join(linhas)
+    if texto.endswith("\n"):
+        resultado += "\n"
+    return resultado if trocou else texto
 
 
 # ============================================================
@@ -232,23 +294,54 @@ def copiar_gerador_moderno_para_snapshot(repo_root: Path, worktree_dir: Path) ->
     return destino
 
 
-def localizar_json_gerado(relatorios_dir: Path, antes: set[str]) -> Optional[Path]:
-    depois = sorted(relatorios_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+def json_dir_de_relatorios(relatorios_root: Path) -> Path:
+    estruturado = relatorios_root / "Relatorios"
+    return estruturado if estruturado.exists() or not list(relatorios_root.glob("*.json")) else relatorios_root
+
+
+def registros_dir_de_relatorios(relatorios_root: Path) -> Path:
+    estruturado = relatorios_root / "Registros"
+    return estruturado if estruturado.exists() else relatorios_root
+
+
+def imagens_dir_de_relatorios(relatorios_root: Path) -> Path:
+    return relatorios_root / "Imagens"
+
+
+def garantir_estrutura_relatorios(relatorios_root: Path) -> None:
+    imagens_dir_de_relatorios(relatorios_root).mkdir(parents=True, exist_ok=True)
+    registros_dir = relatorios_root / "Registros"
+    registros_dir.mkdir(parents=True, exist_ok=True)
+    json_dir = relatorios_root / "Relatorios"
+    json_dir.mkdir(parents=True, exist_ok=True)
+
+
+def listar_jsons_relatorios(relatorios_root: Path) -> list[Path]:
+    json_dir = json_dir_de_relatorios(relatorios_root)
+    return sorted(json_dir.glob("*.json"))
+
+
+def localizar_json_gerado(relatorios_root: Path, antes: set[str]) -> Optional[Path]:
+    json_dir = json_dir_de_relatorios(relatorios_root)
+    depois = sorted(json_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
     for p in depois:
         if p.name not in antes:
             return p
     return depois[0] if depois else None
 
 
-def localizar_md_gerado(relatorios_dir: Path, stem_json: str) -> Optional[Path]:
-    candidato = relatorios_dir / f"{stem_json}.md"
+def localizar_md_gerado(relatorios_root: Path, stem_json: str) -> Optional[Path]:
+    candidato = registros_dir_de_relatorios(relatorios_root) / f"{stem_json}.md"
     if candidato.exists():
         return candidato
+    legado = relatorios_root / f"{stem_json}.md"
+    if legado.exists():
+        return legado
     return None
 
 
-def localizar_pasta_imagens_gerada(relatorios_dir: Path, stem_json: str) -> Optional[Path]:
-    candidato = relatorios_dir / "Imagens" / stem_json
+def localizar_pasta_imagens_gerada(relatorios_root: Path, stem_json: str) -> Optional[Path]:
+    candidato = imagens_dir_de_relatorios(relatorios_root) / stem_json
     if candidato.exists() and candidato.is_dir():
         return candidato
     return None
@@ -260,10 +353,10 @@ def rodar_gerador_moderno_no_snapshot(
     data_referencia: datetime,
 ) -> Tuple[Path, Optional[Path], Optional[Path]]:
     gerador_no_snapshot = copiar_gerador_moderno_para_snapshot(repo_root, worktree_dir)
-    relatorios_dir_snapshot = worktree_dir / PASTA_RELATORIOS_ORIGINAIS
+    relatorios_dir_snapshot = worktree_dir / PASTA_RELATORIOS_ATUALIZADOS
     relatorios_dir_snapshot.mkdir(parents=True, exist_ok=True)
 
-    antes = {p.name for p in relatorios_dir_snapshot.glob("*.json")}
+    antes = {p.name for p in listar_jsons_relatorios(relatorios_dir_snapshot)}
 
     env = dict(os_environ_seguro())
     env["RELATORIO_DATA_REFERENCIA_ISO"] = data_referencia.isoformat(timespec="seconds")
@@ -312,6 +405,22 @@ def copiar_pasta_imagens(origem: Path, destino: Path) -> None:
     shutil.copytree(origem, destino)
 
 
+def preparar_pastas_relatorios(repo_root: Path) -> Tuple[Path, Path]:
+    pasta_atual = repo_root / PASTA_RELATORIOS_ATUALIZADOS
+    pasta_legado = repo_root / PASTA_RELATORIOS_ORIGINAIS
+
+    if not pasta_legado.exists():
+        if pasta_atual.exists():
+            pasta_legado.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(pasta_atual), str(pasta_legado))
+            log(f"[OK] Pasta antiga movida para legado: {pasta_legado}")
+        else:
+            raise FileNotFoundError(f"Nenhuma pasta de relatórios encontrada em: {pasta_atual}")
+
+    garantir_estrutura_relatorios(pasta_atual)
+    return pasta_legado, pasta_atual
+
+
 # ============================================================
 # ATUALIZAÇÃO DE UM RELATÓRIO
 # ============================================================
@@ -346,10 +455,12 @@ def enriquecer_relatorio_atualizado(
     meta["modo_reconstrucao"] = "commit_mais_recente_antes_da_data_do_relatorio"
     meta["arquivo"] = nome_original
     meta["arquivo_markdown"] = nome_md_original
-    meta["imagens_dir"] = f"Imagens/{stem_original}"
+    meta["imagens_dir"] = f"Outros/Relatorios/Imagens/{stem_original}"
     meta["repo"] = repo_root.name
     meta["base_dir"] = str(repo_root)
     meta["relatorios_dir"] = PASTA_RELATORIOS_ATUALIZADOS
+    meta["relatorios_json_dir"] = f"{PASTA_RELATORIOS_ATUALIZADOS}/Relatorios"
+    meta["registros_dir"] = f"{PASTA_RELATORIOS_ATUALIZADOS}/Registros"
     meta["script"] = "Outros/AtualizadorRelatorios.py"
     meta["script_gerador_modelo"] = CAMINHO_GERADOR_ATUAL
 
@@ -360,7 +471,7 @@ def enriquecer_relatorio_atualizado(
                 continue
             valor = valor.replace(
                 f"Outros/Relatorios/Imagens/{stem_gerado}/",
-                f"Outros/Relatorios atualizados/Imagens/{stem_original}/",
+                f"Outros/Relatorios/Imagens/{stem_original}/",
             )
             valor = valor.replace(f"Imagens/{stem_gerado}/", f"Imagens/{stem_original}/")
             graficos[chave] = valor
@@ -376,20 +487,20 @@ def main() -> None:
     outros_dir = script_path.parent
     repo_root = outros_dir.parent
 
-    pasta_relatorios_origem = repo_root / PASTA_RELATORIOS_ORIGINAIS
-    pasta_relatorios_atualizados = repo_root / PASTA_RELATORIOS_ATUALIZADOS
-    pasta_imagens_atualizadas = pasta_relatorios_atualizados / "Imagens"
-    pasta_relatorios_atualizados.mkdir(parents=True, exist_ok=True)
-    pasta_imagens_atualizadas.mkdir(parents=True, exist_ok=True)
-
     if not validar_git(repo_root):
         return
 
-    if not pasta_relatorios_origem.exists():
-        log(f"[ERRO] Pasta de relatórios não encontrada: {pasta_relatorios_origem}")
+    try:
+        pasta_relatorios_origem, pasta_relatorios_atualizados = preparar_pastas_relatorios(repo_root)
+    except Exception as e:
+        log(f"[ERRO] {e}")
         return
 
-    relatorios = sorted(pasta_relatorios_origem.glob("*.json"))
+    pasta_imagens_atualizadas = imagens_dir_de_relatorios(pasta_relatorios_atualizados)
+    pasta_registros_atualizados = registros_dir_de_relatorios(pasta_relatorios_atualizados)
+    pasta_jsons_atualizados = json_dir_de_relatorios(pasta_relatorios_atualizados)
+
+    relatorios = listar_jsons_relatorios(pasta_relatorios_origem)
     if LIMITE_RELATORIOS is not None:
         relatorios = relatorios[:LIMITE_RELATORIOS]
 
@@ -412,6 +523,7 @@ def main() -> None:
         log(f"[{idx}/{total}] {relatorio_path.name}")
         relatorio_antigo = ler_json(relatorio_path)
         modelo_antigo = extrair_modelo(relatorio_antigo)
+        horas_original = extrair_horas_estimadas_relatorio(relatorio_antigo)
 
         precisa_atualizar = False
         if modelo_antigo is None:
@@ -460,14 +572,16 @@ def main() -> None:
                 data_original=data_relatorio,
                 commit_usado=commit_usado,
             )
+            aplicar_horas_preservadas(relatorio_novo, horas_original)
 
-            destino_json = pasta_relatorios_atualizados / relatorio_path.name
+            destino_json = pasta_jsons_atualizados / relatorio_path.name
             salvar_json(destino_json, relatorio_novo)
 
             if md_gerado and md_gerado.exists():
                 md_texto = md_gerado.read_text(encoding="utf-8", errors="ignore")
                 md_texto = reescrever_referencias_imagens_md(md_texto, stem_original=stem_original, stem_gerado=json_gerado.stem)
-                destino_md = pasta_relatorios_atualizados / nome_md_original
+                md_texto = aplicar_horas_preservadas_markdown(md_texto, horas_original)
+                destino_md = pasta_registros_atualizados / nome_md_original
                 salvar_texto(destino_md, md_texto)
                 vlog(f"  - Markdown atualizado: {destino_md}")
             else:

@@ -82,7 +82,7 @@ FIELD_GROUPS = [
     {
         "title": "Geral",
         "keys": [
-            "visible", "alcance", "ajustavel", "alcance_min", "alcance_max",
+            "visible", "tipo_fluxo", "alcance", "velocidade", "aceleracao", "ajustavel", "alcance_min", "alcance_max",
             "largura_teto", "largura_base", "grudado", "offset", "espacamento",
             "escalonavel", "intensidade_dano",
         ],
@@ -98,8 +98,14 @@ FIELD_GROUPS = [
         "title": "Ricochet",
         "keys": [
             "ricocheteia_objetos", "ricocheteia_pokemons", "atravessa_objetos",
-            "atravessa_pokemons", "numero_ricochets",
+            "atravessa_pokemons", "numero_ricochets", "numero_atravessadas",
+            "aumento_alcance_por_ricochet", "aumento_alcance_por_atravessada",
+            "multiplicador_dano_por_ricochet", "multiplicador_dano_por_atravessada", "multiplicador_dano_por_tile_movido",
         ],
+    },
+    {
+        "title": "Tiro",
+        "keys": ["diametro_projetil", "quantidade_tiros", "angulo_abertura_tiros"],
     },
     {
         "title": "Curvatura",
@@ -123,7 +129,13 @@ FIELD_GROUPS = [
 
 FIELD_DEFS = {
     "visible": {"label": "Visível", "kind": "bool"},
+    "tipo_fluxo": {"label": "Tipo Fluxo", "kind": "choice", "options": ["tiro", "area", "zona"]},
     "alcance": {"label": "Alcance", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
+    "velocidade": {"label": "Velocidade", "kind": "float", "step": 0.05, "min": 0.01, "max": 999.0},
+    "aceleracao": {"label": "Aceleração", "kind": "float", "step": 0.05, "min": -20.0, "max": 20.0},
+    "diametro_projetil": {"label": "Diâmetro projétil", "kind": "float", "step": 0.05, "min": 0.05, "max": 10.0},
+    "quantidade_tiros": {"label": "Qtd tiros", "kind": "int", "step": 1, "min": 1, "max": 32},
+    "angulo_abertura_tiros": {"label": "Abertura tiros", "kind": "float", "step": 0.5, "min": 0.0, "max": 180.0},
     "ajustavel": {"label": "Ajustável", "kind": "bool"},
     "alcance_min": {"label": "Alcance min", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
     "alcance_max": {"label": "Alcance max", "kind": "float", "step": 0.10, "min": 0.10, "max": 60.0},
@@ -142,6 +154,12 @@ FIELD_DEFS = {
     "atravessa_objetos": {"label": "Atravessa objetos", "kind": "bool"},
     "atravessa_pokemons": {"label": "Atravessa pokémons", "kind": "bool"},
     "numero_ricochets": {"label": "Número ricochets", "kind": "int", "step": 1, "min": 0, "max": MAX_RICOCHETS},
+    "numero_atravessadas": {"label": "Número atravessadas", "kind": "int", "step": 1, "min": 0, "max": 32},
+    "aumento_alcance_por_ricochet": {"label": "+alcance ricochet", "kind": "float", "step": 0.1, "min": 0.0, "max": 200.0},
+    "aumento_alcance_por_atravessada": {"label": "+alcance atrav.", "kind": "float", "step": 0.1, "min": 0.0, "max": 200.0},
+    "multiplicador_dano_por_ricochet": {"label": "Mult dano ricochet", "kind": "float", "step": 0.05, "min": 0.0, "max": 10.0},
+    "multiplicador_dano_por_atravessada": {"label": "Mult dano atrav.", "kind": "float", "step": 0.05, "min": 0.0, "max": 10.0},
+    "multiplicador_dano_por_tile_movido": {"label": "Mult dano/tile", "kind": "float", "step": 0.01, "min": 0.0, "max": 10.0},
     "hastes": {"label": "Hastes", "kind": "choice", "options": HASTES_OPTIONS},
     "pontos_curvatura": {"label": "Pontos curvatura", "kind": "int", "step": 1, "min": 0, "max": 6},
     "curvatura_circular": {"label": "Curvatura circular", "kind": "bool"},
@@ -688,7 +706,7 @@ def load_attacks(csv_path: str) -> List[dict]:
     relevant = []
     for row in rows:
         estilo = row.get("Estilo", "").strip().lower()
-        if estilo not in {"tiro", "area"}:
+        if estilo not in {"tiro", "area", "zona"}:
             continue
         relevant.append({
             "Ataque": row.get("Ataque", "").strip(),
@@ -702,9 +720,29 @@ def load_attacks(csv_path: str) -> List[dict]:
 def default_flow(is_subflow: bool = False) -> Dict:
     flow = {
         "visible": True,
+        "expanded": True,
+        "tipo_fluxo": "tiro",
+        "diametro_projetil": 0.5,
         "alcance": 6.0,
-        "largura_teto": 1.0,
-        "largura_base": 1.0,
+        "velocidade": 1.0,
+        "aceleracao": 0.0,
+        "quantidade_tiros": 1,
+        "angulo_abertura_tiros": 0.0,
+        "ricocheteia_objetos": False,
+        "ricocheteia_pokemons": False,
+        "atravessa_objetos": False,
+        "atravessa_pokemons": False,
+        "numero_ricochets": 0,
+        "numero_atravessadas": 0,
+        "aumento_alcance_por_ricochet": 0.0,
+        "aumento_alcance_por_atravessada": 0.0,
+        "multiplicador_dano_por_ricochet": 1.0,
+        "multiplicador_dano_por_atravessada": 1.0,
+        "multiplicador_dano_por_tile_movido": 1.0,
+        "raio": 2.0,
+        "largura": 2.0,
+        "intensidade_dano": 1.0,
+        "subfluxos": [],
         "grudado": True,
         "offset": 0.0,
         "espacamento": 0.0,
@@ -725,54 +763,132 @@ def default_flow(is_subflow: bool = False) -> Dict:
         "curvatura_4": 0.0,
         "curvatura_5": 0.0,
         "curvatura_6": 0.0,
-        "circular": False,
-        "centralizar": False,
+        "largura_base": 1.0,
+        "largura_teto": 1.0,
         "raio": 2.0,
-        "shape": "normal",
-        "tamanho_elementos": 0.6,
-        "quantidade_elementos": 8,
-        "ricocheteia_objetos": False,
-        "ricocheteia_pokemons": False,
-        "atravessa_objetos": False,
-        "atravessa_pokemons": False,
-        "numero_ricochets": 1,
+        "circular": False,
         "escalonavel": False,
-        "intensidade_dano": 1.0,
+        "ajustavel": False,
+        "alcance_min": 3.0,
+        "alcance_max": 9.0,
         "subfluxo_atinge_a_si_mesmo": False,
-        "expanded": True,
-        "subfluxos": [],
     }
-    if not is_subflow:
-        flow["ajustavel"] = False
-        flow["alcance_min"] = 3.0
-        flow["alcance_max"] = 9.0
     return flow
 
 
 def sanitize_flow(raw: Dict, is_subflow: bool = False) -> Dict:
-    base = default_flow(is_subflow)
-    data = copy.deepcopy(base)
-    if isinstance(raw, dict):
-        for key, value in raw.items():
-            if key in data:
-                data[key] = value
-    for key, field in FIELD_DEFS.items():
-        if key not in data:
-            continue
-        kind = field["kind"]
-        if kind == "bool":
-            data[key] = bool(data.get(key, base.get(key, False)))
-        elif kind == "int":
-            data[key] = int(clamp(safe_int(data.get(key), base.get(key, 0)), field["min"], field["max"]))
-        elif kind == "float":
-            data[key] = float(clamp(safe_float(data.get(key), base.get(key, 0.0)), field["min"], field["max"]))
-        elif kind == "choice":
-            options = field["options"]
-            data[key] = data.get(key, base.get(key)) if data.get(key) in options else base.get(key)
-    if data["ajustavel"] if "ajustavel" in data else False:
-        data["alcance_max"] = max(data["alcance_min"], data["alcance_max"])
-    data["subfluxos"] = [sanitize_flow(item, True) for item in data.get("subfluxos", [])[:MAX_SUBFLOWS]]
-    return data
+    data = copy.deepcopy(default_flow(is_subflow))
+    raw = dict(raw or {})
+    tipo = str(raw.get("tipo_fluxo") or "").strip().lower()
+    if tipo not in {"tiro", "area", "zona"}:
+        raise ValueError("Fluxo sem tipo_fluxo válido")
+    data["tipo_fluxo"] = tipo
+    data["circular"] = bool(tipo == "zona")
+    data["alcance"] = float(safe_float(raw.get("alcance"), data["alcance"]))
+    data["velocidade"] = float(safe_float(raw.get("velocidade"), data["velocidade"]))
+    data["aceleracao"] = float(safe_float(raw.get("aceleracao"), 0.0))
+    data["atravessa_pokemons"] = bool(raw.get("atravessa_pokemons", tipo in {"area", "zona"}))
+    data["atravessa_objetos"] = bool(raw.get("atravessa_objetos", tipo in {"area", "zona"}))
+    data["intensidade_dano"] = float(safe_float(raw.get("intensidade_dano"), 1.0))
+    if tipo == "tiro":
+        data["diametro_projetil"] = max(0.05, float(safe_float(raw.get("diametro_projetil"), 0.5)))
+        data["quantidade_tiros"] = max(1, int(safe_int(raw.get("quantidade_tiros"), 1)))
+        data["angulo_abertura_tiros"] = float(safe_float(raw.get("angulo_abertura_tiros"), 0.0))
+        data["ricocheteia_objetos"] = bool(raw.get("ricocheteia_objetos", False))
+        data["ricocheteia_pokemons"] = bool(raw.get("ricocheteia_pokemons", False))
+        data["numero_ricochets"] = max(0, int(safe_int(raw.get("numero_ricochets"), 0)))
+        data["numero_atravessadas"] = max(0, int(safe_int(raw.get("numero_atravessadas"), 0)))
+        data["aumento_alcance_por_ricochet"] = float(safe_float(raw.get("aumento_alcance_por_ricochet"), 0.0))
+        data["aumento_alcance_por_atravessada"] = float(safe_float(raw.get("aumento_alcance_por_atravessada"), 0.0))
+        data["multiplicador_dano_por_ricochet"] = float(safe_float(raw.get("multiplicador_dano_por_ricochet"), 1.0))
+        data["multiplicador_dano_por_atravessada"] = float(safe_float(raw.get("multiplicador_dano_por_atravessada"), 1.0))
+        data["multiplicador_dano_por_tile_movido"] = float(safe_float(raw.get("multiplicador_dano_por_tile_movido"), 1.0))
+    elif tipo == "zona":
+        data["raio"] = max(0.1, float(safe_float(raw.get("raio"), 2.0)))
+        data["circular"] = True
+    elif tipo == "area":
+        for chave in (
+            "grudado", "offset", "espacamento", "faixas", "largura_faixa", "repeticao_faixas",
+            "faixas_ciclicas", "distancia_faixa", "hastes", "pontos_curvatura", "curvatura_circular",
+            "curvaturas_ciclicas", "distancia_entre_curvaturas", "invertido", "curvatura_1", "curvatura_2",
+            "curvatura_3", "curvatura_4", "curvatura_5", "curvatura_6", "escalonavel", "ajustavel",
+            "alcance_min", "alcance_max", "largura_base", "largura_teto",
+        ):
+            if chave in raw:
+                data[chave] = raw[chave]
+    for chave in ("visible", "expanded", "subfluxo_atinge_a_si_mesmo"):
+        if chave in raw:
+            data[chave] = raw[chave]
+    data["subfluxos"] = [sanitize_flow(item, True) for item in list(raw.get("subfluxos") or [])[:MAX_SUBFLOWS]]
+
+    base_comum = {
+        "tipo_fluxo": data["tipo_fluxo"],
+        "alcance": data["alcance"],
+        "velocidade": data["velocidade"],
+        "aceleracao": data["aceleracao"],
+        "atravessa_pokemons": data["atravessa_pokemons"],
+        "atravessa_objetos": data["atravessa_objetos"],
+        "intensidade_dano": data["intensidade_dano"],
+        "subfluxos": data["subfluxos"],
+        "visible": bool(data.get("visible", True)),
+        "expanded": bool(data.get("expanded", True)),
+        "subfluxo_atinge_a_si_mesmo": bool(data.get("subfluxo_atinge_a_si_mesmo", False)),
+    }
+    if data["tipo_fluxo"] == "tiro":
+        return {
+            **base_comum,
+            "diametro_projetil": data["diametro_projetil"],
+            "quantidade_tiros": data["quantidade_tiros"],
+            "angulo_abertura_tiros": data["angulo_abertura_tiros"],
+            "ricocheteia_objetos": data["ricocheteia_objetos"],
+            "ricocheteia_pokemons": data["ricocheteia_pokemons"],
+            "numero_ricochets": data["numero_ricochets"],
+            "numero_atravessadas": data["numero_atravessadas"],
+            "aumento_alcance_por_ricochet": data["aumento_alcance_por_ricochet"],
+            "aumento_alcance_por_atravessada": data["aumento_alcance_por_atravessada"],
+            "multiplicador_dano_por_ricochet": data["multiplicador_dano_por_ricochet"],
+            "multiplicador_dano_por_atravessada": data["multiplicador_dano_por_atravessada"],
+            "multiplicador_dano_por_tile_movido": data["multiplicador_dano_por_tile_movido"],
+        }
+    if data["tipo_fluxo"] == "zona":
+        return {
+            **base_comum,
+            "circular": True,
+            "centralizar": bool(data.get("centralizar", True)),
+            "raio": data["raio"],
+            "shape": data.get("shape", "normal"),
+            "tamanho_elementos": float(data.get("tamanho_elementos", 0.0)),
+            "quantidade_elementos": int(data.get("quantidade_elementos", 8)),
+        }
+    return {
+        **base_comum,
+        "grudado": bool(data.get("grudado", False)),
+        "offset": float(data.get("offset", 0.0)),
+        "espacamento": float(data.get("espacamento", 0.0)),
+        "faixas": int(data.get("faixas", 0)),
+        "largura_faixa": float(data.get("largura_faixa", 1.0)),
+        "repeticao_faixas": bool(data.get("repeticao_faixas", True)),
+        "faixas_ciclicas": bool(data.get("faixas_ciclicas", False)),
+        "distancia_faixa": float(data.get("distancia_faixa", 2.0)),
+        "hastes": data.get("hastes", "reto"),
+        "pontos_curvatura": int(data.get("pontos_curvatura", 0)),
+        "curvatura_circular": bool(data.get("curvatura_circular", True)),
+        "curvaturas_ciclicas": bool(data.get("curvaturas_ciclicas", False)),
+        "distancia_entre_curvaturas": float(data.get("distancia_entre_curvaturas", 2.0)),
+        "invertido": bool(data.get("invertido", True)),
+        "curvatura_1": float(data.get("curvatura_1", 0.0)),
+        "curvatura_2": float(data.get("curvatura_2", 0.0)),
+        "curvatura_3": float(data.get("curvatura_3", 0.0)),
+        "curvatura_4": float(data.get("curvatura_4", 0.0)),
+        "curvatura_5": float(data.get("curvatura_5", 0.0)),
+        "curvatura_6": float(data.get("curvatura_6", 0.0)),
+        "largura_base": float(data.get("largura_base", 1.0)),
+        "largura_teto": float(data.get("largura_teto", 1.0)),
+        "escalonavel": bool(data.get("escalonavel", False)),
+        "ajustavel": bool(data.get("ajustavel", False)),
+        "alcance_min": float(data.get("alcance_min", 3.0)),
+        "alcance_max": float(data.get("alcance_max", 9.0)),
+    }
 
 
 def default_attack_entry() -> Dict:
@@ -1492,7 +1608,22 @@ class EditorFluxos:
 
     def visible_keys_for_group(self, flow: Dict, keys: List[str], is_subflow: bool) -> List[str]:
         out = []
+        tipo_fluxo = str(flow.get("tipo_fluxo") or "").strip().lower()
+        campos_tiro = {
+            "diametro_projetil", "quantidade_tiros", "angulo_abertura_tiros", "ricocheteia_objetos",
+            "ricocheteia_pokemons", "numero_ricochets", "numero_atravessadas",
+            "aumento_alcance_por_ricochet", "aumento_alcance_por_atravessada",
+            "multiplicador_dano_por_ricochet", "multiplicador_dano_por_atravessada",
+            "multiplicador_dano_por_tile_movido",
+        }
+        campos_area_zona_comuns = {"velocidade", "aceleracao", "atravessa_pokemons", "atravessa_objetos", "intensidade_dano"}
         for key in keys:
+            if tipo_fluxo in {"area", "zona"} and key in campos_tiro:
+                continue
+            if tipo_fluxo == "tiro" and key in {"largura_base", "largura_teto", "grudado", "offset", "espacamento", "hastes", "pontos_curvatura", "curvatura_circular", "curvaturas_ciclicas", "distancia_entre_curvaturas", "invertido"}:
+                continue
+            if tipo_fluxo == "zona" and key in {"largura_base", "largura_teto", "hastes", "pontos_curvatura", "curvatura_1", "curvatura_2", "curvatura_3", "curvatura_4", "curvatura_5", "curvatura_6"}:
+                continue
             if key in ("alcance_min", "alcance_max") and not flow.get("ajustavel", False):
                 continue
             if key == "alcance" and flow.get("ajustavel", False) and not is_subflow:

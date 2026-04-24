@@ -126,6 +126,9 @@ class ControladorBatalha:
     def pokemon_eh_reserva_aliada(self, pokemon) -> bool:
         return pokemon in self.PokemonsReservaAliadosObj
 
+    def pokemon_eh_reserva(self, pokemon) -> bool:
+        return bool(getattr(pokemon, "EmReserva", False))
+
     def modo_teste_ativo(self) -> bool:
         resultado = self.resultado_batalha_atual()
         if isinstance(resultado, dict) and "modo_teste" in resultado:
@@ -146,6 +149,24 @@ class ControladorBatalha:
         if self.pokemon_eh_aliado(pokemon):
             return True
         return bool(self.modo_teste_ativo() and pokemon in self.PokemonsInimigos)
+
+    def id_pokemon(self, pokemon) -> str:
+        return self._uid_pokemon(pokemon)
+
+    def pokemon_por_id(self, pokemon_id: object):
+        return self._mapa_existentes().get(str(pokemon_id or ""))
+
+    def limites_arena(self) -> pygame.Rect:
+        centro = self._centro_arena_local()
+        arena_w = float(self.Contexto.get("arena_largura", 40) or 40)
+        arena_h = float(self.Contexto.get("arena_altura", 20) or 20)
+        return pygame.Rect(int(centro[0] - arena_w * 0.5), int(centro[1] - arena_h * 0.5), int(arena_w), int(arena_h))
+
+    def ponto_dentro_arena(self, ponto_batalha) -> bool:
+        if not isinstance(ponto_batalha, (tuple, list)) or len(ponto_batalha) != 2:
+            return False
+        rect = self.limites_arena()
+        return rect.collidepoint(float(ponto_batalha[0]), float(ponto_batalha[1]))
 
     def definir_provedor_reservas(self, provedor) -> None:
         self._provedor_reservas = provedor
@@ -189,6 +210,12 @@ class ControladorBatalha:
             uid = self._uid_pokemon(pokemon)
             if uid and uid not in mapa:
                 mapa[uid] = pokemon
+            dados = getattr(pokemon, "Dados", {}) if hasattr(pokemon, "Dados") else {}
+            if isinstance(dados, dict):
+                for chave in ("id", "ID", "uid"):
+                    valor = str(dados.get(chave) or "").strip()
+                    if valor and valor not in mapa:
+                        mapa[valor] = pokemon
         return mapa
 
     @staticmethod

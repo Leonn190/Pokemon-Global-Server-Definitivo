@@ -6,7 +6,7 @@ import random
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -215,7 +215,7 @@ def main() -> int:
     # Limpeza de legado ativa da Fase 1.1
     t.check("PlayerControleBat.py removido", False, (ROOT / "Codigo/ModulosBatalha/PlayerControleBat.py").exists())
     hud_texto = (ROOT / "Codigo/ModulosBatalha/ElementosHudBatalha.py").read_text(encoding="utf-8")
-    batalha_teste_texto = (ROOT / "Codigo/Outros/BatalhaTeste.py").read_text(encoding="utf-8")
+    batalha_teste_texto = (ROOT / "Outros/BatalhaTeste.py").read_text(encoding="utf-8")
     t.check("HUD não importa ControladorFluxos", False, "ControladorFluxos" in hud_texto)
     t.check("HUD não importa PainelJogada", False, "PainelJogada" in hud_texto)
     t.check("BatalhaTeste sem Fluxos.json", False, "Fluxos.json" in batalha_teste_texto)

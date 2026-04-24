@@ -6,15 +6,17 @@ from typing import Callable, List, Optional
 import pygame
 
 from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
-from Codigo.Paineis.PainelJogada import PainelJogada
+from Codigo.Paineis.PainelAcoes import PainelAcoes
 from Codigo.Paineis.VisualizadorLog import VisualizadorLog
-from Codigo.ModulosBatalha.ControladorFluxos import ControladorFluxos
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 
 
 class ElementosHudBatalha:
+    TECLAS_ATAQUE = [pygame.K_q, pygame.K_w, pygame.K_e, pygame.K_a, pygame.K_s]
+    TECLAS_POKEMON = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6]
+
     def __init__(self, controlador_batalha=None, camera=None, ao_fugir: Optional[Callable[[], None]] = None) -> None:
         self._ao_fugir = ao_fugir
         self._controlador = controlador_batalha
@@ -28,8 +30,8 @@ class ElementosHudBatalha:
         self._fuga_taxa_decay = 0.08
         self._fuga_disparada = False
         self._ficha = FichaPokemonBatalha()
-        self._fluxos = ControladorFluxos(controlador_batalha, camera) if controlador_batalha is not None and camera is not None else None
-        self._painel_jogada = PainelJogada()
+        self._fluxos = None
+        self._painel_jogada = PainelAcoes()
         self._visualizador_log = VisualizadorLog(controlador_batalha)
         self._anim_ficha = 0.0
         self._pokemon_exibido = None
@@ -164,14 +166,10 @@ class ElementosHudBatalha:
                 break
 
     def _preparar_jogada(self) -> None:
-        if self._fluxos is not None:
-            self._fluxos.acao_principal(self._ficha)
+        self._aguardando_resultado_rodada = False
 
     def _confirmar_jogadas(self) -> None:
-        if self._fluxos is not None:
-            status = self._fluxos.pronto()
-            if status in {"ok", "aguardando"}:
-                self._aguardando_resultado_rodada = True
+        self._aguardando_resultado_rodada = True
 
     def _atualizar_animacao_ficha(self, dt: float):
         selecionado = getattr(self._controlador, "PokemonSelecionado", None)
@@ -183,13 +181,33 @@ class ElementosHudBatalha:
         if self._anim_ficha <= 0.01 and selecionado is None:
             self._pokemon_exibido = None
 
+    def _processar_atalhos_teclado(self, eventos: List[pygame.event.Event]) -> None:
+        if self._controlador is None:
+            return
+        for evento in eventos or []:
+            if evento.type != pygame.KEYDOWN:
+                continue
+            if evento.key in self.TECLAS_POKEMON:
+                indice = self.TECLAS_POKEMON.index(evento.key)
+                self._controlador.selecionar_slot_aliado(indice)
+                continue
+            if evento.key in self.TECLAS_ATAQUE:
+                indice = self.TECLAS_ATAQUE.index(evento.key)
+                selecionado = getattr(self._controlador, "PokemonSelecionado", None)
+                self._ficha.selecionar_ataque_indice(indice, selecionado)
+                continue
+            if evento.key == pygame.K_ESCAPE:
+                if self._fluxos is not None:
+                    self._fluxos.cancelar_preparacao()
+                self._ficha.limpar_ataque_selecionado()
+
     def desenhar(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> None:
         self._garantir_layout(tela)
         self._visualizador_log.preparar(tela, dt)
         replay_ativo = bool(getattr(self._controlador, "esta_reproduzindo_logs", lambda: False)()) if self._controlador is not None else False
         interacao_bloqueada = bool(self._aguardando_resultado_rodada or replay_ativo)
-        if not interacao_bloqueada and self._controlador is not None and hasattr(self._controlador, "Jogador"):
-            self._controlador.Jogador.Controle.processar_eventos(eventos or [], self._controlador, self._ficha, self._fluxos)
+        if not interacao_bloqueada:
+            self._processar_atalhos_teclado(eventos or [])
         self._sincronizar_tempo_rodada()
         self._atualizar_animacao_ficha(dt)
         self._atualizar_fuga(dt)

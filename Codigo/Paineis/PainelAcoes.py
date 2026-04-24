@@ -25,7 +25,7 @@ class _PainelItem:
     botao_fechar: Botao | None = None
 
 
-class PainelJogada:
+class PainelAcoes:
     def __init__(self) -> None:
         self._itens: Dict[int, _PainelItem] = {}
         self._texto_nome = Texto(

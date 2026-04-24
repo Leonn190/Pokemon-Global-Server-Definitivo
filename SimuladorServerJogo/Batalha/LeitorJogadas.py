@@ -1,4 +1,5 @@
 from __future__ import annotations
+# LEGADO TEMPORÁRIO — não é contrato do novo modelo de batalha.
 
 import math
 import re

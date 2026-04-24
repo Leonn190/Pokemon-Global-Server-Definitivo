@@ -4,7 +4,6 @@ from copy import deepcopy
 from typing import Dict, List
 
 from Codigo.Geradores.PokemonBatalha import PokemonBatalha
-from Codigo.ModulosBatalha.PlayerControleBat import PlayerControleBat
 
 
 class PlayerBatalha:
@@ -14,7 +13,6 @@ class PlayerBatalha:
         self.TimeCompleto: List[Dict[str, object]] = [deepcopy(p) for p in (pokemons_slots or []) if isinstance(p, dict)]
         self.PokemonsAtivos: List[PokemonBatalha] = []
         self.PokemonsReserva: List[Dict[str, object]] = []
-        self.Controle = PlayerControleBat()
 
     def preparar_slots(self):
         ativos = self.TimeCompleto[: self.MaxAtivos]

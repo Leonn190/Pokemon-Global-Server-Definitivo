@@ -408,10 +408,6 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     contexto = EstadioInterno.contexto_batalha(estadio_estado)
                     contexto["centro"] = [float(contexto.get("largura", 60) * 0.5), float(contexto.get("altura", 40) * 0.5)]
                 return _ok("Contexto de batalha pronto", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
-            if categoria in {"batalha_iniciar", "combate_iniciar"}:
-                return _ok("Sistema de batalha desativado", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
-            if categoria in {"batalha_jogada", "combate_jogada"}:
-                return _ok("Jogada ignorada; sistema de batalha desativado", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
             if categoria == "pokemon_derrotado_batalha":
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
                 if pokemon_id > 0:

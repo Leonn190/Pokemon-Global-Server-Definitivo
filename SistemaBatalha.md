@@ -105,8 +105,11 @@ A análise dos zips mostra que o modelo atual concentra muita coisa em poucos po
 - `SimuladorServerJogo/Batalha/SimuladorFisica.py` já tem uma física parcial, mas usa fórmula de velocidade diferente da nova diretriz.
 - `SimuladorServerJogo/Batalha/PokemonBatalha.py` já possui `Verifica()`, atributos, dano, cura, barreira, energia e efeitos, mas várias fórmulas atuais não batem com este novo modelo.
 - `Codigo/ModulosBatalha/MontadorJogada.py` tem ideias reaproveitáveis: limite de ações, ações por Pokémon, energia reservada, ordem de criação e posição virtual.
-- `Codigo/ModulosBatalha/ControladorFluxos.py` tem ideias reaproveitáveis para UX, mas o modelo antigo de fluxos de batalha deve ser substituído.
-- `Codigo/ModulosBatalha/LeitorFluxos.py` deve ser apagado para a batalha nova. Fluxos antigos podem continuar existindo fora da batalha se ainda forem úteis em outro contexto.
+- `Codigo/ModulosBatalha/ControladorFluxos.py`
+- `Codigo/ModulosBatalha/PlayerControleBat.py`
+- `Codigo/Paineis/PainelJogada.py`
+- `Codigo/Prefabs/Fluxos.json` ou equivalente legado de fluxos, se existir pertence ao modelo antigo de fluxos; qualquer ideia útil deve ser migrada, mas o arquivo não deve sobreviver como dependência da batalha nova.
+- `Codigo/ModulosBatalha/LeitorFluxos.py` e `Fluxos.json` não devem ser base da batalha nova e devem ser removidos do núcleo logo no início da migração.
 - `Codigo/ModulosBatalha/LeitorLogs.py` tem base útil como leitor/animação, mas o formato de histórico deve mudar para o novo histórico por eventos de tick.
 
 ---
@@ -2486,6 +2489,8 @@ O contrato base de **PropriedadesAtaque** deve carregar, quando couber:
 
 Flags internas do fluxo de execução não precisam viver nesse contrato base. O construtor, a classe do estilo e os dispatchers continuam responsáveis por ligar esses executes ao fluxo real da ação.
 
+O JSON técnico deve ser enxuto. Ele não deve carregar metadados de implementação, fonte CSV, nível considerado, observações de fase, lista global de estilos válidos, estilo original do CSV, descrição humana redundante, nem campos genéricos como `tipo_de_dano`/`fonte_de_dano` no cadastro inicial.
+
 ### 18.2. CSV e JSON
 
 O CSV pode manter:
@@ -2533,10 +2538,11 @@ Interações já fechadas:
 
 Status:
 
-- normalmente é autouso;
+- no modelo atual, **todo ataque de status é autouso por padrão**;
+- portanto, o JSON técnico não deve ter `status.autouso` nem `condicoes.autouso`;
 - o jogador seleciona o ataque e clica no próprio Pokémon;
-- esse clique não desseleciona o Pokémon;
-- no pacote enviado ao servidor, o status não precisa carregar alvo explícito quando for autouso puro;
+- esse clique não desseleciona o Pokémon, porque nesse momento o clique está escolhendo/aplicando o status;
+- no pacote enviado ao servidor, o status autouso puro pode ir sem alvo explícito;
 - pode ter intervalo de ativação;
 - pode ser interrompido por Recuo ou outro efeito aplicável;
 - embora o estilo seja autouso, executes podem afetar aliados ou inimigos.
@@ -2654,7 +2660,16 @@ Em muitos casos ele pode viver como executes/passivas reagindo às flags correta
 
 Ataque irregular exige classe/caso próprio.
 
-Caso já fechado para a implementação atual: **Parede**.
+Casos já fechados para a implementação atual:
+
+- **Parede**;
+- **Explosivo**.
+
+Esses casos não devem inchar o construtor comum de ataques. Eles devem ser montados por um arquivo específico de construção de ataques irregulares, chamado pelo construtor principal.
+
+#### Parede
+
+No JSON técnico, Parede deve aparecer como estilo técnico **`parede`**, e não como `irregular` genérico.
 
 Leitura operacional da montagem do ataque Parede:
 
@@ -2663,9 +2678,28 @@ Leitura operacional da montagem do ataque Parede:
 - depois escolhe o segundo ponto;
 - os dois pontos são ligados e formam a parede no mapa;
 - o segundo ponto só pode ser escolhido dentro de um limite de **4 tiles** a partir do primeiro;
-- durante a montagem, o preview já deve mostrar a área válida para escolher o segundo ponto e também o fluxo/segmento previsto da parede;
+- durante a montagem, o preview deve mostrar a área válida para escolher o segundo ponto e o segmento real previsto da parede;
+- o preview não deve usar seta;
+- depois de preparada, deve aparecer apenas a parede prevista, com a grossura real dela;
 - a parede gerada possui largura fixa de **0.25 tile**;
 - trata-se de um ataque totalmente irregular que cria um objeto fixo de parede na arena.
+
+#### Explosivo
+
+Explosivo é um novo tipo de ataque irregular.
+
+Leitura oficial:
+
+- o ataque **Explosivo** nasce como um projétil;
+- ele usa propriedades normais de projétil: raio, alcance, velocidade, massa, colisões, atravessar, ricochetear e destruir;
+- além disso, carrega uma subpropriedade de **zona de explosão**;
+- quando colide com algo configurado para detonar, ele cria uma zona de dano no ponto de impacto;
+- os tipos de colisão que detonam devem ser configuráveis, por exemplo Pokémon, parede, construto ou projétil;
+- ao explodir, o ataque causa dano/efeito em área circular como zona instantânea;
+- Bola Climática deve ser tratada como caso irregular de bola/explosivo, porque o projétil ao atingir algo pode gerar uma zona derivada;
+- a zona derivada pode ter imunes configurados, por exemplo o próprio alvo gerador ou a origem, se o execute exigir.
+
+Esse estilo deve ter propriedades de projétil e uma subpropriedade de zona no `PropriedadesAtaque.json`.
 
 ## 20. MONTAGEM VISUAL E PREVIEW
 
@@ -2682,11 +2716,26 @@ Depois de preparar, o ataque selecionado é desselecionado.
 Indicadores de preview devem ser brancos.  
 Indicadores preparados ficam no chão, mais transparentes e sem animação leve.
 
-Impulso é exceção visual:
+Regra visual central:
 
-- usa seta;
-- grossura aumenta com intensidade;
-- transparência diminui com intensidade.
+- **não usar seta como solução genérica**;
+- o indicador deve simular exatamente a área, faixa, rota ou zona que o ataque realmente pode atingir;
+- a única exceção em que seta é esperada é **Impulso**.
+
+Regras por estilo:
+
+- **Área:** deve desenhar a forma real do ataque, como cone ou trapézio técnico, usando alcance, abertura, base, teto e altura conforme as propriedades. Não pode ser seta.
+- **Laser:** deve desenhar uma faixa/linha reta com a grossura real e o alcance do ataque. A faixa não deve simplesmente seguir o mouse além do alcance.
+- **Projétil:** deve desenhar a rota real até o alcance máximo, com grossura igual ao diâmetro do projétil (`2 * raio`). O indicador deve simular colisões relevantes com Pokémon, parede, construto e projétil conforme propriedades de destruir, atravessar e ricochetear, respeitando limites de ricochetes e atravessadas. Se o projétil gerar subfluxo, como Bola Climática/Explosivo criando zona no impacto, o preview deve mostrar esse subfluxo.
+- **Alvo:** deve respeitar grupo permitido, alcance, Provocando e Furtivo. Pokémon que podem virar alvo devem receber animação de borda piscando em fade vermelho, não apenas marcação estática.
+- **Status:** ao selecionar um status, o próprio Pokémon válido deve receber a mesma lógica de animação de selecionável; clicar nele aplica/prepara o status e não seleciona/deseleciona.
+- **Parede:** deve mostrar a parede real entre os dois pontos, com a grossura padrão. Não deve desenhar seta para o segundo ponto nem manter seta depois de preparada.
+- **Zona:** deve mostrar o alcance máximo para posicionar o centro e o círculo real da zona. Não deve usar seta até o mouse. Depois de preparada, deve continuar mostrando a zona no tamanho real, sem reduzir visualmente a área.
+- **Dash:** deve mostrar uma faixa de impacto/deslocamento, não seta. A grossura da faixa deve considerar basicamente a largura/hitbox do Pokémon executor.
+- **Movimento regular:** não deve usar seta. O preview deve mostrar o deslocamento/posição fantasma e atualizar visualmente o gasto de energia na ficha conforme a distância aumenta. Se o deslocamento previsto passar da energia disponível, o gasto deve ficar vermelho.
+- **Impulso:** é o único caso com seta. A seta deve ser visualmente limpa, com corpo retangular e triângulo na ponta sem deixar a ponta quadrada do corpo aparecendo; grossura aumenta com intensidade e transparência diminui com intensidade.
+
+A animação de alvo/status selecionável deve ser feita por meio de `PokemonAnimator`, criando uma animação própria de Pokémon selecionável/alvejável para esses casos.
 
 ### 20.3. Movimento por arrasto
 
@@ -2745,7 +2794,16 @@ Clicar/soltar conforme o estilo já prepara.
 
 ### 20.10. Botão de pronto
 
-Quando o jogador pressiona pronto ou o tempo acaba, as ações são enviadas ao servidor em ordem.
+No fluxo real futuro, quando o jogador pressionar pronto ou o tempo acabar, as ações serão enviadas ao servidor em ordem.
+
+No estado temporário da Fase 2/Fase 2.5, enquanto ainda não houver rodada funcional completa, o botão **Pronto** no `BatalhaTeste.py` deve apenas:
+
+- limpar as jogadas preparadas;
+- passar para o próximo turno/rodada fake;
+- resetar o tempo de preparação;
+- liberar a interação novamente.
+
+Ele não deve deixar o teste visual travado em estado de aguardando resultado sem servidor respondendo.
 
 ---
 
@@ -3090,9 +3148,6 @@ Status autouso puro não precisa de bloco de alvo obrigatório.
   "multiplicador_dano": 0,
   "pode_criticar": false,
   "aplica_stab": false,
-  "condicoes": {
-    "autouso": true
-  },
   "visual": {
     "preview": {
       "forma": "status_autouso"
@@ -3311,7 +3366,7 @@ Dash pode ter distância fixa ou distância configurável entre mínimo e máxim
   },
   "visual": {
     "preview": {
-      "forma": "seta_dash"
+      "forma": "faixa_dash"
     },
     "efeito_alvo": "Impacto_Chifrada",
     "projetil_imagem": null
@@ -3350,7 +3405,89 @@ Dash pode ter distância fixa ou distância configurável entre mínimo e máxim
 }
 ```
 
-#### 23.1.10. Ataque derivado com imunes
+#### 23.1.10. Parede
+
+Parede é irregular, mas no JSON técnico deve usar estilo específico `parede`.
+
+```json
+{
+  "id": 7010,
+  "code": "parede",
+  "nome": "Parede",
+  "tipo": "Normal",
+  "estilo": "parede",
+  "custo": 35,
+  "intervalo": 7,
+  "multiplicador_dano": 0,
+  "pode_criticar": false,
+  "aplica_stab": false,
+  "parede": {
+    "distancia_max_entre_pontos": 4.0,
+    "largura": 0.25,
+    "fixa": true
+  },
+  "visual": {
+    "preview": {
+      "forma": "segmento_parede"
+    },
+    "efeito_alvo": null,
+    "projetil_imagem": null
+  }
+}
+```
+
+#### 23.1.11. Explosivo
+
+Explosivo é irregular de bola/projétil com subpropriedade de zona.
+
+```json
+{
+  "id": 7011,
+  "code": "bola_climatica",
+  "nome": "Bola Climática",
+  "tipo": "Normal",
+  "estilo": "explosivo",
+  "custo": 45,
+  "intervalo": 8,
+  "multiplicador_dano": 1.0,
+  "pode_criticar": true,
+  "aplica_stab": true,
+  "projetil": {
+    "raio": 0.35,
+    "alcance": 8.0,
+    "velocidade": 180,
+    "aceleracao": 0,
+    "massa": 0,
+    "quantidade": 1,
+    "angulo_entre_projeteis": 0,
+    "intervalo_entre_projeteis": 0
+  },
+  "explosivo": {
+    "detona_ao_colidir_com": ["pokemon", "parede", "construto"],
+    "comportamento_apos_detonar": "destruir",
+    "zona": {
+      "raio": 1.8,
+      "multiplicador_dano": 0.7,
+      "imunes_ao_ataque": []
+    }
+  },
+  "colisao": {
+    "pokemon": { "disparo": "executa_principal", "comportamento_fim": "detonar" },
+    "parede": { "disparo": "executa_estado", "comportamento_fim": "detonar" },
+    "construto": { "disparo": "executa_estado", "comportamento_fim": "detonar" },
+    "projetil": { "disparo": "nenhum", "comportamento_fim": "destruir" }
+  },
+  "visual": {
+    "preview": {
+      "forma": "linha_projetil_com_explosao"
+    },
+    "efeito_alvo": "Explosao_Climatica",
+    "projetil_imagem": "bola_climatica.png"
+  }
+}
+```
+
+#### 23.1.12. Ataque derivado com imunes
 
 Quando um ataque derivado precisar excluir alguém específico, a ação derivada pode nascer com uma lista de `imunes_ao_ataque`.
 
@@ -3908,7 +4045,7 @@ Essas partes devem ser substituídas pelo modelo deste documento.
 O modelo de `Fluxos.json` e `LeitorFluxos.py` não deve ser a base da batalha nova.  
 As novas formas devem nascer do JSON técnico dos ataques.
 
-Fluxos antigos podem continuar existindo fora da batalha se algum módulo externo ainda precisar deles.
+Fluxos antigos podem continuar existindo apenas se algum módulo externo fora da batalha ainda precisar deles; no núcleo da batalha nova, devem ser removidos já no início.
 
 ### 26.3. Logs antigos
 
@@ -3995,7 +4132,7 @@ As seguintes falhas devem ser evitadas como diretriz:
 - estado `ENCERRADA` representa a fase final de conferência entre resultado/log e estado real da partida antes do fechamento definitivo.
 - coordenada interna da arena é contínua, `0`-based e baseada em float; a leitura `(1,1)` é apenas visual para o jogador.
 - verificação formal de vitória/derrota ocorre em `finalizar_turno()`.
-- o ataque Parede é um caso irregular montado em dois pontos, com limite de 4 tiles entre eles e largura fixa de 0.25 tile.
+- o ataque Parede usa estilo técnico `parede`, é tratado como irregular pelo construtor específico e é montado em dois pontos, com limite de 4 tiles entre eles e largura fixa de 0.25 tile.
 
 ---
 
@@ -4045,7 +4182,7 @@ A ideia é manter uma árvore **compacta, implementável e fiel às diretrizes**
 
 ## 30. Arquivos extras que valem a pena existir
 
-A estrutura proposta por você já está boa. Eu só julgo que **2 arquivos extras** melhoram bastante a clareza sem burocratizar:
+A estrutura proposta por você já está boa. Com a inclusão dos ataques irregulares novos, **3 arquivos extras** melhoram bastante a clareza sem burocratizar:
 
 ### 30.1. `SimuladorServerJogo/Batalha/FisicaBatalha.py`
 
@@ -4057,7 +4194,17 @@ O projeto atual já tem `SimuladorFisica.py`, então faz sentido manter um arqui
 **Motivo:** as diretrizes exigem estado macro formal da partida (`montando`, `aguardando`, `rodando`, `animando`, `encerrada`).  
 Centralizar isso evita string solta espalhada no client e no server.
 
-Fora esses dois, **eu não adicionaria mais nada agora**.
+### 30.3. `SimuladorServerJogo/Batalha/ConstrutorAtaquesIrregulares.py`
+
+**Motivo:** ataques irregulares como **Parede** e **Explosivo** não devem inchar `ConstrutorAtaque.py` com casos especiais.  
+`ConstrutorAtaque.py` continua sendo a porta principal, mas delega casos irregulares para este arquivo específico.
+
+Este arquivo já deve nascer preparado para pelo menos:
+
+- construir **Parede**, usando dois pontos, limite de distância e grossura fixa;
+- construir **Explosivo**, usando propriedades de projétil + subpropriedade de zona de explosão.
+
+Fora esses três, **eu não adicionaria mais nada agora**.
 
 ---
 
@@ -4112,7 +4259,8 @@ SimuladorServerJogo/
 │   ├── ColetorJogadas.py
 │   ├── LogBatalha.py
 │   ├── ConstrutorAcao.py
-│   └── ConstrutorAtaque.py
+│   ├── ConstrutorAtaque.py
+│   └── ConstrutorAtaquesIrregulares.py
 └── Logica/
     └── Executes/
         └── ExecuteAtaques.py
@@ -4151,7 +4299,7 @@ Antes de listar classe e método, estas fronteiras precisam ficar fechadas:
 ### 32.5. Fluxos antigos deixam de ser base da batalha
 - `LeitorFluxos.py` e `Fluxos.json` deixam de ser base do combate;
 - preview nasce do JSON técnico do ataque;
-- o legado de fluxo só pode sobreviver fora do núcleo da nova batalha.
+- o legado de fluxo deve ser removido do núcleo da batalha nova na Fase 1; se sobreviver por dependência externa, não pode ser importado pelo caminho novo de montagem.
 
 ---
 
@@ -4204,6 +4352,21 @@ Fonte de verdade das propriedades técnicas que entram no construtor dos ataques
 ### Observação crítica
 Flags internas do fluxo não precisam viver nesse JSON base.
 O construtor continua responsável por ler os nomes declarados no dado técnico e acoplar o comportamento real da ação.
+
+### Campos proibidos no JSON técnico
+`PropriedadesAtaque.json` não deve virar relatório, documentação de fase nem checklist de implementação.
+
+Não devem entrar no JSON técnico:
+
+- `implementacao`, `fase_planejada`, `logica_real_implementada` ou `pendencias`;
+- `fonte_csv`, `nivel_considerado`, `observacao`, `estilos_validos` ou metadados globais semelhantes;
+- `estilo_original_csv` repetido em cada ataque;
+- descrição humana redundante, porque a descrição fica no CSV/UI;
+- `tipo_de_dano` e `fonte_de_dano` como campos genéricos inchados no cadastro inicial;
+- `status.autouso` ou `condicoes.autouso`, porque todo ataque de estilo `status` é autouso por padrão no modelo atual.
+
+Se uma exceção real de gameplay exigir um dado parecido no futuro, ela deve nascer como propriedade mecânica específica do estilo/execute, não como metadado genérico espalhado em todos os ataques.
+
 
 ### Leitura arquitetural
 `PropriedadesAtaque` + envio do jogador (direção, alvos quando couber, intensidade quando couber) entram no construtor.  
@@ -5059,7 +5222,8 @@ Arquivo que recebe `PropriedadesAtaque` e os dados enviados pelo jogador para co
 O construtor escolhe a classe correta do estilo, acopla automaticamente execute principal, execute de estado e executes periféricos quando necessário, define a lista de imunes ao ataque quando couber, e devolve a ação pronta para a fila do turno.  
 Todas as classes de estilo herdam de `AcaoAtaque`, **exceto dash e impulso**, que herdam de `AcaoMover`.
 
-Caso irregular já fechado: o ataque **Parede** deve ter classe/caso próprio de montagem, recebendo dois pontos, respeitando o limite de 4 tiles entre eles, gerando uma parede de largura fixa de 0.25 tile e permitindo preview da área válida do segundo ponto ainda no client.
+Casos irregulares já fechados: **Parede** e **Explosivo**.  
+`ConstrutorAtaque.py` não deve concentrar esses casos especiais. Ele deve detectar o estilo técnico e delegar a montagem para `ConstrutorAtaquesIrregulares.py`.
 
 ### Classes principais
 - `AtaqueBase`: base comum carregada pelo construtor.
@@ -5077,6 +5241,7 @@ Caso irregular já fechado: o ataque **Parede** deve ter classe/caso próprio de
 - `carregar_propriedades()`: lê e normaliza `PropriedadesAtaque`.
 - `acoplar_executes()`: liga automaticamente execute principal, execute de estado e executes periféricos à ação quando necessário.
 - `calcular_tick_ativacao()`: calcula o `tick_ativacao` da ação somando `tick_nascimento_acao` e intervalo.
+- `delegar_irregular()`: encaminha estilos como `parede` e `explosivo` para `ConstrutorAtaquesIrregulares.py`.
 
 ### Métodos principais das classes de estilo
 - `resolver_alvo()`: decide alvo real da ativação quando o estilo exigir.
@@ -5085,6 +5250,21 @@ Caso irregular já fechado: o ataque **Parede** deve ter classe/caso próprio de
 - `resolver_ticks_laser()`: executa a faixa do laser ao longo dos ticks.
 - `resolver_impacto_movimento()`: resolve dash/impulso quando a colisão disparar execute.
 - `resolver_comportamento_fim_colisao()`: aplica destruir/ricochetear/atravessar após colisão relevante, especialmente em projéteis.
+
+## 37.2. `SimuladorServerJogo/Batalha/ConstrutorAtaquesIrregulares.py`
+
+### Papel
+Arquivo específico para construir ataques irregulares sem inchar `ConstrutorAtaque.py`.
+
+### Casos iniciais
+- `Parede`: recebe dois pontos, valida distância máxima, gera `ParedeBatalha` fixa e usa largura real de 0.25 tile.
+- `Explosivo`: recebe propriedades de projétil e subpropriedade de zona; cria projétil que, ao colidir com alvo configurado, detona uma zona circular no ponto de impacto.
+
+### Métodos principais
+- `construir_irregular()`: recebe propriedades + payload e decide qual irregular montar.
+- `construir_parede()`: monta o caso Parede.
+- `construir_explosivo()`: monta o caso Explosivo.
+- `validar_payload_irregular()`: valida pontos, direção, alcance, alvos e subpropriedades exigidas.
 
 ## 38. EXECUTES
 
@@ -5129,13 +5309,14 @@ Passivas de item e habilidade não dependem de JSON nem de um novo dispatcher de
 - `ObjetoBatalha.py`
 - `PokemonBatalha.py`
 
-### 39.2. Arquivos legados que devem ser absorvidos ou sumir do núcleo
-- `ControladorFluxos.py` deve ser absorvido por `IndicadoresAcoes.py` + `MontadorJogada.py`.
-- `LeitorFluxos.py` sai do núcleo da batalha nova.
-- `PlayerControleBat.py` pode ser absorvido por `PlayerBatalha.py` ou `ControladorBatalha.py`.
+### 39.2. Arquivos legados que devem ser absorvidos ou removidos cedo
+- `ControladorFluxos.py` deve ser absorvido por `IndicadoresAcoes.py` + `MontadorJogada.py` e removido do núcleo da batalha nova já na Fase 1.
+- `LeitorFluxos.py` e qualquer `Fluxos.json` usado pelo combate antigo não podem ser base da batalha nova e devem ser removidos do núcleo já na Fase 1.
+- `PlayerControleBat.py` deve ter qualquer lógica útil migrada para `ElementosHudBatalha.py`, `PlayerBatalha.py` ou `ControladorBatalha.py`, e depois sair do núcleo novo.
+- `PainelJogada.py` deve ser substituído por `PainelAcoes.py`; se houver reaproveitamento, deve ser migração de código, não dependência final.
 - `Codigo/ModulosBatalha/SistemaBatalha.py` deve ser quebrado entre `ControladorBatalha`, `InicializadorBatalha` e `FinalizadorBatalha`.
 - `SimuladorServerJogo/Batalha/SistemaBatalha.py` deve virar `Partida.py` + `InicializadorPartida.py`.
-- `SimuladorServerJogo/Batalha/LeitorJogadas.py` deve ser desmontado em `ColetorJogadas.py`, `MotorAcoes.py`, `ExecutorTurnos.py`, `LogBatalha.py`, `ConstrutorAcao.py` e `ConstrutorAtaque.py`.
+- `SimuladorServerJogo/Batalha/LeitorJogadas.py` deve ser desmontado em `ColetorJogadas.py`, `MotorAcoes.py`, `ExecutorTurnos.py`, `LogBatalha.py`, `ConstrutorAcao.py`, `ConstrutorAtaque.py` e `ConstrutorAtaquesIrregulares.py`.
 - `SimuladorServerJogo/Batalha/SimuladorFisica.py` deve virar `FisicaBatalha.py`.
 
 
@@ -5211,11 +5392,17 @@ Ou seja: uma fase só é considerada concluída quando:
 - o `BatalhaTeste.py` não quebrou;
 - a parte implementada pode ser observada de maneira prática.
 
-### 42.3. O legado não some de uma vez
+### 42.3. Remoção agressiva do legado de batalha
 
-Arquivos legados como `LeitorJogadas.py`, `SistemaBatalha.py`, `ControladorFluxos.py` e `LeitorFluxos.py` não devem ser destruídos cedo demais se ainda forem necessários para manter a capacidade de teste durante a migração.
+A batalha nova não deve manter arquivos, métodos, classes, JSONs ou fluxos legados como muleta quando eles já tiverem substituto claro no plano novo.
 
-A remoção real do núcleo legado acontece apenas nas fases finais.
+Leitura oficial atual:
+
+- a **Fase 1** já deve remover do núcleo da nova batalha a maior parte do lixo legado ligado ao modelo antigo;
+- código útil pode ser migrado antes da remoção, mas o arquivo legado não deve continuar como dependência central;
+- `ControladorFluxos.py`, `PlayerControleBat.py`, `PainelJogada.py`, `LeitorFluxos.py` e qualquer `Fluxos.json` usado pela batalha antiga não são base aceitável para a nova batalha;
+- se algum desses arquivos sobreviver temporariamente por dependência externa fora da batalha, ele deve ficar claramente fora do núcleo novo e sem import direto pela montagem nova;
+- testes da Fase 1 e da Fase 2 devem procurar imports, referências e sobras desses legados no caminho novo.
 
 ### 42.4. Nada de prompt gigante definitivo do Codex
 
@@ -5245,7 +5432,7 @@ Padrão esperado:
 - resultado: `OK` ou `FALHOU`.
 
 #### B. Teste prático visual/real
-Feito no `Codigo/Outros/BatalhaTeste.py`, que funciona como um simulador de batalha desacoplado do fluxo normal do jogo.
+Feito no `Outros/BatalhaTeste.py`, que funciona como um simulador de batalha desacoplado do fluxo normal do jogo.
 
 ---
 
@@ -5293,7 +5480,7 @@ Roda o arquivo `TesteFaseXX.py`.
 
 ## 44. Base de testes do projeto
 
-### 44.1. `Codigo/Outros/BatalhaTeste.py`
+### 44.1. `Outros/BatalhaTeste.py`
 
 ### Papel
 Arquivo de uso contínuo durante toda a migração.
@@ -5327,21 +5514,20 @@ Logo:
 Estrutura recomendada:
 
 ```text
-Codigo/
-└── Outros/
-    ├── BatalhaTeste.py
-    └── TestesBatalha/
-        ├── UtilTesteBatalha.py
-        ├── TesteFase01.py
-        ├── TesteFase02.py
-        ├── TesteFase03.py
-        ├── TesteFase04.py
-        ├── TesteFase05.py
-        ├── TesteFase06.py
-        ├── TesteFase07.py
-        ├── TesteFase08.py
-        ├── TesteFase09.py
-        └── TesteFase10.py
+Outros/
+├── BatalhaTeste.py
+└── TestesBatalha/
+    ├── UtilTesteBatalha.py
+    ├── TesteFase01.py
+    ├── TesteFase02.py
+    ├── TesteFase03.py
+    ├── TesteFase04.py
+    ├── TesteFase05.py
+    ├── TesteFase06.py
+    ├── TesteFase07.py
+    ├── TesteFase08.py
+    ├── TesteFase09.py
+    └── TesteFase10.py
 ```
 
 ### `UtilTesteBatalha.py`
@@ -5405,10 +5591,12 @@ Depende diretamente da mecânica de recuperação de energia e da regra de exced
 Por isso entra depois da base de energia estar estável.
 
 #### Bola Climática
-É um dos melhores ataques para validar:
-- tipo adaptado ao clima;
-- aumento de dano por clima;
-- uso conjunto de execute principal, execute de estado e executes periféricos quando necessário.
+É um dos melhores ataques para validar o novo irregular **Explosivo**:
+- nasce como projétil/bola;
+- ao atingir algo configurado, gera zona de explosão no ponto de impacto;
+- pode adaptar tipo e dano ao clima;
+- pode usar execute principal, execute de estado e executes periféricos quando necessário;
+- o preview deve simular a rota do projétil e também a zona derivada quando houver impacto previsto.
 
 #### Bomba de lama
 É um ótimo caso para validar:
@@ -5419,10 +5607,10 @@ Por isso entra depois da base de energia estar estável.
 
 #### Parede
 É um ótimo caso para validar:
-- ataque irregular;
+- estilo técnico `parede`, tratado como irregular pelo construtor específico;
 - montagem em dois pontos;
 - limite de 4 tiles entre o primeiro e o segundo ponto;
-- preview do fluxo/segmento da parede ainda na preparação;
+- preview do segmento real da parede ainda na preparação, sem seta;
 - criação de objeto fixo;
 - colisão com parede;
 - interação com projétil, dash e impulso.
@@ -5457,14 +5645,14 @@ A tabela abaixo define **em que fase cada ataque entra como caso de implementaç
 | Biscoito | tiro | 6 | projétil com cura e lógica de alvo |
 | Energia | tiro | 6 | projétil especial simples |
 | Disparo | tiro | 6 | projétil com ricochete |
-| Bola Climática | tiro | 8 | projétil dependente de clima e lógica avançada |
+| Bola Climática | explosivo | 8 | irregular explosivo: projétil que gera zona no impacto |
 | Bomba de lama | zona | 8 | zona + efeito de tile persistente |
 | Hiper Raio | laser | 7 | valida ação contínua por ticks |
 | Chifrada | dash | 7 | valida dash ofensivo |
 | Investida | impulso | 7 | valida impulso ofensivo |
 | Investida Selvagem | impulso | 7 | impulso com dano de retorno/erro |
 | Dança da chuva | status | 8 | clima |
-| Parede | irregular | 7 | cria objeto fixo irregular |
+| Parede | parede | 7 | cria objeto fixo irregular com dois pontos |
 | Recarga | status | 8 | energia/excedente pós-Energizado |
 | Enraivecer | status | 8 | depende de acerto final dos efeitos envolvidos |
 | Acumulador | passiva | 8 | único caso explícito de validação de passiva reativa |
@@ -5489,17 +5677,24 @@ Fechar a base contratual do novo modelo e criar o ambiente de teste contínuo.
 ### Arquivos a criar
 - `Dados/Pokemon Global Server - PropriedadesAtaque.json`
 - `SimuladorServerJogo/Batalha/EstadosPartida.py`
-- `Codigo/Outros/BatalhaTeste.py`
-- `Codigo/Outros/TestesBatalha/TesteFase01.py`
+- `Outros/BatalhaTeste.py`
+- `Outros/TestesBatalha/TesteFase01.py`
 
 ### Arquivos a editar
 - pontos de entrada de batalha no client/server
 - `Codigo/ModulosBatalha/ControladorBatalha.py`
 - `Codigo/Cenas/CenaCombate.py`
+- arquivos que ainda importem o fluxo legado de batalha, para remover a dependência já nesta fase
 
 ### Observação de dados desta fase
 - os CSVs já existentes do projeto, incluindo `Pokemon Global Server - Ataques.csv` e `Pokemon Global Server - Efeitos.csv`, podem ser lidos e citados como referência, mas **não devem ser editados pela IA**;
-- o foco de edição de dados desta fase fica no `PropriedadesAtaque.json` e nos contratos novos do sistema.
+- o foco de edição de dados desta fase fica no `PropriedadesAtaque.json` e nos contratos novos do sistema;
+- `PropriedadesAtaque.json` deve ser enxuto e não deve conter metadados de implementação, observações de fase, `fonte_csv`, `nivel_considerado`, `estilos_validos`, `estilo_original_csv`, descrição humana redundante, `tipo_de_dano`/`fonte_de_dano` genéricos ou `status.autouso`.
+
+### Limpeza obrigatória de legado nesta fase
+- remover do núcleo novo imports e dependências de `ControladorFluxos.py`, `PlayerControleBat.py`, `PainelJogada.py`, `LeitorFluxos.py` e `Fluxos.json`;
+- migrar apenas o que for útil para os arquivos novos;
+- não deixar teste da Fase 1 aprovar se a montagem nova ainda depender desses legados.
 
 ### O que deve ser entregue nesta fase
 1. estrutura base do JSON técnico de ataques, já incluindo os campos de execute principal, execute de estado e executes periféricos;
@@ -5511,7 +5706,7 @@ Fechar a base contratual do novo modelo e criar o ambiente de teste contínuo.
 4. criação do `BatalhaTeste.py`;
 5. primeira leitura dos ataques da lista atual para o JSON técnico;
 6. esquema base de IDs globais já fechado no contrato inicial, com teste cedo;
-7. contrato inicial da `SeedPartida` como base autoritativa do RNG;
+7. contrato inicial da `SeedPartida` como base autoritativa do RNG, gerada no servidor junto com os IDs ao inicializar a partida e devolvida já na primeira resposta de inicialização;
 8. criação do **modo de teste** do `BatalhaTeste.py`, com botão para ligar/desligar:
    - controle dos inimigos;
    - energia infinita.
@@ -5538,9 +5733,9 @@ Esses ataques cobrem cedo vários estilos que o sistema terá de suportar, inclu
 `TesteFase01.py`
 
 Casos mínimos:
-- schema mínimo do JSON técnico;
+- estrutura mínima do JSON técnico, sem metadados globais inúteis;
 - ids válidos;
-- estilos válidos;
+- estilos técnicos válidos diretamente nos ataques;
 - estados macro válidos;
 - payload base de jogada válido;
 - histórico base válido;
@@ -5574,7 +5769,7 @@ Implementar a camada visual de preparação de jogadas, previews e indicadores.
 ### Arquivos a criar
 - `Codigo/ModulosBatalha/IndicadoresAcoes.py`
 - `Codigo/Paineis/PainelAcoes.py`
-- `Codigo/Outros/TestesBatalha/TesteFase02.py`
+- `Outros/TestesBatalha/TesteFase02.py`
 
 ### Arquivos a editar
 - `Codigo/ModulosBatalha/MontadorJogada.py`
@@ -5587,9 +5782,10 @@ Implementar a camada visual de preparação de jogadas, previews e indicadores.
 - `Codigo/Paineis/PainelAcoes.py` (inclusive se nascer por extração/renome de código vindo de `PainelJogada.py`)
 
 ### Observação de transição desta fase
-- `PlayerControleBat.py` e `PainelJogada.py` **não** são alvos arquiteturais do modelo novo.
-- Se algum trecho legado desses arquivos for reaproveitado nesta fase, isso deve acontecer apenas como **migração de código**, deixando o resultado final concentrado em `PlayerBatalha.py` e `PainelAcoes.py`.
-- Nenhuma lógica nova central da montagem de jogadas deve permanecer em `PlayerControleBat.py` ou `PainelJogada.py` ao final da fase.
+- a Fase 2 parte do princípio de que `ControladorFluxos.py`, `PlayerControleBat.py`, `PainelJogada.py`, `LeitorFluxos.py` e `Fluxos.json` já não são dependências do núcleo novo;
+- se algum trecho útil tiver sido reaproveitado, ele já deve ter sido migrado para os alvos finais;
+- nenhuma lógica nova central da montagem de jogadas deve permanecer em arquivo legado;
+- `ElementosHudBatalha.py` não deve virar um arquivo inchado com toda a lógica de preview: a carga pesada deve ficar em `MontadorJogada.py` e `IndicadoresAcoes.py`.
 
 ### O que deve ser entregue nesta fase
 1. preview imediato ao selecionar ataque;
@@ -5605,8 +5801,8 @@ Implementar a camada visual de preparação de jogadas, previews e indicadores.
 11. arrasto do Pokémon ativo até um Pokémon válido da reserva/banco fora da arena preparando troca;
 12. bloqueador impedindo que o destino comum de movimento saia da arena, com exceção visual controlada para conectar o arrasto ao Pokémon da reserva quando for troca válida;
 13. bloqueio visual e lógico para arrasto até Pokémon inválido do banco, sem preparar troca inválida;
-14. início da absorção do legado de `ControladorFluxos.py`;
-15. absorção explícita do que ainda existir de `PlayerControleBat.py` e `PainelJogada.py` para os alvos finais `PlayerBatalha.py` e `PainelAcoes.py`.
+14. confirmação de que a montagem nova não importa nem usa `ControladorFluxos.py`, `LeitorFluxos.py` ou `Fluxos.json`;
+15. divisão correta de responsabilidades: `ElementosHudBatalha.py` coordena HUD/eventos, `MontadorJogada.py` concentra regras de montagem/custo/validade e `IndicadoresAcoes.py` concentra desenho inteligente dos indicadores.
 
 ### Ataques usados como caso visual nesta fase
 - Proteger — preview de alvo
@@ -5617,7 +5813,8 @@ Implementar a camada visual de preparação de jogadas, previews e indicadores.
 - Chifrada — preview de dash
 - Investida — preview de impulso
 - Provocar / Tankar — preview de status autouso
-- Parede — preview irregular com seleção em dois pontos
+- Parede — preview de parede em dois pontos, sem seta
+- Bola Climática — preview explosivo com rota de projétil e zona derivada no impacto previsto
 
 ### Teste técnico da fase
 `TesteFase02.py`
@@ -5628,7 +5825,14 @@ Casos mínimos:
 - proibição de repetir ação idêntica no turno;
 - ordem local das ações;
 - recalculo da posição fantasma;
-- estrutura de indicador gerada por estilo;
+- estrutura de indicador gerada por estilo, sem seta genérica indevida;
+- área desenhada como cone/trapézio real;
+- zona desenhada com alcance e círculo real, sem redução de tamanho após preparar;
+- laser desenhado como faixa com grossura e alcance;
+- projétil desenhado como rota com diâmetro real, alcance, colisão, ricochete/atravessar/destruir e subfluxo explosivo quando houver;
+- dash desenhado como faixa de deslocamento/impacto;
+- impulso desenhado com seta própria limpa;
+- alvo/status usando animação de Pokémon selecionável/alvejável via `PokemonAnimator`;
 - arrasto para dentro da arena gerando movimento;
 - arrasto até Pokémon válido do banco fora da arena gerando troca;
 - arrasto até Pokémon inválido do banco sendo bloqueado sem preparar troca;
@@ -5640,11 +5844,13 @@ Casos mínimos:
 - ver preview;
 - preparar duas ações válidas;
 - apagar uma;
-- ver painel e previews recalcularem.
+- ver painel e previews recalcularem;
+- apertar **Pronto** e confirmar que, no teste temporário, as jogadas são limpas e a rodada fake avança sem travar a interação.
 
 ### Critério de aceite
 - a montagem do turno já funciona visualmente com o novo modelo;
-- o preview deixa de depender do fluxo velho como centro do sistema.
+- o preview deixa de depender do fluxo velho como centro do sistema;
+- o botão **Pronto** não deixa o `BatalhaTeste.py` preso aguardando servidor nessa fase temporária.
 
 ---
 
@@ -5658,7 +5864,7 @@ Criar a casca real do servidor novo, com `Partida` como dona do estado.
 - `SimuladorServerJogo/Batalha/Partida.py`
 - `SimuladorServerJogo/Batalha/InicializadorPartida.py`
 - `SimuladorServerJogo/Batalha/LogBatalha.py`
-- `Codigo/Outros/TestesBatalha/TesteFase03.py`
+- `Outros/TestesBatalha/TesteFase03.py`
 
 ### Arquivos a editar
 - `SimuladorServerJogo/Batalha/GerenciadorBatalhas.py`
@@ -5715,7 +5921,7 @@ Colocar o novo rodador para funcionar com a menor fatia jogável possível.
 - `SimuladorServerJogo/Batalha/ExecutorTurnos.py`
 - `SimuladorServerJogo/Batalha/ConstrutorAcao.py`
 - `SimuladorServerJogo/Batalha/FisicaBatalha.py`
-- `Codigo/Outros/TestesBatalha/TesteFase04.py`
+- `Outros/TestesBatalha/TesteFase04.py`
 
 ### Arquivos a editar
 - `SimuladorServerJogo/Batalha/ObjetoBatalha.py`
@@ -5774,7 +5980,7 @@ Implementar a primeira camada de ataque real sem objeto persistente.
 - `SimuladorServerJogo/Batalha/ConstrutorAtaque.py`
 - `SimuladorServerJogo/Batalha/MotorAcoes.py`
 - `SimuladorServerJogo/Logica/Executes/ExecuteAtaques.py`
-- `Codigo/Outros/TestesBatalha/TesteFase05.py`
+- `Outros/TestesBatalha/TesteFase05.py`
 
 ### Arquivos a editar
 - `SimuladorServerJogo/Batalha/PokemonBatalha.py`
@@ -5860,7 +6066,7 @@ Implementar projéteis como objetos de batalha com vida própria.
 - `SimuladorServerJogo/Batalha/ProjetilBatalha.py`
 - `SimuladorServerJogo/Batalha/ParedeBatalha.py` (base mínima)
 - `SimuladorServerJogo/Batalha/ConstrutoBatalha.py` (base mínima)
-- `Codigo/Outros/TestesBatalha/TesteFase06.py`
+- `Outros/TestesBatalha/TesteFase06.py`
 
 ### Arquivos a editar
 - `SimuladorServerJogo/Batalha/FisicaBatalha.py`
@@ -5922,13 +6128,14 @@ Casos mínimos:
 
 ---
 
-## Fase 7 — Dash, impulso, laser e ataque irregular com parede
+## Fase 7 — Dash, impulso, laser e parede
 
 ### Objetivo
 Fechar os estilos com física própria e timeline mais complexa.
 
 ### Arquivos a criar
-- `Codigo/Outros/TestesBatalha/TesteFase07.py`
+- `Outros/TestesBatalha/TesteFase07.py`
+- `SimuladorServerJogo/Batalha/ConstrutorAtaquesIrregulares.py`
 
 ### Arquivos a editar
 - `SimuladorServerJogo/Batalha/ConstrutorAtaque.py`
@@ -5947,7 +6154,7 @@ Fechar os estilos com física própria e timeline mais complexa.
 4. laser contínuo por tick;
 5. colisão com parede;
 6. criação de parede como objeto fixo;
-7. montagem irregular da Parede em dois pontos, com limite de 4 tiles e preview da área válida do segundo ponto;
+7. montagem da Parede em dois pontos, com limite de 4 tiles, estilo técnico `parede` e preview sem seta;
 8. logs de avanço e impacto.
 
 ### Ataques implementados/testados aqui
@@ -5971,13 +6178,13 @@ Valida impulso mais pesado e dano de retorno/erro.
 Valida ataque laser contínuo.
 
 #### Parede
-Valida ataque irregular que cria objeto fixo de colisão.
+Valida estilo técnico `parede`, tratado como irregular pelo construtor específico, criando objeto fixo de colisão.
 
 A montagem fechada deste ataque é:
 - selecionar o ataque;
 - selecionar o primeiro ponto;
 - selecionar o segundo ponto dentro de um limite de 4 tiles;
-- visualizar durante a montagem o fluxo/segmento previsto da parede;
+- visualizar durante a montagem o segmento real previsto da parede, sem seta;
 - gerar uma parede de largura fixa de 0.25 tile no mapa.
 
 ### Teste técnico da fase
@@ -6006,7 +6213,7 @@ Casos mínimos:
 Fechar a camada de fidelidade do sistema: `Verifica()`, clima, tile, energia avançada e passivas.
 
 ### Arquivos a criar
-- `Codigo/Outros/TestesBatalha/TesteFase08.py`
+- `Outros/TestesBatalha/TesteFase08.py`
 
 ### Arquivos a editar
 - `SimuladorServerJogo/Batalha/PokemonBatalha.py`
@@ -6014,6 +6221,7 @@ Fechar a camada de fidelidade do sistema: `Verifica()`, clima, tile, energia ava
 - `SimuladorServerJogo/Batalha/LogBatalha.py`
 - `SimuladorServerJogo/Batalha/FisicaBatalha.py`
 - `SimuladorServerJogo/Batalha/ConstrutorAtaque.py`
+- `SimuladorServerJogo/Batalha/ConstrutorAtaquesIrregulares.py`
 - `SimuladorServerJogo/Batalha/MotorAcoes.py`
 
 ### Observação de dados desta fase
@@ -6047,7 +6255,7 @@ Valida mudança de clima.
 Valida zona + criação de tile lama persistente.
 
 #### Bola Climática
-Valida adaptação ao clima, aumento de dano por clima e uso mais elaborado dos executes do ataque.
+Valida adaptação ao clima, aumento de dano por clima e o irregular **Explosivo**: projétil/bola que gera zona de explosão no impacto configurado.
 
 #### Recarga
 Valida recuperação de energia e a regra de excedente persistente após Energizado.
@@ -6094,7 +6302,7 @@ Criar a fase própria da IA local, separada do resto do motor, usando o mesmo co
 - `Codigo/ModulosBatalha/IA/BotBatalha.py`
 - `Codigo/ModulosBatalha/IA/AvaliadorAcoesIA.py`
 - `Codigo/ModulosBatalha/IA/GeradorJogadasIA.py`
-- `Codigo/Outros/TestesBatalha/TesteFase09.py`
+- `Outros/TestesBatalha/TesteFase09.py`
 
 ### Arquivos a editar
 - `Codigo/ModulosBatalha/ControladorBatalha.py`
@@ -6137,7 +6345,7 @@ Completar a virada final do client e aposentar o núcleo velho.
 
 ### Arquivos a criar
 - `Codigo/ModulosBatalha/ExecutorAnimacao.py`
-- `Codigo/Outros/TestesBatalha/TesteFase10.py`
+- `Outros/TestesBatalha/TesteFase10.py`
 
 ### Arquivos a editar
 - `Codigo/ModulosBatalha/LeitorLogs.py`
@@ -6148,13 +6356,16 @@ Completar a virada final do client e aposentar o núcleo velho.
 - `Codigo/ModulosBatalha/FinalizadorBatalha.py`
 - `Codigo/ModulosBatalha/ControladorBatalha.py`
 
-### Arquivos legados que devem ser esvaziados/removidos ao final
+### Arquivos legados que já não devem estar no núcleo e devem ser conferidos ao final
 - `SimuladorServerJogo/Batalha/LeitorJogadas.py`
 - `SimuladorServerJogo/Batalha/SistemaBatalha.py`
 - `SimuladorServerJogo/Batalha/SimuladorFisica.py`
 - `Codigo/ModulosBatalha/SistemaBatalha.py`
 - `Codigo/ModulosBatalha/LeitorFluxos.py`
 - `Codigo/ModulosBatalha/ControladorFluxos.py`
+- `Codigo/ModulosBatalha/PlayerControleBat.py`
+- `Codigo/Paineis/PainelJogada.py`
+- `Codigo/Prefabs/Fluxos.json` ou equivalente legado de fluxos, se existir
 
 ### O que deve ser entregue nesta fase
 1. leitura fiel do histórico;
@@ -6253,15 +6464,16 @@ Uma fase só pode ser considerada concluída quando:
 4. **Rodador mínimo: movimento, troca e ordem do turno**
 5. **Ataques simples: alvo, status, área e zona instantânea**
 6. **Objetos persistentes, projéteis e colisão rica**
-7. **Dash, impulso, laser e ataque irregular com parede**
+7. **Dash, impulso, laser e parede**
 8. **Efeitos, clima, tile, energia e passivas**
 9. **IA de batalha no client**
-10. **Leitura de logs, animação, reconciliamento final e remoção do núcleo legado**
+10. **Leitura de logs, animação, reconciliamento final e checagem de ausência do núcleo legado**
 
 ### Ataques novos destacados no plano
 - **Dança da chuva** — valida clima
 - **Bomba de lama** — valida zona + tile
-- **Parede** — valida ataque irregular + objeto fixo
+- **Parede** — valida estilo `parede` tratado como irregular + objeto fixo
+- **Bola Climática** — valida irregular explosivo com projétil + zona no impacto
 - **Acumulador** — valida passiva reativa
 
 ### Regra final do processo

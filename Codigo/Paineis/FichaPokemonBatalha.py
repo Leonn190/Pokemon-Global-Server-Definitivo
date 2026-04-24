@@ -171,7 +171,7 @@ class FichaPokemonBatalha:
     def _estilo_tecnico_ataque(cls, ataque: dict | None) -> str:
         if cls._CACHE_ESTILO_ATAQUES is None:
             cls._CACHE_ESTILO_ATAQUES = {}
-            caminho = Path("Dados") / "Pokemon Global Server - PropriedadesAtaque.json"
+            caminho = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - PropriedadesAtaque.json"
             try:
                 dados = json.loads(caminho.read_text(encoding="utf-8"))
                 ataques = dados.get("ataques") if isinstance(dados, dict) else {}

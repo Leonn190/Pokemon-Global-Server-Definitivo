@@ -162,11 +162,21 @@ class ControladorBatalha:
         arena_h = float(self.Contexto.get("arena_altura", 20) or 20)
         return pygame.Rect(int(centro[0] - arena_w * 0.5), int(centro[1] - arena_h * 0.5), int(arena_w), int(arena_h))
 
+    def limites_arena_float(self) -> tuple[float, float, float, float]:
+        centro = self._centro_arena_local()
+        arena_w = float(self.Contexto.get("arena_largura", 40) or 40)
+        arena_h = float(self.Contexto.get("arena_altura", 20) or 20)
+        min_x = float(centro[0]) - arena_w * 0.5
+        min_y = float(centro[1]) - arena_h * 0.5
+        return min_x, min_y, min_x + arena_w, min_y + arena_h
+
     def ponto_dentro_arena(self, ponto_batalha) -> bool:
         if not isinstance(ponto_batalha, (tuple, list)) or len(ponto_batalha) != 2:
             return False
-        rect = self.limites_arena()
-        return rect.collidepoint(float(ponto_batalha[0]), float(ponto_batalha[1]))
+        min_x, min_y, max_x, max_y = self.limites_arena_float()
+        x = float(ponto_batalha[0])
+        y = float(ponto_batalha[1])
+        return min_x <= x <= max_x and min_y <= y <= max_y
 
     def definir_provedor_reservas(self, provedor) -> None:
         self._provedor_reservas = provedor
@@ -397,8 +407,14 @@ class ControladorBatalha:
     def avancar_turno_basico(self) -> None:
         self._rodada_atual = int(self._rodada_atual) + 1
 
-    def renderizar(self, tela, camera) -> None:
+    def finalizar_rodada_fake(self) -> None:
+        self.avancar_turno_basico()
+        self.Contexto["batalha_teste_rodada_fake"] = int(self._rodada_atual)
+
+    def renderizar_arena(self, tela, camera) -> None:
         self.Arena.renderizar(tela, camera)
+
+    def renderizar_pokemons(self, tela, camera) -> None:
         pokemon_hover = self.pokemon_no_ponto(pygame.mouse.get_pos(), camera)
         for poke in self.PokemonsReservaAliadosObj:
             reservado = float(self._provedor_reservas(poke)) if callable(self._provedor_reservas) else 0.0
@@ -409,3 +425,7 @@ class ControladorBatalha:
         for poke in self.PokemonsInimigos:
             reservado = float(self._provedor_reservas(poke)) if callable(self._provedor_reservas) else 0.0
             poke.renderizar(tela, camera, selecionado=(poke is self.PokemonSelecionado), hover=(poke is pokemon_hover), energia_reservada=reservado)
+
+    def renderizar(self, tela, camera) -> None:
+        self.renderizar_arena(tela, camera)
+        self.renderizar_pokemons(tela, camera)

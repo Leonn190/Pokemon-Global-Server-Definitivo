@@ -156,7 +156,9 @@ class CenaCombate:
     def render_base(self, surface, JOGO, EVENTOS, dt):
         _ = (JOGO, EVENTOS, dt)
         surface.fill((20, 20, 28))
-        self.ControladorBatalha.renderizar(surface, self.Camera)
+        self.ControladorBatalha.renderizar_arena(surface, self.Camera)
+        self.ElementosHudBatalha.desenhar_indicadores_campo(surface)
+        self.ControladorBatalha.renderizar_pokemons(surface, self.Camera)
 
     def render_post(self, surface, JOGO, EVENTOS, dt):
         _ = (surface, JOGO, EVENTOS, dt)

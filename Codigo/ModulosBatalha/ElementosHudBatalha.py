@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
@@ -130,7 +129,24 @@ class ElementosHudBatalha:
         tela.blit(overlay, (0, 0))
 
     def _confirmar_jogadas(self) -> None:
+        if self._contexto_teste_local():
+            self._montador.limpar()
+            self._preview = {}
+            self._parede_ponto_a = None
+            if self._controlador is not None:
+                avancar = getattr(self._controlador, "finalizar_rodada_fake", None) or getattr(self._controlador, "avancar_turno_basico", None)
+                if callable(avancar):
+                    avancar()
+            self._tempo_restante_rodada = self._tempo_total_rodada
+            self._aguardando_resultado_rodada = False
+            return
         self._aguardando_resultado_rodada = True
+
+    def _contexto_teste_local(self) -> bool:
+        if self._controlador is None:
+            return False
+        contexto = getattr(self._controlador, "Contexto", {}) if isinstance(getattr(self._controlador, "Contexto", {}), dict) else {}
+        return bool(contexto.get("client_id") == "batalha_teste_local" or contexto.get("batalha_teste_local"))
 
     def _atualizar_animacao_ficha(self, dt: float):
         selecionado = getattr(self._controlador, "PokemonSelecionado", None)
@@ -153,87 +169,20 @@ class ElementosHudBatalha:
 
     def _origem_virtual(self, pokemon):
         mapa = getattr(self._controlador, "mapa_pokemons", lambda: {})()
-        return self._montador.posicao_virtual_executor(getattr(pokemon, "Uid", ""), mapa) or tuple(getattr(pokemon, "Posicao", (0.0, 0.0)))
+        return self._montador.origem_virtual(pokemon, mapa)
 
     def _build_preview_ataque(self, pokemon, ataque, mouse_pos_px):
-        origem = self._origem_virtual(pokemon)
-        destino = tuple(self._camera.tela_para_batalha_tiles(mouse_pos_px))
-        props = self._montador.obter_propriedades_ataque(ataque if isinstance(ataque, dict) else None)
-        estilo = self._montador.estilo_ataque(props)
-        prev = {"executor": pokemon, "executor_id": getattr(pokemon, "Uid", ""), "ataque": props, "estilo": estilo, "origem_mundo": origem, "destino_mundo": destino, "invalido": False}
-        if estilo == "alvo":
-            alcance = float(((props or {}).get("alvo") or {}).get("alcance", 3.0))
-            prev["alcance"] = alcance
-            alvo = self._controlador.pokemon_no_ponto(mouse_pos_px, self._camera)
-            if alvo is None:
-                prev["invalido"] = True
-            else:
-                prev["alvo_ids"] = [getattr(alvo, "Uid", "")]
-                prev["invalido"] = math.dist(tuple(getattr(alvo, "Posicao", (0.0, 0.0))), origem) > alcance
-        elif estilo == "status":
-            prev["autouso"] = True
-            prev["invalido"] = self._controlador.pokemon_no_ponto(mouse_pos_px, self._camera) is not pokemon
-        elif estilo == "zona":
-            prev["raio"] = float(((props or {}).get("zona") or {}).get("raio", 1.0))
-            alcance = float(((props or {}).get("zona") or {}).get("alcance_max_centro", ((props or {}).get("zona") or {}).get("alcance", 6.0)))
-            prev["alcance"] = alcance
-            if math.dist(origem, destino) > alcance:
-                prev["invalido"] = True
-        elif estilo == "laser":
-            prev["alcance"] = float(((props or {}).get("laser") or {}).get("alcance", 8.0))
-            prev["grossura"] = float(((props or {}).get("laser") or {}).get("grossura", 0.8))
-        elif estilo == "projetil":
-            prev["alcance"] = float(((props or {}).get("projetil") or {}).get("alcance", 8.0))
-            prev["raio"] = float(((props or {}).get("projetil") or {}).get("raio", 0.35))
-        elif estilo == "dash":
-            mov = (props or {}).get("movimento_ofensivo") if isinstance(props, dict) else {}
-            prev["distancia_min"] = float((mov or {}).get("distancia_min", 0.0) or 0.0)
-            prev["distancia_max"] = float((mov or {}).get("distancia_max", 6.0) or 6.0)
-            distancia = max(0.0, math.dist(origem, destino))
-            max_dist = max(0.01, prev["distancia_max"])
-            if distancia > max_dist:
-                fator = max_dist / distancia
-                destino = (origem[0] + (destino[0] - origem[0]) * fator, origem[1] + (destino[1] - origem[1]) * fator)
-                prev["destino_mundo"] = destino
-        elif estilo == "impulso":
-            mov = (props or {}).get("movimento_ofensivo") if isinstance(props, dict) else {}
-            prev["distancia_min"] = float((mov or {}).get("distancia_min", 0.0) or 0.0)
-            prev["distancia_max"] = float((mov or {}).get("distancia_max", 6.0) or 6.0)
-            distancia = max(0.0, math.dist(origem, destino))
-            max_dist = max(0.01, prev["distancia_max"])
-            distancia_ajustada = min(distancia, max_dist)
-            if distancia > max_dist:
-                fator = max_dist / distancia
-                destino = (origem[0] + (destino[0] - origem[0]) * fator, origem[1] + (destino[1] - origem[1]) * fator)
-                prev["destino_mundo"] = destino
-            prev["intensidade"] = max(0.0, min(1.0, distancia_ajustada / max_dist))
-        elif estilo == "irregular":
-            irregular = (props or {}).get("irregular") if isinstance(props, dict) else {}
-            distancia_max = float((irregular or {}).get("distancia_max_entre_pontos", 4.0) or 4.0)
-            prev["distancia_max_entre_pontos"] = distancia_max
-            prev["largura"] = float((irregular or {}).get("largura", 0.25) or 0.25)
-            if self._parede_ponto_a is None:
-                prev["ponto_a"] = destino
-            else:
-                prev["ponto_a"] = self._parede_ponto_a
-                prev["ponto_b"] = destino
-                prev["invalido"] = not self._montador.validar_segundo_ponto_parede(self._parede_ponto_a, destino, distancia_max)
-        return prev
+        return self._montador.construir_preview_ataque(
+            pokemon=pokemon,
+            ataque=ataque,
+            mouse_pos_px=mouse_pos_px,
+            camera=self._camera,
+            controlador=self._controlador,
+            parede_ponto_a=self._parede_ponto_a,
+        )
 
     def _montar_jogada_de_preview(self, preview: Dict[str, object]) -> Dict[str, object]:
-        ataque = preview.get("ataque")
-        executor = preview.get("executor")
-        estilo = str(preview.get("estilo") or "")
-        return {
-            "executor": executor,
-            "executor_id": getattr(executor, "Uid", ""),
-            "ataque": ataque,
-            "estilo": estilo,
-            "destino_mundo": preview.get("destino_mundo"),
-            "tipo_movimento": estilo in {"dash", "impulso"},
-            "custo_base": self._montador.custo_base_ataque(ataque, 0.0),
-            "payload": {k: preview.get(k) for k in ["alvo_ids", "autouso", "ponto_a", "ponto_b"] if k in preview},
-        }
+        return self._montador.montar_jogada_de_preview(preview)
 
     def _tentar_adicionar(self, jogada: Dict[str, object]) -> bool:
         executor = jogada.get("executor")
@@ -246,10 +195,10 @@ class ElementosHudBatalha:
         if not self._preview or self._preview.get("invalido"):
             return
         estilo = str(self._preview.get("estilo") or "")
-        if estilo == "irregular" and self._parede_ponto_a is None:
+        if estilo == "parede" and self._parede_ponto_a is None:
             self._parede_ponto_a = self._preview.get("destino_mundo")
             return
-        if estilo == "irregular" and self._parede_ponto_a is not None:
+        if estilo == "parede" and self._parede_ponto_a is not None:
             self._preview["ponto_a"] = self._parede_ponto_a
             self._preview["ponto_b"] = self._preview.get("destino_mundo")
         if self._tentar_adicionar(self._montar_jogada_de_preview(self._preview)):
@@ -257,8 +206,8 @@ class ElementosHudBatalha:
         self._preview = {}
         self._parede_ponto_a = None
 
-    def _iniciar_drag(self, pokemon, pos):
-        self._drag = {"pokemon": pokemon, "inicio_px": tuple(pos), "inicio_mundo": self._origem_virtual(pokemon), "ativo": False}
+    def _iniciar_drag(self, pokemon, pos, *, ja_selecionado: bool = False):
+        self._drag = {"pokemon": pokemon, "inicio_px": tuple(pos), "inicio_mundo": self._origem_virtual(pokemon), "ativo": False, "ja_selecionado": bool(ja_selecionado)}
 
     def _preview_drag(self, pos):
         if not self._drag:
@@ -279,7 +228,11 @@ class ElementosHudBatalha:
             invalido = not (self._controlador.pokemon_eh_aliado(reserva) and bool(getattr(reserva, "VidaAtual", 1.0) > 0.0))
         elif not self._controlador.ponto_dentro_arena(destino):
             invalido = True
-        self._preview = {"estilo": estilo, "executor": poke, "executor_id": getattr(poke, "Uid", ""), "origem_mundo": self._drag.get("inicio_mundo"), "destino_mundo": getattr(reserva, "Posicao", destino), "troca_reserva_id": getattr(reserva, "Uid", None) if estilo == "troca" else None, "tipo_movimento": estilo == "movimento", "invalido": invalido}
+        destino_final = getattr(reserva, "Posicao", destino)
+        self._preview = {"estilo": estilo, "executor": poke, "executor_id": getattr(poke, "Uid", ""), "origem_mundo": self._drag.get("inicio_mundo"), "destino_mundo": destino_final, "troca_reserva_id": getattr(reserva, "Uid", None) if estilo == "troca" else None, "tipo_movimento": estilo == "movimento", "invalido": invalido}
+        self._preview["largura"] = max(0.5, float(getattr(poke, "DiametroTiles", getattr(poke, "TamanhoTiles", 1.0)) or 1.0))
+        if estilo == "movimento":
+            self._preview["custo_base"] = self._montador.custo_movimento(poke, self._drag.get("inicio_mundo"), destino_final)
 
     def _finalizar_drag(self):
         if not self._drag:
@@ -297,6 +250,8 @@ class ElementosHudBatalha:
             )
             if isinstance(jogada, dict):
                 self._tentar_adicionar(jogada)
+        elif self._drag.get("ja_selecionado"):
+            self._controlador.limpar_selecao()
         self._drag = {}
         self._preview = {}
 
@@ -329,9 +284,10 @@ class ElementosHudBatalha:
                     continue
                 clicado = self._controlador.pokemon_no_ponto(ev.pos, self._camera)
                 if ataque is None and clicado is not None and self._controlador.pokemon_eh_controlavel(clicado):
+                    ja_selecionado = clicado is selecionado
                     if clicado is not selecionado:
                         self._controlador.selecionar_pokemon(clicado)
-                    self._iniciar_drag(clicado, ev.pos)
+                    self._iniciar_drag(clicado, ev.pos, ja_selecionado=ja_selecionado)
                 elif ataque is not None and selecionado is not None:
                     self._preview = self._build_preview_ataque(selecionado, ataque, ev.pos)
                     self._finalizar_preview_ataque()
@@ -358,11 +314,39 @@ class ElementosHudBatalha:
     def _previsao_ficha(self):
         poke = self._pokemon_exibido
         ataque = self._ficha.ataque_selecionado()
+        if self._preview and self._preview.get("tipo_movimento") and self._preview.get("executor") is poke:
+            jogada = dict(self._preview)
+            jogada["custo_base"] = float(jogada.get("custo_base") or 0.0)
+            return self._montador.calcular_previsao(getattr(poke, "Uid", ""), jogada, self._energia_disponivel(poke), ignorar_custo=self._modo_energia_infinita())
         if poke is None or ataque is None:
             return 0.0, True
         prev = self._build_preview_ataque(poke, ataque, pygame.mouse.get_pos())
         jogada = self._montar_jogada_de_preview(prev)
         return self._montador.calcular_previsao(getattr(poke, "Uid", ""), jogada, self._energia_disponivel(poke), ignorar_custo=self._modo_energia_infinita())
+
+    def _marcar_pokemons_interativos(self) -> None:
+        if not self._preview or self._controlador is None:
+            return
+        estilo = str(self._preview.get("estilo") or "").casefold()
+        alvos = set(str(x) for x in list(self._preview.get("alvo_ids") or []))
+        if estilo == "status" and self._preview.get("executor") is not None:
+            alvos.add(str(getattr(self._preview.get("executor"), "Uid", "")))
+        if not alvos:
+            return
+        for poke in self._controlador.mapa_pokemons().values():
+            if str(getattr(poke, "Uid", "")) not in alvos:
+                continue
+            animador = getattr(poke, "Animador", None)
+            if animador is not None and hasattr(animador, "marcar_selecionavel"):
+                animador.marcar_selecionavel(cor=(255, 88, 88) if estilo == "alvo" else (96, 214, 255))
+
+    def desenhar_indicadores_campo(self, tela: pygame.Surface) -> None:
+        if self._controlador is None or self._camera is None:
+            return
+        visuais, _ = self._montador.resolver_visuais(self._controlador.mapa_pokemons())
+        self._indicadores.desenhar_preparadas(tela, self._camera, visuais)
+        if self._preview:
+            self._indicadores.desenhar_preparando(tela, self._camera, self._preview)
 
     def desenhar(self, tela: pygame.Surface, eventos: List[pygame.event.Event], dt: float = 0.0) -> None:
         self._garantir_layout(tela)
@@ -413,11 +397,7 @@ class ElementosHudBatalha:
         previsao, pode = self._previsao_ficha()
         self._ficha.atualizar_previsao(previsao, pode or self._modo_energia_infinita())
 
-        if self._controlador is not None and self._camera is not None:
-            visuais, _ = self._montador.resolver_visuais(self._controlador.mapa_pokemons())
-            self._indicadores.desenhar_preparadas(tela, self._camera, visuais)
-            if self._preview:
-                self._indicadores.desenhar_preparando(tela, self._camera, self._preview)
+        self._marcar_pokemons_interativos()
 
         self._painel_jogada.desenhar(tela, dt)
         self._ficha.definir_controle_inimigo(bool(getattr(self._controlador, "modo_teste_ativo", lambda: False)()))

@@ -1,126 +1,66 @@
 {
-  "schema_version": "batalha_propriedades_ataque_v1",
-  "fonte_csv": "Pokemon Global Server - Ataques.csv",
-  "nivel_considerado": 1,
-  "observacao": "Cadastro técnico inicial da Fase 1. A lógica real será implementada por fases futuras.",
-  "estilos_validos": [
-    "alvo",
-    "status",
-    "projetil",
-    "area",
-    "zona",
-    "laser",
-    "dash",
-    "impulso",
-    "passiva",
-    "irregular"
-  ],
   "ataques": {
     "7001": {
       "id": 7001,
-      "csv_code": 1,
       "code": "investida",
       "nome": "Investida",
       "tipo": "normal",
       "estilo": "impulso",
-      "estilo_original_csv": "Impulso",
       "custo": 40,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (100% de Atk) como dano normal e avança com (120% de Vel). O usuário recebe 15% do dano causado.",
-      "multiplicador_dano": 1.0,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "investida_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_impulso",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 7",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 1.0,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "movimento_ofensivo": {
         "modo": "impulso",
-        "vel_percentual_min": 1.2,
-        "vel_percentual_max": 1.2,
-        "desaceleracao_base": null,
+        "distancia_min": 0.5,
+        "distancia_max": 4.0,
         "atravessa_pokemon": false
       }
     },
     "7002": {
       "id": 7002,
-      "csv_code": 2,
       "code": "biscoito",
       "nome": "Biscoito",
       "tipo": "normal",
       "estilo": "projetil",
-      "estilo_original_csv": "tiro",
       "custo": 25,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Cura o aliado em (30% de Mag), aplica 1 stack de Biscoito no alvo e no usuário, e cada stack aumenta a cura em +5% de Mag.",
-      "multiplicador_dano": 1.0,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "biscoito_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_projetil",
-        "efeito_alvo": "-",
-        "projetil_imagem": "Biscoito"
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 6",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 0.3,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "projetil": {
-        "raio": 0.35,
+        "raio": 0.75,
         "alcance": 8.0,
-        "velocidade": 180,
-        "aceleracao": 0,
-        "massa": 0,
+        "velocidade": 8.0,
         "quantidade": 1,
-        "angulo_entre_projeteis": 0,
-        "intervalo_entre_projeteis": 0
+        "angulo_entre_projeteis": 0
+      },
+      "alvo": {
+        "grupo_permitido": "aliado",
+        "alcance": 8.0
       },
       "colisao": {
         "pokemon": {
-          "disparo": "executa_principal",
           "comportamento_fim": "destruir"
         },
         "parede": {
-          "disparo": "nenhum",
           "comportamento_fim": "destruir"
         },
         "projetil": {
-          "disparo": "nenhum",
           "comportamento_fim": "destruir"
         },
         "construto": {
-          "disparo": "executa_principal",
           "comportamento_fim": "destruir"
         }
       },
@@ -163,273 +103,124 @@
     },
     "7003": {
       "id": 7003,
-      "csv_code": 3,
       "code": "enraivecer",
       "nome": "Enraivecer",
       "tipo": "normal",
       "estilo": "status",
-      "estilo_original_csv": "status",
       "custo": 20,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Se a Vida estiver abaixo de 50%, o usuário ganha Aprimorado se SpA > Atk; caso contrário, ganha Amplificado.",
-      "multiplicador_dano": 0.0,
-      "fonte_dano": "nenhum",
-      "tipo_dano": "nenhum",
-      "pode_criticar": false,
-      "aplica_stab": false,
       "executes": {
         "principal": "enraivecer_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_status",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 8",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
-      "status": {
-        "autouso": true
-      }
+      "status": {}
     },
     "7004": {
       "id": 7004,
-      "csv_code": 4,
       "code": "provocar",
       "nome": "Provocar",
       "tipo": "normal",
       "estilo": "status",
-      "estilo_original_csv": "status",
       "custo": 20,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "O usuário ganha Provocando.",
-      "multiplicador_dano": 0.0,
-      "fonte_dano": "nenhum",
-      "tipo_dano": "nenhum",
-      "pode_criticar": false,
-      "aplica_stab": false,
       "executes": {
         "principal": "provocar_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_status",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 5",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
-      "status": {
-        "autouso": true
-      }
+      "status": {}
     },
     "7005": {
       "id": 7005,
-      "csv_code": 5,
       "code": "proteger",
       "nome": "Proteger",
       "tipo": "normal",
       "estilo": "alvo",
-      "estilo_original_csv": "alvo",
       "custo": 30,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "O alvo fica Protegido.",
-      "multiplicador_dano": 0.0,
-      "fonte_dano": "nenhum",
-      "tipo_dano": "nenhum",
-      "pode_criticar": false,
-      "aplica_stab": false,
       "executes": {
         "principal": "proteger_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_alvo",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 5",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
       "alvo": {
-        "grupos_permitidos": [
-          "aliado",
-          "inimigo"
-        ],
-        "alcance": 5.0,
-        "max_alvos": 1,
-        "intervalo_entre_alvos": 0
+        "grupo_permitido": "aliado",
+        "alcance": 3.5
       }
     },
     "7006": {
       "id": 7006,
-      "csv_code": 6,
       "code": "arranhar",
       "nome": "Arranhar",
       "tipo": "normal",
       "estilo": "area",
-      "estilo_original_csv": "area",
       "custo": 35,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (135% de Atk) como dano normal em uma área de cone.",
-      "multiplicador_dano": 1.35,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "arranhar_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_area",
-        "efeito_alvo": "Garra",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 5",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 1.35,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "area": {
-        "modo": "cone",
-        "alcance": 3.0,
-        "abertura_graus": 70
+        "forma": "cone",
+        "alcance": 2.2,
+        "abertura_graus": 72,
+        "atravessa_parede": false
       }
     },
     "7007": {
       "id": 7007,
-      "csv_code": 7,
       "code": "recarga",
       "nome": "Recarga",
       "tipo": "normal",
       "estilo": "status",
-      "estilo_original_csv": "status",
       "custo": 25,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Recupera 200% de Ene gasta neste ataque.",
-      "multiplicador_dano": 0.0,
-      "fonte_dano": "nenhum",
-      "tipo_dano": "nenhum",
-      "pode_criticar": false,
-      "aplica_stab": false,
       "executes": {
         "principal": "recarga_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_status",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 8",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
-      "status": {
-        "autouso": true
-      }
+      "status": {}
     },
     "7008": {
       "id": 7008,
-      "csv_code": 8,
       "code": "energia",
       "nome": "Energia",
       "tipo": "normal",
       "estilo": "projetil",
-      "estilo_original_csv": "tiro",
       "custo": 30,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (120% de SpA) como dano especial.",
-      "multiplicador_dano": 1.2,
-      "fonte_dano": "spa",
-      "tipo_dano": "especial",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "energia_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_projetil",
-        "efeito_alvo": "-",
-        "projetil_imagem": "-"
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 6",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 1.2,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "projetil": {
         "raio": 0.35,
         "alcance": 8.0,
-        "velocidade": 180,
-        "aceleracao": 0,
-        "massa": 0,
+        "velocidade": 8.0,
         "quantidade": 1,
-        "angulo_entre_projeteis": 0,
-        "intervalo_entre_projeteis": 0
+        "angulo_entre_projeteis": 0
       },
       "colisao": {
         "pokemon": {
-          "disparo": "executa_principal",
           "comportamento_fim": "destruir"
         },
         "parede": {
-          "disparo": "nenhum",
           "comportamento_fim": "destruir"
         },
         "projetil": {
-          "disparo": "nenhum",
           "comportamento_fim": "destruir"
         },
         "construto": {
-          "disparo": "executa_principal",
           "comportamento_fim": "destruir"
         }
       },
@@ -472,149 +263,83 @@
     },
     "7009": {
       "id": 7009,
-      "csv_code": 9,
       "code": "hiper_raio",
       "nome": "Hiper Raio",
       "tipo": "normal",
       "estilo": "laser",
-      "estilo_original_csv": "laser",
       "custo": 100,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (160% de SpA) como dano especial.",
-      "multiplicador_dano": 1.6,
-      "fonte_dano": "spa",
-      "tipo_dano": "especial",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "hiper_raio_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_laser",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 7",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 1.6,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "laser": {
         "alcance": 9.0,
-        "grossura": 0.9,
-        "velocidade_avanco": 0.25
+        "grossura": 0.65
       }
     },
     "7010": {
       "id": 7010,
-      "csv_code": 10,
       "code": "guilhotina",
       "nome": "Guilhotina",
       "tipo": "normal",
       "estilo": "area",
-      "estilo_original_csv": "area",
       "custo": 80,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (50% de Atk) como dano normal em área. Executa inimigos com menos de 25% da Vida; se for crítico, executa inimigos com menos de 30% da Vida.",
-      "multiplicador_dano": 1.0,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "guilhotina_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_area",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 5",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 0.5,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "area": {
-        "modo": "cone",
-        "alcance": 3.0,
-        "abertura_graus": 70
+        "forma": "trapezio",
+        "alcance": 2.6,
+        "base": 0.9,
+        "teto": 2.4,
+        "atravessa_parede": false
       }
     },
     "7011": {
       "id": 7011,
-      "csv_code": 11,
       "code": "disparo",
       "nome": "Disparo",
       "tipo": "normal",
       "estilo": "projetil",
-      "estilo_original_csv": "tiro",
       "custo": 35,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (90% de Atk) como dano normal e ricocheteia 2 vez.",
-      "multiplicador_dano": 1.0,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "disparo_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_projetil",
-        "efeito_alvo": "-",
-        "projetil_imagem": "-"
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 6",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 0.9,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "projetil": {
         "raio": 0.35,
         "alcance": 8.0,
-        "velocidade": 180,
-        "aceleracao": 0,
-        "massa": 0,
+        "velocidade": 8.0,
         "quantidade": 1,
-        "angulo_entre_projeteis": 0,
-        "intervalo_entre_projeteis": 0
+        "angulo_entre_projeteis": 0
       },
       "colisao": {
         "pokemon": {
-          "disparo": "executa_principal",
           "comportamento_fim": "destruir"
         },
         "parede": {
-          "disparo": "nenhum",
           "comportamento_fim": "ricochetear"
         },
         "projetil": {
-          "disparo": "nenhum",
           "comportamento_fim": "destruir"
         },
         "construto": {
-          "disparo": "executa_principal",
           "comportamento_fim": "destruir"
         }
       },
@@ -657,238 +382,133 @@
     },
     "7012": {
       "id": 7012,
-      "csv_code": 12,
       "code": "chifrada",
       "nome": "Chifrada",
       "tipo": "normal",
       "estilo": "dash",
-      "estilo_original_csv": "dash",
       "custo": 45,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (80% de Atk) + (40% de Per) como dano normal e avança com (110% de Vel).",
-      "multiplicador_dano": 1.2,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "chifrada_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_dash",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 7",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 0.8,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "movimento_ofensivo": {
         "modo": "dash",
-        "vel_percentual": 1.1,
-        "distancia_fixa": null,
-        "distancia_min": 2.0,
+        "distancia_min": 0.5,
         "distancia_max": 5.0,
         "atravessa_pokemon": false
       }
     },
     "7013": {
       "id": 7013,
-      "csv_code": 13,
       "code": "resetar",
       "nome": "Resetar",
       "tipo": "normal",
       "estilo": "alvo",
-      "estilo_original_csv": "alvo",
       "custo": 30,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Remove todas as variações de atributos do alvo.",
-      "multiplicador_dano": 1.0,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "resetar_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_alvo",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 5",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
       "alvo": {
-        "grupos_permitidos": [
-          "aliado",
-          "inimigo"
-        ],
-        "alcance": 5.0,
-        "max_alvos": 1,
-        "intervalo_entre_alvos": 0
+        "grupo_permitido": "ambos",
+        "alcance": 3.5
       }
     },
     "7014": {
       "id": 7014,
-      "csv_code": 14,
       "code": "tankar",
       "nome": "Tankar",
       "tipo": "normal",
       "estilo": "status",
-      "estilo_original_csv": "status",
       "custo": 60,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "O usuário ganha uma barreira equivalente a (100% da Mag) e também recebe (10% de Mag) na sua menor defesa.",
-      "multiplicador_dano": 0.0,
-      "fonte_dano": "nenhum",
-      "tipo_dano": "nenhum",
-      "pode_criticar": false,
-      "aplica_stab": false,
       "executes": {
         "principal": "tankar_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_status",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 5",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
-      "status": {
-        "autouso": true
-      }
+      "status": {}
     },
     "7015": {
       "id": 7015,
-      "csv_code": 15,
       "code": "estocada",
       "nome": "Estocada",
       "tipo": "normal",
       "estilo": "area",
-      "estilo_original_csv": "area",
       "custo": 35,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (100% de Atk) como dano normal. Se for o primeiro ataque do turno, causa +30% de dano.",
-      "multiplicador_dano": 1.0,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "estocada_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_area",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 5",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 1.0,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "area": {
-        "modo": "cone",
-        "alcance": 3.0,
-        "abertura_graus": 70
+        "forma": "trapezio",
+        "alcance": 2.6,
+        "base": 0.9,
+        "teto": 2.4,
+        "atravessa_parede": false
       }
     },
     "7016": {
       "id": 7016,
-      "csv_code": 16,
       "code": "bola_climatica",
       "nome": "Bola Climática",
       "tipo": "normal",
-      "estilo": "projetil",
-      "estilo_original_csv": "tiro",
+      "estilo": "explosivo",
       "custo": 50,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (120% de SpA) como dano especial, adapta o tipo ao clima e, se houver clima ativo, causa +10% de dano.",
-      "multiplicador_dano": 1.0,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "bola_climatica_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_projetil",
-        "efeito_alvo": "-",
-        "projetil_imagem": "-"
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 8",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 1.2,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "projetil": {
         "raio": 0.35,
         "alcance": 8.0,
-        "velocidade": 180,
-        "aceleracao": 0,
-        "massa": 0,
+        "velocidade": 7.5,
         "quantidade": 1,
-        "angulo_entre_projeteis": 0,
-        "intervalo_entre_projeteis": 0
+        "angulo_entre_projeteis": 0
+      },
+      "explosivo": {
+        "detona_ao_colidir_com": [
+          "pokemon",
+          "parede",
+          "construto",
+          "projetil"
+        ],
+        "zona": {
+          "raio": 1.6,
+          "multiplicador_dano": 0.55
+        },
+        "imunes_ao_subfluxo": [
+          "executor"
+        ]
       },
       "colisao": {
         "pokemon": {
-          "disparo": "executa_principal",
           "comportamento_fim": "destruir"
         },
         "parede": {
-          "disparo": "nenhum",
           "comportamento_fim": "destruir"
         },
         "projetil": {
-          "disparo": "nenhum",
           "comportamento_fim": "destruir"
         },
         "construto": {
-          "disparo": "executa_principal",
           "comportamento_fim": "destruir"
         }
       },
@@ -931,269 +551,122 @@
     },
     "7017": {
       "id": 7017,
-      "csv_code": 17,
       "code": "hiper_presa",
       "nome": "Hiper Presa",
       "tipo": "normal",
       "estilo": "alvo",
-      "estilo_original_csv": "alvo",
       "custo": 45,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (140% de Atk) como dano normal. Se for crítico, o alvo recua. Este ataque não pode ultrapassar 80% de CrC.",
-      "multiplicador_dano": 1.0,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "hiper_presa_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_alvo",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 5",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 1.4,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "alvo": {
-        "grupos_permitidos": [
-          "aliado",
-          "inimigo"
-        ],
-        "alcance": 5.0,
-        "max_alvos": 1,
-        "intervalo_entre_alvos": 0
+        "grupo_permitido": "inimigo",
+        "alcance": 3.5
       }
     },
     "7018": {
       "id": 7018,
-      "csv_code": 18,
       "code": "investida_selvagem",
       "nome": "Investida Selvagem",
       "tipo": "normal",
       "estilo": "impulso",
-      "estilo_original_csv": "Impulso",
       "custo": 70,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Causa (180% de Atk) como dano normal e avança com (105% de Vel). O usuário recebe 25% do dano causado; se errar, recebe 50% do dano causado.",
-      "multiplicador_dano": 1.8,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "investida_selvagem_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_impulso",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 7",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 1.8,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "movimento_ofensivo": {
         "modo": "impulso",
-        "vel_percentual_min": 1.05,
-        "vel_percentual_max": 1.05,
-        "desaceleracao_base": null,
+        "distancia_min": 0.5,
+        "distancia_max": 4.0,
         "atravessa_pokemon": false
       }
     },
     "7020": {
       "id": 7020,
-      "csv_code": 20,
       "code": "danca_da_chuva",
       "nome": "Dança da chuva",
       "tipo": "agua",
       "estilo": "status",
-      "estilo_original_csv": "status",
       "custo": 15,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Deixe o clima como chuvoso",
-      "multiplicador_dano": 0.0,
-      "fonte_dano": "nenhum",
-      "tipo_dano": "nenhum",
-      "pode_criticar": false,
-      "aplica_stab": false,
       "executes": {
         "principal": "danca_da_chuva_principal",
-        "estado": "aplicar_clima_chuvoso",
+        "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_status",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 8",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
       "status": {
-        "autouso": true
+        "clima": "chuvoso"
       }
     },
     "7021": {
       "id": 7021,
-      "csv_code": 21,
       "code": "bomba_de_lama",
       "nome": "Bomba de lama",
       "tipo": "terrestre",
       "estilo": "zona",
-      "estilo_original_csv": "zona",
       "custo": 30,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "causa (50% de atk) e deixa toda area com o efeito de lama",
-      "multiplicador_dano": 0.5,
-      "fonte_dano": "atk",
-      "tipo_dano": "normal",
-      "pode_criticar": true,
-      "aplica_stab": true,
       "executes": {
         "principal": "bomba_de_lama_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_zona",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 8",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
+      "multiplicador_dano": 0.5,
+      "pode_criticar": true,
+      "aplica_stab": true,
       "zona": {
-        "raio": 2.0,
-        "alcance_max_centro": 6.0
+        "raio": 1.8,
+        "alcance_max_centro": 6.0,
+        "duracao_turnos": 1
       }
     },
     "7022": {
       "id": 7022,
-      "csv_code": 22,
       "code": "parede",
       "nome": "Parede",
       "tipo": "normal",
-      "estilo": "irregular",
-      "estilo_original_csv": "Irregular",
+      "estilo": "parede",
       "custo": 20,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "construa uma parede",
-      "multiplicador_dano": 0.0,
-      "fonte_dano": "nenhum",
-      "tipo_dano": "nenhum",
-      "pode_criticar": false,
-      "aplica_stab": false,
       "executes": {
         "principal": "parede_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_irregular",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 7",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
-      "irregular": {
-        "tipo_irregular": "parede",
-        "pontos_necessarios": 2,
+      "parede": {
+        "alcance_primeiro_ponto": 6.0,
         "distancia_max_entre_pontos": 4.0,
         "largura": 0.25,
-        "cria_objeto": "parede"
+        "fixa": true
       }
     },
     "7023": {
       "id": 7023,
-      "csv_code": 23,
       "code": "acumulador",
       "nome": "Acumulador",
       "tipo": "normal",
       "estilo": "passiva",
-      "estilo_original_csv": "passiva",
       "custo": 0,
       "intervalo": 1.0,
-      "nivel_considerado": 1,
-      "descricao_nivel_1": "Toda vez que esse pokemon sofre qualquer instancia de dano ele aumenta o seu Atk e Spa em 5%",
-      "multiplicador_dano": 0.0,
-      "fonte_dano": "nenhum",
-      "tipo_dano": "nenhum",
-      "pode_criticar": false,
-      "aplica_stab": false,
       "executes": {
-        "principal": "acumulador_passiva",
+        "principal": "acumulador_principal",
         "estado": null,
         "perifericos": []
       },
-      "condicoes": {},
-      "visual": {
-        "preview": "preview_passiva",
-        "efeito_alvo": "-",
-        "projetil_imagem": null
-      },
-      "implementacao": {
-        "fase_planejada": "Fase 8",
-        "logica_real_implementada": false,
-        "pendencias": [
-          "Ajustar valores finos de balanceamento por ataque.",
-          "Implementar execute real no motor por turnos futuro."
-        ]
-      },
       "passiva": {
-        "preparavel": false,
-        "gatilhos": [
-          "AoReceberDano"
-        ],
-        "efeito": {
-          "tipo": "modificar_atributos_percentual",
-          "atributos": [
-            "Atk",
-            "SpA"
-          ],
-          "percentual": 5,
-          "duracao": "permanente"
-        }
+        "gatilho": "ao_sofrer_dano"
       }
     }
   }

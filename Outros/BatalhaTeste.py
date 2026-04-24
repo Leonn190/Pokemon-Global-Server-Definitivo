@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import csv
+import os
+import random
 import sys
 from pathlib import Path
 
@@ -24,18 +26,19 @@ def carregar_especies_validas() -> list[str]:
         return [str(row.get("Nome") or "").strip() for row in csv.DictReader(f) if str(row.get("Nome") or "").strip()]
 
 
-def resolver_especies(preferidas: list[str], fallback: list[str], total: int = 6) -> list[str]:
-    escolhidas: list[str] = []
-    fallback_set = {x.casefold() for x in fallback}
-    for nome in preferidas:
-        if nome.casefold() in fallback_set:
-            escolhidas.append(nome)
-    for nome in fallback:
-        if len(escolhidas) >= total:
-            break
-        if nome.casefold() not in {x.casefold() for x in escolhidas}:
-            escolhidas.append(nome)
-    return escolhidas[:total]
+def sortear_especies(especies: list[str], total: int = 12) -> list[str]:
+    unicas = list(dict.fromkeys(nome for nome in especies if str(nome).strip()))
+    seed = os.environ.get("BATALHA_TESTE_SEED")
+    rng = random.Random(seed) if seed else random.Random()
+    if len(unicas) >= total:
+        return rng.sample(unicas, total)
+    if not unicas:
+        raise RuntimeError("Nenhuma especie valida encontrada no CSV de Pokemons.")
+    sorteadas = list(unicas)
+    while len(sorteadas) < total:
+        sorteadas.append(rng.choice(unicas))
+    rng.shuffle(sorteadas)
+    return sorteadas[:total]
 
 
 def montar_time(especies: list[str]) -> dict:
@@ -58,10 +61,9 @@ def main() -> int:
     fonte = pygame.font.SysFont("consolas", 24)
 
     nomes_validos = carregar_especies_validas()
-    pref_jogador = ["Bulbasaur", "Charmander", "Squirtle", "Pikachu", "Caterpie", "Pidgey"]
-    pref_inimigo = ["Rattata", "Spearow", "Ekans", "Sandshrew", "Nidoran", "Zubat"]
-    jogador = resolver_especies(pref_jogador, nomes_validos, total=6)
-    inimigo = resolver_especies(pref_inimigo, list(reversed(nomes_validos)), total=6)
+    sorteio = sortear_especies(nomes_validos, total=12)
+    jogador = sorteio[:6]
+    inimigo = sorteio[6:12]
 
     time_jogador = montar_time(jogador)
     time_inimigo = montar_time(inimigo)
@@ -76,6 +78,7 @@ def main() -> int:
         "centro": [40.0, 20.0],
         "modo_teste": False,
         "energia_infinita_teste": False,
+        "batalha_teste_local": True,
         "client_id": "batalha_teste_local",
     }
 
@@ -96,7 +99,7 @@ def main() -> int:
         controlador.Contexto["energia_infinita_teste"] = ativo
 
     while rodando:
-        dt = clock.tick(60) / 1000.0
+        dt = clock.tick(180) / 1000.0
         eventos = pygame.event.get()
         for ev in eventos:
             if ev.type == pygame.QUIT:
@@ -112,7 +115,9 @@ def main() -> int:
         controlador.atualizar(eventos, dt)
 
         tela.fill((22, 24, 30))
-        controlador.renderizar(tela, camera)
+        controlador.renderizar_arena(tela, camera)
+        hud.desenhar_indicadores_campo(tela)
+        controlador.renderizar_pokemons(tela, camera)
         hud.desenhar(tela, eventos, dt)
 
         pygame.draw.rect(tela, (28, 44, 62), botao, border_radius=8)
@@ -124,6 +129,8 @@ def main() -> int:
 
         topo = fonte.render("BatalhaTeste.py | ambiente 6v6 local", True, (250, 250, 210))
         tela.blit(topo, (20, 20))
+        fps_txt = fonte.render(f"{clock.get_fps():.0f} FPS", True, (240, 247, 255))
+        tela.blit(fps_txt, fps_txt.get_rect(topright=(tela.get_width() - 20, 18)))
         pygame.display.flip()
 
     pygame.quit()

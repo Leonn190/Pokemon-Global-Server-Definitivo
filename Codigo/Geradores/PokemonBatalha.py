@@ -453,9 +453,14 @@ class PokemonBatalha:
             0.15,
         )
         self.DiametroTiles = max(0.4, base_tamanho + max(0.0, float(self.Escala)) * max(0.01, incremento))
-        self.TamanhoTiles = max(0.0, self._numero(dados.get("tamanho_tiles", self.TamanhoTiles or self.DiametroTiles), self.DiametroTiles))
+        dados_batalha = (
+            "atributos" in dados or "atributos_base" in dados or "slot_ativo" in dados or "slot_time" in dados
+        )
+        tamanho_recebido = dados.get("tamanho_tiles") if dados_batalha else None
+        raio_recebido = dados.get("raio_colisao") if dados_batalha else None
+        self.TamanhoTiles = max(0.0, self._numero(tamanho_recebido, self.DiametroTiles))
         self.DiametroTiles = self.TamanhoTiles
-        self.RaioColisao = max(0.0, self._numero(dados.get("raio_colisao", self.RaioColisao or (self.TamanhoTiles * 0.5)), self.TamanhoTiles * 0.5))
+        self.RaioColisao = max(0.0, self._numero(raio_recebido, self.TamanhoTiles * 0.5))
 
         atributos_base_brutos = dict(dados.get("atributos_base") or {})
         atributos_atuais_brutos = dict(dados.get("atributos") or {})

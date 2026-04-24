@@ -116,6 +116,7 @@ class PokemonAnimator:
         self._efeitos_ataque: List[Dict[str, object]] = []
         self._fluxos: List[Dict[str, object]] = []
         self._projeteis: List[Dict[str, object]] = []
+        self._marcacoes_selecionaveis: List[Dict[str, object]] = []
         self._movimento: Dict[str, object] | None = None
         self._morte: Dict[str, object] | None = None
         self._corpo_oculto = False
@@ -131,12 +132,14 @@ class PokemonAnimator:
         self._atualizar_efeitos_ataque(dt)
         self._atualizar_fluxos(dt)
         self._atualizar_projeteis(dt)
+        self._atualizar_marcacoes_selecionaveis(dt)
         self._atualizar_movimento(dt)
         self._atualizar_morte(dt)
 
     def renderizar(self, tela: pygame.Surface, camera) -> None:
         self._desenhar_fluxos(tela, camera)
         self._desenhar_projeteis(tela, camera)
+        self._desenhar_marcacoes_selecionaveis(tela, camera)
         self._desenhar_efeitos_ataque(tela, camera)
         self._desenhar_flash(tela, camera)
         self._desenhar_setas(tela, camera)
@@ -194,6 +197,15 @@ class PokemonAnimator:
             'duracao': 0.6,
         }
         self._corpo_oculto = False
+
+    def marcar_selecionavel(self, *, cor: Tuple[int, int, int] = (255, 86, 86), duracao_s: float = 0.18) -> None:
+        self._marcacoes_selecionaveis.append(
+            {
+                'cor': tuple(cor),
+                'tempo': 0.0,
+                'duracao': max(0.05, float(duracao_s)),
+            }
+        )
 
     def restaurar_visual_corpo(self) -> None:
         self._morte = None
@@ -368,6 +380,14 @@ class PokemonAnimator:
             if float(projetil['tempo']) < float(projetil['duracao']):
                 novos.append(projetil)
         self._projeteis = novos
+
+    def _atualizar_marcacoes_selecionaveis(self, dt: float) -> None:
+        novos = []
+        for marca in self._marcacoes_selecionaveis:
+            marca['tempo'] = float(marca['tempo']) + dt
+            if float(marca['tempo']) < float(marca['duracao']):
+                novos.append(marca)
+        self._marcacoes_selecionaveis = novos
 
     def _atualizar_movimento(self, dt: float) -> None:
         if self._movimento is None:
@@ -627,6 +647,26 @@ class PokemonAnimator:
                 max(1, int(raio_px * 0.6)),
             )
             tela.blit(camada, camada.get_rect(center=(int(atual_px[0]), int(atual_px[1]))))
+
+    def _desenhar_marcacoes_selecionaveis(self, tela: pygame.Surface, camera) -> None:
+        if not self._marcacoes_selecionaveis:
+            return
+        centro = self.Pokemon.centro_tela(camera)
+        raio = self.Pokemon.raio_px(camera)
+        pulso = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 115.0)
+        for marca in self._marcacoes_selecionaveis[-2:]:
+            cor = tuple(marca.get('cor') or (255, 86, 86))
+            alpha = int(90 + 120 * pulso)
+            largura = max(3, int(raio * (0.10 + 0.04 * pulso)))
+            camada = pygame.Surface((raio * 4, raio * 4), pygame.SRCALPHA)
+            pygame.draw.circle(
+                camada,
+                (int(cor[0]), int(cor[1]), int(cor[2]), alpha),
+                (camada.get_width() // 2, camada.get_height() // 2),
+                int(raio * (1.05 + 0.08 * pulso)),
+                largura,
+            )
+            tela.blit(camada, camada.get_rect(center=centro))
 
     def _desenhar_flash(self, tela: pygame.Surface, camera) -> None:
         if not self._flashes:

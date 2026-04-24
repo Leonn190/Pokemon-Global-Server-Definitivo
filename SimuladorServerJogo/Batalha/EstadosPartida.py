@@ -34,7 +34,8 @@ ESTILOS_ATAQUE_VALIDOS = (
     "dash",
     "impulso",
     "passiva",
-    "irregular",
+    "parede",
+    "explosivo",
 )
 
 

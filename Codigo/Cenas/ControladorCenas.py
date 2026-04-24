@@ -165,7 +165,7 @@ class ControladorCenas:
                 if e.type == pygame.QUIT:
                     self.SolicitarSair()
 
-            if self.CenaAlvo is not None:
+            if self.CenaAlvo is not None and self.Escuro == 100:
                 self._garantir_preparacao_transicao()
             if self.CenaAlvo is not None and self.Escuro == 100 and self._preparacao_transicao_concluida():
                 self.DefinirCena()

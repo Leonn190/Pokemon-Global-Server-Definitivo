@@ -14,7 +14,6 @@ from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publicas, carregar_regras_pokemons
-from SimuladorServerJogo.Batalha.GerenciadorBatalhas import GERENCIADOR_BATALHAS
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
@@ -397,7 +396,7 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 centro = payload.get("centro") if isinstance(payload.get("centro"), (list, tuple)) and len(payload.get("centro")) == 2 else payload.get("player_pos")
                 if not isinstance(centro, (list, tuple)) or len(centro) != 2:
                     centro = [0.0, 0.0]
-                contexto = _coletar_contexto_batalha_servidor((float(centro[0]), float(centro[1])), rx=50, ry=30)
+                contexto = _coletar_contexto_batalha_servidor((float(centro[0]), float(centro[1])), rx=40, ry=20)
                 obj_id_ctx = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 obj_ctx = BANCO_DADOS.obter_objeto(obj_id_ctx) if obj_id_ctx > 0 else None
                 estado_ctx = getattr(obj_ctx, "estado_extra", {}) if isinstance(getattr(obj_ctx, "estado_extra", {}), dict) else {}
@@ -410,20 +409,9 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     contexto["centro"] = [float(contexto.get("largura", 60) * 0.5), float(contexto.get("altura", 40) * 0.5)]
                 return _ok("Contexto de batalha pronto", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
             if categoria in {"batalha_iniciar", "combate_iniciar"}:
-                resposta = GERENCIADOR_BATALHAS.iniciar_batalha(
-                    client_id=client_id,
-                    contexto_batalha=payload.get("contexto_batalha") if isinstance(payload.get("contexto_batalha"), dict) else {},
-                )
-                resposta["client_id"] = client_id
-                return _serializar_resposta(resposta, serializar_resposta)
+                return _ok("Sistema de batalha desativado", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
             if categoria in {"batalha_jogada", "combate_jogada"}:
-                resposta = GERENCIADOR_BATALHAS.receber_jogadas(
-                    client_id=client_id,
-                    batalha_id=str(payload.get("batalha_id") or ""),
-                    jogadas=payload.get("jogadas") if isinstance(payload.get("jogadas"), list) else [],
-                )
-                resposta["client_id"] = client_id
-                return _serializar_resposta(resposta, serializar_resposta)
+                return _ok("Jogada ignorada; sistema de batalha desativado", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
             if categoria == "pokemon_derrotado_batalha":
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
                 if pokemon_id > 0:

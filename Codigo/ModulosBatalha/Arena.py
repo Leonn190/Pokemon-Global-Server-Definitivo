@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple
 import pygame
 
 from Codigo.Geradores.EstruturaNaturais import EstruturaNaturalFake, tipo_estrutura_natural_por_codigo
+from Codigo.ModulosGerais.GerenciadorTiles import GerenciadorTiles
 
 Vector2 = Tuple[float, float]
 
@@ -24,9 +25,13 @@ class Arena:
         self._cores = {
             0: (24, 72, 145), 1: (64, 156, 255), 2: (106, 190, 48), 3: (46, 125, 50),
             4: (230, 210, 140), 5: (217, 179, 92), 6: (245, 248, 252), 7: (140, 82, 255),
-            8: (88, 70, 70), 9: (110, 92, 68),
+            8: (88, 70, 70), 9: (110, 92, 68), 10: (226, 238, 252), 11: (206, 224, 243),
         }
         self._cache_sprites: Dict[Tuple[str, int], pygame.Surface] = {}
+        self._grid_tiles: List[List[int]] = [[0 for _ in range(max(1, self.Largura))] for _ in range(max(1, self.Altura))]
+        self._renderizador_tiles = GerenciadorTiles(cores_blocos=self._cores)
+        self._cache_mapa: pygame.Surface | None = None
+        self._cache_tile_px = 0
         self._montar()
 
     def _retangulo_arena(self) -> pygame.Rect:
@@ -43,16 +48,16 @@ class Arena:
             ty = int(item.get("y", 0) or 0)
             bloco = int(item.get("bloco", 0) or 0)
             self._tiles.append((tx, ty, bloco))
+            if 0 <= ty < self.Altura and 0 <= tx < self.Largura:
+                self._grid_tiles[ty][tx] = bloco
 
         arena_rect = self._retangulo_arena()
-        margem = 3
-        area_exclusao = pygame.Rect(arena_rect.x - margem, arena_rect.y - margem, arena_rect.w + margem * 2, arena_rect.h + margem * 2)
         for item in self.Contexto.get("estruturas", []):
             if not isinstance(item, dict):
                 continue
             x = float(item.get("x", 0.0) or 0.0)
             y = float(item.get("y", 0.0) or 0.0)
-            if area_exclusao.collidepoint(x, y):
+            if arena_rect.collidepoint(x, y):
                 continue
             codigo = int(item.get("codigo_natural", 0) or 0)
             sprite = str(item.get("sprite", "") or "")
@@ -97,9 +102,18 @@ class Arena:
 
     def renderizar(self, tela, camera) -> None:
         tile_px = max(1, int(getattr(camera, "TilePx", 40) or 40))
-        for tx, ty, bloco in self._tiles:
-            px, py = camera.mundo_para_tela_px((tx, ty))
-            pygame.draw.rect(tela, self._cores.get(bloco, (255, 0, 255)), (int(px), int(py), tile_px + 1, tile_px + 1))
+        if self._cache_mapa is None or self._cache_tile_px != tile_px:
+            self._cache_mapa = self._renderizador_tiles.renderizar_chunk(
+                chave_chunk=(0, 0),
+                grid=self._grid_tiles,
+                tile_px=tile_px,
+                tamanho_chunk=max(self.Largura, self.Altura, 1),
+            )
+            self._cache_tile_px = tile_px
+        if self._cache_mapa is None:
+            return
+        x0, y0 = camera.mundo_para_tela_px((0, 0))
+        tela.blit(self._cache_mapa, (int(x0), int(y0)))
 
         for estrutura in self._estruturas_fundo:
             px, py = camera.mundo_para_tela_px(estrutura.Posicao)
@@ -108,9 +122,3 @@ class Arena:
                 pygame.draw.circle(tela, (92, 72, 52), (int(px), int(py)), max(4, tile_px // 4))
                 continue
             tela.blit(sprite, sprite.get_rect(center=(int(px), int(py))))
-
-        rect = self._retangulo_arena()
-        x0, y0 = camera.mundo_para_tela_px((rect.x, rect.y))
-        border = pygame.Rect(int(x0), int(y0), int(rect.w * tile_px), int(rect.h * tile_px))
-        pygame.draw.rect(tela, (245, 228, 130), border, width=max(2, tile_px // 10), border_radius=5)
-        self._desenhar_grid_arena(tela, camera, tile_px)

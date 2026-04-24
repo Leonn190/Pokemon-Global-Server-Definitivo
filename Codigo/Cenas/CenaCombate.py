@@ -1,10 +1,7 @@
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.Camera import CameraBatalha
-from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
-from Codigo.ModulosBatalha.FinalizadorBatalha import FinalizadorBatalha
-from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
+from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
-from Codigo.Telas.SubtelaFinalizacao import SubtelaFinalizacao
 from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo, solicitar_contexto_batalha_mundo
 from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
@@ -15,6 +12,8 @@ import pygame
 class CenaCombate:
     def PrepararTransicaoAssincrona(self, JOGO) -> None:
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
+        if str(contexto.get("tipo") or "confronto").strip().lower() not in {"confronto", "treinador", "trainer"}:
+            return
         tiles = contexto.get("tiles")
         if isinstance(tiles, list) and tiles:
             return
@@ -71,9 +70,7 @@ class CenaCombate:
             (arena_w, arena_h),
         )
         self.Camera.atualizar(0.0)
-        self.ControladorBatalha = ControladorBatalha(contexto)
-        self.FinalizadorBatalha = FinalizadorBatalha(self.ControladorBatalha)
-        self.ElementosHudBatalha = ElementosHudBatalha(controlador_batalha=self.ControladorBatalha, camera=self.Camera, ao_fugir=lambda: self._fugir_combate(JOGO))
+        self.Arena = Arena(contexto)
 
         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
@@ -90,9 +87,8 @@ class CenaCombate:
 
     def _meta_terminal_batalha(self, jogo) -> dict:
         contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
-        batalha_id_ctx = str(contexto.get("batalha_id_servidor") or getattr(getattr(self, "ControladorBatalha", None), "Contexto", {}).get("batalha_id_servidor") or "")
         meta = {
-            "batalha_id": batalha_id_ctx,
+            "batalha_id": str(contexto.get("batalha_id_servidor") or ""),
             "client_id": str(contexto.get("client_id") or jogo.INFO.get("UsuarioLogado", "anon")),
         }
         return meta
@@ -100,13 +96,7 @@ class CenaCombate:
     def _enviar_terminal_batalha(self, link: str, usuario: str, texto: str) -> dict:
         if not link:
             return {"status": "erro", "mensagem": "Servidor indisponível"}
-        retorno = enviar_mensagem_terminal(link, usuario, texto, contexto="batalha", meta=self._meta_terminal_batalha(self._jogo_ref))
-        atualizacao = retorno.get("batalha_atualizacao") if isinstance(retorno, dict) else {}
-        batalha = atualizacao.get("batalha") if isinstance(atualizacao, dict) and isinstance(atualizacao.get("batalha"), dict) else {}
-        if batalha:
-            self.ControladorBatalha.atualizar_estado_servidor({"batalha": batalha})
-            self.ControladorBatalha.Contexto["batalha_servidor_ultimo_comando"] = {"batalha": batalha}
-        return retorno
+        return enviar_mensagem_terminal(link, usuario, texto, contexto="batalha", meta=self._meta_terminal_batalha(self._jogo_ref))
 
     def _fugir_combate(self, jogo) -> None:
         jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
@@ -120,10 +110,6 @@ class CenaCombate:
     def atualizar_cena(self, JOGO, EVENTOS, dt):
         if self.TelaAtual == "Config":
             return
-        if self.FinalizadorBatalha.pronto() and JOGO.GerenciadorSubtelas.obter_por_tipo(SubtelaFinalizacao) is None:
-            subtela_final = self.FinalizadorBatalha.criar_subtela(JOGO)
-            if subtela_final is not None:
-                JOGO.GerenciadorSubtelas.abrir(subtela_final)
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
         eventos_ui = list(EVENTOS or [])
         if self.Terminal is not None:
@@ -139,12 +125,9 @@ class CenaCombate:
         terminal_digitando = bool(self.Terminal is not None and self.Terminal.esta_digitando)
         bloqueado = opcoes_modal is not None or terminal_digitando
         if not bloqueado:
-            eventos_camera = self.ElementosHudBatalha.filtrar_eventos_camera(JOGO.TELA, eventos_ui, dt)
-            self.Camera.processar_eventos(eventos_camera)
-        eventos_batalha = [] if terminal_digitando else eventos_ui
+            self.Camera.processar_eventos(eventos_ui)
         self._eventos_ui_atual = list(eventos_ui)
         self.Camera.atualizar(dt)
-        self.ControladorBatalha.atualizar(eventos_batalha, dt)
 
     def tela_atual_eh_complexa(self) -> bool:
         return self.TelaAtual != "Config"
@@ -156,17 +139,13 @@ class CenaCombate:
     def render_base(self, surface, JOGO, EVENTOS, dt):
         _ = (JOGO, EVENTOS, dt)
         surface.fill((20, 20, 28))
-        self.ControladorBatalha.renderizar_arena(surface, self.Camera)
-        self.ElementosHudBatalha.desenhar_indicadores_campo(surface)
-        self.ControladorBatalha.renderizar_pokemons(surface, self.Camera)
+        self.Arena.renderizar(surface, self.Camera)
 
     def render_post(self, surface, JOGO, EVENTOS, dt):
         _ = (surface, JOGO, EVENTOS, dt)
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         eventos_ui = list(getattr(self, "_eventos_ui_atual", EVENTOS) or [])
-        terminal_digitando = bool(self.Terminal is not None and self.Terminal.esta_digitando)
-        self.ElementosHudBatalha.desenhar(surface, [] if terminal_digitando else eventos_ui, dt)
         if self.Terminal is not None:
             self.Terminal.desenhar(surface, eventos_ui, dt)
 

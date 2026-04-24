@@ -5,7 +5,6 @@ import threading
 import time
 
 from SimuladorServerJogo.Logica.Comandos.Comandos import executar_comando_terminal
-from SimuladorServerJogo.Logica.Comandos.ComandosBatalha import executar_comando_batalha
 
 _TERMINAL_LOCK = threading.Lock()
 _TERMINAL_ID = 0
@@ -47,7 +46,7 @@ def processar_terminal_json(requisicao_json: str) -> str:
             return _erro("texto obrigatório")
         texto = texto[:220]
         if texto.startswith("/"):
-            cmd = executar_comando_batalha(autor, texto, meta=meta) if contexto == "batalha" else executar_comando_terminal(autor, texto)
+            cmd = {"ok": False, "feedback": "Comandos de batalha desativados"} if contexto == "batalha" else executar_comando_terminal(autor, texto)
             if cmd.get("ok"):
                 with _TERMINAL_LOCK:
                     msg = {

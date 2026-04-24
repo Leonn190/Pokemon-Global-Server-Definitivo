@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import json
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -18,6 +19,7 @@ from Codigo.Prefabs.Tooltip import Tooltip
 
 
 class FichaPokemonBatalha:
+    _CACHE_ESTILO_ATAQUES: dict[str, str] | None = None
     _COR_FUNDO = (10, 16, 28)
     _COR_SETOR = (12, 20, 34)
     _COR_SETOR_2 = (18, 27, 44)
@@ -164,6 +166,29 @@ class FichaPokemonBatalha:
         surf = FichaPokemon._carregar_surface(caminho, (lado, lado), chave_extra="contain") if caminho is not None else None
         self._cache_ataque_icones[chave] = surf
         return surf
+
+    @classmethod
+    def _estilo_tecnico_ataque(cls, ataque: dict | None) -> str:
+        if cls._CACHE_ESTILO_ATAQUES is None:
+            cls._CACHE_ESTILO_ATAQUES = {}
+            caminho = Path("Dados") / "Pokemon Global Server - PropriedadesAtaque.json"
+            try:
+                dados = json.loads(caminho.read_text(encoding="utf-8"))
+                ataques = dados.get("ataques") if isinstance(dados, dict) else {}
+                if isinstance(ataques, dict):
+                    for item in ataques.values():
+                        if not isinstance(item, dict):
+                            continue
+                        nome = str(item.get("nome") or "").strip().casefold()
+                        estilo = str(item.get("estilo") or "").strip().casefold()
+                        if nome and estilo:
+                            cls._CACHE_ESTILO_ATAQUES[nome] = estilo
+            except Exception:
+                cls._CACHE_ESTILO_ATAQUES = {}
+        nome = str((ataque or {}).get("Ataque") or (ataque or {}).get("Nome") or "").strip().casefold()
+        if not nome:
+            return ""
+        return str(cls._CACHE_ESTILO_ATAQUES.get(nome, str((ataque or {}).get("estilo") or "").casefold()))
 
     def _sincronizar_botoes_habilidade(self, quantidade: int):
         quantidade = max(0, int(quantidade))
@@ -353,7 +378,9 @@ class FichaPokemonBatalha:
                 )
                 botao.render(tela, eventos or [], dt, None)
                 if pode_interagir and botao.clicado:
-                    self._ataque_selecionado = None if selecionado else ataque
+                    estilo = self._estilo_tecnico_ataque(ataque if isinstance(ataque, dict) else None)
+                    if estilo != "passiva":
+                        self._ataque_selecionado = None if selecionado else ataque
                 area_icone = botao.rect.inflate(-10, -10)
                 pygame.draw.rect(
                     tela,
@@ -591,6 +618,9 @@ class FichaPokemonBatalha:
         if idx < 0 or idx >= len(ataques):
             return self._ataque_selecionado
         ataque = ataques[idx]
+        estilo = self._estilo_tecnico_ataque(ataque if isinstance(ataque, dict) else None)
+        if estilo == "passiva":
+            return self._ataque_selecionado
         self._ataque_selecionado = None if ataque == self._ataque_selecionado else ataque
         return self._ataque_selecionado
 

@@ -9,7 +9,7 @@ from Codigo.Geradores.PokemonBatalha import PokemonBatalha
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha, pontos_lados_arena
 from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
-from Codigo.ModulosBatalha.SistemaBatalha import SistemaBatalha
+from Codigo.ModulosBatalha.SistemaBatalha import SistemaBatalha  # Ponte legada temporária até a migração para Partida.
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
@@ -131,6 +131,14 @@ class ControladorBatalha:
         if isinstance(resultado, dict) and "modo_teste" in resultado:
             return bool(resultado.get("modo_teste"))
         return bool(self.Contexto.get("modo_teste", False))
+
+    def definir_modo_teste(self, habilitado: bool) -> None:
+        ativo = bool(habilitado)
+        self.Contexto["modo_teste"] = ativo
+        if hasattr(self.SistemaBatalha, "definir_modo_teste"):
+            self.SistemaBatalha.definir_modo_teste(ativo)
+        elif hasattr(self.SistemaBatalha, "Contexto") and isinstance(self.SistemaBatalha.Contexto, dict):
+            self.SistemaBatalha.Contexto["modo_teste"] = ativo
 
     def pokemon_eh_controlavel(self, pokemon) -> bool:
         if pokemon is None or bool(getattr(pokemon, "EmReserva", False)):

@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-import unicodedata
 
 import pygame
 
@@ -27,8 +26,6 @@ def _i(valor, default=0) -> int:
 
 @dataclass
 class PokemonBatalha:
-    _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
-    _MAPA_ANIMACOES: dict[str, Path] | None = None
     id_batalha: str
     id_original: Any = None
     Nome: str = "Pokemon"
@@ -156,12 +153,27 @@ class PokemonBatalha:
         frames = []
 
         especie = str(self.Especie or info.get("especie") or info.get("Especie") or self.Nome or "").strip()
-        pasta_anim = self._pasta_animacao_por_especie(especie)
-        if pasta_anim is not None:
+        base_anim = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
+        especie_candidatos = [
+            especie,
+            especie.lower(),
+            especie.replace("_", " "),
+            especie.replace("_", " ").lower(),
+            especie.replace(" ", "-").lower(),
+            especie.replace("-", " ").lower(),
+        ]
+        for nome_especie in especie_candidatos:
+            if not nome_especie:
+                continue
+            pasta_anim = base_anim / nome_especie
+            if not pasta_anim.exists() or not pasta_anim.is_dir():
+                continue
             try:
                 frames = carregar_frames(pasta_anim)
             except Exception:
                 frames = []
+            if frames:
+                break
 
         if not frames:
             pistas = [
@@ -184,45 +196,6 @@ class PokemonBatalha:
                 if frames:
                     break
         self.Frames = [f for f in frames if isinstance(f, pygame.Surface)]
-
-    @classmethod
-    def _normalizar_nome_especie(cls, nome: str) -> str:
-        base = "".join(
-            c for c in unicodedata.normalize("NFKD", str(nome or "").lower())
-            if not unicodedata.combining(c)
-        )
-        for ch in ("_", "-", "'", ".", ":", ";", ","):
-            base = base.replace(ch, " ")
-        return " ".join(base.split())
-
-    @classmethod
-    def _mapa_animacoes(cls) -> dict[str, Path]:
-        if cls._MAPA_ANIMACOES is not None:
-            return cls._MAPA_ANIMACOES
-        mapa: dict[str, Path] = {}
-        if cls._PASTA_ANIMACOES.exists():
-            for pasta in cls._PASTA_ANIMACOES.iterdir():
-                if not pasta.is_dir():
-                    continue
-                chave = cls._normalizar_nome_especie(pasta.name)
-                if chave and chave not in mapa:
-                    mapa[chave] = pasta
-        cls._MAPA_ANIMACOES = mapa
-        return cls._MAPA_ANIMACOES
-
-    @classmethod
-    def _pasta_animacao_por_especie(cls, especie: str) -> Path | None:
-        chave = cls._normalizar_nome_especie(especie)
-        if not chave:
-            return None
-        mapa = cls._mapa_animacoes()
-        if chave in mapa:
-            return mapa[chave]
-        chave_sem_espaco = chave.replace(" ", "")
-        for nome_norm, pasta in mapa.items():
-            if nome_norm.replace(" ", "") == chave_sem_espaco:
-                return pasta
-        return None
 
     def atualizar_animacao(self, dt: float):
         if not self.Frames:

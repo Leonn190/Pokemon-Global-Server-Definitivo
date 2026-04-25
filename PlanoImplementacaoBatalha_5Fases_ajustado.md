@@ -103,7 +103,7 @@ Não criar camada de compatibilidade para formato antigo de batalha.
 
 | Fase | Resultado principal | Estado esperado |
 |---|---|---|
-| Fase 1 | `Codigo/Outros/SimuladorBatalha` visual e interativo | Arena, HUD, Pokémon, reserva, seleção, ficha e botões funcionando sem servidor real |
+| Fase 1 | `Outros/SimuladorBatalha.py` visual e interativo | Arena, HUD, Pokémon, reserva, seleção, ficha e botões funcionando sem servidor real |
 | Fase 2 | Montagem de jogadas, indicadores e início da ponte com servidor | Ações preparadas aparecem no painel e são serializadas/enviadas |
 | Fase 3 | Servidor funcional com matemática e diffs | Rodada resolve corretamente, mas sem histórico bonito nem animações |
 | Fase 4 | Histórico completo de logs e animações | Replay visual ordenado por evento, com leitura sólida de log |
@@ -115,7 +115,7 @@ Não criar camada de compatibilidade para formato antigo de batalha.
 
 ## 1.1 Objetivo
 
-Criar um simulador local em `Codigo/Outros/SimuladorBatalha/` para testar a estrutura visual e interativa inicial da Batalha sem depender ainda do servidor real.
+Criar um simulador local simples em `Outros/SimuladorBatalha.py`, na raiz do repositório, para testar a estrutura visual e interativa inicial da Batalha sem depender ainda do servidor real.
 
 Esta fase deve permitir abrir uma janela de teste e ver imediatamente:
 
@@ -139,35 +139,33 @@ O botão `Pronto` nesta fase apenas passa a rodada localmente, incrementa contad
 
 ---
 
-## 1.2 Arquivos a criar
+## 1.2 Arquivo a criar
 
-Criar uma pasta nova:
-
-```text
-Codigo/Outros/SimuladorBatalha/
-```
-
-Arquivos sugeridos:
+Criar apenas um arquivo simples na raiz do repositório:
 
 ```text
-Codigo/Outros/SimuladorBatalha/__init__.py
-Codigo/Outros/SimuladorBatalha/SimuladorBatalha.py
-Codigo/Outros/SimuladorBatalha/ContextoSimuladoBatalha.py
-Codigo/Outros/SimuladorBatalha/MockJogadorBatalha.py
-Codigo/Outros/SimuladorBatalha/README.md
+Outros/SimuladorBatalha.py
 ```
 
-O arquivo principal deve poder ser executado diretamente, por exemplo:
+Não criar pasta própria para o simulador, não criar pacote, não criar `README.md` e não criar arquivos auxiliares. O simulador deve ser um arquivo único, direto e leve, vivendo de imports dos módulos úteis da Batalha, dos prefabs/painéis existentes, dos loaders/dados necessários e das funções reais de geração/materialização de Pokémon.
+
+O arquivo deve poder ser executado diretamente:
 
 ```bash
-python Codigo/Outros/SimuladorBatalha/SimuladorBatalha.py
+python Outros/SimuladorBatalha.py
 ```
 
-ou, se o projeto preferir execução por módulo:
+Responsabilidade desse arquivo único:
 
-```bash
-python -m Codigo.Outros.SimuladorBatalha.SimuladorBatalha
-```
+- abrir uma janela Pygame de teste;
+- montar um contexto local 6v6 sem entrar no mundo;
+- selecionar 6 Pokémon aleatórios para cada lado;
+- usar as funções atuais de geração e materialização de Pokémon;
+- sortear/associar ataques exibíveis;
+- criar um estado inicial simples com 3 ativos e até 3 reservas por lado;
+- inicializar `Arena`, `ControladorBatalha`, `ElementosHudBatalha`, `PlayerBatalha` e `PokemonBatalha`;
+- não criar regra oficial de servidor;
+- não duplicar prefabs, ficha, painel de ações ou visualizador de logs.
 
 ---
 
@@ -219,7 +217,7 @@ Dados/Pokemon Global Server - Ataques.csv
 SimuladorServerJogo/Gerais/Geradores/GeradorPokemon.py
 ```
 
-A fase 1 pode usar o gerador/materializador atual do servidor de forma isolada dentro do simulador, porque a própria v7 aceita essa exceção temporária para inicialização. Porém, essa dependência deve ficar encapsulada no simulador ou no `InicializadorBatalha`, nunca espalhada pela UI.
+A fase 1 deve usar o gerador/materializador real e pode importar tudo que for necessário para montar o contexto 6v6 local. O ponto importante é que esses imports fiquem concentrados no arquivo único `Outros/SimuladorBatalha.py` e não sejam espalhados pela UI.
 
 A geração deve:
 
@@ -389,7 +387,9 @@ Regras da fase 1:
 - clicar em oponente seleciona para visualização;
 - se modo teste estiver ativo, oponente passa a ser controlável;
 - clicar em ataque da ficha seleciona/deseleciona ataque;
-- ataque passivo não deve ser selecionável;
+- ataque com `estilo_logico = "passivo"` não deve ser selecionável;
+- ataque com `estilo_logico = "ativo"` deve ser selecionável e confirmado sem alvo;
+- ataque com `estilo_logico = "alvo"` deve exigir área/alvo;
 - `ESC` limpa ataque selecionado primeiro, depois Pokémon/área selecionada.
 
 A ficha `FichaPokemonBatalha` já tem suporte a seleção de ataques e controle inimigo por `definir_controle_inimigo`. A fase 1 deve reaproveitar isso.
@@ -529,9 +529,7 @@ SimuladorServerJogo/Batalha/Partida.py
 
 Observação de estrutura:
 
-A v7 cita conceitualmente `SimuladorServerJogo/Rotas/RotasBatalha.py`, mas a estrutura atual usa `SimuladorServerJogo/Gerais/Rotas/`. Então a implementação deve seguir o padrão real do projeto, evitando criar uma pasta de rotas duplicada sem necessidade.
-
-Se for preciso compatibilizar ambos, criar apenas um arquivo real e, no máximo, um reexport simples, mas a preferência é respeitar o padrão atual.
+A rota oficial da Batalha deve ficar em `SimuladorServerJogo/Gerais/Rotas/RotasBatalha.py`, seguindo o padrão real do projeto. Não criar `SimuladorServerJogo/Rotas/` duplicado e não criar reexport/camada extra sem necessidade.
 
 ---
 
@@ -552,12 +550,12 @@ O JSON deve conter, no mínimo:
       "Code": 1,
       "nome": "Investida",
       "custo": 40,
-      "estilo_logico": "ativo",
+      "estilo_logico": "alvo",
       "alvificacao": {
         "tipo": "area",
         "quantidade": 1,
         "lados_permitidos": ["lado_oposto"],
-        "requer_ocupante": false
+        "exige_area_ocupada": false
       },
       "animacao": {
         "contato": "avanco",
@@ -578,21 +576,29 @@ Campos mínimos por ataque:
 - `nome`;
 - `custo`, se sobrescrever CSV;
 - `estilo_logico`;
-- `alvificacao`;
+- `alvificacao`, apenas quando `estilo_logico = "alvo"`;
 - `animacao`;
 - `execute_principal`;
 - `execute_alvificacao`, quando existir;
 - `executes_perifericos`, quando existir;
 - parâmetros extras simples.
 
+Semântica obrigatória de `estilo_logico`:
+
+- `alvo`: o ataque exige seleção de alvo/área e possui `alvificacao`;
+- `ativo`: o ataque é ativado diretamente, sem escolha de alvo; não deve trazer `alvificacao` de seleção;
+- `passivo`: o ataque não é selecionável/acionável pela ficha e só roda por flags/passivas.
+
 Regras obrigatórias:
 
 - ataque sem JSON não roda;
 - na ficha, ataque sem JSON deve aparecer bloqueado/desabilitado ou não selecionável;
-- alvo serializado é `area_id` por padrão;
-- mesmo se o clique for no Pokémon, enviar a área;
-- ataque pode mirar área vazia por padrão;
-- usar `requer_ocupante: true` para exceções;
+- ataques com `estilo_logico = "alvo"` serializam o alvo como `area_id` por padrão;
+- mesmo se o clique for no Pokémon, ataque de alvo envia a área ocupada por ele;
+- ataque de alvo pode mirar área vazia por padrão;
+- usar `exige_area_ocupada: true` para exceções;
+- ataques com `estilo_logico = "ativo"` não serializam alvo e executam diretamente no usuário/partida;
+- ataques com `estilo_logico = "passivo"` não entram na montagem manual;
 - linha/coluna devem guardar a referência necessária para recalcular na execução.
 
 ---
@@ -780,13 +786,13 @@ Resposta mínima aceita nesta fase:
   "status": "ok",
   "mensagem": "Jogada recebida",
   "id_partida": "...",
-  "estado_batalha": "aguardando" ou "resolvido_stub",
+  "estado_batalha": "aguardando" ou "recebido_stub",
   "avisos": [],
   "erros": []
 }
 ```
 
-Se a fase 2 ainda não resolver rodada, o servidor pode retornar `aguardando` ou `stub`. Mas a jogada precisa ser serializada corretamente.
+A fase 2 deve ter apenas um servidor mínimo/stub de recebimento: ele registra/aceita a jogada e devolve resposta serializável, mas ainda não faz matemática real de dano, cura, efeitos, ordenação completa ou resultado de rodada. Essa matemática entra na Fase 3.
 
 ---
 
@@ -798,7 +804,9 @@ Na fase 2, modo teste deve:
 
 - permitir controlar Pokémon oponentes;
 - permitir preparar ações do lado oponente;
-- permitir preparar jogadas para ambos os lados no simulador;
+- permitir preparar manualmente as ações dos dois lados no simulador;
+- ao clicar em `Pronto`, enviar as ações dos dois lados juntas no mesmo pacote/fluxo de rodada, como acontecerá futuramente quando a IA existir;
+- manter a IA desativada nesta fase, porque no teste manual o usuário faz o papel dos dois lados;
 - ignorar bloqueio por energia na montagem;
 - marcar no pacote se a ação foi criada em modo teste, se isso for útil para debug.
 
@@ -820,8 +828,8 @@ A fase 2 está pronta quando:
 - remover ação funciona;
 - energia prevista atualiza ficha e barra;
 - modo teste remove bloqueio por energia;
-- botão pronto envia pacote serializável;
-- servidor mínimo recebe a jogada sem objetos Python complexos;
+- botão pronto envia pacote serializável; em modo teste, envia as ações dos dois lados juntas;
+- servidor mínimo/stub recebe a jogada sem objetos Python complexos e sem resolver matemática real;
 - ataque mira `area_id`, não objeto Pokémon;
 - JSON de propriedades dos ataques existe e é usado pelo montador.
 
@@ -862,7 +870,6 @@ A resposta pode conter `resultado`/diff final suficiente para o cliente atualiza
 Criar a lógica nova em fontes `.py` reais:
 
 ```text
-SimuladorServerJogo/Batalha/__init__.py
 SimuladorServerJogo/Batalha/GerenciadorPartidas.py
 SimuladorServerJogo/Batalha/Partida.py
 SimuladorServerJogo/Batalha/PokemonBatalha.py
@@ -1608,7 +1615,6 @@ Comportamento:
 Criar:
 
 ```text
-Codigo/ModulosBatalha/IA/__init__.py
 Codigo/ModulosBatalha/IA/ControladorIA.py
 ```
 
@@ -1631,7 +1637,7 @@ Comportamento inicial recomendado:
 
 - localizar Pokémon ativos vivos do lado controlado;
 - ignorar Pokémon sem energia suficiente, salvo movimento/troca simples;
-- escolher ataque ativo não passivo;
+- escolher ataque com `estilo_logico = "alvo"` ou `estilo_logico = "ativo"`; nunca escolher ataque `passivo` como ação manual;
 - priorizar alvo em área ocupada por adversário;
 - se não houver alvo bom, pode mirar área provável ou enviar jogada vazia;
 - ocasionalmente mover para área livre;

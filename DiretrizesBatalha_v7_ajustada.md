@@ -522,8 +522,9 @@ Dados/
   JSON de propriedades dos ataques
 
 SimuladorServerJogo/
-  Rotas/
-    RotasBatalha.py
+  Gerais/
+    Rotas/
+      RotasBatalha.py
 
   Batalha/
     GerenciadorPartidas.py
@@ -2169,7 +2170,7 @@ Regras fechadas:
 - Não existe mais regra de ricochete neste modelo.
 - Não existe parede como colisão de ataque neste modelo.
 - Não precisa declarar imunidades genéricas no JSON neste momento.
-- O estilo básico de ataque deve distinguir principalmente ataque ativo/passivo conforme o modelo atual.
+- O estilo lógico do ataque deve distinguir três casos: `alvo`, `ativo` e `passivo`. `alvo` exige seleção de alvo/área e possui alvificação; `ativo` é acionado diretamente sem seleção de alvo; `passivo` não é acionado manualmente e roda por flags/passivas.
 - A animação/projétil visual vem do JSON, mas a execução real continua no servidor.
 
 
@@ -2182,8 +2183,9 @@ Esse JSON é mais intenso que o CSV e determina como o ataque funciona em termos
 ### Campos conceituais esperados
 
 - ID/code do ataque;
-- regra de alvificação;
-- número de alvos;
+- estilo lógico (`alvo`, `ativo` ou `passivo`);
+- regra de alvificação, quando o estilo lógico for `alvo`;
+- número de alvos, quando o estilo lógico for `alvo`;
 - lado permitido do alvo;
 - formato de alvo: regular, linha, coluna, múltiplas linhas, múltiplas colunas etc.;
 - animação de contato: tiro, avanço, salto, nenhum;
@@ -2213,7 +2215,7 @@ Garante que o JSON tenha formato mínimo esperado.
 
 ### Alvificação
 
-A alvificação define como o jogador pode escolher os alvos do ataque.
+A alvificação existe apenas para ataques de `estilo_logico = "alvo"`. Ela define como o jogador pode escolher os alvos do ataque. Ataques de `estilo_logico = "ativo"` são confirmados sem alvo, e ataques de `estilo_logico = "passivo"` não são montados manualmente pela ficha.
 
 Formatos possíveis:
 
@@ -2269,7 +2271,7 @@ A execução real dos efeitos deve acontecer no servidor. O cliente usa o JSON p
 
 ---
 
-## 21. `SimuladorServerJogo/Rotas/RotasBatalha.py`
+## 21. `SimuladorServerJogo/Gerais/Rotas/RotasBatalha.py`
 
 ### Atualização v5 — três rotas
 
@@ -2288,7 +2290,7 @@ A rota de jogada pode retornar log, e o resultado fica dentro do log.
 
 Receber as duas chamadas de batalha vindas do client através de `Codigo/Server/ServerBatalha.py` e encaminhar para `GerenciadorPartidas`.
 
-Caso o projeto já tenha um arquivo central de rotas com outro nome, a implementação deve adicionar as rotas de batalha nele em vez de criar duplicata desnecessária.
+A rota oficial da Batalha deve seguir o padrão real do projeto em `SimuladorServerJogo/Gerais/Rotas/RotasBatalha.py`. Não criar `SimuladorServerJogo/Rotas/` duplicado.
 
 ### `selfs`/estado relevante, caso seja classe
 
@@ -4070,8 +4072,7 @@ Todo ataque inicial deve ter uma entrada no JSON de propriedades com, no mínimo
   "nome": "Investida",
   "tipo": "normal",
   "custo": 40,
-  "estilo": "alvo",
-  "modo": "ativo",
+  "estilo_logico": "alvo",
   "alvificacao": {},
   "execucao": {},
   "visual": {},
@@ -4085,9 +4086,11 @@ Campos mínimos esperados por ataque:
 - `nome`: nome legível.
 - `tipo`: tipo elemental do ataque.
 - `custo`: custo base, podendo sobrescrever o CSV se o JSON declarar regra especial.
-- `estilo`: valor do CSV, usado como orientação visual/dados simples.
-- `modo`: `ativo` ou `passivo`.
-- `alvificacao`: como o alvo/área é escolhido.
+- `estilo_logico`: `alvo`, `ativo` ou `passivo`.
+  - `alvo`: exige seleção de alvo/área e possui `alvificacao`.
+  - `ativo`: é acionado diretamente sem escolha de alvo e não deve declarar `alvificacao` de seleção.
+  - `passivo`: não é acionado manualmente pela ficha; roda por flags/passivas.
+- `alvificacao`: como o alvo/área é escolhido, somente para ataques de `estilo_logico = "alvo"`.
 - `execucao`: qual execute principal e quais parâmetros ele recebe.
 - `visual`: animação, projétil genérico, avanço, salto ou nenhum.
 - `flags`: executes periféricos, passivas ou ativações especiais.
@@ -4109,18 +4112,18 @@ Regra padrão:
 |---:|---|---:|---|---|
 | 1 | Investida | 40 | alvo | Dano normal em alvo/área ocupada: `120% de Atk`. Depois, o usuário recebe recuo equivalente a `20% do dano causado`. |
 | 2 | Biscoito | 25 | alvo | Cura alvo aliado/ocupado em `55% de Mag`; aplica stack de Biscoito no alvo e no usuário; cada stack no alvo aumenta a cura. |
-| 3 | Enraivecer | 20 | ativa | Ação ativa no próprio usuário. Se `VidaAtual < 40% da Vida final`, aplica `Amplificado` no usuário. |
-| 4 | Provocar | 20 | ativa | Ação ativa no próprio usuário. Aplica `Provocando` no usuário. |
+| 3 | Enraivecer | 20 | ativo | Ação ativa no próprio usuário. Se `VidaAtual < 40% da Vida final`, aplica `Amplificado` no usuário. |
+| 4 | Provocar | 20 | ativo | Ação ativa no próprio usuário. Aplica `Provocando` no usuário. |
 | 5 | Proteger | 30 | alvo | Aplica estado transitório `protegido` no alvo ocupado. Não é efeito formal do CSV nesta versão. |
 | 6 | Arranhar | 35 | alvo | Dano normal em alvo/área ocupada: `135% de Atk`. |
-| 7 | Recarga | 25 | ativa | Ação ativa no próprio usuário. Após pagar custo, recupera `200% da Ene gasta neste ataque`. |
+| 7 | Recarga | 25 | ativo | Ação ativa no próprio usuário. Após pagar custo, recupera `200% da Ene gasta neste ataque`. |
 | 8 | Energia | 30 | alvo | Dano especial em alvo/área ocupada: `115% de SpA`. |
 | 9 | Hiper Raio | 100 | alvo | Dano especial em fileira/linha: base `150% de SpA`; cada alvo adicional atingido reduz o dano base em `15% de SpA`. |
 | 10 | Guilhotina | 80 | alvo | Dano normal: `80% de Atk`; se for crítico, executa alvo inimigo com `VidaAtual < 25% da Vida final` após o dano. |
 | 11 | Disparo | 35 | alvo | Dano normal em alvo/área ocupada: `100% de Atk`; visual preferencial de projétil genérico. |
 | 12 | Chifrada | 45 | alvo | Dano normal em alvo/área ocupada: `90% de Atk + 40% de Per`. |
 | 13 | Resetar | 30 | alvo | Remove todas as variações permanentes de atributos do alvo ocupado. Pode mirar qualquer lado, conforme JSON. |
-| 14 | Tankar | 60 | ativa | Aplica `Fortificado` no usuário e adiciona `20% de Mag` à menor defesa. Se crítico, também cria barreira de `20% de Mag`. |
+| 14 | Tankar | 60 | ativo | Aplica `Fortificado` no usuário e adiciona `20% de Mag` à menor defesa. Se crítico, também cria barreira de `20% de Mag`. |
 | 15 | Estocada | 35 | alvo | Dano normal: `105% de Atk`; se for a primeira ação de ataque executada na rodada, recebe `+25% de dano`. |
 | 16 | Bola Climática | 50 | alvo | Dano especial: `105% de SpA`; se houver clima ativo, usa `130% de SpA`. Causa splash de `50% do dano causado` em inimigos adjacentes. |
 | 17 | Hiper Presa | 45 | alvo | Dano normal: `140% de Atk`; se crítico, alvo recua. Este ataque limita `CrC` efetivo a no máximo `80%`. |

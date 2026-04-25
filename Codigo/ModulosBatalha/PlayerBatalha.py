@@ -6,7 +6,12 @@ import pygame
 class PlayerBatalha:
     def __init__(self, controlador) -> None:
         self.controlador = controlador
+        self.mouse_down_pos = None
+        self.mouse_down_pokemon = None
+        self.mouse_down_em_hud = False
+        self.arraste_pendente = False
         self.arrastando = False
+        self.drag_threshold_px = 10
 
     def processar_eventos(self, eventos):
         if str(self.controlador.estado_batalha) != "montando_jogada":
@@ -23,27 +28,43 @@ class PlayerBatalha:
 
     def processar_movimento_mouse(self, pos):
         montador = self.controlador.montador_jogadas
+        if self.arraste_pendente and not self.arrastando and self.mouse_down_pos is not None and self.mouse_down_pokemon is not None:
+            dx = float(pos[0]) - float(self.mouse_down_pos[0])
+            dy = float(pos[1]) - float(self.mouse_down_pos[1])
+            if (dx * dx + dy * dy) >= float(self.drag_threshold_px * self.drag_threshold_px):
+                self.arrastando = True
+                montador.iniciar_arraste_pokemon(self.mouse_down_pokemon, self.mouse_down_pos)
         if self.arrastando:
             montador.atualizar_arraste(pos)
-        elif montador.indicador_previa is not None:
+        elif montador.estado_montagem == "preparando_ataque":
             montador.atualizar_preparacao(pos)
 
     def processar_mouse_down(self, pos_mouse):
         ctrl = self.controlador
-        if ctrl.hud and ctrl.hud.consumiu_clique(pos_mouse):
+        self.mouse_down_pos = pos_mouse
+        self.mouse_down_em_hud = bool(ctrl.hud and ctrl.hud.consumiu_clique(pos_mouse))
+        self.arraste_pendente = False
+        self.mouse_down_pokemon = None
+        if self.mouse_down_em_hud:
             return
 
         poke = self._pokemon_no_ponto(pos_mouse)
         if poke is not None and self.pode_controlar_pokemon(poke) and poke.esta_ativo() and not poke.esta_na_reserva():
-            self.arrastando = True
-            ctrl.montador_jogadas.iniciar_arraste_pokemon(poke, pos_mouse)
+            self.arraste_pendente = True
+            self.mouse_down_pokemon = poke
             return
         self.processar_clique(pos_mouse)
 
     def processar_mouse_up(self, pos_mouse):
         if self.arrastando:
             self.controlador.montador_jogadas.soltar_arraste(pos_mouse)
-            self.arrastando = False
+        elif self.arraste_pendente and not self.mouse_down_em_hud:
+            self.processar_clique(pos_mouse)
+        self.arrastando = False
+        self.arraste_pendente = False
+        self.mouse_down_pokemon = None
+        self.mouse_down_pos = None
+        self.mouse_down_em_hud = False
 
     def processar_clique(self, pos_mouse):
         ctrl = self.controlador
@@ -66,8 +87,8 @@ class PlayerBatalha:
         if poke is not None:
             area_id = getattr(poke, "AreaId", None)
             if ctrl.ataque_selecionado is not None and area_id:
-                montador.confirmar_alvo(area_id)
-                ctrl.limpar_ataque()
+                if montador.confirmar_alvo(area_id):
+                    ctrl.limpar_ataque()
                 return
             if ctrl.pokemon_selecionado == poke:
                 ctrl.desselecionar_pokemon()
@@ -81,7 +102,10 @@ class PlayerBatalha:
                 if montador.confirmar_alvo(area_id):
                     ctrl.limpar_ataque()
                 return
-            ctrl.selecionar_area(area_id)
+            if ctrl.area_selecionada == area_id:
+                ctrl.desselecionar_pokemon()
+            else:
+                ctrl.selecionar_area(area_id)
             return
 
         self.cancelar_selecao()

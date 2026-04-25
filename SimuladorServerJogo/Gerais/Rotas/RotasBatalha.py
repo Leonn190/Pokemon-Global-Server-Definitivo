@@ -22,7 +22,10 @@ def rota_enviar_jogada(dados_jogada):
         return {"status": "erro", "mensagem": "id_partida obrigatório", "id_partida": "", "estado_batalha": "erro", "avisos": [], "erros": ["id_partida_obrigatorio"]}
     if bool(dados_jogada.get("modo_teste")):
         return GERENCIADOR_PARTIDAS.receber_jogadas_modo_teste(id_partida, dados_jogada.get("jogadas") or [])
-    lado_id = int(dados_jogada.get("lado_id", -1))
+    try:
+        lado_id = int(dados_jogada.get("lado_id", -1))
+    except (TypeError, ValueError):
+        return {"status": "erro", "mensagem": "lado_id inválido", "id_partida": id_partida, "estado_batalha": "erro", "avisos": [], "erros": ["lado_id_invalido"]}
     return GERENCIADOR_PARTIDAS.receber_jogada(id_partida, lado_id, dados_jogada)
 
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import math
 from typing import Dict, List, Tuple
+from pathlib import Path
 
 import pygame
 
@@ -34,6 +36,8 @@ class Arena:
         self._renderizador_tiles = GerenciadorTiles(cores_blocos=self._cores)
         self._cache_mapa: pygame.Surface | None = None
         self._cache_tile_px = 0
+        self._cache_fundos_redimensionados: dict[tuple[str, tuple[int, int], int], pygame.Surface | None] = {}
+        self._avisos_fundo_emitidos: set[str] = set()
 
         self._areas: list[dict[str, object]] = []
         self._areas_por_id: dict[str, dict[str, object]] = {}
@@ -83,20 +87,22 @@ class Arena:
         self._areas_por_id = {}
         margem_x = 1
         margem_y = 1
-        espaco_x = 2
-        area_lado = 6
+        area_lado = 5
+        gap_area = 1
 
         arena_rect = self._retangulo_arena()
         base_ax = arena_rect.x + margem_x
         base_ay = arena_rect.y + margem_y
-        base_ix = base_ax + (3 * area_lado) + espaco_x
+        largura_grupo = (3 * area_lado) + (2 * gap_area)
+        espaco_grupos = max(2, arena_rect.width - largura_grupo * 2 - (margem_x * 2))
+        base_ix = base_ax + largura_grupo + espaco_grupos
         base_iy = arena_rect.y + margem_y
 
         for row in range(3):
             for col in range(3):
                 aid = f"A{row * 3 + col + 1}"
-                x = base_ax + (col * area_lado)
-                y = base_ay + (row * area_lado)
+                x = base_ax + (col * (area_lado + gap_area))
+                y = base_ay + (row * (area_lado + gap_area))
                 area = {
                     "id": aid,
                     "lado_visual": "jogador",
@@ -122,8 +128,8 @@ class Arena:
         for row in range(3):
             for col in range(3):
                 aid = f"I{row * 3 + col + 1}"
-                x = base_ix + (col * area_lado)
-                y = base_iy + (row * area_lado)
+                x = base_ix + (col * (area_lado + gap_area))
+                y = base_iy + (row * (area_lado + gap_area))
                 area = {
                     "id": aid,
                     "lado_visual": "inimigo",
@@ -209,7 +215,85 @@ class Arena:
                 continue
             tela.blit(sprite, sprite.get_rect(center=(int(px), int(py))))
 
-    def desenhar_areas(self, surface, camera, area_hover=None, area_selecionada=None):
+    def _carregar_fundo_areas(self, caminho: str, tamanho_px: tuple[int, int], tile_px: int):
+        chave = (str(caminho), (int(tamanho_px[0]), int(tamanho_px[1])), int(tile_px))
+        if chave in self._cache_fundos_redimensionados:
+            return self._cache_fundos_redimensionados[chave]
+        try:
+            if not Path(caminho).exists():
+                raise FileNotFoundError(caminho)
+            img = pygame.image.load(caminho).convert()
+            img = pygame.transform.smoothscale(img, (max(1, int(tamanho_px[0])), max(1, int(tamanho_px[1]))))
+            self._cache_fundos_redimensionados[chave] = img
+        except Exception:
+            self._cache_fundos_redimensionados[chave] = None
+            if caminho not in self._avisos_fundo_emitidos:
+                self._avisos_fundo_emitidos.add(caminho)
+                print(f"[Arena] Aviso: não foi possível carregar fundo '{caminho}'.")
+        return self._cache_fundos_redimensionados[chave]
+
+    def obter_areas_por_lado_visual(self, lado_visual):
+        lado = str(lado_visual or "").strip()
+        return [a for a in self._areas if str(a.get("lado_visual")) == lado]
+
+    def obter_areas_por_lado_id(self, lado_id):
+        try:
+            alvo = int(lado_id)
+        except (TypeError, ValueError):
+            return []
+        return [a for a in self._areas if int(a.get("lado_id", -1)) == alvo]
+
+    def lado_id_da_area(self, area_id):
+        area = self.obter_area_por_id(area_id)
+        if area is None:
+            return None
+        return int(area.get("lado_id", -1))
+
+    def area_pertence_ao_lado(self, area_id, lado_id):
+        try:
+            alvo = int(lado_id)
+        except (TypeError, ValueError):
+            return False
+        return int(self.lado_id_da_area(area_id) or -1) == alvo
+
+    def obter_rect_grupo_areas(self, lado_visual, camera=None):
+        areas = self.obter_areas_por_lado_visual(lado_visual)
+        if not areas:
+            return None
+        min_x = min(a["rect"].left for a in areas)
+        min_y = min(a["rect"].top for a in areas)
+        max_x = max(a["rect"].right for a in areas)
+        max_y = max(a["rect"].bottom for a in areas)
+        rect = pygame.Rect(min_x, min_y, max_x - min_x, max_y - min_y)
+        if camera is None:
+            return rect
+        x, y = camera.mundo_para_tela_px((rect.x, rect.y))
+        tile = max(1, int(getattr(camera, "TilePx", 40) or 40))
+        return pygame.Rect(int(x), int(y), int(rect.width * tile), int(rect.height * tile))
+
+    def desenhar_fundos_areas(self, surface, camera):
+        tile_px = max(1, int(getattr(camera, "TilePx", 40) or 40))
+        caminhos = {
+            "jogador": str(Path("Recursos") / "Visual" / "Fundos" / "FundoPokemonAliado.jpg"),
+            "inimigo": str(Path("Recursos") / "Visual" / "Fundos" / "FundoPokemonInimigo.jpg"),
+        }
+        for lado_visual, caminho in caminhos.items():
+            rect = self.obter_rect_grupo_areas(lado_visual, camera=camera)
+            if rect is None:
+                continue
+            img = self._carregar_fundo_areas(caminho, rect.size, tile_px)
+            if img is not None:
+                surface.blit(img, rect.topleft)
+            else:
+                fallback = pygame.Surface(rect.size, pygame.SRCALPHA)
+                fallback.fill((34, 68, 104, 82) if lado_visual == "jogador" else (96, 42, 44, 82))
+                surface.blit(fallback, rect.topleft)
+
+    def desenhar_areas(self, surface, camera, area_hover=None, area_selecionada=None, areas_destacadas=None, areas_invalidas=None):
+        destaques = set(str(a) for a in (areas_destacadas or []))
+        invalidas = set(str(a) for a in (areas_invalidas or []))
+        t = pygame.time.get_ticks() / 1000.0
+        pulso_alpha = int(80 + 130 * (0.5 + 0.5 * math.sin(t * 4.0)))
         for area in self._areas:
             rect_tela = self.rect_area_tela(area["id"], camera)
             if rect_tela is None:
@@ -218,12 +302,16 @@ class Arena:
             if not self._tem_tiles_contexto:
                 cor_base = (44, 96, 210, 120) if area.get("lado_visual") == "jogador" else (196, 68, 76, 120)
                 pygame.draw.rect(overlay, cor_base, overlay.get_rect(), border_radius=4)
-            borda = (164, 170, 182, 130)
+            borda = (6, 8, 12, 230)
             if area_hover == area["id"]:
-                borda = (198, 206, 220, 180)
+                borda = (240, 244, 255, 190)
             if area_selecionada == area["id"]:
                 borda = (255, 235, 90, 235)
-            pygame.draw.rect(overlay, borda, overlay.get_rect(), 2)
+            pygame.draw.rect(overlay, borda, overlay.get_rect(), 4)
+            if area["id"] in destaques:
+                pygame.draw.rect(overlay, (255, 228, 72, pulso_alpha), overlay.get_rect(), 4)
+            if area["id"] in invalidas:
+                pygame.draw.rect(overlay, (250, 72, 72, 145), overlay.get_rect(), 3)
             surface.blit(overlay, rect_tela.topleft)
             texto_idx = self._textos_indices_area.get(str(area.get("id", "")))
             if texto_idx is not None:

@@ -180,7 +180,7 @@ class FichaPokemonBatalha:
                         if not isinstance(item, dict):
                             continue
                         nome = str(item.get("nome") or "").strip().casefold()
-                        estilo = str(item.get("estilo_logico") or item.get("estilo") or "").strip().casefold()
+                        estilo = cls._normalizar_estilo_logico(item.get("estilo_logico") or item.get("estilo"))
                         if nome and estilo:
                             cls._CACHE_ESTILO_ATAQUES[nome] = estilo
             except Exception:
@@ -189,6 +189,17 @@ class FichaPokemonBatalha:
         if not nome:
             return ""
         return str(cls._CACHE_ESTILO_ATAQUES.get(nome, ""))
+
+    @staticmethod
+    def _normalizar_estilo_logico(valor) -> str:
+        estilo = str(valor or "").strip().casefold()
+        if estilo in {"passivo", "passiva"}:
+            return "passivo"
+        if estilo in {"ativo", "ativa"}:
+            return "ativo"
+        if estilo == "alvo":
+            return "alvo"
+        return ""
 
     def _sincronizar_botoes_habilidade(self, quantidade: int):
         quantidade = max(0, int(quantidade))
@@ -362,15 +373,17 @@ class FichaPokemonBatalha:
                 botao.base_rect = pygame.Rect(x, y, skill_lado, skill_lado)
                 botao.rect = pygame.Rect(botao.base_rect)
                 botao.set_text("")
-                botao.set_habilitado(pode_interagir)
+                estilo = self._estilo_tecnico_ataque(ataque if isinstance(ataque, dict) else None)
+                ataque_bloqueado = (not estilo) or estilo == "passivo"
+                botao.set_habilitado(pode_interagir and not ataque_bloqueado)
                 selecionado = ataque == self._ataque_selecionado
                 botao.set_style(
                     radius=max(12, skill_lado // 4),
                     border_width=3 if selecionado else 2,
-                    bg=(34, 106, 66) if selecionado else (18, 28, 44),
-                    bg_hover=(44, 128, 78) if selecionado else (28, 42, 64),
-                    bg_pressed=(26, 82, 52) if selecionado else (14, 22, 34),
-                    border=(245, 249, 255) if selecionado else (148, 176, 220),
+                    bg=(34, 106, 66) if selecionado else (16, 20, 30) if ataque_bloqueado else (18, 28, 44),
+                    bg_hover=(44, 128, 78) if selecionado else (22, 30, 44) if ataque_bloqueado else (28, 42, 64),
+                    bg_pressed=(26, 82, 52) if selecionado else (14, 20, 30) if ataque_bloqueado else (14, 22, 34),
+                    border=(245, 249, 255) if selecionado else (80, 90, 118) if ataque_bloqueado else (148, 176, 220),
                     border_hover=(255, 255, 255),
                     pulse=selecionado,
                     pulse_color=(104, 194, 126),
@@ -378,8 +391,7 @@ class FichaPokemonBatalha:
                 )
                 botao.render(tela, eventos or [], dt, None)
                 if pode_interagir and botao.clicado:
-                    estilo = self._estilo_tecnico_ataque(ataque if isinstance(ataque, dict) else None)
-                    if estilo and estilo != "passiva":
+                    if estilo and estilo != "passivo":
                         self._ataque_selecionado = None if selecionado else ataque
                 area_icone = botao.rect.inflate(-10, -10)
                 pygame.draw.rect(
@@ -621,7 +633,7 @@ class FichaPokemonBatalha:
             return self._ataque_selecionado
         ataque = ataques[idx]
         estilo = self._estilo_tecnico_ataque(ataque if isinstance(ataque, dict) else None)
-        if (not estilo) or estilo == "passiva":
+        if (not estilo) or estilo == "passivo":
             return self._ataque_selecionado
         self._ataque_selecionado = None if ataque == self._ataque_selecionado else ataque
         return self._ataque_selecionado

@@ -39,6 +39,12 @@ class ElementosHudBatalha:
             execute=lambda _jogo, _botao: self._fugir_local(),
             style={"radius": 12, "bg": (74, 82, 108), "bg_hover": (92, 104, 136), "bg_pressed": (58, 64, 88), "text_style": {"size": 14}},
         )
+        self.botao_modo_teste = Botao(
+            pygame.Rect(20, 160, 120, 34),
+            "Teste OFF",
+            execute=lambda _jogo, _botao: self.controlador.alternar_modo_teste(),
+            style={"radius": 10, "bg": (54, 68, 98), "bg_hover": (78, 98, 136), "bg_pressed": (40, 54, 80), "text_style": {"size": 14}},
+        )
         self._icone_fuga = self._carregar_icone("Fugir")
         self._icone_pronto = self._carregar_icone("Pronto")
         self._ficha_t_visivel = 0.0
@@ -72,6 +78,12 @@ class ElementosHudBatalha:
         if abs(self._ficha_t_visivel - self._ficha_alvo_visivel) < 0.001:
             self._ficha_t_visivel = self._ficha_alvo_visivel
         self.ficha.definir_controle_inimigo(self.controlador.modo_teste)
+        self.botao_modo_teste.set_text(f"Teste {'ON' if self.controlador.modo_teste else 'OFF'}")
+        self.botao_modo_teste.set_style(
+            bg=(38, 124, 72) if self.controlador.modo_teste else (54, 68, 98),
+            bg_hover=(52, 152, 90) if self.controlador.modo_teste else (78, 98, 136),
+            bg_pressed=(26, 96, 58) if self.controlador.modo_teste else (40, 54, 80),
+        )
         montador = getattr(self.controlador, "montador_jogadas", None)
         jogadas = list(getattr(montador, "acoes_preparadas", []) or [])
         selecionado_id = getattr(montador, "acao_selecionada_id", None)
@@ -84,6 +96,21 @@ class ElementosHudBatalha:
                 self.controlador.atualizar_previsoes_hud()
             elif acao == "selecionar" and montador is not None:
                 montador.selecionar_acao(cmd.get("id"))
+        pokemon = self.controlador.pokemon_selecionado
+        if pokemon is not None:
+            custo = float(getattr(pokemon, "CustoPrevistoPendente", 0.0) or 0.0)
+            pode = bool(getattr(pokemon, "PodePagarPrevisao", True))
+            self.ficha.atualizar_previsao(custo, pode)
+            ataque = self.ficha.ataque_selecionado()
+            if ataque != self.controlador.ataque_selecionado:
+                self.controlador.selecionar_ataque(ataque)
+                if self.controlador.ataque_selecionado is None:
+                    self.ficha.limpar_ataque_selecionado()
+        else:
+            if self.ficha.ataque_selecionado() is not None:
+                self.ficha.limpar_ataque_selecionado()
+            if self.controlador.ataque_selecionado is not None:
+                self.controlador.limpar_ataque()
 
     def consumiu_clique(self, pos_mouse):
         if self._ficha_t_visivel > 0.05 and self.ficha.contem_ponto(pos_mouse):
@@ -107,6 +134,8 @@ class ElementosHudBatalha:
         self.botao_fugir.rect = pygame.Rect(self.botao_fugir.base_rect)
         self.botao_pronto.base_rect = pygame.Rect(w - btn - margem, h - btn - margem, btn, btn)
         self.botao_pronto.rect = pygame.Rect(self.botao_pronto.base_rect)
+        self.botao_modo_teste.base_rect = pygame.Rect(20, 84 + btn + 12, 126, 34)
+        self.botao_modo_teste.rect = pygame.Rect(self.botao_modo_teste.base_rect)
 
         self._txt_rodada.set_text(f"Rodada {self.controlador.rodada_atual}")
         self._txt_rodada.set_pos((20, 22))
@@ -121,6 +150,7 @@ class ElementosHudBatalha:
 
         self.botao_pronto.render(tela, eventos, dt, None)
         self.botao_fugir.render(tela, eventos, dt, None)
+        self.botao_modo_teste.render(tela, eventos, dt, None)
         if self._icone_fuga is not None:
             lado = self.botao_fugir.rect.height - 16
             icone = pygame.transform.smoothscale(self._icone_fuga, (lado, lado))
@@ -139,27 +169,10 @@ class ElementosHudBatalha:
             txt.set_pos(self.botao_pronto.rect.center)
             txt.draw(tela)
 
-        self._retangulos_fixos = [pygame.Rect(self.botao_pronto.rect), pygame.Rect(self.botao_fugir.rect)]
+        self._retangulos_fixos = [pygame.Rect(self.botao_pronto.rect), pygame.Rect(self.botao_fugir.rect), pygame.Rect(self.botao_modo_teste.rect)]
 
         pokemon = self.controlador.pokemon_selecionado
         if pokemon is not None or self._ficha_t_visivel > 0.01:
             self.ficha.render(tela, pokemon, self._ficha_t_visivel, eventos, dt)
-        if pokemon is not None:
-            custo = float(getattr(pokemon, "CustoPrevistoPendente", 0.0) or 0.0)
-            pode = bool(getattr(pokemon, "PodePagarPrevisao", True))
-            self.ficha.atualizar_previsao(custo, pode)
-            ataque = self.ficha.ataque_selecionado()
-            if ataque is not None:
-                estilo = str(ataque.get("Estilo") or ataque.get("estilo") or "").strip().lower()
-                if estilo in {"passiva", "passivo"}:
-                    self.ficha.limpar_ataque_selecionado()
-                    ataque = None
-            if ataque != self.controlador.ataque_selecionado:
-                self.controlador.selecionar_ataque(ataque)
-                if ataque is not None and self.controlador.montador_jogadas is not None and pokemon is not None:
-                    self.controlador.montador_jogadas.iniciar_preparacao_ataque(pokemon, ataque)
-        else:
-            self.ficha.limpar_ataque_selecionado()
-
         self.painel_acoes.desenhar(tela, dt)
         self.visualizador.desenhar(tela, eventos, dt)

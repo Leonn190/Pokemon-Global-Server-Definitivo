@@ -59,6 +59,9 @@ def normalizar_ataque(bruto: dict) -> dict:
         "custo": custo,
         "Estilo": estilo,
         "estilo": estilo,
+        "Descrição Nivel 1": str(bruto.get("Descrição Nivel 1") or "").strip(),
+        "Descrição Nivel 2": str(bruto.get("Descrição Nivel 2") or "").strip(),
+        "Descrição Nivel 3": str(bruto.get("Descrição Nivel 3") or "").strip(),
         "Code": code,
         "code": code,
     }

@@ -6,6 +6,7 @@ import pygame
 
 from Codigo.Geradores.EstruturaNaturais import EstruturaNaturalFake, tipo_estrutura_natural_por_codigo
 from Codigo.ModulosGerais.GerenciadorTiles import GerenciadorTiles
+from Codigo.Prefabs.Texto import Texto
 
 Vector2 = Tuple[float, float]
 
@@ -21,6 +22,7 @@ class Arena:
         self.BlocoInicio = tuple(self.Contexto.get("origem", (0.0, 0.0)))
 
         self._tiles: List[Tuple[int, int, int]] = []
+        self._tem_tiles_contexto = False
         self._estruturas_fundo: List[EstruturaNaturalFake] = []
         self._cores = {
             0: (24, 72, 145), 1: (64, 156, 255), 2: (106, 190, 48), 3: (46, 125, 50),
@@ -37,6 +39,7 @@ class Arena:
         self._areas_por_id: dict[str, dict[str, object]] = {}
         self._ocupacao_areas: dict[str, object] = {}
         self._slots_reserva: dict[str, list[dict[str, object]]] = {"jogador": [], "inimigo": []}
+        self._textos_indices_area: dict[str, Texto] = {}
 
         self._montar()
         self.criar_areas_batalha()
@@ -55,6 +58,7 @@ class Arena:
             ty = int(item.get("y", 0) or 0)
             bloco = int(item.get("bloco", 0) or 0)
             self._tiles.append((tx, ty, bloco))
+            self._tem_tiles_contexto = True
             if 0 <= ty < self.Altura and 0 <= tx < self.Largura:
                 self._grid_tiles[ty][tx] = bloco
 
@@ -103,6 +107,17 @@ class Arena:
                 }
                 self._areas.append(area)
                 self._areas_por_id[aid] = area
+                self._textos_indices_area[aid] = Texto(
+                    str(row * 3 + col + 1),
+                    style={
+                        "size": 36,
+                        "align": "center",
+                        "color": (220, 228, 245),
+                        "outline": True,
+                        "outline_thickness": 2,
+                        "outline_color": (10, 14, 24),
+                    },
+                )
 
         for row in range(3):
             for col in range(3):
@@ -119,6 +134,17 @@ class Arena:
                 }
                 self._areas.append(area)
                 self._areas_por_id[aid] = area
+                self._textos_indices_area[aid] = Texto(
+                    str(row * 3 + col + 1),
+                    style={
+                        "size": 36,
+                        "align": "center",
+                        "color": (220, 228, 245),
+                        "outline": True,
+                        "outline_thickness": 2,
+                        "outline_color": (10, 14, 24),
+                    },
+                )
 
     def atualizar_layout_batalha(self, camera=None) -> None:
         # Mantém API para fases futuras; layout atual é estático em tiles de mundo.
@@ -159,6 +185,9 @@ class Arena:
 
     def renderizar(self, tela, camera) -> None:
         tile_px = max(1, int(getattr(camera, "TilePx", 40) or 40))
+        if not self._tem_tiles_contexto:
+            tela.fill((0, 0, 0))
+            return
         if self._cache_mapa is None or self._cache_tile_px != tile_px:
             self._cache_mapa = self._renderizador_tiles.renderizar_chunk(
                 chave_chunk=(0, 0),
@@ -181,22 +210,30 @@ class Arena:
             tela.blit(sprite, sprite.get_rect(center=(int(px), int(py))))
 
     def desenhar_areas(self, surface, camera, area_hover=None, area_selecionada=None):
-        fonte = pygame.font.SysFont("arial", max(14, int(getattr(camera, "TilePx", 40) * 0.45)), bold=True)
         for area in self._areas:
             rect_tela = self.rect_area_tela(area["id"], camera)
             if rect_tela is None:
                 continue
+            overlay = pygame.Surface((rect_tela.w, rect_tela.h), pygame.SRCALPHA)
+            if not self._tem_tiles_contexto:
+                cor_base = (44, 96, 210, 120) if area.get("lado_visual") == "jogador" else (196, 68, 76, 120)
+                pygame.draw.rect(overlay, cor_base, overlay.get_rect(), border_radius=4)
             borda = (164, 170, 182, 130)
             if area_hover == area["id"]:
                 borda = (198, 206, 220, 180)
             if area_selecionada == area["id"]:
                 borda = (255, 235, 90, 235)
-            overlay = pygame.Surface((rect_tela.w, rect_tela.h), pygame.SRCALPHA)
             pygame.draw.rect(overlay, borda, overlay.get_rect(), 2)
-            idx = str(area.get("id", ""))[1:]
-            txt = fonte.render(idx, True, (214, 220, 232, 70))
-            overlay.blit(txt, txt.get_rect(center=(rect_tela.w // 2, rect_tela.h // 2)))
             surface.blit(overlay, rect_tela.topleft)
+            texto_idx = self._textos_indices_area.get(str(area.get("id", "")))
+            if texto_idx is not None:
+                escala = max(20, int(rect_tela.height * 0.42))
+                texto_idx.style["size"] = escala
+                texto_layer = pygame.Surface((rect_tela.w, rect_tela.h), pygame.SRCALPHA)
+                texto_idx.set_pos((rect_tela.w // 2, rect_tela.h // 2))
+                texto_idx.draw(texto_layer)
+                texto_layer.set_alpha(110)
+                surface.blit(texto_layer, rect_tela.topleft)
 
     def obter_area_por_id(self, area_id):
         return self._areas_por_id.get(str(area_id or "").strip())

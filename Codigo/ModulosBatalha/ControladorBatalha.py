@@ -32,6 +32,12 @@ class ControladorBatalha:
         self._area_hover = None
         self._ultimos_eventos = []
         self._ultimo_dt = 0.0
+        self._intervalo_frame_ms = 85
+        self._fuga_alpha = 0.0
+        self._fuga_incremento_clique = 56.0
+        self._fuga_clarear_por_segundo = 34.0
+        self._fuga_limite_saida = 210.0
+        self.solicitou_encerrar_batalha = False
 
     def iniciar(self, estado_inicial):
         estado = dict(estado_inicial or {})
@@ -46,6 +52,21 @@ class ControladorBatalha:
         self.camera.definir_limites_mundo(self.arena.Largura, self.arena.Altura, toroidal=False)
 
         self.pokemons = [PokemonBatalha.from_serializado(item) for item in list(estado.get("pokemons") or [])]
+        regras = estado.get("regras") if isinstance(estado.get("regras"), dict) else {}
+        if not regras and isinstance(estado.get("regras_mundo"), dict):
+            regras = estado.get("regras_mundo")
+        if not regras:
+            regras = estado
+        animacao = regras.get("animacao") if isinstance(regras.get("animacao"), dict) else {}
+        intervalo_ms = animacao.get("intervalo_frame_ms", 85)
+        try:
+            self._intervalo_frame_ms = max(1, int(float(intervalo_ms)))
+        except (TypeError, ValueError):
+            self._intervalo_frame_ms = 85
+        for pokemon in self.pokemons:
+            pokemon.definir_intervalo_frame_ms(self._intervalo_frame_ms)
+            pokemon.Nivel = max(1, int(getattr(pokemon, "Nivel", 1) or 1))
+            pokemon.VidaAtual = max(0.0, min(float(pokemon.VidaMax), float(pokemon.VidaMax)))
         self.pokemons_por_id = {p.id_batalha: p for p in self.pokemons}
         self.arena.atualizar_ocupacao(self.pokemons)
 
@@ -75,6 +96,7 @@ class ControladorBatalha:
         self._area_hover = self.arena.area_em_posicao_mouse(pygame.mouse.get_pos(), self.camera)
         self.player_batalha.processar_eventos(eventos)
         self.hud.atualizar(dt, eventos)
+        self._atualizar_fuga(dt)
 
     def desenhar(self, surface):
         if self.arena is None:
@@ -100,9 +122,14 @@ class ControladorBatalha:
                     overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
                     pygame.draw.rect(overlay, borda, overlay.get_rect(), 2)
                     surface.blit(overlay, rect.topleft)
-                poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover)
+                poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover, camera=self.camera)
 
         self.hud.desenhar(surface, self._ultimos_eventos, self._ultimo_dt)
+        alpha = max(0, min(255, int(round(self._fuga_alpha))))
+        if alpha > 0:
+            overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, alpha))
+            surface.blit(overlay, (0, 0))
 
     def selecionar_pokemon(self, pokemon):
         self.pokemon_selecionado = pokemon
@@ -145,6 +172,17 @@ class ControladorBatalha:
         self.timer_rodada = self.timer_rodada_max
         self.logs_locais.append({"rodada": self.rodada_atual, "texto": f"Rodada {self.rodada_atual} iniciada."})
         self.estado_batalha = "montando_jogada"
+
+    def iniciar_fuga(self):
+        self._fuga_alpha = min(255.0, self._fuga_alpha + self._fuga_incremento_clique)
+        self.estado_batalha = "fugindo"
+        if self._fuga_alpha >= self._fuga_limite_saida:
+            self.solicitou_encerrar_batalha = True
+
+    def _atualizar_fuga(self, dt: float):
+        dt = max(0.0, float(dt or 0.0))
+        if self._fuga_alpha > 0.0:
+            self._fuga_alpha = max(0.0, self._fuga_alpha - self._fuga_clarear_por_segundo * dt)
 
     def definir_modo_teste(self, ativo: bool):
         self.modo_teste = bool(ativo)

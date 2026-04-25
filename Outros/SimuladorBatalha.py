@@ -13,6 +13,7 @@ if str(RAIZ) not in sys.path:
 
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
 from Codigo.ModulosGerais.Camera import CameraBatalha
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
 def carregar_especies_validas(caminho_csv: Path) -> list[str]:
@@ -72,9 +73,35 @@ def carregar_ataques(caminho_csv: Path) -> list[dict]:
 
 def criar_materializado(especie: str) -> dict:
     try:
-        from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
+        from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_server, materializar_pokemon
 
-        return criar_pokemon_inicial_materializado(especie)
+        pokemon_gerado = gerar_pokemon_server(novo_id=0, posicao=(0.0, 0.0), chunk_xy=(0, 0), especie=especie)
+        estado = dict(getattr(pokemon_gerado, "estado_extra", {}) or {})
+        bruto = {
+            "id": 0,
+            "especie": str(getattr(pokemon_gerado, "Especie", especie) or especie),
+            "nome": str(getattr(pokemon_gerado, "Especie", especie) or especie),
+            "nivel": int(estado.get("nivel", 1) or 1),
+            "iv": int(estado.get("iv", 0) or 0),
+            "subivs": dict(estado.get("subivs", {}) or {}),
+            "stats_base": dict(estado.get("stats_base", {}) or {}),
+            "stats": dict(estado.get("stats", {}) or {}),
+            "altura": float(estado.get("altura", 1.0) or 1.0),
+            "peso": float(estado.get("peso", 1.0) or 1.0),
+            "tipos": list(estado.get("tipos", []) or []),
+            "grupo": str(estado.get("grupo", "") or ""),
+            "raridade": int(estado.get("raridade", 1) or 1),
+            "estagio": int(estado.get("estagio", 1) or 1),
+            "escala": int(estado.get("escala", 3) or 3),
+            "variacao_tamanho": int(estado.get("variacao_tamanho", 0) or 0),
+            "tamanho": str(estado.get("tamanho", "M") or "M"),
+            "tamanho_tiles": float(estado.get("tamanho_tiles", 0.6) or 0.6),
+            "code": str(estado.get("code", "") or ""),
+            "linhagem": str(estado.get("linhagem", "") or ""),
+            "equipaveis": int(estado.get("equipaveis", 1) or 1),
+            "chunk_origem": list(estado.get("chunk_origem", [0, 0]) or [0, 0]),
+        }
+        return materializar_pokemon(bruto, efeitos_captura=None)
     except Exception as exc:
         print(f"[SimuladorBatalha] Falha ao materializar '{especie}': {exc!r}. Usando fallback visual.")
         return {
@@ -134,13 +161,10 @@ def montar_estado_inicial() -> dict:
             )
 
     largura, altura = 120, 72
-    tiles = []
-    for y in range(altura):
-        for x in range(largura):
-            bloco = 1 if y < altura * 0.45 else 2
-            if 32 < x < 88 and 20 < y < 52:
-                bloco = 5 if (x + y) % 2 == 0 else 4
-            tiles.append({"x": x, "y": y, "bloco": bloco})
+
+    regras_cliente = carregar_regras_cliente_mundo()
+    animacao = regras_cliente.get("animacao") if isinstance(regras_cliente.get("animacao"), dict) else {}
+    intervalo_frame_ms = int(animacao.get("intervalo_frame_ms", 85) or 85)
 
     return {
         "id_partida": "simulador_local_fase1",
@@ -158,9 +182,10 @@ def montar_estado_inicial() -> dict:
             "arena_largura": 40,
             "arena_altura": 20,
             "origem": (0, 0),
-            "tiles": tiles,
+            "tiles": [],
             "estruturas": [],
         },
+        "regras": {"animacao": {"intervalo_frame_ms": intervalo_frame_ms}},
         "pokemons": pokemons_serializados,
     }
 
@@ -180,7 +205,7 @@ def main() -> None:
 
     rodando = True
     while rodando:
-        dt = clock.tick(60) / 1000.0
+        dt = clock.tick(180) / 1000.0
         eventos = pygame.event.get()
         for evento in eventos:
             if evento.type == pygame.QUIT:
@@ -192,6 +217,9 @@ def main() -> None:
                 controlador.definir_modo_teste(not controlador.modo_teste)
 
         controlador.atualizar(dt, eventos)
+        if controlador.solicitou_encerrar_batalha:
+            rodando = False
+            continue
         tela.fill((8, 12, 18))
         controlador.desenhar(tela)
         pygame.draw.rect(tela, (28, 36, 54), btn_teste, border_radius=10)

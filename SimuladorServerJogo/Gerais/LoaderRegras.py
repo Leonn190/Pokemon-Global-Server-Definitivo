@@ -357,6 +357,9 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
     regras_batalha = carregar_regras_batalha_publicas()
     return {
         "mundo": {"chunk_tiles": int(_ler_valor(carregar_regras_mundo(), "ChunkTiles", 10))},
+        "animacao": {
+            "intervalo_frame_ms": int(_ler_valor(regras_pokemons, "animacao_intervalo_frame_ms", 85)),
+        },
         "pokemons": {
             "animacao_intervalo_frame_ms": int(_ler_valor(regras_pokemons, "animacao_intervalo_frame_ms", 85)),
             "tamanho_diametro_base_tiles": float(_ler_valor(regras_pokemons, "tamanho_diametro_base_tiles", 0.6)),

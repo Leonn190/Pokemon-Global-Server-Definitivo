@@ -328,3 +328,19 @@ class Arena:
                     "rect": rect_mundo,
                     "rect_tela": rect_tela,
                 })
+
+    def centro_slot_reserva(self, slot_id_ou_pokemon_id, camera=None):
+        chave = str(slot_id_ou_pokemon_id or "").strip()
+        if not chave:
+            return None
+        for slots in self._slots_reserva.values():
+            for slot in slots:
+                if str(slot.get("id_slot") or "") == chave or str(slot.get("pokemon_id") or "") == chave:
+                    rect_tela = slot.get("rect_tela")
+                    if isinstance(rect_tela, pygame.Rect):
+                        return rect_tela.center
+                    rect = slot.get("rect")
+                    if isinstance(rect, pygame.Rect):
+                        centro = rect.center
+                        return camera.mundo_para_tela_px(centro) if camera is not None else centro
+        return None

@@ -72,9 +72,35 @@ def carregar_ataques(caminho_csv: Path) -> list[dict]:
 
 def criar_materializado(especie: str) -> dict:
     try:
-        from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
+        from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_server, materializar_pokemon
 
-        return criar_pokemon_inicial_materializado(especie)
+        pokemon_gerado = gerar_pokemon_server(novo_id=0, posicao=(0.0, 0.0), chunk_xy=(0, 0), especie=especie)
+        estado = dict(getattr(pokemon_gerado, "estado_extra", {}) or {})
+        bruto = {
+            "id": 0,
+            "especie": str(getattr(pokemon_gerado, "Especie", especie) or especie),
+            "nome": str(getattr(pokemon_gerado, "Especie", especie) or especie),
+            "nivel": int(estado.get("nivel", 1) or 1),
+            "iv": int(estado.get("iv", 0) or 0),
+            "subivs": dict(estado.get("subivs", {}) or {}),
+            "stats_base": dict(estado.get("stats_base", {}) or {}),
+            "stats": dict(estado.get("stats", {}) or {}),
+            "altura": float(estado.get("altura", 1.0) or 1.0),
+            "peso": float(estado.get("peso", 1.0) or 1.0),
+            "tipos": list(estado.get("tipos", []) or []),
+            "grupo": str(estado.get("grupo", "") or ""),
+            "raridade": int(estado.get("raridade", 1) or 1),
+            "estagio": int(estado.get("estagio", 1) or 1),
+            "escala": int(estado.get("escala", 3) or 3),
+            "variacao_tamanho": int(estado.get("variacao_tamanho", 0) or 0),
+            "tamanho": str(estado.get("tamanho", "M") or "M"),
+            "tamanho_tiles": float(estado.get("tamanho_tiles", 0.6) or 0.6),
+            "code": str(estado.get("code", "") or ""),
+            "linhagem": str(estado.get("linhagem", "") or ""),
+            "equipaveis": int(estado.get("equipaveis", 1) or 1),
+            "chunk_origem": list(estado.get("chunk_origem", [0, 0]) or [0, 0]),
+        }
+        return materializar_pokemon(bruto, efeitos_captura=None)
     except Exception as exc:
         print(f"[SimuladorBatalha] Falha ao materializar '{especie}': {exc!r}. Usando fallback visual.")
         return {

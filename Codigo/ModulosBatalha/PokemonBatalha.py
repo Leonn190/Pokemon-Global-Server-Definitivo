@@ -51,7 +51,7 @@ class PokemonBatalha:
     FrameAtual: int = 0
     TempoFrame: float = 1.0 / 8.0
     TimerAnimacao: float = 0.0
-    _cache_frames_escalados: list[pygame.Surface] | None = None
+    _cache_frames_escalados: dict[int, list[pygame.Surface]] = field(default_factory=dict)
     _carregamento_frames_tentado: bool = False
 
     @classmethod
@@ -93,7 +93,6 @@ class PokemonBatalha:
         if ms <= 0:
             return
         self.TempoFrame = max(0.01, ms / 1000.0)
-        self._cache_frames_escalados = None
 
     def _aplicar_stats(self, stats: dict, stats_base: dict):
         aliases = {"Amplificacao": "Amp", "Durabilidade": "Dur"}
@@ -203,7 +202,7 @@ class PokemonBatalha:
                 if frames:
                     break
         self.Frames = [f for f in frames if isinstance(f, pygame.Surface)]
-        self._cache_frames_escalados = None
+        self._cache_frames_escalados = {}
 
     def atualizar_animacao(self, dt: float):
         if not self.Frames:
@@ -213,18 +212,21 @@ class PokemonBatalha:
             self.TimerAnimacao -= self.TempoFrame
             self.FrameAtual = (self.FrameAtual + 1) % len(self.Frames)
 
-    def _frame_atual_escalado(self):
+    def _frame_atual_escalado(self, camera):
         if not self.Frames:
             return None
-        if self._cache_frames_escalados is None:
+        tile_px = max(1, int(getattr(camera, "TilePx", 40) or 40)) if camera is not None else 40
+        if tile_px not in self._cache_frames_escalados:
+            fator_zoom = float(tile_px) / 40.0
+            fator = max(0.1, 1.10 * fator_zoom)
             escalados = []
             for frame in self.Frames:
-                fw = max(1, int(frame.get_width() * 1.10))
-                fh = max(1, int(frame.get_height() * 1.10))
+                fw = max(1, int(round(frame.get_width() * fator)))
+                fh = max(1, int(round(frame.get_height() * fator)))
                 escalado = pygame.transform.smoothscale(frame, (fw, fh)).convert_alpha()
                 escalados.append(escalado)
-            self._cache_frames_escalados = escalados
-        frames = self._cache_frames_escalados or []
+            self._cache_frames_escalados[tile_px] = escalados
+        frames = self._cache_frames_escalados.get(tile_px) or []
         if not frames:
             return None
         idx = self.FrameAtual % len(frames)
@@ -295,7 +297,7 @@ class PokemonBatalha:
         if centro is None:
             return
         cx, cy = camera.mundo_para_tela_px(centro)
-        img = self._frame_atual_escalado()
+        img = self._frame_atual_escalado(camera)
         if img is None:
             cor = (110, 196, 126) if self.Lado == "jogador" else (204, 108, 108)
             lado = max(46, int(getattr(camera, "TilePx", 40) * 1.7))
@@ -310,10 +312,10 @@ class PokemonBatalha:
             self.RectAtual = pygame.Rect(rect)
         self.desenhar_barras(surface)
 
-    def desenhar_reserva(self, surface, rect_slot, selecionado=False, hover=False):
+    def desenhar_reserva(self, surface, rect_slot, selecionado=False, hover=False, camera=None):
         _ = (selecionado, hover)
         base = pygame.Rect(rect_slot)
-        img = self._frame_atual_escalado()
+        img = self._frame_atual_escalado(camera)
         if img is None:
             cor = (110, 196, 126) if self.Lado == "jogador" else (204, 108, 108)
             pygame.draw.circle(surface, cor, base.center, max(6, min(base.w, base.h) // 3))

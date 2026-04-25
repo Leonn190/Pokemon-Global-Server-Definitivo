@@ -47,7 +47,10 @@ class ModuladorRegras:
                 pass
 
         pokemons = regras.get("pokemons") if isinstance(regras.get("pokemons"), dict) else {}
-        intervalo_anim = pokemons.get("animacao_intervalo_frame_ms")
+        animacao = regras.get("animacao") if isinstance(regras.get("animacao"), dict) else {}
+        intervalo_anim = animacao.get("intervalo_frame_ms")
+        if intervalo_anim is None:
+            intervalo_anim = pokemons.get("animacao_intervalo_frame_ms")
         incremento_tamanho = pokemons.get("tamanho_incremento_por_escala", pokemons.get("tamanho_incremento_por_tamanho"))
         diametro_base_tamanho = pokemons.get("tamanho_diametro_base_tiles")
         if intervalo_anim is not None:

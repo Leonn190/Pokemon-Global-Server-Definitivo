@@ -118,7 +118,7 @@ class ControladorBatalha:
                     overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
                     pygame.draw.rect(overlay, borda, overlay.get_rect(), 2)
                     surface.blit(overlay, rect.topleft)
-                poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover)
+                poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover, camera=self.camera)
 
         self.hud.desenhar(surface, self._ultimos_eventos, self._ultimo_dt)
         alpha = max(0, min(255, int(round(self._fuga_alpha))))

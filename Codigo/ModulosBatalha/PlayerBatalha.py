@@ -20,30 +20,38 @@ class PlayerBatalha:
         if ctrl.hud and ctrl.hud.consumiu_clique(pos_mouse):
             return
 
-        for pokemon in reversed(ctrl.pokemons):
-            if pokemon.contem_ponto(pos_mouse):
-                if ctrl.pokemon_selecionado is pokemon:
-                    ctrl.desselecionar_pokemon()
-                    return
-                ctrl.selecionar_pokemon(pokemon)
-                return
-
-        slot = ctrl.arena.reserva_em_posicao_mouse(pos_mouse)
+        slot = ctrl.arena.reserva_em_posicao_mouse(pos_mouse, ctrl.camera)
         if slot is not None:
             poke = ctrl.pokemons_por_id.get(slot.get("pokemon_id"))
             if poke is not None:
-                if ctrl.pokemon_selecionado is poke:
+                slot_id = slot.get("id_slot")
+                if ctrl.area_selecionada == slot_id:
                     ctrl.desselecionar_pokemon()
                 else:
                     ctrl.selecionar_pokemon(poke)
+                    ctrl.area_selecionada = slot_id
             return
 
         area_id = ctrl.arena.area_em_posicao_mouse(pos_mouse, ctrl.camera)
         if area_id:
             if ctrl.area_selecionada == area_id:
-                ctrl.area_selecionada = None
+                ctrl.desselecionar_pokemon()
             else:
                 ctrl.selecionar_area(area_id)
+            return
+
+        for pokemon in reversed(ctrl.pokemons):
+            if not pokemon.contem_ponto(pos_mouse):
+                continue
+            if not self.pode_controlar_pokemon(pokemon):
+                continue
+            area_alvo = getattr(pokemon, "AreaId", None)
+            if area_alvo and ctrl.area_selecionada == area_alvo:
+                ctrl.desselecionar_pokemon()
+            elif area_alvo:
+                ctrl.selecionar_area(area_alvo)
+            return
+
         else:
             self.cancelar_selecao()
 
@@ -51,8 +59,7 @@ class PlayerBatalha:
         if tecla == pygame.K_ESCAPE:
             if self.controlador.ataque_selecionado is not None:
                 self.controlador.limpar_ataque()
-            else:
-                self.cancelar_selecao()
+            self.cancelar_selecao()
 
     def pode_controlar_pokemon(self, pokemon):
         if pokemon is None:

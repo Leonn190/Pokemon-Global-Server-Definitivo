@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import pygame
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosGerais.Auxiliares import carregar_frames
 
 
 def _f(valor, default=0.0) -> float:
@@ -47,6 +49,13 @@ class PokemonBatalha:
     Tipos: list[str] = field(default_factory=list)
     ListaAtaques: list[dict[str, Any]] = field(default_factory=list)
     RectAtual: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
+    Frames: list[pygame.Surface] = field(default_factory=list)
+    FrameAtual: int = 0
+    TempoFrame: float = 1.0 / 8.0
+    TimerAnimacao: float = 0.0
+    SpriteFallback: pygame.Surface | None = None
+    _cache_frames_escalados: dict[int, list[pygame.Surface]] = field(default_factory=dict)
+    _carregamento_frames_tentado: bool = False
 
     @classmethod
     def from_serializado(cls, dados):
@@ -76,39 +85,53 @@ class PokemonBatalha:
             ListaAtaques=list(bruto.get("ataques") or []),
         )
         p._aplicar_stats(stats, stats_base)
-        p.Energia = max(0.0, round(p.EnergiaMax * 0.75, 2))
+        p._carregar_animacao()
         return p
 
     def _aplicar_stats(self, stats: dict, stats_base: dict):
-        chaves = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int", "CrD", "CrC"]
+        aliases = {"Amplificacao": "Amp", "Durabilidade": "Dur"}
+        chaves = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int", "CrD", "CrC", "Amp", "Dur", "Vamp", "Acuracia", "Assertividade", "EneM"]
+        variacoes_brutas = self.Dados.get("variacoes")
+        if not isinstance(variacoes_brutas, dict):
+            variacoes_brutas = self.Dados.get("Variacoes") if isinstance(self.Dados.get("Variacoes"), dict) else {}
         for chave in chaves:
-            base = _f(stats_base.get(chave, stats.get(chave, 0.0)), 0.0)
-            atual = _f(stats.get(chave, base), base)
+            chave_stats = chave
+            if chave in ("Amp", "Dur"):
+                alt = "Amplificacao" if chave == "Amp" else "Durabilidade"
+                chave_stats = chave if chave in stats or chave in stats_base else alt
+            base = _f(stats_base.get(chave_stats, stats.get(chave_stats, 0.0)), 0.0)
+            atual = _f(stats.get(chave_stats, base), base)
             self.AtributosBase[chave] = base
             self.Atributos[chave] = atual
-            self.Variacoes[chave] = atual - base
+            self.Variacoes[chave] = _f(variacoes_brutas.get(chave, 0.0), 0.0)
 
-        self.Atributos.setdefault("Amplificacao", 0.0)
-        self.Atributos.setdefault("Durabilidade", 0.0)
-        self.Atributos.setdefault("Vamp", 0.0)
-        self.Atributos.setdefault("Acuracia", 100.0)
-        self.Atributos.setdefault("Assertividade", 100.0)
-
-        self.AtributosBase.setdefault("Amplificacao", 0.0)
-        self.AtributosBase.setdefault("Durabilidade", 0.0)
-        self.AtributosBase.setdefault("Vamp", 0.0)
-        self.AtributosBase.setdefault("Acuracia", 100.0)
-        self.AtributosBase.setdefault("Assertividade", 100.0)
+        for alias_antigo, oficial in aliases.items():
+            if oficial in self.Atributos:
+                self.Atributos[alias_antigo] = self.Atributos[oficial]
+                self.AtributosBase[alias_antigo] = self.AtributosBase.get(oficial, 0.0)
+                self.Variacoes[alias_antigo] = self.Variacoes.get(oficial, 0.0)
 
         self.VidaMax = max(1.0, _f(self.Atributos.get("Vida", 1.0), 1.0))
-        self.VidaAtual = self.VidaMax
-        energia_raw = _f(self.Dados.get("EnergiaMaxima", self.Dados.get("EnergiaMax", 0.0)), 0.0)
+        vida_atual = self.Dados.get("VidaAtual", self.Dados.get("vida_atual", self.Dados.get("vidaAtual", None)))
+        if vida_atual is None and isinstance(self.Dados.get("estado"), dict):
+            est = self.Dados.get("estado")
+            vida_atual = est.get("VidaAtual", est.get("vida_atual", est.get("vidaAtual", None)))
+        self.VidaAtual = max(0.0, min(self.VidaMax, _f(vida_atual, self.VidaMax)))
+
+        energia_raw = _f(self.Dados.get("EnergiaMaxima", self.Dados.get("EnergiaMax", self.Dados.get("EneM", 0.0))), 0.0)
         if energia_raw <= 0:
             energia_raw = _f(self.Atributos.get("EnergiaMaxima", self.Atributos.get("EneM", 0.0)), 0.0)
         if energia_raw <= 0:
             energia_raw = max(1.0, _f(self.Atributos.get("Ene", 1.0), 1.0) * 3.0)
         self.EnergiaMax = max(1.0, energia_raw)
-        self.BarreiraAtual = _f(self.Dados.get("Barreira", self.Dados.get("barreira", 0.0)), 0.0)
+        energia_atual = self.Dados.get("EnergiaAtual", self.Dados.get("energia_atual", self.Dados.get("energiaAtual", None)))
+        if energia_atual is None and isinstance(self.Dados.get("estado"), dict):
+            est = self.Dados.get("estado")
+            energia_atual = est.get("EnergiaAtual", est.get("energia_atual", est.get("energiaAtual", None)))
+        energia_padrao = round(self.EnergiaMax * 0.75, 2)
+        self.Energia = max(0.0, min(self.EnergiaMax, _f(energia_atual, energia_padrao)))
+
+        self.BarreiraAtual = _f(self.Dados.get("BarreiraAtual", self.Dados.get("Barreira", self.Dados.get("barreira", 0.0))), 0.0)
 
         peso = self.Dados.get("peso", self.Dados.get("Peso"))
         escala = self.Dados.get("escala", self.Dados.get("Escala"))
@@ -120,6 +143,82 @@ class PokemonBatalha:
             self.Atributos["Escala"] = _f(escala, 0.0)
             self.AtributosBase["Escala"] = _f(escala, 0.0)
             self.Variacoes["Escala"] = 0.0
+
+    def _carregar_animacao(self):
+        if self._carregamento_frames_tentado:
+            return
+        self._carregamento_frames_tentado = True
+
+        info = self.Dados if isinstance(self.Dados, dict) else {}
+        frames = []
+
+        especie = str(self.Especie or info.get("especie") or info.get("Especie") or self.Nome or "").strip()
+        base_anim = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
+        especie_candidatos = [
+            especie,
+            especie.lower(),
+            especie.replace("_", " "),
+            especie.replace("_", " ").lower(),
+            especie.replace(" ", "-").lower(),
+            especie.replace("-", " ").lower(),
+        ]
+        for nome_especie in especie_candidatos:
+            if not nome_especie:
+                continue
+            pasta_anim = base_anim / nome_especie
+            if not pasta_anim.exists() or not pasta_anim.is_dir():
+                continue
+            try:
+                frames = carregar_frames(pasta_anim)
+            except Exception:
+                frames = []
+            if frames:
+                break
+
+        if not frames:
+            pistas = [
+                info.get("CaminhoFrames"),
+                info.get("caminho_frames"),
+                info.get("FramesPath"),
+                info.get("frames_path"),
+                info.get("SpriteFrames"),
+                info.get("sprite_frames"),
+            ]
+            for pista in pistas:
+                if not pista:
+                    continue
+                pasta = Path(str(pista))
+                if pasta.exists() and pasta.is_dir():
+                    try:
+                        frames = carregar_frames(pasta)
+                    except Exception:
+                        frames = []
+                if frames:
+                    break
+        self.Frames = [f for f in frames if isinstance(f, pygame.Surface)]
+
+    def atualizar_animacao(self, dt: float):
+        if not self.Frames:
+            return
+        self.TimerAnimacao += max(0.0, float(dt))
+        while self.TimerAnimacao >= self.TempoFrame:
+            self.TimerAnimacao -= self.TempoFrame
+            self.FrameAtual = (self.FrameAtual + 1) % len(self.Frames)
+
+    def _frame_atual_escalado(self, lado: int):
+        if not self.Frames:
+            return None
+        lado = int(max(8, lado))
+        if lado not in self._cache_frames_escalados:
+            self._cache_frames_escalados[lado] = [
+                pygame.transform.smoothscale(frame, (lado, lado)).convert_alpha()
+                for frame in self.Frames
+            ]
+        frames = self._cache_frames_escalados.get(lado) or []
+        if not frames:
+            return None
+        idx = self.FrameAtual % len(frames)
+        return frames[idx]
 
     def serializar(self):
         return {
@@ -179,6 +278,7 @@ class PokemonBatalha:
         return []
 
     def desenhar(self, surface, camera, arena, selecionado=False, hover=False):
+        _ = (selecionado, hover)
         if not self.Ativo or self.EmReserva or not self.AreaId:
             return
         centro = arena.centro_area(self.AreaId)
@@ -186,11 +286,16 @@ class PokemonBatalha:
             return
         cx, cy = camera.mundo_para_tela_px(centro)
         lado = max(46, int(getattr(camera, "TilePx", 40) * 1.7))
-        img = None
-        try:
-            img = PokemonInventario.surface_pokemon(self.Dados, lado)
-        except Exception:
-            img = None
+        img = self._frame_atual_escalado(lado)
+        if img is None:
+            try:
+                if self.SpriteFallback is None:
+                    self.SpriteFallback = PokemonInventario.surface_pokemon(self.Dados, lado)
+                elif self.SpriteFallback.get_width() != lado:
+                    self.SpriteFallback = pygame.transform.smoothscale(self.SpriteFallback, (lado, lado))
+                img = self.SpriteFallback
+            except Exception:
+                img = None
         if img is None:
             cor = (110, 196, 126) if self.Lado == "jogador" else (204, 108, 108)
             pygame.draw.circle(surface, cor, (int(cx), int(cy)), lado // 2)
@@ -202,36 +307,52 @@ class PokemonBatalha:
             rect = img.get_rect(center=(int(cx), int(cy)))
             surface.blit(img, rect)
             self.RectAtual = pygame.Rect(rect)
-
-        if selecionado:
-            pygame.draw.rect(surface, (255, 235, 90), self.RectAtual.inflate(8, 8), 3, border_radius=12)
-        elif hover:
-            pygame.draw.rect(surface, (240, 240, 240), self.RectAtual.inflate(4, 4), 2, border_radius=10)
+        self.desenhar_barras(surface)
 
     def desenhar_reserva(self, surface, rect_slot, selecionado=False, hover=False):
+        _ = (selecionado, hover)
         base = pygame.Rect(rect_slot)
-        cor = (26, 46, 74) if self.Lado == "jogador" else (74, 30, 30)
-        pygame.draw.rect(surface, cor, base, border_radius=10)
-        pygame.draw.rect(surface, (132, 172, 228), base, 2, border_radius=10)
         img = None
-        lado = min(base.w, base.h) - 10
-        try:
-            img = PokemonInventario.surface_pokemon(self.Dados, lado)
-        except Exception:
-            img = None
+        lado = min(base.w, base.h) - 8
+        img = self._frame_atual_escalado(lado)
+        if img is None:
+            try:
+                img = PokemonInventario.surface_pokemon(self.Dados, lado)
+            except Exception:
+                img = None
         if img is not None:
-            surface.blit(img, img.get_rect(midleft=(base.x + 6 + lado // 2, base.centery)))
-        fonte = pygame.font.SysFont("arial", 14, bold=True)
-        txt = fonte.render(self.Nome[:12], True, (245, 248, 255))
-        surface.blit(txt, (base.x + lado + 10, base.y + 7))
-        if selecionado:
-            pygame.draw.rect(surface, (255, 235, 90), base.inflate(4, 4), 2, border_radius=10)
-        elif hover:
-            pygame.draw.rect(surface, (230, 230, 230), base.inflate(2, 2), 1, border_radius=10)
+            surface.blit(img, img.get_rect(center=base.center))
         self.RectAtual = base
 
     def desenhar_barras(self, surface):
-        _ = surface
+        if self.RectAtual.width <= 0 or self.RectAtual.height <= 0:
+            return
+        vida_max = max(1.0, float(self.VidaMax))
+        ene_max = max(1.0, float(self.EnergiaMax))
+        vida_t = max(0.0, min(1.0, float(self.VidaAtual) / vida_max))
+        ene_t = max(0.0, min(1.0, float(self.Energia) / ene_max))
+
+        barra_w = max(46, int(self.RectAtual.width * 0.92))
+        vida_h = max(8, int(self.RectAtual.height * 0.14))
+        ene_h = max(4, int(vida_h * 0.5))
+        x = self.RectAtual.centerx - barra_w // 2
+        y = self.RectAtual.y - vida_h - ene_h - 8
+        rect_vida = pygame.Rect(x, y, barra_w, vida_h)
+        rect_ene = pygame.Rect(x, y + vida_h + 3, barra_w, ene_h)
+
+        pygame.draw.rect(surface, (14, 18, 24), rect_vida, border_radius=max(3, vida_h // 2))
+        pygame.draw.rect(surface, (24, 28, 35), rect_ene, border_radius=max(2, ene_h // 2))
+        pygame.draw.rect(surface, (44, 190, 88), pygame.Rect(rect_vida.x, rect_vida.y, int(rect_vida.w * vida_t), rect_vida.h), border_radius=max(3, vida_h // 2))
+        pygame.draw.rect(surface, (74, 148, 255), pygame.Rect(rect_ene.x, rect_ene.y, int(rect_ene.w * ene_t), rect_ene.h), border_radius=max(2, ene_h // 2))
+        pygame.draw.rect(surface, (230, 236, 244), rect_vida, 1, border_radius=max(3, vida_h // 2))
+        pygame.draw.rect(surface, (230, 236, 244), rect_ene, 1, border_radius=max(2, ene_h // 2))
+
+        if vida_max >= 30:
+            setores = int(vida_max // 30)
+            for i in range(1, setores + 1):
+                tx = rect_vida.x + int(rect_vida.w * ((i * 30) / vida_max))
+                if rect_vida.x < tx < rect_vida.right:
+                    pygame.draw.line(surface, (0, 0, 0), (tx, rect_vida.y + 1), (tx, rect_vida.bottom - 1), 1)
 
     def contem_ponto(self, pos_mouse):
         return self.RectAtual.collidepoint(pos_mouse)

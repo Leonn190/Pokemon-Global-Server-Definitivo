@@ -77,23 +77,22 @@ class Arena:
     def criar_areas_batalha(self) -> None:
         self._areas = []
         self._areas_por_id = {}
-        margem_x = max(2, int(self.ArenaLargura * 0.09))
-        margem_y = max(2, int(self.ArenaAltura * 0.10))
-        espaco_x = max(1, int(self.ArenaLargura * 0.08))
-        espaco_y = max(1, int(self.ArenaAltura * 0.07))
-        area_lado = max(2, int(min((self.ArenaLargura - margem_x * 2 - espaco_x) / 6, (self.ArenaAltura - margem_y * 2) / 3)))
+        margem_x = 1
+        margem_y = 1
+        espaco_x = 2
+        area_lado = 6
 
         arena_rect = self._retangulo_arena()
         base_ax = arena_rect.x + margem_x
-        base_ay = arena_rect.y + self.ArenaAltura - margem_y - area_lado
-        base_ix = arena_rect.right - margem_x - area_lado
+        base_ay = arena_rect.y + margem_y
+        base_ix = base_ax + (3 * area_lado) + espaco_x
         base_iy = arena_rect.y + margem_y
 
         for row in range(3):
             for col in range(3):
                 aid = f"A{row * 3 + col + 1}"
                 x = base_ax + (col * area_lado)
-                y = base_ay - (row * area_lado)
+                y = base_ay + (row * area_lado)
                 area = {
                     "id": aid,
                     "lado_visual": "jogador",
@@ -108,7 +107,7 @@ class Arena:
         for row in range(3):
             for col in range(3):
                 aid = f"I{row * 3 + col + 1}"
-                x = base_ix - (col * area_lado)
+                x = base_ix + (col * area_lado)
                 y = base_iy + (row * area_lado)
                 area = {
                     "id": aid,
@@ -182,21 +181,22 @@ class Arena:
             tela.blit(sprite, sprite.get_rect(center=(int(px), int(py))))
 
     def desenhar_areas(self, surface, camera, area_hover=None, area_selecionada=None):
+        fonte = pygame.font.SysFont("arial", max(14, int(getattr(camera, "TilePx", 40) * 0.45)), bold=True)
         for area in self._areas:
             rect_tela = self.rect_area_tela(area["id"], camera)
             if rect_tela is None:
                 continue
-            ocupado = self.area_esta_ocupada(area["id"])
-            cor = (90, 200, 120, 58) if area["lado_visual"] == "jogador" else (210, 96, 96, 58)
-            if ocupado:
-                cor = (120, 220, 140, 90) if area["lado_visual"] == "jogador" else (230, 120, 120, 90)
-            pygame.draw.rect(surface, cor, rect_tela)
-            borda = (130, 220, 160) if area["lado_visual"] == "jogador" else (240, 150, 150)
+            borda = (164, 170, 182, 130)
             if area_hover == area["id"]:
-                borda = (255, 255, 180)
+                borda = (198, 206, 220, 180)
             if area_selecionada == area["id"]:
-                borda = (255, 235, 90)
-            pygame.draw.rect(surface, borda, rect_tela, 2)
+                borda = (255, 235, 90, 235)
+            overlay = pygame.Surface((rect_tela.w, rect_tela.h), pygame.SRCALPHA)
+            pygame.draw.rect(overlay, borda, overlay.get_rect(), 2)
+            idx = str(area.get("id", ""))[1:]
+            txt = fonte.render(idx, True, (214, 220, 232, 70))
+            overlay.blit(txt, txt.get_rect(center=(rect_tela.w // 2, rect_tela.h // 2)))
+            surface.blit(overlay, rect_tela.topleft)
 
     def obter_area_por_id(self, area_id):
         return self._areas_por_id.get(str(area_id or "").strip())
@@ -248,34 +248,46 @@ class Arena:
     def obter_slots_reserva(self, lado_visual):
         return list(self._slots_reserva.get(str(lado_visual or ""), []))
 
-    def reserva_em_posicao_mouse(self, pos_mouse):
+    def reserva_em_posicao_mouse(self, pos_mouse, camera):
+        wx, wy = camera.tela_para_mundo_tiles(pos_mouse)
         for lado, slots in self._slots_reserva.items():
             for slot in slots:
-                rect = slot.get("rect_tela")
-                if isinstance(rect, pygame.Rect) and rect.collidepoint(pos_mouse):
+                rect_tela = slot.get("rect_tela")
+                if isinstance(rect_tela, pygame.Rect) and rect_tela.collidepoint(pos_mouse):
+                    retorno = dict(slot)
+                    retorno["lado_visual"] = lado
+                    return retorno
+                rect = slot.get("rect")
+                if isinstance(rect, pygame.Rect) and rect.collidepoint(wx, wy):
                     retorno = dict(slot)
                     retorno["lado_visual"] = lado
                     return retorno
         return None
 
-    def atualizar_slots_reserva(self, pokemons, tela):
-        if tela is None:
-            w, h = (1920, 1080)
-        else:
-            w, h = tela.get_size()
+    def atualizar_slots_reserva(self, pokemons, camera):
+        tile = max(1, int(getattr(camera, "TilePx", 40)))
+        arena_rect = self._retangulo_arena()
         self._slots_reserva = {"jogador": [], "inimigo": []}
         por_lado = {
             "jogador": [p for p in pokemons if bool(getattr(p, "EmReserva", False)) and getattr(p, "Lado", "") == "jogador"],
             "inimigo": [p for p in pokemons if bool(getattr(p, "EmReserva", False)) and getattr(p, "Lado", "") == "inimigo"],
         }
-        largura_slot = max(95, int(w * 0.085))
-        altura_slot = max(62, int(h * 0.09))
-        gap = 8
+        lado_slot = 4
+        gap = 1
         for lado, lista in por_lado.items():
             for i, poke in enumerate(lista[:3]):
-                x = 16 + i * (largura_slot + gap)
-                y = h - altura_slot - 16 if lado == "jogador" else 16
+                if lado == "jogador":
+                    x = arena_rect.x + i * (lado_slot + gap)
+                    y = arena_rect.bottom + 1
+                else:
+                    x = arena_rect.right - ((3 - i) * lado_slot + (2 - i) * gap)
+                    y = arena_rect.y - (lado_slot + 1)
+                rect_mundo = pygame.Rect(x, y, lado_slot, lado_slot)
+                tx, ty = camera.mundo_para_tela_px((x, y))
+                rect_tela = pygame.Rect(int(tx), int(ty), int(lado_slot * tile), int(lado_slot * tile))
                 self._slots_reserva[lado].append({
+                    "id_slot": f"R-{lado}-{i + 1}",
                     "pokemon_id": getattr(poke, "id_batalha", None),
-                    "rect_tela": pygame.Rect(x, y, largura_slot, altura_slot),
+                    "rect": rect_mundo,
+                    "rect_tela": rect_tela,
                 })

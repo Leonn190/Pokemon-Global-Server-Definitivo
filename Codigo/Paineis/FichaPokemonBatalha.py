@@ -545,13 +545,15 @@ class FichaPokemonBatalha:
 
     def render(self, tela: pygame.Surface, pokemon, t_visivel: float, eventos, dt: float):
         if pokemon is None:
+            pokemon = self._pokemon_render_atual
+        if pokemon is None:
             return
 
         self._garantir_layout(tela)
         self._atualizar_animacoes(dt)
         self._atualizar_estilo_botao_extra()
         self._mouse_pos = pygame.mouse.get_pos()
-        self._pokemon_render_atual = pokemon
+        self._pokemon_render_atual = pokemon if t_visivel > 0.01 else self._pokemon_render_atual
         self._hover_atributo = None
         self._hover_ataque = None
         self._hover_acao = None

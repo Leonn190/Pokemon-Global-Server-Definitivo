@@ -110,11 +110,21 @@ class ControladorBatalha:
         if self.arena is None:
             return
         self.arena.renderizar(surface, self.camera)
-        self.arena.desenhar_areas(surface, self.camera, area_hover=self._area_hover, area_selecionada=self.area_selecionada)
+        self.arena.desenhar_fundos_areas(surface, self.camera)
+        areas_destacadas = self.montador_jogadas.obter_areas_destacadas() if self.montador_jogadas is not None else []
+        areas_invalidas = self.montador_jogadas.obter_areas_invalidas_preview() if self.montador_jogadas is not None else []
+        self.arena.desenhar_areas(
+            surface,
+            self.camera,
+            area_hover=self._area_hover,
+            area_selecionada=self.area_selecionada,
+            areas_destacadas=areas_destacadas,
+            areas_invalidas=areas_invalidas,
+        )
         for indicador in list(getattr(self.montador_jogadas, "indicadores_preparados", []) or []):
             indicador.atualizar(dt=self._ultimo_dt)
             indicador.desenhar(surface, self.camera)
-        if getattr(self.montador_jogadas, "indicador_previa", None) is not None:
+        if self._deve_desenhar_indicador_previa():
             self.montador_jogadas.indicador_previa.atualizar(dt=self._ultimo_dt)
             self.montador_jogadas.indicador_previa.desenhar(surface, self.camera)
 
@@ -173,9 +183,23 @@ class ControladorBatalha:
 
     def selecionar_ataque(self, ataque):
         self.ataque_selecionado = ataque
+        if self.montador_jogadas is None:
+            return
+        if ataque is None:
+            self.montador_jogadas.cancelar_previa()
+            return
+        pokemon = self.pokemon_selecionado
+        if pokemon is None:
+            self.montador_jogadas.cancelar_previa()
+            self.ataque_selecionado = None
+            return
+        if not self.montador_jogadas.iniciar_preparacao_ataque(pokemon, ataque):
+            self.ataque_selecionado = None
 
     def limpar_ataque(self):
         self.ataque_selecionado = None
+        if self.montador_jogadas is not None and self.montador_jogadas.estado_montagem == "preparando_ataque":
+            self.montador_jogadas.cancelar_previa()
         if self.hud:
             self.hud.ficha.limpar_ataque_selecionado()
 
@@ -198,10 +222,12 @@ class ControladorBatalha:
     def tratar_resposta_jogada(self, resposta):
         status = str((resposta or {}).get("status") or "erro")
         if status == "ok":
-            self.estado_batalha = str((resposta or {}).get("estado_batalha") or "recebido_stub")
+            estado_batalha = str((resposta or {}).get("estado_batalha") or "recebido_stub")
+            self.estado_batalha = estado_batalha
             self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Jogada aceita"))
-            self.limpar_jogada_confirmada()
-            self.rodada_atual += 1
+            if estado_batalha == "recebido_stub":
+                self.limpar_jogada_confirmada()
+                self.rodada_atual += 1
             self.estado_batalha = "montando_jogada"
             return
         self.estado_batalha = "montando_jogada"
@@ -242,6 +268,17 @@ class ControladorBatalha:
 
     def alternar_modo_teste(self):
         return self.definir_modo_teste(not self.modo_teste)
+
+    def _deve_desenhar_indicador_previa(self) -> bool:
+        montador = self.montador_jogadas
+        if montador is None or montador.indicador_previa is None:
+            return False
+        estado = str(getattr(montador, "estado_montagem", "ocioso"))
+        if estado not in {"preparando_ataque", "arrastando"}:
+            return False
+        if estado == "preparando_ataque" and self.ataque_selecionado is None:
+            return False
+        return True
 
     def estado_visualizador_logs(self):
         return {

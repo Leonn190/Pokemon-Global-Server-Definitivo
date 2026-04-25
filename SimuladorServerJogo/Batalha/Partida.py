@@ -26,7 +26,10 @@ class Partida:
         normalizado, falhas = self._normalizar_serializavel(jogada)
         if falhas:
             return {"status": "erro", "mensagem": "Jogada inválida", "id_partida": self.id_partida, "estado_batalha": self.estado_partida, "avisos": avisos, "erros": falhas}
-        lado = int(lado_id)
+        try:
+            lado = int(lado_id)
+        except (TypeError, ValueError):
+            return {"status": "erro", "mensagem": "lado_id inválido", "id_partida": self.id_partida, "estado_batalha": self.estado_partida, "avisos": avisos, "erros": ["lado_id_invalido"]}
         self.lados.add(lado)
         self.jogadas_recebidas[lado] = normalizado
         self.historico_recebimentos.append({"lado_id": lado, "jogada": copy.deepcopy(normalizado)})
@@ -42,7 +45,11 @@ class Partida:
             if not isinstance(item, dict):
                 avisos.append("Entrada de jogada ignorada por formato")
                 continue
-            lado = int(item.get("lado_id", -1))
+            try:
+                lado = int(item.get("lado_id", -1))
+            except (TypeError, ValueError):
+                avisos.append("Entrada de jogada ignorada por lado_id inválido")
+                continue
             self.lados.add(lado)
             self.jogadas_recebidas[lado] = copy.deepcopy(item)
         self.historico_recebimentos.append({"modo_teste": True, "jogadas": copy.deepcopy(normalizado)})

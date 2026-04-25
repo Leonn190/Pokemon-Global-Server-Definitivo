@@ -5,7 +5,7 @@
       "ID": 1,
       "Code": 1,
       "nome": "Investida",
-      "custo": 40,
+      "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -22,7 +22,10 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 1,
+      "custo_base": 30,
+      "tipo_ataque": "normal"
     },
     "2": {
       "ID": 2,
@@ -42,10 +45,14 @@
         "tipo": "area",
         "quantidade": 1,
         "lados_permitidos": [
-          "lado_oposto"
+          "mesmo_lado",
+          "usuario"
         ],
-        "exige_area_ocupada": false
-      }
+        "exige_area_ocupada": true
+      },
+      "code": 2,
+      "custo_base": 25,
+      "tipo_ataque": "normal"
     },
     "3": {
       "ID": 3,
@@ -60,7 +67,9 @@
       "execute_principal": "ataque_enraivecer",
       "parametros": {
         "tipo": "normal"
-      }
+      },
+      "code": 3,
+      "custo_base": 20
     },
     "4": {
       "ID": 4,
@@ -75,13 +84,15 @@
       "execute_principal": "ataque_provocar",
       "parametros": {
         "tipo": "normal"
-      }
+      },
+      "code": 4,
+      "custo_base": 20
     },
     "5": {
       "ID": 5,
       "Code": 5,
       "nome": "Proteger",
-      "custo": 30,
+      "custo": 25,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -95,10 +106,13 @@
         "tipo": "area",
         "quantidade": 1,
         "lados_permitidos": [
-          "lado_oposto"
+          "mesmo_lado",
+          "usuario"
         ],
-        "exige_area_ocupada": false
-      }
+        "exige_area_ocupada": true
+      },
+      "code": 5,
+      "custo_base": 25
     },
     "6": {
       "ID": 6,
@@ -121,13 +135,16 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 6,
+      "custo_base": 35,
+      "tipo_ataque": "normal"
     },
     "7": {
       "ID": 7,
       "Code": 7,
       "nome": "Recarga",
-      "custo": 25,
+      "custo": 15,
       "estilo_logico": "ativo",
       "animacao": {
         "contato": "avanco",
@@ -136,7 +153,9 @@
       "execute_principal": "ataque_recarga",
       "parametros": {
         "tipo": "normal"
-      }
+      },
+      "code": 7,
+      "custo_base": 15
     },
     "8": {
       "ID": 8,
@@ -159,13 +178,16 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 8,
+      "custo_base": 30,
+      "tipo_ataque": "especial"
     },
     "9": {
       "ID": 9,
       "Code": 9,
       "nome": "Hiper Raio",
-      "custo": 100,
+      "custo": 45,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -176,19 +198,22 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
+        "tipo": "linha",
+        "quantidade": 3,
         "lados_permitidos": [
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 9,
+      "custo_base": 45,
+      "tipo_ataque": "especial"
     },
     "10": {
       "ID": 10,
       "Code": 10,
       "nome": "Guilhotina",
-      "custo": 80,
+      "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -205,13 +230,16 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 10,
+      "custo_base": 30,
+      "tipo_ataque": "normal"
     },
     "11": {
       "ID": 11,
       "Code": 11,
       "nome": "Disparo",
-      "custo": 35,
+      "custo": 28,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -228,13 +256,16 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 11,
+      "custo_base": 28,
+      "tipo_ataque": "normal"
     },
     "12": {
       "ID": 12,
       "Code": 12,
       "nome": "Chifrada",
-      "custo": 45,
+      "custo": 26,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -251,13 +282,16 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 12,
+      "custo_base": 26,
+      "tipo_ataque": "normal"
     },
     "13": {
       "ID": 13,
       "Code": 13,
       "nome": "Resetar",
-      "custo": 30,
+      "custo": 22,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -271,16 +305,18 @@
         "tipo": "area",
         "quantidade": 1,
         "lados_permitidos": [
-          "lado_oposto"
+          "qualquer_lado"
         ],
-        "exige_area_ocupada": false
-      }
+        "exige_area_ocupada": true
+      },
+      "code": 13,
+      "custo_base": 22
     },
     "14": {
       "ID": 14,
       "Code": 14,
       "nome": "Tankar",
-      "custo": 60,
+      "custo": 20,
       "estilo_logico": "ativo",
       "animacao": {
         "contato": "avanco",
@@ -289,13 +325,15 @@
       "execute_principal": "ataque_tankar",
       "parametros": {
         "tipo": "normal"
-      }
+      },
+      "code": 14,
+      "custo_base": 20
     },
     "15": {
       "ID": 15,
       "Code": 15,
       "nome": "Estocada",
-      "custo": 35,
+      "custo": 24,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -312,13 +350,16 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 15,
+      "custo_base": 24,
+      "tipo_ataque": "normal"
     },
     "16": {
       "ID": 16,
       "Code": 16,
       "nome": "Bola Climática",
-      "custo": 50,
+      "custo": 32,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -335,13 +376,16 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 16,
+      "custo_base": 32,
+      "tipo_ataque": "especial"
     },
     "17": {
       "ID": 17,
       "Code": 17,
       "nome": "Hiper Presa",
-      "custo": 45,
+      "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
@@ -358,7 +402,10 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
-      }
+      },
+      "code": 17,
+      "custo_base": 35,
+      "tipo_ataque": "normal"
     },
     "18": {
       "ID": 18,
@@ -373,7 +420,10 @@
       "execute_principal": "ataque_acumulador",
       "parametros": {
         "tipo": "normal"
-      }
+      },
+      "code": 18,
+      "custo_base": 0,
+      "selecionavel": false
     }
   }
 }

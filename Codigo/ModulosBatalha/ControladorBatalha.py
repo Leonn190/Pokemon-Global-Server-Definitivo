@@ -47,9 +47,29 @@ class ControladorBatalha:
         self.solicitou_encerrar_batalha = False
 
     def iniciar(self, estado_inicial):
-        estado = dict(estado_inicial or {})
+        estado_local = dict(estado_inicial or {})
+        pacote = {
+            "id_partida": str(estado_local.get("id_partida") or self.id_partida),
+            "tipo_batalha": estado_local.get("tipo_batalha", "simulador"),
+            "rodada_atual": int(estado_local.get("rodada_atual", 1) or 1),
+            "lado_jogador": int(estado_local.get("lado_jogador", 50) or 50),
+            "lados": list(estado_local.get("lados") or [{"lado_id": 50}, {"lado_id": 51}]),
+            "arena": dict(estado_local.get("arena") or {}),
+            "pokemons": list(estado_local.get("pokemons") or []),
+        }
+        if "seed_partida" in estado_local:
+            pacote["seed_partida"] = estado_local.get("seed_partida")
+        resposta_server = self.server_batalha.inicializar_batalha(pacote)
+        if str((resposta_server or {}).get("status") or "") == "ok" and isinstance((resposta_server or {}).get("estado_inicial"), dict):
+            estado = dict(resposta_server.get("estado_inicial") or {})
+            self.id_partida = str(resposta_server.get("id_partida") or pacote["id_partida"])
+        else:
+            estado = dict(estado_local)
+            self.id_partida = str(pacote["id_partida"])
+            self.adicionar_log_local("Falha ao inicializar batalha no servidor. Usando fallback local.")
+
         self.rodada_atual = int(estado.get("rodada_atual", 1) or 1)
-        self.lado_jogador = int(estado.get("lado_jogador", 50) or 50)
+        self.lado_jogador = int(estado.get("lado_jogador", pacote["lado_jogador"]) or 50)
 
         contexto_arena = dict(estado.get("arena") or {})
         self.arena = Arena(contexto_arena)
@@ -73,13 +93,10 @@ class ControladorBatalha:
         for pokemon in self.pokemons:
             pokemon.definir_intervalo_frame_ms(self._intervalo_frame_ms)
             pokemon.Nivel = max(1, int(getattr(pokemon, "Nivel", 1) or 1))
-            pokemon.VidaAtual = max(0.0, min(float(pokemon.VidaMax), float(pokemon.VidaMax)))
         self.pokemons_por_id = {p.id_batalha: p for p in self.pokemons}
         self.arena.atualizar_ocupacao(self.pokemons)
 
         self.criar_componentes()
-        self.id_partida = str(estado.get("id_partida") or self.id_partida)
-        self.server_batalha.inicializar_batalha({"id_partida": self.id_partida, "lado_jogador": self.lado_jogador})
         self.timer_rodada = self.timer_rodada_max
         self.estado_batalha = "montando_jogada"
 
@@ -230,15 +247,41 @@ class ControladorBatalha:
 
     def tratar_resposta_jogada(self, resposta):
         status = str((resposta or {}).get("status") or "erro")
-        if status == "ok":
-            self.estado_batalha = str((resposta or {}).get("estado_batalha") or "recebido_stub")
-            self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Jogada aceita"))
-            self.limpar_jogada_confirmada()
-            self.rodada_atual += 1
+        if status != "ok":
             self.estado_batalha = "montando_jogada"
+            self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Falha ao enviar jogada"))
             return
+
+        estado = str((resposta or {}).get("estado_batalha") or "")
+        if estado == "aguardando":
+            self.estado_batalha = "aguardando"
+            self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Aguardando outro lado"))
+            return
+
+        resultado = None
+        if isinstance((resposta or {}).get("log"), dict):
+            resultado = (resposta.get("log") or {}).get("resultado")
+        if not isinstance(resultado, dict):
+            resultado = (resposta or {}).get("resultado")
+        if isinstance(resultado, dict):
+            self.aplicar_resultado_imediato(resultado)
+            self.limpar_jogada_confirmada()
+            rodada_log = int((resposta.get("log") or {}).get("rodada", max(1, self.rodada_atual)) if isinstance(resposta.get("log"), dict) else max(1, self.rodada_atual))
+            self.adicionar_log_local(f"Rodada {rodada_log} resolvida")
+            self.estado_batalha = "finalizada" if bool(resultado.get("finalizada")) else "montando_jogada"
+            return
+
         self.estado_batalha = "montando_jogada"
-        self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Falha ao enviar jogada"))
+        self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Jogada aceita"))
+
+    def aplicar_resultado_imediato(self, resultado):
+        pokes = dict((resultado or {}).get("pokemons") or {})
+        for pid, diff in pokes.items():
+            poke = self.pokemons_por_id.get(str(pid))
+            if poke is not None:
+                poke.atualizar_por_diff(diff)
+        self.arena.atualizar_ocupacao(self.pokemons)
+        self.rodada_atual = int((resultado or {}).get("rodada_atual", self.rodada_atual) or self.rodada_atual)
 
     def adicionar_log_local(self, texto):
         self.logs_locais.append({"rodada": self.rodada_atual, "texto": str(texto or "")})

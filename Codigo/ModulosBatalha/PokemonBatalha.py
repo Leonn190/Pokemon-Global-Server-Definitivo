@@ -254,7 +254,29 @@ class PokemonBatalha:
         }
 
     def atualizar_por_diff(self, diff):
-        _ = diff
+        if not isinstance(diff, dict):
+            return
+        self.Vivo = bool(diff.get("vivo", self.Vivo))
+        self.Ativo = bool(diff.get("ativo", self.Ativo))
+        self.EmReserva = bool(diff.get("em_reserva", self.EmReserva))
+        self.AreaId = diff.get("area_id", self.AreaId)
+        self.BarreiraAtual = _f(diff.get("BarreiraAtual", self.BarreiraAtual), self.BarreiraAtual)
+        self.Tipos = list(diff.get("tipos") or self.Tipos)
+        self.ListaAtaques = list(diff.get("ataques") or self.ListaAtaques)
+        if isinstance(diff.get("dados"), dict):
+            self.Dados = dict(diff.get("dados"))
+        attrs = dict(diff.get("atributos_finais") or {})
+        base = dict(diff.get("atributos_base") or {})
+        if attrs:
+            self.Atributos.update({k: _f(v, self.Atributos.get(k, 0.0)) for k, v in attrs.items()})
+        if base:
+            self.AtributosBase.update({k: _f(v, self.AtributosBase.get(k, 0.0)) for k, v in base.items()})
+        self.Variacoes.update({k: _f(v, self.Variacoes.get(k, 0.0)) for k, v in dict(diff.get("variacoes_temporarias") or {}).items()})
+        self.Variacoes.update({k: _f(v, self.Variacoes.get(k, 0.0)) for k, v in dict(diff.get("variacoes_permanentes") or {}).items()})
+        self.VidaMax = max(1.0, _f(self.Atributos.get("Vida", self.VidaMax), self.VidaMax))
+        self.VidaAtual = max(0.0, min(self.VidaMax, _f(diff.get("VidaAtual", self.VidaAtual), self.VidaAtual)))
+        self.EnergiaMax = max(1.0, _f(self.Atributos.get("EneM", self.EnergiaMax), self.EnergiaMax))
+        self.Energia = max(0.0, _f(diff.get("EnergiaAtual", self.Energia), self.Energia))
 
     def obter_ataques_ficha(self, limite=5):
         return list(self.ListaAtaques or [])[: max(0, int(limite or 5))]

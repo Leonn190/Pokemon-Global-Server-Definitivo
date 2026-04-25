@@ -58,6 +58,7 @@ class PainelAcoes:
 
     @staticmethod
     def _cor_item(dados: Dict[str, object], selecionado: bool) -> tuple[tuple[int, int, int], tuple[int, int, int], tuple[int, int, int]]:
+        _ = selecionado
         estilo = str(dados.get("estilo") or "movimento").casefold()
         if estilo == "movimento" and dados.get("ataque") is None:
             base = (42, 120, 210)
@@ -67,9 +68,9 @@ class PainelAcoes:
             base = (190, 76, 76)
         else:
             base = (220, 220, 220)
-        borda = tuple(min(255, canal + (55 if selecionado else 20)) for canal in base)
-        fundo = tuple(max(18, int(canal * (0.16 if selecionado else 0.12))) for canal in base)
-        brilho = tuple(min(255, canal + (80 if selecionado else 40)) for canal in base)
+        borda = tuple(min(255, canal + 20) for canal in base)
+        fundo = tuple(max(18, int(canal * 0.12)) for canal in base)
+        brilho = tuple(min(255, canal + 40) for canal in base)
         return fundo, borda, brilho
 
     @staticmethod
@@ -110,6 +111,36 @@ class PainelAcoes:
         surf = FichaPokemon._carregar_surface(arquivo, (lado, lado), chave_extra="contain") if arquivo is not None else None
         self._cache_icones_diversos[chave] = surf
         return surf
+
+    @staticmethod
+    def _pokemon_surface(pokemon, lado: int) -> Optional[pygame.Surface]:
+        if pokemon is None:
+            return None
+        try:
+            return PokemonInventario.surface_pokemon(getattr(pokemon, "Dados", {}), lado)
+        except Exception:
+            return None
+
+    def _desenhar_pokemon_em_circulo(self, tela: pygame.Surface, pokemon, rect: pygame.Rect, borda) -> None:
+        img = self._pokemon_surface(pokemon, max(18, rect.width - 4))
+        pygame.draw.circle(tela, (18, 24, 38), rect.center, rect.width // 2)
+        pygame.draw.circle(tela, borda, rect.center, rect.width // 2, 2)
+        if img is not None:
+            tela.blit(img, img.get_rect(center=rect.center))
+
+    def _desenhar_alvo(self, tela: pygame.Surface, item: _PainelItem, rect: pygame.Rect, borda) -> None:
+        alvo = item.dados.get("alvo_visual") if isinstance(item.dados.get("alvo_visual"), dict) else {}
+        pokemon = alvo.get("pokemon")
+        area_id = str(alvo.get("area_id") or "").strip()
+        if pokemon is not None:
+            self._desenhar_pokemon_em_circulo(tela, pokemon, rect, borda)
+        else:
+            pygame.draw.circle(tela, (18, 24, 38), rect.center, rect.width // 2)
+            pygame.draw.circle(tela, borda, rect.center, rect.width // 2, 2)
+            self._texto_aux.set_text(area_id)
+            self._texto_aux.set_style(align="center", size=max(11, min(15, rect.height // 3)))
+            self._texto_aux.set_pos(rect.center)
+            self._texto_aux.draw(tela)
 
     def sincronizar(self, jogadas: List[Dict[str, object]], selecionado_id: object | None) -> None:
         ordem_ids = []
@@ -153,7 +184,7 @@ class PainelAcoes:
             item.dados = dict(jogada)
             item.ordem = indice
             item.alvo_animacao = 1.0
-            item.selecionado = (selecionado_id is not None and int(selecionado_id) == jid)
+            item.selecionado = False
 
         ids_ativos = set(ordem_ids)
         for jid, item in list(self._itens.items()):
@@ -176,7 +207,7 @@ class PainelAcoes:
         visiveis = [item for item in self._itens_ordenados() if item.animacao > 0.01 or item.alvo_animacao > 0.0]
         if not visiveis:
             return
-        largura = max(168, min(230, int(tela.get_width() * 0.17)))
+        largura = max(176, min(200, int(tela.get_width() * 0.13)))
         altura = 58
         gap = 10
         total_h = len(visiveis) * altura + max(0, len(visiveis) - 1) * gap
@@ -214,9 +245,6 @@ class PainelAcoes:
                 if item.botao_fechar is not None and item.botao_fechar.rect.collidepoint(evento.pos):
                     self._comandos.append({"acao": "remover", "id": item.jogada_id})
                     return
-                if item.rect.collidepoint(evento.pos):
-                    self._comandos.append({"acao": "selecionar", "id": item.jogada_id})
-                    return
 
     def coletar_comandos(self) -> List[Dict[str, object]]:
         comandos = list(self._comandos)
@@ -242,18 +270,12 @@ class PainelAcoes:
             alpha_fundo = int(215 * item.animacao)
             pygame.draw.rect(base, (*fundo, alpha_fundo), base.get_rect(), border_radius=item.rect.height // 2)
             pygame.draw.rect(base, (255, 255, 255, int(245 * item.animacao)), base.get_rect(), 2, border_radius=item.rect.height // 2)
-            if item.selecionado:
-                pygame.draw.rect(base, (*brilho, int(88 * item.animacao)), base.get_rect().inflate(-10, -16), border_radius=item.rect.height // 2)
             tela.blit(base, item.rect.topleft)
 
             lado_img = item.rect.height - 16
             executor = item.dados.get("executor")
-            img_poke = PokemonInventario.surface_pokemon(getattr(executor, "Dados", {}), lado_img) if executor is not None else None
             rect_poke = pygame.Rect(item.rect.x + 8, item.rect.y + 8, lado_img, lado_img)
-            pygame.draw.circle(tela, (18, 24, 38), rect_poke.center, lado_img // 2)
-            pygame.draw.circle(tela, brilho, rect_poke.center, lado_img // 2, 2)
-            if img_poke is not None:
-                tela.blit(img_poke, img_poke.get_rect(center=rect_poke.center))
+            self._desenhar_pokemon_em_circulo(tela, executor, rect_poke, brilho)
 
             rect_icone = pygame.Rect(rect_poke.right + 8, item.rect.y + 11, lado_img - 6, lado_img - 6)
             icone = self._icone_ataque(item.dados, rect_icone.width)
@@ -261,16 +283,23 @@ class PainelAcoes:
                 icone = self._icone_diverso("trocar" if item.dados.get("troca_reserva_id") else "mover", rect_icone.width)
             if icone is not None:
                 tela.blit(icone, icone.get_rect(center=rect_icone.center))
+            else:
+                texto = "T" if item.dados.get("troca_reserva_id") else "M" if str(item.dados.get("tipo")) != "ataque" else "A"
+                self._texto_nome.set_text(texto)
+                self._texto_nome.set_style(align="center", size=18)
+                self._texto_nome.set_pos(rect_icone.center)
+                self._texto_nome.draw(tela)
 
-            self._texto_nome.set_text(self._nome_item(item.dados))
-            self._texto_nome.set_pos((rect_icone.right + 8, item.rect.y + 22))
-            self._texto_nome.draw(tela)
-            self._texto_aux.set_text(self._descricao_item(item.dados))
-            self._texto_aux.set_pos((rect_icone.right + 8, item.rect.y + 39))
-            self._texto_aux.draw(tela)
+            rect_alvo = pygame.Rect(rect_icone.right + 8, item.rect.y + 8, lado_img, lado_img)
+            self._desenhar_alvo(tela, item, rect_alvo, brilho)
 
             if item.botao_fechar is not None:
                 item.botao_fechar.base_rect = pygame.Rect(item.rect.right - 28, item.rect.y + 13, 18, 18)
                 item.botao_fechar.rect = pygame.Rect(item.botao_fechar.base_rect)
                 item.rect_fechar = pygame.Rect(item.botao_fechar.rect)
                 item.botao_fechar.render(tela, [], dt, None)
+                custo = int(round(float(item.dados.get("custo_previsto") or item.dados.get("custo") or 0.0)))
+                self._texto_aux.set_text(str(custo))
+                self._texto_aux.set_style(align="center", size=12)
+                self._texto_aux.set_pos((item.botao_fechar.rect.centerx, item.botao_fechar.rect.bottom + 4))
+                self._texto_aux.draw(tela)

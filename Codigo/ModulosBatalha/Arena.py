@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import pygame
@@ -30,6 +32,7 @@ class Arena:
             8: (88, 70, 70), 9: (110, 92, 68), 10: (226, 238, 252), 11: (206, 224, 243),
         }
         self._cache_sprites: Dict[Tuple[str, int], pygame.Surface] = {}
+        self._cache_fundos_area: Dict[Tuple[str, int, int], pygame.Surface | None] = {}
         self._grid_tiles: List[List[int]] = [[0 for _ in range(max(1, self.Largura))] for _ in range(max(1, self.Altura))]
         self._renderizador_tiles = GerenciadorTiles(cores_blocos=self._cores)
         self._cache_mapa: pygame.Surface | None = None
@@ -83,20 +86,22 @@ class Arena:
         self._areas_por_id = {}
         margem_x = 1
         margem_y = 1
+        espaco_area = 1
         espaco_x = 2
-        area_lado = 6
+        area_lado = 5
 
         arena_rect = self._retangulo_arena()
         base_ax = arena_rect.x + margem_x
         base_ay = arena_rect.y + margem_y
-        base_ix = base_ax + (3 * area_lado) + espaco_x
+        largura_grupo = (3 * area_lado) + (2 * espaco_area)
+        base_ix = base_ax + largura_grupo + espaco_x
         base_iy = arena_rect.y + margem_y
 
         for row in range(3):
             for col in range(3):
                 aid = f"A{row * 3 + col + 1}"
-                x = base_ax + (col * area_lado)
-                y = base_ay + (row * area_lado)
+                x = base_ax + (col * (area_lado + espaco_area))
+                y = base_ay + (row * (area_lado + espaco_area))
                 area = {
                     "id": aid,
                     "lado_visual": "jogador",
@@ -122,8 +127,8 @@ class Arena:
         for row in range(3):
             for col in range(3):
                 aid = f"I{row * 3 + col + 1}"
-                x = base_ix + (col * area_lado)
-                y = base_iy + (row * area_lado)
+                x = base_ix + (col * (area_lado + espaco_area))
+                y = base_iy + (row * (area_lado + espaco_area))
                 area = {
                     "id": aid,
                     "lado_visual": "inimigo",
@@ -183,10 +188,36 @@ class Arena:
             pygame.draw.line(grid_surf, cor, (0, y), (w_px, y), 1)
         tela.blit(grid_surf, (int(x0_px), int(y0_px)))
 
+    def _fundo_area(self, lado_visual: str, tamanho: tuple[int, int]) -> pygame.Surface | None:
+        w, h = max(1, int(tamanho[0])), max(1, int(tamanho[1]))
+        lado = "inimigo" if str(lado_visual) == "inimigo" else "jogador"
+        chave = (lado, w, h)
+        if chave in self._cache_fundos_area:
+            return self._cache_fundos_area[chave]
+        nome = "FundoPokemonInimigo.jpg" if lado == "inimigo" else "FundoPokemonAliado.jpg"
+        caminho = Path(__file__).resolve().parents[2] / "Recursos" / "Visual" / "Fundos" / nome
+        try:
+            img = pygame.image.load(str(caminho)).convert()
+            img = pygame.transform.smoothscale(img, (w, h)).convert_alpha()
+        except Exception:
+            return None
+        self._cache_fundos_area[chave] = img
+        return img
+
+    def _desenhar_fundos_areas(self, surface: pygame.Surface, camera) -> None:
+        for area in self._areas:
+            rect_tela = self.rect_area_tela(area["id"], camera)
+            if rect_tela is None:
+                continue
+            fundo = self._fundo_area(str(area.get("lado_visual") or ""), rect_tela.size)
+            if fundo is not None:
+                surface.blit(fundo, rect_tela.topleft)
+
     def renderizar(self, tela, camera) -> None:
         tile_px = max(1, int(getattr(camera, "TilePx", 40) or 40))
         if not self._tem_tiles_contexto:
             tela.fill((0, 0, 0))
+            self._desenhar_fundos_areas(tela, camera)
             return
         if self._cache_mapa is None or self._cache_tile_px != tile_px:
             self._cache_mapa = self._renderizador_tiles.renderizar_chunk(
@@ -200,6 +231,7 @@ class Arena:
             return
         x0, y0 = camera.mundo_para_tela_px((0, 0))
         tela.blit(self._cache_mapa, (int(x0), int(y0)))
+        self._desenhar_fundos_areas(tela, camera)
 
         for estrutura in self._estruturas_fundo:
             px, py = camera.mundo_para_tela_px(estrutura.Posicao)
@@ -209,21 +241,25 @@ class Arena:
                 continue
             tela.blit(sprite, sprite.get_rect(center=(int(px), int(py))))
 
-    def desenhar_areas(self, surface, camera, area_hover=None, area_selecionada=None):
+    def desenhar_areas(self, surface, camera, area_hover=None, area_selecionada=None, areas_destacadas=None):
+        areas_destacadas = {str(a) for a in (areas_destacadas or [])}
+        pulso = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 180.0)
         for area in self._areas:
             rect_tela = self.rect_area_tela(area["id"], camera)
             if rect_tela is None:
                 continue
             overlay = pygame.Surface((rect_tela.w, rect_tela.h), pygame.SRCALPHA)
-            if not self._tem_tiles_contexto:
+            if not self._tem_tiles_contexto and self._fundo_area(str(area.get("lado_visual") or ""), rect_tela.size) is None:
                 cor_base = (44, 96, 210, 120) if area.get("lado_visual") == "jogador" else (196, 68, 76, 120)
                 pygame.draw.rect(overlay, cor_base, overlay.get_rect(), border_radius=4)
-            borda = (164, 170, 182, 130)
+            pygame.draw.rect(overlay, (0, 0, 0, 235), overlay.get_rect(), 4)
+            if str(area.get("id")) in areas_destacadas:
+                alpha = int(80 + 150 * pulso)
+                pygame.draw.rect(overlay, (255, 225, 70, alpha), overlay.get_rect().inflate(-2, -2), 4)
             if area_hover == area["id"]:
-                borda = (198, 206, 220, 180)
+                pygame.draw.rect(overlay, (235, 240, 250, 150), overlay.get_rect().inflate(-4, -4), 2)
             if area_selecionada == area["id"]:
-                borda = (255, 235, 90, 235)
-            pygame.draw.rect(overlay, borda, overlay.get_rect(), 2)
+                pygame.draw.rect(overlay, (255, 235, 90, 245), overlay.get_rect().inflate(-6, -6), 4)
             surface.blit(overlay, rect_tela.topleft)
             texto_idx = self._textos_indices_area.get(str(area.get("id", "")))
             if texto_idx is not None:
@@ -343,4 +379,16 @@ class Arena:
                     if isinstance(rect, pygame.Rect):
                         centro = rect.center
                         return camera.mundo_para_tela_px(centro) if camera is not None else centro
+        return None
+
+    def centro_slot_reserva_mundo(self, slot_id_ou_pokemon_id):
+        chave = str(slot_id_ou_pokemon_id or "").strip()
+        if not chave:
+            return None
+        for slots in self._slots_reserva.values():
+            for slot in slots:
+                if str(slot.get("id_slot") or "") == chave or str(slot.get("pokemon_id") or "") == chave:
+                    rect = slot.get("rect")
+                    if isinstance(rect, pygame.Rect):
+                        return rect.center
         return None

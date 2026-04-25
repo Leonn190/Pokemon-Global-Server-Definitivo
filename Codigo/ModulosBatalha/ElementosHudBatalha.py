@@ -82,8 +82,6 @@ class ElementosHudBatalha:
             if acao == "remover" and montador is not None:
                 montador.remover_acao(cmd.get("id"))
                 self.controlador.atualizar_previsoes_hud()
-            elif acao == "selecionar" and montador is not None:
-                montador.selecionar_acao(cmd.get("id"))
 
     def consumiu_clique(self, pos_mouse):
         if self._ficha_t_visivel > 0.05 and self.ficha.contem_ponto(pos_mouse):

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import pygame
 
 from Codigo.ModulosBatalha.Arena import Arena
@@ -110,7 +112,20 @@ class ControladorBatalha:
         if self.arena is None:
             return
         self.arena.renderizar(surface, self.camera)
-        self.arena.desenhar_areas(surface, self.camera, area_hover=self._area_hover, area_selecionada=self.area_selecionada)
+        areas_destacadas = []
+        reservas_destacadas = []
+        if self.montador_jogadas is not None:
+            areas_destacadas = self.montador_jogadas.areas_destacadas()
+            reservas_destacadas = self.montador_jogadas.reservas_destacadas()
+        self.arena.desenhar_areas(
+            surface,
+            self.camera,
+            area_hover=self._area_hover,
+            area_selecionada=self.area_selecionada,
+            areas_destacadas=areas_destacadas,
+        )
+        if self.montador_jogadas is not None:
+            self.montador_jogadas.desenhar_pulso_previa(surface)
         for indicador in list(getattr(self.montador_jogadas, "indicadores_preparados", []) or []):
             indicador.atualizar(dt=self._ultimo_dt)
             indicador.desenhar(surface, self.camera)
@@ -123,6 +138,7 @@ class ControladorBatalha:
                 hover = pokemon.contem_ponto(pygame.mouse.get_pos())
                 pokemon.desenhar(surface, self.camera, self.arena, selecionado=(self.area_selecionada == pokemon.AreaId), hover=hover)
 
+        reservas_destacadas_set = set(reservas_destacadas)
         for lado in ("jogador", "inimigo"):
             for slot in self.arena.obter_slots_reserva(lado):
                 poke = self.pokemons_por_id.get(slot.get("pokemon_id"))
@@ -130,11 +146,21 @@ class ControladorBatalha:
                     continue
                 rect = slot.get("rect_tela")
                 hover = rect.collidepoint(pygame.mouse.get_pos()) if rect else False
-                selecionado = self.area_selecionada == slot.get("id_slot")
+                selecionado = self.area_selecionada in {slot.get("id_slot"), slot.get("pokemon_id")}
                 if rect:
-                    borda = (255, 235, 90) if selecionado else (204, 212, 228, 170) if hover else (150, 158, 175, 130)
+                    destacado = str(slot.get("id_slot")) in reservas_destacadas_set
+                    if selecionado:
+                        borda = (255, 235, 90, 245)
+                    elif destacado:
+                        pulso = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 180.0)
+                        borda = (255, 225, 70, int(80 + 150 * pulso))
+                    elif hover:
+                        borda = (204, 212, 228, 170)
+                    else:
+                        borda = (0, 0, 0, 225)
                     overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
-                    pygame.draw.rect(overlay, borda, overlay.get_rect(), 2)
+                    pygame.draw.rect(overlay, (0, 0, 0, 235), overlay.get_rect(), 4)
+                    pygame.draw.rect(overlay, borda, overlay.get_rect().inflate(-4, -4), 3)
                     surface.blit(overlay, rect.topleft)
                 poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover, camera=self.camera)
 
@@ -164,6 +190,9 @@ class ControladorBatalha:
         self.limpar_ataque()
 
     def selecionar_area(self, area_id):
+        if area_id is not None and self.area_selecionada == area_id:
+            self.desselecionar_pokemon()
+            return
         self.area_selecionada = area_id
         if area_id is None:
             self.pokemon_selecionado = None
@@ -173,9 +202,13 @@ class ControladorBatalha:
 
     def selecionar_ataque(self, ataque):
         self.ataque_selecionado = ataque
+        if ataque is None and self.montador_jogadas is not None and self.montador_jogadas.estado_montagem == "preparando_ataque":
+            self.montador_jogadas.cancelar_previa()
 
     def limpar_ataque(self):
         self.ataque_selecionado = None
+        if self.montador_jogadas is not None and self.montador_jogadas.estado_montagem == "preparando_ataque":
+            self.montador_jogadas.cancelar_previa()
         if self.hud:
             self.hud.ficha.limpar_ataque_selecionado()
 

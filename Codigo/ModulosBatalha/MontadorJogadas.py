@@ -18,6 +18,8 @@ class MontadorJogadas:
         self.indicador_previa = None
         self.pokemon_origem = None
         self.ataque_selecionado = None
+        self.area_alvo_previa = None
+        self.alvo_previa_mundo = None
         self.estado_montagem = "ocioso"
         self.proximo_id_local = 1
         self.acao_selecionada_id = None
@@ -68,19 +70,48 @@ class MontadorJogadas:
             return False
         self.pokemon_origem = pokemon
         self.ataque_selecionado = dict(ataque)
+        self.area_alvo_previa = None
+        self.alvo_previa_mundo = None
         if estilo == "ativo":
             return self.adicionar_acao(self._criar_acao_ataque(pokemon, ataque, None))
-        origem = self.arena.centro_area_tela(getattr(pokemon, "AreaId", None), self.controlador.camera)
-        self.indicador_previa = IndicadorAtaque().configurar(origem, origem, "ataque")
+        origem = self.arena.centro_area(getattr(pokemon, "AreaId", None))
+        self.indicador_previa = IndicadorAtaque().configurar(origem, origem, "ataque", coordenadas_mundo=True)
         self.estado_montagem = "preparando_ataque"
+        self.recalcular_previsao_energia()
         return True
 
     def atualizar_preparacao(self, pos_mouse):
         if self.indicador_previa is not None:
-            self.indicador_previa.atualizar(destino_atual=pos_mouse)
+            destino = self.controlador.camera.tela_para_mundo_tiles(pos_mouse)
+            area_id = None
+            alvo_mundo = None
+            if self.estado_montagem == "preparando_ataque":
+                hover = self.arena.area_em_posicao_mouse(pos_mouse, self.controlador.camera)
+                if hover and self.area_permitida_para_ataque(hover):
+                    centro = self.arena.centro_area(hover)
+                    if centro is not None:
+                        destino = centro
+                        area_id = hover
+                        alvo_mundo = centro
+                if hover:
+                    self.indicador_previa.definir_validade(area_id is not None)
+                else:
+                    self.indicador_previa.definir_validade(True)
+            elif self.estado_montagem == "arrastando":
+                alvo = self.alvo_movimento_em_posicao(pos_mouse)
+                if alvo is not None:
+                    destino = alvo["centro"]
+                    alvo_mundo = destino
+                    area_id = alvo.get("area_id")
+                self.indicador_previa.definir_validade(alvo is not None or not self._mouse_sobre_alvo_movimento(pos_mouse))
+            self.area_alvo_previa = area_id
+            self.alvo_previa_mundo = alvo_mundo
+            self.indicador_previa.atualizar(destino_atual=destino)
 
     def confirmar_alvo(self, area_id):
         if self.pokemon_origem is None or self.ataque_selecionado is None:
+            return False
+        if not self.area_permitida_para_ataque(area_id):
             return False
         props = self.buscar_propriedades_ataque(self.ataque_selecionado) or {}
         alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
@@ -91,9 +122,14 @@ class MontadorJogadas:
         return ok
 
     def iniciar_arraste_pokemon(self, pokemon, pos_mouse):
+        self.controlador.selecionar_pokemon(pokemon)
         self.pokemon_origem = pokemon
-        origem = self.arena.centro_area_tela(getattr(pokemon, "AreaId", None), self.controlador.camera)
-        self.indicador_previa = IndicadorAtaque().configurar(origem, pos_mouse, "movimento")
+        self.ataque_selecionado = None
+        self.area_alvo_previa = None
+        self.alvo_previa_mundo = None
+        origem = self.arena.centro_area(getattr(pokemon, "AreaId", None))
+        destino = self.controlador.camera.tela_para_mundo_tiles(pos_mouse)
+        self.indicador_previa = IndicadorAtaque().configurar(origem, destino, "movimento", coordenadas_mundo=True)
         self.estado_montagem = "arrastando"
 
     def atualizar_arraste(self, pos_mouse):
@@ -103,16 +139,16 @@ class MontadorJogadas:
         poke = self.pokemon_origem
         if poke is None:
             return False
-        slot = self.arena.reserva_em_posicao_mouse(pos_mouse, self.controlador.camera)
-        if slot is not None:
-            destino = self.controlador.pokemons_por_id.get(slot.get("pokemon_id"))
+        alvo = self.alvo_movimento_em_posicao(pos_mouse)
+        if alvo is None:
+            self.cancelar_previa()
+            return False
+        if alvo.get("tipo") == "reserva":
+            destino = self.controlador.pokemons_por_id.get(alvo.get("pokemon_id"))
             ok = self.preparar_troca_reserva(poke, destino)
             self.cancelar_previa()
             return ok
-        area_id = self.arena.area_em_posicao_mouse(pos_mouse, self.controlador.camera)
-        if not area_id:
-            self.cancelar_previa()
-            return False
+        area_id = alvo.get("area_id")
         destino = self.arena.pokemon_na_area(area_id)
         if destino is None:
             ok = self.preparar_movimento(poke, area_id)
@@ -123,6 +159,8 @@ class MontadorJogadas:
 
     def preparar_movimento(self, pokemon, area_destino):
         if pokemon is None or not pokemon.esta_ativo() or not pokemon.esta_vivo():
+            return False
+        if str(area_destino) == str(getattr(pokemon, "AreaId", "")):
             return False
         area = self.arena.obter_area_por_id(area_destino)
         if not area or int(area.get("lado_id", -1)) != int(getattr(pokemon, "lado_id", -2)):
@@ -139,6 +177,8 @@ class MontadorJogadas:
 
     def preparar_troca_posicao(self, pokemon_origem, pokemon_destino):
         if pokemon_origem is None or pokemon_destino is None:
+            return False
+        if str(getattr(pokemon_origem, "id_batalha", "")) == str(getattr(pokemon_destino, "id_batalha", "")):
             return False
         if int(getattr(pokemon_origem, "lado_id", -1)) != int(getattr(pokemon_destino, "lado_id", -2)):
             return False
@@ -182,7 +222,12 @@ class MontadorJogadas:
             "pokemon_id": pokemon.id_batalha,
             "lado_id": pokemon.lado_id,
             "rodada": self.controlador.rodada_atual,
-            "ataque": {"ID": code, "Code": code, "nome": ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome")},
+            "ataque": {
+                "ID": code,
+                "Code": code,
+                "nome": ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome"),
+                "Tipo": ataque.get("Tipo") or ataque.get("tipo"),
+            },
             "alvo": {"tipo": "area", "area_id": area_id} if area_id else None,
         }
 
@@ -194,6 +239,8 @@ class MontadorJogadas:
         if len(acoes_lado) >= self.limite_acoes_jogada:
             return False
         pid = str(acao.get("pokemon_id") or "")
+        if any(self._chave_acao(a) == self._chave_acao(acao) for a in acoes_lado if str(a.get("pokemon_id") or "") == pid):
+            return False
         if sum(1 for a in acoes_lado if str(a.get("pokemon_id") or "") == pid) >= self.limite_acoes_por_pokemon:
             return False
         poke = self.controlador.pokemons_por_id.get(pid)
@@ -207,6 +254,7 @@ class MontadorJogadas:
         acao["custo_previsto"] = custo
         acao["modo_teste"] = bool(self.controlador.modo_teste)
         acao["executor"] = poke
+        acao["alvo_visual"] = self._resolver_alvo_visual(acao)
         self.proximo_id_local += 1
         self.acoes_preparadas.append(acao)
         self._adicionar_indicador_para_acao(acao)
@@ -217,17 +265,140 @@ class MontadorJogadas:
         tipo = str(acao.get("tipo"))
         origem = destino = None
         if tipo == "ataque":
-            origem = self.arena.centro_area_tela(self.controlador.pokemons_por_id[acao["pokemon_id"]].AreaId, self.controlador.camera)
+            origem = self.arena.centro_area(self.controlador.pokemons_por_id[acao["pokemon_id"]].AreaId)
             alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
-            destino = self.arena.centro_area_tela(alvo.get("area_id"), self.controlador.camera)
+            destino = self.arena.centro_area(alvo.get("area_id")) or origem
         elif tipo in {"movimento", "troca_posicao"}:
-            origem = self.arena.centro_area_tela((acao.get("origem") or {}).get("area_id", self.controlador.pokemons_por_id[acao["pokemon_id"]].AreaId), self.controlador.camera)
-            destino = self.arena.centro_area_tela((acao.get("destino") or {}).get("area_id"), self.controlador.camera)
+            origem = self.arena.centro_area((acao.get("origem") or {}).get("area_id", self.controlador.pokemons_por_id[acao["pokemon_id"]].AreaId))
+            destino = self.arena.centro_area((acao.get("destino") or {}).get("area_id"))
         elif tipo == "troca_reserva":
-            origem = self.arena.centro_area_tela((acao.get("origem") or {}).get("area_id"), self.controlador.camera)
-            destino = self.arena.centro_slot_reserva((acao.get("destino") or {}).get("pokemon_id"), self.controlador.camera)
+            origem = self.arena.centro_area((acao.get("origem") or {}).get("area_id"))
+            destino = self.arena.centro_slot_reserva_mundo((acao.get("destino") or {}).get("pokemon_id"))
         if origem and destino:
-            self.indicadores_preparados.append(IndicadorAtaque().configurar(origem, destino, tipo, estado="preparado", id_acao=acao.get("id")))
+            self.indicadores_preparados.append(IndicadorAtaque().configurar(origem, destino, tipo, estado="preparado", id_acao=acao.get("id"), coordenadas_mundo=True))
+
+    def _chave_acao(self, acao):
+        tipo = str((acao or {}).get("tipo") or "")
+        if tipo == "ataque":
+            ataque = (acao or {}).get("ataque") if isinstance((acao or {}).get("ataque"), dict) else {}
+            return ("ataque", str(ataque.get("Code") or ataque.get("ID") or ataque.get("nome") or ""))
+        if tipo == "movimento":
+            return ("movimento",)
+        if tipo in {"troca_posicao", "troca_reserva"}:
+            return ("troca",)
+        return (tipo,)
+
+    def _resolver_alvo_visual(self, acao):
+        tipo = str((acao or {}).get("tipo") or "")
+        if tipo == "ataque":
+            alvo = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+            area_id = alvo.get("area_id")
+            if not area_id:
+                return {"pokemon": (acao or {}).get("executor")}
+            poke = self.arena.pokemon_na_area(area_id)
+            return {"area_id": area_id, "pokemon": poke}
+        if tipo in {"movimento", "troca_posicao"}:
+            destino = (acao or {}).get("destino") if isinstance((acao or {}).get("destino"), dict) else {}
+            area_id = destino.get("area_id")
+            poke = self.arena.pokemon_na_area(area_id)
+            return {"area_id": area_id, "pokemon": poke}
+        if tipo == "troca_reserva":
+            destino = (acao or {}).get("destino") if isinstance((acao or {}).get("destino"), dict) else {}
+            return {"pokemon": self.controlador.pokemons_por_id.get(str(destino.get("pokemon_id") or ""))}
+        return {"pokemon": (acao or {}).get("executor")}
+
+    def area_movimento_sob_mouse(self, pos_mouse):
+        if self.pokemon_origem is None:
+            return None
+        area_id = self.arena.area_em_posicao_mouse(pos_mouse, self.controlador.camera)
+        if not area_id:
+            return None
+        area = self.arena.obter_area_por_id(area_id)
+        if not area:
+            return None
+        if str(area_id) == str(getattr(self.pokemon_origem, "AreaId", "")):
+            return None
+        if int(area.get("lado_id", -1)) != int(getattr(self.pokemon_origem, "lado_id", -2)):
+            return None
+        return area_id
+
+    def alvo_movimento_em_posicao(self, pos_mouse):
+        area_id = self.area_movimento_sob_mouse(pos_mouse)
+        if area_id:
+            centro = self.arena.centro_area(area_id)
+            if centro is not None:
+                return {"tipo": "area", "area_id": area_id, "centro": centro}
+        slot = self.arena.reserva_em_posicao_mouse(pos_mouse, self.controlador.camera)
+        if slot is not None and self.slot_reserva_permitido(slot):
+            centro = self.arena.centro_slot_reserva_mundo(slot.get("pokemon_id"))
+            if centro is not None:
+                return {"tipo": "reserva", "pokemon_id": slot.get("pokemon_id"), "centro": centro}
+        return None
+
+    def _mouse_sobre_alvo_movimento(self, pos_mouse):
+        return self.arena.area_em_posicao_mouse(pos_mouse, self.controlador.camera) is not None or self.arena.reserva_em_posicao_mouse(pos_mouse, self.controlador.camera) is not None
+
+    def slot_reserva_permitido(self, slot):
+        if self.pokemon_origem is None or not isinstance(slot, dict):
+            return False
+        if str(slot.get("lado_visual") or "") != str(getattr(self.pokemon_origem, "Lado", "")):
+            return False
+        destino = self.controlador.pokemons_por_id.get(str(slot.get("pokemon_id") or ""))
+        return destino is not None and int(getattr(destino, "lado_id", -1)) == int(getattr(self.pokemon_origem, "lado_id", -2))
+
+    def area_permitida_para_ataque(self, area_id):
+        if self.pokemon_origem is None or self.ataque_selecionado is None:
+            return False
+        area = self.arena.obter_area_por_id(area_id)
+        if area is None:
+            return False
+        props = self.buscar_propriedades_ataque(self.ataque_selecionado) or {}
+        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        if bool(alvo_cfg.get("exige_area_ocupada")) and not self.arena.area_esta_ocupada(area_id):
+            return False
+        permitidos = alvo_cfg.get("lados_permitidos")
+        if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
+            return True
+        lado_area = int(area.get("lado_id", -999))
+        lado_origem = int(getattr(self.pokemon_origem, "lado_id", -998))
+        area_origem = str(getattr(self.pokemon_origem, "AreaId", ""))
+        for item in permitidos:
+            token = str(item or "").strip().lower()
+            if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
+                return True
+            if token in {"lado_oposto", "oposto", "inimigo", "inimigos", "adversario", "adversarios"} and lado_area != lado_origem:
+                return True
+            if token in {"mesmo_lado", "aliado", "aliados", "proprio_lado"} and lado_area == lado_origem:
+                return True
+            if token in {"usuario", "proprio", "si_mesmo"} and str(area_id) == area_origem:
+                return True
+        return False
+
+    def areas_destacadas(self):
+        if self.estado_montagem == "preparando_ataque" and self.ataque_selecionado is not None:
+            return [str(a.get("id")) for a in getattr(self.arena, "_areas", []) if self.area_permitida_para_ataque(a.get("id"))]
+        if self.estado_montagem == "arrastando" and self.pokemon_origem is not None:
+            lado = int(getattr(self.pokemon_origem, "lado_id", -1))
+            area_origem = str(getattr(self.pokemon_origem, "AreaId", ""))
+            return [
+                str(a.get("id"))
+                for a in getattr(self.arena, "_areas", [])
+                if int(a.get("lado_id", -2)) == lado and str(a.get("id")) != area_origem
+            ]
+        return []
+
+    def reservas_destacadas(self):
+        if self.estado_montagem != "arrastando" or self.pokemon_origem is None:
+            return []
+        lado_visual = str(getattr(self.pokemon_origem, "Lado", ""))
+        return [str(s.get("id_slot")) for s in self.arena.obter_slots_reserva(lado_visual)]
+
+    def desenhar_pulso_previa(self, surface):
+        if self.estado_montagem not in {"preparando_ataque", "arrastando"} or self.alvo_previa_mundo is None:
+            return
+        pos = self.controlador.camera.mundo_para_tela_px(self.alvo_previa_mundo)
+        tile = max(1, int(getattr(self.controlador.camera, "TilePx", 40) or 40))
+        IndicadorAtaque.desenhar_pulso(surface, pos, raio_base=max(18, int(tile * 0.95)))
 
     def remover_acao(self, id_local):
         alvo = int(id_local)
@@ -244,6 +415,8 @@ class MontadorJogadas:
         self.acoes_preparadas = []
         self.indicadores_preparados = []
         self.indicador_previa = None
+        self.area_alvo_previa = None
+        self.alvo_previa_mundo = None
         self.acao_selecionada_id = None
         self.recalcular_previsao_energia()
 
@@ -251,7 +424,10 @@ class MontadorJogadas:
         self.indicador_previa = None
         self.pokemon_origem = None
         self.ataque_selecionado = None
+        self.area_alvo_previa = None
+        self.alvo_previa_mundo = None
         self.estado_montagem = "ocioso"
+        self.recalcular_previsao_energia()
 
     def calcular_custo_acao(self, pokemon, acao_base, ordem_pokemon=1):
         tipo = str((acao_base or {}).get("tipo") or "")
@@ -274,7 +450,13 @@ class MontadorJogadas:
             por_pokemon[pid] = por_pokemon.get(pid, 0) + 1
             a["custo_previsto"] = self.calcular_custo_acao(self.controlador.pokemons_por_id.get(pid), a, ordem_pokemon=por_pokemon[pid])
             custos[pid] = custos.get(pid, 0.0) + float(a.get("custo_previsto") or 0.0)
-        self.previa_energia_por_pokemon = custos
+        custos_preparados = dict(custos)
+        if self.estado_montagem == "preparando_ataque" and self.pokemon_origem is not None and self.ataque_selecionado is not None:
+            pid = str(getattr(self.pokemon_origem, "id_batalha", "") or "")
+            ordem = por_pokemon.get(pid, 0) + 1
+            custo_previa = self.calcular_custo_acao(self.pokemon_origem, self._criar_acao_ataque(self.pokemon_origem, self.ataque_selecionado, None), ordem_pokemon=ordem)
+            custos[pid] = custos.get(pid, 0.0) + float(custo_previa)
+        self.previa_energia_por_pokemon = custos_preparados
         for p in self.controlador.pokemons:
             custo = float(custos.get(p.id_batalha, 0.0))
             p.CustoPrevistoPendente = custo
@@ -314,7 +496,7 @@ class MontadorJogadas:
         }
 
     def _serializar_acao(self, acao):
-        out = {k: v for k, v in acao.items() if k not in {"executor"}}
+        out = {k: v for k, v in acao.items() if k not in {"executor", "alvo_visual"}}
         return out
 
 

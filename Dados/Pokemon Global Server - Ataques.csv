@@ -1,25 +1,19 @@
-Ataque,Tipo,Custo,Estilo,Descrição Nivel 1,Descrição Nivel 2,Descrição Nivel 3,Tiro,Efeito,Code
-Investida,normal,40,Impulso,Causa (100% de Atk) como dano normal e avança com (120% de Vel). O usuário recebe 15% do dano causado.,Causa (110% de Atk) como dano normal e avança com (135% de Vel).,O usuário recebe apenas 5% do dano causado.,-,-,1
-Biscoito,normal,25,tiro,"Cura o aliado em (30% de Mag), aplica 1 stack de Biscoito no alvo e no usuário, e cada stack aumenta a cura em +5% de Mag.",Lança 2 Biscoitos laterais adicionais junto ao principal.,A cura base sobe para (45% de Mag).,Biscoito,-,2
-Enraivecer,normal,20,status,"Se a Vida estiver abaixo de 50%, o usuário ganha Aprimorado se SpA > Atk; caso contrário, ganha Amplificado.",Os efeitos passam a ser ativados com Vida abaixo de 70%.,"Ao ativar o efeito, cura (20% da Vida) perdida.",-,-,3
-Provocar,normal,20,status,O usuário ganha Provocando.,O usuário também ganha uma barreira equivalente a (50% de Mag).,A barreira sobe para (60% de Mag) e a duração de Provocando é dobrada.,-,-,4
-Proteger,normal,30,alvo,O alvo fica Protegido.,O alvo remove 1 efeito negativo aleatório.,O alvo também ganha uma barreira equivalente a (40% de Mag).,-,-,5
-Arranhar,normal,35,area,Causa (135% de Atk) como dano normal em uma área de cone.,Causa (150% de Atk) como dano normal.,Este ataque ganha (+10% de CrC) e (+10% de CrD).,-,Garra,6
-Recarga,normal,25,status,Recupera 200% de Ene gasta neste ataque.,"Pode ultrapassar o limite máximo de Ene, mas só recupera 50% do excedente.",Passa a recuperar 100% do excedente.,-,-,7
-Energia,normal,30,tiro,Causa (120% de SpA) como dano especial.,Causa (135% de SpA) como dano especial.,Causa (150% de SpA) como dano especial.,-,-,8
-Hiper Raio,normal,100,laser,Causa (160% de SpA) como dano especial.,Causa (180% de SpA) como dano especial.,Causa (200% de SpA) como dano especial.,-,-,9
-Guilhotina,normal,80,area,"Causa (50% de Atk) como dano normal em área. Executa inimigos com menos de 25% da Vida; se for crítico, executa inimigos com menos de 30% da Vida.",Causa (75% de Atk) como dano normal em área.,"Se for crítico, executa inimigos com menos de 40% da Vida.",-,-,10
-Disparo,normal,35,tiro,Causa (90% de Atk) como dano normal e ricocheteia 2 vez.,Ricocheteia 3 vezes.,Causa (95% de Atk) como dano normal e tem +25% de duração.,-,-,11
-Chifrada,normal,45,dash,Causa (80% de Atk) + (40% de Per) como dano normal e avança com (110% de Vel).,"A Per usada neste ataque é 35% maior; se for crítico, passa a ser 50% maior.",Causa (90% de Atk) + (50% de Per) como dano normal e avança com (115% de Vel).,-,-,12
-Resetar,normal,30,alvo,Remove todas as variações de atributos do alvo.,Recupera 40% de Ene gasta neste ataque.,Recupera 90% de Ene gasta neste ataque.,-,-,13
-Tankar,normal,60,status,O usuário ganha uma barreira equivalente a (100% da Mag) e também recebe (10% de Mag) na sua menor defesa.,Passa a ganhar (110% de Mag) como barreira e (12% de Mag) em ambas as defesas.,Passa a ganhar (125% de Mag) como barreira e também recebe Imortal.,-,-,14
-Estocada,normal,35,area,"Causa (100% de Atk) como dano normal. Se for o primeiro ataque do turno, causa +30% de dano.","Causa (105% de Atk) como dano normal. Se for o primeiro ataque do turno, causa +35% de dano.","Causa (110% de Atk) como dano normal. Se for o primeiro ataque do turno, o golpe é crítico.",-,-,15
-Bola Climática,normal,50,tiro,"Causa (120% de SpA) como dano especial, adapta o tipo ao clima e, se houver clima ativo, causa +10% de dano.","Se houver clima ativo, causa +35% de dano.",Causa (130% de SpA) como dano especial.,-,-,16
-Hiper Presa,normal,45,alvo,"Causa (140% de Atk) como dano normal. Se for crítico, o alvo recua. Este ataque não pode ultrapassar 80% de CrC.",Causa (145% de Atk) como dano normal e o limite de CrC sobe para 90%.,Causa (155% de Atk) como dano normal.,-,-,17
-Investida Selvagem,normal,70,Impulso,"Causa (180% de Atk) como dano normal e avança com (105% de Vel). O usuário recebe 25% do dano causado; se errar, recebe 50% do dano causado.","Causa (195% de Atk) como dano normal. O usuário recebe 20% do dano causado; se errar, recebe 40% do dano causado.",Causa (210% de Atk) como dano normal e avança com (115% de Vel).,-,-,18
-,,,,,,,-,-,19
-Dança da chuva,agua,15,status,Deixe o clima como chuvoso,,,-,-,20
-Bomba de lama,terrestre,30,zona,causa (50% de atk) e deixa toda area com o efeito de lama,,,-,-,21
-Parede,normal,20,Irregular,construa uma parede,,,-,-,22
-Acumulador,normal,0,passiva,Toda vez que esse pokemon sofre qualquer instancia de dano ele aumenta o seu Atk e Spa em 5%,,,-,-,23
-,,,,,,,-,-,24
+Ataque,Tipo,Custo,Estilo,Descrição Nivel 1,Descrição Nivel 2,Descrição Nivel 3,Code
+Investida,normal,40,alvo,Causa (120% de Atk) como dano normal. O usuário recebe (20% do dano causado).,,,1
+Biscoito,normal,25,alvo,"Cura o alvo em (55% de Mag), aplica 1 stack no alvo e no usuário, e cada stack no alvo aumenta a cura em (+10% de Mag). Se for crítico, cada stack aumenta a cura em (+15% de Mag).",,,2
+Enraivecer,normal,20,ativa,"Se a Vida estiver abaixo de 40%, o usuário ganha Amplificado.",,,3
+Provocar,normal,20,ativa,O usuário ganha Provocando.,,,4
+Proteger,normal,30,alvo,O alvo fica Protegido.,,,5
+Arranhar,normal,35,alvo,Causa (135% de Atk) como dano normal.,,,6
+Recarga,normal,25,ativa,Recupera (200% da Ene gasta neste ataque).,,,7
+Energia,normal,30,alvo,Causa (115% de SpA) como dano especial.,,,8
+Hiper Raio,normal,100,alvo,"Causa (150% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",,,9
+Guilhotina,normal,80,alvo,"Causa (80% de Atk) como dano normal. Se for crítico, executa inimigos com menos de 25% da Vida.",,,10
+Disparo,normal,35,alvo,Causa (100% de Atk) como dano normal.,,,11
+Chifrada,normal,45,alvo,Causa (90% de Atk) + (40% de Per) como dano normal.,,,12
+Resetar,normal,30,alvo,Remove todas as variações permanentes de atributos do alvo.,,,13
+Tankar,normal,60,ativa,"O usuário ganha Fortificado e recebe (20% de Mag) na sua menor defesa. Se for crítico, também ganha uma barreira equivalente a (20% de Mag).",,,14
+Estocada,normal,35,alvo,"Causa (105% de Atk) como dano normal. Se for o primeiro ataque do turno, causa +25% de dano.",,,15
+Bola Climática,normal,50,alvo,"Causa (105% de SpA) como dano especial. Se houver clima ativo, causa (130% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos em áreas adjacentes.",,,16
+Hiper Presa,normal,45,alvo,"Causa (140% de Atk) como dano normal. Se for crítico, o alvo recua. Este ataque não pode ultrapassar 80% de CrC.",,,17
+Acumulador,normal,0,passivo,O usuário ganha +4 de Amplificação toda vez que é atacado.,,,18

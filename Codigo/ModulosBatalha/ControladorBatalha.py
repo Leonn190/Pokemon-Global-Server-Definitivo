@@ -33,12 +33,10 @@ class ControladorBatalha:
         self._ultimos_eventos = []
         self._ultimo_dt = 0.0
         self._intervalo_frame_ms = 85
-        self._fuga_estado = "inativo"
         self._fuga_alpha = 0.0
-        self._fuga_alpha_alvo = 220.0
-        self._fuga_escurecer_vel = 360.0
-        self._fuga_clarear_vel = 280.0
-        self._fuga_solicitou_saida = False
+        self._fuga_incremento_clique = 56.0
+        self._fuga_clarear_por_segundo = 34.0
+        self._fuga_limite_saida = 210.0
         self.solicitou_encerrar_batalha = False
 
     def iniciar(self, estado_inicial):
@@ -55,8 +53,8 @@ class ControladorBatalha:
 
         self.pokemons = [PokemonBatalha.from_serializado(item) for item in list(estado.get("pokemons") or [])]
         regras = estado.get("regras") if isinstance(estado.get("regras"), dict) else {}
-        regras_pokemons = regras.get("pokemons") if isinstance(regras.get("pokemons"), dict) else {}
-        intervalo_ms = regras_pokemons.get("animacao_intervalo_frame_ms", estado.get("animacao_intervalo_frame_ms", 85))
+        animacao = regras.get("animacao") if isinstance(regras.get("animacao"), dict) else {}
+        intervalo_ms = animacao.get("intervalo_frame_ms", 85)
         try:
             self._intervalo_frame_ms = max(1, int(float(intervalo_ms)))
         except (TypeError, ValueError):
@@ -123,12 +121,11 @@ class ControladorBatalha:
                 poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover)
 
         self.hud.desenhar(surface, self._ultimos_eventos, self._ultimo_dt)
-        if self._fuga_estado != "inativo" or self._fuga_alpha > 0.0:
-            alpha = max(0, min(255, int(round(self._fuga_alpha))))
-            if alpha > 0:
-                overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-                overlay.fill((0, 0, 0, alpha))
-                surface.blit(overlay, (0, 0))
+        alpha = max(0, min(255, int(round(self._fuga_alpha))))
+        if alpha > 0:
+            overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, alpha))
+            surface.blit(overlay, (0, 0))
 
     def selecionar_pokemon(self, pokemon):
         self.pokemon_selecionado = pokemon
@@ -173,25 +170,15 @@ class ControladorBatalha:
         self.estado_batalha = "montando_jogada"
 
     def iniciar_fuga(self):
-        if self._fuga_estado in {"escurecendo", "clareando"}:
-            return
-        self._fuga_estado = "escurecendo"
-        self._fuga_solicitou_saida = False
+        self._fuga_alpha = min(255.0, self._fuga_alpha + self._fuga_incremento_clique)
         self.estado_batalha = "fugindo"
+        if self._fuga_alpha >= self._fuga_limite_saida:
+            self.solicitou_encerrar_batalha = True
 
     def _atualizar_fuga(self, dt: float):
         dt = max(0.0, float(dt or 0.0))
-        if self._fuga_estado == "escurecendo":
-            self._fuga_alpha = min(self._fuga_alpha_alvo, self._fuga_alpha + self._fuga_escurecer_vel * dt)
-            if self._fuga_alpha >= self._fuga_alpha_alvo - 1:
-                self._fuga_estado = "clareando"
-                if not self._fuga_solicitou_saida:
-                    self._fuga_solicitou_saida = True
-                    self.solicitou_encerrar_batalha = True
-        elif self._fuga_estado == "clareando":
-            self._fuga_alpha = max(0.0, self._fuga_alpha - self._fuga_clarear_vel * dt)
-            if self._fuga_alpha <= 0.0:
-                self._fuga_estado = "inativo"
+        if self._fuga_alpha > 0.0:
+            self._fuga_alpha = max(0.0, self._fuga_alpha - self._fuga_clarear_por_segundo * dt)
 
     def definir_modo_teste(self, ativo: bool):
         self.modo_teste = bool(ativo)

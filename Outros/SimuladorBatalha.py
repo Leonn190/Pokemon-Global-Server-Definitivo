@@ -134,13 +134,6 @@ def montar_estado_inicial() -> dict:
             )
 
     largura, altura = 120, 72
-    tiles = []
-    for y in range(altura):
-        for x in range(largura):
-            bloco = 1 if y < altura * 0.45 else 2
-            if 32 < x < 88 and 20 < y < 52:
-                bloco = 5 if (x + y) % 2 == 0 else 4
-            tiles.append({"x": x, "y": y, "bloco": bloco})
 
     return {
         "id_partida": "simulador_local_fase1",
@@ -158,9 +151,10 @@ def montar_estado_inicial() -> dict:
             "arena_largura": 40,
             "arena_altura": 20,
             "origem": (0, 0),
-            "tiles": tiles,
+            "tiles": [],
             "estruturas": [],
         },
+        "regras": {"animacao": {"intervalo_frame_ms": 85}},
         "pokemons": pokemons_serializados,
     }
 
@@ -180,7 +174,7 @@ def main() -> None:
 
     rodando = True
     while rodando:
-        dt = clock.tick(60) / 1000.0
+        dt = clock.tick(180) / 1000.0
         eventos = pygame.event.get()
         for evento in eventos:
             if evento.type == pygame.QUIT:
@@ -192,6 +186,9 @@ def main() -> None:
                 controlador.definir_modo_teste(not controlador.modo_teste)
 
         controlador.atualizar(dt, eventos)
+        if controlador.solicitou_encerrar_batalha:
+            rodando = False
+            continue
         tela.fill((8, 12, 18))
         controlador.desenhar(tela)
         pygame.draw.rect(tela, (28, 36, 54), btn_teste, border_radius=10)

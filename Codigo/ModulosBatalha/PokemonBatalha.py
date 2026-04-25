@@ -5,8 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import pygame
-
-from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
 
 
@@ -53,8 +51,7 @@ class PokemonBatalha:
     FrameAtual: int = 0
     TempoFrame: float = 1.0 / 8.0
     TimerAnimacao: float = 0.0
-    SpriteFallback: pygame.Surface | None = None
-    _cache_frames_escalados: dict[int, list[pygame.Surface]] = field(default_factory=dict)
+    _cache_frames_escalados: list[pygame.Surface] | None = None
     _carregamento_frames_tentado: bool = False
 
     @classmethod
@@ -96,6 +93,7 @@ class PokemonBatalha:
         if ms <= 0:
             return
         self.TempoFrame = max(0.01, ms / 1000.0)
+        self._cache_frames_escalados = None
 
     def _aplicar_stats(self, stats: dict, stats_base: dict):
         aliases = {"Amplificacao": "Amp", "Durabilidade": "Dur"}
@@ -205,6 +203,7 @@ class PokemonBatalha:
                 if frames:
                     break
         self.Frames = [f for f in frames if isinstance(f, pygame.Surface)]
+        self._cache_frames_escalados = None
 
     def atualizar_animacao(self, dt: float):
         if not self.Frames:
@@ -214,22 +213,18 @@ class PokemonBatalha:
             self.TimerAnimacao -= self.TempoFrame
             self.FrameAtual = (self.FrameAtual + 1) % len(self.Frames)
 
-    def _frame_atual_escalado(self, lado: int):
+    def _frame_atual_escalado(self):
         if not self.Frames:
             return None
-        lado = int(max(8, lado))
-        if lado not in self._cache_frames_escalados:
+        if self._cache_frames_escalados is None:
             escalados = []
             for frame in self.Frames:
-                fw = max(1, int(frame.get_width()))
-                fh = max(1, int(frame.get_height()))
-                escala = min(float(lado) / float(fw), float(lado) / float(fh))
-                alvo_w = max(1, int(round(fw * escala)))
-                alvo_h = max(1, int(round(fh * escala)))
-                escalado = pygame.transform.smoothscale(frame, (alvo_w, alvo_h)).convert_alpha()
+                fw = max(1, int(frame.get_width() * 1.10))
+                fh = max(1, int(frame.get_height() * 1.10))
+                escalado = pygame.transform.smoothscale(frame, (fw, fh)).convert_alpha()
                 escalados.append(escalado)
-            self._cache_frames_escalados[lado] = escalados
-        frames = self._cache_frames_escalados.get(lado) or []
+            self._cache_frames_escalados = escalados
+        frames = self._cache_frames_escalados or []
         if not frames:
             return None
         idx = self.FrameAtual % len(frames)
@@ -300,24 +295,10 @@ class PokemonBatalha:
         if centro is None:
             return
         cx, cy = camera.mundo_para_tela_px(centro)
-        lado = max(46, int(getattr(camera, "TilePx", 40) * 1.7))
-        img = self._frame_atual_escalado(lado)
-        if img is None:
-            try:
-                if self.SpriteFallback is None:
-                    self.SpriteFallback = PokemonInventario.surface_pokemon(self.Dados, lado)
-                elif max(self.SpriteFallback.get_width(), self.SpriteFallback.get_height()) != lado:
-                    fw = max(1, int(self.SpriteFallback.get_width()))
-                    fh = max(1, int(self.SpriteFallback.get_height()))
-                    escala = min(float(lado) / float(fw), float(lado) / float(fh))
-                    alvo_w = max(1, int(round(fw * escala)))
-                    alvo_h = max(1, int(round(fh * escala)))
-                    self.SpriteFallback = pygame.transform.smoothscale(self.SpriteFallback, (alvo_w, alvo_h))
-                img = self.SpriteFallback
-            except Exception:
-                img = None
+        img = self._frame_atual_escalado()
         if img is None:
             cor = (110, 196, 126) if self.Lado == "jogador" else (204, 108, 108)
+            lado = max(46, int(getattr(camera, "TilePx", 40) * 1.7))
             pygame.draw.circle(surface, cor, (int(cx), int(cy)), lado // 2)
             fonte = pygame.font.SysFont("arial", max(16, lado // 4), bold=True)
             txt = fonte.render(str(self.Nome)[:3].upper(), True, (20, 20, 20))
@@ -332,15 +313,11 @@ class PokemonBatalha:
     def desenhar_reserva(self, surface, rect_slot, selecionado=False, hover=False):
         _ = (selecionado, hover)
         base = pygame.Rect(rect_slot)
-        img = None
-        lado = min(base.w, base.h) - 8
-        img = self._frame_atual_escalado(lado)
+        img = self._frame_atual_escalado()
         if img is None:
-            try:
-                img = PokemonInventario.surface_pokemon(self.Dados, lado)
-            except Exception:
-                img = None
-        if img is not None:
+            cor = (110, 196, 126) if self.Lado == "jogador" else (204, 108, 108)
+            pygame.draw.circle(surface, cor, base.center, max(6, min(base.w, base.h) // 3))
+        else:
             surface.blit(img, img.get_rect(center=base.center))
         self.RectAtual = base
 

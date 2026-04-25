@@ -229,8 +229,11 @@ class Arena:
             if texto_idx is not None:
                 escala = max(20, int(rect_tela.height * 0.42))
                 texto_idx.style["size"] = escala
-                texto_idx.set_pos(rect_tela.center)
-                texto_idx.draw(surface)
+                texto_layer = pygame.Surface((rect_tela.w, rect_tela.h), pygame.SRCALPHA)
+                texto_idx.set_pos((rect_tela.w // 2, rect_tela.h // 2))
+                texto_idx.draw(texto_layer)
+                texto_layer.set_alpha(110)
+                surface.blit(texto_layer, rect_tela.topleft)
 
     def obter_area_por_id(self, area_id):
         return self._areas_por_id.get(str(area_id or "").strip())

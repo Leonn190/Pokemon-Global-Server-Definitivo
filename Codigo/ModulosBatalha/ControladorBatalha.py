@@ -28,7 +28,7 @@ class ControladorBatalha:
         self.estado_batalha = "inicializando"
 
         self.timer_rodada = 1.0
-        self.timer_rodada_max = 15.0
+        self.timer_rodada_max = 45.0
         self._area_hover = None
         self._ultimos_eventos = []
         self._ultimo_dt = 0.0
@@ -50,6 +50,7 @@ class ControladorBatalha:
         self.arena.atualizar_ocupacao(self.pokemons)
 
         self.criar_componentes()
+        self.timer_rodada = self.timer_rodada_max
         self.estado_batalha = "montando_jogada"
 
     def criar_componentes(self):
@@ -67,7 +68,9 @@ class ControladorBatalha:
         self.timer_rodada = max(0.0, self.timer_rodada - float(dt))
         self.arena.atualizar_ocupacao(self.pokemons)
         self.arena.atualizar_layout_batalha(self.camera)
-        self.arena.atualizar_slots_reserva(self.pokemons, pygame.display.get_surface())
+        self.arena.atualizar_slots_reserva(self.pokemons, self.camera)
+        for pokemon in self.pokemons:
+            pokemon.atualizar_animacao(dt)
 
         self._area_hover = self.arena.area_em_posicao_mouse(pygame.mouse.get_pos(), self.camera)
         self.player_batalha.processar_eventos(eventos)
@@ -82,7 +85,7 @@ class ControladorBatalha:
         for pokemon in self.pokemons:
             if pokemon.esta_ativo() and not pokemon.esta_na_reserva():
                 hover = pokemon.contem_ponto(pygame.mouse.get_pos())
-                pokemon.desenhar(surface, self.camera, self.arena, selecionado=(pokemon is self.pokemon_selecionado), hover=hover)
+                pokemon.desenhar(surface, self.camera, self.arena, selecionado=(self.area_selecionada == pokemon.AreaId), hover=hover)
 
         for lado in ("jogador", "inimigo"):
             for slot in self.arena.obter_slots_reserva(lado):
@@ -91,13 +94,24 @@ class ControladorBatalha:
                     continue
                 rect = slot.get("rect_tela")
                 hover = rect.collidepoint(pygame.mouse.get_pos()) if rect else False
-                poke.desenhar_reserva(surface, rect, selecionado=(poke is self.pokemon_selecionado), hover=hover)
+                selecionado = self.area_selecionada == slot.get("id_slot")
+                if rect:
+                    borda = (255, 235, 90) if selecionado else (204, 212, 228, 170) if hover else (150, 158, 175, 130)
+                    overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
+                    pygame.draw.rect(overlay, borda, overlay.get_rect(), 2)
+                    surface.blit(overlay, rect.topleft)
+                poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover)
 
         self.hud.desenhar(surface, self._ultimos_eventos, self._ultimo_dt)
 
     def selecionar_pokemon(self, pokemon):
         self.pokemon_selecionado = pokemon
-        self.area_selecionada = getattr(pokemon, "AreaId", None)
+        if pokemon is None:
+            self.area_selecionada = None
+        elif bool(getattr(pokemon, "EmReserva", False)):
+            self.area_selecionada = getattr(pokemon, "id_batalha", None)
+        else:
+            self.area_selecionada = getattr(pokemon, "AreaId", None)
         if self.hud:
             self.hud.ficha.definir_controle_inimigo(self.modo_teste)
             if pokemon is None or (pokemon.Lado == "inimigo" and not self.modo_teste):
@@ -110,6 +124,11 @@ class ControladorBatalha:
 
     def selecionar_area(self, area_id):
         self.area_selecionada = area_id
+        if area_id is None:
+            self.pokemon_selecionado = None
+            self.limpar_ataque()
+            return
+        self.pokemon_selecionado = self.arena.pokemon_na_area(area_id)
 
     def selecionar_ataque(self, ataque):
         self.ataque_selecionado = ataque
@@ -127,13 +146,18 @@ class ControladorBatalha:
         self.logs_locais.append({"rodada": self.rodada_atual, "texto": f"Rodada {self.rodada_atual} iniciada."})
         self.estado_batalha = "montando_jogada"
 
-    def alternar_modo_teste(self):
-        self.modo_teste = not self.modo_teste
+    def definir_modo_teste(self, ativo: bool):
+        self.modo_teste = bool(ativo)
         if self.hud:
             self.hud.ficha.definir_controle_inimigo(self.modo_teste)
         if self.pokemon_selecionado is not None and self.pokemon_selecionado.Lado == "inimigo" and not self.modo_teste:
             self.limpar_ataque()
+            if self.pokemon_selecionado.esta_ativo():
+                self.selecionar_area(getattr(self.pokemon_selecionado, "AreaId", None))
         return self.modo_teste
+
+    def alternar_modo_teste(self):
+        return self.definir_modo_teste(not self.modo_teste)
 
     def estado_visualizador_logs(self):
         return {

@@ -8,7 +8,7 @@ from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
 from Codigo.Paineis.PainelAcoes import PainelAcoes
 from Codigo.Paineis.VisualizadorLog import VisualizadorLog
 from Codigo.Prefabs.Barra import Barra
-from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
+from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 
 
@@ -28,55 +28,54 @@ class ElementosHudBatalha:
         self.barra_timer.configurar(cor_fundo=(22, 28, 42), cor_borda=(114, 145, 198), cor_preenchimento=(72, 184, 255), border_radius=8)
 
         self.botao_pronto = Botao(
-            pygame.Rect(20, 84, 140, 42),
-            "Pronto",
+            pygame.Rect(20, 84, 64, 64),
+            "",
             execute=lambda _jogo, _botao: self.controlador.passar_rodada_local(),
-            style={"text_style": {"size": 20}},
+            style={"radius": 12, "text_style": {"size": 14}},
         )
         self.botao_fugir = Botao(
-            pygame.Rect(170, 84, 140, 42),
-            "Fugir",
+            pygame.Rect(170, 84, 64, 64),
+            "",
             execute=lambda _jogo, _botao: self._fugir_local(),
-            style={"bg": (74, 82, 108), "bg_hover": (92, 104, 136), "bg_pressed": (58, 64, 88), "text_style": {"size": 20}},
+            style={"radius": 12, "bg": (74, 82, 108), "bg_hover": (92, 104, 136), "bg_pressed": (58, 64, 88), "text_style": {"size": 14}},
         )
-        self._icone_fuga = self._carregar_icone_fuga()
-
-        self.botao_modo_teste = BotaoAlavanca(
-            pygame.Rect(320, 84, 220, 42),
-            "Modo teste",
-            estado_inicial=False,
-            execute=lambda _jogo, estado, _botao: self._alternar_modo_teste(estado),
-            style={"text_style": {"size": 18}},
-        )
+        self._icone_fuga = self._carregar_icone("Fugir")
+        self._icone_pronto = self._carregar_icone("Pronto")
+        self._ficha_t_visivel = 0.0
+        self._ficha_alvo_visivel = 0.0
+        self.velocidade_animacao_ficha = 8.0
 
         self._retangulos_fixos: list[pygame.Rect] = []
 
-    def _carregar_icone_fuga(self):
+    def _carregar_icone(self, nome: str):
         base = Path("Recursos") / "Visual" / "Icones" / "Diversos"
-        for nome in ("Fuga.png", "fuga.png", "Fuga.webp", "fuga.webp"):
-            caminho = base / nome
-            if caminho.exists():
-                try:
-                    return pygame.image.load(str(caminho)).convert_alpha()
-                except Exception:
-                    return None
+        nomes = [nome, nome.lower(), nome.upper(), nome.capitalize(), "Fuga" if nome.lower() == "fugir" else nome]
+        exts = (".png", ".webp", ".jpg", ".jpeg")
+        for nome_base in nomes:
+            for ext in exts:
+                caminho = base / f"{nome_base}{ext}"
+                if caminho.exists():
+                    try:
+                        return pygame.image.load(str(caminho)).convert_alpha()
+                    except Exception:
+                        return None
         return None
 
     def _fugir_local(self):
         self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Tentativa de fuga (visual)."})
 
-    def _alternar_modo_teste(self, estado: bool):
-        self.controlador.modo_teste = bool(estado)
-        self.ficha.definir_controle_inimigo(self.controlador.modo_teste)
-
     def atualizar(self, dt: float, eventos):
-        _ = dt
+        self._ficha_alvo_visivel = 1.0 if self.controlador.pokemon_selecionado is not None else 0.0
+        passo = min(1.0, max(0.0, float(dt)) * self.velocidade_animacao_ficha)
+        self._ficha_t_visivel += (self._ficha_alvo_visivel - self._ficha_t_visivel) * passo
+        if abs(self._ficha_t_visivel - self._ficha_alvo_visivel) < 0.001:
+            self._ficha_t_visivel = self._ficha_alvo_visivel
         self.ficha.definir_controle_inimigo(self.controlador.modo_teste)
         self.painel_acoes.sincronizar([], None)
         self.painel_acoes.processar_eventos(eventos)
 
     def consumiu_clique(self, pos_mouse):
-        if self.ficha.contem_ponto(pos_mouse):
+        if self._ficha_t_visivel > 0.05 and self.ficha.contem_ponto(pos_mouse):
             return True
         for rect in self._retangulos_fixos:
             if rect.collidepoint(pos_mouse):
@@ -87,6 +86,14 @@ class ElementosHudBatalha:
         return False
 
     def desenhar(self, tela: pygame.Surface, eventos, dt: float):
+        w, h = tela.get_size()
+        btn = max(52, min(76, int(h * 0.07)))
+        margem = 18
+        self.botao_fugir.base_rect = pygame.Rect(margem, h - btn - margem, btn, btn)
+        self.botao_fugir.rect = pygame.Rect(self.botao_fugir.base_rect)
+        self.botao_pronto.base_rect = pygame.Rect(w - btn - margem, h - btn - margem, btn, btn)
+        self.botao_pronto.rect = pygame.Rect(self.botao_pronto.base_rect)
+
         self._txt_rodada.set_text(f"Rodada {self.controlador.rodada_atual}")
         self._txt_rodada.set_pos((20, 22))
         self._txt_rodada.draw(tela)
@@ -100,18 +107,30 @@ class ElementosHudBatalha:
 
         self.botao_pronto.render(tela, eventos, dt, None)
         self.botao_fugir.render(tela, eventos, dt, None)
-        self.botao_modo_teste.render(tela, eventos, dt, None)
-
         if self._icone_fuga is not None:
-            lado = self.botao_fugir.rect.height - 12
+            lado = self.botao_fugir.rect.height - 16
             icone = pygame.transform.smoothscale(self._icone_fuga, (lado, lado))
-            tela.blit(icone, icone.get_rect(midleft=(self.botao_fugir.rect.x + 10, self.botao_fugir.rect.centery)))
+            tela.blit(icone, icone.get_rect(center=self.botao_fugir.rect.center))
+        else:
+            txt = Texto("Fugir", style={"size": 14, "align": "center", "outline": True, "outline_thickness": 2})
+            txt.set_pos(self.botao_fugir.rect.center)
+            txt.draw(tela)
 
-        self._retangulos_fixos = [pygame.Rect(self.botao_pronto.rect), pygame.Rect(self.botao_fugir.rect), pygame.Rect(self.botao_modo_teste.rect)]
+        if self._icone_pronto is not None:
+            lado = self.botao_pronto.rect.height - 16
+            icone = pygame.transform.smoothscale(self._icone_pronto, (lado, lado))
+            tela.blit(icone, icone.get_rect(center=self.botao_pronto.rect.center))
+        else:
+            txt = Texto("Pronto", style={"size": 14, "align": "center", "outline": True, "outline_thickness": 2})
+            txt.set_pos(self.botao_pronto.rect.center)
+            txt.draw(tela)
+
+        self._retangulos_fixos = [pygame.Rect(self.botao_pronto.rect), pygame.Rect(self.botao_fugir.rect)]
 
         pokemon = self.controlador.pokemon_selecionado
+        if pokemon is not None or self._ficha_t_visivel > 0.01:
+            self.ficha.render(tela, pokemon, self._ficha_t_visivel, eventos, dt)
         if pokemon is not None:
-            self.ficha.render(tela, pokemon, 1.0, eventos, dt)
             ataque = self.ficha.ataque_selecionado()
             if ataque is not None:
                 estilo = str(ataque.get("Estilo") or ataque.get("estilo") or "").strip().lower()

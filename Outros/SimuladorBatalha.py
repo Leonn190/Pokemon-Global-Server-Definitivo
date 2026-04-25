@@ -75,7 +75,8 @@ def criar_materializado(especie: str) -> dict:
         from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
 
         return criar_pokemon_inicial_materializado(especie)
-    except Exception:
+    except Exception as exc:
+        print(f"[SimuladorBatalha] Falha ao materializar '{especie}': {exc!r}. Usando fallback visual.")
         return {
             "id": 0,
             "especie": especie,
@@ -95,6 +96,9 @@ def montar_estado_inicial() -> dict:
     random.shuffle(especies)
 
     precisa = 12
+    if not especies:
+        print("[SimuladorBatalha] Nenhuma espécie válida encontrada no CSV. Usando fallback seguro.")
+        especies = ["Pikachu", "Bulbasaur", "Charmander", "Squirtle"]
     escolhidas = especies[:precisa] if len(especies) >= precisa else [random.choice(especies) for _ in range(precisa)]
 
     pokemons_serializados = []
@@ -108,6 +112,12 @@ def montar_estado_inicial() -> dict:
             ativo = i < 3
             area_id = (areas_j if lado_id == 50 else areas_i)[i] if ativo else None
             atk_sample = random.sample(ataques, k=min(5, len(ataques))) if ataques else []
+            stats_base = dict((dados.get("stats_base") if isinstance(dados.get("stats_base"), dict) else dados.get("stats")) or {})
+            stats_normalizado = dict(stats_base)
+            variacoes = {chave: 0 for chave in stats_normalizado.keys()}
+            dados["stats_base"] = dict(stats_base)
+            dados["stats"] = dict(stats_normalizado)
+            dados["Variacoes"] = variacoes
             pokemons_serializados.append(
                 {
                     "id_batalha": f"{lado_id:03d}{offset + i:02d}",
@@ -145,8 +155,8 @@ def montar_estado_inicial() -> dict:
             "centro": (60, 36),
             "largura": largura,
             "altura": altura,
-            "arena_largura": 56,
-            "arena_altura": 32,
+            "arena_largura": 40,
+            "arena_altura": 20,
             "origem": (0, 0),
             "tiles": tiles,
             "estruturas": [],
@@ -165,6 +175,8 @@ def main() -> None:
     camera = CameraBatalha(tela.get_size(), posicao_inicial_tiles=(0, 0), tile_px=40)
     controlador = ControladorBatalha(camera=camera)
     controlador.iniciar(estado_inicial)
+    fonte_overlay = pygame.font.SysFont("consolas", 20, bold=True)
+    btn_teste = pygame.Rect(20, 130, 170, 40)
 
     rodando = True
     while rodando:
@@ -176,10 +188,20 @@ def main() -> None:
             elif evento.type == pygame.VIDEORESIZE:
                 tela = pygame.display.set_mode((max(960, evento.w), max(540, evento.h)), pygame.RESIZABLE)
                 controlador.camera.TamanhoTelaPx = (float(tela.get_width()), float(tela.get_height()))
+            elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1 and btn_teste.collidepoint(evento.pos):
+                controlador.definir_modo_teste(not controlador.modo_teste)
 
         controlador.atualizar(dt, eventos)
         tela.fill((8, 12, 18))
         controlador.desenhar(tela)
+        pygame.draw.rect(tela, (28, 36, 54), btn_teste, border_radius=10)
+        pygame.draw.rect(tela, (120, 144, 190), btn_teste, 2, border_radius=10)
+        txt_teste = fonte_overlay.render(f"Modo teste: {'ON' if controlador.modo_teste else 'OFF'}", True, (236, 242, 255))
+        tela.blit(txt_teste, txt_teste.get_rect(center=btn_teste.center))
+
+        fps = clock.get_fps()
+        txt_fps = fonte_overlay.render(f"FPS: {fps:5.1f}", True, (240, 245, 255))
+        tela.blit(txt_fps, txt_fps.get_rect(topright=(tela.get_width() - 16, 12)))
         pygame.display.flip()
 
     pygame.quit()

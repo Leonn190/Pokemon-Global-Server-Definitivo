@@ -331,9 +331,9 @@ class PokemonBatalha:
         vida_t = max(0.0, min(1.0, float(self.VidaAtual) / vida_max))
         ene_t = max(0.0, min(1.0, float(self.Energia) / ene_max))
 
-        barra_w = max(56, int(self.RectAtual.width * 1.03))
-        vida_h = max(10, int(self.RectAtual.height * 0.16))
-        ene_h = max(5, int(vida_h * 0.52))
+        barra_w = 86
+        vida_h = 10
+        ene_h = 5
         x = self.RectAtual.centerx - barra_w // 2
         y = self.RectAtual.y - vida_h - ene_h - 8
         rect_vida = pygame.Rect(x, y, barra_w, vida_h)
@@ -349,13 +349,6 @@ class PokemonBatalha:
             pygame.draw.rect(surface, (44, 190, 88), fill_vida, border_radius=raio_vida)
         if fill_ene.w > 0:
             pygame.draw.rect(surface, (74, 148, 255), fill_ene, border_radius=raio_ene)
-
-        brilho_vida = pygame.Rect(rect_vida.x + 1, rect_vida.y + 1, max(0, rect_vida.w - 2), max(1, rect_vida.h // 3))
-        brilho_ene = pygame.Rect(rect_ene.x + 1, rect_ene.y + 1, max(0, rect_ene.w - 2), max(1, rect_ene.h // 3))
-        if brilho_vida.w > 0 and brilho_vida.h > 0:
-            pygame.draw.rect(surface, (255, 255, 255, 26), brilho_vida, border_radius=max(2, brilho_vida.h // 2))
-        if brilho_ene.w > 0 and brilho_ene.h > 0:
-            pygame.draw.rect(surface, (255, 255, 255, 20), brilho_ene, border_radius=max(2, brilho_ene.h // 2))
 
         pygame.draw.rect(surface, (230, 236, 244), rect_vida, 1, border_radius=raio_vida)
         pygame.draw.rect(surface, (230, 236, 244), rect_ene, 1, border_radius=raio_ene)

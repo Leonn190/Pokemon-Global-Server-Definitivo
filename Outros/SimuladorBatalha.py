@@ -13,6 +13,7 @@ if str(RAIZ) not in sys.path:
 
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
 from Codigo.ModulosGerais.Camera import CameraBatalha
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
 def carregar_especies_validas(caminho_csv: Path) -> list[str]:
@@ -161,6 +162,10 @@ def montar_estado_inicial() -> dict:
 
     largura, altura = 120, 72
 
+    regras_cliente = carregar_regras_cliente_mundo()
+    animacao = regras_cliente.get("animacao") if isinstance(regras_cliente.get("animacao"), dict) else {}
+    intervalo_frame_ms = int(animacao.get("intervalo_frame_ms", 85) or 85)
+
     return {
         "id_partida": "simulador_local_fase1",
         "tipo_batalha": "Confronto",
@@ -180,7 +185,7 @@ def montar_estado_inicial() -> dict:
             "tiles": [],
             "estruturas": [],
         },
-        "regras": {"animacao": {"intervalo_frame_ms": 85}},
+        "regras": {"animacao": {"intervalo_frame_ms": intervalo_frame_ms}},
         "pokemons": pokemons_serializados,
     }
 

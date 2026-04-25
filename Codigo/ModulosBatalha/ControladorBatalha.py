@@ -53,6 +53,10 @@ class ControladorBatalha:
 
         self.pokemons = [PokemonBatalha.from_serializado(item) for item in list(estado.get("pokemons") or [])]
         regras = estado.get("regras") if isinstance(estado.get("regras"), dict) else {}
+        if not regras and isinstance(estado.get("regras_mundo"), dict):
+            regras = estado.get("regras_mundo")
+        if not regras:
+            regras = estado
         animacao = regras.get("animacao") if isinstance(regras.get("animacao"), dict) else {}
         intervalo_ms = animacao.get("intervalo_frame_ms", 85)
         try:

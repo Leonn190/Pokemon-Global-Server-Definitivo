@@ -254,7 +254,39 @@ class PokemonBatalha:
         }
 
     def atualizar_por_diff(self, diff):
-        _ = diff
+        if not isinstance(diff, dict):
+            return
+        self.Vivo = bool(diff.get("Vivo", diff.get("vivo", self.Vivo)))
+        self.Ativo = bool(diff.get("Ativo", diff.get("ativo", self.Ativo)))
+        self.EmReserva = bool(diff.get("EmReserva", diff.get("em_reserva", self.EmReserva)))
+        self.AreaId = diff.get("AreaId", diff.get("area_id", self.AreaId))
+        self.VidaAtual = _f(diff.get("VidaAtual", self.VidaAtual), self.VidaAtual)
+        self.VidaMax = max(1.0, _f(diff.get("VidaMax", self.VidaMax), self.VidaMax))
+        self.Energia = _f(diff.get("Energia", diff.get("EnergiaAtual", self.Energia)), self.Energia)
+        self.EnergiaMax = max(1.0, _f(diff.get("EnergiaMax", diff.get("EnergiaMaxima", self.EnergiaMax)), self.EnergiaMax))
+        self.BarreiraAtual = max(0.0, _f(diff.get("BarreiraAtual", self.BarreiraAtual), self.BarreiraAtual))
+        if isinstance(diff.get("Atributos"), dict):
+            self.Atributos = {str(k): _f(v, 0.0) for k, v in diff.get("Atributos").items()}
+        if isinstance(diff.get("AtributosBase"), dict):
+            self.AtributosBase = {str(k): _f(v, 0.0) for k, v in diff.get("AtributosBase").items()}
+        if isinstance(diff.get("Variacoes"), dict):
+            self.Variacoes = {str(k): _f(v, 0.0) for k, v in diff.get("Variacoes").items()}
+        if isinstance(diff.get("Tipos"), list):
+            self.Tipos = list(diff.get("Tipos") or [])
+        if isinstance(diff.get("ListaAtaques"), list):
+            self.ListaAtaques = list(diff.get("ListaAtaques") or [])
+        elif isinstance(diff.get("ataques"), list):
+            self.ListaAtaques = list(diff.get("ataques") or [])
+        if isinstance(diff.get("Dados"), dict):
+            self.Dados.update(diff.get("Dados") or {})
+        elif isinstance(diff.get("dados"), dict):
+            self.Dados.update(diff.get("dados") or {})
+        self.Dados["efeitos"] = list(diff.get("efeitos") or self.Dados.get("efeitos") or [])
+        self.Dados["estados_transitorios"] = dict(diff.get("estados_transitorios") or self.Dados.get("estados_transitorios") or {})
+        self.Dados["estatisticas_batalha"] = dict(diff.get("estatisticas_batalha") or self.Dados.get("estatisticas_batalha") or {})
+        self.EnergiaPrevista = float(self.Energia)
+        self.CustoPrevistoPendente = 0.0
+        self.PodePagarPrevisao = True
 
     def obter_ataques_ficha(self, limite=5):
         return list(self.ListaAtaques or [])[: max(0, int(limite or 5))]

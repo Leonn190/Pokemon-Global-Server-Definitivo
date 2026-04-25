@@ -488,6 +488,9 @@ class MontadorJogadas:
         for a in self.acoes_preparadas:
             lado = int(a.get("lado_id", -1))
             por_lado.setdefault(lado, []).append(self._serializar_acao(a))
+        for pokemon in self.controlador.pokemons:
+            if pokemon.esta_vivo():
+                por_lado.setdefault(int(getattr(pokemon, "lado_id", -1)), [])
         return {
             "id_partida": self.controlador.id_partida,
             "rodada": self.controlador.rodada_atual,

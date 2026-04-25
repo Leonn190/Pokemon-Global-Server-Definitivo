@@ -4,13 +4,15 @@ from SimuladorServerJogo.Batalha.GerenciadorPartidas import GERENCIADOR_PARTIDAS
 
 
 def rota_inicializar_batalha(dados_inicializacao):
-    partida = GERENCIADOR_PARTIDAS.criar_partida(dados_inicializacao or {})
+    if not isinstance(dados_inicializacao, dict):
+        return {"status": "erro", "mensagem": "dados_inicializacao inválido", "id_partida": "", "estado_inicial": {}, "avisos": [], "erros": ["dados_invalidos"]}
+    partida = GERENCIADOR_PARTIDAS.criar_partida(dados_inicializacao)
     return {
         "status": "ok",
         "mensagem": "Batalha inicializada",
         "id_partida": partida.id_partida,
-        "estado_inicial": "recebido_stub",
-        "avisos": [],
+        "estado_inicial": partida.serializar_estado_inicial(),
+        "avisos": list(partida.avisos_inicializacao),
         "erros": [],
     }
 

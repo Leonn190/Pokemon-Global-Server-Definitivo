@@ -70,7 +70,7 @@ class PokemonBatalha:
             id_original=bruto.get("id_original") if bruto.get("id_original") is not None else info.get("id"),
             Nome=str(info.get("nome") or info.get("Nome") or bruto.get("nome") or bruto.get("especie") or "Pokemon"),
             Especie=str(info.get("especie") or info.get("Especie") or bruto.get("especie") or "Pokemon"),
-            Nivel=_i(info.get("nivel", info.get("Nivel", 1)), 1),
+            Nivel=max(1, _i(info.get("nivel", info.get("Nivel", 1)), 1)),
             lado_id=_i(bruto.get("lado_id", 50), 50),
             Lado=str(bruto.get("lado_visual") or ("jogador" if _i(bruto.get("lado_id", 50), 50) == 50 else "inimigo")),
             Ativo=bool(bruto.get("ativo", False)),
@@ -87,6 +87,15 @@ class PokemonBatalha:
         p._aplicar_stats(stats, stats_base)
         p._carregar_animacao()
         return p
+
+    def definir_intervalo_frame_ms(self, intervalo_ms: float | int | None):
+        try:
+            ms = float(intervalo_ms)
+        except (TypeError, ValueError):
+            return
+        if ms <= 0:
+            return
+        self.TempoFrame = max(0.01, ms / 1000.0)
 
     def _aplicar_stats(self, stats: dict, stats_base: dict):
         aliases = {"Amplificacao": "Amp", "Durabilidade": "Dur"}
@@ -210,10 +219,16 @@ class PokemonBatalha:
             return None
         lado = int(max(8, lado))
         if lado not in self._cache_frames_escalados:
-            self._cache_frames_escalados[lado] = [
-                pygame.transform.smoothscale(frame, (lado, lado)).convert_alpha()
-                for frame in self.Frames
-            ]
+            escalados = []
+            for frame in self.Frames:
+                fw = max(1, int(frame.get_width()))
+                fh = max(1, int(frame.get_height()))
+                escala = min(float(lado) / float(fw), float(lado) / float(fh))
+                alvo_w = max(1, int(round(fw * escala)))
+                alvo_h = max(1, int(round(fh * escala)))
+                escalado = pygame.transform.smoothscale(frame, (alvo_w, alvo_h)).convert_alpha()
+                escalados.append(escalado)
+            self._cache_frames_escalados[lado] = escalados
         frames = self._cache_frames_escalados.get(lado) or []
         if not frames:
             return None
@@ -291,8 +306,13 @@ class PokemonBatalha:
             try:
                 if self.SpriteFallback is None:
                     self.SpriteFallback = PokemonInventario.surface_pokemon(self.Dados, lado)
-                elif self.SpriteFallback.get_width() != lado:
-                    self.SpriteFallback = pygame.transform.smoothscale(self.SpriteFallback, (lado, lado))
+                elif max(self.SpriteFallback.get_width(), self.SpriteFallback.get_height()) != lado:
+                    fw = max(1, int(self.SpriteFallback.get_width()))
+                    fh = max(1, int(self.SpriteFallback.get_height()))
+                    escala = min(float(lado) / float(fw), float(lado) / float(fh))
+                    alvo_w = max(1, int(round(fw * escala)))
+                    alvo_h = max(1, int(round(fh * escala)))
+                    self.SpriteFallback = pygame.transform.smoothscale(self.SpriteFallback, (alvo_w, alvo_h))
                 img = self.SpriteFallback
             except Exception:
                 img = None
@@ -332,27 +352,42 @@ class PokemonBatalha:
         vida_t = max(0.0, min(1.0, float(self.VidaAtual) / vida_max))
         ene_t = max(0.0, min(1.0, float(self.Energia) / ene_max))
 
-        barra_w = max(46, int(self.RectAtual.width * 0.92))
-        vida_h = max(8, int(self.RectAtual.height * 0.14))
-        ene_h = max(4, int(vida_h * 0.5))
+        barra_w = max(56, int(self.RectAtual.width * 1.03))
+        vida_h = max(10, int(self.RectAtual.height * 0.16))
+        ene_h = max(5, int(vida_h * 0.52))
         x = self.RectAtual.centerx - barra_w // 2
         y = self.RectAtual.y - vida_h - ene_h - 8
         rect_vida = pygame.Rect(x, y, barra_w, vida_h)
         rect_ene = pygame.Rect(x, y + vida_h + 3, barra_w, ene_h)
 
-        pygame.draw.rect(surface, (14, 18, 24), rect_vida, border_radius=max(3, vida_h // 2))
-        pygame.draw.rect(surface, (24, 28, 35), rect_ene, border_radius=max(2, ene_h // 2))
-        pygame.draw.rect(surface, (44, 190, 88), pygame.Rect(rect_vida.x, rect_vida.y, int(rect_vida.w * vida_t), rect_vida.h), border_radius=max(3, vida_h // 2))
-        pygame.draw.rect(surface, (74, 148, 255), pygame.Rect(rect_ene.x, rect_ene.y, int(rect_ene.w * ene_t), rect_ene.h), border_radius=max(2, ene_h // 2))
-        pygame.draw.rect(surface, (230, 236, 244), rect_vida, 1, border_radius=max(3, vida_h // 2))
-        pygame.draw.rect(surface, (230, 236, 244), rect_ene, 1, border_radius=max(2, ene_h // 2))
+        raio_vida = max(4, vida_h // 2)
+        raio_ene = max(3, ene_h // 2)
+        pygame.draw.rect(surface, (14, 18, 24), rect_vida, border_radius=raio_vida)
+        pygame.draw.rect(surface, (24, 28, 35), rect_ene, border_radius=raio_ene)
+        fill_vida = pygame.Rect(rect_vida.x, rect_vida.y, int(rect_vida.w * vida_t), rect_vida.h)
+        fill_ene = pygame.Rect(rect_ene.x, rect_ene.y, int(rect_ene.w * ene_t), rect_ene.h)
+        if fill_vida.w > 0:
+            pygame.draw.rect(surface, (44, 190, 88), fill_vida, border_radius=raio_vida)
+        if fill_ene.w > 0:
+            pygame.draw.rect(surface, (74, 148, 255), fill_ene, border_radius=raio_ene)
+
+        brilho_vida = pygame.Rect(rect_vida.x + 1, rect_vida.y + 1, max(0, rect_vida.w - 2), max(1, rect_vida.h // 3))
+        brilho_ene = pygame.Rect(rect_ene.x + 1, rect_ene.y + 1, max(0, rect_ene.w - 2), max(1, rect_ene.h // 3))
+        if brilho_vida.w > 0 and brilho_vida.h > 0:
+            pygame.draw.rect(surface, (255, 255, 255, 26), brilho_vida, border_radius=max(2, brilho_vida.h // 2))
+        if brilho_ene.w > 0 and brilho_ene.h > 0:
+            pygame.draw.rect(surface, (255, 255, 255, 20), brilho_ene, border_radius=max(2, brilho_ene.h // 2))
+
+        pygame.draw.rect(surface, (230, 236, 244), rect_vida, 1, border_radius=raio_vida)
+        pygame.draw.rect(surface, (230, 236, 244), rect_ene, 1, border_radius=raio_ene)
 
         if vida_max >= 30:
             setores = int(vida_max // 30)
+            area_interna = rect_vida.inflate(-2, -2)
             for i in range(1, setores + 1):
-                tx = rect_vida.x + int(rect_vida.w * ((i * 30) / vida_max))
-                if rect_vida.x < tx < rect_vida.right:
-                    pygame.draw.line(surface, (0, 0, 0), (tx, rect_vida.y + 1), (tx, rect_vida.bottom - 1), 1)
+                tx = area_interna.x + int(area_interna.w * ((i * 30) / vida_max))
+                if area_interna.x < tx < area_interna.right:
+                    pygame.draw.line(surface, (0, 0, 0), (tx, area_interna.y), (tx, area_interna.bottom - 1), 1)
 
     def contem_ponto(self, pos_mouse):
         return self.RectAtual.collidepoint(pos_mouse)

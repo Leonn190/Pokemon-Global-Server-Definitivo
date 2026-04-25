@@ -62,7 +62,8 @@ class ElementosHudBatalha:
         return None
 
     def _fugir_local(self):
-        self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Tentativa de fuga (visual)."})
+        self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Fuga solicitada (visual)."})
+        self.controlador.iniciar_fuga()
 
     def atualizar(self, dt: float, eventos):
         self._ficha_alvo_visivel = 1.0 if self.controlador.pokemon_selecionado is not None else 0.0

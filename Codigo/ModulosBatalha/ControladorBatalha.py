@@ -4,9 +4,11 @@ import pygame
 
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
+from Codigo.ModulosBatalha.MontadorJogadas import MontadorJogadas
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
 from Codigo.ModulosBatalha.PokemonBatalha import PokemonBatalha
 from Codigo.ModulosGerais.Camera import CameraBatalha
+from Codigo.Server import ServerBatalha
 
 
 class ControladorBatalha:
@@ -17,6 +19,7 @@ class ControladorBatalha:
         self.pokemons_por_id = {}
         self.player_batalha = None
         self.hud = None
+        self.montador_jogadas = None
 
         self.rodada_atual = 1
         self.lado_jogador = 50
@@ -26,6 +29,8 @@ class ControladorBatalha:
         self.ataque_selecionado = None
         self.logs_locais = []
         self.estado_batalha = "inicializando"
+        self.id_partida = "simulador_local_fase2"
+        self.server_batalha = ServerBatalha
 
         self.timer_rodada = 1.0
         self.timer_rodada_max = 45.0
@@ -71,12 +76,15 @@ class ControladorBatalha:
         self.arena.atualizar_ocupacao(self.pokemons)
 
         self.criar_componentes()
+        self.id_partida = str(estado.get("id_partida") or self.id_partida)
+        self.server_batalha.inicializar_batalha({"id_partida": self.id_partida, "lado_jogador": self.lado_jogador})
         self.timer_rodada = self.timer_rodada_max
         self.estado_batalha = "montando_jogada"
 
     def criar_componentes(self):
         self.player_batalha = PlayerBatalha(self)
         self.hud = ElementosHudBatalha(self)
+        self.montador_jogadas = MontadorJogadas(self)
 
     def atualizar(self, dt, eventos):
         if self.arena is None or self.camera is None:
@@ -103,6 +111,12 @@ class ControladorBatalha:
             return
         self.arena.renderizar(surface, self.camera)
         self.arena.desenhar_areas(surface, self.camera, area_hover=self._area_hover, area_selecionada=self.area_selecionada)
+        for indicador in list(getattr(self.montador_jogadas, "indicadores_preparados", []) or []):
+            indicador.atualizar(dt=self._ultimo_dt)
+            indicador.desenhar(surface, self.camera)
+        if getattr(self.montador_jogadas, "indicador_previa", None) is not None:
+            self.montador_jogadas.indicador_previa.atualizar(dt=self._ultimo_dt)
+            self.montador_jogadas.indicador_previa.desenhar(surface, self.camera)
 
         for pokemon in self.pokemons:
             if pokemon.esta_ativo() and not pokemon.esta_na_reserva():
@@ -172,6 +186,38 @@ class ControladorBatalha:
         self.timer_rodada = self.timer_rodada_max
         self.logs_locais.append({"rodada": self.rodada_atual, "texto": f"Rodada {self.rodada_atual} iniciada."})
         self.estado_batalha = "montando_jogada"
+
+    def enviar_jogada_pronta(self):
+        if self.montador_jogadas is None:
+            return
+        pacote = self.montador_jogadas.gerar_pacote_jogadas_modo_teste() if self.modo_teste else self.montador_jogadas.gerar_pacote_jogada()
+        self.estado_batalha = "aguardando_servidor"
+        resposta = self.server_batalha.enviar_jogada(self.id_partida, self.lado_jogador, pacote)
+        self.tratar_resposta_jogada(resposta)
+
+    def tratar_resposta_jogada(self, resposta):
+        status = str((resposta or {}).get("status") or "erro")
+        if status == "ok":
+            self.estado_batalha = str((resposta or {}).get("estado_batalha") or "recebido_stub")
+            self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Jogada aceita"))
+            self.limpar_jogada_confirmada()
+            self.rodada_atual += 1
+            self.estado_batalha = "montando_jogada"
+            return
+        self.estado_batalha = "montando_jogada"
+        self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Falha ao enviar jogada"))
+
+    def adicionar_log_local(self, texto):
+        self.logs_locais.append({"rodada": self.rodada_atual, "texto": str(texto or "")})
+
+    def limpar_jogada_confirmada(self):
+        if self.montador_jogadas is not None:
+            self.montador_jogadas.limpar_jogada()
+        self.atualizar_previsoes_hud()
+
+    def atualizar_previsoes_hud(self):
+        if self.montador_jogadas is not None:
+            self.montador_jogadas.recalcular_previsao_energia()
 
     def iniciar_fuga(self):
         self._fuga_alpha = min(255.0, self._fuga_alpha + self._fuga_incremento_clique)

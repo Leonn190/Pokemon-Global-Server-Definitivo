@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +45,9 @@ class PokemonBatalha:
     Energia: float = 1.0
     EnergiaMax: float = 1.0
     BarreiraAtual: float = 0.0
+    EnergiaPrevista: float = 0.0
+    CustoPrevistoPendente: float = 0.0
+    PodePagarPrevisao: bool = True
     Tipos: list[str] = field(default_factory=list)
     ListaAtaques: list[dict[str, Any]] = field(default_factory=list)
     RectAtual: pygame.Rect = field(default_factory=lambda: pygame.Rect(0, 0, 0, 0))
@@ -138,6 +142,9 @@ class PokemonBatalha:
         self.Energia = max(0.0, min(self.EnergiaMax, _f(energia_atual, energia_padrao)))
 
         self.BarreiraAtual = _f(self.Dados.get("BarreiraAtual", self.Dados.get("Barreira", self.Dados.get("barreira", 0.0))), 0.0)
+        self.EnergiaPrevista = float(self.Energia)
+        self.CustoPrevistoPendente = 0.0
+        self.PodePagarPrevisao = True
 
         peso = self.Dados.get("peso", self.Dados.get("Peso"))
         escala = self.Dados.get("escala", self.Dados.get("Escala"))
@@ -349,6 +356,18 @@ class PokemonBatalha:
             pygame.draw.rect(surface, (44, 190, 88), fill_vida, border_radius=raio_vida)
         if fill_ene.w > 0:
             pygame.draw.rect(surface, (74, 148, 255), fill_ene, border_radius=raio_ene)
+        if float(self.CustoPrevistoPendente) > 0.0 and ene_max > 0:
+            reservado = max(0.0, min(float(self.CustoPrevistoPendente), float(self.Energia)))
+            inicio_t = max(0.0, min(1.0, (float(self.Energia) - reservado) / ene_max))
+            fim_t = max(0.0, min(1.0, float(self.Energia) / ene_max))
+            ini_x = rect_ene.x + int(rect_ene.w * inicio_t)
+            fim_x = rect_ene.x + int(rect_ene.w * fim_t)
+            if fim_x > ini_x:
+                alpha = int(90 + 80 * (0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 140.0)))
+                cor = (255, 255, 255, alpha) if self.PodePagarPrevisao else (255, 116, 116, alpha)
+                overlay = pygame.Surface((fim_x - ini_x, rect_ene.h), pygame.SRCALPHA)
+                pygame.draw.rect(overlay, cor, overlay.get_rect(), border_radius=raio_ene)
+                surface.blit(overlay, (ini_x, rect_ene.y))
 
         pygame.draw.rect(surface, (230, 236, 244), rect_vida, 1, border_radius=raio_vida)
         pygame.draw.rect(surface, (230, 236, 244), rect_ene, 1, border_radius=raio_ene)

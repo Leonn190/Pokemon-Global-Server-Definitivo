@@ -30,7 +30,7 @@ class ElementosHudBatalha:
         self.botao_pronto = Botao(
             pygame.Rect(20, 84, 64, 64),
             "",
-            execute=lambda _jogo, _botao: self.controlador.passar_rodada_local(),
+            execute=lambda _jogo, _botao: self.controlador.enviar_jogada_pronta(),
             style={"radius": 12, "text_style": {"size": 14}},
         )
         self.botao_fugir = Botao(
@@ -72,8 +72,18 @@ class ElementosHudBatalha:
         if abs(self._ficha_t_visivel - self._ficha_alvo_visivel) < 0.001:
             self._ficha_t_visivel = self._ficha_alvo_visivel
         self.ficha.definir_controle_inimigo(self.controlador.modo_teste)
-        self.painel_acoes.sincronizar([], None)
+        montador = getattr(self.controlador, "montador_jogadas", None)
+        jogadas = list(getattr(montador, "acoes_preparadas", []) or [])
+        selecionado_id = getattr(montador, "acao_selecionada_id", None)
+        self.painel_acoes.sincronizar(jogadas, selecionado_id)
         self.painel_acoes.processar_eventos(eventos)
+        for cmd in self.painel_acoes.coletar_comandos():
+            acao = str(cmd.get("acao") or "")
+            if acao == "remover" and montador is not None:
+                montador.remover_acao(cmd.get("id"))
+                self.controlador.atualizar_previsoes_hud()
+            elif acao == "selecionar" and montador is not None:
+                montador.selecionar_acao(cmd.get("id"))
 
     def consumiu_clique(self, pos_mouse):
         if self._ficha_t_visivel > 0.05 and self.ficha.contem_ponto(pos_mouse):
@@ -82,6 +92,9 @@ class ElementosHudBatalha:
             if rect.collidepoint(pos_mouse):
                 return True
         for rect in self.visualizador.retangulos_interativos():
+            if rect.collidepoint(pos_mouse):
+                return True
+        for rect in self.painel_acoes.retangulos_interativos():
             if rect.collidepoint(pos_mouse):
                 return True
         return False
@@ -132,6 +145,9 @@ class ElementosHudBatalha:
         if pokemon is not None or self._ficha_t_visivel > 0.01:
             self.ficha.render(tela, pokemon, self._ficha_t_visivel, eventos, dt)
         if pokemon is not None:
+            custo = float(getattr(pokemon, "CustoPrevistoPendente", 0.0) or 0.0)
+            pode = bool(getattr(pokemon, "PodePagarPrevisao", True))
+            self.ficha.atualizar_previsao(custo, pode)
             ataque = self.ficha.ataque_selecionado()
             if ataque is not None:
                 estilo = str(ataque.get("Estilo") or ataque.get("estilo") or "").strip().lower()
@@ -140,6 +156,8 @@ class ElementosHudBatalha:
                     ataque = None
             if ataque != self.controlador.ataque_selecionado:
                 self.controlador.selecionar_ataque(ataque)
+                if ataque is not None and self.controlador.montador_jogadas is not None and pokemon is not None:
+                    self.controlador.montador_jogadas.iniciar_preparacao_ataque(pokemon, ataque)
         else:
             self.ficha.limpar_ataque_selecionado()
 

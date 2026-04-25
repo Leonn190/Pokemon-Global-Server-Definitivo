@@ -10,7 +10,7 @@ variacao_escala_min = -1
 variacao_escala_max = 1
 
 [animacao]
-intervalo_frame_ms = 50
+intervalo_frame_ms = 40
 
 [batalha_tamanho]
 diametro_base_tiles = 1.0

@@ -291,6 +291,13 @@ class FichaPokemonBatalha:
             self._desenhar_texto(self._txt_micro, tela, chave[:3], (x + 11, area.centery), align="center")
             x += 26
         texto = f"{int(round(float(valor)))}" if isinstance(valor, (int, float)) else str(valor)
+        variacao = float(getattr(pokemon, "obter_variacao_ficha", lambda _c: 0.0)(chave) or 0.0)
+        if variacao > 0.001:
+            self._txt_numero.set_style(color=(104, 220, 126))
+        elif variacao < -0.001:
+            self._txt_numero.set_style(color=(238, 96, 96))
+        else:
+            self._txt_numero.set_style(color=self._COR_TEXTO)
         self._desenhar_texto(self._txt_numero, tela, texto, (x, area.centery), align="midleft")
         if area.collidepoint(self._mouse_pos):
             self._registrar_hover_atributo(chave, pokemon)

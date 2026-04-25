@@ -294,7 +294,7 @@ class Arena:
             area["ocupante_id"] = None
         for pokemon in pokemons or []:
             aid = getattr(pokemon, "AreaId", None)
-            if not aid or bool(getattr(pokemon, "EmReserva", False)):
+            if not aid or bool(getattr(pokemon, "EmReserva", False)) or not bool(getattr(pokemon, "Vivo", True)):
                 continue
             self._ocupacao_areas[str(aid)] = pokemon
             area = self.obter_area_por_id(aid)

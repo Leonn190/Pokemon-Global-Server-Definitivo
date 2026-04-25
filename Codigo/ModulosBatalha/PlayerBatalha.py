@@ -39,10 +39,11 @@ class PlayerBatalha:
 
     def processar_mouse_down(self, pos_mouse):
         ctrl = self.controlador
+        montador = ctrl.montador_jogadas
         if ctrl.hud and ctrl.hud.consumiu_clique(pos_mouse):
             return
 
-        if ctrl.ataque_selecionado is not None:
+        if ctrl.ataque_selecionado is not None and montador.estado_montagem == "preparando_ataque":
             self.processar_clique(pos_mouse)
             return
 
@@ -85,7 +86,7 @@ class PlayerBatalha:
         poke = self._pokemon_no_ponto(pos_mouse)
         if poke is not None:
             area_id = getattr(poke, "AreaId", None)
-            if ctrl.ataque_selecionado is not None and area_id:
+            if ctrl.ataque_selecionado is not None and montador.estado_montagem == "preparando_ataque" and area_id:
                 montador.confirmar_alvo(area_id)
                 ctrl.limpar_ataque()
                 return
@@ -97,7 +98,7 @@ class PlayerBatalha:
 
         area_id = ctrl.arena.area_em_posicao_mouse(pos_mouse, ctrl.camera)
         if area_id:
-            if ctrl.ataque_selecionado is not None:
+            if ctrl.ataque_selecionado is not None and montador.estado_montagem == "preparando_ataque":
                 if montador.confirmar_alvo(area_id):
                     ctrl.limpar_ataque()
                 return

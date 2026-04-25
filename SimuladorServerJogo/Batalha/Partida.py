@@ -267,6 +267,7 @@ class Partida:
                 ganho *= 0.75
             pokemon.GanharEnergia(ganho, dados={"fim_rodada": True})
             pokemon.limpar_transitorios_fim_rodada()
+        self.substituir_derrotados_por_reserva()
         self.verificar_fim_batalha()
         self.jogadas_recebidas = {}
         if not self.finalizada:
@@ -366,6 +367,26 @@ class Partida:
         pokemon_reserva.area_id = area
         pokemon_reserva.adicionar_estado_transitorio("entrou_na_rodada", {"rodada": self.rodada_atual})
         return True
+
+    def substituir_derrotados_por_reserva(self):
+        for pokemon in list(self.pokemons_por_id.values()):
+            if pokemon.esta_vivo() or pokemon.reserva or not pokemon.ativo:
+                continue
+            area = pokemon.area_id
+            if self.area_existe(area) and self.ocupacao_areas.get(area) == pokemon.id_batalha:
+                self.ocupacao_areas[area] = None
+                self.areas[area]["ocupante_id"] = None
+            pokemon.ativo = False
+            pokemon.reserva = False
+            pokemon.area_id = None
+            reserva = next((p for p in self.pokemons_por_lado.get(int(pokemon.lado_id), []) if p.reserva and p.esta_vivo()), None)
+            if reserva is None or not self.area_existe(area):
+                continue
+            reserva.ativo = True
+            reserva.reserva = False
+            reserva.area_id = area
+            self.ocupacao_areas[area] = reserva.id_batalha
+            self.areas[area]["ocupante_id"] = reserva.id_batalha
 
     def finalizar(self, motivo=None):
         self.finalizada = True

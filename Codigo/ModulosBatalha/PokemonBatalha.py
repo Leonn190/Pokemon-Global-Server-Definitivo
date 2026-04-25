@@ -85,6 +85,8 @@ class PokemonBatalha:
             Tipos=list(info.get("tipos") or estado.get("tipos") or []),
             ListaAtaques=list(bruto.get("ataques") or []),
         )
+        if isinstance(bruto.get("Variacoes"), dict) and not isinstance(info.get("variacoes"), dict):
+            p.Dados["variacoes"] = dict(bruto.get("Variacoes") or {})
         p._aplicar_stats(stats, stats_base)
         p._carregar_animacao()
         return p
@@ -111,9 +113,11 @@ class PokemonBatalha:
                 chave_stats = chave if chave in stats or chave in stats_base else alt
             base = _f(stats_base.get(chave_stats, stats.get(chave_stats, 0.0)), 0.0)
             atual = _f(stats.get(chave_stats, base), base)
+            variacao_real = atual - base
             self.AtributosBase[chave] = base
             self.Atributos[chave] = atual
-            self.Variacoes[chave] = _f(variacoes_brutas.get(chave, 0.0), 0.0)
+            variacao = _f(variacoes_brutas.get(chave, 0.0), 0.0)
+            self.Variacoes[chave] = variacao_real if abs(variacao) < 0.001 and abs(variacao_real) > 0.001 else variacao
 
         for alias_antigo, oficial in aliases.items():
             if oficial in self.Atributos:
@@ -309,7 +313,10 @@ class PokemonBatalha:
         return self.AtributosBase.get(str(chave), self.obter_valor_ficha(chave))
 
     def obter_variacao_ficha(self, chave):
-        return self.Variacoes.get(str(chave), self.obter_valor_ficha(chave) - self.obter_valor_base_ficha(chave))
+        diff = self.obter_valor_ficha(chave) - self.obter_valor_base_ficha(chave)
+        if abs(diff) > 0.001:
+            return diff
+        return self.Variacoes.get(str(chave), 0.0)
 
     def atributos_texto_ataque(self):
         return {
@@ -330,7 +337,7 @@ class PokemonBatalha:
 
     def desenhar(self, surface, camera, arena, selecionado=False, hover=False):
         _ = (selecionado, hover)
-        if not self.Ativo or self.EmReserva or not self.AreaId:
+        if not self.Vivo or not self.Ativo or self.EmReserva or not self.AreaId:
             return
         centro = arena.centro_area(self.AreaId)
         if centro is None:
@@ -350,6 +357,25 @@ class PokemonBatalha:
             surface.blit(img, rect)
             self.RectAtual = pygame.Rect(rect)
         self.desenhar_barras(surface)
+
+    def desenhar_fantasma(self, surface, camera, arena, area_id, alpha=68):
+        if not self.Vivo:
+            return
+        centro = arena.centro_area(area_id)
+        if centro is None:
+            return
+        cx, cy = camera.mundo_para_tela_px(centro)
+        img = self._frame_atual_escalado(camera)
+        if img is None:
+            lado = max(46, int(getattr(camera, "TilePx", 40) * 1.7))
+            ghost = pygame.Surface((lado, lado), pygame.SRCALPHA)
+            cor = (110, 196, 126, int(alpha)) if self.Lado == "jogador" else (204, 108, 108, int(alpha))
+            pygame.draw.circle(ghost, cor, (lado // 2, lado // 2), lado // 2)
+            surface.blit(ghost, ghost.get_rect(center=(int(cx), int(cy))))
+            return
+        ghost = img.copy()
+        ghost.set_alpha(int(alpha))
+        surface.blit(ghost, ghost.get_rect(center=(int(cx), int(cy))))
 
     def desenhar_reserva(self, surface, rect_slot, selecionado=False, hover=False, camera=None):
         _ = (selecionado, hover)

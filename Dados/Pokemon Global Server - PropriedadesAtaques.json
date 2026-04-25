@@ -42,7 +42,7 @@
         "tipo": "area",
         "quantidade": 1,
         "lados_permitidos": [
-          "lado_oposto"
+          "mesmo_lado"
         ],
         "exige_area_ocupada": false
       }
@@ -95,7 +95,7 @@
         "tipo": "area",
         "quantidade": 1,
         "lados_permitidos": [
-          "lado_oposto"
+          "mesmo_lado"
         ],
         "exige_area_ocupada": false
       }
@@ -176,7 +176,7 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
+        "tipo": "linha",
         "quantidade": 1,
         "lados_permitidos": [
           "lado_oposto"

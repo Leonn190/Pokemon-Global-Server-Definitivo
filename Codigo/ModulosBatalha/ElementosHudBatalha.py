@@ -156,6 +156,8 @@ class ElementosHudBatalha:
                 self.controlador.selecionar_ataque(ataque)
                 if ataque is not None and self.controlador.montador_jogadas is not None and pokemon is not None:
                     self.controlador.montador_jogadas.iniciar_preparacao_ataque(pokemon, ataque)
+                    if self.controlador.montador_jogadas.estado_montagem != "preparando_ataque":
+                        self.controlador.limpar_ataque()
         else:
             self.ficha.limpar_ataque_selecionado()
 

@@ -122,10 +122,17 @@ class ColetorAcoes:
                 return self._invalidar(out, "ataque_sem_json")
             if str(props.get("estilo_logico") or "").strip().lower() == "passivo":
                 return self._invalidar(out, "ataque_passivo_manual")
-            if str(props.get("estilo_logico") or "").strip().lower() != "ativo":
+            if str(props.get("estilo_logico") or "").strip().lower() == "ativo":
+                if isinstance(out.get("alvo"), dict) and out.get("alvo", {}).get("area_id"):
+                    return self._invalidar(out, "ataque_ativo_nao_aceita_alvo")
+                out["alvo"] = None
+            else:
                 alvo = out.get("alvo") if isinstance(out.get("alvo"), dict) else {}
-                if not alvo.get("area_id"):
+                area_id = alvo.get("area_id")
+                if not area_id:
                     return self._invalidar(out, "ataque_sem_area_alvo")
+                if not self._area_permitida_para_ataque(pokemon, area_id, props):
+                    return self._invalidar(out, "area_alvo_nao_permitida")
             out["propriedades"] = copy.deepcopy(props)
         elif tipo == "movimento":
             destino = out.get("destino") if isinstance(out.get("destino"), dict) else {}
@@ -146,10 +153,10 @@ class ColetorAcoes:
 
     def _calcular_custo(self, acao, pokemon):
         tipo = str(acao.get("tipo") or "")
-        if tipo in {"movimento", "troca_posicao"}:
-            base = 10.0
-        elif tipo == "troca_reserva":
+        if tipo == "movimento":
             base = 15.0
+        elif tipo in {"troca_posicao", "troca_reserva"}:
+            base = 20.0
         elif tipo == "ataque":
             props = self.buscar_propriedades_ataque(acao.get("ataque") if isinstance(acao.get("ataque"), dict) else {})
             if not isinstance(props, dict):
@@ -168,6 +175,31 @@ class ColetorAcoes:
         out = dict(acao)
         out["motivo_invalidacao"] = motivo
         return out
+
+    def _area_permitida_para_ataque(self, pokemon, area_id, props):
+        area = self.partida.areas.get(str(area_id or ""))
+        if not isinstance(area, dict):
+            return False
+        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        if bool(alvo_cfg.get("exige_area_ocupada")) and self.partida.pokemon_na_area(area_id) is None:
+            return False
+        permitidos = alvo_cfg.get("lados_permitidos")
+        if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
+            return True
+        lado_area = int(area.get("lado_id", -999))
+        lado_origem = int(getattr(pokemon, "lado_id", -998))
+        area_origem = str(getattr(pokemon, "area_id", ""))
+        for item in permitidos:
+            token = str(item or "").strip().lower()
+            if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
+                return True
+            if token in {"lado_oposto", "oposto", "inimigo", "inimigos", "adversario", "adversarios"} and lado_area != lado_origem:
+                return True
+            if token in {"mesmo_lado", "aliado", "aliados", "proprio_lado"} and lado_area == lado_origem:
+                return True
+            if token in {"usuario", "proprio", "si_mesmo"} and str(area_id) == area_origem:
+                return True
+        return False
 
     def ordenar_acoes(self, acoes):
         def chave(acao):

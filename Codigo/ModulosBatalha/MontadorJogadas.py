@@ -27,8 +27,9 @@ class MontadorJogadas:
         self.limite_acoes_jogada = 5
         self.limite_acoes_por_pokemon = 2
         self.multiplicador_segunda_acao = 1.10
-        self.custo_movimento = 10
-        self.custo_troca_reserva = 15
+        self.custo_movimento = 15
+        self.custo_troca_posicao = 20
+        self.custo_troca_reserva = 20
 
     def carregar_propriedades_ataques(self):
         caminho = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - PropriedadesAtaques.json"
@@ -73,8 +74,10 @@ class MontadorJogadas:
         self.area_alvo_previa = None
         self.alvo_previa_mundo = None
         if estilo == "ativo":
-            return self.adicionar_acao(self._criar_acao_ataque(pokemon, ataque, None))
-        origem = self.arena.centro_area(getattr(pokemon, "AreaId", None))
+            ok = self.adicionar_acao(self._criar_acao_ataque(pokemon, ataque, None))
+            self.cancelar_previa()
+            return ok
+        origem = self.arena.centro_area(self.area_prevista_pokemon(pokemon))
         self.indicador_previa = IndicadorAtaque().configurar(origem, origem, "ataque", coordenadas_mundo=True)
         self.estado_montagem = "preparando_ataque"
         self.recalcular_previsao_energia()
@@ -216,9 +219,12 @@ class MontadorJogadas:
 
     def _criar_acao_ataque(self, pokemon, ataque, area_id):
         code = int(float(ataque.get("Code") or ataque.get("code") or 0))
+        props = self.buscar_propriedades_ataque(ataque) or {}
+        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        tipo_alvo = str(alvo_cfg.get("tipo") or "area")
         return {
             "tipo": "ataque",
-            "estilo": str((self.buscar_propriedades_ataque(ataque) or {}).get("estilo_logico") or "alvo"),
+            "estilo": str(props.get("estilo_logico") or "alvo"),
             "pokemon_id": pokemon.id_batalha,
             "lado_id": pokemon.lado_id,
             "rodada": self.controlador.rodada_atual,
@@ -228,7 +234,7 @@ class MontadorJogadas:
                 "nome": ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome"),
                 "Tipo": ataque.get("Tipo") or ataque.get("tipo"),
             },
-            "alvo": {"tipo": "area", "area_id": area_id} if area_id else None,
+            "alvo": {"tipo": tipo_alvo, "area_id": area_id, "areas": self.areas_afetadas_por_alvo(area_id, props)} if area_id else None,
         }
 
     def adicionar_acao(self, acao):
@@ -265,9 +271,15 @@ class MontadorJogadas:
         tipo = str(acao.get("tipo"))
         origem = destino = None
         if tipo == "ataque":
-            origem = self.arena.centro_area(self.controlador.pokemons_por_id[acao["pokemon_id"]].AreaId)
+            origem = self.arena.centro_area(self.area_prevista_pokemon(self.controlador.pokemons_por_id[acao["pokemon_id"]]))
             alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
-            destino = self.arena.centro_area(alvo.get("area_id")) or origem
+            props = acao.get("propriedades") if isinstance(acao.get("propriedades"), dict) else self.buscar_propriedades_ataque(acao.get("ataque"))
+            destinos = [self.arena.centro_area(aid) for aid in self.areas_afetadas_por_alvo(alvo.get("area_id"), props)]
+            destinos = [d for d in destinos if d is not None] or [self.arena.centro_area(alvo.get("area_id")) or origem]
+            for destino in destinos:
+                if origem and destino:
+                    self.indicadores_preparados.append(IndicadorAtaque().configurar(origem, destino, tipo, estado="preparado", id_acao=acao.get("id"), coordenadas_mundo=True))
+            return
         elif tipo in {"movimento", "troca_posicao"}:
             origem = self.arena.centro_area((acao.get("origem") or {}).get("area_id", self.controlador.pokemons_por_id[acao["pokemon_id"]].AreaId))
             destino = self.arena.centro_area((acao.get("destino") or {}).get("area_id"))
@@ -276,6 +288,42 @@ class MontadorJogadas:
             destino = self.arena.centro_slot_reserva_mundo((acao.get("destino") or {}).get("pokemon_id"))
         if origem and destino:
             self.indicadores_preparados.append(IndicadorAtaque().configurar(origem, destino, tipo, estado="preparado", id_acao=acao.get("id"), coordenadas_mundo=True))
+
+    def area_prevista_pokemon(self, pokemon):
+        if pokemon is None:
+            return None
+        pid = str(getattr(pokemon, "id_batalha", "") or "")
+        area = getattr(pokemon, "AreaId", None)
+        for acao in self.acoes_preparadas:
+            if str(acao.get("pokemon_id") or "") != pid:
+                continue
+            tipo = str(acao.get("tipo") or "")
+            if tipo == "movimento":
+                destino = acao.get("destino") if isinstance(acao.get("destino"), dict) else {}
+                area = destino.get("area_id", area)
+            elif tipo == "troca_posicao":
+                destino = acao.get("destino") if isinstance(acao.get("destino"), dict) else {}
+                area = destino.get("area_id", area)
+        return area
+
+    def areas_afetadas_por_alvo(self, area_id, props=None):
+        area_id = str(area_id or "")
+        if not area_id:
+            return []
+        props = props if isinstance(props, dict) else {}
+        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
+        try:
+            idx = int(area_id[1:]) - 1
+        except (ValueError, IndexError):
+            return [area_id]
+        prefixo = area_id[:1]
+        row, col = idx // 3, idx % 3
+        if tipo in {"linha", "fileira", "row", "line"}:
+            return [f"{prefixo}{row * 3 + c + 1}" for c in range(3)]
+        if tipo in {"coluna", "column"}:
+            return [f"{prefixo}{r * 3 + col + 1}" for r in range(3)]
+        return [area_id]
 
     def _chave_acao(self, acao):
         tipo = str((acao or {}).get("tipo") or "")
@@ -396,9 +444,25 @@ class MontadorJogadas:
     def desenhar_pulso_previa(self, surface):
         if self.estado_montagem not in {"preparando_ataque", "arrastando"} or self.alvo_previa_mundo is None:
             return
-        pos = self.controlador.camera.mundo_para_tela_px(self.alvo_previa_mundo)
         tile = max(1, int(getattr(self.controlador.camera, "TilePx", 40) or 40))
-        IndicadorAtaque.desenhar_pulso(surface, pos, raio_base=max(18, int(tile * 0.95)))
+        props = self.buscar_propriedades_ataque(self.ataque_selecionado) if self.estado_montagem == "preparando_ataque" else None
+        areas = self.areas_afetadas_por_alvo(self.area_alvo_previa, props) if props else []
+        centros = [self.arena.centro_area(aid) for aid in areas] if areas else [self.alvo_previa_mundo]
+        for centro in [c for c in centros if c is not None]:
+            pos = self.controlador.camera.mundo_para_tela_px(centro)
+            IndicadorAtaque.desenhar_pulso(surface, pos, raio_base=max(18, int(tile * 0.95)))
+
+    def desenhar_fantasmas_movimento(self, surface):
+        for acao in self.acoes_preparadas:
+            if str(acao.get("tipo") or "") != "movimento":
+                continue
+            destino = acao.get("destino") if isinstance(acao.get("destino"), dict) else {}
+            area_id = destino.get("area_id")
+            if not area_id or self.arena.pokemon_na_area(area_id) is not None:
+                continue
+            pokemon = self.controlador.pokemons_por_id.get(str(acao.get("pokemon_id") or ""))
+            if pokemon is not None and hasattr(pokemon, "desenhar_fantasma"):
+                pokemon.desenhar_fantasma(surface, self.controlador.camera, self.arena, area_id)
 
     def remover_acao(self, id_local):
         alvo = int(id_local)
@@ -431,8 +495,10 @@ class MontadorJogadas:
 
     def calcular_custo_acao(self, pokemon, acao_base, ordem_pokemon=1):
         tipo = str((acao_base or {}).get("tipo") or "")
-        if tipo == "movimento" or tipo == "troca_posicao":
+        if tipo == "movimento":
             base = float(self.custo_movimento)
+        elif tipo == "troca_posicao":
+            base = float(self.custo_troca_posicao)
         elif tipo == "troca_reserva":
             base = float(self.custo_troca_reserva)
         else:

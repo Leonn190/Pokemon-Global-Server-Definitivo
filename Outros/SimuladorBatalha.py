@@ -26,6 +26,14 @@ def carregar_especies_validas(caminho_csv: Path) -> list[str]:
             nome = str(row.get("Nome") or "").strip()
             if not nome:
                 continue
+            estagio = str(row.get("Estagio") or "").strip().upper()
+            raridade = str(row.get("Raridade") or "").strip()
+            try:
+                raridade_num = float(raridade)
+            except (TypeError, ValueError):
+                continue
+            if estagio in {"F", "FF"} or raridade_num < 1.0 or raridade_num > 10.0:
+                continue
             if any(b.lower() in nome.lower() for b in bloqueios):
                 continue
             especies.append(nome)

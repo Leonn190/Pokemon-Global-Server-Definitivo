@@ -390,7 +390,7 @@ def executar_alvificacao(nome_ou_code, contexto):
     if partida is None or not area_id:
         return []
     tipo_alvo = str((props.get("alvificacao") or {}).get("tipo") if isinstance(props.get("alvificacao"), dict) else "").strip().lower()
-    if tipo_alvo in {"linha", "line"}:
+    if tipo_alvo in {"linha", "fileira", "row", "line"}:
         return [p for p in _alvos_linha(partida, area_id) if p is not None]
     if tipo_alvo in {"coluna", "column"}:
         return [p for p in _alvos_coluna(partida, area_id) if p is not None]

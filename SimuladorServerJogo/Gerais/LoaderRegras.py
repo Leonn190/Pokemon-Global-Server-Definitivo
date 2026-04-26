@@ -268,8 +268,12 @@ def carregar_regras_batalha() -> Dict[str, object]:
 
 def carregar_regras_batalha_publicas() -> Dict[str, object]:
     regras_batalha = carregar_regras_batalha()
+    regras_pokemons = carregar_regras_pokemons()
     return {
         "tick_segundos": float(_ler_valor(regras_batalha, "batalha_tick_segundos", 0.2)),
+        "animacao": {
+            "intervalo_frame_ms": int(_ler_valor(regras_pokemons, "animacao_intervalo_frame_ms", 85)),
+        },
         "colisao": {
             "restituicao": float(_ler_valor(regras_batalha, "batalha_colisao_restituicao", 0.35)),
             "deslocamento_base_min": float(_ler_valor(regras_batalha, "batalha_colisao_deslocamento_base_min", 0.25)),

@@ -83,8 +83,13 @@ class RodadorTurno:
             return "pokemon_entrou_na_rodada"
         if pokemon.estados_transitorios.get("recuado"):
             return "pokemon_recuado"
-        if not pokemon.esta_apto_para_agir():
+        tipo = str((acao or {}).get("tipo") or "")
+        if pokemon.possui_efeito("Dormindo") or pokemon.possui_efeito("Congelado"):
             return "pokemon_inapto"
+        if tipo == "ataque" and pokemon.possui_efeito("Paralisado"):
+            return "ataque_bloqueado_por_paralisia"
+        if tipo in {"movimento", "troca_posicao", "troca_reserva"} and pokemon.possui_efeito("Enraizado"):
+            return "movimento_bloqueado_por_enraizado"
         if str((acao or {}).get("tipo")) in {"ataque", "movimento", "troca_posicao", "troca_reserva"} and (not pokemon.ativo or pokemon.reserva):
             return "pokemon_nao_ativo_execucao"
         return None

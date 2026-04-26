@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 import pygame
 
 from Codigo.Telas.SubtelaFinalizacao import SubtelaFinalizacao
@@ -82,14 +84,22 @@ class FinalizadorBatalha:
             id_original = dados.get("id_original")
             if id_original is None:
                 continue
-            alvo = self._localizar_pokemon_contexto(contexto, id_original)
-            if alvo is None:
+            alvos = self._localizar_pokemons_contexto(contexto, id_original)
+            if not alvos:
                 avisos.append({"id_original": id_original, "motivo": "pokemon_original_nao_encontrado"})
                 continue
-            self._aplicar_vida(alvo, dados.get("VidaAtual"))
-            self._aplicar_xp(alvo, dados.get("xp_ganho"))
+            for alvo in alvos:
+                self._aplicar_vida(alvo, dados.get("VidaAtual"))
+                self._aplicar_xp(alvo, dados.get("xp_ganho"))
         if avisos:
             contexto.setdefault("avisos_persistencia_batalha", []).extend(avisos)
+        inventario = self._inventario_atualizado_pos_batalha(jogo, contexto)
+        if inventario:
+            jogo.INFO.setdefault("PlayerDadosServer", {})["inventario"] = inventario
+            jogo.INFO["SincronizacaoPosBatalhaMundo"] = {
+                "inventario": inventario,
+                "pokemon_mundo_id": int(contexto.get("pokemon_mundo_id", 0) or 0) if bool(resultado.get("finalizada")) and self._vencedor_visual(resultado) == "jogador" else 0,
+            }
 
     def abrir_subtela_resultados(self, resultado):
         self._finalizacao_aberta = True
@@ -129,12 +139,19 @@ class FinalizadorBatalha:
             return "jogador" if lado in [_i(v) for v in vencedor] else "inimigo"
         return "jogador" if _i(vencedor, -999) == lado else "inimigo"
 
-    def _localizar_pokemon_contexto(self, contexto, id_original):
+    def _localizar_pokemons_contexto(self, contexto, id_original):
         alvo_id = str(id_original)
+        encontrados = []
+        vistos = set()
         for pokemon in self._iter_pokemons_prioritarios(contexto):
-            if self._id_pokemon(pokemon) == alvo_id:
-                return pokemon
-        return None
+            if self._id_pokemon(pokemon) != alvo_id:
+                continue
+            marcador = id(pokemon)
+            if marcador in vistos:
+                continue
+            vistos.add(marcador)
+            encontrados.append(pokemon)
+        return encontrados
 
     def _iter_pokemons_prioritarios(self, contexto):
         time_jogador = contexto.get("time_jogador")
@@ -203,3 +220,21 @@ class FinalizadorBatalha:
                     dados[chave] = _i(dados.get(chave), 0) + ganho
                     return
         pokemon["XP"] = ganho
+
+    def _inventario_atualizado_pos_batalha(self, jogo, contexto):
+        player_dados = jogo.INFO.get("PlayerDadosServer") if isinstance(jogo.INFO.get("PlayerDadosServer"), dict) else {}
+        inventario = deepcopy(player_dados.get("inventario") if isinstance(player_dados.get("inventario"), dict) else {})
+        if not inventario:
+            return {}
+        if isinstance(contexto.get("pokemons_jogador"), list):
+            inventario["pokemons"] = deepcopy(contexto.get("pokemons_jogador") or [])
+        times = contexto.get("times_jogador") if isinstance(contexto.get("times_jogador"), list) else None
+        if times is not None:
+            inventario["times_pokemon"] = deepcopy(times)
+        indice = _i(contexto.get("time_jogador_indice"), -1)
+        if indice >= 0 and isinstance(contexto.get("time_jogador"), dict):
+            inventario.setdefault("times_pokemon", [])
+            while len(inventario["times_pokemon"]) <= indice:
+                inventario["times_pokemon"].append({"Nome": f"Time {len(inventario['times_pokemon']) + 1}", "Slots": [None] * 6})
+            inventario["times_pokemon"][indice] = deepcopy(contexto.get("time_jogador") or {})
+        return inventario

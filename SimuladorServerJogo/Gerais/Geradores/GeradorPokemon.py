@@ -417,6 +417,112 @@ def criar_pokemon_inicial_materializado(especie: str) -> Dict[str, object]:
     return materializar_pokemon(bruto, efeitos_captura=None)
 
 
+def _row_eh_forma(row: Dict[str, str]) -> bool:
+    estagio = str(row.get("Estagio", "") or "").strip().upper()
+    ff = str(row.get("FF", "") or row.get("F", "") or "").strip().upper()
+    if estagio in {"F", "FF"}:
+        return True
+    return bool(ff and ff not in {"0", "N", "NAO", "NÃO", "FALSE"})
+
+
+def _row_base_por_pokemon(pokemon_base: Dict[str, object]) -> Dict[str, str]:
+    estado = pokemon_base.get("estado") if isinstance(pokemon_base.get("estado"), dict) else pokemon_base
+    code = str(estado.get("code") or pokemon_base.get("code") or "").strip()
+    especie = str(estado.get("especie") or estado.get("nome") or pokemon_base.get("especie") or pokemon_base.get("nome") or "").strip()
+    return _escolher_especie(code or especie)
+
+
+def _especies_bando_possiveis(pokemon_base: Dict[str, object]) -> List[Dict[str, str]]:
+    row_base = _row_base_por_pokemon(pokemon_base)
+    linhagem = str(row_base.get("Linhagem", "") or "").strip()
+    try:
+        estagio_base = int(float(row_base.get("Estagio", 1) or 1))
+    except (TypeError, ValueError):
+        estagio_base = 1
+    if not linhagem:
+        return []
+    candidatos: List[Dict[str, str]] = []
+    for item in _BASE_POKEMONS:
+        row = item.get("row", {}) if isinstance(item, dict) else {}
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("Linhagem", "") or "").strip() != linhagem:
+            continue
+        if _row_eh_forma(row):
+            continue
+        try:
+            estagio = int(float(row.get("Estagio", 1) or 1))
+        except (TypeError, ValueError):
+            continue
+        if estagio <= estagio_base:
+            candidatos.append(row)
+    return candidatos
+
+
+def _materializar_membro_bando(row: Dict[str, str], pokemon_base: Dict[str, object], indice: int) -> Dict[str, object]:
+    estado_base = pokemon_base.get("estado") if isinstance(pokemon_base.get("estado"), dict) else pokemon_base
+    nivel_base = max(0, _inum(estado_base.get("nivel", pokemon_base.get("nivel", 0)), 0))
+    delta = max(1, int(round(max(1, nivel_base) * 0.20)))
+    nivel = max(0, min(100, nivel_base + random.randint(-delta, delta)))
+    escala, variacao_tamanho, tamanho_sigla = _sortear_escala_e_tamanho(_normalizar_escala_pokemon(row.get("Tamanho", 3), default=3))
+    bruto = {
+        "id": f"bando_{estado_base.get('code') or row.get('Code')}_{random.randint(100000, 999999)}_{indice}",
+        "especie": str(row.get("Nome", "Pokemon")),
+        "nome": str(row.get("Nome", "Pokemon")),
+        "nivel": nivel,
+        "iv": max(0, min(100, _inum(estado_base.get("iv", random.randint(0, 100)), random.randint(0, 100)) + random.randint(-10, 10))),
+        "stats_base": {k: _fnum(row.get(k), 0.0) for k in STATS_BASE},
+        "stats": {k: _fnum(row.get(k), 0.0) for k in STATS_BASE},
+        "altura": round(_fnum(row.get("Altura"), 1.0), 3),
+        "peso": round(_fnum(row.get("Peso"), 1.0), 3),
+        "tipos": _sortear_tipos(row),
+        "grupo": str(row.get("Grupo", "")),
+        "raridade": int(_fnum(row.get("Raridade"), 1)),
+        "estagio": int(_fnum(row.get("Estagio"), 1)),
+        "escala": int(escala),
+        "variacao_tamanho": int(variacao_tamanho),
+        "tamanho": str(tamanho_sigla),
+        "tamanho_tiles": round(_diametro_tiles_por_escala(escala), 2),
+        "code": str(row.get("Code", "")),
+        "linhagem": str(row.get("Linhagem", "")),
+        "equipaveis": max(1, min(4, _inum(row.get("Equipaveis", 1), 1))),
+        "chunk_origem": list(estado_base.get("chunk_origem", [])) if isinstance(estado_base.get("chunk_origem"), list) else [],
+    }
+    return materializar_pokemon(bruto, efeitos_captura=None)
+
+
+def gerar_bando_confronto(pokemon_confrontado: Dict[str, object], max_extras: int = 5) -> List[Dict[str, object]]:
+    """Gera o time selvagem ao redor do Pokemon confrontado.
+
+    O primeiro membro sempre e o Pokemon encontrado; os extras tentam seguir a
+    mesma linhagem, sem formas especiais, com estagio igual ou inferior.
+    """
+    if not isinstance(pokemon_confrontado, dict):
+        return []
+    time = [dict(pokemon_confrontado)]
+    candidatos = _especies_bando_possiveis(pokemon_confrontado)
+    if not candidatos:
+        return time
+    total_desejado = random.choices([1, 2, 3, 4, 5, 6], weights=[7, 18, 45, 21, 7, 2], k=1)[0]
+    total_desejado = max(1, min(1 + max(0, int(max_extras or 5)), int(total_desejado)))
+    contagem = {}
+    estado_base = pokemon_confrontado.get("estado") if isinstance(pokemon_confrontado.get("estado"), dict) else pokemon_confrontado
+    nome_base = str(estado_base.get("especie") or estado_base.get("nome") or pokemon_confrontado.get("especie") or pokemon_confrontado.get("nome") or "").strip()
+    if nome_base:
+        contagem[nome_base.casefold()] = 1
+    tentativas = 0
+    while len(time) < total_desejado and tentativas < 80:
+        tentativas += 1
+        row = random.choice(candidatos)
+        nome = str(row.get("Nome", "Pokemon")).strip()
+        chave = nome.casefold()
+        if contagem.get(chave, 0) >= 3:
+            continue
+        time.append(_materializar_membro_bando(row, pokemon_confrontado, len(time)))
+        contagem[chave] = contagem.get(chave, 0) + 1
+    return time
+
+
 def _carregar_base() -> List[Dict[str, object]]:
     if not ARQUIVO_POKEMONS.exists():
         return []

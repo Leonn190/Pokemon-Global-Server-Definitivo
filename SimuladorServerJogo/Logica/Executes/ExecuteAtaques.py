@@ -386,6 +386,9 @@ def executar_alvificacao(nome_ou_code, contexto):
     partida = (contexto or {}).get("partida")
     acao = (contexto or {}).get("acao") if isinstance((contexto or {}).get("acao"), dict) else {}
     alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
+    if str(alvo.get("tipo") or "").strip().lower() == "pokemon" and alvo.get("pokemon_id"):
+        pokemon = partida.obter_pokemon(alvo.get("pokemon_id"))
+        return [pokemon] if pokemon is not None else []
     area_id = alvo.get("area_id")
     if partida is None or not area_id:
         return []

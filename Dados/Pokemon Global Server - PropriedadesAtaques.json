@@ -297,12 +297,13 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
+        "tipo": "pokemon",
         "quantidade": 1,
         "lados_permitidos": [
-          "lado_oposto"
+          "qualquer"
         ],
-        "exige_area_ocupada": false
+        "exige_area_ocupada": true,
+        "inclui_reserva": true
       }
     },
     "14": {

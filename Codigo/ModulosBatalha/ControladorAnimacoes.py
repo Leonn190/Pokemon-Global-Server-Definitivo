@@ -77,7 +77,6 @@ class ControladorAnimacoes:
             if nome:
                 out.append(self.animator.animar_efeito(poke, nome))
             if poke is not None:
-                poke.aplicar_efeito_visual(efeito or {"nome": dados.get("efeito_nome"), "code": dados.get("efeito_code"), "passos_restantes": dados.get("passos_restantes"), "tipo": dados.get("tipo")})
                 if hasattr(poke, "animar_variacao_status"):
                     negativo = bool((efeito or {}).get("negativo")) or str(dados.get("tipo") or (efeito or {}).get("tipo") or "").lower() == "negativo"
                     poke.animar_variacao_status(not negativo)

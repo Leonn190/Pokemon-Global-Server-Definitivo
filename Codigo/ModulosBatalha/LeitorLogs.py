@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 class LeitorLogs:
-    ESTADOS = {"parado", "lendo", "aguardando_animacao", "consolidando", "finalizado"}
+    ESTADOS = {"parado", "lendo", "aguardando_animacao", "consolidando", "aguardando_resultado", "finalizado"}
 
     def __init__(self, controlador, controlador_animacoes):
         self.controlador = controlador
@@ -13,6 +13,7 @@ class LeitorLogs:
         self.indice = 0
         self.estado = "parado"
         self.avisos: list[str] = []
+        self._delay_resultado_s = 0.0
 
     def carregar_log(self, log):
         self.log = dict(log or {})
@@ -28,6 +29,11 @@ class LeitorLogs:
 
     def atualizar(self, dt):
         _ = dt
+        if self.estado == "aguardando_resultado":
+            self._delay_resultado_s = max(0.0, float(self._delay_resultado_s) - max(0.0, float(dt or 0.0)))
+            if self._delay_resultado_s <= 0.0:
+                self.abrir_resultado_final_pendente()
+            return
         if self.estado not in {"lendo", "aguardando_animacao", "consolidando"}:
             return
         if self.estado == "aguardando_animacao":
@@ -135,11 +141,17 @@ class LeitorLogs:
             self.controlador.replay_log_atual["ativo"] = False
         if bool(self.resultado.get("finalizada")):
             self.controlador.estado_batalha = "finalizada"
-            finalizador = getattr(self.controlador, "finalizador", None)
-            if finalizador is not None:
-                finalizador.finalizar_por_resultado(self.resultado)
+            self._delay_resultado_s = 1.0
+            self.estado = "aguardando_resultado"
+            return
         else:
             self.controlador.voltar_para_montagem()
+        self.estado = "finalizado"
+
+    def abrir_resultado_final_pendente(self):
+        finalizador = getattr(self.controlador, "finalizador", None)
+        if finalizador is not None:
+            finalizador.finalizar_por_resultado(self.resultado)
         self.estado = "finalizado"
 
     def terminou(self):

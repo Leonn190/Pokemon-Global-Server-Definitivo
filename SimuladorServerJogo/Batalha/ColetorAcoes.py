@@ -108,6 +108,9 @@ class ColetorAcoes:
         exige_ativo = tipo in {"ataque", "movimento", "troca_posicao", "troca_reserva"}
         if exige_ativo and (not pokemon.ativo or pokemon.reserva):
             return self._invalidar(out, "pokemon_nao_ativo")
+        bloqueio = self._bloqueio_efeito_acao(pokemon, tipo)
+        if bloqueio:
+            return self._invalidar(out, bloqueio)
         contagem_pokemon[pid] = contagem_pokemon.get(pid, 0) + 1
         out["ordem_pokemon"] = contagem_pokemon[pid]
         if contagem_pokemon[pid] > 2:
@@ -128,11 +131,16 @@ class ColetorAcoes:
                 out["alvo"] = None
             else:
                 alvo = out.get("alvo") if isinstance(out.get("alvo"), dict) else {}
-                area_id = alvo.get("area_id")
-                if not area_id:
-                    return self._invalidar(out, "ataque_sem_area_alvo")
-                if not self._area_permitida_para_ataque(pokemon, area_id, props):
-                    return self._invalidar(out, "area_alvo_nao_permitida")
+                if str(alvo.get("tipo") or "").strip().lower() == "pokemon" and alvo.get("pokemon_id"):
+                    alvo_pokemon = self.partida.obter_pokemon(alvo.get("pokemon_id"))
+                    if not self._pokemon_permitido_para_ataque(pokemon, alvo_pokemon, props):
+                        return self._invalidar(out, "pokemon_alvo_nao_permitido")
+                else:
+                    area_id = alvo.get("area_id")
+                    if not area_id:
+                        return self._invalidar(out, "ataque_sem_area_alvo")
+                    if not self._area_permitida_para_ataque(pokemon, area_id, props):
+                        return self._invalidar(out, "area_alvo_nao_permitida")
             out["propriedades"] = copy.deepcopy(props)
         elif tipo == "movimento":
             destino = out.get("destino") if isinstance(out.get("destino"), dict) else {}
@@ -183,6 +191,8 @@ class ColetorAcoes:
         alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
         if bool(alvo_cfg.get("exige_area_ocupada")) and self.partida.pokemon_na_area(area_id) is None:
             return False
+        if not self._area_respeita_provocando(pokemon, area_id):
+            return False
         permitidos = alvo_cfg.get("lados_permitidos")
         if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
             return True
@@ -200,6 +210,60 @@ class ColetorAcoes:
             if token in {"usuario", "proprio", "si_mesmo"} and str(area_id) == area_origem:
                 return True
         return False
+
+    def _pokemon_permitido_para_ataque(self, pokemon, alvo, props):
+        if alvo is None or not alvo.esta_vivo():
+            return False
+        if (not bool(getattr(self.partida, "modo_teste", False))) and int(getattr(alvo, "lado_id", -999)) != int(getattr(pokemon, "lado_id", -998)) and alvo.possui_efeito("Furtivo"):
+            return False
+        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        if bool(getattr(alvo, "reserva", False)) and not bool(alvo_cfg.get("inclui_reserva", False)):
+            return False
+        permitidos = alvo_cfg.get("lados_permitidos")
+        if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
+            return True
+        lado_alvo = int(getattr(alvo, "lado_id", -999))
+        lado_origem = int(getattr(pokemon, "lado_id", -998))
+        for item in permitidos:
+            token = str(item or "").strip().lower()
+            if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
+                return True
+            if token in {"lado_oposto", "oposto", "inimigo", "inimigos", "adversario", "adversarios"} and lado_alvo != lado_origem:
+                return True
+            if token in {"mesmo_lado", "aliado", "aliados", "proprio_lado"} and lado_alvo == lado_origem:
+                return True
+            if token in {"usuario", "proprio", "si_mesmo"} and str(getattr(alvo, "id_batalha", "")) == str(getattr(pokemon, "id_batalha", "")):
+                return True
+        return False
+
+    def _bloqueio_efeito_acao(self, pokemon, tipo):
+        tipo = str(tipo or "")
+        if pokemon.possui_efeito("Dormindo") or pokemon.possui_efeito("Congelado"):
+            return "acao_bloqueada_por_efeito"
+        if tipo == "ataque" and pokemon.possui_efeito("Paralisado"):
+            return "ataque_bloqueado_por_paralisia"
+        if tipo in {"movimento", "troca_posicao", "troca_reserva"} and pokemon.possui_efeito("Enraizado"):
+            return "movimento_bloqueado_por_enraizado"
+        return None
+
+    def _area_respeita_provocando(self, pokemon, area_id):
+        area = self.partida.areas.get(str(area_id or ""))
+        if not isinstance(area, dict):
+            return False
+        lado_area = int(area.get("lado_id", -999))
+        lado_origem = int(getattr(pokemon, "lado_id", -998))
+        if lado_area == lado_origem:
+            return True
+        ocupante = self.partida.pokemon_na_area(area_id)
+        if ocupante is None:
+            return True
+        provocadores = [
+            p for p in self.partida.pokemons_por_lado.get(lado_area, [])
+            if p.esta_vivo() and p.ativo and not p.reserva and p.possui_efeito("Provocando")
+        ]
+        if not provocadores:
+            return True
+        return any(str(getattr(p, "area_id", "")) == str(area_id) for p in provocadores)
 
     def ordenar_acoes(self, acoes):
         def chave(acao):

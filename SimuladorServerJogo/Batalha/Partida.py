@@ -103,13 +103,17 @@ class Partida:
         if isinstance(dados.get("pokemons"), list):
             pokemons = list(dados["pokemons"])
             return self._randomizar_posicoes_teste(pokemons) if self.modo_teste else pokemons
+        time_jogador_slots = (dados.get("time_jogador") or {}).get("Slots") if isinstance(dados.get("time_jogador"), dict) else None
+        time_inimigo = dados.get("time_inimigo") or dados.get("time_adversario")
+        time_inimigo_slots = (time_inimigo or {}).get("Slots") if isinstance(time_inimigo, dict) else None
         saida = []
         fontes = [
-            (50, dados.get("pokemons_jogador")),
-            (51, dados.get("pokemons_inimigo") or dados.get("pokemons_adversario")),
-            (50, (dados.get("time_jogador") or {}).get("Slots") if isinstance(dados.get("time_jogador"), dict) else None),
-            (51, (dados.get("time_inimigo") or dados.get("time_adversario") or {}).get("Slots") if isinstance(dados.get("time_inimigo") or dados.get("time_adversario"), dict) else None),
+            (50, time_jogador_slots if time_jogador_slots is not None else dados.get("pokemons_jogador")),
+            (51, time_inimigo_slots if time_inimigo_slots is not None else (dados.get("pokemons_inimigo") or dados.get("pokemons_adversario"))),
         ]
+        areas_por_lado = {50: [f"A{i}" for i in range(1, 10)], 51: [f"I{i}" for i in range(1, 10)]}
+        for areas in areas_por_lado.values():
+            self.rng.shuffle(areas)
         areas_teste = [f"{prefixo}{i}" for prefixo in ("A", "I") for i in range(1, 10)]
         if self.modo_teste:
             self.rng.shuffle(areas_teste)
@@ -125,7 +129,8 @@ class Partida:
                     if self.modo_teste:
                         item["area_id"] = areas_teste.pop(0) if areas_teste else (("A" if int(lado_id) == 50 else "I") + str(idx))
                     elif not item.get("area_id"):
-                        item["area_id"] = ("A" if int(lado_id) == 50 else "I") + str(idx)
+                        areas_lado = areas_por_lado.get(int(lado_id), [])
+                        item["area_id"] = areas_lado.pop(0) if areas_lado else (("A" if int(lado_id) == 50 else "I") + str(idx))
                 saida.append(item)
         return saida
 

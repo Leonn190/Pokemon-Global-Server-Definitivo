@@ -43,10 +43,12 @@ class ControladorMundo:
     def montar_player_local(self, dados_player):
         return self.Player.montar_player_local(dados_player)
 
-    def conectar(self, link: str, client_id: str, bootstrap_inicial=None) -> None:
+    def conectar(self, link: str, client_id: str, bootstrap_inicial=None, chunks_bootstrap=None) -> None:
         self.Leitor.conectar_servidor(link)
         self.Leitor.iniciar()
         self.Pacotes.configurar_conexao(link, client_id)
+        if isinstance(chunks_bootstrap, dict):
+            self.Leitor.processar_pacote_chunks(chunks_bootstrap)
         self._bootstrap_objetos_remotos_iniciais(link, client_id, resposta_precarregada=bootstrap_inicial)
         self.Leitor.preaquecer_chunks_visiveis()
         self.Pacotes.iniciar()

@@ -30,8 +30,10 @@ class PlayerBatalha:
             dx = float(pos[0]) - float(self._drag_pendente_pos[0])
             dy = float(pos[1]) - float(self._drag_pendente_pos[1])
             if (dx * dx + dy * dy) >= float(self._limiar_arraste_px * self._limiar_arraste_px):
-                self.arrastando = True
-                montador.iniciar_arraste_pokemon(self._drag_pendente_pokemon, self._drag_pendente_pos)
+                self.arrastando = bool(montador.iniciar_arraste_pokemon(self._drag_pendente_pokemon, self._drag_pendente_pos))
+                if not self.arrastando:
+                    self._drag_pendente_pokemon = None
+                    self._drag_pendente_pos = None
         if self.arrastando:
             montador.atualizar_arraste(pos)
         elif montador.indicador_previa is not None:
@@ -77,6 +79,12 @@ class PlayerBatalha:
         if slot is not None:
             poke = ctrl.pokemons_por_id.get(slot.get("pokemon_id"))
             if poke is not None:
+                if not ctrl.pokemon_visivel(poke):
+                    return
+                if ctrl.ataque_selecionado is not None and montador.estado_montagem == "preparando_ataque":
+                    if montador.confirmar_alvo_pokemon(poke):
+                        ctrl.limpar_ataque()
+                    return
                 if ctrl.pokemon_selecionado == poke:
                     ctrl.desselecionar_pokemon()
                 else:
@@ -132,6 +140,8 @@ class PlayerBatalha:
 
     def _pokemon_no_ponto(self, pos_mouse):
         for pokemon in reversed(self.controlador.pokemons):
+            if (not pokemon.esta_vivo()) or (not self.controlador.pokemon_visivel(pokemon)):
+                continue
             if pokemon.contem_ponto(pos_mouse):
                 return pokemon
         return None

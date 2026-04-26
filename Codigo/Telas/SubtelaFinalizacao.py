@@ -114,9 +114,16 @@ class SubtelaFinalizacao(Subtela):
 
         visual = item.get("visual")
         area_sprite = pygame.Rect(rect.x + 10, rect.y + 52, rect.width - 20, 96)
-        if visual is not None and hasattr(visual, "_frame_atual"):
+        if visual is not None:
             lado_sprite = max(56, min(76, rect.width - 20))
-            frame = visual._frame_atual(lado_sprite)
+            frame = None
+            if hasattr(visual, "_frame_atual"):
+                frame = visual._frame_atual(lado_sprite)
+            elif hasattr(visual, "_frame_atual_escalado"):
+                frame = visual._frame_atual_escalado(None)
+                if frame is not None:
+                    escala = min(lado_sprite / max(1, frame.get_width()), 88 / max(1, frame.get_height()), 1.0)
+                    frame = pygame.transform.smoothscale(frame, (max(1, int(frame.get_width() * escala)), max(1, int(frame.get_height() * escala))))
             if frame is not None:
                 frame = frame.copy()
                 if bool(item.get("morto", False)):

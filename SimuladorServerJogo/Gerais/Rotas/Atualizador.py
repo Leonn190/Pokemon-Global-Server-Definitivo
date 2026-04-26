@@ -14,7 +14,7 @@ from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publicas, carregar_regras_pokemons
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import subir_nivel_pokemon
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_bando_confronto, subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
 
@@ -397,6 +397,12 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 if not isinstance(centro, (list, tuple)) or len(centro) != 2:
                     centro = [0.0, 0.0]
                 contexto = _coletar_contexto_batalha_servidor((float(centro[0]), float(centro[1])), rx=40, ry=20)
+                pokemon_id = int(payload.get("pokemon_id", 0) or 0)
+                pokemon_obj = BANCO_DADOS.obter_objeto(pokemon_id) if pokemon_id > 0 else None
+                if pokemon_obj is not None and str(getattr(pokemon_obj, "tipo_classe", "") or "").endswith("pokemon"):
+                    pokemon_base = pokemon_obj.serializar() if hasattr(pokemon_obj, "serializar") else {}
+                    contexto["pokemons_inimigo"] = gerar_bando_confronto(pokemon_base, max_extras=5)
+                    contexto["pokemon_mundo_id"] = int(pokemon_id)
                 obj_id_ctx = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 obj_ctx = BANCO_DADOS.obter_objeto(obj_id_ctx) if obj_id_ctx > 0 else None
                 estado_ctx = getattr(obj_ctx, "estado_extra", {}) if isinstance(getattr(obj_ctx, "estado_extra", {}), dict) else {}
@@ -407,6 +413,10 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     estadio_estado = getattr(estadio_obj, "estado_extra", {}) if isinstance(getattr(estadio_obj, "estado_extra", {}), dict) else {}
                     contexto = EstadioInterno.contexto_batalha(estadio_estado)
                     contexto["centro"] = [float(contexto.get("largura", 60) * 0.5), float(contexto.get("altura", 40) * 0.5)]
+                    if pokemon_obj is not None and str(getattr(pokemon_obj, "tipo_classe", "") or "").endswith("pokemon"):
+                        pokemon_base = pokemon_obj.serializar() if hasattr(pokemon_obj, "serializar") else {}
+                        contexto["pokemons_inimigo"] = gerar_bando_confronto(pokemon_base, max_extras=5)
+                        contexto["pokemon_mundo_id"] = int(pokemon_id)
                 return _ok("Contexto de batalha pronto", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
             if categoria == "pokemon_derrotado_batalha":
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)

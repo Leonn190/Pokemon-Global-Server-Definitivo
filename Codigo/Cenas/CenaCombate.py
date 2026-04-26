@@ -9,6 +9,7 @@ from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Prefabs.Terminal import Terminal
 import pygame
 from copy import deepcopy
+import random
 
 
 class CenaCombate:
@@ -102,7 +103,48 @@ class CenaCombate:
             pokemon_colisao = estado.get("pokemon_colisao") if isinstance(estado.get("pokemon_colisao"), dict) else None
             if pokemon_colisao is not None:
                 estado["pokemons_inimigo"] = [deepcopy(pokemon_colisao)]
+        self._definir_posicoes_iniciais_cliente(estado)
         return estado
+
+    def _definir_posicoes_iniciais_cliente(self, estado: dict) -> None:
+        def _slots_time(chave_time, chave_lista):
+            time = estado.get(chave_time)
+            if isinstance(time, dict) and isinstance(time.get("Slots"), list):
+                return time.get("Slots")
+            if isinstance(estado.get(chave_lista), list):
+                return estado.get(chave_lista)
+            return None
+
+        def _aplicar(lista, lado_id, prefixo):
+            if not isinstance(lista, list):
+                return
+            indices_validos = [i for i, p in enumerate(lista) if isinstance(p, dict)]
+            areas = [f"{prefixo}{i}" for i in range(1, 10)]
+            random.shuffle(areas)
+            ativos = set(indices_validos[:3])
+            for ordem, idx in enumerate(indices_validos):
+                pokemon = lista[idx]
+                pokemon["lado_id"] = int(lado_id)
+                if idx in ativos:
+                    pokemon["ativo"] = True
+                    pokemon["Ativo"] = True
+                    pokemon["em_reserva"] = False
+                    pokemon["EmReserva"] = False
+                    pokemon["area_id"] = areas.pop(0) if areas else f"{prefixo}{ordem + 1}"
+                    pokemon["AreaId"] = pokemon["area_id"]
+                else:
+                    pokemon["ativo"] = False
+                    pokemon["Ativo"] = False
+                    pokemon["em_reserva"] = True
+                    pokemon["EmReserva"] = True
+                    pokemon.pop("area_id", None)
+                    pokemon.pop("AreaId", None)
+
+        _aplicar(_slots_time("time_jogador", "pokemons_jogador"), 50, "A")
+        inimigos = _slots_time("time_inimigo", "pokemons_inimigo")
+        if inimigos is None:
+            inimigos = _slots_time("time_adversario", "pokemons_adversario")
+        _aplicar(inimigos, 51, "I")
 
     def _meta_terminal_batalha(self, jogo) -> dict:
         contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}

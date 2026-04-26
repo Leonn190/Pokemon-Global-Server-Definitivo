@@ -44,7 +44,7 @@ class IndicadorAtaque:
         self.cor = self.CORES.get(self.tipo_acao, self.CORES["ataque"])
         if not self.valido:
             self.cor = (238, 76, 76)
-        self.alpha = 148 if self.estado == "preparado" else 220
+        self.alpha = 182 if self.estado == "preparado" else 232
 
     def atualizar(self, destino_atual=None, dt=0.0):
         self.tempo_animacao += max(0.0, float(dt or 0.0))
@@ -52,7 +52,7 @@ class IndicadorAtaque:
             self.destino = tuple(destino_atual)
             self.calcular_pontos_setas()
         if self.estado == "preparando":
-            self.alpha = 180 + int(50 * (0.5 + 0.5 * math.sin(self.tempo_animacao * 8.0)))
+            self.alpha = 198 + int(42 * (0.5 + 0.5 * math.sin(self.tempo_animacao * 8.0)))
 
     def desenhar(self, surface, camera=None):
         if self.origem is None or self.destino is None:
@@ -61,9 +61,7 @@ class IndicadorAtaque:
         if self.coordenadas_mundo and camera is not None:
             origem = camera.mundo_para_tela_px(origem)
             destino = camera.mundo_para_tela_px(destino)
-        overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-        self._desenhar_fluxo_setas(overlay, origem, destino)
-        surface.blit(overlay, (0, 0))
+        self._desenhar_fluxo_setas(surface, origem, destino)
 
     def _desenhar_fluxo_setas(self, surface, origem, destino):
         x1, y1 = float(origem[0]), float(origem[1])
@@ -76,8 +74,8 @@ class IndicadorAtaque:
         nx, ny = -dir_y, dir_x
         espacamento = 42.0 * 0.85
         num_setas = max(2, int(dist_total / espacamento))
-        tempo = pygame.time.get_ticks() / 1000.0
-        deslocamento = (tempo * 34.0) % espacamento
+        tempo = pygame.time.get_ticks() / 1000.0 if self.estado == "preparando" else 0.0
+        deslocamento = ((tempo * 34.0) % espacamento) if self.estado == "preparando" else 0.0
         for i in range(num_setas):
             distancia = ((i + 0.5) * espacamento + deslocamento) % dist_total
             fator = distancia / dist_total

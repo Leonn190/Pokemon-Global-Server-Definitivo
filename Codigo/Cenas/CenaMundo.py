@@ -21,6 +21,7 @@ from Codigo.Server.ServerMundo import (
     iniciar_interacao_npc_mundo,
     notificar_pokemon_derrotado_batalha_mundo,
     receber_pacotes_tick_mundo,
+    consultar_chunks_mundo,
     coletar_mapa_mundo,
 )
 from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
@@ -35,10 +36,17 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mund
 
 
 class CenaMundo:
+    @staticmethod
+    def _tem_exploracao_chunks(dados_player: dict) -> bool:
+        exploracao = dados_player.get("exploracao_chunks") if isinstance(dados_player, dict) else {}
+        mundo = exploracao.get("Mundo") if isinstance(exploracao, dict) and isinstance(exploracao.get("Mundo"), dict) else {}
+        return any(isinstance(valores, (list, tuple, set)) and len(valores) > 0 for valores in mundo.values())
+
     def PrepararTransicaoAssincrona(self, JOGO) -> None:
         preparado = {
             "regras_mundo": {},
             "bootstrap": None,
+            "chunks_bootstrap": None,
             "mapa_bootstrap": None,
             "erros": [],
         }
@@ -64,8 +72,15 @@ class CenaMundo:
             except Exception as exc:
                 preparado["erros"].append(f"falha_bootstrap_mundo:{exc}")
 
-        mapa_bootstrap = None
+        chunks_bootstrap = None
         if link:
+            try:
+                chunks_bootstrap = consultar_chunks_mundo(link, client_id, posicao, raio_chunks=4)
+            except Exception as exc:
+                preparado["erros"].append(f"falha_bootstrap_chunks:{exc}")
+
+        mapa_bootstrap = None
+        if link and self._tem_exploracao_chunks(dados):
             try:
                 import threading
                 resultado = {"payload": None}
@@ -87,9 +102,12 @@ class CenaMundo:
             except Exception as exc:
                 mapa_bootstrap = {"status": "erro", "mensagem": str(exc)}
                 preparado["erros"].append(f"falha_bootstrap_mapa:{exc}")
+        elif link:
+            preparado["erros"].append("mapa_bootstrap_pulado_primeira_entrada")
 
         preparado["regras_mundo"] = dict(regras_mundo or {})
         preparado["bootstrap"] = bootstrap if isinstance(bootstrap, dict) else None
+        preparado["chunks_bootstrap"] = chunks_bootstrap if isinstance(chunks_bootstrap, dict) else None
         preparado["mapa_bootstrap"] = mapa_bootstrap if isinstance(mapa_bootstrap, dict) else None
         JOGO.INFO["MundoPreparadoTransicao"] = preparado
 
@@ -223,7 +241,8 @@ class CenaMundo:
         if link:
             client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
             bootstrap = preparado.get("bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("bootstrap"), dict) else None
-            self.ControladorMundo.conectar(link, client_id, bootstrap_inicial=bootstrap)
+            chunks_bootstrap = preparado.get("chunks_bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("chunks_bootstrap"), dict) else None
+            self.ControladorMundo.conectar(link, client_id, bootstrap_inicial=bootstrap, chunks_bootstrap=chunks_bootstrap)
             self.ServicoMapa = ServicoMapaMundo(JOGO, link, client_id)
             mapa_bootstrap = preparado.get("mapa_bootstrap") if isinstance(preparado, dict) and isinstance(preparado.get("mapa_bootstrap"), dict) else None
             try:

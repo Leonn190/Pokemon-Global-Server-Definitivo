@@ -98,7 +98,7 @@ class ControladorBatalha:
         for pokemon in self.pokemons:
             pokemon.definir_intervalo_frame_ms(self._intervalo_frame_ms)
             pokemon.Nivel = max(1, int(getattr(pokemon, "Nivel", 1) or 1))
-            pokemon.VidaAtual = max(0.0, min(float(pokemon.VidaMax), float(pokemon.VidaMax)))
+            pokemon.VidaAtual = max(0.0, min(float(pokemon.VidaMax), float(getattr(pokemon, "VidaAtual", pokemon.VidaMax))))
         self.pokemons_por_id = {p.id_batalha: p for p in self.pokemons}
         self.arena.atualizar_ocupacao(self.pokemons)
 
@@ -138,7 +138,7 @@ class ControladorBatalha:
         self._area_hover = self.arena.area_em_posicao_mouse(pygame.mouse.get_pos(), self.camera)
         if self.controlador_animacoes is not None:
             self.controlador_animacoes.atualizar(dt)
-        if self.leitor_logs is not None and self.estado_batalha in {"lendo_log", "animando_rodada"}:
+        if self.leitor_logs is not None and (self.estado_batalha in {"lendo_log", "animando_rodada"} or getattr(self.leitor_logs, "estado", "") == "aguardando_resultado"):
             self.leitor_logs.atualizar(dt)
         if self.estado_batalha not in {"lendo_log", "animando_rodada", "aguardando_servidor", "finalizada"}:
             self.player_batalha.processar_eventos(eventos)
@@ -173,6 +173,9 @@ class ControladorBatalha:
 
         for pokemon in self.pokemons:
             if pokemon.esta_ativo() and not pokemon.esta_na_reserva():
+                if not self.pokemon_visivel(pokemon):
+                    pokemon.RectAtual = pygame.Rect(0, 0, 0, 0)
+                    continue
                 hover = pokemon.contem_ponto(pygame.mouse.get_pos())
                 pokemon.desenhar(surface, self.camera, self.arena, selecionado=(self.area_selecionada == pokemon.AreaId), hover=hover)
 
@@ -181,6 +184,9 @@ class ControladorBatalha:
             for slot in self.arena.obter_slots_reserva(lado):
                 poke = self.pokemons_por_id.get(slot.get("pokemon_id"))
                 if poke is None:
+                    continue
+                if not self.pokemon_visivel(poke):
+                    poke.RectAtual = pygame.Rect(0, 0, 0, 0)
                     continue
                 rect = slot.get("rect_tela")
                 hover = rect.collidepoint(pygame.mouse.get_pos()) if rect else False
@@ -212,6 +218,8 @@ class ControladorBatalha:
             surface.blit(overlay, (0, 0))
 
     def selecionar_pokemon(self, pokemon):
+        if pokemon is not None and not self.pokemon_visivel(pokemon):
+            pokemon = None
         self.pokemon_selecionado = pokemon
         if pokemon is None:
             self.area_selecionada = None
@@ -239,6 +247,17 @@ class ControladorBatalha:
             self.limpar_ataque()
             return
         self.pokemon_selecionado = self.arena.pokemon_na_area(area_id)
+        if not self.pokemon_visivel(self.pokemon_selecionado):
+            self.pokemon_selecionado = None
+
+    def pokemon_visivel(self, pokemon):
+        if pokemon is None:
+            return False
+        if bool(self.modo_teste):
+            return True
+        if int(getattr(pokemon, "lado_id", -1)) == int(self.lado_jogador):
+            return True
+        return not (hasattr(pokemon, "esta_furtivo") and pokemon.esta_furtivo())
 
     def selecionar_ataque(self, ataque):
         self.ataque_selecionado = ataque
@@ -326,6 +345,8 @@ class ControladorBatalha:
                 pokemon.atualizar_por_diff(diff)
         if self.arena is not None:
             self.arena.atualizar_ocupacao(self.pokemons)
+        if self.pokemon_selecionado is not None and ((not self.pokemon_selecionado.esta_vivo()) or (not self.pokemon_visivel(self.pokemon_selecionado))):
+            self.desselecionar_pokemon()
         self.rodada_atual = int(resultado.get("rodada_atual", self.rodada_atual) or self.rodada_atual)
         self.estado_batalha = str(resultado.get("estado_batalha") or ("finalizada" if resultado.get("finalizada") else "montando_jogada"))
         if bool(resultado.get("finalizada")):

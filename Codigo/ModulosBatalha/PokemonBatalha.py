@@ -378,6 +378,7 @@ class PokemonBatalha:
     def desenhar(self, surface, camera, arena, selecionado=False, hover=False):
         _ = (selecionado, hover)
         if not self.Vivo or not self.Ativo or self.EmReserva or not self.AreaId:
+            self.RectAtual = pygame.Rect(0, 0, 0, 0)
             return
         if self.CentroMundoOverride is not None:
             cx, cy = camera.mundo_para_tela_px(self.CentroMundoOverride)
@@ -535,10 +536,13 @@ class PokemonBatalha:
                 continue
             if chave in novos_por_chave:
                 atual = novos_por_chave[chave]
-                atual["stacks"] = max(1, _i(atual.get("stacks"), 1)) + max(1, _i(efeito.get("stacks"), 1))
-                atual["passos_restantes"] = max(_i(atual.get("passos_restantes"), 0), _i(efeito.get("passos_restantes"), 0))
-                atual["passos_totais"] = max(_i(atual.get("passos_totais"), 0), _i(efeito.get("passos_totais"), 0), _i(atual.get("passos_restantes"), 0))
+                atuais = max(0, _i(atual.get("passos_restantes"), 0))
+                novos = max(0, _i(efeito.get("passos_restantes"), 0))
+                atual["stacks"] = 1
+                atual["passos_restantes"] = atuais + novos
+                atual["passos_totais"] = max(_i(atual.get("passos_totais"), atuais), atuais) + novos
             else:
+                efeito["stacks"] = 1
                 novos_por_chave[chave] = efeito
         novos = list(novos_por_chave.values())
         chaves_atuais = {self._chave_efeito(e) for e in self.EfeitosFormais}
@@ -556,10 +560,15 @@ class PokemonBatalha:
         novo = dict(efeito)
         existente = next((e for e in self.EfeitosFormais if self._chave_efeito(e) == chave), None)
         if existente is not None:
+            passos_anteriores = max(0, _i(existente.get("passos_restantes"), 0))
+            passos_novos = max(0, _i(novo.get("passos_restantes"), 0))
             existente.update(novo)
-            existente["stacks"] = max(1, _i(novo.get("stacks"), _i(existente.get("stacks"), 1)))
-            existente["passos_totais"] = max(_i(existente.get("passos_totais"), 0), _i(existente.get("passos_restantes"), 0), _i(novo.get("passos_totais"), 0), _i(novo.get("passos_restantes"), 0))
+            existente["stacks"] = 1
+            if passos_novos > 0:
+                existente["passos_restantes"] = passos_anteriores + passos_novos
+                existente["passos_totais"] = max(_i(existente.get("passos_totais"), passos_anteriores), passos_anteriores) + passos_novos
         else:
+            novo["stacks"] = 1
             self.EfeitosFormais.append(novo)
         self.EfeitosFormais = self.EfeitosFormais[:4]
         self.AnimacoesEfeitos[chave] = 0.0
@@ -639,13 +648,6 @@ class PokemonBatalha:
                 nome = str(efeito.get("nome") or efeito.get("code") or "?")
                 txt = fonte_fallback.render(nome[:2].upper(), True, (18, 24, 30))
                 surface.blit(txt, txt.get_rect(center=(cx, y)))
-            stacks = _i(efeito.get("stacks"), 1)
-            if stacks > 1:
-                txt = fonte_stack.render(f"x{stacks}", True, (255, 255, 255))
-                fundo = pygame.Rect(0, 0, txt.get_width() + max(4, int(round(7 * escala_ui))), txt.get_height() + max(2, int(round(2 * escala_ui))))
-                fundo.center = (cx + r - max(2, int(round(3 * escala_ui))), y - r + max(3, int(round(4 * escala_ui))))
-                pygame.draw.rect(surface, (20, 24, 32), fundo, border_radius=max(3, int(round(5 * escala_ui))))
-                surface.blit(txt, txt.get_rect(center=fundo.center))
             area = pygame.Rect(cx - r, y - r, r * 2, r * 2)
             if area.collidepoint(mouse):
                 tooltip = (str(efeito.get("nome") or efeito.get("code") or "Efeito"), negativo, cx, y + r + max(4, int(round(6 * escala_ui))))
@@ -733,6 +735,13 @@ class PokemonBatalha:
 
     def contem_ponto(self, pos_mouse):
         return self.RectAtual.collidepoint(pos_mouse)
+
+    def possui_efeito(self, nome_ou_code):
+        alvo = _normalizar_nome(nome_ou_code)
+        return any(_normalizar_nome((e or {}).get("nome") or (e or {}).get("code")) == alvo for e in self.EfeitosFormais)
+
+    def esta_furtivo(self):
+        return self.possui_efeito("Furtivo")
 
     def esta_ativo(self):
         return bool(self.Ativo)

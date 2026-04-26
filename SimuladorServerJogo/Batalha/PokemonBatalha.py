@@ -42,7 +42,8 @@ def _clamp(valor: float, minimo: float, maximo: float) -> float:
 class PokemonBatalha:
     def __init__(self, dados: dict, partida=None, lado_id: int | None = None, indice: int = 1):
         bruto = dict(dados or {})
-        info = dict(bruto.get("dados") or bruto.get("Dados") or {})
+        info_bruto = bruto.get("dados") or bruto.get("Dados")
+        info = dict(info_bruto) if isinstance(info_bruto, dict) else dict(bruto)
         estado = info.get("estado") if isinstance(info.get("estado"), dict) else {}
         self.partida = partida
         self.id_original = bruto.get("id_original", info.get("id", info.get("ID", bruto.get("id"))))
@@ -57,7 +58,7 @@ class PokemonBatalha:
         self.vivo = bool(bruto.get("vivo", bruto.get("Vivo", True)))
         self.dados_originais = copy.deepcopy(info or bruto)
         self.tipos = list(info.get("tipos") or info.get("Tipos") or estado.get("tipos") or bruto.get("tipos") or [])
-        self.ataques = list(bruto.get("ataques") or bruto.get("ListaAtaques") or info.get("ataques") or info.get("Ataques") or [])
+        self.ataques = self._coletar_ataques(bruto, info, estado)
         self.Build = copy.deepcopy(info.get("Build") or info.get("build") or bruto.get("Build") or {})
         self.atributos_base = {}
         self.variacoes_temporarias = {}
@@ -71,12 +72,29 @@ class PokemonBatalha:
             self.estatisticas_batalha.setdefault(chave, 0.0)
         self._carregar_atributos(info, estado, bruto)
         self.recalcular_atributos()
-        self.VidaAtual = _clamp(_f(bruto.get("VidaAtual", info.get("VidaAtual", estado.get("VidaAtual", self.atributos_finais["Vida"]))), self.atributos_finais["Vida"]), 0.0, self.atributos_finais["Vida"])
+        self.VidaAtual = _clamp(_f(bruto.get("VidaAtual", info.get("VidaAtual", info.get("vida_atual", estado.get("VidaAtual", estado.get("vida_atual", self.atributos_finais["Vida"]))))), self.atributos_finais["Vida"]), 0.0, self.atributos_finais["Vida"])
         energia_padrao = round(self.atributos_finais["EneM"] * 0.75, 2)
-        self.EnergiaAtual = _clamp(_f(bruto.get("Energia", bruto.get("EnergiaAtual", info.get("EnergiaAtual", estado.get("EnergiaAtual", energia_padrao)))), energia_padrao), 0.0, self.atributos_finais["EneM"])
+        self.EnergiaAtual = _clamp(_f(bruto.get("Energia", bruto.get("EnergiaAtual", info.get("EnergiaAtual", info.get("energia_atual", estado.get("EnergiaAtual", estado.get("energia_atual", energia_padrao)))))), energia_padrao), 0.0, self.atributos_finais["EneM"])
         self.BarreiraAtual = max(0.0, _f(bruto.get("BarreiraAtual", info.get("BarreiraAtual", estado.get("BarreiraAtual", 0.0))), 0.0))
         if self.VidaAtual <= 0:
             self.vivo = False
+
+    @staticmethod
+    def _coletar_ataques(bruto: dict, info: dict, estado: dict) -> list:
+        for fonte in (bruto, info, estado):
+            for chave in ("ataques", "ListaAtaques", "Ataques", "habilidades", "Habilidades"):
+                valor = fonte.get(chave) if isinstance(fonte, dict) else None
+                if isinstance(valor, list) and any(isinstance(item, dict) for item in valor):
+                    return [copy.deepcopy(item) for item in valor if isinstance(item, dict)]
+        alvo = estado if isinstance(estado, dict) and estado else info
+        try:
+            from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import normalizar_habilidades_memorias
+
+            normalizar_habilidades_memorias(alvo, total_slots=5)
+        except Exception:
+            return []
+        valor = alvo.get("habilidades") if isinstance(alvo, dict) else None
+        return [copy.deepcopy(item) for item in list(valor or []) if isinstance(item, dict)]
 
     def _registrar_evento(self, tipo, dados=None):
         if self.partida is None or not hasattr(self.partida, "registrar_evento_log"):
@@ -100,7 +118,7 @@ class PokemonBatalha:
             alt = aliases.get(chave, chave)
             base = _f(attrs_base.get(chave, stats_base.get(chave, stats_base.get(alt, stats.get(chave, stats.get(alt, attrs.get(chave, 0.0)))))), 0.0)
             atual = _f(attrs.get(chave, stats.get(chave, stats.get(alt, base))), base)
-            self.atributos_base[chave] = atual if base == 0.0 else base
+            self.atributos_base[chave] = atual
             self.variacoes_permanentes[chave] = _f(variacoes.get(chave, 0.0), 0.0)
             self.variacoes_temporarias[chave] = 0.0
         self.atributos_base["Dur"] = self.atributos_base.get("Dur", 0.0)
@@ -402,10 +420,12 @@ class PokemonBatalha:
         chave = _normalizar(formal.get("code") or formal.get("nome"))
         existente = next((e for e in self.efeitos_formais if _normalizar((e or {}).get("code") or (e or {}).get("nome")) == chave), None)
         if existente is not None:
-            existente["stacks"] = max(1, _i(existente.get("stacks"), 1)) + 1
-            existente["passos_restantes"] = max(_i(existente.get("passos_restantes"), 1), formal["passos_restantes"])
-            existente["passos_totais"] = max(_i(existente.get("passos_totais"), formal["passos_totais"]), formal["passos_totais"], _i(existente.get("passos_restantes"), 1))
-            existente["valor"] = _f(existente.get("valor"), 0.0) + _f(formal.get("valor"), 0.0)
+            passos_anteriores = max(0, _i(existente.get("passos_restantes"), 0))
+            passos_novos = max(1, _i(formal.get("passos_restantes"), 1))
+            existente["stacks"] = 1
+            existente["passos_restantes"] = passos_anteriores + passos_novos
+            existente["passos_totais"] = max(_i(existente.get("passos_totais"), 0), passos_anteriores) + passos_novos
+            existente["valor"] = formal.get("valor", existente.get("valor", 0.0))
             existente["dados"] = {**dict(existente.get("dados") or {}), **dict(formal.get("dados") or {})}
             existente["tipo"] = formal["tipo"]
             formal = dict(existente)
@@ -567,7 +587,7 @@ class PokemonBatalha:
     def esta_apto_para_agir(self):
         if not self.esta_vivo():
             return False
-        bloqueios = {"dormindo", "congelado", "paralisado"}
+        bloqueios = {"dormindo", "congelado"}
         return not any(self.possui_efeito(nome) for nome in bloqueios)
 
     def possui_efeito(self, nome_ou_code):

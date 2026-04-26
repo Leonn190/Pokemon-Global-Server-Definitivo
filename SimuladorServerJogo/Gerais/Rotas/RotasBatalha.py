@@ -39,5 +39,5 @@ def rota_finalizar_batalha(dados_finalizacao):
         dados_finalizacao.get("id_partida"),
         motivo=dados_finalizacao.get("motivo"),
         dados=dados_finalizacao.get("dados"),
+        lado_id=dados_finalizacao.get("lado_id"),
     )
-

@@ -32,16 +32,15 @@ class GerenciadorPartidas:
             return {"status": "erro", "mensagem": "Partida nao encontrada", "id_partida": str(id_partida or ""), "estado_batalha": "ausente", "avisos": [], "erros": ["partida_inexistente"]}
         return partida.receber_jogadas_modo_teste(jogadas)
 
-    def finalizar_partida(self, id_partida, motivo=None, dados=None):
+    def finalizar_partida(self, id_partida, motivo=None, dados=None, lado_id=None):
         _ = dados
         partida = self.obter_partida(id_partida)
         if partida is None:
             return {"status": "erro", "mensagem": "Partida nao encontrada", "id_partida": str(id_partida or ""), "estado_finalizacao": "ausente", "avisos": [], "erros": ["partida_inexistente"]}
-        retorno = partida.finalizar(motivo)
+        retorno = partida.finalizar(motivo, lado_id=lado_id)
         self.partidas_ativas.pop(str(id_partida), None)
         self.partidas_finalizadas[str(id_partida)] = partida
         return retorno
 
 
 GERENCIADOR_PARTIDAS = GerenciadorPartidas()
-

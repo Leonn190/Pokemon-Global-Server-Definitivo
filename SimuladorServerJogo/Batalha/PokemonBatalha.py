@@ -67,6 +67,8 @@ class PokemonBatalha:
         self.estados_transitorios = dict(bruto.get("estados_transitorios") or {})
         self.contadores_especiais = dict(bruto.get("contadores_especiais") or {})
         self.estatisticas_batalha = dict(bruto.get("estatisticas_batalha") or {})
+        for chave in ("dano_causado", "dano_recebido", "cura_feita", "cura_recebida", "energia_gasta", "abates"):
+            self.estatisticas_batalha.setdefault(chave, 0.0)
         self._carregar_atributos(info, estado, bruto)
         self.recalcular_atributos()
         self.VidaAtual = _clamp(_f(bruto.get("VidaAtual", info.get("VidaAtual", estado.get("VidaAtual", self.atributos_finais["Vida"]))), self.atributos_finais["Vida"]), 0.0, self.atributos_finais["Vida"])
@@ -543,12 +545,16 @@ class PokemonBatalha:
         self.vivo = False
         self.VidaAtual = 0.0
         self.estados_transitorios["morto_na_rodada"] = dict(dados or {})
+        origem_id = dados.get("origem_id")
+        origem = self.partida.obter_pokemon(origem_id) if self.partida is not None and origem_id is not None else None
+        if origem is not None and origem.id_batalha != self.id_batalha:
+            origem.estatisticas_batalha["abates"] = _f(origem.estatisticas_batalha.get("abates"), 0.0) + 1
         self._registrar_evento(
             "pokemon_morreu",
             {
                 "pokemon_id": self.id_batalha,
                 "pokemon_nome": self.nome,
-                "origem_id": dados.get("origem_id"),
+                "origem_id": origem_id,
                 "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
                 "area_id": self.area_id,
             },

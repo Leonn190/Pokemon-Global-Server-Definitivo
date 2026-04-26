@@ -62,7 +62,7 @@ class ElementosHudBatalha:
         return None
 
     def _fugir_local(self):
-        self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Fuga solicitada (visual)."})
+        self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Fuga solicitada."})
         self.controlador.iniciar_fuga()
 
     def atualizar(self, dt: float, eventos):

@@ -7,6 +7,8 @@ import pygame
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.ControladorAnimacoes import ControladorAnimacoes
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
+from Codigo.ModulosBatalha.FinalizadorBatalha import FinalizadorBatalha
+from Codigo.ModulosBatalha.IA.ControladorIA import ControladorIA
 from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.MontadorJogadas import MontadorJogadas
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
@@ -16,8 +18,10 @@ from Codigo.Server import ServerBatalha
 
 
 class ControladorBatalha:
-    def __init__(self, camera=None):
+    def __init__(self, camera=None, jogo=None, ao_sair_batalha=None):
         self.camera = camera
+        self.jogo = jogo
+        self.ao_sair_batalha = ao_sair_batalha
         self.arena = None
         self.pokemons = []
         self.pokemons_por_id = {}
@@ -26,6 +30,8 @@ class ControladorBatalha:
         self.montador_jogadas = None
         self.controlador_animacoes = None
         self.leitor_logs = None
+        self.controlador_ia = None
+        self.finalizador = FinalizadorBatalha(self)
 
         self.rodada_atual = 1
         self.lado_jogador = 50
@@ -107,6 +113,7 @@ class ControladorBatalha:
         self.montador_jogadas = MontadorJogadas(self)
         self.controlador_animacoes = ControladorAnimacoes(self)
         self.leitor_logs = LeitorLogs(self, self.controlador_animacoes)
+        self.controlador_ia = ControladorIA() if self.batalha_usa_ia() else None
 
     def atualizar(self, dt, eventos):
         if self.arena is None or self.camera is None:
@@ -262,10 +269,26 @@ class ControladorBatalha:
             pacote = self.montador_jogadas.gerar_pacote_jogadas_modo_teste()
         else:
             pacote = self.montador_jogadas.gerar_pacote_jogada()
-            pacote["resolver_lados_ausentes"] = True
+            if not self.batalha_usa_ia():
+                pacote["resolver_lados_ausentes"] = True
         self.estado_batalha = "aguardando_servidor"
         resposta = self.server_batalha.enviar_jogada(self.id_partida, self.lado_jogador, pacote)
+        if self._resposta_aguardando(resposta) and self.batalha_usa_ia():
+            resposta_ia = self.enviar_jogada_ia()
+            if resposta_ia is not None:
+                resposta = resposta_ia
         self.tratar_resposta_jogada(resposta)
+
+    def enviar_jogada_ia(self):
+        lado_ia = self.obter_lado_ia()
+        if lado_ia is None:
+            return None
+        if self.controlador_ia is None:
+            self.controlador_ia = ControladorIA()
+        pacote = self.controlador_ia.gerar_jogada(self, lado_ia)
+        pacote["id_partida"] = self.id_partida
+        pacote["rodada"] = self.rodada_atual
+        return self.server_batalha.enviar_jogada(self.id_partida, lado_ia, pacote)
 
     def tratar_resposta_jogada(self, resposta):
         status = str((resposta or {}).get("status") or "erro")
@@ -282,6 +305,8 @@ class ControladorBatalha:
             if isinstance(resultado, dict):
                 self.aplicar_resultado_final(resultado)
                 self.limpar_jogada_confirmada()
+                if bool(resultado.get("finalizada")) and self.finalizador is not None:
+                    self.finalizador.finalizar_por_resultado(resultado)
                 return
             if self.estado_batalha != "aguardando":
                 self.limpar_jogada_confirmada()
@@ -306,6 +331,23 @@ class ControladorBatalha:
         if bool(resultado.get("finalizada")):
             self.estado_batalha = "finalizada"
         self.timer_rodada = self.timer_rodada_max
+
+    def batalha_usa_ia(self):
+        tipo = str(self.tipo_batalha or "").strip().lower()
+        return tipo in {"confronto", "treinador", "trainer"} and not bool(self.modo_teste)
+
+    def obter_lado_ia(self):
+        for pokemon in self.pokemons:
+            if not pokemon.esta_vivo():
+                continue
+            lado = int(getattr(pokemon, "lado_id", -1) or -1)
+            if lado != int(self.lado_jogador):
+                return lado
+        return 51
+
+    @staticmethod
+    def _resposta_aguardando(resposta):
+        return str((resposta or {}).get("status") or "").lower() == "ok" and str((resposta or {}).get("estado_batalha") or "").lower() == "aguardando"
 
     def receber_log(self, log):
         rodada = int((log or {}).get("rodada") or self.rodada_atual or 1)
@@ -356,7 +398,10 @@ class ControladorBatalha:
         self._fuga_alpha = min(255.0, self._fuga_alpha + self._fuga_incremento_clique)
         self.estado_batalha = "fugindo"
         if self._fuga_alpha >= self._fuga_limite_saida:
-            self.solicitou_encerrar_batalha = True
+            if self.finalizador is not None:
+                self.finalizador.finalizar_por_fuga()
+            else:
+                self.solicitou_encerrar_batalha = True
 
     def _atualizar_fuga(self, dt: float):
         dt = max(0.0, float(dt or 0.0))

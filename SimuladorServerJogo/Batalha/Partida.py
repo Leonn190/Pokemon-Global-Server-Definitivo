@@ -52,6 +52,7 @@ class Partida:
         self.finalizada = False
         self.vencedor = None
         self.perdedor = None
+        self.motivo_finalizacao = None
         self.avisos = []
         self.coletor_acoes = ColetorAcoes(self)
         self.rodador_turno = RodadorTurno(self)
@@ -323,6 +324,7 @@ class Partida:
         if derrotados:
             vencedores = [lado for lado, tem_vivo in vivos_por_lado.items() if tem_vivo]
             self.finalizada = True
+            self.motivo_finalizacao = self.motivo_finalizacao or "fim_normal"
             self.perdedor = derrotados[0] if len(derrotados) == 1 else derrotados
             self.vencedor = vencedores[0] if len(vencedores) == 1 else vencedores
             self.estado_partida = "finalizada"
@@ -469,8 +471,15 @@ class Partida:
                 {"pokemon_id": reserva.id_batalha, "pokemon_nome": reserva.nome, "area_id": area, "motivo": "substituicao_derrotado"},
             )
 
-    def finalizar(self, motivo=None):
+    def finalizar(self, motivo=None, lado_id=None):
+        motivo = str(motivo or "fim_normal")
         self.finalizada = True
+        self.motivo_finalizacao = motivo
+        if motivo == "fuga":
+            perdedor = _i(lado_id, self.lado_jogador)
+            vencedores = [lado for lado in self._lados_com_pokemon_vivo() if int(lado) != int(perdedor)]
+            self.perdedor = perdedor
+            self.vencedor = vencedores[0] if len(vencedores) == 1 else vencedores
         self.estado_partida = "finalizada"
         return {
             "status": "ok",

@@ -1,12 +1,14 @@
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosBatalha.Arena import Arena
+from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
 from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo, solicitar_contexto_batalha_mundo
 from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Prefabs.Terminal import Terminal
 import pygame
+from copy import deepcopy
 
 
 class CenaCombate:
@@ -71,6 +73,8 @@ class CenaCombate:
         )
         self.Camera.atualizar(0.0)
         self.Arena = Arena(contexto)
+        self.ControladorBatalha = ControladorBatalha(self.Camera, jogo=JOGO)
+        self.ControladorBatalha.iniciar(self._estado_inicial_batalha(JOGO, contexto))
 
         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
@@ -84,6 +88,21 @@ class CenaCombate:
         )
         self.Terminal.iniciar()
         self._eventos_ui_atual = []
+
+    def _estado_inicial_batalha(self, JOGO, contexto):
+        estado = deepcopy(contexto or {})
+        estado.setdefault("tipo_batalha", estado.get("tipo") or "confronto")
+        estado.setdefault("lado_jogador", 50)
+        estado.setdefault("modo_teste", False)
+        if isinstance(JOGO.INFO.get("RegrasMundo"), dict):
+            estado.setdefault("regras_mundo", deepcopy(JOGO.INFO.get("RegrasMundo") or {}))
+        if isinstance(estado.get("batalha"), dict):
+            estado.setdefault("regras", deepcopy(estado.get("batalha") or {}))
+        if not estado.get("pokemons_inimigo") and not estado.get("pokemons_adversario"):
+            pokemon_colisao = estado.get("pokemon_colisao") if isinstance(estado.get("pokemon_colisao"), dict) else None
+            if pokemon_colisao is not None:
+                estado["pokemons_inimigo"] = [deepcopy(pokemon_colisao)]
+        return estado
 
     def _meta_terminal_batalha(self, jogo) -> dict:
         contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
@@ -102,6 +121,16 @@ class CenaCombate:
         jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
         jogo.CenaAlvo = "Mundo"
 
+    def _cancelar_batalha_com_esc(self) -> bool:
+        controlador = getattr(self, "ControladorBatalha", None)
+        montador = getattr(controlador, "montador_jogadas", None)
+        if montador is not None and str(getattr(montador, "estado_montagem", "")) in {"preparando_ataque", "arrastando"}:
+            montador.cancelar_previa()
+            if controlador is not None:
+                controlador.limpar_ataque()
+            return True
+        return False
+
     def DefinirTela(self, tela):
         if tela == "Config":
             ResetTelaConfig()
@@ -118,16 +147,18 @@ class CenaCombate:
         if opcoes_modal is None and self.TelaAtual != "Config":
             for ev in eventos_ui:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                    if self._cancelar_batalha_com_esc():
+                        break
                     opcoes_modal = SubtelaOpcoes()
                     opcoes_modal.toggle(JOGO)
                     JOGO.GerenciadorSubtelas.abrir(opcoes_modal)
                     break
         terminal_digitando = bool(self.Terminal is not None and self.Terminal.esta_digitando)
         bloqueado = opcoes_modal is not None or terminal_digitando
-        if not bloqueado:
-            self.Camera.processar_eventos(eventos_ui)
+        eventos_batalha = [] if bloqueado else list(eventos_ui)
         self._eventos_ui_atual = list(eventos_ui)
-        self.Camera.atualizar(dt)
+        if self.ControladorBatalha is not None and self.TelaAtual != "Config":
+            self.ControladorBatalha.atualizar(dt, eventos_batalha)
 
     def tela_atual_eh_complexa(self) -> bool:
         return self.TelaAtual != "Config"
@@ -138,8 +169,11 @@ class CenaCombate:
 
     def render_base(self, surface, JOGO, EVENTOS, dt):
         _ = (JOGO, EVENTOS, dt)
-        surface.fill((20, 20, 28))
-        self.Arena.renderizar(surface, self.Camera)
+        if self.ControladorBatalha is not None:
+            self.ControladorBatalha.desenhar(surface)
+        else:
+            surface.fill((20, 20, 28))
+            self.Arena.renderizar(surface, self.Camera)
 
     def render_post(self, surface, JOGO, EVENTOS, dt):
         _ = (surface, JOGO, EVENTOS, dt)

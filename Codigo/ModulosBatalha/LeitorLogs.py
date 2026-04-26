@@ -135,6 +135,9 @@ class LeitorLogs:
             self.controlador.replay_log_atual["ativo"] = False
         if bool(self.resultado.get("finalizada")):
             self.controlador.estado_batalha = "finalizada"
+            finalizador = getattr(self.controlador, "finalizador", None)
+            if finalizador is not None:
+                finalizador.finalizar_por_resultado(self.resultado)
         else:
             self.controlador.voltar_para_montagem()
         self.estado = "finalizado"

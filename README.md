@@ -2,7 +2,7 @@
 
 # Pokémon Global Server
 
-<img src="Recursos/Visual/Icones/GlobalServer%20QuadroLogo.png" alt="Logo do Pokémon Global Server" width="360">
+<img src="Recursos/Visual/Icones/GlobalServer/QuadroLogo.png" alt="Logo do Pokémon Global Server" width="360">
 
 **Jogo 2D em Python com arquitetura client/server, mundo aberto, coleta de Pokémon, inventário, crafting, NPCs, exploração e batalhas estratégicas baseadas em turnos, ticks, física e efeitos.**
 

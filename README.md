@@ -2,8 +2,7 @@
 
 # Pokémon Global Server
 
-<!-- Substitua o caminho abaixo quando a logo final estiver no repositório -->
-<img src="docs/imagens/logo.png" alt="Logo do Pokémon Global Server" width="260">
+<img src="Recursos/Visual/Icones/GlobalServer%20QuadroLogo.png" alt="Logo do Pokémon Global Server" width="360">
 
 **Jogo 2D em Python com arquitetura client/server, mundo aberto, coleta de Pokémon, inventário, crafting, NPCs, exploração e batalhas estratégicas baseadas em turnos, ticks, física e efeitos.**
 
@@ -15,7 +14,7 @@
 
 **Pokémon Global Server** é um jogo 2D desenvolvido em Python com foco em exploração, progressão e batalhas estratégicas. O projeto combina um cliente visual feito com Pygame, módulos de interface, animação e renderização, além de um simulador de servidor responsável por regras, mundo, entidades, rotas e lógica autoritativa.
 
-O jogo possui uma base grande de dados própria, incluindo Pokémon, ataques, itens, equipamentos, efeitos, baús, NPCs, receitas, diálogos e regras de mundo. A estrutura foi pensada para separar cada parte importante do projeto: o cliente cuida da experiência visual e da interação do jogador, enquanto o servidor/simulador concentra a lógica de mundo, batalha, geração e validação de regras.
+O jogo possui uma base grande de dados própria, incluindo Pokémon, ataques, itens, equipamentos, efeitos, NPCs, receitas, diálogos e regras de mundo. A estrutura foi pensada para separar cada parte importante do projeto: o cliente cuida da experiência visual e da interação do jogador, enquanto o servidor/simulador concentra a lógica de mundo, batalha, geração e validação de regras.
 
 A proposta principal é criar um jogo com aparência simples, mas sistemas internos profundos: mundo grande em tiles, NPCs combatentes e vendedores, inventário, crafting, captura, efeitos de status, batalha 6v6, leitura de logs de combate, ações planejadas pelo jogador e uma arquitetura preparada para evoluir para multiplayer real.
 
@@ -23,7 +22,7 @@ A proposta principal é criar um jogo com aparência simples, mas sistemas inter
 
 ## 2. Snapshots
 
-> Esta seção ainda está preparada como placeholder, porque as imagens finais, vídeo de showcase e site de instalação ainda não foram definidos.
+> O vídeo de showcase ainda será adicionado. As imagens abaixo são renderizadas diretamente do diretório `Snapshots/` do repositório.
 
 ### Showcase em vídeo
 
@@ -33,11 +32,11 @@ A proposta principal é criar um jogo com aparência simples, mas sistemas inter
 
 | Snapshot | Snapshot |
 |---|---|
-| ![Snapshot 01](docs/snapshots/snapshot-01.png) | ![Snapshot 02](docs/snapshots/snapshot-02.png) |
-| ![Snapshot 03](docs/snapshots/snapshot-03.png) | ![Snapshot 04](docs/snapshots/snapshot-04.png) |
-| ![Snapshot 05](docs/snapshots/snapshot-05.png) | ![Snapshot 06](docs/snapshots/snapshot-06.png) |
-| ![Snapshot 07](docs/snapshots/snapshot-07.png) | ![Snapshot 08](docs/snapshots/snapshot-08.png) |
-| ![Snapshot 09](docs/snapshots/snapshot-09.png) | ![Snapshot 10](docs/snapshots/snapshot-10.png) |
+| <img src="Snapshots/Foto1.png" alt="Snapshot 01" width="420"> | <img src="Snapshots/Foto2.png" alt="Snapshot 02" width="420"> |
+| <img src="Snapshots/Foto3.png" alt="Snapshot 03" width="420"> | <img src="Snapshots/Foto4.png" alt="Snapshot 04" width="420"> |
+| <img src="Snapshots/Foto5.png" alt="Snapshot 05" width="420"> | <img src="Snapshots/Foto6.png" alt="Snapshot 06" width="420"> |
+| <img src="Snapshots/Foto7.png" alt="Snapshot 07" width="420"> | <img src="Snapshots/Foto8.png" alt="Snapshot 08" width="420"> |
+| <img src="Snapshots/Foto9.png" alt="Snapshot 09" width="420"> | <img src="Snapshots/Foto10.png" alt="Snapshot 10" width="420"> |
 
 ---
 
@@ -52,19 +51,14 @@ Os números abaixo foram levantados a partir dos arquivos atuais enviados do pro
 | Efeitos cadastrados em `Dados/Pokemon Global Server - Efeitos.csv` | **50** |
 | Itens cadastrados em `Dados/Pokemon Global Server - Itens.csv` | **140** |
 | Equipáveis cadastrados em `Dados/Pokemon Global Server - Equipaveis.csv` | **63** |
-| Baús cadastrados em `Dados/Pokemon Global Server - Baus.csv` | **39** |
-| NPCs combatentes cadastrados | **60** |
-| NPCs vendedores cadastrados | **15** |
-| Arquivos de interação/diálogo de NPCs | **26** |
-| Tipos/colunas de fraqueza e resistência no sistema FR | **19 linhas de relação** |
+| NPCs cadastrados | **75** |
+| Tipos de Pokémon | **20** |
+| Biomas | **7** |
+| Estruturas naturais | **24** |
+| Trilhas sonoras | **35** |
+| Receitas | **31** |
 | Estádios/categorias de combatentes no CSV atual | **20** |
 | Mundo planejado | **10.000 x 10.000 tiles** |
-| Arquivos Python analisados | **159** |
-| Arquivos Java de geração de mundo | **7** |
-| Arquivos TOML de regras | **14** |
-| Arquivos JSON analisados | **29** |
-| Arquivos CSV analisados | **9** |
-| Linhas totais em arquivos `.py`, `.java`, `.toml`, `.json`, `.csv`, `.frag` e `.vert` | **54.965** |
 
 Principais arquivos de dados:
 
@@ -73,7 +67,6 @@ Principais arquivos de dados:
 - `Dados/Pokemon Global Server - Efeitos.csv`
 - `Dados/Pokemon Global Server - Itens.csv`
 - `Dados/Pokemon Global Server - Equipaveis.csv`
-- `Dados/Pokemon Global Server - Baus.csv`
 - `Dados/Pokemon Global Server - Receitas.json`
 - `Dados/Pokemon Global Server - PropriedadesAtaques.json`
 - `Dados/Pokemon Global Server - Sistema FR.csv`
@@ -177,8 +170,7 @@ A arquitetura do projeto está organizada em três blocos principais:
 ├── Dados/
 │   ├── InteracoesNPC/
 │   ├── Pokemon Global Server - Ataques.csv
-│   ├── Pokemon Global Server - Baus.csv
-│   ├── Pokemon Global Server - Efeitos.csv
+│   │   ├── Pokemon Global Server - Efeitos.csv
 │   ├── Pokemon Global Server - Equipaveis.csv
 │   ├── Pokemon Global Server - Itens.csv
 │   ├── Pokemon Global Server - NPC Combatente.csv
@@ -334,7 +326,7 @@ Codigo/
 
 ### `Dados/` — base de dados do jogo
 
-O diretório `Dados/` funciona como uma base semiestruturada do projeto. Ele concentra informações editáveis sobre entidades, ataques, efeitos, itens, NPCs, receitas, baús e diálogos.
+O diretório `Dados/` funciona como uma base semiestruturada do projeto. Ele concentra informações editáveis sobre entidades, ataques, efeitos, itens, NPCs, receitas e diálogos.
 
 ```text
 Dados/
@@ -371,7 +363,6 @@ Dados/
 │   └── ManualDialogos.json
 │
 ├── Pokemon Global Server - Ataques.csv
-├── Pokemon Global Server - Baus.csv
 ├── Pokemon Global Server - Efeitos.csv
 ├── Pokemon Global Server - Equipaveis.csv
 ├── Pokemon Global Server - Itens.csv
@@ -403,7 +394,6 @@ SimuladorServerJogo/
 │   ├── EstadoServidor.py
 │   ├── LoaderRegras.py
 │   ├── Geradores/
-│   │   ├── GeradorBaus.py
 │   │   ├── GeradorMundo.py
 │   │   ├── GeradorPokemon.py
 │   │   └── Java/
@@ -461,7 +451,6 @@ SimuladorServerJogo/
     ├── ServicoInventario.py
     ├── TiqueServidor.py
     └── Cerebros/
-        ├── CerebroBaus.py
         ├── CerebroCentral.py
         ├── CerebroEstadios.py
         ├── CerebroEstruturasNaturais.py
@@ -527,7 +516,6 @@ ServerMundo / Rotas do servidor
 CerebroCentral
   ├── CerebroPokemons
   ├── CerebroNPCs
-  ├── CerebroBaus
   ├── CerebroItensMundo
   ├── CerebroEstadios
   ├── CerebroEstruturasNaturais
@@ -682,13 +670,15 @@ Projeto criado como um jogo autoral em Python, com foco em sistemas complexos de
 
 ## 9. Último relatório
 
-> O projeto utiliza relatórios de desenvolvimento. O último relatório deve ser incorporado aqui a partir do arquivo `registro.md`, localizado na raiz do repositório.
->
-> Nos arquivos analisados nesta etapa, o arquivo `registro.md` não estava presente. Quando ele estiver no repositório, esta seção pode ser preenchida automaticamente ou manualmente com o conteúdo mais recente.
+O projeto mantém o relatório mais recente em [`Registro.md`](Registro.md), localizado na raiz do repositório.
 
-```md
-<!-- Cole aqui o conteúdo de registro.md -->
-```
+> O GitHub não incorpora automaticamente o conteúdo de outro arquivo Markdown dentro do README apenas com sintaxe Markdown. Para manter esta seção sempre atualizada de forma autônoma, o ideal é o atualizador de relatórios copiar o conteúdo de `Registro.md` para dentro do bloco abaixo sempre que o relatório for regenerado.
+
+<!-- INICIO_REGISTRO_MD -->
+
+> Conteúdo de `Registro.md` será inserido aqui automaticamente pelo atualizador de relatórios.
+
+<!-- FIM_REGISTRO_MD -->
 
 ---
 

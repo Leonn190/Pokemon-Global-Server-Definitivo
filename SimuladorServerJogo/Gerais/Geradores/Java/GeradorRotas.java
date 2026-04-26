@@ -92,47 +92,10 @@ final class GeradorRotas {
             System.out.println("  Rotas: 0 / 0 (vilas insuficientes)");
             return;
         }
-
-        int target = rangedValue(rules.minCount, rules.maxCount, 340_001L);
-        int maxPairs = (villages.size() * (villages.size() - 1)) / 2;
-        int maxByDegree = (villages.size() * Math.max(0, rules.maxVillageLinks + 1)) / 2;
-        target = Math.min(target, Math.min(maxPairs, maxByDegree));
         int[] degree = new int[villages.size()];
         Set<Long> attemptedPairs = new HashSet<>();
         int routeId = 0;
         int attempts = 0;
-
-        Set<Integer> connected = new HashSet<>();
-        connected.add(0);
-        while (connected.size() < villages.size()) {
-            RouteCandidate best = null;
-            for (int from : connected) {
-                for (int to = 0; to < villages.size(); to++) {
-                    if (connected.contains(to) || from == to) {
-                        continue;
-                    }
-                    RouteCandidate cand = buildCandidate(villages, from, to);
-                    if (cand == null) {
-                        continue;
-                    }
-                    if (best == null || cand.sortScore < best.sortScore) {
-                        best = cand;
-                    }
-                }
-            }
-            if (best == null) {
-                break;
-            }
-            attempts++;
-            if (tryCreateRoute(best, villages, degree, attemptedPairs, routeId)) {
-                routeId++;
-                connected.add(best.a);
-                connected.add(best.b);
-            } else {
-                connected.add(best.b);
-            }
-        }
-
         List<RouteCandidate> extras = new ArrayList<>();
         for (int a = 0; a < villages.size(); a++) {
             for (int b = a + 1; b < villages.size(); b++) {
@@ -144,31 +107,40 @@ final class GeradorRotas {
         }
         extras.sort((l, r) -> Double.compare(l.sortScore, r.sortScore));
 
-        for (RouteCandidate cand : extras) {
-            if (ctx.routes.size() >= target) {
-                break;
+        for (int vila = 0; vila < villages.size(); vila++) {
+            while (degree[vila] < rules.minVillageLinks) {
+                RouteCandidate melhor = null;
+                for (RouteCandidate cand : extras) {
+                    if (cand.a != vila && cand.b != vila) {
+                        continue;
+                    }
+                    int outro = cand.a == vila ? cand.b : cand.a;
+                    if (degree[outro] >= rules.maxVillageLinks) {
+                        continue;
+                    }
+                    if (attemptedPairs.contains(pairKey(cand.a, cand.b))) {
+                        continue;
+                    }
+                    melhor = cand;
+                    break;
+                }
+                if (melhor == null) {
+                    break;
+                }
+                attempts++;
+                if (tryCreateRoute(melhor, villages, degree, attemptedPairs, routeId)) {
+                    routeId++;
+                }
             }
+        }
+
+        for (RouteCandidate cand : extras) {
             if (degree[cand.a] >= rules.maxVillageLinks || degree[cand.b] >= rules.maxVillageLinks) {
                 continue;
             }
             attempts++;
             if (tryCreateRoute(cand, villages, degree, attemptedPairs, routeId)) {
                 routeId++;
-            }
-        }
-
-        if (ctx.routes.size() < target) {
-            for (RouteCandidate cand : extras) {
-                if (ctx.routes.size() >= target) {
-                    break;
-                }
-                if (degree[cand.a] >= rules.maxVillageLinks + 1 || degree[cand.b] >= rules.maxVillageLinks + 1) {
-                    continue;
-                }
-                attempts++;
-                if (tryCreateRoute(cand, villages, degree, attemptedPairs, routeId)) {
-                    routeId++;
-                }
             }
         }
 
@@ -185,7 +157,7 @@ final class GeradorRotas {
             sumDegree += value;
         }
         double avgDegree = villages.isEmpty() ? 0.0 : (sumDegree / (double) villages.size());
-        System.out.println("  Rotas: " + ctx.routes.size() + " / " + target + " (tentativas: " + attempts + ")");
+        System.out.println("  Rotas: " + ctx.routes.size() + " (tentativas: " + attempts + ")");
         System.out.printf(Locale.US, "    conectividade vilas: min=%d max=%d media=%.2f%n", minDegree, maxDegree, avgDegree);
     }
 
@@ -197,6 +169,9 @@ final class GeradorRotas {
         attemptedPairs.add(key);
         List<int[]> path = findPath(villages.get(cand.a), villages.get(cand.b));
         if (path == null || path.size() < 2) {
+            return false;
+        }
+        if (pathBlockedByNaturalOrDeepWater(path, rules.routeBrushRadius)) {
             return false;
         }
         degree[cand.a]++;
@@ -225,10 +200,12 @@ final class GeradorRotas {
                 int deep = 0;
                 int shallow = 0;
                 int land = 0;
+                int naturais = 0;
                 int total = 0;
                 for (int y = y0; y < y1; y++) {
                     for (int x = x0; x < x1; x++) {
                         Tile tile = Tile.values()[ctx.tileMap[ctx.index(x, y)] & 0xFF];
+                        NaturalStructure structure = NaturalStructure.values()[ctx.naturalMap[ctx.index(x, y)] & 0xFF];
                         total++;
                         if (tile == Tile.WATER_DEEP) {
                             deep++;
@@ -236,6 +213,9 @@ final class GeradorRotas {
                             shallow++;
                         } else {
                             land++;
+                        }
+                        if (structure != NaturalStructure.NONE) {
+                            naturais++;
                         }
                     }
                 }
@@ -249,7 +229,11 @@ final class GeradorRotas {
                     cost = 1.0;
                     cost += (shallow / (double) Math.max(1, total)) * rules.shallowWaterPenalty;
                     cost += (deep / (double) Math.max(1, total)) * 60.0;
+                    cost += (naturais / (double) Math.max(1, total)) * 40.0;
                     if (deep * 2 >= total && land * 3 < total * 2) {
+                        cost = INF;
+                    }
+                    if (naturais * 2 >= total) {
                         cost = INF;
                     }
                 }
@@ -407,6 +391,76 @@ final class GeradorRotas {
         }
     }
 
+    private boolean pathBlockedByNaturalOrDeepWater(List<int[]> path, int radius) {
+        if (path == null || path.size() < 2) {
+            return true;
+        }
+        for (int i = 1; i < path.size(); i++) {
+            int[] a = path.get(i - 1);
+            int[] b = path.get(i);
+            if (segmentBrushBlocked(a[0], a[1], b[0], b[1], radius)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean segmentBrushBlocked(int x0, int y0, int x1, int y1, int radius) {
+        int dx = Math.abs(x1 - x0);
+        int dy = Math.abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+        int x = x0;
+        int y = y0;
+        while (true) {
+            if (brushBlockedAt(x, y, radius)) {
+                return true;
+            }
+            if (x == x1 && y == y1) {
+                break;
+            }
+            int e2 = err * 2;
+            if (e2 > -dy) {
+                err -= dy;
+                x += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y += sy;
+            }
+        }
+        return false;
+    }
+
+    private boolean brushBlockedAt(int cx, int cy, int radius) {
+        int rr = radius * radius;
+        for (int dy = -radius; dy <= radius; dy++) {
+            int y = cy + dy;
+            if (y < 0 || y >= ctx.height) {
+                continue;
+            }
+            for (int dx = -radius; dx <= radius; dx++) {
+                int x = cx + dx;
+                if (x < 0 || x >= ctx.width) {
+                    continue;
+                }
+                if (dx * dx + dy * dy > rr) {
+                    continue;
+                }
+                int idx = ctx.index(x, y);
+                Tile tile = Tile.values()[ctx.tileMap[idx] & 0xFF];
+                if (tile == Tile.WATER_DEEP) {
+                    return true;
+                }
+                if (ctx.naturalMap[idx] != (byte) NaturalStructure.NONE.ordinal()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void clearCircle(int cx, int cy, int radius) {
         int rr = radius * radius;
         for (int dy = -radius; dy <= radius; dy++) {
@@ -426,7 +480,6 @@ final class GeradorRotas {
                 if (tile == Tile.WATER_DEEP) {
                     continue;
                 }
-                ctx.naturalMap[ctx.index(x, y)] = (byte) NaturalStructure.NONE.ordinal();
             }
         }
     }

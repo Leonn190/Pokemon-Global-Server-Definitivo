@@ -1,8 +1,8 @@
 # Regras de estruturas naturais por código.
 
 [variacao]
-escala_min = 0.90
-escala_max = 1.10
+escala_min = 0.85
+escala_max = 1.15
 subtipos_variantes = ["arvore", "arvore_trombosa"]
 total_variantes = 3
 
@@ -10,6 +10,7 @@ total_variantes = 3
 subtipo = "arvore"
 nome = "Árvore"
 sprite = "Recursos/Visual/Mundo/Objetos/Arvore.png"
+rotacao = "nenhuma"
 raio_colisao = 0.85
 raio_interacao = 0.95
 campo = 0.95
@@ -20,11 +21,11 @@ estilo = "machado"
 dureza = 1
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."2"]
 subtipo = "pedra"
 nome = "Pedra"
 sprite = "Recursos/Visual/Mundo/Objetos/Pedra.png"
+rotacao = "nenhuma"
 raio_colisao = 1.2
 raio_interacao = 1.25
 campo = 1.25
@@ -35,11 +36,11 @@ estilo = "picareta"
 dureza = 2
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."3"]
 subtipo = "arbusto"
 nome = "Arbusto"
 sprite = "Recursos/Visual/Mundo/Objetos/Arbusto.png"
+rotacao = "nenhuma"
 raio_colisao = 0.55
 raio_interacao = 0.6
 campo = 0.6
@@ -50,11 +51,11 @@ estilo = "machado"
 dureza = 1
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."4"]
 subtipo = "ouro"
 nome = "Ouro"
 sprite = "Recursos/Visual/Mundo/Objetos/Ouro.png"
+rotacao = "nenhuma"
 raio_colisao = 1.15
 raio_interacao = 1.2
 campo = 1.2
@@ -65,11 +66,11 @@ estilo = "picareta"
 dureza = 3
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."5"]
 subtipo = "ametista"
 nome = "Ametista"
 sprite = "Recursos/Visual/Mundo/Objetos/Ametista.png"
+rotacao = "nenhuma"
 raio_colisao = 1
 raio_interacao = 1.1
 campo = 1.05
@@ -80,11 +81,11 @@ estilo = "picareta"
 dureza = 5
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."6"]
 subtipo = "diamante"
 nome = "Diamante"
 sprite = "Recursos/Visual/Mundo/Objetos/Diamante.png"
+rotacao = "nenhuma"
 raio_colisao = 1
 raio_interacao = 1.1
 campo = 1.05
@@ -95,11 +96,11 @@ estilo = "picareta"
 dureza = 4
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."7"]
 subtipo = "rubi"
 nome = "Rubi"
 sprite = "Recursos/Visual/Mundo/Objetos/Rubi.png"
+rotacao = "nenhuma"
 raio_colisao = 1
 raio_interacao = 1.1
 campo = 1.05
@@ -110,11 +111,11 @@ estilo = "picareta"
 dureza = 6
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."8"]
 subtipo = "esmeralda"
 nome = "Esmeralda"
 sprite = "Recursos/Visual/Mundo/Objetos/Esmeralda.png"
+rotacao = "nenhuma"
 raio_colisao = 1
 raio_interacao = 1.1
 campo = 1.05
@@ -125,11 +126,11 @@ estilo = "picareta"
 dureza = 5
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."9"]
 subtipo = "palmeira"
 nome = "Palmeira"
 sprite = "Recursos/Visual/Mundo/Objetos/Palmeira.png"
+rotacao = "nenhuma"
 raio_colisao = 0.75
 raio_interacao = 0.8
 campo = 0.7
@@ -140,11 +141,11 @@ estilo = "machado"
 dureza = 2
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."10"]
 subtipo = "pinheiro"
 nome = "Pinheiro"
 sprite = "Recursos/Visual/Mundo/Objetos/Pinheiro.png"
+rotacao = "nenhuma"
 raio_colisao = 0.75
 raio_interacao = 0.75
 campo = 0.7
@@ -155,11 +156,11 @@ estilo = "machado"
 dureza = 2
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."11"]
 subtipo = "cobre"
 nome = "Cobre"
 sprite = "Recursos/Visual/Mundo/Objetos/Cobre.png"
+rotacao = "nenhuma"
 raio_colisao = 0.62
 raio_interacao = 0.62
 campo = 0.48
@@ -170,11 +171,11 @@ estilo = "picareta"
 dureza = 3
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."12"]
 subtipo = "lava"
 nome = "Lava"
 sprite = "Recursos/Visual/Mundo/Objetos/Lava.png"
+rotacao = "nenhuma"
 raio_colisao = 4
 raio_interacao = 4
 campo = 4.25
@@ -185,11 +186,11 @@ estilo = "balde"
 dureza = 1
 particulasXP = [1]
 tamanhosXP = ["Pequeno"]
-
 [tipos."13"]
 subtipo = "cacto"
 nome = "Cacto"
 sprite = "Recursos/Visual/Mundo/Objetos/Cacto.png"
+rotacao = "nenhuma"
 raio_colisao = 0.7
 raio_interacao = 0.8
 campo = 0.65
@@ -200,11 +201,11 @@ dureza = 1
 drop_ativo = false
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."14"]
 subtipo = "concha"
 nome = "Concha"
 sprite = "Recursos/Visual/Mundo/Objetos/Concha.png"
+rotacao = "nenhuma"
 raio_colisao = 0.45
 raio_interacao = 0.55
 campo = 0.4
@@ -215,11 +216,11 @@ dureza = 1
 drop_ativo = false
 particulasXP = [1, 2, 3]
 tamanhosXP = ["Pequeno"]
-
 [tipos."15"]
 subtipo = "aquamarine"
 nome = "Aquamarine"
 sprite = "Recursos/Visual/Mundo/Objetos/Aquamarine.png"
+rotacao = "nenhuma"
 raio_colisao = 0.95
 raio_interacao = 1.05
 campo = 1.0
@@ -230,11 +231,11 @@ dureza = 4
 drop_ativo = false
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."16"]
 subtipo = "carvao"
 nome = "Carvão"
 sprite = "Recursos/Visual/Mundo/Objetos/Carvão.png"
+rotacao = "nenhuma"
 raio_colisao = 0.9
 raio_interacao = 1.0
 campo = 0.95
@@ -245,11 +246,11 @@ dureza = 2
 drop_ativo = false
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."17"]
 subtipo = "ferro"
 nome = "Ferro"
 sprite = "Recursos/Visual/Mundo/Objetos/Ferro.png"
+rotacao = "nenhuma"
 raio_colisao = 0.95
 raio_interacao = 1.05
 campo = 1.0
@@ -260,11 +261,11 @@ dureza = 3
 drop_ativo = false
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."18"]
 subtipo = "flor"
 nome = "Flor"
 sprite = "Recursos/Visual/Mundo/Objetos/Flor.png"
+rotacao = "nenhuma"
 raio_colisao = 0.35
 raio_interacao = 0.45
 campo = 0.3
@@ -275,11 +276,11 @@ dureza = 1
 drop_ativo = false
 particulasXP = [1, 2]
 tamanhosXP = ["Pequeno"]
-
 [tipos."19"]
 subtipo = "jade"
 nome = "Jade"
 sprite = "Recursos/Visual/Mundo/Objetos/Jade.png"
+rotacao = "nenhuma"
 raio_colisao = 0.95
 raio_interacao = 1.05
 campo = 1.0
@@ -290,11 +291,11 @@ dureza = 4
 drop_ativo = false
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."20"]
 subtipo = "planta"
 nome = "Planta"
 sprite = "Recursos/Visual/Mundo/Objetos/Planta.png"
+rotacao = "nenhuma"
 raio_colisao = 0.4
 raio_interacao = 0.5
 campo = 0.35
@@ -305,11 +306,11 @@ dureza = 1
 drop_ativo = false
 particulasXP = [1, 2]
 tamanhosXP = ["Pequeno"]
-
 [tipos."21"]
 subtipo = "safira"
 nome = "Safira"
 sprite = "Recursos/Visual/Mundo/Objetos/Safira.png"
+rotacao = "nenhuma"
 raio_colisao = 0.95
 raio_interacao = 1.05
 campo = 1.0
@@ -320,11 +321,11 @@ dureza = 5
 drop_ativo = false
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."22"]
 subtipo = "topazio"
 nome = "Topázio"
 sprite = "Recursos/Visual/Mundo/Objetos/Topazio.png"
+rotacao = "nenhuma"
 raio_colisao = 0.95
 raio_interacao = 1.05
 campo = 1.0
@@ -335,11 +336,11 @@ dureza = 4
 drop_ativo = false
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."23"]
 subtipo = "arvore_trombosa"
 nome = "Árvore Trombosa"
 sprite = "Recursos/Visual/Mundo/Objetos/Arvore Frondosa.png"
+rotacao = "nenhuma"
 raio_colisao = 0.95
 raio_interacao = 1.05
 campo = 1.05
@@ -351,11 +352,11 @@ dureza = 2
 drop_ativo = true
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
-
 [tipos."102"]
 subtipo = "pedra_dungeon"
 nome = "Pedra Dungeon"
 sprite = "Recursos/Visual/Mundo/Objetos/PedraDungeon.png"
+rotacao = "nenhuma"
 raio_colisao = 1.1
 raio_interacao = 1.2
 campo = 1.0
@@ -366,3 +367,19 @@ estilo = "picareta"
 dureza = 3
 particulasXP = [2, 3, 4]
 tamanhosXP = ["Pequeno", "Medio"]
+
+[tipos."24"]
+subtipo = "casa"
+nome = "Casa"
+sprite = "Recursos/Visual/Mundo/Objetos/Casa.png"
+raio_colisao = 0.95
+raio_interacao = 1.05
+campo = 0.95
+intensidade = 1.5
+quantidade = 1
+estilo = "nenhum"
+dureza = 1
+drop_ativo = false
+rotacao = "90"
+particulasXP = [1]
+tamanhosXP = ["Pequeno"]

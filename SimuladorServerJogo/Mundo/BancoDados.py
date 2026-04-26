@@ -169,6 +169,17 @@ class BancoDadosMundo:
         escala_max = float(variacao.get("escala_max", 1.10) if variacao.get("escala_max", 1.10) not in (None, "") else 1.10)
         return (escala_min, escala_max)
 
+    def _rotacao_estrutura(self, cfg: Dict[str, object], gx: int, gy: int, codigo: int) -> Tuple[str, float]:
+        tipo = str(cfg.get("rotacao", "nenhuma") or "nenhuma").strip().lower()
+        if tipo in {"nenhum", "none", "sem"}:
+            tipo = "nenhuma"
+        if tipo in {"90", "noventa", "90_graus"}:
+            angulo_idx = int(self._rng01_estrutura(gx, gy, codigo, sal=3) * 4.0) % 4
+            return ("90", float(angulo_idx * 90.0))
+        if tipo in {"geral", "livre", "any"}:
+            return ("geral", float(self._rng01_estrutura(gx, gy, codigo, sal=3) * 360.0))
+        return ("nenhuma", 0.0)
+
     def _sprite_variante(self, sprite_base: str, indice_variante: int, total_variantes: int) -> str:
         caminho = Path(str(sprite_base or "").strip())
         if not caminho.name or int(indice_variante) <= 1:
@@ -248,6 +259,9 @@ class BancoDadosMundo:
                     )
                     obj.estado_extra["escala_mundo"] = float(round(escala_mundo, 5))
                     obj.estado_extra["variante_sprite"] = int(variante_idx)
+                    rotacao_tipo, rotacao_graus = self._rotacao_estrutura(cfg, gx, gy, tile_nat)
+                    obj.estado_extra["rotacao_tipo"] = str(rotacao_tipo)
+                    obj.estado_extra["rotacao_graus"] = float(round(rotacao_graus, 3))
                     obj.tipo_classe = "estrutura_natural"
                     self._objetos[obj.Id] = obj
                     self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)

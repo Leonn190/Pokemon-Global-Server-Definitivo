@@ -51,7 +51,7 @@ class ControladorObjetos:
         self._versao_estruturas_visiveis = 0
 
         self._cache_sprites_fallback: Dict[str, Optional[pygame.Surface]] = {}
-        self._cache_sprites_fallback_escalados: Dict[Tuple[str, int, int], pygame.Surface] = {}
+        self._cache_sprites_fallback_escalados: Dict[Tuple[object, ...], pygame.Surface] = {}
         self._ultimo_render_pokemons_ms = pygame.time.get_ticks()
         self._pokemon_alvo_local_id: Optional[int] = None
         self._capturas_por_token: Dict[str, Dict[str, object]] = {}
@@ -707,6 +707,14 @@ class ControladorObjetos:
         self._cache_sprites_fallback_escalados[chave] = sprite_escalado
         return sprite_escalado
 
+    @staticmethod
+    def _rotacao_sprite_payload(obj: Dict[str, object]) -> float:
+        estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+        try:
+            return float(estado.get("rotacao_graus", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return 0.0
+
     def _render_fallback_objeto(self, tela, camera, obj: Dict[str, object], cor_fallback=(222, 233, 245), escala: float = 1.0, pos_tela: Optional[Tuple[float, float]] = None, fila_blits: Optional[List[tuple]] = None):
         if pos_tela is None:
             pos = obj.get("posicao", [0.0, 0.0])
@@ -732,6 +740,15 @@ class ControladorObjetos:
             escala = limitar_escala_estrutura_natural(float(escala or 1.0))
             if abs(escala - 1.0) > 0.001:
                 sprite = self._obter_sprite_fallback_escalado(sprite_path, sprite, escala)
+            rotacao = self._rotacao_sprite_payload(obj) % 360.0
+            if abs(rotacao) > 0.001:
+                ang = int(round(rotacao)) % 360
+                chave_rot = (str(sprite_path or ""), sprite.get_width(), sprite.get_height(), ang)
+                sprite_rot = self._cache_sprites_fallback_escalados.get(chave_rot)
+                if sprite_rot is None:
+                    sprite_rot = pygame.transform.rotate(sprite, rotacao)
+                    self._cache_sprites_fallback_escalados[chave_rot] = sprite_rot
+                sprite = sprite_rot
             largura_sprite = sprite.get_width()
             altura_sprite = sprite.get_height()
             destino_x = px_int - (largura_sprite // 2)

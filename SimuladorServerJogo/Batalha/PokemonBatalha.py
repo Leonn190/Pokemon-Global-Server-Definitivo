@@ -76,6 +76,17 @@ class PokemonBatalha:
         if self.VidaAtual <= 0:
             self.vivo = False
 
+    def _registrar_evento(self, tipo, dados=None):
+        if self.partida is None or not hasattr(self.partida, "registrar_evento_log"):
+            return None
+        return self.partida.registrar_evento_log(tipo, dados or {})
+
+    def _dados_origem(self, origem):
+        return {
+            "origem_id": getattr(origem, "id_batalha", None),
+            "origem_nome": getattr(origem, "nome", None),
+        }
+
     def _carregar_atributos(self, info: dict, estado: dict, bruto: dict) -> None:
         stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else info.get("stats") if isinstance(info.get("stats"), dict) else {}
         stats_base = estado.get("stats_base") if isinstance(estado.get("stats_base"), dict) else info.get("stats_base") if isinstance(info.get("stats_base"), dict) else {}
@@ -176,15 +187,69 @@ class PokemonBatalha:
         dano = max(0.0, _f(valor, 0.0))
         if self.estados_transitorios.get("protegido"):
             self.estados_transitorios.pop("protegido", None)
+            self._registrar_evento(
+                "barreira_absorveu",
+                {
+                    "alvo_id": self.id_batalha,
+                    "alvo_nome": self.nome,
+                    **self._dados_origem(origem),
+                    "dano_original": round(dano, 4),
+                    "dano_barreira": round(dano, 4),
+                    "barreira_antes": self.BarreiraAtual,
+                    "barreira_depois": self.BarreiraAtual,
+                    "protegido": True,
+                    "critico": bool(dados.get("critico", False)),
+                    "ataque_id": dados.get("ataque_id") or dados.get("Code"),
+                    "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                },
+            )
             return {"aplicado": True, "protegido": True, "dano_vida": 0.0, "dano_barreira": 0.0}
         if self.BarreiraAtual > 0:
+            antes_barreira = self.BarreiraAtual
             absorvido = min(self.BarreiraAtual, dano)
             self.BarreiraAtual = max(0.0, self.BarreiraAtual - absorvido)
+            self._registrar_evento(
+                "barreira_absorveu",
+                {
+                    "alvo_id": self.id_batalha,
+                    "alvo_nome": self.nome,
+                    **self._dados_origem(origem),
+                    "dano_original": round(dano, 4),
+                    "dano_barreira": round(absorvido, 4),
+                    "barreira_antes": round(antes_barreira, 4),
+                    "barreira_depois": round(self.BarreiraAtual, 4),
+                    "critico": bool(dados.get("critico", False)),
+                    "tipo": dados.get("tipo"),
+                    "categoria": dados.get("categoria"),
+                    "ataque_id": dados.get("ataque_id") or dados.get("Code"),
+                    "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                },
+            )
             return {"aplicado": True, "dano_vida": 0.0, "dano_barreira": round(absorvido, 4), "barreira_absorveu_instancia": True}
         antes = self.VidaAtual
         self.VidaAtual = max(0.0, self.VidaAtual - dano)
         dano_vida = max(0.0, antes - self.VidaAtual)
         self.estatisticas_batalha["dano_recebido"] = _f(self.estatisticas_batalha.get("dano_recebido"), 0.0) + dano_vida
+        if dano_vida > 0:
+            self._registrar_evento(
+                "pokemon_sofreu_dano",
+                {
+                    "alvo_id": self.id_batalha,
+                    "alvo_nome": self.nome,
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    **self._dados_origem(origem),
+                    "valor": round(dano_vida, 4),
+                    "vida_antes": round(antes, 4),
+                    "vida_depois": round(self.VidaAtual, 4),
+                    "critico": bool(dados.get("critico", False)),
+                    "tipo": dados.get("tipo"),
+                    "categoria": dados.get("categoria"),
+                    "ataque_id": dados.get("ataque_id") or dados.get("Code"),
+                    "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                    "dano_barreira": round(_f(dados.get("dano_barreira"), 0.0), 4),
+                },
+            )
         if self.VidaAtual <= 0:
             self.Morrer({"origem_id": getattr(origem, "id_batalha", None), **dados})
         return {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0}
@@ -193,7 +258,7 @@ class PokemonBatalha:
         return alvo.ReceberCura(valor, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
 
     def ReceberCura(self, valor, origem=None, dados=None):
-        _ = origem
+        dados = dict(dados or {})
         if not self.esta_vivo():
             return {"aplicado": False, "motivo": "morto", "cura": 0.0}
         cura = max(0.0, _f(valor, 0.0))
@@ -205,15 +270,49 @@ class PokemonBatalha:
         self.estatisticas_batalha["cura_recebida"] = _f(self.estatisticas_batalha.get("cura_recebida"), 0.0) + real
         if origem is not None:
             origem.estatisticas_batalha["cura_feita"] = _f(origem.estatisticas_batalha.get("cura_feita"), 0.0) + real
+        if real > 0:
+            self._registrar_evento(
+                "pokemon_recebeu_cura",
+                {
+                    "alvo_id": self.id_batalha,
+                    "alvo_nome": self.nome,
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    **self._dados_origem(origem),
+                    "valor": round(real, 4),
+                    "vida_antes": round(antes, 4),
+                    "vida_depois": round(self.VidaAtual, 4),
+                    "critico": bool(dados.get("critico", False)),
+                    "ataque_id": dados.get("ataque_id") or dados.get("Code"),
+                    "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                },
+            )
         return {"aplicado": True, "cura": round(real, 4), "dados": dict(dados or {})}
 
     def AplicarBarreira(self, alvo, valor, dados=None):
         return alvo.ReceberBarreira(valor, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
 
     def ReceberBarreira(self, valor, origem=None, dados=None):
-        _ = origem
+        dados = dict(dados or {})
         ganho = max(0.0, _f(valor, 0.0))
+        antes = self.BarreiraAtual
         self.BarreiraAtual += ganho
+        self._registrar_evento(
+            "pokemon_ganhou_barreira",
+            {
+                "alvo_id": self.id_batalha,
+                "alvo_nome": self.nome,
+                "pokemon_id": self.id_batalha,
+                "pokemon_nome": self.nome,
+                **self._dados_origem(origem),
+                "valor": round(ganho, 4),
+                "barreira_antes": round(antes, 4),
+                "barreira_depois": round(self.BarreiraAtual, 4),
+                "critico": bool(dados.get("critico", False)),
+                "ataque_id": dados.get("ataque_id") or dados.get("Code"),
+                "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+            },
+        )
         return {"aplicado": True, "barreira": round(ganho, 4), "dados": dict(dados or {})}
 
     def AplicarEfeito(self, alvo, efeito, dados=None):
@@ -230,6 +329,16 @@ class PokemonBatalha:
             aviso = {"pokemon_id": self.id_batalha, "efeito": nome, "motivo": "limite_efeitos_formais"}
             if self.partida is not None:
                 self.partida.avisos.append(aviso)
+            self._registrar_evento(
+                "efeito_bloqueado_por_limite",
+                {
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    "efeito_nome": nome,
+                    "efeito_code": base.get("code", nome),
+                    **self._dados_origem(origem),
+                },
+            )
             return {"aplicado": False, "motivo": "limite_efeitos_formais", "aviso": aviso}
         duracao_base = max(1, _i(base.get("duracao", base.get("passos", base.get("passos_restantes", 3))), 3))
         negativo = bool(base.get("negativo", _normalizar(nome) in {"queimado", "envenenado", "intoxicado", "provocando", "congelado", "dormindo", "paralisado", "enraizado", "cauterizado", "descarregado"}))
@@ -250,6 +359,19 @@ class PokemonBatalha:
         }
         self.efeitos_formais.append(formal)
         self.recalcular_atributos()
+        self._registrar_evento(
+            "pokemon_recebeu_efeito",
+            {
+                "pokemon_id": self.id_batalha,
+                "pokemon_nome": self.nome,
+                "efeito_nome": formal.get("nome"),
+                "efeito_code": formal.get("code"),
+                "tipo": "negativo" if negativo else "positivo",
+                "passos_restantes": formal.get("passos_restantes"),
+                **self._dados_origem(origem),
+                "efeito": dict(formal),
+            },
+        )
         return {"aplicado": True, "efeito": dict(formal)}
 
     def RemoverEfeito(self, filtro):
@@ -260,11 +382,11 @@ class PokemonBatalha:
         return antes - len(self.efeitos_formais)
 
     def decrementar_efeitos(self, passo_atual):
-        _ = passo_atual
         restantes = []
         for efeito in self.efeitos_formais:
             nome = _normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
             vida = self.obter_atributo("Vida", 1.0)
+            duracao_antes = _i((efeito or {}).get("passos_restantes"), 1)
             if nome == "queimado":
                 self.ReceberDano(vida * 0.01, dados={"efeito": "Queimado"})
             elif nome == "envenenado":
@@ -274,23 +396,61 @@ class PokemonBatalha:
             elif nome in {"regeneracao", "abencoado"}:
                 self.ReceberCura(vida * 0.02, dados={"efeito": nome})
             efeito = dict(efeito)
-            efeito["passos_restantes"] = _i(efeito.get("passos_restantes"), 1) - 1
+            efeito["passos_restantes"] = duracao_antes - 1
+            self._registrar_evento(
+                "efeito_tickou",
+                {
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    "efeito_nome": efeito.get("nome"),
+                    "efeito_code": efeito.get("code"),
+                    "passos_antes": duracao_antes,
+                    "passos_depois": efeito["passos_restantes"],
+                    "passo": passo_atual,
+                },
+            )
             if efeito["passos_restantes"] > 0 and self.esta_vivo():
                 restantes.append(efeito)
+            else:
+                self._registrar_evento(
+                    "efeito_expirou",
+                    {
+                        "pokemon_id": self.id_batalha,
+                        "pokemon_nome": self.nome,
+                        "efeito_nome": efeito.get("nome"),
+                        "efeito_code": efeito.get("code"),
+                    },
+                )
         self.efeitos_formais = restantes
         self.recalcular_atributos()
 
     def GastarEnergia(self, valor, dados=None):
         custo = max(0.0, _f(valor, 0.0))
         if self.EnergiaAtual < custo:
-            return False
+            return {"aplicado": False, "motivo": "energia_insuficiente", "energia_antes": round(self.EnergiaAtual, 4), "energia_depois": round(self.EnergiaAtual, 4)}
+        antes = self.EnergiaAtual
         self.EnergiaAtual = max(0.0, self.EnergiaAtual - custo)
         self.estatisticas_batalha["energia_gasta"] = _f(self.estatisticas_batalha.get("energia_gasta"), 0.0) + custo
-        return True
+        return {"aplicado": True, "valor": round(custo, 4), "energia_antes": round(antes, 4), "energia_depois": round(self.EnergiaAtual, 4), "dados": dict(dados or {})}
 
     def GanharEnergia(self, valor, dados=None):
+        dados = dict(dados or {})
         ganho = max(0.0, _f(valor, 0.0))
+        antes = self.EnergiaAtual
         self.EnergiaAtual = min(self.obter_atributo("EneM", 1.0), self.EnergiaAtual + ganho)
+        real = max(0.0, self.EnergiaAtual - antes)
+        if real > 0:
+            self._registrar_evento(
+                "pokemon_ganhou_energia",
+                {
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    "valor": round(real, 4),
+                    "energia_antes": round(antes, 4),
+                    "energia_depois": round(self.EnergiaAtual, 4),
+                    "motivo": dados.get("motivo") or ("fim_rodada" if dados.get("fim_rodada") else dados.get("ataque")),
+                },
+            )
         return {"aplicado": True, "energia": round(ganho, 4), "dados": dict(dados or {})}
 
     def Mover(self, area_id):
@@ -308,9 +468,22 @@ class PokemonBatalha:
         return self.partida.trocar_posicao(self, outro_pokemon) if self.partida is not None else False
 
     def Morrer(self, dados=None):
+        if not self.vivo and self.VidaAtual <= 0:
+            return False
+        dados = dict(dados or {})
         self.vivo = False
         self.VidaAtual = 0.0
         self.estados_transitorios["morto_na_rodada"] = dict(dados or {})
+        self._registrar_evento(
+            "pokemon_morreu",
+            {
+                "pokemon_id": self.id_batalha,
+                "pokemon_nome": self.nome,
+                "origem_id": dados.get("origem_id"),
+                "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                "area_id": self.area_id,
+            },
+        )
         return True
 
     def esta_vivo(self):
@@ -381,4 +554,3 @@ class PokemonBatalha:
                 },
             },
         }
-

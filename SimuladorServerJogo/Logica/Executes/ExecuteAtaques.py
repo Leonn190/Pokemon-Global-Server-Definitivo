@@ -413,7 +413,16 @@ def _dano(ctx, alvo, bruto, categoria="normal", **extra):
     usuario = ctx.get("usuario")
     if usuario is None or alvo is None:
         return {"falha": True, "motivo": "alvo_invalido"}
-    dados = {"dano_bruto": max(0.0, float(bruto or 0.0)), "tipo": _tipo_contexto(ctx), "categoria": categoria, **extra}
+    ataque = ctx.get("ataque") if isinstance(ctx.get("ataque"), dict) else {}
+    props = ctx.get("propriedades") if isinstance(ctx.get("propriedades"), dict) else {}
+    dados = {
+        "dano_bruto": max(0.0, float(bruto or 0.0)),
+        "tipo": _tipo_contexto(ctx),
+        "categoria": categoria,
+        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID") or props.get("Code"),
+        "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
+        **extra,
+    }
     return usuario.AplicarDano(alvo, dados, contexto=ctx)
 
 
@@ -449,7 +458,7 @@ def _exec_biscoito(ctx, alvo):
     critico = _critico_simples(usuario, ctx)
     cura = usuario.obter_atributo("Mag") * 0.55
     cura += stacks * usuario.obter_atributo("Mag") * (0.15 if critico else 0.10)
-    ret = usuario.AplicarCura(alvo, cura, dados={"ataque": "Biscoito", "critico": critico})
+    ret = usuario.AplicarCura(alvo, cura, dados={"ataque": "Biscoito", "ataque_id": 2, "ataque_nome": "Biscoito", "critico": critico})
     alvo.contadores_especiais["Biscoito"] = stacks + 1
     if usuario is not alvo:
         usuario.contadores_especiais["Biscoito"] = int(usuario.contadores_especiais.get("Biscoito", 0) or 0) + 1
@@ -483,7 +492,7 @@ def _exec_arranhar(ctx, alvo):
 
 def _exec_recarga(ctx, alvo):
     usuario = ctx.get("usuario")
-    return usuario.GanharEnergia(float(ctx.get("custo_real") or 0.0) * 2.0, dados={"ataque": "Recarga"})
+    return usuario.GanharEnergia(float(ctx.get("custo_real") or 0.0) * 2.0, dados={"ataque": "Recarga", "motivo": "Recarga"})
 
 
 def _exec_energia(ctx, alvo):
@@ -534,7 +543,7 @@ def _exec_tankar(ctx, alvo):
     bonus = usuario.obter_atributo("Mag") * 0.20
     ret = _aplicar_efeito(usuario, usuario, "Fortificado", duracao=3, dados={"atributo": defesa, "valor": bonus}, valor=bonus, negativo=False)
     if _critico_simples(usuario, ctx):
-        usuario.ReceberBarreira(bonus, origem=usuario, dados={"ataque": "Tankar", "critico": True})
+        usuario.ReceberBarreira(bonus, origem=usuario, dados={"ataque": "Tankar", "ataque_id": 14, "ataque_nome": "Tankar", "critico": True})
         ret["barreira_critica"] = bonus
     return ret
 

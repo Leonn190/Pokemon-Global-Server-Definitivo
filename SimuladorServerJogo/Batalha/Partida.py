@@ -241,9 +241,20 @@ class Partida:
         rodada_anterior = self.rodada_atual
         self.estado_partida = "resolvendo"
         self.avisos = list(self.avisos)
+        self.construtor_log.iniciar_log_rodada(rodada_anterior)
+        self.registrar_evento_log("rodada_iniciada", {"rodada": rodada_anterior}, passo=0)
         acoes, invalidas = self.coletor_acoes.coletar(self.jogadas_recebidas)
+        for invalida in list(invalidas or []):
+            self.registrar_evento_log("acao_falhou", dict(invalida), passo=0)
         resumo = self.rodador_turno.rodar(acoes, invalidas)
         self.aplicar_fim_de_rodada()
+        self.registrar_evento_log("rodada_finalizada", {"rodada": rodada_anterior, "rodada_atual": self.rodada_atual}, passo=self.passo_atual)
+        if self.finalizada:
+            self.registrar_evento_log(
+                "batalha_finalizada",
+                {"vencedor": self.vencedor, "perdedor": self.perdedor, "estado_batalha": self.estado_partida},
+                passo=self.passo_atual,
+            )
         resultado = self.gerar_resultado_diff(rodada_anterior, resumo)
         return {
             "status": "ok",
@@ -303,6 +314,11 @@ class Partida:
             acoes_falhas=resumo.get("acoes_falhas") or [],
         )
 
+    def registrar_evento_log(self, tipo, dados=None, passo=None, ordem=None):
+        if getattr(self, "construtor_log", None) is None:
+            return None
+        return self.construtor_log.registrar_evento(tipo, dados=dados or {}, passo=passo, ordem=ordem)
+
     def obter_pokemon(self, id_pokemon):
         return self.pokemons_por_id.get(str(id_pokemon or ""))
 
@@ -323,11 +339,21 @@ class Partida:
         if pokemon.area_id in self.ocupacao_areas and self.ocupacao_areas.get(pokemon.area_id) == pokemon.id_batalha:
             self.ocupacao_areas[pokemon.area_id] = None
             self.areas[pokemon.area_id]["ocupante_id"] = None
+        area_origem = pokemon.area_id
         pokemon.area_id = area_id
         pokemon.ativo = True
         pokemon.reserva = False
         self.ocupacao_areas[area_id] = pokemon.id_batalha
         self.areas[area_id]["ocupante_id"] = pokemon.id_batalha
+        self.registrar_evento_log(
+            "pokemon_moveu",
+            {
+                "pokemon_id": pokemon.id_batalha,
+                "pokemon_nome": pokemon.nome,
+                "area_origem": area_origem,
+                "area_destino": area_id,
+            },
+        )
         return True
 
     def trocar_posicao(self, pokemon_a, pokemon_b):
@@ -345,6 +371,19 @@ class Partida:
         self.ocupacao_areas[area_b] = pokemon_a.id_batalha
         self.areas[area_a]["ocupante_id"] = pokemon_b.id_batalha
         self.areas[area_b]["ocupante_id"] = pokemon_a.id_batalha
+        self.registrar_evento_log(
+            "pokemon_trocou_posicao",
+            {
+                "pokemon_a_id": pokemon_a.id_batalha,
+                "pokemon_a_nome": pokemon_a.nome,
+                "pokemon_b_id": pokemon_b.id_batalha,
+                "pokemon_b_nome": pokemon_b.nome,
+                "area_a_antes": area_a,
+                "area_a_depois": area_b,
+                "area_b_antes": area_b,
+                "area_b_depois": area_a,
+            },
+        )
         return True
 
     def trocar_reserva(self, pokemon_ativo, pokemon_reserva):
@@ -357,6 +396,7 @@ class Partida:
         area = pokemon_ativo.area_id
         if not self.area_existe(area):
             return False
+        reserva_slot_id = pokemon_reserva.id_batalha
         self.ocupacao_areas[area] = pokemon_reserva.id_batalha
         self.areas[area]["ocupante_id"] = pokemon_reserva.id_batalha
         pokemon_ativo.ativo = False
@@ -366,6 +406,18 @@ class Partida:
         pokemon_reserva.reserva = False
         pokemon_reserva.area_id = area
         pokemon_reserva.adicionar_estado_transitorio("entrou_na_rodada", {"rodada": self.rodada_atual})
+        dados_troca = {
+            "pokemon_saiu_id": pokemon_ativo.id_batalha,
+            "pokemon_saiu_nome": pokemon_ativo.nome,
+            "pokemon_entrou_id": pokemon_reserva.id_batalha,
+            "pokemon_entrou_nome": pokemon_reserva.nome,
+            "area_id": area,
+            "slot_reserva_id": reserva_slot_id,
+            "lado_id": pokemon_ativo.lado_id,
+        }
+        self.registrar_evento_log("pokemon_trocou_reserva", dados_troca)
+        self.registrar_evento_log("pokemon_saiu", {"pokemon_id": pokemon_ativo.id_batalha, "pokemon_nome": pokemon_ativo.nome, "area_id": area, "slot_reserva_id": reserva_slot_id})
+        self.registrar_evento_log("pokemon_entrou", {"pokemon_id": pokemon_reserva.id_batalha, "pokemon_nome": pokemon_reserva.nome, "area_id": area, "slot_reserva_id": reserva_slot_id})
         return True
 
     def substituir_derrotados_por_reserva(self):
@@ -387,6 +439,10 @@ class Partida:
             reserva.area_id = area
             self.ocupacao_areas[area] = reserva.id_batalha
             self.areas[area]["ocupante_id"] = reserva.id_batalha
+            self.registrar_evento_log(
+                "pokemon_entrou",
+                {"pokemon_id": reserva.id_batalha, "pokemon_nome": reserva.nome, "area_id": area, "motivo": "substituicao_derrotado"},
+            )
 
     def finalizar(self, motivo=None):
         self.finalizada = True

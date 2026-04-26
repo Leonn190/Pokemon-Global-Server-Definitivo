@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import math
 from pathlib import Path
 from typing import Any
+import unicodedata
 
 import pygame
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
@@ -21,6 +22,12 @@ def _i(valor, default=0) -> int:
         return int(float(valor))
     except (TypeError, ValueError):
         return int(default)
+
+
+def _normalizar_nome(valor: object) -> str:
+    bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+    return "".join(ch for ch in sem_acento if ch.isalnum())
 
 
 @dataclass
@@ -57,6 +64,15 @@ class PokemonBatalha:
     TimerAnimacao: float = 0.0
     _cache_frames_escalados: dict[int, list[pygame.Surface]] = field(default_factory=dict)
     _carregamento_frames_tentado: bool = False
+    EfeitosFormais: list[dict[str, Any]] = field(default_factory=list)
+    AnimacoesEfeitos: dict[str, float] = field(default_factory=dict)
+    EfeitosSaindo: dict[str, float] = field(default_factory=dict)
+    CentroTelaOverride: tuple[float, float] | None = None
+    OffsetVisual: tuple[float, float] = (0.0, 0.0)
+    AlphaVisual: int = 255
+    RotacaoVisual: float = 0.0
+    FlashVisualCor: tuple[int, int, int] = (255, 255, 255)
+    FlashVisualAlpha: int = 0
 
     @classmethod
     def from_serializado(cls, dados):
@@ -88,6 +104,7 @@ class PokemonBatalha:
         if isinstance(bruto.get("Variacoes"), dict) and not isinstance(info.get("variacoes"), dict):
             p.Dados["variacoes"] = dict(bruto.get("Variacoes") or {})
         p._aplicar_stats(stats, stats_base)
+        p.EfeitosFormais = list(bruto.get("efeitos") or info.get("efeitos") or [])
         p._carregar_animacao()
         return p
 
@@ -286,6 +303,7 @@ class PokemonBatalha:
         elif isinstance(diff.get("dados"), dict):
             self.Dados.update(diff.get("dados") or {})
         self.Dados["efeitos"] = list(diff.get("efeitos") or self.Dados.get("efeitos") or [])
+        self._sincronizar_efeitos(self.Dados["efeitos"])
         self.Dados["estados_transitorios"] = dict(diff.get("estados_transitorios") or self.Dados.get("estados_transitorios") or {})
         self.Dados["estatisticas_batalha"] = dict(diff.get("estatisticas_batalha") or self.Dados.get("estatisticas_batalha") or {})
         self.EnergiaPrevista = float(self.Energia)
@@ -339,24 +357,36 @@ class PokemonBatalha:
         _ = (selecionado, hover)
         if not self.Vivo or not self.Ativo or self.EmReserva or not self.AreaId:
             return
-        centro = arena.centro_area(self.AreaId)
-        if centro is None:
-            return
-        cx, cy = camera.mundo_para_tela_px(centro)
+        if self.CentroTelaOverride is not None:
+            cx, cy = self.CentroTelaOverride
+        else:
+            centro = arena.centro_area(self.AreaId)
+            if centro is None:
+                return
+            cx, cy = camera.mundo_para_tela_px(centro)
+        ox, oy = self.OffsetVisual
+        cx += ox
+        cy += oy
         img = self._frame_atual_escalado(camera)
         if img is None:
             cor = (110, 196, 126) if self.Lado == "jogador" else (204, 108, 108)
             lado = max(46, int(getattr(camera, "TilePx", 40) * 1.7))
-            pygame.draw.circle(surface, cor, (int(cx), int(cy)), lado // 2)
+            sprite = pygame.Surface((lado, lado), pygame.SRCALPHA)
+            pygame.draw.circle(sprite, cor, (lado // 2, lado // 2), lado // 2)
             fonte = pygame.font.SysFont("arial", max(16, lado // 4), bold=True)
             txt = fonte.render(str(self.Nome)[:3].upper(), True, (20, 20, 20))
-            surface.blit(txt, txt.get_rect(center=(int(cx), int(cy))))
+            sprite.blit(txt, txt.get_rect(center=(lado // 2, lado // 2)))
+            sprite = self._aplicar_transformacao_visual(sprite)
+            surface.blit(sprite, sprite.get_rect(center=(int(cx), int(cy))))
             self.RectAtual = pygame.Rect(int(cx - lado // 2), int(cy - lado // 2), lado, lado)
         else:
+            img = self._aplicar_transformacao_visual(img)
             rect = img.get_rect(center=(int(cx), int(cy)))
             surface.blit(img, rect)
             self.RectAtual = pygame.Rect(rect)
+        self._desenhar_flash(surface)
         self.desenhar_barras(surface)
+        self.desenhar_efeitos(surface)
 
     def desenhar_fantasma(self, surface, camera, arena, area_id, alpha=68):
         if not self.Vivo:
@@ -387,6 +417,24 @@ class PokemonBatalha:
         else:
             surface.blit(img, img.get_rect(center=base.center))
         self.RectAtual = base
+
+    def _aplicar_transformacao_visual(self, img):
+        out = img
+        if abs(float(self.RotacaoVisual or 0.0)) > 0.001:
+            out = pygame.transform.rotozoom(out, float(self.RotacaoVisual or 0.0), 1.0)
+        alpha = max(0, min(255, int(self.AlphaVisual)))
+        if alpha < 255:
+            out = out.copy()
+            out.set_alpha(alpha)
+        return out
+
+    def _desenhar_flash(self, surface):
+        alpha = max(0, min(255, int(self.FlashVisualAlpha or 0)))
+        if alpha <= 0 or self.RectAtual.width <= 0:
+            return
+        overlay = pygame.Surface(self.RectAtual.size, pygame.SRCALPHA)
+        pygame.draw.ellipse(overlay, (*tuple(self.FlashVisualCor or (255, 255, 255)), alpha), overlay.get_rect())
+        surface.blit(overlay, self.RectAtual.topleft)
 
     def desenhar_barras(self, surface):
         if self.RectAtual.width <= 0 or self.RectAtual.height <= 0:
@@ -437,6 +485,126 @@ class PokemonBatalha:
                 tx = area_interna.x + int(area_interna.w * ((i * 30) / vida_max))
                 if area_interna.x < tx < area_interna.right:
                     pygame.draw.line(surface, (0, 0, 0), (tx, area_interna.y), (tx, area_interna.bottom - 1), 1)
+
+    def _sincronizar_efeitos(self, efeitos):
+        novos = [dict(e) for e in list(efeitos or []) if isinstance(e, dict)]
+        chaves_atuais = {self._chave_efeito(e) for e in self.EfeitosFormais}
+        chaves_novas = {self._chave_efeito(e) for e in novos}
+        for chave in chaves_novas - chaves_atuais:
+            self.AnimacoesEfeitos[chave] = 0.0
+        for chave in chaves_atuais - chaves_novas:
+            self.EfeitosSaindo[chave] = 0.0
+        self.EfeitosFormais = novos[:4]
+
+    def aplicar_efeito_visual(self, efeito):
+        if not isinstance(efeito, dict):
+            return
+        chave = self._chave_efeito(efeito)
+        self.EfeitosFormais = [e for e in self.EfeitosFormais if self._chave_efeito(e) != chave]
+        self.EfeitosFormais.append(dict(efeito))
+        self.EfeitosFormais = self.EfeitosFormais[:4]
+        self.AnimacoesEfeitos[chave] = 0.0
+        self.EfeitosSaindo.pop(chave, None)
+
+    def atualizar_timer_efeito(self, efeito_code=None, efeito_nome=None, passos_restantes=None):
+        alvo = _normalizar_nome(efeito_code or efeito_nome)
+        for efeito in self.EfeitosFormais:
+            if _normalizar_nome(efeito.get("code") or efeito.get("nome")) == alvo:
+                efeito["passos_restantes"] = passos_restantes
+                break
+
+    def expirar_efeito_visual(self, efeito_code=None, efeito_nome=None):
+        alvo = _normalizar_nome(efeito_code or efeito_nome)
+        for efeito in list(self.EfeitosFormais):
+            if _normalizar_nome(efeito.get("code") or efeito.get("nome")) == alvo:
+                self.EfeitosSaindo[self._chave_efeito(efeito)] = 0.0
+
+    def atualizar_efeitos_visuais(self, dt):
+        dt = max(0.0, float(dt or 0.0))
+        for chave in list(self.AnimacoesEfeitos):
+            self.AnimacoesEfeitos[chave] = min(1.0, float(self.AnimacoesEfeitos.get(chave, 0.0)) + dt * 5.5)
+            if self.AnimacoesEfeitos[chave] >= 1.0:
+                self.AnimacoesEfeitos.pop(chave, None)
+        for chave in list(self.EfeitosSaindo):
+            self.EfeitosSaindo[chave] = min(1.0, float(self.EfeitosSaindo.get(chave, 0.0)) + dt * 5.5)
+            if self.EfeitosSaindo[chave] >= 1.0:
+                self.EfeitosSaindo.pop(chave, None)
+                self.EfeitosFormais = [e for e in self.EfeitosFormais if self._chave_efeito(e) != chave]
+
+    def desenhar_efeitos(self, surface):
+        if self.RectAtual.width <= 0:
+            return
+        efeitos = list(self.EfeitosFormais or [])[:4]
+        if not efeitos:
+            return
+        raio = 16
+        gap = 8
+        total_w = len(efeitos) * raio * 2 + (len(efeitos) - 1) * gap
+        x0 = self.RectAtual.centerx - total_w // 2 + raio
+        y = self.RectAtual.bottom + 18
+        fonte_num = pygame.font.SysFont("arial", 12, bold=True)
+        fonte_fallback = pygame.font.SysFont("arial", 11, bold=True)
+        for idx, efeito in enumerate(efeitos):
+            chave = self._chave_efeito(efeito)
+            t_entrada = float(self.AnimacoesEfeitos.get(chave, 1.0))
+            t_saida = float(self.EfeitosSaindo.get(chave, 0.0))
+            escala = max(0.0, min(1.0, t_entrada)) * (1.0 - max(0.0, min(1.0, t_saida)))
+            if escala <= 0.02:
+                continue
+            cx = x0 + idx * (raio * 2 + gap)
+            r = max(2, int(raio * escala))
+            negativo = bool(efeito.get("negativo")) or str(efeito.get("tipo") or "").lower() == "negativo"
+            cor = (235, 104, 104, 210) if negativo else (112, 218, 139, 210)
+            pygame.draw.circle(surface, cor, (cx, y), r)
+            pygame.draw.circle(surface, (245, 250, 255), (cx, y), r, 2)
+            icone = self._icone_efeito(efeito.get("nome") or efeito.get("code"))
+            if icone is not None and r > 6:
+                img = pygame.transform.smoothscale(icone, (max(4, r * 2 - 8), max(4, r * 2 - 8)))
+                surface.blit(img, img.get_rect(center=(cx, y)))
+            else:
+                nome = str(efeito.get("nome") or efeito.get("code") or "?")
+                txt = fonte_fallback.render(nome[:2].upper(), True, (18, 24, 30))
+                surface.blit(txt, txt.get_rect(center=(cx, y)))
+            passos = efeito.get("passos_restantes")
+            if passos is not None:
+                txt = fonte_num.render(str(passos), True, (255, 255, 255))
+                fundo = pygame.Rect(0, 0, txt.get_width() + 8, txt.get_height() + 3)
+                fundo.center = (cx, y + r - 1)
+                pygame.draw.rect(surface, (20, 24, 32), fundo, border_radius=5)
+                surface.blit(txt, txt.get_rect(center=fundo.center))
+
+    @staticmethod
+    def _chave_efeito(efeito):
+        return _normalizar_nome((efeito or {}).get("code") or (efeito or {}).get("nome"))
+
+    @classmethod
+    def _icone_efeito(cls, nome):
+        chave = _normalizar_nome(nome)
+        if not chave:
+            return None
+        cache = getattr(cls, "_icones_cache_real", None)
+        if cache is None:
+            cache = {}
+            setattr(cls, "_icones_cache_real", cache)
+        if chave in cache:
+            return cache[chave]
+        base = Path("Recursos") / "Visual" / "Icones" / "Efeitos"
+        escolhido = None
+        try:
+            for caminho in base.iterdir():
+                if caminho.is_file() and _normalizar_nome(caminho.stem) == chave:
+                    escolhido = caminho
+                    break
+        except Exception:
+            escolhido = None
+        if escolhido is not None:
+            try:
+                cache[chave] = pygame.image.load(str(escolhido)).convert_alpha()
+            except Exception:
+                cache[chave] = None
+        else:
+            cache[chave] = None
+        return cache[chave]
 
     def contem_ponto(self, pos_mouse):
         return self.RectAtual.collidepoint(pos_mouse)

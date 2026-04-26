@@ -5,7 +5,9 @@ import math
 import pygame
 
 from Codigo.ModulosBatalha.Arena import Arena
+from Codigo.ModulosBatalha.ControladorAnimacoes import ControladorAnimacoes
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
+from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.MontadorJogadas import MontadorJogadas
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
 from Codigo.ModulosBatalha.PokemonBatalha import PokemonBatalha
@@ -22,6 +24,8 @@ class ControladorBatalha:
         self.player_batalha = None
         self.hud = None
         self.montador_jogadas = None
+        self.controlador_animacoes = None
+        self.leitor_logs = None
 
         self.rodada_atual = 1
         self.lado_jogador = 50
@@ -31,6 +35,9 @@ class ControladorBatalha:
         self.area_selecionada = None
         self.ataque_selecionado = None
         self.logs_locais = []
+        self.logs_por_rodada = {}
+        self.logs_visiveis_por_rodada = {}
+        self.replay_log_atual = None
         self.estado_batalha = "inicializando"
         self.id_partida = "simulador_local_fase2"
         self.server_batalha = ServerBatalha
@@ -98,6 +105,8 @@ class ControladorBatalha:
         self.player_batalha = PlayerBatalha(self)
         self.hud = ElementosHudBatalha(self)
         self.montador_jogadas = MontadorJogadas(self)
+        self.controlador_animacoes = ControladorAnimacoes(self)
+        self.leitor_logs = LeitorLogs(self, self.controlador_animacoes)
 
     def atualizar(self, dt, eventos):
         if self.arena is None or self.camera is None:
@@ -107,7 +116,8 @@ class ControladorBatalha:
         self.camera.processar_eventos(eventos)
         self.camera.atualizar(dt)
 
-        self.timer_rodada = max(0.0, self.timer_rodada - float(dt))
+        if self.estado_batalha == "montando_jogada":
+            self.timer_rodada = max(0.0, self.timer_rodada - float(dt))
         if self.timer_rodada <= 0.0 and self.estado_batalha == "montando_jogada":
             self.enviar_jogada_pronta()
         self.arena.atualizar_ocupacao(self.pokemons)
@@ -115,9 +125,16 @@ class ControladorBatalha:
         self.arena.atualizar_slots_reserva(self.pokemons, self.camera)
         for pokemon in self.pokemons:
             pokemon.atualizar_animacao(dt)
+            if hasattr(pokemon, "atualizar_efeitos_visuais"):
+                pokemon.atualizar_efeitos_visuais(dt)
 
         self._area_hover = self.arena.area_em_posicao_mouse(pygame.mouse.get_pos(), self.camera)
-        self.player_batalha.processar_eventos(eventos)
+        if self.controlador_animacoes is not None:
+            self.controlador_animacoes.atualizar(dt)
+        if self.leitor_logs is not None and self.estado_batalha in {"lendo_log", "animando_rodada"}:
+            self.leitor_logs.atualizar(dt)
+        if self.estado_batalha not in {"lendo_log", "animando_rodada", "aguardando_servidor", "finalizada"}:
+            self.player_batalha.processar_eventos(eventos)
         self.hud.atualizar(dt, eventos)
         self._atualizar_fuga(dt)
 
@@ -178,6 +195,8 @@ class ControladorBatalha:
                     surface.blit(overlay, rect.topleft)
                 poke.desenhar_reserva(surface, rect, selecionado=selecionado, hover=hover, camera=self.camera)
 
+        if self.controlador_animacoes is not None:
+            self.controlador_animacoes.desenhar(surface)
         self.hud.desenhar(surface, self._ultimos_eventos, self._ultimo_dt)
         alpha = max(0, min(255, int(round(self._fuga_alpha))))
         if alpha > 0:
@@ -235,6 +254,8 @@ class ControladorBatalha:
         self.estado_batalha = "montando_jogada"
 
     def enviar_jogada_pronta(self):
+        if self.estado_batalha != "montando_jogada":
+            return
         if self.montador_jogadas is None:
             return
         if self.modo_teste:
@@ -251,12 +272,15 @@ class ControladorBatalha:
         if status == "ok":
             self.estado_batalha = str((resposta or {}).get("estado_batalha") or "recebido_stub")
             self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Jogada aceita"))
+            log = (resposta or {}).get("log") if isinstance((resposta or {}).get("log"), dict) else {}
+            if isinstance(log, dict) and list(log.get("historico") or []):
+                self.receber_log(log)
+                return
             resultado = (resposta or {}).get("resultado")
             if not isinstance(resultado, dict):
-                log = (resposta or {}).get("log") if isinstance((resposta or {}).get("log"), dict) else {}
                 resultado = log.get("resultado") if isinstance(log.get("resultado"), dict) else None
             if isinstance(resultado, dict):
-                self.aplicar_resultado_batalha(resultado)
+                self.aplicar_resultado_final(resultado)
                 self.limpar_jogada_confirmada()
                 return
             if self.estado_batalha != "aguardando":
@@ -267,6 +291,9 @@ class ControladorBatalha:
         self.adicionar_log_local(str((resposta or {}).get("mensagem") or "Falha ao enviar jogada"))
 
     def aplicar_resultado_batalha(self, resultado):
+        return self.aplicar_resultado_final(resultado)
+
+    def aplicar_resultado_final(self, resultado):
         pokemons = resultado.get("pokemons") if isinstance(resultado.get("pokemons"), dict) else {}
         for pid, diff in pokemons.items():
             pokemon = self.pokemons_por_id.get(str(pid))
@@ -279,6 +306,39 @@ class ControladorBatalha:
         if bool(resultado.get("finalizada")):
             self.estado_batalha = "finalizada"
         self.timer_rodada = self.timer_rodada_max
+
+    def receber_log(self, log):
+        rodada = int((log or {}).get("rodada") or self.rodada_atual or 1)
+        self.logs_por_rodada[rodada] = dict(log or {})
+        self.logs_visiveis_por_rodada[rodada] = []
+        self.replay_log_atual = {"ativo": True, "turno_atual": rodada, "tick_atual": 0, "tick_final": len(list((log or {}).get("historico") or []))}
+        self.bloquear_input_durante_log()
+        self.estado_batalha = "animando_rodada"
+        if self.leitor_logs is not None:
+            self.leitor_logs.carregar_log(log)
+            self.leitor_logs.iniciar_leitura()
+
+    def registrar_evento_visual(self, evento):
+        rodada = int((evento or {}).get("rodada") or (self.replay_log_atual or {}).get("turno_atual") or self.rodada_atual or 1)
+        self.logs_visiveis_por_rodada.setdefault(rodada, []).append(dict(evento or {}))
+        if isinstance(self.replay_log_atual, dict) and int(self.replay_log_atual.get("turno_atual", 0) or 0) == rodada:
+            self.replay_log_atual["tick_atual"] = len(self.logs_visiveis_por_rodada.get(rodada, []))
+
+    def voltar_para_montagem(self):
+        self.desbloquear_input_apos_log()
+        self.estado_batalha = "montando_jogada"
+        self.timer_rodada = self.timer_rodada_max
+        if isinstance(self.replay_log_atual, dict):
+            self.replay_log_atual["ativo"] = False
+
+    def bloquear_input_durante_log(self):
+        self.limpar_ataque()
+        self.area_selecionada = None
+        self.pokemon_selecionado = None
+
+    def desbloquear_input_apos_log(self):
+        if isinstance(self.replay_log_atual, dict):
+            self.replay_log_atual["ativo"] = False
 
     def adicionar_log_local(self, texto):
         self.logs_locais.append({"rodada": self.rodada_atual, "texto": str(texto or "")})
@@ -317,13 +377,16 @@ class ControladorBatalha:
         return self.definir_modo_teste(not self.modo_teste)
 
     def estado_visualizador_logs(self):
+        ultimo = max([1, self.rodada_atual, *list(self.logs_por_rodada.keys() or [1]), *list(self.logs_visiveis_por_rodada.keys() or [1])])
         return {
-            "ultimo_turno_com_log": max(1, self.rodada_atual),
-            "replay": {"ativo": False},
+            "ultimo_turno_com_log": ultimo,
+            "replay": dict(self.replay_log_atual or {"ativo": False}),
         }
 
     def obter_log_publico(self, rodada):
         alvo = int(rodada or 1)
+        if alvo in self.logs_visiveis_por_rodada:
+            return {"historico": [dict(e) for e in self.logs_visiveis_por_rodada.get(alvo, [])]}
         historico = []
         for idx, item in enumerate(self.logs_locais):
             if int(item.get("rodada", 0) or 0) != alvo:

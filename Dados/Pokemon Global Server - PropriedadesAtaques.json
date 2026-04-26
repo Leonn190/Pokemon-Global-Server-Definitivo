@@ -9,7 +9,9 @@
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
-        "projetil": null
+        "projetil": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_investida",
       "parametros": {
@@ -31,8 +33,13 @@
       "custo": 25,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "tiro",
+        "projetil": {
+          "arquivo": "biscoito.png",
+          "caminho": "Recursos/Visual/Projeteis/biscoito.png"
+        },
+        "efeito_alvo": "ChuvaBrilhante",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_biscoito",
       "parametros": {
@@ -54,8 +61,10 @@
       "custo": 20,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": "EstouroVermelho"
       },
       "execute_principal": "ataque_enraivecer",
       "parametros": {
@@ -69,8 +78,10 @@
       "custo": 20,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": "MarcaAmarela"
       },
       "execute_principal": "ataque_provocar",
       "parametros": {
@@ -84,8 +95,10 @@
       "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "BarreiraCelular",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_proteger",
       "parametros": {
@@ -108,7 +121,9 @@
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
-        "projetil": null
+        "projetil": null,
+        "efeito_alvo": "Garra",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_arranhar",
       "parametros": {
@@ -130,8 +145,10 @@
       "custo": 25,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": "EnergiaAzul"
       },
       "execute_principal": "ataque_recarga",
       "parametros": {
@@ -145,8 +162,10 @@
       "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": "EnergiaAzul",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_energia",
       "parametros": {
@@ -168,8 +187,10 @@
       "custo": 100,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": "RaioAzul",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_hiper_raio",
       "parametros": {
@@ -191,8 +212,10 @@
       "custo": 80,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "salto",
+        "projetil": null,
+        "efeito_alvo": "CorteDourado",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_guilhotina",
       "parametros": {
@@ -214,8 +237,10 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": "TirosAmarelos",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_disparo",
       "parametros": {
@@ -238,7 +263,9 @@
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
-        "projetil": null
+        "projetil": null,
+        "efeito_alvo": "ImpactoRochoso",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_chifrada",
       "parametros": {
@@ -260,8 +287,10 @@
       "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "MarcaAzul",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_resetar",
       "parametros": {
@@ -283,8 +312,10 @@
       "custo": 60,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": "BarreiraCelular"
       },
       "execute_principal": "ataque_tankar",
       "parametros": {
@@ -299,7 +330,9 @@
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
-        "projetil": null
+        "projetil": null,
+        "efeito_alvo": "FacasBrancas",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_estocada",
       "parametros": {
@@ -321,8 +354,10 @@
       "custo": 50,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": "SuperNova",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_bola_climática",
       "parametros": {
@@ -345,7 +380,9 @@
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "avanco",
-        "projetil": null
+        "projetil": null,
+        "efeito_alvo": "Mordida",
+        "efeito_usuario": null
       },
       "execute_principal": "ataque_hiper_presa",
       "parametros": {
@@ -367,8 +404,10 @@
       "custo": 0,
       "estilo_logico": "passivo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": "MarcaBrilhosa"
       },
       "execute_principal": "ataque_acumulador",
       "parametros": {

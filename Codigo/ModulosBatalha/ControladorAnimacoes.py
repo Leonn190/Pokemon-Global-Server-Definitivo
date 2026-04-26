@@ -1,0 +1,151 @@
+from __future__ import annotations
+
+from Codigo.ModulosGerais.PokemonAnimator import PokemonAnimator
+
+
+class ControladorAnimacoes:
+    def __init__(self, controlador):
+        self.controlador = controlador
+        self.animator = PokemonAnimator(controlador)
+        self.fila: list[dict[str, object]] = []
+        self._avisos: list[str] = []
+
+    def receber_evento(self, evento):
+        try:
+            animacoes = self.criar_animacao_de_evento(evento)
+        except Exception as exc:
+            self._avisos.append(f"animacao_falhou:{exc}")
+            return
+        for anim in list(animacoes or []):
+            if anim is not None:
+                self.adicionar_animacao(anim, bloqueante=bool(anim.get("bloqueante", True)) if isinstance(anim, dict) else True)
+
+    def criar_animacao_de_evento(self, evento):
+        dados = self._dados(evento)
+        tipo = str((evento or {}).get("tipo") or "").strip()
+        ctrl = self.controlador
+        out = []
+
+        if tipo == "ataque_usado":
+            usuario = ctrl.pokemons_por_id.get(str(dados.get("usuario_id") or dados.get("pokemon_id") or ""))
+            alvo = self._resolver_alvo(dados)
+            animacao = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
+            contato = str(animacao.get("contato") or dados.get("contato") or "nenhum").strip().lower()
+            if animacao.get("efeito_usuario"):
+                out.append(self.animator.animar_efeito(usuario, animacao.get("efeito_usuario"), posicao="usuario"))
+            if contato == "avanco":
+                out.append(self.animator.animar_avanco(usuario, alvo))
+            elif contato == "salto":
+                out.append(self.animator.animar_salto(usuario, alvo))
+            elif contato == "tiro":
+                out.append(self.animator.animar_lancar_projetil(usuario, alvo, sprite=animacao.get("projetil")))
+        elif tipo == "ataque_acertou":
+            alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or ""))
+            animacao = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
+            efeito = dados.get("efeito_alvo") or animacao.get("efeito_alvo")
+            if efeito:
+                out.append(self.animator.animar_efeito(alvo, efeito, posicao="alvo"))
+        elif tipo == "pokemon_sofreu_dano":
+            alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
+            valor = dados.get("valor")
+            critico = bool(dados.get("critico", False))
+            out.append(self.animator.animar_tomar_dano(alvo, valor=valor))
+            prefixo = "CRIT " if critico else ""
+            out.append(self.animator.exibir_cartucho(alvo, f"{prefixo}{self._fmt(valor)}", "dano", valor=valor, critico=critico))
+        elif tipo == "barreira_absorveu":
+            alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
+            valor = dados.get("dano_barreira") or dados.get("valor")
+            out.append(self.animator.animar_efeito(alvo, "BarreiraCelular"))
+            out.append(self.animator.exibir_cartucho(alvo, "bloqueado" if dados.get("protegido") else self._fmt(valor), "barreira", valor=valor))
+        elif tipo == "pokemon_recebeu_cura":
+            alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
+            valor = dados.get("valor")
+            critico = bool(dados.get("critico", False))
+            out.append(self.animator.animar_receber_cura(alvo, valor=valor))
+            out.append(self.animator.exibir_cartucho(alvo, f"+{self._fmt(valor)}", "cura", valor=valor, critico=critico))
+        elif tipo == "pokemon_ganhou_barreira":
+            alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
+            out.append(self.animator.animar_efeito(alvo, "BarreiraCelular"))
+            out.append(self.animator.exibir_cartucho(alvo, f"+{self._fmt(dados.get('valor'))}", "barreira", valor=dados.get("valor")))
+        elif tipo == "pokemon_recebeu_efeito":
+            poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
+            efeito = dados.get("efeito") if isinstance(dados.get("efeito"), dict) else {}
+            nome = dados.get("efeito_gif") or efeito.get("gif") or dados.get("efeito_visual")
+            if nome:
+                out.append(self.animator.animar_efeito(poke, nome))
+            if poke is not None:
+                poke.aplicar_efeito_visual(efeito or {"nome": dados.get("efeito_nome"), "code": dados.get("efeito_code"), "passos_restantes": dados.get("passos_restantes"), "tipo": dados.get("tipo")})
+        elif tipo == "efeito_tickou":
+            poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
+            if poke is not None:
+                poke.atualizar_timer_efeito(dados.get("efeito_code"), dados.get("efeito_nome"), dados.get("passos_depois"))
+        elif tipo == "efeito_expirou":
+            poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
+            if poke is not None:
+                poke.expirar_efeito_visual(dados.get("efeito_code"), dados.get("efeito_nome"))
+        elif tipo == "pokemon_moveu":
+            poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
+            out.append(self.animator.animar_movimento(poke, dados.get("area_destino")))
+        elif tipo == "pokemon_trocou_posicao":
+            a = ctrl.pokemons_por_id.get(str(dados.get("pokemon_a_id") or ""))
+            b = ctrl.pokemons_por_id.get(str(dados.get("pokemon_b_id") or ""))
+            out.append(self.animator.animar_troca_posicao(a, b, dados.get("area_a_depois"), dados.get("area_b_depois")))
+        elif tipo == "pokemon_trocou_reserva":
+            saiu = ctrl.pokemons_por_id.get(str(dados.get("pokemon_saiu_id") or ""))
+            entrou = ctrl.pokemons_por_id.get(str(dados.get("pokemon_entrou_id") or ""))
+            out.append(self.animator.animar_troca(saiu, entrou, origem_saida=dados.get("area_id"), destino_entrada=dados.get("area_id")))
+        elif tipo == "pokemon_morreu":
+            poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
+            out.append(self.animator.animar_morrer(poke))
+
+        return [a for a in out if a is not None]
+
+    def adicionar_animacao(self, animacao, bloqueante=True):
+        if isinstance(animacao, dict):
+            animacao["bloqueante"] = bool(bloqueante)
+        return animacao
+
+    def executar_proxima(self):
+        return None
+
+    def atualizar(self, dt):
+        self.animator.atualizar(dt)
+
+    def desenhar(self, surface):
+        self.animator.desenhar(surface)
+
+    def esta_ocupado(self):
+        return self.animator.esta_ocupado()
+
+    def _resolver_alvo(self, dados):
+        ctrl = self.controlador
+        for pid in list(dados.get("alvos_ids") or []):
+            poke = ctrl.pokemons_por_id.get(str(pid))
+            if poke is not None:
+                return poke
+        if dados.get("alvo_id"):
+            poke = ctrl.pokemons_por_id.get(str(dados.get("alvo_id")))
+            if poke is not None:
+                return poke
+        area = dados.get("area_alvo_real") or dados.get("area_alvo")
+        if area and getattr(ctrl, "arena", None) is not None:
+            return ctrl.arena.centro_area_tela(area, ctrl.camera)
+        return None
+
+    @staticmethod
+    def _dados(evento):
+        dados = dict((evento or {}).get("dados") or {})
+        for chave, valor in dict(evento or {}).items():
+            if chave not in {"dados"} and chave not in dados:
+                dados[chave] = valor
+        return dados
+
+    @staticmethod
+    def _fmt(valor):
+        try:
+            num = float(valor)
+        except (TypeError, ValueError):
+            return str(valor or "0")
+        if abs(num - round(num)) < 0.001:
+            return str(int(round(num)))
+        return f"{num:.1f}".rstrip("0").rstrip(".")

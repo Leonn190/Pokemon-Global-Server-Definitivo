@@ -50,8 +50,7 @@ class ControladorAnimacoes:
             valor = dados.get("valor")
             critico = bool(dados.get("critico", False))
             out.append(self.animator.animar_tomar_dano(alvo, valor=valor))
-            prefixo = "CRIT " if critico else ""
-            out.append(self.animator.exibir_cartucho(alvo, f"{prefixo}{self._fmt(valor)}", "dano", valor=valor, critico=critico))
+            out.append(self.animator.exibir_cartucho(alvo, self._fmt(valor), "dano", valor=valor, critico=critico))
         elif tipo == "barreira_absorveu":
             alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
             valor = dados.get("dano_barreira") or dados.get("valor")
@@ -63,10 +62,14 @@ class ControladorAnimacoes:
             critico = bool(dados.get("critico", False))
             out.append(self.animator.animar_receber_cura(alvo, valor=valor))
             out.append(self.animator.exibir_cartucho(alvo, f"+{self._fmt(valor)}", "cura", valor=valor, critico=critico))
+            if alvo is not None and hasattr(alvo, "animar_variacao_status"):
+                alvo.animar_variacao_status(True)
         elif tipo == "pokemon_ganhou_barreira":
             alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
             out.append(self.animator.animar_efeito(alvo, "BarreiraCelular"))
             out.append(self.animator.exibir_cartucho(alvo, f"+{self._fmt(dados.get('valor'))}", "barreira", valor=dados.get("valor")))
+            if alvo is not None and hasattr(alvo, "animar_variacao_status"):
+                alvo.animar_variacao_status(True)
         elif tipo == "pokemon_recebeu_efeito":
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             efeito = dados.get("efeito") if isinstance(dados.get("efeito"), dict) else {}
@@ -75,6 +78,9 @@ class ControladorAnimacoes:
                 out.append(self.animator.animar_efeito(poke, nome))
             if poke is not None:
                 poke.aplicar_efeito_visual(efeito or {"nome": dados.get("efeito_nome"), "code": dados.get("efeito_code"), "passos_restantes": dados.get("passos_restantes"), "tipo": dados.get("tipo")})
+                if hasattr(poke, "animar_variacao_status"):
+                    negativo = bool((efeito or {}).get("negativo")) or str(dados.get("tipo") or (efeito or {}).get("tipo") or "").lower() == "negativo"
+                    poke.animar_variacao_status(not negativo)
         elif tipo == "efeito_tickou":
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             if poke is not None:
@@ -97,6 +103,10 @@ class ControladorAnimacoes:
         elif tipo == "pokemon_morreu":
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             out.append(self.animator.animar_morrer(poke))
+        elif tipo in {"passiva", "passivo"}:
+            poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
+            if poke is not None and hasattr(poke, "animar_variacao_status"):
+                poke.animar_variacao_status(True)
 
         return [a for a in out if a is not None]
 
@@ -129,7 +139,7 @@ class ControladorAnimacoes:
                 return poke
         area = dados.get("area_alvo_real") or dados.get("area_alvo")
         if area and getattr(ctrl, "arena", None) is not None:
-            return ctrl.arena.centro_area_tela(area, ctrl.camera)
+            return ctrl.arena.centro_area(area)
         return None
 
     @staticmethod

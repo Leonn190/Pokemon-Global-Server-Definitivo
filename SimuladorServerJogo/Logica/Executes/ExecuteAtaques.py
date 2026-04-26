@@ -539,7 +539,7 @@ def _exec_resetar(ctx, alvo):
 
 def _exec_tankar(ctx, alvo):
     usuario = ctx.get("usuario")
-    defesa = "Def" if usuario.obter_atributo("Def") <= usuario.obter_atributo("SpD") else "SpD"
+    defesa = "Dur"
     bonus = usuario.obter_atributo("Mag") * 0.20
     ret = _aplicar_efeito(usuario, usuario, "Fortificado", duracao=3, dados={"atributo": defesa, "valor": bonus}, valor=bonus, negativo=False)
     if _critico_simples(usuario, ctx):

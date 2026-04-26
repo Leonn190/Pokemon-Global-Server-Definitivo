@@ -123,12 +123,15 @@ class PokemonBatalha:
             nome = _normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
             dados = (efeito or {}).get("dados") if isinstance((efeito or {}).get("dados"), dict) else {}
             valor = _f((efeito or {}).get("valor", dados.get("valor", 0.0)), 0.0)
+            stacks = max(1, _i((efeito or {}).get("stacks"), 1))
             if nome == "amplificado":
-                finais["Amp"] += valor if valor else 15.0
+                finais["Amp"] += valor if valor else 15.0 * stacks
             elif nome == "fortificado":
-                atributo = str(dados.get("atributo") or "Def")
+                atributo = str(dados.get("atributo") or "Dur")
+                if atributo in {"Def", "SpD"}:
+                    atributo = "Dur"
                 if atributo in finais:
-                    finais[atributo] += valor
+                    finais[atributo] += valor if valor else 10.0 * stacks
             elif nome == "energizado":
                 finais["EneM"] += valor if valor else max(1.0, finais.get("Ene", 1.0))
             elif nome == "descarregado":
@@ -152,12 +155,23 @@ class PokemonBatalha:
         contexto = dict(contexto or {})
         dados = dict(dados_dano or {})
         dano = max(0.0, _f(dados.get("dano_bruto", dados.get("dano", 0.0)), 0.0))
+        calculo = [f"Dano bruto = {round(dano, 4)}"]
         tipo = dados.get("tipo") or contexto.get("tipo_ataque") or "normal"
         categoria = _normalizar(dados.get("categoria") or "normal")
-        dano *= 1.0 + (self.obter_atributo("Amp") / 100.0)
-        dano *= obter_multiplicador(tipo, alvo.tipos)
+        mult_amp = 1.0 + (self.obter_atributo("Amp") / 100.0)
+        if abs(mult_amp - 1.0) > 0.001:
+            antes = dano
+            dano *= mult_amp
+            calculo.append(f"Amplificacao: {round(antes, 4)} * {round(mult_amp, 4)} = {round(dano, 4)}")
+        mult_tipo = obter_multiplicador(tipo, alvo.tipos)
+        if abs(mult_tipo - 1.0) > 0.001:
+            antes = dano
+            dano *= mult_tipo
+            calculo.append(f"Tipo: {round(antes, 4)} * {round(mult_tipo, 4)} = {round(dano, 4)}")
         if _normalizar(tipo) in {_normalizar(t) for t in self.tipos}:
+            antes = dano
             dano *= 1.20
+            calculo.append(f"STAB: {round(antes, 4)} * 1.2 = {round(dano, 4)}")
         rng = contexto.get("rng") or getattr(getattr(self, "partida", None), "rng", None)
         chance_crit = _f(dados.get("chance_critico", self.obter_atributo("CrC")), 0.0)
         chance_crit = min(chance_crit, _f(dados.get("chance_critico_max", 999.0), 999.0))
@@ -166,13 +180,38 @@ class PokemonBatalha:
             sorte = rng.random() * 100.0 if rng is not None else 100.0
             critico = sorte <= chance_crit
         if critico:
-            dano *= 1.0 + (self.obter_atributo("CrD") / 100.0)
+            mult_crit = 1.0 + (self.obter_atributo("CrD") / 100.0)
+            antes = dano
+            dano *= mult_crit
+            calculo.append(f"Critico: {round(antes, 4)} * {round(mult_crit, 4)} = {round(dano, 4)}")
         defesa_chave = "SpD" if categoria in {"especial", "spa", "magico"} else "Def"
         defesa = alvo.obter_atributo(defesa_chave)
         defesa_efetiva = max(0.0, defesa - (self.obter_atributo("Per") / 2.0))
-        dano *= 100.0 / (100.0 + defesa_efetiva)
-        dano = max(0.0, dano - alvo.obter_atributo("Dur"))
-        recebido = alvo.ReceberDano(dano, origem=self, dados={**dados, "critico": critico, "tipo": tipo})
+        calculo.append(f"Defesa bruta ({defesa_chave}) = {round(defesa, 4)}")
+        if self.obter_atributo("Per") > 0:
+            calculo.append(f"Defesa apos perfuracao = max(0, {round(defesa, 4)} - {round(self.obter_atributo('Per') / 2.0, 4)}) = {round(defesa_efetiva, 4)}")
+        mult_defesa = 100.0 / (100.0 + defesa_efetiva)
+        antes = dano
+        dano *= mult_defesa
+        calculo.append(f"Defesa: {round(antes, 4)} * {round(mult_defesa, 4)} = {round(dano, 4)}")
+        dur_alvo = alvo.obter_atributo("Dur")
+        if dur_alvo > 0:
+            antes = dano
+            dano = max(0.0, dano - dur_alvo)
+            calculo.append(f"Durabilidade: max(0, {round(antes, 4)} - {round(dur_alvo, 4)}) = {round(dano, 4)}")
+        calculo.append(f"Dano final = {round(dano, 4)}")
+        detalhes = {
+            "dano_bruto": round(_f(dados.get("dano_bruto", dados.get("dano", 0.0)), 0.0), 4),
+            "multiplicador_amp": round(mult_amp, 4),
+            "multiplicador_tipo": round(mult_tipo, 4),
+            "multiplicador_stab": 1.2 if _normalizar(tipo) in {_normalizar(t) for t in self.tipos} else 1.0,
+            "multiplicador_critico": round(1.0 + (self.obter_atributo("CrD") / 100.0), 4) if critico else 1.0,
+            "defesa_base": round(defesa, 4),
+            "defesa_aplicada": round(defesa_efetiva, 4),
+            "multiplicador_defesa": round(mult_defesa, 4),
+            "durabilidade": round(dur_alvo, 4),
+        }
+        recebido = alvo.ReceberDano(dano, origem=self, dados={**dados, "critico": critico, "tipo": tipo, "detalhes": detalhes, "calculo": calculo})
         dano_vida = _f(recebido.get("dano_vida"), 0.0)
         if dano_vida > 0 and self.obter_atributo("Vamp") > 0:
             self.ReceberCura(dano_vida * (self.obter_atributo("Vamp") / 100.0), origem=self, dados={"vampirismo": True})
@@ -201,6 +240,8 @@ class PokemonBatalha:
                     "critico": bool(dados.get("critico", False)),
                     "ataque_id": dados.get("ataque_id") or dados.get("Code"),
                     "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                    "detalhes": dict(dados.get("detalhes") or {}),
+                    "calculo": list(dados.get("calculo") or []),
                 },
             )
             return {"aplicado": True, "protegido": True, "dano_vida": 0.0, "dano_barreira": 0.0}
@@ -223,6 +264,8 @@ class PokemonBatalha:
                     "categoria": dados.get("categoria"),
                     "ataque_id": dados.get("ataque_id") or dados.get("Code"),
                     "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                    "detalhes": dict(dados.get("detalhes") or {}),
+                    "calculo": list(dados.get("calculo") or []),
                 },
             )
             return {"aplicado": True, "dano_vida": 0.0, "dano_barreira": round(absorvido, 4), "barreira_absorveu_instancia": True}
@@ -248,6 +291,8 @@ class PokemonBatalha:
                     "ataque_id": dados.get("ataque_id") or dados.get("Code"),
                     "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
                     "dano_barreira": round(_f(dados.get("dano_barreira"), 0.0), 4),
+                    "detalhes": dict(dados.get("detalhes") or {}),
+                    "calculo": list(dados.get("calculo") or []),
                 },
             )
         if self.VidaAtual <= 0:
@@ -262,11 +307,15 @@ class PokemonBatalha:
         if not self.esta_vivo():
             return {"aplicado": False, "motivo": "morto", "cura": 0.0}
         cura = max(0.0, _f(valor, 0.0))
+        calculo = [f"Cura bruta = {round(cura, 4)}"]
         if self.possui_efeito("Queimado"):
+            antes_calc = cura
             cura *= 0.65
+            calculo.append(f"Queimado: {round(antes_calc, 4)} * 0.65 = {round(cura, 4)}")
         antes = self.VidaAtual
         self.VidaAtual = min(self.obter_atributo("Vida", 1.0), self.VidaAtual + cura)
         real = max(0.0, self.VidaAtual - antes)
+        calculo.append(f"Cura final = {round(real, 4)}")
         self.estatisticas_batalha["cura_recebida"] = _f(self.estatisticas_batalha.get("cura_recebida"), 0.0) + real
         if origem is not None:
             origem.estatisticas_batalha["cura_feita"] = _f(origem.estatisticas_batalha.get("cura_feita"), 0.0) + real
@@ -285,6 +334,7 @@ class PokemonBatalha:
                     "critico": bool(dados.get("critico", False)),
                     "ataque_id": dados.get("ataque_id") or dados.get("Code"),
                     "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                    "calculo": list(dados.get("calculo") or calculo),
                 },
             )
         return {"aplicado": True, "cura": round(real, 4), "dados": dict(dados or {})}
@@ -297,6 +347,7 @@ class PokemonBatalha:
         ganho = max(0.0, _f(valor, 0.0))
         antes = self.BarreiraAtual
         self.BarreiraAtual += ganho
+        calculo = list(dados.get("calculo") or [f"Barreira bruta = {round(ganho, 4)}", f"Barreira final = {round(ganho, 4)}"])
         self._registrar_evento(
             "pokemon_ganhou_barreira",
             {
@@ -311,6 +362,7 @@ class PokemonBatalha:
                 "critico": bool(dados.get("critico", False)),
                 "ataque_id": dados.get("ataque_id") or dados.get("Code"),
                 "ataque_nome": dados.get("ataque_nome") or dados.get("ataque"),
+                "calculo": calculo,
             },
         )
         return {"aplicado": True, "barreira": round(ganho, 4), "dados": dict(dados or {})}
@@ -325,23 +377,8 @@ class PokemonBatalha:
         nome = str(base.get("nome") or base.get("Nome") or base.get("code") or "").strip()
         if not nome:
             return {"aplicado": False, "motivo": "efeito_sem_nome"}
-        if len(self.efeitos_formais) >= 4:
-            aviso = {"pokemon_id": self.id_batalha, "efeito": nome, "motivo": "limite_efeitos_formais"}
-            if self.partida is not None:
-                self.partida.avisos.append(aviso)
-            self._registrar_evento(
-                "efeito_bloqueado_por_limite",
-                {
-                    "pokemon_id": self.id_batalha,
-                    "pokemon_nome": self.nome,
-                    "efeito_nome": nome,
-                    "efeito_code": base.get("code", nome),
-                    **self._dados_origem(origem),
-                },
-            )
-            return {"aplicado": False, "motivo": "limite_efeitos_formais", "aviso": aviso}
         duracao_base = max(1, _i(base.get("duracao", base.get("passos", base.get("passos_restantes", 3))), 3))
-        negativo = bool(base.get("negativo", _normalizar(nome) in {"queimado", "envenenado", "intoxicado", "provocando", "congelado", "dormindo", "paralisado", "enraizado", "cauterizado", "descarregado"}))
+        negativo = bool(base.get("negativo", _normalizar(nome) in {"queimado", "envenenado", "intoxicado", "congelado", "dormindo", "paralisado", "enraizado", "cauterizado", "descarregado"}))
         mag_origem = origem.obter_atributo("Mag") if origem is not None and hasattr(origem, "obter_atributo") else 0.0
         mag_alvo = self.obter_atributo("Mag")
         if negativo and origem is self:
@@ -354,10 +391,39 @@ class PokemonBatalha:
             "nome": nome,
             "code": base.get("code", nome),
             "passos_restantes": max(1, int(duracao)),
+            "passos_totais": max(1, int(duracao)),
             "dados": dict(dados or base.get("dados") or {}),
             "valor": base.get("valor", (dados or {}).get("valor") if isinstance(dados, dict) else 0.0),
+            "stacks": 1,
+            "tipo": "negativo" if negativo else "positivo",
         }
-        self.efeitos_formais.append(formal)
+        chave = _normalizar(formal.get("code") or formal.get("nome"))
+        existente = next((e for e in self.efeitos_formais if _normalizar((e or {}).get("code") or (e or {}).get("nome")) == chave), None)
+        if existente is not None:
+            existente["stacks"] = max(1, _i(existente.get("stacks"), 1)) + 1
+            existente["passos_restantes"] = max(_i(existente.get("passos_restantes"), 1), formal["passos_restantes"])
+            existente["passos_totais"] = max(_i(existente.get("passos_totais"), formal["passos_totais"]), formal["passos_totais"], _i(existente.get("passos_restantes"), 1))
+            existente["valor"] = _f(existente.get("valor"), 0.0) + _f(formal.get("valor"), 0.0)
+            existente["dados"] = {**dict(existente.get("dados") or {}), **dict(formal.get("dados") or {})}
+            existente["tipo"] = formal["tipo"]
+            formal = dict(existente)
+        else:
+            if len(self.efeitos_formais) >= 4:
+                aviso = {"pokemon_id": self.id_batalha, "efeito": nome, "motivo": "limite_efeitos_formais"}
+                if self.partida is not None:
+                    self.partida.avisos.append(aviso)
+                self._registrar_evento(
+                    "efeito_bloqueado_por_limite",
+                    {
+                        "pokemon_id": self.id_batalha,
+                        "pokemon_nome": self.nome,
+                        "efeito_nome": nome,
+                        "efeito_code": base.get("code", nome),
+                        **self._dados_origem(origem),
+                    },
+                )
+                return {"aplicado": False, "motivo": "limite_efeitos_formais", "aviso": aviso}
+            self.efeitos_formais.append(formal)
         self.recalcular_atributos()
         self._registrar_evento(
             "pokemon_recebeu_efeito",
@@ -368,6 +434,8 @@ class PokemonBatalha:
                 "efeito_code": formal.get("code"),
                 "tipo": "negativo" if negativo else "positivo",
                 "passos_restantes": formal.get("passos_restantes"),
+                "passos_totais": formal.get("passos_totais"),
+                "stacks": formal.get("stacks", 1),
                 **self._dados_origem(origem),
                 "efeito": dict(formal),
             },
@@ -406,6 +474,7 @@ class PokemonBatalha:
                     "efeito_code": efeito.get("code"),
                     "passos_antes": duracao_antes,
                     "passos_depois": efeito["passos_restantes"],
+                    "passos_totais": efeito.get("passos_totais", duracao_antes),
                     "passo": passo_atual,
                 },
             )

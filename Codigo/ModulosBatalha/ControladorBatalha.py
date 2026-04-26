@@ -380,6 +380,7 @@ class ControladorBatalha:
         ultimo = max([1, self.rodada_atual, *list(self.logs_por_rodada.keys() or [1]), *list(self.logs_visiveis_por_rodada.keys() or [1])])
         return {
             "ultimo_turno_com_log": ultimo,
+            "rodada_atual": self.rodada_atual,
             "replay": dict(self.replay_log_atual or {"ativo": False}),
         }
 

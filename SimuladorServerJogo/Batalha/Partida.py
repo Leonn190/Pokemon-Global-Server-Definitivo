@@ -32,6 +32,7 @@ class Partida:
         self.rodada_atual = int(dados.get("rodada_atual", dados.get("rodada", 1)) or 1)
         self.passo_atual = 0
         self.estado_partida = "montando_jogada"
+        self.modo_teste = bool(dados.get("modo_teste", False))
         self.lado_jogador = int(dados.get("lado_jogador", 50) or 50)
         self.arena_contexto = dict(dados.get("arena") or {})
         self.regras = copy.deepcopy(dados.get("regras") or {}) if isinstance(dados.get("regras"), dict) else {}
@@ -96,9 +97,11 @@ class Partida:
 
     def _coletar_pokemons_iniciais(self, dados):
         if isinstance(dados.get("pokemons"), dict):
-            return list(dados["pokemons"].values())
+            pokemons = list(dados["pokemons"].values())
+            return self._randomizar_posicoes_teste(pokemons) if self.modo_teste else pokemons
         if isinstance(dados.get("pokemons"), list):
-            return list(dados["pokemons"])
+            pokemons = list(dados["pokemons"])
+            return self._randomizar_posicoes_teste(pokemons) if self.modo_teste else pokemons
         saida = []
         fontes = [
             (50, dados.get("pokemons_jogador")),
@@ -106,6 +109,9 @@ class Partida:
             (50, (dados.get("time_jogador") or {}).get("Slots") if isinstance(dados.get("time_jogador"), dict) else None),
             (51, (dados.get("time_inimigo") or dados.get("time_adversario") or {}).get("Slots") if isinstance(dados.get("time_inimigo") or dados.get("time_adversario"), dict) else None),
         ]
+        areas_teste = [f"{prefixo}{i}" for prefixo in ("A", "I") for i in range(1, 10)]
+        if self.modo_teste:
+            self.rng.shuffle(areas_teste)
         for lado_id, lista in fontes:
             for idx, pokemon in enumerate(list(lista or []), start=1):
                 if not isinstance(pokemon, dict):
@@ -114,9 +120,28 @@ class Partida:
                 item.setdefault("lado_id", lado_id)
                 item.setdefault("ativo", idx <= 3)
                 item.setdefault("em_reserva", idx > 3)
-                if idx <= 3 and not item.get("area_id"):
-                    item["area_id"] = ("A" if int(lado_id) == 50 else "I") + str(idx)
+                if idx <= 3:
+                    if self.modo_teste:
+                        item["area_id"] = areas_teste.pop(0) if areas_teste else (("A" if int(lado_id) == 50 else "I") + str(idx))
+                    elif not item.get("area_id"):
+                        item["area_id"] = ("A" if int(lado_id) == 50 else "I") + str(idx)
                 saida.append(item)
+        return saida
+
+    def _randomizar_posicoes_teste(self, pokemons):
+        areas = [f"{prefixo}{i}" for prefixo in ("A", "I") for i in range(1, 10)]
+        self.rng.shuffle(areas)
+        saida = []
+        for bruto in list(pokemons or []):
+            if not isinstance(bruto, dict):
+                saida.append(bruto)
+                continue
+            item = copy.deepcopy(bruto)
+            ativo = bool(item.get("ativo", item.get("Ativo", False)))
+            reserva = bool(item.get("em_reserva", item.get("reserva", item.get("EmReserva", False))))
+            if ativo and not reserva and areas:
+                item["area_id"] = areas.pop(0)
+            saida.append(item)
         return saida
 
     def _inicializar_pokemons(self, dados):

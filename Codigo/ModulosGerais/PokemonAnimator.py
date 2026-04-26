@@ -136,8 +136,8 @@ class PokemonAnimator:
         )
 
     def animar_lancar_projetil(self, origem, destino, sprite=None, duracao=None):
-        p0 = self._posicao(origem)
-        p1 = self._posicao(destino)
+        p0 = self._posicao_mundo(origem)
+        p1 = self._posicao_mundo(destino)
         if p0 is None or p1 is None:
             return None
         return self._adicionar(
@@ -155,34 +155,38 @@ class PokemonAnimator:
     def animar_avanco(self, pokemon, destino, duracao=None):
         if pokemon is None:
             return None
-        origem = self._posicao(pokemon)
-        alvo = self._posicao(destino)
+        origem = self._posicao_mundo(pokemon)
+        alvo = self._posicao_mundo(destino)
         if origem is None or alvo is None:
             return None
         dx, dy = alvo[0] - origem[0], alvo[1] - origem[1]
         dist = max(1.0, math.hypot(dx, dy))
-        alcance = min(dist * 0.58, 120.0)
+        raio_origem = self._raio_mundo(pokemon, 0.45)
+        raio_alvo = self._raio_mundo(destino, 0.45)
+        alcance = max(0.0, dist - raio_origem - raio_alvo)
         pico = (origem[0] + dx / dist * alcance, origem[1] + dy / dist * alcance)
-        return self._adicionar({"tipo": "deslocamento_temporario", "pokemon": pokemon, "origem": origem, "pico": pico, "tempo": 0.0, "duracao": float(duracao or 0.44), "modo": "avanco", "bloqueante": True})
+        return self._adicionar({"tipo": "deslocamento_temporario", "pokemon": pokemon, "origem": origem, "pico": pico, "tempo": 0.0, "duracao": float(duracao or 0.78), "modo": "avanco", "bloqueante": True})
 
     def animar_salto(self, pokemon, destino, duracao=None):
         if pokemon is None:
             return None
-        origem = self._posicao(pokemon)
-        alvo = self._posicao(destino)
+        origem = self._posicao_mundo(pokemon)
+        alvo = self._posicao_mundo(destino)
         if origem is None or alvo is None:
             return None
         dx, dy = alvo[0] - origem[0], alvo[1] - origem[1]
         dist = max(1.0, math.hypot(dx, dy))
-        alcance = min(dist * 0.54, 120.0)
+        raio_origem = self._raio_mundo(pokemon, 0.45)
+        raio_alvo = self._raio_mundo(destino, 0.45)
+        alcance = max(0.0, dist - raio_origem - raio_alvo)
         pico = (origem[0] + dx / dist * alcance, origem[1] + dy / dist * alcance)
-        return self._adicionar({"tipo": "deslocamento_temporario", "pokemon": pokemon, "origem": origem, "pico": pico, "tempo": 0.0, "duracao": float(duracao or 0.58), "modo": "salto", "bloqueante": True})
+        return self._adicionar({"tipo": "deslocamento_temporario", "pokemon": pokemon, "origem": origem, "pico": pico, "tempo": 0.0, "duracao": float(duracao or 0.86), "modo": "salto", "bloqueante": True})
 
     def animar_movimento(self, pokemon, destino_area_id, duracao=None):
         if pokemon is None:
             return None
-        origem = self._posicao(pokemon)
-        destino = self._posicao_area(destino_area_id)
+        origem = self._posicao_mundo(pokemon)
+        destino = self._posicao_area_mundo(destino_area_id)
         if origem is None or destino is None:
             if destino_area_id:
                 pokemon.AreaId = destino_area_id
@@ -201,8 +205,13 @@ class PokemonAnimator:
         )
 
     def animar_troca(self, pokemon_saida, pokemon_entrada, origem_saida=None, destino_entrada=None):
-        saida = self._posicao(pokemon_saida) or self._posicao_area(origem_saida)
-        entrada = self._posicao_area(destino_entrada) or self._posicao(pokemon_saida) or self._posicao(pokemon_entrada)
+        saida = self._posicao_mundo(pokemon_saida) or self._posicao_area_mundo(origem_saida)
+        entrada = self._posicao_area_mundo(destino_entrada) or self._posicao_mundo(pokemon_saida) or self._posicao_mundo(pokemon_entrada)
+        reserva = self._posicao_reserva_mundo(pokemon_entrada)
+        if pokemon_saida is not None:
+            pokemon_saida.AlphaVisual = 255
+        if pokemon_entrada is not None:
+            pokemon_entrada.AlphaVisual = 255
         return self._adicionar(
             {
                 "tipo": "troca",
@@ -210,6 +219,7 @@ class PokemonAnimator:
                 "pokemon_entrada": pokemon_entrada,
                 "pos_saida": saida,
                 "pos_entrada": entrada,
+                "pos_reserva": reserva,
                 "area_entrada": destino_entrada,
                 "tempo": 0.0,
                 "duracao": 1.05,
@@ -220,8 +230,8 @@ class PokemonAnimator:
     def animar_troca_posicao(self, pokemon_a, pokemon_b, area_a_depois=None, area_b_depois=None):
         if pokemon_a is None or pokemon_b is None:
             return None
-        pos_a = self._posicao(pokemon_a)
-        pos_b = self._posicao(pokemon_b)
+        pos_a = self._posicao_mundo(pokemon_a)
+        pos_b = self._posicao_mundo(pokemon_b)
         if pos_a is None or pos_b is None:
             return None
         return self._adicionar(
@@ -269,6 +279,7 @@ class PokemonAnimator:
             elif tipo == "gif":
                 self._desenhar_gif(surface, anim)
             elif tipo in {"troca"}:
+                self._desenhar_fantasmas_troca(surface, anim)
                 self._desenhar_circulos_troca(surface, anim)
 
     def esta_ocupado(self):
@@ -301,15 +312,15 @@ class PokemonAnimator:
                 x = _interp(origem[0], pico[0], vai)
                 y = _interp(origem[1], pico[1], vai)
                 if str(anim.get("modo")) == "salto":
-                    y -= math.sin(t * math.pi) * 55.0
-                pokemon.CentroTelaOverride = (x, y)
+                    y -= math.sin(t * math.pi) * 1.25
+                pokemon.CentroMundoOverride = (x, y)
         elif tipo == "movimento_area":
             pokemon = anim.get("pokemon")
             origem = anim.get("origem")
             destino = anim.get("destino")
             if pokemon is not None and origem and destino:
                 suave = t * t * (3 - 2 * t)
-                pokemon.CentroTelaOverride = (_interp(origem[0], destino[0], suave), _interp(origem[1], destino[1], suave))
+                pokemon.CentroMundoOverride = (_interp(origem[0], destino[0], suave), _interp(origem[1], destino[1], suave))
         elif tipo == "morte":
             pokemon = anim.get("pokemon")
             if pokemon is not None:
@@ -322,9 +333,9 @@ class PokemonAnimator:
             ob = anim.get("origem_b")
             suave = t * t * (3 - 2 * t)
             if a is not None and oa and ob:
-                a.CentroTelaOverride = (_interp(oa[0], ob[0], suave), _interp(oa[1], ob[1], suave))
+                a.CentroMundoOverride = (_interp(oa[0], ob[0], suave), _interp(oa[1], ob[1], suave))
             if b is not None and oa and ob:
-                b.CentroTelaOverride = (_interp(ob[0], oa[0], suave), _interp(ob[1], oa[1], suave))
+                b.CentroMundoOverride = (_interp(ob[0], oa[0], suave), _interp(ob[1], oa[1], suave))
         elif tipo == "troca":
             saida = anim.get("pokemon_saida")
             entrada = anim.get("pokemon_entrada")
@@ -341,6 +352,7 @@ class PokemonAnimator:
         for chave in ("pokemon", "pokemon_a", "pokemon_b", "pokemon_saida", "pokemon_entrada"):
             poke = anim.get(chave)
             if poke is not None:
+                poke.CentroMundoOverride = None
                 poke.CentroTelaOverride = None
                 poke.OffsetVisual = (0.0, 0.0)
                 poke.AlphaVisual = 255
@@ -375,25 +387,70 @@ class PokemonAnimator:
                 pokemon.Vivo = False
                 pokemon.VidaAtual = 0.0
 
-    def _posicao(self, alvo):
+    def _posicao_mundo(self, alvo):
         if alvo is None:
             return None
         if isinstance(alvo, (list, tuple)) and len(alvo) >= 2:
             return (float(alvo[0]), float(alvo[1]))
-        rect = getattr(alvo, "RectAtual", None)
-        if isinstance(rect, pygame.Rect) and rect.width > 0 and rect.height > 0:
-            return rect.center
+        override = getattr(alvo, "CentroMundoOverride", None)
+        if isinstance(override, (list, tuple)) and len(override) >= 2:
+            return (float(override[0]), float(override[1]))
         area_id = getattr(alvo, "AreaId", None)
-        return self._posicao_area(area_id)
-
-    def _posicao_area(self, area_id):
+        if area_id and not bool(getattr(alvo, "EmReserva", False)):
+            pos = self._posicao_area_mundo(area_id)
+            if pos is not None:
+                return pos
+        reserva = self._posicao_reserva_mundo(alvo)
+        if reserva is not None:
+            return reserva
+        rect = getattr(alvo, "RectAtual", None)
         ctrl = self.controlador
-        if ctrl is None or getattr(ctrl, "arena", None) is None or getattr(ctrl, "camera", None) is None:
+        camera = getattr(ctrl, "camera", None) if ctrl is not None else None
+        if isinstance(rect, pygame.Rect) and rect.width > 0 and rect.height > 0 and camera is not None:
+            try:
+                return camera.tela_para_mundo_tiles(rect.center)
+            except Exception:
+                return None
+        return None
+
+    def _posicao_area_mundo(self, area_id):
+        ctrl = self.controlador
+        if ctrl is None or getattr(ctrl, "arena", None) is None:
             return None
         try:
-            return ctrl.arena.centro_area_tela(area_id, ctrl.camera)
+            return ctrl.arena.centro_area(area_id)
         except Exception:
             return None
+
+    def _posicao_reserva_mundo(self, pokemon):
+        ctrl = self.controlador
+        if pokemon is None or ctrl is None or getattr(ctrl, "arena", None) is None:
+            return None
+        try:
+            return ctrl.arena.centro_slot_reserva_mundo(getattr(pokemon, "id_batalha", None))
+        except Exception:
+            return None
+
+    def _posicao_tela(self, pos_mundo):
+        if not (isinstance(pos_mundo, (list, tuple)) and len(pos_mundo) >= 2):
+            return None
+        ctrl = self.controlador
+        camera = getattr(ctrl, "camera", None) if ctrl is not None else None
+        if camera is None:
+            return (float(pos_mundo[0]), float(pos_mundo[1]))
+        try:
+            return camera.mundo_para_tela_px((float(pos_mundo[0]), float(pos_mundo[1])))
+        except Exception:
+            return None
+
+    def _raio_mundo(self, alvo, default=0.45):
+        ctrl = self.controlador
+        camera = getattr(ctrl, "camera", None) if ctrl is not None else None
+        tile = max(1.0, float(getattr(camera, "TilePx", 40) or 40)) if camera is not None else 40.0
+        rect = getattr(alvo, "RectAtual", None)
+        if isinstance(rect, pygame.Rect) and rect.width > 0:
+            return max(default, (float(rect.width) * 0.35) / tile)
+        return default
 
     def _carregar_projetil(self, sprite):
         caminho = None
@@ -441,8 +498,10 @@ class PokemonAnimator:
         destino = anim.get("destino")
         if not origem or not destino:
             return
-        x = _interp(origem[0], destino[0], t)
-        y = _interp(origem[1], destino[1], t)
+        pos = self._posicao_tela((_interp(origem[0], destino[0], t), _interp(origem[1], destino[1], t)))
+        if pos is None:
+            return
+        x, y = pos
         sprite = anim.get("sprite")
         if isinstance(sprite, pygame.Surface):
             lado = max(20, min(46, int(sprite.get_width())))
@@ -455,7 +514,8 @@ class PokemonAnimator:
 
     def _desenhar_cartucho(self, surface, anim):
         pokemon = anim.get("pokemon")
-        pos = self._posicao(pokemon)
+        pos_mundo = self._posicao_mundo(pokemon)
+        pos = self._posicao_tela(pos_mundo)
         if pos is None:
             return
         t = self._progresso(anim)
@@ -487,7 +547,8 @@ class PokemonAnimator:
     def _desenhar_gif(self, surface, anim):
         frames = anim.get("frames") if isinstance(anim.get("frames"), list) else []
         pokemon = anim.get("pokemon")
-        pos = self._posicao(pokemon)
+        pos_mundo = self._posicao_mundo(pokemon)
+        pos = self._posicao_tela(pos_mundo)
         if not frames or pos is None:
             return
         fps = max(1.0, float(anim.get("fps", 20.0) or 20.0))
@@ -499,10 +560,46 @@ class PokemonAnimator:
         img = pygame.transform.smoothscale(frame, (tamanho, tamanho)).convert_alpha()
         surface.blit(img, img.get_rect(center=(int(pos[0]), int(pos[1]))))
 
+    def _desenhar_fantasmas_troca(self, surface, anim):
+        t = self._progresso(anim)
+        entrada_alpha = int(255 * _clamp((t - 0.45) / 0.55, 0.0, 1.0))
+        saida_alpha = int(255 * _clamp((t - 0.20) / 0.60, 0.0, 1.0))
+        if entrada_alpha > 0:
+            self._desenhar_pokemon_em_mundo(surface, anim.get("pokemon_entrada"), anim.get("pos_entrada"), entrada_alpha)
+        if saida_alpha > 0:
+            self._desenhar_pokemon_em_mundo(surface, anim.get("pokemon_saida"), anim.get("pos_reserva"), saida_alpha)
+
+    def _desenhar_pokemon_em_mundo(self, surface, pokemon, pos_mundo, alpha):
+        pos = self._posicao_tela(pos_mundo)
+        if pokemon is None or pos is None or alpha <= 0:
+            return
+        ctrl = self.controlador
+        camera = getattr(ctrl, "camera", None) if ctrl is not None else None
+        img = None
+        if hasattr(pokemon, "_frame_atual_escalado"):
+            try:
+                img = pokemon._frame_atual_escalado(camera)
+            except Exception:
+                img = None
+        if isinstance(img, pygame.Surface):
+            copia = img.copy()
+            copia.set_alpha(max(0, min(255, int(alpha))))
+            surface.blit(copia, copia.get_rect(center=(int(pos[0]), int(pos[1]))))
+            return
+        tile = max(1, int(getattr(camera, "TilePx", 40) or 40)) if camera is not None else 40
+        lado = max(34, int(tile * 1.7))
+        cor = (110, 196, 126, int(alpha)) if getattr(pokemon, "Lado", "") == "jogador" else (204, 108, 108, int(alpha))
+        sprite = pygame.Surface((lado, lado), pygame.SRCALPHA)
+        pygame.draw.circle(sprite, cor, (lado // 2, lado // 2), lado // 2)
+        surface.blit(sprite, sprite.get_rect(center=(int(pos[0]), int(pos[1]))))
+
     def _desenhar_circulos_troca(self, surface, anim):
         t = self._progresso(anim)
-        for pos, fase in ((anim.get("pos_saida"), 0.0), (anim.get("pos_entrada"), 0.42)):
-            if not pos:
+        for pos_mundo, fase in ((anim.get("pos_saida"), 0.0), (anim.get("pos_entrada"), 0.42), (anim.get("pos_reserva"), 0.28)):
+            if not pos_mundo:
+                continue
+            pos = self._posicao_tela(pos_mundo)
+            if pos is None:
                 continue
             local_t = _clamp((t - fase) / 0.45, 0.0, 1.0)
             if local_t <= 0 or local_t >= 1.0:

@@ -20,7 +20,11 @@ class RodadorTurno:
         self.erros_acoes = list(acoes_invalidas or [])
         self.acoes_falhas = []
         self._ataques_executados = 0
-        for acao in list(acoes_ordenadas or []):
+        acoes = list(acoes_ordenadas or [])
+        if not acoes:
+            self.partida.passo_atual += 1
+            self._fim_passo()
+        for acao in acoes:
             self.partida.passo_atual += 1
             self.executar_passo(acao)
         return {
@@ -158,8 +162,16 @@ class RodadorTurno:
                     continue
                 ctx_alvo = dict(contexto)
                 ctx_alvo["alvo"] = alvo
-                processar_passivas_ataque(ctx_alvo, "antes_receber_ataque")
-                processar_passivas_itens(ctx_alvo, "antes_receber_ataque")
+                for passiva in list(processar_passivas_ataque(ctx_alvo, "antes_receber_ataque") or []):
+                    dados_passiva = dict(passiva or {})
+                    dados_passiva.setdefault("pokemon_id", alvo.id_batalha)
+                    dados_passiva.setdefault("pokemon_nome", alvo.nome)
+                    self.partida.registrar_evento_log("passiva", dados_passiva)
+                for passiva in list(processar_passivas_itens(ctx_alvo, "antes_receber_ataque") or []):
+                    dados_passiva = dict(passiva or {})
+                    dados_passiva.setdefault("pokemon_id", alvo.id_batalha)
+                    dados_passiva.setdefault("pokemon_nome", alvo.nome)
+                    self.partida.registrar_evento_log("passiva", dados_passiva)
                 if not self._acertou(pokemon, alvo):
                     self.partida.registrar_evento_log("ataque_errou", self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao))
                     self._falhar(acao, "ataque_errou", alvo_id=alvo.id_batalha)

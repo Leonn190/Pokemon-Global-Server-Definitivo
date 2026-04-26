@@ -116,8 +116,8 @@ class _ListaRegistrosLog(PainelRolavel):
         self._texto_medidor.Rect = pygame.Rect(0, 0, largura, 10)
         self._texto_medidor.set_segmentos([dict(item) for item in list(registro.get("segmentos") or []) if isinstance(item, dict)])
         altura_texto = max(20, self._texto_medidor.medir_altura())
-        altura = 18 + 18 + altura_texto + 14
-        return max(70, altura)
+        altura = 18 + altura_texto + 18
+        return max(58, altura)
 
     def draw(self, tela):
         tela.fill((0, 0, 0, 0))
@@ -145,14 +145,14 @@ class _ListaRegistrosLog(PainelRolavel):
             pygame.draw.rect(cartao, faixa, pygame.Rect(0, 0, 6, rect.height), border_radius=14)
             tela.blit(cartao, rect.topleft)
 
-            fase = str(registro.get("fase_label") or "")
+            fase = ""
             tick = int(registro.get("tick", 0) or 0)
             if fase:
                 self._texto_fase.set_text(f"{fase}  •  Tick {tick}")
                 self._texto_fase.set_pos((rect.x + 16, rect.y + 10))
                 self._texto_fase.draw(tela)
 
-            self._texto_medidor.Rect = pygame.Rect(rect.x + 16, rect.y + 30, rect.width - 32, rect.height - 42)
+            self._texto_medidor.Rect = pygame.Rect(rect.x + 16, rect.y + 14, rect.width - 32, rect.height - 26)
             self._texto_medidor.set_segmentos([dict(item) for item in list(registro.get("segmentos") or []) if isinstance(item, dict)])
             self._texto_medidor.draw(tela)
             for area in self._texto_medidor.obter_areas_tooltip():
@@ -329,8 +329,8 @@ class VisualizadorLog:
         }
 
     def _atributo_dano(self, evento: Dict[str, object]) -> str:
-        dano_tipo = str(evento.get("dano_tipo") or "").strip().casefold()
-        if dano_tipo == "especial":
+        dano_tipo = str(evento.get("dano_tipo") or evento.get("categoria") or "").strip().casefold()
+        if dano_tipo in {"especial", "spa", "magico"}:
             return "spa"
         return "atk"
 
@@ -338,7 +338,13 @@ class VisualizadorLog:
         descricao = "\n".join([str(linha) for linha in linhas if str(linha or "").strip()])
         return (titulo, descricao)
 
+    def _tooltip_calculo(self, titulo: str, evento: Dict[str, object], fallback: list[str]) -> tuple[str, str]:
+        calculo = [str(linha) for linha in list(evento.get("calculo") or []) if str(linha or "").strip()]
+        return self._tooltip_valor_simples(titulo, calculo or fallback)
+
     def _tooltip_dano(self, evento: Dict[str, object]) -> tuple[str, str]:
+        if isinstance(evento.get("calculo"), list) and evento.get("calculo"):
+            return self._tooltip_valor_simples("Detalhes do dano", [str(linha) for linha in evento.get("calculo")])
         detalhes = dict(evento.get("detalhes") or {})
         linhas: list[str] = []
 
@@ -410,6 +416,46 @@ class VisualizadorLog:
             "segmentos": [self._segmento(mensagem)],
         }
 
+    def _cores_evento(self, tipo: str, evento: Dict[str, object]):
+        cores = {
+            "laranja": ((82, 43, 18, 238), (232, 126, 46), (255, 158, 76)),
+            "roxo": ((48, 28, 70, 238), (168, 104, 224), (206, 150, 255)),
+            "azul": ((18, 42, 68, 238), (74, 156, 235), (122, 202, 255)),
+            "verde": ((18, 58, 36, 238), (72, 190, 104), (124, 230, 152)),
+            "amarelo": ((72, 60, 22, 238), (218, 184, 70), (255, 222, 112)),
+            "vermelho": ((82, 26, 30, 238), (226, 70, 78), (255, 126, 132)),
+            "rosa": ((72, 32, 58, 238), (224, 104, 172), (255, 158, 210)),
+            "marrom": ((58, 42, 30, 238), (166, 118, 78), (210, 158, 112)),
+            "cinza": ((42, 46, 54, 238), (132, 142, 156), (176, 186, 202)),
+        }
+        if tipo == "ataque_resumo":
+            impactos = [dict(item) for item in list(evento.get("impactos") or []) if isinstance(item, dict)]
+            if bool(evento.get("critico", False)) or any(bool(i.get("critico", False)) for i in impactos):
+                return cores["vermelho"]
+            if any(str(i.get("tipo") or "") == "pokemon_recebeu_efeito" and str(i.get("tipo_efeito") or i.get("tipo") or "").lower() == "negativo" for i in impactos):
+                return cores["roxo"]
+            danos = [i for i in impactos if str(i.get("tipo") or "") in {"pokemon_sofreu_dano", "barreira_absorveu"}]
+            if danos:
+                if any(str(i.get("categoria") or "").lower() in {"especial", "spa", "magico"} for i in danos):
+                    return cores["roxo"]
+                return cores["laranja"]
+            if any(str(i.get("tipo") or "") in {"pokemon_recebeu_cura", "pokemon_ganhou_barreira", "pokemon_recebeu_efeito"} for i in impactos):
+                return cores["rosa"]
+            return cores["cinza"]
+        if tipo in {"pokemon_moveu", "movimento"}:
+            return cores["azul"]
+        if tipo in {"pokemon_trocou_posicao", "pokemon_trocou_reserva", "troca"}:
+            return cores["verde"]
+        if tipo in {"efeito_expirou", "clima_expirou"}:
+            return cores["amarelo"]
+        if tipo in {"passiva", "passivo"}:
+            return cores["marrom"]
+        if tipo == "pokemon_morreu":
+            return cores["vermelho"]
+        if tipo in {"acao_falhou", "ataque_errou", "ataque_sem_alvo_real"}:
+            return cores["cinza"]
+        return self._CORES_TIPO.get(tipo, cores["cinza"])
+
     def _registro_evento(self, evento: Dict[str, object], tick: int, fase: str) -> dict[str, object]:
         if isinstance(evento.get("dados"), dict):
             dados = dict(evento.get("dados") or {})
@@ -420,7 +466,51 @@ class VisualizadorLog:
         alvo = self._nome_pokemon(evento, "alvo_nome", "alvo_id")
         pokemon = self._nome_pokemon(evento, "pokemon_nome", "pokemon_id")
 
-        if tipo == "rodada_iniciada":
+        if tipo == "ataque_resumo":
+            base = dict(evento.get("base") or {})
+            usuario = str(base.get("usuario_nome") or pokemon)
+            ataque = str(base.get("ataque_nome") or "Ataque")
+            area = str(base.get("area_alvo") or base.get("area_alvo_real") or "").strip()
+            segmentos = [self._segmento(usuario), self._segmento(" usou "), self._segmento(ataque)]
+            impactos = [dict(item) for item in list(evento.get("impactos") or []) if isinstance(item, dict)]
+            falhas = [dict(item) for item in list(evento.get("falhas") or []) if isinstance(item, dict)]
+            if impactos:
+                segmentos.append(self._segmento(" e atingiu "))
+                partes = []
+                for impacto in impactos:
+                    alvo_nome = str(impacto.get("alvo_nome") or impacto.get("pokemon_nome") or impacto.get("efeito_nome") or "alvo")
+                    itipo = str(impacto.get("tipo") or "").strip().casefold()
+                    if itipo == "pokemon_sofreu_dano":
+                        titulo, descricao = self._tooltip_dano(impacto)
+                        partes.append([self._segmento(alvo_nome), self._segmento(" causando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo=self._atributo_dano(impacto), titulo=titulo, descricao=descricao), self._segmento(" de dano")])
+                    elif itipo == "barreira_absorveu":
+                        titulo, descricao = self._tooltip_calculo("Detalhes da barreira", impacto, [f"Barreira absorveu: {self._formatar_numero(impacto.get('dano_barreira', 0))}"])
+                        partes.append([self._segmento(alvo_nome), self._segmento(" absorvendo "), self._segmento(self._formatar_numero(impacto.get("dano_barreira", 0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" na barreira")])
+                    elif itipo == "pokemon_recebeu_cura":
+                        titulo, descricao = self._tooltip_calculo("Detalhes da cura", impacto, [f"Cura final = {self._formatar_numero(impacto.get('valor', 0))}"])
+                        partes.append([self._segmento(alvo_nome), self._segmento(" curando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo="vida", titulo=titulo, descricao=descricao), self._segmento(" de vida")])
+                    elif itipo == "pokemon_ganhou_barreira":
+                        titulo, descricao = self._tooltip_calculo("Detalhes da barreira", impacto, [f"Barreira final = {self._formatar_numero(impacto.get('valor', 0))}"])
+                        partes.append([self._segmento(alvo_nome), self._segmento(" ganhando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" de barreira")])
+                    elif itipo == "pokemon_recebeu_efeito":
+                        efeito = str(impacto.get("efeito_nome") or "efeito")
+                        passos = impacto.get("passos_restantes", "?")
+                        partes.append([self._segmento(alvo_nome), self._segmento(" recebendo "), self._segmento(efeito), self._segmento(f" por {passos} passos")])
+                for idx, parte in enumerate(partes):
+                    if idx > 0:
+                        segmentos.append(self._segmento(", "))
+                    segmentos.extend(parte)
+            elif bool(evento.get("sem_alvo", False)):
+                segmentos.extend([self._segmento(" em "), self._segmento(f"Area {area}" if area else "uma area"), self._segmento(", mas nao encontrou alvo")])
+            elif falhas:
+                alvo_falha = str(falhas[0].get("alvo_nome") or falhas[0].get("alvo_id") or area or "o alvo")
+                segmentos.extend([self._segmento(" em "), self._segmento(alvo_falha), self._segmento(", mas errou")])
+            elif area:
+                segmentos.extend([self._segmento(" em "), self._segmento(f"Area {area}")])
+            if bool(evento.get("critico", False)):
+                segmentos.append(self._segmento(" (critico)"))
+            segmentos.append(self._segmento("."))
+        elif tipo == "rodada_iniciada":
             segmentos = [self._segmento(f"Rodada {evento.get('rodada')} iniciada.")]
         elif tipo == "rodada_finalizada":
             segmentos = [self._segmento(f"Rodada {evento.get('rodada')} finalizada.")]
@@ -450,7 +540,7 @@ class VisualizadorLog:
         elif tipo == "ataque_acertou":
             segmentos = [self._segmento(str(evento.get("usuario_nome") or pokemon)), self._segmento(" acertou "), self._segmento(str(evento.get("alvo_nome") or "o alvo")), self._segmento(".")]
         elif tipo == "pokemon_sofreu_dano":
-            titulo, descricao = self._tooltip_vida("Detalhes do dano", evento.get("valor", 0.0), evento.get("vida_antes", 0.0), evento.get("vida_depois", 0.0))
+            titulo, descricao = self._tooltip_calculo("Detalhes do dano", evento, [f"Valor aplicado: {self._formatar_numero(evento.get('valor', 0.0))}", f"Antes: {self._formatar_numero(evento.get('vida_antes', 0.0))}", f"Depois: {self._formatar_numero(evento.get('vida_depois', 0.0))}"])
             segmentos = [self._segmento(str(evento.get("alvo_nome") or pokemon)), self._segmento(" sofreu "), self._segmento(self._formatar_numero(evento.get("valor", 0.0)), atributo="atk", titulo=titulo, descricao=descricao), self._segmento(" de dano.")]
             if bool(evento.get("critico", False)):
                 segmentos.append(self._segmento(" Foi critico."))
@@ -458,10 +548,10 @@ class VisualizadorLog:
             titulo, descricao = self._tooltip_valor_simples("Detalhes da barreira", [f"Antes: {self._formatar_numero(evento.get('barreira_antes', 0))}", f"Depois: {self._formatar_numero(evento.get('barreira_depois', 0))}"])
             segmentos = [self._segmento("A barreira de "), self._segmento(str(evento.get("alvo_nome") or alvo)), self._segmento(" absorveu "), self._segmento(self._formatar_numero(evento.get("dano_barreira", 0.0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" de dano.")]
         elif tipo == "pokemon_recebeu_cura":
-            titulo, descricao = self._tooltip_vida("Detalhes da cura", evento.get("valor", 0.0), evento.get("vida_antes", 0.0), evento.get("vida_depois", 0.0))
+            titulo, descricao = self._tooltip_calculo("Detalhes da cura", evento, [f"Valor aplicado: {self._formatar_numero(evento.get('valor', 0.0))}", f"Antes: {self._formatar_numero(evento.get('vida_antes', 0.0))}", f"Depois: {self._formatar_numero(evento.get('vida_depois', 0.0))}"])
             segmentos = [self._segmento(str(evento.get("alvo_nome") or pokemon)), self._segmento(" recuperou "), self._segmento(self._formatar_numero(evento.get("valor", 0.0)), atributo="vida", titulo=titulo, descricao=descricao), self._segmento(" de vida.")]
         elif tipo == "pokemon_ganhou_barreira":
-            titulo, descricao = self._tooltip_barreira(evento.get("valor", 0.0), evento.get("barreira_depois", 0.0))
+            titulo, descricao = self._tooltip_calculo("Detalhes da barreira", evento, [f"Barreira ganha: {self._formatar_numero(evento.get('valor', 0.0))}", f"Barreira total: {self._formatar_numero(evento.get('barreira_depois', 0.0))}"])
             segmentos = [self._segmento(str(evento.get("alvo_nome") or pokemon)), self._segmento(" ganhou "), self._segmento(self._formatar_numero(evento.get("valor", 0.0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" de barreira.")]
         elif tipo == "pokemon_recebeu_efeito":
             segmentos = [self._segmento(pokemon), self._segmento(" recebeu "), self._segmento(str(evento.get("efeito_nome") or "efeito")), self._segmento(f" por {evento.get('passos_restantes', '?')} passos.")]
@@ -471,6 +561,8 @@ class VisualizadorLog:
             segmentos = [self._segmento(str(evento.get("efeito_nome") or "Efeito")), self._segmento(" tickou em "), self._segmento(pokemon), self._segmento(f": {evento.get('passos_antes', '?')} -> {evento.get('passos_depois', '?')}.")]
         elif tipo == "efeito_expirou":
             segmentos = [self._segmento(str(evento.get("efeito_nome") or "Efeito")), self._segmento(" expirou em "), self._segmento(pokemon), self._segmento(".")]
+        elif tipo == "clima_expirou":
+            segmentos = [self._segmento("Clima "), self._segmento(str(evento.get("clima") or evento.get("clima_nome") or "ativo")), self._segmento(" expirou.")]
         elif tipo == "pokemon_moveu":
             segmentos = [self._segmento(pokemon), self._segmento(" moveu-se de "), self._segmento(str(evento.get("area_origem") or "?")), self._segmento(" para "), self._segmento(str(evento.get("area_destino") or "?")), self._segmento(".")]
         elif tipo == "pokemon_trocou_posicao":
@@ -483,6 +575,16 @@ class VisualizadorLog:
             segmentos = [self._segmento(pokemon), self._segmento(" saiu de campo.")]
         elif tipo == "pokemon_morreu":
             segmentos = [self._segmento(pokemon), self._segmento(" desmaiou.")]
+        elif tipo in {"passiva", "passivo"}:
+            nome_passiva = str(evento.get("passiva") or evento.get("nome") or "Passiva")
+            segmentos = [self._segmento("Passiva "), self._segmento(nome_passiva), self._segmento(" ativou em "), self._segmento(pokemon)]
+            atributos = []
+            for chave in ("Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Amp", "Dur"):
+                if chave in evento:
+                    atributos.append(f"{chave} {self._formatar_numero(evento.get(chave))}")
+            if atributos:
+                segmentos.extend([self._segmento(": "), self._segmento(", ".join(atributos))])
+            segmentos.append(self._segmento("."))
         elif tipo == "acao":
             ataque = str(evento.get("ataque") or "ação")
             destino = evento.get("destino")
@@ -630,7 +732,7 @@ class VisualizadorLog:
         else:
             segmentos = [self._segmento(f"{executor}: evento {tipo or 'desconhecido'}.")]
 
-        cor_fundo, cor_borda, cor_faixa = self._CORES_TIPO.get(tipo, ((20, 28, 44, 228), (90, 112, 152), (126, 154, 204)))
+        cor_fundo, cor_borda, cor_faixa = self._cores_evento(tipo, evento)
         return {
             "tipo": tipo,
             "tick": int(tick),
@@ -655,10 +757,43 @@ class VisualizadorLog:
 
         historico = [dict(item) for item in list((log or {}).get("historico") or []) if isinstance(item, dict)]
         if historico and any("tipo" in item for item in historico):
+            atual = None
             for idx, evento in enumerate(historico, start=1):
+                evento = self._evento_plano(evento)
                 if not self._evento_deve_aparecer(evento):
                     continue
-                saida.append({"tick": int(evento.get("ordem") or idx), "fase": "segmentacao", "evento": evento})
+                tipo = str(evento.get("tipo") or "").strip().casefold()
+                tick = int(evento.get("ordem") or idx)
+                if tipo == "ataque_usado":
+                    atual = {"tipo": "ataque_resumo", "base": dict(evento), "impactos": [], "falhas": [], "sem_alvo": False, "critico": False}
+                    saida.append({"tick": tick, "fase": "segmentacao", "evento": atual})
+                    continue
+                if atual is not None and tipo in {"pokemon_sofreu_dano", "barreira_absorveu", "pokemon_recebeu_cura", "pokemon_ganhou_barreira", "pokemon_recebeu_efeito"}:
+                    impacto = dict(evento)
+                    if tipo == "pokemon_recebeu_efeito":
+                        impacto["tipo_efeito"] = str(evento.get("tipo_efeito") or evento.get("tipo_status") or evento.get("efeito_tipo") or evento.get("tipo") or "")
+                        if not impacto["tipo_efeito"] and isinstance(evento.get("efeito"), dict):
+                            impacto["tipo_efeito"] = str(evento["efeito"].get("tipo") or "")
+                    atual["impactos"].append(impacto)
+                    if bool(evento.get("critico", False)):
+                        atual["critico"] = True
+                    continue
+                if atual is not None and tipo == "ataque_errou":
+                    atual["falhas"].append(dict(evento))
+                    continue
+                if atual is not None and tipo == "ataque_sem_alvo_real":
+                    atual["sem_alvo"] = True
+                    continue
+                if atual is not None and tipo == "acao_falhou":
+                    atual["falhas"].append(dict(evento))
+                    continue
+                if tipo in {"ataque_acertou", "acao_iniciada", "pokemon_gastou_energia", "pokemon_ganhou_energia", "efeito_tickou", "pokemon_entrou", "pokemon_saiu"}:
+                    continue
+                if atual is not None and tipo in {"passiva", "passivo", "pokemon_morreu"}:
+                    saida.append({"tick": tick, "fase": "segmentacao", "evento": evento})
+                    continue
+                atual = None
+                saida.append({"tick": tick, "fase": "segmentacao", "evento": evento})
             return saida
         for bloco in historico:
             tick = int(bloco.get("tick", 0) or 0)
@@ -679,8 +814,34 @@ class VisualizadorLog:
         flush_movimentos()
         return saida
 
+    @staticmethod
+    def _evento_plano(evento: Dict[str, object]) -> Dict[str, object]:
+        out = dict(evento or {})
+        dados = out.get("dados") if isinstance(out.get("dados"), dict) else {}
+        for chave, valor in dados.items():
+            if chave == "tipo" and "tipo" in out:
+                out.setdefault("tipo_efeito", valor)
+            else:
+                out.setdefault(chave, valor)
+        return out
+
     def _evento_deve_aparecer(self, evento: Dict[str, object]) -> bool:
+        evento = self._evento_plano(evento)
         tipo = str(evento.get("tipo") or "").strip().casefold()
+        ocultos = {
+            "rodada_iniciada",
+            "rodada_finalizada",
+            "batalha_finalizada",
+            "acao_iniciada",
+            "pokemon_gastou_energia",
+            "pokemon_ganhou_energia",
+            "efeito_tickou",
+            "ataque_acertou",
+            "pokemon_entrou",
+            "pokemon_saiu",
+        }
+        if tipo in ocultos:
+            return False
         if tipo != "dano":
             return True
         detalhes = dict(evento.get("detalhes") or {})
@@ -709,7 +870,7 @@ class VisualizadorLog:
             if not eventos:
                 return [
                     self._registro_placeholder(
-                        "A rodada começou. Os registros vão surgir em ordem conforme a animação do combate avança.",
+                        "As acoes vao surgir em ordem conforme a animacao do combate avanca.",
                         subtitulo="Reproduzindo rodada",
                     )
                 ]
@@ -735,11 +896,12 @@ class VisualizadorLog:
         replay = dict(self._estado_logs.get("replay") or {})
         turno_replay = int(replay.get("turno_atual", 0) or 0)
         ultimo_turno = max(1, int(self._estado_logs.get("ultimo_turno_com_log", 0) or 0))
+        rodada_atual = max(1, int(self._estado_logs.get("rodada_atual", ultimo_turno) or ultimo_turno))
         if bool(replay.get("ativo", False)) and turno_replay > 0:
             self._rodada_selecionada = turno_replay
             self._rodada_manual = False
         elif not self._rodada_manual or int(self._rodada_selecionada or 1) > ultimo_turno:
-            self._rodada_selecionada = ultimo_turno
+            self._rodada_selecionada = max(1, min(ultimo_turno, rodada_atual - 1 if rodada_atual > 1 else 1))
 
         log = self._controlador.obter_log_publico(self._rodada_selecionada) if hasattr(self._controlador, "obter_log_publico") else None
         registros = self._registros_rodada(self._rodada_selecionada, log, replay)
@@ -827,7 +989,7 @@ class VisualizadorLog:
         if bool(replay.get("ativo", False)) and int(replay.get("turno_atual", 0) or 0) == int(self._rodada_selecionada):
             tick_atual = max(0, int(replay.get("tick_atual", 0) or 0))
             tick_final = max(0, int(replay.get("tick_final", 0) or 0))
-            self._texto_subtitulo.set_text(f"Reproduzindo ticks: {tick_atual}/{tick_final}")
+            self._texto_subtitulo.set_text(f"Reproduzindo ações: {tick_atual}/{tick_final}")
         else:
             self._texto_subtitulo.set_text("Histórico da batalha")
         self._texto_subtitulo.set_pos((self._rect_painel.x + 16, self._rect_painel.y + 44))

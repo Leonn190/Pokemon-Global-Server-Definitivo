@@ -12,12 +12,13 @@ name_candidates = [
 ]
 
 [villages]
-min_count = 24
+min_count = 25
 max_count = 30
 min_distance = 340
 margin = 180
 near_water_radius = 3
 clear_radius = 24
+area_chunks = 7
 allowed_biomes = ["FIELD", "FOREST", "DESERT", "SNOW", "SWAMP", "MAGIC"]
 name_candidates = [
   "Vila Nova", "Boa Vista", "Santa Rosa", "Vale Verde", "Campo Belo", "Rio Claro", "Ponte Alta", "Pedra Branca",
@@ -29,10 +30,10 @@ name_candidates = [
 ]
 
 [houses]
-min_per_village = 8
-max_per_village = 16
-radius = 28
-min_distance_from_center = 4
+min_per_village = 35
+max_per_village = 70
+radius = 48
+min_distance_from_center = 2
 
 [gyms]
 count = 20
@@ -44,10 +45,10 @@ area_chunks = 5
 clear_margin_tiles = 3
 
 [routes]
-min_count = 49
-max_count = 64
-min_village_links = 2
-max_village_links = 5
+min_count = 0
+max_count = 0
+min_village_links = 3
+max_village_links = 4
 min_distance = 140
 max_distance = 2400
 shallow_water_penalty = 10

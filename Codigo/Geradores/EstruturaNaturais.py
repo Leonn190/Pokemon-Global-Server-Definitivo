@@ -33,6 +33,7 @@ ESTRUTURAS_NATURAIS_TIPOS: Dict[int, Dict[str, object]] = {
     21: {"subtipo": "safira", "nome": "Safira", "sprite": "Recursos/Visual/Mundo/Objetos/Safira.png"},
     22: {"subtipo": "topazio", "nome": "Topázio", "sprite": "Recursos/Visual/Mundo/Objetos/Topazio.png"},
     23: {"subtipo": "arvore_trombosa", "nome": "Arvore Frondosa", "sprite": "Recursos/Visual/Mundo/Objetos/Arvore Frondosa.png"},
+    24: {"subtipo": "casa", "nome": "Casa", "sprite": "Recursos/Visual/Mundo/Objetos/Casa.png"},
 }
 
 ORDEM_CANONICA_ESTRUTURAS_NATURAIS: Tuple[str, ...] = (
@@ -41,8 +42,8 @@ ORDEM_CANONICA_ESTRUTURAS_NATURAIS: Tuple[str, ...] = (
 _PRIORIDADE_SUBTIPO: Dict[str, int] = {nome: idx for idx, nome in enumerate(ORDEM_CANONICA_ESTRUTURAS_NATURAIS)}
 
 
-_LIMITE_ESCALA_ESTRUTURA_MIN = 0.90
-_LIMITE_ESCALA_ESTRUTURA_MAX = 1.10
+_LIMITE_ESCALA_ESTRUTURA_MIN = 0.85
+_LIMITE_ESCALA_ESTRUTURA_MAX = 1.15
 
 
 def definir_limites_escala_estrutura_natural(minimo: object, maximo: object) -> None:
@@ -50,11 +51,11 @@ def definir_limites_escala_estrutura_natural(minimo: object, maximo: object) -> 
     try:
         min_val = float(minimo)
     except (TypeError, ValueError):
-        min_val = 0.90
+        min_val = 0.85
     try:
         max_val = float(maximo)
     except (TypeError, ValueError):
-        max_val = 1.10
+        max_val = 1.15
     if min_val > max_val:
         min_val, max_val = max_val, min_val
     _LIMITE_ESCALA_ESTRUTURA_MIN = max(0.1, min_val)

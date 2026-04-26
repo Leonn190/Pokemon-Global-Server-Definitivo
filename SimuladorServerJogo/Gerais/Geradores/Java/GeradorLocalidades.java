@@ -41,6 +41,7 @@ final class LocalityRules {
     final int villageNearWaterRadius;
     final EnumSet<Biome> villageAllowedBiomes;
     final int villageClearRadius;
+    final int villageAreaChunks;
 
     final int housesMinPerVillage;
     final int housesMaxPerVillage;
@@ -65,6 +66,7 @@ final class LocalityRules {
         int villageNearWaterRadius,
         EnumSet<Biome> villageAllowedBiomes,
         int villageClearRadius,
+        int villageAreaChunks,
         int housesMinPerVillage,
         int housesMaxPerVillage,
         int houseRadius,
@@ -85,6 +87,7 @@ final class LocalityRules {
         this.villageNearWaterRadius = villageNearWaterRadius;
         this.villageAllowedBiomes = villageAllowedBiomes;
         this.villageClearRadius = villageClearRadius;
+        this.villageAreaChunks = Math.max(1, villageAreaChunks);
         this.housesMinPerVillage = housesMinPerVillage;
         this.housesMaxPerVillage = housesMaxPerVillage;
         this.houseRadius = houseRadius;
@@ -118,6 +121,7 @@ final class LocalityRules {
             villages.reqInt("near_water_radius"),
             SimpleToml.enumSet(Biome.class, villages.reqStringList("allowed_biomes")),
             villages.reqInt("clear_radius"),
+            villages.optInt("area_chunks", 7),
             houses.reqInt("min_per_village"),
             houses.reqInt("max_per_village"),
             houses.reqInt("radius"),
@@ -214,8 +218,7 @@ final class GeradorLocalidades {
     boolean isReservedForNaturalStructure(int x, int y) {
         for (Poi poi : ctx.pois) {
             if (poi.type == PoiType.VILLAGE) {
-                long rr = (long) rules.villageClearRadius * rules.villageClearRadius;
-                if (ctx.distanceSquared(x, y, poi.x, poi.y) <= rr) {
+                if (isInsideVillageArea(x, y, poi)) {
                     return true;
                 }
             } else if (poi.type == PoiType.GYM && isInsideGymReservedArea(x, y, poi, rules.gymConfig)) {
@@ -322,7 +325,17 @@ final class GeradorLocalidades {
         if (rules.villageNearWaterRadius > 0 && ctx.nearWater(x, y, rules.villageNearWaterRadius)) {
             return false;
         }
+        int chunkSize = Math.max(1, ctx.terrainRules.chunkSize);
+        int centroChunkX = x / chunkSize;
+        int centroChunkY = y / chunkSize;
         for (Poi poi : ctx.pois) {
+            if (poi.type == PoiType.VILLAGE) {
+                int outroChunkX = poi.x / chunkSize;
+                int outroChunkY = poi.y / chunkSize;
+                if (Math.abs(centroChunkX - outroChunkX) <= 9 && Math.abs(centroChunkY - outroChunkY) <= 9) {
+                    return false;
+                }
+            }
             if (ctx.distanceSquared(x, y, poi.x, poi.y) < (long) rules.villageMinDistance * rules.villageMinDistance) {
                 return false;
             }
@@ -339,20 +352,9 @@ final class GeradorLocalidades {
     }
 
     private void clearVillageArea(Poi village) {
-        int radius = Math.max(1, rules.villageClearRadius);
-        for (int dy = -radius; dy <= radius; dy++) {
-            int y = village.y + dy;
-            if (y < 0 || y >= ctx.height) {
-                continue;
-            }
-            for (int dx = -radius; dx <= radius; dx++) {
-                int x = village.x + dx;
-                if (x < 0 || x >= ctx.width) {
-                    continue;
-                }
-                if (dx * dx + dy * dy > radius * radius) {
-                    continue;
-                }
+        int[] area = villageAreaBounds(village);
+        for (int y = area[1]; y <= area[3]; y++) {
+            for (int x = area[0]; x <= area[2]; x++) {
                 ctx.naturalMap[ctx.index(x, y)] = (byte) NaturalStructure.NONE.ordinal();
             }
         }
@@ -360,22 +362,20 @@ final class GeradorLocalidades {
 
     private void placeVillageHouses(Poi village) {
         int houseTarget = rangedValue(rules.housesMinPerVillage, rules.housesMaxPerVillage, 5_001L + village.x * 13L + village.y * 17L);
+        int[] area = villageAreaBounds(village);
         int placed = 0;
         int attempts = 0;
-        while (placed < houseTarget && attempts < houseTarget * 140) {
+        while (placed < houseTarget && attempts < houseTarget * 520) {
             attempts++;
-            int dist = Math.max(rules.houseMinDistanceFromCenter,
-                ctx.boundedRandomInt(rules.houseMinDistanceFromCenter, Math.max(rules.houseMinDistanceFromCenter + 1, rules.houseRadius + 1), ctx.seed + village.x * 71L + village.y * 89L + attempts * 23L));
-            double angle = ctx.random01(ctx.seed + village.x * 101L + village.y * 131L + attempts * 41L) * (Math.PI * 2.0);
-            int x = village.x + (int) Math.round(Math.cos(angle) * dist);
-            int y = village.y + (int) Math.round(Math.sin(angle) * dist);
+            int x = ctx.boundedRandomInt(area[0], area[2] + 1, ctx.seed + village.x * 71L + village.y * 89L + attempts * 23L);
+            int y = ctx.boundedRandomInt(area[1], area[3] + 1, ctx.seed + village.x * 101L + village.y * 131L + attempts * 41L);
             if (x <= 1 || y <= 1 || x >= ctx.width - 1 || y >= ctx.height - 1) {
                 continue;
             }
             if (!isLandCandidate(x, y) || ctx.nearWater(x, y, 1)) {
                 continue;
             }
-            if (ctx.distanceSquared(x, y, village.x, village.y) <= 1) {
+            if (Math.abs(x - village.x) <= rules.houseMinDistanceFromCenter && Math.abs(y - village.y) <= rules.houseMinDistanceFromCenter) {
                 continue;
             }
             int idx = ctx.index(x, y);
@@ -395,6 +395,29 @@ final class GeradorLocalidades {
             ctx.naturalMap[idx] = (byte) NaturalStructure.HOUSE.ordinal();
             placed++;
         }
+    }
+
+    private int[] villageAreaBounds(Poi village) {
+        int chunkSize = Math.max(1, ctx.terrainRules.chunkSize);
+        int chunksX = Math.max(1, (int) Math.ceil(ctx.width / (double) chunkSize));
+        int chunksY = Math.max(1, (int) Math.ceil(ctx.height / (double) chunkSize));
+        int centerChunkX = ctx.clamp(village.x / chunkSize, 0, chunksX - 1);
+        int centerChunkY = ctx.clamp(village.y / chunkSize, 0, chunksY - 1);
+        int radiusChunks = Math.max(0, rules.villageAreaChunks / 2);
+        int minChunkX = Math.max(0, centerChunkX - radiusChunks);
+        int maxChunkX = Math.min(chunksX - 1, centerChunkX + radiusChunks);
+        int minChunkY = Math.max(0, centerChunkY - radiusChunks);
+        int maxChunkY = Math.min(chunksY - 1, centerChunkY + radiusChunks);
+        int x0 = minChunkX * chunkSize;
+        int y0 = minChunkY * chunkSize;
+        int x1 = Math.min(ctx.width - 1, ((maxChunkX + 1) * chunkSize) - 1);
+        int y1 = Math.min(ctx.height - 1, ((maxChunkY + 1) * chunkSize) - 1);
+        return new int[] {x0, y0, x1, y1};
+    }
+
+    private boolean isInsideVillageArea(int x, int y, Poi village) {
+        int[] area = villageAreaBounds(village);
+        return x >= area[0] && x <= area[2] && y >= area[1] && y <= area[3];
     }
 
     private void generateGyms() {

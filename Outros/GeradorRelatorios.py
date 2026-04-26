@@ -1605,10 +1605,20 @@ def main() -> None:
     md_path.write_text(md_local, encoding="utf-8")
     registro_md_path.write_text(md_root, encoding="utf-8")
 
+    try:
+        from AtualizadorReadMe import atualizar_readme
+
+        readme_atualizado_path = atualizar_readme(repo_root)
+    except Exception as exc:
+        readme_atualizado_path = None
+        print(f"- README: não atualizado automaticamente ({exc})")
+
     print("Relatório gerado:")
     print(f"- JSON: {json_path}")
     print(f"- Markdown do relatório: {md_path}")
     print(f"- Markdown da raiz: {registro_md_path}")
+    if readme_atualizado_path is not None:
+        print(f"- README atualizado: {readme_atualizado_path}")
     if graficos:
         print(f"- Pasta de imagens: {imagens_base_dir / basename}")
     else:

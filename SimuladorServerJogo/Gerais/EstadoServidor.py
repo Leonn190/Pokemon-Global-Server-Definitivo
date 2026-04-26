@@ -619,9 +619,13 @@ def obter_regras_cliente() -> dict:
     regras = carregar_regras_cliente_mundo()
     meta = _ESTADO_MUNDO.get("meta", {}) if isinstance(_ESTADO_MUNDO.get("meta"), dict) else {}
     seed_mundo = int(meta.get("seed", 0) or 0)
-    variacao = carregar_regras_estruturas_naturais().get("variacao", {})
+    regras_estruturas = carregar_regras_estruturas_naturais()
+    variacao = regras_estruturas.get("variacao", {})
     escala_min = float(variacao.get("escala_min", 0.85) or 0.85) if isinstance(variacao, dict) else 0.85
     escala_max = float(variacao.get("escala_max", 1.15) or 1.15) if isinstance(variacao, dict) else 1.15
+    tipos_estrutura = regras_estruturas.get("tipos", {}) if isinstance(regras_estruturas.get("tipos"), dict) else {}
+    escala_base_max = max((float(cfg.get("escala_base", 1.0) or 1.0) for cfg in tipos_estrutura.values() if isinstance(cfg, dict)), default=1.0)
+    escala_max *= max(1.0, escala_base_max)
     if escala_min > escala_max:
         escala_min, escala_max = escala_max, escala_min
     regras["player"] = dict(carregar_regras_player())

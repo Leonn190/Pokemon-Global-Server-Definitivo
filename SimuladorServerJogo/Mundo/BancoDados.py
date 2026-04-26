@@ -224,6 +224,7 @@ class BancoDadosMundo:
                     escala_min, escala_max = self._limites_escala_estrutura()
                     escala_rng = self._rng01_estrutura(gx, gy, tile_nat, sal=1)
                     escala_mundo = escala_min + (escala_max - escala_min) * escala_rng
+                    escala_mundo *= float(cfg.get("escala_base", 1.0) if cfg.get("escala_base", 1.0) not in (None, "") else 1.0)
 
                     subtipo = str(cfg.get("subtipo", "natural") or "natural")
                     variantes_subtipos = {str(v).strip().lower() for v in (variacao.get("subtipos_variantes") or [])}
@@ -256,6 +257,7 @@ class BancoDadosMundo:
                         estilo=str(cfg.get("estilo", "") or ""),
                         dureza=int(cfg.get("dureza", 1) if cfg.get("dureza", 1) not in (None, "") else 1),
                         drop_ativo=bool(cfg.get("drop_ativo", True)),
+                        inquebravel=bool(cfg.get("inquebravel", False)),
                     )
                     obj.estado_extra["escala_mundo"] = float(round(escala_mundo, 5))
                     obj.estado_extra["variante_sprite"] = int(variante_idx)

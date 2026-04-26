@@ -64,7 +64,7 @@ class TelaMapa:
         topo = 14
         gap = 8
         x = jogo.TELA.get_width() - largura - 14
-        nomes = ["Vilas", "Estádios", "Regiões"]
+        nomes = ["Rotas", "Vilas", "Estádios", "Regiões"]
         for i, nome in enumerate(nomes):
             self._botoes[nome] = BotaoAlavanca(pygame.Rect(x, topo + i * (altura + gap), largura, altura), nome, estado_inicial=(nome != "Regiões"), style=estilo)
 
@@ -166,6 +166,26 @@ class TelaMapa:
             max(1, int(altura_m * self.zoom)),
         )
         pygame.draw.rect(tela, (190, 196, 212), borda, 2)
+
+        if self._botoes["Rotas"].estado:
+            largura_rota = max(2, min(8, int(2 + self.zoom * 0.45)))
+            for rota in getattr(servico_mapa, "rotas", []):
+                pontos = rota.get("pontos") if isinstance(rota, dict) else None
+                if not isinstance(pontos, list) or len(pontos) < 2:
+                    continue
+                segmento = []
+                for pos in pontos:
+                    if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
+                        continue
+                    cx, cy = int(float(pos[0]) // ger.chunk_blocos), int(float(pos[1]) // ger.chunk_blocos)
+                    if not ger.chunk_explorado(cx, cy):
+                        if len(segmento) >= 2:
+                            pygame.draw.lines(tela, (174, 112, 62), False, segmento, largura_rota)
+                        segmento = []
+                        continue
+                    segmento.append(self._mundo_para_tela(pos))
+                if len(segmento) >= 2:
+                    pygame.draw.lines(tela, (174, 112, 62), False, segmento, largura_rota)
 
         if self._botoes["Vilas"].estado:
             for vila in servico_mapa.vilas:

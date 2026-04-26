@@ -208,13 +208,13 @@ TOPAZ = 0.0
 [biomes.MAGIC]
 base_tile = "MAGIC_SOIL"
 coast_tile = "BEACH_SAND"
-weight = 0.30
+weight = 0.58
 temperature_min = 0.0
 temperature_max = 1.0
 moisture_min = 0.0
 moisture_max = 1.0
 primary_source = "MAGIC"
-primary_min = 0.70
+primary_min = 0.58
 primary_max = 1.0
 
 [biomes.MAGIC.objects]

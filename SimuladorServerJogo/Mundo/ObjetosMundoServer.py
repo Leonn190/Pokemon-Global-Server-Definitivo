@@ -121,7 +121,7 @@ class BauServer:
 
 
 class EstruturaNaturalServer:
-    def __init__(self, id_objeto: int, tipo: str, nome: str, sprite: str, posicao: Vector2 = (0.0, 0.0), raio_colisao: float = 20.0, raio_interacao: float = 26.0, campo: float = 0.0, intensidade: float = 0.0, codigo_natural: int = 0, quantidade: int = 0, material: str = "", estilo: str = "", dureza: int = 1, drop_ativo: bool = True):
+    def __init__(self, id_objeto: int, tipo: str, nome: str, sprite: str, posicao: Vector2 = (0.0, 0.0), raio_colisao: float = 20.0, raio_interacao: float = 26.0, campo: float = 0.0, intensidade: float = 0.0, codigo_natural: int = 0, quantidade: int = 0, material: str = "", estilo: str = "", dureza: int = 1, drop_ativo: bool = True, inquebravel: bool = False):
         self.id_objeto = int(id_objeto)
         self.Id = self.id_objeto
         self.tipo_classe = "estrutura_natural"
@@ -138,6 +138,7 @@ class EstruturaNaturalServer:
             "estilo": str(estilo or ""),
             "dureza": int(dureza if dureza not in (None, "") else 1),
             "drop_ativo": bool(drop_ativo),
+            "inquebravel": bool(inquebravel),
         }
         self.nome = str(nome)
         self.sprite = str(sprite)
@@ -152,6 +153,8 @@ class EstruturaNaturalServer:
         return max(0, int(self.estado_extra.get("quantidade", 0) or 0))
 
     def tentar_coleta(self, fator_ferramenta: int, estilo_ferramenta: str = "") -> int:
+        if bool(self.estado_extra.get("inquebravel", False)):
+            return 0
         restante = self.quantidade_restante
         if restante <= 0:
             return 0
@@ -487,5 +490,5 @@ def criar_objeto_mundo_server(dados: Dict[str, object]):
     if str(estado.get("subtipo", "")).strip().lower() == "bau" or tipo == "entidade_bau":
         return BauServer(id_objeto=oid, tipo_bau=str(estado.get("tipo_bau", "Comum")), itens=list(estado.get("itens", [])), posicao=(float(pos[0]), float(pos[1])), aberto=bool(estado.get("aberto", False)), raio_colisao=float(dados.get("raio_colisao", 0.42)), raio_interacao=float(dados.get("raio_interacao", 0.85) or 0.85), quantidade_itens=int(estado.get("quantidade_itens", max(1, len(list(estado.get("itens", [])))))), tamanho_tiles=float(estado.get("tamanho_tiles", 1.10) or 1.10))
     if tipo.startswith("estrutura") or tipo == "estrutura_natural":
-        return EstruturaNaturalServer(id_objeto=oid, tipo=str(estado.get("subtipo") or "natural"), nome=str(dados.get("nome") or "Estrutura"), sprite=str(dados.get("sprite") or ""), posicao=(float(pos[0]), float(pos[1])), raio_colisao=float(dados.get("raio_colisao", 1.0)), raio_interacao=float(dados.get("raio_interacao", 1.0)), campo=float(dados.get("campo", 0.0)), intensidade=float(dados.get("intensidade", 0.0)), codigo_natural=int(dados.get("codigo_natural", 0) or 0), quantidade=int(estado.get("quantidade", 0) or 0), material=str(estado.get("material", "") or ""), estilo=str(estado.get("estilo", "") or ""), dureza=int(estado.get("dureza", 1) or 1), drop_ativo=bool(estado.get("drop_ativo", True)))
+        return EstruturaNaturalServer(id_objeto=oid, tipo=str(estado.get("subtipo") or "natural"), nome=str(dados.get("nome") or "Estrutura"), sprite=str(dados.get("sprite") or ""), posicao=(float(pos[0]), float(pos[1])), raio_colisao=float(dados.get("raio_colisao", 1.0)), raio_interacao=float(dados.get("raio_interacao", 1.0)), campo=float(dados.get("campo", 0.0)), intensidade=float(dados.get("intensidade", 0.0)), codigo_natural=int(dados.get("codigo_natural", 0) or 0), quantidade=int(estado.get("quantidade", 0) or 0), material=str(estado.get("material", "") or ""), estilo=str(estado.get("estilo", "") or ""), dureza=int(estado.get("dureza", 1) or 1), drop_ativo=bool(estado.get("drop_ativo", True)), inquebravel=bool(estado.get("inquebravel", False)))
     return None

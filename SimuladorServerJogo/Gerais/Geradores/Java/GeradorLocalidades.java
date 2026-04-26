@@ -219,7 +219,11 @@ final class GeradorLocalidades {
         for (Poi poi : ctx.pois) {
             if (poi.type == PoiType.VILLAGE) {
                 if (isInsideVillageArea(x, y, poi)) {
-                    return true;
+                    long clear = (long) rules.villageClearRadius * rules.villageClearRadius;
+                    if (ctx.distanceSquared(x, y, poi.x, poi.y) <= clear) {
+                        return true;
+                    }
+                    return ctx.random01(ctx.tileSeed(x, y, 4_241L + poi.x * 17L + poi.y * 31L)) >= 0.25;
                 }
             } else if (poi.type == PoiType.GYM && isInsideGymReservedArea(x, y, poi, rules.gymConfig)) {
                 return true;

@@ -52,13 +52,15 @@ def _meta_mundo_para_mapa() -> dict:
         "atlas_chunks_lado": 100,
         "atlas_px": 1000,
         "cores_blocos": cores,
+        "rotas": list(meta.get("rotas", []) if isinstance(meta.get("rotas"), list) else []),
     }
 
 
-def _poi_mapa() -> tuple[list, list, list]:
+def _poi_mapa() -> tuple[list, list, list, list]:
     meta = BANCO_DADOS._estado_mundo.get("meta", {}) if isinstance(getattr(BANCO_DADOS, "_estado_mundo", {}), dict) else {}
     vilas = list(meta.get("vilas", []) if isinstance(meta.get("vilas"), list) else [])
     estadios = list(meta.get("estadios", []) if isinstance(meta.get("estadios"), list) else [])
+    rotas = list(meta.get("rotas", []) if isinstance(meta.get("rotas"), list) else [])
     regioes_raw = list(meta.get("regioes", []) if isinstance(meta.get("regioes"), list) else [])
     regioes = []
     prox_id = 1
@@ -80,7 +82,7 @@ def _poi_mapa() -> tuple[list, list, list]:
         if not (isinstance(cor, list) and len(cor) == 3):
             item["cor"] = _cor_regiao_fallback(int(item.get("id", 0) or 0))
         regioes.append(item)
-    return vilas, estadios, regioes
+    return vilas, estadios, regioes, rotas
 
 
 def _resolver_posicao_mundo_referencia(obj_player, posicao_camera: Vector2) -> Vector2:
@@ -414,8 +416,8 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
             mapa_chunks_enviados.update(chunks_explorados)
             state["mapa_chunks_enviados"] = mapa_chunks_enviados
             atlas = _atlas_do_conjunto(chunks_explorados)
-            vilas, estadios, regioes = _poi_mapa()
-            return _serializar_resposta({"status": "ok", "meta": _meta_mundo_para_mapa(), "explorados": explorados, "atlas": atlas, "vilas": vilas, "estadios": estadios, "regioes": regioes}, serializar_resposta)
+            vilas, estadios, regioes, rotas = _poi_mapa()
+            return _serializar_resposta({"status": "ok", "meta": _meta_mundo_para_mapa(), "explorados": explorados, "atlas": atlas, "vilas": vilas, "estadios": estadios, "regioes": regioes, "rotas": rotas}, serializar_resposta)
 
         if modo == "mapa_delta":
             chunks_base = _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")

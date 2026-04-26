@@ -18,6 +18,7 @@ class ServicoMapaMundo:
         self.vilas: List[dict] = []
         self.estadios: List[dict] = []
         self.regioes: List[dict] = []
+        self.rotas: List[dict] = []
         self._lock = threading.RLock()
         self._ultimo_delta = 0.0
         self.intervalo_delta_s = 2.0
@@ -62,6 +63,7 @@ class ServicoMapaMundo:
             self.vilas = list(resp.get("vilas") or [])
             self.estadios = list(resp.get("estadios") or [])
             self.regioes = list(resp.get("regioes") or [])
+            self.rotas = list(resp.get("rotas") or self.meta.get("rotas") or [])
             self.gerenciador.preparar(self.meta, explorados=resp.get("explorados"), regioes=self.regioes)
             self.gerenciador.aplicar_chunks(resp.get("atlas") if isinstance(resp.get("atlas"), list) else [])
 

@@ -12,8 +12,8 @@ name_candidates = [
 ]
 
 [villages]
-min_count = 25
-max_count = 30
+min_count = 40
+max_count = 50
 min_distance = 340
 margin = 180
 near_water_radius = 3

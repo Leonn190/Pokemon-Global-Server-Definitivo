@@ -453,7 +453,8 @@ final class GeradorRotas {
                 if (tile == Tile.WATER_DEEP) {
                     return true;
                 }
-                if (ctx.naturalMap[idx] != (byte) NaturalStructure.NONE.ordinal()) {
+                NaturalStructure structure = NaturalStructure.values()[ctx.naturalMap[idx] & 0xFF];
+                if (structure == NaturalStructure.HOUSE) {
                     return true;
                 }
             }
@@ -476,9 +477,13 @@ final class GeradorRotas {
                 if (dx * dx + dy * dy > rr) {
                     continue;
                 }
-                Tile tile = Tile.values()[ctx.tileMap[ctx.index(x, y)] & 0xFF];
+                int idx = ctx.index(x, y);
+                Tile tile = Tile.values()[ctx.tileMap[idx] & 0xFF];
                 if (tile == Tile.WATER_DEEP) {
                     continue;
+                }
+                if (NaturalStructure.values()[ctx.naturalMap[idx] & 0xFF] != NaturalStructure.HOUSE) {
+                    ctx.naturalMap[idx] = (byte) NaturalStructure.NONE.ordinal();
                 }
             }
         }

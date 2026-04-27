@@ -663,6 +663,8 @@ final class GeneratorContext {
                 writer.write("    {\"id\": " + route.id
                     + ", \"origem\": \"" + escapeJson(route.fromVillage) + "\""
                     + ", \"destino\": \"" + escapeJson(route.toVillage) + "\""
+                    + ", \"tipo_origem\": \"" + escapeJson(route.fromType) + "\""
+                    + ", \"tipo_destino\": \"" + escapeJson(route.toType) + "\""
                     + ", \"regiao_origem_id\": " + route.fromRegionId
                     + ", \"regiao_destino_id\": " + route.toRegionId
                     + ", \"pontos\": [");

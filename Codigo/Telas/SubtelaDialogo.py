@@ -82,6 +82,7 @@ class SubtelaDialogo(Subtela):
             nivel_respeito_estadio=self._nivel_respeito_estadio,
             tipo_estadio_npc=self._npc_tipo_estadio,
             callback_ganho=self._ao_registrar_ganho,
+            catalogo_estado=estado.get("loja") if isinstance(estado.get("loja"), dict) else None,
         )
 
         self._leitor = LeitorDialogo(

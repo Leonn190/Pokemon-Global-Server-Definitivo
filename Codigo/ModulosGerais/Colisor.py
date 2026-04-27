@@ -356,11 +356,12 @@ class Colisor:
 
         vx = px - cx
         vy = py - cy
-        dist = math.hypot(vx, vy)
+        dist2 = (vx * vx) + (vy * vy)
+        if dist2 > (limite * limite):
+            return (mvx, mvy)
+        dist = math.sqrt(dist2)
         if dist == 0.0:
             vx, vy, dist = 1.0, 0.0, 1.0
-        if dist > limite:
-            return (mvx, mvy)
 
         dirx = vx / dist
         diry = vy / dist

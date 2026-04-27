@@ -46,7 +46,7 @@ class ControladorIA:
         }
 
     def _acao_ataque(self, partida, pokemon, inimigos, rodada, rng):
-        ataques = list(getattr(pokemon, "ListaAtaques", []) or [])
+        ataques = self._ataques(pokemon)
         candidatos = []
         for ataque in ataques:
             props = self.buscar_propriedades_ataque(ataque)
@@ -100,7 +100,7 @@ class ControladorIA:
             "troca_reserva_id": self._pid(reserva),
             "lado_id": lado_id,
             "rodada": rodada,
-            "origem": {"tipo": "area", "area_id": getattr(pokemon, "AreaId", None)},
+            "origem": {"tipo": "area", "area_id": self._area_id(pokemon)},
             "destino": {"tipo": "reserva", "pokemon_id": self._pid(reserva)},
         }
 
@@ -108,33 +108,32 @@ class ControladorIA:
         alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
         exige_ocupada = bool(alvo_cfg.get("exige_area_ocupada"))
         for inimigo in inimigos:
-            area_id = getattr(inimigo, "AreaId", None)
+            area_id = self._area_id(inimigo)
             if area_id and self._area_permitida(partida, pokemon, area_id, props):
                 return area_id
         if exige_ocupada:
             return None
         areas = [
             str(a.get("id"))
-            for a in list(getattr(getattr(partida, "arena", None), "_areas", []) or [])
-            if int(a.get("lado_id", -999)) != int(getattr(pokemon, "lado_id", -998))
+            for a in self._areas(partida)
+            if int(a.get("lado_id", -999)) != self._lado(pokemon)
             and self._area_permitida(partida, pokemon, a.get("id"), props)
         ]
         return rng.choice(areas) if areas else None
 
     def _area_permitida(self, partida, pokemon, area_id, props):
-        arena = getattr(partida, "arena", None)
-        area = arena.obter_area_por_id(area_id) if arena is not None and hasattr(arena, "obter_area_por_id") else None
+        area = self._area_por_id(partida, area_id)
         if not isinstance(area, dict):
             return False
         alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
-        if bool(alvo_cfg.get("exige_area_ocupada")) and (arena is None or not arena.area_esta_ocupada(area_id)):
+        if bool(alvo_cfg.get("exige_area_ocupada")) and not self._area_esta_ocupada(partida, area_id):
             return False
         permitidos = alvo_cfg.get("lados_permitidos")
         if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
             return True
         lado_area = int(area.get("lado_id", -999))
-        lado_origem = int(getattr(pokemon, "lado_id", -998))
-        area_origem = str(getattr(pokemon, "AreaId", ""))
+        lado_origem = self._lado(pokemon)
+        area_origem = str(self._area_id(pokemon) or "")
         for item in permitidos:
             token = str(item or "").strip().lower()
             if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
@@ -182,7 +181,34 @@ class ControladorIA:
 
     @staticmethod
     def _pokemons(partida):
-        return list(getattr(partida, "pokemons", []) or [])
+        if hasattr(partida, "pokemons"):
+            return list(getattr(partida, "pokemons", []) or [])
+        if hasattr(partida, "pokemons_por_id"):
+            return list(getattr(partida, "pokemons_por_id", {}).values())
+        return []
+
+    @staticmethod
+    def _areas(partida):
+        areas = getattr(partida, "areas", {})
+        if isinstance(areas, dict):
+            return list(areas.values())
+        arena = getattr(partida, "arena", None)
+        return list(getattr(arena, "_areas", []) or [])
+
+    @staticmethod
+    def _area_por_id(partida, area_id):
+        areas = getattr(partida, "areas", {})
+        if isinstance(areas, dict):
+            return areas.get(str(area_id or ""))
+        arena = getattr(partida, "arena", None)
+        return arena.obter_area_por_id(area_id) if arena is not None and hasattr(arena, "obter_area_por_id") else None
+
+    @staticmethod
+    def _area_esta_ocupada(partida, area_id):
+        if hasattr(partida, "pokemon_na_area"):
+            return partida.pokemon_na_area(area_id) is not None
+        arena = getattr(partida, "arena", None)
+        return bool(arena.area_esta_ocupada(area_id)) if arena is not None and hasattr(arena, "area_esta_ocupada") else False
 
     @staticmethod
     def _pid(pokemon):
@@ -190,27 +216,40 @@ class ControladorIA:
 
     @staticmethod
     def _lado(pokemon):
-        return int(getattr(pokemon, "lado_id", 0) or 0)
+        return int(getattr(pokemon, "lado_id", getattr(pokemon, "LadoId", 0)) or 0)
 
     @staticmethod
     def _ativo(pokemon):
-        return bool(getattr(pokemon, "Ativo", False))
+        return bool(getattr(pokemon, "ativo", getattr(pokemon, "Ativo", False)))
 
     @staticmethod
     def _reserva(pokemon):
-        return bool(getattr(pokemon, "EmReserva", False))
+        return bool(getattr(pokemon, "reserva", getattr(pokemon, "EmReserva", False)))
 
     @staticmethod
     def _vivo(pokemon):
-        return bool(getattr(pokemon, "Vivo", False)) and _f(getattr(pokemon, "VidaAtual", 0.0), 0.0) > 0
+        if hasattr(pokemon, "esta_vivo"):
+            return bool(pokemon.esta_vivo())
+        return bool(getattr(pokemon, "vivo", getattr(pokemon, "Vivo", False))) and _f(getattr(pokemon, "VidaAtual", 0.0), 0.0) > 0
 
     @staticmethod
     def _energia(pokemon):
-        return _f(getattr(pokemon, "Energia", 0.0), 0.0)
+        return _f(getattr(pokemon, "EnergiaAtual", getattr(pokemon, "Energia", 0.0)), 0.0)
 
     @staticmethod
     def _vida_percentual(pokemon):
-        return _f(getattr(pokemon, "VidaAtual", 0.0), 0.0) / max(1.0, _f(getattr(pokemon, "VidaMax", 1.0), 1.0))
+        vida_max = getattr(pokemon, "VidaMax", None)
+        if vida_max is None and hasattr(pokemon, "obter_atributo"):
+            vida_max = pokemon.obter_atributo("Vida", 1.0)
+        return _f(getattr(pokemon, "VidaAtual", 0.0), 0.0) / max(1.0, _f(vida_max, 1.0))
+
+    @staticmethod
+    def _area_id(pokemon):
+        return getattr(pokemon, "area_id", getattr(pokemon, "AreaId", None))
+
+    @staticmethod
+    def _ataques(pokemon):
+        return list(getattr(pokemon, "ataques", getattr(pokemon, "ListaAtaques", [])) or [])
 
     @staticmethod
     def _code_ataque(ataque, props):

@@ -516,6 +516,10 @@ class CenaMundo:
 
         def _comecar_com_time(time_escolhido: dict):
             indice_time = next((i for i, time_existente in enumerate(times_validos) if time_existente == time_escolhido), 0)
+            times_npc = [t for t in list(npc_ctx.get("times_pokemon") or []) if isinstance(t, dict)]
+            batalha_numero = max(1, int(npc_ctx.get("batalha_numero", 1) or 1))
+            time_npc = deepcopy(times_npc[min(len(times_npc) - 1, batalha_numero - 1)]) if times_npc else {}
+            pokemons_npc = list(time_npc.get("Slots") or time_npc.get("slots") or [])
             jogo.INFO["CombateContexto"] = {
                 **contexto_base,
                 "batalha": dict(carregar_regras_cliente_mundo().get("batalha") or {}),
@@ -524,6 +528,8 @@ class CenaMundo:
                 "times_jogador": deepcopy(list(times_validos)),
                 "time_jogador": deepcopy(dict(time_escolhido or {})),
                 "time_jogador_indice": int(indice_time),
+                "time_inimigo": time_npc,
+                "pokemons_inimigo": deepcopy(pokemons_npc),
                 "tile_bioma": tile_mundo_atual(self),
                 "posicao_referencia_mundo": [float(player.Posicao[0]), float(player.Posicao[1])] if player is not None else [0.0, 0.0],
                 "server_ip": str((jogo.INFO.get("ServerSelecionado") or {}).get("ip") or ""),

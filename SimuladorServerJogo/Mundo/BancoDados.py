@@ -500,16 +500,15 @@ class BancoDadosMundo:
         x0, y0 = float(posicao_anterior[0]), float(posicao_anterior[1])
         x1, y1 = float(entidade.posicao[0]), float(entidade.posicao[1])
         mvx, mvy = (x1 - x0), (y1 - y0)
+        if (mvx * mvx + mvy * mvy) <= 1e-12:
+            return
+        if str(getattr(entidade, "estado_extra", {}).get("dimensao", "Mundo") or "Mundo") != "Mundo":
+            return
         px, py = x1, y1
         raio_entidade = max(0.0, float(getattr(entidade, "raio_colisao", 0.0)))
 
-        # Nova regra: colisão/repulsão local por raio fixo de 10 tiles para pokémons.
-        # Para demais entidades, mantém comportamento amplo atual.
-        is_pokemon = str(getattr(entidade, "tipo_classe", "")).lower() in ("pokemon", "entidade_pokemon")
-        if is_pokemon:
-            estruturas = self._estruturas_proximas_por_raio((px, py), raio_tiles=10.0)
-        else:
-            estruturas = [o for o in self._objetos.values() if str(getattr(o, "tipo_classe", "")).startswith("estrutura")]
+        # Colisão/repulsão local por raio fixo; evita varrer estruturas do mapa inteiro a cada update.
+        estruturas = self._estruturas_proximas_por_raio((px, py), raio_tiles=10.0)
         for estrutura in estruturas:
             if estrutura.Id == entidade.Id:
                 continue

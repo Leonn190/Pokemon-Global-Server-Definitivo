@@ -7,6 +7,7 @@ import uuid
 
 from SimuladorServerJogo.Batalha.ColetorAcoes import ColetorAcoes
 from SimuladorServerJogo.Batalha.ConstrutorLog import ConstrutorLog
+from SimuladorServerJogo.Batalha.BatalhaIA.ControladorIA import ControladorIA
 from SimuladorServerJogo.Batalha.PokemonBatalha import PokemonBatalha
 from SimuladorServerJogo.Batalha.RodadorTurno import RodadorTurno
 
@@ -55,6 +56,7 @@ class Partida:
         self.motivo_finalizacao = None
         self.avisos = []
         self.coletor_acoes = ColetorAcoes(self)
+        self.controlador_ia = ControladorIA() if self.batalha_usa_ia() else None
         self.rodador_turno = RodadorTurno(self)
         self.construtor_log = ConstrutorLog(self)
         self._inicializar_lados(dados)
@@ -235,6 +237,7 @@ class Partida:
             return {"status": "erro", "mensagem": "Jogada invalida", "id_partida": self.id_partida, "estado_batalha": self.estado_partida, "avisos": [], "erros": [str(exc)]}
         if bool((jogada or {}).get("resolver_lados_ausentes")):
             self._completar_lados_ausentes_com_jogadas_vazias(modo_teste=False)
+        self._completar_lados_ia()
         if not self.todos_lados_prontos():
             self.estado_partida = "aguardando"
             return {"status": "ok", "mensagem": "Jogada recebida", "id_partida": self.id_partida, "estado_batalha": "aguardando", "avisos": [], "erros": []}
@@ -267,6 +270,20 @@ class Partida:
     def _completar_lados_ausentes_com_jogadas_vazias(self, modo_teste=False):
         for lado in self._lados_com_pokemon_vivo():
             self.jogadas_recebidas.setdefault(lado, {"lado_id": lado, "acoes": [], "modo_teste": bool(modo_teste)})
+
+    def batalha_usa_ia(self):
+        tipo = str(self.tipo_batalha or "").strip().lower()
+        return tipo in {"confronto", "treinador", "trainer"} and not bool(self.modo_teste)
+
+    def _completar_lados_ia(self):
+        if not self.batalha_usa_ia():
+            return
+        if self.controlador_ia is None:
+            self.controlador_ia = ControladorIA()
+        for lado in sorted(self._lados_com_pokemon_vivo()):
+            if int(lado) == int(self.lado_jogador) or lado in self.jogadas_recebidas:
+                continue
+            self.jogadas_recebidas[int(lado)] = _jsonavel(self.controlador_ia.gerar_jogada(self, int(lado)))
 
     def resolver_rodada(self):
         rodada_anterior = self.rodada_atual

@@ -13,6 +13,7 @@ from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer
 from SimuladorServerJogo.Gerais.EstadoServidor import carregar_npcs_vendedores_estado, salvar_npcs_vendedores_estado
 from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import carregar_estado_mundo
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
+from SimuladorServerJogo.Mundo.InicializadorNPC import InicializadorNPC
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]
@@ -28,6 +29,7 @@ class CerebroNPCs:
     def _carregar_ou_criar_estado(self) -> None:
         largura, altura = BANCO_DADOS.limites_mundo()
         estado_mundo = carregar_estado_mundo()
+        self._inicializador = InicializadorNPC(estado_mundo, velocidade_base=float(self._core._f("npc_velocidade_base", 4.5)))
         spawn = estado_mundo.get("spawn", [0.0, 0.0]) if isinstance(estado_mundo, dict) else [0.0, 0.0]
         try:
             spawn_x = float(spawn[0])
@@ -38,49 +40,14 @@ class CerebroNPCs:
 
         estado = carregar_npcs_vendedores_estado()
         if estado:
-            self._npcs = {str(k): dict(v) for k, v in estado.items() if isinstance(v, dict)}
-            mudou = self._reconciliar_lideres_salvos()
-            self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
+            self._npcs, mudou = self._inicializador.reconciliar({str(k): dict(v) for k, v in estado.items() if isinstance(v, dict)})
+            mudou = self._normalizar_npcs_salvos(spawn_x, spawn_y) or mudou
             if mudou:
                 salvar_npcs_vendedores_estado(self._npcs, force=True)
             return
 
-        base: Dict[str, Dict[str, object]] = {}
-        arquivo_vendedores = Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv"
-        if arquivo_vendedores.exists():
-            with arquivo_vendedores.open("r", encoding="utf-8") as f:
-                for idx, row in enumerate(csv.DictReader(f), start=1):
-                    nome = str(row.get("Nome") or f"Vendedor {idx}").strip() or f"Vendedor {idx}"
-                    code = str(row.get("Code") or idx).strip() or str(idx)
-                    skin_raw = str(row.get("Skin") or "1").strip()
-                    if skin_raw.lower().endswith(".png"):
-                        skin = skin_raw
-                    elif skin_raw.lower().startswith("s") and skin_raw[1:].isdigit():
-                        skin = f"{skin_raw[1:]}.png"
-                    else:
-                        skin = f"{skin_raw}.png"
-                    px, py = self._encontrar_spawn_terrestre((spawn_x, spawn_y), idx)
-                    estatico = False
-                    rota = [] if estatico else self._gerar_rota_grande((px, py), idx)
-                    npc_id = int(900000 + int(code) if code.isdigit() else 900000 + idx)
-                    base[f"vendedor:{code}"] = {
-                        "id": npc_id,
-                        "code": str(code),
-                        "nome": nome,
-                        "skin": skin,
-                        "velocidade": float(self._core._f("npc_velocidade_base", 4.5)),
-                        "estilo": "vendedor",
-                        "estatico": bool(estatico),
-                        "dimensao": "Mundo",
-                        "posicao": [float(px), float(py)],
-                        "rota": [[float(p[0]), float(p[1])] for p in rota],
-                        "rota_idx": 0,
-                        "espera_ate_tick": 0,
-                        "interacao": {"ativa": False, "cliente": ""},
-                    }
-        base.update(self._carregar_lideres_base())
-        self._npcs = base
-        self._forcar_josefa_chunk_inicial(spawn_x, spawn_y)
+        self._npcs = self._inicializador.criar_estado()
+        self._normalizar_npcs_salvos(spawn_x, spawn_y)
         salvar_npcs_vendedores_estado(self._npcs, force=True)
 
     def _carregar_lideres_base(self) -> Dict[str, Dict[str, object]]:
@@ -146,35 +113,41 @@ class CerebroNPCs:
                 mudou = True
         return mudou
 
-    def _forcar_josefa_chunk_inicial(self, spawn_x: float, spawn_y: float) -> None:
+    def _normalizar_npcs_salvos(self, spawn_x: float, spawn_y: float) -> bool:
         mudou = False
         for npc in self._npcs.values():
             nome = str(npc.get("nome") or "").strip().lower()
             estilo = str(npc.get("estilo") or "vendedor").strip().lower()
-            if estilo == "combatente":
+            if bool(npc.get("fixado", False)):
+                anterior = (bool(npc.get("estatico", False)), list(npc.get("rota", [])) if isinstance(npc.get("rota"), list) else [], int(npc.get("rota_idx", 0) or 0))
                 npc["estatico"] = True
                 npc["rota"] = []
                 npc["rota_idx"] = 0
-                mudou = True
+                if anterior != (True, [], 0):
+                    mudou = True
                 continue
             pos = npc.get("posicao", [spawn_x, spawn_y])
-            pos_ruim = (
+            pos_ruim = str(npc.get("dimensao") or "Mundo") == "Mundo" and (
                 (not isinstance(pos, (list, tuple)))
                 or len(pos) != 2
                 or self._tile_bloqueado_npc((float(pos[0]), float(pos[1])))
                 or (abs(float(pos[0])) < 0.05 and abs(float(pos[1])) < 0.05)
             )
-            if bool(npc.get("estatico", False)) or pos_ruim:
-                npc["estatico"] = False
+            if pos_ruim:
                 if pos_ruim:
-                    sx, sy = self._encontrar_spawn_terrestre((spawn_x, spawn_y), int(npc.get("id", 0) or 1))
+                    local = self._local_estado(npc)
+                    if local is not None:
+                        sx, sy = self._posicao_local_segura(local, int(npc.get("id", 0) or 1))
+                    else:
+                        sx, sy = self._encontrar_spawn_terrestre((spawn_x, spawn_y), int(npc.get("id", 0) or 1))
                     npc["posicao"] = [float(sx), float(sy)]
-                if not isinstance(npc.get("rota"), list) or not npc.get("rota"):
-                    pos = npc.get("posicao", [spawn_x, spawn_y])
-                    origem = (float(pos[0]), float(pos[1])) if isinstance(pos, (list, tuple)) and len(pos) == 2 else (float(spawn_x), float(spawn_y))
-                    npc["rota"] = [[float(p[0]), float(p[1])] for p in self._gerar_rota_grande(origem, int(npc.get("id", 0) or 1))]
+                npc.setdefault("fase", "permanencia")
+                npc.setdefault("modo_local", "ambulante" if int(npc.get("id", 0) or 0) % 2 == 0 else "parado")
                 mudou = True
-        if mudou:
+        return mudou
+
+    def _forcar_josefa_chunk_inicial(self, spawn_x: float, spawn_y: float) -> None:
+        if self._normalizar_npcs_salvos(spawn_x, spawn_y):
             salvar_npcs_vendedores_estado(self._npcs, force=True)
 
     def _segmento_terrestre(self, p0: Vector2, p1: Vector2, passo: float = 0.75) -> tuple[bool, float]:
@@ -238,6 +211,159 @@ class CerebroNPCs:
         if "velocidade" in npc and npc.get("velocidade") not in (None, ""):
             return float(npc.get("velocidade"))
         return float(self._core._f("npc_velocidade_base", 4.5))
+
+    def _local_estado(self, npc: Dict[str, object]) -> Dict[str, object] | None:
+        slug = str(npc.get("local_atual") or "").strip()
+        for local in list(getattr(self._inicializador, "vilas", [])) + list(getattr(self._inicializador, "estadios", [])):
+            if str(local.get("slug") or "") == slug:
+                return local
+        return None
+
+    def _posicao_local_segura(self, local: Dict[str, object], semente: int) -> Vector2:
+        pos = self._inicializador.posicao_em_local(local, int(semente))
+        if str(local.get("tipo") or "") == "estadio" and str(local.get("dimensao") or "Mundo") != "Mundo":
+            return (float(pos[0]), float(pos[1]))
+        if not self._tile_bloqueado_npc((float(pos[0]), float(pos[1]))):
+            return (float(pos[0]), float(pos[1]))
+        base = local.get("posicao") if isinstance(local.get("posicao"), (list, tuple)) and len(local.get("posicao")) == 2 else pos
+        return self._encontrar_spawn_terrestre((float(base[0]), float(base[1])), int(semente))
+
+    def _definir_permanencia(self, npc: Dict[str, object], tick: int) -> None:
+        npc["fase"] = "permanencia"
+        npc["rota"] = []
+        npc["rota_idx"] = 0
+        npc["destino_local"] = ""
+        npc["permanencia_ate_tick"] = self._inicializador.permanencia_ticks(npc.get("id", 0), tick)
+        if random.random() < 0.5:
+            npc["modo_local"] = "ambulante"
+            npc["estatico"] = False
+        else:
+            npc["modo_local"] = "parado"
+            npc["estatico"] = True
+
+    def _iniciar_viagem(self, npc: Dict[str, object], tick: int) -> bool:
+        local_slug = str(npc.get("local_atual") or "")
+        rotas = self._inicializador.rotas_do_local(local_slug)
+        if not rotas:
+            npc["permanencia_ate_tick"] = int(tick + random.randint(240, 900))
+            return False
+        rota = random.choice(rotas)
+        destino = self._inicializador.outro_lado_rota(rota, local_slug)
+        pontos = self._inicializador.pontos_rota_a_partir(rota, local_slug)
+        if destino is None or len(pontos) < 2:
+            npc["permanencia_ate_tick"] = int(tick + random.randint(240, 900))
+            return False
+        if str(npc.get("dimensao") or "Mundo") != "Mundo":
+            local = self._local_estado(npc)
+            if local is not None:
+                pos = local.get("posicao") if isinstance(local.get("posicao"), (list, tuple)) and len(local.get("posicao")) == 2 else pontos[0]
+                npc["posicao"] = [float(pos[0]), float(pos[1])]
+            npc["dimensao"] = "Mundo"
+        npc["fase"] = "viagem"
+        npc["estatico"] = False
+        npc["rota"] = pontos
+        npc["rota_idx"] = 1
+        npc["destino_local"] = str(destino.get("slug") or "")
+        npc["destino_tipo"] = str(destino.get("tipo") or "vila")
+        return True
+
+    def _chegar_destino(self, npc: Dict[str, object], tick: int) -> None:
+        destino_slug = str(npc.get("destino_local") or "")
+        destino = None
+        for local in list(getattr(self._inicializador, "vilas", [])) + list(getattr(self._inicializador, "estadios", [])):
+            if str(local.get("slug") or "") == destino_slug:
+                destino = local
+                break
+        if destino is None:
+            self._definir_permanencia(npc, tick)
+            return
+        npc["local_atual"] = str(destino.get("slug") or "")
+        npc["local_tipo"] = str(destino.get("tipo") or "vila")
+        if str(destino.get("tipo") or "") == "estadio" and random.random() < 0.75:
+            npc["dimensao"] = str(destino.get("dimensao") or "Mundo")
+            pos = self._posicao_local_segura(destino, int(npc.get("id", 0) or 1) + tick)
+            npc["posicao"] = [float(pos[0]), float(pos[1])]
+        else:
+            npc["dimensao"] = "Mundo"
+        self._definir_permanencia(npc, tick)
+
+    def _rota_ambulante_local(self, npc: Dict[str, object], atual: Vector2) -> None:
+        local = self._local_estado(npc)
+        if local is None:
+            return
+        destino = self._posicao_local_segura(local, int(npc.get("id", 0) or 1) + int(self._core._tick_contador))
+        npc["rota"] = [[float(atual[0]), float(atual[1])], [float(destino[0]), float(destino[1])]]
+        npc["rota_idx"] = 1
+
+    def _angulo_para(self, origem: Vector2, destino: Vector2, dimensao: str = "Mundo") -> float:
+        if str(dimensao or "Mundo") == "Mundo":
+            dx, dy = self._dist_toroidal(origem, destino)
+        else:
+            dx = float(destino[0]) - float(origem[0])
+            dy = float(destino[1]) - float(origem[1])
+        return float((math.degrees(math.atan2(-dy, dx)) + 360.0) % 360.0)
+
+    def _alvo_olhar_proximo(self, npc_id: int, atual: Vector2, dimensao: str, subtipo_alvo: str) -> Vector2 | None:
+        melhor = None
+        melhor_d2 = None
+        for obj in BANCO_DADOS.buscar_proximos(atual, 6.0):
+            oid = int(getattr(obj, "Id", 0) or 0)
+            if oid == int(npc_id):
+                continue
+            estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+            if str(estado.get("dimensao") or "Mundo") != str(dimensao or "Mundo"):
+                continue
+            subtipo = str(estado.get("subtipo") or "").strip().lower()
+            if subtipo != subtipo_alvo and not (subtipo_alvo == "player" and str(getattr(obj, "tipo_classe", "") or "").strip().lower() == "entidade_player"):
+                continue
+            dx = float(getattr(obj, "posicao", atual)[0]) - float(atual[0])
+            dy = float(getattr(obj, "posicao", atual)[1]) - float(atual[1])
+            d2 = dx * dx + dy * dy
+            if d2 > 36.0:
+                continue
+            if melhor_d2 is None or d2 < melhor_d2:
+                melhor_d2 = d2
+                melhor = (float(getattr(obj, "posicao", atual)[0]), float(getattr(obj, "posicao", atual)[1]))
+        return melhor
+
+    def _alvo_interacao(self, client_id: str) -> Vector2 | None:
+        obj_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id or "")) or 0)
+        obj = BANCO_DADOS.obter_objeto(obj_id) if obj_id > 0 else None
+        if isinstance(obj, AtorServer):
+            return (float(obj.posicao[0]), float(obj.posicao[1]))
+        return None
+
+    def _atualizar_angulo_npc(self, npc: Dict[str, object], atual: Vector2, movimento: Vector2 | None, inter: Dict[str, object], tick: int) -> None:
+        dimensao = str(npc.get("dimensao") or "Mundo")
+        if bool(inter.get("ativa", False)):
+            alvo = self._alvo_interacao(str(inter.get("cliente") or ""))
+            if alvo is not None:
+                npc["angulo"] = self._angulo_para(atual, alvo, dimensao=dimensao)
+            return
+        if movimento is not None and (movimento[0] * movimento[0] + movimento[1] * movimento[1]) > 1e-6:
+            npc["angulo"] = self._angulo_para((0.0, 0.0), movimento, dimensao="local")
+            return
+        alvo_player = self._alvo_olhar_proximo(int(npc.get("id", 0) or 0), atual, dimensao, "player")
+        if alvo_player is not None:
+            npc["angulo"] = self._angulo_para(atual, alvo_player, dimensao=dimensao)
+            return
+        alvo_npc = None
+        melhor_d2 = None
+        for subtipo in ("npc_vendedor", "npc_combatente"):
+            alvo = self._alvo_olhar_proximo(int(npc.get("id", 0) or 0), atual, dimensao, subtipo)
+            if alvo is None:
+                continue
+            d2 = (alvo[0] - atual[0]) ** 2 + (alvo[1] - atual[1]) ** 2
+            if melhor_d2 is None or d2 < melhor_d2:
+                melhor_d2 = d2
+                alvo_npc = alvo
+        if alvo_npc is not None:
+            npc["angulo"] = self._angulo_para(atual, alvo_npc, dimensao=dimensao)
+            return
+        proximo = int(npc.get("proximo_angulo_aleatorio_tick", 0) or 0)
+        if tick >= proximo:
+            npc["angulo"] = float(random.choice((0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0)))
+            npc["proximo_angulo_aleatorio_tick"] = int(tick + random.randint(90, 360))
 
     def _dist_toroidal(self, p0: Vector2, p1: Vector2) -> Vector2:
         largura, altura = BANCO_DADOS.limites_mundo()
@@ -309,11 +435,16 @@ class CerebroNPCs:
         ator.estado_extra["nome"] = str(npc.get("nome") or "Vendedor")
         ator.estado_extra["npc_code"] = str(npc.get("code") or "")
         ator.estado_extra["estilo"] = str(npc.get("estilo") or "vendedor")
+        ator.estado_extra["cargo"] = str(npc.get("cargo") or npc.get("estilo") or "vendedor")
+        ator.estado_extra["nivel"] = int(npc.get("nivel", 1) or 1)
         ator.estado_extra["estatico"] = bool(npc.get("estatico", False))
+        ator.estado_extra["fixado"] = bool(npc.get("fixado", False))
         ator.estado_extra["velocidade"] = self._velocidade_npc(npc)
         ator.estado_extra["angulo"] = float(npc.get("angulo", 0.0) or 0.0)
         ator.estado_extra["interacao"] = dict(npc.get("interacao", {})) if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
         ator.estado_extra["dimensao"] = str(npc.get("dimensao") or "Mundo")
+        ator.estado_extra["loja"] = dict(npc.get("loja", {})) if isinstance(npc.get("loja"), dict) else {}
+        ator.estado_extra["estadio_tipo"] = str(npc.get("estadio_tipo") or "")
         ator.estado_extra["pokemons"] = list(npc.get("pokemons", [])) if isinstance(npc.get("pokemons"), list) else []
         ator.estado_extra["times_pokemon"] = list(npc.get("times_pokemon", [])) if isinstance(npc.get("times_pokemon"), list) else []
         BANCO_DADOS.inserir_objeto(ator)
@@ -471,58 +602,75 @@ class CerebroNPCs:
                 pos = [0.0, 0.0]
             atual = (float(pos[0]), float(pos[1]))
             estilo = str(npc.get("estilo") or "vendedor").strip().lower()
-            if estilo != "combatente":
+            fixado = bool(npc.get("fixado", False))
+            if not fixado and str(npc.get("dimensao") or "Mundo") == "Mundo":
                 ruim = self._tile_bloqueado_npc(atual) or (abs(atual[0]) < 0.05 and abs(atual[1]) < 0.05)
                 if ruim:
-                    sx, sy = self._encontrar_spawn_terrestre(atual, int(npc.get("id", 0) or 1))
+                    local = self._local_estado(npc)
+                    if local is not None:
+                        sx, sy = self._posicao_local_segura(local, int(npc.get("id", 0) or 1))
+                    else:
+                        sx, sy = self._encontrar_spawn_terrestre(atual, int(npc.get("id", 0) or 1))
                     atual = (float(sx), float(sy))
                     npc["posicao"] = [float(atual[0]), float(atual[1])]
-                    npc["estatico"] = False
-                    npc["rota"] = [[float(p[0]), float(p[1])] for p in self._gerar_rota_grande(atual, int(npc.get("id", 0) or 1))]
+                    npc["rota"] = []
                     npc["rota_idx"] = 0
             inter = npc.get("interacao") if isinstance(npc.get("interacao"), dict) else {"ativa": False, "cliente": ""}
             esperando = int(npc.get("espera_ate_tick", 0) or 0) > tick
-            estatico = bool(npc.get("estatico", False))
+            estatico = bool(npc.get("estatico", False)) or fixado
             materializado = isinstance(BANCO_DADOS.obter_objeto(int(npc.get("id", 0) or 0)), AtorServer)
+            movimento_vec = None
 
-            if (not estatico) and (not inter.get("ativa", False)) and (not esperando):
-                chance_variacao = float(self._core._f("npc_rota_chance_variacao_por_tick", 0.04))
-                if chance_variacao > 0.0 and random.random() < chance_variacao:
-                    self._replanejar_rota(npc, atual)
+            if (not fixado) and (not inter.get("ativa", False)) and (not esperando):
+                fase = str(npc.get("fase") or "permanencia")
+                if fase == "permanencia":
+                    if int(npc.get("permanencia_ate_tick", 0) or 0) <= tick:
+                        self._iniciar_viagem(npc, tick)
+                    elif str(npc.get("modo_local") or "parado") == "ambulante" and not npc.get("rota"):
+                        self._rota_ambulante_local(npc, atual)
                 rota = npc.get("rota", []) if isinstance(npc.get("rota"), list) else []
-                if not rota:
-                    self._replanejar_rota(npc, atual)
-                    rota = npc.get("rota", []) if isinstance(npc.get("rota"), list) else []
                 if rota:
                     idx = int(npc.get("rota_idx", 0) or 0) % max(1, len(rota))
                     alvo_raw = rota[idx]
                     if isinstance(alvo_raw, (list, tuple)) and len(alvo_raw) == 2:
                         alvo = (float(alvo_raw[0]), float(alvo_raw[1]))
-                        if self._tile_bloqueado_npc(alvo):
-                            if not self._replanejar_rota(npc, atual):
-                                continue
-                            rota = npc.get("rota", []) if isinstance(npc.get("rota"), list) else []
-                            if not rota:
-                                continue
-                            idx = int(npc.get("rota_idx", 0) or 0) % max(1, len(rota))
-                            alvo_raw = rota[idx]
-                            if not (isinstance(alvo_raw, (list, tuple)) and len(alvo_raw) == 2):
-                                continue
-                            alvo = (float(alvo_raw[0]), float(alvo_raw[1]))
-                        dx, dy = self._dist_toroidal(atual, alvo)
+                        if str(npc.get("dimensao") or "Mundo") == "Mundo" and self._tile_bloqueado_npc(alvo):
+                            npc["rota"] = []
+                            npc["rota_idx"] = 0
+                            continue
+                        if str(npc.get("dimensao") or "Mundo") == "Mundo":
+                            dx, dy = self._dist_toroidal(atual, alvo)
+                        else:
+                            dx = float(alvo[0]) - float(atual[0])
+                            dy = float(alvo[1]) - float(atual[1])
                         dist = math.hypot(dx, dy)
                         if dist < 0.75:
-                            npc["rota_idx"] = (idx + 1) % len(rota)
-                            npc["espera_ate_tick"] = tick + random.randint(30, 180)
+                            if idx >= len(rota) - 1:
+                                npc["rota"] = []
+                                npc["rota_idx"] = 0
+                                if str(npc.get("fase") or "") == "viagem":
+                                    self._chegar_destino(npc, tick)
+                                    pos_chegada = npc.get("posicao", [atual[0], atual[1]])
+                                    if isinstance(pos_chegada, (list, tuple)) and len(pos_chegada) == 2:
+                                        atual = (float(pos_chegada[0]), float(pos_chegada[1]))
+                                else:
+                                    npc["espera_ate_tick"] = tick + random.randint(30, 180)
+                            else:
+                                npc["rota_idx"] = idx + 1
+                                npc["espera_ate_tick"] = tick + random.randint(12, 60) if str(npc.get("fase") or "") != "viagem" else tick
                         else:
                             vel = self._velocidade_npc(npc)
                             passo = min(dist, max(0.01, vel / 30.0))
                             nx, ny = (atual[0] + (dx / max(1e-6, dist)) * passo, atual[1] + (dy / max(1e-6, dist)) * passo)
-                            nx += math.sin((tick + int(npc.get("id", 0))) * 0.03) * 0.04
-                            ny += math.cos((tick + int(npc.get("id", 0))) * 0.025) * 0.04
-                            largura, altura = BANCO_DADOS.limites_mundo()
-                            candidato = (nx % max(1.0, float(largura)), ny % max(1.0, float(altura)))
-                            if self._tile_bloqueado_npc(candidato):
+                            if str(npc.get("fase") or "") != "viagem":
+                                nx += math.sin((tick + int(npc.get("id", 0))) * 0.03) * 0.04
+                                ny += math.cos((tick + int(npc.get("id", 0))) * 0.025) * 0.04
+                            if str(npc.get("dimensao") or "Mundo") == "Mundo":
+                                largura, altura = BANCO_DADOS.limites_mundo()
+                                candidato = (nx % max(1.0, float(largura)), ny % max(1.0, float(altura)))
+                            else:
+                                candidato = (max(1.0, min(59.0, nx)), max(1.0, min(39.0, ny)))
+                            if str(npc.get("dimensao") or "Mundo") == "Mundo" and self._tile_bloqueado_npc(candidato):
                                 candidato = atual
                             elif materializado:
                                 candidato = self._resolver_movimento_npc_materializado(
@@ -531,11 +679,11 @@ class CerebroNPCs:
                                     candidato,
                                     raio=0.55,
                                 )
+                            movimento_vec = (float(candidato[0]) - float(atual[0]), float(candidato[1]) - float(atual[1]))
                             atual = candidato
                             npc["posicao"] = [float(atual[0]), float(atual[1])]
-                            if passo > 1e-6:
-                                angulo = (math.degrees(math.atan2(-dy, dx)) + 360.0) % 360.0
-                                npc["angulo"] = float(angulo)
+
+            self._atualizar_angulo_npc(npc, atual, movimento_vec, inter, tick)
 
             deve_materializar = self._chunk_in_qualquer(atual, chunks_carregados, chunks_simulados)
             oid = int(npc.get("id", 0) or 0)
@@ -549,9 +697,16 @@ class CerebroNPCs:
                     BANCO_DADOS.atualizar_objeto(int(obj.Id), {"posicao": [float(atual[0]), float(atual[1])]})
                     obj.estado_extra["nome"] = str(npc.get("nome") or obj.estado_extra.get("nome", "NPC"))
                     obj.estado_extra["estatico"] = bool(npc.get("estatico", False))
+                    obj.estado_extra["fixado"] = bool(npc.get("fixado", False))
+                    obj.estado_extra["cargo"] = str(npc.get("cargo") or obj.estado_extra.get("cargo", npc.get("estilo", "vendedor")))
+                    obj.estado_extra["nivel"] = int(npc.get("nivel", obj.estado_extra.get("nivel", 1)) or 1)
                     obj.estado_extra["interacao"] = dict(npc.get("interacao", {}))
                     obj.estado_extra["angulo"] = float(npc.get("angulo", obj.estado_extra.get("angulo", 0.0)) or 0.0)
                     obj.estado_extra["dimensao"] = str(npc.get("dimensao") or obj.estado_extra.get("dimensao", "Mundo"))
+                    obj.estado_extra["loja"] = dict(npc.get("loja", {})) if isinstance(npc.get("loja"), dict) else {}
+                    obj.estado_extra["estadio_tipo"] = str(npc.get("estadio_tipo") or obj.estado_extra.get("estadio_tipo", ""))
+                    obj.estado_extra["pokemons"] = list(npc.get("pokemons", [])) if isinstance(npc.get("pokemons"), list) else []
+                    obj.estado_extra["times_pokemon"] = list(npc.get("times_pokemon", [])) if isinstance(npc.get("times_pokemon"), list) else []
                     registrar_diff_cb("update", payload=obj.serializar(), escopo={"centro": [obj.posicao[0], obj.posicao[1]], "raio": 240.0}, objeto_id=obj.Id, autor="server", categoria=categoria_npc)
             else:
                 if isinstance(obj, AtorServer):

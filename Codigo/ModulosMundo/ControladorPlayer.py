@@ -431,11 +431,13 @@ class ControladorPlayer:
         tipo_alvo = str(alvo.get("tipo") or "")
 
         if tipo_alvo == "estadio_saida":
+            estadio = alvo.get("estadio") if isinstance(alvo.get("estadio"), dict) else {}
             self._objetos.EnfileirarDiffRapida({
                 "tipo": "evento",
                 "categoria": "interacao_estadio",
                 "payload": {
                     "acao": "sair",
+                    "estadio_id": int(estadio.get("id", 0) or 0),
                     "instante_cliente_ms": int(time.time() * 1000),
                     "pos_player": [float(pos[0]), float(pos[1])],
                 },

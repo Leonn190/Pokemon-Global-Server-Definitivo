@@ -270,7 +270,8 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
         pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
         saida_interna = _saida_interna(estado_est)
-        if not _dist_ok(player.posicao, saida_interna, 2.0):
+        pos_cliente = payload.get("pos_player") if isinstance(payload.get("pos_player"), (list, tuple)) and len(payload.get("pos_player")) == 2 else None
+        if not (_dist_ok(player.posicao, saida_interna, 2.0) or (pos_cliente is not None and _dist_ok(pos_cliente, saida_interna, 2.0))):
             return False
         entrada = _entrada_externa(estado_est)
         player.estado_extra["dimensao"] = "Mundo"

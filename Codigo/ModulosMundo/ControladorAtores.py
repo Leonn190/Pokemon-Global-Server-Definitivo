@@ -62,8 +62,6 @@ class ControladorAtores:
         if skin and str(skin) != str(getattr(remoto, "NomeSkin", "")):
             remoto.set_nome_skin(str(skin))
 
-        if "angulo" in estado:
-            remoto.definir_angulo_olhar(float(estado.get("angulo", 0.0)))
         if bool(estado.get("tapa")):
             remoto.iniciar_tapa()
 

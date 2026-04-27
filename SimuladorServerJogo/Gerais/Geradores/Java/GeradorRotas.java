@@ -10,6 +10,7 @@ final class RouteRules {
     final int maxCount;
     final int minVillageLinks;
     final int maxVillageLinks;
+    final int maxGymLinks;
     final int minDistance;
     final int maxDistance;
     final double shallowWaterPenalty;
@@ -21,6 +22,7 @@ final class RouteRules {
         int maxCount,
         int minVillageLinks,
         int maxVillageLinks,
+        int maxGymLinks,
         int minDistance,
         int maxDistance,
         double shallowWaterPenalty,
@@ -31,6 +33,7 @@ final class RouteRules {
         this.maxCount = maxCount;
         this.minVillageLinks = minVillageLinks;
         this.maxVillageLinks = maxVillageLinks;
+        this.maxGymLinks = maxGymLinks;
         this.minDistance = minDistance;
         this.maxDistance = maxDistance;
         this.shallowWaterPenalty = shallowWaterPenalty;
@@ -43,6 +46,8 @@ final class RouteData {
     final int id;
     final String fromVillage;
     final String toVillage;
+    final String fromType;
+    final String toType;
     final int fromX;
     final int fromY;
     final int toX;
@@ -55,6 +60,8 @@ final class RouteData {
         this.id = id;
         this.fromVillage = from.name == null ? "Vila " + id : from.name;
         this.toVillage = to.name == null ? "Vila " + (id + 1) : to.name;
+        this.fromType = routeType(from.type);
+        this.toType = routeType(to.type);
         this.fromX = from.x;
         this.fromY = from.y;
         this.toX = to.x;
@@ -62,6 +69,16 @@ final class RouteData {
         this.fromRegionId = from.regionId;
         this.toRegionId = to.regionId;
         this.points = points;
+    }
+
+    private static String routeType(PoiType type) {
+        if (type == PoiType.GYM) {
+            return "estadio";
+        }
+        if (type == PoiType.DUNGEON) {
+            return "dungeon";
+        }
+        return "vila";
     }
 }
 
@@ -92,14 +109,18 @@ final class GeradorRotas {
             System.out.println("  Rotas: 0 / 0 (vilas insuficientes)");
             return;
         }
-        int[] degree = new int[villages.size()];
+        List<Poi> nodes = routeNodes();
+        int[] degree = new int[nodes.size()];
         Set<Long> attemptedPairs = new HashSet<>();
         int routeId = 0;
         int attempts = 0;
         List<RouteCandidate> extras = new ArrayList<>();
-        for (int a = 0; a < villages.size(); a++) {
-            for (int b = a + 1; b < villages.size(); b++) {
-                RouteCandidate cand = buildCandidate(villages, a, b);
+        for (int a = 0; a < nodes.size(); a++) {
+            for (int b = a + 1; b < nodes.size(); b++) {
+                if (!pairAllowed(nodes.get(a), nodes.get(b))) {
+                    continue;
+                }
+                RouteCandidate cand = buildCandidate(nodes, a, b, 1.75);
                 if (cand != null) {
                     extras.add(cand);
                 }
@@ -115,7 +136,7 @@ final class GeradorRotas {
                         continue;
                     }
                     int outro = cand.a == vila ? cand.b : cand.a;
-                    if (degree[outro] >= rules.maxVillageLinks) {
+                    if (isGym(nodes.get(outro)) && degree[outro] >= rules.maxGymLinks) {
                         continue;
                     }
                     if (attemptedPairs.contains(pairKey(cand.a, cand.b))) {
@@ -128,19 +149,46 @@ final class GeradorRotas {
                     break;
                 }
                 attempts++;
-                if (tryCreateRoute(melhor, villages, degree, attemptedPairs, routeId)) {
+                if (tryCreateRoute(melhor, nodes, degree, attemptedPairs, routeId)) {
                     routeId++;
                 }
             }
         }
 
         for (RouteCandidate cand : extras) {
-            if (degree[cand.a] >= rules.maxVillageLinks || degree[cand.b] >= rules.maxVillageLinks) {
+            if (!shouldAddExtra(nodes, degree, cand)) {
                 continue;
             }
             attempts++;
-            if (tryCreateRoute(cand, villages, degree, attemptedPairs, routeId)) {
+            if (tryCreateRoute(cand, nodes, degree, attemptedPairs, routeId)) {
                 routeId++;
+            }
+        }
+
+        for (int rodada = 0; rodada < 3; rodada++) {
+            boolean criouNaRodada = false;
+            for (int vila = 0; vila < villages.size(); vila++) {
+                if (degree[vila] >= rules.minVillageLinks) {
+                    continue;
+                }
+                for (RouteCandidate cand : extras) {
+                    if (cand.a != vila && cand.b != vila) {
+                        continue;
+                    }
+                    int outro = cand.a == vila ? cand.b : cand.a;
+                    if (isGym(nodes.get(outro)) && degree[outro] >= rules.maxGymLinks) {
+                        continue;
+                    }
+                    attempts++;
+                    if (tryCreateRoute(cand, nodes, degree, attemptedPairs, routeId)) {
+                        routeId++;
+                        criouNaRodada = true;
+                        break;
+                    }
+                }
+            }
+            if (!criouNaRodada) {
+                break;
             }
         }
 
@@ -151,7 +199,8 @@ final class GeradorRotas {
         int minDegree = Integer.MAX_VALUE;
         int maxDegree = 0;
         int sumDegree = 0;
-        for (int value : degree) {
+        for (int i = 0; i < villages.size(); i++) {
+            int value = degree[i];
             minDegree = Math.min(minDegree, value);
             maxDegree = Math.max(maxDegree, value);
             sumDegree += value;
@@ -161,22 +210,22 @@ final class GeradorRotas {
         System.out.printf(Locale.US, "    conectividade vilas: min=%d max=%d media=%.2f%n", minDegree, maxDegree, avgDegree);
     }
 
-    private boolean tryCreateRoute(RouteCandidate cand, List<Poi> villages, int[] degree, Set<Long> attemptedPairs, int routeId) {
+    private boolean tryCreateRoute(RouteCandidate cand, List<Poi> nodes, int[] degree, Set<Long> attemptedPairs, int routeId) {
         long key = pairKey(cand.a, cand.b);
         if (attemptedPairs.contains(key)) {
             return false;
         }
         attemptedPairs.add(key);
-        List<int[]> path = findPath(villages.get(cand.a), villages.get(cand.b));
+        List<int[]> path = findPath(nodes.get(cand.a), nodes.get(cand.b));
         if (path == null || path.size() < 2) {
             return false;
         }
-        if (pathBlockedByNaturalOrDeepWater(path, rules.routeBrushRadius)) {
+        if (pathBlockedByDeepWater(path, rules.routeBrushRadius) && pathBlockedByDeepWater(path, 0)) {
             return false;
         }
         degree[cand.a]++;
         degree[cand.b]++;
-        ctx.routes.add(new RouteData(routeId, villages.get(cand.a), villages.get(cand.b), path));
+        ctx.routes.add(new RouteData(routeId, nodes.get(cand.a), nodes.get(cand.b), path));
         return true;
     }
 
@@ -188,6 +237,60 @@ final class GeradorRotas {
             }
         }
         return out;
+    }
+
+    private List<Poi> routeNodes() {
+        List<Poi> out = new ArrayList<>();
+        int gymIndex = 0;
+        for (Poi poi : ctx.pois) {
+            if (poi.type == PoiType.VILLAGE) {
+                out.add(poi);
+            }
+        }
+        for (Poi poi : ctx.pois) {
+            if (poi.type != PoiType.GYM) {
+                continue;
+            }
+            String tipo = GeneratorContext.GYM_TYPES[gymIndex % GeneratorContext.GYM_TYPES.length];
+            out.add(new Poi(poi.x, poi.y, PoiType.GYM, "Estadio " + tipo, poi.regionId));
+            gymIndex++;
+        }
+        return out;
+    }
+
+    private boolean pairAllowed(Poi a, Poi b) {
+        if (a.type == PoiType.GYM && b.type == PoiType.GYM) {
+            return false;
+        }
+        return a.type == PoiType.VILLAGE || b.type == PoiType.VILLAGE;
+    }
+
+    private boolean isGym(Poi poi) {
+        return poi.type == PoiType.GYM;
+    }
+
+    private boolean shouldAddExtra(List<Poi> nodes, int[] degree, RouteCandidate cand) {
+        Poi a = nodes.get(cand.a);
+        Poi b = nodes.get(cand.b);
+        if (isGym(a) && degree[cand.a] >= rules.maxGymLinks) {
+            return false;
+        }
+        if (isGym(b) && degree[cand.b] >= rules.maxGymLinks) {
+            return false;
+        }
+        int softVillageTarget = Math.max(rules.minVillageLinks, rules.maxVillageLinks);
+        if (softVillageTarget <= 0) {
+            return true;
+        }
+        boolean aVillageOpen = a.type == PoiType.VILLAGE && degree[cand.a] < softVillageTarget;
+        boolean bVillageOpen = b.type == PoiType.VILLAGE && degree[cand.b] < softVillageTarget;
+        if (aVillageOpen || bVillageOpen) {
+            return true;
+        }
+        if (a.type == PoiType.VILLAGE && b.type == PoiType.VILLAGE && a.regionId == b.regionId) {
+            return cand.dist <= Math.max(rules.minDistance, rules.maxDistance * 0.38);
+        }
+        return false;
     }
 
     private void buildCellCostMap() {
@@ -229,11 +332,8 @@ final class GeradorRotas {
                     cost = 1.0;
                     cost += (shallow / (double) Math.max(1, total)) * rules.shallowWaterPenalty;
                     cost += (deep / (double) Math.max(1, total)) * 60.0;
-                    cost += (naturais / (double) Math.max(1, total)) * 40.0;
+                    cost += (naturais / (double) Math.max(1, total)) * 18.0;
                     if (deep * 2 >= total && land * 3 < total * 2) {
-                        cost = INF;
-                    }
-                    if (naturais * 2 >= total) {
                         cost = INF;
                     }
                 }
@@ -242,14 +342,18 @@ final class GeradorRotas {
         }
     }
 
-    private RouteCandidate buildCandidate(List<Poi> villages, int a, int b) {
+    private RouteCandidate buildCandidate(List<Poi> villages, int a, int b, double maxDistanceMultiplier) {
         Poi va = villages.get(a);
         Poi vb = villages.get(b);
         double dist = Math.sqrt(ctx.distanceSquared(va.x, va.y, vb.x, vb.y));
-        if (dist < rules.minDistance || dist > rules.maxDistance) {
+        double maxDist = Math.max(rules.maxDistance, rules.maxDistance * Math.max(1.0, maxDistanceMultiplier));
+        if (dist < rules.minDistance || dist > maxDist) {
             return null;
         }
         double sortScore = dist;
+        if (dist > rules.maxDistance) {
+            sortScore *= 1.35;
+        }
         if (va.regionId == vb.regionId) {
             sortScore *= Math.max(0.1, rules.sameRegionBonus);
         }
@@ -391,7 +495,7 @@ final class GeradorRotas {
         }
     }
 
-    private boolean pathBlockedByNaturalOrDeepWater(List<int[]> path, int radius) {
+    private boolean pathBlockedByDeepWater(List<int[]> path, int radius) {
         if (path == null || path.size() < 2) {
             return true;
         }
@@ -453,10 +557,6 @@ final class GeradorRotas {
                 if (tile == Tile.WATER_DEEP) {
                     return true;
                 }
-                NaturalStructure structure = NaturalStructure.values()[ctx.naturalMap[idx] & 0xFF];
-                if (structure == NaturalStructure.HOUSE) {
-                    return true;
-                }
             }
         }
         return false;
@@ -482,9 +582,7 @@ final class GeradorRotas {
                 if (tile == Tile.WATER_DEEP) {
                     continue;
                 }
-                if (NaturalStructure.values()[ctx.naturalMap[idx] & 0xFF] != NaturalStructure.HOUSE) {
-                    ctx.naturalMap[idx] = (byte) NaturalStructure.NONE.ordinal();
-                }
+                ctx.naturalMap[idx] = (byte) NaturalStructure.NONE.ordinal();
             }
         }
     }

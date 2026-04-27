@@ -151,6 +151,7 @@ final class LocalityRules {
             table.reqInt("max_count"),
             table.reqInt("min_village_links"),
             table.reqInt("max_village_links"),
+            table.optInt("max_gym_links", 2),
             table.reqInt("min_distance"),
             table.reqInt("max_distance"),
             table.optInt("shallow_water_penalty", 10),

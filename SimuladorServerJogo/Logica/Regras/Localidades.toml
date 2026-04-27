@@ -49,6 +49,7 @@ min_count = 0
 max_count = 0
 min_village_links = 3
 max_village_links = 4
+max_gym_links = 2
 min_distance = 140
 max_distance = 2400
 shallow_water_penalty = 10

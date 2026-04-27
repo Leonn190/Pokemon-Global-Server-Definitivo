@@ -289,6 +289,28 @@ class EstadioInterno:
         # Porta
         px_porta, py_porta = tela_px((float(porta[0]), float(porta[1])))
 
+        # Corredor da porta ate a arena
+        corredor_top = arena.bottom - px(0.2)
+        corredor_bottom = py_porta - px(0.55)  # desenhado antes da porta
+        if corredor_bottom > corredor_top:
+            corredor_w = max(px(2.0), int(arena.width * 0.16))
+            corredor = pygame.Rect(0, 0, corredor_w, corredor_bottom - corredor_top)
+            corredor.midtop = (px_porta, corredor_top)
+
+            pygame.draw.rect(
+                tela,
+                cor_corredor,
+                corredor,
+                border_radius=max(8, px(0.16)),
+            )
+            pygame.draw.rect(
+                tela,
+                cor_corredor_borda,
+                corredor,
+                max(2, px(0.07)),
+                border_radius=max(8, px(0.16)),
+            )
+
         porta_w = max(px(1.7), 34)
         porta_h = max(px(2.4), 52)
 
@@ -351,7 +373,7 @@ class EstadioInterno:
 
         # Corredor da porta até a arena
         corredor_top = arena.bottom - px(0.2)
-        corredor_bottom = py_porta - px(0.55)
+        corredor_bottom = min(py_porta - px(0.55), arco.top - px(0.08))
         if corredor_bottom > corredor_top:
             corredor_w = max(px(2.0), int(arena.width * 0.16))
             corredor = pygame.Rect(0, 0, corredor_w, corredor_bottom - corredor_top)

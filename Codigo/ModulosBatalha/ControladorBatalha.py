@@ -8,7 +8,6 @@ from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.ControladorAnimacoes import ControladorAnimacoes
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
 from Codigo.ModulosBatalha.FinalizadorBatalha import FinalizadorBatalha
-from Codigo.ModulosBatalha.IA.ControladorIA import ControladorIA
 from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.MontadorJogadas import MontadorJogadas
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
@@ -30,7 +29,6 @@ class ControladorBatalha:
         self.montador_jogadas = None
         self.controlador_animacoes = None
         self.leitor_logs = None
-        self.controlador_ia = None
         self.finalizador = FinalizadorBatalha(self)
 
         self.rodada_atual = 1
@@ -113,7 +111,6 @@ class ControladorBatalha:
         self.montador_jogadas = MontadorJogadas(self)
         self.controlador_animacoes = ControladorAnimacoes(self)
         self.leitor_logs = LeitorLogs(self, self.controlador_animacoes)
-        self.controlador_ia = ControladorIA() if self.batalha_usa_ia() else None
 
     def atualizar(self, dt, eventos):
         if self.arena is None or self.camera is None:
@@ -292,22 +289,7 @@ class ControladorBatalha:
                 pacote["resolver_lados_ausentes"] = True
         self.estado_batalha = "aguardando_servidor"
         resposta = self.server_batalha.enviar_jogada(self.id_partida, self.lado_jogador, pacote)
-        if self._resposta_aguardando(resposta) and self.batalha_usa_ia():
-            resposta_ia = self.enviar_jogada_ia()
-            if resposta_ia is not None:
-                resposta = resposta_ia
         self.tratar_resposta_jogada(resposta)
-
-    def enviar_jogada_ia(self):
-        lado_ia = self.obter_lado_ia()
-        if lado_ia is None:
-            return None
-        if self.controlador_ia is None:
-            self.controlador_ia = ControladorIA()
-        pacote = self.controlador_ia.gerar_jogada(self, lado_ia)
-        pacote["id_partida"] = self.id_partida
-        pacote["rodada"] = self.rodada_atual
-        return self.server_batalha.enviar_jogada(self.id_partida, lado_ia, pacote)
 
     def tratar_resposta_jogada(self, resposta):
         status = str((resposta or {}).get("status") or "erro")

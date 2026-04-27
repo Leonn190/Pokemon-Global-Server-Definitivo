@@ -1,62 +1,61 @@
 Nome,Estadio,Cargo,Nivel,Skin,Batalhas,Pokemon1,Pokemon2,Pokemon3,Pokemon4,Pokemon5,Pokemon6,Pokemon7,Pokemon8,Pokemon9,Pokemon10,Pokemon11,Pokemon12,Presente 1,Quantidade 1,Presente 2,Quantidade 2,Presente 3,Quantidade 3,Code
-Alleka,Metal,Lider,,49,2,Excadrill,Durant,Lucario,Magnezone,Scizor,Aggron,Metagross,Archaludon,Kingambit,Kartana,Melmetal,Zacian,,,,,,,1
-Ph,Eletrico,Lider,,75,2,Raichu,Rotom Heat,Bellibolt,Vikavolt,Toxtricity,Ampharos,Eelektross,Luxray,Electivire,Xurkitree,Zeraora,Zekrom,,,,,,,2
-Garcia,Psiquico,Lider,,38,2,Hypno,Gothitelle,Slowking,Starmie,Espeon,Exeggutor,Alakazam,Gardevoir,Hatterene,Delphox,Celebi,Latios,,,,,,,3
-Paulo,Venenoso,Lider,,62,2,Salazzle,Victreebel,Weezing,Drapion,Gengar,Overqwil,Tentacruel,Venusaur,Roserade,Crobat,Naganadel,Nihilego,,,,,,,4
-Ramos,Sonoro,Lider,,77,2,Chatot,Wigglytuff,Kricketune,Altaria,Oricorio,Audino,Primarina,Rillaboom,Bronzong,Exploud,Noivern,Meloetta,,,,,,,5
-Guedes,Lutador,Lider,,89,2,Flamigo,Mienshao,Hawlucha,Quaquaval,Gallade,Chesnaught,Infernape,Blaziken,Buzzwole,Kommo-o,Marshadow,Zamazenta,,,,,,,6
-João,Gelo,Lider,,94,2,Crabominable,Weavile,Cloyster,Vanilluxe,Beartic,Empoleon,Aurorus,Avalugg,Mamoswine,Wailord,Regice,Kyuren,,,,,,,7
-Henrique,Fogo,Lider,,56,2,Houndoom,Emboar,Pyroar,Incineroar,Skelerdirge,Charizard,Magmortar,Volcarona,Arcanine,Blacephalon,Victini,Reshiram,,,,,,,8
-Felps,Dragão,Lider,,80,2,Appletun,Cyclizar,Druddigon,Altaria,Flygon,Kingdra,Haxorus,Tyrantrum,Goodra,Dragonite,Garchomp,Rayquaza,,,,,,,9
-Ferraz,Fantasma,Lider,,79,2,Driftbloon,Palossand,Golurk,Spiritomb,Mismagios,Dhelmise,Chandelure,Decidueye,Basculegion,Annihilape,Spectrier,Lunala,,,,,,,10
-Vasques,Sombrio,Lider,,28,2,Sharpedo,Cacturne,Absol,Malamar,Hounchkrow,Obstagoon,shiftry,Krookodile,Greninja,Guzzlord,Darkrai,Yvelta,,,,,,,11
-Caio,Agua,Lider,,59,2,Araquanid,Barraskewda,Seismitoad,Vaporeon,Feraligatr,Dondozo,Swampert,Milotic,Blastoise,Gyarados,Suicune,Kyogre,,,,,,,12
-Murilo,Inseto,Lider,,21,2,Ninjask,Leavanny,Armaldo,Centiskorch,Yanmega,Kleavor,Frosmoth,Scolipede,Heracross,Golisopod,Pheromosa,Genesect,,,,,,,13
-Felipox,Cosmico,Lider,,51,2,Crygonal,Musharna,Minior,Ultra Rapidash,Orbeetle,Clefable,Solrock,Lunatone,Togekiss,Porygon Z,Stakataka,Deoxys,,,,,,,14
-Lisciele,Voador,Lider,,57,2,Fearow,Pelipper,Cramorant,Talonflame,Pidgeot,Corviknight,Aerodactyl,Celesteela,Braviary,Salamance,Shaymin,Lugia,,,,,,,15
-Suriane,Normal,Lider,,37,2,Zangoose,Tauros,Noctowl,Wyrdeer,Bewer,Oranguru,Drampa,Staraptor,Blissey,Snorlax,Slaking,Regigigas,,,,,,,16
-Amable,Terrestre,Lider,,44,2,Marowak,Sandaconda,Torterra,Donphan,Runerigus,Nidoqueen,Nidoking,Mudsdale,Gliscor,Ursaluna,Landouros,Groudon,,,,,,,17
-Nathzinha,Fada,Lider,,54,2,Mawile,Granbull,Azumarill,Slurpuff,Mimikyu,Confey,Tinkaton,Grimmsnarl,Sylveon,Florges,Diancie,Xerneas,,,,,,,18
-Suneiva,Planta,Lider,,25,2,Liligant,Flapple,Belossom,Lurantis,Tangrowth,Trevenant,Vileplume,Leafon,Meowscarada,Serperior,Zarude,Virizion,,,,,,,19
-Sidney,Pedra,Lider,,76,2,Relicanth,Shuckle,Klawf,Stoujorner,Lycanrock,Barbanacle,Golem,Rampardos,Coalossal,Garganacl,Rhyperior,Terrakion,,,,,,,20
-Curi,,Capitão,,,,,,,,,,,,,,,,,,,,,,21
-Clara,,Capitão,,,,,,,,,,,,,,,,,,,,,,22
-Catarina,,Capitão,,,,,,,,,,,,,,,,,,,,,,23
-André Bian,,Capitão,,,,,,,,,,,,,,,,,,,,,,24
-JM,,Capitão,,,,,,,,,,,,,,,,,,,,,,25
-Laura,Eletrico,Capitão,,,,,,,,,,,,,,,,,,,,,,26
-Carol,Fogo,Capitão,,,,,,,,,,,,,,,,,,,,,,27
-Justo,Sombrio,Capitão,,,,,,,,,,,,,,,,,,,,,,28
-Joao Felipe,,Capitão,,,,,,,,,,,,,,,,,,,,,,29
-Xavier,,Capitão,,,,,,,,,,,,,,,,,,,,,,30
-Martinelli,,Capitão,,,,,,,,,,,,,,,,,,,,,,31
-Enrico,,Capitão,,,,,,,,,,,,,,,,,,,,,,32
-Tutu,,Capitão,,,,,,,,,,,,,,,,,,,,,,33
-André Cond,,Capitão,,,,,,,,,,,,,,,,,,,,,,34
-Gabslage,,Capitão,,,,,,,,,,,,,,,,,,,,,,35
-Bruno,,Capitão,,,,,,,,,,,,,,,,,,,,,,36
-Lyan,,Capitão,,,,,,,,,,,,,,,,,,,,,,37
-Dayan,,Capitão,,,,,,,,,,,,,,,,,,,,,,38
-Wippich,,Capitão,,,,,,,,,,,,,,,,,,,,,,39
-,,Capitão,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
-,,Desafiante,,,,,,,,,,,,,,,,,,,,,,
+Alleka,Metal,Lider,90,49,2,Excadrill,Durant,Lucario,Magnezone,Scizor,Aggron,Metagross,Archaludon,Kingambit,Kartana,Melmetal,Zacian Crowned,,,,,,,1
+Ph,Eletrico,Lider,90,75,2,Raichu,RotomHeat,Jolteon,Vikavolt,Toxtricity,Ampharos,Eelektross,Luxray,Electivire,Xurkitree,Zeraora,Zekrom,,,,,,,2
+Garcia,Psiquico,Lider,90,38,2,Hypno,Gothitelle,Slowking,Starmie,Espeon,Exeggutor,Alakazam,Gardevoir,Hatterene,Delphox,Celebi,Latios,,,,,,,3
+Paulo,Venenoso,Lider,90,62,2,Salazzle,Victreebel,Weezing,Drapion,Gengar,Overqwil,Tentacruel,Venusaur,Roserade,Crobat,Naganadel,Nihilego,,,,,,,4
+Ramos,Sonoro,Lider,90,77,2,Chatot,Wigglytuff,Kricketune,Altaria,Oricorio,Audino,Porygon2,Rillaboom,Bronzong,Exploud,Noivern,Meloetta,,,,,,,5
+Guedes,Lutador,Lider,90,89,2,Hitmonlee,Mienshao,Hawlucha,Poliwrath,Gallade,Chesnaught,Infernape,Blaziken,Buzzwole,Kommo-o,Marshadow,Zamazenta,,,,,,,6
+João,Gelo,Lider,90,94,2,Crabominable,Weavile,Cloyster,Vanilluxe,Beartic,Empoleon,Aurorus,Avalugg,Mamoswine,Walrein,Regice,Kyurem,,,,,,,7
+Henrique,Fogo,Lider,90,56,2,Houndoom,Emboar,Pyroar,Incineroar,Cinderace,Charizard,Magmortar,Volcarona,Arcanine,Blacephalon,Victini,Reshiram,,,,,,,8
+Felps,Dragão,Lider,90,80,2,Appletun,Noivern,Druddigon,Altaria,Flygon,Kingdra,Haxorus,Tyrantrum,Goodra,Dragonite,Garchomp,Rayquaza,,,,,,,9
+Ferraz,Fantasma,Lider,90,79,2,Drifblim,Palossand,Golurk,Spiritomb,Mismagius,Dhelmise,Chandelure,Decidueye,Basculegion,Annihilape,Spectrier,Lunala,,,,,,,10
+Vasques,Sombrio,Lider,90,28,2,Sharpedo,Cacturne,Absol,Malamar,Honchkrow,Obstagoon,Shiftry,Krookodile,Greninja,Guzzlord,Darkrai,Yveltal,,,,,,,11
+Caio,Agua,Lider,90,59,2,Araquanid,Barraskewda,Seismitoad,Vaporeon,Feraligatr,Lapras,Swampert,Milotic,Blastoise,Gyarados,Manaphy,Kyogre,,,,,,,12
+Murilo,Inseto,Lider,90,21,2,Ninjask,Leavanny,Armaldo,Centiskorch,Yanmega,Kleavor,Frosmoth,Scolipede,Heracross,Golisopod,Pheromosa,Genesect,,,,,,,13
+Felipox,Cosmico,Lider,90,51,2,Cryogonal,Musharna,Minior,Ultra Rapidash,Orbeetle,Clefable,Solrock,Lunatone,Togekiss,Porygon-Z,Stakataka,Deoxys,,,,,,,14
+Lisciele,Voador,Lider,90,57,2,Fearow,Pelipper,Cramorant,Talonflame,Pidgeot,Corviknight,Aerodactyl,Celesteela,Braviary,Salamence,ShayminSky,Lugia,,,,,,,15
+Suriane,Normal,Lider,90,37,2,Zangoose,Tauros,Noctowl,Wyrdeer,Bewear,Oranguru,Drampa,Stoutland,Blissey,Snorlax,Slaking,Regigigas,,,,,,,16
+Amable,Terrestre,Lider,90,44,2,Marowak,Sandaconda,Torterra,Donphan,Hippowdon,Nidoqueen,Nidoking,Mudsdale,Gliscor,Ursaluna,Landorus,Groudon,,,,,,,17
+Nathzinha,Fada,Lider,90,54,2,Mawile,Granbull,Azumarill,Slurpuff,Mimikyu,Comfey,Hatterene,Grimmsnarl,Sylveon,Florges,Diancie,Xerneas,,,,,,,18
+Suneiva,Planta,Lider,90,25,2,Lilligant,Flapple,Bellossom,Lurantis,Tangrowth,Trevenant,Vileplume,Leafeon,Sceptile,Serperior,Zarude,Virizion,,,,,,,19
+Sidney,Pedra,Lider,90,76,2,Relicanth,Shuckle,Aerodactyl,Stonjourner,LycanrocMidday,Barbaracle,Golem,Rampardos,Coalossal,Gigalith,Rhyperior,Terrakion,,,,,,,20
+Caio Ferraz,Metal,Capitão,67,12,1,Skarmory,Ferrothorn,Bisharp,Copperajah,Steelix,Lucario,,,,,,,,,,,,,21
+Helena Voltz,Eletrico,Capitão,66,18,1,Raichu,Manectric,Galvantula,Toxtricity,Jolteon,Ampharos,,,,,,,,,,,,,22
+Ícaro Mente,Psiquico,Capitão,64,23,1,Kadabra,Mr. Mime,Grumpig,Xatu,Musharna,Reuniclus,,,,,,,,,,,,,23
+Nádia Víbora,Venenoso,Capitão,65,31,1,Salazzle,Toxicroak,Drapion,Toxapex,Scolipede,Muk,,,,,,,,,,,,,24
+Luan Eco,Sonoro,Capitão,63,34,1,Delcatty,Audino,Kricketune,Altaria,Toxtricity,Exploud,,,,,,,,,,,,,25
+Breno Punho,Lutador,Capitão,68,41,1,Mienshao,Heracross,Bewear,Conkeldurr,Lucario,Machamp,,,,,,,,,,,,,26
+Isabela Geada,Gelo,Capitão,62,46,1,Weavile,Beartic,Frosmoth,Glaceon,Vanilluxe,Walrein,,,,,,,,,,,,,27
+Dante Brasa,Fogo,Capitão,66,52,1,Houndoom,Ninetales,Salazzle,Chandelure,Coalossal,Cinderace,,,,,,,,,,,,,28
+Ryu Draconi,Dragão,Capitão,69,58,1,Druddigon,Flygon,Altaria,Noivern,Tyrantrum,Kingdra,,,,,,,,,,,,,29
+Luna Véu,Fantasma,Capitão,64,63,1,Spiritomb,Banette,Mismagius,Cofagrigus,Trevenant,Chandelure,,,,,,,,,,,,,30
+Mauro Umbra,Sombrio,Capitão,65,67,1,Houndoom,Drapion,Weavile,Zoroark,Honchkrow,Umbreon,,,,,,,,,,,,,31
+Marina Maré,Agua,Capitão,66,72,1,Kingler,Lapras,Tentacruel,Politoed,Seismitoad,Blastoise,,,,,,,,,,,,,32
+Bento Seda,Inseto,Capitão,62,83,1,Pinsir,Scyther,Galvantula,Frosmoth,Scolipede,Vikavolt,,,,,,,,,,,,,33
+Cássio Estelar,Cosmico,Capitão,64,86,1,Musharna,Claydol,Beheeyem,Cryogonal,Orbeetle,Gothitelle,,,,,,,,,,,,,34
+Vânia Celeste,Voador,Capitão,65,91,1,Braviary,Skarmory,Staraptor,Gliscor,Talonflame,Corviknight,,,,,,,,,,,,,35
+Nora Campos,Normal,Capitão,63,3,1,Tauros,Zangoose,Miltank,Ursaring,Porygon2,Stoutland,,,,,,,,,,,,,36
+Téo Barro,Terrestre,Capitão,66,7,1,Sandslash,Gliscor,Hippowdon,Excadrill,Donphan,Krookodile,,,,,,,,,,,,,37
+Flora Encanto,Fada,Capitão,64,14,1,Azumarill,Wigglytuff,Mimikyu,Sylveon,Grimmsnarl,Florges,,,,,,,,,,,,,38
+Gaia Verde,Planta,Capitão,63,19,1,Lilligant,Whimsicott,Ludicolo,Leafeon,Tangrowth,Rillaboom,,,,,,,,,,,,,39
+Petra Rocha,Pedra,Capitão,65,32,1,Omastar,Kabutops,Crustle,Barbaracle,Aurorus,Gigalith,,,,,,,,,,,,,
+Alice Ferraz,Metal,Desafiante,15,5,1,Bronzor,Ferroseed,Aron,Klink,Magnemite,Pawniard,,,,,,,,,,,,,
+Enzo Raio,Eletrico,Desafiante,14,8,1,Pichu,Mareep,Tynamo,Joltik,Yamper,Shinx,,,,,,,,,,,,,
+Sofia Prisma,Psiquico,Desafiante,16,11,1,Wynaut,Mime Jr,Natu,Abra,Ralts,Espurr,,,,,,,,,,,,,
+Cael Víbora,Venenoso,Desafiante,15,13,1,Weedle,Zubat,Oddish,Croagunk,Ekans,Koffing,,,,,,,,,,,,,
+Melina Eco,Sonoro,Desafiante,14,17,1,Igglybuff,Smoochum,Bronzor,Tympole,Whismur,Kricketot,,,,,,,,,,,,,
+Hugo Punho,Lutador,Desafiante,16,20,1,Tyrogue,Riolu,Timburr,Pancham,Mankey,Machop,,,,,,,,,,,,,
+Bianca Neve,Gelo,Desafiante,14,24,1,Snom,Swinub,Spheal,Snorunt,Cubchoo,Vanillite,,,,,,,,,,,,,
+Ravi Chamas,Fogo,Desafiante,17,27,1,Magby,Vulpix,Torchic,Chimchar,Tepig,Litten,,,,,,,,,,,,,
+Kael Draco,Dragão,Desafiante,18,29,1,Applin,Bagon,Jangmo-o,Goomy,Noibat,Axew,,,,,,,,,,,,,
+Cíntia Véu,Fantasma,Desafiante,16,33,1,Sinistea,Sandygast,Duskull,Litwick,Gastly,Drifloon,,,,,,,,,,,,,
+Otávio Umbra,Sombrio,Desafiante,15,36,1,Seedot,Impidimp,Poochyena,Nickit,Sandile,Purrloin,,,,,,,,,,,,,
+Lia Azul,Agua,Desafiante,14,39,1,Magikarp,Feebas,Barboach,Tympole,Buizel,Mudkip,,,,,,,,,,,,,
+Ian Casulo,Inseto,Desafiante,13,42,1,Snom,Caterpie,Weedle,Scatterbug,Blipbug,Kricketot,,,,,,,,,,,,,
+Aurora Cosmo,Cosmico,Desafiante,16,45,1,Togepi,Cleffa,Blipbug,Gothita,Munna,Baltoy,,,,,,,,,,,,,
+Yuri Asa,Voador,Desafiante,14,48,1,Mantyke,Starly,Hoothoot,Pidgey,Rookidee,Spearow,,,,,,,,,,,,,
+Clara Campos,Normal,Desafiante,12,50,1,Rattata,Teddiursa,Lillipup,Zigzagoon,Sentret,Skitty,,,,,,,,,,,,,
+Davi Areia,Terrestre,Desafiante,15,53,1,Barboach,Phanpy,Geodude,Diglett,Wooper,Sandile,,,,,,,,,,,,,
+Mirela Encanto,Fada,Desafiante,14,55,1,Azurill,Togepi,Cleffa,Igglybuff,Cutiefly,Snubbull,,,,,,,,,,,,,
+Olívia Broto,Planta,Desafiante,13,60,1,Budew,Gossifleur,Cherubi,Seedot,Oddish,Turtwig,,,,,,,,,,,,,
+Raul Granito,Pedra,Desafiante,16,61,1,Bonsly,Roggenrola,Geodude,Cranidos,Nosepass,Rockruff,,,,,,,,,,,,,

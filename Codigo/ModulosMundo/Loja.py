@@ -24,6 +24,7 @@ class Loja:
         nivel_respeito_estadio: Callable[[str], int] | None = None,
         tipo_estadio_npc: str = "",
         callback_ganho: Callable[[dict], None] | None = None,
+        catalogo_estado: dict | None = None,
     ) -> None:
         self._npc_nome = str(npc_nome or "NPC")
         self._npc_code = str(npc_code or "")
@@ -35,6 +36,7 @@ class Loja:
         self._nivel_respeito_estadio = nivel_respeito_estadio
         self._tipo_estadio_npc = str(tipo_estadio_npc or "").strip().lower()
         self._callback_ganho = callback_ganho if callable(callback_ganho) else None
+        self._catalogo_estado = dict(catalogo_estado or {}) if isinstance(catalogo_estado, dict) else {}
 
         self._catalogo = self._carregar_catalogo_npc()
         self._botoes_loja: list[dict] = []
@@ -80,6 +82,9 @@ class Loja:
     def _carregar_loja_padrao(self) -> list[dict]:
         if self._npc_estilo != "vendedor":
             return []
+        ofertas_estado = self._catalogo_estado.get("padrao") if isinstance(self._catalogo_estado.get("padrao"), list) else None
+        if ofertas_estado is not None:
+            return [dict(o) for o in ofertas_estado if isinstance(o, dict)]
         row = self._procurar_row_csv(Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv")
         if not isinstance(row, dict):
             return []
@@ -95,6 +100,9 @@ class Loja:
     def _carregar_loja_secreta(self) -> list[dict]:
         if self._npc_estilo != "vendedor":
             return []
+        ofertas_estado = self._catalogo_estado.get("secreta") if isinstance(self._catalogo_estado.get("secreta"), list) else None
+        if ofertas_estado is not None:
+            return [dict(o) for o in ofertas_estado if isinstance(o, dict)]
         row = self._procurar_row_csv(Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv")
         if not isinstance(row, dict):
             return []

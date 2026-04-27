@@ -6,6 +6,8 @@ from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
 from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
+from Codigo.Server.ServerLogin import registrar_server_conta
+from Codigo.Telas.TelaConfig import salvar_config_fixa
 from Codigo.Telas.SubtelaCriarPersonagem import SubtelaCriarPersonagem
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaEscolha, SubtelaTexto
 
@@ -215,6 +217,7 @@ def _abrir_subtela_criar_personagem(jogo):
 
         jogo.INFO["UsuarioLogado"] = usuario
         jogo.INFO["PlayerDadosServer"] = personagem
+        _registrar_server_na_conta(jogo)
         jogo.CenaAlvo = "Carregamento"
 
     jogo.GerenciadorSubtelas.abrir(SubtelaCriarPersonagem(
@@ -464,6 +467,20 @@ def _render_acao(nome, tela, eventos, dt, JOGO, mouse_pos=None):
     botao.render(tela, eventos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
 
+
+
+def _registrar_server_na_conta(jogo):
+    if _SERVER_SELECIONADO is None:
+        return
+    usuario = str(jogo.CONFIG.get("Usuario") or "").strip()
+    if not usuario:
+        return
+    server = SERVER_LIST[_SERVER_SELECIONADO]
+    resposta = registrar_server_conta(usuario, server.get("id"), server.get("nome"))
+    if resposta.get("status") == "ok" and isinstance(resposta.get("conta"), dict):
+        jogo.CONFIG["ContaInfo"] = resposta.get("conta")
+        salvar_config_fixa(jogo.CONFIG)
+
 def _processar_requisicao(Cena, JOGO):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO
     if not _REQUISICAO_RESULTADO:
@@ -498,6 +515,7 @@ def _processar_requisicao(Cena, JOGO):
             nome_personagem = str(personagem.get("nome") or JOGO.CONFIG.get("Usuario") or "Visitante").strip()
             JOGO.INFO["UsuarioLogado"] = nome_personagem
             JOGO.INFO["PlayerDadosServer"] = personagem
+            _registrar_server_na_conta(JOGO)
             JOGO.CenaAlvo = "Carregamento"
         else:
             _abrir_subtela_criar_personagem(JOGO)

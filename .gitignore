@@ -1,5 +1,15 @@
 SimuladorServerJogo/EstadoMundo/
 
+ServerList/
+
+EstadoMundo/
+EstadosMundo/
+EstadoServer/
+EstadosServer/
+EstadoServidor/
+EstadosServidor/
+EstadoServidor.json
+
 __pycache__/
 *.pyc
 *.pyo

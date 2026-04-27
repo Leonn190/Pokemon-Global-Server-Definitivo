@@ -387,6 +387,11 @@ class BotaoAlavanca(Botao):
     def __init__(self, rect: pygame.Rect, nome: str, estado_inicial=False, execute=None, style=None):
         self.nome = nome
         self.estado = bool(estado_inicial)
+        style = dict(style or {})
+        self.estilo_ativo = dict(self._estilo_ativo_padrao())
+        self.estilo_ativo.update(style.pop("estilo_ativo", {}))
+        self.estilo_desativado = dict(self._estilo_desativado_padrao())
+        self.estilo_desativado.update(style.pop("estilo_desativado", {}))
 
         estilo_final = dict(self._estilo_estado())
         if style:
@@ -401,15 +406,16 @@ class BotaoAlavanca(Botao):
     def _texto_estado(self):
         return f"{self.nome}: {'Ligado' if self.estado else 'Desligado'}"
 
-    def _estilo_estado(self):
-        if self.estado:
-            return {
-                "bg": (24, 128, 42),
-                "bg_hover": (35, 156, 54),
-                "bg_pressed": (20, 102, 34),
-                "border": (12, 60, 20),
-                "border_hover": (180, 255, 180),
-            }
+    def _estilo_ativo_padrao(self):
+        return {
+            "bg": (24, 128, 42),
+            "bg_hover": (35, 156, 54),
+            "bg_pressed": (20, 102, 34),
+            "border": (12, 60, 20),
+            "border_hover": (180, 255, 180),
+        }
+
+    def _estilo_desativado_padrao(self):
         return {
             "bg": (150, 32, 32),
             "bg_hover": (186, 42, 42),
@@ -417,6 +423,9 @@ class BotaoAlavanca(Botao):
             "border": (70, 16, 16),
             "border_hover": (255, 180, 180),
         }
+
+    def _estilo_estado(self):
+        return self.estilo_ativo if self.estado else self.estilo_desativado
 
     def set_estado(self, estado: bool):
         self.estado = bool(estado)

@@ -58,6 +58,26 @@ _ESTILO_BOTAO = {
 }
 
 
+def _estilo_alavanca_acao():
+    estilo = dict(_ESTILO_BOTAO)
+    estilo["text_style"] = dict(_ESTILO_BOTAO["text_style"])
+    estilo["estilo_ativo"] = {
+        "bg": (150, 32, 32),
+        "bg_hover": (186, 42, 42),
+        "bg_pressed": (118, 26, 26),
+        "border": (70, 16, 16),
+        "border_hover": (255, 180, 180),
+    }
+    estilo["estilo_desativado"] = {
+        "bg": (24, 128, 42),
+        "bg_hover": (35, 156, 54),
+        "bg_pressed": (20, 102, 34),
+        "border": (12, 60, 20),
+        "border_hover": (180, 255, 180),
+    }
+    return estilo
+
+
 def _emitir_feedback(texto, sucesso=False):
     if _MENSAGEM is None:
         return
@@ -317,7 +337,7 @@ def _montar_layout(jogo, tela_destino=None):
         "Server",
         estado_inicial=False,
         execute=_toggle_ligado,
-        style=_ESTILO_BOTAO,
+        style=_estilo_alavanca_acao(),
     )
 
     _BOTAO_MUNDO = BotaoAlavanca(
@@ -325,7 +345,7 @@ def _montar_layout(jogo, tela_destino=None):
         "Mundo",
         estado_inicial=False,
         execute=_pedir_confirmacao_apagar_mundo,
-        style=_ESTILO_BOTAO,
+        style=_estilo_alavanca_acao(),
     )
 
     _BOTAO_VOLTAR = Botao(

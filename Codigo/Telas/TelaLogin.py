@@ -5,7 +5,7 @@ import pygame
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.CaixaTexto import CaixaTexto
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Server.Login import autenticar
+from Codigo.Server.ServerLogin import autenticar
 from Codigo.Telas.TelaConfig import salvar_config_fixa
 
 
@@ -101,6 +101,8 @@ def _processar_resposta_login(jogo):
 
     usuario_login = resposta.get("usuario") or usuario
     jogo.CONFIG["Usuario"] = usuario_login
+    conta_info = resposta.get("conta") if isinstance(resposta.get("conta"), dict) else {}
+    jogo.CONFIG["ContaInfo"] = conta_info
     salvar_config_fixa(jogo.CONFIG)
 
     _definir_mensagem("Login feito com sucesso!", (130, 255, 160))

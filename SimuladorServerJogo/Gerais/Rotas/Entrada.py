@@ -18,6 +18,36 @@ def _resposta(status, mensagem, possui_personagem=None, personagem=None, regras=
     return pacote
 
 
+def _ator_payload(usuario: str, personagem: dict) -> dict:
+    dados = dict(personagem or {})
+    inventario = dict(dados.get("inventario") or {})
+    return {
+        "nome": str(dados.get("nome") or usuario),
+        "nome_skin": str(dados.get("skin") or "S1.png"),
+        "perfil": {
+            "nivel": int(dados.get("nivel", 0) or 0),
+            "xp": int(dados.get("xp", 0) or 0),
+            "xp_alvo": int(dados.get("xp_alvo", 0) or 0),
+            "batalhas_totais": int(dados.get("batalhas_totais", 0) or 0),
+            "batalhas_pvp_vencidas": int(dados.get("batalhas_pvp_vencidas", 0) or 0),
+            "batalhas_bot_vencidas": int(dados.get("batalhas_bot_vencidas", 0) or 0),
+            "tempo_jogo_segundos": float(dados.get("tempo_jogo_segundos", 0.0) or 0.0),
+            "baus_abertos": int(dados.get("baus_abertos", 0) or 0),
+            "maestria": int(dados.get("maestria", 0) or 0),
+            "nivel_mochila": int(dados.get("nivel_mochila", 1) or 1),
+            "limite_pokemons": int(dados.get("limite_pokemons", 64) or 64),
+            "dinheiro": int(dados.get("dinheiro", 0) or 0),
+            "skins_liberadas": list(dados.get("skins_liberadas") or []),
+            "habilidades_aprendidas": list(dados.get("habilidades_aprendidas") or []),
+        },
+        "inventario": {
+            "pokemons": list(inventario.get("pokemons") or []),
+            "itens": list(inventario.get("itens") or []),
+            "times_pokemon": list(inventario.get("times_pokemon") or []),
+        },
+    }
+
+
 # ============================= ROTA =============================
 # ROTA: processa requisições de entrada no servidor.
 def processar_entrada_json(requisicao_json):
@@ -76,6 +106,17 @@ def processar_entrada_json(requisicao_json):
             _resposta("ok", mensagem, possui_personagem=possui_personagem, personagem=personagem, regras=obter_regras_cliente()),
             ensure_ascii=False,
         )
+
+    # ROTA: sair_mundo
+    if acao == "obter_estatisticas_player":
+        usuario = str(dados.get("usuario", "")).strip()
+        if not usuario:
+            return json.dumps(_resposta("erro", "Usuário obrigatório"), ensure_ascii=False)
+        estado = snapshot_estado()
+        personagem = estado.get("personagens", {}).get(usuario)
+        if not isinstance(personagem, dict):
+            return json.dumps({"status": "negado", "mensagem": "Personagem não encontrado para esta conta."}, ensure_ascii=False)
+        return json.dumps({"status": "ok", "mensagem": "Estatísticas carregadas", "ator": _ator_payload(usuario, personagem)}, ensure_ascii=False)
 
     # ROTA: sair_mundo
     if acao == "sair_mundo":

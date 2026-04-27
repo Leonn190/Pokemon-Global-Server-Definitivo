@@ -4,6 +4,8 @@ from Codigo.ModulosGerais.Sonoridades import VerificaSonoridade
 from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Telas.TelaConfigAvancada import TelaConfigAvancada
+from Codigo.Telas.TelaConta import TelaConta
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao
 
 _CONFIG_CARREGADA = False
@@ -13,8 +15,11 @@ _BARRAS = {}
 _BOTOES_TOGGLE = {}
 _BOTAO_SALVAR = None
 _BOTAO_CANCELAR = None
-_BOTAO_DESLOGAR = None
+_BOTAO_CONFIG_AVANCADA = None
+_BOTAO_CONTA = None
 _TITULO = None
+
+_SUBTELA_ATIVA = None
 
 _CONFIG_INICIAL = None
 
@@ -91,7 +96,7 @@ def _executar_cancelar(Cena, JOGO, botao):
     _BARRAS["Volume"].set_valor(JOGO.CONFIG["Volume"] * 100)
 
     for chave, botao_toggle in _BOTOES_TOGGLE.items():
-        botao_toggle.set_estado(JOGO.CONFIG[chave])
+        botao_toggle.set_estado(bool(JOGO.CONFIG.get(chave, False)))
 
     VerificaSonoridade(JOGO.CONFIG)
     _voltar_menu(Cena, JOGO)
@@ -104,6 +109,7 @@ def _executar_salvar(Cena, JOGO, botao):
 
 def _confirmar_deslogar(Cena, JOGO):
     JOGO.CONFIG["Usuario"] = None
+    JOGO.CONFIG["ContaInfo"] = {}
     salvar_config_fixa(JOGO.CONFIG)
     Cena.DefinirTela("MenuPrincipal")
     JOGO.CenaAlvo = "Login"
@@ -118,9 +124,41 @@ def _abrir_confirmacao_deslogar(Cena, JOGO):
     ))
 
 
+def _abrir_subtela_avancada(Cena, JOGO, botao):
+    global _SUBTELA_ATIVA
+    _SUBTELA_ATIVA = TelaConfigAvancada(
+        JOGO,
+        _estilo_base(),
+        confirmar_callback=lambda: _confirmar_config_avancada(JOGO),
+        cancelar_callback=_fechar_subtela,
+    )
+
+
+def _abrir_subtela_conta(Cena, JOGO, botao):
+    global _SUBTELA_ATIVA
+    _SUBTELA_ATIVA = TelaConta(
+        JOGO,
+        _estilo_base(),
+        deslogar_callback=lambda: _abrir_confirmacao_deslogar(Cena, JOGO),
+        voltar_callback=_fechar_subtela,
+    )
+
+
+def _fechar_subtela():
+    global _SUBTELA_ATIVA
+    _SUBTELA_ATIVA = None
+
+
+def _confirmar_config_avancada(jogo):
+    global _CONFIG_INICIAL
+    salvar_config_fixa(jogo.CONFIG)
+    _CONFIG_INICIAL = dict(jogo.CONFIG)
+    _fechar_subtela()
+
+
 def _montar_layout(Cena, JOGO):
     global _CONFIG_CARREGADA, _TAMANHO_CACHE, _CONFIG_INICIAL
-    global _BARRAS, _BOTOES_TOGGLE, _BOTAO_SALVAR, _BOTAO_CANCELAR, _BOTAO_DESLOGAR, _TITULO
+    global _BARRAS, _BOTOES_TOGGLE, _BOTAO_SALVAR, _BOTAO_CANCELAR, _BOTAO_CONFIG_AVANCADA, _BOTAO_CONTA, _TITULO
 
     largura_tela, altura_tela = JOGO.TELA.get_size()
     estilo = _estilo_base()
@@ -144,25 +182,36 @@ def _montar_layout(Cena, JOGO):
     y_toggles = y_inicial + espacamento * 3 + 20
     x_toggles = (largura_tela - (largura_toggle * 2 + espaco_x)) // 2
 
-    chaves = ["Mudo", "Shader", "FPS Visivel", "Ping Visivel", "Cords Visiveis", "MostrarHorario", "MostrarMinimapa"]
     _BOTOES_TOGGLE = {}
-    for i, chave in enumerate(chaves):
-        coluna = i % 2
-        linha = i // 2
-        x = x_toggles + coluna * (largura_toggle + espaco_x)
-        y = y_toggles + linha * (altura_toggle + 18)
-
+    for i, chave in enumerate(("Mudo", "Shader")):
+        x = x_toggles + i * (largura_toggle + espaco_x)
+        y = y_toggles
         estilo_toggle = dict(estilo)
         estilo_toggle["text_style"] = dict(estilo["text_style"])
-
-        botao_toggle = BotaoAlavanca(
+        _BOTOES_TOGGLE[chave] = BotaoAlavanca(
             pygame.Rect(x, y, largura_toggle, altura_toggle),
             chave,
-            estado_inicial=JOGO.CONFIG[chave],
+            estado_inicial=bool(JOGO.CONFIG.get(chave, False)),
             execute=lambda jogo, estado, botao, chave=chave: _ao_toggle(chave, jogo, estado),
             style=estilo_toggle,
         )
-        _BOTOES_TOGGLE[chave] = botao_toggle
+
+    largura_sub = 320
+    altura_sub = 76
+    y_sub = y_toggles + altura_toggle + 22
+
+    _BOTAO_CONFIG_AVANCADA = Botao(
+        pygame.Rect(x_toggles, y_sub, largura_sub, altura_sub),
+        "Config avançada",
+        execute=lambda jogo, botao: _abrir_subtela_avancada(Cena, jogo, botao),
+        style=estilo,
+    )
+    _BOTAO_CONTA = Botao(
+        pygame.Rect(x_toggles + largura_toggle + espaco_x, y_sub, largura_sub, altura_sub),
+        "Conta",
+        execute=lambda jogo, botao: _abrir_subtela_conta(Cena, jogo, botao),
+        style=estilo,
+    )
 
     estilo_acao = dict(estilo)
     estilo_acao["text_style"] = dict(estilo["text_style"])
@@ -187,19 +236,6 @@ def _montar_layout(Cena, JOGO):
         style=estilo_acao,
     )
 
-    estilo_deslogar = dict(estilo_acao)
-    estilo_deslogar["text_style"] = dict(estilo_acao["text_style"])
-    estilo_deslogar["bg"] = (105, 38, 38)
-    estilo_deslogar["bg_hover"] = (132, 48, 48)
-    estilo_deslogar["bg_pressed"] = (86, 30, 30)
-
-    _BOTAO_DESLOGAR = Botao(
-        pygame.Rect(largura_tela // 2 - (largura_acao // 2), y_acao - 98, largura_acao, 78),
-        "Deslogar",
-        execute=lambda jogo, botao: _abrir_confirmacao_deslogar(Cena, jogo),
-        style=estilo_deslogar,
-    )
-
     _TITULO = Texto(
         "Configurações",
         pos=(largura_tela // 2, int(altura_tela * 0.08)),
@@ -220,8 +256,9 @@ def _montar_layout(Cena, JOGO):
 
 
 def ResetTelaConfig():
-    global _CONFIG_CARREGADA
+    global _CONFIG_CARREGADA, _SUBTELA_ATIVA
     _CONFIG_CARREGADA = False
+    _SUBTELA_ATIVA = None
 
 
 def TelaConfig(Cena, JOGO, EVENTOS, dt, tela_destino=None):
@@ -231,10 +268,15 @@ def TelaConfig(Cena, JOGO, EVENTOS, dt, tela_destino=None):
 
     tela = tela_destino if tela_destino is not None else JOGO.TELA
     tela.fill((10, 14, 28))
-    _TITULO.draw(tela)
 
     eventos_ativos = [] if JOGO.GerenciadorSubtelas.ativa else EVENTOS
     mouse_pos = (-99999, -99999) if JOGO.GerenciadorSubtelas.ativa else None
+
+    if _SUBTELA_ATIVA is not None:
+        _SUBTELA_ATIVA.render(tela, eventos_ativos, dt)
+        return
+
+    _TITULO.draw(tela)
 
     alterou_fps = _BARRAS["FPS"].render(tela, eventos_ativos, dt)
     alterou_claridade = _BARRAS["Claridade"].render(tela, eventos_ativos, dt)
@@ -253,6 +295,7 @@ def TelaConfig(Cena, JOGO, EVENTOS, dt, tela_destino=None):
     for botao in _BOTOES_TOGGLE.values():
         botao.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
 
-    _BOTAO_DESLOGAR.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    _BOTAO_CONFIG_AVANCADA.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
+    _BOTAO_CONTA.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
     _BOTAO_CANCELAR.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)
     _BOTAO_SALVAR.render(tela, eventos_ativos, dt, JOGO=JOGO, mouse_pos=mouse_pos)

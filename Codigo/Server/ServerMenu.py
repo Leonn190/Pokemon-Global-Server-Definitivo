@@ -110,3 +110,23 @@ def criar_personagem(server_id, usuario, skin, pokemon_inicial):
         return json.loads(resposta_json)
     except json.JSONDecodeError:
         return _erro_padrao("Falha ao interpretar resposta de criação de personagem")
+
+
+def obter_estatisticas_player(server_id, usuario):
+    server, erro = _preparar_servidor_local(server_id)
+    if erro:
+        return erro
+
+    pacote = {
+        "server_id": server.get("id"),
+        "acao": "obter_estatisticas_player",
+        "dados": {
+            "usuario": usuario,
+        },
+    }
+
+    resposta_json = processar_entrada_json(json.dumps(pacote, ensure_ascii=False))
+    try:
+        return json.loads(resposta_json)
+    except json.JSONDecodeError:
+        return _erro_padrao("Falha ao interpretar resposta de estatísticas do jogador")

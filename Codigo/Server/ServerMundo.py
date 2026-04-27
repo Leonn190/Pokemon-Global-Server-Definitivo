@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import json
 import time
+from pathlib import Path
 
+from Codigo.Server.GerenciadorServerList import obter_servidor_por_id
+from SimuladorServerJogo.Gerais.ContextoServidor import definir_servidor_ativo, obter_pasta_servidor_ativo
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.Rotas.Ativador import processar_ativador_json
 from SimuladorServerJogo.Gerais.Rotas.Atualizador import processar_atualizador_json
@@ -15,7 +18,24 @@ def _erro_padrao(mensagem):
     return {"status": "erro", "mensagem": mensagem}
 
 
+def _preparar_servidor_local(server_id):
+    server = obter_servidor_por_id(server_id)
+    if not server:
+        return _erro_padrao("Servidor não encontrado.")
+    if server.get("tipo") != "local":
+        return {"status": "negado", "mensagem": "Servidor online ainda não implementado."}
+    pasta = Path(server.get("pasta")).resolve()
+    if obter_pasta_servidor_ativo() != pasta:
+        definir_servidor_ativo(pasta)
+        from SimuladorServerJogo.Gerais.EstadoServidor import snapshot_estado
+        snapshot_estado()
+    return None
+
+
 def _processar_rota_local(processador, pacote, mensagem_erro):
+    erro = _preparar_servidor_local(pacote.get("ip"))
+    if erro:
+        return erro
     resposta = processador(pacote)
     if isinstance(resposta, dict):
         return resposta
@@ -83,6 +103,9 @@ def enviar_diffs_mundo_categoria(ip, client_id, categoria, diffs):
 
 
 def desconectar_mundo(ip, client_id):
+    erro = _preparar_servidor_local(ip)
+    if erro:
+        return erro
     pacote = {
         "ip": ip,
         "acao": "sair_mundo",
@@ -99,6 +122,9 @@ def desconectar_mundo(ip, client_id):
 
 
 def coletar_regras_mundo(ip):
+    erro = _preparar_servidor_local(ip)
+    if erro:
+        return erro
     pacote = {
         "ip": ip,
         "acao": "coletar_regras_mundo",

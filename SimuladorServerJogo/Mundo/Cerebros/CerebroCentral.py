@@ -59,6 +59,31 @@ class CerebroCentral:
         self._cerebro_tempo = CerebroTempo(self._regras)
         self._snapshot_tempo = self._cerebro_tempo.snapshot()
 
+    def recarregar_contexto_mundo(self) -> None:
+        with self._lock:
+            self._ultimo_tick = 0.0
+            self._tick_contador = 0
+            self._ativador_id = ""
+            self._players_ativos.clear()
+            self._pokemons_ids.clear()
+            self._baus_ids.clear()
+            self._itens_mundo_ids.clear()
+            self._xp_mundo_ids.clear()
+            self._spawns_pokemon_ultimos_200.clear()
+            self._spawns_bau_ultimos_200.clear()
+            self._movimento_estado.clear()
+            self._capturas_inventario_pendentes.clear()
+            self._servico_inventario = ServicoInventario()
+            self._cerebro_baus = CerebroBaus(self)
+            self._cerebro_pokemons = CerebroPokemons(self)
+            self._cerebro_projeteis = CerebroProjeteis(self)
+            self._cerebro_itens_mundo = CerebroItensMundo(self)
+            self._cerebro_estruturas = CerebroEstruturasNaturais(self)
+            self._cerebro_xp_mundo = CerebroXpMundo(self)
+            self._cerebro_npcs = CerebroNPCs(self)
+            self._cerebro_tempo = CerebroTempo(self._regras)
+            self._snapshot_tempo = self._cerebro_tempo.snapshot()
+
     def _i(self, k: str, d: int) -> int:
         try:
             return int(self._regras.get(k, d))

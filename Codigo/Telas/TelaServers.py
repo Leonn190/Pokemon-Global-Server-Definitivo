@@ -488,6 +488,7 @@ def _processar_requisicao(Cena, JOGO):
             JOGO.INFO["ServerSelecionado"] = {
                 "indice": _SERVER_SELECIONADO,
                 "nome": server.get("nome", "Servidor"),
+                "ip": server.get("id"),
                 "server_id": server.get("id"),
                 "tipo": server.get("tipo", "local"),
             }

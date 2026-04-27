@@ -246,6 +246,14 @@ def _salvar_json_servidor_ativo_locked() -> None:
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
 
+def _recarregar_cerebro_mundo() -> None:
+    try:
+        from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
+        CEREBRO.recarregar_contexto_mundo()
+    except Exception:
+        pass
+
+
 def _garantir_estado_ativo() -> None:
     global _SERVIDOR_ATIVO_ATUAL, _ESTADO_MUNDO, _CHAVE_SEGURANCA
 
@@ -284,6 +292,7 @@ def _garantir_estado_ativo() -> None:
     BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
     PACOTES_TICK.resetar()
     _SERVIDOR_ATIVO_ATUAL = pasta
+    _recarregar_cerebro_mundo()
 
 
 def _worker_persistencia_estado_mundo() -> None:
@@ -648,6 +657,7 @@ def _criar_novo_mundo_sync():
     BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
     PACOTES_TICK.resetar()
     resetar_estado_clientes()
+    _recarregar_cerebro_mundo()
     _set_geracao(progresso=100, mensagem="Mundo pronto")
 
 
@@ -678,6 +688,7 @@ def _apagar_mundo():
     _ESTADO["jogadores_com_personagem"].clear()
     BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
     resetar_estado_clientes()
+    _recarregar_cerebro_mundo()
 
 
 

@@ -3,69 +3,139 @@ from __future__ import annotations
 import json
 import random
 from pathlib import Path
+from typing import Any, Mapping
 
-
-def _f(valor, default=0.0) -> float:
-    try:
-        return float(valor)
-    except (TypeError, ValueError):
-        return float(default)
+from .ConfigIA import ConfigIA
+from .ContextoIA import ContextoIA, fnum
+from .GeradorCandidatosIA import GeradorCandidatosIA
+from .AvaliadorIA import AvaliadorIA
+from .PlanejadorIA import PlanejadorIA
+from .SimuladorIA import SimuladorIA
+from .MemoriaIA import MemoriaIA
 
 
 class ControladorIA:
-    def __init__(self, seed_base=None):
+    """Ponto de entrada da IA server-side.
+
+    Mantem a assinatura atual `gerar_jogada(partida, lado_id)` para nao exigir
+    mudancas fora desta pasta. A IA ja aceita configuracao opcional por criterio,
+    mas possui fallback proprio enquanto nada externo for enviado.
+    """
+
+    def __init__(self, seed_base=None, config: Mapping[str, Any] | ConfigIA | None = None):
         self.seed_base = seed_base
         self.propriedades_ataques = self._carregar_propriedades_ataques()
+        self.config_padrao = config if isinstance(config, ConfigIA) else ConfigIA.from_dict(config)
+        self.memoria = MemoriaIA()
+        self.gerador = GeradorCandidatosIA(self.propriedades_ataques)
+        self.avaliador = AvaliadorIA()
+        self.simulador = SimuladorIA()
+        self.planejador = PlanejadorIA(self.gerador, self.avaliador, self.simulador)
 
-    def gerar_jogada(self, partida, lado_id):
+    def gerar_jogada(self, partida, lado_id, config_ia: Mapping[str, Any] | ConfigIA | None = None):
         lado_id = int(lado_id or 0)
         rodada = int(getattr(partida, "rodada_atual", 1) or 1)
         rng = random.Random(self._seed_rodada(partida, rodada, lado_id))
-        acoes = []
-        ativos = [p for p in self._pokemons(partida) if self._lado(p) == lado_id and self._vivo(p) and self._ativo(p) and not self._reserva(p)]
-        inimigos = [p for p in self._pokemons(partida) if self._lado(p) != lado_id and self._vivo(p) and self._ativo(p) and not self._reserva(p)]
-        inimigos.sort(key=lambda p: (self._vida_percentual(p), str(self._pid(p))))
+        config = self._resolver_config(partida, lado_id, config_ia)
+        usar_leitura_player = bool(rng.random() < float(config.criterio_hacker or 0.0))
 
-        for pokemon in ativos:
-            if len(acoes) >= 5:
-                break
-            acao = self._acao_ataque(partida, pokemon, inimigos, rodada, rng)
-            if acao is not None:
-                acoes.append(acao)
-                continue
-            acao = self._acao_troca_simples(partida, pokemon, lado_id, rodada)
-            if acao is not None:
-                acoes.append(acao)
+        try:
+            contexto = ContextoIA(
+                partida=partida,
+                lado_id=lado_id,
+                config=config,
+                rng=rng,
+                propriedades_ataques=self.propriedades_ataques,
+                usar_leitura_player=usar_leitura_player,
+            )
+            self.memoria.atualizar_com_contexto(contexto)
+            acoes = self.planejador.planejar(contexto)
+            if not acoes:
+                acoes = self._fallback(partida, lado_id, rodada, rng)
+        except Exception as exc:
+            self._registrar_aviso(partida, {"motivo": "ia_fallback_exception", "erro": str(exc), "lado_id": lado_id})
+            acoes = self._fallback(partida, lado_id, rodada, rng)
 
         return {
             "id_partida": str(getattr(partida, "id_partida", "") or ""),
             "rodada": rodada,
             "modo_teste": False,
             "lado_id": lado_id,
-            "acoes": acoes[:5],
+            "acoes": list(acoes or [])[: int(config.max_acoes_por_lado or 5)],
+            "meta_ia": {
+                "criterio_hacker": round(float(config.criterio_hacker or 0.0), 4),
+                "usou_leitura_player": usar_leitura_player,
+                "criterios_dificuldade": config.dificuldade.as_dict(),
+                "criterios_personalidade": config.personalidade.as_dict(),
+            },
         }
 
-    def _acao_ataque(self, partida, pokemon, inimigos, rodada, rng):
-        ataques = self._ataques(pokemon)
+    def _resolver_config(self, partida, lado_id: int, config_ia: Mapping[str, Any] | ConfigIA | None) -> ConfigIA:
+        config = self.config_padrao
+        if isinstance(config_ia, ConfigIA):
+            config = config_ia
+        elif isinstance(config_ia, Mapping):
+            config = config.mesclar(config_ia)
+
+        # Ganchos futuros sem exigir alteracao de Partida.py: se algum dia o lado,
+        # regras ou dados de inicializacao carregarem criterios, a IA ja le.
+        candidatos: list[Mapping[str, Any]] = []
+        regras = getattr(partida, "regras", {})
+        if isinstance(regras, Mapping):
+            ia_regras = regras.get("ia") or regras.get("IA")
+            if isinstance(ia_regras, Mapping):
+                candidatos.append(ia_regras)
+        lados = getattr(partida, "lados", {})
+        dados_lado = lados.get(int(lado_id)) if isinstance(lados, Mapping) else None
+        if isinstance(dados_lado, Mapping):
+            for chave in ("ia", "IA", "config_ia", "ConfigIA"):
+                if isinstance(dados_lado.get(chave), Mapping):
+                    candidatos.append(dados_lado[chave])
+        for dados in candidatos:
+            config = config.mesclar(dados)
+        return config
+
+    def _fallback(self, partida, lado_id: int, rodada: int, rng) -> list[dict]:
+        """Comportamento simples de seguranca.
+
+        Mantem a batalha andando caso algum criterio ou simulacao falhe.
+        """
+        acoes: list[dict] = []
+        ativos = [p for p in self._pokemons(partida) if self._lado(p) == lado_id and self._vivo(p) and self._ativo(p) and not self._reserva(p)]
+        inimigos = [p for p in self._pokemons(partida) if self._lado(p) != lado_id and self._vivo(p) and self._ativo(p) and not self._reserva(p)]
+        inimigos.sort(key=lambda p: (self._vida_percentual(p), str(self._pid(p))))
+        for pokemon in ativos:
+            if len(acoes) >= 5:
+                break
+            acao = self._fallback_ataque(partida, pokemon, inimigos, rodada, rng)
+            if acao is not None:
+                acoes.append(acao)
+                continue
+            acao = self._fallback_troca(partida, pokemon, lado_id, rodada)
+            if acao is not None:
+                acoes.append(acao)
+        return acoes
+
+    def _fallback_ataque(self, partida, pokemon, inimigos, rodada, rng):
         candidatos = []
-        for ataque in ataques:
+        for ataque in self._ataques(pokemon):
             props = self.buscar_propriedades_ataque(ataque)
             if not isinstance(props, dict):
                 continue
             estilo = str(props.get("estilo_logico") or "").strip().lower()
             if estilo == "passivo" or estilo not in {"alvo", "ativo"}:
                 continue
-            if self._energia(pokemon) < _f(props.get("custo"), 0.0):
+            if self._energia(pokemon) < fnum(props.get("custo"), 0.0):
                 continue
             if estilo == "ativo":
                 candidatos.append((ataque, props, None))
                 continue
-            area_id = self._melhor_area_alvo(partida, pokemon, props, inimigos, rng)
+            area_id = self._fallback_area_alvo(partida, pokemon, props, inimigos, rng)
             if area_id is not None:
                 candidatos.append((ataque, props, area_id))
         if not candidatos:
             return None
-        ataque, props, area_id = rng.choice(candidatos[:3])
+        ataque, props, area_id = candidatos[0]
         code = self._code_ataque(ataque, props)
         alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
         alvo = None
@@ -84,9 +154,11 @@ class ControladorIA:
                 "Tipo": ataque.get("Tipo") or ataque.get("tipo") or (props.get("parametros") or {}).get("tipo"),
             },
             "alvo": alvo,
+            "origem_ia": True,
+            "fallback_ia": True,
         }
 
-    def _acao_troca_simples(self, partida, pokemon, lado_id, rodada):
+    def _fallback_troca(self, partida, pokemon, lado_id, rodada):
         if self._vida_percentual(pokemon) > 0.25:
             return None
         reserva = next((p for p in self._pokemons(partida) if self._lado(p) == lado_id and self._vivo(p) and self._reserva(p)), None)
@@ -102,49 +174,25 @@ class ControladorIA:
             "rodada": rodada,
             "origem": {"tipo": "area", "area_id": self._area_id(pokemon)},
             "destino": {"tipo": "reserva", "pokemon_id": self._pid(reserva)},
+            "origem_ia": True,
+            "fallback_ia": True,
         }
 
-    def _melhor_area_alvo(self, partida, pokemon, props, inimigos, rng):
+    def _fallback_area_alvo(self, partida, pokemon, props, inimigos, rng):
         alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
         exige_ocupada = bool(alvo_cfg.get("exige_area_ocupada"))
-        for inimigo in inimigos:
-            area_id = self._area_id(inimigo)
+        permitidos = alvo_cfg.get("lados_permitidos") if isinstance(alvo_cfg.get("lados_permitidos"), (list, tuple, set)) else []
+        quer_aliado = any(str(x).lower() in {"mesmo_lado", "aliado", "aliados", "proprio_lado", "usuario"} for x in permitidos)
+        alvos = [p for p in self._pokemons(partida) if self._lado(p) == self._lado(pokemon) and self._vivo(p) and self._ativo(p) and not self._reserva(p)] if quer_aliado else inimigos
+        alvos.sort(key=lambda p: (self._vida_percentual(p), str(self._pid(p))))
+        for alvo in alvos:
+            area_id = self._area_id(alvo)
             if area_id and self._area_permitida(partida, pokemon, area_id, props):
                 return area_id
         if exige_ocupada:
             return None
-        areas = [
-            str(a.get("id"))
-            for a in self._areas(partida)
-            if int(a.get("lado_id", -999)) != self._lado(pokemon)
-            and self._area_permitida(partida, pokemon, a.get("id"), props)
-        ]
+        areas = [str(a.get("id")) for a in self._areas(partida) if self._area_permitida(partida, pokemon, a.get("id"), props)]
         return rng.choice(areas) if areas else None
-
-    def _area_permitida(self, partida, pokemon, area_id, props):
-        area = self._area_por_id(partida, area_id)
-        if not isinstance(area, dict):
-            return False
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
-        if bool(alvo_cfg.get("exige_area_ocupada")) and not self._area_esta_ocupada(partida, area_id):
-            return False
-        permitidos = alvo_cfg.get("lados_permitidos")
-        if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
-            return True
-        lado_area = int(area.get("lado_id", -999))
-        lado_origem = self._lado(pokemon)
-        area_origem = str(self._area_id(pokemon) or "")
-        for item in permitidos:
-            token = str(item or "").strip().lower()
-            if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
-                return True
-            if token in {"lado_oposto", "oposto", "inimigo", "inimigos", "adversario", "adversarios"} and lado_area != lado_origem:
-                return True
-            if token in {"mesmo_lado", "aliado", "aliados", "proprio_lado"} and lado_area == lado_origem:
-                return True
-            if token in {"usuario", "proprio", "si_mesmo"} and str(area_id) == area_origem:
-                return True
-        return False
 
     def buscar_propriedades_ataque(self, ataque):
         if not isinstance(ataque, dict):
@@ -177,7 +225,14 @@ class ControladorIA:
 
     def _seed_rodada(self, partida, rodada, lado_id):
         seed = self.seed_base if self.seed_base is not None else getattr(partida, "seed_partida", 0)
-        return f"{seed}:{rodada}:{lado_id}"
+        return f"{seed}:{rodada}:{lado_id}:ia_v2"
+
+    @staticmethod
+    def _registrar_aviso(partida, aviso: dict) -> None:
+        try:
+            getattr(partida, "avisos", []).append(dict(aviso))
+        except Exception:
+            pass
 
     @staticmethod
     def _pokemons(partida):
@@ -192,23 +247,46 @@ class ControladorIA:
         areas = getattr(partida, "areas", {})
         if isinstance(areas, dict):
             return list(areas.values())
-        arena = getattr(partida, "arena", None)
-        return list(getattr(arena, "_areas", []) or [])
+        return []
 
     @staticmethod
     def _area_por_id(partida, area_id):
         areas = getattr(partida, "areas", {})
         if isinstance(areas, dict):
             return areas.get(str(area_id or ""))
-        arena = getattr(partida, "arena", None)
-        return arena.obter_area_por_id(area_id) if arena is not None and hasattr(arena, "obter_area_por_id") else None
+        return None
 
     @staticmethod
     def _area_esta_ocupada(partida, area_id):
         if hasattr(partida, "pokemon_na_area"):
             return partida.pokemon_na_area(area_id) is not None
-        arena = getattr(partida, "arena", None)
-        return bool(arena.area_esta_ocupada(area_id)) if arena is not None and hasattr(arena, "area_esta_ocupada") else False
+        area = ControladorIA._area_por_id(partida, area_id)
+        return bool(area and area.get("ocupante_id"))
+
+    def _area_permitida(self, partida, pokemon, area_id, props):
+        area = self._area_por_id(partida, area_id)
+        if not isinstance(area, dict):
+            return False
+        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        if bool(alvo_cfg.get("exige_area_ocupada")) and not self._area_esta_ocupada(partida, area_id):
+            return False
+        permitidos = alvo_cfg.get("lados_permitidos")
+        if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
+            return True
+        lado_area = int(area.get("lado_id", -999))
+        lado_origem = self._lado(pokemon)
+        area_origem = str(self._area_id(pokemon) or "")
+        for item in permitidos:
+            token = str(item or "").strip().lower()
+            if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
+                return True
+            if token in {"lado_oposto", "oposto", "inimigo", "inimigos", "adversario", "adversarios"} and lado_area != lado_origem:
+                return True
+            if token in {"mesmo_lado", "aliado", "aliados", "proprio_lado"} and lado_area == lado_origem:
+                return True
+            if token in {"usuario", "proprio", "si_mesmo"} and str(area_id) == area_origem:
+                return True
+        return False
 
     @staticmethod
     def _pid(pokemon):
@@ -216,7 +294,10 @@ class ControladorIA:
 
     @staticmethod
     def _lado(pokemon):
-        return int(getattr(pokemon, "lado_id", getattr(pokemon, "LadoId", 0)) or 0)
+        try:
+            return int(getattr(pokemon, "lado_id", getattr(pokemon, "LadoId", 0)) or 0)
+        except (TypeError, ValueError):
+            return 0
 
     @staticmethod
     def _ativo(pokemon):
@@ -230,18 +311,18 @@ class ControladorIA:
     def _vivo(pokemon):
         if hasattr(pokemon, "esta_vivo"):
             return bool(pokemon.esta_vivo())
-        return bool(getattr(pokemon, "vivo", getattr(pokemon, "Vivo", False))) and _f(getattr(pokemon, "VidaAtual", 0.0), 0.0) > 0
+        return bool(getattr(pokemon, "vivo", getattr(pokemon, "Vivo", False))) and fnum(getattr(pokemon, "VidaAtual", 0.0), 0.0) > 0
 
     @staticmethod
     def _energia(pokemon):
-        return _f(getattr(pokemon, "EnergiaAtual", getattr(pokemon, "Energia", 0.0)), 0.0)
+        return fnum(getattr(pokemon, "EnergiaAtual", getattr(pokemon, "Energia", 0.0)), 0.0)
 
     @staticmethod
     def _vida_percentual(pokemon):
         vida_max = getattr(pokemon, "VidaMax", None)
         if vida_max is None and hasattr(pokemon, "obter_atributo"):
             vida_max = pokemon.obter_atributo("Vida", 1.0)
-        return _f(getattr(pokemon, "VidaAtual", 0.0), 0.0) / max(1.0, _f(vida_max, 1.0))
+        return fnum(getattr(pokemon, "VidaAtual", 0.0), 0.0) / max(1.0, fnum(vida_max, 1.0))
 
     @staticmethod
     def _area_id(pokemon):

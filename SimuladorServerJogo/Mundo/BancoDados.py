@@ -9,10 +9,10 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+import SimuladorServerJogo.Gerais.Geradores.GeradorMundo as GERADOR_MUNDO
 from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import (
     BLOCO_TAMANHO_PX,
     CHUNK_BLOCOS,
-    PASTA_WORLD_CHUNKS,
     carregar_estado_mundo,
 )
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, EstadioServer
@@ -91,7 +91,10 @@ class BancoDadosMundo:
         return int((1 << 62) | (c << 44) | (x << 24) | y)
 
     def _resolver_chunks_dir(self) -> Path:
-        return PASTA_WORLD_CHUNKS
+        try:
+            return GERADOR_MUNDO.obter_pasta_world_chunks()
+        except RuntimeError:
+            return Path()
 
     def recarregar_mundo(self, estado_mundo: Dict[str, object], limpar_objetos: bool = False) -> None:
         with self._lock:

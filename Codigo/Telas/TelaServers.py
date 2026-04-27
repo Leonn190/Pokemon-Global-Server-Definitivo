@@ -4,10 +4,12 @@ import pygame
 from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
+from Codigo.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
 from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
 from Codigo.Telas.SubtelaCriarPersonagem import SubtelaCriarPersonagem
-from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
-from ServerList import SERVER_LIST
+from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaEscolha, SubtelaTexto
+
+SERVER_LIST = []
 
 _TELA_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)
@@ -30,6 +32,12 @@ _STATUS_RESULTADO = None
 _STATUS_CACHE = {}
 _STATUS_INTERVALO = 2.0
 _STATUS_ACUMULADO = 999.0
+
+
+def _atualizar_lista_servers():
+    global SERVER_LIST
+    SERVER_LIST = GERENCIADOR_SERVER_LIST.listar_servidores()
+    return SERVER_LIST
 
 
 def _gerar_estilos():
@@ -101,37 +109,55 @@ def _renomear_server(novo_nome):
     if not novo_nome:
         return
 
-    SERVER_LIST[_SERVER_SELECIONADO]["nome"] = novo_nome
+    server = SERVER_LIST[_SERVER_SELECIONADO]
+    atualizado = GERENCIADOR_SERVER_LIST.renomear_servidor(server.get("id"), novo_nome)
+    if not atualizado:
+        _emitir_feedback("Falha ao renomear servidor")
+        return
+    _atualizar_lista_servers()
     _BOTOES_SERVERS[_SERVER_SELECIONADO].set_text(novo_nome)
     _emitir_feedback("Server Renomeado com sucesso", sucesso=True)
     tocar("Salvou")
 
 
-def _adicionar_server(nome, link):
+def _adicionar_server_online(nome, link):
     nome = nome.strip()
     link = link.strip()
     if not nome or not link:
         return
-    SERVER_LIST.append({"nome": nome, "ip": link})
-    _emitir_feedback("Server Criado com sucesso", sucesso=True)
+    GERENCIADOR_SERVER_LIST.criar_servidor_online(nome, link)
+    _atualizar_lista_servers()
+    _emitir_feedback("Server Online Cadastrado com sucesso", sucesso=True)
+
+
+def _adicionar_server_local(nome, chave):
+    nome = nome.strip()
+    chave = chave.strip()
+    if not nome or not chave:
+        return
+    GERENCIADOR_SERVER_LIST.criar_servidor_local(nome, chave)
+    _atualizar_lista_servers()
+    _emitir_feedback("Server Local Criado com sucesso", sucesso=True)
 
 
 def _apagar_server():
     if _SERVER_SELECIONADO is None:
         return
-    SERVER_LIST.pop(_SERVER_SELECIONADO)
+    server = SERVER_LIST[_SERVER_SELECIONADO]
+    GERENCIADOR_SERVER_LIST.apagar_servidor(server.get("id"))
+    _atualizar_lista_servers()
     _limpar_selecao()
     _emitir_feedback("Server Apagado com Sucesso", sucesso=True)
     tocar("Apagou")
 
 
-def _worker_requisicao(tipo, ip, payload):
+def _worker_requisicao(tipo, server_id, payload):
     global _REQUISICAO_RESULTADO
 
     if tipo == "entrar":
-        resposta = entrar_server(ip, payload)
+        resposta = entrar_server(server_id, payload)
     else:
-        resposta = operar_server(ip, payload)
+        resposta = operar_server(server_id, payload)
 
     _REQUISICAO_RESULTADO = {"tipo": tipo, "resposta": resposta}
 
@@ -140,21 +166,20 @@ def _worker_status():
     global _STATUS_RESULTADO
     resultado = {}
     for i, server in enumerate(SERVER_LIST):
-        ip = server.get("ip", "")
-        resposta = obter_status_operacao(ip)
+        resposta = obter_status_operacao(server.get("id"))
         if resposta.get("status") == "ok":
             resultado[i] = bool(resposta.get("ligado", False))
     _STATUS_RESULTADO = resultado
 
 
-def _iniciar_requisicao(tipo, ip, payload, mensagem):
+def _iniciar_requisicao(tipo, server_id, payload, mensagem):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO
     if _REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive():
         return
 
     _REQUISICAO_RESULTADO = None
     _emitir_info(mensagem)
-    _REQUISICAO_THREAD = threading.Thread(target=_worker_requisicao, args=(tipo, ip, payload), daemon=True)
+    _REQUISICAO_THREAD = threading.Thread(target=_worker_requisicao, args=(tipo, server_id, payload), daemon=True)
     _REQUISICAO_THREAD.start()
 
 
@@ -164,7 +189,7 @@ def _entrar_server(jogo):
 
     server = SERVER_LIST[_SERVER_SELECIONADO]
     usuario = (jogo.CONFIG.get("Usuario") or "Visitante").strip()
-    _iniciar_requisicao("entrar", server.get("ip", ""), usuario, "Conectando ao servidor de jogo...")
+    _iniciar_requisicao("entrar", server.get("id"), usuario, "Conectando ao servidor de jogo...")
 
 
 def _abrir_subtela_criar_personagem(jogo):
@@ -179,7 +204,7 @@ def _abrir_subtela_criar_personagem(jogo):
         if not str(skin_val).lower().endswith(".png"):
             skin_val = f"{skin_val}.png"
 
-        entrada = entrar_server(server.get("ip", ""), usuario)
+        entrada = entrar_server(server.get("id"), usuario)
         personagem = entrada.get("personagem") if isinstance(entrada, dict) else None
         if not isinstance(personagem, dict):
             personagem = {}
@@ -194,7 +219,7 @@ def _abrir_subtela_criar_personagem(jogo):
 
     jogo.GerenciadorSubtelas.abrir(SubtelaCriarPersonagem(
         jogo.TELA.get_size(),
-        ip_server=server.get("ip", ""),
+        ip_server=server.get("id"),
         usuario=usuario,
         concluir_callback=_concluir,
     ))
@@ -205,7 +230,7 @@ def _enviar_chave_operacao(chave):
         return
 
     server = SERVER_LIST[_SERVER_SELECIONADO]
-    _iniciar_requisicao("operar", server.get("ip", ""), chave, "Validando chave de operação...")
+    _iniciar_requisicao("operar", server.get("id"), chave, "Validando chave de operação...")
 
 
 def _abrir_subtela_renomear(JOGO):
@@ -221,11 +246,43 @@ def _abrir_subtela_renomear(JOGO):
 
 
 def _abrir_subtela_adicionar(JOGO):
+    def _abrir_online(jogo):
+        jogo.GerenciadorSubtelas.abrir(SubtelaTexto(
+            jogo.TELA.get_size(),
+            "Adicionar Online",
+            ["", ""],
+            enviar_callback=_adicionar_server_online,
+            placeholders=["Nome do servidor", "IP do servidor"],
+            max_chars=[28, 50],
+        ))
+
+    def _abrir_local(jogo):
+        jogo.GerenciadorSubtelas.abrir(SubtelaTexto(
+            jogo.TELA.get_size(),
+            "Criar Localmente",
+            ["", ""],
+            enviar_callback=_adicionar_server_local,
+            placeholders=["Nome do servidor", "Chave de acesso"],
+            max_chars=[28, 12],
+        ))
+
+    JOGO.GerenciadorSubtelas.abrir(SubtelaEscolha(
+        JOGO.TELA.get_size(),
+        "Adicionar Servidor",
+        "Como deseja adicionar o servidor?",
+        "Adicionar Online",
+        "Criar Localmente",
+        callback_escolha_1=_abrir_online,
+        callback_escolha_2=_abrir_local,
+    ))
+
+
+def _abrir_subtela_adicionar_antiga(JOGO):
     JOGO.GerenciadorSubtelas.abrir(SubtelaTexto(
         JOGO.TELA.get_size(),
         "Adicionar novo server",
         ["", ""],
-        enviar_callback=_adicionar_server,
+        enviar_callback=_adicionar_server_online,
         placeholders=["Nome do servidor", "Link do servidor"],
         max_chars=[28, 50],
     ))
@@ -289,6 +346,7 @@ def _montar_layout(Cena, JOGO, tela_destino=None):
 
     tela = tela_destino if tela_destino is not None else JOGO.TELA
     largura_tela, altura_tela = tela.get_size()
+    _atualizar_lista_servers()
 
     _ESTILO_BOTAO, _ESTILO_BOTAO_DESTAQUE = _gerar_estilos()
 
@@ -430,7 +488,8 @@ def _processar_requisicao(Cena, JOGO):
             JOGO.INFO["ServerSelecionado"] = {
                 "indice": _SERVER_SELECIONADO,
                 "nome": server.get("nome", "Servidor"),
-                "ip": server.get("ip", ""),
+                "server_id": server.get("id"),
+                "tipo": server.get("tipo", "local"),
             }
 
         if resposta.get("possui_personagem", True):

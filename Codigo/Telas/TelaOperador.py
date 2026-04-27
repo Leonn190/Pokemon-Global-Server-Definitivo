@@ -4,9 +4,9 @@ import pygame
 
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Mensagem import Mensagem
+from Codigo.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
 from Codigo.Server.ServerMenu import definir_mundo_server, definir_server_ligado, obter_status_operacao, operar_server
 from Codigo.Telas.TelasGenericas import SubtelaCarregamento, SubtelaConfirmacao, SubtelaTexto
-from ServerList import SERVER_LIST
 
 _TELA_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)
@@ -70,33 +70,34 @@ def _emitir_info(texto):
     _MENSAGEM.emitir(texto, tipo="info")
 
 
-def _get_server_ip(cena):
+def _get_server_id(cena):
+    servidores = GERENCIADOR_SERVER_LIST.listar_servidores()
     indice = getattr(cena, "ServerOperadorIndice", None)
-    if indice is None or indice >= len(SERVER_LIST):
+    if indice is None or indice >= len(servidores):
         return ""
-    return SERVER_LIST[indice].get("ip", "")
+    return servidores[indice].get("id", "")
 
 
-def _worker(tipo, ip, payload):
+def _worker(tipo, server_id, payload):
     global _REQUISICAO_RESULTADO
 
     if tipo == "ligado":
-        resposta = definir_server_ligado(ip, payload)
+        resposta = definir_server_ligado(server_id, payload)
     elif tipo == "mundo":
-        resposta = definir_mundo_server(ip, payload)
+        resposta = definir_mundo_server(server_id, payload)
     elif tipo == "status":
-        resposta = obter_status_operacao(ip)
+        resposta = obter_status_operacao(server_id)
     else:
-        resposta = operar_server(ip, payload)
+        resposta = operar_server(server_id, payload)
 
     _REQUISICAO_RESULTADO = {"tipo": tipo, "resposta": resposta, "payload": payload}
 
 
-def _iniciar_requisicao(tipo, ip, payload=None, mensagem="Comunicando com SimuladorServerJogo..."):
+def _iniciar_requisicao(tipo, server_id, payload=None, mensagem="Comunicando com SimuladorServerJogo..."):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _REQUISICAO_TIPO_ATUAL, _REQUISICAO_PENDENTE
     if _REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive():
         if _REQUISICAO_TIPO_ATUAL == "status" and tipo != "status":
-            _REQUISICAO_PENDENTE = (tipo, ip, payload, mensagem)
+            _REQUISICAO_PENDENTE = (tipo, server_id, payload, mensagem)
             return True
         return False
 
@@ -105,7 +106,7 @@ def _iniciar_requisicao(tipo, ip, payload=None, mensagem="Comunicando com Simula
     _REQUISICAO_TIPO_ATUAL = tipo
     if mensagem:
         _emitir_info(mensagem)
-    _REQUISICAO_THREAD = threading.Thread(target=_worker, args=(tipo, ip, payload), daemon=True)
+    _REQUISICAO_THREAD = threading.Thread(target=_worker, args=(tipo, server_id, payload), daemon=True)
     _REQUISICAO_THREAD.start()
     return True
 
@@ -114,9 +115,9 @@ def _iniciar_requisicao_pendente():
     global _REQUISICAO_PENDENTE
     if _REQUISICAO_PENDENTE is None:
         return False
-    tipo, ip, payload, mensagem = _REQUISICAO_PENDENTE
+    tipo, server_id, payload, mensagem = _REQUISICAO_PENDENTE
     _REQUISICAO_PENDENTE = None
-    return _iniciar_requisicao(tipo, ip, payload, mensagem)
+    return _iniciar_requisicao(tipo, server_id, payload, mensagem)
 
 
 def _voltar(cena):
@@ -128,7 +129,7 @@ def _voltar(cena):
 def _pedir_confirmacao_apagar_mundo(jogo, estado, botao):
     global _AGUARDANDO_CRIACAO
     if estado:
-        if _iniciar_requisicao("mundo", _get_server_ip(jogo.Cena), True, "Iniciando criação de mundo..."):
+        if _iniciar_requisicao("mundo", _get_server_id(jogo.Cena), True, "Iniciando criação de mundo..."):
             _AGUARDANDO_CRIACAO = True
             jogo.GerenciadorSubtelas.abrir(SubtelaCarregamento(jogo.TELA.get_size(), "Carregando"))
             modal = jogo.GerenciadorSubtelas.obter_por_tipo(SubtelaCarregamento)
@@ -156,12 +157,12 @@ def _abrir_subtela_chave_apagar(jogo):
 
 
 def _validar_chave_apagar(jogo, chave):
-    if not _iniciar_requisicao("validar_chave", _get_server_ip(jogo.Cena), chave, "Validando chave de segurança..."):
+    if not _iniciar_requisicao("validar_chave", _get_server_id(jogo.Cena), chave, "Validando chave de segurança..."):
         _emitir_feedback("Já existe uma operação em andamento")
         return False
     return True
 def _toggle_ligado(jogo, estado, botao):
-    _iniciar_requisicao("ligado", _get_server_ip(jogo.Cena), estado, "Atualizando status do servidor...")
+    _iniciar_requisicao("ligado", _get_server_id(jogo.Cena), estado, "Atualizando status do servidor...")
 
 
 def _atualizar_rotulos_botoes():
@@ -227,7 +228,7 @@ def _processar_status_geracao(jogo, resposta):
             _GERACAO_NOTIFICADA = True
 
         if not bool(resposta.get("ligado", False)) and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
-            _iniciar_requisicao("ligado", _get_server_ip(jogo.Cena), True, "Ligando servidor automaticamente...")
+            _iniciar_requisicao("ligado", _get_server_id(jogo.Cena), True, "Ligando servidor automaticamente...")
 
 
 def _processar_resposta(jogo):
@@ -273,7 +274,7 @@ def _processar_resposta(jogo):
             modal = jogo.GerenciadorSubtelas.obter_por_tipo(SubtelaCarregamento)
             modal.set_progresso(0)
             modal.set_mensagem("Apagando mundo")
-            _iniciar_requisicao("mundo", _get_server_ip(jogo.Cena), False, "Apagando mundo do servidor...")
+            _iniciar_requisicao("mundo", _get_server_id(jogo.Cena), False, "Apagando mundo do servidor...")
         else:
             _emitir_feedback(resposta.get("mensagem", "Chave inválida"))
 
@@ -340,7 +341,7 @@ def _montar_layout(jogo, tela_destino=None):
     _TAMANHO_CACHE = (largura, altura)
     _TELA_CARREGADA = True
     _atualizar_rotulos_botoes()
-    _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "Carregando estado do servidor...")
+    _iniciar_requisicao("status", _get_server_id(jogo.Cena), None, "Carregando estado do servidor...")
 
 
 def TelaOperador(cena, jogo, eventos, dt, tela_destino=None):
@@ -359,7 +360,7 @@ def TelaOperador(cena, jogo, eventos, dt, tela_destino=None):
     pode_atualizar_status = (modal is None) or isinstance(modal, SubtelaCarregamento)
     if _STATUS_TIMER >= 0.12 and pode_atualizar_status and not (_REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive()):
         _STATUS_TIMER = 0.0
-        _iniciar_requisicao("status", _get_server_ip(jogo.Cena), None, "")
+        _iniciar_requisicao("status", _get_server_id(jogo.Cena), None, "")
 
     tela.fill((7, 10, 20))
 

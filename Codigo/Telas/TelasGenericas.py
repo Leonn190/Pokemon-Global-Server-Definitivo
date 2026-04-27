@@ -159,6 +159,105 @@ class SubtelaConfirmacao(BaseGenerica):
         self.botao_confirmar.render(tela, eventos, dt, JOGO=JOGO)
 
 
+class SubtelaEscolha(BaseGenerica):
+    def __init__(
+        self,
+        tela_size,
+        titulo,
+        pergunta,
+        texto_escolha_1,
+        texto_escolha_2,
+        callback_escolha_1=None,
+        callback_escolha_2=None,
+    ):
+        largura, altura = tela_size
+        caixa = pygame.Rect(0, 0, min(900, int(largura * 0.78)), min(360, int(altura * 0.48)))
+        caixa.center = (largura // 2, altura // 2)
+
+        self.caixa = caixa
+        self.titulo = titulo
+        self.pergunta = pergunta
+        self.texto_escolha_1 = texto_escolha_1
+        self.texto_escolha_2 = texto_escolha_2
+        self.callback_escolha_1 = callback_escolha_1
+        self.callback_escolha_2 = callback_escolha_2
+        self.encerrada = False
+
+        super().__init__(tela_size, alpha_overlay=175)
+
+        self._texto_titulo = Texto(self.titulo, (self.caixa.centerx, self.caixa.top + 56), style={"size": 38, "align": "center"})
+        self._texto_pergunta = Texto(self.pergunta, (self.caixa.centerx, self.caixa.centery - 20), style={"size": 29, "align": "center"})
+
+        self.botao_fechar = Botao(
+            pygame.Rect(self.caixa.right - 58, self.caixa.top + 18, 40, 40),
+            "X",
+            execute=self._fechar,
+            style=_ESTILO_BOTAO_MODAL,
+        )
+        y_botoes = self.caixa.bottom - 96
+        largura_botao = 300
+        self.botao_escolha_1 = Botao(
+            pygame.Rect(self.caixa.centerx - largura_botao - 18, y_botoes, largura_botao, 68),
+            self.texto_escolha_1,
+            execute=self._escolha_1,
+            style=_ESTILO_BOTAO_MODAL,
+        )
+        self.botao_escolha_2 = Botao(
+            pygame.Rect(self.caixa.centerx + 18, y_botoes, largura_botao, 68),
+            self.texto_escolha_2,
+            execute=self._escolha_2,
+            style=_ESTILO_BOTAO_MODAL,
+        )
+
+    def _fechar(self, jogo, botao):
+        self.encerrada = True
+
+    def _escolha_1(self, jogo, botao):
+        self.encerrada = True
+        if callable(self.callback_escolha_1):
+            self.callback_escolha_1(jogo)
+
+    def _escolha_2(self, jogo, botao):
+        self.encerrada = True
+        if callable(self.callback_escolha_2):
+            self.callback_escolha_2(jogo)
+
+    def _on_resize(self, tela_size):
+        largura, altura = tela_size
+        caixa = pygame.Rect(0, 0, min(900, int(largura * 0.78)), min(360, int(altura * 0.48)))
+        caixa.center = (largura // 2, altura // 2)
+        self.caixa = caixa
+        self._texto_titulo.set_pos((self.caixa.centerx, self.caixa.top + 56))
+        self._texto_pergunta.set_pos((self.caixa.centerx, self.caixa.centery - 20))
+        self.botao_fechar.rect = pygame.Rect(self.caixa.right - 58, self.caixa.top + 18, 40, 40)
+        y_botoes = self.caixa.bottom - 96
+        largura_botao = 300
+        self.botao_escolha_1.rect = pygame.Rect(self.caixa.centerx - largura_botao - 18, y_botoes, largura_botao, 68)
+        self.botao_escolha_2.rect = pygame.Rect(self.caixa.centerx + 18, y_botoes, largura_botao, 68)
+        self._painel_surf = None
+        self._painel_size = (0, 0)
+
+    def render(self, tela, eventos, dt, JOGO=None):
+        size = tela.get_size()
+        if size != self._cache_size:
+            self._rebuild_cache(size)
+            self._on_resize(size)
+
+        painel = self._get_painel(
+            self.caixa,
+            bg_color=(16, 21, 40),
+            border_color=(255, 220, 120),
+            border_w=2,
+            radius=20,
+        )
+        tela.blit(painel, self.caixa.topleft)
+        self._texto_titulo.draw(tela)
+        self._texto_pergunta.draw(tela)
+        self.botao_fechar.render(tela, eventos, dt, JOGO=JOGO)
+        self.botao_escolha_1.render(tela, eventos, dt, JOGO=JOGO)
+        self.botao_escolha_2.render(tela, eventos, dt, JOGO=JOGO)
+
+
 class SubtelaTexto(BaseGenerica):
     def __init__(
         self,

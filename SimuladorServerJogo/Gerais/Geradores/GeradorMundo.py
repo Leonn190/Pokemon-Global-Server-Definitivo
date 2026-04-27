@@ -14,17 +14,16 @@ import tomllib
 from pathlib import Path
 from typing import Callable, Dict, Tuple
 
+from SimuladorServerJogo.Gerais import ContextoServidor
+
 BLOCO_TAMANHO_PX = 32
 
 PASTA_SERVIDOR = Path(__file__).resolve().parent
 PASTA_MODULO_SIMULADOR = PASTA_SERVIDOR.parents[1]
 RAIZ_REPOSITORIO = PASTA_SERVIDOR.parents[2]
-PASTA_ESTADO_MUNDO = PASTA_MODULO_SIMULADOR / "EstadoMundo"
-PASTAS_ESTADO_MUNDO_LEGADAS = (
-    PASTA_MODULO_SIMULADOR / "Mundo" / "EstadoMundo",
-    RAIZ_REPOSITORIO / "EstadoMundo",
-)
-PASTA_WORLD_CHUNKS = PASTA_ESTADO_MUNDO / "chunks"
+PASTA_ESTADO_MUNDO = None
+PASTAS_ESTADO_MUNDO_LEGADAS = ()
+PASTA_WORLD_CHUNKS = None
 PASTA_REGRAS = RAIZ_REPOSITORIO / "SimuladorServerJogo" / "Logica" / "Regras"
 ARQUIVO_REGRAS_TERRENO_FONTE = PASTA_REGRAS / "Terreno.toml"
 ARQUIVO_REGRAS_BIOMAS_FONTE = PASTA_REGRAS / "Biomas.toml"
@@ -81,29 +80,50 @@ ARQUIVOS_ESTADO_MUTAVEL = {
 }
 
 
-def _pasta_estado_mundo_existente() -> Path:
-    if PASTA_ESTADO_MUNDO.exists():
-        return PASTA_ESTADO_MUNDO
-    for pasta_legada in PASTAS_ESTADO_MUNDO_LEGADAS:
-        if pasta_legada.exists():
-            return pasta_legada
-    return PASTA_ESTADO_MUNDO
+def obter_pasta_estado_mundo(criar: bool = False, exigir_ativo: bool = False) -> Path | None:
+    try:
+        pasta = ContextoServidor.obter_pasta_estado_mundo()
+    except RuntimeError:
+        if exigir_ativo:
+            raise
+        return None
+    if criar:
+        pasta.mkdir(parents=True, exist_ok=True)
+    return pasta
+
+
+def obter_pasta_world_chunks() -> Path:
+    pasta = obter_pasta_estado_mundo(criar=True, exigir_ativo=True)
+    return pasta / "chunks"
+
+
+def _estado_mundo_vazio() -> Dict[str, object]:
+    return {
+        "meta": {},
+        "grid": [],
+        "grid_biomas": [],
+        "grid_estruturas_naturais": [],
+        "estruturas_naturais_tocadas": {},
+        "players": {},
+        "npcs_vendedores": {},
+        "spawn": [0.0, 0.0],
+        "tempo_mundo": {},
+    }
+
+
+def _pasta_estado_mundo_existente() -> Path | None:
+    return obter_pasta_estado_mundo(criar=True, exigir_ativo=False)
 
 
 def _arquivo_estado_mundo(nome: str, *, preferir_novo: bool = True) -> Path:
-    pasta_base = PASTA_ESTADO_MUNDO if preferir_novo else _pasta_estado_mundo_existente()
+    pasta_base = obter_pasta_estado_mundo(criar=True, exigir_ativo=True) if preferir_novo else _pasta_estado_mundo_existente()
+    if pasta_base is None:
+        raise RuntimeError("Nenhum servidor local ativo definido")
     return pasta_base / nome
 
 
 def _migrar_estado_mundo_legado_se_necessario() -> None:
-    if PASTA_ESTADO_MUNDO.exists():
-        return
-    for pasta_legada in PASTAS_ESTADO_MUNDO_LEGADAS:
-        if not pasta_legada.exists():
-            continue
-        PASTA_ESTADO_MUNDO.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(pasta_legada), str(PASTA_ESTADO_MUNDO))
-        return
+    return
 
 
 def _gerar_seed() -> int:
@@ -217,13 +237,12 @@ def _emitir_progresso(callback_progresso, percentual: int, mensagem: str) -> Non
 
 
 def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str], None] | None = None) -> None:
-    _migrar_estado_mundo_legado_se_necessario()
     _compilar_java_se_necessario()
 
-    pasta_estado_mundo = _arquivo_estado_mundo("", preferir_novo=True)
-    arquivo_world_meta = _arquivo_estado_mundo("world_meta.json", preferir_novo=True)
-    pasta_world_chunks = _arquivo_estado_mundo("chunks", preferir_novo=True)
-    arquivo_foto_mundo_java = _arquivo_estado_mundo("world_foto.png", preferir_novo=True)
+    pasta_estado_mundo = obter_pasta_estado_mundo(criar=True, exigir_ativo=True)
+    arquivo_world_meta = pasta_estado_mundo / "world_meta.json"
+    pasta_world_chunks = pasta_estado_mundo / "chunks"
+    arquivo_foto_mundo_java = pasta_estado_mundo / "world_foto.png"
     pasta_estado_mundo.mkdir(parents=True, exist_ok=True)
 
     if not ARQUIVO_REGRAS_TERRENO_FONTE.exists():
@@ -364,13 +383,10 @@ def _executar_world_generator(seed: int, callback_progresso: Callable[[int, str]
 
 
 def limpar_arquivos_mundo() -> None:
-    for pasta in (PASTA_ESTADO_MUNDO, *PASTAS_ESTADO_MUNDO_LEGADAS):
-        if not pasta.exists():
-            continue
-        try:
-            shutil.rmtree(pasta)
-        except OSError:
-            pass
+    pasta = obter_pasta_estado_mundo(criar=False, exigir_ativo=True)
+    if pasta.exists():
+        shutil.rmtree(pasta)
+    pasta.mkdir(parents=True, exist_ok=True)
 
 
 def _carregar_world_meta() -> Dict[str, int | float]:
@@ -534,7 +550,6 @@ def _normalizar_secoes_mutaveis(secoes) -> Tuple[str, ...]:
 
 
 def salvar_estado_mundo(estado_mundo: Dict[str, object], secoes_mutaveis=None) -> None:
-    _migrar_estado_mundo_legado_se_necessario()
     arquivo_base = _arquivo_estado_mundo(ARQUIVO_ESTADO_MUNDO_BASE, preferir_novo=True)
     secoes_norm = _normalizar_secoes_mutaveis(secoes_mutaveis)
     meta_valida = isinstance(estado_mundo.get("meta"), dict) and bool(estado_mundo.get("meta"))
@@ -552,6 +567,8 @@ def salvar_estado_mundo(estado_mundo: Dict[str, object], secoes_mutaveis=None) -
 
 def carregar_estado_mundo() -> Dict[str, object]:
     pasta_estado_mundo = _pasta_estado_mundo_existente()
+    if pasta_estado_mundo is None:
+        return _estado_mundo_vazio()
     if not pasta_estado_mundo.exists():
         pasta_estado_mundo.mkdir(parents=True, exist_ok=True)
     arquivo_mundo = pasta_estado_mundo / ARQUIVO_ESTADO_MUNDO_BASE
@@ -571,17 +588,7 @@ def carregar_estado_mundo() -> Dict[str, object]:
                     except json.JSONDecodeError:
                         estado = None
             if not isinstance(estado, dict):
-                return {
-                    "meta": {},
-                    "grid": [],
-                    "grid_biomas": [],
-                    "grid_estruturas_naturais": [],
-                    "estruturas_naturais_tocadas": {},
-                    "players": {},
-                    "npcs_vendedores": {},
-                    "spawn": [0.0, 0.0],
-                    "tempo_mundo": {},
-                }
+                return _estado_mundo_vazio()
             salvar_estado_mundo(estado)
         for secao, nome_arquivo in ARQUIVOS_ESTADO_MUTAVEL.items():
             arquivo_secao = pasta_estado_mundo / nome_arquivo
@@ -639,17 +646,7 @@ def carregar_estado_mundo() -> Dict[str, object]:
                     estado.setdefault("tempo_mundo", {})
                     return estado
 
-    return {
-        "meta": {},
-        "grid": [],
-        "grid_biomas": [],
-        "grid_estruturas_naturais": [],
-        "estruturas_naturais_tocadas": {},
-        "players": {},
-        "npcs_vendedores": {},
-        "spawn": [0.0, 0.0],
-        "tempo_mundo": {},
-    }
+    return _estado_mundo_vazio()
 
 
 def carregar_ou_criar_estado_mundo() -> Dict[str, object]:

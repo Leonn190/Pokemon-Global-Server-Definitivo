@@ -1,9 +1,11 @@
 import copy
+import json
 import threading
 import time
 import re
 from pathlib import Path
 
+from SimuladorServerJogo.Gerais import ContextoServidor
 import SimuladorServerJogo.Gerais.Geradores.GeradorMundo as GERADOR_MUNDO
 from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import (
     carregar_estado_mundo,
@@ -23,17 +25,27 @@ from SimuladorServerJogo.Gerais.LoaderRegras import (
     carregar_regras_player,
 )
 
-_CHAVE_SEGURANCA = "1900"
-_ESTADO_MUNDO = carregar_estado_mundo()
+_CHAVE_SEGURANCA = ""
+_SERVIDOR_ATIVO_ATUAL = None
+_ESTADO_MUNDO = {
+    "meta": {},
+    "grid": [],
+    "grid_biomas": [],
+    "grid_estruturas_naturais": [],
+    "estruturas_naturais_tocadas": {},
+    "players": {},
+    "npcs_vendedores": {},
+    "spawn": [0.0, 0.0],
+    "tempo_mundo": {},
+}
 
 _ESTADO = {
-    "nome": "Servidor Indigo",
-    "ip": "203.0.113.77:8123",
-    "ligado": bool(_ESTADO_MUNDO.get("meta")),
-    "mundo_existente": bool(_ESTADO_MUNDO.get("meta")),
-    "banidos": {"JogadorBanido"},
-    "jogadores_com_personagem": set(_ESTADO_MUNDO.get("players", {}).keys()),
-    "personagens": dict(_ESTADO_MUNDO.get("players", {})),
+    "nome": "",
+    "ligado": False,
+    "mundo_existente": False,
+    "banidos": set(),
+    "jogadores_com_personagem": set(),
+    "personagens": {},
 }
 
 _ESTADO_GERACAO = {
@@ -195,6 +207,83 @@ def _estado_mundo_vazio():
         "spawn": [0.0, 0.0],
         "tempo_mundo": _tempo_mundo_padrao(),
     }
+
+
+def _agora_iso() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def _carregar_json_servidor_ativo() -> dict:
+    arquivo = ContextoServidor.obter_arquivo_estado_servidor()
+    if not arquivo.exists():
+        raise RuntimeError(f"EstadoServidor.json não encontrado: {arquivo}")
+    try:
+        with arquivo.open("r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"EstadoServidor.json inválido: {arquivo}") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"EstadoServidor.json inválido: {arquivo}")
+    if str(payload.get("tipo", "local")).lower() != "local":
+        raise RuntimeError("Servidor online ainda não implementado.")
+    return payload
+
+
+def _salvar_json_servidor_ativo_locked() -> None:
+    try:
+        arquivo = ContextoServidor.obter_arquivo_estado_servidor()
+    except RuntimeError:
+        return
+    try:
+        payload = _carregar_json_servidor_ativo()
+    except RuntimeError:
+        return
+    payload["ligado"] = bool(_ESTADO.get("ligado", False))
+    payload["mundo_existente"] = bool(_ESTADO.get("mundo_existente", False))
+    payload["banidos"] = sorted(str(x) for x in _ESTADO.get("banidos", set()))
+    payload["atualizado_em"] = _agora_iso()
+    with arquivo.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+
+def _garantir_estado_ativo() -> None:
+    global _SERVIDOR_ATIVO_ATUAL, _ESTADO_MUNDO, _CHAVE_SEGURANCA
+
+    pasta = ContextoServidor.obter_pasta_servidor_ativo()
+    if pasta is None:
+        raise RuntimeError("Nenhum servidor local ativo definido")
+    pasta = str(Path(pasta).resolve())
+    if _SERVIDOR_ATIVO_ATUAL == pasta:
+        return
+
+    servidor = _carregar_json_servidor_ativo()
+    _CHAVE_SEGURANCA = str(servidor.get("chave_acesso", "")).strip()
+    _ESTADO_MUNDO = carregar_estado_mundo()
+    _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))
+    personagens = dict(_ESTADO_MUNDO.get("players", {})) if isinstance(_ESTADO_MUNDO.get("players"), dict) else {}
+    mundo_existente = bool(servidor.get("mundo_existente", bool(_ESTADO_MUNDO.get("meta"))))
+    _ESTADO.update(
+        {
+            "nome": str(servidor.get("nome", "")),
+            "ligado": bool(servidor.get("ligado", False)) and mundo_existente,
+            "mundo_existente": mundo_existente,
+            "banidos": set(servidor.get("banidos", []) or []),
+            "jogadores_com_personagem": set(personagens.keys()),
+            "personagens": personagens,
+        }
+    )
+    _ESTADO_GERACAO.update(
+        {
+            "em_andamento": False,
+            "progresso": 0,
+            "mensagem": "Aguardando operação",
+            "erro": "",
+            "operacao": "nenhuma",
+        }
+    )
+    BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
+    PACOTES_TICK.resetar()
+    _SERVIDOR_ATIVO_ATUAL = pasta
 
 
 def _worker_persistencia_estado_mundo() -> None:
@@ -395,6 +484,10 @@ def _normalizar_exploracao_chunks(valor: dict | None) -> dict:
 
 
 def obter_exploracao_chunks(usuario: str) -> dict:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return {"Mundo": {}}
     if not usuario:
         return {"Mundo": {}}
     with _LOCK:
@@ -405,6 +498,10 @@ def obter_exploracao_chunks(usuario: str) -> dict:
 
 
 def registrar_chunks_explorados(usuario: str, chunks: list[tuple[int, int]] | set[tuple[int, int]], dimensao: str = "Mundo") -> None:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return
     if not usuario or str(dimensao or "Mundo") != "Mundo" or not chunks:
         return
     with _LOCK:
@@ -518,6 +615,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
 
 def _recarregar_mundo():
     global _ESTADO_MUNDO
+    _garantir_estado_ativo()
     _ESTADO_MUNDO = carregar_estado_mundo()
     _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))
 
@@ -533,6 +631,7 @@ def _limites_mundo_atuais() -> tuple[float, float]:
 
 def _criar_novo_mundo_sync():
     global _ESTADO_MUNDO
+    _garantir_estado_ativo()
     from SimuladorServerJogo.Gerais.Rotas.Ativador import resetar_estado_clientes
 
     def _callback_progresso(percentual: int, mensagem: str):
@@ -557,17 +656,21 @@ def _worker_criacao_mundo():
         _criar_novo_mundo_sync()
         with _LOCK:
             _ESTADO["mundo_existente"] = True
+            _salvar_json_servidor_ativo_locked()
             _set_geracao(em_andamento=False, progresso=100, mensagem="Mundo pronto", erro="", operacao="nenhuma")
     except Exception as exc:
         with _LOCK:
             _ESTADO_MUNDO.clear()
             _ESTADO_MUNDO.update(_estado_mundo_vazio())
             _ESTADO["mundo_existente"] = False
+            _ESTADO["ligado"] = False
+            _salvar_json_servidor_ativo_locked()
             _set_geracao(em_andamento=False, progresso=0, mensagem="Falha ao criar mundo", erro=str(exc), operacao="nenhuma")
 
 
 def _apagar_mundo():
     global _ESTADO_MUNDO
+    _garantir_estado_ativo()
     from SimuladorServerJogo.Gerais.Rotas.Ativador import resetar_estado_clientes
     limpar_arquivos_mundo()
     _ESTADO_MUNDO = _estado_mundo_vazio()
@@ -592,6 +695,7 @@ def _worker_apagar_mundo():
         with _LOCK:
             _ESTADO["mundo_existente"] = False
             _ESTADO["ligado"] = False
+            _salvar_json_servidor_ativo_locked()
             _set_geracao(progresso=62, mensagem="Recarregando banco de dados")
         with _LOCK:
             _set_geracao(progresso=79, mensagem="Sincronizando clientes")
@@ -604,6 +708,7 @@ def _worker_apagar_mundo():
         with _LOCK:
             _ESTADO["mundo_existente"] = False
             _ESTADO["ligado"] = False
+            _salvar_json_servidor_ativo_locked()
             _set_geracao(em_andamento=False, progresso=0, mensagem="Falha ao apagar mundo", erro=str(exc), operacao="nenhuma")
             CEREBRO.desligar_servidor()
 
@@ -618,6 +723,7 @@ def _persistir_personagens(force: bool = False) -> None:
 
 
 def obter_regras_cliente() -> dict:
+    _garantir_estado_ativo()
     regras = carregar_regras_cliente_mundo()
     meta = _ESTADO_MUNDO.get("meta", {}) if isinstance(_ESTADO_MUNDO.get("meta"), dict) else {}
     seed_mundo = int(meta.get("seed", 0) or 0)
@@ -641,14 +747,15 @@ def obter_regras_cliente() -> dict:
     return regras
 
 def chave_seguranca():
+    _garantir_estado_ativo()
     return _CHAVE_SEGURANCA
 
 
 def snapshot_estado():
+    _garantir_estado_ativo()
     with _LOCK:
         return {
             "nome": _ESTADO["nome"],
-            "ip": _ESTADO["ip"],
             "ligado": _ESTADO["ligado"],
             "mundo_existente": _ESTADO["mundo_existente"],
             "banidos": set(_ESTADO["banidos"]),
@@ -664,6 +771,10 @@ def snapshot_estado():
 
 
 def obter_tempo_mundo_estado() -> dict:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return _tempo_mundo_padrao()
     with _LOCK:
         tempo = _normalizar_tempo_mundo(_ESTADO_MUNDO.get("tempo_mundo"))
         _ESTADO_MUNDO["tempo_mundo"] = tempo
@@ -671,12 +782,20 @@ def obter_tempo_mundo_estado() -> dict:
 
 
 def atualizar_tempo_mundo_estado(tempo: dict, force: bool = False) -> None:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return
     with _LOCK:
         _ESTADO_MUNDO["tempo_mundo"] = _normalizar_tempo_mundo(tempo)
         _agendar_persistencia_locked(force=force, secoes={"tempo_mundo"})
 
 
 def registrar_estrutura_natural_tocada_estado(estrutura_id: int, quantidade_restante: int, force: bool = False) -> None:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return
     with _LOCK:
         tocadas = _ESTADO_MUNDO.get("estruturas_naturais_tocadas")
         if not isinstance(tocadas, dict):
@@ -687,25 +806,36 @@ def registrar_estrutura_natural_tocada_estado(estrutura_id: int, quantidade_rest
 
 
 def carregar_npcs_vendedores_estado() -> dict:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return {}
     with _LOCK:
         bruto = _ESTADO_MUNDO.get("npcs_vendedores", {}) if isinstance(_ESTADO_MUNDO, dict) else {}
         return {str(k): dict(v) for k, v in bruto.items()} if isinstance(bruto, dict) else {}
 
 
 def salvar_npcs_vendedores_estado(npcs: dict, force: bool = False) -> None:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return
     with _LOCK:
         _ESTADO_MUNDO["npcs_vendedores"] = {str(k): dict(v) for k, v in (npcs or {}).items() if isinstance(v, dict)}
         _agendar_persistencia_locked(force=force, secoes={"npcs_vendedores"})
 
 
 def definir_ligado(ativo):
+    _garantir_estado_ativo()
     from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
     with _LOCK:
         desejado = bool(ativo)
         if desejado and not _ESTADO["mundo_existente"]:
             _ESTADO["ligado"] = False
+            _salvar_json_servidor_ativo_locked()
             return False, "Não é possível ligar o servidor sem mundo"
         _ESTADO["ligado"] = desejado
+        _salvar_json_servidor_ativo_locked()
         TIQUE_SERVIDOR.definir_ativo(_ESTADO["ligado"])
         if not _ESTADO["ligado"]:
             CEREBRO.desligar_servidor()
@@ -714,6 +844,7 @@ def definir_ligado(ativo):
 
 
 def definir_mundo_existente(ativo):
+    _garantir_estado_ativo()
     with _LOCK:
         ativo = bool(ativo)
         if ativo:
@@ -735,6 +866,7 @@ def definir_mundo_existente(ativo):
 
 
 def adicionar_personagem(usuario, skin, pokemon_inicial):
+    _garantir_estado_ativo()
     with _LOCK:
         if _ESTADO_GERACAO["em_andamento"]:
             return False, "Aguarde a criação do mundo terminar"
@@ -765,6 +897,7 @@ def adicionar_personagem(usuario, skin, pokemon_inicial):
 
 
 def obter_personagem_para_entrada(usuario):
+    _garantir_estado_ativo()
     if not usuario:
         return None
 
@@ -801,6 +934,7 @@ def obter_personagem_para_entrada(usuario):
 
 
 def atualizar_posicao_personagem(usuario, posicao, dimensao: str = "Mundo"):
+    _garantir_estado_ativo()
     if not usuario:
         return
 
@@ -822,6 +956,7 @@ def atualizar_posicao_personagem(usuario, posicao, dimensao: str = "Mundo"):
 
 
 def atualizar_inventario_personagem(usuario, inventario):
+    _garantir_estado_ativo()
     if not usuario or not isinstance(inventario, dict):
         return
 
@@ -834,6 +969,7 @@ def atualizar_inventario_personagem(usuario, inventario):
 
 
 def atualizar_perfil_personagem(usuario, perfil):
+    _garantir_estado_ativo()
     if not usuario or not isinstance(perfil, dict):
         return
 

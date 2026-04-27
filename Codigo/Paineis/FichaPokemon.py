@@ -7,25 +7,15 @@ from pathlib import Path
 
 import pygame
 
-try:
-    from Codigo.ModulosGerais.Auxiliares import carregar_frames
-    from Codigo.Geradores.ItemInventario import ItemInventario
-    from Codigo.Geradores.PokemonInventario import PokemonInventario
-    from Codigo.Prefabs.Arrastavel import Arrastavel
-    from Codigo.Prefabs.Barra import Barra
-    from Codigo.Prefabs.Botao import Botao
-    from Codigo.Prefabs.Painel import Painel
-    from Codigo.Prefabs.Texto import Texto
-    from Codigo.Paineis.FichaAtaque import FichaAtaque
-except Exception:  # pragma: no cover
-    from PokemonInventario import PokemonInventario
-    from Arrastavel import Arrastavel
-    from Barra import Barra
-    from Botao import Botao
-    from Painel import Painel
-    from Texto import Texto
-    from FichaAtaque import FichaAtaque
-
+from Codigo.ModulosGerais.Auxiliares import carregar_frames
+from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.Prefabs.Arrastavel import Arrastavel
+from Codigo.Prefabs.Barra import Barra
+from Codigo.Prefabs.Botao import Botao
+from Codigo.Prefabs.Painel import Painel
+from Codigo.Prefabs.Texto import Texto
+from Codigo.Paineis.FichaAtaque import FichaAtaque
 
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
 

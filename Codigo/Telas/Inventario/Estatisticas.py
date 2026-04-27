@@ -68,4 +68,5 @@ class InventarioPerfil:
         self._painel_estatisticas.Ator = self.Ator
         self._reconstruir_layout(pygame.Rect(rect))
         self._painel_estatisticas.renderizar(tela, rect, inventario=inventario, eventos=eventos, dt=dt)
-        self._desenhar_rotas(tela, eventos or [], dt)
+        if not self._painel_estatisticas.esta_com_overlay_aberto():
+            self._desenhar_rotas(tela, eventos or [], dt)

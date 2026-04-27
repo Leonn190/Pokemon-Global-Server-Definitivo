@@ -1,14 +1,55 @@
 from __future__ import annotations
 
 from datetime import datetime
+from types import SimpleNamespace
 
 import pygame
 
+from Codigo.Paineis.PainelEstatisticas import PainelEstatisticas
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Server.ServerMenu import obter_estatisticas_player
 
 
-class SubtelaConta:
+class _AtorContaAdapter:
+    def __init__(self, payload: dict):
+        dados = dict(payload or {})
+        perfil_src = dict(dados.get("perfil") or {})
+        inventario_src = dict(dados.get("inventario") or {})
+
+        self.Nome = str(dados.get("nome") or "Treinador")
+        self.NomeSkin = str(dados.get("nome_skin") or "S1.png")
+        self.Perfil = SimpleNamespace(
+            BatalhasPVPVencidas=int(perfil_src.get("batalhas_pvp_vencidas", 0) or 0),
+            BatalhasBotVencidas=int(perfil_src.get("batalhas_bot_vencidas", 0) or 0),
+            BatalhasTotais=int(perfil_src.get("batalhas_totais", 0) or 0),
+            TempoJogoSegundos=float(perfil_src.get("tempo_jogo_segundos", 0.0) or 0.0),
+            BausAbertos=int(perfil_src.get("baus_abertos", 0) or 0),
+            Maestria=int(perfil_src.get("maestria", 0) or 0),
+            NivelMochila=int(perfil_src.get("nivel_mochila", 1) or 1),
+            LimitePokemons=int(perfil_src.get("limite_pokemons", 64) or 64),
+            Nivel=int(perfil_src.get("nivel", 0) or 0),
+            XP=int(perfil_src.get("xp", 0) or 0),
+            XPAlvo=int(perfil_src.get("xp_alvo", 0) or 0),
+            Dinheiro=int(perfil_src.get("dinheiro", 0) or 0),
+            SkinsLiberadas=list(perfil_src.get("skins_liberadas") or []),
+            HabilidadesAprendidas=list(perfil_src.get("habilidades_aprendidas") or []),
+            TapaPorSegundo=2.0,
+            LimiteTimesPokemon=6,
+        )
+        self.Inventario = SimpleNamespace(
+            Pokemons=list(inventario_src.get("pokemons") or []),
+            Itens=list(inventario_src.get("itens") or []),
+            TimesPokemons=list(inventario_src.get("times_pokemon") or []),
+            LimitePokemons=int(perfil_src.get("limite_pokemons", 64) or 64),
+            LimiteTimesPokemon=6,
+        )
+
+    def set_skin(self, _surface):
+        return None
+
+
+class TelaConta:
     def __init__(self, jogo, estilo_base, deslogar_callback=None, voltar_callback=None):
         self._jogo = jogo
         self._estilo_base = estilo_base
@@ -22,6 +63,9 @@ class SubtelaConta:
         self._max_scroll = 0
         self._area_lista = pygame.Rect(0, 0, 0, 0)
         self._servidor_selecionado = None
+        self._modo = "lista"
+        self._ator_por_servidor = {}
+        self._painel_estatisticas = PainelEstatisticas(None)
 
     def _conta_info(self):
         return dict(self._jogo.CONFIG.get("ContaInfo") or {})
@@ -88,6 +132,10 @@ class SubtelaConta:
         self._cache = tuple(tela_size)
 
     def _voltar(self):
+        if self._modo == "servidor":
+            self._modo = "lista"
+            self._painel_estatisticas.on_close()
+            return
         if callable(self._voltar_callback):
             self._voltar_callback()
 
@@ -97,44 +145,27 @@ class SubtelaConta:
 
     def _selecionar_servidor(self, server_id):
         self._servidor_selecionado = str(server_id or "")
+        if not self._servidor_selecionado:
+            return
+        if self._servidor_selecionado not in self._ator_por_servidor:
+            usuario = str(self._conta_info().get("usuario") or self._jogo.CONFIG.get("Usuario") or "").strip()
+            resposta = obter_estatisticas_player(self._servidor_selecionado, usuario)
+            if resposta.get("status") == "ok" and isinstance(resposta.get("ator"), dict):
+                self._ator_por_servidor[self._servidor_selecionado] = _AtorContaAdapter(resposta.get("ator"))
+        ator = self._ator_por_servidor.get(self._servidor_selecionado)
+        if ator is not None:
+            self._painel_estatisticas.Ator = ator
+            self._modo = "servidor"
 
     def _processar_scroll(self, eventos):
-        if not self._area_lista.collidepoint(pygame.mouse.get_pos()):
+        if self._modo != "lista" or not self._area_lista.collidepoint(pygame.mouse.get_pos()):
             return
         for evento in eventos:
             if evento.type == pygame.MOUSEWHEEL:
                 self._scroll = max(0, min(self._max_scroll, self._scroll - evento.y * 36))
                 self._cache = None
 
-    def _render_estatisticas_servidor(self, tela):
-        if not self._servidor_selecionado:
-            return
-        info = self._conta_info()
-        mapa = dict(info.get("estatisticas_servidores") or {})
-        stats = dict(mapa.get(self._servidor_selecionado) or {})
-
-        painel = pygame.Rect(int(tela.get_width() * 0.22), int(tela.get_height() * 0.20), int(tela.get_width() * 0.56), int(tela.get_height() * 0.56))
-        pygame.draw.rect(tela, (12, 18, 34), painel, border_radius=16)
-        pygame.draw.rect(tela, (86, 112, 170), painel, 2, border_radius=16)
-
-        titulo = Texto(f"Estatísticas - {self._servidor_selecionado}", (painel.centerx, painel.y + 32), style={"size": 34, "align": "center"})
-        titulo.draw(tela)
-
-        linhas = [
-            f"Perfil: {stats.get('perfil_nome', '--')}",
-            f"Nível: {stats.get('nivel', 0)}",
-            f"Batalhas: {stats.get('batalhas', 0)}",
-            f"Vitórias: {stats.get('vitorias', 0)}",
-            f"Maestria: {stats.get('maestria', 0)}",
-            f"Poder máximo: {stats.get('poder_maximo', 0)}",
-        ]
-        for i, linha in enumerate(linhas):
-            Texto(linha, (painel.x + 24, painel.y + 86 + i * 56), style={"size": 28, "align": "topleft"}).draw(tela)
-
-    def render(self, tela, eventos, dt):
-        self._processar_scroll(eventos)
-        self._montar_layout(tela.get_size())
-
+    def _render_lista(self, tela, eventos, dt):
         info = self._conta_info()
         usuario = str(info.get("usuario") or self._jogo.CONFIG.get("Usuario") or "Visitante")
         data_criacao = self._data_br(info.get("data_criacao"))
@@ -148,11 +179,27 @@ class SubtelaConta:
         pygame.draw.rect(tela, (10, 15, 28), self._area_lista, border_radius=12)
         pygame.draw.rect(tela, (70, 92, 145), self._area_lista, 1, border_radius=12)
 
+        old_clip = tela.get_clip()
+        tela.set_clip(self._area_lista)
         for botao in self._botoes_servidor:
-            if self._area_lista.colliderect(botao.rect):
-                botao.render(tela, eventos, dt, JOGO=self._jogo)
+            botao.render(tela, eventos, dt, JOGO=self._jogo)
+        tela.set_clip(old_clip)
 
         self._botao_voltar.render(tela, eventos, dt, JOGO=self._jogo)
         self._botao_deslogar.render(tela, eventos, dt, JOGO=self._jogo)
 
-        self._render_estatisticas_servidor(tela)
+    def _render_servidor(self, tela, eventos, dt):
+        area = pygame.Rect(int(tela.get_width() * 0.06), int(tela.get_height() * 0.08), int(tela.get_width() * 0.88), int(tela.get_height() * 0.74))
+        self._painel_estatisticas.renderizar(tela, area, eventos=eventos, dt=dt)
+        self._botao_voltar.render(tela, eventos, dt, JOGO=self._jogo)
+        self._botao_deslogar.render(tela, eventos, dt, JOGO=self._jogo)
+
+    def render(self, tela, eventos, dt):
+        self._processar_scroll(eventos)
+        self._montar_layout(tela.get_size())
+
+        if self._modo == "servidor" and self._painel_estatisticas.Ator is not None:
+            self._render_servidor(tela, eventos, dt)
+            return
+
+        self._render_lista(tela, eventos, dt)

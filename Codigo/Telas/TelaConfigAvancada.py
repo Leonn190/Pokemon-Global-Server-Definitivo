@@ -6,7 +6,7 @@ from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
 
 
-class SubtelaConfigAvancada:
+class TelaConfigAvancada:
     def __init__(self, jogo, estilo_base, confirmar_callback=None, cancelar_callback=None):
         self._jogo = jogo
         self._estilo_base = estilo_base

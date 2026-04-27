@@ -9,16 +9,6 @@ _CONTAS = {
         "servidores_registrados": [
             {"id": "local-alpha", "nome": "Servidor Alpha"},
         ],
-        "estatisticas_servidores": {
-            "local-alpha": {
-                "perfil_nome": "Leon19",
-                "nivel": 18,
-                "batalhas": 52,
-                "vitorias": 31,
-                "maestria": 120,
-                "poder_maximo": 940,
-            }
-        },
     },
 }
 
@@ -38,7 +28,6 @@ def _conta_publica(usuario):
         "usuario": usuario,
         "data_criacao": conta.get("data_criacao"),
         "servidores_registrados": copy.deepcopy(list(conta.get("servidores_registrados") or [])),
-        "estatisticas_servidores": copy.deepcopy(dict(conta.get("estatisticas_servidores") or {})),
     }
 
 
@@ -55,17 +44,6 @@ def _registrar_server(dados):
     if not any(str((srv or {}).get("id") or "") == server_id for srv in servidores):
         servidores.append({"id": server_id, "nome": server_nome})
         conta["servidores_registrados"] = servidores
-
-    estatisticas = dict(conta.get("estatisticas_servidores") or {})
-    estatisticas.setdefault(server_id, {
-        "perfil_nome": usuario,
-        "nivel": 1,
-        "batalhas": 0,
-        "vitorias": 0,
-        "maestria": 0,
-        "poder_maximo": 0,
-    })
-    conta["estatisticas_servidores"] = estatisticas
 
     return _resposta("ok", "Servidor registrado na conta", usuario=usuario, conta=_conta_publica(usuario))
 

@@ -170,6 +170,9 @@ class PainelEstatisticas:
     def on_close(self):
         self._arvore_aberta = False
 
+    def esta_com_overlay_aberto(self) -> bool:
+        return bool(self._arvore_aberta)
+
     def _maior_poder(self, pokemons: list[dict]) -> int:
         maior = 0.0
         for pokemon in pokemons:

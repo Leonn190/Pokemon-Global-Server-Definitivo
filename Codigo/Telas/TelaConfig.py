@@ -4,8 +4,8 @@ from Codigo.ModulosGerais.Sonoridades import VerificaSonoridade
 from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Telas.SubtelaConfigAvancada import SubtelaConfigAvancada
-from Codigo.Telas.SubtelaConta import SubtelaConta
+from Codigo.Telas.TelaConfigAvancada import TelaConfigAvancada
+from Codigo.Telas.TelaConta import TelaConta
 from Codigo.Telas.TelasGenericas import SubtelaConfirmacao
 
 _CONFIG_CARREGADA = False
@@ -126,17 +126,17 @@ def _abrir_confirmacao_deslogar(Cena, JOGO):
 
 def _abrir_subtela_avancada(Cena, JOGO, botao):
     global _SUBTELA_ATIVA
-    _SUBTELA_ATIVA = SubtelaConfigAvancada(
+    _SUBTELA_ATIVA = TelaConfigAvancada(
         JOGO,
         _estilo_base(),
-        confirmar_callback=lambda: salvar_config_fixa(JOGO.CONFIG),
-        cancelar_callback=lambda: None,
+        confirmar_callback=lambda: _confirmar_config_avancada(JOGO),
+        cancelar_callback=_fechar_subtela,
     )
 
 
 def _abrir_subtela_conta(Cena, JOGO, botao):
     global _SUBTELA_ATIVA
-    _SUBTELA_ATIVA = SubtelaConta(
+    _SUBTELA_ATIVA = TelaConta(
         JOGO,
         _estilo_base(),
         deslogar_callback=lambda: _abrir_confirmacao_deslogar(Cena, JOGO),
@@ -147,6 +147,13 @@ def _abrir_subtela_conta(Cena, JOGO, botao):
 def _fechar_subtela():
     global _SUBTELA_ATIVA
     _SUBTELA_ATIVA = None
+
+
+def _confirmar_config_avancada(jogo):
+    global _CONFIG_INICIAL
+    salvar_config_fixa(jogo.CONFIG)
+    _CONFIG_INICIAL = dict(jogo.CONFIG)
+    _fechar_subtela()
 
 
 def _montar_layout(Cena, JOGO):

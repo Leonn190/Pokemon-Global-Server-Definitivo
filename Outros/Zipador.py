@@ -36,6 +36,7 @@ def main() -> None:
 
     copiar_pastas(raiz, pasta_gs)
     zip_path = criar_zip(pasta_gs)
+    shutil.rmtree(pasta_gs)
 
     print(f"Zip criado com sucesso: {zip_path}")
 

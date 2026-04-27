@@ -13,6 +13,7 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import (
     salvar_estado_mundo,
 )
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
+from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
 from SimuladorServerJogo.Gerais.LoaderRegras import (
@@ -546,6 +547,7 @@ def _criar_novo_mundo_sync():
     salvar_estado_mundo(_ESTADO_MUNDO)
     _set_geracao(progresso=99, mensagem="Carregando mundo no servidor")
     BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
+    PACOTES_TICK.resetar()
     resetar_estado_clientes()
     _set_geracao(progresso=100, mensagem="Mundo pronto")
 

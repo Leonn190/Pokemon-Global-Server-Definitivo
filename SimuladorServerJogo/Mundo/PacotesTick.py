@@ -49,5 +49,11 @@ class ArmazenadorPacotesTick:
             limite = int(seq_exclusivo or 0)
             return [dict(diff) for diff in self._pendentes if int(diff.get("seq", 0) or 0) > limite]
 
+    def resetar(self) -> None:
+        with self._lock:
+            self._tick_atual = 0
+            self._pendentes.clear()
+            self._pacotes.clear()
+
 
 PACOTES_TICK = ArmazenadorPacotesTick(max_pacotes=900)

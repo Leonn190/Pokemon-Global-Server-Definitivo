@@ -268,11 +268,13 @@ class RodadorTurno:
     def _dados_ataque(self, pokemon, acao, props, alvo_ids=None, alvo=None, animacao=None):
         ataque = (acao or {}).get("ataque") if isinstance((acao or {}).get("ataque"), dict) else {}
         alvo_dict = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+        parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        tipo_ataque = parametros.get("tipo") or props.get("tipo") or ataque.get("Tipo") or ataque.get("tipo") or "normal"
         dados = {
             "id_acao": (acao or {}).get("id_acao"),
-            "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID") or props.get("Code"),
-            "ataque_code": ataque.get("Code") or props.get("Code"),
+            "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
             "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
+            "tipo_ataque": tipo_ataque,
             "usuario_id": pokemon.id_batalha,
             "usuario_nome": pokemon.nome,
             "pokemon_id": pokemon.id_batalha,

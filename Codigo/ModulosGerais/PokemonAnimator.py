@@ -28,6 +28,7 @@ PALETA_TIPOS_ATAQUE: Dict[str, tuple[int, int, int]] = {
     "gelo": (152, 208, 225),
     "lutador": (168, 89, 71),
     "venenoso": (147, 92, 180),
+    "veneno": (147, 92, 180),
     "terra": (164, 132, 73),
     "voador": (133, 168, 205),
     "psiquico": (217, 104, 146),
@@ -46,6 +47,7 @@ PALETA_TIPOS_ATAQUE: Dict[str, tuple[int, int, int]] = {
 PROJETEIS_ESPECIAIS: Dict[str, dict[str, object]] = {
     "biscoito": {
         "nome": "Biscoito",
+        "caminho": "Recursos/Visual/Projeteis/biscoito.png",
         "velocidade": 8.0,
         "gira": True,
         "rotacao_base": 0.0,
@@ -549,9 +551,11 @@ class PokemonAnimator:
         nome = dados.get("nome") or dados.get("projetil") or dados.get("codigo") or dados.get("code") or (sprite if isinstance(sprite, str) else None)
         chave = _normalizar_nome(nome)
         base = dict(PROJETEIS_ESPECIAIS.get(chave) or {})
-        caminho = dados.get("caminho") or dados.get("arquivo")
+        caminho = dados.get("caminho") or dados.get("arquivo") or base.get("caminho") or base.get("arquivo")
         if caminho is None and chave in PROJETEIS_ESPECIAIS:
             caminho = self._buscar_arquivo_projetil(base.get("nome") or nome)
+        elif caminho is not None and not Path(str(caminho)).is_absolute() and Path(str(caminho)).parent == Path("."):
+            caminho = self._buscar_arquivo_projetil(caminho) or caminho
         config = {
             "nome": str(base.get("nome") or nome or "padrao"),
             "velocidade": float(velocidade or dados.get("velocidade") or base.get("velocidade") or 7.0),
@@ -798,5 +802,3 @@ class PokemonAnimator:
             raio = int(16 + math.sin(local_t * math.pi) * 76)
             alpha = int(180 * math.sin(local_t * math.pi))
             pygame.draw.circle(surface, (120, 218, 255, alpha), (int(pos[0]), int(pos[1])), raio, max(4, raio // 8))
-
-

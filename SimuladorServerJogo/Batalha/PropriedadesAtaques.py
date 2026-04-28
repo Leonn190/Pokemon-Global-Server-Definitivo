@@ -37,7 +37,7 @@ def carregar_propriedades_ataques(base_dir: Path | None = None):
             for code, props in bloco.items():
                 if not isinstance(props, dict):
                     continue
-                chave = _code_norm(props.get("Code") or props.get("ID") or code)
+                chave = _code_norm(props.get("ID") or code)
                 if chave:
                     ataques[chave] = dict(props)
     return ataques

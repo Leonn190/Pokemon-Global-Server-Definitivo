@@ -4,7 +4,6 @@
   "ataques": {
     "1": {
       "ID": 1,
-      "Code": 1,
       "nome": "Investida",
       "custo": 40,
       "estilo_logico": "alvo",
@@ -29,16 +28,12 @@
     },
     "2": {
       "ID": 2,
-      "Code": 2,
       "nome": "Biscoito",
       "custo": 25,
       "estilo_logico": "alvo",
       "animacao": {
         "contato": "tiro",
-        "projetil": {
-          "arquivo": "biscoito.png",
-          "caminho": "Recursos/Visual/Projeteis/biscoito.png"
-        },
+        "projetil": "biscoito",
         "efeito_alvo": "ChuvaBrilhante",
         "efeito_usuario": null
       },
@@ -57,7 +52,6 @@
     },
     "3": {
       "ID": 3,
-      "Code": 3,
       "nome": "Enraivecer",
       "custo": 20,
       "estilo_logico": "ativo",
@@ -74,7 +68,6 @@
     },
     "4": {
       "ID": 4,
-      "Code": 4,
       "nome": "Provocar",
       "custo": 20,
       "estilo_logico": "ativo",
@@ -91,7 +84,6 @@
     },
     "5": {
       "ID": 5,
-      "Code": 5,
       "nome": "Proteger",
       "custo": 30,
       "estilo_logico": "alvo",
@@ -116,7 +108,6 @@
     },
     "6": {
       "ID": 6,
-      "Code": 6,
       "nome": "Arranhar",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -141,7 +132,6 @@
     },
     "7": {
       "ID": 7,
-      "Code": 7,
       "nome": "Recarga",
       "custo": 25,
       "estilo_logico": "ativo",
@@ -158,7 +148,6 @@
     },
     "8": {
       "ID": 8,
-      "Code": 8,
       "nome": "Energia",
       "custo": 30,
       "estilo_logico": "alvo",
@@ -183,7 +172,6 @@
     },
     "9": {
       "ID": 9,
-      "Code": 9,
       "nome": "Hiper Raio",
       "custo": 100,
       "estilo_logico": "alvo",
@@ -208,7 +196,6 @@
     },
     "10": {
       "ID": 10,
-      "Code": 10,
       "nome": "Guilhotina",
       "custo": 80,
       "estilo_logico": "alvo",
@@ -233,7 +220,6 @@
     },
     "11": {
       "ID": 11,
-      "Code": 11,
       "nome": "Disparo",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -258,7 +244,6 @@
     },
     "12": {
       "ID": 12,
-      "Code": 12,
       "nome": "Chifrada",
       "custo": 45,
       "estilo_logico": "alvo",
@@ -283,7 +268,6 @@
     },
     "13": {
       "ID": 13,
-      "Code": 13,
       "nome": "Resetar",
       "custo": 30,
       "estilo_logico": "alvo",
@@ -309,7 +293,6 @@
     },
     "14": {
       "ID": 14,
-      "Code": 14,
       "nome": "Tankar",
       "custo": 60,
       "estilo_logico": "ativo",
@@ -326,7 +309,6 @@
     },
     "15": {
       "ID": 15,
-      "Code": 15,
       "nome": "Estocada",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -351,7 +333,6 @@
     },
     "16": {
       "ID": 16,
-      "Code": 16,
       "nome": "Bola Climática",
       "custo": 50,
       "estilo_logico": "alvo",
@@ -376,7 +357,6 @@
     },
     "17": {
       "ID": 17,
-      "Code": 17,
       "nome": "Hiper Presa",
       "custo": 45,
       "estilo_logico": "alvo",
@@ -401,7 +381,6 @@
     },
     "18": {
       "ID": 18,
-      "Code": 18,
       "nome": "Acumulador",
       "custo": 0,
       "estilo_logico": "passivo",

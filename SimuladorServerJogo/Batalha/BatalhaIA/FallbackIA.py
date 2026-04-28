@@ -237,7 +237,7 @@ class FallbackIA:
 
     @staticmethod
     def _code_ataque(ataque, props):
-        valor = ataque.get("Code") or ataque.get("ID") or ataque.get("code") or props.get("Code") or props.get("ID") or 0
+        valor = ataque.get("ID") or ataque.get("Code") or ataque.get("code") or props.get("ID") or 0
         try:
             return int(float(valor))
         except (TypeError, ValueError):

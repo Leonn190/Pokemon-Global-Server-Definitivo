@@ -398,5 +398,5 @@ class ContextoIA:
     def code_ataque(ataque: Mapping[str, Any] | None, props: Mapping[str, Any] | None = None) -> int:
         ataque = ataque if isinstance(ataque, Mapping) else {}
         props = props if isinstance(props, Mapping) else {}
-        valor = ataque.get("Code") or ataque.get("ID") or ataque.get("code") or props.get("Code") or props.get("ID") or 0
+        valor = ataque.get("ID") or ataque.get("Code") or ataque.get("code") or props.get("ID") or 0
         return inteiro(valor, 0)

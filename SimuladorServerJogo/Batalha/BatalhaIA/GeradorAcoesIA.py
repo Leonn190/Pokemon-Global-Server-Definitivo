@@ -357,7 +357,7 @@ class GeradorAcoesIA:
     @staticmethod
     def classificar_ataque(ataque: Mapping[str, Any], props: Mapping[str, Any]) -> str:
         nome = normalizar(ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome") or props.get("nome"))
-        code = inteiro(ataque.get("Code") or ataque.get("ID") or props.get("Code") or props.get("ID"), 0)
+        code = inteiro(ataque.get("ID") or ataque.get("Code") or props.get("ID"), 0)
         if code == 2 or nome == "biscoito":
             return "cura"
         if code == 5 or nome == "proteger":

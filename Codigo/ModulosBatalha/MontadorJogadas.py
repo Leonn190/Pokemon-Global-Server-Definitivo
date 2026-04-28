@@ -49,7 +49,7 @@ class MontadorJogadas:
     def buscar_propriedades_ataque(self, ataque):
         if not isinstance(ataque, dict):
             return None
-        code = str(ataque.get("Code") or ataque.get("code") or "").strip()
+        code = str(ataque.get("ID") or ataque.get("Code") or ataque.get("code") or "").strip()
         if code and code in self.propriedades_ataques:
             return self.propriedades_ataques.get(code)
         nome = str(ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome") or "").strip().casefold()
@@ -700,7 +700,6 @@ def gerar_propriedades_ataques_json(csv_path: Path, out_path: Path):
             estilo = "passivo" if estilo_csv == "passivo" else "ativo" if estilo_csv == "ativa" else "alvo"
             base = {
                 "ID": int(float(code)),
-                "Code": int(float(code)),
                 "nome": nome,
                 "custo": int(float(row.get("Custo") or 0)),
                 "estilo_logico": estilo,

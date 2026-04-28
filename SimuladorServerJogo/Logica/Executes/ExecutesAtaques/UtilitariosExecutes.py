@@ -37,7 +37,7 @@ def dano_generico(ctx, alvo, bruto, categoria="normal", **extra):
         "dano_bruto": max(0.0, float(bruto or 0.0)),
         "tipo": parametros.get("tipo") or props.get("tipo") or "normal",
         "categoria": categoria,
-        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID") or props.get("Code"),
+        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
         "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
         "reativos_acao": (ctx or {}).get("reativos_acao"),
         **extra,

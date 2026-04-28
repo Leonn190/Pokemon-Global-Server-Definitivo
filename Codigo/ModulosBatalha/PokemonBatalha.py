@@ -55,6 +55,7 @@ ESTILOS_VISUAIS_EFEITOS: dict[str, dict[str, object]] = {
 EFEITOS_TRAVAM_FRAME = {"congelado", "dormindo", "paralisado"}
 EFEITOS_IDLE_LENTO = {"encharcado"}
 EFEITOS_IDLE_RAPIDO = {"energizado"}
+EFEITO_VISUAL_INTENSIDADE_MULT = 0.45
 
 
 @dataclass
@@ -573,7 +574,7 @@ class PokemonBatalha:
         if not estilo or not isinstance(img, pygame.Surface):
             return img
         cor = tuple(estilo.get("cor") or (255, 255, 255))
-        intensidade = max(0.0, min(1.0, float(estilo.get("intensidade", 0.5) or 0.5)))
+        intensidade = max(0.0, min(1.0, float(estilo.get("intensidade", 0.5) or 0.5) * EFEITO_VISUAL_INTENSIDADE_MULT))
         t = float(self.TempoVisualEfeitos or 0.0)
         out = img.copy()
         w, h = out.get_size()
@@ -589,7 +590,24 @@ class PokemonBatalha:
         movimento = estilo.get("particulas")
         if movimento:
             self._desenhar_particulas_de_estado(out, cor[:3], str(movimento), intensidade, float(estilo.get("densidade", 1.0) or 1.0), float(estilo.get("vel", 1.0) or 1.0), t)
+        self._preservar_alpha_original(out, img)
         return out
+
+    @staticmethod
+    def _preservar_alpha_original(destino, origem):
+        try:
+            alpha_dest = pygame.surfarray.pixels_alpha(destino)
+            alpha_orig = pygame.surfarray.pixels_alpha(origem)
+            alpha_dest[:] = alpha_orig
+            del alpha_dest, alpha_orig
+            return
+        except Exception:
+            pass
+        mascara = pygame.mask.from_surface(origem, threshold=1).to_surface(
+            setcolor=(255, 255, 255, 255),
+            unsetcolor=(255, 255, 255, 0),
+        )
+        destino.blit(mascara, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
 
     @staticmethod
     def _hash_visual(seed):
@@ -597,7 +615,7 @@ class PokemonBatalha:
 
     def _desenhar_pixels_pulsantes(self, surface, cor, intensidade, tempo):
         w, h = surface.get_size()
-        quantidade = max(5, min(42, int((w * h) / 2600)))
+        quantidade = max(3, min(24, int((w * h) / 4200)))
         for i in range(quantidade):
             x = int(self._hash_visual(i + len(self.id_batalha) * 7) * max(1, w - 2))
             y = int(self._hash_visual(i * 3 + len(self.Nome) * 11) * max(1, h - 2))
@@ -608,7 +626,7 @@ class PokemonBatalha:
 
     def _desenhar_particulas_de_estado(self, surface, cor, movimento, intensidade, densidade, velocidade, tempo):
         w, h = surface.get_size()
-        quantidade = max(4, min(48, int((w * h) / 1800 * densidade)))
+        quantidade = max(2, min(26, int((w * h) / 3200 * densidade)))
         for i in range(quantidade):
             fase = self._hash_visual(i * 13 + len(self.id_batalha))
             progresso = (tempo * velocidade * (0.35 + fase * 0.45) + fase) % 1.0

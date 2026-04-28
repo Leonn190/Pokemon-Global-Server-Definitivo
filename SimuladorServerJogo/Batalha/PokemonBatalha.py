@@ -449,7 +449,7 @@ class PokemonBatalha:
         base_dados = base.get("dados") if isinstance(base.get("dados"), dict) else {}
         dados_recebidos = dados if isinstance(dados, dict) else {}
         permanente = bool(base.get("permanente") or base_dados.get("permanente") or dados_recebidos.get("permanente"))
-        if negativo and origem is not None and origem is not self and (self.possui_efeito("Imune") or self.possui_efeito("Imunizado")):
+        if negativo and origem is not None and origem is not self and self.possui_efeito("Imune"):
             return {"aplicado": False, "motivo": "imune"}
         mag_origem = origem.obter_atributo("Mag") if origem is not None and hasattr(origem, "obter_atributo") else 0.0
         mag_alvo = self.obter_atributo("Mag")

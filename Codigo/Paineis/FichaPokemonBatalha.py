@@ -28,6 +28,7 @@ class FichaPokemonBatalha:
     _COR_TITULO = (245, 249, 255)
     _COR_SUB = (188, 202, 232)
     _COR_TEXTO = (236, 241, 252)
+    _ATRIBUTOS_PERCENTUAIS = {"Acuracia", "Assertividade", "CrC", "CrD", "Amp", "Dur", "Amplificacao", "Durabilidade"}
 
     _ESTILO_TEXTO_BASE = {
         "outline": True,
@@ -137,6 +138,8 @@ class FichaPokemonBatalha:
             "SpD": ("SpD", "DefesaEspecial"),
             "CrC": ("CrC", "CriticoChance", "ChanceCritico"),
             "CrD": ("CrD", "CriticoDano", "DanoCritico"),
+            "Acuracia": ("Acuracia", "Precisao", "Accuracy"),
+            "Assertividade": ("Assertividade", "Assertiveness"),
         }
         chave_cache = (str(chave), int(lado))
         if chave_cache in self._cache_icones_stats:
@@ -230,20 +233,24 @@ class FichaPokemonBatalha:
             "Durabilidade": "Durabilidade",
             "CrC": "Chance Critica",
             "CrD": "Dano Critico",
+            "Acuracia": "Acuracia",
+            "Assertividade": "Assertividade",
             "Barreira": "Barreira",
             "Precisao": "Perfuracao",
         }
         return mapa.get(str(chave), str(chave))
 
-    @staticmethod
-    def _fmt_numero(valor: float) -> str:
+    @classmethod
+    def _fmt_numero(cls, valor: float, chave: str | None = None) -> str:
         try:
             numero = float(valor)
         except (TypeError, ValueError):
             return "0"
         if abs(numero - round(numero)) < 0.001:
-            return str(int(round(numero)))
-        return f"{numero:.1f}"
+            texto = str(int(round(numero)))
+        else:
+            texto = f"{numero:.1f}"
+        return f"{texto}%" if chave in cls._ATRIBUTOS_PERCENTUAIS else texto
 
     def _registrar_hover_atributo(self, chave: str, pokemon):
         nome = self._nome_atributo(chave)
@@ -252,7 +259,7 @@ class FichaPokemonBatalha:
         total = getattr(pokemon, "obter_valor_ficha", lambda _c: base)(chave)
         sinal = "+" if float(variacao) >= 0 else "-"
         descricao = (
-            f"{self._fmt_numero(base)} base {sinal} {self._fmt_numero(abs(float(variacao)))} variacao = {self._fmt_numero(total)}"
+            f"{self._fmt_numero(base, chave)} base {sinal} {self._fmt_numero(abs(float(variacao)), chave)} variacao = {self._fmt_numero(total, chave)}"
         )
         self._hover_atributo = (nome, descricao)
 
@@ -287,9 +294,11 @@ class FichaPokemonBatalha:
         else:
             self._desenhar_texto(self._txt_micro, tela, chave[:3], (x + 11, area.centery), align="center")
             x += 26
-        texto = f"{int(round(float(valor)))}" if isinstance(valor, (int, float)) else str(valor)
+        texto = self._fmt_numero(valor, chave) if isinstance(valor, (int, float)) else str(valor)
         variacao = float(getattr(pokemon, "obter_variacao_ficha", lambda _c: 0.0)(chave) or 0.0)
-        if variacao > 0.001:
+        if str(chave) == "Assertividade" and abs(variacao) > 0.001:
+            self._txt_numero.set_style(color=(104, 220, 126))
+        elif variacao > 0.001:
             self._txt_numero.set_style(color=(104, 220, 126))
         elif variacao < -0.001:
             self._txt_numero.set_style(color=(238, 96, 96))
@@ -318,8 +327,8 @@ class FichaPokemonBatalha:
         if area.width <= 8:
             return
         self._desenhar_setor(tela, area, secundario=True)
-        esquerda = ["Vida", "Amplificacao", "Peso", "CrC", None]
-        direita = ["EnergiaMaxima", "Durabilidade", "Escala", "CrD", "Barreira"]
+        esquerda = ["Vida", "Amplificacao", "Assertividade", "CrC", None]
+        direita = ["EnergiaMaxima", "Durabilidade", "Acuracia", "CrD", "Barreira"]
         self._desenhar_grade_atributos(tela, area, pokemon, esquerda, direita)
 
     def _desenhar_stats_esquerda(self, tela: pygame.Surface, area: pygame.Rect, pokemon):

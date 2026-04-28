@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 from SimuladorServerJogo.Batalha.ResolvedorFlags import ExecuteReativo
-from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ExecutesNovos import (
-    obter_aliases_executes_novos,
-    obter_executes_novos,
-    obter_passivas_ataques_novas,
-)
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import (
     aplicar_efeito,
+    aplicar_mod_atributo,
     critico_simples,
     dano_generico,
     normalizar,
@@ -147,6 +143,15 @@ def _exec_acumulador(ctx, alvo):
     return {"falha": True, "motivo": "passiva_nao_manual"}
 
 
+def _exec_rugido(ctx, alvo):
+    return aplicar_mod_atributo(ctx, alvo, "Rugido", "Atk", -alvo.obter_atributo("Atk") * 0.08, 6, True)
+
+
+def _exec_inflar(ctx, alvo):
+    usuario = ctx.get("usuario")
+    return aplicar_mod_atributo(ctx, usuario, "Inflar", "Vida", usuario.obter_atributo("Mag") * 0.20, 6, False)
+
+
 def _passiva_acumulador(ctx):
     alvo = ctx.get("dono_passiva") or ctx.get("pokemon_evento")
     if alvo is None:
@@ -174,8 +179,9 @@ _EXECUTES = {
     "bolaclimatica": _exec_bola_climatica,
     "hiperpresa": _exec_hiper_presa,
     "acumulador": _exec_acumulador,
+    "rugido": _exec_rugido,
+    "inflar": _exec_inflar,
 }
-_EXECUTES.update(obter_executes_novos())
 
 _EXECUTES_REATIVOS = [
     ExecuteReativo(nome="GuilhotinaExecucao", flag="AoAplicarDano", func=_reativo_guilhotina, origem_ataque="Guilhotina", code="10", ordem=1),
@@ -184,12 +190,10 @@ _EXECUTES_REATIVOS = [
 _PASSIVAS_ATAQUE = [
     {"nome": "Acumulador", "flag": "AntesReceberAtaque", "grupo": "self", "func": _passiva_acumulador, "origem": "ataque", "code": "18"},
 ]
-_PASSIVAS_ATAQUE.extend(obter_passivas_ataques_novas())
 
 _ALIASES = {
-    "1": "investida", "2": "biscoito", "3": "enraivecer", "4": "provocar", "5": "proteger", "6": "arranhar", "7": "recarga", "8": "energia", "9": "hiperraio", "10": "guilhotina", "11": "disparo", "12": "chifrada", "13": "resetar", "14": "tankar", "15": "estocada", "16": "bolaclimatica", "17": "hiperpresa", "18": "acumulador",
+    "1": "investida", "2": "biscoito", "3": "enraivecer", "4": "provocar", "5": "proteger", "6": "arranhar", "7": "recarga", "8": "energia", "9": "hiperraio", "10": "guilhotina", "11": "disparo", "12": "chifrada", "13": "resetar", "14": "tankar", "15": "estocada", "16": "bolaclimatica", "17": "hiperpresa", "18": "acumulador", "36": "rugido", "60": "inflar",
 }
-_ALIASES.update(obter_aliases_executes_novos())
 
 def obter_executes_normais():
     return dict(_EXECUTES)
@@ -201,6 +205,10 @@ def obter_executes_reativos_normais():
 
 def obter_passivas_ataques_normais():
     return list(_PASSIVAS_ATAQUE)
+
+
+def obter_aliases_executes_normais():
+    return dict(_ALIASES)
 
 
 def resolver_chave(nome_ou_code):

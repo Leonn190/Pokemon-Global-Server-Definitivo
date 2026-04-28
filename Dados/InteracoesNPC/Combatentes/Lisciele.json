@@ -25,7 +25,7 @@
       "opcoes": [
         {
           "texto": "Quero batalhar agora!",
-          "acao": "batalhar"
+          "acao": "batalha"
         },
         {
           "texto": "Vou treinar mais um pouco.",
@@ -38,7 +38,7 @@
       "opcoes": [
         {
           "texto": "Fechado, vamos nessa.",
-          "acao": "batalhar"
+          "acao": "batalha"
         },
         {
           "texto": "Volto depois.",
@@ -51,7 +51,7 @@
       "opcoes": [
         {
           "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalhar"
+          "acao": "batalha"
         },
         {
           "texto": "Melhor voltar outro dia.",
@@ -64,13 +64,35 @@
       "opcoes": [
         {
           "texto": "Vamos batalhar de novo!",
-          "acao": "batalhar"
+          "acao": "batalha"
         },
         {
           "texto": "Hoje não, campeão.",
           "fim": true
         }
       ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
     }
+  },
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota"
   }
 }

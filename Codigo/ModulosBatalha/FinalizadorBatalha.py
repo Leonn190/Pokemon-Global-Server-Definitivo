@@ -30,6 +30,7 @@ class FinalizadorBatalha:
         if self._finalizacao_aberta:
             return
         resultado = dict(resultado or {})
+        self._ultimo_resultado = dict(resultado)
         self.aplicar_persistencia(resultado)
         self._notificar_servidor_finalizacao(resultado)
         self.abrir_subtela_resultados(resultado)
@@ -38,6 +39,7 @@ class FinalizadorBatalha:
         ctrl = self.controlador
         resposta = ctrl.server_batalha.finalizar_batalha(ctrl.id_partida, ctrl.lado_jogador, motivo="fuga")
         resultado = resposta.get("resultado") if isinstance(resposta, dict) and isinstance(resposta.get("resultado"), dict) else {}
+        self._ultimo_resultado = dict(resultado)
         self.aplicar_persistencia(resultado)
         self.voltar_ao_mundo()
 
@@ -118,11 +120,30 @@ class FinalizadorBatalha:
         ctrl = self.controlador
         jogo = getattr(ctrl, "jogo", None)
         if jogo is not None and isinstance(getattr(jogo, "INFO", None), dict):
+            self._preparar_dialogo_pos_batalha(jogo)
             jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
             jogo.INFO.pop("CombateContextoTemporario", None)
             jogo.CenaAlvo = "Mundo"
         ctrl.solicitou_encerrar_batalha = True
         ctrl.estado_batalha = "finalizada"
+
+    def _preparar_dialogo_pos_batalha(self, jogo):
+        contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
+        if str(contexto.get("tipo") or "").strip().lower() not in {"treinador", "trainer"}:
+            return
+        npc_ctx = contexto.get("npc_contexto") if isinstance(contexto.get("npc_contexto"), dict) else {}
+        npc_id = _i(npc_ctx.get("npc_id"), 0)
+        if npc_id <= 0:
+            return
+        vencedor = self._vencedor_visual(getattr(self, "_ultimo_resultado", {}) or {})
+        pos = npc_ctx.get("pos_batalha") if isinstance(npc_ctx.get("pos_batalha"), dict) else {}
+        chave = "vitoria" if vencedor == "jogador" else "derrota"
+        destino = str(pos.get(chave) or pos.get("padrao") or f"pos_batalha_{chave}").strip()
+        jogo.INFO["DialogoPosBatalha"] = {
+            "npc_id": npc_id,
+            "inicio_dialogo": destino,
+            "resultado_batalha": chave,
+        }
 
     def _notificar_servidor_finalizacao(self, resultado):
         ctrl = self.controlador

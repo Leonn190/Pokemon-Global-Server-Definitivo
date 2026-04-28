@@ -39,7 +39,7 @@ class Partida:
         self.arena_contexto = dict(dados.get("arena") or {})
         self.regras = copy.deepcopy(dados.get("regras") or {}) if isinstance(dados.get("regras"), dict) else {}
         self.regras_mundo = copy.deepcopy(dados.get("regras_mundo") or {}) if isinstance(dados.get("regras_mundo"), dict) else {}
-        for chave in ("centro", "largura", "altura", "arena_largura", "arena_altura", "origem", "tiles", "estruturas"):
+        for chave in ("centro", "largura", "altura", "arena_largura", "arena_altura", "origem", "tiles", "estruturas", "contexto_estadio", "tipo_estadio"):
             if chave in dados and chave not in self.arena_contexto:
                 self.arena_contexto[chave] = copy.deepcopy(dados.get(chave))
         self.lados: dict[int, dict] = {}

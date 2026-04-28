@@ -4,7 +4,7 @@ import copy
 
 from SimuladorServerJogo.Logica.Executes.ExecuteAtaques import executar_alvificacao, executar_execute_principal
 from SimuladorServerJogo.Logica.Executes.PassivaAtaques import processar_passivas_ataque
-from SimuladorServerJogo.Logica.Executes.PassivaItens import processar_passivas_itens
+from SimuladorServerJogo.Logica.Executes.PassivasEquipaveis import processar_passivas_itens
 
 
 class RodadorTurno:

@@ -41,6 +41,7 @@ class ControladorPlayer:
         self._colisao_pokemon_pendente: Optional[Dict[str, object]] = None
         self._normalizacao_posicao_pendente = False
         self._dt_ultimo_frame = 1.0 / 60.0
+        self._estado_player_local_base: Dict[str, object] = {}
 
     def _regras(self) -> Dict[str, object]:
         info = getattr(self._jogo, "INFO", {}) if self._jogo is not None else {}
@@ -99,6 +100,7 @@ class ControladorPlayer:
         dados = dados_player if isinstance(dados_player, dict) else {}
         estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
         dim_inicial = str(estado.get("dimensao") or dados.get("dimensao") or "Mundo")
+        self._estado_player_local_base = dict(estado)
         self._player_local = self._hidratar_ator_payload(None, dados, com_controle=True)
         setattr(self._player_local, "DimensaoAtual", dim_inicial)
         self._objetos.definir_player_local_info(self._player_local)
@@ -634,6 +636,8 @@ class ControladorPlayer:
         dados = dict(payload)
         teleporte = bool(dados.get("teleporte", False))
         estado_servidor = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
+        if estado_servidor:
+            self._estado_player_local_base.update({k: v for k, v in estado_servidor.items() if k not in {"angulo", "tapa", "mirando", "inventario_aberto", "correndo"}})
         payload_local = self._objetos.ObjetosPorId.get(int(getattr(self._player_local, "Id", 0) or 0), {}) if isinstance(self._objetos.ObjetosPorId, dict) else {}
         estado_local = payload_local.get("estado") if isinstance(payload_local.get("estado"), dict) else {}
         dim_antiga = str(estado_local.get("dimensao") or payload_local.get("dimensao") or "Mundo")
@@ -682,6 +686,8 @@ class ControladorPlayer:
         ator = self._player_local
         if ator is None or getattr(ator, "Id", None) is None:
             return
+        estado = dict(self._estado_player_local_base or {})
+        estado.setdefault("dimensao", str(getattr(ator, "DimensaoAtual", "") or "Mundo"))
         self._objetos.aplicar_diff({
             "tipo": "update",
             "objeto_id": int(ator.Id),
@@ -692,6 +698,7 @@ class ControladorPlayer:
                 "skin": str(getattr(ator, "NomeSkin", "S1")),
                 "posicao": [ator.Posicao[0], ator.Posicao[1]],
                 "raio_colisao": getattr(ator.Colisor, "raio_colisao", 0.35),
+                "estado": estado,
             },
         })
 

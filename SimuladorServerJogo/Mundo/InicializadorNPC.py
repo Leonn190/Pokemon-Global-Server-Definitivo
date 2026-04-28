@@ -272,6 +272,9 @@ class InicializadorNPC:
         except Exception:
             return None
 
+    def _pokemons_treinador(self, nomes: List[str], nivel_treinador: int, rnd: random.Random) -> List[Dict[str, object] | None]:
+        return [self._pokemon_treinador(nome, nivel_treinador, rnd) if nome else None for nome in nomes]
+
     @staticmethod
     def colunas_pokemon(row: Dict[str, object]) -> List[str]:
         cols: List[Tuple[int, str]] = []
@@ -294,21 +297,28 @@ class InicializadorNPC:
         code = self.inteiro(row.get("Code"), sum(ord(c) for c in nome_npc))
         rnd = random.Random(72_000 + code)
         nomes = [str(row.get(col) or "").strip() for col in self.colunas_pokemon(row)]
-        pokes: List[Dict[str, object] | None] = [self._pokemon_treinador(nome, nivel, rnd) if nome else None for nome in nomes]
+        pokes: List[Dict[str, object] | None] = []
 
-        def compact(indices: List[int]) -> List[Dict[str, object]]:
-            return [pokes[i] for i in indices if 0 <= i < len(pokes) and isinstance(pokes[i], dict)]
+        def compact(indices: List[int], fonte: List[Dict[str, object] | None] | None = None) -> List[Dict[str, object]]:
+            base = fonte if fonte is not None else pokes
+            return [base[i] for i in indices if 0 <= i < len(base) and isinstance(base[i], dict)]
 
         times: List[Dict[str, object]] = []
-        if cargo == "lider" and len(pokes) >= 12:
+        if cargo == "lider" and len(nomes) >= 12:
             meio = list(range(3, 9))
             sorteados = rnd.sample(meio, k=3)
             sobraram = [i for i in meio if i not in sorteados]
-            time1 = compact([0, 1, 2] + sorteados)
-            time2 = compact(sobraram + [9, 10, 11])
+            indices_time1 = [0, 1, 2] + sorteados
+            indices_time2 = sobraram + [9, 10, 11]
+            pokes_time1 = self._pokemons_treinador(nomes, max(0, nivel - 50), rnd)
+            pokes_time2 = self._pokemons_treinador(nomes, nivel, rnd)
+            time1 = compact(indices_time1, pokes_time1)
+            time2 = compact(indices_time2, pokes_time2)
+            pokes = [p for p in pokes_time1 + pokes_time2 if isinstance(p, dict)]
             times.append({"Nome": "Time 1", "Slots": time1[:6]})
             times.append({"Nome": "Time 2", "Slots": time2[:6]})
         else:
+            pokes = self._pokemons_treinador(nomes, nivel, rnd)
             times.append({"Nome": "Time 1", "Slots": compact(list(range(0, 6)))[:6]})
         todos = [p for time in times for p in time.get("Slots", []) if isinstance(p, dict)]
         return todos, times

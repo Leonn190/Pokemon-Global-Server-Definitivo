@@ -283,6 +283,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         else:
             mundo_pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else entrada
         player.definir_posicao(float(mundo_pos[0]), float(mundo_pos[1]))
+        atualizar_posicao_personagem(client_id, player.posicao, dimensao="Mundo")
         registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
         return True
 
@@ -306,6 +307,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     player.estado_extra["estadio_atual_id"] = int(estadio.Id)
     player.estado_extra["posicoes_por_dimensao"] = pos_dim
     player.definir_posicao(float(destino[0]), float(destino[1]))
+    atualizar_posicao_personagem(client_id, player.posicao, dimensao=dim)
     registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
     return True
 

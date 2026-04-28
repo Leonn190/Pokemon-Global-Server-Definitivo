@@ -210,6 +210,7 @@ class SubtelaDialogo(Subtela):
             nos_extra = {}
         return {
             "inicio": "saudacao",
+            "pos_batalha": {"vitoria": "pos_batalha_vitoria", "derrota": "pos_batalha_derrota"},
             "nos": {
                 "saudacao": {
                     "fala_condicional": {
@@ -224,6 +225,14 @@ class SubtelaDialogo(Subtela):
                     "opcoes": opcoes,
                 },
                 **nos_extra,
+                "pos_batalha_vitoria": {
+                    "fala": f"Voce venceu. Bom combate, {self._player_nome}.",
+                    "opcoes": [{"texto": "Encerrar conversa.", "acao": "fim"}],
+                },
+                "pos_batalha_derrota": {
+                    "fala": f"Voce perdeu. Treine mais um pouco e volte quando estiver pronto, {self._player_nome}.",
+                    "opcoes": [{"texto": "Encerrar conversa.", "acao": "fim"}],
+                },
                 "fallback": {
                     "fala": "Tive um problema para montar este diálogo.",
                     "opcoes": [{"texto": "Fechar", "acao": "fim"}],

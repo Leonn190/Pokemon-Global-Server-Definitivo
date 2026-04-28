@@ -74,7 +74,7 @@ class CerebroNPCs:
                 else:
                     skin = f"{skin_raw}.png"
                 npc_id = int(910000 + int(code) if code.isdigit() else 910000 + idx)
-                pokemons_npc, times_npc = self._pokemon_npc_materializados(row)
+                pokemons_npc, times_npc = self._inicializador.montar_times_combatente(row) if hasattr(self, "_inicializador") else self._pokemon_npc_materializados(row)
                 base[f"combatente:{code}"] = {
                     "id": npc_id,
                     "code": str(code),

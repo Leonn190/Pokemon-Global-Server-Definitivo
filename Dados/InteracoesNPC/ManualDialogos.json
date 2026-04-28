@@ -17,6 +17,14 @@
   },
   "estrutura_raiz": {
     "inicio": "id do no inicial",
+    "pos_batalha": {
+      "descricao": "Opcional para treinadores. Define para qual no o dialogo volta depois de uma batalha.",
+      "formato": {
+        "vitoria": "pos_batalha_vitoria",
+        "derrota": "pos_batalha_derrota",
+        "padrao": "pos_batalha_derrota"
+      }
+    },
     "inicio_condicional": {
       "descricao": "Opcional. Escolhe o no inicial por condicao.",
       "formato": {
@@ -140,6 +148,7 @@
             },
             "acao": "Opcional. Suportados: batalha, fim.",
             "batalha": "Numero da batalha quando acao = batalha.",
+            "pos_batalha": "Opcional. Sobrescreve o pos_batalha raiz para esta opcao. Ex.: {\"vitoria\": \"venceu_batalha_1\", \"derrota\": \"perdeu_batalha_1\"}.",
             "ao_escolher": {
               "setor": {
                 "PerguntouSobreSegredo": true,
@@ -216,6 +225,7 @@
   "saidas_principais": {
     "fim": "Use em uma opcao com acao = fim.",
     "batalha": "Use em uma opcao com acao = batalha e batalha = numero.",
+    "pos_batalha": "Depois de uma batalha contra treinador, o jogo reabre o dialogo do NPC no no indicado por pos_batalha.vitoria ou pos_batalha.derrota.",
     "loja": "Use em um no com saida = loja.",
     "loja_secreta": "Use em um no com saida = loja_secreta.",
     "presente": "Use em um no com saida = presente."

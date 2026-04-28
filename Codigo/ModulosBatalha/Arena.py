@@ -22,6 +22,7 @@ class Arena:
         self.ArenaLargura = int(self.Contexto.get("arena_largura", 40) or 40)
         self.ArenaAltura = int(self.Contexto.get("arena_altura", 20) or 20)
         self.BlocoInicio = tuple(self.Contexto.get("origem", (0.0, 0.0)))
+        self._contexto_estadio = bool(self.Contexto.get("contexto_estadio"))
 
         self._tiles: List[Tuple[int, int, int]] = []
         self._tem_tiles_contexto = False
@@ -213,8 +214,42 @@ class Arena:
             if fundo is not None:
                 surface.blit(fundo, rect_tela.topleft)
 
+    def _montar_fundo_estadio(self, tile_px: int) -> pygame.Surface:
+        surf = pygame.Surface((max(1, self.Largura * tile_px), max(1, self.Altura * tile_px)))
+        cor_a = (188, 198, 210)
+        cor_b = (170, 181, 194)
+        for y in range(self.Altura):
+            for x in range(self.Largura):
+                pygame.draw.rect(surf, cor_a if (x + y) % 2 == 0 else cor_b, (x * tile_px, y * tile_px, tile_px, tile_px))
+        arena = self._retangulo_arena()
+        arena_px = pygame.Rect(arena.x * tile_px, arena.y * tile_px, arena.w * tile_px, arena.h * tile_px)
+        pygame.draw.rect(surf, (116, 124, 134), arena_px.inflate(tile_px, tile_px), border_radius=max(4, tile_px // 3))
+        pygame.draw.rect(surf, (150, 156, 164), arena_px, border_radius=max(4, tile_px // 4))
+        pygame.draw.rect(surf, (205, 210, 216), arena_px.inflate(-tile_px, -tile_px), max(2, tile_px // 12))
+
+        lado_slot = 4
+        gap = 1
+        plataformas = [
+            pygame.Rect(arena.x, arena.bottom + 1, (lado_slot * 3) + (gap * 2), lado_slot),
+            pygame.Rect(arena.right - ((lado_slot * 3) + (gap * 2)), arena.y - (lado_slot + 1), (lado_slot * 3) + (gap * 2), lado_slot),
+        ]
+        for rect in plataformas:
+            rpx = pygame.Rect(rect.x * tile_px, rect.y * tile_px, rect.w * tile_px, rect.h * tile_px)
+            pygame.draw.rect(surf, (112, 119, 128), rpx.inflate(tile_px // 2, tile_px // 2), border_radius=max(4, tile_px // 4))
+            pygame.draw.rect(surf, (154, 160, 168), rpx, border_radius=max(4, tile_px // 5))
+        return surf
+
     def renderizar(self, tela, camera) -> None:
         tile_px = max(1, int(getattr(camera, "TilePx", 40) or 40))
+        if self._contexto_estadio:
+            if self._cache_mapa is None or self._cache_tile_px != tile_px:
+                self._cache_mapa = self._montar_fundo_estadio(tile_px)
+                self._cache_tile_px = tile_px
+            x0, y0 = camera.mundo_para_tela_px((0, 0))
+            tela.fill((20, 22, 26))
+            tela.blit(self._cache_mapa, (int(x0), int(y0)))
+            self._desenhar_fundos_areas(tela, camera)
+            return
         if not self._tem_tiles_contexto:
             tela.fill((0, 0, 0))
             self._desenhar_fundos_areas(tela, camera)

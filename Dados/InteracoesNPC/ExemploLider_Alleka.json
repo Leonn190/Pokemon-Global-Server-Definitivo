@@ -222,6 +222,28 @@
           "acao": "fim"
         }
       ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "opcoes": [
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
     }
+  },
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota"
   }
 }

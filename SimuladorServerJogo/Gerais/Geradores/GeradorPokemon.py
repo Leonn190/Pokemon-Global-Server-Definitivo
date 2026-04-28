@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import random
+import unicodedata
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -549,10 +550,15 @@ def _escolher_especie(especie=None) -> Dict[str, str]:
         return {"Nome": "MissingNo", "Raridade": "10", "Altura": "1.0", "Peso": "1.0", **{k: "10" for k in STATS_BASE}}
     alvo = str(especie or "").strip().lower()
     if alvo:
+        alvo_slug = "".join(ch for ch in unicodedata.normalize("NFKD", alvo).encode("ascii", "ignore").decode("ascii") if ch.isalnum())
         for item in _BASE_POKEMONS:
             row = item.get("row", {}) if isinstance(item, dict) else {}
             if str(row.get("Code", "")).strip().lower() == alvo or str(row.get("Nome", "")).strip().lower() == alvo:
                 return row
+            nome_slug = "".join(ch for ch in unicodedata.normalize("NFKD", str(row.get("Nome", "")).strip().lower()).encode("ascii", "ignore").decode("ascii") if ch.isalnum())
+            if nome_slug and nome_slug == alvo_slug:
+                return row
+        return {"Nome": "MissingNo", "Raridade": "10", "Altura": "1.0", "Peso": "1.0", **{k: "10" for k in STATS_BASE}}
     item = random.choices(_BASE_POKEMONS, weights=[x["peso_spawn"] for x in _BASE_POKEMONS], k=1)[0]
     return item["row"]
 

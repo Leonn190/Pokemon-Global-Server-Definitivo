@@ -108,6 +108,10 @@ class LeitorDialogo:
         self._gravar_valor("setor", caminho, atual + 1)
 
     def _resolver_inicio(self) -> str:
+        inicio_forcado = str(self._npc.get("inicio_dialogo") or "").strip()
+        if inicio_forcado:
+            return inicio_forcado
+
         cfg = self._dialogo.get("inicio_condicional")
         if isinstance(cfg, dict):
             inicio = self._resolver_bloco_condicional(cfg)
@@ -170,6 +174,9 @@ class LeitorDialogo:
         visitas = int(self._ler_caminho(self._setor, f"NPCs.{self._npc_chave_setor}.visitas", 0) or 0)
         return {
             "respeito_atual": self.nivel_respeito_estadio(self.npc_estadio),
+            "ultima_batalha.resultado": str(self._npc.get("resultado_batalha") or ""),
+            "ultima_batalha.vitoria": str(self._npc.get("resultado_batalha") or "") == "vitoria",
+            "ultima_batalha.derrota": str(self._npc.get("resultado_batalha") or "") == "derrota",
             "npc.visitas": visitas,
             "npc.visitas_anteriores": self._visitas_anteriores,
             "npc.nome": self.npc_nome,
@@ -406,6 +413,9 @@ class LeitorDialogo:
             batalha = self._resolver_campo(op, "batalha")
             if batalha is not None:
                 item["batalha"] = batalha
+            pos_batalha = self._resolver_campo(op, "pos_batalha")
+            if pos_batalha is not None:
+                item["pos_batalha"] = pos_batalha
             resolvidas.append(item)
         self._opcoes_visiveis = resolvidas
 
@@ -443,6 +453,10 @@ class LeitorDialogo:
         self._aplicar_efeitos(op.get("ao_escolher"))
 
         acao = str(op.get("acao") or "").strip().lower()
+        if bool(op.get("fim")):
+            acao = "fim"
+        if acao in {"batalhar", "combate", "lutar"}:
+            acao = "batalha"
         if acao == "fim":
             return {"tipo": "fim"}
 
@@ -454,9 +468,10 @@ class LeitorDialogo:
                 self._opcoes_visiveis = [{"texto": "Entendi.", "acao": "fim"}]
                 return {"tipo": "navegou"}
             try:
-                numero = int(op.get("batalha") or 1)
+                numero = int(op.get("batalha") or (2 if self.npc_cargo == "lider" and self.nivel_respeito_estadio(self.npc_estadio) >= 3 else 1))
             except Exception:
                 numero = 1
+            pos_batalha = op.get("pos_batalha") if isinstance(op.get("pos_batalha"), dict) else self._dialogo.get("pos_batalha")
             return {
                 "tipo": "batalha",
                 "contexto": {
@@ -467,6 +482,7 @@ class LeitorDialogo:
                     "npc_estadio": self.npc_estadio,
                     "batalha_numero": max(1, numero),
                     "times_pokemon": list(self._estado.get("times_pokemon", [])) if isinstance(self._estado.get("times_pokemon"), list) else [],
+                    "pos_batalha": dict(pos_batalha or {}) if isinstance(pos_batalha, dict) else {},
                 },
             }
 

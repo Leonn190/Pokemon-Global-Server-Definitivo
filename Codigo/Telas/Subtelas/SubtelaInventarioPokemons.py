@@ -21,7 +21,7 @@ from Codigo.Prefabs.Botao import BotaoAlavanca
 from Codigo.Prefabs.Opcoes import Opções
 from Codigo.Prefabs.Painel import Painel
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
+from Codigo.Telas.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaTexto
 
 _EXEC_POCAO = importlib.import_module("Codigo.ModulosMundo.ExecutaveisPoção")
 

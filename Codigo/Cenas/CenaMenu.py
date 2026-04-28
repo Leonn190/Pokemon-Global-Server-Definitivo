@@ -1,8 +1,8 @@
 from Codigo.ModulosGerais.EfeitosTela import Clarear, Escurecer
-from Codigo.Telas.TelaMenu import TelaMenu
-from Codigo.Telas.TelaServers import TelaServers
-from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
-from Codigo.Telas.TelaOperador import TelaOperador
+from Codigo.Telas.Telas.TelaMenu import TelaMenu
+from Codigo.Telas.Telas.TelaServers import TelaServers
+from Codigo.Telas.Telas.TelaConfig import TelaConfig, ResetTelaConfig
+from Codigo.Telas.Telas.TelaOperador import TelaOperador
 
 
 class CenaMenu:

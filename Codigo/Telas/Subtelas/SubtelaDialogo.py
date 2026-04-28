@@ -11,7 +11,7 @@ from Codigo.Geradores.Ator import Ator
 from Codigo.ModulosMundo.LeitorDialogo import LeitorDialogo
 from Codigo.ModulosMundo.Loja import Loja
 from Codigo.Prefabs.Texto import Texto, TextoAnimado
-from Codigo.Telas.Subtela import Subtela
+from Codigo.Telas.Subtelas.Subtela import Subtela
 
 
 class SubtelaDialogo(Subtela):

@@ -3,12 +3,12 @@ from __future__ import annotations
 import pygame
 
 from Codigo.Prefabs.Botao import BotaoSelecao
-from Codigo.Telas.Inventario.Estatisticas import InventarioPerfil
-from Codigo.Telas.Inventario.InventarioItens import InventarioItens
-from Codigo.Telas.Inventario.InventarioPokemons import InventarioPokemons
+from Codigo.Telas.Subtelas.SubtelaInventarioEstatisticas import InventarioPerfil
+from Codigo.Telas.Subtelas.SubtelaInventarioItens import InventarioItens
+from Codigo.Telas.Subtelas.SubtelaInventarioPokemons import InventarioPokemons
 
 
-from Codigo.Telas.Subtela import Subtela
+from Codigo.Telas.Subtelas.Subtela import Subtela
 
 
 class SubtelaInventario(Subtela):

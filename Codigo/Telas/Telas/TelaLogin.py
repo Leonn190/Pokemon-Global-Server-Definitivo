@@ -6,7 +6,7 @@ from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.CaixaTexto import CaixaTexto
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Server.ServerLogin import autenticar
-from Codigo.Telas.TelaConfig import salvar_config_fixa
+from Codigo.Telas.Telas.TelaConfig import salvar_config_fixa
 
 
 _TELA_CARREGADA = False

@@ -6,14 +6,14 @@ from Codigo.ModulosGerais.Camera import Camera
 from Codigo.ModulosMundo.ControladorMundo import ControladorMundo
 from Codigo.ModulosMundo.ElementosHudMundo import ElementosHudMundo
 from Codigo.ModulosMundo.ServicoMapaMundo import ServicoMapaMundo
-from Codigo.Telas.TelaMapa import TelaMapa
+from Codigo.Telas.Telas.TelaMapa import TelaMapa
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
 from Codigo.ModulosGerais.ModuladorRegras import ModuladorRegras
 from Codigo.ModulosGerais.Sonoridades import tile_mundo_atual
 from Codigo.ModulosGerais.Auxiliares import bioma_visual_por_tile
-from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
-from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
+from Codigo.Telas.Subtelas.SubtelaOpcoes import SubtelaOpcoes
+from Codigo.Telas.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Server.ServerMundo import (
     desconectar_mundo,
     enviar_diffs_mundo,
@@ -25,10 +25,10 @@ from Codigo.Server.ServerMundo import (
     coletar_mapa_mundo,
 )
 from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
-from Codigo.Telas.Inventario.SubtelaInventario import SubtelaInventario
+from Codigo.Telas.Subtelas.SubtelaInventario import SubtelaInventario
 from Codigo.Prefabs.Terminal import Terminal
-from Codigo.Telas.SubtelaDialogo import SubtelaDialogo
-from Codigo.Telas.SubtelaPreBatalha import SubtelaPreBatalha
+from Codigo.Telas.Subtelas.SubtelaDialogo import SubtelaDialogo
+from Codigo.Telas.Subtelas.SubtelaPreBatalha import SubtelaPreBatalha
 from Codigo.Geradores.Estadio import EstadioInterno
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
 from Codigo.Prefabs.Texto import Texto

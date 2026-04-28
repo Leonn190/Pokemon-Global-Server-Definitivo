@@ -6,7 +6,7 @@ from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
 from Codigo.Server.ServerMenu import definir_mundo_server, definir_server_ligado, obter_status_operacao, operar_server
-from Codigo.Telas.TelasGenericas import SubtelaCarregamento, SubtelaConfirmacao, SubtelaTexto
+from Codigo.Telas.Telas.TelasGenericas import SubtelaCarregamento, SubtelaConfirmacao, SubtelaTexto
 
 _TELA_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)

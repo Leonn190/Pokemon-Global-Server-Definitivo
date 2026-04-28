@@ -8,6 +8,7 @@ import pygame
 from Codigo.Paineis.PainelEstatisticas import PainelEstatisticas
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
 from Codigo.Server.ServerMenu import obter_estatisticas_player
 
 
@@ -70,6 +71,27 @@ class TelaConta:
     def _conta_info(self):
         return dict(self._jogo.CONFIG.get("ContaInfo") or {})
 
+    def _servidores_registrados(self):
+        info = self._conta_info()
+        servidores_atuais = GERENCIADOR_SERVER_LIST.listar_servidores()
+        registrados = list(info.get("servidores_registrados") or [])
+        ids_registrados = [str((server or {}).get("id") or "") for server in registrados]
+        ids_registrados = [server_id for server_id in ids_registrados if server_id]
+        if not ids_registrados:
+            return servidores_atuais
+
+        servidores_por_id = {str((server or {}).get("id") or ""): server for server in servidores_atuais}
+        servidores = []
+        for registrado in registrados:
+            sid = str((registrado or {}).get("id") or "")
+            servidor = servidores_por_id.get(sid)
+            if servidor is None:
+                continue
+            servidor = dict(servidor)
+            servidor["nome"] = str(servidor.get("nome") or (registrado or {}).get("nome") or sid or "Servidor")
+            servidores.append(servidor)
+        return servidores
+
     def _data_br(self, texto_iso):
         try:
             return datetime.strptime(str(texto_iso), "%Y-%m-%d").strftime("%d/%m/%Y")
@@ -77,11 +99,11 @@ class TelaConta:
             return str(texto_iso or "--")
 
     def _montar_layout(self, tela_size):
-        if self._cache == tuple(tela_size):
-            return
         w, h = tela_size
-        info = self._conta_info()
-        servidores = list(info.get("servidores_registrados") or [])
+        servidores = self._servidores_registrados()
+        cache = (tuple(tela_size), tuple((str(server.get("id") or ""), str(server.get("nome") or "")) for server in servidores))
+        if self._cache == cache:
+            return
 
         self._area_lista = pygame.Rect(int(w * 0.18), int(h * 0.34), int(w * 0.64), int(h * 0.34))
 
@@ -129,7 +151,7 @@ class TelaConta:
             style=estilo_deslogar,
         )
 
-        self._cache = tuple(tela_size)
+        self._cache = cache
 
     def _voltar(self):
         if self._modo == "servidor":
@@ -169,7 +191,7 @@ class TelaConta:
         info = self._conta_info()
         usuario = str(info.get("usuario") or self._jogo.CONFIG.get("Usuario") or "Visitante")
         data_criacao = self._data_br(info.get("data_criacao"))
-        servidores = list(info.get("servidores_registrados") or [])
+        servidores = self._servidores_registrados()
 
         Texto("Conta", (tela.get_width() // 2, int(tela.get_height() * 0.10)), style={"size": 50, "align": "center", "outline": True, "outline_color": (0, 0, 0), "outline_thickness": 2}).draw(tela)
         Texto(f"Conta: {usuario}", (int(tela.get_width() * 0.18), int(tela.get_height() * 0.20)), style={"size": 30, "align": "topleft"}).draw(tela)

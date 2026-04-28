@@ -13,7 +13,7 @@ from Codigo.ModulosGerais.Sonoridades import SISTEMA_MUSICAS
 from Codigo.ModulosGerais.EfeitosTela import aplicar_claridade, Escurecer
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosGerais.Discord import DiscordPresence
-from Codigo.Telas.Subtela import GerenciadorSubtelas
+from Codigo.Telas.Subtelas.Subtela import GerenciadorSubtelas
 from Codigo.ModulosGerais.PipelineGrafica import PipelineGrafica
 
 class ControladorCenas:

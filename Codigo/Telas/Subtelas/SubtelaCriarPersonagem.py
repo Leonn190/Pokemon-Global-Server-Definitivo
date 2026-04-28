@@ -72,7 +72,7 @@ def _scale_to_fit_keep_ratio(img: pygame.Surface, max_w: int, max_h: int) -> pyg
     return pygame.transform.smoothscale(img, (nw, nh)).convert_alpha()
 
 
-from Codigo.Telas.Subtela import Subtela
+from Codigo.Telas.Subtelas.Subtela import Subtela
 
 
 class SubtelaCriarPersonagem(Subtela):

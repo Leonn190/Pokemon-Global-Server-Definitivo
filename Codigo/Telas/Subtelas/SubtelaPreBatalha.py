@@ -7,7 +7,7 @@ import pygame
 from Codigo.Paineis.PainelTimes import PainelTimes
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Telas.Subtela import Subtela
+from Codigo.Telas.Subtelas.Subtela import Subtela
 
 
 class SubtelaPreBatalha(Subtela):

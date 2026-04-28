@@ -6,7 +6,7 @@ import pygame
 
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import NumeroVariavel, Texto
-from Codigo.Telas.Subtela import Subtela
+from Codigo.Telas.Subtelas.Subtela import Subtela
 
 
 class SubtelaFinalizacao(Subtela):

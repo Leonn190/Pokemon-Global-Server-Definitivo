@@ -5,7 +5,7 @@ from __future__ import annotations
 import pygame
 from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao
-from Codigo.Telas.Subtela import Subtela
+from Codigo.Telas.Subtelas.Subtela import Subtela
 
 
 class SubtelaOpcoes(Subtela):

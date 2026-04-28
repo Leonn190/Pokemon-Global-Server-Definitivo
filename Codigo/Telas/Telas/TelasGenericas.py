@@ -3,7 +3,7 @@ from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.CaixaTexto import CaixaTexto
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
-from Codigo.Telas.Subtela import Subtela
+from Codigo.Telas.Subtelas.Subtela import Subtela
 
 
 _ESTILO_BOTAO_MODAL = {

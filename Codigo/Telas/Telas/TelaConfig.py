@@ -4,9 +4,9 @@ from Codigo.ModulosGerais.Sonoridades import VerificaSonoridade
 from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao, BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Telas.TelaConfigAvancada import TelaConfigAvancada
-from Codigo.Telas.TelaConta import TelaConta
-from Codigo.Telas.TelasGenericas import SubtelaConfirmacao
+from Codigo.Telas.Telas.TelaConfigAvancada import TelaConfigAvancada
+from Codigo.Telas.Telas.TelaConta import TelaConta
+from Codigo.Telas.Telas.TelasGenericas import SubtelaConfirmacao
 
 _CONFIG_CARREGADA = False
 _TAMANHO_CACHE = (0, 0)
@@ -55,8 +55,15 @@ def _estilo_base():
 def salvar_config_fixa(config):
     from pathlib import Path
 
+    dados = dict(config)
+    conta_info = dados.get("ContaInfo")
+    if isinstance(conta_info, dict):
+        conta_info = dict(conta_info)
+        conta_info.pop("servidores_registrados", None)
+        dados["ContaInfo"] = conta_info
+
     caminho = Path("Outros/ConfigFixa.py")
-    caminho.write_text("ConfigFixa = " + repr(dict(config)) + "\n", encoding="utf-8")
+    caminho.write_text("ConfigFixa = " + repr(dados) + "\n", encoding="utf-8")
 
 
 def _voltar_menu(Cena, JOGO):

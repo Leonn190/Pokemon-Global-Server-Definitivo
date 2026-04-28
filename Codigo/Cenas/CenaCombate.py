@@ -2,10 +2,10 @@ from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
-from Codigo.Telas.SubtelaOpcoes import SubtelaOpcoes
+from Codigo.Telas.Subtelas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo, solicitar_contexto_batalha_mundo
 from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
-from Codigo.Telas.TelaConfig import TelaConfig, ResetTelaConfig
+from Codigo.Telas.Telas.TelaConfig import TelaConfig, ResetTelaConfig
 from Codigo.Prefabs.Terminal import Terminal
 import pygame
 from copy import deepcopy

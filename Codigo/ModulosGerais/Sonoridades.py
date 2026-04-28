@@ -351,7 +351,7 @@ def _atualizar_loop_manual():
 
 def _tem_subtela_carregamento_menu():
     try:
-        from Codigo.Telas.TelaOperador import possui_subtela_carregamento_ativa
+        from Codigo.Telas.Telas.TelaOperador import possui_subtela_carregamento_ativa
         return bool(possui_subtela_carregamento_ativa())
     except Exception:
         return False

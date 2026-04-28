@@ -7,9 +7,9 @@ from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
 from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
 from Codigo.Server.ServerLogin import registrar_server_conta
-from Codigo.Telas.TelaConfig import salvar_config_fixa
-from Codigo.Telas.SubtelaCriarPersonagem import SubtelaCriarPersonagem
-from Codigo.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaEscolha, SubtelaTexto
+from Codigo.Telas.Telas.TelaConfig import salvar_config_fixa
+from Codigo.Telas.Subtelas.SubtelaCriarPersonagem import SubtelaCriarPersonagem
+from Codigo.Telas.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaEscolha, SubtelaTexto
 
 SERVER_LIST = []
 

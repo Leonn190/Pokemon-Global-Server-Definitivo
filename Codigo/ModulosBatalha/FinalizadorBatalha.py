@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import pygame
 
-from Codigo.Telas.SubtelaFinalizacao import SubtelaFinalizacao
+from Codigo.Telas.Subtelas.SubtelaFinalizacao import SubtelaFinalizacao
 
 
 def _i(valor, default=0) -> int:

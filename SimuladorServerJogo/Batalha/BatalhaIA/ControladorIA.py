@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import random
 from pathlib import Path
 from typing import Any, Mapping
@@ -16,6 +15,7 @@ from .MemoriaIA import MemoriaIA
 from .MetadadosIA import MetadadosIA
 from .MicroSimulador import MicroSimulador
 from .PlanejadorIA import PlanejadorIA
+from SimuladorServerJogo.Batalha.PropriedadesAtaques import carregar_propriedades_ataques
 
 
 class ControladorIA:
@@ -151,18 +151,8 @@ class ControladorIA:
         return self.config_padrao
 
     def _carregar_propriedades_ataques(self):
-        caminho = Path(__file__).resolve().parents[3] / "Dados" / "Pokemon Global Server - PropriedadesAtaques.json"
-        if not caminho.exists():
-            caminho_alt = Path.cwd() / "Dados" / "Pokemon Global Server - PropriedadesAtaques.json"
-            caminho = caminho_alt if caminho_alt.exists() else caminho
-        if not caminho.exists():
-            return {}
-        try:
-            dados = json.loads(caminho.read_text(encoding="utf-8"))
-        except Exception:
-            return {}
-        ataques = dados.get("ataques") if isinstance(dados, dict) else {}
-        return ataques if isinstance(ataques, dict) else {}
+        base = Path(__file__).resolve().parents[3]
+        return carregar_propriedades_ataques(base)
 
     def _seed_rodada(self, partida, rodada, lado_id):
         seed = self.seed_base if self.seed_base is not None else getattr(partida, "seed_partida", 0)

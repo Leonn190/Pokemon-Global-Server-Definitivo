@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import copy
 
-from SimuladorServerJogo.Logica.Executes.ExecuteAtaques import executar_alvificacao, executar_execute_principal
-from SimuladorServerJogo.Logica.Executes.PassivaAtaques import processar_passivas_ataque
-from SimuladorServerJogo.Logica.Executes.PassivasEquipaveis import processar_passivas_itens
+from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ControladorExecutes import executar_alvificacao, executar_execute_principal, obter_executes_reativos
 
 
 class RodadorTurno:
@@ -102,11 +100,11 @@ class RodadorTurno:
         area_id = destino.get("area_id")
         ocupante = self.partida.pokemon_na_area(area_id)
         if ocupante is None:
-            if not self.partida.mover_pokemon_para_area(pokemon, area_id):
+            if not self.partida.mover_pokemon_para_area(pokemon, area_id, dados={"reativos_acao": (acao or {}).get("reativos_acao")}):
                 self._falhar(acao, "movimento_falhou")
             return
         if int(ocupante.lado_id) == int(pokemon.lado_id):
-            if not self.partida.trocar_posicao(pokemon, ocupante):
+            if not self.partida.trocar_posicao(pokemon, ocupante, dados={"reativos_acao": (acao or {}).get("reativos_acao")}):
                 self._falhar(acao, "troca_posicao_convertida_falhou")
             return
         self._falhar(acao, "area_ocupada_por_oponente")
@@ -116,7 +114,7 @@ class RodadorTurno:
         if outro is None or not outro.esta_vivo():
             self._falhar(acao, "troca_posicao_alvo_morto")
             return
-        if not self.partida.trocar_posicao(pokemon, outro):
+        if not self.partida.trocar_posicao(pokemon, outro, dados={"reativos_acao": (acao or {}).get("reativos_acao")}):
             self._falhar(acao, "troca_posicao_falhou")
 
     def _executar_troca_reserva(self, pokemon, acao):
@@ -124,7 +122,7 @@ class RodadorTurno:
         if reserva is None or not reserva.esta_vivo():
             self._falhar(acao, "reserva_morta_ou_inexistente")
             return
-        if not self.partida.trocar_reserva(pokemon, reserva):
+        if not self.partida.trocar_reserva(pokemon, reserva, dados={"reativos_acao": (acao or {}).get("reativos_acao")}):
             self._falhar(acao, "troca_reserva_falhou")
 
     def _executar_ataque(self, pokemon, acao):
@@ -145,6 +143,7 @@ class RodadorTurno:
             "alvos": [],
             "primeiro_ataque_da_rodada": self._ataques_executados == 0,
         }
+        contexto["reativos_acao"] = obter_executes_reativos(props.get("nome") or (contexto["ataque"] or {}).get("Code"))
         alvos = executar_alvificacao(props.get("nome") or (contexto["ataque"] or {}).get("nome") or (contexto["ataque"] or {}).get("Code"), contexto)
         contexto["alvos"] = list(alvos or [])
         alvo_ids = [alvo.id_batalha for alvo in contexto["alvos"] if alvo is not None]
@@ -167,16 +166,17 @@ class RodadorTurno:
                     continue
                 ctx_alvo = dict(contexto)
                 ctx_alvo["alvo"] = alvo
-                for passiva in list(processar_passivas_ataque(ctx_alvo, "antes_receber_ataque") or []):
-                    dados_passiva = dict(passiva or {})
-                    dados_passiva.setdefault("pokemon_id", alvo.id_batalha)
-                    dados_passiva.setdefault("pokemon_nome", alvo.nome)
-                    self.partida.registrar_evento_log("passiva", dados_passiva)
-                for passiva in list(processar_passivas_itens(ctx_alvo, "antes_receber_ataque") or []):
-                    dados_passiva = dict(passiva or {})
-                    dados_passiva.setdefault("pokemon_id", alvo.id_batalha)
-                    dados_passiva.setdefault("pokemon_nome", alvo.nome)
-                    self.partida.registrar_evento_log("passiva", dados_passiva)
+                ctx_flag = {
+                    "partida": self.partida,
+                    "usuario": pokemon,
+                    "alvo": alvo,
+                    "pokemon_evento": alvo,
+                    "acao": acao,
+                    "ataque": contexto.get("ataque"),
+                    "propriedades": props,
+                    "reativos_acao": contexto.get("reativos_acao"),
+                }
+                self.partida.disparar_flag("AntesReceberAtaque", ctx_flag, reativos=contexto.get("reativos_acao"))
                 if not self._acertou(pokemon, alvo):
                     self.partida.registrar_evento_log("ataque_errou", self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao))
                     self._falhar(acao, "ataque_errou", alvo_id=alvo.id_batalha)

@@ -51,7 +51,8 @@ class ConstrutorLog:
         passo_real = _i(passo, _i(getattr(self.partida, "passo_atual", 0), 0))
         ordem_real = _i(ordem, self._ordem_evento)
         evento = {
-            "id_evento": f"{int(self.rodada):02d}{int(self._ordem_evento):06d}",
+            "id_evento": str(self.partida.novo_id_evento()),
+            "id_evento_legado": f"{int(self.rodada):02d}{int(self._ordem_evento):06d}",
             "rodada": int(self.rodada),
             "passo": int(passo_real),
             "ordem": int(ordem_real),
@@ -148,7 +149,8 @@ class ConstrutorLog:
         )
         return _jsonavel(
             {
-                "id_log": f"{int(rodada):06d}",
+                "id_log": str(self.partida.novo_id_log()),
+                "id_log_legado": f"{int(rodada):06d}",
                 "rodada": int(rodada),
                 "historico": self.montar_historico(),
                 "resultado": resultado_final,

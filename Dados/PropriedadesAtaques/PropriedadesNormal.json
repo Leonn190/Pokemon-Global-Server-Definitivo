@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "tipo": "normal",
   "ataques": {
     "1": {
       "ID": 1,
@@ -415,5 +416,6 @@
         "tipo": "normal"
       }
     }
-  }
+  },
+  "_comentario": "Ataques normais migrados do arquivo legado neste patch."
 }

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import copy
-import json
 import unicodedata
-from pathlib import Path
+
+from SimuladorServerJogo.Batalha.PropriedadesAtaques import buscar_por_nome_ou_code, carregar_propriedades_ataques
 
 
 def _normalizar(valor: object) -> str:
@@ -29,33 +29,10 @@ class ColetorAcoes:
         self.propriedades_ataques = self._carregar_propriedades_ataques()
 
     def _carregar_propriedades_ataques(self):
-        caminho = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - PropriedadesAtaques.json"
-        if not caminho.exists():
-            return {}
-        try:
-            dados = json.loads(caminho.read_text(encoding="utf-8"))
-        except Exception:
-            return {}
-        ataques = dados.get("ataques") if isinstance(dados, dict) else {}
-        return ataques if isinstance(ataques, dict) else {}
+        return carregar_propriedades_ataques()
 
     def buscar_propriedades_ataque(self, ataque):
-        if not isinstance(ataque, dict):
-            return None
-        code = str(ataque.get("Code") or ataque.get("ID") or ataque.get("code") or "").strip()
-        if code:
-            try:
-                code = str(int(float(code)))
-            except (TypeError, ValueError):
-                pass
-            if code in self.propriedades_ataques:
-                return self.propriedades_ataques.get(code)
-        nome = _normalizar(ataque.get("nome") or ataque.get("Nome") or ataque.get("Ataque"))
-        if nome:
-            for item in self.propriedades_ataques.values():
-                if _normalizar(item.get("nome")) == nome:
-                    return item
-        return None
+        return buscar_por_nome_ou_code(self.propriedades_ataques, ataque)
 
     def coletar(self, jogadas_recebidas):
         acoes_validas = []
@@ -87,7 +64,7 @@ class ColetorAcoes:
         if not isinstance(acao, dict):
             return {"lado_id": lado_id, "ordem_local": ordem_local, "motivo_invalidacao": "acao_nao_dict"}
         out = copy.deepcopy(acao)
-        out["id_acao"] = str(out.get("id_acao") or out.get("id") or out.get("id_local") or f"A{contador_global}")
+        out["id_acao"] = str(out.get("id_acao") or out.get("id") or out.get("id_local") or self.partida.novo_id_acao(out.get("lado_id", lado_id)))
         out["ordem_local"] = int(out.get("ordem_local", ordem_local) or ordem_local)
         out["lado_id"] = int(out.get("lado_id", lado_id) or lado_id)
         out["ordem_global"] = contador_global

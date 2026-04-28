@@ -47,7 +47,10 @@ class PokemonBatalha:
         estado = info.get("estado") if isinstance(info.get("estado"), dict) else {}
         self.partida = partida
         self.id_original = bruto.get("id_original", info.get("id", info.get("ID", bruto.get("id"))))
-        self.id_batalha = str(bruto.get("id_batalha") or bruto.get("uid") or bruto.get("Uid") or self.id_original or f"P{indice}")
+        if self.partida is not None and hasattr(self.partida, "novo_id_pokemon"):
+            self.id_batalha = str(self.partida.novo_id_pokemon(lado_id if lado_id is not None else bruto.get("lado_id", 50)))
+        else:
+            self.id_batalha = str(bruto.get("id_batalha") or f"P{indice}")
         self.nome = str(info.get("nome") or info.get("Nome") or bruto.get("nome") or bruto.get("Nome") or "Pokemon")
         self.especie = str(info.get("especie") or info.get("Especie") or bruto.get("especie") or self.nome)
         self.nivel = max(1, _i(info.get("nivel", info.get("Nivel", bruto.get("nivel", 1))), 1))
@@ -59,6 +62,7 @@ class PokemonBatalha:
         self.dados_originais = copy.deepcopy(info or bruto)
         self.tipos = list(info.get("tipos") or info.get("Tipos") or estado.get("tipos") or bruto.get("tipos") or [])
         self.ataques = self._coletar_ataques(bruto, info, estado)
+        self._instanciar_ids_ataques()
         self.Build = copy.deepcopy(info.get("Build") or info.get("build") or bruto.get("Build") or {})
         self.atributos_base = {}
         self.variacoes_temporarias = {}
@@ -100,6 +104,20 @@ class PokemonBatalha:
         if self.partida is None or not hasattr(self.partida, "registrar_evento_log"):
             return None
         return self.partida.registrar_evento_log(tipo, dados or {})
+
+    def _disparar_flag(self, flag, contexto, reativos=None):
+        if self.partida is None or not hasattr(self.partida, "disparar_flag"):
+            return []
+        return self.partida.disparar_flag(flag, contexto, reativos=reativos)
+
+    def _instanciar_ids_ataques(self):
+        for ataque in list(self.ataques or []):
+            if not isinstance(ataque, dict):
+                continue
+            ataque.setdefault("id_original", ataque.get("ID") or ataque.get("Code"))
+            if self.partida is not None and hasattr(self.partida, "novo_id_ataque"):
+                ataque["id_batalha"] = str(self.partida.novo_id_ataque(self.lado_id))
+                ataque["id_ataque_batalha"] = ataque["id_batalha"]
 
     def _dados_origem(self, origem):
         return {
@@ -237,6 +255,11 @@ class PokemonBatalha:
             self.ReceberCura(dano_vida * (self.obter_atributo("Vamp") / 100.0), origem=self, dados={"vampirismo": True})
         self.estatisticas_batalha["dano_causado"] = _f(self.estatisticas_batalha.get("dano_causado"), 0.0) + dano_vida
         recebido.update({"critico": critico, "dano_calculado": round(dano, 4)})
+        self._disparar_flag(
+            "AoAplicarDano",
+            {"partida": self.partida, "usuario": self, "alvo": alvo, "pokemon_evento": self, "resultado": dict(recebido), "dados_dano": dict(dados), **contexto},
+            reativos=contexto.get("reativos_acao"),
+        )
         return recebido
 
     def ReceberDano(self, valor, origem=None, dados=None):
@@ -317,10 +340,18 @@ class PokemonBatalha:
             )
         if self.VidaAtual <= 0:
             self.Morrer({"origem_id": getattr(origem, "id_batalha", None), **dados})
-        return {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0}
+        retorno = {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0}
+        self._disparar_flag(
+            "AoReceberDano",
+            {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno), "dados_dano": dict(dados), "reativos_acao": dados.get("reativos_acao")},
+            reativos=dados.get("reativos_acao"),
+        )
+        return retorno
 
     def AplicarCura(self, alvo, valor, dados=None):
-        return alvo.ReceberCura(valor, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
+        retorno = alvo.ReceberCura(valor, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
+        self._disparar_flag("AoCurar", {"partida": self.partida, "usuario": self, "alvo": alvo, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao"))
+        return retorno
 
     def ReceberCura(self, valor, origem=None, dados=None):
         dados = dict(dados or {})
@@ -357,7 +388,9 @@ class PokemonBatalha:
                     "calculo": list(dados.get("calculo") or calculo),
                 },
             )
-        return {"aplicado": True, "cura": round(real, 4), "dados": dict(dados or {})}
+        retorno = {"aplicado": True, "cura": round(real, 4), "dados": dict(dados or {})}
+        self._disparar_flag("AoReceberCura", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao"))
+        return retorno
 
     def AplicarBarreira(self, alvo, valor, dados=None):
         return alvo.ReceberBarreira(valor, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
@@ -388,7 +421,9 @@ class PokemonBatalha:
         return {"aplicado": True, "barreira": round(ganho, 4), "dados": dict(dados or {})}
 
     def AplicarEfeito(self, alvo, efeito, dados=None):
-        return alvo.ReceberEfeito(efeito, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
+        retorno = alvo.ReceberEfeito(efeito, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
+        self._disparar_flag("AoAplicarEfeito", {"partida": self.partida, "usuario": self, "alvo": alvo, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao"))
+        return retorno
 
     def ReceberEfeito(self, efeito, origem=None, dados=None):
         if not self.esta_vivo():
@@ -462,7 +497,9 @@ class PokemonBatalha:
                 "efeito": dict(formal),
             },
         )
-        return {"aplicado": True, "efeito": dict(formal)}
+        retorno = {"aplicado": True, "efeito": dict(formal)}
+        self._disparar_flag("AoReceberEfeito", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao") if isinstance(dados, dict) else None)
+        return retorno
 
     def RemoverEfeito(self, filtro):
         alvo = _normalizar(filtro)
@@ -542,21 +579,23 @@ class PokemonBatalha:
                     "motivo": dados.get("motivo") or ("fim_rodada" if dados.get("fim_rodada") else dados.get("ataque")),
                 },
             )
-        return {"aplicado": True, "energia": round(ganho, 4), "dados": dict(dados or {})}
+        retorno = {"aplicado": True, "energia": round(ganho, 4), "dados": dict(dados or {})}
+        self._disparar_flag("AoGanharEnergia", {"partida": self.partida, "usuario": self, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao"))
+        return retorno
 
-    def Mover(self, area_id):
+    def Mover(self, area_id, dados=None):
         if self.partida is None:
             self.area_id = area_id
             self.ativo = True
             self.reserva = False
             return True
-        return self.partida.mover_pokemon_para_area(self, area_id)
+        return self.partida.mover_pokemon_para_area(self, area_id, dados=dados)
 
-    def TrocarComReserva(self, pokemon_reserva):
-        return self.partida.trocar_reserva(self, pokemon_reserva) if self.partida is not None else False
+    def TrocarComReserva(self, pokemon_reserva, dados=None):
+        return self.partida.trocar_reserva(self, pokemon_reserva, dados=dados) if self.partida is not None else False
 
-    def TrocarPosicao(self, outro_pokemon):
-        return self.partida.trocar_posicao(self, outro_pokemon) if self.partida is not None else False
+    def TrocarPosicao(self, outro_pokemon, dados=None):
+        return self.partida.trocar_posicao(self, outro_pokemon, dados=dados) if self.partida is not None else False
 
     def Morrer(self, dados=None):
         if not self.vivo and self.VidaAtual <= 0:
@@ -579,6 +618,9 @@ class PokemonBatalha:
                 "area_id": self.area_id,
             },
         )
+        if origem is not None and origem.id_batalha != self.id_batalha:
+            self._disparar_flag("AoMatar", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": origem, "dados": dict(dados)}, reativos=dados.get("reativos_acao"))
+        self._disparar_flag("AoMorrer", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "dados": dict(dados)}, reativos=dados.get("reativos_acao"))
         return True
 
     def esta_vivo(self):

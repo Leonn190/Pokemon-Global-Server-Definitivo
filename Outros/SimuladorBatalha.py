@@ -17,7 +17,7 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mund
 
 
 def carregar_especies_validas(caminho_csv: Path) -> list[str]:
-    bloqueios = ("Mega", "Gigantamax", "Ultra", "Eternamax", "Totem", "Primal", "Origin")
+    bloqueios = ("Mega", "Gigantamax", "Ultra", "Eternamax", "Radiante")
     especies: list[str] = []
     if not caminho_csv.exists():
         return especies

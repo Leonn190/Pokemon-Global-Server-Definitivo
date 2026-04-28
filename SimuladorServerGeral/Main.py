@@ -6,9 +6,7 @@ _CONTAS = {
     "Leon19": {
         "senha": "Batata19",
         "data_criacao": "2025-01-03",
-        "servidores_registrados": [
-            {"id": "local-alpha", "nome": "Servidor Alpha"},
-        ],
+        "servidores_registrados": [],
     },
 }
 

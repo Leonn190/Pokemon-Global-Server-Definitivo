@@ -4,6 +4,7 @@ import copy
 import json
 import random
 import uuid
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from SimuladorServerJogo.Batalha.ColetorAcoes import ColetorAcoes
 from SimuladorServerJogo.Batalha.ConstrutorLog import ConstrutorLog
@@ -59,9 +60,26 @@ class Partida:
         self.controlador_ia = ControladorIA() if self.batalha_usa_ia() else None
         self.rodador_turno = RodadorTurno(self)
         self.construtor_log = ConstrutorLog(self)
+        self._ia_executor = None
+        self._ia_futures = {}
+        self._desabilitar_thread_ia = False
         self._inicializar_lados(dados)
         self._inicializar_pokemons(dados)
         self.verificar_fim_batalha()
+        self._iniciar_planejamento_ia_background()
+
+    def __getstate__(self):
+        estado = dict(self.__dict__)
+        estado["_ia_executor"] = None
+        estado["_ia_futures"] = {}
+        estado["_desabilitar_thread_ia"] = True
+        return estado
+
+    def __setstate__(self, estado):
+        self.__dict__.update(estado)
+        self._ia_executor = None
+        self._ia_futures = {}
+        self._desabilitar_thread_ia = True
 
     def _montar_areas(self):
         areas = {}
@@ -283,7 +301,46 @@ class Partida:
         for lado in sorted(self._lados_com_pokemon_vivo()):
             if int(lado) == int(self.lado_jogador) or lado in self.jogadas_recebidas:
                 continue
-            self.jogadas_recebidas[int(lado)] = _jsonavel(self.controlador_ia.gerar_jogada(self, int(lado)))
+            self.jogadas_recebidas[int(lado)] = _jsonavel(self._obter_jogada_ia_final(int(lado)))
+
+    def _iniciar_planejamento_ia_background(self):
+        if not self.batalha_usa_ia() or self.finalizada or self.estado_partida != "montando_jogada":
+            return
+        if bool(getattr(self, "_desabilitar_thread_ia", False)):
+            return
+        if self.controlador_ia is None:
+            self.controlador_ia = ControladorIA()
+        if self._ia_executor is None:
+            self._ia_executor = ThreadPoolExecutor(max_workers=1)
+        rodada = int(self.rodada_atual or 1)
+        for lado in sorted(self._lados_com_pokemon_vivo()):
+            lado = int(lado)
+            if lado == int(self.lado_jogador) or lado in self.jogadas_recebidas:
+                continue
+            chave = (rodada, lado)
+            futuro = self._ia_futures.get(chave)
+            if futuro is not None and not futuro.cancelled():
+                continue
+            self._ia_futures[chave] = self._ia_executor.submit(self.controlador_ia.gerar_jogada_base, self, lado)
+
+    def _obter_jogada_ia_final(self, lado):
+        lado = int(lado)
+        rodada = int(self.rodada_atual or 1)
+        chave = (rodada, lado)
+        futuro = self._ia_futures.get(chave)
+        jogada_base = None
+        if futuro is not None:
+            try:
+                jogada_base = futuro.result(timeout=0)
+            except TimeoutError:
+                self.avisos.append({"motivo": "ia_base_nao_pronta_usou_fallback", "lado_id": lado, "rodada": rodada})
+            except Exception as exc:
+                self.avisos.append({"motivo": "ia_base_falhou_usou_fallback", "lado_id": lado, "rodada": rodada, "erro": str(exc)})
+        else:
+            self.avisos.append({"motivo": "ia_base_sem_future_usou_fallback", "lado_id": lado, "rodada": rodada})
+        if jogada_base is None:
+            jogada_base = self.controlador_ia.gerar_jogada_fallback(self, lado, motivo="ia_base_nao_pronta_usou_fallback")
+        return self.controlador_ia.finalizar_jogada_com_hacker(self, lado, jogada_base)
 
     def resolver_rodada(self):
         rodada_anterior = self.rodada_atual
@@ -332,6 +389,7 @@ class Partida:
         if not self.finalizada:
             self.rodada_atual += 1
             self.estado_partida = "montando_jogada"
+            self._iniciar_planejamento_ia_background()
         else:
             self.estado_partida = "finalizada"
 

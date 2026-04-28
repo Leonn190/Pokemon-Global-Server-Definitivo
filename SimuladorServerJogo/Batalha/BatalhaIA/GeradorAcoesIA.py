@@ -15,6 +15,7 @@ class CandidatoIA:
     categoria: str = "neutro"
     ataque: dict[str, Any] | None = None
     propriedades: dict[str, Any] | None = None
+    metadados: dict[str, Any] = field(default_factory=dict)
     alvos: list[object] = field(default_factory=list)
     area_id: str | None = None
     custo_base: float = 0.0
@@ -29,7 +30,7 @@ class CandidatoIA:
         return copy.deepcopy(self.acao)
 
 
-class GeradorCandidatosIA:
+class GeradorAcoesIA:
     def __init__(self, propriedades_ataques: Mapping[str, dict] | None = None):
         self.propriedades_ataques = dict(propriedades_ataques or {})
 
@@ -41,7 +42,37 @@ class GeradorCandidatosIA:
             por_pokemon.extend(self._gerar_trocas_reserva(contexto, pokemon))
             por_pokemon.extend(self._gerar_movimentos(contexto, pokemon))
             por_pokemon.extend(self._gerar_trocas_posicao(contexto, pokemon))
-            candidatos.extend(por_pokemon[: max(1, int(contexto.config.max_candidatos_por_pokemon))])
+            for candidato in por_pokemon:
+                if candidato.ataque:
+                    candidato.metadados = contexto.metadados_ataque(candidato.ataque)
+            por_pokemon = self._ordenar_pre_analise(contexto, pokemon, por_pokemon)
+            limite_base = int(contexto.config.max_candidatos_por_pokemon)
+            limite = max(4, int(6 + contexto.config.dificuldade.inteligencia * max(1, limite_base - 6)))
+            candidatos.extend(por_pokemon[:limite])
+        return candidatos
+
+    def _ordenar_pre_analise(self, contexto: ContextoIA, pokemon, candidatos: list[CandidatoIA]) -> list[CandidatoIA]:
+        """Pré-filtro de Inteligência.
+
+        Inteligência controla qualidade e quantidade das microanálises iniciais.
+        Memória entra aqui para fazer mover/proteger/trocar subir antes da simulação.
+        """
+        memoria = getattr(contexto, "memoria_ia", None)
+        peso_mem = float(contexto.config.dificuldade.memoria or 0.0)
+        foco_mem = float(getattr(memoria, "foco_player", {}).get(contexto.pid(pokemon), 0) or 0) * peso_mem if memoria is not None else 0.0
+
+        def chave(cand: CandidatoIA):
+            meta = cand.metadados if isinstance(cand.metadados, dict) else {}
+            prioridade = fnum(meta.get("prioridade_simulacao"), 0.35)
+            score = prioridade * contexto.config.dificuldade.conhecimento
+            score += max(0.0, 1.0 - contexto.vida_pct(pokemon)) * 0.35
+            if cand.categoria in {"cura", "defesa"} or cand.tipo in {"movimento", "troca_reserva", "troca_posicao"}:
+                score += foco_mem * 0.35
+            if cand.categoria == "dano":
+                score += contexto.config.personalidade.agressividade * 0.10
+            return (-score, str(cand.tipo), str(cand.area_id or ""))
+
+        candidatos.sort(key=chave)
         return candidatos
 
     def _gerar_ataques(self, contexto: ContextoIA, pokemon) -> list[CandidatoIA]:
@@ -217,9 +248,11 @@ class GeradorCandidatosIA:
         energia = contexto.energia_pct(pokemon)
         ameacado = contexto.ameacas_por_pokemon.get(contexto.pid(pokemon), 0.0) > 0
         efeitos_ruins = contexto.qtd_efeitos_negativos(pokemon)
-        # Mesmo com uso_troca baixo, gera fallback se a situacao for critica.
-        situacao_critica = hp < 0.35 or energia < 0.18 or efeitos_ruins > 0 or ameacado
-        if not situacao_critica and contexto.config.dificuldade.uso_troca < 0.35:
+        memoria = getattr(contexto, "memoria_ia", None)
+        foco_mem = float(getattr(memoria, "foco_player", {}).get(contexto.pid(pokemon), 0) or 0) * float(contexto.config.dificuldade.memoria or 0.0) if memoria is not None else 0.0
+        # Mesmo com inteligência baixa, gera fallback se a situação for crítica ou a memória indicar foco recorrente.
+        situacao_critica = hp < 0.35 or energia < 0.18 or efeitos_ruins > 0 or ameacado or foco_mem > 0
+        if not situacao_critica and contexto.config.dificuldade.inteligencia < 0.35:
             return []
 
         reservas = sorted(
@@ -269,7 +302,13 @@ class GeradorCandidatosIA:
                 return 9
             return abs(c1[1] - c2[1]) + abs(c1[2] - c2[2])
 
-        areas.sort(key=lambda aid: (aid in contexto.areas_miradas, distancia(aid), aid))
+        memoria = getattr(contexto, "memoria_ia", None)
+        areas.sort(key=lambda aid: (
+            aid in contexto.areas_miradas,
+            float(getattr(memoria, "areas_player", {}).get(str(aid), 0) or 0) * float(contexto.config.dificuldade.memoria or 0.0) if memoria is not None else 0.0,
+            distancia(aid),
+            aid,
+        ))
         saida: list[CandidatoIA] = []
         for area_id in areas[:4]:
             acao = {
@@ -287,11 +326,13 @@ class GeradorCandidatosIA:
     def _gerar_trocas_posicao(self, contexto: ContextoIA, pokemon) -> list[CandidatoIA]:
         if not contexto.apto_para_acao(pokemon, "troca_posicao"):
             return []
-        if contexto.config.dificuldade.controle_risco < 0.45 and not contexto.usar_leitura_player:
+        memoria = getattr(contexto, "memoria_ia", None)
+        foco_mem = float(getattr(memoria, "foco_player", {}).get(contexto.pid(pokemon), 0) or 0) * float(contexto.config.dificuldade.memoria or 0.0) if memoria is not None else 0.0
+        if contexto.config.dificuldade.raciocinio < 0.45 and not contexto.usar_leitura_player and foco_mem <= 0:
             return []
         saida: list[CandidatoIA] = []
         pid = contexto.pid(pokemon)
-        ameaca_pokemon = contexto.ameacas_por_pokemon.get(pid, 0.0)
+        ameaca_pokemon = contexto.ameacas_por_pokemon.get(pid, 0.0) + foco_mem * 12.0
         for aliado in contexto.aliados_ativos:
             if aliado is pokemon or not contexto.vivo(aliado):
                 continue

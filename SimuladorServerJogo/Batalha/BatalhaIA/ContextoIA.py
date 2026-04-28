@@ -38,12 +38,13 @@ EFEITOS_POSITIVOS = {
 
 
 class ContextoIA:
-    def __init__(self, partida, lado_id: int, config, rng, propriedades_ataques: Mapping[str, dict] | None = None, usar_leitura_player: bool = False):
+    def __init__(self, partida, lado_id: int, config, rng, propriedades_ataques: Mapping[str, dict] | None = None, metadados_ia=None, usar_leitura_player: bool = False):
         self.partida = partida
         self.lado_id = int(lado_id or 0)
         self.config = config
         self.rng = rng
         self.propriedades_ataques = dict(propriedades_ataques or {})
+        self.metadados_ia = metadados_ia
         self.usar_leitura_player = bool(usar_leitura_player)
         self.rodada = int(getattr(partida, "rodada_atual", 1) or 1)
         self.id_partida = str(getattr(partida, "id_partida", "") or "")
@@ -55,8 +56,10 @@ class ContextoIA:
         self.reservas_aliadas = [p for p in self.aliados if self.vivo(p) and self.reserva(p)]
         self.reservas_inimigas = [p for p in self.inimigos if self.vivo(p) and self.reserva(p)]
         self.jogadas_recebidas = getattr(partida, "jogadas_recebidas", {}) if isinstance(getattr(partida, "jogadas_recebidas", {}), dict) else {}
+        # Jogada atual do player só é visível na etapa HackerIA.
+        # A memória NÃO pode ler a jogada atual antes da IA decidir, senão vira trapaça invisível.
         self.jogadas_player = self._extrair_jogadas_player() if self.usar_leitura_player else []
-        self.jogadas_visiveis_para_memoria = self._extrair_jogadas_player()
+        self.jogadas_visiveis_para_memoria: list[dict] = []
         self.ameacas_por_pokemon, self.areas_miradas = self._mapear_ameacas_player(self.jogadas_player)
 
     def _listar_pokemons(self) -> list:
@@ -77,6 +80,13 @@ class ContextoIA:
                 if isinstance(acao, dict):
                     saida.append(acao)
         return saida
+
+    def acoes_player_recebidas(self) -> list[dict]:
+        """Retorna a jogada atual do player só para registro pós-decisão ou HackerIA.
+
+        Não use este método em Gerador/Avaliador/Planejador fora do fluxo hacker.
+        """
+        return self._extrair_jogadas_player()
 
     def _mapear_ameacas_player(self, acoes_player: Iterable[dict]) -> tuple[dict[str, float], set[str]]:
         ameacas: dict[str, float] = {}
@@ -118,6 +128,15 @@ class ContextoIA:
                 if normalizar(item.get("nome")) == nome:
                     return item
         return None
+
+    def metadados_ataque(self, ataque: Mapping[str, Any] | None) -> dict:
+        if self.metadados_ia is None:
+            return {}
+        try:
+            return self.metadados_ia.consultar(ataque, self.config.dificuldade.conhecimento)
+        except Exception:
+            return {}
+
 
     def props_por_code_ou_nome(self, code_ou_nome: object) -> dict | None:
         chave = str(code_ou_nome or "").strip()

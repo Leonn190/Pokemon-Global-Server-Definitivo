@@ -161,6 +161,31 @@ def _chunks_explorados_para_set(explorados: dict) -> set[Chunk]:
                     continue
     return out
 
+
+def _atlas_conhecidos(conhecidos: dict | None) -> dict[tuple[int, int], set[Chunk]]:
+    out: dict[tuple[int, int], set[Chunk]] = {}
+    atlas_lista = conhecidos.get("atlas") if isinstance(conhecidos, dict) and isinstance(conhecidos.get("atlas"), list) else []
+    for item in atlas_lista:
+        if not isinstance(item, dict):
+            continue
+        pos = item.get("atlas")
+        if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
+            continue
+        try:
+            chave = (int(pos[0]), int(pos[1]))
+        except Exception:
+            continue
+        chunks_out = out.setdefault(chave, set())
+        chunks = item.get("chunks") if isinstance(item.get("chunks"), list) else []
+        for ch in chunks:
+            if not (isinstance(ch, (list, tuple)) and len(ch) == 2):
+                continue
+            try:
+                chunks_out.add((int(ch[0]), int(ch[1])))
+            except Exception:
+                continue
+    return out
+
 def _serializar_resposta(payload: Dict[str, object], serializar: bool):
     if not serializar:
         return payload
@@ -413,9 +438,17 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
             registrar_chunks_explorados(client_id, list(chunks_base), dimensao="Mundo")
             explorados = obter_exploracao_chunks(client_id)
             chunks_explorados = _chunks_explorados_para_set(explorados)
-            mapa_chunks_enviados.update(chunks_explorados)
+            atlas_conhecidos = _atlas_conhecidos(dados.get("conhecidos") if isinstance(dados, dict) else None)
+            chunks_confirmados = set()
+            for chunk in chunks_explorados:
+                chave_atlas = (int(chunk[0]) // 100, int(chunk[1]) // 100)
+                if chunk in atlas_conhecidos.get(chave_atlas, set()):
+                    chunks_confirmados.add(chunk)
+            chunks_para_enviar = {ch for ch in chunks_explorados if ch not in chunks_confirmados}
+            mapa_chunks_enviados.update(chunks_confirmados)
+            mapa_chunks_enviados.update(chunks_para_enviar)
             state["mapa_chunks_enviados"] = mapa_chunks_enviados
-            atlas = _atlas_do_conjunto(chunks_explorados)
+            atlas = _atlas_do_conjunto(chunks_para_enviar)
             vilas, estadios, regioes, rotas = _poi_mapa()
             return _serializar_resposta({"status": "ok", "meta": _meta_mundo_para_mapa(), "explorados": explorados, "atlas": atlas, "vilas": vilas, "estadios": estadios, "regioes": regioes, "rotas": rotas}, serializar_resposta)
 

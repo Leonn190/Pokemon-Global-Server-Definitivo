@@ -13,7 +13,9 @@ class ServicoMapaMundo:
         self.jogo = jogo
         self.server_ip = str(server_ip or "")
         self.client_id = str(client_id or "anon")
-        self.gerenciador = GerenciadorImagensMapa()
+        server_info = jogo.INFO.get("ServerSelecionado") if isinstance(getattr(jogo, "INFO", {}).get("ServerSelecionado"), dict) else {}
+        server_id_estavel = str(server_info.get("id") or server_info.get("nome") or self.server_ip or "default")
+        self.gerenciador = GerenciadorImagensMapa(server_id=server_id_estavel, client_id=self.client_id)
         self.meta: Dict[str, object] = {}
         self.vilas: List[dict] = []
         self.estadios: List[dict] = []
@@ -107,14 +109,17 @@ class ServicoMapaMundo:
                 self._request_bootstrap = False if precisa_bootstrap else self._request_bootstrap
             if precisa_bootstrap:
                 try:
-                    resp_boot = coletar_mapa_mundo(self.server_ip, self.client_id, pos)
+                    self.gerenciador.garantir_manifest_carregado()
+                    conhecidos_boot = self.gerenciador.conhecidos_payload()
+                    resp_boot = coletar_mapa_mundo(self.server_ip, self.client_id, pos, conhecidos=conhecidos_boot)
                 except Exception as exc:
                     resp_boot = {"status": "erro", "mensagem": str(exc)}
                 with self._worker_lock:
                     self._bootstrap_pendente = resp_boot if isinstance(resp_boot, dict) else {"status": "erro", "mensagem": "bootstrap_invalido"}
             if precisa_delta:
                 try:
-                    resp = atualizar_mapa_mundo(self.server_ip, self.client_id, pos, conhecidos=None)
+                    conhecidos = self.gerenciador.conhecidos_payload()
+                    resp = atualizar_mapa_mundo(self.server_ip, self.client_id, pos, conhecidos=conhecidos)
                 except Exception:
                     resp = {"status": "erro", "atlas": []}
                 atlas = resp.get("atlas") if isinstance(resp, dict) and isinstance(resp.get("atlas"), list) else []
@@ -156,6 +161,5 @@ class ServicoMapaMundo:
             self._worker.join(timeout=1.5)
         self._worker = None
         self.gerenciador.flush()
-        if bool(limpar_imagens):
-            with self._lock:
-                self.gerenciador.limpar()
+        with self._lock:
+            self.gerenciador.limpar()

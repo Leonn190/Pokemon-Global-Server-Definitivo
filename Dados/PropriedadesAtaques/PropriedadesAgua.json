@@ -1,6 +1,97 @@
 {
   "schema_version": 1,
   "tipo": "agua",
-  "ataques": {},
+  "ataques": {
+    "20": {
+      "ID": 20,
+      "nome": "Bola de Agua",
+      "custo": 60,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_bola_de_agua",
+      "parametros": {
+        "tipo": "agua",
+        "categoria": "especial",
+        "escala_spa": 1.05,
+        "splash_frac": 0.5
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "24": {
+      "ID": 24,
+      "nome": "Gota Pesada",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_gota_pesada",
+      "parametros": {
+        "tipo": "agua",
+        "efeito": "Encharcado",
+        "duracao": 6,
+        "negativo": true
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "47": {
+      "ID": 47,
+      "nome": "Correnteza",
+      "custo": 25,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_correnteza",
+      "parametros": {
+        "tipo": "agua",
+        "atributo": "Vel",
+        "percentual_mag": 0.15,
+        "duracao": 6
+      }
+    },
+    "71": {
+      "ID": 71,
+      "nome": "Dança da Chuva",
+      "custo": 40,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_dança_da_chuva",
+      "parametros": {
+        "tipo": "agua",
+        "clima": "Chuva"
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

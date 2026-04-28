@@ -1,6 +1,62 @@
 {
   "schema_version": 1,
   "tipo": "inseto",
-  "ataques": {},
+  "ataques": {
+    "29": {
+      "ID": 29,
+      "nome": "Regeneração",
+      "custo": 45,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_regeneração",
+      "parametros": {
+        "tipo": "inseto",
+        "efeito": "Regeneração",
+        "duracao": 6,
+        "negativo": false
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "48": {
+      "ID": 48,
+      "nome": "Teia Pegajosa",
+      "custo": 25,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_teia_pegajosa",
+      "parametros": {
+        "tipo": "inseto",
+        "atributo": "Vel",
+        "percentual_alvo": 0.08,
+        "duracao": 6
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

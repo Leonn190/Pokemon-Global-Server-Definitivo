@@ -11,6 +11,11 @@ ATRIBUTOS_OFICIAIS = [
     "Vida", "Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int",
     "Vamp", "CrC", "CrD", "Dur", "Amp", "EneM", "Acuracia", "Assertividade",
 ]
+_ALIAS_ATRIBUTO_EFEITO = {
+    "vidamaxima": "Vida",
+    "vida": "Vida",
+    "acuracia": "Acuracia",
+}
 
 
 def _normalizar(valor: object) -> str:
@@ -162,6 +167,13 @@ class PokemonBatalha:
             dados = (efeito or {}).get("dados") if isinstance((efeito or {}).get("dados"), dict) else {}
             valor = _f((efeito or {}).get("valor", dados.get("valor", 0.0)), 0.0)
             stacks = max(1, _i((efeito or {}).get("stacks"), 1))
+            if str(dados.get("tipo") or "").strip().lower() == "mod_atributo" or bool(dados.get("mod_atributo")):
+                chave = _normalizar(dados.get("atributo") or "")
+                atributo = _ALIAS_ATRIBUTO_EFEITO.get(chave)
+                if atributo is None:
+                    atributo = next((k for k in ATRIBUTOS_OFICIAIS if _normalizar(k) == chave), None)
+                if atributo in finais:
+                    finais[atributo] += valor
             if nome == "amplificado":
                 finais["Amp"] += valor if valor else 15.0 * stacks
             elif nome == "fortificado":
@@ -434,6 +446,11 @@ class PokemonBatalha:
             return {"aplicado": False, "motivo": "efeito_sem_nome"}
         duracao_base = max(1, _i(base.get("duracao", base.get("passos", base.get("passos_restantes", 3))), 3))
         negativo = bool(base.get("negativo", _normalizar(nome) in {"queimado", "envenenado", "intoxicado", "congelado", "dormindo", "paralisado", "enraizado", "cauterizado", "descarregado"}))
+        base_dados = base.get("dados") if isinstance(base.get("dados"), dict) else {}
+        dados_recebidos = dados if isinstance(dados, dict) else {}
+        permanente = bool(base.get("permanente") or base_dados.get("permanente") or dados_recebidos.get("permanente"))
+        if negativo and origem is not None and origem is not self and (self.possui_efeito("Imune") or self.possui_efeito("Imunizado")):
+            return {"aplicado": False, "motivo": "imune"}
         mag_origem = origem.obter_atributo("Mag") if origem is not None and hasattr(origem, "obter_atributo") else 0.0
         mag_alvo = self.obter_atributo("Mag")
         if negativo and origem is self:
@@ -445,16 +462,27 @@ class PokemonBatalha:
         formal = {
             "nome": nome,
             "code": base.get("code", nome),
-            "passos_restantes": max(1, int(duracao)),
-            "passos_totais": max(1, int(duracao)),
+            "passos_restantes": -1 if permanente else max(1, int(duracao)),
+            "passos_totais": -1 if permanente else max(1, int(duracao)),
             "dados": dict(dados or base.get("dados") or {}),
             "valor": base.get("valor", (dados or {}).get("valor") if isinstance(dados, dict) else 0.0),
             "stacks": 1,
             "tipo": "negativo" if negativo else "positivo",
+            "permanente": permanente,
         }
         chave = _normalizar(formal.get("code") or formal.get("nome"))
         existente = next((e for e in self.efeitos_formais if _normalizar((e or {}).get("code") or (e or {}).get("nome")) == chave), None)
         if existente is not None:
+            if bool(existente.get("permanente")) or permanente:
+                existente["permanente"] = True
+                existente["passos_restantes"] = -1
+                existente["passos_totais"] = -1
+                existente["dados"] = {**dict(existente.get("dados") or {}), **dict(formal.get("dados") or {})}
+                formal = dict(existente)
+                self.recalcular_atributos()
+                retorno = {"aplicado": True, "efeito": dict(formal), "ja_existia": True}
+                self._disparar_flag("AoReceberEfeito", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao") if isinstance(dados, dict) else None)
+                return retorno
             passos_anteriores = max(0, _i(existente.get("passos_restantes"), 0))
             passos_novos = max(1, _i(formal.get("passos_restantes"), 1))
             existente["stacks"] = 1
@@ -465,7 +493,8 @@ class PokemonBatalha:
             existente["tipo"] = formal["tipo"]
             formal = dict(existente)
         else:
-            if len(self.efeitos_formais) >= 4:
+            efeitos_temporarios = [e for e in self.efeitos_formais if not bool((e or {}).get("permanente"))]
+            if (not permanente) and len(efeitos_temporarios) >= 4:
                 aviso = {"pokemon_id": self.id_batalha, "efeito": nome, "motivo": "limite_efeitos_formais"}
                 if self.partida is not None:
                     self.partida.avisos.append(aviso)
@@ -523,6 +552,9 @@ class PokemonBatalha:
             elif nome in {"regeneracao", "abencoado"}:
                 self.ReceberCura(vida * 0.02, dados={"efeito": nome})
             efeito = dict(efeito)
+            if bool(efeito.get("permanente")):
+                restantes.append(efeito)
+                continue
             efeito["passos_restantes"] = duracao_antes - 1
             self._registrar_evento(
                 "efeito_tickou",

@@ -11,6 +11,17 @@ def _normalizar(valor: object) -> str:
     return "".join(ch for ch in sem_acento if ch.isalnum())
 
 
+_TIPOS_ALIAS = {
+    "veneno": "venenoso",
+    "rocha": "pedra",
+}
+
+
+def _normalizar_tipo(valor: object) -> str:
+    tipo = _normalizar(valor)
+    return _TIPOS_ALIAS.get(tipo, tipo)
+
+
 def _numero(valor: object, default: float = 1.0) -> float:
     try:
         if isinstance(valor, str):
@@ -47,7 +58,7 @@ class FraquezasResistencia:
         for linha in linhas[1:]:
             if not linha:
                 continue
-            tipo_ataque = _normalizar(linha[0])
+            tipo_ataque = _normalizar_tipo(linha[0])
             if not tipo_ataque:
                 continue
             self._matriz[tipo_ataque] = {}
@@ -57,7 +68,7 @@ class FraquezasResistencia:
 
     def obter_multiplicador(self, tipo_ataque: object, tipos_defensor: object) -> float:
         self.carregar()
-        tipo = _normalizar(tipo_ataque)
+        tipo = _normalizar_tipo(tipo_ataque)
         if not tipo:
             return 1.0
         if isinstance(tipos_defensor, str):
@@ -67,7 +78,7 @@ class FraquezasResistencia:
         multiplicador = 1.0
         linha = self._matriz.get(tipo, {})
         for tipo_def in tipos:
-            chave = _normalizar(tipo_def)
+            chave = _normalizar_tipo(tipo_def)
             if not chave:
                 continue
             multiplicador *= float(linha.get(chave, 1.0))
@@ -89,4 +100,3 @@ TABELA_FR = FraquezasResistencia()
 
 def obter_multiplicador(tipo_ataque: object, tipos_defensor: object) -> float:
     return TABELA_FR.obter_multiplicador(tipo_ataque, tipos_defensor)
-

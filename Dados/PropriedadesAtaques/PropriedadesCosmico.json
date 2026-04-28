@@ -1,6 +1,35 @@
 {
   "schema_version": 1,
   "tipo": "cosmico",
-  "ataques": {},
+  "ataques": {
+    "70": {
+      "ID": 70,
+      "nome": "Raio Cósmico",
+      "custo": 90,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_raio_cósmico",
+      "parametros": {
+        "tipo": "cosmico",
+        "categoria": "especial",
+        "escala_inicial_spa": 1.45,
+        "reducao_spa_por_alvo": 0.12,
+        "tipo_linha": "reta"
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

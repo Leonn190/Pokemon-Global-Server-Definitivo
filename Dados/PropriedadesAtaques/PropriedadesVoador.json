@@ -1,6 +1,64 @@
 {
   "schema_version": 1,
   "tipo": "voador",
-  "ataques": {},
+  "ataques": {
+    "30": {
+      "ID": 30,
+      "nome": "Voar",
+      "custo": 50,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_voar",
+      "parametros": {
+        "tipo": "voador",
+        "efeito": "Voando",
+        "duracao": 6,
+        "negativo": false
+      }
+    },
+    "64": {
+      "ID": 64,
+      "nome": "Olho de Águia",
+      "custo": 25,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_olho_de_águia",
+      "parametros": {
+        "tipo": "voador",
+        "atributo": "Acuracia",
+        "percentual_mag": 0.15,
+        "duracao": 6,
+        "rotulo_atributo": "Acurácia"
+      }
+    },
+    "74": {
+      "ID": 74,
+      "nome": "Voador",
+      "custo": 0,
+      "estilo_logico": "passivo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_voador",
+      "parametros": {
+        "tipo": "voador",
+        "efeito": "Voando",
+        "permanente": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

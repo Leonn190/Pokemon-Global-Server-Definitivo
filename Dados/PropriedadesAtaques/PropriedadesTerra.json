@@ -1,6 +1,62 @@
 {
   "schema_version": 1,
   "tipo": "terra",
-  "ataques": {},
+  "ataques": {
+    "57": {
+      "ID": 57,
+      "nome": "Rachar Terra",
+      "custo": 35,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_rachar_terra",
+      "parametros": {
+        "tipo": "terra",
+        "atributo": "Dur",
+        "percentual_alvo": 0.06,
+        "duracao": 6
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "65": {
+      "ID": 65,
+      "nome": "Poeira nos Olhos",
+      "custo": 25,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_poeira_nos_olhos",
+      "parametros": {
+        "tipo": "terra",
+        "atributo": "Acuracia",
+        "percentual_alvo": 0.08,
+        "duracao": 6,
+        "rotulo_atributo": "Acurácia"
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

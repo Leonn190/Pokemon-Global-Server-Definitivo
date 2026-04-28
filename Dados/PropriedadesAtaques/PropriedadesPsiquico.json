@@ -1,6 +1,118 @@
 {
   "schema_version": 1,
   "tipo": "psiquico",
-  "ataques": {},
+  "ataques": {
+    "28": {
+      "ID": 28,
+      "nome": "Confusão",
+      "custo": 45,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_confusão",
+      "parametros": {
+        "tipo": "psiquico",
+        "efeito": "Confuso",
+        "duracao": 6,
+        "negativo": true
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "31": {
+      "ID": 31,
+      "nome": "Flutuar",
+      "custo": 40,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_flutuar",
+      "parametros": {
+        "tipo": "psiquico",
+        "efeito": "Flutuando",
+        "duracao": 6,
+        "negativo": false
+      }
+    },
+    "49": {
+      "ID": 49,
+      "nome": "Instinto",
+      "custo": 30,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_instinto",
+      "parametros": {
+        "tipo": "psiquico",
+        "atributo": "Int",
+        "percentual_mag": 0.15,
+        "duracao": 6
+      }
+    },
+    "69": {
+      "ID": 69,
+      "nome": "Raio Psíquico",
+      "custo": 75,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_raio_psíquico",
+      "parametros": {
+        "tipo": "psiquico",
+        "categoria": "especial",
+        "escala_inicial_spa": 1.3,
+        "reducao_spa_por_alvo": 0.15,
+        "tipo_linha": "reta"
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "75": {
+      "ID": 75,
+      "nome": "Flutuante",
+      "custo": 0,
+      "estilo_logico": "passivo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_flutuante",
+      "parametros": {
+        "tipo": "psiquico",
+        "efeito": "Flutuando",
+        "permanente": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

@@ -1,6 +1,125 @@
 {
   "schema_version": 1,
   "tipo": "fogo",
-  "ataques": {},
+  "ataques": {
+    "19": {
+      "ID": 19,
+      "nome": "Bola de Fogo",
+      "custo": 60,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_bola_de_fogo",
+      "parametros": {
+        "tipo": "fogo",
+        "categoria": "especial",
+        "escala_spa": 1.05,
+        "splash_frac": 0.5
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "25": {
+      "ID": 25,
+      "nome": "Queimar",
+      "custo": 35,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_queimar",
+      "parametros": {
+        "tipo": "fogo",
+        "efeito": "Queimado",
+        "duracao": 6,
+        "negativo": true
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "37": {
+      "ID": 37,
+      "nome": "Chama Interior",
+      "custo": 25,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_chama_interior",
+      "parametros": {
+        "tipo": "fogo",
+        "atributo": "SpA",
+        "percentual_mag": 0.15,
+        "duracao": 6
+      }
+    },
+    "66": {
+      "ID": 66,
+      "nome": "Raio de Fogo",
+      "custo": 75,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_raio_de_fogo",
+      "parametros": {
+        "tipo": "fogo",
+        "categoria": "especial",
+        "escala_inicial_spa": 1.3,
+        "reducao_spa_por_alvo": 0.15,
+        "tipo_linha": "reta"
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "72": {
+      "ID": 72,
+      "nome": "Dança do Sol",
+      "custo": 40,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_dança_do_sol",
+      "parametros": {
+        "tipo": "fogo",
+        "clima": "Sol Forte"
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

@@ -1,6 +1,81 @@
 {
   "schema_version": 1,
   "tipo": "fada",
-  "ataques": {},
+  "ataques": {
+    "32": {
+      "ID": 32,
+      "nome": "Benção",
+      "custo": 55,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_benção",
+      "parametros": {
+        "tipo": "fada",
+        "efeito": "Abençoado",
+        "duracao": 6,
+        "negativo": false
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "43": {
+      "ID": 43,
+      "nome": "Canalizar",
+      "custo": 35,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_canalizar",
+      "parametros": {
+        "tipo": "fada",
+        "atributo": "Mag",
+        "percentual_mag": 0.15,
+        "duracao": 6
+      }
+    },
+    "55": {
+      "ID": 55,
+      "nome": "Amolecer",
+      "custo": 30,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_amolecer",
+      "parametros": {
+        "tipo": "fada",
+        "atributo": "CrD",
+        "percentual_alvo": 0.06,
+        "duracao": 6
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

@@ -95,6 +95,8 @@ class Partida:
                     dono=pokemon,
                     code=passiva.get("code"),
                 )
+        for pokemon in self.pokemons_por_id.values():
+            self.disparar_flag("AoRegistrarPassiva", {"partida": self, "pokemon_evento": pokemon, "usuario": pokemon, "alvo": pokemon})
 
     def __getstate__(self):
         estado = dict(self.__dict__)

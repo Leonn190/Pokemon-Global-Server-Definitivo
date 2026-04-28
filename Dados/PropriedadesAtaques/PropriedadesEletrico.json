@@ -1,6 +1,99 @@
 {
   "schema_version": 1,
   "tipo": "eletrico",
-  "ataques": {},
+  "ataques": {
+    "21": {
+      "ID": 21,
+      "nome": "Bola Eletrica",
+      "custo": 60,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_bola_eletrica",
+      "parametros": {
+        "tipo": "eletrico",
+        "categoria": "especial",
+        "escala_spa": 1.05,
+        "splash_frac": 0.5
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "27": {
+      "ID": 27,
+      "nome": "Energizar",
+      "custo": 45,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_energizar",
+      "parametros": {
+        "tipo": "eletrico",
+        "efeito": "Energizado",
+        "duracao": 6,
+        "negativo": false
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "58": {
+      "ID": 58,
+      "nome": "Amplificar",
+      "custo": 40,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_amplificar",
+      "parametros": {
+        "tipo": "eletrico",
+        "atributo": "Amp",
+        "percentual_mag": 0.08,
+        "duracao": 6
+      }
+    },
+    "73": {
+      "ID": 73,
+      "nome": "Dança Elétrica",
+      "custo": 55,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_dança_elétrica",
+      "parametros": {
+        "tipo": "eletrico",
+        "clima": "Tempestade de Raios",
+        "alias_clima": "Tempestade Elétrica"
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

@@ -12,6 +12,46 @@ from Codigo.ModulosGerais.Auxiliares import carregar_frames
 
 Vector2 = Tuple[float, float]
 
+
+def _normalizar_nome(valor: object) -> str:
+    bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+    return "".join(ch for ch in sem_acento if ch.isalnum())
+
+
+PALETA_TIPOS_ATAQUE: Dict[str, tuple[int, int, int]] = {
+    "normal": (187, 176, 151),
+    "fogo": (219, 106, 72),
+    "agua": (80, 130, 219),
+    "planta": (86, 171, 90),
+    "eletrico": (224, 199, 61),
+    "gelo": (152, 208, 225),
+    "lutador": (168, 89, 71),
+    "venenoso": (147, 92, 180),
+    "terra": (164, 132, 73),
+    "voador": (133, 168, 205),
+    "psiquico": (217, 104, 146),
+    "inseto": (140, 164, 63),
+    "pedra": (128, 121, 107),
+    "fantasma": (96, 90, 143),
+    "dragao": (87, 97, 191),
+    "sombrio": (86, 77, 76),
+    "metal": (132, 145, 157),
+    "fada": (220, 154, 196),
+    "cosmico": (102, 105, 176),
+    "sonoro": (198, 123, 219),
+}
+
+
+PROJETEIS_ESPECIAIS: Dict[str, dict[str, object]] = {
+    "biscoito": {
+        "nome": "Biscoito",
+        "velocidade": 8.0,
+        "gira": True,
+        "rotacao_base": 0.0,
+    }
+}
+
 EFEITOS_ATAQUE_FPS: Dict[str, float] = {
     'LabaredaMultipla': 31.25,
     'Corte': 10.2,
@@ -87,6 +127,7 @@ def _interp(a: float, b: float, t: float) -> float:
 class PokemonAnimator:
     _cache_frames_efeitos: dict[str, list[pygame.Surface]] = {}
     _cache_projeteis: dict[str, pygame.Surface | None] = {}
+    _cache_icones_atributos: dict[str, pygame.Surface | None] = {}
 
     def __init__(self, controlador=None):
         self.controlador = controlador
@@ -108,12 +149,13 @@ class PokemonAnimator:
             return None
         return self._adicionar({"tipo": "flash", "pokemon": pokemon, "tempo": 0.0, "duracao": 0.48, "cor": (82, 242, 126), "bloqueante": False})
 
-    def exibir_cartucho(self, pokemon, texto, tipo, valor=None, critico=False):
+    def exibir_cartucho(self, pokemon, texto, tipo, valor=None, critico=False, atributo=None, cor_fundo=None):
         if pokemon is None:
             return None
         escala = 1.0
         try:
-            v = abs(float(valor if valor is not None else str(texto).replace("+", "").replace("CRIT", "").strip() or 0))
+            bruto = str(texto).replace("+", "").replace("-", "").replace("CRIT", "").strip()
+            v = abs(float(valor if valor is not None else bruto or 0))
         except (TypeError, ValueError):
             v = 0.0
         max_ref = 80.0 if str(tipo) == "cura" else 100.0
@@ -128,6 +170,8 @@ class PokemonAnimator:
                 "categoria": str(tipo or "dano"),
                 "valor": valor,
                 "critico": bool(critico),
+                "atributo": atributo,
+                "cor_fundo": cor_fundo,
                 "escala_alvo": escala,
                 "tempo": 0.0,
                 "duracao": 0.95,
@@ -135,20 +179,65 @@ class PokemonAnimator:
             }
         )
 
-    def animar_lancar_projetil(self, origem, destino, sprite=None, duracao=None):
+    def exibir_cartucho_atributo(self, pokemon, atributo, valor, positivo=None):
+        if pokemon is None or not atributo:
+            return None
+        if positivo is None:
+            try:
+                positivo = float(valor) >= 0
+            except (TypeError, ValueError):
+                positivo = True
+        texto = self._formatar_variacao(valor, positivo=bool(positivo))
+        cor = (55, 136, 232) if bool(positivo) else (126, 68, 190)
+        return self.exibir_cartucho(pokemon, texto, "atributo", valor=valor, atributo=atributo, cor_fundo=cor)
+
+    def animar_lancar_projetil(self, origem, destino, sprite=None, duracao=None, tipo_ataque=None, velocidade=None):
         p0 = self._posicao_mundo(origem)
         p1 = self._posicao_mundo(destino)
         if p0 is None or p1 is None:
             return None
+        config = self._config_projetil(sprite, tipo_ataque=tipo_ataque, velocidade=velocidade)
+        dist = max(0.001, math.hypot(p1[0] - p0[0], p1[1] - p0[1]))
+        duracao_real = float(duracao or 0.0)
+        if duracao_real <= 0:
+            vel = float(config.get("velocidade") or 0.0)
+            duracao_real = _clamp(dist / vel if vel > 0 else 0.46, 0.18, 1.20)
         return self._adicionar(
             {
                 "tipo": "projetil",
                 "origem": p0,
                 "destino": p1,
-                "sprite": self._carregar_projetil(sprite),
+                "sprite": config.get("sprite"),
+                "config": config,
                 "tempo": 0.0,
-                "duracao": float(duracao or 0.46),
+                "duracao": duracao_real,
                 "bloqueante": True,
+            }
+        )
+
+    def animar_desvio(self, pokemon, duracao=None, intensidade_tiles=None):
+        if pokemon is None:
+            return None
+        origem = self._posicao_mundo(pokemon)
+        if origem is None:
+            return None
+        lado = str(getattr(pokemon, "Lado", "") or "").strip().lower()
+        lado_id = getattr(pokemon, "lado_id", None)
+        inimigo = lado == "inimigo" or (lado_id is not None and str(lado_id) != "50")
+        intensidade = float(intensidade_tiles or 0.42)
+        dx = intensidade if inimigo else -intensidade
+        dy = -intensidade * 0.72
+        pico = (origem[0] + dx, origem[1] + dy)
+        return self._adicionar(
+            {
+                "tipo": "deslocamento_temporario",
+                "pokemon": pokemon,
+                "origem": origem,
+                "pico": pico,
+                "tempo": 0.0,
+                "duracao": float(duracao or 0.34),
+                "modo": "desvio",
+                "bloqueante": False,
             }
         )
 
@@ -309,9 +398,12 @@ class PokemonAnimator:
             pico = anim.get("pico")
             if pokemon is not None and origem and pico:
                 vai = math.sin(t * math.pi)
+                modo = str(anim.get("modo") or "")
+                if modo == "desvio":
+                    vai = math.sin(t * math.pi) ** 0.78
                 x = _interp(origem[0], pico[0], vai)
                 y = _interp(origem[1], pico[1], vai)
-                if str(anim.get("modo")) == "salto":
+                if modo == "salto":
                     y -= math.sin(t * math.pi) * 1.25
                 pokemon.CentroMundoOverride = (x, y)
         elif tipo == "movimento_area":
@@ -452,24 +544,55 @@ class PokemonAnimator:
             return max(default, (float(rect.width) * 0.35) / tile)
         return default
 
-    def _carregar_projetil(self, sprite):
-        caminho = None
-        if isinstance(sprite, dict):
-            caminho = sprite.get("caminho") or sprite.get("arquivo")
-        elif sprite:
-            caminho = str(sprite)
-        if caminho:
-            path = Path(str(caminho))
-            if not path.is_absolute():
-                path = Path.cwd() / path
-            chave = str(path)
-            if chave not in self._cache_projeteis:
-                try:
-                    self._cache_projeteis[chave] = pygame.image.load(str(path)).convert_alpha()
-                except Exception:
-                    self._cache_projeteis[chave] = None
-            return self._cache_projeteis.get(chave)
+    def _config_projetil(self, sprite=None, tipo_ataque=None, velocidade=None):
+        dados = dict(sprite or {}) if isinstance(sprite, dict) else {}
+        nome = dados.get("nome") or dados.get("projetil") or dados.get("codigo") or dados.get("code") or (sprite if isinstance(sprite, str) else None)
+        chave = _normalizar_nome(nome)
+        base = dict(PROJETEIS_ESPECIAIS.get(chave) or {})
+        caminho = dados.get("caminho") or dados.get("arquivo")
+        if caminho is None and chave in PROJETEIS_ESPECIAIS:
+            caminho = self._buscar_arquivo_projetil(base.get("nome") or nome)
+        config = {
+            "nome": str(base.get("nome") or nome or "padrao"),
+            "velocidade": float(velocidade or dados.get("velocidade") or base.get("velocidade") or 7.0),
+            "gira": bool(dados.get("gira", base.get("gira", False))),
+            "rotacao_base": float(dados.get("rotacao_base", base.get("rotacao_base", 0.0)) or 0.0),
+            "tipo_ataque": str(tipo_ataque or dados.get("tipo") or dados.get("tipo_ataque") or "normal").strip().lower(),
+            "sprite": self._carregar_projetil(caminho),
+        }
+        config["cor"] = PALETA_TIPOS_ATAQUE.get(config["tipo_ataque"], PALETA_TIPOS_ATAQUE["normal"])
+        return config
+
+    def _buscar_arquivo_projetil(self, nome):
+        chave = _normalizar_nome(nome)
+        if not chave:
+            return None
+        cache_key = f"_busca:{chave}"
+        if cache_key in self._cache_projeteis:
+            return None
+        base = Path.cwd() / "Recursos" / "Visual" / "Projeteis"
+        try:
+            for caminho in base.rglob("*"):
+                if caminho.is_file() and caminho.suffix.lower() in {".png", ".webp", ".jpg", ".jpeg"} and _normalizar_nome(caminho.stem) == chave:
+                    return caminho
+        except Exception:
+            pass
+        self._cache_projeteis[cache_key] = None
         return None
+
+    def _carregar_projetil(self, sprite):
+        if not sprite:
+            return None
+        path = Path(str(sprite))
+        if not path.is_absolute():
+            path = Path.cwd() / path
+        chave = str(path)
+        if chave not in self._cache_projeteis:
+            try:
+                self._cache_projeteis[chave] = pygame.image.load(str(path)).convert_alpha()
+            except Exception:
+                self._cache_projeteis[chave] = None
+        return self._cache_projeteis.get(chave)
 
     def _carregar_frames_efeito(self, nome):
         nome = str(nome or "").strip()
@@ -502,15 +625,23 @@ class PokemonAnimator:
         if pos is None:
             return
         x, y = pos
+        config = anim.get("config") if isinstance(anim.get("config"), dict) else {}
         sprite = anim.get("sprite")
         if isinstance(sprite, pygame.Surface):
-            lado = max(20, min(46, int(sprite.get_width())))
-            img = pygame.transform.smoothscale(sprite, (lado, lado))
+            lado = max(20, min(50, int(max(sprite.get_width(), sprite.get_height()))))
+            img = pygame.transform.smoothscale(sprite, (lado, lado)).convert_alpha()
+            ang = float(config.get("rotacao_base", 0.0) or 0.0)
+            if bool(config.get("gira", False)):
+                ang += float(anim.get("tempo", 0.0)) * 720.0
+            if abs(ang) > 0.001:
+                img = pygame.transform.rotozoom(img, -ang, 1.0)
             surface.blit(img, img.get_rect(center=(int(x), int(y))))
         else:
+            cor = tuple(config.get("cor") or PALETA_TIPOS_ATAQUE["normal"])
             raio = max(7, int(13 + 4 * math.sin(t * math.pi)))
-            pygame.draw.circle(surface, (96, 210, 255), (int(x), int(y)), raio)
-            pygame.draw.circle(surface, (242, 252, 255), (int(x), int(y)), max(3, raio // 2))
+            brilho = tuple(min(255, int(c * 1.25 + 32)) for c in cor)
+            pygame.draw.circle(surface, (*cor, 230), (int(x), int(y)), raio)
+            pygame.draw.circle(surface, (*brilho, 235), (int(x - raio * 0.25), int(y - raio * 0.25)), max(3, raio // 2))
 
     def _desenhar_cartucho(self, surface, anim):
         pokemon = anim.get("pokemon")
@@ -525,24 +656,84 @@ class PokemonAnimator:
         y = pos[1] - 42 - 58 * t
         fonte = pygame.font.SysFont("arial", max(16, int(22 * escala)), bold=True)
         txt = fonte.render(texto, True, (255, 255, 255))
+        icone = self._carregar_icone_atributo(anim.get("atributo"))
+        icon_lado = max(0, int(24 * escala)) if icone is not None else 0
         pad_x, pad_y = int(12 * escala), int(5 * escala)
-        rect = pygame.Rect(0, 0, txt.get_width() + pad_x * 2, txt.get_height() + pad_y * 2)
+        gap = int(6 * escala) if icone is not None else 0
+        rect = pygame.Rect(0, 0, txt.get_width() + icon_lado + gap + pad_x * 2, max(txt.get_height(), icon_lado) + pad_y * 2)
         rect.center = (int(pos[0]), int(y))
         surf = pygame.Surface(rect.size, pygame.SRCALPHA)
         categoria = str(anim.get("categoria") or "dano")
-        if bool(anim.get("critico")):
+        cor_cfg = anim.get("cor_fundo")
+        if isinstance(cor_cfg, (list, tuple)) and len(cor_cfg) >= 3:
+            cor = (int(cor_cfg[0]), int(cor_cfg[1]), int(cor_cfg[2]), alpha)
+        elif bool(anim.get("critico")):
             cor = (216, 44, 54, alpha)
         elif categoria == "cura":
             cor = (42, 176, 92, alpha)
         elif categoria == "barreira":
             cor = (72, 164, 226, alpha)
+        elif categoria == "desvio":
+            cor = (75, 110, 210, alpha)
         else:
             cor = (226, 114, 44, alpha)
         pygame.draw.rect(surf, cor, surf.get_rect(), border_radius=8)
         pygame.draw.rect(surf, (255, 255, 255, alpha), surf.get_rect(), 2, border_radius=8)
+        x = pad_x
+        if icone is not None:
+            icon = pygame.transform.smoothscale(icone, (icon_lado, icon_lado)).convert_alpha()
+            icon.set_alpha(alpha)
+            surf.blit(icon, icon.get_rect(midleft=(x, surf.get_height() // 2)))
+            x += icon_lado + gap
         txt.set_alpha(alpha)
-        surf.blit(txt, (pad_x, pad_y))
+        surf.blit(txt, (x, (surf.get_height() - txt.get_height()) // 2))
         surface.blit(surf, rect.topleft)
+
+    @staticmethod
+    def _formatar_variacao(valor, positivo=True):
+        try:
+            num = float(valor)
+        except (TypeError, ValueError):
+            bruto = str(valor or "")
+            return bruto if bruto.startswith(("+", "-")) else (("+" if positivo else "-") + bruto)
+        sinal = "+" if num >= 0 else "-"
+        if positivo and num == 0:
+            sinal = "+"
+        valor_abs = abs(num)
+        corpo = str(int(round(valor_abs))) if abs(valor_abs - round(valor_abs)) < 0.001 else f"{valor_abs:.1f}".rstrip("0").rstrip(".")
+        return f"{sinal}{corpo}"
+
+    @classmethod
+    def _carregar_icone_atributo(cls, atributo):
+        chave = _normalizar_nome(atributo)
+        if not chave:
+            return None
+        aliases = {
+            "amp": "amplificacao",
+            "amplificacao": "amplificacao",
+            "dur": "durabilidade",
+            "durabilidade": "durabilidade",
+        }
+        busca = aliases.get(chave, chave)
+        if busca in cls._cache_icones_atributos:
+            return cls._cache_icones_atributos[busca]
+        base = Path.cwd() / "Recursos" / "Visual" / "Icones" / "Atributos"
+        escolhido = None
+        try:
+            for caminho in base.iterdir():
+                if caminho.is_file() and _normalizar_nome(caminho.stem) == busca:
+                    escolhido = caminho
+                    break
+        except Exception:
+            escolhido = None
+        if escolhido is not None:
+            try:
+                cls._cache_icones_atributos[busca] = pygame.image.load(str(escolhido)).convert_alpha()
+            except Exception:
+                cls._cache_icones_atributos[busca] = None
+        else:
+            cls._cache_icones_atributos[busca] = None
+        return cls._cache_icones_atributos[busca]
 
     def _desenhar_gif(self, surface, anim):
         frames = anim.get("frames") if isinstance(anim.get("frames"), list) else []

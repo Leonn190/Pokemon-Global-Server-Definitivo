@@ -38,13 +38,17 @@ class ControladorAnimacoes:
             elif contato == "salto":
                 out.append(self.animator.animar_salto(usuario, alvo))
             elif contato == "tiro":
-                out.append(self.animator.animar_lancar_projetil(usuario, alvo, sprite=animacao.get("projetil")))
+                out.append(self.animator.animar_lancar_projetil(usuario, alvo, sprite=animacao.get("projetil"), tipo_ataque=dados.get("tipo_ataque") or animacao.get("tipo") or animacao.get("tipo_ataque")))
         elif tipo == "ataque_acertou":
             alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or ""))
             animacao = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
             efeito = dados.get("efeito_alvo") or animacao.get("efeito_alvo")
             if efeito:
                 out.append(self.animator.animar_efeito(alvo, efeito, posicao="alvo"))
+        elif tipo in {"ataque_desviado", "pokemon_desviou"}:
+            alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
+            out.append(self.animator.animar_desvio(alvo))
+            out.append(self.animator.exibir_cartucho(alvo, "DESVIO", "desvio"))
         elif tipo == "pokemon_sofreu_dano":
             alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
             valor = dados.get("valor")
@@ -77,9 +81,18 @@ class ControladorAnimacoes:
             if nome:
                 out.append(self.animator.animar_efeito(poke, nome))
             if poke is not None:
+                if hasattr(poke, "aplicar_efeito_visual") and efeito:
+                    poke.aplicar_efeito_visual(efeito)
                 if hasattr(poke, "animar_variacao_status"):
                     negativo = bool((efeito or {}).get("negativo")) or str(dados.get("tipo") or (efeito or {}).get("tipo") or "").lower() == "negativo"
                     poke.animar_variacao_status(not negativo)
+        elif tipo in {"pokemon_variou_atributo", "atributo_variou", "pokemon_alterou_atributo"}:
+            poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or dados.get("alvo_id") or ""))
+            atributo = dados.get("atributo") or dados.get("stat") or dados.get("chave")
+            valor = dados.get("valor") if dados.get("valor") is not None else dados.get("variacao")
+            positivo = self._positivo(valor, dados)
+            if poke is not None and hasattr(poke, "animar_variacao_status"):
+                poke.animar_variacao_status(positivo, atributo=atributo, valor=valor)
         elif tipo == "efeito_tickou":
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             if poke is not None:
@@ -148,6 +161,18 @@ class ControladorAnimacoes:
             if chave not in {"dados"} and chave not in dados:
                 dados[chave] = valor
         return dados
+
+    @staticmethod
+    def _positivo(valor, dados=None):
+        dados = dados or {}
+        if "positivo" in dados:
+            return bool(dados.get("positivo"))
+        if "negativo" in dados:
+            return not bool(dados.get("negativo"))
+        try:
+            return float(valor) >= 0
+        except (TypeError, ValueError):
+            return True
 
     @staticmethod
     def _fmt(valor):

@@ -8,6 +8,8 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from SimuladorServerJogo.Batalha.ColetorAcoes import ColetorAcoes
 from SimuladorServerJogo.Batalha.ConstrutorLog import ConstrutorLog
+from SimuladorServerJogo.Batalha.IDsBatalha import IDsBatalha
+from SimuladorServerJogo.Batalha.ResolvedorFlags import ResolvedorFlags
 from SimuladorServerJogo.Batalha.BatalhaIA.ControladorIA import ControladorIA
 from SimuladorServerJogo.Batalha.PokemonBatalha import PokemonBatalha
 from SimuladorServerJogo.Batalha.RodadorTurno import RodadorTurno
@@ -43,6 +45,8 @@ class Partida:
             if chave in dados and chave not in self.arena_contexto:
                 self.arena_contexto[chave] = copy.deepcopy(dados.get(chave))
         self.lados: dict[int, dict] = {}
+        self.ids_batalha = IDsBatalha()
+        self.resolvedor_flags = ResolvedorFlags()
         self.pokemons_por_id = {}
         self.pokemons_por_lado: dict[int, list[PokemonBatalha]] = {}
         self.areas = self._montar_areas()
@@ -65,8 +69,32 @@ class Partida:
         self._desabilitar_thread_ia = False
         self._inicializar_lados(dados)
         self._inicializar_pokemons(dados)
+        self._registrar_passivas_pokemon()
         self.verificar_fim_batalha()
         self._iniciar_planejamento_ia_background()
+
+    def _registrar_passivas_pokemon(self):
+        try:
+            from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ControladorExecutes import obter_passivas_ataque
+        except Exception:
+            return
+        passivas = list(obter_passivas_ataque() or [])
+        if not passivas:
+            return
+        for pokemon in self.pokemons_por_id.values():
+            for passiva in passivas:
+                code = str(passiva.get("code") or "")
+                if code and not any(str((a or {}).get("Code") or (a or {}).get("ID") or "") == code for a in list(getattr(pokemon, "ataques", []) or [])):
+                    continue
+                self.resolvedor_flags.registrar_passiva(
+                    nome=passiva.get("nome"),
+                    flag=passiva.get("flag"),
+                    grupo=passiva.get("grupo"),
+                    func=passiva.get("func"),
+                    origem=passiva.get("origem"),
+                    dono=pokemon,
+                    code=passiva.get("code"),
+                )
 
     def __getstate__(self):
         estado = dict(self.__dict__)
@@ -112,9 +140,30 @@ class Partida:
                     self.lados[lid] = dict(item)
         if not self.lados:
             self.lados = {
-                50: {"lado_id": 50, "lado_visual": "jogador"},
-                51: {"lado_id": 51, "lado_visual": "inimigo"},
+                50: {"lado_id": self.ids_batalha.novo_id_lado(0), "lado_visual": "jogador"},
+                51: {"lado_id": self.ids_batalha.novo_id_lado(1), "lado_visual": "inimigo"},
             }
+
+    def novo_id_pokemon(self, lado_id):
+        return self.ids_batalha.novo_id_pokemon(lado_id)
+
+    def novo_id_ataque(self, lado_id=None):
+        return self.ids_batalha.novo_id_ataque(lado_id)
+
+    def novo_id_acao(self, lado_id=None):
+        return self.ids_batalha.novo_id_acao(lado_id)
+
+    def novo_id_evento(self):
+        return self.ids_batalha.novo_id_evento(self.rodada_atual)
+
+    def novo_id_log(self):
+        return self.ids_batalha.novo_id_log(self.rodada_atual)
+
+    def disparar_flag(self, flag, contexto, reativos=None):
+        eventos = self.resolvedor_flags.disparar(flag, contexto, reativos=reativos)
+        for evento in list(eventos or []):
+            self.registrar_evento_log(evento.get("tipo"), evento)
+        return eventos
 
     def _coletar_pokemons_iniciais(self, dados):
         if isinstance(dados.get("pokemons"), dict):
@@ -436,7 +485,7 @@ class Partida:
     def area_existe(self, area_id):
         return str(area_id or "") in self.areas
 
-    def mover_pokemon_para_area(self, pokemon, area_id):
+    def mover_pokemon_para_area(self, pokemon, area_id, dados=None):
         area_id = str(area_id or "")
         if pokemon is None or not self.area_existe(area_id):
             return False
@@ -461,9 +510,11 @@ class Partida:
                 "area_destino": area_id,
             },
         )
+        dados = dict(dados or {})
+        self.disparar_flag("AoMover", {"partida": self, "pokemon_evento": pokemon, "pokemon": pokemon, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
         return True
 
-    def trocar_posicao(self, pokemon_a, pokemon_b):
+    def trocar_posicao(self, pokemon_a, pokemon_b, dados=None):
         if pokemon_a is None or pokemon_b is None:
             return False
         if not pokemon_a.ativo or not pokemon_b.ativo or pokemon_a.reserva or pokemon_b.reserva:
@@ -491,9 +542,11 @@ class Partida:
                 "area_b_depois": area_a,
             },
         )
+        dados = dict(dados or {})
+        self.disparar_flag("AoTrocar", {"partida": self, "pokemon_evento": pokemon_a, "pokemon": pokemon_a, "pokemon_outro": pokemon_b, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
         return True
 
-    def trocar_reserva(self, pokemon_ativo, pokemon_reserva):
+    def trocar_reserva(self, pokemon_ativo, pokemon_reserva, dados=None):
         if pokemon_ativo is None or pokemon_reserva is None:
             return False
         if int(pokemon_ativo.lado_id) != int(pokemon_reserva.lado_id):
@@ -525,6 +578,8 @@ class Partida:
         self.registrar_evento_log("pokemon_trocou_reserva", dados_troca)
         self.registrar_evento_log("pokemon_saiu", {"pokemon_id": pokemon_ativo.id_batalha, "pokemon_nome": pokemon_ativo.nome, "area_id": area, "slot_reserva_id": reserva_slot_id})
         self.registrar_evento_log("pokemon_entrou", {"pokemon_id": pokemon_reserva.id_batalha, "pokemon_nome": pokemon_reserva.nome, "area_id": area, "slot_reserva_id": reserva_slot_id})
+        dados = dict(dados or {})
+        self.disparar_flag("AoTrocar", {"partida": self, "pokemon_evento": pokemon_reserva, "pokemon": pokemon_reserva, "pokemon_outro": pokemon_ativo, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
         return True
 
     def substituir_derrotados_por_reserva(self):

@@ -1,6 +1,26 @@
 {
   "schema_version": 1,
   "tipo": "pedra",
-  "ataques": {},
+  "ataques": {
+    "39": {
+      "ID": 39,
+      "nome": "Casca de Pedra",
+      "custo": 25,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_casca_de_pedra",
+      "parametros": {
+        "tipo": "pedra",
+        "atributo": "Def",
+        "percentual_mag": 0.15,
+        "duracao": 6
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

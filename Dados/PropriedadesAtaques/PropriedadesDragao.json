@@ -1,6 +1,26 @@
 {
   "schema_version": 1,
   "tipo": "dragao",
-  "ataques": {},
+  "ataques": {
+    "41": {
+      "ID": 41,
+      "nome": "Escama Mística",
+      "custo": 25,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_escama_mística",
+      "parametros": {
+        "tipo": "dragao",
+        "atributo": "SpD",
+        "percentual_mag": 0.15,
+        "duracao": 6
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

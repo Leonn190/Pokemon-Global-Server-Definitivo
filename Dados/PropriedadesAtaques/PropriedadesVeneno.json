@@ -1,6 +1,79 @@
 {
   "schema_version": 1,
-  "tipo": "veneno",
-  "ataques": {},
+  "tipo": "venenoso",
+  "ataques": {
+    "26": {
+      "ID": 26,
+      "nome": "Envenenar",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_envenenar",
+      "parametros": {
+        "tipo": "venenoso",
+        "efeito": "Envenenado",
+        "duracao": 6,
+        "negativo": true
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "46": {
+      "ID": 46,
+      "nome": "Armadura Mole",
+      "custo": 35,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_armadura_mole",
+      "parametros": {
+        "tipo": "venenoso",
+        "atributo": "Per",
+        "percentual_alvo": 0.07,
+        "duracao": 6
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "77": {
+      "ID": 77,
+      "nome": "Imunizado",
+      "custo": 0,
+      "estilo_logico": "passivo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_imunizado",
+      "parametros": {
+        "tipo": "venenoso",
+        "efeito": "Imunizado",
+        "permanente": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

@@ -1,6 +1,81 @@
 {
   "schema_version": 1,
   "tipo": "gelo",
-  "ataques": {},
+  "ataques": {
+    "38": {
+      "ID": 38,
+      "nome": "Névoa Fria",
+      "custo": 25,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_névoa_fria",
+      "parametros": {
+        "tipo": "gelo",
+        "atributo": "SpA",
+        "percentual_alvo": 0.08,
+        "duracao": 6
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "52": {
+      "ID": 52,
+      "nome": "Sangue Frio",
+      "custo": 30,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_sangue_frio",
+      "parametros": {
+        "tipo": "gelo",
+        "atributo": "CrC",
+        "percentual_mag": 0.06,
+        "duracao": 6
+      }
+    },
+    "67": {
+      "ID": 67,
+      "nome": "Raio de Gelo",
+      "custo": 75,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_raio_de_gelo",
+      "parametros": {
+        "tipo": "gelo",
+        "categoria": "especial",
+        "escala_inicial_spa": 1.3,
+        "reducao_spa_por_alvo": 0.15,
+        "tipo_linha": "reta"
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

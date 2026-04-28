@@ -1,6 +1,53 @@
 {
   "schema_version": 1,
   "tipo": "metal",
-  "ataques": {},
+  "ataques": {
+    "40": {
+      "ID": 40,
+      "nome": "Ferrugem",
+      "custo": 25,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_ferrugem",
+      "parametros": {
+        "tipo": "metal",
+        "atributo": "Def",
+        "percentual_alvo": 0.08,
+        "duracao": 6
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "45": {
+      "ID": 45,
+      "nome": "Afiar",
+      "custo": 35,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_afiar",
+      "parametros": {
+        "tipo": "metal",
+        "atributo": "Per",
+        "percentual_mag": 0.15,
+        "duracao": 6
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

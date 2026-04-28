@@ -1,6 +1,110 @@
 {
   "schema_version": 1,
   "tipo": "planta",
-  "ataques": {},
+  "ataques": {
+    "34": {
+      "ID": 34,
+      "nome": "Raizes",
+      "custo": 50,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_raizes",
+      "parametros": {
+        "tipo": "planta",
+        "efeito": "Enraizado",
+        "duracao": 6,
+        "negativo": true
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "56": {
+      "ID": 56,
+      "nome": "Casco Vivo",
+      "custo": 35,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_casco_vivo",
+      "parametros": {
+        "tipo": "planta",
+        "atributo": "Dur",
+        "percentual_mag": 0.12,
+        "duracao": 6
+      }
+    },
+    "61": {
+      "ID": 61,
+      "nome": "Murchar",
+      "custo": 35,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_murchar",
+      "parametros": {
+        "tipo": "planta",
+        "atributo": "Vida",
+        "percentual_alvo": 0.06,
+        "duracao": 6,
+        "rotulo_atributo": "Vida Máxima"
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "68": {
+      "ID": 68,
+      "nome": "Raio Solar",
+      "custo": 80,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_raio_solar",
+      "parametros": {
+        "tipo": "planta",
+        "categoria": "especial",
+        "escala_inicial_spa": 1.3,
+        "escala_sol_forte_spa": 1.6,
+        "reducao_spa_por_alvo": 0.15,
+        "tipo_linha": "reta"
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    }
+  },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
 }

@@ -394,6 +394,53 @@
       "parametros": {
         "tipo": "normal"
       }
+    },
+    "36": {
+      "ID": 36,
+      "nome": "Rugido",
+      "custo": 25,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "tiro",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_rugido",
+      "parametros": {
+        "tipo": "normal",
+        "atributo": "Atk",
+        "percentual_alvo": 0.08,
+        "duracao": 6
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "lado_oposto"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "60": {
+      "ID": 60,
+      "nome": "Inflar",
+      "custo": 35,
+      "estilo_logico": "ativo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": null,
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_inflar",
+      "parametros": {
+        "tipo": "normal",
+        "atributo": "Vida",
+        "percentual_mag": 0.2,
+        "duracao": 6,
+        "rotulo_atributo": "Vida Máxima"
+      }
     }
   },
   "_comentario": "Ataques normais migrados do arquivo legado neste patch."

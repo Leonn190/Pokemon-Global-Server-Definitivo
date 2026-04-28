@@ -247,8 +247,9 @@ class FinalizadorBatalha:
         inventario = deepcopy(player_dados.get("inventario") if isinstance(player_dados.get("inventario"), dict) else {})
         if not inventario:
             return {}
-        if isinstance(contexto.get("pokemons_jogador"), list):
-            inventario["pokemons"] = deepcopy(contexto.get("pokemons_jogador") or [])
+        pokemons_jogador = contexto.get("pokemons_jogador")
+        if isinstance(pokemons_jogador, list) and pokemons_jogador:
+            inventario["pokemons"] = deepcopy(pokemons_jogador)
         times = contexto.get("times_jogador") if isinstance(contexto.get("times_jogador"), list) else None
         if times is not None:
             inventario["times_pokemon"] = deepcopy(times)

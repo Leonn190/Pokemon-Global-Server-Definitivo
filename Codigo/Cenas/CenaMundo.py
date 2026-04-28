@@ -525,12 +525,14 @@ class CenaMundo:
             batalha_numero = max(1, int(npc_ctx.get("batalha_numero", 1) or 1))
             time_npc = deepcopy(times_npc[min(len(times_npc) - 1, batalha_numero - 1)]) if times_npc else {}
             pokemons_npc = list(time_npc.get("Slots") or time_npc.get("slots") or [])
+            pokemons_jogador = deepcopy(list(getattr(inventario, "Pokemons", []) or [])) if inventario is not None else []
             jogo.INFO["CombateContexto"] = {
                 **contexto_base,
                 "batalha": dict(carregar_regras_cliente_mundo().get("batalha") or {}),
                 "tipo": "treinador",
                 "npc_contexto": npc_ctx,
                 "times_jogador": deepcopy(list(times_validos)),
+                "pokemons_jogador": pokemons_jogador,
                 "time_jogador": deepcopy(dict(time_escolhido or {})),
                 "time_jogador_indice": int(indice_time),
                 "time_inimigo": time_npc,

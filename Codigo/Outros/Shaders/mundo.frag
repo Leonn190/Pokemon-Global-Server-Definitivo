@@ -13,6 +13,10 @@ uniform float u_inside;
 uniform float u_time;
 uniform float u_biome_mode;
 uniform float u_biome_power;
+uniform float u_battle_sun_power;
+uniform float u_battle_sand_power;
+uniform float u_battle_fog_power;
+uniform float u_battle_acid_power;
 uniform float u_shader_enabled;
 
 in vec2 v_uv;
@@ -77,6 +81,10 @@ void main() {
     float dark = clamp(u_darkness, 0.0, 1.0);
     float rain = clamp(u_rain_power, 0.0, 1.0);
     float biome = clamp(u_biome_power, 0.0, 1.0);
+    float battle_sun = clamp(u_battle_sun_power, 0.0, 1.0);
+    float battle_sand = clamp(u_battle_sand_power, 0.0, 1.0);
+    float battle_fog = clamp(u_battle_fog_power, 0.0, 1.0);
+    float battle_acid = clamp(u_battle_acid_power, 0.0, 1.0);
 
     float vignette = smoothstep(1.16, 0.12, length(centered));
     vec3 tint_grade = mix(vec3(1.0), clamp(u_tint, 0.0, 1.0), dark * 0.66);
@@ -89,12 +97,14 @@ void main() {
         float ripple = noise21(vec2(screen_uv.x * 28.0 + u_time * 0.35, screen_uv.y * 36.0 - u_time * 3.8));
         vec2 wet_offset = vec2((ripple - 0.5) * 0.010 * rain, 0.0);
         vec3 rainy = scene_sample(v_uv + wet_offset);
-        color = mix(color, rainy * vec3(0.92, 0.98, 1.03), rain * 0.20);
+        vec3 rain_grade = mix(vec3(0.92, 0.98, 1.03), vec3(0.84, 1.07, 0.76), battle_acid);
+        color = mix(color, rainy * rain_grade, rain * 0.20);
 
         float reflection_mask = smoothstep(0.40, 1.0, screen_uv.y) * (1.0 - u_inside * 0.55);
         float streak = smoothstep(0.56, 1.0, ripple);
-        color += vec3(0.025, 0.045, 0.060) * reflection_mask * rain * (0.30 + 0.70 * streak);
-        color = mix(color, color * vec3(0.84, 0.90, 0.98), rain * 0.22);
+        vec3 rain_glow = mix(vec3(0.025, 0.045, 0.060), vec3(0.025, 0.085, 0.018), battle_acid);
+        color += rain_glow * reflection_mask * rain * (0.30 + 0.70 * streak);
+        color = mix(color, color * mix(vec3(0.84, 0.90, 0.98), vec3(0.80, 0.98, 0.78), battle_acid), rain * 0.22);
     }
 
     if (u_biome_mode > 0.5 && u_biome_mode < 1.5) {
@@ -138,6 +148,34 @@ void main() {
         color = saturate_color(color, 1.0 - biome * 0.24);
         color = mix(color, color * vec3(0.84, 0.90, 0.84), biome * 0.28);
         color = mix(color, vec3(0.48, 0.54, 0.48), fog * biome * 0.18 * (1.0 - u_inside * 0.40));
+    }
+
+    if (battle_sun > 0.001) {
+        vec2 sun_pos = vec2(-0.10, 1.10);
+        float sun_dist = length((screen_uv - sun_pos) * vec2(aspect, 1.0));
+        float glare = 1.0 - smoothstep(0.15, 1.16, sun_dist);
+        float ray_seed = screen_uv.x * 5.2 + screen_uv.y * 2.5 + sin(u_time * 0.18) * 0.18;
+        float rays = pow(max(0.0, sin(ray_seed * 3.14159) * 0.5 + 0.5), 5.0);
+        rays *= smoothstep(1.04, 0.20, sun_dist);
+        color = mix(color, min(color * vec3(1.12, 1.06, 0.90) + vec3(0.055, 0.044, 0.020), vec3(1.0)), battle_sun * 0.42);
+        color += vec3(0.35, 0.28, 0.10) * (glare * 0.20 + rays * 0.16) * battle_sun;
+    }
+
+    if (battle_sand > 0.001) {
+        float sand_n = noise21(vec2(screen_uv.x * 12.0 - u_time * 2.2, screen_uv.y * 28.0 + u_time * 0.32));
+        vec2 sand_offset = vec2((sand_n - 0.5) * 0.012 * battle_sand, 0.0);
+        vec3 sandy = scene_sample(v_uv + sand_offset);
+        float sheet = smoothstep(0.42, 1.0, sand_n) * (0.35 + 0.65 * smoothstep(0.08, 0.92, screen_uv.y));
+        color = mix(color, sandy * vec3(1.08, 1.01, 0.82), battle_sand * 0.30);
+        color = mix(color, vec3(0.76, 0.66, 0.43), sheet * battle_sand * 0.16);
+    }
+
+    if (battle_fog > 0.001) {
+        float fog_n = noise21(vec2(screen_uv.x * 5.5 - u_time * 0.12, screen_uv.y * 7.0 + u_time * 0.05));
+        float veil = smoothstep(0.10, 0.92, fog_n) * (0.55 + 0.45 * smoothstep(0.04, 0.78, screen_uv.y));
+        color = saturate_color(color, 1.0 - battle_fog * 0.34);
+        color = mix(color, vec3(0.72, 0.76, 0.75), battle_fog * (0.18 + veil * 0.24));
+        color = mix(vec3(0.5), color, 1.0 - battle_fog * 0.16);
     }
 
     if (u_star_strength > 0.01 && u_inside < 0.5) {

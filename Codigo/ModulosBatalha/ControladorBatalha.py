@@ -45,6 +45,7 @@ class ControladorBatalha:
         self.estado_batalha = "inicializando"
         self.id_partida = "simulador_local_fase2"
         self.server_batalha = ServerBatalha
+        self.clima_atual = None
 
         self.timer_rodada = 1.0
         self.timer_rodada_max = 45.0
@@ -73,6 +74,7 @@ class ControladorBatalha:
         self.lado_jogador = int(estado.get("lado_jogador", 50) or 50)
         self.tipo_batalha = str(estado.get("tipo_batalha") or self.tipo_batalha)
         self.modo_teste = bool(estado.get("modo_teste", self.modo_teste))
+        self.clima_atual = estado.get("clima_atual")
 
         contexto_arena = dict(estado.get("arena") or {})
         self.arena = Arena(contexto_arena)
@@ -330,6 +332,8 @@ class ControladorBatalha:
         if self.pokemon_selecionado is not None and ((not self.pokemon_selecionado.esta_vivo()) or (not self.pokemon_visivel(self.pokemon_selecionado))):
             self.desselecionar_pokemon()
         self.rodada_atual = int(resultado.get("rodada_atual", self.rodada_atual) or self.rodada_atual)
+        if "clima_atual" in resultado:
+            self.clima_atual = resultado.get("clima_atual")
         self.estado_batalha = str(resultado.get("estado_batalha") or ("finalizada" if resultado.get("finalizada") else "montando_jogada"))
         if bool(resultado.get("finalizada")):
             self.estado_batalha = "finalizada"

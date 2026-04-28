@@ -1,6 +1,7 @@
 from Codigo.ModulosGerais.EfeitosTela import FecharIris, AbrirIris
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosBatalha.Arena import Arena
+from Codigo.ModulosBatalha.ClimaBatalha import ClimaBatalha
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
 from Codigo.Telas.Subtelas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Server.ServerMundo import finalizar_interacao_npc_mundo, solicitar_contexto_batalha_mundo
@@ -76,6 +77,7 @@ class CenaCombate:
         self.Arena = Arena(contexto)
         self.ControladorBatalha = ControladorBatalha(self.Camera, jogo=JOGO)
         self.ControladorBatalha.iniciar(self._estado_inicial_batalha(JOGO, contexto))
+        self.ClimaBatalha = ClimaBatalha()
 
         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
@@ -218,7 +220,19 @@ class CenaCombate:
             self.Arena.renderizar(surface, self.Camera)
 
     def render_post(self, surface, JOGO, EVENTOS, dt):
-        _ = (surface, JOGO, EVENTOS, dt)
+        _ = (JOGO, EVENTOS)
+        clima = getattr(self.ControladorBatalha, "clima_atual", None) if self.ControladorBatalha is not None else None
+        if getattr(self, "ClimaBatalha", None) is not None:
+            self.ClimaBatalha.coletar_uniformes(surface.get_size(), clima, dt)
+            self.ClimaBatalha.desenhar_base(surface)
+
+    def coletar_efeito_shader(self, JOGO, dt, tamanho_tela):
+        _ = (JOGO, dt, tamanho_tela)
+        if self.TelaAtual == "Config":
+            return None
+        if getattr(self, "ClimaBatalha", None) is None:
+            return None
+        return self.ClimaBatalha.uniformes_atuais()
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         eventos_ui = list(getattr(self, "_eventos_ui_atual", EVENTOS) or [])

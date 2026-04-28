@@ -83,6 +83,7 @@ class ConstrutorLog:
             "pokemons": {pid: pokemon.serializar() for pid, pokemon in partida.pokemons_por_id.items()},
             "areas": dict(partida.ocupacao_areas),
             "lados": list(partida.lados.keys()),
+            "clima_atual": copy.deepcopy(getattr(partida, "clima_atual", None)),
             "estatisticas": self._montar_estatisticas(),
             "xp": self._montar_xp(rodadas_totais),
             "persistencia": self._montar_persistencia(rodadas_totais),

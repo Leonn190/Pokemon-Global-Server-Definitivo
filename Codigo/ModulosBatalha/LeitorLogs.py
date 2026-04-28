@@ -124,6 +124,10 @@ class LeitorLogs:
                 poke.Ativo = True
                 poke.EmReserva = False
                 poke.AreaId = dados.get("area_id")
+        elif tipo in {"clima_aplicado", "clima_alterado", "clima_iniciado"}:
+            ctrl.clima_atual = dados.get("clima") or dados.get("clima_nome") or dados.get("nome") or dados
+        elif tipo == "clima_expirou":
+            ctrl.clima_atual = None
         ctrl.arena.atualizar_ocupacao(ctrl.pokemons)
 
     def enviar_evento_para_hud(self, evento):

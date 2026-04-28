@@ -133,7 +133,7 @@ class TelaMapa:
         mostrar_regioes = bool(self._botoes["Regiões"].estado)
 
         cam_rect = pygame.Rect(int(-self.offset[0] / self.zoom), int(-self.offset[1] / self.zoom), int(tela.get_width() / self.zoom) + 4, int(tela.get_height() / self.zoom) + 4)
-        chave = (round(self.zoom, 3), int(self.offset[0]), int(self.offset[1]), mostrar_regioes, tuple((a.atlas_x, a.atlas_y, a.versao) for a in ger.all_atlas()))
+        chave = (round(self.zoom, 3), int(self.offset[0]), int(self.offset[1]), mostrar_regioes, int(ger.versao_mapa()))
         if self._cache_chave != chave:
             frame = pygame.Surface(tela.get_size())
             frame.fill((0, 0, 0))

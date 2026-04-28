@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import math
-import shutil
 import threading
+import json
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -45,18 +46,39 @@ class AtlasMapa:
 
 
 class GerenciadorImagensMapa:
-    def __init__(self, pasta_ram: Path | str = "RAM/ImagensMapa", atlas_chunks_lado: int = 100, chunk_blocos: int = 10):
+    def __init__(
+        self,
+        server_id: str = "default",
+        client_id: str = "anon",
+        pasta_base: Path | str = "Saves/MapaCache",
+        atlas_chunks_lado: int = 100,
+        chunk_blocos: int = 10,
+    ):
         self._lock = threading.RLock()
-        self.pasta_ram = Path(pasta_ram)
+        self.server_id = self._normalizar_id(server_id, "default")
+        self.client_id = self._normalizar_id(client_id, "anon")
+        self.pasta_base = Path(pasta_base)
+        self.pasta_cache = self.pasta_base / self.server_id / self.client_id
+        self.path_manifest = self.pasta_cache / "manifest.json"
         self.atlas_chunks_lado = int(atlas_chunks_lado)
         self.chunk_blocos = int(chunk_blocos)
         self.atlas_px = self.atlas_chunks_lado * self.chunk_blocos
         self.meta: Dict[str, object] = {}
         self._atlas: Dict[Tuple[int, int], AtlasMapa] = {}
+        self._atlas_manifest: Dict[Tuple[int, int], dict] = {}
         self._explorados_mundo: Dict[int, set[int]] = {}
         self._regioes: List[dict] = []
         self._regioes_idx: Dict[int, dict] = {}
+        self._manifest: Dict[str, object] = {}
+        self._manifest_carregado = False
+        self._manifest_dirty = False
+        self._versao_mapa = 0
+        self._ultimo_flush_s = 0.0
+        self._chunks_pendentes_flush = 0
+        self._flush_intervalo_s = 5.0
+        self._flush_chunks_limite = 50
         self._prepared = False
+        self._garantir_manifest_carregado()
 
     def preparar(self, meta: dict, explorados: dict | None = None, regioes: list | None = None) -> None:
         with self._lock:
@@ -64,14 +86,18 @@ class GerenciadorImagensMapa:
             self.chunk_blocos = int(self.meta.get("chunk_blocos", self.chunk_blocos) or self.chunk_blocos)
             self.atlas_chunks_lado = int(self.meta.get("atlas_chunks_lado", self.atlas_chunks_lado) or self.atlas_chunks_lado)
             self.atlas_px = int(self.meta.get("atlas_px", self.atlas_chunks_lado * self.chunk_blocos) or (self.atlas_chunks_lado * self.chunk_blocos))
-            self.pasta_ram.mkdir(parents=True, exist_ok=True)
+            self.pasta_cache.mkdir(parents=True, exist_ok=True)
             self._atlas.clear()
+            self._atlas_manifest.clear()
             self._explorados_mundo = self._normalizar_explorados(explorados)
             self._regioes = [dict(r) for r in (regioes or []) if isinstance(r, dict)]
             for idx, reg in enumerate(self._regioes):
                 if reg.get("id") in (None, ""):
                     reg["id"] = int(idx + 1)
             self._regioes_idx = {int(r.get("id", -1)): r for r in self._regioes if r.get("id") is not None}
+            self._carregar_manifest()
+            self._sincronizar_manifest_meta()
+            self._mesclar_explorados_manifest()
             self._prepared = True
 
     def limpar(self) -> None:
@@ -79,14 +105,27 @@ class GerenciadorImagensMapa:
             self._atlas.clear()
             self._explorados_mundo.clear()
             self._prepared = False
+
+    def apagar_cache_persistente(self) -> None:
+        with self._lock:
+            self._atlas.clear()
+            self._atlas_manifest.clear()
+            self._explorados_mundo.clear()
+            self._manifest = {}
+            self._manifest_dirty = False
         try:
-            if self.pasta_ram.exists():
-                shutil.rmtree(self.pasta_ram, ignore_errors=True)
+            if self.pasta_cache.exists():
+                for item in self.pasta_cache.glob("*"):
+                    if item.is_file():
+                        item.unlink(missing_ok=True)
         except Exception:
             pass
 
     def flush(self) -> None:
         payloads: list[tuple[pygame.Surface, Path, pygame.Surface, Path]] = []
+        salvar_manifest = False
+        manifest_payload: Dict[str, object] = {}
+        houve_salvamento = False
         with self._lock:
             for atlas in self._atlas.values():
                 if not atlas.chunks_explorados:
@@ -96,9 +135,24 @@ class GerenciadorImagensMapa:
                 payloads.append((atlas.surface_base.copy(), atlas.path_base, atlas.surface_regioes.copy(), atlas.path_regioes))
                 atlas.dirty_base = False
                 atlas.dirty_regioes = False
+            if self._manifest_dirty:
+                manifest_payload = self._manifest_payload()
+                salvar_manifest = True
+                self._manifest_dirty = False
+                houve_salvamento = True
         for base, path_base, reg, path_reg in payloads:
             pygame.image.save(base, str(path_base))
             pygame.image.save(reg, str(path_reg))
+            houve_salvamento = True
+        if salvar_manifest:
+            try:
+                self.path_manifest.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            except Exception:
+                pass
+        if houve_salvamento:
+            with self._lock:
+                self._ultimo_flush_s = time.monotonic()
+                self._chunks_pendentes_flush = 0
 
     def _normalizar_explorados(self, explorados: dict | None) -> Dict[int, set[int]]:
         bruto = {}
@@ -150,23 +204,14 @@ class GerenciadorImagensMapa:
 
     def _atlas_for_chunk(self, chunk_x: int, chunk_y: int) -> AtlasMapa:
         ax, ay = self._atlas_key(chunk_x, chunk_y)
-        chave = (ax, ay)
-        atlas = self._atlas.get(chave)
-        if atlas is not None:
-            return atlas
-        base_path = self.pasta_ram / f"atlas_{ax}_{ay}_base.png"
-        reg_path = self.pasta_ram / f"atlas_{ax}_{ay}_regioes.png"
-        sbase = pygame.Surface((self.atlas_px, self.atlas_px))
-        sbase.fill((0, 0, 0))
-        sreg = pygame.Surface((self.atlas_px, self.atlas_px))
-        sreg.fill((0, 0, 0))
-        atlas = AtlasMapa(ax, ay, base_path, reg_path, sbase, sreg)
-        self._atlas[chave] = atlas
-        return atlas
+        return self._obter_ou_carregar_atlas(ax, ay)
 
     def obter_atlas(self, atlas_x: int, atlas_y: int) -> AtlasMapa | None:
         with self._lock:
-            return self._atlas.get((int(atlas_x), int(atlas_y)))
+            ax, ay = int(atlas_x), int(atlas_y)
+            if (ax, ay) in self._atlas_manifest or (ax, ay) in self._atlas:
+                return self._obter_ou_carregar_atlas(ax, ay)
+            return None
 
     def atlas_keys_no_rect(self, x: int, y: int, largura: int, altura: int) -> list[tuple[int, int]]:
         if largura <= 0 or altura <= 0:
@@ -279,7 +324,18 @@ class GerenciadorImagensMapa:
                     self._desenhar_chunk_no_atlas(atlas, cx, cy, grid, objetos=objetos)
                     atlas.chunks_explorados.add((cx, cy))
                     self._explorados_mundo.setdefault(cx, set()).add(cy)
+                    self._registrar_chunk_manifest(cx, cy, atlas)
                     alterados += 1
+            if alterados > 0:
+                self._versao_mapa += 1
+                self._chunks_pendentes_flush += int(alterados)
+                precisa_flush = (self._chunks_pendentes_flush >= self._flush_chunks_limite) or (
+                    (time.monotonic() - float(self._ultimo_flush_s or 0.0)) >= self._flush_intervalo_s
+                )
+            else:
+                precisa_flush = False
+        if precisa_flush:
+            self.flush()
         return alterados
 
     def _desenhar_chunk_no_atlas(self, atlas: AtlasMapa, cx: int, cy: int, grid: List[List[int]], objetos: list | None = None) -> None:
@@ -341,7 +397,12 @@ class GerenciadorImagensMapa:
             return []
         with self._lock:
             out: List[AtlasMapa] = []
-            for atlas in self._atlas.values():
+            candidatos = set(self.atlas_keys_no_rect(camera_rect_mundo_px.x, camera_rect_mundo_px.y, camera_rect_mundo_px.width, camera_rect_mundo_px.height))
+            candidatos.update(self._atlas.keys())
+            for key in candidatos:
+                if key not in self._atlas_manifest and key not in self._atlas:
+                    continue
+                atlas = self._obter_ou_carregar_atlas(*key)
                 if not atlas.chunks_explorados:
                     continue
                 rect = pygame.Rect(atlas.atlas_x * self.atlas_px, atlas.atlas_y * self.atlas_px, self.atlas_px, self.atlas_px)
@@ -353,7 +414,154 @@ class GerenciadorImagensMapa:
         with self._lock:
             return list(self._atlas.values())
 
+    def conhecidos_payload(self) -> Dict[str, object]:
+        with self._lock:
+            self._garantir_manifest_carregado()
+            atlas = []
+            for (ax, ay), reg in self._atlas_manifest.items():
+                chunks = [[int(cx), int(cy)] for cx, cy in sorted(reg.get("chunks", set()))]
+                atlas.append({"atlas": [int(ax), int(ay)], "versao": int(reg.get("versao", 0) or 0), "chunks": chunks})
+            return {"atlas": atlas}
+
+    def garantir_manifest_carregado(self) -> None:
+        with self._lock:
+            self._garantir_manifest_carregado()
+
+    def versao_mapa(self) -> int:
+        with self._lock:
+            return int(self._versao_mapa)
+
     def mundo_tamanho_px(self) -> Tuple[int, int]:
         largura_blocos = int(self.meta.get("largura_blocos", 0) or 0)
         altura_blocos = int(self.meta.get("altura_blocos", 0) or 0)
         return (max(1, largura_blocos), max(1, altura_blocos))
+
+    @staticmethod
+    def _normalizar_id(valor: str, fallback: str) -> str:
+        base = "".join(ch if (ch.isalnum() or ch in ("-", "_", ".")) else "_" for ch in str(valor or "").strip())
+        return base or fallback
+
+    def _surface_preta(self) -> pygame.Surface:
+        surf = pygame.Surface((self.atlas_px, self.atlas_px))
+        surf.fill((0, 0, 0))
+        return surf
+
+    def _path_atlas(self, ax: int, ay: int) -> Tuple[Path, Path]:
+        return (
+            self.pasta_cache / f"atlas_{ax}_{ay}_base.png",
+            self.pasta_cache / f"atlas_{ax}_{ay}_regioes.png",
+        )
+
+    def _obter_ou_carregar_atlas(self, ax: int, ay: int) -> AtlasMapa:
+        chave = (int(ax), int(ay))
+        atlas = self._atlas.get(chave)
+        if atlas is not None:
+            return atlas
+        base_path, reg_path = self._path_atlas(*chave)
+        sbase = self._surface_preta()
+        sreg = self._surface_preta()
+        if base_path.exists():
+            try:
+                img = pygame.image.load(str(base_path))
+                if img.get_size() == (self.atlas_px, self.atlas_px):
+                    sbase = img
+            except Exception:
+                pass
+        if reg_path.exists():
+            try:
+                img = pygame.image.load(str(reg_path))
+                if img.get_size() == (self.atlas_px, self.atlas_px):
+                    sreg = img
+            except Exception:
+                pass
+        atlas = AtlasMapa(chave[0], chave[1], base_path, reg_path, sbase, sreg)
+        reg = self._atlas_manifest.get(chave, {})
+        atlas.chunks_explorados = set(reg.get("chunks", set()))
+        atlas.versao = int(reg.get("versao", 0) or 0)
+        self._atlas[chave] = atlas
+        return atlas
+
+    def _carregar_manifest(self) -> None:
+        self._manifest = {}
+        self._manifest_carregado = True
+        bruto = {}
+        try:
+            if self.path_manifest.exists():
+                bruto = json.loads(self.path_manifest.read_text(encoding="utf-8"))
+        except Exception:
+            bruto = {}
+        self._manifest = bruto if isinstance(bruto, dict) else {}
+        atlas_entries = self._manifest.get("atlas") if isinstance(self._manifest.get("atlas"), list) else []
+        for item in atlas_entries:
+            if not isinstance(item, dict):
+                continue
+            atlas_pos = item.get("atlas")
+            if not (isinstance(atlas_pos, (list, tuple)) and len(atlas_pos) == 2):
+                continue
+            ax, ay = int(atlas_pos[0]), int(atlas_pos[1])
+            chunks_raw = item.get("chunks") if isinstance(item.get("chunks"), list) else []
+            chunks = set()
+            for pos in chunks_raw:
+                if isinstance(pos, (list, tuple)) and len(pos) == 2:
+                    chunks.add((int(pos[0]), int(pos[1])))
+            self._atlas_manifest[(ax, ay)] = {
+                "chunks": chunks,
+                "versao": int(item.get("versao", 0) or 0),
+            }
+        for base_path in self.pasta_cache.glob("atlas_*_*_base.png"):
+            partes = base_path.stem.split("_")
+            if len(partes) < 4:
+                continue
+            try:
+                ax, ay = int(partes[1]), int(partes[2])
+            except Exception:
+                continue
+            self._atlas_manifest.setdefault((ax, ay), {"chunks": set(), "versao": 0})
+
+    def _garantir_manifest_carregado(self) -> None:
+        if self._manifest_carregado:
+            return
+        self._carregar_manifest()
+
+    def _manifest_payload(self) -> Dict[str, object]:
+        atlas = []
+        for (ax, ay), reg in sorted(self._atlas_manifest.items(), key=lambda it: (it[0][1], it[0][0])):
+            chunks = [[int(cx), int(cy)] for cx, cy in sorted(reg.get("chunks", set()))]
+            atlas.append({"atlas": [int(ax), int(ay)], "versao": int(reg.get("versao", 0) or 0), "chunks": chunks})
+        return {
+            "server_id": self.server_id,
+            "client_id": self.client_id,
+            "chunk_blocos": int(self.chunk_blocos),
+            "atlas_chunks_lado": int(self.atlas_chunks_lado),
+            "atlas_px": int(self.atlas_px),
+            "atlas": atlas,
+        }
+
+    def _sincronizar_manifest_meta(self) -> None:
+        mudou = False
+        if int(self._manifest.get("chunk_blocos", 0) or 0) != int(self.chunk_blocos):
+            mudou = True
+        if int(self._manifest.get("atlas_chunks_lado", 0) or 0) != int(self.atlas_chunks_lado):
+            mudou = True
+        if int(self._manifest.get("atlas_px", 0) or 0) != int(self.atlas_px):
+            mudou = True
+        if str(self._manifest.get("server_id", "")) != self.server_id:
+            mudou = True
+        if str(self._manifest.get("client_id", "")) != self.client_id:
+            mudou = True
+        if mudou:
+            self._manifest_dirty = True
+
+    def _mesclar_explorados_manifest(self) -> None:
+        for reg in self._atlas_manifest.values():
+            for cx, cy in reg.get("chunks", set()):
+                self._explorados_mundo.setdefault(int(cx), set()).add(int(cy))
+
+    def _registrar_chunk_manifest(self, cx: int, cy: int, atlas: AtlasMapa) -> None:
+        chave = (int(atlas.atlas_x), int(atlas.atlas_y))
+        reg = self._atlas_manifest.setdefault(chave, {"chunks": set(), "versao": 0})
+        if (int(cx), int(cy)) not in reg["chunks"]:
+            reg["chunks"].add((int(cx), int(cy)))
+            self._manifest_dirty = True
+        reg["versao"] = max(int(reg.get("versao", 0) or 0), int(atlas.versao))
+        self._manifest_dirty = True

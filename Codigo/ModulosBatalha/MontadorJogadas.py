@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from Codigo.ModulosBatalha.IndicadorAtaque import IndicadorAtaque
+from SimuladorServerJogo.Batalha.PropriedadesAtaques import carregar_propriedades_ataques
 
 
 class MontadorJogadas:
@@ -32,6 +33,9 @@ class MontadorJogadas:
         self.custo_troca_reserva = 20
 
     def carregar_propriedades_ataques(self):
+        ataques = carregar_propriedades_ataques()
+        if ataques:
+            return ataques
         caminho = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - PropriedadesAtaques.json"
         if not caminho.exists():
             return {}

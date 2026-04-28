@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-import json
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -16,6 +15,7 @@ from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Prefabs.Tooltip import Tooltip
+from SimuladorServerJogo.Batalha.PropriedadesAtaques import carregar_propriedades_ataques
 
 
 class FichaPokemonBatalha:
@@ -171,18 +171,15 @@ class FichaPokemonBatalha:
     def _estilo_tecnico_ataque(cls, ataque: dict | None) -> str:
         if cls._CACHE_ESTILO_ATAQUES is None:
             cls._CACHE_ESTILO_ATAQUES = {}
-            caminho = Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - PropriedadesAtaques.json"
             try:
-                dados = json.loads(caminho.read_text(encoding="utf-8"))
-                ataques = dados.get("ataques") if isinstance(dados, dict) else {}
-                if isinstance(ataques, dict):
-                    for item in ataques.values():
-                        if not isinstance(item, dict):
-                            continue
-                        nome = str(item.get("nome") or "").strip().casefold()
-                        estilo = str(item.get("estilo_logico") or item.get("estilo") or "").strip().casefold()
-                        if nome and estilo:
-                            cls._CACHE_ESTILO_ATAQUES[nome] = estilo
+                ataques = carregar_propriedades_ataques()
+                for item in ataques.values():
+                    if not isinstance(item, dict):
+                        continue
+                    nome = str(item.get("nome") or "").strip().casefold()
+                    estilo = str(item.get("estilo_logico") or item.get("estilo") or "").strip().casefold()
+                    if nome and estilo:
+                        cls._CACHE_ESTILO_ATAQUES[nome] = estilo
             except Exception:
                 cls._CACHE_ESTILO_ATAQUES = {}
         nome = str((ataque or {}).get("Ataque") or (ataque or {}).get("Nome") or "").strip().casefold()

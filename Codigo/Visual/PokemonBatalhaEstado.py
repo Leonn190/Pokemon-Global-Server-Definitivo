@@ -414,16 +414,11 @@ class PokemonBatalhaEstado:
         if not efeitos:
             return
         escala_ui = self._escala_mundo_ui(camera)
-        raio = max(7, int(round(16 * escala_ui)))
+        lado = max(14, int(round(30 * escala_ui)))
         gap = max(3, int(round(8 * escala_ui)))
-        total_w = len(efeitos) * raio * 2 + (len(efeitos) - 1) * gap
-        x0 = self.RectAtual.centerx - total_w // 2 + raio
-        y = self.RectAtual.bottom + max(8, int(round(18 * escala_ui)))
-        fonte_fallback = pygame.font.SysFont("arial", max(7, int(round(11 * escala_ui))), bold=True)
-        fonte_stack = pygame.font.SysFont("arial", max(7, int(round(11 * escala_ui))), bold=True)
-        fonte_tooltip = pygame.font.SysFont("arial", max(9, int(round(13 * escala_ui))), bold=True)
-        mouse = pygame.mouse.get_pos()
-        tooltip = None
+        total_w = len(efeitos) * lado + (len(efeitos) - 1) * gap
+        x0 = self.RectAtual.centerx - total_w // 2
+        y = self.RectAtual.bottom + max(8, int(round(14 * escala_ui)))
         for idx, efeito in enumerate(efeitos):
             chave = self._chave_efeito(efeito)
             t_entrada = float(self.AnimacoesEfeitos.get(chave, 1.0))
@@ -431,46 +426,15 @@ class PokemonBatalhaEstado:
             escala = max(0.0, min(1.0, t_entrada)) * (1.0 - max(0.0, min(1.0, t_saida)))
             if escala <= 0.02:
                 continue
-            cx = x0 + idx * (raio * 2 + gap)
-            r = max(2, int(raio * escala))
-            negativo = bool(efeito.get("negativo")) or str(efeito.get("tipo") or "").lower() == "negativo"
-            cor = (224, 70, 70, 220) if negativo else (72, 190, 104, 220)
-            pygame.draw.circle(surface, cor, (cx, y), r)
-            self._desenhar_borda_efeito(surface, cx, y, r, efeito, escala_ui)
+            cx = x0 + idx * (lado + gap) + lado // 2
+            tamanho = max(4, int(round(lado * escala)))
             icone = self._icone_efeito(efeito.get("nome") or efeito.get("code"))
-            if icone is not None and r > 6:
-                margem_icone = max(3, int(round(4 * escala_ui)))
-                img = pygame.transform.smoothscale(icone, (max(4, r * 2 - margem_icone * 2), max(4, r * 2 - margem_icone * 2)))
+            if icone is not None:
+                img = pygame.transform.smoothscale(icone, (tamanho, tamanho)).convert_alpha()
                 surface.blit(img, img.get_rect(center=(cx, y)))
-            else:
-                nome = str(efeito.get("nome") or efeito.get("code") or "?")
-                txt = fonte_fallback.render(nome[:2].upper(), True, (18, 24, 30))
-                surface.blit(txt, txt.get_rect(center=(cx, y)))
-            area = pygame.Rect(cx - r, y - r, r * 2, r * 2)
-            if area.collidepoint(mouse):
-                tooltip = (str(efeito.get("nome") or efeito.get("code") or "Efeito"), negativo, cx, y + r + max(4, int(round(6 * escala_ui))))
-        if tooltip is not None:
-            nome, negativo, cx, ty = tooltip
-            cor_txt = (132, 218, 255) if not negativo else (190, 126, 255)
-            txt = fonte_tooltip.render(nome, True, cor_txt)
-            fundo = pygame.Rect(0, 0, txt.get_width() + max(6, int(round(10 * escala_ui))), txt.get_height() + max(4, int(round(6 * escala_ui))))
-            fundo.midtop = (int(cx), int(ty))
-            raio_tooltip = max(4, int(round(6 * escala_ui)))
-            pygame.draw.rect(surface, (13, 16, 24, 232), fundo, border_radius=raio_tooltip)
-            pygame.draw.rect(surface, cor_txt, fundo, max(1, int(round(escala_ui))), border_radius=raio_tooltip)
-            surface.blit(txt, txt.get_rect(center=fundo.center))
-
-    def _desenhar_borda_efeito(self, surface, cx, y, r, efeito, escala_ui=1.0):
-        rect = pygame.Rect(cx - r, y - r, r * 2, r * 2)
-        largura = max(1, int(round(2 * escala_ui)))
-        pygame.draw.ellipse(surface, (245, 250, 255, 235), rect, largura)
-        pygame.draw.ellipse(surface, (12, 14, 22, 120), rect.inflate(-largura * 2, -largura * 2), max(1, largura // 2))
-        restantes = max(0, _i(efeito.get("passos_restantes"), 0))
-        if restantes > 0:
-            texto = str(restantes)
-            tamanho = max(8, int(round(11 * escala_ui)))
-            pos = (cx, y + r - max(1, int(round(2 * escala_ui))))
-            self._desenhar_texto(surface, texto, pos, tamanho, (255, 255, 255, 245), centro=True, negrito=True, contorno=(12, 14, 22, 235))
+            restantes = max(0, _i(efeito.get("passos_restantes"), 0))
+            if restantes > 0:
+                self._desenhar_texto(surface, str(restantes), (cx, y + lado // 2 + max(6, int(round(4 * escala_ui)))), max(8, int(round(11 * escala_ui))), (255, 255, 255, 245), centro=True, negrito=True, contorno=(12, 14, 22, 235))
 
     def desenhar_animacoes_status(self, surface, camera=None, arena=None):
         if self.RectAtual.width <= 0 or not self.AnimacoesStatus:
@@ -545,22 +509,14 @@ class PokemonBatalhaEstado:
     def _desenhar_texto(self, surface, texto, pos, tamanho, cor, centro=True, negrito=True, contorno=None):
         x, y = pos
         if _TextoPrefab is not None:
-            tentativas = [
-                ((str(texto), int(x), int(y), int(tamanho)), {"cor": cor}),
-                ((str(texto), int(x), int(y)), {"tamanho": int(tamanho), "cor": cor}),
-                ((str(texto),), {"x": int(x), "y": int(y), "tamanho": int(tamanho), "cor": cor}),
-            ]
-            for args, kwargs in tentativas:
-                try:
-                    obj = _TextoPrefab(*args, **kwargs)
-                    if hasattr(obj, "desenhar"):
-                        obj.desenhar(surface)
-                        return
-                    if hasattr(obj, "draw"):
-                        obj.draw(surface)
-                        return
-                except Exception:
-                    continue
+            try:
+                estilo = {"size": int(tamanho), "color": tuple(cor[:3]), "align": "center" if centro else "topleft", "outline": bool(contorno), "outline_thickness": 1, "shadow": False}
+                if contorno:
+                    estilo["outline_color"] = tuple(contorno[:3])
+                _TextoPrefab(str(texto), pos=(int(x), int(y)), style=estilo).draw(surface)
+                return
+            except Exception:
+                pass
         fonte = pygame.font.SysFont("arial", int(tamanho), bold=bool(negrito))
         txt = fonte.render(str(texto), True, tuple(cor[:3]))
         if len(cor) >= 4:

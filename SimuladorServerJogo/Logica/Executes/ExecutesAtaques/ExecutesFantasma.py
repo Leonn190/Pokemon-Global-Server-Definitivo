@@ -4,19 +4,24 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
 
 
 def _exec_selar_arcano(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Selar Arcano", "Mag", -alvo.obter_atributo("Mag") * 0.07, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("Mag") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Selar Arcano", "Mag", -valor, 6, True)
 
 
 def _exec_desorientar(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Desorientar", "Int", -alvo.obter_atributo("Int") * 0.07, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("Int") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Desorientar", "Int", -valor, 6, True)
 
 
 def _exec_azar(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Azar", "CrC", -alvo.obter_atributo("CrC") * 0.06, 6, True)
+    usuario = ctx.get("usuario")
+    return aplicar_mod_atributo(ctx, alvo, "Azar", "CrC", -(5.0 + usuario.obter_atributo("Mag") * 0.10), 6, True)
 
 
 _EXECUTES = {"selararcano": _exec_selar_arcano, "desorientar": _exec_desorientar, "azar": _exec_azar}
-_ALIASES = {"44": "selararcano", "50": "desorientar", "53": "azar"}
+_ALIASES = {"60": "selararcano", "61": "desorientar", "62": "azar"}
 
 
 def obter_executes_fantasma():

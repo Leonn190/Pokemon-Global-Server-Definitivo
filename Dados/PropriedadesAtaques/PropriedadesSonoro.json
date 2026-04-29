@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "sonoro",
   "ataques": {
-    "33": {
-      "ID": 33,
+    "76": {
+      "ID": 76,
       "nome": "Som Atordoante",
       "custo": 45,
       "estilo_logico": "alvo",

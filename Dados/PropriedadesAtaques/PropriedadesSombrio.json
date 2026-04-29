@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "sombrio",
   "ataques": {
-    "22": {
-      "ID": 22,
+    "64": {
+      "ID": 64,
       "nome": "Bola Sombria",
       "custo": 60,
       "estilo_logico": "alvo",
@@ -29,8 +29,8 @@
         "exige_area_ocupada": false
       }
     },
-    "23": {
-      "ID": 23,
+    "65": {
+      "ID": 65,
       "nome": "Nas Sombras",
       "custo": 50,
       "estilo_logico": "ativo",
@@ -48,8 +48,8 @@
         "negativo": false
       }
     },
-    "42": {
-      "ID": 42,
+    "66": {
+      "ID": 66,
       "nome": "Sussurro Sombrio",
       "custo": 25,
       "estilo_logico": "alvo",
@@ -63,7 +63,8 @@
       "parametros": {
         "tipo": "sombrio",
         "atributo": "SpD",
-        "percentual_alvo": 0.08,
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {
@@ -75,8 +76,8 @@
         "exige_area_ocupada": false
       }
     },
-    "51": {
-      "ID": 51,
+    "67": {
+      "ID": 67,
       "nome": "Sede de Sangue",
       "custo": 30,
       "estilo_logico": "ativo",
@@ -90,12 +91,12 @@
       "parametros": {
         "tipo": "sombrio",
         "atributo": "Vamp",
-        "percentual_mag": 0.08,
+        "percentual_mag": 0.25,
         "duracao": 6
       }
     },
-    "54": {
-      "ID": 54,
+    "68": {
+      "ID": 68,
       "nome": "Golpe Letal",
       "custo": 30,
       "estilo_logico": "ativo",
@@ -109,12 +110,12 @@
       "parametros": {
         "tipo": "sombrio",
         "atributo": "CrD",
-        "percentual_mag": 0.1,
+        "percentual_mag": 0.25,
         "duracao": 6
       }
     },
-    "59": {
-      "ID": 59,
+    "69": {
+      "ID": 69,
       "nome": "Silenciar",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -128,7 +129,8 @@
       "parametros": {
         "tipo": "sombrio",
         "atributo": "Amp",
-        "percentual_alvo": 0.06,
+        "valor_base": 5.0,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {
@@ -140,8 +142,8 @@
         "exige_area_ocupada": false
       }
     },
-    "63": {
-      "ID": 63,
+    "70": {
+      "ID": 70,
       "nome": "Intimidar",
       "custo": 25,
       "estilo_logico": "alvo",
@@ -155,7 +157,8 @@
       "parametros": {
         "tipo": "sombrio",
         "atributo": "Assertividade",
-        "percentual_alvo": 0.08,
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {

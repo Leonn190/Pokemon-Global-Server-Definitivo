@@ -13,7 +13,9 @@ def _exec_envenenar(ctx, alvo):
 
 
 def _exec_armadura_mole(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Armadura Mole", "Per", -alvo.obter_atributo("Per") * 0.07, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("Per") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Armadura Mole", "Per", -valor, 6, True)
 
 
 def _passiva_imunizado(ctx):
@@ -26,9 +28,9 @@ _EXECUTES = {
     "imunizado": execute_passiva_nao_manual,
 }
 _PASSIVAS_ATAQUE = [
-    {"nome": "Imunizado", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_imunizado, "origem": "ataque", "code": "77"},
+    {"nome": "Imunizado", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_imunizado, "origem": "ataque", "code": "46"},
 ]
-_ALIASES = {"26": "envenenar", "46": "armaduramole", "77": "imunizado"}
+_ALIASES = {"44": "envenenar", "45": "armaduramole", "46": "imunizado"}
 
 
 def obter_executes_veneno():

@@ -13,11 +13,13 @@ def _exec_raizes(ctx, alvo):
 
 def _exec_casco_vivo(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Casco Vivo", "Dur", usuario.obter_atributo("Mag") * 0.12, 6, False)
+    return aplicar_mod_atributo(ctx, usuario, "Casco Vivo", "Dur", usuario.obter_atributo("Mag") * 0.25, 6, False)
 
 
 def _exec_murchar(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Murchar", "Vida", -alvo.obter_atributo("Vida") * 0.06, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("Vida") * 0.08 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Murchar", "Vida", -valor, 6, True)
 
 
 def _exec_raio_solar(ctx, alvo):
@@ -30,7 +32,7 @@ _EXECUTES = {
     "murchar": _exec_murchar,
     "raiosolar": _exec_raio_solar,
 }
-_ALIASES = {"34": "raizes", "56": "cascovivo", "61": "murchar", "68": "raiosolar"}
+_ALIASES = {"34": "raizes", "35": "cascovivo", "36": "murchar", "37": "raiosolar"}
 
 
 def obter_executes_planta():

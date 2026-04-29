@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "fada",
   "ataques": {
-    "32": {
-      "ID": 32,
+    "73": {
+      "ID": 73,
       "nome": "Benção",
       "custo": 55,
       "estilo_logico": "alvo",
@@ -30,8 +30,8 @@
         "exige_area_ocupada": true
       }
     },
-    "43": {
-      "ID": 43,
+    "74": {
+      "ID": 74,
       "nome": "Canalizar",
       "custo": 35,
       "estilo_logico": "ativo",
@@ -45,12 +45,12 @@
       "parametros": {
         "tipo": "fada",
         "atributo": "Mag",
-        "percentual_mag": 0.15,
+        "percentual_mag": 0.3,
         "duracao": 6
       }
     },
-    "55": {
-      "ID": 55,
+    "75": {
+      "ID": 75,
       "nome": "Amolecer",
       "custo": 30,
       "estilo_logico": "alvo",
@@ -64,7 +64,8 @@
       "parametros": {
         "tipo": "fada",
         "atributo": "CrD",
-        "percentual_alvo": 0.06,
+        "valor_base": 5.0,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {

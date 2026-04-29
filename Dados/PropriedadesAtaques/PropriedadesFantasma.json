@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "fantasma",
   "ataques": {
-    "44": {
-      "ID": 44,
+    "60": {
+      "ID": 60,
       "nome": "Selar Arcano",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -17,7 +17,8 @@
       "parametros": {
         "tipo": "fantasma",
         "atributo": "Mag",
-        "percentual_alvo": 0.07,
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {
@@ -29,8 +30,8 @@
         "exige_area_ocupada": false
       }
     },
-    "50": {
-      "ID": 50,
+    "61": {
+      "ID": 61,
       "nome": "Desorientar",
       "custo": 30,
       "estilo_logico": "alvo",
@@ -44,7 +45,8 @@
       "parametros": {
         "tipo": "fantasma",
         "atributo": "Int",
-        "percentual_alvo": 0.07,
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {
@@ -56,8 +58,8 @@
         "exige_area_ocupada": false
       }
     },
-    "53": {
-      "ID": 53,
+    "62": {
+      "ID": 62,
       "nome": "Azar",
       "custo": 30,
       "estilo_logico": "alvo",
@@ -71,7 +73,8 @@
       "parametros": {
         "tipo": "fantasma",
         "atributo": "CrC",
-        "percentual_alvo": 0.06,
+        "valor_base": 5.0,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {

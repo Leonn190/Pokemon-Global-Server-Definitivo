@@ -29,8 +29,8 @@
         "exige_area_ocupada": false
       }
     },
-    "56": {
-      "ID": 56,
+    "35": {
+      "ID": 35,
       "nome": "Casco Vivo",
       "custo": 35,
       "estilo_logico": "ativo",
@@ -44,12 +44,12 @@
       "parametros": {
         "tipo": "planta",
         "atributo": "Dur",
-        "percentual_mag": 0.12,
+        "percentual_mag": 0.25,
         "duracao": 6
       }
     },
-    "61": {
-      "ID": 61,
+    "36": {
+      "ID": 36,
       "nome": "Murchar",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -63,9 +63,10 @@
       "parametros": {
         "tipo": "planta",
         "atributo": "Vida",
-        "percentual_alvo": 0.06,
-        "duracao": 6,
-        "rotulo_atributo": "Vida Máxima"
+        "percentual_alvo": 0.08,
+        "percentual_mag": 0.1,
+        "rotulo_atributo": "Vida M\u00e1xima",
+        "duracao": 6
       },
       "alvificacao": {
         "tipo": "area",
@@ -76,8 +77,8 @@
         "exige_area_ocupada": false
       }
     },
-    "68": {
-      "ID": 68,
+    "37": {
+      "ID": 37,
       "nome": "Raio Solar",
       "custo": 80,
       "estilo_logico": "alvo",

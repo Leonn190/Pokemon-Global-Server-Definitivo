@@ -16,25 +16,30 @@ def _exec_nas_sombras(ctx, alvo):
 
 
 def _exec_sussurro_sombrio(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Sussurro Sombrio", "SpD", -alvo.obter_atributo("SpD") * 0.08, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("SpD") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Sussurro Sombrio", "SpD", -valor, 6, True)
 
 
 def _exec_sede_de_sangue(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Sede de Sangue", "Vamp", usuario.obter_atributo("Mag") * 0.08, 6, False)
+    return aplicar_mod_atributo(ctx, usuario, "Sede de Sangue", "Vamp", usuario.obter_atributo("Mag") * 0.25, 6, False)
 
 
 def _exec_golpe_letal(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Golpe Letal", "CrD", usuario.obter_atributo("Mag") * 0.10, 6, False)
+    return aplicar_mod_atributo(ctx, usuario, "Golpe Letal", "CrD", usuario.obter_atributo("Mag") * 0.25, 6, False)
 
 
 def _exec_silenciar(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Silenciar", "Amp", -alvo.obter_atributo("Amp") * 0.06, 6, True)
+    usuario = ctx.get("usuario")
+    return aplicar_mod_atributo(ctx, alvo, "Silenciar", "Amp", -(5.0 + usuario.obter_atributo("Mag") * 0.10), 6, True)
 
 
 def _exec_intimidar(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Intimidar", "Assertividade", -alvo.obter_atributo("Assertividade") * 0.08, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("Assertividade") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Intimidar", "Assertividade", -valor, 6, True)
 
 
 _EXECUTES = {
@@ -47,8 +52,8 @@ _EXECUTES = {
     "intimidar": _exec_intimidar,
 }
 _ALIASES = {
-    "22": "bolasombria", "23": "nassombras", "42": "sussurrosombrio", "51": "sededesangue",
-    "54": "golpeletal", "59": "silenciar", "63": "intimidar",
+    "64": "bolasombria", "65": "nassombras", "66": "sussurrosombrio", "67": "sededesangue",
+    "68": "golpeletal", "69": "silenciar", "70": "intimidar",
 }
 
 

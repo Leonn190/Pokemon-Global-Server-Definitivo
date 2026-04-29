@@ -395,8 +395,8 @@
         "tipo": "normal"
       }
     },
-    "36": {
-      "ID": 36,
+    "19": {
+      "ID": 19,
       "nome": "Rugido",
       "custo": 25,
       "estilo_logico": "alvo",
@@ -410,7 +410,8 @@
       "parametros": {
         "tipo": "normal",
         "atributo": "Atk",
-        "percentual_alvo": 0.08,
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {
@@ -422,8 +423,8 @@
         "exige_area_ocupada": false
       }
     },
-    "60": {
-      "ID": 60,
+    "20": {
+      "ID": 20,
       "nome": "Inflar",
       "custo": 35,
       "estilo_logico": "ativo",
@@ -437,9 +438,10 @@
       "parametros": {
         "tipo": "normal",
         "atributo": "Vida",
-        "percentual_mag": 0.2,
-        "duracao": 6,
-        "rotulo_atributo": "Vida Máxima"
+        "percentual_mag": 0.25,
+        "percentual_usuario_atributo": 0.1,
+        "rotulo_atributo": "Vida M\u00e1xima",
+        "duracao": 6
       }
     }
   },

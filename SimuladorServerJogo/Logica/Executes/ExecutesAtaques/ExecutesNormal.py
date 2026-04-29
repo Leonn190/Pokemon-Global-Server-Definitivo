@@ -144,12 +144,15 @@ def _exec_acumulador(ctx, alvo):
 
 
 def _exec_rugido(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Rugido", "Atk", -alvo.obter_atributo("Atk") * 0.08, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("Atk") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Rugido", "Atk", -valor, 6, True)
 
 
 def _exec_inflar(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Inflar", "Vida", usuario.obter_atributo("Mag") * 0.20, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.25 + usuario.obter_atributo("Vida") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Inflar", "Vida", valor, 6, False)
 
 
 def _passiva_acumulador(ctx):
@@ -192,7 +195,7 @@ _PASSIVAS_ATAQUE = [
 ]
 
 _ALIASES = {
-    "1": "investida", "2": "biscoito", "3": "enraivecer", "4": "provocar", "5": "proteger", "6": "arranhar", "7": "recarga", "8": "energia", "9": "hiperraio", "10": "guilhotina", "11": "disparo", "12": "chifrada", "13": "resetar", "14": "tankar", "15": "estocada", "16": "bolaclimatica", "17": "hiperpresa", "18": "acumulador", "36": "rugido", "60": "inflar",
+    "1": "investida", "2": "biscoito", "3": "enraivecer", "4": "provocar", "5": "proteger", "6": "arranhar", "7": "recarga", "8": "energia", "9": "hiperraio", "10": "guilhotina", "11": "disparo", "12": "chifrada", "13": "resetar", "14": "tankar", "15": "estocada", "16": "bolaclimatica", "17": "hiperpresa", "18": "acumulador", "19": "rugido", "20": "inflar",
 }
 
 def obter_executes_normais():

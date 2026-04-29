@@ -8,7 +8,7 @@ def _exec_raio_cosmico(ctx, alvo):
 
 
 _EXECUTES = {"raiocosmico": _exec_raio_cosmico}
-_ALIASES = {"70": "raiocosmico"}
+_ALIASES = {"77": "raiocosmico"}
 
 
 def obter_executes_cosmicos():

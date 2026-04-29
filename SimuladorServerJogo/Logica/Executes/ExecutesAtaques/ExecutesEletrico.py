@@ -18,7 +18,7 @@ def _exec_energizar(ctx, alvo):
 
 def _exec_amplificar(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Amplificar", "Amp", usuario.obter_atributo("Mag") * 0.08, 6, False)
+    return aplicar_mod_atributo(ctx, usuario, "Amplificar", "Amp", usuario.obter_atributo("Mag") * 0.25, 6, False)
 
 
 def _exec_danca_eletrica(ctx, alvo):
@@ -31,7 +31,7 @@ _EXECUTES = {
     "amplificar": _exec_amplificar,
     "dancaeletrica": _exec_danca_eletrica,
 }
-_ALIASES = {"21": "bolaeletrica", "27": "energizar", "58": "amplificar", "73": "dancaeletrica"}
+_ALIASES = {"30": "bolaeletrica", "31": "energizar", "32": "amplificar", "33": "dancaeletrica"}
 
 
 def obter_executes_eletricos():

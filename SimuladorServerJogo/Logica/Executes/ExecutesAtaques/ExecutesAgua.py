@@ -18,7 +18,8 @@ def _exec_gota_pesada(ctx, alvo):
 
 def _exec_correnteza(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Correnteza", "Vel", usuario.obter_atributo("Mag") * 0.15, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("Vel") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Correnteza", "Vel", valor, 6, False)
 
 
 def _exec_danca_da_chuva(ctx, alvo):
@@ -32,7 +33,7 @@ _EXECUTES = {
     "dancadachuva": _exec_danca_da_chuva,
 }
 
-_ALIASES = {"20": "boladeagua", "24": "gotapesada", "47": "correnteza", "71": "dancadachuva"}
+_ALIASES = {"21": "boladeagua", "22": "gotapesada", "23": "correnteza", "24": "dancadachuva"}
 
 
 def obter_executes_agua():

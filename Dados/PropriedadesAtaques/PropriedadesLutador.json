@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "lutador",
   "ataques": {
-    "35": {
-      "ID": 35,
+    "41": {
+      "ID": 41,
       "nome": "Grito de Guerra",
       "custo": 25,
       "estilo_logico": "ativo",
@@ -17,31 +17,13 @@
       "parametros": {
         "tipo": "lutador",
         "atributo": "Atk",
-        "percentual_mag": 0.15,
+        "percentual_mag": 0.2,
+        "percentual_usuario_atributo": 0.1,
         "duracao": 6
       }
     },
-    "62": {
-      "ID": 62,
-      "nome": "Postura Firme",
-      "custo": 25,
-      "estilo_logico": "ativo",
-      "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
-      },
-      "execute_principal": "ataque_postura_firme",
-      "parametros": {
-        "tipo": "lutador",
-        "atributo": "Assertividade",
-        "percentual_mag": 0.15,
-        "duracao": 6
-      }
-    },
-    "76": {
-      "ID": 76,
+    "43": {
+      "ID": 43,
       "nome": "Implacável",
       "custo": 0,
       "estilo_logico": "passivo",

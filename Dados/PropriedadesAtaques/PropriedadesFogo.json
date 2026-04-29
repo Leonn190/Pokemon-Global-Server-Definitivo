@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "fogo",
   "ataques": {
-    "19": {
-      "ID": 19,
+    "25": {
+      "ID": 25,
       "nome": "Bola de Fogo",
       "custo": 60,
       "estilo_logico": "alvo",
@@ -29,8 +29,8 @@
         "exige_area_ocupada": false
       }
     },
-    "25": {
-      "ID": 25,
+    "26": {
+      "ID": 26,
       "nome": "Queimar",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -56,8 +56,8 @@
         "exige_area_ocupada": false
       }
     },
-    "37": {
-      "ID": 37,
+    "27": {
+      "ID": 27,
       "nome": "Chama Interior",
       "custo": 25,
       "estilo_logico": "ativo",
@@ -71,12 +71,13 @@
       "parametros": {
         "tipo": "fogo",
         "atributo": "SpA",
-        "percentual_mag": 0.15,
+        "percentual_mag": 0.2,
+        "percentual_usuario_atributo": 0.1,
         "duracao": 6
       }
     },
-    "66": {
-      "ID": 66,
+    "28": {
+      "ID": 28,
       "nome": "Raio de Fogo",
       "custo": 75,
       "estilo_logico": "alvo",
@@ -103,8 +104,8 @@
         "exige_area_ocupada": false
       }
     },
-    "72": {
-      "ID": 72,
+    "29": {
+      "ID": 29,
       "nome": "Dança do Sol",
       "custo": 40,
       "estilo_logico": "ativo",

@@ -29,8 +29,8 @@
         "exige_area_ocupada": false
       }
     },
-    "52": {
-      "ID": 52,
+    "39": {
+      "ID": 39,
       "nome": "Sangue Frio",
       "custo": 30,
       "estilo_logico": "ativo",
@@ -44,12 +44,12 @@
       "parametros": {
         "tipo": "gelo",
         "atributo": "CrC",
-        "percentual_mag": 0.06,
+        "percentual_mag": 0.25,
         "duracao": 6
       }
     },
-    "67": {
-      "ID": 67,
+    "40": {
+      "ID": 40,
       "nome": "Raio de Gelo",
       "custo": 75,
       "estilo_logico": "alvo",

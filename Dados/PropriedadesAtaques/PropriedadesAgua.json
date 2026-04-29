@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "agua",
   "ataques": {
-    "20": {
-      "ID": 20,
+    "21": {
+      "ID": 21,
       "nome": "Bola de Agua",
       "custo": 60,
       "estilo_logico": "alvo",
@@ -29,8 +29,8 @@
         "exige_area_ocupada": false
       }
     },
-    "24": {
-      "ID": 24,
+    "22": {
+      "ID": 22,
       "nome": "Gota Pesada",
       "custo": 40,
       "estilo_logico": "alvo",
@@ -56,8 +56,8 @@
         "exige_area_ocupada": false
       }
     },
-    "47": {
-      "ID": 47,
+    "23": {
+      "ID": 23,
       "nome": "Correnteza",
       "custo": 25,
       "estilo_logico": "ativo",
@@ -71,12 +71,13 @@
       "parametros": {
         "tipo": "agua",
         "atributo": "Vel",
-        "percentual_mag": 0.15,
+        "percentual_mag": 0.2,
+        "percentual_usuario_atributo": 0.1,
         "duracao": 6
       }
     },
-    "71": {
-      "ID": 71,
+    "24": {
+      "ID": 24,
       "nome": "Dança da Chuva",
       "custo": 40,
       "estilo_logico": "ativo",

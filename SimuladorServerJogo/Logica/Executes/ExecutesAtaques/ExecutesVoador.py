@@ -14,7 +14,8 @@ def _exec_voar(ctx, alvo):
 
 def _exec_olho_de_aguia(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Olho de \u00c1guia", "Acuracia", usuario.obter_atributo("Mag") * 0.15, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("Acuracia") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Olho de \u00c1guia", "Acuracia", valor, 6, False)
 
 
 def _passiva_voador(ctx):
@@ -27,9 +28,9 @@ _EXECUTES = {
     "voador": execute_passiva_nao_manual,
 }
 _PASSIVAS_ATAQUE = [
-    {"nome": "Voador", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_voador, "origem": "ataque", "code": "74"},
+    {"nome": "Voador", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_voador, "origem": "ataque", "code": "51"},
 ]
-_ALIASES = {"30": "voar", "64": "olhodeaguia", "74": "voador"}
+_ALIASES = {"49": "voar", "50": "olhodeaguia", "51": "voador"}
 
 
 def obter_executes_voador():

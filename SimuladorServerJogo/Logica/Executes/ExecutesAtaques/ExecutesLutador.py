@@ -9,12 +9,8 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
 
 def _exec_grito_de_guerra(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Grito de Guerra", "Atk", usuario.obter_atributo("Mag") * 0.15, 6, False)
-
-
-def _exec_postura_firme(ctx, alvo):
-    usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Postura Firme", "Assertividade", usuario.obter_atributo("Mag") * 0.15, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("Atk") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Grito de Guerra", "Atk", valor, 6, False)
 
 
 def _passiva_implacavel(ctx):
@@ -23,13 +19,12 @@ def _passiva_implacavel(ctx):
 
 _EXECUTES = {
     "gritodeguerra": _exec_grito_de_guerra,
-    "posturafirme": _exec_postura_firme,
     "implacavel": execute_passiva_nao_manual,
 }
 _PASSIVAS_ATAQUE = [
-    {"nome": "Implac\u00e1vel", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_implacavel, "origem": "ataque", "code": "76"},
+    {"nome": "Implac\u00e1vel", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_implacavel, "origem": "ataque", "code": "43"},
 ]
-_ALIASES = {"35": "gritodeguerra", "62": "posturafirme", "76": "implacavel"}
+_ALIASES = {"41": "gritodeguerra", "43": "implacavel"}
 
 
 def obter_executes_lutador():

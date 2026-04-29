@@ -19,7 +19,8 @@ def _exec_queimar(ctx, alvo):
 
 def _exec_chama_interior(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Chama Interior", "SpA", usuario.obter_atributo("Mag") * 0.15, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("SpA") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Chama Interior", "SpA", valor, 6, False)
 
 
 def _exec_raio_de_fogo(ctx, alvo):
@@ -37,7 +38,7 @@ _EXECUTES = {
     "raiodefogo": _exec_raio_de_fogo,
     "dancadosol": _exec_danca_do_sol,
 }
-_ALIASES = {"19": "boladefogo", "25": "queimar", "37": "chamainterior", "66": "raiodefogo", "72": "dancadosol"}
+_ALIASES = {"25": "boladefogo", "26": "queimar", "27": "chamainterior", "28": "raiodefogo", "29": "dancadosol"}
 
 
 def obter_executes_fogo():

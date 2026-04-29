@@ -8,7 +8,7 @@ def _exec_som_atordoante(ctx, alvo):
 
 
 _EXECUTES = {"somatordoante": _exec_som_atordoante}
-_ALIASES = {"33": "somatordoante"}
+_ALIASES = {"76": "somatordoante"}
 
 
 def obter_executes_sonoro():

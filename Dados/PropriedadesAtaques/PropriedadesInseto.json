@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "inseto",
   "ataques": {
-    "29": {
-      "ID": 29,
+    "57": {
+      "ID": 57,
       "nome": "Regeneração",
       "custo": 45,
       "estilo_logico": "alvo",
@@ -30,8 +30,8 @@
         "exige_area_ocupada": true
       }
     },
-    "48": {
-      "ID": 48,
+    "58": {
+      "ID": 58,
       "nome": "Teia Pegajosa",
       "custo": 25,
       "estilo_logico": "alvo",
@@ -45,7 +45,8 @@
       "parametros": {
         "tipo": "inseto",
         "atributo": "Vel",
-        "percentual_alvo": 0.08,
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {

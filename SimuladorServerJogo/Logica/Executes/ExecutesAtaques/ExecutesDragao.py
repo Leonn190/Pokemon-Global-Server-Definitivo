@@ -5,11 +5,12 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
 
 def _exec_escama_mistica(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Escama M\u00edstica", "SpD", usuario.obter_atributo("Mag") * 0.15, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("SpD") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Escama M\u00edstica", "SpD", valor, 6, False)
 
 
 _EXECUTES = {"escamamistica": _exec_escama_mistica}
-_ALIASES = {"41": "escamamistica"}
+_ALIASES = {"63": "escamamistica"}
 
 
 def obter_executes_dragao():

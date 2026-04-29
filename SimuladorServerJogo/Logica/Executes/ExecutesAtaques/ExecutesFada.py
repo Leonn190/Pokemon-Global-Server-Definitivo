@@ -9,15 +9,16 @@ def _exec_bencao(ctx, alvo):
 
 def _exec_canalizar(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Canalizar", "Mag", usuario.obter_atributo("Mag") * 0.15, 6, False)
+    return aplicar_mod_atributo(ctx, usuario, "Canalizar", "Mag", usuario.obter_atributo("Mag") * 0.30, 6, False)
 
 
 def _exec_amolecer(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Amolecer", "CrD", -alvo.obter_atributo("CrD") * 0.06, 6, True)
+    usuario = ctx.get("usuario")
+    return aplicar_mod_atributo(ctx, alvo, "Amolecer", "CrD", -(5.0 + usuario.obter_atributo("Mag") * 0.10), 6, True)
 
 
 _EXECUTES = {"bencao": _exec_bencao, "canalizar": _exec_canalizar, "amolecer": _exec_amolecer}
-_ALIASES = {"32": "bencao", "43": "canalizar", "55": "amolecer"}
+_ALIASES = {"73": "bencao", "74": "canalizar", "75": "amolecer"}
 
 
 def obter_executes_fada():

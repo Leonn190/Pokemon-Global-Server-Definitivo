@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "eletrico",
   "ataques": {
-    "21": {
-      "ID": 21,
+    "30": {
+      "ID": 30,
       "nome": "Bola Eletrica",
       "custo": 60,
       "estilo_logico": "alvo",
@@ -29,8 +29,8 @@
         "exige_area_ocupada": false
       }
     },
-    "27": {
-      "ID": 27,
+    "31": {
+      "ID": 31,
       "nome": "Energizar",
       "custo": 45,
       "estilo_logico": "alvo",
@@ -57,8 +57,8 @@
         "exige_area_ocupada": true
       }
     },
-    "58": {
-      "ID": 58,
+    "32": {
+      "ID": 32,
       "nome": "Amplificar",
       "custo": 40,
       "estilo_logico": "ativo",
@@ -72,12 +72,12 @@
       "parametros": {
         "tipo": "eletrico",
         "atributo": "Amp",
-        "percentual_mag": 0.08,
+        "percentual_mag": 0.25,
         "duracao": 6
       }
     },
-    "73": {
-      "ID": 73,
+    "33": {
+      "ID": 33,
       "nome": "Dança Elétrica",
       "custo": 55,
       "estilo_logico": "ativo",

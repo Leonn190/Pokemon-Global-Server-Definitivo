@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "dragao",
   "ataques": {
-    "41": {
-      "ID": 41,
+    "63": {
+      "ID": 63,
       "nome": "Escama Mística",
       "custo": 25,
       "estilo_logico": "ativo",

@@ -19,7 +19,8 @@ def _exec_flutuar(ctx, alvo):
 
 def _exec_instinto(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Instinto", "Int", usuario.obter_atributo("Mag") * 0.15, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("Int") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Instinto", "Int", valor, 6, False)
 
 
 def _exec_raio_psiquico(ctx, alvo):
@@ -38,9 +39,9 @@ _EXECUTES = {
     "flutuante": execute_passiva_nao_manual,
 }
 _PASSIVAS_ATAQUE = [
-    {"nome": "Flutuante", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_flutuante, "origem": "ataque", "code": "75"},
+    {"nome": "Flutuante", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_flutuante, "origem": "ataque", "code": "56"},
 ]
-_ALIASES = {"28": "confusao", "31": "flutuar", "49": "instinto", "69": "raiopsiquico", "75": "flutuante"}
+_ALIASES = {"52": "confusao", "53": "flutuar", "54": "instinto", "55": "raiopsiquico", "56": "flutuante"}
 
 
 def obter_executes_psiquicos():

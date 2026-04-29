@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "terra",
   "ataques": {
-    "57": {
-      "ID": 57,
+    "47": {
+      "ID": 47,
       "nome": "Rachar Terra",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -17,7 +17,8 @@
       "parametros": {
         "tipo": "terra",
         "atributo": "Dur",
-        "percentual_alvo": 0.06,
+        "valor_base": 5.0,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {
@@ -29,8 +30,8 @@
         "exige_area_ocupada": false
       }
     },
-    "65": {
-      "ID": 65,
+    "48": {
+      "ID": 48,
       "nome": "Poeira nos Olhos",
       "custo": 25,
       "estilo_logico": "alvo",
@@ -44,9 +45,10 @@
       "parametros": {
         "tipo": "terra",
         "atributo": "Acuracia",
-        "percentual_alvo": 0.08,
-        "duracao": 6,
-        "rotulo_atributo": "Acurácia"
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
+        "rotulo_atributo": "Acur\u00e1cia",
+        "duracao": 6
       },
       "alvificacao": {
         "tipo": "area",

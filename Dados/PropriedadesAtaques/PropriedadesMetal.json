@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "metal",
   "ataques": {
-    "40": {
-      "ID": 40,
+    "71": {
+      "ID": 71,
       "nome": "Ferrugem",
       "custo": 25,
       "estilo_logico": "alvo",
@@ -17,7 +17,8 @@
       "parametros": {
         "tipo": "metal",
         "atributo": "Def",
-        "percentual_alvo": 0.08,
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {
@@ -29,8 +30,8 @@
         "exige_area_ocupada": false
       }
     },
-    "45": {
-      "ID": 45,
+    "72": {
+      "ID": 72,
       "nome": "Afiar",
       "custo": 35,
       "estilo_logico": "ativo",
@@ -44,7 +45,8 @@
       "parametros": {
         "tipo": "metal",
         "atributo": "Per",
-        "percentual_mag": 0.15,
+        "percentual_mag": 0.2,
+        "percentual_usuario_atributo": 0.1,
         "duracao": 6
       }
     }

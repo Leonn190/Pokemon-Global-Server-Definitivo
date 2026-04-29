@@ -4,12 +4,14 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
 
 
 def _exec_nevoa_fria(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "N\u00e9voa Fria", "SpA", -alvo.obter_atributo("SpA") * 0.08, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("SpA") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "N\u00e9voa Fria", "SpA", -valor, 6, True)
 
 
 def _exec_sangue_frio(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Sangue Frio", "CrC", usuario.obter_atributo("Mag") * 0.06, 6, False)
+    return aplicar_mod_atributo(ctx, usuario, "Sangue Frio", "CrC", usuario.obter_atributo("Mag") * 0.25, 6, False)
 
 
 def _exec_raio_de_gelo(ctx, alvo):
@@ -17,7 +19,7 @@ def _exec_raio_de_gelo(ctx, alvo):
 
 
 _EXECUTES = {"nevoafria": _exec_nevoa_fria, "sanguefrio": _exec_sangue_frio, "raiodegelo": _exec_raio_de_gelo}
-_ALIASES = {"38": "nevoafria", "52": "sanguefrio", "67": "raiodegelo"}
+_ALIASES = {"38": "nevoafria", "39": "sanguefrio", "40": "raiodegelo"}
 
 
 def obter_executes_gelo():

@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "voador",
   "ataques": {
-    "30": {
-      "ID": 30,
+    "49": {
+      "ID": 49,
       "nome": "Voar",
       "custo": 50,
       "estilo_logico": "ativo",
@@ -21,8 +21,8 @@
         "negativo": false
       }
     },
-    "64": {
-      "ID": 64,
+    "50": {
+      "ID": 50,
       "nome": "Olho de Águia",
       "custo": 25,
       "estilo_logico": "ativo",
@@ -41,8 +41,8 @@
         "rotulo_atributo": "Acurácia"
       }
     },
-    "74": {
-      "ID": 74,
+    "51": {
+      "ID": 51,
       "nome": "Voador",
       "custo": 0,
       "estilo_logico": "passivo",

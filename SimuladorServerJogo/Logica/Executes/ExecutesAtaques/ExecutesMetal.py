@@ -4,16 +4,19 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
 
 
 def _exec_ferrugem(ctx, alvo):
-    return aplicar_mod_atributo(ctx, alvo, "Ferrugem", "Def", -alvo.obter_atributo("Def") * 0.08, 6, True)
+    usuario = ctx.get("usuario")
+    valor = alvo.obter_atributo("Def") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Ferrugem", "Def", -valor, 6, True)
 
 
 def _exec_afiar(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_mod_atributo(ctx, usuario, "Afiar", "Per", usuario.obter_atributo("Mag") * 0.15, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("Per") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Afiar", "Per", valor, 6, False)
 
 
 _EXECUTES = {"ferrugem": _exec_ferrugem, "afiar": _exec_afiar}
-_ALIASES = {"40": "ferrugem", "45": "afiar"}
+_ALIASES = {"71": "ferrugem", "72": "afiar"}
 
 
 def obter_executes_metal():

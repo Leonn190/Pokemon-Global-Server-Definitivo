@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tipo": "venenoso",
   "ataques": {
-    "26": {
-      "ID": 26,
+    "44": {
+      "ID": 44,
       "nome": "Envenenar",
       "custo": 40,
       "estilo_logico": "alvo",
@@ -29,8 +29,8 @@
         "exige_area_ocupada": false
       }
     },
-    "46": {
-      "ID": 46,
+    "45": {
+      "ID": 45,
       "nome": "Armadura Mole",
       "custo": 35,
       "estilo_logico": "alvo",
@@ -44,7 +44,8 @@
       "parametros": {
         "tipo": "venenoso",
         "atributo": "Per",
-        "percentual_alvo": 0.07,
+        "percentual_alvo": 0.1,
+        "percentual_mag": 0.1,
         "duracao": 6
       },
       "alvificacao": {
@@ -56,8 +57,8 @@
         "exige_area_ocupada": false
       }
     },
-    "77": {
-      "ID": 77,
+    "46": {
+      "ID": 46,
       "nome": "Imunizado",
       "custo": 0,
       "estilo_logico": "passivo",

@@ -1,78 +1,77 @@
 Ataque,Custo Nivel 1,Custo Nivel 2,Custo Nivel 3,Tipo,Estilo,Descrição Nivel 1,Descrição Nivel 2,Descrição Nivel 3,Code
-Investida,30,45,60,normal,alvo,Causa (120% de Atk) como dano normal. O usuário recebe (20% do dano causado).,Causa (145% de Atk) como dano normal. O usuário recebe (20% do dano causado).,Causa (175% de Atk) como dano normal. O usuário recebe (20% do dano causado).,1
-Biscoito,30,45,65,normal,alvo,"Cura o alvo em (55% de Mag), aplica 1 stack no alvo e no usuário, e cada stack no alvo aumenta a cura em (+10% de Mag). Se for crítico, cada stack aumenta a cura em (+15% de Mag).","Cura o alvo em (70% de Mag), aplica 1 stack no alvo e no usuário, e cada stack no alvo aumenta a cura em (+12% de Mag). Se for crítico, cada stack aumenta a cura em (+18% de Mag).","Cura o alvo em (90% de Mag), aplica 2 stacks no alvo e no usuário, e cada stack no alvo aumenta a cura em (+15% de Mag). Se for crítico, cada stack aumenta a cura em (+22% de Mag).",2
-Enraivecer,20,35,50,normal,ativa,"Se a Vida estiver abaixo de 40%, o usuário ganha Amplificado.","Se a Vida estiver abaixo de 50%, o usuário ganha Amplificado.","Se a Vida estiver abaixo de 60%, o usuário ganha Amplificado.",3
+Investida,30,45,60,normal,alvo,Causa (120% de Atk) como dano normal. O usuário recebe (20% do dano causado).,,,1
+Biscoito,30,45,65,normal,alvo,"Cura o alvo em (55% de Mag), aplica 1 stack no alvo e no usuário, e cada stack no alvo aumenta a cura em (+10% de Mag). Se for crítico, cada stack aumenta a cura em (+15% de Mag).",,,2
+Enraivecer,20,35,50,normal,ativa,"Se a Vida estiver abaixo de 40%, o usuário ganha Amplificado.",,,3
 Provocar,25,,,normal,ativa,O usuário ganha Provocando.,,,4
 Proteger,40,,,normal,alvo,O alvo fica Protegido.,,,5
-Arranhar,35,50,65,normal,alvo,Causa (135% de Atk) como dano normal.,Causa (160% de Atk) como dano normal.,Causa (190% de Atk) como dano normal.,6
+Arranhar,35,50,65,normal,alvo,Causa (135% de Atk) como dano normal.,,,6
 Recarga,20,30,45,normal,ativa,Recupera (200% da Ene gasta neste ataque).,,,7
-Energia,30,45,65,normal,alvo,Causa (115% de SpA) como dano especial.,Causa (140% de SpA) como dano especial.,Causa (170% de SpA) como dano especial.,8
-Hiper Raio,90,120,155,normal,alvo,"Causa (150% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.","Causa (190% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.","Causa (240% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",9
-Guilhotina,75,105,140,normal,alvo,"Causa (80% de Atk) como dano normal. Se for crítico, executa inimigos com menos de 25% da Vida.","Causa (105% de Atk) como dano normal. Se for crítico, executa inimigos com menos de 25% da Vida.","Causa (135% de Atk) como dano normal. Se for crítico, executa inimigos com menos de 30% da Vida.",10
-Disparo,25,40,55,normal,alvo,Causa (100% de Atk) como dano normal.,Causa (125% de Atk) como dano normal.,Causa (155% de Atk) como dano normal.,11
-Chifrada,45,65,90,normal,alvo,Causa (90% de Atk) + (40% de Per) como dano normal.,Causa (105% de Atk) + (55% de Per) como dano normal.,Causa (125% de Atk) + (75% de Per) como dano normal.,12
-Resetar,60,80,110,normal,alvo,Remove todas as variações permanentes de atributos do alvo.,Remove todas as variações permanentes de atributos do alvo e remove 1 efeito positivo do alvo.,Remove todas as variações permanentes de atributos do alvo e remove 2 efeitos positivos do alvo.,13
-Tankar,55,75,100,normal,ativa,"O usuário ganha Fortificado e recebe (20% de Mag) na sua menor defesa. Se for crítico, também ganha uma barreira equivalente a (20% de Mag).","O usuário ganha Fortificado e recebe (30% de Mag) na sua menor defesa. Se for crítico, também ganha uma barreira equivalente a (30% de Mag).","O usuário ganha Fortificado e recebe (45% de Mag) na sua menor defesa. Se for crítico, também ganha uma barreira equivalente a (45% de Mag).",14
-Estocada,40,55,75,normal,alvo,"Causa (105% de Atk) como dano normal. Se for o primeiro ataque do turno, causa +25% de dano.","Causa (125% de Atk) como dano normal. Se for o primeiro ataque do turno, causa +30% de dano.","Causa (150% de Atk) como dano normal. Se for o primeiro ataque do turno, causa +40% de dano.",15
-Bola Climática,60,85,115,normal,alvo,"Causa (105% de SpA) como dano especial. Se houver clima ativo, causa (130% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos em áreas adjacentes.","Causa (125% de SpA) como dano especial. Se houver clima ativo, causa (160% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos em áreas adjacentes.","Causa (150% de SpA) como dano especial. Se houver clima ativo, causa (195% de SpA) como dano especial. Também causa (60% do dano causado) a inimigos em áreas adjacentes.",16
-Hiper Presa,45,65,90,normal,alvo,"Causa (140% de Atk) como dano normal. Se for crítico, o alvo recua. Este ataque não pode ultrapassar 80% de CrC.","Causa (165% de Atk) como dano normal. Se for crítico, o alvo recua. Este ataque não pode ultrapassar 80% de CrC.","Causa (195% de Atk) como dano normal. Se for crítico, o alvo recua. Este ataque não pode ultrapassar 80% de CrC.",17
-Acumulador,0,0,0,normal,passivo,O usuário ganha +4 de Amplificação toda vez que é atacado.,O usuário ganha +5 de Amplificação toda vez que é atacado.,O usuário ganha +6 de Amplificação toda vez que é atacado.,18
-Bola de Fogo,60,85,110,fogo,alvo,Causa (105% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,Causa (130% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,Causa (160% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,19
-Bola de Agua,60,85,110,agua,alvo,Causa (105% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,Causa (130% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,Causa (160% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,20
-Bola Eletrica,60,85,110,eletrico,alvo,Causa (105% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,Causa (130% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,Causa (160% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,21
-Bola Sombria,60,85,110,sombrio,alvo,Causa (105% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,Causa (130% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,Causa (160% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,22
-Nas Sombras,50,,,sombrio,ativa,O usuário fica Furtivo.,,,23
-Gota Pesada,40,,,agua,alvo,Aplica Encharcado no inimigo.,,,24
-Queimar,35,,,fogo,alvo,Aplica Queimado no inimigo.,,,25
-Envenenar,40,,,venenoso,alvo,Aplica Envenenado no inimigo.,,,26
-Energizar,45,,,eletrico,alvo,O alvo fica Energizado.,,,27
-Confusão,45,,,psiquico,alvo,Aplica Confuso no inimigo.,,,28
-Regeneração,45,,,inseto,alvo,O alvo recebe Regeneração.,,,29
-Voar,50,,,voador,ativa,O usuário fica Voando.,,,30
-Flutuar,40,,,psiquico,ativa,O usuário fica Flutuando.,,,31
-Benção,55,,,fada,alvo,O alvo fica Abençoado.,,,32
-Som Atordoante,45,,,sonoro,alvo,Aplica Atordoado no inimigo.,,,33
+Energia,30,45,65,normal,alvo,Causa (115% de SpA) como dano especial.,,,8
+Hiper Raio,90,120,155,normal,alvo,"Causa (150% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",,,9
+Guilhotina,75,105,140,normal,alvo,"Causa (80% de Atk) como dano normal. Se for crítico, executa inimigos com menos de 25% da Vida.",,,10
+Disparo,25,40,55,normal,alvo,Causa (100% de Atk) como dano normal.,,,11
+Chifrada,45,65,90,normal,alvo,Causa (90% de Atk) + (40% de Per) como dano normal.,,,12
+Resetar,60,80,110,normal,alvo,Remove todas as variações permanentes de atributos do alvo.,,,13
+Tankar,55,75,100,normal,ativa,"O usuário ganha Fortificado e recebe (20% de Mag) na sua menor defesa. Se for crítico, também ganha uma barreira equivalente a (20% de Mag).",,,14
+Estocada,40,55,75,normal,alvo,"Causa (105% de Atk) como dano normal. Se for o primeiro ataque do turno, causa +25% de dano.",,,15
+Bola Climática,60,85,115,normal,alvo,"Causa (105% de SpA) como dano especial. Se houver clima ativo, causa (130% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos em áreas adjacentes.",,,16
+Hiper Presa,45,65,90,normal,alvo,"Causa (140% de Atk) como dano normal. Se for crítico, o alvo recua. Este ataque não pode ultrapassar 80% de CrC.",,,17
+Acumulador,0,0,0,normal,passivo,O usuário ganha +4 de Amplificação toda vez que é atacado.,,,18
+Rugido,25,35,50,normal,alvo,O inimigo perde (10% de Atk do alvo) + (10% da Mag do usuário) em Atk.,,,19
+Inflar,35,50,70,normal,ativa,O usuário ganha (25% de Mag) + (10% da Vida Máxima) em Vida Máxima.,,,20
+Bola de Agua,60,85,110,agua,alvo,Causa (105% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,,,21
+Gota Pesada,40,,,agua,alvo,Aplica Encharcado no inimigo.,,,22
+Correnteza,25,35,50,agua,ativa,O usuário ganha (20% de Mag) + (10% de Vel) em Vel.,,,23
+Dança da Chuva,40,,,agua,ativa,Muda o clima para Chuva.,,,24
+Bola de Fogo,60,85,110,fogo,alvo,Causa (105% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,,,25
+Queimar,35,,,fogo,alvo,Aplica Queimado no inimigo.,,,26
+Chama Interior,25,35,50,fogo,ativa,O usuário ganha (20% de Mag) + (10% de SpA) em SpA.,,,27
+Raio de Fogo,75,105,135,fogo,alvo,"Causa (130% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",,,28
+Dança do Sol,40,,,fogo,ativa,Muda o clima para Sol Forte.,,,29
+Bola Eletrica,60,85,110,eletrico,alvo,Causa (105% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,,,30
+Energizar,45,,,eletrico,alvo,O alvo fica Energizado.,,,31
+Amplificar,40,55,75,eletrico,ativa,O usuário ganha (25% de Mag) em Amp.,,,32
+Dança Elétrica,55,,,eletrico,ativa,Muda o clima para Tempestade Elétrica.,,,33
 Raizes,50,,,planta,alvo,Aplica Enraizado no inimigo.,,,34
-Grito de Guerra,25,35,50,lutador,ativa,O usuário ganha (15% de Mag) em Atk.,O usuário ganha (25% de Mag) em Atk.,O usuário ganha (35% de Mag) em Atk.,35
-Rugido,25,35,50,normal,alvo,O inimigo perde 8% de Atk.,O inimigo perde 12% de Atk.,O inimigo perde 18% de Atk.,36
-Chama Interior,25,35,50,fogo,ativa,O usuário ganha (15% de Mag) em SpA.,O usuário ganha (25% de Mag) em SpA.,O usuário ganha (35% de Mag) em SpA.,37
-Névoa Fria,25,35,50,gelo,alvo,O inimigo perde 8% de SpA.,O inimigo perde 12% de SpA.,O inimigo perde 18% de SpA.,38
-Casca de Pedra,25,35,50,rocha,ativa,O usuário ganha (15% de Mag) em Def.,O usuário ganha (25% de Mag) em Def.,O usuário ganha (35% de Mag) em Def.,39
-Ferrugem,25,35,50,metal,alvo,O inimigo perde 8% de Def.,O inimigo perde 12% de Def.,O inimigo perde 18% de Def.,40
-Escama Mística,25,35,50,dragao,ativa,O usuário ganha (15% de Mag) em SpD.,O usuário ganha (25% de Mag) em SpD.,O usuário ganha (35% de Mag) em SpD.,41
-Sussurro Sombrio,25,35,50,sombrio,alvo,O inimigo perde 8% de SpD.,O inimigo perde 12% de SpD.,O inimigo perde 18% de SpD.,42
-Canalizar,35,50,70,fada,ativa,O usuário ganha (15% de Mag) em Mag.,O usuário ganha (25% de Mag) em Mag.,O usuário ganha (35% de Mag) em Mag.,43
-Selar Arcano,35,50,70,fantasma,alvo,O inimigo perde 7% de Mag.,O inimigo perde 11% de Mag.,O inimigo perde 16% de Mag.,44
-Afiar,35,50,70,metal,ativa,O usuário ganha (15% de Mag) em Per.,O usuário ganha (25% de Mag) em Per.,O usuário ganha (35% de Mag) em Per.,45
-Armadura Mole,35,50,70,venenoso,alvo,O inimigo perde 7% de Per.,O inimigo perde 11% de Per.,O inimigo perde 16% de Per.,46
-Correnteza,25,35,50,agua,ativa,O usuário ganha (15% de Mag) em Vel.,O usuário ganha (25% de Mag) em Vel.,O usuário ganha (35% de Mag) em Vel.,47
-Teia Pegajosa,25,35,50,inseto,alvo,O inimigo perde 8% de Vel.,O inimigo perde 12% de Vel.,O inimigo perde 18% de Vel.,48
-Instinto,30,45,60,psiquico,ativa,O usuário ganha (15% de Mag) em Int.,O usuário ganha (25% de Mag) em Int.,O usuário ganha (35% de Mag) em Int.,49
-Desorientar,30,45,60,fantasma,alvo,O inimigo perde 7% de Int.,O inimigo perde 11% de Int.,O inimigo perde 16% de Int.,50
-Sede de Sangue,30,45,60,sombrio,ativa,O usuário ganha (8% de Mag) em Vamp.,O usuário ganha (13% de Mag) em Vamp.,O usuário ganha (20% de Mag) em Vamp.,51
-Sangue Frio,30,45,60,gelo,ativa,O usuário ganha (6% de Mag) em CrC.,O usuário ganha (10% de Mag) em CrC.,O usuário ganha (16% de Mag) em CrC.,52
-Azar,30,45,60,fantasma,alvo,O inimigo perde 6% de CrC.,O inimigo perde 10% de CrC.,O inimigo perde 15% de CrC.,53
-Golpe Letal,30,45,60,sombrio,ativa,O usuário ganha (10% de Mag) em CrD.,O usuário ganha (18% de Mag) em CrD.,O usuário ganha (28% de Mag) em CrD.,54
-Amolecer,30,45,60,fada,alvo,O inimigo perde 6% de CrD.,O inimigo perde 10% de CrD.,O inimigo perde 15% de CrD.,55
-Casco Vivo,35,50,70,planta,ativa,O usuário ganha (12% de Mag) em Dur.,O usuário ganha (20% de Mag) em Dur.,O usuário ganha (32% de Mag) em Dur.,56
-Rachar Terra,35,50,70,terra,alvo,O inimigo perde 6% de Dur.,O inimigo perde 10% de Dur.,O inimigo perde 15% de Dur.,57
-Amplificar,40,55,75,eletrico,ativa,O usuário ganha (8% de Mag) em Amp.,O usuário ganha (14% de Mag) em Amp.,O usuário ganha (22% de Mag) em Amp.,58
-Silenciar,35,50,70,sombrio,alvo,O inimigo perde 6% de Amp.,O inimigo perde 10% de Amp.,O inimigo perde 15% de Amp.,59
-Inflar,35,50,70,normal,ativa,O usuário ganha (20% de Mag) em Vida Máxima.,O usuário ganha (30% de Mag) em Vida Máxima.,O usuário ganha (45% de Mag) em Vida Máxima.,60
-Murchar,35,50,70,planta,alvo,O inimigo perde 6% de Vida Máxima.,O inimigo perde 10% de Vida Máxima.,O inimigo perde 15% de Vida Máxima.,61
-Postura Firme,25,35,50,lutador,ativa,O usuário ganha (15% de Mag) em Assertividade.,O usuário ganha (25% de Mag) em Assertividade.,O usuário ganha (35% de Mag) em Assertividade.,62
-Intimidar,25,35,50,sombrio,alvo,O inimigo perde 8% de Assertividade.,O inimigo perde 12% de Assertividade.,O inimigo perde 18% de Assertividade.,63
-Olho de Águia,25,35,50,voador,ativa,O usuário ganha (15% de Mag) em Acurácia.,O usuário ganha (25% de Mag) em Acurácia.,O usuário ganha (35% de Mag) em Acurácia.,64
-Poeira nos Olhos,25,35,50,terra,alvo,O inimigo perde 8% de Acurácia.,O inimigo perde 12% de Acurácia.,O inimigo perde 18% de Acurácia.,65
-Raio de Fogo,75,105,135,fogo,alvo,"Causa (130% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.","Causa (165% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (13% de SpA) do dano deste ataque.","Causa (210% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (10% de SpA) do dano deste ataque.",66
-Raio de Gelo,75,105,135,gelo,alvo,"Causa (130% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.","Causa (165% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (13% de SpA) do dano deste ataque.","Causa (210% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (10% de SpA) do dano deste ataque.",67
-Raio Solar,80,110,145,planta,alvo,"Causa (130% de SpA) como dano especial em linha. Se o clima for Sol Forte, causa (160% de SpA). Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.","Causa (165% de SpA) como dano especial em linha. Se o clima for Sol Forte, causa (205% de SpA). Para cada alvo atingido, reduz (13% de SpA) do dano deste ataque.","Causa (210% de SpA) como dano especial em linha. Se o clima for Sol Forte, causa (260% de SpA). Para cada alvo atingido, reduz (10% de SpA) do dano deste ataque.",68
-Raio Psíquico,75,105,135,psiquico,alvo,"Causa (130% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.","Causa (165% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (13% de SpA) do dano deste ataque.","Causa (210% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (10% de SpA) do dano deste ataque.",69
-Raio Cósmico,90,120,155,cosmico,alvo,"Causa (145% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (12% de SpA) do dano deste ataque.","Causa (185% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (10% de SpA) do dano deste ataque.","Causa (235% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (8% de SpA) do dano deste ataque.",70
-Dança da Chuva,40,,,agua,ativa,Muda o clima para Chuva.,,,71
-Dança do Sol,40,,,fogo,ativa,Muda o clima para Sol Forte.,,,72
-Dança Elétrica,55,,,eletrico,ativa,Muda o clima para Tempestade Elétrica.,,,73
-Voador,0,,,voador,passivo,O usuário recebe Voando de forma permanente.,,,74
-Flutuante,0,,,psiquico,passivo,O usuário recebe Flutuando de forma permanente.,,,75
-Implacável,0,,,lutador,passivo,O usuário recebe Imparável de forma permanente.,,,76
-Imunizado,0,,,venenoso,passivo,O usuário recebe Imunizado de forma permanente.,,,77
+Casco Vivo,35,50,70,planta,ativa,O usuário ganha (25% de Mag) em Dur.,,,35
+Murchar,35,50,70,planta,alvo,O inimigo perde (8% da Vida Máxima do alvo) + (10% da Mag do usuário) em Vida Máxima.,,,36
+Raio Solar,80,110,145,planta,alvo,"Causa (130% de SpA) como dano especial em linha. Se o clima for Sol Forte, causa (160% de SpA). Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",,,37
+Névoa Fria,25,35,50,gelo,alvo,O inimigo perde (10% de SpA do alvo) + (10% da Mag do usuário) em SpA.,,,38
+Sangue Frio,30,45,60,gelo,ativa,O usuário ganha (25% de Mag) em CrC.,,,39
+Raio de Gelo,75,105,135,gelo,alvo,"Causa (130% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",,,40
+Grito de Guerra,25,35,50,lutador,ativa,O usuário ganha (20% de Mag) + (10% de Atk) em Atk.,,,41
+Implacável,0,,,lutador,passivo,O usuário recebe Imparável de forma permanente.,,,43
+Envenenar,40,,,venenoso,alvo,Aplica Envenenado no inimigo.,,,44
+Armadura Mole,35,50,70,venenoso,alvo,O inimigo perde (10% de Per do alvo) + (10% da Mag do usuário) em Per.,,,45
+Imunizado,0,,,venenoso,passivo,O usuário recebe Imunizado de forma permanente.,,,46
+Rachar Terra,35,50,70,terra,alvo,O inimigo perde (5) + (10% da Mag do usuário) em Dur.,,,47
+Poeira nos Olhos,25,35,50,terra,alvo,O inimigo perde (10% da Acurácia do alvo) + (10% da Mag do usuário) em Acurácia.,,,48
+Voar,50,,,voador,ativa,O usuário fica Voando.,,,49
+Olho de Águia,25,35,50,voador,ativa,O usuário ganha (20% de Mag) + (10% da Acurácia) em Acurácia.,,,50
+Voador,0,,,voador,passivo,O usuário recebe Voando de forma permanente.,,,51
+Confusão,45,,,psiquico,alvo,Aplica Confuso no inimigo.,,,52
+Flutuar,40,,,psiquico,ativa,O usuário fica Flutuando.,,,53
+Instinto,30,45,60,psiquico,ativa,O usuário ganha (20% de Mag) + (10% de Int) em Int.,,,54
+Raio Psíquico,75,105,135,psiquico,alvo,"Causa (130% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",,,55
+Flutuante,0,,,psiquico,passivo,O usuário recebe Flutuando de forma permanente.,,,56
+Regeneração,45,,,inseto,alvo,O alvo recebe Regeneração.,,,57
+Teia Pegajosa,25,35,50,inseto,alvo,O inimigo perde (10% de Vel do alvo) + (10% da Mag do usuário) em Vel.,,,58
+Casca de Pedra,25,35,50,rocha,ativa,O usuário ganha (20% de Mag) + (10% de Def) em Def.,,,59
+Selar Arcano,35,50,70,fantasma,alvo,O inimigo perde (10% de Mag do alvo) + (10% da Mag do usuário) em Mag.,,,60
+Desorientar,30,45,60,fantasma,alvo,O inimigo perde (10% de Int do alvo) + (10% da Mag do usuário) em Int.,,,61
+Azar,30,45,60,fantasma,alvo,O inimigo perde (5) + (10% da Mag do usuário) em CrC.,,,62
+Escama Mística,25,35,50,dragao,ativa,O usuário ganha (20% de Mag) + (10% de SpD) em SpD.,,,63
+Bola Sombria,60,85,110,sombrio,alvo,Causa (105% de SpA) como dano especial. Também causa (50% do dano causado) a inimigos adjacentes ao alvo.,,,64
+Nas Sombras,50,,,sombrio,ativa,O usuário fica Furtivo.,,,65
+Sussurro Sombrio,25,35,50,sombrio,alvo,O inimigo perde (10% de SpD do alvo) + (10% da Mag do usuário) em SpD.,,,66
+Sede de Sangue,30,45,60,sombrio,ativa,O usuário ganha (25% de Mag) em Vamp.,,,67
+Golpe Letal,30,45,60,sombrio,ativa,O usuário ganha (25% de Mag) em CrD.,,,68
+Silenciar,35,50,70,sombrio,alvo,O inimigo perde (5) + (10% da Mag do usuário) em Amp.,,,69
+Intimidar,25,35,50,sombrio,alvo,O inimigo perde (10% da Assertividade do alvo) + (10% da Mag do usuário) em Assertividade.,,,70
+Ferrugem,25,35,50,metal,alvo,O inimigo perde (10% de Def do alvo) + (10% da Mag do usuário) em Def.,,,71
+Afiar,35,50,70,metal,ativa,O usuário ganha (20% de Mag) + (10% de Per) em Per.,,,72
+Benção,55,,,fada,alvo,O alvo fica Abençoado.,,,73
+Canalizar,35,50,70,fada,ativa,O usuário ganha (20% de Mag) + (10% de Mag) em Mag.,,,74
+Amolecer,30,45,60,fada,alvo,O inimigo perde (5) + (10% da Mag do usuário) em CrD.,,,75
+Som Atordoante,45,,,sonoro,alvo,Aplica Atordoado no inimigo.,,,76
+Raio Cósmico,75,105,135,cosmico,alvo,"Causa (130% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",,,77

@@ -1,3 +1,7 @@
+# =========================
+# SERVIDOR / SAVES / ESTADO
+# =========================
+
 SimuladorServerJogo/EstadoMundo/
 
 ServerList/
@@ -11,9 +15,50 @@ EstadoServidor/
 EstadosServidor/
 EstadoServidor.json
 
+
+# =========================
+# PYTHON
+# =========================
+
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
 Outros/ConfigFixa.py
+
+
+# =========================
+# SITE / ASTRO / NODE
+# =========================
+
+Site/node_modules/
+Site/dist/
+Site/.astro/
+
+Site/.vite/
+Site/.cache/
+
+Site/npm-debug.log*
+Site/yarn-debug.log*
+Site/yarn-error.log*
+Site/pnpm-debug.log*
+
+Site/.env
+Site/.env.local
+Site/.env.development.local
+Site/.env.test.local
+Site/.env.production.local
+
+
+# =========================
+# EDITORES / SISTEMA
+# =========================
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+.DS_Store
+Thumbs.db
+desktop.ini

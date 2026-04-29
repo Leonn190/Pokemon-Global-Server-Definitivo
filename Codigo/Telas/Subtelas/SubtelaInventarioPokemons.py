@@ -10,6 +10,7 @@ from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.Geradores.Doce import Doce
 from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Paineis.Container import Container
 from Codigo.Paineis.PainelAuxiliarPoke import PainelAuxiliarPoke
@@ -1054,7 +1055,9 @@ class InventarioPokemons:
         if self._arrastavel.Ativo and self._arrastavel.Item is not None:
             rect_drag = self._arrastavel.Rect.inflate(int(self._arrastavel.Rect.width * 0.1), int(self._arrastavel.Rect.height * 0.1))
             item_drag = self._arrastavel.Item
-            if isinstance(item_drag, dict) and self._estilo_item(item_drag) in {'equipavel', 'poção'}:
+            if isinstance(item_drag, dict) and self._estilo_item(item_drag) == 'doce':
+                Doce.desenhar_item_no_rect(tela, item_drag, rect_drag)
+            elif isinstance(item_drag, dict) and self._estilo_item(item_drag) in {'equipavel', 'poção'}:
                 ItemInventario.desenhar_item_no_rect(tela, item_drag, rect_drag)
             else:
                 PokemonInventario.desenhar_item_no_rect(tela, item_drag, rect_drag, escala_sprite=0.86)

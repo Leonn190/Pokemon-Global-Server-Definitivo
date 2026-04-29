@@ -92,7 +92,8 @@ class FinalizadorBatalha:
                 avisos.append({"id_original": id_original, "motivo": "pokemon_original_nao_encontrado"})
                 continue
             for alvo in alvos:
-                self._aplicar_vida(alvo, dados.get("VidaAtual"))
+                vida = self._vida_pos_batalha(alvo, dados.get("VidaAtual"))
+                self._aplicar_vida(alvo, vida)
                 self._aplicar_xp(alvo, dados.get("xp_ganho"))
         if avisos:
             contexto.setdefault("avisos_persistencia_batalha", []).extend(avisos)
@@ -226,6 +227,45 @@ class FinalizadorBatalha:
                 aplicado = True
         if not aplicado:
             pokemon["VidaAtual"] = vida
+
+    def _vida_pos_batalha(self, pokemon, vida_persistida):
+        if self._tem_pocao_suprema(pokemon):
+            return self._vida_maxima(pokemon, vida_persistida)
+        return vida_persistida
+
+    def _tem_pocao_suprema(self, pokemon):
+        for fonte in self._fontes_pokemon(pokemon):
+            for chave in ("pocao_suprema", "PocaoSuprema"):
+                if bool(fonte.get(chave)):
+                    return True
+        return False
+
+    def _vida_maxima(self, pokemon, default=1.0):
+        for fonte in self._fontes_pokemon(pokemon):
+            for chave in ("VidaMax", "vida_max", "Vida", "vida"):
+                if chave in fonte:
+                    valor = _f(fonte.get(chave), 0.0)
+                    if valor > 0:
+                        return valor
+            stats = fonte.get("stats") if isinstance(fonte.get("stats"), dict) else fonte.get("Stats") if isinstance(fonte.get("Stats"), dict) else None
+            if stats is not None:
+                valor = _f(stats.get("Vida"), 0.0)
+                if valor > 0:
+                    return valor
+        return max(1.0, _f(default, 1.0))
+
+    def _fontes_pokemon(self, pokemon):
+        if not isinstance(pokemon, dict):
+            return []
+        fontes = [pokemon]
+        for chave in ("estado", "dados", "Dados"):
+            valor = pokemon.get(chave)
+            if isinstance(valor, dict):
+                fontes.append(valor)
+                estado = valor.get("estado") if isinstance(valor.get("estado"), dict) else None
+                if estado is not None:
+                    fontes.append(estado)
+        return fontes
 
     def _aplicar_xp(self, pokemon, xp_ganho):
         ganho = _i(xp_ganho, 0)

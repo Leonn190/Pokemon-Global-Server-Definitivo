@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import unicodedata
+
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon, aprender_ataque_aleatorio
@@ -8,7 +10,9 @@ _CACHE_POCOES = None
 
 
 def _normalizar_nome(nome: str) -> str:
-    return " ".join(str(nome or "").strip().lower().replace("ç", "c").replace("ã", "a").replace("á", "a").replace("é", "e").split())
+    base = unicodedata.normalize("NFKD", str(nome or "").strip().lower())
+    base = "".join(c for c in base if not unicodedata.combining(c))
+    return " ".join(base.replace("ç", "c").replace("ã", "a").replace("á", "a").replace("é", "e").split())
 
 
 def _valor_vida(pokemon: dict, chave, padrao=0.0) -> float:
@@ -65,12 +69,29 @@ def _reviver(pokemon: dict, percentual_vida: float):
     return True
 
 
+def _aplicar_pocao_suprema(pokemon: dict):
+    alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+    alvo["pocao_suprema"] = True
+    alvo["PocaoSuprema"] = True
+    if alvo is not pokemon:
+        pokemon["pocao_suprema"] = True
+        pokemon["PocaoSuprema"] = True
+    return True
+
+
 def executar_pocao(nome_pocao: str, pokemon: dict) -> dict:
     dados = _dados_pocao(nome_pocao)
     nome = str(dados.get("Nome") or nome_pocao or "").strip()
-    fator = float(dados.get("Fator") or 0)
+    try:
+        fator = float(dados.get("Fator") or 0)
+    except (TypeError, ValueError):
+        fator = 0.0
     desc = str(dados.get("Descrição") or "")
     n = _normalizar_nome(nome)
+
+    if n == _normalizar_nome("Pocao Suprema"):
+        aplicado = _aplicar_pocao_suprema(pokemon)
+        return {"ok": aplicado, "tipo": "pocao_suprema", "nome": nome, "descricao": desc}
 
     tipos = {
         _normalizar_nome("Max Revival"): ("revival", 1.0),
@@ -113,6 +134,10 @@ def executar_pocao_mega(pokemon: dict) -> dict:
 
 def executar_pocao_maxima(pokemon: dict) -> dict:
     return executar_pocao("Poção Maxima", pokemon)
+
+
+def executar_pocao_suprema(pokemon: dict) -> dict:
+    return executar_pocao("Pocao Suprema", pokemon)
 
 
 def executar_pocao_elixir(pokemon: dict) -> dict:

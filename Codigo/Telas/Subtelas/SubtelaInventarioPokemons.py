@@ -259,6 +259,7 @@ class InventarioPokemons:
             self._painel_auxiliar.configurar_rects(self._area_abas, self._area_times)
         else:
             self._painel_auxiliar.configurar_rects(self._area_abas, self._area_times)
+        self._painel_auxiliar.definir_pokemon_analisado(self._pokemon_analisado)
 
         if self._painel_times is None:
             self._painel_times = PainelTimes(self._area_times, times, slots_por_time=self._slots_por_time())
@@ -305,7 +306,7 @@ class InventarioPokemons:
         if alvo[0] == 'time':
             return self._painel_times.pokemon_no_slot(alvo[1], alvo[2])
         if alvo[0] == 'aux' and alvo[1] == 'pokemons':
-            return alvo[3]
+            return self._painel_auxiliar.item_por_visual(alvo[2]) if self._painel_auxiliar is not None else None
         return None
 
     def _nome_pokemon(self, pokemon):
@@ -625,24 +626,40 @@ class InventarioPokemons:
             return
         indice_visual = int(alvo[2])
         slot_inventario = self._painel_auxiliar.slot_inventario_por_visual(indice_visual) if self._painel_auxiliar is not None else None
-        if slot_inventario is None or self.Inventario is None:
+        if self.Inventario is None:
             return
-        if not (0 <= slot_inventario < len(self.Inventario.Itens)):
-            return
-        item_origem = self.Inventario.Itens[slot_inventario]
-        if not isinstance(item_origem, dict):
-            return
-        item_drag = copy.deepcopy(item_origem)
-        item_drag['quantidade'] = 1
-        qtd = int(item_origem.get('quantidade', 1) or 1)
-        if qtd <= 1:
-            self.Inventario.Itens[slot_inventario] = None
+        if slot_inventario is None:
+            item_origem = self._painel_auxiliar.item_por_visual(indice_visual) if self._painel_auxiliar is not None else None
+            if not isinstance(item_origem, dict):
+                return
+            if str(item_origem.get("Estilo") or "").strip().lower() != "doce":
+                return
+            grupo = str(item_origem.get("Grupo") or "").strip()
+            qtd_doces = int(getattr(self.Inventario, "Doces", {}).get(grupo, 0) or 0)
+            if qtd_doces <= 0:
+                return
+            self.Inventario.Doces[grupo] = qtd_doces - 1
+            item_drag = copy.deepcopy(item_origem)
+            item_drag["quantidade"] = 1
+            origem = ("aux_doce", grupo)
         else:
-            item_origem['quantidade'] = qtd - 1
+            if not (0 <= slot_inventario < len(self.Inventario.Itens)):
+                return
+            item_origem = self.Inventario.Itens[slot_inventario]
+            if not isinstance(item_origem, dict):
+                return
+            item_drag = copy.deepcopy(item_origem)
+            item_drag['quantidade'] = 1
+            qtd = int(item_origem.get('quantidade', 1) or 1)
+            if qtd <= 1:
+                self.Inventario.Itens[slot_inventario] = None
+            else:
+                item_origem['quantidade'] = qtd - 1
+            origem = ('aux_item', slot_inventario)
         if self._painel_auxiliar is not None:
             self._painel_auxiliar.marcar_sujo()
         rect_slot = self._painel_auxiliar._container.slot_rect(indice_visual) if self._painel_auxiliar and self._painel_auxiliar._container else pygame.Rect(mouse_pos[0], mouse_pos[1], 42, 42)
-        self._arrastavel.iniciar(item_drag, ('aux_item', slot_inventario), rect_slot.inflate(-8, -8), mouse_pos, botao=1)
+        self._arrastavel.iniciar(item_drag, origem, rect_slot.inflate(-8, -8), mouse_pos, botao=1)
 
     def _iniciar_arrasto_build(self, indice_slot, mouse_pos):
         if self._pokemon_analisado is None:
@@ -719,6 +736,15 @@ class InventarioPokemons:
             self._restaurar_origem_aux()
             self._arrastavel.cancelar()
             return
+        if origem and origem[0] == 'aux_doce':
+            grupo = str(origem[1])
+            if not hasattr(self.Inventario, "Doces"):
+                self.Inventario.Doces = {}
+            self.Inventario.Doces[grupo] = int(self.Inventario.Doces.get(grupo, 0) or 0) + 1
+            if self._painel_auxiliar is not None:
+                self._painel_auxiliar.marcar_sujo()
+            self._arrastavel.cancelar()
+            return
         if origem and origem[0] == 'build':
             self._retornar_item_build(origem[1], self._arrastavel.Item)
             self._arrastavel.cancelar()
@@ -738,11 +764,11 @@ class InventarioPokemons:
             return
 
         origem = self._arrastavel.Origem or ()
-        if alvo is None and (not origem or origem[0] not in {'aux_item', 'build'}):
+        if alvo is None and (not origem or origem[0] not in {'aux_item', 'aux_doce', 'build'}):
             return
         pokemon_arrastado = self._arrastavel.Item
 
-        if origem[0] in {'aux_item', 'build'}:
+        if origem[0] in {'aux_item', 'aux_doce', 'build'}:
             if self._pokemon_analisado is None:
                 self._retornar_para_origem()
                 return
@@ -763,6 +789,13 @@ class InventarioPokemons:
 
             if self._ficha_pokemon.area_animacao_rect().collidepoint(pygame.mouse.get_pos()) and self._estilo_item(item) == 'poção':
                 resultado = _EXEC_POCAO.executar_pocao(str(item.get('Nome') or ''), self._pokemon_analisado)
+                if not bool(resultado.get('ok', False)):
+                    self._retornar_para_origem()
+                    return
+                self._arrastavel.cancelar()
+                return
+            if self._ficha_pokemon.area_animacao_rect().collidepoint(pygame.mouse.get_pos()) and self._estilo_item(item) == 'doce':
+                resultado = _EXEC_POCAO.executar_doce(item, self._pokemon_analisado)
                 if not bool(resultado.get('ok', False)):
                     self._retornar_para_origem()
                     return
@@ -877,7 +910,7 @@ class InventarioPokemons:
                 if analisando and self._area_ficha.collidepoint(evento.pos):
                     if self._arrastavel.Ativo:
                         alvo = self._alvo_no_mouse(evento.pos)
-                        if alvo is None and (self._arrastavel.Origem or (None,))[0] not in {'aux_item', 'build'}:
+                        if alvo is None and (self._arrastavel.Origem or (None,))[0] not in {'aux_item', 'aux_doce', 'build'}:
                             if (self._arrastavel.Origem or (None,))[0] == 'build':
                                 if self._devolver_build_para_inventario_ou_drop((self._arrastavel.Origem or (None, None, None))[2]):
                                     self._arrastavel.cancelar()

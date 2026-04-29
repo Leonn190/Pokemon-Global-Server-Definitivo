@@ -6,6 +6,7 @@ from pathlib import Path
 import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.Geradores.Doce import Doce
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.Container import Container
 from Codigo.Prefabs.Botao import BotaoSelecao
@@ -27,6 +28,7 @@ class PainelAuxiliarPoke:
         self._fonte = Texto("", style={"size": 14, "outline": True, "outline_thickness": 1, "outline_color": (8, 12, 20)})
         self._configurar_layout()
         self._mapa_estilos = self._carregar_mapa_estilos()
+        self._pokemon_analisado = None
 
     @staticmethod
     def _carregar_mapa_estilos():
@@ -131,6 +133,10 @@ class PainelAuxiliarPoke:
                 indices.append(idx)
         return saida, indices
 
+    def definir_pokemon_analisado(self, pokemon):
+        self._pokemon_analisado = pokemon if isinstance(pokemon, dict) else None
+        self._assinatura_sincronizada = None
+
     def sincronizar(self, inventario, area_conteudo: pygame.Rect, area_abas: pygame.Rect | None = None):
         if area_abas is not None:
             self.configurar_rects(area_abas, area_conteudo)
@@ -160,10 +166,20 @@ class PainelAuxiliarPoke:
             slot_px = 54
         elif self._aba_ativa in ("pocoes", "equipaveis"):
             self._itens_filtro, self._indices_inventario = self._filtrar_itens(getattr(inventario, "Itens", []), self._aba_ativa)
+            if self._aba_ativa == "pocoes":
+                estado = self._pokemon_analisado.get("estado") if isinstance(getattr(self, "_pokemon_analisado", None), dict) and isinstance(self._pokemon_analisado.get("estado"), dict) else self._pokemon_analisado
+                grupo = str((estado or {}).get("grupo") or "").strip()
+                doces = getattr(inventario, "Doces", {})
+                qtd_doces = int((doces or {}).get(grupo, 0) or 0)
+                if grupo and qtd_doces > 0:
+                    self._itens_filtro = [{"Nome": f"Doce {grupo}", "Estilo": "doce", "Grupo": grupo, "quantidade": qtd_doces}] + self._itens_filtro
+                    self._indices_inventario = [None] + self._indices_inventario
             renderizador = ItemInventario
             colunas = 5
             gap = 10
             slot_px = 54
+            if self._aba_ativa == "pocoes":
+                renderizador = Doce
         else:
             self._itens_filtro = []
             self._indices_inventario = []
@@ -217,7 +233,15 @@ class PainelAuxiliarPoke:
         item = self._container.item_por_slot_visual(idx)
         if item is None:
             return None
-        return ("aux", self._aba_ativa, idx, item)
+        return ("aux", self._aba_ativa, idx)
+
+    def item_por_visual(self, indice_visual):
+        if indice_visual is None:
+            return None
+        idx = int(indice_visual)
+        if not (0 <= idx < len(self._itens_filtro)):
+            return None
+        return self._itens_filtro[idx]
 
     def slot_inventario_por_visual(self, indice_visual):
         if indice_visual is None or not (0 <= int(indice_visual) < len(self._indices_inventario)):

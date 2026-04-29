@@ -44,6 +44,7 @@ def _ator_payload(usuario: str, personagem: dict) -> dict:
             "pokemons": list(inventario.get("pokemons") or []),
             "itens": list(inventario.get("itens") or []),
             "times_pokemon": list(inventario.get("times_pokemon") or []),
+            "doces": dict(inventario.get("doces") or {}),
         },
     }
 

@@ -550,6 +550,7 @@ def _normalizar_inventario(payload: dict) -> dict:
         "itens": itens_norm,
         "pokemons": list(base.get("pokemons", []))[:limite_pokemons],
         "times_pokemon": list(base.get("times_pokemon", [])),
+        "doces": {str(k): int(max(0, v or 0)) for k, v in (base.get("doces", {}).items() if isinstance(base.get("doces"), dict) else [])},
         "limite_itens": int(max(1, base.get("limite_itens", 100))),
         "limite_slots": int(max(1, base.get("limite_slots", 32))),
         "limite_pokemons": limite_pokemons,

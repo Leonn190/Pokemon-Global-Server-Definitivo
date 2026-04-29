@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import random
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -105,6 +106,11 @@ class ServicoInventario:
         if len(pokemons) >= limite_pokes:
             return False
         pokemons.append(dict(pokemon or {}))
+        grupo = str((pokemon or {}).get("grupo") or "").strip()
+        if grupo:
+            doces = dict(inv.get("doces", {})) if isinstance(inv.get("doces"), dict) else {}
+            doces[grupo] = int(doces.get(grupo, 0) or 0) + random.randint(2, 4)
+            inv["doces"] = doces
         inv["pokemons"] = pokemons
         inv["limite_pokemons"] = int(limite_pokes)
 

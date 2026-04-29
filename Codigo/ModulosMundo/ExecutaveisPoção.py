@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon, aprender_ataque_aleatorio
 
 _ARQ_ITENS = Path("Dados") / "Pokemon Global Server - Itens.csv"
 _CACHE_POCOES = None
@@ -141,3 +141,21 @@ def executar_revive(pokemon: dict) -> dict:
 
 def executar_revive_maximo(pokemon: dict) -> dict:
     return executar_pocao("Revive Maximo", pokemon)
+
+
+def executar_doce(item_doce: dict, pokemon: dict) -> dict:
+    alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+    try:
+        xp_alvo = int(alvo.get("XPAlvo", 0) or 0)
+    except (TypeError, ValueError):
+        xp_alvo = 0
+    if xp_alvo <= 0:
+        try:
+            nivel = int(alvo.get("nivel", 1) or 1)
+        except (TypeError, ValueError):
+            nivel = 1
+        xp_alvo = max(1, (max(0, min(100, nivel)) + 1) * 100)
+    ganho = max(1, int(round(xp_alvo * 0.10)))
+    ganhar_xp_pokemon(alvo, ganho)
+    novo_ataque = aprender_ataque_aleatorio(alvo, forcar=False)
+    return {"ok": True, "tipo": "doce", "xp": ganho, "novo_ataque": bool(novo_ataque), "grupo": str(item_doce.get("Grupo") or "")}

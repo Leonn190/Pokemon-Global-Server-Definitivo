@@ -14,6 +14,7 @@ class Inventario:
         self.LimiteTimesPokemon = int(limite_times_pokemon)
         self.Pokemons = []
         self.TimesPokemon = []
+        self.Doces = {}
         self.SlotSelecionado = 0
 
     def definir_limite_itens(self, limite_itens, preservar=True):
@@ -139,6 +140,8 @@ class Inventario:
         self.LimiteTimesPokemon = int(dados.get("limite_times_pokemon", self.LimiteTimesPokemon))
         self.Pokemons = list(dados.get("pokemons", self.Pokemons))[: self.LimitePokemons]
         self.TimesPokemon = list(dados.get("times_pokemon", self.TimesPokemon))
+        doces_src = dados.get("doces", self.Doces)
+        self.Doces = {str(k): int(max(0, v or 0)) for k, v in (doces_src.items() if isinstance(doces_src, dict) else [])}
 
         total_slots_mao = max(1, min(8, self.LimiteSlots))
         self.SlotSelecionado = int(dados.get("slot_selecionado", self.SlotSelecionado)) % total_slots_mao
@@ -173,6 +176,7 @@ class Inventario:
             "limite_pokemons": self.LimitePokemons,
             "limite_times_pokemon": self.LimiteTimesPokemon,
             "slot_selecionado": self.SlotSelecionado,
+            "doces": copy.deepcopy(dict(self.Doces)),
         }
 
 

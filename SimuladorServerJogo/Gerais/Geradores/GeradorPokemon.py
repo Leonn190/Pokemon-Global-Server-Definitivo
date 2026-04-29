@@ -263,6 +263,16 @@ def _ataque_com_nivel(ataque: Dict[str, object]) -> Dict[str, object]:
     dados["Nivel"] = int(dados.get("Nivel", 1) or 1)
     return dados
 
+def gerar_ataque_aleatorio(excluir: Optional[set[str]] = None) -> Optional[Dict[str, object]]:
+    if not _ATAQUES_DISPONIVEIS:
+        return None
+    pool = _ATAQUES_DISPONIVEIS
+    if excluir:
+        pool = [atk for atk in _ATAQUES_DISPONIVEIS if str(atk.get("Ataque", "")).strip().lower() not in excluir]
+    if not pool:
+        return None
+    return _ataque_com_nivel(random.choice(pool))
+
 
 def aprender_ataque_aleatorio(estado_pokemon: Dict[str, object], forcar: bool = False) -> bool:
     if not isinstance(estado_pokemon, dict) or not _ATAQUES_DISPONIVEIS:

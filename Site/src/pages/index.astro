@@ -1,0 +1,113 @@
+---
+import Layout from "../Componentes/Layout.astro";
+import Botao from "../Componentes/Botao.astro";
+import CardWiki from "../Componentes/CardWiki.astro";
+import logo from "@recursos/Visual/Icones/GlobalServer/Logo.png";
+import quadroLogo from "@recursos/Visual/Icones/GlobalServer/QuadroLogo.png";
+import icone from "@recursos/Visual/Icones/GlobalServer/Icone.png";
+import "../Estilos/home.css";
+
+const cardsWiki = [
+  {
+    href: "/wiki/pokemons",
+    emoji: "🐾",
+    titulo: "Pokémons",
+    texto: "Espaço futuro para criaturas, atributos, grupos, raridade e formas de obtenção.",
+  },
+  {
+    href: "/wiki/efeitos",
+    emoji: "✨",
+    titulo: "Efeitos",
+    texto: "Status positivos e negativos, duração, ícones e regras de funcionamento.",
+  },
+  {
+    href: "/wiki/mundo",
+    emoji: "🌍",
+    titulo: "Mundo",
+    texto: "Biomas, exploração, mapa, vilas, rotas, chunks e sistemas globais.",
+  },
+];
+---
+
+<Layout
+  titulo="Início | Pokémon Global Server"
+  descricao="Página inicial provisória do Pokémon Global Server."
+>
+  <section class="hero">
+    <div class="hero-texto">
+      <p class="selo">Beta em desenvolvimento</p>
+      <h1>Pokémon Global Server</h1>
+      <p class="subtitulo">
+        Um mundo online de exploração, criaturas, batalhas estratégicas e uma wiki feita para crescer junto com o jogo.
+      </p>
+
+      <div class="acoes">
+        <Botao href="/wiki">Abrir wiki</Botao>
+        <Botao href="/download" tipo="secundario">Ver acesso beta</Botao>
+      </div>
+
+      <div class="mini-estatisticas" aria-label="Estatísticas provisórias">
+        <div class="mini-estatistica">
+          <strong>5</strong>
+          <span>seções iniciais da wiki</span>
+        </div>
+        <div class="mini-estatistica">
+          <strong>0.1</strong>
+          <span>base inicial do site</span>
+        </div>
+        <div class="mini-estatistica">
+          <strong>PGS</strong>
+          <span>identidade visual ativa</span>
+        </div>
+      </div>
+
+      <div class="status-site" data-status-site>
+        Site Astro carregado. Imagens importadas de Recursos.
+      </div>
+    </div>
+
+    <div class="hero-logo">
+      <div class="moldura-logo">
+        <img data-logo-principal src={logo.src} alt="Logo Pokémon Global Server" />
+      </div>
+
+      <div class="troca-logo" aria-label="Escolher visual da logo">
+        <button type="button" data-logo-src={logo.src} data-logo-nome="Logo" class="ativo">Logo</button>
+        <button type="button" data-logo-src={quadroLogo.src} data-logo-nome="Quadro">Quadro</button>
+        <button type="button" data-logo-src={icone.src} data-logo-nome="Ícone">Ícone</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao">
+    <div class="cabecalho-secao">
+      <p class="selo">Wiki planejada</p>
+      <h2>Base para organizar o conhecimento do jogo</h2>
+    </div>
+
+    <div class="cards">
+      {cardsWiki.map((card) => <CardWiki {...card} />)}
+    </div>
+  </section>
+
+  <section class="secao grade-dupla">
+    <div class="painel destaque">
+      <p class="selo">Estrutura Astro</p>
+      <h2>Separado por página, mas com visual unificado</h2>
+      <p>
+        O topo, o rodapé e os botões são componentes. Assim você muda uma vez e o site inteiro acompanha.
+      </p>
+    </div>
+
+    <div class="painel">
+      <p class="selo">Próximo passo</p>
+      <h2>Substituir placeholders</h2>
+      <p>
+        Depois você pode trocar os textos por dados reais do jogo, link do instalador, cards da wiki e notícias.
+      </p>
+      <button class="botao principal" type="button" data-alerta="JS funcionando dentro da estrutura Astro.">
+        Testar JS
+      </button>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,41 @@
+---
+import icone from "@recursos/Visual/Icones/GlobalServer/Icone.png";
+
+const rotaAtual = Astro.url.pathname;
+
+const links = [
+  { href: "/", texto: "Início" },
+  { href: "/conta", texto: "Conta" },
+  { href: "/wiki", texto: "Wiki" },
+  { href: "/download", texto: "Download", destaque: true },
+];
+
+function ativo(href) {
+  if (href === "/") return rotaAtual === "/";
+  return rotaAtual.startsWith(href);
+}
+---
+
+<header class="topbar" data-topbar>
+  <a class="marca" href="/" aria-label="Página inicial do Pokémon Global Server">
+    <img src={icone.src} alt="Ícone Pokémon Global Server" />
+    <span>PGS</span>
+  </a>
+
+  <button class="menu-mobile" type="button" data-menu-mobile aria-label="Abrir menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <nav class="menu" data-menu>
+    {links.map((link) => (
+      <a
+        href={link.href}
+        class:list={[{ ativo: ativo(link.href), "botao-menu": link.destaque }]}
+      >
+        {link.texto}
+      </a>
+    ))}
+  </nav>
+</header>

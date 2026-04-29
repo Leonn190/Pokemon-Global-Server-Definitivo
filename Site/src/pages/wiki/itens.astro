@@ -1,0 +1,43 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import "../../Estilos/wiki.css";
+---
+
+<Layout titulo="Itens | Wiki PGS" descricao="Página provisória de Itens da wiki.">
+  <section class="wiki-hero">
+    <p class="selo">Wiki / Itens</p>
+    <h1>Itens</h1>
+    <p class="wiki-descricao">
+      Página futura para consumíveis, doces, equipamentos, receitas, drops e itens especiais.
+    </p>
+  </section>
+
+  <section class="wiki-layout">
+    <aside class="wiki-menu-lateral">
+      <a href="/wiki/pokemons">Pokémons</a>
+      <a class="ativo" href="/wiki/itens">Itens</a>
+      <a href="/wiki/efeitos">Efeitos</a>
+      <a href="/wiki/estadios">Estádios</a>
+      <a href="/wiki/mundo">Mundo</a>
+    </aside>
+
+    <div class="wiki-conteudo">
+      <div class="wiki-grid">
+        <article class="bloco-info">
+          <h2>Categorias provisórias</h2>
+          <p>Organize os itens por função para facilitar a leitura da wiki.</p>
+          <div class="placeholder-lista">
+            <div class="placeholder-item"><strong>Consumíveis</strong><span>cura, energia, buffs</span></div>
+            <div class="placeholder-item"><strong>Equipáveis</strong><span>atributos e efeitos</span></div>
+            <div class="placeholder-item"><strong>Receitas</strong><span>craft e materiais</span></div>
+          </div>
+        </article>
+
+        <article class="bloco-info">
+          <h2>Placeholder</h2>
+          <p>Depois esta página pode puxar dados da pasta Dados/Tabelas e gerar cards automaticamente.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</Layout>

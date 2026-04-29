@@ -1,0 +1,37 @@
+---
+import Header from "./Header.astro";
+import Footer from "./Footer.astro";
+import icone from "@recursos/Visual/Icones/GlobalServer/Icone.png";
+import "../Estilos/global.css";
+
+const {
+  titulo = "Pokémon Global Server",
+  descricao = "Site oficial provisório do Pokémon Global Server.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={descricao} />
+    <link rel="icon" href={icone.src} />
+    <title>{titulo}</title>
+  </head>
+
+  <body>
+    <div class="fundo-luz" aria-hidden="true"></div>
+    <Header />
+
+    <main class="pagina">
+      <slot />
+    </main>
+
+    <Footer />
+
+    <script>
+      import "../Codigo/site.js";
+    </script>
+  </body>
+</html>

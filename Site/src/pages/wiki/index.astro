@@ -1,0 +1,58 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import CardWiki from "../../Componentes/CardWiki.astro";
+import "../../Estilos/wiki.css";
+
+const secoes = [
+  {
+    href: "/wiki/pokemons",
+    emoji: "🐾",
+    titulo: "Pokémons",
+    texto: "Lista futura de criaturas, atributos, grupos, raridades, evoluções e formas de obtenção.",
+  },
+  {
+    href: "/wiki/itens",
+    emoji: "🎒",
+    titulo: "Itens",
+    texto: "Consumíveis, doces, equipamentos, receitas e itens especiais do jogo.",
+  },
+  {
+    href: "/wiki/efeitos",
+    emoji: "✨",
+    titulo: "Efeitos",
+    texto: "Status positivos, negativos, efeitos de terreno, buffs, debuffs e ícones.",
+  },
+  {
+    href: "/wiki/estadios",
+    emoji: "🏟️",
+    titulo: "Estádios",
+    texto: "Arenas, regras de batalha, modos, layouts e mecânicas específicas.",
+  },
+  {
+    href: "/wiki/mundo",
+    emoji: "🌍",
+    titulo: "Mundo",
+    texto: "Biomas, chunks, exploração, vilas, rotas, mapa e geração do mundo.",
+  },
+];
+---
+
+<Layout titulo="Wiki | Pokémon Global Server" descricao="Wiki provisória do Pokémon Global Server.">
+  <section class="wiki-hero">
+    <p class="selo">Wiki</p>
+    <h1>Central de conhecimento</h1>
+    <p class="wiki-descricao">
+      Esta é a entrada principal da wiki. Por enquanto tudo está em placeholder, mas a estrutura já separa cada área em uma rota própria.
+    </p>
+  </section>
+
+  <section class="secao">
+    <div class="cards">
+      {secoes.slice(0, 3).map((secao) => <CardWiki {...secao} />)}
+    </div>
+
+    <div class="cards" style="margin-top: 18px; grid-template-columns: repeat(2, 1fr);">
+      {secoes.slice(3).map((secao) => <CardWiki {...secao} />)}
+    </div>
+  </section>
+</Layout>

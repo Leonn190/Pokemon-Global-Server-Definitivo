@@ -1,52 +1,75 @@
-# Site inicial — Pokémon Global Server
+# Site — Pokémon Global Server
 
-Coloque esta pasta `Site` na raiz do seu repositório:
+Estrutura inicial em Astro para o site do Pokémon Global Server.
+
+## Como usar
+
+Coloque a pasta `Site` na raiz do repositório:
 
 ```text
 Pokemon-Global-Server-Definitivo/
 ├─ Site/
-│  ├─ index.html
-│  ├─ style.css
-│  ├─ script.js
-│  ├─ index.astro
-│  └─ README.md
-└─ Recursos/Visual/Icones/GlobalServer/
-   ├─ QuadroLogo.png
-   ├─ Logo.png
-   └─ Icone.png
+├─ Recursos/
+├─ Codigo/
+└─ SimuladorServerJogo/
 ```
 
-## Como testar agora
+Depois rode:
 
-Abra o arquivo:
+```bash
+cd Site
+npm install
+npm run dev
+```
+
+O site deve abrir no endereço informado pelo terminal, normalmente:
 
 ```text
-Site/index.html
+http://localhost:4321
 ```
 
-Ele usa as imagens por caminho relativo:
+## Imagens
+
+As imagens não ficam dentro do site. Elas são importadas da pasta oficial do jogo:
 
 ```text
-../Recursos/Visual/Icones/GlobalServer/Logo.png
-../Recursos/Visual/Icones/GlobalServer/QuadroLogo.png
-../Recursos/Visual/Icones/GlobalServer/Icone.png
+Recursos/Visual/Icones/GlobalServer/
+├─ QuadroLogo.png
+├─ Logo.png
+└─ Icone.png
 ```
 
-## O que cada arquivo faz
+O alias `@recursos` é configurado em `astro.config.mjs`.
 
-- `index.html`: página normal que você pode abrir direto no navegador.
-- `style.css`: aparência da página.
-- `script.js`: interações simples, como trocar a logo e testar um botão.
-- `index.astro`: a mesma ideia em formato Astro, com variáveis no topo.
+Exemplo:
 
-## Observação sobre Astro
+```astro
+---
+import logo from "@recursos/Visual/Icones/GlobalServer/Logo.png";
+---
 
-Para respeitar seu pedido de não criar subpastas, deixei tudo solto dentro de `Site`.
+<img src={logo.src} alt="Pokémon Global Server" />
+```
 
-Em um projeto Astro real, o arquivo `index.astro` normalmente ficaria em:
+## Organização
 
 ```text
-Site/src/pages/index.astro
+src/Codigo      → JavaScript funcional
+src/Estilos     → CSS
+src/Componentes → blocos reutilizáveis Astro
+src/pages       → páginas/rotas do site
 ```
 
-Por enquanto, use o `index.html` para ver a tela funcionando imediatamente.
+## Rotas criadas
+
+```text
+/              → Início
+/conta         → Conta
+/download      → Download
+/wiki          → Wiki
+/wiki/pokemons → Wiki / Pokémons
+/wiki/itens    → Wiki / Itens
+/wiki/efeitos  → Wiki / Efeitos
+/wiki/estadios → Wiki / Estádios
+/wiki/mundo    → Wiki / Mundo
+```

@@ -1,0 +1,16 @@
+---
+const {
+  href = "#",
+  tipo = "principal",
+  externo = false,
+} = Astro.props;
+---
+
+<a
+  class={`botao ${tipo}`}
+  href={href}
+  target={externo ? "_blank" : undefined}
+  rel={externo ? "noreferrer" : undefined}
+>
+  <slot />
+</a>

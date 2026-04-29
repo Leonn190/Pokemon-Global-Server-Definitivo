@@ -7,9 +7,12 @@
   --azul-escuro: #063c8f;
   --vermelho: #ff364f;
   --amarelo: #ffd934;
+  --verde: #60f59a;
   --borda: rgba(255, 255, 255, 0.14);
   --vidro: rgba(8, 16, 40, 0.72);
+  --vidro-forte: rgba(4, 10, 28, 0.88);
   --sombra: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --largura: 1180px;
 }
 
 * {
@@ -32,6 +35,11 @@ body {
   overflow-x: hidden;
 }
 
+body::selection {
+  color: #071531;
+  background: var(--amarelo);
+}
+
 .fundo-luz {
   position: fixed;
   inset: 0;
@@ -46,7 +54,7 @@ body {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -55,6 +63,13 @@ body {
   background: rgba(3, 6, 18, 0.72);
   border-bottom: 1px solid var(--borda);
   backdrop-filter: blur(14px);
+  transition: 0.2s ease;
+}
+
+.topbar.compacto {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  background: rgba(3, 6, 18, 0.9);
 }
 
 .marca {
@@ -91,41 +106,38 @@ body {
 }
 
 .menu a:hover,
+.menu a.ativo,
 .menu .botao-menu {
   color: var(--texto);
   background: rgba(255, 255, 255, 0.09);
 }
 
+.menu .botao-menu {
+  border: 1px solid rgba(255, 217, 52, 0.28);
+}
+
+.menu-mobile {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.menu-mobile span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  margin: 4px auto;
+  border-radius: 999px;
+  background: var(--texto);
+}
+
 .pagina {
-  width: min(1180px, calc(100% - 36px));
+  width: min(var(--largura), calc(100% - 36px));
   margin: 0 auto;
-}
-
-.hero {
-  min-height: calc(100vh - 84px);
-  display: grid;
-  grid-template-columns: 1fr 0.9fr;
-  align-items: center;
-  gap: clamp(28px, 5vw, 72px);
-  padding: 64px 0;
-}
-
-.hero-texto h1 {
-  margin: 14px 0 18px;
-  font-size: clamp(3rem, 8vw, 6.6rem);
-  line-height: 0.9;
-  letter-spacing: -0.07em;
-  text-transform: uppercase;
-  text-shadow:
-    0 8px 0 rgba(0, 52, 130, 0.7),
-    0 22px 48px rgba(0, 0, 0, 0.55);
-}
-
-.subtitulo {
-  max-width: 640px;
-  color: var(--texto-fraco);
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
-  line-height: 1.65;
 }
 
 .selo {
@@ -144,13 +156,6 @@ body {
   letter-spacing: 0.08em;
 }
 
-.acoes {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-top: 28px;
-}
-
 .botao {
   display: inline-flex;
   justify-content: center;
@@ -164,7 +169,7 @@ body {
   font: inherit;
   font-weight: 900;
   cursor: pointer;
-  transition: transform 0.18s ease, filter 0.18s ease;
+  transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
 }
 
 .botao:hover {
@@ -183,61 +188,9 @@ body {
   box-shadow: 0 16px 35px rgba(16, 135, 255, 0.22);
 }
 
-.status-site {
-  margin-top: 20px;
-  color: var(--texto-fraco);
-  font-size: 0.95rem;
-}
-
-.hero-logo {
-  display: grid;
-  gap: 18px;
-  justify-items: center;
-}
-
-.moldura-logo {
-  width: min(520px, 100%);
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  padding: clamp(14px, 3vw, 28px);
+.botao.fantasma {
   border: 1px solid var(--borda);
-  border-radius: 40px;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(16, 135, 255, 0.24), transparent 42%),
-    radial-gradient(circle at 80% 80%, rgba(255, 54, 79, 0.22), transparent 36%),
-    var(--vidro);
-  box-shadow: var(--sombra);
-}
-
-.moldura-logo img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.46));
-}
-
-.troca-logo {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.troca-logo button {
-  border: 1px solid var(--borda);
-  border-radius: 999px;
-  padding: 10px 14px;
-  color: var(--texto-fraco);
   background: rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-}
-
-.troca-logo button.ativo {
-  color: #082056;
-  background: var(--amarelo);
-  border-color: transparent;
-  font-weight: 900;
 }
 
 .secao {
@@ -250,7 +203,9 @@ body {
   margin-bottom: 22px;
 }
 
+.cabecalho-secao h1,
 .cabecalho-secao h2,
+.painel h1,
 .painel h2 {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 3rem);
@@ -275,13 +230,27 @@ body {
   padding: 24px;
 }
 
+.card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: 0.18s ease;
+}
+
+.card-link:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 217, 52, 0.42);
+  background: rgba(10, 22, 56, 0.78);
+}
+
 .card h3 {
   margin: 14px 0 8px;
   font-size: 1.4rem;
 }
 
 .card p,
-.painel p {
+.painel p,
+.texto-fraco {
   color: var(--texto-fraco);
   line-height: 1.65;
 }
@@ -312,33 +281,94 @@ body {
     var(--vidro);
 }
 
+.lista-limpa {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 18px 0 0;
+  list-style: none;
+}
+
+.lista-limpa li {
+  padding: 14px 16px;
+  border: 1px solid var(--borda);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--texto-fraco);
+}
+
+.rodape {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(var(--largura), calc(100% - 36px));
+  margin: 34px auto 0;
+  padding: 28px 0 42px;
+  border-top: 1px solid var(--borda);
+  color: var(--texto-fraco);
+}
+
+.rodape strong {
+  color: var(--texto);
+}
+
+.rodape p {
+  margin: 8px 0 0;
+}
+
+.rodape nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rodape a {
+  color: var(--texto-fraco);
+  text-decoration: none;
+}
+
+.rodape a:hover {
+  color: var(--texto);
+}
+
 @media (max-width: 860px) {
-  .hero,
   .cards,
   .grade-dupla {
     grid-template-columns: 1fr;
   }
 
-  .hero {
-    min-height: auto;
+  .menu-mobile {
+    display: block;
+  }
+
+  .menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 18px;
+    right: 18px;
+    padding: 14px;
+    border: 1px solid var(--borda);
+    border-radius: 22px;
+    background: var(--vidro-forte);
+    box-shadow: var(--sombra);
+  }
+
+  .menu.aberto {
+    display: flex;
+  }
+
+  .menu a {
+    width: 100%;
   }
 
   .topbar {
-    align-items: flex-start;
+    align-items: center;
   }
 }
 
 @media (max-width: 560px) {
-  .topbar {
-    position: static;
+  .rodape {
     flex-direction: column;
-  }
-
-  .menu {
-    justify-content: flex-start;
-  }
-
-  .hero-texto h1 {
-    font-size: 3rem;
   }
 }

@@ -1,0 +1,38 @@
+---
+import Layout from "../Componentes/Layout.astro";
+import Botao from "../Componentes/Botao.astro";
+---
+
+<Layout titulo="Download | Pokémon Global Server" descricao="Área provisória de download do Pokémon Global Server.">
+  <section class="secao">
+    <div class="cabecalho-secao">
+      <p class="selo">Download</p>
+      <h1>Baixar o jogo</h1>
+      <p class="texto-fraco">
+        Placeholder para o instalador, launcher, requisitos mínimos e instruções da versão beta.
+      </p>
+    </div>
+
+    <div class="grade-dupla">
+      <div class="painel destaque">
+        <h2>Versão beta fechada</h2>
+        <p>
+          Quando o instalador existir, o botão principal pode apontar para GitHub Releases, servidor próprio ou outra página de distribuição.
+        </p>
+        <div class="acoes">
+          <Botao href="#">Download indisponível</Botao>
+          <Botao href="/conta" tipo="secundario">Ver conta</Botao>
+        </div>
+      </div>
+
+      <div class="painel">
+        <h2>Requisitos provisórios</h2>
+        <ul class="lista-limpa">
+          <li>Windows 10 ou superior</li>
+          <li>Conexão com internet</li>
+          <li>Instalador ainda não definido</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,43 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import "../../Estilos/wiki.css";
+---
+
+<Layout titulo="Pokémons | Wiki PGS" descricao="Página provisória de Pokémons da wiki.">
+  <section class="wiki-hero">
+    <p class="selo">Wiki / Pokémons</p>
+    <h1>Pokémons</h1>
+    <p class="wiki-descricao">
+      Página futura para criaturas, atributos, raridades, grupos, habilidades, evolução e formas de obtenção.
+    </p>
+  </section>
+
+  <section class="wiki-layout">
+    <aside class="wiki-menu-lateral">
+      <a class="ativo" href="/wiki/pokemons">Pokémons</a>
+      <a href="/wiki/itens">Itens</a>
+      <a href="/wiki/efeitos">Efeitos</a>
+      <a href="/wiki/estadios">Estádios</a>
+      <a href="/wiki/mundo">Mundo</a>
+    </aside>
+
+    <div class="wiki-conteudo">
+      <div class="wiki-grid">
+        <article class="bloco-info">
+          <h2>Lista futura</h2>
+          <p>Espaço para cards com imagem, tipo, grupo, raridade e principais atributos.</p>
+          <div class="placeholder-lista">
+            <div class="placeholder-item"><strong>Pokémon exemplo</strong><span>Tipo / grupo</span></div>
+            <div class="placeholder-item"><strong>Pokémon exemplo</strong><span>Raridade</span></div>
+            <div class="placeholder-item"><strong>Pokémon exemplo</strong><span>Status base</span></div>
+          </div>
+        </article>
+
+        <article class="bloco-info">
+          <h2>Ideias de dados</h2>
+          <p>Essa seção pode futuramente puxar informações do CSV/TOML do jogo para gerar a wiki automaticamente.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</Layout>

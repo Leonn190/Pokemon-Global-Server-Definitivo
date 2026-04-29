@@ -861,6 +861,7 @@ class FichaPokemon:
         linhas = [
             ('Altura', self._formatar_numero(self._altura(pokemon), 2, ' m')),
             ('Peso', self._formatar_numero(self._peso(pokemon), 2, ' kg')),
+            ('Grupo', str(self._grupo(pokemon) or '-')),
             ('Amizade', self._formatar_percentual(self._amizade(pokemon))),
             ('Fruta', str(self._fruta_favorita(pokemon) or '-')),
             ('Escala', str(self._escala(pokemon))),

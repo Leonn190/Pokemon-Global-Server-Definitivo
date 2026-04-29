@@ -483,6 +483,7 @@ def evoluir_pokemon(pokemon: Dict[str, object]) -> Dict[str, object]:
             "coeficiente_altura": round(coef_altura, 5),
             "coeficiente_peso": round(coef_peso, 5),
             "tipos": _sortear_tipos(row),
+            "Grupo": str(row.get("Grupo", "")),
             "grupo": str(row.get("Grupo", "")),
             "raridade": int(_fnum(row.get("Raridade"), 1)),
             "estagio": int(_fnum(row.get("Estagio"), estagio_atual + 1)),
@@ -556,6 +557,8 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     estado["stats"] = stats_final
     estado["amizade"] = int(amizade)
     estado["tipos"] = list(estado.get("tipos", [])) if isinstance(estado.get("tipos"), list) else []
+    estado["Grupo"] = str(estado.get("Grupo", estado.get("grupo", "")))
+    estado["grupo"] = str(estado.get("grupo", estado.get("Grupo", "")))
     estado["nivel"] = 0
     estado["XP"] = 0
     estado["xp"] = 0
@@ -603,6 +606,7 @@ def criar_pokemon_inicial_materializado(especie: str) -> Dict[str, object]:
         "altura": round(_fnum(row.get("Altura"), 1.0), 3),
         "peso": round(_fnum(row.get("Peso"), 1.0), 3),
         "tipos": _sortear_tipos(row),
+        "Grupo": str(row.get("Grupo", "")),
         "grupo": str(row.get("Grupo", "")),
         "raridade": int(_fnum(row.get("Raridade"), 1)),
         "estagio": int(_fnum(row.get("Estagio"), 1)),
@@ -677,6 +681,7 @@ def _materializar_membro_bando(row: Dict[str, str], pokemon_base: Dict[str, obje
         "altura": round(_fnum(row.get("Altura"), 1.0), 3),
         "peso": round(_fnum(row.get("Peso"), 1.0), 3),
         "tipos": _sortear_tipos(row),
+        "Grupo": str(row.get("Grupo", "")),
         "grupo": str(row.get("Grupo", "")),
         "raridade": int(_fnum(row.get("Raridade"), 1)),
         "estagio": int(_fnum(row.get("Estagio"), 1)),
@@ -807,6 +812,7 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "coeficiente_altura": round(coef_altura, 5),
             "coeficiente_peso": round(coef_peso, 5),
             "tipos": tipos,
+            "Grupo": str(row.get("Grupo", "")),
             "grupo": str(row.get("Grupo", "")),
             "raridade": int(_fnum(row.get("Raridade"), 1)),
             "estagio": int(_fnum(row.get("Estagio"), 1)),

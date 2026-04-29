@@ -2,19 +2,15 @@
 
 from __future__ import annotations
 
-import csv
 import random
 import unicodedata
 from copy import deepcopy
-from pathlib import Path
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from typing import Dict, List, Optional
 
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import PokemonServer
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_pokemons
 
-ARQUIVO_POKEMONS = Path(__file__).resolve().parents[3] / "Dados" / "Pokemon Global Server - Pokemons.csv"
-ARQUIVO_ATAQUES = Path(__file__).resolve().parents[3] / "Dados" / "Pokemon Global Server - Ataques.csv"
-ARQUIVO_ITENS = Path(__file__).resolve().parents[3] / "Dados" / "Pokemon Global Server - Itens.csv"
 STATS_BASE = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int", "CrD", "CrC"]
 STATS_VARIAVEIS_IV = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"]
 _REGRAS_POKEMON = carregar_regras_pokemons()
@@ -186,11 +182,12 @@ def _recalcular_poder_relativo(stats: Dict[str, float]) -> float:
 
 
 def _carregar_frutas() -> List[str]:
-    if not ARQUIVO_ITENS.exists():
-        return []
     frutas: List[str] = []
-    with ARQUIVO_ITENS.open(encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
+    try:
+        linhas = carregar_csv_dict("Pokemon Global Server - Itens.csv")
+    except OSError:
+        return frutas
+    for row in linhas:
             if str(row.get("Estilo", "")).strip().lower() != "fruta":
                 continue
             nome = str(row.get("Nome", "")).strip()
@@ -239,11 +236,12 @@ def _sortear_tipos(row: Dict[str, str]) -> List[str]:
 
 
 def _carregar_ataques() -> List[Dict[str, object]]:
-    if not ARQUIVO_ATAQUES.exists():
-        return []
     ataques: List[Dict[str, object]] = []
-    with ARQUIVO_ATAQUES.open(encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
+    try:
+        linhas = carregar_csv_dict("Pokemon Global Server - Ataques.csv")
+    except OSError:
+        return ataques
+    for row in linhas:
             ataque = str(row.get("Ataque", "")).strip()
             if not ataque:
                 continue
@@ -727,11 +725,12 @@ def gerar_bando_confronto(pokemon_confrontado: Dict[str, object], max_extras: in
 
 
 def _carregar_base() -> List[Dict[str, object]]:
-    if not ARQUIVO_POKEMONS.exists():
-        return []
     linhas: List[Dict[str, object]] = []
-    with ARQUIVO_POKEMONS.open(encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
+    try:
+        base_rows = carregar_csv_dict("Pokemon Global Server - Pokemons.csv")
+    except OSError:
+        return linhas
+    for row in base_rows:
             if not row.get("Nome"):
                 continue
             raridade_raw = str(row.get("Raridade", "")).strip()

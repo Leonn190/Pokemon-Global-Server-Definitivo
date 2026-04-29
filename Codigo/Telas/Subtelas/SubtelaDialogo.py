@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import csv
 import json
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 import pygame
+
+from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from Codigo.Geradores.Ator import Ator
 from Codigo.ModulosMundo.LeitorDialogo import LeitorDialogo
@@ -158,11 +159,11 @@ class SubtelaDialogo(Subtela):
 
     @staticmethod
     def _item_por_nome(nome_item: str) -> Dict[str, object]:
-        arquivo = Path("Dados") / "Pokemon Global Server - Itens.csv"
-        if not arquivo.exists():
+        try:
+            linhas = carregar_csv_dict("Pokemon Global Server - Itens.csv", encoding="utf-8")
+        except OSError:
             return {"Code": "", "Nome": str(nome_item), "quantidade": 1}
-        with arquivo.open("r", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
+        for row in linhas:
                 nome = str(row.get("Nome") or "").strip()
                 if nome.lower() != str(nome_item or "").strip().lower():
                     continue

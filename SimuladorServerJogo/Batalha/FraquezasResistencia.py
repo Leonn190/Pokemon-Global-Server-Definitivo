@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import csv
 import unicodedata
-from pathlib import Path
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_lista
 
 
 def _normalizar(valor: object) -> str:
@@ -36,20 +35,12 @@ class FraquezasResistencia:
         self._matriz: dict[str, dict[str, float]] = {}
         self._carregado = False
 
-    def _caminho_csv(self) -> Path:
-        return Path(__file__).resolve().parents[2] / "Dados" / "Pokemon Global Server - Sistema FR.csv"
-
     def carregar(self) -> None:
         if self._carregado:
             return
         self._carregado = True
-        caminho = self._caminho_csv()
-        if not caminho.exists():
-            return
         try:
-            with caminho.open("r", encoding="utf-8-sig", newline="") as arquivo:
-                reader = csv.reader(arquivo)
-                linhas = list(reader)
+            linhas = carregar_csv_lista("Pokemon Global Server - Sistema FR.csv")
         except Exception:
             return
         if not linhas:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import csv
-from pathlib import Path
+from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 from typing import Callable
 
 import pygame
@@ -60,11 +59,12 @@ class Loja:
     def _carregar_catalogo_npc(self) -> dict:
         return {"padrao": self._carregar_loja_padrao(), "secreta": self._carregar_loja_secreta(), "presentes": self._carregar_presentes()}
 
-    def _procurar_row_csv(self, arquivo: Path) -> dict | None:
-        if not arquivo.exists():
+    def _procurar_row_csv(self, arquivo: str) -> dict | None:
+        try:
+            linhas = carregar_csv_dict(arquivo, encoding="utf-8")
+        except OSError:
             return None
-        with arquivo.open("r", encoding="utf-8") as f:
-            for idx, row in enumerate(csv.DictReader(f), start=1):
+        for idx, row in enumerate(linhas, start=1):
                 code = str(row.get("Code") or idx).strip() or str(idx)
                 nome = str(row.get("Nome") or "").strip().lower()
                 if code == self._npc_code or nome == self._npc_nome.lower():
@@ -85,7 +85,7 @@ class Loja:
         ofertas_estado = self._catalogo_estado.get("padrao") if isinstance(self._catalogo_estado.get("padrao"), list) else None
         if ofertas_estado is not None:
             return [dict(o) for o in ofertas_estado if isinstance(o, dict)]
-        row = self._procurar_row_csv(Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv")
+        row = self._procurar_row_csv("Pokemon Global Server - NPC Vendedor.csv")
         if not isinstance(row, dict):
             return []
         ofertas = []
@@ -103,7 +103,7 @@ class Loja:
         ofertas_estado = self._catalogo_estado.get("secreta") if isinstance(self._catalogo_estado.get("secreta"), list) else None
         if ofertas_estado is not None:
             return [dict(o) for o in ofertas_estado if isinstance(o, dict)]
-        row = self._procurar_row_csv(Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv")
+        row = self._procurar_row_csv("Pokemon Global Server - NPC Vendedor.csv")
         if not isinstance(row, dict):
             return []
         ofertas = []
@@ -116,7 +116,7 @@ class Loja:
         return ofertas
 
     def _carregar_presentes(self) -> list[dict]:
-        arquivo = Path("Dados") / ("Pokemon Global Server - NPC Combatente.csv" if self._npc_estilo == "combatente" else "Pokemon Global Server - NPC Vendedor.csv")
+        arquivo = "Pokemon Global Server - NPC Combatente.csv" if self._npc_estilo == "combatente" else "Pokemon Global Server - NPC Vendedor.csv"
         row = self._procurar_row_csv(arquivo)
         if not isinstance(row, dict):
             return []

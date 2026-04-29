@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import copy
-import csv
 import json
 import unicodedata
 from pathlib import Path
-
 import pygame
+
+from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Botao import Botao
@@ -67,20 +67,10 @@ class PainelReceitas(PainelRolavel):
     @classmethod
     def _caminho_json(cls):
         caminhos = [
-            Path('Dados') / 'Pokemon Global Server - Receitas.json',
+            Path('Dados') / 'Outros' / 'Pokemon Global Server - Receitas.json',
             Path('Pokemon Global Server - Receitas.json'),
-            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Receitas.json',
+            Path(__file__).resolve().parents[3] / 'Dados' / 'Outros' / 'Pokemon Global Server - Receitas.json',
             Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Receitas.json',
-        ]
-        return next((p for p in caminhos if p.exists()), None)
-
-    @classmethod
-    def _caminho_itens_csv(cls):
-        caminhos = [
-            Path('Dados') / 'Pokemon Global Server - Itens.csv',
-            Path('Pokemon Global Server - Itens.csv'),
-            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Itens.csv',
-            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Itens.csv',
         ]
         return next((p for p in caminhos if p.exists()), None)
 
@@ -90,23 +80,16 @@ class PainelReceitas(PainelRolavel):
             return cls._itens_cache
 
         mapa = {}
-        caminho = cls._caminho_itens_csv()
-
-        if caminho is None:
-            cls._itens_cache = mapa
-            return mapa
 
         try:
-            with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
-                for linha in csv.DictReader(arquivo):
-                    dado = dict(linha)
-                    nome = str(dado.get('Nome') or '').strip()
-                    code = str(dado.get('Code') or '').strip()
-
-                    if nome:
-                        mapa[('nome', cls._norm(nome))] = dado
-                    if code:
-                        mapa[('code', cls._norm(code))] = dado
+            for linha in carregar_csv_dict("Pokemon Global Server - Itens.csv"):
+                dado = dict(linha)
+                nome = str(dado.get('Nome') or '').strip()
+                code = str(dado.get('Code') or '').strip()
+                if nome:
+                    mapa[('nome', cls._norm(nome))] = dado
+                if code:
+                    mapa[('code', cls._norm(code))] = dado
         except OSError:
             pass
 

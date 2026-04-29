@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import csv
 import math
 import random
 import unicodedata
 from pathlib import Path
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict, carregar_csv_lista, caminho_tabela
 from typing import Dict, List, Tuple
 
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado, subir_nivel_pokemon
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 
 Vector2 = Tuple[float, float]
 
@@ -179,12 +180,12 @@ class InicializadorNPC:
         return [[float(p[0]), float(p[1])] for p in reversed(pontos) if isinstance(p, (list, tuple)) and len(p) == 2]
 
     def _carregar_itens(self) -> List[Dict[str, object]]:
-        arquivo = Path("Dados") / "Pokemon Global Server - Itens.csv"
-        if not arquivo.exists():
-            return []
         out: List[Dict[str, object]] = []
-        with arquivo.open("r", encoding="utf-8-sig") as f:
-            for row in csv.DictReader(f):
+        try:
+            linhas = carregar_csv_dict("Pokemon Global Server - Itens.csv")
+        except OSError:
+            return out
+        for row in linhas:
                 nome = str(row.get("Nome") or "").strip()
                 if not nome:
                     continue
@@ -377,19 +378,21 @@ class InicializadorNPC:
 
     def criar_estado(self) -> Dict[str, Dict[str, object]]:
         base: Dict[str, Dict[str, object]] = {}
-        arq_vendedores = Path("Dados") / "Pokemon Global Server - NPC Vendedor.csv"
-        if arq_vendedores.exists():
-            with arq_vendedores.open("r", encoding="utf-8-sig") as f:
-                for idx, row in enumerate(csv.DictReader(f), start=1):
+        try:
+            linhas_vendedores = carregar_csv_dict("Pokemon Global Server - NPC Vendedor.csv")
+        except OSError:
+            linhas_vendedores = []
+        for idx, row in enumerate(linhas_vendedores, start=1):
                     code = str(row.get("Code") or idx).strip() or str(idx)
                     npc = self.base_movel(chave=f"vendedor:{code}", row=row, estilo="vendedor", cargo="vendedor", id_base=900000)
                     npc["loja"] = self.montar_loja(row)
                     base[f"vendedor:{code}"] = npc
 
-        arq_combatentes = Path("Dados") / "Pokemon Global Server - NPC Combatente.csv"
-        if arq_combatentes.exists():
-            with arq_combatentes.open("r", encoding="utf-8-sig") as f:
-                for idx, row in enumerate(csv.DictReader(f), start=1):
+        try:
+            linhas_combatentes = carregar_csv_dict("Pokemon Global Server - NPC Combatente.csv")
+        except OSError:
+            linhas_combatentes = []
+        for idx, row in enumerate(linhas_combatentes, start=1):
                     code = str(row.get("Code") or idx).strip() or str(idx)
                     cargo = self.slug(row.get("Cargo") or "dissociado")
                     pokemons, times = self.montar_times_combatente(row)

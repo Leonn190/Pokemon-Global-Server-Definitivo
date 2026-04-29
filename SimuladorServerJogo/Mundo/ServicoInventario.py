@@ -2,22 +2,18 @@
 
 from __future__ import annotations
 
-import csv
 import random
-from pathlib import Path
 from typing import Dict, Optional
 
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_inventario_personagem
-
-_RAIZ = Path(__file__).resolve().parents[2]
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 
 
 def _carregar_itens() -> tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str, object]]]:
     by_code: Dict[str, Dict[str, object]] = {}
     by_nome: Dict[str, Dict[str, object]] = {}
-    with (_RAIZ / "Dados" / "Pokemon Global Server - Itens.csv").open("r", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
+    for row in carregar_csv_dict("Pokemon Global Server - Itens.csv", encoding="utf-8"):
             code = str(row.get("Code", "")).strip()
             nome = str(row.get("Nome", "")).strip()
             if not code:

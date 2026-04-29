@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import csv
-from pathlib import Path
-
 import pygame
+
+from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Geradores.Doce import Doce
@@ -32,19 +31,9 @@ class PainelAuxiliarPoke:
 
     @staticmethod
     def _carregar_mapa_estilos():
-        caminhos = [
-            Path('Dados') / 'Pokemon Global Server - Itens.csv',
-            Path('Pokemon Global Server - Itens.csv'),
-            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Itens.csv',
-            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Itens.csv',
-        ]
-        caminho = next((p for p in caminhos if p.exists()), None)
         base = {}
-        if caminho is None:
-            return base
         try:
-            with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
-                for linha in csv.DictReader(arquivo):
+            for linha in carregar_csv_dict('Pokemon Global Server - Itens.csv'):
                     estilo = str(linha.get('Estilo') or '').strip().lower()
                     nome = str(linha.get('Nome') or '').strip().lower()
                     code = str(linha.get('Code') or '').strip()

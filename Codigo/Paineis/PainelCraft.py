@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import copy
-import csv
 import unicodedata
-from pathlib import Path
-
 import pygame
+
+from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Painel import Painel
@@ -56,27 +55,12 @@ class PainelCraft:
         return ' '.join(base.split())
 
     @classmethod
-    def _caminho_itens_csv(cls):
-        caminhos = [
-            Path('Dados') / 'Pokemon Global Server - Itens.csv',
-            Path('Pokemon Global Server - Itens.csv'),
-            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Itens.csv',
-            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Itens.csv',
-        ]
-        return next((p for p in caminhos if p.exists()), None)
-
-    @classmethod
     def _carregar_itens_csv(cls):
         if cls._itens_cache is not None:
             return cls._itens_cache
         mapa = {}
-        caminho = cls._caminho_itens_csv()
-        if caminho is None:
-            cls._itens_cache = mapa
-            return mapa
         try:
-            with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
-                for linha in csv.DictReader(arquivo):
+            for linha in carregar_csv_dict('Pokemon Global Server - Itens.csv'):
                     dado = dict(linha)
                     nome = str(dado.get('Nome') or '').strip()
                     code = str(dado.get('Code') or '').strip()

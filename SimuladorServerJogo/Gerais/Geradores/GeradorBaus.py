@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import csv
 import random
-from pathlib import Path
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict, carregar_csv_lista
 from typing import Dict, List
 
 TIPOS_ORDEM = ("Comum", "Incomum", "Raro", "Epico", "Lendario", "Mitico")
@@ -20,10 +19,6 @@ _TAMANHO_BAU_POR_QTD = {
     3: 1.30,
     4: 1.50,
 }
-
-PASTA_DADOS = Path(__file__).resolve().parents[3] / "Dados"
-ARQUIVO_BAUS = PASTA_DADOS / "Pokemon Global Server - Baus.csv"
-ARQUIVO_ITENS = PASTA_DADOS / "Pokemon Global Server - Itens.csv"
 
 
 def _fnum(v, default=0.0):
@@ -48,8 +43,7 @@ def _carregar_tabela_baus() -> Dict[int, Dict[str, object]]:
     tabela: Dict[int, Dict[str, object]] = {}
     dia_atual = 1
 
-    with ARQUIVO_BAUS.open("r", encoding="utf-8") as f:
-        for linha in csv.reader(f):
+    for linha in carregar_csv_lista("Pokemon Global Server - Baus.csv", encoding="utf-8"):
             tokens = [str(c or "").strip() for c in linha if str(c or "").strip()]
             if not tokens:
                 continue
@@ -87,8 +81,7 @@ def _carregar_tabela_baus() -> Dict[int, Dict[str, object]]:
 def _carregar_itens_validos() -> Dict[int, List[Dict[str, object]]]:
     itens_por_raridade: Dict[int, List[Dict[str, object]]] = {i: [] for i in range(1, 7)}
 
-    with ARQUIVO_ITENS.open("r", encoding="utf-8") as f:
-        for linha in csv.DictReader(f):
+    for linha in carregar_csv_dict("Pokemon Global Server - Itens.csv", encoding="utf-8"):
             entra_bau = str(linha.get("Bau", "")).strip().lower()
             if entra_bau and entra_bau != "s":
                 continue

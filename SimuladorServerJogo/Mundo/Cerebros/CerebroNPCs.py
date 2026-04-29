@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import csv
 import math
 import random
 import unicodedata
-from pathlib import Path
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from typing import Dict, List, Set, Tuple
 
 from Codigo.ModulosGerais.Colisor import Colisor
@@ -53,11 +52,11 @@ class CerebroNPCs:
     def _carregar_lideres_base(self) -> Dict[str, Dict[str, object]]:
         base: Dict[str, Dict[str, object]] = {}
         mapa_estadios = self._mapa_dimensao_estadios()
-        arquivo_combatentes = Path("Dados") / "Pokemon Global Server - NPC Combatente.csv"
-        if not arquivo_combatentes.exists():
+        try:
+            linhas = carregar_csv_dict("Pokemon Global Server - NPC Combatente.csv", encoding="utf-8")
+        except OSError:
             return base
-        with arquivo_combatentes.open("r", encoding="utf-8") as f:
-            for idx, row in enumerate(csv.DictReader(f), start=1):
+        for idx, row in enumerate(linhas, start=1):
                 cargo = str(row.get("Cargo") or "").strip().lower()
                 nivel = str(row.get("Nivel") or "").strip().lower()
                 if cargo != "lider" and nivel != "lider":

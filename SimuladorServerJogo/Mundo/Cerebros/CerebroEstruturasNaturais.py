@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import csv
 import math
 import random
 import uuid
-from pathlib import Path
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from typing import Dict, Tuple
 
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
@@ -14,13 +13,10 @@ from SimuladorServerJogo.Gerais.EstadoServidor import obter_personagem_para_entr
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, ItemMundoServer
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_estruturas_naturais
 
-_RAIZ = Path(__file__).resolve().parents[3]
-
 
 def _carregar_fatores_ferramenta() -> Dict[str, int]:
     by_code: Dict[str, int] = {}
-    with (_RAIZ / "Dados" / "Pokemon Global Server - Itens.csv").open("r", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
+    for row in carregar_csv_dict("Pokemon Global Server - Itens.csv", encoding="utf-8"):
             code = str(row.get("Code", "")).strip()
             if not code:
                 continue

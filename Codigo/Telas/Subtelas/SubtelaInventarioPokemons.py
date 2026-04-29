@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import copy
-import csv
 import importlib
 import math
-from pathlib import Path
 
 import pygame
+
+from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Geradores.ItemInventario import ItemInventario
@@ -320,22 +320,15 @@ class InventarioPokemons:
             return f'Nome: {nome} | {especie} | Poder {poder}'
         return f'Nome: {nome} | {especie} Lv {nivel} | Poder {poder}'
 
-    def _caminho_csv(self, arquivo):
-        caminhos = [
-            Path('Dados') / arquivo,
-            Path(__file__).resolve().parents[3] / 'Dados' / arquivo,
-        ]
-        return next((p for p in caminhos if p.exists()), None)
-
     def _base_itens(self):
         if self._csv_itens is not None:
             return self._csv_itens
         self._csv_itens = {}
-        caminho = self._caminho_csv('Pokemon Global Server - Itens.csv')
-        if caminho is None:
+        try:
+            linhas = carregar_csv_dict('Pokemon Global Server - Itens.csv')
+        except OSError:
             return self._csv_itens
-        with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
-            for linha in csv.DictReader(arquivo):
+        for linha in linhas:
                 nome = str(linha.get('Nome') or '').strip().lower()
                 code = str(linha.get('Code') or '').strip()
                 if nome:
@@ -348,11 +341,11 @@ class InventarioPokemons:
         if self._csv_equipaveis is not None:
             return self._csv_equipaveis
         self._csv_equipaveis = {}
-        caminho = self._caminho_csv('Pokemon Global Server - Equipaveis.csv')
-        if caminho is None:
+        try:
+            linhas = carregar_csv_dict('Pokemon Global Server - Equipaveis.csv')
+        except OSError:
             return self._csv_equipaveis
-        with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
-            for linha in csv.DictReader(arquivo):
+        for linha in linhas:
                 nome = str(linha.get('Nome') or '').strip().lower()
                 if nome:
                     self._csv_equipaveis[nome] = dict(linha)

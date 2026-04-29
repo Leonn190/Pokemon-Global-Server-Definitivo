@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import csv
-from pathlib import Path
+from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon, aprender_ataque_aleatorio
 
-_ARQ_ITENS = Path("Dados") / "Pokemon Global Server - Itens.csv"
 _CACHE_POCOES = None
 
 
@@ -25,9 +23,7 @@ def _dados_pocao(nome_pocao: str) -> dict:
     if _CACHE_POCOES is None:
         _CACHE_POCOES = {}
         try:
-            with _ARQ_ITENS.open("r", encoding="utf-8") as arquivo:
-                leitor = csv.DictReader(arquivo)
-                for linha in leitor:
+            for linha in carregar_csv_dict("Pokemon Global Server - Itens.csv", encoding="utf-8"):
                     if _normalizar_nome(linha.get("Estilo", "")) != _normalizar_nome("poção"):
                         continue
                     _CACHE_POCOES[_normalizar_nome(linha.get("Nome", ""))] = dict(linha)

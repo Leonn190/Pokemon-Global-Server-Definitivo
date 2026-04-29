@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import csv
-from pathlib import Path
-
 import pygame
+
+from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Texto import Texto, SetorTexto
@@ -42,19 +41,8 @@ class FichaItem:
         if cls._dados_csv is not None:
             return cls._dados_csv
         cls._dados_csv = {}
-        caminhos = [
-            Path('Dados') / 'Pokemon Global Server - Itens.csv',
-            Path('Pokemon Global Server - Itens.csv'),
-            Path(__file__).resolve().parents[3] / 'Dados' / 'Pokemon Global Server - Itens.csv',
-            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Itens.csv',
-        ]
-        caminho = next((p for p in caminhos if p.exists()), None)
-        if caminho is None:
-            return cls._dados_csv
         try:
-            with caminho.open('r', encoding='utf-8-sig', newline='') as arquivo:
-                leitor = csv.DictReader(arquivo)
-                for linha in leitor:
+            for linha in carregar_csv_dict('Pokemon Global Server - Itens.csv'):
                     nome = str(linha.get('Nome') or '').strip().lower()
                     code = str(linha.get('Code') or '').strip()
                     if nome:

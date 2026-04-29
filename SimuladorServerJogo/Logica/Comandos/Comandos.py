@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import csv
 import random
 import time
-from pathlib import Path
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import snapshot_estado, atualizar_inventario_personagem, atualizar_perfil_personagem, atualizar_posicao_personagem
@@ -12,8 +11,6 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorBaus import gerar_bau_server
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_server
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
-
-_RAIZ = Path(__file__).resolve().parents[3]
 
 
 def _split_args(tokens):
@@ -153,8 +150,7 @@ def _normalizar_xy(x, y):
 
 def _carregar_itens():
     itens, by_code, by_nome = [], {}, {}
-    with (_RAIZ / "Dados" / "Pokemon Global Server - Itens.csv").open("r", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
+    for row in carregar_csv_dict("Pokemon Global Server - Itens.csv", encoding="utf-8"):
             nome = str(row.get("Nome", "")).strip()
             code = str(row.get("Code", "")).strip()
             if not nome:
@@ -176,8 +172,7 @@ def _carregar_itens():
 
 def _carregar_pokemons():
     pokes, by_code, by_nome = [], {}, {}
-    with (_RAIZ / "Dados" / "Pokemon Global Server - Pokemons.csv").open("r", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
+    for row in carregar_csv_dict("Pokemon Global Server - Pokemons.csv", encoding="utf-8"):
             nome = str(row.get("Nome", "")).strip()
             code = str(row.get("Code", "")).strip()
             estagio = str(row.get("Estagio", "")).strip()

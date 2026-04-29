@@ -7,7 +7,7 @@ import time
 from collections import deque
 from typing import Dict, List, Optional
 
-from Codigo.Server.ServerMundo import enviar_pacote_cliente_mundo, receber_pacotes_tick_mundo
+from Codigo.ModulosGerais.Server.ServerMundo import enviar_pacote_cliente_mundo, receber_pacotes_tick_mundo
 
 
 class SistemaPacotes:

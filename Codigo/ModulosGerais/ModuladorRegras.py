@@ -6,7 +6,7 @@ from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
 from Codigo.Paineis.FichaPokemon import FichaPokemon
-from Codigo.Server.ServerMundo import coletar_regras_mundo
+from Codigo.ModulosGerais.Server.ServerMundo import coletar_regras_mundo
 
 
 class ModuladorRegras:

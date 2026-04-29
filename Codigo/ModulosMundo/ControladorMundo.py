@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from Codigo.Server.ServerMundo import consultar_chunks_mundo, receber_pacotes_tick_mundo, desconectar_mundo, definir_bombeamento_local_manual
+from Codigo.ModulosGerais.Server.ServerMundo import consultar_chunks_mundo, receber_pacotes_tick_mundo, desconectar_mundo, definir_bombeamento_local_manual
 
 from .LeitorMundo import LeitorMundo
 from .ControladorObjetos import ControladorObjetos

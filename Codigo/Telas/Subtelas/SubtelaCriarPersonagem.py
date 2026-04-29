@@ -8,7 +8,7 @@ from Codigo.ModulosGerais.DesenhaAtor import DesenhaAtor
 from Codigo.Prefabs.Barra import BarraEditavel
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Server.ServerMenu import criar_personagem
+from Codigo.ModulosGerais.Server.ServerMenu import criar_personagem
 
 _SKINS_LIBERADAS = [f"{i}.png" for i in range(1, 13)]
 

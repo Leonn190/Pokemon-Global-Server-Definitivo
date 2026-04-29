@@ -14,7 +14,7 @@ from Codigo.ModulosGerais.Sonoridades import tile_mundo_atual
 from Codigo.ModulosGerais.Auxiliares import bioma_visual_por_tile
 from Codigo.Telas.Subtelas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.Telas.Telas.TelaConfig import TelaConfig, ResetTelaConfig
-from Codigo.Server.ServerMundo import (
+from Codigo.ModulosGerais.Server.ServerMundo import (
     desconectar_mundo,
     enviar_diffs_mundo,
     finalizar_interacao_npc_mundo,
@@ -24,7 +24,7 @@ from Codigo.Server.ServerMundo import (
     consultar_chunks_mundo,
     coletar_mapa_mundo,
 )
-from Codigo.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
+from Codigo.ModulosGerais.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.Subtelas.SubtelaInventario import SubtelaInventario
 from Codigo.Prefabs.Terminal import Terminal
 from Codigo.Telas.Subtelas.SubtelaDialogo import SubtelaDialogo

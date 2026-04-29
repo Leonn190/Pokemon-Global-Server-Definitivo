@@ -4,9 +4,9 @@ import pygame
 from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Prefabs.Botao import Botao, BotaoSelecao
 from Codigo.Prefabs.Mensagem import Mensagem
-from Codigo.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
-from Codigo.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
-from Codigo.Server.ServerLogin import registrar_server_conta
+from Codigo.ModulosGerais.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
+from Codigo.ModulosGerais.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
+from Codigo.ModulosGerais.Server.ServerLogin import registrar_server_conta
 from Codigo.Telas.Telas.TelaConfig import salvar_config_fixa
 from Codigo.Telas.Subtelas.SubtelaCriarPersonagem import SubtelaCriarPersonagem
 from Codigo.Telas.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaEscolha, SubtelaTexto

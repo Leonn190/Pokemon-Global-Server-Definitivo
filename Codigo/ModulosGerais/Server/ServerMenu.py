@@ -1,6 +1,6 @@
 import json
 
-from Codigo.Server.GerenciadorServerList import obter_servidor_por_id
+from Codigo.ModulosGerais.Server.GerenciadorServerList import obter_servidor_por_id
 from SimuladorServerJogo.Gerais.ContextoServidor import definir_servidor_ativo
 from SimuladorServerJogo.Gerais.Rotas.Entrada import processar_entrada_json
 from SimuladorServerJogo.Gerais.Rotas.ServerOperar import processar_operacao_json

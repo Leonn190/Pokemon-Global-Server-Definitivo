@@ -8,8 +8,8 @@ import pygame
 from Codigo.Paineis.PainelEstatisticas import PainelEstatisticas
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
-from Codigo.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
-from Codigo.Server.ServerMenu import obter_estatisticas_player
+from Codigo.ModulosGerais.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
+from Codigo.ModulosGerais.Server.ServerMenu import obter_estatisticas_player
 
 
 class _AtorContaAdapter:

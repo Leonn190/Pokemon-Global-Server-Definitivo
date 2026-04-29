@@ -5,7 +5,7 @@ import time
 from typing import Dict, List, Tuple
 
 from Codigo.ModulosGerais.ImagensMapa import GerenciadorImagensMapa
-from Codigo.Server.ServerMundo import atualizar_mapa_mundo, coletar_mapa_mundo
+from Codigo.ModulosGerais.Server.ServerMundo import atualizar_mapa_mundo, coletar_mapa_mundo
 
 
 class ServicoMapaMundo:

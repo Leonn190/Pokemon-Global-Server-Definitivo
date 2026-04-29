@@ -13,7 +13,7 @@ from Codigo.ModulosBatalha.MontadorJogadas import MontadorJogadas
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
 from Codigo.ModulosBatalha.PokemonBatalha import PokemonBatalha
 from Codigo.ModulosGerais.Camera import CameraBatalha
-from Codigo.Server import ServerBatalha
+from Codigo.ModulosGerais.Server import ServerBatalha
 
 
 class ControladorBatalha:

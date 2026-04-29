@@ -6,7 +6,7 @@ import json
 import time
 from pathlib import Path
 
-from Codigo.Server.GerenciadorServerList import obter_servidor_por_id
+from Codigo.ModulosGerais.Server.GerenciadorServerList import obter_servidor_por_id
 from SimuladorServerJogo.Gerais.ContextoServidor import definir_servidor_ativo, obter_pasta_servidor_ativo
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.Rotas.Ativador import processar_ativador_json

@@ -626,7 +626,7 @@ class FichaPokemon:
         )
         self._botao_upar = Botao(
             pygame.Rect(rect.x + 136, rect.bottom - 40, 148, 26),
-            'Subir nível',
+            'Evoluir',
             execute=lambda _jogo, _botao: setattr(self, 'UparNivelSolicitado', True),
             style={
                 'radius': 10, 'border_width': 2,
@@ -1243,8 +1243,7 @@ class FichaPokemon:
             base_y = left.bottom - ((btn_h * 2) + 8) - 10
             self._botao_upar.base_rect = pygame.Rect(left.x + 16, base_y, btn_w, btn_h)
             self._botao_upar.rect = pygame.Rect(self._botao_upar.base_rect)
-            xp_atual, xp_alvo = self._xp(pokemon)
-            pode_upar = xp_atual >= xp_alvo
+            pode_upar = PokemonInventario.pode_evoluir(pokemon)
             self._botao_upar.set_habilitado(pode_upar)
             self._botao_upar.set_pulsando(pode_upar, cor=(188, 227, 140), cor_borda=(227, 255, 191), velocidade=2.0, intensidade=0.44)
 

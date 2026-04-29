@@ -129,6 +129,13 @@ class PokemonInventario:
         except (TypeError, ValueError):
             return False
 
+    @staticmethod
+    def pode_evoluir(pokemon: object) -> bool:
+        if not isinstance(pokemon, dict):
+            return False
+        fonte = pokemon.get('estado') if isinstance(pokemon.get('estado'), dict) else pokemon
+        return bool(fonte.get('PodeEvoluir', fonte.get('pode_evoluir', False)))
+
     @classmethod
     def normalizar_tipo(cls, tipo: str) -> str:
         return cls._norm(tipo)
@@ -296,12 +303,12 @@ class PokemonInventario:
             if coracao is not None:
                 tela.blit(coracao, coracao.get_rect(topright=(rect.right - 3, rect.y + 3)))
 
-        if cls.pode_subir_nivel(pokemon):
+        if cls.pode_evoluir(pokemon):
             marcador = pygame.Rect(rect.x + 4, rect.y + 6, 12, 12)
             pygame.draw.rect(tela, (176, 250, 170), marcador, border_radius=3)
             pygame.draw.rect(tela, (236, 255, 234), marcador, 1, border_radius=3)
             texto_p = Texto(
-                "P",
+                "E",
                 style={
                     "size": 10,
                     "color": (10, 22, 10),

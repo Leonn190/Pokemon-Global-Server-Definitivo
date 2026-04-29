@@ -34,7 +34,7 @@ class Controle:
         self._item_arremesso_atual = None
         self._acao_arremesso_pendente = None
         self._acao_drop_item_mundo_pendente = None
-        self._acao_subir_nivel_pokemon_pendente = None
+        self._acao_evoluir_pokemon_pendente = None
         self._acao_interacao_pendente = None
         self.BloquearToggleInventario = False
 
@@ -80,11 +80,14 @@ class Controle:
         self._acao_drop_item_mundo_pendente = None
         return acao
 
-    def solicitar_subir_nivel_pokemon(self, chave_pokemon: str):
+    def solicitar_evoluir_pokemon(self, chave_pokemon: str):
         chave = str(chave_pokemon or "").strip()
         if not chave:
             return
-        self._acao_subir_nivel_pokemon_pendente = {"chave_pokemon": chave}
+        self._acao_evoluir_pokemon_pendente = {"chave_pokemon": chave}
+
+    def solicitar_subir_nivel_pokemon(self, chave_pokemon: str):
+        self.solicitar_evoluir_pokemon(chave_pokemon)
 
 
     def registrar_acao_interacao(self, payload):
@@ -95,10 +98,13 @@ class Controle:
         self._acao_interacao_pendente = None
         return acao
 
-    def consumir_acao_subir_nivel_pokemon(self):
-        acao = self._acao_subir_nivel_pokemon_pendente
-        self._acao_subir_nivel_pokemon_pendente = None
+    def consumir_acao_evoluir_pokemon(self):
+        acao = self._acao_evoluir_pokemon_pendente
+        self._acao_evoluir_pokemon_pendente = None
         return acao
+
+    def consumir_acao_subir_nivel_pokemon(self):
+        return self.consumir_acao_evoluir_pokemon()
 
     def _item_qualquer_na_mao(self):
         inv = getattr(self.Ator, "Inventario", None)

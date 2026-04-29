@@ -5,6 +5,7 @@ from copy import deepcopy
 import pygame
 
 from Codigo.Telas.Subtelas.SubtelaFinalizacao import SubtelaFinalizacao
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon
 
 
 def _i(valor, default=0) -> int:
@@ -230,17 +231,15 @@ class FinalizadorBatalha:
         ganho = _i(xp_ganho, 0)
         if ganho <= 0:
             return
-        for chave in ("XP", "xp", "Experiencia", "experiencia"):
-            if chave in pokemon:
-                pokemon[chave] = _i(pokemon.get(chave), 0) + ganho
-                return
+        alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+        if isinstance(alvo, dict):
+            ganhar_xp_pokemon(alvo, ganho)
+            return
         dados = pokemon.get("dados") if isinstance(pokemon.get("dados"), dict) else pokemon.get("Dados") if isinstance(pokemon.get("Dados"), dict) else None
         if dados is not None:
-            for chave in ("XP", "xp", "Experiencia", "experiencia"):
-                if chave in dados:
-                    dados[chave] = _i(dados.get(chave), 0) + ganho
-                    return
-        pokemon["XP"] = ganho
+            alvo = dados.get("estado") if isinstance(dados.get("estado"), dict) else dados
+            if isinstance(alvo, dict):
+                ganhar_xp_pokemon(alvo, ganho)
 
     def _inventario_atualizado_pos_batalha(self, jogo, contexto):
         player_dados = jogo.INFO.get("PlayerDadosServer") if isinstance(jogo.INFO.get("PlayerDadosServer"), dict) else {}

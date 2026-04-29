@@ -498,19 +498,17 @@ class InventarioPokemons:
             max_chars=24,
             ))
 
-    def _subir_nivel_pokemon_analisado(self):
+    def _evoluir_pokemon_analisado(self):
         pokemon = self._pokemon_analisado
         if not isinstance(pokemon, dict):
             return
         fonte = pokemon.get('estado') if isinstance(pokemon.get('estado'), dict) else pokemon
-        xp_atual = int(float(fonte.get('XP', fonte.get('xp', 0)) or 0))
-        xp_alvo = int(float(fonte.get('XPAlvo', fonte.get('xp_alvo', 0)) or 0))
-        if xp_atual < xp_alvo or xp_alvo <= 0:
+        if not bool(fonte.get('PodeEvoluir', fonte.get('pode_evoluir', False))):
             return
         controle = getattr(self.Ator, 'Controle', None)
         chave = self._chave(pokemon)
-        if controle is not None and hasattr(controle, 'solicitar_subir_nivel_pokemon'):
-            controle.solicitar_subir_nivel_pokemon(chave)
+        if controle is not None and hasattr(controle, 'solicitar_evoluir_pokemon'):
+            controle.solicitar_evoluir_pokemon(chave)
         if self._container is not None:
             self._container.marcar_sujo()
         if self._painel_times is not None:
@@ -989,7 +987,7 @@ class InventarioPokemons:
             elif self._ficha_pokemon.DoarSolicitado and self._pokemon_analisado is not None:
                 self._abrir_confirmacao_doacao(self._pokemon_analisado)
             elif self._ficha_pokemon.UparNivelSolicitado and self._pokemon_analisado is not None:
-                self._subir_nivel_pokemon_analisado()
+                self._evoluir_pokemon_analisado()
 
         if not analisando:
             self._container.desenhar(

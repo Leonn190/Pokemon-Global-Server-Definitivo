@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import random
 import unicodedata
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -100,6 +101,59 @@ def _xp_alvo_por_nivel(nivel: int) -> int:
     if nivel_ajustado >= 100:
         return 0
     return int((nivel_ajustado + 1) * 100)
+
+
+def _estado_pokemon(pokemon: Dict[str, object]) -> Dict[str, object]:
+    if not isinstance(pokemon, dict):
+        return {}
+    return pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+
+
+def _linhagem_regular(linhagem: str) -> List[Dict[str, str]]:
+    alvo = str(linhagem or "").strip()
+    if not alvo:
+        return []
+    rows: List[Dict[str, str]] = []
+    for item in _BASE_POKEMONS:
+        row = item.get("row", {}) if isinstance(item, dict) else {}
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("Linhagem", "") or "").strip() != alvo:
+            continue
+        if _row_eh_forma(row):
+            continue
+        rows.append(row)
+    rows.sort(key=lambda r: (_inum(r.get("Estagio"), 0), _inum(r.get("Code"), 0)))
+    return rows
+
+
+def _sortear_pode_evoluir(estado: Dict[str, object], nivel_anterior: int) -> bool:
+    if not isinstance(estado, dict) or bool(estado.get("PodeEvoluir", estado.get("pode_evoluir", False))):
+        return False
+    linhagem = str(estado.get("linhagem") or "").strip()
+    rows = _linhagem_regular(linhagem)
+    estagios = sorted({_inum(row.get("Estagio"), 0) for row in rows if _inum(row.get("Estagio"), 0) > 0})
+    total = len(estagios)
+    estagio_atual = _inum(estado.get("estagio"), 0)
+    if total <= 1 or estagio_atual >= total:
+        return False
+
+    nivel_base = max(0, int(nivel_anterior))
+    chance = 0.0
+    if total == 2:
+        chance = float(nivel_base)
+    elif total == 3:
+        if estagio_atual == 1:
+            chance = 5.0 + float(nivel_base)
+        elif estagio_atual == 2:
+            chance = -10.0 + float(nivel_base)
+
+    chance = max(0.0, min(100.0, chance))
+    if chance > 0.0 and random.random() <= (chance / 100.0):
+        estado["PodeEvoluir"] = True
+        estado["pode_evoluir"] = True
+        return True
+    return False
 
 
 def _recalcular_total(stats: Dict[str, float]) -> float:
@@ -323,6 +377,138 @@ def subir_nivel_pokemon(pokemon: Dict[str, object], vezes: int = 1) -> Dict[str,
     return dados
 
 
+def ganhar_xp_pokemon(pokemon: Dict[str, object], quantidade_xp: int = 0) -> Dict[str, int]:
+    estado = _estado_pokemon(pokemon)
+    if not estado:
+        return {"xp_ganho": 0, "niveis_ganhos": 0, "nivel_atual": 0, "xp_atual": 0, "xp_alvo": 0}
+
+    ganho = max(0, _inum(quantidade_xp, 0))
+    nivel = max(0, min(100, _inum(estado.get("nivel", estado.get("Nivel", 0)), 0)))
+    xp = max(0, _inum(estado.get("XP", estado.get("xp", 0)), 0)) + ganho
+    niveis = 0
+
+    while nivel < 100:
+        xp_alvo = _xp_alvo_por_nivel(nivel)
+        if xp_alvo <= 0 or xp < xp_alvo:
+            break
+        nivel_anterior = nivel
+        xp -= xp_alvo
+        estado["XP"] = xp
+        estado["xp"] = xp
+        subir_nivel_pokemon(estado, vezes=1)
+        nivel = max(0, min(100, _inum(estado.get("nivel", nivel + 1), nivel + 1)))
+        niveis += 1
+        _sortear_pode_evoluir(estado, nivel_anterior)
+
+    if nivel >= 100:
+        xp = 0
+    xp_alvo = _xp_alvo_por_nivel(nivel)
+    estado["nivel"] = int(nivel)
+    estado["XP"] = int(xp)
+    estado["xp"] = int(xp)
+    estado["XPAlvo"] = int(xp_alvo)
+    estado["xp_alvo"] = int(xp_alvo)
+    return {
+        "xp_ganho": int(ganho),
+        "niveis_ganhos": int(niveis),
+        "nivel_atual": int(nivel),
+        "xp_atual": int(xp),
+        "xp_alvo": int(xp_alvo),
+    }
+
+
+def evoluir_pokemon(pokemon: Dict[str, object]) -> Dict[str, object]:
+    dados = pokemon if isinstance(pokemon, dict) else {}
+    estado = _estado_pokemon(dados)
+    if not estado or not bool(estado.get("PodeEvoluir", estado.get("pode_evoluir", False))):
+        return {"evoluiu": False}
+
+    row_base = _row_base_por_pokemon(dados)
+    linhagem = str(row_base.get("Linhagem") or estado.get("linhagem") or "").strip()
+    estagio_atual = _inum(estado.get("estagio", row_base.get("Estagio", 1)), 1)
+    candidatos = [row for row in _linhagem_regular(linhagem) if _inum(row.get("Estagio"), 0) == estagio_atual + 1]
+    if not candidatos:
+        return {"evoluiu": False}
+    row = candidatos[0]
+
+    nivel = max(0, min(100, _inum(estado.get("nivel", 0), 0)))
+    xp = max(0, _inum(estado.get("XP", estado.get("xp", 0)), 0))
+    iv = max(0, min(100, _inum(estado.get("iv", 0), 0)))
+    subivs = deepcopy(estado.get("subivs")) if isinstance(estado.get("subivs"), dict) else _gerar_subivs_media(iv)
+    coef_genetico = _fnum(estado.get("coeficiente_genetico"), 1.0)
+    coef_altura = _fnum(estado.get("coeficiente_altura"), 1.0)
+    coef_peso = _fnum(estado.get("coeficiente_peso"), 1.0)
+    tamanho_sigla = str(estado.get("tamanho", "M") or "M").strip().upper()
+    if tamanho_sigla not in {"S", "M", "G"}:
+        tamanho_sigla = "M"
+    variacao_tamanho = {"S": -1, "M": 0, "G": 1}.get(tamanho_sigla, 0)
+    escala = _normalizar_escala_pokemon(_normalizar_escala_pokemon(row.get("Tamanho", 3), default=3) + variacao_tamanho, default=3)
+    ataques = {
+        chave: deepcopy(estado.get(chave))
+        for chave in ("habilidades", "memorias", "Habilidades", "Memoria", "Ataques")
+        if isinstance(estado.get(chave), list)
+    }
+
+    stats_base = {k: _fnum(row.get(k), 0.0) for k in STATS_BASE}
+    stats = {}
+    for stat in STATS_VARIAVEIS_IV:
+        base = _fnum(stats_base.get(stat), 0.0)
+        mult = 0.75 + (_inum(subivs.get(stat), iv) / 200.0)
+        stats[stat] = round(base * mult, 2)
+    stats["CrC"] = round(_fnum(stats_base.get("CrC"), 0.0), 2)
+    stats["CrD"] = round(_fnum(stats_base.get("CrD"), 0.0), 2)
+
+    nome_anterior = str(estado.get("especie") or estado.get("nome") or dados.get("especie") or dados.get("nome") or "")
+    nome_novo = str(row.get("Nome", "Pokemon"))
+    estado.update(
+        {
+            "especie": nome_novo,
+            "nome": nome_novo,
+            "nivel": 0,
+            "iv": iv,
+            "subivs": subivs,
+            "stats_base": stats_base,
+            "stats": stats,
+            "altura": round(_fnum(row.get("Altura"), 1.0) * coef_genetico * coef_altura, 3),
+            "peso": round(_fnum(row.get("Peso"), 1.0) * coef_genetico * coef_peso, 3),
+            "coeficiente_genetico": round(coef_genetico, 5),
+            "coeficiente_altura": round(coef_altura, 5),
+            "coeficiente_peso": round(coef_peso, 5),
+            "tipos": _sortear_tipos(row),
+            "grupo": str(row.get("Grupo", "")),
+            "raridade": int(_fnum(row.get("Raridade"), 1)),
+            "estagio": int(_fnum(row.get("Estagio"), estagio_atual + 1)),
+            "escala": int(escala),
+            "variacao_tamanho": int(variacao_tamanho),
+            "tamanho": str(tamanho_sigla),
+            "tamanho_tiles": round(_diametro_tiles_por_escala(escala), 2),
+            "code": str(row.get("Code", "")),
+            "linhagem": str(row.get("Linhagem", "")),
+            "equipaveis": max(1, min(4, _inum(row.get("Equipaveis", 1), 1))),
+            "XP": 0,
+            "xp": 0,
+            "XPAlvo": _xp_alvo_por_nivel(0),
+            "xp_alvo": _xp_alvo_por_nivel(0),
+            "PodeEvoluir": False,
+            "pode_evoluir": False,
+        }
+    )
+    estado.update(ataques)
+    subir_nivel_pokemon(estado, vezes=nivel)
+    estado["XP"] = int(xp)
+    estado["xp"] = int(xp)
+    estado["XPAlvo"] = _xp_alvo_por_nivel(nivel)
+    estado["xp_alvo"] = estado["XPAlvo"]
+    estado["poder"] = _recalcular_poder(estado.get("stats", {}))
+    estado["poder_relativo"] = _recalcular_poder_relativo(estado.get("stats", {}))
+    estado["vida_atual"] = round(_fnum(estado.get("stats", {}).get("Vida"), 0.0), 2)
+    if isinstance(dados, dict) and dados is not estado:
+        dados["especie"] = nome_novo
+        dados["nome"] = nome_novo
+        dados["code"] = str(row.get("Code", ""))
+    return {"evoluiu": True, "de": nome_anterior, "para": nome_novo}
+
+
 def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Optional[Dict[str, object]] = None) -> Dict[str, object]:
     bruto = dict(pokemon_mundo or {})
     estado = bruto.get("estado") if isinstance(bruto.get("estado"), dict) else bruto
@@ -364,7 +550,11 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     estado["tipos"] = list(estado.get("tipos", [])) if isinstance(estado.get("tipos"), list) else []
     estado["nivel"] = 0
     estado["XP"] = 0
+    estado["xp"] = 0
     estado["XPAlvo"] = _xp_alvo_por_nivel(0)
+    estado["xp_alvo"] = estado["XPAlvo"]
+    estado["PodeEvoluir"] = False
+    estado["pode_evoluir"] = False
     estado["poder"] = _recalcular_poder(stats_final)
     estado["poder_relativo"] = _recalcular_poder_relativo(stats_final)
     estado["vida_atual"] = round(_fnum(stats_final.get("Vida"), 0.0), 2)
@@ -386,6 +576,8 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
 
 MaterializarPokemon = materializar_pokemon
 SubirNivel = subir_nivel_pokemon
+GanharXP = ganhar_xp_pokemon
+EvoluirPokemon = evoluir_pokemon
 
 
 def criar_pokemon_inicial_materializado(especie: str) -> Dict[str, object]:
@@ -619,6 +811,8 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "poder": poder_base,
             "poder_relativo": _recalcular_poder_relativo(stats_base),
             "vida_atual": round(_fnum(stats_base.get("Vida"), 0.0), 2),
+            "PodeEvoluir": False,
+            "pode_evoluir": False,
             "dificuldade_captura": dificuldade,
             "tamanho_barra_captura": tamanho_barra,
             "velocidade_barra_captura": velocidade_barra,

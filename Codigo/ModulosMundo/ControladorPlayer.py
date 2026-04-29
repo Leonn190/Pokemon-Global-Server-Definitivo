@@ -462,10 +462,10 @@ class ControladorPlayer:
                 "instante_cliente_ms": int(time.time() * 1000),
             },
         })
-    def _processar_intencao_subir_nivel_pokemon(self) -> None:
+    def _processar_intencao_evoluir_pokemon(self) -> None:
         if self._player_local is None or self._player_local.Controle is None:
             return
-        acao = self._player_local.Controle.consumir_acao_subir_nivel_pokemon()
+        acao = self._player_local.Controle.consumir_acao_evoluir_pokemon()
         if not isinstance(acao, dict):
             return
         chave = str(acao.get("chave_pokemon") or "").strip()
@@ -473,7 +473,7 @@ class ControladorPlayer:
             return
         self._objetos.EnfileirarDiffRapida({
             "tipo": "evento",
-            "categoria": "pokemon_subir_nivel",
+            "categoria": "pokemon_evoluir",
             "payload": {
                 "chave_pokemon": chave,
                 "instante_cliente_ms": int(time.time() * 1000),
@@ -525,7 +525,7 @@ class ControladorPlayer:
             self._processar_intencao_arremesso_local()
             self._processar_intencao_drop_item_mundo()
             self._processar_intencao_coleta_estrutura()
-            self._processar_intencao_subir_nivel_pokemon()
+            self._processar_intencao_evoluir_pokemon()
             self._processar_intencao_interacao_estadio()
         elif self._player_local.Controle is not None:
             self._player_local.Controle.atualizar_bloqueado(dt)

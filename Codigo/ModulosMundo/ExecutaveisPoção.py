@@ -3,6 +3,8 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon
+
 _ARQ_ITENS = Path("Dados") / "Pokemon Global Server - Itens.csv"
 _CACHE_POCOES = None
 
@@ -37,10 +39,8 @@ def _dados_pocao(nome_pocao: str) -> dict:
 
 def _aplicar_xp(pokemon: dict, quantidade: float):
     alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
-    atual = int(_valor_vida(alvo, "XP", _valor_vida(alvo, "xp", 0)))
     ganho = int(max(0, round(float(quantidade))))
-    alvo["XP"] = atual + ganho
-    alvo["xp"] = alvo["XP"]
+    ganhar_xp_pokemon(alvo, ganho)
 
 
 def _curar(pokemon: dict, cura: float):

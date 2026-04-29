@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+from copy import deepcopy
 from typing import Dict
 
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, diff_seq_atual, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
@@ -14,7 +15,7 @@ from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publicas, carregar_regras_pokemons
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_bando_confronto, subir_nivel_pokemon
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import evoluir_pokemon, ganhar_xp_pokemon, gerar_bando_confronto, subir_nivel_pokemon
 from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
 from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
 
@@ -59,12 +60,13 @@ def _processar_pendencias_pokemon_nivel(inventario: dict) -> dict:
         if not isinstance(pokemon, dict):
             continue
         alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+        antes = dict(alvo)
         pendente = int(float(alvo.get("__subir_nivel_pendente", 0) or 0))
-        if pendente <= 0:
-            continue
-        subir_nivel_pokemon(alvo, vezes=pendente)
+        if pendente > 0:
+            subir_nivel_pokemon(alvo, vezes=pendente)
         alvo.pop("__subir_nivel_pendente", None)
-        alterado = True
+        ganhar_xp_pokemon(alvo, 0)
+        alterado = alterado or alvo != antes
     if alterado:
         inv["pokemons"] = pokemons
     return inv
@@ -169,7 +171,7 @@ def _pokemon_casa_chave(pokemon: dict, chave_pokemon: str) -> bool:
     return False
 
 
-def _processar_evento_subir_nivel_pokemon(client_id: str, payload: Dict[str, object]) -> bool:
+def _processar_evento_evoluir_pokemon(client_id: str, payload: Dict[str, object]) -> bool:
     chave_pokemon = str(payload.get("chave_pokemon") or "").strip()
     if not chave_pokemon:
         return False
@@ -184,22 +186,32 @@ def _processar_evento_subir_nivel_pokemon(client_id: str, payload: Dict[str, obj
         inventario = dict(getattr(obj, "estado_extra", {}).get("inventario", {}))
     pokemons = list(inventario.get("pokemons", [])) if isinstance(inventario.get("pokemons"), list) else []
     alterado = False
+    pokemon_evoluido = None
     for pokemon in pokemons:
         if not _pokemon_casa_chave(pokemon, chave_pokemon):
             continue
         alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
-        xp = int(float(alvo.get("XP", alvo.get("xp", 0)) or 0))
-        xp_alvo = int(float(alvo.get("XPAlvo", alvo.get("xp_alvo", 0)) or 0))
-        if xp_alvo <= 0 or xp < xp_alvo:
+        if not bool(alvo.get("PodeEvoluir", alvo.get("pode_evoluir", False))):
             return False
-        alvo["XP"] = max(0, xp - xp_alvo)
-        alvo["xp"] = alvo["XP"]
-        subir_nivel_pokemon(alvo, vezes=1)
+        resultado = evoluir_pokemon(alvo)
+        if not bool(resultado.get("evoluiu", False)):
+            return False
+        pokemon_evoluido = deepcopy(pokemon)
         alterado = True
         break
     if not alterado:
         return False
     inventario["pokemons"] = pokemons
+    if pokemon_evoluido is not None and isinstance(inventario.get("times_pokemon"), list):
+        for time_pokemon in inventario.get("times_pokemon", []):
+            if not isinstance(time_pokemon, dict):
+                continue
+            slots = time_pokemon.get("Slots") if isinstance(time_pokemon.get("Slots"), list) else time_pokemon.get("slots")
+            if not isinstance(slots, list):
+                continue
+            for i, slot in enumerate(slots):
+                if _pokemon_casa_chave(slot, chave_pokemon):
+                    slots[i] = deepcopy(pokemon_evoluido)
     if isinstance(getattr(obj, "estado_extra", {}), dict):
         obj.estado_extra["inventario"] = inventario
     atualizar_inventario_personagem(client_id, inventario)
@@ -381,6 +393,8 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 if "inventario" in payload_in and isinstance(payload_in.get("inventario"), dict):
                     inventario_sync = _processar_pendencias_pokemon_nivel(payload_in.get("inventario"))
                     payload_in["inventario"] = inventario_sync
+                    if isinstance(getattr(obj, "estado_extra", None), dict):
+                        obj.estado_extra["inventario"] = inventario_sync
                     atualizar_inventario_personagem(usuario, inventario_sync)
             registrar_diff(
                 "update",
@@ -472,8 +486,8 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 else:
                     ignorados += 1
                 continue
-            if categoria == "pokemon_subir_nivel":
-                if _processar_evento_subir_nivel_pokemon(client_id, payload):
+            if categoria == "pokemon_evoluir":
+                if _processar_evento_evoluir_pokemon(client_id, payload):
                     aplicados += 1
                 else:
                     ignorados += 1

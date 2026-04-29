@@ -10,9 +10,9 @@ from typing import Dict, List, Optional, Tuple
 import pygame
 
 from Codigo.ModulosGerais.Colisor import Colisor
-from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
 from Codigo.ModulosGerais.Sonoridades import tocar
+from Codigo.Visual.PokemonMundoAnimator import PokemonMundoAnimator
 
 Vector2 = Tuple[float, float]
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
@@ -81,6 +81,7 @@ class Pokemon:
         self._pronto_para_remover = False
         self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
         self._diametro_tiles_visual = max(1.0, self._raio_colisao_padrao * 2.0)
+        self.Animator = PokemonMundoAnimator(self)
         self.aplicar_snapshot(snapshot)
 
     @staticmethod
@@ -530,157 +531,11 @@ class Pokemon:
                 else:
                     self._trocar_fase("normal")
 
-    def _desenhar_barra_local(self, tela, centro, raio):
-        decorrido_s = max(0.0, (pygame.time.get_ticks() - int(self._inicio_barra_local_ms)) / 1000.0)
-        ang = (decorrido_s * self.VelocidadeBarraCaptura) % 360.0
-        jan = max(8.0, min(120.0, self.TamanhoBarraCaptura * 360.0))
-        rect = pygame.Rect(0, 0, raio * 2, raio * 2)
-        rect.center = centro
-        ini = math.radians(-ang)
-        fim = math.radians(-(ang + jan))
-        pygame.draw.arc(tela, (255, 210, 76), rect, fim, ini, 4)
-
-    def _desenhar_pokemon_normal(self, tela, centro, raio_corpo, escala_extra: float = 1.0, alpha: int = 255):
-        raio = max(2, int(raio_corpo * max(0.05, float(escala_extra))))
-        frames = self._obter_frames_escalados(self.Especie, max(12, int(raio * 1.8)))
-        if frames and raio > 2:
-            frame = frames[int((pygame.time.get_ticks() / self._INTERVALO_FRAME_ANIM_MS) % len(frames))].copy()
-            if alpha < 255:
-                frame.set_alpha(alpha)
-            tela.blit(frame, frame.get_rect(center=centro))
-        else:
-            surf = pygame.Surface((raio * 2 + 8, raio * 2 + 8), pygame.SRCALPHA)
-            pygame.draw.circle(surf, (70, 155, 245, alpha), (surf.get_width() // 2, surf.get_height() // 2), raio)
-            pygame.draw.circle(surf, (24, 84, 190, alpha), (surf.get_width() // 2, surf.get_height() // 2), raio, 2)
-            tela.blit(surf, surf.get_rect(center=centro))
-
-    def _desenhar_circulo_base(self, tela, centro, raio_base):
-        pulso = 1.0 + math.sin(pygame.time.get_ticks() * 0.008) * 0.06
-        rr = max(3, int(raio_base * pulso))
-        pygame.draw.circle(tela, (70, 155, 245), centro, rr)
-        pygame.draw.circle(tela, (24, 84, 190), centro, rr, 2)
-        return rr
-
-    def _surface_bola_captura(self, tile_px: int):
-        nome_bola = str(self.CapturaEstado.get("bola_nome") or "pokeball")
-        item = {"Nome": nome_bola, "Code": ""}
-        return ItemInventario.surface_item(item, lado_px=max(12, int(tile_px * 0.45)))
-
-    def _desenhar_bola(self, tela, centro, tile_px: int, rotacao: float = 0.0, escala: float = 1.0, alpha: int = 255):
-        base = self._surface_bola_captura(tile_px)
-        if base is None:
-            pygame.draw.circle(tela, (255, 180, 90), (int(centro[0]), int(centro[1])), max(3, int(tile_px * 0.16)))
-            return
-        sprite = base
-        if abs(escala - 1.0) > 1e-3:
-            w, h = base.get_size()
-            sprite = pygame.transform.smoothscale(base, (max(1, int(w * escala)), max(1, int(h * escala))))
-        ang_i = int(rotacao) % 360
-        chave = (id(sprite), ang_i)
-        rot = self._cache_rotacao_bola.get(chave)
-        if rot is None:
-            rot = pygame.transform.rotate(sprite, rotacao)
-            self._cache_rotacao_bola[chave] = rot
-            if len(self._cache_rotacao_bola) > 720:
-                self._cache_rotacao_bola.clear()
-        if alpha < 255:
-            rot = rot.copy()
-            rot.set_alpha(alpha)
-        tela.blit(rot, rot.get_rect(center=(int(centro[0]), int(centro[1]))))
-
-    def _desenhar_animacao_captura(self, tela, camera, centro, tile_px):
-        t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimCapturaMs))))
-        base = max(6, int(tile_px * self._raio_colisao_padrao))
-        aura_r = max(base + 4, int(base * (1.1 + 0.55 * t)))
-        aura = pygame.Surface((aura_r * 3, aura_r * 3), pygame.SRCALPHA)
-        c = (150, 220, 255, int(120 * (1.0 - t * 0.35)))
-        pygame.draw.circle(aura, c, (aura.get_width() // 2, aura.get_height() // 2), aura_r, max(2, int(base * 0.09)))
-        tela.blit(aura, aura.get_rect(center=centro))
-        for i in range(3):
-            ang = (t * math.pi * 2.2) + (i * math.pi * 2.0 / 3.0)
-            ox = int(math.cos(ang) * base * (0.5 + 0.2 * (1.0 - t)))
-            oy = int(math.sin(ang) * base * (0.35 + 0.2 * (1.0 - t)))
-            pygame.draw.circle(tela, (180, 235, 255), (centro[0] + ox, centro[1] + oy), max(2, int(base * 0.10)))
-        poke_scale = max(0.0, 1.0 - (t ** 1.35))
-        poke_y = int(centro[1] - tile_px * 0.12 * t)
-        if poke_scale > 0.02:
-            self._desenhar_pokemon_normal(tela, (centro[0], poke_y), max(2, int(base * 2.1)), escala_extra=poke_scale, alpha=max(20, int(255 * (1.0 - t * 0.55))))
-        bola_y = int(centro[1] - tile_px * 0.24 * (1.0 - t) * (1.0 - t))
-        bola_rot = -280.0 * (1.0 - t)
-        bola_squash = 1.0 + 0.12 * math.sin(t * math.pi)
-        self._desenhar_bola(tela, (centro[0], bola_y), tile_px, rotacao=bola_rot, escala=bola_squash)
-
-    def _desenhar_animacao_checagem(self, tela, camera, centro, tile_px):
-        base = max(6, int(tile_px * self._raio_colisao_padrao))
-        indice = max(0, int(self.CapturaEstado.get("indice_checagem", 0) or 0))
-        t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimChecagemMs))))
-        amplitudes = [13.0, 9.0, 6.0]
-        rotacoes = [18.0, 12.0, 7.0]
-        amp = amplitudes[min(indice, len(amplitudes) - 1)]
-        rot = rotacoes[min(indice, len(rotacoes) - 1)]
-        onda = math.sin(t * math.pi)
-        dx = int(math.sin(t * math.pi * 2.0) * amp * onda)
-        ang = math.sin(t * math.pi * 2.0) * rot * onda
-        sombra = pygame.Rect(0, 0, int(base * 1.8), max(4, int(base * 0.45)))
-        sombra.center = (centro[0], centro[1] + int(base * 0.72))
-        pygame.draw.ellipse(tela, (0, 0, 0, 90), sombra)
-        self._desenhar_bola(tela, (centro[0] + dx, centro[1]), tile_px, rotacao=ang)
-
-    def _desenhar_animacao_fuga(self, tela, centro, base):
-        t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimFugaMs))))
-        base_visual = max(6, int(base * 2))
-        corpo_visual = max(3, int(base_visual * 1.05))
-        self._desenhar_circulo_base(tela, centro, base_visual)
-        for i in range(5):
-            ang = (i / 5.0) * math.pi * 2.0 + (t * 2.4)
-            ox = int(math.cos(ang) * base_visual * (0.45 + t * 0.85))
-            oy = int(math.sin(ang) * base_visual * (0.25 + t * 0.65))
-            pygame.draw.circle(tela, (255, 225, 170), (centro[0] + ox, centro[1] + oy), max(2, int(base_visual * 0.08)))
-        escala = min(1.0, 0.18 + (t ** 0.65) * 0.92)
-        alpha = max(50, int(255 * min(1.0, 0.4 + t * 0.9)))
-        self._desenhar_pokemon_normal(tela, centro, corpo_visual, escala_extra=escala, alpha=alpha)
-
-    def _desenhar_animacao_volta(self, tela, camera, tile_px):
-        ini = self.CapturaEstado.get("retorno_inicio") if isinstance(self.CapturaEstado.get("retorno_inicio"), (list, tuple)) else list(self._posicao_bola_mundo())
-        fim = self.CapturaEstado.get("retorno_destino") if isinstance(self.CapturaEstado.get("retorno_destino"), (list, tuple)) else ini
-        t = min(1.0, max(0.0, self._tempo_fase_ms() / max(1.0, float(self.TempoAnimVoltaMs))))
-        ini_t = camera.mundo_para_tela_px((float(ini[0]), float(ini[1])))
-        fim_t = camera.mundo_para_tela_px((float(fim[0]), float(fim[1])))
-        bx = ini_t[0] + (fim_t[0] - ini_t[0]) * t
-        by = ini_t[1] + (fim_t[1] - ini_t[1]) * t - math.sin(t * math.pi) * max(18.0, tile_px * 0.55)
-        rot = -540.0 * t
-        self._desenhar_bola(tela, (int(bx), int(by)), tile_px, rotacao=rot)
-
     def atualizar_visual(self, dt: float) -> None:
-        self.atualizar(dt)
+        self.Animator.atualizar_visual(dt)
 
     def render(self, tela, camera, dt: float = 0.0) -> None:
-        if self._pronto_para_remover:
-            return
-        cx, cy = camera.mundo_para_tela_px(self.Posicao)
-        centro = (int(cx), int(cy))
-        tile_px = int(getattr(camera, "TilePx", 50))
-        base = max(6, int(tile_px * max(float(getattr(self.Colisor, "raio_colisao", 0.0) or 0.0), self._raio_colisao_padrao)))
-        fase = self._fase()
-        em_pendente = self.em_captura_pendente()
-
-        if self.FrutasAplicadas and fase not in {"volta"} and not em_pendente:
-            pygame.draw.circle(tela, (98, 212, 118), centro, base + 8, 2)
-
-        if self.AlvoLocalCaptura and fase == "normal" and not em_pendente:
-            self._desenhar_barra_local(tela, centro, base + 14)
-
-        if fase == "captura":
-            self._desenhar_animacao_captura(tela, camera, centro, tile_px)
-        elif fase == "checagem":
-            self._desenhar_animacao_checagem(tela, camera, centro, tile_px)
-        elif fase == "fuga":
-            self._desenhar_animacao_fuga(tela, centro, base)
-        elif fase == "volta":
-            self._desenhar_animacao_volta(tela, camera, tile_px)
-        else:
-            self._desenhar_circulo_base(tela, centro, int(base * 2))
-            self._desenhar_pokemon_normal(tela, centro, max(2, int(base * 2.0)))
+        self.Animator.render(tela, camera, dt)
 
 
 Pokemon.desenhar = Pokemon.render

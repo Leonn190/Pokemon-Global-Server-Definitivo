@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import math
-import re
 import unicodedata
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Tuple
 
 import pygame
 
-from Codigo.ModulosGerais.Auxiliares import carregar_frames
+from Codigo.Visual.ArenaAnimator import ArenaAnimator
+from Codigo.Visual.EfeitosBatalha import EFEITOS_ATAQUE_FPS
+from Codigo.Visual.ProjetilBatalha import GerenciadorProjeteisBatalha
 
 Vector2 = Tuple[float, float]
 
@@ -17,105 +18,6 @@ def _normalizar_nome(valor: object) -> str:
     bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
     sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
     return "".join(ch for ch in sem_acento if ch.isalnum())
-
-
-PALETA_TIPOS_ATAQUE: Dict[str, tuple[int, int, int]] = {
-    "normal": (187, 176, 151),
-    "fogo": (219, 106, 72),
-    "agua": (80, 130, 219),
-    "planta": (86, 171, 90),
-    "eletrico": (224, 199, 61),
-    "gelo": (152, 208, 225),
-    "lutador": (168, 89, 71),
-    "venenoso": (147, 92, 180),
-    "veneno": (147, 92, 180),
-    "terra": (164, 132, 73),
-    "voador": (133, 168, 205),
-    "psiquico": (217, 104, 146),
-    "inseto": (140, 164, 63),
-    "pedra": (128, 121, 107),
-    "fantasma": (96, 90, 143),
-    "dragao": (87, 97, 191),
-    "sombrio": (86, 77, 76),
-    "metal": (132, 145, 157),
-    "fada": (220, 154, 196),
-    "cosmico": (102, 105, 176),
-    "sonoro": (198, 123, 219),
-}
-
-
-PROJETEIS_ESPECIAIS: Dict[str, dict[str, object]] = {
-    "biscoito": {
-        "nome": "Biscoito",
-        "caminho": "Recursos/Visual/Projeteis/biscoito.png",
-        "velocidade": 8.0,
-        "gira": True,
-        "rotacao_base": 0.0,
-    }
-}
-
-EFEITOS_ATAQUE_FPS: Dict[str, float] = {
-    'LabaredaMultipla': 31.25,
-    'Corte': 10.2,
-    'BolhasVerdes': 20,
-    'CorteDourado': 10.87,
-    'ChuvaVermelha': 31.25,
-    'ChuvaBrilhante': 33.33,
-    'Agua': 23.81,
-    'AtemporalRosa': 40,
-    'BarreiraCelular': 12.5,
-    'ChicoteMultiplo': 13.89,
-    'CorteDuploRoxo': 33.33,
-    'CorteMagico': 25,
-    'CorteRicocheteadoRoxo': 8.93,
-    'CorteRosa': 25,
-    'DomoVerde': 11.76,
-    'EnergiaAzul': 15.38,
-    'Engrenagem': 8.7,
-    'EspiralAzul': 22.22,
-    'Estouro': 10.31,
-    'EstouroMagico': 20,
-    'EstouroVermelho': 21.74,
-    'Explosao': 22.22,
-    'ExplosaoPedra': 10.87,
-    'ExplosaoVerde': 8.93,
-    'ExplosaoVermelha': 33.33,
-    'ExplosaoRoxa': 9.52,
-    'FacasAzuis': 35.71,
-    'FacasBrancas': 26.32,
-    'FacasColoridas': 31.25,
-    'FacasRosas': 40,
-    'FeixeMagenta': 23.81,
-    'FeixeRoxo': 10.42,
-    'FluxoAzul': 15.38,
-    'Fogo': 10.53,
-    'Fumaça': 28.57,
-    'GasRoxo': 12.82,
-    'Garra': 12.5,
-    'HexagonoLaminas': 27.78,
-    'ImpactoRochoso': 8.7,
-    'Karate': 11.11,
-    'LuaAmarela': 55.56,
-    'MagiaAzul': 38.46,
-    'MagiaMagenta': 20.83,
-    'MarcaBrilhosa': 26.32,
-    'MarcaAmarela': 19.23,
-    'MarcaAzul': 26.32,
-    'Mordida': 8.7,
-    'MultiplasFacas': 27.78,
-    'OrbesRoxos': 35.71,
-    'PedaçoColorido': 26.32,
-    'RaioAzul': 83.33,
-    'RajadaAmarela': 28.57,
-    'RasgoMagenta': 38.46,
-    'RasgosRosa': 35.71,
-    'RedemoinhoAzul': 26.32,
-    'RedemoinhoCosmico': 10.53,
-    'SuperDescarga': 12.2,
-    'SuperNova': 31.25,
-    'TirosAmarelos': 40,
-    'TornadoAgua': 25.64
-}
 
 
 def _clamp(valor: float, minimo: float, maximo: float) -> float:
@@ -127,13 +29,13 @@ def _interp(a: float, b: float, t: float) -> float:
 
 
 class PokemonAnimator:
-    _cache_frames_efeitos: dict[str, list[pygame.Surface]] = {}
-    _cache_projeteis: dict[str, pygame.Surface | None] = {}
     _cache_icones_atributos: dict[str, pygame.Surface | None] = {}
 
     def __init__(self, controlador=None):
         self.controlador = controlador
         self.animacoes: list[dict[str, object]] = []
+        self.projeteis = GerenciadorProjeteisBatalha(self._posicao_tela)
+        self.arena_animator = ArenaAnimator(self._posicao_mundo, self._posicao_tela)
         self._avisos: list[str] = []
 
     def animar_morrer(self, pokemon):
@@ -198,24 +100,7 @@ class PokemonAnimator:
         p1 = self._posicao_mundo(destino)
         if p0 is None or p1 is None:
             return None
-        config = self._config_projetil(sprite, tipo_ataque=tipo_ataque, velocidade=velocidade)
-        dist = max(0.001, math.hypot(p1[0] - p0[0], p1[1] - p0[1]))
-        duracao_real = float(duracao or 0.0)
-        if duracao_real <= 0:
-            vel = float(config.get("velocidade") or 0.0)
-            duracao_real = _clamp(dist / vel if vel > 0 else 0.46, 0.18, 1.20)
-        return self._adicionar(
-            {
-                "tipo": "projetil",
-                "origem": p0,
-                "destino": p1,
-                "sprite": config.get("sprite"),
-                "config": config,
-                "tempo": 0.0,
-                "duracao": duracao_real,
-                "bloqueante": True,
-            }
-        )
+        return self.projeteis.animar_lancar(p0, p1, sprite=sprite, duracao=duracao, tipo_ataque=tipo_ataque, velocidade=velocidade)
 
     def animar_desvio(self, pokemon, duracao=None, intensidade_tiles=None):
         if pokemon is None:
@@ -341,15 +226,12 @@ class PokemonAnimator:
         )
 
     def animar_efeito(self, pokemon, nome_efeito_gif, posicao="alvo"):
-        frames = self._carregar_frames_efeito(nome_efeito_gif)
-        if pokemon is None or not frames:
-            return None
-        fps = float(EFEITOS_ATAQUE_FPS.get(str(nome_efeito_gif), 20.0) or 20.0)
-        duracao = max(0.15, len(frames) / max(1.0, fps))
-        return self._adicionar({"tipo": "gif", "pokemon": pokemon, "frames": frames, "fps": fps, "tempo": 0.0, "duracao": duracao, "bloqueante": False})
+        return self.arena_animator.animar_efeito(pokemon, nome_efeito_gif, posicao=posicao)
 
     def atualizar(self, dt):
         dt = max(0.0, float(dt or 0.0))
+        self.projeteis.atualizar(dt)
+        self.arena_animator.atualizar(dt)
         restantes = []
         for anim in list(self.animacoes):
             anim["tempo"] = float(anim.get("tempo", 0.0)) + dt
@@ -361,20 +243,18 @@ class PokemonAnimator:
         self.animacoes = restantes
 
     def desenhar(self, surface):
+        self.projeteis.desenhar(surface)
+        self.arena_animator.desenhar(surface)
         for anim in list(self.animacoes):
             tipo = str(anim.get("tipo") or "")
-            if tipo == "projetil":
-                self._desenhar_projetil(surface, anim)
-            elif tipo == "cartucho":
+            if tipo == "cartucho":
                 self._desenhar_cartucho(surface, anim)
-            elif tipo == "gif":
-                self._desenhar_gif(surface, anim)
             elif tipo in {"troca"}:
                 self._desenhar_fantasmas_troca(surface, anim)
                 self._desenhar_circulos_troca(surface, anim)
 
     def esta_ocupado(self):
-        return any(bool(anim.get("bloqueante", True)) for anim in self.animacoes)
+        return self.projeteis.esta_ocupado() or self.arena_animator.esta_ocupado() or any(bool(anim.get("bloqueante", True)) for anim in self.animacoes)
 
     def _adicionar(self, animacao):
         if not isinstance(animacao, dict):
@@ -546,107 +426,6 @@ class PokemonAnimator:
             return max(default, (float(rect.width) * 0.35) / tile)
         return default
 
-    def _config_projetil(self, sprite=None, tipo_ataque=None, velocidade=None):
-        dados = dict(sprite or {}) if isinstance(sprite, dict) else {}
-        nome = dados.get("nome") or dados.get("projetil") or dados.get("codigo") or dados.get("code") or (sprite if isinstance(sprite, str) else None)
-        chave = _normalizar_nome(nome)
-        base = dict(PROJETEIS_ESPECIAIS.get(chave) or {})
-        caminho = dados.get("caminho") or dados.get("arquivo") or base.get("caminho") or base.get("arquivo")
-        if caminho is None and chave in PROJETEIS_ESPECIAIS:
-            caminho = self._buscar_arquivo_projetil(base.get("nome") or nome)
-        elif caminho is not None and not Path(str(caminho)).is_absolute() and Path(str(caminho)).parent == Path("."):
-            caminho = self._buscar_arquivo_projetil(caminho) or caminho
-        config = {
-            "nome": str(base.get("nome") or nome or "padrao"),
-            "velocidade": float(velocidade or dados.get("velocidade") or base.get("velocidade") or 7.0),
-            "gira": bool(dados.get("gira", base.get("gira", False))),
-            "rotacao_base": float(dados.get("rotacao_base", base.get("rotacao_base", 0.0)) or 0.0),
-            "tipo_ataque": str(tipo_ataque or dados.get("tipo") or dados.get("tipo_ataque") or "normal").strip().lower(),
-            "sprite": self._carregar_projetil(caminho),
-        }
-        config["cor"] = PALETA_TIPOS_ATAQUE.get(config["tipo_ataque"], PALETA_TIPOS_ATAQUE["normal"])
-        return config
-
-    def _buscar_arquivo_projetil(self, nome):
-        chave = _normalizar_nome(nome)
-        if not chave:
-            return None
-        cache_key = f"_busca:{chave}"
-        if cache_key in self._cache_projeteis:
-            return None
-        base = Path.cwd() / "Recursos" / "Visual" / "Projeteis"
-        try:
-            for caminho in base.rglob("*"):
-                if caminho.is_file() and caminho.suffix.lower() in {".png", ".webp", ".jpg", ".jpeg"} and _normalizar_nome(caminho.stem) == chave:
-                    return caminho
-        except Exception:
-            pass
-        self._cache_projeteis[cache_key] = None
-        return None
-
-    def _carregar_projetil(self, sprite):
-        if not sprite:
-            return None
-        path = Path(str(sprite))
-        if not path.is_absolute():
-            path = Path.cwd() / path
-        chave = str(path)
-        if chave not in self._cache_projeteis:
-            try:
-                self._cache_projeteis[chave] = pygame.image.load(str(path)).convert_alpha()
-            except Exception:
-                self._cache_projeteis[chave] = None
-        return self._cache_projeteis.get(chave)
-
-    def _carregar_frames_efeito(self, nome):
-        nome = str(nome or "").strip()
-        if not nome:
-            return []
-        if nome in self._cache_frames_efeitos:
-            return self._cache_frames_efeitos[nome]
-        base = Path.cwd() / "Recursos" / "Visual" / "AtaquesGifs"
-        candidatos = [base / nome, base / f"{nome}_frames"]
-        frames = []
-        for pasta in candidatos:
-            if not pasta.exists() or not pasta.is_dir():
-                continue
-            try:
-                frames = carregar_frames(pasta)
-            except Exception:
-                frames = []
-            if frames:
-                break
-        self._cache_frames_efeitos[nome] = [f for f in frames if isinstance(f, pygame.Surface)]
-        return self._cache_frames_efeitos[nome]
-
-    def _desenhar_projetil(self, surface, anim):
-        t = self._progresso(anim)
-        origem = anim.get("origem")
-        destino = anim.get("destino")
-        if not origem or not destino:
-            return
-        pos = self._posicao_tela((_interp(origem[0], destino[0], t), _interp(origem[1], destino[1], t)))
-        if pos is None:
-            return
-        x, y = pos
-        config = anim.get("config") if isinstance(anim.get("config"), dict) else {}
-        sprite = anim.get("sprite")
-        if isinstance(sprite, pygame.Surface):
-            lado = max(20, min(50, int(max(sprite.get_width(), sprite.get_height()))))
-            img = pygame.transform.smoothscale(sprite, (lado, lado)).convert_alpha()
-            ang = float(config.get("rotacao_base", 0.0) or 0.0)
-            if bool(config.get("gira", False)):
-                ang += float(anim.get("tempo", 0.0)) * 720.0
-            if abs(ang) > 0.001:
-                img = pygame.transform.rotozoom(img, -ang, 1.0)
-            surface.blit(img, img.get_rect(center=(int(x), int(y))))
-        else:
-            cor = tuple(config.get("cor") or PALETA_TIPOS_ATAQUE["normal"])
-            raio = max(7, int(13 + 4 * math.sin(t * math.pi)))
-            brilho = tuple(min(255, int(c * 1.25 + 32)) for c in cor)
-            pygame.draw.circle(surface, (*cor, 230), (int(x), int(y)), raio)
-            pygame.draw.circle(surface, (*brilho, 235), (int(x - raio * 0.25), int(y - raio * 0.25)), max(3, raio // 2))
-
     def _desenhar_cartucho(self, surface, anim):
         pokemon = anim.get("pokemon")
         pos_mundo = self._posicao_mundo(pokemon)
@@ -738,22 +517,6 @@ class PokemonAnimator:
         else:
             cls._cache_icones_atributos[busca] = None
         return cls._cache_icones_atributos[busca]
-
-    def _desenhar_gif(self, surface, anim):
-        frames = anim.get("frames") if isinstance(anim.get("frames"), list) else []
-        pokemon = anim.get("pokemon")
-        pos_mundo = self._posicao_mundo(pokemon)
-        pos = self._posicao_tela(pos_mundo)
-        if not frames or pos is None:
-            return
-        fps = max(1.0, float(anim.get("fps", 20.0) or 20.0))
-        idx = min(len(frames) - 1, int(float(anim.get("tempo", 0.0)) * fps) % len(frames))
-        frame = frames[idx]
-        if not isinstance(frame, pygame.Surface):
-            return
-        tamanho = max(72, int(max(getattr(pokemon, "RectAtual", pygame.Rect(0, 0, 72, 72)).size or (72, 72)) * 1.35))
-        img = pygame.transform.smoothscale(frame, (tamanho, tamanho)).convert_alpha()
-        surface.blit(img, img.get_rect(center=(int(pos[0]), int(pos[1]))))
 
     def _desenhar_fantasmas_troca(self, surface, anim):
         t = self._progresso(anim)

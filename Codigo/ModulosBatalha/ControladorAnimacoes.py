@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from Codigo.ModulosGerais.PokemonAnimator import PokemonAnimator
+from Codigo.Visual.PokemonBatalhaAnimator import PokemonAnimator
 
 
 class ControladorAnimacoes:
@@ -42,13 +42,18 @@ class ControladorAnimacoes:
                 tipo_ataque = dados.get("tipo_ataque") or animacao.get("tipo_ataque") or animacao.get("tipo")
                 out.append(self.animator.animar_lancar_projetil(usuario, alvo, sprite=projetil, tipo_ataque=tipo_ataque))
         elif tipo == "ataque_acertou":
-            alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or ""))
+            alvo = self._resolver_alvo(dados)
             animacao = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
             efeito = dados.get("efeito_alvo") or animacao.get("efeito_alvo")
             if efeito:
                 out.append(self.animator.animar_efeito(alvo, efeito, posicao="alvo"))
         elif tipo in {"ataque_desviado", "pokemon_desviou", "ataque_errou"}:
             alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
+            alvo_animacao = alvo or self._resolver_alvo(dados)
+            animacao = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
+            efeito = dados.get("efeito_alvo") or animacao.get("efeito_alvo")
+            if efeito:
+                out.append(self.animator.animar_efeito(alvo_animacao, efeito, posicao="alvo"))
             out.append(self.animator.animar_desvio(alvo))
             out.append(self.animator.exibir_cartucho(alvo, "DESVIO", "desvio"))
         elif tipo == "pokemon_sofreu_dano":

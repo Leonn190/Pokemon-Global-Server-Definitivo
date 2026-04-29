@@ -387,6 +387,17 @@ class VisualizadorLog:
             ],
         )
 
+    def _tooltip_variacao_atributo(self, evento: Dict[str, object]) -> tuple[str, str]:
+        atributo = str(evento.get("atributo") or evento.get("stat") or evento.get("chave") or "Atributo")
+        calculo = [str(linha) for linha in list(evento.get("calculo") or []) if str(linha or "").strip()]
+        if not calculo:
+            calculo = [
+                f"Valor inicial = {self._formatar_numero(evento.get('valor_antes', 0.0))}",
+                f"Variacao = {self._formatar_numero(evento.get('valor', evento.get('variacao', 0.0)))}",
+                f"Valor final = {self._formatar_numero(evento.get('valor_depois', 0.0))}",
+            ]
+        return self._tooltip_valor_simples(f"Detalhes de {atributo}", calculo)
+
     def _tooltip_barreira(self, valor: object, total: object) -> tuple[str, str]:
         return self._tooltip_valor_simples(
             "Detalhes da barreira",
@@ -430,15 +441,17 @@ class VisualizadorLog:
         }
         if tipo == "ataque_resumo":
             impactos = [dict(item) for item in list(evento.get("impactos") or []) if isinstance(item, dict)]
-            if bool(evento.get("critico", False)) or any(bool(i.get("critico", False)) for i in impactos):
+            danos = [i for i in impactos if str(i.get("tipo") or "") in {"pokemon_sofreu_dano", "barreira_absorveu"}]
+            if any(bool(i.get("critico", False)) for i in danos):
                 return cores["vermelho"]
             if any(str(i.get("tipo") or "") == "pokemon_recebeu_efeito" and str(i.get("tipo_efeito") or i.get("tipo") or "").lower() == "negativo" for i in impactos):
                 return cores["roxo"]
-            danos = [i for i in impactos if str(i.get("tipo") or "") in {"pokemon_sofreu_dano", "barreira_absorveu"}]
             if danos:
                 if any(str(i.get("categoria") or "").lower() in {"especial", "spa", "magico"} for i in danos):
                     return cores["roxo"]
                 return cores["laranja"]
+            if any(str(i.get("tipo") or "") in {"pokemon_variou_atributo", "atributo_variou", "pokemon_alterou_atributo"} for i in impactos):
+                return cores["verde"] if any(not bool(i.get("negativo", False)) for i in impactos) else cores["roxo"]
             if any(str(i.get("tipo") or "") in {"pokemon_recebeu_cura", "pokemon_ganhou_barreira", "pokemon_recebeu_efeito"} for i in impactos):
                 return cores["rosa"]
             return cores["cinza"]
@@ -452,6 +465,8 @@ class VisualizadorLog:
             return cores["marrom"]
         if tipo == "pokemon_morreu":
             return cores["vermelho"]
+        if tipo in {"pokemon_variou_atributo", "atributo_variou", "pokemon_alterou_atributo"}:
+            return cores["roxo"] if bool(evento.get("negativo", False)) else cores["verde"]
         if tipo in {"acao_falhou", "ataque_errou", "ataque_sem_alvo_real"}:
             return cores["cinza"]
         return self._CORES_TIPO.get(tipo, cores["cinza"])
@@ -459,6 +474,9 @@ class VisualizadorLog:
     def _registro_evento(self, evento: Dict[str, object], tick: int, fase: str) -> dict[str, object]:
         if isinstance(evento.get("dados"), dict):
             dados = dict(evento.get("dados") or {})
+            if isinstance(dados.get("dados"), dict):
+                for chave, valor in dict(dados.get("dados") or {}).items():
+                    dados.setdefault(chave, valor)
             for chave, valor in dados.items():
                 evento.setdefault(chave, valor)
         tipo = str(evento.get("tipo") or "").strip().casefold()
@@ -475,31 +493,55 @@ class VisualizadorLog:
             impactos = [dict(item) for item in list(evento.get("impactos") or []) if isinstance(item, dict)]
             falhas = [dict(item) for item in list(evento.get("falhas") or []) if isinstance(item, dict)]
             if impactos:
-                segmentos.append(self._segmento(" e atingiu "))
-                partes = []
-                for impacto in impactos:
-                    alvo_nome = str(impacto.get("alvo_nome") or impacto.get("pokemon_nome") or impacto.get("efeito_nome") or "alvo")
-                    itipo = str(impacto.get("tipo") or "").strip().casefold()
-                    if itipo == "pokemon_sofreu_dano":
-                        titulo, descricao = self._tooltip_dano(impacto)
-                        partes.append([self._segmento(alvo_nome), self._segmento(" causando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo=self._atributo_dano(impacto), titulo=titulo, descricao=descricao), self._segmento(" de dano")])
-                    elif itipo == "barreira_absorveu":
-                        titulo, descricao = self._tooltip_calculo("Detalhes da barreira", impacto, [f"Barreira absorveu: {self._formatar_numero(impacto.get('dano_barreira', 0))}"])
-                        partes.append([self._segmento(alvo_nome), self._segmento(" absorvendo "), self._segmento(self._formatar_numero(impacto.get("dano_barreira", 0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" na barreira")])
-                    elif itipo == "pokemon_recebeu_cura":
-                        titulo, descricao = self._tooltip_calculo("Detalhes da cura", impacto, [f"Cura final = {self._formatar_numero(impacto.get('valor', 0))}"])
-                        partes.append([self._segmento(alvo_nome), self._segmento(" curando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo="vida", titulo=titulo, descricao=descricao), self._segmento(" de vida")])
-                    elif itipo == "pokemon_ganhou_barreira":
-                        titulo, descricao = self._tooltip_calculo("Detalhes da barreira", impacto, [f"Barreira final = {self._formatar_numero(impacto.get('valor', 0))}"])
-                        partes.append([self._segmento(alvo_nome), self._segmento(" ganhando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" de barreira")])
-                    elif itipo == "pokemon_recebeu_efeito":
-                        efeito = str(impacto.get("efeito_nome") or "efeito")
-                        passos = impacto.get("passos_restantes", "?")
-                        partes.append([self._segmento(alvo_nome), self._segmento(" recebendo "), self._segmento(efeito), self._segmento(f" por {passos} passos")])
-                for idx, parte in enumerate(partes):
-                    if idx > 0:
-                        segmentos.append(self._segmento(", "))
-                    segmentos.extend(parte)
+                tipos_attr = {"pokemon_variou_atributo", "atributo_variou", "pokemon_alterou_atributo"}
+                if all(str(impacto.get("tipo") or "").strip().casefold() in tipos_attr for impacto in impactos):
+                    for idx, impacto in enumerate(impactos):
+                        atributo = str(impacto.get("atributo") or "Atributo")
+                        valor = self._numero(impacto.get("valor", impacto.get("variacao", 0.0)), 0.0)
+                        verbo = "aumentou" if valor >= 0 else "diminuiu"
+                        mesmo_alvo = str(impacto.get("origem_id") or impacto.get("usuario_id") or base.get("usuario_id") or "") == str(impacto.get("alvo_id") or impacto.get("pokemon_id") or "")
+                        alvo_nome = str(impacto.get("alvo_nome") or impacto.get("pokemon_nome") or "alvo")
+                        alvo_txt = f"sua propria {atributo}" if mesmo_alvo else f"{atributo} de {alvo_nome}"
+                        titulo, descricao = self._tooltip_variacao_atributo(impacto)
+                        segmentos.append(self._segmento(" e " if idx == 0 else ", e "))
+                        segmentos.append(self._segmento(f"{verbo} {alvo_txt} para "))
+                        segmentos.append(self._segmento(self._formatar_numero(impacto.get("valor_depois", 0.0)), atributo=atributo, titulo=titulo, descricao=descricao))
+                else:
+                    segmentos.append(self._segmento(" e atingiu "))
+                    partes = []
+                    for impacto in impactos:
+                        alvo_nome = str(impacto.get("alvo_nome") or impacto.get("pokemon_nome") or impacto.get("efeito_nome") or "alvo")
+                        itipo = str(impacto.get("tipo") or "").strip().casefold()
+                        if itipo == "pokemon_sofreu_dano":
+                            titulo, descricao = self._tooltip_dano(impacto)
+                            partes.append([self._segmento(alvo_nome), self._segmento(" causando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo=self._atributo_dano(impacto), titulo=titulo, descricao=descricao), self._segmento(" de dano")])
+                        elif itipo == "barreira_absorveu":
+                            titulo, descricao = self._tooltip_calculo("Detalhes da barreira", impacto, [f"Barreira absorveu: {self._formatar_numero(impacto.get('dano_barreira', 0))}"])
+                            partes.append([self._segmento(alvo_nome), self._segmento(" absorvendo "), self._segmento(self._formatar_numero(impacto.get("dano_barreira", 0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" na barreira")])
+                        elif itipo == "pokemon_recebeu_cura":
+                            titulo, descricao = self._tooltip_calculo("Detalhes da cura", impacto, [f"Cura final = {self._formatar_numero(impacto.get('valor', 0))}"])
+                            partes.append([self._segmento(alvo_nome), self._segmento(" curando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo="vida", titulo=titulo, descricao=descricao), self._segmento(" de vida")])
+                        elif itipo == "pokemon_ganhou_barreira":
+                            titulo, descricao = self._tooltip_calculo("Detalhes da barreira", impacto, [f"Barreira final = {self._formatar_numero(impacto.get('valor', 0))}"])
+                            partes.append([self._segmento(alvo_nome), self._segmento(" ganhando "), self._segmento(self._formatar_numero(impacto.get("valor", 0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" de barreira")])
+                        elif itipo == "pokemon_recebeu_efeito":
+                            efeito = str(impacto.get("efeito_nome") or "efeito")
+                            passos = impacto.get("passos_restantes", "?")
+                            partes.append([self._segmento(alvo_nome), self._segmento(" recebendo "), self._segmento(efeito), self._segmento(f" por {passos} passos")])
+                        elif itipo in tipos_attr:
+                            atributo = str(impacto.get("atributo") or "Atributo")
+                            valor = self._numero(impacto.get("valor", impacto.get("variacao", 0.0)), 0.0)
+                            acao_txt = "aumentando" if valor >= 0 else "diminuindo"
+                            titulo, descricao = self._tooltip_variacao_atributo(impacto)
+                            partes.append([
+                                self._segmento(alvo_nome),
+                                self._segmento(f" {acao_txt} {atributo} para "),
+                                self._segmento(self._formatar_numero(impacto.get("valor_depois", 0.0)), atributo=atributo, titulo=titulo, descricao=descricao),
+                            ])
+                    for idx, parte in enumerate(partes):
+                        if idx > 0:
+                            segmentos.append(self._segmento(", "))
+                        segmentos.extend(parte)
             elif bool(evento.get("sem_alvo", False)):
                 segmentos.extend([self._segmento(" em "), self._segmento(f"Area {area}" if area else "uma area"), self._segmento(", mas nao encontrou alvo")])
             elif falhas:
@@ -507,7 +549,7 @@ class VisualizadorLog:
                 segmentos.extend([self._segmento(" em "), self._segmento(alvo_falha), self._segmento(", mas errou")])
             elif area:
                 segmentos.extend([self._segmento(" em "), self._segmento(f"Area {area}")])
-            if bool(evento.get("critico", False)):
+            if any(str(i.get("tipo") or "").strip().casefold() in {"pokemon_sofreu_dano", "barreira_absorveu"} and bool(i.get("critico", False)) for i in impactos):
                 segmentos.append(self._segmento(" (critico)"))
             segmentos.append(self._segmento("."))
         elif tipo == "rodada_iniciada":
@@ -550,6 +592,23 @@ class VisualizadorLog:
         elif tipo == "pokemon_recebeu_cura":
             titulo, descricao = self._tooltip_calculo("Detalhes da cura", evento, [f"Valor aplicado: {self._formatar_numero(evento.get('valor', 0.0))}", f"Antes: {self._formatar_numero(evento.get('vida_antes', 0.0))}", f"Depois: {self._formatar_numero(evento.get('vida_depois', 0.0))}"])
             segmentos = [self._segmento(str(evento.get("alvo_nome") or pokemon)), self._segmento(" recuperou "), self._segmento(self._formatar_numero(evento.get("valor", 0.0)), atributo="vida", titulo=titulo, descricao=descricao), self._segmento(" de vida.")]
+        elif tipo in {"pokemon_variou_atributo", "atributo_variou", "pokemon_alterou_atributo"}:
+            alvo_nome = str(evento.get("alvo_nome") or evento.get("pokemon_nome") or pokemon)
+            origem_nome = str(evento.get("origem_nome") or evento.get("usuario_nome") or executor)
+            ataque = str(evento.get("ataque_nome") or "ataque")
+            atributo = str(evento.get("atributo") or "Atributo")
+            valor = self._numero(evento.get("valor", evento.get("variacao", 0.0)), 0.0)
+            verbo = "aumentou" if valor >= 0 else "diminuiu"
+            alvo_txt = "sua propria" if str(evento.get("origem_id") or evento.get("usuario_id") or "") == str(evento.get("alvo_id") or evento.get("pokemon_id") or "") else f"de {alvo_nome}"
+            titulo, descricao = self._tooltip_variacao_atributo(evento)
+            segmentos = [
+                self._segmento(origem_nome),
+                self._segmento(" usou "),
+                self._segmento(ataque),
+                self._segmento(f" e {verbo} {alvo_txt} {atributo} para "),
+                self._segmento(self._formatar_numero(evento.get("valor_depois", 0.0)), atributo=atributo, titulo=titulo, descricao=descricao),
+                self._segmento("."),
+            ]
         elif tipo == "pokemon_ganhou_barreira":
             titulo, descricao = self._tooltip_calculo("Detalhes da barreira", evento, [f"Barreira ganha: {self._formatar_numero(evento.get('valor', 0.0))}", f"Barreira total: {self._formatar_numero(evento.get('barreira_depois', 0.0))}"])
             segmentos = [self._segmento(str(evento.get("alvo_nome") or pokemon)), self._segmento(" ganhou "), self._segmento(self._formatar_numero(evento.get("valor", 0.0)), atributo="def", titulo=titulo, descricao=descricao), self._segmento(" de barreira.")]
@@ -768,7 +827,7 @@ class VisualizadorLog:
                     atual = {"tipo": "ataque_resumo", "base": dict(evento), "impactos": [], "falhas": [], "sem_alvo": False, "critico": False}
                     saida.append({"tick": tick, "fase": "segmentacao", "evento": atual})
                     continue
-                if atual is not None and tipo in {"pokemon_sofreu_dano", "barreira_absorveu", "pokemon_recebeu_cura", "pokemon_ganhou_barreira", "pokemon_recebeu_efeito"}:
+                if atual is not None and tipo in {"pokemon_sofreu_dano", "barreira_absorveu", "pokemon_recebeu_cura", "pokemon_ganhou_barreira", "pokemon_recebeu_efeito", "pokemon_variou_atributo", "atributo_variou", "pokemon_alterou_atributo"}:
                     impacto = dict(evento)
                     if tipo == "pokemon_recebeu_efeito":
                         impacto["tipo_efeito"] = str(evento.get("tipo_efeito") or evento.get("tipo_status") or evento.get("efeito_tipo") or evento.get("tipo") or "")
@@ -818,6 +877,9 @@ class VisualizadorLog:
     def _evento_plano(evento: Dict[str, object]) -> Dict[str, object]:
         out = dict(evento or {})
         dados = out.get("dados") if isinstance(out.get("dados"), dict) else {}
+        if isinstance(dados.get("dados"), dict):
+            for chave, valor in dict(dados.get("dados") or {}).items():
+                dados.setdefault(chave, valor)
         for chave, valor in dados.items():
             if chave == "tipo" and "tipo" in out:
                 out.setdefault("tipo_efeito", valor)

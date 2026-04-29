@@ -101,6 +101,20 @@ class LeitorLogs:
             poke = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
             if poke is not None and dados.get("vida_depois") is not None:
                 poke.VidaAtual = max(0.0, float(dados.get("vida_depois") or poke.VidaAtual))
+        elif tipo in {"pokemon_variou_atributo", "atributo_variou", "pokemon_alterou_atributo"}:
+            poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or dados.get("alvo_id") or ""))
+            atributo = str(dados.get("atributo") or dados.get("stat") or dados.get("chave") or "")
+            if poke is not None and atributo:
+                if dados.get("valor_depois") is not None and hasattr(poke, "Atributos"):
+                    poke.Atributos[atributo] = float(dados.get("valor_depois") or 0.0)
+                    if atributo == "Vida" and hasattr(poke, "VidaMax"):
+                        poke.VidaMax = max(1.0, float(dados.get("valor_depois") or poke.VidaMax))
+                    elif atributo == "EneM" and hasattr(poke, "EnergiaMax"):
+                        poke.EnergiaMax = max(1.0, float(dados.get("valor_depois") or poke.EnergiaMax))
+                if dados.get("variacao_total") is not None and hasattr(poke, "Variacoes"):
+                    poke.Variacoes[atributo] = float(dados.get("variacao_total") or 0.0)
+                if hasattr(poke, "_sincronizar_alias_atributos"):
+                    poke._sincronizar_alias_atributos()
         elif tipo == "pokemon_ganhou_barreira":
             poke = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
             if poke is not None and dados.get("barreira_depois") is not None:

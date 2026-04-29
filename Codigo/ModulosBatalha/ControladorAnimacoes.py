@@ -47,6 +47,12 @@ class ControladorAnimacoes:
             efeito = dados.get("efeito_alvo") or animacao.get("efeito_alvo")
             if efeito:
                 out.append(self.animator.animar_efeito(alvo, efeito, posicao="alvo"))
+        elif tipo == "ataque_sem_alvo_real":
+            alvo = self._resolver_alvo(dados)
+            animacao = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
+            efeito = dados.get("efeito_alvo") or animacao.get("efeito_alvo")
+            if efeito:
+                out.append(self.animator.animar_efeito(alvo, efeito, posicao="alvo"))
         elif tipo in {"ataque_desviado", "pokemon_desviou", "ataque_errou"}:
             alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or dados.get("pokemon_id") or ""))
             alvo_animacao = alvo or self._resolver_alvo(dados)
@@ -103,6 +109,7 @@ class ControladorAnimacoes:
             positivo = self._positivo(valor, dados)
             if poke is not None and hasattr(poke, "animar_variacao_status"):
                 poke.animar_variacao_status(positivo, atributo=atributo, valor=valor)
+            out.append(self.animator.exibir_cartucho_atributo(poke, atributo, valor, positivo=positivo))
         elif tipo == "efeito_tickou":
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             if poke is not None:
@@ -130,6 +137,7 @@ class ControladorAnimacoes:
             if poke is not None and hasattr(poke, "animar_variacao_status"):
                 atributo, valor = self._atributo_em_dados(dados)
                 poke.animar_variacao_status(True, atributo=atributo, valor=valor)
+                out.append(self.animator.exibir_cartucho_atributo(poke, atributo, valor, positivo=self._positivo(valor, dados)))
 
         return [a for a in out if a is not None]
 
@@ -168,6 +176,9 @@ class ControladorAnimacoes:
     @staticmethod
     def _dados(evento):
         dados = dict((evento or {}).get("dados") or {})
+        if isinstance(dados.get("dados"), dict):
+            for chave, valor in dict(dados.get("dados") or {}).items():
+                dados.setdefault(chave, valor)
         for chave, valor in dict(evento or {}).items():
             if chave not in {"dados"} and chave not in dados:
                 dados[chave] = valor

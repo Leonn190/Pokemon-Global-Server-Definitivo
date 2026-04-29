@@ -206,6 +206,29 @@ class PokemonBatalha:
         dados = dict(dados_dano or {})
         dano = max(0.0, _f(dados.get("dano_bruto", dados.get("dano", 0.0)), 0.0))
         calculo = [f"Dano bruto = {round(dano, 4)}"]
+        for item in list(dados.get("multiplicadores_condicionais") or []):
+            if not isinstance(item, dict):
+                continue
+            mult = _f(item.get("multiplicador", item.get("valor", 1.0)), 1.0)
+            if abs(mult - 1.0) <= 0.001:
+                continue
+            antes = dano
+            dano *= mult
+            label = "Multiplicador Condicional"
+            calculo.append(f"{label}: {round(antes, 4)} * {round(mult, 4)} = {round(dano, 4)}")
+        for item in list(dados.get("ajustes_condicionais") or []):
+            if not isinstance(item, dict):
+                continue
+            valor = _f(item.get("valor"), 0.0)
+            if abs(valor) <= 0.001:
+                continue
+            antes = dano
+            op = str(item.get("op") or "add").strip().lower()
+            dano = max(0.0, dano - valor) if op in {"sub", "subtract", "-"} else max(0.0, dano + valor)
+            sinal = "-" if op in {"sub", "subtract", "-"} else "+"
+            label = "Ajuste Condicional"
+            calculo.append(f"{label}: {round(antes, 4)} {sinal} {round(valor, 4)} = {round(dano, 4)}")
+        dano_pos_condicional = dano
         tipo = dados.get("tipo") or contexto.get("tipo_ataque") or "normal"
         categoria = _normalizar(dados.get("categoria") or "normal")
         mult_amp = 1.0 + (self.obter_atributo("Amp") / 100.0)
@@ -239,7 +262,7 @@ class PokemonBatalha:
         defesa_efetiva = max(0.0, defesa - (self.obter_atributo("Per") / 2.0))
         calculo.append(f"Defesa bruta ({defesa_chave}) = {round(defesa, 4)}")
         if self.obter_atributo("Per") > 0:
-            calculo.append(f"Defesa apos perfuracao = max(0, {round(defesa, 4)} - {round(self.obter_atributo('Per') / 2.0, 4)}) = {round(defesa_efetiva, 4)}")
+            calculo.append(f"Defesa apos perfuracao = {round(defesa, 4)} - {round(self.obter_atributo('Per') / 2.0, 4)} = {round(defesa_efetiva, 4)}")
         mult_defesa = 100.0 / (100.0 + defesa_efetiva)
         antes = dano
         dano *= mult_defesa
@@ -252,6 +275,7 @@ class PokemonBatalha:
         calculo.append(f"Dano final = {round(dano, 4)}")
         detalhes = {
             "dano_bruto": round(_f(dados.get("dano_bruto", dados.get("dano", 0.0)), 0.0), 4),
+            "dano_pos_condicional": round(dano_pos_condicional, 4),
             "multiplicador_amp": round(mult_amp, 4),
             "multiplicador_tipo": round(mult_tipo, 4),
             "multiplicador_stab": 1.2 if _normalizar(tipo) in {_normalizar(t) for t in self.tipos} else 1.0,
@@ -328,7 +352,8 @@ class PokemonBatalha:
         self.VidaAtual = max(0.0, self.VidaAtual - dano)
         dano_vida = max(0.0, antes - self.VidaAtual)
         self.estatisticas_batalha["dano_recebido"] = _f(self.estatisticas_batalha.get("dano_recebido"), 0.0) + dano_vida
-        if dano_vida > 0:
+        deve_registrar_zero = dano <= 0.001 and (dados.get("ataque_id") is not None or dados.get("ataque_nome") or dados.get("ataque"))
+        if dano_vida > 0 or deve_registrar_zero:
             self._registrar_evento(
                 "pokemon_sofreu_dano",
                 {
@@ -371,6 +396,28 @@ class PokemonBatalha:
             return {"aplicado": False, "motivo": "morto", "cura": 0.0}
         cura = max(0.0, _f(valor, 0.0))
         calculo = [f"Cura bruta = {round(cura, 4)}"]
+        for item in list(dados.get("multiplicadores_condicionais") or []):
+            if not isinstance(item, dict):
+                continue
+            mult = _f(item.get("multiplicador", item.get("valor", 1.0)), 1.0)
+            if abs(mult - 1.0) <= 0.001:
+                continue
+            antes_calc = cura
+            cura *= mult
+            label = "Multiplicador Condicional"
+            calculo.append(f"{label}: {round(antes_calc, 4)} * {round(mult, 4)} = {round(cura, 4)}")
+        for item in list(dados.get("ajustes_condicionais") or []):
+            if not isinstance(item, dict):
+                continue
+            valor_ajuste = _f(item.get("valor"), 0.0)
+            if abs(valor_ajuste) <= 0.001:
+                continue
+            antes_calc = cura
+            op = str(item.get("op") or "add").strip().lower()
+            cura = max(0.0, cura - valor_ajuste) if op in {"sub", "subtract", "-"} else max(0.0, cura + valor_ajuste)
+            sinal = "-" if op in {"sub", "subtract", "-"} else "+"
+            label = "Ajuste Condicional"
+            calculo.append(f"{label}: {round(antes_calc, 4)} {sinal} {round(valor_ajuste, 4)} = {round(cura, 4)}")
         if self.possui_efeito("Queimado"):
             antes_calc = cura
             cura *= 0.65
@@ -378,11 +425,15 @@ class PokemonBatalha:
         antes = self.VidaAtual
         self.VidaAtual = min(self.obter_atributo("Vida", 1.0), self.VidaAtual + cura)
         real = max(0.0, self.VidaAtual - antes)
+        excedente = max(0.0, cura - real)
+        if excedente > 0.001:
+            calculo.append(f"Excedente = {round(excedente, 4)}")
         calculo.append(f"Cura final = {round(real, 4)}")
         self.estatisticas_batalha["cura_recebida"] = _f(self.estatisticas_batalha.get("cura_recebida"), 0.0) + real
         if origem is not None:
             origem.estatisticas_batalha["cura_feita"] = _f(origem.estatisticas_batalha.get("cura_feita"), 0.0) + real
-        if real > 0:
+        deve_registrar_zero = real <= 0.001 and cura > 0.001 and (dados.get("ataque_id") is not None or dados.get("ataque_nome") or dados.get("ataque"))
+        if real > 0 or deve_registrar_zero:
             self._registrar_evento(
                 "pokemon_recebeu_cura",
                 {
@@ -392,6 +443,9 @@ class PokemonBatalha:
                     "pokemon_nome": self.nome,
                     **self._dados_origem(origem),
                     "valor": round(real, 4),
+                    "cura_bruta": round(max(0.0, _f(valor, 0.0)), 4),
+                    "cura_calculada": round(cura, 4),
+                    "excedente": round(excedente, 4),
                     "vida_antes": round(antes, 4),
                     "vida_depois": round(self.VidaAtual, 4),
                     "critico": bool(dados.get("critico", False)),

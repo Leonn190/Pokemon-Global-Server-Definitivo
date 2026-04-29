@@ -154,10 +154,49 @@ def aplicar_mod_atributo(ctx, alvo, nome_efeito, atributo, valor, duracao=6, neg
         return {"falha": True, "motivo": "alvo_invalido"}
     if not hasattr(alvo, "variacoes_permanentes"):
         return {"falha": True, "motivo": "alvo_sem_variacoes"}
+    usuario = (ctx or {}).get("usuario")
+    ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
+    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
     valor = fnum(valor, 0.0)
+    antes = fnum(alvo.obter_atributo(atributo) if hasattr(alvo, "obter_atributo") else 0.0, 0.0)
+    variacao_antes = fnum(alvo.variacoes_permanentes.get(atributo), 0.0)
     alvo.variacoes_permanentes[atributo] = fnum(alvo.variacoes_permanentes.get(atributo), 0.0) + valor
     if hasattr(alvo, "recalcular_atributos"):
         alvo.recalcular_atributos()
+    depois = fnum(alvo.obter_atributo(atributo) if hasattr(alvo, "obter_atributo") else antes + valor, antes + valor)
+    variacao_total = fnum(alvo.variacoes_permanentes.get(atributo), 0.0)
+    calculo = [
+        f"Valor inicial = {round(antes, 4)}",
+        f"Variacao = {round(valor, 4)}",
+        f"Valor final = {round(depois, 4)}",
+    ]
+    partida = (ctx or {}).get("partida")
+    if partida is not None and hasattr(partida, "registrar_evento_log"):
+        partida.registrar_evento_log(
+            "pokemon_variou_atributo",
+            {
+                "pokemon_id": getattr(alvo, "id_batalha", None),
+                "pokemon_nome": getattr(alvo, "nome", None),
+                "alvo_id": getattr(alvo, "id_batalha", None),
+                "alvo_nome": getattr(alvo, "nome", None),
+                "origem_id": getattr(usuario, "id_batalha", None),
+                "origem_nome": getattr(usuario, "nome", None),
+                "usuario_id": getattr(usuario, "id_batalha", None),
+                "usuario_nome": getattr(usuario, "nome", None),
+                "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
+                "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome") or nome_efeito,
+                "atributo": atributo,
+                "valor": round(valor, 4),
+                "variacao": round(valor, 4),
+                "valor_antes": round(antes, 4),
+                "valor_depois": round(depois, 4),
+                "variacao_antes": round(variacao_antes, 4),
+                "variacao_total": round(variacao_total, 4),
+                "positivo": valor >= 0,
+                "negativo": bool(negativo) or valor < 0,
+                "calculo": calculo,
+            },
+        )
     return {
         "aplicado": True,
         "variacao_permanente": True,
@@ -165,6 +204,8 @@ def aplicar_mod_atributo(ctx, alvo, nome_efeito, atributo, valor, duracao=6, neg
         "atributo": atributo,
         "valor": valor,
         "valor_total": alvo.variacoes_permanentes.get(atributo),
+        "valor_antes": antes,
+        "valor_depois": depois,
     }
 
 
@@ -183,19 +224,25 @@ def executar_raio(ctx, alvo, escala_inicial, reducao_spa, tipo, escala_sol_forte
     usuario = (ctx or {}).get("usuario")
     partida = (ctx or {}).get("partida")
     spa = usuario.obter_atributo("SpA")
-    base = spa * escala_inicial
+    base_padrao = spa * escala_inicial
+    base = base_padrao
+    multiplicadores = []
     if escala_sol_forte is not None and str(getattr(partida, "clima_atual", "")) == "Sol Forte":
-        base = spa * escala_sol_forte
+        mult_clima = float(escala_sol_forte) / float(escala_inicial or 1.0)
+        base = base_padrao * mult_clima
+        multiplicadores.append({"label": "Multiplicador Condicional (Sol Forte)", "multiplicador": mult_clima})
     alvos_ctx = [a for a in list((ctx or {}).get("alvos") or []) if a is not None and a.esta_vivo()]
     if alvos_ctx and alvo is not None:
         idx = next((i for i, item in enumerate(alvos_ctx) if item is alvo), 0)
-        bruto = max(0.0, base - (spa * reducao_spa * idx))
-        return dano_generico(ctx, alvo, bruto, "especial", tipo=tipo)
+        reducao = spa * reducao_spa * idx
+        ajustes = [{"label": "Reducao Condicional por alvo anterior", "valor": reducao, "op": "sub"}] if reducao > 0 else []
+        return dano_generico(ctx, alvo, base_padrao, "especial", tipo=tipo, multiplicadores_condicionais=multiplicadores, ajustes_condicionais=ajustes)
     alvos = alvos_linha_inimigos(ctx, alvo) or ([alvo] if alvo is not None else [])
     ultimo = {}
     for idx, alvo_linha in enumerate(alvos):
-        bruto = max(0.0, base - (spa * reducao_spa * idx))
-        ultimo = dano_generico(ctx, alvo_linha, bruto, "especial", tipo=tipo)
+        reducao = spa * reducao_spa * idx
+        ajustes = [{"label": "Reducao Condicional por alvo anterior", "valor": reducao, "op": "sub"}] if reducao > 0 else []
+        ultimo = dano_generico(ctx, alvo_linha, base_padrao, "especial", tipo=tipo, multiplicadores_condicionais=multiplicadores, ajustes_condicionais=ajustes)
     return ultimo
 
 

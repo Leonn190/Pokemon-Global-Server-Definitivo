@@ -495,7 +495,6 @@ class PokemonBatalhaEstado:
                 else:
                     pts = [(x, y + 11 * escala), (x - 8 * escala, y - 5 * escala), (x - 3 * escala, y - 5 * escala), (x - 3 * escala, y - 14 * escala), (x + 3 * escala, y - 14 * escala), (x + 3 * escala, y - 5 * escala), (x + 8 * escala, y - 5 * escala)]
                 pygame.draw.polygon(surface, cor, pts)
-            self._desenhar_cartucho_variacao_status(surface, anim, base_x, y_base - 30 * escala, escala, t)
 
     def _desenhar_cartucho_variacao_status(self, surface, anim, base_x, base_y, escala, t):
         atributo = anim.get("atributo")

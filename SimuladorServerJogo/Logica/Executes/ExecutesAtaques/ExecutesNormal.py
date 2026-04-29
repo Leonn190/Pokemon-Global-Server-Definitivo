@@ -6,6 +6,7 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
     aplicar_mod_atributo,
     critico_simples,
     dano_generico,
+    fnum,
     normalizar,
 )
 
@@ -25,8 +26,22 @@ def _exec_biscoito(ctx, alvo):
         return {"falha": True, "motivo": "alvo_invalido"}
     stacks = int(alvo.contadores_especiais.get("Biscoito", 0) or 0)
     critico = critico_simples(usuario, ctx)
-    cura = usuario.obter_atributo("Mag") * 0.55 + stacks * usuario.obter_atributo("Mag") * (0.15 if critico else 0.10)
-    ret = usuario.AplicarCura(alvo, cura, dados={"ataque": "Biscoito", "ataque_id": 2, "ataque_nome": "Biscoito", "critico": critico, "reativos_acao": ctx.get("reativos_acao")})
+    cura = usuario.obter_atributo("Mag") * 0.55
+    mult_stacks = 1.0 + (stacks * ((0.15 if critico else 0.10) / 0.55))
+    ret = usuario.AplicarCura(
+        alvo,
+        cura,
+        dados={
+            "ataque": "Biscoito",
+            "ataque_id": 2,
+            "ataque_nome": "Biscoito",
+            "critico": critico,
+            "reativos_acao": ctx.get("reativos_acao"),
+            "multiplicadores_condicionais": [
+                {"label": "Multiplicador Condicional (stacks de Biscoito)", "multiplicador": mult_stacks}
+            ],
+        },
+    )
     alvo.contadores_especiais["Biscoito"] = stacks + 1
     if usuario is not alvo:
         usuario.contadores_especiais["Biscoito"] = int(usuario.contadores_especiais.get("Biscoito", 0) or 0) + 1
@@ -103,8 +118,45 @@ def _exec_chifrada(ctx, alvo):
 def _exec_resetar(ctx, alvo):
     if alvo is None:
         return {"falha": True, "motivo": "alvo_invalido"}
+    usuario = ctx.get("usuario")
+    ataque = ctx.get("ataque") if isinstance(ctx.get("ataque"), dict) else {}
+    props = ctx.get("propriedades") if isinstance(ctx.get("propriedades"), dict) else {}
+    partida = ctx.get("partida")
+    variacoes_antes = dict(getattr(alvo, "variacoes_permanentes", {}) or {})
+    atributos_antes = {chave: alvo.obter_atributo(chave) for chave, valor in variacoes_antes.items() if abs(fnum(valor, 0.0)) > 0.001}
     alvo.variacoes_permanentes = {k: 0.0 for k in alvo.variacoes_permanentes}
     alvo.recalcular_atributos()
+    if partida is not None and hasattr(partida, "registrar_evento_log"):
+        for atributo, variacao_anterior in variacoes_antes.items():
+            variacao_anterior = fnum(variacao_anterior, 0.0)
+            if abs(variacao_anterior) <= 0.001:
+                continue
+            depois = alvo.obter_atributo(atributo)
+            valor = -variacao_anterior
+            partida.registrar_evento_log(
+                "pokemon_variou_atributo",
+                {
+                    "pokemon_id": alvo.id_batalha,
+                    "pokemon_nome": alvo.nome,
+                    "alvo_id": alvo.id_batalha,
+                    "alvo_nome": alvo.nome,
+                    "origem_id": getattr(usuario, "id_batalha", None),
+                    "origem_nome": getattr(usuario, "nome", None),
+                    "usuario_id": getattr(usuario, "id_batalha", None),
+                    "usuario_nome": getattr(usuario, "nome", None),
+                    "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
+                    "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome") or "Resetar",
+                    "atributo": atributo,
+                    "valor": round(valor, 4),
+                    "variacao": round(valor, 4),
+                    "valor_antes": round(fnum(atributos_antes.get(atributo, depois), 0.0), 4),
+                    "valor_depois": round(fnum(depois, 0.0), 4),
+                    "variacao_antes": round(variacao_anterior, 4),
+                    "variacao_total": 0.0,
+                    "positivo": valor >= 0,
+                    "negativo": valor < 0,
+                },
+            )
     return {"aplicado": True, "resetou_variacoes": True}
 
 
@@ -120,9 +172,12 @@ def _exec_tankar(ctx, alvo):
 
 def _exec_estocada(ctx, alvo):
     bruto = ctx.get("usuario").obter_atributo("Atk") * 1.05
+    extras = {}
     if bool(ctx.get("primeiro_ataque_da_rodada")):
-        bruto *= 1.25
-    return dano_generico(ctx, alvo, bruto, "normal")
+        extras["multiplicadores_condicionais"] = [
+            {"label": "Multiplicador Condicional (primeiro ataque do turno)", "multiplicador": 1.25}
+        ]
+    return dano_generico(ctx, alvo, bruto, "normal", **extras)
 
 
 def _exec_bola_climatica(ctx, alvo):
@@ -161,7 +216,7 @@ def _passiva_acumulador(ctx):
         return {}
     alvo.variacoes_permanentes["Amp"] = float(alvo.variacoes_permanentes.get("Amp", 0.0) or 0.0) + 4.0
     alvo.recalcular_atributos()
-    return {"passiva": "Acumulador", "pokemon_id": alvo.id_batalha, "Amp": alvo.variacoes_permanentes["Amp"]}
+    return {"passiva": "Acumulador", "pokemon_id": alvo.id_batalha, "atributo": "Amp", "valor": 4.0, "Amp": alvo.variacoes_permanentes["Amp"], "positivo": True}
 
 _EXECUTES = {
     "investida": _exec_investida,

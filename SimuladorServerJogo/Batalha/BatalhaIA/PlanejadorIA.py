@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import copy
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from .AvaliadorIA import AvaliadorIA
 from .ContextoIA import ContextoIA
@@ -218,7 +217,7 @@ class PlanejadorIA:
             acao.setdefault("origem_ia", True)
             acao.setdefault("score_ia", round(float(cand.score or 0.0), 4))
             if cand.estimativa:
-                estimativa = copy.deepcopy(cand.estimativa)
+                estimativa = self._estimativa_jsonavel(cand.estimativa)
                 # Não despeja cópia gigante de simulação real no pacote da jogada.
                 if isinstance(estimativa.get("micro_simulacao"), dict):
                     estimativa["micro_simulacao"] = {
@@ -230,3 +229,19 @@ class PlanejadorIA:
                 acao.setdefault("estimativa_ia", estimativa)
             saida.append(acao)
         return saida
+
+    def _estimativa_jsonavel(self, valor):
+        if valor is None or isinstance(valor, (str, int, float, bool)):
+            return valor
+        if isinstance(valor, Mapping):
+            return {str(k): self._estimativa_jsonavel(v) for k, v in valor.items()}
+        if isinstance(valor, (list, tuple, set)):
+            return [self._estimativa_jsonavel(v) for v in valor]
+        if hasattr(valor, "id_batalha"):
+            return {
+                "pokemon_id": str(getattr(valor, "id_batalha", "") or ""),
+                "pokemon_nome": str(getattr(valor, "nome", "") or ""),
+                "lado_id": getattr(valor, "lado_id", None),
+                "area_id": getattr(valor, "area_id", None),
+            }
+        return str(valor)

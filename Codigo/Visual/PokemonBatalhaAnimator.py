@@ -450,7 +450,7 @@ class PokemonAnimator:
         cor_cfg = anim.get("cor_fundo")
         if isinstance(cor_cfg, (list, tuple)) and len(cor_cfg) >= 3:
             cor = (int(cor_cfg[0]), int(cor_cfg[1]), int(cor_cfg[2]), alpha)
-        elif bool(anim.get("critico")):
+        elif bool(anim.get("critico")) and categoria == "dano":
             cor = (216, 44, 54, alpha)
         elif categoria == "cura":
             cor = (42, 176, 92, alpha)

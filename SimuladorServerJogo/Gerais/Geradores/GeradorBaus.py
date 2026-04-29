@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
 import random
-from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict, carregar_csv_lista
+from pathlib import Path
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from typing import Dict, List
 
-TIPOS_ORDEM = ("Comum", "Incomum", "Raro", "Epico", "Lendario", "Mitico")
+CAMINHO_BAUS_JSON = Path(__file__).resolve().parents[3] / "Dados" / "Outros" / "Pokemon Global Server - Baus.json"
 
 _CHANCES_QTD_ITENS = {
     1: 30.0,
@@ -40,42 +42,15 @@ def _escolher_por_peso(rng: random.Random, pesos: Dict[object, float]):
 
 
 def _carregar_tabela_baus() -> Dict[int, Dict[str, object]]:
-    tabela: Dict[int, Dict[str, object]] = {}
-    dia_atual = 1
-
-    for linha in carregar_csv_lista("Pokemon Global Server - Baus.csv", encoding="utf-8"):
-            tokens = [str(c or "").strip() for c in linha if str(c or "").strip()]
-            if not tokens:
-                continue
-
-            primeiro = tokens[0]
-
-            if primeiro.lower().startswith("dia"):
-                dia_atual = int(primeiro.split()[1])
-                tabela[dia_atual] = {
-                    "chance_tipos": {},
-                    "chance_raridade_por_tipo": {},
-                }
-                continue
-
-            if primeiro.lower() == "bau":
-                continue
-
-            if primeiro not in TIPOS_ORDEM:
-                continue
-
-            tabela[dia_atual]["chance_tipos"][primeiro] = _fnum(tokens[1])
-
-            tabela[dia_atual]["chance_raridade_por_tipo"][primeiro] = {
-                1: _fnum(tokens[2] if len(tokens) > 2 else 0),
-                2: _fnum(tokens[3] if len(tokens) > 3 else 0),
-                3: _fnum(tokens[4] if len(tokens) > 4 else 0),
-                4: _fnum(tokens[5] if len(tokens) > 5 else 0),
-                5: _fnum(tokens[6] if len(tokens) > 6 else 0),
-                6: _fnum(tokens[7] if len(tokens) > 7 else 0),
-            }
-
-    return tabela
+    with CAMINHO_BAUS_JSON.open("r", encoding="utf-8") as arquivo:
+        dados = json.load(arquivo)
+    return {
+        int(dia): {
+            "chance_tipos": {tipo: _fnum(info.get("chance")) for tipo, info in bloco.items()},
+            "chance_raridade_por_tipo": {tipo: {int(r): _fnum(p) for r, p in info.get("raridades", {}).items()} for tipo, info in bloco.items()},
+        }
+        for dia, bloco in dados.items()
+    }
 
 
 def _carregar_itens_validos() -> Dict[int, List[Dict[str, object]]]:

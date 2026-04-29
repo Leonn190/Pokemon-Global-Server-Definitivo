@@ -45,13 +45,13 @@ Os números abaixo são atualizados automaticamente pelo `Outros/AtualizadorRead
 | Categoria | Quantidade atual |
 |---|---:|
 | Pokémon cadastrados em `Dados/Pokemon Global Server - Pokemons.csv` | **1.292** |
-| Ataques cadastrados em `Dados/Pokemon Global Server - Ataques.csv` | **18** |
+| Ataques cadastrados em `Dados/Pokemon Global Server - Ataques.csv` | **76** |
 | Efeitos cadastrados em `Dados/Pokemon Global Server - Efeitos.csv` | **51** |
 | Itens cadastrados em `Dados/Pokemon Global Server - Itens.csv` | **141** |
 | Equipáveis cadastrados em `Dados/Pokemon Global Server - Equipaveis.csv` | **64** |
 | NPCs cadastrados | **95** |
 | Estruturas naturais | **25** |
-| Trilhas sonoras | **35** |
+| Trilhas sonoras | **37** |
 | Receitas | **31** |
 | Tipos de Pokémon | **20** |
 | Biomas | **7** |
@@ -727,59 +727,59 @@ O projeto mantém o relatório mais recente em [`Registro.md`](Registro.md), loc
 
 # Registro
 
-**Relatório:** #49  
+**Relatório:** #50  
 **Repo:** `Pokemon-Global-Server-Definitivo`  
-**Gerado em:** 2026-04-28T11:43:35  
+**Gerado em:** 2026-04-28T21:09:13  
 **Modelo de relatório:** 9  
 **Autor:** Leon Cunha Alvaro Lopez Soto
 
 ## Visão geral
 
-- **Pastas:** 1.259
-- **Arquivos:** 72.208
+- **Pastas:** 1.260
+- **Arquivos:** 72.212
 - **Arquivos de texto:** 289
-- **Peso dos arquivos de texto:** 3071.94 KB
-- **Tamanho total:** 0.584 GB (627.141.609 bytes)
+- **Peso dos arquivos de texto:** 3151.70 KB
+- **Tamanho total:** 0.585 GB (627.927.900 bytes)
 - **Dias desde a criação do repo:** 57
 - **Dias desde a criação oficial:** 331
 - **Horas estimadas:** 313.00
-- **Linhas totais gerais:** 74.082
-- **Commits (repo):** 458
-- **Adições desde o último relatório:** <span style='color: green'>+5.135</span>
-- **Reduções desde o último relatório:** <span style='color: red'>-1.355</span>
+- **Linhas totais gerais:** 76.788
+- **Commits (repo):** 464
+- **Adições desde o último relatório:** <span style='color: green'>+4.992</span>
+- **Reduções desde o último relatório:** <span style='color: red'>-415</span>
 
 ## Python
 
 - **Arquivos `.py`:** 206
-- **Linhas totais:** 54.286
-- **Tamanho total `.py`:** 2343.07 KB
+- **Linhas totais:** 55.502
+- **Tamanho total `.py`:** 2382.13 KB
 - **Classes encontradas:** 181
-- **Funções encontradas:** 652
-- **Métodos encontrados:** 2.473
-- **Total funções + métodos:** 3.125
+- **Funções encontradas:** 785
+- **Métodos encontrados:** 2.475
+- **Total funções + métodos:** 3.260
 - **Bibliotecas diferentes usadas:** 40
 
 ## Rank das 15 pastas mais relevantes por linhas
 
-![Gráfico de barras do rank das 15 pastas](Outros/Relatorios/Imagens/2026-04-28_11-43-35/rank_15_pastas_barras.png)
+![Gráfico de barras do rank das 15 pastas](Outros/Relatorios/Imagens/2026-04-28_21-09-13/rank_15_pastas_barras.png)
 
-![Gráfico de pizza do rank das 15 pastas](Outros/Relatorios/Imagens/2026-04-28_11-43-35/rank_15_pastas_pizza.png)
+![Gráfico de pizza do rank das 15 pastas](Outros/Relatorios/Imagens/2026-04-28_21-09-13/rank_15_pastas_pizza.png)
 
 | Rank | Pasta | Subpastas | Arquivos | Linhas gerais | Tamanho (KB) |
 |---:|---|---:|---:|---:|---:|
 | 1 | `ServerGerais` | 4 | 50 | 8.394 | 468.47 |
-| 2 | `Paineis` | 0 | 16 | 6.677 | 297.64 |
-| 3 | `ServerBatalha` | 1 | 24 | 6.096 | 269.41 |
-| 4 | `Telas` | 2 | 19 | 6.019 | 233.55 |
-| 5 | `Dados` | 4 | 56 | 5.890 | 287.34 |
+| 2 | `Dados` | 4 | 56 | 7.337 | 326.05 |
+| 3 | `Paineis` | 0 | 16 | 6.686 | 298.20 |
+| 4 | `ServerBatalha` | 1 | 24 | 6.142 | 271.95 |
+| 5 | `Telas` | 2 | 19 | 6.019 | 233.55 |
 | 6 | `ServerMundo` | 1 | 17 | 4.479 | 234.09 |
 | 7 | `ModulosMundo` | 0 | 14 | 4.263 | 196.19 |
-| 8 | `ModulosBatalha` | 0 | 12 | 4.202 | 196.69 |
-| 9 | `ModulosGerais` | 0 | 15 | 4.185 | 160.87 |
-| 10 | `Outros` | 0 | 8 | 3.937 | 142.31 |
-| 11 | `Prefabs` | 0 | 14 | 3.606 | 131.80 |
-| 12 | `Geradores` | 1 | 15 | 3.433 | 151.65 |
-| 13 | `ServerLogica` | 4 | 41 | 2.881 | 86.02 |
+| 8 | `ModulosBatalha` | 0 | 12 | 4.236 | 198.50 |
+| 9 | `ModulosGerais` | 0 | 15 | 4.187 | 161.19 |
+| 10 | `ServerLogica` | 4 | 41 | 4.008 | 119.88 |
+| 11 | `Outros` | 0 | 8 | 3.935 | 142.28 |
+| 12 | `Prefabs` | 0 | 14 | 3.606 | 131.80 |
+| 13 | `Geradores` | 1 | 15 | 3.433 | 151.65 |
 | 14 | `Cenas` | 0 | 6 | 1.432 | 66.46 |
 | 15 | `Server` | 0 | 7 | 709 | 24.83 |
 
@@ -787,27 +787,27 @@ O projeto mantém o relatório mais recente em [`Registro.md`](Registro.md), loc
 
 | Arquivo | Linhas | Tamanho (KB) |
 |---|---:|---:|
-| `Outros/GeradorRelatorios.py` | 1.631 | 59.85 |
+| `Outros/GeradorRelatorios.py` | 1.629 | 59.82 |
 | `Codigo/Paineis/FichaPokemon.py` | 1.267 | 56.90 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py` | 1.061 | 47.35 |
-| `Codigo/ModulosBatalha/PokemonBatalha.py` | 1.042 | 49.61 |
+| `Codigo/ModulosBatalha/PokemonBatalha.py` | 1.060 | 50.31 |
 | `Codigo/ModulosMundo/ControladorObjetos.py` | 1.029 | 50.58 |
 | `Codigo/Paineis/VisualizadorLog.py` | 1.011 | 56.90 |
 | `SimuladorServerJogo/Gerais/EstadoServidor.py` | 992 | 39.46 |
 | `Codigo/Prefabs/Texto.py` | 806 | 30.97 |
-| `Codigo/ModulosGerais/PokemonAnimator.py` | 802 | 32.63 |
-| `Codigo/ModulosBatalha/MontadorJogadas.py` | 720 | 35.77 |
+| `Codigo/ModulosGerais/PokemonAnimator.py` | 804 | 32.95 |
+| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | 725 | 39.65 |
+| `Codigo/ModulosBatalha/MontadorJogadas.py` | 719 | 35.75 |
 | `Codigo/ModulosMundo/ControladorPlayer.py` | 719 | 34.47 |
 | `SimuladorServerJogo/Mundo/Cerebros/CerebroNPCs.py` | 718 | 37.98 |
-| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | 693 | 37.58 |
 | `SimuladorServerJogo/Mundo/BancoDados.py` | 689 | 33.84 |
 | `Codigo/Geradores/PokemonMundo.py` | 687 | 33.86 |
 | `SimuladorServerJogo/Logica/Comandos/Comandos.py` | 686 | 28.53 |
 | `SimuladorServerJogo/Gerais/Geradores/GeradorMundo.py` | 678 | 27.20 |
-| `Codigo/Paineis/FichaPokemonBatalha.py` | 668 | 32.80 |
+| `Codigo/Paineis/FichaPokemonBatalha.py` | 677 | 33.37 |
 | `Codigo/Paineis/Container.py` | 637 | 23.33 |
+| `SimuladorServerJogo/Batalha/Partida.py` | 629 | 30.51 |
 | `SimuladorServerJogo/Gerais/Geradores/GeradorPokemon.py` | 628 | 26.14 |
-| `SimuladorServerJogo/Batalha/Partida.py` | 627 | 30.32 |
 | `Codigo/Cenas/CenaMundo.py` | 623 | 33.83 |
 | `Outros/AtualizadorRelatorios.py` | 619 | 21.46 |
 | `Codigo/Telas/Telas/TelaServers.py` | 570 | 17.86 |
@@ -870,18 +870,18 @@ O projeto mantém o relatório mais recente em [`Registro.md`](Registro.md), loc
 | `Codigo/Paineis/FichaPokemon.py` | `FichaPokemon` | 1.245 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py` | `InventarioPokemons` | 1.033 |
 | `Codigo/ModulosMundo/ControladorObjetos.py` | `ControladorObjetos` | 1.003 |
-| `Codigo/ModulosBatalha/PokemonBatalha.py` | `PokemonBatalha` | 982 |
+| `Codigo/ModulosBatalha/PokemonBatalha.py` | `PokemonBatalha` | 999 |
 | `Codigo/Paineis/VisualizadorLog.py` | `VisualizadorLog` | 821 |
 | `Codigo/ModulosMundo/ControladorPlayer.py` | `ControladorPlayer` | 700 |
 | `SimuladorServerJogo/Mundo/Cerebros/CerebroNPCs.py` | `CerebroNPCs` | 697 |
+| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | `PokemonBatalha` | 679 |
 | `Codigo/ModulosBatalha/MontadorJogadas.py` | `MontadorJogadas` | 677 |
-| `Codigo/ModulosGerais/PokemonAnimator.py` | `PokemonAnimator` | 674 |
+| `Codigo/ModulosGerais/PokemonAnimator.py` | `PokemonAnimator` | 676 |
 | `Codigo/Geradores/PokemonMundo.py` | `Pokemon` | 663 |
 | `SimuladorServerJogo/Mundo/BancoDados.py` | `BancoDadosMundo` | 661 |
-| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | `PokemonBatalha` | 652 |
-| `Codigo/Paineis/FichaPokemonBatalha.py` | `FichaPokemonBatalha` | 648 |
+| `Codigo/Paineis/FichaPokemonBatalha.py` | `FichaPokemonBatalha` | 657 |
 | `Codigo/Paineis/Container.py` | `Container` | 628 |
-| `SimuladorServerJogo/Batalha/Partida.py` | `Partida` | 599 |
+| `SimuladorServerJogo/Batalha/Partida.py` | `Partida` | 601 |
 | `Codigo/Cenas/CenaMundo.py` | `CenaMundo` | 586 |
 | `Codigo/ModulosGerais/ImagensMapa.py` | `GerenciadorImagensMapa` | 520 |
 | `Codigo/Paineis/PainelArvoreHabilidades.py` | `PainelArvoreHabilidades` | 517 |
@@ -894,6 +894,7 @@ O projeto mantém o relatório mais recente em [`Registro.md`](Registro.md), loc
 |---|---:|
 | `Codigo/Prefabs/Texto.py` | 42 |
 | `Codigo/Prefabs/Botao.py` | 31 |
+| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/UtilitariosExecutes.py` | 21 |
 | `SimuladorServerJogo/Gerais/EstadoServidor.py` | 16 |
 | `SimuladorServerJogo/Mundo/BancoDados.py` | 14 |
 | `Codigo/Geradores/ItemInventario.py` | 14 |
@@ -901,22 +902,21 @@ O projeto mantém o relatório mais recente em [`Registro.md`](Registro.md), loc
 | `Codigo/ModulosGerais/Auxiliares.py` | 13 |
 | `SimuladorServerJogo/Gerais/Rotas/Ativador.py` | 12 |
 | `SimuladorServerJogo/Mundo/ObjetosMundoServer.py` | 11 |
-| `SimuladorServerJogo/Gerais/LoaderRegras.py` | 10 |
 
 ## Top 10 arquivos que mais importam
 
 | Arquivo | Arquivos internos importados | Imports totais | Linhas |
 |---|---:|---:|---:|
 | `Codigo/Cenas/CenaMundo.py` | 22 | 25 | 623 |
+| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/ControladorExecutes.py` | 22 | 23 | 264 |
 | `SimuladorServerJogo/Mundo/Cerebros/CerebroCentral.py` | 16 | 25 | 427 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py` | 14 | 21 | 1.061 |
 | `SimuladorServerJogo/Batalha/BatalhaIA/ControladorIA.py` | 12 | 16 | 166 |
 | `Codigo/Cenas/ControladorCenas.py` | 11 | 16 | 299 |
 | `SimuladorServerJogo/Gerais/Rotas/Atualizador.py` | 11 | 15 | 561 |
-| `Codigo/Paineis/FichaPokemonBatalha.py` | 10 | 15 | 668 |
+| `Codigo/Paineis/FichaPokemonBatalha.py` | 10 | 15 | 677 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioItens.py` | 10 | 13 | 509 |
 | `Codigo/ModulosBatalha/ControladorBatalha.py` | 10 | 13 | 457 |
-| `Codigo/Cenas/CenaCombate.py` | 10 | 13 | 263 |
 
 ## Top 10 maiores arquivos por linhas
 
@@ -924,45 +924,45 @@ O projeto mantém o relatório mais recente em [`Registro.md`](Registro.md), loc
 |---|---:|---:|
 | `Legado/DiretrizesBatalha_v7_ajustada.md` | `.md` | 4.860 |
 | `Legado/PlanoImplementacaoBatalha_5Fases_ajustado.md` | `.md` | 1.872 |
-| `Outros/GeradorRelatorios.py` | `.py` | 1.631 |
+| `Outros/GeradorRelatorios.py` | `.py` | 1.629 |
 | `Dados/Pokemon Global Server - Pokemons.csv` | `.csv` | 1.309 |
 | `Codigo/Paineis/FichaPokemon.py` | `.py` | 1.267 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py` | `.py` | 1.061 |
-| `Codigo/ModulosBatalha/PokemonBatalha.py` | `.py` | 1.042 |
+| `Codigo/ModulosBatalha/PokemonBatalha.py` | `.py` | 1.060 |
 | `Codigo/ModulosMundo/ControladorObjetos.py` | `.py` | 1.029 |
 | `Codigo/Paineis/VisualizadorLog.py` | `.py` | 1.011 |
-| `SimuladorServerJogo/Gerais/EstadoServidor.py` | `.py` | 992 |
+| `README.md` | `.md` | 1.010 |
 
 ## Linhas por extensão
 
-![Gráfico de pizza das linhas por extensão](Outros/Relatorios/Imagens/2026-04-28_11-43-35/linhas_por_extensao_pizza.png)
+![Gráfico de pizza das linhas por extensão](Outros/Relatorios/Imagens/2026-04-28_21-09-13/linhas_por_extensao_pizza.png)
 
 | Ext | Linhas |
 |---:|---:|
-| `.py` | 54.286 |
-| `.md` | 7.699 |
-| `.json` | 5.239 |
+| `.py` | 55.502 |
+| `.md` | 7.742 |
+| `.json` | 6.628 |
 | `.java` | 4.033 |
-| `.csv` | 1.746 |
+| `.csv` | 1.804 |
 | `.toml` | 1.060 |
 
 ## Peso por extensão
 
-![Gráfico de pizza do peso por categoria](Outros/Relatorios/Imagens/2026-04-28_11-43-35/peso_por_categoria_pizza.png)
+![Gráfico de pizza do peso por categoria](Outros/Relatorios/Imagens/2026-04-28_21-09-13/peso_por_categoria_pizza.png)
 
 | Ext | Arquivos | Peso | % do jogo |
 |---:|---:|---:|---:|
-| `.png` | 71.814 | 496.57 MB | 83.03% |
-| `.ogg` | 35 | 90.64 MB | 15.15% |
+| `.png` | 71.816 | 496.75 MB | 82.95% |
+| `.ogg` | 35 | 90.64 MB | 15.14% |
 | `.wav` | 9 | 3.81 MB | 0.64% |
 | `.jpg` | 23 | 3.61 MB | 0.60% |
-| `.py` | 206 | 2.29 MB | 0.38% |
-| `.md` | 3 | 244.45 KB | 0.04% |
+| `.py` | 206 | 2.33 MB | 0.39% |
+| `.mp3` | 5 | 636.73 KB | 0.10% |
+| `.md` | 3 | 246.44 KB | 0.04% |
 | `.ttf` | 2 | 196.64 KB | 0.03% |
-| `.csv` | 9 | 180.84 KB | 0.03% |
+| `.csv` | 9 | 186.54 KB | 0.03% |
+| `.json` | 49 | 161.95 KB | 0.03% |
 | `.java` | 7 | 152.40 KB | 0.02% |
-| `.mp3` | 3 | 135.71 KB | 0.02% |
-| `.json` | 49 | 128.94 KB | 0.02% |
 | `.class` | 31 | 125.12 KB | 0.02% |
 | `.toml` | 14 | 22.04 KB | 0.00% |
 | `.frag` | 1 | 9.20 KB | 0.00% |
@@ -972,31 +972,31 @@ O projeto mantém o relatório mais recente em [`Registro.md`](Registro.md), loc
 
 | Métrica | Relatório anterior | Relatório atual | Diferença |
 |---|---:|---:|---:|
-| Arquivos | 72.168 | 72.208 | +40 |
-| Linhas | 72.199 | 74.082 | +1.883 |
-| Linhas .py | 53.072 | 54.286 | +1.214 |
-| Métodos/funções | 3.066 | 3.125 | +59 |
-| Classes | 176 | 181 | +5 |
-| Commits | 448 | 458 | +10 |
-| Tamanho | 598.02 MB | 598.09 MB | +70.53 KB |
+| Arquivos | 72.208 | 72.212 | +4 |
+| Linhas | 74.082 | 76.788 | +2.706 |
+| Linhas .py | 54.286 | 55.502 | +1.216 |
+| Métodos/funções | 3.125 | 3.260 | +135 |
+| Classes | 181 | 181 | 0 |
+| Commits | 458 | 464 | +6 |
+| Tamanho | 598.09 MB | 598.84 MB | +767.86 KB |
 
 ### Top 3 commits por tamanho de diff
 
 | Rank | Commit | Mensagem | Arquivos | Adições | Reduções | Diff total |
 |---:|---|---|---:|---:|---:|---:|
-| 1 | `f6e88c202a82` | relatorio | 12 | 2.113 | 238 | 2.351 |
-| 2 | `579ef1109722` | OrganizaÃ§Ã£o de Ataques multiplos com flags | 53 | 846 | 766 | 1.612 |
-| 3 | `6fa5e3de42ce` | Conjunto de bugs em batalhas de treinadores e estadios | 39 | 778 | 141 | 919 |
+| 1 | `596364a1108c` | relatorio | 12 | 2.181 | 269 | 2.450 |
+| 2 | `7eb060895040` | Novos Ataques | 25 | 1.794 | 51 | 1.845 |
+| 3 | `35d5e61d55b7` | ajustes novos ataques | 45 | 1.271 | 378 | 1.649 |
 
 ## Gráficos de crescimento
 
-![Crescimento de linhas gerais](Outros/Relatorios/Imagens/2026-04-28_11-43-35/crescimento_linhas_totais.png)
+![Crescimento de linhas gerais](Outros/Relatorios/Imagens/2026-04-28_21-09-13/crescimento_linhas_totais.png)
 
-![Crescimento de linhas .py](Outros/Relatorios/Imagens/2026-04-28_11-43-35/crescimento_linhas_py.png)
+![Crescimento de linhas .py](Outros/Relatorios/Imagens/2026-04-28_21-09-13/crescimento_linhas_py.png)
 
-![Crescimento de arquivos .py](Outros/Relatorios/Imagens/2026-04-28_11-43-35/crescimento_arquivos_py.png)
+![Crescimento de arquivos .py](Outros/Relatorios/Imagens/2026-04-28_21-09-13/crescimento_arquivos_py.png)
 
-![Crescimento de commits](Outros/Relatorios/Imagens/2026-04-28_11-43-35/crescimento_commits.png)
+![Crescimento de commits](Outros/Relatorios/Imagens/2026-04-28_21-09-13/crescimento_commits.png)
 
 <!-- FIM_REGISTRO_MD -->
 

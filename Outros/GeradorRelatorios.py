@@ -14,7 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 # ============================================================
 # CONFIGURAÇÃO MANUAL
 # ============================================================
-MODELO_RELATORIO = 9
+MODELO_RELATORIO = 10
 AUTOR_RELATORIO = "Leon Cunha Alvaro Lopez Soto"
 INCREMENTO_HORAS = 0.0
 HORAS_PADRAO_SEM_HISTORICO = 313.0
@@ -39,11 +39,11 @@ EXTENSOES_TEXTO_INTERESSE = {
     ".h", ".hpp", ".cs", ".lua", ".rs", ".go", ".php", ".rb", ".vue", ".vhd", ".vhdl",
 }
 
-EXTENSOES_LINHAS_INTERESSE = {".toml", ".csv", ".java", ".py", ".json", ".md"}
+EXTENSOES_LINHAS_INTERESSE = {".toml", ".csv", ".java", ".py", ".json", ".md", ".css", ".html", ".htm", ".astro", ".js"}
 EXTENSOES_IMAGEM = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".ico"}
 EXTENSOES_AUDIO = {".ogg", ".mp3", ".wav", ".flac", ".midi", ".mid"}
 
-# 15 itens fixos conforme pedido.
+# 16 itens fixos conforme pedido.
 PASTAS_IMPORTANTES_RANK: List[Tuple[str, str]] = [
     ("Codigo/Cenas", "Cenas"),
     ("Codigo/Geradores", "Geradores"),
@@ -52,14 +52,23 @@ PASTAS_IMPORTANTES_RANK: List[Tuple[str, str]] = [
     ("Codigo/ModulosMundo", "ModulosMundo"),
     ("Codigo/Paineis", "Paineis"),
     ("Codigo/Prefabs", "Prefabs"),
-    ("Codigo/Server", "Server"),
     ("Codigo/Telas", "Telas"),
+    ("Codigo/Visual", "Visual"),
     ("SimuladorServerJogo/Logica", "ServerLogica"),
     ("SimuladorServerJogo/Gerais", "ServerGerais"),
     ("SimuladorServerJogo/Mundo", "ServerMundo"),
     ("SimuladorServerJogo/Batalha", "ServerBatalha"),
+    ("Site", "Site"),
     ("Outros", "Outros"),
     ("Dados", "Dados"),
+]
+
+PASTAS_ARQUITETURA_RELATORIO: List[Tuple[str, str]] = [
+    ("Codigo", "Codigo"),
+    ("SimuladorServerJogo", "Server"),
+    ("Dados", "Dados"),
+    ("Site", "Site"),
+    ("Outros", "Outros"),
 ]
 
 
@@ -619,6 +628,13 @@ def extrair_metricas_historicas(relatorio: Dict[str, Any]) -> Dict[str, Optional
                 ("meta", "commits"),
             ],
         ),
+        "tamanho_bytes": extrair_primeiro_numero(
+            relatorio,
+            [
+                ("resumo", "tamanho_bytes"),
+                ("visao_geral", "tamanho_bytes"),
+            ],
+        ),
     }
 
 
@@ -698,6 +714,7 @@ def coletar_historico_relatorios(
                 "linhas_py": metricas["linhas_py"],
                 "arquivos_py": metricas["arquivos_py"],
                 "commits": commits,
+                "tamanho_bytes": metricas.get("tamanho_bytes"),
             })
 
     pontos.append({
@@ -706,6 +723,7 @@ def coletar_historico_relatorios(
         "linhas_py": atual.get("python", {}).get("linhas_totais"),
         "arquivos_py": atual.get("python", {}).get("py_arquivos"),
         "commits": atual.get("resumo", {}).get("commits"),
+        "tamanho_bytes": atual.get("resumo", {}).get("tamanho_bytes"),
     })
 
     dedup: Dict[str, Dict[str, Any]] = {}
@@ -822,32 +840,48 @@ def gerar_graficos(
     graficos: Dict[str, str] = {}
 
     rank_itens = atual.get("pastas_importantes", {}).get("itens", []) or []
-    labels_rank = [str(it.get("pasta", "")) for it in rank_itens[:15]]
-    valores_rank = [float(it.get("linhas_gerais", 0)) for it in rank_itens[:15]]
+    labels_rank = [str(it.get("pasta", "")) for it in rank_itens[:16]]
+    valores_rank = [float(it.get("linhas_gerais", 0)) for it in rank_itens[:16]]
 
-    destino = imagens_dir / "rank_15_pastas_barras.png"
-    if salvar_grafico_barras(plt, labels_rank, valores_rank, "Rank das 15 pastas mais relevantes por linhas", "Linhas", destino):
-        graficos["rank_15_pastas_barras"] = f"{imagens_rel_local}/{destino.name}"
-        graficos["rank_15_pastas_barras_root"] = f"{imagens_rel_root}/{destino.name}"
+    destino = imagens_dir / "rank_16_pastas_barras.png"
+    if salvar_grafico_barras(plt, labels_rank, valores_rank, "Rank das 16 pastas principais por linhas", "Linhas", destino):
+        graficos["rank_16_pastas_barras"] = f"{imagens_rel_local}/{destino.name}"
+        graficos["rank_16_pastas_barras_root"] = f"{imagens_rel_root}/{destino.name}"
 
-    destino = imagens_dir / "rank_15_pastas_pizza.png"
-    if salvar_grafico_pizza(plt, labels_rank, valores_rank, "Fatia das 15 pastas mais relevantes por linhas", destino):
-        graficos["rank_15_pastas_pizza"] = f"{imagens_rel_local}/{destino.name}"
-        graficos["rank_15_pastas_pizza_root"] = f"{imagens_rel_root}/{destino.name}"
+    destino = imagens_dir / "rank_16_pastas_pizza.png"
+    if salvar_grafico_pizza(plt, labels_rank, valores_rank, "Fatia das 16 pastas principais por linhas", destino):
+        graficos["rank_16_pastas_pizza"] = f"{imagens_rel_local}/{destino.name}"
+        graficos["rank_16_pastas_pizza_root"] = f"{imagens_rel_root}/{destino.name}"
 
     linhas_ext = atual.get("linhas_por_extensao", {}).get("itens", []) or []
-    linhas_ext_plot = list(linhas_ext[:10])
-    if len(linhas_ext) > 10:
-        resto = sum(int(it.get("linhas", 0)) for it in linhas_ext[10:])
+    linhas_ext_plot = list(linhas_ext[:12])
+    if len(linhas_ext) > 12:
+        resto = sum(int(it.get("linhas", 0)) for it in linhas_ext[12:])
         if resto > 0:
             linhas_ext_plot.append({"ext": "Outras", "linhas": resto})
 
     labels_ext = [str(it.get("ext", "")) for it in linhas_ext_plot]
     valores_ext = [float(it.get("linhas", 0)) for it in linhas_ext_plot]
+
+    destino = imagens_dir / "linhas_por_extensao_barras.png"
+    if salvar_grafico_barras(plt, labels_ext, valores_ext, "Linhas por extensão", "Linhas", destino):
+        graficos["linhas_por_extensao_barras"] = f"{imagens_rel_local}/{destino.name}"
+        graficos["linhas_por_extensao_barras_root"] = f"{imagens_rel_root}/{destino.name}"
+
     destino = imagens_dir / "linhas_por_extensao_pizza.png"
     if salvar_grafico_pizza(plt, labels_ext, valores_ext, "Linhas por extensão", destino):
         graficos["linhas_por_extensao_pizza"] = f"{imagens_rel_local}/{destino.name}"
         graficos["linhas_por_extensao_pizza_root"] = f"{imagens_rel_root}/{destino.name}"
+
+    peso_ext = atual.get("peso_por_extensao", {}).get("itens", []) or []
+    peso_ext_top12 = list(peso_ext[:12])
+    labels_peso_ext = [str(it.get("ext", "")) for it in peso_ext_top12]
+    valores_peso_ext = [float(it.get("tamanho_bytes", 0)) for it in peso_ext_top12]
+
+    destino = imagens_dir / "peso_por_extensao_barras_top12.png"
+    if salvar_grafico_barras(plt, labels_peso_ext, valores_peso_ext, "Peso por extensão - Top 12", "Bytes", destino):
+        graficos["peso_por_extensao_barras_top12"] = f"{imagens_rel_local}/{destino.name}"
+        graficos["peso_por_extensao_barras_top12_root"] = f"{imagens_rel_root}/{destino.name}"
 
     peso_cat = atual.get("peso_por_categoria", {}).get("itens", []) or []
     labels_peso_cat = [str(it.get("categoria", "")) for it in peso_cat]
@@ -863,6 +897,7 @@ def gerar_graficos(
         ("linhas_py", "Crescimento de linhas .py", "Linhas .py", "crescimento_linhas_py.png"),
         ("arquivos_py", "Crescimento de arquivos .py", "Arquivos .py", "crescimento_arquivos_py.png"),
         ("commits", "Crescimento de commits", "Commits", "crescimento_commits.png"),
+        ("tamanho_bytes", "Crescimento de peso do jogo", "Bytes", "crescimento_peso_jogo.png"),
     ]
 
     for chave, titulo, y_label, nome_arquivo in series:
@@ -1109,8 +1144,16 @@ def coletar_metricas(
 
     commits = tentar_contar_commits(repo_root, data_referencia)
     rank_pastas = coletar_rank_pastas_importantes(repo_root, relatorios_dir)
+    total_linhas_extensoes = sum(int(v) for v in linhas_por_ext.values())
     linhas_por_ext_lista = [
-        {"ext": ext, "linhas": linhas}
+        {
+            "ext": ext,
+            "linhas": int(linhas),
+            "arquivos": int(arquivos_por_ext.get(ext, 0)),
+            "tamanho_bytes": int(tamanho_por_ext.get(ext, 0)),
+            "tamanho_kb": round(bytes_para_kb(int(tamanho_por_ext.get(ext, 0))), 2),
+            "percentual_linhas": round((int(linhas) / total_linhas_extensoes * 100.0), 4) if total_linhas_extensoes else 0.0,
+        }
         for ext, linhas in sorted(linhas_por_ext.items(), key=lambda kv: kv[1], reverse=True)
         if linhas > 0
     ]
@@ -1174,11 +1217,11 @@ def coletar_metricas(
             "top10_arquivos_que_mais_importam": arquivos_que_mais_importam[:10],
         },
         "pastas_importantes": {
-            "observacao": "Rank recursivo por linhas das 15 pastas principais definidas manualmente.",
+            "observacao": "Rank recursivo por linhas das 16 pastas principais definidas manualmente.",
             "itens": rank_pastas,
         },
         "linhas_por_extensao": {
-            "observacao": "Contabiliza apenas .toml, .csv, .java, .py, .json e .md.",
+            "observacao": "Contabiliza extensões textuais principais, incluindo .css, .html, .astro e .js quando existirem.",
             "itens": linhas_por_ext_lista,
         },
         "peso_por_extensao": {
@@ -1195,10 +1238,72 @@ def coletar_metricas(
 
 
 # ============================================================
+# ARQUITETURA PARA O RELATÓRIO
+# ============================================================
+def deve_ignorar_arquitetura(path: Path) -> bool:
+    if path.name in {".DS_Store", "Thumbs.db"}:
+        return True
+    return any(parte in IGNORAR_PASTAS for parte in path.parts)
+
+
+def natural_key_path(path: Path) -> List[Any]:
+    texto = path.name.lower()
+    partes = re.split(r"(\d+)", texto)
+    chave: List[Any] = []
+    for parte in partes:
+        if parte.isdigit():
+            chave.append(int(parte))
+        else:
+            chave.append(parte)
+    return chave
+
+
+def listar_filhos_arquitetura(pasta: Path) -> List[Path]:
+    try:
+        filhos = [p for p in pasta.iterdir() if not deve_ignorar_arquitetura(p)]
+    except OSError:
+        return []
+    filhos.sort(key=lambda p: (not p.is_dir(), natural_key_path(p)))
+    return filhos
+
+
+def gerar_arvore_arquitetura(pasta: Path, prefixo: str = "") -> List[str]:
+    filhos = listar_filhos_arquitetura(pasta)
+    linhas: List[str] = []
+
+    for idx, filho in enumerate(filhos):
+        ultimo = idx == len(filhos) - 1
+        conector = "└── " if ultimo else "├── "
+        nome = filho.name + ("/" if filho.is_dir() else "")
+        linhas.append(f"{prefixo}{conector}{nome}")
+        if filho.is_dir():
+            novo_prefixo = prefixo + ("    " if ultimo else "│   ")
+            linhas.extend(gerar_arvore_arquitetura(filho, novo_prefixo))
+
+    return linhas
+
+
+def gerar_bloco_arvore_arquitetura(repo_root: Path, caminho_relativo: str) -> str:
+    pasta = repo_root / caminho_relativo
+    if not pasta.exists() or not pasta.is_dir():
+        return f"{caminho_relativo}/\n└── (pasta não encontrada)"
+    linhas = [f"{caminho_relativo}/"]
+    linhas.extend(gerar_arvore_arquitetura(pasta))
+    return "\n".join(linhas)
+
+
+def markdown_arquitetura(repo_root: Path) -> str:
+    md: List[str] = []
+    for caminho, titulo in PASTAS_ARQUITETURA_RELATORIO:
+        md.extend([f"### `{titulo}/`", "", "```text", gerar_bloco_arvore_arquitetura(repo_root, caminho), "```", ""])
+    return "\n".join(md).strip()
+
+
+# ============================================================
 # MARKDOWN
 # ============================================================
 def markdown_rank_pastas_importantes(atual: Dict[str, Any]) -> str:
-    itens = (atual.get("pastas_importantes", {}).get("itens") or [])[:15]
+    itens = (atual.get("pastas_importantes", {}).get("itens") or [])[:16]
     if not itens:
         return "_Nenhuma pasta importante encontrada para montar o rank._"
 
@@ -1312,13 +1417,16 @@ def markdown_linhas_por_extensao(atual: Dict[str, Any]) -> str:
         return "_Nenhuma linha contabilizada por extensão._"
 
     linhas = [
-        "| Ext | Linhas |",
-        "|---:|---:|",
+        "| Ext | Linhas | % das linhas | Arquivos | Peso |",
+        "|---:|---:|---:|---:|---:|",
     ]
     for it in itens:
-        linhas.append(f"| `{it['ext']}` | {fmt_int(int(it['linhas']))} |")
+        linhas.append(
+            f"| `{it['ext']}` | {fmt_int(int(it['linhas']))} | "
+            f"{fmt_num(float(it.get('percentual_linhas', 0.0)), 2)}% | "
+            f"{fmt_int(int(it.get('arquivos', 0)))} | {fmt_tamanho_curto(int(it.get('tamanho_bytes', 0)))} |"
+        )
     return "\n".join(linhas)
-
 
 
 def markdown_peso_por_extensao(atual: Dict[str, Any]) -> str:
@@ -1399,14 +1507,14 @@ def bloco_imagem(rel_path: Optional[str], titulo: str) -> List[str]:
     return [f"![{titulo}]({rel_path})", ""]
 
 
-def gerar_markdown(atual: Dict[str, Any], imagem_key_suffix: str = "") -> str:
+def gerar_markdown(atual: Dict[str, Any], imagem_key_suffix: str = "", repo_root: Optional[Path] = None) -> str:
     resumo = atual["resumo"]
     py = atual["python"]
     meta = atual.get("meta", {}) or {}
     graficos = atual.get("graficos", {}) or {}
 
     criado_em = str(meta.get("criado_em", ""))
-    nome_repo = str(meta.get("repo", ""))
+    nome_projeto = str(meta.get("projeto", meta.get("repo", "")))
     numero_relatorio = meta.get("numero_relatorio")
 
     def g(chave: str) -> Optional[str]:
@@ -1417,15 +1525,15 @@ def gerar_markdown(atual: Dict[str, Any], imagem_key_suffix: str = "") -> str:
     md.append("")
     if numero_relatorio is not None:
         md.append(f"**Relatório:** #{numero_relatorio}  ")
-    if nome_repo:
-        md.append(f"**Repo:** `{nome_repo}`  ")
+    if nome_projeto:
+        md.append(f"**Projeto:** `{nome_projeto}`  ")
     if criado_em:
         md.append(f"**Gerado em:** {criado_em}  ")
     md.append(f"**Modelo de relatório:** {MODELO_RELATORIO}  ")
     md.append(f"**Autor:** {AUTOR_RELATORIO}")
     md.append("")
 
-    md.append("## Visão geral")
+    md.append("## 1. Visão geral")
     md.append("")
     md.append(f"- **Pastas:** {fmt_int(int(resumo['pastas']))}")
     md.append(f"- **Arquivos:** {fmt_int(int(resumo['arquivos']))}")
@@ -1433,20 +1541,20 @@ def gerar_markdown(atual: Dict[str, Any], imagem_key_suffix: str = "") -> str:
     md.append(f"- **Peso dos arquivos de texto:** {fmt_tamanho_kb(int(resumo['tamanho_texto_bytes']))}")
     md.append(f"- **Tamanho total:** {fmt_tamanho_gb_com_bytes(int(resumo['tamanho_bytes']))}")
     if resumo.get("dias_desde_criacao_repo") is not None:
-        md.append(f"- **Dias desde a criação do repo:** {fmt_int(int(resumo['dias_desde_criacao_repo']))}")
+        md.append(f"- **Dias desde a criação do projeto:** {fmt_int(int(resumo['dias_desde_criacao_repo']))}")
     if resumo.get("dias_desde_criacao_oficial") is not None:
         md.append(f"- **Dias desde a criação oficial:** {fmt_int(int(resumo['dias_desde_criacao_oficial']))}")
     md.append(f"- **Horas estimadas:** {fmt_num(float(resumo['horas_estimadas']), 2)}")
     md.append(f"- **Linhas totais gerais:** {fmt_int(int(resumo['linhas_totais_geral']))}")
     if resumo.get("commits") is not None:
-        md.append(f"- **Commits (repo):** {fmt_int(int(resumo['commits']))}")
+        md.append(f"- **Commits (projeto):** {fmt_int(int(resumo['commits']))}")
     diff = atual.get("diff_desde_ultimo_relatorio", {}) or {}
     if diff.get("disponivel"):
         md.append(f"- **Adições desde o último relatório:** <span style='color: green'>+{fmt_int(int(diff.get('adicoes', 0)))}</span>")
         md.append(f"- **Reduções desde o último relatório:** <span style='color: red'>-{fmt_int(int(diff.get('reducoes', 0)))}</span>")
     md.append("")
 
-    md.append("## Python")
+    md.append("## 2. Python")
     md.append("")
     md.append(f"- **Arquivos `.py`:** {fmt_int(int(py['py_arquivos']))}")
     md.append(f"- **Linhas totais:** {fmt_int(int(py['linhas_totais']))}")
@@ -1458,56 +1566,68 @@ def gerar_markdown(atual: Dict[str, Any], imagem_key_suffix: str = "") -> str:
     md.append(f"- **Bibliotecas diferentes usadas:** {fmt_int(int(py['bibliotecas_diferentes']))}")
     md.append("")
 
-    md.append("## Rank das 15 pastas mais relevantes por linhas")
+    md.append("## 3. Principais pastas")
     md.append("")
-    md.extend(bloco_imagem(g("rank_15_pastas_barras"), "Gráfico de barras do rank das 15 pastas"))
-    md.extend(bloco_imagem(g("rank_15_pastas_pizza"), "Gráfico de pizza do rank das 15 pastas"))
+    md.extend(bloco_imagem(g("rank_16_pastas_barras"), "Gráfico de barras das 16 pastas principais"))
+    md.extend(bloco_imagem(g("rank_16_pastas_pizza"), "Gráfico de pizza das 16 pastas principais"))
     md.append(markdown_rank_pastas_importantes(atual))
     md.append("")
 
-    md.append("## Top 50 maiores arquivos `.py` por linhas")
+    md.append("## 4. Arquitetura")
+    md.append("")
+    if repo_root is not None:
+        md.append(markdown_arquitetura(repo_root))
+    else:
+        md.append("_Arquitetura não disponível neste contexto._")
+    md.append("")
+
+    md.append("## 5. Ranks")
+    md.append("")
+    md.append("### Top 50 maiores arquivos `.py` por linhas")
     md.append("")
     md.append(markdown_top50_py_por_linhas(atual))
     md.append("")
 
-    md.append("## Top 20 maiores funções e métodos")
-    md.append("")
-    md.append(markdown_top_funcoes_metodos(atual))
-    md.append("")
-
-    md.append("## Top 20 maiores classes")
+    md.append("### Top 20 maiores classes")
     md.append("")
     md.append(markdown_top_classes(atual))
     md.append("")
 
-    md.append("## Top 10 arquivos mais importados")
+    md.append("### Top 20 maiores funções e métodos")
+    md.append("")
+    md.append(markdown_top_funcoes_metodos(atual))
+    md.append("")
+
+    md.append("### Top 10 arquivos mais importados")
     md.append("")
     md.append(markdown_top_arquivos_mais_importados(atual))
     md.append("")
 
-    md.append("## Top 10 arquivos que mais importam")
+    md.append("### Top 10 arquivos que mais importam")
     md.append("")
     md.append(markdown_top_arquivos_que_mais_importam(atual))
     md.append("")
 
-    md.append("## Top 10 maiores arquivos por linhas")
+    md.append("### Top 10 maiores arquivos por linhas")
     md.append("")
     md.append(markdown_top_arquivos_por_linhas(atual))
     md.append("")
 
-    md.append("## Linhas por extensão")
+    md.append("## 6. Linhas por extensão")
     md.append("")
+    md.extend(bloco_imagem(g("linhas_por_extensao_barras"), "Gráfico de barras das linhas por extensão"))
     md.extend(bloco_imagem(g("linhas_por_extensao_pizza"), "Gráfico de pizza das linhas por extensão"))
     md.append(markdown_linhas_por_extensao(atual))
     md.append("")
 
-    md.append("## Peso por extensão")
+    md.append("## 7. Peso por extensão")
     md.append("")
+    md.extend(bloco_imagem(g("peso_por_extensao_barras_top12"), "Gráfico de barras do peso por extensão - Top 12"))
     md.extend(bloco_imagem(g("peso_por_categoria_pizza"), "Gráfico de pizza do peso por categoria"))
     md.append(markdown_peso_por_extensao(atual))
     md.append("")
 
-    md.append("## Comparativo com o último relatório")
+    md.append("## 8. Comparativo com o último relatório")
     md.append("")
     md.append(markdown_comparativo_ultimo_relatorio(atual))
     md.append("")
@@ -1517,12 +1637,13 @@ def gerar_markdown(atual: Dict[str, Any], imagem_key_suffix: str = "") -> str:
     md.append(markdown_top_commits_por_diff(atual))
     md.append("")
 
-    md.append("## Gráficos de crescimento")
+    md.append("## 9. Gráficos de crescimento")
     md.append("")
     md.extend(bloco_imagem(g("linhas_totais_geral"), "Crescimento de linhas gerais"))
     md.extend(bloco_imagem(g("linhas_py"), "Crescimento de linhas .py"))
     md.extend(bloco_imagem(g("arquivos_py"), "Crescimento de arquivos .py"))
     md.extend(bloco_imagem(g("commits"), "Crescimento de commits"))
+    md.extend(bloco_imagem(g("tamanho_bytes"), "Crescimento de peso do jogo"))
 
     return "\n".join(md).strip() + "\n"
 
@@ -1538,11 +1659,13 @@ def main() -> None:
     relatorios_root_dir = outros_dir / "Relatorios"
     imagens_base_dir = relatorios_root_dir / "Imagens"
     registros_dir = relatorios_root_dir / "Registros"
+    readmes_dir = relatorios_root_dir / "Readmes"
     relatorios_json_dir = relatorios_root_dir / "Relatorios"
 
     relatorios_root_dir.mkdir(parents=True, exist_ok=True)
     imagens_base_dir.mkdir(parents=True, exist_ok=True)
     registros_dir.mkdir(parents=True, exist_ok=True)
+    readmes_dir.mkdir(parents=True, exist_ok=True)
     relatorios_json_dir.mkdir(parents=True, exist_ok=True)
 
     agora_real = datetime.now().astimezone()
@@ -1555,6 +1678,7 @@ def main() -> None:
 
     json_path = relatorios_json_dir / json_name
     md_path = registros_dir / md_name
+    readme_historico_path = readmes_dir / md_name
     registro_md_path = repo_root / "Registro.md"
 
     relatorio_anterior_path = encontrar_ultimo_relatorio_anterior(relatorios_json_dir, data_referencia)
@@ -1575,9 +1699,10 @@ def main() -> None:
         "numero_relatorio": numero_relatorio,
         "criado_em": iso_sem_timezone(agora_real),
         "data_referencia": iso_sem_timezone(data_referencia),
-        "repo": repo_root.name,
+        "projeto": repo_root.name,
         "arquivo": json_name,
         "arquivo_markdown": md_name,
+        "arquivo_readme": md_name,
         "base_dir": str(repo_root),
         "script": str(script_path.relative_to(repo_root)).replace("\\", "/"),
         "relatorios_dir": str(relatorios_root_dir.relative_to(repo_root)).replace("\\", "/"),
@@ -1600,8 +1725,8 @@ def main() -> None:
     with json_path.open("w", encoding="utf-8") as f:
         json.dump(atual, f, ensure_ascii=False, indent=2)
 
-    md_local = gerar_markdown(atual, imagem_key_suffix="")
-    md_root = gerar_markdown(atual, imagem_key_suffix="_root")
+    md_local = gerar_markdown(atual, imagem_key_suffix="", repo_root=repo_root)
+    md_root = gerar_markdown(atual, imagem_key_suffix="_root", repo_root=repo_root)
     md_path.write_text(md_local, encoding="utf-8")
     registro_md_path.write_text(md_root, encoding="utf-8")
 
@@ -1609,6 +1734,8 @@ def main() -> None:
         from AtualizadorReadMe import atualizar_readme
 
         readme_atualizado_path = atualizar_readme(repo_root)
+        if readme_atualizado_path.exists():
+            readme_historico_path.write_text(readme_atualizado_path.read_text(encoding="utf-8", errors="ignore"), encoding="utf-8")
     except Exception as exc:
         readme_atualizado_path = None
         print(f"- README: não atualizado automaticamente ({exc})")
@@ -1619,6 +1746,7 @@ def main() -> None:
     print(f"- Markdown da raiz: {registro_md_path}")
     if readme_atualizado_path is not None:
         print(f"- README atualizado: {readme_atualizado_path}")
+        print(f"- README histórico: {readme_historico_path}")
     if graficos:
         print(f"- Pasta de imagens: {imagens_base_dir / basename}")
     else:

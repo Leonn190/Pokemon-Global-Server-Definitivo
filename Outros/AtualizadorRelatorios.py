@@ -17,6 +17,7 @@ MODELO_ATUAL = 9
 PASTA_RELATORIOS_ORIGINAIS = "Outros/RelatoriosLegado"
 PASTA_RELATORIOS_ATUALIZADOS = "Outros/Relatorios"
 CAMINHO_GERADOR_ATUAL = "Outros/GeradorRelatorios.py"
+CAMINHO_ATUALIZADOR_README_ATUAL = "Outros/AtualizadorReadMe.py"
 ATUALIZAR_SEM_MODELO = True
 LIMITE_RELATORIOS: Optional[int] = None
 MODO_VERBOSE = True
@@ -291,6 +292,13 @@ def copiar_gerador_moderno_para_snapshot(repo_root: Path, worktree_dir: Path) ->
     destino = worktree_dir / CAMINHO_GERADOR_ATUAL
     destino.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(gerador_atual, destino)
+
+    atualizador_readme = repo_root / CAMINHO_ATUALIZADOR_README_ATUAL
+    if atualizador_readme.exists():
+        destino_readme = worktree_dir / CAMINHO_ATUALIZADOR_README_ATUAL
+        destino_readme.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(atualizador_readme, destino_readme)
+
     return destino
 
 
@@ -308,10 +316,16 @@ def imagens_dir_de_relatorios(relatorios_root: Path) -> Path:
     return relatorios_root / "Imagens"
 
 
+def readmes_dir_de_relatorios(relatorios_root: Path) -> Path:
+    return relatorios_root / "Readmes"
+
+
 def garantir_estrutura_relatorios(relatorios_root: Path) -> None:
     imagens_dir_de_relatorios(relatorios_root).mkdir(parents=True, exist_ok=True)
     registros_dir = relatorios_root / "Registros"
     registros_dir.mkdir(parents=True, exist_ok=True)
+    readmes_dir = relatorios_root / "Readmes"
+    readmes_dir.mkdir(parents=True, exist_ok=True)
     json_dir = relatorios_root / "Relatorios"
     json_dir.mkdir(parents=True, exist_ok=True)
 
@@ -347,11 +361,18 @@ def localizar_pasta_imagens_gerada(relatorios_root: Path, stem_json: str) -> Opt
     return None
 
 
+def localizar_readme_gerado(relatorios_root: Path, stem_json: str) -> Optional[Path]:
+    candidato = readmes_dir_de_relatorios(relatorios_root) / f"{stem_json}.md"
+    if candidato.exists():
+        return candidato
+    return None
+
+
 def rodar_gerador_moderno_no_snapshot(
     repo_root: Path,
     worktree_dir: Path,
     data_referencia: datetime,
-) -> Tuple[Path, Optional[Path], Optional[Path]]:
+) -> Tuple[Path, Optional[Path], Optional[Path], Optional[Path]]:
     gerador_no_snapshot = copiar_gerador_moderno_para_snapshot(repo_root, worktree_dir)
     relatorios_dir_snapshot = worktree_dir / PASTA_RELATORIOS_ATUALIZADOS
     relatorios_dir_snapshot.mkdir(parents=True, exist_ok=True)
@@ -383,7 +404,8 @@ def rodar_gerador_moderno_no_snapshot(
 
     md_gerado = localizar_md_gerado(relatorios_dir_snapshot, json_gerado.stem)
     imagens_geradas = localizar_pasta_imagens_gerada(relatorios_dir_snapshot, json_gerado.stem)
-    return json_gerado, md_gerado, imagens_geradas
+    readme_gerado = localizar_readme_gerado(relatorios_dir_snapshot, json_gerado.stem)
+    return json_gerado, md_gerado, imagens_geradas, readme_gerado
 
 
 def os_environ_seguro() -> Dict[str, str]:
@@ -456,11 +478,12 @@ def enriquecer_relatorio_atualizado(
     meta["arquivo"] = nome_original
     meta["arquivo_markdown"] = nome_md_original
     meta["imagens_dir"] = f"Outros/Relatorios/Imagens/{stem_original}"
-    meta["repo"] = repo_root.name
+    meta["projeto"] = repo_root.name
     meta["base_dir"] = str(repo_root)
     meta["relatorios_dir"] = PASTA_RELATORIOS_ATUALIZADOS
     meta["relatorios_json_dir"] = f"{PASTA_RELATORIOS_ATUALIZADOS}/Relatorios"
     meta["registros_dir"] = f"{PASTA_RELATORIOS_ATUALIZADOS}/Registros"
+    meta["readmes_dir"] = f"{PASTA_RELATORIOS_ATUALIZADOS}/Readmes"
     meta["script"] = "Outros/AtualizadorRelatorios.py"
     meta["script_gerador_modelo"] = CAMINHO_GERADOR_ATUAL
 
@@ -498,6 +521,7 @@ def main() -> None:
 
     pasta_imagens_atualizadas = imagens_dir_de_relatorios(pasta_relatorios_atualizados)
     pasta_registros_atualizados = registros_dir_de_relatorios(pasta_relatorios_atualizados)
+    pasta_readmes_atualizados = readmes_dir_de_relatorios(pasta_relatorios_atualizados)
     pasta_jsons_atualizados = json_dir_de_relatorios(pasta_relatorios_atualizados)
 
     relatorios = listar_jsons_relatorios(pasta_relatorios_origem)
@@ -512,7 +536,7 @@ def main() -> None:
     log("=" * 70)
     log("ATUALIZADOR DE RELATÓRIOS")
     log("=" * 70)
-    log(f"Repo: {repo_root}")
+    log(f"Projeto: {repo_root}")
     log(f"Modelo alvo: {MODELO_ATUAL}")
     log(f"Origem: {pasta_relatorios_origem}")
     log(f"Destino: {pasta_relatorios_atualizados}")
@@ -552,7 +576,7 @@ def main() -> None:
         worktree_dir = None
         try:
             tmp, worktree_dir = criar_worktree_temporario(repo_root, commit_hash)
-            json_gerado, md_gerado, imagens_geradas = rodar_gerador_moderno_no_snapshot(repo_root, worktree_dir, data_relatorio)
+            json_gerado, md_gerado, imagens_geradas, readme_gerado = rodar_gerador_moderno_no_snapshot(repo_root, worktree_dir, data_relatorio)
 
             relatorio_novo = ler_json(json_gerado)
             if not isinstance(relatorio_novo, dict):
@@ -586,6 +610,14 @@ def main() -> None:
                 vlog(f"  - Markdown atualizado: {destino_md}")
             else:
                 vlog("  - Aviso: markdown não foi encontrado no snapshot gerado.")
+
+            if readme_gerado and readme_gerado.exists():
+                readme_texto = readme_gerado.read_text(encoding="utf-8", errors="ignore")
+                destino_readme = pasta_readmes_atualizados / nome_md_original
+                salvar_texto(destino_readme, readme_texto)
+                vlog(f"  - README atualizado: {destino_readme}")
+            else:
+                vlog("  - Aviso: README não foi encontrado no snapshot gerado.")
 
             if imagens_geradas and imagens_geradas.exists():
                 destino_imagens = pasta_imagens_atualizadas / stem_original

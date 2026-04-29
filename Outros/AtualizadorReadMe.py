@@ -3,8 +3,9 @@ from __future__ import annotations
 import csv
 import json
 import re
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import tomllib  # Python 3.11+
@@ -13,31 +14,6 @@ except Exception:  # pragma: no cover
 
 
 README_NOME = "README.md"
-REGISTRO_NOME = "Registro.md"
-
-PASTAS_ARQUITETURA = [
-    "Dados",
-    "Codigo",
-    "SimuladorServerJogo",
-]
-
-IGNORAR_PASTAS = {
-    ".git",
-    "__pycache__",
-    ".pytest_cache",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".venv",
-    "venv",
-    "Relatorios",
-    "RelatoriosLegado",
-    "Relatorios atualizados",
-}
-
-IGNORAR_ARQUIVOS = {
-    ".DS_Store",
-    "Thumbs.db",
-}
 
 EXTENSOES_IMAGEM = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
 EXTENSOES_AUDIO = {".ogg", ".mp3", ".wav", ".flac", ".midi", ".mid"}
@@ -60,6 +36,26 @@ def fmt_int(n: int) -> str:
     return f"{n:,}".replace(",", ".")
 
 
+def fmt_num(n: float, casas: int = 2) -> str:
+    return f"{n:.{casas}f}".replace(",", ".")
+
+
+def bytes_para_kb(num_bytes: int) -> float:
+    return num_bytes / 1024.0
+
+
+def bytes_para_gb(num_bytes: int) -> float:
+    return num_bytes / (1024.0 ** 3)
+
+
+def fmt_tamanho_kb(num_bytes: int) -> str:
+    return f"{fmt_num(bytes_para_kb(num_bytes), 2)} KB"
+
+
+def fmt_tamanho_gb_com_bytes(num_bytes: int) -> str:
+    return f"{fmt_num(bytes_para_gb(num_bytes), 3)} GB ({fmt_int(num_bytes)} bytes)"
+
+
 def ler_texto(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8", errors="ignore")
@@ -69,6 +65,14 @@ def ler_texto(path: Path) -> str:
 
 def escrever_texto(path: Path, texto: str) -> None:
     path.write_text(texto, encoding="utf-8")
+
+
+def ler_json(path: Path) -> Optional[Dict[str, Any]]:
+    try:
+        data = json.loads(ler_texto(path))
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
 
 
 def natural_key(path: Path) -> List[Any]:
@@ -87,35 +91,58 @@ def caminho_md(path: Path, repo_root: Path) -> str:
     return str(path.relative_to(repo_root)).replace("\\", "/")
 
 
-def substituir_secao_por_titulo(readme: str, titulo: str, novo_conteudo: str) -> str:
-    """Substitui uma seção Markdown de nível 2, do título informado até o próximo ##."""
+def parse_datetime_seguro(valor: str) -> Optional[datetime]:
+    if not valor:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(valor).replace("Z", "+00:00"))
+        return dt.astimezone().replace(tzinfo=None) if dt.tzinfo is not None else dt
+    except Exception:
+        return None
+
+
+def extrair_prefixo(readme: str) -> str:
+    match = re.search(r"^##\s+1\. Descrição\s*$", readme, flags=re.MULTILINE)
+    if not match:
+        return readme.strip() + "\n"
+    return readme[: match.start()].rstrip() + "\n"
+
+
+def extrair_secao(readme: str, titulo: str, fallback: str) -> str:
     padrao = re.compile(
-        rf"(^##\s+{re.escape(titulo)}\s*$)(.*?)(?=^##\s+|\Z)",
+        rf"(^##\s+{re.escape(titulo)}\s*$.*?)(?=^##\s+\d+\.\s+|\Z)",
         flags=re.MULTILINE | re.DOTALL,
     )
-    bloco = novo_conteudo.strip() + "\n\n"
-    if padrao.search(readme):
-        return padrao.sub(bloco, readme, count=1)
+    match = padrao.search(readme)
+    if match:
+        secao = match.group(1).strip()
+    else:
+        secao = fallback.strip()
+    # As seções fixas do README antigo podiam terminar com separador `---`.
+    # O montador já controla os separadores, então removemos apenas essa sobra final.
+    return re.sub(r"\n+---\s*$", "", secao).strip()
 
-    if readme.endswith("\n"):
-        return readme + "\n" + bloco
-    return readme + "\n\n" + bloco
 
-
-def substituir_entre_marcadores(readme: str, inicio: str, fim: str, conteudo: str) -> str:
-    padrao = re.compile(
-        rf"({re.escape(inicio)})(.*?)({re.escape(fim)})",
-        flags=re.DOTALL,
-    )
-    novo_bloco = f"{inicio}\n\n{conteudo.strip()}\n\n{fim}"
-    if padrao.search(readme):
-        return padrao.sub(novo_bloco, readme, count=1)
-    return readme.rstrip() + f"\n\n{novo_bloco}\n"
+def valor_num(relatorio: Optional[Dict[str, Any]], caminho: Tuple[str, ...], default: float = 0.0) -> float:
+    cur: Any = relatorio
+    for parte in caminho:
+        if not isinstance(cur, dict) or parte not in cur:
+            return default
+        cur = cur[parte]
+    return float(cur) if isinstance(cur, (int, float)) else default
 
 
 # ============================================================
-# CONTADORES DE DADOS
+# CONTADORES DE DADOS DO JOGO
 # ============================================================
+def resolver_path_dados(repo_root: Path, *candidatos: str) -> Path:
+    for candidato in candidatos:
+        path = repo_root / candidato
+        if path.exists():
+            return path
+    return repo_root / candidatos[0]
+
+
 def contar_csv_registros(path: Path) -> int:
     if not path.exists():
         return 0
@@ -142,8 +169,6 @@ def contar_csv_registros(path: Path) -> int:
     if not rows_validas:
         return 0
 
-    # Os CSVs do projeto têm cabeçalho. O contador considera apenas registros.
-    # Linhas exportadas com a primeira coluna vazia são tratadas como sobra de planilha.
     registros = [row for row in rows_validas[1:] if row and str(row[0]).strip()]
     return len(registros)
 
@@ -195,21 +220,104 @@ def contar_trilhas_sonoras(repo_root: Path) -> int:
     return sum(1 for p in pasta.rglob("*") if p.is_file() and p.suffix.lower() in EXTENSOES_AUDIO)
 
 
-def coletar_estatisticas(repo_root: Path) -> List[tuple[str, int]]:
-    dados = repo_root / "Dados"
-    return [
-        (f"Pokémon cadastrados em `Dados/{CSV_POKEMONS}`", contar_csv_registros(dados / CSV_POKEMONS)),
-        (f"Ataques cadastrados em `Dados/{CSV_ATAQUES}`", contar_csv_registros(dados / CSV_ATAQUES)),
-        (f"Efeitos cadastrados em `Dados/{CSV_EFEITOS}`", contar_csv_registros(dados / CSV_EFEITOS)),
-        (f"Itens cadastrados em `Dados/{CSV_ITENS}`", contar_csv_registros(dados / CSV_ITENS)),
-        (f"Equipáveis cadastrados em `Dados/{CSV_EQUIPAVEIS}`", contar_csv_registros(dados / CSV_EQUIPAVEIS)),
+def coletar_estatisticas_jogo(repo_root: Path) -> List[Tuple[str, str]]:
+    pokemon_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_POKEMONS}", f"Dados/{CSV_POKEMONS}")
+    ataques_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_ATAQUES}", f"Dados/{CSV_ATAQUES}")
+    efeitos_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_EFEITOS}", f"Dados/{CSV_EFEITOS}")
+    itens_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_ITENS}", f"Dados/{CSV_ITENS}")
+    equipaveis_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_EQUIPAVEIS}", f"Dados/{CSV_EQUIPAVEIS}")
+    npc_combatente_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_NPC_COMBATENTE}", f"Dados/{CSV_NPC_COMBATENTE}")
+    npc_vendedor_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_NPC_VENDEDOR}", f"Dados/{CSV_NPC_VENDEDOR}")
+    receitas_json = resolver_path_dados(repo_root, f"Dados/Outros/{JSON_RECEITAS}", f"Dados/{JSON_RECEITAS}")
+
+    dados: List[Tuple[str, str]] = [
+        ("Pokémon registrados", fmt_int(contar_csv_registros(pokemon_csv))),
+        ("Ataques registrados", fmt_int(contar_csv_registros(ataques_csv))),
+        ("Efeitos registrados", fmt_int(contar_csv_registros(efeitos_csv))),
+        ("Itens registrados", fmt_int(contar_csv_registros(itens_csv))),
+        ("Equipáveis registrados", fmt_int(contar_csv_registros(equipaveis_csv))),
         (
             "NPCs cadastrados",
-            contar_csv_registros(dados / CSV_NPC_COMBATENTE) + contar_csv_registros(dados / CSV_NPC_VENDEDOR),
+            fmt_int(contar_csv_registros(npc_combatente_csv) + contar_csv_registros(npc_vendedor_csv)),
         ),
-        ("Estruturas naturais", contar_estruturas_naturais(repo_root)),
-        ("Trilhas sonoras", contar_trilhas_sonoras(repo_root)),
-        ("Receitas", contar_json_dict(dados / JSON_RECEITAS)),
+        ("Estruturas naturais", fmt_int(contar_estruturas_naturais(repo_root))),
+        ("Trilhas sonoras", fmt_int(contar_trilhas_sonoras(repo_root))),
+        ("Receitas", fmt_int(contar_json_dict(receitas_json))),
+        ("Tipos de Pokémon", "20"),
+        ("Biomas", "7"),
+        ("Mundo planejado", "10.000 x 10.000 tiles"),
+        ("Critérios de Habilidade da IA", "12"),
+        ("Critérios de Personalidade da IA", "7"),
+    ]
+    return dados
+
+
+# ============================================================
+# ESTATÍSTICAS DO PROJETO A PARTIR DO ÚLTIMO RELATÓRIO
+# ============================================================
+def data_relatorio(path: Path, data: Optional[Dict[str, Any]]) -> datetime:
+    if isinstance(data, dict):
+        meta = data.get("meta")
+        if isinstance(meta, dict):
+            for chave in ("data_referencia", "criado_em", "data_relatorio_original"):
+                dt = parse_datetime_seguro(str(meta.get(chave, "")))
+                if dt is not None:
+                    return dt
+    try:
+        return datetime.strptime(path.stem, "%Y-%m-%d_%H-%M-%S")
+    except Exception:
+        return datetime.fromtimestamp(path.stat().st_mtime)
+
+
+def localizar_ultimo_relatorio(repo_root: Path) -> Optional[Dict[str, Any]]:
+    candidatos: List[Path] = []
+    for pasta in (
+        repo_root / "Outros" / "Relatorios" / "Relatorios",
+        repo_root / "Outros" / "Relatorios",
+    ):
+        if pasta.exists():
+            candidatos.extend([p for p in pasta.glob("*.json") if p.is_file()])
+
+    melhores: List[Tuple[datetime, Path, Dict[str, Any]]] = []
+    for path in candidatos:
+        data = ler_json(path)
+        if isinstance(data, dict):
+            melhores.append((data_relatorio(path, data), path, data))
+
+    if not melhores:
+        return None
+
+    melhores.sort(key=lambda item: item[0], reverse=True)
+    return melhores[0][2]
+
+
+def coletar_estatisticas_projeto(repo_root: Path) -> List[Tuple[str, str]]:
+    relatorio = localizar_ultimo_relatorio(repo_root)
+
+    resumo = relatorio.get("resumo", {}) if isinstance(relatorio, dict) else {}
+    python = relatorio.get("python", {}) if isinstance(relatorio, dict) else {}
+
+    tamanho_texto_bytes = int(resumo.get("tamanho_texto_bytes", 0) or 0)
+    tamanho_total_bytes = int(resumo.get("tamanho_bytes", 0) or 0)
+    py_tamanho_bytes = int(python.get("tamanho_bytes", 0) or 0)
+    dias_projeto = resumo.get("dias_desde_criacao_oficial", resumo.get("dias_desde_criacao_projeto", resumo.get("dias_desde_criacao_repo", 0)))
+
+    return [
+        ("Pastas", fmt_int(int(resumo.get("pastas", 0) or 0))),
+        ("Arquivos", fmt_int(int(resumo.get("arquivos", 0) or 0))),
+        ("Arquivos de texto", fmt_int(int(resumo.get("arquivos_texto", 0) or 0))),
+        ("Peso dos arquivos de texto", fmt_tamanho_kb(tamanho_texto_bytes)),
+        ("Tamanho total", fmt_tamanho_gb_com_bytes(tamanho_total_bytes)),
+        ("Dias desde a criação do projeto", fmt_int(int(dias_projeto or 0))),
+        ("Linhas totais gerais", fmt_int(int(resumo.get("linhas_totais_geral", 0) or 0))),
+        ("Commits (projeto)", fmt_int(int(resumo.get("commits", 0) or 0))),
+        ("Arquivos .py", fmt_int(int(python.get("py_arquivos", 0) or 0))),
+        ("Linhas totais .py", fmt_int(int(python.get("linhas_totais", 0) or 0))),
+        ("Tamanho total .py", fmt_tamanho_kb(py_tamanho_bytes)),
+        ("Classes encontradas", fmt_int(int(python.get("classes_encontradas", 0) or 0))),
+        ("Funções encontradas", fmt_int(int(python.get("funcoes_encontradas", 0) or 0))),
+        ("Métodos encontrados", fmt_int(int(python.get("metodos_encontrados", 0) or 0))),
+        ("Total funções + métodos", fmt_int(int(python.get("total_funcoes_e_metodos", 0) or 0))),
     ]
 
 
@@ -259,128 +367,70 @@ def gerar_secao_snapshots(repo_root: Path) -> str:
 
 
 # ============================================================
-# ESTATÍSTICAS
+# SEÇÕES GERADAS DO README
 # ============================================================
 def gerar_secao_estatisticas(repo_root: Path) -> str:
     md: List[str] = [
         "## 3. Detalhes estatísticos",
         "",
-        "Os números abaixo são atualizados automaticamente pelo `Outros/AtualizadorReadMe.py` a partir dos arquivos atuais do projeto.",
+        "Os números abaixo são atualizados automaticamente pelo `Outros/AtualizadorReadMe.py` a partir dos arquivos atuais do projeto e do último relatório gerado.",
+        "",
+        "### Dados estatísticos do jogo",
         "",
         "| Categoria | Quantidade atual |",
         "|---|---:|",
     ]
 
-    for nome, valor in coletar_estatisticas(repo_root):
-        md.append(f"| {nome} | **{fmt_int(int(valor))}** |")
+    for nome, valor in coletar_estatisticas_jogo(repo_root):
+        md.append(f"| {nome} | **{valor}** |")
 
     md.extend([
-        "| Tipos de Pokémon | **20** |",
-        "| Biomas | **7** |",
-        "| Mundo planejado | **10.000 x 10.000 tiles** |",
         "",
-        "Principais arquivos de dados:",
+        "### Dados estatísticos do projeto",
         "",
-        f"- `Dados/{CSV_POKEMONS}`",
-        f"- `Dados/{CSV_ATAQUES}`",
-        f"- `Dados/{CSV_EFEITOS}`",
-        f"- `Dados/{CSV_ITENS}`",
-        f"- `Dados/{CSV_EQUIPAVEIS}`",
-        f"- `Dados/{JSON_RECEITAS}`",
-        "- `Dados/Pokemon Global Server - PropriedadesAtaques.json`",
-        "- `Dados/Pokemon Global Server - Sistema FR.csv`",
+        "| Categoria | Quantidade atual |",
+        "|---|---:|",
     ])
 
-    return "\n".join(md)
-
-
-# ============================================================
-# ARQUITETURA
-# ============================================================
-def deve_ignorar_path(path: Path) -> bool:
-    if path.name in IGNORAR_ARQUIVOS:
-        return True
-    return any(parte in IGNORAR_PASTAS for parte in path.parts)
-
-
-def listar_filhos_ordenados(pasta: Path) -> List[Path]:
-    try:
-        filhos = [p for p in pasta.iterdir() if not deve_ignorar_path(p)]
-    except OSError:
-        return []
-    filhos.sort(key=lambda p: (not p.is_dir(), natural_key(p)))
-    return filhos
-
-
-def gerar_arvore(pasta: Path, prefixo: str = "") -> List[str]:
-    filhos = listar_filhos_ordenados(pasta)
-    linhas: List[str] = []
-
-    for idx, filho in enumerate(filhos):
-        ultimo = idx == len(filhos) - 1
-        conector = "└── " if ultimo else "├── "
-        nome = filho.name + ("/" if filho.is_dir() else "")
-        linhas.append(f"{prefixo}{conector}{nome}")
-        if filho.is_dir():
-            novo_prefixo = prefixo + ("    " if ultimo else "│   ")
-            linhas.extend(gerar_arvore(filho, novo_prefixo))
-
-    return linhas
-
-
-def gerar_bloco_arvore(repo_root: Path, nome_pasta: str) -> str:
-    pasta = repo_root / nome_pasta
-    if not pasta.exists() or not pasta.is_dir():
-        return f"{nome_pasta}/\n└── (pasta não encontrada)"
-    linhas = [f"{nome_pasta}/"]
-    linhas.extend(gerar_arvore(pasta))
-    return "\n".join(linhas)
-
-
-def gerar_secao_arquitetura(repo_root: Path) -> str:
-    md: List[str] = [
-        "## 5. Arquitetura",
-        "",
-        "A arquitetura abaixo é atualizada automaticamente pelo `Outros/AtualizadorReadMe.py`, vasculhando as principais pastas do projeto.",
-        "",
-        "- `Codigo/`: cliente do jogo, interface, cenas, renderização, HUDs, telas e módulos visuais.",
-        "- `Dados/`: base de dados do jogo, com CSVs e JSONs de Pokémon, ataques, itens, NPCs, receitas e interações.",
-        "- `SimuladorServerJogo/`: servidor/simulador, regras, rotas, lógica autoritativa, mundo, batalha, geração e banco de dados.",
-        "",
-        "### Visão geral atualizada",
-        "",
-        "```text",
-        ".",
-    ]
-
-    existentes = [p for p in PASTAS_ARQUITETURA if (repo_root / p).exists()]
-    for idx, nome in enumerate(existentes):
-        ultimo = idx == len(existentes) - 1
-        conector = "└── " if ultimo else "├── "
-        md.append(f"{conector}{nome}/")
-    md.append("```")
-
-    for nome in PASTAS_ARQUITETURA:
-        md.extend(["", f"### `{nome}/`", "", "```text", gerar_bloco_arvore(repo_root, nome), "```"])
+    for nome, valor in coletar_estatisticas_projeto(repo_root):
+        md.append(f"| {nome} | **{valor}** |")
 
     return "\n".join(md)
 
 
-# ============================================================
-# REGISTRO
-# ============================================================
-def atualizar_registro_no_readme(readme: str, repo_root: Path) -> str:
-    registro_path = repo_root / REGISTRO_NOME
-    registro = ler_texto(registro_path).strip()
-    if not registro:
-        registro = f"> `{REGISTRO_NOME}` ainda não foi encontrado ou está vazio."
+def gerar_secao_autor_site() -> str:
+    return "\n".join([
+        "## 5. Autor e Site",
+        "",
+        "- **Autor:** Leon Cunha Alvaro Lopez Soto",
+        "- **Site oficial:** `COLOCAR_SITE_DO_GLOBAL_SERVER_AQUI`",
+    ])
 
-    return substituir_entre_marcadores(
-        readme,
-        "<!-- INICIO_REGISTRO_MD -->",
-        "<!-- FIM_REGISTRO_MD -->",
-        registro,
+
+def montar_readme(readme_atual: str, repo_root: Path) -> str:
+    cabecalho = extrair_prefixo(readme_atual)
+    descricao = extrair_secao(
+        readme_atual,
+        "1. Descrição",
+        "## 1. Descrição\n\nDescrição ainda não preenchida.",
     )
+    features = extrair_secao(
+        readme_atual,
+        "4. Features principais e conceitos",
+        "## 4. Features principais e conceitos\n\nFeatures ainda não preenchidas.",
+    )
+
+    partes = [
+        cabecalho.strip(),
+        descricao.strip(),
+        "---",
+        gerar_secao_snapshots(repo_root).strip(),
+        gerar_secao_estatisticas(repo_root).strip(),
+        features.strip(),
+        "---",
+        gerar_secao_autor_site().strip(),
+    ]
+    return "\n\n".join([p for p in partes if p]).rstrip() + "\n"
 
 
 # ============================================================
@@ -388,7 +438,6 @@ def atualizar_registro_no_readme(readme: str, repo_root: Path) -> str:
 # ============================================================
 def atualizar_readme(repo_root: Optional[Path | str] = None) -> Path:
     if repo_root is None:
-        # Arquivo esperado em Outros/AtualizadorReadMe.py.
         repo_root_path = Path(__file__).resolve().parent.parent
     else:
         repo_root_path = Path(repo_root).resolve()
@@ -398,13 +447,8 @@ def atualizar_readme(repo_root: Optional[Path | str] = None) -> Path:
         raise FileNotFoundError(f"README não encontrado: {readme_path}")
 
     readme = ler_texto(readme_path)
-
-    readme = substituir_secao_por_titulo(readme, "2. Snapshots", gerar_secao_snapshots(repo_root_path))
-    readme = substituir_secao_por_titulo(readme, "3. Detalhes estatísticos", gerar_secao_estatisticas(repo_root_path))
-    readme = substituir_secao_por_titulo(readme, "5. Arquitetura", gerar_secao_arquitetura(repo_root_path))
-    readme = atualizar_registro_no_readme(readme, repo_root_path)
-
-    escrever_texto(readme_path, readme.rstrip() + "\n")
+    novo_readme = montar_readme(readme, repo_root_path)
+    escrever_texto(readme_path, novo_readme)
     return readme_path
 
 

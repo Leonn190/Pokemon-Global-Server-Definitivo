@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 URL_SITE = "http://localhost:4321/"
+
 NODE_DIR = Path(r"C:\Program Files\nodejs")
 NODE_EXE = NODE_DIR / "node.exe"
 NPM_CMD = NODE_DIR / "npm.cmd"
@@ -36,6 +37,7 @@ def achar_pasta_site() -> Path:
 
     print("ERRO: não encontrei a pasta Site com package.json.")
     print("Locais testados:")
+
     for candidato in candidatos:
         print(f"- {candidato}")
 
@@ -46,14 +48,11 @@ def achar_pasta_site() -> Path:
 def preparar_ambiente() -> dict[str, str]:
     """
     Corrige o PATH dentro deste processo Python.
-
-    No Windows, às vezes existe 'Path' e não 'PATH'. Se criarmos outro
-    'PATH', alguns processos podem ignorar. Por isso removemos qualquer
-    variação e recriamos só 'Path'.
     """
     env_original = os.environ.copy()
 
     caminho_antigo = ""
+
     for chave, valor in env_original.items():
         if chave.lower() == "path":
             caminho_antigo = valor
@@ -66,6 +65,7 @@ def preparar_ambiente() -> dict[str, str]:
     }
 
     env["Path"] = str(NODE_DIR) + os.pathsep + caminho_antigo
+
     return env
 
 
@@ -100,12 +100,15 @@ def testar_node(env: dict[str, str]) -> None:
 
 def remover_node_modules(pasta_site: Path, env: dict[str, str]) -> None:
     node_modules = pasta_site / "node_modules"
+
     if not node_modules.exists():
         return
 
     print("\nRemovendo node_modules quebrado...")
+
     subprocess.run(
-        ["cmd.exe", "/c", "rmdir", "/s", "/q", str(node_modules)],
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+         f"Remove-Item -LiteralPath '{node_modules}' -Recurse -Force"],
         env=env,
         shell=False,
     )
@@ -146,26 +149,47 @@ def servidor_respondendo() -> bool:
         return False
 
 
-def abrir_servidor_astro(pasta_site: Path) -> None:
+def texto_powershell(valor: Path | str) -> str:
     """
-    Abre o Astro em uma janela separada de terminal.
-    A janela fica aberta mantendo o site rodando.
+    Coloca texto/caminho entre aspas simples do PowerShell.
+    Se algum dia tiver aspas simples no caminho, ele escapa corretamente.
     """
-    comando = (
-        f'cd /d "{pasta_site}" && '
-        f'set "PATH={NODE_DIR};%PATH%" && '
-        f'"{NPM_CMD}" run dev'
+    texto = str(valor)
+    texto = texto.replace("'", "''")
+    return f"'{texto}'"
+
+
+def abrir_servidor_astro(pasta_site: Path, env: dict[str, str]) -> None:
+    """
+    Abre o Astro usando PowerShell em uma janela separada.
+    """
+    pasta_site_ps = texto_powershell(pasta_site)
+    node_dir_ps = texto_powershell(NODE_DIR)
+    npm_cmd_ps = texto_powershell(NPM_CMD)
+
+    comando_ps = (
+        f"Set-Location -LiteralPath {pasta_site_ps}; "
+        f"$env:Path = {node_dir_ps} + ';' + $env:Path; "
+        f"& {npm_cmd_ps} run dev"
     )
 
     subprocess.Popen(
-        ["cmd.exe", "/k", comando],
+        [
+            "powershell.exe",
+            "-NoExit",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            comando_ps,
+        ],
+        cwd=pasta_site,
+        env=env,
         creationflags=subprocess.CREATE_NEW_CONSOLE,
     )
 
 
 def abrir_navegador() -> None:
-    # Abre no navegador padrão do Windows.
-    # Se ele já estiver aberto, normalmente abre uma nova aba nele.
     webbrowser.open(URL_SITE, new=2)
 
 
@@ -174,18 +198,20 @@ def main() -> None:
     env = preparar_ambiente()
 
     print(f"Pasta do site: {pasta_site}")
-    testar_node(env)
 
+    testar_node(env)
     instalar_dependencias_se_precisar(pasta_site, env)
 
     if not servidor_respondendo():
-        print("\nAbrindo servidor Astro...")
-        abrir_servidor_astro(pasta_site)
+        print("\nAbrindo servidor Astro com PowerShell...")
+        abrir_servidor_astro(pasta_site, env)
 
         print("Esperando o site subir...")
+
         for _ in range(40):
             if servidor_respondendo():
                 break
+
             time.sleep(1)
 
     print(f"\nAbrindo navegador em: {URL_SITE}")

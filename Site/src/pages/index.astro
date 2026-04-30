@@ -1,113 +1,194 @@
 ---
 import Layout from "../Componentes/Layout.astro";
 import Botao from "../Componentes/Botao.astro";
-import CardWiki from "../Componentes/CardWiki.astro";
 import logo from "@recursos/Visual/Icones/GlobalServer/Logo.png";
 import quadroLogo from "@recursos/Visual/Icones/GlobalServer/QuadroLogo.png";
-import icone from "@recursos/Visual/Icones/GlobalServer/Icone.png";
 import "../Estilos/home.css";
 
-const cardsWiki = [
+const estatisticas = [
+  { valor: "1307", rotulo: "Pokémon cadastrados" },
+  { valor: "75", rotulo: "Ataques cadastrados" },
+  { valor: "50", rotulo: "Efeitos e status" },
+  { valor: "142", rotulo: "Itens registrados" },
+  { valor: "63", rotulo: "Equipáveis" },
+  { valor: "20", rotulo: "Tipos no sistema" },
+];
+
+const pilares = [
   {
-    href: "/wiki/pokemons",
-    emoji: "🐾",
-    titulo: "Pokémons",
-    texto: "Espaço futuro para criaturas, atributos, grupos, raridade e formas de obtenção.",
+    etiqueta: "Exploração",
+    titulo: "Mundo aberto vivo",
+    texto:
+      "Um mapa procedural de 10.000 x 10.000 blocos, dividido em chunks, com biomas, estruturas, vilas, baús, NPCs, rotas e pontos de interesse para descobrir.",
   },
   {
-    href: "/wiki/efeitos",
-    emoji: "✨",
-    titulo: "Efeitos",
-    texto: "Status positivos e negativos, duração, ícones e regras de funcionamento.",
+    etiqueta: "Combate",
+    titulo: "Arena tática com decisão real",
+    texto:
+      "O combate sai do automático: ações planejadas, energia, atributos, efeitos, clima, tipos, posicionamento, logs e animações dos acontecimentos no cliente.",
   },
   {
-    href: "/wiki/mundo",
-    emoji: "🌍",
-    titulo: "Mundo",
-    texto: "Biomas, exploração, mapa, vilas, rotas, chunks e sistemas globais.",
+    etiqueta: "Progressão",
+    titulo: "Loot, captura, craft e evolução",
+    texto:
+      "O jogador explora, encontra criaturas, coleta recursos, captura Pokémon, evolui a equipe, usa equipamentos e transforma materiais em itens úteis.",
   },
+  {
+    etiqueta: "Arquitetura",
+    titulo: "Servidor cuidando das regras",
+    texto:
+      "Por trás da tela, o cliente mostra o jogo e o servidor simulado segura a lógica: mundo, spawns, inventário, batalhas, validações e persistência.",
+  },
+];
+
+const tecnologias = [
+  "Python e Pygame",
+  "Pipeline 2D próprio",
+  "Integração inicial com ModernGL",
+  "Dados em CSV, JSON e TOML",
+  "Servidor com tick de mundo",
+  "Mapa explorável com cache por chunks",
 ];
 ---
 
 <Layout
   titulo="Início | Pokémon Global Server"
-  descricao="Página inicial provisória do Pokémon Global Server."
+  descricao="Página inicial do Pokémon Global Server, um RPG online 2D de exploração, captura, craft e batalhas estratégicas."
 >
-  <section class="hero">
-    <div class="hero-texto">
-      <p class="selo">Beta em desenvolvimento</p>
-      <h1>Pokémon Global Server</h1>
-      <p class="subtitulo">
-        Um mundo online de exploração, criaturas, batalhas estratégicas e uma wiki feita para crescer junto com o jogo.
+  <section class="hero-home" aria-labelledby="titulo-principal">
+    <div class="hero-aurora" aria-hidden="true"></div>
+
+    <div class="logo-palco" aria-label="Logo Pokémon Global Server">
+      <div class="anel-luz anel-luz-azul"></div>
+      <div class="anel-luz anel-luz-vermelho"></div>
+      <div class="orbita orbita-um"></div>
+      <div class="orbita orbita-dois"></div>
+      <img class="logo-principal" src={logo.src} alt="Logo Pokémon Global Server" />
+    </div>
+
+    <div class="hero-copy">
+      <p class="selo">Fan game online 2D em desenvolvimento</p>
+      <h1 id="titulo-principal">Pokémon Global Server</h1>
+      <p class="subtitulo-home">
+        Entre em um mundo online 2D feito para explorar, capturar, evoluir equipes, coletar recursos, criar itens e vencer batalhas com estratégia de verdade.
       </p>
 
-      <div class="acoes">
-        <Botao href="/wiki">Abrir wiki</Botao>
+      <div class="acoes hero-acoes">
+        <Botao href="/wiki">Explorar a wiki</Botao>
         <Botao href="/download" tipo="secundario">Ver acesso beta</Botao>
       </div>
-
-      <div class="mini-estatisticas" aria-label="Estatísticas provisórias">
-        <div class="mini-estatistica">
-          <strong>5</strong>
-          <span>seções iniciais da wiki</span>
-        </div>
-        <div class="mini-estatistica">
-          <strong>0.1</strong>
-          <span>base inicial do site</span>
-        </div>
-        <div class="mini-estatistica">
-          <strong>PGS</strong>
-          <span>identidade visual ativa</span>
-        </div>
-      </div>
-
-      <div class="status-site" data-status-site>
-        Site Astro carregado. Imagens importadas de Recursos.
-      </div>
-    </div>
-
-    <div class="hero-logo">
-      <div class="moldura-logo">
-        <img data-logo-principal src={logo.src} alt="Logo Pokémon Global Server" />
-      </div>
-
-      <div class="troca-logo" aria-label="Escolher visual da logo">
-        <button type="button" data-logo-src={logo.src} data-logo-nome="Logo" class="ativo">Logo</button>
-        <button type="button" data-logo-src={quadroLogo.src} data-logo-nome="Quadro">Quadro</button>
-        <button type="button" data-logo-src={icone.src} data-logo-nome="Ícone">Ícone</button>
-      </div>
     </div>
   </section>
 
-  <section class="secao">
-    <div class="cabecalho-secao">
-      <p class="selo">Wiki planejada</p>
-      <h2>Base para organizar o conhecimento do jogo</h2>
+  <section class="secao secao-conteudo" aria-labelledby="titulo-visao">
+    <div class="intro-home">
+      <figure class="quadro-logo-card">
+        <img src={quadroLogo.src} alt="Arte promocional do Pokémon Global Server com iluminação azul e vermelha" />
+        <figcaption>Exploração 2D com clima de mundo grande, servidor e batalha estratégica.</figcaption>
+      </figure>
+
+      <div class="intro-copy">
+        <p class="selo">Visão do jogo</p>
+        <h2 id="titulo-visao">Explore. Capture. Batalhe.</h2>
+        <p>
+          Pokémon Global Server é um fan game 2D onde o jogador sai pelo mapa, descobre biomas, captura criaturas, coleta recursos, monta equipe, cria itens e entra em batalhas que dependem de energia, efeitos, tipos e posicionamento.
+        </p>
+
+        <div class="mini-destaques" aria-label="Destaques da experiência">
+          <article>
+            <strong>Mundo por chunks</strong>
+            <span>Mapa enorme sem carregar tudo de uma vez.</span>
+          </article>
+          <article>
+            <strong>Arena tática</strong>
+            <span>Ações planejadas, logs e animações no cliente.</span>
+          </article>
+          <article>
+            <strong>Progressão completa</strong>
+            <span>Captura, evolução, inventário, craft e equipamentos.</span>
+          </article>
+        </div>
+      </div>
     </div>
 
-    <div class="cards">
-      {cardsWiki.map((card) => <CardWiki {...card} />)}
+    <div class="estatisticas-home" aria-label="Estatísticas do projeto">
+      {estatisticas.map((item) => (
+        <article class="estatistica-card">
+          <strong>{item.valor}</strong>
+          <span>{item.rotulo}</span>
+        </article>
+      ))}
     </div>
   </section>
 
-  <section class="secao grade-dupla">
-    <div class="painel destaque">
-      <p class="selo">Estrutura Astro</p>
-      <h2>Separado por página, mas com visual unificado</h2>
+  <section class="secao grade-pilares" aria-label="Principais sistemas do jogo">
+    {pilares.map((pilar) => (
+      <article class="pilar-card">
+        <span>{pilar.etiqueta}</span>
+        <h2>{pilar.titulo}</h2>
+        <p>{pilar.texto}</p>
+      </article>
+    ))}
+  </section>
+
+  <section class="secao destaque-tecnico" aria-labelledby="titulo-tecnico">
+    <div class="painel-tecnico">
+      <p class="selo">Por trás do jogo</p>
+      <h2 id="titulo-tecnico">Não é só uma tela bonita: tem sistema segurando tudo</h2>
       <p>
-        O topo, o rodapé e os botões são componentes. Assim você muda uma vez e o site inteiro acompanha.
+        O projeto separa cliente, servidor simulado, dados, regras, cenas, HUD, mapa, batalha e persistência. A base foi pensada para crescer sem virar um amontoado de código hardcoded.
       </p>
+
+      <div class="chips-tecnicos">
+        {tecnologias.map((tecnologia) => <span>{tecnologia}</span>)}
+      </div>
     </div>
 
-    <div class="painel">
-      <p class="selo">Próximo passo</p>
-      <h2>Substituir placeholders</h2>
-      <p>
-        Depois você pode trocar os textos por dados reais do jogo, link do instalador, cards da wiki e notícias.
-      </p>
-      <button class="botao principal" type="button" data-alerta="JS funcionando dentro da estrutura Astro.">
-        Testar JS
-      </button>
+    <div class="painel-lateral">
+      <h3>O que deixa o projeto mais ambicioso</h3>
+      <ul class="lista-destaques">
+        <li>Mundo carregado por chunks, sem tentar enfiar o mapa inteiro na tela.</li>
+        <li>Mapa explorável com áreas ocultas, cache e descoberta progressiva.</li>
+        <li>Ataques, itens, efeitos, receitas e regras fora do código duro, em tabelas e arquivos de configuração.</li>
+        <li>Combate resolvido pelo servidor e reproduzido no cliente com logs e animações.</li>
+      </ul>
     </div>
+  </section>
+
+  <section class="secao jornada-home" aria-labelledby="titulo-jornada">
+    <div class="cabecalho-home compacto">
+      <p class="selo">Loop do jogo</p>
+      <h2 id="titulo-jornada">Explorar, crescer e entrar na arena</h2>
+    </div>
+
+    <div class="trilha-jogo">
+      <article>
+        <strong>01</strong>
+        <h3>Explorar</h3>
+        <p>O jogador cruza biomas, abre o mapa aos poucos, encontra NPCs, baús, estruturas e áreas especiais.</p>
+      </article>
+      <article>
+        <strong>02</strong>
+        <h3>Coletar e evoluir</h3>
+        <p>Capturas, recursos, itens, equipamentos e receitas fazem a equipe ficar cada vez mais forte.</p>
+      </article>
+      <article>
+        <strong>03</strong>
+        <h3>Planejar ações</h3>
+        <p>Antes da rodada, o jogador escolhe ataques, movimentos, trocas, alvos e como gastar energia.</p>
+      </article>
+      <article>
+        <strong>04</strong>
+        <h3>Assistir aos logs</h3>
+        <p>O servidor resolve tudo e o cliente transforma os resultados em animações, efeitos e HUD.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="aviso-legal">
+    <strong>Projeto independente e educacional.</strong>
+    <p>
+      Este projeto é feito para estudo e portfólio, sem finalidade comercial. Não é afiliado, patrocinado, aprovado ou associado à Nintendo, The Pokémon Company, Creatures Inc. ou GAME FREAK inc. Pokémon e marcas relacionadas pertencem aos seus respectivos proprietários.
+    </p>
   </section>
 </Layout>

@@ -29,8 +29,9 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   color: var(--texto);
   background:
-    radial-gradient(circle at top left, rgba(16, 135, 255, 0.26), transparent 32rem),
-    radial-gradient(circle at top right, rgba(255, 54, 79, 0.24), transparent 34rem),
+    radial-gradient(circle at top left, rgba(16, 135, 255, 0.28), transparent 34rem),
+    radial-gradient(circle at top right, rgba(255, 54, 79, 0.26), transparent 36rem),
+    radial-gradient(circle at bottom, rgba(255, 217, 52, 0.08), transparent 34rem),
     linear-gradient(135deg, #02030a 0%, var(--fundo) 45%, #120510 100%);
   overflow-x: hidden;
 }
@@ -49,6 +50,7 @@ body::selection {
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 52px 52px;
   mask-image: linear-gradient(to bottom, black, transparent 82%);
+  opacity: 0.75;
 }
 
 .topbar {
@@ -76,17 +78,26 @@ body::selection {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  max-width: min(44vw, 360px);
   color: var(--texto);
   text-decoration: none;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.01em;
 }
 
 .marca img {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
-  filter: drop-shadow(0 0 14px rgba(16, 135, 255, 0.55));
+  filter:
+    drop-shadow(0 0 14px rgba(16, 135, 255, 0.55))
+    drop-shadow(0 0 12px rgba(255, 54, 79, 0.22));
+}
+
+.marca span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .menu {
@@ -102,6 +113,7 @@ body::selection {
   text-decoration: none;
   padding: 10px 14px;
   border-radius: 999px;
+  font-weight: 700;
   transition: 0.18s ease;
 }
 
@@ -364,6 +376,10 @@ body::selection {
 
   .topbar {
     align-items: center;
+  }
+
+  .marca {
+    max-width: calc(100% - 62px);
   }
 }
 

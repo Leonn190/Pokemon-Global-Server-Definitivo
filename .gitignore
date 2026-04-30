@@ -50,7 +50,7 @@ Site/.env.development.local
 Site/.env.test.local
 Site/.env.production.local
 
-Site/"package-lock.json"
+Site/package-lock.json
 
 
 # =========================
@@ -64,3 +64,9 @@ Site/"package-lock.json"
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# =========================
+# JAVA
+# =========================
+
+*.class

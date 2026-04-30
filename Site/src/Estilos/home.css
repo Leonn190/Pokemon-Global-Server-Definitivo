@@ -1,17 +1,38 @@
 @import url("https://fonts.googleapis.com/css2?family=Russo+One&family=Exo+2:wght@600;700;800;900&display=swap");
 
+/*
+  A home precisa ser full-width.
+  Antes a hero usava 100vw + margem negativa dentro de .pagina, que é um container centralizado.
+  Em tela cheia isso criava dois centros diferentes: o centro do container e o centro real da viewport.
+*/
+body:has(.hero-home) .pagina {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+
+body:has(.hero-home) .secao-conteudo,
+body:has(.hero-home) .grade-pilares,
+body:has(.hero-home) .destaque-tecnico,
+body:has(.hero-home) .jornada-home,
+body:has(.hero-home) .aviso-legal {
+  width: min(var(--largura), calc(100% - 36px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
 .hero-home {
   position: relative;
-  left: 50%;
-  width: 100vw;
+  width: 100%;
   min-height: calc(100vh - 78px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-content: start;
   text-align: center;
   gap: clamp(18px, 3vw, 34px);
-  margin-left: -50vw;
+  margin: 0;
   padding: clamp(38px, 6vw, 76px) clamp(18px, 4vw, 72px) clamp(82px, 10vw, 132px);
   overflow: hidden;
   isolation: isolate;
@@ -53,6 +74,7 @@
 
 .logo-palco {
   position: relative;
+  justify-self: center;
   width: min(755px, 96vw);
   aspect-ratio: 1.18;
   display: grid;
@@ -101,6 +123,7 @@
   max-height: 92%;
   object-fit: contain;
   transform-origin: center;
+  translate: none;
   filter:
     drop-shadow(0 22px 26px rgba(0, 0, 0, 0.58))
     drop-shadow(-16px 0 26px rgba(16, 135, 255, 0.34))
@@ -157,12 +180,13 @@
 
 .hero-copy {
   display: grid;
+  justify-self: center;
   justify-items: center;
   text-align: center;
   width: min(1460px, 100%);
-  max-width: 100%;
   margin-inline: auto;
-  transform: translateX(-75px);
+  padding-inline: 0;
+  transform: none;
 }
 
 .hero-copy h1 {
@@ -686,4 +710,14 @@
   .orbita-dois {
     animation: none;
   }
+}
+
+
+.hero-home .hero-copy,
+.hero-home .hero-copy .selo,
+.hero-home .hero-copy h1,
+.hero-home .subtitulo-home,
+.hero-home .hero-acoes {
+  margin-left: auto;
+  margin-right: auto;
 }

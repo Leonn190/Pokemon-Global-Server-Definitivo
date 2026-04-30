@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-RAIZ_REPOSITORIO = Path(__file__).resolve().parents[2]
+RAIZ_REPOSITORIO = Path(__file__).resolve().parents[3]
 PASTA_SERVER_LIST = RAIZ_REPOSITORIO / "ServerList"
 ARQUIVO_ESTADO_SERVIDOR = "EstadoServidor.json"
 PASTA_ESTADO_MUNDO = "EstadoMundo"

@@ -160,6 +160,6 @@ class ServicoMapaMundo:
         if self._worker is not None and self._worker.is_alive():
             self._worker.join(timeout=1.5)
         self._worker = None
-        self.gerenciador.flush()
+        self.gerenciador.flush(aguardar=True)
         with self._lock:
             self.gerenciador.limpar()

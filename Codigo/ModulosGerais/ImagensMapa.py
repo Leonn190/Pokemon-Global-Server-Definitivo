@@ -77,6 +77,9 @@ class GerenciadorImagensMapa:
         self._chunks_pendentes_flush = 0
         self._flush_intervalo_s = 5.0
         self._flush_chunks_limite = 50
+        self._flush_worker: threading.Thread | None = None
+        self._flush_pendente_atlas: Dict[Tuple[str, str], tuple[pygame.Surface, Path, pygame.Surface, Path]] = {}
+        self._flush_pendente_manifest: tuple[Path, Dict[str, object]] | None = None
         self._prepared = False
         self._garantir_manifest_carregado()
 
@@ -107,12 +110,15 @@ class GerenciadorImagensMapa:
             self._prepared = False
 
     def apagar_cache_persistente(self) -> None:
+        self._aguardar_flush_worker()
         with self._lock:
             self._atlas.clear()
             self._atlas_manifest.clear()
             self._explorados_mundo.clear()
             self._manifest = {}
             self._manifest_dirty = False
+            self._flush_pendente_atlas.clear()
+            self._flush_pendente_manifest = None
         try:
             if self.pasta_cache.exists():
                 for item in self.pasta_cache.glob("*"):
@@ -121,11 +127,10 @@ class GerenciadorImagensMapa:
         except Exception:
             pass
 
-    def flush(self) -> None:
+    def flush(self, aguardar: bool = False) -> None:
         payloads: list[tuple[pygame.Surface, Path, pygame.Surface, Path]] = []
         salvar_manifest = False
         manifest_payload: Dict[str, object] = {}
-        houve_salvamento = False
         with self._lock:
             for atlas in self._atlas.values():
                 if not atlas.chunks_explorados:
@@ -139,20 +144,58 @@ class GerenciadorImagensMapa:
                 manifest_payload = self._manifest_payload()
                 salvar_manifest = True
                 self._manifest_dirty = False
-                houve_salvamento = True
-        for base, path_base, reg, path_reg in payloads:
-            pygame.image.save(base, str(path_base))
-            pygame.image.save(reg, str(path_reg))
-            houve_salvamento = True
-        if salvar_manifest:
-            try:
-                self.path_manifest.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            except Exception:
-                pass
+        houve_salvamento = bool(payloads or salvar_manifest)
         if houve_salvamento:
+            self._enfileirar_flush(payloads, manifest_payload if salvar_manifest else None)
             with self._lock:
                 self._ultimo_flush_s = time.monotonic()
                 self._chunks_pendentes_flush = 0
+        if aguardar:
+            self._aguardar_flush_worker()
+
+    def _enfileirar_flush(self, payloads: list[tuple[pygame.Surface, Path, pygame.Surface, Path]], manifest_payload: Dict[str, object] | None) -> None:
+        with self._lock:
+            for base, path_base, reg, path_reg in payloads:
+                self._flush_pendente_atlas[(str(path_base), str(path_reg))] = (base, path_base, reg, path_reg)
+            if manifest_payload is not None:
+                self._flush_pendente_manifest = (self.path_manifest, manifest_payload)
+            if self._flush_worker is not None and self._flush_worker.is_alive():
+                return
+            self._flush_worker = threading.Thread(target=self._loop_flush_worker, name="ImagensMapaFlushWorker")
+            self._flush_worker.start()
+
+    def _loop_flush_worker(self) -> None:
+        while True:
+            with self._lock:
+                if not self._flush_pendente_atlas and self._flush_pendente_manifest is None:
+                    self._flush_worker = None
+                    return
+                payloads = list(self._flush_pendente_atlas.values())
+                self._flush_pendente_atlas.clear()
+                manifest = self._flush_pendente_manifest
+                self._flush_pendente_manifest = None
+            for base, path_base, reg, path_reg in payloads:
+                try:
+                    pygame.image.save(base, str(path_base))
+                    pygame.image.save(reg, str(path_reg))
+                except Exception:
+                    pass
+            if manifest is not None:
+                path_manifest, manifest_payload = manifest
+                try:
+                    path_manifest.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+                except Exception:
+                    pass
+
+    def _aguardar_flush_worker(self) -> None:
+        if self._flush_worker is threading.current_thread():
+            return
+        while True:
+            with self._lock:
+                worker = self._flush_worker
+            if worker is None or not worker.is_alive():
+                return
+            worker.join(timeout=0.2)
 
     def _normalizar_explorados(self, explorados: dict | None) -> Dict[int, set[int]]:
         bruto = {}

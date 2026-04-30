@@ -1,18 +1,90 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
+import {
+  ATRIBUTOS_BASE,
+  carregarPokemons,
+  criarAssetsPokemons,
+  indexarArquivosPorNome,
+  indexarFramesPorPasta,
+  normalizarChave,
+  resumoPokemons,
+} from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
+
+const pokemons = carregarPokemons();
+const resumo = resumoPokemons(pokemons);
+
+const imagensPokemons = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const framesPokemonsComAcento = import.meta.glob("@recursos/Visual/Pokemons/Animação/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const framesPokemonsSemAcento = import.meta.glob("@recursos/Visual/Pokemons/Animacao/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const iconesAtributosBrutos = import.meta.glob("@recursos/Visual/Icones/Atributos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+
+const imagensPorNome = indexarArquivosPorNome(imagensPokemons);
+const framesPorPasta = indexarFramesPorPasta({ ...framesPokemonsComAcento, ...framesPokemonsSemAcento });
+const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
+const iconesAtributos = indexarArquivosPorNome(iconesAtributosBrutos);
+const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome, framesPorPasta);
+
+const gruposVisiveis = resumo.grupos.slice(0, 18);
+const tiposVisiveis = resumo.tipos;
+const pokemonInicial = pokemons[0] ?? null;
 ---
 
-<Layout titulo="Pokémons | Wiki Pokémon Global Server" descricao="Página provisória de Pokémons da wiki.">
-  <section class="wiki-hero">
-    <p class="selo">Wiki / Pokémons</p>
-    <h1>Pokémons</h1>
-    <p class="wiki-descricao">
-      Página futura para criaturas, atributos, raridades, grupos, habilidades, evolução e formas de obtenção.
-    </p>
+<Layout
+  titulo="Pokémons | Wiki Pokémon Global Server"
+  descricao="Wiki de Pokémons do Pokémon Global Server, com busca, filtros, atributos, tipagens, raridade, linhagem e animações."
+>
+  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-pokedex">
+    <div>
+      <p class="selo">Wiki / Pokémons</p>
+      <h1 id="titulo-pokedex">Pokédex Global</h1>
+      <p class="wiki-descricao">
+        Protótipo inicial da wiki puxando os registros do CSV do jogo. A lista renderiza em blocos para não pesar a página, mas mantém busca, filtros, ordenação e painel detalhado com animação por frames.
+      </p>
+    </div>
+
+    <div class="pokedex-resumo" aria-label="Resumo dos registros da Pokédex">
+      <article>
+        <strong>{resumo.quantidade}</strong>
+        <span>Pokémons registrados</span>
+      </article>
+      <article>
+        <strong>{resumo.tipos.length}</strong>
+        <span>Tipos encontrados</span>
+      </article>
+      <article>
+        <strong>{resumo.grupos.length}</strong>
+        <span>Grupos</span>
+      </article>
+      <article>
+        <strong>{resumo.maiorTotal}</strong>
+        <span>Maior poder total</span>
+      </article>
+    </div>
   </section>
 
-  <section class="wiki-layout">
+  <section class="wiki-layout wiki-layout-pokedex">
     <aside class="wiki-menu-lateral">
       <a class="ativo" href="/wiki/pokemons">Pokémons</a>
       <a href="/wiki/itens">Itens</a>
@@ -21,23 +93,405 @@ import "../../Estilos/wiki.css";
       <a href="/wiki/mundo">Mundo</a>
     </aside>
 
-    <div class="wiki-conteudo">
-      <div class="wiki-grid">
-        <article class="bloco-info">
-          <h2>Lista futura</h2>
-          <p>Espaço para cards com imagem, tipo, grupo, raridade e principais atributos.</p>
-          <div class="placeholder-lista">
-            <div class="placeholder-item"><strong>Pokémon exemplo</strong><span>Tipo / grupo</span></div>
-            <div class="placeholder-item"><strong>Pokémon exemplo</strong><span>Raridade</span></div>
-            <div class="placeholder-item"><strong>Pokémon exemplo</strong><span>Status base</span></div>
-          </div>
-        </article>
+    <div class="wiki-conteudo pokedex-app" data-pokedex-app>
+      <section class="pokedex-toolbar" aria-label="Ferramentas da wiki de Pokémons">
+        <label class="campo-busca">
+          <span>Pesquisar</span>
+          <input data-pokedex-search type="search" placeholder="Nome, código, tipo ou grupo..." autocomplete="off" />
+        </label>
 
-        <article class="bloco-info">
-          <h2>Ideias de dados</h2>
-          <p>Essa seção pode futuramente puxar informações do CSV/TOML do jogo para gerar a wiki automaticamente.</p>
-        </article>
+        <label>
+          <span>Ordenar</span>
+          <select data-pokedex-sort>
+            <option value="ordem-asc">Ordem do CSV</option>
+            <option value="nome-asc">Nome A-Z</option>
+            <option value="total-desc">Maior poder total</option>
+            <option value="raridade-desc">Maior raridade</option>
+            <option value="poderR3-desc">Maior Poder R3</option>
+            <option value="vida-desc">Mais vida</option>
+            <option value="atk-desc">Mais Atk</option>
+            <option value="spa-desc">Mais SpA</option>
+            <option value="vel-desc">Mais Vel</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Tipo</span>
+          <select data-pokedex-type>
+            <option value="">Todos</option>
+            {tiposVisiveis.map((tipo) => <option value={normalizarChave(tipo)}>{tipo}</option>)}
+          </select>
+        </label>
+
+        <label>
+          <span>Grupo</span>
+          <select data-pokedex-group>
+            <option value="">Todos</option>
+            {resumo.grupos.map((grupo) => <option value={normalizarChave(grupo)}>{grupo}</option>)}
+          </select>
+        </label>
+
+        <label>
+          <span>Raridade</span>
+          <select data-pokedex-rarity>
+            <option value="">Todas</option>
+            {resumo.raridades.map((raridade) => <option value={normalizarChave(raridade)}>{raridade}</option>)}
+          </select>
+        </label>
+      </section>
+
+      <section class="filtros-rapidos" aria-label="Filtros rápidos por tipo">
+        {tiposVisiveis.slice(0, 18).map((tipo) => (
+          <button class="tipo-chip" type="button" data-type-chip={normalizarChave(tipo)}>
+            <span class="tipo-icone-mini">
+              {iconesTipos[normalizarChave(tipo)] ? <img src={iconesTipos[normalizarChave(tipo)]} alt="" loading="lazy" /> : null}
+            </span>
+            {tipo}
+          </button>
+        ))}
+      </section>
+
+      <section class="pokedex-status" aria-live="polite">
+        <div>
+          <strong data-pokedex-count>{resumo.quantidade}</strong>
+          <span>resultados encontrados</span>
+        </div>
+        <button class="botao fantasma compacto" type="button" data-pokedex-clear>Limpar filtros</button>
+      </section>
+
+      <section class="pokedex-grid" data-pokedex-grid aria-label="Lista de Pokémons"></section>
+
+      <div class="pokedex-vazio" data-pokedex-empty hidden>
+        <strong>Nenhum Pokémon encontrado.</strong>
+        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
+      </div>
+
+      <div class="pokedex-carregar">
+        <button class="botao secundario" type="button" data-pokedex-more>Carregar mais Pokémons</button>
       </div>
     </div>
   </section>
+
+  <aside class="pokemon-detalhe" data-pokemon-detail hidden aria-live="polite">
+    <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
+    <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-detalhe-nome">
+      <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
+
+      <div class="pokemon-detalhe-topo">
+        <div class="pokemon-palco-detalhe">
+          <div class="pokemon-brilho-detalhe"></div>
+          <img data-detail-image alt="" loading="lazy" />
+          <div class="pokemon-sem-imagem" data-detail-fallback hidden>?</div>
+        </div>
+
+        <div class="pokemon-cabecalho-detalhe">
+          <span class="codigo-pokemon" data-detail-code>{pokemonInicial ? `#${pokemonInicial.id}` : "#000"}</span>
+          <h2 id="pokemon-detalhe-nome" data-detail-name>{pokemonInicial?.nome ?? "Pokémon"}</h2>
+          <div class="pokemon-tags" data-detail-tags></div>
+          <p data-detail-summary></p>
+        </div>
+      </div>
+
+      <div class="pokemon-detalhe-grid">
+        <section class="painel-detalhe">
+          <h3>Atributos básicos</h3>
+          <div class="barras-atributos" data-detail-stats></div>
+        </section>
+
+        <section class="painel-detalhe">
+          <h3>Informações</h3>
+          <dl class="pokemon-info-lista" data-detail-info></dl>
+        </section>
+      </div>
+
+      <section class="painel-detalhe painel-linhagem">
+        <div class="painel-titulo-linha">
+          <h3>Linhagem / evoluções</h3>
+          <span data-detail-line-count></span>
+        </div>
+        <div class="linhagem-lista" data-detail-line></div>
+      </section>
+    </article>
+  </aside>
+
+  <script define:vars={{ pokemons, assetsPokemons, iconesTipos, iconesAtributos, atributosBase: ATRIBUTOS_BASE, resumo }}>
+    const app = document.querySelector("[data-pokedex-app]");
+
+    if (app) {
+      const grid = app.querySelector("[data-pokedex-grid]");
+      const busca = app.querySelector("[data-pokedex-search]");
+      const ordenacao = app.querySelector("[data-pokedex-sort]");
+      const filtroTipo = app.querySelector("[data-pokedex-type]");
+      const filtroGrupo = app.querySelector("[data-pokedex-group]");
+      const filtroRaridade = app.querySelector("[data-pokedex-rarity]");
+      const contador = app.querySelector("[data-pokedex-count]");
+      const botaoMais = app.querySelector("[data-pokedex-more]");
+      const botaoLimpar = app.querySelector("[data-pokedex-clear]");
+      const vazio = app.querySelector("[data-pokedex-empty]");
+      const chipsTipo = app.querySelectorAll("[data-type-chip]");
+      const detalhe = document.querySelector("[data-pokemon-detail]");
+      const PAGE_SIZE = 72;
+      let visiveis = PAGE_SIZE;
+      let resultadoAtual = [];
+      let frameTimer = null;
+      let pokemonAberto = null;
+
+      const normalizar = (valor) => String(valor ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "");
+
+      const html = (valor) => String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#039;",
+        '"': "&quot;",
+      })[char]);
+
+      const formatarNumero = (valor, sufixo = "") => {
+        if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "-";
+        const numero = Number(valor);
+        const texto = Number.isInteger(numero) ? String(numero) : numero.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+        return `${texto}${sufixo}`;
+      };
+
+      function assetPokemon(pokemon) {
+        return assetsPokemons[pokemon.id] ?? { imagem: null, frames: [] };
+      }
+
+      function tiposHtml(pokemon, pequeno = false) {
+        return pokemon.tipos.map((tipo) => {
+          const chave = normalizar(tipo.nome);
+          const icone = iconesTipos[chave];
+          return `<span class="tipo-pill ${pequeno ? "pequeno" : ""}">
+            <span class="tipo-icone">${icone ? `<img src="${icone}" alt="" loading="lazy" />` : ""}</span>
+            <span>${html(tipo.nome)}</span>
+            ${tipo.chance ? `<em>${formatarNumero(tipo.chance, "%")}</em>` : ""}
+          </span>`;
+        }).join("");
+      }
+
+      function renderCard(pokemon) {
+        const asset = assetPokemon(pokemon);
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "pokemon-card";
+        card.dataset.pokemonId = pokemon.id;
+        card.innerHTML = `
+          <span class="pokemon-card-codigo">#${html(pokemon.id)}</span>
+          <span class="pokemon-card-arte">
+            ${asset.imagem ? `<img src="${asset.imagem}" alt="${html(pokemon.nome)}" loading="lazy" />` : `<span>${html(pokemon.nome.slice(0, 1))}</span>`}
+          </span>
+          <span class="pokemon-card-nome">${html(pokemon.nome)}</span>
+          <span class="pokemon-card-meta">${html(pokemon.grupo)} • ${html(pokemon.raridadeTexto)}</span>
+          <span class="pokemon-card-tipos">${tiposHtml(pokemon, true)}</span>
+          <span class="pokemon-card-poder"><strong>${formatarNumero(pokemon.total)}</strong><small>Poder total</small></span>
+        `;
+        card.addEventListener("click", () => abrirDetalhe(pokemon.id));
+        return card;
+      }
+
+      function obterResultado() {
+        const termo = normalizar(busca?.value ?? "");
+        const tipo = filtroTipo?.value ?? "";
+        const grupo = filtroGrupo?.value ?? "";
+        const raridade = filtroRaridade?.value ?? "";
+        const sort = ordenacao?.value ?? "ordem-asc";
+
+        const filtrados = pokemons.filter((pokemon) => {
+          if (termo && !pokemon.busca.includes(termo)) return false;
+          if (tipo && !pokemon.tipos.some((item) => normalizar(item.nome) === tipo)) return false;
+          if (grupo && normalizar(pokemon.grupo) !== grupo) return false;
+          if (raridade && normalizar(pokemon.raridadeTexto) !== raridade) return false;
+          return true;
+        });
+
+        const ordenadores = {
+          "ordem-asc": (a, b) => a.ordem - b.ordem,
+          "nome-asc": (a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }),
+          "total-desc": (a, b) => (b.total ?? 0) - (a.total ?? 0),
+          "raridade-desc": (a, b) => (b.raridade ?? -1) - (a.raridade ?? -1),
+          "poderR3-desc": (a, b) => (b.poderR3 ?? 0) - (a.poderR3 ?? 0),
+          "vida-desc": (a, b) => (b.vida ?? 0) - (a.vida ?? 0),
+          "atk-desc": (a, b) => (b.atk ?? 0) - (a.atk ?? 0),
+          "spa-desc": (a, b) => (b.spa ?? 0) - (a.spa ?? 0),
+          "vel-desc": (a, b) => (b.vel ?? 0) - (a.vel ?? 0),
+        };
+
+        return filtrados.sort(ordenadores[sort] ?? ordenadores["ordem-asc"]);
+      }
+
+      function atualizarChips() {
+        chipsTipo.forEach((chip) => chip.classList.toggle("ativo", chip.dataset.typeChip === filtroTipo?.value && filtroTipo.value !== ""));
+      }
+
+      function renderLista(reset = true) {
+        if (reset) visiveis = PAGE_SIZE;
+        resultadoAtual = obterResultado();
+        const fatia = resultadoAtual.slice(0, visiveis);
+        grid.replaceChildren(...fatia.map(renderCard));
+        if (contador) contador.textContent = String(resultadoAtual.length);
+        if (vazio) vazio.hidden = resultadoAtual.length > 0;
+        if (botaoMais) botaoMais.hidden = resultadoAtual.length <= visiveis;
+        atualizarChips();
+      }
+
+      function limparAnimacao() {
+        if (frameTimer) window.clearInterval(frameTimer);
+        frameTimer = null;
+      }
+
+      function abrirDetalhe(id) {
+        const pokemon = pokemons.find((item) => item.id === String(id));
+        if (!pokemon || !detalhe) return;
+        pokemonAberto = pokemon;
+        limparAnimacao();
+
+        const asset = assetPokemon(pokemon);
+        const imagem = detalhe.querySelector("[data-detail-image]");
+        const fallback = detalhe.querySelector("[data-detail-fallback]");
+        const nome = detalhe.querySelector("[data-detail-name]");
+        const codigo = detalhe.querySelector("[data-detail-code]");
+        const tags = detalhe.querySelector("[data-detail-tags]");
+        const resumoTexto = detalhe.querySelector("[data-detail-summary]");
+        const stats = detalhe.querySelector("[data-detail-stats]");
+        const info = detalhe.querySelector("[data-detail-info]");
+        const linha = detalhe.querySelector("[data-detail-line]");
+        const linhaCount = detalhe.querySelector("[data-detail-line-count]");
+
+        if (nome) nome.textContent = pokemon.nome;
+        if (codigo) codigo.textContent = `#${pokemon.id}`;
+        if (tags) {
+          tags.innerHTML = `${tiposHtml(pokemon)}<span class="tag-extra">Grupo ${html(pokemon.grupo)}</span><span class="tag-extra">Raridade ${html(pokemon.raridadeTexto)}</span>`;
+        }
+        if (resumoTexto) {
+          resumoTexto.textContent = `${pokemon.nome} tem ${formatarNumero(pokemon.total)} de poder total, ${formatarNumero(pokemon.poderR3)} de Poder R3 e pertence à linhagem ${pokemon.linhagem}.`;
+        }
+
+        if (imagem && fallback) {
+          const frames = asset.frames?.length ? asset.frames : [];
+          const imagemBase = frames[0] || asset.imagem;
+          if (imagemBase) {
+            imagem.hidden = false;
+            fallback.hidden = true;
+            imagem.src = imagemBase;
+            imagem.alt = pokemon.nome;
+          } else {
+            imagem.hidden = true;
+            fallback.hidden = false;
+            fallback.textContent = pokemon.nome.slice(0, 1);
+          }
+
+          if (frames.length > 1) {
+            let frame = 0;
+            frameTimer = window.setInterval(() => {
+              if (pokemonAberto?.id !== pokemon.id) return;
+              frame = (frame + 1) % frames.length;
+              imagem.src = frames[frame];
+            }, 130);
+          }
+        }
+
+        if (stats) {
+          stats.innerHTML = atributosBase.map((atributo) => {
+            const valor = pokemon.atributos[atributo.chave] ?? 0;
+            const maximo = resumo.maximos[atributo.chave] ?? 1;
+            const largura = Math.max(4, Math.min(100, (valor / maximo) * 100));
+            const icone = iconesAtributos[normalizar(atributo.chave)] || iconesAtributos[normalizar(atributo.rotulo)];
+            return `<div class="atributo-linha">
+              <span class="atributo-nome">${icone ? `<img src="${icone}" alt="" loading="lazy" />` : ""}${html(atributo.rotulo)}</span>
+              <span class="atributo-barra"><i style="width:${largura}%"></i></span>
+              <strong>${formatarNumero(valor)}</strong>
+            </div>`;
+          }).join("");
+        }
+
+        if (info) {
+          const dados = [
+            ["Altura média", formatarNumero(pokemon.altura, " m")],
+            ["Peso médio", formatarNumero(pokemon.peso, " kg")],
+            ["Tamanho", formatarNumero(pokemon.tamanho)],
+            ["Grupo", pokemon.grupo],
+            ["Estágio", pokemon.estagio],
+            ["Forma", pokemon.formaFinal || "normal"],
+            ["Poder R1", formatarNumero(pokemon.poderR1)],
+            ["Poder R2", formatarNumero(pokemon.poderR2)],
+            ["Poder R3", formatarNumero(pokemon.poderR3)],
+            ["Sinergia", formatarNumero(pokemon.sinergia)],
+            ["Habilidades", formatarNumero(pokemon.habilidades)],
+            ["Equipáveis", formatarNumero(pokemon.equipaveis)],
+          ];
+          info.innerHTML = dados.map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`).join("");
+        }
+
+        if (linha) {
+          const familia = pokemons
+            .filter((item) => String(item.linhagem) === String(pokemon.linhagem))
+            .sort((a, b) => {
+              const ea = Number(a.estagio) || 99;
+              const eb = Number(b.estagio) || 99;
+              if (ea !== eb) return ea - eb;
+              return a.ordem - b.ordem;
+            });
+          if (linhaCount) linhaCount.textContent = `${familia.length} forma${familia.length === 1 ? "" : "s"}`;
+          linha.innerHTML = familia.map((item) => {
+            const assetLinha = assetPokemon(item);
+            return `<button type="button" class="linhagem-card ${item.id === pokemon.id ? "ativo" : ""}" data-line-pokemon="${html(item.id)}">
+              <span>${assetLinha.imagem ? `<img src="${assetLinha.imagem}" alt="" loading="lazy" />` : html(item.nome.slice(0, 1))}</span>
+              <strong>${html(item.nome)}</strong>
+              <small>Estágio ${html(item.estagio)} ${item.formaFinal ? `• ${html(item.formaFinal)}` : ""}</small>
+            </button>`;
+          }).join("");
+          linha.querySelectorAll("[data-line-pokemon]").forEach((botao) => {
+            botao.addEventListener("click", () => abrirDetalhe(botao.dataset.linePokemon));
+          });
+        }
+
+        detalhe.hidden = false;
+        document.body.classList.add("detalhe-aberto");
+      }
+
+      function fecharDetalhe() {
+        limparAnimacao();
+        if (detalhe) detalhe.hidden = true;
+        document.body.classList.remove("detalhe-aberto");
+      }
+
+      [busca, ordenacao, filtroTipo, filtroGrupo, filtroRaridade].forEach((controle) => {
+        controle?.addEventListener("input", () => renderLista(true));
+        controle?.addEventListener("change", () => renderLista(true));
+      });
+
+      chipsTipo.forEach((chip) => {
+        chip.addEventListener("click", () => {
+          if (!filtroTipo) return;
+          filtroTipo.value = filtroTipo.value === chip.dataset.typeChip ? "" : chip.dataset.typeChip;
+          renderLista(true);
+        });
+      });
+
+      botaoLimpar?.addEventListener("click", () => {
+        if (busca) busca.value = "";
+        if (ordenacao) ordenacao.value = "ordem-asc";
+        if (filtroTipo) filtroTipo.value = "";
+        if (filtroGrupo) filtroGrupo.value = "";
+        if (filtroRaridade) filtroRaridade.value = "";
+        renderLista(true);
+      });
+
+      botaoMais?.addEventListener("click", () => {
+        visiveis += PAGE_SIZE;
+        renderLista(false);
+      });
+
+      detalhe?.querySelectorAll("[data-pokemon-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
+      document.addEventListener("keydown", (evento) => {
+        if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
+      });
+
+      renderLista(true);
+    }
+  </script>
 </Layout>

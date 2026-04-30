@@ -757,3 +757,220 @@ body:has(.hero-home) {
     text-wrap: balance;
   }
 }
+
+/* =========================
+   Pokémon em destaque na home
+   ========================= */
+body:has(.hero-home) .pokemon-destaque-home {
+  width: min(var(--largura), calc(100% - 36px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pokemon-destaque-home {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
+  align-items: center;
+  gap: clamp(22px, 5vw, 62px);
+}
+
+.pokemon-destaque-copy h2 {
+  margin: 14px 0 12px;
+  font-size: clamp(2.2rem, 5vw, 4.9rem);
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+}
+
+.pokemon-destaque-copy p:not(.selo) {
+  max-width: 630px;
+  color: var(--texto-fraco);
+  font-size: 1.06rem;
+  line-height: 1.7;
+}
+
+.pokemon-destaque-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 0.82fr 1fr;
+  gap: 20px;
+  align-items: center;
+  min-height: 440px;
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 36px;
+  background:
+    radial-gradient(circle at 22% 22%, rgba(255, 217, 52, 0.17), transparent 31%),
+    radial-gradient(circle at 82% 18%, rgba(16, 135, 255, 0.23), transparent 36%),
+    radial-gradient(circle at 72% 88%, rgba(255, 54, 79, 0.18), transparent 38%),
+    rgba(7, 14, 36, 0.78);
+  box-shadow: var(--sombra);
+}
+
+.pokemon-destaque-card::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  background: conic-gradient(from 140deg, rgba(16, 135, 255, 0.14), transparent 24%, rgba(255, 217, 52, 0.14), transparent 48%, rgba(255, 54, 79, 0.12), transparent 72%);
+  animation: girar 18s linear infinite;
+  opacity: 0.85;
+}
+
+.pokemon-destaque-arte,
+.pokemon-destaque-info {
+  position: relative;
+  z-index: 1;
+}
+
+.pokemon-destaque-arte {
+  min-height: 310px;
+  display: grid;
+  place-items: center;
+}
+
+.pokemon-destaque-aura {
+  position: absolute;
+  width: min(260px, 85%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 55%),
+    linear-gradient(135deg, rgba(16, 135, 255, 0.2), rgba(255, 54, 79, 0.14));
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow:
+    0 0 50px rgba(16, 135, 255, 0.16),
+    inset 0 0 45px rgba(255, 255, 255, 0.08);
+}
+
+.pokemon-destaque-arte img {
+  position: relative;
+  width: min(250px, 90%);
+  height: min(250px, 90%);
+  object-fit: contain;
+  filter: drop-shadow(0 26px 25px rgba(0, 0, 0, 0.5));
+  animation: flutuar-pokemon-home 3.6s ease-in-out infinite;
+}
+
+.pokemon-destaque-arte span {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  color: #071531;
+  background: linear-gradient(135deg, var(--amarelo), #ff9d00);
+  font-size: 4rem;
+  font-weight: 1000;
+}
+
+.pokemon-destaque-info h3 {
+  margin: 10px 0;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.055em;
+}
+
+.pokemon-destaque-tipos {
+  justify-content: flex-start;
+  margin: 10px 0 16px;
+}
+
+.pokemon-destaque-tipos span {
+  padding: 8px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: var(--texto);
+  background: rgba(255, 255, 255, 0.07);
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.pokemon-destaque-metricas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.pokemon-destaque-metricas article {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.pokemon-destaque-metricas strong {
+  display: block;
+  min-height: 1.4em;
+  color: var(--amarelo);
+  font-size: 1.1rem;
+  line-height: 1.05;
+  word-break: break-word;
+}
+
+.pokemon-destaque-metricas span {
+  display: block;
+  margin-top: 4px;
+  color: var(--texto-fraco);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.pokemon-destaque-barras {
+  display: grid;
+  gap: 8px;
+}
+
+.pokemon-destaque-barras div {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+  color: var(--texto-fraco);
+  font-weight: 900;
+}
+
+.pokemon-destaque-barras strong {
+  color: var(--texto);
+  text-align: right;
+}
+
+.pokemon-destaque-home.trocando .pokemon-destaque-card {
+  animation: troca-card-pokemon 0.46s ease both;
+}
+
+@keyframes flutuar-pokemon-home {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+@keyframes troca-card-pokemon {
+  0% { transform: scale(0.985); filter: brightness(0.92); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@media (max-width: 980px) {
+  .pokemon-destaque-home,
+  .pokemon-destaque-card {
+    grid-template-columns: 1fr;
+  }
+
+  .pokemon-destaque-tipos {
+    justify-content: center;
+  }
+
+  .pokemon-destaque-info {
+    text-align: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .pokemon-destaque-metricas {
+    grid-template-columns: 1fr;
+  }
+
+  .pokemon-destaque-card {
+    min-height: auto;
+  }
+}

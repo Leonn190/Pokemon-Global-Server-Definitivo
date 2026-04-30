@@ -3,10 +3,19 @@ import Layout from "../Componentes/Layout.astro";
 import Botao from "../Componentes/Botao.astro";
 import logo from "@recursos/Visual/Icones/GlobalServer/Logo.png";
 import quadroLogo from "@recursos/Visual/Icones/GlobalServer/QuadroLogo.png";
+import {
+  carregarPokemons,
+  criarAssetsPokemons,
+  indexarArquivosPorNome,
+  selecionarDestaquesHome,
+} from "../Codigo/PokemonWikiDados.js";
 import "../Estilos/home.css";
 
+const pokemonsHome = carregarPokemons();
+const totalPokemonsHome = pokemonsHome.length || 1307;
+
 const estatisticas = [
-  { valor: "1307", rotulo: "Pokémon cadastrados" },
+  { valor: String(totalPokemonsHome), rotulo: "Pokémon cadastrados" },
   { valor: "75", rotulo: "Ataques cadastrados" },
   { valor: "50", rotulo: "Efeitos e status" },
   { valor: "142", rotulo: "Itens registrados" },
@@ -49,6 +58,15 @@ const tecnologias = [
   "Servidor com tick de mundo",
   "Mapa explorável com cache por chunks",
 ];
+
+const destaquesHome = selecionarDestaquesHome(pokemonsHome, 8);
+const imagensPokemonsHome = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const assetsDestaquesHome = criarAssetsPokemons(destaquesHome, indexarArquivosPorNome(imagensPokemonsHome));
+const primeiroDestaque = destaquesHome[0] ?? null;
 ---
 
 <Layout
@@ -121,6 +139,47 @@ const tecnologias = [
     </div>
   </section>
 
+  <section class="secao pokemon-destaque-home" data-home-pokemon-spotlight aria-labelledby="titulo-pokemon-destaque">
+    <div class="pokemon-destaque-copy">
+      <p class="selo">Pokémon em destaque</p>
+      <h2 id="titulo-pokemon-destaque">A wiki também vive na página inicial</h2>
+      <p>
+        Um destaque rotativo mostra criaturas registradas no CSV, seus tipos, grupo, raridade, poder total e atributos principais. É uma prévia direta da Pokédex Global.
+      </p>
+      <div class="acoes">
+        <Botao href="/wiki/pokemons">Abrir Pokédex</Botao>
+        <Botao href="/wiki" tipo="fantasma">Ver wiki completa</Botao>
+      </div>
+    </div>
+
+    <article class="pokemon-destaque-card">
+      <div class="pokemon-destaque-arte">
+        <div class="pokemon-destaque-aura"></div>
+        {primeiroDestaque && assetsDestaquesHome[primeiroDestaque.id]?.imagem ? (
+          <img data-home-pokemon-image src={assetsDestaquesHome[primeiroDestaque.id].imagem} alt={primeiroDestaque.nome} loading="lazy" />
+        ) : (
+          <span data-home-pokemon-fallback>{primeiroDestaque?.nome?.slice(0, 1) ?? "?"}</span>
+        )}
+      </div>
+
+      <div class="pokemon-destaque-info">
+        <span class="codigo-pokemon" data-home-pokemon-code>{primeiroDestaque ? `#${primeiroDestaque.id}` : "#000"}</span>
+        <h3 data-home-pokemon-name>{primeiroDestaque?.nome ?? "Pokémon"}</h3>
+        <div class="pokemon-destaque-tipos" data-home-pokemon-types>
+          {primeiroDestaque?.tipos.map((tipo) => <span>{tipo.nome} {tipo.chance ? `${tipo.chance}%` : ""}</span>)}
+        </div>
+
+        <div class="pokemon-destaque-metricas">
+          <article><strong data-home-pokemon-total>{primeiroDestaque?.total ?? "-"}</strong><span>Poder total</span></article>
+          <article><strong data-home-pokemon-group>{primeiroDestaque?.grupo ?? "-"}</strong><span>Grupo</span></article>
+          <article><strong data-home-pokemon-rarity>{primeiroDestaque?.raridadeTexto ?? "-"}</strong><span>Raridade</span></article>
+        </div>
+
+        <div class="pokemon-destaque-barras" data-home-pokemon-bars></div>
+      </div>
+    </article>
+  </section>
+
   <section class="secao grade-pilares" aria-label="Principais sistemas do jogo">
     {pilares.map((pilar) => (
       <article class="pilar-card">
@@ -191,4 +250,70 @@ const tecnologias = [
       Este projeto é feito para estudo e portfólio, sem finalidade comercial. Não é afiliado, patrocinado, aprovado ou associado à Nintendo, The Pokémon Company, Creatures Inc. ou GAME FREAK inc. Pokémon e marcas relacionadas pertencem aos seus respectivos proprietários.
     </p>
   </section>
+  <script define:vars={{ destaquesHome, assetsDestaquesHome }}>
+    const spotlight = document.querySelector("[data-home-pokemon-spotlight]");
+
+    if (spotlight && destaquesHome.length) {
+      const imagem = spotlight.querySelector("[data-home-pokemon-image]");
+      const fallback = spotlight.querySelector("[data-home-pokemon-fallback]");
+      const codigo = spotlight.querySelector("[data-home-pokemon-code]");
+      const nome = spotlight.querySelector("[data-home-pokemon-name]");
+      const tipos = spotlight.querySelector("[data-home-pokemon-types]");
+      const total = spotlight.querySelector("[data-home-pokemon-total]");
+      const grupo = spotlight.querySelector("[data-home-pokemon-group]");
+      const raridade = spotlight.querySelector("[data-home-pokemon-rarity]");
+      const barras = spotlight.querySelector("[data-home-pokemon-bars]");
+      const principais = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel"];
+      let atual = 0;
+
+      const formatar = (valor) => valor === null || valor === undefined ? "-" : String(valor);
+      const maximos = Object.fromEntries(principais.map((atributo) => [
+        atributo,
+        Math.max(1, ...destaquesHome.map((pokemon) => pokemon.atributos?.[atributo] ?? 0)),
+      ]));
+
+      function renderDestaque() {
+        const pokemon = destaquesHome[atual];
+        const asset = assetsDestaquesHome[pokemon.id] ?? {};
+        spotlight.classList.remove("trocando");
+        void spotlight.offsetWidth;
+        spotlight.classList.add("trocando");
+
+        if (codigo) codigo.textContent = `#${pokemon.id}`;
+        if (nome) nome.textContent = pokemon.nome;
+        if (total) total.textContent = formatar(pokemon.total);
+        if (grupo) grupo.textContent = pokemon.grupo || "-";
+        if (raridade) raridade.textContent = pokemon.raridadeTexto || "-";
+
+        if (tipos) {
+          tipos.innerHTML = pokemon.tipos.map((tipo) => `<span>${tipo.nome}${tipo.chance ? ` ${tipo.chance}%` : ""}</span>`).join("");
+        }
+
+        if (imagem && asset.imagem) {
+          imagem.hidden = false;
+          imagem.src = asset.imagem;
+          imagem.alt = pokemon.nome;
+          if (fallback) fallback.hidden = true;
+        } else if (fallback) {
+          fallback.hidden = false;
+          fallback.textContent = pokemon.nome.slice(0, 1);
+          if (imagem) imagem.hidden = true;
+        }
+
+        if (barras) {
+          barras.innerHTML = principais.map((atributo) => {
+            const valor = pokemon.atributos?.[atributo] ?? 0;
+            const largura = Math.max(4, Math.min(100, (valor / maximos[atributo]) * 100));
+            return `<div><span>${atributo}</span><i><b style="width:${largura}%"></b></i><strong>${valor}</strong></div>`;
+          }).join("");
+        }
+      }
+
+      renderDestaque();
+      window.setInterval(() => {
+        atual = (atual + 1) % destaquesHome.length;
+        renderDestaque();
+      }, 4200);
+    }
+  </script>
 </Layout>

@@ -65,8 +65,6 @@ class PipelineGrafica:
     def _compor_tela_cena(self, jogo, cena, eventos, dt, render_subtelas_scene=None) -> None:
         scene_surface = self.obter_surface_scene()
         hud_surface = self.obter_surface_hud()
-        scene_surface.fill((0, 0, 0))
-        hud_surface.fill((0, 0, 0, 0))
 
         tela_complexa = self._hook(cena, "tela_atual_eh_complexa")
         eh_complexa = bool(tela_complexa()) if tela_complexa is not None else False
@@ -75,6 +73,10 @@ class PipelineGrafica:
             render_base = self._hook(cena, "render_base")
             render_post = self._hook(cena, "render_post")
             render_hud = self._hook(cena, "render_hud")
+            base_limpa = self._hook(cena, "render_base_limpa_surface")
+            if base_limpa is None or not bool(base_limpa()):
+                scene_surface.fill((0, 0, 0))
+            hud_surface.fill((0, 0, 0, 0))
             if render_base is not None:
                 render_base(scene_surface, jogo, eventos, dt)
             if callable(render_subtelas_scene):
@@ -87,11 +89,15 @@ class PipelineGrafica:
 
         render_tela = self._hook(cena, "render_tela")
         if render_tela is not None:
+            scene_surface.fill((0, 0, 0))
+            hud_surface.fill((0, 0, 0, 0))
             render_tela(scene_surface, jogo, eventos, dt)
             if callable(render_subtelas_scene):
                 render_subtelas_scene(scene_surface)
             return
 
+        scene_surface.fill((0, 0, 0))
+        hud_surface.fill((0, 0, 0, 0))
         render_hud = self._hook(cena, "render_hud")
         if render_hud is not None:
             render_hud(hud_surface, jogo, eventos, dt)

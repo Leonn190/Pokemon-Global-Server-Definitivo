@@ -211,14 +211,27 @@ class Texto:
         self._final_surf = None
 
     def _render(self):
-        self._ensure_structure()
-
         st = self.style
-        color = st["color"]
-
-        final_key = (self._structure_key, tuple(color))
+        color = tuple(st["color"])
+        final_key = (
+            self.text,
+            int(st["size"]),
+            color,
+            bool(st["outline"]),
+            int(st["outline_thickness"]),
+            tuple(st["outline_color"]),
+            bool(st["highlight"]),
+            tuple(st["highlight_color"]),
+            tuple(st["highlight_padding"]),
+            int(st["highlight_radius"]),
+            bool(st["shadow"]),
+            tuple(st["shadow_color"]),
+            tuple(st["shadow_offset"]),
+        )
         if self._final_key == final_key and self._final_surf is not None:
             return self._final_surf
+
+        self._ensure_structure()
 
         # monta final = estrutura + texto na cor atual
         surf = self._structure_surf.copy()

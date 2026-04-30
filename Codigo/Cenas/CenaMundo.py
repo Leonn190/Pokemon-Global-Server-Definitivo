@@ -373,6 +373,9 @@ class CenaMundo:
         surface.fill((20, 20, 28))
         self.ControladorMundo.renderizar(surface)
 
+    def render_base_limpa_surface(self):
+        return True
+
     def render_post(self, surface, JOGO, EVENTOS, dt):
         _ = EVENTOS
         tempo = self.ControladorMundo.tempo_mundo_atual() if self.ControladorMundo is not None else {}

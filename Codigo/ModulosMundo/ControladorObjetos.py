@@ -49,6 +49,7 @@ class ControladorObjetos:
         self._versao_objetos_visiveis = 0
         self._cache_estruturas_visiveis: Dict[Tuple[object, ...], List[Dict[str, object]]] = {}
         self._versao_estruturas_visiveis = 0
+        self._cache_cfg_natural: Dict[object, Optional[Dict[str, object]]] = {}
 
         self._cache_sprites_fallback: Dict[str, Optional[pygame.Surface]] = {}
         self._cache_sprites_fallback_escalados: Dict[Tuple[object, ...], pygame.Surface] = {}
@@ -231,16 +232,6 @@ class ControladorObjetos:
                         continue
                     objs.append(estadio)
 
-            objs.sort(
-                key=lambda o: (
-                    prioridade_estrutura_natural(
-                        codigo=o.get("codigo_natural"),
-                        subtipo=(o.get("estado", {}) if isinstance(o.get("estado"), dict) else {}).get("subtipo"),
-                    ),
-                    float((o.get("posicao") or [0.0, 0.0])[1] if isinstance(o.get("posicao"), (list, tuple)) and len(o.get("posicao")) == 2 else 0.0),
-                    int(o.get("id", 0) or 0),
-                )
-            )
             if len(self._cache_estruturas_visiveis) >= 16:
                 self._cache_estruturas_visiveis.clear()
             self._cache_estruturas_visiveis[chave_cache] = objs
@@ -707,6 +698,14 @@ class ControladorObjetos:
         self._cache_sprites_fallback_escalados[chave] = sprite_escalado
         return sprite_escalado
 
+    def _cfg_natural_cacheada(self, codigo_natural) -> Optional[Dict[str, object]]:
+        chave = codigo_natural if codigo_natural is not None else ""
+        if chave in self._cache_cfg_natural:
+            return self._cache_cfg_natural[chave]
+        cfg = tipo_estrutura_natural_por_codigo(codigo_natural)
+        self._cache_cfg_natural[chave] = cfg
+        return cfg
+
     @staticmethod
     def _rotacao_sprite_payload(obj: Dict[str, object]) -> float:
         estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
@@ -715,7 +714,7 @@ class ControladorObjetos:
         except (TypeError, ValueError):
             return 0.0
 
-    def _render_fallback_objeto(self, tela, camera, obj: Dict[str, object], cor_fallback=(222, 233, 245), escala: float = 1.0, pos_tela: Optional[Tuple[float, float]] = None, fila_blits: Optional[List[tuple]] = None):
+    def _render_fallback_objeto(self, tela, camera, obj: Dict[str, object], cor_fallback=(222, 233, 245), escala: float = 1.0, pos_tela: Optional[Tuple[float, float]] = None, fila_blits: Optional[List[tuple]] = None, tela_size: Optional[Tuple[int, int]] = None):
         if pos_tela is None:
             pos = obj.get("posicao", [0.0, 0.0])
             if not isinstance(pos, (list, tuple)) or len(pos) != 2:
@@ -729,7 +728,7 @@ class ControladorObjetos:
         codigo_natural = obj.get("codigo_natural")
         if codigo_natural is None and isinstance(obj.get("estado"), dict):
             codigo_natural = obj["estado"].get("codigo_natural")
-        cfg_natural = tipo_estrutura_natural_por_codigo(codigo_natural)
+        cfg_natural = self._cfg_natural_cacheada(codigo_natural)
 
         sprite_path = str(obj.get("sprite", "")).strip()
         if not sprite_path and cfg_natural:
@@ -753,7 +752,7 @@ class ControladorObjetos:
             altura_sprite = sprite.get_height()
             destino_x = px_int - (largura_sprite // 2)
             destino_y = py_int - (altura_sprite // 2)
-            tela_w, tela_h = tela.get_size()
+            tela_w, tela_h = tela_size if tela_size is not None else tela.get_size()
             clip_x = max(0, -destino_x)
             clip_y = max(0, -destino_y)
             largura_visivel = min(largura_sprite - clip_x, int(tela_w) - max(0, destino_x))
@@ -804,7 +803,10 @@ class ControladorObjetos:
         pos = obj.get("posicao", [0.0, 0.0])
         if not isinstance(pos, (tuple, list)) or len(pos) != 2:
             return None
-        px, py = camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
+        cam_pos = getattr(camera, "PosicaoTiles", (0.0, 0.0))
+        tile_px = float(getattr(camera, "TilePx", 50) or 50)
+        px = (float(pos[0]) - float(cam_pos[0])) * tile_px
+        py = (float(pos[1]) - float(cam_pos[1])) * tile_px
         tela_w, tela_h = getattr(camera, "TamanhoTelaPx", (1280.0, 720.0))
         if px < -margem_px or py < -margem_px or px > (tela_w + margem_px) or py > (tela_h + margem_px):
             return None
@@ -896,26 +898,39 @@ class ControladorObjetos:
 
     def renderizar_estruturas(self, tela, camera):
         objs = self._estruturas_visiveis_ordenadas(camera, margem_chunks=1)
-        fila_blits: List[tuple] = []
+        tela_size = tela.get_size()
+        preparados: List[tuple] = []
         for obj in objs:
-            if self._eh_payload_estadio(obj):
+            estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            eh_estadio = self._eh_payload_estadio(obj)
+            if eh_estadio:
+                rx = float(estado.get("raio_elipse_x", 24.0) or 24.0)
+                ry = float(estado.get("raio_elipse_y", 24.0) or 24.0)
+                margem_px = int(max(220.0, max(rx, ry) * float(getattr(camera, "TilePx", 50) or 50) * 1.35))
+            else:
+                margem_px = 220
+            pos_tela = self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=margem_px)
+            if pos_tela is None:
+                continue
+            pos = obj.get("posicao") if isinstance(obj.get("posicao"), (list, tuple)) and len(obj.get("posicao")) == 2 else (0.0, 0.0)
+            chave_ordem = (
+                prioridade_estrutura_natural(codigo=obj.get("codigo_natural"), subtipo=estado.get("subtipo")),
+                float(pos[1]),
+                int(obj.get("id", 0) or 0),
+            )
+            preparados.append((chave_ordem, obj, pos_tela, eh_estadio))
+        preparados.sort(key=lambda item: item[0])
+        fila_blits: List[tuple] = []
+        for _, obj, pos_tela, eh_estadio in preparados:
+            if eh_estadio:
                 if fila_blits:
                     self._aplicar_blits_batch(tela, fila_blits)
                     fila_blits.clear()
-                estado_obj = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
-                rx = float(estado_obj.get("raio_elipse_x", 24.0) or 24.0)
-                ry = float(estado_obj.get("raio_elipse_y", 24.0) or 24.0)
-                margem_estadio_px = int(max(220.0, max(rx, ry) * float(getattr(camera, "TilePx", 50) or 50) * 1.35))
-                if self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=margem_estadio_px) is None:
-                    continue
                 GeradorEstadio.renderizar(tela, camera, obj)
-                continue
-            pos_tela = self._objeto_posicao_tela_se_visivel(obj, camera, margem_px=220)
-            if pos_tela is None:
                 continue
             est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))
             escala = est.escala_render() if est is not None else 1.0
-            self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala, pos_tela=pos_tela, fila_blits=fila_blits)
+            self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala, pos_tela=pos_tela, fila_blits=fila_blits, tela_size=tela_size)
         self._aplicar_blits_batch(tela, fila_blits)
 
 

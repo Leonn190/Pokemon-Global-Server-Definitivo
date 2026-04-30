@@ -307,6 +307,7 @@ class LeitorMundo:
         )
         if superficie is None:
             return None
+        superficie = superficie.convert()
         self._cache_superficies_chunks[chave_chunk] = superficie
         return superficie
 
@@ -404,15 +405,15 @@ class LeitorMundo:
     def renderizar_mundo(self, tela) -> None:
         tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
         with self._lock:
-            tamanho_chunk = max(1, int(self.TamanhoChunkBlocos)); meta = dict(self.MetaMundo); chunks_ref = self.Chunks
-        dimensao_meta = str(meta.get("dimensao") or "Mundo")
+            tamanho_chunk = max(1, int(self.TamanhoChunkBlocos)); meta = self.MetaMundo; chunks_ref = self.Chunks
+            dimensao_meta = str(meta.get("dimensao") or "Mundo")
+            largura_blocos = int(meta.get("largura_blocos", 0) or 0) if isinstance(meta, dict) else 0
+            altura_blocos = int(meta.get("altura_blocos", 0) or 0) if isinstance(meta, dict) else 0
         if dimensao_meta.startswith("Estadio"):
             return
         if not chunks_ref:
             return
 
-        largura_blocos = int(meta.get("largura_blocos", 0) or 0) if isinstance(meta, dict) else 0
-        altura_blocos = int(meta.get("altura_blocos", 0) or 0) if isinstance(meta, dict) else 0
         largura_mundo = float(largura_blocos)
         altura_mundo = float(altura_blocos)
         chunks_x = max(1, int((largura_blocos + tamanho_chunk - 1) // tamanho_chunk)) if largura_blocos > 0 else 0

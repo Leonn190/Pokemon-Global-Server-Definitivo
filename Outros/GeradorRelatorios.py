@@ -36,12 +36,13 @@ IGNORAR_PASTAS_RAIZ = {"ServerList", "Saves"}
 
 # Dentro de Site, o relatório deve contar o código do site, mas ignorar caches/dependências.
 IGNORAR_PASTAS_SITE = {".astro", "node_modules"}
+IGNORAR_ARQUIVOS_SITE = {"package-lock.json"}
 
 IGNORAR_EXTENSOES = {".pyc"}
 IGNORAR_ARQUIVOS_EXATOS = {"Registro.md"}
 
 EXTENSOES_TEXTO_INTERESSE = {
-    ".py", ".json", ".java", ".js", ".ts", ".jsx", ".tsx", ".css", ".html", ".htm",
+    ".py", ".json", ".java", ".js", ".ts", ".jsx", ".tsx", ".css", ".html", ".htm", ".astro",
     ".md", ".txt", ".yml", ".yaml", ".toml", ".ini", ".cfg", ".csv", ".xml", ".sql",
     ".bat", ".sh", ".ps1", ".properties", ".gradle", ".kt", ".kts", ".c", ".cpp",
     ".h", ".hpp", ".cs", ".lua", ".rs", ".go", ".php", ".rb", ".vue", ".vhd", ".vhdl",
@@ -321,6 +322,9 @@ def caminho_relativo_ignorado(rel_parts: Tuple[str, ...]) -> bool:
         return True
 
     if len(rel_parts) >= 2 and rel_parts[0] == "Site" and rel_parts[1] in IGNORAR_PASTAS_SITE:
+        return True
+
+    if len(rel_parts) >= 2 and rel_parts[0] == "Site" and rel_parts[-1] in IGNORAR_ARQUIVOS_SITE:
         return True
 
     return False
@@ -1306,6 +1310,8 @@ def deve_ignorar_arquitetura(path: Path) -> bool:
 
     for i, parte in enumerate(parts[:-1]):
         if parte == "Site" and parts[i + 1] in IGNORAR_PASTAS_SITE:
+            return True
+        if parte == "Site" and path.name in IGNORAR_ARQUIVOS_SITE:
             return True
 
     return False

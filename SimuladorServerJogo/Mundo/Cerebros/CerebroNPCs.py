@@ -682,9 +682,11 @@ class CerebroNPCs:
                             atual = candidato
                             npc["posicao"] = [float(atual[0]), float(atual[1])]
 
-            self._atualizar_angulo_npc(npc, atual, movimento_vec, inter, tick)
+            area_ativa = self._chunk_in_qualquer(atual, chunks_carregados, chunks_simulados)
+            if area_ativa:
+                self._atualizar_angulo_npc(npc, atual, movimento_vec, inter, tick)
 
-            deve_materializar = self._chunk_in_qualquer(atual, chunks_carregados, chunks_simulados)
+            deve_materializar = area_ativa
             oid = int(npc.get("id", 0) or 0)
             categoria_npc = "npc_combatente" if str(npc.get("estilo") or "").strip().lower() == "combatente" else "npc_vendedor"
             obj = BANCO_DADOS.obter_objeto(oid)

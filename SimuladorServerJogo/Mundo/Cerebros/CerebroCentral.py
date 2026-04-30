@@ -223,10 +223,14 @@ class CerebroCentral:
 
     def _executar_tick(self) -> None:
         self._snapshot_tempo = self._cerebro_tempo.executar_tick(random)
-        self._sincronizar_registries_com_banco()
+        if self._tick_contador % 30 == 0:
+            self._sincronizar_registries_com_banco()
         self._limpar_janela_spawns()
         chunks_carregados, chunks_simulados = self._calcular_chunks_carregados()
         self._chunks_carregados_tick_atual = set(chunks_carregados)
+        chunks_ativos = set(chunks_carregados) | set(chunks_simulados)
+        if self._tick_contador % 300 == 0:
+            BANCO_DADOS.descarregar_estruturas_fora_dos_chunks(chunks_ativos)
 
         if chunks_simulados:
             self._cerebro_pokemons.tentar_spawn(chunks_simulados)

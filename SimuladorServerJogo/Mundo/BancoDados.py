@@ -586,6 +586,35 @@ class BancoDadosMundo:
     def listar_objetos(self) -> List[object]:
         with self._lock:
             return list(self._objetos.values())
+
+    def contar_objetos(self) -> int:
+        with self._lock:
+            return len(self._objetos)
+
+    def contar_chunks_estruturas_carregados(self) -> int:
+        with self._lock:
+            return len(self._chunks_estruturas_carregados)
+
+    def descarregar_estruturas_fora_dos_chunks(self, chunks_permitidos: Set[Tuple[int, int]]) -> int:
+        with self._lock:
+            permitidos = {self.normalizar_chunk(ch) for ch in chunks_permitidos}
+            remover: List[Tuple[int, Tuple[int, int]]] = []
+            for oid, obj in list(self._objetos.items()):
+                if getattr(obj, "tipo_classe", "") != "estrutura_natural":
+                    continue
+                chunk = self.chunk_da_posicao(getattr(obj, "posicao", (0.0, 0.0)))
+                if chunk not in permitidos:
+                    remover.append((int(oid), chunk))
+
+            for oid, chunk in remover:
+                obj = self._objetos.pop(oid, None)
+                if obj is not None:
+                    self._indice_espacial[self._celula(obj.posicao)].discard(oid)
+                self._chunks_estruturas_carregados.discard(chunk)
+
+            self._chunks_estruturas_carregados.intersection_update(permitidos)
+            return len(remover)
+
     def usuario_por_objeto_id(self, objeto_id: int) -> Optional[str]:
         with self._lock:
             for usuario, oid in self._usuarios_para_objeto.items():
@@ -593,13 +622,14 @@ class BancoDadosMundo:
                     return usuario
         return None
 
-    def buscar_proximos(self, posicao: Vector2, raio: float) -> List[object]:
+    def buscar_proximos(self, posicao: Vector2, raio: float, garantir_estruturas: bool = False) -> List[object]:
         raio = max(0.0, float(raio))
-        chunk_tamanho = self.chunk_tamanho_unidade()
-        if chunk_tamanho > 0:
-            alcance_chunk = max(0, int(math.ceil(raio / chunk_tamanho)))
-            for c in self.chunks_proximos(posicao, raio_chunks=alcance_chunk):
-                self._assegurar_estruturas_chunk(c[0], c[1])
+        if garantir_estruturas:
+            chunk_tamanho = self.chunk_tamanho_unidade()
+            if chunk_tamanho > 0:
+                alcance_chunk = max(0, int(math.ceil(raio / chunk_tamanho)))
+                for c in self.chunks_proximos(posicao, raio_chunks=alcance_chunk):
+                    self._assegurar_estruturas_chunk(c[0], c[1])
         cx, cy = self._celula(posicao)
         alcance = int(math.ceil(raio / self._tamanho_celula)) + 1
         ids: Set[int] = set()

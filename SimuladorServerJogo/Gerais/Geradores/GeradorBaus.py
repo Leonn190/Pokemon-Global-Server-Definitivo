@@ -6,7 +6,7 @@ from pathlib import Path
 from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from typing import Dict, List
 
-CAMINHO_BAUS_JSON = Path(__file__).resolve().parents[3] / "Dados" / "Outros" / "Pokemon Global Server - Baus.json"
+CAMINHO_BAUS_JSON = Path(__file__).resolve().parents[3] / "Dados" / "Catalogo" / "Pokemon Global Server - Baus.json"
 
 _CHANCES_QTD_ITENS = {
     1: 30.0,

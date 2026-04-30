@@ -1,0 +1,50 @@
+{
+  "Clique": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Clique.wav",
+    "Volume": 0.75
+  },
+  "Bloq": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Bloq.wav",
+    "Volume": 0.85
+  },
+  "Abre": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Abre.wav",
+    "Volume": 0.8
+  },
+  "AbrirBau": {
+    "Arquivo": "Recursos/Sonoridades/Sons/AbrirBau.mp3",
+    "Volume": 0.85
+  },
+  "Apagou": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Apagou.wav",
+    "Volume": 0.8
+  },
+  "BaterFerramenta": {
+    "Arquivo": "Recursos/Sonoridades/Sons/BaterFerramenta.mp3",
+    "Volume": 0.85
+  },
+  "CliqueOpções": {
+    "Arquivo": "Recursos/Sonoridades/Sons/CliqueOpções.mp3",
+    "Volume": 0.8
+  },
+  "Conseguiu": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Conseguiu.wav",
+    "Volume": 0.85
+  },
+  "Dropar": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Dropar.wav",
+    "Volume": 0.85
+  },
+  "Falhou": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Falhou.wav",
+    "Volume": 0.85
+  },
+  "Fecha": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Fecha.wav",
+    "Volume": 0.8
+  },
+  "Salvou": {
+    "Arquivo": "Recursos/Sonoridades/Sons/Salvou.wav",
+    "Volume": 0.85
+  }
+}

@@ -4,6 +4,7 @@ from copy import deepcopy
 
 import pygame
 
+from Codigo.ModulosGerais.Sonoridades import tocar_musica_resultado_batalha
 from Codigo.Telas.Subtelas.SubtelaFinalizacao import SubtelaFinalizacao
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon
 
@@ -116,6 +117,7 @@ class FinalizadorBatalha:
         if gerenciador is None:
             self.voltar_ao_mundo()
             return
+        tocar_musica_resultado_batalha(vencedor)
         gerenciador.abrir(SubtelaFinalizacao(itens, rodadas_totais=rodadas, vencedor=vencedor, ao_continuar=self.voltar_ao_mundo))
 
     def voltar_ao_mundo(self):

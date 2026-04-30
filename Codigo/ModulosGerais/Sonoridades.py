@@ -1,4 +1,7 @@
+import json
 import random
+from pathlib import Path
+
 import pygame
 
 from Codigo.ModulosGerais.Auxiliares import bioma_por_tile
@@ -6,161 +9,31 @@ from Codigo.ModulosGerais.Auxiliares import bioma_por_tile
 silencio = False
 Volume = 0.0
 
-Sons = {
-    "Clique": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Clique.wav",
-        "Som": None,
-        "Volume": 0.75
-    },
-    "Bloq": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Bloq.wav",
-        "Som": None,
-        "Volume": 0.85
-    },
-    "Abre": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Abre.wav",
-        "Som": None,
-        "Volume": 0.80
-    },
-    "AbrirBau": {
-        "Arquivo": "Recursos/Sonoridades/Sons/AbrirBau.mp3",
-        "Som": None,
-        "Volume": 0.85
-    },
-    "Apagou": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Apagou.wav",
-        "Som": None,
-        "Volume": 0.80
-    },
-    "BaterFerramenta": {
-        "Arquivo": "Recursos/Sonoridades/Sons/BaterFerramenta.mp3",
-        "Som": None,
-        "Volume": 0.85
-    },
-    "CliqueOpções": {
-        "Arquivo": "Recursos/Sonoridades/Sons/CliqueOpções.mp3",
-        "Som": None,
-        "Volume": 0.80
-    },
-    "Conseguiu": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Conseguiu.wav",
-        "Som": None,
-        "Volume": 0.85
-    },
-    "Dropar": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Dropar.wav",
-        "Som": None,
-        "Volume": 0.85
-    },
-    "Falhou": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Falhou.wav",
-        "Som": None,
-        "Volume": 0.85
-    },
-    "Fecha": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Fecha.wav",
-        "Som": None,
-        "Volume": 0.80
-    },
-    "Salvou": {
-        "Arquivo": "Recursos/Sonoridades/Sons/Salvou.wav",
-        "Som": None,
-        "Volume": 0.85
-    }
-}
+_RAIZ_PROJETO = Path(__file__).resolve().parents[2]
+_CAMINHO_CATALOGO = _RAIZ_PROJETO / "Dados" / "Catalogo"
 
-Musicas = {
-    "Menu1": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu1.ogg",
-        "loop": 12.7,
-        "fimloop": 110.55
-    },
-    "Menu2": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu2.ogg",
-        "loop": 1.34,
-        "fimloop": 146.92
-    },
-    "Menu3": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu3.ogg",
-        "loop": 1.67,
-        "fimloop": 134.19
-    },
-    "Login": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Login.ogg",
-        "loop": 7.03,
-        "fimloop": 60.26
-    },
-    "Carregamento": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Menu/Carregamento.ogg",
-        "loop": 1.28,
-        "fimloop": 109.43
-    },
-    "ConfrontoDoVale": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoVale.ogg",
-        "loop": 2.34,
-        "fimloop": 83.6
-    },
-    "ConfrontoDaNeve": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDaNeve.ogg",
-        "loop": 2.32,
-        "fimloop": 83.65
-    },
-    "ConfrontoDoMar": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoMar.ogg",
-        "loop": 2.27,
-        "fimloop": 83.64
-    },
-    "ConfrontoDoDeserto": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoDeserto.ogg",
-        "loop": 2.33,
-        "fimloop": 83.655
-    },
-    "ConfrontoDoVulcao": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoVulcao.ogg",
-        "loop": 2.34,
-        "fimloop": 83.62
-    },
-    "ConfrontoDoMagia": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDaMagia.ogg",
-        "loop": 2.34,
-        "fimloop": 83.62
-    },
-    "ConfrontoDoPantano": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoPantano.ogg",
-        "loop": 2.34,
-        "fimloop": 83.62
-    },
-    "Vale": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vale.ogg",
-        "loop": 3.2,
-        "fimloop": 111.9,
-        "volume": 0.55
-    },
-    "Neve": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Neve.ogg",
-        "loop": 4.2,
-        "fimloop": 68.35,
-        "volume": 0.55
-    },
-    "Deserto": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Deserto.ogg",
-        "loop": 0.2,
-        "fimloop": 87.45,
-        "volume": 0.55
-    },
-    "Vulcão": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vulcão.ogg",
-        "loop": 10.19,
-        "fimloop": 62.23,
-        "volume": 0.55
-    },
-    "Praia": {
-        "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Praia.ogg",
-        "loop": 10.24,
-        "fimloop": 154.99,
-        "volume": 0.55
-    }
-}
+
+def _carregar_catalogo(nome):
+    caminho = _CAMINHO_CATALOGO / f"{nome}.json"
+    try:
+        with caminho.open("r", encoding="utf-8") as arquivo:
+            dados = json.load(arquivo)
+    except Exception as exc:
+        print(f"[ERRO] Falha ao carregar catalogo de sonoridades '{nome}': {exc}")
+        return {}
+    return dados if isinstance(dados, dict) else {}
+
+
+def _carregar_sons():
+    sons = _carregar_catalogo("Sons")
+    for dados in sons.values():
+        if isinstance(dados, dict):
+            dados.setdefault("Som", None)
+    return sons
+
+
+Sons = _carregar_sons()
+Musicas = _carregar_catalogo("Musicas")
 
 MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão"}
 
@@ -300,6 +173,25 @@ def TransicaoMusica(nome):
     _fade_inicio = pygame.time.get_ticks()
     _fade_volume_inicial = pygame.mixer.music.get_volume()
     _fade_alvo = nome
+
+
+def musica_resultado_batalha(vencedor):
+    vencedor = str(vencedor or "").strip().lower()
+    if vencedor == "jogador":
+        return "Vitoria"
+    if vencedor == "inimigo":
+        return "Derrota"
+    return None
+
+
+def tocar_musica_resultado_batalha(vencedor):
+    global _fade_tipo, _fade_alvo
+
+    nome = musica_resultado_batalha(vencedor)
+    if nome:
+        _fade_tipo = None
+        _fade_alvo = None
+        _iniciar_musica(nome)
 
 
 def _atualizar_fade():
@@ -520,6 +412,12 @@ def _resolver_musica_alvo(jogo):
         return _musica_mundo_estavel(cena)
 
     if cena_id == "Combate":
+        finalizador = getattr(getattr(cena, "ControladorBatalha", None), "finalizador", None)
+        if finalizador is not None and bool(getattr(finalizador, "_finalizacao_aberta", False)):
+            vencedor = getattr(finalizador, "_vencedor_visual", lambda _r: "")(getattr(finalizador, "_ultimo_resultado", {}) or {})
+            musica_fechamento = musica_resultado_batalha(vencedor)
+            if musica_fechamento:
+                return musica_fechamento
         contexto = getattr(jogo, "INFO", {}).get("CombateContexto") if isinstance(getattr(jogo, "INFO", None), dict) else {}
         tile_bioma = contexto.get("tile_bioma") if isinstance(contexto, dict) else None
         return musica_confronto_por_tile(tile_bioma)

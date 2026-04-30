@@ -228,7 +228,7 @@ def coletar_estatisticas_jogo(repo_root: Path) -> List[Tuple[str, str]]:
     equipaveis_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_EQUIPAVEIS}", f"Dados/{CSV_EQUIPAVEIS}")
     npc_combatente_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_NPC_COMBATENTE}", f"Dados/{CSV_NPC_COMBATENTE}")
     npc_vendedor_csv = resolver_path_dados(repo_root, f"Dados/Tabelas/{CSV_NPC_VENDEDOR}", f"Dados/{CSV_NPC_VENDEDOR}")
-    receitas_json = resolver_path_dados(repo_root, f"Dados/Outros/{JSON_RECEITAS}", f"Dados/{JSON_RECEITAS}")
+    receitas_json = resolver_path_dados(repo_root, f"Dados/Catalogo/{JSON_RECEITAS}", f"Dados/{JSON_RECEITAS}")
 
     dados: List[Tuple[str, str]] = [
         ("Pokémon registrados", fmt_int(contar_csv_registros(pokemon_csv))),

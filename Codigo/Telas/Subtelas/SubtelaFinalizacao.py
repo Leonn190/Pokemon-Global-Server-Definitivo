@@ -27,6 +27,7 @@ class SubtelaFinalizacao(Subtela):
 
         self._titulo = Texto("Final da batalha", style={"size": 34, "color": (240, 246, 255), "align": "center", "outline": True, "outline_color": (8, 12, 20), "outline_thickness": 2})
         self._subtitulo = Texto("", style={"size": 18, "color": (190, 210, 228), "align": "center", "outline": True, "outline_color": (8, 12, 20), "outline_thickness": 2})
+        self._resultado = Texto("", style={"size": 42, "color": (92, 226, 118), "align": "center", "outline": True, "outline_color": (8, 12, 20), "outline_thickness": 3})
 
         for item in self._itens:
             xp = int(item.get("xp_batalha", 0) or 0)
@@ -113,7 +114,7 @@ class SubtelaFinalizacao(Subtela):
             nome.draw(tela)
 
         visual = item.get("visual")
-        area_sprite = pygame.Rect(rect.x + 10, rect.y + 52, rect.width - 20, 96)
+        area_sprite = pygame.Rect(rect.x + 10, rect.y + 46, rect.width - 20, 82)
         if visual is not None:
             lado_sprite = max(56, min(76, rect.width - 20))
             frame = None
@@ -132,7 +133,7 @@ class SubtelaFinalizacao(Subtela):
 
         numero_xp = item.get("numero_xp")
         if isinstance(numero_xp, NumeroVariavel):
-            numero_xp.set_pos((rect.centerx, area_sprite.bottom + 16))
+            numero_xp.set_pos((rect.centerx, area_sprite.bottom + 14))
             numero_xp.draw(tela)
 
         dano = int(round(float(item.get("dano", 0.0) or 0.0)))
@@ -141,17 +142,17 @@ class SubtelaFinalizacao(Subtela):
         texto_dano = item.get("texto_dano")
         if isinstance(texto_dano, Texto):
             texto_dano.set_text(f"Dano {dano}")
-            texto_dano.set_pos((rect.centerx, area_sprite.bottom + 48))
+            texto_dano.set_pos((rect.centerx, area_sprite.bottom + 42))
             texto_dano.draw(tela)
         texto_abates = item.get("texto_abates")
         if isinstance(texto_abates, Texto):
             texto_abates.set_text(f"Abates {abates}")
-            texto_abates.set_pos((rect.centerx, area_sprite.bottom + 68))
+            texto_abates.set_pos((rect.centerx, area_sprite.bottom + 60))
             texto_abates.draw(tela)
         texto_energia = item.get("texto_energia")
         if isinstance(texto_energia, Texto):
             texto_energia.set_text(f"Energia {energia}")
-            texto_energia.set_pos((rect.centerx, area_sprite.bottom + 88))
+            texto_energia.set_pos((rect.centerx, area_sprite.bottom + 78))
             texto_energia.draw(tela)
 
     def render(self, tela, eventos, dt, JOGO=None):
@@ -163,14 +164,18 @@ class SubtelaFinalizacao(Subtela):
 
         self._titulo.set_pos((self._rect.centerx, self._rect.y + 28))
         self._titulo.draw(tela)
-        resultado_txt = ""
-        if self._vencedor:
-            resultado_txt = " | Vitória" if self._vencedor == "jogador" else " | Derrota"
-        self._subtitulo.set_text(f"Rodadas: {self._rodadas_totais}{resultado_txt}")
+        self._subtitulo.set_text(f"Rodadas: {self._rodadas_totais}")
         self._subtitulo.set_pos((self._rect.centerx, self._rect.y + 60))
         self._subtitulo.draw(tela)
 
-        area = pygame.Rect(self._rect.x + 16, self._rect.y + 90, self._rect.width - 32, self._rect.height - 180)
+        if self._vencedor:
+            vitoria = self._vencedor == "jogador"
+            self._resultado.set_text("Vitoria" if vitoria else "Derrota")
+            self._resultado.set_style(color=(92, 226, 118) if vitoria else (238, 88, 88))
+            self._resultado.set_pos((self._rect.centerx, self._rect.y + 106))
+            self._resultado.draw(tela)
+
+        area = pygame.Rect(self._rect.x + 16, self._rect.y + 146, self._rect.width - 32, self._rect.height - 236)
         total = max(1, len(self._itens))
         espaco_min = 12
         largura_setor = int((area.width - (espaco_min * (total + 1))) / total)
@@ -178,7 +183,7 @@ class SubtelaFinalizacao(Subtela):
         espaco = max(espaco_min, int((area.width - (largura_setor * total)) / (total + 1)))
         total_largura = (largura_setor * total) + (espaco * (total + 1))
         origem_x = area.x + max(0, (area.width - total_largura) // 2) + espaco
-        altura_card = max(200, area.height - 8)
+        altura_card = max(210, area.height - 8)
 
         for indice, item in enumerate(self._itens):
             x = origem_x + (indice * (largura_setor + espaco))

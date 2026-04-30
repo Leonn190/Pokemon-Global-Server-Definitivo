@@ -1,6 +1,14 @@
 from __future__ import annotations
 
+import unicodedata
+
 from Codigo.Visual.PokemonBatalhaAnimator import PokemonAnimator
+
+
+def _normalizar_nome(valor):
+    bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+    return "".join(ch for ch in sem_acento if ch.isalnum())
 
 
 class ControladorAnimacoes:
@@ -30,16 +38,24 @@ class ControladorAnimacoes:
             usuario = ctrl.pokemons_por_id.get(str(dados.get("usuario_id") or dados.get("pokemon_id") or ""))
             alvo = self._resolver_alvo(dados)
             animacao = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
-            contato = str(animacao.get("contato") or dados.get("contato") or "nenhum").strip().lower()
+            contato = self._contato_ataque(dados, animacao)
+            tipo_ataque = dados.get("tipo_ataque") or animacao.get("tipo_ataque") or animacao.get("tipo")
             if animacao.get("efeito_usuario"):
                 out.append(self.animator.animar_efeito(usuario, animacao.get("efeito_usuario"), posicao="usuario"))
             if contato == "avanco":
                 out.append(self.animator.animar_avanco(usuario, alvo))
             elif contato == "salto":
                 out.append(self.animator.animar_salto(usuario, alvo))
+            elif contato == "laser_linha":
+                linha = self._linha_alvo(dados)
+                if linha:
+                    out.append(self.animator.animar_laser_linha(usuario, linha[0], linha[-1], tipo_ataque=tipo_ataque))
+                else:
+                    out.append(self.animator.animar_laser(usuario, alvo, tipo_ataque=tipo_ataque))
+            elif contato in {"laser", "raio", "jato_liquido"}:
+                out.append(self.animator.animar_contato_irregular(contato, usuario, alvo, tipo_ataque=tipo_ataque))
             elif contato == "tiro":
                 projetil = animacao.get("projetil") if animacao.get("projetil") is not None else dados.get("projetil")
-                tipo_ataque = dados.get("tipo_ataque") or animacao.get("tipo_ataque") or animacao.get("tipo")
                 out.append(self.animator.animar_lancar_projetil(usuario, alvo, sprite=projetil, tipo_ataque=tipo_ataque))
         elif tipo == "ataque_acertou":
             alvo = self._resolver_alvo(dados)
@@ -172,6 +188,31 @@ class ControladorAnimacoes:
         if area and getattr(ctrl, "arena", None) is not None:
             return ctrl.arena.centro_area(area)
         return None
+
+    def _contato_ataque(self, dados, animacao):
+        contato = _normalizar_nome(animacao.get("contato") or dados.get("contato") or "nenhum")
+        return {
+            "avanco": "avanco",
+            "salto": "salto",
+            "tiro": "tiro",
+            "laser": "laser",
+            "raio": "raio",
+            "jatoliquido": "jato_liquido",
+            "laserlinha": "laser_linha",
+        }.get(contato, "nenhum")
+
+    def _linha_alvo(self, dados):
+        area_id = str(dados.get("area_alvo") or dados.get("area_alvo_real") or "").upper()
+        if not area_id or getattr(self.controlador, "arena", None) is None:
+            return []
+        try:
+            idx = int(area_id[1:]) - 1
+        except (TypeError, ValueError, IndexError):
+            return []
+        prefixo = area_id[:1]
+        row = idx // 3
+        centros = [self.controlador.arena.centro_area(f"{prefixo}{row * 3 + col + 1}") for col in range(3)]
+        return [centro for centro in centros if centro is not None]
 
     @staticmethod
     def _dados(evento):

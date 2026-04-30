@@ -83,7 +83,7 @@
       "custo": 80,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
+        "contato": "laser_linha",
         "projetil": null,
         "efeito_alvo": null,
         "efeito_usuario": null

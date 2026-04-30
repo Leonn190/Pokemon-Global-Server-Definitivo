@@ -6,7 +6,7 @@ from typing import Callable, Tuple
 import pygame
 
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
-from Codigo.Visual.EfeitosBatalha import EFEITOS_ATAQUE_FPS
+from Codigo.Visual.AuxiliaresVisuais import EFEITOS_ATAQUE_FPS
 
 Vector2 = Tuple[float, float]
 

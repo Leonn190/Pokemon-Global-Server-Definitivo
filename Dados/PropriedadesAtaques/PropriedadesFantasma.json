@@ -8,7 +8,7 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
+        "contato": "raio",
         "projetil": null,
         "efeito_alvo": null,
         "efeito_usuario": null
@@ -36,7 +36,7 @@
       "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
+        "contato": "salto",
         "projetil": null,
         "efeito_alvo": null,
         "efeito_usuario": null

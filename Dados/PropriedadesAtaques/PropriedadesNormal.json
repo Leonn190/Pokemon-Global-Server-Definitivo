@@ -152,7 +152,7 @@
       "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
+        "contato": "laser",
         "projetil": null,
         "efeito_alvo": "EnergiaAzul",
         "efeito_usuario": null
@@ -176,7 +176,7 @@
       "custo": 100,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
+        "contato": "laser_linha",
         "projetil": null,
         "efeito_alvo": "RaioAzul",
         "efeito_usuario": null

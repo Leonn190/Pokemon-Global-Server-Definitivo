@@ -8,7 +8,8 @@ from typing import Tuple
 import pygame
 
 from Codigo.Visual.ArenaAnimator import ArenaAnimator
-from Codigo.Visual.EfeitosBatalha import EFEITOS_ATAQUE_FPS
+from Codigo.Visual.AuxiliaresVisuais import EFEITOS_ATAQUE_FPS
+from Codigo.Visual.ContatoIrregularAnimator import ContatoIrregularAnimator
 from Codigo.Visual.ProjetilBatalha import GerenciadorProjeteisBatalha
 
 Vector2 = Tuple[float, float]
@@ -35,6 +36,7 @@ class PokemonAnimator:
         self.controlador = controlador
         self.animacoes: list[dict[str, object]] = []
         self.projeteis = GerenciadorProjeteisBatalha(self._posicao_tela)
+        self.contatos_irregulares = ContatoIrregularAnimator(self._posicao_mundo, self._posicao_tela)
         self.arena_animator = ArenaAnimator(self._posicao_mundo, self._posicao_tela)
         self._avisos: list[str] = []
 
@@ -101,6 +103,30 @@ class PokemonAnimator:
         if p0 is None or p1 is None:
             return None
         return self.projeteis.animar_lancar(p0, p1, sprite=sprite, duracao=duracao, tipo_ataque=tipo_ataque, velocidade=velocidade)
+
+
+    def animar_contato_irregular(self, estilo, origem, destino=None, tipo_ataque=None, duracao=None, **kwargs):
+        return self.contatos_irregulares.animar(estilo, origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, **kwargs)
+
+    def animar_laser(self, origem, destino, tipo_ataque=None, duracao=None, largura=None):
+        return self.contatos_irregulares.animar_laser(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, largura=largura)
+
+    def animar_laser_linha(self, pokemon, linha_inicio, linha_fim=None, frente_linha=None, tipo_ataque=None, duracao=None, largura=None):
+        return self.contatos_irregulares.animar_laser_linha(
+            pokemon,
+            linha_inicio,
+            linha_fim,
+            frente_linha=frente_linha,
+            tipo_ataque=tipo_ataque,
+            duracao=duracao,
+            largura=largura,
+        )
+
+    def animar_raio(self, origem, destino, tipo_ataque=None, duracao=None, intensidade=None):
+        return self.contatos_irregulares.animar_raio(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, intensidade=intensidade)
+
+    def animar_jato_liquido(self, origem, destino, tipo_ataque=None, duracao=None, largura=None):
+        return self.contatos_irregulares.animar_jato_liquido(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, largura=largura)
 
     def animar_desvio(self, pokemon, duracao=None, intensidade_tiles=None):
         if pokemon is None:
@@ -231,6 +257,7 @@ class PokemonAnimator:
     def atualizar(self, dt):
         dt = max(0.0, float(dt or 0.0))
         self.projeteis.atualizar(dt)
+        self.contatos_irregulares.atualizar(dt)
         self.arena_animator.atualizar(dt)
         restantes = []
         for anim in list(self.animacoes):
@@ -244,6 +271,7 @@ class PokemonAnimator:
 
     def desenhar(self, surface):
         self.projeteis.desenhar(surface)
+        self.contatos_irregulares.desenhar(surface)
         self.arena_animator.desenhar(surface)
         for anim in list(self.animacoes):
             tipo = str(anim.get("tipo") or "")
@@ -254,7 +282,7 @@ class PokemonAnimator:
                 self._desenhar_circulos_troca(surface, anim)
 
     def esta_ocupado(self):
-        return self.projeteis.esta_ocupado() or self.arena_animator.esta_ocupado() or any(bool(anim.get("bloqueante", True)) for anim in self.animacoes)
+        return self.projeteis.esta_ocupado() or self.contatos_irregulares.esta_ocupado() or self.arena_animator.esta_ocupado() or any(bool(anim.get("bloqueante", True)) for anim in self.animacoes)
 
     def _adicionar(self, animacao):
         if not isinstance(animacao, dict):

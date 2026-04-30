@@ -129,8 +129,8 @@ def criar_materializado(especie: str) -> dict:
 
 
 def montar_estado_inicial() -> dict:
-    especies = carregar_especies_validas(RAIZ / "Dados" / "Pokemon Global Server - Pokemons.csv")
-    ataques = carregar_ataques(RAIZ / "Dados" / "Pokemon Global Server - Ataques.csv")
+    especies = carregar_especies_validas(RAIZ / "Dados" / "Tabelas" / "Pokemon Global Server - Pokemons.csv")
+    ataques = carregar_ataques(RAIZ / "Dados" / "Tabelas" / "Pokemon Global Server - Ataques.csv")
     random.shuffle(especies)
 
     precisa = 12

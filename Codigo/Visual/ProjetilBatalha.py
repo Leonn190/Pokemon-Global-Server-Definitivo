@@ -7,6 +7,8 @@ from typing import Callable, Dict, Tuple
 
 import pygame
 
+from Codigo.Visual.AuxiliaresVisuais import CORES_TIPOS_ATAQUE, normalizar_tipo_ataque
+
 Vector2 = Tuple[float, float]
 
 
@@ -24,29 +26,8 @@ def _interp(a: float, b: float, t: float) -> float:
     return float(a) + (float(b) - float(a)) * float(t)
 
 
-PALETA_TIPOS_ATAQUE: Dict[str, tuple[int, int, int]] = {
-    "normal": (187, 176, 151),
-    "fogo": (219, 106, 72),
-    "agua": (80, 130, 219),
-    "planta": (86, 171, 90),
-    "eletrico": (224, 199, 61),
-    "gelo": (152, 208, 225),
-    "lutador": (168, 89, 71),
-    "venenoso": (147, 92, 180),
-    "veneno": (147, 92, 180),
-    "terra": (164, 132, 73),
-    "voador": (133, 168, 205),
-    "psiquico": (217, 104, 146),
-    "inseto": (140, 164, 63),
-    "pedra": (128, 121, 107),
-    "fantasma": (96, 90, 143),
-    "dragao": (87, 97, 191),
-    "sombrio": (86, 77, 76),
-    "metal": (132, 145, 157),
-    "fada": (220, 154, 196),
-    "cosmico": (102, 105, 176),
-    "sonoro": (198, 123, 219),
-}
+PALETA_TIPOS_ATAQUE = CORES_TIPOS_ATAQUE
+
 
 
 PROJETEIS_ESPECIAIS: Dict[str, dict[str, object]] = {
@@ -144,7 +125,7 @@ class GerenciadorProjeteisBatalha:
             "velocidade": float(velocidade or dados.get("velocidade") or base.get("velocidade") or 7.0),
             "gira": bool(dados.get("gira", base.get("gira", False))),
             "rotacao_base": float(dados.get("rotacao_base", base.get("rotacao_base", 0.0)) or 0.0),
-            "tipo_ataque": str(tipo_ataque or dados.get("tipo") or dados.get("tipo_ataque") or "normal").strip().lower(),
+            "tipo_ataque": normalizar_tipo_ataque(tipo_ataque or dados.get("tipo") or dados.get("tipo_ataque") or "normal"),
             "sprite": self._carregar_projetil(caminho),
         }
         config["cor"] = PALETA_TIPOS_ATAQUE.get(config["tipo_ataque"], PALETA_TIPOS_ATAQUE["normal"])

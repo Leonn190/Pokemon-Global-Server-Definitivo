@@ -1,34 +1,156 @@
 ---
 import Layout from "../Componentes/Layout.astro";
+import "../Estilos/auth.css";
 ---
 
-<Layout titulo="Conta | Pokémon Global Server" descricao="Área provisória de conta do Pokémon Global Server.">
-  <section class="secao">
-    <div class="cabecalho-secao">
-      <p class="selo">Conta</p>
-      <h1>Área da conta</h1>
-      <p class="texto-fraco">
-        Placeholder para login, cadastro, chave beta, recuperação de acesso e vínculo com o jogo.
+<Layout titulo="Conta | Pokémon Global Server" descricao="Entre, crie uma conta beta simulada ou solicite token de acesso do Pokémon Global Server.">
+  <section class="secao acesso-hero" data-account-app>
+    <div class="acesso-brilho" aria-hidden="true"></div>
+
+    <div class="acesso-cabecalho">
+      <p class="selo">Conta beta fechada</p>
+      <h1>Entre no portal do treinador</h1>
+      <p>
+        Esta versão ainda não usa banco de dados, servidor real ou autenticação definitiva. Mesmo assim, a frente já está funcional para simular o fluxo de acesso, token, conta e download bloqueado.
       </p>
     </div>
 
-    <div class="grade-dupla">
-      <div class="painel destaque">
-        <h2>Futuro cadastro</h2>
-        <p>
-          Aqui pode entrar a criação de conta, confirmação por e-mail e uso de chave para liberar acesso ao beta.
+    <div class="grade-acesso">
+      <aside class="painel conta-status-card" aria-live="polite">
+        <span class="status-ponto" data-session-dot></span>
+        <p class="selo selo-azul">Status local</p>
+        <h2 data-session-title>Modo deslogado</h2>
+        <p data-session-text>
+          Faça login com a conta de teste para liberar a tela de download. O estado fica salvo apenas neste navegador.
         </p>
-      </div>
 
-      <div class="painel">
-        <h2>Chave beta</h2>
-        <p>
-          Espaço reservado para resgatar chave, mostrar status da conta e liberar download quando estiver pronto.
-        </p>
-        <button class="botao principal" type="button" data-alerta="Placeholder da área de conta.">
-          Testar ação
-        </button>
+        <div class="usuario-logado" data-user-card hidden>
+          <span>Treinador conectado</span>
+          <strong data-user-name>Leon190</strong>
+          <small data-user-email>euleonsoto@gmail.com</small>
+        </div>
+
+        <div class="acoes conta-acoes-status">
+          <a class="botao secundario" href="/download" data-account-download-link>Ver download</a>
+          <button class="botao fantasma" type="button" data-logout-button hidden>Sair da conta</button>
+        </div>
+      </aside>
+
+      <div class="painel painel-formulario">
+        <div class="abas-conta" role="tablist" aria-label="Acesso da conta">
+          <button class="aba-conta ativa" type="button" data-account-tab="login" aria-selected="true">Entrar</button>
+          <button class="aba-conta" type="button" data-account-tab="signup" aria-selected="false">Criar conta</button>
+        </div>
+
+        <form class="form-conta" data-account-panel="login" data-login-form>
+          <div>
+            <p class="selo">Login</p>
+            <h2>Entrar na conta</h2>
+            <p class="texto-fraco">
+              Use nome de usuário ou Gmail e senha. Por enquanto, só a conta de teste entra de verdade.
+            </p>
+          </div>
+
+          <label>
+            <span>Nome de usuário ou Gmail</span>
+            <input type="text" name="identificador" autocomplete="username" placeholder="Leon190 ou euleonsoto@gmail.com" required />
+          </label>
+
+          <label>
+            <span>Senha</span>
+            <input type="password" name="senha" autocomplete="current-password" placeholder="Digite a senha" required />
+          </label>
+
+          <div class="dica-form">
+            <strong>Conta de teste local</strong>
+            <span>Gmail: euleonsoto@gmail.com · Usuário: Leon190 · Senha: Senha</span>
+          </div>
+
+          <button class="botao principal" type="submit">Entrar</button>
+          <p class="mensagem-form" data-login-message aria-live="polite"></p>
+        </form>
+
+        <form class="form-conta escondido" data-account-panel="signup" data-signup-form>
+          <div>
+            <p class="selo">Token beta</p>
+            <h2>Criar conta</h2>
+            <p class="texto-fraco">
+              O cadastro valida o token localmente e mostra o fluxo final. Sem backend, ele não cria conta permanente no servidor.
+            </p>
+          </div>
+
+          <div class="grade-campos">
+            <label>
+              <span>Nome de usuário</span>
+              <input type="text" name="usuario" autocomplete="username" placeholder="Seu nome no jogo" minlength="3" required />
+            </label>
+
+            <label>
+              <span>Gmail</span>
+              <input type="email" name="email" autocomplete="email" placeholder="seugmail@gmail.com" required />
+            </label>
+          </div>
+
+          <div class="grade-campos">
+            <label>
+              <span>Senha</span>
+              <input type="password" name="senha" autocomplete="new-password" placeholder="Crie uma senha" minlength="4" required />
+            </label>
+
+            <label>
+              <span>Confirmar senha</span>
+              <input type="password" name="confirmar" autocomplete="new-password" placeholder="Repita a senha" minlength="4" required />
+            </label>
+          </div>
+
+          <label>
+            <span>Token de acesso</span>
+            <input type="text" name="token" autocomplete="off" placeholder="Exemplo: LN1900" required />
+          </label>
+
+          <div class="dica-form destaque-token">
+            <strong>Não tem token?</strong>
+            <span>Solicite avaliação na página de contato e aguarde a resposta pelo seu Gmail.</span>
+            <a href="/contato">Solicitar token</a>
+          </div>
+
+          <button class="botao principal" type="submit">Validar token e simular cadastro</button>
+          <p class="mensagem-form" data-signup-message aria-live="polite"></p>
+        </form>
       </div>
+    </div>
+  </section>
+
+  <section class="secao fluxo-beta" aria-labelledby="titulo-fluxo-beta">
+    <div class="cabecalho-secao compacto-auth">
+      <p class="selo">Como o acesso funciona</p>
+      <h2 id="titulo-fluxo-beta">Fluxo pronto para virar backend depois</h2>
+      <p class="texto-fraco">
+        O visual já separa o usuário deslogado, o login, a criação com token e a liberação do download. Depois, basta trocar a simulação local por API real.
+      </p>
+    </div>
+
+    <div class="cards-fluxo">
+      <article>
+        <strong>01</strong>
+        <h3>Solicitar token</h3>
+        <p>Quem ainda não tem token envia o Gmail para avaliação pelo contato oficial.</p>
+      </article>
+      <article>
+        <strong>02</strong>
+        <h3>Criar conta beta</h3>
+        <p>O token libera o formulário de cadastro. Neste protótipo, LN1900 é aceito.</p>
+      </article>
+      <article>
+        <strong>03</strong>
+        <h3>Entrar no portal</h3>
+        <p>A sessão local alterna o site entre modo logado e deslogado.</p>
+      </article>
+      <article>
+        <strong>04</strong>
+        <h3>Baixar quando existir</h3>
+        <p>O download real fica reservado para conta logada e instalador publicado.</p>
+      </article>
     </div>
   </section>
 </Layout>

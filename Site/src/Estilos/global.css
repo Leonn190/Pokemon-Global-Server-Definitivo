@@ -388,3 +388,18 @@ body::selection {
     flex-direction: column;
   }
 }
+
+.acoes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .acoes .botao,
+  .acoes a.botao,
+  .acoes button.botao {
+    width: 100%;
+  }
+}

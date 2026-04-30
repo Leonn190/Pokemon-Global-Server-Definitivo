@@ -721,3 +721,39 @@ body:has(.hero-home) .aviso-legal {
   margin-left: auto;
   margin-right: auto;
 }
+
+/* Ajuste final de centralização da hero:
+   o conteúdo principal agora é medido pela viewport real, não por um container intermediário. */
+body:has(.hero-home) {
+  overflow-x: clip;
+}
+
+.hero-home {
+  max-width: 100vw;
+  place-items: start center;
+}
+
+.logo-palco,
+.hero-copy {
+  max-width: calc(100vw - 36px);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-copy {
+  width: min(1520px, calc(100vw - 36px));
+}
+
+.hero-copy h1 {
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 1180px) {
+  .hero-copy h1 {
+    white-space: normal;
+    text-wrap: balance;
+  }
+}

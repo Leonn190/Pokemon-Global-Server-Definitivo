@@ -1,0 +1,649 @@
+.acesso-hero,
+.download-hero,
+.contato-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: calc(100vh - 190px);
+  display: grid;
+  align-items: center;
+  gap: clamp(24px, 5vw, 52px);
+  padding-top: clamp(42px, 7vw, 92px);
+  padding-bottom: clamp(42px, 7vw, 92px);
+  isolation: isolate;
+}
+
+.acesso-hero::before,
+.download-hero::before,
+.contato-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(50% - 50vw);
+  z-index: -2;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(16, 135, 255, 0.26), transparent 32rem),
+    radial-gradient(circle at 84% 20%, rgba(255, 54, 79, 0.22), transparent 34rem),
+    radial-gradient(circle at 50% 92%, rgba(255, 217, 52, 0.08), transparent 28rem);
+  opacity: 0.95;
+}
+
+.acesso-brilho {
+  position: absolute;
+  inset: 16% -22% auto;
+  z-index: -1;
+  height: 360px;
+  background: linear-gradient(90deg, rgba(16, 135, 255, 0.12), rgba(255, 217, 52, 0.08), rgba(255, 54, 79, 0.12));
+  filter: blur(44px);
+  transform: rotate(-7deg);
+  pointer-events: none;
+}
+
+.acesso-cabecalho,
+.download-copy,
+.contato-copy {
+  display: grid;
+  gap: 16px;
+  max-width: 980px;
+}
+
+.acesso-cabecalho {
+  margin: 0 auto;
+  text-align: center;
+  justify-items: center;
+}
+
+.acesso-cabecalho h1,
+.download-copy h1,
+.contato-copy h1 {
+  margin: 0;
+  font-family: "Exo 2", Arial, Helvetica, sans-serif;
+  font-size: clamp(2.55rem, 6vw, 6.3rem);
+  line-height: 0.94;
+  letter-spacing: -0.065em;
+  text-shadow: 0 22px 70px rgba(0, 0, 0, 0.65);
+}
+
+.acesso-cabecalho p:not(.selo),
+.download-copy > p,
+.contato-copy > p {
+  max-width: 820px;
+  margin: 0;
+  color: var(--texto-fraco);
+  font-size: clamp(1.06rem, 1.8vw, 1.28rem);
+  line-height: 1.7;
+}
+
+.grade-acesso {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.conta-status-card,
+.painel-formulario,
+.download-gate,
+.painel-contato,
+.requisito-card,
+.painel-download-info,
+.cards-contato .painel {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(18px);
+}
+
+.conta-status-card::before,
+.painel-formulario::before,
+.download-gate::before,
+.painel-contato::before,
+.requisito-card::before,
+.painel-download-info::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 30%),
+    radial-gradient(circle at 88% 14%, rgba(255, 217, 52, 0.12), transparent 18rem);
+  opacity: 0.85;
+}
+
+.conta-status-card > *,
+.painel-formulario > *,
+.download-gate > *,
+.painel-contato > *,
+.requisito-card > *,
+.painel-download-info > * {
+  position: relative;
+  z-index: 1;
+}
+
+.conta-status-card {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  min-height: 520px;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(16, 135, 255, 0.18), transparent 18rem),
+    rgba(6, 13, 36, 0.74);
+}
+
+.status-ponto {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--vermelho);
+  box-shadow: 0 0 0 8px rgba(255, 54, 79, 0.11), 0 0 26px rgba(255, 54, 79, 0.75);
+}
+
+.status-ponto.online {
+  background: var(--verde);
+  box-shadow: 0 0 0 8px rgba(96, 245, 154, 0.11), 0 0 26px rgba(96, 245, 154, 0.72);
+}
+
+.selo-azul {
+  color: #73c2ff;
+  border-color: rgba(16, 135, 255, 0.38);
+  background: rgba(16, 135, 255, 0.08);
+}
+
+.conta-status-card h2,
+.painel-formulario h2,
+.download-gate h2,
+.painel-contato h2,
+.requisito-card h3,
+.painel-download-info h2,
+.cards-contato h2 {
+  margin: 0;
+  font-family: "Exo 2", Arial, Helvetica, sans-serif;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+}
+
+.conta-status-card h2,
+.download-gate h2,
+.painel-contato h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+}
+
+.usuario-logado {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid rgba(96, 245, 154, 0.22);
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(96, 245, 154, 0.12), rgba(16, 135, 255, 0.08)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.usuario-logado span,
+.usuario-logado small {
+  color: var(--texto-fraco);
+}
+
+.usuario-logado strong {
+  color: var(--texto);
+  font-size: 1.35rem;
+}
+
+.conta-acoes-status {
+  align-self: end;
+  margin-top: auto;
+}
+
+.painel-formulario {
+  padding: clamp(20px, 4vw, 36px);
+  border-radius: 30px;
+  border: 1px solid var(--borda);
+  background:
+    radial-gradient(circle at 82% 22%, rgba(255, 54, 79, 0.12), transparent 22rem),
+    rgba(5, 11, 32, 0.78);
+  box-shadow: var(--sombra);
+}
+
+.abas-conta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 24px;
+  border: 1px solid var(--borda);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.aba-conta {
+  min-height: 46px;
+  border: 0;
+  border-radius: 16px;
+  color: var(--texto-fraco);
+  background: transparent;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.aba-conta.ativa,
+.aba-conta:hover {
+  color: #071531;
+  background: linear-gradient(135deg, var(--amarelo), #ffac17);
+  box-shadow: 0 14px 30px rgba(255, 180, 0, 0.2);
+}
+
+.form-conta {
+  display: grid;
+  gap: 18px;
+}
+
+.form-conta.escondido {
+  display: none;
+}
+
+.form-conta label {
+  display: grid;
+  gap: 8px;
+}
+
+.form-conta label span {
+  color: var(--texto);
+  font-weight: 900;
+}
+
+.form-conta input,
+.form-conta textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  padding: 15px 16px;
+  color: var(--texto);
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+  font: inherit;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: 0.18s ease;
+}
+
+.form-conta textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.form-conta input:focus,
+.form-conta textarea:focus {
+  border-color: rgba(255, 217, 52, 0.52);
+  box-shadow: 0 0 0 4px rgba(255, 217, 52, 0.11);
+  background: rgba(255, 255, 255, 0.082);
+}
+
+.form-conta input::placeholder,
+.form-conta textarea::placeholder {
+  color: rgba(183, 197, 232, 0.62);
+}
+
+.grade-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.dica-form {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid rgba(16, 135, 255, 0.24);
+  border-radius: 20px;
+  background: rgba(16, 135, 255, 0.075);
+}
+
+.dica-form strong {
+  color: var(--texto);
+}
+
+.dica-form span,
+.dica-form p {
+  margin: 0;
+  color: var(--texto-fraco);
+  line-height: 1.55;
+}
+
+.dica-form a {
+  color: var(--amarelo);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.destaque-token {
+  border-color: rgba(255, 217, 52, 0.26);
+  background: rgba(255, 217, 52, 0.075);
+}
+
+.mensagem-form {
+  min-height: 28px;
+  margin: 0;
+  color: var(--texto-fraco);
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.mensagem-form.ok {
+  color: var(--verde);
+}
+
+.mensagem-form.erro {
+  color: #ff8795;
+}
+
+.compacto-auth {
+  max-width: 920px;
+}
+
+.compacto-auth h2 {
+  margin: 0;
+  font-family: "Exo 2", Arial, Helvetica, sans-serif;
+  font-size: clamp(2rem, 4.2vw, 4.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.06em;
+}
+
+.cards-fluxo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.cards-fluxo article {
+  min-height: 220px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid var(--borda);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.072), rgba(255, 255, 255, 0.032)),
+    var(--vidro);
+  box-shadow: var(--sombra);
+}
+
+.cards-fluxo strong,
+.tag-requisito {
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: var(--amarelo);
+  border: 1px solid rgba(255, 217, 52, 0.28);
+  background: rgba(255, 217, 52, 0.07);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cards-fluxo h3 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+
+.cards-fluxo p {
+  margin: 0;
+  color: var(--texto-fraco);
+  line-height: 1.62;
+}
+
+.download-hero {
+  grid-template-columns: minmax(0, 1.12fr) minmax(330px, 0.88fr);
+}
+
+.download-copy h1,
+.contato-copy h1 {
+  max-width: 960px;
+}
+
+.download-metricas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.download-metricas article {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid var(--borda);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: var(--sombra);
+}
+
+.download-metricas strong {
+  color: var(--amarelo);
+  font-size: clamp(1.7rem, 3vw, 2.7rem);
+  line-height: 1;
+}
+
+.download-metricas span {
+  color: var(--texto-fraco);
+}
+
+.download-gate {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 18px;
+  min-height: 430px;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 217, 52, 0.16), transparent 18rem),
+    linear-gradient(135deg, rgba(16, 135, 255, 0.15), rgba(255, 54, 79, 0.13)),
+    rgba(5, 11, 32, 0.78);
+}
+
+.download-gate.liberado {
+  border-color: rgba(96, 245, 154, 0.34);
+  background:
+    radial-gradient(circle at 22% 18%, rgba(96, 245, 154, 0.18), transparent 18rem),
+    linear-gradient(135deg, rgba(16, 135, 255, 0.15), rgba(96, 245, 154, 0.12)),
+    rgba(5, 11, 32, 0.78);
+}
+
+.gate-icone {
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  font-size: 2rem;
+}
+
+.botao-download-real[disabled],
+.botao[disabled] {
+  opacity: 0.72;
+  cursor: not-allowed;
+  filter: grayscale(0.18);
+}
+
+.requisitos {
+  padding-top: 26px;
+}
+
+.grade-requisitos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.requisito-card {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  min-height: 560px;
+}
+
+.requisito-card h3 {
+  font-size: clamp(1.8rem, 3vw, 3rem);
+}
+
+.requisito-card.minimo {
+  background:
+    radial-gradient(circle at 16% 14%, rgba(16, 135, 255, 0.18), transparent 20rem),
+    var(--vidro);
+}
+
+.requisito-card.recomendado {
+  background:
+    radial-gradient(circle at 16% 14%, rgba(255, 217, 52, 0.16), transparent 20rem),
+    var(--vidro);
+}
+
+.lista-requisitos {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.lista-requisitos li {
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  color: var(--texto-fraco);
+  background: rgba(255, 255, 255, 0.046);
+  line-height: 1.48;
+}
+
+.lista-requisitos strong {
+  color: var(--texto);
+}
+
+.notas-download {
+  padding-top: 20px;
+}
+
+.painel-download-info {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 0.72fr);
+  gap: 22px;
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(16, 135, 255, 0.16), rgba(255, 54, 79, 0.12)),
+    var(--vidro);
+}
+
+.painel-download-info h2 {
+  margin: 12px 0;
+  font-size: clamp(2rem, 4vw, 4.4rem);
+}
+
+.checklist-download {
+  display: grid;
+  gap: 10px;
+}
+
+.checklist-download span {
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 18px;
+  color: var(--texto-fraco);
+  background: rgba(255, 255, 255, 0.055);
+  font-weight: 800;
+}
+
+.contato-hero {
+  grid-template-columns: minmax(0, 0.8fr) minmax(360px, 1.2fr);
+}
+
+.painel-contato {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.48fr);
+  gap: 18px;
+  align-items: start;
+  background:
+    radial-gradient(circle at 24% 18%, rgba(16, 135, 255, 0.16), transparent 20rem),
+    rgba(5, 11, 32, 0.78);
+}
+
+.cartao-email {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid rgba(255, 217, 52, 0.23);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 217, 52, 0.13), transparent 14rem),
+    rgba(255, 255, 255, 0.055);
+}
+
+.cartao-email span {
+  color: var(--texto-fraco);
+  font-weight: 800;
+}
+
+.cartao-email strong {
+  overflow-wrap: anywhere;
+  color: var(--amarelo);
+  font-size: 1.15rem;
+}
+
+.cartao-email p {
+  margin: 0;
+  color: var(--texto-fraco);
+  line-height: 1.55;
+}
+
+.cards-contato {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  padding-top: 20px;
+}
+
+@media (max-width: 1040px) {
+  .grade-acesso,
+  .download-hero,
+  .contato-hero,
+  .painel-contato,
+  .painel-download-info {
+    grid-template-columns: 1fr;
+  }
+
+  .conta-status-card,
+  .download-gate,
+  .requisito-card {
+    min-height: auto;
+  }
+
+  .cards-fluxo {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .grade-requisitos,
+  .cards-contato,
+  .download-metricas,
+  .grade-campos {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .acesso-cabecalho,
+  .download-copy,
+  .contato-copy {
+    text-align: left;
+    justify-items: start;
+  }
+
+  .cards-fluxo {
+    grid-template-columns: 1fr;
+  }
+
+  .abas-conta {
+    grid-template-columns: 1fr;
+  }
+}

@@ -6,13 +6,14 @@ const rotaAtual = Astro.url.pathname;
 const links = [
   { href: "/", texto: "Início" },
   { href: "/conta", texto: "Conta" },
+  { href: "/contato", texto: "Contato" },
   { href: "/wiki", texto: "Wiki" },
   { href: "/download", texto: "Download", destaque: true },
 ];
 
 function ativo(href) {
   if (href === "/") return rotaAtual === "/";
-  return rotaAtual.startsWith(href);
+  return rotaAtual === href || rotaAtual.startsWith(`${href}/`);
 }
 ---
 

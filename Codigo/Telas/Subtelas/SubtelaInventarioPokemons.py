@@ -934,11 +934,12 @@ class InventarioPokemons:
                             self._soltar_no_alvo(alvo_aux)
                     elif alvo_aux is not None and alvo_aux[0] == 'aux':
                         if alvo_aux[1] == 'pokemons':
+                            pokemon_aux = self._pokemon_do_alvo(alvo_aux)
                             if getattr(evento, 'clicks', 1) >= 2:
-                                self._abrir_analise_pokemon(alvo_aux[3])
+                                self._abrir_analise_pokemon(pokemon_aux)
                             else:
-                                self._pokemon_analisado = alvo_aux[3]
-                                self._pokemon_hover = alvo_aux[3]
+                                self._pokemon_analisado = pokemon_aux
+                                self._pokemon_hover = pokemon_aux
                                 self._layout_montado = False
                         else:
                             self._iniciar_arrasto_aux_item(alvo_aux, evento.pos)
@@ -962,7 +963,7 @@ class InventarioPokemons:
                 if analisando and self._painel_auxiliar is not None and self._painel_auxiliar.aba_ativa == 'pokemons':
                     alvo_aux = self._alvo_no_mouse(evento.pos)
                     if alvo_aux is not None and alvo_aux[0] == 'aux' and alvo_aux[1] == 'pokemons':
-                        self._abrir_opcoes_pokemon(evento.pos, alvo_aux[3])
+                        self._abrir_opcoes_pokemon(evento.pos, self._pokemon_do_alvo(alvo_aux))
                         continue
                 pode_contexto_time = self._painel_times_ativo(analisando)
                 alvo_ctx = self._painel_times.alvo_contexto_no_mouse(evento.pos) if self._painel_times is not None and pode_contexto_time else None

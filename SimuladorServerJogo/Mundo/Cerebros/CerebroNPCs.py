@@ -571,9 +571,14 @@ class CerebroNPCs:
         if bool(inter.get("ativa", False)) and str(inter.get("cliente", "")) != str(client_id):
             return (False, "NPC já está em interação")
         alvo["interacao"] = {"ativa": True, "cliente": str(client_id)}
+        pos = alvo.get("posicao") if isinstance(alvo.get("posicao"), (list, tuple)) and len(alvo.get("posicao")) == 2 else None
+        pos_player = self._alvo_interacao(str(client_id))
+        if pos is not None and pos_player is not None:
+            alvo["angulo"] = self._angulo_para((float(pos[0]), float(pos[1])), pos_player, dimensao=str(alvo.get("dimensao") or "Mundo"))
         obj = BANCO_DADOS.obter_objeto(int(alvo.get("id", 0) or 0))
         if isinstance(obj, AtorServer):
             obj.estado_extra["interacao"] = dict(alvo["interacao"])
+            obj.estado_extra["angulo"] = float(alvo.get("angulo", obj.estado_extra.get("angulo", 0.0)) or 0.0)
         salvar_npcs_vendedores_estado(self._npcs)
         return (True, "Interação iniciada")
 

@@ -41,6 +41,16 @@ class ServicoMapaMundo:
 
     def _posicao_camera(self) -> Tuple[float, float]:
         cena = getattr(self.jogo, "Cena", None)
+        objetos = getattr(getattr(cena, "ControladorMundo", None), "Objetos", None)
+        player = getattr(getattr(cena, "ControladorMundo", None), "player_local", None)
+        if objetos is not None and player is not None and str(objetos.dimensao_atual_client() or "Mundo") != "Mundo":
+            player_payload = objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}) if isinstance(objetos.ObjetosPorId, dict) else {}
+            estado = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
+            estadio_id = int(estado.get("estadio_atual_id", 0) or 0)
+            estadio = objetos.EstadiosPorId.get(estadio_id, {}) if isinstance(objetos.EstadiosPorId, dict) else {}
+            pos = estadio.get("posicao") if isinstance(estadio, dict) and isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else None
+            if pos is not None:
+                return (float(pos[0]), float(pos[1]))
         camera = getattr(cena, "Camera", None)
         pos = getattr(camera, "PosicaoTiles", (0.0, 0.0))
         return (float(pos[0]), float(pos[1]))

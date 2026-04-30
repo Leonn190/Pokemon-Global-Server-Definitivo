@@ -192,7 +192,7 @@ class EstadioServer:
         largura_interna = 60.0
         altura_interna = 40.0
         saida_interna = [largura_interna * 0.5, max(1.0, altura_interna - 3.0)]
-        spawn_interno = [5.0, 5.0]
+        spawn_interno = list(saida_interna)
         entrada_offset_x, entrada_offset_y = GeradorEstadio.offset_porta_externa(raio_elipse_y)
         self.estado_extra = {
             "subtipo": "estadio",

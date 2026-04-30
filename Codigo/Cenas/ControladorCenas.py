@@ -253,7 +253,9 @@ class ControladorCenas:
         destino = self.TELA if tela is None else tela
         largura_tela = destino.get_width()
         deslocamento_direita = 0
-        if bool(self.CONFIG.get("MostrarMinimapa", False)) and str(getattr(self.Cena, "ID", "")) == "Mundo":
+        cena_id = str(getattr(self.Cena, "ID", "") or "")
+        somente_fps = cena_id == "Menu"
+        if bool(self.CONFIG.get("MostrarMinimapa", False)) and cena_id == "Mundo":
             deslocamento_direita = 210
         itens_hud = []
 
@@ -261,11 +263,11 @@ class ControladorCenas:
             self.TextoFPS.set_text(f"FPS: {int(self.RELOGIO.get_fps())}")
             itens_hud.append(self.TextoFPS)
 
-        if self.CONFIG.get("Ping Visivel", False):
+        if not somente_fps and self.CONFIG.get("Ping Visivel", False):
             self.TextoPing.set_text("Ping: 5")
             itens_hud.append(self.TextoPing)
 
-        if self.CONFIG.get("Cords Visiveis", False):
+        if not somente_fps and self.CONFIG.get("Cords Visiveis", False):
             entidade_main = getattr(self.Cena, "EntidadeMain", None)
             if entidade_main is not None and hasattr(entidade_main, "Posicao"):
                 x, y = entidade_main.Posicao
@@ -274,7 +276,7 @@ class ControladorCenas:
                 self.TextoCoords.set_text("--")
             itens_hud.append(self.TextoCoords)
 
-        if self.CONFIG.get("MostrarHorario", False):
+        if not somente_fps and self.CONFIG.get("MostrarHorario", False):
             if hasattr(self.Cena, "ControladorMundo") and getattr(self.Cena, "ControladorMundo", None) is not None:
                 tempo = self.Cena.ControladorMundo.tempo_mundo_atual()
                 if "dia" in tempo and "hora" in tempo and "minuto" in tempo:

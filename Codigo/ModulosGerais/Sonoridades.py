@@ -35,7 +35,7 @@ def _carregar_sons():
 Sons = _carregar_sons()
 Musicas = _carregar_catalogo("Musicas")
 
-MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão"}
+MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão", "Estadio"}
 
 # Estado da música atual
 _musica_atual = None
@@ -409,6 +409,9 @@ def _resolver_musica_alvo(jogo):
         return _menu_faixa_atual
 
     if cena_id == "Mundo":
+        objetos = getattr(getattr(cena, "ControladorMundo", None), "Objetos", None)
+        if objetos is not None and str(objetos.dimensao_atual_client() or "Mundo") != "Mundo":
+            return "Estadio"
         return _musica_mundo_estavel(cena)
 
     if cena_id == "Combate":

@@ -255,11 +255,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         return [largura * 0.5, max(1.0, altura - 3.0)]
 
     def _spawn_interno(estado_est):
-        if isinstance(estado_est.get("spawn_interno_pos"), (list, tuple)) and len(estado_est.get("spawn_interno_pos")) == 2:
-            return [float(estado_est.get("spawn_interno_pos")[0]), float(estado_est.get("spawn_interno_pos")[1])]
-        largura = float(estado_est.get("largura_interna", 60.0) or 60.0)
-        altura = float(estado_est.get("altura_interna", 40.0) or 40.0)
-        return [largura * 0.5, max(1.0, altura - 3.0)]
+        return _saida_interna(estado_est)
 
     def _entrada_externa(estado_est):
         if isinstance(estado_est.get("entrada_pos"), (list, tuple)) and len(estado_est.get("entrada_pos")) == 2:
@@ -474,6 +470,9 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 npc_id = int(payload.get("npc_id", 0) or 0)
                 ok, _ = CEREBRO.registrar_inicio_interacao_npc(client_id, npc_id)
                 if ok:
+                    obj_npc = BANCO_DADOS.obter_objeto(npc_id)
+                    if obj_npc is not None:
+                        registrar_diff("update", payload=obj_npc.serializar(), escopo=_escopo_objeto(obj_npc), objeto_id=int(npc_id), autor="server", categoria=str(getattr(obj_npc, "estado_extra", {}).get("subtipo", "npc")))
                     aplicados += 1
                 else:
                     ignorados += 1

@@ -227,6 +227,7 @@ class CenaMundo:
         player_local = self.ControladorMundo.montar_player_local(dados)
         self.EntidadeMain = player_local
         self.Camera.definir_main(self.EntidadeMain)
+        self._centralizar_camera_no_player()
         self.ModuladorRegras.aplicar_em_cena_mundo(self, JOGO)
 
         usuario = str(JOGO.INFO.get("UsuarioLogado", "anon"))
@@ -249,6 +250,16 @@ class CenaMundo:
                 self.ServicoMapa.preparar_bootstrap(mapa_bootstrap if str((mapa_bootstrap or {}).get("status", "ok")).lower() == "ok" else None)
             except Exception as exc:
                 print(f"[CenaMundo] falha ao preparar serviço de mapa: {exc}")
+
+    def _centralizar_camera_no_player(self) -> None:
+        if self.Camera is None or self.EntidadeMain is None or not hasattr(self.EntidadeMain, "Posicao"):
+            return
+        half_w = (float(self.Camera.TamanhoTelaPx[0]) * 0.5) / max(1.0, float(self.Camera.TilePx))
+        half_h = (float(self.Camera.TamanhoTelaPx[1]) * 0.5) / max(1.0, float(self.Camera.TilePx))
+        self.Camera.PosicaoTiles = (float(self.EntidadeMain.Posicao[0]) - half_w, float(self.EntidadeMain.Posicao[1]) - half_h)
+        normalizar = getattr(self.Camera, "_normalizar_posicao_limites", None)
+        if callable(normalizar):
+            normalizar()
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
@@ -291,7 +302,7 @@ class CenaMundo:
                 ger.fechar(inventario_modal)
 
         dentro_estadio = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo") != "Mundo"
-        if self.ServicoMapa is not None and not dentro_estadio:
+        if self.ServicoMapa is not None:
             self.ServicoMapa.tick()
 
         bloqueio_mapa = bloqueio_gameplay or (opcoes_modal is not None) or dialogo_ativo or inventario_modal is not None or self.TelaAtual == "Config" or ger.ativa
@@ -409,7 +420,13 @@ class CenaMundo:
             estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {})
             pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if (self.ServicoMapa is not None and isinstance(estado_player, dict)) else tuple(getattr(player, "Posicao", (0.0, 0.0)))
             dentro_estadio = str((estado_player or {}).get("dimensao") or self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo") != "Mundo"
-            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)) and not dentro_estadio)
+            if dentro_estadio:
+                estadio_id = int((estado_player or {}).get("estadio_atual_id", 0) or 0)
+                estadio = self.ControladorMundo.Objetos.EstadiosPorId.get(estadio_id, {})
+                pos_estadio = estadio.get("posicao") if isinstance(estadio, dict) and isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else None
+                if pos_estadio is not None:
+                    pos_player_mundo = (float(pos_estadio[0]), float(pos_estadio[1]))
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)))
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
             estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
             dica_estadio = self.ControladorMundo.Objetos.mensagem_interacao_estadio(
@@ -466,7 +483,11 @@ class CenaMundo:
         client_id = str(jogo.INFO.get("UsuarioLogado", "anon"))
         npc_id = int(npc_obj.get("id", 0) or 0)
         if link and npc_id > 0:
-            iniciar_interacao_npc_mundo(link, client_id, npc_id)
+            resposta = iniciar_interacao_npc_mundo(link, client_id, npc_id)
+            pacotes = resposta.get("pacotes", []) if isinstance(resposta, dict) and isinstance(resposta.get("pacotes"), list) else []
+            for pacote in pacotes:
+                if isinstance(pacote, dict):
+                    self.ControladorMundo.Pacotes._distribuir_pacote_tick(pacote)
         self._npc_interacao_pendente = {"npc_id": npc_id, "desde_ms": int(pygame.time.get_ticks())}
 
     def _abrir_dialogo_npc_autoritativo(self, jogo, npc_obj: dict) -> None:
@@ -566,6 +587,12 @@ class CenaMundo:
         ativo = bool(inter.get("ativa", False))
         client_id = str(jogo.INFO.get("UsuarioLogado", "anon"))
         if ativo and dono == client_id:
+            confirmado_ms = int(pend.get("confirmado_ms", 0) or 0)
+            if confirmado_ms <= 0:
+                self._npc_interacao_pendente = {"npc_id": npc_id, "desde_ms": int(pend.get("desde_ms", 0) or 0), "confirmado_ms": int(pygame.time.get_ticks())}
+                return
+            if int(pygame.time.get_ticks()) - confirmado_ms < 220:
+                return
             self._abrir_dialogo_npc_autoritativo(jogo, obj)
             return
         if ativo and dono != client_id:
@@ -591,6 +618,7 @@ class CenaMundo:
         npc_payload["inicio_dialogo"] = str(pend.get("inicio_dialogo") or "")
         npc_payload["resultado_batalha"] = str(pend.get("resultado_batalha") or "")
         jogo.INFO.pop("DialogoPosBatalha", None)
+        self._centralizar_camera_no_player()
         self._abrir_dialogo_npc_autoritativo(jogo, npc_payload)
         return True
 

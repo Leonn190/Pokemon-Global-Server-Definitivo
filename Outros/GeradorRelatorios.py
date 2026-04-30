@@ -29,6 +29,14 @@ IGNORAR_PASTAS = {
     "RelatoriosLegado",
     "Relatorios atualizados",
 }
+
+# Pastas pesadas/geradas que não devem entrar nos relatórios.
+# ServerList e Saves são ignoradas apenas quando aparecem na raiz do projeto.
+IGNORAR_PASTAS_RAIZ = {"ServerList", "Saves"}
+
+# Dentro de Site, o relatório deve contar o código do site, mas ignorar caches/dependências.
+IGNORAR_PASTAS_SITE = {".astro", "node_modules"}
+
 IGNORAR_EXTENSOES = {".pyc"}
 IGNORAR_ARQUIVOS_EXATOS = {"Registro.md"}
 
@@ -302,9 +310,32 @@ def span_linhas_no(no: ast.AST) -> int:
     return 0
 
 
+def caminho_relativo_ignorado(rel_parts: Tuple[str, ...]) -> bool:
+    if not rel_parts:
+        return False
+
+    if any(parte in IGNORAR_PASTAS for parte in rel_parts):
+        return True
+
+    if rel_parts[0] in IGNORAR_PASTAS_RAIZ:
+        return True
+
+    if len(rel_parts) >= 2 and rel_parts[0] == "Site" and rel_parts[1] in IGNORAR_PASTAS_SITE:
+        return True
+
+    return False
+
+
+def obter_partes_relativas(p: Path, repo_root: Path) -> Tuple[str, ...]:
+    try:
+        return p.relative_to(repo_root).parts
+    except ValueError:
+        return p.parts
+
+
 def deve_ignorar(p: Path, repo_root: Path, relatorios_dir: Path) -> bool:
-    parts = set(p.parts)
-    if any(x in parts for x in IGNORAR_PASTAS):
+    rel_parts = obter_partes_relativas(p, repo_root)
+    if caminho_relativo_ignorado(rel_parts):
         return True
     if p.is_relative_to(relatorios_dir):
         return True
@@ -315,11 +346,36 @@ def deve_ignorar(p: Path, repo_root: Path, relatorios_dir: Path) -> bool:
     return False
 
 
+def iterar_paths_filtrados(base: Path, repo_root: Path, relatorios_dir: Path) -> Iterable[Path]:
+    if not base.exists():
+        return
+
+    for raiz, dirnames, filenames in os.walk(base):
+        raiz_path = Path(raiz)
+
+        # Poda a árvore antes de entrar em pastas gigantes como node_modules.
+        dirnames[:] = [
+            nome
+            for nome in dirnames
+            if not deve_ignorar(raiz_path / nome, repo_root, relatorios_dir)
+        ]
+
+        for nome in dirnames:
+            yield raiz_path / nome
+
+        for nome in filenames:
+            p = raiz_path / nome
+            if not deve_ignorar(p, repo_root, relatorios_dir):
+                yield p
+
+
 def construir_mapa_modulos_py(repo_root: Path, relatorios_dir: Path) -> Tuple[Dict[str, str], Dict[str, str]]:
     modulo_para_arquivo: Dict[str, str] = {}
     arquivo_para_modulo: Dict[str, str] = {}
 
-    for p in repo_root.rglob("*.py"):
+    for p in iterar_paths_filtrados(repo_root, repo_root, relatorios_dir):
+        if p.suffix.lower() != ".py":
+            continue
         if deve_ignorar(p, repo_root, relatorios_dir):
             continue
         if not p.is_file():
@@ -936,7 +992,7 @@ def coletar_metricas_pasta_importante(pasta_base: Path, repo_root: Path, relator
     total_size = 0
     total_linhas = 0
 
-    for p in pasta_base.rglob("*"):
+    for p in iterar_paths_filtrados(pasta_base, repo_root, relatorios_dir):
         try:
             if deve_ignorar(p, repo_root, relatorios_dir):
                 continue
@@ -1024,7 +1080,7 @@ def coletar_metricas(
     modulo_para_arquivo, arquivo_para_modulo = construir_mapa_modulos_py(repo_root, relatorios_dir)
     importado_por_count: Counter[str] = Counter()
 
-    for p in repo_root.rglob("*"):
+    for p in iterar_paths_filtrados(repo_root, repo_root, relatorios_dir):
         try:
             if deve_ignorar(p, repo_root, relatorios_dir):
                 continue
@@ -1243,7 +1299,16 @@ def coletar_metricas(
 def deve_ignorar_arquitetura(path: Path) -> bool:
     if path.name in {".DS_Store", "Thumbs.db"}:
         return True
-    return any(parte in IGNORAR_PASTAS for parte in path.parts)
+
+    parts = path.parts
+    if any(parte in IGNORAR_PASTAS for parte in parts):
+        return True
+
+    for i, parte in enumerate(parts[:-1]):
+        if parte == "Site" and parts[i + 1] in IGNORAR_PASTAS_SITE:
+            return True
+
+    return False
 
 
 def natural_key_path(path: Path) -> List[Any]:

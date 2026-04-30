@@ -10,15 +10,17 @@ from pathlib import Path
 
 
 URL_SITE = "http://localhost:4321/"
-NODE_DIR = r"C:\Program Files\nodejs"
+NODE_DIR = Path(r"C:\Program Files\nodejs")
+NODE_EXE = NODE_DIR / "node.exe"
+NPM_CMD = NODE_DIR / "npm.cmd"
 
 
 def achar_pasta_site() -> Path:
     """
     Este arquivo pode ficar em:
-    - Pokemon-Global-Server-Definitivo/AbrirSite.py
-    - Pokemon-Global-Server-Definitivo/Outros/AbrirSite.py
-    - Pokemon-Global-Server-Definitivo/Site/AbrirSite.py
+    - Pokemon-Global-Server-Definitivo/AbridorSite.py
+    - Pokemon-Global-Server-Definitivo/Outros/AbridorSite.py
+    - Pokemon-Global-Server-Definitivo/Site/AbridorSite.py
     """
     pasta_atual = Path(__file__).resolve().parent
 
@@ -42,27 +44,71 @@ def achar_pasta_site() -> Path:
 
 
 def preparar_ambiente() -> dict[str, str]:
-    env = os.environ.copy()
+    """
+    Corrige o PATH dentro deste processo Python.
 
-    # Resolve o problema do Node instalado mas fora do PATH.
-    if Path(NODE_DIR).exists():
-        env["PATH"] = NODE_DIR + os.pathsep + env.get("PATH", "")
+    No Windows, às vezes existe 'Path' e não 'PATH'. Se criarmos outro
+    'PATH', alguns processos podem ignorar. Por isso removemos qualquer
+    variação e recriamos só 'Path'.
+    """
+    env_original = os.environ.copy()
 
+    caminho_antigo = ""
+    for chave, valor in env_original.items():
+        if chave.lower() == "path":
+            caminho_antigo = valor
+            break
+
+    env = {
+        chave: valor
+        for chave, valor in env_original.items()
+        if chave.lower() != "path"
+    }
+
+    env["Path"] = str(NODE_DIR) + os.pathsep + caminho_antigo
     return env
 
 
-def testar_comando(comando: list[str], env: dict[str, str]) -> bool:
-    try:
-        subprocess.run(
-            comando,
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True,
-        )
-        return True
-    except Exception:
-        return False
+def rodar(comando: list[str], pasta: Path | None, env: dict[str, str]) -> int:
+    return subprocess.run(
+        comando,
+        cwd=pasta,
+        env=env,
+        shell=False,
+    ).returncode
+
+
+def testar_node(env: dict[str, str]) -> None:
+    if not NODE_EXE.exists():
+        print("ERRO: node.exe não foi encontrado no caminho esperado.")
+        print(f"Caminho esperado: {NODE_EXE}")
+        input("\nPressione Enter para sair...")
+        sys.exit(1)
+
+    if not NPM_CMD.exists():
+        print("ERRO: npm.cmd não foi encontrado no caminho esperado.")
+        print(f"Caminho esperado: {NPM_CMD}")
+        input("\nPressione Enter para sair...")
+        sys.exit(1)
+
+    print("Node encontrado:")
+    subprocess.run([str(NODE_EXE), "-v"], env=env, shell=False)
+
+    print("npm encontrado:")
+    subprocess.run([str(NPM_CMD), "-v"], env=env, shell=False)
+
+
+def remover_node_modules(pasta_site: Path, env: dict[str, str]) -> None:
+    node_modules = pasta_site / "node_modules"
+    if not node_modules.exists():
+        return
+
+    print("\nRemovendo node_modules quebrado...")
+    subprocess.run(
+        ["cmd.exe", "/c", "rmdir", "/s", "/q", str(node_modules)],
+        env=env,
+        shell=False,
+    )
 
 
 def instalar_dependencias_se_precisar(pasta_site: Path, env: dict[str, str]) -> None:
@@ -71,21 +117,25 @@ def instalar_dependencias_se_precisar(pasta_site: Path, env: dict[str, str]) -> 
     if astro_cmd.exists():
         return
 
-    print("Dependências do site não encontradas. Rodando npm.cmd install...")
+    print("\nDependências do site não encontradas. Rodando npm.cmd install...")
     print("Isso pode demorar um pouco na primeira vez.\n")
 
-    resultado = subprocess.run(
-        ["npm.cmd", "install"],
-        cwd=pasta_site,
-        env=env,
-        shell=False,
-    )
+    codigo = rodar([str(NPM_CMD), "install"], pasta_site, env)
 
-    if resultado.returncode != 0:
-        print("\nERRO: npm.cmd install falhou.")
-        print("Tente fechar VS Code/terminais que estejam usando a pasta Site e rode novamente.")
+    if codigo == 0:
+        return
+
+    print("\nA instalação falhou. Vou tentar limpar node_modules e instalar de novo.")
+    remover_node_modules(pasta_site, env)
+
+    print("\nRodando npm.cmd install novamente...\n")
+    codigo = rodar([str(NPM_CMD), "install"], pasta_site, env)
+
+    if codigo != 0:
+        print("\nERRO: npm.cmd install falhou de novo.")
+        print("Feche VS Code, terminais e qualquer janela rodando Astro/site, depois rode este arquivo novamente.")
         input("\nPressione Enter para sair...")
-        sys.exit(resultado.returncode)
+        sys.exit(codigo)
 
 
 def servidor_respondendo() -> bool:
@@ -96,7 +146,7 @@ def servidor_respondendo() -> bool:
         return False
 
 
-def abrir_servidor_astro(pasta_site: Path, env: dict[str, str]) -> None:
+def abrir_servidor_astro(pasta_site: Path) -> None:
     """
     Abre o Astro em uma janela separada de terminal.
     A janela fica aberta mantendo o site rodando.
@@ -104,12 +154,11 @@ def abrir_servidor_astro(pasta_site: Path, env: dict[str, str]) -> None:
     comando = (
         f'cd /d "{pasta_site}" && '
         f'set "PATH={NODE_DIR};%PATH%" && '
-        f'npm.cmd run dev'
+        f'"{NPM_CMD}" run dev'
     )
 
     subprocess.Popen(
         ["cmd.exe", "/k", comando],
-        env=env,
         creationflags=subprocess.CREATE_NEW_CONSOLE,
     )
 
@@ -124,31 +173,22 @@ def main() -> None:
     pasta_site = achar_pasta_site()
     env = preparar_ambiente()
 
-    if not testar_comando(["node", "-v"], env):
-        print("ERRO: Node.js não foi encontrado.")
-        print(f"Verifique se existe: {NODE_DIR}")
-        input("\nPressione Enter para sair...")
-        sys.exit(1)
-
-    if not testar_comando(["npm.cmd", "-v"], env):
-        print("ERRO: npm.cmd não foi encontrado.")
-        print(f"Verifique se existe: {NODE_DIR}\\npm.cmd")
-        input("\nPressione Enter para sair...")
-        sys.exit(1)
+    print(f"Pasta do site: {pasta_site}")
+    testar_node(env)
 
     instalar_dependencias_se_precisar(pasta_site, env)
 
     if not servidor_respondendo():
-        print("Abrindo servidor Astro...")
-        abrir_servidor_astro(pasta_site, env)
+        print("\nAbrindo servidor Astro...")
+        abrir_servidor_astro(pasta_site)
 
         print("Esperando o site subir...")
-        for _ in range(30):
+        for _ in range(40):
             if servidor_respondendo():
                 break
             time.sleep(1)
 
-    print(f"Abrindo navegador em: {URL_SITE}")
+    print(f"\nAbrindo navegador em: {URL_SITE}")
     abrir_navegador()
 
 

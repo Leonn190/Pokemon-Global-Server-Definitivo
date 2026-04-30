@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional, Tuple
 # ============================================================
 # CONFIGURAÇÃO MANUAL
 # ============================================================
-MODELO_ATUAL = 9
+MODELO_ATUAL = 10
 PASTA_RELATORIOS_ORIGINAIS = "Outros/RelatoriosLegado"
 PASTA_RELATORIOS_ATUALIZADOS = "Outros/Relatorios"
 CAMINHO_GERADOR_ATUAL = "Outros/GeradorRelatorios.py"

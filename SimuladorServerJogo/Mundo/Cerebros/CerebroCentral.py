@@ -380,6 +380,9 @@ class CerebroCentral:
     def registrar_impacto_projetil_cliente(self, client_id: str, payload: Dict[str, object], fruta: bool = False) -> bool:
         return self._cerebro_projeteis.registrar_impacto_cliente(client_id, payload, fruta=fruta)
 
+    def registrar_falha_captura_pokemon(self, poke: PokemonServer) -> bool:
+        return self._cerebro_pokemons.registrar_falha_captura(poke)
+
     def registrar_drop_item_mundo(self, client_id: str, payload: Dict[str, object]) -> bool:
         return self._cerebro_itens_mundo.registrar_drop(client_id, payload)
 

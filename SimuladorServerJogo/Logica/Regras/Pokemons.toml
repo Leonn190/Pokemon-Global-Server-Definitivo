@@ -28,3 +28,64 @@ bonus_maestria_por_ponto = 10.0
 # Clamp da chance de escape após a fórmula de dificuldade.
 chance_escape_min = 2.0
 chance_escape_max = 95.0
+
+[captura.dificuldade]
+formula = "min + (max - min) * (peso_total * percentil_total^expoente_total + peso_nivel * nivel_p^expoente_nivel + peso_iv * iv_p^expoente_iv)"
+min = 5.0
+max = 120.0
+peso_total = 0.70
+peso_nivel = 0.20
+peso_iv = 0.10
+expoente_total = 1.18
+expoente_nivel = 0.85
+expoente_iv = 0.90
+
+[captura.poder]
+formula = "(poder_base_captura + poder_base_bola + bonus_frutas + bonus_bioma + bonus_maestria) * multiplicador_critico"
+poder_base_captura = 5.0
+maestria_max = 10.0
+bonus_maestria_max = 30.0
+expoente_maestria = 0.70
+multiplicador_critico = 1.35
+
+[captura.chance]
+formula = "chance_check = clamp(base_check + (poder_total - dificuldade) * escala_diferenca, check_min, check_max); precisa passar em checks_necessarios checks"
+base_check = 58.0
+escala_diferenca = 0.82
+check_min = 3.0
+check_max = 98.0
+checks_necessarios = 3
+
+[captura.falhas]
+incremento_dificuldade_por_falha = 3.0
+falhas_para_irritar = 5
+limiar_dificuldade_irritado = 85.0
+dificuldade_irritado_fixa = 130.0
+
+[personalidade_mundo]
+# Pesos relativos. Nao precisam somar 1; normalizar no codigo.
+peso_normal = 0.25
+peso_curioso = 0.35
+peso_medroso = 0.35
+peso_bravo = 0.20
+peso_super_bravo = 0.10
+
+[personalidade_mundo.curioso]
+raio_percepcao_tiles = 5.0
+distancia_segura_tiles = 2.4
+multiplicador_velocidade = 0.95
+
+[personalidade_mundo.medroso]
+raio_percepcao_tiles = 5.5
+multiplicador_velocidade = 1.05
+
+[personalidade_mundo.irritado]
+raio_busca_tiles = 6.0
+multiplicador_velocidade = 1.20
+cooldown_movimento_mult = 0.70
+chance_movimento_mult = 2.0
+
+[personalidade_mundo.super_bravo]
+raio_ativacao_tiles = 7.0
+raio_busca_irritado_tiles = 9.0
+multiplicador_velocidade_irritado = 1.35

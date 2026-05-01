@@ -108,8 +108,20 @@ class CerebroProjeteis:
             "captura_bonus_maestria": float(self._core._f("captura_bonus_maestria", 10.0)),
             "captura_chance_min": float(self._core._f("captura_chance_min", 2.0)),
             "captura_chance_max": float(self._core._f("captura_chance_max", 95.0)),
+            "captura_poder_poder_base_captura": float(self._core._f("captura_poder_poder_base_captura", 5.0)),
+            "captura_poder_maestria_max": float(self._core._f("captura_poder_maestria_max", 10.0)),
+            "captura_poder_bonus_maestria_max": float(self._core._f("captura_poder_bonus_maestria_max", 30.0)),
+            "captura_poder_expoente_maestria": float(self._core._f("captura_poder_expoente_maestria", 0.70)),
+            "captura_poder_multiplicador_critico": float(self._core._f("captura_poder_multiplicador_critico", 1.35)),
+            "captura_chance_base_check": float(self._core._f("captura_chance_base_check", 58.0)),
+            "captura_chance_escala_diferenca": float(self._core._f("captura_chance_escala_diferenca", 0.82)),
+            "captura_chance_check_min": float(self._core._f("captura_chance_check_min", 3.0)),
+            "captura_chance_check_max": float(self._core._f("captura_chance_check_max", 98.0)),
+            "captura_chance_checks_necessarios": int(self._core._i("captura_chance_checks_necessarios", 3)),
         })
         if bool(ret.get("iniciada", False)):
+            if not bool(ret.get("sucesso", False)):
+                self._core.registrar_falha_captura_pokemon(poke)
             cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
             cap["token_arremesso"] = token
             BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": poke.estado_extra})

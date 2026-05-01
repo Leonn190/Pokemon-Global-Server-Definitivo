@@ -39,32 +39,34 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         return {"iniciada": False, "motivo": "captura_em_andamento", "eventos": []}
 
     bola = executar_pokebola(nome_bola, pokemon, contexto=ctx)
+    poder_base_captura = float(ctx.get("captura_poder_poder_base_captura", 5.0) if ctx.get("captura_poder_poder_base_captura", 5.0) not in (None, "") else 5.0)
     poder_base = float(bola.get("poder_base", 0.0) or 0.0)
-    poder = float(poder_base)
 
     estado_fruta = pokemon.estado_extra.get("estado_frutificacao") if isinstance(pokemon.estado_extra.get("estado_frutificacao"), dict) else {}
     bonus_frutas = float(estado_fruta.get("bonus_captura_frutas", 0.0) or 0.0)
-    poder += bonus_frutas
     bonus_bioma = estado_fruta.get("bonus_captura_bioma") if isinstance(estado_fruta.get("bonus_captura_bioma"), dict) else {}
     bonus_bioma_valor = float(bonus_bioma.get(str(ctx.get("bioma", "")).lower(), 0.0) or 0.0)
-    poder += bonus_bioma_valor
 
     maestria = float(ctx.get("maestria", 0.0) if ctx.get("maestria", 0.0) not in (None, "") else 0.0)
-    bonus_maestria = float(ctx.get("captura_bonus_maestria", 10.0) if ctx.get("captura_bonus_maestria", 10.0) not in (None, "") else 10.0)
-    bonus_maestria_total = maestria * bonus_maestria
-    poder += bonus_maestria_total
-    bonus_critica = 0.0
-    if bool(ctx.get("captura_critica_cliente", False)):
-        bonus_critica = float(ctx.get("captura_bonus_critica_cliente", 15.0) if ctx.get("captura_bonus_critica_cliente", 15.0) not in (None, "") else 15.0)
-        poder += bonus_critica
+    maestria_max = float(ctx.get("captura_poder_maestria_max", 10.0) if ctx.get("captura_poder_maestria_max", 10.0) not in (None, "") else 10.0)
+    bonus_maestria_max = float(ctx.get("captura_poder_bonus_maestria_max", 30.0) if ctx.get("captura_poder_bonus_maestria_max", 30.0) not in (None, "") else 30.0)
+    expoente_maestria = float(ctx.get("captura_poder_expoente_maestria", 0.70) if ctx.get("captura_poder_expoente_maestria", 0.70) not in (None, "") else 0.70)
+    maestria_p = max(0.0, min(1.0, maestria / max(0.0001, maestria_max)))
+    bonus_maestria_total = bonus_maestria_max * (maestria_p ** expoente_maestria)
+    poder_linear = poder_base_captura + poder_base + bonus_frutas + bonus_bioma_valor + bonus_maestria_total
+    multiplicador_critico = float(ctx.get("captura_poder_multiplicador_critico", 1.35) if ctx.get("captura_poder_multiplicador_critico", 1.35) not in (None, "") else 1.35)
+    critica_cliente = bool(ctx.get("captura_critica_cliente", False))
+    poder = poder_linear * multiplicador_critico if critica_cliente else poder_linear
 
     dificuldade = float(pokemon.estado_extra.get("dificuldade_captura", 50.0) or 50.0)
     garantida = bool(bola.get("captura_garantida", False))
-    chance_min = float(ctx.get("captura_chance_min", 2.0) if ctx.get("captura_chance_min", 2.0) not in (None, "") else 2.0)
-    chance_max = float(ctx.get("captura_chance_max", 95.0) if ctx.get("captura_chance_max", 95.0) not in (None, "") else 95.0)
-    chance_escape = 0.0 if garantida else max(chance_min, min(chance_max, dificuldade - poder))
-    chance_captura_check = 100.0 - chance_escape
-    chance_captura_total = 100.0 if garantida else (chance_captura_check / 100.0) ** 3 * 100.0
+    base_check = float(ctx.get("captura_chance_base_check", 58.0) if ctx.get("captura_chance_base_check", 58.0) not in (None, "") else 58.0)
+    escala_diferenca = float(ctx.get("captura_chance_escala_diferenca", 0.82) if ctx.get("captura_chance_escala_diferenca", 0.82) not in (None, "") else 0.82)
+    check_min = float(ctx.get("captura_chance_check_min", 3.0) if ctx.get("captura_chance_check_min", 3.0) not in (None, "") else 3.0)
+    check_max = float(ctx.get("captura_chance_check_max", 98.0) if ctx.get("captura_chance_check_max", 98.0) not in (None, "") else 98.0)
+    checks_necessarios = max(1, int(ctx.get("captura_chance_checks_necessarios", 3) if ctx.get("captura_chance_checks_necessarios", 3) not in (None, "") else 3))
+    chance_check = 100.0 if garantida else max(check_min, min(check_max, base_check + ((poder - dificuldade) * escala_diferenca)))
+    chance_real_checks = 100.0 if garantida else (chance_check / 100.0) ** checks_necessarios * 100.0
 
     dono_pos = ctx.get("dono_posicao") if isinstance(ctx.get("dono_posicao"), (list, tuple)) and len(ctx.get("dono_posicao")) == 2 else None
     bola_pos = [float(pokemon.posicao[0]), float(pokemon.posicao[1])]
@@ -73,7 +75,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     checks: List[bool] = []
     rolagens: List[float] = []
     falhou = False
-    for _idx in range(1, 4):
+    for _idx in range(1, checks_necessarios + 1):
         if falhou:
             checks.append(False)
             continue
@@ -81,7 +83,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         if not passou:
             rolagem = random.uniform(0.0, 100.0)
             rolagens.append(float(rolagem))
-            passou = rolagem > chance_escape
+            passou = rolagem <= chance_check
         checks.append(bool(passou))
         if not passou:
             falhou = True
@@ -108,7 +110,8 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
             "retorno_inicio": list(bola_pos),
             "retorno_destino": list(retorno_destino),
             "poder_total": float(poder),
-            "chance_escape": float(chance_escape),
+            "chance_check": float(chance_check),
+            "chance_real_3_checks": float(chance_real_checks),
             "captura_garantida": bool(garantida),
             "liberar_movimento_tick": int(liberar_tick),
             "efeitos_bola": dict(bola.get("efeitos", {})) if isinstance(bola.get("efeitos"), dict) else {},
@@ -119,19 +122,17 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     pokemon.estado_extra["ativo"] = not sucesso
     pokemon.estado_extra["capturado"] = bool(sucesso)
     pokemon.estado_extra["cooldown_movimento_ate_tick"] = int(liberar_tick)
-    if not sucesso:
-        pokemon.estado_extra["tentativas_falhas_captura"] = int(pokemon.estado_extra.get("tentativas_falhas_captura", 0) or 0) + 1
 
     print(
         "[CAPTURA_MATEMATICA_SERVER] "
         f"pokemon_id={int(getattr(pokemon, 'Id', 0) or 0)} especie={pokemon.estado_extra.get('especie', '')} "
         f"token={ctx.get('token_arremesso', '')} bola={nome_bola} garantida={garantida} "
-        f"poder_base={poder_base:.3f} bonus_frutas={bonus_frutas:.3f} bonus_bioma={bonus_bioma_valor:.3f} "
-        f"maestria={maestria:.3f} bonus_maestria_por_ponto={bonus_maestria:.3f} bonus_maestria_total={bonus_maestria_total:.3f} "
-        f"critica_cliente={bool(ctx.get('captura_critica_cliente', False))} bonus_critica={bonus_critica:.3f} "
-        f"poder_total={poder:.3f} dificuldade={dificuldade:.3f} chance_min={chance_min:.3f} chance_max={chance_max:.3f} "
-        f"formula_escape='clamp(dificuldade - poder_total, chance_min, chance_max)' chance_escape_por_check={chance_escape:.3f}% "
-        f"chance_captura_por_check={chance_captura_check:.3f}% chance_captura_3_checks={chance_captura_total:.3f}% "
+        f"poder_base_captura={poder_base_captura:.3f} poder_base={poder_base:.3f} bonus_frutas={bonus_frutas:.3f} bonus_bioma={bonus_bioma_valor:.3f} "
+        f"maestria={maestria:.3f} bonus_maestria_total={bonus_maestria_total:.3f} "
+        f"critica_cliente={critica_cliente} multiplicador_critico={multiplicador_critico:.3f} "
+        f"poder_total={poder:.3f} dificuldade={dificuldade:.3f} "
+        f"formula_chance='clamp(base_check + (poder_total - dificuldade) * escala_diferenca, check_min, check_max)' "
+        f"chance_check={chance_check:.3f}% chance_real_3_checks={chance_real_checks:.3f}% "
         f"rolagens={[round(x, 3) for x in rolagens]} checagens={checks} resultado={resultado}"
     )
 

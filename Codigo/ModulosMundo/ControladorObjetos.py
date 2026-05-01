@@ -605,7 +605,8 @@ class ControladorObjetos:
         agora_ms = pygame.time.get_ticks()
         info["impacto_local_enviado"] = True
         info["impacto_local_enviado_ms"] = agora_ms
-        if hasattr(poke, "registrar_colisao_projetil_local"):
+        eh_fruta = str(getattr(proj, "TipoProjetil", "")).lower() == "fruta"
+        if (not eh_fruta) and hasattr(poke, "registrar_colisao_projetil_local"):
             poke.registrar_colisao_projetil_local(token, nome_bola=str(getattr(proj, "ItemNome", "") or getattr(proj, "Subtipo", "pokeball")), tempo_espera_confirmacao_ms=1500)
         dono_ref = getattr(self, "_player_local_ref", None)
         if dono_ref is not None and hasattr(dono_ref, "Posicao"):
@@ -617,7 +618,7 @@ class ControladorObjetos:
         captura_critica_cliente = bool(getattr(poke, "calcular_captura_critica_local", lambda _p: False)(tuple(proj.Posicao)))
         self.EnfileirarDiffRapida({
             "tipo": "evento",
-            "categoria": "captura_impacto_cliente" if str(getattr(proj, "TipoProjetil", "")).lower() != "fruta" else "fruta_impacto_cliente",
+            "categoria": "fruta_impacto_cliente" if eh_fruta else "captura_impacto_cliente",
             "payload": {
                 "token": token,
                 "pokemon_id": int(getattr(poke, "Id", 0) or 0),

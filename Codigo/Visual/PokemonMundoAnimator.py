@@ -11,17 +11,6 @@ class PokemonMundoAnimator:
     def __init__(self, pokemon) -> None:
         self.pokemon = pokemon
 
-    def _desenhar_barra_local(self, tela, centro, raio):
-        p = self.pokemon
-        decorrido_s = max(0.0, (pygame.time.get_ticks() - int(p._inicio_barra_local_ms)) / 1000.0)
-        ang = (decorrido_s * p.VelocidadeBarraCaptura) % 360.0
-        jan = max(8.0, min(120.0, p.TamanhoBarraCaptura * 360.0))
-        rect = pygame.Rect(0, 0, raio * 2, raio * 2)
-        rect.center = centro
-        ini = math.radians(-ang)
-        fim = math.radians(-(ang + jan))
-        pygame.draw.arc(tela, (255, 210, 76), rect, fim, ini, 4)
-
     def _desenhar_pokemon_normal(self, tela, centro, raio_corpo, escala_extra: float = 1.0, alpha: int = 255):
         p = self.pokemon
         raio = max(2, int(raio_corpo * max(0.05, float(escala_extra))))
@@ -38,11 +27,10 @@ class PokemonMundoAnimator:
             tela.blit(surf, surf.get_rect(center=centro))
 
     def _desenhar_circulo_base(self, tela, centro, raio_base):
-        pulso = 1.0 + math.sin(pygame.time.get_ticks() * 0.008) * 0.06
-        rr = max(3, int(raio_base * pulso))
-        pygame.draw.circle(tela, (70, 155, 245), centro, rr)
-        pygame.draw.circle(tela, (24, 84, 190), centro, rr, 2)
-        return rr
+        estado_visual = getattr(self.pokemon, "EstadoVisual", None)
+        if estado_visual is not None:
+            return estado_visual.desenhar_circulo_base(tela, centro, raio_base)
+        return max(3, int(raio_base))
 
     def _surface_bola_captura(self, tile_px: int):
         p = self.pokemon
@@ -154,9 +142,6 @@ class PokemonMundoAnimator:
         fase = p._fase()
         em_pendente = p.em_captura_pendente()
 
-        if p.FrutasAplicadas and fase not in {"volta"} and not em_pendente:
-            pygame.draw.circle(tela, (98, 212, 118), centro, base + 8, 2)
-
         if fase == "captura":
             self._desenhar_animacao_captura(tela, camera, centro, tile_px)
         elif fase == "checagem":
@@ -169,4 +154,4 @@ class PokemonMundoAnimator:
             self._desenhar_circulo_base(tela, centro, int(base * 2))
             self._desenhar_pokemon_normal(tela, centro, max(2, int(base * 2.0)))
             if p.AlvoLocalCaptura and not em_pendente:
-                self._desenhar_barra_local(tela, centro, int(base * 2.35))
+                p.EstadoVisual.desenhar_barra_critica(tela, centro, int(base * 2.35))

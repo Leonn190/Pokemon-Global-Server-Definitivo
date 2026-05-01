@@ -23,6 +23,10 @@ def _fnum(v, default=0.0):
         return float(default)
 
 
+def _clamp01(v) -> float:
+    return max(0.0, min(1.0, _fnum(v, 0.0)))
+
+
 def _inum(v, default=0) -> int:
     try:
         return int(float(v))
@@ -179,6 +183,55 @@ def _recalcular_poder_relativo(stats: Dict[str, float]) -> float:
     for _, chave, real in ranking[:6]:
         total += real if chave == "Vida" else (real * 2.0)
     return round(total * 2.0, 2)
+
+
+def _total_csv_ou_stats(row: Dict[str, str]) -> float:
+    total = _fnum(row.get("Total"), -1.0)
+    if total >= 0.0:
+        return float(total)
+    return _recalcular_total({k: _fnum(row.get(k), 0.0) for k in STATS_BASE})
+
+
+def _percentil_total_capturavel(row: Dict[str, str]) -> float:
+    if len(_TOTAIS_CAPTURAVEIS_ORDENADOS) <= 1:
+        return 0.0
+    total = _total_csv_ou_stats(row)
+    indices = [idx for idx, valor in enumerate(_TOTAIS_CAPTURAVEIS_ORDENADOS) if abs(float(valor) - total) <= 1e-9]
+    if not indices:
+        menores = sum(1 for valor in _TOTAIS_CAPTURAVEIS_ORDENADOS if float(valor) < total)
+        return max(0.0, min(1.0, menores / max(1, len(_TOTAIS_CAPTURAVEIS_ORDENADOS) - 1)))
+    rank_medio = (indices[0] + indices[-1]) / 2.0
+    return max(0.0, min(1.0, rank_medio / max(1, len(_TOTAIS_CAPTURAVEIS_ORDENADOS) - 1)))
+
+
+def _calcular_dificuldade_captura(row: Dict[str, str], iv: int, nivel: int) -> float:
+    total_p = _percentil_total_capturavel(row)
+    iv_p = _clamp01(float(iv) / 100.0)
+    nivel_p = _clamp01(float(nivel) / 100.0)
+    peso_total = float(_REGRAS_POKEMON.get("captura_dificuldade_peso_total", 0.70))
+    peso_nivel = float(_REGRAS_POKEMON.get("captura_dificuldade_peso_nivel", 0.20))
+    peso_iv = float(_REGRAS_POKEMON.get("captura_dificuldade_peso_iv", 0.10))
+    exp_total = float(_REGRAS_POKEMON.get("captura_dificuldade_expoente_total", 1.18))
+    exp_nivel = float(_REGRAS_POKEMON.get("captura_dificuldade_expoente_nivel", 0.85))
+    exp_iv = float(_REGRAS_POKEMON.get("captura_dificuldade_expoente_iv", 0.90))
+    dif_min = float(_REGRAS_POKEMON.get("captura_dificuldade_min", 10.0))
+    dif_max = float(_REGRAS_POKEMON.get("captura_dificuldade_max", 120.0))
+    score = (peso_total * (total_p ** exp_total)) + (peso_nivel * (nivel_p ** exp_nivel)) + (peso_iv * (iv_p ** exp_iv))
+    return round(dif_min + ((dif_max - dif_min) * score), 2)
+
+
+def _sortear_personalidade_mundo() -> str:
+    opcoes = ["normal", "curioso", "medroso", "bravo", "super_bravo"]
+    pesos = [
+        max(0.0, float(_REGRAS_POKEMON.get("personalidade_mundo_peso_normal", 0.25))),
+        max(0.0, float(_REGRAS_POKEMON.get("personalidade_mundo_peso_curioso", 0.35))),
+        max(0.0, float(_REGRAS_POKEMON.get("personalidade_mundo_peso_medroso", 0.35))),
+        max(0.0, float(_REGRAS_POKEMON.get("personalidade_mundo_peso_bravo", 0.20))),
+        max(0.0, float(_REGRAS_POKEMON.get("personalidade_mundo_peso_super_bravo", 0.10))),
+    ]
+    if sum(pesos) <= 0.0:
+        pesos = [0.25, 0.35, 0.35, 0.20, 0.10]
+    return random.choices(opcoes, weights=pesos, k=1)[0]
 
 
 def _carregar_frutas() -> List[str]:
@@ -522,6 +575,23 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     bruto = dict(pokemon_mundo or {})
     estado = bruto.get("estado") if isinstance(bruto.get("estado"), dict) else bruto
     efeitos = efeitos_captura if isinstance(efeitos_captura, dict) else {}
+    for chave in (
+        "personalidade_mundo",
+        "esta_irritado",
+        "motivo_irritado",
+        "alvo_player_id",
+        "comportamento_mundo",
+        "destino_fuga",
+        "destino_perseguicao",
+        "tentativas_falhas_captura",
+        "dificuldade_captura",
+        "dificuldade_captura_base",
+        "captura",
+        "captura_fase",
+        "cooldown_movimento_ate_tick",
+    ):
+        estado.pop(chave, None)
+        bruto.pop(chave, None)
 
     nivel_original = max(0, min(100, _inum(estado.get("nivel", 0), 0)))
     bonus_nivel = _inum(efeitos.get("bonus_nivel", 0), 0)
@@ -749,6 +819,7 @@ def _carregar_base() -> List[Dict[str, object]]:
 
 
 _BASE_POKEMONS = _carregar_base()
+_TOTAIS_CAPTURAVEIS_ORDENADOS = sorted(_total_csv_ou_stats(item.get("row", {})) for item in _BASE_POKEMONS if isinstance(item, dict))
 
 
 def _escolher_especie(especie=None) -> Dict[str, str]:
@@ -786,7 +857,7 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
     stats_base = {k: _fnum(row.get(k), 0.0) for k in STATS_BASE}
     tipos = _sortear_tipos(row)
     poder_base = _recalcular_poder(stats_base)
-    dificuldade = round(poder_base * (iv_global / 100.0) * (nivel / 10.0), 2)
+    dificuldade = _calcular_dificuldade_captura(row, iv_global, nivel)
     tamanho_barra = round(max(0.05, 0.46 - (nivel / 160.0)), 3)
     velocidade_barra = round(min(260.0, 40.0 + (iv_global * 1.7)), 2)
 
@@ -829,6 +900,10 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "PodeEvoluir": False,
             "pode_evoluir": False,
             "dificuldade_captura": dificuldade,
+            "dificuldade_captura_base": dificuldade,
+            "tentativas_falhas_captura": 0,
+            "esta_irritado": False,
+            "personalidade_mundo": _sortear_personalidade_mundo(),
             "tamanho_barra_captura": tamanho_barra,
             "velocidade_barra_captura": velocidade_barra,
             "chunk_origem": [int(chunk_xy[0]), int(chunk_xy[1])],

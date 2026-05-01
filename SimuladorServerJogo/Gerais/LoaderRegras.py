@@ -99,6 +99,15 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     batalha_tamanho = dados.get("batalha_tamanho") if isinstance(dados.get("batalha_tamanho"), dict) else {}
     anim = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
     captura = dados.get("captura") if isinstance(dados.get("captura"), dict) else {}
+    captura_dificuldade = captura.get("dificuldade") if isinstance(captura.get("dificuldade"), dict) else {}
+    captura_poder = captura.get("poder") if isinstance(captura.get("poder"), dict) else {}
+    captura_chance = captura.get("chance") if isinstance(captura.get("chance"), dict) else {}
+    captura_falhas = captura.get("falhas") if isinstance(captura.get("falhas"), dict) else {}
+    personalidade = dados.get("personalidade_mundo") if isinstance(dados.get("personalidade_mundo"), dict) else {}
+    personalidade_curioso = personalidade.get("curioso") if isinstance(personalidade.get("curioso"), dict) else {}
+    personalidade_medroso = personalidade.get("medroso") if isinstance(personalidade.get("medroso"), dict) else {}
+    personalidade_irritado = personalidade.get("irritado") if isinstance(personalidade.get("irritado"), dict) else {}
+    personalidade_super_bravo = personalidade.get("super_bravo") if isinstance(personalidade.get("super_bravo"), dict) else {}
 
     out["velocidade_base_pokemon_tiles_s"] = _float_cfg(vel, "base_tiles_s", 3.0)
     out["tamanho_diametro_base_tiles"] = _float_cfg(tamanho, "diametro_base_tiles", 0.6)
@@ -121,6 +130,45 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     out["captura_bonus_maestria"] = _float_cfg(captura, "bonus_maestria_por_ponto", 10.0)
     out["captura_chance_min"] = _float_cfg(captura, "chance_escape_min", 2.0)
     out["captura_chance_max"] = _float_cfg(captura, "chance_escape_max", 95.0)
+    out["captura_dificuldade_min"] = _float_cfg(captura_dificuldade, "min", 10.0)
+    out["captura_dificuldade_max"] = _float_cfg(captura_dificuldade, "max", 120.0)
+    out["captura_dificuldade_peso_total"] = _float_cfg(captura_dificuldade, "peso_total", 0.70)
+    out["captura_dificuldade_peso_nivel"] = _float_cfg(captura_dificuldade, "peso_nivel", 0.20)
+    out["captura_dificuldade_peso_iv"] = _float_cfg(captura_dificuldade, "peso_iv", 0.10)
+    out["captura_dificuldade_expoente_total"] = _float_cfg(captura_dificuldade, "expoente_total", 1.18)
+    out["captura_dificuldade_expoente_nivel"] = _float_cfg(captura_dificuldade, "expoente_nivel", 0.85)
+    out["captura_dificuldade_expoente_iv"] = _float_cfg(captura_dificuldade, "expoente_iv", 0.90)
+    out["captura_poder_poder_base_captura"] = _float_cfg(captura_poder, "poder_base_captura", 5.0)
+    out["captura_poder_maestria_max"] = _float_cfg(captura_poder, "maestria_max", 10.0)
+    out["captura_poder_bonus_maestria_max"] = _float_cfg(captura_poder, "bonus_maestria_max", 30.0)
+    out["captura_poder_expoente_maestria"] = _float_cfg(captura_poder, "expoente_maestria", 0.70)
+    out["captura_poder_multiplicador_critico"] = _float_cfg(captura_poder, "multiplicador_critico", 1.35)
+    out["captura_chance_base_check"] = _float_cfg(captura_chance, "base_check", 58.0)
+    out["captura_chance_escala_diferenca"] = _float_cfg(captura_chance, "escala_diferenca", 0.82)
+    out["captura_chance_check_min"] = _float_cfg(captura_chance, "check_min", 3.0)
+    out["captura_chance_check_max"] = _float_cfg(captura_chance, "check_max", 98.0)
+    out["captura_chance_checks_necessarios"] = _int_cfg(captura_chance, "checks_necessarios", 3)
+    out["captura_falhas_incremento_dificuldade_por_falha"] = _float_cfg(captura_falhas, "incremento_dificuldade_por_falha", 3.0)
+    out["captura_falhas_falhas_para_irritar"] = _int_cfg(captura_falhas, "falhas_para_irritar", 5)
+    out["captura_falhas_limiar_dificuldade_irritado"] = _float_cfg(captura_falhas, "limiar_dificuldade_irritado", 85.0)
+    out["captura_falhas_dificuldade_irritado_fixa"] = _float_cfg(captura_falhas, "dificuldade_irritado_fixa", 130.0)
+    out["personalidade_mundo_peso_normal"] = _float_cfg(personalidade, "peso_normal", 0.25)
+    out["personalidade_mundo_peso_curioso"] = _float_cfg(personalidade, "peso_curioso", 0.35)
+    out["personalidade_mundo_peso_medroso"] = _float_cfg(personalidade, "peso_medroso", 0.35)
+    out["personalidade_mundo_peso_bravo"] = _float_cfg(personalidade, "peso_bravo", 0.20)
+    out["personalidade_mundo_peso_super_bravo"] = _float_cfg(personalidade, "peso_super_bravo", 0.10)
+    out["personalidade_mundo_curioso_raio_percepcao_tiles"] = _float_cfg(personalidade_curioso, "raio_percepcao_tiles", 5.0)
+    out["personalidade_mundo_curioso_distancia_segura_tiles"] = _float_cfg(personalidade_curioso, "distancia_segura_tiles", 2.4)
+    out["personalidade_mundo_curioso_multiplicador_velocidade"] = _float_cfg(personalidade_curioso, "multiplicador_velocidade", 0.95)
+    out["personalidade_mundo_medroso_raio_percepcao_tiles"] = _float_cfg(personalidade_medroso, "raio_percepcao_tiles", 5.5)
+    out["personalidade_mundo_medroso_multiplicador_velocidade"] = _float_cfg(personalidade_medroso, "multiplicador_velocidade", 1.05)
+    out["personalidade_mundo_irritado_raio_busca_tiles"] = _float_cfg(personalidade_irritado, "raio_busca_tiles", 6.0)
+    out["personalidade_mundo_irritado_multiplicador_velocidade"] = _float_cfg(personalidade_irritado, "multiplicador_velocidade", 1.20)
+    out["personalidade_mundo_irritado_cooldown_movimento_mult"] = _float_cfg(personalidade_irritado, "cooldown_movimento_mult", 0.70)
+    out["personalidade_mundo_irritado_chance_movimento_mult"] = _float_cfg(personalidade_irritado, "chance_movimento_mult", 2.0)
+    out["personalidade_mundo_super_bravo_raio_ativacao_tiles"] = _float_cfg(personalidade_super_bravo, "raio_ativacao_tiles", 7.0)
+    out["personalidade_mundo_super_bravo_raio_busca_irritado_tiles"] = _float_cfg(personalidade_super_bravo, "raio_busca_irritado_tiles", 9.0)
+    out["personalidade_mundo_super_bravo_multiplicador_velocidade_irritado"] = _float_cfg(personalidade_super_bravo, "multiplicador_velocidade_irritado", 1.35)
     return out
 
 

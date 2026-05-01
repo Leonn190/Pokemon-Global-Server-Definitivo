@@ -712,7 +712,19 @@ class ControladorPlayer:
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
         self._ultimo_pivo_visual_local_tela = (float(pos_tela[0]), float(pos_tela[1]))
         respiracao_tempo = getattr(getattr(ator, "Controle", None), "_tempo_respiracao", 0.0)
-        ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
+        agora_ms = int(pygame.time.get_ticks())
+        imune_ate = int(getattr(ator, "ImuneCombateAteMs", 0) or 0)
+        alpha = 255
+        if agora_ms < imune_ate:
+            pulso = (math.sin(agora_ms * 0.018) + 1.0) * 0.5
+            alpha = int(95 + (130 * pulso))
+        if alpha < 255:
+            camada = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
+            ator.desenhar(camada, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
+            camada.set_alpha(alpha)
+            tela.blit(camada, (0, 0))
+        else:
+            ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
         ator.renderizar_stamina(tela, camera, float(self._dt_ultimo_frame))
         estado_mira = ator.Controle.estado_mira(camera.tela_para_mundo_tiles(pygame.mouse.get_pos())) if ator.Controle else None
         if estado_mira:

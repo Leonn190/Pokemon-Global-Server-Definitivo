@@ -13,6 +13,7 @@ from Codigo.ModulosGerais.Colisor import Colisor
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
 from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Visual.PokemonMundoAnimator import PokemonMundoAnimator
+from Codigo.Visual.PokemonMundoEstado import PokemonMundoEstado
 
 Vector2 = Tuple[float, float]
 _PASTA_ANIMACOES = Path("Recursos") / "Visual" / "Pokemons" / "Animação"
@@ -39,6 +40,7 @@ class Pokemon:
         self.Info: Dict[str, object] = {"stats": {}}
         self.FrutasAplicadas: List[Dict[str, object]] = []
         self.EstadoFrutificacao: Dict[str, object] = {"efeitos": {}}
+        self.EstaIrritado = False
         self.DificuldadeCaptura = 20.0
         self.TamanhoBarraCaptura = 0.32
         self.VelocidadeBarraCaptura = 90.0
@@ -81,6 +83,7 @@ class Pokemon:
         self._pronto_para_remover = False
         self._raio_colisao_padrao = max(0.2, self._f(snapshot.get("raio_colisao"), 0.45))
         self._diametro_tiles_visual = max(1.0, self._raio_colisao_padrao * 2.0)
+        self.EstadoVisual = PokemonMundoEstado(self)
         self.Animator = PokemonMundoAnimator(self)
         self.aplicar_snapshot(snapshot)
 
@@ -161,24 +164,14 @@ class Pokemon:
         return escalados
 
     def definir_alvo_local_captura(self, ativo: bool) -> None:
-        novo = bool(ativo)
-        if novo and not self.AlvoLocalCaptura:
-            self._inicio_barra_local_ms = pygame.time.get_ticks()
-        self.AlvoLocalCaptura = novo
+        self.AlvoLocalCaptura = bool(ativo)
 
     def calcular_captura_critica_local(self, pos_projetil: Vector2) -> bool:
         dx = float(pos_projetil[0]) - float(self.Posicao[0])
         dy = float(pos_projetil[1]) - float(self.Posicao[1])
         ang_impacto = (math.degrees(math.atan2(-dy, dx)) + 360.0) % 360.0
-        decorrido_s = max(0.0, (pygame.time.get_ticks() - int(self._inicio_barra_local_ms)) / 1000.0)
-        ang = (decorrido_s * self.VelocidadeBarraCaptura) % 360.0
-        janela = max(8.0, min(120.0, self.TamanhoBarraCaptura * 360.0))
-        inicio = ang % 360.0
-        fim = (ang + janela) % 360.0
-        if inicio <= fim:
-            critica = inicio <= ang_impacto <= fim
-        else:
-            critica = ang_impacto >= inicio or ang_impacto <= fim
+        inicio, fim, janela = self.EstadoVisual.estado_barra_critica()
+        critica = self.EstadoVisual.captura_critica(pos_projetil)
         print(
             "[CAPTURA_CRITICA_CLIENT] "
             f"pokemon_id={self.Id} especie={self.Especie} pos_projetil=({float(pos_projetil[0]):.3f},{float(pos_projetil[1]):.3f}) "
@@ -467,10 +460,15 @@ class Pokemon:
         stats_norm = {str(k): self._f(v) for k, v in stats.items()}
         self.Info = {"id": int(snapshot.get("id", self.Id)), "nome": self.Nome, "especie": self.Especie, "stats": stats_norm}
         self.DificuldadeCaptura = self._f(estado.get("dificuldade_captura", estado.get("dificuldade")), self._f(stats_norm.get("Poder"), 200.0) / 20.0 + 10.0)
-        self.TamanhoBarraCaptura = max(0.06, min(0.45, self._f(estado.get("tamanho_barra_captura"), 0.32)))
-        self.VelocidadeBarraCaptura = max(20.0, min(260.0, self._f(estado.get("velocidade_barra_captura"), 90.0)))
+        tamanho_barra = self._f(estado.get("tamanho_barra_captura"), 0.32)
+        velocidade_barra = self._f(estado.get("velocidade_barra_captura"), 90.0)
         self.FrutasAplicadas = list(estado.get("frutas_aplicadas") or [])[:2]
         self.EstadoFrutificacao = dict(estado.get("estado_frutificacao") or {"efeitos": {}})
+        bonus_barra = self._f(self.EstadoFrutificacao.get("bonus_tamanho_barra_captura_percentual"), 0.0)
+        mult_velocidade = self._f(self.EstadoFrutificacao.get("multiplicador_velocidade_barra_captura"), 1.0)
+        self.TamanhoBarraCaptura = max(0.06, min(0.45, tamanho_barra * (1.0 + bonus_barra / 100.0)))
+        self.VelocidadeBarraCaptura = max(20.0, min(260.0, velocidade_barra * max(0.05, mult_velocidade)))
+        self.EstaIrritado = bool(estado.get("esta_irritado", False))
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
         if self._snapshot_captura_autoritativo(captura):
             self.capturar(captura)
@@ -522,6 +520,7 @@ class Pokemon:
 
     def atualizar(self, dt: float) -> None:
         dt = max(0.0, float(dt))
+        self.EstadoVisual.atualizar(dt)
         self._resolver_timeout_resultado_captura()
         self._aplicar_confirmacao_servidor_pendente()
         fase = self._fase()

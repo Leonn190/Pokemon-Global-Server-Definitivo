@@ -210,6 +210,16 @@ class CenaMundo:
             ResetTelaConfig()
         self.TelaAtual = tela
 
+    def _atualizar_imunidade_combate_visual(self, JOGO) -> bool:
+        agora = int(pygame.time.get_ticks())
+        ate = max(int(getattr(self, "_imune_combate_ate_ms", 0) or 0), int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0))
+        self._imune_combate_ate_ms = int(ate)
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        if player is not None:
+            setattr(player, "ImuneCombateAteMs", int(ate))
+            setattr(player, "ImuneCombateAtiva", bool(agora < ate))
+        return bool(agora < ate)
+
     def _montar_mundo(self, JOGO):
         server = JOGO.INFO.get("ServerSelecionado") or {}
         link = server.get("ip")
@@ -321,12 +331,15 @@ class CenaMundo:
                     break
 
         player_bloqueado = (self.TelaAtual == "Mapa") or bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
+        imune_combate = self._atualizar_imunidade_combate_visual(JOGO)
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
 
         if self._abrir_dialogo_pos_batalha_pendente(JOGO):
             return EVENTOS
 
-        if JOGO.CenaAlvo is None and (not player_bloqueado) and int(pygame.time.get_ticks()) >= int(self._imune_combate_ate_ms or 0):
+        if JOGO.CenaAlvo is None and (not player_bloqueado) and imune_combate:
+            self.ControladorMundo.Player.consumir_colisao_pokemon()
+        elif JOGO.CenaAlvo is None and (not player_bloqueado):
             colisao_pokemon = self.ControladorMundo.Player.consumir_colisao_pokemon()
             if isinstance(colisao_pokemon, dict):
                 inventario = getattr(player, "Inventario", None)

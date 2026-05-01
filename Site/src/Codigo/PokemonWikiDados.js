@@ -49,6 +49,16 @@ export const ATRIBUTOS_BASE = [
   { chave: "CrC", rotulo: "CrC" },
 ];
 
+export const ATRIBUTOS_REGULARES = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"];
+
+function calcularFocoAtributo(atributos) {
+  return ATRIBUTOS_REGULARES.reduce((melhor, atributo) => {
+    const valor = (atributos[atributo] ?? 0) / (atributo === "Vida" ? 2 : 1);
+    if (!melhor || valor > melhor.valor) return { atributo, valor };
+    return melhor;
+  }, null)?.atributo ?? "";
+}
+
 function limparTexto(valor) {
   return String(valor ?? "").trim();
 }
@@ -154,6 +164,7 @@ function normalizarPokemon(linha, indice) {
   ].filter((tipo) => tipo.nome);
 
   const atributos = Object.fromEntries(ATRIBUTOS_BASE.map((atributo) => [atributo.chave, normalizado[atributo.chave] ?? 0]));
+  const focoAtributo = calcularFocoAtributo(atributos);
 
   return {
     id: String(code ?? indice + 1),
@@ -162,6 +173,8 @@ function normalizarPokemon(linha, indice) {
     busca: normalizarChave(`${nome} ${linha.Grupo ?? ""} ${linha.Tipo1 ?? ""} ${linha.Tipo2 ?? ""} ${linha.Tipo3 ?? ""} ${code ?? ""}`),
     slug: normalizarChave(nome),
     atributos,
+    focoAtributo,
+    focoBusca: normalizarChave(focoAtributo),
     vida: atributos.Vida,
     atk: atributos.Atk,
     def: atributos.Def,
@@ -228,17 +241,29 @@ export function indexarFramesPorPasta(glob) {
   return Object.fromEntries(Object.entries(grupos).map(([chave, frames]) => [chave, frames.map((frame) => frame.url)]));
 }
 
+function nomeBaseRadiante(nome) {
+  return String(nome ?? "")
+    .replace(/\bradiante\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function candidatosPokemon(pokemon) {
   const codigo = String(pokemon.code ?? pokemon.id ?? "");
+  const nome = pokemon.nome ?? "";
+  const baseRadiante = nomeBaseRadiante(nome);
   return [
     codigo,
     codigo.padStart(3, "0"),
     `pokemon${codigo}`,
     `poke${codigo}`,
-    pokemon.nome,
+    nome,
     pokemon.slug,
-    pokemon.nome?.replace(/\s+/g, "_"),
-    pokemon.nome?.replace(/\s+/g, "-"),
+    nome?.replace(/\s+/g, "_"),
+    nome?.replace(/\s+/g, "-"),
+    baseRadiante,
+    baseRadiante?.replace(/\s+/g, "_"),
+    baseRadiante?.replace(/\s+/g, "-"),
   ]
     .filter(Boolean)
     .map(normalizarChave);
@@ -258,15 +283,17 @@ export function resolverFramesPokemon(pokemon, framesPorPasta) {
   return [];
 }
 
-export function criarAssetsPokemons(pokemons, imagensPorNome, framesPorPasta = {}) {
+export function criarAssetsPokemons(pokemons, imagensPorNome, framesPorPasta = null) {
   return Object.fromEntries(
-    pokemons.map((pokemon) => [
-      pokemon.id,
-      {
-        imagem: resolverImagemPokemon(pokemon, imagensPorNome),
-        frames: resolverFramesPokemon(pokemon, framesPorPasta),
-      },
-    ]),
+    pokemons.map((pokemon) => {
+      const frames = framesPorPasta ? resolverFramesPokemon(pokemon, framesPorPasta) : [];
+      return [
+        pokemon.id,
+        frames.length
+          ? { imagem: resolverImagemPokemon(pokemon, imagensPorNome), frames }
+          : { imagem: resolverImagemPokemon(pokemon, imagensPorNome) },
+      ];
+    }),
   );
 }
 
@@ -277,6 +304,8 @@ export function resumoPokemons(pokemons) {
   const grupos = [...new Set(pokemons.map((pokemon) => pokemon.grupo).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, "pt-BR"),
   );
+  const focos = [...new Set(pokemons.map((pokemon) => pokemon.focoAtributo).filter(Boolean))];
+  const linhagens = new Set(pokemons.map((pokemon) => String(pokemon.linhagem)).filter(Boolean));
   const raridades = [...new Set(pokemons.map((pokemon) => pokemon.raridadeTexto).filter(Boolean))].sort((a, b) => {
     const na = Number(a);
     const nb = Number(b);
@@ -291,6 +320,8 @@ export function resumoPokemons(pokemons) {
     quantidade: pokemons.length,
     tipos,
     grupos,
+    focos,
+    linhagens: linhagens.size,
     raridades,
     maximos,
     maiorTotal: Math.max(1, ...pokemons.map((pokemon) => pokemon.total ?? 0)),
@@ -298,7 +329,7 @@ export function resumoPokemons(pokemons) {
   };
 }
 
-export function selecionarDestaquesHome(pokemons, limite = 8) {
+export function selecionarDestaquesHome(pokemons, limite = 18) {
   const nomesPreferidos = [
     "Bulbasaur",
     "Charizard",

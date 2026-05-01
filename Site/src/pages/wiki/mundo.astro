@@ -4,40 +4,33 @@ import "../../Estilos/wiki.css";
 ---
 
 <Layout titulo="Mundo | Wiki Pokémon Global Server" descricao="Página provisória de Mundo da wiki.">
-  <section class="wiki-hero">
-    <p class="selo">Wiki / Mundo</p>
-    <h1>Mundo</h1>
-    <p class="wiki-descricao">
-      Página futura para biomas, exploração, chunks, vilas, rotas, mapa, regiões e geração procedural.
-    </p>
+  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-mundo">
+    <h1 id="titulo-mundo">Mundo</h1>
   </section>
 
-  <section class="wiki-layout">
-    <aside class="wiki-menu-lateral">
+  <section class="pokedex-topo" aria-label="Navegação da wiki">
+    <div class="pokedex-resumo wiki-placeholder-resumo" aria-label="Resumo da área">
+      <article><strong>Beta</strong><span>Estado da wiki</span></article>
+      <article><strong>0</strong><span>Registros publicados</span></article>
+      <article><strong>0</strong><span>Categorias</span></article>
+      <article><strong>0</strong><span>Filtros ativos</span></article>
+    </div>
+
+    <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
       <a href="/wiki/pokemons">Pokémons</a>
       <a href="/wiki/itens">Itens</a>
-      <a href="/wiki/efeitos">Efeitos</a>
-      <a href="/wiki/estadios">Estádios</a>
+      <a href="/wiki/combate">Combate</a>
+      <a href="/wiki/dungeons">Dungeons</a>
+      <a href="/wiki/equipaveis">Equipáveis</a>
+      <a class="" href="/wiki/efeitos">Efeitos</a>
+      <a class="" href="/wiki/estadios">Estádios</a>
       <a class="ativo" href="/wiki/mundo">Mundo</a>
-    </aside>
+    </nav>
+  </section>
 
-    <div class="wiki-conteudo">
-      <div class="wiki-grid">
-        <article class="bloco-info">
-          <h2>Exploração</h2>
-          <p>Espaço para explicar chunks, minimapa, mapa grande, descoberta de regiões e cache de imagens.</p>
-          <div class="placeholder-lista">
-            <div class="placeholder-item"><strong>Biomas</strong><span>campo, floresta, deserto...</span></div>
-            <div class="placeholder-item"><strong>Rotas</strong><span>ligações entre vilas</span></div>
-            <div class="placeholder-item"><strong>Regiões</strong><span>divisões do mundo</span></div>
-          </div>
-        </article>
-
-        <article class="bloco-info">
-          <h2>Geração</h2>
-          <p>Depois você pode documentar regras de terreno, precedência de tiles e estruturas naturais.</p>
-        </article>
-      </div>
-    </div>
+  <section class="wiki-placeholder-card">
+    <p class="selo">Wiki em expansão</p>
+    <h2>Mundo</h2>
+    <p>Área futura para biomas, exploração, chunks, vilas, rotas, mapa, regiões e geração procedural.</p>
   </section>
 </Layout>

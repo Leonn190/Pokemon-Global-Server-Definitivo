@@ -51,6 +51,31 @@ export const ATRIBUTOS_BASE = [
 
 export const ATRIBUTOS_REGULARES = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"];
 
+const TIPOS_CANONICOS = {
+  agua: "Água",
+  cosmico: "Cósmico",
+  dragao: "Dragão",
+  eletrico: "Elétrico",
+  fada: "Fada",
+  fantasma: "Fantasma",
+  fogo: "Fogo",
+  gelo: "Gelo",
+  grama: "Planta",
+  planta: "Planta",
+  inseto: "Inseto",
+  lutador: "Lutador",
+  metal: "Metal",
+  normal: "Normal",
+  pedra: "Pedra",
+  psiquico: "Psíquico",
+  sombrio: "Sombrio",
+  sombro: "Sombrio",
+  sonoro: "Sonoro",
+  terrestre: "Terrestre",
+  venenoso: "Venenoso",
+  voador: "Voador",
+};
+
 function calcularFocoAtributo(atributos) {
   return ATRIBUTOS_REGULARES.reduce((melhor, atributo) => {
     const valor = (atributos[atributo] ?? 0) / (atributo === "Vida" ? 2 : 1);
@@ -76,6 +101,18 @@ export function normalizarChave(valor) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "");
+}
+
+function tipoCanonico(valor) {
+  const chave = normalizarChave(valor);
+  return TIPOS_CANONICOS[chave] ?? limparTexto(valor).replace(/^./, (letra) => letra.toUpperCase());
+}
+
+function nomeBaseRadiante(nome) {
+  return String(nome ?? "")
+    .replace(/\bradiante\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function parseCsv(texto) {
@@ -156,12 +193,20 @@ function normalizarPokemon(linha, indice) {
   });
 
   const nome = limparTexto(linha.Nome) || `Pokémon ${indice + 1}`;
+  const nomeExibicao = nomeBaseRadiante(nome) || nome;
   const code = normalizado.Code ?? indice + 1;
-  const tipos = [
+  const tiposUnicos = new Map();
+  [
     { nome: limparTexto(linha.Tipo1), chance: normalizado["%1"] },
     { nome: limparTexto(linha.Tipo2), chance: normalizado["%2"] },
     { nome: limparTexto(linha.Tipo3), chance: normalizado["%3"] },
-  ].filter((tipo) => tipo.nome);
+  ].forEach((tipo) => {
+    if (!tipo.nome) return;
+    const nomeTipo = tipoCanonico(tipo.nome);
+    const chave = normalizarChave(nomeTipo);
+    if (!tiposUnicos.has(chave)) tiposUnicos.set(chave, { nome: nomeTipo, chance: tipo.chance });
+  });
+  const tipos = [...tiposUnicos.values()];
 
   const atributos = Object.fromEntries(ATRIBUTOS_BASE.map((atributo) => [atributo.chave, normalizado[atributo.chave] ?? 0]));
   const focoAtributo = calcularFocoAtributo(atributos);
@@ -170,8 +215,10 @@ function normalizarPokemon(linha, indice) {
     id: String(code ?? indice + 1),
     ordem: indice + 1,
     nome,
-    busca: normalizarChave(`${nome} ${linha.Grupo ?? ""} ${linha.Tipo1 ?? ""} ${linha.Tipo2 ?? ""} ${linha.Tipo3 ?? ""} ${code ?? ""}`),
+    nomeExibicao,
+    busca: normalizarChave(`${nome} ${nomeExibicao} ${linha.Grupo ?? ""} ${linha.Tipo1 ?? ""} ${linha.Tipo2 ?? ""} ${linha.Tipo3 ?? ""} ${code ?? ""}`),
     slug: normalizarChave(nome),
+    slugBase: normalizarChave(nomeExibicao),
     atributos,
     focoAtributo,
     focoBusca: normalizarChave(focoAtributo),
@@ -241,13 +288,6 @@ export function indexarFramesPorPasta(glob) {
   return Object.fromEntries(Object.entries(grupos).map(([chave, frames]) => [chave, frames.map((frame) => frame.url)]));
 }
 
-function nomeBaseRadiante(nome) {
-  return String(nome ?? "")
-    .replace(/\bradiante\b/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function candidatosPokemon(pokemon) {
   const codigo = String(pokemon.code ?? pokemon.id ?? "");
   const nome = pokemon.nome ?? "";
@@ -259,6 +299,7 @@ function candidatosPokemon(pokemon) {
     `poke${codigo}`,
     nome,
     pokemon.slug,
+    pokemon.slugBase,
     nome?.replace(/\s+/g, "_"),
     nome?.replace(/\s+/g, "-"),
     baseRadiante,
@@ -298,9 +339,12 @@ export function criarAssetsPokemons(pokemons, imagensPorNome, framesPorPasta = n
 }
 
 export function resumoPokemons(pokemons) {
-  const tipos = [...new Set(pokemons.flatMap((pokemon) => pokemon.tipos.map((tipo) => tipo.nome)))].sort((a, b) =>
-    a.localeCompare(b, "pt-BR"),
-  );
+  const tiposPorChave = new Map();
+  pokemons.flatMap((pokemon) => pokemon.tipos.map((tipo) => tipo.nome)).forEach((tipo) => {
+    const chave = normalizarChave(tipo);
+    if (chave && !tiposPorChave.has(chave)) tiposPorChave.set(chave, tipoCanonico(tipo));
+  });
+  const tipos = [...tiposPorChave.values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const grupos = [...new Set(pokemons.map((pokemon) => pokemon.grupo).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, "pt-BR"),
   );
@@ -329,8 +373,8 @@ export function resumoPokemons(pokemons) {
   };
 }
 
-export function selecionarDestaquesHome(pokemons, limite = 36) {
-  const validos = [...pokemons].filter((pokemon) => pokemon?.id && pokemon?.nome);
+export function selecionarDestaquesHome(pokemons, limite = 36, imagensPorNome = null) {
+  const validos = [...pokemons].filter((pokemon) => pokemon?.id && pokemon?.nome && (!imagensPorNome || resolverImagemPokemon(pokemon, imagensPorNome)));
   for (let i = validos.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [validos[i], validos[j]] = [validos[j], validos[i]];

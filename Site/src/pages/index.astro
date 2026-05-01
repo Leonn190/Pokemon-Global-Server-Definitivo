@@ -62,8 +62,6 @@ const tecnologias = [
   "Mapa explorável com cache por chunks",
 ];
 
-const destaquesHome = selecionarDestaquesHome(pokemonsHome, 36);
-const trilhoDestaquesHome = [...destaquesHome, ...destaquesHome];
 const imagensPokemonsHome = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
   eager: true,
   query: "?url",
@@ -79,9 +77,12 @@ const iconesAtributosHomeBrutos = import.meta.glob("@recursos/Visual/Icones/Atri
   query: "?url",
   import: "default",
 });
+const imagensPokemonsHomeIndexadas = indexarArquivosPorNome(imagensPokemonsHome);
 const iconesTiposHome = indexarArquivosPorNome(iconesTiposHomeBrutos);
 const iconesAtributosHome = indexarArquivosPorNome(iconesAtributosHomeBrutos);
-const assetsDestaquesHome = criarAssetsPokemons(destaquesHome, indexarArquivosPorNome(imagensPokemonsHome));
+const destaquesHome = selecionarDestaquesHome(pokemonsHome, 44, imagensPokemonsHomeIndexadas);
+const trilhoDestaquesHome = [...destaquesHome, ...destaquesHome];
+const assetsDestaquesHome = criarAssetsPokemons(destaquesHome, imagensPokemonsHomeIndexadas);
 const classeChanceHome = (chance) => {
   const valor = Number(chance);
   if (!Number.isFinite(valor)) return "chance-neutra";
@@ -90,6 +91,7 @@ const classeChanceHome = (chance) => {
   return "chance-bronze";
 };
 const ehRadianteHome = (pokemon) => normalizarChave(pokemon?.nome).includes("radiante");
+const nomeHome = (pokemon) => pokemon.nomeExibicao || String(pokemon.nome || "").replace(/\bradiante\b/gi, "").trim();
 const payloadHomePokemon = JSON.stringify({
   pokemons: destaquesHome,
   assetsPokemons: assetsDestaquesHome,
@@ -184,19 +186,19 @@ const payloadHomePokemon = JSON.stringify({
               <span class="pokemon-card-codigo">#{pokemon.id}</span>
               <span class="pokemon-card-arte">
                 {asset?.imagem ? (
-                  <img class={radiante ? "sprite-radiante" : ""} src={asset.imagem} alt={pokemon.nome} loading="lazy" decoding="async" />
+                  <img class={radiante ? "sprite-radiante" : ""} src={asset.imagem} alt={nomeHome(pokemon)} loading="lazy" decoding="async" />
                 ) : (
-                  <span class="pokemon-card-sem-arte">{pokemon.nome.slice(0, 1)}</span>
+                  <span class="pokemon-card-sem-arte">{nomeHome(pokemon).slice(0, 1)}</span>
                 )}
               </span>
-              <span class="pokemon-card-nome">{pokemon.nome}</span>
+              <span class="pokemon-card-nome">{nomeHome(pokemon)}</span>
               <span class="pokemon-card-meta">{pokemon.grupo}</span>
               <span class="pokemon-card-tipos">
                 {pokemon.tipos.map((tipo) => {
                   const icone = iconesTiposHome[normalizarChave(tipo.nome)];
                   return (
                     <span class={`tipo-bola pequena ${classeChanceHome(tipo.chance)}`} title={`${tipo.nome}${tipo.chance ? ` ${tipo.chance}%` : ""}`}>
-                      {icone ? <img src={icone} alt={tipo.nome} loading="lazy" decoding="async" /> : <b>{tipo.nome.slice(0, 1)}</b>}
+                      {icone ? <img src={icone} alt={tipo.nome} loading="eager" decoding="async" /> : <b>{tipo.nome.slice(0, 1)}</b>}
                     </span>
                   );
                 })}

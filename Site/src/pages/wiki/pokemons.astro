@@ -76,6 +76,9 @@ const payloadPokedex = JSON.stringify({
     <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
       <a class="ativo" href="/wiki/pokemons">Pokémons</a>
       <a href="/wiki/itens">Itens</a>
+      <a href="/wiki/combate">Combate</a>
+      <a href="/wiki/dungeons">Dungeons</a>
+      <a href="/wiki/equipaveis">Equipáveis</a>
       <a href="/wiki/efeitos">Efeitos</a>
       <a href="/wiki/estadios">Estádios</a>
       <a href="/wiki/mundo">Mundo</a>
@@ -93,23 +96,23 @@ const payloadPokedex = JSON.stringify({
         <label>
           <span>Ordenar</span>
           <select data-pokedex-sort>
-            <option value="ordem-asc">Ordem oficial</option>
-            <option value="nome-asc">Alfabética</option>
-            <option value="vida-desc">Vida</option>
-            <option value="atk-desc">Atk</option>
-            <option value="def-desc">Def</option>
-            <option value="spa-desc">SpA</option>
-            <option value="spd-desc">SpD</option>
-            <option value="vel-desc">Vel</option>
-            <option value="mag-desc">Mag</option>
-            <option value="per-desc">Per</option>
-            <option value="ene-desc">Ene</option>
-            <option value="int-desc">Int</option>
-            <option value="crd-desc">CrD</option>
-            <option value="crc-desc">CrC</option>
-            <option value="total-desc">Total</option>
-            <option value="altura-desc">Altura</option>
-            <option value="peso-desc">Peso</option>
+            <option value="ordem">Ordem oficial</option>
+            <option value="nome">Alfabética</option>
+            <option value="vida">Vida</option>
+            <option value="atk">Atk</option>
+            <option value="def">Def</option>
+            <option value="spa">SpA</option>
+            <option value="spd">SpD</option>
+            <option value="vel">Vel</option>
+            <option value="mag">Mag</option>
+            <option value="per">Per</option>
+            <option value="ene">Ene</option>
+            <option value="int">Int</option>
+            <option value="crd">CrD</option>
+            <option value="crc">CrC</option>
+            <option value="total">Total</option>
+            <option value="altura">Altura</option>
+            <option value="peso">Peso</option>
           </select>
         </label>
 
@@ -142,7 +145,7 @@ const payloadPokedex = JSON.stringify({
         {tiposVisiveis.map((tipo) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`}>
             <span class="tipo-icone-mini">
-              {iconesTipos[normalizarChave(tipo)] ? <img src={iconesTipos[normalizarChave(tipo)]} alt="" loading="lazy" decoding="async" /> : null}
+              {iconesTipos[normalizarChave(tipo)] ? <img src={iconesTipos[normalizarChave(tipo)]} alt="" loading="eager" decoding="async" /> : null}
             </span>
           </button>
         ))}
@@ -153,7 +156,10 @@ const payloadPokedex = JSON.stringify({
           <strong data-pokedex-count>{resumo.quantidade}</strong>
           <span>resultados encontrados</span>
         </div>
-        <button class="botao fantasma compacto" type="button" data-pokedex-clear>Limpar filtros</button>
+        <div class="pokedex-acoes-status">
+          <button class="botao fantasma compacto" type="button" data-pokedex-direction data-sort-direction="asc">Crescente</button>
+          <button class="botao fantasma compacto" type="button" data-pokedex-clear>Limpar filtros</button>
+        </div>
       </section>
 
       <section class="pokedex-grid" data-pokedex-grid aria-label="Lista de Pokémons"></section>

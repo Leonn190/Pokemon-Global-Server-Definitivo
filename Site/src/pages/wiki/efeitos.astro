@@ -4,40 +4,33 @@ import "../../Estilos/wiki.css";
 ---
 
 <Layout titulo="Efeitos | Wiki Pokémon Global Server" descricao="Página provisória de Efeitos da wiki.">
-  <section class="wiki-hero">
-    <p class="selo">Wiki / Efeitos</p>
-    <h1>Efeitos</h1>
-    <p class="wiki-descricao">
-      Página futura para status positivos, negativos, efeitos de terreno, buffs, debuffs e ícones.
-    </p>
+  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-efeitos">
+    <h1 id="titulo-efeitos">Efeitos</h1>
   </section>
 
-  <section class="wiki-layout">
-    <aside class="wiki-menu-lateral">
+  <section class="pokedex-topo" aria-label="Navegação da wiki">
+    <div class="pokedex-resumo wiki-placeholder-resumo" aria-label="Resumo da área">
+      <article><strong>Beta</strong><span>Estado da wiki</span></article>
+      <article><strong>0</strong><span>Registros publicados</span></article>
+      <article><strong>0</strong><span>Categorias</span></article>
+      <article><strong>0</strong><span>Filtros ativos</span></article>
+    </div>
+
+    <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
       <a href="/wiki/pokemons">Pokémons</a>
       <a href="/wiki/itens">Itens</a>
+      <a href="/wiki/combate">Combate</a>
+      <a href="/wiki/dungeons">Dungeons</a>
+      <a href="/wiki/equipaveis">Equipáveis</a>
       <a class="ativo" href="/wiki/efeitos">Efeitos</a>
-      <a href="/wiki/estadios">Estádios</a>
-      <a href="/wiki/mundo">Mundo</a>
-    </aside>
+      <a class="" href="/wiki/estadios">Estádios</a>
+      <a class="" href="/wiki/mundo">Mundo</a>
+    </nav>
+  </section>
 
-    <div class="wiki-conteudo">
-      <div class="wiki-grid">
-        <article class="bloco-info">
-          <h2>Status</h2>
-          <p>Espaço para explicar efeitos como Queimado, Envenenado, Congelado, Imune, Furtivo e outros.</p>
-          <div class="placeholder-lista">
-            <div class="placeholder-item"><strong>Positivos</strong><span>buffs e proteções</span></div>
-            <div class="placeholder-item"><strong>Negativos</strong><span>dano, controle, redução</span></div>
-            <div class="placeholder-item"><strong>Terreno</strong><span>efeitos de tiles</span></div>
-          </div>
-        </article>
-
-        <article class="bloco-info">
-          <h2>Ícones</h2>
-          <p>Depois dá para montar uma grade com os ícones que você está criando para cada efeito.</p>
-        </article>
-      </div>
-    </div>
+  <section class="wiki-placeholder-card">
+    <p class="selo">Wiki em expansão</p>
+    <h2>Efeitos</h2>
+    <p>Área futura para status positivos, negativos, efeitos de terreno, buffs, debuffs e ícones.</p>
   </section>
 </Layout>

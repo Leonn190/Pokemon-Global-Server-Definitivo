@@ -59,6 +59,10 @@ function ehRadiante(pokemon) {
   return normalizar(pokemon?.nome).includes("radiante");
 }
 
+function nomeExibicao(pokemon) {
+  return String(pokemon?.nomeExibicao || pokemon?.nome || "Pokémon").replace(/\bradiante\b/gi, "").replace(/\s+/g, " ").trim();
+}
+
 function nomeBaseRadiante(nome) {
   return String(nome ?? "")
     .replace(/\bradiante\b/gi, "")
@@ -70,6 +74,7 @@ function candidatosPokemon(pokemon) {
   const codigo = String(pokemon?.code ?? pokemon?.id ?? "");
   const nome = String(pokemon?.nome ?? "");
   const nomeBase = nomeBaseRadiante(nome);
+  const exibicao = nomeExibicao(pokemon);
   return [
     codigo,
     codigo.padStart(3, "0"),
@@ -77,11 +82,15 @@ function candidatosPokemon(pokemon) {
     `poke${codigo}`,
     nome,
     pokemon?.slug,
+    pokemon?.slugBase,
     nome.replace(/\s+/g, "_"),
     nome.replace(/\s+/g, "-"),
     nomeBase,
+    exibicao,
     nomeBase.replace(/\s+/g, "_"),
     nomeBase.replace(/\s+/g, "-"),
+    exibicao.replace(/\s+/g, "_"),
+    exibicao.replace(/\s+/g, "-"),
   ]
     .filter(Boolean)
     .map(normalizar);
@@ -138,7 +147,7 @@ function tipoBolinhaHtml(tipo, iconesTipos, pequeno = true) {
   const chave = normalizar(tipo.nome);
   const icone = iconesTipos?.[chave];
   return `<span class="tipo-bola ${pequeno ? "pequena" : ""} ${classeChance(tipo.chance)}" title="${html(tipo.nome)}${tipo.chance ? ` ${formatarNumero(tipo.chance, "%")}` : ""}">
-    ${icone ? `<img src="${icone}" alt="${html(tipo.nome)}" loading="lazy" decoding="async" />` : `<b>${html(String(tipo.nome || "?").slice(0, 1))}</b>`}
+    ${icone ? `<img src="${icone}" alt="${html(tipo.nome)}" loading="eager" decoding="async" />` : `<b>${html(String(tipo.nome || "?").slice(0, 1))}</b>`}
   </span>`;
 }
 
@@ -146,7 +155,7 @@ function tipoBadgeHtml(tipo, iconesTipos) {
   const chave = normalizar(tipo.nome);
   const icone = iconesTipos?.[chave];
   return `<span class="tipo-badge ${classeChance(tipo.chance)}">
-    <span class="tipo-icone">${icone ? `<img src="${icone}" alt="" loading="lazy" decoding="async" />` : ""}</span>
+    <span class="tipo-icone">${icone ? `<img src="${icone}" alt="" loading="eager" decoding="async" />` : ""}</span>
     <strong>${html(tipo.nome)}</strong>
     ${tipo.chance ? `<em>${formatarNumero(tipo.chance, "%")}</em>` : ""}
   </span>`;
@@ -182,6 +191,7 @@ function focoPrincipal(pokemon) {
 
 function criarCardPokemon(pokemon, dados, origem = "wiki") {
   const asset = assetPokemon(pokemon, dados.assetsPokemons);
+  const nomeVisivel = nomeExibicao(pokemon);
   const card = document.createElement("button");
   card.type = "button";
   card.className = `pokemon-card ${ehRadiante(pokemon) ? "pokemon-radiante" : ""}`;
@@ -190,9 +200,9 @@ function criarCardPokemon(pokemon, dados, origem = "wiki") {
   card.innerHTML = `
     <span class="pokemon-card-codigo">#${html(pokemon.id)}</span>
     <span class="pokemon-card-arte">
-      ${asset.imagem ? `<img class="${ehRadiante(pokemon) ? "sprite-radiante" : ""}" src="${asset.imagem}" alt="${html(pokemon.nome)}" loading="lazy" decoding="async" />` : `<span class="pokemon-card-sem-arte">${html(pokemon.nome.slice(0, 1))}</span>`}
+      ${asset.imagem ? `<img class="${ehRadiante(pokemon) ? "sprite-radiante" : ""}" src="${asset.imagem}" alt="${html(nomeVisivel)}" loading="lazy" decoding="async" />` : `<span class="pokemon-card-sem-arte">${html(nomeVisivel.slice(0, 1))}</span>`}
     </span>
-    <span class="pokemon-card-nome">${html(pokemon.nome)}</span>
+    <span class="pokemon-card-nome">${html(nomeVisivel)}</span>
     <span class="pokemon-card-meta">${html(pokemon.grupo)}</span>
     <span class="pokemon-card-tipos">${tiposBolinhaHtml(pokemon, dados.iconesTipos)}</span>
     <span class="pokemon-card-poder"><strong>${formatarNumero(pokemon.total)}</strong><small>Poder total</small></span>
@@ -245,24 +255,28 @@ function criarControladorDetalhe(dados, opcoes = {}) {
     limparAnimacao();
 
     const asset = assetPokemon(pokemon, dados.assetsPokemons);
+    const nomeVisivel = nomeExibicao(pokemon);
     const imagem = detalhe.querySelector("[data-detail-image]");
     const fallback = detalhe.querySelector("[data-detail-fallback]");
-    const nome = detalhe.querySelector("[data-detail-name]");
     const codigo = detalhe.querySelector("[data-detail-code]");
+    const nome = detalhe.querySelector("[data-detail-name]");
     const tags = detalhe.querySelector("[data-detail-tags]");
-    const resumoTexto = detalhe.querySelector("[data-detail-summary]");
+    const resumo = detalhe.querySelector("[data-detail-summary]");
     const stats = detalhe.querySelector("[data-detail-stats]");
     const info = detalhe.querySelector("[data-detail-info]");
     const linha = detalhe.querySelector("[data-detail-line]");
     const linhaCount = detalhe.querySelector("[data-detail-line-count]");
     const painelLinhagem = detalhe.querySelector("[data-detail-line-panel]");
 
-    if (nome) nome.textContent = pokemon.nome;
-    if (codigo) codigo.textContent = `#${pokemon.id}`;
+    if (codigo) {
+      codigo.textContent = `#${pokemon.id}`;
+      codigo.classList.toggle("radiante", false);
+    }
+    if (nome) nome.textContent = nomeVisivel;
     if (tags) tags.innerHTML = tiposBadgeHtml(pokemon, dados.iconesTipos);
-    if (resumoTexto) {
-      resumoTexto.textContent = "";
-      resumoTexto.hidden = true;
+    if (resumo) {
+      resumo.textContent = "";
+      resumo.hidden = true;
     }
 
     if (imagem && fallback) {
@@ -272,10 +286,10 @@ function criarControladorDetalhe(dados, opcoes = {}) {
         imagem.hidden = false;
         fallback.hidden = true;
         imagem.src = imagemBase;
-        imagem.alt = pokemon.nome;
+        imagem.alt = nomeVisivel;
       } else {
         imagem.hidden = true;
-        fallback.hidden = false;
+        fallback.hidden = true;
         fallback.textContent = "";
       }
 
@@ -286,7 +300,7 @@ function criarControladorDetalhe(dados, opcoes = {}) {
         imagem.hidden = false;
         fallback.hidden = true;
         imagem.src = frames[0];
-        imagem.alt = pokemon.nome;
+        imagem.alt = nomeVisivel;
       }
 
       if (frames.length > 1) {
@@ -335,9 +349,10 @@ function criarControladorDetalhe(dados, opcoes = {}) {
       if (linhaCount) linhaCount.textContent = `${familia.length} forma${familia.length === 1 ? "" : "s"}`;
       linha.innerHTML = familia.map((item) => {
         const assetLinha = assetPokemon(item, dados.assetsPokemons);
+        const nomeLinha = nomeExibicao(item);
         return `<button type="button" class="linhagem-card ${item.id === pokemon.id ? "ativo" : ""} ${ehRadiante(item) ? "pokemon-radiante" : ""}" data-line-pokemon="${html(item.id)}">
-          <span>${assetLinha.imagem ? `<img class="${ehRadiante(item) ? "sprite-radiante" : ""}" src="${assetLinha.imagem}" alt="" loading="lazy" decoding="async" />` : html(item.nome.slice(0, 1))}</span>
-          <strong>${html(item.nome)}</strong>
+          <span>${assetLinha.imagem ? `<img class="${ehRadiante(item) ? "sprite-radiante" : ""}" src="${assetLinha.imagem}" alt="" loading="lazy" decoding="async" />` : html(nomeLinha.slice(0, 1))}</span>
+          <strong>${html(nomeLinha)}</strong>
           <small>Estágio ${html(item.estagio)}${item.formaFinal ? ` • ${html(item.formaFinal)}` : ""}</small>
         </button>`;
       }).join("");
@@ -376,6 +391,7 @@ export function inicializarPokedex(idDados = "pokedex-data") {
   const grid = app.querySelector("[data-pokedex-grid]");
   const busca = app.querySelector("[data-pokedex-search]");
   const ordenacao = app.querySelector("[data-pokedex-sort]");
+  const botaoDirecao = app.querySelector("[data-pokedex-direction]");
   const filtroFoco = app.querySelector("[data-pokedex-focus]");
   const filtroGrupo = app.querySelector("[data-pokedex-group]");
   const filtroRaridade = app.querySelector("[data-pokedex-rarity]");
@@ -384,13 +400,16 @@ export function inicializarPokedex(idDados = "pokedex-data") {
   const vazio = app.querySelector("[data-pokedex-empty]");
   const sentinela = app.querySelector("[data-pokedex-sentinel]");
   const chipsTipo = app.querySelectorAll("[data-type-chip]");
-  const PAGE_SIZE = 48;
-  const RENDER_BATCH = 12;
+  const PAGE_SIZE = 30;
+  const RENDER_BATCH = 1;
+  const RENDER_DELAY = 20;
   const tiposSelecionados = [];
   let visiveis = 0;
   let resultadoAtual = [];
   let renderRequest = 0;
   let renderizando = false;
+
+  if (botaoDirecao && !botaoDirecao.dataset.sortDirection) botaoDirecao.dataset.sortDirection = "asc";
 
   const detalheController = criarControladorDetalhe(dados, {
     mostrarLinhagem: true,
@@ -398,12 +417,24 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     obterListaAtual: () => resultadoAtual,
   });
 
+  function direcaoAtual() {
+    return botaoDirecao?.dataset.sortDirection === "desc" ? "desc" : "asc";
+  }
+
+  function atualizarBotaoDirecao() {
+    if (!botaoDirecao) return;
+    botaoDirecao.textContent = direcaoAtual() === "asc" ? "Crescente" : "Descrescente";
+    botaoDirecao.setAttribute("aria-label", `Ordenação ${botaoDirecao.textContent.toLowerCase()}`);
+  }
+
   function obterResultado() {
     const termo = normalizar(busca?.value ?? "");
     const foco = filtroFoco?.value ?? "";
     const grupo = filtroGrupo?.value ?? "";
     const raridade = filtroRaridade?.value ?? "";
-    const sort = ordenacao?.value ?? "ordem-asc";
+    const sortBruto = ordenacao?.value ?? "ordem";
+    const sort = sortBruto.replace(/-(asc|desc)$/g, "");
+    const direcao = botaoDirecao ? direcaoAtual() : (sortBruto.endsWith("-desc") ? "desc" : "asc");
 
     const filtrados = (dados.pokemons || []).filter((pokemon) => {
       if (termo && !pokemon.busca.includes(termo)) return false;
@@ -415,26 +446,32 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     });
 
     const ordenadores = {
-      "ordem-asc": (a, b) => a.ordem - b.ordem,
-      "nome-asc": (a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }),
-      "vida-desc": (a, b) => (b.vida ?? 0) - (a.vida ?? 0),
-      "atk-desc": (a, b) => (b.atk ?? 0) - (a.atk ?? 0),
-      "def-desc": (a, b) => (b.def ?? 0) - (a.def ?? 0),
-      "spa-desc": (a, b) => (b.spa ?? 0) - (a.spa ?? 0),
-      "spd-desc": (a, b) => (b.spd ?? 0) - (a.spd ?? 0),
-      "vel-desc": (a, b) => (b.vel ?? 0) - (a.vel ?? 0),
-      "mag-desc": (a, b) => (b.mag ?? 0) - (a.mag ?? 0),
-      "per-desc": (a, b) => (b.per ?? 0) - (a.per ?? 0),
-      "ene-desc": (a, b) => (b.ene ?? 0) - (a.ene ?? 0),
-      "int-desc": (a, b) => (b.int ?? 0) - (a.int ?? 0),
-      "crd-desc": (a, b) => (b.crd ?? 0) - (a.crd ?? 0),
-      "crc-desc": (a, b) => (b.crc ?? 0) - (a.crc ?? 0),
-      "total-desc": (a, b) => (b.total ?? 0) - (a.total ?? 0),
-      "altura-desc": (a, b) => (b.altura ?? 0) - (a.altura ?? 0),
-      "peso-desc": (a, b) => (b.peso ?? 0) - (a.peso ?? 0),
+      ordem: (a, b) => a.ordem - b.ordem,
+      nome: (a, b) => nomeExibicao(a).localeCompare(nomeExibicao(b), "pt-BR", { numeric: true }),
+      vida: (a, b) => (a.vida ?? 0) - (b.vida ?? 0),
+      atk: (a, b) => (a.atk ?? 0) - (b.atk ?? 0),
+      def: (a, b) => (a.def ?? 0) - (b.def ?? 0),
+      spa: (a, b) => (a.spa ?? 0) - (b.spa ?? 0),
+      spd: (a, b) => (a.spd ?? 0) - (b.spd ?? 0),
+      vel: (a, b) => (a.vel ?? 0) - (b.vel ?? 0),
+      mag: (a, b) => (a.mag ?? 0) - (b.mag ?? 0),
+      per: (a, b) => (a.per ?? 0) - (b.per ?? 0),
+      ene: (a, b) => (a.ene ?? 0) - (b.ene ?? 0),
+      int: (a, b) => (a.int ?? 0) - (b.int ?? 0),
+      crd: (a, b) => (a.crd ?? 0) - (b.crd ?? 0),
+      crc: (a, b) => (a.crc ?? 0) - (b.crc ?? 0),
+      total: (a, b) => (a.total ?? 0) - (b.total ?? 0),
+      altura: (a, b) => (a.altura ?? 0) - (b.altura ?? 0),
+      peso: (a, b) => (a.peso ?? 0) - (b.peso ?? 0),
     };
 
-    return filtrados.sort(ordenadores[sort] ?? ordenadores["ordem-asc"]);
+    const ordenador = ordenadores[sort] ?? ordenadores.ordem;
+    const ordenados = [...filtrados].sort((a, b) => {
+      const principal = ordenador(a, b);
+      const final = principal === 0 ? a.ordem - b.ordem : principal;
+      return direcao === "desc" ? -final : final;
+    });
+    return ordenados;
   }
 
   function atualizarChips() {
@@ -450,6 +487,7 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     if (vazio) vazio.hidden = resultadoAtual.length !== 0;
     if (sentinela) sentinela.hidden = resultadoAtual.length === 0 || visiveis >= resultadoAtual.length;
     atualizarChips();
+    atualizarBotaoDirecao();
   }
 
   function anexarCards(inicio, fim) {
@@ -478,7 +516,7 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     window.requestAnimationFrame(() => {
       if (idRender !== renderRequest) return;
       anexarCards(jaRenderizados, proximoFim);
-      window.setTimeout(() => renderizarAte(alvo, idRender), 28);
+      window.setTimeout(() => renderizarAte(alvo, idRender), RENDER_DELAY);
     });
   }
 
@@ -516,6 +554,12 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     controle?.addEventListener("change", () => renderLista(true));
   });
 
+  botaoDirecao?.addEventListener("click", () => {
+    botaoDirecao.dataset.sortDirection = direcaoAtual() === "asc" ? "desc" : "asc";
+    atualizarBotaoDirecao();
+    renderLista(true);
+  });
+
   chipsTipo.forEach((chip) => {
     chip.addEventListener("click", () => {
       const tipo = chip.dataset.typeChip;
@@ -541,7 +585,8 @@ export function inicializarPokedex(idDados = "pokedex-data") {
 
   botaoLimpar?.addEventListener("click", () => {
     if (busca) busca.value = "";
-    if (ordenacao) ordenacao.value = "ordem-asc";
+    if (ordenacao) ordenacao.value = "ordem";
+    if (botaoDirecao) botaoDirecao.dataset.sortDirection = "asc";
     if (filtroFoco) filtroFoco.value = "";
     if (filtroGrupo) filtroGrupo.value = "";
     if (filtroRaridade) filtroRaridade.value = "";
@@ -552,15 +597,16 @@ export function inicializarPokedex(idDados = "pokedex-data") {
   if (sentinela && "IntersectionObserver" in window) {
     const observer = new IntersectionObserver((entradas) => {
       if (entradas.some((entrada) => entrada.isIntersecting)) carregarMaisAutomatico();
-    }, { rootMargin: "720px 0px" });
+    }, { rootMargin: "360px 0px" });
     observer.observe(sentinela);
   } else {
     window.addEventListener("scroll", () => {
       const restante = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-      if (restante < 720) carregarMaisAutomatico();
+      if (restante < 360) carregarMaisAutomatico();
     }, { passive: true });
   }
 
+  atualizarBotaoDirecao();
   renderLista(true);
 
   const pokemonInicial = new URLSearchParams(window.location.search).get("pokemon");

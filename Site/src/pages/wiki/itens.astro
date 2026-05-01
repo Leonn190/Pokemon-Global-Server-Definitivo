@@ -1,43 +1,178 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
+import {
+  carregarItens,
+  criarAssetsItens,
+  indexarImagensItens,
+  resumoItens,
+  MAPA_RARIDADES,
+  OPCOES_VENDA,
+} from "../../Codigo/ItemWikiDados.js";
+import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
+
+const itens = carregarItens();
+const resumo = resumoItens(itens);
+const imagensItensBrutas = import.meta.glob("@recursos/Visual/Itens/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const imagensItens = indexarImagensItens(imagensItensBrutas);
+const assetsItens = criarAssetsItens(itens, imagensItens);
+const estilos = [...new Map(itens.map((item) => [item.estiloBusca, item.estiloRotulo])).entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
+const raridades = Object.entries(MAPA_RARIDADES).sort((a, b) => Number(a[0]) - Number(b[0]));
+const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g, "\\u003c");
 ---
 
-<Layout titulo="Itens | Wiki Pokémon Global Server" descricao="Página provisória de Itens da wiki.">
-  <section class="wiki-hero">
-    <p class="selo">Wiki / Itens</p>
-    <h1>Itens</h1>
-    <p class="wiki-descricao">
-      Página futura para consumíveis, doces, equipamentos, receitas, drops e itens especiais.
-    </p>
+<Layout
+  titulo="Itens | Wiki Pokémon Global Server"
+  descricao="Wiki de itens do Pokémon Global Server, com busca, filtros por estilo, raridade, baús, lojas e detalhes de cada item."
+>
+  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-itens">
+    <h1 id="titulo-itens">Itens Globais</h1>
   </section>
 
-  <section class="wiki-layout">
-    <aside class="wiki-menu-lateral">
+  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
+    <div class="pokedex-resumo" aria-label="Resumo dos registros de itens">
+      <article>
+        <strong>{resumo.quantidade}</strong>
+        <span>Itens registrados</span>
+      </article>
+      <article>
+        <strong>{resumo.equipaveis}</strong>
+        <span>Equipáveis registrados</span>
+      </article>
+      <article>
+        <strong>{resumo.estilos.length}</strong>
+        <span>Estilos</span>
+      </article>
+      <article>
+        <strong>{resumo.raridades.length}</strong>
+        <span>Raridades existentes</span>
+      </article>
+    </div>
+
+    <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
       <a href="/wiki/pokemons">Pokémons</a>
       <a class="ativo" href="/wiki/itens">Itens</a>
+      <a href="/wiki/combate">Combate</a>
+      <a href="/wiki/dungeons">Dungeons</a>
+      <a href="/wiki/equipaveis">Equipáveis</a>
       <a href="/wiki/efeitos">Efeitos</a>
       <a href="/wiki/estadios">Estádios</a>
       <a href="/wiki/mundo">Mundo</a>
-    </aside>
+    </nav>
+  </section>
 
-    <div class="wiki-conteudo">
-      <div class="wiki-grid">
-        <article class="bloco-info">
-          <h2>Categorias provisórias</h2>
-          <p>Organize os itens por função para facilitar a leitura da wiki.</p>
-          <div class="placeholder-lista">
-            <div class="placeholder-item"><strong>Consumíveis</strong><span>cura, energia, buffs</span></div>
-            <div class="placeholder-item"><strong>Equipáveis</strong><span>atributos e efeitos</span></div>
-            <div class="placeholder-item"><strong>Receitas</strong><span>craft e materiais</span></div>
-          </div>
-        </article>
+  <section class="wiki-layout wiki-layout-pokedex">
+    <div class="wiki-conteudo pokedex-app itens-app" data-itens-app>
+      <section class="pokedex-toolbar itens-toolbar" aria-label="Ferramentas da wiki de itens">
+        <label class="campo-busca">
+          <span>Pesquisar</span>
+          <input data-itens-search type="search" placeholder="Nome, código, estilo ou descrição..." autocomplete="off" />
+        </label>
 
-        <article class="bloco-info">
-          <h2>Placeholder</h2>
-          <p>Depois esta página pode puxar dados da pasta Dados/Tabelas e gerar cards automaticamente.</p>
-        </article>
+        <label>
+          <span>Ordenar</span>
+          <select data-itens-sort>
+            <option value="ordem">Ordem oficial</option>
+            <option value="nome">Alfabética</option>
+            <option value="valor">Valor médio</option>
+            <option value="raridade">Raridade</option>
+            <option value="estilo">Estilo</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Estilo</span>
+          <select data-itens-style>
+            <option value="">Todos</option>
+            {estilos.map(([chave, rotulo]) => <option value={chave}>{rotulo}</option>)}
+          </select>
+        </label>
+
+        <label>
+          <span>Raridade</span>
+          <select data-itens-rarity>
+            <option value="">Todas</option>
+            {raridades.map(([numero, dados]) => <option value={numero}>{dados.nome}</option>)}
+          </select>
+        </label>
+
+        <label>
+          <span>Baús</span>
+          <select data-itens-chest>
+            <option value="">Todos</option>
+            <option value="s">Sim</option>
+            <option value="n">Não</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Venda</span>
+          <select data-itens-sale>
+            <option value="">Todos</option>
+            {Object.entries(OPCOES_VENDA).map(([codigo, rotulo]) => <option value={codigo}>{rotulo}</option>)}
+          </select>
+        </label>
+      </section>
+
+      <section class="pokedex-status" aria-live="polite">
+        <div>
+          <strong data-itens-count>{resumo.quantidade}</strong>
+          <span>resultados encontrados</span>
+        </div>
+        <div class="pokedex-acoes-status">
+          <button class="botao fantasma compacto" type="button" data-itens-direction data-sort-direction="asc">Crescente</button>
+          <button class="botao fantasma compacto" type="button" data-itens-clear>Limpar filtros</button>
+        </div>
+      </section>
+
+      <section class="itens-grid" data-itens-grid aria-label="Lista de itens"></section>
+
+      <div class="pokedex-vazio" data-itens-empty hidden>
+        <strong>Nenhum item encontrado.</strong>
+        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
       </div>
+
+      <div class="pokedex-sentinel" data-itens-sentinel aria-hidden="true"></div>
     </div>
   </section>
+
+  <aside class="item-detalhe pokemon-detalhe" data-item-detail hidden aria-live="polite">
+    <div class="pokemon-detalhe-backdrop" data-item-close></div>
+    <article class="pokemon-detalhe-card item-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="item-detalhe-nome">
+      <div class="pokemon-controles-detalhe" aria-label="Navegação do item aberto">
+        <button class="pokemon-navegar" type="button" data-item-prev aria-label="Item anterior">‹</button>
+        <button class="pokemon-navegar" type="button" data-item-next aria-label="Próximo item">›</button>
+        <button class="pokemon-fechar" type="button" data-item-close aria-label="Fechar detalhes">×</button>
+      </div>
+
+      <div class="pokemon-detalhe-topo item-detalhe-topo">
+        <div class="pokemon-palco-detalhe item-palco-detalhe">
+          <div class="pokemon-brilho-detalhe"></div>
+          <img data-item-image alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="pokemon-cabecalho-detalhe">
+          <span class="codigo-pokemon" data-item-code>#000</span>
+          <h2 id="item-detalhe-nome" data-item-name>Item</h2>
+          <span class="raridade-pill" data-item-rarity>Comum</span>
+          <p class="item-descricao-melhor" data-item-description></p>
+        </div>
+      </div>
+
+      <section class="painel-detalhe item-info-painel">
+        <h3>Informações</h3>
+        <dl class="pokemon-info-lista" data-item-info></dl>
+      </section>
+    </article>
+  </aside>
+
+  <script id="itens-data" type="application/json" set:html={payloadItens}></script>
+  <script>
+    import { inicializarWikiItens } from "../../Codigo/ItensRuntime.js";
+    inicializarWikiItens();
+  </script>
 </Layout>

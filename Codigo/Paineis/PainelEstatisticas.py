@@ -123,7 +123,7 @@ class PainelEstatisticas:
         margem = 18
         topo = rect.y + 16
         largura_stats = int(rect.width * 0.63)
-        altura_painel = max(0, rect.height - 32)
+        altura_painel = max(0, rect.height - 56)
         self._area_stats = pygame.Rect(rect.x + margem, topo, largura_stats, altura_painel)
         self._area_direita = pygame.Rect(self._area_stats.right + 24, topo, rect.right - self._area_stats.right - margem - 24, altura_painel)
 

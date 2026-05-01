@@ -176,9 +176,10 @@ def _carregar_pokemons():
             nome = str(row.get("Nome", "")).strip()
             code = str(row.get("Code", "")).strip()
             estagio = str(row.get("Estagio", "")).strip()
+            raridade = str(row.get("Raridade", "")).strip()
             if not nome:
                 continue
-            d = {"Nome": nome, "Code": code, "Estagio": estagio}
+            d = {"Nome": nome, "Code": code, "Estagio": estagio, "Raridade": raridade}
             pokes.append(d)
             if code:
                 by_code[code] = d
@@ -229,6 +230,7 @@ _AJUDA_COMANDOS = {
             "pokemon: code ou nome do Pokémon.",
             "posx/posy são opcionais; se faltar, spawn acontece perto do autor.",
             "Não permite estágio FF.",
+            "Não permite raridade fora de 1..10.",
             "Aceita ajustes de stats/iv no spawn (ex.: iv=80 atk=30 ivatk=50).",
         ],
     },
@@ -485,6 +487,9 @@ def _cmd_spawn(autor, args):
         return "Erro no /spawn. Ordem base: /spawn pokemon posx posy"
     if str(poke.get("Estagio", "")).strip().upper() == "FF":
         return "Não é permitido spawnar Pokémon de estágio FF"
+    raridade = _to_float(poke.get("Raridade"))
+    if raridade is None or raridade < 1.0 or raridade > 10.0:
+        return "Não é permitido spawnar Pokémon com raridade fora de 1..10"
     x = _to_float(nomeados.get("x"))
     y = _to_float(nomeados.get("y"))
     if x is None and livres:

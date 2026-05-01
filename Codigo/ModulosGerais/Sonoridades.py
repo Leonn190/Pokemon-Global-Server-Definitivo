@@ -34,6 +34,9 @@ def _carregar_sons():
 
 Sons = _carregar_sons()
 Musicas = _carregar_catalogo("Musicas")
+for _nome_musica, _dados_musica in Musicas.items():
+    if isinstance(_dados_musica, dict):
+        _dados_musica.setdefault("id", str(_nome_musica))
 
 MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão", "Estadio"}
 
@@ -62,6 +65,7 @@ _tile_candidato_inicio = 0
 _confirmacao_bioma_ms = 700
 _ultima_troca_bioma = 0
 _cooldown_bioma_ms = 1200
+_musica_conhecimento_registrada = None
 
 
 def _garantir_mixer():
@@ -435,6 +439,7 @@ def _atualizar_motor_musica():
 
 class SistemaMusicas:
     def atualizar_musica(self, jogo=None):
+        global _musica_conhecimento_registrada
         if jogo is not None:
             config = getattr(jogo, "CONFIG", None)
             if isinstance(config, dict):
@@ -447,6 +452,12 @@ class SistemaMusicas:
                     TransicaoMusica(alvo)
                 else:
                     _iniciar_musica(alvo)
+            if _musica_atual and _musica_atual != _musica_conhecimento_registrada:
+                perfil = getattr(getattr(getattr(jogo, "Cena", None), "ControladorMundo", None), "player_local", None)
+                perfil = getattr(perfil, "Perfil", None)
+                if perfil is not None and hasattr(perfil, "registrar_conhecimento_musica") and _musica_atual in Musicas:
+                    perfil.registrar_conhecimento_musica((Musicas.get(_musica_atual) or {}).get("id") or _musica_atual)
+                    _musica_conhecimento_registrada = _musica_atual
 
         _atualizar_motor_musica()
 

@@ -8,6 +8,8 @@ from Codigo.Geradores.Ator import Ator
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.ModulosGerais.DesenhaAtor import DesenhaAtor
 from Codigo.Paineis.PainelArvoreHabilidades import PainelArvoreHabilidades
+from Codigo.Paineis.PainelConhecimento import PainelConhecimento
+from Codigo.Paineis.PainelProgresso import PainelProgresso
 from Codigo.Prefabs.Barra import Barra, BarraEditavel
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
@@ -25,6 +27,11 @@ class PainelEstatisticas:
         self._painel_skill = PainelArvoreHabilidades(ator)
         self._arvore_aberta = False
         self._botao_skill: Botao | None = None
+        self._botao_conhecimento: Botao | None = None
+        self._botao_progresso: Botao | None = None
+        self._painel_conhecimento = PainelConhecimento(ator)
+        self._painel_progresso = PainelProgresso(ator)
+        self._overlay_extra = ""
 
         self._area_stats = pygame.Rect(0, 0, 0, 0)
         self._area_direita = pygame.Rect(0, 0, 0, 0)
@@ -38,8 +45,8 @@ class PainelEstatisticas:
         self.txt_skin_atual = Texto("", style={**base, "size": 17, "color": (221, 234, 255), "align": "topright"})
         self.txt_dinheiro = Texto("", style={**base, "size": 24, "color": (255, 223, 121), "align": "topright"})
         self._icone_dinheiro = self._carregar_icone_dinheiro()
-        self._labels = [Texto("", style={**base, "size": 18, "color": (164, 184, 221)}) for _ in range(12)]
-        self._values = [Texto("", style={**base, "size": 26, "color": (247, 250, 255)}) for _ in range(12)]
+        self._labels = [Texto("", style={**base, "size": 18, "color": (164, 184, 221)}) for _ in range(16)]
+        self._values = [Texto("", style={**base, "size": 26, "color": (247, 250, 255)}) for _ in range(16)]
 
     @staticmethod
     def _carregar_icone_dinheiro() -> pygame.Surface | None:
@@ -116,10 +123,11 @@ class PainelEstatisticas:
         margem = 18
         topo = rect.y + 16
         largura_stats = int(rect.width * 0.63)
-        self._area_stats = pygame.Rect(rect.x + margem, topo, largura_stats, rect.height - 128)
-        self._area_direita = pygame.Rect(self._area_stats.right + 24, topo, rect.right - self._area_stats.right - margem - 24, rect.height - 128)
+        altura_painel = max(0, rect.height - 32)
+        self._area_stats = pygame.Rect(rect.x + margem, topo, largura_stats, altura_painel)
+        self._area_direita = pygame.Rect(self._area_stats.right + 24, topo, rect.right - self._area_stats.right - margem - 24, altura_painel)
 
-        y_botao_skill = self._area_direita.y + 92
+        y_botao_skill = self._area_direita.y + 108
         h_botao_skill = 48
         gap_botao_ator = 14
         y_ator = y_botao_skill + h_botao_skill + gap_botao_ator
@@ -148,6 +156,15 @@ class PainelEstatisticas:
 
         def _abrir(_jogo, _botao):
             self._arvore_aberta = True
+            self._overlay_extra = ""
+
+        def _abrir_conhecimento(_jogo, _botao):
+            self._arvore_aberta = False
+            self._overlay_extra = "conhecimento"
+
+        def _abrir_progresso(_jogo, _botao):
+            self._arvore_aberta = False
+            self._overlay_extra = "progresso"
 
         self._botao_skill = Botao(
             pygame.Rect(self._area_direita.x + 18, y_botao_skill, self._area_direita.width - 36, h_botao_skill),
@@ -164,14 +181,28 @@ class PainelEstatisticas:
             },
         )
 
+
+        coluna3_x = self._area_stats.x + 18 + 2 * (((self._area_stats.width - 72) // 3) + 18)
+        col_w = ((self._area_stats.width - 72) // 3)
+        self._botao_conhecimento = Botao(
+            pygame.Rect(coluna3_x, self._area_stats.bottom - 122, col_w, 42),
+            "Conhecimento", execute=_abrir_conhecimento,
+            style={"radius": 12, "bg": (52, 100, 160), "bg_hover": (67, 122, 191), "bg_pressed": (45, 86, 140), "border": (188, 224, 255), "text_style": {"size": 18, "outline_thickness": 1, "shadow": False}},
+        )
+        self._botao_progresso = Botao(
+            pygame.Rect(coluna3_x, self._area_stats.bottom - 72, col_w, 42),
+            "Progresso", execute=_abrir_progresso,
+            style={"radius": 12, "bg": (70, 112, 76), "bg_hover": (86, 136, 92), "bg_pressed": (58, 96, 64), "border": (210, 236, 214), "text_style": {"size": 18, "outline_thickness": 1, "shadow": False}},
+        )
     def on_open(self):
         pass
 
     def on_close(self):
         self._arvore_aberta = False
+        self._overlay_extra = ""
 
     def esta_com_overlay_aberto(self) -> bool:
-        return bool(self._arvore_aberta)
+        return bool(self._arvore_aberta or self._overlay_extra)
 
     def _maior_poder(self, pokemons: list[dict]) -> int:
         maior = 0.0
@@ -237,9 +268,9 @@ class PainelEstatisticas:
             ("Vitórias totais", str(vitorias_totais)),
             ("Vitórias vs jogadores", str(vitorias_pvp)),
             ("Vitórias vs BOT", str(vitorias_bot)),
-            ("Tempo de jogo", tempo),
+            ("Fugas totais", str(int(getattr(perfil, "Fugas", 0) or 0))),
         ]
-        direita = [
+        meio = [
             ("Baús abertos", str(baus)),
             ("Itens no inventário", f"{total_itens} / {capacidade_itens}"),
             ("Pokémons guardados", f"{len(pokemons)} / {limite_pokemons}"),
@@ -247,7 +278,13 @@ class PainelEstatisticas:
             ("Maior poder Time", str(self._maior_poder_time())),
             ("Maestria", str(maestria)),
         ]
-        return nome, esquerda, direita
+        direita = [
+            ("Insígnias", f"{len(getattr(perfil, 'Insignias', []) or [])} / 25"),
+            ("Dungeons terminadas", f"{int(getattr(perfil, 'DungeonsTerminadas', 0) or 0)} / 60"),
+            ("Elo", str(int(getattr(perfil, 'Elo', 0) or 0))),
+            ("Tempo de jogo", tempo),
+        ]
+        return nome, esquerda, meio, direita
 
     def _aplicar_troca_skin(self):
         if self._slider_skin is None or self._desenhador is None or not self._skins:
@@ -263,20 +300,20 @@ class PainelEstatisticas:
         self.Ator.set_skin(surface_skin)
         self._slider_skin.set_valor(self._skin_index + 1)
 
-    def _desenhar_stats(self, tela):
+    def _desenhar_stats(self, tela, eventos, dt):
         pygame.draw.rect(tela, (10, 16, 30), self._area_stats, border_radius=18)
         pygame.draw.rect(tela, (67, 92, 148), self._area_stats, 1, border_radius=18)
 
-        nome, esquerda, direita = self._coletar_dados()
+        nome, esquerda, meio, direita = self._coletar_dados()
         self.txt_nome_bloco.set_text(nome)
         self.txt_nome_bloco.set_pos((self._area_stats.x + 18, self._area_stats.y + 18))
         self.txt_nome_bloco.draw(tela)
 
-        col_w = (self._area_stats.width - 54) // 2
-        row_gap = 74
+        col_w = (self._area_stats.width - 72) // 3
+        row_gap = 68
         base_y = self._area_stats.y + 74
         idx = 0
-        for c, bloco in enumerate((esquerda, direita)):
+        for c, bloco in enumerate((esquerda, meio, direita)):
             x = self._area_stats.x + 18 + c * (col_w + 18)
             for i, (rotulo, valor) in enumerate(bloco):
                 y = base_y + i * row_gap
@@ -287,6 +324,10 @@ class PainelEstatisticas:
                 self._values[idx].set_pos((x, y + 24))
                 self._values[idx].draw(tela)
                 idx += 1
+        if self._botao_conhecimento is not None:
+            self._botao_conhecimento.render(tela, eventos, dt, None)
+        if self._botao_progresso is not None:
+            self._botao_progresso.render(tela, eventos, dt, None)
 
     def _desenhar_direita(self, tela, eventos, dt):
         pygame.draw.rect(tela, (10, 16, 30), self._area_direita, border_radius=18)
@@ -361,5 +402,16 @@ class PainelEstatisticas:
                 self._arvore_aberta = False
             return
 
-        self._desenhar_stats(tela)
+        if self._overlay_extra == "conhecimento":
+            self._painel_conhecimento.Ator = self.Ator
+            if self._painel_conhecimento.renderizar(tela, pygame.Rect(rect), eventos=eventos, dt=dt):
+                self._overlay_extra = ""
+            return
+        if self._overlay_extra == "progresso":
+            self._painel_progresso.Ator = self.Ator
+            if self._painel_progresso.renderizar(tela, pygame.Rect(rect), eventos=eventos, dt=dt):
+                self._overlay_extra = ""
+            return
+
+        self._desenhar_stats(tela, eventos, dt)
         self._desenhar_direita(tela, eventos, dt)

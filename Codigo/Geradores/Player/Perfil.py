@@ -26,6 +26,11 @@ class Perfil:
         self.TempoJogoSegundos = 0.0
         self.Insignias = []
         self.Maestria = 0
+        self.Fugas = 0
+        self.DungeonsTerminadas = 0
+        self.Elo = 0
+        self.LimiteConhecimento = 300
+        self.Conhecimento = {"Efeitos": [], "Ataques": [], "Pokemons": [], "Itens": [], "Musicas": []}
         self.SkinsLiberadas = self._skins_liberadas_padrao()
         self.HabilidadesAprendidas = []
         self.PresentesResgatadosNPC = {}
@@ -133,6 +138,18 @@ class Perfil:
         self.TempoJogoSegundos = max(0.0, float(self._pegar(dados, "tempo_jogo_segundos", "TempoJogoSegundos", padrao=self.TempoJogoSegundos)))
         self.Insignias = list(self._pegar(dados, "insignias", "Insignias", padrao=self.Insignias) or [])
         self.Maestria = int(self._pegar(dados, "maestria", "Maestria", padrao=self.Maestria))
+        self.Fugas = max(0, int(self._pegar(dados, "fugas", "Fugas", padrao=self.Fugas)))
+        self.DungeonsTerminadas = max(0, int(self._pegar(dados, "dungeons_terminadas", "DungeonsTerminadas", padrao=self.DungeonsTerminadas)))
+        self.Elo = int(self._pegar(dados, "elo", "Elo", padrao=self.Elo))
+        self.LimiteConhecimento = max(0, int(self._pegar(dados, "limite_conhecimento", "LimiteConhecimento", padrao=self.LimiteConhecimento)))
+        conhecimento_raw = self._pegar(dados, "conhecimento", "Conhecimento", padrao=self.Conhecimento)
+        conhecimento_norm = {"Efeitos": [], "Ataques": [], "Pokemons": [], "Itens": [], "Musicas": []}
+        if isinstance(conhecimento_raw, dict):
+            for chave in conhecimento_norm:
+                vals = conhecimento_raw.get(chave)
+                if isinstance(vals, list):
+                    conhecimento_norm[chave] = list(dict.fromkeys(vals))
+        self.Conhecimento = conhecimento_norm
         skins_raw = list(self._pegar(dados, "skins_liberadas", "SkinsLiberadas", padrao=self.SkinsLiberadas) or self._skins_liberadas_padrao())
         normalizadas = []
         for skin in skins_raw:
@@ -200,6 +217,11 @@ class Perfil:
             "tempo_jogo_segundos": int(self.TempoJogoSegundos),
             "insignias": list(self.Insignias),
             "maestria": self.Maestria,
+            "fugas": self.Fugas,
+            "dungeons_terminadas": self.DungeonsTerminadas,
+            "elo": self.Elo,
+            "limite_conhecimento": self.LimiteConhecimento,
+            "conhecimento": {k: list(v) for k, v in self.Conhecimento.items()},
             "skins_liberadas": list(self.SkinsLiberadas),
             "habilidades_aprendidas": list(self.HabilidadesAprendidas),
             "presentes_resgatados_npc": {str(npc): list(valores) for npc, valores in self.PresentesResgatadosNPC.items()},
@@ -240,6 +262,65 @@ class Perfil:
         atuais = set(self.PresentesResgatadosNPC.get(npc, []))
         atuais.add(presente)
         self.PresentesResgatadosNPC[npc] = sorted(atuais)
+
+
+    def registrar_fuga(self, quantidade: int = 1) -> None:
+        self.Fugas = max(0, int(self.Fugas) + max(0, int(quantidade)))
+
+    def registrar_conhecimento(self, categoria: str, conhecimento_id) -> bool:
+        categoria_fmt = str(categoria or "").strip().title()
+        if categoria_fmt not in self.Conhecimento:
+            return False
+        if conhecimento_id is None:
+            return False
+        total = sum(len(v) for v in self.Conhecimento.values())
+        valor = int(conhecimento_id) if isinstance(conhecimento_id, (int, float)) else str(conhecimento_id).strip()
+        if not valor:
+            return False
+        if valor in self.Conhecimento[categoria_fmt]:
+            return False
+        if total >= max(0, int(self.LimiteConhecimento)):
+            return False
+        self.Conhecimento[categoria_fmt].append(valor)
+        return True
+
+    @staticmethod
+    def _extrair_id_generico(valor):
+        if isinstance(valor, dict):
+            for chave in ("id", "ID", "code", "Code", "codigo", "Codigo", "nome", "Nome"):
+                v = valor.get(chave)
+                if v is not None and str(v).strip():
+                    return v
+            return None
+        for chave in ("ID", "Id", "id", "Code", "code", "Codigo", "codigo", "Nome", "nome"):
+            if hasattr(valor, chave):
+                v = getattr(valor, chave)
+                if v is not None and str(v).strip():
+                    return v
+        return valor
+
+    def registrar_conhecimento_pokemon(self, pokemon) -> bool:
+        pid = self._extrair_id_generico(pokemon)
+        if pid is None and isinstance(pokemon, dict) and isinstance(pokemon.get("Dados"), dict):
+            pid = self._extrair_id_generico(pokemon.get("Dados"))
+        return self.registrar_conhecimento("Pokemons", pid)
+
+    def registrar_conhecimento_ataques_pokemon(self, pokemon) -> None:
+        if not isinstance(pokemon, dict):
+            return
+        ataques = pokemon.get("Ataques") or pokemon.get("ataques") or pokemon.get("Moves") or pokemon.get("moves") or []
+        for ataque in list(ataques or []):
+            aid = self._extrair_id_generico(ataque)
+            self.registrar_conhecimento("Ataques", aid)
+
+    def registrar_conhecimento_item(self, item) -> bool:
+        return self.registrar_conhecimento("Itens", self._extrair_id_generico(item))
+
+    def registrar_conhecimento_efeito(self, efeito_id) -> bool:
+        return self.registrar_conhecimento("Efeitos", efeito_id)
+
+    def registrar_conhecimento_musica(self, musica_id) -> bool:
+        return self.registrar_conhecimento("Musicas", musica_id)
 
 
 PlayerPerfil = Perfil

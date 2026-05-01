@@ -1,190 +1,227 @@
 {
   "Menu1": {
+    "id": "Menu1",
     "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu1.ogg",
     "loop": 12.7,
     "fimloop": 110.55
   },
   "Menu2": {
+    "id": "Menu2",
     "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu2.ogg",
     "loop": 1.34,
     "fimloop": 146.92
   },
   "Menu3": {
+    "id": "Menu3",
     "arquivo": "Recursos/Sonoridades/Musicas/Menu/Menu3.ogg",
     "loop": 1.67,
     "fimloop": 134.19
   },
   "Login": {
+    "id": "Login",
     "arquivo": "Recursos/Sonoridades/Musicas/Menu/Login.ogg",
     "loop": 7.03,
     "fimloop": 60.26
   },
   "Carregamento": {
+    "id": "Carregamento",
     "arquivo": "Recursos/Sonoridades/Musicas/Menu/Carregamento.ogg",
     "loop": 1.28,
     "fimloop": 109.43
   },
   "ConfrontoDoVale": {
+    "id": "ConfrontoDoVale",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoVale.ogg",
     "loop": 2.34,
     "fimloop": 83.6
   },
   "ConfrontoDaNeve": {
+    "id": "ConfrontoDaNeve",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDaNeve.ogg",
     "loop": 2.32,
     "fimloop": 83.65
   },
   "ConfrontoDoMar": {
+    "id": "ConfrontoDoMar",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoMar.ogg",
     "loop": 2.27,
     "fimloop": 83.64
   },
   "ConfrontoDoDeserto": {
+    "id": "ConfrontoDoDeserto",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoDeserto.ogg",
     "loop": 2.33,
     "fimloop": 83.655
   },
   "ConfrontoDoVulcao": {
+    "id": "ConfrontoDoVulcao",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoVulcao.ogg",
     "loop": 2.34,
     "fimloop": 83.62
   },
   "ConfrontoDoMagia": {
+    "id": "ConfrontoDoMagia",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDaMagia.ogg",
     "loop": 2.34,
     "fimloop": 83.62
   },
   "ConfrontoDoPantano": {
+    "id": "ConfrontoDoPantano",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoPantano.ogg",
     "loop": 2.34,
     "fimloop": 83.62
   },
   "Vale": {
+    "id": "Vale",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vale.ogg",
     "loop": 3.2,
     "fimloop": 111.9,
     "volume": 0.55
   },
   "Neve": {
+    "id": "Neve",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Neve.ogg",
     "loop": 4.2,
     "fimloop": 68.35,
     "volume": 0.55
   },
   "Deserto": {
+    "id": "Deserto",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Deserto.ogg",
     "loop": 0.2,
     "fimloop": 87.45,
     "volume": 0.55
   },
   "Vulcão": {
+    "id": "Vulcão",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vulcão.ogg",
     "loop": 10.19,
     "fimloop": 62.23,
     "volume": 0.55
   },
   "Praia": {
+    "id": "Praia",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Praia.ogg",
     "loop": 10.24,
     "fimloop": 154.99,
     "volume": 0.55
   },
   "Agua": {
+    "id": "Agua",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Agua.ogg",
     "loop": 0,
     "fimloop": 128.128
   },
   "Cosmico": {
+    "id": "Cosmico",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Cosmico.ogg",
     "loop": 0,
     "fimloop": 207.063
   },
   "Dragão": {
+    "id": "Dragão",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Dragão.ogg",
     "loop": 0,
     "fimloop": 126.758
   },
   "Eletrico": {
+    "id": "Eletrico",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Eletrico.ogg",
     "loop": 0,
     "fimloop": 143.476
   },
   "Fada": {
+    "id": "Fada",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Fada.ogg",
     "loop": 0,
     "fimloop": 164.524
   },
   "Fantasma": {
+    "id": "Fantasma",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Fantasma.ogg",
     "loop": 0,
     "fimloop": 156.758
   },
   "Fogo": {
+    "id": "Fogo",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Fogo.ogg",
     "loop": 0,
     "fimloop": 191.147
   },
   "Gelo": {
+    "id": "Gelo",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Gelo.ogg",
     "loop": 0,
     "fimloop": 159.057
   },
   "Inseto": {
+    "id": "Inseto",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Inseto.ogg",
     "loop": 0,
     "fimloop": 125.086
   },
   "Normal": {
+    "id": "Normal",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Normal.ogg",
     "loop": 0,
     "fimloop": 136.069
   },
   "Planta": {
+    "id": "Planta",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Planta.ogg",
     "loop": 0,
     "fimloop": 131.1
   },
   "Terrestre": {
+    "id": "Terrestre",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Terrestre.ogg",
     "loop": 0,
     "fimloop": 245.063
   },
   "Venenoso": {
+    "id": "Venenoso",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Venenoso.ogg",
     "loop": 0,
     "fimloop": 142.199
   },
   "Voador": {
+    "id": "Voador",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Voador.ogg",
     "loop": 0,
     "fimloop": 217.594
   },
   "Derrota": {
+    "id": "Derrota",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Fechamento/Derrota.mp3",
     "loop": 0,
     "fimloop": 5.695
   },
   "Vitoria": {
+    "id": "Vitoria",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Fechamento/Vitoria.mp3",
     "loop": 0,
     "fimloop": 7.131
   },
   "Fogo-Batalha": {
+    "id": "Fogo-Batalha",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Fogo-Batalha.ogg",
     "loop": 0,
     "fimloop": 239.398
   },
   "Sonoro-Ramos": {
+    "id": "Sonoro-Ramos",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Sonoro-Ramos.ogg",
     "loop": 0,
     "fimloop": 344.886
   },
   "Venenoso-Paulo": {
+    "id": "Venenoso-Paulo",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Venenoso-Paulo.ogg",
     "loop": 0,
     "fimloop": 339.894
   },
   "Estadio": {
+    "id": "Estadio",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Estadio.ogg",
     "loop": 0,
     "fimloop": 218.082,

@@ -78,6 +78,14 @@ class LeitorLogs:
         dados = self._dados(evento)
         tipo = str((evento or {}).get("tipo") or "")
         ctrl = self.controlador
+        perfil = getattr(getattr(ctrl, "ator", None), "Perfil", None)
+        if perfil is not None and hasattr(perfil, "registrar_conhecimento_efeito"):
+            if tipo in {"pokemon_recebeu_efeito", "efeito_tickou", "efeito_expirou"}:
+                perfil.registrar_conhecimento_efeito(dados.get("efeito_code") or dados.get("efeito_nome"))
+            elif tipo in {"clima_aplicado", "clima_alterado", "clima_iniciado"}:
+                perfil.registrar_conhecimento_efeito(dados.get("clima_code") or dados.get("clima") or dados.get("clima_nome") or dados.get("nome"))
+            elif tipo in {"efeito_area_aplicado", "efeito_area_tickou", "efeito_area_expirou"}:
+                perfil.registrar_conhecimento_efeito(dados.get("efeito_code") or dados.get("efeito_nome"))
         if tipo == "pokemon_gastou_energia":
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             if poke is not None and dados.get("energia_depois") is not None:

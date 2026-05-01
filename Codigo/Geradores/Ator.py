@@ -126,8 +126,24 @@ class Ator:
             self.iniciar_tapa()
         if self.Perfil is not None and isinstance(dados.get("perfil"), dict):
             self.Perfil.aplicar_serializado(dados.get("perfil"))
+        if self.Inventario is not None and hasattr(self.Inventario, "Perfil") and self.Inventario.Perfil is None and self.Perfil is not None:
+            self.Inventario.Perfil = self.Perfil
         if self.Inventario is not None and isinstance(dados.get("inventario"), dict):
+            itens_antes = list(getattr(self.Inventario, "Itens", []) or [])
+            pokemons_antes = list(getattr(self.Inventario, "Pokemons", []) or [])
             self.Inventario.aplicar_serializado(dados.get("inventario"))
+            perfil = self.Perfil
+            if perfil is not None and hasattr(perfil, "registrar_conhecimento_item"):
+                for item in list(getattr(self.Inventario, "Itens", []) or []):
+                    if item is None or item in itens_antes:
+                        continue
+                    perfil.registrar_conhecimento_item(item)
+            if perfil is not None and hasattr(perfil, "registrar_conhecimento_pokemon"):
+                for pokemon in list(getattr(self.Inventario, "Pokemons", []) or []):
+                    if pokemon in pokemons_antes:
+                        continue
+                    perfil.registrar_conhecimento_pokemon(pokemon)
+                    perfil.registrar_conhecimento_ataques_pokemon(pokemon)
         if self.Inventario is not None and "slot_selecionado" in dados:
             try:
                 self.Inventario.SlotSelecionado = int(dados.get("slot_selecionado"))

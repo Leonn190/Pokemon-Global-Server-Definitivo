@@ -60,7 +60,7 @@ function ehRadiante(pokemon) {
 }
 
 function nomeExibicao(pokemon) {
-  return String(pokemon?.nomeExibicao || pokemon?.nome || "Pokémon").replace(/\bradiante\b/gi, "").replace(/\s+/g, " ").trim();
+  return String(pokemon?.nome || pokemon?.nomeExibicao || "Pokémon").replace(/\s+/g, " ").trim();
 }
 
 function nomeBaseRadiante(nome) {
@@ -501,6 +501,24 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     grid.appendChild(fragmento);
   }
 
+  function manterScrollAposReset(alturaAnterior, scrollAnterior) {
+    if (!grid) return;
+    if (alturaAnterior > 0) grid.style.minHeight = `${Math.ceil(alturaAnterior)}px`;
+
+    const comportamentoAnterior = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = "auto";
+    window.requestAnimationFrame(() => {
+      window.scrollTo(window.scrollX, scrollAnterior);
+      document.documentElement.style.scrollBehavior = comportamentoAnterior;
+    });
+  }
+
+  function liberarAlturaReservada(idRender) {
+    window.setTimeout(() => {
+      if (grid && idRender === renderRequest) grid.style.minHeight = "";
+    }, 120);
+  }
+
   function renderizarAte(limite, idRender) {
     if (!grid || idRender !== renderRequest) return;
     const jaRenderizados = grid.children.length;
@@ -508,6 +526,7 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     if (jaRenderizados >= alvo) {
       renderizando = false;
       atualizarEstado();
+      liberarAlturaReservada(idRender);
       return;
     }
 
@@ -521,12 +540,15 @@ export function inicializarPokedex(idDados = "pokedex-data") {
   }
 
   function renderLista(reset = true) {
-    const idRender = ++renderRequest;
     if (!grid) return;
 
     if (reset) {
+      const idRender = ++renderRequest;
+      const alturaAnterior = grid.getBoundingClientRect().height;
+      const scrollAnterior = window.scrollY;
       resultadoAtual = obterResultado();
       visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
+      manterScrollAposReset(alturaAnterior, scrollAnterior);
       grid.replaceChildren();
       renderizando = false;
       atualizarEstado();
@@ -539,6 +561,7 @@ export function inicializarPokedex(idDados = "pokedex-data") {
       return;
     }
 
+    const idRender = ++renderRequest;
     visiveis = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
     atualizarEstado();
     renderizarAte(visiveis, idRender);

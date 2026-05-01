@@ -1558,3 +1558,42 @@ body.detalhe-aberto {
     justify-content: flex-start;
   }
 }
+
+
+/* Ajustes da wiki v5 - topo alinhado e estável */
+.pokedex-topo {
+  align-items: stretch;
+}
+
+.pokedex-topo .pokedex-resumo,
+.wiki-menu-topo {
+  min-height: 152px;
+}
+
+.pokedex-topo .pokedex-resumo article {
+  min-height: 152px;
+  display: grid;
+  align-content: center;
+  padding: 18px 16px;
+}
+
+.wiki-menu-topo {
+  align-self: stretch;
+  align-content: center;
+  gap: 4px 8px;
+  padding: 10px 14px;
+}
+
+.wiki-menu-topo a {
+  min-height: 29px;
+  padding: 5px 12px;
+  border-radius: 13px;
+}
+
+@media (max-width: 680px) {
+  .pokedex-topo .pokedex-resumo,
+  .wiki-menu-topo,
+  .pokedex-topo .pokedex-resumo article {
+    min-height: auto;
+  }
+}

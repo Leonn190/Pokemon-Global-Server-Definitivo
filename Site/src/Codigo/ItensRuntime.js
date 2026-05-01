@@ -227,6 +227,24 @@ export function inicializarWikiItens(idDados = "itens-data") {
     grid.appendChild(fragmento);
   }
 
+  function manterScrollAposReset(alturaAnterior, scrollAnterior) {
+    if (!grid) return;
+    if (alturaAnterior > 0) grid.style.minHeight = `${Math.ceil(alturaAnterior)}px`;
+
+    const comportamentoAnterior = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = "auto";
+    window.requestAnimationFrame(() => {
+      window.scrollTo(window.scrollX, scrollAnterior);
+      document.documentElement.style.scrollBehavior = comportamentoAnterior;
+    });
+  }
+
+  function liberarAlturaReservada(idRender) {
+    window.setTimeout(() => {
+      if (grid && idRender === renderRequest) grid.style.minHeight = "";
+    }, 120);
+  }
+
   function renderizarAte(limite, idRender) {
     if (!grid || idRender !== renderRequest) return;
     const jaRenderizados = grid.children.length;
@@ -234,6 +252,7 @@ export function inicializarWikiItens(idDados = "itens-data") {
     if (jaRenderizados >= alvo) {
       renderizando = false;
       atualizarEstado();
+      liberarAlturaReservada(idRender);
       return;
     }
     renderizando = true;
@@ -245,21 +264,33 @@ export function inicializarWikiItens(idDados = "itens-data") {
   }
 
   function renderLista(reset = true) {
-    const idRender = ++renderRequest;
     if (!grid) return;
     if (reset) {
+      const idRender = ++renderRequest;
+      const alturaAnterior = grid.getBoundingClientRect().height;
+      const scrollAnterior = window.scrollY;
       resultadoAtual = obterResultado();
       visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
+      manterScrollAposReset(alturaAnterior, scrollAnterior);
       grid.replaceChildren();
       renderizando = false;
       atualizarEstado();
       renderizarAte(visiveis, idRender);
       return;
     }
-    if (renderizando || visiveis >= resultadoAtual.length) return;
+    if (renderizando || visiveis >= resultadoAtual.length) {
+      atualizarEstado();
+      return;
+    }
+    const idRender = ++renderRequest;
     visiveis = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
     atualizarEstado();
     renderizarAte(visiveis, idRender);
+  }
+
+  function carregarMaisAutomatico() {
+    if (renderizando || visiveis >= resultadoAtual.length) return;
+    renderLista(false);
   }
 
   [busca, ordenacao, filtroEstilo, filtroRaridade, filtroBau, filtroVenda].forEach((controle) => {
@@ -292,13 +323,13 @@ export function inicializarWikiItens(idDados = "itens-data") {
 
   if (sentinela && "IntersectionObserver" in window) {
     const observer = new IntersectionObserver((entradas) => {
-      if (entradas.some((entrada) => entrada.isIntersecting)) renderLista(false);
+      if (entradas.some((entrada) => entrada.isIntersecting)) carregarMaisAutomatico();
     }, { rootMargin: "360px 0px" });
     observer.observe(sentinela);
   } else {
     window.addEventListener("scroll", () => {
       const restante = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-      if (restante < 360) renderLista(false);
+      if (restante < 360) carregarMaisAutomatico();
     }, { passive: true });
   }
 

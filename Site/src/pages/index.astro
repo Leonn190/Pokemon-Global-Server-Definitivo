@@ -91,7 +91,7 @@ const classeChanceHome = (chance) => {
   return "chance-bronze";
 };
 const ehRadianteHome = (pokemon) => normalizarChave(pokemon?.nome).includes("radiante");
-const nomeHome = (pokemon) => pokemon.nomeExibicao || String(pokemon.nome || "").replace(/\bradiante\b/gi, "").trim();
+const nomeHome = (pokemon) => String(pokemon.nome || pokemon.nomeExibicao || "Pokémon").replace(/\s+/g, " ").trim();
 const payloadHomePokemon = JSON.stringify({
   pokemons: destaquesHome,
   assetsPokemons: assetsDestaquesHome,

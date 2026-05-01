@@ -16,6 +16,7 @@ class Inventario:
         self.TimesPokemon = []
         self.Doces = {}
         self.SlotSelecionado = 0
+        self.Perfil = None
 
     def definir_limite_itens(self, limite_itens, preservar=True):
         self.LimiteItens = int(limite_itens)
@@ -68,6 +69,10 @@ class Inventario:
             return item_copia
         return item
 
+    def _registrar_conhecimento_item(self, item):
+        if self.Perfil is not None and hasattr(self.Perfil, "registrar_conhecimento_item"):
+            self.Perfil.registrar_conhecimento_item(item)
+
     @staticmethod
     def _limite_stack(item) -> int:
         if not isinstance(item, dict):
@@ -106,6 +111,8 @@ class Inventario:
                     if item_copia["quantidade"] <= 0:
                         if isinstance(item, dict):
                             item["quantidade"] = 0
+                        if adicionado > 0:
+                            self._registrar_conhecimento_item(item)
                         return True
 
         while isinstance(item_copia, dict) and item_copia["quantidade"] > 0:
@@ -122,6 +129,8 @@ class Inventario:
             self.Itens[slot_livre] = novo
         if isinstance(item, dict):
             item["quantidade"] = int(item_copia.get("quantidade", 0) if isinstance(item_copia, dict) else 0)
+        if adicionado > 0:
+            self._registrar_conhecimento_item(item)
         return True
 
     def aplicar_serializado(self, dados):

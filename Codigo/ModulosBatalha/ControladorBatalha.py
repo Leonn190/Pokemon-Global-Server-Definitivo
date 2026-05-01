@@ -58,6 +58,7 @@ class ControladorBatalha:
         self._fuga_clarear_por_segundo = 34.0
         self._fuga_limite_saida = 210.0
         self.solicitou_encerrar_batalha = False
+        self._conhecimento_pokemons_vistos = set()
 
     def iniciar(self, estado_inicial):
         estado = dict(estado_inicial or {})
@@ -100,6 +101,7 @@ class ControladorBatalha:
             pokemon.Nivel = max(1, int(getattr(pokemon, "Nivel", 1) or 1))
             pokemon.VidaAtual = max(0.0, min(float(pokemon.VidaMax), float(getattr(pokemon, "VidaAtual", pokemon.VidaMax))))
         self.pokemons_por_id = {p.id_batalha: p for p in self.pokemons}
+        self._registrar_conhecimento_pokemons_batalha()
         self.arena.atualizar_ocupacao(self.pokemons)
 
         self.criar_componentes()
@@ -143,6 +145,18 @@ class ControladorBatalha:
             self.player_batalha.processar_eventos(eventos)
         self.hud.atualizar(dt, eventos)
         self._atualizar_fuga(dt)
+
+    def _registrar_conhecimento_pokemons_batalha(self):
+        perfil = getattr(getattr(self, "ator", None), "Perfil", None)
+        if perfil is None or not hasattr(perfil, "registrar_conhecimento_pokemon"):
+            return
+        for pokemon in list(self.pokemons or []):
+            pid = getattr(pokemon, "ID", None) or getattr(pokemon, "Id", None) or getattr(pokemon, "id", None) or getattr(pokemon, "id_original", None) or getattr(pokemon, "id_batalha", None)
+            chave = str(pid or "")
+            if not chave or chave in self._conhecimento_pokemons_vistos:
+                continue
+            perfil.registrar_conhecimento("Pokemons", pid)
+            self._conhecimento_pokemons_vistos.add(chave)
 
     def desenhar(self, surface):
         if self.arena is None:

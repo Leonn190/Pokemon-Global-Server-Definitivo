@@ -39,6 +39,12 @@ class FinalizadorBatalha:
 
     def finalizar_por_fuga(self):
         ctrl = self.controlador
+        perfil = getattr(getattr(ctrl, "ator", None), "Perfil", None)
+        if perfil is None:
+            jogo = getattr(ctrl, "jogo", None)
+            perfil = getattr(getattr(jogo, "Ator", None), "Perfil", None)
+        if perfil is not None and hasattr(perfil, "registrar_fuga"):
+            perfil.registrar_fuga()
         resposta = ctrl.server_batalha.finalizar_batalha(ctrl.id_partida, ctrl.lado_jogador, motivo="fuga")
         resultado = resposta.get("resultado") if isinstance(resposta, dict) and isinstance(resposta.get("resultado"), dict) else {}
         self._ultimo_resultado = dict(resultado)

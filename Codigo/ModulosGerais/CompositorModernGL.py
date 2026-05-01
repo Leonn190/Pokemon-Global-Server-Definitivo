@@ -133,7 +133,7 @@ class CompositorModernGL:
         player_uv = dados.get("player_uv", (0.5, 0.5))
         tint = dados.get("tint", (1.0, 1.0, 1.0))
         tipo_efeito = str(dados.get("tipo") or "")
-        efeito_ativo = bool(shader_ativo and (tipo_efeito == "mundo" or (tipo_efeito == "batalha" and bool(dados.get("ativo", True)))))
+        efeito_ativo = bool(shader_ativo and (tipo_efeito in ("mundo", "menu_logo") or (tipo_efeito == "batalha" and bool(dados.get("ativo", True)))))
         scene_upload_surface = scene_surface
         hud_upload_surface = hud_surface if efeito_ativo else None
         if not efeito_ativo:
@@ -161,6 +161,16 @@ class CompositorModernGL:
         self._uniform("u_battle_sand_power", float(self._clamp(float(dados.get("battle_sand_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_fog_power", float(self._clamp(float(dados.get("battle_fog_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_acid_power", float(self._clamp(float(dados.get("battle_acid_power", 0.0) or 0.0), 0.0, 1.0)))
+
+        menu_logo_rect = dados.get("menu_logo_rect", (0.0, 0.0, 0.0, 0.0))
+        try:
+            menu_logo_rect = tuple(float(v) for v in menu_logo_rect)
+        except Exception:
+            menu_logo_rect = (0.0, 0.0, 0.0, 0.0)
+        if len(menu_logo_rect) != 4:
+            menu_logo_rect = (0.0, 0.0, 0.0, 0.0)
+        self._uniform("u_menu_logo_rect", menu_logo_rect)
+        self._uniform("u_menu_logo_power", float(self._clamp(float(dados.get("menu_logo_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_shader_enabled", 1.0 if efeito_ativo else 0.0)
 
         self._upload_surface(self._scene_tex, scene_upload_surface, self._scene_upload_info)

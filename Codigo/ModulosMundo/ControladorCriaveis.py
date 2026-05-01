@@ -105,7 +105,7 @@ class ControladorCriaveis:
     def aplicar_spawn_especial(self, categoria: str, payload: Dict[str, object], aplicar_diff_cb: Callable[[Dict[str, object]], None]) -> bool:
         categoria = str(categoria or "").strip().lower()
         dados = payload if isinstance(payload, dict) else {}
-        if categoria == "projetil_lancamento":
+        if categoria == "arremesso_visual":
             pos_inicial = dados.get("pos_inicial") if isinstance(dados.get("pos_inicial"), (list, tuple)) else [0.0, 0.0]
             pos_final = dados.get("pos_final") if isinstance(dados.get("pos_final"), (list, tuple)) else list(pos_inicial)
             dx = float(pos_final[0]) - float(pos_inicial[0]); dy = float(pos_final[1]) - float(pos_inicial[1])
@@ -151,8 +151,7 @@ class ControladorCriaveis:
                     if subtipo == "pokemon":
                         poke = alvo
                         p.encerrar_imediato()
-                        if str(getattr(p, "TipoProjetil", "")).lower() != "fruta":
-                            registrar_colisao_pokemon_cb(p, poke)
+                        registrar_colisao_pokemon_cb(p, poke)
                     else:
                         p.encerrar_com_fade(0.5)
             if p.deve_remover():

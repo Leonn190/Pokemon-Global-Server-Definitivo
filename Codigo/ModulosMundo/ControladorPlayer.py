@@ -280,7 +280,7 @@ class ControladorPlayer:
 
         self._objetos.EnfileirarDiffRapida({
             "tipo": "spawn",
-            "categoria": "projetil_lancamento",
+            "categoria": "arremesso_visual",
             "payload": {
                 "token": token,
                 "subtipo_projetil": "fruta" if variante == "fruta" else "pokebola",

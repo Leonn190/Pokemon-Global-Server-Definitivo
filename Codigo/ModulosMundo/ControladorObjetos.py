@@ -591,10 +591,10 @@ class ControladorObjetos:
         if not token:
             return {}
         return self._capturas_por_token.setdefault(token, {
-            "server_confirmou": False,
-            "server_confirmou_ms": 0,
-            "colidiu_local": False,
-            "colidiu_local_ms": 0,
+            "resultado_servidor_recebido": False,
+            "resultado_servidor_recebido_ms": 0,
+            "impacto_local_enviado": False,
+            "impacto_local_enviado_ms": 0,
         })
 
     def _registrar_colisao_local_projetil_pokemon(self, proj: Projetil, poke: Pokemon) -> None:
@@ -603,12 +603,37 @@ class ControladorObjetos:
             return
         info = self._token_info(token)
         agora_ms = pygame.time.get_ticks()
-        info["colidiu_local"] = True
-        info["colidiu_local_ms"] = agora_ms
+        info["impacto_local_enviado"] = True
+        info["impacto_local_enviado_ms"] = agora_ms
         if hasattr(poke, "registrar_colisao_projetil_local"):
             poke.registrar_colisao_projetil_local(token, nome_bola=str(getattr(proj, "ItemNome", "") or getattr(proj, "Subtipo", "pokeball")), tempo_espera_confirmacao_ms=1500)
-        if bool(info.get("server_confirmou", False)) and hasattr(poke, "confirmar_captura_por_token"):
-            poke.confirmar_captura_por_token(token, esperar_colisao=False, atraso_ms=0)
+        dono_ref = getattr(self, "_player_local_ref", None)
+        if dono_ref is not None and hasattr(dono_ref, "Posicao"):
+            dono_pos = tuple(getattr(dono_ref, "Posicao", (0.0, 0.0)))
+        else:
+            dono_payload = self.ObjetosPorId.get(int(getattr(proj, "DonoId", 0) or 0), {})
+            dono_pos = tuple(dono_payload.get("posicao") or proj.Posicao)
+        dist = math.hypot(float(proj.Posicao[0]) - float(dono_pos[0]), float(proj.Posicao[1]) - float(dono_pos[1]))
+        captura_critica_cliente = bool(getattr(poke, "calcular_captura_critica_local", lambda _p: False)(tuple(proj.Posicao)))
+        self.EnfileirarDiffRapida({
+            "tipo": "evento",
+            "categoria": "captura_impacto_cliente" if str(getattr(proj, "TipoProjetil", "")).lower() != "fruta" else "fruta_impacto_cliente",
+            "payload": {
+                "token": token,
+                "pokemon_id": int(getattr(poke, "Id", 0) or 0),
+                "dono_id": int(getattr(proj, "DonoId", 0) or 0),
+                "tipo_projetil": str(getattr(proj, "TipoProjetil", "") or ""),
+                "variante": str(getattr(proj, "Subtipo", "") or ""),
+                "item_nome": str(getattr(proj, "ItemNome", "") or ""),
+                "item_base_id": str(getattr(proj, "ItemBaseId", "") or ""),
+                "pos_projetil": [float(proj.Posicao[0]), float(proj.Posicao[1])],
+                "pos_pokemon": [float(poke.Posicao[0]), float(poke.Posicao[1])],
+                "distancia_arremesso_tiles": float(dist),
+                "captura_critica_cliente": bool(captura_critica_cliente),
+            },
+        })
+        if bool(info.get("resultado_servidor_recebido", False)) and hasattr(poke, "resultado_servidor_recebido_por_token"):
+            poke.resultado_servidor_recebido_por_token(token, esperar_colisao=False, atraso_ms=0)
 
     def _registrar_confirmacao_servidor_captura(self, payload: Dict[str, object]) -> None:
         estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
@@ -619,17 +644,17 @@ class ControladorObjetos:
         if not token:
             return
         info = self._token_info(token)
-        info["server_confirmou"] = True
-        info["server_confirmou_ms"] = pygame.time.get_ticks()
+        info["resultado_servidor_recebido"] = True
+        info["resultado_servidor_recebido_ms"] = pygame.time.get_ticks()
         poke = self.PokemonsPorId.get(int(payload.get("id", 0) or 0))
         if poke is None:
             return
         payload_captura = dict(captura)
-        colidiu_local = bool(info.get("colidiu_local", False))
+        impacto_local_enviado = bool(info.get("impacto_local_enviado", False))
         if hasattr(poke, "aplicar_resultado_servidor_captura"):
-            poke.aplicar_resultado_servidor_captura(payload_captura, esperar_colisao=not colidiu_local)
-        elif hasattr(poke, "confirmar_captura_por_token"):
-            poke.confirmar_captura_por_token(token, esperar_colisao=not colidiu_local, atraso_ms=0)
+            poke.aplicar_resultado_servidor_captura(payload_captura, esperar_colisao=not impacto_local_enviado)
+        elif hasattr(poke, "resultado_servidor_recebido_por_token"):
+            poke.resultado_servidor_recebido_por_token(token, esperar_colisao=not impacto_local_enviado, atraso_ms=0)
 
     def atualizar_projeteis_visuais(self, dt: float) -> None:
         with self._lock_objetos:

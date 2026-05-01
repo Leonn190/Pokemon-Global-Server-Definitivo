@@ -491,14 +491,26 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 else:
                     ignorados += 1
                 continue
-            if tipo == "evento":
-                ignorados += 1
-                continue
-            if categoria == "projetil_lancamento":
+            if categoria == "arremesso_visual":
                 if CEREBRO.registrar_lancamento_projetil(client_id, payload):
                     aplicados += 1
                 else:
                     ignorados += 1
+                continue
+            if categoria == "captura_impacto_cliente":
+                if CEREBRO.registrar_impacto_projetil_cliente(client_id, payload, fruta=False):
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            if categoria == "fruta_impacto_cliente":
+                if CEREBRO.registrar_impacto_projetil_cliente(client_id, payload, fruta=True):
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            if tipo == "evento":
+                ignorados += 1
                 continue
             if categoria == "item_mundo_drop":
                 CEREBRO.registrar_drop_item_mundo(client_id, payload)

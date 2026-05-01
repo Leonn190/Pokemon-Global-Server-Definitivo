@@ -49,6 +49,8 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     maestria = float(ctx.get("maestria", 0.0) if ctx.get("maestria", 0.0) not in (None, "") else 0.0)
     bonus_maestria = float(ctx.get("captura_bonus_maestria", 10.0) if ctx.get("captura_bonus_maestria", 10.0) not in (None, "") else 10.0)
     poder += maestria * bonus_maestria
+    if bool(ctx.get("captura_critica_cliente", False)):
+        poder += float(ctx.get("captura_bonus_critica_cliente", 15.0) if ctx.get("captura_bonus_critica_cliente", 15.0) not in (None, "") else 15.0)
 
     dificuldade = float(pokemon.estado_extra.get("dificuldade_captura", 50.0) or 50.0)
     garantida = bool(bola.get("captura_garantida", False))
@@ -98,8 +100,6 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
             "chance_escape": float(chance_escape),
             "captura_garantida": bool(garantida),
             "liberar_movimento_tick": int(liberar_tick),
-            "pokemon_colisao_ativa": False,
-            "pokemon_interacao_ativa": False,
             "efeitos_bola": dict(bola.get("efeitos", {})) if isinstance(bola.get("efeitos"), dict) else {},
         }
     )

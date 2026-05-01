@@ -62,7 +62,7 @@ const tecnologias = [
   "Mapa explorável com cache por chunks",
 ];
 
-const destaquesHome = selecionarDestaquesHome(pokemonsHome, 18);
+const destaquesHome = selecionarDestaquesHome(pokemonsHome, 36);
 const trilhoDestaquesHome = [...destaquesHome, ...destaquesHome];
 const imagensPokemonsHome = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
   eager: true,
@@ -171,15 +171,7 @@ const payloadHomePokemon = JSON.stringify({
 
   <section class="secao pokemon-destaque-home pokemon-destaque-carrossel-home" data-home-pokemon-carousel aria-labelledby="titulo-pokemon-destaque">
     <div class="pokemon-destaque-copy">
-      <p class="selo">Pokémon em destaque</p>
-      <h2 id="titulo-pokemon-destaque">A Pokédex também vive na página inicial</h2>
-      <p>
-        Os mesmos cartuchos da wiki aparecem em carrossel, puxados do CSV. Clique em qualquer Pokémon para abrir uma visualização rápida sem sair da home.
-      </p>
-      <div class="acoes">
-        <Botao href="/wiki/pokemons">Abrir Pokédex</Botao>
-        <Botao href="/wiki" tipo="fantasma">Ver wiki completa</Botao>
-      </div>
+      <h2 id="titulo-pokemon-destaque">Explore um catálogo diversificado</h2>
     </div>
 
     <div class="pokemon-carrossel-janela" aria-label="Pokémons em destaque em carrossel">
@@ -215,18 +207,27 @@ const payloadHomePokemon = JSON.stringify({
         })}
       </div>
     </div>
+
+    <div class="acoes pokemon-carrossel-acoes">
+      <Botao href="/wiki" tipo="fantasma">Ver wiki completa</Botao>
+      <Botao href="/wiki/pokemons">Abrir Pokédex</Botao>
+    </div>
   </section>
 
   <aside class="pokemon-detalhe" data-home-pokemon-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
     <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-home-detalhe-nome">
-      <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
+      <div class="pokemon-controles-detalhe" aria-label="Navegação do Pokémon aberto">
+        <button class="pokemon-navegar" type="button" data-pokemon-prev aria-label="Pokémon anterior">‹</button>
+        <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
+        <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
+      </div>
 
       <div class="pokemon-detalhe-topo">
         <div class="pokemon-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-detail-image alt="" loading="lazy" decoding="async" />
-          <div class="pokemon-sem-imagem" data-detail-fallback hidden>Sem imagem</div>
+          <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
         </div>
 
         <div class="pokemon-cabecalho-detalhe">

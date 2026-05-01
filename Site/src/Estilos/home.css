@@ -1041,3 +1041,57 @@ body.detalhe-aberto .pokemon-carrossel-trilho {
     width: 100%;
   }
 }
+
+/* Ajustes do carrossel da home v3 */
+.pokemon-destaque-carrossel-home {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  overflow: visible;
+}
+
+.pokemon-destaque-carrossel-home .pokemon-destaque-copy {
+  text-align: center;
+}
+
+.pokemon-destaque-carrossel-home .pokemon-destaque-copy h2 {
+  margin: 0 auto 6px;
+  max-width: none;
+  white-space: nowrap;
+  font-size: clamp(2.2rem, 5.8vw, 5.4rem);
+}
+
+.pokemon-destaque-carrossel-home .pokemon-carrossel-janela {
+  width: 100%;
+  padding: 20px 0;
+}
+
+.pokemon-destaque-carrossel-home .pokemon-carrossel-trilho {
+  gap: 12px;
+  animation-duration: 78s;
+}
+
+.pokemon-destaque-carrossel-home:hover .pokemon-carrossel-trilho {
+  animation-play-state: running;
+}
+
+.pokemon-destaque-carrossel-home.pausado .pokemon-carrossel-trilho,
+body.detalhe-aberto .pokemon-carrossel-trilho {
+  animation-play-state: paused;
+}
+
+.pokemon-carrossel-acoes {
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.pokemon-card-home {
+  width: 166px;
+  flex-basis: 166px;
+}
+
+@media (max-width: 900px) {
+  .pokemon-destaque-carrossel-home .pokemon-destaque-copy h2 {
+    white-space: normal;
+  }
+}

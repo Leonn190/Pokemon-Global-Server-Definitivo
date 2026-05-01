@@ -50,14 +50,10 @@ const payloadPokedex = JSON.stringify({
   descricao="Wiki de Pokémons do Pokémon Global Server, com busca, filtros por foco, filtros por tipos, atributos, raridade, linhagem e animações."
 >
   <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-pokedex">
-    <div>
-      <p class="selo">Wiki / Pokémons</p>
-      <h1 id="titulo-pokedex">Pokédex Global</h1>
-      <p class="wiki-descricao">
-        Protótipo da wiki puxando os registros do CSV do jogo. Os cards carregam em blocos, os filtros trabalham por combinação de tipos e a animação por frames só é buscada quando você abre um Pokémon.
-      </p>
-    </div>
+    <h1 id="titulo-pokedex">Pokédex Global</h1>
+  </section>
 
+  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
     <div class="pokedex-resumo" aria-label="Resumo dos registros da Pokédex">
       <article>
         <strong>{resumo.quantidade}</strong>
@@ -76,17 +72,17 @@ const payloadPokedex = JSON.stringify({
         <span>Linhagens</span>
       </article>
     </div>
-  </section>
 
-  <section class="wiki-layout wiki-layout-pokedex">
-    <aside class="wiki-menu-lateral">
+    <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
       <a class="ativo" href="/wiki/pokemons">Pokémons</a>
       <a href="/wiki/itens">Itens</a>
       <a href="/wiki/efeitos">Efeitos</a>
       <a href="/wiki/estadios">Estádios</a>
       <a href="/wiki/mundo">Mundo</a>
-    </aside>
+    </nav>
+  </section>
 
+  <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app" data-pokedex-app>
       <section class="pokedex-toolbar" aria-label="Ferramentas da wiki de Pokémons">
         <label class="campo-busca">
@@ -97,7 +93,7 @@ const payloadPokedex = JSON.stringify({
         <label>
           <span>Ordenar</span>
           <select data-pokedex-sort>
-            <option value="ordem-asc">Ordem do CSV</option>
+            <option value="ordem-asc">Ordem oficial</option>
             <option value="nome-asc">Alfabética</option>
             <option value="vida-desc">Vida</option>
             <option value="atk-desc">Atk</option>
@@ -167,22 +163,24 @@ const payloadPokedex = JSON.stringify({
         <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
       </div>
 
-      <div class="pokedex-carregar">
-        <button class="botao secundario" type="button" data-pokedex-more>Carregar mais Pokémons</button>
-      </div>
+      <div class="pokedex-sentinel" data-pokedex-sentinel aria-hidden="true"></div>
     </div>
   </section>
 
   <aside class="pokemon-detalhe" data-pokemon-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
     <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-detalhe-nome">
-      <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
+      <div class="pokemon-controles-detalhe" aria-label="Navegação do Pokémon aberto">
+        <button class="pokemon-navegar" type="button" data-pokemon-prev aria-label="Pokémon anterior">‹</button>
+        <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
+        <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
+      </div>
 
       <div class="pokemon-detalhe-topo">
         <div class="pokemon-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-detail-image alt="" loading="lazy" decoding="async" />
-          <div class="pokemon-sem-imagem" data-detail-fallback hidden>Sem imagem</div>
+          <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
         </div>
 
         <div class="pokemon-cabecalho-detalhe">

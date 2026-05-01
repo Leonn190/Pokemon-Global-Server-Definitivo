@@ -1059,3 +1059,172 @@ body.detalhe-aberto {
     height: 29px;
   }
 }
+
+/* Ajustes solicitados da Pokédex v3 */
+.wiki-hero-pokedex {
+  display: block;
+  padding: 58px 0 20px;
+  text-align: center;
+}
+
+.wiki-hero-pokedex h1 {
+  margin-inline: auto;
+  white-space: nowrap;
+}
+
+.pokedex-topo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 22px;
+}
+
+.pokedex-topo .pokedex-resumo {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.wiki-menu-topo {
+  position: static;
+  top: auto;
+  align-self: stretch;
+  align-content: center;
+  min-height: 100%;
+}
+
+.wiki-layout-pokedex {
+  display: block;
+  padding-top: 0;
+}
+
+.filtros-tipos-icones {
+  display: grid;
+  grid-template-columns: repeat(20, 44px);
+  justify-content: center;
+  gap: 8px;
+  margin: 16px 0 18px;
+}
+
+.pokedex-grid {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  align-items: stretch;
+}
+
+.pokedex-vazio[hidden],
+.pokedex-sentinel[hidden],
+.pokemon-sem-imagem[hidden] {
+  display: none !important;
+}
+
+.pokedex-carregar {
+  display: none !important;
+}
+
+.pokedex-sentinel {
+  min-height: 1px;
+  margin-top: 18px;
+}
+
+.pokemon-card-entrando {
+  animation: pokemon-card-surgir 0.38s ease both;
+}
+
+@keyframes pokemon-card-surgir {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.pokemon-controles-detalhe {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  float: right;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.pokemon-controles-detalhe .pokemon-fechar,
+.pokemon-navegar {
+  position: static;
+  float: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  color: var(--texto);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pokemon-navegar {
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.pokemon-controles-detalhe .pokemon-fechar:hover,
+.pokemon-navegar:hover {
+  border-color: rgba(255, 217, 52, 0.46);
+  background: rgba(255, 217, 52, 0.1);
+}
+
+.pokemon-palco-detalhe img {
+  width: auto;
+  height: auto;
+  max-width: min(225px, 72%);
+  max-height: min(225px, 72%);
+  object-fit: contain;
+}
+
+.pokemon-sem-imagem {
+  width: 1px;
+  min-width: 1px;
+  height: 1px;
+  min-height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+  .pokedex-topo {
+    grid-template-columns: 1fr;
+  }
+
+  .wiki-menu-topo {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .filtros-tipos-icones {
+    grid-template-columns: repeat(10, 44px);
+  }
+}
+
+@media (max-width: 680px) {
+  .wiki-hero-pokedex h1 {
+    white-space: normal;
+  }
+
+  .pokedex-topo .pokedex-resumo,
+  .wiki-menu-topo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filtros-tipos-icones {
+    grid-template-columns: repeat(5, 44px);
+  }
+}

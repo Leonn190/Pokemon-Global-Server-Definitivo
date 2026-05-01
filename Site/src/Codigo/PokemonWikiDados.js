@@ -329,30 +329,11 @@ export function resumoPokemons(pokemons) {
   };
 }
 
-export function selecionarDestaquesHome(pokemons, limite = 18) {
-  const nomesPreferidos = [
-    "Bulbasaur",
-    "Charizard",
-    "Pikachu",
-    "Mewtwo",
-    "Lucario",
-    "Greninja",
-    "Gengar",
-    "Dragonite",
-    "Arceus",
-    "Rayquaza",
-  ];
-
-  const porNome = new Map(pokemons.map((pokemon) => [normalizarChave(pokemon.nome), pokemon]));
-  const escolhidos = nomesPreferidos.map((nome) => porNome.get(normalizarChave(nome))).filter(Boolean);
-
-  if (escolhidos.length >= limite) return escolhidos.slice(0, limite);
-
-  const usados = new Set(escolhidos.map((pokemon) => pokemon.id));
-  const fortes = [...pokemons]
-    .filter((pokemon) => !usados.has(pokemon.id))
-    .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))
-    .slice(0, limite - escolhidos.length);
-
-  return [...escolhidos, ...fortes];
+export function selecionarDestaquesHome(pokemons, limite = 36) {
+  const validos = [...pokemons].filter((pokemon) => pokemon?.id && pokemon?.nome);
+  for (let i = validos.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [validos[i], validos[j]] = [validos[j], validos[i]];
+  }
+  return validos.slice(0, Math.min(limite, validos.length));
 }

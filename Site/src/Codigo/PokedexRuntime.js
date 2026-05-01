@@ -16,7 +16,8 @@ const MAXIMOS_BARRAS = {
 };
 
 const ATRIBUTOS_REGULARES = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"];
-const frameIndex = criarIndiceFrames(FRAME_MODULES);
+let frameIndex = null;
+const framesCache = new Map();
 
 function normalizar(valor) {
   return String(valor ?? "")
@@ -105,11 +106,19 @@ function criarIndiceFrames(modulos) {
 }
 
 async function carregarFramesPokemon(pokemon) {
+  const cacheKey = String(pokemon?.id ?? pokemon?.nome ?? "");
+  if (framesCache.has(cacheKey)) return framesCache.get(cacheKey);
+  if (!frameIndex) frameIndex = criarIndiceFrames(FRAME_MODULES);
+
   for (const candidato of candidatosPokemon(pokemon)) {
     const frames = frameIndex[candidato];
     if (!frames?.length) continue;
-    return Promise.all(frames.map((frame) => frame.carregador()));
+    const carregados = await Promise.all(frames.map((frame) => frame.carregador()));
+    framesCache.set(cacheKey, carregados);
+    return carregados;
   }
+
+  framesCache.set(cacheKey, []);
   return [];
 }
 
@@ -213,6 +222,22 @@ function criarControladorDetalhe(dados, opcoes = {}) {
       });
   }
 
+  function listaNavegacao() {
+    const listaAtual = typeof opcoes.obterListaAtual === "function" ? opcoes.obterListaAtual() : null;
+    const lista = Array.isArray(listaAtual) && listaAtual.length ? listaAtual : (dados.pokemons || []);
+    return [...lista].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+  }
+
+  function abrirVizinho(direcao) {
+    if (!pokemonAberto) return;
+    const lista = listaNavegacao();
+    if (!lista.length) return;
+    const indiceAtual = lista.findIndex((item) => String(item.id) === String(pokemonAberto.id));
+    const indiceSeguro = indiceAtual === -1 ? 0 : indiceAtual;
+    const proximo = lista[(indiceSeguro + direcao + lista.length) % lista.length];
+    if (proximo) abrirDetalhe(proximo.id);
+  }
+
   async function abrirDetalhe(id) {
     const pokemon = (dados.pokemons || []).find((item) => item.id === String(id));
     if (!pokemon || !detalhe) return;
@@ -251,7 +276,7 @@ function criarControladorDetalhe(dados, opcoes = {}) {
       } else {
         imagem.hidden = true;
         fallback.hidden = false;
-        fallback.textContent = "Sem imagem";
+        fallback.textContent = "";
       }
 
       const frames = opcoes.animarFrames === false ? [] : await carregarFramesPokemon(pokemon);
@@ -333,6 +358,8 @@ function criarControladorDetalhe(dados, opcoes = {}) {
     document.dispatchEvent(new CustomEvent("pokemon-detail-closed"));
   }
 
+  detalhe?.querySelectorAll("[data-pokemon-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
+  detalhe?.querySelectorAll("[data-pokemon-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));
   detalhe?.querySelectorAll("[data-pokemon-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
@@ -353,16 +380,23 @@ export function inicializarPokedex(idDados = "pokedex-data") {
   const filtroGrupo = app.querySelector("[data-pokedex-group]");
   const filtroRaridade = app.querySelector("[data-pokedex-rarity]");
   const contador = app.querySelector("[data-pokedex-count]");
-  const botaoMais = app.querySelector("[data-pokedex-more]");
   const botaoLimpar = app.querySelector("[data-pokedex-clear]");
   const vazio = app.querySelector("[data-pokedex-empty]");
+  const sentinela = app.querySelector("[data-pokedex-sentinel]");
   const chipsTipo = app.querySelectorAll("[data-type-chip]");
   const PAGE_SIZE = 48;
+  const RENDER_BATCH = 12;
   const tiposSelecionados = [];
-  const detalheController = criarControladorDetalhe(dados, { mostrarLinhagem: true, animarFrames: true });
-  let visiveis = PAGE_SIZE;
+  let visiveis = 0;
   let resultadoAtual = [];
   let renderRequest = 0;
+  let renderizando = false;
+
+  const detalheController = criarControladorDetalhe(dados, {
+    mostrarLinhagem: true,
+    animarFrames: true,
+    obterListaAtual: () => resultadoAtual,
+  });
 
   function obterResultado() {
     const termo = normalizar(busca?.value ?? "");
@@ -411,21 +445,70 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     });
   }
 
-  function renderLista(reset = true) {
-    const idRender = ++renderRequest;
-    if (reset) visiveis = PAGE_SIZE;
+  function atualizarEstado() {
+    if (contador) contador.textContent = String(resultadoAtual.length);
+    if (vazio) vazio.hidden = resultadoAtual.length !== 0;
+    if (sentinela) sentinela.hidden = resultadoAtual.length === 0 || visiveis >= resultadoAtual.length;
+    atualizarChips();
+  }
+
+  function anexarCards(inicio, fim) {
+    if (!grid) return;
+    const fragmento = document.createDocumentFragment();
+    resultadoAtual.slice(inicio, fim).forEach((pokemon) => {
+      const card = criarCardPokemon(pokemon, dados);
+      card.classList.add("pokemon-card-entrando");
+      fragmento.appendChild(card);
+    });
+    grid.appendChild(fragmento);
+  }
+
+  function renderizarAte(limite, idRender) {
+    if (!grid || idRender !== renderRequest) return;
+    const jaRenderizados = grid.children.length;
+    const alvo = Math.min(limite, resultadoAtual.length);
+    if (jaRenderizados >= alvo) {
+      renderizando = false;
+      atualizarEstado();
+      return;
+    }
+
+    renderizando = true;
+    const proximoFim = Math.min(jaRenderizados + RENDER_BATCH, alvo);
     window.requestAnimationFrame(() => {
       if (idRender !== renderRequest) return;
-      resultadoAtual = obterResultado();
-      const fatia = resultadoAtual.slice(0, visiveis);
-      const fragmento = document.createDocumentFragment();
-      fatia.forEach((pokemon) => fragmento.appendChild(criarCardPokemon(pokemon, dados)));
-      grid.replaceChildren(fragmento);
-      if (contador) contador.textContent = String(resultadoAtual.length);
-      if (vazio) vazio.hidden = resultadoAtual.length > 0;
-      if (botaoMais) botaoMais.hidden = resultadoAtual.length <= visiveis;
-      atualizarChips();
+      anexarCards(jaRenderizados, proximoFim);
+      window.setTimeout(() => renderizarAte(alvo, idRender), 28);
     });
+  }
+
+  function renderLista(reset = true) {
+    const idRender = ++renderRequest;
+    if (!grid) return;
+
+    if (reset) {
+      resultadoAtual = obterResultado();
+      visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
+      grid.replaceChildren();
+      renderizando = false;
+      atualizarEstado();
+      renderizarAte(visiveis, idRender);
+      return;
+    }
+
+    if (renderizando || visiveis >= resultadoAtual.length) {
+      atualizarEstado();
+      return;
+    }
+
+    visiveis = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
+    atualizarEstado();
+    renderizarAte(visiveis, idRender);
+  }
+
+  function carregarMaisAutomatico() {
+    if (renderizando || visiveis >= resultadoAtual.length) return;
+    renderLista(false);
   }
 
   [busca, ordenacao, filtroFoco, filtroGrupo, filtroRaridade].forEach((controle) => {
@@ -466,10 +549,17 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     renderLista(true);
   });
 
-  botaoMais?.addEventListener("click", () => {
-    visiveis += PAGE_SIZE;
-    renderLista(false);
-  });
+  if (sentinela && "IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entradas) => {
+      if (entradas.some((entrada) => entrada.isIntersecting)) carregarMaisAutomatico();
+    }, { rootMargin: "720px 0px" });
+    observer.observe(sentinela);
+  } else {
+    window.addEventListener("scroll", () => {
+      const restante = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+      if (restante < 720) carregarMaisAutomatico();
+    }, { passive: true });
+  }
 
   renderLista(true);
 

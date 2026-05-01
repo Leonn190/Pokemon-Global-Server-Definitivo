@@ -264,6 +264,17 @@ class ControladorObjetos:
             return False
         return False
 
+    def _posicao_raio_colisao_client(self, oid: int, obj: Dict[str, object]):
+        if self._eh_payload_pokemon(obj):
+            poke = self.PokemonsPorId.get(int(oid))
+            colisor = getattr(poke, "Colisor", None) if poke is not None else None
+            if colisor is not None:
+                return (float(colisor.x), float(colisor.y)), float(getattr(colisor, "raio_colisao", 0.0) or 0.0)
+        pos = obj.get("posicao")
+        if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            return None, 0.0
+        return (float(pos[0]), float(pos[1])), float(obj.get("raio_colisao", 0.0) or 0.0)
+
     def iter_colisores_proximos_por_raio(self, posicao: Tuple[float, float], raio_tiles: float = 10.0):
         px, py = float(posicao[0]), float(posicao[1])
         chunk_cx, chunk_cy = self._chunk_posicao(px, py)
@@ -284,13 +295,12 @@ class ControladorObjetos:
                 continue
             if not self._payload_tem_colisao_solida(obj):
                 continue
-            pos = obj.get("posicao")
-            if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            pos_colisao, raio = self._posicao_raio_colisao_client(int(obj.get("id", 0) or 0), obj)
+            if pos_colisao is None:
                 continue
-            sx, sy = float(pos[0]), float(pos[1])
+            sx, sy = pos_colisao
             if ((sx - px) ** 2 + (sy - py) ** 2) > r2:
                 continue
-            raio = float(obj.get("raio_colisao", 0.0) or 0.0)
             if raio <= 0.0:
                 continue
             tipo_obj = str(obj.get("tipo", ""))
@@ -554,11 +564,11 @@ class ControladorObjetos:
                 continue
             if int(oid) == int(getattr(proj, "DonoId", 0) or 0):
                 continue
-            pos = obj.get("posicao")
-            if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+            pos_colisao, raio_alvo = self._posicao_raio_colisao_client(int(oid), obj)
+            if pos_colisao is None:
                 continue
-            dx = float(pos[0]) - float(proj.Posicao[0])
-            dy = float(pos[1]) - float(proj.Posicao[1])
+            dx = float(pos_colisao[0]) - float(proj.Posicao[0])
+            dy = float(pos_colisao[1]) - float(proj.Posicao[1])
             d2 = (dx * dx) + (dy * dy)
             if d2 > (raio_busca * raio_busca):
                 continue
@@ -567,7 +577,10 @@ class ControladorObjetos:
             subtipo = str(estado.get("subtipo", "")).strip().lower()
             if not (subtipo in {"pokemon", "player", "bau"} or tipo.startswith("estrutura")):
                 continue
-            raio_alvo = float(obj.get("raio_colisao", 0.2) or 0.2)
+            if raio_alvo <= 0.0:
+                if self._eh_payload_pokemon(obj):
+                    continue
+                raio_alvo = 0.2
             limite = float(getattr(getattr(proj, "Colisor", None), "raio_colisao", 0.18)) + raio_alvo
             if d2 <= (limite * limite):
                 return obj

@@ -157,9 +157,6 @@ class PokemonMundoAnimator:
         if p.FrutasAplicadas and fase not in {"volta"} and not em_pendente:
             pygame.draw.circle(tela, (98, 212, 118), centro, base + 8, 2)
 
-        if p.AlvoLocalCaptura and fase == "normal" and not em_pendente:
-            self._desenhar_barra_local(tela, centro, base + 14)
-
         if fase == "captura":
             self._desenhar_animacao_captura(tela, camera, centro, tile_px)
         elif fase == "checagem":
@@ -171,3 +168,5 @@ class PokemonMundoAnimator:
         else:
             self._desenhar_circulo_base(tela, centro, int(base * 2))
             self._desenhar_pokemon_normal(tela, centro, max(2, int(base * 2.0)))
+            if p.AlvoLocalCaptura and not em_pendente:
+                self._desenhar_barra_local(tela, centro, int(base * 2.35))

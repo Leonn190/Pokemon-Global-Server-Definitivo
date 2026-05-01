@@ -176,8 +176,17 @@ class Pokemon:
         inicio = ang % 360.0
         fim = (ang + janela) % 360.0
         if inicio <= fim:
-            return inicio <= ang_impacto <= fim
-        return ang_impacto >= inicio or ang_impacto <= fim
+            critica = inicio <= ang_impacto <= fim
+        else:
+            critica = ang_impacto >= inicio or ang_impacto <= fim
+        print(
+            "[CAPTURA_CRITICA_CLIENT] "
+            f"pokemon_id={self.Id} especie={self.Especie} pos_projetil=({float(pos_projetil[0]):.3f},{float(pos_projetil[1]):.3f}) "
+            f"pos_pokemon=({float(self.Posicao[0]):.3f},{float(self.Posicao[1]):.3f}) ang_impacto={ang_impacto:.3f} "
+            f"barra_inicio={inicio:.3f} barra_fim={fim:.3f} janela={janela:.3f} velocidade={self.VelocidadeBarraCaptura:.3f} "
+            f"tamanho_barra={self.TamanhoBarraCaptura:.3f} critica={critica}"
+        )
+        return bool(critica)
 
     def _agora_ms(self) -> int:
         return pygame.time.get_ticks()
@@ -232,7 +241,7 @@ class Pokemon:
             if r in {"falha", "falhou", "escape", "nao", "não", "false"}:
                 return False
         for chave in ("resultado_final", "capturado", "sucesso", "capturou"):
-            if chave in evento:
+            if chave in evento and evento.get(chave) is not None:
                 return bool(evento.get(chave))
         return None
 
@@ -241,6 +250,20 @@ class Pokemon:
         checagens = self._normalizar_log_checagens(evento)
         resultado = self._resultado_final_evento(evento)
         return f"{token}|{resultado}|{','.join('1' if bool(c) else '0' for c in checagens)}"
+
+    def _snapshot_captura_autoritativo(self, captura: Dict[str, object]) -> bool:
+        if not isinstance(captura, dict) or not captura:
+            return False
+        token = str(captura.get("token_arremesso") or "").strip()
+        resultado = str(captura.get("resultado") or "").strip().lower()
+        checagens = captura.get("checagens")
+        pendente = bool(captura.get("captura_pendente", False))
+        tem_resultado_bool = any(captura.get(k) is not None for k in ("resultado_final", "capturado", "sucesso", "capturou"))
+
+        if not token and not pendente and resultado in {"", "pendente"} and not checagens and not tem_resultado_bool:
+            return False
+
+        return bool(token or pendente or resultado in {"sucesso", "falha", "falhou", "capturado", "escape"} or checagens or tem_resultado_bool)
 
     def _tocar_resultado_captura(self, resultado_final: Optional[bool], token: str) -> None:
         if resultado_final is None:
@@ -264,9 +287,19 @@ class Pokemon:
         evento = dict(evento_captura or {})
         if not evento:
             return
-        token = str(evento.get("token_arremesso") or self.CapturaEstado.get("token_arremesso") or self._captura_local_token or "")
+        token_evento = str(evento.get("token_arremesso") or "").strip()
+        resultado = str(evento.get("resultado") or "").strip().lower()
+        tem_resultado = (
+            resultado in {"sucesso", "falha", "falhou", "capturado", "escape"}
+            or any(evento.get(k) is not None for k in ("resultado_final", "capturado", "sucesso", "capturou"))
+            or bool(self._normalizar_log_checagens(evento))
+        )
+        if not token_evento and not tem_resultado and not bool(evento.get("captura_pendente", False)):
+            return
+        token = token_evento or str(self.CapturaEstado.get("token_arremesso") or self._captura_local_token or "")
         if token:
             self.CapturaEstado["token_arremesso"] = token
+        if tem_resultado:
             self._captura_local_inicio_ms = 0
         if "bola_nome" in evento or not self.CapturaEstado.get("bola_nome"):
             self.CapturaEstado["bola_nome"] = str(evento.get("bola_nome") or self.CapturaEstado.get("bola_nome") or "pokeball")
@@ -285,7 +318,10 @@ class Pokemon:
             self.CapturaEstado["resultado_final"] = resultado_final
             if not self.CapturaEstado.get("checagens"):
                 self.CapturaEstado["checagens"] = [True, True, True] if resultado_final else [False]
-        self.CapturaEstado["captura_pendente"] = False
+        if tem_resultado:
+            self.CapturaEstado["captura_pendente"] = False
+        elif "captura_pendente" in evento:
+            self.CapturaEstado["captura_pendente"] = bool(evento.get("captura_pendente", False))
 
     def registrar_colisao_projetil_local(self, token: str, nome_bola: str = "pokeball", tempo_espera_confirmacao_ms: int = 1500) -> None:
         token = str(token or "")
@@ -436,7 +472,7 @@ class Pokemon:
         self.FrutasAplicadas = list(estado.get("frutas_aplicadas") or [])[:2]
         self.EstadoFrutificacao = dict(estado.get("estado_frutificacao") or {"efeitos": {}})
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
-        if captura:
+        if self._snapshot_captura_autoritativo(captura):
             self.capturar(captura)
 
         diametro_estado = self._f(estado.get("tamanho_tiles"), 0.0)

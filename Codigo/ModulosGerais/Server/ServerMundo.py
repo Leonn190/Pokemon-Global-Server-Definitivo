@@ -138,35 +138,6 @@ def coletar_regras_mundo(ip):
 
 
 
-def enviar_evento_arremesso_mundo(ip, client_id, payload):
-    """Mantido por compatibilidade: normaliza para spawn/categoria=projetil_lancamento."""
-    dados = dict(payload or {})
-    pos_inicial = dados.get("pos_inicial") if isinstance(dados.get("pos_inicial"), (list, tuple)) else dados.get("origem")
-    pos_final = dados.get("pos_final") if isinstance(dados.get("pos_final"), (list, tuple)) else dados.get("destino")
-    if not isinstance(pos_inicial, (list, tuple)) or len(pos_inicial) != 2:
-        pos_inicial = [0.0, 0.0]
-    if not isinstance(pos_final, (list, tuple)) or len(pos_final) != 2:
-        pos_final = [float(pos_inicial[0]), float(pos_inicial[1])]
-    diff = {
-        "tipo": "spawn",
-        "categoria": "projetil_lancamento",
-        "payload": {
-            "token": str(dados.get("token") or ""),
-            "subtipo_projetil": str(dados.get("subtipo_projetil") or "pokebola"),
-            "variante": str(dados.get("variante") or dados.get("item") or "pokebola"),
-            "item": str(dados.get("item") or ""),
-            "item_base_id": str(dados.get("item_base_id") or ""),
-            "pos_inicial": [float(pos_inicial[0]), float(pos_inicial[1])],
-            "pos_final": [float(pos_final[0]), float(pos_final[1])],
-            "velocidade_tiles_s": float(dados.get("velocidade_tiles_s", 7.0) or 7.0),
-            "dono_id": int(dados.get("dono_id", 0) or 0),
-            "dono_nome": str(dados.get("dono_nome") or client_id or ""),
-            "instante_cliente_ms": int(dados.get("instante_cliente_ms", int(time.time() * 1000)) or int(time.time() * 1000)),
-        },
-    }
-    return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
-
-
 def enviar_evento_coleta_estrutura_mundo(ip, client_id, payload):
     dados = dict(payload or {})
     pos_mao = dados.get("pos_mao") if isinstance(dados.get("pos_mao"), (list, tuple)) and len(dados.get("pos_mao")) == 2 else [0.0, 0.0]

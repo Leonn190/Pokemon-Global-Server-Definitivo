@@ -504,6 +504,18 @@ class PokemonBatalha:
         dados_recebidos = dados if isinstance(dados, dict) else {}
         permanente = bool(base.get("permanente") or base_dados.get("permanente") or dados_recebidos.get("permanente"))
         if negativo and origem is not None and origem is not self and self.possui_efeito("Imune"):
+            self._registrar_evento(
+                "efeito_bloqueado_por_imunidade",
+                {
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    "efeito_nome": nome,
+                    "efeito_code": base.get("code", nome),
+                    "bloqueador_nome": "Imune",
+                    "bloqueador_code": "Imune",
+                    **self._dados_origem(origem),
+                },
+            )
             return {"aplicado": False, "motivo": "imune"}
         mag_origem = origem.obter_atributo("Mag") if origem is not None and hasattr(origem, "obter_atributo") else 0.0
         mag_alvo = self.obter_atributo("Mag")

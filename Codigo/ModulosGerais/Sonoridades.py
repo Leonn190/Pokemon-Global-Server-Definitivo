@@ -437,6 +437,158 @@ def _atualizar_motor_musica():
     _atualizar_loop_manual()
 
 
+def _perfil_para_registro_musica(jogo):
+    cena = getattr(jogo, "Cena", None)
+    controlador_mundo = getattr(cena, "ControladorMundo", None)
+    player = getattr(controlador_mundo, "player_local", None)
+    perfil = getattr(player, "Perfil", None)
+    if perfil is not None:
+        return perfil
+    controlador_batalha = getattr(cena, "ControladorBatalha", None)
+    if controlador_batalha is not None and hasattr(controlador_batalha, "perfil_local"):
+        return controlador_batalha.perfil_local()
+    return None
+
+
+def _sincronizar_registro_musica(jogo):
+    controlador_batalha = getattr(getattr(jogo, "Cena", None), "ControladorBatalha", None)
+    if controlador_batalha is not None and hasattr(controlador_batalha, "sincronizar_perfil_local"):
+        controlador_batalha.sincronizar_perfil_local()
+
+
+
+# ---------------------------------------------------------------------------
+# Player de prévia do PainelConhecimento
+# ---------------------------------------------------------------------------
+_musica_conhecimento_preview = None
+_musica_conhecimento_retorno = None
+_musica_conhecimento_retorno_pos = 0.0
+
+
+def _posicao_musica_atual_segundos():
+    if not pygame.mixer.get_init():
+        return 0.0
+    try:
+        pos = pygame.mixer.music.get_pos()
+    except Exception:
+        pos = -1
+    if pos < 0:
+        return max(0.0, float(_posicao_manual or 0.0))
+    return max(0.0, (pos / 1000.0) + float(_posicao_manual or 0.0))
+
+
+def _iniciar_musica_na_posicao(nome, posicao=0.0, volume_inicial=None):
+    global _musica_atual, _loop_point, _fimloop_point, _posicao_manual, _vol_mult_atual, _fade_tipo, _fade_alvo
+
+    nome = str(nome or "").strip()
+    if nome not in Musicas:
+        print(f"[ERRO] Música '{nome}' não encontrada.")
+        return False
+
+    dados = Musicas[nome]
+    _musica_atual = nome
+    _loop_point = float(dados.get("loop", 0.0) or 0.0)
+    _fimloop_point = float(dados.get("fimloop", 1.0) or 1.0)
+    _vol_mult_atual = float(dados.get("volume", 1.0) or 1.0)
+    _fade_tipo = None
+    _fade_alvo = None
+
+    posicao = max(0.0, min(float(posicao or 0.0), max(0.0, _fimloop_point - 0.05)))
+    _posicao_manual = posicao
+
+    _garantir_mixer()
+    try:
+        pygame.mixer.music.load(dados["arquivo"])
+    except Exception as exc:
+        print(f"[ERRO] Falha ao carregar música '{nome}': {exc}")
+        return False
+
+    if volume_inicial is None:
+        volume_inicial = _volume_musica()
+    pygame.mixer.music.set_volume(max(0.0, min(1.0, volume_inicial)))
+    try:
+        pygame.mixer.music.play(start=posicao)
+    except TypeError:
+        pygame.mixer.music.play()
+    except Exception:
+        try:
+            pygame.mixer.music.play()
+        except Exception:
+            return False
+    return True
+
+
+def tocar_musica_conhecimento(nome, posicao=0.0, posicao_inicial=None):
+    """Toca uma música como prévia no PainelConhecimento.
+
+    Enquanto a prévia estiver ativa, SistemaMusicas não troca para a música da cena.
+    Ao parar a prévia, a música anterior volta automaticamente.
+    """
+    global _musica_conhecimento_preview, _musica_conhecimento_retorno, _musica_conhecimento_retorno_pos
+
+    nome = str(nome or "").strip()
+    if not nome or nome not in Musicas:
+        return False
+
+    if posicao_inicial is not None:
+        posicao = posicao_inicial
+
+    if _musica_conhecimento_preview is None:
+        _musica_conhecimento_retorno = _musica_atual
+        _musica_conhecimento_retorno_pos = _posicao_musica_atual_segundos()
+
+    _musica_conhecimento_preview = nome
+    return _iniciar_musica_na_posicao(nome, posicao=posicao)
+
+
+def alterar_posicao_musica_conhecimento(nome, posicao):
+    nome = str(nome or "").strip()
+    if not nome or nome not in Musicas:
+        return False
+    return tocar_musica_conhecimento(nome, posicao=posicao)
+
+
+def parar_musica_conhecimento(restaurar=True):
+    global _musica_conhecimento_preview, _musica_conhecimento_retorno, _musica_conhecimento_retorno_pos
+
+    estava_em_preview = _musica_conhecimento_preview is not None
+    retorno = _musica_conhecimento_retorno
+    retorno_pos = float(_musica_conhecimento_retorno_pos or 0.0)
+    _musica_conhecimento_preview = None
+    _musica_conhecimento_retorno = None
+    _musica_conhecimento_retorno_pos = 0.0
+
+    if not estava_em_preview:
+        return False
+
+    _garantir_mixer()
+    try:
+        pygame.mixer.music.stop()
+    except Exception:
+        pass
+
+    if restaurar and retorno in Musicas:
+        return _iniciar_musica_na_posicao(retorno, posicao=retorno_pos)
+    return True
+
+
+def musica_conhecimento_estado():
+    nome = _musica_conhecimento_preview
+    pos = _posicao_musica_atual_segundos() if nome else 0.0
+    dados = Musicas.get(nome, {}) if nome else {}
+    try:
+        duracao = float(dados.get("fimloop", 1.0) or 1.0)
+    except Exception:
+        duracao = 1.0
+    tocando = False
+    if nome:
+        try:
+            tocando = bool(pygame.mixer.music.get_busy())
+        except Exception:
+            tocando = True
+    return {"nome": nome, "posicao": pos, "duracao": max(1.0, duracao), "tocando": tocando}
+
+
 class SistemaMusicas:
     def atualizar_musica(self, jogo=None):
         global _musica_conhecimento_registrada
@@ -445,6 +597,12 @@ class SistemaMusicas:
             if isinstance(config, dict):
                 VerificaSonoridade(config)
 
+        # Prévia do painel de conhecimento tem prioridade sobre a música da cena.
+        if _musica_conhecimento_preview is not None:
+            _atualizar_motor_musica()
+            return
+
+        if jogo is not None:
             alvo = _resolver_musica_alvo(jogo)
 
             if alvo and alvo != _musica_atual:
@@ -453,10 +611,10 @@ class SistemaMusicas:
                 else:
                     _iniciar_musica(alvo)
             if _musica_atual and _musica_atual != _musica_conhecimento_registrada:
-                perfil = getattr(getattr(getattr(jogo, "Cena", None), "ControladorMundo", None), "player_local", None)
-                perfil = getattr(perfil, "Perfil", None)
+                perfil = _perfil_para_registro_musica(jogo)
                 if perfil is not None and hasattr(perfil, "registrar_conhecimento_musica") and _musica_atual in Musicas:
                     perfil.registrar_conhecimento_musica((Musicas.get(_musica_atual) or {}).get("id") or _musica_atual)
+                    _sincronizar_registro_musica(jogo)
                     _musica_conhecimento_registrada = _musica_atual
 
         _atualizar_motor_musica()

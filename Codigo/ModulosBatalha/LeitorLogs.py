@@ -78,14 +78,22 @@ class LeitorLogs:
         dados = self._dados(evento)
         tipo = str((evento or {}).get("tipo") or "")
         ctrl = self.controlador
-        perfil = getattr(getattr(ctrl, "ator", None), "Perfil", None)
+        perfil = ctrl.perfil_local() if hasattr(ctrl, "perfil_local") else getattr(getattr(ctrl, "ator", None), "Perfil", None)
+        if perfil is not None and hasattr(perfil, "registrar_conhecimento"):
+            if tipo in {"acao_iniciada", "ataque_usado", "ataque_acertou", "ataque_errou", "ataque_sem_alvo_real"}:
+                perfil.registrar_conhecimento("Ataques", dados.get("ataque_id") or dados.get("ataque_nome") or dados.get("ataque"))
         if perfil is not None and hasattr(perfil, "registrar_conhecimento_efeito"):
             if tipo in {"pokemon_recebeu_efeito", "efeito_tickou", "efeito_expirou"}:
                 perfil.registrar_conhecimento_efeito(dados.get("efeito_code") or dados.get("efeito_nome"))
+            elif tipo in {"efeito_bloqueado_por_limite", "efeito_bloqueado_por_imunidade"}:
+                perfil.registrar_conhecimento_efeito(dados.get("efeito_code") or dados.get("efeito_nome") or dados.get("efeito"))
+                perfil.registrar_conhecimento_efeito(dados.get("bloqueador_code") or dados.get("bloqueador_nome"))
             elif tipo in {"clima_aplicado", "clima_alterado", "clima_iniciado"}:
                 perfil.registrar_conhecimento_efeito(dados.get("clima_code") or dados.get("clima") or dados.get("clima_nome") or dados.get("nome"))
             elif tipo in {"efeito_area_aplicado", "efeito_area_tickou", "efeito_area_expirou"}:
                 perfil.registrar_conhecimento_efeito(dados.get("efeito_code") or dados.get("efeito_nome"))
+        if perfil is not None and hasattr(ctrl, "sincronizar_perfil_local"):
+            ctrl.sincronizar_perfil_local()
         if tipo == "pokemon_gastou_energia":
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             if poke is not None and dados.get("energia_depois") is not None:

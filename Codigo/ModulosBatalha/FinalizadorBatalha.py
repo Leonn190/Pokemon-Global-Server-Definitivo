@@ -33,23 +33,42 @@ class FinalizadorBatalha:
             return
         resultado = dict(resultado or {})
         self._ultimo_resultado = dict(resultado)
+        self._registrar_resultado_perfil(resultado)
         self.aplicar_persistencia(resultado)
         self._notificar_servidor_finalizacao(resultado)
         self.abrir_subtela_resultados(resultado)
 
     def finalizar_por_fuga(self):
         ctrl = self.controlador
-        perfil = getattr(getattr(ctrl, "ator", None), "Perfil", None)
+        perfil = ctrl.perfil_local() if hasattr(ctrl, "perfil_local") else getattr(getattr(ctrl, "ator", None), "Perfil", None)
         if perfil is None:
             jogo = getattr(ctrl, "jogo", None)
             perfil = getattr(getattr(jogo, "Ator", None), "Perfil", None)
         if perfil is not None and hasattr(perfil, "registrar_fuga"):
             perfil.registrar_fuga()
+            if hasattr(ctrl, "sincronizar_perfil_local"):
+                ctrl.sincronizar_perfil_local()
+        self._registrar_resultado_perfil({}, fuga=True)
         resposta = ctrl.server_batalha.finalizar_batalha(ctrl.id_partida, ctrl.lado_jogador, motivo="fuga")
         resultado = resposta.get("resultado") if isinstance(resposta, dict) and isinstance(resposta.get("resultado"), dict) else {}
         self._ultimo_resultado = dict(resultado)
         self.aplicar_persistencia(resultado)
         self.voltar_ao_mundo()
+
+    def _registrar_resultado_perfil(self, resultado, fuga=False):
+        ctrl = self.controlador
+        perfil = ctrl.perfil_local() if hasattr(ctrl, "perfil_local") else getattr(getattr(ctrl, "ator", None), "Perfil", None)
+        if perfil is None or not hasattr(perfil, "registrar_batalha"):
+            return
+        if bool(getattr(self, "_perfil_resultado_registrado", False)):
+            return
+        vencedor = False if fuga else self._vencedor_visual(resultado) == "jogador"
+        tipo = str(getattr(ctrl, "tipo_batalha", "") or "").strip().lower()
+        contra_bot = tipo in {"confronto", "treinador", "trainer", "simulador"}
+        perfil.registrar_batalha(vencedor=vencedor, contra_bot=contra_bot)
+        if hasattr(ctrl, "sincronizar_perfil_local"):
+            ctrl.sincronizar_perfil_local()
+        self._perfil_resultado_registrado = True
 
     def montar_itens_resultado(self, resultado):
         resultado = dict(resultado or {})
@@ -130,6 +149,12 @@ class FinalizadorBatalha:
         ctrl = self.controlador
         jogo = getattr(ctrl, "jogo", None)
         if jogo is not None and isinstance(getattr(jogo, "INFO", None), dict):
+            if hasattr(ctrl, "sincronizar_perfil_local"):
+                ctrl.sincronizar_perfil_local()
+            player_dados = jogo.INFO.get("PlayerDadosServer") if isinstance(jogo.INFO.get("PlayerDadosServer"), dict) else {}
+            perfil = player_dados.get("perfil") if isinstance(player_dados.get("perfil"), dict) else None
+            if perfil is not None:
+                jogo.INFO.setdefault("SincronizacaoPosBatalhaMundo", {})["perfil"] = deepcopy(perfil)
             self._preparar_dialogo_pos_batalha(jogo)
             jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
             jogo.INFO.pop("CombateContextoTemporario", None)

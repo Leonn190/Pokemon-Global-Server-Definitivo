@@ -5,6 +5,7 @@ from typing import Callable
 
 import pygame
 
+from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 
@@ -17,7 +18,6 @@ class MissaoProgresso:
     peso: float
     obter_valor: Callable[["PainelProgresso", dict[str, float]], int | float | bool]
     unidade: str = ""
-    descricao: str = ""
 
 
 @dataclass(frozen=True)
@@ -32,14 +32,6 @@ class RotaProgresso:
 
 
 class PainelProgresso:
-    """
-    Painel visual das rotas de progresso do jogador.
-
-    A classe já tenta ler vários nomes prováveis do Perfil/Inventário para
-    funcionar mesmo antes de existir um contrato final de save. O que não for
-    encontrado cai para 0, sem quebrar o painel.
-    """
-
     ROTAS_ORDEM = ("campeao", "intelectual", "magnata", "heroi", "imperador")
 
     def __init__(self, ator=None):
@@ -55,10 +47,11 @@ class PainelProgresso:
         self._rota_selecionada = "campeao"
         self._solicitou_fechar = False
         self._textos: dict[str, Texto] = {}
+        self._barras: dict[str, Barra] = {}
         self._rotas = self._montar_rotas()
 
     # ------------------------------------------------------------------
-    # Dados / leitura tolerante do Perfil
+    # Leitura tolerante do Perfil/Inventario
     # ------------------------------------------------------------------
     def _perfil(self):
         return getattr(self.Ator, "Perfil", None) if self.Ator is not None else None
@@ -116,7 +109,9 @@ class PainelProgresso:
             return 1 if item is not None else 0
         for chave in ("quantidade", "Quantidade", "qtd", "Qtd", "stack", "Stack"):
             try:
-                return max(0, int(item.get(chave, 0) or 0)) or 1
+                valor = int(item.get(chave, 0) or 0)
+                if valor > 0:
+                    return valor
             except (TypeError, ValueError):
                 continue
         return 1
@@ -146,6 +141,19 @@ class PainelProgresso:
 
     def _contar_registro(self, nomes: tuple[str, ...], fallback=None) -> int:
         perfil = self._perfil()
+        conhecimento = getattr(perfil, "Conhecimento", None)
+        if isinstance(conhecimento, dict):
+            mapa = {
+                "ConhecimentoPokemons": "Pokemons",
+                "ConhecimentoAtaques": "Ataques",
+                "ConhecimentoEfeitos": "Efeitos",
+                "ConhecimentoItens": "Itens",
+                "ConhecimentoMusicas": "Musicas",
+            }
+            for nome in nomes:
+                chave = mapa.get(str(nome))
+                if chave and isinstance(conhecimento.get(chave), list):
+                    return len([v for v in conhecimento.get(chave) if v is not None])
         valor = self._lista_ou_dict(perfil, nomes)
         if isinstance(valor, (int, float)):
             return max(0, int(valor))
@@ -160,15 +168,16 @@ class PainelProgresso:
         if perfil is None:
             return 0
         for nome in nomes:
-            if hasattr(perfil, nome):
-                valor = getattr(perfil, nome)
-                if isinstance(valor, bool):
-                    return 1 if valor else 0
-                if isinstance(valor, (int, float)):
-                    return 1 if valor > 0 else 0
-                if isinstance(valor, str):
-                    return 1 if valor.strip().lower() in {"1", "true", "sim", "yes", "feito", "concluido", "concluído"} else 0
+            if not hasattr(perfil, nome):
+                continue
+            valor = getattr(perfil, nome)
+            if isinstance(valor, bool):
                 return 1 if valor else 0
+            if isinstance(valor, (int, float)):
+                return 1 if valor > 0 else 0
+            if isinstance(valor, str):
+                return 1 if valor.strip().lower() in {"1", "true", "sim", "yes", "feito", "concluido", "concluído"} else 0
+            return 1 if valor else 0
         return 0
 
     def _ouro(self) -> int:
@@ -177,9 +186,9 @@ class PainelProgresso:
 
     def _vitorias_totais(self) -> int:
         perfil = self._perfil()
-        vitorias_diretas = self._valor_numerico(perfil, ("VitoriasTotais", "VitóriasTotais", "BatalhasVencidas", "Vitorias"), None)
-        if vitorias_diretas is not None:
-            return max(0, int(vitorias_diretas))
+        direto = self._valor_numerico(perfil, ("VitoriasTotais", "VitóriasTotais", "BatalhasVencidas", "Vitorias"), None)
+        if direto is not None:
+            return max(0, int(direto))
         pvp = int(self._valor_numerico(perfil, ("BatalhasPVPVencidas", "VitoriasPVP", "VitóriasPVP"), 0) or 0)
         bot = int(self._valor_numerico(perfil, ("BatalhasBotVencidas", "VitoriasBot", "VitóriasBot"), 0) or 0)
         return max(0, pvp + bot)
@@ -207,11 +216,7 @@ class PainelProgresso:
 
     def _contar_recursos_miticos(self) -> int:
         perfil = self._perfil()
-        direto = self._valor_numerico(
-            perfil,
-            ("RecursosMiticos", "RecursosMíticos", "RecursosMiticosQuantidade", "ItensRecursosMiticos"),
-            None,
-        )
+        direto = self._valor_numerico(perfil, ("RecursosMiticos", "RecursosMíticos", "RecursosMiticosQuantidade", "ItensRecursosMiticos"), None)
         if direto is not None:
             return max(0, int(direto))
 
@@ -236,13 +241,9 @@ class PainelProgresso:
     def _montar_rotas(self) -> dict[str, RotaProgresso]:
         rotas = {
             "intelectual": RotaProgresso(
-                id="intelectual",
-                nome="Intelectual",
-                subtitulo="Complete registros, catálogo e descobertas do mundo.",
-                cor=(92, 137, 232),
-                cor_clara=(196, 219, 255),
-                cor_escura=(35, 59, 118),
-                missoes=(
+                "intelectual", "Intelectual", "Registros, catálogo e descobertas do mundo.",
+                (92, 137, 232), (196, 219, 255), (35, 59, 118),
+                (
                     MissaoProgresso("pokemons_registrados", "Registre 1000 pokémons", 1000, 40, lambda p, _: p._contar_registro(("PokemonsRegistrados", "PokémonsRegistrados", "RegistroPokemons", "Pokedex", "PokemonsConhecidos", "ConhecimentoPokemons"), p._contar_pokemons_inventario)),
                     MissaoProgresso("itens_registrados", "Registre 120 itens", 120, 20, lambda p, _: p._contar_registro(("ItensRegistrados", "RegistroItens", "ItensConhecidos", "ConhecimentoItens"), lambda: p._contar_itens_inventario(apenas_distintos=True))),
                     MissaoProgresso("efeitos_registrados", "Registre 50 efeitos", 50, 12, lambda p, _: p._contar_registro(("EfeitosRegistrados", "RegistroEfeitos", "EfeitosConhecidos", "ConhecimentoEfeitos"))),
@@ -251,59 +252,42 @@ class PainelProgresso:
                 ),
             ),
             "campeao": RotaProgresso(
-                id="campeao",
-                nome="Campeão",
-                subtitulo="Domine ginásios, batalhas e o caminho competitivo.",
-                cor=(235, 177, 69),
-                cor_clara=(255, 232, 168),
-                cor_escura=(109, 73, 23),
-                missoes=(
+                "campeao", "Campeão", "Ginásios, batalhas e caminho competitivo.",
+                (235, 177, 69), (255, 232, 168), (109, 73, 23),
+                (
                     MissaoProgresso("insignias", "Consiga 25 insígnias", 25, 40, lambda p, _: p._insignias()),
                     MissaoProgresso("vitorias", "Consiga 1000 vitórias", 1000, 20, lambda p, _: p._vitorias_totais()),
                     MissaoProgresso("lider_ginasios", "Torne-se líder de 5 ginásios", 5, 25, lambda p, _: p._ginasios_liderados()),
-                    MissaoProgresso("grande_campeao", "Derrote o grande Campeão", 1, 15, lambda p, _: p._flag_perfil(("GrandeCampeaoDerrotado", "DerrotouGrandeCampeao", "CampeaoDerrotado", "CampeãoDerrotado")), unidade="feito"),
+                    MissaoProgresso("grande_campeao", "Derrote o grande Campeão", 1, 15, lambda p, _: p._flag_perfil(("GrandeCampeaoDerrotado", "DerrotouGrandeCampeao", "CampeaoDerrotado", "CampeãoDerrotado")), "feito"),
                 ),
             ),
             "magnata": RotaProgresso(
-                id="magnata",
-                nome="Magnata",
-                subtitulo="Acumule riqueza, coleção e recursos raros.",
-                cor=(91, 190, 112),
-                cor_clara=(202, 255, 210),
-                cor_escura=(33, 91, 49),
-                missoes=(
-                    MissaoProgresso("ouro", "Consiga ter 1.000.000.000 de ouro", 1_000_000_000, 70, lambda p, _: p._ouro(), unidade="ouro"),
+                "magnata", "Magnata", "Riqueza, coleção e recursos raros.",
+                (91, 190, 112), (202, 255, 210), (33, 91, 49),
+                (
+                    MissaoProgresso("ouro", "Consiga ter 1.000.000.000 de ouro", 1_000_000_000, 70, lambda p, _: p._ouro(), "ouro"),
                     MissaoProgresso("pokemons_guardados", "Consiga ter 1000 pokémons", 1000, 20, lambda p, _: p._contar_pokemons_inventario()),
                     MissaoProgresso("recursos_miticos", "Consiga ter 500 itens de recursos míticos", 500, 10, lambda p, _: p._contar_recursos_miticos()),
                 ),
             ),
             "heroi": RotaProgresso(
-                id="heroi",
-                nome="Herói",
-                subtitulo="Supere dungeons, nível máximo e ameaças finais.",
-                cor=(219, 83, 113),
-                cor_clara=(255, 201, 215),
-                cor_escura=(105, 31, 50),
-                missoes=(
+                "heroi", "Herói", "Dungeons, nível máximo e ameaças finais.",
+                (219, 83, 113), (255, 201, 215), (105, 31, 50),
+                (
                     MissaoProgresso("nivel", "Consiga chegar no nível 100", 100, 25, lambda p, _: p._nivel()),
                     MissaoProgresso("dungeons", "Termine 50 dungeons", 50, 60, lambda p, _: p._dungeons_terminadas()),
-                    MissaoProgresso("eternidade", "Derrote a Eternidade", 1, 15, lambda p, _: p._flag_perfil(("EternidadeDerrotada", "DerrotouEternidade", "BossEternidadeDerrotado")), unidade="feito"),
+                    MissaoProgresso("eternidade", "Derrote a Eternidade", 1, 15, lambda p, _: p._flag_perfil(("EternidadeDerrotada", "DerrotouEternidade", "BossEternidadeDerrotado")), "feito"),
                 ),
             ),
         }
-
         rotas["imperador"] = RotaProgresso(
-            id="imperador",
-            nome="Imperador",
-            subtitulo="Una as quatro grandes rotas em uma conquista final.",
-            cor=(151, 105, 229),
-            cor_clara=(226, 211, 255),
-            cor_escura=(64, 41, 115),
-            missoes=(
-                MissaoProgresso("ser_magnata", "Se torne um Magnata", 1, 25, lambda p, cache: cache.get("magnata", 0.0), unidade="rota"),
-                MissaoProgresso("ser_campeao", "Se torne um Campeão", 1, 25, lambda p, cache: cache.get("campeao", 0.0), unidade="rota"),
-                MissaoProgresso("ser_heroi", "Se torne um Herói", 1, 25, lambda p, cache: cache.get("heroi", 0.0), unidade="rota"),
-                MissaoProgresso("ser_intelectual", "Se torne um Intelectual", 1, 25, lambda p, cache: cache.get("intelectual", 0.0), unidade="rota"),
+            "imperador", "Imperador", "A união das quatro grandes rotas.",
+            (151, 105, 229), (226, 211, 255), (64, 41, 115),
+            (
+                MissaoProgresso("ser_magnata", "Se torne um Magnata", 1, 25, lambda p, cache: cache.get("magnata", 0.0), "rota"),
+                MissaoProgresso("ser_campeao", "Se torne um Campeão", 1, 25, lambda p, cache: cache.get("campeao", 0.0), "rota"),
+                MissaoProgresso("ser_heroi", "Se torne um Herói", 1, 25, lambda p, cache: cache.get("heroi", 0.0), "rota"),
+                MissaoProgresso("ser_intelectual", "Se torne um Intelectual", 1, 25, lambda p, cache: cache.get("intelectual", 0.0), "rota"),
             ),
         )
         return rotas
@@ -337,12 +321,11 @@ class PainelProgresso:
             progresso, missoes = self._calcular_rota(self._rotas[rid])
             cache[rid] = progresso / 100.0
             detalhes[rid] = (progresso, missoes)
-        progresso, missoes = self._calcular_rota(self._rotas["imperador"], cache)
-        detalhes["imperador"] = (progresso, missoes)
+        detalhes["imperador"] = self._calcular_rota(self._rotas["imperador"], cache)
         return detalhes
 
     # ------------------------------------------------------------------
-    # Layout / UI
+    # Visual
     # ------------------------------------------------------------------
     def _texto(self, chave: str, conteudo: str, pos, style: dict):
         txt = self._textos.get(chave)
@@ -392,17 +375,15 @@ class PainelProgresso:
     def _style_botao_rota(self, rota: RotaProgresso, selecionado: bool):
         bg = rota.cor if selecionado else self._misturar(rota.cor_escura, (28, 36, 58), 0.55)
         hover = rota.cor_clara if selecionado else self._misturar(rota.cor, (35, 47, 76), 0.45)
-        pressed = rota.cor_escura
-        border = rota.cor_clara if selecionado else self._misturar(rota.cor, (108, 124, 158), 0.5)
         return {
             "radius": 14,
             "border_width": 2,
-            "hover_scale": 1.015,
+            "hover_scale": 1.01,
             "press_scale": 0.985,
             "bg": bg,
             "bg_hover": hover,
-            "bg_pressed": pressed,
-            "border": border,
+            "bg_pressed": rota.cor_escura,
+            "border": rota.cor_clara if selecionado else self._misturar(rota.cor, (108, 124, 158), 0.5),
             "border_hover": rota.cor_clara,
             "text_style": {
                 "size": 18,
@@ -416,6 +397,24 @@ class PainelProgresso:
             },
         }
 
+    def _barra(self, chave: str, rect: pygame.Rect, valor: float, maximo: float, cor, cor_borda=None):
+        barra = self._barras.get(chave)
+        if barra is None:
+            barra = Barra(rect, texto="", valor=0, minimo=0, maximo=maximo, mostrar_rotulo=False, suavizacao=16.0)
+            self._barras[chave] = barra
+        barra.configurar(
+            rect=rect,
+            minimo=0,
+            maximo=max(1.0, float(maximo)),
+            cor_fundo=(20, 27, 46),
+            cor_preenchimento=cor,
+            cor_borda=cor_borda or (89, 112, 168),
+            border_radius=max(3, rect.height // 2),
+        )
+        barra.set_valor(max(0.0, min(float(valor), float(maximo))), animar=True)
+        barra.render(self._tela_atual, [], self._dt_frame)
+        return barra
+
     def _reconstruir_layout(self, rect: pygame.Rect):
         chave = (rect.x, rect.y, rect.width, rect.height)
         if chave == self._layout_chave and self._botao_fechar is not None:
@@ -423,9 +422,9 @@ class PainelProgresso:
 
         self._layout_chave = chave
         self._rect = pygame.Rect(rect)
-        self._area_botoes = pygame.Rect(rect.x + 22, rect.y + 92, rect.width - 44, 54)
-        self._area_conteudo = pygame.Rect(rect.x + 22, rect.y + 164, rect.width - 44, rect.height - 186)
-        self._area_missoes = pygame.Rect(self._area_conteudo.x + 18, self._area_conteudo.y + 164, self._area_conteudo.width - 36, self._area_conteudo.height - 184)
+        self._area_botoes = pygame.Rect(rect.x + 28, rect.y + 78, rect.width - 56, 52)
+        self._area_conteudo = pygame.Rect(rect.x + 28, rect.y + 146, rect.width - 56, rect.height - 164)
+        self._area_missoes = pygame.Rect(self._area_conteudo.x + 20, self._area_conteudo.y + 146, self._area_conteudo.width - 40, self._area_conteudo.height - 154)
 
         def _fechar(_jogo, _botao):
             self._solicitou_fechar = True
@@ -469,41 +468,12 @@ class PainelProgresso:
         tela.fill((8, 12, 22), self._rect)
         camada = pygame.Surface(self._rect.size, pygame.SRCALPHA)
         pygame.draw.rect(camada, (12, 18, 32, 248), camada.get_rect(), border_radius=22)
-        # brilho suave no topo, feito sem depender de imagem externa
-        pygame.draw.ellipse(camada, (58, 82, 150, 42), (-120, -180, self._rect.width + 240, 310))
-        pygame.draw.ellipse(camada, (22, 36, 82, 38), (self._rect.width - 360, 40, 420, 280))
+        pygame.draw.ellipse(camada, (58, 82, 150, 34), (-120, -190, self._rect.width + 240, 300))
+        pygame.draw.ellipse(camada, (22, 36, 82, 32), (self._rect.width - 360, 28, 420, 260))
         tela.blit(camada, self._rect.topleft)
 
-    def _desenhar_barra(self, tela, rect: pygame.Rect, progresso: float, cor, cor_clara=None, texto: str | None = None, alto_brilho=False):
-        progresso = max(0.0, min(1.0, float(progresso)))
-        cor_clara = cor_clara or self._misturar(cor, (255, 255, 255), 0.45)
-        pygame.draw.rect(tela, (20, 27, 46), rect, border_radius=rect.height // 2)
-        pygame.draw.rect(tela, (69, 88, 137), rect, 1, border_radius=rect.height // 2)
-        if progresso > 0:
-            preenchido = pygame.Rect(rect.x + 2, rect.y + 2, max(4, int((rect.width - 4) * progresso)), rect.height - 4)
-            pygame.draw.rect(tela, cor, preenchido, border_radius=preenchido.height // 2)
-            if alto_brilho:
-                brilho = pygame.Rect(preenchido.x + 3, preenchido.y + 3, max(0, preenchido.width - 6), max(2, preenchido.height // 3))
-                pygame.draw.rect(tela, (*cor_clara, 112), brilho, border_radius=brilho.height // 2)
-        if texto:
-            self._texto(f"barra_{rect.x}_{rect.y}_{rect.width}", texto, rect.center, self._style_texto(16, (248, 251, 255), "center"))
-
-    def _texto_valor_missao(self, missao: MissaoProgresso, valor, progresso: float) -> str:
-        if missao.unidade == "feito":
-            return "Concluído" if progresso >= 1.0 else "Pendente"
-        if missao.unidade == "rota":
-            return f"{int(round(progresso * 100))}% / 100%"
-        compactar = missao.alvo >= 1_000_000
-        return f"{self._formatar_numero(valor, compactar)} / {self._formatar_numero(missao.alvo, compactar)}"
-
     def _desenhar_topo(self, tela, detalhes):
-        self._texto("titulo", "Progresso", (self._rect.x + 22, self._rect.y + 18), self._style_texto(34, (247, 250, 255)))
-        self._texto(
-            "subtitulo",
-            "Escolha uma rota e acompanhe as missões que levam ao 100%.",
-            (self._rect.x + 24, self._rect.y + 58),
-            self._style_texto(18, (187, 207, 238)),
-        )
+        self._texto("titulo", "Progresso", (self._rect.x + 26, self._rect.y + 20), self._style_texto(34, (247, 250, 255)))
 
         for rid in self.ROTAS_ORDEM:
             rota = self._rotas[rid]
@@ -514,41 +484,49 @@ class PainelProgresso:
                 self._status_estilo_botoes[rid] = selecionado
             botao.render(tela, self._eventos_frame, self._dt_frame, None)
 
-            progresso = detalhes[rid][0] / 100.0
-            mini = pygame.Rect(botao.base_rect.x + 12, botao.base_rect.bottom - 10, botao.base_rect.width - 24, 5)
-            self._desenhar_barra(tela, mini, progresso, rota.cor, rota.cor_clara)
+            progresso = detalhes[rid][0]
+            mini = pygame.Rect(botao.base_rect.x + 12, botao.base_rect.bottom - 9, botao.base_rect.width - 24, 5)
+            self._barra(f"mini_{rid}", mini, progresso, 100, rota.cor, (15, 23, 42))
 
         self._botao_fechar.render(tela, self._eventos_frame, self._dt_frame, None)
 
     def _desenhar_card_rota(self, tela, rota: RotaProgresso, progresso_rota: float, missoes_calc):
-        card = pygame.Rect(self._area_conteudo.x, self._area_conteudo.y, self._area_conteudo.width, 142)
+        card = pygame.Rect(self._area_conteudo.x, self._area_conteudo.y, self._area_conteudo.width, 122)
         pygame.draw.rect(tela, (14, 22, 40), card, border_radius=18)
         pygame.draw.rect(tela, self._misturar(rota.cor, (180, 205, 255), 0.45), card, 2, border_radius=18)
 
-        badge = pygame.Rect(card.x + 18, card.y + 20, 58, 58)
+        badge = pygame.Rect(card.x + 18, card.y + 18, 56, 56)
         pygame.draw.rect(tela, rota.cor_escura, badge, border_radius=17)
         pygame.draw.rect(tela, rota.cor_clara, badge, 2, border_radius=17)
-        self._texto("rota_sigla", rota.nome[:2].upper(), badge.center, self._style_texto(24, (255, 255, 255), "center"))
+        self._texto("rota_sigla", rota.nome[:2].upper(), badge.center, self._style_texto(23, (255, 255, 255), "center"))
 
-        self._texto("rota_nome", rota.nome, (card.x + 92, card.y + 18), self._style_texto(30, (248, 250, 255)))
-        self._texto("rota_sub", rota.subtitulo, (card.x + 94, card.y + 56), self._style_texto(17, (190, 210, 238)))
+        self._texto("rota_nome", rota.nome, (card.x + 92, card.y + 16), self._style_texto(30, (248, 250, 255)))
+        self._texto("rota_sub", rota.subtitulo, (card.x + 94, card.y + 53), self._style_texto(17, (190, 210, 238)))
 
         pct = int(round(progresso_rota))
-        self._texto("rota_pct", f"{pct}%", (card.right - 24, card.y + 22), self._style_texto(34, rota.cor_clara, "topright"))
+        self._texto("rota_pct", f"{pct}%", (card.right - 24, card.y + 18), self._style_texto(34, rota.cor_clara, "topright"))
         concluidas = sum(1 for _m, _v, prog in missoes_calc if prog >= 1.0)
-        self._texto("rota_concluidas", f"{concluidas}/{len(missoes_calc)} missões concluídas", (card.right - 24, card.y + 64), self._style_texto(16, (190, 210, 238), "topright"))
+        self._texto("rota_concluidas", f"{concluidas}/{len(missoes_calc)} missões", (card.right - 24, card.y + 58), self._style_texto(16, (190, 210, 238), "topright"))
 
-        barra = pygame.Rect(card.x + 20, card.bottom - 36, card.width - 40, 22)
-        self._desenhar_barra(tela, barra, progresso_rota / 100.0, rota.cor, rota.cor_clara, f"Progresso geral da rota: {pct}%", alto_brilho=True)
+        barra = pygame.Rect(card.x + 20, card.bottom - 30, card.width - 40, 21)
+        self._barra("rota_geral", barra, progresso_rota, 100, rota.cor, rota.cor_clara)
+        self._texto("rota_barra_pct", f"{pct}%", barra.center, self._style_texto(16, (248, 251, 255), "center"))
+
+    def _texto_valor_missao(self, missao: MissaoProgresso, valor, progresso: float) -> str:
+        if missao.unidade == "feito":
+            return "Concluído" if progresso >= 1.0 else "Pendente"
+        if missao.unidade == "rota":
+            return f"{int(round(progresso * 100))}% / 100%"
+        compactar = missao.alvo >= 1_000_000
+        return f"{self._formatar_numero(valor, compactar)} / {self._formatar_numero(missao.alvo, compactar)}"
 
     def _desenhar_missoes(self, tela, rota: RotaProgresso, missoes_calc):
-        titulo_y = self._area_missoes.y - 34
+        titulo_y = self._area_missoes.y - 29
         self._texto("missoes_titulo", "Missões da rota", (self._area_missoes.x + 2, titulo_y), self._style_texto(22, (241, 245, 255)))
-        self._texto("missoes_info", "A porcentagem ao lado é o peso dela no 100% final.", (self._area_missoes.right - 2, titulo_y + 4), self._style_texto(15, (162, 182, 218), "topright"))
 
         qtd = max(1, len(missoes_calc))
-        gap = 12
-        altura = min(82, max(58, (self._area_missoes.height - gap * (qtd - 1)) // qtd))
+        gap = 10
+        altura = min(78, max(56, (self._area_missoes.height - gap * (qtd - 1)) // qtd))
         for i, (missao, valor, progresso) in enumerate(missoes_calc):
             y = self._area_missoes.y + i * (altura + gap)
             card = pygame.Rect(self._area_missoes.x, y, self._area_missoes.width, altura)
@@ -556,19 +534,19 @@ class PainelProgresso:
             pygame.draw.rect(tela, cor_card, card, border_radius=16)
             pygame.draw.rect(tela, self._misturar(rota.cor, (78, 94, 138), 0.35), card, 1, border_radius=16)
 
-            peso_rect = pygame.Rect(card.x + 14, card.y + 14, 58, card.height - 28)
+            peso_rect = pygame.Rect(card.x + 14, card.y + 13, 58, 30)
             pygame.draw.rect(tela, self._misturar(rota.cor_escura, (16, 22, 36), 0.35), peso_rect, border_radius=12)
             pygame.draw.rect(tela, rota.cor_clara, peso_rect, 1, border_radius=12)
             self._texto(f"peso_{missao.id}", f"{int(missao.peso)}%", peso_rect.center, self._style_texto(18, rota.cor_clara, "center"))
 
             x_texto = card.x + 88
-            self._texto(f"missao_{missao.id}", missao.titulo, (x_texto, card.y + 13), self._style_texto(19, (247, 250, 255)))
+            self._texto(f"missao_{missao.id}", missao.titulo, (x_texto, card.y + 8), self._style_texto(19, (247, 250, 255)))
             valor_txt = self._texto_valor_missao(missao, valor, progresso)
-            self._texto(f"valor_{missao.id}", valor_txt, (card.right - 18, card.y + 13), self._style_texto(18, (211, 226, 250), "topright"))
+            self._texto(f"valor_{missao.id}", valor_txt, (card.right - 18, card.y + 8), self._style_texto(18, (211, 226, 250), "topright"))
 
-            barra = pygame.Rect(x_texto, card.bottom - 29, card.right - x_texto - 18, 18)
-            pct = int(round(progresso * 100))
-            self._desenhar_barra(tela, barra, progresso, rota.cor, rota.cor_clara, f"{pct}%")
+            barra = pygame.Rect(x_texto, card.bottom - 25, card.right - x_texto - 18, 18)
+            self._barra(f"missao_{missao.id}", barra, progresso * 100, 100, rota.cor, self._misturar(rota.cor_clara, (60, 80, 126), 0.45))
+            self._texto(f"pct_{missao.id}", f"{int(round(progresso * 100))}%", barra.center, self._style_texto(15, (248, 251, 255), "center"))
 
     def renderizar(self, tela, rect, eventos=None, dt=0.0):
         eventos = eventos or []

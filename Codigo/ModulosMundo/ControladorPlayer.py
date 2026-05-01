@@ -88,6 +88,7 @@ class ControladorPlayer:
             ator.Perfil = Perfil()
         if ator.Inventario is None:
             ator.Inventario = Inventario()
+        ator.Inventario.Perfil = ator.Perfil
         perfil_serializado = dados.get("perfil") if isinstance(dados.get("perfil"), dict) else dados
         ator.Perfil.aplicar_serializado(perfil_serializado)
         if isinstance(dados.get("inventario"), dict):
@@ -590,7 +591,7 @@ class ControladorPlayer:
         if ator_id <= 0:
             return
         perfil = getattr(self._player_local, "Perfil", None)
-        forcar_sync_perfil = bool(getattr(perfil, "_habilidades_aprendidas_dirty", False))
+        forcar_sync_perfil = bool(getattr(perfil, "_habilidades_aprendidas_dirty", False) or getattr(perfil, "_perfil_dirty", False))
 
         if (agora - self._ultimo_envio_supervisao_rapida) >= self._intervalo_supervisao_rapida_s:
             s = self._snapshot_player_local_rapido()
@@ -612,6 +613,7 @@ class ControladorPlayer:
                 self._objetos.EnfileirarDiffRapida({"tipo": "update", "objeto_id": ator_id, "payload": d})
             if forcar_sync_perfil and perfil is not None:
                 setattr(perfil, "_habilidades_aprendidas_dirty", False)
+                setattr(perfil, "_perfil_dirty", False)
             self._ultimo_envio_supervisao_lenta = agora
 
     def is_diff_player_local(self, diff: Dict[str, object]) -> bool:

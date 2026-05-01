@@ -266,6 +266,19 @@ class Perfil:
 
     def registrar_fuga(self, quantidade: int = 1) -> None:
         self.Fugas = max(0, int(self.Fugas) + max(0, int(quantidade)))
+        self._perfil_dirty = True
+
+    def registrar_batalha(self, vencedor=False, contra_bot=True, quantidade: int = 1) -> None:
+        qtd = max(0, int(quantidade))
+        if qtd <= 0:
+            return
+        self.BatalhasTotais = max(0, int(self.BatalhasTotais) + qtd)
+        if bool(vencedor):
+            if bool(contra_bot):
+                self.BatalhasBotVencidas = max(0, int(self.BatalhasBotVencidas) + qtd)
+            else:
+                self.BatalhasPVPVencidas = max(0, int(self.BatalhasPVPVencidas) + qtd)
+        self._perfil_dirty = True
 
     def registrar_conhecimento(self, categoria: str, conhecimento_id) -> bool:
         categoria_fmt = str(categoria or "").strip().title()
@@ -282,6 +295,7 @@ class Perfil:
         if total >= max(0, int(self.LimiteConhecimento)):
             return False
         self.Conhecimento[categoria_fmt].append(valor)
+        self._perfil_dirty = True
         return True
 
     @staticmethod
@@ -299,19 +313,69 @@ class Perfil:
                     return v
         return valor
 
+    @classmethod
+    def _extrair_id_pokemon(cls, pokemon):
+        fontes = []
+        if isinstance(pokemon, dict):
+            fontes.append(pokemon)
+            for chave in ("dados", "Dados", "estado", "Estado"):
+                valor = pokemon.get(chave)
+                if isinstance(valor, dict):
+                    fontes.append(valor)
+        else:
+            dados = getattr(pokemon, "Dados", None)
+            if isinstance(dados, dict):
+                fontes.append(dados)
+        for fonte in fontes:
+            for chave in ("code", "Code", "codigo", "Codigo", "especie", "Especie", "nome", "Nome"):
+                v = fonte.get(chave)
+                if v is not None and str(v).strip():
+                    return v
+        if not isinstance(pokemon, dict):
+            for chave in ("Code", "code", "Codigo", "codigo", "Especie", "especie", "Nome", "nome"):
+                if hasattr(pokemon, chave):
+                    v = getattr(pokemon, chave)
+                    if v is not None and str(v).strip():
+                        return v
+        return None
+
     def registrar_conhecimento_pokemon(self, pokemon) -> bool:
-        pid = self._extrair_id_generico(pokemon)
-        if pid is None and isinstance(pokemon, dict) and isinstance(pokemon.get("Dados"), dict):
-            pid = self._extrair_id_generico(pokemon.get("Dados"))
+        pid = self._extrair_id_pokemon(pokemon)
         return self.registrar_conhecimento("Pokemons", pid)
 
     def registrar_conhecimento_ataques_pokemon(self, pokemon) -> None:
-        if not isinstance(pokemon, dict):
-            return
-        ataques = pokemon.get("Ataques") or pokemon.get("ataques") or pokemon.get("Moves") or pokemon.get("moves") or []
-        for ataque in list(ataques or []):
+        for ataque in self._iter_ataques_pokemon(pokemon):
             aid = self._extrair_id_generico(ataque)
             self.registrar_conhecimento("Ataques", aid)
+
+    @classmethod
+    def _iter_ataques_pokemon(cls, pokemon):
+        fontes = []
+        if isinstance(pokemon, dict):
+            fontes.append(pokemon)
+            for chave in ("Dados", "dados", "estado", "Estado", "Build", "build"):
+                valor = pokemon.get(chave)
+                if isinstance(valor, dict):
+                    fontes.append(valor)
+                    estado = valor.get("estado") if isinstance(valor.get("estado"), dict) else None
+                    if estado is not None:
+                        fontes.append(estado)
+        else:
+            for chave in ("ListaAtaques", "Ataques", "ataques", "Moves", "moves", "Habilidades", "habilidades"):
+                valor = getattr(pokemon, chave, None)
+                if isinstance(valor, list):
+                    yield from [a for a in valor if a is not None]
+            dados = getattr(pokemon, "Dados", None)
+            if isinstance(dados, dict):
+                fontes.append(dados)
+
+        for fonte in fontes:
+            for chave in ("ListaAtaques", "Ataques", "ataques", "Moves", "moves", "Habilidades", "habilidades", "Ativos", "ativos", "Golpes", "golpes"):
+                valor = fonte.get(chave) if isinstance(fonte, dict) else None
+                if isinstance(valor, list):
+                    for ataque in valor:
+                        if ataque is not None:
+                            yield ataque
 
     def registrar_conhecimento_item(self, item) -> bool:
         return self.registrar_conhecimento("Itens", self._extrair_id_generico(item))

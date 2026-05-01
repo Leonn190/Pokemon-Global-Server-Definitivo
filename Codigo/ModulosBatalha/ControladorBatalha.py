@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from types import SimpleNamespace
 
 import pygame
 
@@ -12,6 +13,8 @@ from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.MontadorJogadas import MontadorJogadas
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
 from Codigo.ModulosBatalha.PokemonBatalha import PokemonBatalha
+from Codigo.Geradores.Player.Inventario import Inventario
+from Codigo.Geradores.Player.Perfil import Perfil
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosGerais.Server import ServerBatalha
 
@@ -46,6 +49,7 @@ class ControladorBatalha:
         self.id_partida = "simulador_local_fase2"
         self.server_batalha = ServerBatalha
         self.clima_atual = None
+        self.ator = None
 
         self.timer_rodada = 1.0
         self.timer_rodada_max = 45.0
@@ -59,6 +63,42 @@ class ControladorBatalha:
         self._fuga_limite_saida = 210.0
         self.solicitou_encerrar_batalha = False
         self._conhecimento_pokemons_vistos = set()
+        self._ator_perfil_cache = None
+
+    def ator_local(self):
+        if self.ator is not None:
+            return self.ator
+        if self._ator_perfil_cache is not None:
+            return self._ator_perfil_cache
+        jogo = getattr(self, "jogo", None)
+        dados = getattr(jogo, "INFO", {}).get("PlayerDadosServer") if jogo is not None and isinstance(getattr(jogo, "INFO", None), dict) else {}
+        if not isinstance(dados, dict):
+            return None
+        perfil = Perfil()
+        perfil.aplicar_serializado(dados.get("perfil") if isinstance(dados.get("perfil"), dict) else dados)
+        inventario = Inventario()
+        inventario.Perfil = perfil
+        if isinstance(dados.get("inventario"), dict):
+            inventario.aplicar_serializado(dados.get("inventario"))
+        self._ator_perfil_cache = SimpleNamespace(Perfil=perfil, Inventario=inventario)
+        return self._ator_perfil_cache
+
+    def perfil_local(self):
+        return getattr(self.ator_local(), "Perfil", None)
+
+    def sincronizar_perfil_local(self):
+        if self._ator_perfil_cache is None:
+            return
+        jogo = getattr(self, "jogo", None)
+        if jogo is None or not isinstance(getattr(jogo, "INFO", None), dict):
+            return
+        dados = jogo.INFO.setdefault("PlayerDadosServer", {})
+        perfil = getattr(self._ator_perfil_cache, "Perfil", None)
+        inventario = getattr(self._ator_perfil_cache, "Inventario", None)
+        if perfil is not None and hasattr(perfil, "serializar"):
+            dados["perfil"] = perfil.serializar()
+        if inventario is not None and hasattr(inventario, "serializar"):
+            dados.setdefault("inventario", inventario.serializar())
 
     def iniciar(self, estado_inicial):
         estado = dict(estado_inicial or {})
@@ -147,16 +187,21 @@ class ControladorBatalha:
         self._atualizar_fuga(dt)
 
     def _registrar_conhecimento_pokemons_batalha(self):
-        perfil = getattr(getattr(self, "ator", None), "Perfil", None)
+        perfil = self.perfil_local()
         if perfil is None or not hasattr(perfil, "registrar_conhecimento_pokemon"):
             return
         for pokemon in list(self.pokemons or []):
-            pid = getattr(pokemon, "ID", None) or getattr(pokemon, "Id", None) or getattr(pokemon, "id", None) or getattr(pokemon, "id_original", None) or getattr(pokemon, "id_batalha", None)
-            chave = str(pid or "")
+            pid = perfil._extrair_id_pokemon(pokemon) if hasattr(perfil, "_extrair_id_pokemon") else getattr(pokemon, "Nome", "")
+            chave = str(pid or "").strip()
             if not chave or chave in self._conhecimento_pokemons_vistos:
                 continue
-            perfil.registrar_conhecimento("Pokemons", pid)
+            perfil.registrar_conhecimento_pokemon(pokemon)
+            if hasattr(perfil, "registrar_conhecimento_ataques_pokemon"):
+                perfil.registrar_conhecimento_ataques_pokemon(pokemon)
+            for efeito in list(getattr(pokemon, "EfeitosFormais", []) or []):
+                perfil.registrar_conhecimento_efeito((efeito or {}).get("code") or (efeito or {}).get("nome"))
             self._conhecimento_pokemons_vistos.add(chave)
+        self.sincronizar_perfil_local()
 
     def desenhar(self, surface):
         if self.arena is None:

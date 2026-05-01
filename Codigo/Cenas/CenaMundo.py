@@ -117,9 +117,15 @@ class CenaMundo:
             return
         player_dados = jogo.INFO.get("PlayerDadosServer") if isinstance(jogo.INFO.get("PlayerDadosServer"), dict) else {}
         inventario = pendente.get("inventario") if isinstance(pendente.get("inventario"), dict) else player_dados.get("inventario")
+        perfil = pendente.get("perfil") if isinstance(pendente.get("perfil"), dict) else player_dados.get("perfil")
         player_id = int(player_dados.get("id", 0) or 0)
         client_id = str(jogo.INFO.get("UsuarioLogado", "anon"))
-        if player_id > 0 and isinstance(inventario, dict):
+        payload = {}
+        if isinstance(inventario, dict):
+            payload["inventario"] = deepcopy(inventario)
+        if isinstance(perfil, dict):
+            payload["perfil"] = deepcopy(perfil)
+        if player_id > 0 and payload:
             enviar_diffs_mundo(
                 link,
                 client_id,
@@ -127,9 +133,7 @@ class CenaMundo:
                     {
                         "tipo": "update",
                         "objeto_id": int(player_id),
-                        "payload": {
-                            "inventario": deepcopy(inventario),
-                        },
+                        "payload": payload,
                     }
                 ],
             )

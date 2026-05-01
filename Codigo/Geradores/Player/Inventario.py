@@ -73,6 +73,14 @@ class Inventario:
         if self.Perfil is not None and hasattr(self.Perfil, "registrar_conhecimento_item"):
             self.Perfil.registrar_conhecimento_item(item)
 
+    def _registrar_conhecimento_pokemon(self, pokemon):
+        if self.Perfil is None:
+            return
+        if hasattr(self.Perfil, "registrar_conhecimento_pokemon"):
+            self.Perfil.registrar_conhecimento_pokemon(pokemon)
+        if hasattr(self.Perfil, "registrar_conhecimento_ataques_pokemon"):
+            self.Perfil.registrar_conhecimento_ataques_pokemon(pokemon)
+
     @staticmethod
     def _limite_stack(item) -> int:
         if not isinstance(item, dict):
@@ -149,6 +157,8 @@ class Inventario:
         self.LimiteTimesPokemon = int(dados.get("limite_times_pokemon", self.LimiteTimesPokemon))
         self.Pokemons = list(dados.get("pokemons", self.Pokemons))[: self.LimitePokemons]
         self.TimesPokemon = list(dados.get("times_pokemon", self.TimesPokemon))
+        for pokemon in list(self.Pokemons or []):
+            self._registrar_conhecimento_pokemon(pokemon)
         doces_src = dados.get("doces", self.Doces)
         self.Doces = {str(k): int(max(0, v or 0)) for k, v in (doces_src.items() if isinstance(doces_src, dict) else [])}
 

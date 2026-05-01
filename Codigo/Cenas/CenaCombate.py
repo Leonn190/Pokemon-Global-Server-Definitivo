@@ -249,6 +249,8 @@ class CenaCombate:
             self.render_tela(JOGO.TELA, JOGO, EVENTOS, dt)
 
     def Finalizar(self, JOGO):
+        if getattr(self, "ControladorBatalha", None) is not None:
+            self.ControladorBatalha.sincronizar_perfil_local()
         if self.Terminal is not None:
             self.Terminal.parar()
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}

@@ -83,7 +83,7 @@
       "parametros": {
         "tipo": "psiquico",
         "categoria": "especial",
-        "escala_inicial_spa": 1.3,
+        "escala_inicial_spa": 1.0,
         "reducao_spa_por_alvo": 0.15,
         "tipo_linha": "reta"
       },
@@ -94,6 +94,64 @@
           "lado_oposto"
         ],
         "exige_area_ocupada": false
+      }
+    },
+    "59": {
+      "ID": 59,
+      "nome": "Véu Arcano",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "BarreiraCelular",
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_véu_arcano",
+      "descricao": "O alvo ganha uma barreira equivalente a (20% de Mag) + (12% de SpA).",
+      "parametros": {
+        "tipo": "psiquico",
+        "percentual_mag": 0.2,
+        "atributo": "SpA",
+        "percentual_usuario_atributo": 0.12
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
+    "60": {
+      "ID": 60,
+      "nome": "Mente Protetora",
+      "custo": 35,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "BarreiraCelular",
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_mente_protetora",
+      "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (10% de Int).",
+      "parametros": {
+        "tipo": "psiquico",
+        "percentual_mag": 0.18,
+        "atributo": "Int",
+        "percentual_usuario_atributo": 0.1
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
       }
     },
     "56": {

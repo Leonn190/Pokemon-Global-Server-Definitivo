@@ -24,7 +24,21 @@ def _exec_instinto(ctx, alvo):
 
 
 def _exec_raio_psiquico(ctx, alvo):
-    return executar_raio(ctx, alvo, 1.30, 0.15, "psiquico")
+    return executar_raio(ctx, alvo, 1.00, 0.15, "psiquico")
+
+
+def _exec_veu_arcano(ctx, alvo):
+    usuario = ctx.get("usuario")
+    alvo = alvo or usuario
+    valor = max(0.0, usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("SpA") * 0.12)
+    return usuario.AplicarBarreira(alvo, valor, dados={"ataque": "Véu Arcano", "ataque_id": 59, "ataque_nome": "Véu Arcano", "reativos_acao": ctx.get("reativos_acao")})
+
+
+def _exec_mente_protetora(ctx, alvo):
+    usuario = ctx.get("usuario")
+    alvo = alvo or usuario
+    valor = max(0.0, usuario.obter_atributo("Mag") * 0.18 + usuario.obter_atributo("Int") * 0.10)
+    return usuario.AplicarBarreira(alvo, valor, dados={"ataque": "Mente Protetora", "ataque_id": 60, "ataque_nome": "Mente Protetora", "reativos_acao": ctx.get("reativos_acao")})
 
 
 def _passiva_flutuante(ctx):
@@ -37,6 +51,8 @@ _EXECUTES = {
     "instinto": _exec_instinto,
     "raiopsiquico": _exec_raio_psiquico,
     "flutuante": execute_passiva_nao_manual,
+    "veuarcano": _exec_veu_arcano,
+    "menteprotetora": _exec_mente_protetora,
 }
 _PASSIVAS_ATAQUE = [
     {"nome": "Flutuante", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_flutuante, "origem": "ataque", "code": "56"},

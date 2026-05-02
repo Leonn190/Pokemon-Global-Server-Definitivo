@@ -17,7 +17,7 @@
       "parametros": {
         "tipo": "eletrico",
         "categoria": "especial",
-        "escala_spa": 1.05,
+        "escala_spa": 0.8,
         "splash_frac": 0.5
       },
       "alvificacao": {
@@ -92,6 +92,35 @@
         "tipo": "eletrico",
         "clima": "Tempestade de Raios",
         "alias_clima": "Tempestade Elétrica"
+      }
+    },
+    "34": {
+      "ID": 34,
+      "nome": "Campo Condutor",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "BarreiraCelular",
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_campo_condutor",
+      "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (12% de Ene).",
+      "parametros": {
+        "tipo": "eletrico",
+        "percentual_mag": 0.18,
+        "atributo": "Ene",
+        "percentual_usuario_atributo": 0.12
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
       }
     }
   },

@@ -211,7 +211,7 @@ def aplicar_mod_atributo(ctx, alvo, nome_efeito, atributo, valor, duracao=6, neg
 
 def executar_bola(ctx, alvo, tipo):
     usuario = (ctx or {}).get("usuario")
-    ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * 1.05, "especial", tipo=tipo)
+    ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * 0.80, "especial", tipo=tipo)
     dano_vida = fnum(ret.get("dano_vida"), 0.0)
     if dano_vida <= 0:
         return ret

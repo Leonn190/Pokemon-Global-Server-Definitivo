@@ -17,8 +17,8 @@
       "parametros": {
         "tipo": "cosmico",
         "categoria": "especial",
-        "escala_inicial_spa": 1.45,
-        "reducao_spa_por_alvo": 0.12,
+        "escala_inicial_spa": 1.0,
+        "reducao_spa_por_alvo": 0.15,
         "tipo_linha": "reta"
       },
       "alvificacao": {

@@ -344,7 +344,11 @@
       },
       "execute_principal": "ataque_bola_climática",
       "parametros": {
-        "tipo": "normal"
+        "tipo": "normal",
+        "categoria": "especial",
+        "escala_spa": 0.8,
+        "escala_clima_spa": 1.0,
+        "splash_frac": 0.5
       },
       "alvificacao": {
         "tipo": "area",

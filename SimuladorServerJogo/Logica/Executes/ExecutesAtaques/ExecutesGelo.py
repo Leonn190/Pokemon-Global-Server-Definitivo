@@ -15,7 +15,7 @@ def _exec_sangue_frio(ctx, alvo):
 
 
 def _exec_raio_de_gelo(ctx, alvo):
-    return executar_raio(ctx, alvo, 1.30, 0.15, "gelo")
+    return executar_raio(ctx, alvo, 1.00, 0.15, "gelo")
 
 
 _EXECUTES = {"nevoafria": _exec_nevoa_fria, "sanguefrio": _exec_sangue_frio, "raiodegelo": _exec_raio_de_gelo}

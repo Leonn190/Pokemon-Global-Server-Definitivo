@@ -4,7 +4,7 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
 
 
 def _exec_raio_cosmico(ctx, alvo):
-    return executar_raio(ctx, alvo, 1.45, 0.12, "cosmico")
+    return executar_raio(ctx, alvo, 1.00, 0.15, "cosmico")
 
 
 _EXECUTES = {"raiocosmico": _exec_raio_cosmico}

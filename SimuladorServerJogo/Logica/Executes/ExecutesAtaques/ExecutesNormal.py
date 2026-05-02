@@ -7,13 +7,14 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
     critico_simples,
     dano_generico,
     fnum,
+    inimigos_vivos_adjacentes_ao_alvo,
     normalizar,
 )
 
 
 def _exec_investida(ctx, alvo):
     usuario = ctx.get("usuario")
-    ret = dano_generico(ctx, alvo, usuario.obter_atributo("Atk") * 1.20, "normal")
+    ret = dano_generico(ctx, alvo, usuario.obter_atributo("Atk") * 0.90, "normal")
     dano_vida = float(ret.get("dano_vida") or 0.0)
     if dano_vida > 0:
         usuario.ReceberDano(dano_vida * 0.20, origem=usuario, dados={"recuo": "Investida", "reativos_acao": ctx.get("reativos_acao")})
@@ -69,7 +70,7 @@ def _exec_proteger(ctx, alvo):
 
 
 def _exec_arranhar(ctx, alvo):
-    return dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 1.35, "normal")
+    return dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 1.00, "normal")
 
 
 def _exec_recarga(ctx, alvo):
@@ -78,18 +79,18 @@ def _exec_recarga(ctx, alvo):
 
 
 def _exec_energia(ctx, alvo):
-    return dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("SpA") * 1.15, "especial")
+    return dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("SpA") * 0.85, "especial")
 
 
 def _exec_hiper_raio(ctx, alvo):
     usuario = ctx.get("usuario")
     alvos = [a for a in list(ctx.get("alvos") or []) if a is not None and a.esta_vivo()]
-    bruto = max(0.0, usuario.obter_atributo("SpA") * 1.50 - ((max(1, len(alvos)) - 1) * usuario.obter_atributo("SpA") * 0.15))
+    bruto = max(0.0, usuario.obter_atributo("SpA") * 1.10 - ((max(1, len(alvos)) - 1) * usuario.obter_atributo("SpA") * 0.15))
     return dano_generico(ctx, alvo, bruto, "especial")
 
 
 def _exec_guilhotina(ctx, alvo):
-    return dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 0.80, "normal")
+    return dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 0.60, "normal")
 
 
 def _reativo_guilhotina(ctx):
@@ -107,12 +108,12 @@ def _reativo_guilhotina(ctx):
 
 
 def _exec_disparo(ctx, alvo):
-    return dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 1.00, "normal")
+    return dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 0.75, "normal")
 
 
 def _exec_chifrada(ctx, alvo):
     u = ctx.get("usuario")
-    return dano_generico(ctx, alvo, u.obter_atributo("Atk") * 0.90 + u.obter_atributo("Per") * 0.40, "normal")
+    return dano_generico(ctx, alvo, u.obter_atributo("Atk") * 0.70 + u.obter_atributo("Per") * 0.25, "normal")
 
 
 def _exec_resetar(ctx, alvo):
@@ -171,11 +172,11 @@ def _exec_tankar(ctx, alvo):
 
 
 def _exec_estocada(ctx, alvo):
-    bruto = ctx.get("usuario").obter_atributo("Atk") * 1.05
+    bruto = ctx.get("usuario").obter_atributo("Atk") * 0.80
     extras = {}
     if bool(ctx.get("primeiro_ataque_da_rodada")):
         extras["multiplicadores_condicionais"] = [
-            {"label": "Multiplicador Condicional (primeiro ataque do turno)", "multiplicador": 1.25}
+            {"label": "Multiplicador Condicional (primeiro ataque do turno)", "multiplicador": 1.20}
         ]
     return dano_generico(ctx, alvo, bruto, "normal", **extras)
 
@@ -183,12 +184,17 @@ def _exec_estocada(ctx, alvo):
 def _exec_bola_climatica(ctx, alvo):
     usuario = ctx.get("usuario")
     partida = ctx.get("partida")
-    bruto = usuario.obter_atributo("SpA") * (1.30 if getattr(partida, "clima_atual", None) else 1.05)
-    return dano_generico(ctx, alvo, bruto, "especial")
+    bruto = usuario.obter_atributo("SpA") * (1.00 if getattr(partida, "clima_atual", None) else 0.80)
+    ret = dano_generico(ctx, alvo, bruto, "especial")
+    dano_vida = fnum(ret.get("dano_vida"), 0.0)
+    if dano_vida > 0:
+        for adjacente in inimigos_vivos_adjacentes_ao_alvo(ctx, alvo):
+            dano_generico(ctx, adjacente, dano_vida * 0.5, "especial", tipo="normal")
+    return ret
 
 
 def _exec_hiper_presa(ctx, alvo):
-    ret = dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 1.40, "normal", chance_critico_max=80.0)
+    ret = dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 1.00, "normal", chance_critico_max=80.0)
     if ret.get("critico") and alvo is not None:
         alvo.adicionar_estado_transitorio("recuado", {"ataque": "Hiper Presa"})
     return ret

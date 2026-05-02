@@ -25,11 +25,19 @@ def _exec_danca_eletrica(ctx, alvo):
     return executar_danca_clima(ctx, "Tempestade de Raios")
 
 
+def _exec_campo_condutor(ctx, alvo):
+    usuario = ctx.get("usuario")
+    alvo = alvo or usuario
+    valor = max(0.0, usuario.obter_atributo("Mag") * 0.18 + usuario.obter_atributo("Ene") * 0.12)
+    return usuario.AplicarBarreira(alvo, valor, dados={"ataque": "Campo Condutor", "ataque_id": 34, "ataque_nome": "Campo Condutor", "reativos_acao": ctx.get("reativos_acao")})
+
+
 _EXECUTES = {
     "bolaeletrica": _exec_bola_eletrica,
     "energizar": _exec_energizar,
     "amplificar": _exec_amplificar,
     "dancaeletrica": _exec_danca_eletrica,
+    "campocondutor": _exec_campo_condutor,
 }
 _ALIASES = {"30": "bolaeletrica", "31": "energizar", "32": "amplificar", "33": "dancaeletrica"}
 

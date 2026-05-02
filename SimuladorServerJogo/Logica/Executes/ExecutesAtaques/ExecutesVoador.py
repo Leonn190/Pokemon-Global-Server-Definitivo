@@ -18,6 +18,13 @@ def _exec_olho_de_aguia(ctx, alvo):
     return aplicar_mod_atributo(ctx, usuario, "Olho de \u00c1guia", "Acuracia", valor, 6, False)
 
 
+def _exec_cortina_de_vento(ctx, alvo):
+    usuario = ctx.get("usuario")
+    alvo = alvo or usuario
+    valor = max(0.0, usuario.obter_atributo("Mag") * 0.18 + usuario.obter_atributo("Vel") * 0.10)
+    return usuario.AplicarBarreira(alvo, valor, dados={"ataque": "Cortina de Vento", "ataque_id": 53, "ataque_nome": "Cortina de Vento", "reativos_acao": ctx.get("reativos_acao")})
+
+
 def _passiva_voador(ctx):
     return aplicar_passiva_permanente(ctx, "Voando")
 
@@ -25,6 +32,7 @@ def _passiva_voador(ctx):
 _EXECUTES = {
     "voar": _exec_voar,
     "olhodeaguia": _exec_olho_de_aguia,
+    "cortinadevento": _exec_cortina_de_vento,
     "voador": execute_passiva_nao_manual,
 }
 _PASSIVAS_ATAQUE = [

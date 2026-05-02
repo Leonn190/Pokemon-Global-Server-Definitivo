@@ -63,8 +63,8 @@
       "parametros": {
         "tipo": "planta",
         "atributo": "Vida",
-        "percentual_alvo": 0.08,
-        "percentual_mag": 0.1,
+        "percentual_alvo": 0.06,
+        "percentual_mag": 0.08,
         "rotulo_atributo": "Vida M\u00e1xima",
         "duracao": 6
       },
@@ -92,8 +92,8 @@
       "parametros": {
         "tipo": "planta",
         "categoria": "especial",
-        "escala_inicial_spa": 1.3,
-        "escala_sol_forte_spa": 1.6,
+        "escala_inicial_spa": 1.0,
+        "escala_sol_forte_spa": 1.25,
         "reducao_spa_por_alvo": 0.15,
         "tipo_linha": "reta"
       },

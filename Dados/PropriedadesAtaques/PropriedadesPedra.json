@@ -2,6 +2,35 @@
   "schema_version": 1,
   "tipo": "pedra",
   "ataques": {
+    "64": {
+      "ID": 64,
+      "nome": "Muralha Rochosa",
+      "custo": 45,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "BarreiraCelular",
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_muralha_rochosa",
+      "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (15% de Def).",
+      "parametros": {
+        "tipo": "rocha",
+        "percentual_mag": 0.18,
+        "atributo": "Def",
+        "percentual_usuario_atributo": 0.15
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
     "59": {
       "ID": 59,
       "nome": "Casca de Pedra",

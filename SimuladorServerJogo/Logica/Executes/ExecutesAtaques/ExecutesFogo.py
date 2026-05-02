@@ -24,7 +24,7 @@ def _exec_chama_interior(ctx, alvo):
 
 
 def _exec_raio_de_fogo(ctx, alvo):
-    return executar_raio(ctx, alvo, 1.30, 0.15, "fogo")
+    return executar_raio(ctx, alvo, 1.00, 0.15, "fogo")
 
 
 def _exec_danca_do_sol(ctx, alvo):

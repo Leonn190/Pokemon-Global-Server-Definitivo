@@ -22,6 +22,35 @@
         "duracao": 6
       }
     },
+    "44": {
+      "ID": 44,
+      "nome": "Punho Guardião",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "BarreiraCelular",
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_punho_guardião",
+      "descricao": "O alvo ganha uma barreira equivalente a (20% de Mag) + (12% de Atk).",
+      "parametros": {
+        "tipo": "lutador",
+        "percentual_mag": 0.2,
+        "atributo": "Atk",
+        "percentual_usuario_atributo": 0.12
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
     "43": {
       "ID": 43,
       "nome": "Implacável",

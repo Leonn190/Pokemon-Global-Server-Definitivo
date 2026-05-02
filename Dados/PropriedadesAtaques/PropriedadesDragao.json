@@ -2,6 +2,35 @@
   "schema_version": 1,
   "tipo": "dragao",
   "ataques": {
+    "69": {
+      "ID": 69,
+      "nome": "Escudo Draconico",
+      "custo": 45,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "BarreiraCelular",
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_escudo_draconico",
+      "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (15% de SpD).",
+      "parametros": {
+        "tipo": "dragao",
+        "percentual_mag": 0.18,
+        "atributo": "SpD",
+        "percentual_usuario_atributo": 0.15
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
     "63": {
       "ID": 63,
       "nome": "Escama Mística",

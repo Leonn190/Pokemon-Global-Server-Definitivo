@@ -13,6 +13,13 @@ def _exec_grito_de_guerra(ctx, alvo):
     return aplicar_mod_atributo(ctx, usuario, "Grito de Guerra", "Atk", valor, 6, False)
 
 
+def _exec_punho_guardiao(ctx, alvo):
+    usuario = ctx.get("usuario")
+    alvo = alvo or usuario
+    valor = max(0.0, usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("Atk") * 0.12)
+    return usuario.AplicarBarreira(alvo, valor, dados={"ataque": "Punho Guardião", "ataque_id": 44, "ataque_nome": "Punho Guardião", "reativos_acao": ctx.get("reativos_acao")})
+
+
 def _passiva_implacavel(ctx):
     return aplicar_passiva_permanente(ctx, "Imparavel")
 
@@ -20,6 +27,7 @@ def _passiva_implacavel(ctx):
 _EXECUTES = {
     "gritodeguerra": _exec_grito_de_guerra,
     "implacavel": execute_passiva_nao_manual,
+    "punhoguardiao": _exec_punho_guardiao,
 }
 _PASSIVAS_ATAQUE = [
     {"nome": "Implac\u00e1vel", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_implacavel, "origem": "ataque", "code": "43"},

@@ -41,6 +41,35 @@
         "rotulo_atributo": "Acurácia"
       }
     },
+    "53": {
+      "ID": 53,
+      "nome": "Cortina de Vento",
+      "custo": 35,
+      "estilo_logico": "alvo",
+      "animacao": {
+        "contato": "nenhum",
+        "projetil": null,
+        "efeito_alvo": "BarreiraCelular",
+        "efeito_usuario": null
+      },
+      "execute_principal": "ataque_cortina_de_vento",
+      "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (10% de Vel).",
+      "parametros": {
+        "tipo": "voador",
+        "percentual_mag": 0.18,
+        "atributo": "Vel",
+        "percentual_usuario_atributo": 0.1
+      },
+      "alvificacao": {
+        "tipo": "area",
+        "quantidade": 1,
+        "lados_permitidos": [
+          "mesmo_lado",
+          "usuario"
+        ],
+        "exige_area_ocupada": true
+      }
+    },
     "51": {
       "ID": 51,
       "nome": "Voador",

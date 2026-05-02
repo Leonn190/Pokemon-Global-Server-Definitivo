@@ -118,13 +118,9 @@ class Camera:
 class CameraBatalha(Camera):
     TILE_MIN = 30
     TILE_MAX = 50
-    ZOOM_PASSO = 3.0
-    ZOOM_SUAVIZACAO = 14.0
 
     def __init__(self, tamanho_tela_px: Vector2, posicao_inicial_tiles: Vector2 = (0.0, 0.0), tile_px: int = 40) -> None:
         super().__init__(tamanho_tela_px=tamanho_tela_px, entidade_main=None, posicao_inicial_tiles=posicao_inicial_tiles, suavizacao=100.0, tile_px=tile_px)
-        self.TilePx = float(tile_px)
-        self._tile_px_alvo = float(tile_px)
         self._arrastando = False
         self._ultimo_mouse_px: Optional[Vector2] = None
         self._origem_arena_mundo_tiles: Vector2 = (0.0, 0.0)
@@ -185,26 +181,18 @@ class CameraBatalha(Camera):
     def _alterar_zoom(self, passos: int) -> None:
         if passos == 0:
             return
-        alvo = max(float(self.TILE_MIN), min(float(self.TILE_MAX), float(self._tile_px_alvo) + float(passos) * self.ZOOM_PASSO))
-        self._tile_px_alvo = alvo
-
-    def _aplicar_zoom_suave(self, delta_time: float) -> None:
-        atual = float(self.TilePx)
-        alvo = float(self._tile_px_alvo)
-        if abs(alvo - atual) <= 0.01:
-            self.TilePx = alvo
+        antigo = int(self.TilePx)
+        novo = max(self.TILE_MIN, min(self.TILE_MAX, int(self.TilePx + passos)))
+        if novo == antigo:
             return
-        passo = min(1.0, max(0.0, float(delta_time or 0.0)) * self.ZOOM_SUAVIZACAO)
-        if passo <= 0.0:
-            return
-        novo = atual + (alvo - atual) * passo
-        centro_x = float(self.PosicaoTiles[0]) + (float(self.TamanhoTelaPx[0]) / max(1.0, atual)) * 0.5
-        centro_y = float(self.PosicaoTiles[1]) + (float(self.TamanhoTelaPx[1]) / max(1.0, atual)) * 0.5
-        self.TilePx = float(novo)
+        centro_x = float(self.PosicaoTiles[0]) + (float(self.TamanhoTelaPx[0]) / max(1.0, float(antigo))) * 0.5
+        centro_y = float(self.PosicaoTiles[1]) + (float(self.TamanhoTelaPx[1]) / max(1.0, float(antigo))) * 0.5
+        self.TilePx = int(novo)
         self.PosicaoTiles = (
             centro_x - (float(self.TamanhoTelaPx[0]) / max(1.0, float(self.TilePx))) * 0.5,
             centro_y - (float(self.TamanhoTelaPx[1]) / max(1.0, float(self.TilePx))) * 0.5,
         )
+        self._aplicar_limites()
 
     def _aplicar_limites(self) -> None:
         if not self.LimitesMundoTiles:
@@ -220,7 +208,6 @@ class CameraBatalha(Camera):
         )
 
     def atualizar(self, delta_time: float) -> Vector2:
-        self._aplicar_zoom_suave(delta_time)
         self._aplicar_limites()
         return self.PosicaoTiles
 

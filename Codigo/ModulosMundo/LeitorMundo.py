@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import threading
 import time
+from collections import deque
 from typing import Callable, Dict, List, Optional, Tuple
 
 import pygame
@@ -49,6 +50,8 @@ class LeitorMundo:
         self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}
         self._cache_assinaturas_chunks: Dict[Tuple[int, int], Tuple[Tuple[int, ...], ...]] = {}
         self._cache_tile_px: int = max(1, int(getattr(self.Camera, "TilePx", 50)))
+        self._fila_preaquecimento_chunks = deque()
+        self._fila_preaquecimento_set = set()
         self._ultimo_chunk_player: Optional[Tuple[int, int]] = None
         self._ultima_versao_chunks_regras = -1
         self._ultimo_seed_tiles: Optional[int] = None
@@ -212,6 +215,8 @@ class LeitorMundo:
             for chave in list(self._cache_assinaturas_chunks.keys()):
                 if chave not in chaves_anel:
                     self._cache_assinaturas_chunks.pop(chave, None)
+            self._fila_preaquecimento_chunks = deque(chave for chave in self._fila_preaquecimento_chunks if chave in chaves_anel)
+            self._fila_preaquecimento_set = set(self._fila_preaquecimento_chunks)
 
     def processar_pacote_chunks(self, pacote: PacoteMundo) -> None:
         if not isinstance(pacote, dict):
@@ -339,9 +344,10 @@ class LeitorMundo:
         toroidal: bool,
         chunks_x: int,
         chunks_y: int,
+        margem_chunks: int = 1,
     ) -> List[Tuple[int, int]]:
-        intervalo_x = self._intervalo_chunks_visiveis(cam_x, tela_w, tile_px, tamanho_chunk, margem_chunks=1)
-        intervalo_y = self._intervalo_chunks_visiveis(cam_y, tela_h, tile_px, tamanho_chunk, margem_chunks=1)
+        intervalo_x = self._intervalo_chunks_visiveis(cam_x, tela_w, tile_px, tamanho_chunk, margem_chunks=margem_chunks)
+        intervalo_y = self._intervalo_chunks_visiveis(cam_y, tela_h, tile_px, tamanho_chunk, margem_chunks=margem_chunks)
         if toroidal and chunks_x > 0 and chunks_y > 0:
             vistos = set()
             chaves = []
@@ -395,12 +401,53 @@ class LeitorMundo:
             toroidal=toroidal,
             chunks_x=chunks_x,
             chunks_y=chunks_y,
+            margem_chunks=0,
         )
+        chaves_margem = self._chaves_chunks_visiveis(
+            cam_x=cam_x,
+            cam_y=cam_y,
+            tela_w=float(tela_w),
+            tela_h=float(tela_h),
+            tile_px=tile_px,
+            tamanho_chunk=tamanho_chunk,
+            chunks_ref=chunks_ref,
+            toroidal=toroidal,
+            chunks_x=chunks_x,
+            chunks_y=chunks_y,
+            margem_chunks=1,
+        )
+        chaves_visiveis_set = set(chaves_visiveis)
 
         for chave_chunk in chaves_visiveis:
             grid = chunks_ref.get(chave_chunk, [])
             if grid:
                 self._obter_superficie_chunk(chave_chunk, grid, tile_px)
+        for chave_chunk in chaves_margem:
+            if (
+                chave_chunk in chaves_visiveis_set
+                or chave_chunk not in chunks_ref
+                or chave_chunk in self._cache_superficies_chunks
+                or chave_chunk in self._fila_preaquecimento_set
+            ):
+                continue
+            self._fila_preaquecimento_chunks.append(chave_chunk)
+            self._fila_preaquecimento_set.add(chave_chunk)
+
+    def bombear_preaquecimento(self, max_chunks: int = 1) -> None:
+        limite = max(0, int(max_chunks or 0))
+        if limite <= 0:
+            return
+        tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))
+        processados = 0
+        while processados < limite and self._fila_preaquecimento_chunks:
+            chave_chunk = self._fila_preaquecimento_chunks.popleft()
+            self._fila_preaquecimento_set.discard(chave_chunk)
+            processados += 1
+            with self._lock:
+                grid = self.Chunks.get(chave_chunk, [])
+            if not grid or chave_chunk in self._cache_superficies_chunks:
+                continue
+            self._obter_superficie_chunk(chave_chunk, grid, tile_px)
 
     def renderizar_mundo(self, tela) -> None:
         tile_px = max(1, int(getattr(self.Camera, "TilePx", 50)))

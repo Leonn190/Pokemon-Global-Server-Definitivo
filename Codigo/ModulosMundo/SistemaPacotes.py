@@ -168,12 +168,13 @@ class SistemaPacotes:
             self._proximo_ciclo_manual = time.perf_counter()
         agora = time.perf_counter()
         ciclos = 0
-        while ciclos < max(1, int(max_ciclos or 1)) and agora >= self._proximo_ciclo_manual:
+        limite_ciclos = max(1, int(max_ciclos or 1))
+        while ciclos < limite_ciclos and agora >= self._proximo_ciclo_manual:
             self._executar_ciclo_rede()
             self._proximo_ciclo_manual += self._intervalo_s
             ciclos += 1
             agora = time.perf_counter()
-        if ciclos >= max(1, int(max_ciclos or 1)) and agora > self._proximo_ciclo_manual:
+        if ciclos >= limite_ciclos and agora > self._proximo_ciclo_manual:
             self._proximo_ciclo_manual = agora
 
     def _executar_ciclo_rede(self) -> bool:

@@ -18,17 +18,26 @@ def _erro_padrao(mensagem):
     return {"status": "erro", "mensagem": mensagem}
 
 
+_CACHE_SERVIDOR_LOCAL = {"server_id": None, "pasta": None, "tipo": None}
+
+
 def _preparar_servidor_local(server_id):
+    pasta_ativa = obter_pasta_servidor_ativo()
+    if _CACHE_SERVIDOR_LOCAL.get("server_id") == str(server_id or "") and _CACHE_SERVIDOR_LOCAL.get("tipo") == "local":
+        pasta_cache = _CACHE_SERVIDOR_LOCAL.get("pasta")
+        if pasta_cache is not None and pasta_ativa == pasta_cache:
+            return None
     server = obter_servidor_por_id(server_id)
     if not server:
         return _erro_padrao("Servidor não encontrado.")
     if server.get("tipo") != "local":
         return {"status": "negado", "mensagem": "Servidor online ainda não implementado."}
     pasta = Path(server.get("pasta")).resolve()
-    if obter_pasta_servidor_ativo() != pasta:
+    if pasta_ativa != pasta:
         definir_servidor_ativo(pasta)
         from SimuladorServerJogo.Gerais.EstadoServidor import snapshot_estado
         snapshot_estado()
+    _CACHE_SERVIDOR_LOCAL.update({"server_id": str(server_id or ""), "pasta": pasta, "tipo": "local"})
     return None
 
 

@@ -81,7 +81,8 @@ class ControladorMundo:
         self.Leitor.atualizar_regras_mundo(controle)
         self.Player.atualizar_frame(eventos, dt, self.Camera, bloqueado=bloqueio_gameplay)
         self.Leitor.bombear()
-        self.Pacotes.bombear()
+        self.Leitor.bombear_preaquecimento(max_chunks=1)
+        self.Pacotes.bombear(max_ciclos=1)
         ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None
         player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
         self.Objetos.atualizar_visuais(dt, self.Camera, ignorar_id=ignorar_id, player_pos=player_pos)

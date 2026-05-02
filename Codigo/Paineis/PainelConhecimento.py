@@ -118,14 +118,6 @@ class PainelConhecimento:
         "itens": "Pokemon Global Server - Itens.csv",
     }
 
-    REGISTROS_PERFIL = {
-        "pokemons": ("ConhecimentoPokemons", "PokemonsRegistrados", "PokémonsRegistrados", "RegistroPokemons", "Pokedex", "PokemonsConhecidos"),
-        "ataques": ("ConhecimentoAtaques", "AtaquesRegistrados", "RegistroAtaques", "AtaquesConhecidos"),
-        "efeitos": ("ConhecimentoEfeitos", "EfeitosRegistrados", "RegistroEfeitos", "EfeitosConhecidos"),
-        "itens": ("ConhecimentoItens", "ItensRegistrados", "RegistroItens", "ItensConhecidos"),
-        "musicas": ("ConhecimentoMusicas", "MusicasRegistradas", "MúsicasRegistradas", "RegistroMusicas", "MusicasConhecidas"),
-    }
-
     ALTURAS = {
         "pokemons": MiniPainelPokemon.ALTURA,
         "ataques": MiniPainelAtaque.ALTURA,
@@ -166,9 +158,6 @@ class PainelConhecimento:
     # ------------------------------------------------------------------
     def _perfil(self):
         return getattr(self.Ator, "Perfil", None) if self.Ator is not None else None
-
-    def _inventario(self):
-        return getattr(self.Ator, "Inventario", None) if self.Ator is not None else None
 
     @staticmethod
     def _roots() -> list[Path]:
@@ -263,37 +252,9 @@ class PainelConhecimento:
 
     def _registro_bruto(self, aba: str):
         perfil = self._perfil()
-        if perfil is not None:
-            conhecimento = getattr(perfil, "Conhecimento", None)
-            if isinstance(conhecimento, dict):
-                chave_real = {
-                    "pokemons": "Pokemons",
-                    "ataques": "Ataques",
-                    "efeitos": "Efeitos",
-                    "itens": "Itens",
-                    "musicas": "Musicas",
-                }.get(aba)
-                valor = conhecimento.get(chave_real)
-                if valor not in (None, ""):
-                    return valor
-        if perfil is not None:
-            for nome in self.REGISTROS_PERFIL.get(aba, ()):  # tenta todos os contratos prováveis
-                if hasattr(perfil, nome):
-                    valor = getattr(perfil, nome)
-                    if valor not in (None, ""):
-                        return valor
-
-        # Fallbacks úteis enquanto o contrato real do conhecimento ainda não existir.
-        inv = self._inventario()
-        if aba == "pokemons" and inv is not None:
-            pokemons = getattr(inv, "Pokemons", None)
-            if pokemons:
-                return list(pokemons)
-        if aba == "itens" and inv is not None:
-            itens = getattr(inv, "Itens", None)
-            if itens:
-                return list(itens)
-        return []
+        conhecimento = getattr(perfil, "Conhecimento", None)
+        chave_real = {"pokemons": "Pokemons", "ataques": "Ataques", "efeitos": "Efeitos", "itens": "Itens", "musicas": "Musicas"}.get(aba)
+        return conhecimento.get(chave_real, []) if isinstance(conhecimento, dict) and chave_real else []
 
     def _tokens_registrados(self, aba: str) -> tuple[set[str], int | None, tuple]:
         bruto = self._registro_bruto(aba)

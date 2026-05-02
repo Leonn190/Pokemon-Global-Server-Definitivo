@@ -29,6 +29,11 @@ class Perfil:
         self.Fugas = 0
         self.DungeonsTerminadas = 0
         self.Elo = 0
+        self.EternidadeDerrotada = False
+        self.GrandeCampeaoDerrotado = False
+        self.EstadiosLiderados = []
+        self.MoedasMaximas = 0
+        self.RecursosMiticosMaximos = 0
         self.LimiteConhecimento = 300
         self.Conhecimento = {"Efeitos": [], "Ataques": [], "Pokemons": [], "Itens": [], "Musicas": []}
         self.SkinsLiberadas = self._skins_liberadas_padrao()
@@ -103,6 +108,45 @@ class Perfil:
     def registrar_tempo_jogo(self, dt: float) -> None:
         self.TempoJogoSegundos += max(0.0, float(dt))
 
+    @staticmethod
+    def _quantidade_item(item) -> int:
+        if not isinstance(item, dict):
+            return 0
+        try:
+            return max(1, int(item.get("quantidade", item.get("Quantidade", 1)) or 1))
+        except (TypeError, ValueError):
+            return 1
+
+    @classmethod
+    def contar_recursos_miticos_itens(cls, itens) -> int:
+        total = 0
+        for item in list(itens or []):
+            if not isinstance(item, dict):
+                continue
+            estilo = str(item.get("Estilo") or item.get("estilo") or "").strip().lower()
+            if estilo != "recurso":
+                continue
+            raridade = item.get("Raridade", item.get("raridade", 0))
+            try:
+                eh_mitico = int(float(raridade or 0)) >= 6
+            except (TypeError, ValueError):
+                eh_mitico = "mitic" in str(raridade or "").strip().lower()
+            if eh_mitico:
+                total += cls._quantidade_item(item)
+        return total
+
+    def atualizar_moedas_maximas(self) -> None:
+        novo = max(0, int(self.MoedasMaximas), int(self.Dinheiro))
+        if novo != self.MoedasMaximas:
+            self.MoedasMaximas = novo
+            self._perfil_dirty = True
+
+    def atualizar_recursos_miticos_maximos(self, itens) -> None:
+        novo = max(0, int(self.RecursosMiticosMaximos), self.contar_recursos_miticos_itens(itens))
+        if novo != self.RecursosMiticosMaximos:
+            self.RecursosMiticosMaximos = novo
+            self._perfil_dirty = True
+
     def consumir_stamina(self, quantidade: float) -> float:
         self.Stamina = max(0.0, self.Stamina - max(0.0, float(quantidade)))
         return self.Stamina
@@ -141,6 +185,11 @@ class Perfil:
         self.Fugas = max(0, int(self._pegar(dados, "fugas", "Fugas", padrao=self.Fugas)))
         self.DungeonsTerminadas = max(0, int(self._pegar(dados, "dungeons_terminadas", "DungeonsTerminadas", padrao=self.DungeonsTerminadas)))
         self.Elo = int(self._pegar(dados, "elo", "Elo", padrao=self.Elo))
+        self.EternidadeDerrotada = bool(self._pegar(dados, "eternidade_derrotada", "EternidadeDerrotada", padrao=self.EternidadeDerrotada))
+        self.GrandeCampeaoDerrotado = bool(self._pegar(dados, "grande_campeao_derrotado", "GrandeCampeaoDerrotado", padrao=self.GrandeCampeaoDerrotado))
+        self.EstadiosLiderados = list(dict.fromkeys(self._pegar(dados, "estadios_liderados", "EstadiosLiderados", padrao=self.EstadiosLiderados) or []))
+        self.MoedasMaximas = max(0, int(self._pegar(dados, "moedas_maximas", "MoedasMaximas", padrao=self.MoedasMaximas)))
+        self.RecursosMiticosMaximos = max(0, int(self._pegar(dados, "recursos_miticos_maximos", "RecursosMiticosMaximos", padrao=self.RecursosMiticosMaximos)))
         self.LimiteConhecimento = max(0, int(self._pegar(dados, "limite_conhecimento", "LimiteConhecimento", padrao=self.LimiteConhecimento)))
         conhecimento_raw = self._pegar(dados, "conhecimento", "Conhecimento", padrao=self.Conhecimento)
         conhecimento_norm = {"Efeitos": [], "Ataques": [], "Pokemons": [], "Itens": [], "Musicas": []}
@@ -220,6 +269,11 @@ class Perfil:
             "fugas": self.Fugas,
             "dungeons_terminadas": self.DungeonsTerminadas,
             "elo": self.Elo,
+            "eternidade_derrotada": bool(self.EternidadeDerrotada),
+            "grande_campeao_derrotado": bool(self.GrandeCampeaoDerrotado),
+            "estadios_liderados": list(self.EstadiosLiderados),
+            "moedas_maximas": int(self.MoedasMaximas),
+            "recursos_miticos_maximos": int(self.RecursosMiticosMaximos),
             "limite_conhecimento": self.LimiteConhecimento,
             "conhecimento": {k: list(v) for k, v in self.Conhecimento.items()},
             "skins_liberadas": list(self.SkinsLiberadas),

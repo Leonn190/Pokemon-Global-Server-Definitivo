@@ -69,6 +69,7 @@ _TIPOS_ESTADIO_RESPEITO = (
     "normal", "fogo", "agua", "planta", "eletrico", "gelo", "lutador", "venenoso", "terrestre", "voador",
     "psiquico", "inseto", "pedra", "fantasma", "dragao", "sombrio", "metal", "fada", "cosmico", "sonoro",
 )
+_CATEGORIAS_CONHECIMENTO = ("Efeitos", "Ataques", "Pokemons", "Itens", "Musicas")
 
 
 def _valor_regra(regras: dict, chave: str, padrao):
@@ -123,6 +124,47 @@ def _normalizar_skins_liberadas(skins: list[str] | None) -> list[str]:
         normalizadas.append(f"{idx}.png")
     out = sorted(dict.fromkeys(normalizadas), key=lambda s: int(re.search(r"(\d+)", Path(s).stem).group(1)))
     return out or padrao
+
+
+def _normalizar_conhecimento(conhecimento: dict | None) -> dict:
+    bruto = conhecimento if isinstance(conhecimento, dict) else {}
+    normalizado = {categoria: [] for categoria in _CATEGORIAS_CONHECIMENTO}
+    aliases = {categoria.lower(): categoria for categoria in _CATEGORIAS_CONHECIMENTO}
+    for chave, valores in bruto.items():
+        categoria = aliases.get(str(chave or "").strip().lower())
+        if categoria is None or not isinstance(valores, (list, tuple, set)):
+            continue
+        unicos = []
+        for valor in valores:
+            if valor is None:
+                continue
+            valor_norm = int(valor) if isinstance(valor, (int, float)) else str(valor).strip()
+            if valor_norm == "":
+                continue
+            unicos.append(valor_norm)
+        normalizado[categoria] = list(dict.fromkeys(unicos))
+    return normalizado
+
+
+def _contar_recursos_miticos_inventario(inventario: dict | None) -> int:
+    itens = inventario.get("itens", []) if isinstance(inventario, dict) else []
+    total = 0
+    for item in list(itens or []):
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("Estilo") or item.get("estilo") or "").strip().lower() != "recurso":
+            continue
+        raridade = item.get("Raridade", item.get("raridade", 0))
+        try:
+            eh_mitico = int(float(raridade or 0)) >= 6
+        except (TypeError, ValueError):
+            eh_mitico = "mitic" in str(raridade or "").strip().lower()
+        if eh_mitico:
+            try:
+                total += max(1, int(item.get("quantidade", item.get("Quantidade", 1)) or 1))
+            except (TypeError, ValueError):
+                total += 1
+    return total
 
 
 def _tempo_mundo_padrao() -> dict:
@@ -405,6 +447,13 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["dinheiro"] = int(dados.get("dinheiro", _valor_regra(regras, "Dinheiro", 20)))
     dados["insignias"] = list(dados.get("insignias", []))
     dados["maestria"] = int(dados.get("maestria", _valor_regra(regras, "Maestria", 0)))
+    dados["limite_conhecimento"] = int(max(0, dados.get("limite_conhecimento", dados.get("LimiteConhecimento", 300))))
+    dados["conhecimento"] = _normalizar_conhecimento(dados.get("conhecimento", dados.get("Conhecimento")))
+    dados["eternidade_derrotada"] = bool(dados.get("eternidade_derrotada", dados.get("EternidadeDerrotada", False)))
+    dados["grande_campeao_derrotado"] = bool(dados.get("grande_campeao_derrotado", dados.get("GrandeCampeaoDerrotado", False)))
+    dados["estadios_liderados"] = list(dict.fromkeys(dados.get("estadios_liderados", dados.get("EstadiosLiderados", [])) or []))
+    dados["moedas_maximas"] = int(max(0, dados.get("moedas_maximas", dados.get("MoedasMaximas", 0))))
+    dados["recursos_miticos_maximos"] = int(max(0, dados.get("recursos_miticos_maximos", dados.get("RecursosMiticosMaximos", 0))))
     dados["skins_liberadas"] = _normalizar_skins_liberadas(dados.get("skins_liberadas"))
     dados["habilidades_aprendidas"] = list(dados.get("habilidades_aprendidas", []))
     for tipo in _TIPOS_ESTADIO_RESPEITO:
@@ -562,6 +611,7 @@ def _normalizar_inventario(payload: dict) -> dict:
 def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> dict:
     base = _normalizar_perfil(personagem_atual)
     payload = dict(atualizacao) if isinstance(atualizacao, dict) else {}
+    dinheiro_antes = int(base.get("dinheiro", 0) or 0)
 
     campos_int = (
         "nivel",
@@ -574,6 +624,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         "baus_abertos",
         "dinheiro",
         "maestria",
+        "limite_conhecimento",
         "limite_slots_inventario",
         "limite_pokemons",
         "limite_times_pokemon",
@@ -582,6 +633,14 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     for campo in campos_int:
         if campo in payload:
             base[campo] = int(payload.get(campo, base[campo]))
+    if "moedas_maximas" in payload:
+        base["moedas_maximas"] = max(int(base.get("moedas_maximas", 0) or 0), int(payload.get("moedas_maximas", 0) or 0))
+    if "recursos_miticos_maximos" in payload:
+        base["recursos_miticos_maximos"] = max(int(base.get("recursos_miticos_maximos", 0) or 0), int(payload.get("recursos_miticos_maximos", 0) or 0))
+    if int(base.get("dinheiro", 0) or 0) > dinheiro_antes:
+        base["moedas_maximas"] = max(int(base.get("moedas_maximas", 0) or 0), int(base.get("dinheiro", 0) or 0))
+    if "LimiteConhecimento" in payload:
+        base["limite_conhecimento"] = int(payload.get("LimiteConhecimento", base.get("limite_conhecimento", 300)))
     base["nivel"] = max(0, int(base.get("nivel", 0)))
     base["xp"] = max(0, int(base.get("xp", 0)))
     base["xp_alvo"] = max(0, int(base.get("xp_alvo", _calcular_xp_alvo_por_nivel(base["nivel"]))))
@@ -600,6 +659,15 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         base["skins_liberadas"] = _normalizar_skins_liberadas(payload.get("skins_liberadas", []))
     if "habilidades_aprendidas" in payload:
         base["habilidades_aprendidas"] = list(payload.get("habilidades_aprendidas", []))
+    if "eternidade_derrotada" in payload:
+        base["eternidade_derrotada"] = bool(payload.get("eternidade_derrotada"))
+    if "grande_campeao_derrotado" in payload:
+        base["grande_campeao_derrotado"] = bool(payload.get("grande_campeao_derrotado"))
+    if "estadios_liderados" in payload:
+        base["estadios_liderados"] = list(dict.fromkeys(payload.get("estadios_liderados") or []))
+    conhecimento_payload = payload.get("conhecimento", payload.get("Conhecimento"))
+    if isinstance(conhecimento_payload, dict):
+        base["conhecimento"] = _normalizar_conhecimento(conhecimento_payload)
     if "exploracao_chunks" in payload:
         base["exploracao_chunks"] = _normalizar_exploracao_chunks(payload.get("exploracao_chunks"))
 
@@ -977,6 +1045,7 @@ def atualizar_inventario_personagem(usuario, inventario):
         if personagem is None:
             return
         personagem["inventario"] = _normalizar_inventario(inventario)
+        personagem["recursos_miticos_maximos"] = max(int(personagem.get("recursos_miticos_maximos", 0) or 0), _contar_recursos_miticos_inventario(personagem["inventario"]))
         _persistir_personagens()
 
 

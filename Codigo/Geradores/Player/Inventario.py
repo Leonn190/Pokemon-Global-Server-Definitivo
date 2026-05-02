@@ -73,6 +73,10 @@ class Inventario:
         if self.Perfil is not None and hasattr(self.Perfil, "registrar_conhecimento_item"):
             self.Perfil.registrar_conhecimento_item(item)
 
+    def _atualizar_recursos_miticos_maximos(self):
+        if self.Perfil is not None and hasattr(self.Perfil, "atualizar_recursos_miticos_maximos"):
+            self.Perfil.atualizar_recursos_miticos_maximos(self.Itens)
+
     def _registrar_conhecimento_pokemon(self, pokemon):
         if self.Perfil is None:
             return
@@ -121,6 +125,7 @@ class Inventario:
                             item["quantidade"] = 0
                         if adicionado > 0:
                             self._registrar_conhecimento_item(item)
+                            self._atualizar_recursos_miticos_maximos()
                         return True
 
         while isinstance(item_copia, dict) and item_copia["quantidade"] > 0:
@@ -139,6 +144,7 @@ class Inventario:
             item["quantidade"] = int(item_copia.get("quantidade", 0) if isinstance(item_copia, dict) else 0)
         if adicionado > 0:
             self._registrar_conhecimento_item(item)
+            self._atualizar_recursos_miticos_maximos()
         return True
 
     def aplicar_serializado(self, dados):

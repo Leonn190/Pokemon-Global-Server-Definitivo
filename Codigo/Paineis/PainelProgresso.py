@@ -60,10 +60,6 @@ class PainelProgresso:
         return getattr(self.Ator, "Inventario", None) if self.Ator is not None else None
 
     @staticmethod
-    def _normalizar_texto(valor) -> str:
-        return str(valor or "").strip().lower().replace("í", "i").replace("é", "e")
-
-    @staticmethod
     def _valor_numerico(obj, nomes: tuple[str, ...], padrao=None):
         if obj is None:
             return padrao
@@ -103,65 +99,16 @@ class PainelProgresso:
                 return valor
         return None
 
-    @staticmethod
-    def _quantidade_item(item) -> int:
-        if not isinstance(item, dict):
-            return 1 if item is not None else 0
-        for chave in ("quantidade", "Quantidade", "qtd", "Qtd", "stack", "Stack"):
-            try:
-                valor = int(item.get(chave, 0) or 0)
-                if valor > 0:
-                    return valor
-            except (TypeError, ValueError):
-                continue
-        return 1
-
     def _contar_pokemons_inventario(self) -> int:
         inventario = self._inventario()
         pokemons = getattr(inventario, "Pokemons", []) if inventario is not None else []
         return len([p for p in list(pokemons or []) if isinstance(p, dict) or p is not None])
 
-    def _contar_itens_inventario(self, apenas_distintos=False) -> int:
-        inventario = self._inventario()
-        itens = getattr(inventario, "Itens", []) if inventario is not None else []
-        total = 0
-        distintos = set()
-        for item in list(itens or []):
-            if item is None:
-                continue
-            if apenas_distintos:
-                if isinstance(item, dict):
-                    chave = item.get("Code") or item.get("code") or item.get("Nome") or item.get("nome") or id(item)
-                else:
-                    chave = str(item)
-                distintos.add(str(chave))
-            else:
-                total += self._quantidade_item(item)
-        return len(distintos) if apenas_distintos else total
-
-    def _contar_registro(self, nomes: tuple[str, ...], fallback=None) -> int:
+    def _contar_registro(self, categoria: str) -> int:
         perfil = self._perfil()
         conhecimento = getattr(perfil, "Conhecimento", None)
-        if isinstance(conhecimento, dict):
-            mapa = {
-                "ConhecimentoPokemons": "Pokemons",
-                "ConhecimentoAtaques": "Ataques",
-                "ConhecimentoEfeitos": "Efeitos",
-                "ConhecimentoItens": "Itens",
-                "ConhecimentoMusicas": "Musicas",
-            }
-            for nome in nomes:
-                chave = mapa.get(str(nome))
-                if chave and isinstance(conhecimento.get(chave), list):
-                    return len([v for v in conhecimento.get(chave) if v is not None])
-        valor = self._lista_ou_dict(perfil, nomes)
-        if isinstance(valor, (int, float)):
-            return max(0, int(valor))
-        if isinstance(valor, list):
-            return len([v for v in valor if v is not None])
-        if fallback is not None:
-            return int(fallback())
-        return 0
+        valores = conhecimento.get(categoria, []) if isinstance(conhecimento, dict) else []
+        return len([v for v in valores if v is not None]) if isinstance(valores, list) else 0
 
     def _flag_perfil(self, nomes: tuple[str, ...]) -> int:
         perfil = self._perfil()
@@ -182,7 +129,7 @@ class PainelProgresso:
 
     def _ouro(self) -> int:
         perfil = self._perfil()
-        return int(self._valor_numerico(perfil, ("Dinheiro", "Ouro", "Gold", "Moedas"), 0) or 0)
+        return int(getattr(perfil, "MoedasMaximas", 0) or 0)
 
     def _vitorias_totais(self) -> int:
         perfil = self._perfil()
@@ -204,7 +151,7 @@ class PainelProgresso:
 
     def _ginasios_liderados(self) -> int:
         perfil = self._perfil()
-        return int(self._valor_numerico(perfil, ("GinasiosLiderados", "GinásiosLiderados", "LiderGinasios", "LiderancasGinasio"), 0) or 0)
+        return len(list(getattr(perfil, "EstadiosLiderados", []) or []))
 
     def _nivel(self) -> int:
         perfil = self._perfil()
@@ -216,24 +163,7 @@ class PainelProgresso:
 
     def _contar_recursos_miticos(self) -> int:
         perfil = self._perfil()
-        direto = self._valor_numerico(perfil, ("RecursosMiticos", "RecursosMíticos", "RecursosMiticosQuantidade", "ItensRecursosMiticos"), None)
-        if direto is not None:
-            return max(0, int(direto))
-
-        inventario = self._inventario()
-        itens = getattr(inventario, "Itens", []) if inventario is not None else []
-        total = 0
-        for item in list(itens or []):
-            if not isinstance(item, dict):
-                continue
-            nome = self._normalizar_texto(item.get("Nome") or item.get("nome") or item.get("Code") or item.get("code"))
-            tipo = self._normalizar_texto(item.get("Tipo") or item.get("tipo") or item.get("Categoria") or item.get("categoria") or item.get("Classe") or item.get("classe"))
-            raridade = self._normalizar_texto(item.get("Raridade") or item.get("raridade") or item.get("Rank") or item.get("rank"))
-            eh_recurso = "recurso" in tipo or "minerio" in tipo or "minério" in tipo
-            eh_mitico = "mitic" in raridade or "mythic" in raridade or "mitic" in nome or "mythic" in nome
-            if eh_recurso and eh_mitico:
-                total += self._quantidade_item(item)
-        return total
+        return int(getattr(perfil, "RecursosMiticosMaximos", 0) or 0)
 
     # ------------------------------------------------------------------
     # Rotas
@@ -244,11 +174,11 @@ class PainelProgresso:
                 "intelectual", "Intelectual", "Registros, catálogo e descobertas do mundo.",
                 (92, 137, 232), (196, 219, 255), (35, 59, 118),
                 (
-                    MissaoProgresso("pokemons_registrados", "Registre 1000 pokémons", 1000, 40, lambda p, _: p._contar_registro(("PokemonsRegistrados", "PokémonsRegistrados", "RegistroPokemons", "Pokedex", "PokemonsConhecidos", "ConhecimentoPokemons"), p._contar_pokemons_inventario)),
-                    MissaoProgresso("itens_registrados", "Registre 120 itens", 120, 20, lambda p, _: p._contar_registro(("ItensRegistrados", "RegistroItens", "ItensConhecidos", "ConhecimentoItens"), lambda: p._contar_itens_inventario(apenas_distintos=True))),
-                    MissaoProgresso("efeitos_registrados", "Registre 50 efeitos", 50, 12, lambda p, _: p._contar_registro(("EfeitosRegistrados", "RegistroEfeitos", "EfeitosConhecidos", "ConhecimentoEfeitos"))),
-                    MissaoProgresso("ataques_registrados", "Registre 500 ataques", 500, 20, lambda p, _: p._contar_registro(("AtaquesRegistrados", "RegistroAtaques", "AtaquesConhecidos", "ConhecimentoAtaques"))),
-                    MissaoProgresso("musicas_registradas", "Registre 50 músicas", 50, 8, lambda p, _: p._contar_registro(("MusicasRegistradas", "MúsicasRegistradas", "RegistroMusicas", "MusicasConhecidas", "ConhecimentoMusicas"))),
+                    MissaoProgresso("pokemons_registrados", "Registre 1000 pokémons", 1000, 40, lambda p, _: p._contar_registro("Pokemons")),
+                    MissaoProgresso("itens_registrados", "Registre 120 itens", 120, 20, lambda p, _: p._contar_registro("Itens")),
+                    MissaoProgresso("efeitos_registrados", "Registre 50 efeitos", 50, 12, lambda p, _: p._contar_registro("Efeitos")),
+                    MissaoProgresso("ataques_registrados", "Registre 500 ataques", 500, 20, lambda p, _: p._contar_registro("Ataques")),
+                    MissaoProgresso("musicas_registradas", "Registre 50 músicas", 50, 8, lambda p, _: p._contar_registro("Musicas")),
                 ),
             ),
             "campeao": RotaProgresso(
@@ -257,8 +187,8 @@ class PainelProgresso:
                 (
                     MissaoProgresso("insignias", "Consiga 25 insígnias", 25, 40, lambda p, _: p._insignias()),
                     MissaoProgresso("vitorias", "Consiga 1000 vitórias", 1000, 20, lambda p, _: p._vitorias_totais()),
-                    MissaoProgresso("lider_ginasios", "Torne-se líder de 5 ginásios", 5, 25, lambda p, _: p._ginasios_liderados()),
-                    MissaoProgresso("grande_campeao", "Derrote o grande Campeão", 1, 15, lambda p, _: p._flag_perfil(("GrandeCampeaoDerrotado", "DerrotouGrandeCampeao", "CampeaoDerrotado", "CampeãoDerrotado")), "feito"),
+                    MissaoProgresso("lider_ginasios", "Torne-se líder de 5 estádios", 5, 25, lambda p, _: p._ginasios_liderados()),
+                    MissaoProgresso("grande_campeao", "Derrote o grande Campeão", 1, 15, lambda p, _: p._flag_perfil(("GrandeCampeaoDerrotado",)), "feito"),
                 ),
             ),
             "magnata": RotaProgresso(
@@ -276,7 +206,7 @@ class PainelProgresso:
                 (
                     MissaoProgresso("nivel", "Consiga chegar no nível 100", 100, 25, lambda p, _: p._nivel()),
                     MissaoProgresso("dungeons", "Termine 50 dungeons", 50, 60, lambda p, _: p._dungeons_terminadas()),
-                    MissaoProgresso("eternidade", "Derrote a Eternidade", 1, 15, lambda p, _: p._flag_perfil(("EternidadeDerrotada", "DerrotouEternidade", "BossEternidadeDerrotado")), "feito"),
+                    MissaoProgresso("eternidade", "Derrote a Eternidade", 1, 15, lambda p, _: p._flag_perfil(("EternidadeDerrotada",)), "feito"),
                 ),
             ),
         }

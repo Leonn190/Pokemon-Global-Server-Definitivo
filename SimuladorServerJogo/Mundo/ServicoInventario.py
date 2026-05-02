@@ -6,7 +6,7 @@ import random
 from typing import Dict, Optional
 
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_inventario_personagem
+from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_inventario_personagem, obter_personagem_para_entrada
 from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 
 
@@ -214,8 +214,10 @@ class ServicoInventario:
     @staticmethod
     def persistir_jogador(usuario: str, player_obj_id: int, inventario: Dict[str, object], registrar_diff_cb) -> None:
         atualizar_inventario_personagem(str(usuario), inventario)
+        dados = obter_personagem_para_entrada(str(usuario)) or {}
+        perfil = {k: v for k, v in dados.items() if k != "inventario"}
         if int(player_obj_id) > 0:
-            BANCO_DADOS.atualizar_objeto(int(player_obj_id), {"estado": {"inventario": inventario}})
+            BANCO_DADOS.atualizar_objeto(int(player_obj_id), {"estado": {"inventario": inventario, "perfil": perfil}})
             player_obj = BANCO_DADOS.obter_objeto(int(player_obj_id))
             if player_obj is not None:
-                registrar_diff_cb("update", payload={"inventario": inventario}, escopo={"centro": [float(player_obj.posicao[0]), float(player_obj.posicao[1])], "raio": 780.0}, objeto_id=int(player_obj_id), autor="server", categoria="player")
+                registrar_diff_cb("update", payload={"inventario": inventario, "perfil": perfil}, escopo={"centro": [float(player_obj.posicao[0]), float(player_obj.posicao[1])], "raio": 780.0}, objeto_id=int(player_obj_id), autor="server", categoria="player")

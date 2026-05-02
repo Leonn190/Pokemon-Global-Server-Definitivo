@@ -285,6 +285,8 @@ class Loja:
             self._status_compra = f"Recebeu {item.get('Nome', 'item')} x{quantidade}"
         elif tipo == "moedas":
             perfil.Dinheiro = saldo - preco + quantidade
+            if hasattr(perfil, "atualizar_moedas_maximas"):
+                perfil.atualizar_moedas_maximas()
             self._emitir_ganho("moedas", "Moedas", quantidade)
             self._status_compra = f"Recebeu {quantidade} moedas"
         elif tipo == "xp":

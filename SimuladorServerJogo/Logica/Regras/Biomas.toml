@@ -97,7 +97,7 @@ TOPAZ = 0.0
 [biomes.FOREST]
 base_tile = "FOREST_GRASS"
 coast_tile = "BEACH_SAND"
-weight = 0.74
+weight = 0.75
 temperature_min = 0.0
 temperature_max = 1.0
 moisture_min = 0.52
@@ -134,7 +134,7 @@ TOPAZ = 0.0
 [biomes.DESERT]
 base_tile = "DESERT_SAND"
 coast_tile = "DESERT_SAND"
-weight = 1.08
+weight = 1.1
 temperature_min = 0.58
 temperature_max = 1.0
 moisture_min = 0.0
@@ -171,7 +171,7 @@ TOPAZ = 0.0012
 [biomes.SNOW]
 base_tile = "SNOW"
 coast_tile = "SNOW"
-weight = 0.7
+weight = 0.69
 temperature_min = 0.0
 temperature_max = 0.33
 moisture_min = 0.0
@@ -208,7 +208,7 @@ TOPAZ = 0.0
 [biomes.MAGIC]
 base_tile = "MAGIC_SOIL"
 coast_tile = "BEACH_SAND"
-weight = 0.26
+weight = 0.27
 temperature_min = 0.0
 temperature_max = 1.0
 moisture_min = 0.0
@@ -245,7 +245,7 @@ TOPAZ = 0.0
 [biomes.VOLCANIC]
 base_tile = "VOLCANIC_ROCK"
 coast_tile = "VOLCANIC_ROCK"
-weight = 0.32
+weight = 0.34
 temperature_min = 0.56
 temperature_max = 1.0
 moisture_min = 0.0
@@ -282,7 +282,7 @@ TOPAZ = 0.0
 [biomes.SWAMP]
 base_tile = "DEAD_SOIL"
 coast_tile = "BEACH_SAND"
-weight = 0.82
+weight = 0.84
 temperature_min = 0.0
 temperature_max = 1.0
 moisture_min = 0.70

@@ -17,12 +17,14 @@ const imagensEstruturasBrutas = import.meta.glob("@recursos/Visual/Mundo/Objetos
 });
 const imagensEstruturas = indexarImagensMundo(imagensEstruturasBrutas);
 const assetsEstruturas = criarAssetsEstruturas(estruturas, imagensEstruturas);
-const areaMundo = `${resumo.largura.toLocaleString("pt-BR")} x ${resumo.altura.toLocaleString("pt-BR")}`;
+const estruturasPublicas = estruturas.map(({ subtipo, sprite, spriteArquivo, slug, origemEspecial, ...estrutura }) => estrutura);
+const tamanhoMundo = resumo.largura.toLocaleString("pt-BR");
+const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, resumo, assetsEstruturas }).replace(/</g, "\\u003c");
 ---
 
 <Layout
   titulo="Mundo | Wiki Pokémon Global Server"
-  descricao="Wiki de Mundo do Pokémon Global Server, com explicações da geração, biomas, vilas, estruturas naturais e dados conectados às regras do jogo."
+  descricao="Wiki de Mundo do Pokémon Global Server, com explicações da geração, biomas, vilas, estruturas naturais e dados ligados às regras do jogo."
 >
   <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-mundo">
     <h1 id="titulo-mundo">Mundo Global</h1>
@@ -39,7 +41,7 @@ const areaMundo = `${resumo.largura.toLocaleString("pt-BR")} x ${resumo.altura.t
         <span>Biomas registrados</span>
       </article>
       <article>
-        <strong>{areaMundo}</strong>
+        <strong>{tamanhoMundo}</strong>
         <span>Tamanho do mundo</span>
       </article>
     </div>
@@ -47,36 +49,17 @@ const areaMundo = `${resumo.largura.toLocaleString("pt-BR")} x ${resumo.altura.t
     <WikiMenu ativo="mundo" />
   </section>
 
-  <main class="wiki-mundo" aria-label="Conteúdo da wiki de mundo">
+  <main class="wiki-mundo" data-mundo-app aria-label="Conteúdo da wiki de mundo">
     <section class="mundo-intro">
       <article class="mundo-intro-principal">
         <p class="selo">Wiki de mundo</p>
-        <h2>Uma área para entender exploração, biomas, estruturas naturais e localidades.</h2>
+        <h2>Exploração, biomas, estruturas naturais e localidades.</h2>
         <p>
-          O mundo do Pokémon Global Server é gerado por regras: tamanho do mapa, chunks, biomas, objetos naturais,
-          vilas, estádios e dungeons seguem arquivos de configuração. Por isso, esta wiki não precisa copiar os valores manualmente:
-          os cartuchos das estruturas leem as regras de estruturas naturais e biomas, então uma mudança no TOML aparece aqui quando o site é atualizado.
+          O mundo do Pokémon Global Server é grande, procedural e dividido em ambientes com identidades próprias.
+          Esta área serve para explicar como o jogador deve entender o mapa: onde procurar recursos, como os biomas
+          organizam a exploração e por que vilas, estádios e dungeons funcionam como pontos de referência durante a jornada.
         </p>
       </article>
-
-      <aside class="mundo-intro-dados" aria-label="Dados rápidos do mundo">
-        <div>
-          <span>Chunk</span>
-          <strong>{resumo.chunk} tiles</strong>
-        </div>
-        <div>
-          <span>Estádios</span>
-          <strong>{resumo.estadios}</strong>
-        </div>
-        <div>
-          <span>Dungeons</span>
-          <strong>{resumo.dungeons}</strong>
-        </div>
-        <div>
-          <span>Vilas base</span>
-          <strong>{resumo.vilas}</strong>
-        </div>
-      </aside>
     </section>
 
     <section class="mundo-blocos-texto" aria-label="Explicação geral do mundo">
@@ -84,128 +67,40 @@ const areaMundo = `${resumo.largura.toLocaleString("pt-BR")} x ${resumo.altura.t
         <span class="mundo-numero">01</span>
         <h3>Geração procedural</h3>
         <p>
-          O mapa é construído por seed e por camadas de terreno. Água profunda, água rasa, praias, campos, florestas,
-          desertos, neve, solo mágico, rocha vulcânica e pântano surgem conforme as regras de terreno e clima.
+          O mapa nasce a partir de uma seed e combina água, terra, praias, campos, florestas, desertos, neve,
+          regiões mágicas, áreas vulcânicas e pântanos. A ideia é que cada servidor tenha um mundo próprio,
+          mas ainda reconhecível pelas mesmas regras de jogo.
         </p>
       </article>
 
       <article class="mundo-bloco-texto">
         <span class="mundo-numero">02</span>
-        <h3>Biomas com identidade</h3>
+        <h3>Biomas com propósito</h3>
         <p>
-          Cada bioma define quais estruturas naturais podem aparecer e com qual intensidade. Isso faz a exploração ter propósito:
-          procurar rubi leva o jogador ao vulcânico, enquanto diamante e jade valorizam regiões de neve.
+          Cada bioma muda o tipo de recurso que o jogador encontra. Algumas estruturas aparecem em muitos ambientes,
+          enquanto outras incentivam o jogador a viajar para regiões específicas do mapa.
         </p>
       </article>
 
       <article class="mundo-bloco-texto">
         <span class="mundo-numero">03</span>
-        <h3>Localidades e exploração</h3>
+        <h3>Localidades importantes</h3>
         <p>
-          Vilas, estádios e dungeons são pontos de interesse espalhados pelo mapa. Eles ajudam a transformar o mundo em uma rede de rotas,
-          objetivos e regiões reconhecíveis, não apenas em um terreno gigante para andar.
+          Vilas, estádios e dungeons transformam o mapa em uma rede de objetivos. Elas ajudam o jogador a se orientar,
+          planejar rotas e reconhecer regiões importantes além da coleta de recursos.
         </p>
       </article>
-    </section>
-
-    <section class="mundo-secao" aria-labelledby="titulo-estruturas-naturais">
-      <div class="mundo-cabecalho-secao">
-        <div>
-          <p class="selo">Cartuchos conectados às regras</p>
-          <h2 id="titulo-estruturas-naturais">Estruturas naturais</h2>
-        </div>
-        <p>
-          Cada cartucho usa a imagem em <strong>Recursos/Visual/Mundo/Objetos</strong> e lê nome, material, ferramenta,
-          dureza, quantidade, colisão, interação, drop e biomas a partir das regras atuais.
-        </p>
-      </div>
-
-      <div class="mundo-estrutura-grid" aria-label="Lista de estruturas naturais">
-        {estruturas.map((estrutura) => {
-          const asset = assetsEstruturas[estrutura.id] ?? { imagem: null };
-          return (
-            <article class="mundo-estrutura-card">
-              <div class="mundo-estrutura-topo">
-                <span class="codigo-pokemon">#{estrutura.id}</span>
-                <span class="raridade-pill mundo-pill">{estrutura.categoria}</span>
-              </div>
-
-              <div class="mundo-estrutura-arte">
-                <div class="pokemon-brilho-detalhe"></div>
-                {asset.imagem
-                  ? <img src={asset.imagem} alt={estrutura.nome} loading="lazy" decoding="async" />
-                  : <span class="item-card-sem-arte">{estrutura.nome.slice(0, 1)}</span>}
-              </div>
-
-              <div class="mundo-estrutura-corpo">
-                <h3>{estrutura.nome}</h3>
-                <p>{estrutura.descricao}</p>
-              </div>
-
-              <dl class="mundo-estrutura-info" aria-label={`Informações de ${estrutura.nome}`}>
-                <div>
-                  <dt>Material</dt>
-                  <dd>{estrutura.material}</dd>
-                </div>
-                <div>
-                  <dt>Ferramenta</dt>
-                  <dd>{estrutura.ferramenta}</dd>
-                </div>
-                <div>
-                  <dt>Dureza</dt>
-                  <dd>{estrutura.durezaTexto}</dd>
-                </div>
-                <div>
-                  <dt>Quantidade</dt>
-                  <dd>{estrutura.quantidadeTexto}</dd>
-                </div>
-                <div>
-                  <dt>Frequência</dt>
-                  <dd>{estrutura.frequencia}</dd>
-                </div>
-                <div>
-                  <dt>Chance máx.</dt>
-                  <dd>{estrutura.chanceMaximaTexto}</dd>
-                </div>
-              </dl>
-
-              <div class="mundo-estrutura-biomas">
-                <strong>Onde aparece</strong>
-                <div>
-                  {estrutura.biomas.length
-                    ? estrutura.biomas.map((bioma) => <span title={`Chance: ${bioma.chanceTexto}`}>{bioma.nome}</span>)
-                    : <span>{estrutura.biomasTexto}</span>}
-                </div>
-              </div>
-
-              <details class="mundo-estrutura-detalhes">
-                <summary>Ver dados técnicos</summary>
-                <dl>
-                  <div><dt>Subtipo</dt><dd>{estrutura.subtipo}</dd></div>
-                  <div><dt>Colisão</dt><dd>{estrutura.raioColisaoTexto}</dd></div>
-                  <div><dt>Interação</dt><dd>{estrutura.raioInteracaoTexto}</dd></div>
-                  <div><dt>Campo</dt><dd>{estrutura.campoTexto}</dd></div>
-                  <div><dt>Intensidade</dt><dd>{estrutura.intensidadeTexto}</dd></div>
-                  <div><dt>Drop ativo</dt><dd>{estrutura.dropAtivo ? "Sim" : "Não"}</dd></div>
-                  <div><dt>Partículas XP</dt><dd>{estrutura.particulasTexto}</dd></div>
-                  <div><dt>Tamanhos XP</dt><dd>{estrutura.tamanhosTexto}</dd></div>
-                </dl>
-              </details>
-            </article>
-          );
-        })}
-      </div>
     </section>
 
     <section class="mundo-secao" aria-labelledby="titulo-biomas-mundo">
       <div class="mundo-cabecalho-secao">
         <div>
           <p class="selo">Biomas</p>
-          <h2 id="titulo-biomas-mundo">Como os ambientes organizam os recursos</h2>
+          <h2 id="titulo-biomas-mundo">Ambientes que organizam a exploração</h2>
         </div>
         <p>
-          Os biomas não são apenas cenário. Eles controlam quais estruturas naturais aparecem, quais recursos ficam raros
-          e quais áreas ganham identidade própria durante a exploração.
+          Os biomas definem a sensação de cada região e ajudam a distribuir as estruturas naturais pelo mundo.
+          Por isso, procurar um recurso também significa escolher qual ambiente explorar.
         </p>
       </div>
 
@@ -214,23 +109,69 @@ const areaMundo = `${resumo.largura.toLocaleString("pt-BR")} x ${resumo.altura.t
           <article class="mundo-bioma-card">
             <h3>{bioma.nome}</h3>
             <p>{bioma.descricao}</p>
-            <dl>
-              <div><dt>Tile base</dt><dd>{bioma.tileBase}</dd></div>
-              <div><dt>Tile de costa</dt><dd>{bioma.tileCosta}</dd></div>
-              <div><dt>Peso</dt><dd>{bioma.pesoTexto}</dd></div>
-              <div><dt>Objetos ativos</dt><dd>{bioma.objetosAtivos}</dd></div>
-            </dl>
+            <div class="mundo-bioma-info">
+              <span>Terreno principal</span>
+              <strong>{bioma.tileBase}</strong>
+            </div>
+            <div class="mundo-bioma-estruturas" aria-label={`Estruturas comuns em ${bioma.nome}`}>
+              {bioma.principaisEstruturas.length
+                ? bioma.principaisEstruturas.map((estrutura) => <span>{estrutura}</span>)
+                : <span>Sem estruturas principais</span>}
+            </div>
           </article>
         ))}
       </div>
     </section>
 
-    <section class="mundo-nota-regras" aria-label="Nota sobre atualização automática">
-      <strong>Conexão com as regras:</strong>
-      <span>
-        Esta página lê <code>EstruturasNaturais.toml</code>, <code>Biomas.toml</code> e <code>Terreno.toml</code>.
-        Ela não importa funções do server; apenas consulta os arquivos de regra para montar a wiki de forma consistente com o jogo.
-      </span>
+    <section class="mundo-secao" aria-labelledby="titulo-estruturas-naturais">
+      <div class="mundo-cabecalho-secao">
+        <div>
+          <p class="selo">Estruturas naturais</p>
+          <h2 id="titulo-estruturas-naturais">Objetos encontrados no mundo</h2>
+        </div>
+        <p>
+          Os cartuchos mostram o básico para consulta rápida. Ao abrir uma estrutura, a subtela mostra material,
+          ferramenta, dureza, quantidade, locais de aparição e outras informações úteis para entender aquele objeto.
+        </p>
+      </div>
+
+      <section class="itens-grid mundo-estrutura-grid" data-mundo-estruturas-grid aria-label="Lista de estruturas naturais"></section>
     </section>
   </main>
+
+  <aside class="item-detalhe pokemon-detalhe" data-mundo-detail hidden aria-live="polite">
+    <div class="pokemon-detalhe-backdrop" data-mundo-close></div>
+    <article class="pokemon-detalhe-card item-detalhe-card mundo-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="mundo-detalhe-nome">
+      <div class="pokemon-controles-detalhe" aria-label="Navegação da estrutura aberta">
+        <button class="pokemon-navegar" type="button" data-mundo-prev aria-label="Estrutura anterior">‹</button>
+        <button class="pokemon-navegar" type="button" data-mundo-next aria-label="Próxima estrutura">›</button>
+        <button class="pokemon-fechar" type="button" data-mundo-close aria-label="Fechar detalhes">×</button>
+      </div>
+
+      <div class="pokemon-detalhe-topo item-detalhe-topo mundo-detalhe-topo">
+        <div class="pokemon-palco-detalhe item-palco-detalhe mundo-palco-detalhe">
+          <div class="pokemon-brilho-detalhe"></div>
+          <img data-mundo-image alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="pokemon-cabecalho-detalhe mundo-cabecalho-detalhe">
+          <span class="codigo-pokemon" data-mundo-code>#000</span>
+          <h2 id="mundo-detalhe-nome" data-mundo-name>Estrutura</h2>
+          <p class="item-descricao-melhor" data-mundo-description></p>
+          <div class="mundo-detalhe-biomas" data-mundo-biomes aria-label="Locais de aparição"></div>
+        </div>
+      </div>
+
+      <section class="painel-detalhe item-info-painel">
+        <h3>Informações</h3>
+        <dl class="pokemon-info-lista" data-mundo-info></dl>
+      </section>
+    </article>
+  </aside>
+
+  <script id="mundo-data" type="application/json" set:html={payloadMundo}></script>
+  <script>
+    import { inicializarWikiMundo } from "../../Codigo/MundoRuntime.js";
+    inicializarWikiMundo();
+  </script>
 </Layout>

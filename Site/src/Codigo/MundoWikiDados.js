@@ -57,44 +57,34 @@ const SUBTIPO_PARA_OBJETO = {
   topazio: "TOPAZ",
   arvore_trombosa: "TREE_TROMBOSA",
   casa: "HOUSE",
+  pedra_dungeon: "DUNGEON_ROCK",
 };
 
-const CATEGORIAS_ESTRUTURA = {
-  arvore: "Flora",
-  arvore_trombosa: "Flora",
-  arbusto: "Flora",
-  palmeira: "Flora",
-  pinheiro: "Flora",
-  cacto: "Flora",
-  flor: "Flora",
-  planta: "Flora",
-  pedra: "Mineral comum",
-  cobre: "Mineral comum",
-  ferro: "Mineral comum",
-  carvao: "Mineral comum",
-  ouro: "Mineral raro",
-  ametista: "Gema",
-  diamante: "Gema",
-  rubi: "Gema",
-  esmeralda: "Gema",
-  aquamarine: "Gema",
-  jade: "Gema",
-  safira: "Gema",
-  topazio: "Gema",
-  lava: "Especial",
-  concha: "Especial",
-  casa: "Localidade",
-  pedra_dungeon: "Dungeon",
-};
+const OBJETO_PARA_SUBTIPO = Object.fromEntries(Object.entries(SUBTIPO_PARA_OBJETO).map(([subtipo, objeto]) => [objeto, subtipo]));
 
 const DESCRICOES_BIOMAS = {
-  FIELD: "Bioma aberto e equilibrado. Costuma receber árvores, arbustos, pedras, minérios básicos e pequenas plantas, funcionando como uma região segura para início de exploração.",
-  FOREST: "Bioma denso e úmido, com maior presença de vegetação. É o principal ambiente para árvores trombosas, arbustos, flores e plantas naturais.",
-  DESERT: "Bioma seco, quente e aberto. Troca vegetação comum por palmeiras, cactos e gemas de areia, como esmeralda e topázio.",
-  SNOW: "Bioma frio, marcado por pinheiros e gemas associadas à neve. É o espaço natural para diamante e jade.",
-  MAGIC: "Bioma raro e instável. Mantém vegetação viva, mas adiciona presença de ametista e flores em maior destaque.",
-  VOLCANIC: "Bioma quente e mineral. Possui ferro, carvão, lava e rubi com mais força que outros ambientes.",
-  SWAMP: "Bioma úmido e pesado. Mistura árvores, plantas, pedra e safira, com uma sensação mais fechada e pantanosa.",
+  FIELD: "Área aberta e equilibrada, boa para início de exploração. Costuma misturar vegetação, pedra e minérios básicos.",
+  FOREST: "Ambiente mais fechado, com muita presença de árvores, arbustos, flores e plantas naturais.",
+  DESERT: "Região seca e quente, marcada por areia, palmeiras, cactos e recursos próprios do deserto.",
+  SNOW: "Área fria, com pinheiros e recursos raros ligados a regiões congeladas.",
+  MAGIC: "Região mais incomum, com solo mágico, vegetação viva e recursos especiais do ambiente.",
+  VOLCANIC: "Área quente e pesada, com rocha vulcânica, lava e minerais associados a calor intenso.",
+  SWAMP: "Região úmida e densa, com solo pantanoso, vegetação resistente e recursos próprios do pântano.",
+};
+
+const DESCRICOES_ESTRUTURAS = {
+  arvore: "Árvores aparecem em áreas naturais e ajudam a formar a base visual do mundo. Também servem como fonte simples de madeira para o jogador.",
+  arvore_trombosa: "Árvore Trombosa é uma variação mais marcante de árvore, usada para deixar florestas mais reconhecíveis e menos repetitivas.",
+  pedra: "Pedras aparecem em vários ambientes terrestres e são um dos recursos básicos da exploração.",
+  arbusto: "Arbustos preenchem áreas naturais e ajudam a deixar o terreno mais vivo sem ocupar o papel principal das árvores.",
+  palmeira: "Palmeiras reforçam a identidade de regiões quentes e secas, principalmente em áreas de deserto.",
+  pinheiro: "Pinheiros combinam com regiões frias e ajudam o jogador a reconhecer áreas de neve durante a exploração.",
+  cacto: "Cactos são estruturas típicas do deserto e dão mais identidade às áreas secas do mapa.",
+  lava: "Lava aparece em regiões vulcânicas e funciona como uma estrutura ambiental especial, com presença visual mais forte que minérios comuns.",
+  concha: "Conchas aparecem em áreas de costa e ajudam a marcar a transição entre terra e água.",
+  aquamarine: "Aquamarine é um recurso associado à água profunda, valorizando a exploração fora dos biomas terrestres comuns.",
+  casa: "Casas fazem parte da geração das vilas. Elas representam civilização e não devem ser tratadas como um recurso natural comum.",
+  pedra_dungeon: "Pedra Dungeon compõe áreas de dungeon e ajuda a separar visualmente esses ambientes do restante do mundo.",
 };
 
 function limparTexto(valor) {
@@ -173,8 +163,7 @@ function parseTomlValue(valor) {
   if (texto === "true") return true;
   if (texto === "false") return false;
   const convertido = Number(texto);
-  if (Number.isFinite(convertido)) return convertido;
-  return texto;
+  return Number.isFinite(convertido) ? convertido : texto;
 }
 
 function garantirSecao(objeto, caminho) {
@@ -202,9 +191,7 @@ function parseToml(texto) {
 
     const igual = linha.indexOf("=");
     if (igual === -1) return;
-    const chave = linha.slice(0, igual).trim();
-    const valor = linha.slice(igual + 1).trim();
-    secaoAtual[chave] = parseTomlValue(valor);
+    secaoAtual[linha.slice(0, igual).trim()] = parseTomlValue(linha.slice(igual + 1).trim());
   });
 
   return raiz;
@@ -229,9 +216,7 @@ function carregarToml(nomeArquivo, rotulo) {
     console.warn(`[Wiki Mundo] ${rotulo} não encontrado. Procurei por: ${caminhos.join(" | ")}`);
     return {};
   }
-
-  const conteudo = readFileSync(caminho, "utf8").replace(/^\uFEFF/, "");
-  return parseToml(conteudo);
+  return parseToml(readFileSync(caminho, "utf8").replace(/^\uFEFF/, ""));
 }
 
 function arquivoSemExtensao(caminho) {
@@ -241,19 +226,8 @@ function arquivoSemExtensao(caminho) {
 
 function rotuloEstilo(valor) {
   const chave = normalizarChave(valor);
-  const rotulos = {
-    machado: "Machado",
-    picareta: "Picareta",
-    balde: "Balde",
-    nenhum: "Nenhum",
-  };
+  const rotulos = { machado: "Machado", picareta: "Picareta", balde: "Balde", nenhum: "Nenhum" };
   return rotulos[chave] ?? (limparTexto(valor) || "Não informado");
-}
-
-function percentual(valor) {
-  const n = numero(valor);
-  if (n === null) return "-";
-  return `${(n * 100).toLocaleString("pt-BR", { maximumFractionDigits: 3 })}%`;
 }
 
 function formatarNumero(valor, casas = 2) {
@@ -263,102 +237,53 @@ function formatarNumero(valor, casas = 2) {
 }
 
 function textoLista(lista, vazio = "Não informado") {
-  if (!Array.isArray(lista) || !lista.length) return vazio;
-  return lista.join(", ");
-}
-
-function gerarDescricaoEstrutura(estrutura, biomas) {
-  const nome = estrutura.nome;
-  const categoria = estrutura.categoria;
-  const ferramenta = estrutura.ferramenta;
-  const biomasTexto = biomas.length ? biomas.map((bioma) => bioma.nome).join(", ") : estrutura.origemEspecial || "localidades específicas";
-  const drop = estrutura.dropAtivo ? "é coletável e entrega recurso ao jogador" : "está marcada como sem drop ativo nas regras atuais";
-
-  if (estrutura.subtipo === "casa") {
-    return "Casas fazem parte da geração das vilas. Na wiki elas aparecem como estruturas de localidade, não como recurso natural comum, porque são inquebráveis e ajudam a representar civilização no mapa.";
-  }
-
-  if (estrutura.subtipo === "pedra_dungeon") {
-    return "Pedra Dungeon é uma estrutura especial usada para compor áreas de dungeon. Ela mantém comportamento mineral, mas sua função principal é dar identidade visual e física aos ambientes fechados.";
-  }
-
-  if (estrutura.subtipo === "aquamarine") {
-    return "Aquamarine é uma gema ligada à água profunda. A regra usa uma taxa própria para águas fundas, então ela não depende dos mesmos sorteios terrestres dos outros biomas.";
-  }
-
-  if (estrutura.subtipo === "concha") {
-    return "Conchas aparecem em faixas de praia e costa. Elas ajudam a marcar a transição entre terra e água e funcionam mais como estrutura ambiental especial do que como recurso bruto comum.";
-  }
-
-  if (estrutura.subtipo === "lava") {
-    return "Lava nasce em regiões vulcânicas e funciona como estrutura natural especial. O tamanho de campo e interação é maior que o de minérios comuns, reforçando que ela ocupa espaço de ambiente.";
-  }
-
-  if (categoria === "Flora") {
-    return `${nome} aparece em ${biomasTexto}. É uma estrutura vegetal de dureza ${estrutura.durezaTexto}, usa ${ferramenta} como ferramenta indicada e ${drop}.`;
-  }
-
-  if (categoria.includes("Mineral")) {
-    return `${nome} aparece em ${biomasTexto}. É uma estrutura mineral de dureza ${estrutura.durezaTexto}, normalmente associada à coleta com ${ferramenta} e a progressão de recursos do mundo.`;
-  }
-
-  if (categoria === "Gema") {
-    return `${nome} aparece em ${biomasTexto}. É uma gema mais específica do mapa, útil para recompensar exploração em biomas próprios e diferenciar regiões visualmente.`;
-  }
-
-  return `${nome} aparece em ${biomasTexto}. A regra define quantidade, dureza, campo e interação, então a wiki acompanha automaticamente qualquer ajuste feito no TOML.`;
-}
-
-function classificarFrequencia(chanceMaxima) {
-  if (!chanceMaxima || chanceMaxima <= 0) return "Especial";
-  if (chanceMaxima >= 0.008) return "Comum";
-  if (chanceMaxima >= 0.003) return "Frequente";
-  if (chanceMaxima >= 0.001) return "Raro";
-  return "Muito raro";
+  return Array.isArray(lista) && lista.length ? lista.join(", ") : vazio;
 }
 
 function biomasDaEstrutura(subtipo, biomasToml) {
   const objeto = SUBTIPO_PARA_OBJETO[subtipo];
-  const biomas = [];
-  if (!objeto) return biomas;
+  if (!objeto) return [];
 
-  Object.entries(biomasToml.biomes ?? {}).forEach(([codigo, cfg]) => {
-    const chance = numero(cfg?.objects?.[objeto]) ?? 0;
-    if (chance <= 0) return;
-    biomas.push({
+  return Object.entries(biomasToml.biomes ?? {})
+    .map(([codigo, cfg]) => ({
       codigo,
       nome: ROTULOS_BIOMAS[codigo] ?? codigo,
       tile: ROTULOS_TILES[cfg.base_tile] ?? cfg.base_tile ?? "Terreno",
-      chance,
-      chanceTexto: percentual(chance),
-    });
-  });
+      chance: numero(cfg?.objects?.[objeto]) ?? 0,
+    }))
+    .filter((bioma) => bioma.chance > 0)
+    .sort((a, b) => b.chance - a.chance || a.nome.localeCompare(b.nome, "pt-BR"))
+    .map(({ chance, ...bioma }) => bioma);
+}
 
-  return biomas.sort((a, b) => b.chance - a.chance || a.nome.localeCompare(b.nome, "pt-BR"));
+function gerarDescricaoEstrutura(estrutura) {
+  if (DESCRICOES_ESTRUTURAS[estrutura.subtipo]) return DESCRICOES_ESTRUTURAS[estrutura.subtipo];
+
+  const locais = estrutura.biomasTexto;
+  if (estrutura.material !== "Sem material") {
+    return `${estrutura.nome} aparece em ${locais} e pode ser consultada nesta wiki como uma estrutura do mundo ligada ao material ${estrutura.material}.`;
+  }
+  return `${estrutura.nome} aparece em ${locais} e funciona como uma estrutura de ambiente dentro das regras atuais do mundo.`;
 }
 
 function montarEstrutura([codigo, cfg], biomasToml) {
   const subtipo = limparTexto(cfg.subtipo) || `estrutura_${codigo}`;
   const biomas = biomasDaEstrutura(subtipo, biomasToml);
-  const chanceMaxima = Math.max(0, ...biomas.map((bioma) => bioma.chance));
   const origemEspecial = subtipo === "aquamarine" ? "Água profunda" : subtipo === "casa" ? "Vilas" : subtipo === "pedra_dungeon" ? "Dungeons" : "Geração especial";
   const dropAtivo = cfg.drop_ativo === undefined ? true : Boolean(cfg.drop_ativo);
+  const material = limparTexto(cfg.material) || "Sem material";
 
   const estrutura = {
     id: String(codigo),
     ordem: numero(codigo) ?? 9999,
     nome: limparTexto(cfg.nome) || `Estrutura ${codigo}`,
     subtipo,
-    subtipoChave: normalizarChave(subtipo),
     slug: normalizarChave(cfg.nome || subtipo),
     sprite: limparTexto(cfg.sprite),
     spriteArquivo: arquivoSemExtensao(cfg.sprite || ""),
-    categoria: CATEGORIAS_ESTRUTURA[subtipo] ?? "Estrutura",
-    material: limparTexto(cfg.material) || (dropAtivo ? "Material não informado" : "Sem material/drop"),
+    material,
     ferramenta: rotuloEstilo(cfg.estilo),
-    dureza: numero(cfg.dureza),
     durezaTexto: formatarNumero(cfg.dureza, 0),
-    quantidade: numero(cfg.quantidade),
     quantidadeTexto: formatarNumero(cfg.quantidade, 0),
     raioColisaoTexto: formatarNumero(cfg.raio_colisao),
     raioInteracaoTexto: formatarNumero(cfg.raio_interacao),
@@ -371,31 +296,31 @@ function montarEstrutura([codigo, cfg], biomasToml) {
     tamanhosTexto: textoLista(cfg.tamanhosXP),
     biomas,
     biomasTexto: biomas.length ? biomas.map((bioma) => bioma.nome).join(", ") : origemEspecial,
-    chanceMaxima,
-    chanceMaximaTexto: chanceMaxima > 0 ? percentual(chanceMaxima) : "Regra especial",
-    frequencia: classificarFrequencia(chanceMaxima),
     origemEspecial,
   };
 
-  estrutura.descricao = gerarDescricaoEstrutura(estrutura, biomas);
+  estrutura.descricao = gerarDescricaoEstrutura(estrutura);
   return estrutura;
 }
 
-function montarBiomas(biomasToml) {
+function montarMapaEstruturasPorObjeto(estruturasToml) {
+  return Object.fromEntries(Object.entries(estruturasToml.tipos ?? {}).map(([, cfg]) => [SUBTIPO_PARA_OBJETO[cfg.subtipo] ?? cfg.subtipo, limparTexto(cfg.nome)]));
+}
+
+function montarBiomas(biomasToml, estruturasPorObjeto) {
   return Object.entries(biomasToml.biomes ?? {}).map(([codigo, cfg]) => {
     const objetos = Object.entries(cfg.objects ?? {})
       .filter(([, chance]) => (numero(chance) ?? 0) > 0)
-      .sort((a, b) => (numero(b[1]) ?? 0) - (numero(a[1]) ?? 0));
+      .sort((a, b) => (numero(b[1]) ?? 0) - (numero(a[1]) ?? 0))
+      .map(([objeto]) => estruturasPorObjeto[objeto] || OBJETO_PARA_SUBTIPO[objeto] || objeto);
 
     return {
       codigo,
       nome: ROTULOS_BIOMAS[codigo] ?? codigo,
       descricao: DESCRICOES_BIOMAS[codigo] ?? "Bioma configurado nas regras de geração do mundo.",
-      pesoTexto: formatarNumero(cfg.weight),
       tileBase: ROTULOS_TILES[cfg.base_tile] ?? cfg.base_tile ?? "-",
       tileCosta: ROTULOS_TILES[cfg.coast_tile] ?? cfg.coast_tile ?? "-",
-      objetosAtivos: objetos.length,
-      principaisObjetos: objetos.slice(0, 4).map(([objeto]) => objeto),
+      principaisEstruturas: objetos.slice(0, 5),
     };
   });
 }
@@ -413,27 +338,18 @@ export function carregarWikiMundo() {
   const estruturas = Object.entries(regras.estruturas.tipos ?? {})
     .map((entrada) => montarEstrutura(entrada, regras.biomas))
     .sort((a, b) => a.ordem - b.ordem);
-  const biomas = montarBiomas(regras.biomas);
+  const estruturasPorObjeto = montarMapaEstruturasPorObjeto(regras.estruturas);
+  const biomas = montarBiomas(regras.biomas, estruturasPorObjeto);
   const mundo = regras.terreno.world ?? {};
-  const pois = regras.terreno.pois ?? {};
-  const variacao = regras.estruturas.variacao ?? {};
 
   return {
     estruturas,
     biomas,
     resumo: {
       estruturas: estruturas.length,
-      categorias: new Set(estruturas.map((estrutura) => estrutura.categoria)).size,
       biomas: biomas.length,
       largura: numero(mundo.width) ?? 10000,
       altura: numero(mundo.height) ?? 10000,
-      chunk: numero(mundo.chunk_size) ?? 10,
-      estadios: numero(pois.gym?.count) ?? 0,
-      dungeons: numero(pois.dungeon?.count) ?? 0,
-      vilas: numero(pois.village?.count) ?? 0,
-      escalaMin: numero(variacao.escala_min),
-      escalaMax: numero(variacao.escala_max),
-      totalVariantes: numero(variacao.total_variantes) ?? 0,
     },
   };
 }
@@ -441,8 +357,7 @@ export function carregarWikiMundo() {
 export function indexarImagensMundo(glob) {
   const indice = {};
   Object.entries(glob).forEach(([caminho, url]) => {
-    const nomeArquivo = arquivoSemExtensao(caminho);
-    const chaveArquivo = normalizarChave(nomeArquivo);
+    const chaveArquivo = normalizarChave(arquivoSemExtensao(caminho));
     if (chaveArquivo && !indice[chaveArquivo]) indice[chaveArquivo] = url;
   });
   return indice;

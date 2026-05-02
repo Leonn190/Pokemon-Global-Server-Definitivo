@@ -31,8 +31,8 @@ from Codigo.Telas.Subtelas.SubtelaDialogo import SubtelaDialogo
 from Codigo.Telas.Subtelas.SubtelaPreBatalha import SubtelaPreBatalha
 from Codigo.Geradores.Estadio import EstadioInterno
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
+from Codigo.ModulosGerais.GerenciadorPokemons import materializar_pokemon, gerar_bando_confronto
 from Codigo.Prefabs.Texto import Texto
-from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
 class CenaMundo:
@@ -352,9 +352,16 @@ class CenaMundo:
                 link = server.get("ip")
                 client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
                 posicao_referencia_mundo = colisao_pokemon.get("posicao") if isinstance(colisao_pokemon.get("posicao"), (list, tuple)) and len(colisao_pokemon.get("posicao")) == 2 else list(getattr(player, "Posicao", [0.0, 0.0]))
+                regras_mundo = JOGO.INFO.get("RegrasMundo") if isinstance(JOGO.INFO.get("RegrasMundo"), dict) else {}
+                batalha = regras_mundo.get("batalha") if isinstance(regras_mundo.get("batalha"), dict) else {}
+                pokemon_materializado = materializar_pokemon(dict(colisao_pokemon))
+                pokemons_inimigo = gerar_bando_confronto(pokemon_materializado, max_extras=5)
+                pokemon_mundo_id = int(colisao_pokemon.get("id", colisao_pokemon.get("Id", colisao_pokemon.get("ID", 0))) or 0)
                 contexto = {
-                    "batalha": dict(carregar_regras_cliente_mundo().get("batalha") or {}),
+                    "batalha": dict(batalha),
                     "pokemon_colisao": dict(colisao_pokemon),
+                    "pokemon_mundo_id": pokemon_mundo_id,
+                    "pokemons_inimigo": deepcopy(pokemons_inimigo),
                     "times_jogador": times,
                     "pokemons_jogador": pokemons_jogador,
                     "time_jogador": deepcopy(time_escolhido),
@@ -572,9 +579,11 @@ class CenaMundo:
             time_npc = deepcopy(times_npc[min(len(times_npc) - 1, batalha_numero - 1)]) if times_npc else {}
             pokemons_npc = list(time_npc.get("Slots") or time_npc.get("slots") or [])
             pokemons_jogador = deepcopy(list(getattr(inventario, "Pokemons", []) or [])) if inventario is not None else []
+            regras_mundo = jogo.INFO.get("RegrasMundo") if isinstance(jogo.INFO.get("RegrasMundo"), dict) else {}
+            batalha = regras_mundo.get("batalha") if isinstance(regras_mundo.get("batalha"), dict) else {}
             jogo.INFO["CombateContexto"] = {
                 **contexto_base,
-                "batalha": dict(carregar_regras_cliente_mundo().get("batalha") or {}),
+                "batalha": dict(batalha),
                 "tipo": "treinador",
                 "npc_contexto": npc_ctx,
                 "times_jogador": deepcopy(list(times_validos)),

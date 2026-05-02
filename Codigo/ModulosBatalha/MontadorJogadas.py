@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from Codigo.ModulosBatalha.IndicadorAtaque import IndicadorAtaque
-from SimuladorServerJogo.Batalha.PropriedadesAtaques import carregar_propriedades_ataques
+from Codigo.ModulosGerais.PropriedadesAtaques import carregar_propriedades_ataques
 
 
 class MontadorJogadas:

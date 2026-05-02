@@ -6,7 +6,7 @@ import pygame
 
 from Codigo.ModulosGerais.Sonoridades import tocar_musica_resultado_batalha
 from Codigo.Telas.Subtelas.SubtelaFinalizacao import SubtelaFinalizacao
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon
+from Codigo.ModulosGerais.GerenciadorPokemons import ganhar_xp_pokemon
 
 
 def _i(valor, default=0) -> int:
@@ -256,6 +256,8 @@ class FinalizadorBatalha:
 
     def _aplicar_vida(self, pokemon, vida):
         vida = max(0.0, _f(vida, 0.0))
+        vida_max = max(1.0, self._vida_maxima(pokemon, vida or 1.0))
+        vida = max(0.0, min(1.0, vida / vida_max))
         aplicado = False
         for chave in ("VidaAtual", "vida_atual", "HP", "hp"):
             if chave in pokemon:

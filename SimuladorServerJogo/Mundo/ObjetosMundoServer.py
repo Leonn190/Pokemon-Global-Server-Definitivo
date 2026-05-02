@@ -5,8 +5,8 @@ from __future__ import annotations
 import time
 from typing import Dict, Optional, Tuple
 
-from Codigo.Geradores.Estadio import GeradorEstadio
-from Codigo.ModulosGerais.Colisor import Colisor
+from SimuladorServerJogo.Mundo.EstadioGeometria import offset_porta_externa
+from SimuladorServerJogo.Mundo.Colisor import Colisor
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_pokemons
 from SimuladorServerJogo.Mundo.AutoridadeCaptura import resolver_captura, resolver_fruta
 
@@ -193,7 +193,7 @@ class EstadioServer:
         altura_interna = 40.0
         saida_interna = [largura_interna * 0.5, max(1.0, altura_interna - 3.0)]
         spawn_interno = list(saida_interna)
-        entrada_offset_x, entrada_offset_y = GeradorEstadio.offset_porta_externa(raio_elipse_y)
+        entrada_offset_x, entrada_offset_y = offset_porta_externa(raio_elipse_y)
         self.estado_extra = {
             "subtipo": "estadio",
             "tipo_estadio": str(tipo_estadio or "normal"),

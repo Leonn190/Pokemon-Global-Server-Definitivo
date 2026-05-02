@@ -7,6 +7,7 @@ import math
 import pygame
 
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
+from Codigo.ModulosGerais.GerenciadorPokemons import evoluir_pokemon
 
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Geradores.ItemInventario import ItemInventario
@@ -500,10 +501,7 @@ class InventarioPokemons:
         fonte = pokemon.get('estado') if isinstance(pokemon.get('estado'), dict) else pokemon
         if not bool(fonte.get('PodeEvoluir', fonte.get('pode_evoluir', False))):
             return
-        controle = getattr(self.Ator, 'Controle', None)
-        chave = self._chave(pokemon)
-        if controle is not None and hasattr(controle, 'solicitar_evoluir_pokemon'):
-            controle.solicitar_evoluir_pokemon(chave)
+        evoluir_pokemon(fonte)
         if self._container is not None:
             self._container.marcar_sujo()
         if self._painel_times is not None:
@@ -661,6 +659,7 @@ class InventarioPokemons:
         equip = self._ficha_pokemon.retirar_equipavel_slot(self._pokemon_analisado, indice_slot)
         if not isinstance(equip, dict):
             return
+        self._marcar_build_suja()
         rect = self._ficha_pokemon._slots_build.get(indice_slot)
         if rect is None:
             return
@@ -689,6 +688,13 @@ class InventarioPokemons:
         equip = self._equipavel_para_build(item)
         if equip is not None and self._pokemon_analisado is not None:
             self._ficha_pokemon.definir_equipavel_slot(self._pokemon_analisado, indice_slot, equip)
+            self._marcar_build_suja()
+
+    def _marcar_build_suja(self):
+        if self._container is not None:
+            self._container.marcar_sujo()
+        if self._painel_times is not None:
+            self._painel_times.marcar_sujo()
 
     def _devolver_build_para_inventario_ou_drop(self, equipavel):
         item = self._build_para_item(equipavel)
@@ -778,6 +784,7 @@ class InventarioPokemons:
                     item_anterior = self._build_para_item(anterior)
                     if isinstance(item_anterior, dict):
                         self._adicionar_item_inventario_ou_dropar_sobra(item_anterior)
+                self._marcar_build_suja()
                 self._arrastavel.cancelar()
                 return
 

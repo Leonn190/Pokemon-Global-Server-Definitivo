@@ -8,6 +8,7 @@ from pathlib import Path
 import pygame
 
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
+from Codigo.ModulosGerais.GerenciadorPokemons import definir_equipavel_slot, retirar_equipavel_slot
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Prefabs.Arrastavel import Arrastavel
@@ -384,7 +385,10 @@ class FichaPokemon:
         )
         try:
             if bruto is not None:
-                return max(0.0, float(bruto))
+                valor = max(0.0, float(bruto))
+                if 0.0 <= valor <= 1.0:
+                    return valor * max(1.0, cls._valor_status(pokemon, 'Vida'))
+                return valor
         except (TypeError, ValueError):
             pass
         return max(0.0, cls._valor_status(pokemon, 'Vida'))
@@ -1108,16 +1112,10 @@ class FichaPokemon:
         return None
 
     def definir_equipavel_slot(self, pokemon: dict | None, indice: int, equipavel: dict | None):
-        if not isinstance(pokemon, dict):
-            return None
-        build = self._build_ref(pokemon)
-        self._garantir_tamanho_lista(build, int(indice))
-        anterior = build[int(indice)]
-        build[int(indice)] = equipavel
-        return anterior
+        return definir_equipavel_slot(pokemon, indice, equipavel)
 
     def retirar_equipavel_slot(self, pokemon: dict | None, indice: int):
-        return self.definir_equipavel_slot(pokemon, indice, None)
+        return retirar_equipavel_slot(pokemon, indice)
 
     def _ataque_no_slot(self, pokemon: dict | None, slot: tuple[str, int] | None):
         if slot is None or not isinstance(pokemon, dict):

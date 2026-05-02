@@ -264,10 +264,8 @@ class InicializadorNPC:
             nivel = self._nivel_pokemon_treinador(nivel_treinador, rnd)
             subir_nivel_pokemon(poke, vezes=nivel)
             estado = poke.get("estado") if isinstance(poke.get("estado"), dict) else poke
-            stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
-            vida = float(stats.get("Vida", 0.0) or 0.0)
-            estado["VidaAtual"] = vida
-            estado["vida_atual"] = vida
+            estado["VidaAtual"] = 1.0
+            estado["vida_atual"] = 1.0
             estado["npc_pokemon"] = True
             return poke
         except Exception:

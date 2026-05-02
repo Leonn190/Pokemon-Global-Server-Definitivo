@@ -14,10 +14,9 @@ from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personage
 from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
-from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publicas, carregar_regras_pokemons
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import evoluir_pokemon, ganhar_xp_pokemon, gerar_bando_confronto, subir_nivel_pokemon
-from Codigo.Geradores.EstruturaNaturais import prioridade_estrutura_natural
-from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
+from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publicas, carregar_regras_estruturas_naturais, carregar_regras_pokemons
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import evoluir_pokemon, ganhar_xp_pokemon, subir_nivel_pokemon
+from SimuladorServerJogo.Mundo.EstadioGeometria import contexto_batalha_estadio, offset_porta_externa
 
 
 def _normalizar_posicao_loop(posicao):
@@ -97,6 +96,19 @@ def _bloco_mundo_em(wx: int, wy: int) -> int:
         return 0
 
 
+def _prioridade_estrutura_natural_server(codigo: object) -> int:
+    regras = carregar_regras_estruturas_naturais()
+    tipos = regras.get("tipos") if isinstance(regras.get("tipos"), dict) else {}
+    info = tipos.get(str(codigo)) if isinstance(tipos.get(str(codigo)), dict) else {}
+    subtipo = str(info.get("subtipo") or "").strip()
+    prioridade = regras.get("prioridade") if isinstance(regras.get("prioridade"), dict) else {}
+    ordem = prioridade.get("ordem_subtipos") if isinstance(prioridade.get("ordem_subtipos"), list) else []
+    try:
+        return ordem.index(subtipo)
+    except ValueError:
+        return len(ordem)
+
+
 def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 40, ry: int = 20) -> Dict[str, object]:
     regras_pokemons = carregar_regras_pokemons()
     regras_batalha = carregar_regras_batalha_publicas()
@@ -136,7 +148,7 @@ def _coletar_contexto_batalha_servidor(centro: tuple[float, float], rx: int = 40
             "codigo_natural": int(getattr(obj, "codigo_natural", estado.get("codigo_natural", 0)) or 0),
             "sprite": str(getattr(obj, "sprite", "") or ""),
         })
-    estruturas.sort(key=lambda e: (prioridade_estrutura_natural(codigo=e.get("codigo_natural")), float(e.get("y", 0.0)), float(e.get("x", 0.0))))
+    estruturas.sort(key=lambda e: (_prioridade_estrutura_natural_server(e.get("codigo_natural")), float(e.get("y", 0.0)), float(e.get("x", 0.0))))
 
     return {
         "origem": [x0, y0],
@@ -265,7 +277,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
                 float(estadio.posicao[0]) + float(estado_est.get("entrada_offset")[0]),
                 float(estadio.posicao[1]) + float(estado_est.get("entrada_offset")[1]),
             ]
-        offset_x, offset_y = GeradorEstadio.offset_porta_externa(float(estado_est.get("raio_elipse_y", 24.0) or 24.0))
+        offset_x, offset_y = offset_porta_externa(float(estado_est.get("raio_elipse_y", 24.0) or 24.0))
         return [float(estadio.posicao[0] + offset_x), float(estadio.posicao[1] + offset_y)]
 
     if acao == "sair":
@@ -411,10 +423,7 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     centro = [0.0, 0.0]
                 contexto = _coletar_contexto_batalha_servidor((float(centro[0]), float(centro[1])), rx=40, ry=20)
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
-                pokemon_obj = BANCO_DADOS.obter_objeto(pokemon_id) if pokemon_id > 0 else None
-                if pokemon_obj is not None and str(getattr(pokemon_obj, "tipo_classe", "") or "").endswith("pokemon"):
-                    pokemon_base = pokemon_obj.serializar() if hasattr(pokemon_obj, "serializar") else {}
-                    contexto["pokemons_inimigo"] = gerar_bando_confronto(pokemon_base, max_extras=5)
+                if pokemon_id > 0:
                     contexto["pokemon_mundo_id"] = int(pokemon_id)
                 obj_id_ctx = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 obj_ctx = BANCO_DADOS.obter_objeto(obj_id_ctx) if obj_id_ctx > 0 else None
@@ -424,11 +433,9 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     estadio_id = int(estado_ctx.get("estadio_atual_id", 0) or 0)
                     estadio_obj = BANCO_DADOS.obter_objeto(estadio_id) if estadio_id > 0 else None
                     estadio_estado = getattr(estadio_obj, "estado_extra", {}) if isinstance(getattr(estadio_obj, "estado_extra", {}), dict) else {}
-                    contexto = EstadioInterno.contexto_batalha(estadio_estado)
+                    contexto = contexto_batalha_estadio(estadio_estado)
                     contexto["centro"] = [float(contexto.get("largura", 60) * 0.5), float(contexto.get("altura", 40) * 0.5)]
-                    if pokemon_obj is not None and str(getattr(pokemon_obj, "tipo_classe", "") or "").endswith("pokemon"):
-                        pokemon_base = pokemon_obj.serializar() if hasattr(pokemon_obj, "serializar") else {}
-                        contexto["pokemons_inimigo"] = gerar_bando_confronto(pokemon_base, max_extras=5)
+                    if pokemon_id > 0:
                         contexto["pokemon_mundo_id"] = int(pokemon_id)
                 return _ok("Contexto de batalha pronto", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
             if categoria == "pokemon_derrotado_batalha":

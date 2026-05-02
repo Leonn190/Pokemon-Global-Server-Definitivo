@@ -6,7 +6,7 @@ import unicodedata
 from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from typing import Dict, List, Set, Tuple
 
-from Codigo.ModulosGerais.Colisor import Colisor
+from SimuladorServerJogo.Mundo.Colisor import Colisor
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer
 from SimuladorServerJogo.Gerais.EstadoServidor import carregar_npcs_vendedores_estado, salvar_npcs_vendedores_estado

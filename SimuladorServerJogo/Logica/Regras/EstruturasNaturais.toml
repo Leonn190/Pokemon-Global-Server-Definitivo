@@ -1,5 +1,32 @@
 # Regras de estruturas naturais por código.
 
+[prioridade]
+ordem_subtipos = [
+  "lava",
+  "pedra",
+  "cobre",
+  "ferro",
+  "carvao",
+  "ouro",
+  "diamante",
+  "ametista",
+  "rubi",
+  "esmeralda",
+  "safira",
+  "topazio",
+  "aquamarine",
+  "jade",
+  "concha",
+  "pinheiro",
+  "palmeira",
+  "cacto",
+  "arvore_trombosa",
+  "arvore",
+  "planta",
+  "flor",
+  "arbusto"
+]
+
 [variacao]
 escala_min = 0.85
 escala_max = 1.15

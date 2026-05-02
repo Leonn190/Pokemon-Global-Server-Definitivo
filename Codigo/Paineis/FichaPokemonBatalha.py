@@ -15,7 +15,7 @@ from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Prefabs.Tooltip import Tooltip
-from SimuladorServerJogo.Batalha.PropriedadesAtaques import carregar_propriedades_ataques
+from Codigo.ModulosGerais.PropriedadesAtaques import carregar_propriedades_ataques
 
 
 class FichaPokemonBatalha:

@@ -156,7 +156,10 @@ class PokemonBatalha:
         if vida_atual is None and isinstance(self.Dados.get("estado"), dict):
             est = self.Dados.get("estado")
             vida_atual = est.get("VidaAtual", est.get("vida_atual", est.get("vidaAtual", None)))
-        self.VidaAtual = max(0.0, min(self.VidaMax, _f(vida_atual, self.VidaMax)))
+        vida_atual = _f(vida_atual, self.VidaMax)
+        if 0.0 <= vida_atual <= 1.0:
+            vida_atual *= self.VidaMax
+        self.VidaAtual = max(0.0, min(self.VidaMax, vida_atual))
 
         energia_raw = _f(self.Dados.get("EnergiaMaxima", self.Dados.get("EnergiaMax", self.Dados.get("EneM", 0.0))), 0.0)
         if energia_raw <= 0:

@@ -4,7 +4,7 @@ import unicodedata
 
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import ganhar_xp_pokemon, aprender_ataque_aleatorio
+from Codigo.ModulosGerais.GerenciadorPokemons import ganhar_xp_pokemon, aprender_ataque_aleatorio
 
 _CACHE_POCOES = None
 
@@ -20,6 +20,19 @@ def _valor_vida(pokemon: dict, chave, padrao=0.0) -> float:
         return float(pokemon.get(chave, padrao) or padrao)
     except (TypeError, ValueError):
         return float(padrao)
+
+
+def _vida_absoluta(alvo: dict, vida_max: float) -> float:
+    valor = _valor_vida(alvo, "VidaAtual", _valor_vida(alvo, "vida_atual", vida_max))
+    if 0.0 <= valor <= 1.0:
+        return valor * max(1.0, vida_max)
+    return valor
+
+
+def _definir_vida_percentual(alvo: dict, vida: float, vida_max: float):
+    percentual = max(0.0, min(1.0, float(vida) / max(1.0, float(vida_max))))
+    alvo["VidaAtual"] = percentual
+    alvo["vida_atual"] = percentual
 
 
 def _dados_pocao(nome_pocao: str) -> dict:
@@ -45,27 +58,25 @@ def _aplicar_xp(pokemon: dict, quantidade: float):
 
 def _curar(pokemon: dict, cura: float):
     alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
-    vida_atual = _valor_vida(alvo, "VidaAtual", _valor_vida(alvo, "vida_atual", _valor_vida(alvo, "Vida", 0)))
+    stats = alvo.get("stats") if isinstance(alvo.get("stats"), dict) else {}
+    vida_max = max(1.0, _valor_vida(alvo, "Vida", _valor_vida(stats, "Vida", 1)))
+    vida_atual = _vida_absoluta(alvo, vida_max)
     if vida_atual <= 0:
         return False
-    stats = alvo.get("stats") if isinstance(alvo.get("stats"), dict) else {}
-    vida_max = max(1.0, _valor_vida(alvo, "Vida", _valor_vida(stats, "Vida", vida_atual)))
     nova_vida = min(vida_max, vida_atual + max(0.0, float(cura)))
-    alvo["VidaAtual"] = nova_vida
-    alvo["vida_atual"] = nova_vida
+    _definir_vida_percentual(alvo, nova_vida, vida_max)
     return True
 
 
 def _reviver(pokemon: dict, percentual_vida: float):
     alvo = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
-    vida_atual = _valor_vida(alvo, "VidaAtual", _valor_vida(alvo, "vida_atual", _valor_vida(alvo, "Vida", 0)))
-    if vida_atual > 0:
-        return False
     stats = alvo.get("stats") if isinstance(alvo.get("stats"), dict) else {}
     vida_max = max(1.0, _valor_vida(alvo, "Vida", _valor_vida(stats, "Vida", 1)))
+    vida_atual = _vida_absoluta(alvo, vida_max)
+    if vida_atual > 0:
+        return False
     revivido = max(1.0, vida_max * max(0.01, min(1.0, float(percentual_vida))))
-    alvo["VidaAtual"] = revivido
-    alvo["vida_atual"] = revivido
+    _definir_vida_percentual(alvo, revivido, vida_max)
     return True
 
 

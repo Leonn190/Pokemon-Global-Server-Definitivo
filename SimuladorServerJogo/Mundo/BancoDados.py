@@ -17,7 +17,7 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import (
 )
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, EstadioServer
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_estruturas_naturais
-from Codigo.ModulosGerais.Colisor import Colisor
+from SimuladorServerJogo.Mundo.Colisor import Colisor
 
 
 Vector2 = Tuple[float, float]

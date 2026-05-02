@@ -27,6 +27,16 @@ def _clamp01(v) -> float:
     return max(0.0, min(1.0, _fnum(v, 0.0)))
 
 
+def _vida_atual_percentual(estado: Dict[str, object], vida_max: float) -> float:
+    bruto = estado.get("VidaAtual", estado.get("vida_atual", None))
+    if bruto is None:
+        return 1.0
+    valor = _fnum(bruto, 1.0)
+    if 0.0 <= valor <= 1.0:
+        return _clamp01(valor)
+    return _clamp01(valor / max(1.0, float(vida_max)))
+
+
 def _inum(v, default=0) -> int:
     try:
         return int(float(v))
@@ -433,7 +443,7 @@ def subir_nivel_pokemon(pokemon: Dict[str, object], vezes: int = 1) -> Dict[str,
         estado["XPAlvo"] = _xp_alvo_por_nivel(nivel_atual)
         estado["poder"] = _recalcular_poder(stats)
         estado["poder_relativo"] = _recalcular_poder_relativo(stats)
-    estado["vida_atual"] = round(_fnum(stats.get("Vida"), 0.0), 2)
+    estado["vida_atual"] = round(_vida_atual_percentual(estado, _fnum(stats.get("Vida"), 1.0)), 4)
     estado["stats"] = stats
     return dados
 
@@ -563,7 +573,7 @@ def evoluir_pokemon(pokemon: Dict[str, object]) -> Dict[str, object]:
     estado["xp_alvo"] = estado["XPAlvo"]
     estado["poder"] = _recalcular_poder(estado.get("stats", {}))
     estado["poder_relativo"] = _recalcular_poder_relativo(estado.get("stats", {}))
-    estado["vida_atual"] = round(_fnum(estado.get("stats", {}).get("Vida"), 0.0), 2)
+    estado["vida_atual"] = round(_vida_atual_percentual(estado, _fnum(estado.get("stats", {}).get("Vida"), 1.0)), 4)
     if isinstance(dados, dict) and dados is not estado:
         dados["especie"] = nome_novo
         dados["nome"] = nome_novo
@@ -638,7 +648,7 @@ def materializar_pokemon(pokemon_mundo: Dict[str, object], efeitos_captura: Opti
     estado["pode_evoluir"] = False
     estado["poder"] = _recalcular_poder(stats_final)
     estado["poder_relativo"] = _recalcular_poder_relativo(stats_final)
-    estado["vida_atual"] = round(_fnum(stats_final.get("Vida"), 0.0), 2)
+    estado["vida_atual"] = 1.0
     estado["equipaveis"] = max(1, min(4, _inum(estado.get("equipaveis", 1), 1)))
     preencher_habilidades_iniciais(estado, total_slots=5)
     estado["fruta_favorita"] = random.choice(_FRUTAS_DISPONIVEIS) if _FRUTAS_DISPONIVEIS else ""
@@ -896,7 +906,7 @@ def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> Pokem
             "equipaveis": max(1, min(4, _inum(row.get("Equipaveis", 1), 1))),
             "poder": poder_base,
             "poder_relativo": _recalcular_poder_relativo(stats_base),
-            "vida_atual": round(_fnum(stats_base.get("Vida"), 0.0), 2),
+            "vida_atual": 1.0,
             "PodeEvoluir": False,
             "pode_evoluir": False,
             "dificuldade_captura": dificuldade,

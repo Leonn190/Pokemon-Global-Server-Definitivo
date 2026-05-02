@@ -81,7 +81,10 @@ class PokemonBatalha:
             self.estatisticas_batalha.setdefault(chave, 0.0)
         self._carregar_atributos(info, estado, bruto)
         self.recalcular_atributos()
-        self.VidaAtual = _clamp(_f(bruto.get("VidaAtual", info.get("VidaAtual", info.get("vida_atual", estado.get("VidaAtual", estado.get("vida_atual", self.atributos_finais["Vida"]))))), self.atributos_finais["Vida"]), 0.0, self.atributos_finais["Vida"])
+        vida_atual = _f(bruto.get("VidaAtual", info.get("VidaAtual", info.get("vida_atual", estado.get("VidaAtual", estado.get("vida_atual", self.atributos_finais["Vida"]))))), self.atributos_finais["Vida"])
+        if 0.0 <= vida_atual <= 1.0:
+            vida_atual *= self.atributos_finais["Vida"]
+        self.VidaAtual = _clamp(vida_atual, 0.0, self.atributos_finais["Vida"])
         energia_padrao = round(self.atributos_finais["EneM"] * 0.75, 2)
         self.EnergiaAtual = _clamp(_f(bruto.get("Energia", bruto.get("EnergiaAtual", info.get("EnergiaAtual", info.get("energia_atual", estado.get("EnergiaAtual", estado.get("energia_atual", energia_padrao)))))), energia_padrao), 0.0, self.atributos_finais["EneM"])
         self.BarreiraAtual = max(0.0, _f(bruto.get("BarreiraAtual", info.get("BarreiraAtual", estado.get("BarreiraAtual", 0.0))), 0.0))

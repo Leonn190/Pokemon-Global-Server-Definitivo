@@ -191,6 +191,8 @@ def calcular_dificuldade_captura_batalha(pokemon, regras=None) -> float:
     if vida_max <= 0:
         stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
         vida_max = _f(stats.get("Vida"), 1.0)
+    if 0.0 <= vida_atual <= 1.0:
+        vida_atual *= max(1.0, vida_max)
     vida_p = max(0.0, min(1.0, vida_atual / max(0.0001, vida_max)))
     return float((base + 10.0) * (0.20 + 0.80 * vida_p))
 

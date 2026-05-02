@@ -42,6 +42,7 @@ class CenaCombate:
             **dict(contexto),
             **dict(contexto_servidor),
             "pokemon_colisao": dict(pokemon_colisao),
+            "pokemons_inimigo": list(contexto.get("pokemons_inimigo") or contexto_servidor.get("pokemons_inimigo") or []),
             "time_jogador": dict(contexto.get("time_jogador") or {}),
             "times_jogador": list(contexto.get("times_jogador") or []),
             "pokemons_jogador": list(contexto.get("pokemons_jogador") or []),

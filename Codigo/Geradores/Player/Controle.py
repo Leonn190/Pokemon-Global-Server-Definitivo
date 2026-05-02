@@ -37,6 +37,7 @@ class Controle:
         self._acao_evoluir_pokemon_pendente = None
         self._acao_interacao_pendente = None
         self.BloquearToggleInventario = False
+        self._tile_atual_cache = None
 
     def atualizar(self, eventos, dt, mouse_pos_mundo_tiles, mouse_pos_tela_px=None, ator_pos_tela_px=None):
         dt = max(0.0, float(dt))
@@ -44,6 +45,7 @@ class Controle:
         if self.InventarioAberto:
             self._tentando_correr = False
             tile_atual = self._tile_atual()
+            self._tile_atual_cache = tile_atual
             self._atualizar_stamina(dt, False, False, tile_atual)
             self._tempo_respiracao += dt
             self.Ator.atualizar(dt)
@@ -53,6 +55,7 @@ class Controle:
         self._processar_input_ataque(eventos, mouse_pos_mundo_tiles)
         self._processar_rotacao(mouse_pos_mundo_tiles, mouse_pos_tela_px=mouse_pos_tela_px, ator_pos_tela_px=ator_pos_tela_px)
         deslocando, correndo, tile_atual = self._processar_movimento(dt)
+        self._tile_atual_cache = tile_atual
         self._atualizar_stamina(dt, deslocando, correndo, tile_atual)
         self._atualizar_tapa_automatico()
         self._tempo_respiracao += dt
@@ -64,6 +67,7 @@ class Controle:
         dt = max(0.0, float(dt))
         self._tentando_correr = False
         tile_atual = self._tile_atual()
+        self._tile_atual_cache = tile_atual
         self._atualizar_stamina(dt, False, False, tile_atual)
         self._tempo_respiracao += dt
         self._mirando = False
@@ -410,5 +414,13 @@ class Controle:
             if evento.type == pygame.KEYDOWN and evento.key == pygame.K_f:
                 self.registrar_acao_interacao({"tecla": "F"})
 
+    def tile_atual_cache(self):
+        return self._tile_atual_cache
+
+    def esta_em_agua_funda(self) -> bool:
+        return int(self._tile_atual_cache) == 0 if self._tile_atual_cache is not None else False
+
+    def esta_em_agua_rasa(self) -> bool:
+        return int(self._tile_atual_cache) == 1 if self._tile_atual_cache is not None else False
 
 PlayerController = Controle

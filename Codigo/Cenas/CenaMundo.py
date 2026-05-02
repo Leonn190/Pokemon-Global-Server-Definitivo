@@ -33,6 +33,7 @@ from Codigo.Geradores.Estadio import EstadioInterno
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
 from Codigo.ModulosGerais.GerenciadorPokemons import materializar_pokemon, gerar_bando_confronto
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Telas.Telas.TelaMorrer import TelaMorrer
 
 
 class CenaMundo:
@@ -196,6 +197,8 @@ class CenaMundo:
         self._imune_combate_ate_ms = max(int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0), agora_ms + 3000)
         JOGO.INFO["ImuneCombateAteMs"] = int(self._imune_combate_ate_ms)
         self._filtro_camera = FiltroCamera()
+        self._tela_morrer = TelaMorrer()
+        self._ultimo_chunk_seguro = None
         self.ModuladorRegras = ModuladorRegras()
 
         self._montar_mundo(JOGO)
@@ -276,6 +279,12 @@ class CenaMundo:
             normalizar()
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
+        if self._tela_morrer.ativa:
+            self._tela_morrer.atualizar(EVENTOS, dt, JOGO)
+            self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
+            self.ElementosHud.atualizar(dt)
+            self.Camera.atualizar(dt)
+            return EVENTOS
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
 
         bloqueio_gameplay = False
@@ -333,6 +342,10 @@ class CenaMundo:
         player_bloqueado = (self.TelaAtual == "Mapa") or bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
         imune_combate = self._atualizar_imunidade_combate_visual(JOGO)
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
+        self._atualizar_checkpoint_seguro()
+        self._aplicar_morte_se_necessario(JOGO)
+        if self._tela_morrer.ativa:
+            return EVENTOS
 
         if self._abrir_dialogo_pos_batalha_pendente(JOGO):
             return EVENTOS
@@ -493,11 +506,13 @@ class CenaMundo:
                 self.TelaAtual = None
 
     def Tela(self, JOGO, EVENTOS, dt):
+        eventos_originais = list(EVENTOS)
         self.atualizar_cena(JOGO, EVENTOS, dt)
         if self.tela_atual_eh_complexa():
             self.render_base(JOGO.TELA, JOGO, EVENTOS, dt)
             self.render_post(JOGO.TELA, JOGO, EVENTOS, dt)
             self.render_hud(JOGO.TELA, JOGO, EVENTOS, dt)
+            self._tela_morrer.desenhar(JOGO.TELA, eventos_originais, dt, JOGO)
         else:
             self.render_tela(JOGO.TELA, JOGO, EVENTOS, dt)
 
@@ -652,6 +667,97 @@ class CenaMundo:
         self._centralizar_camera_no_player()
         self._abrir_dialogo_npc_autoritativo(jogo, npc_payload)
         return True
+
+    def _atualizar_checkpoint_seguro(self):
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        controle = getattr(player, "Controle", None) if player is not None else None
+        if player is None or controle is None:
+            return
+        leitor = getattr(self.ControladorMundo, "Leitor", None)
+        if leitor is None:
+            return
+        tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10)))
+        px, py = float(player.Posicao[0]), float(player.Posicao[1])
+        cx, cy = int(px // tamanho), int(py // tamanho)
+        chunk = (getattr(leitor, "Chunks", {}) or {}).get((cx, cy))
+        if not isinstance(chunk, list) or not chunk:
+            return
+        for linha in chunk:
+            if not isinstance(linha, list):
+                return
+            for tile in linha:
+                if int(tile) in (0, 1):
+                    return
+        self._ultimo_chunk_seguro = (cx, cy)
+
+    def _aplicar_morte_se_necessario(self, jogo):
+        if self._tela_morrer.ativa:
+            return
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        controle = getattr(player, "Controle", None) if player is not None else None
+        perfil = getattr(player, "Perfil", None) if player is not None else None
+        if controle is None or perfil is None:
+            return
+        if bool(getattr(controle, "esta_em_agua_funda", lambda: False)()) and float(getattr(perfil, "Stamina", 0.0)) <= 0.001:
+            self._enviar_diff_morte(jogo)
+            self._tela_morrer.abrir(jogo.TELA.get_size(), ao_ressurgir=lambda: self._ressurgir_player(jogo), ao_menu=lambda: self._voltar_menu(jogo))
+
+    def _enviar_diff_morte(self, jogo):
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        if player is None:
+            return
+        server = jogo.INFO.get("ServerSelecionado") if isinstance(jogo.INFO.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        if not link:
+            return
+        enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_morreu", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "agua_funda_stamina_zero"}}])
+
+    def _ressurgir_player(self, jogo):
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        if player is None:
+            return
+        leitor = getattr(self.ControladorMundo, "Leitor", None)
+        if leitor is None:
+            return
+        chunks = dict(getattr(leitor, "Chunks", {}) or {})
+        tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10)))
+        base = self._ultimo_chunk_seguro if isinstance(self._ultimo_chunk_seguro, tuple) else None
+        if base is None or base not in chunks:
+            for chave, dados_chunk in chunks.items():
+                if not isinstance(dados_chunk, list) or not dados_chunk:
+                    continue
+                if all(int(tile) not in (0, 1) for linha in dados_chunk if isinstance(linha, list) for tile in linha):
+                    base = chave
+                    break
+        if base is None:
+            base = (0, 0)
+        chunk = chunks.get(base)
+        candidatos = []
+        if isinstance(chunk, list):
+            for y, linha in enumerate(chunk):
+                if not isinstance(linha, list):
+                    continue
+                for x, tile in enumerate(linha):
+                    if int(tile) not in (0, 1):
+                        candidatos.append((x, y))
+        if not candidatos:
+            player.definir_posicao(float(base[0] * tamanho + 0.5), float(base[1] * tamanho + 0.5))
+            nova_pos = [float(player.Posicao[0]), float(player.Posicao[1])]
+        else:
+            import random
+            lx, ly = random.choice(candidatos)
+            player.definir_posicao(float(base[0] * tamanho + lx + 0.5), float(base[1] * tamanho + ly + 0.5))
+            nova_pos = [float(player.Posicao[0]), float(player.Posicao[1])]
+        player.Perfil.Stamina = max(float(player.Perfil.StaminaMax) * 0.6, 10.0)
+        server = jogo.INFO.get("ServerSelecionado") if isinstance(jogo.INFO.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        if link:
+            enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_ressurgiu", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "morte_agua_funda", "posicao": nova_pos, "stamina": float(player.Perfil.Stamina)}}])
+            enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "update", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"posicao": nova_pos, "perfil": {"stamina": float(player.Perfil.Stamina)}}}])
+        self._tela_morrer.fechar()
+
+    def _voltar_menu(self, jogo):
+        jogo.CenaAlvo = "Menu"
 
     def _finalizar_dialogo_npc(self, jogo) -> None:
         npc_id = int(self._npc_interacao_id or 0)

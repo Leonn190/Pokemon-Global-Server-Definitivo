@@ -22,6 +22,9 @@ from Codigo.ModulosGerais.Server import ServerBatalha
 
 
 class ControladorBatalha:
+    ESCALA_ATOR_BATALHA = 1.5
+    MARGEM_ATOR_CAPTURA_TILES = 1.8
+
     def __init__(self, camera=None, jogo=None, ao_sair_batalha=None):
         self.camera = camera
         self.jogo = jogo
@@ -386,6 +389,7 @@ class ControladorBatalha:
             pacote = self.montador_jogadas.gerar_pacote_jogada()
             if not self.batalha_usa_ia():
                 pacote["resolver_lados_ausentes"] = True
+        self._ocultar_montagem_visual()
         self.estado_batalha = "aguardando_servidor"
         resposta = self.server_batalha.enviar_jogada(self.id_partida, self.lado_jogador, pacote)
         self.tratar_resposta_jogada(resposta)
@@ -461,16 +465,16 @@ class ControladorBatalha:
         if not area or not isinstance(area.get("rect"), pygame.Rect):
             return self.arena.centro_area(area_id)
         rect = area["rect"]
-        margem = 1.1
+        margem = float(self.MARGEM_ATOR_CAPTURA_TILES)
         if aliado:
             return (float(rect.left) - margem, float(rect.centery))
         return (float(rect.right) + margem, float(rect.centery))
 
     def _preparar_atores_visuais_batalha(self):
         tile = max(1, int(getattr(self.camera, "TilePx", 40) or 40)) if self.camera is not None else 40
-        self._ator_visual_player = Ator(nome_skin=self._skin_player_batalha(), posicao=(0.0, 0.0), escala_skin_tiles=1.0, tile_px=tile)
+        self._ator_visual_player = Ator(nome_skin=self._skin_player_batalha(), posicao=(0.0, 0.0), escala_skin_tiles=self.ESCALA_ATOR_BATALHA, tile_px=tile)
         npc_skin = self._skin_npc_batalha()
-        self._ator_visual_npc = Ator(nome_skin=npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.0, tile_px=tile) if npc_skin else None
+        self._ator_visual_npc = Ator(nome_skin=npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=self.ESCALA_ATOR_BATALHA, tile_px=tile) if npc_skin else None
 
     def _skin_player_batalha(self):
         if self.ator is not None and getattr(self.ator, "NomeSkin", None):
@@ -556,6 +560,7 @@ class ControladorBatalha:
         self.logs_por_rodada[rodada] = dict(log or {})
         self.logs_visiveis_por_rodada[rodada] = []
         self.replay_log_atual = {"ativo": True, "turno_atual": rodada, "tick_atual": 0, "tick_final": len(list((log or {}).get("historico") or []))}
+        self._ocultar_montagem_visual()
         self.bloquear_input_durante_log()
         self.estado_batalha = "animando_rodada"
         if self.leitor_logs is not None:
@@ -579,6 +584,15 @@ class ControladorBatalha:
         self.limpar_ataque()
         self.area_selecionada = None
         self.pokemon_selecionado = None
+
+    def _ocultar_montagem_visual(self):
+        if self.montador_jogadas is not None:
+            self.montador_jogadas.limpar_jogada()
+            self.montador_jogadas.cancelar_previa()
+        hud = getattr(self, "hud", None)
+        painel = getattr(hud, "painel_acoes", None)
+        if painel is not None and hasattr(painel, "sincronizar"):
+            painel.sincronizar([], None)
 
     def desbloquear_input_apos_log(self):
         if isinstance(self.replay_log_atual, dict):

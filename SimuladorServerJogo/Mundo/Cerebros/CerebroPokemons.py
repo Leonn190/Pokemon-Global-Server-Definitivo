@@ -170,6 +170,8 @@ class CerebroPokemons:
                 continue
             if bool(cap.get("captura_pendente", False)):
                 continue
+            if bool(poke.estado_extra.get("em_batalha", False)):
+                continue
 
             estado = self._core._movimento_estado.get(oid)
             if not isinstance(estado, dict):
@@ -180,7 +182,7 @@ class CerebroPokemons:
                 dx, dy = estado.get("dir", (0.0, 0.0))
                 passo_atual = passo * max(0.1, float(estado.get("vel_mult", 1.0) or 1.0))
                 destino = (float(poke.posicao[0]) + float(dx) * passo_atual, float(poke.posicao[1]) + float(dy) * passo_atual)
-                if self._colisao_movimento_pokemon(oid, destino, poke.raio_colisao):
+                if self._colisao_movimento_pokemon(oid, destino, poke.raio_colisao, permitir_player=bool(estado.get("permite_colidir_player", False))):
                     estado["restante"] = 0
                     estado["cooldown_ate"] = self._core._tick_contador + int(estado.get("cooldown_ticks", cooldown_min) or cooldown_min)
                     continue
@@ -222,6 +224,7 @@ class CerebroPokemons:
                     poke.estado_extra["alvo_player_id"] = str(alvo[0])
                     poke.estado_extra["comportamento_mundo"] = "perseguindo"
                     direcao_forcada = self._direcao_para(poke.posicao, alvo[1])
+                    estado["permite_colidir_player"] = True
                 chance_atual *= float(self._core._f("personalidade_mundo_irritado_chance_movimento_mult", 2.0))
                 cooldown_atual = max(1, int(round(cooldown_min * float(self._core._f("personalidade_mundo_irritado_cooldown_movimento_mult", 0.70)))))
             elif personalidade == "curioso":
@@ -247,6 +250,7 @@ class CerebroPokemons:
             estado["dir"] = direcao_forcada or random.choice(_DIRECOES_8)
             estado["vel_mult"] = float(vel_mult)
             estado["cooldown_ticks"] = int(cooldown_atual)
+            estado["permite_colidir_player"] = bool(irritado and direcao_forcada is not None)
             restante_min = int(cooldown_atual)
             restante_max = int(duracao_max)
             if restante_max < restante_min:
@@ -257,7 +261,7 @@ class CerebroPokemons:
                 estado["restante"] = random.randint(restante_min, restante_max)
 
     @staticmethod
-    def _colisao_movimento_pokemon(pokemon_id: int, destino: Vector2, raio: float) -> bool:
+    def _colisao_movimento_pokemon(pokemon_id: int, destino: Vector2, raio: float, permitir_player: bool = False) -> bool:
         px, py = float(destino[0]), float(destino[1])
         for obj in BANCO_DADOS.buscar_proximos((px, py), max(0.8, float(raio) + 0.8)):
             oid = int(getattr(obj, "Id", 0) or 0)
@@ -265,6 +269,8 @@ class CerebroPokemons:
                 continue
             subt = str(getattr(obj, "estado_extra", {}).get("subtipo", "")).strip().lower()
             tipo = str(getattr(obj, "tipo_classe", "")).strip().lower()
+            if subt in {"player"} and bool(permitir_player):
+                continue
             if subt in {"player"} or tipo.startswith("estrutura"):
                 rr = float(getattr(obj, "raio_colisao", 0.5) or 0.5) + float(raio)
                 if ((px - float(obj.posicao[0])) ** 2 + (py - float(obj.posicao[1])) ** 2) <= (rr * rr):

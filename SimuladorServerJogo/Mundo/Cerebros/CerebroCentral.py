@@ -383,6 +383,43 @@ class CerebroCentral:
     def registrar_falha_captura_pokemon(self, poke: PokemonServer) -> bool:
         return self._cerebro_pokemons.registrar_falha_captura(poke)
 
+    def marcar_pokemon_em_batalha(self, pokemon_id: int, client_id: str = "") -> PokemonServer | None:
+        poke = BANCO_DADOS.obter_objeto(int(pokemon_id or 0))
+        if not isinstance(poke, PokemonServer):
+            return None
+        poke.estado_extra["em_batalha"] = True
+        poke.estado_extra["batalha_client_id"] = str(client_id or "")
+        self._movimento_estado.pop(int(pokemon_id), None)
+        return poke
+
+    def liberar_pokemon_apos_fuga_batalha(self, pokemon_id: int, client_id: str = "") -> PokemonServer | None:
+        poke = BANCO_DADOS.obter_objeto(int(pokemon_id or 0))
+        if not isinstance(poke, PokemonServer):
+            return None
+        poke.estado_extra.pop("em_batalha", None)
+        poke.estado_extra.pop("batalha_client_id", None)
+        poke.estado_extra["cooldown_movimento_ate_tick"] = 0
+        player_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id or "")) or 0)
+        player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
+        dx, dy = 1.0, 0.0
+        irritado = bool(poke.estado_extra.get("esta_irritado", False))
+        if isinstance(player, AtorServer):
+            dx = float(player.posicao[0]) - float(poke.posicao[0])
+            dy = float(player.posicao[1]) - float(poke.posicao[1])
+            if not irritado:
+                dx, dy = -dx, -dy
+        norma = math.hypot(dx, dy) or 1.0
+        cooldown_movimento = int(self._i("intervalo_minimo_apos_movimento_ticks", 40))
+        self._movimento_estado[int(pokemon_id)] = {
+            "dir": (dx / norma, dy / norma),
+            "restante": max(12, int(cooldown_movimento * 0.5)),
+            "cooldown_ate": 0,
+            "cooldown_ticks": cooldown_movimento,
+            "vel_mult": 1.20 if irritado else 1.0,
+            "permite_colidir_player": irritado,
+        }
+        return poke
+
     def registrar_drop_item_mundo(self, client_id: str, payload: Dict[str, object]) -> bool:
         return self._cerebro_itens_mundo.registrar_drop(client_id, payload)
 

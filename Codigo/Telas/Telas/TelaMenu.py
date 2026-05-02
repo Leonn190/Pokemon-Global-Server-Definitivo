@@ -1,7 +1,7 @@
 import pygame
 from pathlib import Path
 from Codigo.Prefabs.Botao import Botao
-from Codigo.Prefabs.LogoMenuShader import LogoMenuShader
+from Codigo.ModulosGerais.LogoMenu import LogoMenu
 
 _CAMINHO_FUNDO = Path("Recursos/Visual/Fundos/FundoMenu.jpg")
 _CAMINHO_LOGO = Path("Recursos/Visual/Icones/GlobalServer/Logo.png")
@@ -165,7 +165,7 @@ def _desenhar_logo_hud(Cena, tela):
     centro_logo = (largura_tela // 2, int(altura_tela * 0.30))
 
     if _LOGO_ESPECIAL is None or _LOGO_ESPECIAL_SIZE != alvo or _LOGO_ESPECIAL_CENTER != centro_logo:
-        _LOGO_ESPECIAL = LogoMenuShader(
+        _LOGO_ESPECIAL = LogoMenu(
             str(_CAMINHO_LOGO),
             center=centro_logo,
             size=alvo,
@@ -177,7 +177,8 @@ def _desenhar_logo_hud(Cena, tela):
     else:
         _LOGO_ESPECIAL.set_layout(centro_logo, alvo)
 
-    rect = _LOGO_ESPECIAL.render(tela, _TEMPO_LOGO)
+    _LOGO_ESPECIAL.render(tela, _TEMPO_LOGO)
+    rect = _LOGO_ESPECIAL.layout_rect
 
     # O shader usa este retangulo em pixels para centralizar fumaca, bloom e orbitas.
     Cena._menu_logo_shader_rect = (float(rect.x), float(rect.y), float(rect.w), float(rect.h))

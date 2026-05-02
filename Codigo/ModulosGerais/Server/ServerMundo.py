@@ -191,6 +191,11 @@ def notificar_pokemon_derrotado_batalha_mundo(ip, client_id, pokemon_id):
     return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
 
 
+def notificar_pokemon_fuga_batalha_mundo(ip, client_id, pokemon_id):
+    diff = {"tipo": "evento", "categoria": "pokemon_fuga_batalha", "payload": {"pokemon_id": int(pokemon_id or 0)}}
+    return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
+
+
 def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, diffs=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
     pacote = {
         "ip": ip,

@@ -425,6 +425,9 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
                 if pokemon_id > 0:
                     contexto["pokemon_mundo_id"] = int(pokemon_id)
+                    poke_batalha = CEREBRO.marcar_pokemon_em_batalha(pokemon_id, client_id)
+                    if poke_batalha is not None:
+                        registrar_diff("update", payload=poke_batalha.serializar(), escopo=_escopo_objeto(poke_batalha), objeto_id=int(pokemon_id), autor="server", categoria="pokemon")
                 obj_id_ctx = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 obj_ctx = BANCO_DADOS.obter_objeto(obj_id_ctx) if obj_id_ctx > 0 else None
                 estado_ctx = getattr(obj_ctx, "estado_extra", {}) if isinstance(getattr(obj_ctx, "estado_extra", {}), dict) else {}
@@ -455,6 +458,16 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                         return _ok("Pokemon derrotado removido", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
                 ignorados += 1
                 return _erro("Pokemon derrotado nao encontrado", serializar=serializar_resposta)
+            if categoria == "pokemon_fuga_batalha":
+                pokemon_id = int(payload.get("pokemon_id", 0) or 0)
+                poke_fuga = CEREBRO.liberar_pokemon_apos_fuga_batalha(pokemon_id, client_id) if pokemon_id > 0 else None
+                if poke_fuga is not None:
+                    BANCO_DADOS.atualizar_objeto(poke_fuga.Id, {"estado": poke_fuga.estado_extra})
+                    registrar_diff("update", payload=poke_fuga.serializar(), escopo=_escopo_objeto(poke_fuga), objeto_id=int(pokemon_id), autor="server", categoria="pokemon")
+                    aplicados += 1
+                    return _ok("Pokemon liberado apos fuga", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
+                ignorados += 1
+                return _erro("Pokemon da fuga nao encontrado", serializar=serializar_resposta)
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):
                     aplicados += 1

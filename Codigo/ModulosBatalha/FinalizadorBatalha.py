@@ -53,6 +53,7 @@ class FinalizadorBatalha:
         resultado = resposta.get("resultado") if isinstance(resposta, dict) and isinstance(resposta.get("resultado"), dict) else {}
         self._ultimo_resultado = dict(resultado)
         self.aplicar_persistencia(resultado)
+        self._notificar_fuga_mundo()
         self.voltar_ao_mundo()
 
     def _registrar_resultado_perfil(self, resultado, fuga=False):
@@ -203,6 +204,24 @@ class FinalizadorBatalha:
         motivo = str((resultado or {}).get("motivo_finalizacao") or "fim_normal")
         try:
             ctrl.server_batalha.finalizar_batalha(ctrl.id_partida, ctrl.lado_jogador, motivo=motivo)
+        except Exception:
+            return
+
+    def _notificar_fuga_mundo(self):
+        ctrl = self.controlador
+        jogo = getattr(ctrl, "jogo", None)
+        info = getattr(jogo, "INFO", {}) if jogo is not None else {}
+        contexto = info.get("CombateContexto") if isinstance(info, dict) and isinstance(info.get("CombateContexto"), dict) else {}
+        pokemon_id = _i(contexto.get("pokemon_mundo_id"), 0)
+        server = info.get("ServerSelecionado") if isinstance(info, dict) and isinstance(info.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        client_id = str(info.get("UsuarioLogado", "anon")) if isinstance(info, dict) else "anon"
+        if pokemon_id <= 0 or not link:
+            return
+        try:
+            from Codigo.ModulosGerais.Server.ServerMundo import notificar_pokemon_fuga_batalha_mundo
+
+            notificar_pokemon_fuga_batalha_mundo(link, client_id, pokemon_id)
         except Exception:
             return
 

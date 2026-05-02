@@ -9,7 +9,8 @@ class PlayerBatalha:
         self.arrastando = False
         self._drag_pendente_pokemon = None
         self._drag_pendente_pos = None
-        self._limiar_arraste_px = 6
+        self._limiar_arraste_px = 3
+        self._folga_hit_pokemon_px = 10
 
     def processar_eventos(self, eventos):
         if str(self.controlador.estado_batalha) != "montando_jogada":
@@ -154,9 +155,13 @@ class PlayerBatalha:
         self.controlador.area_selecionada = None
 
     def _pokemon_no_ponto(self, pos_mouse):
+        candidato = None
         for pokemon in reversed(self.controlador.pokemons):
             if (not pokemon.esta_vivo()) or (not self.controlador.pokemon_visivel(pokemon)):
                 continue
             if pokemon.contem_ponto(pos_mouse):
                 return pokemon
-        return None
+            rect = getattr(pokemon, "RectAtual", None)
+            if candidato is None and isinstance(rect, pygame.Rect) and rect.inflate(self._folga_hit_pokemon_px * 2, self._folga_hit_pokemon_px * 2).collidepoint(pos_mouse):
+                candidato = pokemon
+        return candidato

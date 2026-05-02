@@ -8,11 +8,7 @@ from typing import Tuple
 import pygame
 
 
-def _clamp(v: float, a: float, b: float) -> float:
-    return a if v < a else b if v > b else v
-
-
-class LogoMenuShader:
+class LogoMenu:
     """
     Logo exclusiva do menu principal.
 
@@ -35,7 +31,7 @@ class LogoMenuShader:
         path: str | Path,
         center: Tuple[int, int] = (0, 0),
         size: Tuple[int, int] | None = None,
-        cache_limit: int = 10,
+        cache_limit: int = 32,
         pulse_scale: float = 0.010,
         float_pixels: float = 4.0,
     ) -> None:
@@ -73,10 +69,9 @@ class LogoMenuShader:
         return surf
 
     def _animated_layout(self, t: float) -> tuple[Tuple[int, int], Tuple[int, int]]:
-        # Quantizado para evitar criar uma escala nova a cada frame.
         pulse = 1.0 + self.pulse_scale * math.sin(t * 1.55)
-        w = max(1, int(round(self.base_size[0] * pulse / 2.0) * 2))
-        h = max(1, int(round(self.base_size[1] * pulse / 2.0) * 2))
+        w = max(1, int(round(self.base_size[0] * pulse)))
+        h = max(1, int(round(self.base_size[1] * pulse)))
         y_float = int(round(math.sin(t * 1.20) * self.float_pixels))
         center = (self.center[0], self.center[1] + y_float)
         return center, (w, h)
@@ -88,6 +83,13 @@ class LogoMenuShader:
         surface.blit(logo, rect)
         self._last_rect = rect.copy()
         return self._last_rect
+
+    @property
+    def layout_rect(self) -> pygame.Rect:
+        return pygame.Rect(0, 0, int(self.base_size[0]), int(self.base_size[1])).copy().move(
+            int(self.center[0] - self.base_size[0] * 0.5),
+            int(self.center[1] - self.base_size[1] * 0.5),
+        )
 
     @property
     def last_rect(self) -> pygame.Rect:

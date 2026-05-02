@@ -1,19 +1,12 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
+import WikiMenu from "../../Componentes/WikiMenu.astro";
 import "../../Estilos/wiki.css";
-
-const paginas = {
-  combate: "Combate",
-  dungeons: "Dungeons",
-  equipaveis: "Equipáveis",
-};
-const rota = Astro.url.pathname.split("/").filter(Boolean).at(-1) || "combate";
-const titulo = paginas[rota] || "Wiki";
 ---
 
-<Layout titulo={`${titulo} | Wiki Pokémon Global Server`} descricao={`Área de ${titulo} da wiki do Pokémon Global Server.`}>
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-wiki-extra">
-    <h1 id="titulo-wiki-extra">{titulo}</h1>
+<Layout titulo="Combate | Wiki Pokémon Global Server" descricao="Área de Combate da wiki do Pokémon Global Server.">
+  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-combate">
+    <h1 id="titulo-combate">Combate</h1>
   </section>
 
   <section class="pokedex-topo" aria-label="Navegação da wiki">
@@ -27,30 +20,17 @@ const titulo = paginas[rota] || "Wiki";
         <span>Categorias</span>
       </article>
       <article>
-        <strong>0</strong>
-        <span>Filtros ativos</span>
-      </article>
-      <article>
         <strong>Beta</strong>
         <span>Estado da wiki</span>
       </article>
     </div>
 
-    <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
-      <a href="/wiki/pokemons">Pokémons</a>
-      <a href="/wiki/itens">Itens</a>
-      <a class={rota === "combate" ? "ativo" : ""} href="/wiki/combate">Combate</a>
-      <a class={rota === "dungeons" ? "ativo" : ""} href="/wiki/dungeons">Dungeons</a>
-      <a class={rota === "equipaveis" ? "ativo" : ""} href="/wiki/equipaveis">Equipáveis</a>
-      <a href="/wiki/efeitos">Efeitos</a>
-      <a href="/wiki/estadios">Estádios</a>
-      <a href="/wiki/mundo">Mundo</a>
-    </nav>
+    <WikiMenu ativo="combate" />
   </section>
 
   <section class="wiki-placeholder-card">
     <p class="selo">Wiki em expansão</p>
-    <h2>{titulo} ainda vai receber dados próprios.</h2>
-    <p>Esta rota já existe para completar o painel da wiki. Quando os CSVs ou regras dessa área forem conectados, ela pode seguir o mesmo modelo visual de Pokémons e Itens.</p>
+    <h2>Combate ainda vai receber dados próprios.</h2>
+    <p>Regras de batalha, turnos, energia, dano, colisões, indicadores e animações.</p>
   </section>
 </Layout>

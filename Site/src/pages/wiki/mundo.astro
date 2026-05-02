@@ -1,36 +1,36 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
+import WikiMenu from "../../Componentes/WikiMenu.astro";
 import "../../Estilos/wiki.css";
 ---
 
-<Layout titulo="Mundo | Wiki Pokémon Global Server" descricao="Página provisória de Mundo da wiki.">
+<Layout titulo="Mundo | Wiki Pokémon Global Server" descricao="Área de Mundo da wiki do Pokémon Global Server.">
   <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-mundo">
     <h1 id="titulo-mundo">Mundo</h1>
   </section>
 
   <section class="pokedex-topo" aria-label="Navegação da wiki">
     <div class="pokedex-resumo wiki-placeholder-resumo" aria-label="Resumo da área">
-      <article><strong>Beta</strong><span>Estado da wiki</span></article>
-      <article><strong>0</strong><span>Registros publicados</span></article>
-      <article><strong>0</strong><span>Categorias</span></article>
-      <article><strong>0</strong><span>Filtros ativos</span></article>
+      <article>
+        <strong>0</strong>
+        <span>Registros publicados</span>
+      </article>
+      <article>
+        <strong>0</strong>
+        <span>Categorias</span>
+      </article>
+      <article>
+        <strong>Beta</strong>
+        <span>Estado da wiki</span>
+      </article>
     </div>
 
-    <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
-      <a href="/wiki/pokemons">Pokémons</a>
-      <a href="/wiki/itens">Itens</a>
-      <a href="/wiki/combate">Combate</a>
-      <a href="/wiki/dungeons">Dungeons</a>
-      <a href="/wiki/equipaveis">Equipáveis</a>
-      <a class="" href="/wiki/efeitos">Efeitos</a>
-      <a class="" href="/wiki/estadios">Estádios</a>
-      <a class="ativo" href="/wiki/mundo">Mundo</a>
-    </nav>
+    <WikiMenu ativo="mundo" />
   </section>
 
   <section class="wiki-placeholder-card">
     <p class="selo">Wiki em expansão</p>
-    <h2>Mundo</h2>
-    <p>Área futura para biomas, exploração, chunks, vilas, rotas, mapa, regiões e geração procedural.</p>
+    <h2>Mundo ainda vai receber dados próprios.</h2>
+    <p>Biomas, exploração, chunks, vilas, rotas, mapa, regiões e geração procedural.</p>
   </section>
 </Layout>

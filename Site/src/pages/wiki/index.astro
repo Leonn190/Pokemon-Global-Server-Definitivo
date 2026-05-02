@@ -17,6 +17,18 @@ const secoes = [
     texto: "Consumíveis, doces, equipamentos, receitas e itens especiais do jogo.",
   },
   {
+    href: "/wiki/ataques",
+    emoji: "⚡",
+    titulo: "Ataques",
+    texto: "Ataques com custo, tipo, estilo, motor, foco, descrição e aprimoramento.",
+  },
+  {
+    href: "/wiki/efeitos",
+    emoji: "✨",
+    titulo: "Efeitos",
+    texto: "Status de Pokémon, climas, terrenos, sentido, passos base e descrições.",
+  },
+  {
     href: "/wiki/combate",
     emoji: "⚔️",
     titulo: "Combate",
@@ -33,12 +45,6 @@ const secoes = [
     emoji: "🛡️",
     titulo: "Equipáveis",
     texto: "Equipamentos, bônus, raridades, slots e efeitos aplicados aos Pokémons.",
-  },
-  {
-    href: "/wiki/efeitos",
-    emoji: "✨",
-    titulo: "Efeitos",
-    texto: "Status positivos, negativos, efeitos de terreno, buffs, debuffs e ícones.",
   },
   {
     href: "/wiki/estadios",
@@ -60,12 +66,12 @@ const secoes = [
     <p class="selo">Wiki</p>
     <h1>Central de conhecimento</h1>
     <p class="wiki-descricao">
-      Esta é a entrada principal da wiki. As seções de Pokémons e Itens já têm protótipos funcionais puxando dados dos CSVs e usando os assets visuais do projeto.
+      Esta é a entrada principal da wiki. As seções de Pokémons, Itens, Ataques e Efeitos já têm protótipos funcionais puxando dados dos CSVs e usando os assets visuais do projeto.
     </p>
   </section>
 
   <section class="secao">
-    <div class="cards wiki-cards-oito">
+    <div class="cards wiki-cards-nove">
       {secoes.map((secao) => <CardWiki {...secao} />)}
     </div>
   </section>

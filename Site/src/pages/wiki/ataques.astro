@@ -1,0 +1,183 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import WikiMenu from "../../Componentes/WikiMenu.astro";
+import {
+  FOCOS_ATAQUE,
+  carregarAtaques,
+  criarAssetsAtaques,
+  indexarIconesAtaques,
+  resumoAtaques,
+} from "../../Codigo/AtaquesWikiDados.js";
+import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
+import "../../Estilos/wiki.css";
+
+const ataques = carregarAtaques();
+const resumo = resumoAtaques(ataques);
+const iconesAtaquesBrutos = import.meta.glob("@recursos/Visual/Icones/Ataques/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const iconesAtaques = indexarIconesAtaques(iconesAtaquesBrutos);
+const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
+const assetsAtaques = criarAssetsAtaques(ataques, iconesAtaques);
+const estilos = [...new Map(ataques.map((ataque) => [ataque.estiloBusca, ataque.estiloRotulo])).entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
+const motores = resumo.motores;
+const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, resumo }).replace(/</g, "\\u003c");
+---
+
+<Layout
+  titulo="Ataques | Wiki Pokémon Global Server"
+  descricao="Wiki de ataques do Pokémon Global Server, com busca, filtros por tipo, estilo, motor, foco e detalhes de aprimoramento."
+>
+  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-ataques">
+    <h1 id="titulo-ataques">Ataques Globais</h1>
+  </section>
+
+  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
+    <div class="pokedex-resumo" aria-label="Resumo dos registros de ataques">
+      <article>
+        <strong>{resumo.quantidade}</strong>
+        <span>Ataques registrados</span>
+      </article>
+      <article>
+        <strong>{resumo.estilos.length}</strong>
+        <span>Estilos registrados</span>
+      </article>
+      <article>
+        <strong>{resumo.tipos.length}</strong>
+        <span>Tipagens registradas</span>
+      </article>
+    </div>
+
+    <WikiMenu ativo="ataques" />
+  </section>
+
+  <section class="wiki-layout wiki-layout-pokedex">
+    <div class="wiki-conteudo pokedex-app ataques-app" data-ataques-app>
+      <section class="pokedex-toolbar ataques-toolbar" aria-label="Ferramentas da wiki de ataques">
+        <label class="campo-busca">
+          <span>Pesquisar</span>
+          <input data-ataques-search type="search" placeholder="Nome, código, tipo, motor ou descrição..." autocomplete="off" />
+        </label>
+
+        <label>
+          <span>Ordenar</span>
+          <select data-ataques-sort>
+            <option value="ordem">Ordem oficial</option>
+            <option value="nome">Alfabética</option>
+            <option value="custo">Custo</option>
+            <option value="ofensivo">Ofensivo</option>
+            <option value="defensivo">Defensivo</option>
+            <option value="suporte">Suporte</option>
+            <option value="utilitario">Utilitário</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Estilo</span>
+          <select data-ataques-style>
+            <option value="">Todos</option>
+            {estilos.map(([chave, rotulo]) => <option value={chave}>{rotulo}</option>)}
+          </select>
+        </label>
+
+        <label>
+          <span>Motor</span>
+          <select data-ataques-motor>
+            <option value="">Todos</option>
+            {motores.map((motor) => <option value={motor.chave}>{motor.rotulo}</option>)}
+          </select>
+        </label>
+
+        <label>
+          <span>Foco</span>
+          <select data-ataques-focus>
+            <option value="">Todos</option>
+            {FOCOS_ATAQUE.map((foco) => <option value={foco.chave}>{foco.rotulo}</option>)}
+          </select>
+        </label>
+      </section>
+
+      <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-ataques" aria-label="Filtros por tipo. Selecione um tipo por vez.">
+        {resumo.tipos.map((tipo) => (
+          <button class="tipo-chip tipo-chip-icone" type="button" data-ataques-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`} aria-pressed="false">
+            <span class="tipo-icone-mini">
+              {iconesTipos[normalizarChave(tipo)] ? <img src={iconesTipos[normalizarChave(tipo)]} alt="" loading="eager" decoding="async" /> : null}
+            </span>
+          </button>
+        ))}
+      </section>
+
+      <section class="pokedex-status" aria-live="polite">
+        <div>
+          <strong data-ataques-count>{resumo.quantidade}</strong>
+          <span>resultados encontrados</span>
+        </div>
+        <div class="pokedex-acoes-status">
+          <button class="botao fantasma compacto" type="button" data-ataques-direction data-sort-direction="asc">Crescente</button>
+          <button class="botao fantasma compacto" type="button" data-ataques-clear>Limpar filtros</button>
+        </div>
+      </section>
+
+      <section class="itens-grid ataques-grid" data-ataques-grid aria-label="Lista de ataques"></section>
+
+      <div class="pokedex-vazio" data-ataques-empty hidden>
+        <strong>Nenhum ataque encontrado.</strong>
+        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
+      </div>
+
+      <div class="pokedex-sentinel" data-ataques-sentinel aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <aside class="item-detalhe pokemon-detalhe" data-ataque-detail hidden aria-live="polite">
+    <div class="pokemon-detalhe-backdrop" data-ataque-close></div>
+    <article class="pokemon-detalhe-card item-detalhe-card ataque-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="ataque-detalhe-nome">
+      <div class="pokemon-controles-detalhe" aria-label="Navegação do ataque aberto">
+        <button class="pokemon-navegar" type="button" data-ataque-prev aria-label="Ataque anterior">‹</button>
+        <button class="pokemon-navegar" type="button" data-ataque-next aria-label="Próximo ataque">›</button>
+        <button class="pokemon-fechar" type="button" data-ataque-close aria-label="Fechar detalhes">×</button>
+      </div>
+
+      <div class="pokemon-detalhe-topo item-detalhe-topo ataque-detalhe-topo">
+        <div class="pokemon-palco-detalhe item-palco-detalhe ataque-palco-detalhe">
+          <div class="pokemon-brilho-detalhe"></div>
+          <img data-ataque-image alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="pokemon-cabecalho-detalhe ataque-cabecalho-detalhe">
+          <span class="codigo-pokemon" data-ataque-code>#000</span>
+          <h2 id="ataque-detalhe-nome" data-ataque-name>Ataque</h2>
+          <div class="pokemon-tags" data-ataque-tags></div>
+        </div>
+      </div>
+
+      <section class="painel-detalhe item-info-painel ataque-texto-painel">
+        <h3>Descrição</h3>
+        <p class="item-descricao-melhor" data-ataque-description></p>
+      </section>
+
+      <section class="painel-detalhe item-info-painel ataque-texto-painel">
+        <h3>Aprimoramento</h3>
+        <p class="item-descricao-melhor" data-ataque-upgrade></p>
+      </section>
+
+      <section class="painel-detalhe item-info-painel">
+        <h3>Informações</h3>
+        <dl class="pokemon-info-lista" data-ataque-info></dl>
+      </section>
+    </article>
+  </aside>
+
+  <script id="ataques-data" type="application/json" set:html={payloadAtaques}></script>
+  <script>
+    import { inicializarWikiAtaques } from "../../Codigo/AtaquesRuntime.js";
+    inicializarWikiAtaques();
+  </script>
+</Layout>

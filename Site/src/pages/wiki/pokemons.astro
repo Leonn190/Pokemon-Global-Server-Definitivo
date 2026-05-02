@@ -1,5 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
+import WikiMenu from "../../Componentes/WikiMenu.astro";
 import {
   ATRIBUTOS_BASE,
   ATRIBUTOS_REGULARES,
@@ -60,10 +61,6 @@ const payloadPokedex = JSON.stringify({
         <span>Pokémons registrados</span>
       </article>
       <article>
-        <strong>{resumo.tipos.length}</strong>
-        <span>Tipos encontrados</span>
-      </article>
-      <article>
         <strong>{resumo.grupos.length}</strong>
         <span>Grupos</span>
       </article>
@@ -73,16 +70,7 @@ const payloadPokedex = JSON.stringify({
       </article>
     </div>
 
-    <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
-      <a class="ativo" href="/wiki/pokemons">Pokémons</a>
-      <a href="/wiki/itens">Itens</a>
-      <a href="/wiki/combate">Combate</a>
-      <a href="/wiki/dungeons">Dungeons</a>
-      <a href="/wiki/equipaveis">Equipáveis</a>
-      <a href="/wiki/efeitos">Efeitos</a>
-      <a href="/wiki/estadios">Estádios</a>
-      <a href="/wiki/mundo">Mundo</a>
-    </nav>
+    <WikiMenu ativo="pokemons" />
   </section>
 
   <section class="wiki-layout wiki-layout-pokedex">

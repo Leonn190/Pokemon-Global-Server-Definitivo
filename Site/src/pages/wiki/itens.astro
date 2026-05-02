@@ -1,5 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
+import WikiMenu from "../../Componentes/WikiMenu.astro";
 import {
   carregarItens,
   criarAssetsItens,
@@ -40,10 +41,6 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
         <span>Itens registrados</span>
       </article>
       <article>
-        <strong>{resumo.equipaveis}</strong>
-        <span>Equipáveis registrados</span>
-      </article>
-      <article>
         <strong>{resumo.estilos.length}</strong>
         <span>Estilos</span>
       </article>
@@ -53,16 +50,7 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
       </article>
     </div>
 
-    <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
-      <a href="/wiki/pokemons">Pokémons</a>
-      <a class="ativo" href="/wiki/itens">Itens</a>
-      <a href="/wiki/combate">Combate</a>
-      <a href="/wiki/dungeons">Dungeons</a>
-      <a href="/wiki/equipaveis">Equipáveis</a>
-      <a href="/wiki/efeitos">Efeitos</a>
-      <a href="/wiki/estadios">Estádios</a>
-      <a href="/wiki/mundo">Mundo</a>
-    </nav>
+    <WikiMenu ativo="itens" />
   </section>
 
   <section class="wiki-layout wiki-layout-pokedex">

@@ -1,0 +1,19 @@
+---
+const { ativo = "" } = Astro.props;
+
+const links = [
+  { chave: "pokemons", href: "/wiki/pokemons", rotulo: "Pokémons" },
+  { chave: "itens", href: "/wiki/itens", rotulo: "Itens" },
+  { chave: "ataques", href: "/wiki/ataques", rotulo: "Ataques" },
+  { chave: "efeitos", href: "/wiki/efeitos", rotulo: "Efeitos" },
+  { chave: "combate", href: "/wiki/combate", rotulo: "Combate" },
+  { chave: "dungeons", href: "/wiki/dungeons", rotulo: "Dungeons" },
+  { chave: "equipaveis", href: "/wiki/equipaveis", rotulo: "Equipáveis" },
+  { chave: "estadios", href: "/wiki/estadios", rotulo: "Estádios" },
+  { chave: "mundo", href: "/wiki/mundo", rotulo: "Mundo" },
+];
+---
+
+<nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
+  {links.map((link) => <a class={ativo === link.chave ? "ativo" : ""} href={link.href}>{link.rotulo}</a>)}
+</nav>

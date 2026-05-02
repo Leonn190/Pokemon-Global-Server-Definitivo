@@ -10,6 +10,7 @@ class TextoCinematico:
         self._tamanho = max(12, int(tamanho))
         self._cor = tuple(cor)
         self._alpha = 0
+        self._ultimo_rect = pygame.Rect(0, 0, 0, 0)
         self._fonte = pygame.font.Font(str(_CAMINHO_FONTE_CINEMATICA), self._tamanho)
 
     def set_texto(self, texto: str) -> None:
@@ -30,4 +31,19 @@ class TextoCinematico:
         placa.blit(base, (cx, cy))
         placa.set_alpha(self._alpha)
         rect = placa.get_rect(center=centro)
+        self._ultimo_rect = rect.copy()
         surface.blit(placa, rect.topleft)
+
+    def efeito_shader(self, modo: float = 0.0) -> dict:
+        if self._alpha <= 0 or self._ultimo_rect.width <= 0 or self._ultimo_rect.height <= 0:
+            return {}
+        return {
+            "texto_cinematico_rect": (
+                float(self._ultimo_rect.x),
+                float(self._ultimo_rect.y),
+                float(self._ultimo_rect.w),
+                float(self._ultimo_rect.h),
+            ),
+            "texto_cinematico_power": max(0.0, min(1.0, float(self._alpha) / 255.0)),
+            "texto_cinematico_modo": float(modo),
+        }

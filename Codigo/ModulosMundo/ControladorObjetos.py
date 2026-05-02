@@ -886,7 +886,8 @@ class ControladorObjetos:
 
         O compositor atual aplica um efeito radial por vez. Se houver mais de
         uma captura simultânea na tela, priorizamos a com maior power e, em
-        empate, a que já tem resultado definido para valorizar sucesso/fuga.
+        empate, a captura crítica. O resultado não entra na prioridade para o
+        shader não antecipar sucesso ou fuga.
         """
         melhor: Dict[str, object] = {}
         melhor_score = -1.0
@@ -897,9 +898,8 @@ class ControladorObjetos:
             if not isinstance(dados, dict) or not dados:
                 continue
             power = float(dados.get("capture_power", 0.0) or 0.0)
-            resultado = abs(float(dados.get("capture_result", 0.0) or 0.0))
             critica = float(dados.get("capture_critical", 0.0) or 0.0)
-            score = power + resultado * 0.18 + critica * 0.08
+            score = power + critica * 0.08
             if score > melhor_score:
                 melhor = dict(dados)
                 melhor_score = float(score)

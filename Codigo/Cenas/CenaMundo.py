@@ -454,6 +454,10 @@ class CenaMundo:
             captura = self.ControladorMundo.Objetos.coletar_efeito_captura_shader(self.Camera, tamanho_tela)
             if isinstance(captura, dict) and captura:
                 efeito = {**efeito, **captura}
+        if getattr(self, "_tela_morrer", None) is not None and self._tela_morrer.ativa:
+            texto = self._tela_morrer.coletar_efeito_shader()
+            if isinstance(texto, dict) and texto:
+                efeito = {**efeito, **texto}
         return efeito
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):

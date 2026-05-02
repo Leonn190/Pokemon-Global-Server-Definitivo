@@ -27,9 +27,9 @@ class CompositorModernGL:
 
     O jogo ainda renderiza a cena e o HUD em surfaces do Pygame. Esta classe
     sobe essas duas surfaces como texturas e aplica um shader de tela inteira.
-    Os arquivos GLSL agora ficam em ``Codigo/Shaders`` e podem usar includes
-    simples, o que permite separar efeitos futuros sem transformar o fragment
-    shader principal em um arquivo gigante.
+    Os arquivos GLSL ficam em ``Codigo/Shaders`` e podem usar includes simples.
+    A pasta foi dividida em ``comum``, ``uniformes`` e ``efeitos`` para evitar
+    um fragment shader gigante conforme novos efeitos surgirem.
     """
 
     _INCLUDE_RE = re.compile(r'^\s*#include\s+["<]([^">]+)[">]\s*$')
@@ -41,6 +41,8 @@ class CompositorModernGL:
         "batalha": 3.0,
         "mapa": 4.0,
         "painel": 5.0,
+        "hud": 5.0,
+        "texto_cinematico": 5.0,
     }
 
     def __init__(self) -> None:
@@ -189,6 +191,28 @@ class CompositorModernGL:
     def _modo_efeito(self, tipo_efeito: str) -> float:
         return float(self._MODOS_EFEITO.get(str(tipo_efeito or "").strip().lower(), 0.0))
 
+
+    def _aplicar_uniformes_estados_batalha(self, estados_batalha) -> None:
+        max_estados = 12
+        for i in range(max_estados):
+            self._uniform(f"u_estado_batalha_{i}", (0.0, 0.0, 0.0, 0.0))
+        if not isinstance(estados_batalha, list):
+            return
+        for i, item in enumerate(estados_batalha[:max_estados]):
+            if not isinstance(item, dict):
+                continue
+            pos = self._vec2(item.get("pos_uv", item.get("uv", (0.5, 0.5))))
+            try:
+                raio = self._clamp(float(item.get("radius", item.get("raio", 0.0)) or 0.0), 0.0, 1.0)
+                codigo = int(float(item.get("tipo", item.get("codigo", 0)) or 0))
+                power = self._clamp(float(item.get("power", item.get("intensidade", 0.0)) or 0.0), 0.0, 1.0)
+            except (TypeError, ValueError):
+                continue
+            if codigo <= 0 or raio <= 0.001 or power <= 0.001:
+                continue
+            codigo_power = float(codigo) + power * 0.1
+            self._uniform(f"u_estado_batalha_{i}", (float(pos[0]), float(pos[1]), float(raio), float(codigo_power)))
+
     def renderizar(self, scene_surface: pygame.Surface, hud_surface: pygame.Surface, efeito: Dict[str, object] | None, shader_ativo: bool) -> None:
         largura, altura = scene_surface.get_size()
         self._garantir_texturas((largura, altura))
@@ -199,12 +223,26 @@ class CompositorModernGL:
         tipo_efeito = str(dados.get("tipo") or "").strip().lower()
         modo_efeito = self._modo_efeito(tipo_efeito)
         captura_power = self._clamp(float(dados.get("capture_power", dados.get("captura_power", 0.0)) or 0.0), 0.0, 1.0)
+        texto_cinematico_power = self._clamp(float(dados.get("texto_cinematico_power", 0.0) or 0.0), 0.0, 1.0)
+        estados_batalha = list(dados.get("battle_status_targets", dados.get("estados_batalha_shader", [])) or [])
+        estados_batalha_ativos = False
+        for item in estados_batalha:
+            if not isinstance(item, dict):
+                continue
+            try:
+                if float(item.get("power", item.get("intensidade", 0.0)) or 0.0) > 0.001:
+                    estados_batalha_ativos = True
+                    break
+            except (TypeError, ValueError):
+                continue
         efeito_ativo = bool(
             shader_ativo
             and (
                 modo_efeito in (1.0, 2.0, 4.0, 5.0)
                 or (modo_efeito == 3.0 and bool(dados.get("ativo", True)))
                 or captura_power > 0.001
+                or texto_cinematico_power > 0.001
+                or estados_batalha_ativos
             )
         )
         scene_upload_surface = scene_surface
@@ -235,6 +273,7 @@ class CompositorModernGL:
         self._uniform("u_battle_sand_power", float(self._clamp(float(dados.get("battle_sand_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_fog_power", float(self._clamp(float(dados.get("battle_fog_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_acid_power", float(self._clamp(float(dados.get("battle_acid_power", 0.0) or 0.0), 0.0, 1.0)))
+        self._aplicar_uniformes_estados_batalha(estados_batalha)
 
         menu_logo_rect = dados.get("menu_logo_rect", (0.0, 0.0, 0.0, 0.0))
         try:
@@ -245,6 +284,17 @@ class CompositorModernGL:
             menu_logo_rect = (0.0, 0.0, 0.0, 0.0)
         self._uniform("u_menu_logo_rect", menu_logo_rect)
         self._uniform("u_menu_logo_power", float(self._clamp(float(dados.get("menu_logo_power", 0.0) or 0.0), 0.0, 1.0)))
+
+        texto_cinematico_rect = dados.get("texto_cinematico_rect", (0.0, 0.0, 0.0, 0.0))
+        try:
+            texto_cinematico_rect = tuple(float(v) for v in texto_cinematico_rect)
+        except Exception:
+            texto_cinematico_rect = (0.0, 0.0, 0.0, 0.0)
+        if len(texto_cinematico_rect) != 4:
+            texto_cinematico_rect = (0.0, 0.0, 0.0, 0.0)
+        self._uniform("u_texto_cinematico_rect", texto_cinematico_rect)
+        self._uniform("u_texto_cinematico_power", float(texto_cinematico_power))
+        self._uniform("u_texto_cinematico_modo", float(dados.get("texto_cinematico_modo", 0.0) or 0.0))
 
         capture_uv = self._vec2(dados.get("capture_uv", dados.get("captura_uv", (0.5, 0.5))))
         self._uniform("u_capture_uv", (float(capture_uv[0]), float(capture_uv[1])))

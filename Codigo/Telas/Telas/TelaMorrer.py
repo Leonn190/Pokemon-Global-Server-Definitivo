@@ -60,3 +60,12 @@ class TelaMorrer:
             return
         for botao in self._botoes:
             botao.render(surface, eventos, dt, JOGO=jogo)
+
+    def coletar_efeito_shader(self):
+        if not self._ativa:
+            return {}
+        efeito = self._texto.efeito_shader(modo=0.15)
+        if not efeito:
+            return {}
+        efeito["tipo"] = "hud"
+        return efeito

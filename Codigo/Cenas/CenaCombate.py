@@ -11,6 +11,7 @@ from Codigo.Prefabs.Terminal import Terminal
 import pygame
 from copy import deepcopy
 import random
+import unicodedata
 
 
 class CenaCombate:
@@ -228,12 +229,88 @@ class CenaCombate:
             self.ClimaBatalha.desenhar_base(surface)
 
     def coletar_efeito_shader(self, JOGO, dt, tamanho_tela):
-        _ = (JOGO, dt, tamanho_tela)
+        _ = (JOGO, dt)
         if self.TelaAtual == "Config":
             return None
-        if getattr(self, "ClimaBatalha", None) is None:
-            return None
-        return self.ClimaBatalha.uniformes_atuais()
+        efeito = {}
+        if getattr(self, "ClimaBatalha", None) is not None:
+            efeito = dict(self.ClimaBatalha.uniformes_atuais() or {})
+        estados = self._coletar_estados_shader_batalha(tamanho_tela)
+        if estados:
+            efeito["tipo"] = "batalha"
+            efeito["battle_status_targets"] = estados
+            efeito["ativo"] = True
+        return efeito or None
+
+    @staticmethod
+    def _normalizar_estado_shader(valor):
+        bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+        sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+        return "".join(ch for ch in sem_acento if ch.isalnum())
+
+    @staticmethod
+    def _codigo_estado_shader(nome_normalizado):
+        codigos = {
+            "envenenado": 1,
+            "queimado": 2,
+            "energizado": 3,
+            "intoxicado": 4,
+            "encharcado": 5,
+            "abencoado": 6,
+        }
+        return codigos.get(str(nome_normalizado or ""), 0)
+
+    def _coletar_estados_shader_batalha(self, tamanho_tela):
+        controlador = getattr(self, "ControladorBatalha", None)
+        pokemons = list(getattr(controlador, "pokemons", []) or []) if controlador is not None else []
+        if not pokemons:
+            return []
+        try:
+            largura = max(1, int(tamanho_tela[0]))
+            altura = max(1, int(tamanho_tela[1]))
+        except Exception:
+            largura, altura = 1, 1
+
+        saida = []
+        for pokemon in pokemons:
+            if len(saida) >= 12:
+                break
+            if not bool(getattr(pokemon, "Ativo", False)) or bool(getattr(pokemon, "EmReserva", False)):
+                continue
+            if controlador is not None and hasattr(controlador, "pokemon_visivel") and not controlador.pokemon_visivel(pokemon):
+                continue
+            rect = getattr(pokemon, "RectAtual", None)
+            if rect is None or int(getattr(rect, "width", 0) or 0) <= 0 or int(getattr(rect, "height", 0) or 0) <= 0:
+                continue
+            cx = float(rect.centerx) / float(largura)
+            cy = float(rect.centery) / float(altura)
+            if cx < -0.10 or cx > 1.10 or cy < -0.10 or cy > 1.10:
+                continue
+            raio = max(float(rect.width), float(rect.height)) / float(altura) * 0.68
+            raio = max(0.025, min(0.14, raio))
+            animacoes_entrada = getattr(pokemon, "AnimacoesEfeitos", {}) if isinstance(getattr(pokemon, "AnimacoesEfeitos", {}), dict) else {}
+            animacoes_saida = getattr(pokemon, "EfeitosSaindo", {}) if isinstance(getattr(pokemon, "EfeitosSaindo", {}), dict) else {}
+            for efeito in list(getattr(pokemon, "EfeitosFormais", []) or []):
+                if len(saida) >= 12:
+                    break
+                if not isinstance(efeito, dict):
+                    continue
+                nome_norm = self._normalizar_estado_shader(efeito.get("code") or efeito.get("nome"))
+                codigo = self._codigo_estado_shader(nome_norm)
+                if codigo <= 0:
+                    continue
+                entrada = max(0.0, min(1.0, float(animacoes_entrada.get(nome_norm, 1.0) or 0.0)))
+                saida_anim = max(0.0, min(1.0, float(animacoes_saida.get(nome_norm, 0.0) or 0.0)))
+                power = (0.50 + 0.50 * entrada) * (1.0 - saida_anim)
+                if codigo == 4:
+                    power *= 1.10
+                elif codigo in (5, 6):
+                    power *= 0.86
+                power = max(0.0, min(1.0, power * 0.82))
+                if power <= 0.001:
+                    continue
+                saida.append({"pos_uv": (cx, cy), "radius": raio, "tipo": codigo, "power": power})
+        return saida
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         eventos_ui = list(getattr(self, "_eventos_ui_atual", EVENTOS) or [])

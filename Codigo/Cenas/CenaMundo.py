@@ -426,10 +426,15 @@ class CenaMundo:
             self._filtro_camera.desenhar_chuva_base(surface)
 
     def coletar_efeito_shader(self, JOGO, dt, tamanho_tela):
-        _ = (JOGO, dt, tamanho_tela)
+        _ = (JOGO, dt)
         if self.TelaAtual == "Config":
             return None
-        return self._filtro_camera.uniformes_atuais()
+        efeito = self._filtro_camera.uniformes_atuais()
+        if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
+            captura = self.ControladorMundo.Objetos.coletar_efeito_captura_shader(self.Camera, tamanho_tela)
+            if isinstance(captura, dict) and captura:
+                efeito = {**efeito, **captura}
+        return efeito
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         player = self.ControladorMundo.player_local

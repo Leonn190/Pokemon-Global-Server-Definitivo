@@ -70,6 +70,8 @@ class Pokemon:
             "indice_checagem": 0,
             "resultado_final": None,
             "captura_pendente": False,
+            "critica_cliente": False,
+            "impacto_critica_ms": 0,
         }
         self._captura_local_token = ""
         self._captura_local_inicio_ms = 0
@@ -172,6 +174,8 @@ class Pokemon:
         ang_impacto = (math.degrees(math.atan2(-dy, dx)) + 360.0) % 360.0
         inicio, fim, janela = self.EstadoVisual.estado_barra_critica()
         critica = self.EstadoVisual.captura_critica(pos_projetil)
+        self.CapturaEstado["critica_cliente"] = bool(critica)
+        self.CapturaEstado["impacto_critica_ms"] = self._agora_ms()
         print(
             "[CAPTURA_CRITICA_CLIENT] "
             f"pokemon_id={self.Id} especie={self.Especie} pos_projetil=({float(pos_projetil[0]):.3f},{float(pos_projetil[1]):.3f}) "
@@ -302,6 +306,8 @@ class Pokemon:
             self.CapturaEstado["retorno_inicio"] = [float(evento["retorno_inicio"][0]), float(evento["retorno_inicio"][1])]
         if isinstance(evento.get("retorno_destino"), (list, tuple)) and len(evento.get("retorno_destino")) == 2:
             self.CapturaEstado["retorno_destino"] = [float(evento["retorno_destino"][0]), float(evento["retorno_destino"][1])]
+        if "captura_critica_cliente" in evento:
+            self.CapturaEstado["critica_cliente"] = bool(evento.get("captura_critica_cliente"))
 
         checagens = self._normalizar_log_checagens(evento)
         if checagens:
@@ -336,6 +342,8 @@ class Pokemon:
         self.CapturaEstado["checagens"] = []
         self.CapturaEstado["indice_checagem"] = 0
         self.CapturaEstado["resultado_final"] = None
+        self.CapturaEstado["critica_cliente"] = False
+        self.CapturaEstado["impacto_critica_ms"] = 0
         self._fixar_bola_na_posicao_atual()
         self._trocar_fase("captura")
 
@@ -431,6 +439,87 @@ class Pokemon:
         if bool(self.CapturaEstado.get("captura_pendente", False)):
             return True
         return fase in {"captura", "checagem", "fuga", "volta"}
+
+    @staticmethod
+    def _hash_token_shader(token: str) -> float:
+        token = str(token or "")
+        if not token:
+            return 0.0
+        acc = 0
+        for ch in token[:48]:
+            acc = (acc * 33 + ord(ch)) % 1009
+        return float(acc) / 1009.0
+
+    def dados_shader_captura(self, camera, tamanho_tela) -> Dict[str, object]:
+        """Retorna uniformes do efeito de captura para o compositor ModernGL.
+
+        O efeito é propositalmente resumido em um único ponto/estado para manter
+        o shader barato: o Python só informa centro, fase, resultado e crítica;
+        o GLSL decide brilho, distorção, ondas e cor.
+        """
+        fase = self._fase()
+        if fase not in {"captura", "checagem", "fuga", "volta"} and not bool(self.CapturaEstado.get("captura_pendente", False)):
+            return {}
+
+        try:
+            largura = max(1, int(tamanho_tela[0]))
+            altura = max(1, int(tamanho_tela[1]))
+        except Exception:
+            largura, altura = 1, 1
+
+        pos_mundo = self._posicao_bola_mundo() if fase in {"captura", "checagem"} else self.Posicao
+        if camera is not None and callable(getattr(camera, "mundo_para_tela_px", None)):
+            px, py = camera.mundo_para_tela_px(tuple(pos_mundo))
+        else:
+            px, py = (largura * 0.5, altura * 0.5)
+        px = float(px)
+        py = float(py)
+        if px < -180 or py < -180 or px > largura + 180 or py > altura + 180:
+            return {}
+
+        fase_codigo = {"captura": 1.0, "checagem": 2.0, "fuga": 3.0, "volta": 4.0}.get(fase, 0.0)
+        tempo_ms = float(self._tempo_fase_ms())
+        if fase == "captura":
+            power = min(1.0, tempo_ms / max(1.0, float(self.TempoAnimCapturaMs)))
+            power = 0.45 + power * 0.55
+        elif fase == "checagem":
+            power = 0.74 + 0.18 * math.sin(self._agora_ms() * 0.012)
+        elif fase == "fuga":
+            power = max(0.0, 1.0 - tempo_ms / max(1.0, float(self.TempoAnimFugaMs)))
+        elif fase == "volta":
+            power = max(0.0, 1.0 - tempo_ms / max(1.0, float(self.TempoAnimVoltaMs)))
+        else:
+            power = 0.0
+        power = max(0.0, min(1.0, float(power)))
+        if power <= 0.001:
+            return {}
+
+        resultado_final = self.CapturaEstado.get("resultado_final")
+        if resultado_final is True:
+            resultado = 1.0
+        elif resultado_final is False:
+            resultado = -1.0
+        else:
+            resultado = 0.0
+
+        checagens = list(self.CapturaEstado.get("checagens") or [])
+        indice = max(0, int(self.CapturaEstado.get("indice_checagem", 0) or 0))
+        if fase == "checagem" and checagens:
+            check_index = min(3, indice + 1)
+        else:
+            check_index = min(3, indice)
+
+        token = str(self.CapturaEstado.get("token_arremesso") or self._captura_local_token or "")
+        return {
+            "capture_uv": (max(0.0, min(1.0, px / float(largura))), max(0.0, min(1.0, py / float(altura)))),
+            "capture_power": power,
+            "capture_phase": fase_codigo,
+            "capture_result": resultado,
+            "capture_critical": 1.0 if bool(self.CapturaEstado.get("critica_cliente", False)) else 0.0,
+            "capture_check_index": float(check_index),
+            "capture_check_count": float(max(1, len(checagens) if checagens else 3)),
+            "capture_token_hash": self._hash_token_shader(token),
+        }
 
     def deve_adiar_despawn(self) -> bool:
         if isinstance(self._captura_servidor_pendente, dict):

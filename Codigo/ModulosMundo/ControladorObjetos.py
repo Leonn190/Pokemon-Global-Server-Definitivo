@@ -881,6 +881,30 @@ class ControladorObjetos:
             if est is not None and hasattr(est, "atualizar_visual"):
                 est.atualizar_visual(dt)
 
+    def coletar_efeito_captura_shader(self, camera, tamanho_tela) -> Dict[str, object]:
+        """Escolhe a captura visível mais relevante para o pós-processo.
+
+        O compositor atual aplica um efeito radial por vez. Se houver mais de
+        uma captura simultânea na tela, priorizamos a com maior power e, em
+        empate, a que já tem resultado definido para valorizar sucesso/fuga.
+        """
+        melhor: Dict[str, object] = {}
+        melhor_score = -1.0
+        for poke in list(self.PokemonsPorId.values()):
+            if poke is None or not hasattr(poke, "dados_shader_captura"):
+                continue
+            dados = poke.dados_shader_captura(camera, tamanho_tela)
+            if not isinstance(dados, dict) or not dados:
+                continue
+            power = float(dados.get("capture_power", 0.0) or 0.0)
+            resultado = abs(float(dados.get("capture_result", 0.0) or 0.0))
+            critica = float(dados.get("capture_critical", 0.0) or 0.0)
+            score = power + resultado * 0.18 + critica * 0.08
+            if score > melhor_score:
+                melhor = dict(dados)
+                melhor_score = float(score)
+        return melhor
+
     def renderizar_entidades(self, tela, camera, ignorar_id=None, player_pos=None):
         _ = player_pos
 

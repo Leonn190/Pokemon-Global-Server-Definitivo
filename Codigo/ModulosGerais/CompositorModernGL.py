@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -22,24 +23,45 @@ _QUAD_FULLSCREEN = (
 
 
 class CompositorModernGL:
+    """Compositor final de tela em ModernGL.
+
+    O jogo ainda renderiza a cena e o HUD em surfaces do Pygame. Esta classe
+    sobe essas duas surfaces como texturas e aplica um shader de tela inteira.
+    Os arquivos GLSL agora ficam em ``Codigo/Shaders`` e podem usar includes
+    simples, o que permite separar efeitos futuros sem transformar o fragment
+    shader principal em um arquivo gigante.
+    """
+
+    _INCLUDE_RE = re.compile(r'^\s*#include\s+["<]([^">]+)[">]\s*$')
+    _MODOS_EFEITO = {
+        "": 0.0,
+        "none": 0.0,
+        "mundo": 1.0,
+        "menu_logo": 2.0,
+        "batalha": 3.0,
+        "mapa": 4.0,
+        "painel": 5.0,
+    }
+
     def __init__(self) -> None:
         if moderngl is None:
             raise RuntimeError("moderngl indisponivel")
 
-        base_dir = Path(__file__).resolve().parents[1] / "Outros" / "Shaders"
-        vert_path = base_dir / "mundo.vert"
-        frag_path = base_dir / "mundo.frag"
+        base_dir = Path(__file__).resolve().parents[1] / "Shaders"
+        vert_path = base_dir / "compositor.vert"
+        frag_path = base_dir / "compositor.frag"
         if not vert_path.exists() or not frag_path.exists():
-            raise FileNotFoundError("Arquivos de shader do mundo nao encontrados.")
+            raise FileNotFoundError("Arquivos de shader do compositor nao encontrados em Codigo/Shaders.")
 
         self._ctx = moderngl.create_context()
         self._ctx.disable(moderngl.DEPTH_TEST)
         self._ctx.disable(moderngl.CULL_FACE)
         self._ctx.disable(moderngl.BLEND)
 
+        self._shader_dir = base_dir
         self._program = self._ctx.program(
-            vertex_shader=vert_path.read_text(encoding="utf-8"),
-            fragment_shader=frag_path.read_text(encoding="utf-8"),
+            vertex_shader=self._ler_shader_com_includes(vert_path),
+            fragment_shader=self._ler_shader_com_includes(frag_path),
         )
         self._quad = self._ctx.buffer(data=_QUAD_FULLSCREEN)
         self._vao = self._ctx.vertex_array(self._program, [(self._quad, "2f 2f", "in_pos", "in_uv")])
@@ -53,6 +75,29 @@ class CompositorModernGL:
 
         self._program["u_scene_tex"] = 0
         self._program["u_hud_tex"] = 1
+
+    def _ler_shader_com_includes(self, path: Path, stack: tuple[Path, ...] = ()) -> str:
+        path = path.resolve()
+        if path in stack:
+            ciclo = " -> ".join(p.name for p in (*stack, path))
+            raise RuntimeError(f"Ciclo de #include em shaders: {ciclo}")
+        if not path.exists():
+            raise FileNotFoundError(str(path))
+
+        partes: list[str] = []
+        for linha in path.read_text(encoding="utf-8").splitlines():
+            match = self._INCLUDE_RE.match(linha)
+            if not match:
+                partes.append(linha)
+                continue
+            rel = match.group(1).strip().replace("\\", "/")
+            include_path = (path.parent / rel).resolve()
+            if not include_path.exists():
+                include_path = (self._shader_dir / rel).resolve()
+            partes.append(f"// BEGIN_INCLUDE {rel}")
+            partes.append(self._ler_shader_com_includes(include_path, (*stack, path)))
+            partes.append(f"// END_INCLUDE {rel}")
+        return "\n".join(partes) + "\n"
 
     @staticmethod
     def disponivel() -> bool:
@@ -125,15 +170,43 @@ class CompositorModernGL:
         except KeyError:
             return
 
+    def _vec2(self, valor, padrao=(0.5, 0.5)) -> tuple[float, float]:
+        try:
+            if isinstance(valor, (list, tuple)) and len(valor) == 2:
+                return (float(valor[0]), float(valor[1]))
+        except Exception:
+            pass
+        return (float(padrao[0]), float(padrao[1]))
+
+    def _vec3(self, valor, padrao=(1.0, 1.0, 1.0)) -> tuple[float, float, float]:
+        try:
+            if isinstance(valor, (list, tuple)) and len(valor) == 3:
+                return (float(valor[0]), float(valor[1]), float(valor[2]))
+        except Exception:
+            pass
+        return (float(padrao[0]), float(padrao[1]), float(padrao[2]))
+
+    def _modo_efeito(self, tipo_efeito: str) -> float:
+        return float(self._MODOS_EFEITO.get(str(tipo_efeito or "").strip().lower(), 0.0))
+
     def renderizar(self, scene_surface: pygame.Surface, hud_surface: pygame.Surface, efeito: Dict[str, object] | None, shader_ativo: bool) -> None:
         largura, altura = scene_surface.get_size()
         self._garantir_texturas((largura, altura))
 
         dados = dict(efeito or {})
-        player_uv = dados.get("player_uv", (0.5, 0.5))
-        tint = dados.get("tint", (1.0, 1.0, 1.0))
-        tipo_efeito = str(dados.get("tipo") or "")
-        efeito_ativo = bool(shader_ativo and (tipo_efeito in ("mundo", "menu_logo") or (tipo_efeito == "batalha" and bool(dados.get("ativo", True)))))
+        player_uv = self._vec2(dados.get("player_uv", (0.5, 0.5)))
+        tint = self._vec3(dados.get("tint", (1.0, 1.0, 1.0)))
+        tipo_efeito = str(dados.get("tipo") or "").strip().lower()
+        modo_efeito = self._modo_efeito(tipo_efeito)
+        captura_power = self._clamp(float(dados.get("capture_power", dados.get("captura_power", 0.0)) or 0.0), 0.0, 1.0)
+        efeito_ativo = bool(
+            shader_ativo
+            and (
+                modo_efeito in (1.0, 2.0, 4.0, 5.0)
+                or (modo_efeito == 3.0 and bool(dados.get("ativo", True)))
+                or captura_power > 0.001
+            )
+        )
         scene_upload_surface = scene_surface
         hud_upload_surface = hud_surface if efeito_ativo else None
         if not efeito_ativo:
@@ -147,6 +220,7 @@ class CompositorModernGL:
             self._hud_upload_info = self._detectar_upload(hud_upload_surface)
 
         self._uniform("u_resolution", (float(largura), float(altura)))
+        self._uniform("u_effect_mode", float(modo_efeito))
         self._uniform("u_player_uv", (float(player_uv[0]), float(player_uv[1])))
         self._uniform("u_tint", (float(tint[0]), float(tint[1]), float(tint[2])))
         self._uniform("u_darkness", float(self._clamp(float(dados.get("darkness", 0.0) or 0.0), 0.0, 1.0)))
@@ -171,6 +245,16 @@ class CompositorModernGL:
             menu_logo_rect = (0.0, 0.0, 0.0, 0.0)
         self._uniform("u_menu_logo_rect", menu_logo_rect)
         self._uniform("u_menu_logo_power", float(self._clamp(float(dados.get("menu_logo_power", 0.0) or 0.0), 0.0, 1.0)))
+
+        capture_uv = self._vec2(dados.get("capture_uv", dados.get("captura_uv", (0.5, 0.5))))
+        self._uniform("u_capture_uv", (float(capture_uv[0]), float(capture_uv[1])))
+        self._uniform("u_capture_power", float(captura_power))
+        self._uniform("u_capture_phase", float(dados.get("capture_phase", dados.get("captura_phase", 0.0)) or 0.0))
+        self._uniform("u_capture_result", float(dados.get("capture_result", dados.get("captura_result", -1.0)) if dados.get("capture_result", dados.get("captura_result", -1.0)) is not None else -1.0))
+        self._uniform("u_capture_critical", float(self._clamp(float(dados.get("capture_critical", dados.get("captura_critical", 0.0)) or 0.0), 0.0, 1.0)))
+        self._uniform("u_capture_check_index", float(dados.get("capture_check_index", dados.get("captura_check_index", 0.0)) or 0.0))
+        self._uniform("u_capture_check_count", float(max(1.0, float(dados.get("capture_check_count", dados.get("captura_check_count", 3.0)) or 3.0))))
+        self._uniform("u_capture_token_hash", float(self._clamp(float(dados.get("capture_token_hash", dados.get("captura_token_hash", 0.0)) or 0.0), 0.0, 1.0)))
         self._uniform("u_shader_enabled", 1.0 if efeito_ativo else 0.0)
 
         self._upload_surface(self._scene_tex, scene_upload_surface, self._scene_upload_info)

@@ -1,65 +1,65 @@
-Nome,Status 1,Aumento 1,Status 2,Aumento 2,Status 3,Aumento 3,Status 4,Aumento 4,Ativação,Descrição,Comp 1,Comp 2,Afinidade,I,Code
-Lamina Fumegante,Vel,40,,,,,,,,-,,,fogo,,
-Machadinha Ignea,,,,,,,,,,Sempre causa acertos criticos a pokemon queimados,,,fogo,,
-Emblema da Chama,Atk,10,Mag,5,,,,,,Seus ataques deixam o alvo com 50% de corta cura,,,fogo,,
-Capa Solari,Vida,25,,,,,,,,Alvos que atingirem esse pokemon tem 75% de chance de ficarem queimados,,,fogo,,
-Fluxo Aquatico,Mag,15,,,,,,,,Esse pokemon tem 40% de vampirismo ao atacar pokemons encharcados,,,agua,,
-Gota Sagrada,EnR,20,,,,,,,,-,,,agua,,
-Semblante das Aguas,Spd,30,vida,10,,,,,,Cura 20% da vida perdida ao se mover,,,agua,,
-Emblema da Semente,Mag,5,,,,,,,,Ganha mais 40% de cura de qualquer fonte,,,planta,,
-Armadura Natural,Vida,80,,,,,,,,-,,,planta,,
-Estilingue das Folhas,CrC,10,Atk,5,,,,,,Seus ataques tem mais 10% de assertividade,,,planta,,
-Trovão Encapsulado,,,,,,,,,,Seus ataques causam mais 30% de dano,,,eletrico,,
-Semblante Congelado,SpD,20,CrC,5,CrD,5,Def,5,,-,,,gelo,,
-Coroa do Inverno Eterno,Vida,10,,,,,,,,Pokemons que atacam esse pokemon perdem 20% da sua Vel,,,gelo,,
-Coração de Gelo,Vida,35,Def,5,Spd,5,,,,"Esse pokemon cura no fim do turno 20% da vida perdida se estiver congelado, pokemon adjacentes curam  5% da vida perdida",,,gelo,,
-Punho Congelado,Atk,5,SpA,5,Per,5,,,,Esse pokemon tem rouba 10% do maior status do alvo caso ele esteja congelado,,,gelo,,
-Amuleto sintilante,Mag,40,,,,,,,,-,,,fada,,
-Ídolo Perdido,,,,,,,,,,Toda rodada rouba 4% da Mag de todos os inimigos ativos,,,fada,,
-Arco dos Ventos,Vel,15,Per,5,,,,,,Seus ataques tem mais 15% de assertividade,,,voador,,
-Espada Envenenada,Atk,10,Per,10,,,,,,Causa mais 20% de dano em inimigos envenenados,,,venenoso,,
-Dente do Fim,CrC,30,,,,,,,,-,,,venenoso,,
-Arco de Ossos,Per,10,CrD,5,,,,,,Esse pokemon tem 5% de assertividade a mais e 5% de chance de envenenar o alvo para cada area de distancia entre ele e o alvo,,,venenoso,,
-Serra Toxica,,,,,,,,,,"Seus ataques removem o efeito envenenado do alvo, mas quando atacam alguem envenenado tem 50% de vampirismo e causam mais 25% de dano",,,venenoso,,
-Mão Sinistra,SpA,20,Per,20,,,,,,seus ataques tem 5% de vampirismo,,,fantasma,,
-Maldição,SpA,10,,,,,,,,"Se o alvo tiver algum efeito negativo, ele perde 15% da Mag",,,fantasma,,
-Capa Assombrada,,,,,,,,,,"Todos os ataques contra esse pokemon tem menos 20% de assertividade, quando ele é atingido o atacante perde 5% de assertividade permanentemente",,,fantasma,,
-Machado Amaldiçoado,,,,,,,,,,Todos os seus ataques tem 30% de vampirismo,,,fantasma,,
-Eternidade,,,,,,,,,,Efeitos Positivos são infinitos nesse pokemon,,,cosmico,,
-Elmo Cosmico,,,,,,,,,,Esse pokemon é imune a efeitos negativos,,,cosmico,,
-Mascara do Mosquito Gigante,Atk,10,Per,10,,,,,,Todos os seus ataques tem 20% de vampirismo,,,inseto,,
-Espada Mental,,,,,,,,,,Seus ataques sempre removem ao menos 1 efeito positivo do alvo,,,psiquico,,
-Elmo Psiônico,Def,5,SpD,5,,,,,,"Suas defesas ficam iguais, fazendo uma media entre elas",,,psiquico,,
-Mão que Tudo Ve,CrD,10,EnE,15,,,,,,Sempre tem acesso a ver os pokemons da reserva do oponente,,,psiquico,,
-Coração de Ferro,,,,,,,,,,"Esse pokemon sofre menos 10% de dano sempre, toda vez que é atacado ganha 2 de Def e 2 de SpD",,,metal,,
-Elmo Abençoado,Ene,40,,,,,,,,-,,,metal,,
-Placa defensiva,Def,20,SpD,20,vida,5,,,,-,,,metal,,
-Botas Colossais,Def,25,Vel,15,,,,,,O efeito do terreno sai assim que esse pokemon pisa nele,,,metal,,
-Cinto do Gigante,Vida,60,,,,,,,,Esse pokemon ganha 5% de vida maxima por turno,,,lutador,,
-Faixa da Escolha,Vida,5,,,,,,,,Esse pokemon é imune a perdas de Status,,,lutador,,
-Punho Robusto,Atk,40,,,,,,,,-,,,lutador,,
-Estaca Terrestre,Per,40,,,,,,,,-,,,terrestre,,
-Pedra Flutuante,,,,,,,,,,Esse pokemon não tem custo para se mover nem para trocar,,,pedra,,
-Sismitarra Marcada,CrD,30,,,,,,,,-,,,pedra,,
-Cajado do Som,EnR,10,CrC,15,,,,,,Esse pokemon ganha 1% de chance de critico em seus ataques com base na sua energia atual apos gastar a energia do ataque,,,sonoro,,
-Sino Dourado,SpA,20,SpD,20,,,,,,Esse pokemon todo turno ganha 10% da energia atual como energia extra ganha,,,sonoro,,
-Emblema das Sombras,,,,,,,,,,Executa inimigos com menos de 15% de vida,,,sombrio,,
-Faca do Dragão,Per,15,Mag,15,EnR,5,,,,-,,,dragao,,
-Ombreira da Escama Ardente,Vida,25,,,,,,,,Aumenta a sua defesa 10% quando é atacado por um ataque daquela defesa,,,dragao,,
-Capa Alheia,SpD,40,,,,,,,,-,,,normal,,
-Chapéu do Bruxo,SpA,40,,,,,,,,-,,,-,,
-Espada Energizada,Ene,25,EnR,10,,,,,,-,,,-,,
-Quebra Barreira,Def,10,Atk,10,Spa,5,Spd,5,,Causa 15% de dano a mais a pokemons com barreira,,,-,,
-Besta Afiada,Atk,15,SpA,15,Per,15,,,,-,,,-,,
-Anjo Guardião,Vida,10,,,,,,,,"Ao morrer, Reviva com 10% da vida maxima e 30% da magia como barreira e com o efeito imortal",,,-,,
-Bastião Inabalavel,vida,15,Def,5,Spd,5,,,,Todo fim de turno Aumenta a Def e a SpD de todos os aliados ao redor em 10% dos seus proprios status,,,-,,
-Botas do Sucesso,Spd,25,Vel,10,,,,,,Toda vez que esse pokemon se move ele ganha 1% de assertividade extra,,,-,,
-Colete de Espinhos,Def,30,vida,10,,,,,,Ao ser atingido por ataques normais devolve 20% do dano,,,-,,
-Tiara Encantada,Mag,20,Vida,20,,,,,,Ao ficar com 50% da vida ganha 50% da Mag como barreira,,,-,,
-Coroa da Vitória,,,,,,,,,,Sempre que for trocado venha com 60% da sua Ene em energia,,,-,,
-Armadura Reforçada,Def,40,,,,,,,,-,,,-,,
-Centro Espiritual,Vida,15,Ene,5,Mag,5,,,,Aumenta as curas fornecidas por esse pokemon em +25%,,,-,,
-Essencia Radiante,,,,,,,,,,Serve para deixar o pokemon em sua versão Radiante,,,-,,
-Pedra da Ultra Evolução,,,,,,,,,,Serve para deixar o pokemon em sua versão Ultra,,,-,,
-Energia Gigantamax,,,,,,,,,,Serve para deixar o pokemon em sua versão Gigantamax,,,-,,
-Pedra da Mega Evolução,,,,,,,,,,Serve para deixar o pokemon em sua versão Mega,,,-,,
+Nome,Status 1,Aumento 1,Status 2,Aumento 2,Status 3,Aumento 3,Status 4,Aumento 4,Descrição,Afinidade,Ofensivo,Defensivo,Suporte,Utilitario,I,Code
+Lamina Fumegante,Vel,40,,,,,,,-,fogo,18,8,0,55,,1
+Machadinha Ignea,,,,,,,,,Sempre causa acertos criticos a pokemon queimados,fogo,65,0,0,10,,2
+Emblema da Chama,Atk,10,Mag,5,,,,,Seus ataques deixam o alvo com 50% de corta cura,fogo,32,0,0,48,,3
+Capa Solari,Vida,25,,,,,,,Alvos que atingirem esse pokemon tem 75% de chance de ficarem queimados,fogo,12,43,0,28,,4
+Fluxo Aquatico,Mag,15,,,,,,,Esse pokemon tem 40% de vampirismo ao atacar pokemons encharcados,agua,22,25,5,18,,5
+Gota Sagrada,EnR,20,,,,,,,-,agua,8,4,25,38,,6
+Semblante das Aguas,Spd,30,vida,10,,,,,Cura 20% da vida perdida ao se mover,agua,0,58,15,22,,7
+Emblema da Semente,Mag,5,,,,,,,Ganha mais 40% de cura de qualquer fonte,planta,3,28,38,5,,8
+Armadura Natural,Vida,80,,,,,,,-,planta,0,70,0,0,,9
+Estilingue das Folhas,CrC,10,Atk,5,,,,,Seus ataques tem mais 10% de assertividade,planta,38,0,0,15,,10
+Trovão Encapsulado,,,,,,,,,Seus ataques causam mais 30% de dano,eletrico,82,0,0,0,,11
+Semblante Congelado,SpD,20,CrC,5,CrD,5,Def,5,-,gelo,15,35,0,0,,12
+Coroa do Inverno Eterno,Vida,10,,,,,,,Pokemons que atacam esse pokemon perdem 20% da sua Vel,gelo,5,35,0,42,,13
+Coração de Gelo,Vida,35,Def,5,Spd,5,,,"Esse pokemon cura no fim do turno 20% da vida perdida se estiver congelado, pokemon adjacentes curam  5% da vida perdida",gelo,0,60,35,10,,14
+Punho Congelado,Atk,5,SpA,5,Per,5,,,Esse pokemon tem rouba 10% do maior status do alvo caso ele esteja congelado,gelo,38,10,0,35,,15
+Amuleto sintilante,Mag,40,,,,,,,-,fada,40,0,32,10,,16
+Ídolo Perdido,,,,,,,,,Toda rodada rouba 4% da Mag de todos os inimigos ativos,fada,32,15,12,60,,17
+Arco dos Ventos,Vel,15,Per,5,,,,,Seus ataques tem mais 15% de assertividade,voador,34,4,0,35,,18
+Espada Envenenada,Atk,10,Per,10,,,,,Causa mais 20% de dano em inimigos envenenados,venenoso,50,0,0,12,,19
+Dente do Fim,CrC,30,,,,,,,-,venenoso,45,0,0,0,,20
+Arco de Ossos,Per,10,CrD,5,,,,,Esse pokemon tem 5% de assertividade a mais e 5% de chance de envenenar o alvo para cada area de distancia entre ele e o alvo,venenoso,48,0,0,48,,21
+Serra Toxica,,,,,,,,,"Seus ataques removem o efeito envenenado do alvo, mas quando atacam alguem envenenado tem 50% de vampirismo e causam mais 25% de dano",venenoso,62,32,5,45,,22
+Mão Sinistra,SpA,20,Per,20,,,,,seus ataques tem 5% de vampirismo,fantasma,55,5,0,5,,23
+Maldição,SpA,10,,,,,,,"Se o alvo tiver algum efeito negativo, ele perde 15% da Mag",fantasma,28,10,0,45,,24
+Capa Assombrada,,,,,,,,,"Todos os ataques contra esse pokemon tem menos 20% de assertividade, quando ele é atingido o atacante perde 5% de assertividade permanentemente",fantasma,0,65,0,50,,25
+Machado Amaldiçoado,,,,,,,,,Todos os seus ataques tem 30% de vampirismo,fantasma,20,45,0,8,,26
+Eternidade,,,,,,,,,Efeitos Positivos são infinitos nesse pokemon,cosmico,20,30,65,70,,27
+Elmo Cosmico,,,,,,,,,Esse pokemon é imune a efeitos negativos,cosmico,0,60,5,45,,28
+Mascara do Mosquito Gigante,Atk,10,Per,10,,,,,Todos os seus ataques tem 20% de vampirismo,inseto,48,28,0,8,,29
+Espada Mental,,,,,,,,,Seus ataques sempre removem ao menos 1 efeito positivo do alvo,psiquico,25,10,0,70,,30
+Elmo Psiônico,Def,5,SpD,5,,,,,"Suas defesas ficam iguais, fazendo uma media entre elas",psiquico,0,35,0,15,,31
+Mão que Tudo Ve,CrD,10,EnE,15,,,,,Sempre tem acesso a ver os pokemons da reserva do oponente,psiquico,20,0,5,70,,32
+Coração de Ferro,,,,,,,,,"Esse pokemon sofre menos 10% de dano sempre, toda vez que é atacado ganha 2 de Def e 2 de SpD",metal,0,75,0,8,,33
+Elmo Abençoado,Ene,40,,,,,,,-,metal,10,5,25,45,,34
+Placa Defensiva,Def,20,SpD,20,vida,5,,,-,metal,0,55,0,0,,35
+Botas Colossais,Def,25,Vel,15,,,,,O efeito do terreno sai assim que esse pokemon pisa nele,metal,5,42,0,55,,36
+Cinto do Gigante,Vida,60,,,,,,,Esse pokemon ganha 5% de vida maxima por turno,lutador,0,82,0,5,,37
+Faixa da Escolha,Vida,5,,,,,,,Esse pokemon é imune a perdas de Status,lutador,0,35,0,45,,38
+Punho Robusto,Atk,40,,,,,,,-,lutador,60,0,0,0,,39
+Estaca Terrestre,Per,40,,,,,,,-,terrestre,62,0,0,0,,40
+Pedra Flutuante,,,,,,,,,Esse pokemon não tem custo para se mover nem para trocar,pedra,8,8,10,80,,41
+Sismitarra Marcada,CrD,30,,,,,,,-,pedra,40,0,0,0,,42
+Cajado do Som,EnR,10,CrC,15,,,,,Esse pokemon ganha 1% de chance de critico em seus ataques com base na sua energia atual apos gastar a energia do ataque,sonoro,55,3,15,30,,43
+Sino Dourado,SpA,20,SpD,20,,,,,Esse pokemon todo turno ganha 10% da energia atual como energia extra ganha,sonoro,33,25,28,40,,44
+Emblema das Sombras,,,,,,,,,Executa inimigos com menos de 15% de vida,sombrio,75,0,0,35,,45
+Faca do Dragão,Per,15,Mag,15,EnR,5,,,-,dragao,45,0,15,28,,46
+Ombreira da Escama Ardente,Vida,25,,,,,,,Aumenta a sua defesa 10% quando é atacado por um ataque daquela defesa,dragao,0,58,0,18,,47
+Capa Alheia,SpD,40,,,,,,,-,normal,0,50,0,0,,48
+Chapéu do Bruxo,SpA,40,,,,,,,-,-,58,0,5,0,,49
+Espada Energizada,Ene,25,EnR,10,,,,,-,-,15,5,28,48,,50
+Quebra Barreira,Def,10,Atk,10,Spa,5,Spd,5,Causa 15% de dano a mais a pokemons com barreira,-,42,20,0,35,,51
+Besta Afiada,Atk,15,SpA,15,Per,15,,,-,-,62,0,0,5,,52
+Anjo Guardião,Vida,10,,,,,,,"Ao morrer, Reviva com 10% da vida maxima e 30% da magia como barreira e com o efeito imortal",-,0,85,5,25,,53
+Bastião Inabalavel,vida,15,Def,5,Spd,5,,,Todo fim de turno Aumenta a Def e a SpD de todos os aliados ao redor em 10% dos seus proprios status,-,0,55,75,15,,54
+Botas do Sucesso,Spd,25,Vel,10,,,,,Toda vez que esse pokemon se move ele ganha 1% de assertividade extra,-,15,35,0,50,,55
+Colete de Espinhos,Def,30,vida,10,,,,,Ao ser atingido por ataques normais devolve 20% do dano,-,22,62,0,12,,56
+Tiara Encantada,Mag,20,Vida,20,,,,,Ao ficar com 50% da vida ganha 50% da Mag como barreira,-,15,62,18,15,,57
+Coroa da Vitória,,,,,,,,,Sempre que for trocado venha com 60% da sua Ene em energia,-,12,5,30,65,,58
+Armadura Reforçada,Def,40,,,,,,,-,-,0,50,0,0,,59
+Centro Espiritual,Vida,15,Ene,5,Mag,5,,,Aumenta as curas fornecidas por esse pokemon em +25%,-,5,18,70,10,,60
+Essencia Radiante,,,,,,,,,Serve para deixar o pokemon em sua versão Radiante,-,0,0,0,85,,61
+Pedra da Ultra Evolução,,,,,,,,,Serve para deixar o pokemon em sua versão Ultra,-,0,0,0,90,,62
+Energia Gigantamax,,,,,,,,,Serve para deixar o pokemon em sua versão Gigantamax,-,0,0,0,95,,63
+Pedra da Mega Evolução,,,,,,,,,Serve para deixar o pokemon em sua versão Mega,-,0,0,0,88,,64

@@ -6,6 +6,10 @@ import sys
 from pathlib import Path
 
 import pygame
+try:
+    import moderngl  # noqa: F401
+except ImportError:
+    moderngl = None
 
 RAIZ = Path(__file__).resolve().parents[1]
 if str(RAIZ) not in sys.path:
@@ -13,6 +17,7 @@ if str(RAIZ) not in sys.path:
 
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
 from Codigo.ModulosGerais.Camera import CameraBatalha
+from Codigo.ModulosGerais.PipelineGrafica import PipelineGrafica
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
@@ -140,8 +145,10 @@ def montar_estado_inicial() -> dict:
     escolhidas = especies[:precisa] if len(especies) >= precisa else [random.choice(especies) for _ in range(precisa)]
 
     pokemons_serializados = []
-    areas_j = ["A1", "A2", "A3"]
-    areas_i = ["I1", "I2", "I3"]
+    areas_j = [f"A{i}" for i in range(1, 10)]
+    areas_i = [f"I{i}" for i in range(1, 10)]
+    random.shuffle(areas_j)
+    random.shuffle(areas_i)
 
     for lado_id, lado_visual, offset in ((50, "jogador", 1), (51, "inimigo", 101)):
         for i in range(6):
@@ -201,10 +208,64 @@ def montar_estado_inicial() -> dict:
     }
 
 
+def criar_janela(tamanho=(1920, 1080), flags=pygame.RESIZABLE):
+    if moderngl is not None:
+        try:
+            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
+            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
+            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
+            try:
+                return pygame.display.set_mode(tamanho, flags | pygame.OPENGL | pygame.DOUBLEBUF, vsync=0), True
+            except TypeError:
+                return pygame.display.set_mode(tamanho, flags | pygame.OPENGL | pygame.DOUBLEBUF), True
+        except pygame.error:
+            pass
+    return pygame.display.set_mode(tamanho, flags), False
+
+
+class JogoSimulador:
+    def __init__(self):
+        self.CONFIG = {"Shader": True}
+        self.INFO = {}
+
+
+class CenaSimuladorBatalha:
+    def __init__(self, controlador, fonte_overlay, btn_teste, clock):
+        self.controlador = controlador
+        self.fonte_overlay = fonte_overlay
+        self.btn_teste = btn_teste
+        self.clock = clock
+
+    def tela_atual_eh_complexa(self):
+        return True
+
+    def render_base(self, surface, JOGO, EVENTOS, dt):
+        _ = (JOGO, EVENTOS, dt)
+        surface.fill((8, 12, 18))
+        self.controlador.desenhar(surface)
+
+    def render_hud(self, surface, JOGO, EVENTOS, dt):
+        _ = (JOGO, EVENTOS, dt)
+        pygame.draw.rect(surface, (28, 36, 54), self.btn_teste, border_radius=10)
+        pygame.draw.rect(surface, (120, 144, 190), self.btn_teste, 2, border_radius=10)
+        txt_teste = self.fonte_overlay.render(f"Modo teste: {'ON' if self.controlador.modo_teste else 'OFF'}", True, (236, 242, 255))
+        surface.blit(txt_teste, txt_teste.get_rect(center=self.btn_teste.center))
+
+        fps = self.clock.get_fps()
+        txt_fps = self.fonte_overlay.render(f"FPS: {fps:5.1f}", True, (240, 245, 255))
+        surface.blit(txt_fps, txt_fps.get_rect(topright=(surface.get_width() - 16, 12)))
+
+
 def main() -> None:
     pygame.init()
     pygame.display.set_caption("Simulador Batalha - Fase 1")
-    tela = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
+    janela, janela_opengl = criar_janela()
+    tela = pygame.Surface(janela.get_size()).convert()
+    pipeline = PipelineGrafica(tela, tela_display=janela)
+    if janela_opengl and not pipeline.shader_disponivel():
+        janela = pygame.display.set_mode(tela.get_size(), pygame.RESIZABLE)
+        tela = pygame.Surface(janela.get_size()).convert()
+        pipeline = PipelineGrafica(tela, tela_display=janela)
     clock = pygame.time.Clock()
 
     estado_inicial = montar_estado_inicial()
@@ -213,6 +274,8 @@ def main() -> None:
     controlador.iniciar(estado_inicial)
     fonte_overlay = pygame.font.SysFont("consolas", 20, bold=True)
     btn_teste = pygame.Rect(20, 130, 170, 40)
+    jogo = JogoSimulador()
+    cena = CenaSimuladorBatalha(controlador, fonte_overlay, btn_teste, clock)
 
     rodando = True
     while rodando:
@@ -222,7 +285,14 @@ def main() -> None:
             if evento.type == pygame.QUIT:
                 rodando = False
             elif evento.type == pygame.VIDEORESIZE:
-                tela = pygame.display.set_mode((max(960, evento.w), max(540, evento.h)), pygame.RESIZABLE)
+                pipeline.liberar()
+                janela, janela_opengl = criar_janela((max(960, evento.w), max(540, evento.h)))
+                tela = pygame.Surface(janela.get_size()).convert()
+                pipeline = PipelineGrafica(tela, tela_display=janela)
+                if janela_opengl and not pipeline.shader_disponivel():
+                    janela = pygame.display.set_mode(tela.get_size(), pygame.RESIZABLE)
+                    tela = pygame.Surface(janela.get_size()).convert()
+                    pipeline = PipelineGrafica(tela, tela_display=janela)
                 controlador.camera.TamanhoTelaPx = (float(tela.get_width()), float(tela.get_height()))
             elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1 and btn_teste.collidepoint(evento.pos):
                 controlador.definir_modo_teste(not controlador.modo_teste)
@@ -231,18 +301,10 @@ def main() -> None:
         if controlador.solicitou_encerrar_batalha:
             rodando = False
             continue
-        tela.fill((8, 12, 18))
-        controlador.desenhar(tela)
-        pygame.draw.rect(tela, (28, 36, 54), btn_teste, border_radius=10)
-        pygame.draw.rect(tela, (120, 144, 190), btn_teste, 2, border_radius=10)
-        txt_teste = fonte_overlay.render(f"Modo teste: {'ON' if controlador.modo_teste else 'OFF'}", True, (236, 242, 255))
-        tela.blit(txt_teste, txt_teste.get_rect(center=btn_teste.center))
-
-        fps = clock.get_fps()
-        txt_fps = fonte_overlay.render(f"FPS: {fps:5.1f}", True, (240, 245, 255))
-        tela.blit(txt_fps, txt_fps.get_rect(topright=(tela.get_width() - 16, 12)))
+        pipeline.renderizar_frame(jogo=jogo, cena=cena, eventos=eventos, dt=dt)
         pygame.display.flip()
 
+    pipeline.liberar()
     pygame.quit()
 
 

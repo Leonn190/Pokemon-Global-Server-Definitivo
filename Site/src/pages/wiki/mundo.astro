@@ -9,7 +9,7 @@ import {
 import "../../Estilos/wiki.css";
 
 const dadosMundo = carregarWikiMundo();
-const { estruturas, biomas, resumo } = dadosMundo;
+const { estruturas, biomas, resumo, captura } = dadosMundo;
 const imagensEstruturasBrutas = import.meta.glob("@recursos/Visual/Mundo/Objetos/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
   eager: true,
   query: "?url",
@@ -121,6 +121,35 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
           </article>
         ))}
       </div>
+    </section>
+
+
+    <section class="mundo-secao mundo-captura" aria-labelledby="titulo-captura-mundo">
+      <div class="mundo-cabecalho-secao">
+        <div>
+          <p class="selo">Captura</p>
+          <h2 id="titulo-captura-mundo">Como a captura funciona no mundo</h2>
+        </div>
+        <p>
+          A captura compara a dificuldade do Pokémon com o poder da tentativa. A fórmula vem de
+          <code>Pokemons.toml</code>, então ajustes nas regras aparecem aqui sem precisar reescrever o site.
+        </p>
+      </div>
+
+      <article class="mundo-captura-card">
+        <p>
+          Primeiro o jogo calcula a dificuldade usando atributos do Pokémon, nível e IV. Depois calcula o poder
+          da tentativa com poder base, bola usada, frutas, bônus de bioma, maestria e captura crítica. Por fim,
+          cada check usa <code>chance = clamp({captura.baseCheck} + (poder - dificuldade) × {captura.escalaDiferenca}, {captura.checkMin}, {captura.checkMax})</code>.
+          A captura precisa passar em <strong>{captura.checksNecessarios}</strong> checks.
+        </p>
+        <div class="mundo-captura-dados" aria-label="Dados da regra de captura">
+          <span>Frutas por tentativa: <strong>{captura.limiteFrutas}</strong></span>
+          <span>Base do check: <strong>{captura.baseCheck}</strong></span>
+          <span>Limite do check: <strong>{captura.checkMin}% a {captura.checkMax}%</strong></span>
+          <span>Crítico: <strong>{captura.multiplicadorCritico}x</strong></span>
+        </div>
+      </article>
     </section>
 
     <section class="mundo-secao" aria-labelledby="titulo-estruturas-naturais">

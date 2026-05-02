@@ -1,36 +1,171 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiMenu from "../../Componentes/WikiMenu.astro";
+import { carregarWikiCombate } from "../../Codigo/CombateWikiDados.js";
+import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
+
+const dadosCombate = carregarWikiCombate();
+const { tabela, resumo, regra } = dadosCombate;
+const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
+const iconeTipo = (tipo) => iconesTipos[normalizarChave(tipo.nome ?? tipo)] ?? null;
+const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazio", vazio: true }];
 ---
 
-<Layout titulo="Combate | Wiki Pokémon Global Server" descricao="Área de Combate da wiki do Pokémon Global Server.">
+<Layout
+  titulo="Combate | Wiki Pokémon Global Server"
+  descricao="Wiki de combate do Pokémon Global Server, com arquitetura da batalha, fórmulas principais e tabela de fraquezas e resistências."
+>
   <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-combate">
-    <h1 id="titulo-combate">Combate</h1>
+    <h1 id="titulo-combate">Combate Global</h1>
   </section>
 
-  <section class="pokedex-topo" aria-label="Navegação da wiki">
-    <div class="pokedex-resumo wiki-placeholder-resumo" aria-label="Resumo da área">
+  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
+    <div class="pokedex-resumo" aria-label="Resumo da wiki de combate">
       <article>
-        <strong>0</strong>
-        <span>Registros publicados</span>
+        <strong>{resumo.tipos}</strong>
+        <span>Tipos na matriz</span>
       </article>
       <article>
-        <strong>0</strong>
-        <span>Categorias</span>
+        <strong>{resumo.tick}</strong>
+        <span>Tick de batalha</span>
       </article>
       <article>
-        <strong>Beta</strong>
-        <span>Estado da wiki</span>
+        <strong>{resumo.colunas}</strong>
+        <span>Colunas da tabela</span>
       </article>
     </div>
 
     <WikiMenu ativo="combate" />
   </section>
 
-  <section class="wiki-placeholder-card">
-    <p class="selo">Wiki em expansão</p>
-    <h2>Combate ainda vai receber dados próprios.</h2>
-    <p>Regras de batalha, turnos, energia, dano, colisões, indicadores e animações.</p>
-  </section>
+  <main class="wiki-combate" aria-label="Conteúdo da wiki de combate">
+    <section class="combate-intro">
+      <p class="selo">Wiki de combate</p>
+      <h2>Batalha por rodada, ações validadas pelo servidor e dano calculado por regra.</h2>
+      <p>
+        A batalha é montada no cliente e resolvida no servidor. No código, <code>MontadorJogadas.py</code>
+        prepara as ações do jogador, <code>ColetorAcoes.py</code> valida o pacote recebido, <code>RodadorTurno.py</code>
+        executa os passos da rodada, <code>PokemonBatalha.py</code> aplica dano, energia e efeitos,
+        <code>FraquezasResistencia.py</code> lê a matriz de tipos e <code>LeitorLogs.py</code> usa o log para animar o resultado no client.
+      </p>
+    </section>
+
+    <section class="combate-faixa" aria-label="Resumo das regras principais">
+      <article>
+        <span>01</span>
+        <h3>Rodada</h3>
+        <p>O jogador escolhe ações, o servidor valida tudo e depois roda a sequência. O log final vira a base da animação.</p>
+      </article>
+      <article>
+        <span>02</span>
+        <h3>Energia</h3>
+        <p>Movimento, troca e ataque gastam energia. A segunda ação do mesmo Pokémon recebe custo extra.</p>
+      </article>
+      <article>
+        <span>03</span>
+        <h3>Dano</h3>
+        <p>O dano passa por multiplicadores, tipo, STAB, crítico, defesa, perfuração e durabilidade.</p>
+      </article>
+    </section>
+
+    <section class="combate-secao" aria-labelledby="titulo-formulas-combate">
+      <div class="combate-cabecalho">
+        <div>
+          <p class="selo">Regras</p>
+          <h2 id="titulo-formulas-combate">Fórmulas principais</h2>
+        </div>
+        <p>
+          Estes blocos resumem o que a batalha usa hoje. A matriz de tipos vem do CSV de fraquezas e resistências,
+          e os parâmetros gerais vêm das regras de batalha.
+        </p>
+      </div>
+
+      <div class="combate-formulas">
+        <article>
+          <h3>Dano</h3>
+          <p>
+            <strong>Dano final</strong> ≈ dano bruto × condicionais × amplificação × tipo × STAB × crítico ×
+            <code>100 / (100 + defesa efetiva)</code> − durabilidade.
+          </p>
+          <p>
+            Defesa efetiva usa <code>max(0, defesa - Per/2)</code>. Se o tipo do ataque combina com o usuário,
+            o STAB aplica <code>1.2x</code>.
+          </p>
+        </article>
+
+        <article>
+          <h3>Tempo e custo</h3>
+          <p>
+            O tick atual da regra é <strong>{regra.tickTexto}</strong>. Para múltiplas ações, a regra registra
+            <strong>{regra.segundaAcaoTexto}</strong> como referência de custo da segunda ação.
+          </p>
+          <p>
+            O custo base vem da ação: movimento, troca, captura ou o custo configurado no JSON de propriedades do ataque.
+          </p>
+        </article>
+
+        <article>
+          <h3>Colisão</h3>
+          <p>
+            As colisões usam restituição de <strong>{regra.restituicaoColisao}</strong> e dano por massa/velocidade
+            de <strong>{regra.danoColisao}</strong> na regra atual.
+          </p>
+          <p>
+            Isso deixa impacto físico separado do dano normal de ataque, mantendo o resultado registrado no log.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="combate-secao" aria-labelledby="titulo-tabela-fr">
+      <div class="combate-cabecalho">
+        <div>
+          <p class="selo">Tipos</p>
+          <h2 id="titulo-tabela-fr">Efetividades, fraquezas, resistências e imunidades</h2>
+        </div>
+        <p>
+          A tabela abaixo é montada diretamente a partir de <code>Pokemon Global Server - Sistema FR.csv</code>.
+          Se o CSV mudar, os ícones desta área mudam junto.
+        </p>
+      </div>
+
+      <div class="combate-tabela-fr" role="table" aria-label="Tabela de fraquezas e resistências">
+        <div class="combate-fr-cabecalho" role="row">
+          <span role="columnheader">Tipo</span>
+          <span role="columnheader">Super eficaz contra</span>
+          <span role="columnheader">Fraquezas</span>
+          <span role="columnheader">Resiste</span>
+          <span role="columnheader">Imune</span>
+        </div>
+
+        {tabela.map((linha) => (
+          <article class="combate-fr-linha" role="row">
+            <div class="combate-fr-tipo" role="cell">
+              <span class="tipo-bola pequena">
+                {iconeTipo(linha) ? <img src={iconeTipo(linha)} alt="" loading="lazy" decoding="async" /> : <b>{linha.nome.slice(0, 1)}</b>}
+              </span>
+              <strong>{linha.nome}</strong>
+            </div>
+
+            {[linha.superEfetivo, linha.fraquezas, linha.resistencias, linha.imunidades].map((grupo) => (
+              <div class="combate-fr-icones" role="cell">
+                {listaIcones(grupo).map((tipo) => (
+                  tipo.vazio ? <span class="combate-fr-vazio">-</span> :
+                  <span class="tipo-bola pequena" title={tipo.nome} aria-label={tipo.nome}>
+                    {iconeTipo(tipo) ? <img src={iconeTipo(tipo)} alt="" loading="lazy" decoding="async" /> : <b>{tipo.nome.slice(0, 1)}</b>}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
 </Layout>

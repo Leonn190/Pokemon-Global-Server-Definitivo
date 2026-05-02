@@ -7,6 +7,7 @@ const NOMES_REGRAS = {
   estruturas: "EstruturasNaturais.toml",
   biomas: "Biomas.toml",
   terreno: "Terreno.toml",
+  pokemons: "Pokemons.toml",
 };
 
 const ROTULOS_BIOMAS = {
@@ -325,11 +326,35 @@ function montarBiomas(biomasToml, estruturasPorObjeto) {
   });
 }
 
+
+function montarCaptura(pokemonsToml) {
+  const captura = pokemonsToml.captura ?? {};
+  const dificuldade = captura.dificuldade ?? {};
+  const poder = captura.poder ?? {};
+  const chance = captura.chance ?? {};
+  const falhas = captura.falhas ?? {};
+
+  return {
+    limiteFrutas: numero(captura.limite_frutas) ?? 2,
+    formulaDificuldade: limparTexto(dificuldade.formula) || "min + (max - min) * dificuldade_do_pokemon",
+    formulaPoder: limparTexto(poder.formula) || "poder_base + poder_bola + bônus",
+    formulaChance: limparTexto(chance.formula) || "chance_check = clamp(base_check + diferença_de_poder, mínimo, máximo)",
+    baseCheck: formatarNumero(chance.base_check, 0),
+    escalaDiferenca: formatarNumero(chance.escala_diferenca, 2),
+    checkMin: formatarNumero(chance.check_min, 0),
+    checkMax: formatarNumero(chance.check_max, 0),
+    checksNecessarios: numero(chance.checks_necessarios) ?? 3,
+    multiplicadorCritico: formatarNumero(poder.multiplicador_critico, 2),
+    falhasParaIrritar: numero(falhas.falhas_para_irritar) ?? 5,
+  };
+}
+
 function carregarRegrasMundo() {
   return {
     estruturas: carregarToml(NOMES_REGRAS.estruturas, "regras de estruturas naturais"),
     biomas: carregarToml(NOMES_REGRAS.biomas, "regras de biomas"),
     terreno: carregarToml(NOMES_REGRAS.terreno, "regras de terreno"),
+    pokemons: carregarToml(NOMES_REGRAS.pokemons, "regras de pokémons"),
   };
 }
 
@@ -345,6 +370,7 @@ export function carregarWikiMundo() {
   return {
     estruturas,
     biomas,
+    captura: montarCaptura(regras.pokemons),
     resumo: {
       estruturas: estruturas.length,
       biomas: biomas.length,

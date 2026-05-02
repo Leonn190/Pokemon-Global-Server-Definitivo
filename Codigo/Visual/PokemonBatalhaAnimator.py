@@ -7,6 +7,7 @@ from typing import Tuple
 
 import pygame
 
+from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Visual.ArenaAnimator import ArenaAnimator
 from Codigo.Visual.AuxiliaresVisuais import EFEITOS_ATAQUE_FPS
 from Codigo.Visual.ContatoIrregularAnimator import ContatoIrregularAnimator
@@ -254,6 +255,30 @@ class PokemonAnimator:
     def animar_efeito(self, pokemon, nome_efeito_gif, posicao="alvo"):
         return self.arena_animator.animar_efeito(pokemon, nome_efeito_gif, posicao=posicao)
 
+    def animar_captura_batalha(self, usuario, alvo, dados):
+        if alvo is None:
+            return None
+        origem = self._posicao_mundo(usuario) or self._posicao_mundo(alvo)
+        destino = self._posicao_mundo(alvo)
+        if origem is None or destino is None:
+            return None
+        return self._adicionar(
+            {
+                "tipo": "captura_batalha",
+                "usuario": usuario,
+                "alvo": alvo,
+                "origem": origem,
+                "destino": destino,
+                "bola_nome": str((dados or {}).get("bola_nome") or "Pokeball"),
+                "item_base_id": str((dados or {}).get("item_base_id") or ""),
+                "checagens": list((dados or {}).get("checagens") or []),
+                "capturado": bool((dados or {}).get("capturado", False)),
+                "tempo": 0.0,
+                "duracao": 2.35,
+                "bloqueante": True,
+            }
+        )
+
     def atualizar(self, dt):
         dt = max(0.0, float(dt or 0.0))
         self.projeteis.atualizar(dt)
@@ -280,6 +305,8 @@ class PokemonAnimator:
             elif tipo in {"troca"}:
                 self._desenhar_fantasmas_troca(surface, anim)
                 self._desenhar_circulos_troca(surface, anim)
+            elif tipo == "captura_batalha":
+                self._desenhar_captura_batalha(surface, anim)
 
     def esta_ocupado(self):
         return self.projeteis.esta_ocupado() or self.contatos_irregulares.esta_ocupado() or self.arena_animator.esta_ocupado() or any(bool(anim.get("bloqueante", True)) for anim in self.animacoes)
@@ -348,6 +375,19 @@ class PokemonAnimator:
                     entrada.AlphaVisual = 0
                 else:
                     entrada.AlphaVisual = int(255 * _clamp((t - 0.45) / 0.55, 0.0, 1.0))
+        elif tipo == "captura_batalha":
+            alvo = anim.get("alvo")
+            if alvo is not None:
+                if t < 0.28:
+                    alvo.AlphaVisual = 255
+                elif t < 0.46:
+                    alvo.AlphaVisual = int(255 * _clamp(1.0 - ((t - 0.28) / 0.18), 0.0, 1.0))
+                    alvo.RotacaoVisual = 360.0 * _clamp((t - 0.28) / 0.18, 0.0, 1.0)
+                elif not bool(anim.get("capturado")) and t > 0.78:
+                    alvo.AlphaVisual = int(255 * _clamp((t - 0.78) / 0.18, 0.0, 1.0))
+                    alvo.RotacaoVisual = 0.0
+                elif bool(anim.get("capturado")):
+                    alvo.AlphaVisual = 0
 
     def _finalizar_animacao(self, anim):
         tipo = str(anim.get("tipo") or "")
@@ -388,6 +428,18 @@ class PokemonAnimator:
             if pokemon is not None:
                 pokemon.Vivo = False
                 pokemon.VidaAtual = 0.0
+        elif tipo == "captura_batalha":
+            alvo = anim.get("alvo")
+            if alvo is not None:
+                if bool(anim.get("capturado")):
+                    alvo.Vivo = False
+                    alvo.Ativo = False
+                    alvo.EmReserva = False
+                    alvo.AreaId = None
+                    alvo.AlphaVisual = 0
+                else:
+                    alvo.AlphaVisual = 255
+                alvo.RotacaoVisual = 0.0
 
     def _posicao_mundo(self, alvo):
         if alvo is None:
@@ -578,6 +630,47 @@ class PokemonAnimator:
         sprite = pygame.Surface((lado, lado), pygame.SRCALPHA)
         pygame.draw.circle(sprite, cor, (lado // 2, lado // 2), lado // 2)
         surface.blit(sprite, sprite.get_rect(center=(int(pos[0]), int(pos[1]))))
+
+    def _desenhar_captura_batalha(self, surface, anim):
+        t = self._progresso(anim)
+        origem = anim.get("origem")
+        destino = anim.get("destino")
+        if not origem or not destino:
+            return
+        if t < 0.26:
+            p = t / 0.26
+            p = p * p * (3 - 2 * p)
+            pos_mundo = (_interp(origem[0], destino[0], p), _interp(origem[1], destino[1], p) - math.sin(p * math.pi) * 1.2)
+        else:
+            pos_mundo = destino
+        pos = self._posicao_tela(pos_mundo)
+        if pos is None:
+            return
+        checks = list(anim.get("checagens") or [])
+        fase_checks = _clamp((t - 0.48) / 0.30, 0.0, 1.0)
+        tremor = 0.0
+        if 0.48 <= t <= 0.82 and checks:
+            tremor = math.sin(fase_checks * math.pi * max(1, len(checks)) * 2.0) * 8.0
+        if not bool(anim.get("capturado")) and t > 0.82:
+            pos = (pos[0], pos[1] - math.sin(_clamp((t - 0.82) / 0.18, 0.0, 1.0) * math.pi) * 26.0)
+        size = max(26, int(max(1, getattr(getattr(self.controlador, "camera", None), "TilePx", 40) or 40) * 0.72))
+        item = {"Nome": anim.get("bola_nome") or "Pokeball", "Code": anim.get("item_base_id") or ""}
+        sprite = ItemInventario.surface_item(item, size)
+        if sprite is None:
+            sprite = pygame.Surface((size, size), pygame.SRCALPHA)
+            pygame.draw.circle(sprite, (245, 248, 255), (size // 2, size // 2), size // 2)
+            pygame.draw.circle(sprite, (218, 52, 68), (size // 2, size // 2), size // 2, max(2, size // 10))
+            pygame.draw.line(sprite, (34, 40, 54), (2, size // 2), (size - 2, size // 2), max(2, size // 12))
+        rect = sprite.get_rect(center=(int(pos[0] + tremor), int(pos[1])))
+        surface.blit(sprite, rect)
+        if 0.28 <= t <= 0.45:
+            alvo = anim.get("alvo")
+            alvo_pos = self._posicao_tela(self._posicao_mundo(alvo))
+            if alvo_pos is not None:
+                local = _clamp((t - 0.28) / 0.17, 0.0, 1.0)
+                alpha = int(180 * (1.0 - local))
+                raio = int(18 + 70 * local)
+                pygame.draw.circle(surface, (128, 218, 255, alpha), (int(alvo_pos[0]), int(alvo_pos[1])), raio, max(3, raio // 8))
 
     def _desenhar_circulos_troca(self, surface, anim):
         t = self._progresso(anim)

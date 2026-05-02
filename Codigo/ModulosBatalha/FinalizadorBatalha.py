@@ -103,7 +103,8 @@ class FinalizadorBatalha:
             return
         persistencia = resultado.get("persistencia") if isinstance(resultado, dict) and isinstance(resultado.get("persistencia"), dict) else {}
         pokemons = persistencia.get("pokemons") if isinstance(persistencia.get("pokemons"), dict) else {}
-        if not pokemons:
+        inventario_resultado = resultado.get("inventario_jogador") if isinstance(resultado.get("inventario_jogador"), dict) else {}
+        if not pokemons and not inventario_resultado:
             return
         contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
         avisos = []
@@ -123,7 +124,24 @@ class FinalizadorBatalha:
                 self._aplicar_xp(alvo, dados.get("xp_ganho"))
         if avisos:
             contexto.setdefault("avisos_persistencia_batalha", []).extend(avisos)
-        inventario = self._inventario_atualizado_pos_batalha(jogo, contexto)
+        inventario = self._inventario_atualizado_pos_batalha(jogo, contexto) or deepcopy(inventario_resultado)
+        if inventario_resultado:
+            for chave in ("itens", "doces", "limite_itens", "limite_slots", "limite_pokemons", "limite_times_pokemon", "slot_selecionado"):
+                if chave in inventario_resultado:
+                    inventario[chave] = deepcopy(inventario_resultado.get(chave))
+            capturados = resultado.get("pokemons_capturados") if isinstance(resultado.get("pokemons_capturados"), list) else []
+            if capturados:
+                inventario.setdefault("pokemons", [])
+                existentes = {str((p or {}).get("id") or (p or {}).get("id_original") or "") for p in inventario.get("pokemons", []) if isinstance(p, dict)}
+                for capturado in capturados:
+                    if not isinstance(capturado, dict):
+                        continue
+                    chave = str(capturado.get("id") or capturado.get("id_original") or "")
+                    if chave and chave in existentes:
+                        continue
+                    inventario["pokemons"].append(deepcopy(capturado))
+                    if chave:
+                        existentes.add(chave)
         if inventario:
             jogo.INFO.setdefault("PlayerDadosServer", {})["inventario"] = inventario
             jogo.INFO["SincronizacaoPosBatalhaMundo"] = {

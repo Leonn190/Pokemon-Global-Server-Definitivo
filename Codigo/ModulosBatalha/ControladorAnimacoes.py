@@ -148,6 +148,12 @@ class ControladorAnimacoes:
         elif tipo == "pokemon_morreu":
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             out.append(self.animator.animar_morrer(poke))
+        elif tipo == "captura_batalha_resultado":
+            usuario = ctrl.pokemons_por_id.get(str(dados.get("usuario_id") or ""))
+            alvo = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or ""))
+            lado_origem = dados.get("lado_id", getattr(usuario, "lado_id", None))
+            origem = ctrl.posicao_captura_lado_mundo(lado_origem) if hasattr(ctrl, "posicao_captura_lado_mundo") else None
+            out.append(self.animator.animar_captura_batalha(origem or usuario, alvo, dados))
         elif tipo in {"passiva", "passivo"}:
             poke = ctrl.pokemons_por_id.get(str(dados.get("pokemon_id") or ""))
             if poke is not None and hasattr(poke, "animar_variacao_status"):

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import copy
 import math
 from types import SimpleNamespace
 
 import pygame
 
+from Codigo.Geradores.Ator import Ator
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.ControladorAnimacoes import ControladorAnimacoes
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
@@ -50,6 +52,10 @@ class ControladorBatalha:
         self.server_batalha = ServerBatalha
         self.clima_atual = None
         self.ator = None
+        self.contexto_batalha = {}
+        self._ator_visual_player = None
+        self._ator_visual_npc = None
+        self._respiracao_atores_batalha = 0.0
 
         self.timer_rodada = 1.0
         self.timer_rodada_max = 45.0
@@ -100,9 +106,35 @@ class ControladorBatalha:
         if inventario is not None and hasattr(inventario, "serializar"):
             dados.setdefault("inventario", inventario.serializar())
 
+    def inventario_local_serializado(self):
+        ator = self.ator_local()
+        inventario = getattr(ator, "Inventario", None)
+        if inventario is not None and hasattr(inventario, "serializar"):
+            return inventario.serializar()
+        jogo = getattr(self, "jogo", None)
+        dados = getattr(jogo, "INFO", {}).get("PlayerDadosServer") if jogo is not None and isinstance(getattr(jogo, "INFO", None), dict) else {}
+        inv = dados.get("inventario") if isinstance(dados, dict) and isinstance(dados.get("inventario"), dict) else {}
+        return copy.deepcopy(inv)
+
+    def aplicar_inventario_batalha(self, inventario):
+        if not isinstance(inventario, dict):
+            return
+        ator = self.ator_local()
+        inv_obj = getattr(ator, "Inventario", None)
+        if inv_obj is not None and hasattr(inv_obj, "aplicar_serializado"):
+            inv_obj.aplicar_serializado(inventario)
+        jogo = getattr(self, "jogo", None)
+        if jogo is not None and isinstance(getattr(jogo, "INFO", None), dict):
+            dados = jogo.INFO.setdefault("PlayerDadosServer", {})
+            dados["inventario"] = copy.deepcopy(inventario)
+
     def iniciar(self, estado_inicial):
         estado = dict(estado_inicial or {})
+        self.contexto_batalha = dict(estado)
         estado_cliente = dict(estado)
+        tipo_estado = str(estado.get("tipo_batalha") or estado.get("tipo") or self.tipo_batalha).strip().lower()
+        if tipo_estado == "confronto" and not bool(estado.get("modo_teste", self.modo_teste)):
+            estado.setdefault("inventario_jogador", self.inventario_local_serializado())
         estado.setdefault("id_partida", self.id_partida)
         estado.setdefault("lado_jogador", self.lado_jogador)
         resposta_inicial = self.server_batalha.inicializar_batalha(estado)
@@ -148,6 +180,7 @@ class ControladorBatalha:
         self.id_partida = str(estado.get("id_partida") or self.id_partida)
         self.timer_rodada = self.timer_rodada_max
         self.estado_batalha = str(estado.get("estado_batalha") or "montando_jogada")
+        self._preparar_atores_visuais_batalha()
 
     def criar_componentes(self):
         self.player_batalha = PlayerBatalha(self)
@@ -163,6 +196,7 @@ class ControladorBatalha:
         self._ultimo_dt = float(dt or 0.0)
         self.camera.processar_eventos(eventos)
         self.camera.atualizar(dt)
+        self._respiracao_atores_batalha += max(0.0, float(dt or 0.0))
 
         if self.estado_batalha == "montando_jogada":
             self.timer_rodada = max(0.0, self.timer_rodada - float(dt))
@@ -206,6 +240,8 @@ class ControladorBatalha:
     def desenhar(self, surface):
         if self.arena is None:
             return
+        if self.hud is not None:
+            self.hud.preparar_layout(surface)
         self.arena.renderizar(surface, self.camera)
         areas_destacadas = []
         reservas_destacadas = []
@@ -228,6 +264,8 @@ class ControladorBatalha:
         if getattr(self.montador_jogadas, "indicador_previa", None) is not None:
             self.montador_jogadas.indicador_previa.atualizar(dt=self._ultimo_dt)
             self.montador_jogadas.indicador_previa.desenhar(surface, self.camera)
+
+        self._desenhar_atores_visuais_batalha(surface)
 
         for pokemon in self.pokemons:
             if pokemon.esta_ativo() and not pokemon.esta_na_reserva():
@@ -393,6 +431,8 @@ class ControladorBatalha:
         self.rodada_atual = int(resultado.get("rodada_atual", self.rodada_atual) or self.rodada_atual)
         if "clima_atual" in resultado:
             self.clima_atual = resultado.get("clima_atual")
+        if isinstance(resultado.get("inventario_jogador"), dict):
+            self.aplicar_inventario_batalha(resultado.get("inventario_jogador"))
         self.estado_batalha = str(resultado.get("estado_batalha") or ("finalizada" if resultado.get("finalizada") else "montando_jogada"))
         if bool(resultado.get("finalizada")):
             self.estado_batalha = "finalizada"
@@ -401,6 +441,102 @@ class ControladorBatalha:
     def batalha_usa_ia(self):
         tipo = str(self.tipo_batalha or "").strip().lower()
         return tipo in {"confronto", "treinador", "trainer"} and not bool(self.modo_teste)
+
+    def posicao_captura_lado_tela(self, lado_id=None):
+        pos = self.posicao_captura_lado_mundo(lado_id)
+        if pos is None or self.camera is None:
+            return None
+        try:
+            return self.camera.mundo_para_tela_px(pos)
+        except Exception:
+            return None
+
+    def posicao_captura_lado_mundo(self, lado_id=None):
+        if self.arena is None:
+            return None
+        lado = int(lado_id if lado_id is not None else self.lado_jogador)
+        aliado = int(lado) == int(self.lado_jogador)
+        area_id = "A7" if aliado else "I3"
+        area = self.arena.obter_area_por_id(area_id)
+        if not area or not isinstance(area.get("rect"), pygame.Rect):
+            return self.arena.centro_area(area_id)
+        rect = area["rect"]
+        margem = 1.1
+        if aliado:
+            return (float(rect.left) - margem, float(rect.centery))
+        return (float(rect.right) + margem, float(rect.centery))
+
+    def _preparar_atores_visuais_batalha(self):
+        tile = max(1, int(getattr(self.camera, "TilePx", 40) or 40)) if self.camera is not None else 40
+        self._ator_visual_player = Ator(nome_skin=self._skin_player_batalha(), posicao=(0.0, 0.0), escala_skin_tiles=1.0, tile_px=tile)
+        npc_skin = self._skin_npc_batalha()
+        self._ator_visual_npc = Ator(nome_skin=npc_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.0, tile_px=tile) if npc_skin else None
+
+    def _skin_player_batalha(self):
+        if self.ator is not None and getattr(self.ator, "NomeSkin", None):
+            return str(getattr(self.ator, "NomeSkin"))
+        jogo = getattr(self, "jogo", None)
+        dados = getattr(jogo, "INFO", {}).get("PlayerDadosServer") if jogo is not None and isinstance(getattr(jogo, "INFO", None), dict) else {}
+        for chave in ("skin", "nome_skin", "NomeSkin"):
+            if isinstance(dados, dict) and dados.get(chave):
+                return str(dados.get(chave))
+        perfil = self.perfil_local()
+        skins = list(getattr(perfil, "SkinsLiberadas", []) or [])
+        return str(skins[0] if skins else "S1.png")
+
+    def _skin_npc_batalha(self):
+        tipo = str(self.tipo_batalha or "").strip().lower()
+        if tipo not in {"treinador", "trainer"}:
+            return ""
+        ctx = dict(getattr(self, "contexto_batalha", {}) or {})
+        npc = ctx.get("npc_contexto") if isinstance(ctx.get("npc_contexto"), dict) else {}
+        estado = npc.get("estado") if isinstance(npc.get("estado"), dict) else {}
+        return str(npc.get("skin") or estado.get("skin") or "1.png")
+
+    def _desenhar_atores_visuais_batalha(self, surface):
+        tipo = str(self.tipo_batalha or "").strip().lower()
+        if tipo not in {"confronto", "treinador", "trainer"} or bool(self.modo_teste):
+            return
+        if self._ator_visual_player is None:
+            self._preparar_atores_visuais_batalha()
+        self._desenhar_ator_captura(surface, self._ator_visual_player, self.lado_jogador)
+        if tipo in {"treinador", "trainer"}:
+            self._desenhar_ator_captura(surface, self._ator_visual_npc, self.obter_lado_ia())
+
+    def _desenhar_ator_captura(self, surface, ator, lado_id):
+        if ator is None or not hasattr(ator, "Desenhador"):
+            return
+        pos_mundo = self.posicao_captura_lado_mundo(lado_id)
+        pos_tela = self.posicao_captura_lado_tela(lado_id)
+        if pos_mundo is None or pos_tela is None:
+            return
+        if self.camera is not None and hasattr(ator, "set_tile_px"):
+            ator.set_tile_px(max(1, int(getattr(self.camera, "TilePx", 40) or 40)))
+        ator.definir_posicao(float(pos_mundo[0]), float(pos_mundo[1]))
+        mouse = pygame.mouse.get_pos()
+        dx = float(mouse[0]) - float(pos_tela[0])
+        dy = float(mouse[1]) - float(pos_tela[1])
+        if abs(dx) + abs(dy) > 0.001:
+            ator.definir_angulo_olhar((math.degrees(math.atan2(-dy, dx)) + 360.0) % 360.0)
+        ator.Desenhador.desenhar(surface, pos_tela, mouse_pos=mouse, angulo_graus=getattr(ator, "AnguloOlhar", 0.0), respiracao_tempo=self._respiracao_atores_batalha)
+
+    def nome_jogador_batalha(self):
+        ator = self.ator_local()
+        perfil = getattr(ator, "Perfil", None)
+        for valor in (
+            getattr(ator, "Nome", None),
+            getattr(perfil, "Nome", None),
+            getattr(perfil, "nome", None),
+        ):
+            if str(valor or "").strip():
+                return str(valor).strip()
+        jogo = getattr(self, "jogo", None)
+        info = getattr(jogo, "INFO", {}) if jogo is not None else {}
+        dados = info.get("PlayerDadosServer") if isinstance(info, dict) else {}
+        for chave in ("nome", "Nome", "usuario", "Usuario", "player_nome"):
+            if isinstance(dados, dict) and str(dados.get(chave) or "").strip():
+                return str(dados.get(chave)).strip()
+        return "Jogador"
 
     def obter_lado_ia(self):
         for pokemon in self.pokemons:

@@ -25,6 +25,8 @@ class PlayerBatalha:
                 self.processar_mouse_up(evento.pos)
 
     def processar_movimento_mouse(self, pos):
+        if getattr(getattr(self.controlador, "hud", None), "seletor_captura", None) is not None:
+            self.controlador.hud.seletor_captura.atualizar_arraste(pos)
         montador = self.controlador.montador_jogadas
         if self._drag_pendente_pokemon is not None and self._drag_pendente_pos is not None and not self.arrastando:
             dx = float(pos[0]) - float(self._drag_pendente_pos[0])
@@ -42,6 +44,12 @@ class PlayerBatalha:
     def processar_mouse_down(self, pos_mouse):
         ctrl = self.controlador
         montador = ctrl.montador_jogadas
+        seletor = getattr(getattr(ctrl, "hud", None), "seletor_captura", None)
+        if seletor is not None and seletor.iniciar_arraste(pos_mouse):
+            self.arrastando = False
+            self._drag_pendente_pokemon = None
+            self._drag_pendente_pos = None
+            return
         if ctrl.hud and ctrl.hud.consumiu_clique(pos_mouse):
             return
 
@@ -57,6 +65,13 @@ class PlayerBatalha:
         self.processar_clique(pos_mouse)
 
     def processar_mouse_up(self, pos_mouse):
+        seletor = getattr(getattr(self.controlador, "hud", None), "seletor_captura", None)
+        if seletor is not None and seletor.arraste is not None:
+            seletor.finalizar_arraste(pos_mouse)
+            self.arrastando = False
+            self._drag_pendente_pokemon = None
+            self._drag_pendente_pos = None
+            return
         if self.arrastando:
             self.controlador.montador_jogadas.soltar_arraste(pos_mouse)
             self.arrastando = False

@@ -13,6 +13,8 @@ from SimuladorServerJogo.Batalha.ResolvedorFlags import ResolvedorFlags
 from SimuladorServerJogo.Batalha.BatalhaIA.ControladorIA import ControladorIA
 from SimuladorServerJogo.Batalha.PokemonBatalha import PokemonBatalha
 from SimuladorServerJogo.Batalha.RodadorTurno import RodadorTurno
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import materializar_pokemon
+from SimuladorServerJogo.Mundo.ServicoInventario import ServicoInventario
 
 
 def _jsonavel(dados):
@@ -45,6 +47,9 @@ class Partida:
             if chave in dados and chave not in self.arena_contexto:
                 self.arena_contexto[chave] = copy.deepcopy(dados.get(chave))
         self.lados: dict[int, dict] = {}
+        self.inventarios_lado: dict[int, dict] = {}
+        self.pokemons_capturados_lado: dict[int, list[dict]] = {}
+        self._servico_inventario = ServicoInventario()
         self.ids_batalha = IDsBatalha()
         self.resolvedor_flags = ResolvedorFlags()
         self.pokemons_por_id = {}
@@ -68,6 +73,7 @@ class Partida:
         self._ia_futures = {}
         self._desabilitar_thread_ia = False
         self._inicializar_lados(dados)
+        self._inicializar_inventarios(dados)
         self._inicializar_pokemons(dados)
         self._registrar_passivas_pokemon()
         self.verificar_fim_batalha()
@@ -145,6 +151,15 @@ class Partida:
                 50: {"lado_id": self.ids_batalha.novo_id_lado(0), "lado_visual": "jogador"},
                 51: {"lado_id": self.ids_batalha.novo_id_lado(1), "lado_visual": "inimigo"},
             }
+
+    def _inicializar_inventarios(self, dados):
+        inv = dados.get("inventario_jogador") if isinstance(dados.get("inventario_jogador"), dict) else dados.get("inventario")
+        if isinstance(inv, dict):
+            self.inventarios_lado[int(self.lado_jogador)] = copy.deepcopy(inv)
+        inventarios = dados.get("inventarios_lado") if isinstance(dados.get("inventarios_lado"), dict) else {}
+        for lado, inventario in inventarios.items():
+            if isinstance(inventario, dict):
+                self.inventarios_lado[_i(lado, 0)] = copy.deepcopy(inventario)
 
     def novo_id_pokemon(self, lado_id):
         return self.ids_batalha.novo_id_pokemon(lado_id)
@@ -278,6 +293,9 @@ class Partida:
             "vencedor": self.vencedor,
             "perdedor": self.perdedor,
         }
+        inv_jogador = self.inventarios_lado.get(int(self.lado_jogador))
+        if isinstance(inv_jogador, dict):
+            estado["inventario_jogador"] = copy.deepcopy(inv_jogador)
         if self.regras:
             estado["regras"] = copy.deepcopy(self.regras)
         if self.regras_mundo:
@@ -302,6 +320,7 @@ class Partida:
             return {"status": "erro", "mensagem": "Lado inexistente", "id_partida": self.id_partida, "estado_batalha": self.estado_partida, "avisos": [], "erros": ["lado_inexistente"]}
         try:
             self.jogadas_recebidas[lado] = _jsonavel(jogada if isinstance(jogada, dict) else {})
+            self._atualizar_inventario_por_jogada(lado, jogada)
         except Exception as exc:
             return {"status": "erro", "mensagem": "Jogada invalida", "id_partida": self.id_partida, "estado_batalha": self.estado_partida, "avisos": [], "erros": [str(exc)]}
         if bool((jogada or {}).get("resolver_lados_ausentes")):
@@ -311,6 +330,13 @@ class Partida:
             self.estado_partida = "aguardando"
             return {"status": "ok", "mensagem": "Jogada recebida", "id_partida": self.id_partida, "estado_batalha": "aguardando", "avisos": [], "erros": []}
         return self.resolver_rodada()
+
+    def _atualizar_inventario_por_jogada(self, lado, jogada):
+        if not isinstance(jogada, dict):
+            return
+        inv = jogada.get("inventario_jogador") if isinstance(jogada.get("inventario_jogador"), dict) else jogada.get("inventario")
+        if isinstance(inv, dict):
+            self.inventarios_lado[int(lado)] = copy.deepcopy(inv)
 
     def receber_jogadas_modo_teste(self, jogadas):
         if not isinstance(jogadas, list):
@@ -479,6 +505,114 @@ class Partida:
 
     def obter_pokemon(self, id_pokemon):
         return self.pokemons_por_id.get(str(id_pokemon or ""))
+
+    def obter_inventario_lado(self, lado_id):
+        return self.inventarios_lado.setdefault(int(lado_id), {"itens": [], "pokemons": []})
+
+    def tem_pokebola_batalha(self, lado_id, item_base_id=None, item_nome=None):
+        inv = self.obter_inventario_lado(lado_id)
+        alvo_code = str(item_base_id or "").strip().lower()
+        alvo_nome = str(item_nome or "").strip().lower()
+        for item in list(inv.get("itens") or []):
+            if not isinstance(item, dict):
+                continue
+            code = str(item.get("Code") or item.get("code") or "").strip().lower()
+            nome = str(item.get("Nome") or item.get("nome") or "").strip().lower()
+            if alvo_code and code != alvo_code:
+                continue
+            if not alvo_code and alvo_nome and nome != alvo_nome:
+                continue
+            try:
+                if int(item.get("quantidade", 1) or 1) > 0:
+                    return True
+            except (TypeError, ValueError):
+                return True
+        return False
+
+    def consumir_pokebola_batalha(self, lado_id, item_base_id=None, item_nome=None):
+        inv = self.obter_inventario_lado(lado_id)
+        return self._servico_inventario.consumir_um(inv, str(item_base_id or ""), str(item_nome or ""))
+
+    def adicionar_pokemon_capturado_batalha(self, lado_id, pokemon_snapshot):
+        inv = self.obter_inventario_lado(lado_id)
+        ok = self._servico_inventario.adicionar_pokemon_capturado(inv, dict(pokemon_snapshot or {}), {})
+        if ok:
+            self.pokemons_capturados_lado.setdefault(int(lado_id), []).append(copy.deepcopy(pokemon_snapshot))
+        return ok
+
+    def snapshot_pokemon_capturado_batalha(self, pokemon, efeitos_bola=None):
+        dados = copy.deepcopy(getattr(pokemon, "dados_originais", {}) or {})
+        estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else dados
+        campos_batalha = (
+            "id_batalha",
+            "lado_id",
+            "lado_visual",
+            "ativo",
+            "Ativo",
+            "reserva",
+            "em_reserva",
+            "EmReserva",
+            "area_id",
+            "AreaId",
+            "Energia",
+            "EnergiaAtual",
+            "BarreiraAtual",
+            "efeitos",
+            "efeitos_formais",
+            "estados_transitorios",
+            "contadores_especiais",
+            "estatisticas_batalha",
+        )
+        for campo in campos_batalha:
+            dados.pop(campo, None)
+            estado.pop(campo, None)
+        estado.setdefault("especie", getattr(pokemon, "especie", getattr(pokemon, "nome", "Pokemon")))
+        estado.setdefault("nome", getattr(pokemon, "nome", estado.get("especie", "Pokemon")))
+        estado.setdefault("nivel", getattr(pokemon, "nivel", 1))
+        estado.setdefault("stats", copy.deepcopy(getattr(pokemon, "atributos_finais", {}) or {}))
+        estado.setdefault("stats_base", copy.deepcopy(getattr(pokemon, "atributos_base", {}) or {}))
+        tipos = list(getattr(pokemon, "tipos", []) or estado.get("tipos") or dados.get("tipos") or dados.get("Tipos") or [])
+        ataques = copy.deepcopy(getattr(pokemon, "ataques", []) or estado.get("habilidades") or estado.get("ataques") or dados.get("ataques") or dados.get("ListaAtaques") or [])
+        if tipos:
+            estado["tipos"] = list(tipos)
+            dados["tipos"] = list(tipos)
+            dados["Tipos"] = list(tipos)
+        if ataques:
+            estado["habilidades"] = copy.deepcopy(ataques)
+            estado["ataques"] = copy.deepcopy(ataques)
+            dados["habilidades"] = copy.deepcopy(ataques)
+            dados["ataques"] = copy.deepcopy(ataques)
+            dados["ListaAtaques"] = copy.deepcopy(ataques)
+        materializado = materializar_pokemon(dados, efeitos_captura=efeitos_bola if isinstance(efeitos_bola, dict) else None)
+        saida_estado = materializado.get("estado") if isinstance(materializado.get("estado"), dict) else materializado
+        for campo in campos_batalha:
+            materializado.pop(campo, None)
+            saida_estado.pop(campo, None)
+        if tipos:
+            saida_estado["tipos"] = list(tipos)
+            materializado["tipos"] = list(tipos)
+            materializado["Tipos"] = list(tipos)
+        if ataques:
+            saida_estado["habilidades"] = copy.deepcopy(ataques)
+            saida_estado["ataques"] = copy.deepcopy(ataques)
+            materializado["habilidades"] = copy.deepcopy(ataques)
+            materializado["ataques"] = copy.deepcopy(ataques)
+            materializado["ListaAtaques"] = copy.deepcopy(ataques)
+        return materializado
+
+    def remover_pokemon_capturado_batalha(self, pokemon):
+        if pokemon is None:
+            return False
+        area = pokemon.area_id
+        if self.area_existe(area) and self.ocupacao_areas.get(area) == pokemon.id_batalha:
+            self.ocupacao_areas[area] = None
+            self.areas[area]["ocupante_id"] = None
+        pokemon.ativo = False
+        pokemon.reserva = False
+        pokemon.area_id = None
+        pokemon.vivo = False
+        pokemon.estados_transitorios["capturado"] = {"rodada": self.rodada_atual}
+        return True
 
     def pokemon_na_area(self, area_id):
         pid = self.ocupacao_areas.get(str(area_id or ""))

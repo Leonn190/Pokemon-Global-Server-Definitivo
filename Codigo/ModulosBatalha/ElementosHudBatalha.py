@@ -7,6 +7,7 @@ import pygame
 from Codigo.Paineis.FichaPokemonBatalha import FichaPokemonBatalha
 from Codigo.Paineis.PainelAcoes import PainelAcoes
 from Codigo.Paineis.VisualizadorLog import VisualizadorLog
+from Codigo.ModulosBatalha.SeletorCapturaBatalha import SeletorCapturaBatalha
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto
@@ -18,6 +19,7 @@ class ElementosHudBatalha:
         self.ficha = FichaPokemonBatalha()
         self.painel_acoes = PainelAcoes()
         self.visualizador = VisualizadorLog(controlador=controlador)
+        self.seletor_captura = SeletorCapturaBatalha(controlador)
 
         self._txt_rodada = Texto(
             "Rodada 1",
@@ -77,6 +79,8 @@ class ElementosHudBatalha:
         selecionado_id = getattr(montador, "acao_selecionada_id", None)
         self.painel_acoes.sincronizar(jogadas, selecionado_id)
         self.painel_acoes.processar_eventos(eventos)
+        if self.seletor_captura is not None:
+            self.seletor_captura.atualizar_arraste(pygame.mouse.get_pos())
         for cmd in self.painel_acoes.coletar_comandos():
             acao = str(cmd.get("acao") or "")
             if acao == "remover" and montador is not None:
@@ -84,6 +88,8 @@ class ElementosHudBatalha:
                 self.controlador.atualizar_previsoes_hud()
 
     def consumiu_clique(self, pos_mouse):
+        if self.seletor_captura is not None and self.seletor_captura.consumiu_ponto(pos_mouse):
+            return True
         if self._ficha_t_visivel > 0.05 and self.ficha.contem_ponto(pos_mouse):
             return True
         for rect in self._retangulos_fixos:
@@ -97,7 +103,7 @@ class ElementosHudBatalha:
                 return True
         return False
 
-    def desenhar(self, tela: pygame.Surface, eventos, dt: float):
+    def preparar_layout(self, tela: pygame.Surface):
         w, h = tela.get_size()
         btn = max(52, min(76, int(h * 0.07)))
         margem = 18
@@ -105,6 +111,11 @@ class ElementosHudBatalha:
         self.botao_fugir.rect = pygame.Rect(self.botao_fugir.base_rect)
         self.botao_pronto.base_rect = pygame.Rect(w - btn - margem, h - btn - margem, btn, btn)
         self.botao_pronto.rect = pygame.Rect(self.botao_pronto.base_rect)
+        if self.seletor_captura is not None:
+            self.seletor_captura.layout(self.botao_pronto.base_rect, tela)
+
+    def desenhar(self, tela: pygame.Surface, eventos, dt: float):
+        self.preparar_layout(tela)
 
         self._txt_rodada.set_text(f"Rodada {self.controlador.rodada_atual}")
         self._txt_rodada.set_pos((20, 22))
@@ -137,7 +148,11 @@ class ElementosHudBatalha:
             txt.set_pos(self.botao_pronto.rect.center)
             txt.draw(tela)
 
-        self._retangulos_fixos = [pygame.Rect(self.botao_pronto.rect), pygame.Rect(self.botao_fugir.rect)]
+        rects_captura = []
+        if self.seletor_captura is not None:
+            self.seletor_captura.desenhar(tela)
+            rects_captura = [pygame.Rect(r) for r in self.seletor_captura.rects]
+        self._retangulos_fixos = [pygame.Rect(self.botao_pronto.rect), pygame.Rect(self.botao_fugir.rect), *rects_captura]
 
         pokemon = self.controlador.pokemon_selecionado
         if pokemon is not None or self._ficha_t_visivel > 0.01:

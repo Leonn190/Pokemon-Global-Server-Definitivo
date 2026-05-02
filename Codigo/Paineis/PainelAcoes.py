@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 
 import pygame
 
+from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.FichaPokemon import FichaPokemon
 from Codigo.Prefabs.Botao import Botao
@@ -60,6 +61,12 @@ class PainelAcoes:
     def _cor_item(dados: Dict[str, object], selecionado: bool) -> tuple[tuple[int, int, int], tuple[int, int, int], tuple[int, int, int]]:
         _ = selecionado
         estilo = str(dados.get("estilo") or "movimento").casefold()
+        if str(dados.get("tipo") or "").casefold() == "captura":
+            base = (118, 92, 210)
+            borda = tuple(min(255, canal + 28) for canal in base)
+            fundo = tuple(max(18, int(canal * 0.12)) for canal in base)
+            brilho = tuple(min(255, canal + 45) for canal in base)
+            return fundo, borda, brilho
         if estilo == "movimento" and dados.get("ataque") is None:
             base = (42, 120, 210)
         elif estilo == "movimento":
@@ -75,6 +82,11 @@ class PainelAcoes:
 
     @staticmethod
     def _nome_item(dados: Dict[str, object]) -> str:
+        if str(dados.get("tipo") or "").casefold() == "captura":
+            alvo = dados.get("alvo_visual") if isinstance(dados.get("alvo_visual"), dict) else {}
+            nome_alvo = str(getattr(alvo.get("pokemon"), "Nome", "") or "Pokemon")
+            bola = str(dados.get("item_nome") or (dados.get("bola") or {}).get("Nome") or "Pokeball")
+            return f"Capturar {nome_alvo} com {bola}"
         if dados.get("troca_reserva_id"):
             return "Trocar"
         ataque = dados.get("ataque")
@@ -102,6 +114,14 @@ class PainelAcoes:
         if caminho is None:
             return None
         return FichaPokemon._carregar_surface(caminho, (lado, lado), chave_extra="contain")
+
+    @staticmethod
+    def _icone_captura(dados: Dict[str, object], lado: int) -> Optional[pygame.Surface]:
+        if str(dados.get("tipo") or "").casefold() != "captura":
+            return None
+        bola = dados.get("bola") if isinstance(dados.get("bola"), dict) else {}
+        item = {"Nome": dados.get("item_nome") or bola.get("Nome") or "Pokeball", "Code": dados.get("item_base_id") or bola.get("Code") or bola.get("item_base_id") or ""}
+        return ItemInventario.surface_item(item, lado)
 
     def _icone_diverso(self, nome: str, lado: int) -> Optional[pygame.Surface]:
         chave = (str(nome), int(lado))
@@ -278,7 +298,9 @@ class PainelAcoes:
             self._desenhar_pokemon_em_circulo(tela, executor, rect_poke, brilho)
 
             rect_icone = pygame.Rect(rect_poke.right + 8, item.rect.y + 11, lado_img - 6, lado_img - 6)
-            icone = self._icone_ataque(item.dados, rect_icone.width)
+            icone = self._icone_captura(item.dados, rect_icone.width)
+            if icone is None:
+                icone = self._icone_ataque(item.dados, rect_icone.width)
             if icone is None:
                 icone = self._icone_diverso("trocar" if item.dados.get("troca_reserva_id") else "mover", rect_icone.width)
             if icone is not None:

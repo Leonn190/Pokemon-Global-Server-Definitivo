@@ -90,6 +90,8 @@ class ConstrutorLog:
             "avisos": list(avisos or []),
             "erros_acoes": list(erros_acoes or []),
             "acoes_falhas": list(acoes_falhas or []),
+            "inventario_jogador": copy.deepcopy(getattr(partida, "inventarios_lado", {}).get(int(getattr(partida, "lado_jogador", 50)), {})),
+            "pokemons_capturados": copy.deepcopy(getattr(partida, "pokemons_capturados_lado", {}).get(int(getattr(partida, "lado_jogador", 50)), [])),
         }
 
     def _montar_estatisticas(self):

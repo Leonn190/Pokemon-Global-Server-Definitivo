@@ -250,6 +250,63 @@ class MontadorJogadas:
         }
         return self.adicionar_acao(acao)
 
+    def preparar_captura(self, alvo, slot_bola):
+        if alvo is None or not self._captura_disponivel():
+            return False
+        if any(str(a.get("tipo") or "") == "captura" and int(a.get("lado_id", -1)) == int(getattr(self.controlador, "lado_jogador", -2)) for a in self.acoes_preparadas):
+            return False
+        if int(getattr(alvo, "lado_id", -1)) == int(getattr(self.controlador, "lado_jogador", -2)):
+            return False
+        if not alvo.esta_vivo() or not alvo.esta_ativo() or alvo.esta_na_reserva():
+            return False
+        lado_id = int(getattr(self.controlador, "lado_jogador", 50))
+        item = dict((slot_bola or {}).get("item") or {})
+        item_nome = str((slot_bola or {}).get("item_nome") or item.get("Nome") or item.get("nome") or "Pokeball")
+        item_base_id = str((slot_bola or {}).get("item_base_id") or item.get("Code") or item.get("code") or "")
+        bola = {
+            "Nome": item_nome,
+            "Code": item_base_id,
+            "item_base_id": item_base_id,
+            "quantidade": 1,
+        }
+        acao = {
+            "tipo": "captura",
+            "estilo": "captura",
+            "pokemon_id": "",
+            "capturador_tipo": "jogador",
+            "jogador_nome": self.controlador.nome_jogador_batalha() if hasattr(self.controlador, "nome_jogador_batalha") else "Jogador",
+            "lado_id": lado_id,
+            "rodada": self.controlador.rodada_atual,
+            "alvo": {"tipo": "pokemon", "pokemon_id": alvo.id_batalha},
+            "bola": bola,
+            "item_nome": item_nome,
+            "item_base_id": item_base_id,
+            "origem_tipo": (slot_bola or {}).get("chave"),
+            "origem_slot_index": (slot_bola or {}).get("primeiro_indice"),
+        }
+        return self.adicionar_acao(acao)
+
+    def _captura_disponivel(self):
+        tipo = str(getattr(self.controlador, "tipo_batalha", "") or "").strip().lower()
+        return tipo == "confronto" and not bool(getattr(self.controlador, "modo_teste", False))
+
+    def _executor_captura(self):
+        selecionado = getattr(self.controlador, "pokemon_selecionado", None)
+        if (
+            selecionado is not None
+            and int(getattr(selecionado, "lado_id", -1)) == int(getattr(self.controlador, "lado_jogador", -2))
+            and selecionado.esta_vivo()
+            and selecionado.esta_ativo()
+            and not selecionado.esta_na_reserva()
+        ):
+            return selecionado
+        for pokemon in list(getattr(self.controlador, "pokemons", []) or []):
+            if int(getattr(pokemon, "lado_id", -1)) != int(getattr(self.controlador, "lado_jogador", -2)):
+                continue
+            if pokemon.esta_vivo() and pokemon.esta_ativo() and not pokemon.esta_na_reserva():
+                return pokemon
+        return None
+
     def _criar_acao_ataque(self, pokemon, ataque, area_id):
         code = int(float(ataque.get("Code") or ataque.get("code") or 0))
         props = self.buscar_propriedades_ataque(ataque) or {}
@@ -285,13 +342,13 @@ class MontadorJogadas:
         pid = str(acao.get("pokemon_id") or "")
         if any(self._chave_acao(a) == self._chave_acao(acao) for a in acoes_lado if str(a.get("pokemon_id") or "") == pid):
             return False
-        if sum(1 for a in acoes_lado if str(a.get("pokemon_id") or "") == pid) >= self.limite_acoes_por_pokemon:
+        if str(acao.get("tipo") or "") != "captura" and sum(1 for a in acoes_lado if str(a.get("pokemon_id") or "") == pid and str(a.get("tipo") or "") != "captura") >= self.limite_acoes_por_pokemon:
             return False
         poke = self.controlador.pokemons_por_id.get(pid)
         if self._acao_bloqueada_por_efeito(poke, acao.get("tipo")):
             return False
         custo = self.calcular_custo_acao(poke, acao, ordem_pokemon=sum(1 for a in acoes_lado if str(a.get("pokemon_id") or "") == pid) + 1)
-        if (not self.controlador.modo_teste) and (not self.pode_pagar_acao(poke, custo)):
+        if str(acao.get("tipo") or "") != "captura" and (not self.controlador.modo_teste) and (not self.pode_pagar_acao(poke, custo)):
             return False
         acao = dict(acao)
         acao["id"] = self.proximo_id_local
@@ -332,6 +389,12 @@ class MontadorJogadas:
         elif tipo == "troca_reserva":
             origem = self.arena.centro_area((acao.get("origem") or {}).get("area_id"))
             destino = self.arena.centro_slot_reserva_mundo((acao.get("destino") or {}).get("pokemon_id"))
+        elif tipo == "captura":
+            origem = self.controlador.posicao_captura_lado_mundo(acao.get("lado_id")) if hasattr(self.controlador, "posicao_captura_lado_mundo") else None
+            if origem is None:
+                origem = self.arena.centro_area(self.area_prevista_pokemon(self.controlador.pokemons_por_id.get(acao["pokemon_id"])))
+            alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
+            destino = self._centro_visual_pokemon(self.controlador.pokemons_por_id.get(str(alvo.get("pokemon_id") or "")))
         if origem and destino:
             self.indicadores_preparados.append(IndicadorAtaque().configurar(origem, destino, tipo, estado="preparado", id_acao=acao.get("id"), coordenadas_mundo=True))
 
@@ -380,6 +443,9 @@ class MontadorJogadas:
             return ("movimento",)
         if tipo in {"troca_posicao", "troca_reserva"}:
             return ("troca",)
+        if tipo == "captura":
+            alvo = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+            return ("captura", str(alvo.get("pokemon_id") or ""), str((acao or {}).get("item_base_id") or (acao or {}).get("item_nome") or ""))
         return (tipo,)
 
     def _resolver_alvo_visual(self, acao):
@@ -401,6 +467,9 @@ class MontadorJogadas:
         if tipo == "troca_reserva":
             destino = (acao or {}).get("destino") if isinstance((acao or {}).get("destino"), dict) else {}
             return {"pokemon": self.controlador.pokemons_por_id.get(str(destino.get("pokemon_id") or ""))}
+        if tipo == "captura":
+            alvo = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+            return {"pokemon": self.controlador.pokemons_por_id.get(str(alvo.get("pokemon_id") or ""))}
         return {"pokemon": (acao or {}).get("executor")}
 
     def area_movimento_sob_mouse(self, pos_mouse):
@@ -619,6 +688,8 @@ class MontadorJogadas:
             base = float(self.custo_troca_posicao)
         elif tipo == "troca_reserva":
             base = float(self.custo_troca_reserva)
+        elif tipo == "captura":
+            return 0.0
         else:
             at = (acao_base or {}).get("ataque") if isinstance((acao_base or {}).get("ataque"), dict) else {}
             props = self.buscar_propriedades_ataque(at)
@@ -631,8 +702,9 @@ class MontadorJogadas:
         por_pokemon = {}
         for a in self.acoes_preparadas:
             pid = str(a.get("pokemon_id") or "")
-            por_pokemon[pid] = por_pokemon.get(pid, 0) + 1
-            a["custo_previsto"] = self.calcular_custo_acao(self.controlador.pokemons_por_id.get(pid), a, ordem_pokemon=por_pokemon[pid])
+            if str(a.get("tipo") or "") != "captura":
+                por_pokemon[pid] = por_pokemon.get(pid, 0) + 1
+            a["custo_previsto"] = self.calcular_custo_acao(self.controlador.pokemons_por_id.get(pid), a, ordem_pokemon=por_pokemon.get(pid, 1))
             custos[pid] = custos.get(pid, 0.0) + float(a.get("custo_previsto") or 0.0)
         custos_preparados = dict(custos)
         if self.estado_montagem == "preparando_ataque" and self.pokemon_origem is not None and self.ataque_selecionado is not None:
@@ -659,13 +731,18 @@ class MontadorJogadas:
         return float(getattr(pokemon, "Energia", 0.0)) - float(self.previa_energia_por_pokemon.get(pokemon.id_batalha, 0.0)) - float(custo) >= 0.0
 
     def gerar_pacote_jogada(self):
-        return {
+        pacote = {
             "id_partida": self.controlador.id_partida,
             "rodada": self.controlador.rodada_atual,
             "modo_teste": False,
             "lado_id": self.controlador.lado_jogador,
             "acoes": [self._serializar_acao(a) for a in self.acoes_preparadas if int(a.get("lado_id", -1)) == int(self.controlador.lado_jogador)],
         }
+        if str(getattr(self.controlador, "tipo_batalha", "") or "").strip().lower() == "confronto" and hasattr(self.controlador, "inventario_local_serializado"):
+            pacote["inventario_jogador"] = self.controlador.inventario_local_serializado()
+            if hasattr(self.controlador, "nome_jogador_batalha"):
+                pacote["jogador_nome"] = self.controlador.nome_jogador_batalha()
+        return pacote
 
     def gerar_pacote_jogadas_modo_teste(self):
         por_lado = {}

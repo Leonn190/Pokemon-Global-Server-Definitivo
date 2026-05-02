@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ControladorExecutes import executar_alvificacao, executar_execute_principal, obter_executes_reativos
+from SimuladorServerJogo.Mundo.AutoridadeCaptura import resolver_captura_batalha
 
 
 class RodadorTurno:
@@ -32,6 +33,12 @@ class RodadorTurno:
         }
 
     def executar_passo(self, acao):
+        tipo = str((acao or {}).get("tipo") or "")
+        if tipo == "captura":
+            self._registrar_acao_iniciada(acao, None)
+            self._executar_captura(None, acao)
+            self._fim_passo()
+            return
         pokemon = self.partida.obter_pokemon((acao or {}).get("pokemon_id"))
         self._registrar_acao_iniciada(acao, pokemon)
         motivo = self._validar_estado_atual(pokemon, acao)
@@ -44,8 +51,8 @@ class RodadorTurno:
             self._falhar(acao, "energia_insuficiente_execucao")
             self._fim_passo()
             return
-        gasto = pokemon.GastarEnergia(custo, dados={"acao_id": acao.get("id_acao")})
-        if isinstance(gasto, dict) and gasto.get("aplicado"):
+        gasto = pokemon.GastarEnergia(custo, dados={"acao_id": acao.get("id_acao")}) if custo > 0 else {"aplicado": False}
+        if custo > 0 and isinstance(gasto, dict) and gasto.get("aplicado"):
             self.partida.registrar_evento_log(
                 "pokemon_gastou_energia",
                 {
@@ -57,7 +64,6 @@ class RodadorTurno:
                     "id_acao": acao.get("id_acao"),
                 },
             )
-        tipo = str(acao.get("tipo") or "")
         if tipo == "movimento":
             self._executar_movimento(pokemon, acao)
         elif tipo == "troca_posicao":
@@ -66,6 +72,8 @@ class RodadorTurno:
             self._executar_troca_reserva(pokemon, acao)
         elif tipo == "ataque":
             self._executar_ataque(pokemon, acao)
+        elif tipo == "captura":
+            self._executar_captura(pokemon, acao)
         else:
             self._falhar(acao, "tipo_sem_executor")
         self._fim_passo()
@@ -82,13 +90,13 @@ class RodadorTurno:
         if pokemon.estados_transitorios.get("recuado"):
             return "pokemon_recuado"
         tipo = str((acao or {}).get("tipo") or "")
-        if pokemon.possui_efeito("Dormindo") or pokemon.possui_efeito("Congelado"):
+        if tipo != "captura" and (pokemon.possui_efeito("Dormindo") or pokemon.possui_efeito("Congelado")):
             return "pokemon_inapto"
         if tipo == "ataque" and pokemon.possui_efeito("Paralisado"):
             return "ataque_bloqueado_por_paralisia"
         if tipo in {"movimento", "troca_posicao", "troca_reserva"} and pokemon.possui_efeito("Enraizado"):
             return "movimento_bloqueado_por_enraizado"
-        if str((acao or {}).get("tipo")) in {"ataque", "movimento", "troca_posicao", "troca_reserva"} and (not pokemon.ativo or pokemon.reserva):
+        if str((acao or {}).get("tipo")) in {"ataque", "movimento", "troca_posicao", "troca_reserva", "captura"} and (not pokemon.ativo or pokemon.reserva):
             return "pokemon_nao_ativo_execucao"
         return None
 
@@ -190,6 +198,90 @@ class RodadorTurno:
         if atingiu:
             self._ataques_executados += 1
 
+    def _executar_captura(self, pokemon, acao):
+        if str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower() != "confronto":
+            self._falhar(acao, "captura_fora_de_confronto")
+            return
+        lado_id = int((acao or {}).get("lado_id", getattr(self.partida, "lado_jogador", 50)) or getattr(self.partida, "lado_jogador", 50))
+        jogador_nome = str((acao or {}).get("jogador_nome") or "Jogador").strip() or "Jogador"
+        usuario_id = str((acao or {}).get("usuario_id") or f"jogador_{lado_id}")
+        alvo = self.partida.obter_pokemon(((acao or {}).get("alvo") or {}).get("pokemon_id") if isinstance((acao or {}).get("alvo"), dict) else None)
+        if alvo is None:
+            self._falhar(acao, "captura_alvo_inexistente")
+            return
+        if int(getattr(alvo, "lado_id", -1)) == int(lado_id):
+            self._falhar(acao, "captura_alvo_aliado", alvo_id=alvo.id_batalha)
+            return
+        if not alvo.esta_vivo() or not bool(getattr(alvo, "ativo", False)) or bool(getattr(alvo, "reserva", False)):
+            self._falhar(acao, "captura_alvo_invalido", alvo_id=alvo.id_batalha)
+            return
+        item_base_id = str((acao or {}).get("item_base_id") or ((acao or {}).get("bola") or {}).get("item_base_id") or ((acao or {}).get("bola") or {}).get("Code") or "").strip()
+        item_nome = str((acao or {}).get("item_nome") or ((acao or {}).get("bola") or {}).get("Nome") or "Pokeball").strip()
+        if not self.partida.consumir_pokebola_batalha(lado_id, item_base_id, item_nome):
+            self._falhar(acao, "pokebola_indisponivel", alvo_id=alvo.id_batalha)
+            return
+        self.partida.registrar_evento_log(
+            "captura_batalha_lancada",
+            {
+                "id_acao": acao.get("id_acao"),
+                "usuario_id": usuario_id,
+                "usuario_nome": jogador_nome,
+                "capturador_tipo": "jogador",
+                "lado_id": lado_id,
+                "alvo_id": alvo.id_batalha,
+                "alvo_nome": alvo.nome,
+                "bola_nome": item_nome,
+                "item_base_id": item_base_id,
+            },
+        )
+        resultado = resolver_captura_batalha(
+            alvo,
+            item_nome,
+            contexto={
+                "rng": self.partida.rng,
+                "regras": getattr(self.partida, "regras_mundo", {}) or getattr(self.partida, "regras", {}),
+                "em_batalha": True,
+                "captura_critica_cliente": False,
+                "captura_chance_checks_necessarios": 3,
+            },
+        )
+        sucesso = bool(resultado.get("sucesso", False))
+        snapshot = None
+        if sucesso:
+            snapshot = self.partida.snapshot_pokemon_capturado_batalha(alvo, efeitos_bola=resultado.get("efeitos_bola") if isinstance(resultado.get("efeitos_bola"), dict) else {})
+            self.partida.adicionar_pokemon_capturado_batalha(lado_id, snapshot)
+            self.partida.remover_pokemon_capturado_batalha(alvo)
+        self.partida.registrar_evento_log(
+            "captura_batalha_resultado",
+            {
+                "id_acao": acao.get("id_acao"),
+                "usuario_id": usuario_id,
+                "usuario_nome": jogador_nome,
+                "capturador_tipo": "jogador",
+                "lado_id": lado_id,
+                "alvo_id": alvo.id_batalha,
+                "alvo_nome": alvo.nome,
+                "bola_nome": item_nome,
+                "item_base_id": item_base_id,
+                "checagens": list(resultado.get("checagens") or []),
+                "resultado": "sucesso" if sucesso else "falha",
+                "capturado": sucesso,
+                "chance_check": resultado.get("chance_check"),
+                "chance_real_3_checks": resultado.get("chance_real_3_checks"),
+                "dificuldade_batalha": resultado.get("dificuldade_batalha"),
+                "poder_total": resultado.get("poder_total"),
+                "pokemon_capturado": snapshot if sucesso else None,
+                "inventario_jogador": copy.deepcopy(self.partida.inventarios_lado.get(int(self.partida.lado_jogador), {})),
+            },
+        )
+        self.partida.registrar_evento_log(
+            "inventario_atualizado_batalha",
+            {
+                "lado_id": int(lado_id),
+                "inventario": copy.deepcopy(self.partida.inventarios_lado.get(int(lado_id), {})),
+            },
+        )
+
     def _acertou(self, usuario, alvo):
         acuracia = usuario.obter_atributo("Acuracia", 100.0) / 100.0
         assertividade = alvo.obter_atributo("Assertividade", 100.0) / 100.0
@@ -236,6 +328,7 @@ class RodadorTurno:
             "tipo_acao": (acao or {}).get("tipo"),
             "pokemon_id": (acao or {}).get("pokemon_id"),
             "pokemon_nome": getattr(pokemon, "nome", None),
+            "jogador_nome": (acao or {}).get("jogador_nome") if str((acao or {}).get("tipo") or "") == "captura" else None,
             "lado_id": (acao or {}).get("lado_id"),
             "ordem_local": (acao or {}).get("ordem_local"),
             "custo_real": (acao or {}).get("custo_real"),

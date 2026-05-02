@@ -22,7 +22,7 @@ def _f(valor: object, default: float = 0.0) -> float:
 
 
 class ColetorAcoes:
-    TIPOS_VALIDOS = {"ataque", "movimento", "troca_posicao", "troca_reserva"}
+    TIPOS_VALIDOS = {"ataque", "movimento", "troca_posicao", "troca_reserva", "captura"}
 
     def __init__(self, partida):
         self.partida = partida
@@ -74,6 +74,11 @@ class ColetorAcoes:
             return self._invalidar(out, "tipo_acao_invalido")
         if out["lado_id"] != int(lado_id):
             return self._invalidar(out, "lado_acao_divergente")
+        if tipo == "captura":
+            contagem_pokemon["__captura__"] = contagem_pokemon.get("__captura__", 0) + 1
+            if contagem_pokemon["__captura__"] > 1:
+                return self._invalidar(out, "limite_1_captura_por_turno")
+            return self._normalizar_captura(out, lado_id)
         pid = str(out.get("pokemon_id") or "").strip()
         pokemon = self.partida.obter_pokemon(pid)
         if pokemon is None:
@@ -82,15 +87,16 @@ class ColetorAcoes:
             return self._invalidar(out, "pokemon_de_outro_lado")
         if not pokemon.esta_vivo():
             return self._invalidar(out, "pokemon_morto")
-        exige_ativo = tipo in {"ataque", "movimento", "troca_posicao", "troca_reserva"}
+        exige_ativo = tipo in {"ataque", "movimento", "troca_posicao", "troca_reserva", "captura"}
         if exige_ativo and (not pokemon.ativo or pokemon.reserva):
             return self._invalidar(out, "pokemon_nao_ativo")
         bloqueio = self._bloqueio_efeito_acao(pokemon, tipo)
         if bloqueio:
             return self._invalidar(out, bloqueio)
-        contagem_pokemon[pid] = contagem_pokemon.get(pid, 0) + 1
-        out["ordem_pokemon"] = contagem_pokemon[pid]
-        if contagem_pokemon[pid] > 2:
+        if tipo != "captura":
+            contagem_pokemon[pid] = contagem_pokemon.get(pid, 0) + 1
+        out["ordem_pokemon"] = contagem_pokemon.get(pid, 1)
+        if tipo != "captura" and contagem_pokemon[pid] > 2:
             return self._invalidar(out, "limite_2_acoes_por_pokemon")
         custo = self._calcular_custo(out, pokemon)
         if custo is None:
@@ -136,6 +142,32 @@ class ColetorAcoes:
             out["pokemon_reserva_id"] = reserva.id_batalha
         return out
 
+    def _normalizar_captura(self, out, lado_id):
+        if str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower() != "confronto" or bool(getattr(self.partida, "modo_teste", False)):
+            return self._invalidar(out, "captura_fora_de_confronto")
+        alvo = out.get("alvo") if isinstance(out.get("alvo"), dict) else {}
+        alvo_pokemon = self.partida.obter_pokemon(alvo.get("pokemon_id"))
+        if alvo_pokemon is None:
+            return self._invalidar(out, "captura_alvo_inexistente")
+        if int(alvo_pokemon.lado_id) == int(lado_id):
+            return self._invalidar(out, "captura_alvo_aliado")
+        if not alvo_pokemon.esta_vivo() or not bool(alvo_pokemon.ativo) or bool(alvo_pokemon.reserva):
+            return self._invalidar(out, "captura_alvo_invalido")
+        bola = out.get("bola") if isinstance(out.get("bola"), dict) else {}
+        item_base_id = str(out.get("item_base_id") or bola.get("item_base_id") or bola.get("Code") or "").strip()
+        item_nome = str(out.get("item_nome") or bola.get("Nome") or bola.get("nome") or "Pokeball").strip()
+        if not self.partida.tem_pokebola_batalha(lado_id, item_base_id, item_nome):
+            return self._invalidar(out, "pokebola_indisponivel")
+        out["pokemon_id"] = str(out.get("pokemon_id") or "")
+        out["capturador_tipo"] = "jogador"
+        out["jogador_nome"] = str(out.get("jogador_nome") or "Jogador")
+        out["item_base_id"] = item_base_id
+        out["item_nome"] = item_nome
+        out["bola"] = {"Nome": item_nome, "Code": item_base_id, "item_base_id": item_base_id, "quantidade": 1}
+        out["ordem_pokemon"] = 0
+        out["custo_real"] = 0.0
+        return out
+
     def _calcular_custo(self, acao, pokemon):
         tipo = str(acao.get("tipo") or "")
         if tipo == "movimento":
@@ -152,6 +184,8 @@ class ColetorAcoes:
             else:
                 base = _f(props.get("custo"), 0.0)
         else:
+            if tipo == "captura":
+                return 0.0
             return None
         mult = 1.10 if int(acao.get("ordem_pokemon", 1) or 1) >= 2 else 1.0
         return base * mult
@@ -215,6 +249,8 @@ class ColetorAcoes:
 
     def _bloqueio_efeito_acao(self, pokemon, tipo):
         tipo = str(tipo or "")
+        if tipo == "captura":
+            return None
         if pokemon.possui_efeito("Dormindo") or pokemon.possui_efeito("Congelado"):
             return "acao_bloqueada_por_efeito"
         if tipo == "ataque" and pokemon.possui_efeito("Paralisado"):
@@ -244,10 +280,12 @@ class ColetorAcoes:
 
     def ordenar_acoes(self, acoes):
         def chave(acao):
+            if str((acao or {}).get("tipo") or "") == "captura":
+                return (1, 0, 0, "~jogador", 999, int((acao or {}).get("ordem_global") or 0))
             pokemon = self.partida.obter_pokemon(acao.get("pokemon_id"))
             int_val = pokemon.obter_atributo("Int") if pokemon is not None else 0.0
             vel_val = pokemon.obter_atributo("Vel") if pokemon is not None else 0.0
-            return (-int_val, -vel_val, str(acao.get("pokemon_id") or ""), int(acao.get("ordem_pokemon") or 1), int(acao.get("ordem_global") or 0))
+            return (0, -int_val, -vel_val, str(acao.get("pokemon_id") or ""), int(acao.get("ordem_pokemon") or 1), int(acao.get("ordem_global") or 0))
 
         ordenadas = sorted(acoes, key=chave)
         for idx, acao in enumerate(ordenadas, start=1):

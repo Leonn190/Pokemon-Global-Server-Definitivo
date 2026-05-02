@@ -220,6 +220,7 @@ class VisualizadorLog:
         "pokemon_trocou_posicao": ((36, 44, 54, 238), (154, 184, 212), (191, 220, 250)),
         "pokemon_trocou_reserva": ((36, 44, 54, 238), (154, 184, 212), (191, 220, 250)),
         "pokemon_morreu": ((58, 26, 30, 238), (212, 96, 96), (243, 132, 132)),
+        "captura_batalha_resultado": ((44, 31, 64, 238), (168, 126, 224), (214, 170, 255)),
     }
 
     def __init__(self, controlador=None) -> None:
@@ -416,6 +417,19 @@ class VisualizadorLog:
             linhas.append(f"Motivo: {motivo}")
         return self._tooltip_valor_simples("Detalhes da energia", linhas)
 
+    def _tooltip_captura(self, evento: Dict[str, object]) -> tuple[str, str]:
+        checks = ["OK" if bool(v) else "falha" for v in list(evento.get("checagens") or [])]
+        return self._tooltip_valor_simples(
+            "Detalhes da captura",
+            [
+                f"Chance por check: {self._formatar_numero(evento.get('chance_check', 0.0))}%",
+                f"Chance real em 3 checks: {self._formatar_numero(evento.get('chance_real_3_checks', 0.0))}%",
+                f"Dificuldade de batalha: {self._formatar_numero(evento.get('dificuldade_batalha', 0.0))}",
+                f"Poder total: {self._formatar_numero(evento.get('poder_total', 0.0))}",
+                f"Checks: {', '.join(checks) if checks else 'sem checks'}",
+            ],
+        )
+
     def _registro_placeholder(self, mensagem: str, subtitulo: str = "Sem registros") -> dict[str, object]:
         return {
             "tipo": "placeholder",
@@ -469,6 +483,8 @@ class VisualizadorLog:
             return cores["roxo"] if bool(evento.get("negativo", False)) else cores["verde"]
         if tipo in {"acao_falhou", "ataque_errou", "ataque_sem_alvo_real"}:
             return cores["cinza"]
+        if tipo == "captura_batalha_resultado":
+            return cores["verde"] if bool(evento.get("capturado", False)) else cores["roxo"]
         return self._CORES_TIPO.get(tipo, cores["cinza"])
 
     def _registro_evento(self, evento: Dict[str, object], tick: int, fase: str) -> dict[str, object]:
@@ -634,6 +650,16 @@ class VisualizadorLog:
             segmentos = [self._segmento(pokemon), self._segmento(" saiu de campo.")]
         elif tipo == "pokemon_morreu":
             segmentos = [self._segmento(pokemon), self._segmento(" desmaiou.")]
+        elif tipo == "captura_batalha_resultado":
+            usuario = str(evento.get("usuario_nome") or executor)
+            alvo_nome = str(evento.get("alvo_nome") or alvo)
+            bola = str(evento.get("bola_nome") or "Pokeball")
+            titulo, descricao = self._tooltip_captura(evento)
+            chance = self._formatar_numero(evento.get("chance_real_3_checks", 0.0))
+            if bool(evento.get("capturado", False)):
+                segmentos = [self._segmento(usuario), self._segmento(" capturou "), self._segmento(alvo_nome), self._segmento(" com "), self._segmento(bola), self._segmento(" ("), self._segmento(f"{chance}%", atributo="per", titulo=titulo, descricao=descricao), self._segmento(").")]
+            else:
+                segmentos = [self._segmento(usuario), self._segmento(" tentou capturar "), self._segmento(alvo_nome), self._segmento(" com "), self._segmento(bola), self._segmento(", mas falhou ("), self._segmento(f"{chance}%", atributo="per", titulo=titulo, descricao=descricao), self._segmento(").")]
         elif tipo in {"passiva", "passivo"}:
             nome_passiva = str(evento.get("passiva") or evento.get("nome") or "Passiva")
             segmentos = [self._segmento("Passiva "), self._segmento(nome_passiva), self._segmento(" ativou em "), self._segmento(pokemon)]
@@ -901,6 +927,8 @@ class VisualizadorLog:
             "ataque_acertou",
             "pokemon_entrou",
             "pokemon_saiu",
+            "captura_batalha_lancada",
+            "inventario_atualizado_batalha",
         }
         if tipo in ocultos:
             return False

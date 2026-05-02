@@ -154,6 +154,18 @@ class LeitorLogs:
                 poke.Ativo = True
                 poke.EmReserva = False
                 poke.AreaId = dados.get("area_id")
+        elif tipo == "captura_batalha_resultado":
+            poke = ctrl.pokemons_por_id.get(str(dados.get("alvo_id") or ""))
+            if poke is not None and bool(dados.get("capturado")):
+                poke.Ativo = False
+                poke.EmReserva = False
+                poke.Vivo = False
+                poke.AreaId = None
+            if isinstance(dados.get("inventario_jogador"), dict):
+                ctrl.aplicar_inventario_batalha(dados.get("inventario_jogador"))
+        elif tipo == "inventario_atualizado_batalha":
+            if int(dados.get("lado_id", getattr(ctrl, "lado_jogador", 50)) or 0) == int(getattr(ctrl, "lado_jogador", 50)) and isinstance(dados.get("inventario"), dict):
+                ctrl.aplicar_inventario_batalha(dados.get("inventario"))
         elif tipo in {"clima_aplicado", "clima_alterado", "clima_iniciado"}:
             ctrl.clima_atual = dados.get("clima") or dados.get("clima_nome") or dados.get("nome") or dados
         elif tipo == "clima_expirou":

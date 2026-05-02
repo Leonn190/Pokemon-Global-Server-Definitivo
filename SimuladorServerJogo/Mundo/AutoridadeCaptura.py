@@ -144,3 +144,111 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         "sucesso": bool(sucesso),
         "cooldown_tick": int(liberar_tick),
     }
+
+
+def _f(valor, default=0.0):
+    try:
+        if isinstance(valor, str):
+            return float(valor.replace(",", "."))
+        return float(valor)
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def _estado_captura_batalha(pokemon) -> Dict[str, object]:
+    dados = getattr(pokemon, "dados_originais", None)
+    dados = dict(dados or getattr(pokemon, "Dados", {}) or {})
+    estado = dict(dados.get("estado") or {}) if isinstance(dados.get("estado"), dict) else {}
+    stats = dict(getattr(pokemon, "atributos_finais", {}) or getattr(pokemon, "Atributos", {}) or estado.get("stats") or dados.get("stats") or {})
+    stats_base = dict(getattr(pokemon, "atributos_base", {}) or getattr(pokemon, "AtributosBase", {}) or estado.get("stats_base") or dados.get("stats_base") or {})
+    return {
+        **dados,
+        **estado,
+        "nome": getattr(pokemon, "nome", getattr(pokemon, "Nome", dados.get("nome", dados.get("Nome", "Pokemon")))),
+        "especie": getattr(pokemon, "especie", getattr(pokemon, "Especie", dados.get("especie", dados.get("Especie", "Pokemon")))),
+        "nivel": getattr(pokemon, "nivel", getattr(pokemon, "Nivel", dados.get("nivel", dados.get("Nivel", 1)))),
+        "tipos": list(getattr(pokemon, "tipos", getattr(pokemon, "Tipos", estado.get("tipos", dados.get("tipos", [])))) or []),
+        "stats": stats,
+        "stats_base": stats_base,
+        "dificuldade_captura": dados.get("dificuldade_captura", estado.get("dificuldade_captura", dados.get("dificuldade_captura_base", estado.get("dificuldade_captura_base", 60)))),
+    }
+
+
+class _PokemonCapturaBatalha:
+    def __init__(self, pokemon, estado):
+        self.Id = getattr(pokemon, "id_original", 0) or 0
+        self.estado_extra = dict(estado or {})
+        self.posicao = [0.0, 0.0]
+
+
+def calcular_dificuldade_captura_batalha(pokemon, regras=None) -> float:
+    estado = _estado_captura_batalha(pokemon)
+    base = _f(estado.get("dificuldade_captura", estado.get("dificuldade_captura_base", 60.0)), 60.0)
+    vida_atual = _f(getattr(pokemon, "VidaAtual", estado.get("VidaAtual", estado.get("vida_atual", 1.0))), 1.0)
+    vida_max = _f(getattr(pokemon, "VidaMax", 0.0), 0.0)
+    if vida_max <= 0 and hasattr(pokemon, "obter_atributo"):
+        vida_max = _f(pokemon.obter_atributo("Vida", 1.0), 1.0)
+    if vida_max <= 0:
+        stats = estado.get("stats") if isinstance(estado.get("stats"), dict) else {}
+        vida_max = _f(stats.get("Vida"), 1.0)
+    vida_p = max(0.0, min(1.0, vida_atual / max(0.0001, vida_max)))
+    return float((base + 10.0) * (0.20 + 0.80 * vida_p))
+
+
+def resolver_captura_batalha(pokemon, nome_bola, contexto=None):
+    ctx = dict(contexto or {})
+    estado = _estado_captura_batalha(pokemon)
+    adaptado = _PokemonCapturaBatalha(pokemon, estado)
+    bola = executar_pokebola(nome_bola, adaptado, contexto={**ctx, "em_batalha": True})
+    poder_base_captura = _f(ctx.get("captura_poder_poder_base_captura", 5.0), 5.0)
+    poder_base = _f(bola.get("poder_base"), 0.0)
+    maestria = _f(ctx.get("maestria", 0.0), 0.0)
+    maestria_max = _f(ctx.get("captura_poder_maestria_max", 10.0), 10.0)
+    bonus_maestria_max = _f(ctx.get("captura_poder_bonus_maestria_max", 30.0), 30.0)
+    expoente_maestria = _f(ctx.get("captura_poder_expoente_maestria", 0.70), 0.70)
+    maestria_p = max(0.0, min(1.0, maestria / max(0.0001, maestria_max)))
+    poder_linear = poder_base_captura + poder_base + bonus_maestria_max * (maestria_p ** expoente_maestria)
+    poder = poder_linear * _f(ctx.get("captura_poder_multiplicador_critico", 1.35), 1.35) if bool(ctx.get("captura_critica_cliente", False)) else poder_linear
+
+    dificuldade = calcular_dificuldade_captura_batalha(pokemon, ctx.get("regras"))
+    garantida = bool(bola.get("captura_garantida", False))
+    checks_necessarios = max(1, int(ctx.get("captura_chance_checks_necessarios", 3) or 3))
+    chance_check = 100.0 if garantida else max(
+        _f(ctx.get("captura_chance_check_min", 3.0), 3.0),
+        min(
+            _f(ctx.get("captura_chance_check_max", 98.0), 98.0),
+            _f(ctx.get("captura_chance_base_check", 58.0), 58.0) + ((poder - dificuldade) * _f(ctx.get("captura_chance_escala_diferenca", 0.82), 0.82)),
+        ),
+    )
+    chance_real_checks = 100.0 if garantida else (chance_check / 100.0) ** checks_necessarios * 100.0
+    rng = ctx.get("rng")
+    rand = rng.random if hasattr(rng, "random") else random.random
+    checks: List[bool] = []
+    rolagens: List[float] = []
+    falhou = False
+    for _idx in range(checks_necessarios):
+        if falhou:
+            checks.append(False)
+            continue
+        rolagem = 0.0 if garantida else float(rand() * 100.0)
+        if not garantida:
+            rolagens.append(rolagem)
+        passou = bool(garantida or rolagem <= chance_check)
+        checks.append(passou)
+        if not passou:
+            falhou = True
+    checks = _normalizar_checks(checks)
+    sucesso = bool(all(checks))
+    return {
+        "iniciada": True,
+        "resultado": "sucesso" if sucesso else "falha",
+        "sucesso": sucesso,
+        "checagens": list(checks),
+        "rolagens": rolagens,
+        "chance_check": float(chance_check),
+        "chance_real_3_checks": float(chance_real_checks),
+        "dificuldade_batalha": float(dificuldade),
+        "poder_total": float(poder),
+        "captura_garantida": garantida,
+        "efeitos_bola": dict(bola.get("efeitos", {})) if isinstance(bola.get("efeitos"), dict) else {},
+    }

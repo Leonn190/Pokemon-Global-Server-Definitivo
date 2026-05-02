@@ -270,6 +270,12 @@ def _objeto_em_chunks(obj, chunks: Set[Chunk], dimensao: str = "Mundo") -> bool:
     return BANCO_DADOS.chunk_da_posicao(getattr(obj, "posicao", (0.0, 0.0))) in chunks
 
 
+def _objeto_renderizavel(obj) -> bool:
+    estado = getattr(obj, "estado_extra", {}) if obj is not None and isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+    if str(getattr(obj, "tipo_classe", "") or "") == "entidade_player" and bool(estado.get("morto", False)):
+        return False
+    return True
+
 
 def _dimensao_objeto(obj) -> str:
     estado = getattr(obj, "estado_extra", {}) if obj is not None and isinstance(getattr(obj, "estado_extra", {}), dict) else {}
@@ -348,7 +354,7 @@ def _filtrar_pacotes_por_camera(pacotes, posicao_camera: Vector2, raio_visao: fl
 def _coletar_diffs_visibilidade(posicao_camera: Vector2, chunks_carregados: Set[Chunk], vistos: Set[int], client_id: str = "", dimensao: str = "Mundo") -> List[Dict[str, object]]:
     raio = _raio_visao_por_regras()
     client_id_norm = str(client_id or "").strip().lower()
-    objetos_proximos = [obj for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio, garantir_estruturas=True) if _objeto_em_chunks(obj, chunks_carregados, dimensao=dimensao)]
+    objetos_proximos = [obj for obj in BANCO_DADOS.buscar_proximos(posicao_camera, raio, garantir_estruturas=True) if _objeto_renderizavel(obj) and _objeto_em_chunks(obj, chunks_carregados, dimensao=dimensao)]
     ids_proximos = {int(obj.Id) for obj in objetos_proximos}
     diffs: List[Dict[str, object]] = []
     agora = time.time()

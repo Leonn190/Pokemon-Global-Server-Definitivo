@@ -388,11 +388,14 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
             if obj is None:
                 ignorados += 1
                 continue
+            usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
+            if isinstance(obj, AtorServer) and bool(getattr(obj, "estado_extra", {}).get("morto", False)):
+                ignorados += 1
+                continue
             payload_in = dict(payload)
             if "posicao" in payload_in:
                 payload_in["posicao"] = _normalizar_posicao_loop(payload_in.get("posicao"))
             obj = BANCO_DADOS.atualizar_objeto(int(objeto_id), payload_in)
-            usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
             if usuario and isinstance(obj, AtorServer):
                 if "posicao" in payload_in:
                     atualizar_posicao_personagem(usuario, obj.posicao, dimensao=str(getattr(obj, "estado_extra", {}).get("dimensao", "Mundo")))
@@ -468,6 +471,43 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     return _ok("Pokemon liberado apos fuga", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
                 ignorados += 1
                 return _erro("Pokemon da fuga nao encontrado", serializar=serializar_resposta)
+            if categoria == "player_morreu":
+                player_id = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+                player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
+                if isinstance(player, AtorServer):
+                    player.estado_extra["morto"] = True
+                    player.estado_extra["motivo_morte"] = str(payload.get("motivo") or "morte")
+                    registrar_diff(
+                        "despawn",
+                        payload={"id": int(player.Id), "motivo": "player_morreu"},
+                        escopo=_escopo_objeto(player),
+                        objeto_id=int(player.Id),
+                        autor="server",
+                        categoria="player",
+                    )
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
+            if categoria == "player_ressurgiu":
+                player_id = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+                player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
+                pos = payload.get("posicao") if isinstance(payload.get("posicao"), (list, tuple)) and len(payload.get("posicao")) == 2 else None
+                if isinstance(player, AtorServer) and pos is not None:
+                    perfil = dict(player.estado_extra.get("perfil", {})) if isinstance(player.estado_extra.get("perfil"), dict) else {}
+                    if "stamina" in payload:
+                        perfil["stamina"] = float(payload.get("stamina", perfil.get("stamina", 0.0)) or 0.0)
+                    player.estado_extra.pop("motivo_morte", None)
+                    campos = {"posicao": _normalizar_posicao_loop(pos), "estado": {"morto": False}, "perfil": perfil}
+                    BANCO_DADOS.atualizar_objeto(int(player.Id), campos)
+                    atualizar_posicao_personagem(client_id, player.posicao, dimensao=str(player.estado_extra.get("dimensao", "Mundo")))
+                    if perfil:
+                        atualizar_perfil_personagem(client_id, perfil)
+                    registrar_diff("spawn", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=int(player.Id), autor="server", categoria="player")
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
             if categoria in {"coleta_estrutura_natural", "estrutura_natural_coleta"}:
                 if CEREBRO.registrar_coleta_estrutura(client_id, payload):
                     aplicados += 1

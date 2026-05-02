@@ -708,6 +708,8 @@ class ControladorPlayer:
         ator = self._player_local
         if ator is None:
             return
+        if bool(getattr(ator, "Morto", False)):
+            return
         ator.set_tile_px(getattr(camera, "TilePx", 50))
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
         self._ultimo_pivo_visual_local_tela = (float(pos_tela[0]), float(pos_tela[1]))

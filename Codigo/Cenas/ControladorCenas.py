@@ -229,6 +229,9 @@ class ControladorCenas:
         self.Discord.atualizar(local=local, acao=acao)
 
     def AplicarClaridadeGlobal(self, tela=None):
+        bloquear = getattr(self.Cena, "bloquear_claridade_global", None)
+        if callable(bloquear) and bool(bloquear()):
+            return
         aplicar_claridade(self.TELA if tela is None else tela, self.CONFIG.get("Claridade", 75))
 
     def SolicitarSair(self):

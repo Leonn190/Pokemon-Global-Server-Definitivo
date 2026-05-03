@@ -1,26 +1,22 @@
 import { campo, campoNumero, carregarCsvWiki, limparTexto } from "./WikiCsv.js";
 import { normalizarChave } from "./PokemonWikiDados.js";
-
 const CSV_COMBATENTES = [
   "Pokemon Global Server - NPC Combatente.csv",
   "Pokemon Global Server - NPC Combatente (1).csv",
   "Pokemon Global Server - NPC Combatentes.csv",
   "Pokemon Global Server - NPCs Combatentes.csv",
 ];
-
 const CSV_VENDEDORES = [
   "Pokemon Global Server - NPC Vendedor.csv",
   "Pokemon Global Server - NPC Vendedor(12).csv",
   "Pokemon Global Server - NPC Vendedores.csv",
   "Pokemon Global Server - NPCs Vendedores.csv",
 ];
-
 const CARGOS_CANONICOS = {
   lider: "Líder",
   capitao: "Capitão",
   desafiante: "Desafiante",
 };
-
 const TIPOS_CANONICOS = {
   agua: "Água",
   aco: "Aço",
@@ -47,38 +43,32 @@ const TIPOS_CANONICOS = {
   veneno: "Venenoso",
   voador: "Voador",
 };
-
 function titulo(valor) {
   const texto = limparTexto(valor);
   return texto ? texto.replace(/^./, (letra) => letra.toUpperCase()) : "";
 }
-
 function tipoCanonico(valor) {
   const texto = limparTexto(valor);
   const chave = normalizarChave(texto);
   return TIPOS_CANONICOS[chave] ?? titulo(texto);
 }
-
 function cargoCanonico(valor) {
   const texto = limparTexto(valor);
   const chave = normalizarChave(texto);
   return CARGOS_CANONICOS[chave] ?? titulo(texto || "Associado");
 }
-
 function separarLista(valor) {
   return limparTexto(valor)
     .split(/[/;,|]+/g)
     .map((item) => limparTexto(item))
     .filter(Boolean);
 }
-
 function coletarPokemons(linha) {
   const pokemons = [];
   Object.entries(linha).forEach(([chave, valor]) => {
     if (/^pokemon\s*\d+$/i.test(limparTexto(chave))) pokemons.push(...separarLista(valor));
   });
   pokemons.push(...separarLista(campo(linha, ["Pokemons", "Pokémons", "Pokemon", "Pokémon", "Equipe"], "")));
-
   const unicos = new Map();
   pokemons.forEach((pokemon) => {
     const chave = normalizarChave(pokemon);
@@ -86,7 +76,6 @@ function coletarPokemons(linha) {
   });
   return [...unicos.values()];
 }
-
 function normalizarCombatente(linha, indice) {
   const code = campoNumero(linha, ["Code", "Código", "ID", "Id"], indice + 1) ?? indice + 1;
   const nome = limparTexto(campo(linha, ["Nome", "NPC"], "")) || `Combatente ${code}`;
@@ -96,7 +85,6 @@ function normalizarCombatente(linha, indice) {
   const skin = limparTexto(campo(linha, ["Skin", "Icone", "Ícone", "Imagem"], ""));
   const pokemons = coletarPokemons(linha);
   const batalhas = campoNumero(linha, ["Batalhas"], null);
-
   return {
     id: `combatente-${code}`,
     ordem: indice + 1,
@@ -117,14 +105,12 @@ function normalizarCombatente(linha, indice) {
     busca: normalizarChave(`${nome} ${code} combatente ${estadio} ${cargo} ${nivel ?? ""} ${pokemons.join(" ")}`),
   };
 }
-
 function normalizarVendedor(linha, indice, deslocamento) {
   const code = campoNumero(linha, ["Code", "Código", "ID", "Id"], deslocamento + indice + 1) ?? deslocamento + indice + 1;
   const nome = limparTexto(campo(linha, ["Nome", "NPC"], "")) || `Vendedor ${code}`;
   const categoria = titulo(campo(linha, ["Categoria", "Loja", "Tipo"], "")) || "Sem categoria";
   const nivel = campoNumero(linha, ["Nivel", "Nível", "Level"], null);
   const skin = limparTexto(campo(linha, ["Skin", "Icone", "Ícone", "Imagem"], ""));
-
   return {
     id: `vendedor-${code}`,
     ordem: deslocamento + indice + 1,
@@ -145,18 +131,15 @@ function normalizarVendedor(linha, indice, deslocamento) {
     busca: normalizarChave(`${nome} ${code} vendedor ${categoria} ${nivel ?? ""}`),
   };
 }
-
 export function carregarNpcs() {
   const combatentes = carregarCsvWiki(CSV_COMBATENTES, "Wiki NPCs Combatentes").map((linha, indice) => normalizarCombatente(linha, indice));
   const vendedores = carregarCsvWiki(CSV_VENDEDORES, "Wiki NPCs Vendedores").map((linha, indice) => normalizarVendedor(linha, indice, combatentes.length));
   return [...combatentes, ...vendedores];
 }
-
 function arquivoSemExtensao(caminho) {
   const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;
   return arquivo.replace(/\.[^.]+$/, "");
 }
-
 export function indexarSkinsNpcs(glob) {
   const indice = {};
   Object.entries(glob).forEach(([caminho, url]) => {
@@ -165,7 +148,6 @@ export function indexarSkinsNpcs(glob) {
   });
   return indice;
 }
-
 function candidatosSkin(npc) {
   const skin = String(npc.skin ?? "").trim();
   const codigo = String(npc.codigo ?? "");
@@ -178,25 +160,21 @@ function candidatosSkin(npc) {
     npc.nome,
   ].filter(Boolean).map(normalizarChave);
 }
-
 export function resolverSkinNpc(npc, skinsPorNome) {
   for (const candidato of candidatosSkin(npc)) {
     if (skinsPorNome[candidato]) return skinsPorNome[candidato];
   }
   return null;
 }
-
 export function criarAssetsNpcs(npcs, skinsPorNome) {
   return Object.fromEntries(npcs.map((npc) => [npc.id, { imagem: resolverSkinNpc(npc, skinsPorNome) }]));
 }
-
 export function resumoNpcs(npcs) {
   const combatentes = npcs.filter((npc) => npc.tipo === "combatente");
   const vendedores = npcs.filter((npc) => npc.tipo === "vendedor");
   const categorias = [...new Map(vendedores.map((npc) => [npc.categoriaBusca, npc.categoria]).filter(([chave]) => chave)).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const cargos = [...new Map(combatentes.map((npc) => [npc.cargoBusca, npc.cargo]).filter(([chave]) => chave)).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const tipagens = [...new Map(combatentes.map((npc) => [npc.estadioBusca, npc.estadio]).filter(([chave]) => chave)).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
-
   return {
     quantidade: npcs.length,
     combatentes: combatentes.length,
@@ -206,13 +184,11 @@ export function resumoNpcs(npcs) {
     tipagens,
   };
 }
-
 const ORDEM_CARGO = {
   lider: 0,
   capitao: 1,
   desafiante: 2,
 };
-
 export function carregarEstadios(npcs) {
   const grupos = new Map();
   npcs.filter((npc) => npc.tipo === "combatente" && npc.estadio).forEach((npc) => {
@@ -229,7 +205,6 @@ export function carregarEstadios(npcs) {
     }
     grupos.get(chave).membrosIds.push(npc.id);
   });
-
   const npcsPorId = Object.fromEntries(npcs.map((npc) => [npc.id, npc]));
   return [...grupos.values()].map((estadio) => {
     const membros = estadio.membrosIds
@@ -250,7 +225,6 @@ export function carregarEstadios(npcs) {
     };
   });
 }
-
 export function indexarIconesEstadios(glob) {
   const indice = {};
   Object.entries(glob).forEach(([caminho, url]) => {
@@ -259,7 +233,6 @@ export function indexarIconesEstadios(glob) {
   });
   return indice;
 }
-
 function candidatosEstadio(estadio) {
   return [
     estadio.nomeTipo,
@@ -271,18 +244,15 @@ function candidatosEstadio(estadio) {
     String(estadio.id).padStart(3, "0"),
   ].filter(Boolean).map(normalizarChave);
 }
-
 export function resolverIconeEstadio(estadio, iconesPorNome) {
   for (const candidato of candidatosEstadio(estadio)) {
     if (iconesPorNome[candidato]) return iconesPorNome[candidato];
   }
   return null;
 }
-
 export function criarAssetsEstadios(estadios, iconesPorNome) {
   return Object.fromEntries(estadios.map((estadio) => [estadio.id, { imagem: resolverIconeEstadio(estadio, iconesPorNome) }]));
 }
-
 export function resumoEstadios(estadios, npcs) {
   return {
     quantidade: estadios.length,

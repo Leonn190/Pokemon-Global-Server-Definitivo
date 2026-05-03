@@ -15,11 +15,9 @@ import {
   normalizarChave,
 } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
-
 const npcs = carregarNpcs();
 const resumo = resumoNpcs(npcs);
 const pokemons = carregarPokemons();
-
 const skinsBrutas = import.meta.glob("@recursos/Visual/Skins/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
   eager: true,
   query: "?url",
@@ -40,7 +38,6 @@ const iconesAtributosBrutos = import.meta.glob("@recursos/Visual/Icones/Atributo
   query: "?url",
   import: "default",
 });
-
 const skinsNpcs = indexarSkinsNpcs(skinsBrutas);
 const assetsNpcs = criarAssetsNpcs(npcs, skinsNpcs);
 const imagensPorNome = indexarArquivosPorNome(imagensPokemons);
@@ -50,20 +47,15 @@ const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome);
 const payloadNpcs = JSON.stringify({ npcs, assetsNpcs, resumo, iconesTipos }).replace(/</g, "\\u003c");
 const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, iconesAtributos, atributosBase: ATRIBUTOS_BASE }).replace(/</g, "\\u003c");
 ---
-
 <Layout
-  titulo="NPCs | Wiki Pokémon Global Server"
+  titulo="NPCs"
   descricao="Wiki de NPCs do Pokémon Global Server, com combatentes, vendedores, cargos, categorias e equipes de Pokémon."
 >
   <WikiTopo
     ativo="npcs"
     titulo="NPCs"
     tituloId="titulo-npcs"
-    ariaResumo="Resumo dos NPCs"
-    resumoClasse="resumo-tres"
-    resumo={[{ valor: resumo.quantidade, rotulo: "NPCs registrados" }, { valor: resumo.combatentes, rotulo: "Combatentes" }, { valor: resumo.vendedores, rotulo: "Vendedores" }]}
   />
-
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app npcs-app" data-npcs-app>
       <section class="pokedex-toolbar npcs-toolbar" aria-label="Ferramentas da wiki de NPCs">
@@ -71,7 +63,6 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
           <span>Pesquisar</span>
           <input data-npcs-search type="search" placeholder="Nome, código, categoria, cargo, estádio ou Pokémon..." autocomplete="off" />
         </label>
-
         <label>
           <span>Ordenar</span>
           <select data-npcs-sort>
@@ -83,7 +74,6 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
             <option value="categoria">Categoria</option>
           </select>
         </label>
-
         <label>
           <span>Tipo</span>
           <select data-npcs-kind>
@@ -92,7 +82,6 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
             <option value="vendedor">Vendedor</option>
           </select>
         </label>
-
         <label data-npcs-vendor-only hidden>
           <span>Categoria</span>
           <select data-npcs-category>
@@ -100,7 +89,6 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
             {resumo.categorias.map((categoria) => <option value={normalizarChave(categoria)}>{categoria}</option>)}
           </select>
         </label>
-
         <label data-npcs-combat-only hidden>
           <span>Cargo</span>
           <select data-npcs-role>
@@ -109,7 +97,6 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
           </select>
         </label>
       </section>
-
       <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-npcs" data-npcs-type-filters hidden aria-label="Filtro por tipagem de combatentes">
         {resumo.tipagens.map((tipo) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-npcs-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`} aria-pressed="false">
@@ -119,7 +106,6 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
           </button>
         ))}
       </section>
-
       <section class="pokedex-status" aria-live="polite">
         <div>
           <strong data-npcs-count>{resumo.quantidade}</strong>
@@ -130,18 +116,14 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
           <button class="botao fantasma compacto" type="button" data-npcs-clear>Limpar filtros</button>
         </div>
       </section>
-
       <section class="itens-grid npcs-grid" data-npcs-grid aria-label="Lista de NPCs"></section>
-
       <div class="pokedex-vazio" data-npcs-empty hidden>
         <strong>Nenhum NPC encontrado.</strong>
         <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
       </div>
-
       <div class="pokedex-sentinel" data-npcs-sentinel aria-hidden="true"></div>
     </div>
   </section>
-
   <aside class="item-detalhe pokemon-detalhe" data-npc-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-npc-close></div>
     <article class="pokemon-detalhe-card item-detalhe-card npc-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="npc-detalhe-nome">
@@ -150,32 +132,27 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
         <button class="pokemon-navegar" type="button" data-npc-next aria-label="Próximo NPC">›</button>
         <button class="pokemon-fechar" type="button" data-npc-close aria-label="Fechar detalhes">×</button>
       </div>
-
       <div class="pokemon-detalhe-topo item-detalhe-topo npc-detalhe-topo">
         <div class="pokemon-palco-detalhe item-palco-detalhe npc-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-npc-image alt="" loading="lazy" decoding="async" />
         </div>
-
         <div class="pokemon-cabecalho-detalhe npc-cabecalho-detalhe">
           <span class="codigo-pokemon" data-npc-code>#000</span>
           <h2 id="npc-detalhe-nome" data-npc-name>NPC</h2>
           <div class="pokemon-tags" data-npc-tags></div>
         </div>
       </div>
-
       <section class="painel-detalhe item-info-painel">
         <h3>Informações</h3>
         <dl class="pokemon-info-lista" data-npc-info></dl>
       </section>
-
       <section class="painel-detalhe item-info-painel dungeon-pokemon-painel" data-npc-team-panel hidden>
         <h3>Equipe Pokémon</h3>
         <div class="dungeon-pokemon-grid" data-npc-team></div>
       </section>
     </article>
   </aside>
-
   <aside class="pokemon-detalhe dungeon-pokemon-detalhe" data-npc-pokemon-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
     <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-npc-detalhe-nome">
@@ -184,14 +161,12 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
         <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
         <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
       </div>
-
       <div class="pokemon-detalhe-topo">
         <div class="pokemon-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-detail-image alt="" loading="lazy" decoding="async" />
           <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
         </div>
-
         <div class="pokemon-cabecalho-detalhe">
           <span class="codigo-pokemon" data-detail-code>#000</span>
           <h2 id="pokemon-npc-detalhe-nome" data-detail-name>Pokémon</h2>
@@ -199,19 +174,16 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
           <p data-detail-summary hidden></p>
         </div>
       </div>
-
       <div class="pokemon-detalhe-grid">
         <section class="painel-detalhe">
           <h3>Atributos básicos</h3>
           <div class="barras-atributos" data-detail-stats></div>
         </section>
-
         <section class="painel-detalhe">
           <h3>Informações</h3>
           <dl class="pokemon-info-lista" data-detail-info></dl>
         </section>
       </div>
-
       <section class="painel-detalhe painel-linhagem" data-detail-line-panel>
         <div class="painel-titulo-linha">
           <h3>Linhagem / evoluções</h3>
@@ -221,7 +193,6 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
       </section>
     </article>
   </aside>
-
   <script id="npcs-data" type="application/json" set:html={payloadNpcs}></script>
   <script id="npcs-pokedex-data" type="application/json" set:html={payloadPokedex}></script>
   <script>

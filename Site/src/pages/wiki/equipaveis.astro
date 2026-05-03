@@ -11,10 +11,8 @@ import {
 } from "../../Codigo/EquipaveisWikiDados.js";
 import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
-
 const equipaveis = carregarEquipaveis();
 const resumo = resumoEquipaveis(equipaveis);
-
 const imagensEquipaveisBrutas = import.meta.glob("@recursos/Visual/Itens/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
   eager: true,
   query: "?url",
@@ -30,27 +28,21 @@ const iconesAtributosBrutos = import.meta.glob("@recursos/Visual/Icones/Atributo
   query: "?url",
   import: "default",
 });
-
 const imagensEquipaveis = indexarImagensEquipaveis(imagensEquipaveisBrutas);
 const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
 const iconesAtributos = indexarArquivosPorNome(iconesAtributosBrutos);
 const assetsEquipaveis = criarAssetsEquipaveis(equipaveis, imagensEquipaveis);
 const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesTipos, iconesAtributos, resumo }).replace(/</g, "\\u003c");
 ---
-
 <Layout
-  titulo="Equipáveis | Wiki Pokémon Global Server"
+  titulo="Equipáveis"
   descricao="Wiki de equipáveis do Pokémon Global Server, com afinidade, atributos aumentados, foco e detalhes de cada equipamento."
 >
   <WikiTopo
     ativo="equipaveis"
     titulo="Equipáveis"
     tituloId="titulo-equipaveis"
-    ariaResumo="Resumo dos registros de equipáveis"
-    resumoClasse="resumo-tres"
-    resumo={[{ valor: resumo.quantidade, rotulo: "Equipáveis registrados" }, { valor: resumo.formasFinais, rotulo: "Formas finais" }, { valor: resumo.passivas, rotulo: "Passivas" }]}
   />
-
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app equipaveis-app" data-equipaveis-app>
       <section class="pokedex-toolbar equipaveis-toolbar" aria-label="Ferramentas da wiki de equipáveis">
@@ -58,7 +50,6 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
           <span>Pesquisar</span>
           <input data-equipaveis-search type="search" placeholder="Nome, código, afinidade ou descrição..." autocomplete="off" />
         </label>
-
         <label>
           <span>Ordenar</span>
           <select data-equipaveis-sort>
@@ -72,7 +63,6 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
             <option value="utilitario">Utilitário</option>
           </select>
         </label>
-
         <label>
           <span>Atributo</span>
           <select data-equipaveis-attribute>
@@ -80,7 +70,6 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
             {ATRIBUTOS_EQUIPAVEIS.map((atributo) => <option value={atributo.chave}>{atributo.rotulo}</option>)}
           </select>
         </label>
-
         <label>
           <span>Foco</span>
           <select data-equipaveis-focus>
@@ -89,7 +78,6 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
           </select>
         </label>
       </section>
-
       <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-equipaveis" aria-label="Filtros por afinidade. Selecione uma afinidade por vez.">
         {resumo.afinidades.map((afinidade) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-equipaveis-type-chip={normalizarChave(afinidade)} title={afinidade} aria-label={`Filtrar por ${afinidade}`} aria-pressed="false">
@@ -99,7 +87,6 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
           </button>
         ))}
       </section>
-
       <section class="pokedex-status" aria-live="polite">
         <div>
           <strong data-equipaveis-count>{resumo.quantidade}</strong>
@@ -110,18 +97,14 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
           <button class="botao fantasma compacto" type="button" data-equipaveis-clear>Limpar filtros</button>
         </div>
       </section>
-
       <section class="itens-grid equipaveis-grid" data-equipaveis-grid aria-label="Lista de equipáveis"></section>
-
       <div class="pokedex-vazio" data-equipaveis-empty hidden>
         <strong>Nenhum equipável encontrado.</strong>
         <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
       </div>
-
       <div class="pokedex-sentinel" data-equipaveis-sentinel aria-hidden="true"></div>
     </div>
   </section>
-
   <aside class="item-detalhe pokemon-detalhe" data-equipavel-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-equipavel-close></div>
     <article class="pokemon-detalhe-card item-detalhe-card equipavel-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="equipavel-detalhe-nome">
@@ -130,13 +113,11 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
         <button class="pokemon-navegar" type="button" data-equipavel-next aria-label="Próximo equipável">›</button>
         <button class="pokemon-fechar" type="button" data-equipavel-close aria-label="Fechar detalhes">×</button>
       </div>
-
       <div class="pokemon-detalhe-topo item-detalhe-topo equipavel-detalhe-topo">
         <div class="pokemon-palco-detalhe item-palco-detalhe equipavel-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-equipavel-image alt="" loading="lazy" decoding="async" />
         </div>
-
         <div class="pokemon-cabecalho-detalhe equipavel-cabecalho-detalhe">
           <span class="codigo-pokemon" data-equipavel-code>#000</span>
           <h2 id="equipavel-detalhe-nome" data-equipavel-name>Equipável</h2>
@@ -144,18 +125,15 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
           <p class="item-descricao-melhor" data-equipavel-description></p>
         </div>
       </div>
-
       <div class="pokemon-detalhe-grid equipavel-detalhe-grid">
         <section class="painel-detalhe">
           <h3>Atributos aumentados</h3>
           <div class="equipavel-atributos" data-equipavel-attributes></div>
         </section>
-
         <section class="painel-detalhe">
           <h3>Foco</h3>
           <div data-equipavel-focus-bars></div>
         </section>
-
         <section class="painel-detalhe">
           <h3>Informações</h3>
           <dl class="pokemon-info-lista" data-equipavel-info></dl>
@@ -163,7 +141,6 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
       </div>
     </article>
   </aside>
-
   <script id="equipaveis-data" type="application/json" set:html={payloadEquipaveis}></script>
   <script>
     import { inicializarWikiEquipaveis } from "../../Codigo/EquipaveisRuntime.js";

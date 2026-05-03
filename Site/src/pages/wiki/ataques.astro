@@ -10,7 +10,6 @@ import {
 } from "../../Codigo/AtaquesWikiDados.js";
 import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
-
 const ataques = carregarAtaques();
 const resumo = resumoAtaques(ataques);
 const iconesAtaquesBrutos = import.meta.glob("@recursos/Visual/Icones/Ataques/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
@@ -30,19 +29,15 @@ const estilos = [...new Map(ataques.map((ataque) => [ataque.estiloBusca, ataque.
 const motores = resumo.motores;
 const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, resumo }).replace(/</g, "\\u003c");
 ---
-
 <Layout
-  titulo="Ataques | Wiki Pokémon Global Server"
+  titulo="Ataques"
   descricao="Wiki de ataques do Pokémon Global Server, com busca, filtros por tipo, estilo, motor, foco e detalhes de aprimoramento."
 >
   <WikiTopo
     ativo="ataques"
-    titulo="Ataques Globais"
+    titulo="Ataques"
     tituloId="titulo-ataques"
-    ariaResumo="Resumo dos registros de ataques"
-    resumo={[{ valor: resumo.quantidade, rotulo: "Ataques registrados" }, { valor: resumo.estilos.length, rotulo: "Estilos registrados" }, { valor: resumo.tipos.length, rotulo: "Tipagens registradas" }]}
   />
-
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app ataques-app" data-ataques-app>
       <section class="pokedex-toolbar ataques-toolbar" aria-label="Ferramentas da wiki de ataques">
@@ -50,7 +45,6 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
           <span>Pesquisar</span>
           <input data-ataques-search type="search" placeholder="Nome, código, tipo, motor ou descrição..." autocomplete="off" />
         </label>
-
         <label>
           <span>Ordenar</span>
           <select data-ataques-sort>
@@ -63,7 +57,6 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
             <option value="utilitario">Utilitário</option>
           </select>
         </label>
-
         <label>
           <span>Estilo</span>
           <select data-ataques-style>
@@ -71,7 +64,6 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
             {estilos.map(([chave, rotulo]) => <option value={chave}>{rotulo}</option>)}
           </select>
         </label>
-
         <label>
           <span>Motor</span>
           <select data-ataques-motor>
@@ -79,7 +71,6 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
             {motores.map((motor) => <option value={motor.chave}>{motor.rotulo}</option>)}
           </select>
         </label>
-
         <label>
           <span>Foco</span>
           <select data-ataques-focus>
@@ -88,7 +79,6 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
           </select>
         </label>
       </section>
-
       <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-ataques" aria-label="Filtros por tipo. Selecione um tipo por vez.">
         {resumo.tipos.map((tipo) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-ataques-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`} aria-pressed="false">
@@ -98,7 +88,6 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
           </button>
         ))}
       </section>
-
       <section class="pokedex-status" aria-live="polite">
         <div>
           <strong data-ataques-count>{resumo.quantidade}</strong>
@@ -109,18 +98,14 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
           <button class="botao fantasma compacto" type="button" data-ataques-clear>Limpar filtros</button>
         </div>
       </section>
-
       <section class="itens-grid ataques-grid" data-ataques-grid aria-label="Lista de ataques"></section>
-
       <div class="pokedex-vazio" data-ataques-empty hidden>
         <strong>Nenhum ataque encontrado.</strong>
         <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
       </div>
-
       <div class="pokedex-sentinel" data-ataques-sentinel aria-hidden="true"></div>
     </div>
   </section>
-
   <aside class="item-detalhe pokemon-detalhe" data-ataque-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-ataque-close></div>
     <article class="pokemon-detalhe-card item-detalhe-card ataque-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="ataque-detalhe-nome">
@@ -129,42 +114,35 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
         <button class="pokemon-navegar" type="button" data-ataque-next aria-label="Próximo ataque">›</button>
         <button class="pokemon-fechar" type="button" data-ataque-close aria-label="Fechar detalhes">×</button>
       </div>
-
       <div class="pokemon-detalhe-topo item-detalhe-topo ataque-detalhe-topo">
         <div class="pokemon-palco-detalhe item-palco-detalhe ataque-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-ataque-image alt="" loading="lazy" decoding="async" />
         </div>
-
         <div class="pokemon-cabecalho-detalhe ataque-cabecalho-detalhe">
           <span class="codigo-pokemon" data-ataque-code>#000</span>
           <h2 id="ataque-detalhe-nome" data-ataque-name>Ataque</h2>
           <div class="pokemon-tags" data-ataque-tags></div>
         </div>
       </div>
-
       <section class="painel-detalhe item-info-painel ataque-texto-painel">
         <h3>Descrição</h3>
         <p class="item-descricao-melhor" data-ataque-description></p>
       </section>
-
       <section class="painel-detalhe item-info-painel ataque-texto-painel">
         <h3>Aprimoramento</h3>
         <p class="item-descricao-melhor" data-ataque-upgrade></p>
       </section>
-
       <section class="painel-detalhe item-info-painel">
         <h3>Foco</h3>
         <div data-ataque-focus-bars></div>
       </section>
-
       <section class="painel-detalhe item-info-painel">
         <h3>Informações</h3>
         <dl class="pokemon-info-lista" data-ataque-info></dl>
       </section>
     </article>
   </aside>
-
   <script id="ataques-data" type="application/json" set:html={payloadAtaques}></script>
   <script>
     import { inicializarWikiAtaques } from "../../Codigo/AtaquesRuntime.js";

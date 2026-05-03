@@ -1,9 +1,7 @@
-import { aplicarImagemDetalhe, html, lerJson } from "./WikiRuntimeBase.js";
-
+import { aplicarImagemDetalhe, criarGridProgressiva, html, lerJson } from "./WikiRuntimeBase.js";
 function assetEstrutura(estrutura, dados) {
   return dados.assetsEstruturas?.[estrutura.id] ?? { imagem: null };
 }
-
 function criarCardEstrutura(estrutura, dados) {
   const asset = assetEstrutura(estrutura, dados);
   const card = document.createElement("button");
@@ -20,7 +18,6 @@ function criarCardEstrutura(estrutura, dados) {
   `;
   return card;
 }
-
 function montarLinhasInfo(estrutura) {
   return [
     ["Material", estrutura.material || "Sem material"],
@@ -34,15 +31,12 @@ function montarLinhasInfo(estrutura) {
     ["Inquebrável", estrutura.inquebravel ? "Sim" : "Não"],
   ];
 }
-
 function criarControladorDetalhe(dados) {
   const detalhe = document.querySelector("[data-mundo-detail]");
   let estruturaAberta = null;
-
   function listaNavegacao() {
     return [...(dados.estruturas || [])].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
   }
-
   function abrirVizinho(direcao) {
     if (!estruturaAberta) return;
     const lista = listaNavegacao();
@@ -52,12 +46,10 @@ function criarControladorDetalhe(dados) {
     const proxima = lista[(indiceSeguro + direcao + lista.length) % lista.length];
     if (proxima) abrirDetalhe(proxima.id);
   }
-
   function abrirDetalhe(id) {
     const estrutura = (dados.estruturas || []).find((atual) => atual.id === String(id));
     if (!estrutura || !detalhe) return;
     estruturaAberta = estrutura;
-
     const asset = assetEstrutura(estrutura, dados);
     const imagem = detalhe.querySelector("[data-mundo-image]");
     const codigo = detalhe.querySelector("[data-mundo-code]");
@@ -65,61 +57,48 @@ function criarControladorDetalhe(dados) {
     const descricao = detalhe.querySelector("[data-mundo-description]");
     const info = detalhe.querySelector("[data-mundo-info]");
     const biomas = detalhe.querySelector("[data-mundo-biomes]");
-
     if (codigo) codigo.textContent = `#${estrutura.id}`;
     if (nome) nome.textContent = estrutura.nome;
     if (descricao) descricao.textContent = estrutura.descricao || "Estrutura natural registrada nas regras do mundo.";
-
     aplicarImagemDetalhe(imagem, asset.imagem, estrutura.nome);
-
     if (info) {
       info.innerHTML = montarLinhasInfo(estrutura)
         .map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`)
         .join("");
     }
-
     if (biomas) {
       const listaBiomas = Array.isArray(estrutura.biomas) && estrutura.biomas.length
         ? estrutura.biomas.map((bioma) => bioma.nome)
         : [estrutura.biomasTexto];
       biomas.innerHTML = listaBiomas.map((bioma) => `<span>${html(bioma)}</span>`).join("");
     }
-
     detalhe.hidden = false;
     document.body.classList.add("detalhe-aberto");
   }
-
   function fecharDetalhe() {
     if (detalhe) detalhe.hidden = true;
     document.body.classList.remove("detalhe-aberto");
   }
-
   detalhe?.querySelectorAll("[data-mundo-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-mundo-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));
   detalhe?.querySelectorAll("[data-mundo-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
   });
-
   return { abrirDetalhe };
 }
-
 export function inicializarWikiMundo(idDados = "mundo-data") {
   const dados = lerJson(idDados);
   const app = document.querySelector("[data-mundo-app]");
   if (!dados || !app) return;
-
   const grid = app.querySelector("[data-mundo-estruturas-grid]");
   const detalheController = criarControladorDetalhe(dados);
-
-  if (grid) {
-    const fragmento = document.createDocumentFragment();
-    (dados.estruturas || []).forEach((estrutura) => fragmento.appendChild(criarCardEstrutura(estrutura, dados)));
-    grid.replaceChildren(fragmento);
-  }
-
-  grid?.addEventListener("click", (evento) => {
-    const card = evento.target.closest("[data-mundo-estrutura-id]");
-    if (card) detalheController.abrirDetalhe(card.dataset.mundoEstruturaId);
-  });
+  criarGridProgressiva({
+    grid,
+    itens: dados.estruturas || [],
+    criarCard: (estrutura) => criarCardEstrutura(estrutura, dados),
+    cardSelector: "[data-mundo-estrutura-id]",
+    obterCardId: (card) => card.dataset.mundoEstruturaId,
+    abrirDetalhe: detalheController.abrirDetalhe,
+  })?.iniciar();
 }

@@ -2,14 +2,12 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizarChave } from "./PokemonWikiDados.js";
-
 const NOMES_REGRAS = {
   estruturas: "EstruturasNaturais.toml",
   biomas: "Biomas.toml",
   terreno: "Terreno.toml",
   pokemons: "Pokemons.toml",
 };
-
 const ROTULOS_BIOMAS = {
   FIELD: "Campo",
   FOREST: "Floresta",
@@ -19,7 +17,6 @@ const ROTULOS_BIOMAS = {
   VOLCANIC: "Vulcânico",
   SWAMP: "Pântano",
 };
-
 const ROTULOS_TILES = {
   FIELD_GRASS: "Grama de campo",
   FOREST_GRASS: "Grama de floresta",
@@ -32,7 +29,6 @@ const ROTULOS_TILES = {
   WATER_DEEP: "Água profunda",
   WATER_SHALLOW: "Água rasa",
 };
-
 const SUBTIPO_PARA_OBJETO = {
   arvore: "TREE",
   pedra: "ROCK",
@@ -60,9 +56,7 @@ const SUBTIPO_PARA_OBJETO = {
   casa: "HOUSE",
   pedra_dungeon: "DUNGEON_ROCK",
 };
-
 const OBJETO_PARA_SUBTIPO = Object.fromEntries(Object.entries(SUBTIPO_PARA_OBJETO).map(([subtipo, objeto]) => [objeto, subtipo]));
-
 const DESCRICOES_BIOMAS = {
   FIELD: "Área aberta e equilibrada, boa para início de exploração. Costuma misturar vegetação, pedra e minérios básicos.",
   FOREST: "Ambiente mais fechado, com muita presença de árvores, arbustos, flores e plantas naturais.",
@@ -72,7 +66,6 @@ const DESCRICOES_BIOMAS = {
   VOLCANIC: "Área quente e pesada, com rocha vulcânica, lava e minerais associados a calor intenso.",
   SWAMP: "Região úmida e densa, com solo pantanoso, vegetação resistente e recursos próprios do pântano.",
 };
-
 const DESCRICOES_ESTRUTURAS = {
   arvore: "Árvores aparecem em áreas naturais e ajudam a formar a base visual do mundo. Também servem como fonte simples de madeira para o jogador.",
   arvore_trombosa: "Árvore Trombosa é uma variação mais marcante de árvore, usada para deixar florestas mais reconhecíveis e menos repetitivas.",
@@ -87,11 +80,9 @@ const DESCRICOES_ESTRUTURAS = {
   casa: "Casas fazem parte da geração das vilas. Elas representam civilização e não devem ser tratadas como um recurso natural comum.",
   pedra_dungeon: "Pedra Dungeon compõe áreas de dungeon e ajuda a separar visualmente esses ambientes do restante do mundo.",
 };
-
 function limparTexto(valor) {
   return String(valor ?? "").trim();
 }
-
 function numero(valor) {
   if (typeof valor === "number" && Number.isFinite(valor)) return valor;
   const texto = limparTexto(valor).replace(",", ".");
@@ -99,7 +90,6 @@ function numero(valor) {
   const convertido = Number(texto);
   return Number.isFinite(convertido) ? convertido : null;
 }
-
 function removerComentario(linha) {
   let aspas = false;
   let resultado = "";
@@ -111,12 +101,10 @@ function removerComentario(linha) {
   }
   return resultado.trim();
 }
-
 function separarCaminhoSecao(secao) {
   const partes = [];
   let atual = "";
   let aspas = false;
-
   for (let i = 0; i < secao.length; i += 1) {
     const char = secao[i];
     if (char === '"' && secao[i - 1] !== "\\") {
@@ -130,18 +118,15 @@ function separarCaminhoSecao(secao) {
     }
     atual += char;
   }
-
   if (atual.trim()) partes.push(atual.trim());
   return partes.map((parte) => parte.replace(/^"|"$/g, ""));
 }
-
 function parseArray(valor) {
   const miolo = valor.slice(1, -1).trim();
   if (!miolo) return [];
   const itens = [];
   let atual = "";
   let aspas = false;
-
   for (let i = 0; i < miolo.length; i += 1) {
     const char = miolo[i];
     if (char === '"' && miolo[i - 1] !== "\\") aspas = !aspas;
@@ -152,11 +137,9 @@ function parseArray(valor) {
     }
     atual += char;
   }
-
   if (atual.trim()) itens.push(parseTomlValue(atual.trim()));
   return itens;
 }
-
 function parseTomlValue(valor) {
   const texto = limparTexto(valor);
   if (texto.startsWith("[") && texto.endsWith("]")) return parseArray(texto);
@@ -166,7 +149,6 @@ function parseTomlValue(valor) {
   const convertido = Number(texto);
   return Number.isFinite(convertido) ? convertido : texto;
 }
-
 function garantirSecao(objeto, caminho) {
   let alvo = objeto;
   caminho.forEach((parte) => {
@@ -175,29 +157,23 @@ function garantirSecao(objeto, caminho) {
   });
   return alvo;
 }
-
 function parseToml(texto) {
   const raiz = {};
   let secaoAtual = raiz;
-
   texto.split(/\r?\n/).forEach((linhaBruta) => {
     const linha = removerComentario(linhaBruta);
     if (!linha) return;
-
     const secao = linha.match(/^\[([^\]]+)\]$/);
     if (secao) {
       secaoAtual = garantirSecao(raiz, separarCaminhoSecao(secao[1]));
       return;
     }
-
     const igual = linha.indexOf("=");
     if (igual === -1) return;
     secaoAtual[linha.slice(0, igual).trim()] = parseTomlValue(linha.slice(igual + 1).trim());
   });
-
   return raiz;
 }
-
 function candidatosRegras(nomeArquivo) {
   const diretorioAtual = path.dirname(fileURLToPath(import.meta.url));
   return [
@@ -209,7 +185,6 @@ function candidatosRegras(nomeArquivo) {
     path.resolve(process.cwd(), "../Pokemon-Global-Server-Definitivo/SimuladorServerJogo/Logica/Regras", nomeArquivo),
   ];
 }
-
 function carregarToml(nomeArquivo, rotulo) {
   const caminhos = candidatosRegras(nomeArquivo);
   const caminho = caminhos.find((item) => existsSync(item));
@@ -219,32 +194,26 @@ function carregarToml(nomeArquivo, rotulo) {
   }
   return parseToml(readFileSync(caminho, "utf8").replace(/^\uFEFF/, ""));
 }
-
 function arquivoSemExtensao(caminho) {
   const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;
   return arquivo.replace(/\.[^.]+$/, "");
 }
-
 function rotuloEstilo(valor) {
   const chave = normalizarChave(valor);
   const rotulos = { machado: "Machado", picareta: "Picareta", balde: "Balde", nenhum: "Nenhum" };
   return rotulos[chave] ?? (limparTexto(valor) || "Não informado");
 }
-
 function formatarNumero(valor, casas = 2) {
   const n = numero(valor);
   if (n === null) return "-";
   return n.toLocaleString("pt-BR", { maximumFractionDigits: casas });
 }
-
 function textoLista(lista, vazio = "Não informado") {
   return Array.isArray(lista) && lista.length ? lista.join(", ") : vazio;
 }
-
 function biomasDaEstrutura(subtipo, biomasToml) {
   const objeto = SUBTIPO_PARA_OBJETO[subtipo];
   if (!objeto) return [];
-
   return Object.entries(biomasToml.biomes ?? {})
     .map(([codigo, cfg]) => ({
       codigo,
@@ -256,24 +225,20 @@ function biomasDaEstrutura(subtipo, biomasToml) {
     .sort((a, b) => b.chance - a.chance || a.nome.localeCompare(b.nome, "pt-BR"))
     .map(({ chance, ...bioma }) => bioma);
 }
-
 function gerarDescricaoEstrutura(estrutura) {
   if (DESCRICOES_ESTRUTURAS[estrutura.subtipo]) return DESCRICOES_ESTRUTURAS[estrutura.subtipo];
-
   const locais = estrutura.biomasTexto;
   if (estrutura.material !== "Sem material") {
     return `${estrutura.nome} aparece em ${locais} e pode ser consultada nesta wiki como uma estrutura do mundo ligada ao material ${estrutura.material}.`;
   }
   return `${estrutura.nome} aparece em ${locais} e funciona como uma estrutura de ambiente dentro das regras atuais do mundo.`;
 }
-
 function montarEstrutura([codigo, cfg], biomasToml) {
   const subtipo = limparTexto(cfg.subtipo) || `estrutura_${codigo}`;
   const biomas = biomasDaEstrutura(subtipo, biomasToml);
   const origemEspecial = subtipo === "aquamarine" ? "Água profunda" : subtipo === "casa" ? "Vilas" : subtipo === "pedra_dungeon" ? "Dungeons" : "Geração especial";
   const dropAtivo = cfg.drop_ativo === undefined ? true : Boolean(cfg.drop_ativo);
   const material = limparTexto(cfg.material) || "Sem material";
-
   const estrutura = {
     id: String(codigo),
     ordem: numero(codigo) ?? 9999,
@@ -299,22 +264,18 @@ function montarEstrutura([codigo, cfg], biomasToml) {
     biomasTexto: biomas.length ? biomas.map((bioma) => bioma.nome).join(", ") : origemEspecial,
     origemEspecial,
   };
-
   estrutura.descricao = gerarDescricaoEstrutura(estrutura);
   return estrutura;
 }
-
 function montarMapaEstruturasPorObjeto(estruturasToml) {
   return Object.fromEntries(Object.entries(estruturasToml.tipos ?? {}).map(([, cfg]) => [SUBTIPO_PARA_OBJETO[cfg.subtipo] ?? cfg.subtipo, limparTexto(cfg.nome)]));
 }
-
 function montarBiomas(biomasToml, estruturasPorObjeto) {
   return Object.entries(biomasToml.biomes ?? {}).map(([codigo, cfg]) => {
     const objetos = Object.entries(cfg.objects ?? {})
       .filter(([, chance]) => (numero(chance) ?? 0) > 0)
       .sort((a, b) => (numero(b[1]) ?? 0) - (numero(a[1]) ?? 0))
       .map(([objeto]) => estruturasPorObjeto[objeto] || OBJETO_PARA_SUBTIPO[objeto] || objeto);
-
     return {
       codigo,
       nome: ROTULOS_BIOMAS[codigo] ?? codigo,
@@ -325,15 +286,12 @@ function montarBiomas(biomasToml, estruturasPorObjeto) {
     };
   });
 }
-
-
 function montarCaptura(pokemonsToml) {
   const captura = pokemonsToml.captura ?? {};
   const dificuldade = captura.dificuldade ?? {};
   const poder = captura.poder ?? {};
   const chance = captura.chance ?? {};
   const falhas = captura.falhas ?? {};
-
   return {
     limiteFrutas: numero(captura.limite_frutas) ?? 2,
     formulaDificuldade: limparTexto(dificuldade.formula) || "min + (max - min) * dificuldade_do_pokemon",
@@ -348,7 +306,6 @@ function montarCaptura(pokemonsToml) {
     falhasParaIrritar: numero(falhas.falhas_para_irritar) ?? 5,
   };
 }
-
 function carregarRegrasMundo() {
   return {
     estruturas: carregarToml(NOMES_REGRAS.estruturas, "regras de estruturas naturais"),
@@ -357,7 +314,6 @@ function carregarRegrasMundo() {
     pokemons: carregarToml(NOMES_REGRAS.pokemons, "regras de pokémons"),
   };
 }
-
 export function carregarWikiMundo() {
   const regras = carregarRegrasMundo();
   const estruturas = Object.entries(regras.estruturas.tipos ?? {})
@@ -366,7 +322,6 @@ export function carregarWikiMundo() {
   const estruturasPorObjeto = montarMapaEstruturasPorObjeto(regras.estruturas);
   const biomas = montarBiomas(regras.biomas, estruturasPorObjeto);
   const mundo = regras.terreno.world ?? {};
-
   return {
     estruturas,
     biomas,
@@ -379,7 +334,6 @@ export function carregarWikiMundo() {
     },
   };
 }
-
 export function indexarImagensMundo(glob) {
   const indice = {};
   Object.entries(glob).forEach(([caminho, url]) => {
@@ -388,7 +342,6 @@ export function indexarImagensMundo(glob) {
   });
   return indice;
 }
-
 function candidatosImagemEstrutura(estrutura) {
   return [
     estrutura.spriteArquivo,
@@ -400,14 +353,12 @@ function candidatosImagemEstrutura(estrutura) {
     estrutura.id,
   ].filter(Boolean).map(normalizarChave);
 }
-
 export function resolverImagemEstrutura(estrutura, imagensPorNome) {
   for (const candidato of candidatosImagemEstrutura(estrutura)) {
     if (imagensPorNome[candidato]) return imagensPorNome[candidato];
   }
   return null;
 }
-
 export function criarAssetsEstruturas(estruturas, imagensPorNome) {
   return Object.fromEntries(estruturas.map((estrutura) => [estrutura.id, { imagem: resolverImagemEstrutura(estrutura, imagensPorNome) }]));
 }

@@ -1,11 +1,9 @@
 import { criarCardNpc, criarControladorDetalheNpc } from "./NpcsRuntime.js";
 import { criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-import { aplicarImagemDetalhe, html, lerJson } from "./WikiRuntimeBase.js";
-
+import { aplicarImagemDetalhe, criarGridProgressiva, html, lerJson } from "./WikiRuntimeBase.js";
 function assetEstadio(estadio, dados) {
   return dados.assetsEstadios?.[estadio.id] ?? { imagem: null };
 }
-
 function criarCardEstadio(estadio, dados) {
   const asset = assetEstadio(estadio, dados);
   const card = document.createElement("button");
@@ -21,7 +19,6 @@ function criarCardEstadio(estadio, dados) {
   `;
   return card;
 }
-
 function agruparMembros(estadio, dados) {
   const porId = Object.fromEntries((dados.npcs || []).map((npc) => [npc.id, npc]));
   const membros = (estadio.membrosIds || []).map((id) => porId[id]).filter(Boolean);
@@ -33,17 +30,14 @@ function agruparMembros(estadio, dados) {
   ];
   return grupos.filter(([, lista]) => lista.length);
 }
-
 function criarControladorEstadio(dados, obterListaAtual, npcController) {
   const detalhe = document.querySelector("[data-estadio-detail]");
   let estadioAberto = null;
-
   function listaNavegacao() {
     const listaAtual = typeof obterListaAtual === "function" ? obterListaAtual() : null;
     const lista = Array.isArray(listaAtual) && listaAtual.length ? listaAtual : (dados.estadios || []);
     return [...lista].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
   }
-
   function abrirVizinho(direcao) {
     if (!estadioAberto) return;
     const lista = listaNavegacao();
@@ -53,7 +47,6 @@ function criarControladorEstadio(dados, obterListaAtual, npcController) {
     const proximo = lista[(indiceSeguro + direcao + lista.length) % lista.length];
     if (proximo) abrirDetalhe(proximo.id);
   }
-
   function abrirDetalhe(id) {
     const estadio = (dados.estadios || []).find((item) => item.id === String(id));
     if (!estadio || !detalhe) return;
@@ -64,7 +57,6 @@ function criarControladorEstadio(dados, obterListaAtual, npcController) {
     const nome = detalhe.querySelector("[data-estadio-name]");
     const tags = detalhe.querySelector("[data-estadio-tags]");
     const membros = detalhe.querySelector("[data-estadio-members]");
-
     if (codigo) codigo.textContent = `#${estadio.id}`;
     if (nome) nome.textContent = estadio.nome;
     if (tags) {
@@ -73,9 +65,7 @@ function criarControladorEstadio(dados, obterListaAtual, npcController) {
         <span class="tag-extra">${html(estadio.membrosQuantidade)} associados</span>
       `;
     }
-
     aplicarImagemDetalhe(imagem, asset.imagem, estadio.nome);
-
     if (membros) {
       membros.replaceChildren();
       const grupos = agruparMembros(estadio, dados);
@@ -92,16 +82,13 @@ function criarControladorEstadio(dados, obterListaAtual, npcController) {
         });
       }
     }
-
     detalhe.hidden = false;
     document.body.classList.add("detalhe-aberto");
   }
-
   function fecharDetalhe() {
     if (detalhe) detalhe.hidden = true;
     document.body.classList.remove("detalhe-aberto");
   }
-
   detalhe?.querySelectorAll("[data-estadio-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-estadio-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));
   detalhe?.querySelectorAll("[data-estadio-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
@@ -113,19 +100,15 @@ function criarControladorEstadio(dados, obterListaAtual, npcController) {
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
   });
-
   return { abrirDetalhe };
 }
-
 export function inicializarWikiEstadios(idDados = "estadios-data") {
   const dados = lerJson(idDados);
   const pokedex = lerJson("estadios-pokedex-data");
   const app = document.querySelector("[data-estadios-app]");
   if (!dados || !pokedex || !app) return;
-
   const grid = app.querySelector("[data-estadios-grid]");
   if (!grid) return;
-
   const npcController = criarControladorDetalheNpc(dados, pokedex, {
     seletorDetalhe: "[data-estadio-npc-detail]",
     obterListaAtual: () => dados.npcs || [],
@@ -136,20 +119,14 @@ export function inicializarWikiEstadios(idDados = "estadios-data") {
     animarFrames: true,
   });
   const estadioController = criarControladorEstadio(dados, () => dados.estadios || [], npcController);
-
-  grid.replaceChildren();
-  (dados.estadios || []).forEach((estadio) => {
-    const card = criarCardEstadio(estadio, dados);
-    card.classList.add("pokemon-card-entrando");
-    grid.appendChild(card);
-  });
-
-  grid.addEventListener("click", (evento) => {
-    const card = evento.target.closest("[data-estadio-id]");
-    if (!card) return;
-    estadioController.abrirDetalhe(card.dataset.estadioId);
-  });
-
+  criarGridProgressiva({
+    grid,
+    itens: dados.estadios || [],
+    criarCard: (estadio) => criarCardEstadio(estadio, dados),
+    cardSelector: "[data-estadio-id]",
+    obterCardId: (card) => card.dataset.estadioId,
+    abrirDetalhe: estadioController.abrirDetalhe,
+  })?.iniciar();
   document.querySelector("[data-estadio-npc-detail]")?.addEventListener("click", (evento) => {
     const card = evento.target.closest("[data-pokemon-id]");
     if (!card) return;

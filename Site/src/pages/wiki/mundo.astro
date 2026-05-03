@@ -7,7 +7,6 @@ import {
   indexarImagensMundo,
 } from "../../Codigo/MundoWikiDados.js";
 import "../../Estilos/wiki.css";
-
 const dadosMundo = carregarWikiMundo();
 const { estruturas, biomas, resumo, captura } = dadosMundo;
 const imagensEstruturasBrutas = import.meta.glob("@recursos/Visual/Mundo/Objetos/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
@@ -21,19 +20,15 @@ const estruturasPublicas = estruturas.map(({ subtipo, sprite, spriteArquivo, slu
 const tamanhoMundo = resumo.largura.toLocaleString("pt-BR");
 const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, resumo, assetsEstruturas }).replace(/</g, "\\u003c");
 ---
-
 <Layout
-  titulo="Mundo | Wiki Pokémon Global Server"
+  titulo="Mundo"
   descricao="Wiki de Mundo do Pokémon Global Server, com explicações da geração, biomas, vilas, estruturas naturais e dados ligados às regras do jogo."
 >
   <WikiTopo
     ativo="mundo"
-    titulo="Mundo Global"
+    titulo="Mundo"
     tituloId="titulo-mundo"
-    ariaResumo="Resumo da wiki de mundo"
-    resumo={[{ valor: resumo.estruturas, rotulo: "Estruturas naturais" }, { valor: resumo.biomas, rotulo: "Biomas registrados" }, { valor: tamanhoMundo, rotulo: "Tamanho do mundo" }]}
   />
-
   <main class="wiki-mundo" data-mundo-app aria-label="Conteúdo da wiki de mundo">
     <section class="mundo-intro">
       <article class="mundo-intro-principal">
@@ -46,7 +41,6 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
         </p>
       </article>
     </section>
-
     <section class="mundo-blocos-texto" aria-label="Explicação geral do mundo">
       <article class="mundo-bloco-texto">
         <span class="mundo-numero">01</span>
@@ -57,7 +51,6 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
           mas ainda reconhecível pelas mesmas regras de jogo.
         </p>
       </article>
-
       <article class="mundo-bloco-texto">
         <span class="mundo-numero">02</span>
         <h3>Biomas com propósito</h3>
@@ -66,7 +59,6 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
           enquanto outras incentivam o jogador a viajar para regiões específicas do mapa.
         </p>
       </article>
-
       <article class="mundo-bloco-texto">
         <span class="mundo-numero">03</span>
         <h3>Localidades importantes</h3>
@@ -76,7 +68,6 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
         </p>
       </article>
     </section>
-
     <section class="mundo-secao" aria-labelledby="titulo-biomas-mundo">
       <div class="mundo-cabecalho-secao">
         <div>
@@ -88,7 +79,6 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
           Por isso, procurar um recurso também significa escolher qual ambiente explorar.
         </p>
       </div>
-
       <div class="mundo-biomas-grid" aria-label="Lista de biomas do mundo">
         {biomas.map((bioma) => (
           <article class="mundo-bioma-card">
@@ -107,8 +97,6 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
         ))}
       </div>
     </section>
-
-
     <section class="mundo-secao mundo-captura" aria-labelledby="titulo-captura-mundo">
       <div class="mundo-cabecalho-secao">
         <div>
@@ -120,7 +108,6 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
           <code>Pokemons.toml</code>, então ajustes nas regras aparecem aqui sem precisar reescrever o site.
         </p>
       </div>
-
       <article class="mundo-captura-card">
         <p>
           Primeiro o jogo calcula a dificuldade usando atributos do Pokémon, nível e IV. Depois calcula o poder
@@ -136,7 +123,6 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
         </div>
       </article>
     </section>
-
     <section class="mundo-secao" aria-labelledby="titulo-estruturas-naturais">
       <div class="mundo-cabecalho-secao">
         <div>
@@ -148,11 +134,9 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
           ferramenta, dureza, quantidade, locais de aparição e outras informações úteis para entender aquele objeto.
         </p>
       </div>
-
       <section class="itens-grid mundo-estrutura-grid" data-mundo-estruturas-grid aria-label="Lista de estruturas naturais"></section>
     </section>
   </main>
-
   <aside class="item-detalhe pokemon-detalhe" data-mundo-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-mundo-close></div>
     <article class="pokemon-detalhe-card item-detalhe-card mundo-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="mundo-detalhe-nome">
@@ -161,13 +145,11 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
         <button class="pokemon-navegar" type="button" data-mundo-next aria-label="Próxima estrutura">›</button>
         <button class="pokemon-fechar" type="button" data-mundo-close aria-label="Fechar detalhes">×</button>
       </div>
-
       <div class="pokemon-detalhe-topo item-detalhe-topo mundo-detalhe-topo">
         <div class="pokemon-palco-detalhe item-palco-detalhe mundo-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-mundo-image alt="" loading="lazy" decoding="async" />
         </div>
-
         <div class="pokemon-cabecalho-detalhe mundo-cabecalho-detalhe">
           <span class="codigo-pokemon" data-mundo-code>#000</span>
           <h2 id="mundo-detalhe-nome" data-mundo-name>Estrutura</h2>
@@ -175,14 +157,12 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
           <div class="mundo-detalhe-biomas" data-mundo-biomes aria-label="Locais de aparição"></div>
         </div>
       </div>
-
       <section class="painel-detalhe item-info-painel">
         <h3>Informações</h3>
         <dl class="pokemon-info-lista" data-mundo-info></dl>
       </section>
     </article>
   </aside>
-
   <script id="mundo-data" type="application/json" set:html={payloadMundo}></script>
   <script>
     import { inicializarWikiMundo } from "../../Codigo/MundoRuntime.js";

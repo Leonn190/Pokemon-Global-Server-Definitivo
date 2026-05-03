@@ -13,10 +13,8 @@ import {
 } from "../Codigo/PokemonWikiDados.js";
 import "../Estilos/wiki.css";
 import "../Estilos/home.css";
-
 const pokemonsHome = carregarPokemons();
 const totalPokemonsHome = pokemonsHome.length || 1307;
-
 const estatisticas = [
   { valor: String(totalPokemonsHome), rotulo: "Pokémon cadastrados" },
   { valor: "75", rotulo: "Ataques cadastrados" },
@@ -25,7 +23,6 @@ const estatisticas = [
   { valor: "63", rotulo: "Equipáveis" },
   { valor: "20", rotulo: "Tipos no sistema" },
 ];
-
 const pilares = [
   {
     etiqueta: "Exploração",
@@ -52,7 +49,6 @@ const pilares = [
       "Por trás da tela, o cliente mostra o jogo e o servidor simulado segura a lógica: mundo, spawns, inventário, batalhas, validações e persistência.",
   },
 ];
-
 const tecnologias = [
   "Python e Pygame",
   "Pipeline 2D próprio",
@@ -61,7 +57,6 @@ const tecnologias = [
   "Servidor com tick de mundo",
   "Mapa explorável com cache por chunks",
 ];
-
 const imagensPokemonsHome = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
   eager: true,
   query: "?url",
@@ -100,14 +95,12 @@ const payloadHomePokemon = JSON.stringify({
   atributosBase: ATRIBUTOS_BASE,
 }).replace(/</g, "\\u003c");
 ---
-
 <Layout
   titulo="Início | Pokémon Global Server"
   descricao="Página inicial do Pokémon Global Server, um RPG online 2D de exploração, captura, craft e batalhas estratégicas."
 >
   <section class="hero-home" aria-labelledby="titulo-principal">
     <div class="hero-aurora" aria-hidden="true"></div>
-
     <div class="logo-palco" aria-label="Logo Pokémon Global Server">
       <div class="anel-luz anel-luz-azul"></div>
       <div class="anel-luz anel-luz-vermelho"></div>
@@ -115,35 +108,30 @@ const payloadHomePokemon = JSON.stringify({
       <div class="orbita orbita-dois"></div>
       <img class="logo-principal" src={logo.src} alt="Logo Pokémon Global Server" />
     </div>
-
     <div class="hero-copy">
       <p class="selo">Fan game online 2D em desenvolvimento</p>
       <h1 id="titulo-principal">Pokémon Global Server</h1>
       <p class="subtitulo-home">
         Entre em um mundo online 2D feito para explorar, capturar, evoluir equipes, coletar recursos, criar itens e vencer batalhas com estratégia de verdade.
       </p>
-
       <div class="acoes hero-acoes">
         <Botao href="/wiki">Explorar a wiki</Botao>
         <Botao href="/download" tipo="secundario">Ver acesso beta</Botao>
       </div>
     </div>
   </section>
-
   <section class="secao secao-conteudo" aria-labelledby="titulo-visao">
     <div class="intro-home">
       <figure class="quadro-logo-card">
         <img src={quadroLogo.src} alt="Arte promocional do Pokémon Global Server com iluminação azul e vermelha" />
         <figcaption>Exploração 2D com clima de mundo grande, servidor e batalha estratégica.</figcaption>
       </figure>
-
       <div class="intro-copy">
         <p class="selo">Visão do jogo</p>
         <h2 id="titulo-visao">Explore. Capture. Batalhe.</h2>
         <p>
           Pokémon Global Server é um fan game 2D onde o jogador sai pelo mapa, descobre biomas, captura criaturas, coleta recursos, monta equipe, cria itens e entra em batalhas que dependem de energia, efeitos, tipos e posicionamento.
         </p>
-
         <div class="mini-destaques" aria-label="Destaques da experiência">
           <article>
             <strong>Mundo por chunks</strong>
@@ -160,7 +148,6 @@ const payloadHomePokemon = JSON.stringify({
         </div>
       </div>
     </div>
-
     <div class="estatisticas-home" aria-label="Estatísticas do projeto">
       {estatisticas.map((item) => (
         <article class="estatistica-card">
@@ -170,12 +157,10 @@ const payloadHomePokemon = JSON.stringify({
       ))}
     </div>
   </section>
-
   <section class="secao pokemon-destaque-home pokemon-destaque-carrossel-home" data-home-pokemon-carousel aria-labelledby="titulo-pokemon-destaque">
     <div class="pokemon-destaque-copy">
       <h2 id="titulo-pokemon-destaque">Explore um catálogo diversificado</h2>
     </div>
-
     <div class="pokemon-carrossel-janela" aria-label="Pokémons em destaque em carrossel">
       <div class="pokemon-carrossel-trilho">
         {trilhoDestaquesHome.map((pokemon) => {
@@ -209,13 +194,11 @@ const payloadHomePokemon = JSON.stringify({
         })}
       </div>
     </div>
-
     <div class="acoes pokemon-carrossel-acoes">
       <Botao href="/wiki" tipo="fantasma">Ver wiki completa</Botao>
       <Botao href="/wiki/pokemons">Abrir Pokédex</Botao>
     </div>
   </section>
-
   <aside class="pokemon-detalhe" data-home-pokemon-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
     <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-home-detalhe-nome">
@@ -224,14 +207,12 @@ const payloadHomePokemon = JSON.stringify({
         <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
         <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
       </div>
-
       <div class="pokemon-detalhe-topo">
         <div class="pokemon-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-detail-image alt="" loading="lazy" decoding="async" />
           <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
         </div>
-
         <div class="pokemon-cabecalho-detalhe">
           <span class="codigo-pokemon" data-detail-code>#000</span>
           <h2 id="pokemon-home-detalhe-nome" data-detail-name>Pokémon</h2>
@@ -239,19 +220,16 @@ const payloadHomePokemon = JSON.stringify({
           <p data-detail-summary hidden></p>
         </div>
       </div>
-
       <div class="pokemon-detalhe-grid">
         <section class="painel-detalhe">
           <h3>Atributos básicos</h3>
           <div class="barras-atributos" data-detail-stats></div>
         </section>
-
         <section class="painel-detalhe">
           <h3>Informações</h3>
           <dl class="pokemon-info-lista" data-detail-info></dl>
         </section>
       </div>
-
       <section class="painel-detalhe painel-linhagem" data-detail-line-panel hidden>
         <div class="painel-titulo-linha">
           <h3>Linhagem / evoluções</h3>
@@ -261,7 +239,6 @@ const payloadHomePokemon = JSON.stringify({
       </section>
     </article>
   </aside>
-
   <section class="secao grade-pilares" aria-label="Principais sistemas do jogo">
     {pilares.map((pilar) => (
       <article class="pilar-card">
@@ -271,7 +248,6 @@ const payloadHomePokemon = JSON.stringify({
       </article>
     ))}
   </section>
-
   <section class="secao destaque-tecnico" aria-labelledby="titulo-tecnico">
     <div class="painel-tecnico">
       <p class="selo">Por trás do jogo</p>
@@ -279,12 +255,10 @@ const payloadHomePokemon = JSON.stringify({
       <p>
         O projeto separa cliente, servidor simulado, dados, regras, cenas, HUD, mapa, batalha e persistência. A base foi pensada para crescer sem virar um amontoado de código hardcoded.
       </p>
-
       <div class="chips-tecnicos">
         {tecnologias.map((tecnologia) => <span>{tecnologia}</span>)}
       </div>
     </div>
-
     <div class="painel-lateral">
       <h3>O que deixa o projeto mais ambicioso</h3>
       <ul class="lista-destaques">
@@ -295,13 +269,11 @@ const payloadHomePokemon = JSON.stringify({
       </ul>
     </div>
   </section>
-
   <section class="secao jornada-home" aria-labelledby="titulo-jornada">
     <div class="cabecalho-home compacto">
       <p class="selo">Loop do jogo</p>
       <h2 id="titulo-jornada">Explorar, crescer e entrar na arena</h2>
     </div>
-
     <div class="trilha-jogo">
       <article>
         <strong>01</strong>
@@ -325,7 +297,6 @@ const payloadHomePokemon = JSON.stringify({
       </article>
     </div>
   </section>
-
   <section class="aviso-legal">
     <strong>Projeto independente e educacional.</strong>
     <p>

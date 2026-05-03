@@ -3,7 +3,6 @@ import Layout from "../Componentes/Layout.astro";
 import Botao from "../Componentes/Botao.astro";
 import "../Estilos/auth.css";
 ---
-
 <Layout titulo="Download | Pokémon Global Server" descricao="Área de download beta, requisitos e acesso logado do Pokémon Global Server.">
   <section class="secao download-hero" data-download-page>
     <div class="download-copy">
@@ -12,7 +11,6 @@ import "../Estilos/auth.css";
       <p>
         O jogo ainda não tem instalador final, mas a página já respeita o fluxo correto: visitante vê o acesso bloqueado, usuário logado vê a área liberada e o aviso de publicação futura.
       </p>
-
       <div class="download-metricas" aria-label="Informações rápidas do download">
         <article>
           <strong>~1 GB</strong>
@@ -28,7 +26,6 @@ import "../Estilos/auth.css";
         </article>
       </div>
     </div>
-
     <aside class="painel download-gate" aria-live="polite">
       <div class="gate-icone" data-download-icon>🔒</div>
       <p class="selo selo-azul" data-download-badge>Acesso protegido</p>
@@ -36,18 +33,15 @@ import "../Estilos/auth.css";
       <p data-download-text>
         O botão de download real só aparece para uma sessão logada. Entre com a conta de teste na aba Conta.
       </p>
-
       <div class="acoes" data-download-actions>
         <Botao href="/conta">Entrar na conta</Botao>
         <Botao href="/contato" tipo="secundario">Pedir token</Botao>
       </div>
-
       <button class="botao principal botao-download-real" type="button" data-download-real hidden>
         Instalador ainda não publicado
       </button>
     </aside>
   </section>
-
   <section class="secao requisitos" aria-labelledby="titulo-requisitos">
     <div class="cabecalho-secao compacto-auth">
       <p class="selo">Requisitos provisórios</p>
@@ -56,7 +50,6 @@ import "../Estilos/auth.css";
         Estes requisitos são estimados para o beta atual. Eles devem ser revisados quando existir instalador, launcher e testes em máquinas diferentes.
       </p>
     </div>
-
     <div class="grade-requisitos">
       <article class="painel requisito-card minimo">
         <span class="tag-requisito">Mínimo</span>
@@ -71,7 +64,6 @@ import "../Estilos/auth.css";
           <li><strong>Tela:</strong> 1366 x 768 ou superior</li>
         </ul>
       </article>
-
       <article class="painel requisito-card recomendado">
         <span class="tag-requisito">Recomendado</span>
         <h3>Para jogar com folga</h3>
@@ -87,7 +79,6 @@ import "../Estilos/auth.css";
       </article>
     </div>
   </section>
-
   <section class="secao notas-download" aria-labelledby="titulo-notas-download">
     <div class="painel painel-download-info">
       <div>
@@ -97,7 +88,6 @@ import "../Estilos/auth.css";
           Esta página já está preparada para receber um link de instalador, launcher ou build compactada. No momento, o botão fica bloqueado mesmo para usuário logado porque o instalador final ainda não existe.
         </p>
       </div>
-
       <div class="checklist-download">
         <span>✓ Bloqueio por login no front-end</span>
         <span>✓ Estado local de sessão</span>

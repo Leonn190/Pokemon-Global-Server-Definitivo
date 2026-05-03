@@ -2,7 +2,6 @@
 import Layout from "../Componentes/Layout.astro";
 import "../Estilos/auth.css";
 ---
-
 <Layout titulo="Contato | Pokémon Global Server" descricao="Solicite avaliação para receber token de acesso beta do Pokémon Global Server.">
   <section class="secao contato-hero" data-contact-page>
     <div class="contato-copy">
@@ -12,7 +11,6 @@ import "../Estilos/auth.css";
         Sem token, o cadastro fica bloqueado. Envie seu Gmail para avaliação e aguarde uma resposta do contato oficial do Pokémon Global Server.
       </p>
     </div>
-
     <div class="painel painel-contato">
       <form class="form-conta" data-contact-form>
         <div>
@@ -22,26 +20,21 @@ import "../Estilos/auth.css";
             Como ainda não existe servidor, o botão abre o Gmail com assunto e mensagem preenchidos para pokemonglobalserver@gmail.com.
           </p>
         </div>
-
         <label>
           <span>Seu Gmail</span>
           <input type="email" name="email" placeholder="seugmail@gmail.com" autocomplete="email" required />
         </label>
-
         <label>
           <span>Nome ou apelido</span>
           <input type="text" name="nome" placeholder="Como podemos te identificar?" autocomplete="name" />
         </label>
-
         <label>
           <span>Mensagem opcional</span>
           <textarea name="mensagem" rows="5" placeholder="Quero participar do beta fechado e receber um token de acesso quando possível."></textarea>
         </label>
-
         <button class="botao principal" type="submit">Abrir Gmail com pedido</button>
         <p class="mensagem-form" data-contact-message aria-live="polite"></p>
       </form>
-
       <aside class="cartao-email">
         <span>Destino</span>
         <strong>pokemonglobalserver@gmail.com</strong>
@@ -51,7 +44,6 @@ import "../Estilos/auth.css";
       </aside>
     </div>
   </section>
-
   <section class="secao cards-contato" aria-label="Informações sobre avaliação de acesso">
     <article class="painel">
       <h2>O que colocar no pedido?</h2>

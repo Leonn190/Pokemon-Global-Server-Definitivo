@@ -1,10 +1,8 @@
 import { criarCardPokemon, criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
 import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
-
 function assetNpc(npc, dados) {
   return dados.assetsNpcs?.[npc.id] ?? { imagem: null };
 }
-
 export function criarCardNpc(npc, dados, origem = "wiki") {
   const asset = assetNpc(npc, dados);
   const card = document.createElement("button");
@@ -22,7 +20,6 @@ export function criarCardNpc(npc, dados, origem = "wiki") {
   `;
   return card;
 }
-
 function encontrarPokemon(nome, pokedex) {
   const chave = normalizar(nome);
   return (pokedex.pokemons || []).find((pokemon) => (
@@ -32,7 +29,6 @@ function encontrarPokemon(nome, pokedex) {
     normalizar(pokemon.slugBase) === chave
   ));
 }
-
 function preencherPokemonGrid(node, nomes, pokedex, origem) {
   if (!node) return;
   node.replaceChildren();
@@ -40,14 +36,12 @@ function preencherPokemonGrid(node, nomes, pokedex, origem) {
     node.innerHTML = `<p class="wiki-vazio-texto">Nenhum Pokémon cadastrado.</p>`;
     return;
   }
-
   nomes.forEach((nome) => {
     const pokemon = encontrarPokemon(nome, pokedex);
     if (pokemon) {
       node.appendChild(criarCardPokemon(pokemon, pokedex, origem));
       return;
     }
-
     const vazio = document.createElement("article");
     vazio.className = "pokemon-card dungeon-pokemon-nao-encontrado";
     vazio.innerHTML = `
@@ -59,7 +53,6 @@ function preencherPokemonGrid(node, nomes, pokedex, origem) {
     node.appendChild(vazio);
   });
 }
-
 function tagsNpc(npc) {
   const extras = [npc.tipoRotulo];
   if (npc.tipo === "combatente") {
@@ -70,17 +63,14 @@ function tagsNpc(npc) {
   }
   return extras.map((item) => `<span class="tag-extra">${html(item)}</span>`).join("");
 }
-
 export function criarControladorDetalheNpc(dados, pokedex, opcoes = {}) {
   const detalhe = document.querySelector(opcoes.seletorDetalhe || "[data-npc-detail]");
   let npcAberto = null;
-
   function listaNavegacao() {
     const listaAtual = typeof opcoes.obterListaAtual === "function" ? opcoes.obterListaAtual() : null;
     const lista = Array.isArray(listaAtual) && listaAtual.length ? listaAtual : (dados.npcs || []);
     return [...lista].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
   }
-
   function abrirVizinho(direcao) {
     if (!npcAberto) return;
     const lista = listaNavegacao();
@@ -90,7 +80,6 @@ export function criarControladorDetalheNpc(dados, pokedex, opcoes = {}) {
     const proximo = lista[(indiceSeguro + direcao + lista.length) % lista.length];
     if (proximo) abrirDetalhe(proximo.id);
   }
-
   function abrirDetalhe(id) {
     const npc = (dados.npcs || []).find((atual) => atual.id === String(id));
     if (!npc || !detalhe) return;
@@ -103,13 +92,10 @@ export function criarControladorDetalheNpc(dados, pokedex, opcoes = {}) {
     const info = detalhe.querySelector("[data-npc-info]");
     const equipePainel = detalhe.querySelector("[data-npc-team-panel]");
     const equipe = detalhe.querySelector("[data-npc-team]");
-
     if (codigo) codigo.textContent = `#${npc.codigo}`;
     if (nome) nome.textContent = npc.nome;
     if (tags) tags.innerHTML = tagsNpc(npc);
-
     aplicarImagemDetalhe(imagem, asset.imagem, npc.nome);
-
     if (info) {
       const linhas = [
         ["Tipo", npc.tipoRotulo],
@@ -124,36 +110,29 @@ export function criarControladorDetalheNpc(dados, pokedex, opcoes = {}) {
       }
       info.innerHTML = infoHtml(linhas);
     }
-
     if (equipePainel) equipePainel.hidden = npc.tipo !== "combatente";
     if (npc.tipo === "combatente") preencherPokemonGrid(equipe, npc.pokemons, pokedex, "npc");
     else if (equipe) equipe.replaceChildren();
-
     detalhe.hidden = false;
     document.body.classList.add("detalhe-aberto");
   }
-
   function fecharDetalhe() {
     if (detalhe) detalhe.hidden = true;
     document.body.classList.remove("detalhe-aberto");
   }
-
   detalhe?.querySelectorAll("[data-npc-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-npc-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));
   detalhe?.querySelectorAll("[data-npc-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
   });
-
   return { abrirDetalhe, fecharDetalhe };
 }
-
 export function inicializarWikiNpcs(idDados = "npcs-data") {
   const dados = lerJson(idDados);
   const pokedex = lerJson("npcs-pokedex-data");
   const app = document.querySelector("[data-npcs-app]");
   if (!dados || !pokedex || !app) return;
-
   const grid = app.querySelector("[data-npcs-grid]");
   const busca = app.querySelector("[data-npcs-search]");
   const ordenacao = app.querySelector("[data-npcs-sort]");
@@ -177,7 +156,6 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
     mostrarLinhagem: true,
     animarFrames: true,
   });
-
   function atualizarControlesCondicionais() {
     const tipo = filtroTipo?.value ?? "";
     vendedorControles.forEach((controle) => { controle.hidden = tipo !== "vendedor"; });
@@ -194,7 +172,6 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
       chip.setAttribute("aria-pressed", ativo ? "true" : "false");
     });
   }
-
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const tipo = filtroTipo?.value ?? "";
@@ -202,7 +179,6 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
     const cargo = tipo === "combatente" ? (filtroCargo?.value ?? "") : "";
     const tipagem = tipo === "combatente" ? tipagemSelecionada : "";
     const sort = ordenacao?.value ?? "ordem";
-
     const filtrados = (dados.npcs || []).filter((npc) => {
       if (termo && !npc.busca.includes(termo)) return false;
       if (tipo && npc.tipo !== tipo) return false;
@@ -211,7 +187,6 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
       if (tipagem && npc.estadioBusca !== tipagem) return false;
       return true;
     });
-
     const ordenadores = {
       ordem: (a, b) => a.ordem - b.ordem,
       nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }),
@@ -220,10 +195,8 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
       cargo: (a, b) => (a.cargo || "").localeCompare(b.cargo || "", "pt-BR", { numeric: true }),
       categoria: (a, b) => (a.categoria || "").localeCompare(b.categoria || "", "pt-BR", { numeric: true }),
     };
-
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-
   listagem = criarListagemPaginada({
     grid,
     contador,
@@ -248,7 +221,6 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
       tipagemSelecionada = "";
     },
   });
-
   tipoChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       const tipo = chip.dataset.npcsTypeChip || "";
@@ -256,12 +228,10 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
       listagem.renderLista(true);
     });
   });
-
   document.querySelector("[data-npc-detail]")?.addEventListener("click", (evento) => {
     const card = evento.target.closest("[data-pokemon-id]");
     if (!card) return;
     pokemonController.abrirDetalhe(card.dataset.pokemonId);
   });
-
   listagem.iniciar();
 }

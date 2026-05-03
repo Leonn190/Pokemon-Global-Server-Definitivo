@@ -1,8 +1,6 @@
 import { carregarCsvWiki, limparTexto } from "./WikiCsv.js";
 import { normalizarChave } from "./PokemonWikiDados.js";
-
 const NOME_CSV = "Pokemon Global Server - Itens.csv";
-
 const RARIDADES = {
   1: { nome: "Comum", classe: "raridade-comum" },
   2: { nome: "Incomum", classe: "raridade-incomum" },
@@ -11,33 +9,26 @@ const RARIDADES = {
   5: { nome: "Lendário", classe: "raridade-lendario" },
   6: { nome: "Mítico", classe: "raridade-mitico" },
 };
-
 const VENDA = {
   SS: "Loja Especial",
   S: "Loja",
   N: "Sem vendas",
 };
-
-
 function numero(valor) {
   const texto = limparTexto(valor).replace(",", ".");
   if (!texto || texto === "-" || texto.toLowerCase() === "nan") return null;
   const convertido = Number(texto);
   return Number.isFinite(convertido) ? convertido : null;
 }
-
-
 function normalizarVenda(valor) {
   const texto = limparTexto(valor).toUpperCase();
   if (texto === "SS") return "SS";
   if (texto === "S") return "S";
   return "N";
 }
-
 function normalizarBau(valor) {
   return limparTexto(valor).toLowerCase() === "s";
 }
-
 function rotuloEstilo(valor) {
   const texto = limparTexto(valor).toLowerCase();
   const nomes = {
@@ -52,7 +43,6 @@ function rotuloEstilo(valor) {
   };
   return nomes[texto] ?? (texto ? texto.replace(/^./, (letra) => letra.toUpperCase()) : "Sem estilo");
 }
-
 function normalizarItem(linha, indice) {
   const nome = limparTexto(linha.Nome) || `Item ${indice + 1}`;
   const code = numero(linha.Code) ?? indice + 1;
@@ -61,7 +51,6 @@ function normalizarItem(linha, indice) {
   const estilo = limparTexto(linha.Estilo) || "sem estilo";
   const vendaCodigo = normalizarVenda(linha.Venda);
   const bau = normalizarBau(linha.Bau);
-
   return {
     id: String(code),
     ordem: indice + 1,
@@ -85,16 +74,13 @@ function normalizarItem(linha, indice) {
     estiloBusca: normalizarChave(estilo),
   };
 }
-
 export function carregarItens() {
   return carregarCsvWiki([NOME_CSV], "Wiki Itens").map((linha, indice) => normalizarItem(linha, indice));
 }
-
 function arquivoSemExtensao(caminho) {
   const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;
   return arquivo.replace(/\.[^.]+$/, "");
 }
-
 export function indexarImagensItens(glob) {
   const indice = {};
   Object.entries(glob).forEach(([caminho, url]) => {
@@ -104,7 +90,6 @@ export function indexarImagensItens(glob) {
   });
   return indice;
 }
-
 function candidatosItem(item) {
   const codigo = String(item.code ?? item.id ?? "");
   return [
@@ -118,18 +103,15 @@ function candidatosItem(item) {
     `icone${codigo}`,
   ].filter(Boolean).map(normalizarChave);
 }
-
 export function resolverImagemItem(item, imagensPorNome) {
   for (const candidato of candidatosItem(item)) {
     if (imagensPorNome[candidato]) return imagensPorNome[candidato];
   }
   return null;
 }
-
 export function criarAssetsItens(itens, imagensPorNome) {
   return Object.fromEntries(itens.map((item) => [item.id, { imagem: resolverImagemItem(item, imagensPorNome) }]));
 }
-
 export function resumoItens(itens) {
   const estilos = [...new Map(itens.map((item) => [item.estiloBusca, item.estiloRotulo])).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const raridades = [...new Map(itens.map((item) => [item.raridadeNumero, item.raridadeNome])).entries()]
@@ -142,6 +124,5 @@ export function resumoItens(itens) {
     raridades,
   };
 }
-
 export const OPCOES_VENDA = VENDA;
 export const MAPA_RARIDADES = RARIDADES;

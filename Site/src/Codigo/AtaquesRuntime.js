@@ -1,17 +1,13 @@
 import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
-
 function assetAtaque(ataque, dados) {
   return dados.assetsAtaques?.[ataque.id] ?? { imagem: null };
 }
-
 function tipoIcone(tipo, dados, classe = "tipo-bola pequena") {
   const chave = normalizar(tipo);
   const src = dados.iconesTipos?.[chave];
   if (src) return `<span class="${classe}"><img src="${src}" alt="" loading="lazy" decoding="async" /></span>`;
   return `<span class="${classe}"><b>${html(String(tipo || "?").slice(0, 1).toUpperCase())}</b></span>`;
 }
-
-
 function focoBarrasHtml(item) {
   const focos = [
     ["Ofensivo", item.ofensivo],
@@ -29,7 +25,6 @@ function focoBarrasHtml(item) {
     `;
   }).join("")}</div>`;
 }
-
 function criarCardAtaque(ataque, dados) {
   const asset = assetAtaque(ataque, dados);
   const card = document.createElement("button");
@@ -46,17 +41,14 @@ function criarCardAtaque(ataque, dados) {
   `;
   return card;
 }
-
 function criarControladorDetalhe(dados, obterListaAtual) {
   const detalhe = document.querySelector("[data-ataque-detail]");
   let ataqueAberto = null;
-
   function listaNavegacao() {
     const listaAtual = typeof obterListaAtual === "function" ? obterListaAtual() : null;
     const lista = Array.isArray(listaAtual) && listaAtual.length ? listaAtual : (dados.ataques || []);
     return [...lista].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
   }
-
   function abrirVizinho(direcao) {
     if (!ataqueAberto) return;
     const lista = listaNavegacao();
@@ -66,7 +58,6 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const proximo = lista[(indiceSeguro + direcao + lista.length) % lista.length];
     if (proximo) abrirDetalhe(proximo.id);
   }
-
   function abrirDetalhe(id) {
     const ataque = (dados.ataques || []).find((atual) => atual.id === String(id));
     if (!ataque || !detalhe) return;
@@ -80,12 +71,9 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const aprimoramento = detalhe.querySelector("[data-ataque-upgrade]");
     const info = detalhe.querySelector("[data-ataque-info]");
     const focos = detalhe.querySelector("[data-ataque-focus-bars]");
-
     if (codigo) codigo.textContent = `#${ataque.id}`;
     if (nome) nome.textContent = ataque.nome;
-
     aplicarImagemDetalhe(imagem, asset.imagem, ataque.nome);
-
     if (tags) {
       tags.innerHTML = `
         <span class="tipo-badge">${tipoIcone(ataque.tipo, dados)}${html(ataque.tipo)}</span>
@@ -94,12 +82,9 @@ function criarControladorDetalhe(dados, obterListaAtual) {
         <span class="tag-extra">AP ${formatarNumero(ataque.custoAprimorado)}</span>
       `;
     }
-
     if (descricao) descricao.textContent = ataque.descricao || "Descrição ainda não cadastrada.";
     if (aprimoramento) aprimoramento.textContent = ataque.aprimoramento || "Aprimoramento ainda não cadastrado.";
-
     if (focos) focos.innerHTML = focoBarrasHtml(ataque);
-
     if (info) {
       const linhas = [
         ["Estilo", ataque.estiloRotulo],
@@ -109,31 +94,25 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       ];
       info.innerHTML = infoHtml(linhas);
     }
-
     detalhe.hidden = false;
     document.body.classList.add("detalhe-aberto");
   }
-
   function fecharDetalhe() {
     if (detalhe) detalhe.hidden = true;
     document.body.classList.remove("detalhe-aberto");
   }
-
   detalhe?.querySelectorAll("[data-ataque-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-ataque-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));
   detalhe?.querySelectorAll("[data-ataque-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
   });
-
   return { abrirDetalhe };
 }
-
 export function inicializarWikiAtaques(idDados = "ataques-data") {
   const dados = lerJson(idDados);
   const app = document.querySelector("[data-ataques-app]");
   if (!dados || !app) return;
-
   const grid = app.querySelector("[data-ataques-grid]");
   const busca = app.querySelector("[data-ataques-search]");
   const ordenacao = app.querySelector("[data-ataques-sort]");
@@ -149,7 +128,6 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
   let tipoSelecionado = "";
   let listagem;
   const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
-
   function atualizarChipsTipo() {
     tipoChips.forEach((chip) => {
       const ativo = chip.dataset.ataquesTypeChip === tipoSelecionado;
@@ -157,14 +135,12 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
       chip.setAttribute("aria-pressed", ativo ? "true" : "false");
     });
   }
-
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const estilo = filtroEstilo?.value ?? "";
     const motor = filtroMotor?.value ?? "";
     const foco = filtroFoco?.value ?? "";
     const sort = ordenacao?.value ?? "ordem";
-
     const filtrados = (dados.ataques || []).filter((ataque) => {
       if (termo && !ataque.busca.includes(termo)) return false;
       if (tipoSelecionado && ataque.tipoBusca !== tipoSelecionado) return false;
@@ -173,7 +149,6 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
       if (foco && ataque.focoPrincipalBusca !== foco) return false;
       return true;
     });
-
     const ordenadores = {
       ordem: (a, b) => a.ordem - b.ordem,
       nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }),
@@ -183,10 +158,8 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
       suporte: (a, b) => (a.suporte ?? 0) - (b.suporte ?? 0),
       utilitario: (a, b) => (a.utilitario ?? 0) - (b.utilitario ?? 0),
     };
-
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-
   listagem = criarListagemPaginada({
     grid,
     contador,
@@ -212,7 +185,6 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
       if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
     },
   });
-
   tipoChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       const tipo = chip.dataset.ataquesTypeChip || "";
@@ -220,6 +192,5 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
       listagem.renderLista(true);
     });
   });
-
   listagem.iniciar();
 }

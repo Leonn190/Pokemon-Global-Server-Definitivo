@@ -2,10 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizarChave } from "./PokemonWikiDados.js";
-
 const CSV_FR = "Pokemon Global Server - Sistema FR.csv";
 const TOML_BATALHA = "Batalha.toml";
-
 const TIPOS_CANONICOS = {
   agua: "Água",
   cosmico: "Cósmico",
@@ -32,11 +30,9 @@ const TIPOS_CANONICOS = {
   veneno: "Venenoso",
   voador: "Voador",
 };
-
 function limparTexto(valor) {
   return String(valor ?? "").trim();
 }
-
 function numero(valor, fallback = null) {
   if (typeof valor === "number" && Number.isFinite(valor)) return valor;
   const texto = limparTexto(valor).replace("%", "").replace(",", ".");
@@ -44,28 +40,23 @@ function numero(valor, fallback = null) {
   const convertido = Number(texto);
   return Number.isFinite(convertido) ? convertido : fallback;
 }
-
 function formatarNumero(valor, casas = 2) {
   const n = numero(valor);
   if (n === null) return "-";
   return n.toLocaleString("pt-BR", { maximumFractionDigits: casas });
 }
-
 function tipoCanonico(valor) {
   const chave = normalizarChave(valor);
   return TIPOS_CANONICOS[chave] ?? limparTexto(valor).replace(/^./, (letra) => letra.toUpperCase());
 }
-
 function parseCsv(texto) {
   const linhas = [];
   let campo = "";
   let linha = [];
   let aspas = false;
-
   for (let i = 0; i < texto.length; i += 1) {
     const char = texto[i];
     const prox = texto[i + 1];
-
     if (char === '"') {
       if (aspas && prox === '"') {
         campo += '"';
@@ -75,13 +66,11 @@ function parseCsv(texto) {
       }
       continue;
     }
-
     if (char === "," && !aspas) {
       linha.push(campo);
       campo = "";
       continue;
     }
-
     if ((char === "\n" || char === "\r") && !aspas) {
       if (char === "\r" && prox === "\n") i += 1;
       linha.push(campo);
@@ -90,18 +79,14 @@ function parseCsv(texto) {
       linha = [];
       continue;
     }
-
     campo += char;
   }
-
   if (campo || linha.length) {
     linha.push(campo);
     if (linha.some((item) => limparTexto(item))) linhas.push(linha);
   }
-
   return linhas;
 }
-
 function removerComentario(linha) {
   let aspas = false;
   let saida = "";
@@ -113,7 +98,6 @@ function removerComentario(linha) {
   }
   return saida.trim();
 }
-
 function separarSecao(secao) {
   const partes = [];
   let atual = "";
@@ -134,7 +118,6 @@ function separarSecao(secao) {
   if (atual.trim()) partes.push(atual.trim());
   return partes;
 }
-
 function parseTomlValor(valor) {
   const texto = limparTexto(valor);
   if (texto.startsWith('"') && texto.endsWith('"')) return texto.slice(1, -1).replace(/\\"/g, '"');
@@ -142,15 +125,12 @@ function parseTomlValor(valor) {
   if (texto === "false") return false;
   return numero(texto, texto);
 }
-
 function parseToml(texto) {
   const raiz = {};
   let alvo = raiz;
-
   texto.split(/\r?\n/).forEach((linhaBruta) => {
     const linha = removerComentario(linhaBruta);
     if (!linha) return;
-
     const secao = linha.match(/^\[([^\]]+)\]$/);
     if (secao) {
       alvo = raiz;
@@ -160,19 +140,15 @@ function parseToml(texto) {
       });
       return;
     }
-
     const igual = linha.indexOf("=");
     if (igual === -1) return;
     alvo[linha.slice(0, igual).trim()] = parseTomlValor(linha.slice(igual + 1));
   });
-
   return raiz;
 }
-
 function diretorioAtual() {
   return path.dirname(fileURLToPath(import.meta.url));
 }
-
 function caminhosCsv() {
   const atual = diretorioAtual();
   return [
@@ -184,7 +160,6 @@ function caminhosCsv() {
     path.resolve(process.cwd(), "Dados", CSV_FR),
   ];
 }
-
 function caminhosRegra(nomeArquivo) {
   const atual = diretorioAtual();
   return [
@@ -195,7 +170,6 @@ function caminhosRegra(nomeArquivo) {
     path.resolve(process.cwd(), "../Pokemon-Global-Server-Definitivo/SimuladorServerJogo/Logica/Regras", nomeArquivo),
   ];
 }
-
 function carregarCsvFr() {
   const caminhos = caminhosCsv();
   const caminho = caminhos.find((item) => existsSync(item));
@@ -205,14 +179,12 @@ function carregarCsvFr() {
   }
   return parseCsv(readFileSync(caminho, "utf8").replace(/^\uFEFF/, ""));
 }
-
 function carregarRegraBatalha() {
   const caminhos = caminhosRegra(TOML_BATALHA);
   const caminho = caminhos.find((item) => existsSync(item));
   if (!caminho) return {};
   return parseToml(readFileSync(caminho, "utf8").replace(/^\uFEFF/, ""));
 }
-
 function montarMatriz(linhasCsv) {
   const cabecalho = (linhasCsv[0] ?? []).slice(1).map(tipoCanonico);
   return (linhasCsv.slice(1) ?? []).map((linha) => {
@@ -224,15 +196,12 @@ function montarMatriz(linhasCsv) {
     return { tipo: tipoAtaque, chave: normalizarChave(tipoAtaque), valores };
   });
 }
-
 function tiposPorCondicao(tipos, fn) {
   return tipos.filter((tipo) => fn(tipo)).map((tipo) => ({ nome: tipo.nome, chave: tipo.chave }));
 }
-
 function montarLinhasTabela(matriz) {
   const tipos = matriz.map((linha) => ({ nome: linha.tipo, chave: linha.chave }));
   const porAtaque = Object.fromEntries(matriz.map((linha) => [linha.chave, linha.valores]));
-
   return tipos.map((tipo) => ({
     ...tipo,
     superEfetivo: tiposPorCondicao(tipos, (defensor) => (porAtaque[tipo.chave]?.[defensor.chave] ?? 1) > 1),
@@ -249,14 +218,12 @@ function montarLinhasTabela(matriz) {
     imunidades: tiposPorCondicao(tipos, (atacante) => (porAtaque[atacante.chave]?.[tipo.chave] ?? 1) === 0),
   }));
 }
-
 function resumoRegraBatalha(regras) {
   const timeline = regras.timeline ?? {};
   const colisao = regras.colisao_movimento ?? {};
   const multiplas = regras.multiplas_acoes ?? {};
   const baseMulti = numero(multiplas.multiplicador_base, 1);
   const extraMulti = numero(multiplas.acrescimo_multiplicador_por_acao_extra, 0.2);
-
   return {
     tickSegundos: numero(timeline.tick_segundos, 0.1),
     tickTexto: `${formatarNumero(numero(timeline.tick_segundos, 0.1), 2)}s`,
@@ -266,12 +233,10 @@ function resumoRegraBatalha(regras) {
     danoColisao: numero(colisao.dano_por_massa_velocidade, 8),
   };
 }
-
 export function carregarWikiCombate() {
   const matriz = montarMatriz(carregarCsvFr());
   const linhasTabela = montarLinhasTabela(matriz);
   const regra = resumoRegraBatalha(carregarRegraBatalha());
-
   return {
     tipos: matriz.map((linha) => ({ nome: linha.tipo, chave: linha.chave })),
     tabela: linhasTabela,

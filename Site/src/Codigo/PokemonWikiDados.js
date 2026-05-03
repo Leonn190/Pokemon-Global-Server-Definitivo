@@ -1,5 +1,4 @@
 import { carregarCsvWiki, limparTexto, numero } from "./WikiCsv.js";
-
 const NOME_CSV = "Pokemon Global Server - Pokemons.csv";
 const CAMPOS_NUMERICOS = [
   "Vida",
@@ -31,7 +30,6 @@ const CAMPOS_NUMERICOS = [
   "Code",
   "Linhagem",
 ];
-
 export const ATRIBUTOS_BASE = [
   { chave: "Vida", rotulo: "Vida" },
   { chave: "Atk", rotulo: "Atk" },
@@ -46,9 +44,7 @@ export const ATRIBUTOS_BASE = [
   { chave: "CrD", rotulo: "CrD" },
   { chave: "CrC", rotulo: "CrC" },
 ];
-
 export const ATRIBUTOS_REGULARES = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"];
-
 const TIPOS_CANONICOS = {
   agua: "Água",
   cosmico: "Cósmico",
@@ -73,7 +69,6 @@ const TIPOS_CANONICOS = {
   venenoso: "Venenoso",
   voador: "Voador",
 };
-
 function calcularFocoAtributo(atributos) {
   return ATRIBUTOS_REGULARES.reduce((melhor, atributo) => {
     const valor = (atributos[atributo] ?? 0) / (atributo === "Vida" ? 2 : 1);
@@ -81,8 +76,6 @@ function calcularFocoAtributo(atributos) {
     return melhor;
   }, null)?.atributo ?? "";
 }
-
-
 export function normalizarChave(valor) {
   return limparTexto(valor)
     .normalize("NFD")
@@ -90,30 +83,24 @@ export function normalizarChave(valor) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "");
 }
-
 function tipoCanonico(valor) {
   const chave = normalizarChave(valor);
   return TIPOS_CANONICOS[chave] ?? limparTexto(valor).replace(/^./, (letra) => letra.toUpperCase());
 }
-
 function nomeBaseRadiante(nome) {
   return String(nome ?? "")
     .replace(/\bradiante\b/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }
-
-
 export function carregarPokemons() {
   return carregarCsvWiki([NOME_CSV], "Wiki Pokémons").map((linha, indice) => normalizarPokemon(linha, indice));
 }
-
 function normalizarPokemon(linha, indice) {
   const normalizado = { ...linha };
   CAMPOS_NUMERICOS.forEach((campo) => {
     normalizado[campo] = numero(linha[campo]);
   });
-
   const nome = limparTexto(linha.Nome) || `Pokémon ${indice + 1}`;
   const nomeExibicao = nomeBaseRadiante(nome) || nome;
   const code = normalizado.Code ?? indice + 1;
@@ -129,10 +116,8 @@ function normalizarPokemon(linha, indice) {
     if (!tiposUnicos.has(chave)) tiposUnicos.set(chave, { nome: nomeTipo, chance: tipo.chance });
   });
   const tipos = [...tiposUnicos.values()];
-
   const atributos = Object.fromEntries(ATRIBUTOS_BASE.map((atributo) => [atributo.chave, normalizado[atributo.chave] ?? 0]));
   const focoAtributo = calcularFocoAtributo(atributos);
-
   return {
     id: String(code ?? indice + 1),
     ordem: indice + 1,
@@ -177,12 +162,10 @@ function normalizarPokemon(linha, indice) {
     linhagem: normalizado.Linhagem ?? code ?? indice + 1,
   };
 }
-
 function arquivoSemExtensao(caminho) {
   const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;
   return arquivo.replace(/\.[^.]+$/, "");
 }
-
 export function indexarArquivosPorNome(glob) {
   const indice = {};
   Object.entries(glob).forEach(([caminho, url]) => {
@@ -191,7 +174,6 @@ export function indexarArquivosPorNome(glob) {
   });
   return indice;
 }
-
 export function indexarFramesPorPasta(glob) {
   const grupos = {};
   Object.entries(glob).forEach(([caminho, url]) => {
@@ -202,14 +184,11 @@ export function indexarFramesPorPasta(glob) {
     if (!grupos[chave]) grupos[chave] = [];
     grupos[chave].push({ caminho, url });
   });
-
   Object.values(grupos).forEach((frames) => {
     frames.sort((a, b) => a.caminho.localeCompare(b.caminho, "pt-BR", { numeric: true, sensitivity: "base" }));
   });
-
   return Object.fromEntries(Object.entries(grupos).map(([chave, frames]) => [chave, frames.map((frame) => frame.url)]));
 }
-
 function candidatosPokemon(pokemon) {
   const codigo = String(pokemon.code ?? pokemon.id ?? "");
   const nome = pokemon.nome ?? "";
@@ -231,21 +210,18 @@ function candidatosPokemon(pokemon) {
     .filter(Boolean)
     .map(normalizarChave);
 }
-
 export function resolverImagemPokemon(pokemon, imagensPorNome) {
   for (const candidato of candidatosPokemon(pokemon)) {
     if (imagensPorNome[candidato]) return imagensPorNome[candidato];
   }
   return null;
 }
-
 export function resolverFramesPokemon(pokemon, framesPorPasta) {
   for (const candidato of candidatosPokemon(pokemon)) {
     if (framesPorPasta[candidato]?.length) return framesPorPasta[candidato];
   }
   return [];
 }
-
 export function criarAssetsPokemons(pokemons, imagensPorNome, framesPorPasta = null) {
   return Object.fromEntries(
     pokemons.map((pokemon) => {
@@ -259,7 +235,6 @@ export function criarAssetsPokemons(pokemons, imagensPorNome, framesPorPasta = n
     }),
   );
 }
-
 export function resumoPokemons(pokemons) {
   const tiposPorChave = new Map();
   pokemons.flatMap((pokemon) => pokemon.tipos.map((tipo) => tipo.nome)).forEach((tipo) => {
@@ -281,7 +256,6 @@ export function resumoPokemons(pokemons) {
   const maximos = Object.fromEntries(
     ATRIBUTOS_BASE.map((atributo) => [atributo.chave, Math.max(1, ...pokemons.map((pokemon) => pokemon.atributos[atributo.chave] ?? 0))]),
   );
-
   return {
     quantidade: pokemons.length,
     tipos,
@@ -294,7 +268,6 @@ export function resumoPokemons(pokemons) {
     maiorPoderR3: Math.max(1, ...pokemons.map((pokemon) => pokemon.poderR3 ?? 0)),
   };
 }
-
 export function selecionarDestaquesHome(pokemons, limite = 36, imagensPorNome = null) {
   const validos = [...pokemons].filter((pokemon) => pokemon?.id && pokemon?.nome && (!imagensPorNome || resolverImagemPokemon(pokemon, imagensPorNome)));
   for (let i = validos.length - 1; i > 0; i -= 1) {

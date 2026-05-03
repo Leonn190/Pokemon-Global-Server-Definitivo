@@ -11,7 +11,6 @@ import {
 } from "../../Codigo/ItemWikiDados.js";
 import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
-
 const itens = carregarItens();
 const resumo = resumoItens(itens);
 const imagensItensBrutas = import.meta.glob("@recursos/Visual/Itens/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
@@ -25,19 +24,15 @@ const estilos = [...new Map(itens.map((item) => [item.estiloBusca, item.estiloRo
 const raridades = Object.entries(MAPA_RARIDADES).sort((a, b) => Number(a[0]) - Number(b[0]));
 const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g, "\\u003c");
 ---
-
 <Layout
-  titulo="Itens | Wiki Pokémon Global Server"
+  titulo="Itens"
   descricao="Wiki de itens do Pokémon Global Server, com busca, filtros por estilo, raridade, baús, lojas e detalhes de cada item."
 >
   <WikiTopo
     ativo="itens"
-    titulo="Itens Globais"
+    titulo="Itens"
     tituloId="titulo-itens"
-    ariaResumo="Resumo dos registros de itens"
-    resumo={[{ valor: resumo.quantidade, rotulo: "Itens registrados" }, { valor: resumo.estilos.length, rotulo: "Estilos" }, { valor: resumo.raridades.length, rotulo: "Raridades existentes" }]}
   />
-
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app itens-app" data-itens-app>
       <section class="pokedex-toolbar itens-toolbar" aria-label="Ferramentas da wiki de itens">
@@ -45,7 +40,6 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
           <span>Pesquisar</span>
           <input data-itens-search type="search" placeholder="Nome, código, estilo ou descrição..." autocomplete="off" />
         </label>
-
         <label>
           <span>Ordenar</span>
           <select data-itens-sort>
@@ -56,7 +50,6 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
             <option value="estilo">Estilo</option>
           </select>
         </label>
-
         <label>
           <span>Estilo</span>
           <select data-itens-style>
@@ -64,7 +57,6 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
             {estilos.map(([chave, rotulo]) => <option value={chave}>{rotulo}</option>)}
           </select>
         </label>
-
         <label>
           <span>Raridade</span>
           <select data-itens-rarity>
@@ -72,7 +64,6 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
             {raridades.map(([numero, dados]) => <option value={numero}>{dados.nome}</option>)}
           </select>
         </label>
-
         <label>
           <span>Baús</span>
           <select data-itens-chest>
@@ -81,7 +72,6 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
             <option value="n">Não</option>
           </select>
         </label>
-
         <label>
           <span>Venda</span>
           <select data-itens-sale>
@@ -90,7 +80,6 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
           </select>
         </label>
       </section>
-
       <section class="pokedex-status" aria-live="polite">
         <div>
           <strong data-itens-count>{resumo.quantidade}</strong>
@@ -101,18 +90,14 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
           <button class="botao fantasma compacto" type="button" data-itens-clear>Limpar filtros</button>
         </div>
       </section>
-
       <section class="itens-grid" data-itens-grid aria-label="Lista de itens"></section>
-
       <div class="pokedex-vazio" data-itens-empty hidden>
         <strong>Nenhum item encontrado.</strong>
         <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
       </div>
-
       <div class="pokedex-sentinel" data-itens-sentinel aria-hidden="true"></div>
     </div>
   </section>
-
   <aside class="item-detalhe pokemon-detalhe" data-item-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-item-close></div>
     <article class="pokemon-detalhe-card item-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="item-detalhe-nome">
@@ -121,13 +106,11 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
         <button class="pokemon-navegar" type="button" data-item-next aria-label="Próximo item">›</button>
         <button class="pokemon-fechar" type="button" data-item-close aria-label="Fechar detalhes">×</button>
       </div>
-
       <div class="pokemon-detalhe-topo item-detalhe-topo">
         <div class="pokemon-palco-detalhe item-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-item-image alt="" loading="lazy" decoding="async" />
         </div>
-
         <div class="pokemon-cabecalho-detalhe">
           <span class="codigo-pokemon" data-item-code>#000</span>
           <h2 id="item-detalhe-nome" data-item-name>Item</h2>
@@ -135,14 +118,12 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
           <p class="item-descricao-melhor" data-item-description></p>
         </div>
       </div>
-
       <section class="painel-detalhe item-info-painel">
         <h3>Informações</h3>
         <dl class="pokemon-info-lista" data-item-info></dl>
       </section>
     </article>
   </aside>
-
   <script id="itens-data" type="application/json" set:html={payloadItens}></script>
   <script>
     import { inicializarWikiItens } from "../../Codigo/ItensRuntime.js";

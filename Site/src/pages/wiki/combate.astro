@@ -4,7 +4,6 @@ import WikiTopo from "../../Componentes/WikiTopo.astro";
 import { carregarWikiCombate } from "../../Codigo/CombateWikiDados.js";
 import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
-
 const dadosCombate = carregarWikiCombate();
 const { tabela, resumo, regra } = dadosCombate;
 const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
@@ -16,19 +15,15 @@ const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
 const iconeTipo = (tipo) => iconesTipos[normalizarChave(tipo.nome ?? tipo)] ?? null;
 const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazio", vazio: true }];
 ---
-
 <Layout
-  titulo="Combate | Wiki Pokémon Global Server"
+  titulo="Combate"
   descricao="Wiki de combate do Pokémon Global Server, com arquitetura da batalha, fórmulas principais e tabela de fraquezas e resistências."
 >
   <WikiTopo
     ativo="combate"
-    titulo="Combate Global"
+    titulo="Combate"
     tituloId="titulo-combate"
-    ariaResumo="Resumo da wiki de combate"
-    resumo={[{ valor: resumo.tipos, rotulo: "Tipos na matriz" }, { valor: resumo.tick, rotulo: "Tick de batalha" }, { valor: resumo.colunas, rotulo: "Colunas da tabela" }]}
   />
-
   <main class="wiki-combate" aria-label="Conteúdo da wiki de combate">
     <section class="combate-intro">
       <p class="selo">Wiki de combate</p>
@@ -40,7 +35,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
         <code>FraquezasResistencia.py</code> lê a matriz de tipos e <code>LeitorLogs.py</code> usa o log para animar o resultado no client.
       </p>
     </section>
-
     <section class="combate-faixa" aria-label="Resumo das regras principais">
       <article>
         <span>01</span>
@@ -58,7 +52,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
         <p>O dano passa por multiplicadores, tipo, STAB, crítico, defesa, perfuração e durabilidade.</p>
       </article>
     </section>
-
     <section class="combate-secao" aria-labelledby="titulo-formulas-combate">
       <div class="combate-cabecalho">
         <div>
@@ -70,7 +63,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
           e os parâmetros gerais vêm das regras de batalha.
         </p>
       </div>
-
       <div class="combate-formulas">
         <article>
           <h3>Dano</h3>
@@ -83,7 +75,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
             o STAB aplica <code>1.2x</code>.
           </p>
         </article>
-
         <article>
           <h3>Tempo e custo</h3>
           <p>
@@ -94,7 +85,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
             O custo base vem da ação: movimento, troca, captura ou o custo configurado no JSON de propriedades do ataque.
           </p>
         </article>
-
         <article>
           <h3>Colisão</h3>
           <p>
@@ -107,7 +97,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
         </article>
       </div>
     </section>
-
     <section class="combate-secao" aria-labelledby="titulo-tabela-fr">
       <div class="combate-cabecalho">
         <div>
@@ -119,7 +108,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
           Se o CSV mudar, os ícones desta área mudam junto.
         </p>
       </div>
-
       <div class="combate-tabela-fr" role="table" aria-label="Tabela de fraquezas e resistências">
         <div class="combate-fr-cabecalho" role="row">
           <span role="columnheader">Tipo</span>
@@ -128,7 +116,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
           <span role="columnheader">Resiste</span>
           <span role="columnheader">Imune</span>
         </div>
-
         {tabela.map((linha) => (
           <article class="combate-fr-linha" role="row">
             <div class="combate-fr-tipo" role="cell">
@@ -137,7 +124,6 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
               </span>
               <strong>{linha.nome}</strong>
             </div>
-
             {[linha.superEfetivo, linha.fraquezas, linha.resistencias, linha.imunidades].map((grupo) => (
               <div class="combate-fr-icones" role="cell">
                 {listaIcones(grupo).map((tipo) => (

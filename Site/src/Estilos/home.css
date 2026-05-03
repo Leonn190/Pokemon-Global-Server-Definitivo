@@ -1,5 +1,4 @@
 @import url("https://fonts.googleapis.com/css2?family=Russo+One&family=Exo+2:wght@600;700;800;900&display=swap");
-
 /*
   A home precisa ser full-width.
   Antes a hero usava 100vw + margem negativa dentro de .pagina, que é um container centralizado.
@@ -10,7 +9,6 @@ body:has(.hero-home) .pagina {
   max-width: none;
   margin-inline: 0;
 }
-
 body:has(.hero-home) .secao-conteudo,
 body:has(.hero-home) .grade-pilares,
 body:has(.hero-home) .destaque-tecnico,
@@ -20,8 +18,6 @@ body:has(.hero-home) .aviso-legal {
   margin-left: auto;
   margin-right: auto;
 }
-
-
 .hero-home {
   position: relative;
   width: 100%;
@@ -37,7 +33,6 @@ body:has(.hero-home) .aviso-legal {
   overflow: hidden;
   isolation: isolate;
 }
-
 .hero-aurora {
   position: absolute;
   inset: -120px max(-8vw, -90px) 0;
@@ -50,7 +45,6 @@ body:has(.hero-home) .aviso-legal {
     linear-gradient(to bottom, transparent 0%, rgba(6, 8, 23, 0.88) 82%, var(--fundo) 100%);
   filter: saturate(1.18);
 }
-
 .hero-aurora::before,
 .hero-aurora::after {
   content: "";
@@ -62,16 +56,13 @@ body:has(.hero-home) .aviso-legal {
   opacity: 0.45;
   animation: pulso-luz 5.5s ease-in-out infinite;
 }
-
 .hero-aurora::before {
   background: linear-gradient(90deg, rgba(16, 135, 255, 0.32), transparent 52%);
 }
-
 .hero-aurora::after {
   background: linear-gradient(270deg, rgba(255, 54, 79, 0.32), transparent 52%);
   animation-delay: -2.2s;
 }
-
 .logo-palco {
   position: relative;
   justify-self: center;
@@ -82,7 +73,6 @@ body:has(.hero-home) .aviso-legal {
   margin: clamp(2px, 2vw, 18px) auto 0;
   perspective: 1100px;
 }
-
 .logo-palco::before {
   content: "";
   position: absolute;
@@ -100,7 +90,6 @@ body:has(.hero-home) .aviso-legal {
     inset 0 0 58px rgba(255, 255, 255, 0.08);
   animation: brilho-globo 6s ease-in-out infinite;
 }
-
 .logo-palco::after {
   content: "";
   position: absolute;
@@ -115,7 +104,6 @@ body:has(.hero-home) .aviso-legal {
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.45));
   animation: estrelas 9s linear infinite;
 }
-
 .logo-principal {
   position: relative;
   z-index: 3;
@@ -130,14 +118,12 @@ body:has(.hero-home) .aviso-legal {
     drop-shadow(16px 0 28px rgba(255, 54, 79, 0.27));
   animation: flutuar-logo 4.8s ease-in-out infinite;
 }
-
 .anel-luz,
 .orbita {
   position: absolute;
   pointer-events: none;
   border-radius: 50%;
 }
-
 .anel-luz {
   z-index: 1;
   width: 78%;
@@ -145,21 +131,18 @@ body:has(.hero-home) .aviso-legal {
   filter: blur(12px);
   opacity: 0.82;
 }
-
 .anel-luz-azul {
   border-left: 5px solid rgba(24, 164, 255, 0.72);
   border-top: 2px solid rgba(24, 164, 255, 0.28);
   box-shadow: -30px 0 64px rgba(16, 135, 255, 0.38);
   animation: girar 18s linear infinite;
 }
-
 .anel-luz-vermelho {
   border-right: 5px solid rgba(255, 54, 79, 0.72);
   border-bottom: 2px solid rgba(255, 54, 79, 0.28);
   box-shadow: 30px 0 64px rgba(255, 54, 79, 0.34);
   animation: girar 22s linear reverse infinite;
 }
-
 .orbita {
   z-index: 2;
   width: 88%;
@@ -169,7 +152,6 @@ body:has(.hero-home) .aviso-legal {
   opacity: 0.45;
   mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
 }
-
 .orbita-dois {
   width: 82%;
   height: 34%;
@@ -177,7 +159,6 @@ body:has(.hero-home) .aviso-legal {
   border-color: rgba(255, 217, 52, 0.16);
   animation: orbita-piscar 4.5s ease-in-out infinite;
 }
-
 .hero-copy {
   display: grid;
   justify-self: center;
@@ -188,7 +169,6 @@ body:has(.hero-home) .aviso-legal {
   padding-inline: 0;
   transform: none;
 }
-
 .hero-copy h1 {
   margin: 18px auto 14px;
   width: 100%;
@@ -210,7 +190,6 @@ body:has(.hero-home) .aviso-legal {
     18px 0 38px rgba(255, 54, 79, 0.3),
     0 28px 70px rgba(0, 0, 0, 0.72);
 }
-
 .subtitulo-home {
   max-width: 840px;
   margin: 0 auto;
@@ -218,16 +197,13 @@ body:has(.hero-home) .aviso-legal {
   font-size: clamp(1.05rem, 1.8vw, 1.36rem);
   line-height: 1.7;
 }
-
 .hero-acoes {
   justify-content: center;
   margin-top: 28px;
 }
-
 .secao-conteudo {
   padding-top: clamp(44px, 8vw, 96px);
 }
-
 .intro-home {
   display: grid;
   grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
@@ -235,7 +211,6 @@ body:has(.hero-home) .aviso-legal {
   gap: clamp(22px, 4vw, 58px);
   margin-bottom: clamp(28px, 5vw, 54px);
 }
-
 .quadro-logo-card {
   position: relative;
   overflow: hidden;
@@ -251,7 +226,6 @@ body:has(.hero-home) .aviso-legal {
     -22px 0 80px rgba(16, 135, 255, 0.16),
     22px 0 80px rgba(255, 54, 79, 0.14);
 }
-
 .quadro-logo-card::before {
   content: "";
   position: absolute;
@@ -259,7 +233,6 @@ body:has(.hero-home) .aviso-legal {
   background: conic-gradient(from 90deg, rgba(16, 135, 255, 0.18), transparent 22%, rgba(255, 54, 79, 0.18), transparent 58%, rgba(255, 217, 52, 0.12), transparent 82%);
   animation: girar 16s linear infinite;
 }
-
 .quadro-logo-card::after {
   content: "";
   position: absolute;
@@ -268,7 +241,6 @@ body:has(.hero-home) .aviso-legal {
   pointer-events: none;
   background: linear-gradient(180deg, transparent 58%, rgba(0, 0, 0, 0.62));
 }
-
 .quadro-logo-card img {
   position: relative;
   z-index: 1;
@@ -282,7 +254,6 @@ body:has(.hero-home) .aviso-legal {
     contrast(1.04)
     drop-shadow(0 20px 28px rgba(0, 0, 0, 0.46));
 }
-
 .quadro-logo-card figcaption {
   position: absolute;
   left: 18px;
@@ -298,12 +269,10 @@ body:has(.hero-home) .aviso-legal {
   font-weight: 800;
   line-height: 1.35;
 }
-
 .intro-copy {
   display: grid;
   gap: 16px;
 }
-
 .intro-copy h2 {
   margin: 0;
   max-width: 900px;
@@ -312,7 +281,6 @@ body:has(.hero-home) .aviso-legal {
   line-height: 0.95;
   letter-spacing: -0.055em;
 }
-
 .intro-copy > p:not(.selo) {
   max-width: 790px;
   margin: 0;
@@ -320,14 +288,12 @@ body:has(.hero-home) .aviso-legal {
   font-size: clamp(1.08rem, 1.55vw, 1.28rem);
   line-height: 1.72;
 }
-
 .mini-destaques {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-top: 8px;
 }
-
 .mini-destaques article {
   min-height: 138px;
   display: grid;
@@ -341,17 +307,14 @@ body:has(.hero-home) .aviso-legal {
     var(--vidro);
   box-shadow: var(--sombra);
 }
-
 .mini-destaques strong {
   color: var(--amarelo);
   font-size: 1.05rem;
 }
-
 .mini-destaques span {
   color: var(--texto-fraco);
   line-height: 1.42;
 }
-
 .cabecalho-home {
   display: grid;
   gap: 14px;
@@ -360,11 +323,9 @@ body:has(.hero-home) .aviso-legal {
   margin: 0 auto 28px;
   text-align: center;
 }
-
 .cabecalho-home.compacto {
   margin-bottom: 20px;
 }
-
 .cabecalho-home h2,
 .destaque-tecnico h2 {
   margin: 0;
@@ -372,7 +333,6 @@ body:has(.hero-home) .aviso-legal {
   line-height: 0.98;
   letter-spacing: -0.06em;
 }
-
 .cabecalho-home p:not(.selo),
 .destaque-tecnico p {
   margin: 0;
@@ -380,13 +340,11 @@ body:has(.hero-home) .aviso-legal {
   font-size: 1.06rem;
   line-height: 1.72;
 }
-
 .estatisticas-home {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 12px;
 }
-
 .estatistica-card {
   position: relative;
   overflow: hidden;
@@ -402,7 +360,6 @@ body:has(.hero-home) .aviso-legal {
     var(--vidro);
   box-shadow: var(--sombra);
 }
-
 .estatistica-card::before {
   content: "";
   position: absolute;
@@ -411,15 +368,12 @@ body:has(.hero-home) .aviso-legal {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transform: rotate(-12deg);
 }
-
 .estatistica-card:nth-child(odd) {
   box-shadow: 0 20px 70px rgba(16, 135, 255, 0.13);
 }
-
 .estatistica-card:nth-child(even) {
   box-shadow: 0 20px 70px rgba(255, 54, 79, 0.12);
 }
-
 .estatistica-card strong {
   position: relative;
   z-index: 1;
@@ -428,20 +382,17 @@ body:has(.hero-home) .aviso-legal {
   line-height: 1;
   text-shadow: 0 10px 28px rgba(0, 0, 0, 0.52);
 }
-
 .estatistica-card span {
   position: relative;
   z-index: 1;
   color: var(--texto-fraco);
   line-height: 1.35;
 }
-
 .grade-pilares {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
-
 .pilar-card,
 .painel-tecnico,
 .painel-lateral,
@@ -452,7 +403,6 @@ body:has(.hero-home) .aviso-legal {
   box-shadow: var(--sombra);
   backdrop-filter: blur(16px);
 }
-
 .pilar-card {
   position: relative;
   overflow: hidden;
@@ -463,7 +413,6 @@ body:has(.hero-home) .aviso-legal {
   padding: 24px;
   border-radius: 30px;
 }
-
 .pilar-card::before {
   content: "";
   position: absolute;
@@ -473,12 +422,10 @@ body:has(.hero-home) .aviso-legal {
     radial-gradient(circle at 86% 86%, rgba(255, 54, 79, 0.18), transparent 34%);
   opacity: 0.8;
 }
-
 .pilar-card > * {
   position: relative;
   z-index: 1;
 }
-
 .pilar-card span,
 .trilha-jogo strong {
   width: fit-content;
@@ -492,14 +439,12 @@ body:has(.hero-home) .aviso-legal {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-
 .pilar-card h2 {
   margin: 22px 0 10px;
   font-size: clamp(1.55rem, 2.2vw, 2.1rem);
   line-height: 1.04;
   letter-spacing: -0.04em;
 }
-
 .pilar-card p,
 .lista-destaques,
 .trilha-jogo p,
@@ -508,37 +453,31 @@ body:has(.hero-home) .aviso-legal {
   color: var(--texto-fraco);
   line-height: 1.62;
 }
-
 .destaque-tecnico {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
   gap: 18px;
 }
-
 .painel-tecnico,
 .painel-lateral {
   border-radius: 34px;
   padding: clamp(24px, 4vw, 42px);
 }
-
 .painel-tecnico {
   background:
     linear-gradient(135deg, rgba(16, 135, 255, 0.18), rgba(255, 54, 79, 0.12)),
     var(--vidro);
 }
-
 .painel-tecnico h2 {
   max-width: 760px;
   margin: 16px 0;
 }
-
 .chips-tecnicos {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 26px;
 }
-
 .chips-tecnicos span {
   padding: 10px 13px;
   border: 1px solid rgba(255, 255, 255, 0.13);
@@ -547,29 +486,24 @@ body:has(.hero-home) .aviso-legal {
   background: rgba(255, 255, 255, 0.07);
   font-weight: 700;
 }
-
 .painel-lateral h3 {
   margin: 0 0 16px;
   font-size: 1.7rem;
   letter-spacing: -0.03em;
 }
-
 .lista-destaques {
   display: grid;
   gap: 14px;
   padding-left: 20px;
 }
-
 .lista-destaques li::marker {
   color: var(--amarelo);
 }
-
 .trilha-jogo {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
-
 .trilha-jogo article {
   min-height: 230px;
   display: grid;
@@ -581,112 +515,91 @@ body:has(.hero-home) .aviso-legal {
     linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)),
     var(--vidro);
 }
-
 .trilha-jogo h3 {
   margin: 0;
   font-size: 1.45rem;
 }
-
 .aviso-legal {
   margin: 20px 0 72px;
   padding: 20px 22px;
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.055);
 }
-
 .aviso-legal strong {
   display: block;
   margin-bottom: 8px;
   color: var(--texto);
 }
-
 @keyframes flutuar-logo {
   0%, 100% { transform: translateY(0) rotateX(0deg) scale(1); }
   50% { transform: translateY(-10px) rotateX(2deg) scale(1.018); }
 }
-
 @keyframes brilho-globo {
   0%, 100% { transform: scale(0.985); opacity: 0.78; }
   50% { transform: scale(1.03); opacity: 1; }
 }
-
 @keyframes girar {
   to { transform: rotate(360deg); }
 }
-
 @keyframes estrelas {
   to { transform: translateY(-18px); }
 }
-
 @keyframes pulso-luz {
   0%, 100% { opacity: 0.28; transform: scaleX(0.9); }
   50% { opacity: 0.58; transform: scaleX(1.04); }
 }
-
 @keyframes orbita-piscar {
   0%, 100% { opacity: 0.26; }
   50% { opacity: 0.6; }
 }
-
 @media (max-width: 1040px) {
   .estatisticas-home {
     grid-template-columns: repeat(3, 1fr);
   }
-
   .grade-pilares,
   .trilha-jogo {
     grid-template-columns: repeat(2, 1fr);
   }
-
   .destaque-tecnico,
   .intro-home {
     grid-template-columns: 1fr;
   }
-
   .quadro-logo-card {
     max-width: 680px;
     margin-inline: auto;
   }
 }
-
 @media (max-width: 760px) {
   .hero-home {
     min-height: auto;
     padding-top: 32px;
   }
-
   .logo-palco {
     width: min(600px, 100vw);
   }
-
   .hero-copy {
     transform: none;
   }
-
   .hero-copy h1 {
     font-size: clamp(2rem, 10.2vw, 4.2rem);
     -webkit-text-stroke-width: 1px;
     letter-spacing: 0.01em;
   }
-
   .estatisticas-home,
   .grade-pilares,
   .trilha-jogo,
   .mini-destaques {
     grid-template-columns: 1fr;
   }
-
   .pilar-card,
   .trilha-jogo article {
     min-height: auto;
   }
 }
-
 @media (max-width: 430px) {
   .hero-copy h1 {
     font-size: clamp(1.52rem, 9vw, 2.48rem);
   }
-
   .quadro-logo-card figcaption {
     position: relative;
     left: auto;
@@ -694,12 +607,10 @@ body:has(.hero-home) .aviso-legal {
     bottom: auto;
     margin: -2px 12px 12px;
   }
-
   .subtitulo-home {
     font-size: 1rem;
   }
 }
-
 @media (prefers-reduced-motion: reduce) {
   .logo-principal,
   .logo-palco::before,
@@ -711,8 +622,6 @@ body:has(.hero-home) .aviso-legal {
     animation: none;
   }
 }
-
-
 .hero-home .hero-copy,
 .hero-home .hero-copy .selo,
 .hero-home .hero-copy h1,
@@ -721,43 +630,36 @@ body:has(.hero-home) .aviso-legal {
   margin-left: auto;
   margin-right: auto;
 }
-
 /* Ajuste final de centralização da hero:
    o conteúdo principal agora é medido pela viewport real, não por um container intermediário. */
 body:has(.hero-home) {
   overflow-x: clip;
 }
-
 .hero-home {
   max-width: 100vw;
   place-items: start center;
 }
-
 .logo-palco,
 .hero-copy {
   max-width: calc(100vw - 36px);
   margin-left: auto;
   margin-right: auto;
 }
-
 .hero-copy {
   width: min(1520px, calc(100vw - 36px));
 }
-
 .hero-copy h1 {
   width: fit-content;
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
 }
-
 @media (max-width: 1180px) {
   .hero-copy h1 {
     white-space: normal;
     text-wrap: balance;
   }
 }
-
 /* =========================
    Pokémon em destaque na home
    ========================= */
@@ -766,28 +668,24 @@ body:has(.hero-home) .pokemon-destaque-home {
   margin-left: auto;
   margin-right: auto;
 }
-
 .pokemon-destaque-home {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
   align-items: center;
   gap: clamp(22px, 5vw, 62px);
 }
-
 .pokemon-destaque-copy h2 {
   margin: 14px 0 12px;
   font-size: clamp(2.2rem, 5vw, 4.9rem);
   line-height: 0.94;
   letter-spacing: -0.06em;
 }
-
 .pokemon-destaque-copy p:not(.selo) {
   max-width: 630px;
   color: var(--texto-fraco);
   font-size: 1.06rem;
   line-height: 1.7;
 }
-
 .pokemon-destaque-card {
   position: relative;
   overflow: hidden;
@@ -806,7 +704,6 @@ body:has(.hero-home) .pokemon-destaque-home {
     rgba(7, 14, 36, 0.78);
   box-shadow: var(--sombra);
 }
-
 .pokemon-destaque-card::before {
   content: "";
   position: absolute;
@@ -815,19 +712,16 @@ body:has(.hero-home) .pokemon-destaque-home {
   animation: girar 18s linear infinite;
   opacity: 0.85;
 }
-
 .pokemon-destaque-arte,
 .pokemon-destaque-info {
   position: relative;
   z-index: 1;
 }
-
 .pokemon-destaque-arte {
   min-height: 310px;
   display: grid;
   place-items: center;
 }
-
 .pokemon-destaque-aura {
   position: absolute;
   width: min(260px, 85%);
@@ -841,7 +735,6 @@ body:has(.hero-home) .pokemon-destaque-home {
     0 0 50px rgba(16, 135, 255, 0.16),
     inset 0 0 45px rgba(255, 255, 255, 0.08);
 }
-
 .pokemon-destaque-arte img {
   position: relative;
   width: min(250px, 90%);
@@ -850,7 +743,6 @@ body:has(.hero-home) .pokemon-destaque-home {
   filter: drop-shadow(0 26px 25px rgba(0, 0, 0, 0.5));
   animation: flutuar-pokemon-home 3.6s ease-in-out infinite;
 }
-
 .pokemon-destaque-arte span {
   position: relative;
   display: grid;
@@ -863,19 +755,16 @@ body:has(.hero-home) .pokemon-destaque-home {
   font-size: 4rem;
   font-weight: 1000;
 }
-
 .pokemon-destaque-info h3 {
   margin: 10px 0;
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 0.96;
   letter-spacing: -0.055em;
 }
-
 .pokemon-destaque-tipos {
   justify-content: flex-start;
   margin: 10px 0 16px;
 }
-
 .pokemon-destaque-tipos span {
   padding: 8px 11px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -885,21 +774,18 @@ body:has(.hero-home) .pokemon-destaque-home {
   font-weight: 900;
   text-transform: capitalize;
 }
-
 .pokemon-destaque-metricas {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin: 16px 0;
 }
-
 .pokemon-destaque-metricas article {
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.055);
 }
-
 .pokemon-destaque-metricas strong {
   display: block;
   min-height: 1.4em;
@@ -908,7 +794,6 @@ body:has(.hero-home) .pokemon-destaque-home {
   line-height: 1.05;
   word-break: break-word;
 }
-
 .pokemon-destaque-metricas span {
   display: block;
   margin-top: 4px;
@@ -916,12 +801,10 @@ body:has(.hero-home) .pokemon-destaque-home {
   font-size: 0.78rem;
   font-weight: 800;
 }
-
 .pokemon-destaque-barras {
   display: grid;
   gap: 8px;
 }
-
 .pokemon-destaque-barras div {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) 34px;
@@ -930,64 +813,52 @@ body:has(.hero-home) .pokemon-destaque-home {
   color: var(--texto-fraco);
   font-weight: 900;
 }
-
 .pokemon-destaque-barras strong {
   color: var(--texto);
   text-align: right;
 }
-
 .pokemon-destaque-home.trocando .pokemon-destaque-card {
   animation: troca-card-pokemon 0.46s ease both;
 }
-
 @keyframes flutuar-pokemon-home {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-9px); }
 }
-
 @keyframes troca-card-pokemon {
   0% { transform: scale(0.985); filter: brightness(0.92); }
   100% { transform: scale(1); filter: brightness(1); }
 }
-
 @media (max-width: 980px) {
   .pokemon-destaque-home,
   .pokemon-destaque-card {
     grid-template-columns: 1fr;
   }
-
   .pokemon-destaque-tipos {
     justify-content: center;
   }
-
   .pokemon-destaque-info {
     text-align: center;
   }
 }
-
 @media (max-width: 560px) {
   .pokemon-destaque-metricas {
     grid-template-columns: 1fr;
   }
-
   .pokemon-destaque-card {
     min-height: auto;
   }
 }
-
 /* Carrossel de Pokémons em destaque v2 */
 body:has(.hero-home) .pokemon-destaque-carrossel-home {
   width: min(var(--largura), calc(100% - 36px));
   margin-left: auto;
   margin-right: auto;
 }
-
 .pokemon-destaque-carrossel-home {
   grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.35fr);
   align-items: center;
   overflow: hidden;
 }
-
 .pokemon-carrossel-janela {
   position: relative;
   overflow: hidden;
@@ -1002,7 +873,6 @@ body:has(.hero-home) .pokemon-destaque-carrossel-home {
   box-shadow: var(--sombra);
   mask-image: linear-gradient(90deg, transparent 0, black 8%, black 92%, transparent 100%);
 }
-
 .pokemon-carrossel-trilho {
   display: flex;
   width: max-content;
@@ -1011,37 +881,30 @@ body:has(.hero-home) .pokemon-destaque-carrossel-home {
   animation: pokemon-carrossel-andar 58s linear infinite;
   will-change: transform;
 }
-
 .pokemon-destaque-carrossel-home:hover .pokemon-carrossel-trilho,
 .pokemon-destaque-carrossel-home.pausado .pokemon-carrossel-trilho,
 body.detalhe-aberto .pokemon-carrossel-trilho {
   animation-play-state: paused;
 }
-
 .pokemon-card-home {
   width: 178px;
   flex: 0 0 178px;
 }
-
 [data-home-pokemon-detail] .pokemon-detalhe-card {
   width: min(940px, 100%);
 }
-
 @keyframes pokemon-carrossel-andar {
   from { transform: translateX(calc(-50% - 7px)); }
   to { transform: translateX(0); }
 }
-
 @media (max-width: 980px) {
   .pokemon-destaque-carrossel-home {
     grid-template-columns: 1fr;
   }
-
   .pokemon-carrossel-janela {
     width: 100%;
   }
 }
-
 /* Ajustes do carrossel da home v3 */
 .pokemon-destaque-carrossel-home {
   display: grid;
@@ -1049,47 +912,38 @@ body.detalhe-aberto .pokemon-carrossel-trilho {
   gap: 18px;
   overflow: visible;
 }
-
 .pokemon-destaque-carrossel-home .pokemon-destaque-copy {
   text-align: center;
 }
-
 .pokemon-destaque-carrossel-home .pokemon-destaque-copy h2 {
   margin: 0 auto 6px;
   max-width: none;
   white-space: nowrap;
   font-size: clamp(2.2rem, 5.8vw, 5.4rem);
 }
-
 .pokemon-destaque-carrossel-home .pokemon-carrossel-janela {
   width: 100%;
   padding: 20px 0;
 }
-
 .pokemon-destaque-carrossel-home .pokemon-carrossel-trilho {
   gap: 12px;
   animation-duration: 108s;
 }
-
 .pokemon-destaque-carrossel-home:hover .pokemon-carrossel-trilho {
   animation-play-state: running;
 }
-
 .pokemon-destaque-carrossel-home.pausado .pokemon-carrossel-trilho,
 body.detalhe-aberto .pokemon-carrossel-trilho {
   animation-play-state: paused;
 }
-
 .pokemon-carrossel-acoes {
   justify-content: center;
   margin-top: 2px;
 }
-
 .pokemon-card-home {
   width: 166px;
   flex-basis: 166px;
 }
-
 @media (max-width: 900px) {
   .pokemon-destaque-carrossel-home .pokemon-destaque-copy h2 {
     white-space: normal;

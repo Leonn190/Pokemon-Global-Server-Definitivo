@@ -11,10 +11,8 @@ import {
   resumoPokemons,
 } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
-
 const pokemons = carregarPokemons();
 const resumo = resumoPokemons(pokemons);
-
 const imagensPokemons = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
   eager: true,
   query: "?url",
@@ -30,7 +28,6 @@ const iconesAtributosBrutos = import.meta.glob("@recursos/Visual/Icones/Atributo
   query: "?url",
   import: "default",
 });
-
 const imagensPorNome = indexarArquivosPorNome(imagensPokemons);
 const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
 const iconesAtributos = indexarArquivosPorNome(iconesAtributosBrutos);
@@ -45,19 +42,15 @@ const payloadPokedex = JSON.stringify({
   resumo,
 }).replace(/</g, "\\u003c");
 ---
-
 <Layout
-  titulo="Pokémons | Wiki Pokémon Global Server"
+  titulo="Pokémons"
   descricao="Wiki de Pokémons do Pokémon Global Server, com busca, filtros por foco, filtros por tipos, atributos, raridade, linhagem e animações."
 >
   <WikiTopo
     ativo="pokemons"
-    titulo="Pokédex Global"
+    titulo="Pokémons"
     tituloId="titulo-pokedex"
-    ariaResumo="Resumo dos registros da Pokédex"
-    resumo={[{ valor: resumo.quantidade, rotulo: "Pokémons registrados" }, { valor: resumo.grupos.length, rotulo: "Grupos" }, { valor: resumo.linhagens, rotulo: "Linhagens" }]}
   />
-
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app" data-pokedex-app>
       <section class="pokedex-toolbar" aria-label="Ferramentas da wiki de Pokémons">
@@ -65,7 +58,6 @@ const payloadPokedex = JSON.stringify({
           <span>Pesquisar</span>
           <input data-pokedex-search type="search" placeholder="Nome, código, tipo ou grupo..." autocomplete="off" />
         </label>
-
         <label>
           <span>Ordenar</span>
           <select data-pokedex-sort>
@@ -88,7 +80,6 @@ const payloadPokedex = JSON.stringify({
             <option value="peso">Peso</option>
           </select>
         </label>
-
         <label>
           <span>Foco</span>
           <select data-pokedex-focus>
@@ -96,7 +87,6 @@ const payloadPokedex = JSON.stringify({
             {ATRIBUTOS_REGULARES.map((foco) => <option value={normalizarChave(foco)}>{foco}</option>)}
           </select>
         </label>
-
         <label>
           <span>Grupo</span>
           <select data-pokedex-group>
@@ -104,7 +94,6 @@ const payloadPokedex = JSON.stringify({
             {resumo.grupos.map((grupo) => <option value={normalizarChave(grupo)}>{grupo}</option>)}
           </select>
         </label>
-
         <label>
           <span>Raridade</span>
           <select data-pokedex-rarity>
@@ -113,7 +102,6 @@ const payloadPokedex = JSON.stringify({
           </select>
         </label>
       </section>
-
       <section class="filtros-rapidos filtros-tipos-icones" aria-label="Filtros por tipo. Selecione até três tipos.">
         {tiposVisiveis.map((tipo) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`}>
@@ -123,7 +111,6 @@ const payloadPokedex = JSON.stringify({
           </button>
         ))}
       </section>
-
       <section class="pokedex-status" aria-live="polite">
         <div>
           <strong data-pokedex-count>{resumo.quantidade}</strong>
@@ -134,18 +121,14 @@ const payloadPokedex = JSON.stringify({
           <button class="botao fantasma compacto" type="button" data-pokedex-clear>Limpar filtros</button>
         </div>
       </section>
-
       <section class="pokedex-grid" data-pokedex-grid aria-label="Lista de Pokémons"></section>
-
       <div class="pokedex-vazio" data-pokedex-empty hidden>
         <strong>Nenhum Pokémon encontrado.</strong>
         <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
       </div>
-
       <div class="pokedex-sentinel" data-pokedex-sentinel aria-hidden="true"></div>
     </div>
   </section>
-
   <aside class="pokemon-detalhe" data-pokemon-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
     <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-detalhe-nome">
@@ -154,14 +137,12 @@ const payloadPokedex = JSON.stringify({
         <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
         <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
       </div>
-
       <div class="pokemon-detalhe-topo">
         <div class="pokemon-palco-detalhe">
           <div class="pokemon-brilho-detalhe"></div>
           <img data-detail-image alt="" loading="lazy" decoding="async" />
           <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
         </div>
-
         <div class="pokemon-cabecalho-detalhe">
           <span class="codigo-pokemon" data-detail-code>#000</span>
           <h2 id="pokemon-detalhe-nome" data-detail-name>Pokémon</h2>
@@ -169,19 +150,16 @@ const payloadPokedex = JSON.stringify({
           <p data-detail-summary hidden></p>
         </div>
       </div>
-
       <div class="pokemon-detalhe-grid">
         <section class="painel-detalhe">
           <h3>Atributos básicos</h3>
           <div class="barras-atributos" data-detail-stats></div>
         </section>
-
         <section class="painel-detalhe">
           <h3>Informações</h3>
           <dl class="pokemon-info-lista" data-detail-info></dl>
         </section>
       </div>
-
       <section class="painel-detalhe painel-linhagem" data-detail-line-panel>
         <div class="painel-titulo-linha">
           <h3>Linhagem / evoluções</h3>
@@ -191,7 +169,6 @@ const payloadPokedex = JSON.stringify({
       </section>
     </article>
   </aside>
-
   <script id="pokedex-data" type="application/json" set:html={payloadPokedex}></script>
   <script>
     import { inicializarPokedex } from "../../Codigo/PokedexRuntime.js";

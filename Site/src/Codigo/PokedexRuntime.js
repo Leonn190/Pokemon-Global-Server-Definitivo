@@ -1,5 +1,4 @@
 import { infoHtml, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
-
 const FRAME_MODULES = {
   ...import.meta.glob("@recursos/Visual/Pokemons/Animação/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
     query: "?url",
@@ -10,32 +9,26 @@ const FRAME_MODULES = {
     import: "default",
   }),
 };
-
 const MAXIMOS_BARRAS = {
   Vida: 200,
   CrD: 75,
   CrC: 75,
 };
-
 const ATRIBUTOS_REGULARES = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"];
 let frameIndex = null;
 const framesCache = new Map();
-
 function ehRadiante(pokemon) {
   return normalizar(pokemon?.nome).includes("radiante");
 }
-
 function nomeExibicao(pokemon) {
   return String(pokemon?.nome || pokemon?.nomeExibicao || "Pokémon").replace(/\s+/g, " ").trim();
 }
-
 function nomeBaseRadiante(nome) {
   return String(nome ?? "")
     .replace(/\bradiante\b/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }
-
 function candidatosPokemon(pokemon) {
   const codigo = String(pokemon?.code ?? pokemon?.id ?? "");
   const nome = String(pokemon?.nome ?? "");
@@ -61,7 +54,6 @@ function candidatosPokemon(pokemon) {
     .filter(Boolean)
     .map(normalizar);
 }
-
 function criarIndiceFrames(modulos) {
   const indice = {};
   Object.entries(modulos).forEach(([caminho, carregador]) => {
@@ -72,19 +64,15 @@ function criarIndiceFrames(modulos) {
     if (!indice[chave]) indice[chave] = [];
     indice[chave].push({ caminho, carregador });
   });
-
   Object.values(indice).forEach((frames) => {
     frames.sort((a, b) => a.caminho.localeCompare(b.caminho, "pt-BR", { numeric: true, sensitivity: "base" }));
   });
-
   return indice;
 }
-
 async function carregarFramesPokemon(pokemon) {
   const cacheKey = String(pokemon?.id ?? pokemon?.nome ?? "");
   if (framesCache.has(cacheKey)) return framesCache.get(cacheKey);
   if (!frameIndex) frameIndex = criarIndiceFrames(FRAME_MODULES);
-
   for (const candidato of candidatosPokemon(pokemon)) {
     const frames = frameIndex[candidato];
     if (!frames?.length) continue;
@@ -92,15 +80,12 @@ async function carregarFramesPokemon(pokemon) {
     framesCache.set(cacheKey, carregados);
     return carregados;
   }
-
   framesCache.set(cacheKey, []);
   return [];
 }
-
 function assetPokemon(pokemon, assetsPokemons) {
   return assetsPokemons?.[pokemon.id] ?? { imagem: null };
 }
-
 function classeChance(chance) {
   const valor = Number(chance);
   if (!Number.isFinite(valor)) return "chance-neutra";
@@ -108,7 +93,6 @@ function classeChance(chance) {
   if (valor === 50) return "chance-prata";
   return "chance-bronze";
 }
-
 function tipoBolinhaHtml(tipo, iconesTipos, pequeno = true) {
   const chave = normalizar(tipo.nome);
   const icone = iconesTipos?.[chave];
@@ -116,7 +100,6 @@ function tipoBolinhaHtml(tipo, iconesTipos, pequeno = true) {
     ${icone ? `<img src="${icone}" alt="${html(tipo.nome)}" loading="eager" decoding="async" />` : `<b>${html(String(tipo.nome || "?").slice(0, 1))}</b>`}
   </span>`;
 }
-
 function tipoBadgeHtml(tipo, iconesTipos) {
   const chave = normalizar(tipo.nome);
   const icone = iconesTipos?.[chave];
@@ -126,21 +109,17 @@ function tipoBadgeHtml(tipo, iconesTipos) {
     ${tipo.chance ? `<em>${formatarNumero(tipo.chance, "%")}</em>` : ""}
   </span>`;
 }
-
 function tiposBolinhaHtml(pokemon, iconesTipos) {
   return pokemon.tipos.map((tipo) => tipoBolinhaHtml(tipo, iconesTipos)).join("");
 }
-
 function tiposBadgeHtml(pokemon, iconesTipos) {
   return pokemon.tipos.map((tipo) => tipoBadgeHtml(tipo, iconesTipos)).join("");
 }
-
 function larguraAtributo(chave, valor) {
   const maximo = MAXIMOS_BARRAS[chave] ?? 100;
   const numero = Number(valor) || 0;
   return Math.max(0, Math.min(100, (numero / maximo) * 100));
 }
-
 function focoPrincipal(pokemon) {
   let melhor = null;
   let melhorValor = -Infinity;
@@ -154,7 +133,6 @@ function focoPrincipal(pokemon) {
   });
   return melhor;
 }
-
 export function criarCardPokemon(pokemon, dados, origem = "wiki") {
   const asset = assetPokemon(pokemon, dados.assetsPokemons);
   const nomeVisivel = nomeExibicao(pokemon);
@@ -175,18 +153,15 @@ export function criarCardPokemon(pokemon, dados, origem = "wiki") {
   `;
   return card;
 }
-
 export function criarControladorDetalhe(dados, opcoes = {}) {
   const detalhe = document.querySelector(opcoes.seletorDetalhe || "[data-pokemon-detail]");
   let frameTimer = null;
   let pokemonAberto = null;
   const atributosBase = dados.atributosBase || [];
-
   function limparAnimacao() {
     if (frameTimer) window.clearInterval(frameTimer);
     frameTimer = null;
   }
-
   function familiaPokemon(pokemon) {
     return (dados.pokemons || [])
       .filter((item) => String(item.linhagem) === String(pokemon.linhagem))
@@ -197,13 +172,11 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
         return a.ordem - b.ordem;
       });
   }
-
   function listaNavegacao() {
     const listaAtual = typeof opcoes.obterListaAtual === "function" ? opcoes.obterListaAtual() : null;
     const lista = Array.isArray(listaAtual) && listaAtual.length ? listaAtual : (dados.pokemons || []);
     return [...lista].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
   }
-
   function abrirVizinho(direcao) {
     if (!pokemonAberto) return;
     const lista = listaNavegacao();
@@ -213,13 +186,11 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
     const proximo = lista[(indiceSeguro + direcao + lista.length) % lista.length];
     if (proximo) abrirDetalhe(proximo.id);
   }
-
   async function abrirDetalhe(id) {
     const pokemon = (dados.pokemons || []).find((item) => item.id === String(id));
     if (!pokemon || !detalhe) return;
     pokemonAberto = pokemon;
     limparAnimacao();
-
     const asset = assetPokemon(pokemon, dados.assetsPokemons);
     const nomeVisivel = nomeExibicao(pokemon);
     const imagem = detalhe.querySelector("[data-detail-image]");
@@ -233,7 +204,6 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
     const linha = detalhe.querySelector("[data-detail-line]");
     const linhaCount = detalhe.querySelector("[data-detail-line-count]");
     const painelLinhagem = detalhe.querySelector("[data-detail-line-panel]");
-
     if (codigo) {
       codigo.textContent = `#${pokemon.id}`;
       codigo.classList.toggle("radiante", false);
@@ -244,7 +214,6 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
       resumo.textContent = "";
       resumo.hidden = true;
     }
-
     if (imagem && fallback) {
       imagem.classList.toggle("sprite-radiante", ehRadiante(pokemon));
       const imagemBase = asset.imagem;
@@ -258,17 +227,14 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
         fallback.hidden = true;
         fallback.textContent = "";
       }
-
       const frames = opcoes.animarFrames === false ? [] : await carregarFramesPokemon(pokemon);
       if (pokemonAberto?.id !== pokemon.id) return;
-
       if (frames.length) {
         imagem.hidden = false;
         fallback.hidden = true;
         imagem.src = frames[0];
         imagem.alt = nomeVisivel;
       }
-
       if (frames.length > 1) {
         let frame = 0;
         frameTimer = window.setInterval(() => {
@@ -278,7 +244,6 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
         }, 40);
       }
     }
-
     if (stats) {
       stats.innerHTML = atributosBase.map((atributo) => {
         const valor = pokemon.atributos?.[atributo.chave] ?? 0;
@@ -291,7 +256,6 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
         </div>`;
       }).join("");
     }
-
     if (info) {
       const dadosInfo = [
         ["Altura média", formatarNumero(pokemon.altura, " m")],
@@ -307,9 +271,7 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
       ];
       info.innerHTML = infoHtml(dadosInfo);
     }
-
     if (painelLinhagem) painelLinhagem.hidden = opcoes.mostrarLinhagem === false;
-
     if (linha && opcoes.mostrarLinhagem !== false) {
       const familia = familiaPokemon(pokemon);
       if (linhaCount) linhaCount.textContent = `${familia.length} forma${familia.length === 1 ? "" : "s"}`;
@@ -326,34 +288,28 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
         botao.addEventListener("click", () => abrirDetalhe(botao.dataset.linePokemon));
       });
     }
-
     detalhe.hidden = false;
     document.body.classList.add("detalhe-aberto");
     document.dispatchEvent(new CustomEvent("pokemon-detail-opened", { detail: { id: pokemon.id } }));
   }
-
   function fecharDetalhe() {
     limparAnimacao();
     if (detalhe) detalhe.hidden = true;
     document.body.classList.remove("detalhe-aberto");
     document.dispatchEvent(new CustomEvent("pokemon-detail-closed"));
   }
-
   detalhe?.querySelectorAll("[data-pokemon-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-pokemon-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));
   detalhe?.querySelectorAll("[data-pokemon-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
   });
-
   return { abrirDetalhe, fecharDetalhe };
 }
-
 export function inicializarPokedex(idDados = "pokedex-data") {
   const dados = lerJson(idDados);
   const app = document.querySelector("[data-pokedex-app]");
   if (!dados || !app) return;
-
   const grid = app.querySelector("[data-pokedex-grid]");
   const busca = app.querySelector("[data-pokedex-search]");
   const ordenacao = app.querySelector("[data-pokedex-sort]");
@@ -373,7 +329,6 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     animarFrames: true,
     obterListaAtual: () => listagem?.obterResultadoAtual() ?? [],
   });
-
   function atualizarChips() {
     chipsTipo.forEach((chip) => {
       const indice = tiposSelecionados.indexOf(chip.dataset.typeChip);
@@ -382,7 +337,6 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     });
     if (botaoDirecao) botaoDirecao.setAttribute("aria-label", `Ordenação ${botaoDirecao.textContent.toLowerCase()}`);
   }
-
   function obterResultado(direcaoBotao) {
     const termo = normalizar(busca?.value ?? "");
     const foco = filtroFoco?.value ?? "";
@@ -391,7 +345,6 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     const sortBruto = ordenacao?.value ?? "ordem";
     const sort = sortBruto.replace(/-(asc|desc)$/g, "");
     const direcao = botaoDirecao ? direcaoBotao : (sortBruto.endsWith("-desc") ? "desc" : "asc");
-
     const filtrados = (dados.pokemons || []).filter((pokemon) => {
       if (termo && !pokemon.busca.includes(termo)) return false;
       if (tiposSelecionados.length && !tiposSelecionados.every((tipo) => pokemon.tipos.some((item) => normalizar(item.nome) === tipo))) return false;
@@ -400,7 +353,6 @@ export function inicializarPokedex(idDados = "pokedex-data") {
       if (raridade && normalizar(pokemon.raridadeTexto) !== raridade) return false;
       return true;
     });
-
     const ordenadores = {
       ordem: (a, b) => a.ordem - b.ordem,
       nome: (a, b) => nomeExibicao(a).localeCompare(nomeExibicao(b), "pt-BR", { numeric: true }),
@@ -420,10 +372,8 @@ export function inicializarPokedex(idDados = "pokedex-data") {
       altura: (a, b) => (a.altura ?? 0) - (b.altura ?? 0),
       peso: (a, b) => (a.peso ?? 0) - (b.peso ?? 0),
     };
-
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-
   listagem = criarListagemPaginada({
     grid,
     contador,
@@ -432,8 +382,8 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     direcaoBotao: botaoDirecao,
     controles: [busca, ordenacao, filtroFoco, filtroGrupo, filtroRaridade],
     botaoLimpar,
-    pageSize: 30,
-    renderDelay: 20,
+    pageSize: 24,
+    renderDelay: 8,
     usarFallbackScroll: true,
     cardSelector: "[data-pokemon-id]",
     obterCardId: (card) => card.dataset.pokemonId,
@@ -456,7 +406,6 @@ export function inicializarPokedex(idDados = "pokedex-data") {
       tiposSelecionados.splice(0, tiposSelecionados.length);
     },
   });
-
   chipsTipo.forEach((chip) => {
     chip.addEventListener("click", () => {
       const tipo = chip.dataset.typeChip;
@@ -469,31 +418,25 @@ export function inicializarPokedex(idDados = "pokedex-data") {
       listagem.renderLista(true);
     });
   });
-
   listagem.iniciar();
-
   const pokemonInicial = new URLSearchParams(window.location.search).get("pokemon");
   if (pokemonInicial) detalheController.abrirDetalhe(pokemonInicial);
 }
-
 export function inicializarCarrosselHome(idDados = "pokemon-home-data") {
   const dados = lerJson(idDados);
   const carrossel = document.querySelector("[data-home-pokemon-carousel]");
   if (!dados || !carrossel) return;
-
   const detalheController = criarControladorDetalhe(dados, {
     seletorDetalhe: "[data-home-pokemon-detail]",
     mostrarLinhagem: false,
     animarFrames: false,
   });
-
   carrossel.addEventListener("click", (evento) => {
     const card = evento.target.closest("[data-home-pokemon-id]");
     if (!card) return;
     detalheController.abrirDetalhe(card.dataset.homePokemonId);
     carrossel.classList.add("pausado");
   });
-
   document.addEventListener("pokemon-detail-closed", () => {
     carrossel.classList.remove("pausado");
   });

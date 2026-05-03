@@ -1,9 +1,7 @@
 import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
-
 function assetItem(item, assetsItens) {
   return assetsItens?.[item.id] ?? { imagem: null };
 }
-
 function criarCardItem(item, dados) {
   const asset = assetItem(item, dados.assetsItens);
   const card = document.createElement("button");
@@ -22,17 +20,14 @@ function criarCardItem(item, dados) {
   `;
   return card;
 }
-
 function criarControladorDetalhe(dados, obterListaAtual) {
   const detalhe = document.querySelector("[data-item-detail]");
   let itemAberto = null;
-
   function listaNavegacao() {
     const listaAtual = typeof obterListaAtual === "function" ? obterListaAtual() : null;
     const lista = Array.isArray(listaAtual) && listaAtual.length ? listaAtual : (dados.itens || []);
     return [...lista].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
   }
-
   function abrirVizinho(direcao) {
     if (!itemAberto) return;
     const lista = listaNavegacao();
@@ -42,7 +37,6 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const proximo = lista[(indiceSeguro + direcao + lista.length) % lista.length];
     if (proximo) abrirDetalhe(proximo.id);
   }
-
   function abrirDetalhe(id) {
     const item = (dados.itens || []).find((atual) => atual.id === String(id));
     if (!item || !detalhe) return;
@@ -54,7 +48,6 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const raridade = detalhe.querySelector("[data-item-rarity]");
     const descricao = detalhe.querySelector("[data-item-description]");
     const info = detalhe.querySelector("[data-item-info]");
-
     if (codigo) codigo.textContent = `#${item.id}`;
     if (nome) nome.textContent = item.nome;
     if (raridade) {
@@ -62,9 +55,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       raridade.textContent = item.raridadeNome;
     }
     if (descricao) descricao.textContent = item.descricaoMelhor || "Descrição detalhada ainda não cadastrada.";
-
     aplicarImagemDetalhe(imagem, asset.imagem, item.nome);
-
     if (info) {
       const linhas = [
         ["Valor médio", formatarNumero(item.valor)],
@@ -76,31 +67,25 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       ];
       info.innerHTML = infoHtml(linhas);
     }
-
     detalhe.hidden = false;
     document.body.classList.add("detalhe-aberto");
   }
-
   function fecharDetalhe() {
     if (detalhe) detalhe.hidden = true;
     document.body.classList.remove("detalhe-aberto");
   }
-
   detalhe?.querySelectorAll("[data-item-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-item-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));
   detalhe?.querySelectorAll("[data-item-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
   });
-
   return { abrirDetalhe };
 }
-
 export function inicializarWikiItens(idDados = "itens-data") {
   const dados = lerJson(idDados);
   const app = document.querySelector("[data-itens-app]");
   if (!dados || !app) return;
-
   const grid = app.querySelector("[data-itens-grid]");
   const busca = app.querySelector("[data-itens-search]");
   const ordenacao = app.querySelector("[data-itens-sort]");
@@ -115,7 +100,6 @@ export function inicializarWikiItens(idDados = "itens-data") {
   const sentinela = app.querySelector("[data-itens-sentinel]");
   let listagem;
   const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
-
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const estilo = filtroEstilo?.value ?? "";
@@ -123,7 +107,6 @@ export function inicializarWikiItens(idDados = "itens-data") {
     const bau = filtroBau?.value ?? "";
     const venda = filtroVenda?.value ?? "";
     const sort = ordenacao?.value ?? "ordem";
-
     const filtrados = (dados.itens || []).filter((item) => {
       if (termo && !item.busca.includes(termo)) return false;
       if (estilo && item.estiloBusca !== estilo) return false;
@@ -132,7 +115,6 @@ export function inicializarWikiItens(idDados = "itens-data") {
       if (venda && item.vendaCodigo !== venda) return false;
       return true;
     });
-
     const ordenadores = {
       ordem: (a, b) => a.ordem - b.ordem,
       nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }),
@@ -140,10 +122,8 @@ export function inicializarWikiItens(idDados = "itens-data") {
       raridade: (a, b) => (a.raridadeNumero ?? 0) - (b.raridadeNumero ?? 0),
       estilo: (a, b) => a.estiloRotulo.localeCompare(b.estiloRotulo, "pt-BR", { numeric: true }),
     };
-
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-
   listagem = criarListagemPaginada({
     grid,
     contador,
@@ -168,6 +148,5 @@ export function inicializarWikiItens(idDados = "itens-data") {
       if (filtroVenda) filtroVenda.value = "";
     },
   });
-
   listagem.iniciar();
 }

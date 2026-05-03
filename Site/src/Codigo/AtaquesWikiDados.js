@@ -1,15 +1,12 @@
 import { carregarCsvWiki, limparTexto, numero } from "./WikiCsv.js";
 import { normalizarChave } from "./PokemonWikiDados.js";
-
 const NOME_CSV = "Pokemon Global Server - Ataques.csv";
-
 export const FOCOS_ATAQUE = [
   { chave: "ofensivo", campo: "Ofensivo", rotulo: "Ofensivo" },
   { chave: "defensivo", campo: "Defensivo", rotulo: "Defensivo" },
   { chave: "suporte", campo: "Suporte", rotulo: "Suporte" },
   { chave: "utilitario", campo: "Utilitario", rotulo: "Utilitário" },
 ];
-
 const TIPOS_CANONICOS = {
   agua: "Água",
   cosmico: "Cósmico",
@@ -35,7 +32,6 @@ const TIPOS_CANONICOS = {
   venenoso: "Venenoso",
   voador: "Voador",
 };
-
 const ESTILOS_ATAQUE = {
   alvo: "Alvo",
   ativa: "Ativa",
@@ -43,19 +39,14 @@ const ESTILOS_ATAQUE = {
   passivo: "Passiva",
   passiva: "Passiva",
 };
-
-
-
 function tipoCanonico(valor) {
   const chave = normalizarChave(valor);
   return TIPOS_CANONICOS[chave] ?? (limparTexto(valor) || "Sem tipo").replace(/^./, (letra) => letra.toUpperCase());
 }
-
 function rotuloEstilo(valor) {
   const chave = normalizarChave(valor);
   return ESTILOS_ATAQUE[chave] ?? (limparTexto(valor) || "Sem estilo").replace(/^./, (letra) => letra.toUpperCase());
 }
-
 function separarMotores(valor) {
   const partes = limparTexto(valor)
     .split("/")
@@ -68,7 +59,6 @@ function separarMotores(valor) {
   });
   return [...unicos.entries()].map(([chave, rotulo]) => ({ chave, rotulo }));
 }
-
 function calcularFoco(linha) {
   return FOCOS_ATAQUE.reduce((melhor, foco) => {
     const valor = numero(linha[foco.campo]) ?? 0;
@@ -76,7 +66,6 @@ function calcularFoco(linha) {
     return melhor;
   }, null);
 }
-
 function normalizarAtaque(linha, indice) {
   const nome = limparTexto(linha.Ataque) || `Ataque ${indice + 1}`;
   const code = numero(linha.Code) ?? indice + 1;
@@ -88,7 +77,6 @@ function normalizarAtaque(linha, indice) {
   const pontuacoes = Object.fromEntries(FOCOS_ATAQUE.map((item) => [item.chave, numero(linha[item.campo]) ?? 0]));
   const custo = numero(linha.Custo);
   const custoAprimorado = numero(linha["Custo AP"]);
-
   return {
     id: String(code),
     ordem: indice + 1,
@@ -114,20 +102,16 @@ function normalizarAtaque(linha, indice) {
     ...pontuacoes,
   };
 }
-
 export function carregarAtaques() {
   return carregarCsvWiki([NOME_CSV], "Wiki Ataques").map((linha, indice) => normalizarAtaque(linha, indice));
 }
-
 function arquivoSemExtensao(caminho) {
   const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;
   return arquivo.replace(/\.[^.]+$/, "");
 }
-
 export function indexarIconesAtaques(glob) {
   const geral = {};
   const porTipo = {};
-
   Object.entries(glob).forEach(([caminho, url]) => {
     const partes = caminho.split(/[\\/]/).filter(Boolean);
     const nomeArquivo = arquivoSemExtensao(caminho);
@@ -135,17 +119,14 @@ export function indexarIconesAtaques(glob) {
     const pastaTipo = partes.at(-2) ?? "";
     const tipo = tipoCanonico(pastaTipo);
     const tipoChave = normalizarChave(tipo);
-
     if (chaveArquivo && !geral[chaveArquivo]) geral[chaveArquivo] = url;
     if (tipoChave) {
       if (!porTipo[tipoChave]) porTipo[tipoChave] = {};
       if (chaveArquivo && !porTipo[tipoChave][chaveArquivo]) porTipo[tipoChave][chaveArquivo] = url;
     }
   });
-
   return { geral, porTipo };
 }
-
 function candidatosAtaque(ataque) {
   const codigo = String(ataque.code ?? ataque.id ?? "");
   return [
@@ -159,7 +140,6 @@ function candidatosAtaque(ataque) {
     `icone${codigo}`,
   ].filter(Boolean).map(normalizarChave);
 }
-
 export function resolverIconeAtaque(ataque, indiceIcones) {
   const tipo = ataque.tipoBusca;
   const porTipo = indiceIcones?.porTipo?.[tipo] ?? {};
@@ -171,11 +151,9 @@ export function resolverIconeAtaque(ataque, indiceIcones) {
   }
   return null;
 }
-
 export function criarAssetsAtaques(ataques, indiceIcones) {
   return Object.fromEntries(ataques.map((ataque) => [ataque.id, { imagem: resolverIconeAtaque(ataque, indiceIcones) }]));
 }
-
 export function resumoAtaques(ataques) {
   const estilos = [...new Map(ataques.map((ataque) => [ataque.estiloBusca, ataque.estiloRotulo])).values()].sort((a, b) =>
     a.localeCompare(b, "pt-BR"),
@@ -183,7 +161,6 @@ export function resumoAtaques(ataques) {
   const tipos = [...new Map(ataques.map((ataque) => [ataque.tipoBusca, ataque.tipo])).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const motores = new Map();
   ataques.forEach((ataque) => ataque.motores.forEach((motor) => motores.set(motor.chave, motor.rotulo)));
-
   return {
     quantidade: ataques.length,
     estilos,

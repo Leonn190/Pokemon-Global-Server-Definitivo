@@ -1,7 +1,6 @@
 export function lerJson(id, origem = "Wiki") {
   const node = document.getElementById(id);
   if (!node) return null;
-
   try {
     return JSON.parse(node.textContent || "{}");
   } catch (erro) {
@@ -9,7 +8,6 @@ export function lerJson(id, origem = "Wiki") {
     return null;
   }
 }
-
 export function html(valor) {
   return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
     "&": "&amp;",
@@ -19,7 +17,6 @@ export function html(valor) {
     '"': "&quot;",
   })[char]);
 }
-
 export function normalizar(valor) {
   return String(valor ?? "")
     .trim()
@@ -28,22 +25,17 @@ export function normalizar(valor) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "");
 }
-
 export function formatarNumero(valor, sufixo = "") {
   if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "-";
-
   const numero = Number(valor);
   const texto = Number.isInteger(numero)
     ? String(numero)
     : numero.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-
   return `${texto}${sufixo}`;
 }
-
 export function infoHtml(linhas) {
   return linhas.map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`).join("");
 }
-
 export function aplicarImagemDetalhe(imagem, src, alt) {
   if (!imagem) return;
   if (src) {
@@ -55,7 +47,6 @@ export function aplicarImagemDetalhe(imagem, src, alt) {
   imagem.hidden = true;
   imagem.removeAttribute("src");
 }
-
 export function ordenarComDirecao(lista, ordenadores, sort, direcao, ordenadorPadrao = "ordem") {
   const ordenador = ordenadores[sort] ?? ordenadores[ordenadorPadrao];
   return [...lista].sort((a, b) => {
@@ -64,7 +55,6 @@ export function ordenarComDirecao(lista, ordenadores, sort, direcao, ordenadorPa
     return direcao === "desc" ? -final : final;
   });
 }
-
 export function criarListagemPaginada(opcoes) {
   const {
     grid,
@@ -74,8 +64,8 @@ export function criarListagemPaginada(opcoes) {
     direcaoBotao,
     controles = [],
     botaoLimpar,
-    pageSize = 36,
-    renderDelay = 18,
+    pageSize = 24,
+    renderDelay = 8,
     rootMargin = "360px 0px",
     preservarScroll = true,
     usarFallbackScroll = false,
@@ -88,25 +78,36 @@ export function criarListagemPaginada(opcoes) {
     limparFiltros,
     aoAtualizarEstado,
   } = opcoes;
-
   const estado = {
     visiveis: 0,
     resultadoAtual: [],
     renderRequest: 0,
     renderizando: false,
+    cancelado: false,
   };
-
+  const cancelarRender = () => {
+    estado.cancelado = true;
+    estado.renderRequest += 1;
+    estado.renderizando = false;
+  };
+  window.__PGS_CANCEL_GRID_RENDERS = window.__PGS_CANCEL_GRID_RENDERS || new Set();
+  window.__PGS_CANCEL_GRID_RENDERS.add(cancelarRender);
+  const cancelarTodosOsRenders = () => {
+    window.__PGS_CANCEL_GRID_RENDERS?.forEach((cancelar) => cancelar());
+  };
+  window.addEventListener("pagehide", cancelarRender, { once: true });
+  window.addEventListener("beforeunload", cancelarRender, { once: true });
+  document.addEventListener("pointerdown", (evento) => {
+    if (evento.target.closest?.(".wiki-menu-topo a, .wiki-menu-lateral a")) cancelarTodosOsRenders();
+  }, { capture: true });
   if (direcaoBotao && !direcaoBotao.dataset.sortDirection) direcaoBotao.dataset.sortDirection = "asc";
-
   function direcaoAtual() {
     return direcaoBotao?.dataset.sortDirection === "desc" ? "desc" : "asc";
   }
-
   function atualizarDirecao() {
     if (!direcaoBotao) return;
     direcaoBotao.textContent = direcaoAtual() === "asc" ? "Crescente" : "Descrescente";
   }
-
   function atualizarEstado() {
     if (contador) contador.textContent = String(estado.resultadoAtual.length);
     if (vazio) vazio.hidden = estado.resultadoAtual.length !== 0;
@@ -114,7 +115,6 @@ export function criarListagemPaginada(opcoes) {
     atualizarDirecao();
     aoAtualizarEstado?.(estado);
   }
-
   function anexarCard(inicio, fim) {
     if (!grid) return;
     const fragmento = document.createDocumentFragment();
@@ -125,11 +125,9 @@ export function criarListagemPaginada(opcoes) {
     });
     grid.appendChild(fragmento);
   }
-
   function manterScrollAposReset(alturaAnterior, scrollAnterior) {
     if (!grid || !preservarScroll) return;
     if (alturaAnterior > 0) grid.style.minHeight = `${Math.ceil(alturaAnterior)}px`;
-
     const comportamentoAnterior = document.documentElement.style.scrollBehavior;
     document.documentElement.style.scrollBehavior = "auto";
     window.requestAnimationFrame(() => {
@@ -137,37 +135,53 @@ export function criarListagemPaginada(opcoes) {
       document.documentElement.style.scrollBehavior = comportamentoAnterior;
     });
   }
-
   function liberarAlturaReservada(idRender) {
     if (!preservarScroll) return;
     window.setTimeout(() => {
       if (grid && idRender === estado.renderRequest) grid.style.minHeight = "";
     }, 120);
   }
-
+  function sentinelaPertoDaTela() {
+    if (!sentinela || sentinela.hidden || estado.visiveis >= estado.resultadoAtual.length) return false;
+    const rect = sentinela.getBoundingClientRect();
+    return rect.top < window.innerHeight + 900 && rect.bottom > -300;
+  }
+  function gridAindaNaoPreencheATela() {
+    if (!grid || estado.visiveis >= estado.resultadoAtual.length) return false;
+    const fimGrid = grid.getBoundingClientRect().bottom;
+    return fimGrid < window.innerHeight + 520;
+  }
+  function deveCarregarMaisAgora() {
+    return sentinelaPertoDaTela() || gridAindaNaoPreencheATela();
+  }
+  function agendarChecagemDeCarga(idRender = estado.renderRequest) {
+    window.requestAnimationFrame(() => {
+      if (estado.cancelado || idRender !== estado.renderRequest) return;
+      if (!estado.renderizando && deveCarregarMaisAgora()) renderLista(false);
+    });
+  }
   function renderizarAte(limite, idRender) {
-    if (!grid || idRender !== estado.renderRequest) return;
+    if (!grid || estado.cancelado || idRender !== estado.renderRequest) return;
     const jaRenderizados = grid.children.length;
     const alvo = Math.min(limite, estado.resultadoAtual.length);
     if (jaRenderizados >= alvo) {
       estado.renderizando = false;
       atualizarEstado();
       liberarAlturaReservada(idRender);
+      agendarChecagemDeCarga(idRender);
       return;
     }
-
     estado.renderizando = true;
     window.requestAnimationFrame(() => {
-      if (idRender !== estado.renderRequest) return;
+      if (estado.cancelado || idRender !== estado.renderRequest) return;
       anexarCard(jaRenderizados, jaRenderizados + 1);
       window.setTimeout(() => renderizarAte(alvo, idRender), renderDelay);
     });
   }
-
   function renderLista(reset = true) {
     if (!grid) return;
-
     if (reset) {
+      estado.cancelado = false;
       const idRender = ++estado.renderRequest;
       const alturaAnterior = grid.getBoundingClientRect().height;
       const scrollAnterior = window.scrollY;
@@ -178,59 +192,54 @@ export function criarListagemPaginada(opcoes) {
       estado.renderizando = false;
       atualizarEstado();
       renderizarAte(estado.visiveis, idRender);
+      agendarChecagemDeCarga(idRender);
       return;
     }
-
     if (estado.renderizando || estado.visiveis >= estado.resultadoAtual.length) {
       atualizarEstado();
       return;
     }
-
+    estado.cancelado = false;
     const idRender = ++estado.renderRequest;
     estado.visiveis = Math.min(estado.visiveis + pageSize, estado.resultadoAtual.length);
     atualizarEstado();
     renderizarAte(estado.visiveis, idRender);
   }
-
   function carregarMaisAutomatico() {
     if (estado.renderizando || estado.visiveis >= estado.resultadoAtual.length) return;
     renderLista(false);
   }
-
+  function checarCargaPelaTela() {
+    if (estado.renderizando || estado.visiveis >= estado.resultadoAtual.length) return;
+    if (deveCarregarMaisAgora()) carregarMaisAutomatico();
+  }
   controles.forEach((controle) => {
     controle?.addEventListener("input", () => renderLista(true));
     controle?.addEventListener("change", () => renderLista(true));
   });
-
   direcaoBotao?.addEventListener("click", () => {
     direcaoBotao.dataset.sortDirection = direcaoAtual() === "asc" ? "desc" : "asc";
     renderLista(true);
   });
-
   botaoLimpar?.addEventListener("click", () => {
     limparFiltros?.();
     renderLista(true);
   });
-
   grid?.addEventListener("click", (evento) => {
     if (!cardSelector || typeof abrirDetalhe !== "function") return;
     const card = evento.target.closest(cardSelector);
     if (!card) return;
     abrirDetalhe(obterCardId ? obterCardId(card) : card.dataset.id);
   });
-
   if (sentinela && "IntersectionObserver" in window) {
     const observer = new IntersectionObserver((entradas) => {
       if (entradas.some((entrada) => entrada.isIntersecting)) carregarMaisAutomatico();
     }, { rootMargin });
     observer.observe(sentinela);
-  } else if (usarFallbackScroll) {
-    window.addEventListener("scroll", () => {
-      const restante = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-      if (restante < 360) carregarMaisAutomatico();
-    }, { passive: true });
   }
-
+  const aoScrollOuResize = () => checarCargaPelaTela();
+  window.addEventListener("scroll", aoScrollOuResize, { passive: true });
+  window.addEventListener("resize", aoScrollOuResize, { passive: true });
   return {
     iniciar() {
       atualizarDirecao();
@@ -242,4 +251,29 @@ export function criarListagemPaginada(opcoes) {
       return estado.resultadoAtual;
     },
   };
+}
+export function criarGridProgressiva({
+  grid,
+  itens = [],
+  criarCard,
+  cardSelector,
+  obterCardId,
+  abrirDetalhe,
+  pageSize = 24,
+  renderDelay = 8,
+  classeEntrada = "pokemon-card-entrando",
+}) {
+  return criarListagemPaginada({
+    grid,
+    pageSize,
+    renderDelay,
+    classeEntrada,
+    cardSelector,
+    obterCardId,
+    abrirDetalhe,
+    criarCard,
+    obterResultado: () => itens,
+    preservarScroll: false,
+    usarFallbackScroll: true,
+  });
 }

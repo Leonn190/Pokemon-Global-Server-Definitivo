@@ -2,7 +2,6 @@
 import Layout from "../../Componentes/Layout.astro";
 import CardWiki from "../../Componentes/CardWiki.astro";
 import "../../Estilos/wiki.css";
-
 const secoes = [
   {
     href: "/wiki/pokemons",
@@ -66,7 +65,6 @@ const secoes = [
   },
 ];
 ---
-
 <Layout titulo="Wiki | Pokémon Global Server" descricao="Wiki provisória do Pokémon Global Server.">
   <section class="wiki-hero">
     <p class="selo">Wiki</p>
@@ -75,7 +73,6 @@ const secoes = [
       Esta é a entrada principal da wiki. As seções usam os CSVs, regras e assets visuais do projeto para manter os dados próximos do funcionamento real do jogo.
     </p>
   </section>
-
   <section class="secao">
     <div class="cards wiki-cards-dez">
       {secoes.map((secao) => <CardWiki {...secao} />)}

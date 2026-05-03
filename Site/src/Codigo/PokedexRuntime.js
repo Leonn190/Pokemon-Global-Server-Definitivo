@@ -189,7 +189,7 @@ function focoPrincipal(pokemon) {
   return melhor;
 }
 
-function criarCardPokemon(pokemon, dados, origem = "wiki") {
+export function criarCardPokemon(pokemon, dados, origem = "wiki") {
   const asset = assetPokemon(pokemon, dados.assetsPokemons);
   const nomeVisivel = nomeExibicao(pokemon);
   const card = document.createElement("button");
@@ -210,7 +210,7 @@ function criarCardPokemon(pokemon, dados, origem = "wiki") {
   return card;
 }
 
-function criarControladorDetalhe(dados, opcoes = {}) {
+export function criarControladorDetalhe(dados, opcoes = {}) {
   const detalhe = document.querySelector(opcoes.seletorDetalhe || "[data-pokemon-detail]");
   let frameTimer = null;
   let pokemonAberto = null;

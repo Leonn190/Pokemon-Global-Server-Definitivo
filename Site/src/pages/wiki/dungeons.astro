@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   DIFICULDADES_DUNGEON,
   TAMANHOS_DUNGEON,
@@ -69,28 +69,14 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
   titulo="Dungeons | Wiki Pokémon Global Server"
   descricao="Wiki de dungeons do Pokémon Global Server, com tamanho, dificuldade, biomas, entradas, bosses e servos."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-dungeons">
-    <h1 id="titulo-dungeons">Dungeons</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo resumo-tres" aria-label="Resumo dos registros de dungeons">
-      <article>
-        <strong>{resumo.quantidade}</strong>
-        <span>Dungeons registradas</span>
-      </article>
-      <article>
-        <strong>{resumo.dificuldades}</strong>
-        <span>Dificuldades</span>
-      </article>
-      <article>
-        <strong>{resumo.tamanhos}</strong>
-        <span>Tamanhos</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="dungeons" />
-  </section>
+  <WikiTopo
+    ativo="dungeons"
+    titulo="Dungeons"
+    tituloId="titulo-dungeons"
+    ariaResumo="Resumo dos registros de dungeons"
+    resumoClasse="resumo-tres"
+    resumo={[{ valor: resumo.quantidade, rotulo: "Dungeons registradas" }, { valor: resumo.dificuldades, rotulo: "Dificuldades" }, { valor: resumo.tamanhos, rotulo: "Tamanhos" }]}
+  />
 
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app dungeons-app" data-dungeons-app>

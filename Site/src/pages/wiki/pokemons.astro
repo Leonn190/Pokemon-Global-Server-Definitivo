@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   ATRIBUTOS_BASE,
   ATRIBUTOS_REGULARES,
@@ -50,28 +50,13 @@ const payloadPokedex = JSON.stringify({
   titulo="Pokémons | Wiki Pokémon Global Server"
   descricao="Wiki de Pokémons do Pokémon Global Server, com busca, filtros por foco, filtros por tipos, atributos, raridade, linhagem e animações."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-pokedex">
-    <h1 id="titulo-pokedex">Pokédex Global</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo" aria-label="Resumo dos registros da Pokédex">
-      <article>
-        <strong>{resumo.quantidade}</strong>
-        <span>Pokémons registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.grupos.length}</strong>
-        <span>Grupos</span>
-      </article>
-      <article>
-        <strong>{resumo.linhagens}</strong>
-        <span>Linhagens</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="pokemons" />
-  </section>
+  <WikiTopo
+    ativo="pokemons"
+    titulo="Pokédex Global"
+    tituloId="titulo-pokedex"
+    ariaResumo="Resumo dos registros da Pokédex"
+    resumo={[{ valor: resumo.quantidade, rotulo: "Pokémons registrados" }, { valor: resumo.grupos.length, rotulo: "Grupos" }, { valor: resumo.linhagens, rotulo: "Linhagens" }]}
+  />
 
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app" data-pokedex-app>

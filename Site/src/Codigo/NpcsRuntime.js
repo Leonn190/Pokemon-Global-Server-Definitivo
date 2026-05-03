@@ -1,40 +1,5 @@
 import { criarCardPokemon, criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-
-function lerJson(id) {
-  const node = document.getElementById(id);
-  if (!node) return null;
-  try {
-    return JSON.parse(node.textContent || "{}");
-  } catch (erro) {
-    console.error(`[Wiki NPCs] Não consegui ler os dados de ${id}.`, erro);
-    return null;
-  }
-}
-
-function html(valor) {
-  return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#039;",
-    '"': "&quot;",
-  })[char]);
-}
-
-function normalizar(valor) {
-  return String(valor ?? "")
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-function formatarNumero(valor) {
-  if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "-";
-  const numero = Number(valor);
-  return Number.isInteger(numero) ? String(numero) : numero.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-}
+import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
 function assetNpc(npc, dados) {
   return dados.assetsNpcs?.[npc.id] ?? { imagem: null };
@@ -143,16 +108,7 @@ export function criarControladorDetalheNpc(dados, pokedex, opcoes = {}) {
     if (nome) nome.textContent = npc.nome;
     if (tags) tags.innerHTML = tagsNpc(npc);
 
-    if (imagem) {
-      if (asset.imagem) {
-        imagem.hidden = false;
-        imagem.src = asset.imagem;
-        imagem.alt = npc.nome;
-      } else {
-        imagem.hidden = true;
-        imagem.removeAttribute("src");
-      }
-    }
+    aplicarImagemDetalhe(imagem, asset.imagem, npc.nome);
 
     if (info) {
       const linhas = [
@@ -166,7 +122,7 @@ export function criarControladorDetalheNpc(dados, pokedex, opcoes = {}) {
         linhas.push(["Estádio", npc.estadio ? `Estádio ${npc.estadio}` : "-"]);
         linhas.push(["Batalhas", formatarNumero(npc.batalhas)]);
       }
-      info.innerHTML = linhas.map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`).join("");
+      info.innerHTML = infoHtml(linhas);
     }
 
     if (equipePainel) equipePainel.hidden = npc.tipo !== "combatente";
@@ -205,34 +161,22 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
   const filtroTipo = app.querySelector("[data-npcs-kind]");
   const filtroCategoria = app.querySelector("[data-npcs-category]");
   const filtroCargo = app.querySelector("[data-npcs-role]");
+  const vendedorControles = [...app.querySelectorAll("[data-npcs-vendor-control]")];
+  const combatenteControles = [...app.querySelectorAll("[data-npcs-combat-control]")];
+  const tipoArea = app.querySelector("[data-npcs-type-area]");
   const tipoChips = [...app.querySelectorAll("[data-npcs-type-chip]")];
-  const tipoArea = app.querySelector("[data-npcs-type-filters]");
-  const vendedorControles = [...app.querySelectorAll("[data-npcs-vendor-only]")];
-  const combatenteControles = [...app.querySelectorAll("[data-npcs-combat-only]")];
   const contador = app.querySelector("[data-npcs-count]");
   const botaoLimpar = app.querySelector("[data-npcs-clear]");
   const vazio = app.querySelector("[data-npcs-empty]");
   const sentinela = app.querySelector("[data-npcs-sentinel]");
-  const PAGE_SIZE = 36;
   let tipagemSelecionada = "";
-  let visiveis = 0;
-  let resultadoAtual = [];
-
-  if (direcaoBotao && !direcaoBotao.dataset.sortDirection) direcaoBotao.dataset.sortDirection = "asc";
-  const detalheController = criarControladorDetalheNpc(dados, pokedex, { obterListaAtual: () => resultadoAtual });
+  let listagem;
+  const detalheController = criarControladorDetalheNpc(dados, pokedex, { obterListaAtual: () => listagem?.obterResultadoAtual() ?? [] });
   const pokemonController = criarControladorPokemonDetalhe(pokedex, {
     seletorDetalhe: "[data-npc-pokemon-detail]",
     mostrarLinhagem: true,
     animarFrames: true,
   });
-
-  function direcaoAtual() {
-    return direcaoBotao?.dataset.sortDirection === "desc" ? "desc" : "asc";
-  }
-
-  function atualizarDirecao() {
-    if (direcaoBotao) direcaoBotao.textContent = direcaoAtual() === "asc" ? "Crescente" : "Descrescente";
-  }
 
   function atualizarControlesCondicionais() {
     const tipo = filtroTipo?.value ?? "";
@@ -251,14 +195,13 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
     });
   }
 
-  function obterResultado() {
+  function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const tipo = filtroTipo?.value ?? "";
     const categoria = tipo === "vendedor" ? (filtroCategoria?.value ?? "") : "";
     const cargo = tipo === "combatente" ? (filtroCargo?.value ?? "") : "";
     const tipagem = tipo === "combatente" ? tipagemSelecionada : "";
     const sort = ordenacao?.value ?? "ordem";
-    const direcao = direcaoAtual();
 
     const filtrados = (dados.npcs || []).filter((npc) => {
       if (termo && !npc.busca.includes(termo)) return false;
@@ -278,76 +221,40 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
       categoria: (a, b) => (a.categoria || "").localeCompare(b.categoria || "", "pt-BR", { numeric: true }),
     };
 
-    const ordenador = ordenadores[sort] ?? ordenadores.ordem;
-    return [...filtrados].sort((a, b) => {
-      const principal = ordenador(a, b);
-      const final = principal === 0 ? a.ordem - b.ordem : principal;
-      return direcao === "desc" ? -final : final;
-    });
+    return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
 
-  function atualizarEstado() {
-    if (contador) contador.textContent = String(resultadoAtual.length);
-    if (vazio) vazio.hidden = resultadoAtual.length !== 0;
-    if (sentinela) sentinela.hidden = resultadoAtual.length === 0 || visiveis >= resultadoAtual.length;
-    atualizarDirecao();
-    atualizarControlesCondicionais();
-  }
-
-  function renderLista() {
-    if (!grid) return;
-    resultadoAtual = obterResultado();
-    visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
-    grid.replaceChildren();
-    resultadoAtual.slice(0, visiveis).forEach((npc) => {
-      const card = criarCardNpc(npc, dados);
-      card.classList.add("pokemon-card-entrando");
-      grid.appendChild(card);
-    });
-    atualizarEstado();
-  }
-
-  function carregarMais() {
-    if (!grid || visiveis >= resultadoAtual.length) return;
-    const fim = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
-    resultadoAtual.slice(visiveis, fim).forEach((npc) => grid.appendChild(criarCardNpc(npc, dados)));
-    visiveis = fim;
-    atualizarEstado();
-  }
-
-  [busca, ordenacao, filtroTipo, filtroCategoria, filtroCargo].forEach((controle) => {
-    controle?.addEventListener("input", renderLista);
-    controle?.addEventListener("change", renderLista);
+  listagem = criarListagemPaginada({
+    grid,
+    contador,
+    vazio,
+    sentinela,
+    direcaoBotao,
+    controles: [busca, ordenacao, filtroTipo, filtroCategoria, filtroCargo],
+    botaoLimpar,
+    cardSelector: "[data-npc-id]",
+    obterCardId: (card) => card.dataset.npcId,
+    abrirDetalhe: (id) => detalheController.abrirDetalhe(id),
+    criarCard: (npc) => criarCardNpc(npc, dados),
+    obterResultado,
+    aoAtualizarEstado: atualizarControlesCondicionais,
+    limparFiltros: () => {
+      if (busca) busca.value = "";
+      if (ordenacao) ordenacao.value = "ordem";
+      if (filtroTipo) filtroTipo.value = "";
+      if (filtroCategoria) filtroCategoria.value = "";
+      if (filtroCargo) filtroCargo.value = "";
+      if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
+      tipagemSelecionada = "";
+    },
   });
 
   tipoChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       const tipo = chip.dataset.npcsTypeChip || "";
       tipagemSelecionada = tipagemSelecionada === tipo ? "" : tipo;
-      renderLista();
+      listagem.renderLista(true);
     });
-  });
-
-  direcaoBotao?.addEventListener("click", () => {
-    direcaoBotao.dataset.sortDirection = direcaoAtual() === "asc" ? "desc" : "asc";
-    renderLista();
-  });
-
-  botaoLimpar?.addEventListener("click", () => {
-    if (busca) busca.value = "";
-    if (ordenacao) ordenacao.value = "ordem";
-    if (filtroTipo) filtroTipo.value = "";
-    if (filtroCategoria) filtroCategoria.value = "";
-    if (filtroCargo) filtroCargo.value = "";
-    if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
-    tipagemSelecionada = "";
-    renderLista();
-  });
-
-  grid?.addEventListener("click", (evento) => {
-    const card = evento.target.closest("[data-npc-id]");
-    if (!card) return;
-    detalheController.abrirDetalhe(card.dataset.npcId);
   });
 
   document.querySelector("[data-npc-detail]")?.addEventListener("click", (evento) => {
@@ -356,12 +263,5 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
     pokemonController.abrirDetalhe(card.dataset.pokemonId);
   });
 
-  if (sentinela && "IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((entradas) => {
-      if (entradas.some((entrada) => entrada.isIntersecting)) carregarMais();
-    }, { rootMargin: "360px 0px" });
-    observer.observe(sentinela);
-  }
-
-  renderLista();
+  listagem.iniciar();
 }

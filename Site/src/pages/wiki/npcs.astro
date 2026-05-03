@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   carregarNpcs,
   criarAssetsNpcs,
@@ -55,28 +55,14 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
   titulo="NPCs | Wiki Pokémon Global Server"
   descricao="Wiki de NPCs do Pokémon Global Server, com combatentes, vendedores, cargos, categorias e equipes de Pokémon."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-npcs">
-    <h1 id="titulo-npcs">NPCs</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo resumo-tres" aria-label="Resumo dos NPCs">
-      <article>
-        <strong>{resumo.quantidade}</strong>
-        <span>NPCs registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.combatentes}</strong>
-        <span>Combatentes</span>
-      </article>
-      <article>
-        <strong>{resumo.vendedores}</strong>
-        <span>Vendedores</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="npcs" />
-  </section>
+  <WikiTopo
+    ativo="npcs"
+    titulo="NPCs"
+    tituloId="titulo-npcs"
+    ariaResumo="Resumo dos NPCs"
+    resumoClasse="resumo-tres"
+    resumo={[{ valor: resumo.quantidade, rotulo: "NPCs registrados" }, { valor: resumo.combatentes, rotulo: "Combatentes" }, { valor: resumo.vendedores, rotulo: "Vendedores" }]}
+  />
 
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app npcs-app" data-npcs-app>

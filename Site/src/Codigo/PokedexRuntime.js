@@ -1,3 +1,5 @@
+import { infoHtml, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+
 const FRAME_MODULES = {
   ...import.meta.glob("@recursos/Visual/Pokemons/Animação/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
     query: "?url",
@@ -18,42 +20,6 @@ const MAXIMOS_BARRAS = {
 const ATRIBUTOS_REGULARES = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"];
 let frameIndex = null;
 const framesCache = new Map();
-
-function normalizar(valor) {
-  return String(valor ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-function html(valor) {
-  return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#039;",
-    '"': "&quot;",
-  })[char]);
-}
-
-function lerJson(id) {
-  const node = document.getElementById(id);
-  if (!node) return null;
-  try {
-    return JSON.parse(node.textContent || "{}");
-  } catch (erro) {
-    console.error(`[Pokédex] Não consegui ler os dados de ${id}.`, erro);
-    return null;
-  }
-}
-
-function formatarNumero(valor, sufixo = "") {
-  if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "-";
-  const numero = Number(valor);
-  const texto = Number.isInteger(numero) ? String(numero) : numero.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-  return `${texto}${sufixo}`;
-}
 
 function ehRadiante(pokemon) {
   return normalizar(pokemon?.nome).includes("radiante");
@@ -339,7 +305,7 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
         ["Habilidades", formatarNumero(pokemon.habilidades)],
         ["Equipáveis", formatarNumero(pokemon.equipaveis)],
       ];
-      info.innerHTML = dadosInfo.map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`).join("");
+      info.innerHTML = infoHtml(dadosInfo);
     }
 
     if (painelLinhagem) painelLinhagem.hidden = opcoes.mostrarLinhagem === false;
@@ -400,41 +366,31 @@ export function inicializarPokedex(idDados = "pokedex-data") {
   const vazio = app.querySelector("[data-pokedex-empty]");
   const sentinela = app.querySelector("[data-pokedex-sentinel]");
   const chipsTipo = app.querySelectorAll("[data-type-chip]");
-  const PAGE_SIZE = 30;
-  const RENDER_BATCH = 1;
-  const RENDER_DELAY = 20;
   const tiposSelecionados = [];
-  let visiveis = 0;
-  let resultadoAtual = [];
-  let renderRequest = 0;
-  let renderizando = false;
-
-  if (botaoDirecao && !botaoDirecao.dataset.sortDirection) botaoDirecao.dataset.sortDirection = "asc";
-
+  let listagem;
   const detalheController = criarControladorDetalhe(dados, {
     mostrarLinhagem: true,
     animarFrames: true,
-    obterListaAtual: () => resultadoAtual,
+    obterListaAtual: () => listagem?.obterResultadoAtual() ?? [],
   });
 
-  function direcaoAtual() {
-    return botaoDirecao?.dataset.sortDirection === "desc" ? "desc" : "asc";
+  function atualizarChips() {
+    chipsTipo.forEach((chip) => {
+      const indice = tiposSelecionados.indexOf(chip.dataset.typeChip);
+      chip.classList.toggle("ativo", indice !== -1);
+      chip.dataset.ordem = indice === -1 ? "" : String(indice + 1);
+    });
+    if (botaoDirecao) botaoDirecao.setAttribute("aria-label", `Ordenação ${botaoDirecao.textContent.toLowerCase()}`);
   }
 
-  function atualizarBotaoDirecao() {
-    if (!botaoDirecao) return;
-    botaoDirecao.textContent = direcaoAtual() === "asc" ? "Crescente" : "Descrescente";
-    botaoDirecao.setAttribute("aria-label", `Ordenação ${botaoDirecao.textContent.toLowerCase()}`);
-  }
-
-  function obterResultado() {
+  function obterResultado(direcaoBotao) {
     const termo = normalizar(busca?.value ?? "");
     const foco = filtroFoco?.value ?? "";
     const grupo = filtroGrupo?.value ?? "";
     const raridade = filtroRaridade?.value ?? "";
     const sortBruto = ordenacao?.value ?? "ordem";
     const sort = sortBruto.replace(/-(asc|desc)$/g, "");
-    const direcao = botaoDirecao ? direcaoAtual() : (sortBruto.endsWith("-desc") ? "desc" : "asc");
+    const direcao = botaoDirecao ? direcaoBotao : (sortBruto.endsWith("-desc") ? "desc" : "asc");
 
     const filtrados = (dados.pokemons || []).filter((pokemon) => {
       if (termo && !pokemon.busca.includes(termo)) return false;
@@ -465,172 +421,56 @@ export function inicializarPokedex(idDados = "pokedex-data") {
       peso: (a, b) => (a.peso ?? 0) - (b.peso ?? 0),
     };
 
-    const ordenador = ordenadores[sort] ?? ordenadores.ordem;
-    const ordenados = [...filtrados].sort((a, b) => {
-      const principal = ordenador(a, b);
-      const final = principal === 0 ? a.ordem - b.ordem : principal;
-      return direcao === "desc" ? -final : final;
-    });
-    return ordenados;
+    return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
 
-  function atualizarChips() {
-    chipsTipo.forEach((chip) => {
-      const indice = tiposSelecionados.indexOf(chip.dataset.typeChip);
-      chip.classList.toggle("ativo", indice !== -1);
-      chip.dataset.ordem = indice === -1 ? "" : String(indice + 1);
-    });
-  }
-
-  function atualizarEstado() {
-    if (contador) contador.textContent = String(resultadoAtual.length);
-    if (vazio) vazio.hidden = resultadoAtual.length !== 0;
-    if (sentinela) sentinela.hidden = resultadoAtual.length === 0 || visiveis >= resultadoAtual.length;
-    atualizarChips();
-    atualizarBotaoDirecao();
-  }
-
-  function anexarCards(inicio, fim) {
-    if (!grid) return;
-    const fragmento = document.createDocumentFragment();
-    resultadoAtual.slice(inicio, fim).forEach((pokemon) => {
-      const card = criarCardPokemon(pokemon, dados);
-      card.classList.add("pokemon-card-entrando");
-      fragmento.appendChild(card);
-    });
-    grid.appendChild(fragmento);
-  }
-
-  function manterScrollAposReset(alturaAnterior, scrollAnterior) {
-    if (!grid) return;
-    if (alturaAnterior > 0) grid.style.minHeight = `${Math.ceil(alturaAnterior)}px`;
-
-    const comportamentoAnterior = document.documentElement.style.scrollBehavior;
-    document.documentElement.style.scrollBehavior = "auto";
-    window.requestAnimationFrame(() => {
-      window.scrollTo(window.scrollX, scrollAnterior);
-      document.documentElement.style.scrollBehavior = comportamentoAnterior;
-    });
-  }
-
-  function liberarAlturaReservada(idRender) {
-    window.setTimeout(() => {
-      if (grid && idRender === renderRequest) grid.style.minHeight = "";
-    }, 120);
-  }
-
-  function renderizarAte(limite, idRender) {
-    if (!grid || idRender !== renderRequest) return;
-    const jaRenderizados = grid.children.length;
-    const alvo = Math.min(limite, resultadoAtual.length);
-    if (jaRenderizados >= alvo) {
-      renderizando = false;
-      atualizarEstado();
-      liberarAlturaReservada(idRender);
-      return;
-    }
-
-    renderizando = true;
-    const proximoFim = Math.min(jaRenderizados + RENDER_BATCH, alvo);
-    window.requestAnimationFrame(() => {
-      if (idRender !== renderRequest) return;
-      anexarCards(jaRenderizados, proximoFim);
-      window.setTimeout(() => renderizarAte(alvo, idRender), RENDER_DELAY);
-    });
-  }
-
-  function renderLista(reset = true) {
-    if (!grid) return;
-
-    if (reset) {
-      const idRender = ++renderRequest;
-      const alturaAnterior = grid.getBoundingClientRect().height;
-      const scrollAnterior = window.scrollY;
-      resultadoAtual = obterResultado();
-      visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
-      manterScrollAposReset(alturaAnterior, scrollAnterior);
-      grid.replaceChildren();
-      renderizando = false;
-      atualizarEstado();
-      renderizarAte(visiveis, idRender);
-      return;
-    }
-
-    if (renderizando || visiveis >= resultadoAtual.length) {
-      atualizarEstado();
-      return;
-    }
-
-    const idRender = ++renderRequest;
-    visiveis = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
-    atualizarEstado();
-    renderizarAte(visiveis, idRender);
-  }
-
-  function carregarMaisAutomatico() {
-    if (renderizando || visiveis >= resultadoAtual.length) return;
-    renderLista(false);
-  }
-
-  [busca, ordenacao, filtroFoco, filtroGrupo, filtroRaridade].forEach((controle) => {
-    controle?.addEventListener("input", () => renderLista(true));
-    controle?.addEventListener("change", () => renderLista(true));
-  });
-
-  botaoDirecao?.addEventListener("click", () => {
-    botaoDirecao.dataset.sortDirection = direcaoAtual() === "asc" ? "desc" : "asc";
-    atualizarBotaoDirecao();
-    renderLista(true);
+  listagem = criarListagemPaginada({
+    grid,
+    contador,
+    vazio,
+    sentinela,
+    direcaoBotao: botaoDirecao,
+    controles: [busca, ordenacao, filtroFoco, filtroGrupo, filtroRaridade],
+    botaoLimpar,
+    pageSize: 30,
+    renderDelay: 20,
+    usarFallbackScroll: true,
+    cardSelector: "[data-pokemon-id]",
+    obterCardId: (card) => card.dataset.pokemonId,
+    abrirDetalhe: (id) => {
+      detalheController.abrirDetalhe(id);
+      const url = new URL(window.location.href);
+      url.searchParams.set("pokemon", id);
+      window.history.replaceState({}, "", url);
+    },
+    criarCard: (pokemon) => criarCardPokemon(pokemon, dados),
+    obterResultado,
+    aoAtualizarEstado: atualizarChips,
+    limparFiltros: () => {
+      if (busca) busca.value = "";
+      if (ordenacao) ordenacao.value = "ordem";
+      if (botaoDirecao) botaoDirecao.dataset.sortDirection = "asc";
+      if (filtroFoco) filtroFoco.value = "";
+      if (filtroGrupo) filtroGrupo.value = "";
+      if (filtroRaridade) filtroRaridade.value = "";
+      tiposSelecionados.splice(0, tiposSelecionados.length);
+    },
   });
 
   chipsTipo.forEach((chip) => {
     chip.addEventListener("click", () => {
       const tipo = chip.dataset.typeChip;
       const indice = tiposSelecionados.indexOf(tipo);
-      if (indice !== -1) {
-        tiposSelecionados.splice(indice, 1);
-      } else {
+      if (indice !== -1) tiposSelecionados.splice(indice, 1);
+      else {
         if (tiposSelecionados.length >= 3) tiposSelecionados.shift();
         tiposSelecionados.push(tipo);
       }
-      renderLista(true);
+      listagem.renderLista(true);
     });
   });
 
-  grid?.addEventListener("click", (evento) => {
-    const card = evento.target.closest("[data-pokemon-id]");
-    if (!card) return;
-    detalheController.abrirDetalhe(card.dataset.pokemonId);
-    const url = new URL(window.location.href);
-    url.searchParams.set("pokemon", card.dataset.pokemonId);
-    window.history.replaceState({}, "", url);
-  });
-
-  botaoLimpar?.addEventListener("click", () => {
-    if (busca) busca.value = "";
-    if (ordenacao) ordenacao.value = "ordem";
-    if (botaoDirecao) botaoDirecao.dataset.sortDirection = "asc";
-    if (filtroFoco) filtroFoco.value = "";
-    if (filtroGrupo) filtroGrupo.value = "";
-    if (filtroRaridade) filtroRaridade.value = "";
-    tiposSelecionados.splice(0, tiposSelecionados.length);
-    renderLista(true);
-  });
-
-  if (sentinela && "IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((entradas) => {
-      if (entradas.some((entrada) => entrada.isIntersecting)) carregarMaisAutomatico();
-    }, { rootMargin: "360px 0px" });
-    observer.observe(sentinela);
-  } else {
-    window.addEventListener("scroll", () => {
-      const restante = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-      if (restante < 360) carregarMaisAutomatico();
-    }, { passive: true });
-  }
-
-  atualizarBotaoDirecao();
-  renderLista(true);
+  listagem.iniciar();
 
   const pokemonInicial = new URLSearchParams(window.location.search).get("pokemon");
   if (pokemonInicial) detalheController.abrirDetalhe(pokemonInicial);

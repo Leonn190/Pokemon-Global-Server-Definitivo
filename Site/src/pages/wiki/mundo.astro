@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   carregarWikiMundo,
   criarAssetsEstruturas,
@@ -26,28 +26,13 @@ const payloadMundo = JSON.stringify({ estruturas: estruturasPublicas, biomas, re
   titulo="Mundo | Wiki Pokémon Global Server"
   descricao="Wiki de Mundo do Pokémon Global Server, com explicações da geração, biomas, vilas, estruturas naturais e dados ligados às regras do jogo."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-mundo">
-    <h1 id="titulo-mundo">Mundo Global</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo" aria-label="Resumo da wiki de mundo">
-      <article>
-        <strong>{resumo.estruturas}</strong>
-        <span>Estruturas naturais</span>
-      </article>
-      <article>
-        <strong>{resumo.biomas}</strong>
-        <span>Biomas registrados</span>
-      </article>
-      <article>
-        <strong>{tamanhoMundo}</strong>
-        <span>Tamanho do mundo</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="mundo" />
-  </section>
+  <WikiTopo
+    ativo="mundo"
+    titulo="Mundo Global"
+    tituloId="titulo-mundo"
+    ariaResumo="Resumo da wiki de mundo"
+    resumo={[{ valor: resumo.estruturas, rotulo: "Estruturas naturais" }, { valor: resumo.biomas, rotulo: "Biomas registrados" }, { valor: tamanhoMundo, rotulo: "Tamanho do mundo" }]}
+  />
 
   <main class="wiki-mundo" data-mundo-app aria-label="Conteúdo da wiki de mundo">
     <section class="mundo-intro">

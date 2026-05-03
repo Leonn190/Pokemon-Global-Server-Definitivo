@@ -1,23 +1,4 @@
-function html(valor) {
-  return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#039;",
-    '"': "&quot;",
-  })[char]);
-}
-
-function lerJson(id) {
-  const node = document.getElementById(id);
-  if (!node) return null;
-  try {
-    return JSON.parse(node.textContent || "{}");
-  } catch (erro) {
-    console.error(`[Wiki Mundo] Não consegui ler os dados de ${id}.`, erro);
-    return null;
-  }
-}
+import { aplicarImagemDetalhe, html, lerJson } from "./WikiRuntimeBase.js";
 
 function assetEstrutura(estrutura, dados) {
   return dados.assetsEstruturas?.[estrutura.id] ?? { imagem: null };
@@ -89,16 +70,7 @@ function criarControladorDetalhe(dados) {
     if (nome) nome.textContent = estrutura.nome;
     if (descricao) descricao.textContent = estrutura.descricao || "Estrutura natural registrada nas regras do mundo.";
 
-    if (imagem) {
-      if (asset.imagem) {
-        imagem.hidden = false;
-        imagem.src = asset.imagem;
-        imagem.alt = estrutura.nome;
-      } else {
-        imagem.hidden = true;
-        imagem.removeAttribute("src");
-      }
-    }
+    aplicarImagemDetalhe(imagem, asset.imagem, estrutura.nome);
 
     if (info) {
       info.innerHTML = montarLinhasInfo(estrutura)

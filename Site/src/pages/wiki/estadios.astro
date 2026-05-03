@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   carregarEstadios,
   carregarNpcs,
@@ -77,28 +77,14 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
   titulo="Estádios | Wiki Pokémon Global Server"
   descricao="Wiki de estádios do Pokémon Global Server, com explicação da progressão e lista de membros de cada estádio."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-estadios">
-    <h1 id="titulo-estadios">Estádios</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo resumo-tres" aria-label="Resumo dos estádios">
-      <article>
-        <strong>{resumo.quantidade}</strong>
-        <span>Estádios registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.tipos}</strong>
-        <span>Tipos representados</span>
-      </article>
-      <article>
-        <strong>{resumo.associados}</strong>
-        <span>Associados</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="estadios" />
-  </section>
+  <WikiTopo
+    ativo="estadios"
+    titulo="Estádios"
+    tituloId="titulo-estadios"
+    ariaResumo="Resumo dos estádios"
+    resumoClasse="resumo-tres"
+    resumo={[{ valor: resumo.quantidade, rotulo: "Estádios registrados" }, { valor: resumo.tipos, rotulo: "Tipos representados" }, { valor: resumo.associados, rotulo: "Associados" }]}
+  />
 
   <section class="wiki-mundo-blocos estadios-intro" aria-label="Funcionamento dos estádios">
     <article class="mundo-bloco mundo-bloco-destaque">

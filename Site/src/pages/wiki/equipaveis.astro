@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   ATRIBUTOS_EQUIPAVEIS,
   FOCOS_EQUIPAVEIS,
@@ -42,28 +42,14 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
   titulo="Equipáveis | Wiki Pokémon Global Server"
   descricao="Wiki de equipáveis do Pokémon Global Server, com afinidade, atributos aumentados, foco e detalhes de cada equipamento."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-equipaveis">
-    <h1 id="titulo-equipaveis">Equipáveis</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo resumo-tres" aria-label="Resumo dos registros de equipáveis">
-      <article>
-        <strong>{resumo.quantidade}</strong>
-        <span>Equipáveis registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.formasFinais}</strong>
-        <span>Formas finais</span>
-      </article>
-      <article>
-        <strong>{resumo.passivas}</strong>
-        <span>Passivas</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="equipaveis" />
-  </section>
+  <WikiTopo
+    ativo="equipaveis"
+    titulo="Equipáveis"
+    tituloId="titulo-equipaveis"
+    ariaResumo="Resumo dos registros de equipáveis"
+    resumoClasse="resumo-tres"
+    resumo={[{ valor: resumo.quantidade, rotulo: "Equipáveis registrados" }, { valor: resumo.formasFinais, rotulo: "Formas finais" }, { valor: resumo.passivas, rotulo: "Passivas" }]}
+  />
 
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app equipaveis-app" data-equipaveis-app>

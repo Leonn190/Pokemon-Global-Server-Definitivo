@@ -1,0 +1,30 @@
+---
+import WikiMenu from "./WikiMenu.astro";
+
+const {
+  ativo = "",
+  titulo = "Wiki",
+  tituloId = "titulo-wiki",
+  resumo = [],
+  ariaResumo = "Resumo da wiki",
+  resumoClasse = "",
+  heroClasse = "wiki-hero-pokedex",
+} = Astro.props;
+---
+
+<section class={`wiki-hero ${heroClasse}`} aria-labelledby={tituloId}>
+  <h1 id={tituloId}>{titulo}</h1>
+</section>
+
+<section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
+  <div class={`pokedex-resumo ${resumoClasse}`.trim()} aria-label={ariaResumo}>
+    {resumo.map((item) => (
+      <article>
+        <strong>{item.valor}</strong>
+        <span>{item.rotulo}</span>
+      </article>
+    ))}
+  </div>
+
+  <WikiMenu ativo={ativo} />
+</section>

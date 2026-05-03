@@ -1,38 +1,4 @@
-function normalizar(valor) {
-  return String(valor ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-function html(valor) {
-  return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#039;",
-    '"': "&quot;",
-  })[char]);
-}
-
-function lerJson(id) {
-  const node = document.getElementById(id);
-  if (!node) return null;
-  try {
-    return JSON.parse(node.textContent || "{}");
-  } catch (erro) {
-    console.error(`[Wiki Itens] Não consegui ler os dados de ${id}.`, erro);
-    return null;
-  }
-}
-
-function formatarNumero(valor, sufixo = "") {
-  if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "-";
-  const numero = Number(valor);
-  const texto = Number.isInteger(numero) ? String(numero) : numero.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-  return `${texto}${sufixo}`;
-}
+import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
 function assetItem(item, assetsItens) {
   return assetsItens?.[item.id] ?? { imagem: null };
@@ -97,16 +63,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     }
     if (descricao) descricao.textContent = item.descricaoMelhor || "Descrição detalhada ainda não cadastrada.";
 
-    if (imagem) {
-      if (asset.imagem) {
-        imagem.hidden = false;
-        imagem.src = asset.imagem;
-        imagem.alt = item.nome;
-      } else {
-        imagem.hidden = true;
-        imagem.removeAttribute("src");
-      }
-    }
+    aplicarImagemDetalhe(imagem, asset.imagem, item.nome);
 
     if (info) {
       const linhas = [
@@ -117,7 +74,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
         ["Stacks", formatarNumero(item.stacks)],
         ["Raridade", item.raridadeNome],
       ];
-      info.innerHTML = linhas.map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`).join("");
+      info.innerHTML = infoHtml(linhas);
     }
 
     detalhe.hidden = false;
@@ -156,33 +113,16 @@ export function inicializarWikiItens(idDados = "itens-data") {
   const botaoLimpar = app.querySelector("[data-itens-clear]");
   const vazio = app.querySelector("[data-itens-empty]");
   const sentinela = app.querySelector("[data-itens-sentinel]");
-  const PAGE_SIZE = 36;
-  const RENDER_DELAY = 18;
-  let visiveis = 0;
-  let resultadoAtual = [];
-  let renderRequest = 0;
-  let renderizando = false;
+  let listagem;
+  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
 
-  if (direcaoBotao && !direcaoBotao.dataset.sortDirection) direcaoBotao.dataset.sortDirection = "asc";
-  const detalheController = criarControladorDetalhe(dados, () => resultadoAtual);
-
-  function direcaoAtual() {
-    return direcaoBotao?.dataset.sortDirection === "desc" ? "desc" : "asc";
-  }
-
-  function atualizarDirecao() {
-    if (!direcaoBotao) return;
-    direcaoBotao.textContent = direcaoAtual() === "asc" ? "Crescente" : "Descrescente";
-  }
-
-  function obterResultado() {
+  function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const estilo = filtroEstilo?.value ?? "";
     const raridade = filtroRaridade?.value ?? "";
     const bau = filtroBau?.value ?? "";
     const venda = filtroVenda?.value ?? "";
     const sort = ordenacao?.value ?? "ordem";
-    const direcao = direcaoAtual();
 
     const filtrados = (dados.itens || []).filter((item) => {
       if (termo && !item.busca.includes(termo)) return false;
@@ -201,138 +141,33 @@ export function inicializarWikiItens(idDados = "itens-data") {
       estilo: (a, b) => a.estiloRotulo.localeCompare(b.estiloRotulo, "pt-BR", { numeric: true }),
     };
 
-    const ordenador = ordenadores[sort] ?? ordenadores.ordem;
-    return [...filtrados].sort((a, b) => {
-      const principal = ordenador(a, b);
-      const final = principal === 0 ? a.ordem - b.ordem : principal;
-      return direcao === "desc" ? -final : final;
-    });
+    return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
 
-  function atualizarEstado() {
-    if (contador) contador.textContent = String(resultadoAtual.length);
-    if (vazio) vazio.hidden = resultadoAtual.length !== 0;
-    if (sentinela) sentinela.hidden = resultadoAtual.length === 0 || visiveis >= resultadoAtual.length;
-    atualizarDirecao();
-  }
-
-  function anexarCard(inicio, fim) {
-    if (!grid) return;
-    const fragmento = document.createDocumentFragment();
-    resultadoAtual.slice(inicio, fim).forEach((item) => {
-      const card = criarCardItem(item, dados);
-      card.classList.add("pokemon-card-entrando");
-      fragmento.appendChild(card);
-    });
-    grid.appendChild(fragmento);
-  }
-
-  function manterScrollAposReset(alturaAnterior, scrollAnterior) {
-    if (!grid) return;
-    if (alturaAnterior > 0) grid.style.minHeight = `${Math.ceil(alturaAnterior)}px`;
-
-    const comportamentoAnterior = document.documentElement.style.scrollBehavior;
-    document.documentElement.style.scrollBehavior = "auto";
-    window.requestAnimationFrame(() => {
-      window.scrollTo(window.scrollX, scrollAnterior);
-      document.documentElement.style.scrollBehavior = comportamentoAnterior;
-    });
-  }
-
-  function liberarAlturaReservada(idRender) {
-    window.setTimeout(() => {
-      if (grid && idRender === renderRequest) grid.style.minHeight = "";
-    }, 120);
-  }
-
-  function renderizarAte(limite, idRender) {
-    if (!grid || idRender !== renderRequest) return;
-    const jaRenderizados = grid.children.length;
-    const alvo = Math.min(limite, resultadoAtual.length);
-    if (jaRenderizados >= alvo) {
-      renderizando = false;
-      atualizarEstado();
-      liberarAlturaReservada(idRender);
-      return;
-    }
-    renderizando = true;
-    window.requestAnimationFrame(() => {
-      if (idRender !== renderRequest) return;
-      anexarCard(jaRenderizados, jaRenderizados + 1);
-      window.setTimeout(() => renderizarAte(alvo, idRender), RENDER_DELAY);
-    });
-  }
-
-  function renderLista(reset = true) {
-    if (!grid) return;
-    if (reset) {
-      const idRender = ++renderRequest;
-      const alturaAnterior = grid.getBoundingClientRect().height;
-      const scrollAnterior = window.scrollY;
-      resultadoAtual = obterResultado();
-      visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
-      manterScrollAposReset(alturaAnterior, scrollAnterior);
-      grid.replaceChildren();
-      renderizando = false;
-      atualizarEstado();
-      renderizarAte(visiveis, idRender);
-      return;
-    }
-    if (renderizando || visiveis >= resultadoAtual.length) {
-      atualizarEstado();
-      return;
-    }
-    const idRender = ++renderRequest;
-    visiveis = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
-    atualizarEstado();
-    renderizarAte(visiveis, idRender);
-  }
-
-  function carregarMaisAutomatico() {
-    if (renderizando || visiveis >= resultadoAtual.length) return;
-    renderLista(false);
-  }
-
-  [busca, ordenacao, filtroEstilo, filtroRaridade, filtroBau, filtroVenda].forEach((controle) => {
-    controle?.addEventListener("input", () => renderLista(true));
-    controle?.addEventListener("change", () => renderLista(true));
+  listagem = criarListagemPaginada({
+    grid,
+    contador,
+    vazio,
+    sentinela,
+    direcaoBotao,
+    controles: [busca, ordenacao, filtroEstilo, filtroRaridade, filtroBau, filtroVenda],
+    botaoLimpar,
+    usarFallbackScroll: true,
+    cardSelector: "[data-item-id]",
+    obterCardId: (card) => card.dataset.itemId,
+    abrirDetalhe: (id) => detalheController.abrirDetalhe(id),
+    criarCard: (item) => criarCardItem(item, dados),
+    obterResultado,
+    limparFiltros: () => {
+      if (busca) busca.value = "";
+      if (ordenacao) ordenacao.value = "ordem";
+      if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
+      if (filtroEstilo) filtroEstilo.value = "";
+      if (filtroRaridade) filtroRaridade.value = "";
+      if (filtroBau) filtroBau.value = "";
+      if (filtroVenda) filtroVenda.value = "";
+    },
   });
 
-  direcaoBotao?.addEventListener("click", () => {
-    direcaoBotao.dataset.sortDirection = direcaoAtual() === "asc" ? "desc" : "asc";
-    atualizarDirecao();
-    renderLista(true);
-  });
-
-  botaoLimpar?.addEventListener("click", () => {
-    if (busca) busca.value = "";
-    if (ordenacao) ordenacao.value = "ordem";
-    if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
-    if (filtroEstilo) filtroEstilo.value = "";
-    if (filtroRaridade) filtroRaridade.value = "";
-    if (filtroBau) filtroBau.value = "";
-    if (filtroVenda) filtroVenda.value = "";
-    renderLista(true);
-  });
-
-  grid?.addEventListener("click", (evento) => {
-    const card = evento.target.closest("[data-item-id]");
-    if (!card) return;
-    detalheController.abrirDetalhe(card.dataset.itemId);
-  });
-
-  if (sentinela && "IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((entradas) => {
-      if (entradas.some((entrada) => entrada.isIntersecting)) carregarMaisAutomatico();
-    }, { rootMargin: "360px 0px" });
-    observer.observe(sentinela);
-  } else {
-    window.addEventListener("scroll", () => {
-      const restante = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-      if (restante < 360) carregarMaisAutomatico();
-    }, { passive: true });
-  }
-
-  atualizarDirecao();
-  renderLista(true);
+  listagem.iniciar();
 }

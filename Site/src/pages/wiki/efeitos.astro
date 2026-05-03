@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   OPCOES_ESTILO_EFEITO,
   OPCOES_SENTIDO_EFEITO,
@@ -27,28 +27,13 @@ const payloadEfeitos = JSON.stringify({ efeitos, assetsEfeitos, resumo }).replac
   titulo="Efeitos | Wiki Pokémon Global Server"
   descricao="Wiki de efeitos do Pokémon Global Server, com status de Pokémon, climas, terrenos, filtros e descrições."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-efeitos">
-    <h1 id="titulo-efeitos">Efeitos Globais</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo" aria-label="Resumo dos registros de efeitos">
-      <article>
-        <strong>{resumo.efeitos}</strong>
-        <span>Efeitos registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.climas}</strong>
-        <span>Climas registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.terrenos}</strong>
-        <span>Terrenos registrados</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="efeitos" />
-  </section>
+  <WikiTopo
+    ativo="efeitos"
+    titulo="Efeitos Globais"
+    tituloId="titulo-efeitos"
+    ariaResumo="Resumo dos registros de efeitos"
+    resumo={[{ valor: resumo.efeitos, rotulo: "Efeitos registrados" }, { valor: resumo.climas, rotulo: "Climas registrados" }, { valor: resumo.terrenos, rotulo: "Terrenos registrados" }]}
+  />
 
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app efeitos-app" data-efeitos-app>

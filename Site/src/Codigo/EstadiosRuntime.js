@@ -1,26 +1,6 @@
 import { criarCardNpc, criarControladorDetalheNpc } from "./NpcsRuntime.js";
 import { criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-
-function lerJson(id) {
-  const node = document.getElementById(id);
-  if (!node) return null;
-  try {
-    return JSON.parse(node.textContent || "{}");
-  } catch (erro) {
-    console.error(`[Wiki Estádios] Não consegui ler os dados de ${id}.`, erro);
-    return null;
-  }
-}
-
-function html(valor) {
-  return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#039;",
-    '"': "&quot;",
-  })[char]);
-}
+import { aplicarImagemDetalhe, html, lerJson } from "./WikiRuntimeBase.js";
 
 function assetEstadio(estadio, dados) {
   return dados.assetsEstadios?.[estadio.id] ?? { imagem: null };
@@ -94,16 +74,7 @@ function criarControladorEstadio(dados, obterListaAtual, npcController) {
       `;
     }
 
-    if (imagem) {
-      if (asset.imagem) {
-        imagem.hidden = false;
-        imagem.src = asset.imagem;
-        imagem.alt = estadio.nome;
-      } else {
-        imagem.hidden = true;
-        imagem.removeAttribute("src");
-      }
-    }
+    aplicarImagemDetalhe(imagem, asset.imagem, estadio.nome);
 
     if (membros) {
       membros.replaceChildren();

@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   carregarItens,
   criarAssetsItens,
@@ -30,28 +30,13 @@ const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g
   titulo="Itens | Wiki Pokémon Global Server"
   descricao="Wiki de itens do Pokémon Global Server, com busca, filtros por estilo, raridade, baús, lojas e detalhes de cada item."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-itens">
-    <h1 id="titulo-itens">Itens Globais</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo" aria-label="Resumo dos registros de itens">
-      <article>
-        <strong>{resumo.quantidade}</strong>
-        <span>Itens registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.estilos.length}</strong>
-        <span>Estilos</span>
-      </article>
-      <article>
-        <strong>{resumo.raridades.length}</strong>
-        <span>Raridades existentes</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="itens" />
-  </section>
+  <WikiTopo
+    ativo="itens"
+    titulo="Itens Globais"
+    tituloId="titulo-itens"
+    ariaResumo="Resumo dos registros de itens"
+    resumo={[{ valor: resumo.quantidade, rotulo: "Itens registrados" }, { valor: resumo.estilos.length, rotulo: "Estilos" }, { valor: resumo.raridades.length, rotulo: "Raridades existentes" }]}
+  />
 
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app itens-app" data-itens-app>

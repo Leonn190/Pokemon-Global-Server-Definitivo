@@ -1,39 +1,4 @@
-function lerJson(id) {
-  const node = document.getElementById(id);
-  if (!node) return null;
-  try {
-    return JSON.parse(node.textContent || "{}");
-  } catch (erro) {
-    console.error(`[Wiki Equipáveis] Não consegui ler os dados de ${id}.`, erro);
-    return null;
-  }
-}
-
-function html(valor) {
-  return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#039;",
-    '"': "&quot;",
-  })[char]);
-}
-
-function normalizar(valor) {
-  return String(valor ?? "")
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-function formatarNumero(valor, sufixo = "") {
-  if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "-";
-  const numero = Number(valor);
-  const texto = Number.isInteger(numero) ? String(numero) : numero.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-  return `${texto}${sufixo}`;
-}
+import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
 function assetEquipavel(equipavel, dados) {
   return dados.assetsEquipaveis?.[equipavel.id] ?? { imagem: null };
@@ -131,16 +96,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     if (nome) nome.textContent = equipavel.nome;
     if (descricao) descricao.textContent = equipavel.descricao || "Descrição ainda não cadastrada.";
 
-    if (imagem) {
-      if (asset.imagem) {
-        imagem.hidden = false;
-        imagem.src = asset.imagem;
-        imagem.alt = equipavel.nome;
-      } else {
-        imagem.hidden = true;
-        imagem.removeAttribute("src");
-      }
-    }
+    aplicarImagemDetalhe(imagem, asset.imagem, equipavel.nome);
 
     if (tags) {
       tags.innerHTML = `
@@ -172,7 +128,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
         ["Passiva", equipavel.passiva || "-"],
         ["Forma final", equipavel.formaFinal || "-"],
       ];
-      info.innerHTML = linhas.map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`).join("");
+      info.innerHTML = infoHtml(linhas);
     }
 
     detalhe.hidden = false;
@@ -210,25 +166,9 @@ export function inicializarWikiEquipaveis(idDados = "equipaveis-data") {
   const botaoLimpar = app.querySelector("[data-equipaveis-clear]");
   const vazio = app.querySelector("[data-equipaveis-empty]");
   const sentinela = app.querySelector("[data-equipaveis-sentinel]");
-  const PAGE_SIZE = 36;
-  const RENDER_DELAY = 18;
   let tipoSelecionado = "";
-  let visiveis = 0;
-  let resultadoAtual = [];
-  let renderRequest = 0;
-  let renderizando = false;
-
-  if (direcaoBotao && !direcaoBotao.dataset.sortDirection) direcaoBotao.dataset.sortDirection = "asc";
-  const detalheController = criarControladorDetalhe(dados, () => resultadoAtual);
-
-  function direcaoAtual() {
-    return direcaoBotao?.dataset.sortDirection === "desc" ? "desc" : "asc";
-  }
-
-  function atualizarDirecao() {
-    if (!direcaoBotao) return;
-    direcaoBotao.textContent = direcaoAtual() === "asc" ? "Crescente" : "Descrescente";
-  }
+  let listagem;
+  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
 
   function atualizarChipsTipo() {
     tipoChips.forEach((chip) => {
@@ -238,12 +178,11 @@ export function inicializarWikiEquipaveis(idDados = "equipaveis-data") {
     });
   }
 
-  function obterResultado() {
+  function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const atributo = filtroAtributo?.value ?? "";
     const foco = filtroFoco?.value ?? "";
     const sort = ordenacao?.value ?? "ordem";
-    const direcao = direcaoAtual();
 
     const filtrados = (dados.equipaveis || []).filter((equipavel) => {
       if (termo && !equipavel.busca.includes(termo)) return false;
@@ -269,109 +208,39 @@ export function inicializarWikiEquipaveis(idDados = "equipaveis-data") {
       utilitario: (a, b) => (a.utilitario ?? 0) - (b.utilitario ?? 0),
     };
 
-    const ordenador = ordenadores[sort] ?? ordenadores.ordem;
-    return [...filtrados].sort((a, b) => {
-      const principal = ordenador(a, b);
-      const final = principal === 0 ? a.ordem - b.ordem : principal;
-      return direcao === "desc" ? -final : final;
-    });
+    return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
 
-  function atualizarEstado() {
-    if (contador) contador.textContent = String(resultadoAtual.length);
-    if (vazio) vazio.hidden = resultadoAtual.length !== 0;
-    if (sentinela) sentinela.hidden = resultadoAtual.length === 0 || visiveis >= resultadoAtual.length;
-    atualizarDirecao();
-    atualizarChipsTipo();
-  }
-
-  function anexarCard(inicio, fim) {
-    if (!grid) return;
-    const fragmento = document.createDocumentFragment();
-    resultadoAtual.slice(inicio, fim).forEach((equipavel) => {
-      const card = criarCardEquipavel(equipavel, dados);
-      card.classList.add("pokemon-card-entrando");
-      fragmento.appendChild(card);
-    });
-    grid.appendChild(fragmento);
-  }
-
-  function renderizarAte(limite, idRender) {
-    if (!grid || idRender !== renderRequest) return;
-    const jaRenderizados = grid.children.length;
-    const alvo = Math.min(limite, resultadoAtual.length);
-    if (jaRenderizados >= alvo) {
-      renderizando = false;
-      atualizarEstado();
-      return;
-    }
-    renderizando = true;
-    window.requestAnimationFrame(() => {
-      if (idRender !== renderRequest) return;
-      anexarCard(jaRenderizados, jaRenderizados + 1);
-      window.setTimeout(() => renderizarAte(alvo, idRender), RENDER_DELAY);
-    });
-  }
-
-  function renderLista(reset = true) {
-    if (!grid) return;
-    if (reset) {
-      const idRender = ++renderRequest;
-      resultadoAtual = obterResultado();
-      visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
-      grid.replaceChildren();
-      renderizando = false;
-      atualizarEstado();
-      renderizarAte(visiveis, idRender);
-      return;
-    }
-    if (renderizando || visiveis >= resultadoAtual.length) return;
-    const idRender = ++renderRequest;
-    visiveis = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
-    atualizarEstado();
-    renderizarAte(visiveis, idRender);
-  }
-
-  [busca, ordenacao, filtroAtributo, filtroFoco].forEach((controle) => {
-    controle?.addEventListener("input", () => renderLista(true));
-    controle?.addEventListener("change", () => renderLista(true));
+  listagem = criarListagemPaginada({
+    grid,
+    contador,
+    vazio,
+    sentinela,
+    direcaoBotao,
+    controles: [busca, ordenacao, filtroAtributo, filtroFoco],
+    botaoLimpar,
+    cardSelector: "[data-equipavel-id]",
+    obterCardId: (card) => card.dataset.equipavelId,
+    abrirDetalhe: (id) => detalheController.abrirDetalhe(id),
+    criarCard: (equipavel) => criarCardEquipavel(equipavel, dados),
+    obterResultado,
+    aoAtualizarEstado: atualizarChipsTipo,
+    limparFiltros: () => {
+      if (busca) busca.value = "";
+      if (ordenacao) ordenacao.value = "ordem";
+      if (filtroAtributo) filtroAtributo.value = "";
+      if (filtroFoco) filtroFoco.value = "";
+      if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
+      tipoSelecionado = "";
+    },
   });
 
   tipoChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       tipoSelecionado = tipoSelecionado === chip.dataset.equipaveisTypeChip ? "" : chip.dataset.equipaveisTypeChip;
-      renderLista(true);
+      listagem.renderLista(true);
     });
   });
 
-  direcaoBotao?.addEventListener("click", () => {
-    direcaoBotao.dataset.sortDirection = direcaoAtual() === "asc" ? "desc" : "asc";
-    renderLista(true);
-  });
-
-  botaoLimpar?.addEventListener("click", () => {
-    if (busca) busca.value = "";
-    if (ordenacao) ordenacao.value = "ordem";
-    if (filtroAtributo) filtroAtributo.value = "";
-    if (filtroFoco) filtroFoco.value = "";
-    if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
-    tipoSelecionado = "";
-    renderLista(true);
-  });
-
-  grid?.addEventListener("click", (evento) => {
-    const card = evento.target.closest("[data-equipavel-id]");
-    if (!card) return;
-    detalheController.abrirDetalhe(card.dataset.equipavelId);
-  });
-
-  if (sentinela && "IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((entradas) => {
-      if (entradas.some((entrada) => entrada.isIntersecting)) renderLista(false);
-    }, { rootMargin: "360px 0px" });
-    observer.observe(sentinela);
-  }
-
-  atualizarDirecao();
-  renderLista(true);
+  listagem.iniciar();
 }

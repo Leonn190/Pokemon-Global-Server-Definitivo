@@ -1,37 +1,4 @@
-function lerJson(id) {
-  const script = document.getElementById(id);
-  if (!script) return null;
-  try {
-    return JSON.parse(script.textContent || "{}");
-  } catch (_erro) {
-    return null;
-  }
-}
-
-function html(valor) {
-  return String(valor ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function normalizar(valor) {
-  return String(valor ?? "")
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-function formatarNumero(valor, sufixo = "") {
-  if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "-";
-  const numero = Number(valor);
-  const texto = Number.isInteger(numero) ? String(numero) : numero.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-  return `${texto}${sufixo}`;
-}
+import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
 function assetAtaque(ataque, dados) {
   return dados.assetsAtaques?.[ataque.id] ?? { imagem: null };
@@ -117,16 +84,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     if (codigo) codigo.textContent = `#${ataque.id}`;
     if (nome) nome.textContent = ataque.nome;
 
-    if (imagem) {
-      if (asset.imagem) {
-        imagem.hidden = false;
-        imagem.src = asset.imagem;
-        imagem.alt = ataque.nome;
-      } else {
-        imagem.hidden = true;
-        imagem.removeAttribute("src");
-      }
-    }
+    aplicarImagemDetalhe(imagem, asset.imagem, ataque.nome);
 
     if (tags) {
       tags.innerHTML = `
@@ -149,7 +107,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
         ["Foco", ataque.focoPrincipal],
         ["Custo após aprimoramento", formatarNumero(ataque.custoAprimorado)],
       ];
-      info.innerHTML = linhas.map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`).join("");
+      info.innerHTML = infoHtml(linhas);
     }
 
     detalhe.hidden = false;
@@ -188,25 +146,9 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
   const botaoLimpar = app.querySelector("[data-ataques-clear]");
   const vazio = app.querySelector("[data-ataques-empty]");
   const sentinela = app.querySelector("[data-ataques-sentinel]");
-  const PAGE_SIZE = 36;
-  const RENDER_DELAY = 18;
   let tipoSelecionado = "";
-  let visiveis = 0;
-  let resultadoAtual = [];
-  let renderRequest = 0;
-  let renderizando = false;
-
-  if (direcaoBotao && !direcaoBotao.dataset.sortDirection) direcaoBotao.dataset.sortDirection = "asc";
-  const detalheController = criarControladorDetalhe(dados, () => resultadoAtual);
-
-  function direcaoAtual() {
-    return direcaoBotao?.dataset.sortDirection === "desc" ? "desc" : "asc";
-  }
-
-  function atualizarDirecao() {
-    if (!direcaoBotao) return;
-    direcaoBotao.textContent = direcaoAtual() === "asc" ? "Crescente" : "Descrescente";
-  }
+  let listagem;
+  const detalheController = criarControladorDetalhe(dados, () => listagem?.obterResultadoAtual() ?? []);
 
   function atualizarChipsTipo() {
     tipoChips.forEach((chip) => {
@@ -216,13 +158,12 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
     });
   }
 
-  function obterResultado() {
+  function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const estilo = filtroEstilo?.value ?? "";
     const motor = filtroMotor?.value ?? "";
     const foco = filtroFoco?.value ?? "";
     const sort = ordenacao?.value ?? "ordem";
-    const direcao = direcaoAtual();
 
     const filtrados = (dados.ataques || []).filter((ataque) => {
       if (termo && !ataque.busca.includes(termo)) return false;
@@ -243,135 +184,42 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
       utilitario: (a, b) => (a.utilitario ?? 0) - (b.utilitario ?? 0),
     };
 
-    const ordenador = ordenadores[sort] ?? ordenadores.ordem;
-    return [...filtrados].sort((a, b) => {
-      const principal = ordenador(a, b);
-      const final = principal === 0 ? a.ordem - b.ordem : principal;
-      return direcao === "desc" ? -final : final;
-    });
+    return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
 
-  function atualizarEstado() {
-    if (contador) contador.textContent = String(resultadoAtual.length);
-    if (vazio) vazio.hidden = resultadoAtual.length !== 0;
-    if (sentinela) sentinela.hidden = resultadoAtual.length === 0 || visiveis >= resultadoAtual.length;
-    atualizarDirecao();
-    atualizarChipsTipo();
-  }
-
-  function anexarCard(inicio, fim) {
-    if (!grid) return;
-    const fragmento = document.createDocumentFragment();
-    resultadoAtual.slice(inicio, fim).forEach((ataque) => {
-      const card = criarCardAtaque(ataque, dados);
-      card.classList.add("pokemon-card-entrando");
-      fragmento.appendChild(card);
-    });
-    grid.appendChild(fragmento);
-  }
-
-  function manterScrollAposReset(alturaAnterior, scrollAnterior) {
-    if (!grid) return;
-    if (alturaAnterior > 0) grid.style.minHeight = `${Math.ceil(alturaAnterior)}px`;
-
-    const comportamentoAnterior = document.documentElement.style.scrollBehavior;
-    document.documentElement.style.scrollBehavior = "auto";
-    window.requestAnimationFrame(() => {
-      window.scrollTo(window.scrollX, scrollAnterior);
-      document.documentElement.style.scrollBehavior = comportamentoAnterior;
-    });
-  }
-
-  function liberarAlturaReservada(idRender) {
-    window.setTimeout(() => {
-      if (grid && idRender === renderRequest) grid.style.minHeight = "";
-    }, 120);
-  }
-
-  function renderizarAte(limite, idRender) {
-    if (!grid || idRender !== renderRequest) return;
-    const jaRenderizados = grid.children.length;
-    const alvo = Math.min(limite, resultadoAtual.length);
-    if (jaRenderizados >= alvo) {
-      renderizando = false;
-      atualizarEstado();
-      liberarAlturaReservada(idRender);
-      return;
-    }
-    renderizando = true;
-    window.requestAnimationFrame(() => {
-      if (idRender !== renderRequest) return;
-      anexarCard(jaRenderizados, jaRenderizados + 1);
-      window.setTimeout(() => renderizarAte(alvo, idRender), RENDER_DELAY);
-    });
-  }
-
-  function renderLista(reset = true) {
-    if (!grid) return;
-    if (reset) {
-      const idRender = ++renderRequest;
-      const alturaAnterior = grid.getBoundingClientRect().height;
-      const scrollAnterior = window.scrollY;
-      resultadoAtual = obterResultado();
-      visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
-      manterScrollAposReset(alturaAnterior, scrollAnterior);
-      grid.replaceChildren();
-      renderizando = false;
-      atualizarEstado();
-      renderizarAte(visiveis, idRender);
-      return;
-    }
-
-    if (renderizando || visiveis >= resultadoAtual.length) return;
-    const idRender = ++renderRequest;
-    const proximoLimite = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
-    visiveis = proximoLimite;
-    atualizarEstado();
-    renderizarAte(proximoLimite, idRender);
-  }
-
-  function limparFiltros() {
-    if (busca) busca.value = "";
-    if (ordenacao) ordenacao.value = "ordem";
-    if (filtroEstilo) filtroEstilo.value = "";
-    if (filtroMotor) filtroMotor.value = "";
-    if (filtroFoco) filtroFoco.value = "";
-    tipoSelecionado = "";
-    if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
-    renderLista(true);
-  }
-
-  grid?.addEventListener("click", (evento) => {
-    const card = evento.target.closest("[data-ataque-id]");
-    if (card) detalheController.abrirDetalhe(card.dataset.ataqueId);
-  });
-
-  [busca, ordenacao, filtroEstilo, filtroMotor, filtroFoco].forEach((elemento) => {
-    elemento?.addEventListener("input", () => renderLista(true));
-    elemento?.addEventListener("change", () => renderLista(true));
+  listagem = criarListagemPaginada({
+    grid,
+    contador,
+    vazio,
+    sentinela,
+    direcaoBotao,
+    controles: [busca, ordenacao, filtroEstilo, filtroMotor, filtroFoco],
+    botaoLimpar,
+    rootMargin: "220px",
+    cardSelector: "[data-ataque-id]",
+    obterCardId: (card) => card.dataset.ataqueId,
+    abrirDetalhe: (id) => detalheController.abrirDetalhe(id),
+    criarCard: (ataque) => criarCardAtaque(ataque, dados),
+    obterResultado,
+    aoAtualizarEstado: atualizarChipsTipo,
+    limparFiltros: () => {
+      if (busca) busca.value = "";
+      if (ordenacao) ordenacao.value = "ordem";
+      if (filtroEstilo) filtroEstilo.value = "";
+      if (filtroMotor) filtroMotor.value = "";
+      if (filtroFoco) filtroFoco.value = "";
+      tipoSelecionado = "";
+      if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
+    },
   });
 
   tipoChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       const tipo = chip.dataset.ataquesTypeChip || "";
       tipoSelecionado = tipoSelecionado === tipo ? "" : tipo;
-      renderLista(true);
+      listagem.renderLista(true);
     });
   });
 
-  direcaoBotao?.addEventListener("click", () => {
-    direcaoBotao.dataset.sortDirection = direcaoAtual() === "asc" ? "desc" : "asc";
-    renderLista(true);
-  });
-
-  botaoLimpar?.addEventListener("click", limparFiltros);
-
-  if (sentinela && "IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((entradas) => {
-      if (entradas.some((entrada) => entrada.isIntersecting)) renderLista(false);
-    }, { rootMargin: "220px" });
-    observer.observe(sentinela);
-  }
-
-  renderLista(true);
+  listagem.iniciar();
 }

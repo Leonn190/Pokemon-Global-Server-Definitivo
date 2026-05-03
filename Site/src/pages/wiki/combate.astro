@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import { carregarWikiCombate } from "../../Codigo/CombateWikiDados.js";
 import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
@@ -21,28 +21,13 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
   titulo="Combate | Wiki Pokémon Global Server"
   descricao="Wiki de combate do Pokémon Global Server, com arquitetura da batalha, fórmulas principais e tabela de fraquezas e resistências."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-combate">
-    <h1 id="titulo-combate">Combate Global</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo" aria-label="Resumo da wiki de combate">
-      <article>
-        <strong>{resumo.tipos}</strong>
-        <span>Tipos na matriz</span>
-      </article>
-      <article>
-        <strong>{resumo.tick}</strong>
-        <span>Tick de batalha</span>
-      </article>
-      <article>
-        <strong>{resumo.colunas}</strong>
-        <span>Colunas da tabela</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="combate" />
-  </section>
+  <WikiTopo
+    ativo="combate"
+    titulo="Combate Global"
+    tituloId="titulo-combate"
+    ariaResumo="Resumo da wiki de combate"
+    resumo={[{ valor: resumo.tipos, rotulo: "Tipos na matriz" }, { valor: resumo.tick, rotulo: "Tick de batalha" }, { valor: resumo.colunas, rotulo: "Colunas da tabela" }]}
+  />
 
   <main class="wiki-combate" aria-label="Conteúdo da wiki de combate">
     <section class="combate-intro">

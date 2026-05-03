@@ -1,40 +1,5 @@
 import { criarCardPokemon, criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-
-function lerJson(id) {
-  const node = document.getElementById(id);
-  if (!node) return null;
-  try {
-    return JSON.parse(node.textContent || "{}");
-  } catch (erro) {
-    console.error(`[Wiki Dungeons] Não consegui ler os dados de ${id}.`, erro);
-    return null;
-  }
-}
-
-function html(valor) {
-  return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#039;",
-    '"': "&quot;",
-  })[char]);
-}
-
-function normalizar(valor) {
-  return String(valor ?? "")
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-function formatarNumero(valor) {
-  if (valor === null || valor === undefined || valor === "" || Number.isNaN(Number(valor))) return "-";
-  const numero = Number(valor);
-  return Number.isInteger(numero) ? String(numero) : numero.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-}
+import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
 function assetDungeon(dungeon, dados) {
   return dados.assetsDungeons?.[dungeon.id] ?? { imagem: null };
@@ -131,16 +96,7 @@ function criarControladorDetalhe(dados, pokedex, obterListaAtual) {
     if (codigo) codigo.textContent = `#${dungeon.id}`;
     if (nome) nome.textContent = dungeon.nome;
 
-    if (imagem) {
-      if (asset.imagem) {
-        imagem.hidden = false;
-        imagem.src = asset.imagem;
-        imagem.alt = dungeon.nome;
-      } else {
-        imagem.hidden = true;
-        imagem.removeAttribute("src");
-      }
-    }
+    aplicarImagemDetalhe(imagem, asset.imagem, dungeon.nome);
 
     if (tags) {
       tags.innerHTML = `
@@ -157,7 +113,7 @@ function criarControladorDetalhe(dados, pokedex, obterListaAtual) {
         ["Entradas", formatarNumero(dungeon.entradas)],
         ["Biomas", dungeon.biomas?.join(" / ") || "-"],
       ];
-      info.innerHTML = linhas.map(([chave, valor]) => `<div><dt>${html(chave)}</dt><dd>${html(valor)}</dd></div>`).join("");
+      info.innerHTML = infoHtml(linhas);
     }
 
     preencherPokemonGrid(pokemons, dungeon.pokemons, pokedex, "dungeon");
@@ -199,34 +155,20 @@ export function inicializarWikiDungeons(idDados = "dungeons-data") {
   const botaoLimpar = app.querySelector("[data-dungeons-clear]");
   const vazio = app.querySelector("[data-dungeons-empty]");
   const sentinela = app.querySelector("[data-dungeons-sentinel]");
-  const PAGE_SIZE = 36;
-  let visiveis = 0;
-  let resultadoAtual = [];
-
-  if (direcaoBotao && !direcaoBotao.dataset.sortDirection) direcaoBotao.dataset.sortDirection = "asc";
-  const detalheController = criarControladorDetalhe(dados, pokedex, () => resultadoAtual);
+  let listagem;
+  const detalheController = criarControladorDetalhe(dados, pokedex, () => listagem?.obterResultadoAtual() ?? []);
   const pokemonController = criarControladorPokemonDetalhe(pokedex, {
     seletorDetalhe: "[data-dungeon-pokemon-detail]",
     mostrarLinhagem: true,
     animarFrames: true,
   });
 
-  function direcaoAtual() {
-    return direcaoBotao?.dataset.sortDirection === "desc" ? "desc" : "asc";
-  }
-
-  function atualizarDirecao() {
-    if (!direcaoBotao) return;
-    direcaoBotao.textContent = direcaoAtual() === "asc" ? "Crescente" : "Descrescente";
-  }
-
-  function obterResultado() {
+  function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const dificuldade = filtroDificuldade?.value ?? "";
     const tamanho = filtroTamanho?.value ?? "";
     const bioma = filtroBioma?.value ?? "";
     const sort = ordenacao?.value ?? "ordem";
-    const direcao = direcaoAtual();
 
     const filtrados = (dados.dungeons || []).filter((dungeon) => {
       if (termo && !dungeon.busca.includes(termo)) return false;
@@ -244,66 +186,30 @@ export function inicializarWikiDungeons(idDados = "dungeons-data") {
       bioma: (a, b) => (a.biomas?.[0] || "").localeCompare(b.biomas?.[0] || "", "pt-BR", { numeric: true }),
     };
 
-    const ordenador = ordenadores[sort] ?? ordenadores.ordem;
-    return [...filtrados].sort((a, b) => {
-      const principal = ordenador(a, b);
-      const final = principal === 0 ? a.ordem - b.ordem : principal;
-      return direcao === "desc" ? -final : final;
-    });
+    return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
 
-  function atualizarEstado() {
-    if (contador) contador.textContent = String(resultadoAtual.length);
-    if (vazio) vazio.hidden = resultadoAtual.length !== 0;
-    if (sentinela) sentinela.hidden = resultadoAtual.length === 0 || visiveis >= resultadoAtual.length;
-    atualizarDirecao();
-  }
-
-  function renderLista() {
-    if (!grid) return;
-    resultadoAtual = obterResultado();
-    visiveis = Math.min(PAGE_SIZE, resultadoAtual.length);
-    grid.replaceChildren();
-    resultadoAtual.slice(0, visiveis).forEach((dungeon) => {
-      const card = criarCardDungeon(dungeon, dados);
-      card.classList.add("pokemon-card-entrando");
-      grid.appendChild(card);
-    });
-    atualizarEstado();
-  }
-
-  function carregarMais() {
-    if (!grid || visiveis >= resultadoAtual.length) return;
-    const fim = Math.min(visiveis + PAGE_SIZE, resultadoAtual.length);
-    resultadoAtual.slice(visiveis, fim).forEach((dungeon) => grid.appendChild(criarCardDungeon(dungeon, dados)));
-    visiveis = fim;
-    atualizarEstado();
-  }
-
-  [busca, ordenacao, filtroDificuldade, filtroTamanho, filtroBioma].forEach((controle) => {
-    controle?.addEventListener("input", renderLista);
-    controle?.addEventListener("change", renderLista);
-  });
-
-  direcaoBotao?.addEventListener("click", () => {
-    direcaoBotao.dataset.sortDirection = direcaoAtual() === "asc" ? "desc" : "asc";
-    renderLista();
-  });
-
-  botaoLimpar?.addEventListener("click", () => {
-    if (busca) busca.value = "";
-    if (ordenacao) ordenacao.value = "ordem";
-    if (filtroDificuldade) filtroDificuldade.value = "";
-    if (filtroTamanho) filtroTamanho.value = "";
-    if (filtroBioma) filtroBioma.value = "";
-    if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
-    renderLista();
-  });
-
-  grid?.addEventListener("click", (evento) => {
-    const card = evento.target.closest("[data-dungeon-id]");
-    if (!card) return;
-    detalheController.abrirDetalhe(card.dataset.dungeonId);
+  listagem = criarListagemPaginada({
+    grid,
+    contador,
+    vazio,
+    sentinela,
+    direcaoBotao,
+    controles: [busca, ordenacao, filtroDificuldade, filtroTamanho, filtroBioma],
+    botaoLimpar,
+    cardSelector: "[data-dungeon-id]",
+    obterCardId: (card) => card.dataset.dungeonId,
+    abrirDetalhe: (id) => detalheController.abrirDetalhe(id),
+    criarCard: (dungeon) => criarCardDungeon(dungeon, dados),
+    obterResultado,
+    limparFiltros: () => {
+      if (busca) busca.value = "";
+      if (ordenacao) ordenacao.value = "ordem";
+      if (filtroDificuldade) filtroDificuldade.value = "";
+      if (filtroTamanho) filtroTamanho.value = "";
+      if (filtroBioma) filtroBioma.value = "";
+      if (direcaoBotao) direcaoBotao.dataset.sortDirection = "asc";
+    },
   });
 
   document.querySelector("[data-dungeon-detail]")?.addEventListener("click", (evento) => {
@@ -312,12 +218,5 @@ export function inicializarWikiDungeons(idDados = "dungeons-data") {
     pokemonController.abrirDetalhe(card.dataset.pokemonId);
   });
 
-  if (sentinela && "IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((entradas) => {
-      if (entradas.some((entrada) => entrada.isIntersecting)) carregarMais();
-    }, { rootMargin: "360px 0px" });
-    observer.observe(sentinela);
-  }
-
-  renderLista();
+  listagem.iniciar();
 }

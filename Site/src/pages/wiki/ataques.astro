@@ -1,6 +1,6 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
-import WikiMenu from "../../Componentes/WikiMenu.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   FOCOS_ATAQUE,
   carregarAtaques,
@@ -35,28 +35,13 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
   titulo="Ataques | Wiki Pokémon Global Server"
   descricao="Wiki de ataques do Pokémon Global Server, com busca, filtros por tipo, estilo, motor, foco e detalhes de aprimoramento."
 >
-  <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-ataques">
-    <h1 id="titulo-ataques">Ataques Globais</h1>
-  </section>
-
-  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
-    <div class="pokedex-resumo" aria-label="Resumo dos registros de ataques">
-      <article>
-        <strong>{resumo.quantidade}</strong>
-        <span>Ataques registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.estilos.length}</strong>
-        <span>Estilos registrados</span>
-      </article>
-      <article>
-        <strong>{resumo.tipos.length}</strong>
-        <span>Tipagens registradas</span>
-      </article>
-    </div>
-
-    <WikiMenu ativo="ataques" />
-  </section>
+  <WikiTopo
+    ativo="ataques"
+    titulo="Ataques Globais"
+    tituloId="titulo-ataques"
+    ariaResumo="Resumo dos registros de ataques"
+    resumo={[{ valor: resumo.quantidade, rotulo: "Ataques registrados" }, { valor: resumo.estilos.length, rotulo: "Estilos registrados" }, { valor: resumo.tipos.length, rotulo: "Tipagens registradas" }]}
+  />
 
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app ataques-app" data-ataques-app>

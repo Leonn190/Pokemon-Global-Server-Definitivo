@@ -50,7 +50,7 @@ final class GeradorObjetos {
     }
 
     void placeDungeons() {
-        placePoiType(PoiType.DUNGEON, terrainRules.dungeonConfig);
+        new GeradorDungeons(ctx).gerar();
     }
 
     private void placePoiType(PoiType type, PoiConfig config) {

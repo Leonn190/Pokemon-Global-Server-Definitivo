@@ -18,6 +18,7 @@ from Codigo.Geradores.EstruturaNaturais import (
     tipo_estrutura_natural_por_codigo,
 )
 from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
+from Codigo.Geradores.Dungeon import renderizar_entrada_mundo as renderizar_entrada_dungeon_mundo
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
 from Codigo.ModulosMundo.ControladorAtores import ControladorAtores
@@ -57,6 +58,7 @@ class ControladorObjetos:
         self._pokemon_alvo_local_id: Optional[int] = None
         self._capturas_por_token: Dict[str, Dict[str, object]] = {}
         self._criaveis = ControladorCriaveis(objetos_por_id=self.ObjetosPorId, remover_indice_cb=self._remover_indice_chunk_objeto)
+        self.LayoutDungeonAtual: Dict[str, object] = {}
 
     @property
     def ProjeteisPorId(self):
@@ -87,6 +89,9 @@ class ControladorObjetos:
 
     def dimensao_atual_client(self) -> str:
         return str(self._dimensao_atual_client or "Mundo")
+
+    def definir_layout_dungeon_atual(self, layout) -> None:
+        self.LayoutDungeonAtual = dict(layout) if isinstance(layout, dict) else {}
 
     def _dimensao_player_local(self) -> str:
         return self.dimensao_atual_client()
@@ -994,6 +999,12 @@ class ControladorObjetos:
             est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))
             escala = est.escala_render() if est is not None else 1.0
             self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala, pos_tela=pos_tela, fila_blits=fila_blits, tela_size=tela_size)
+            estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            if str(estado.get("subtipo") or "").lower() == "dungeon" and bool(estado.get("porta_ativa", False) or estado.get("estrutura_quebrada", False)):
+                if fila_blits:
+                    self._aplicar_blits_batch(tela, fila_blits)
+                    fila_blits.clear()
+                renderizar_entrada_dungeon_mundo(tela, camera, obj)
         self._aplicar_blits_batch(tela, fila_blits)
 
 
@@ -1047,7 +1058,18 @@ class ControladorObjetos:
 
         candidatos: List[Tuple[float, Dict[str, object]]] = []
 
-        if dim != "Mundo":
+        if dim.startswith("Dungeon_"):
+            estado_dungeon = estado_p.get("estado_dungeon") if isinstance(estado_p.get("estado_dungeon"), dict) else {}
+            porta_idx = int(estado_dungeon.get("porta_idx", 1) or 1)
+            layout = self.LayoutDungeonAtual if isinstance(self.LayoutDungeonAtual, dict) else {}
+            entradas = layout.get("entradas") if isinstance(layout.get("entradas"), list) else []
+            entrada = next((e for e in entradas if int(e.get("porta_idx", 0) or 0) == porta_idx), None)
+            saida = entrada.get("saida") if isinstance(entrada, dict) else None
+            if isinstance(saida, (list, tuple)) and len(saida) == 2:
+                d2 = (float(saida[0]) - px) ** 2 + (float(saida[1]) - py) ** 2
+                if d2 <= (2.0 * 2.0):
+                    candidatos.append((d2, {"tipo": "dungeon_saida", "posicao": [float(saida[0]), float(saida[1])] }))
+        elif dim != "Mundo":
             estadio = self.EstadiosPorId.get(estadio_real_id, {})
             if not isinstance(estadio, dict) or not estadio:
                 for candidato in self.EstadiosPorId.values():
@@ -1070,6 +1092,19 @@ class ControladorObjetos:
                 d2 = (float(entrada[0]) - px) ** 2 + (float(entrada[1]) - py) ** 2
                 if d2 <= (2.0 * 2.0):
                     candidatos.append((d2, {"tipo": "estadio_entrada", "estadio": estadio, "posicao": [float(entrada[0]), float(entrada[1])] }))
+            objs = self._estruturas_interagiveis_por_dimensao(dim)
+            for obj in objs:
+                estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+                if str(estado.get("subtipo") or "").lower() != "dungeon":
+                    continue
+                if not bool(estado.get("porta_ativa", False) or estado.get("estrutura_quebrada", False)):
+                    continue
+                pos_d = obj.get("posicao") if isinstance(obj.get("posicao"), (list, tuple)) and len(obj.get("posicao")) == 2 else None
+                if pos_d is None:
+                    continue
+                d2 = (float(pos_d[0]) - px) ** 2 + (float(pos_d[1]) - py) ** 2
+                if d2 <= (2.0 * 2.0):
+                    candidatos.append((d2, {"tipo": "dungeon_entrada", "estrutura": obj, "posicao": [float(pos_d[0]), float(pos_d[1])] }))
 
         npc_alvo = self.npc_interagivel_proximo((px, py), raio=2.3)
         if isinstance(npc_alvo, dict):
@@ -1095,7 +1130,24 @@ class ControladorObjetos:
             return "Pressione F para sair do estádio"
         if tipo == "npc":
             return "Pressione F para interagir"
+        if tipo == "dungeon_entrada":
+            return "Pressione F para entrar na dungeon"
+        if tipo == "dungeon_saida":
+            return "Pressione F para sair da dungeon"
         return "Pressione F para interagir"
+
+    def _estruturas_interagiveis_por_dimensao(self, dim: str):
+        with self._lock_objetos:
+            vals = list(self.ObjetosPorId.values())
+        out = []
+        for obj in vals:
+            if not isinstance(obj, dict) or not self._eh_payload_estrutura(obj):
+                continue
+            estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            if str(estado.get("dimensao") or obj.get("dimensao") or "Mundo") != dim:
+                continue
+            out.append(obj)
+        return out
 
     def renderizar(self, tela, camera, ignorar_entidade_id=None):
         self.renderizar_entidades(tela, camera, ignorar_id=ignorar_entidade_id)

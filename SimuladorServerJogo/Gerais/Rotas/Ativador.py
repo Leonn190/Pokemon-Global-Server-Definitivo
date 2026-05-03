@@ -13,6 +13,7 @@ from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Mundo.Cerebros.CerebroEstadios import CEREBRO_ESTADIOS
+from SimuladorServerJogo.Mundo.DungeonGeometria import eh_dimensao_dungeon
 from SimuladorServerJogo.Gerais.EstadoServidor import obter_exploracao_chunks, registrar_chunks_explorados
 
 Vector2 = Tuple[float, float]
@@ -235,6 +236,9 @@ def _obter_state_client(client_id: str) -> Dict[str, object]:
 def _eh_dimensao_estadio(dimensao: str) -> bool:
     return str(dimensao or "").strip().startswith("Estadio")
 
+def _eh_dimensao_dungeon(dimensao: str) -> bool:
+    return eh_dimensao_dungeon(dimensao)
+
 
 def _chunks_carregados_cliente(posicao_camera: Vector2, dimensao: str = "Mundo") -> Set[Chunk]:
     raio = max(0, int(CEREBRO._i("raio_chunks_carregados", 4)))
@@ -242,6 +246,9 @@ def _chunks_carregados_cliente(posicao_camera: Vector2, dimensao: str = "Mundo")
     if _eh_dimensao_estadio(dimensao_norm):
         centro = (int(posicao_camera[0] // BANCO_DADOS.chunk_tamanho_unidade()), int(posicao_camera[1] // BANCO_DADOS.chunk_tamanho_unidade()))
         return set(CEREBRO_ESTADIOS.chunks_proximos(dimensao_norm, centro, raio))
+    if _eh_dimensao_dungeon(dimensao_norm):
+        centro = (int(posicao_camera[0] // BANCO_DADOS.chunk_tamanho_unidade()), int(posicao_camera[1] // BANCO_DADOS.chunk_tamanho_unidade()))
+        return set(CEREBRO._cerebro_dungeons.chunks_proximos(dimensao_norm, centro, raio))
     centro = BANCO_DADOS.chunk_da_posicao(posicao_camera)
     chunks: Set[Chunk] = set()
     for dx in range(-raio, raio + 1):
@@ -429,15 +436,39 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
 
         if modo == "chunks":
             chunks = []
+            layout_dungeon = None
+            if _eh_dimensao_dungeon(dimensao):
+                layout_dungeon = CEREBRO._cerebro_dungeons._layouts.get(dimensao)
+                if layout_dungeon is None and obj_player is not None:
+                    estado_dungeon = getattr(obj_player, "estado_extra", {}).get("estado_dungeon", {}) if isinstance(getattr(obj_player, "estado_extra", {}), dict) else {}
+                    code = str(estado_dungeon.get("dungeon_code") or "").strip()
+                    if code:
+                        layout_dungeon = CEREBRO._cerebro_dungeons.obter_ou_gerar(code, int(estado_dungeon.get("porta_idx", 1) or 1), int(estado_dungeon.get("pedra_id", 0) or 0))
             for chunk in sorted(chunks_carregados):
-                grid = _grid_neutra_estadio() if _eh_dimensao_estadio(dimensao) else BANCO_DADOS.chunk_em_grade(chunk)
+                if _eh_dimensao_estadio(dimensao):
+                    grid = _grid_neutra_estadio()
+                elif _eh_dimensao_dungeon(dimensao):
+                    grid = CEREBRO._cerebro_dungeons.chunk_em_grade(dimensao, chunk)
+                else:
+                    grid = BANCO_DADOS.chunk_em_grade(chunk)
                 chunks.append({"pos": [chunk[0], chunk[1]], "grid": grid, "chunk_blocos": BANCO_DADOS.chunk_tamanho_unidade()})
             if obj_player is not None:
-                chunks_mundo = {BANCO_DADOS.normalizar_chunk(ch) for ch in (_chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo") if _eh_dimensao_estadio(dimensao) else chunks_carregados)}
-                registrar_chunks_explorados(client_id, list(chunks_mundo), dimensao="Mundo")
+                if _eh_dimensao_estadio(dimensao):
+                    chunks_mundo = {BANCO_DADOS.normalizar_chunk(ch) for ch in _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")}
+                    registrar_chunks_explorados(client_id, list(chunks_mundo), dimensao="Mundo")
             dim_largura = int(CEREBRO_ESTADIOS.chunks_largura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[0])
             dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[1])
-            return _serializar_resposta({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, serializar_resposta)
+            if _eh_dimensao_dungeon(dimensao) and isinstance(layout_dungeon, dict):
+                bloco = int(layout_dungeon.get("tamanho_bloco_sala_tiles", 30) or 30)
+                dim_largura_dungeon = int(layout_dungeon.get("largura_blocos", 0) or 0)
+                dim_altura_dungeon = int(layout_dungeon.get("altura_blocos", 0) or 0)
+                dim_largura = int(dim_largura_dungeon * bloco)
+                dim_altura = int(dim_altura_dungeon * bloco)
+            else:
+                dim_largura_dungeon = 0
+                dim_altura_dungeon = 0
+                bloco = 30
+            return _serializar_resposta({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "tipo_dimensao": "dungeon" if _eh_dimensao_dungeon(dimensao) else ("estadio" if _eh_dimensao_estadio(dimensao) else "mundo"), "layout_dungeon": layout_dungeon, "tamanho_bloco_sala_tiles": int(bloco), "largura_blocos_dungeon": int(dim_largura_dungeon), "altura_blocos_dungeon": int(dim_altura_dungeon), "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, serializar_resposta)
 
         if modo == "mapa_bootstrap":
             chunks_base = _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")

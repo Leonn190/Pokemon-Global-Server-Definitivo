@@ -8,6 +8,8 @@ from .LeitorMundo import LeitorMundo
 from .ControladorObjetos import ControladorObjetos
 from .ControladorPlayer import ControladorPlayer
 from .SistemaPacotes import SistemaPacotes
+from Codigo.ModulosMundo.ControladorDungeons import ControladorDungeons
+from Codigo.Geradores.ConstrutorDungeon import renderizar_dungeon
 
 
 class ControladorMundo:
@@ -25,6 +27,7 @@ class ControladorMundo:
             raio_chunks=4,
         )
         self.Pacotes = SistemaPacotes(self.Objetos, self.Player, self.Leitor, camera)
+        self.Dungeons = ControladorDungeons()
         definir_bombeamento_local_manual(True)
         self.Leitor.ativar_bombeamento_manual(True)
         self.Pacotes.ativar_bombeamento_manual(True)
@@ -32,6 +35,7 @@ class ControladorMundo:
 
     def _ao_dimensao_atualizada(self, dimensao: str, forcar_imediato: bool = False) -> None:
         self.Objetos.definir_dimensao_atual_client(dimensao)
+        self.Dungeons.atualizar_dimensao(dimensao, self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else None)
         self.Leitor.forcar_refresh_chunks()
         if bool(forcar_imediato):
             self.Leitor.bombear()
@@ -83,6 +87,7 @@ class ControladorMundo:
         self.Leitor.bombear()
         self.Leitor.bombear_preaquecimento(max_chunks=1)
         self.Pacotes.bombear(max_ciclos=1)
+        self.Objetos.definir_layout_dungeon_atual(self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {})
         ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None
         player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
         self.Objetos.atualizar_visuais(dt, self.Camera, ignorar_id=ignorar_id, player_pos=player_pos)
@@ -91,12 +96,21 @@ class ControladorMundo:
         dim_local = str(self.Objetos.dimensao_atual_client() or "Mundo")
         if dim_local == "Mundo":
             self.Leitor.renderizar_mundo(tela)
-        self.Objetos.renderizar_estadio_interior(tela, self.Camera)
+        elif dim_local.startswith("Dungeon_"):
+            renderizar_dungeon(tela, self.Camera, self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {})
+        if dim_local.startswith("Estadio"):
+            self.Objetos.renderizar_estadio_interior(tela, self.Camera)
         ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None
         player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
         self.Objetos.renderizar_entidades(tela, self.Camera, ignorar_id=ignorar_id, player_pos=player_pos)
         self.Player.renderizar(tela, self.Camera)
-        self.Objetos.renderizar_estruturas(tela, self.Camera)
+        if not dim_local.startswith("Dungeon_"):
+            self.Objetos.renderizar_estruturas(tela, self.Camera)
+        if dim_local.startswith("Dungeon_"):
+            player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
+            layout = self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {}
+            self.Dungeons.renderizar_mascara_sala(tela, self.Camera, player_pos, layout)
+            self.Dungeons.renderizar_texto(tela)
 
     def tempo_mundo_atual(self) -> dict:
         return self.Pacotes.tempo_mundo_atual() if self.Pacotes is not None else {"dia": 0, "hora": 8, "minuto": 0, "chuva_intensidade": 0}

@@ -23,6 +23,7 @@ from Codigo.ModulosGerais.Server.ServerMundo import (
     receber_pacotes_tick_mundo,
     consultar_chunks_mundo,
     coletar_mapa_mundo,
+    enviar_evento_interacao_dungeon_mundo,
 )
 from Codigo.ModulosGerais.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.Subtelas.SubtelaInventario import SubtelaInventario
@@ -411,6 +412,25 @@ class CenaMundo:
                         inter = estado.get("interacao") if isinstance(estado.get("interacao"), dict) else {}
                         if not bool(inter.get("ativa", False)):
                             self._solicitar_interacao_npc(JOGO, npc_obj)
+                    elif isinstance(alvo, dict) and str(alvo.get("tipo") or "") == "dungeon_entrada":
+                        server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
+                        link = server.get("ip")
+                        payload_estrutura = alvo.get("estrutura") if isinstance(alvo.get("estrutura"), dict) else {}
+                        estado_e = payload_estrutura.get("estado") if isinstance(payload_estrutura.get("estado"), dict) else {}
+                        enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), {
+                            "acao": "entrar",
+                            "estrutura_id": int(payload_estrutura.get("id", 0) or 0),
+                            "dungeon_code": str(estado_e.get("dungeon_code") or ""),
+                            "porta_idx": int(estado_e.get("porta_idx", 1) or 1),
+                            "pos_player": [float(player.Posicao[0]), float(player.Posicao[1])],
+                        })
+                    elif isinstance(alvo, dict) and str(alvo.get("tipo") or "") == "dungeon_saida":
+                        server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
+                        link = server.get("ip")
+                        enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), {
+                            "acao": "sair",
+                            "pos_player": [float(player.Posicao[0]), float(player.Posicao[1])],
+                        })
                     break
         self._processar_estado_dialogo_npc(JOGO)
         self.ElementosHud.atualizar(dt)

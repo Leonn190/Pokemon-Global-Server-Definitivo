@@ -24,6 +24,7 @@ from SimuladorServerJogo.Mundo.Cerebros.CerebroEstruturasNaturais import Cerebro
 from SimuladorServerJogo.Mundo.Cerebros.CerebroXpMundo import CerebroXpMundo
 from SimuladorServerJogo.Mundo.Cerebros.CerebroNPCs import CerebroNPCs
 from SimuladorServerJogo.Mundo.Cerebros.CerebroTempo import CerebroTempo
+from SimuladorServerJogo.Mundo.Cerebros.CerebroDungeons import CerebroDungeons
 from SimuladorServerJogo.Mundo.ServicoInventario import ServicoInventario
 
 Vector2 = Tuple[float, float]
@@ -57,6 +58,7 @@ class CerebroCentral:
         self._cerebro_xp_mundo = CerebroXpMundo(self)
         self._cerebro_npcs = CerebroNPCs(self)
         self._cerebro_tempo = CerebroTempo(self._regras)
+        self._cerebro_dungeons = CerebroDungeons(self)
         self._snapshot_tempo = self._cerebro_tempo.snapshot()
 
     def recarregar_contexto_mundo(self) -> None:
@@ -82,6 +84,7 @@ class CerebroCentral:
             self._cerebro_xp_mundo = CerebroXpMundo(self)
             self._cerebro_npcs = CerebroNPCs(self)
             self._cerebro_tempo = CerebroTempo(self._regras)
+            self._cerebro_dungeons = CerebroDungeons(self)
             self._snapshot_tempo = self._cerebro_tempo.snapshot()
 
     def _i(self, k: str, d: int) -> int:

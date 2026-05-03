@@ -1,36 +1,251 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiMenu from "../../Componentes/WikiMenu.astro";
+import {
+  carregarEstadios,
+  carregarNpcs,
+  criarAssetsEstadios,
+  criarAssetsNpcs,
+  indexarIconesEstadios,
+  indexarSkinsNpcs,
+  resumoEstadios,
+} from "../../Codigo/NpcsWikiDados.js";
+import {
+  ATRIBUTOS_BASE,
+  carregarPokemons,
+  criarAssetsPokemons,
+  indexarArquivosPorNome,
+} from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
+
+const npcs = carregarNpcs();
+const estadios = carregarEstadios(npcs);
+const resumo = resumoEstadios(estadios, npcs);
+const pokemons = carregarPokemons();
+
+const skinsBrutas = import.meta.glob("@recursos/Visual/Skins/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const iconesEstadiosBrutos = {
+  ...import.meta.glob("@recursos/Visual/Icones/Insigneas/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+    eager: true,
+    query: "?url",
+    import: "default",
+  }),
+  ...import.meta.glob("@recursos/Visual/Icones/Insignias/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+    eager: true,
+    query: "?url",
+    import: "default",
+  }),
+  ...import.meta.glob("@recursos/Visual/Icones/Insígnias/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+    eager: true,
+    query: "?url",
+    import: "default",
+  }),
+};
+const imagensPokemons = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const iconesAtributosBrutos = import.meta.glob("@recursos/Visual/Icones/Atributos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+
+const skinsNpcs = indexarSkinsNpcs(skinsBrutas);
+const assetsNpcs = criarAssetsNpcs(npcs, skinsNpcs);
+const iconesEstadios = indexarIconesEstadios(iconesEstadiosBrutos);
+const assetsEstadios = criarAssetsEstadios(estadios, iconesEstadios);
+const imagensPorNome = indexarArquivosPorNome(imagensPokemons);
+const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
+const iconesAtributos = indexarArquivosPorNome(iconesAtributosBrutos);
+const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome);
+const payloadEstadios = JSON.stringify({ estadios, assetsEstadios, npcs, assetsNpcs }).replace(/</g, "\\u003c");
+const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, iconesAtributos, atributosBase: ATRIBUTOS_BASE }).replace(/</g, "\\u003c");
 ---
 
-<Layout titulo="Estádios | Wiki Pokémon Global Server" descricao="Área de Estádios da wiki do Pokémon Global Server.">
+<Layout
+  titulo="Estádios | Wiki Pokémon Global Server"
+  descricao="Wiki de estádios do Pokémon Global Server, com explicação da progressão e lista de membros de cada estádio."
+>
   <section class="wiki-hero wiki-hero-pokedex" aria-labelledby="titulo-estadios">
     <h1 id="titulo-estadios">Estádios</h1>
   </section>
 
-  <section class="pokedex-topo" aria-label="Navegação da wiki">
-    <div class="pokedex-resumo wiki-placeholder-resumo" aria-label="Resumo da área">
+  <section class="pokedex-topo" aria-label="Resumo e navegação da wiki">
+    <div class="pokedex-resumo resumo-tres" aria-label="Resumo dos estádios">
       <article>
-        <strong>0</strong>
-        <span>Registros publicados</span>
+        <strong>{resumo.quantidade}</strong>
+        <span>Estádios registrados</span>
       </article>
       <article>
-        <strong>0</strong>
-        <span>Categorias</span>
+        <strong>{resumo.tipos}</strong>
+        <span>Tipos representados</span>
       </article>
       <article>
-        <strong>Beta</strong>
-        <span>Estado da wiki</span>
+        <strong>{resumo.associados}</strong>
+        <span>Associados</span>
       </article>
     </div>
 
     <WikiMenu ativo="estadios" />
   </section>
 
-  <section class="wiki-placeholder-card">
-    <p class="selo">Wiki em expansão</p>
-    <h2>Estádios ainda vai receber dados próprios.</h2>
-    <p>Arenas, regras de batalha, layouts, clima, tiles e modos especiais.</p>
+  <section class="wiki-mundo-blocos estadios-intro" aria-label="Funcionamento dos estádios">
+    <article class="mundo-bloco mundo-bloco-destaque">
+      <span class="selo">Progressão de estádio</span>
+      <h2>Estádios são centros de desafio espalhados pelo mapa.</h2>
+      <p>
+        O mundo possui vários estádios, com a ideia de existir um para cada tipo principal do jogo. Em cada estádio,
+        o jogador enfrenta associados daquela tipagem, ganha respeito dentro da organização e avança até a última
+        batalha para conquistar a insígnia.
+      </p>
+    </article>
+
+    <article class="mundo-bloco">
+      <h3>Associados, capitães e líderes</h3>
+      <p>
+        A progressão começa pelos desafiantes e associados do estádio, passa por cargos intermediários e chega ao líder.
+        Depois de conquistar a insígnia, continuar batalhando no mesmo estádio pode abrir caminho para disputar espaço
+        e, futuramente, se tornar o próprio líder daquele tipo.
+      </p>
+    </article>
   </section>
+
+  <section class="wiki-layout wiki-layout-pokedex estadios-layout">
+    <div class="wiki-conteudo pokedex-app estadios-app" data-estadios-app>
+      <section class="mundo-secao-cabecalho">
+        <span class="selo">Estádios conhecidos</span>
+        <h2>Grid de estádios</h2>
+        <p>Cada cartucho usa a insígnia do tipo e abre a lista de membros cadastrados para aquele estádio.</p>
+      </section>
+
+      <section class="itens-grid estadios-grid" data-estadios-grid aria-label="Lista de estádios"></section>
+    </div>
+  </section>
+
+  <aside class="item-detalhe pokemon-detalhe" data-estadio-detail hidden aria-live="polite">
+    <div class="pokemon-detalhe-backdrop" data-estadio-close></div>
+    <article class="pokemon-detalhe-card item-detalhe-card estadio-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="estadio-detalhe-nome">
+      <div class="pokemon-controles-detalhe" aria-label="Navegação do estádio aberto">
+        <button class="pokemon-navegar" type="button" data-estadio-prev aria-label="Estádio anterior">‹</button>
+        <button class="pokemon-navegar" type="button" data-estadio-next aria-label="Próximo estádio">›</button>
+        <button class="pokemon-fechar" type="button" data-estadio-close aria-label="Fechar detalhes">×</button>
+      </div>
+
+      <div class="pokemon-detalhe-topo item-detalhe-topo estadio-detalhe-topo">
+        <div class="pokemon-palco-detalhe item-palco-detalhe estadio-palco-detalhe">
+          <div class="pokemon-brilho-detalhe"></div>
+          <img data-estadio-image alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="pokemon-cabecalho-detalhe estadio-cabecalho-detalhe">
+          <span class="codigo-pokemon" data-estadio-code>#000</span>
+          <h2 id="estadio-detalhe-nome" data-estadio-name>Estádio</h2>
+          <div class="pokemon-tags" data-estadio-tags></div>
+        </div>
+      </div>
+
+      <section class="painel-detalhe item-info-painel estadio-membros-painel">
+        <h3>Membros do estádio</h3>
+        <div data-estadio-members></div>
+      </section>
+    </article>
+  </aside>
+
+  <aside class="item-detalhe pokemon-detalhe estadio-npc-detalhe" data-estadio-npc-detail hidden aria-live="polite">
+    <div class="pokemon-detalhe-backdrop" data-npc-close></div>
+    <article class="pokemon-detalhe-card item-detalhe-card npc-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="npc-estadio-detalhe-nome">
+      <div class="pokemon-controles-detalhe" aria-label="Navegação do NPC aberto">
+        <button class="pokemon-navegar" type="button" data-npc-prev aria-label="NPC anterior">‹</button>
+        <button class="pokemon-navegar" type="button" data-npc-next aria-label="Próximo NPC">›</button>
+        <button class="pokemon-fechar" type="button" data-npc-close aria-label="Fechar detalhes">×</button>
+      </div>
+
+      <div class="pokemon-detalhe-topo item-detalhe-topo npc-detalhe-topo">
+        <div class="pokemon-palco-detalhe item-palco-detalhe npc-palco-detalhe">
+          <div class="pokemon-brilho-detalhe"></div>
+          <img data-npc-image alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="pokemon-cabecalho-detalhe npc-cabecalho-detalhe">
+          <span class="codigo-pokemon" data-npc-code>#000</span>
+          <h2 id="npc-estadio-detalhe-nome" data-npc-name>NPC</h2>
+          <div class="pokemon-tags" data-npc-tags></div>
+        </div>
+      </div>
+
+      <section class="painel-detalhe item-info-painel">
+        <h3>Informações</h3>
+        <dl class="pokemon-info-lista" data-npc-info></dl>
+      </section>
+
+      <section class="painel-detalhe item-info-painel dungeon-pokemon-painel" data-npc-team-panel hidden>
+        <h3>Equipe Pokémon</h3>
+        <div class="dungeon-pokemon-grid" data-npc-team></div>
+      </section>
+    </article>
+  </aside>
+
+  <aside class="pokemon-detalhe dungeon-pokemon-detalhe estadio-pokemon-detalhe" data-estadio-pokemon-detail hidden aria-live="polite">
+    <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
+    <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-estadio-detalhe-nome">
+      <div class="pokemon-controles-detalhe" aria-label="Navegação do Pokémon aberto">
+        <button class="pokemon-navegar" type="button" data-pokemon-prev aria-label="Pokémon anterior">‹</button>
+        <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
+        <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
+      </div>
+
+      <div class="pokemon-detalhe-topo">
+        <div class="pokemon-palco-detalhe">
+          <div class="pokemon-brilho-detalhe"></div>
+          <img data-detail-image alt="" loading="lazy" decoding="async" />
+          <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
+        </div>
+
+        <div class="pokemon-cabecalho-detalhe">
+          <span class="codigo-pokemon" data-detail-code>#000</span>
+          <h2 id="pokemon-estadio-detalhe-nome" data-detail-name>Pokémon</h2>
+          <div class="pokemon-tags" data-detail-tags></div>
+          <p data-detail-summary hidden></p>
+        </div>
+      </div>
+
+      <div class="pokemon-detalhe-grid">
+        <section class="painel-detalhe">
+          <h3>Atributos básicos</h3>
+          <div class="barras-atributos" data-detail-stats></div>
+        </section>
+
+        <section class="painel-detalhe">
+          <h3>Informações</h3>
+          <dl class="pokemon-info-lista" data-detail-info></dl>
+        </section>
+      </div>
+
+      <section class="painel-detalhe painel-linhagem" data-detail-line-panel>
+        <div class="painel-titulo-linha">
+          <h3>Linhagem / evoluções</h3>
+          <span data-detail-line-count></span>
+        </div>
+        <div class="linhagem-lista" data-detail-line></div>
+      </section>
+    </article>
+  </aside>
+
+  <script id="estadios-data" type="application/json" set:html={payloadEstadios}></script>
+  <script id="estadios-pokedex-data" type="application/json" set:html={payloadPokedex}></script>
+  <script>
+    import { inicializarWikiEstadios } from "../../Codigo/EstadiosRuntime.js";
+    inicializarWikiEstadios();
+  </script>
 </Layout>

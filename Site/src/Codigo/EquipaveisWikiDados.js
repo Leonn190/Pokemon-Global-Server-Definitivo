@@ -1,4 +1,4 @@
-import { campo, campoNumero, carregarCsvWiki, limparTexto, numero } from "./WikiCsv.js";
+import { campo, campoNumero, carregarCsvWiki, limparTexto } from "./WikiCsv.js";
 import { normalizarChave } from "./PokemonWikiDados.js";
 
 const NOMES_CSV = ["Pokemon Global Server - Equipaveis.csv", "Pokemon Global Server - Equipáveis.csv"];
@@ -28,6 +28,13 @@ export const FOCOS_EQUIPAVEIS = [
   { chave: "suporte", campos: ["Suporte"], rotulo: "Suporte" },
   { chave: "utilitario", campos: ["Utilitario", "Utilitário"], rotulo: "Utilitário" },
 ];
+
+const ATRIBUTOS_POR_CHAVE = Object.fromEntries(
+  ATRIBUTOS_EQUIPAVEIS.flatMap((atributo) => [
+    [normalizarChave(atributo.chave), atributo],
+    [normalizarChave(atributo.rotulo), atributo],
+  ]),
+);
 
 const TIPOS_CANONICOS = {
   agua: "Água",
@@ -62,6 +69,11 @@ function tipoCanonico(valor) {
   return TIPOS_CANONICOS[chave] ?? (texto ? texto.replace(/^./, (letra) => letra.toUpperCase()) : "Sem afinidade");
 }
 
+function atributoCanonico(valor) {
+  const chave = normalizarChave(valor);
+  return ATRIBUTOS_POR_CHAVE[chave] ?? null;
+}
+
 function separarAfinidades(valor) {
   const lista = limparTexto(valor)
     .split(/[/;,|]+/g)
@@ -70,7 +82,24 @@ function separarAfinidades(valor) {
   return lista.length ? [...new Map(lista.map((item) => [normalizarChave(item), item])).values()] : ["Sem afinidade"];
 }
 
-function valorAtributo(linha, atributo) {
+function numeroAumento(linha, indice) {
+  return campoNumero(linha, [`Aumento ${indice}`, `Valor ${indice}`, `Bonus ${indice}`, `Bônus ${indice}`], 0) ?? 0;
+}
+
+function aumentosPorParesStatus(linha) {
+  const mapa = new Map();
+  for (let i = 1; i <= 8; i += 1) {
+    const atributo = atributoCanonico(campo(linha, [`Status ${i}`, `Atributo ${i}`], ""));
+    const valor = numeroAumento(linha, i);
+    if (!atributo || valor === 0) continue;
+    const atual = mapa.get(atributo.chave) ?? { ...atributo, valor: 0 };
+    atual.valor += valor;
+    mapa.set(atributo.chave, atual);
+  }
+  return mapa;
+}
+
+function valorAtributoDireto(linha, atributo) {
   return campoNumero(linha, [
     atributo.chave,
     atributo.rotulo,
@@ -79,6 +108,20 @@ function valorAtributo(linha, atributo) {
     `Aumento ${atributo.chave}`,
     `Aumento ${atributo.rotulo}`,
   ], 0) ?? 0;
+}
+
+function coletarAumentos(linha) {
+  const porPares = aumentosPorParesStatus(linha);
+
+  ATRIBUTOS_EQUIPAVEIS.forEach((atributo) => {
+    const direto = valorAtributoDireto(linha, atributo);
+    if (!direto) return;
+    const atual = porPares.get(atributo.chave) ?? { ...atributo, valor: 0 };
+    atual.valor += direto;
+    porPares.set(atributo.chave, atual);
+  });
+
+  return [...porPares.values()].filter((atributo) => atributo.valor !== 0);
 }
 
 function calcularFoco(linha) {
@@ -96,10 +139,11 @@ function normalizarEquipavel(linha, indice) {
   const code = campoNumero(linha, ["Code", "Código", "ID", "Id"], indice + 1) ?? indice + 1;
   const afinidades = separarAfinidades(campo(linha, ["Afinidade", "Tipo", "Elemento"], ""));
   const afinidade = afinidades.join(" / ");
-  const atributos = Object.fromEntries(ATRIBUTOS_EQUIPAVEIS.map((atributo) => [atributo.chave, valorAtributo(linha, atributo)]));
-  const aumentos = ATRIBUTOS_EQUIPAVEIS
-    .map((atributo) => ({ ...atributo, valor: atributos[atributo.chave] ?? 0 }))
-    .filter((atributo) => atributo.valor !== 0);
+  const aumentos = coletarAumentos(linha);
+  const atributos = Object.fromEntries(ATRIBUTOS_EQUIPAVEIS.map((atributo) => [atributo.chave, 0]));
+  aumentos.forEach((atributo) => {
+    atributos[atributo.chave] = atributo.valor;
+  });
   const maiorAumento = aumentos.reduce((maior, atual) => (Math.abs(atual.valor) > Math.abs(maior?.valor ?? 0) ? atual : maior), null);
   const foco = calcularFoco(linha);
   const descricao = limparTexto(campo(linha, ["Descrição", "Descricao", "Descrição Melhor", "Descricao Melhor", "Desc"], ""));
@@ -112,16 +156,17 @@ function normalizarEquipavel(linha, indice) {
     code,
     nome,
     slug: normalizarChave(nome),
-    busca: normalizarChave(`${nome} ${code} ${afinidade} ${descricao} ${passiva} ${formaFinal}`),
-    descricao: descricao || "Descrição ainda não cadastrada.",
+    busca: normalizarChave(`${nome} ${code} ${afinidade} ${descricao} ${passiva} ${formaFinal} ${aumentos.map((item) => item.rotulo).join(" ")}`),
+    descricao: descricao && descricao !== "-" ? descricao : "Descrição ainda não cadastrada.",
     afinidade,
     afinidades,
     afinidadeBusca: normalizarChave(afinidades[0]),
     afinidadesBusca: afinidades.map(normalizarChave),
     atributos,
     aumentos,
-    atributosBusca: aumentos.map((atributo) => normalizarChave(atributo.chave)),
+    atributosBusca: aumentos.flatMap((atributo) => [atributo.chave, normalizarChave(atributo.chave), atributo.rotulo, normalizarChave(atributo.rotulo)]),
     maiorAumento: maiorAumento?.chave ?? "",
+    maiorAumentoRotulo: maiorAumento?.rotulo ?? "",
     maiorAumentoValor: maiorAumento?.valor ?? 0,
     focoPrincipal: foco.principal?.rotulo ?? "Sem foco definido",
     focoPrincipalBusca: foco.principal?.chave ?? "",

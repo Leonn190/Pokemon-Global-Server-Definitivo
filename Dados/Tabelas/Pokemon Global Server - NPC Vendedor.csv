@@ -1,36 +1,36 @@
-Nome,Nivel,Categoria,Skin,Item 1,Preço 1,Item 2,Preço 2,Item 3,Preço 3,Item 4,Preço 4,Item 5,Preço 5,Item 6,Preço 6,Item S1,Preço S1,Item S2,Preço S2,Code
-Josefa,3,Moedas,4,,,,,,,,,,,,,,,,,1
-Hans,6,Moedas,6,,,,,,,,,,,,,,,,,2
-Marina,9,Moedas,14,,,,,,,,,,,,,,,,,3
-Kleber,12,Moedas,13,,,,,,,,,,,,,,,,,4
-Danilo,15,Moedas,22,,,,,,,,,,,,,,,,,5
-Bruno,19,Moedas,15,,,,,,,,,,,,,,,,,6
-Vanessa,23,Moedas,7,,,,,,,,,,,,,,,,,7
-Tatiana,27,Moedas,8,,,,,,,,,,,,,,,,,8
-Lia,31,Moedas,18,,,,,,,,,,,,,,,,,9
-Mortis,36,Moedas,33,,,,,,,,,,,,,,,,,10
-Michel,41,Moedas,12,,,,,,,,,,,,,,,,,11
-Helena,47,Moedas,66,,,,,,,,,,,,,,,,,12
-Rubiano,54,Moedas,92,,,,,,,,,,,,,,,,,13
-Selena,62,Moedas,73,,,,,,,,,,,,,,,,,14
-Ravena,70,Moedas,45,,,,,,,,,,,,,,,,,15
-Olavo,78,Moedas,27,,,,,,,,,,,,,,,,,16
-Clarice,82,Moedas,31,,,,,,,,,,,,,,,,,17
-Nicolas,85,Moedas,52,,,,,,,,,,,,,,,,,18
-Mirela,88,Moedas,61,,,,,,,,,,,,,,,,,19
-Edward Newgate,93,Moedas,80,,,,,,,,,,,,,,,,,20
-Osvaldo,5,Item,9,,,,,,,,,,,,,,,,,21
-Cecília,12,Item,16,,,,,,,,,,,,,,,,,22
-Ramon,20,Item,24,,,,,,,,,,,,,,,,,23
-Bianca,29,Item,29,,,,,,,,,,,,,,,,,24
-Valter,38,Item,36,,,,,,,,,,,,,,,,,25
-Samira,48,Item,41,,,,,,,,,,,,,,,,,26
-Igor,59,Item,48,,,,,,,,,,,,,,,,,27
-Priscila,70,Item,57,,,,,,,,,,,,,,,,,28
-Dário,80,Item,69,,,,,,,,,,,,,,,,,29
-Estela,82,Item,77,,,,,,,,,,,,,,,,,30
-Baltazar,18,Pokemon,83,,,,,,,,,,,,,,,,,31
-Nair Sombria,34,Pokemon,88,,,,,,,,,,,,,,,,,32
-Vlad,52,Pokemon,91,,,,,,,,,,,,,,,,,33
-Carmen Noctis,70,Pokemon,95,,,,,,,,,,,,,,,,,34
-Morigan,90,Pokemon,99,,,,,,,,,,,,,,,,,35
+Nome,Nivel,Categoria,Skin,Code
+Josefa,3,Moedas,4,61
+Hans,6,Moedas,6,62
+Marina,9,Moedas,14,63
+Kleber,12,Moedas,13,64
+Danilo,15,Moedas,22,65
+Bruno,19,Moedas,15,66
+Vanessa,23,Moedas,7,67
+Tatiana,27,Moedas,8,68
+Lia,31,Moedas,18,69
+Mortis,36,Moedas,33,70
+Michel,41,Moedas,12,71
+Helena,47,Moedas,66,72
+Rubiano,54,Moedas,92,73
+Selena,62,Moedas,73,74
+Ravena,70,Moedas,45,75
+Olavo,78,Moedas,27,76
+Clarice,82,Moedas,31,77
+Nicolas,85,Moedas,52,78
+Mirela,88,Moedas,61,79
+Edward Newgate,93,Moedas,80,80
+Osvaldo,5,Item,9,81
+Cecília,12,Item,16,82
+Ramon,20,Item,24,83
+Bianca,29,Item,29,84
+Valter,38,Item,36,85
+Samira,48,Item,41,86
+Igor,59,Item,48,87
+Priscila,70,Item,57,88
+Dário,80,Item,69,89
+Estela,82,Item,77,90
+Baltazar,18,Pokemon,83,91
+Nair Sombria,34,Pokemon,88,92
+Vlad,52,Pokemon,91,93
+Carmen Noctis,70,Pokemon,95,94
+Morigan,90,Pokemon,99,95

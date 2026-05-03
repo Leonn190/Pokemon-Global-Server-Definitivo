@@ -44,6 +44,25 @@ function tipoIcone(tipo, dados, classe = "tipo-bola pequena") {
   return `<span class="${classe}"><b>${html(String(tipo || "?").slice(0, 1).toUpperCase())}</b></span>`;
 }
 
+
+function focoBarrasHtml(item) {
+  const focos = [
+    ["Ofensivo", item.ofensivo],
+    ["Defensivo", item.defensivo],
+    ["Suporte", item.suporte],
+    ["Utilitário", item.utilitario],
+  ];
+  return `<div class="foco-barras">${focos.map(([rotulo, valor]) => {
+    const numero = Math.max(0, Math.min(100, Number(valor) || 0));
+    return `
+      <div class="foco-barra">
+        <div class="foco-barra-topo"><span>${html(rotulo)}</span><strong>${formatarNumero(numero)}</strong></div>
+        <div class="foco-barra-trilho"><span style="width: ${numero}%"></span></div>
+      </div>
+    `;
+  }).join("")}</div>`;
+}
+
 function criarCardAtaque(ataque, dados) {
   const asset = assetAtaque(ataque, dados);
   const card = document.createElement("button");
@@ -93,6 +112,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const descricao = detalhe.querySelector("[data-ataque-description]");
     const aprimoramento = detalhe.querySelector("[data-ataque-upgrade]");
     const info = detalhe.querySelector("[data-ataque-info]");
+    const focos = detalhe.querySelector("[data-ataque-focus-bars]");
 
     if (codigo) codigo.textContent = `#${ataque.id}`;
     if (nome) nome.textContent = ataque.nome;
@@ -119,6 +139,8 @@ function criarControladorDetalhe(dados, obterListaAtual) {
 
     if (descricao) descricao.textContent = ataque.descricao || "Descrição ainda não cadastrada.";
     if (aprimoramento) aprimoramento.textContent = ataque.aprimoramento || "Aprimoramento ainda não cadastrado.";
+
+    if (focos) focos.innerHTML = focoBarrasHtml(ataque);
 
     if (info) {
       const linhas = [

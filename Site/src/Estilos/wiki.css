@@ -2365,3 +2365,145 @@ body.detalhe-aberto {
 .pokedex-topo .pokedex-resumo.resumo-tres {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+
+/* Ajustes Wiki: barras de foco, NPCs e Estádios */
+.foco-barras {
+  display: grid;
+  gap: 12px;
+}
+
+.foco-barra {
+  display: grid;
+  gap: 6px;
+}
+
+.foco-barra-topo {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--texto-fraco);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.foco-barra-topo strong {
+  color: var(--amarelo);
+}
+
+.foco-barra-trilho {
+  overflow: hidden;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.foco-barra-trilho span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(16, 135, 255, 0.9), rgba(255, 217, 52, 0.95));
+  box-shadow: 0 0 16px rgba(255, 217, 52, 0.2);
+}
+
+.npcs-toolbar {
+  grid-template-columns: minmax(240px, 1.6fr) repeat(4, minmax(128px, 1fr));
+}
+
+.npcs-grid,
+.estadios-grid,
+.estadio-membros-grid {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+}
+
+.npc-card-arte img,
+.estadio-card-arte img,
+.npc-palco-detalhe img,
+.estadio-palco-detalhe img {
+  image-rendering: auto;
+}
+
+.npc-card .item-card-meta,
+.estadio-card .item-card-meta {
+  min-height: 20px;
+}
+
+.npc-card-combatente {
+  border-color: rgba(255, 217, 52, 0.2);
+}
+
+.npc-card-vendedor {
+  border-color: rgba(16, 135, 255, 0.22);
+}
+
+.estadios-intro {
+  width: min(var(--largura), calc(100% - 36px));
+  margin: 0 auto 22px;
+}
+
+.estadios-layout {
+  width: min(var(--largura), calc(100% - 36px));
+  margin: 0 auto;
+}
+
+.estadio-card {
+  min-height: 210px;
+}
+
+.estadio-card .item-card-nome {
+  margin-top: 6px;
+}
+
+.estadio-membros-painel {
+  margin-top: 18px;
+}
+
+.estadio-membros-bloco {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.estadio-membros-bloco:first-child {
+  margin-top: 0;
+}
+
+.estadio-membros-bloco h3 {
+  margin: 0;
+  color: var(--amarelo);
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+}
+
+.estadio-npc-detalhe {
+  z-index: 150;
+}
+
+.estadio-pokemon-detalhe {
+  z-index: 160;
+}
+
+.wiki-cards-dez {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1180px) {
+  .npcs-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .npcs-toolbar .campo-busca {
+    grid-column: 1 / -1;
+  }
+
+  .wiki-cards-dez {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .npcs-toolbar,
+  .wiki-cards-dez {
+    grid-template-columns: 1fr;
+  }
+}

@@ -52,6 +52,25 @@ function afinidadeHtml(equipavel, dados) {
   return `${tipoIcone(primeira, dados)}${html(equipavel.afinidade)}`;
 }
 
+
+function focoBarrasHtml(item) {
+  const focos = [
+    ["Ofensivo", item.ofensivo],
+    ["Defensivo", item.defensivo],
+    ["Suporte", item.suporte],
+    ["Utilitário", item.utilitario],
+  ];
+  return `<div class="foco-barras">${focos.map(([rotulo, valor]) => {
+    const numero = Math.max(0, Math.min(100, Number(valor) || 0));
+    return `
+      <div class="foco-barra">
+        <div class="foco-barra-topo"><span>${html(rotulo)}</span><strong>${formatarNumero(numero)}</strong></div>
+        <div class="foco-barra-trilho"><span style="width: ${numero}%"></span></div>
+      </div>
+    `;
+  }).join("")}</div>`;
+}
+
 function atributoIcone(atributo, dados) {
   const src = dados.iconesAtributos?.[normalizar(atributo.chave)] || dados.iconesAtributos?.[normalizar(atributo.rotulo)];
   return src ? `<img src="${src}" alt="" loading="lazy" decoding="async" />` : "";
@@ -105,6 +124,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const tags = detalhe.querySelector("[data-equipavel-tags]");
     const descricao = detalhe.querySelector("[data-equipavel-description]");
     const atributos = detalhe.querySelector("[data-equipavel-attributes]");
+    const focos = detalhe.querySelector("[data-equipavel-focus-bars]");
     const info = detalhe.querySelector("[data-equipavel-info]");
 
     if (codigo) codigo.textContent = `#${equipavel.id}`;
@@ -142,11 +162,13 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       }
     }
 
+    if (focos) focos.innerHTML = focoBarrasHtml(equipavel);
+
     if (info) {
       const linhas = [
         ["Afinidade", equipavel.afinidade],
         ["Foco", equipavel.focoPrincipal],
-        ["Maior aumento", equipavel.maiorAumento ? `${equipavel.maiorAumento} ${formatarNumero(equipavel.maiorAumentoValor)}` : "-"],
+        ["Maior aumento", equipavel.maiorAumento ? `${equipavel.maiorAumentoRotulo || equipavel.maiorAumento} ${formatarNumero(equipavel.maiorAumentoValor)}` : "-"],
         ["Passiva", equipavel.passiva || "-"],
         ["Forma final", equipavel.formaFinal || "-"],
       ];

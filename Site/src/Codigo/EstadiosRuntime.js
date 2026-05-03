@@ -1,0 +1,187 @@
+import { criarCardNpc, criarControladorDetalheNpc } from "./NpcsRuntime.js";
+import { criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
+
+function lerJson(id) {
+  const node = document.getElementById(id);
+  if (!node) return null;
+  try {
+    return JSON.parse(node.textContent || "{}");
+  } catch (erro) {
+    console.error(`[Wiki Estádios] Não consegui ler os dados de ${id}.`, erro);
+    return null;
+  }
+}
+
+function html(valor) {
+  return String(valor ?? "").replace(/[&<>'"]/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#039;",
+    '"': "&quot;",
+  })[char]);
+}
+
+function assetEstadio(estadio, dados) {
+  return dados.assetsEstadios?.[estadio.id] ?? { imagem: null };
+}
+
+function criarCardEstadio(estadio, dados) {
+  const asset = assetEstadio(estadio, dados);
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "item-card estadio-card";
+  card.dataset.estadioId = estadio.id;
+  card.innerHTML = `
+    <span class="item-card-codigo">#${html(estadio.id)}</span>
+    <span class="item-card-arte estadio-card-arte">
+      ${asset.imagem ? `<img src="${asset.imagem}" alt="${html(estadio.nome)}" loading="lazy" decoding="async" />` : `<span class="item-card-sem-arte">${html(estadio.nomeTipo.slice(0, 1))}</span>`}
+    </span>
+    <span class="item-card-nome">${html(estadio.nome)}</span>
+  `;
+  return card;
+}
+
+function agruparMembros(estadio, dados) {
+  const porId = Object.fromEntries((dados.npcs || []).map((npc) => [npc.id, npc]));
+  const membros = (estadio.membrosIds || []).map((id) => porId[id]).filter(Boolean);
+  const grupos = [
+    ["Líder", membros.filter((npc) => npc.cargoBusca === "lider")],
+    ["Capitão", membros.filter((npc) => npc.cargoBusca === "capitao")],
+    ["Desafiante", membros.filter((npc) => npc.cargoBusca === "desafiante")],
+    ["Associados", membros.filter((npc) => !["lider", "capitao", "desafiante"].includes(npc.cargoBusca))],
+  ];
+  return grupos.filter(([, lista]) => lista.length);
+}
+
+function criarControladorEstadio(dados, obterListaAtual, npcController) {
+  const detalhe = document.querySelector("[data-estadio-detail]");
+  let estadioAberto = null;
+
+  function listaNavegacao() {
+    const listaAtual = typeof obterListaAtual === "function" ? obterListaAtual() : null;
+    const lista = Array.isArray(listaAtual) && listaAtual.length ? listaAtual : (dados.estadios || []);
+    return [...lista].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+  }
+
+  function abrirVizinho(direcao) {
+    if (!estadioAberto) return;
+    const lista = listaNavegacao();
+    if (!lista.length) return;
+    const indiceAtual = lista.findIndex((item) => String(item.id) === String(estadioAberto.id));
+    const indiceSeguro = indiceAtual === -1 ? 0 : indiceAtual;
+    const proximo = lista[(indiceSeguro + direcao + lista.length) % lista.length];
+    if (proximo) abrirDetalhe(proximo.id);
+  }
+
+  function abrirDetalhe(id) {
+    const estadio = (dados.estadios || []).find((item) => item.id === String(id));
+    if (!estadio || !detalhe) return;
+    estadioAberto = estadio;
+    const asset = assetEstadio(estadio, dados);
+    const imagem = detalhe.querySelector("[data-estadio-image]");
+    const codigo = detalhe.querySelector("[data-estadio-code]");
+    const nome = detalhe.querySelector("[data-estadio-name]");
+    const tags = detalhe.querySelector("[data-estadio-tags]");
+    const membros = detalhe.querySelector("[data-estadio-members]");
+
+    if (codigo) codigo.textContent = `#${estadio.id}`;
+    if (nome) nome.textContent = estadio.nome;
+    if (tags) {
+      tags.innerHTML = `
+        <span class="tag-extra">Tipo ${html(estadio.nomeTipo)}</span>
+        <span class="tag-extra">${html(estadio.membrosQuantidade)} associados</span>
+      `;
+    }
+
+    if (imagem) {
+      if (asset.imagem) {
+        imagem.hidden = false;
+        imagem.src = asset.imagem;
+        imagem.alt = estadio.nome;
+      } else {
+        imagem.hidden = true;
+        imagem.removeAttribute("src");
+      }
+    }
+
+    if (membros) {
+      membros.replaceChildren();
+      const grupos = agruparMembros(estadio, dados);
+      if (!grupos.length) {
+        membros.innerHTML = `<p class="wiki-vazio-texto">Nenhum membro cadastrado.</p>`;
+      } else {
+        grupos.forEach(([cargo, lista]) => {
+          const bloco = document.createElement("section");
+          bloco.className = "estadio-membros-bloco";
+          bloco.innerHTML = `<h3>${html(cargo)}</h3><div class="itens-grid npcs-grid estadio-membros-grid"></div>`;
+          const grid = bloco.querySelector(".estadio-membros-grid");
+          lista.forEach((npc) => grid.appendChild(criarCardNpc(npc, dados, "estadio")));
+          membros.appendChild(bloco);
+        });
+      }
+    }
+
+    detalhe.hidden = false;
+    document.body.classList.add("detalhe-aberto");
+  }
+
+  function fecharDetalhe() {
+    if (detalhe) detalhe.hidden = true;
+    document.body.classList.remove("detalhe-aberto");
+  }
+
+  detalhe?.querySelectorAll("[data-estadio-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
+  detalhe?.querySelectorAll("[data-estadio-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));
+  detalhe?.querySelectorAll("[data-estadio-close]").forEach((botao) => botao.addEventListener("click", fecharDetalhe));
+  detalhe?.addEventListener("click", (evento) => {
+    const card = evento.target.closest("[data-npc-id]");
+    if (!card) return;
+    npcController.abrirDetalhe(card.dataset.npcId);
+  });
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape" && detalhe && !detalhe.hidden) fecharDetalhe();
+  });
+
+  return { abrirDetalhe };
+}
+
+export function inicializarWikiEstadios(idDados = "estadios-data") {
+  const dados = lerJson(idDados);
+  const pokedex = lerJson("estadios-pokedex-data");
+  const app = document.querySelector("[data-estadios-app]");
+  if (!dados || !pokedex || !app) return;
+
+  const grid = app.querySelector("[data-estadios-grid]");
+  if (!grid) return;
+
+  const npcController = criarControladorDetalheNpc(dados, pokedex, {
+    seletorDetalhe: "[data-estadio-npc-detail]",
+    obterListaAtual: () => dados.npcs || [],
+  });
+  const pokemonController = criarControladorPokemonDetalhe(pokedex, {
+    seletorDetalhe: "[data-estadio-pokemon-detail]",
+    mostrarLinhagem: true,
+    animarFrames: true,
+  });
+  const estadioController = criarControladorEstadio(dados, () => dados.estadios || [], npcController);
+
+  grid.replaceChildren();
+  (dados.estadios || []).forEach((estadio) => {
+    const card = criarCardEstadio(estadio, dados);
+    card.classList.add("pokemon-card-entrando");
+    grid.appendChild(card);
+  });
+
+  grid.addEventListener("click", (evento) => {
+    const card = evento.target.closest("[data-estadio-id]");
+    if (!card) return;
+    estadioController.abrirDetalhe(card.dataset.estadioId);
+  });
+
+  document.querySelector("[data-estadio-npc-detail]")?.addEventListener("click", (evento) => {
+    const card = evento.target.closest("[data-pokemon-id]");
+    if (!card) return;
+    pokemonController.abrirDetalhe(card.dataset.pokemonId);
+  });
+}

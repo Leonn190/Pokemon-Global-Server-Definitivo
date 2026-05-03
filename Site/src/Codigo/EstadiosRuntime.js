@@ -72,14 +72,18 @@ function criarControladorEstadio(dados, obterListaAtual, npcController) {
       if (!grupos.length) {
         membros.innerHTML = `<p class="wiki-vazio-texto">Nenhum membro cadastrado.</p>`;
       } else {
+        const listaMembros = document.createElement("div");
+        listaMembros.className = "estadio-membros-lista";
         grupos.forEach(([cargo, lista]) => {
-          const bloco = document.createElement("section");
-          bloco.className = "estadio-membros-bloco";
-          bloco.innerHTML = `<h3>${html(cargo)}</h3><div class="itens-grid npcs-grid estadio-membros-grid"></div>`;
-          const grid = bloco.querySelector(".estadio-membros-grid");
-          lista.forEach((npc) => grid.appendChild(criarCardNpc(npc, dados, "estadio")));
-          membros.appendChild(bloco);
+          lista.forEach((npc) => {
+            const item = document.createElement("article");
+            item.className = "estadio-membro-item";
+            item.innerHTML = `<h3>${html(cargo)}</h3>`;
+            item.appendChild(criarCardNpc(npc, dados, "estadio"));
+            listaMembros.appendChild(item);
+          });
         });
+        membros.appendChild(listaMembros);
       }
     }
     detalhe.hidden = false;

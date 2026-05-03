@@ -82,14 +82,14 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
             <option value="vendedor">Vendedor</option>
           </select>
         </label>
-        <label data-npcs-vendor-only hidden>
+        <label>
           <span>Categoria</span>
           <select data-npcs-category>
             <option value="">Todas</option>
             {resumo.categorias.map((categoria) => <option value={normalizarChave(categoria)}>{categoria}</option>)}
           </select>
         </label>
-        <label data-npcs-combat-only hidden>
+        <label>
           <span>Cargo</span>
           <select data-npcs-role>
             <option value="">Todos</option>
@@ -97,7 +97,7 @@ const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, i
           </select>
         </label>
       </section>
-      <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-npcs" data-npcs-type-filters hidden aria-label="Filtro por tipagem de combatentes">
+      <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-npcs" aria-label="Filtro por tipagem de combatentes">
         {resumo.tipagens.map((tipo) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-npcs-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`} aria-pressed="false">
             <span class="tipo-icone-mini">

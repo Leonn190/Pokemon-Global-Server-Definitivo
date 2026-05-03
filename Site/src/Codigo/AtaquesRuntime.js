@@ -1,4 +1,4 @@
-import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetAtaque(ataque, dados) {
   return dados.assetsAtaques?.[ataque.id] ?? { imagem: null };
 }
@@ -10,17 +10,19 @@ function tipoIcone(tipo, dados, classe = "tipo-bola pequena") {
 }
 function focoBarrasHtml(item) {
   const focos = [
-    ["Ofensivo", item.ofensivo],
-    ["Defensivo", item.defensivo],
-    ["Suporte", item.suporte],
-    ["Utilitário", item.utilitario],
+    ["Ofensivo", item.ofensivo, 100],
+    ["Defensivo", item.defensivo, 100],
+    ["Suporte", item.suporte, 100],
+    ["Utilitário", item.utilitario, 100],
+    ["Custo", item.custo, 150],
   ];
-  return `<div class="foco-barras">${focos.map(([rotulo, valor]) => {
-    const numero = Math.max(0, Math.min(100, Number(valor) || 0));
+  return `<div class="foco-barras">${focos.map(([rotulo, valor, maximo]) => {
+    const numero = Math.max(0, Number(valor) || 0);
+    const largura = Math.max(0, Math.min(100, (numero / maximo) * 100));
     return `
       <div class="foco-barra">
         <div class="foco-barra-topo"><span>${html(rotulo)}</span><strong>${formatarNumero(numero)}</strong></div>
-        <div class="foco-barra-trilho"><span style="width: ${numero}%"></span></div>
+        <div class="foco-barra-trilho"><span style="width: ${largura}%"></span></div>
       </div>
     `;
   }).join("")}</div>`;
@@ -69,7 +71,6 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const tags = detalhe.querySelector("[data-ataque-tags]");
     const descricao = detalhe.querySelector("[data-ataque-description]");
     const aprimoramento = detalhe.querySelector("[data-ataque-upgrade]");
-    const info = detalhe.querySelector("[data-ataque-info]");
     const focos = detalhe.querySelector("[data-ataque-focus-bars]");
     if (codigo) codigo.textContent = `#${ataque.id}`;
     if (nome) nome.textContent = ataque.nome;
@@ -78,22 +79,13 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       tags.innerHTML = `
         <span class="tipo-badge">${tipoIcone(ataque.tipo, dados)}${html(ataque.tipo)}</span>
         <span class="tag-extra">${html(ataque.estiloRotulo)}</span>
-        <span class="tag-extra">Custo ${formatarNumero(ataque.custo)}</span>
-        <span class="tag-extra">AP ${formatarNumero(ataque.custoAprimorado)}</span>
       `;
     }
     if (descricao) descricao.textContent = ataque.descricao || "Descrição ainda não cadastrada.";
-    if (aprimoramento) aprimoramento.textContent = ataque.aprimoramento || "Aprimoramento ainda não cadastrado.";
-    if (focos) focos.innerHTML = focoBarrasHtml(ataque);
-    if (info) {
-      const linhas = [
-        ["Estilo", ataque.estiloRotulo],
-        ["Motor", ataque.motorTexto],
-        ["Foco", ataque.focoPrincipal],
-        ["Custo após aprimoramento", formatarNumero(ataque.custoAprimorado)],
-      ];
-      info.innerHTML = infoHtml(linhas);
+    if (aprimoramento) {
+      aprimoramento.innerHTML = `${html(ataque.aprimoramento || "Aprimoramento ainda não cadastrado.")}<span class="custo-aprimoramento">Custo após aprimoramento: ${formatarNumero(ataque.custoAprimorado)}</span>`;
     }
+    if (focos) focos.innerHTML = focoBarrasHtml(ataque);
     detalhe.hidden = false;
     document.body.classList.add("detalhe-aberto");
   }

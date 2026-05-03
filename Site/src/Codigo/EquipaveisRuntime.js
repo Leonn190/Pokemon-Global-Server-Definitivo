@@ -1,4 +1,4 @@
-import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetEquipavel(equipavel, dados) {
   return dados.assetsEquipaveis?.[equipavel.id] ?? { imagem: null };
 }
@@ -79,7 +79,6 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const descricao = detalhe.querySelector("[data-equipavel-description]");
     const atributos = detalhe.querySelector("[data-equipavel-attributes]");
     const focos = detalhe.querySelector("[data-equipavel-focus-bars]");
-    const info = detalhe.querySelector("[data-equipavel-info]");
     if (codigo) codigo.textContent = `#${equipavel.id}`;
     if (nome) nome.textContent = equipavel.nome;
     if (descricao) descricao.textContent = equipavel.descricao || "Descrição ainda não cadastrada.";
@@ -103,16 +102,6 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       }
     }
     if (focos) focos.innerHTML = focoBarrasHtml(equipavel);
-    if (info) {
-      const linhas = [
-        ["Afinidade", equipavel.afinidade],
-        ["Foco", equipavel.focoPrincipal],
-        ["Maior aumento", equipavel.maiorAumento ? `${equipavel.maiorAumentoRotulo || equipavel.maiorAumento} ${formatarNumero(equipavel.maiorAumentoValor)}` : "-"],
-        ["Passiva", equipavel.passiva || "-"],
-        ["Forma final", equipavel.formaFinal || "-"],
-      ];
-      info.innerHTML = infoHtml(linhas);
-    }
     detalhe.hidden = false;
     document.body.classList.add("detalhe-aberto");
   }
@@ -168,7 +157,6 @@ export function inicializarWikiEquipaveis(idDados = "equipaveis-data") {
     const ordenadores = {
       ordem: (a, b) => a.ordem - b.ordem,
       nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }),
-      foco: (a, b) => a.focoPrincipal.localeCompare(b.focoPrincipal, "pt-BR", { numeric: true }),
       atributo: (a, b) => {
         const chave = atributo || "maiorAumento";
         const av = chave === "maiorAumento" ? Math.abs(a.maiorAumentoValor ?? 0) : Math.abs(a.atributos?.[chave] ?? 0);

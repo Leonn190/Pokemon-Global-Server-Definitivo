@@ -55,7 +55,6 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
           <select data-equipaveis-sort>
             <option value="ordem">Ordem oficial</option>
             <option value="nome">Alfabética</option>
-            <option value="foco">Foco</option>
             <option value="atributo">Aumento do atributo</option>
             <option value="ofensivo">Ofensivo</option>
             <option value="defensivo">Defensivo</option>
@@ -67,7 +66,7 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
           <span>Atributo</span>
           <select data-equipaveis-attribute>
             <option value="">Todos</option>
-            {ATRIBUTOS_EQUIPAVEIS.map((atributo) => <option value={atributo.chave}>{atributo.rotulo}</option>)}
+            {ATRIBUTOS_EQUIPAVEIS.filter((atributo) => !["Bar", "Dur", "Amp"].includes(atributo.chave)).map((atributo) => <option value={atributo.chave}>{atributo.rotulo}</option>)}
           </select>
         </label>
         <label>
@@ -79,7 +78,7 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
         </label>
       </section>
       <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-equipaveis" aria-label="Filtros por afinidade. Selecione uma afinidade por vez.">
-        {resumo.afinidades.map((afinidade) => (
+        {resumo.afinidades.filter((afinidade) => normalizarChave(afinidade) !== "semafinidade").map((afinidade) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-equipaveis-type-chip={normalizarChave(afinidade)} title={afinidade} aria-label={`Filtrar por ${afinidade}`} aria-pressed="false">
             <span class="tipo-icone-mini">
               {iconesTipos[normalizarChave(afinidade)] ? <img src={iconesTipos[normalizarChave(afinidade)]} alt="" loading="eager" decoding="async" /> : null}
@@ -133,10 +132,6 @@ const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesT
         <section class="painel-detalhe">
           <h3>Foco</h3>
           <div data-equipavel-focus-bars></div>
-        </section>
-        <section class="painel-detalhe">
-          <h3>Informações</h3>
-          <dl class="pokemon-info-lista" data-equipavel-info></dl>
         </section>
       </div>
     </article>

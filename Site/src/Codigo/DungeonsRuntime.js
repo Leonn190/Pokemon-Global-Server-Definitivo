@@ -3,10 +3,6 @@ import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, 
 function assetDungeon(dungeon, dados) {
   return dados.assetsDungeons?.[dungeon.id] ?? { imagem: null };
 }
-function chips(lista) {
-  if (!lista?.length) return `<span class="tag-extra">-</span>`;
-  return lista.map((item) => `<span class="tag-extra">${html(item)}</span>`).join("");
-}
 function criarCardDungeon(dungeon, dados) {
   const asset = assetDungeon(dungeon, dados);
   const card = document.createElement("button");
@@ -78,20 +74,12 @@ function criarControladorDetalhe(dados, pokedex, obterListaAtual) {
     const imagem = detalhe.querySelector("[data-dungeon-image]");
     const codigo = detalhe.querySelector("[data-dungeon-code]");
     const nome = detalhe.querySelector("[data-dungeon-name]");
-    const tags = detalhe.querySelector("[data-dungeon-tags]");
     const info = detalhe.querySelector("[data-dungeon-info]");
     const pokemons = detalhe.querySelector("[data-dungeon-pokemons]");
     const servos = detalhe.querySelector("[data-dungeon-servos]");
     if (codigo) codigo.textContent = `#${dungeon.id}`;
     if (nome) nome.textContent = dungeon.nome;
     aplicarImagemDetalhe(imagem, asset.imagem, dungeon.nome);
-    if (tags) {
-      tags.innerHTML = `
-        <span class="tag-extra">${html(dungeon.dificuldadeRotulo)}</span>
-        <span class="tag-extra">${html(dungeon.tamanhoRotulo)}</span>
-        ${chips(dungeon.biomas)}
-      `;
-    }
     if (info) {
       const linhas = [
         ["Tamanho", dungeon.tamanhoRotulo],

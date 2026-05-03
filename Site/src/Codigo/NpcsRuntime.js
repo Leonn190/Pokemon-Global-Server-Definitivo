@@ -140,9 +140,6 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
   const filtroTipo = app.querySelector("[data-npcs-kind]");
   const filtroCategoria = app.querySelector("[data-npcs-category]");
   const filtroCargo = app.querySelector("[data-npcs-role]");
-  const vendedorControles = [...app.querySelectorAll("[data-npcs-vendor-control]")];
-  const combatenteControles = [...app.querySelectorAll("[data-npcs-combat-control]")];
-  const tipoArea = app.querySelector("[data-npcs-type-area]");
   const tipoChips = [...app.querySelectorAll("[data-npcs-type-chip]")];
   const contador = app.querySelector("[data-npcs-count]");
   const botaoLimpar = app.querySelector("[data-npcs-clear]");
@@ -157,15 +154,6 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
     animarFrames: true,
   });
   function atualizarControlesCondicionais() {
-    const tipo = filtroTipo?.value ?? "";
-    vendedorControles.forEach((controle) => { controle.hidden = tipo !== "vendedor"; });
-    combatenteControles.forEach((controle) => { controle.hidden = tipo !== "combatente"; });
-    if (tipoArea) tipoArea.hidden = tipo !== "combatente";
-    if (tipo !== "vendedor" && filtroCategoria) filtroCategoria.value = "";
-    if (tipo !== "combatente") {
-      if (filtroCargo) filtroCargo.value = "";
-      tipagemSelecionada = "";
-    }
     tipoChips.forEach((chip) => {
       const ativo = chip.dataset.npcsTypeChip === tipagemSelecionada;
       chip.classList.toggle("ativo", ativo);
@@ -175,9 +163,9 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");
     const tipo = filtroTipo?.value ?? "";
-    const categoria = tipo === "vendedor" ? (filtroCategoria?.value ?? "") : "";
-    const cargo = tipo === "combatente" ? (filtroCargo?.value ?? "") : "";
-    const tipagem = tipo === "combatente" ? tipagemSelecionada : "";
+    const categoria = filtroCategoria?.value ?? "";
+    const cargo = filtroCargo?.value ?? "";
+    const tipagem = tipagemSelecionada;
     const sort = ordenacao?.value ?? "ordem";
     const filtrados = (dados.npcs || []).filter((npc) => {
       if (termo && !npc.busca.includes(termo)) return false;

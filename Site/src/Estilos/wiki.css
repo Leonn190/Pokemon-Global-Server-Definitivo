@@ -696,13 +696,17 @@ body.detalhe-aberto {
 }
 .filtros-tipos-icones {
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 .tipo-chip-icone {
   position: relative;
-  width: 44px;
-  min-height: 44px;
-  padding: 4px;
+  width: 45px;
+  min-height: 45px;
+  padding: 3px;
   justify-content: center;
   border-radius: 999px;
 }
@@ -730,8 +734,8 @@ body.detalhe-aberto {
   background: #fff;
 }
 .tipo-icone-mini {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
 }
 .tipo-icone {
   width: 31px;
@@ -944,9 +948,9 @@ body.detalhe-aberto {
 }
 .filtros-tipos-icones {
   display: grid;
-  grid-template-columns: repeat(20, 44px);
+  grid-template-columns: repeat(20, 45px);
   justify-content: center;
-  gap: 8px;
+  gap: 5px;
   margin: 16px 0 18px;
 }
 .pokedex-grid {
@@ -1040,7 +1044,7 @@ body.detalhe-aberto {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   .filtros-tipos-icones {
-    grid-template-columns: repeat(10, 44px);
+    grid-template-columns: repeat(10, 45px);
   }
 }
 @media (max-width: 680px) {
@@ -1052,7 +1056,7 @@ body.detalhe-aberto {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .filtros-tipos-icones {
-    grid-template-columns: repeat(5, 44px);
+    grid-template-columns: repeat(5, 45px);
   }
 }
 /* Ajustes da wiki v4 */
@@ -1083,12 +1087,12 @@ body.detalhe-aberto {
   border-radius: 14px;
 }
 .filtros-tipos-icones {
-  grid-template-columns: repeat(20, 46px);
-  gap: 7px;
+  grid-template-columns: repeat(20, 45px);
+  gap: 5px;
 }
 .tipo-chip-icone {
-  width: 46px;
-  min-height: 46px;
+  width: 45px;
+  min-height: 45px;
 }
 .tipo-icone-mini {
   width: 35px;
@@ -1279,6 +1283,13 @@ body.detalhe-aberto {
   border-color: color-mix(in srgb, var(--raridade-cor) 42%, rgba(255, 255, 255, 0.12));
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.24), 0 0 26px color-mix(in srgb, var(--raridade-cor) 14%, transparent);
 }
+
+.item-card:is(.raridade-comum,.raridade-incomum,.raridade-raro,.raridade-epico,.raridade-lendario,.raridade-mitico):is(:hover,:focus-visible) {
+  transform: translateY(-4px);
+  border-color: rgba(255, 217, 52, 0.42);
+  box-shadow: 0 24px 62px rgba(0, 0, 0, 0.34), 0 0 32px rgba(16, 135, 255, 0.12);
+}
+
 .raridade-pill.raridade-comum,
 .raridade-pill.raridade-incomum,
 .raridade-pill.raridade-raro,
@@ -1291,7 +1302,7 @@ body.detalhe-aberto {
   box-shadow: 0 0 18px color-mix(in srgb, var(--raridade-cor) 20%, transparent);
 }
 .item-detalhe-card {
-  width: min(900px, 100%);
+  width: min(1040px, 100%);
 }
 .item-palco-detalhe img {
   position: relative;
@@ -1304,7 +1315,7 @@ body.detalhe-aberto {
   filter: drop-shadow(0 24px 26px rgba(0, 0, 0, 0.48));
 }
 .item-descricao-melhor {
-  max-width: 620px;
+  max-width: 760px;
   margin-top: 16px;
   color: var(--texto-fraco);
   font-size: 1rem;
@@ -1315,7 +1326,7 @@ body.detalhe-aberto {
 }
 @media (max-width: 1180px) {
   .filtros-tipos-icones {
-    grid-template-columns: repeat(10, 46px);
+    grid-template-columns: repeat(10, 45px);
   }
   .itens-toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1334,7 +1345,7 @@ body.detalhe-aberto {
     grid-template-columns: 1fr;
   }
   .filtros-tipos-icones {
-    grid-template-columns: repeat(5, 46px);
+    grid-template-columns: repeat(5, 45px);
   }
   .pokedex-acoes-status {
     justify-content: flex-start;
@@ -1995,6 +2006,46 @@ body.detalhe-aberto {
   color: var(--texto-fraco);
   line-height: 1.55;
 }
+
+.equipavel-palco-detalhe img {
+  max-width: min(270px, 82%);
+  max-height: min(270px, 82%);
+}
+.ataque-foco-painel {
+  margin-top: 18px;
+}
+.custo-aprimoramento {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 14px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 217, 52, 0.28);
+  border-radius: 14px;
+  color: var(--amarelo);
+  background: rgba(255, 217, 52, 0.08);
+  font-weight: 950;
+}
+.estadio-membros-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+}
+.estadio-membro-item {
+  display: grid;
+  gap: 10px;
+  width: 168px;
+}
+.estadio-membro-item h3 {
+  margin: 0;
+  color: var(--amarelo);
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+.estadio-membro-item .npc-card {
+  width: 100%;
+}
+
 @media (max-width: 1180px) {
   .equipaveis-toolbar,
   .dungeons-toolbar {
@@ -2090,20 +2141,6 @@ body.detalhe-aberto {
 .estadio-membros-painel {
   margin-top: 18px;
 }
-.estadio-membros-bloco {
-  display: grid;
-  gap: 12px;
-  margin-top: 18px;
-}
-.estadio-membros-bloco:first-child {
-  margin-top: 0;
-}
-.estadio-membros-bloco h3 {
-  margin: 0;
-  color: var(--amarelo);
-  font-size: 1rem;
-  letter-spacing: 0.03em;
-}
 .estadio-npc-detalhe {
   z-index: 150;
 }
@@ -2111,7 +2148,7 @@ body.detalhe-aberto {
   z-index: 160;
 }
 .wiki-cards-dez {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 @media (max-width: 1180px) {
   .npcs-toolbar {
@@ -2130,14 +2167,14 @@ body.detalhe-aberto {
     grid-template-columns: 1fr;
   }
 }
-/* Padronização das wikis: topo limpo + menu 12 wikis em 2 linhas. */
+/* Padronização das wikis: topo limpo + menu 12 wikis em 3 linhas. */
 .wiki-topo-simples {
   display: block;
   margin-bottom: 24px;
 }
 .wiki-topo-simples .wiki-menu-topo {
   width: 100%;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
 }
 .wiki-topo-simples .wiki-menu-topo a {

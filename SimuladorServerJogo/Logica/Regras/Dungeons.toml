@@ -1,0 +1,7 @@
+tamanho_bloco_sala_tiles = 30
+coracoes_iniciais = 3
+coracoes_maximos = 3
+tamanho_1_blocos = 4
+tamanho_2_blocos = 5
+tamanho_3_blocos = 6
+raio_interacao_porta = 2.0

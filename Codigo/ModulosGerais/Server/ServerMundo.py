@@ -266,3 +266,15 @@ def atualizar_mapa_mundo(ip, client_id, posicao_camera, conhecidos=None):
         "dados": dados,
     }
     return _processar_rota_local(processar_ativador_json, pacote, "Falha ao interpretar resposta de mapa delta")
+
+
+def enviar_evento_interacao_dungeon_mundo(ip, client_id, payload):
+    dados = dict(payload or {})
+    diff = {"tipo": "evento", "categoria": "interacao_dungeon", "payload": {
+        "acao": str(dados.get("acao") or "entrar"),
+        "estrutura_id": int(dados.get("estrutura_id", dados.get("pedra_id", 0)) or 0),
+        "dungeon_code": str(dados.get("dungeon_code") or ""),
+        "porta_idx": int(dados.get("porta_idx", 1) or 1),
+        "pos_player": list(dados.get("pos_player") or [0.0, 0.0]),
+    }}
+    return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pygame
+from Codigo.Geradores.Porta import renderizar as renderizar_porta
 
 
 class GeradorEstadio:
@@ -307,69 +308,11 @@ class EstadioInterno:
                 border_radius=max(8, px(0.16)),
             )
 
-        porta_w = max(px(1.7), 34)
-        porta_h = max(px(2.4), 52)
-
-        porta_externa = pygame.Rect(0, 0, porta_w, porta_h)
-        porta_externa.midbottom = (px_porta, py_porta)
-
-        pygame.draw.rect(
-            tela,
-            cor_porta_moldura,
-            porta_externa,
-            border_radius=max(8, px(0.16)),
-        )
-
-        # Arco da porta
-        arco = pygame.Rect(
-            porta_externa.left - px(0.15),
-            porta_externa.top - px(0.75),
-            porta_externa.width + px(0.3),
-            max(px(1.0), int(porta_externa.height * 0.62)),
-        )
-        pygame.draw.ellipse(tela, cor_porta_arco, arco)
-        pygame.draw.ellipse(tela, cor_porta_moldura, arco, max(2, px(0.07)))
-
-        # Centro luminoso
-        porta_interna = porta_externa.inflate(-px(0.42), -px(0.42))
-        pygame.draw.rect(
-            tela,
-            cor_porta_luz,
-            porta_interna,
-            border_radius=max(6, px(0.12)),
-        )
-
-        brilho = porta_interna.inflate(-px(0.45), -px(0.55))
-        if brilho.width > 4 and brilho.height > 4:
-            pygame.draw.rect(
-                tela,
-                cor_porta_luz_2,
-                brilho,
-                border_radius=max(4, px(0.08)),
-            )
-
-        # Faixa superior da porta
-        faixa_topo = pygame.Rect(
-            porta_externa.left - px(0.25),
-            porta_externa.top - px(0.22),
-            porta_externa.width + px(0.5),
-            max(6, px(0.24)),
-        )
-        pygame.draw.rect(
-            tela,
-            (88, 100, 124),
-            faixa_topo,
-            border_radius=max(4, px(0.08)),
-        )
-
-        # Luzes pequenas laterais
-        luz_r = max(3, px(0.10))
-        pygame.draw.circle(tela, (255, 214, 95), (porta_externa.left + px(0.22), porta_externa.top + px(0.34)), luz_r)
-        pygame.draw.circle(tela, (255, 214, 95), (porta_externa.right - px(0.22), porta_externa.top + px(0.34)), luz_r)
+        renderizar_porta(tela, camera, (porta[0], porta[1]), modo="estadio", px_porta=px_porta, py_porta=py_porta)
 
         # Corredor da porta até a arena
         corredor_top = arena.bottom - px(0.2)
-        corredor_bottom = min(py_porta - px(0.55), arco.top - px(0.08))
+        corredor_bottom = py_porta - px(0.55)
         if corredor_bottom > corredor_top:
             corredor_w = max(px(2.0), int(arena.width * 0.16))
             corredor = pygame.Rect(0, 0, corredor_w, corredor_bottom - corredor_top)

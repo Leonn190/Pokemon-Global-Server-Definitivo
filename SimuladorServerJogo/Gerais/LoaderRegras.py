@@ -457,3 +457,17 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
         },
         "batalha": dict(regras_batalha),
     }
+
+
+def carregar_regras_dungeons() -> Dict[str, object]:
+    base = {
+        "tamanho_bloco_sala_tiles": 30,
+        "coracoes_iniciais": 3,
+        "coracoes_maximos": 3,
+        "tamanho_1_blocos": 4,
+        "tamanho_2_blocos": 5,
+        "tamanho_3_blocos": 6,
+        "raio_interacao_porta": 2.0,
+    }
+    base.update(_ler_toml("Dungeons.toml"))
+    return base

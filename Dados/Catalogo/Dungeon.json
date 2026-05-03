@@ -1,0 +1,12 @@
+{
+  "salas": {
+    "entrada": {
+      "id": "entrada",
+      "nome": "Sala de Entrada",
+      "largura_blocos": 1,
+      "altura_blocos": 1,
+      "tipo": "entrada",
+      "descricao": "Sala inicial isolada da dungeon. Possui apenas a porta de saída para o mundo."
+    }
+  }
+}

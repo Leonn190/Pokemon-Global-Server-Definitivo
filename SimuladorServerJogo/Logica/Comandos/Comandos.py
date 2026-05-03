@@ -215,8 +215,8 @@ _AJUDA_COMANDOS = {
         ],
     },
     "locate": {
-        "uso": "/locate nome (nomes compostos com _)",
-        "descricao": "Retorna coordenadas de NPCs e estádios por nome.",
+        "uso": "/locate nome | /locate dungeon <code>",
+        "descricao": "Retorna coordenadas por nome e também portas de dungeon por code.",
         "detalhes": [
             "nome: nome exato (case-insensitive), como Edward_Newgate, Josefa ou EstadioPlanta.",
             "Nomes compostos devem usar _ no lugar de espaço.",
@@ -467,7 +467,23 @@ def _cmd_tp(autor, args):
 def _cmd_locate(args):
     _, livres = _split_args(args)
     if not livres:
-        return "Erro no /locate. Ordem base: /locate nome (nomes compostos com _)"
+        return "Erro no /locate. Ordem base: /locate nome | /locate dungeon <code>"
+    if len(livres) >= 2 and str(livres[0]).lower() == "dungeon":
+        code = str(livres[1]).strip().lower()
+        portas = []
+        nome = code
+        for obj in BANCO_DADOS.listar_objetos():
+            estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+            if str(estado.get("subtipo") or "").lower() != "dungeon":
+                continue
+            if str(estado.get("dungeon_code") or "").strip().lower() != code:
+                continue
+            nome = str(estado.get("dungeon_nome") or nome)
+            portas.append((int(estado.get("porta_idx", len(portas)+1) or len(portas)+1), int(obj.posicao[0]), int(obj.posicao[1])))
+        if not portas:
+            return f"Dungeon não encontrada: {code}"
+        portas.sort(key=lambda x: x[0])
+        return f"Dungeon {nome}: " + ", ".join([f"porta {i} em ({x},{y})" for i,x,y in portas])
     nome_raw = " ".join(livres).strip()
     destinos = _buscar_locais_por_nome(nome_raw)
     if not destinos:

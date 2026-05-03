@@ -526,6 +526,16 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 else:
                     ignorados += 1
                 continue
+            if categoria == "interacao_dungeon":
+                if _processar_evento_interacao_dungeon(client_id, payload):
+                    obj_id_player = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+                    obj_player = BANCO_DADOS.obter_objeto(obj_id_player) if obj_id_player > 0 else None
+                    if obj_player is not None:
+                        registrar_diff("update", payload=obj_player.serializar(), escopo=_escopo_objeto(obj_player), objeto_id=int(obj_player.Id), autor="server", categoria="player")
+                    aplicados += 1
+                else:
+                    ignorados += 1
+                continue
             if categoria == "npc_interacao_inicio":
                 npc_id = int(payload.get("npc_id", 0) or 0)
                 ok, _ = CEREBRO.registrar_inicio_interacao_npc(client_id, npc_id)
@@ -644,3 +654,10 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
         servidor_ts=time.time(),
         meta={"tempo_mundo": CEREBRO.obter_snapshot_tempo()},
     )
+
+
+def _processar_evento_interacao_dungeon(client_id: str, payload: Dict[str, object]) -> bool:
+    acao = str(payload.get("acao") or "entrar").strip().lower()
+    if acao == "sair":
+        return bool(CEREBRO._cerebro_dungeons.sair_dungeon(client_id))
+    return bool(CEREBRO._cerebro_dungeons.entrar_dungeon(client_id, int(payload.get("pedra_id", payload.get("estrutura_id", 0)) or 0), int(payload.get("porta_idx", 1) or 1), str(payload.get("dungeon_code") or "")))

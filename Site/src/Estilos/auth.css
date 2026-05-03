@@ -480,47 +480,11 @@
   background: rgba(255, 255, 255, 0.055);
   font-weight: 800;
 }
-.contato-hero {
-  grid-template-columns: minmax(0, 0.8fr) minmax(360px, 1.2fr);
-}
 .painel-contato {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.48fr);
   gap: 18px;
   align-items: start;
-  background:
-    radial-gradient(circle at 24% 18%, rgba(16, 135, 255, 0.16), transparent 20rem),
-    rgba(5, 11, 32, 0.78);
-}
-.cartao-email {
-  display: grid;
-  gap: 10px;
-  padding: 20px;
-  border: 1px solid rgba(255, 217, 52, 0.23);
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 80% 20%, rgba(255, 217, 52, 0.13), transparent 14rem),
-    rgba(255, 255, 255, 0.055);
-}
-.cartao-email span {
-  color: var(--texto-fraco);
-  font-weight: 800;
-}
-.cartao-email strong {
-  overflow-wrap: anywhere;
-  color: var(--amarelo);
-  font-size: 1.15rem;
-}
-.cartao-email p {
-  margin: 0;
-  color: var(--texto-fraco);
-  line-height: 1.55;
-}
-.cards-contato {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  padding-top: 20px;
+  background: radial-gradient(circle at 24% 18%, rgba(16, 135, 255, 0.16), transparent 20rem), rgba(5, 11, 32, 0.78);
 }
 @media (max-width: 1040px) {
   .grade-acesso,
@@ -561,3 +525,9 @@
     grid-template-columns: 1fr;
   }
 }
+.contato-generico { grid-template-columns: 1fr; min-height: calc(100vh - 220px); }
+.contato-generico .painel-contato { width: min(860px, 100%); margin: 0 auto; padding: clamp(24px, 4vw, 42px); }
+.contato-generico h1 { margin: 0; font-family: "Exo 2", Arial, Helvetica, sans-serif; font-size: clamp(2.4rem, 5vw, 4.8rem); line-height: 0.98; letter-spacing: -0.055em; }
+.form-conta select { width: 100%; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 18px; padding: 15px 16px; color: var(--texto); background: rgba(255, 255, 255, 0.06); outline: none; font: inherit; }
+.form-conta select:focus { border-color: rgba(255, 217, 52, 0.52); box-shadow: 0 0 0 4px rgba(255, 217, 52, 0.11); }
+.form-conta select option { color: #071531; }

@@ -214,27 +214,13 @@ function configurarContato() {
     evento.preventDefault();
     const dados = new FormData(form);
     const email = normalizarEmail(dados.get("email"));
-    const nome = normalizarTexto(dados.get("nome"));
-    const textoLivre = normalizarTexto(dados.get("mensagem"));
-    const assunto = "Solicitação de token beta - Pokémon Global Server";
-    const corpo = [
-      "Olá, Pokémon Global Server.",
-      "",
-      "Quero solicitar avaliação para receber um token de acesso ao beta fechado.",
-      "",
-      `Gmail para contato: ${email}`,
-      nome ? `Nome/apelido: ${nome}` : "Nome/apelido: não informado",
-      "",
-      textoLivre || "Mensagem: Quero participar do beta fechado quando possível.",
-    ].join("\n");
-    const url = new URL("https://mail.google.com/mail/");
-    url.searchParams.set("view", "cm");
-    url.searchParams.set("fs", "1");
-    url.searchParams.set("to", "pokemonglobalserver@gmail.com");
-    url.searchParams.set("su", assunto);
-    url.searchParams.set("body", corpo);
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
-    definirMensagem(mensagem, "Gmail aberto com a mensagem preenchida. Revise e envie manualmente.", "ok");
+    const motivo = normalizarTexto(dados.get("motivo"));
+    if (!email.endsWith("@gmail.com")) {
+      definirMensagem(mensagem, "Use um Gmail válido para receber a resposta.", "erro");
+      return;
+    }
+    form.reset();
+    definirMensagem(mensagem, `Contato enviado como ${motivo || "Outros"}. Aguarde o retorno pelo Gmail informado.`, "ok");
   });
 }
 window.addEventListener("scroll", atualizarTopbar, { passive: true });

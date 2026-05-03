@@ -120,7 +120,10 @@ export function criarListagemPaginada(opcoes) {
     const fragmento = document.createDocumentFragment();
     estado.resultadoAtual.slice(inicio, fim).forEach((item) => {
       const card = criarCard(item);
-      if (classeEntrada) card.classList.add(classeEntrada);
+      if (classeEntrada) {
+        card.classList.add(classeEntrada);
+        card.addEventListener("animationend", () => card.classList.remove(classeEntrada), { once: true });
+      }
       fragmento.appendChild(card);
     });
     grid.appendChild(fragmento);

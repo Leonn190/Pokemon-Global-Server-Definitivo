@@ -431,11 +431,41 @@ export function inicializarCarrosselHome(idDados = "pokemon-home-data") {
     mostrarLinhagem: false,
     animarFrames: false,
   });
+  let ponteiro = null;
+  let cardAtivo = null;
+  let raf = 0;
+  function atualizarHover() {
+    raf = 0;
+    if (!ponteiro) return;
+    const elemento = document.elementFromPoint(ponteiro.x, ponteiro.y);
+    const card = elemento?.closest?.("[data-home-pokemon-id]");
+    const proximo = card && carrossel.contains(card) ? card : null;
+    if (cardAtivo !== proximo) {
+      cardAtivo?.classList.remove("carrossel-hover");
+      cardAtivo = proximo;
+      cardAtivo?.classList.add("carrossel-hover");
+    }
+    raf = requestAnimationFrame(atualizarHover);
+  }
+  function iniciarHover(evento) {
+    ponteiro = { x: evento.clientX, y: evento.clientY };
+    if (!raf) raf = requestAnimationFrame(atualizarHover);
+  }
+  function limparHover() {
+    ponteiro = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    cardAtivo?.classList.remove("carrossel-hover");
+    cardAtivo = null;
+  }
+  carrossel.addEventListener("pointermove", iniciarHover);
+  carrossel.addEventListener("pointerleave", limparHover);
   carrossel.addEventListener("click", (evento) => {
     const card = evento.target.closest("[data-home-pokemon-id]");
     if (!card) return;
     detalheController.abrirDetalhe(card.dataset.homePokemonId);
     carrossel.classList.add("pausado");
+    limparHover();
   });
   document.addEventListener("pokemon-detail-closed", () => {
     carrossel.classList.remove("pausado");

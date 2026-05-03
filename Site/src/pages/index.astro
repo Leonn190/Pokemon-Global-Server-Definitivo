@@ -23,40 +23,6 @@ const estatisticas = [
   { valor: "63", rotulo: "Equipáveis" },
   { valor: "20", rotulo: "Tipos no sistema" },
 ];
-const pilares = [
-  {
-    etiqueta: "Exploração",
-    titulo: "Mundo aberto vivo",
-    texto:
-      "Um mapa procedural de 10.000 x 10.000 blocos, dividido em chunks, com biomas, estruturas, vilas, baús, NPCs, rotas e pontos de interesse para descobrir.",
-  },
-  {
-    etiqueta: "Combate",
-    titulo: "Arena tática com decisão real",
-    texto:
-      "O combate sai do automático: ações planejadas, energia, atributos, efeitos, clima, tipos, posicionamento, logs e animações dos acontecimentos no cliente.",
-  },
-  {
-    etiqueta: "Progressão",
-    titulo: "Loot, captura, craft e evolução",
-    texto:
-      "O jogador explora, encontra criaturas, coleta recursos, captura Pokémon, evolui a equipe, usa equipamentos e transforma materiais em itens úteis.",
-  },
-  {
-    etiqueta: "Arquitetura",
-    titulo: "Servidor cuidando das regras",
-    texto:
-      "Por trás da tela, o cliente mostra o jogo e o servidor simulado segura a lógica: mundo, spawns, inventário, batalhas, validações e persistência.",
-  },
-];
-const tecnologias = [
-  "Python e Pygame",
-  "Pipeline 2D próprio",
-  "Integração inicial com ModernGL",
-  "Dados em CSV, JSON e TOML",
-  "Servidor com tick de mundo",
-  "Mapa explorável com cache por chunks",
-];
 const imagensPokemonsHome = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
   eager: true,
   query: "?url",
@@ -199,6 +165,21 @@ const payloadHomePokemon = JSON.stringify({
       <Botao href="/wiki/pokemons">Abrir Pokédex</Botao>
     </div>
   </section>
+
+  <section class="secao instalar-home" aria-labelledby="titulo-instalar">
+    <div class="instalar-card">
+      <p class="selo selo-azul">Como instalar</p>
+      <h2 id="titulo-instalar">Acesso beta com token</h2>
+      <p>
+        O jogo ainda está em fase beta. Para instalar, primeiro crie uma conta do Pokémon Global Server. O acesso ainda é exclusivo para quem possui token; você pode pedir um token entrando em contato com o projeto.
+      </p>
+      <div class="acoes instalar-acoes">
+        <Botao href="/contato">Pedir token</Botao>
+        <Botao href="/conta" tipo="secundario">Criar conta</Botao>
+        <Botao href="/download" tipo="fantasma">Fazer download</Botao>
+      </div>
+    </div>
+  </section>
   <aside class="pokemon-detalhe" data-home-pokemon-detail hidden aria-live="polite">
     <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
     <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-home-detalhe-nome">
@@ -239,64 +220,6 @@ const payloadHomePokemon = JSON.stringify({
       </section>
     </article>
   </aside>
-  <section class="secao grade-pilares" aria-label="Principais sistemas do jogo">
-    {pilares.map((pilar) => (
-      <article class="pilar-card">
-        <span>{pilar.etiqueta}</span>
-        <h2>{pilar.titulo}</h2>
-        <p>{pilar.texto}</p>
-      </article>
-    ))}
-  </section>
-  <section class="secao destaque-tecnico" aria-labelledby="titulo-tecnico">
-    <div class="painel-tecnico">
-      <p class="selo">Por trás do jogo</p>
-      <h2 id="titulo-tecnico">Não é só uma tela bonita: tem sistema segurando tudo</h2>
-      <p>
-        O projeto separa cliente, servidor simulado, dados, regras, cenas, HUD, mapa, batalha e persistência. A base foi pensada para crescer sem virar um amontoado de código hardcoded.
-      </p>
-      <div class="chips-tecnicos">
-        {tecnologias.map((tecnologia) => <span>{tecnologia}</span>)}
-      </div>
-    </div>
-    <div class="painel-lateral">
-      <h3>O que deixa o projeto mais ambicioso</h3>
-      <ul class="lista-destaques">
-        <li>Mundo carregado por chunks, sem tentar enfiar o mapa inteiro na tela.</li>
-        <li>Mapa explorável com áreas ocultas, cache e descoberta progressiva.</li>
-        <li>Ataques, itens, efeitos, receitas e regras fora do código duro, em tabelas e arquivos de configuração.</li>
-        <li>Combate resolvido pelo servidor e reproduzido no cliente com logs e animações.</li>
-      </ul>
-    </div>
-  </section>
-  <section class="secao jornada-home" aria-labelledby="titulo-jornada">
-    <div class="cabecalho-home compacto">
-      <p class="selo">Loop do jogo</p>
-      <h2 id="titulo-jornada">Explorar, crescer e entrar na arena</h2>
-    </div>
-    <div class="trilha-jogo">
-      <article>
-        <strong>01</strong>
-        <h3>Explorar</h3>
-        <p>O jogador cruza biomas, abre o mapa aos poucos, encontra NPCs, baús, estruturas e áreas especiais.</p>
-      </article>
-      <article>
-        <strong>02</strong>
-        <h3>Coletar e evoluir</h3>
-        <p>Capturas, recursos, itens, equipamentos e receitas fazem a equipe ficar cada vez mais forte.</p>
-      </article>
-      <article>
-        <strong>03</strong>
-        <h3>Planejar ações</h3>
-        <p>Antes da rodada, o jogador escolhe ataques, movimentos, trocas, alvos e como gastar energia.</p>
-      </article>
-      <article>
-        <strong>04</strong>
-        <h3>Assistir aos logs</h3>
-        <p>O servidor resolve tudo e o cliente transforma os resultados em animações, efeitos e HUD.</p>
-      </article>
-    </div>
-  </section>
   <section class="aviso-legal">
     <strong>Projeto independente e educacional.</strong>
     <p>

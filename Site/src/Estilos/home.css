@@ -10,9 +10,6 @@ body:has(.hero-home) .pagina {
   margin-inline: 0;
 }
 body:has(.hero-home) .secao-conteudo,
-body:has(.hero-home) .grade-pilares,
-body:has(.hero-home) .destaque-tecnico,
-body:has(.hero-home) .jornada-home,
 body:has(.hero-home) .aviso-legal {
   width: min(var(--largura), calc(100% - 36px));
   margin-left: auto;
@@ -326,15 +323,13 @@ body:has(.hero-home) .aviso-legal {
 .cabecalho-home.compacto {
   margin-bottom: 20px;
 }
-.cabecalho-home h2,
-.destaque-tecnico h2 {
+.cabecalho-home h2 {
   margin: 0;
   font-size: clamp(2rem, 4.6vw, 4.6rem);
   line-height: 0.98;
   letter-spacing: -0.06em;
 }
-.cabecalho-home p:not(.selo),
-.destaque-tecnico p {
+.cabecalho-home p:not(.selo) {
   margin: 0;
   color: var(--texto-fraco);
   font-size: 1.06rem;
@@ -388,148 +383,7 @@ body:has(.hero-home) .aviso-legal {
   color: var(--texto-fraco);
   line-height: 1.35;
 }
-.grade-pilares {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-.pilar-card,
-.painel-tecnico,
-.painel-lateral,
-.trilha-jogo article,
-.aviso-legal {
-  border: 1px solid var(--borda);
-  background: var(--vidro);
-  box-shadow: var(--sombra);
-  backdrop-filter: blur(16px);
-}
-.pilar-card {
-  position: relative;
-  overflow: hidden;
-  min-height: 310px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 24px;
-  border-radius: 30px;
-}
-.pilar-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 25% 18%, rgba(16, 135, 255, 0.22), transparent 34%),
-    radial-gradient(circle at 86% 86%, rgba(255, 54, 79, 0.18), transparent 34%);
-  opacity: 0.8;
-}
-.pilar-card > * {
-  position: relative;
-  z-index: 1;
-}
-.pilar-card span,
-.trilha-jogo strong {
-  width: fit-content;
-  padding: 7px 10px;
-  border-radius: 999px;
-  color: var(--amarelo);
-  border: 1px solid rgba(255, 217, 52, 0.28);
-  background: rgba(255, 217, 52, 0.07);
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.pilar-card h2 {
-  margin: 22px 0 10px;
-  font-size: clamp(1.55rem, 2.2vw, 2.1rem);
-  line-height: 1.04;
-  letter-spacing: -0.04em;
-}
-.pilar-card p,
-.lista-destaques,
-.trilha-jogo p,
-.aviso-legal p {
-  margin: 0;
-  color: var(--texto-fraco);
-  line-height: 1.62;
-}
-.destaque-tecnico {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
-  gap: 18px;
-}
-.painel-tecnico,
-.painel-lateral {
-  border-radius: 34px;
-  padding: clamp(24px, 4vw, 42px);
-}
-.painel-tecnico {
-  background:
-    linear-gradient(135deg, rgba(16, 135, 255, 0.18), rgba(255, 54, 79, 0.12)),
-    var(--vidro);
-}
-.painel-tecnico h2 {
-  max-width: 760px;
-  margin: 16px 0;
-}
-.chips-tecnicos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 26px;
-}
-.chips-tecnicos span {
-  padding: 10px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 999px;
-  color: var(--texto);
-  background: rgba(255, 255, 255, 0.07);
-  font-weight: 700;
-}
-.painel-lateral h3 {
-  margin: 0 0 16px;
-  font-size: 1.7rem;
-  letter-spacing: -0.03em;
-}
-.lista-destaques {
-  display: grid;
-  gap: 14px;
-  padding-left: 20px;
-}
-.lista-destaques li::marker {
-  color: var(--amarelo);
-}
-.trilha-jogo {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-.trilha-jogo article {
-  min-height: 230px;
-  display: grid;
-  align-content: start;
-  gap: 14px;
-  padding: 24px;
-  border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)),
-    var(--vidro);
-}
-.trilha-jogo h3 {
-  margin: 0;
-  font-size: 1.45rem;
-}
-.aviso-legal {
-  margin: 20px 0 72px;
-  padding: 20px 22px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.055);
-}
-.aviso-legal strong {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--texto);
-}
+
 @keyframes flutuar-logo {
   0%, 100% { transform: translateY(0) rotateX(0deg) scale(1); }
   50% { transform: translateY(-10px) rotateX(2deg) scale(1.018); }
@@ -556,11 +410,6 @@ body:has(.hero-home) .aviso-legal {
   .estatisticas-home {
     grid-template-columns: repeat(3, 1fr);
   }
-  .grade-pilares,
-  .trilha-jogo {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .destaque-tecnico,
   .intro-home {
     grid-template-columns: 1fr;
   }
@@ -586,14 +435,8 @@ body:has(.hero-home) .aviso-legal {
     letter-spacing: 0.01em;
   }
   .estatisticas-home,
-  .grade-pilares,
-  .trilha-jogo,
   .mini-destaques {
     grid-template-columns: 1fr;
-  }
-  .pilar-card,
-  .trilha-jogo article {
-    min-height: auto;
   }
 }
 @media (max-width: 430px) {
@@ -647,12 +490,21 @@ body:has(.hero-home) {
 }
 .hero-copy {
   width: min(1520px, calc(100vw - 36px));
+  justify-content: center;
+  justify-items: center;
+}
+.hero-copy > * {
+  justify-self: center;
 }
 .hero-copy h1 {
   width: fit-content;
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
+}
+.subtitulo-home {
+  width: min(840px, 100%);
+  text-align: center;
 }
 @media (max-width: 1180px) {
   .hero-copy h1 {
@@ -949,3 +801,22 @@ body.detalhe-aberto .pokemon-carrossel-trilho {
     white-space: normal;
   }
 }
+.pokemon-carrossel-trilho .pokemon-card-home:hover:not(.carrossel-hover) {
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.24);
+}
+.pokemon-carrossel-trilho .pokemon-card-home.carrossel-hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 217, 52, 0.42);
+  box-shadow: 0 24px 62px rgba(0, 0, 0, 0.34), 0 0 32px rgba(16, 135, 255, 0.12);
+}
+.instalar-home { padding-top: clamp(28px, 5vw, 62px); }
+.instalar-card {
+  display: grid; justify-items: center; gap: 16px; max-width: 980px; margin: 0 auto; padding: clamp(24px, 4vw, 42px); text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 30px;
+  background: radial-gradient(circle at 18% 20%, rgba(16, 135, 255, 0.18), transparent 20rem), radial-gradient(circle at 86% 18%, rgba(255, 217, 52, 0.12), transparent 18rem), rgba(5, 11, 32, 0.78); box-shadow: var(--sombra);
+}
+.instalar-card h2 { margin: 0; font-family: "Exo 2", Arial, Helvetica, sans-serif; font-size: clamp(2.2rem, 5vw, 4.8rem); line-height: 0.98; letter-spacing: -0.055em; }
+.instalar-card p:not(.selo) { max-width: 760px; margin: 0; color: var(--texto-fraco); font-size: 1.08rem; line-height: 1.65; }
+.instalar-acoes { justify-content: center; }

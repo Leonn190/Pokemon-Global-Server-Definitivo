@@ -171,7 +171,7 @@ TOPAZ = 0.0012
 [biomes.SNOW]
 base_tile = "SNOW"
 coast_tile = "SNOW"
-weight = 0.69
+weight = 0.67
 temperature_min = 0.0
 temperature_max = 0.33
 moisture_min = 0.0

@@ -710,6 +710,35 @@ final class GeneratorContext {
                 }
                 writer.write("\n");
             }
+            writer.write("  ],\n");
+
+            writer.write("  \"dungeons\": [\n");
+            List<Poi> dungeons = new ArrayList<>();
+            for (Poi poi : pois) {
+                if (poi.type == PoiType.DUNGEON) {
+                    dungeons.add(poi);
+                }
+            }
+            for (int i = 0; i < dungeons.size(); i++) {
+                Poi poi = dungeons.get(i);
+                String anotado = poi.name == null ? "25,0" : poi.name;
+                int dungeonCode = 0;
+                int virgula = anotado.indexOf(',');
+                if (virgula >= 0 && virgula + 1 < anotado.length()) {
+                    try {
+                        dungeonCode = Integer.parseInt(anotado.substring(virgula + 1).trim());
+                    } catch (NumberFormatException ignored) {}
+                }
+                writer.write("    {\"id\": \"" + escapeJson(anotado) + "\""
+                    + ", \"base_id\": 25"
+                    + ", \"dungeon_code\": " + dungeonCode
+                    + ", \"regiao_id\": " + poi.regionId
+                    + ", \"posicao\": [" + poi.x + ", " + poi.y + "]}");
+                if (i < dungeons.size() - 1) {
+                    writer.write(",");
+                }
+                writer.write("\n");
+            }
             writer.write("  ]\n");
             writer.write("}\n");
         }
@@ -730,7 +759,7 @@ final class GeneratorContext {
     int poiCode(PoiType type) {
         return switch (type) {
             case GYM -> 101;
-            case DUNGEON -> 102;
+            case DUNGEON -> 25;
             case VILLAGE -> 103;
         };
     }

@@ -3,52 +3,28 @@ import Layout from "../Componentes/Layout.astro";
 import Botao from "../Componentes/Botao.astro";
 import "../Estilos/auth.css";
 ---
-<Layout titulo="Download | Pokémon Global Server" descricao="Área de download beta, requisitos e acesso logado do Pokémon Global Server.">
+<Layout titulo="Download | Pokémon Global Server" descricao="Download e requisitos do Pokémon Global Server.">
   <section class="secao download-hero" data-download-page>
-    <div class="download-copy">
-      <p class="selo">Beta fechado</p>
-      <h1>Download do Pokémon Global Server</h1>
-      <p>
-        O jogo ainda não tem instalador final, mas a página já respeita o fluxo correto: visitante vê o acesso bloqueado, usuário logado vê a área liberada e o aviso de publicação futura.
-      </p>
-      <div class="download-metricas" aria-label="Informações rápidas do download">
-        <article>
-          <strong>~1 GB</strong>
-          <span>Tamanho estimado</span>
-        </article>
-        <article>
-          <strong>Windows</strong>
-          <span>Foco inicial</span>
-        </article>
-        <article>
-          <strong>Beta</strong>
-          <span>Acesso com conta</span>
-        </article>
-      </div>
-    </div>
     <aside class="painel download-gate" aria-live="polite">
-      <div class="gate-icone" data-download-icon>🔒</div>
-      <p class="selo selo-azul" data-download-badge>Acesso protegido</p>
-      <h2 data-download-title>Entre para liberar o download</h2>
-      <p data-download-text>
-        O botão de download real só aparece para uma sessão logada. Entre com a conta de teste na aba Conta.
+      <div class="gate-icone">🔒</div>
+      <p class="selo selo-azul">Download protegido</p>
+      <h1>Acesso bloqueado</h1>
+      <p>
+        O download é liberado para treinadores com conta ativa e token autorizado. Entre na sua conta ou crie seu acesso para continuar.
       </p>
-      <div class="acoes" data-download-actions>
-        <Botao href="/conta">Entrar na conta</Botao>
-        <Botao href="/contato" tipo="secundario">Pedir token</Botao>
+      <div class="acoes">
+        <Botao href="/conta">Entrar</Botao>
+        <Botao href="/conta" tipo="secundario">Criar conta</Botao>
+        <Botao href="/contato" tipo="fantasma">Pedir token</Botao>
       </div>
-      <button class="botao principal botao-download-real" type="button" data-download-real hidden>
-        Instalador ainda não publicado
-      </button>
     </aside>
   </section>
+
   <section class="secao requisitos" aria-labelledby="titulo-requisitos">
     <div class="cabecalho-secao compacto-auth">
-      <p class="selo">Requisitos provisórios</p>
-      <h2 id="titulo-requisitos">Feito para rodar leve, mas com margem para o mundo crescer</h2>
-      <p class="texto-fraco">
-        Estes requisitos são estimados para o beta atual. Eles devem ser revisados quando existir instalador, launcher e testes em máquinas diferentes.
-      </p>
+      <p class="selo">Requisitos</p>
+      <h2 id="titulo-requisitos">Preparado para rodar leve, com margem para o mundo crescer</h2>
+      <p class="texto-fraco">Use estas configurações como base para jogar com estabilidade durante o beta.</p>
     </div>
     <div class="grade-requisitos">
       <article class="painel requisito-card minimo">
@@ -77,23 +53,6 @@ import "../Estilos/auth.css";
           <li><strong>Tela:</strong> 1920 x 1080 recomendado</li>
         </ul>
       </article>
-    </div>
-  </section>
-  <section class="secao notas-download" aria-labelledby="titulo-notas-download">
-    <div class="painel painel-download-info">
-      <div>
-        <p class="selo">Antes de baixar</p>
-        <h2 id="titulo-notas-download">O que ainda falta para o download real</h2>
-        <p>
-          Esta página já está preparada para receber um link de instalador, launcher ou build compactada. No momento, o botão fica bloqueado mesmo para usuário logado porque o instalador final ainda não existe.
-        </p>
-      </div>
-      <div class="checklist-download">
-        <span>✓ Bloqueio por login no front-end</span>
-        <span>✓ Estado local de sessão</span>
-        <span>✓ Requisitos mínimos e recomendados</span>
-        <span>• Falta instalador/launcher real</span>
-      </div>
     </div>
   </section>
 </Layout>

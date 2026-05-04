@@ -17,7 +17,7 @@ import unicodedata
 class CenaCombate:
     def PrepararTransicaoAssincrona(self, JOGO) -> None:
         contexto = JOGO.INFO.get("CombateContexto") if isinstance(JOGO.INFO.get("CombateContexto"), dict) else {}
-        if str(contexto.get("tipo") or "confronto").strip().lower() not in {"confronto", "treinador", "trainer"}:
+        if str(contexto.get("tipo") or "confronto").strip().lower() not in {"confronto", "treinador", "trainer", "servo", "boss"}:
             return
         tiles = contexto.get("tiles")
         if isinstance(tiles, list) and tiles:

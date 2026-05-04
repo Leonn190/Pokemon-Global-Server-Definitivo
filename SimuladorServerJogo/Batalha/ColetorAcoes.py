@@ -96,8 +96,9 @@ class ColetorAcoes:
         if tipo != "captura":
             contagem_pokemon[pid] = contagem_pokemon.get(pid, 0) + 1
         out["ordem_pokemon"] = contagem_pokemon.get(pid, 1)
-        if tipo != "captura" and contagem_pokemon[pid] > 2:
-            return self._invalidar(out, "limite_2_acoes_por_pokemon")
+        limite_pokemon = 3 if str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower() == "boss" and int(lado_id) != int(getattr(self.partida, "lado_jogador", 50) or 50) else 2
+        if tipo != "captura" and contagem_pokemon[pid] > limite_pokemon:
+            return self._invalidar(out, "limite_3_acoes_por_pokemon" if limite_pokemon == 3 else "limite_2_acoes_por_pokemon")
         custo = self._calcular_custo(out, pokemon)
         if custo is None:
             return self._invalidar(out, "custo_indefinido")
@@ -143,8 +144,9 @@ class ColetorAcoes:
         return out
 
     def _normalizar_captura(self, out, lado_id):
-        if str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower() != "confronto" or bool(getattr(self.partida, "modo_teste", False)):
-            return self._invalidar(out, "captura_fora_de_confronto")
+        tipo_batalha = str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower()
+        if tipo_batalha != "confronto" or bool(getattr(self.partida, "modo_teste", False)):
+            return self._invalidar(out, "captura_bloqueada_tipo_batalha" if tipo_batalha in {"servo", "boss"} else "captura_fora_de_confronto")
         alvo = out.get("alvo") if isinstance(out.get("alvo"), dict) else {}
         alvo_pokemon = self.partida.obter_pokemon(alvo.get("pokemon_id"))
         if alvo_pokemon is None:

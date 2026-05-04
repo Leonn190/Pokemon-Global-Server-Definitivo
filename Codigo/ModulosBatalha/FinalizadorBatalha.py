@@ -36,10 +36,14 @@ class FinalizadorBatalha:
         self._registrar_resultado_perfil(resultado)
         self.aplicar_persistencia(resultado)
         self._notificar_servidor_finalizacao(resultado)
+        self._notificar_derrota_dungeon(resultado)
         self.abrir_subtela_resultados(resultado)
 
     def finalizar_por_fuga(self):
         ctrl = self.controlador
+        if hasattr(ctrl, "fuga_disponivel") and not ctrl.fuga_disponivel():
+            ctrl.adicionar_log_local("Fuga bloqueada nesta batalha.")
+            return
         perfil = ctrl.perfil_local() if hasattr(ctrl, "perfil_local") else getattr(getattr(ctrl, "ator", None), "Perfil", None)
         if perfil is None:
             jogo = getattr(ctrl, "jogo", None)
@@ -65,7 +69,7 @@ class FinalizadorBatalha:
             return
         vencedor = False if fuga else self._vencedor_visual(resultado) == "jogador"
         tipo = str(getattr(ctrl, "tipo_batalha", "") or "").strip().lower()
-        contra_bot = tipo in {"confronto", "treinador", "trainer", "simulador"}
+        contra_bot = tipo in {"confronto", "treinador", "trainer", "simulador", "servo", "boss"}
         perfil.registrar_batalha(vencedor=vencedor, contra_bot=contra_bot)
         if hasattr(ctrl, "sincronizar_perfil_local"):
             ctrl.sincronizar_perfil_local()
@@ -222,6 +226,27 @@ class FinalizadorBatalha:
             from Codigo.ModulosGerais.Server.ServerMundo import notificar_pokemon_fuga_batalha_mundo
 
             notificar_pokemon_fuga_batalha_mundo(link, client_id, pokemon_id)
+        except Exception:
+            return
+
+    def _notificar_derrota_dungeon(self, resultado):
+        ctrl = self.controlador
+        tipo = str(getattr(ctrl, "tipo_batalha", "") or "").strip().lower()
+        if tipo not in {"servo", "boss"} or self._vencedor_visual(resultado) == "jogador":
+            return
+        jogo = getattr(ctrl, "jogo", None)
+        info = getattr(jogo, "INFO", {}) if jogo is not None else {}
+        contexto = info.get("CombateContexto") if isinstance(info, dict) and isinstance(info.get("CombateContexto"), dict) else {}
+        pokemon_id = _i(contexto.get("pokemon_mundo_id"), 0)
+        server = info.get("ServerSelecionado") if isinstance(info, dict) and isinstance(info.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        client_id = str(info.get("UsuarioLogado", "anon")) if isinstance(info, dict) else "anon"
+        if not link:
+            return
+        try:
+            from Codigo.ModulosGerais.Server.ServerMundo import notificar_derrota_dungeon_batalha_mundo
+
+            notificar_derrota_dungeon_batalha_mundo(link, client_id, pokemon_id)
         except Exception:
             return
 

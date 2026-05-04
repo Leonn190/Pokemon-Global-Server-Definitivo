@@ -64,6 +64,9 @@ class ElementosHudBatalha:
         return None
 
     def _fugir_local(self):
+        if hasattr(self.controlador, "fuga_disponivel") and not self.controlador.fuga_disponivel():
+            self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Fuga bloqueada nesta batalha."})
+            return
         self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Fuga solicitada."})
         self.controlador.iniciar_fuga()
 
@@ -129,15 +132,17 @@ class ElementosHudBatalha:
         self.barra_timer.render(tela, eventos, dt)
 
         self.botao_pronto.render(tela, eventos, dt, None)
-        self.botao_fugir.render(tela, eventos, dt, None)
-        if self._icone_fuga is not None:
-            lado = self.botao_fugir.rect.height - 16
-            icone = pygame.transform.smoothscale(self._icone_fuga, (lado, lado))
-            tela.blit(icone, icone.get_rect(center=self.botao_fugir.rect.center))
-        else:
-            txt = Texto("Fugir", style={"size": 14, "align": "center", "outline": True, "outline_thickness": 2})
-            txt.set_pos(self.botao_fugir.rect.center)
-            txt.draw(tela)
+        fuga_visivel = not hasattr(self.controlador, "fuga_disponivel") or self.controlador.fuga_disponivel()
+        if fuga_visivel:
+            self.botao_fugir.render(tela, eventos, dt, None)
+            if self._icone_fuga is not None:
+                lado = self.botao_fugir.rect.height - 16
+                icone = pygame.transform.smoothscale(self._icone_fuga, (lado, lado))
+                tela.blit(icone, icone.get_rect(center=self.botao_fugir.rect.center))
+            else:
+                txt = Texto("Fugir", style={"size": 14, "align": "center", "outline": True, "outline_thickness": 2})
+                txt.set_pos(self.botao_fugir.rect.center)
+                txt.draw(tela)
 
         if self._icone_pronto is not None:
             lado = self.botao_pronto.rect.height - 16
@@ -152,7 +157,7 @@ class ElementosHudBatalha:
         if self.seletor_captura is not None:
             self.seletor_captura.desenhar(tela)
             rects_captura = [pygame.Rect(r) for r in self.seletor_captura.rects]
-        self._retangulos_fixos = [pygame.Rect(self.botao_pronto.rect), pygame.Rect(self.botao_fugir.rect), *rects_captura]
+        self._retangulos_fixos = [pygame.Rect(self.botao_pronto.rect), *([pygame.Rect(self.botao_fugir.rect)] if fuga_visivel else []), *rects_captura]
 
         pokemon = self.controlador.pokemon_selecionado
         if pokemon is not None or self._ficha_t_visivel > 0.01:

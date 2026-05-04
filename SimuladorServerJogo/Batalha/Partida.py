@@ -10,6 +10,7 @@ from SimuladorServerJogo.Batalha.ColetorAcoes import ColetorAcoes
 from SimuladorServerJogo.Batalha.ConstrutorLog import ConstrutorLog
 from SimuladorServerJogo.Batalha.IDsBatalha import IDsBatalha
 from SimuladorServerJogo.Batalha.ResolvedorFlags import ResolvedorFlags
+from SimuladorServerJogo.Batalha.BatalhaIA.ControladorIABoss import ControladorIABoss
 from SimuladorServerJogo.Batalha.BatalhaIA.ControladorIA import ControladorIA
 from SimuladorServerJogo.Batalha.PokemonBatalha import PokemonBatalha
 from SimuladorServerJogo.Batalha.RodadorTurno import RodadorTurno
@@ -66,7 +67,7 @@ class Partida:
         self.motivo_finalizacao = None
         self.avisos = []
         self.coletor_acoes = ColetorAcoes(self)
-        self.controlador_ia = ControladorIA() if self.batalha_usa_ia() else None
+        self.controlador_ia = self._criar_controlador_ia() if self.batalha_usa_ia() else None
         self.rodador_turno = RodadorTurno(self)
         self.construtor_log = ConstrutorLog(self)
         self._ia_executor = None
@@ -368,13 +369,16 @@ class Partida:
 
     def batalha_usa_ia(self):
         tipo = str(self.tipo_batalha or "").strip().lower()
-        return tipo in {"confronto", "treinador", "trainer"} and not bool(self.modo_teste)
+        return tipo in {"confronto", "treinador", "trainer", "servo", "boss"} and not bool(self.modo_teste)
+
+    def _criar_controlador_ia(self):
+        return ControladorIABoss() if str(self.tipo_batalha or "").strip().lower() == "boss" else ControladorIA()
 
     def _completar_lados_ia(self):
         if not self.batalha_usa_ia():
             return
         if self.controlador_ia is None:
-            self.controlador_ia = ControladorIA()
+            self.controlador_ia = self._criar_controlador_ia()
         for lado in sorted(self._lados_com_pokemon_vivo()):
             if int(lado) == int(self.lado_jogador) or lado in self.jogadas_recebidas:
                 continue
@@ -386,7 +390,7 @@ class Partida:
         if bool(getattr(self, "_desabilitar_thread_ia", False)):
             return
         if self.controlador_ia is None:
-            self.controlador_ia = ControladorIA()
+            self.controlador_ia = self._criar_controlador_ia()
         if self._ia_executor is None:
             self._ia_executor = ThreadPoolExecutor(max_workers=1)
         rodada = int(self.rodada_atual or 1)
@@ -744,6 +748,8 @@ class Partida:
 
     def finalizar(self, motivo=None, lado_id=None):
         motivo = str(motivo or "fim_normal")
+        if motivo == "fuga" and str(self.tipo_batalha or "").strip().lower() in {"servo", "boss"}:
+            return {"status": "erro", "mensagem": "Fuga bloqueada neste tipo de batalha", "id_partida": self.id_partida, "estado_finalizacao": self.estado_partida, "avisos": [], "erros": ["fuga_bloqueada_tipo_batalha"], "resultado": self.gerar_resultado_diff(self.rodada_atual)["resultado"]}
         self.finalizada = True
         self.motivo_finalizacao = motivo
         if motivo == "fuga":

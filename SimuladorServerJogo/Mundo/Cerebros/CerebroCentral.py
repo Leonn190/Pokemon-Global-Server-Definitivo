@@ -190,11 +190,12 @@ class CerebroCentral:
             obj = BANCO_DADOS.obter_objeto(obj_id)
             if isinstance(obj, AtorServer):
                 estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
-                if str(estado.get("dimensao") or "Mundo") == "Mundo":
-                    try:
-                        return (float(obj.posicao[0]), float(obj.posicao[1]))
-                    except Exception:
-                        pass
+                if str(estado.get("dimensao") or "Mundo") != "Mundo":
+                    return None
+                try:
+                    return (float(obj.posicao[0]), float(obj.posicao[1]))
+                except Exception:
+                    pass
         try:
             return (float(fallback[0]), float(fallback[1]))
         except Exception:
@@ -241,6 +242,7 @@ class CerebroCentral:
 
         self._cerebro_pokemons.atualizar_movimento(chunks_carregados)
         from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff
+        self._cerebro_dungeons.executar_tick(chunks_carregados, chunks_simulados, registrar_diff)
         self._cerebro_npcs.executar_tick(chunks_carregados, chunks_simulados, registrar_diff)
         self._cerebro_baus.executar_tick(chunks_simulados)
         self._cerebro_itens_mundo.executar_tick(chunks_carregados, chunks_simulados)

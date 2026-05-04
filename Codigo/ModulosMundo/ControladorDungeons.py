@@ -1,10 +1,13 @@
 from __future__ import annotations
 import pygame
+from Codigo.Geradores.ConstrutorDungeon import salvar_debug_layout
 class ControladorDungeons:
     def __init__(self): self._ultima_dim='Mundo'; self._texto_ate=0; self._texto='Dungeon'
     def atualizar_dimensao(self, dimensao:str, layout:dict|None=None):
         if str(dimensao).startswith('Dungeon') and not str(self._ultima_dim).startswith('Dungeon'):
             self._texto=(layout or {}).get('dungeon_nome','Dungeon'); self._texto_ate=pygame.time.get_ticks()+2400
+        if str(dimensao).startswith("Dungeon") and isinstance(layout, dict):
+            salvar_debug_layout(layout, str(dimensao))
         self._ultima_dim=dimensao
     def renderizar_texto(self, tela):
         if pygame.time.get_ticks()>self._texto_ate: return

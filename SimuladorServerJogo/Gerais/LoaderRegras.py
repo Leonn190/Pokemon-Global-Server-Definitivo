@@ -395,6 +395,7 @@ def carregar_regras_runtime_servidor() -> Dict[str, object]:
         carregar_regras_ciclo(),
         carregar_regras_npcs(),
         carregar_regras_gerais(),
+        carregar_regras_dungeons(),
     ):
         regras.update(bloco)
     return regras
@@ -461,15 +462,25 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
 
 def carregar_regras_dungeons() -> Dict[str, object]:
     base = {
-        "tamanho_bloco_sala_tiles": 30,
-        "largura_bloco_sala_tiles": 40,
-        "altura_bloco_sala_tiles": 30,
+        "tamanho_bloco_sala_tiles": 32,
+        "largura_bloco_sala_tiles": 32,
+        "altura_bloco_sala_tiles": 24,
+        "tile_chao_dungeon": 8,
+        "tile_agua_funda": 0,
         "coracoes_iniciais": 3,
         "coracoes_maximos": 3,
         "tamanho_1_blocos": 4,
         "tamanho_2_blocos": 5,
         "tamanho_3_blocos": 6,
+        "tamanho_4_blocos": 7,
+        "tamanho_5_blocos": 8,
+        "tamanho_6_blocos": 9,
         "raio_interacao_porta": 2.0,
+        "invulnerabilidade_dungeon_ticks": 90,
+        "servo_chance_despawn_por_tick": 0.002,
+        "servo_raio_busca_tiles": 10.0,
+        "servo_velocidade_tiles_s": 2.8,
+        "servo_cooldown_colisao_ticks": 30,
     }
     base.update(_ler_toml("Dungeons.toml"))
     return base

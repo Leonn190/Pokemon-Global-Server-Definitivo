@@ -154,6 +154,8 @@ class CerebroPokemons:
             if not isinstance(poke, PokemonServer):
                 self._core._pokemons_ids.discard(oid)
                 continue
+            if str(poke.estado_extra.get("dimensao") or "Mundo").startswith("Dungeon_") or str(poke.estado_extra.get("comportamento_mundo") or "") in {"servo", "boss"}:
+                continue
             cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
             if cap:
                 liberar_tick = int(cap.get("liberar_movimento_tick", 0) or 0)
@@ -288,6 +290,8 @@ class CerebroPokemons:
             poke = BANCO_DADOS.obter_objeto(oid)
             if not isinstance(poke, PokemonServer):
                 self._core._pokemons_ids.discard(oid); continue
+            if str(poke.estado_extra.get("dimensao") or "Mundo").startswith("Dungeon_") or str(poke.estado_extra.get("comportamento_mundo") or "") in {"servo", "boss"}:
+                continue
             if BANCO_DADOS.chunk_da_posicao(poke.posicao) in chunks_simulados:
                 candidatos_poke.append((oid, poke))
         if candidatos_poke and random.random() < chance_poke:

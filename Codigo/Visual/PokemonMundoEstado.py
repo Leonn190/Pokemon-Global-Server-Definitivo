@@ -8,6 +8,8 @@ import pygame
 class PokemonMundoEstado:
     _CORES = {
         "normal": ((70, 155, 245), (24, 84, 190)),
+        "servo": ((155, 88, 235), (82, 35, 156)),
+        "boss": ((252, 218, 76), (170, 120, 20)),
         "irritado": ((235, 64, 58), (155, 20, 28)),
         "fruta_1": ((255, 166, 206), (210, 94, 160)),
         "fruta_2": ((255, 92, 188), (210, 40, 145)),
@@ -20,6 +22,11 @@ class PokemonMundoEstado:
         self._borda = tuple(self._CORES["normal"][1])
 
     def _estado_alvo(self) -> str:
+        comportamento = str(getattr(self.pokemon, "ComportamentoMundo", "") or "").strip().lower()
+        if bool(getattr(self.pokemon, "Boss", False)) or comportamento == "boss":
+            return "boss"
+        if comportamento == "servo":
+            return "servo"
         if bool(getattr(self.pokemon, "EstaIrritado", False)):
             return "irritado"
         frutas = getattr(self.pokemon, "FrutasAplicadas", []) or []

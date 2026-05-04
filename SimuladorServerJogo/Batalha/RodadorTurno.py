@@ -199,8 +199,9 @@ class RodadorTurno:
             self._ataques_executados += 1
 
     def _executar_captura(self, pokemon, acao):
-        if str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower() != "confronto":
-            self._falhar(acao, "captura_fora_de_confronto")
+        tipo_batalha = str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower()
+        if tipo_batalha != "confronto":
+            self._falhar(acao, "captura_bloqueada_tipo_batalha" if tipo_batalha in {"servo", "boss"} else "captura_fora_de_confronto")
             return
         lado_id = int((acao or {}).get("lado_id", getattr(self.partida, "lado_jogador", 50)) or getattr(self.partida, "lado_jogador", 50))
         jogador_nome = str((acao or {}).get("jogador_nome") or "Jogador").strip() or "Jogador"

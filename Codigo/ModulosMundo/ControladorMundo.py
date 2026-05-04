@@ -89,6 +89,9 @@ class ControladorMundo:
         self.Pacotes.bombear(max_ciclos=1)
         layout_dungeon = self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {}
         self.Objetos.definir_layout_dungeon_atual(layout_dungeon)
+        dim_local = str(self.Objetos.dimensao_atual_client() or "Mundo")
+        if dim_local.startswith("Dungeon_"):
+            self.Dungeons.atualizar_dimensao(dim_local, layout_dungeon)
         definir_layout = getattr(self.Camera, "definir_layout_dungeon", None)
         if callable(definir_layout):
             definir_layout(layout_dungeon)

@@ -9,14 +9,15 @@ from typing import Dict
 
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, diff_seq_atual, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, criar_objeto_mundo_server
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, PokemonServer, criar_objeto_mundo_server
 from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
 from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_batalha_publicas, carregar_regras_estruturas_naturais, carregar_regras_pokemons
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import evoluir_pokemon, ganhar_xp_pokemon, subir_nivel_pokemon
+from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import evoluir_pokemon, ganhar_xp_pokemon, materializar_pokemon, subir_nivel_pokemon
 from SimuladorServerJogo.Mundo.EstadioGeometria import contexto_batalha_estadio, offset_porta_externa
+from SimuladorServerJogo.Mundo.DungeonGeometria import eh_dimensao_dungeon
 
 
 def _normalizar_posicao_loop(posicao):
@@ -426,6 +427,7 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     centro = [0.0, 0.0]
                 contexto = _coletar_contexto_batalha_servidor((float(centro[0]), float(centro[1])), rx=40, ry=20)
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
+                poke_batalha = None
                 if pokemon_id > 0:
                     contexto["pokemon_mundo_id"] = int(pokemon_id)
                     poke_batalha = CEREBRO.marcar_pokemon_em_batalha(pokemon_id, client_id)
@@ -435,6 +437,39 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 obj_ctx = BANCO_DADOS.obter_objeto(obj_id_ctx) if obj_id_ctx > 0 else None
                 estado_ctx = getattr(obj_ctx, "estado_extra", {}) if isinstance(getattr(obj_ctx, "estado_extra", {}), dict) else {}
                 dimensao = str(estado_ctx.get("dimensao") or "Mundo")
+                if eh_dimensao_dungeon(dimensao) and isinstance(poke_batalha, PokemonServer):
+                    estado_poke = poke_batalha.estado_extra if isinstance(poke_batalha.estado_extra, dict) else {}
+                    tipo_batalha = str(estado_poke.get("tipo_batalha") or estado_poke.get("comportamento_mundo") or "confronto").strip().lower()
+                    if tipo_batalha in {"servo", "boss"}:
+                        inimigo = materializar_pokemon(poke_batalha.serializar())
+                        if isinstance(inimigo, dict):
+                            est = inimigo.get("estado") if isinstance(inimigo.get("estado"), dict) else inimigo
+                            if isinstance(est, dict):
+                                est.update(
+                                    {
+                                        "capturavel": False,
+                                        "tipo_batalha": tipo_batalha,
+                                        "comportamento": tipo_batalha,
+                                        "comportamento_mundo": tipo_batalha,
+                                        "boss": bool(estado_poke.get("boss", False)),
+                                        "pokemon_boss": estado_poke.get("pokemon_boss", ""),
+                                    }
+                                )
+                        contexto.update(
+                            {
+                                "tipo": tipo_batalha,
+                                "tipo_batalha": tipo_batalha,
+                                "dimensao": dimensao,
+                                "pokemon_mundo_id": int(pokemon_id),
+                                "pokemons_inimigo": [inimigo],
+                                "dungeon": {
+                                    "dungeon_code": str(estado_poke.get("dungeon_code") or ""),
+                                    "sala_id": str(estado_poke.get("sala_id") or ""),
+                                    "servos_pool": list((CEREBRO._cerebro_dungeons._layouts.get(dimensao) or {}).get("servos_pool") or []),
+                                },
+                            }
+                        )
+                        return _ok("Contexto de batalha pronto", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados, contexto_batalha=contexto)
                 if dimensao != "Mundo":
                     estadio_id = int(estado_ctx.get("estadio_atual_id", 0) or 0)
                     estadio_obj = BANCO_DADOS.obter_objeto(estadio_id) if estadio_id > 0 else None
@@ -447,8 +482,17 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
             if categoria == "pokemon_derrotado_batalha":
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
                 if pokemon_id > 0:
+                    obj_atual = BANCO_DADOS.obter_objeto(pokemon_id)
+                    if isinstance(obj_atual, PokemonServer) and bool(getattr(obj_atual, "estado_extra", {}).get("boss", False)):
+                        obj_atual.estado_extra.pop("em_batalha", None)
+                        obj_atual.estado_extra.pop("batalha_client_id", None)
+                        BANCO_DADOS.atualizar_objeto(obj_atual.Id, {"estado": obj_atual.estado_extra})
+                        registrar_diff("update", payload=obj_atual.serializar(), escopo=_escopo_objeto(obj_atual), objeto_id=int(obj_atual.Id), autor="server", categoria="pokemon")
+                        aplicados += 1
+                        return _ok("Boss liberado apos batalha", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
                     obj_derrotado = BANCO_DADOS.remover_objeto(pokemon_id)
                     if obj_derrotado is not None:
+                        getattr(CEREBRO, "_pokemons_ids", set()).discard(int(pokemon_id))
                         registrar_diff(
                             "despawn",
                             payload={"id": int(obj_derrotado.Id), "motivo": "batalha_derrotado"},
@@ -471,6 +515,16 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     return _ok("Pokemon liberado apos fuga", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
                 ignorados += 1
                 return _erro("Pokemon da fuga nao encontrado", serializar=serializar_resposta)
+            if categoria in {"dungeon_perder_vida", "dungeon_batalha_derrota"}:
+                if CEREBRO._cerebro_dungeons.registrar_derrota_dungeon(client_id, str(payload.get("motivo") or categoria), int(payload.get("pokemon_id", 0) or 0), registrar_diff=registrar_diff):
+                    obj_id_player = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+                    obj_player = BANCO_DADOS.obter_objeto(obj_id_player) if obj_id_player > 0 else None
+                    if obj_player is not None:
+                        registrar_diff("update", payload=obj_player.serializar(), escopo=_escopo_objeto(obj_player), objeto_id=int(obj_player.Id), autor="server", categoria="player")
+                    aplicados += 1
+                    continue
+                ignorados += 1
+                continue
             if categoria == "player_morreu":
                 player_id = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None

@@ -1,0 +1,69 @@
+from __future__ import annotations
+
+import re
+import sys
+from collections import deque
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parents[1]
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
+
+from SimuladorServerJogo.Gerais.Geradores.GeradorDungeons import gerar_dungeon_layout, resolver_dungeon_por_code
+
+
+def _lista(valor):
+    return [p.strip() for p in re.split(r"[/,;|]+", str(valor or "")) if p.strip()]
+
+
+def _validar_conectividade(layout):
+    salas = layout.get("salas") if isinstance(layout.get("salas"), list) else []
+    por_pos = {tuple(s.get("posicao_sala", [])): s for s in salas if isinstance(s, dict)}
+    entradas = [tuple(e.get("posicao_sala", [])) for e in layout.get("entradas", []) if isinstance(e, dict)]
+    assert entradas, "layout sem entradas"
+    inicio = next((e for e in entradas if e in por_pos), None)
+    assert inicio is not None, "entrada sem sala correspondente"
+    fila = deque([inicio])
+    vistos = {inicio}
+    dirs = {"N": (0, -1), "S": (0, 1), "L": (1, 0), "O": (-1, 0)}
+    while fila:
+        pos = fila.popleft()
+        sala = por_pos[pos]
+        for porta in sala.get("portas") or []:
+            dx, dy = dirs[str(porta)]
+            prox = (pos[0] + dx, pos[1] + dy)
+            if prox in por_pos and prox not in vistos:
+                vistos.add(prox)
+                fila.append(prox)
+    assert len(vistos) == len(por_pos), f"salas inalcancaveis: {len(por_pos) - len(vistos)}"
+
+
+def validar(code):
+    row = resolver_dungeon_por_code(str(code)) or {}
+    layout = gerar_dungeon_layout(str(code), [{"porta_idx": 1, "pedra_id": 0}])
+    bosses_csv = _lista(row.get("Pokemons"))
+    bosses_layout = list(layout.get("bosses") or [])
+    entradas = list(layout.get("entradas") or [])
+    grid_ids = layout.get("grid_salas_ids")
+    grid_tiles = layout.get("grid_tiles")
+    largura = int(layout.get("largura_blocos") or 0)
+    altura = int(layout.get("altura_blocos") or 0)
+    bloco_w = int(layout.get("largura_bloco_sala_tiles") or 32)
+    bloco_h = int(layout.get("altura_bloco_sala_tiles") or 24)
+
+    assert len(bosses_layout) == len(bosses_csv), f"bosses esperados={len(bosses_csv)} gerados={len(bosses_layout)}"
+    assert entradas, "sem entradas"
+    assert isinstance(grid_ids, list) and len(grid_ids) == altura and all(len(r) == largura for r in grid_ids), "grid_salas_ids com dimensoes incorretas"
+    assert isinstance(grid_tiles, list) and len(grid_tiles) == altura * bloco_h and all(len(r) == largura * bloco_w for r in grid_tiles), "grid_tiles com dimensoes incorretas"
+    _validar_conectividade(layout)
+    print(f"Code {code}: {largura}x{altura} blocos, salas={len(layout.get('salas') or [])}, bosses={len(bosses_layout)}, entradas={len(entradas)}")
+
+
+def main():
+    for code in (30, 19, 1):
+        validar(code)
+    print("Layouts de dungeon OK")
+
+
+if __name__ == "__main__":
+    main()

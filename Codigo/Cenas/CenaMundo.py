@@ -19,6 +19,7 @@ from Codigo.ModulosGerais.Server.ServerMundo import (
     enviar_diffs_mundo,
     finalizar_interacao_npc_mundo,
     iniciar_interacao_npc_mundo,
+    notificar_dano_dungeon_mundo,
     notificar_pokemon_derrotado_batalha_mundo,
     receber_pacotes_tick_mundo,
     consultar_chunks_mundo,
@@ -356,21 +357,32 @@ class CenaMundo:
         elif JOGO.CenaAlvo is None and (not player_bloqueado):
             colisao_pokemon = self.ControladorMundo.Player.consumir_colisao_pokemon()
             if isinstance(colisao_pokemon, dict):
+                estado_colisao = colisao_pokemon.get("estado") if isinstance(colisao_pokemon.get("estado"), dict) else {}
+                tipo_batalha = str(estado_colisao.get("tipo_batalha") or estado_colisao.get("comportamento_mundo") or estado_colisao.get("comportamento") or "confronto").strip().lower()
+                if tipo_batalha not in {"servo", "boss"}:
+                    tipo_batalha = "confronto"
+                server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
+                link = server.get("ip")
+                client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
+                pokemon_mundo_id = int(colisao_pokemon.get("id", colisao_pokemon.get("Id", colisao_pokemon.get("ID", 0))) or 0)
                 inventario = getattr(player, "Inventario", None)
                 times = deepcopy(list(getattr(inventario, "TimesPokemon", []) or [])) if inventario is not None else []
                 pokemons_jogador = deepcopy(list(getattr(inventario, "Pokemons", []) or [])) if inventario is not None else []
                 indice_time, time_escolhido = InicializadorBatalha.escolher_time_confronto_com_indice(times, pokemons_jogador, slots_por_time=6)
                 if not InicializadorBatalha.time_tem_pokemon_vivo(time_escolhido):
+                    if tipo_batalha in {"servo", "boss"} and link:
+                        notificar_dano_dungeon_mundo(link, client_id, "colisao_sem_pokemon", pokemon_mundo_id)
                     return EVENTOS
-                server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
-                link = server.get("ip")
-                client_id = str(JOGO.INFO.get("UsuarioLogado", "anon"))
                 posicao_referencia_mundo = colisao_pokemon.get("posicao") if isinstance(colisao_pokemon.get("posicao"), (list, tuple)) and len(colisao_pokemon.get("posicao")) == 2 else list(getattr(player, "Posicao", [0.0, 0.0]))
                 regras_mundo = JOGO.INFO.get("RegrasMundo") if isinstance(JOGO.INFO.get("RegrasMundo"), dict) else {}
                 batalha = regras_mundo.get("batalha") if isinstance(regras_mundo.get("batalha"), dict) else {}
                 pokemon_materializado = materializar_pokemon(dict(colisao_pokemon))
-                pokemons_inimigo = gerar_bando_confronto(pokemon_materializado, max_extras=5)
-                pokemon_mundo_id = int(colisao_pokemon.get("id", colisao_pokemon.get("Id", colisao_pokemon.get("ID", 0))) or 0)
+                if isinstance(pokemon_materializado, dict):
+                    est_mat = pokemon_materializado.get("estado") if isinstance(pokemon_materializado.get("estado"), dict) else pokemon_materializado
+                    if isinstance(est_mat, dict):
+                        est_mat["capturavel"] = False if tipo_batalha in {"servo", "boss"} else est_mat.get("capturavel", True)
+                        est_mat["tipo_batalha"] = tipo_batalha
+                pokemons_inimigo = [pokemon_materializado] if tipo_batalha in {"servo", "boss"} else gerar_bando_confronto(pokemon_materializado, max_extras=5)
                 contexto = {
                     "batalha": dict(batalha),
                     "pokemon_colisao": dict(colisao_pokemon),
@@ -380,7 +392,8 @@ class CenaMundo:
                     "pokemons_jogador": pokemons_jogador,
                     "time_jogador": deepcopy(time_escolhido),
                     "time_jogador_indice": int(indice_time),
-                    "tipo": "confronto",
+                    "tipo": tipo_batalha,
+                    "tipo_batalha": tipo_batalha,
                     "origem": [0.0, 0.0],
                     "centro": [40.0, 20.0],
                     "largura": 80,

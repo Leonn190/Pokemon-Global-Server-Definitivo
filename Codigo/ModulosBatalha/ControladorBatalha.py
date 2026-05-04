@@ -444,7 +444,10 @@ class ControladorBatalha:
 
     def batalha_usa_ia(self):
         tipo = str(self.tipo_batalha or "").strip().lower()
-        return tipo in {"confronto", "treinador", "trainer"} and not bool(self.modo_teste)
+        return tipo in {"confronto", "treinador", "trainer", "servo", "boss"} and not bool(self.modo_teste)
+
+    def fuga_disponivel(self):
+        return str(self.tipo_batalha or "").strip().lower() not in {"servo", "boss"}
 
     def posicao_captura_lado_tela(self, lado_id=None):
         pos = self.posicao_captura_lado_mundo(lado_id)
@@ -611,6 +614,9 @@ class ControladorBatalha:
             self.montador_jogadas.recalcular_previsao_energia()
 
     def iniciar_fuga(self):
+        if not self.fuga_disponivel():
+            self.adicionar_log_local("Fuga bloqueada nesta batalha.")
+            return
         self._fuga_alpha = min(255.0, self._fuga_alpha + self._fuga_incremento_clique)
         self.estado_batalha = "fugindo"
         if self._fuga_alpha >= self._fuga_limite_saida:

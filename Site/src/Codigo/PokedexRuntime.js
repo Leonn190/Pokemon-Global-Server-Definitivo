@@ -1,87 +1,15 @@
 import { infoHtml, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
-const FRAME_MODULES = {
-  ...import.meta.glob("@recursos/Visual/Pokemons/Animação/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-    query: "?url",
-    import: "default",
-  }),
-  ...import.meta.glob("@recursos/Visual/Pokemons/Animacao/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-    query: "?url",
-    import: "default",
-  }),
-};
 const MAXIMOS_BARRAS = {
   Vida: 200,
   CrD: 75,
   CrC: 75,
 };
 const ATRIBUTOS_REGULARES = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int"];
-let frameIndex = null;
-const framesCache = new Map();
 function ehRadiante(pokemon) {
   return normalizar(pokemon?.nome).includes("radiante");
 }
 function nomeExibicao(pokemon) {
   return String(pokemon?.nome || pokemon?.nomeExibicao || "Pokémon").replace(/\s+/g, " ").trim();
-}
-function nomeBaseRadiante(nome) {
-  return String(nome ?? "")
-    .replace(/\bradiante\b/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-function candidatosPokemon(pokemon) {
-  const codigo = String(pokemon?.code ?? pokemon?.id ?? "");
-  const nome = String(pokemon?.nome ?? "");
-  const nomeBase = nomeBaseRadiante(nome);
-  const exibicao = nomeExibicao(pokemon);
-  return [
-    codigo,
-    codigo.padStart(3, "0"),
-    `pokemon${codigo}`,
-    `poke${codigo}`,
-    nome,
-    pokemon?.slug,
-    pokemon?.slugBase,
-    nome.replace(/\s+/g, "_"),
-    nome.replace(/\s+/g, "-"),
-    nomeBase,
-    exibicao,
-    nomeBase.replace(/\s+/g, "_"),
-    nomeBase.replace(/\s+/g, "-"),
-    exibicao.replace(/\s+/g, "_"),
-    exibicao.replace(/\s+/g, "-"),
-  ]
-    .filter(Boolean)
-    .map(normalizar);
-}
-function criarIndiceFrames(modulos) {
-  const indice = {};
-  Object.entries(modulos).forEach(([caminho, carregador]) => {
-    const partes = caminho.split(/[\\/]/).filter(Boolean);
-    const pasta = partes.at(-2) ?? "";
-    const chave = normalizar(pasta);
-    if (!chave) return;
-    if (!indice[chave]) indice[chave] = [];
-    indice[chave].push({ caminho, carregador });
-  });
-  Object.values(indice).forEach((frames) => {
-    frames.sort((a, b) => a.caminho.localeCompare(b.caminho, "pt-BR", { numeric: true, sensitivity: "base" }));
-  });
-  return indice;
-}
-async function carregarFramesPokemon(pokemon) {
-  const cacheKey = String(pokemon?.id ?? pokemon?.nome ?? "");
-  if (framesCache.has(cacheKey)) return framesCache.get(cacheKey);
-  if (!frameIndex) frameIndex = criarIndiceFrames(FRAME_MODULES);
-  for (const candidato of candidatosPokemon(pokemon)) {
-    const frames = frameIndex[candidato];
-    if (!frames?.length) continue;
-    const carregados = await Promise.all(frames.map((frame) => frame.carregador()));
-    framesCache.set(cacheKey, carregados);
-    return carregados;
-  }
-  framesCache.set(cacheKey, []);
-  return [];
 }
 function assetPokemon(pokemon, assetsPokemons) {
   return assetsPokemons?.[pokemon.id] ?? { imagem: null };
@@ -155,13 +83,8 @@ export function criarCardPokemon(pokemon, dados, origem = "wiki") {
 }
 export function criarControladorDetalhe(dados, opcoes = {}) {
   const detalhe = document.querySelector(opcoes.seletorDetalhe || "[data-pokemon-detail]");
-  let frameTimer = null;
   let pokemonAberto = null;
   const atributosBase = dados.atributosBase || [];
-  function limparAnimacao() {
-    if (frameTimer) window.clearInterval(frameTimer);
-    frameTimer = null;
-  }
   function familiaPokemon(pokemon) {
     return (dados.pokemons || [])
       .filter((item) => String(item.linhagem) === String(pokemon.linhagem))
@@ -190,7 +113,6 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
     const pokemon = (dados.pokemons || []).find((item) => item.id === String(id));
     if (!pokemon || !detalhe) return;
     pokemonAberto = pokemon;
-    limparAnimacao();
     const asset = assetPokemon(pokemon, dados.assetsPokemons);
     const nomeVisivel = nomeExibicao(pokemon);
     const imagem = detalhe.querySelector("[data-detail-image]");
@@ -226,22 +148,6 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
         imagem.hidden = true;
         fallback.hidden = true;
         fallback.textContent = "";
-      }
-      const frames = opcoes.animarFrames === false ? [] : await carregarFramesPokemon(pokemon);
-      if (pokemonAberto?.id !== pokemon.id) return;
-      if (frames.length) {
-        imagem.hidden = false;
-        fallback.hidden = true;
-        imagem.src = frames[0];
-        imagem.alt = nomeVisivel;
-      }
-      if (frames.length > 1) {
-        let frame = 0;
-        frameTimer = window.setInterval(() => {
-          if (pokemonAberto?.id !== pokemon.id) return;
-          frame = (frame + 1) % frames.length;
-          imagem.src = frames[frame];
-        }, 40);
       }
     }
     if (stats) {
@@ -293,7 +199,6 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
     document.dispatchEvent(new CustomEvent("pokemon-detail-opened", { detail: { id: pokemon.id } }));
   }
   function fecharDetalhe() {
-    limparAnimacao();
     if (detalhe) detalhe.hidden = true;
     document.body.classList.remove("detalhe-aberto");
     document.dispatchEvent(new CustomEvent("pokemon-detail-closed"));
@@ -326,7 +231,6 @@ export function inicializarPokedex(idDados = "pokedex-data") {
   let listagem;
   const detalheController = criarControladorDetalhe(dados, {
     mostrarLinhagem: true,
-    animarFrames: true,
     obterListaAtual: () => listagem?.obterResultadoAtual() ?? [],
   });
   function atualizarChips() {
@@ -429,7 +333,6 @@ export function inicializarCarrosselHome(idDados = "pokemon-home-data") {
   const detalheController = criarControladorDetalhe(dados, {
     seletorDetalhe: "[data-home-pokemon-detail]",
     mostrarLinhagem: false,
-    animarFrames: false,
   });
   let ponteiro = null;
   let cardAtivo = null;

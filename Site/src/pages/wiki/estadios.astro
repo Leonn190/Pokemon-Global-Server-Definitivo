@@ -14,57 +14,20 @@ import {
   ATRIBUTOS_BASE,
   carregarPokemons,
   criarAssetsPokemons,
-  indexarArquivosPorNome,
 } from "../../Codigo/PokemonWikiDados.js";
+import { indexarPublicoPorNome, listarImagensPublicas } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const npcs = carregarNpcs();
 const estadios = carregarEstadios(npcs);
 const resumo = resumoEstadios(estadios, npcs);
 const pokemons = carregarPokemons();
-const skinsBrutas = import.meta.glob("@recursos/Visual/Skins/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesEstadiosBrutos = {
-  ...import.meta.glob("@recursos/Visual/Icones/Insigneas/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-    eager: true,
-    query: "?url",
-    import: "default",
-  }),
-  ...import.meta.glob("@recursos/Visual/Icones/Insignias/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-    eager: true,
-    query: "?url",
-    import: "default",
-  }),
-  ...import.meta.glob("@recursos/Visual/Icones/Insígnias/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-    eager: true,
-    query: "?url",
-    import: "default",
-  }),
-};
-const imagensPokemons = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesAtributosBrutos = import.meta.glob("@recursos/Visual/Icones/Atributos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const skinsNpcs = indexarSkinsNpcs(skinsBrutas);
+const skinsNpcs = indexarSkinsNpcs(listarImagensPublicas("Skins"));
 const assetsNpcs = criarAssetsNpcs(npcs, skinsNpcs);
-const iconesEstadios = indexarIconesEstadios(iconesEstadiosBrutos);
+const iconesEstadios = indexarIconesEstadios(listarImagensPublicas(["Insigneas", "Insignias", "Insígnias"]));
 const assetsEstadios = criarAssetsEstadios(estadios, iconesEstadios);
-const imagensPorNome = indexarArquivosPorNome(imagensPokemons);
-const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
-const iconesAtributos = indexarArquivosPorNome(iconesAtributosBrutos);
+const imagensPorNome = indexarPublicoPorNome("Imagens");
+const iconesTipos = indexarPublicoPorNome("Tipos");
+const iconesAtributos = indexarPublicoPorNome("Atributos");
 const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome);
 const payloadEstadios = JSON.stringify({ estadios, assetsEstadios, npcs, assetsNpcs }).replace(/</g, "\\u003c");
 const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, iconesAtributos, atributosBase: ATRIBUTOS_BASE }).replace(/</g, "\\u003c");

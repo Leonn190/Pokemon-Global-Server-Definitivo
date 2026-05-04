@@ -2,16 +2,12 @@
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
 import { carregarWikiCombate } from "../../Codigo/CombateWikiDados.js";
-import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
+import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
+import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const dadosCombate = carregarWikiCombate();
 const { tabela, resumo, regra } = dadosCombate;
-const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
+const iconesTipos = indexarPublicoPorNome("Tipos");
 const iconeTipo = (tipo) => iconesTipos[normalizarChave(tipo.nome ?? tipo)] ?? null;
 const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazio", vazio: true }];
 ---

@@ -8,22 +8,13 @@ import {
   indexarIconesAtaques,
   resumoAtaques,
 } from "../../Codigo/AtaquesWikiDados.js";
-import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
+import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
+import { indexarPublicoPorNome, listarImagensPublicas } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const ataques = carregarAtaques();
 const resumo = resumoAtaques(ataques);
-const iconesAtaquesBrutos = import.meta.glob("@recursos/Visual/Icones/Ataques/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesAtaques = indexarIconesAtaques(iconesAtaquesBrutos);
-const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
+const iconesAtaques = indexarIconesAtaques(listarImagensPublicas("Ataques"));
+const iconesTipos = indexarPublicoPorNome("Tipos");
 const assetsAtaques = criarAssetsAtaques(ataques, iconesAtaques);
 const estilos = [...new Map(ataques.map((ataque) => [ataque.estiloBusca, ataque.estiloRotulo])).entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
 const motores = resumo.motores;

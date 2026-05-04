@@ -1,5 +1,6 @@
 ---
 import Layout from "../Componentes/Layout.astro";
+import { rotaSite } from "../Codigo/RotasSite.js";
 import "../Estilos/auth.css";
 ---
 <Layout titulo="Conta | Pokémon Global Server" descricao="Entre ou crie sua conta de acesso ao Pokémon Global Server.">
@@ -71,7 +72,7 @@ import "../Estilos/auth.css";
           <div class="dica-form destaque-token">
             <strong>Não tem token?</strong>
             <span>Entre em contato com o projeto para solicitar acesso ao beta fechado.</span>
-            <a href="/contato">Solicitar token</a>
+            <a href={rotaSite("/contato")}>Solicitar token</a>
           </div>
           <button class="botao principal" type="submit">Criar conta</button>
           <p class="mensagem-form" data-signup-message aria-live="polite"></p>

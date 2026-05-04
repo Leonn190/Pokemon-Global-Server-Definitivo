@@ -4,17 +4,12 @@ import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   carregarWikiMundo,
   criarAssetsEstruturas,
-  indexarImagensMundo,
 } from "../../Codigo/MundoWikiDados.js";
+import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const dadosMundo = carregarWikiMundo();
 const { estruturas, biomas, resumo, captura } = dadosMundo;
-const imagensEstruturasBrutas = import.meta.glob("@recursos/Visual/Mundo/Objetos/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const imagensEstruturas = indexarImagensMundo(imagensEstruturasBrutas);
+const imagensEstruturas = indexarPublicoPorNome(["Objetos", "Itens"]);
 const assetsEstruturas = criarAssetsEstruturas(estruturas, imagensEstruturas);
 const estruturasPublicas = estruturas.map(({ subtipo, sprite, spriteArquivo, slug, origemEspecial, ...estrutura }) => estrutura);
 const tamanhoMundo = resumo.largura.toLocaleString("pt-BR");

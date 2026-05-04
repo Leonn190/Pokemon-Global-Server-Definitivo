@@ -6,31 +6,16 @@ import {
   FOCOS_EQUIPAVEIS,
   carregarEquipaveis,
   criarAssetsEquipaveis,
-  indexarImagensEquipaveis,
   resumoEquipaveis,
 } from "../../Codigo/EquipaveisWikiDados.js";
-import { indexarArquivosPorNome, normalizarChave } from "../../Codigo/PokemonWikiDados.js";
+import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
+import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const equipaveis = carregarEquipaveis();
 const resumo = resumoEquipaveis(equipaveis);
-const imagensEquipaveisBrutas = import.meta.glob("@recursos/Visual/Itens/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesAtributosBrutos = import.meta.glob("@recursos/Visual/Icones/Atributos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const imagensEquipaveis = indexarImagensEquipaveis(imagensEquipaveisBrutas);
-const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
-const iconesAtributos = indexarArquivosPorNome(iconesAtributosBrutos);
+const imagensEquipaveis = indexarPublicoPorNome(["Objetos", "Itens"]);
+const iconesTipos = indexarPublicoPorNome("Tipos");
+const iconesAtributos = indexarPublicoPorNome("Atributos");
 const assetsEquipaveis = criarAssetsEquipaveis(equipaveis, imagensEquipaveis);
 const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesTipos, iconesAtributos, resumo }).replace(/</g, "\\u003c");
 ---

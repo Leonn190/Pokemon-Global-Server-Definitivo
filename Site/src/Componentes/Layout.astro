@@ -1,12 +1,13 @@
 ---
 import Header from "./Header.astro";
 import Footer from "./Footer.astro";
-import icone from "@recursos/Visual/Icones/GlobalServer/Icone.png";
+import { urlPublica } from "../Codigo/AssetsPublicos.js";
 import "../Estilos/global.css";
 const {
   titulo = "Pokémon Global Server",
   descricao = "Site oficial do Pokémon Global Server.",
 } = Astro.props;
+const icone = urlPublica("GlobalServer/Icone.png");
 ---
 <!doctype html>
 <html lang="pt-BR">
@@ -14,7 +15,7 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={descricao} />
-    <link rel="icon" href={icone.src} />
+    <link rel="icon" href={icone} />
     <title>{titulo}</title>
   </head>
   <body>

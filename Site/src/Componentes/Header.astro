@@ -1,6 +1,9 @@
 ---
-import icone from "@recursos/Visual/Icones/GlobalServer/Icone.png";
-const rotaAtual = Astro.url.pathname;
+import { urlPublica } from "../Codigo/AssetsPublicos.js";
+import { caminhoSite, rotaSite } from "../Codigo/RotasSite.js";
+
+const rotaAtual = caminhoSite(Astro.url.pathname);
+const icone = urlPublica("GlobalServer/Icone.png");
 const links = [
   { href: "/", texto: "Início" },
   { href: "/conta", texto: "Conta" },
@@ -14,8 +17,8 @@ function ativo(href) {
 }
 ---
 <header class="topbar" data-topbar>
-  <a class="marca" href="/" aria-label="Página inicial do Pokémon Global Server">
-    <img src={icone.src} alt="Ícone Pokémon Global Server" />
+  <a class="marca" href={rotaSite("/")} aria-label="Página inicial do Pokémon Global Server">
+    <img src={icone} alt="Ícone Pokémon Global Server" />
     <span>Pokémon Global Server</span>
   </a>
   <button class="menu-mobile" type="button" data-menu-mobile aria-label="Abrir menu">
@@ -26,7 +29,7 @@ function ativo(href) {
   <nav class="menu" data-menu>
     {links.map((link) => (
       <a
-        href={link.href}
+        href={rotaSite(link.href)}
         class:list={[{ ativo: ativo(link.href), "botao-menu": link.destaque }]}
       >
         {link.texto}

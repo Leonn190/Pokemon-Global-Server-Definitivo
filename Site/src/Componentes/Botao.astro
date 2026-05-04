@@ -1,13 +1,15 @@
 ---
+import { rotaSite } from "../Codigo/RotasSite.js";
 const {
   href = "#",
   tipo = "principal",
   externo = false,
 } = Astro.props;
+const hrefFinal = externo ? href : rotaSite(href);
 ---
 <a
   class={`botao ${tipo}`}
-  href={href}
+  href={hrefFinal}
   target={externo ? "_blank" : undefined}
   rel={externo ? "noreferrer" : undefined}
 >

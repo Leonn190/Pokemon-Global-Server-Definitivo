@@ -151,7 +151,6 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
   const pokemonController = criarControladorPokemonDetalhe(pokedex, {
     seletorDetalhe: "[data-npc-pokemon-detail]",
     mostrarLinhagem: true,
-    animarFrames: true,
   });
   function atualizarControlesCondicionais() {
     tipoChips.forEach((chip) => {

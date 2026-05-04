@@ -120,7 +120,6 @@ export function inicializarWikiEstadios(idDados = "estadios-data") {
   const pokemonController = criarControladorPokemonDetalhe(pokedex, {
     seletorDetalhe: "[data-estadio-pokemon-detail]",
     mostrarLinhagem: true,
-    animarFrames: true,
   });
   const estadioController = criarControladorEstadio(dados, () => dados.estadios || [], npcController);
   criarGridProgressiva({

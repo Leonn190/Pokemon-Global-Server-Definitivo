@@ -4,21 +4,16 @@ import WikiTopo from "../../Componentes/WikiTopo.astro";
 import {
   carregarItens,
   criarAssetsItens,
-  indexarImagensItens,
   resumoItens,
   MAPA_RARIDADES,
   OPCOES_VENDA,
 } from "../../Codigo/ItemWikiDados.js";
 import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
+import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const itens = carregarItens();
 const resumo = resumoItens(itens);
-const imagensItensBrutas = import.meta.glob("@recursos/Visual/Itens/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const imagensItens = indexarImagensItens(imagensItensBrutas);
+const imagensItens = indexarPublicoPorNome(["Objetos", "Itens"]);
 const assetsItens = criarAssetsItens(itens, imagensItens);
 const estilos = [...new Map(itens.map((item) => [item.estiloBusca, item.estiloRotulo])).entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
 const raridades = Object.entries(MAPA_RARIDADES).sort((a, b) => Number(a[0]) - Number(b[0]));

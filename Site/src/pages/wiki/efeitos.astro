@@ -9,15 +9,11 @@ import {
   indexarIconesEfeitos,
   resumoEfeitos,
 } from "../../Codigo/EfeitosWikiDados.js";
+import { listarImagensPublicas } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const efeitos = carregarEfeitos();
 const resumo = resumoEfeitos(efeitos);
-const iconesEfeitosBrutos = import.meta.glob("@recursos/Visual/Icones/Efeitos/**/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesEfeitos = indexarIconesEfeitos(iconesEfeitosBrutos);
+const iconesEfeitos = indexarIconesEfeitos(listarImagensPublicas("Efeitos"));
 const assetsEfeitos = criarAssetsEfeitos(efeitos, iconesEfeitos);
 const payloadEfeitos = JSON.stringify({ efeitos, assetsEfeitos, resumo }).replace(/</g, "\\u003c");
 ---

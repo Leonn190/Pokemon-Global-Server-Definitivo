@@ -1,4 +1,5 @@
 ---
+import { rotaSite } from "../Codigo/RotasSite.js";
 const {
   href = "/wiki",
   emoji = "✨",
@@ -6,7 +7,7 @@ const {
   texto = "Informações da seção.",
 } = Astro.props;
 ---
-<a class="card card-link" href={href}>
+<a class="card card-link" href={rotaSite(href)}>
   <span class="emoji" aria-hidden="true">{emoji}</span>
   <h3>{titulo}</h3>
   <p>{texto}</p>

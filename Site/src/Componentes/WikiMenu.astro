@@ -1,4 +1,5 @@
 ---
+import { rotaSite } from "../Codigo/RotasSite.js";
 const { ativo = "" } = Astro.props;
 const links = [
   { chave: "pokemons", href: "/wiki/pokemons", rotulo: "Pokémons" },
@@ -16,5 +17,5 @@ const links = [
 ];
 ---
 <nav class="wiki-menu-lateral wiki-menu-topo" aria-label="Outras áreas da wiki">
-  {links.map((link) => <a class={ativo === link.chave ? "ativo" : ""} href={link.href}>{link.rotulo}</a>)}
+  {links.map((link) => <a class={ativo === link.chave ? "ativo" : ""} href={rotaSite(link.href)}>{link.rotulo}</a>)}
 </nav>

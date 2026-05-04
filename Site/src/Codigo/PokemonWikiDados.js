@@ -162,33 +162,6 @@ function normalizarPokemon(linha, indice) {
     linhagem: normalizado.Linhagem ?? code ?? indice + 1,
   };
 }
-function arquivoSemExtensao(caminho) {
-  const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;
-  return arquivo.replace(/\.[^.]+$/, "");
-}
-export function indexarArquivosPorNome(glob) {
-  const indice = {};
-  Object.entries(glob).forEach(([caminho, url]) => {
-    const chave = normalizarChave(arquivoSemExtensao(caminho));
-    if (chave && !indice[chave]) indice[chave] = url;
-  });
-  return indice;
-}
-export function indexarFramesPorPasta(glob) {
-  const grupos = {};
-  Object.entries(glob).forEach(([caminho, url]) => {
-    const partes = caminho.split(/[\\/]/).filter(Boolean);
-    const pasta = partes.at(-2) ?? "";
-    const chave = normalizarChave(pasta);
-    if (!chave) return;
-    if (!grupos[chave]) grupos[chave] = [];
-    grupos[chave].push({ caminho, url });
-  });
-  Object.values(grupos).forEach((frames) => {
-    frames.sort((a, b) => a.caminho.localeCompare(b.caminho, "pt-BR", { numeric: true, sensitivity: "base" }));
-  });
-  return Object.fromEntries(Object.entries(grupos).map(([chave, frames]) => [chave, frames.map((frame) => frame.url)]));
-}
 function candidatosPokemon(pokemon) {
   const codigo = String(pokemon.code ?? pokemon.id ?? "");
   const nome = pokemon.nome ?? "";
@@ -216,23 +189,9 @@ export function resolverImagemPokemon(pokemon, imagensPorNome) {
   }
   return null;
 }
-export function resolverFramesPokemon(pokemon, framesPorPasta) {
-  for (const candidato of candidatosPokemon(pokemon)) {
-    if (framesPorPasta[candidato]?.length) return framesPorPasta[candidato];
-  }
-  return [];
-}
-export function criarAssetsPokemons(pokemons, imagensPorNome, framesPorPasta = null) {
+export function criarAssetsPokemons(pokemons, imagensPorNome) {
   return Object.fromEntries(
-    pokemons.map((pokemon) => {
-      const frames = framesPorPasta ? resolverFramesPokemon(pokemon, framesPorPasta) : [];
-      return [
-        pokemon.id,
-        frames.length
-          ? { imagem: resolverImagemPokemon(pokemon, imagensPorNome), frames }
-          : { imagem: resolverImagemPokemon(pokemon, imagensPorNome) },
-      ];
-    }),
+    pokemons.map((pokemon) => [pokemon.id, { imagem: resolverImagemPokemon(pokemon, imagensPorNome) }]),
   );
 }
 export function resumoPokemons(pokemons) {

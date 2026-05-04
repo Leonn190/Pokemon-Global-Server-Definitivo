@@ -6,31 +6,16 @@ import {
   ATRIBUTOS_REGULARES,
   carregarPokemons,
   criarAssetsPokemons,
-  indexarArquivosPorNome,
   normalizarChave,
   resumoPokemons,
 } from "../../Codigo/PokemonWikiDados.js";
+import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const pokemons = carregarPokemons();
 const resumo = resumoPokemons(pokemons);
-const imagensPokemons = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesTiposBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesAtributosBrutos = import.meta.glob("@recursos/Visual/Icones/Atributos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const imagensPorNome = indexarArquivosPorNome(imagensPokemons);
-const iconesTipos = indexarArquivosPorNome(iconesTiposBrutos);
-const iconesAtributos = indexarArquivosPorNome(iconesAtributosBrutos);
+const imagensPorNome = indexarPublicoPorNome("Imagens");
+const iconesTipos = indexarPublicoPorNome("Tipos");
+const iconesAtributos = indexarPublicoPorNome("Atributos");
 const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome);
 const tiposVisiveis = resumo.tipos;
 const payloadPokedex = JSON.stringify({
@@ -44,7 +29,7 @@ const payloadPokedex = JSON.stringify({
 ---
 <Layout
   titulo="Pokémons"
-  descricao="Wiki de Pokémons do Pokémon Global Server, com busca, filtros por foco, filtros por tipos, atributos, raridade, linhagem e animações."
+  descricao="Wiki de Pokémons do Pokémon Global Server, com busca, filtros por foco, filtros por tipos, atributos, raridade, linhagem e imagens principais."
 >
   <WikiTopo
     ativo="pokemons"

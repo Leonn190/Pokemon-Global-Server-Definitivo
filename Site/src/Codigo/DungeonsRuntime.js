@@ -127,7 +127,6 @@ export function inicializarWikiDungeons(idDados = "dungeons-data") {
   const pokemonController = criarControladorPokemonDetalhe(pokedex, {
     seletorDetalhe: "[data-dungeon-pokemon-detail]",
     mostrarLinhagem: true,
-    animarFrames: true,
   });
   function obterResultado(direcao) {
     const termo = normalizar(busca?.value ?? "");

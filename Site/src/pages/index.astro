@@ -1,13 +1,11 @@
 ---
 import Layout from "../Componentes/Layout.astro";
 import Botao from "../Componentes/Botao.astro";
-import logo from "@recursos/Visual/Icones/GlobalServer/Logo.png";
-import quadroLogo from "@recursos/Visual/Icones/GlobalServer/QuadroLogo.png";
+import { indexarPublicoPorNome, urlPublica } from "../Codigo/AssetsPublicos.js";
 import {
   ATRIBUTOS_BASE,
   carregarPokemons,
   criarAssetsPokemons,
-  indexarArquivosPorNome,
   normalizarChave,
   selecionarDestaquesHome,
 } from "../Codigo/PokemonWikiDados.js";
@@ -23,24 +21,11 @@ const estatisticas = [
   { valor: "63", rotulo: "Equipáveis" },
   { valor: "20", rotulo: "Tipos no sistema" },
 ];
-const imagensPokemonsHome = import.meta.glob("@recursos/Visual/Pokemons/Imagens/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesTiposHomeBrutos = import.meta.glob("@recursos/Visual/Icones/Tipos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const iconesAtributosHomeBrutos = import.meta.glob("@recursos/Visual/Icones/Atributos/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,gif,GIF}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
-const imagensPokemonsHomeIndexadas = indexarArquivosPorNome(imagensPokemonsHome);
-const iconesTiposHome = indexarArquivosPorNome(iconesTiposHomeBrutos);
-const iconesAtributosHome = indexarArquivosPorNome(iconesAtributosHomeBrutos);
+const logo = urlPublica("GlobalServer/Logo.png");
+const quadroLogo = urlPublica("GlobalServer/QuadroLogo.png");
+const imagensPokemonsHomeIndexadas = indexarPublicoPorNome("Imagens");
+const iconesTiposHome = indexarPublicoPorNome("Tipos");
+const iconesAtributosHome = indexarPublicoPorNome("Atributos");
 const destaquesHome = selecionarDestaquesHome(pokemonsHome, 44, imagensPokemonsHomeIndexadas);
 const trilhoDestaquesHome = [...destaquesHome, ...destaquesHome];
 const assetsDestaquesHome = criarAssetsPokemons(destaquesHome, imagensPokemonsHomeIndexadas);
@@ -72,7 +57,7 @@ const payloadHomePokemon = JSON.stringify({
       <div class="anel-luz anel-luz-vermelho"></div>
       <div class="orbita orbita-um"></div>
       <div class="orbita orbita-dois"></div>
-      <img class="logo-principal" src={logo.src} alt="Logo Pokémon Global Server" />
+      <img class="logo-principal" src={logo} alt="Logo Pokémon Global Server" />
     </div>
     <div class="hero-copy">
       <p class="selo">Fan game online 2D em desenvolvimento</p>
@@ -89,7 +74,7 @@ const payloadHomePokemon = JSON.stringify({
   <section class="secao secao-conteudo" aria-labelledby="titulo-visao">
     <div class="intro-home">
       <figure class="quadro-logo-card">
-        <img src={quadroLogo.src} alt="Arte promocional do Pokémon Global Server com iluminação azul e vermelha" />
+        <img src={quadroLogo} alt="Arte promocional do Pokémon Global Server com iluminação azul e vermelha" />
         <figcaption>Exploração 2D com clima de mundo grande, servidor e batalha estratégica.</figcaption>
       </figure>
       <div class="intro-copy">

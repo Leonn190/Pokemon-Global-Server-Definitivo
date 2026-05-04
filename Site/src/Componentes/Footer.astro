@@ -1,13 +1,16 @@
+---
+import { rotaSite } from "../Codigo/RotasSite.js";
+---
 <footer class="rodape">
   <div>
     <strong>Pokémon Global Server</strong>
     <p>Acesso beta fechado para treinadores autorizados.</p>
   </div>
   <nav aria-label="Links finais">
-    <a href="/">Início</a>
-    <a href="/wiki">Wiki</a>
-    <a href="/download">Download</a>
-    <a href="/conta">Conta</a>
-    <a href="/contato">Contato</a>
+    <a href={rotaSite("/")}>Início</a>
+    <a href={rotaSite("/wiki")}>Wiki</a>
+    <a href={rotaSite("/download")}>Download</a>
+    <a href={rotaSite("/conta")}>Conta</a>
+    <a href={rotaSite("/contato")}>Contato</a>
   </nav>
 </footer>

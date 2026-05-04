@@ -99,7 +99,7 @@ final class GeradorDungeons {
     }
 
     private List<DungeonDef> carregarDefinicoes() {
-        Path csv = Path.of("Dados", "Tabelas", "Pokemon Global Server - Dungeons.csv");
+        Path csv = resolverCsvDungeons();
         if (!Files.exists(csv)) {
             System.out.println("  [WARN] CSV de dungeons não encontrado: " + csv);
             return List.of();
@@ -138,6 +138,14 @@ final class GeradorDungeons {
             return List.of();
         }
         return out;
+    }
+
+    private Path resolverCsvDungeons() {
+        Path direto = Path.of("Dados", "Tabelas", "Pokemon Global Server - Dungeons.csv");
+        if (Files.exists(direto)) {
+            return direto;
+        }
+        return Path.of("..", "..", "..", "..", "Dados", "Tabelas", "Pokemon Global Server - Dungeons.csv");
     }
 
     private EnumSet<Biome> parseBiomas(String texto) {

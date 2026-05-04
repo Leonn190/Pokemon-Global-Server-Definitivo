@@ -719,6 +719,7 @@ final class GeneratorContext {
                     dungeons.add(poi);
                 }
             }
+            Map<Integer, Integer> dungeonPortas = new LinkedHashMap<>();
             for (int i = 0; i < dungeons.size(); i++) {
                 Poi poi = dungeons.get(i);
                 String anotado = poi.name == null ? "25,0" : poi.name;
@@ -729,9 +730,12 @@ final class GeneratorContext {
                         dungeonCode = Integer.parseInt(anotado.substring(virgula + 1).trim());
                     } catch (NumberFormatException ignored) {}
                 }
+                int portaIdx = dungeonPortas.getOrDefault(dungeonCode, 0) + 1;
+                dungeonPortas.put(dungeonCode, portaIdx);
                 writer.write("    {\"id\": \"" + escapeJson(anotado) + "\""
                     + ", \"base_id\": 25"
                     + ", \"dungeon_code\": " + dungeonCode
+                    + ", \"porta_idx\": " + portaIdx
                     + ", \"regiao_id\": " + poi.regionId
                     + ", \"posicao\": [" + poi.x + ", " + poi.y + "]}");
                 if (i < dungeons.size() - 1) {

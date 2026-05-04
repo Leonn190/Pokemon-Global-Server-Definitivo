@@ -10,13 +10,24 @@ def _dungeons_csv():
 
 def _coletar_entradas_dungeon_no_banco(dungeon_code: str) -> list[dict]:
     entradas_reais = []
+    vistos = set()
     for obj in BANCO_DADOS.listar_objetos():
         estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
         if str(estado.get("subtipo") or "").lower() != "dungeon":
             continue
         if str(estado.get("dungeon_code") or "").strip().lower() != str(dungeon_code).strip().lower():
             continue
-        entradas_reais.append({"porta_idx": int(estado.get("porta_idx", len(entradas_reais)+1) or len(entradas_reais)+1), "pedra_id": int(getattr(obj, "Id", 0) or 0)})
+        porta_idx = int(estado.get("porta_idx", len(entradas_reais)+1) or len(entradas_reais)+1)
+        entradas_reais.append({"porta_idx": porta_idx, "pedra_id": int(getattr(obj, "Id", 0) or 0)})
+        vistos.add(porta_idx)
+    for item in BANCO_DADOS.listar_dungeons_registradas():
+        if str(item.get("dungeon_code") or "").strip().lower() != str(dungeon_code).strip().lower():
+            continue
+        porta_idx = int(item.get("porta_idx", len(entradas_reais)+1) or len(entradas_reais)+1)
+        if porta_idx in vistos:
+            continue
+        entradas_reais.append({"porta_idx": porta_idx, "pedra_id": int(item.get("pedra_id", 0) or 0)})
+        vistos.add(porta_idx)
     return entradas_reais
 
 

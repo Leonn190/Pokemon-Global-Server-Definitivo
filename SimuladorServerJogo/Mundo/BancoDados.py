@@ -16,7 +16,9 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorMundo import (
     carregar_estado_mundo,
 )
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, EstruturaNaturalServer, EstadioServer
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_estruturas_naturais
+from SimuladorServerJogo.Mundo.DungeonGeometria import nome_dimensao_dungeon
 from SimuladorServerJogo.Mundo.Colisor import Colisor
 
 
@@ -89,6 +91,60 @@ class BancoDadosMundo:
         x = int(gx) & 0x0FFFFF
         y = int(gy) & 0xFFFFFF
         return int((1 << 62) | (c << 44) | (x << 24) | y)
+
+    @staticmethod
+    def _nome_dungeon_csv(dungeon_code: str) -> str:
+        alvo = str(dungeon_code or "").strip().lower()
+        if not alvo:
+            return ""
+        try:
+            linhas = carregar_csv_dict("Pokemon Global Server - Dungeons.csv")
+        except Exception:
+            return ""
+        for row in linhas:
+            if str(row.get("Code") or "").strip().lower() == alvo:
+                return str(row.get("Nome") or dungeon_code)
+        return ""
+
+    def listar_dungeons_registradas(self) -> List[Dict[str, object]]:
+        with self._lock:
+            meta = self._estado_mundo.get("meta", {}) if isinstance(self._estado_mundo.get("meta"), dict) else {}
+            dungeons = meta.get("dungeons", []) if isinstance(meta.get("dungeons"), list) else []
+            contagem_por_code: Dict[str, int] = {}
+            saida: List[Dict[str, object]] = []
+            for item in dungeons:
+                if not isinstance(item, dict):
+                    continue
+                code = str(item.get("dungeon_code") or "").strip()
+                if not code:
+                    ident = str(item.get("id") or "")
+                    if "," in ident:
+                        code = ident.split(",", 1)[1].strip()
+                pos = item.get("posicao") if isinstance(item.get("posicao"), (list, tuple)) and len(item.get("posicao")) == 2 else None
+                if not code or pos is None:
+                    continue
+                contagem_por_code[code.lower()] = int(contagem_por_code.get(code.lower(), 0)) + 1
+                porta_idx = int(item.get("porta_idx", contagem_por_code[code.lower()]) or contagem_por_code[code.lower()])
+                nome = str(item.get("dungeon_nome") or self._nome_dungeon_csv(code) or code)
+                saida.append(
+                    {
+                        "base_id": int(item.get("base_id", 25) or 25),
+                        "dungeon_code": code,
+                        "dungeon_nome": nome,
+                        "porta_idx": porta_idx,
+                        "dimensao_destino": str(item.get("dimensao_destino") or nome_dimensao_dungeon(code)),
+                        "posicao": [float(pos[0]), float(pos[1])],
+                    }
+                )
+            return saida
+
+    def _dungeon_registrada_em(self, gx: int, gy: int) -> Optional[Dict[str, object]]:
+        x, y = int(gx), int(gy)
+        for item in self.listar_dungeons_registradas():
+            pos = item.get("posicao") if isinstance(item.get("posicao"), list) else None
+            if isinstance(pos, list) and len(pos) == 2 and int(float(pos[0])) == x and int(float(pos[1])) == y:
+                return dict(item)
+        return None
 
     def _resolver_chunks_dir(self) -> Path:
         try:
@@ -215,13 +271,18 @@ class BancoDadosMundo:
             for gy in range(y0, y1 + 1):
                 for gx in range(x0, x1 + 1):
                     tile_nat = self._tile_estrutura_em(gx, gy)
+                    meta_dungeon = self._dungeon_registrada_em(gx, gy) if int(tile_nat) in {25, 102} else None
                     cfg = self._regras_estruturas.get(int(tile_nat))
+                    if cfg is None and int(tile_nat) == 25:
+                        cfg = self._regras_estruturas.get(102)
                     if not cfg:
                         continue
                     oid = self._id_estrutura_natural(tile_nat, gx, gy)
                     qtd_base = int(cfg.get("quantidade", 0) if cfg.get("quantidade", 0) not in (None, "") else 0)
                     qtd_restante = int(self._estado_estruturas_naturais.get(oid, qtd_base))
-                    if qtd_restante <= 0:
+                    subtipo = str(cfg.get("subtipo", "natural") or "natural")
+                    eh_dungeon = int(tile_nat) in {25, 102} and (meta_dungeon is not None or subtipo.strip().lower() in {"dungeon", "pedra_dungeon"})
+                    if qtd_restante <= 0 and not eh_dungeon:
                         continue
                     variacao = dict(self._regras_variacao_estruturas)
                     escala_min, escala_max = self._limites_escala_estrutura()
@@ -229,7 +290,6 @@ class BancoDadosMundo:
                     escala_mundo = escala_min + (escala_max - escala_min) * escala_rng
                     escala_mundo *= float(cfg.get("escala_base", 1.0) if cfg.get("escala_base", 1.0) not in (None, "") else 1.0)
 
-                    subtipo = str(cfg.get("subtipo", "natural") or "natural")
                     variantes_subtipos = {str(v).strip().lower() for v in (variacao.get("subtipos_variantes") or [])}
                     total_variantes = int(variacao.get("total_variantes", 1) if variacao.get("total_variantes", 1) not in (None, "") else 1)
                     variante_idx = 1
@@ -246,7 +306,7 @@ class BancoDadosMundo:
 
                     obj = EstruturaNaturalServer(
                         id_objeto=oid,
-                        tipo=subtipo,
+                        tipo="dungeon" if eh_dungeon else subtipo,
                         nome=str(cfg.get("nome", "Estrutura")),
                         sprite=sprite_variante,
                         posicao=(float(gx), float(gy)),
@@ -267,6 +327,23 @@ class BancoDadosMundo:
                     rotacao_tipo, rotacao_graus = self._rotacao_estrutura(cfg, gx, gy, tile_nat)
                     obj.estado_extra["rotacao_tipo"] = str(rotacao_tipo)
                     obj.estado_extra["rotacao_graus"] = float(round(rotacao_graus, 3))
+                    if eh_dungeon:
+                        meta_dungeon = dict(meta_dungeon or {})
+                        code = str(meta_dungeon.get("dungeon_code") or "").strip()
+                        nome_dungeon = str(meta_dungeon.get("dungeon_nome") or self._nome_dungeon_csv(code) or code or "Dungeon")
+                        obj.estado_extra.update(
+                            {
+                                "subtipo": "dungeon",
+                                "codigo_natural_base": 25,
+                                "dungeon_code": code,
+                                "dungeon_nome": nome_dungeon,
+                                "porta_idx": int(meta_dungeon.get("porta_idx", 1) or 1),
+                                "dimensao_destino": str(meta_dungeon.get("dimensao_destino") or nome_dimensao_dungeon(code)),
+                            }
+                        )
+                        if qtd_restante <= 0:
+                            obj.estado_extra["porta_ativa"] = True
+                            obj.estado_extra["estrutura_quebrada"] = True
                     obj.tipo_classe = "estrutura_natural"
                     self._objetos[obj.Id] = obj
                     self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)

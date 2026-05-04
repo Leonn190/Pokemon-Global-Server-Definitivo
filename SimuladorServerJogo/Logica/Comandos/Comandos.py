@@ -293,6 +293,16 @@ def _resolver_pokemon(raw):
     return _POKE_CODE.get(s) or _POKE_NOME.get(s.lower())
 
 
+def _resolver_dungeon_csv(raw):
+    alvo = str(raw or "").strip().lower()
+    if not alvo:
+        return None
+    for row in carregar_csv_dict("Pokemon Global Server - Dungeons.csv"):
+        if str(row.get("Code") or "").strip().lower() == alvo:
+            return row
+    return None
+
+
 def _normalizar_nome_busca(raw):
     return str(raw or "").strip().lower()
 
@@ -469,19 +479,36 @@ def _cmd_locate(args):
     if not livres:
         return "Erro no /locate. Ordem base: /locate nome | /locate dungeon <code>"
     if len(livres) >= 2 and str(livres[0]).lower() == "dungeon":
-        code = str(livres[1]).strip().lower()
+        code = str(livres[1]).strip()
+        code_busca = code.lower()
+        row_dungeon = _resolver_dungeon_csv(code)
+        if row_dungeon is None:
+            return f"Dungeon não encontrada no CSV: {code}"
         portas = []
-        nome = code
+        chaves = set()
+        nome = str(row_dungeon.get("Nome") or code)
         for obj in BANCO_DADOS.listar_objetos():
             estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
             if str(estado.get("subtipo") or "").lower() != "dungeon":
                 continue
-            if str(estado.get("dungeon_code") or "").strip().lower() != code:
+            if str(estado.get("dungeon_code") or "").strip().lower() != code_busca:
                 continue
             nome = str(estado.get("dungeon_nome") or nome)
-            portas.append((int(estado.get("porta_idx", len(portas)+1) or len(portas)+1), int(obj.posicao[0]), int(obj.posicao[1])))
+            porta = (int(estado.get("porta_idx", len(portas)+1) or len(portas)+1), int(obj.posicao[0]), int(obj.posicao[1]))
+            portas.append(porta)
+            chaves.add((porta[0], porta[1], porta[2]))
+        for item in BANCO_DADOS.listar_dungeons_registradas():
+            if str(item.get("dungeon_code") or "").strip().lower() != code_busca:
+                continue
+            pos = item.get("posicao") if isinstance(item.get("posicao"), list) else [0, 0]
+            porta = (int(item.get("porta_idx", len(portas)+1) or len(portas)+1), int(float(pos[0])), int(float(pos[1])))
+            if (porta[0], porta[1], porta[2]) in chaves:
+                continue
+            nome = str(item.get("dungeon_nome") or nome)
+            portas.append(porta)
+            chaves.add((porta[0], porta[1], porta[2]))
         if not portas:
-            return f"Dungeon não encontrada: {code}"
+            return f"Dungeon {code} existe no CSV, mas nenhuma pedra/porta foi registrada no mundo."
         portas.sort(key=lambda x: x[0])
         return f"Dungeon {nome}: " + ", ".join([f"porta {i} em ({x},{y})" for i,x,y in portas])
     nome_raw = " ".join(livres).strip()

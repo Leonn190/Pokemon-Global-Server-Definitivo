@@ -39,6 +39,7 @@ ARQUIVOS_JAVA = [
     PASTA_JAVA / "GeradorTerreno.java",
     PASTA_JAVA / "GeradorBiomas.java",
     PASTA_JAVA / "GeradorObjetos.java",
+    PASTA_JAVA / "GeradorDungeons.java",
     PASTA_JAVA / "GeradorImagens.java",
     PASTA_JAVA / "GeradorLocalidades.java",
     PASTA_JAVA / "GeradorRotas.java",
@@ -426,6 +427,7 @@ def _carregar_world_meta() -> Dict[str, int | float]:
     regioes = payload.get("regioes", []) if isinstance(payload.get("regioes"), list) else []
     vilas = payload.get("vilas", []) if isinstance(payload.get("vilas"), list) else []
     estadios = payload.get("estadios", []) if isinstance(payload.get("estadios"), list) else []
+    dungeons = payload.get("dungeons", []) if isinstance(payload.get("dungeons"), list) else []
     rotas = payload.get("rotas", []) if isinstance(payload.get("rotas"), list) else []
 
     return {
@@ -443,6 +445,7 @@ def _carregar_world_meta() -> Dict[str, int | float]:
         "regioes": regioes,
         "vilas": vilas,
         "estadios": estadios,
+        "dungeons": dungeons,
         "rotas": rotas,
     }
 
@@ -471,6 +474,7 @@ def gerar_novo_estado_mundo(players: Dict[str, object] | None = None, callback_p
             "regioes": list(meta_java.get("regioes", [])) if isinstance(meta_java.get("regioes", []), list) else [],
             "vilas": list(meta_java.get("vilas", [])) if isinstance(meta_java.get("vilas", []), list) else [],
             "estadios": list(meta_java.get("estadios", [])) if isinstance(meta_java.get("estadios", []), list) else [],
+            "dungeons": list(meta_java.get("dungeons", [])) if isinstance(meta_java.get("dungeons", []), list) else [],
             "rotas": list(meta_java.get("rotas", [])) if isinstance(meta_java.get("rotas", []), list) else [],
         },
         "spawn": [float(spawn[0]), float(spawn[1])],
@@ -603,6 +607,13 @@ def carregar_estado_mundo() -> Dict[str, object]:
                 estado[secao] = payload_secao
         if isinstance(estado, dict) and isinstance(estado.get("meta"), dict):
             meta = estado.get("meta", {}) if isinstance(estado.get("meta"), dict) else {}
+            if not isinstance(meta.get("dungeons"), list):
+                try:
+                    meta_java = _carregar_world_meta()
+                    if isinstance(meta_java.get("dungeons"), list):
+                        meta["dungeons"] = list(meta_java.get("dungeons", []))
+                except Exception:
+                    pass
             global LARGURA_BLOCOS, ALTURA_BLOCOS
             largura = int(meta.get("largura_blocos", 0))
             altura = int(meta.get("altura_blocos", 0))

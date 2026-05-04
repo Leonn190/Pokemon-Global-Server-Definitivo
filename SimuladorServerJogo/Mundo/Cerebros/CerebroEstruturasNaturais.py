@@ -113,20 +113,27 @@ class CerebroEstruturasNaturais:
         BANCO_DADOS.registrar_quantidade_estrutura(estrutura.Id, restante)
         self._persistir_estrutura_tocada_imediato(estrutura.Id, restante)
         if restante <= 0:
-            regra_xp = _REGRAS_ESTRUTURA.get(str(int(getattr(estrutura, "codigo_natural", 0) or 0)), {}) if isinstance(_REGRAS_ESTRUTURA, dict) else {}
-            particulas_cfg = regra_xp.get("particulasXP") if isinstance(regra_xp.get("particulasXP"), list) else []
-            tamanhos_cfg = regra_xp.get("tamanhosXP") if isinstance(regra_xp.get("tamanhosXP"), list) else []
-            pool_particulas = [max(1, int(v)) for v in particulas_cfg if isinstance(v, (int, float, str)) and str(v).strip().lstrip("-").isdigit()]
-            pool_tamanhos = [str(v).strip().lower() for v in tamanhos_cfg if str(v).strip().lower() in {"pequeno", "medio", "grande"}]
-            self._core._cerebro_xp_mundo.agendar_burst(
-                origem=(float(estrutura.posicao[0]), float(estrutura.posicao[1])),
-                total_particulas=random.choice(pool_particulas) if pool_particulas else 3,
-                tamanhos_possiveis=(pool_tamanhos if pool_tamanhos else ["pequeno", "medio"]),
-                atraso_ticks=0,
-            )
-            removido = BANCO_DADOS.remover_objeto(estrutura.Id)
-            if removido is not None:
-                registrar_diff("despawn", payload={"id": removido.Id, "motivo": "estrutura_esgotada"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 90.0}, objeto_id=removido.Id, autor="server", categoria="estrutura")
+            if subtipo == "dungeon":
+                estrutura.estado_extra["porta_ativa"] = True
+                estrutura.estado_extra["estrutura_quebrada"] = True
+                estrutura.estado_extra["quantidade"] = 0
+                BANCO_DADOS.atualizar_objeto(estrutura.Id, {"estado": estrutura.estado_extra})
+                registrar_diff("update", payload=estrutura.serializar(), escopo={"centro": [estrutura.posicao[0], estrutura.posicao[1]], "raio": 90.0}, objeto_id=estrutura.Id, autor="server", categoria="estrutura")
+            else:
+                regra_xp = _REGRAS_ESTRUTURA.get(str(int(getattr(estrutura, "codigo_natural", 0) or 0)), {}) if isinstance(_REGRAS_ESTRUTURA, dict) else {}
+                particulas_cfg = regra_xp.get("particulasXP") if isinstance(regra_xp.get("particulasXP"), list) else []
+                tamanhos_cfg = regra_xp.get("tamanhosXP") if isinstance(regra_xp.get("tamanhosXP"), list) else []
+                pool_particulas = [max(1, int(v)) for v in particulas_cfg if isinstance(v, (int, float, str)) and str(v).strip().lstrip("-").isdigit()]
+                pool_tamanhos = [str(v).strip().lower() for v in tamanhos_cfg if str(v).strip().lower() in {"pequeno", "medio", "grande"}]
+                self._core._cerebro_xp_mundo.agendar_burst(
+                    origem=(float(estrutura.posicao[0]), float(estrutura.posicao[1])),
+                    total_particulas=random.choice(pool_particulas) if pool_particulas else 3,
+                    tamanhos_possiveis=(pool_tamanhos if pool_tamanhos else ["pequeno", "medio"]),
+                    atraso_ticks=0,
+                )
+                removido = BANCO_DADOS.remover_objeto(estrutura.Id)
+                if removido is not None:
+                    registrar_diff("despawn", payload={"id": removido.Id, "motivo": "estrutura_esgotada"}, escopo={"centro": [removido.posicao[0], removido.posicao[1]], "raio": 90.0}, objeto_id=removido.Id, autor="server", categoria="estrutura")
         else:
             BANCO_DADOS.atualizar_objeto(estrutura.Id, {"estado": {"quantidade": restante}})
             registrar_diff("update", payload=estrutura.serializar(), escopo={"centro": [estrutura.posicao[0], estrutura.posicao[1]], "raio": 90.0}, objeto_id=estrutura.Id, autor="server", categoria="estrutura")

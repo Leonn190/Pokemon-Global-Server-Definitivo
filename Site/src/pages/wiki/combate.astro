@@ -6,14 +6,14 @@ import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const dadosCombate = carregarWikiCombate();
-const { tabela, resumo, regra } = dadosCombate;
+const { tabela, regra } = dadosCombate;
 const iconesTipos = indexarPublicoPorNome("Tipos");
 const iconeTipo = (tipo) => iconesTipos[normalizarChave(tipo.nome ?? tipo)] ?? null;
 const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazio", vazio: true }];
 ---
 <Layout
   titulo="Combate"
-  descricao="Wiki de combate do Pokémon Global Server, com arquitetura da batalha, fórmulas principais e tabela de fraquezas e resistências."
+  descricao="Wiki de combate do Pokémon Global Server, com fluxo real da rodada, validação de ações, energia, dano e tabela de fraquezas e resistências."
 >
   <WikiTopo
     ativo="combate"
@@ -23,76 +23,107 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
   <main class="wiki-combate" aria-label="Conteúdo da wiki de combate">
     <section class="combate-intro">
       <p class="selo">Wiki de combate</p>
-      <h2>Batalha por rodada, ações validadas pelo servidor e dano calculado por regra.</h2>
+      <h2>Combate por rodadas, ações ordenadas por atributo e resultado reproduzido por log.</h2>
       <p>
-        A batalha é montada no cliente e resolvida no servidor. No código, <code>MontadorJogadas.py</code>
-        prepara as ações do jogador, <code>ColetorAcoes.py</code> valida o pacote recebido, <code>RodadorTurno.py</code>
-        executa os passos da rodada, <code>PokemonBatalha.py</code> aplica dano, energia e efeitos,
-        <code>FraquezasResistencia.py</code> lê a matriz de tipos e <code>LeitorLogs.py</code> usa o log para animar o resultado no client.
+        O cliente monta a jogada e envia as ações. No servidor, <code>Partida.py</code> recebe as jogadas,
+        <code>ColetorAcoes.py</code> valida limites, custos e alvos, <code>RodadorTurno.py</code> executa cada passo,
+        <code>PokemonBatalha.py</code> resolve dano, cura, energia, barreira e efeitos, e o log final volta para o cliente
+        animar o resultado. A wiki abaixo evita regras antigas de tick/física que não representam o fluxo atual do código.
       </p>
     </section>
+
     <section class="combate-faixa" aria-label="Resumo das regras principais">
       <article>
         <span>01</span>
-        <h3>Rodada</h3>
-        <p>O jogador escolhe ações, o servidor valida tudo e depois roda a sequência. O log final vira a base da animação.</p>
+        <h3>Planejamento</h3>
+        <p>Cada lado envia até {regra.maxAcoesPorLado} ações por rodada, com limite de {regra.maxAcoesPorPokemon} ações para o mesmo Pokémon.</p>
       </article>
       <article>
         <span>02</span>
-        <h3>Energia</h3>
-        <p>Movimento, troca e ataque gastam energia. A segunda ação do mesmo Pokémon recebe custo extra.</p>
+        <h3>Ordem</h3>
+        <p>As ações comuns são ordenadas por Inteligência e depois Velocidade. Captura entra depois das ações comuns.</p>
       </article>
       <article>
         <span>03</span>
-        <h3>Dano</h3>
-        <p>O dano passa por multiplicadores, tipo, STAB, crítico, defesa, perfuração e durabilidade.</p>
+        <h3>Log</h3>
+        <p>Cada ação gera eventos de início, acerto, falha, dano, cura, energia e fim de rodada para o client reproduzir.</p>
       </article>
     </section>
+
     <section class="combate-secao" aria-labelledby="titulo-formulas-combate">
       <div class="combate-cabecalho">
         <div>
-          <p class="selo">Regras</p>
-          <h2 id="titulo-formulas-combate">Fórmulas principais</h2>
+          <p class="selo">Regras reais do código</p>
+          <h2 id="titulo-formulas-combate">Fluxo principal da batalha</h2>
         </div>
         <p>
-          Estes blocos resumem o que a batalha usa hoje. A matriz de tipos vem do CSV de fraquezas e resistências,
-          e os parâmetros gerais vêm das regras de batalha.
+          Estes blocos seguem os módulos atuais do servidor de batalha, não uma descrição antiga do sistema.
         </p>
       </div>
       <div class="combate-formulas">
         <article>
+          <h3>Ações e validação</h3>
+          <p>
+            Tipos aceitos: ataque, movimento, troca de posição, troca com reserva e captura. O servidor rejeita ação de
+            Pokémon morto, fora do lado correto, na reserva, sem alvo válido ou sem energia.
+          </p>
+          <p>
+            Bloqueios atuais: Dormindo/Congelado impedem ações comuns, Paralisado impede ataque e Enraizado impede movimento ou troca.
+          </p>
+        </article>
+        <article>
+          <h3>Ordem e custo</h3>
+          <p>
+            Ordem: <strong>{regra.ordemTexto}</strong>. Movimento custa <strong>{regra.custoMovimento}</strong>, troca custa
+            <strong>{regra.custoTroca}</strong> e ataque usa o custo das propriedades do ataque.
+          </p>
+          <p>
+            A segunda ação do mesmo Pokémon na rodada custa <strong>{regra.segundaAcaoTexto}</strong> do custo base.
+          </p>
+        </article>
+        <article>
+          <h3>Energia</h3>
+          <p>
+            Ao fim da rodada, cada Pokémon vivo recupera energia igual ao seu atributo <strong>{regra.energiaFimRodada}</strong>.
+            Energizado altera esse ganho em <strong>{regra.energiaEnergizado}</strong> e Descarregado em <strong>{regra.energiaDescarregado}</strong>.
+          </p>
+          <p>
+            O gasto de energia é registrado no log quando uma ação validada consome custo real maior que zero.
+          </p>
+        </article>
+        <article>
           <h3>Dano</h3>
           <p>
-            <strong>Dano final</strong> ≈ dano bruto × condicionais × amplificação × tipo × STAB × crítico ×
-            <code>100 / (100 + defesa efetiva)</code> − durabilidade.
+            Dano bruto recebe multiplicadores e ajustes condicionais, depois Amplificação, multiplicador de tipo,
+            STAB de <strong>{regra.stabTexto}</strong> quando o tipo combina com o usuário, crítico, defesa e Durabilidade.
           </p>
           <p>
-            Defesa efetiva usa <code>max(0, defesa - Per/2)</code>. Se o tipo do ataque combina com o usuário,
-            o STAB aplica <code>1.2x</code>.
-          </p>
-        </article>
-        <article>
-          <h3>Tempo e custo</h3>
-          <p>
-            O tick atual da regra é <strong>{regra.tickTexto}</strong>. Para múltiplas ações, a regra registra
-            <strong>{regra.segundaAcaoTexto}</strong> como referência de custo da segunda ação.
-          </p>
-          <p>
-            O custo base vem da ação: movimento, troca, captura ou o custo configurado no JSON de propriedades do ataque.
+            A defesa efetiva usa <code>max(0, defesa - Per/2)</code> e o redutor é <code>100 / (100 + defesa efetiva)</code>.
+            Durabilidade entra como redução fixa depois da defesa.
           </p>
         </article>
         <article>
-          <h3>Colisão</h3>
+          <h3>Barreira, protegido e cura</h3>
           <p>
-            As colisões usam restituição de <strong>{regra.restituicaoColisao}</strong> e dano por massa/velocidade
-            de <strong>{regra.danoColisao}</strong> na regra atual.
+            Protegido anula o dano recebido uma vez. Se houver Barreira, ela absorve o dano antes da Vida.
           </p>
           <p>
-            Isso deixa impacto físico separado do dano normal de ataque, mantendo o resultado registrado no log.
+            A cura também aceita multiplicadores/ajustes condicionais. Se o alvo estiver Queimado, a cura final é multiplicada por
+            <strong>{regra.curaQueimadoTexto}</strong>.
+          </p>
+        </article>
+        <article>
+          <h3>Acerto</h3>
+          <p>
+            A chance base usa Acurácia do usuário e Assertividade do alvo. Depois o código ajusta a chance pela diferença relativa de Velocidade.
+          </p>
+          <p>
+            Em caso de erro, o servidor registra <code>ataque_errou</code> e a ação falha naquele alvo.
           </p>
         </article>
       </div>
     </section>
+
     <section class="combate-secao" aria-labelledby="titulo-tabela-fr">
       <div class="combate-cabecalho">
         <div>

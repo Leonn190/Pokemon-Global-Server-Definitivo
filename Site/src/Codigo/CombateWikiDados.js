@@ -218,25 +218,29 @@ function montarLinhasTabela(matriz) {
     imunidades: tiposPorCondicao(tipos, (atacante) => (porAtaque[atacante.chave]?.[tipo.chave] ?? 1) === 0),
   }));
 }
-function resumoRegraBatalha(regras) {
-  const timeline = regras.timeline ?? {};
-  const colisao = regras.colisao_movimento ?? {};
-  const multiplas = regras.multiplas_acoes ?? {};
-  const baseMulti = numero(multiplas.multiplicador_base, 1);
-  const extraMulti = numero(multiplas.acrescimo_multiplicador_por_acao_extra, 0.2);
+function resumoRegraBatalha() {
+  // Valores refletidos pelo código atual em SimuladorServerJogo/Batalha:
+  // ColetorAcoes valida limites/custos/ordem; RodadorTurno executa passos;
+  // PokemonBatalha calcula dano, cura, energia, barreira e efeitos.
   return {
-    tickSegundos: numero(timeline.tick_segundos, 0.1),
-    tickTexto: `${formatarNumero(numero(timeline.tick_segundos, 0.1), 2)}s`,
-    multiplicadorSegundaAcao: baseMulti + extraMulti,
-    segundaAcaoTexto: `${formatarNumero(baseMulti + extraMulti, 2)}x`,
-    restituicaoColisao: numero(colisao.restituicao, 0.35),
-    danoColisao: numero(colisao.dano_por_massa_velocidade, 8),
+    maxAcoesPorLado: 5,
+    maxAcoesPorPokemon: 2,
+    custoMovimento: 15,
+    custoTroca: 20,
+    multiplicadorSegundaAcao: 1.10,
+    segundaAcaoTexto: "1,10x",
+    ordemTexto: "Inteligência decrescente; empate por Velocidade; captura depois das ações comuns",
+    energiaFimRodada: "Ene do Pokémon",
+    energiaEnergizado: "+25%",
+    energiaDescarregado: "-25%",
+    stabTexto: "1,20x",
+    curaQueimadoTexto: "0,65x",
   };
 }
 export function carregarWikiCombate() {
   const matriz = montarMatriz(carregarCsvFr());
   const linhasTabela = montarLinhasTabela(matriz);
-  const regra = resumoRegraBatalha(carregarRegraBatalha());
+  const regra = resumoRegraBatalha();
   return {
     tipos: matriz.map((linha) => ({ nome: linha.tipo, chave: linha.chave })),
     tabela: linhasTabela,
@@ -244,7 +248,7 @@ export function carregarWikiCombate() {
     resumo: {
       tipos: matriz.length,
       colunas: matriz.length ? 5 : 0,
-      tick: regra.tickTexto,
+      maxAcoesPorLado: regra.maxAcoesPorLado,
     },
   };
 }

@@ -81,31 +81,95 @@ function arquivoSemExtensao(caminho) {
   const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;
   return arquivo.replace(/\.[^.]+$/, "");
 }
+const CATEGORIAS_PASTAS_ITENS = {
+  equipaveis: "equipavel",
+  equipavel: "equipavel",
+  equipamentos: "equipavel",
+  equipamento: "equipavel",
+  pokebolas: "bola",
+  pokebola: "bola",
+  bolas: "bola",
+  bola: "bola",
+  pocoes: "pocao",
+  pocao: "pocao",
+  potions: "pocao",
+  frutas: "fruta",
+  fruta: "fruta",
+  berries: "fruta",
+  recursos: "recurso",
+  recurso: "recurso",
+  ferramentas: "ferramenta",
+  ferramenta: "ferramenta",
+};
+
+function categoriaPorCaminhoItem(caminho) {
+  const partes = caminho.split(/[\\/]/).filter(Boolean).map(normalizarChave);
+  for (const parte of partes.slice(0, -1).reverse()) {
+    if (CATEGORIAS_PASTAS_ITENS[parte]) return CATEGORIAS_PASTAS_ITENS[parte];
+  }
+  return "geral";
+}
+
+function registrarImagem(indice, chave, url) {
+  const normalizada = normalizarChave(chave);
+  if (normalizada && !indice[normalizada]) indice[normalizada] = url;
+}
+
 export function indexarImagensItens(glob) {
-  const indice = {};
+  const geral = {};
+  const porCategoria = {};
   Object.entries(glob).forEach(([caminho, url]) => {
     const nome = arquivoSemExtensao(caminho);
     const chave = normalizarChave(nome);
-    if (chave && !indice[chave]) indice[chave] = url;
+    if (!chave) return;
+    const categoria = categoriaPorCaminhoItem(caminho);
+    if (!porCategoria[categoria]) porCategoria[categoria] = {};
+    registrarImagem(porCategoria[categoria], chave, url);
+    if (categoria === "geral") registrarImagem(geral, chave, url);
   });
-  return indice;
+  return { ...geral, geral, porCategoria };
 }
-function candidatosItem(item) {
-  const codigo = String(item.code ?? item.id ?? "");
+function candidatosNomeItem(item) {
   return [
     item.nome,
     item.slug,
     item.nome?.replace(/\s+/g, "_"),
     item.nome?.replace(/\s+/g, "-"),
+  ].filter(Boolean).map(normalizarChave);
+}
+function candidatosNumericosItem(item) {
+  const codigo = String(item.code ?? item.id ?? "").trim();
+  return [
     codigo,
     codigo.padStart(3, "0"),
     `item${codigo}`,
     `icone${codigo}`,
+    item.estiloBusca === "equipavel" ? `equipavel${codigo}` : null,
+    item.estiloBusca === "equipavel" ? `equipável${codigo}` : null,
   ].filter(Boolean).map(normalizarChave);
 }
+function candidatosItem(item) {
+  return [...candidatosNomeItem(item), ...candidatosNumericosItem(item)];
+}
 export function resolverImagemItem(item, imagensPorNome) {
-  for (const candidato of candidatosItem(item)) {
-    if (imagensPorNome[candidato]) return imagensPorNome[candidato];
+  const categoria = normalizarChave(item.estiloBusca || "");
+  const porCategoria = imagensPorNome?.porCategoria || {};
+  const categoriasPreferidas = [categoria];
+  if (categoria === "equipavel") categoriasPreferidas.unshift("equipavel");
+
+  // Primeiro procura dentro da pasta correspondente ao estilo do item.
+  // Isso permite que a wiki de Itens use as imagens da pasta Equipáveis sem roubar imagem de outros estilos por ID igual.
+  for (const cat of [...new Set(categoriasPreferidas.filter(Boolean))]) {
+    const indiceCategoria = porCategoria[cat] || {};
+    for (const candidato of candidatosItem(item)) {
+      if (indiceCategoria[candidato]) return indiceCategoria[candidato];
+    }
+  }
+
+  // Em pastas gerais, só o nome é confiável. O fallback por número causava trocas de imagem entre categorias.
+  for (const candidato of candidatosNomeItem(item)) {
+    if (imagensPorNome?.geral?.[candidato]) return imagensPorNome.geral[candidato];
+    if (imagensPorNome?.[candidato]) return imagensPorNome[candidato];
   }
   return null;
 }

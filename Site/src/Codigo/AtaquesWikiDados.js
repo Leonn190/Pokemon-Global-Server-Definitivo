@@ -109,45 +109,86 @@ function arquivoSemExtensao(caminho) {
   const arquivo = caminho.split(/[\\/]/).pop() ?? caminho;
   return arquivo.replace(/\.[^.]+$/, "");
 }
+const CHAVES_TIPOS_VALIDOS = new Set(Object.keys(TIPOS_CANONICOS));
+
+function chaveTipoPorCaminho(partes) {
+  for (const parte of partes.slice(0, -1).reverse()) {
+    const chave = normalizarChave(parte);
+    if (CHAVES_TIPOS_VALIDOS.has(chave)) return normalizarChave(tipoCanonico(parte));
+  }
+  return "";
+}
+
+function registrarImagem(indice, chave, url) {
+  const normalizada = normalizarChave(chave);
+  if (normalizada && !indice[normalizada]) indice[normalizada] = url;
+}
+
 export function indexarIconesAtaques(glob) {
   const geral = {};
   const porTipo = {};
+  let temPastasDeTipo = false;
+
   Object.entries(glob).forEach(([caminho, url]) => {
     const partes = caminho.split(/[\\/]/).filter(Boolean);
     const nomeArquivo = arquivoSemExtensao(caminho);
     const chaveArquivo = normalizarChave(nomeArquivo);
-    const pastaTipo = partes.at(-2) ?? "";
-    const tipo = tipoCanonico(pastaTipo);
-    const tipoChave = normalizarChave(tipo);
-    if (chaveArquivo && !geral[chaveArquivo]) geral[chaveArquivo] = url;
+    const tipoChave = chaveTipoPorCaminho(partes);
+    if (!chaveArquivo) return;
+
     if (tipoChave) {
+      temPastasDeTipo = true;
       if (!porTipo[tipoChave]) porTipo[tipoChave] = {};
-      if (chaveArquivo && !porTipo[tipoChave][chaveArquivo]) porTipo[tipoChave][chaveArquivo] = url;
+      registrarImagem(porTipo[tipoChave], chaveArquivo, url);
+      return;
     }
+
+    registrarImagem(geral, chaveArquivo, url);
   });
-  return { geral, porTipo };
+
+  return { geral, porTipo, temPastasDeTipo };
 }
-function candidatosAtaque(ataque) {
-  const codigo = String(ataque.code ?? ataque.id ?? "");
+function candidatosNomeAtaque(ataque) {
   return [
     ataque.nome,
     ataque.slug,
     ataque.nome?.replace(/\s+/g, "_"),
     ataque.nome?.replace(/\s+/g, "-"),
+  ].filter(Boolean).map(normalizarChave);
+}
+function candidatosNumericosAtaque(ataque) {
+  const codigo = String(ataque.code ?? ataque.id ?? "").trim();
+  return [
     codigo,
     codigo.padStart(3, "0"),
     `ataque${codigo}`,
     `icone${codigo}`,
   ].filter(Boolean).map(normalizarChave);
 }
+function candidatosAtaque(ataque) {
+  return [...candidatosNomeAtaque(ataque), ...candidatosNumericosAtaque(ataque)];
+}
 export function resolverIconeAtaque(ataque, indiceIcones) {
   const tipo = ataque.tipoBusca;
   const porTipo = indiceIcones?.porTipo?.[tipo] ?? {};
+
+  // Código/ID só é seguro quando está dentro da pasta do tipo correto.
+  // Isso evita o bug de ataques normais puxarem ícones de água/fogo por terem o mesmo número.
   for (const candidato of candidatosAtaque(ataque)) {
     if (porTipo[candidato]) return porTipo[candidato];
   }
-  for (const candidato of candidatosAtaque(ataque)) {
+
+  // Fora de uma pasta de tipo, só o nome é confiável quando há pastas tipadas no projeto.
+  for (const candidato of candidatosNomeAtaque(ataque)) {
     if (indiceIcones?.geral?.[candidato]) return indiceIcones.geral[candidato];
+  }
+
+  // Projetos antigos podem ter apenas ícones numéricos soltos em /public/Ataques.
+  // Nesse caso, permite o fallback numérico porque não há risco de cruzar tipos.
+  if (!indiceIcones?.temPastasDeTipo) {
+    for (const candidato of candidatosNumericosAtaque(ataque)) {
+      if (indiceIcones?.geral?.[candidato]) return indiceIcones.geral[candidato];
+    }
   }
   return null;
 }

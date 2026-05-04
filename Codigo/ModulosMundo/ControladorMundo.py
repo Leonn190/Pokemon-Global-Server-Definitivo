@@ -87,7 +87,11 @@ class ControladorMundo:
         self.Leitor.bombear()
         self.Leitor.bombear_preaquecimento(max_chunks=1)
         self.Pacotes.bombear(max_ciclos=1)
-        self.Objetos.definir_layout_dungeon_atual(self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {})
+        layout_dungeon = self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {}
+        self.Objetos.definir_layout_dungeon_atual(layout_dungeon)
+        definir_layout = getattr(self.Camera, "definir_layout_dungeon", None)
+        if callable(definir_layout):
+            definir_layout(layout_dungeon)
         ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None
         player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
         self.Objetos.atualizar_visuais(dt, self.Camera, ignorar_id=ignorar_id, player_pos=player_pos)

@@ -117,6 +117,8 @@ class CerebroEstruturasNaturais:
                 estrutura.estado_extra["porta_ativa"] = True
                 estrutura.estado_extra["estrutura_quebrada"] = True
                 estrutura.estado_extra["quantidade"] = 0
+                estrutura.raio_colisao = 0.0
+                estrutura.Colisor.raio_colisao = 0.0
                 BANCO_DADOS.atualizar_objeto(estrutura.Id, {"estado": estrutura.estado_extra})
                 registrar_diff("update", payload=estrutura.serializar(), escopo={"centro": [estrutura.posicao[0], estrutura.posicao[1]], "raio": 90.0}, objeto_id=estrutura.Id, autor="server", categoria="estrutura")
             else:

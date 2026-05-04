@@ -19,10 +19,11 @@ class CerebroDungeons:
 
     def chunks_proximos(self, dimensao, centro, raio):
         layout = self._layouts.get(str(dimensao), {}) if isinstance(self._layouts.get(str(dimensao), {}), dict) else {}
-        bloco = max(1, int(layout.get("tamanho_bloco_sala_tiles", 30) or 30))
+        bloco_w = max(1, int(layout.get("largura_bloco_sala_tiles", layout.get("tamanho_bloco_sala_tiles", 30)) or 30))
+        bloco_h = max(1, int(layout.get("altura_bloco_sala_tiles", layout.get("tamanho_bloco_sala_tiles", 30)) or 30))
         chunk_sz = max(1, int(BANCO_DADOS.chunk_tamanho_unidade()))
-        max_x = max(1, int((int(layout.get("largura_blocos", 1) or 1) * bloco + chunk_sz - 1) // chunk_sz))
-        max_y = max(1, int((int(layout.get("altura_blocos", 1) or 1) * bloco + chunk_sz - 1) // chunk_sz))
+        max_x = max(1, int((int(layout.get("largura_blocos", 1) or 1) * bloco_w + chunk_sz - 1) // chunk_sz))
+        max_y = max(1, int((int(layout.get("altura_blocos", 1) or 1) * bloco_h + chunk_sz - 1) // chunk_sz))
         cx, cy = int(centro[0]), int(centro[1])
         out = []
         for dx in range(-int(raio), int(raio)+1):
@@ -35,7 +36,7 @@ class CerebroDungeons:
 
     def chunk_em_grade(self, dimensao, chunk):
         t = int(BANCO_DADOS.chunk_tamanho_unidade())
-        return [[0 for _ in range(t)] for _ in range(t)]
+        return [[8 for _ in range(t)] for _ in range(t)]
 
     def entrar_dungeon(self, client_id, pedra_id, porta_idx, dungeon_code):
         obj_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)

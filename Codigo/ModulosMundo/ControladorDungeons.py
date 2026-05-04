@@ -13,8 +13,10 @@ class ControladorDungeons:
         if not str(self._ultima_dim).startswith("Dungeon") or not isinstance(layout, dict) or player_pos is None:
             return
         bloco = int(layout.get("tamanho_bloco_sala_tiles", 30) or 30)
+        bloco_w = int(layout.get("largura_bloco_sala_tiles", bloco) or bloco)
+        bloco_h = int(layout.get("altura_bloco_sala_tiles", bloco) or bloco)
         salas = layout.get("salas") if isinstance(layout.get("salas"), list) else []
-        sala_atual = (int(float(player_pos[0]) // bloco), int(float(player_pos[1]) // bloco))
+        sala_atual = (int(float(player_pos[0]) // bloco_w), int(float(player_pos[1]) // bloco_h))
         sala_valida = None
         for sala in salas:
             pos = sala.get("posicao_sala") if isinstance(sala, dict) else None
@@ -29,11 +31,11 @@ class ControladorDungeons:
                     sala_valida = (int(pos_e[0]), int(pos_e[1]))
         if sala_valida is None:
             return
-        sx = int(sala_valida[0]) * bloco
-        sy = int(sala_valida[1]) * bloco
+        sx = int(sala_valida[0]) * bloco_w
+        sy = int(sala_valida[1]) * bloco_h
         x, y = camera.mundo_para_tela_px((sx, sy))
         tile = float(getattr(camera, "TilePx", 50) or 50)
-        vis = pygame.Rect(int(x), int(y), int(bloco * tile), int(bloco * tile))
+        vis = pygame.Rect(int(x), int(y), int(bloco_w * tile), int(bloco_h * tile))
         W, H = tela.get_size()
         pygame.draw.rect(tela, (0, 0, 0), pygame.Rect(0, 0, W, max(0, vis.top)))
         pygame.draw.rect(tela, (0, 0, 0), pygame.Rect(0, vis.bottom, W, max(0, H - vis.bottom)))

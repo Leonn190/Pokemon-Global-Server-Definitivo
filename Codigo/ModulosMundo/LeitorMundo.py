@@ -225,7 +225,7 @@ class LeitorMundo:
         with self._lock:
             meta_alterada = False
             meta = pacote.get("meta") if isinstance(pacote.get("meta"), dict) else {}
-            for chave_meta in ("largura_blocos", "altura_blocos", "raio_chunks_ativo", "dimensao", "layout_dungeon", "tipo_dimensao", "tamanho_bloco_sala_tiles"):
+            for chave_meta in ("largura_blocos", "altura_blocos", "raio_chunks_ativo", "dimensao", "layout_dungeon", "tipo_dimensao", "tamanho_bloco_sala_tiles", "largura_bloco_sala_tiles", "altura_bloco_sala_tiles"):
                 valor_meta = meta.get(chave_meta)
                 if valor_meta is not None and self.MetaMundo.get(chave_meta) != valor_meta:
                     self.MetaMundo[chave_meta] = valor_meta

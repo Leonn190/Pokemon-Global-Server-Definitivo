@@ -1,4 +1,6 @@
 tamanho_bloco_sala_tiles = 30
+largura_bloco_sala_tiles = 40
+altura_bloco_sala_tiles = 30
 coracoes_iniciais = 3
 coracoes_maximos = 3
 tamanho_1_blocos = 4

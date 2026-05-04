@@ -259,6 +259,8 @@ class ControladorObjetos:
         if self._eh_payload_bau(payload):
             return True
         if self._eh_payload_estrutura(payload):
+            if self._eh_dungeon_aberta(payload):
+                return False
             return True
         if self._eh_payload_estadio(payload):
             return True
@@ -270,6 +272,8 @@ class ControladorObjetos:
         return False
 
     def _posicao_raio_colisao_client(self, oid: int, obj: Dict[str, object]):
+        if self._eh_dungeon_aberta(obj):
+            return None, 0.0
         if self._eh_payload_pokemon(obj):
             poke = self.PokemonsPorId.get(int(oid))
             colisor = getattr(poke, "Colisor", None) if poke is not None else None
@@ -336,6 +340,8 @@ class ControladorObjetos:
             estruturas = [self.ObjetosPorId.get(oid) for oid in self.EstruturasPorId.keys()]
         for obj in estruturas:
             if not isinstance(obj, dict):
+                continue
+            if self._eh_dungeon_aberta(obj):
                 continue
             pos = obj.get("posicao")
             if not isinstance(pos, (list, tuple)) or len(pos) != 2:
@@ -423,6 +429,11 @@ class ControladorObjetos:
 
     def _eh_payload_estrutura(self, payload: Dict[str, object]) -> bool:
         return str(payload.get("tipo", "")).strip().lower() in {"estrutura_natural", "estrutura"}
+
+    @staticmethod
+    def _eh_dungeon_aberta(payload: Dict[str, object]) -> bool:
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        return str(estado.get("subtipo") or "").strip().lower() == "dungeon" and bool(estado.get("porta_ativa", False) or estado.get("estrutura_quebrada", False))
 
     def _eh_payload_estadio(self, payload: Dict[str, object]) -> bool:
         return str(payload.get("tipo", "")).strip().lower() in {"entidade_estadio", "estadio"}
@@ -998,9 +1009,11 @@ class ControladorObjetos:
                 continue
             est = self.EstruturasPorId.get(int(obj.get("id", 0) or 0))
             escala = est.escala_render() if est is not None else 1.0
-            self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala, pos_tela=pos_tela, fila_blits=fila_blits, tela_size=tela_size)
             estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
-            if str(estado.get("subtipo") or "").lower() == "dungeon" and bool(estado.get("porta_ativa", False) or estado.get("estrutura_quebrada", False)):
+            dungeon_aberta = self._eh_dungeon_aberta(obj)
+            if not dungeon_aberta:
+                self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala, pos_tela=pos_tela, fila_blits=fila_blits, tela_size=tela_size)
+            if dungeon_aberta:
                 if fila_blits:
                     self._aplicar_blits_batch(tela, fila_blits)
                     fila_blits.clear()

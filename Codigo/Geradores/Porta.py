@@ -33,5 +33,6 @@ def renderizar(tela, camera, posicao, modo="dungeon", **kwargs):
         pygame.draw.rect(tela, (88, 100, 124), faixa_topo, border_radius=max(4, px(0.08)))
         luz_r = max(3, px(0.10)); pygame.draw.circle(tela, (255, 214, 95), (porta_externa.left + px(0.22), porta_externa.top + px(0.34)), luz_r); pygame.draw.circle(tela, (255, 214, 95), (porta_externa.right - px(0.22), porta_externa.top + px(0.34)), luz_r)
     else:
-        pygame.draw.circle(tela, (8,8,8), (int(x), int(y)), max(5,int(getattr(camera,'TilePx',50)*0.35)))
-        pygame.draw.circle(tela, (70,70,70), (int(x), int(y)), max(5,int(getattr(camera,'TilePx',50)*0.35)), 2)
+        raio = max(7,int(getattr(camera,'TilePx',50)*0.52))
+        pygame.draw.circle(tela, (8,8,8), (int(x), int(y)), raio)
+        pygame.draw.circle(tela, (70,70,70), (int(x), int(y)), raio, 2)

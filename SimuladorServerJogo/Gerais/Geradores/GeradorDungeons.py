@@ -1,7 +1,7 @@
 from __future__ import annotations
 from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Mundo.DungeonGeometria import nome_dimensao_dungeon, posicao_sala_entrada, spawn_interno_entrada, saida_sala_entrada, tamanho_em_blocos, TAMANHO_BLOCO_SALA_TILES
+from SimuladorServerJogo.Mundo.DungeonGeometria import nome_dimensao_dungeon, posicao_sala_entrada, spawn_interno_entrada, saida_sala_entrada, tamanho_em_blocos, TAMANHO_BLOCO_SALA_TILES, LARGURA_BLOCO_SALA_TILES, ALTURA_BLOCO_SALA_TILES
 
 
 def _dungeons_csv():
@@ -55,4 +55,4 @@ def gerar_dungeon_layout(dungeon_code:str, entradas:list[dict])->dict:
         ent={"porta_idx":porta_idx,"sala_id":f"entrada_{porta_idx}","posicao_sala":[pos_bloco[0],pos_bloco[1]],"spawn":spawn_interno_entrada(pos_bloco),"saida":saida_sala_entrada(pos_bloco)}
         entradas_out.append(ent)
         salas.append({"id":ent["sala_id"],"tipo":"entrada","largura_blocos":1,"altura_blocos":1,"posicao_sala":[pos_bloco[0],pos_bloco[1]]})
-    return {"dimensao":nome_dimensao_dungeon(dungeon_code),"dungeon_code":str(dungeon_code),"dungeon_nome":nome,"tamanho":tamanho,"dificuldade":dificuldade,"largura_blocos":largura,"altura_blocos":altura,"tamanho_bloco_sala_tiles":TAMANHO_BLOCO_SALA_TILES,"salas":salas,"entradas":entradas_out,"catalogo_versao":"v1"}
+    return {"dimensao":nome_dimensao_dungeon(dungeon_code),"dungeon_code":str(dungeon_code),"dungeon_nome":nome,"tamanho":tamanho,"dificuldade":dificuldade,"largura_blocos":largura,"altura_blocos":altura,"tamanho_bloco_sala_tiles":TAMANHO_BLOCO_SALA_TILES,"largura_bloco_sala_tiles":LARGURA_BLOCO_SALA_TILES,"altura_bloco_sala_tiles":ALTURA_BLOCO_SALA_TILES,"salas":salas,"entradas":entradas_out,"catalogo_versao":"v1"}

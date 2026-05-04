@@ -344,6 +344,8 @@ class BancoDadosMundo:
                         if qtd_restante <= 0:
                             obj.estado_extra["porta_ativa"] = True
                             obj.estado_extra["estrutura_quebrada"] = True
+                            obj.raio_colisao = 0.0
+                            obj.Colisor.raio_colisao = 0.0
                     obj.tipo_classe = "estrutura_natural"
                     self._objetos[obj.Id] = obj
                     self._indice_espacial[self._celula(obj.posicao)].add(obj.Id)

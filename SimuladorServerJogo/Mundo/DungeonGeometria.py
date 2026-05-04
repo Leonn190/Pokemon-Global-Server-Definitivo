@@ -3,6 +3,8 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_dungeons
 
 _REGRAS=carregar_regras_dungeons()
 TAMANHO_BLOCO_SALA_TILES=int(_REGRAS.get("tamanho_bloco_sala_tiles",30) or 30)
+LARGURA_BLOCO_SALA_TILES=int(_REGRAS.get("largura_bloco_sala_tiles",TAMANHO_BLOCO_SALA_TILES) or TAMANHO_BLOCO_SALA_TILES)
+ALTURA_BLOCO_SALA_TILES=int(_REGRAS.get("altura_bloco_sala_tiles",TAMANHO_BLOCO_SALA_TILES) or TAMANHO_BLOCO_SALA_TILES)
 
 def normalizar_dimensao_dungeon(dimensao:str)->str:
     return str(dimensao or "").strip()
@@ -21,7 +23,7 @@ def posicao_sala_entrada(porta_idx:int, tamanho:int)->tuple[int,int]:
     t=tamanho_em_blocos(tamanho); i=max(0,int(porta_idx or 1)-1); return (i%t,i//t)
 
 def retangulo_sala_em_tiles(pos_bloco):
-    bx,by=int(pos_bloco[0]),int(pos_bloco[1]); s=TAMANHO_BLOCO_SALA_TILES; return (bx*s,by*s,s,s)
+    bx,by=int(pos_bloco[0]),int(pos_bloco[1]); return (bx*LARGURA_BLOCO_SALA_TILES,by*ALTURA_BLOCO_SALA_TILES,LARGURA_BLOCO_SALA_TILES,ALTURA_BLOCO_SALA_TILES)
 
 def spawn_interno_entrada(pos_bloco):
     x,y,w,h=retangulo_sala_em_tiles(pos_bloco); return [x+w/2.0,y+h-3.0]
@@ -30,4 +32,4 @@ def saida_sala_entrada(pos_bloco):
     return spawn_interno_entrada(pos_bloco)
 
 def sala_atual_por_posicao(pos):
-    s=TAMANHO_BLOCO_SALA_TILES; return (int(float(pos[0])//s),int(float(pos[1])//s))
+    return (int(float(pos[0])//LARGURA_BLOCO_SALA_TILES),int(float(pos[1])//ALTURA_BLOCO_SALA_TILES))

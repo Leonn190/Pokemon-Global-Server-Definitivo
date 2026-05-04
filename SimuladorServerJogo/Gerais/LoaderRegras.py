@@ -462,6 +462,8 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
 def carregar_regras_dungeons() -> Dict[str, object]:
     base = {
         "tamanho_bloco_sala_tiles": 30,
+        "largura_bloco_sala_tiles": 40,
+        "altura_bloco_sala_tiles": 30,
         "coracoes_iniciais": 3,
         "coracoes_maximos": 3,
         "tamanho_1_blocos": 4,

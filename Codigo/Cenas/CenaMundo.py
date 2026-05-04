@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pygame
 
-from Codigo.ModulosGerais.Camera import Camera
+from Codigo.ModulosGerais.Camera import CameraDungeon
 from Codigo.ModulosMundo.ControladorMundo import ControladorMundo
 from Codigo.ModulosMundo.ElementosHudMundo import ElementosHudMundo
 from Codigo.ModulosMundo.ServicoMapaMundo import ServicoMapaMundo
@@ -240,7 +240,7 @@ class CenaMundo:
         tile_px = int(gerais.get("camera_px_por_tile", 50))
 
         dados = JOGO.INFO.get("PlayerDadosServer") or {}
-        self.Camera = Camera(JOGO.TELA.get_size(), entidade_main=None, tile_px=tile_px)
+        self.Camera = CameraDungeon(JOGO.TELA.get_size(), entidade_main=None, tile_px=tile_px)
         self.ControladorMundo = ControladorMundo(jogo=JOGO, camera=self.Camera)
         player_local = self.ControladorMundo.montar_player_local(dados)
         self.EntidadeMain = player_local
@@ -720,7 +720,10 @@ class CenaMundo:
                 return
         except (IndexError, TypeError, ValueError):
             return
-        self._ultimo_chunk_seguro = {"chave": (cx, cy), "grid": [list(linha) for linha in chunk]}
+        dim = "Mundo"
+        if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
+            dim = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
+        self._ultimo_chunk_seguro = {"chave": (cx, cy), "grid": [list(linha) for linha in chunk], "dimensao": dim}
 
     def _aplicar_morte_se_necessario(self, jogo):
         if self._tela_morrer.ativa:
@@ -787,6 +790,7 @@ class CenaMundo:
         checkpoint = self._ultimo_chunk_seguro if isinstance(self._ultimo_chunk_seguro, dict) else {}
         base = checkpoint.get("chave") if isinstance(checkpoint.get("chave"), tuple) else None
         chunk = checkpoint.get("grid") if isinstance(checkpoint.get("grid"), list) else None
+        dimensao_checkpoint = str(checkpoint.get("dimensao") or self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
         if chunk is None and base in chunks:
             chunk = chunks.get(base)
         if base is None or chunk is None:
@@ -814,12 +818,18 @@ class CenaMundo:
         player.definir_posicao(float(base[0] * tamanho + lx + 0.5), float(base[1] * tamanho + ly + 0.5))
         nova_pos = [float(player.Posicao[0]), float(player.Posicao[1])]
         player.Perfil.Stamina = max(float(player.Perfil.StaminaMax) * 0.6, 10.0)
+        estado_respawn = {"dimensao": dimensao_checkpoint}
+        setattr(player, "DimensaoAtual", dimensao_checkpoint)
+        if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
+            self.ControladorMundo.Objetos.aplicar_diff({"tipo": "update", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"posicao": nova_pos, "estado": estado_respawn}})
+            if callable(getattr(self.ControladorMundo, "_ao_dimensao_atualizada", None)):
+                self.ControladorMundo._ao_dimensao_atualizada(dimensao_checkpoint, False)
         server = jogo.INFO.get("ServerSelecionado") if isinstance(jogo.INFO.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
         if link:
-            resposta = enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_ressurgiu", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "morte_agua_funda", "posicao": nova_pos, "stamina": float(player.Perfil.Stamina)}}])
+            resposta = enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_ressurgiu", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "morte_agua_funda", "posicao": nova_pos, "stamina": float(player.Perfil.Stamina), "dimensao": dimensao_checkpoint}}])
             self._aplicar_resposta_mundo(resposta)
-            resposta = enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "update", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"posicao": nova_pos, "perfil": {"stamina": float(player.Perfil.Stamina)}}}])
+            resposta = enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "update", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"posicao": nova_pos, "perfil": {"stamina": float(player.Perfil.Stamina)}, "estado": estado_respawn}}])
             self._aplicar_resposta_mundo(resposta)
         self._definir_player_morto(False)
         self._tela_morrer.fechar()

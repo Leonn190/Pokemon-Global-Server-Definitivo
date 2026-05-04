@@ -460,15 +460,19 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
             dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[1])
             if _eh_dimensao_dungeon(dimensao) and isinstance(layout_dungeon, dict):
                 bloco = int(layout_dungeon.get("tamanho_bloco_sala_tiles", 30) or 30)
+                bloco_w = int(layout_dungeon.get("largura_bloco_sala_tiles", bloco) or bloco)
+                bloco_h = int(layout_dungeon.get("altura_bloco_sala_tiles", bloco) or bloco)
                 dim_largura_dungeon = int(layout_dungeon.get("largura_blocos", 0) or 0)
                 dim_altura_dungeon = int(layout_dungeon.get("altura_blocos", 0) or 0)
-                dim_largura = int(dim_largura_dungeon * bloco)
-                dim_altura = int(dim_altura_dungeon * bloco)
+                dim_largura = int(dim_largura_dungeon * bloco_w)
+                dim_altura = int(dim_altura_dungeon * bloco_h)
             else:
                 dim_largura_dungeon = 0
                 dim_altura_dungeon = 0
                 bloco = 30
-            return _serializar_resposta({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "tipo_dimensao": "dungeon" if _eh_dimensao_dungeon(dimensao) else ("estadio" if _eh_dimensao_estadio(dimensao) else "mundo"), "layout_dungeon": layout_dungeon, "tamanho_bloco_sala_tiles": int(bloco), "largura_blocos_dungeon": int(dim_largura_dungeon), "altura_blocos_dungeon": int(dim_altura_dungeon), "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, serializar_resposta)
+                bloco_w = bloco
+                bloco_h = bloco
+            return _serializar_resposta({"status": "ok", "client_id": client_id, "chunks": chunks, "meta": {"total_chunks": len(chunks), "chunk_blocos": int(BANCO_DADOS.chunk_tamanho_unidade()), "dimensao": dimensao, "tipo_dimensao": "dungeon" if _eh_dimensao_dungeon(dimensao) else ("estadio" if _eh_dimensao_estadio(dimensao) else "mundo"), "layout_dungeon": layout_dungeon, "tamanho_bloco_sala_tiles": int(bloco), "largura_bloco_sala_tiles": int(bloco_w), "altura_bloco_sala_tiles": int(bloco_h), "largura_blocos_dungeon": int(dim_largura_dungeon), "altura_blocos_dungeon": int(dim_altura_dungeon), "largura_blocos": int(dim_largura), "altura_blocos": int(dim_altura)}}, serializar_resposta)
 
         if modo == "mapa_bootstrap":
             chunks_base = _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")

@@ -115,6 +115,54 @@ class Camera:
         return (wx, wy)
 
 
+class CameraDungeon(Camera):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.LayoutDungeonAtual: dict = {}
+
+    def definir_layout_dungeon(self, layout: dict | None) -> None:
+        self.LayoutDungeonAtual = dict(layout) if isinstance(layout, dict) else {}
+
+    @staticmethod
+    def _tamanho_sala(layout: dict) -> Tuple[float, float]:
+        base = float(layout.get("tamanho_bloco_sala_tiles", 30) or 30)
+        return (
+            float(layout.get("largura_bloco_sala_tiles", base) or base),
+            float(layout.get("altura_bloco_sala_tiles", base) or base),
+        )
+
+    def _sala_1x1_atual(self):
+        layout = self.LayoutDungeonAtual if isinstance(self.LayoutDungeonAtual, dict) else {}
+        salas = layout.get("salas") if isinstance(layout.get("salas"), list) else []
+        if not salas or self.EntidadeMain is None or not hasattr(self.EntidadeMain, "Posicao"):
+            return None
+        sala_w, sala_h = self._tamanho_sala(layout)
+        px, py = float(self.EntidadeMain.Posicao[0]), float(self.EntidadeMain.Posicao[1])
+        sala_atual = (int(px // max(1.0, sala_w)), int(py // max(1.0, sala_h)))
+        for sala in salas:
+            if not isinstance(sala, dict):
+                continue
+            pos = sala.get("posicao_sala") if isinstance(sala.get("posicao_sala"), (list, tuple)) else None
+            if not pos or len(pos) != 2:
+                continue
+            if int(pos[0]) != sala_atual[0] or int(pos[1]) != sala_atual[1]:
+                continue
+            if int(sala.get("largura_blocos", 1) or 1) == 1 and int(sala.get("altura_blocos", 1) or 1) == 1:
+                return (float(pos[0]) * sala_w, float(pos[1]) * sala_h, sala_w, sala_h)
+        return None
+
+    def atualizar(self, delta_time: float) -> Vector2:
+        sala = self._sala_1x1_atual()
+        if sala is None:
+            return super().atualizar(delta_time)
+        sx, sy, sw, sh = sala
+        half_w_tiles = (self.TamanhoTelaPx[0] * 0.5) / max(1.0, float(self.TilePx))
+        half_h_tiles = (self.TamanhoTelaPx[1] * 0.5) / max(1.0, float(self.TilePx))
+        self.PosicaoTiles = (sx + (sw * 0.5) - half_w_tiles, sy + (sh * 0.5) - half_h_tiles)
+        self._normalizar_posicao_limites()
+        return self.PosicaoTiles
+
+
 class CameraBatalha(Camera):
     TILE_MIN = 30
     TILE_MAX = 50

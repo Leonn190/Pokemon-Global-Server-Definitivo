@@ -6,6 +6,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const raizDoRepositorio = path.resolve(__dirname, "..");
 
 export default defineConfig({
+  site: "https://leonn190.github.io",
+  base: "/Pokemon-Global-Server-Definitivo",
+
   vite: {
     resolve: {
       alias: {

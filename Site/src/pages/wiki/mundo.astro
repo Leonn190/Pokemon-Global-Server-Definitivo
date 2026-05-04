@@ -9,7 +9,7 @@ import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const dadosMundo = carregarWikiMundo();
 const { estruturas, biomas, resumo, captura } = dadosMundo;
-const imagensEstruturas = indexarPublicoPorNome(["Objetos", "Itens"]);
+const imagensEstruturas = indexarPublicoPorNome(["Recursos", "Objetos", "Ferramentas", "Itens", "Mundo"]);
 const assetsEstruturas = criarAssetsEstruturas(estruturas, imagensEstruturas);
 const estruturasPublicas = estruturas.map(({ subtipo, sprite, spriteArquivo, slug, origemEspecial, ...estrutura }) => estrutura);
 const tamanhoMundo = resumo.largura.toLocaleString("pt-BR");

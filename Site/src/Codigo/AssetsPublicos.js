@@ -4,6 +4,10 @@ import { fileURLToPath } from "node:url";
 
 const EXTENSOES_IMAGEM = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".avif"]);
 const cacheListas = new Map();
+const cacheIndices = new Map();
+
+const PASTAS_POKEMON = ["pokemon", "pokemons", "pokedex", "pokédex", "sprites", "imagens"];
+const PASTAS_RUIDO = ["animacao", "animação", "animacoes", "animações", "frames", "frame", "gif", "gifs", "ataquesgifs"];
 
 function diretorioModulo() {
   try {
@@ -15,7 +19,7 @@ function diretorioModulo() {
 
 function subirAtePublic(inicio) {
   let atual = path.resolve(inicio || process.cwd());
-  for (let i = 0; i < 8; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const candidato = path.join(atual, "public");
     if (existsSync(candidato)) return candidato;
     const pai = path.dirname(atual);
@@ -46,7 +50,7 @@ function resolverRaizPublic() {
 
 const RAIZ_PUBLIC = resolverRaizPublic();
 
-function normalizarChave(valor) {
+export function normalizarChavePublica(valor) {
   return String(valor ?? "")
     .trim()
     .normalize("NFD")
@@ -114,30 +118,93 @@ function listarArquivosRecursivo(diretorio, destino) {
   return destino;
 }
 
-function chavesNumericas(valor) {
-  const texto = String(valor ?? "");
-  const numeros = texto.match(/\d+/g) ?? [];
-  const chaves = [];
-  for (const numero of numeros) {
-    const inteiro = Number(numero);
-    if (!Number.isFinite(inteiro)) continue;
-    chaves.push(String(inteiro));
-    chaves.push(String(inteiro).padStart(2, "0"));
-    chaves.push(String(inteiro).padStart(3, "0"));
-    chaves.push(String(inteiro).padStart(4, "0"));
-    chaves.push(`pokemon${inteiro}`);
-    chaves.push(`pokemon${String(inteiro).padStart(3, "0")}`);
-    chaves.push(`poke${inteiro}`);
-    chaves.push(`poke${String(inteiro).padStart(3, "0")}`);
-    chaves.push(`icone${inteiro}`);
-    chaves.push(`icone${String(inteiro).padStart(3, "0")}`);
-  }
-  return chaves;
+function numeroIdentificador(valor) {
+  const chave = normalizarChavePublica(valor);
+  const match = chave.match(/^(?:pokemon|poke|pokedex|dex|item|ataque|efeito|icone|icon|medalhao|insignia|skin|npc)?0*(\d{1,5})$/);
+  if (!match) return null;
+  return String(Number(match[1]));
 }
 
-function adicionarChave(indice, chave, url) {
-  const normalizada = normalizarChave(chave);
-  if (normalizada && !indice[normalizada]) indice[normalizada] = url;
+function chavesNumericasIdentificadoras(valor) {
+  const numero = numeroIdentificador(valor);
+  if (!numero) return [];
+  return [
+    numero,
+    numero.padStart(2, "0"),
+    numero.padStart(3, "0"),
+    numero.padStart(4, "0"),
+    `pokemon${numero}`,
+    `pokemon${numero.padStart(3, "0")}`,
+    `poke${numero}`,
+    `poke${numero.padStart(3, "0")}`,
+    `pokedex${numero}`,
+    `dex${numero}`,
+    `item${numero}`,
+    `ataque${numero}`,
+    `efeito${numero}`,
+    `icone${numero}`,
+    `icon${numero}`,
+    `medalhao${numero}`,
+    `insignia${numero}`,
+    `skin${numero}`,
+    `npc${numero}`,
+  ];
+}
+
+function variantesNomeArquivo(nomeArquivo) {
+  const semExt = String(nomeArquivo || "").replace(/\.[^.]+$/, "");
+  const variantes = new Set([semExt]);
+  variantes.add(semExt.replace(/^\d+px[-_\s]*/i, ""));
+  variantes.add(semExt.replace(/[_\s-]*hd$/i, ""));
+  variantes.add(semExt.replace(/^\d+px[-_\s]*/i, "").replace(/[_\s-]*hd$/i, ""));
+  variantes.add(semExt.replace(/^icone[-_\s]*/i, ""));
+  variantes.add(semExt.replace(/^icon[-_\s]*/i, ""));
+  variantes.add(semExt.replace(/^pokemon[-_\s]*/i, ""));
+  variantes.add(semExt.replace(/^poke[-_\s]*/i, ""));
+  variantes.add(semExt.replace(/^item[-_\s]*/i, ""));
+  return [...variantes].filter(Boolean);
+}
+
+function pontuarCandidato({ caminho, arquivo, nomeArquivo, pastaPai, pastaRaiz, chaveOrigem, prioridade = 0 }) {
+  const chave = normalizarChavePublica(chaveOrigem);
+  const nome = normalizarChavePublica(nomeArquivo);
+  const pai = normalizarChavePublica(pastaPai);
+  const raiz = normalizarChavePublica(pastaRaiz);
+  const caminhoNormalizado = normalizarChavePublica(caminho);
+  const partes = caminho.split("/").map(normalizarChavePublica).filter(Boolean);
+  const extensao = path.extname(arquivo).toLowerCase();
+  const numeroChave = numeroIdentificador(chave);
+  const numeroNome = numeroIdentificador(nome);
+
+  let score = Number(prioridade) || 0;
+  if (!chave) return -Infinity;
+
+  if (nome === chave) score += 1200;
+  if (numeroChave && numeroNome && numeroChave === numeroNome) score += 1050;
+  if (nome.endsWith(chave) || nome.startsWith(chave)) score += 420;
+  if (pai === chave) score += 360;
+  if (raiz === chave) score += 120;
+  if (caminhoNormalizado.includes(chave)) score += 70;
+
+  if (partes.some((parte) => PASTAS_POKEMON.includes(parte))) score += 90;
+  if (partes.some((parte) => PASTAS_RUIDO.includes(parte))) score -= 650;
+  if (extensao === ".webp") score += 25;
+  if (extensao === ".png") score += 18;
+  if (extensao === ".jpg" || extensao === ".jpeg") score += 10;
+  if (extensao === ".gif") score -= 60;
+  score -= Math.max(0, partes.length - 2) * 8;
+
+  return score;
+}
+
+function registrar(indiceInterno, chave, entrada, prioridade = 0) {
+  const normalizada = normalizarChavePublica(chave);
+  if (!normalizada) return;
+  const score = pontuarCandidato({ ...entrada, chaveOrigem: normalizada, prioridade });
+  const atual = indiceInterno.get(normalizada);
+  if (!atual || score > atual.score || (score === atual.score && compararCaminhos(entrada.caminho, atual.caminho) < 0)) {
+    indiceInterno.set(normalizada, { ...entrada, score });
+  }
 }
 
 export function urlPublica(caminho) {
@@ -175,10 +242,14 @@ export function listarImagensPublicas(pastas) {
 }
 
 export function indexarPublicoPorNome(pastas) {
-  const indice = {};
+  const listaPastas = (Array.isArray(pastas) ? pastas : [pastas]).map(caminhoRelativo).filter(Boolean);
+  const chaveCache = `${RAIZ_PUBLIC}|indice|${listaPastas.join("|")}`;
+  if (cacheIndices.has(chaveCache)) return cacheIndices.get(chaveCache);
+
+  const indiceInterno = new Map();
   const listaOrdenada = [];
 
-  Object.entries(listarImagensPublicas(pastas)).forEach(([caminho, url]) => {
+  Object.entries(listarImagensPublicas(listaPastas)).forEach(([caminho, url]) => {
     const partes = caminho.split("/").filter(Boolean);
     const arquivo = partes.at(-1) || caminho;
     const nomeArquivo = arquivo.replace(/\.[^.]+$/, "");
@@ -186,28 +257,39 @@ export function indexarPublicoPorNome(pastas) {
     const pastaRaiz = partes.at(0) || "";
     const caminhoSemExtensao = caminho.replace(/\.[^.]+$/, "");
     const partesSemPastaRaiz = partes.slice(1).join("/").replace(/\.[^.]+$/, "");
+    const entrada = { caminho, url, arquivo, nome: nomeArquivo, nomeArquivo, pastaPai, pastaRaiz };
 
-    listaOrdenada.push({ caminho, url, nome: nomeArquivo });
+    listaOrdenada.push(entrada);
 
+    variantesNomeArquivo(nomeArquivo).forEach((chave) => registrar(indiceInterno, chave, entrada, 0));
     [
-      nomeArquivo,
       pastaPai,
       pastaRaiz,
       `${pastaPai} ${nomeArquivo}`,
       `${pastaRaiz} ${nomeArquivo}`,
       caminhoSemExtensao,
       partesSemPastaRaiz,
-      nomeArquivo.replace(/^0+(\d+)$/, "$1"),
-      ...chavesNumericas(nomeArquivo),
-      ...chavesNumericas(pastaPai),
-      ...chavesNumericas(caminhoSemExtensao),
-    ].forEach((chave) => adicionarChave(indice, chave, url));
+    ].forEach((chave) => registrar(indiceInterno, chave, entrada, -80));
+
+    chavesNumericasIdentificadoras(nomeArquivo).forEach((chave) => registrar(indiceInterno, chave, entrada, 40));
+    chavesNumericasIdentificadoras(pastaPai).forEach((chave) => registrar(indiceInterno, chave, entrada, -30));
   });
+
+  const indice = {};
+  for (const [chave, entrada] of indiceInterno.entries()) {
+    indice[chave] = entrada.url;
+  }
 
   Object.defineProperty(indice, "__listaOrdenada", {
     value: listaOrdenada.sort((a, b) => compararCaminhos(a.caminho, b.caminho)),
     enumerable: false,
   });
 
+  Object.defineProperty(indice, "__entradasPorChave", {
+    value: indiceInterno,
+    enumerable: false,
+  });
+
+  cacheIndices.set(chaveCache, indice);
   return indice;
 }

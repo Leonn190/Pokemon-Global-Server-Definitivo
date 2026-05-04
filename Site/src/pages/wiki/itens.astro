@@ -13,7 +13,7 @@ import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const itens = carregarItens();
 const resumo = resumoItens(itens);
-const imagensItens = indexarPublicoPorNome(["Objetos", "Itens"]);
+const imagensItens = indexarPublicoPorNome(["Itens", "Objetos", "Pokebolas", "Pokébolas", "Poções", "Pocoes", "Frutas", "Ferramentas", "Recursos"]);
 const assetsItens = criarAssetsItens(itens, imagensItens);
 const estilos = [...new Map(itens.map((item) => [item.estiloBusca, item.estiloRotulo])).entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
 const raridades = Object.entries(MAPA_RARIDADES).sort((a, b) => Number(a[0]) - Number(b[0]));

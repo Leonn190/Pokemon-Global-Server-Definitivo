@@ -93,6 +93,22 @@ function nomeBaseRadiante(nome) {
     .replace(/\s+/g, " ")
     .trim();
 }
+function nomeBaseForma(nome) {
+  return String(nome ?? "")
+    .replace(/\b(radiante|mega|ultra|gigantamax|gmax)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function variantesTextoPokemon(nome) {
+  const texto = String(nome ?? "").trim();
+  if (!texto) return [];
+  return [
+    texto,
+    texto.replace(/\s+/g, "_"),
+    texto.replace(/\s+/g, "-"),
+    texto.replace(/\s+/g, ""),
+  ];
+}
 export function carregarPokemons() {
   return carregarCsvWiki([NOME_CSV], "Wiki Pokémons").map((linha, indice) => normalizarPokemon(linha, indice));
 }
@@ -163,22 +179,35 @@ function normalizarPokemon(linha, indice) {
   };
 }
 function candidatosPokemon(pokemon) {
-  const codigo = String(pokemon.code ?? pokemon.id ?? "");
+  const codigo = String(pokemon.code ?? pokemon.id ?? "").trim();
+  const codigo3 = codigo.padStart(3, "0");
+  const codigo4 = codigo.padStart(4, "0");
   const nome = pokemon.nome ?? "";
+  const nomeExibicao = pokemon.nomeExibicao ?? nome;
   const baseRadiante = nomeBaseRadiante(nome);
+  const baseForma = nomeBaseForma(nomeExibicao);
   return [
-    codigo,
-    codigo.padStart(3, "0"),
-    `pokemon${codigo}`,
-    `poke${codigo}`,
-    nome,
+    ...variantesTextoPokemon(nome),
+    ...variantesTextoPokemon(nomeExibicao),
     pokemon.slug,
     pokemon.slugBase,
-    nome?.replace(/\s+/g, "_"),
-    nome?.replace(/\s+/g, "-"),
-    baseRadiante,
-    baseRadiante?.replace(/\s+/g, "_"),
-    baseRadiante?.replace(/\s+/g, "-"),
+    codigo,
+    codigo3,
+    codigo4,
+    `pokemon${codigo}`,
+    `pokemon${codigo3}`,
+    `pokemon_${codigo}`,
+    `pokemon_${codigo3}`,
+    `pokemon-${codigo}`,
+    `pokemon-${codigo3}`,
+    `poke${codigo}`,
+    `poke${codigo3}`,
+    `pokedex${codigo}`,
+    `pokedex${codigo3}`,
+    `dex${codigo}`,
+    `dex${codigo3}`,
+    ...variantesTextoPokemon(baseRadiante),
+    ...variantesTextoPokemon(baseForma),
   ]
     .filter(Boolean)
     .map(normalizarChave);
@@ -188,12 +217,8 @@ export function resolverImagemPokemon(pokemon, imagensPorNome) {
     if (imagensPorNome[candidato]) return imagensPorNome[candidato];
   }
 
-  const imagensOrdenadas = imagensPorNome?.__listaOrdenada;
-  const indiceOrdem = Number(pokemon?.ordem ?? 0) - 1;
-  if (Array.isArray(imagensOrdenadas) && indiceOrdem >= 0 && imagensOrdenadas[indiceOrdem]?.url) {
-    return imagensOrdenadas[indiceOrdem].url;
-  }
-
+  // Não usa fallback pela ordem dos arquivos: a pasta Imagens pode misturar imagens de várias origens.
+  // Fallback por ordem foi o que fez Bulbasaur receber sprite errado quando a lista não batia com o CSV.
   return null;
 }
 export function criarAssetsPokemons(pokemons, imagensPorNome) {

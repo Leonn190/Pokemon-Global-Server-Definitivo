@@ -187,6 +187,13 @@ export function resolverImagemPokemon(pokemon, imagensPorNome) {
   for (const candidato of candidatosPokemon(pokemon)) {
     if (imagensPorNome[candidato]) return imagensPorNome[candidato];
   }
+
+  const imagensOrdenadas = imagensPorNome?.__listaOrdenada;
+  const indiceOrdem = Number(pokemon?.ordem ?? 0) - 1;
+  if (Array.isArray(imagensOrdenadas) && indiceOrdem >= 0 && imagensOrdenadas[indiceOrdem]?.url) {
+    return imagensOrdenadas[indiceOrdem].url;
+  }
+
   return null;
 }
 export function criarAssetsPokemons(pokemons, imagensPorNome) {

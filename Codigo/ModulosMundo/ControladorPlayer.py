@@ -614,6 +614,35 @@ class ControladorPlayer:
             })
             return
 
+        if tipo_alvo == "dungeon_saida":
+            self._objetos.EnfileirarDiffRapida({
+                "tipo": "evento",
+                "categoria": "interacao_dungeon",
+                "payload": {
+                    "acao": "sair",
+                    "instante_cliente_ms": int(time.time() * 1000),
+                    "pos_player": [float(pos[0]), float(pos[1])],
+                },
+            })
+            return
+
+        if tipo_alvo == "dungeon_entrada":
+            estrutura = alvo.get("estrutura") if isinstance(alvo.get("estrutura"), dict) else {}
+            estado = estrutura.get("estado") if isinstance(estrutura.get("estado"), dict) else {}
+            self._objetos.EnfileirarDiffRapida({
+                "tipo": "evento",
+                "categoria": "interacao_dungeon",
+                "payload": {
+                    "acao": "entrar",
+                    "estrutura_id": int(estrutura.get("id", 0) or 0),
+                    "pedra_id": int(estrutura.get("id", 0) or 0),
+                    "porta_idx": int(estado.get("porta_idx", 1) or 1),
+                    "dungeon_code": str(estado.get("dungeon_code") or ""),
+                    "instante_cliente_ms": int(time.time() * 1000),
+                },
+            })
+            return
+
         if tipo_alvo != "estadio_entrada":
             return
         estadio = alvo.get("estadio") if isinstance(alvo.get("estadio"), dict) else {}
@@ -809,6 +838,7 @@ class ControladorPlayer:
         estado_servidor = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
         if estado_servidor:
             self._estado_player_local_base.update({k: v for k, v in estado_servidor.items() if k not in {"angulo", "tapa", "mirando", "inventario_aberto", "correndo"}})
+            self._player_local.update({"estado": {k: v for k, v in estado_servidor.items() if k not in {"angulo", "tapa", "mirando", "inventario_aberto", "correndo"}}})
         payload_local = self._objetos.ObjetosPorId.get(int(getattr(self._player_local, "Id", 0) or 0), {}) if isinstance(self._objetos.ObjetosPorId, dict) else {}
         estado_local = payload_local.get("estado") if isinstance(payload_local.get("estado"), dict) else {}
         dim_antiga = str(estado_local.get("dimensao") or payload_local.get("dimensao") or "Mundo")
@@ -883,17 +913,9 @@ class ControladorPlayer:
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
         self._ultimo_pivo_visual_local_tela = (float(pos_tela[0]), float(pos_tela[1]))
         respiracao_tempo = getattr(getattr(ator, "Controle", None), "_tempo_respiracao", 0.0)
-        agora_ms = int(pygame.time.get_ticks())
-        imune_ate = int(getattr(ator, "ImuneCombateAteMs", 0) or 0)
-        alpha = 255
-        if agora_ms < imune_ate:
-            pulso = (math.sin(agora_ms * 0.018) + 1.0) * 0.5
-            alpha = int(95 + (130 * pulso))
-        if alpha < 255:
-            camada = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
-            ator.desenhar(camada, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
-            camada.set_alpha(alpha)
-            tela.blit(camada, (0, 0))
+        estado_visual = getattr(ator, "EstadoVisual", None)
+        if estado_visual is not None:
+            estado_visual.desenhar(tela, pos_tela, respiracao_tempo=respiracao_tempo)
         else:
             ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
         ator.renderizar_stamina(tela, camera, float(self._dt_ultimo_frame))

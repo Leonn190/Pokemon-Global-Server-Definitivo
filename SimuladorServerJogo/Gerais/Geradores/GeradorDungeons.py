@@ -116,18 +116,21 @@ def _int_csv(valor, default=1) -> int:
 
 def _coletar_entradas_dungeon_no_banco(dungeon_code: str) -> list[dict]:
     entradas_reais = []
-    vistos = set()
+    por_porta = {}
     for obj in BANCO_DADOS.listar_objetos():
         estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
         if str(estado.get("subtipo") or "").lower() != "dungeon":
             continue
         if str(estado.get("dungeon_code") or "").strip().lower() != str(dungeon_code).strip().lower():
             continue
-        if not bool(estado.get("porta_ativa", False) or estado.get("estrutura_quebrada", False)):
-            continue
         porta_idx = int(estado.get("porta_idx", len(entradas_reais) + 1) or len(entradas_reais) + 1)
-        entradas_reais.append({"porta_idx": porta_idx, "pedra_id": int(getattr(obj, "Id", 0) or 0)})
-        vistos.add(porta_idx)
+        ativa = bool(estado.get("porta_ativa", False) or estado.get("estrutura_quebrada", False))
+        por_porta[porta_idx] = {
+            "porta_idx": porta_idx,
+            "pedra_id": int(getattr(obj, "Id", 0) or 0),
+            "ativa": ativa,
+            "estrutura_quebrada": bool(estado.get("estrutura_quebrada", False)),
+        }
     for item in BANCO_DADOS.listar_dungeons_registradas():
         if str(item.get("dungeon_code") or "").strip().lower() != str(dungeon_code).strip().lower():
             continue
@@ -135,13 +138,21 @@ def _coletar_entradas_dungeon_no_banco(dungeon_code: str) -> list[dict]:
             qtd_restante = int(item.get("quantidade_restante", -1))
         except (TypeError, ValueError):
             qtd_restante = -1
-        if qtd_restante != 0:
+        porta_idx = int(item.get("porta_idx", len(por_porta) + 1) or len(por_porta) + 1)
+        ativa = qtd_restante == 0
+        existente = por_porta.get(porta_idx)
+        if existente is not None:
+            existente["ativa"] = bool(existente.get("ativa", False) or ativa)
+            if not int(existente.get("pedra_id", 0) or 0):
+                existente["pedra_id"] = int(item.get("pedra_id", 0) or 0)
             continue
-        porta_idx = int(item.get("porta_idx", len(entradas_reais) + 1) or len(entradas_reais) + 1)
-        if porta_idx in vistos:
-            continue
-        entradas_reais.append({"porta_idx": porta_idx, "pedra_id": int(item.get("pedra_id", 0) or 0)})
-        vistos.add(porta_idx)
+        por_porta[porta_idx] = {
+            "porta_idx": porta_idx,
+            "pedra_id": int(item.get("pedra_id", 0) or 0),
+            "ativa": ativa,
+            "estrutura_quebrada": ativa,
+        }
+    entradas_reais = list(por_porta.values())
     entradas_reais.sort(key=lambda e: int(e.get("porta_idx", 0) or 0))
     return entradas_reais
 
@@ -244,19 +255,34 @@ def _slug(nome: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", str(nome or "").strip().lower()).strip("_") or "boss"
 
 
+def _config_sala_vazia() -> dict:
+    return {
+        "servos": [],
+        "armadilhas": [],
+        "claridade": 10,
+        "piscina": None,
+        "buracao": None,
+        "passagens": {},
+        "passagens_trancadas": [],
+    }
+
+
 def _criar_sala(pos: tuple[int, int], catalogo: dict, tipo: str, id_str: str, id_num: int, nome: str | None = None, pokemon_boss: str = "") -> dict:
     cfg = dict(catalogo.get(tipo) or catalogo.get("comum") or {})
+    tipo_publico = "normal" if tipo in {"comum", "pacifica", "dificil", "piscina", "escura"} else tipo
     return {
         "id": id_str,
         "id_numerico": int(id_num),
         "id_catalogo": int(cfg.get("id", id_num) or id_num),
-        "tipo": tipo,
+        "tipo": tipo_publico,
+        "subtipo_procedural": tipo,
         "nome": str(nome or cfg.get("nome") or tipo.title()),
         "posicao_sala": [int(pos[0]), int(pos[1])],
         "largura_blocos": 1,
         "altura_blocos": 1,
         "chance": float(cfg.get("chance", 0.0) or 0.0),
         "dificuldade_sala": int(cfg.get("dificuldade", 0) or 0),
+        "config": _config_sala_vazia(),
         "portas": [],
         "portas_bloqueadas": [],
         "portas_info": [],
@@ -363,7 +389,7 @@ def _porta_id(a: tuple[int, int], b: tuple[int, int]) -> str:
 
 
 def _elegivel_chave(sala: dict) -> bool:
-    return str(sala.get("tipo") or "") in {"comum", "dificil", "piscina", "escura"} and int(sala.get("chaves_da_sala", 0) or 0) < int(_REGRAS.get("chaves_por_sala_max", 2) or 2)
+    return str(sala.get("tipo") or "") == "normal" and int(sala.get("chaves_da_sala", 0) or 0) < int(_REGRAS.get("chaves_por_sala_max", 2) or 2)
 
 
 def _gerar_conexoes_e_portas(ocupadas: dict, entradas_pos: list[tuple[int, int]], rng: random.Random) -> None:
@@ -420,6 +446,149 @@ def _gerar_conexoes_e_portas(ocupadas: dict, entradas_pos: list[tuple[int, int]]
             if bloqueada and direcao not in sala["portas_bloqueadas"]:
                 sala["portas_bloqueadas"].append(direcao)
             sala["portas_info"].append({"id": pid, "direcao": direcao, "destino_sala_id": ocupadas[destino].get("id"), "trancada": bool(bloqueada)})
+    for sala in ocupadas.values():
+        cfg = sala.setdefault("config", _config_sala_vazia())
+        cfg["passagens"] = {
+            str(info.get("direcao") or ""): {
+                "porta_id": str(info.get("id") or ""),
+                "destino_sala_id": str(info.get("destino_sala_id") or ""),
+                "trancada": bool(info.get("trancada", False)),
+            }
+            for info in list(sala.get("portas_info") or [])
+            if str(info.get("direcao") or "")
+        }
+        cfg["passagens_trancadas"] = [
+            str(info.get("id") or "")
+            for info in list(sala.get("portas_info") or [])
+            if bool(info.get("trancada", False))
+        ]
+
+
+def _rng_sala(seed_layout: int, sala_id: str, sal: str = "") -> random.Random:
+    bruto = f"{int(seed_layout)}:{sala_id}:{sal}"
+    return random.Random(int(hashlib.sha256(bruto.encode("utf-8")).hexdigest()[:16], 16))
+
+
+def _dificuldade_sala(rng: random.Random, dificuldade_dungeon: int, tipo: str) -> int:
+    dif = max(1, min(6, int(dificuldade_dungeon or 2)))
+    leve = rng.random() < max(0.12, 0.34 - dif * 0.025)
+    if leve:
+        return max(0, min(3, rng.randint(0, 1 + dif // 3)))
+    base = rng.triangular(0.0, 6.0, float(dif))
+    if tipo == "boss":
+        base += 0.5
+    return max(0, min(6, int(round(base))))
+
+
+def _retangulo_interno_sala(pos: tuple[int, int], margem_extra: int = 0) -> tuple[int, int, int, int]:
+    parede = max(1, int(_REGRAS.get("parede_largura_tiles", 2) or 2))
+    margem = parede + max(0, int(margem_extra))
+    x0 = int(pos[0]) * LARGURA_BLOCO_SALA_TILES + margem
+    y0 = int(pos[1]) * ALTURA_BLOCO_SALA_TILES + margem
+    x1 = (int(pos[0]) + 1) * LARGURA_BLOCO_SALA_TILES - margem - 1
+    y1 = (int(pos[1]) + 1) * ALTURA_BLOCO_SALA_TILES - margem - 1
+    return x0, y0, max(x0, x1), max(y0, y1)
+
+
+def _posicao_interna(rng: random.Random, pos_sala: tuple[int, int], ocupados: set[tuple[int, int]], margem_extra: int = 1) -> list[float]:
+    x0, y0, x1, y1 = _retangulo_interno_sala(pos_sala, margem_extra=margem_extra)
+    for _ in range(80):
+        x = rng.randint(x0, x1)
+        y = rng.randint(y0, y1)
+        if (x, y) in ocupados:
+            continue
+        ocupados.add((x, y))
+        return [float(x) + 0.5, float(y) + 0.5]
+    return [float((x0 + x1) * 0.5), float((y0 + y1) * 0.5)]
+
+
+def _nivel_servo(rng: random.Random, dificuldade_dungeon: int, dificuldade_sala: int) -> int:
+    base = 4 + max(1, int(dificuldade_dungeon or 1)) * 5 + max(0, int(dificuldade_sala or 0)) * 4
+    variacao = rng.randint(-3, 5)
+    return max(2, min(100, int(base + variacao)))
+
+
+def _gerar_armadilha(sala: dict, idx: int, rng: random.Random, dificuldade_sala: int, ocupados: set[tuple[int, int]]) -> dict:
+    pos_sala = tuple(sala.get("posicao_sala", [0, 0]))
+    dif = max(0, min(6, int(dificuldade_sala or 0)))
+    tipos = ["espeto", "quebradinho"]
+    pesos = [1.4, 1.1]
+    if dif >= 2:
+        tipos.extend(["espeto_movel", "barra_fogo"])
+        pesos.extend([0.75 + dif * 0.12, 0.55 + dif * 0.13])
+    if dif >= 3:
+        tipos.append("torreta")
+        pesos.append(0.35 + dif * 0.14)
+    tipo = rng.choices(tipos, weights=pesos, k=1)[0]
+    tid = f"trap_{pos_sala[0]}_{pos_sala[1]}_{idx}"
+    pos = _posicao_interna(rng, pos_sala, ocupados, margem_extra=3)
+    cfg: dict[str, object] = {"seed": int(rng.randrange(1 << 30))}
+    if tipo == "espeto":
+        cfg["escala"] = round(rng.uniform(0.90, 1.15), 3)
+        cfg["raio_dano"] = round(0.45 * float(cfg["escala"]), 3)
+        cfg["solido"] = True
+    elif tipo == "espeto_movel":
+        ang = rng.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
+        cfg.update({"direcao": [ang[0], ang[1]], "velocidade": round(1.2 + dif * 0.22 + rng.random() * 0.35, 3), "raio_dano": 0.42, "limites_sala": list(_retangulo_interno_sala(pos_sala, margem_extra=3))})
+    elif tipo == "quebradinho":
+        cfg.update({"tempo_rachando_ticks": 45, "tile_original": int(_REGRAS.get("tile_chao_dungeon", 8) or 8)})
+    elif tipo == "barra_fogo":
+        cfg.update({"bolas": rng.randint(3, min(8, 4 + dif)), "velocidade_giro": round(rng.uniform(0.9, 1.7) + dif * 0.07, 3), "comprimento": round(rng.uniform(1.3, 2.7) + dif * 0.18, 3), "barras": rng.randint(1, 3 if dif >= 5 else 2), "raio_bola": 0.23, "solido_centro": True})
+    elif tipo == "torreta":
+        cfg.update({"cooldown_ticks": max(24, int(72 - dif * 6 + rng.randint(-6, 10))), "velocidade_tiro": round(4.2 + dif * 0.45, 3), "alcance": round(7.0 + dif * 1.2, 3), "raio_tiro": 0.18, "solido": True})
+    return {"id": tid, "tipo": tipo, "posicao": pos, "config": cfg}
+
+
+def _gerar_conteudo_salas(ocupadas: dict, servos_pool: list[str], rng: random.Random, dificuldade_dungeon: int, seed_layout: int) -> list[dict]:
+    pool = [str(p).strip() for p in servos_pool if str(p).strip()] or ["Pokemon"]
+    todos_servos: list[dict] = []
+    for sala in sorted(ocupadas.values(), key=lambda s: int(s.get("id_numerico", 0) or 0)):
+        cfg = sala.setdefault("config", _config_sala_vazia())
+        tipo = str(sala.get("tipo") or "")
+        srng = _rng_sala(seed_layout, str(sala.get("id") or ""), "conteudo")
+        if tipo == "entrada":
+            cfg.update({"servos": [], "armadilhas": [], "claridade": 10, "piscina": None, "buracao": None})
+            sala["servos"] = []
+            continue
+        dif_sala = _dificuldade_sala(srng, dificuldade_dungeon, tipo)
+        sala["dificuldade_sala"] = int(dif_sala)
+        cfg["claridade"] = max(0, min(10, 10 - srng.randint(0, max(1, min(8, dif_sala + 1)))))
+        ocupados: set[tuple[int, int]] = set()
+        qtd_servos = 0 if srng.random() < max(0.12, 0.34 - dif_sala * 0.025) else srng.randint(1, min(5, 1 + max(1, dif_sala)))
+        if tipo == "boss":
+            qtd_servos = srng.randint(0, min(3, max(1, dif_sala)))
+        chaves = list(sala.get("chaves_ids") or [])
+        qtd_servos = max(qtd_servos, len(chaves))
+        servos = []
+        for i in range(qtd_servos):
+            uid = f"servo_{sala.get('id')}_{i+1}"
+            chave_id = chaves[i] if i < len(chaves) else ""
+            item = {
+                "pokemon": srng.choice(pool),
+                "uid": uid,
+                "nivel": _nivel_servo(srng, dificuldade_dungeon, dif_sala),
+                "posicao": _posicao_interna(srng, tuple(sala.get("posicao_sala", [0, 0])), ocupados, margem_extra=4),
+                "possui_chave": bool(chave_id),
+                "chave_id": chave_id,
+            }
+            servos.append(item)
+            todos_servos.append({"sala_id": sala.get("id"), **item})
+        sala["servos"] = servos
+        cfg["servos"] = [dict(s) for s in servos]
+        qtd_traps = 0 if srng.random() < max(0.10, 0.32 - dif_sala * 0.03) else srng.randint(1, min(5, 1 + dif_sala))
+        armadilhas = [_gerar_armadilha(sala, i + 1, srng, dif_sala, ocupados) for i in range(qtd_traps)]
+        cfg["armadilhas"] = armadilhas
+        chance_piscina = min(0.55, 0.08 + dif_sala * 0.045)
+        chance_buracao = min(0.42, 0.04 + dif_sala * 0.04)
+        if srng.random() < chance_piscina:
+            cfg["piscina"] = {"tipo": "agua_funda", "retangulo_rel": [0.36, 0.35, 0.28, 0.30]}
+        else:
+            cfg["piscina"] = None
+        if srng.random() < chance_buracao:
+            cfg["buracao"] = {"tipo": "buraco", "retangulo_rel": [0.40, 0.38, 0.20, 0.24]}
+        else:
+            cfg["buracao"] = None
+    return todos_servos
 
 
 def _marcar_porta_grid(grid: list[list[int]], pos: tuple[int, int], direcao: str, tile: int) -> None:
@@ -446,22 +615,49 @@ def _grid_tiles(ocupadas: dict, largura: int, altura: int) -> list[list[int]]:
     tile_vazio = int(_REGRAS.get("tile_vazio_dungeon", 9) or 9)
     tile_chao = int(_REGRAS.get("tile_chao_dungeon", 8) or 8)
     tile_agua = int(_REGRAS.get("tile_agua_funda", 0) or 0)
+    tile_buraco = int(_REGRAS.get("tile_buraco", 10) or 10)
+    tile_quebradinho = int(_REGRAS.get("tile_quebradinho", tile_chao) or tile_chao)
     parede = max(1, int(_REGRAS.get("parede_largura_tiles", 2) or 2))
     largura_tiles = largura * LARGURA_BLOCO_SALA_TILES
     altura_tiles = altura * ALTURA_BLOCO_SALA_TILES
     grid = [[tile_vazio for _ in range(largura_tiles)] for _ in range(altura_tiles)]
+
+    def _aplicar_ret_rel(sala: dict, tile: int, ret_rel: list[float]) -> None:
+        pos = sala.get("posicao_sala") if isinstance(sala.get("posicao_sala"), (list, tuple)) else [0, 0]
+        x0 = int(pos[0]) * LARGURA_BLOCO_SALA_TILES
+        y0 = int(pos[1]) * ALTURA_BLOCO_SALA_TILES
+        rx, ry, rw, rh = [float(v) for v in list(ret_rel or [0.40, 0.40, 0.20, 0.20])[:4]]
+        ax0 = x0 + max(parede + 2, int(round(LARGURA_BLOCO_SALA_TILES * rx)))
+        ay0 = y0 + max(parede + 2, int(round(ALTURA_BLOCO_SALA_TILES * ry)))
+        ax1 = min(x0 + LARGURA_BLOCO_SALA_TILES - parede - 3, x0 + int(round(LARGURA_BLOCO_SALA_TILES * (rx + rw))))
+        ay1 = min(y0 + ALTURA_BLOCO_SALA_TILES - parede - 3, y0 + int(round(ALTURA_BLOCO_SALA_TILES * (ry + rh))))
+        for yy in range(min(ay0, ay1), max(ay0, ay1) + 1):
+            for xx in range(min(ax0, ax1), max(ax0, ax1) + 1):
+                if 0 <= yy < len(grid) and 0 <= xx < len(grid[yy]):
+                    grid[yy][xx] = int(tile)
+
     for (bx, by), sala in ocupadas.items():
         x0 = bx * LARGURA_BLOCO_SALA_TILES
         y0 = by * ALTURA_BLOCO_SALA_TILES
         for y in range(y0 + parede, y0 + ALTURA_BLOCO_SALA_TILES - parede):
             for x in range(x0 + parede, x0 + LARGURA_BLOCO_SALA_TILES - parede):
                 grid[y][x] = tile_chao
-        if str(sala.get("tipo")) == "piscina":
-            margem_x = max(parede + 3, LARGURA_BLOCO_SALA_TILES // 4)
-            margem_y = max(parede + 2, ALTURA_BLOCO_SALA_TILES // 4)
-            for y in range(y0 + margem_y, y0 + ALTURA_BLOCO_SALA_TILES - margem_y):
-                for x in range(x0 + margem_x, x0 + LARGURA_BLOCO_SALA_TILES - margem_x):
-                    grid[y][x] = tile_agua
+        cfg = sala.get("config") if isinstance(sala.get("config"), dict) else {}
+        piscina = cfg.get("piscina") if isinstance(cfg.get("piscina"), dict) else None
+        if piscina is not None:
+            _aplicar_ret_rel(sala, tile_agua, list(piscina.get("retangulo_rel") or [0.36, 0.35, 0.28, 0.30]))
+        buracao = cfg.get("buracao") if isinstance(cfg.get("buracao"), dict) else None
+        if buracao is not None:
+            _aplicar_ret_rel(sala, tile_buraco, list(buracao.get("retangulo_rel") or [0.40, 0.38, 0.20, 0.24]))
+        for trap in list(cfg.get("armadilhas") or []):
+            if not isinstance(trap, dict) or str(trap.get("tipo") or "") != "quebradinho":
+                continue
+            pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) and len(trap.get("posicao")) == 2 else None
+            if pos is None:
+                continue
+            tx, ty = int(float(pos[0])), int(float(pos[1]))
+            if 0 <= ty < len(grid) and 0 <= tx < len(grid[ty]):
+                grid[ty][tx] = tile_quebradinho
     for pos, sala in ocupadas.items():
         for info in list(sala.get("portas_info") or []):
             if bool(info.get("trancada", False)):
@@ -520,9 +716,12 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         qtd_csv = max(1, _int_csv(row.get("Entradas", 1), 1))
         entradas_reais = [{"porta_idx": i, "pedra_id": 0} for i in range(1, qtd_csv + 1)]
 
-    catalogo_raw = carregar_catalogo_dungeons()
+    # Compatibilidade: o loader antigo continua existindo para ferramentas legadas,
+    # mas a geracao nova nao escolhe salas a partir de catalogo fixo.
+    catalogo_raw = _catalogo_default()
     catalogo = _catalogo_por_tipo(catalogo_raw)
-    rng = random.Random(_seed_layout(str(dungeon_code), row, entradas_reais))
+    seed_layout = _seed_layout(str(dungeon_code), row, entradas_reais)
+    rng = random.Random(seed_layout)
 
     ocupadas: dict[tuple[int, int], dict] = {}
     entradas_out = []
@@ -534,26 +733,31 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         pos = _proxima_posicao_livre_jogavel((base_entrada[0] + margem, base_entrada[1] + margem), ocupadas, largura, altura, margem)
         if pos is None:
             continue
-        sala = _criar_sala(pos, catalogo, "entrada", f"entrada_{porta_idx}", proximo_id[0], "Entrada")
+        sala = _criar_sala(pos, catalogo, "entrada", f"sala_{pos[0]}_{pos[1]}", proximo_id[0], "Entrada")
         proximo_id[0] += 1
         ocupadas[pos] = sala
+        ativa = bool(entrada.get("ativa", True) if "ativa" not in entrada else entrada.get("ativa", False))
+        ativa = bool(ativa or entrada.get("porta_ativa", False) or entrada.get("estrutura_quebrada", False))
+        saida = saida_sala_entrada(pos) if ativa else None
         entradas_out.append(
             {
                 "porta_idx": porta_idx,
                 "sala_id": sala["id"],
                 "posicao_sala": [pos[0], pos[1]],
                 "spawn": spawn_interno_entrada(pos),
-                "saida": saida_sala_entrada(pos),
+                "saida": saida,
+                "saida_pos": saida_sala_entrada(pos),
+                "ativa": bool(ativa),
                 "pedra_id": int(entrada.get("pedra_id", 0) or 0),
             }
         )
 
     if not ocupadas and not dungeons_registradas_code:
         pos = (margem, margem)
-        sala = _criar_sala(pos, catalogo, "entrada", "entrada_1", proximo_id[0], "Entrada")
+        sala = _criar_sala(pos, catalogo, "entrada", f"sala_{pos[0]}_{pos[1]}", proximo_id[0], "Entrada")
         proximo_id[0] += 1
         ocupadas[pos] = sala
-        entradas_out.append({"porta_idx": 1, "sala_id": sala["id"], "posicao_sala": [pos[0], pos[1]], "spawn": spawn_interno_entrada(pos), "saida": saida_sala_entrada(pos), "pedra_id": 0})
+        entradas_out.append({"porta_idx": 1, "sala_id": sala["id"], "posicao_sala": [pos[0], pos[1]], "spawn": spawn_interno_entrada(pos), "saida": saida_sala_entrada(pos), "saida_pos": saida_sala_entrada(pos), "ativa": True, "pedra_id": 0})
 
     entradas_pos = [tuple(e["posicao_sala"]) for e in entradas_out]
     if not entradas_pos:
@@ -578,7 +782,7 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
             candidatos = separados
         alvo = rng.choice(candidatos[: max(1, min(6, len(candidatos)))])
         origem = min(ocupadas.keys(), key=lambda p: abs(p[0] - alvo[0]) + abs(p[1] - alvo[1]))
-        sala_boss = _criar_sala(alvo, catalogo, "boss", f"boss_{_slug(boss)}", proximo_id[0], f"Sala de Boss - {boss}", boss)
+        sala_boss = _criar_sala(alvo, catalogo, "boss", f"sala_{alvo[0]}_{alvo[1]}", proximo_id[0], f"Sala de Boss - {boss}", boss)
         proximo_id[0] += 1
         _adicionar_caminho(ocupadas, origem, alvo, rng, catalogo, proximo_id, sala_final=sala_boss, dificuldade=dificuldade_num)
 
@@ -606,7 +810,7 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
                 break
 
     _gerar_conexoes_e_portas(ocupadas, [tuple(e["posicao_sala"]) for e in entradas_out], rng)
-    servos_layout = _gerar_servos_salas(ocupadas, servos_pool, rng)
+    servos_layout = _gerar_conteudo_salas(ocupadas, servos_pool, rng, dificuldade_num, seed_layout)
 
     grid_ids = [[0 for _ in range(largura)] for _ in range(altura)]
     grid_tipos = [["" for _ in range(largura)] for _ in range(altura)]
@@ -641,6 +845,9 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         "tile_vazio_dungeon": int(_REGRAS.get("tile_vazio_dungeon", 9) or 9),
         "tile_chao_dungeon": int(_REGRAS.get("tile_chao_dungeon", 8) or 8),
         "tile_agua_funda": int(_REGRAS.get("tile_agua_funda", 0) or 0),
+        "tile_agua_rasa": int(_REGRAS.get("tile_agua_rasa", 1) or 1),
+        "tile_buraco": int(_REGRAS.get("tile_buraco", 10) or 10),
+        "tile_quebradinho": int(_REGRAS.get("tile_quebradinho", int(_REGRAS.get("tile_chao_dungeon", 8) or 8)) or int(_REGRAS.get("tile_chao_dungeon", 8) or 8)),
         "salas": salas,
         "entradas": entradas_out,
         "grid_salas_ids": grid_ids,
@@ -648,6 +855,13 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         "grid_tiles": _grid_tiles(ocupadas, largura, altura),
         "bosses": bosses,
         "servos": servos_layout,
+        "armadilhas": [
+            {"sala_id": sala.get("id"), **trap}
+            for sala in salas
+            for trap in list((sala.get("config") or {}).get("armadilhas") or [])
+            if isinstance(trap, dict)
+        ],
+        "seed": int(seed_layout),
         "portas_trancadas": [
             {"sala_id": sala.get("id"), **info}
             for sala in salas

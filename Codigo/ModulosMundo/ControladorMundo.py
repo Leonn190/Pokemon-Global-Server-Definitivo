@@ -127,7 +127,7 @@ class ControladorMundo:
             self.Leitor.renderizar_mundo(tela)
         elif dim_local.startswith("Dungeon_"):
             self.Leitor.renderizar_mundo(tela)
-            renderizar_dungeon(tela, self.Camera, self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {})
+            renderizar_dungeon(tela, self.Camera, self.Objetos.LayoutDungeonAtual)
         if dim_local.startswith("Estadio"):
             self.Objetos.renderizar_estadio_interior(tela, self.Camera)
         ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None
@@ -138,7 +138,7 @@ class ControladorMundo:
             self.Objetos.renderizar_estruturas(tela, self.Camera)
         if dim_local.startswith("Dungeon_"):
             player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
-            layout = self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {}
+            layout = self.Objetos.LayoutDungeonAtual
             self.Dungeons.renderizar_mascara_sala(tela, self.Camera, player_pos, layout)
 
     def tempo_mundo_atual(self) -> dict:

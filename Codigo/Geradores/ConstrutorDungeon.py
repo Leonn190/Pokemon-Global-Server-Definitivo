@@ -6,8 +6,10 @@ import pygame
 from Codigo.Geradores.Porta import renderizar as renderizar_porta
 
 _DEBUG_HASHES = {}
+_SPRITES_TRAPS = {}
 _CORES_DEBUG = {
     "entrada": (60, 210, 105),
+    "normal": (128, 128, 136),
     "comum": (128, 128, 136),
     "pacifica": (126, 212, 242),
     "dificil": (230, 94, 54),
@@ -29,6 +31,78 @@ def _porta_rect(pos, direcao, bloco_w, bloco_h, tile, largura_tiles=4, espessura
     px = x0 if direcao == "O" else x0 + bloco_w - e
     py = y0 + (bloco_h - w) * 0.5
     return pygame.Rect(int(px * tile), int(py * tile), max(2, int(e * tile)), max(2, int(w * tile)))
+
+
+def _sprite_trap(nome: str):
+    chave = str(nome or "")
+    if chave in _SPRITES_TRAPS:
+        return _SPRITES_TRAPS[chave]
+    caminho = Path("Recursos") / "Visual" / "Mundo" / "Outros" / chave
+    try:
+        surf = pygame.image.load(str(caminho)).convert_alpha()
+    except Exception:
+        surf = None
+    _SPRITES_TRAPS[chave] = surf
+    return surf
+
+
+def _mundo_para_tela(camera, pos):
+    return camera.mundo_para_tela_px((float(pos[0]), float(pos[1])))
+
+
+def _desenhar_espeto(tela, camera, pos, movel=False, escala=1.0):
+    sprite = _sprite_trap("Espetos Movel.png" if movel else "Espetos.png")
+    cx, cy = _mundo_para_tela(camera, pos)
+    lado = max(10, int(float(getattr(camera, "TilePx", 50) or 50) * float(escala)))
+    if sprite is not None:
+        img = pygame.transform.smoothscale(sprite, (lado, lado))
+        tela.blit(img, img.get_rect(center=(int(cx), int(cy))))
+        return
+    cor = (150, 150, 162) if not movel else (190, 180, 210)
+    pts = [(int(cx), int(cy - lado * 0.45)), (int(cx - lado * 0.36), int(cy + lado * 0.32)), (int(cx + lado * 0.36), int(cy + lado * 0.32))]
+    pygame.draw.polygon(tela, cor, pts)
+    pygame.draw.polygon(tela, (44, 44, 52), pts, 2)
+
+
+def _desenhar_quebradinho(tela, camera, pos, fase="inteiro"):
+    cx, cy = _mundo_para_tela(camera, pos)
+    tile = int(getattr(camera, "TilePx", 50) or 50)
+    rect = pygame.Rect(0, 0, max(6, int(tile * 0.82)), max(6, int(tile * 0.82)))
+    rect.center = (int(cx), int(cy))
+    cor = (64, 64, 70) if fase != "buraco" else (0, 0, 0)
+    pygame.draw.rect(tela, cor, rect, border_radius=max(1, tile // 18))
+    if fase != "buraco":
+        pygame.draw.line(tela, (26, 26, 30), rect.midtop, rect.center, 2)
+        pygame.draw.line(tela, (26, 26, 30), rect.center, rect.bottomright, 2)
+        pygame.draw.line(tela, (26, 26, 30), rect.center, rect.midleft, 2)
+
+
+def _desenhar_barra_fogo(tela, camera, trap, estado):
+    pos = trap.get("posicao", [0, 0])
+    cx, cy = _mundo_para_tela(camera, pos)
+    tile = float(getattr(camera, "TilePx", 50) or 50)
+    pygame.draw.rect(tela, (54, 46, 44), pygame.Rect(int(cx - tile * 0.28), int(cy - tile * 0.28), int(tile * 0.56), int(tile * 0.56)))
+    for bola in list(estado.get("bolas_posicoes") or []):
+        bx, by = _mundo_para_tela(camera, bola)
+        r = max(4, int(tile * 0.18))
+        pygame.draw.circle(tela, (255, 100, 28), (int(bx), int(by)), r)
+        pygame.draw.circle(tela, (255, 218, 74), (int(bx), int(by)), max(2, r // 2))
+
+
+def _desenhar_torreta(tela, camera, trap, estado):
+    pos = trap.get("posicao", [0, 0])
+    cx, cy = _mundo_para_tela(camera, pos)
+    tile = float(getattr(camera, "TilePx", 50) or 50)
+    rect = pygame.Rect(0, 0, int(tile * 0.78), int(tile * 0.78))
+    rect.center = (int(cx), int(cy))
+    pygame.draw.rect(tela, (52, 58, 66), rect)
+    pygame.draw.rect(tela, (180, 190, 205), rect, 2)
+    for proj in list(estado.get("projeteis") or []):
+        p = proj.get("posicao") if isinstance(proj.get("posicao"), (list, tuple)) else None
+        if p is None:
+            continue
+        px, py = _mundo_para_tela(camera, p)
+        pygame.draw.circle(tela, (255, 114, 46), (int(px), int(py)), max(4, int(tile * 0.16)))
 
 
 def construir_surface_mapa_dungeon(layout: dict, estado_dungeon: dict | None = None, debug: bool = False, cell: int = 28):
@@ -169,6 +243,26 @@ def renderizar_dungeon(tela, camera, layout:dict):
         saida=ent.get('saida')
         if isinstance(saida,(list,tuple)) and len(saida)==2:
             renderizar_porta(tela,camera,saida,modo='dungeon')
+    estado_armadilhas = layout.get("estado_armadilhas") if isinstance(layout.get("estado_armadilhas"), dict) else {}
+    traps_estado = estado_armadilhas.get("traps") if isinstance(estado_armadilhas.get("traps"), dict) else {}
+    for sala in layout.get("salas", []) if isinstance(layout, dict) else []:
+        cfg = sala.get("config") if isinstance(sala.get("config"), dict) else {}
+        for trap in list(cfg.get("armadilhas") or []):
+            if not isinstance(trap, dict):
+                continue
+            tid = str(trap.get("id") or "")
+            estado = traps_estado.get(tid) if isinstance(traps_estado.get(tid), dict) else {}
+            tipo = str(trap.get("tipo") or "")
+            if tipo == "espeto":
+                _desenhar_espeto(tela, camera, trap.get("posicao", [0, 0]), movel=False, escala=float((trap.get("config") or {}).get("escala", 1.0) if isinstance(trap.get("config"), dict) else 1.0))
+            elif tipo == "espeto_movel":
+                _desenhar_espeto(tela, camera, estado.get("posicao", trap.get("posicao", [0, 0])), movel=True)
+            elif tipo == "quebradinho":
+                _desenhar_quebradinho(tela, camera, trap.get("posicao", [0, 0]), fase=str(estado.get("fase") or "inteiro"))
+            elif tipo == "barra_fogo":
+                _desenhar_barra_fogo(tela, camera, trap, estado)
+            elif tipo == "torreta":
+                _desenhar_torreta(tela, camera, trap, estado)
 
 
 def salvar_debug_layout(layout: dict, dimensao: str) -> bool:

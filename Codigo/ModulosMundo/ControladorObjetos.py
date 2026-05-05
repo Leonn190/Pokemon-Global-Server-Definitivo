@@ -91,7 +91,11 @@ class ControladorObjetos:
         return str(self._dimensao_atual_client or "Mundo")
 
     def definir_layout_dungeon_atual(self, layout) -> None:
-        self.LayoutDungeonAtual = dict(layout) if isinstance(layout, dict) else {}
+        anterior = self.LayoutDungeonAtual if isinstance(self.LayoutDungeonAtual, dict) else {}
+        novo = dict(layout) if isinstance(layout, dict) else {}
+        if "estado_armadilhas" not in novo and isinstance(anterior.get("estado_armadilhas"), dict):
+            novo["estado_armadilhas"] = anterior.get("estado_armadilhas")
+        self.LayoutDungeonAtual = novo
 
     def _dimensao_player_local(self) -> str:
         return self.dimensao_atual_client()
@@ -496,6 +500,15 @@ class ControladorObjetos:
         categoria = str(diff.get("categoria", "")).strip().lower()
 
         if tipo == "spawn" and self._criaveis.aplicar_spawn_especial(categoria, payload, self.aplicar_diff):
+            return
+
+        if categoria == "dungeon_armadilhas":
+            estado = payload.get("estado_armadilhas") if isinstance(payload.get("estado_armadilhas"), dict) else {}
+            with self._lock_objetos:
+                if isinstance(self.LayoutDungeonAtual, dict):
+                    self.LayoutDungeonAtual["estado_armadilhas"] = estado
+                    if bool(payload.get("tiles_alterados", False)):
+                        self.LayoutDungeonAtual["_tiles_runtime_dirty"] = True
             return
 
         if tipo == "spawn":

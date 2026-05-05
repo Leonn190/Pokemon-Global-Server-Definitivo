@@ -6,6 +6,7 @@ import math
 
 import pygame
 from Codigo.ModulosGerais.Sonoridades import tocar
+from Codigo.ModulosMundo.MecanicasTiles import MecanicasTiles
 
 
 class Controle:
@@ -45,6 +46,7 @@ class Controle:
         if self.InventarioAberto:
             self._tentando_correr = False
             tile_atual = self._tile_atual()
+            MecanicasTiles.aplicar_no_ator(self.Ator, tile_atual)
             self._tile_atual_cache = tile_atual
             self._atualizar_stamina(dt, False, False, tile_atual)
             self._tempo_respiracao += dt
@@ -67,6 +69,7 @@ class Controle:
         dt = max(0.0, float(dt))
         self._tentando_correr = False
         tile_atual = self._tile_atual()
+        MecanicasTiles.aplicar_no_ator(self.Ator, tile_atual)
         self._tile_atual_cache = tile_atual
         self._atualizar_stamina(dt, False, False, tile_atual)
         self._tempo_respiracao += dt
@@ -315,6 +318,7 @@ class Controle:
 
         deslocando = mag > 0
         tile_atual = self._tile_atual()
+        MecanicasTiles.aplicar_no_ator(self.Ator, tile_atual)
         shift = teclas[pygame.K_LSHIFT] or teclas[pygame.K_RSHIFT]
         self._tentando_correr = bool(shift)
         if self._bloqueio_por_exaustao and self.Ator.Perfil.Stamina >= (self.Ator.Perfil.StaminaMax - 0.001):
@@ -335,7 +339,7 @@ class Controle:
                     self._bonus_corrida_atual - (dt / tempo_desacel) * float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMax", 0.60)),
                 )
 
-        mult = 1.0 + max(0.0, self._bonus_corrida_atual)
+        mult = (1.0 + max(0.0, self._bonus_corrida_atual)) * MecanicasTiles.multiplicador_velocidade(tile_atual)
         vbase = float(getattr(self.Ator.Perfil, "VelocidadeBaseTiles", self.VelocidadeTiles))
         antes = self.Ator.Posicao
         self.Ator.mover(eixo_x * vbase * mult * dt, eixo_y * vbase * mult * dt)

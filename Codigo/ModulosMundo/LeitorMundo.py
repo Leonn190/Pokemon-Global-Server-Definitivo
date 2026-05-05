@@ -46,7 +46,7 @@ class LeitorMundo:
         self.MetaMundo: Dict[str, object] = {}
         self.TamanhoChunkBlocos = 10
         self.CoresBlocosBase = {0: (24, 72, 145), 1: (64, 156, 255), 2: (106, 190, 48), 3: (46, 125, 50), 4: (230, 210, 140), 5: (217, 179, 92), 6: (245, 248, 252), 7: (140, 82, 255), 8: (88, 70, 70), 9: (110, 92, 68), 10: (226, 238, 252), 11: (206, 224, 243)}
-        self.CoresBlocosDungeon = {**self.CoresBlocosBase, 0: (14, 34, 64), 1: (32, 74, 122), 8: (38, 39, 43), 9: (74, 75, 82), 10: (50, 52, 58), 11: (88, 90, 98)}
+        self.CoresBlocosDungeon = {**self.CoresBlocosBase, 0: (14, 34, 64), 1: (32, 74, 122), 8: (38, 39, 43), 9: (74, 75, 82), 10: (0, 0, 0), 11: (88, 90, 98)}
         self.CoresBlocos = dict(self.CoresBlocosBase)
         self._modo_cores_tiles = "mundo"
 

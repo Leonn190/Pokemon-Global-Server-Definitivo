@@ -13,6 +13,7 @@ from Codigo.ModulosGerais.Colisor import Colisor
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Prefabs.Barra import Barra
+from Codigo.Visual.AtorEstado import AtorEstado
 
 Vector2 = Tuple[float, float]
 
@@ -94,6 +95,11 @@ class Ator:
         self._alvo_angulo = self.AnguloOlhar
         self._velocidade_interp_alvo = 10.0
         self._tempo_respiracao = 0.0
+        self.EstadoVisual = AtorEstado(self)
+        self.ImuneCombateAteMs = 0
+        self.TileAtualMecanica = None
+        self.EstadoAgua = ""
+        self.SobreBuraco = False
 
     def update(self, payload: dict) -> None:
         dados = payload if isinstance(payload, dict) else {}
@@ -124,6 +130,12 @@ class Ator:
                 self.definir_angulo_olhar(alvo_ang)
         if bool(estado.get("tapa")):
             self.iniciar_tapa()
+        estado_dungeon = estado.get("estado_dungeon") if isinstance(estado.get("estado_dungeon"), dict) else {}
+        inv_tick = int(estado_dungeon.get("invulneravel_dungeon_ate_tick", 0) or 0)
+        ultimo_inv = int(getattr(self, "_UltimoInvulneravelDungeonTick", 0) or 0)
+        if inv_tick > ultimo_inv:
+            self._UltimoInvulneravelDungeonTick = inv_tick
+            self.ImuneCombateAteMs = max(int(getattr(self, "ImuneCombateAteMs", 0) or 0), int(pygame.time.get_ticks()) + 3000)
         if self.Perfil is not None and isinstance(dados.get("perfil"), dict):
             self.Perfil.aplicar_serializado(dados.get("perfil"))
         if self.Inventario is not None and hasattr(self.Inventario, "Perfil") and self.Inventario.Perfil is None and self.Perfil is not None:
@@ -363,6 +375,8 @@ class Ator:
     def atualizar_visual(self, dt: float) -> None:
         dt = max(0.0, float(dt))
         self.atualizar_colisor_mao_mundo()
+        if getattr(self, "EstadoVisual", None) is not None:
+            self.EstadoVisual.atualizar(dt)
         perfil = getattr(self, "Perfil", None)
         if perfil is None:
             self._stamina_alpha = 0.0

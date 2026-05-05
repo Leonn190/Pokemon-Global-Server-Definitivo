@@ -24,6 +24,7 @@ from SimuladorServerJogo.Mundo.Dungeons.EstadoDungeon import (
 )
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, ItemMundoServer, PokemonServer
 from SimuladorServerJogo.Mundo.ServicoInventario import ServicoInventario
+from SimuladorServerJogo.Mundo.CerebroArmadilhas import CerebroArmadilhas
 
 
 class CerebroDungeons:
@@ -31,6 +32,7 @@ class CerebroDungeons:
         self._cerebro = cerebro_central
         self._regras = carregar_regras_dungeons()
         self._layouts = {}
+        self._cerebro_armadilhas = CerebroArmadilhas()
 
     def obter_ou_gerar(self, dungeon_code, porta_idx=1, pedra_id=0):
         dim = nome_dimensao_dungeon(dungeon_code)
@@ -132,6 +134,8 @@ class CerebroDungeons:
         layout = self._layouts.get(dimensao) if isinstance(self._layouts.get(dimensao), dict) else {}
         porta_idx = int(estado_dungeon.get("porta_idx", 1) or 1)
         entrada = next((e for e in (layout.get("entradas") or []) if int(e.get("porta_idx", 0) or 0) == porta_idx), None)
+        if isinstance(entrada, dict) and not bool(entrada.get("ativa", True)):
+            return False
         saida = entrada.get("saida") if isinstance(entrada, dict) else None
         if isinstance(saida, (list, tuple)) and len(saida) == 2:
             dx = float(player.posicao[0]) - float(saida[0])
@@ -173,6 +177,17 @@ class CerebroDungeons:
                         registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 80}, objeto_id=player.Id, autor="server", categoria="player")
             self._garantir_bosses(layout, salas_por_id, registrar_diff)
             self._garantir_servos(layout, salas_por_id, registrar_diff)
+            alterou_tiles = self._cerebro_armadilhas.executar_tick(
+                layout,
+                players,
+                int(getattr(self._cerebro, "_tick_contador", 0)),
+                aplicar_dano=lambda player, motivo: self._perder_vida_player(player, motivo, registrar_diff=registrar_diff),
+                matar_queda=lambda player, motivo: self._matar_player_dungeon(player, motivo, registrar_diff=registrar_diff),
+                registrar_diff=registrar_diff,
+            )
+            if alterou_tiles:
+                for player in players:
+                    registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=player.Id, autor="server", categoria="player")
             self._atualizar_servos(layout, players, salas_por_id, registrar_diff)
 
     def _players_dungeon_por_dimensao(self):
@@ -237,7 +252,7 @@ class CerebroDungeons:
             sala = salas_por_id.get(str(item.get("sala_id") or ""))
             if not isinstance(sala, dict):
                 continue
-            pos = self._posicao_spawn_sala(sala)
+            pos = item.get("posicao") if isinstance(item.get("posicao"), (list, tuple)) and len(item.get("posicao")) == 2 else self._posicao_spawn_sala(sala)
             self._spawn_pokemon_dungeon(str(item.get("pokemon") or "Pokemon"), pos, sala, layout, "servo", registrar_diff, servo_info=item)
 
     def _atualizar_servos(self, layout, players, salas_por_id, registrar_diff):
@@ -271,8 +286,35 @@ class CerebroDungeons:
             nx = float(poke.posicao[0]) + (dx / dist) * min(passo, dist)
             ny = float(poke.posicao[1]) + (dy / dist) * min(passo, dist)
             nx, ny = self._clamp_sala(sala, nx, ny, margem=max(0.5, float(poke.raio_colisao)))
+            if self._posicao_proibida_servo(layout, sala, nx, ny):
+                continue
             BANCO_DADOS.atualizar_objeto(poke.Id, {"posicao": [nx, ny], "estado": poke.estado_extra})
             registrar_diff("update", payload=poke.serializar(), escopo={"centro": [nx, ny], "raio": 80}, objeto_id=poke.Id, autor="server", categoria="pokemon")
+
+    def _posicao_proibida_servo(self, layout: dict, sala: dict, x: float, y: float) -> bool:
+        grid = layout.get("grid_tiles") if isinstance(layout.get("grid_tiles"), list) else []
+        tx, ty = int(math.floor(float(x))), int(math.floor(float(y)))
+        if 0 <= ty < len(grid) and isinstance(grid[ty], list) and 0 <= tx < len(grid[ty]):
+            try:
+                if int(grid[ty][tx]) == int(layout.get("tile_buraco", 10) or 10):
+                    return True
+            except (TypeError, ValueError):
+                pass
+        cfg = sala.get("config") if isinstance(sala.get("config"), dict) else {}
+        for trap in list(cfg.get("armadilhas") or []):
+            if not isinstance(trap, dict):
+                continue
+            tcfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
+            if not bool(tcfg.get("solido", False) or tcfg.get("solido_centro", False)):
+                continue
+            if str(trap.get("tipo") or "") == "espeto_movel":
+                continue
+            pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else None
+            if pos is None:
+                continue
+            if (float(pos[0]) - float(x)) ** 2 + (float(pos[1]) - float(y)) ** 2 <= 0.85 * 0.85:
+                return True
+        return False
 
     def _processar_colisao_dungeon(self, player, poke, registrar_diff):
         tick = int(getattr(self._cerebro, "_tick_contador", 0))
@@ -371,6 +413,13 @@ class CerebroDungeons:
                     "drop_item": "ChaveDungeon" if bool(servo_info.get("possui_chave", False)) else "",
                 }
             )
+        if isinstance(servo_info, dict) and int(servo_info.get("nivel", 0) or 0) > 0:
+            bruto = dict(poke.estado_extra)
+            bruto["nivel"] = int(servo_info.get("nivel", 1) or 1)
+            mat = materializar_pokemon(bruto)
+            estado_mat = mat.get("estado") if isinstance(mat.get("estado"), dict) else mat
+            if isinstance(estado_mat, dict):
+                poke.estado_extra.update(estado_mat)
         if tipo == "boss":
             stats = poke.estado_extra.get("stats") if isinstance(poke.estado_extra.get("stats"), dict) else {}
             vida_max = float(stats.get("Vida", 1.0) or 1.0)
@@ -674,6 +723,19 @@ class CerebroDungeons:
             self._expulsar_player_dungeon(player)
         else:
             BANCO_DADOS.atualizar_objeto(player.Id, {"estado": player.estado_extra})
+        if callable(registrar_diff):
+            registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=player.Id, autor="server", categoria="player")
+        return True
+
+    def _matar_player_dungeon(self, player, motivo="queda_buraco", registrar_diff=None):
+        estado = player.estado_extra.get("estado_dungeon")
+        if not isinstance(estado, dict):
+            return False
+        estado["coracoes"] = 0
+        estado["ultimo_dano_motivo"] = str(motivo or "queda_buraco")
+        estado["queda_buraco"] = True
+        estado["animacao_queda_tick"] = int(getattr(self._cerebro, "_tick_contador", 0))
+        self._expulsar_player_dungeon(player)
         if callable(registrar_diff):
             registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=player.Id, autor="server", categoria="player")
         return True

@@ -7,12 +7,16 @@ from Codigo.Prefabs.TextoCinematico import TextoCinematico
 class ControladorDungeons:
     def __init__(self):
         self._ultima_dim = "Mundo"
+        self._ultimo_nome = ""
         self._texto = TextoCinematico("Dungeon", tamanho=42)
 
     def atualizar_dimensao(self, dimensao:str, layout:dict|None=None):
-        if str(dimensao).startswith('Dungeon') and not str(self._ultima_dim).startswith('Dungeon'):
-            self._texto.iniciar((layout or {}).get('dungeon_nome','Dungeon'), duracao_ms=2400)
-        if str(dimensao).startswith("Dungeon") and isinstance(layout, dict):
+        dentro_dungeon = str(dimensao).startswith("Dungeon")
+        nome = str((layout or {}).get("dungeon_nome") or "").strip()
+        if dentro_dungeon and (not str(self._ultima_dim).startswith("Dungeon") or (nome and nome != self._ultimo_nome)):
+            self._ultimo_nome = nome or self._ultimo_nome or "Dungeon"
+            self._texto.iniciar(self._ultimo_nome, duracao_ms=2400)
+        if dentro_dungeon and isinstance(layout, dict):
             salvar_debug_layout(layout, str(dimensao))
         self._ultima_dim=dimensao
 

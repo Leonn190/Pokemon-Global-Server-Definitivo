@@ -106,6 +106,13 @@
     "fimloop": 154.99,
     "volume": 0.55
   },
+  "Dungeon": {
+    "id": "Dungeon",
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Dungeon.mp3",
+    "loop": 0,
+    "fimloop": 120,
+    "volume": 0.55
+  },
   "Agua": {
     "id": "Agua",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Agua.ogg",

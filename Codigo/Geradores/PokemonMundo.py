@@ -564,6 +564,9 @@ class Pokemon:
         self.ComportamentoMundo = str(estado.get("comportamento_mundo") or estado.get("comportamento") or estado.get("tipo_batalha") or "")
         self.Boss = bool(estado.get("boss", False) or estado.get("pokemon_boss") or str(estado.get("tipo_batalha") or "").strip().lower() == "boss")
         self.PossuiChaveDungeon = bool(estado.get("possui_chave_dungeon", False))
+        velocidade_estado = self._f(estado.get("velocidade", snapshot.get("velocidade")), 0.0)
+        if velocidade_estado > 0.0:
+            self._velocidade_interp_tiles_s = max(1.0, min(12.0, velocidade_estado * 1.35))
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
         if self._snapshot_captura_autoritativo(captura):
             self.capturar(captura)

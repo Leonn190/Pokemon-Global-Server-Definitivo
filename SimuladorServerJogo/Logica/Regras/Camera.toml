@@ -1,5 +1,6 @@
 [camera]
 px_por_tile = 50
+dungeon_px_por_tile = 60
 
 [combate]
 camera_px_por_tile = 40

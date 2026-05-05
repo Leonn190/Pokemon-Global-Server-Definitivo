@@ -101,11 +101,20 @@ class CerebroPokemons:
 
     def _velocidade_pokemon_mundo(self, poke: PokemonServer) -> float:
         fallback = self._core._f("velocidade_base_pokemon_tiles_s", 3.0)
-        stats = poke.estado_extra.get("stats") if isinstance(poke.estado_extra.get("stats"), dict) else {}
-        if not stats:
-            stats = poke.estado_extra
+        candidatos = []
+        for bloco in (poke.estado_extra.get("stats"), poke.estado_extra.get("stats_base"), poke.estado_extra):
+            if isinstance(bloco, dict):
+                candidatos.append(bloco)
+        vel = None
+        for stats in candidatos:
+            for chave in ("Vel", "vel", "VEL", "Velocidade", "velocidade", "Speed", "speed"):
+                if stats.get(chave) not in (None, ""):
+                    vel = stats.get(chave)
+                    break
+            if vel not in (None, ""):
+                break
         try:
-            vel = float(stats.get("Vel", stats.get("vel", stats.get("Velocidade", stats.get("velocidade")))))
+            vel = float(vel)
         except (TypeError, ValueError):
             return float(fallback)
         base = self._core._f("pokemon_mundo_vel_base_tiles_s", 1.0)
@@ -195,8 +204,9 @@ class CerebroPokemons:
 
             if int(estado.get("restante", 0) or 0) > 0:
                 dx, dy = estado.get("dir", (0.0, 0.0))
-                passo_base = self._velocidade_pokemon_mundo(poke) / 30.0
-                passo_atual = passo_base * max(0.1, float(estado.get("vel_mult", 1.0) or 1.0))
+                velocidade_atual = self._velocidade_pokemon_mundo(poke) * max(0.1, float(estado.get("vel_mult", 1.0) or 1.0))
+                poke.estado_extra["velocidade"] = float(velocidade_atual)
+                passo_atual = velocidade_atual / 30.0
                 destino = (float(poke.posicao[0]) + float(dx) * passo_atual, float(poke.posicao[1]) + float(dy) * passo_atual)
                 if self._colisao_movimento_pokemon(oid, destino, poke.raio_colisao, permitir_player=bool(estado.get("permite_colidir_player", False))):
                     estado["restante"] = 0

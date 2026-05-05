@@ -119,6 +119,13 @@ class CerebroEstruturasNaturais:
                 estrutura.estado_extra["quantidade"] = 0
                 estrutura.raio_colisao = 0.0
                 estrutura.Colisor.raio_colisao = 0.0
+                code = str(estrutura.estado_extra.get("dungeon_code") or "").strip()
+                porta_idx = int(estrutura.estado_extra.get("porta_idx", 1) or 1)
+                try:
+                    if code and hasattr(self._core, "_cerebro_dungeons"):
+                        self._core._cerebro_dungeons.obter_ou_gerar(code, porta_idx, int(estrutura.Id))
+                except Exception:
+                    pass
                 BANCO_DADOS.atualizar_objeto(estrutura.Id, {"estado": estrutura.estado_extra})
                 registrar_diff("update", payload=estrutura.serializar(), escopo={"centro": [estrutura.posicao[0], estrutura.posicao[1]], "raio": 90.0}, objeto_id=estrutura.Id, autor="server", categoria="estrutura")
             else:

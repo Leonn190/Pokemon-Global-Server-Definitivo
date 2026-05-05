@@ -259,12 +259,15 @@ class CerebroDungeons:
             dx = float(alvo.posicao[0]) - float(poke.posicao[0])
             dy = float(alvo.posicao[1]) - float(poke.posicao[1])
             dist = math.hypot(dx, dy)
-            if dist <= float(poke.raio_colisao + alvo.raio_colisao + 0.10):
+            velocidade = self._velocidade_servo(poke)
+            poke.estado_extra["velocidade"] = float(velocidade)
+            passo = velocidade / 30.0
+            limite_colisao = float(poke.raio_colisao + alvo.raio_colisao + 0.25)
+            if dist <= limite_colisao + max(0.0, passo):
                 self._processar_colisao_dungeon(alvo, poke, registrar_diff)
                 continue
             if dist <= 0.001:
                 continue
-            passo = self._velocidade_servo(poke) / 30.0
             nx = float(poke.posicao[0]) + (dx / dist) * min(passo, dist)
             ny = float(poke.posicao[1]) + (dy / dist) * min(passo, dist)
             nx, ny = self._clamp_sala(sala, nx, ny, margem=max(0.5, float(poke.raio_colisao)))
@@ -306,11 +309,20 @@ class CerebroDungeons:
 
     def _velocidade_servo(self, poke) -> float:
         fallback = float(self._regras.get("servo_velocidade_tiles_s", 2.8) or 2.8)
-        stats = poke.estado_extra.get("stats") if isinstance(poke.estado_extra.get("stats"), dict) else {}
-        if not stats:
-            stats = poke.estado_extra
+        stats_candidatos = []
+        for bloco in (poke.estado_extra.get("stats"), poke.estado_extra.get("stats_base"), poke.estado_extra):
+            if isinstance(bloco, dict):
+                stats_candidatos.append(bloco)
+        vel = None
+        for stats in stats_candidatos:
+            for chave in ("Vel", "vel", "VEL", "Velocidade", "velocidade", "Speed", "speed"):
+                if stats.get(chave) not in (None, ""):
+                    vel = stats.get(chave)
+                    break
+            if vel not in (None, ""):
+                break
         try:
-            vel = float(stats.get("Vel", stats.get("vel", stats.get("Velocidade", stats.get("velocidade")))))
+            vel = float(vel)
         except (TypeError, ValueError):
             return fallback
         base = float(self._regras.get("servo_vel_base_tiles_s", 1.0) or 1.0)
@@ -324,6 +336,10 @@ class CerebroDungeons:
         x, y = self._clamp_sala(sala, float(pos[0]), float(pos[1]), margem=0.8)
         novo_id = BANCO_DADOS.gerar_id()
         poke = gerar_pokemon_server(novo_id=novo_id, posicao=(x, y), chunk_xy=BANCO_DADOS.chunk_da_posicao((x, y)), especie=especie)
+        poke.raio_colisao = max(float(getattr(poke, "raio_colisao", 0.55) or 0.55), 0.68)
+        poke.raio_interacao = max(float(getattr(poke, "raio_interacao", 1.2) or 1.2), poke.raio_colisao, 1.2)
+        poke.Colisor.raio_colisao = poke.raio_colisao
+        poke.Colisor.raio_interacao = poke.raio_interacao
         if tipo == "boss":
             bruto = dict(poke.estado_extra)
             bruto["nivel"] = 100
@@ -449,6 +465,47 @@ class CerebroDungeons:
         m = max(float(margem), float(parede) + float(margem))
         return (max(sx + m, min(sx + w - m, float(x))), max(sy + m, min(sy + h - m, float(y))))
 
+    def _clamp_sala_com_passagem(self, sala, x, y, margem=0.5):
+        ajuste = self._clamp_passagem_sala(sala, x, y, margem=margem)
+        if ajuste is not None:
+            return ajuste
+        return self._clamp_sala(sala, x, y, margem=margem)
+
+    def _clamp_passagem_sala(self, sala, x, y, margem=0.5):
+        if not isinstance(sala, dict):
+            return None
+        sx, sy, w, h = retangulo_sala_em_tiles(sala.get("posicao_sala", [0, 0]))
+        parede = max(1, int(self._regras.get("parede_largura_tiles", 2) or 2))
+        porta_w = max(1, int(self._regras.get("porta_largura_tiles", 4) or 4))
+        folga = max(0.1, float(margem))
+        x = float(x)
+        y = float(y)
+        for info in list(sala.get("portas_info") or []):
+            if bool(info.get("trancada", False)):
+                continue
+            direcao = str(info.get("direcao") or "")
+            if direcao in {"N", "S"}:
+                centro = sx + w * 0.5
+                min_x = centro - porta_w * 0.5 + folga
+                max_x = centro + porta_w * 0.5 - folga
+                if min_x > max_x:
+                    min_x = max_x = centro
+                if direcao == "N" and y <= sy + parede + folga:
+                    return (max(min_x, min(max_x, x)), max(sy - folga, min(sy + parede + folga, y)))
+                if direcao == "S" and y >= sy + h - parede - folga:
+                    return (max(min_x, min(max_x, x)), max(sy + h - parede - folga, min(sy + h + folga, y)))
+            elif direcao in {"L", "O"}:
+                centro = sy + h * 0.5
+                min_y = centro - porta_w * 0.5 + folga
+                max_y = centro + porta_w * 0.5 - folga
+                if min_y > max_y:
+                    min_y = max_y = centro
+                if direcao == "O" and x <= sx + parede + folga:
+                    return (max(sx - folga, min(sx + parede + folga, x)), max(min_y, min(max_y, y)))
+                if direcao == "L" and x >= sx + w - parede - folga:
+                    return (max(sx + w - parede - folga, min(sx + w + folga, x)), max(min_y, min(max_y, y)))
+        return None
+
     def destrancar_porta(self, client_id: str, porta_id: str, registrar_diff=None) -> bool:
         obj_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
         player = BANCO_DADOS.obter_objeto(obj_id)
@@ -514,18 +571,19 @@ class CerebroDungeons:
         destino_pos = tuple(sala_atual_por_posicao(destino))
         sala_origem = salas_por_pos.get(origem_pos)
         sala_destino = salas_por_pos.get(destino_pos)
+        margem_player = max(0.5, float(player.raio_colisao))
         if not isinstance(sala_destino, dict):
-            return list(self._clamp_sala(sala_origem or {"posicao_sala": origem_pos}, player.posicao[0], player.posicao[1], margem=max(0.5, float(player.raio_colisao))))
+            return list(self._clamp_sala_com_passagem(sala_origem or {"posicao_sala": origem_pos}, player.posicao[0], player.posicao[1], margem=margem_player))
         if origem_pos == destino_pos or not isinstance(sala_origem, dict):
-            return [float(destino[0]), float(destino[1])]
+            return list(self._clamp_sala_com_passagem(sala_destino, destino[0], destino[1], margem=margem_player))
         dx, dy = destino_pos[0] - origem_pos[0], destino_pos[1] - origem_pos[1]
         if abs(dx) + abs(dy) != 1:
-            return list(self._clamp_sala(sala_origem, player.posicao[0], player.posicao[1], margem=max(0.5, float(player.raio_colisao))))
+            return list(self._clamp_sala_com_passagem(sala_origem, player.posicao[0], player.posicao[1], margem=margem_player))
         direcao = "L" if dx > 0 else "O" if dx < 0 else "S" if dy > 0 else "N"
         if not self._passagem_aberta(sala_origem, direcao, player):
-            return list(self._clamp_sala(sala_origem, player.posicao[0], player.posicao[1], margem=max(0.5, float(player.raio_colisao))))
+            return list(self._clamp_sala_com_passagem(sala_origem, player.posicao[0], player.posicao[1], margem=margem_player))
         if not self._dentro_da_abertura(sala_origem, direcao, destino):
-            return list(self._clamp_sala(sala_origem, player.posicao[0], player.posicao[1], margem=max(0.5, float(player.raio_colisao))))
+            return list(self._clamp_sala_com_passagem(sala_origem, player.posicao[0], player.posicao[1], margem=margem_player))
         return [float(destino[0]), float(destino[1])]
 
     def _passagem_aberta(self, sala: dict, direcao: str, player) -> bool:

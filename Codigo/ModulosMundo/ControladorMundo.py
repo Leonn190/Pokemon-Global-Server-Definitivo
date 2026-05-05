@@ -40,7 +40,11 @@ class ControladorMundo:
         return max(1, int(gerais.get("camera_px_por_tile", 50) or 50))
 
     def _sincronizar_tile_px_dimensao(self, dimensao: str) -> None:
-        tile_px = 60 if str(dimensao or "").startswith("Dungeon_") else self._tile_px_mundo()
+        info = getattr(self.JOGO, "INFO", {}) if self.JOGO is not None else {}
+        regras = info.get("RegrasMundo") if isinstance(info, dict) and isinstance(info.get("RegrasMundo"), dict) else {}
+        gerais = regras.get("gerais") if isinstance(regras.get("gerais"), dict) else {}
+        tile_dungeon = max(1, int(gerais.get("dungeon_camera_px_por_tile", 60) or 60))
+        tile_px = tile_dungeon if str(dimensao or "").startswith("Dungeon_") else self._tile_px_mundo()
         if int(getattr(self.Camera, "TilePx", tile_px) or tile_px) == tile_px:
             return
         self.Camera.TilePx = int(tile_px)

@@ -16,17 +16,12 @@ def contexto_batalha_dungeon(layout: dict, sala: dict | None, tipo_batalha: str,
     x0, y0 = sx * bloco_w, sy * bloco_h
     off_x, off_y = max(0, (largura - bloco_w) // 2), max(0, (altura - bloco_h) // 2)
     grid = layout.get("grid_tiles") if isinstance(layout.get("grid_tiles"), list) else []
-    tile_vazio = int(layout.get("tile_vazio_dungeon", 9) or 9)
     tile_chao = int(layout.get("tile_chao_dungeon", 8) or 8)
     tiles = []
     for ly in range(bloco_h):
         gy = y0 + ly
-        row = grid[gy] if 0 <= gy < len(grid) and isinstance(grid[gy], list) else []
         for lx in range(bloco_w):
-            gx = x0 + lx
-            bloco_tile = int(row[gx]) if 0 <= gx < len(row) else tile_vazio
-            bloco_tile = tile_vazio if bloco_tile == tile_vazio else tile_chao
-            tiles.append({"x": int(off_x + lx), "y": int(off_y + ly), "bloco": bloco_tile})
+            tiles.append({"x": int(off_x + lx), "y": int(off_y + ly), "bloco": tile_chao})
     tipo_sala = str(sala.get("tipo") or "")
     contexto.update(
         {

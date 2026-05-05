@@ -232,7 +232,11 @@ class ControladorPlayer:
     def _clamp_sala_pos(pos, sala_idx, bloco_w, bloco_h, raio, layout=None, sala=None):
         bx, by = sala_idx
         layout = layout if isinstance(layout, dict) else {}
-        if ControladorPlayer._pos_em_abertura(pos, sala_idx, bloco_w, bloco_h, raio, layout, sala or {}):
+        sala = sala or {}
+        ajuste_passagem = ControladorPlayer._clamp_passagem(pos, sala_idx, bloco_w, bloco_h, raio, layout, sala)
+        if ajuste_passagem is not None:
+            return ajuste_passagem
+        if ControladorPlayer._pos_em_abertura(pos, sala_idx, bloco_w, bloco_h, raio, layout, sala):
             return (float(pos[0]), float(pos[1]))
         margem = max(0.08, float(raio)) + max(1, int(layout.get("parede_largura_tiles", 2) or 2))
         if bx < 0 or by < 0:
@@ -241,6 +245,43 @@ class ControladorPlayer:
             max(bx * bloco_w + margem, min((bx + 1) * bloco_w - margem, float(pos[0]))),
             max(by * bloco_h + margem, min((by + 1) * bloco_h - margem, float(pos[1]))),
         )
+
+    @staticmethod
+    def _clamp_passagem(pos, sala_idx, bloco_w, bloco_h, raio, layout, sala):
+        if not isinstance(sala, dict):
+            return None
+        bx, by = sala_idx
+        parede = max(1, int(layout.get("parede_largura_tiles", 2) or 2))
+        porta_w = max(1, int(layout.get("porta_largura_tiles", 4) or 4))
+        x, y = float(pos[0]), float(pos[1])
+        x0, y0 = bx * bloco_w, by * bloco_h
+        x1, y1 = (bx + 1) * bloco_w, (by + 1) * bloco_h
+        folga = max(0.1, float(raio))
+        for info in list(sala.get("portas_info") or []):
+            if bool(info.get("trancada", False)):
+                continue
+            direcao = str(info.get("direcao") or "")
+            if direcao in {"N", "S"}:
+                centro = x0 + bloco_w * 0.5
+                min_x = centro - porta_w * 0.5 + folga
+                max_x = centro + porta_w * 0.5 - folga
+                if min_x > max_x:
+                    min_x = max_x = centro
+                if direcao == "N" and y <= y0 + parede + folga:
+                    return (max(min_x, min(max_x, x)), max(y0 - folga, min(y0 + parede + folga, y)))
+                if direcao == "S" and y >= y1 - parede - folga:
+                    return (max(min_x, min(max_x, x)), max(y1 - parede - folga, min(y1 + folga, y)))
+            elif direcao in {"L", "O"}:
+                centro = y0 + bloco_h * 0.5
+                min_y = centro - porta_w * 0.5 + folga
+                max_y = centro + porta_w * 0.5 - folga
+                if min_y > max_y:
+                    min_y = max_y = centro
+                if direcao == "O" and x <= x0 + parede + folga:
+                    return (max(x0 - folga, min(x0 + parede + folga, x)), max(min_y, min(max_y, y)))
+                if direcao == "L" and x >= x1 - parede - folga:
+                    return (max(x1 - parede - folga, min(x1 + folga, x)), max(min_y, min(max_y, y)))
+        return None
 
     def _normalizar_posicao_player_local(self) -> None:
         ator = self._player_local
@@ -255,6 +296,32 @@ class ControladorPlayer:
         evento = dict(self._colisao_pokemon_pendente) if isinstance(self._colisao_pokemon_pendente, dict) else None
         self._colisao_pokemon_pendente = None
         return evento
+
+    def _detectar_colisao_pokemon_proxima(self) -> None:
+        ator = self._player_local
+        if ator is None:
+            return
+        pos = tuple(ator.Posicao)
+        player_id = getattr(ator, "Id", None)
+        raio_ator = max(0.0, float(getattr(getattr(ator, "Colisor", None), "raio_colisao", 0.35)))
+        for c in self._objetos.iter_colisores_proximos_por_raio(pos, raio_tiles=2.0):
+            oid, sx, sy, raio_obj, tipo_obj, *_ = c
+            if int(oid) == int(player_id or -1):
+                continue
+            if str(tipo_obj).strip().lower() not in {"entidade_pokemon", "pokemon"}:
+                continue
+            payload = self._objetos.snapshot_objeto_por_id(int(oid))
+            estado = payload.get("estado") if isinstance(payload, dict) and isinstance(payload.get("estado"), dict) else {}
+            comportamento = str(estado.get("comportamento_mundo") or estado.get("comportamento") or estado.get("tipo_batalha") or "").strip().lower()
+            ameacador = bool(estado.get("esta_irritado", False)) or comportamento in {"perseguindo", "servo", "boss"}
+            limite = raio_ator + float(raio_obj) + (0.70 if ameacador else 0.05)
+            d2 = (float(sx) - float(pos[0])) ** 2 + (float(sy) - float(pos[1])) ** 2
+            if d2 <= limite * limite:
+                if isinstance(payload, dict) and payload:
+                    self._colisao_pokemon_pendente = payload
+                else:
+                    self._colisao_pokemon_pendente = {"id": int(oid), "posicao": [float(sx), float(sy)]}
+                return
 
     def _spec_projetil(self, item: Dict[str, object]) -> Tuple[str, float, float]:
         regras = self._regras()
@@ -628,8 +695,10 @@ class ControladorPlayer:
             self._processar_intencao_coleta_estrutura()
             self._processar_intencao_evoluir_pokemon()
             self._processar_intencao_interacao_estadio()
+            self._detectar_colisao_pokemon_proxima()
         elif self._player_local.Controle is not None:
             self._player_local.Controle.atualizar_bloqueado(dt)
+            self._detectar_colisao_pokemon_proxima()
 
         if hasattr(self._player_local, "atualizar_visual"):
             self._player_local.atualizar_visual(dt)

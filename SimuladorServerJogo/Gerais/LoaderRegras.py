@@ -344,11 +344,14 @@ def carregar_regras_batalha_publicas() -> Dict[str, object]:
 
 
 def carregar_regras_gerais() -> Dict[str, object]:
-    dados = _ler_toml("Gerais.toml")
+    dados = _ler_toml("Camera.toml")
+    if not dados:
+        dados = _ler_toml("Gerais.toml")
     out = _flatten(dados)
     camera = dados.get("camera") if isinstance(dados.get("camera"), dict) else {}
     combate = dados.get("combate") if isinstance(dados.get("combate"), dict) else {}
     out["camera_px_por_tile"] = _int_cfg(camera, "px_por_tile", 50)
+    out["dungeon_camera_px_por_tile"] = _int_cfg(camera, "dungeon_px_por_tile", 60)
     out["combate_camera_px_por_tile"] = _int_cfg(combate, "camera_px_por_tile", 40)
     out["combate_camera_zoom_min"] = _int_cfg(combate, "camera_zoom_min", 30)
     out["combate_camera_zoom_max"] = _int_cfg(combate, "camera_zoom_max", 50)
@@ -456,6 +459,7 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
         },
         "gerais": {
             "camera_px_por_tile": int(_ler_valor(regras_gerais, "camera_px_por_tile", 50)),
+            "dungeon_camera_px_por_tile": int(_ler_valor(regras_gerais, "dungeon_camera_px_por_tile", 60)),
             "combate_camera_px_por_tile": int(_ler_valor(regras_gerais, "combate_camera_px_por_tile", 40)),
             "combate_camera_zoom_min": int(_ler_valor(regras_gerais, "combate_camera_zoom_min", 30)),
             "combate_camera_zoom_max": int(_ler_valor(regras_gerais, "combate_camera_zoom_max", 50)),

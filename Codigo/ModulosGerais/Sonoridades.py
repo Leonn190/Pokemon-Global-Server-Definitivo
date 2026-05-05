@@ -38,7 +38,7 @@ for _nome_musica, _dados_musica in Musicas.items():
     if isinstance(_dados_musica, dict):
         _dados_musica.setdefault("id", str(_nome_musica))
 
-MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão", "Estadio"}
+MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão", "Estadio", "Dungeon"}
 
 # Estado da música atual
 _musica_atual = None
@@ -414,7 +414,10 @@ def _resolver_musica_alvo(jogo):
 
     if cena_id == "Mundo":
         objetos = getattr(getattr(cena, "ControladorMundo", None), "Objetos", None)
-        if objetos is not None and str(objetos.dimensao_atual_client() or "Mundo") != "Mundo":
+        dimensao = str(objetos.dimensao_atual_client() or "Mundo") if objetos is not None else "Mundo"
+        if dimensao.startswith("Dungeon_"):
+            return "Dungeon"
+        if dimensao.startswith("Estadio"):
             return "Estadio"
         return _musica_mundo_estavel(cena)
 

@@ -448,20 +448,22 @@ class CenaMundo:
                         link = server.get("ip")
                         payload_estrutura = alvo.get("estrutura") if isinstance(alvo.get("estrutura"), dict) else {}
                         estado_e = payload_estrutura.get("estado") if isinstance(payload_estrutura.get("estado"), dict) else {}
-                        enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), {
+                        resposta = enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), {
                             "acao": "entrar",
                             "estrutura_id": int(payload_estrutura.get("id", 0) or 0),
                             "dungeon_code": str(estado_e.get("dungeon_code") or ""),
                             "porta_idx": int(estado_e.get("porta_idx", 1) or 1),
                             "pos_player": [float(player.Posicao[0]), float(player.Posicao[1])],
                         })
+                        self._aplicar_resposta_mundo(resposta)
                     elif isinstance(alvo, dict) and str(alvo.get("tipo") or "") == "dungeon_saida":
                         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
                         link = server.get("ip")
-                        enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), {
+                        resposta = enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), {
                             "acao": "sair",
                             "pos_player": [float(player.Posicao[0]), float(player.Posicao[1])],
                         })
+                        self._aplicar_resposta_mundo(resposta)
                     break
         self._processar_estado_dialogo_npc(JOGO)
         self.ElementosHud.atualizar(dt)
@@ -539,16 +541,19 @@ class CenaMundo:
         if player is not None:
             estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {})
             pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if (self.ServicoMapa is not None and isinstance(estado_player, dict)) else tuple(getattr(player, "Posicao", (0.0, 0.0)))
-            dentro_estadio = str((estado_player or {}).get("dimensao") or self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo") != "Mundo"
+            dim_player = str((estado_player or {}).get("dimensao") or self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
+            dentro_estadio = dim_player.startswith("Estadio")
+            dentro_dungeon = dim_player.startswith("Dungeon_")
             if dentro_estadio:
                 estadio_id = int((estado_player or {}).get("estadio_atual_id", 0) or 0)
                 estadio = self.ControladorMundo.Objetos.EstadiosPorId.get(estadio_id, {})
                 pos_estadio = estadio.get("posicao") if isinstance(estadio, dict) and isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else None
                 if pos_estadio is not None:
                     pos_player_mundo = (float(pos_estadio[0]), float(pos_estadio[1]))
-            layout_dungeon = self.ControladorMundo.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.ControladorMundo.Leitor.MetaMundo, dict) else {}
-            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=(estado_player or {}).get("estado_dungeon"), layout_dungeon=layout_dungeon)
-            self.ControladorMundo.Dungeons.renderizar_texto(surface)
+            layout_dungeon = self.ControladorMundo.Leitor.MetaMundo.get("layout_dungeon") if dentro_dungeon and isinstance(self.ControladorMundo.Leitor.MetaMundo, dict) else None
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=((estado_player or {}).get("estado_dungeon") if dentro_dungeon else None), layout_dungeon=layout_dungeon)
+            if dentro_dungeon:
+                self.ControladorMundo.Dungeons.renderizar_texto(surface)
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
             estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
             dica_estadio = self.ControladorMundo.Objetos.mensagem_interacao_estadio(

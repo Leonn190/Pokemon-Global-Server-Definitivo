@@ -3,7 +3,7 @@ from __future__ import annotations
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_dungeons
 
 _REGRAS = carregar_regras_dungeons()
-TAMANHO_BLOCO_SALA_TILES = int(_REGRAS.get("tamanho_bloco_sala_tiles", 34) or 34)
+TAMANHO_BLOCO_SALA_TILES = int(_REGRAS.get("tamanho_bloco_sala_tiles", 32) or 32)
 LARGURA_BLOCO_SALA_TILES = int(_REGRAS.get("largura_bloco_sala_tiles", TAMANHO_BLOCO_SALA_TILES) or TAMANHO_BLOCO_SALA_TILES)
 ALTURA_BLOCO_SALA_TILES = int(_REGRAS.get("altura_bloco_sala_tiles", TAMANHO_BLOCO_SALA_TILES) or TAMANHO_BLOCO_SALA_TILES)
 
@@ -24,7 +24,21 @@ def tamanho_em_blocos(tamanho:int)->int:
     return int(_REGRAS.get(f"tamanho_{t}_blocos", 4 + t) or (4 + t))
 
 def posicao_sala_entrada(porta_idx:int, tamanho:int)->tuple[int,int]:
-    t=tamanho_em_blocos(tamanho); i=max(0,int(porta_idx or 1)-1); return (i%t,i//t)
+    t = tamanho_em_blocos(tamanho)
+    i = max(0, int(porta_idx or 1) - 1)
+    if t <= 1:
+        return (0, 0)
+    perimetro = []
+    for x in range(t):
+        perimetro.append((x, 0))
+    for y in range(1, t):
+        perimetro.append((t - 1, y))
+    for x in range(t - 2, -1, -1):
+        perimetro.append((x, t - 1))
+    for y in range(t - 2, 0, -1):
+        perimetro.append((0, y))
+    passo = max(1, len(perimetro) // max(1, min(len(perimetro), 4)))
+    return perimetro[(i * passo) % len(perimetro)]
 
 def retangulo_sala_em_tiles(pos_bloco):
     bx,by=int(pos_bloco[0]),int(pos_bloco[1]); return (bx*LARGURA_BLOCO_SALA_TILES,by*ALTURA_BLOCO_SALA_TILES,LARGURA_BLOCO_SALA_TILES,ALTURA_BLOCO_SALA_TILES)

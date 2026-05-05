@@ -32,6 +32,8 @@ class Arena:
             4: (230, 210, 140), 5: (217, 179, 92), 6: (245, 248, 252), 7: (140, 82, 255),
             8: (88, 70, 70), 9: (110, 92, 68), 10: (226, 238, 252), 11: (206, 224, 243),
         }
+        if bool(self.Contexto.get("contexto_dungeon")):
+            self._cores.update({0: (70, 70, 74), 1: (70, 70, 74), 8: (86, 86, 90), 9: (42, 42, 46), 11: (92, 92, 96)})
         self._cache_sprites: Dict[Tuple[str, int], pygame.Surface] = {}
         self._cache_fundos_area: Dict[Tuple[str, int, int], pygame.Surface | None] = {}
         self._grid_tiles: List[List[int]] = [[0 for _ in range(max(1, self.Largura))] for _ in range(max(1, self.Altura))]

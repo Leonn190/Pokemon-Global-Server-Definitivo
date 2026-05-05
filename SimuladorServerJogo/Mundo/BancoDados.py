@@ -134,6 +134,11 @@ class BancoDadosMundo:
                         "porta_idx": porta_idx,
                         "dimensao_destino": str(item.get("dimensao_destino") or nome_dimensao_dungeon(code)),
                         "posicao": [float(pos[0]), float(pos[1])],
+                        "pedra_id": self._id_estrutura_natural(int(item.get("base_id", 25) or 25), int(float(pos[0])), int(float(pos[1]))),
+                        "quantidade_restante": int(self._estado_estruturas_naturais.get(
+                            self._id_estrutura_natural(int(item.get("base_id", 25) or 25), int(float(pos[0])), int(float(pos[1]))),
+                            -1,
+                        )),
                     }
                 )
             return saida

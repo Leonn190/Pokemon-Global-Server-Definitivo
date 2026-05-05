@@ -33,7 +33,23 @@ class ControladorMundo:
         self.Pacotes.ativar_bombeamento_manual(True)
         self._desconectado = False
 
+    def _tile_px_mundo(self) -> int:
+        info = getattr(self.JOGO, "INFO", {}) if self.JOGO is not None else {}
+        regras = info.get("RegrasMundo") if isinstance(info, dict) and isinstance(info.get("RegrasMundo"), dict) else {}
+        gerais = regras.get("gerais") if isinstance(regras.get("gerais"), dict) else {}
+        return max(1, int(gerais.get("camera_px_por_tile", 50) or 50))
+
+    def _sincronizar_tile_px_dimensao(self, dimensao: str) -> None:
+        tile_px = 60 if str(dimensao or "").startswith("Dungeon_") else self._tile_px_mundo()
+        if int(getattr(self.Camera, "TilePx", tile_px) or tile_px) == tile_px:
+            return
+        self.Camera.TilePx = int(tile_px)
+        normalizar = getattr(self.Camera, "_normalizar_posicao_limites", None)
+        if callable(normalizar):
+            normalizar()
+
     def _ao_dimensao_atualizada(self, dimensao: str, forcar_imediato: bool = False) -> None:
+        self._sincronizar_tile_px_dimensao(dimensao)
         self.Objetos.definir_dimensao_atual_client(dimensao)
         self.Dungeons.atualizar_dimensao(dimensao, self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else None)
         self.Leitor.forcar_refresh_chunks()
@@ -82,6 +98,7 @@ class ControladorMundo:
 
     def atualizar_frame(self, eventos, dt, bloqueio_gameplay: bool) -> None:
         controle = getattr(self.player_local, "Controle", None) if self.player_local is not None else None
+        self._sincronizar_tile_px_dimensao(str(self.Objetos.dimensao_atual_client() or "Mundo"))
         self.Leitor.atualizar_regras_mundo(controle)
         self.Player.atualizar_frame(eventos, dt, self.Camera, bloqueado=bloqueio_gameplay)
         self.Leitor.bombear()
@@ -90,6 +107,7 @@ class ControladorMundo:
         layout_dungeon = self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {}
         self.Objetos.definir_layout_dungeon_atual(layout_dungeon)
         dim_local = str(self.Objetos.dimensao_atual_client() or "Mundo")
+        self._sincronizar_tile_px_dimensao(dim_local)
         if dim_local.startswith("Dungeon_"):
             self.Dungeons.atualizar_dimensao(dim_local, layout_dungeon)
         definir_layout = getattr(self.Camera, "definir_layout_dungeon", None)
@@ -104,6 +122,7 @@ class ControladorMundo:
         if dim_local == "Mundo":
             self.Leitor.renderizar_mundo(tela)
         elif dim_local.startswith("Dungeon_"):
+            self.Leitor.renderizar_mundo(tela)
             renderizar_dungeon(tela, self.Camera, self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {})
         if dim_local.startswith("Estadio"):
             self.Objetos.renderizar_estadio_interior(tela, self.Camera)

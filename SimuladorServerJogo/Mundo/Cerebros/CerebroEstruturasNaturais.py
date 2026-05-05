@@ -186,4 +186,4 @@ class CerebroEstruturasNaturais:
 
     @staticmethod
     def _persistir_estrutura_tocada_imediato(estrutura_id: int, quantidade_restante: int) -> None:
-        registrar_estrutura_natural_tocada_estado(int(estrutura_id), int(quantidade_restante or 0), force=False)
+        registrar_estrutura_natural_tocada_estado(int(estrutura_id), int(quantidade_restante or 0), force=True)

@@ -45,7 +45,10 @@ class LeitorMundo:
         self._versao_chunks = 0
         self.MetaMundo: Dict[str, object] = {}
         self.TamanhoChunkBlocos = 10
-        self.CoresBlocos = {0: (24, 72, 145), 1: (64, 156, 255), 2: (106, 190, 48), 3: (46, 125, 50), 4: (230, 210, 140), 5: (217, 179, 92), 6: (245, 248, 252), 7: (140, 82, 255), 8: (88, 70, 70), 9: (110, 92, 68), 10: (226, 238, 252), 11: (206, 224, 243)}
+        self.CoresBlocosBase = {0: (24, 72, 145), 1: (64, 156, 255), 2: (106, 190, 48), 3: (46, 125, 50), 4: (230, 210, 140), 5: (217, 179, 92), 6: (245, 248, 252), 7: (140, 82, 255), 8: (88, 70, 70), 9: (110, 92, 68), 10: (226, 238, 252), 11: (206, 224, 243)}
+        self.CoresBlocosDungeon = {**self.CoresBlocosBase, 0: (14, 34, 64), 1: (32, 74, 122), 8: (38, 39, 43), 9: (74, 75, 82), 10: (50, 52, 58), 11: (88, 90, 98)}
+        self.CoresBlocos = dict(self.CoresBlocosBase)
+        self._modo_cores_tiles = "mundo"
 
         self._cache_superficies_chunks: Dict[Tuple[int, int], pygame.Surface] = {}
         self._cache_assinaturas_chunks: Dict[Tuple[int, int], Tuple[Tuple[int, ...], ...]] = {}
@@ -56,6 +59,15 @@ class LeitorMundo:
         self._ultima_versao_chunks_regras = -1
         self._ultimo_seed_tiles: Optional[int] = None
         self.RenderizadorTiles = GerenciadorTiles(cores_blocos=self.CoresBlocos)
+
+    def _aplicar_paleta_dimensao(self, dimensao: str) -> None:
+        modo = "dungeon" if str(dimensao or "").startswith("Dungeon_") else "mundo"
+        if modo == self._modo_cores_tiles:
+            return
+        self._modo_cores_tiles = modo
+        self.CoresBlocos = dict(self.CoresBlocosDungeon if modo == "dungeon" else self.CoresBlocosBase)
+        self.RenderizadorTiles.atualizar_cores(self.CoresBlocos)
+        self._cache_superficies_chunks.clear()
 
     def atualizar_regras_mundo(self, player_controle=None) -> None:
         with self._lock:
@@ -71,6 +83,7 @@ class LeitorMundo:
         altura = meta.get("altura_blocos")
         if largura is not None and altura is not None:
             dimensao = str(meta.get("dimensao") or "Mundo")
+            self._aplicar_paleta_dimensao(dimensao)
             eh_mundo = dimensao == "Mundo"
             if player_controle is not None:
                 player_controle.definir_limites_mundo(largura, altura, toroidal=eh_mundo)

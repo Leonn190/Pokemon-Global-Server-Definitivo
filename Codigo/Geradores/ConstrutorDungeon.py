@@ -18,16 +18,17 @@ _CORES_DEBUG = {
 }
 
 
-def _porta_rect(pos, direcao, bloco_w, bloco_h, tile, largura_tiles=4):
+def _porta_rect(pos, direcao, bloco_w, bloco_h, tile, largura_tiles=4, espessura_tiles=1):
     x0, y0 = float(pos[0] * bloco_w), float(pos[1] * bloco_h)
     w = max(1, int(largura_tiles))
+    e = max(1, int(espessura_tiles))
     if direcao in ("N", "S"):
         px = x0 + (bloco_w - w) * 0.5
-        py = y0 if direcao == "N" else y0 + bloco_h - 1
-        return pygame.Rect(int(px * tile), int(py * tile), max(2, int(w * tile)), max(2, int(tile)))
-    px = x0 if direcao == "O" else x0 + bloco_w - 1
+        py = y0 if direcao == "N" else y0 + bloco_h - e
+        return pygame.Rect(int(px * tile), int(py * tile), max(2, int(w * tile)), max(2, int(e * tile)))
+    px = x0 if direcao == "O" else x0 + bloco_w - e
     py = y0 + (bloco_h - w) * 0.5
-    return pygame.Rect(int(px * tile), int(py * tile), max(2, int(tile)), max(2, int(w * tile)))
+    return pygame.Rect(int(px * tile), int(py * tile), max(2, int(e * tile)), max(2, int(w * tile)))
 
 
 def construir_surface_mapa_dungeon(layout: dict, estado_dungeon: dict | None = None, debug: bool = False, cell: int = 28):
@@ -153,31 +154,17 @@ def renderizar_dungeon(tela, camera, layout:dict):
     bloco = int(layout.get("tamanho_bloco_sala_tiles", 30) or 30) if isinstance(layout, dict) else 30
     bloco_w = int(layout.get("largura_bloco_sala_tiles", bloco) or bloco) if isinstance(layout, dict) else bloco
     bloco_h = int(layout.get("altura_bloco_sala_tiles", bloco) or bloco) if isinstance(layout, dict) else bloco
+    parede = max(1, int(layout.get("parede_largura_tiles", 2) or 2)) if isinstance(layout, dict) else 2
     for sala in layout.get('salas',[]) if isinstance(layout,dict) else []:
-        pos = sala.get('posicao_sala') or [0,0]
-        mundo_x, mundo_y = float(pos[0]*bloco_w), float(pos[1]*bloco_h)
-        tela_x, tela_y = camera.mundo_para_tela_px((mundo_x, mundo_y))
-        r=pygame.Rect(int(tela_x), int(tela_y), int(bloco_w*tile), int(bloco_h*tile))
-        pygame.draw.rect(tela,(60,60,68),r)
-        if str(sala.get("tipo") or "") == "piscina":
-            margem_x = max(5, bloco_w // 4)
-            margem_y = max(4, bloco_h // 4)
-            agua = pygame.Rect(
-                int(tela_x + margem_x * tile),
-                int(tela_y + margem_y * tile),
-                int((bloco_w - margem_x * 2) * tile),
-                int((bloco_h - margem_y * 2) * tile),
-            )
-            pygame.draw.rect(tela, (24, 72, 145), agua)
-        pygame.draw.rect(tela,(130,130,140),r,4)
         for info in list(sala.get("portas_info") or []):
+            if not bool(info.get("trancada", False)):
+                continue
             pos = sala.get("posicao_sala") or [0, 0]
-            pr = _porta_rect(pos, str(info.get("direcao") or ""), bloco_w, bloco_h, tile, int(layout.get("porta_largura_tiles", 4) or 4))
+            pr = _porta_rect(pos, str(info.get("direcao") or ""), bloco_w, bloco_h, tile, int(layout.get("porta_largura_tiles", 4) or 4), parede)
             pr.x += int(-camera.PosicaoTiles[0] * tile)
             pr.y += int(-camera.PosicaoTiles[1] * tile)
-            pygame.draw.rect(tela, (74, 58, 48) if bool(info.get("trancada", False)) else (94, 86, 76), pr)
-            if bool(info.get("trancada", False)):
-                pygame.draw.rect(tela, (246, 196, 64), pr, max(1, int(tile * 0.06)))
+            pygame.draw.rect(tela, (58, 52, 48), pr)
+            pygame.draw.rect(tela, (246, 196, 64), pr, max(1, int(tile * 0.06)))
     for ent in layout.get('entradas',[]) if isinstance(layout,dict) else []:
         saida=ent.get('saida')
         if isinstance(saida,(list,tuple)) and len(saida)==2:

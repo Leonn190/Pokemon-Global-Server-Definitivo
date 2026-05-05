@@ -173,31 +173,68 @@ class ControladorPlayer:
         a = (int(float(antes[0]) // bloco_w), int(float(antes[1]) // bloco_h))
         d = (int(float(depois[0]) // bloco_w), int(float(depois[1]) // bloco_h))
         if d not in salas:
-            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio, layout, salas.get(a, {}))
         if a == d:
-            return depois
+            return self._clamp_sala_pos(depois, a, bloco_w, bloco_h, raio, layout, salas.get(a, {}))
         if a not in salas or abs(a[0] - d[0]) + abs(a[1] - d[1]) != 1:
-            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio, layout, salas.get(a, {}))
         direcao = "L" if d[0] > a[0] else "O" if d[0] < a[0] else "S" if d[1] > a[1] else "N"
         sala = salas.get(a, {})
         info = next((p for p in list(sala.get("portas_info") or []) if str(p.get("direcao") or "") == direcao), None)
         if not isinstance(info, dict) or bool(info.get("trancada", False)):
-            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio, layout, sala)
         porta_w = max(1, int(layout.get("porta_largura_tiles", 4) or 4))
         if direcao in {"N", "S"}:
             centro = a[0] * bloco_w + bloco_w * 0.5
             if abs(float(depois[0]) - centro) > (porta_w * 0.5 + max(0.1, raio)):
-                return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+                return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio, layout, sala)
         else:
             centro = a[1] * bloco_h + bloco_h * 0.5
             if abs(float(depois[1]) - centro) > (porta_w * 0.5 + max(0.1, raio)):
-                return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+                return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio, layout, sala)
         return depois
 
     @staticmethod
-    def _clamp_sala_pos(pos, sala_idx, bloco_w, bloco_h, raio):
+    def _pos_em_abertura(pos, sala_idx, bloco_w, bloco_h, raio, layout, sala):
+        if not isinstance(sala, dict):
+            return False
         bx, by = sala_idx
-        margem = max(0.08, float(raio))
+        parede = max(1, int(layout.get("parede_largura_tiles", 2) or 2))
+        porta_w = max(1, int(layout.get("porta_largura_tiles", 4) or 4))
+        x, y = float(pos[0]), float(pos[1])
+        x0, y0 = bx * bloco_w, by * bloco_h
+        x1, y1 = (bx + 1) * bloco_w, (by + 1) * bloco_h
+        if x < x0 - raio or x > x1 + raio or y < y0 - raio or y > y1 + raio:
+            return False
+        for info in list(sala.get("portas_info") or []):
+            if bool(info.get("trancada", False)):
+                continue
+            direcao = str(info.get("direcao") or "")
+            if direcao in {"N", "S"}:
+                centro = x0 + bloco_w * 0.5
+                if abs(x - centro) > porta_w * 0.5 + max(0.1, raio):
+                    continue
+                if direcao == "N" and y <= y0 + parede + raio:
+                    return True
+                if direcao == "S" and y >= y1 - parede - raio:
+                    return True
+            elif direcao in {"L", "O"}:
+                centro = y0 + bloco_h * 0.5
+                if abs(y - centro) > porta_w * 0.5 + max(0.1, raio):
+                    continue
+                if direcao == "O" and x <= x0 + parede + raio:
+                    return True
+                if direcao == "L" and x >= x1 - parede - raio:
+                    return True
+        return False
+
+    @staticmethod
+    def _clamp_sala_pos(pos, sala_idx, bloco_w, bloco_h, raio, layout=None, sala=None):
+        bx, by = sala_idx
+        layout = layout if isinstance(layout, dict) else {}
+        if ControladorPlayer._pos_em_abertura(pos, sala_idx, bloco_w, bloco_h, raio, layout, sala or {}):
+            return (float(pos[0]), float(pos[1]))
+        margem = max(0.08, float(raio)) + max(1, int(layout.get("parede_largura_tiles", 2) or 2))
         if bx < 0 or by < 0:
             return pos
         return (
@@ -430,6 +467,22 @@ class ControladorPlayer:
         alvos = self._objetos.estruturas_colidindo((float(colisor_mao.x), float(colisor_mao.y)), float(colisor_mao.raio_colisao))
         baus = self._objetos.baus_colidindo((float(colisor_mao.x), float(colisor_mao.y)), float(colisor_mao.raio_colisao))
         if not alvos and not baus:
+            alvo = self._objetos.alvo_interagivel_atual(
+                pos_player=(float(colisor_mao.x), float(colisor_mao.y)),
+                dimensao_player=str(self._objetos.dimensao_atual_client() or "Mundo"),
+            )
+            if isinstance(alvo, dict) and str(alvo.get("tipo") or "") == "dungeon_porta_trancada":
+                self._coleta_tapa_enviada = True
+                self._objetos.EnfileirarDiffRapida({
+                    "tipo": "evento",
+                    "categoria": "interacao_dungeon",
+                    "payload": {
+                        "acao": "destrancar_porta",
+                        "porta_id": str(alvo.get("porta_id") or ""),
+                        "pos_mao": [float(colisor_mao.x), float(colisor_mao.y)],
+                        "instante_cliente_ms": int(time.time() * 1000),
+                    },
+                })
             return
         self._coleta_tapa_enviada = True
         instante = int(time.time() * 1000)

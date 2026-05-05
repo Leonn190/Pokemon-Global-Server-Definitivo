@@ -306,24 +306,24 @@ class Ator:
 
             progresso = max(0.0, min(1.0, float(self._progresso_tapa())))
             empurrao_tapa = max(0.0, float(self._alcance_tapa_px()))
-            respiracao = math.sin(max(0.0, float(respiracao_tempo)) * 3.4) * 3.0
+            respiracao = math.sin(max(0.0, float(respiracao_tempo)) * 3.4) * (base * 0.06)
 
             mao_x = cx + px * dist_lateral
             mao_y = cy + py * dist_lateral - dist_vertical
 
             if empurrao_tapa > 0.0:
                 arco = math.sin(progresso * math.pi)
-                mao_x += vx * (60.0 * arco) - px * (16.0 * arco)
-                mao_y += vy * (60.0 * arco) - py * (16.0 * arco)
+                mao_x += vx * (base * 1.20 * arco) - px * (base * 0.32 * arco)
+                mao_y += vy * (base * 1.20 * arco) - py * (base * 0.32 * arco)
             else:
-                recuo = 16.0 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0
+                recuo = (base * 0.32) if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0
                 mao_x += vx * (respiracao - recuo)
                 mao_y += vy * (respiracao - recuo)
 
             ang_mao = math.degrees(math.atan2(-(mao_y - cy), mao_x - cx))
             eh_picareta = nome.startswith("picareta")
 
-            lado = max(62, int(base * (1.65 if eh_picareta else 1.95) * escala))
+            lado = max(int(base * 1.24), int(base * (1.65 if eh_picareta else 1.95) * escala))
             sprite = ItemInventario.surface_item(item_mao, lado_px=lado)
 
             if sprite is not None:
@@ -351,11 +351,11 @@ class Ator:
             alcance_tapa=self._alcance_tapa_px(),
             progresso_tapa=self._progresso_tapa(),
             respiracao_tempo=respiracao_tempo,
-            recuo_mao=(16.0 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0),
+            recuo_mao=(float(self.Desenhador._tile_px) * 0.32 if bool(getattr(self, "EstadoMiraAtiva", False)) else 0.0),
         )
 
         if item_mao is not None and estilo != "ferramenta":
-            sprite_item = ItemInventario.surface_item(item_mao, lado_px=max(19, int(dados_mao["raio_mao"] * 2.8)))
+            sprite_item = ItemInventario.surface_item(item_mao, lado_px=max(int(float(self.Desenhador._tile_px) * 0.38), int(dados_mao["raio_mao"] * 2.8)))
             if sprite_item is not None:
                 tela.blit(sprite_item, sprite_item.get_rect(center=dados_mao["mao_tapa"]))
 

@@ -108,7 +108,9 @@ class CerebroDungeons:
         dy = float(player.posicao[1]) - float(getattr(pedra, "posicao", [0.0, 0.0])[1])
         if (dx * dx + dy * dy) > float(self._regras.get("raio_interacao_porta", 2.0)) ** 2:
             return False
-        layout = self._regenerar_run(code_real, porta_real, pedra_id)
+        layout = self.obter_ou_gerar(code_real, porta_real, pedra_id)
+        if isinstance(layout.get("servos_derrotados"), list):
+            layout["servos_derrotados"].clear()
         entrada = next((e for e in layout.get("entradas", []) if int(e.get("porta_idx", 0)) == int(porta_real)), None) or (layout.get("entradas") or [{}])[0]
         player.estado_extra["ultima_pos_mundo"] = [float(player.posicao[0]), float(player.posicao[1])]
         player.estado_extra["dimensao"] = layout.get("dimensao")
@@ -305,8 +307,10 @@ class CerebroDungeons:
     def _velocidade_servo(self, poke) -> float:
         fallback = float(self._regras.get("servo_velocidade_tiles_s", 2.8) or 2.8)
         stats = poke.estado_extra.get("stats") if isinstance(poke.estado_extra.get("stats"), dict) else {}
+        if not stats:
+            stats = poke.estado_extra
         try:
-            vel = float(stats.get("Vel", stats.get("vel")))
+            vel = float(stats.get("Vel", stats.get("vel", stats.get("Velocidade", stats.get("velocidade")))))
         except (TypeError, ValueError):
             return fallback
         base = float(self._regras.get("servo_vel_base_tiles_s", 1.0) or 1.0)
@@ -436,12 +440,14 @@ class CerebroDungeons:
 
     def _posicao_spawn_sala(self, sala):
         x, y, w, h = retangulo_sala_em_tiles(sala.get("posicao_sala", [0, 0]))
-        return [random.uniform(x + 3.0, x + max(3.0, w - 3.0)), random.uniform(y + 3.0, y + max(3.0, h - 3.0))]
+        parede = max(1, int(self._regras.get("parede_largura_tiles", 2) or 2))
+        return [random.uniform(x + parede + 1.0, x + max(parede + 1.0, w - parede - 1.0)), random.uniform(y + parede + 1.0, y + max(parede + 1.0, h - parede - 1.0))]
 
-    @staticmethod
-    def _clamp_sala(sala, x, y, margem=0.5):
+    def _clamp_sala(self, sala, x, y, margem=0.5):
         sx, sy, w, h = retangulo_sala_em_tiles(sala.get("posicao_sala", [0, 0]))
-        return (max(sx + margem, min(sx + w - margem, float(x))), max(sy + margem, min(sy + h - margem, float(y))))
+        parede = max(1, int(self._regras.get("parede_largura_tiles", 2) or 2))
+        m = max(float(margem), float(parede) + float(margem))
+        return (max(sx + m, min(sx + w - m, float(x))), max(sy + m, min(sy + h - m, float(y))))
 
     def destrancar_porta(self, client_id: str, porta_id: str, registrar_diff=None) -> bool:
         obj_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
@@ -579,17 +585,18 @@ class CerebroDungeons:
 
     def _marcar_porta_grid_runtime(self, grid, pos, direcao, tile):
         porta_w = max(1, int(self._regras.get("porta_largura_tiles", 4) or 4))
+        parede = max(1, int(self._regras.get("parede_largura_tiles", 2) or 2))
         x0 = int(pos[0]) * LARGURA_BLOCO_SALA_TILES
         y0 = int(pos[1]) * ALTURA_BLOCO_SALA_TILES
         cx = x0 + (LARGURA_BLOCO_SALA_TILES // 2)
         cy = y0 + (ALTURA_BLOCO_SALA_TILES // 2)
         meio = porta_w // 2
         if direcao in {"N", "S"}:
-            y = y0 if direcao == "N" else y0 + ALTURA_BLOCO_SALA_TILES - 1
-            pontos = [(x, y) for x in range(cx - meio, cx - meio + porta_w)]
+            ys = range(y0, y0 + parede) if direcao == "N" else range(y0 + ALTURA_BLOCO_SALA_TILES - parede, y0 + ALTURA_BLOCO_SALA_TILES)
+            pontos = [(x, y) for y in ys for x in range(cx - meio, cx - meio + porta_w)]
         else:
-            x = x0 + LARGURA_BLOCO_SALA_TILES - 1 if direcao == "L" else x0
-            pontos = [(x, y) for y in range(cy - meio, cy - meio + porta_w)]
+            xs = range(x0 + LARGURA_BLOCO_SALA_TILES - parede, x0 + LARGURA_BLOCO_SALA_TILES) if direcao == "L" else range(x0, x0 + parede)
+            pontos = [(x, y) for x in xs for y in range(cy - meio, cy - meio + porta_w)]
         for x, y in pontos:
             if 0 <= y < len(grid) and isinstance(grid[y], list) and 0 <= x < len(grid[y]):
                 grid[y][x] = int(tile)

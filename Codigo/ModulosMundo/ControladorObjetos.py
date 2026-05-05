@@ -791,7 +791,7 @@ class ControladorObjetos:
 
         sprite = self._obter_sprite_fallback(sprite_path)
         if sprite is not None:
-            escala = limitar_escala_estrutura_natural(float(escala or 1.0))
+            escala = limitar_escala_estrutura_natural(float(escala or 1.0)) * max(0.05, float(getattr(camera, "TilePx", 50) or 50) / 50.0)
             if abs(escala - 1.0) > 0.001:
                 sprite = self._obter_sprite_fallback_escalado(sprite_path, sprite, escala)
             rotacao = self._rotacao_sprite_payload(obj) % 360.0
@@ -1174,7 +1174,7 @@ class ControladorObjetos:
         if tipo == "dungeon_saida":
             return "Pressione F para sair da dungeon"
         if tipo == "dungeon_porta_trancada":
-            return "Pressione F com ChaveDungeon na mão"
+            return ""
         return "Pressione F para interagir"
 
     def _estruturas_interagiveis_por_dimensao(self, dim: str):

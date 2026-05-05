@@ -25,7 +25,6 @@ from Codigo.ModulosGerais.Server.ServerMundo import (
     consultar_chunks_mundo,
     coletar_mapa_mundo,
     enviar_evento_interacao_dungeon_mundo,
-    enviar_evento_porta_dungeon_mundo,
 )
 from Codigo.ModulosGerais.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.Subtelas.SubtelaInventario import SubtelaInventario
@@ -163,6 +162,16 @@ class CenaMundo:
             **estado_payload,
             "angulo": float(getattr(player, "AnguloOlhar", estado_payload.get("angulo", estado_base.get("angulo", 0.0))) or 0.0),
         }
+        posicao = [float(player.Posicao[0]), float(player.Posicao[1])]
+        if str(estado.get("dimensao") or "").startswith("Dungeon_"):
+            checkpoint = self._ultimo_chunk_seguro_mundo if isinstance(self._ultimo_chunk_seguro_mundo, dict) else {}
+            base_chunk = checkpoint.get("chave") if isinstance(checkpoint.get("chave"), tuple) else None
+            leitor = getattr(self.ControladorMundo, "Leitor", None) if self.ControladorMundo is not None else None
+            tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10) or 10))
+            if base_chunk is not None:
+                posicao = [float(base_chunk[0] * tamanho + 0.5), float(base_chunk[1] * tamanho + 0.5)]
+            estado["dimensao"] = "Mundo"
+            estado.pop("estado_dungeon", None)
         inventario = getattr(player, "Inventario", None)
         perfil = getattr(player, "Perfil", None)
         slot_selecionado = int(getattr(inventario, "SlotSelecionado", base.get("slot_selecionado", 0)) or 0) if inventario is not None else int(base.get("slot_selecionado", 0) or 0)
@@ -172,7 +181,8 @@ class CenaMundo:
             "nome": str(getattr(player, "Nome", base.get("nome", base.get("usuario", ""))) or ""),
             "usuario": str(getattr(player, "Nome", base.get("usuario", base.get("nome", ""))) or ""),
             "skin": str(getattr(player, "NomeSkin", base.get("skin", "1.png")) or "1.png"),
-            "posicao": [float(player.Posicao[0]), float(player.Posicao[1])],
+            "posicao": posicao,
+            "dimensao_atual": str(estado.get("dimensao") or base.get("dimensao_atual", "Mundo") or "Mundo"),
             "estado": estado,
             "perfil": perfil.serializar() if perfil is not None and hasattr(perfil, "serializar") else deepcopy(base.get("perfil", {})),
             "inventario": inventario.serializar() if inventario is not None and hasattr(inventario, "serializar") else deepcopy(base.get("inventario", {})),
@@ -202,6 +212,7 @@ class CenaMundo:
         self._filtro_camera = FiltroCamera()
         self._tela_morrer = TelaMorrer()
         self._ultimo_chunk_seguro = None
+        self._ultimo_chunk_seguro_mundo = None
         self.ModuladorRegras = ModuladorRegras()
 
         self._montar_mundo(JOGO)
@@ -451,10 +462,6 @@ class CenaMundo:
                             "acao": "sair",
                             "pos_player": [float(player.Posicao[0]), float(player.Posicao[1])],
                         })
-                    elif isinstance(alvo, dict) and str(alvo.get("tipo") or "") == "dungeon_porta_trancada":
-                        server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
-                        link = server.get("ip")
-                        enviar_evento_porta_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), str(alvo.get("porta_id") or ""))
                     break
         self._processar_estado_dialogo_npc(JOGO)
         self.ElementosHud.atualizar(dt)
@@ -525,7 +532,7 @@ class CenaMundo:
         sala_id = str(estado_dungeon.get("sala_id") or "")
         sala = next((s for s in layout.get("salas", []) if isinstance(s, dict) and str(s.get("id") or "") == sala_id), None) if isinstance(layout, dict) else None
         escura = isinstance(sala, dict) and str(sala.get("tipo") or "").strip().lower() == "escura"
-        return {"dungeon_power": 1.0, "dungeon_darkness": 0.52 if escura else 0.34}
+        return {"dungeon_power": 1.0, "dungeon_darkness": 0.84 if escura else 0.58}
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         player = self.ControladorMundo.player_local
@@ -772,7 +779,10 @@ class CenaMundo:
         dim = "Mundo"
         if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
             dim = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
-        self._ultimo_chunk_seguro = {"chave": (cx, cy), "grid": [list(linha) for linha in chunk], "dimensao": dim}
+        checkpoint = {"chave": (cx, cy), "grid": [list(linha) for linha in chunk], "dimensao": dim}
+        self._ultimo_chunk_seguro = checkpoint
+        if dim == "Mundo":
+            self._ultimo_chunk_seguro_mundo = checkpoint
 
     def _aplicar_morte_se_necessario(self, jogo):
         if self._tela_morrer.ativa:
@@ -836,10 +846,16 @@ class CenaMundo:
             return
         chunks = dict(getattr(leitor, "Chunks", {}) or {})
         tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10)))
-        checkpoint = self._ultimo_chunk_seguro if isinstance(self._ultimo_chunk_seguro, dict) else {}
+        dim_atual = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
+        if dim_atual.startswith("Dungeon_") and isinstance(self._ultimo_chunk_seguro_mundo, dict):
+            checkpoint = self._ultimo_chunk_seguro_mundo
+        else:
+            checkpoint = self._ultimo_chunk_seguro if isinstance(self._ultimo_chunk_seguro, dict) else {}
         base = checkpoint.get("chave") if isinstance(checkpoint.get("chave"), tuple) else None
         chunk = checkpoint.get("grid") if isinstance(checkpoint.get("grid"), list) else None
         dimensao_checkpoint = str(checkpoint.get("dimensao") or self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
+        if dimensao_checkpoint.startswith("Dungeon_"):
+            dimensao_checkpoint = "Mundo"
         if chunk is None and base in chunks:
             chunk = chunks.get(base)
         if base is None or chunk is None:

@@ -5,7 +5,7 @@ import pygame
 from Codigo.Prefabs.Botao import BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
-from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon_local
+from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon
 
 
 class TelaMapa:
@@ -146,7 +146,8 @@ class TelaMapa:
                         self.fechar()
                 if ev.type == pygame.MOUSEWHEEL:
                     self.zoom = max(0.6, min(8.0, self.zoom + 0.25 * ev.y))
-            surf = construir_surface_mapa_dungeon_local(self._layout_dungeon, self._estado_dungeon, cell=36, raio=1)
+            cell = 36
+            surf = construir_surface_mapa_dungeon(self._layout_dungeon, self._estado_dungeon, cell=cell)
             if surf is not None:
                 w, h = surf.get_size()
                 escala = max(1, int(w * self.zoom)), max(1, int(h * self.zoom))
@@ -154,7 +155,15 @@ class TelaMapa:
                 rect = img.get_rect(center=tela.get_rect().center)
                 tela.blit(img, rect)
                 pygame.draw.rect(tela, (190, 196, 212), rect, 2)
-                desenhar_seta_player(tela, tela.get_rect().center, angulo_olhar, tamanho=14)
+                sala_pos = self._estado_dungeon.get("sala_posicao") if isinstance(self._estado_dungeon, dict) else None
+                if not (isinstance(sala_pos, (list, tuple)) and len(sala_pos) == 2):
+                    sala_id = str((self._estado_dungeon or {}).get("sala_id") or "")
+                    sala = next((s for s in list(self._layout_dungeon.get("salas") or []) if isinstance(s, dict) and str(s.get("id") or "") == sala_id), None)
+                    sala_pos = sala.get("posicao_sala") if isinstance(sala, dict) else None
+                if isinstance(sala_pos, (list, tuple)) and len(sala_pos) == 2:
+                    px = rect.left + (float(sala_pos[0]) + 0.5) * cell * self.zoom
+                    py = rect.top + (float(sala_pos[1]) + 0.5) * cell * self.zoom
+                    desenhar_seta_player(tela, (int(px), int(py)), angulo_olhar, tamanho=max(6, min(48, int(12 * self.zoom))))
             if self._fechando:
                 self._concluir_fechamento()
             return

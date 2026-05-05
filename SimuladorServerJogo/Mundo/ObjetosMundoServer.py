@@ -222,7 +222,7 @@ class PokemonServer:
         self.Id = self.id_objeto
         self.tipo_classe = "entidade_pokemon"
         self.posicao = (float(posicao[0]), float(posicao[1]))
-        self.raio_colisao = float(kwargs.get("raio_colisao", 0.45))
+        self.raio_colisao = float(kwargs.get("raio_colisao", 0.55))
         self.raio_interacao = float(kwargs.get("raio_interacao", 1.2))
         self.campo = float(kwargs.get("campo", 0.0))
         self.intensidade = float(kwargs.get("intensidade", 0.0))

@@ -137,7 +137,7 @@ class DesenhaAtor:
 
         progresso = max(0.0, min(1.0, float(progresso_tapa)))
         empurrao_tapa = max(0.0, float(alcance_tapa))
-        respiracao = math.sin(max(0.0, float(respiracao_tempo)) * 3.4) * 3.0
+        respiracao = math.sin(max(0.0, float(respiracao_tempo)) * 3.4) * (base * 0.06)
 
         mao_dir_base_x = cx + px * dist_lateral
         mao_dir_base_y = cy + py * dist_lateral - dist_vertical
@@ -146,8 +146,8 @@ class DesenhaAtor:
 
         if empurrao_tapa > 0.0:
             arco = math.sin(progresso * math.pi)
-            curva_frente = 60.0 * arco
-            curva_esquerda = 16.0 * arco
+            curva_frente = base * 1.20 * arco
+            curva_esquerda = base * 0.32 * arco
             mao_dir_x = mao_dir_base_x + vx * curva_frente - px * curva_esquerda
             mao_dir_y = mao_dir_base_y + vy * curva_frente - py * curva_esquerda
         else:

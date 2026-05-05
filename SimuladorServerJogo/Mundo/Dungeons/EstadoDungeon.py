@@ -97,11 +97,11 @@ def registrar_sala_explorada(player, dungeon_code: str, sala_id: str, client_id:
 
 
 def resolver_posicao_saida_dungeon(player, estado_dungeon: dict) -> list[float]:
-    pedra = BANCO_DADOS.obter_objeto(int((estado_dungeon or {}).get("pedra_id", 0) or 0))
-    pos = list(getattr(pedra, "posicao", [])) if pedra is not None else []
-    if isinstance(pos, list) and len(pos) == 2:
-        return [float(pos[0]), float(pos[1])]
     estado = getattr(player, "estado_extra", {}) if isinstance(getattr(player, "estado_extra", {}), dict) else {}
+    pos_dim = estado.get("posicoes_por_dimensao") if isinstance(estado.get("posicoes_por_dimensao"), dict) else {}
+    valor_mundo = pos_dim.get("Mundo")
+    if isinstance(valor_mundo, (list, tuple)) and len(valor_mundo) == 2:
+        return [float(valor_mundo[0]), float(valor_mundo[1])]
     for chave in ("ultima_pos_mundo",):
         valor = estado.get(chave)
         if isinstance(valor, (list, tuple)) and len(valor) == 2:
@@ -109,6 +109,10 @@ def resolver_posicao_saida_dungeon(player, estado_dungeon: dict) -> list[float]:
     valor = (estado_dungeon or {}).get("entrada_mundo")
     if isinstance(valor, (list, tuple)) and len(valor) == 2:
         return [float(valor[0]), float(valor[1])]
+    pedra = BANCO_DADOS.obter_objeto(int((estado_dungeon or {}).get("pedra_id", 0) or 0))
+    pos = list(getattr(pedra, "posicao", [])) if pedra is not None else []
+    if isinstance(pos, list) and len(pos) == 2:
+        return [float(pos[0]), float(pos[1])]
     return [0.0, 0.0]
 
 
@@ -126,15 +130,15 @@ def normalizar_personagem_login_dungeon(usuario: str, personagem: dict) -> dict:
         return dados
     pos_dim = dados.get("posicoes_por_dimensao") if isinstance(dados.get("posicoes_por_dimensao"), dict) else {}
     estado_dungeon = dados.get("estado_dungeon") if isinstance(dados.get("estado_dungeon"), dict) else {}
-    pedra = BANCO_DADOS.obter_objeto(int(estado_dungeon.get("pedra_id", 0) or 0))
-    pos_pedra = list(getattr(pedra, "posicao", [])) if pedra is not None else []
-    pos = pos_pedra if isinstance(pos_pedra, list) and len(pos_pedra) == 2 else None
+    pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else None
+    if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
+        pos = dados.get("ultima_pos_mundo") if isinstance(dados.get("ultima_pos_mundo"), (list, tuple)) and len(dados.get("ultima_pos_mundo")) == 2 else None
     if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
         pos = estado_dungeon.get("entrada_mundo") if isinstance(estado_dungeon.get("entrada_mundo"), (list, tuple)) else None
     if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
-        pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else None
-    if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
-        pos = dados.get("ultima_pos_mundo") if isinstance(dados.get("ultima_pos_mundo"), (list, tuple)) and len(dados.get("ultima_pos_mundo")) == 2 else None
+        pedra = BANCO_DADOS.obter_objeto(int(estado_dungeon.get("pedra_id", 0) or 0))
+        pos_pedra = list(getattr(pedra, "posicao", [])) if pedra is not None else []
+        pos = pos_pedra if isinstance(pos_pedra, list) and len(pos_pedra) == 2 else None
     if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
         pos = [0.0, 0.0]
     pos = [float(pos[0]), float(pos[1])]

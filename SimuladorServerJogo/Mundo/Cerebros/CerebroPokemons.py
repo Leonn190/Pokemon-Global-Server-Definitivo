@@ -102,8 +102,10 @@ class CerebroPokemons:
     def _velocidade_pokemon_mundo(self, poke: PokemonServer) -> float:
         fallback = self._core._f("velocidade_base_pokemon_tiles_s", 3.0)
         stats = poke.estado_extra.get("stats") if isinstance(poke.estado_extra.get("stats"), dict) else {}
+        if not stats:
+            stats = poke.estado_extra
         try:
-            vel = float(stats.get("Vel", stats.get("vel")))
+            vel = float(stats.get("Vel", stats.get("vel", stats.get("Velocidade", stats.get("velocidade")))))
         except (TypeError, ValueError):
             return float(fallback)
         base = self._core._f("pokemon_mundo_vel_base_tiles_s", 1.0)

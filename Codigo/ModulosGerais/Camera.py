@@ -158,7 +158,12 @@ class CameraDungeon(Camera):
         sx, sy, sw, sh = sala
         half_w_tiles = (self.TamanhoTelaPx[0] * 0.5) / max(1.0, float(self.TilePx))
         half_h_tiles = (self.TamanhoTelaPx[1] * 0.5) / max(1.0, float(self.TilePx))
-        self.PosicaoTiles = (sx + (sw * 0.5) - half_w_tiles, sy + (sh * 0.5) - half_h_tiles)
+        alvo = (sx + (sw * 0.5) - half_w_tiles, sy + (sh * 0.5) - half_h_tiles)
+        fator = min(1.0, max(0.0, float(delta_time)) * max(10.0, float(self.Suavizacao) * 1.8))
+        self.PosicaoTiles = (
+            float(self.PosicaoTiles[0]) + (float(alvo[0]) - float(self.PosicaoTiles[0])) * fator,
+            float(self.PosicaoTiles[1]) + (float(alvo[1]) - float(self.PosicaoTiles[1])) * fator,
+        )
         self._normalizar_posicao_limites()
         return self.PosicaoTiles
 

@@ -482,6 +482,9 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
             if categoria == "pokemon_derrotado_batalha":
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
                 if pokemon_id > 0:
+                    if CEREBRO._cerebro_dungeons.registrar_pokemon_derrotado(pokemon_id, client_id, registrar_diff=registrar_diff):
+                        aplicados += 1
+                        return _ok("Pokemon dungeon derrotado processado", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
                     obj_atual = BANCO_DADOS.obter_objeto(pokemon_id)
                     if isinstance(obj_atual, PokemonServer) and bool(getattr(obj_atual, "estado_extra", {}).get("boss", False)):
                         obj_atual.estado_extra.pop("em_batalha", None)
@@ -716,4 +719,6 @@ def _processar_evento_interacao_dungeon(client_id: str, payload: Dict[str, objec
     acao = str(payload.get("acao") or "entrar").strip().lower()
     if acao == "sair":
         return bool(CEREBRO._cerebro_dungeons.sair_dungeon(client_id))
+    if acao == "destrancar_porta":
+        return bool(CEREBRO._cerebro_dungeons.destrancar_porta(client_id, str(payload.get("porta_id") or ""), registrar_diff=registrar_diff))
     return bool(CEREBRO._cerebro_dungeons.entrar_dungeon(client_id, int(payload.get("pedra_id", payload.get("estrutura_id", 0)) or 0), int(payload.get("porta_idx", 1) or 1), str(payload.get("dungeon_code") or "")))

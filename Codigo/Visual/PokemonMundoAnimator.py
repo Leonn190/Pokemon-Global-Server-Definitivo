@@ -22,8 +22,15 @@ class PokemonMundoAnimator:
             tela.blit(frame, frame.get_rect(center=centro))
         else:
             surf = pygame.Surface((raio * 2 + 8, raio * 2 + 8), pygame.SRCALPHA)
-            pygame.draw.circle(surf, (70, 155, 245, alpha), (surf.get_width() // 2, surf.get_height() // 2), raio)
-            pygame.draw.circle(surf, (24, 84, 190, alpha), (surf.get_width() // 2, surf.get_height() // 2), raio, 2)
+            comportamento = str(getattr(p, "ComportamentoMundo", "") or "").strip().lower()
+            if bool(getattr(p, "Boss", False)) or comportamento == "boss":
+                fill, borda = (252, 218, 76, alpha), (170, 120, 20, alpha)
+            elif comportamento == "servo":
+                fill, borda = (155, 88, 235, alpha), (82, 35, 156, alpha)
+            else:
+                fill, borda = (70, 155, 245, alpha), (24, 84, 190, alpha)
+            pygame.draw.circle(surf, fill, (surf.get_width() // 2, surf.get_height() // 2), raio)
+            pygame.draw.circle(surf, borda, (surf.get_width() // 2, surf.get_height() // 2), raio, 2)
             tela.blit(surf, surf.get_rect(center=centro))
 
     def _desenhar_circulo_base(self, tela, centro, raio_base):

@@ -25,6 +25,7 @@ from Codigo.ModulosGerais.Server.ServerMundo import (
     consultar_chunks_mundo,
     coletar_mapa_mundo,
     enviar_evento_interacao_dungeon_mundo,
+    enviar_evento_porta_dungeon_mundo,
 )
 from Codigo.ModulosGerais.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.Subtelas.SubtelaInventario import SubtelaInventario
@@ -326,7 +327,8 @@ class CenaMundo:
             elif not player.Controle.InventarioAberto and inventario_modal is not None:
                 ger.fechar(inventario_modal)
 
-        dentro_estadio = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo") != "Mundo"
+        dim_cliente_atual = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
+        dentro_estadio = dim_cliente_atual.startswith("Estadio")
         if self.ServicoMapa is not None:
             self.ServicoMapa.tick()
 
@@ -335,8 +337,13 @@ class CenaMundo:
             for ev in EVENTOS:
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_m:
                     estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {}) if player is not None else {}
-                    pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if (self.ServicoMapa is not None and player is not None) else tuple(getattr(player, "Posicao", (0.0, 0.0)))
-                    if self.ServicoMapa is not None:
+                    dim_player = str((estado_player or {}).get("dimensao") or dim_cliente_atual)
+                    if dim_player.startswith("Dungeon_"):
+                        layout = self.ControladorMundo.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.ControladorMundo.Leitor.MetaMundo, dict) else {}
+                        self.TelaMapa.abrir_dungeon(JOGO, layout, (estado_player or {}).get("estado_dungeon", {}))
+                        self.TelaAtual = "Mapa"
+                    elif self.ServicoMapa is not None:
+                        pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if player is not None else tuple(getattr(player, "Posicao", (0.0, 0.0)))
                         self.TelaMapa.abrir(JOGO, self.ServicoMapa, pos_player_mundo)
                         self.TelaAtual = "Mapa"
                     break
@@ -444,6 +451,10 @@ class CenaMundo:
                             "acao": "sair",
                             "pos_player": [float(player.Posicao[0]), float(player.Posicao[1])],
                         })
+                    elif isinstance(alvo, dict) and str(alvo.get("tipo") or "") == "dungeon_porta_trancada":
+                        server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
+                        link = server.get("ip")
+                        enviar_evento_porta_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), str(alvo.get("porta_id") or ""))
                     break
         self._processar_estado_dialogo_npc(JOGO)
         self.ElementosHud.atualizar(dt)
@@ -505,7 +516,8 @@ class CenaMundo:
                 pos_estadio = estadio.get("posicao") if isinstance(estadio, dict) and isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else None
                 if pos_estadio is not None:
                     pos_player_mundo = (float(pos_estadio[0]), float(pos_estadio[1]))
-            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)))
+            layout_dungeon = self.ControladorMundo.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.ControladorMundo.Leitor.MetaMundo, dict) else {}
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=(estado_player or {}).get("estado_dungeon"), layout_dungeon=layout_dungeon)
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
             estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
             dica_estadio = self.ControladorMundo.Objetos.mensagem_interacao_estadio(
@@ -530,10 +542,10 @@ class CenaMundo:
             TelaConfig(self, JOGO, EVENTOS, dt, tela_destino=surface)
             self._tela_morrer.desenhar(surface, EVENTOS, dt, JOGO)
             return
-        if self.TelaAtual == "Mapa" and self.ServicoMapa is not None:
+        if self.TelaAtual == "Mapa" and (self.ServicoMapa is not None or isinstance(getattr(self.TelaMapa, "_layout_dungeon", None), dict)):
             player = self.ControladorMundo.player_local
             estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {}) if player is not None else {}
-            pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if player is not None else (0.0, 0.0)
+            pos_player_mundo = self.ServicoMapa.gerenciador.posicao_player_mundo(estado_player, tuple(getattr(player, "Posicao", (0.0, 0.0)))) if (self.ServicoMapa is not None and player is not None) else tuple(getattr(player, "Posicao", (0.0, 0.0))) if player is not None else (0.0, 0.0)
             self.TelaMapa.desenhar(
                 surface,
                 JOGO,

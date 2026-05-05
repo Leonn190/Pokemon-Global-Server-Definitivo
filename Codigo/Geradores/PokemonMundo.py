@@ -560,8 +560,8 @@ class Pokemon:
         self.TamanhoBarraCaptura = max(0.06, min(0.45, tamanho_barra * (1.0 + bonus_barra / 100.0)))
         self.VelocidadeBarraCaptura = max(20.0, min(260.0, velocidade_barra * max(0.05, mult_velocidade)))
         self.EstaIrritado = bool(estado.get("esta_irritado", False))
-        self.ComportamentoMundo = str(estado.get("comportamento_mundo") or estado.get("comportamento") or "")
-        self.Boss = bool(estado.get("boss", False))
+        self.ComportamentoMundo = str(estado.get("comportamento_mundo") or estado.get("comportamento") or estado.get("tipo_batalha") or "")
+        self.Boss = bool(estado.get("boss", False) or estado.get("pokemon_boss") or str(estado.get("tipo_batalha") or "").strip().lower() == "boss")
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
         if self._snapshot_captura_autoritativo(captura):
             self.capturar(captura)

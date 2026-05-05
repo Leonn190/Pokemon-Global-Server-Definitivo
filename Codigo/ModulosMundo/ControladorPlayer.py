@@ -155,8 +155,55 @@ class ControladorPlayer:
             colisores=colisores,
             dt=dt,
         )
+        px, py = self._resolver_limites_dungeon(posicao_antes, (px, py), raio_ator)
         ator.definir_posicao(px, py)
         self._normalizar_posicao_player_local()
+
+    def _resolver_limites_dungeon(self, antes, depois, raio):
+        dim = str(self._objetos.dimensao_atual_client() or "Mundo")
+        layout = self._objetos.LayoutDungeonAtual if isinstance(getattr(self._objetos, "LayoutDungeonAtual", None), dict) else {}
+        if not dim.startswith("Dungeon_") or not layout:
+            return depois
+        bloco_w = int(layout.get("largura_bloco_sala_tiles", layout.get("tamanho_bloco_sala_tiles", 32)) or 32)
+        bloco_h = int(layout.get("altura_bloco_sala_tiles", layout.get("tamanho_bloco_sala_tiles", 24)) or 24)
+        salas = {
+            tuple(s.get("posicao_sala", [])): s
+            for s in layout.get("salas", []) if isinstance(s, dict) and isinstance(s.get("posicao_sala"), (list, tuple))
+        }
+        a = (int(float(antes[0]) // bloco_w), int(float(antes[1]) // bloco_h))
+        d = (int(float(depois[0]) // bloco_w), int(float(depois[1]) // bloco_h))
+        if d not in salas:
+            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+        if a == d:
+            return depois
+        if a not in salas or abs(a[0] - d[0]) + abs(a[1] - d[1]) != 1:
+            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+        direcao = "L" if d[0] > a[0] else "O" if d[0] < a[0] else "S" if d[1] > a[1] else "N"
+        sala = salas.get(a, {})
+        info = next((p for p in list(sala.get("portas_info") or []) if str(p.get("direcao") or "") == direcao), None)
+        if not isinstance(info, dict) or bool(info.get("trancada", False)):
+            return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+        porta_w = max(1, int(layout.get("porta_largura_tiles", 4) or 4))
+        if direcao in {"N", "S"}:
+            centro = a[0] * bloco_w + bloco_w * 0.5
+            if abs(float(depois[0]) - centro) > (porta_w * 0.5 + max(0.1, raio)):
+                return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+        else:
+            centro = a[1] * bloco_h + bloco_h * 0.5
+            if abs(float(depois[1]) - centro) > (porta_w * 0.5 + max(0.1, raio)):
+                return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio)
+        return depois
+
+    @staticmethod
+    def _clamp_sala_pos(pos, sala_idx, bloco_w, bloco_h, raio):
+        bx, by = sala_idx
+        margem = max(0.08, float(raio))
+        if bx < 0 or by < 0:
+            return pos
+        return (
+            max(bx * bloco_w + margem, min((bx + 1) * bloco_w - margem, float(pos[0]))),
+            max(by * bloco_h + margem, min((by + 1) * bloco_h - margem, float(pos[1]))),
+        )
 
     def _normalizar_posicao_player_local(self) -> None:
         ator = self._player_local

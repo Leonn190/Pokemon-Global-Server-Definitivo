@@ -134,7 +134,10 @@ class CerebroItensMundo:
                     if rem is not None:
                         registrar_diff("despawn", payload={"id": rem.Id, "motivo": "evento"}, escopo={"centro": [rem.posicao[0], rem.posicao[1]], "raio": 120}, objeto_id=rem.Id, autor="server", categoria="item_mundo")
                 continue
+            dim_item = str(estado.get("dimensao") or "Mundo")
             for player in players:
+                if str(getattr(player, "estado_extra", {}).get("dimensao") or "Mundo") != dim_item:
+                    continue
                 dx = float(item.posicao[0]) - float(player.posicao[0]); dy = float(item.posicao[1]) - float(player.posicao[1])
                 limite = float(item.raio_colisao) + float(player.raio_colisao)
                 if (dx * dx + dy * dy) > (limite * limite):

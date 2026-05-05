@@ -21,7 +21,7 @@ def tamanho_em_blocos(tamanho:int)->int:
         t = max(1, min(6, int(tamanho or 1)))
     except (TypeError, ValueError):
         t = 1
-    return int(_REGRAS.get(f"tamanho_{t}_blocos", 3 + t) or (3 + t))
+    return int(_REGRAS.get(f"tamanho_{t}_blocos", 4 + t) or (4 + t))
 
 def posicao_sala_entrada(porta_idx:int, tamanho:int)->tuple[int,int]:
     t=tamanho_em_blocos(tamanho); i=max(0,int(porta_idx or 1)-1); return (i%t,i//t)

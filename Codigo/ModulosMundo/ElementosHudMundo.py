@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pygame
+from pathlib import Path
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Mensagem import MensagensGanhosMundo
@@ -14,6 +15,21 @@ class ElementosHudMundo:
         self.TextoQtd = Texto("", style={"size": 14, "align": "bottomright", "outline_thickness": 1})
         self._mensagens_ganhos = MensagensGanhosMundo()
         self._minimapa = MinimapaMundo()
+        self._coracao = None
+        self._coracao_preto = None
+
+    def _carregar_coracao(self, lado=28):
+        if self._coracao is not None:
+            return
+        try:
+            img = pygame.image.load(str(Path("Recursos") / "Visual" / "Icones" / "Diversos" / "CoraçãoVida.png")).convert_alpha()
+            self._coracao = pygame.transform.smoothscale(img, (lado, lado))
+        except Exception:
+            self._coracao = pygame.Surface((lado, lado), pygame.SRCALPHA)
+            pygame.draw.polygon(self._coracao, (230, 42, 64), [(lado//2, lado-4), (4, lado//3), (lado//4, 4), (lado//2, lado//4), (3*lado//4, 4), (lado-4, lado//3)])
+        preto = self._coracao.copy()
+        preto.fill((0, 0, 0, 255), special_flags=pygame.BLEND_RGBA_MULT)
+        self._coracao_preto = preto
 
     def registrar_ganho(self, ganho: dict | None) -> None:
         if not isinstance(ganho, dict):
@@ -34,13 +50,26 @@ class ElementosHudMundo:
     def atualizar(self, dt: float) -> None:
         self._mensagens_ganhos.atualizar(dt)
 
-    def desenhar(self, tela, inventario, terminal=None, eventos=None, dt=0.0, servico_mapa=None, pos_player_mundo=(0.0, 0.0), angulo_olhar=0.0, mostrar_minimapa=False):
+    def desenhar(self, tela, inventario, terminal=None, eventos=None, dt=0.0, servico_mapa=None, pos_player_mundo=(0.0, 0.0), angulo_olhar=0.0, mostrar_minimapa=False, estado_dungeon=None, layout_dungeon=None):
         largura, altura = tela.get_size()
         slot = 50
         gap = 8
         total = (slot * self.SlotsVisiveis) + (gap * (self.SlotsVisiveis - 1))
         x0 = (largura - total) // 2
         y = altura - slot - 20
+        if isinstance(estado_dungeon, dict):
+            self._carregar_coracao()
+            coracoes = max(0, int(estado_dungeon.get("coracoes", 0) or 0))
+            max_cor = max(coracoes, int(estado_dungeon.get("coracoes_max", 3) or 3))
+            gap_h = 6
+            lado = self._coracao.get_width() if self._coracao is not None else 28
+            total_h = (lado * max_cor) + (gap_h * max(0, max_cor - 1))
+            hx = (largura - total_h) // 2
+            hy = y - lado - 10
+            for i in range(max_cor):
+                img = self._coracao if i < coracoes else self._coracao_preto
+                if img is not None:
+                    tela.blit(img, (hx + i * (lado + gap_h), hy))
 
         for i in range(self.SlotsVisiveis):
             rect = pygame.Rect(x0 + i * (slot + gap), y, slot, slot)
@@ -64,8 +93,8 @@ class ElementosHudMundo:
                 self.TextoQtd.set_pos((rect.right - 2, rect.bottom - 1))
                 self.TextoQtd.draw(tela)
 
-        if bool(mostrar_minimapa) and servico_mapa is not None and bool(getattr(servico_mapa, "pronto", False)):
-            self._minimapa.desenhar(tela, servico_mapa, pos_player_mundo, float(angulo_olhar or 0.0))
+        if bool(mostrar_minimapa):
+            self._minimapa.desenhar(tela, servico_mapa, pos_player_mundo, float(angulo_olhar or 0.0), layout_dungeon=layout_dungeon, estado_dungeon=estado_dungeon)
 
         if terminal is not None:
             terminal.desenhar(tela, eventos or [], dt)

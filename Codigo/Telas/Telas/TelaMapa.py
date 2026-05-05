@@ -5,6 +5,7 @@ import pygame
 from Codigo.Prefabs.Botao import BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
+from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon
 
 
 class TelaMapa:
@@ -20,6 +21,8 @@ class TelaMapa:
         self.aberto_ms = 0
         self._cache_chave = None
         self._cache_frame = None
+        self._layout_dungeon = None
+        self._estado_dungeon = None
         self._txt_regiao = Texto("", style={"size": 34, "outline": True, "align": "center"})
         self._txt_poi = Texto("", style={"size": 20, "outline": True, "align": "center"})
         self._txt_loading = Texto("Carregando mapa...", style={"size": 30, "outline": True, "align": "center"})
@@ -27,6 +30,8 @@ class TelaMapa:
 
     def abrir(self, jogo, servico_mapa, pos_player_mundo):
         self.ativo = True
+        self._layout_dungeon = None
+        self._estado_dungeon = None
         self._fechando = False
         self._fechamento_ms = 0
         self.aberto_ms = pygame.time.get_ticks()
@@ -39,6 +44,18 @@ class TelaMapa:
         self.offset = [tela_w * 0.5 - float(pos_player_mundo[0]) * self.zoom, tela_h * 0.5 - float(pos_player_mundo[1]) * self.zoom]
         self._garantir_botoes(jogo)
         self._clamp_offset(jogo, servico_mapa)
+
+    def abrir_dungeon(self, jogo, layout, estado_dungeon):
+        self.ativo = True
+        self._fechando = False
+        self._fechamento_ms = 0
+        self.aberto_ms = pygame.time.get_ticks()
+        self._cache_chave = None
+        self._cache_frame = None
+        self._layout_dungeon = dict(layout or {}) if isinstance(layout, dict) else {}
+        self._estado_dungeon = dict(estado_dungeon or {}) if isinstance(estado_dungeon, dict) else {}
+        self.zoom = 1.0
+        self.offset = [0.0, 0.0]
 
     def fechar(self):
         if not self.ativo:
@@ -122,6 +139,25 @@ class TelaMapa:
     def desenhar(self, tela, jogo, eventos, dt, servico_mapa, estado_player: dict, pos_player_mundo, angulo_olhar: float = 0.0):
         _ = dt
         tela.fill((0, 0, 0))
+        if isinstance(self._layout_dungeon, dict) and self._layout_dungeon:
+            for ev in eventos:
+                if ev.type == pygame.KEYDOWN and ev.key in (pygame.K_ESCAPE, pygame.K_m):
+                    if (pygame.time.get_ticks() - int(self.aberto_ms or 0)) >= 120:
+                        self.fechar()
+                if ev.type == pygame.MOUSEWHEEL:
+                    self.zoom = max(0.6, min(8.0, self.zoom + 0.25 * ev.y))
+            surf = construir_surface_mapa_dungeon(self._layout_dungeon, self._estado_dungeon, debug=False, cell=36)
+            if surf is not None:
+                w, h = surf.get_size()
+                escala = max(1, int(w * self.zoom)), max(1, int(h * self.zoom))
+                img = pygame.transform.smoothscale(surf, escala)
+                rect = img.get_rect(center=tela.get_rect().center)
+                tela.blit(img, rect)
+                pygame.draw.rect(tela, (190, 196, 212), rect, 2)
+                desenhar_seta_player(tela, tela.get_rect().center, angulo_olhar, tamanho=14)
+            if self._fechando:
+                self._concluir_fechamento()
+            return
         self.processar_eventos(jogo, eventos, servico_mapa)
         if not bool(getattr(servico_mapa, "pronto", False)):
             self._txt_loading.set_pos((tela.get_width() // 2, tela.get_height() // 2))

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pygame
 from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
+from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon
 
 
 class MinimapaMundo:
@@ -11,14 +12,22 @@ class MinimapaMundo:
         self._cache_key = None
         self._cache_surface = None
 
-    def desenhar(self, tela: pygame.Surface, servico_mapa, pos_player_mundo: tuple[float, float], angulo: float) -> None:
+    def desenhar(self, tela: pygame.Surface, servico_mapa, pos_player_mundo: tuple[float, float], angulo: float, layout_dungeon=None, estado_dungeon=None) -> None:
+        area = pygame.Rect(tela.get_width() - self.tamanho - self.margem, self.margem, self.tamanho, self.tamanho)
+        if isinstance(layout_dungeon, dict) and str(layout_dungeon.get("dimensao") or "").startswith("Dungeon_"):
+            base = construir_surface_mapa_dungeon(layout_dungeon, estado_dungeon, debug=False, cell=16)
+            if base is not None:
+                mini = pygame.transform.smoothscale(base, area.size)
+                tela.blit(mini, area)
+                pygame.draw.rect(tela, (8, 8, 8), area, 2)
+                desenhar_seta_player(tela, area.center, angulo, tamanho=10, escala_extra=0.5)
+            return
         if servico_mapa is None:
             return
         ger = servico_mapa.gerenciador
         chunk_blocos = int(ger.meta.get("chunk_blocos", 10) or 10)
         lado_chunks = 6
         lado_px_logico = lado_chunks * chunk_blocos
-        area = pygame.Rect(tela.get_width() - self.tamanho - self.margem, self.margem, self.tamanho, self.tamanho)
         x0 = int(pos_player_mundo[0]) - (lado_px_logico // 2)
         y0 = int(pos_player_mundo[1]) - (lado_px_logico // 2)
         chunk_player = (int(pos_player_mundo[0] // max(1, chunk_blocos)), int(pos_player_mundo[1] // max(1, chunk_blocos)))

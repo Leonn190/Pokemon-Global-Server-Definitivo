@@ -8,13 +8,16 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_se
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_dungeons
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Mundo.DungeonGeometria import (
+    ALTURA_BLOCO_SALA_TILES,
+    LARGURA_BLOCO_SALA_TILES,
     centro_sala_em_tiles,
     eh_dimensao_dungeon,
     nome_dimensao_dungeon,
     retangulo_sala_em_tiles,
     sala_atual_por_posicao,
 )
-from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, PokemonServer
+from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, ItemMundoServer, PokemonServer
+from SimuladorServerJogo.Mundo.ServicoInventario import ServicoInventario
 
 
 class CerebroDungeons:
@@ -27,6 +30,12 @@ class CerebroDungeons:
         dim = nome_dimensao_dungeon(dungeon_code)
         if dim in self._layouts:
             return self._layouts[dim]
+        self._layouts[dim] = gerar_dungeon_layout(str(dungeon_code), [{"porta_idx": int(porta_idx or 1), "pedra_id": int(pedra_id or 0)}])
+        return self._layouts[dim]
+
+    def _regenerar_run(self, dungeon_code, porta_idx=1, pedra_id=0):
+        dim = nome_dimensao_dungeon(dungeon_code)
+        self._remover_servos_dimensao(dim)
         self._layouts[dim] = gerar_dungeon_layout(str(dungeon_code), [{"porta_idx": int(porta_idx or 1), "pedra_id": int(pedra_id or 0)}])
         return self._layouts[dim]
 
@@ -92,7 +101,7 @@ class CerebroDungeons:
         dy = float(player.posicao[1]) - float(getattr(pedra, "posicao", [0.0, 0.0])[1])
         if (dx * dx + dy * dy) > float(self._regras.get("raio_interacao_porta", 2.0)) ** 2:
             return False
-        layout = self.obter_ou_gerar(code_real, porta_real, pedra_id)
+        layout = self._regenerar_run(code_real, porta_real, pedra_id)
         entrada = next((e for e in layout.get("entradas", []) if int(e.get("porta_idx", 0)) == int(porta_real)), None) or (layout.get("entradas") or [{}])[0]
         player.estado_extra["ultima_pos_mundo"] = [float(player.posicao[0]), float(player.posicao[1])]
         player.estado_extra["dimensao"] = layout.get("dimensao")
@@ -105,6 +114,8 @@ class CerebroDungeons:
             "entrada_mundo": list(player.estado_extra["ultima_pos_mundo"]),
             "dimensao": layout.get("dimensao"),
             "invulneravel_dungeon_ate_tick": 0,
+            "portas_destrancadas": [],
+            "salas_exploradas": [str(entrada.get("sala_id") or "")],
         }
         sx, sy = float(entrada.get("spawn", [0, 0])[0]), float(entrada.get("spawn", [0, 0])[1])
         BANCO_DADOS.atualizar_objeto(player.Id, {"posicao": [sx, sy], "estado": player.estado_extra})
@@ -156,12 +167,15 @@ class CerebroDungeons:
                 if isinstance(sala, dict):
                     estado = player.estado_extra.setdefault("estado_dungeon", {})
                     if isinstance(estado, dict) and estado.get("sala_id") != sala.get("id"):
+                        exploradas = estado.setdefault("salas_exploradas", [])
+                        if isinstance(exploradas, list) and str(sala.get("id")) not in exploradas:
+                            exploradas.append(str(sala.get("id")))
                         estado["sala_id"] = sala.get("id")
                         estado["sala_posicao"] = list(sala.get("posicao_sala", []))
                         BANCO_DADOS.atualizar_objeto(player.Id, {"estado": player.estado_extra})
                         registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 80}, objeto_id=player.Id, autor="server", categoria="player")
             self._garantir_bosses(layout, salas_por_id, registrar_diff)
-            self._tentar_spawn_servos(layout, players, salas_por_pos, registrar_diff)
+            self._garantir_servos(layout, salas_por_id, registrar_diff)
             self._atualizar_servos(layout, players, salas_por_id, registrar_diff)
 
     def _players_dungeon_por_dimensao(self):
@@ -209,34 +223,28 @@ class CerebroDungeons:
             pos = boss.get("posicao") if isinstance(boss.get("posicao"), list) else centro_sala_em_tiles(sala.get("posicao_sala", [0, 0]))
             self._spawn_pokemon_dungeon(str(boss.get("pokemon") or sala.get("pokemon_boss") or "Pokemon"), pos, sala, layout, "boss", registrar_diff)
 
-    def _tentar_spawn_servos(self, layout, players, salas_por_pos, registrar_diff):
+    def _garantir_servos(self, layout, salas_por_id, registrar_diff):
         dimensao = str(layout.get("dimensao") or "")
-        servos_pool = [str(p) for p in list(layout.get("servos_pool") or []) if str(p).strip()]
-        if not servos_pool:
-            return
-        salas_ativas = {}
-        for player in players:
-            sala = salas_por_pos.get(tuple(sala_atual_por_posicao(player.posicao)))
-            if isinstance(sala, dict):
-                salas_ativas[str(sala.get("id"))] = sala
-        servos = [p for p in self._pokemons_dungeon(dimensao) if str(p.estado_extra.get("comportamento_mundo")) == "servo"]
-        for sala_id, sala in salas_ativas.items():
-            rate = float(sala.get("servo_rate", 0.0) or 0.0)
-            max_sala = int(sala.get("servo_max", 0) or 0)
-            if rate <= 0.0 or max_sala <= 0:
+        derrotados = set(layout.setdefault("servos_derrotados", []))
+        existentes = {
+            str(p.estado_extra.get("servo_uid") or ""): p
+            for p in self._pokemons_dungeon(dimensao)
+            if str(p.estado_extra.get("comportamento_mundo")) == "servo"
+        }
+        for item in list(layout.get("servos") or []):
+            if not isinstance(item, dict):
                 continue
-            vivos = [p for p in servos if str(p.estado_extra.get("sala_id") or "") == sala_id and not bool(p.estado_extra.get("despawnado", False))]
-            if len(vivos) >= max_sala:
+            uid = str(item.get("uid") or "")
+            if not uid or uid in existentes or uid in derrotados:
                 continue
-            if random.random() > rate:
+            sala = salas_por_id.get(str(item.get("sala_id") or ""))
+            if not isinstance(sala, dict):
                 continue
-            especie = random.choice(servos_pool)
             pos = self._posicao_spawn_sala(sala)
-            self._spawn_pokemon_dungeon(especie, pos, sala, layout, "servo", registrar_diff)
+            self._spawn_pokemon_dungeon(str(item.get("pokemon") or "Pokemon"), pos, sala, layout, "servo", registrar_diff, servo_info=item)
 
     def _atualizar_servos(self, layout, players, salas_por_id, registrar_diff):
         dimensao = str(layout.get("dimensao") or "")
-        chance_despawn = float(self._regras.get("servo_chance_despawn_por_tick", 0.002) or 0.002)
         velocidade = float(self._regras.get("servo_velocidade_tiles_s", 2.8) or 2.8)
         passo = velocidade / 30.0
         for poke in list(self._pokemons_dungeon(dimensao)):
@@ -248,8 +256,6 @@ class CerebroDungeons:
                 continue
             players_sala = [p for p in players if str((p.estado_extra.get("estado_dungeon") or {}).get("sala_id") or "") == sala_id]
             if not players_sala:
-                if random.random() < chance_despawn:
-                    self._despawn_pokemon_dungeon(poke, registrar_diff)
                 continue
             if bool(poke.estado_extra.get("em_batalha", False)):
                 continue
@@ -281,7 +287,7 @@ class CerebroDungeons:
             return
         self._perder_vida_player(player, "colisao_sem_pokemon", registrar_diff=registrar_diff)
 
-    def _spawn_pokemon_dungeon(self, especie, pos, sala, layout, tipo, registrar_diff):
+    def _spawn_pokemon_dungeon(self, especie, pos, sala, layout, tipo, registrar_diff, servo_info=None):
         x, y = self._clamp_sala(sala, float(pos[0]), float(pos[1]), margem=0.8)
         novo_id = BANCO_DADOS.gerar_id()
         poke = gerar_pokemon_server(novo_id=novo_id, posicao=(x, y), chunk_xy=BANCO_DADOS.chunk_da_posicao((x, y)), especie=especie)
@@ -307,6 +313,15 @@ class CerebroDungeons:
                 "esta_irritado": False,
             }
         )
+        if tipo == "servo" and isinstance(servo_info, dict):
+            poke.estado_extra.update(
+                {
+                    "servo_uid": str(servo_info.get("uid") or ""),
+                    "possui_chave_dungeon": bool(servo_info.get("possui_chave", False)),
+                    "chave_id": str(servo_info.get("chave_id") or ""),
+                    "drop_item": "ChaveDungeon" if bool(servo_info.get("possui_chave", False)) else "",
+                }
+            )
         if tipo == "boss":
             stats = poke.estado_extra.get("stats") if isinstance(poke.estado_extra.get("stats"), dict) else {}
             vida_max = float(stats.get("Vida", 1.0) or 1.0)
@@ -332,6 +347,63 @@ class CerebroDungeons:
         self._cerebro._pokemons_ids.discard(int(poke.Id))
         registrar_diff("despawn", payload=snapshot, escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 100}, objeto_id=poke.Id, autor="server", categoria="pokemon")
 
+    def _remover_servos_dimensao(self, dimensao: str):
+        for poke in list(self._pokemons_dungeon(str(dimensao))):
+            if str(poke.estado_extra.get("comportamento_mundo") or "") != "servo":
+                continue
+            BANCO_DADOS.remover_objeto(poke.Id)
+            self._cerebro._pokemons_ids.discard(int(poke.Id))
+
+    def registrar_pokemon_derrotado(self, pokemon_id: int, client_id: str, registrar_diff=None):
+        poke = BANCO_DADOS.obter_objeto(int(pokemon_id or 0))
+        if not isinstance(poke, PokemonServer):
+            return False
+        estado = poke.estado_extra if isinstance(poke.estado_extra, dict) else {}
+        if str(estado.get("comportamento_mundo") or "") == "boss" or bool(estado.get("boss", False)):
+            estado.pop("em_batalha", None)
+            estado.pop("batalha_client_id", None)
+            BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": estado})
+            if callable(registrar_diff):
+                registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120}, objeto_id=int(poke.Id), autor="server", categoria="pokemon")
+            return True
+        if str(estado.get("comportamento_mundo") or "") != "servo":
+            return False
+        dimensao = str(estado.get("dimensao") or "")
+        layout = self._layouts.get(dimensao) if isinstance(self._layouts.get(dimensao), dict) else {}
+        uid = str(estado.get("servo_uid") or "")
+        if uid:
+            derrotados = layout.setdefault("servos_derrotados", []) if isinstance(layout, dict) else []
+            if isinstance(derrotados, list) and uid not in derrotados:
+                derrotados.append(uid)
+        if bool(estado.get("possui_chave_dungeon", False)):
+            self._dropar_chave_dungeon(poke, registrar_diff)
+        self._despawn_pokemon_dungeon(poke, registrar_diff)
+        return True
+
+    def _dropar_chave_dungeon(self, poke, registrar_diff):
+        item = self._cerebro._servico_inventario.normalizar_item({"Code": "ChaveDungeon", "Nome": "ChaveDungeon", "quantidade": 1})
+        novo_id = BANCO_DADOS.gerar_id()
+        pos = [float(poke.posicao[0]), float(poke.posicao[1])]
+        obj = ItemMundoServer(
+            id_objeto=novo_id,
+            posicao=(pos[0], pos[1]),
+            dono_id=0,
+            item_nome=str(item.get("Nome") or "ChaveDungeon"),
+            item_base_id=str(item.get("Code") or "ChaveDungeon"),
+            quantidade=1,
+            pos_inicial=(pos[0], pos[1]),
+            pos_final=(pos[0], pos[1]),
+            velocidade=0.0,
+            tick_spawn=int(getattr(self._cerebro, "_tick_contador", 0)),
+            item_dados=item,
+        )
+        obj.estado_extra["dimensao"] = str(poke.estado_extra.get("dimensao") or "")
+        BANCO_DADOS.inserir_objeto(obj)
+        self._cerebro._itens_mundo_ids.add(int(obj.Id))
+        if callable(registrar_diff):
+            registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": pos, "raio": 120}, objeto_id=int(obj.Id), autor="server", categoria="item_mundo")
+        return True
+
     def _posicao_spawn_sala(self, sala):
         x, y, w, h = retangulo_sala_em_tiles(sala.get("posicao_sala", [0, 0]))
         return [random.uniform(x + 3.0, x + max(3.0, w - 3.0)), random.uniform(y + 3.0, y + max(3.0, h - 3.0))]
@@ -340,6 +412,111 @@ class CerebroDungeons:
     def _clamp_sala(sala, x, y, margem=0.5):
         sx, sy, w, h = retangulo_sala_em_tiles(sala.get("posicao_sala", [0, 0]))
         return (max(sx + margem, min(sx + w - margem, float(x))), max(sy + margem, min(sy + h - margem, float(y))))
+
+    def destrancar_porta(self, client_id: str, porta_id: str, registrar_diff=None) -> bool:
+        obj_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
+        player = BANCO_DADOS.obter_objeto(obj_id)
+        if not isinstance(player, AtorServer) or not eh_dimensao_dungeon(player.estado_extra.get("dimensao")):
+            return False
+        estado_dungeon = player.estado_extra.get("estado_dungeon") if isinstance(player.estado_extra.get("estado_dungeon"), dict) else {}
+        layout = self._layouts.get(str(player.estado_extra.get("dimensao") or "")) if isinstance(self._layouts.get(str(player.estado_extra.get("dimensao") or "")), dict) else {}
+        if not layout:
+            return False
+        porta = self._buscar_porta(layout, str(porta_id or ""))
+        if not isinstance(porta, dict) or not bool(porta.get("trancada", False)):
+            return False
+        if not self._player_perto_porta(player, porta, layout):
+            return False
+        if not self._chave_na_mao(player):
+            return False
+        inv = player.estado_extra.get("inventario") if isinstance(player.estado_extra.get("inventario"), dict) else {}
+        serv = ServicoInventario()
+        if not serv.consumir_um(inv, "ChaveDungeon", "ChaveDungeon"):
+            return False
+        estado_dungeon.setdefault("portas_destrancadas", [])
+        if isinstance(estado_dungeon["portas_destrancadas"], list) and porta["id"] not in estado_dungeon["portas_destrancadas"]:
+            estado_dungeon["portas_destrancadas"].append(porta["id"])
+        player.estado_extra["inventario"] = inv
+        self._abrir_porta_layout(layout, porta)
+        BANCO_DADOS.atualizar_objeto(player.Id, {"estado": player.estado_extra})
+        if callable(registrar_diff):
+            registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=int(player.Id), autor="server", categoria="player")
+        serv.persistir_jogador(str(player.estado_extra.get("usuario") or client_id), int(player.Id), inv, registrar_diff if callable(registrar_diff) else (lambda *a, **k: None))
+        return True
+
+    @staticmethod
+    def _buscar_porta(layout: dict, porta_id: str):
+        for sala in layout.get("salas", []) if isinstance(layout.get("salas"), list) else []:
+            for info in list(sala.get("portas_info") or []):
+                if str(info.get("id") or "") == str(porta_id or ""):
+                    return {"sala": sala, **dict(info)}
+        return None
+
+    @staticmethod
+    def _porta_centro_tiles(sala: dict, direcao: str):
+        x, y, w, h = retangulo_sala_em_tiles(sala.get("posicao_sala", [0, 0]))
+        if direcao == "N":
+            return [x + w / 2.0, y]
+        if direcao == "S":
+            return [x + w / 2.0, y + h - 1]
+        if direcao == "L":
+            return [x + w - 1, y + h / 2.0]
+        return [x, y + h / 2.0]
+
+    def _player_perto_porta(self, player, porta: dict, layout: dict) -> bool:
+        centro = self._porta_centro_tiles(porta.get("sala", {}), str(porta.get("direcao") or ""))
+        dx = float(player.posicao[0]) - float(centro[0])
+        dy = float(player.posicao[1]) - float(centro[1])
+        return (dx * dx + dy * dy) <= float(self._regras.get("raio_interacao_porta", 2.0) or 2.0) ** 2
+
+    @staticmethod
+    def _chave_na_mao(player) -> bool:
+        inv = player.estado_extra.get("inventario") if isinstance(player.estado_extra.get("inventario"), dict) else {}
+        itens = list(inv.get("itens") or [])
+        idx = int(inv.get("slot_selecionado", player.estado_extra.get("slot_selecionado", 0)) or 0)
+        item = itens[idx] if 0 <= idx < len(itens) else None
+        if not isinstance(item, dict):
+            return False
+        return str(item.get("Code") or "").strip().lower() == "chavedungeon" or str(item.get("Nome") or "").strip().lower() == "chavedungeon"
+
+    def _abrir_porta_layout(self, layout: dict, porta: dict) -> None:
+        pid = str(porta.get("id") or "")
+        tile_chao = int(self._regras.get("tile_chao_dungeon", 8) or 8)
+        for sala in layout.get("salas", []) if isinstance(layout.get("salas"), list) else []:
+            novas = []
+            for info in list(sala.get("portas_info") or []):
+                item = dict(info)
+                if str(item.get("id") or "") == pid:
+                    item["trancada"] = False
+                    d = str(item.get("direcao") or "")
+                    if d in list(sala.get("portas_bloqueadas") or []):
+                        sala["portas_bloqueadas"] = [p for p in list(sala.get("portas_bloqueadas") or []) if str(p) != d]
+                novas.append(item)
+            sala["portas_info"] = novas
+        for item in list(layout.get("portas_trancadas") or []):
+            if str(item.get("id") or "") == pid:
+                item["trancada"] = False
+        grid = layout.get("grid_tiles") if isinstance(layout.get("grid_tiles"), list) else []
+        sala = porta.get("sala") if isinstance(porta.get("sala"), dict) else {}
+        pos = sala.get("posicao_sala") if isinstance(sala.get("posicao_sala"), (list, tuple)) else [0, 0]
+        self._marcar_porta_grid_runtime(grid, pos, str(porta.get("direcao") or ""), tile_chao)
+
+    def _marcar_porta_grid_runtime(self, grid, pos, direcao, tile):
+        porta_w = max(1, int(self._regras.get("porta_largura_tiles", 4) or 4))
+        x0 = int(pos[0]) * LARGURA_BLOCO_SALA_TILES
+        y0 = int(pos[1]) * ALTURA_BLOCO_SALA_TILES
+        cx = x0 + (LARGURA_BLOCO_SALA_TILES // 2)
+        cy = y0 + (ALTURA_BLOCO_SALA_TILES // 2)
+        meio = porta_w // 2
+        if direcao in {"N", "S"}:
+            y = y0 if direcao == "N" else y0 + ALTURA_BLOCO_SALA_TILES - 1
+            pontos = [(x, y) for x in range(cx - meio, cx - meio + porta_w)]
+        else:
+            x = x0 + LARGURA_BLOCO_SALA_TILES - 1 if direcao == "L" else x0
+            pontos = [(x, y) for y in range(cy - meio, cy - meio + porta_w)]
+        for x, y in pontos:
+            if 0 <= y < len(grid) and isinstance(grid[y], list) and 0 <= x < len(grid[y]):
+                grid[y][x] = int(tile)
 
     def _perder_vida_player(self, player, motivo, registrar_diff=None, forcar=False):
         estado = player.estado_extra.get("estado_dungeon")

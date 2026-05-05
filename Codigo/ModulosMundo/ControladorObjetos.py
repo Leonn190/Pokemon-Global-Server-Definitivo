@@ -1073,8 +1073,34 @@ class ControladorObjetos:
 
         if dim.startswith("Dungeon_"):
             estado_dungeon = estado_p.get("estado_dungeon") if isinstance(estado_p.get("estado_dungeon"), dict) else {}
+            destrancadas = {str(p) for p in list(estado_dungeon.get("portas_destrancadas") or [])}
             porta_idx = int(estado_dungeon.get("porta_idx", 1) or 1)
             layout = self.LayoutDungeonAtual if isinstance(self.LayoutDungeonAtual, dict) else {}
+            bloco_w = int(layout.get("largura_bloco_sala_tiles", layout.get("tamanho_bloco_sala_tiles", 32)) or 32)
+            bloco_h = int(layout.get("altura_bloco_sala_tiles", layout.get("tamanho_bloco_sala_tiles", 24)) or 24)
+            for sala in layout.get("salas", []) if isinstance(layout.get("salas"), list) else []:
+                if not isinstance(sala, dict):
+                    continue
+                pos_s = sala.get("posicao_sala") if isinstance(sala.get("posicao_sala"), (list, tuple)) else None
+                if not pos_s:
+                    continue
+                for porta in list(sala.get("portas_info") or []):
+                    if not bool(porta.get("trancada", False)) or str(porta.get("id") or "") in destrancadas:
+                        continue
+                    direcao = str(porta.get("direcao") or "")
+                    cx = float(pos_s[0]) * bloco_w + bloco_w * 0.5
+                    cy = float(pos_s[1]) * bloco_h + bloco_h * 0.5
+                    if direcao == "N":
+                        cy = float(pos_s[1]) * bloco_h
+                    elif direcao == "S":
+                        cy = (float(pos_s[1]) + 1.0) * bloco_h - 1.0
+                    elif direcao == "L":
+                        cx = (float(pos_s[0]) + 1.0) * bloco_w - 1.0
+                    elif direcao == "O":
+                        cx = float(pos_s[0]) * bloco_w
+                    d2 = (cx - px) ** 2 + (cy - py) ** 2
+                    if d2 <= (2.0 * 2.0):
+                        candidatos.append((d2, {"tipo": "dungeon_porta_trancada", "porta_id": str(porta.get("id") or ""), "posicao": [cx, cy]}))
             entradas = layout.get("entradas") if isinstance(layout.get("entradas"), list) else []
             entrada = next((e for e in entradas if int(e.get("porta_idx", 0) or 0) == porta_idx), None)
             saida = entrada.get("saida") if isinstance(entrada, dict) else None
@@ -1147,6 +1173,8 @@ class ControladorObjetos:
             return "Pressione F para entrar na dungeon"
         if tipo == "dungeon_saida":
             return "Pressione F para sair da dungeon"
+        if tipo == "dungeon_porta_trancada":
+            return "Pressione F com ChaveDungeon na mão"
         return "Pressione F para interagir"
 
     def _estruturas_interagiveis_por_dimensao(self, dim: str):

@@ -1,12 +1,47 @@
 {
-  "salas": {
-    "entrada": {
-      "id": "entrada",
+  "catalogo_versao": "v1",
+  "salas": [
+    {
+      "id": 1,
       "nome": "Sala de Entrada",
-      "largura_blocos": 1,
-      "altura_blocos": 1,
       "tipo": "entrada",
-      "descricao": "Sala inicial isolada da dungeon. Possui apenas a porta de saída para o mundo."
+      "chance": 0.0,
+      "dificuldade": 0
+    },
+    {
+      "id": 2,
+      "nome": "Sala Comum",
+      "tipo": "comum",
+      "chance": 1.0,
+      "dificuldade": 1
+    },
+    {
+      "id": 3,
+      "nome": "Sala Pacifica",
+      "tipo": "pacifica",
+      "chance": 0.28,
+      "dificuldade": 0
+    },
+    {
+      "id": 4,
+      "nome": "Sala Dificil",
+      "tipo": "dificil",
+      "chance": 0.35,
+      "dificuldade": 3
+    },
+    {
+      "id": 5,
+      "nome": "Sala Piscina",
+      "tipo": "piscina",
+      "chance": 0.18,
+      "dificuldade": 1
+    },
+    {
+      "id": 6,
+      "nome": "Sala de Boss",
+      "tipo": "boss",
+      "chance": 0.0,
+      "dificuldade": 0
     }
-  }
+  ]
 }

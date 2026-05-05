@@ -441,9 +441,25 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
                 layout_dungeon = CEREBRO._cerebro_dungeons._layouts.get(dimensao)
                 if layout_dungeon is None and obj_player is not None:
                     estado_dungeon = getattr(obj_player, "estado_extra", {}).get("estado_dungeon", {}) if isinstance(getattr(obj_player, "estado_extra", {}), dict) else {}
-                    code = str(estado_dungeon.get("dungeon_code") or "").strip()
+                    code = str(estado_dungeon.get("dungeon_code") or str(dimensao).removeprefix("Dungeon_")).strip()
                     if code:
                         layout_dungeon = CEREBRO._cerebro_dungeons.obter_ou_gerar(code, int(estado_dungeon.get("porta_idx", 1) or 1), int(estado_dungeon.get("pedra_id", 0) or 0))
+                        if isinstance(layout_dungeon, dict) and ((not isinstance(estado_dungeon, dict)) or not estado_dungeon):
+                            estado_player = getattr(obj_player, "estado_extra", {}) if isinstance(getattr(obj_player, "estado_extra", {}), dict) else {}
+                            entrada = (layout_dungeon.get("entradas") or [{}])[0]
+                            estado_player["estado_dungeon"] = {
+                                "dungeon_code": str(code),
+                                "porta_idx": int(entrada.get("porta_idx", 1) or 1),
+                                "pedra_id": int(entrada.get("pedra_id", 0) or 0),
+                                "coracoes": int(CEREBRO._cerebro_dungeons._regras.get("coracoes_iniciais", 3)),
+                                "coracoes_max": int(CEREBRO._cerebro_dungeons._regras.get("coracoes_maximos", 3)),
+                                "entrada_mundo": list(estado_player.get("ultima_pos_mundo") or [0.0, 0.0]),
+                                "dimensao": str(dimensao),
+                                "invulneravel_dungeon_ate_tick": 0,
+                                "portas_destrancadas": [],
+                                "salas_exploradas": [str(entrada.get("sala_id") or "")],
+                            }
+                            BANCO_DADOS.atualizar_objeto(obj_player.Id, {"estado": estado_player})
             for chunk in sorted(chunks_carregados):
                 if _eh_dimensao_estadio(dimensao):
                     grid = _grid_neutra_estadio()

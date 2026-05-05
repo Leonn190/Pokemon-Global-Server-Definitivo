@@ -24,8 +24,7 @@ from SimuladorServerJogo.Mundo.DungeonGeometria import (
 
 
 _RAIZ = Path(__file__).resolve().parents[3]
-_CATALOGO_PATH = _RAIZ / "Dados" / "Catalogos" / "Dungeon.json"
-_CATALOGO_LEGADO_PATH = _RAIZ / "Dados" / "Catalogo" / "Dungeon.json"
+_CATALOGO_PATH = _RAIZ / "Dados" / "Catalogo" / "Dungeon.json"
 _REGRAS = carregar_regras_dungeons()
 
 _DIRECOES = {
@@ -34,18 +33,19 @@ _DIRECOES = {
     "L": (1, 0),
     "O": (-1, 0),
 }
+_OPOSTA = {"N": "S", "S": "N", "L": "O", "O": "L"}
 
 
 def _catalogo_default() -> dict:
     return {
         "catalogo_versao": "v1",
         "salas": [
-            {"id": 1, "nome": "Entrada", "tipo": "entrada", "servo_rate": 0.0, "servo_max": 0, "bau_rate": 0.0},
-            {"id": 2, "nome": "Sala Comum", "tipo": "comum", "servo_rate": 0.004, "servo_max": 1, "bau_rate": 0.0},
-            {"id": 3, "nome": "Sala Pacifica", "tipo": "pacifica", "servo_rate": 0.0, "servo_max": 0, "bau_rate": 0.0},
-            {"id": 4, "nome": "Sala Dificil", "tipo": "dificil", "servo_rate": 0.012, "servo_max": 2, "bau_rate": 0.0},
-            {"id": 5, "nome": "Sala Piscina", "tipo": "piscina", "servo_rate": 0.003, "servo_max": 1, "bau_rate": 0.0},
-            {"id": 6, "nome": "Sala de Boss", "tipo": "boss", "servo_rate": 0.0, "servo_max": 0, "bau_rate": 0.0},
+            {"id": 1, "nome": "Entrada", "tipo": "entrada", "chance": 0.0, "dificuldade": 0},
+            {"id": 2, "nome": "Sala Comum", "tipo": "comum", "chance": 1.0, "dificuldade": 1},
+            {"id": 3, "nome": "Sala Pacifica", "tipo": "pacifica", "chance": 0.28, "dificuldade": 0},
+            {"id": 4, "nome": "Sala Dificil", "tipo": "dificil", "chance": 0.35, "dificuldade": 3},
+            {"id": 5, "nome": "Sala Piscina", "tipo": "piscina", "chance": 0.18, "dificuldade": 1},
+            {"id": 6, "nome": "Sala de Boss", "tipo": "boss", "chance": 0.0, "dificuldade": 0},
         ],
     }
 
@@ -72,9 +72,8 @@ def _normalizar_catalogo(data: dict) -> dict:
                 "id": id_catalogo,
                 "nome": str(item.get("nome") or item.get("Nome") or tipo.title()),
                 "tipo": tipo,
-                "servo_rate": float(item.get("servo_rate", 0.0) or 0.0),
-                "servo_max": int(float(item.get("servo_max", 0) or 0)),
-                "bau_rate": float(item.get("bau_rate", 0.0) or 0.0),
+                "chance": float(item.get("chance", 0.0) or 0.0),
+                "dificuldade": int(float(item.get("dificuldade", 0) or 0)),
             }
         )
     if not salas:
@@ -87,12 +86,11 @@ def _normalizar_catalogo(data: dict) -> dict:
 
 
 def carregar_catalogo_dungeons() -> dict:
-    for path in (_CATALOGO_PATH, _CATALOGO_LEGADO_PATH):
-        try:
-            if path.exists():
-                return _normalizar_catalogo(json.loads(path.read_text(encoding="utf-8")))
-        except Exception as exc:
-            print(f"[Dungeons] Catalogo invalido em {path}: {exc}")
+    try:
+        if _CATALOGO_PATH.exists():
+            return _normalizar_catalogo(json.loads(_CATALOGO_PATH.read_text(encoding="utf-8")))
+    except Exception as exc:
+        print(f"[Dungeons] Catalogo invalido em {_CATALOGO_PATH}: {exc}")
     return _catalogo_default()
 
 
@@ -217,8 +215,6 @@ def _slug(nome: str) -> str:
 
 def _criar_sala(pos: tuple[int, int], catalogo: dict, tipo: str, id_str: str, id_num: int, nome: str | None = None, pokemon_boss: str = "") -> dict:
     cfg = dict(catalogo.get(tipo) or catalogo.get("comum") or {})
-    if tipo == "boss":
-        cfg.update({"servo_rate": 0.0, "servo_max": 0, "bau_rate": 0.0})
     return {
         "id": id_str,
         "id_numerico": int(id_num),
@@ -228,41 +224,188 @@ def _criar_sala(pos: tuple[int, int], catalogo: dict, tipo: str, id_str: str, id
         "posicao_sala": [int(pos[0]), int(pos[1])],
         "largura_blocos": 1,
         "altura_blocos": 1,
-        "servo_rate": float(cfg.get("servo_rate", 0.0) or 0.0),
-        "servo_max": int(cfg.get("servo_max", 0) or 0),
-        "bau_rate": float(cfg.get("bau_rate", 0.0) or 0.0),
+        "chance": float(cfg.get("chance", 0.0) or 0.0),
+        "dificuldade_sala": int(cfg.get("dificuldade", 0) or 0),
         "portas": [],
         "portas_bloqueadas": [],
+        "portas_info": [],
+        "chaves_da_sala": 0,
+        "chaves_ids": [],
+        "servos": [],
         **({"pokemon_boss": str(pokemon_boss)} if pokemon_boss else {}),
     }
 
 
-def _tipo_sala_comum(rng: random.Random) -> str:
-    return rng.choices(["comum", "pacifica", "dificil", "piscina"], weights=[62, 14, 16, 8], k=1)[0]
+def _dificuldade_num(valor) -> int:
+    mapa = {"facil": 1, "fácil": 1, "media": 2, "média": 2, "normal": 2, "dificil": 4, "difícil": 4, "lendaria": 6, "lendária": 6}
+    txt = str(valor or "").strip().lower()
+    if txt in mapa:
+        return mapa[txt]
+    try:
+        return int(float(txt))
+    except (TypeError, ValueError):
+        return 2
 
 
-def _adicionar_caminho(ocupadas: dict, origem: tuple[int, int], destino: tuple[int, int], rng: random.Random, catalogo: dict, proximo_id: list[int], sala_final: dict | None = None) -> None:
+def _tipo_sala_comum(rng: random.Random, catalogo: dict | None = None, dificuldade=2) -> str:
+    base = catalogo or {}
+    dif = max(1, min(6, _dificuldade_num(dificuldade)))
+    pesos = {}
+    for tipo in ("comum", "pacifica", "dificil", "piscina"):
+        cfg = base.get(tipo, {}) if isinstance(base.get(tipo, {}), dict) else {}
+        peso = float(cfg.get("chance", 1.0) or 0.0)
+        alvo = int(cfg.get("dificuldade", 1) or 1)
+        if tipo == "dificil":
+            peso *= 0.55 + (dif * 0.35)
+        elif tipo == "pacifica":
+            peso *= max(0.15, 1.35 - (dif * 0.18))
+        else:
+            peso *= max(0.35, 1.10 - abs(dif - alvo) * 0.08)
+        pesos[tipo] = max(0.0, peso)
+    tipos = [t for t, p in pesos.items() if p > 0.0] or ["comum"]
+    return rng.choices(tipos, weights=[pesos.get(t, 1.0) for t in tipos], k=1)[0]
+
+
+def _adicionar_caminho(ocupadas: dict, origem: tuple[int, int], destino: tuple[int, int], rng: random.Random, catalogo: dict, proximo_id: list[int], sala_final: dict | None = None, dificuldade=2) -> None:
     for pos in _caminho_manhattan(origem, destino, rng):
         if pos in ocupadas:
             continue
         if sala_final is not None and pos == destino:
             ocupadas[pos] = sala_final
         else:
-            tipo = _tipo_sala_comum(rng)
+            tipo = _tipo_sala_comum(rng, catalogo, dificuldade)
             ocupadas[pos] = _criar_sala(pos, catalogo, tipo, f"sala_{pos[0]}_{pos[1]}", proximo_id[0])
             proximo_id[0] += 1
     if destino not in ocupadas and sala_final is not None:
         ocupadas[destino] = sala_final
 
 
-def _portas_por_sala(ocupadas: dict) -> None:
+def _dir_entre(a: tuple[int, int], b: tuple[int, int]) -> str:
+    dx, dy = int(b[0] - a[0]), int(b[1] - a[1])
+    for nome, delta in _DIRECOES.items():
+        if delta == (dx, dy):
+            return nome
+    return ""
+
+
+def _edge(a: tuple[int, int], b: tuple[int, int]):
+    return tuple(sorted((tuple(a), tuple(b))))
+
+
+def _arvore_conexoes(ocupadas: dict, entradas_pos: list[tuple[int, int]], rng: random.Random) -> tuple[set, dict, list]:
+    if not ocupadas:
+        return set(), {}, []
+    inicio = next((p for p in entradas_pos if p in ocupadas), next(iter(ocupadas)))
+    visitados = {inicio}
+    pais = {}
+    ordem = [inicio]
+    conexoes = set()
+    fronteira = [inicio]
+    while fronteira:
+        atual = fronteira.pop()
+        vizinhos = [v for v in _vizinhos(atual, 9999, 9999) if v in ocupadas]
+        rng.shuffle(vizinhos)
+        for viz in vizinhos:
+            if viz in visitados:
+                continue
+            visitados.add(viz)
+            pais[viz] = atual
+            ordem.append(viz)
+            conexoes.add(_edge(atual, viz))
+            fronteira.append(viz)
+    for pos in list(ocupadas):
+        if pos in visitados:
+            continue
+        alvo = min(visitados, key=lambda p: abs(p[0] - pos[0]) + abs(p[1] - pos[1]))
+        pais[pos] = alvo
+        ordem.append(pos)
+        conexoes.add(_edge(alvo, pos))
+        visitados.add(pos)
+    return conexoes, pais, ordem
+
+
+def _porta_id(a: tuple[int, int], b: tuple[int, int]) -> str:
+    p0, p1 = sorted((tuple(a), tuple(b)))
+    return f"porta_{int(p0[0])}_{int(p0[1])}_{int(p1[0])}_{int(p1[1])}"
+
+
+def _elegivel_chave(sala: dict) -> bool:
+    return str(sala.get("tipo") or "") in {"comum", "dificil", "piscina"} and int(sala.get("chaves_da_sala", 0) or 0) < int(_REGRAS.get("chaves_por_sala_max", 2) or 2)
+
+
+def _gerar_conexoes_e_portas(ocupadas: dict, entradas_pos: list[tuple[int, int]], rng: random.Random) -> None:
     for pos, sala in ocupadas.items():
-        portas = []
-        for nome, (dx, dy) in _DIRECOES.items():
-            if (pos[0] + dx, pos[1] + dy) in ocupadas:
-                portas.append(nome)
-        sala["portas"] = portas
+        sala["portas"] = []
         sala["portas_bloqueadas"] = []
+        sala["portas_info"] = []
+        sala["chaves_da_sala"] = 0
+        sala["chaves_ids"] = []
+
+    conexoes, pais, ordem = _arvore_conexoes(ocupadas, entradas_pos, rng)
+    chance_extra = float(_REGRAS.get("chance_porta_extra", 0.18) or 0.18)
+    for pos in list(ocupadas):
+        for nome, (dx, dy) in _DIRECOES.items():
+            viz = (pos[0] + dx, pos[1] + dy)
+            if viz not in ocupadas or _edge(pos, viz) in conexoes:
+                continue
+            if str(ocupadas[pos].get("tipo")) == "boss" or str(ocupadas[viz].get("tipo")) == "boss":
+                continue
+            if rng.random() < chance_extra:
+                conexoes.add(_edge(pos, viz))
+
+    trancadas = set()
+    visitadas_antes = set()
+    for pos in ordem:
+        pai = pais.get(pos)
+        sala = ocupadas.get(pos, {})
+        if pai is not None:
+            tipo = str(sala.get("tipo") or "")
+            chance_lock = float(_REGRAS.get("chance_porta_boss_trancada" if tipo == "boss" else "chance_porta_trancada", 0.24) or 0.24)
+            candidatos_chave = [p for p in visitadas_antes if _elegivel_chave(ocupadas.get(p, {}))]
+            if candidatos_chave and rng.random() < chance_lock:
+                edge = _edge(pai, pos)
+                trancadas.add(edge)
+                sala_key_pos = rng.choice(candidatos_chave)
+                sala_key = ocupadas[sala_key_pos]
+                chave_id = f"chave_{_porta_id(pai, pos)}"
+                sala_key["chaves_da_sala"] = int(sala_key.get("chaves_da_sala", 0) or 0) + 1
+                sala_key.setdefault("chaves_ids", []).append(chave_id)
+        visitadas_antes.add(pos)
+
+    for a, b in sorted(conexoes):
+        for origem, destino in ((a, b), (b, a)):
+            sala = ocupadas.get(origem)
+            if not isinstance(sala, dict):
+                continue
+            direcao = _dir_entre(origem, destino)
+            if not direcao:
+                continue
+            pid = _porta_id(origem, destino)
+            bloqueada = _edge(origem, destino) in trancadas
+            if direcao not in sala["portas"]:
+                sala["portas"].append(direcao)
+            if bloqueada and direcao not in sala["portas_bloqueadas"]:
+                sala["portas_bloqueadas"].append(direcao)
+            sala["portas_info"].append({"id": pid, "direcao": direcao, "destino_sala_id": ocupadas[destino].get("id"), "trancada": bool(bloqueada)})
+
+
+def _marcar_porta_grid(grid: list[list[int]], pos: tuple[int, int], direcao: str, tile: int) -> None:
+    porta_w = max(1, int(_REGRAS.get("porta_largura_tiles", 4) or 4))
+    x0 = int(pos[0]) * LARGURA_BLOCO_SALA_TILES
+    y0 = int(pos[1]) * ALTURA_BLOCO_SALA_TILES
+    cx = x0 + (LARGURA_BLOCO_SALA_TILES // 2)
+    cy = y0 + (ALTURA_BLOCO_SALA_TILES // 2)
+    meio = porta_w // 2
+    pontos = []
+    if direcao in {"N", "S"}:
+        y = y0 if direcao == "N" else y0 + ALTURA_BLOCO_SALA_TILES - 1
+        pontos = [(x, y) for x in range(cx - meio, cx - meio + porta_w)]
+    elif direcao in {"L", "O"}:
+        x = x0 + LARGURA_BLOCO_SALA_TILES - 1 if direcao == "L" else x0
+        pontos = [(x, y) for y in range(cy - meio, cy - meio + porta_w)]
+    for x, y in pontos:
+        if 0 <= y < len(grid) and 0 <= x < len(grid[y]):
+            grid[y][x] = int(tile)
 
 
 def _grid_tiles(ocupadas: dict, largura: int, altura: int) -> list[list[int]]:
@@ -283,7 +426,40 @@ def _grid_tiles(ocupadas: dict, largura: int, altura: int) -> list[list[int]]:
             for y in range(y0 + margem_y, y0 + ALTURA_BLOCO_SALA_TILES - margem_y):
                 for x in range(x0 + margem_x, x0 + LARGURA_BLOCO_SALA_TILES - margem_x):
                     grid[y][x] = tile_agua
+    for pos, sala in ocupadas.items():
+        for info in list(sala.get("portas_info") or []):
+            if bool(info.get("trancada", False)):
+                _marcar_porta_grid(grid, pos, str(info.get("direcao") or ""), 0)
+            else:
+                _marcar_porta_grid(grid, pos, str(info.get("direcao") or ""), tile_chao)
     return grid
+
+
+def _gerar_servos_salas(ocupadas: dict, servos_pool: list[str], rng: random.Random) -> list[dict]:
+    pool = [str(p).strip() for p in servos_pool if str(p).strip()] or ["Pokemon"]
+    todos = []
+    for sala in sorted(ocupadas.values(), key=lambda s: int(s.get("id_numerico", 0) or 0)):
+        tipo = str(sala.get("tipo") or "")
+        if tipo == "dificil":
+            mn = int(_REGRAS.get("servo_dificil_min", 2) or 2)
+            mx = int(_REGRAS.get("servo_dificil_max", 4) or 4)
+        elif tipo in {"comum", "piscina"}:
+            mn = int(_REGRAS.get("servo_comum_min", 0) or 0)
+            mx = int(_REGRAS.get("servo_comum_max", 2) or 2)
+        else:
+            sala["servos"] = []
+            continue
+        chaves = list(sala.get("chaves_ids") or [])
+        qtd = max(len(chaves), rng.randint(max(0, mn), max(max(0, mn), mx)))
+        servos = []
+        for i in range(qtd):
+            uid = f"servo_{sala.get('id')}_{i+1}"
+            chave_id = chaves[i] if i < len(chaves) else ""
+            item = {"pokemon": rng.choice(pool), "uid": uid, "possui_chave": bool(chave_id), "chave_id": chave_id}
+            servos.append(item)
+            todos.append({"sala_id": sala.get("id"), **item})
+        sala["servos"] = servos
+    return todos
 
 
 def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
@@ -292,6 +468,7 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
     largura = altura = tamanho_em_blocos(tamanho)
     nome = str(row.get("Nome") or dungeon_code)
     dificuldade = str(row.get("Dificuldade") or "")
+    dificuldade_num = _dificuldade_num(dificuldade or tamanho)
     bosses_nomes = _lista_csv(row.get("Pokemons"))
     servos_pool = _lista_csv(row.get("Servos"))
 
@@ -334,6 +511,11 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         ocupadas[pos] = sala
         entradas_out.append({"porta_idx": 1, "sala_id": sala["id"], "posicao_sala": [0, 0], "spawn": spawn_interno_entrada(pos), "saida": saida_sala_entrada(pos), "pedra_id": 0})
 
+    entradas_pos = [tuple(e["posicao_sala"]) for e in entradas_out]
+    for destino in entradas_pos[1:]:
+        origem = entradas_pos[0]
+        _adicionar_caminho(ocupadas, origem, destino, rng, catalogo, proximo_id, dificuldade=dificuldade_num)
+
     for boss in bosses_nomes:
         candidatos = [(x, y) for y in range(altura) for x in range(largura) if (x, y) not in ocupadas]
         if not candidatos:
@@ -344,7 +526,7 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         origem = min(ocupadas.keys(), key=lambda p: abs(p[0] - alvo[0]) + abs(p[1] - alvo[1]))
         sala_boss = _criar_sala(alvo, catalogo, "boss", f"boss_{_slug(boss)}", proximo_id[0], f"Sala de Boss - {boss}", boss)
         proximo_id[0] += 1
-        _adicionar_caminho(ocupadas, origem, alvo, rng, catalogo, proximo_id, sala_final=sala_boss)
+        _adicionar_caminho(ocupadas, origem, alvo, rng, catalogo, proximo_id, sala_final=sala_boss, dificuldade=dificuldade_num)
 
     alvo_total = min(largura * altura, max(len(ocupadas), int(round(largura * altura * rng.uniform(0.40, 0.58)))))
     tentativas = 0
@@ -355,11 +537,12 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         if not livres:
             continue
         pos = rng.choice(livres)
-        tipo = _tipo_sala_comum(rng)
+        tipo = _tipo_sala_comum(rng, catalogo, dificuldade_num)
         ocupadas[pos] = _criar_sala(pos, catalogo, tipo, f"sala_{pos[0]}_{pos[1]}", proximo_id[0])
         proximo_id[0] += 1
 
-    _portas_por_sala(ocupadas)
+    _gerar_conexoes_e_portas(ocupadas, [tuple(e["posicao_sala"]) for e in entradas_out], rng)
+    servos_layout = _gerar_servos_salas(ocupadas, servos_pool, rng)
 
     grid_ids = [[0 for _ in range(largura)] for _ in range(altura)]
     grid_tipos = [["" for _ in range(largura)] for _ in range(altura)]
@@ -386,12 +569,25 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         "tamanho_bloco_sala_tiles": TAMANHO_BLOCO_SALA_TILES,
         "largura_bloco_sala_tiles": LARGURA_BLOCO_SALA_TILES,
         "altura_bloco_sala_tiles": ALTURA_BLOCO_SALA_TILES,
+        "porta_largura_tiles": int(_REGRAS.get("porta_largura_tiles", 4) or 4),
         "salas": salas,
         "entradas": entradas_out,
         "grid_salas_ids": grid_ids,
         "grid_salas_tipos": grid_tipos,
         "grid_tiles": _grid_tiles(ocupadas, largura, altura),
         "bosses": bosses,
+        "servos": servos_layout,
+        "portas_trancadas": [
+            {"sala_id": sala.get("id"), **info}
+            for sala in salas
+            for info in list(sala.get("portas_info") or [])
+            if bool(info.get("trancada", False))
+        ],
+        "chaves": [
+            {"sala_id": sala.get("id"), "chave_id": chave}
+            for sala in salas
+            for chave in list(sala.get("chaves_ids") or [])
+        ],
         "servos_pool": servos_pool,
         "catalogo_versao": str(catalogo_raw.get("catalogo_versao") or "v1"),
     }

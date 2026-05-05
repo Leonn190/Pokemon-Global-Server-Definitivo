@@ -55,6 +55,18 @@ def validar(code):
     assert entradas, "sem entradas"
     assert isinstance(grid_ids, list) and len(grid_ids) == altura and all(len(r) == largura for r in grid_ids), "grid_salas_ids com dimensoes incorretas"
     assert isinstance(grid_tiles, list) and len(grid_tiles) == altura * bloco_h and all(len(r) == largura * bloco_w for r in grid_tiles), "grid_tiles com dimensoes incorretas"
+    for sala in layout.get("salas") or []:
+        tipo = str(sala.get("tipo") or "")
+        servos = list(sala.get("servos") or [])
+        chaves = int(sala.get("chaves_da_sala", 0) or 0)
+        if tipo in {"entrada", "pacifica", "boss"}:
+            assert not servos and chaves == 0, f"sala {tipo} nao pode ter servo/chave"
+        if tipo == "comum":
+            assert 0 <= len(servos) <= 2, "sala comum fora da faixa 0..2 servos"
+        if tipo == "dificil":
+            assert 2 <= len(servos) <= 4, "sala dificil fora da faixa 2..4 servos"
+        assert sum(1 for s in servos if s.get("possui_chave")) == chaves, "quantidade de chaves nao bate com servos-chave"
+    assert len(layout.get("chaves") or []) >= len({p.get("id") for p in layout.get("portas_trancadas") or [] if p.get("trancada")}) or not layout.get("portas_trancadas"), "porta trancada sem chave gerada"
     _validar_conectividade(layout)
     print(f"Code {code}: {largura}x{altura} blocos, salas={len(layout.get('salas') or [])}, bosses={len(bosses_layout)}, entradas={len(entradas)}")
 

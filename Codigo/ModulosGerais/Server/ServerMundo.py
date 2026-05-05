@@ -215,6 +215,11 @@ def notificar_derrota_dungeon_batalha_mundo(ip, client_id, pokemon_id=0):
     return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
 
 
+def enviar_evento_porta_dungeon_mundo(ip, client_id, porta_id):
+    diff = {"tipo": "evento", "categoria": "interacao_dungeon", "payload": {"acao": "destrancar_porta", "porta_id": str(porta_id or "")}}
+    return enviar_diffs_mundo_categoria(ip, client_id, "rapida", [diff])
+
+
 def enviar_pacote_cliente_mundo(ip, client_id, ultimo_tick_recebido, diffs=None, tick_cliente=0, posicao_camera=(0.0, 0.0), raio_chunks=4):
     pacote = {
         "ip": ip,

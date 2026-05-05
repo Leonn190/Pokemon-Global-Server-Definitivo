@@ -1,0 +1,15 @@
+---
+const { tipo = "", chave = "", icone = "", ativo = false, ...atributos } = Astro.props;
+---
+<button
+  class:list={["tipo-chip", "tipo-chip-icone", { ativo }]}
+  type="button"
+  title={tipo}
+  aria-label={`Filtrar por ${tipo}`}
+  aria-pressed={ativo ? "true" : "false"}
+  {...atributos}
+>
+  <span class="tipo-icone-mini">
+    {icone ? <img src={icone} alt="" loading="eager" decoding="async" /> : null}
+  </span>
+</button>

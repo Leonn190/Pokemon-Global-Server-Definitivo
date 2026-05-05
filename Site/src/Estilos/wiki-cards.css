@@ -1,0 +1,61 @@
+/* Ajustes da wiki v5 - topo alinhado e estável */
+.pokedex-topo {
+  align-items: stretch;
+}
+.pokedex-topo .pokedex-resumo,
+.wiki-menu-topo {
+  min-height: 152px;
+}
+.pokedex-topo .pokedex-resumo article {
+  min-height: 152px;
+  display: grid;
+  align-content: center;
+  padding: 18px 16px;
+}
+.wiki-menu-topo {
+  align-self: stretch;
+  align-content: center;
+  gap: 4px 8px;
+  padding: 10px 14px;
+}
+.wiki-menu-topo a {
+  min-height: 29px;
+  padding: 5px 12px;
+  border-radius: 13px;
+}
+@media (max-width: 680px) {
+  .pokedex-topo .pokedex-resumo,
+  .wiki-menu-topo,
+  .pokedex-topo .pokedex-resumo article {
+    min-height: auto;
+  }
+}
+/* Wiki v6 - 9 seções, Ataques e Efeitos */
+.pokedex-topo {
+  grid-template-columns: minmax(0, 0.92fr) minmax(380px, 520px);
+}
+.pokedex-topo .pokedex-resumo {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.pokedex-topo .pokedex-resumo,
+.wiki-menu-topo {
+  min-height: 156px;
+}
+.pokedex-topo .pokedex-resumo article {
+  min-height: 156px;
+}
+.wiki-menu-topo {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: center;
+  gap: 7px;
+  padding: 12px;
+}
+.wiki-menu-topo a {
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 10px;
+  text-align: center;
+}
+.wiki-cards-nove {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}

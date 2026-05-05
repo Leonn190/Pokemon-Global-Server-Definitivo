@@ -21,12 +21,12 @@ function ativo(href) {
     <img src={icone} alt="Ícone Pokémon Global Server" />
     <span>Pokémon Global Server</span>
   </a>
-  <button class="menu-mobile" type="button" data-menu-mobile aria-label="Abrir menu">
+  <button class="menu-mobile" type="button" data-menu-mobile aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-principal">
     <span></span>
     <span></span>
     <span></span>
   </button>
-  <nav class="menu" data-menu>
+  <nav id="menu-principal" class="menu" data-menu>
     {links.map((link) => (
       <a
         href={rotaSite(link.href)}

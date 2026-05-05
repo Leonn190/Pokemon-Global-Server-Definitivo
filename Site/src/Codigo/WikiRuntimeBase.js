@@ -55,6 +55,96 @@ export function ordenarComDirecao(lista, ordenadores, sort, direcao, ordenadorPa
     return direcao === "desc" ? -final : final;
   });
 }
+function iniciarAcessibilidadeModaisWiki() {
+  if (typeof window === "undefined" || typeof document === "undefined" || window.__PGS_MODAL_A11Y) return;
+  window.__PGS_MODAL_A11Y = true;
+  const seletorFoco = [
+    "a[href]",
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "[tabindex]:not([tabindex='-1'])",
+  ].join(",");
+  const focoAnterior = new WeakMap();
+
+  function containerDoDialog(dialog) {
+    return dialog?.closest("aside, [data-pokemon-detail], [data-item-detail], [data-ataque-detail], [data-efeito-detail], [data-equipavel-detail], [data-dungeon-detail], [data-mundo-detail], [data-npc-detail], [data-estadio-detail]") ?? null;
+  }
+  function estaVisivel(elemento) {
+    return !!elemento && !elemento.hidden && elemento.getClientRects().length > 0;
+  }
+  function dialogAbertoAtual() {
+    const dialogs = [...document.querySelectorAll("[role='dialog']")];
+    return dialogs.reverse().find((dialog) => estaVisivel(containerDoDialog(dialog) || dialog));
+  }
+  function elementosFocaveis(dialog) {
+    return [...dialog.querySelectorAll(seletorFoco)].filter((item) => !item.hidden && item.getClientRects().length > 0);
+  }
+  function ativarModal(container) {
+    const dialog = container?.querySelector?.("[role='dialog']") ?? (container?.matches?.("[role='dialog']") ? container : null);
+    if (!dialog || container?.hidden) return;
+    if (!focoAnterior.has(container)) focoAnterior.set(container, document.activeElement);
+    container.dataset.pgsModalOpen = "true";
+    if (!dialog.hasAttribute("tabindex")) dialog.setAttribute("tabindex", "-1");
+    window.requestAnimationFrame(() => {
+      const alvo = dialog.querySelector("[aria-label*='Fechar'], .pokemon-fechar, button") || dialog;
+      alvo.focus?.({ preventScroll: true });
+    });
+  }
+  function desativarModal(container) {
+    if (!container) return;
+    delete container.dataset.pgsModalOpen;
+    const anterior = focoAnterior.get(container);
+    focoAnterior.delete(container);
+    if (anterior && document.contains(anterior) && typeof anterior.focus === "function") {
+      window.requestAnimationFrame(() => anterior.focus({ preventScroll: true }));
+    }
+  }
+  function avaliarContainer(container) {
+    if (!container?.querySelector?.("[role='dialog']")) return;
+    if (container.hidden) desativarModal(container);
+    else ativarModal(container);
+  }
+
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Tab") return;
+    const dialog = dialogAbertoAtual();
+    if (!dialog) return;
+    const focaveis = elementosFocaveis(dialog);
+    if (!focaveis.length) {
+      evento.preventDefault();
+      dialog.focus?.({ preventScroll: true });
+      return;
+    }
+    const primeiro = focaveis[0];
+    const ultimo = focaveis[focaveis.length - 1];
+    if (evento.shiftKey && document.activeElement === primeiro) {
+      evento.preventDefault();
+      ultimo.focus();
+    } else if (!evento.shiftKey && document.activeElement === ultimo) {
+      evento.preventDefault();
+      primeiro.focus();
+    }
+  });
+
+  const observer = new MutationObserver((mutacoes) => {
+    mutacoes.forEach((mutacao) => {
+      if (mutacao.type === "attributes" && mutacao.attributeName === "hidden") avaliarContainer(mutacao.target);
+      mutacao.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) avaliarContainer(node);
+      });
+    });
+  });
+  const iniciarObserver = () => {
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
+    document.querySelectorAll("[role='dialog']").forEach((dialog) => avaliarContainer(containerDoDialog(dialog) || dialog));
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciarObserver, { once: true });
+  else iniciarObserver();
+}
+iniciarAcessibilidadeModaisWiki();
+
 export function criarListagemPaginada(opcoes) {
   const {
     grid,
@@ -255,6 +345,10 @@ export function criarListagemPaginada(opcoes) {
     },
   };
 }
+export function criarWikiCatalogo(opcoes) {
+  return criarListagemPaginada(opcoes);
+}
+
 export function criarGridProgressiva({
   grid,
   itens = [],

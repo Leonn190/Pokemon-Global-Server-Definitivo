@@ -1,0 +1,12 @@
+---
+const { itens = [], class: classe = "" } = Astro.props;
+---
+<div class:list={["pokedex-resumo", classe]}>
+  {itens.map((item) => (
+    <article>
+      <strong>{item.valor}</strong>
+      <span>{item.rotulo}</span>
+    </article>
+  ))}
+  <slot />
+</div>

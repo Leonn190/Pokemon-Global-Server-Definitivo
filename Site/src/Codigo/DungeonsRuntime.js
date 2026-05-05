@@ -1,5 +1,5 @@
 import { criarCardPokemon, criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetDungeon(dungeon, dados) {
   return dados.assetsDungeons?.[dungeon.id] ?? { imagem: null };
 }
@@ -150,7 +150,7 @@ export function inicializarWikiDungeons(idDados = "dungeons-data") {
     };
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-  listagem = criarListagemPaginada({
+  listagem = criarWikiCatalogo({
     grid,
     contador,
     vazio,

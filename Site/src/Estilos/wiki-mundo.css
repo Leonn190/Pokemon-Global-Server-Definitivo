@@ -1,0 +1,209 @@
+/* Ajuste geral: faixa de resumo + menu das wikis */
+.pokedex-topo {
+  width: 100%;
+  max-width: var(--largura);
+  margin-inline: auto;
+}
+/* =========================
+   Wiki de Mundo
+   ========================= */
+.wiki-mundo {
+  width: 100%;
+  margin: 0 auto 76px;
+}
+.mundo-intro {
+  margin-bottom: 18px;
+}
+.mundo-intro-principal,
+.mundo-bloco-texto,
+.mundo-bioma-card {
+  border: 1px solid var(--borda);
+  background:
+    radial-gradient(circle at 16% 10%, rgba(16, 135, 255, 0.14), transparent 38%),
+    radial-gradient(circle at 88% 82%, rgba(255, 54, 79, 0.11), transparent 40%),
+    var(--vidro);
+  box-shadow: var(--sombra);
+}
+.mundo-intro-principal {
+  min-height: 280px;
+  padding: clamp(24px, 4vw, 42px);
+  border-radius: 34px;
+}
+.mundo-intro-principal h2 {
+  max-width: 900px;
+  margin: 0 0 16px;
+  font-size: clamp(2rem, 4vw, 3.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+.mundo-intro-principal p:not(.selo) {
+  max-width: 960px;
+  color: var(--texto-fraco);
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+.mundo-blocos-texto {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 34px;
+}
+.mundo-bloco-texto {
+  position: relative;
+  overflow: hidden;
+  min-height: 245px;
+  padding: 24px;
+  border-radius: 28px;
+}
+.mundo-numero {
+  display: inline-flex;
+  margin-bottom: 38px;
+  color: rgba(255, 255, 255, 0.18);
+  font-size: 3.5rem;
+  font-weight: 1000;
+  line-height: 0.8;
+}
+.mundo-bloco-texto h3,
+.mundo-bioma-card h3 {
+  margin: 0 0 10px;
+  color: var(--texto);
+  line-height: 1.05;
+}
+.mundo-bloco-texto p,
+.mundo-bioma-card p,
+.mundo-cabecalho-secao p {
+  color: var(--texto-fraco);
+  line-height: 1.65;
+}
+.mundo-secao {
+  margin-top: 34px;
+}
+.mundo-cabecalho-secao {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(260px, 0.7fr);
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+.mundo-cabecalho-secao h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.052em;
+}
+.mundo-cabecalho-secao p {
+  margin: 0;
+}
+.mundo-biomas-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+.mundo-bioma-card {
+  flex: 1 1 250px;
+  max-width: 280px;
+  min-height: 285px;
+  padding: 22px;
+  border-radius: 28px;
+}
+.mundo-bioma-card h3 {
+  font-size: 1.45rem;
+}
+.mundo-bioma-info {
+  display: grid;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 11px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.055);
+}
+.mundo-bioma-info span {
+  color: var(--texto-fraco);
+  font-size: 0.74rem;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mundo-bioma-info strong {
+  color: var(--texto);
+  font-size: 0.94rem;
+  line-height: 1.2;
+}
+.mundo-bioma-estruturas,
+.mundo-detalhe-biomas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 14px;
+}
+.mundo-bioma-estruturas span,
+.mundo-detalhe-biomas span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  color: var(--texto-fraco);
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+.mundo-estrutura-grid {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+.mundo-card {
+  min-height: 252px;
+}
+.mundo-card-arte {
+  width: 112px;
+  height: 112px;
+}
+.mundo-card-arte img {
+  width: 102px;
+  height: 102px;
+}
+.mundo-card-material {
+  min-height: 2.1em;
+  display: grid;
+  align-items: center;
+}
+.mundo-detalhe-card {
+  width: min(940px, 100%);
+}
+.mundo-palco-detalhe img {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  max-width: min(230px, 72%);
+  max-height: min(230px, 72%);
+  object-fit: contain;
+  filter: drop-shadow(0 24px 26px rgba(0, 0, 0, 0.48));
+}
+.mundo-cabecalho-detalhe .item-descricao-melhor {
+  max-width: 650px;
+}
+@media (max-width: 1180px) {
+  .mundo-cabecalho-secao {
+    grid-template-columns: 1fr;
+  }
+  .mundo-blocos-texto {
+    grid-template-columns: 1fr;
+  }
+  .mundo-bloco-texto {
+    min-height: auto;
+  }
+  .mundo-numero {
+    margin-bottom: 20px;
+  }
+}
+@media (max-width: 680px) {
+  .mundo-intro-principal {
+    min-height: auto;
+  }
+  .mundo-bioma-card {
+    max-width: none;
+  }
+}

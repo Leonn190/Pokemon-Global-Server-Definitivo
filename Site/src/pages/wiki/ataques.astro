@@ -1,6 +1,8 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiToolbar from "../../Componentes/WikiToolbar.astro";
+import WikiGrid from "../../Componentes/WikiGrid.astro";
 import {
   FOCOS_ATAQUE,
   carregarAtaques,
@@ -31,7 +33,7 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
   />
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app ataques-app" data-ataques-app>
-      <section class="pokedex-toolbar ataques-toolbar" aria-label="Ferramentas da wiki de ataques">
+      <WikiToolbar class="ataques-toolbar" rotulo="Ferramentas da wiki de ataques">
         <label class="campo-busca">
           <span>Pesquisar</span>
           <input data-ataques-search type="search" placeholder="Nome, código, tipo, motor ou descrição..." autocomplete="off" />
@@ -69,7 +71,7 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
             {FOCOS_ATAQUE.map((foco) => <option value={foco.chave}>{foco.rotulo}</option>)}
           </select>
         </label>
-      </section>
+      </WikiToolbar>
       <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-ataques" aria-label="Filtros por tipo. Selecione um tipo por vez.">
         {resumo.tipos.map((tipo) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-ataques-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`} aria-pressed="false">
@@ -86,10 +88,10 @@ const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, res
         </div>
         <div class="pokedex-acoes-status">
           <button class="botao fantasma compacto" type="button" data-ataques-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-ataques-clear>Limpar filtros</button>
+          <button class="botao fantasma compacto" type="button" data-ataques-clear aria-label="Limpar todos os filtros de ataques">Limpar filtros</button>
         </div>
       </section>
-      <section class="itens-grid ataques-grid" data-ataques-grid aria-label="Lista de ataques"></section>
+      <WikiGrid class="itens-grid ataques-grid" data-ataques-grid rotulo="Lista de ataques" />
       <div class="pokedex-vazio" data-ataques-empty hidden>
         <strong>Nenhum ataque encontrado.</strong>
         <span>Tente remover algum filtro ou pesquisar por outro nome.</span>

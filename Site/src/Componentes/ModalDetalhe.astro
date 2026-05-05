@@ -1,0 +1,14 @@
+---
+const {
+  class: classe = "",
+  cardClass = "pokemon-detalhe-card",
+  labelledby,
+  ...atributos
+} = Astro.props;
+---
+<aside class:list={[classe]} {...atributos} hidden aria-live="polite">
+  <div class="pokemon-detalhe-backdrop" data-modal-backdrop></div>
+  <article class={cardClass} role="dialog" aria-modal="true" aria-labelledby={labelledby}>
+    <slot />
+  </article>
+</aside>

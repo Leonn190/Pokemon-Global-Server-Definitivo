@@ -1,4 +1,4 @@
-import { aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetEquipavel(equipavel, dados) {
   return dados.assetsEquipaveis?.[equipavel.id] ?? { imagem: null };
 }
@@ -40,6 +40,7 @@ function criarCardEquipavel(equipavel, dados) {
   card.type = "button";
   card.className = "item-card equipavel-card";
   card.dataset.equipavelId = equipavel.id;
+  card.dataset.tipo = normalizar(equipavel.afinidades?.[0] || equipavel.afinidade || "");
   card.innerHTML = `
     <span class="item-card-codigo">#${html(equipavel.id)}</span>
     <span class="item-card-arte equipavel-card-arte">
@@ -170,7 +171,7 @@ export function inicializarWikiEquipaveis(idDados = "equipaveis-data") {
     };
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-  listagem = criarListagemPaginada({
+  listagem = criarWikiCatalogo({
     grid,
     contador,
     vazio,

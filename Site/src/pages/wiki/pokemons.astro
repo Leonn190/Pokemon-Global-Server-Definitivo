@@ -1,6 +1,8 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiToolbar from "../../Componentes/WikiToolbar.astro";
+import WikiGrid from "../../Componentes/WikiGrid.astro";
 import {
   ATRIBUTOS_BASE,
   ATRIBUTOS_REGULARES,
@@ -38,7 +40,7 @@ const payloadPokedex = JSON.stringify({
   />
   <section class="wiki-layout wiki-layout-pokedex">
     <div class="wiki-conteudo pokedex-app" data-pokedex-app>
-      <section class="pokedex-toolbar" aria-label="Ferramentas da wiki de Pokémons">
+      <WikiToolbar rotulo="Ferramentas da wiki de Pokémons">
         <label class="campo-busca">
           <span>Pesquisar</span>
           <input data-pokedex-search type="search" placeholder="Nome, código, tipo ou grupo..." autocomplete="off" />
@@ -86,7 +88,7 @@ const payloadPokedex = JSON.stringify({
             {resumo.raridades.map((raridade) => <option value={normalizarChave(raridade)}>{raridade}</option>)}
           </select>
         </label>
-      </section>
+      </WikiToolbar>
       <section class="filtros-rapidos filtros-tipos-icones" aria-label="Filtros por tipo. Selecione até três tipos.">
         {tiposVisiveis.map((tipo) => (
           <button class="tipo-chip tipo-chip-icone" type="button" data-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`}>
@@ -103,10 +105,10 @@ const payloadPokedex = JSON.stringify({
         </div>
         <div class="pokedex-acoes-status">
           <button class="botao fantasma compacto" type="button" data-pokedex-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-pokedex-clear>Limpar filtros</button>
+          <button class="botao fantasma compacto" type="button" data-pokedex-clear aria-label="Limpar todos os filtros de Pokémons">Limpar filtros</button>
         </div>
       </section>
-      <section class="pokedex-grid" data-pokedex-grid aria-label="Lista de Pokémons"></section>
+      <WikiGrid class="pokedex-grid" data-pokedex-grid rotulo="Lista de Pokémons" />
       <div class="pokedex-vazio" data-pokedex-empty hidden>
         <strong>Nenhum Pokémon encontrado.</strong>
         <span>Tente remover algum filtro ou pesquisar por outro nome.</span>

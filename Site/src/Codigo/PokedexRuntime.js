@@ -1,4 +1,4 @@
-import { infoHtml, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { infoHtml, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 const MAXIMOS_BARRAS = {
   Vida: 200,
   CrD: 75,
@@ -69,6 +69,7 @@ export function criarCardPokemon(pokemon, dados, origem = "wiki") {
   card.className = `pokemon-card ${ehRadiante(pokemon) ? "pokemon-radiante" : ""}`;
   card.dataset.pokemonId = pokemon.id;
   card.dataset.origem = origem;
+  card.dataset.tipo = normalizar(pokemon.tipos?.[0]?.nome || "");
   card.innerHTML = `
     <span class="pokemon-card-codigo">#${html(pokemon.id)}</span>
     <span class="pokemon-card-arte">
@@ -278,7 +279,7 @@ export function inicializarPokedex(idDados = "pokedex-data") {
     };
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-  listagem = criarListagemPaginada({
+  listagem = criarWikiCatalogo({
     grid,
     contador,
     vazio,

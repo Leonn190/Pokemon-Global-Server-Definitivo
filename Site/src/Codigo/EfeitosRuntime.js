@@ -1,4 +1,4 @@
-import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetEfeito(efeito, dados) {
   return dados.assetsEfeitos?.[efeito.id] ?? { imagem: null };
 }
@@ -108,7 +108,7 @@ export function inicializarWikiEfeitos(idDados = "efeitos-data") {
     };
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-  listagem = criarListagemPaginada({
+  listagem = criarWikiCatalogo({
     grid,
     contador,
     vazio,

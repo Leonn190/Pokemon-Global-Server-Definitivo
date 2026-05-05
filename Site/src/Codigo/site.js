@@ -100,9 +100,14 @@ window.addEventListener("scroll", atualizarTopbar, { passive: true });
 atualizarTopbar();
 
 if (botaoMenu && menu) {
-  botaoMenu.addEventListener("click", () => menu.classList.toggle("aberto"));
+  const definirMenuAberto = (aberto) => {
+    menu.classList.toggle("aberto", aberto);
+    botaoMenu.setAttribute("aria-expanded", aberto ? "true" : "false");
+    botaoMenu.setAttribute("aria-label", aberto ? "Fechar menu" : "Abrir menu");
+  };
+  botaoMenu.addEventListener("click", () => definirMenuAberto(!menu.classList.contains("aberto")));
   menu.addEventListener("click", (evento) => {
-    if (evento.target instanceof HTMLAnchorElement) menu.classList.remove("aberto");
+    if (evento.target instanceof HTMLAnchorElement) definirMenuAberto(false);
   });
 }
 

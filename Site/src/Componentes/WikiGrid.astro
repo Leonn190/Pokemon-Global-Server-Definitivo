@@ -1,0 +1,6 @@
+---
+const { class: classe = "", rotulo = "Lista da wiki", ...atributos } = Astro.props;
+---
+<section class:list={[classe]} aria-label={rotulo} {...atributos}>
+  <slot />
+</section>

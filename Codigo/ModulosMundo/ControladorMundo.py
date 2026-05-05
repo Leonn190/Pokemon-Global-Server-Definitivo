@@ -117,7 +117,6 @@ class ControladorMundo:
             player_pos = tuple(self.player_local.Posicao) if self.player_local is not None else None
             layout = self.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.Leitor.MetaMundo, dict) else {}
             self.Dungeons.renderizar_mascara_sala(tela, self.Camera, player_pos, layout)
-            self.Dungeons.renderizar_texto(tela)
 
     def tempo_mundo_atual(self) -> dict:
         return self.Pacotes.tempo_mundo_atual() if self.Pacotes is not None else {"dia": 0, "hora": 8, "minuto": 0, "chuva_intensidade": 0}

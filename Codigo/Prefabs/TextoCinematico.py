@@ -10,14 +10,40 @@ class TextoCinematico:
         self._tamanho = max(12, int(tamanho))
         self._cor = tuple(cor)
         self._alpha = 0
+        self._inicio_ms = 0
+        self._duracao_ms = 0
+        self._fade_in_ms = 350
+        self._fade_out_ms = 550
         self._ultimo_rect = pygame.Rect(0, 0, 0, 0)
-        self._fonte = pygame.font.Font(str(_CAMINHO_FONTE_CINEMATICA), self._tamanho)
+        self._fonte = pygame.font.Font(str(_CAMINHO_FONTE_CINEMATICA), self._tamanho) if _CAMINHO_FONTE_CINEMATICA.exists() else pygame.font.SysFont("arial", self._tamanho, bold=True)
 
     def set_texto(self, texto: str) -> None:
         self._texto = str(texto or "")
 
     def set_alpha(self, alpha: float) -> None:
         self._alpha = max(0, min(255, int(alpha)))
+
+    def iniciar(self, texto: str, duracao_ms: int = 2400, fade_in_ms: int = 350, fade_out_ms: int = 550) -> None:
+        self.set_texto(texto)
+        self._inicio_ms = pygame.time.get_ticks()
+        self._duracao_ms = max(1, int(duracao_ms))
+        self._fade_in_ms = max(1, int(fade_in_ms))
+        self._fade_out_ms = max(1, int(fade_out_ms))
+        self.set_alpha(0)
+
+    def atualizar(self) -> None:
+        if not self.ativo():
+            self.set_alpha(0)
+            return
+        agora = pygame.time.get_ticks()
+        decorrido = max(0, agora - int(self._inicio_ms))
+        restante = max(0, int(self._duracao_ms) - decorrido)
+        entrada = min(1.0, decorrido / float(self._fade_in_ms))
+        saida = min(1.0, restante / float(self._fade_out_ms))
+        self.set_alpha(255.0 * min(entrada, saida))
+
+    def ativo(self) -> bool:
+        return bool(self._duracao_ms > 0 and pygame.time.get_ticks() - int(self._inicio_ms) <= int(self._duracao_ms))
 
     def desenhar(self, surface: pygame.Surface, centro: tuple[int, int]) -> None:
         base = self._fonte.render(self._texto, True, self._cor).convert_alpha()

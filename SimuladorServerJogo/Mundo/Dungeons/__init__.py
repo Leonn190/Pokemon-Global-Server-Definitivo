@@ -1,0 +1,1 @@
+"""Helpers pequenos de dungeon."""

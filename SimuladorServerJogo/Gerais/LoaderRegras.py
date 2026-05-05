@@ -110,6 +110,10 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     personalidade_super_bravo = personalidade.get("super_bravo") if isinstance(personalidade.get("super_bravo"), dict) else {}
 
     out["velocidade_base_pokemon_tiles_s"] = _float_cfg(vel, "base_tiles_s", 3.0)
+    out["pokemon_mundo_vel_min_tiles_s"] = _float_cfg(vel, "mundo_min_tiles_s", 1.0)
+    out["pokemon_mundo_vel_max_tiles_s"] = _float_cfg(vel, "mundo_max_tiles_s", 4.8)
+    out["pokemon_mundo_vel_base_tiles_s"] = _float_cfg(vel, "mundo_base_tiles_s", 1.0)
+    out["pokemon_mundo_vel_divisor"] = _float_cfg(vel, "mundo_divisor", 90.0)
     out["tamanho_diametro_base_tiles"] = _float_cfg(tamanho, "diametro_base_tiles", 0.6)
     out["tamanho_incremento_por_escala"] = float(
         _ler_valor(tamanho, "incremento_por_escala", _ler_valor(tamanho, "incremento_por_tamanho", 0.1))
@@ -462,12 +466,14 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
 
 def carregar_regras_dungeons() -> Dict[str, object]:
     base = {
-        "tamanho_bloco_sala_tiles": 32,
-        "largura_bloco_sala_tiles": 32,
-        "altura_bloco_sala_tiles": 24,
+        "tamanho_bloco_sala_tiles": 34,
+        "largura_bloco_sala_tiles": 34,
+        "altura_bloco_sala_tiles": 22,
+        "tile_vazio_dungeon": 9,
         "tile_chao_dungeon": 8,
         "tile_agua_funda": 0,
         "porta_largura_tiles": 4,
+        "margem_blocos_dungeon": 1,
         "coracoes_iniciais": 3,
         "coracoes_maximos": 3,
         "tamanho_1_blocos": 5,
@@ -480,15 +486,26 @@ def carregar_regras_dungeons() -> Dict[str, object]:
         "invulnerabilidade_dungeon_ticks": 90,
         "servo_raio_busca_tiles": 10.0,
         "servo_velocidade_tiles_s": 2.8,
+        "servo_vel_min_tiles_s": 1.4,
+        "servo_vel_max_tiles_s": 4.6,
+        "servo_vel_mult_dungeon": 0.85,
+        "servo_vel_base_tiles_s": 1.0,
+        "servo_vel_divisor": 90.0,
         "servo_cooldown_colisao_ticks": 30,
+        "servo_batalha_lock_timeout_ticks": 180,
         "servo_comum_min": 0,
         "servo_comum_max": 2,
         "servo_dificil_min": 2,
         "servo_dificil_max": 4,
-        "chance_porta_extra": 0.18,
+        "chance_porta_extra": 0.10,
         "chance_porta_trancada": 0.24,
         "chance_porta_boss_trancada": 0.72,
         "chaves_por_sala_max": 2,
+        "dungeon_preenchimento_min": 0.32,
+        "dungeon_preenchimento_max": 0.52,
+        "dungeon_chance_ramificacao": 0.35,
+        "dungeon_tortuosidade": 0.65,
+        "dungeon_distancia_min_boss_entrada": 3,
     }
     base.update(_ler_toml("Dungeons.toml"))
     return base

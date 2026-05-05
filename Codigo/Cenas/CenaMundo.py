@@ -495,14 +495,37 @@ class CenaMundo:
             return None
         efeito = self._filtro_camera.uniformes_atuais()
         if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
+            dungeon_fx = self._coletar_efeito_dungeon()
+            if dungeon_fx:
+                efeito = {**efeito, **dungeon_fx}
             captura = self.ControladorMundo.Objetos.coletar_efeito_captura_shader(self.Camera, tamanho_tela)
             if isinstance(captura, dict) and captura:
                 efeito = {**efeito, **captura}
+            dungeon_texto = self.ControladorMundo.Dungeons.efeito_shader()
+            if isinstance(dungeon_texto, dict) and dungeon_texto:
+                efeito = {**efeito, **dungeon_texto}
         if getattr(self, "_tela_morrer", None) is not None and self._tela_morrer.ativa:
             texto = self._tela_morrer.coletar_efeito_shader()
             if isinstance(texto, dict) and texto:
                 efeito = {**efeito, **texto}
         return efeito
+
+    def _coletar_efeito_dungeon(self) -> dict:
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        objetos = getattr(self.ControladorMundo, "Objetos", None) if self.ControladorMundo is not None else None
+        if player is None or objetos is None:
+            return {}
+        payload = objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
+        estado_player = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        dimensao = str(estado_player.get("dimensao") or objetos.dimensao_atual_client() or "Mundo")
+        if not dimensao.startswith("Dungeon_"):
+            return {}
+        layout = self.ControladorMundo.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.ControladorMundo.Leitor.MetaMundo, dict) else {}
+        estado_dungeon = estado_player.get("estado_dungeon") if isinstance(estado_player.get("estado_dungeon"), dict) else {}
+        sala_id = str(estado_dungeon.get("sala_id") or "")
+        sala = next((s for s in layout.get("salas", []) if isinstance(s, dict) and str(s.get("id") or "") == sala_id), None) if isinstance(layout, dict) else None
+        escura = isinstance(sala, dict) and str(sala.get("tipo") or "").strip().lower() == "escura"
+        return {"dungeon_power": 1.0, "dungeon_darkness": 0.52 if escura else 0.34}
 
     def render_hud(self, surface, JOGO, EVENTOS, dt):
         player = self.ControladorMundo.player_local
@@ -518,6 +541,7 @@ class CenaMundo:
                     pos_player_mundo = (float(pos_estadio[0]), float(pos_estadio[1]))
             layout_dungeon = self.ControladorMundo.Leitor.MetaMundo.get("layout_dungeon") if isinstance(self.ControladorMundo.Leitor.MetaMundo, dict) else {}
             self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=(estado_player or {}).get("estado_dungeon"), layout_dungeon=layout_dungeon)
+            self.ControladorMundo.Dungeons.renderizar_texto(surface)
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
             estado_player = player_payload.get("estado") if isinstance(player_payload.get("estado"), dict) else {}
             dica_estadio = self.ControladorMundo.Objetos.mensagem_interacao_estadio(

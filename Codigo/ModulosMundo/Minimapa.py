@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pygame
 from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
-from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon
+from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon_local
 
 
 class MinimapaMundo:
@@ -15,7 +15,7 @@ class MinimapaMundo:
     def desenhar(self, tela: pygame.Surface, servico_mapa, pos_player_mundo: tuple[float, float], angulo: float, layout_dungeon=None, estado_dungeon=None) -> None:
         area = pygame.Rect(tela.get_width() - self.tamanho - self.margem, self.margem, self.tamanho, self.tamanho)
         if isinstance(layout_dungeon, dict) and str(layout_dungeon.get("dimensao") or "").startswith("Dungeon_"):
-            base = construir_surface_mapa_dungeon(layout_dungeon, estado_dungeon, debug=False, cell=16)
+            base = construir_surface_mapa_dungeon_local(layout_dungeon, estado_dungeon, cell=16, raio=1)
             if base is not None:
                 mini = pygame.transform.smoothscale(base, area.size)
                 tela.blit(mini, area)

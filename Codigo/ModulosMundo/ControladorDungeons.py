@@ -1,17 +1,30 @@
 from __future__ import annotations
 import pygame
 from Codigo.Geradores.ConstrutorDungeon import salvar_debug_layout
+from Codigo.Prefabs.TextoCinematico import TextoCinematico
+
+
 class ControladorDungeons:
-    def __init__(self): self._ultima_dim='Mundo'; self._texto_ate=0; self._texto='Dungeon'
+    def __init__(self):
+        self._ultima_dim = "Mundo"
+        self._texto = TextoCinematico("Dungeon", tamanho=42)
+
     def atualizar_dimensao(self, dimensao:str, layout:dict|None=None):
         if str(dimensao).startswith('Dungeon') and not str(self._ultima_dim).startswith('Dungeon'):
-            self._texto=(layout or {}).get('dungeon_nome','Dungeon'); self._texto_ate=pygame.time.get_ticks()+2400
+            self._texto.iniciar((layout or {}).get('dungeon_nome','Dungeon'), duracao_ms=2400)
         if str(dimensao).startswith("Dungeon") and isinstance(layout, dict):
             salvar_debug_layout(layout, str(dimensao))
         self._ultima_dim=dimensao
+
     def renderizar_texto(self, tela):
-        if pygame.time.get_ticks()>self._texto_ate: return
-        f=pygame.font.SysFont('arial',42); img=f.render(self._texto,True,(240,240,240)); tela.blit(img,img.get_rect(center=tela.get_rect().center))
+        self._texto.atualizar()
+        if not self._texto.ativo():
+            return
+        self._texto.desenhar(tela, tela.get_rect().center)
+
+    def efeito_shader(self) -> dict:
+        return self._texto.efeito_shader(modo=1.0)
+
     def renderizar_mascara_sala(self, tela, camera, player_pos, layout):
         if not str(self._ultima_dim).startswith("Dungeon") or not isinstance(layout, dict) or player_pos is None:
             return

@@ -224,6 +224,7 @@ class CompositorModernGL:
         modo_efeito = self._modo_efeito(tipo_efeito)
         captura_power = self._clamp(float(dados.get("capture_power", dados.get("captura_power", 0.0)) or 0.0), 0.0, 1.0)
         texto_cinematico_power = self._clamp(float(dados.get("texto_cinematico_power", 0.0) or 0.0), 0.0, 1.0)
+        dungeon_power = self._clamp(float(dados.get("dungeon_power", 0.0) or 0.0), 0.0, 1.0)
         estados_batalha = list(dados.get("battle_status_targets", dados.get("estados_batalha_shader", [])) or [])
         estados_batalha_ativos = False
         for item in estados_batalha:
@@ -242,6 +243,7 @@ class CompositorModernGL:
                 or (modo_efeito == 3.0 and bool(dados.get("ativo", True)))
                 or captura_power > 0.001
                 or texto_cinematico_power > 0.001
+                or dungeon_power > 0.001
                 or estados_batalha_ativos
             )
         )
@@ -269,6 +271,8 @@ class CompositorModernGL:
         self._uniform("u_time", float(dados.get("time", 0.0) or 0.0))
         self._uniform("u_biome_mode", float(dados.get("biome_mode", 0.0) or 0.0))
         self._uniform("u_biome_power", float(self._clamp(float(dados.get("biome_power", 0.0) or 0.0), 0.0, 1.0)))
+        self._uniform("u_dungeon_power", float(dungeon_power))
+        self._uniform("u_dungeon_darkness", float(self._clamp(float(dados.get("dungeon_darkness", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_sun_power", float(self._clamp(float(dados.get("battle_sun_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_sand_power", float(self._clamp(float(dados.get("battle_sand_power", 0.0) or 0.0), 0.0, 1.0)))
         self._uniform("u_battle_fog_power", float(self._clamp(float(dados.get("battle_fog_power", 0.0) or 0.0), 0.0, 1.0)))

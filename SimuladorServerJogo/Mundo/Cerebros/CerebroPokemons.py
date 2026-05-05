@@ -99,6 +99,19 @@ class CerebroPokemons:
             return random.choice(_DIRECOES_8)
         return (dx / n, dy / n)
 
+    def _velocidade_pokemon_mundo(self, poke: PokemonServer) -> float:
+        fallback = self._core._f("velocidade_base_pokemon_tiles_s", 3.0)
+        stats = poke.estado_extra.get("stats") if isinstance(poke.estado_extra.get("stats"), dict) else {}
+        try:
+            vel = float(stats.get("Vel", stats.get("vel")))
+        except (TypeError, ValueError):
+            return float(fallback)
+        base = self._core._f("pokemon_mundo_vel_base_tiles_s", 1.0)
+        divisor = max(1.0, self._core._f("pokemon_mundo_vel_divisor", 90.0))
+        minimo = self._core._f("pokemon_mundo_vel_min_tiles_s", 1.0)
+        maximo = self._core._f("pokemon_mundo_vel_max_tiles_s", 4.8)
+        return max(minimo, min(maximo, base + (vel / divisor)))
+
     def tentar_spawn(self, chunks_simulados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff
 
@@ -145,8 +158,6 @@ class CerebroPokemons:
         chance_inicio = self._core._f("chance_movimento_pokemon_por_tick", 0.008)
         cooldown_min = self._core._i("intervalo_minimo_apos_movimento_ticks", 40)
         duracao_max = self._core._i("tempo_maximo_movimento_ticks", 150)
-        velocidade = self._core._f("velocidade_base_pokemon_tiles_s", 3.0)
-        passo = velocidade / 30.0
         players_ativos = self._players_ativos()
 
         for oid in list(self._core._pokemons_ids):
@@ -182,7 +193,8 @@ class CerebroPokemons:
 
             if int(estado.get("restante", 0) or 0) > 0:
                 dx, dy = estado.get("dir", (0.0, 0.0))
-                passo_atual = passo * max(0.1, float(estado.get("vel_mult", 1.0) or 1.0))
+                passo_base = self._velocidade_pokemon_mundo(poke) / 30.0
+                passo_atual = passo_base * max(0.1, float(estado.get("vel_mult", 1.0) or 1.0))
                 destino = (float(poke.posicao[0]) + float(dx) * passo_atual, float(poke.posicao[1]) + float(dy) * passo_atual)
                 if self._colisao_movimento_pokemon(oid, destino, poke.raio_colisao, permitir_player=bool(estado.get("permite_colidir_player", False))):
                     estado["restante"] = 0
@@ -236,7 +248,8 @@ class CerebroPokemons:
                 if alvo is not None and float(alvo[2]) > seguro:
                     direcao_forcada = self._direcao_para(poke.posicao, alvo[1])
                     vel_mult = float(self._core._f("personalidade_mundo_curioso_multiplicador_velocidade", 0.95))
-                    restante_forcado = max(1, int((float(alvo[2]) - seguro) / max(0.001, passo * vel_mult)))
+                    passo_base = self._velocidade_pokemon_mundo(poke) / 30.0
+                    restante_forcado = max(1, int((float(alvo[2]) - seguro) / max(0.001, passo_base * vel_mult)))
                     poke.estado_extra["comportamento_mundo"] = "curioso"
             elif personalidade == "medroso":
                 raio = float(self._core._f("personalidade_mundo_medroso_raio_percepcao_tiles", 5.5))

@@ -26,7 +26,12 @@ class PokemonMundoAnimator:
             if bool(getattr(p, "Boss", False)) or comportamento == "boss":
                 fill, borda = (252, 218, 76, alpha), (170, 120, 20, alpha)
             elif comportamento == "servo":
-                fill, borda = (155, 88, 235, alpha), (82, 35, 156, alpha)
+                fill_rgb, borda_rgb = (155, 88, 235), (82, 35, 156)
+                if bool(getattr(p, "PossuiChaveDungeon", False)):
+                    pulso = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() * 0.006)
+                    fill_rgb = tuple(int(round(a + (b - a) * pulso)) for a, b in zip(fill_rgb, (238, 132, 46)))
+                    borda_rgb = tuple(int(round(a + (b - a) * pulso)) for a, b in zip(borda_rgb, (184, 82, 24)))
+                fill, borda = (*fill_rgb, alpha), (*borda_rgb, alpha)
             else:
                 fill, borda = (70, 155, 245, alpha), (24, 84, 190, alpha)
             pygame.draw.circle(surf, fill, (surf.get_width() // 2, surf.get_height() // 2), raio)

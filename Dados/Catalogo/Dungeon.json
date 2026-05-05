@@ -42,6 +42,13 @@
       "tipo": "boss",
       "chance": 0.0,
       "dificuldade": 0
+    },
+    {
+      "id": 7,
+      "nome": "Sala Escura",
+      "tipo": "escura",
+      "chance": 0.20,
+      "dificuldade": 2
     }
   ]
 }

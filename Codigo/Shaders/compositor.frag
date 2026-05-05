@@ -12,6 +12,7 @@
 #include "efeitos/mundo/grade_global.glsl"
 #include "efeitos/mundo/clima_mundo.glsl"
 #include "efeitos/mundo/biomas_mundo.glsl"
+#include "efeitos/mundo/dungeon_ambiente.glsl"
 #include "efeitos/mundo/captura.glsl"
 #include "efeitos/batalha/clima_batalha.glsl"
 #include "efeitos/batalha/estados_batalha.glsl"
@@ -56,6 +57,7 @@ void main() {
     color = aplicar_estados_batalha(color, v_uv, aspect);
     color = aplicar_estrelas_luz_player(color, screen_uv, aspect, dark, rain);
     color = aplicar_raios_mundo(color, screen_uv);
+    color = aplicar_dungeon_ambiente(color, screen_uv, centered);
     color = aplicar_captura(color, v_uv);
 
     color = clamp(color, 0.0, 1.0);

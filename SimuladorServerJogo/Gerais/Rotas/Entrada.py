@@ -4,6 +4,7 @@ import time
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, desconectar_client
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import adicionar_personagem, obter_personagem_para_entrada, snapshot_estado, obter_regras_cliente
+from SimuladorServerJogo.Mundo.Dungeons.EstadoDungeon import normalizar_personagem_login_dungeon
 
 
 # --------------------- Funções auxiliares ---------------------
@@ -95,6 +96,7 @@ def processar_entrada_json(requisicao_json):
         if possui_personagem:
             personagem = obter_personagem_para_entrada(usuario) or {}
             personagem.setdefault("nome", usuario)
+            personagem = normalizar_personagem_login_dungeon(usuario, personagem)
             dimensao_atual = str(personagem.get("dimensao_atual") or "Mundo")
             pos_dim = personagem.get("posicoes_por_dimensao") if isinstance(personagem.get("posicoes_por_dimensao"), dict) else {}
             pos_dim_dim = pos_dim.get(dimensao_atual) if isinstance(pos_dim.get(dimensao_atual), (list, tuple)) and len(pos_dim.get(dimensao_atual)) == 2 else personagem.get("posicao", (0.0, 0.0))

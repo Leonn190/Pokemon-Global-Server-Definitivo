@@ -515,6 +515,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["dimensao_atual"] = dimensao_atual
     dados["posicoes_por_dimensao"] = pos_dim_norm
     dados["exploracao_chunks"] = _normalizar_exploracao_chunks(dados.get("exploracao_chunks"))
+    dados["dungeons"] = copy.deepcopy(dados.get("dungeons")) if isinstance(dados.get("dungeons"), dict) else {}
     return dados
 
 
@@ -670,6 +671,8 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         base["conhecimento"] = _normalizar_conhecimento(conhecimento_payload)
     if "exploracao_chunks" in payload:
         base["exploracao_chunks"] = _normalizar_exploracao_chunks(payload.get("exploracao_chunks"))
+    if isinstance(payload.get("dungeons"), dict):
+        base["dungeons"] = copy.deepcopy(payload.get("dungeons"))
 
     stamina_max = float(base.get("stamina_max", 100.0))
     if "stamina_max" in payload:

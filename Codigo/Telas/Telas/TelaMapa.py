@@ -5,7 +5,7 @@ import pygame
 from Codigo.Prefabs.Botao import BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
-from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon
+from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon_local
 
 
 class TelaMapa:
@@ -146,7 +146,7 @@ class TelaMapa:
                         self.fechar()
                 if ev.type == pygame.MOUSEWHEEL:
                     self.zoom = max(0.6, min(8.0, self.zoom + 0.25 * ev.y))
-            surf = construir_surface_mapa_dungeon(self._layout_dungeon, self._estado_dungeon, debug=False, cell=36)
+            surf = construir_surface_mapa_dungeon_local(self._layout_dungeon, self._estado_dungeon, cell=36, raio=1)
             if surf is not None:
                 w, h = surf.get_size()
                 escala = max(1, int(w * self.zoom)), max(1, int(h * self.zoom))

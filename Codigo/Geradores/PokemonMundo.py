@@ -43,6 +43,7 @@ class Pokemon:
         self.EstaIrritado = False
         self.ComportamentoMundo = ""
         self.Boss = False
+        self.PossuiChaveDungeon = False
         self.DificuldadeCaptura = 20.0
         self.TamanhoBarraCaptura = 0.32
         self.VelocidadeBarraCaptura = 90.0
@@ -562,6 +563,7 @@ class Pokemon:
         self.EstaIrritado = bool(estado.get("esta_irritado", False))
         self.ComportamentoMundo = str(estado.get("comportamento_mundo") or estado.get("comportamento") or estado.get("tipo_batalha") or "")
         self.Boss = bool(estado.get("boss", False) or estado.get("pokemon_boss") or str(estado.get("tipo_batalha") or "").strip().lower() == "boss")
+        self.PossuiChaveDungeon = bool(estado.get("possui_chave_dungeon", False))
         captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
         if self._snapshot_captura_autoritativo(captura):
             self.capturar(captura)

@@ -46,6 +46,7 @@ def _catalogo_default() -> dict:
             {"id": 4, "nome": "Sala Dificil", "tipo": "dificil", "chance": 0.35, "dificuldade": 3},
             {"id": 5, "nome": "Sala Piscina", "tipo": "piscina", "chance": 0.18, "dificuldade": 1},
             {"id": 6, "nome": "Sala de Boss", "tipo": "boss", "chance": 0.0, "dificuldade": 0},
+            {"id": 7, "nome": "Sala Escura", "tipo": "escura", "chance": 0.20, "dificuldade": 2},
         ],
     }
 
@@ -190,6 +191,28 @@ def _proxima_posicao_livre(pos: tuple[int, int], ocupadas: dict, largura: int, a
     return None
 
 
+def _dentro_jogavel(pos: tuple[int, int], largura: int, altura: int, margem: int) -> bool:
+    m = max(0, int(margem or 0))
+    return m <= int(pos[0]) < int(largura) - m and m <= int(pos[1]) < int(altura) - m
+
+
+def _proxima_posicao_livre_jogavel(pos: tuple[int, int], ocupadas: dict, largura: int, altura: int, margem: int) -> tuple[int, int] | None:
+    if _livre(pos, ocupadas, largura, altura) and _dentro_jogavel(pos, largura, altura, margem):
+        return pos
+    fila = deque([pos])
+    vistos = {pos}
+    while fila:
+        atual = fila.popleft()
+        for viz in _vizinhos(atual, largura, altura):
+            if viz in vistos:
+                continue
+            if _livre(viz, ocupadas, largura, altura) and _dentro_jogavel(viz, largura, altura, margem):
+                return viz
+            vistos.add(viz)
+            fila.append(viz)
+    return None
+
+
 def _caminho_manhattan(origem: tuple[int, int], destino: tuple[int, int], rng: random.Random) -> list[tuple[int, int]]:
     x, y = origem
     tx, ty = destino
@@ -251,7 +274,7 @@ def _tipo_sala_comum(rng: random.Random, catalogo: dict | None = None, dificulda
     base = catalogo or {}
     dif = max(1, min(6, _dificuldade_num(dificuldade)))
     pesos = {}
-    for tipo in ("comum", "pacifica", "dificil", "piscina"):
+    for tipo in ("comum", "pacifica", "dificil", "piscina", "escura"):
         cfg = base.get(tipo, {}) if isinstance(base.get(tipo, {}), dict) else {}
         peso = float(cfg.get("chance", 1.0) or 0.0)
         alvo = int(cfg.get("dificuldade", 1) or 1)
@@ -259,6 +282,8 @@ def _tipo_sala_comum(rng: random.Random, catalogo: dict | None = None, dificulda
             peso *= 0.55 + (dif * 0.35)
         elif tipo == "pacifica":
             peso *= max(0.15, 1.35 - (dif * 0.18))
+        elif tipo == "escura":
+            peso *= 0.75 + (dif * 0.12)
         else:
             peso *= max(0.35, 1.10 - abs(dif - alvo) * 0.08)
         pesos[tipo] = max(0.0, peso)
@@ -330,7 +355,7 @@ def _porta_id(a: tuple[int, int], b: tuple[int, int]) -> str:
 
 
 def _elegivel_chave(sala: dict) -> bool:
-    return str(sala.get("tipo") or "") in {"comum", "dificil", "piscina"} and int(sala.get("chaves_da_sala", 0) or 0) < int(_REGRAS.get("chaves_por_sala_max", 2) or 2)
+    return str(sala.get("tipo") or "") in {"comum", "dificil", "piscina", "escura"} and int(sala.get("chaves_da_sala", 0) or 0) < int(_REGRAS.get("chaves_por_sala_max", 2) or 2)
 
 
 def _gerar_conexoes_e_portas(ocupadas: dict, entradas_pos: list[tuple[int, int]], rng: random.Random) -> None:
@@ -409,16 +434,17 @@ def _marcar_porta_grid(grid: list[list[int]], pos: tuple[int, int], direcao: str
 
 
 def _grid_tiles(ocupadas: dict, largura: int, altura: int) -> list[list[int]]:
+    tile_vazio = int(_REGRAS.get("tile_vazio_dungeon", 9) or 9)
     tile_chao = int(_REGRAS.get("tile_chao_dungeon", 8) or 8)
     tile_agua = int(_REGRAS.get("tile_agua_funda", 0) or 0)
     largura_tiles = largura * LARGURA_BLOCO_SALA_TILES
     altura_tiles = altura * ALTURA_BLOCO_SALA_TILES
-    grid = [[0 for _ in range(largura_tiles)] for _ in range(altura_tiles)]
+    grid = [[tile_vazio for _ in range(largura_tiles)] for _ in range(altura_tiles)]
     for (bx, by), sala in ocupadas.items():
         x0 = bx * LARGURA_BLOCO_SALA_TILES
         y0 = by * ALTURA_BLOCO_SALA_TILES
-        for y in range(y0, y0 + ALTURA_BLOCO_SALA_TILES):
-            for x in range(x0, x0 + LARGURA_BLOCO_SALA_TILES):
+        for y in range(y0 + 1, y0 + ALTURA_BLOCO_SALA_TILES - 1):
+            for x in range(x0 + 1, x0 + LARGURA_BLOCO_SALA_TILES - 1):
                 grid[y][x] = tile_chao
         if str(sala.get("tipo")) == "piscina":
             margem_x = max(5, LARGURA_BLOCO_SALA_TILES // 4)
@@ -429,7 +455,7 @@ def _grid_tiles(ocupadas: dict, largura: int, altura: int) -> list[list[int]]:
     for pos, sala in ocupadas.items():
         for info in list(sala.get("portas_info") or []):
             if bool(info.get("trancada", False)):
-                _marcar_porta_grid(grid, pos, str(info.get("direcao") or ""), 0)
+                _marcar_porta_grid(grid, pos, str(info.get("direcao") or ""), tile_vazio)
             else:
                 _marcar_porta_grid(grid, pos, str(info.get("direcao") or ""), tile_chao)
     return grid
@@ -443,7 +469,7 @@ def _gerar_servos_salas(ocupadas: dict, servos_pool: list[str], rng: random.Rand
         if tipo == "dificil":
             mn = int(_REGRAS.get("servo_dificil_min", 2) or 2)
             mx = int(_REGRAS.get("servo_dificil_max", 4) or 4)
-        elif tipo in {"comum", "piscina"}:
+        elif tipo in {"comum", "piscina", "escura"}:
             mn = int(_REGRAS.get("servo_comum_min", 0) or 0)
             mx = int(_REGRAS.get("servo_comum_max", 2) or 2)
         else:
@@ -465,7 +491,10 @@ def _gerar_servos_salas(ocupadas: dict, servos_pool: list[str], rng: random.Rand
 def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
     row = resolver_dungeon_por_code(dungeon_code) or {}
     tamanho = max(1, min(6, _int_csv(row.get("Tamanho", 1), 1)))
-    largura = altura = tamanho_em_blocos(tamanho)
+    margem = max(0, int(_REGRAS.get("margem_blocos_dungeon", 1) or 1))
+    largura_jogavel = altura_jogavel = tamanho_em_blocos(tamanho)
+    largura = largura_jogavel + (margem * 2)
+    altura = altura_jogavel + (margem * 2)
     nome = str(row.get("Nome") or dungeon_code)
     dificuldade = str(row.get("Dificuldade") or "")
     dificuldade_num = _dificuldade_num(dificuldade or tamanho)
@@ -487,7 +516,8 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
 
     for i, entrada in enumerate(entradas_reais, start=1):
         porta_idx = int(entrada.get("porta_idx", i) or i)
-        pos = _proxima_posicao_livre(posicao_sala_entrada(porta_idx, tamanho), ocupadas, largura, altura)
+        base_entrada = posicao_sala_entrada(porta_idx, tamanho)
+        pos = _proxima_posicao_livre_jogavel((base_entrada[0] + margem, base_entrada[1] + margem), ocupadas, largura, altura, margem)
         if pos is None:
             continue
         sala = _criar_sala(pos, catalogo, "entrada", f"entrada_{porta_idx}", proximo_id[0], "Entrada")
@@ -505,11 +535,11 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         )
 
     if not ocupadas:
-        pos = (0, 0)
+        pos = (margem, margem)
         sala = _criar_sala(pos, catalogo, "entrada", "entrada_1", proximo_id[0], "Entrada")
         proximo_id[0] += 1
         ocupadas[pos] = sala
-        entradas_out.append({"porta_idx": 1, "sala_id": sala["id"], "posicao_sala": [0, 0], "spawn": spawn_interno_entrada(pos), "saida": saida_sala_entrada(pos), "pedra_id": 0})
+        entradas_out.append({"porta_idx": 1, "sala_id": sala["id"], "posicao_sala": [pos[0], pos[1]], "spawn": spawn_interno_entrada(pos), "saida": saida_sala_entrada(pos), "pedra_id": 0})
 
     entradas_pos = [tuple(e["posicao_sala"]) for e in entradas_out]
     for destino in entradas_pos[1:]:
@@ -517,29 +547,43 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         _adicionar_caminho(ocupadas, origem, destino, rng, catalogo, proximo_id, dificuldade=dificuldade_num)
 
     for boss in bosses_nomes:
-        candidatos = [(x, y) for y in range(altura) for x in range(largura) if (x, y) not in ocupadas]
+        candidatos = [(x, y) for y in range(altura) for x in range(largura) if (x, y) not in ocupadas and _dentro_jogavel((x, y), largura, altura, margem)]
         if not candidatos:
             break
         entradas_pos = [tuple(e["posicao_sala"]) for e in entradas_out]
+        dist_min = int(_REGRAS.get("dungeon_distancia_min_boss_entrada", 3) or 3)
         candidatos.sort(key=lambda p: min(abs(p[0] - e[0]) + abs(p[1] - e[1]) for e in entradas_pos), reverse=True)
+        distantes = [p for p in candidatos if min(abs(p[0] - e[0]) + abs(p[1] - e[1]) for e in entradas_pos) >= dist_min]
+        if distantes:
+            candidatos = distantes
         alvo = rng.choice(candidatos[: max(1, min(6, len(candidatos)))])
         origem = min(ocupadas.keys(), key=lambda p: abs(p[0] - alvo[0]) + abs(p[1] - alvo[1]))
         sala_boss = _criar_sala(alvo, catalogo, "boss", f"boss_{_slug(boss)}", proximo_id[0], f"Sala de Boss - {boss}", boss)
         proximo_id[0] += 1
         _adicionar_caminho(ocupadas, origem, alvo, rng, catalogo, proximo_id, sala_final=sala_boss, dificuldade=dificuldade_num)
 
-    alvo_total = min(largura * altura, max(len(ocupadas), int(round(largura * altura * rng.uniform(0.40, 0.58)))))
+    fill_min = float(_REGRAS.get("dungeon_preenchimento_min", 0.32) or 0.32)
+    fill_max = float(_REGRAS.get("dungeon_preenchimento_max", 0.52) or 0.52)
+    if fill_max < fill_min:
+        fill_min, fill_max = fill_max, fill_min
+    alvo_total = min(largura_jogavel * altura_jogavel, max(len(ocupadas), int(round(largura_jogavel * altura_jogavel * rng.uniform(fill_min, fill_max)))))
     tentativas = 0
-    while len(ocupadas) < alvo_total and tentativas < largura * altura * 6:
+    chance_ramificacao = float(_REGRAS.get("dungeon_chance_ramificacao", 0.35) or 0.35)
+    while len(ocupadas) < alvo_total and tentativas < largura_jogavel * altura_jogavel * 8:
         tentativas += 1
         origem = rng.choice(list(ocupadas.keys()))
-        livres = [v for v in _vizinhos(origem, largura, altura) if v not in ocupadas]
-        if not livres:
-            continue
-        pos = rng.choice(livres)
-        tipo = _tipo_sala_comum(rng, catalogo, dificuldade_num)
-        ocupadas[pos] = _criar_sala(pos, catalogo, tipo, f"sala_{pos[0]}_{pos[1]}", proximo_id[0])
-        proximo_id[0] += 1
+        passos = rng.randint(1, max(2, min(5, largura_jogavel // 2)))
+        for _ in range(passos):
+            livres = [v for v in _vizinhos(origem, largura, altura) if v not in ocupadas and _dentro_jogavel(v, largura, altura, margem)]
+            if not livres:
+                break
+            pos = rng.choice(livres)
+            tipo = _tipo_sala_comum(rng, catalogo, dificuldade_num)
+            ocupadas[pos] = _criar_sala(pos, catalogo, tipo, f"sala_{pos[0]}_{pos[1]}", proximo_id[0])
+            proximo_id[0] += 1
+            origem = pos
+            if len(ocupadas) >= alvo_total or rng.random() > chance_ramificacao:
+                break
 
     _gerar_conexoes_e_portas(ocupadas, [tuple(e["posicao_sala"]) for e in entradas_out], rng)
     servos_layout = _gerar_servos_salas(ocupadas, servos_pool, rng)
@@ -566,10 +610,16 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         "dificuldade": dificuldade,
         "largura_blocos": largura,
         "altura_blocos": altura,
+        "largura_blocos_jogaveis": largura_jogavel,
+        "altura_blocos_jogaveis": altura_jogavel,
+        "margem_blocos": margem,
         "tamanho_bloco_sala_tiles": TAMANHO_BLOCO_SALA_TILES,
         "largura_bloco_sala_tiles": LARGURA_BLOCO_SALA_TILES,
         "altura_bloco_sala_tiles": ALTURA_BLOCO_SALA_TILES,
         "porta_largura_tiles": int(_REGRAS.get("porta_largura_tiles", 4) or 4),
+        "tile_vazio_dungeon": int(_REGRAS.get("tile_vazio_dungeon", 9) or 9),
+        "tile_chao_dungeon": int(_REGRAS.get("tile_chao_dungeon", 8) or 8),
+        "tile_agua_funda": int(_REGRAS.get("tile_agua_funda", 0) or 0),
         "salas": salas,
         "entradas": entradas_out,
         "grid_salas_ids": grid_ids,

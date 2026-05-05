@@ -3,7 +3,7 @@ from __future__ import annotations
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_dungeons
 
 _REGRAS = carregar_regras_dungeons()
-TAMANHO_BLOCO_SALA_TILES = int(_REGRAS.get("tamanho_bloco_sala_tiles", 32) or 32)
+TAMANHO_BLOCO_SALA_TILES = int(_REGRAS.get("tamanho_bloco_sala_tiles", 34) or 34)
 LARGURA_BLOCO_SALA_TILES = int(_REGRAS.get("largura_bloco_sala_tiles", TAMANHO_BLOCO_SALA_TILES) or TAMANHO_BLOCO_SALA_TILES)
 ALTURA_BLOCO_SALA_TILES = int(_REGRAS.get("altura_bloco_sala_tiles", TAMANHO_BLOCO_SALA_TILES) or TAMANHO_BLOCO_SALA_TILES)
 

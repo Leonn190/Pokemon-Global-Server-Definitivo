@@ -394,6 +394,8 @@ class CerebroCentral:
             return None
         poke.estado_extra["em_batalha"] = True
         poke.estado_extra["batalha_client_id"] = str(client_id or "")
+        poke.estado_extra["batalha_tick"] = int(self._tick_contador)
+        poke.estado_extra["batalha_confirmada"] = True
         self._movimento_estado.pop(int(pokemon_id), None)
         return poke
 
@@ -403,6 +405,7 @@ class CerebroCentral:
             return None
         poke.estado_extra.pop("em_batalha", None)
         poke.estado_extra.pop("batalha_client_id", None)
+        poke.estado_extra.pop("batalha_confirmada", None)
         poke.estado_extra["cooldown_movimento_ate_tick"] = 0
         player_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id or "")) or 0)
         player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None

@@ -45,6 +45,10 @@ class PokemonMundoEstado:
     def atualizar(self, dt: float) -> None:
         self._estado = self._estado_alvo()
         fill_alvo, borda_alvo = self._CORES.get(self._estado, self._CORES["normal"])
+        if self._estado == "servo" and bool(getattr(self.pokemon, "PossuiChaveDungeon", False)):
+            pulso = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() * 0.006)
+            fill_alvo = self._lerp_cor(fill_alvo, (238, 132, 46), pulso)
+            borda_alvo = self._lerp_cor(borda_alvo, (184, 82, 24), pulso)
         k = min(1.0, max(0.02, float(dt) * 8.0))
         self._fill = self._lerp_cor(self._fill, fill_alvo, k)
         self._borda = self._lerp_cor(self._borda, borda_alvo, k)

@@ -7,6 +7,8 @@ uniform float u_star_strength;
 uniform float u_inside;
 uniform float u_biome_mode;
 uniform float u_biome_power;
+uniform float u_dungeon_power;
+uniform float u_dungeon_darkness;
 
 // Captura no mundo: efeito radial curto em torno do Pokémon/bola.
 uniform vec2 u_capture_uv;

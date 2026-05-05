@@ -14,6 +14,7 @@ from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Mundo.Cerebros.CerebroEstadios import CEREBRO_ESTADIOS
 from SimuladorServerJogo.Mundo.DungeonGeometria import eh_dimensao_dungeon
+from SimuladorServerJogo.Mundo.Dungeons.EstadoDungeon import criar_estado_entrada
 from SimuladorServerJogo.Gerais.EstadoServidor import obter_exploracao_chunks, registrar_chunks_explorados
 
 Vector2 = Tuple[float, float]
@@ -447,18 +448,7 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
                         if isinstance(layout_dungeon, dict) and ((not isinstance(estado_dungeon, dict)) or not estado_dungeon):
                             estado_player = getattr(obj_player, "estado_extra", {}) if isinstance(getattr(obj_player, "estado_extra", {}), dict) else {}
                             entrada = (layout_dungeon.get("entradas") or [{}])[0]
-                            estado_player["estado_dungeon"] = {
-                                "dungeon_code": str(code),
-                                "porta_idx": int(entrada.get("porta_idx", 1) or 1),
-                                "pedra_id": int(entrada.get("pedra_id", 0) or 0),
-                                "coracoes": int(CEREBRO._cerebro_dungeons._regras.get("coracoes_iniciais", 3)),
-                                "coracoes_max": int(CEREBRO._cerebro_dungeons._regras.get("coracoes_maximos", 3)),
-                                "entrada_mundo": list(estado_player.get("ultima_pos_mundo") or [0.0, 0.0]),
-                                "dimensao": str(dimensao),
-                                "invulneravel_dungeon_ate_tick": 0,
-                                "portas_destrancadas": [],
-                                "salas_exploradas": [str(entrada.get("sala_id") or "")],
-                            }
+                            estado_player["estado_dungeon"] = criar_estado_entrada(obj_player, client_id, str(code), int(entrada.get("porta_idx", 1) or 1), int(entrada.get("pedra_id", 0) or 0), layout_dungeon, entrada, CEREBRO._cerebro_dungeons._regras)
                             BANCO_DADOS.atualizar_objeto(obj_player.Id, {"estado": estado_player})
             for chunk in sorted(chunks_carregados):
                 if _eh_dimensao_estadio(dimensao):

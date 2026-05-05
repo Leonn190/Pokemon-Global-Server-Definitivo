@@ -1,5 +1,9 @@
 [velocidade]
 base_tiles_s = 3.0
+mundo_min_tiles_s = 1.0
+mundo_max_tiles_s = 4.8
+mundo_base_tiles_s = 1.0
+mundo_divisor = 90.0
 
 [tamanho]
 # Diâmetro visual/físico no mundo: diametro_base_tiles + (escala * incremento_por_escala).

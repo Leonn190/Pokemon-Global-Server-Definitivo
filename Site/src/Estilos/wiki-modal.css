@@ -1,0 +1,50 @@
+.item-detalhe-card {
+  width: min(1040px, 100%);
+}
+.item-palco-detalhe img {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  max-width: min(210px, 68%);
+  max-height: min(210px, 68%);
+  object-fit: contain;
+  filter: drop-shadow(0 24px 26px rgba(0, 0, 0, 0.48));
+}
+.item-descricao-melhor {
+  max-width: 760px;
+  margin-top: 16px;
+  color: var(--texto-fraco);
+  font-size: 1rem;
+  line-height: 1.68;
+}
+.item-info-painel {
+  margin-top: 18px;
+}
+@media (max-width: 1180px) {
+  .filtros-tipos-icones {
+    grid-template-columns: repeat(10, 45px);
+  }
+  .itens-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .itens-toolbar .campo-busca {
+    grid-column: 1 / -1;
+  }
+  .wiki-cards-oito {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 680px) {
+  .wiki-menu-topo,
+  .pokedex-topo .pokedex-resumo,
+  .wiki-cards-oito {
+    grid-template-columns: 1fr;
+  }
+  .filtros-tipos-icones {
+    grid-template-columns: repeat(5, 45px);
+  }
+  .pokedex-acoes-status {
+    justify-content: flex-start;
+  }
+}

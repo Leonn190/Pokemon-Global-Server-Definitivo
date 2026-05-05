@@ -1,5 +1,5 @@
 import { criarCardPokemon, criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetNpc(npc, dados) {
   return dados.assetsNpcs?.[npc.id] ?? { imagem: null };
 }
@@ -184,7 +184,7 @@ export function inicializarWikiNpcs(idDados = "npcs-data") {
     };
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-  listagem = criarListagemPaginada({
+  listagem = criarWikiCatalogo({
     grid,
     contador,
     vazio,

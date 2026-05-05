@@ -1,0 +1,326 @@
+.dungeon-pokemon-painel h3 {
+  margin-bottom: 14px;
+}
+.dungeon-pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.dungeon-pokemon-grid .pokemon-card {
+  min-height: 208px;
+  padding: 12px;
+}
+.dungeon-pokemon-grid .pokemon-card-arte {
+  width: 88px;
+  height: 88px;
+}
+.dungeon-pokemon-grid .pokemon-card-arte img {
+  width: 92px;
+  height: 92px;
+}
+.dungeon-pokemon-grid .pokemon-card-poder {
+  display: none;
+}
+.dungeon-pokemon-nao-encontrado {
+  cursor: default;
+}
+.dungeon-pokemon-detalhe {
+  z-index: 140;
+}
+.wiki-vazio-texto {
+  margin: 0;
+  color: var(--texto-fraco);
+  line-height: 1.55;
+}
+
+.equipavel-palco-detalhe img {
+  max-width: min(270px, 82%);
+  max-height: min(270px, 82%);
+}
+.ataque-foco-painel {
+  margin-top: 18px;
+}
+.custo-aprimoramento {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 14px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 217, 52, 0.28);
+  border-radius: 14px;
+  color: var(--amarelo);
+  background: rgba(255, 217, 52, 0.08);
+  font-weight: 950;
+}
+.estadio-membros-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+}
+.estadio-membro-item {
+  display: grid;
+  gap: 10px;
+  width: 168px;
+}
+.estadio-membro-item h3 {
+  margin: 0;
+  color: var(--amarelo);
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+.estadio-membro-item .npc-card {
+  width: 100%;
+}
+
+@media (max-width: 1180px) {
+  .equipaveis-toolbar,
+  .dungeons-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .equipaveis-toolbar .campo-busca,
+  .dungeons-toolbar .campo-busca {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 760px) {
+  .equipaveis-toolbar,
+  .dungeons-toolbar,
+  .equipavel-detalhe-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.pokedex-topo .pokedex-resumo.resumo-tres {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+/* Ajustes Wiki: barras de foco, NPCs e Estádios */
+.foco-barras {
+  display: grid;
+  gap: 12px;
+}
+.foco-barra {
+  display: grid;
+  gap: 6px;
+}
+.foco-barra-topo {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--texto-fraco);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+.foco-barra-topo strong {
+  color: var(--amarelo);
+}
+.foco-barra-trilho {
+  overflow: hidden;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+.foco-barra-trilho span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(16, 135, 255, 0.9), rgba(255, 217, 52, 0.95));
+  box-shadow: 0 0 16px rgba(255, 217, 52, 0.2);
+}
+.npcs-toolbar {
+  grid-template-columns: minmax(240px, 1.6fr) repeat(4, minmax(128px, 1fr));
+}
+.npcs-grid,
+.estadios-grid,
+.estadio-membros-grid {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+}
+.npc-card-arte img,
+.estadio-card-arte img,
+.npc-palco-detalhe img,
+.estadio-palco-detalhe img {
+  image-rendering: auto;
+}
+.npc-card .item-card-meta,
+.estadio-card .item-card-meta {
+  min-height: 20px;
+}
+.npc-card-combatente {
+  border-color: rgba(255, 217, 52, 0.2);
+}
+.npc-card-vendedor {
+  border-color: rgba(16, 135, 255, 0.22);
+}
+.estadios-intro {
+  width: min(var(--largura), calc(100% - 36px));
+  margin: 0 auto 22px;
+}
+.estadios-layout {
+  width: min(var(--largura), calc(100% - 36px));
+  margin: 0 auto;
+}
+.estadio-card {
+  min-height: 210px;
+}
+.estadio-card .item-card-nome {
+  margin-top: 6px;
+}
+.estadio-membros-painel {
+  margin-top: 18px;
+}
+.estadio-npc-detalhe {
+  z-index: 150;
+}
+.estadio-pokemon-detalhe {
+  z-index: 160;
+}
+.wiki-cards-dez {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 1180px) {
+  .npcs-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .npcs-toolbar .campo-busca {
+    grid-column: 1 / -1;
+  }
+  .wiki-cards-dez {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .npcs-toolbar,
+  .wiki-cards-dez {
+    grid-template-columns: 1fr;
+  }
+}
+/* Padronização das wikis: topo limpo + menu 12 wikis em 3 linhas. */
+.wiki-topo-simples {
+  display: block;
+  margin-bottom: 24px;
+}
+.wiki-topo-simples .wiki-menu-topo {
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+}
+.wiki-topo-simples .wiki-menu-topo a {
+  justify-content: center;
+  text-align: center;
+}
+.wiki-placeholder .bloco-info {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+@media (max-width: 920px) {
+  .wiki-topo-simples .wiki-menu-topo {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .wiki-topo-simples .wiki-menu-topo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Polimento solicitado: filtro de tipos acima da toolbar, aura por tipo e tilt leve dos cards. */
+.pokedex-toolbar {
+  position: relative;
+  z-index: 3;
+}
+.filtros-tipos-icones {
+  position: relative;
+  z-index: 2;
+  padding: 6px 6px 4px;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+.tipo-chip-icone {
+  overflow: visible;
+}
+.tipo-chip-icone::after {
+  right: 1px;
+  top: 1px;
+  width: 17px;
+  height: 17px;
+  font-size: 0.66rem;
+  z-index: 2;
+}
+[data-tipo] {
+  --tipo-cor: #6fb7ff;
+  --tipo-glow: rgba(111, 183, 255, 0.22);
+}
+[data-tipo="agua"] { --tipo-cor: #56a9ff; --tipo-glow: rgba(86, 169, 255, 0.25); }
+[data-tipo="cosmico"] { --tipo-cor: #b477ff; --tipo-glow: rgba(180, 119, 255, 0.25); }
+[data-tipo="dragao"] { --tipo-cor: #7a6cff; --tipo-glow: rgba(122, 108, 255, 0.24); }
+[data-tipo="eletrico"] { --tipo-cor: #ffd834; --tipo-glow: rgba(255, 216, 52, 0.26); }
+[data-tipo="fada"] { --tipo-cor: #ff8fe7; --tipo-glow: rgba(255, 143, 231, 0.25); }
+[data-tipo="fantasma"] { --tipo-cor: #8d78c9; --tipo-glow: rgba(141, 120, 201, 0.25); }
+[data-tipo="fogo"] { --tipo-cor: #ff7d3d; --tipo-glow: rgba(255, 125, 61, 0.27); }
+[data-tipo="gelo"] { --tipo-cor: #7df2ff; --tipo-glow: rgba(125, 242, 255, 0.22); }
+[data-tipo="inseto"] { --tipo-cor: #9bdc3c; --tipo-glow: rgba(155, 220, 60, 0.22); }
+[data-tipo="lutador"] { --tipo-cor: #e26a82; --tipo-glow: rgba(226, 106, 130, 0.23); }
+[data-tipo="metal"] { --tipo-cor: #9fc0d4; --tipo-glow: rgba(159, 192, 212, 0.22); }
+[data-tipo="normal"] { --tipo-cor: #d7c7a6; --tipo-glow: rgba(215, 199, 166, 0.22); }
+[data-tipo="pedra"] { --tipo-cor: #c6b079; --tipo-glow: rgba(198, 176, 121, 0.22); }
+[data-tipo="planta"] { --tipo-cor: #6ee27e; --tipo-glow: rgba(110, 226, 126, 0.23); }
+[data-tipo="psiquico"] { --tipo-cor: #ff6ca8; --tipo-glow: rgba(255, 108, 168, 0.24); }
+[data-tipo="sombrio"] { --tipo-cor: #746a82; --tipo-glow: rgba(116, 106, 130, 0.26); }
+[data-tipo="sonoro"] { --tipo-cor: #42d7ff; --tipo-glow: rgba(66, 215, 255, 0.23); }
+[data-tipo="terrestre"] { --tipo-cor: #d59a52; --tipo-glow: rgba(213, 154, 82, 0.23); }
+[data-tipo="venenoso"] { --tipo-cor: #b45cff; --tipo-glow: rgba(180, 92, 255, 0.25); }
+[data-tipo="voador"] { --tipo-cor: #a9c7ff; --tipo-glow: rgba(169, 199, 255, 0.22); }
+.item-card[data-tipo],
+.pokemon-card[data-tipo] {
+  border-color: color-mix(in srgb, var(--tipo-cor) 28%, rgba(255, 255, 255, 0.12));
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.24), 0 0 24px var(--tipo-glow);
+}
+.item-card[data-tipo]::after,
+.pokemon-card[data-tipo]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 4%, var(--tipo-glow), transparent 42%),
+    linear-gradient(140deg, color-mix(in srgb, var(--tipo-cor) 12%, transparent), transparent 48%);
+  opacity: 0.58;
+  pointer-events: none;
+}
+.item-card > *,
+.pokemon-card > * {
+  position: relative;
+  z-index: 1;
+}
+.item-card-arte,
+.pokemon-card-arte {
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .item-card:hover,
+  .item-card:focus-visible {
+    transform: perspective(900px) translateY(-5px) rotateX(1.2deg) rotateY(-1.2deg);
+  }
+  .pokemon-card:hover,
+  .pokemon-card:focus-visible {
+    transform: perspective(900px) translateY(-5px) rotateX(1.2deg) rotateY(-1.2deg);
+  }
+  .item-card:hover .item-card-arte,
+  .item-card:focus-visible .item-card-arte,
+  .pokemon-card:hover .pokemon-card-arte,
+  .pokemon-card:focus-visible .pokemon-card-arte {
+    transform: translateY(-3px) scale(1.035);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pokemon-card-entrando {
+    animation: none !important;
+  }
+  .item-card,
+  .pokemon-card,
+  .item-card-arte,
+  .pokemon-card-arte,
+  .tipo-chip {
+    transition-duration: 0.001ms !important;
+  }
+}

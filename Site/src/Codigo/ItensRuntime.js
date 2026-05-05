@@ -1,4 +1,4 @@
-import { infoHtml, aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetItem(item, assetsItens) {
   return assetsItens?.[item.id] ?? { imagem: null };
 }
@@ -124,7 +124,7 @@ export function inicializarWikiItens(idDados = "itens-data") {
     };
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-  listagem = criarListagemPaginada({
+  listagem = criarWikiCatalogo({
     grid,
     contador,
     vazio,

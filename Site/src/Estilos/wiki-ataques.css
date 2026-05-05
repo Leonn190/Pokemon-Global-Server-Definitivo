@@ -1,0 +1,82 @@
+.ataques-toolbar {
+  grid-template-columns: minmax(240px, 1.5fr) repeat(4, minmax(118px, 1fr));
+}
+.efeitos-toolbar {
+  grid-template-columns: minmax(240px, 1.6fr) repeat(3, minmax(130px, 1fr));
+}
+.ataques-grid,
+.efeitos-grid {
+  grid-template-columns: repeat(auto-fill, minmax(166px, 1fr));
+}
+.ataque-card {
+  min-height: 214px;
+}
+.efeito-card {
+  min-height: 188px;
+}
+.ataque-card-arte,
+.efeito-card-arte {
+  border-radius: 999px;
+}
+.ataque-card-arte img,
+.efeito-card-arte img {
+  width: 82px;
+  height: 82px;
+}
+.efeito-card .item-card-nome {
+  margin-top: 6px;
+}
+.ataque-detalhe-card,
+.efeito-detalhe-card {
+  width: min(940px, 100%);
+}
+.ataque-palco-detalhe img,
+.efeito-palco-detalhe img {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  max-width: min(210px, 68%);
+  max-height: min(210px, 68%);
+  object-fit: contain;
+  filter: drop-shadow(0 24px 26px rgba(0, 0, 0, 0.48));
+}
+.ataque-texto-painel .item-descricao-melhor {
+  max-width: none;
+  margin: 0;
+}
+.filtros-tipos-ataques .tipo-chip-icone.ativo::after {
+  content: "✓";
+}
+@media (max-width: 1180px) {
+  .pokedex-topo {
+    grid-template-columns: 1fr;
+  }
+  .ataques-toolbar,
+  .efeitos-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ataques-toolbar .campo-busca,
+  .efeitos-toolbar .campo-busca {
+    grid-column: 1 / -1;
+  }
+  .wiki-cards-nove {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .pokedex-topo .pokedex-resumo,
+  .wiki-menu-topo,
+  .wiki-cards-nove {
+    grid-template-columns: 1fr;
+  }
+  .pokedex-topo .pokedex-resumo,
+  .wiki-menu-topo,
+  .pokedex-topo .pokedex-resumo article {
+    min-height: auto;
+  }
+  .ataques-toolbar,
+  .efeitos-toolbar {
+    grid-template-columns: 1fr;
+  }
+}

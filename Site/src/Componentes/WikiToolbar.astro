@@ -1,0 +1,6 @@
+---
+const { class: classe = "", rotulo = "Ferramentas da wiki", ...atributos } = Astro.props;
+---
+<section class:list={["pokedex-toolbar", classe]} aria-label={rotulo} {...atributos}>
+  <slot />
+</section>

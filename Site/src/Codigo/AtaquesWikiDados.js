@@ -69,6 +69,7 @@ function calcularFoco(linha) {
 function normalizarAtaque(linha, indice) {
   const nome = limparTexto(linha.Ataque) || `Ataque ${indice + 1}`;
   const code = numero(linha.Code) ?? indice + 1;
+  const codigoExibicao = String(code);
   const tipo = tipoCanonico(linha.Tipo);
   const estiloRotulo = rotuloEstilo(linha.Estilo);
   const estiloBusca = normalizarChave(linha.Estilo || estiloRotulo);
@@ -77,10 +78,13 @@ function normalizarAtaque(linha, indice) {
   const pontuacoes = Object.fromEntries(FOCOS_ATAQUE.map((item) => [item.chave, numero(linha[item.campo]) ?? 0]));
   const custo = numero(linha.Custo);
   const custoAprimorado = numero(linha["Custo AP"]);
+  const uid = `${codigoExibicao}-${indice + 1}-${normalizarChave(nome)}`;
   return {
-    id: String(code),
+    id: codigoExibicao,
+    uid,
     ordem: indice + 1,
     code,
+    codigoExibicao,
     nome,
     slug: normalizarChave(nome),
     busca: normalizarChave(`${nome} ${code} ${tipo} ${linha.Tipo ?? ""} ${linha.Estilo ?? ""} ${linha.Motor ?? ""} ${linha.Descrição ?? ""} ${linha.Aprimoramento ?? ""}`),
@@ -193,7 +197,17 @@ export function resolverIconeAtaque(ataque, indiceIcones) {
   return null;
 }
 export function criarAssetsAtaques(ataques, indiceIcones) {
-  return Object.fromEntries(ataques.map((ataque) => [ataque.id, { imagem: resolverIconeAtaque(ataque, indiceIcones) }]));
+  const assets = {};
+  ataques.forEach((ataque) => {
+    const entrada = { imagem: resolverIconeAtaque(ataque, indiceIcones) };
+    const chaveUnica = ataque.uid || ataque.id;
+    assets[chaveUnica] = entrada;
+
+    // Fallback de compatibilidade para tabelas antigas com Code único.
+    // Se o Code se repetir em outra linha, não sobrescreve e evita o bug de vários ataques puxarem o mesmo ícone.
+    if (ataque.id && !assets[ataque.id]) assets[ataque.id] = entrada;
+  });
+  return assets;
 }
 export function resumoAtaques(ataques) {
   const estilos = [...new Map(ataques.map((ataque) => [ataque.estiloBusca, ataque.estiloRotulo])).values()].sort((a, b) =>

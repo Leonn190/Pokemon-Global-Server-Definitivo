@@ -1,0 +1,23 @@
+---
+const {
+  class: classe = "item-card",
+  codigo = "",
+  nome = "",
+  imagem = "",
+  meta = "",
+  detalhe = "",
+  tipo = "",
+  alt = nome,
+  ...atributos
+} = Astro.props;
+---
+<button type="button" class={classe} data-tipo={tipo} {...atributos}>
+  {codigo && <span class="item-card-codigo">#{codigo}</span>}
+  <span class="item-card-arte">
+    {imagem ? <img src={imagem} alt={alt} loading="lazy" decoding="async" /> : <span class="item-card-sem-arte">{String(nome).slice(0, 1)}</span>}
+  </span>
+  <span class="item-card-nome">{nome}</span>
+  {meta && <span class="item-card-meta">{meta}</span>}
+  {detalhe && <span class="item-card-linha" set:html={detalhe}></span>}
+  <slot />
+</button>

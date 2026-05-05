@@ -1,6 +1,6 @@
-import { aplicarImagemDetalhe, criarListagemPaginada, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetAtaque(ataque, dados) {
-  return dados.assetsAtaques?.[ataque.id] ?? { imagem: null };
+  return dados.assetsAtaques?.[ataque.uid] ?? dados.assetsAtaques?.[ataque.id] ?? { imagem: null };
 }
 function tipoIcone(tipo, dados, classe = "tipo-bola pequena") {
   const chave = normalizar(tipo);
@@ -32,9 +32,10 @@ function criarCardAtaque(ataque, dados) {
   const card = document.createElement("button");
   card.type = "button";
   card.className = "item-card ataque-card";
-  card.dataset.ataqueId = ataque.id;
+  card.dataset.ataqueId = ataque.uid || ataque.id;
+  card.dataset.tipo = ataque.tipoBusca || "";
   card.innerHTML = `
-    <span class="item-card-codigo">#${html(ataque.id)}</span>
+    <span class="item-card-codigo">#${html(ataque.codigoExibicao || ataque.id)}</span>
     <span class="item-card-arte ataque-card-arte">
       ${asset.imagem ? `<img src="${asset.imagem}" alt="${html(ataque.nome)}" loading="lazy" decoding="async" />` : `<span class="item-card-sem-arte">${html(ataque.nome.slice(0, 1))}</span>`}
     </span>
@@ -55,13 +56,13 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     if (!ataqueAberto) return;
     const lista = listaNavegacao();
     if (!lista.length) return;
-    const indiceAtual = lista.findIndex((ataque) => String(ataque.id) === String(ataqueAberto.id));
+    const indiceAtual = lista.findIndex((ataque) => String(ataque.uid || ataque.id) === String(ataqueAberto.uid || ataqueAberto.id));
     const indiceSeguro = indiceAtual === -1 ? 0 : indiceAtual;
     const proximo = lista[(indiceSeguro + direcao + lista.length) % lista.length];
-    if (proximo) abrirDetalhe(proximo.id);
+    if (proximo) abrirDetalhe(proximo.uid || proximo.id);
   }
   function abrirDetalhe(id) {
-    const ataque = (dados.ataques || []).find((atual) => atual.id === String(id));
+    const ataque = (dados.ataques || []).find((atual) => String(atual.uid || atual.id) === String(id));
     if (!ataque || !detalhe) return;
     ataqueAberto = ataque;
     const asset = assetAtaque(ataque, dados);
@@ -72,7 +73,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     const descricao = detalhe.querySelector("[data-ataque-description]");
     const aprimoramento = detalhe.querySelector("[data-ataque-upgrade]");
     const focos = detalhe.querySelector("[data-ataque-focus-bars]");
-    if (codigo) codigo.textContent = `#${ataque.id}`;
+    if (codigo) codigo.textContent = `#${ataque.codigoExibicao || ataque.id}`;
     if (nome) nome.textContent = ataque.nome;
     aplicarImagemDetalhe(imagem, asset.imagem, ataque.nome);
     if (tags) {
@@ -152,7 +153,7 @@ export function inicializarWikiAtaques(idDados = "ataques-data") {
     };
     return ordenarComDirecao(filtrados, ordenadores, sort, direcao);
   }
-  listagem = criarListagemPaginada({
+  listagem = criarWikiCatalogo({
     grid,
     contador,
     vazio,

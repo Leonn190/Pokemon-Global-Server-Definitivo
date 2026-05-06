@@ -10,7 +10,7 @@ from typing import Dict
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, diff_seq_atual, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, PokemonServer, criar_objeto_mundo_server
-from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem
+from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem, aplicar_respawn_mundo, registrar_checkpoint_mundo_seguro
 from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
@@ -405,6 +405,7 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
             if usuario and isinstance(obj, AtorServer):
                 if "posicao" in payload_in:
                     atualizar_posicao_personagem(usuario, obj.posicao, dimensao=str(getattr(obj, "estado_extra", {}).get("dimensao", "Mundo")))
+                    registrar_checkpoint_mundo_seguro(usuario, obj)
                 if "perfil" in payload_in and isinstance(payload_in.get("perfil"), dict):
                     atualizar_perfil_personagem(usuario, payload_in.get("perfil"))
                 if "inventario" in payload_in and isinstance(payload_in.get("inventario"), dict):
@@ -541,6 +542,10 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 player_id = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
                 if isinstance(player, AtorServer):
+                    if eh_dimensao_dungeon(player.estado_extra.get("dimensao")):
+                        aplicar_respawn_mundo(client_id, player, str(payload.get("motivo") or "morte_dungeon"), registrar_diff=registrar_diff)
+                        aplicados += 1
+                        continue
                     player.estado_extra["morto"] = True
                     player.estado_extra["motivo_morte"] = str(payload.get("motivo") or "morte")
                     registrar_diff(
@@ -555,26 +560,11 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 else:
                     ignorados += 1
                 continue
-            if categoria == "player_ressurgiu":
+            if categoria in {"player_ressurgir", "player_ressurgiu"}:
                 player_id = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
-                pos = payload.get("posicao") if isinstance(payload.get("posicao"), (list, tuple)) and len(payload.get("posicao")) == 2 else None
-                if isinstance(player, AtorServer) and pos is not None:
-                    perfil = dict(player.estado_extra.get("perfil", {})) if isinstance(player.estado_extra.get("perfil"), dict) else {}
-                    if "stamina" in payload:
-                        perfil["stamina"] = float(payload.get("stamina", perfil.get("stamina", 0.0)) or 0.0)
-                    player.estado_extra.pop("motivo_morte", None)
-                    player.estado_extra.pop("game_over", None)
-                    player.estado_extra.pop("queda_buraco", None)
-                    player.estado_extra.pop("estado_dungeon", None)
-                    dimensao_respawn = str(payload.get("dimensao") or player.estado_extra.get("dimensao", "Mundo") or "Mundo")
-                    pos_respawn = _normalizar_posicao_loop(pos) if dimensao_respawn == "Mundo" else [float(pos[0]), float(pos[1])]
-                    campos = {"posicao": pos_respawn, "estado": {"morto": False, "game_over": False, "queda_buraco": False, "dimensao": dimensao_respawn}, "perfil": perfil}
-                    BANCO_DADOS.atualizar_objeto(int(player.Id), campos)
-                    atualizar_posicao_personagem(client_id, player.posicao, dimensao=dimensao_respawn)
-                    if perfil:
-                        atualizar_perfil_personagem(client_id, perfil)
-                    registrar_diff("spawn", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=int(player.Id), autor="server", categoria="player")
+                if isinstance(player, AtorServer):
+                    aplicar_respawn_mundo(client_id, player, str(payload.get("motivo") or categoria), registrar_diff=registrar_diff)
                     aplicados += 1
                 else:
                     ignorados += 1

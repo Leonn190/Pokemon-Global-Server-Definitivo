@@ -3,7 +3,7 @@ import time
 
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, desconectar_client
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
-from SimuladorServerJogo.Gerais.EstadoServidor import adicionar_personagem, obter_personagem_para_entrada, snapshot_estado, obter_regras_cliente
+from SimuladorServerJogo.Gerais.EstadoServidor import adicionar_personagem, obter_personagem_para_entrada, snapshot_estado, obter_regras_cliente, registrar_checkpoint_mundo_seguro
 from SimuladorServerJogo.Mundo.Dungeons.EstadoDungeon import normalizar_personagem_login_dungeon
 
 
@@ -107,6 +107,7 @@ def processar_entrada_json(requisicao_json):
             )
             ator.estado_extra["dimensao"] = dimensao_atual
             ator.estado_extra["posicoes_por_dimensao"] = {str(k): [float(v[0]), float(v[1])] for k, v in pos_dim.items() if isinstance(v, (list, tuple)) and len(v) == 2}
+            registrar_checkpoint_mundo_seguro(usuario, ator)
             personagem["id"] = ator.Id
             mensagem = "Entrada autorizada: personagem já encontrado no servidor."
         else:

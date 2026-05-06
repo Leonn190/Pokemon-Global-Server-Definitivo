@@ -782,6 +782,11 @@ class CenaMundo:
         controle = getattr(player, "Controle", None) if player is not None else None
         if player is None or controle is None:
             return
+        dim = "Mundo"
+        if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
+            dim = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
+        if dim != "Mundo":
+            return
         leitor = getattr(self.ControladorMundo, "Leitor", None)
         if leitor is None:
             return
@@ -797,17 +802,13 @@ class CenaMundo:
         lx = int(px) % tamanho
         ly = int(py) % tamanho
         try:
-            if int(chunk[ly][lx]) in (0, 1):
+            if int(chunk[ly][lx]) == 0:
                 return
         except (IndexError, TypeError, ValueError):
             return
-        dim = "Mundo"
-        if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
-            dim = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
         checkpoint = {"chave": (cx, cy), "grid": [list(linha) for linha in chunk], "dimensao": dim}
         self._ultimo_chunk_seguro = checkpoint
-        if dim == "Mundo":
-            self._ultimo_chunk_seguro_mundo = checkpoint
+        self._ultimo_chunk_seguro_mundo = checkpoint
 
     def _aplicar_morte_se_necessario(self, jogo):
         if self._tela_morrer.ativa:
@@ -896,71 +897,10 @@ class CenaMundo:
         player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
         if player is None:
             return
-        leitor = getattr(self.ControladorMundo, "Leitor", None)
-        if leitor is None:
-            return
-        chunks = dict(getattr(leitor, "Chunks", {}) or {})
-        tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10)))
-        dim_atual = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
-        estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {}) if self.ControladorMundo is not None else {}
-        ultima_pos_mundo = estado_player.get("ultima_pos_mundo") if isinstance(estado_player, dict) and isinstance(estado_player.get("ultima_pos_mundo"), (list, tuple)) and len(estado_player.get("ultima_pos_mundo")) == 2 else None
-        if dim_atual.startswith("Dungeon_") and isinstance(self._ultimo_chunk_seguro_mundo, dict):
-            checkpoint = self._ultimo_chunk_seguro_mundo
-        elif dim_atual.startswith("Dungeon_") and ultima_pos_mundo is not None:
-            bx, by = int(float(ultima_pos_mundo[0]) // tamanho), int(float(ultima_pos_mundo[1]) // tamanho)
-            checkpoint = {"chave": (bx, by), "grid": None, "dimensao": "Mundo", "fallback_pos": [float(ultima_pos_mundo[0]), float(ultima_pos_mundo[1])]}
-        else:
-            checkpoint = self._ultimo_chunk_seguro if isinstance(self._ultimo_chunk_seguro, dict) else {}
-        base = checkpoint.get("chave") if isinstance(checkpoint.get("chave"), tuple) else None
-        chunk = checkpoint.get("grid") if isinstance(checkpoint.get("grid"), list) else None
-        dimensao_checkpoint = str(checkpoint.get("dimensao") or self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
-        if dimensao_checkpoint.startswith("Dungeon_"):
-            dimensao_checkpoint = "Mundo"
-        if chunk is None and base in chunks:
-            chunk = chunks.get(base)
-        if base is None or chunk is None:
-            for chave, dados_chunk in chunks.items():
-                if not isinstance(dados_chunk, list) or not dados_chunk:
-                    continue
-                if all(int(tile) not in (0, 1) for linha in dados_chunk if isinstance(linha, list) for tile in linha):
-                    base = chave
-                    chunk = dados_chunk
-                    break
-        if base is None:
-            return
-        candidatos = []
-        if isinstance(chunk, list):
-            for y, linha in enumerate(chunk):
-                if not isinstance(linha, list):
-                    continue
-                for x, tile in enumerate(linha):
-                    if int(tile) not in (0, 1):
-                        candidatos.append((x, y))
-        if not candidatos:
-            fallback = checkpoint.get("fallback_pos") if isinstance(checkpoint.get("fallback_pos"), (list, tuple)) and len(checkpoint.get("fallback_pos")) == 2 else None
-            if fallback is None:
-                return
-            import random
-            nova_pos = [float(fallback[0]) + random.uniform(-1.75, 1.75), float(fallback[1]) + random.uniform(-1.75, 1.75)]
-            player.definir_posicao(nova_pos[0], nova_pos[1])
-        else:
-            import random
-            lx, ly = random.choice(candidatos)
-            player.definir_posicao(float(base[0] * tamanho + lx + 0.5), float(base[1] * tamanho + ly + 0.5))
-        nova_pos = [float(player.Posicao[0]), float(player.Posicao[1])]
-        player.Perfil.Stamina = float(player.Perfil.StaminaMax)
-        estado_respawn = {"dimensao": dimensao_checkpoint, "morto": False, "game_over": False, "queda_buraco": False}
-        setattr(player, "DimensaoAtual", dimensao_checkpoint)
-        if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
-            self.ControladorMundo.Objetos.aplicar_diff({"tipo": "update", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"posicao": nova_pos, "estado": estado_respawn}})
-            if callable(getattr(self.ControladorMundo, "_ao_dimensao_atualizada", None)):
-                self.ControladorMundo._ao_dimensao_atualizada(dimensao_checkpoint, False)
         server = jogo.INFO.get("ServerSelecionado") if isinstance(jogo.INFO.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
         if link:
-            resposta = enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_ressurgiu", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "morte_agua_funda", "posicao": nova_pos, "stamina": float(player.Perfil.Stamina), "dimensao": dimensao_checkpoint}}])
-            self._aplicar_resposta_mundo(resposta)
-            resposta = enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "update", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"posicao": nova_pos, "perfil": {"stamina": float(player.Perfil.Stamina)}, "estado": estado_respawn}}])
+            resposta = enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_ressurgir", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "pedido_cliente"}}])
             self._aplicar_resposta_mundo(resposta)
         self._definir_player_morto(False)
         self._tela_morrer.fechar()

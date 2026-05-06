@@ -4,7 +4,7 @@ import pygame
 
 
 class Portal:
-    RAIO_INTERACAO_TILES = 1.25
+    RAIO_INTERACAO_TILES = 1.75
 
     @staticmethod
     def distancia_quadrada(pos_a, pos_b):
@@ -51,7 +51,7 @@ class Portal:
             pygame.draw.circle(tela, (255, 214, 95), (porta_externa.left + px(0.22), porta_externa.top + px(0.34)), luz_r)
             pygame.draw.circle(tela, (255, 214, 95), (porta_externa.right - px(0.22), porta_externa.top + px(0.34)), luz_r)
             return
-        raio = max(7, int(getattr(camera, "TilePx", 50) * 0.52))
+        raio = max(9, int(getattr(camera, "TilePx", 50) * 0.68))
         pygame.draw.circle(tela, (8, 8, 8), (int(x), int(y)), raio)
         pygame.draw.circle(tela, (70, 70, 70), (int(x), int(y)), raio, 2)
 

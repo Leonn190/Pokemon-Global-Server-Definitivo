@@ -4,7 +4,7 @@ import copy
 import time
 from typing import Iterable
 
-from SimuladorServerJogo.Gerais.EstadoServidor import obter_personagem_para_entrada, atualizar_perfil_personagem
+from SimuladorServerJogo.Gerais.EstadoServidor import obter_personagem_para_entrada, atualizar_perfil_personagem, resolver_respawn_mundo_seguro
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Mundo.DungeonGeometria import eh_dimensao_dungeon
 
@@ -71,6 +71,7 @@ def criar_estado_entrada(player, client_id: str, dungeon_code: str, porta_idx: i
         "coracoes": int((regras or {}).get("coracoes_iniciais", 3) or 3),
         "coracoes_max": int((regras or {}).get("coracoes_maximos", 3) or 3),
         "entrada_mundo": list(getattr(player, "estado_extra", {}).get("ultima_pos_mundo", list(getattr(player, "posicao", [0.0, 0.0])))),
+        "entrada_mundo_pos": list(getattr(player, "estado_extra", {}).get("ultima_pos_mundo", list(getattr(player, "posicao", [0.0, 0.0])))),
         "dimensao": (layout or {}).get("dimensao"),
         "invulneravel_dungeon_ate_tick": 0,
         "portas_destrancadas": [],
@@ -98,7 +99,7 @@ def registrar_sala_explorada(player, dungeon_code: str, sala_id: str, client_id:
 
 def resolver_posicao_saida_dungeon(player, estado_dungeon: dict) -> list[float]:
     estado = getattr(player, "estado_extra", {}) if isinstance(getattr(player, "estado_extra", {}), dict) else {}
-    valor = (estado_dungeon or {}).get("entrada_mundo")
+    valor = (estado_dungeon or {}).get("entrada_mundo_pos") or (estado_dungeon or {}).get("entrada_mundo")
     if isinstance(valor, (list, tuple)) and len(valor) == 2:
         return [float(valor[0]), float(valor[1])]
     entradas_por_porta = estado.get("entradas_dungeon_mundo") if isinstance(estado.get("entradas_dungeon_mundo"), dict) else {}
@@ -118,7 +119,7 @@ def resolver_posicao_saida_dungeon(player, estado_dungeon: dict) -> list[float]:
     pos = list(getattr(pedra, "posicao", [])) if pedra is not None else []
     if isinstance(pos, list) and len(pos) == 2:
         return [float(pos[0]), float(pos[1])]
-    return [0.0, 0.0]
+    return resolver_respawn_mundo_seguro(str(estado.get("usuario") or ""), player)
 
 
 def limpar_estado_temporario(player) -> None:
@@ -145,7 +146,7 @@ def normalizar_personagem_login_dungeon(usuario: str, personagem: dict) -> dict:
         pos_pedra = list(getattr(pedra, "posicao", [])) if pedra is not None else []
         pos = pos_pedra if isinstance(pos_pedra, list) and len(pos_pedra) == 2 else None
     if not (isinstance(pos, (list, tuple)) and len(pos) == 2):
-        pos = [0.0, 0.0]
+        pos = resolver_respawn_mundo_seguro(str(usuario), None)
     pos = [float(pos[0]), float(pos[1])]
     dados["posicao"] = pos
     dados["dimensao_atual"] = "Mundo"

@@ -173,6 +173,7 @@ def _seed_layout(dungeon_code: str, row: dict, entradas: list[dict]) -> int:
             "pokemons": row.get("Pokemons", ""),
             "servos": row.get("Servos", ""),
             "tamanho": row.get("Tamanho", ""),
+            "seed_mundo": int(getattr(BANCO_DADOS, "_seed_mundo", 0) or 0),
             "entradas": [int(e.get("porta_idx", 0) or 0) for e in entradas],
         },
         sort_keys=True,

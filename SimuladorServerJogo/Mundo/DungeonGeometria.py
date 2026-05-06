@@ -50,7 +50,7 @@ def spawn_interno_entrada(pos_bloco):
     x,y,w,h=retangulo_sala_em_tiles(pos_bloco); return [x+w/2.0,y+h-3.0]
 
 def saida_sala_entrada(pos_bloco):
-    return spawn_interno_entrada(pos_bloco)
+    return centro_sala_em_tiles(pos_bloco)
 
 def sala_atual_por_posicao(pos):
     return (int(float(pos[0])//LARGURA_BLOCO_SALA_TILES),int(float(pos[1])//ALTURA_BLOCO_SALA_TILES))

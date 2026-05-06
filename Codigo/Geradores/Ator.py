@@ -134,7 +134,7 @@ class Ator:
         if bool(estado.get("tapa")):
             self.iniciar_tapa()
         estado_dungeon = estado.get("estado_dungeon") if isinstance(estado.get("estado_dungeon"), dict) else {}
-        inv_tick = int(estado_dungeon.get("invulneravel_dungeon_ate_tick", 0) or 0)
+        inv_tick = max(int(estado.get("invulneravel_ate_tick", 0) or 0), int(estado_dungeon.get("invulneravel_dungeon_ate_tick", 0) or 0))
         ultimo_inv = int(getattr(self, "_UltimoInvulneravelDungeonTick", 0) or 0)
         if inv_tick > ultimo_inv:
             self._UltimoInvulneravelDungeonTick = inv_tick

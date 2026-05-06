@@ -1036,6 +1036,144 @@ def atualizar_posicao_personagem(usuario, posicao, dimensao: str = "Mundo"):
         _persistir_personagens()
 
 
+def _posicao_mundo_valida(posicao) -> bool:
+    try:
+        x = float(posicao[0])
+        y = float(posicao[1])
+    except (TypeError, ValueError, IndexError):
+        return False
+    largura, altura = BANCO_DADOS.limites_mundo()
+    return 0.0 <= x < float(largura) and 0.0 <= y < float(altura)
+
+
+def _tile_mundo_seguro(posicao) -> bool:
+    if not _posicao_mundo_valida(posicao):
+        return False
+    try:
+        return int(BANCO_DADOS.tile_em(int(float(posicao[0])), int(float(posicao[1])))) != 0
+    except (TypeError, ValueError):
+        return False
+
+
+def registrar_checkpoint_mundo_seguro(usuario, player) -> bool:
+    if not usuario or player is None or not isinstance(getattr(player, "estado_extra", None), dict):
+        return False
+    if str(player.estado_extra.get("dimensao") or "Mundo") != "Mundo":
+        return False
+    pos = [float(player.posicao[0]), float(player.posicao[1])]
+    if not _tile_mundo_seguro(pos):
+        return False
+    chunk = BANCO_DADOS.chunk_da_posicao(pos)
+    checkpoint = {"chunk": [int(chunk[0]), int(chunk[1])], "posicao": pos}
+    player.estado_extra["checkpoint_mundo"] = dict(checkpoint)
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(str(usuario))
+        if isinstance(personagem, dict):
+            personagem["checkpoint_mundo"] = dict(checkpoint)
+            _persistir_personagens()
+    return True
+
+
+def _posicao_segura_no_chunk(chunk) -> list[float] | None:
+    try:
+        cx, cy = int(chunk[0]), int(chunk[1])
+    except (TypeError, ValueError, IndexError):
+        return None
+    tx, ty = BANCO_DADOS.total_chunks()
+    if cx < 0 or cy < 0 or cx >= int(tx) or cy >= int(ty):
+        return None
+    grid = BANCO_DADOS.chunk_em_grade((cx, cy))
+    tamanho = max(1, int(BANCO_DADOS.chunk_tamanho_unidade()))
+    for y, linha in enumerate(grid):
+        if not isinstance(linha, list):
+            continue
+        for x, tile in enumerate(linha):
+            try:
+                if int(tile) != 0:
+                    return [float(cx * tamanho + x) + 0.5, float(cy * tamanho + y) + 0.5]
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def _posicao_segura_perto_spawn() -> list[float] | None:
+    spawn = obter_posicao_spawn(_ESTADO_MUNDO)
+    sx, sy = _clamp_posicao(spawn)
+    if _tile_mundo_seguro((sx, sy)):
+        return [float(sx), float(sy)]
+    largura, altura = BANCO_DADOS.limites_mundo()
+    for raio in range(1, 49):
+        x0, x1 = int(sx) - raio, int(sx) + raio
+        y0, y1 = int(sy) - raio, int(sy) + raio
+        for x in range(x0, x1 + 1):
+            for y in (y0, y1):
+                if 0 <= x < largura and 0 <= y < altura and _tile_mundo_seguro((x + 0.5, y + 0.5)):
+                    return [float(x) + 0.5, float(y) + 0.5]
+        for y in range(y0 + 1, y1):
+            for x in (x0, x1):
+                if 0 <= x < largura and 0 <= y < altura and _tile_mundo_seguro((x + 0.5, y + 0.5)):
+                    return [float(x) + 0.5, float(y) + 0.5]
+    return None
+
+
+def resolver_respawn_mundo_seguro(usuario, player) -> list[float]:
+    estado = getattr(player, "estado_extra", {}) if player is not None and isinstance(getattr(player, "estado_extra", {}), dict) else {}
+    checkpoint = estado.get("checkpoint_mundo") if isinstance(estado.get("checkpoint_mundo"), dict) else None
+    if checkpoint is None and usuario:
+        with _LOCK:
+            personagem = _ESTADO["personagens"].get(str(usuario))
+            checkpoint = personagem.get("checkpoint_mundo") if isinstance(personagem, dict) and isinstance(personagem.get("checkpoint_mundo"), dict) else None
+    if isinstance(checkpoint, dict):
+        pos = checkpoint.get("posicao")
+        if isinstance(pos, (list, tuple)) and len(pos) == 2 and _tile_mundo_seguro(pos):
+            return [float(pos[0]), float(pos[1])]
+        chunk_pos = checkpoint.get("chunk")
+        pos_chunk = _posicao_segura_no_chunk(chunk_pos) if isinstance(chunk_pos, (list, tuple)) and len(chunk_pos) == 2 else None
+        if pos_chunk is not None:
+            return pos_chunk
+    perto_spawn = _posicao_segura_perto_spawn()
+    if perto_spawn is not None:
+        return perto_spawn
+    sx, sy = _clamp_posicao(obter_posicao_spawn(_ESTADO_MUNDO))
+    return [float(sx), float(sy)]
+
+
+def aplicar_respawn_mundo(usuario, player, motivo="respawn", registrar_diff=None):
+    if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
+        return None
+    pos = resolver_respawn_mundo_seguro(usuario, player)
+    estado = player.estado_extra
+    estado["dimensao"] = "Mundo"
+    estado["morto"] = False
+    estado["game_over"] = False
+    estado["queda_buraco"] = False
+    estado["motivo_respawn"] = str(motivo or "respawn")
+    for chave in ("motivo_morte", "estado_dungeon", "queda_buraco_pendente", "queda_buraco_pendente_ate_tick", "animacao_queda_tick"):
+        estado.pop(chave, None)
+    pos_dim = estado.get("posicoes_por_dimensao") if isinstance(estado.get("posicoes_por_dimensao"), dict) else {}
+    pos_dim["Mundo"] = [float(pos[0]), float(pos[1])]
+    estado["posicoes_por_dimensao"] = pos_dim
+    perfil = estado.get("perfil") if isinstance(estado.get("perfil"), dict) else {}
+    if perfil:
+        perfil["stamina"] = float(perfil.get("stamina_max", perfil.get("stamina", 100.0)) or 100.0)
+        estado["perfil"] = perfil
+    BANCO_DADOS.atualizar_objeto(int(player.Id), {"posicao": pos, "estado": estado, "perfil": perfil})
+    atualizar_posicao_personagem(str(usuario or estado.get("usuario") or ""), pos, dimensao="Mundo")
+    if perfil:
+        atualizar_perfil_personagem(str(usuario or estado.get("usuario") or ""), perfil)
+    registrar_checkpoint_mundo_seguro(str(usuario or estado.get("usuario") or ""), player)
+    if callable(registrar_diff) and hasattr(player, "serializar"):
+        registrar_diff(
+            "update",
+            payload=player.serializar(),
+            escopo={"centro": [float(pos[0]), float(pos[1])], "raio": 999999.0},
+            objeto_id=int(player.Id),
+            autor="server",
+            categoria="player",
+        )
+    return player
+
+
 
 
 def atualizar_inventario_personagem(usuario, inventario):

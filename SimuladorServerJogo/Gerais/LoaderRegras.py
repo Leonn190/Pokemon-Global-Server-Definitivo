@@ -487,7 +487,7 @@ def carregar_regras_dungeons() -> Dict[str, object]:
         "tamanho_4_blocos": 8,
         "tamanho_5_blocos": 9,
         "tamanho_6_blocos": 10,
-        "raio_interacao_porta": 2.0,
+        "raio_interacao_porta": 1.25,
         "invulnerabilidade_dungeon_ticks": 90,
         "servo_raio_busca_tiles": 10.0,
         "servo_velocidade_tiles_s": 3.6,

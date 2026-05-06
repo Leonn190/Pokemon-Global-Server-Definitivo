@@ -11,6 +11,7 @@ import threading
 import pygame
 
 from Codigo.Geradores.Baus import Bau
+from Codigo.Geradores.Armadilhas import ArmadilhasDungeon
 from Codigo.Geradores.EstruturaNaturais import (
     EstruturaNatural,
     limitar_escala_estrutura_natural,
@@ -19,6 +20,7 @@ from Codigo.Geradores.EstruturaNaturais import (
 )
 from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
 from Codigo.Geradores.Dungeon import renderizar_entrada_mundo as renderizar_entrada_dungeon_mundo
+from Codigo.Geradores.portal import Portal
 from Codigo.Geradores.PokemonMundo import Pokemon
 from Codigo.Geradores.Projetil import Projetil
 from Codigo.ModulosMundo.ControladorAtores import ControladorAtores
@@ -59,6 +61,7 @@ class ControladorObjetos:
         self._capturas_por_token: Dict[str, Dict[str, object]] = {}
         self._criaveis = ControladorCriaveis(objetos_por_id=self.ObjetosPorId, remover_indice_cb=self._remover_indice_chunk_objeto)
         self.LayoutDungeonAtual: Dict[str, object] = {}
+        self.ArmadilhasDungeon = ArmadilhasDungeon()
 
     @property
     def ProjeteisPorId(self):
@@ -332,6 +335,47 @@ class ControladorObjetos:
                 )
                 continue
             yield (int(obj.get("id", 0)), sx, sy, raio, tipo_obj, float(obj.get("campo", 0.0) or 0.0), float(obj.get("intensidade", 0.0) or 0.0))
+        yield from self._iter_colisores_armadilhas_dungeon(posicao, raio_tiles)
+
+    def _iter_colisores_armadilhas_dungeon(self, posicao: Tuple[float, float], raio_tiles: float):
+        dim = self._dimensao_player_local()
+        if not str(dim or "").startswith("Dungeon_"):
+            return
+        layout = self.LayoutDungeonAtual if isinstance(self.LayoutDungeonAtual, dict) else {}
+        if not layout:
+            return
+        px, py = float(posicao[0]), float(posicao[1])
+        r2 = float(raio_tiles) * float(raio_tiles)
+        estado_armadilhas = layout.get("estado_armadilhas") if isinstance(layout.get("estado_armadilhas"), dict) else {}
+        traps_estado = estado_armadilhas.get("traps") if isinstance(estado_armadilhas.get("traps"), dict) else {}
+        oid_base = -900000
+        idx = 0
+        for sala in layout.get("salas", []) if isinstance(layout.get("salas"), list) else []:
+            if not isinstance(sala, dict):
+                continue
+            cfg_sala = sala.get("config") if isinstance(sala.get("config"), dict) else {}
+            for trap in list(cfg_sala.get("armadilhas") or []):
+                if not isinstance(trap, dict):
+                    continue
+                tipo = str(trap.get("tipo") or "")
+                cfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
+                solido = bool(cfg.get("solido", False) or cfg.get("solido_centro", False))
+                if not solido or tipo == "espeto_movel":
+                    continue
+                tid = str(trap.get("id") or "")
+                estado = traps_estado.get(tid) if isinstance(traps_estado.get(tid), dict) else {}
+                pos = estado.get("posicao") if isinstance(estado.get("posicao"), (list, tuple)) else trap.get("posicao")
+                if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+                    continue
+                sx, sy = float(pos[0]), float(pos[1])
+                if ((sx - px) ** 2 + (sy - py) ** 2) > r2:
+                    continue
+                if tipo == "espeto":
+                    raio = max(0.62, float(cfg.get("raio_colisao", cfg.get("raio_dano", 0.8)) or 0.8))
+                else:
+                    raio = max(0.56, float(cfg.get("raio_colisao", 0.58) or 0.58))
+                idx += 1
+                yield (oid_base - idx, sx, sy, raio, "armadilha_dungeon", 0.0, 0.0)
 
     def estrutura_colidindo(self, posicao: Tuple[float, float], raio: float) -> Optional[Dict[str, object]]:
         colisoes = self.estruturas_colidindo(posicao, raio)
@@ -882,6 +926,7 @@ class ControladorObjetos:
 
     def atualizar_visuais(self, dt: float, camera, ignorar_id=None, player_pos=None):
         dt = max(0.0, float(dt))
+        self.ArmadilhasDungeon.atualizar(self.LayoutDungeonAtual, dt)
         self._atualizar_alvo_local_captura(camera, player_pos=player_pos)
         for obj in self._iter_objetos_visiveis_por_chunk(camera, margem_chunks=3):
             if not isinstance(obj, dict):
@@ -1027,11 +1072,14 @@ class ControladorObjetos:
             if not dungeon_aberta:
                 self._render_fallback_objeto(tela, camera, obj, cor_fallback=(125, 86, 54), escala=escala, pos_tela=pos_tela, fila_blits=fila_blits, tela_size=tela_size)
             if dungeon_aberta:
-                if fila_blits:
-                    self._aplicar_blits_batch(tela, fila_blits)
-                    fila_blits.clear()
-                renderizar_entrada_dungeon_mundo(tela, camera, obj)
+                continue
         self._aplicar_blits_batch(tela, fila_blits)
+
+    def renderizar_portais_dungeon(self, tela, camera):
+        for obj in self._estruturas_visiveis_ordenadas(camera, margem_chunks=1):
+            if not isinstance(obj, dict) or not self._eh_dungeon_aberta(obj):
+                continue
+            renderizar_entrada_dungeon_mundo(tela, camera, obj)
 
 
     def renderizar_estadio_interior(self, tela, camera):
@@ -1119,7 +1167,7 @@ class ControladorObjetos:
             saida = entrada.get("saida") if isinstance(entrada, dict) else None
             if isinstance(saida, (list, tuple)) and len(saida) == 2:
                 d2 = (float(saida[0]) - px) ** 2 + (float(saida[1]) - py) ** 2
-                if d2 <= (2.0 * 2.0):
+                if d2 <= (Portal.RAIO_INTERACAO_TILES * Portal.RAIO_INTERACAO_TILES):
                     candidatos.append((d2, {"tipo": "dungeon_saida", "posicao": [float(saida[0]), float(saida[1])] }))
         elif dim != "Mundo":
             estadio = self.EstadiosPorId.get(estadio_real_id, {})
@@ -1155,7 +1203,7 @@ class ControladorObjetos:
                 if pos_d is None:
                     continue
                 d2 = (float(pos_d[0]) - px) ** 2 + (float(pos_d[1]) - py) ** 2
-                if d2 <= (2.0 * 2.0):
+                if d2 <= (Portal.RAIO_INTERACAO_TILES * Portal.RAIO_INTERACAO_TILES):
                     candidatos.append((d2, {"tipo": "dungeon_entrada", "estrutura": obj, "posicao": [float(pos_d[0]), float(pos_d[1])] }))
 
         npc_alvo = self.npc_interagivel_proximo((px, py), raio=2.3)

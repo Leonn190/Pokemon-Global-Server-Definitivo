@@ -36,6 +36,7 @@ from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
 from Codigo.ModulosGerais.GerenciadorPokemons import materializar_pokemon, gerar_bando_confronto
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Telas.Telas.TelaMorrer import TelaMorrer
+from Codigo.Geradores.portal import Portal
 
 
 class CenaMundo:
@@ -190,6 +191,7 @@ class CenaMundo:
         }
 
     def Inicializar(self, JOGO):
+        self._jogo_ref = JOGO
         self.Abertura = AbrirIris
         self.Fechamento = FecharIris
         self.ID = "Mundo"
@@ -213,6 +215,7 @@ class CenaMundo:
         self._tela_morrer = TelaMorrer()
         self._ultimo_chunk_seguro = None
         self._ultimo_chunk_seguro_mundo = None
+        self._portal_transicao = None
         self.ModuladorRegras = ModuladorRegras()
 
         self._montar_mundo(JOGO)
@@ -359,7 +362,7 @@ class CenaMundo:
                         self.TelaAtual = "Mapa"
                     break
 
-        player_bloqueado = (self.TelaAtual == "Mapa") or bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo
+        player_bloqueado = (self.TelaAtual == "Mapa") or bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo or self._portal_transicao is not None
         imune_combate = self._atualizar_imunidade_combate_visual(JOGO)
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
         self._atualizar_checkpoint_seguro()
@@ -447,23 +450,13 @@ class CenaMundo:
                         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
                         link = server.get("ip")
                         payload_estrutura = alvo.get("estrutura") if isinstance(alvo.get("estrutura"), dict) else {}
-                        estado_e = payload_estrutura.get("estado") if isinstance(payload_estrutura.get("estado"), dict) else {}
-                        resposta = enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), {
-                            "acao": "entrar",
-                            "estrutura_id": int(payload_estrutura.get("id", 0) or 0),
-                            "dungeon_code": str(estado_e.get("dungeon_code") or ""),
-                            "porta_idx": int(estado_e.get("porta_idx", 1) or 1),
-                            "pos_player": [float(player.Posicao[0]), float(player.Posicao[1])],
-                        })
-                        self._aplicar_resposta_mundo(resposta)
+                        payload = Portal.payload_dungeon_entrada(payload_estrutura, player.Posicao)
+                        self._iniciar_transicao_portal(lambda: self._aplicar_resposta_mundo(enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), payload)))
                     elif isinstance(alvo, dict) and str(alvo.get("tipo") or "") == "dungeon_saida":
                         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
                         link = server.get("ip")
-                        resposta = enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), {
-                            "acao": "sair",
-                            "pos_player": [float(player.Posicao[0]), float(player.Posicao[1])],
-                        })
-                        self._aplicar_resposta_mundo(resposta)
+                        payload = Portal.payload_dungeon_saida(player.Posicao)
+                        self._iniciar_transicao_portal(lambda: self._aplicar_resposta_mundo(enviar_evento_interacao_dungeon_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), payload)))
                     break
         self._processar_estado_dialogo_npc(JOGO)
         self.ElementosHud.atualizar(dt)
@@ -566,6 +559,33 @@ class CenaMundo:
                 self._texto_estadio.set_pos((surface.get_width() // 2, max(45, surface.get_height() - 118)))
                 self._texto_estadio.draw(surface)
         self._tela_morrer.desenhar(surface, EVENTOS, dt, JOGO)
+        self._renderizar_transicao_portal(JOGO, dt)
+
+    def _iniciar_transicao_portal(self, acao):
+        if self._portal_transicao is not None or not callable(acao):
+            return
+        jogo = getattr(self, "_jogo_ref", None)
+        if jogo is not None:
+            jogo.Escuro = 0
+        self._portal_transicao = {"fase": "fechando", "acao": acao, "executou": False}
+
+    def _renderizar_transicao_portal(self, jogo, dt):
+        trans = self._portal_transicao if isinstance(self._portal_transicao, dict) else None
+        if not trans:
+            return
+        fase = str(trans.get("fase") or "fechando")
+        if fase == "fechando":
+            FecharIris(jogo, dt, dur=0.22)
+            if float(getattr(jogo, "Escuro", 0.0) or 0.0) >= 100.0 and not bool(trans.get("executou", False)):
+                trans["executou"] = True
+                acao = trans.get("acao")
+                if callable(acao):
+                    acao()
+                trans["fase"] = "abrindo"
+            return
+        AbrirIris(jogo, dt, dur=0.24)
+        if float(getattr(jogo, "Escuro", 0.0) or 0.0) <= 0.0:
+            self._portal_transicao = None
 
     def tela_atual_eh_complexa(self) -> bool:
         return self.TelaAtual not in ("Config", "Mapa")
@@ -793,6 +813,27 @@ class CenaMundo:
         if self._tela_morrer.ativa:
             return
         player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        if player is None:
+            return
+        payload_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}) if self.ControladorMundo is not None else {}
+        estado_player = payload_player.get("estado") if isinstance(payload_player.get("estado"), dict) else {}
+        game_over_server = bool(estado_player.get("morto", False) or estado_player.get("game_over", False) or getattr(player, "GameOverServidor", False))
+        if game_over_server:
+            estado_dungeon = estado_player.get("estado_dungeon") if isinstance(estado_player.get("estado_dungeon"), dict) else {}
+            motivo_morte = str(estado_player.get("motivo_morte") or getattr(player, "MotivoMorteServidor", ""))
+            queda_buraco = bool(estado_player.get("queda_buraco", False) or estado_dungeon.get("queda_buraco", False) or motivo_morte == "queda_buraco")
+            if queda_buraco and int(getattr(player, "AnimacaoQuedaAteMs", 0) or 0) <= 0:
+                setattr(player, "AnimacaoQuedaAteMs", int(pygame.time.get_ticks()) + 680)
+                setattr(player, "SobreBuraco", True)
+                estado_visual = getattr(player, "EstadoVisual", None)
+                if estado_visual is not None and hasattr(estado_visual, "iniciar_queda"):
+                    estado_visual.iniciar_queda(680)
+            queda_ativa = int(pygame.time.get_ticks()) < int(getattr(player, "AnimacaoQuedaAteMs", 0) or 0)
+            if queda_ativa:
+                return
+            self._definir_player_morto(True)
+            self._tela_morrer.abrir(jogo.TELA.get_size(), ao_ressurgir=lambda: self._ressurgir_player(jogo), ao_menu=lambda: self._voltar_menu(jogo))
+            return
         controle = getattr(player, "Controle", None) if player is not None else None
         perfil = getattr(player, "Perfil", None) if player is not None else None
         if controle is None or perfil is None:
@@ -814,11 +855,20 @@ class CenaMundo:
         if player is None:
             return
         setattr(player, "Morto", bool(morto))
+        if not bool(morto):
+            setattr(player, "GameOverServidor", False)
+            setattr(player, "MotivoMorteServidor", "")
+            setattr(player, "AnimacaoQuedaAteMs", 0)
+            setattr(player, "SobreBuraco", False)
         try:
             oid = int(getattr(player, "Id", 0) or 0)
             atual = self.ControladorMundo.Objetos.ObjetosPorId.get(oid, {})
             estado = atual.get("estado") if isinstance(atual.get("estado"), dict) else {}
             estado["morto"] = bool(morto)
+            estado["game_over"] = bool(morto)
+            estado["queda_buraco"] = False if not bool(morto) else bool(estado.get("queda_buraco", False))
+            if not bool(morto):
+                estado.pop("estado_dungeon", None)
             self.ControladorMundo.Objetos.aplicar_diff({"tipo": "update", "objeto_id": oid, "payload": {"estado": estado}})
         except Exception:
             pass
@@ -852,8 +902,13 @@ class CenaMundo:
         chunks = dict(getattr(leitor, "Chunks", {}) or {})
         tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10)))
         dim_atual = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo")
+        estado_player = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {}).get("estado", {}) if self.ControladorMundo is not None else {}
+        ultima_pos_mundo = estado_player.get("ultima_pos_mundo") if isinstance(estado_player, dict) and isinstance(estado_player.get("ultima_pos_mundo"), (list, tuple)) and len(estado_player.get("ultima_pos_mundo")) == 2 else None
         if dim_atual.startswith("Dungeon_") and isinstance(self._ultimo_chunk_seguro_mundo, dict):
             checkpoint = self._ultimo_chunk_seguro_mundo
+        elif dim_atual.startswith("Dungeon_") and ultima_pos_mundo is not None:
+            bx, by = int(float(ultima_pos_mundo[0]) // tamanho), int(float(ultima_pos_mundo[1]) // tamanho)
+            checkpoint = {"chave": (bx, by), "grid": None, "dimensao": "Mundo", "fallback_pos": [float(ultima_pos_mundo[0]), float(ultima_pos_mundo[1])]}
         else:
             checkpoint = self._ultimo_chunk_seguro if isinstance(self._ultimo_chunk_seguro, dict) else {}
         base = checkpoint.get("chave") if isinstance(checkpoint.get("chave"), tuple) else None
@@ -882,13 +937,19 @@ class CenaMundo:
                     if int(tile) not in (0, 1):
                         candidatos.append((x, y))
         if not candidatos:
-            return
-        import random
-        lx, ly = random.choice(candidatos)
-        player.definir_posicao(float(base[0] * tamanho + lx + 0.5), float(base[1] * tamanho + ly + 0.5))
+            fallback = checkpoint.get("fallback_pos") if isinstance(checkpoint.get("fallback_pos"), (list, tuple)) and len(checkpoint.get("fallback_pos")) == 2 else None
+            if fallback is None:
+                return
+            import random
+            nova_pos = [float(fallback[0]) + random.uniform(-1.75, 1.75), float(fallback[1]) + random.uniform(-1.75, 1.75)]
+            player.definir_posicao(nova_pos[0], nova_pos[1])
+        else:
+            import random
+            lx, ly = random.choice(candidatos)
+            player.definir_posicao(float(base[0] * tamanho + lx + 0.5), float(base[1] * tamanho + ly + 0.5))
         nova_pos = [float(player.Posicao[0]), float(player.Posicao[1])]
-        player.Perfil.Stamina = max(float(player.Perfil.StaminaMax) * 0.6, 10.0)
-        estado_respawn = {"dimensao": dimensao_checkpoint}
+        player.Perfil.Stamina = float(player.Perfil.StaminaMax)
+        estado_respawn = {"dimensao": dimensao_checkpoint, "morto": False, "game_over": False, "queda_buraco": False}
         setattr(player, "DimensaoAtual", dimensao_checkpoint)
         if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None:
             self.ControladorMundo.Objetos.aplicar_diff({"tipo": "update", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"posicao": nova_pos, "estado": estado_respawn}})

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from Codigo.Geradores.Porta import renderizar as renderizar_porta
+from Codigo.Geradores.portal import renderizar as renderizar_portal
 
 def estrutura_eh_porta_dungeon(payload:dict)->bool:
     estado = payload.get('estado') if isinstance(payload.get('estado'),dict) else {}
@@ -10,4 +10,4 @@ def renderizar_entrada_mundo(tela, camera, payload:dict)->None:
         return
     pos = payload.get('posicao')
     if isinstance(pos,(list,tuple)) and len(pos)==2:
-        renderizar_porta(tela,camera,pos,modo='dungeon')
+        renderizar_portal(tela,camera,pos,modo='dungeon')

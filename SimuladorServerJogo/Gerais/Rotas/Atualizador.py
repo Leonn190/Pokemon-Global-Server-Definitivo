@@ -564,9 +564,12 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     if "stamina" in payload:
                         perfil["stamina"] = float(payload.get("stamina", perfil.get("stamina", 0.0)) or 0.0)
                     player.estado_extra.pop("motivo_morte", None)
+                    player.estado_extra.pop("game_over", None)
+                    player.estado_extra.pop("queda_buraco", None)
+                    player.estado_extra.pop("estado_dungeon", None)
                     dimensao_respawn = str(payload.get("dimensao") or player.estado_extra.get("dimensao", "Mundo") or "Mundo")
                     pos_respawn = _normalizar_posicao_loop(pos) if dimensao_respawn == "Mundo" else [float(pos[0]), float(pos[1])]
-                    campos = {"posicao": pos_respawn, "estado": {"morto": False, "dimensao": dimensao_respawn}, "perfil": perfil}
+                    campos = {"posicao": pos_respawn, "estado": {"morto": False, "game_over": False, "queda_buraco": False, "dimensao": dimensao_respawn}, "perfil": perfil}
                     BANCO_DADOS.atualizar_objeto(int(player.Id), campos)
                     atualizar_posicao_personagem(client_id, player.posicao, dimensao=dimensao_respawn)
                     if perfil:

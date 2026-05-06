@@ -130,7 +130,37 @@ class CerebroArmadilhas:
                 out.append([float(centro[0]) + math.cos(ang) * r, float(centro[1]) + math.sin(ang) * r])
         return out
 
-    def _atualizar_torreta(self, trap: dict, estado: dict, players: list, tick: int) -> None:
+    def _projetil_bloqueado(self, layout: dict, x: float, y: float, ignorar_trap_id: str = "") -> bool:
+        tile = self._grid_tile(layout, x, y)
+        if tile is None:
+            return True
+        tile_vazio = int(layout.get("tile_vazio_dungeon", 9) or 9)
+        if int(tile) == tile_vazio:
+            return True
+        for sala in layout.get("salas", []) if isinstance(layout.get("salas"), list) else []:
+            if not isinstance(sala, dict):
+                continue
+            cfg_sala = sala.get("config") if isinstance(sala.get("config"), dict) else {}
+            for trap in list(cfg_sala.get("armadilhas") or []):
+                if not isinstance(trap, dict):
+                    continue
+                if str(trap.get("id") or "") == str(ignorar_trap_id or ""):
+                    continue
+                tipo = str(trap.get("tipo") or "")
+                if tipo == "espeto_movel":
+                    continue
+                tcfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
+                if not bool(tcfg.get("solido", False) or tcfg.get("solido_centro", False)):
+                    continue
+                pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else None
+                if pos is None:
+                    continue
+                raio = float(tcfg.get("raio_colisao", 0.58) or 0.58)
+                if self._dist2([x, y], pos) <= raio * raio:
+                    return True
+        return False
+
+    def _atualizar_torreta(self, layout: dict, trap: dict, estado: dict, players: list, tick: int) -> None:
         cfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
         pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else [0.0, 0.0]
         projeteis = estado.setdefault("projeteis", [])
@@ -143,6 +173,8 @@ class CerebroArmadilhas:
             p = proj.get("posicao") if isinstance(proj.get("posicao"), (list, tuple)) else list(pos)
             nx = float(p[0]) + float(direcao[0]) * vel / self.tick_rate
             ny = float(p[1]) + float(direcao[1]) * vel / self.tick_rate
+            if self._projetil_bloqueado(layout, nx, ny, ignorar_trap_id=str(trap.get("id") or "")):
+                continue
             proj["posicao"] = [nx, ny]
             proj["distancia"] = float(proj.get("distancia", 0.0) or 0.0) + vel / self.tick_rate
             if float(proj["distancia"]) < float(cfg.get("alcance", 8.0) or 8.0):
@@ -178,6 +210,9 @@ class CerebroArmadilhas:
     ) -> bool:
         if not isinstance(layout, dict) or not players:
             return False
+        players = [p for p in players if not bool(getattr(p, "estado_extra", {}).get("morto", False) or getattr(p, "estado_extra", {}).get("game_over", False))]
+        if not players:
+            return False
         alterou_tiles = False
         salas_por_pos = {
             tuple(s.get("posicao_sala", [0, 0])): s
@@ -188,6 +223,7 @@ class CerebroArmadilhas:
         for player in players:
             if self._player_no_buraco(layout, player):
                 matar_queda(player, "queda_buraco")
+                continue
             sala = salas_por_pos.get(tuple(sala_atual_por_posicao(player.posicao)))
             if isinstance(sala, dict):
                 players_por_sala.setdefault(str(sala.get("id") or ""), []).append(player)
@@ -207,7 +243,7 @@ class CerebroArmadilhas:
                 elif tipo == "quebradinho":
                     alterou_tiles = self._atualizar_quebradinho(layout, trap, estado, players_sala, int(tick)) or alterou_tiles
                 elif tipo == "torreta":
-                    self._atualizar_torreta(trap, estado, players_sala, int(tick))
+                    self._atualizar_torreta(layout, trap, estado, players_sala, int(tick))
                 elif tipo == "barra_fogo":
                     estado["bolas_posicoes"] = self._bolas_barra_fogo(trap, int(tick))
 

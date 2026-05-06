@@ -65,7 +65,8 @@ class ElementosHudBatalha:
 
     def _fugir_local(self):
         if hasattr(self.controlador, "fuga_disponivel") and not self.controlador.fuga_disponivel():
-            self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Fuga bloqueada nesta batalha."})
+            texto = "Fuga liberada apos 5 turnos." if str(getattr(self.controlador, "tipo_batalha", "") or "").strip().lower() == "servo" else "Fuga bloqueada nesta batalha."
+            self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": texto})
             return
         self.controlador.logs_locais.append({"rodada": self.controlador.rodada_atual, "texto": "Fuga solicitada."})
         self.controlador.iniciar_fuga()

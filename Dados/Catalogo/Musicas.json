@@ -110,7 +110,7 @@
     "id": "Dungeon",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Dungeon.mp3",
     "loop": 0,
-    "fimloop": 120,
+    "fimloop": 200,
     "volume": 0.55
   },
   "Agua": {

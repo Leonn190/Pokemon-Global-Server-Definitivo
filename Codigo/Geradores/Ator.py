@@ -100,6 +100,9 @@ class Ator:
         self.TileAtualMecanica = None
         self.EstadoAgua = ""
         self.SobreBuraco = False
+        self.GameOverServidor = False
+        self.MotivoMorteServidor = ""
+        self.AnimacaoQuedaAteMs = 0
 
     def update(self, payload: dict) -> None:
         dados = payload if isinstance(payload, dict) else {}
@@ -136,6 +139,19 @@ class Ator:
         if inv_tick > ultimo_inv:
             self._UltimoInvulneravelDungeonTick = inv_tick
             self.ImuneCombateAteMs = max(int(getattr(self, "ImuneCombateAteMs", 0) or 0), int(pygame.time.get_ticks()) + 3000)
+        motivo_morte = str(estado.get("motivo_morte") or estado_dungeon.get("ultimo_dano_motivo") or "")
+        if bool(estado.get("morto", False) or estado.get("game_over", False)):
+            self.GameOverServidor = True
+            self.MotivoMorteServidor = motivo_morte
+        elif "morto" in estado or "game_over" in estado:
+            self.GameOverServidor = False
+            self.MotivoMorteServidor = ""
+        if bool(estado.get("queda_buraco", False) or estado_dungeon.get("queda_buraco", False) or motivo_morte == "queda_buraco"):
+            agora = int(pygame.time.get_ticks())
+            self.AnimacaoQuedaAteMs = max(int(getattr(self, "AnimacaoQuedaAteMs", 0) or 0), agora + 680)
+            self.SobreBuraco = True
+            if getattr(self, "EstadoVisual", None) is not None and hasattr(self.EstadoVisual, "iniciar_queda"):
+                self.EstadoVisual.iniciar_queda(680)
         if self.Perfil is not None and isinstance(dados.get("perfil"), dict):
             self.Perfil.aplicar_serializado(dados.get("perfil"))
         if self.Inventario is not None and hasattr(self.Inventario, "Perfil") and self.Inventario.Perfil is None and self.Perfil is not None:

@@ -447,7 +447,12 @@ class ControladorBatalha:
         return tipo in {"confronto", "treinador", "trainer", "servo", "boss"} and not bool(self.modo_teste)
 
     def fuga_disponivel(self):
-        return str(self.tipo_batalha or "").strip().lower() not in {"servo", "boss"}
+        tipo = str(self.tipo_batalha or "").strip().lower()
+        if tipo == "boss":
+            return False
+        if tipo == "servo":
+            return int(self.rodada_atual or 1) > 5
+        return True
 
     def posicao_captura_lado_tela(self, lado_id=None):
         pos = self.posicao_captura_lado_mundo(lado_id)
@@ -615,7 +620,7 @@ class ControladorBatalha:
 
     def iniciar_fuga(self):
         if not self.fuga_disponivel():
-            self.adicionar_log_local("Fuga bloqueada nesta batalha.")
+            self.adicionar_log_local("Fuga liberada apos 5 turnos." if str(self.tipo_batalha or "").strip().lower() == "servo" else "Fuga bloqueada nesta batalha.")
             return
         self._fuga_alpha = min(255.0, self._fuga_alpha + self._fuga_incremento_clique)
         self.estado_batalha = "fugindo"

@@ -419,9 +419,10 @@ def _gerar_conexoes_e_portas(ocupadas: dict, entradas_pos: list[tuple[int, int]]
         sala = ocupadas.get(pos, {})
         if pai is not None:
             tipo = str(sala.get("tipo") or "")
+            tipo_pai = str(ocupadas.get(pai, {}).get("tipo") or "")
             chance_lock = float(_REGRAS.get("chance_porta_boss_trancada" if tipo == "boss" else "chance_porta_trancada", 0.24) or 0.24)
             candidatos_chave = [p for p in visitadas_antes if _elegivel_chave(ocupadas.get(p, {}))]
-            if candidatos_chave and rng.random() < chance_lock:
+            if tipo != "entrada" and tipo_pai != "entrada" and candidatos_chave and rng.random() < chance_lock:
                 edge = _edge(pai, pos)
                 trancadas.add(edge)
                 sala_key_pos = rng.choice(candidatos_chave)
@@ -524,18 +525,19 @@ def _gerar_armadilha(sala: dict, idx: int, rng: random.Random, dificuldade_sala:
     pos = _posicao_interna(rng, pos_sala, ocupados, margem_extra=3)
     cfg: dict[str, object] = {"seed": int(rng.randrange(1 << 30))}
     if tipo == "espeto":
-        cfg["escala"] = round(rng.uniform(0.90, 1.15), 3)
-        cfg["raio_dano"] = round(0.45 * float(cfg["escala"]), 3)
+        cfg["escala"] = round(rng.uniform(1.65, 2.20), 3)
+        cfg["raio_dano"] = round(0.58 * float(cfg["escala"]), 3)
+        cfg["raio_colisao"] = round(0.48 * float(cfg["escala"]), 3)
         cfg["solido"] = True
     elif tipo == "espeto_movel":
         ang = rng.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
-        cfg.update({"direcao": [ang[0], ang[1]], "velocidade": round(1.2 + dif * 0.22 + rng.random() * 0.35, 3), "raio_dano": 0.42, "limites_sala": list(_retangulo_interno_sala(pos_sala, margem_extra=3))})
+        cfg.update({"direcao": [ang[0], ang[1]], "velocidade": round(2.1 + dif * 0.34 + rng.random() * 0.55, 3), "escala": round(rng.uniform(1.08, 1.34), 3), "raio_dano": 0.50, "solido": False, "limites_sala": list(_retangulo_interno_sala(pos_sala, margem_extra=3))})
     elif tipo == "quebradinho":
         cfg.update({"tempo_rachando_ticks": 45, "tile_original": int(_REGRAS.get("tile_chao_dungeon", 8) or 8)})
     elif tipo == "barra_fogo":
-        cfg.update({"bolas": rng.randint(3, min(8, 4 + dif)), "velocidade_giro": round(rng.uniform(0.9, 1.7) + dif * 0.07, 3), "comprimento": round(rng.uniform(1.3, 2.7) + dif * 0.18, 3), "barras": rng.randint(1, 3 if dif >= 5 else 2), "raio_bola": 0.23, "solido_centro": True})
+        cfg.update({"bolas": rng.randint(5, min(10, 6 + dif)), "velocidade_giro": round(rng.uniform(0.9, 1.7) + dif * 0.07, 3), "comprimento": round(rng.uniform(2.2, 3.8) + dif * 0.22, 3), "barras": rng.randint(1, 3 if dif >= 5 else 2), "raio_bola": 0.34, "raio_colisao": 0.58, "solido_centro": True})
     elif tipo == "torreta":
-        cfg.update({"cooldown_ticks": max(24, int(72 - dif * 6 + rng.randint(-6, 10))), "velocidade_tiro": round(4.2 + dif * 0.45, 3), "alcance": round(7.0 + dif * 1.2, 3), "raio_tiro": 0.18, "solido": True})
+        cfg.update({"cooldown_ticks": max(24, int(72 - dif * 6 + rng.randint(-6, 10))), "velocidade_tiro": round(4.2 + dif * 0.45, 3), "alcance": round(7.0 + dif * 1.2, 3), "raio_tiro": 0.24, "raio_colisao": 0.58, "solido": True})
     return {"id": tid, "tipo": tipo, "posicao": pos, "config": cfg}
 
 

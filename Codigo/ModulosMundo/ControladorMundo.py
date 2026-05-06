@@ -125,9 +125,10 @@ class ControladorMundo:
         dim_local = str(self.Objetos.dimensao_atual_client() or "Mundo")
         if dim_local == "Mundo":
             self.Leitor.renderizar_mundo(tela)
+            self.Objetos.renderizar_portais_dungeon(tela, self.Camera)
         elif dim_local.startswith("Dungeon_"):
             self.Leitor.renderizar_mundo(tela)
-            renderizar_dungeon(tela, self.Camera, self.Objetos.LayoutDungeonAtual)
+            renderizar_dungeon(tela, self.Camera, self.Objetos.LayoutDungeonAtual, renderizador_armadilhas=self.Objetos.ArmadilhasDungeon)
         if dim_local.startswith("Estadio"):
             self.Objetos.renderizar_estadio_interior(tela, self.Camera)
         ignorar_id = getattr(self.player_local, "Id", None) if self.player_local is not None else None

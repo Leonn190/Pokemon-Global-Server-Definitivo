@@ -267,6 +267,8 @@ class ControladorPlayer:
                 max_x = centro + porta_w * 0.5 - folga
                 if min_x > max_x:
                     min_x = max_x = centro
+                if x < min_x or x > max_x:
+                    continue
                 if direcao == "N" and y <= y0 + parede + folga:
                     return (max(min_x, min(max_x, x)), max(y0 - folga, min(y0 + parede + folga, y)))
                 if direcao == "S" and y >= y1 - parede - folga:
@@ -277,6 +279,8 @@ class ControladorPlayer:
                 max_y = centro + porta_w * 0.5 - folga
                 if min_y > max_y:
                     min_y = max_y = centro
+                if y < min_y or y > max_y:
+                    continue
                 if direcao == "O" and x <= x0 + parede + folga:
                     return (max(x0 - folga, min(x0 + parede + folga, x)), max(min_y, min(max_y, y)))
                 if direcao == "L" and x >= x1 - parede - folga:
@@ -614,35 +618,6 @@ class ControladorPlayer:
             })
             return
 
-        if tipo_alvo == "dungeon_saida":
-            self._objetos.EnfileirarDiffRapida({
-                "tipo": "evento",
-                "categoria": "interacao_dungeon",
-                "payload": {
-                    "acao": "sair",
-                    "instante_cliente_ms": int(time.time() * 1000),
-                    "pos_player": [float(pos[0]), float(pos[1])],
-                },
-            })
-            return
-
-        if tipo_alvo == "dungeon_entrada":
-            estrutura = alvo.get("estrutura") if isinstance(alvo.get("estrutura"), dict) else {}
-            estado = estrutura.get("estado") if isinstance(estrutura.get("estado"), dict) else {}
-            self._objetos.EnfileirarDiffRapida({
-                "tipo": "evento",
-                "categoria": "interacao_dungeon",
-                "payload": {
-                    "acao": "entrar",
-                    "estrutura_id": int(estrutura.get("id", 0) or 0),
-                    "pedra_id": int(estrutura.get("id", 0) or 0),
-                    "porta_idx": int(estado.get("porta_idx", 1) or 1),
-                    "dungeon_code": str(estado.get("dungeon_code") or ""),
-                    "instante_cliente_ms": int(time.time() * 1000),
-                },
-            })
-            return
-
         if tipo_alvo != "estadio_entrada":
             return
         estadio = alvo.get("estadio") if isinstance(alvo.get("estadio"), dict) else {}
@@ -679,6 +654,10 @@ class ControladorPlayer:
 
     def atualizar_frame(self, eventos, dt, camera, bloqueado: bool) -> None:
         if self._player_local is None:
+            return
+        if bool(getattr(self._player_local, "GameOverServidor", False)):
+            if hasattr(self._player_local, "atualizar_visual"):
+                self._player_local.atualizar_visual(max(0.0, float(dt)))
             return
         if self._normalizacao_posicao_pendente:
             self._normalizar_posicao_player_local()
@@ -907,7 +886,8 @@ class ControladorPlayer:
         ator = self._player_local
         if ator is None:
             return
-        if bool(getattr(ator, "Morto", False)):
+        queda_ativa = int(pygame.time.get_ticks()) < int(getattr(ator, "AnimacaoQuedaAteMs", 0) or 0)
+        if bool(getattr(ator, "Morto", False)) and not queda_ativa:
             return
         ator.set_tile_px(getattr(camera, "TilePx", 50))
         pos_tela = camera.mundo_para_tela_px(ator.Posicao)
@@ -918,6 +898,8 @@ class ControladorPlayer:
             estado_visual.desenhar(tela, pos_tela, respiracao_tempo=respiracao_tempo)
         else:
             ator.desenhar(tela, posicao_tela=pos_tela, respiracao_tempo=respiracao_tempo)
+        if queda_ativa:
+            return
         ator.renderizar_stamina(tela, camera, float(self._dt_ultimo_frame))
         estado_mira = ator.Controle.estado_mira(camera.tela_para_mundo_tiles(pygame.mouse.get_pos())) if ator.Controle else None
         if estado_mira:

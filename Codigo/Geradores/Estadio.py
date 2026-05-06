@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pygame
-from Codigo.Geradores.Porta import renderizar as renderizar_porta
+from Codigo.Geradores.portal import renderizar as renderizar_portal
 
 
 class GeradorEstadio:
@@ -308,7 +308,7 @@ class EstadioInterno:
                 border_radius=max(8, px(0.16)),
             )
 
-        renderizar_porta(tela, camera, (porta[0], porta[1]), modo="estadio", px_porta=px_porta, py_porta=py_porta)
+        renderizar_portal(tela, camera, (porta[0], porta[1]), modo="estadio", px_porta=px_porta, py_porta=py_porta)
 
         # Corredor da porta até a arena
         corredor_top = arena.bottom - px(0.2)

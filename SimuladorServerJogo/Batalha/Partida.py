@@ -748,7 +748,8 @@ class Partida:
 
     def finalizar(self, motivo=None, lado_id=None):
         motivo = str(motivo or "fim_normal")
-        if motivo == "fuga" and str(self.tipo_batalha or "").strip().lower() in {"servo", "boss"}:
+        tipo_batalha = str(self.tipo_batalha or "").strip().lower()
+        if motivo == "fuga" and (tipo_batalha == "boss" or (tipo_batalha == "servo" and int(self.rodada_atual or 1) <= 5)):
             return {"status": "erro", "mensagem": "Fuga bloqueada neste tipo de batalha", "id_partida": self.id_partida, "estado_finalizacao": self.estado_partida, "avisos": [], "erros": ["fuga_bloqueada_tipo_batalha"], "resultado": self.gerar_resultado_diff(self.rodada_atual)["resultado"]}
         self.finalizada = True
         self.motivo_finalizacao = motivo

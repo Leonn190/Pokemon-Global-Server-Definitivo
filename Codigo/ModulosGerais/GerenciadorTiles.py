@@ -61,6 +61,11 @@ class AparenciaBaseTiles:
 
         base = tuple(self.CoresBlocos.get(int(bloco), (255, 0, 255)))
         superficie = pygame.Surface((tile_px, tile_px), pygame.SRCALPHA)
+        if base == (0, 0, 0):
+            superficie.fill((0, 0, 0, 255))
+            resultado = superficie.convert_alpha()
+            self._cache_tiles[chave] = resultado
+            return resultado
         ganho = (int(variante) - 3.5) * 1.6
         r0 = self._clamp_cor(base[0] + ganho)
         g0 = self._clamp_cor(base[1] + ganho)

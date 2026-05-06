@@ -114,7 +114,14 @@ class CerebroDungeons:
         if isinstance(layout.get("servos_derrotados"), list):
             layout["servos_derrotados"].clear()
         entrada = next((e for e in layout.get("entradas", []) if int(e.get("porta_idx", 0)) == int(porta_real)), None) or (layout.get("entradas") or [{}])[0]
-        player.estado_extra["ultima_pos_mundo"] = [float(player.posicao[0]), float(player.posicao[1])]
+        entrada_mundo = [float(player.posicao[0]), float(player.posicao[1])]
+        player.estado_extra["ultima_pos_mundo"] = list(entrada_mundo)
+        pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
+        pos_dim["Mundo"] = list(entrada_mundo)
+        player.estado_extra["posicoes_por_dimensao"] = pos_dim
+        entradas_dungeon = player.estado_extra.get("entradas_dungeon_mundo") if isinstance(player.estado_extra.get("entradas_dungeon_mundo"), dict) else {}
+        entradas_dungeon[f"{code_real}:{int(porta_real)}:{int(pedra_id or 0)}"] = list(entrada_mundo)
+        player.estado_extra["entradas_dungeon_mundo"] = entradas_dungeon
         player.estado_extra["dimensao"] = layout.get("dimensao")
         player.estado_extra["estado_dungeon"] = criar_estado_entrada(player, client_id, code_real, porta_real, pedra_id, layout, entrada, self._regras)
         registrar_sala_explorada(player, code_real, str(entrada.get("sala_id") or ""), client_id=str(client_id))
@@ -195,6 +202,8 @@ class CerebroDungeons:
         for obj in BANCO_DADOS.listar_objetos():
             if not isinstance(obj, AtorServer):
                 continue
+            if bool(obj.estado_extra.get("morto", False) or obj.estado_extra.get("game_over", False)):
+                continue
             dimensao = str(obj.estado_extra.get("dimensao") or "Mundo")
             if eh_dimensao_dungeon(dimensao):
                 out.setdefault(dimensao, []).append(obj)
@@ -264,7 +273,11 @@ class CerebroDungeons:
             sala = salas_por_id.get(sala_id)
             if not isinstance(sala, dict):
                 continue
-            players_sala = [p for p in players if str((p.estado_extra.get("estado_dungeon") or {}).get("sala_id") or "") == sala_id]
+            players_sala = [
+                p for p in players
+                if not bool(p.estado_extra.get("morto", False) or p.estado_extra.get("game_over", False))
+                and str((p.estado_extra.get("estado_dungeon") or {}).get("sala_id") or "") == sala_id
+            ]
             if not players_sala:
                 continue
             if bool(poke.estado_extra.get("em_batalha", False)):
@@ -283,23 +296,53 @@ class CerebroDungeons:
                 continue
             if dist <= 0.001:
                 continue
-            nx = float(poke.posicao[0]) + (dx / dist) * min(passo, dist)
-            ny = float(poke.posicao[1]) + (dy / dist) * min(passo, dist)
-            nx, ny = self._clamp_sala(sala, nx, ny, margem=max(0.5, float(poke.raio_colisao)))
-            if self._posicao_proibida_servo(layout, sala, nx, ny):
+            destino = None
+            for nx, ny in self._candidatos_movimento_servo(poke, dx / dist, dy / dist, min(passo, dist)):
+                nx, ny = self._clamp_sala(sala, nx, ny, margem=max(0.5, float(poke.raio_colisao)))
+                if not self._posicao_proibida_servo(layout, sala, nx, ny, raio=float(poke.raio_colisao)):
+                    destino = (nx, ny)
+                    break
+            if destino is None:
                 continue
+            nx, ny = destino
             BANCO_DADOS.atualizar_objeto(poke.Id, {"posicao": [nx, ny], "estado": poke.estado_extra})
             registrar_diff("update", payload=poke.serializar(), escopo={"centro": [nx, ny], "raio": 80}, objeto_id=poke.Id, autor="server", categoria="pokemon")
 
-    def _posicao_proibida_servo(self, layout: dict, sala: dict, x: float, y: float) -> bool:
+    @staticmethod
+    def _candidatos_movimento_servo(poke, ux: float, uy: float, passo: float):
+        px, py = float(poke.posicao[0]), float(poke.posicao[1])
+        vetores = [
+            (ux, uy),
+            (-uy, ux),
+            (uy, -ux),
+            (ux * 0.72 - uy * 0.72, uy * 0.72 + ux * 0.72),
+            (ux * 0.72 + uy * 0.72, uy * 0.72 - ux * 0.72),
+            (-ux, -uy),
+        ]
+        vistos = set()
+        for vx, vy in vetores:
+            n = math.hypot(vx, vy)
+            if n <= 0.001:
+                continue
+            vx, vy = vx / n, vy / n
+            pos = (round(px + vx * float(passo), 4), round(py + vy * float(passo), 4))
+            if pos in vistos:
+                continue
+            vistos.add(pos)
+            yield pos
+
+    def _posicao_proibida_servo(self, layout: dict, sala: dict, x: float, y: float, raio: float = 0.45) -> bool:
         grid = layout.get("grid_tiles") if isinstance(layout.get("grid_tiles"), list) else []
-        tx, ty = int(math.floor(float(x))), int(math.floor(float(y)))
-        if 0 <= ty < len(grid) and isinstance(grid[ty], list) and 0 <= tx < len(grid[ty]):
-            try:
-                if int(grid[ty][tx]) == int(layout.get("tile_buraco", 10) or 10):
-                    return True
-            except (TypeError, ValueError):
-                pass
+        tile_buraco = int(layout.get("tile_buraco", 10) or 10)
+        amostras = [(0.0, 0.0), (raio, 0.0), (-raio, 0.0), (0.0, raio), (0.0, -raio)]
+        for ox, oy in amostras:
+            tx, ty = int(math.floor(float(x) + ox)), int(math.floor(float(y) + oy))
+            if 0 <= ty < len(grid) and isinstance(grid[ty], list) and 0 <= tx < len(grid[ty]):
+                try:
+                    if int(grid[ty][tx]) == tile_buraco:
+                        return True
+                except (TypeError, ValueError):
+                    pass
         cfg = sala.get("config") if isinstance(sala.get("config"), dict) else {}
         for trap in list(cfg.get("armadilhas") or []):
             if not isinstance(trap, dict):
@@ -312,7 +355,8 @@ class CerebroDungeons:
             pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else None
             if pos is None:
                 continue
-            if (float(pos[0]) - float(x)) ** 2 + (float(pos[1]) - float(y)) ** 2 <= 0.85 * 0.85:
+            limite = max(0.62, float(tcfg.get("raio_colisao", 0.58) or 0.58)) + max(0.15, float(raio))
+            if (float(pos[0]) - float(x)) ** 2 + (float(pos[1]) - float(y)) ** 2 <= limite * limite:
                 return True
         return False
 
@@ -539,6 +583,8 @@ class CerebroDungeons:
                 max_x = centro + porta_w * 0.5 - folga
                 if min_x > max_x:
                     min_x = max_x = centro
+                if x < min_x or x > max_x:
+                    continue
                 if direcao == "N" and y <= sy + parede + folga:
                     return (max(min_x, min(max_x, x)), max(sy - folga, min(sy + parede + folga, y)))
                 if direcao == "S" and y >= sy + h - parede - folga:
@@ -549,6 +595,8 @@ class CerebroDungeons:
                 max_y = centro + porta_w * 0.5 - folga
                 if min_y > max_y:
                     min_y = max_y = centro
+                if y < min_y or y > max_y:
+                    continue
                 if direcao == "O" and x <= sx + parede + folga:
                     return (max(sx - folga, min(sx + parede + folga, x)), max(min_y, min(max_y, y)))
                 if direcao == "L" and x >= sx + w - parede - folga:
@@ -709,6 +757,8 @@ class CerebroDungeons:
                 grid[y][x] = int(tile)
 
     def _perder_vida_player(self, player, motivo, registrar_diff=None, forcar=False):
+        if bool(player.estado_extra.get("morto", False) or player.estado_extra.get("game_over", False)):
+            return False
         estado = player.estado_extra.get("estado_dungeon")
         if not isinstance(estado, dict):
             return False
@@ -720,7 +770,7 @@ class CerebroDungeons:
         estado["ultimo_dano_motivo"] = str(motivo or "")
         estado["invulneravel_dungeon_ate_tick"] = tick + int(self._regras.get("invulnerabilidade_dungeon_ticks", 90) or 90)
         if coracoes <= 0:
-            self._expulsar_player_dungeon(player)
+            self._marcar_game_over_dungeon(player, str(motivo or "sem_coracoes"), queda=False)
         else:
             BANCO_DADOS.atualizar_objeto(player.Id, {"estado": player.estado_extra})
         if callable(registrar_diff):
@@ -728,6 +778,8 @@ class CerebroDungeons:
         return True
 
     def _matar_player_dungeon(self, player, motivo="queda_buraco", registrar_diff=None):
+        if bool(player.estado_extra.get("morto", False) or player.estado_extra.get("game_over", False)):
+            return False
         estado = player.estado_extra.get("estado_dungeon")
         if not isinstance(estado, dict):
             return False
@@ -735,14 +787,32 @@ class CerebroDungeons:
         estado["ultimo_dano_motivo"] = str(motivo or "queda_buraco")
         estado["queda_buraco"] = True
         estado["animacao_queda_tick"] = int(getattr(self._cerebro, "_tick_contador", 0))
-        self._expulsar_player_dungeon(player)
+        self._marcar_game_over_dungeon(player, "queda_buraco", queda=True)
         if callable(registrar_diff):
             registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=player.Id, autor="server", categoria="player")
         return True
 
+    def _marcar_game_over_dungeon(self, player, motivo: str, queda: bool = False) -> None:
+        estado = player.estado_extra.get("estado_dungeon")
+        if isinstance(estado, dict):
+            estado["coracoes"] = 0
+            estado["ultimo_dano_motivo"] = str(motivo or "morte_dungeon")
+            if bool(queda):
+                estado["queda_buraco"] = True
+                estado["animacao_queda_tick"] = int(getattr(self._cerebro, "_tick_contador", 0))
+        player.estado_extra["morto"] = True
+        player.estado_extra["game_over"] = True
+        player.estado_extra["motivo_morte"] = str(motivo or "morte_dungeon")
+        player.estado_extra["queda_buraco"] = bool(queda)
+        BANCO_DADOS.atualizar_objeto(player.Id, {"estado": player.estado_extra})
+
     def _expulsar_player_dungeon(self, player):
         estado_dungeon = player.estado_extra.get("estado_dungeon") if isinstance(player.estado_extra.get("estado_dungeon"), dict) else {}
         pos = resolver_posicao_saida_dungeon(player, estado_dungeon)
+        pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
+        pos_dim["Mundo"] = [float(pos[0]), float(pos[1])]
+        player.estado_extra["posicoes_por_dimensao"] = pos_dim
+        player.estado_extra["ultima_pos_mundo"] = [float(pos[0]), float(pos[1])]
         limpar_estado_temporario(player)
         BANCO_DADOS.atualizar_objeto(player.Id, {"posicao": [float(pos[0]), float(pos[1])], "estado": player.estado_extra})
         try:

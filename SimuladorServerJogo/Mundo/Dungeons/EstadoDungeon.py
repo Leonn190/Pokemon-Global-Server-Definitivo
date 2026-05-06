@@ -98,6 +98,14 @@ def registrar_sala_explorada(player, dungeon_code: str, sala_id: str, client_id:
 
 def resolver_posicao_saida_dungeon(player, estado_dungeon: dict) -> list[float]:
     estado = getattr(player, "estado_extra", {}) if isinstance(getattr(player, "estado_extra", {}), dict) else {}
+    valor = (estado_dungeon or {}).get("entrada_mundo")
+    if isinstance(valor, (list, tuple)) and len(valor) == 2:
+        return [float(valor[0]), float(valor[1])]
+    entradas_por_porta = estado.get("entradas_dungeon_mundo") if isinstance(estado.get("entradas_dungeon_mundo"), dict) else {}
+    chave_entrada = f"{str((estado_dungeon or {}).get('dungeon_code') or '')}:{int((estado_dungeon or {}).get('porta_idx', 1) or 1)}:{int((estado_dungeon or {}).get('pedra_id', 0) or 0)}"
+    valor = entradas_por_porta.get(chave_entrada)
+    if isinstance(valor, (list, tuple)) and len(valor) == 2:
+        return [float(valor[0]), float(valor[1])]
     pos_dim = estado.get("posicoes_por_dimensao") if isinstance(estado.get("posicoes_por_dimensao"), dict) else {}
     valor_mundo = pos_dim.get("Mundo")
     if isinstance(valor_mundo, (list, tuple)) and len(valor_mundo) == 2:
@@ -106,9 +114,6 @@ def resolver_posicao_saida_dungeon(player, estado_dungeon: dict) -> list[float]:
         valor = estado.get(chave)
         if isinstance(valor, (list, tuple)) and len(valor) == 2:
             return [float(valor[0]), float(valor[1])]
-    valor = (estado_dungeon or {}).get("entrada_mundo")
-    if isinstance(valor, (list, tuple)) and len(valor) == 2:
-        return [float(valor[0]), float(valor[1])]
     pedra = BANCO_DADOS.obter_objeto(int((estado_dungeon or {}).get("pedra_id", 0) or 0))
     pos = list(getattr(pedra, "posicao", [])) if pedra is not None else []
     if isinstance(pos, list) and len(pos) == 2:

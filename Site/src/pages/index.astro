@@ -15,14 +15,13 @@ const pokemonsHome = carregarPokemons();
 const totalPokemonsHome = pokemonsHome.length || 1307;
 const estatisticas = [
   { valor: String(totalPokemonsHome), rotulo: "Pokémon cadastrados" },
-  { valor: "75", rotulo: "Ataques cadastrados" },
+  { valor: "183", rotulo: "Ataques cadastrados" },
   { valor: "50", rotulo: "Efeitos e status" },
-  { valor: "142", rotulo: "Itens registrados" },
-  { valor: "63", rotulo: "Equipáveis" },
-  { valor: "20", rotulo: "Tipos no sistema" },
+  { valor: "145", rotulo: "Itens registrados" },
+  { valor: "64", rotulo: "Equipáveis" },
 ];
-const logo = urlPublica("GlobalServer/Logo.png");
-const quadroLogo = urlPublica("GlobalServer/QuadroLogo.png");
+const logo = urlPublica("GlobalServer/Logo.webp");
+const quadroLogo = urlPublica("GlobalServer/QuadroLogo.webp");
 const imagensPokemonsHomeIndexadas = indexarPublicoPorNome("Imagens");
 const iconesTiposHome = indexarPublicoPorNome("Tipos");
 const iconesAtributosHome = indexarPublicoPorNome("Atributos");

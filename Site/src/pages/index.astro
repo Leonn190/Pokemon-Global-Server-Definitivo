@@ -2,6 +2,8 @@
 import Layout from "../Componentes/Layout.astro";
 import Botao from "../Componentes/Botao.astro";
 import { indexarPublicoPorNome, urlPublica } from "../Codigo/AssetsPublicos.js";
+import { carregarAtaques } from "../Codigo/AtaquesWikiDados.js";
+import { carregarItens } from "../Codigo/ItemWikiDados.js";
 import {
   ATRIBUTOS_BASE,
   carregarPokemons,
@@ -12,13 +14,15 @@ import {
 import "../Estilos/wiki.css";
 import "../Estilos/home.css";
 const pokemonsHome = carregarPokemons();
-const totalPokemonsHome = pokemonsHome.length || 1307;
-const estatisticas = [
+const ataquesHome = carregarAtaques();
+const itensHome = carregarItens();
+const totalPokemonsHome = pokemonsHome.length;
+const totalAtaquesHome = ataquesHome.length;
+const totalItensHome = itensHome.length;
+const estatisticasPrincipais = [
   { valor: String(totalPokemonsHome), rotulo: "Pokémon cadastrados" },
-  { valor: "183", rotulo: "Ataques cadastrados" },
-  { valor: "50", rotulo: "Efeitos e status" },
-  { valor: "145", rotulo: "Itens registrados" },
-  { valor: "64", rotulo: "Equipáveis" },
+  { valor: String(totalAtaquesHome), rotulo: "Ataques cadastrados" },
+  { valor: String(totalItensHome), rotulo: "Itens registrados" },
 ];
 const logo = urlPublica("GlobalServer/Logo.webp");
 const quadroLogo = urlPublica("GlobalServer/QuadroLogo.webp");
@@ -82,29 +86,15 @@ const payloadHomePokemon = JSON.stringify({
         <p>
           Pokémon Global Server é um fan game 2D onde o jogador sai pelo mapa, descobre biomas, captura criaturas, coleta recursos, monta equipe, cria itens e entra em batalhas que dependem de energia, efeitos, tipos e posicionamento.
         </p>
-        <div class="mini-destaques" aria-label="Destaques da experiência">
-          <article>
-            <strong>Mundo por chunks</strong>
-            <span>Mapa enorme sem carregar tudo de uma vez.</span>
-          </article>
-          <article>
-            <strong>Arena tática</strong>
-            <span>Ações planejadas, logs e animações no cliente.</span>
-          </article>
-          <article>
-            <strong>Progressão completa</strong>
-            <span>Captura, evolução, inventário, craft e equipamentos.</span>
-          </article>
+        <div class="mini-destaques metricas-home" aria-label="Números do projeto">
+          {estatisticasPrincipais.map((item) => (
+            <article>
+              <strong>{item.valor}</strong>
+              <span>{item.rotulo}</span>
+            </article>
+          ))}
         </div>
       </div>
-    </div>
-    <div class="estatisticas-home" aria-label="Estatísticas do projeto">
-      {estatisticas.map((item) => (
-        <article class="estatistica-card">
-          <strong>{item.valor}</strong>
-          <span>{item.rotulo}</span>
-        </article>
-      ))}
     </div>
   </section>
   <section class="secao pokemon-destaque-home pokemon-destaque-carrossel-home" data-home-pokemon-carousel aria-labelledby="titulo-pokemon-destaque">

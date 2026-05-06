@@ -312,6 +312,18 @@ body:has(.hero-home) .aviso-legal {
   color: var(--texto-fraco);
   line-height: 1.42;
 }
+
+.metricas-home article {
+  min-height: 138px;
+}
+.metricas-home strong {
+  font-size: clamp(1.9rem, 3.2vw, 2.8rem);
+  line-height: 1;
+  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.52);
+}
+.metricas-home span {
+  font-size: 0.95rem;
+}
 .cabecalho-home {
   display: grid;
   gap: 14px;

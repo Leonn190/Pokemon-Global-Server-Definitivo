@@ -29,6 +29,19 @@ def _interp(a: float, b: float, t: float) -> float:
 PALETA_TIPOS_ATAQUE = CORES_TIPOS_ATAQUE
 
 
+def _cor_rgb(valor: object):
+    if not (isinstance(valor, (list, tuple)) and len(valor) >= 3):
+        return None
+    try:
+        return (
+            max(0, min(255, int(valor[0]))),
+            max(0, min(255, int(valor[1]))),
+            max(0, min(255, int(valor[2]))),
+        )
+    except (TypeError, ValueError):
+        return None
+
+
 
 PROJETEIS_ESPECIAIS: Dict[str, dict[str, object]] = {
     "biscoito": {
@@ -63,8 +76,9 @@ class ProjetilBatalha:
         if pos is None:
             return
         x, y = pos
+        tamanho = max(4, float(self.config.get("tamanho") or 16.0))
         if isinstance(self.sprite, pygame.Surface):
-            lado = max(20, min(50, int(max(self.sprite.get_width(), self.sprite.get_height()))))
+            lado = max(8, int(tamanho * 2))
             img = pygame.transform.smoothscale(self.sprite, (lado, lado)).convert_alpha()
             ang = float(self.config.get("rotacao_base", 0.0) or 0.0)
             if bool(self.config.get("gira", False)):
@@ -74,7 +88,7 @@ class ProjetilBatalha:
             surface.blit(img, img.get_rect(center=(int(x), int(y))))
             return
         cor = tuple(self.config.get("cor") or PALETA_TIPOS_ATAQUE["normal"])
-        raio = max(7, int(13 + 4 * math.sin(t * math.pi)))
+        raio = max(4, int(tamanho + tamanho * 0.24 * math.sin(t * math.pi)))
         brilho = tuple(min(255, int(c * 1.25 + 32)) for c in cor)
         pygame.draw.circle(surface, (*cor, 230), (int(x), int(y)), raio)
         pygame.draw.circle(surface, (*brilho, 235), (int(x - raio * 0.25), int(y - raio * 0.25)), max(3, raio // 2))
@@ -87,8 +101,8 @@ class GerenciadorProjeteisBatalha:
         self._posicao_tela = posicao_tela
         self.projeteis: list[ProjetilBatalha] = []
 
-    def animar_lancar(self, origem: Vector2, destino: Vector2, sprite=None, duracao=None, tipo_ataque=None, velocidade=None):
-        config = self._config_projetil(sprite, tipo_ataque=tipo_ataque, velocidade=velocidade)
+    def animar_lancar(self, origem: Vector2, destino: Vector2, sprite=None, duracao=None, tipo_ataque=None, velocidade=None, tamanho=None, cor=None):
+        config = self._config_projetil(sprite, tipo_ataque=tipo_ataque, velocidade=velocidade, tamanho=tamanho, cor=cor)
         dist = max(0.001, math.hypot(destino[0] - origem[0], destino[1] - origem[1]))
         duracao_real = float(duracao or 0.0)
         if duracao_real <= 0:
@@ -110,25 +124,28 @@ class GerenciadorProjeteisBatalha:
     def esta_ocupado(self) -> bool:
         return bool(self.projeteis)
 
-    def _config_projetil(self, sprite=None, tipo_ataque=None, velocidade=None):
+    def _config_projetil(self, sprite=None, tipo_ataque=None, velocidade=None, tamanho=None, cor=None):
         dados = dict(sprite or {}) if isinstance(sprite, dict) else {}
         nome = dados.get("nome") or dados.get("projetil") or dados.get("codigo") or dados.get("code") or (sprite if isinstance(sprite, str) else None)
         chave = _normalizar_nome(nome)
+        generico = chave in {"", "generico", "padrao", "default"}
         base = dict(PROJETEIS_ESPECIAIS.get(chave) or {})
-        caminho = dados.get("caminho") or dados.get("arquivo") or base.get("caminho") or base.get("arquivo")
+        caminho = None if generico else dados.get("caminho") or dados.get("arquivo") or base.get("caminho") or base.get("arquivo")
         if caminho is None and chave in PROJETEIS_ESPECIAIS:
             caminho = self._buscar_arquivo_projetil(base.get("nome") or nome)
         elif caminho is not None and not Path(str(caminho)).is_absolute() and Path(str(caminho)).parent == Path("."):
             caminho = self._buscar_arquivo_projetil(caminho) or caminho
+        cor_explicita = _cor_rgb(cor if cor is not None else dados.get("cor"))
         config = {
-            "nome": str(base.get("nome") or nome or "padrao"),
-            "velocidade": float(velocidade or dados.get("velocidade") or base.get("velocidade") or 7.0),
+            "nome": str(base.get("nome") or nome or "Generico"),
+            "velocidade": float(velocidade or dados.get("velocidade") or base.get("velocidade") or 8.0),
+            "tamanho": float(tamanho or dados.get("tamanho") or base.get("tamanho") or 16.0),
             "gira": bool(dados.get("gira", base.get("gira", False))),
             "rotacao_base": float(dados.get("rotacao_base", base.get("rotacao_base", 0.0)) or 0.0),
             "tipo_ataque": normalizar_tipo_ataque(tipo_ataque or dados.get("tipo") or dados.get("tipo_ataque") or "normal"),
             "sprite": self._carregar_projetil(caminho),
         }
-        config["cor"] = PALETA_TIPOS_ATAQUE.get(config["tipo_ataque"], PALETA_TIPOS_ATAQUE["normal"])
+        config["cor"] = cor_explicita or PALETA_TIPOS_ATAQUE.get(config["tipo_ataque"], PALETA_TIPOS_ATAQUE["normal"])
         return config
 
     def _buscar_arquivo_projetil(self, nome):

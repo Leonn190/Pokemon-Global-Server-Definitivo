@@ -794,7 +794,7 @@ def gerar_propriedades_ataques_json(csv_path: Path, out_path: Path):
                 "nome": nome,
                 "custo": int(float(row.get("Custo") or 0)),
                 "estilo_logico": estilo,
-                "animacao": {"contato": "avanco", "projetil": None},
+                "animacao": {"modelo": "Avanço", "efeito_executor": None, "efeito_alvo": None},
                 "execute_principal": f"ataque_{nome.lower().replace(' ', '_')}",
                 "parametros": {"tipo": str(row.get("Tipo") or "normal").lower()},
             }

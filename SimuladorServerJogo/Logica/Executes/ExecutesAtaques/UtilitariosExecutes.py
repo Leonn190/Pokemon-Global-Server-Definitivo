@@ -240,12 +240,33 @@ def aplicar_mod_atributo(ctx, alvo, nome_efeito, atributo, valor, duracao=6, neg
 
 def executar_bola(ctx, alvo, tipo):
     usuario = (ctx or {}).get("usuario")
-    ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * 0.80, "especial", tipo=tipo)
+    secundarios = inimigos_vivos_adjacentes_ao_alvo(ctx, alvo)
+    alvo_principal_id = getattr(alvo, "id_batalha", None)
+    secundarios_ids = [getattr(p, "id_batalha", None) for p in secundarios if p is not None]
+    ret = dano_generico(
+        ctx,
+        alvo,
+        usuario.obter_atributo("SpA") * 0.80,
+        "especial",
+        tipo=tipo,
+        alvo_principal_id=alvo_principal_id,
+        alvos_secundarios_ids=secundarios_ids,
+        impacto_principal=True,
+    )
     dano_vida = fnum(ret.get("dano_vida"), 0.0)
     if dano_vida <= 0:
         return ret
-    for adjacente in inimigos_vivos_adjacentes_ao_alvo(ctx, alvo):
-        dano_generico(ctx, adjacente, dano_vida * 0.5, "especial", tipo=tipo)
+    for adjacente in secundarios:
+        dano_generico(
+            ctx,
+            adjacente,
+            dano_vida * 0.5,
+            "especial",
+            tipo=tipo,
+            alvo_principal_id=alvo_principal_id,
+            alvos_secundarios_ids=secundarios_ids,
+            impacto_secundario=True,
+        )
     return ret
 
 

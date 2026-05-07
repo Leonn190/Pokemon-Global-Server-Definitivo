@@ -8,10 +8,10 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_rachar_terra",
       "parametros": {
@@ -36,10 +36,10 @@
       "custo": 25,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_poeira_nos_olhos",
       "parametros": {
@@ -47,7 +47,7 @@
         "atributo": "Acuracia",
         "percentual_alvo": 0.1,
         "percentual_mag": 0.1,
-        "rotulo_atributo": "Acur\u00e1cia",
+        "rotulo_atributo": "Acurácia",
         "duracao": 6
       },
       "alvificacao": {

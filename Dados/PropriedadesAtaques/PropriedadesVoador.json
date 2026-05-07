@@ -8,10 +8,9 @@
       "custo": 50,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_voar",
       "parametros": {
@@ -27,10 +26,9 @@
       "custo": 25,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_olho_de_águia",
       "parametros": {
@@ -47,10 +45,9 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": "BarreiraCelular",
-        "efeito_usuario": null
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular"
       },
       "execute_principal": "ataque_cortina_de_vento",
       "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (10% de Vel).",
@@ -76,10 +73,9 @@
       "custo": 0,
       "estilo_logico": "passivo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_voador",
       "parametros": {

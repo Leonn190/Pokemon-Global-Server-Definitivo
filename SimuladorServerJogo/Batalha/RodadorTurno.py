@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ControladorExecutes import executar_alvificacao, executar_execute_principal, obter_executes_reativos
+from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import inimigos_vivos_adjacentes_ao_alvo, normalizar
 from SimuladorServerJogo.Mundo.AutoridadeCaptura import resolver_captura_batalha
 
 
@@ -156,7 +157,13 @@ class RodadorTurno:
         alvos = executar_alvificacao(chave_ataque, contexto)
         contexto["alvos"] = list(alvos or [])
         alvo_ids = [alvo.id_batalha for alvo in contexto["alvos"] if alvo is not None]
-        self.partida.registrar_evento_log("ataque_usado", self._dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids, animacao=animacao))
+        alvo_principal_id = alvo_ids[0] if alvo_ids else None
+        alvos_secundarios_ids = []
+        if normalizar(animacao.get("modelo")) == "explosao" and contexto["alvos"]:
+            secundarios = inimigos_vivos_adjacentes_ao_alvo(contexto, contexto["alvos"][0])
+            alvos_secundarios_ids = [alvo.id_batalha for alvo in secundarios if alvo is not None]
+            alvo_ids = [alvo_principal_id, *alvos_secundarios_ids]
+        self.partida.registrar_evento_log("ataque_usado", self._dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids, animacao=animacao, alvo_principal_id=alvo_principal_id, alvos_secundarios_ids=alvos_secundarios_ids))
         if not contexto["alvos"] and str(props.get("estilo_logico") or "").lower() != "ativo":
             self.partida.registrar_evento_log("ataque_sem_alvo_real", self._dados_ataque(pokemon, acao, props, alvo_ids=[], animacao=animacao))
             self._falhar(acao, "sem_alvo_real")
@@ -167,7 +174,7 @@ class RodadorTurno:
             if retorno.get("falha"):
                 self._falhar(acao, str(retorno.get("motivo") or "execute_falhou"))
             else:
-                self.partida.registrar_evento_log("ataque_acertou", self._dados_ataque(pokemon, acao, props, alvo_ids=[pokemon.id_batalha], alvo=pokemon, animacao=animacao))
+                self.partida.registrar_evento_log("ataque_acertou", self._dados_ataque(pokemon, acao, props, alvo_ids=[pokemon.id_batalha], alvo=pokemon, animacao=animacao, alvo_principal_id=pokemon.id_batalha))
                 atingiu = True
         else:
             for alvo in contexto["alvos"]:
@@ -189,10 +196,10 @@ class RodadorTurno:
                 acerto = self._calcular_acerto(pokemon, alvo, props)
                 ctx_alvo["bonus_critico_acerto"] = acerto.get("bonus_critico_acerto", 0.0)
                 if not acerto.get("acertou"):
-                    self.partida.registrar_evento_log("ataque_errou", {**self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao), "acerto": acerto})
+                    self.partida.registrar_evento_log("ataque_errou", {**self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao, alvo_principal_id=alvo_principal_id), "acerto": acerto})
                     self._falhar(acao, "ataque_errou", alvo_id=alvo.id_batalha)
                     continue
-                self.partida.registrar_evento_log("ataque_acertou", {**self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao), "acerto": acerto})
+                self.partida.registrar_evento_log("ataque_acertou", {**self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao, alvo_principal_id=alvo_principal_id), "acerto": acerto})
                 retorno = executar_execute_principal(chave_ataque, ctx_alvo, alvo=alvo)
                 if retorno.get("falha"):
                     self._falhar(acao, str(retorno.get("motivo") or "execute_falhou"), alvo_id=alvo.id_batalha)
@@ -377,16 +384,15 @@ class RodadorTurno:
         visual = props.get("visual") if isinstance(props.get("visual"), dict) else {}
         if visual:
             animacao.setdefault("visual", copy.deepcopy(visual))
-        for chave in ("contato", "projetil", "efeito_alvo", "efeito_usuario"):
+        for chave in ("modelo", "projetil", "efeito_alvo", "efeito_executor"):
             if chave in props and chave not in animacao:
                 animacao[chave] = copy.deepcopy(props.get(chave))
-        animacao.setdefault("contato", "nenhum")
-        animacao.setdefault("projetil", None)
+        animacao.setdefault("modelo", "EfeitoAlvo")
+        animacao.setdefault("efeito_executor", None)
         animacao.setdefault("efeito_alvo", None)
-        animacao.setdefault("efeito_usuario", None)
         return animacao
 
-    def _dados_ataque(self, pokemon, acao, props, alvo_ids=None, alvo=None, animacao=None):
+    def _dados_ataque(self, pokemon, acao, props, alvo_ids=None, alvo=None, animacao=None, alvo_principal_id=None, alvos_secundarios_ids=None):
         ataque = (acao or {}).get("ataque") if isinstance((acao or {}).get("ataque"), dict) else {}
         alvo_dict = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
         parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
@@ -403,12 +409,11 @@ class RodadorTurno:
             "area_origem": pokemon.area_id,
             "area_alvo": alvo_dict.get("area_id"),
             "alvos_ids": list(alvo_ids or []),
+            "alvo_principal_id": alvo_principal_id,
+            "alvos_secundarios_ids": list(alvos_secundarios_ids or []),
             "animacao": copy.deepcopy(animacao or self._dados_animacao(props)),
             "visual": copy.deepcopy(props.get("visual") if isinstance(props.get("visual"), dict) else {}),
-            "contato": (animacao or {}).get("contato") if isinstance(animacao, dict) else None,
-            "projetil": (animacao or {}).get("projetil") if isinstance(animacao, dict) else None,
-            "efeito_alvo": (animacao or {}).get("efeito_alvo") if isinstance(animacao, dict) else None,
-            "efeito_usuario": (animacao or {}).get("efeito_usuario") if isinstance(animacao, dict) else None,
+            "modelo": (animacao or {}).get("modelo") if isinstance(animacao, dict) else None,
         }
         if alvo is not None:
             dados.update({"alvo_id": alvo.id_batalha, "alvo_nome": alvo.nome, "area_alvo_real": alvo.area_id})

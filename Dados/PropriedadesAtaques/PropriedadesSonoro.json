@@ -8,10 +8,10 @@
       "custo": 45,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_som_atordoante",
       "parametros": {

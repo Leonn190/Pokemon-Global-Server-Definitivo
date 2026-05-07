@@ -8,10 +8,9 @@
       "custo": 40,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null,
-        "efeito_alvo": "ImpactoRochoso",
-        "efeito_usuario": null
+        "modelo": "Avanço",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
       },
       "execute_principal": "ataque_investida",
       "parametros": {
@@ -32,10 +31,10 @@
       "custo": 25,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": "biscoito",
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": "ChuvaBrilhante",
-        "efeito_usuario": null
+        "projetil": "Biscoito"
       },
       "execute_principal": "ataque_biscoito",
       "parametros": {
@@ -56,10 +55,9 @@
       "custo": 20,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": "EstouroVermelho"
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EstouroVermelho",
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_enraivecer",
       "parametros": {
@@ -72,10 +70,9 @@
       "custo": 20,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": "MarcaAmarela"
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaAmarela",
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_provocar",
       "parametros": {
@@ -88,10 +85,9 @@
       "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": "BarreiraCelular",
-        "efeito_usuario": null
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular"
       },
       "execute_principal": "ataque_proteger",
       "parametros": {
@@ -112,10 +108,9 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null,
-        "efeito_alvo": "Garra",
-        "efeito_usuario": null
+        "modelo": "Avanço",
+        "efeito_executor": null,
+        "efeito_alvo": "Garra"
       },
       "execute_principal": "ataque_arranhar",
       "parametros": {
@@ -136,10 +131,9 @@
       "custo": 25,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": "EnergiaAzul"
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "EnergiaAzul",
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_recarga",
       "parametros": {
@@ -152,10 +146,9 @@
       "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "laser",
-        "projetil": null,
-        "efeito_alvo": "EnergiaAzul",
-        "efeito_usuario": null
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "EnergiaAzul"
       },
       "execute_principal": "ataque_energia",
       "parametros": {
@@ -176,10 +169,9 @@
       "custo": 100,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "laser_linha",
-        "projetil": null,
-        "efeito_alvo": "RaioAzul",
-        "efeito_usuario": null
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": "RaioAzul"
       },
       "execute_principal": "ataque_hiper_raio",
       "parametros": {
@@ -200,10 +192,9 @@
       "custo": 80,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "salto",
-        "projetil": null,
-        "efeito_alvo": "CorteDourado",
-        "efeito_usuario": null
+        "modelo": "Salto",
+        "efeito_executor": null,
+        "efeito_alvo": "CorteDourado"
       },
       "execute_principal": "ataque_guilhotina",
       "parametros": {
@@ -224,10 +215,10 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": "TirosAmarelos",
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_disparo",
       "parametros": {
@@ -248,10 +239,9 @@
       "custo": 45,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null,
-        "efeito_alvo": "ImpactoRochoso",
-        "efeito_usuario": null
+        "modelo": "Avanço",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
       },
       "execute_principal": "ataque_chifrada",
       "parametros": {
@@ -272,10 +262,9 @@
       "custo": 30,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": "MarcaAzul",
-        "efeito_usuario": null
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "MarcaAzul"
       },
       "execute_principal": "ataque_resetar",
       "parametros": {
@@ -297,10 +286,9 @@
       "custo": 60,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": "BarreiraCelular"
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "BarreiraCelular",
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_tankar",
       "parametros": {
@@ -313,10 +301,9 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null,
-        "efeito_alvo": "FacasBrancas",
-        "efeito_usuario": null
+        "modelo": "Avanço",
+        "efeito_executor": null,
+        "efeito_alvo": "FacasBrancas"
       },
       "execute_principal": "ataque_estocada",
       "parametros": {
@@ -337,10 +324,12 @@
       "custo": 50,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Explosão",
+        "efeito_executor": null,
         "efeito_alvo": "SuperNova",
-        "efeito_usuario": null
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "efeito_impacto_secundario": "SuperNova"
       },
       "execute_principal": "ataque_bola_climática",
       "parametros": {
@@ -365,10 +354,9 @@
       "custo": 45,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "avanco",
-        "projetil": null,
-        "efeito_alvo": "Mordida",
-        "efeito_usuario": null
+        "modelo": "Avanço",
+        "efeito_executor": null,
+        "efeito_alvo": "Mordida"
       },
       "execute_principal": "ataque_hiper_presa",
       "parametros": {
@@ -389,10 +377,9 @@
       "custo": 0,
       "estilo_logico": "passivo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": "MarcaBrilhosa"
+        "modelo": "EfeitoProprio",
+        "efeito_executor": "MarcaBrilhosa",
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_acumulador",
       "parametros": {
@@ -405,10 +392,10 @@
       "custo": 25,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_rugido",
       "parametros": {
@@ -433,10 +420,9 @@
       "custo": 35,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_inflar",
       "parametros": {
@@ -444,7 +430,7 @@
         "atributo": "Vida",
         "percentual_mag": 0.25,
         "percentual_usuario_atributo": 0.1,
-        "rotulo_atributo": "Vida M\u00e1xima",
+        "rotulo_atributo": "Vida Máxima",
         "duracao": 6
       }
     }

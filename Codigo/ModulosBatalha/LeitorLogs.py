@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+
 
 class LeitorLogs:
     ESTADOS = {"parado", "lendo", "aguardando_animacao", "consolidando", "aguardando_resultado", "finalizado"}
@@ -37,11 +39,15 @@ class LeitorLogs:
         if self.estado not in {"lendo", "aguardando_animacao", "consolidando"}:
             return
         if self.estado == "aguardando_animacao":
-            if self.controlador_animacoes.esta_ocupado():
+            proximo = self.historico[self.indice] if self.indice < len(self.historico) else None
+            pode_processar = proximo is not None and hasattr(self.controlador_animacoes, "pode_processar_evento_durante_animacao") and self.controlador_animacoes.pode_processar_evento_durante_animacao(proximo)
+            if self.controlador_animacoes.esta_ocupado() and not pode_processar:
                 return
             self.estado = "lendo"
         if self.estado == "lendo":
-            if self.controlador_animacoes.esta_ocupado():
+            proximo = self.historico[self.indice] if self.indice < len(self.historico) else None
+            pode_processar = proximo is not None and hasattr(self.controlador_animacoes, "pode_processar_evento_durante_animacao") and self.controlador_animacoes.pode_processar_evento_durante_animacao(proximo)
+            if self.controlador_animacoes.esta_ocupado() and not pode_processar:
                 self.estado = "aguardando_animacao"
                 return
             if self.indice >= len(self.historico):
@@ -69,8 +75,12 @@ class LeitorLogs:
         tipo = str((evento or {}).get("tipo") or "")
         try:
             self.enviar_evento_para_hud(evento)
-            self.enviar_evento_para_animacao(evento)
-            self.aplicar_diff_evento(evento)
+            delay_visual = float(self.enviar_evento_para_animacao(evento) or 0.0)
+            if delay_visual > 0.001 and self._diff_deve_esperar_visual(tipo):
+                evento_diff = copy.deepcopy(evento)
+                self.controlador_animacoes.agendar_callback(delay_visual, lambda ev=evento_diff: self.aplicar_diff_evento(ev))
+            else:
+                self.aplicar_diff_evento(evento)
         except Exception as exc:
             self.avisos.append(f"evento_{tipo or 'desconhecido'}_ignorado:{exc}")
 
@@ -185,7 +195,20 @@ class LeitorLogs:
             self.controlador.registrar_evento_visual(evento)
 
     def enviar_evento_para_animacao(self, evento):
-        self.controlador_animacoes.receber_evento(evento)
+        return self.controlador_animacoes.receber_evento(evento)
+
+    @staticmethod
+    def _diff_deve_esperar_visual(tipo):
+        return str(tipo or "") in {
+            "pokemon_sofreu_dano",
+            "barreira_absorveu",
+            "pokemon_recebeu_cura",
+            "pokemon_ganhou_barreira",
+            "pokemon_recebeu_efeito",
+            "pokemon_variou_atributo",
+            "atributo_variou",
+            "pokemon_alterou_atributo",
+        }
 
     def consolidar_resultado(self):
         if isinstance(self.resultado, dict):

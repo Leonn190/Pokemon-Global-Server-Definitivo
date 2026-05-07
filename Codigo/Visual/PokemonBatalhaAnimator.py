@@ -98,22 +98,19 @@ class PokemonAnimator:
         cor = (55, 136, 232) if bool(positivo) else (126, 68, 190)
         return self.exibir_cartucho(pokemon, texto, "atributo", valor=valor, atributo=atributo, cor_fundo=cor)
 
-    def animar_lancar_projetil(self, origem, destino, sprite=None, duracao=None, tipo_ataque=None, velocidade=None):
+    def animar_lancar_projetil(self, origem, destino, sprite=None, duracao=None, tipo_ataque=None, velocidade=None, tamanho=None, cor=None):
         p0 = self._posicao_mundo(origem)
         p1 = self._posicao_mundo(destino)
         if p0 is None or p1 is None:
             return None
-        return self.projeteis.animar_lancar(p0, p1, sprite=sprite, duracao=duracao, tipo_ataque=tipo_ataque, velocidade=velocidade)
+        return self.projeteis.animar_lancar(p0, p1, sprite=sprite, duracao=duracao, tipo_ataque=tipo_ataque, velocidade=velocidade, tamanho=tamanho, cor=cor)
 
 
-    def animar_contato_irregular(self, estilo, origem, destino=None, tipo_ataque=None, duracao=None, **kwargs):
-        return self.contatos_irregulares.animar(estilo, origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, **kwargs)
+    def animar_laser(self, origem, destino, tipo_ataque=None, duracao=None, largura=None, cor=None):
+        return self.contatos_irregulares.animar_laser(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, largura=largura, cor=cor)
 
-    def animar_laser(self, origem, destino, tipo_ataque=None, duracao=None, largura=None):
-        return self.contatos_irregulares.animar_laser(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, largura=largura)
-
-    def animar_laser_linha(self, pokemon, linha_inicio, linha_fim=None, frente_linha=None, tipo_ataque=None, duracao=None, largura=None):
-        return self.contatos_irregulares.animar_laser_linha(
+    def animar_laser_por_linha(self, pokemon, linha_inicio, linha_fim=None, frente_linha=None, tipo_ataque=None, duracao=None, largura=None, cor=None):
+        return self.contatos_irregulares.animar_laser_por_linha(
             pokemon,
             linha_inicio,
             linha_fim,
@@ -121,13 +118,17 @@ class PokemonAnimator:
             tipo_ataque=tipo_ataque,
             duracao=duracao,
             largura=largura,
+            cor=cor,
         )
 
-    def animar_raio(self, origem, destino, tipo_ataque=None, duracao=None, intensidade=None):
-        return self.contatos_irregulares.animar_raio(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, intensidade=intensidade)
+    def animar_raio(self, origem, destino, tipo_ataque=None, duracao=None, largura=None, cor=None):
+        return self.contatos_irregulares.animar_raio(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, largura=largura, cor=cor)
 
-    def animar_jato_liquido(self, origem, destino, tipo_ataque=None, duracao=None, largura=None):
-        return self.contatos_irregulares.animar_jato_liquido(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, largura=largura)
+    def animar_jato(self, origem, destino, tipo_ataque=None, duracao=None, largura=None, cor=None):
+        return self.contatos_irregulares.animar_jato(origem, destino, tipo_ataque=tipo_ataque, duracao=duracao, largura=largura, cor=cor)
+
+    def animar_explosao_onda(self, centro, alvos=None, tipo_ataque=None, raio=None, duracao=None, largura=None, cor=None):
+        return self.contatos_irregulares.animar_explosao_onda(centro, alvos=alvos, tipo_ataque=tipo_ataque, raio=raio, duracao=duracao, largura=largura, cor=cor)
 
     def animar_desvio(self, pokemon, duracao=None, intensidade_tiles=None):
         if pokemon is None:
@@ -184,6 +185,50 @@ class PokemonAnimator:
         alcance = max(0.0, dist - raio_origem - raio_alvo)
         pico = (origem[0] + dx / dist * alcance, origem[1] + dy / dist * alcance)
         return self._adicionar({"tipo": "deslocamento_temporario", "pokemon": pokemon, "origem": origem, "pico": pico, "tempo": 0.0, "duracao": float(duracao or 0.86), "modo": "salto", "bloqueante": True})
+
+    def animar_deslocamento_ataque(self, pokemon, destinos, modo="avanco", velocidade=None, altura=None, distancia_parada="contato", retornar=True):
+        if pokemon is None:
+            return None
+        origem = self._posicao_mundo(pokemon)
+        if origem is None:
+            return None
+        pontos = [origem]
+        impactos = []
+        duracoes = []
+        atual = origem
+        vel = max(0.1, float(velocidade or (7.0 if str(modo) == "salto" else 8.0)))
+        for destino in list(destinos or []):
+            alvo = self._posicao_mundo(destino)
+            if alvo is None:
+                continue
+            ponto = self._ponto_parada_contato(pokemon, destino, atual, alvo, distancia_parada)
+            dist = max(0.05, math.hypot(ponto[0] - atual[0], ponto[1] - atual[1]))
+            dur = _clamp(dist / vel, 0.16, 0.72)
+            duracoes.append(dur)
+            pontos.append(ponto)
+            impactos.append(sum(duracoes))
+            atual = ponto
+        if len(pontos) <= 1:
+            return None
+        if bool(retornar):
+            dist = max(0.05, math.hypot(atual[0] - origem[0], atual[1] - origem[1]))
+            duracoes.append(_clamp(dist / vel, 0.16, 0.72))
+            pontos.append(origem)
+        duracao_total = max(0.16, sum(duracoes))
+        return self._adicionar(
+            {
+                "tipo": "deslocamento_ataque",
+                "pokemon": pokemon,
+                "pontos": pontos,
+                "duracoes": duracoes,
+                "impactos": impactos,
+                "tempo": 0.0,
+                "duracao": duracao_total,
+                "modo": str(modo or "avanco"),
+                "altura": float(altura or 1.25),
+                "bloqueante": True,
+            }
+        )
 
     def animar_movimento(self, pokemon, destino_area_id, duracao=None):
         if pokemon is None:
@@ -342,6 +387,30 @@ class PokemonAnimator:
                 y = _interp(origem[1], pico[1], vai)
                 if modo == "salto":
                     y -= math.sin(t * math.pi) * 1.25
+                pokemon.CentroMundoOverride = (x, y)
+        elif tipo == "deslocamento_ataque":
+            pokemon = anim.get("pokemon")
+            pontos = list(anim.get("pontos") or [])
+            duracoes = list(anim.get("duracoes") or [])
+            if pokemon is not None and len(pontos) >= 2 and duracoes:
+                tempo = float(anim.get("tempo", 0.0))
+                acumulado = 0.0
+                idx = 0
+                for i, dur in enumerate(duracoes):
+                    dur = max(0.001, float(dur or 0.0))
+                    if tempo <= acumulado + dur or i == len(duracoes) - 1:
+                        idx = i
+                        break
+                    acumulado += dur
+                dur = max(0.001, float(duracoes[idx] or 0.0))
+                local = _clamp((tempo - acumulado) / dur, 0.0, 1.0)
+                suave = local * local * (3 - 2 * local)
+                a = pontos[idx]
+                b = pontos[min(idx + 1, len(pontos) - 1)]
+                x = _interp(a[0], b[0], suave)
+                y = _interp(a[1], b[1], suave)
+                if str(anim.get("modo") or "") == "salto":
+                    y -= math.sin(local * math.pi) * float(anim.get("altura") or 1.25)
                 pokemon.CentroMundoOverride = (x, y)
         elif tipo == "movimento_area":
             pokemon = anim.get("pokemon")
@@ -505,6 +574,19 @@ class PokemonAnimator:
         if isinstance(rect, pygame.Rect) and rect.width > 0:
             return max(default, (float(rect.width) * 0.35) / tile)
         return default
+
+    def _ponto_parada_contato(self, pokemon, destino, origem, alvo, distancia_parada="contato"):
+        dx, dy = alvo[0] - origem[0], alvo[1] - origem[1]
+        dist = max(0.001, math.hypot(dx, dy))
+        if _normalizar_nome(distancia_parada) == "contato":
+            parada = self._raio_mundo(pokemon, 0.45) + self._raio_mundo(destino, 0.45)
+        else:
+            try:
+                parada = max(0.0, float(distancia_parada))
+            except (TypeError, ValueError):
+                parada = self._raio_mundo(pokemon, 0.45) + self._raio_mundo(destino, 0.45)
+        alcance = max(0.0, dist - parada)
+        return (origem[0] + dx / dist * alcance, origem[1] + dy / dist * alcance)
 
     def _desenhar_cartucho(self, surface, anim):
         pokemon = anim.get("pokemon")

@@ -8,10 +8,10 @@
       "custo": 50,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_raizes",
       "parametros": {
@@ -35,10 +35,9 @@
       "custo": 35,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_casco_vivo",
       "parametros": {
@@ -54,10 +53,10 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_murchar",
       "parametros": {
@@ -65,7 +64,7 @@
         "atributo": "Vida",
         "percentual_alvo": 0.06,
         "percentual_mag": 0.08,
-        "rotulo_atributo": "Vida M\u00e1xima",
+        "rotulo_atributo": "Vida Máxima",
         "duracao": 6
       },
       "alvificacao": {
@@ -83,10 +82,9 @@
       "custo": 80,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "laser_linha",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_raio_solar",
       "parametros": {

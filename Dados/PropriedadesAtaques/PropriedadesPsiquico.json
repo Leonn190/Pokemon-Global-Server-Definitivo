@@ -8,10 +8,10 @@
       "custo": 45,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_confusão",
       "parametros": {
@@ -35,10 +35,9 @@
       "custo": 40,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_flutuar",
       "parametros": {
@@ -54,10 +53,9 @@
       "custo": 30,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_instinto",
       "parametros": {
@@ -74,10 +72,9 @@
       "custo": 75,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "laser_linha",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_raio_psíquico",
       "parametros": {
@@ -102,10 +99,9 @@
       "custo": 40,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": "BarreiraCelular",
-        "efeito_usuario": null
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular"
       },
       "execute_principal": "ataque_véu_arcano",
       "descricao": "O alvo ganha uma barreira equivalente a (20% de Mag) + (12% de SpA).",
@@ -131,10 +127,9 @@
       "custo": 35,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": "BarreiraCelular",
-        "efeito_usuario": null
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular"
       },
       "execute_principal": "ataque_mente_protetora",
       "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (10% de Int).",
@@ -160,10 +155,9 @@
       "custo": 0,
       "estilo_logico": "passivo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_flutuante",
       "parametros": {

@@ -8,10 +8,10 @@
       "custo": 25,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Projetil",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "projetil": "Generico"
       },
       "execute_principal": "ataque_ferrugem",
       "parametros": {
@@ -36,10 +36,9 @@
       "custo": 35,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_afiar",
       "parametros": {

@@ -8,10 +8,9 @@
       "custo": 45,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": "BarreiraCelular",
-        "efeito_usuario": null
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular"
       },
       "execute_principal": "ataque_muralha_rochosa",
       "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (15% de Def).",
@@ -37,10 +36,9 @@
       "custo": 25,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_casca_de_pedra",
       "parametros": {

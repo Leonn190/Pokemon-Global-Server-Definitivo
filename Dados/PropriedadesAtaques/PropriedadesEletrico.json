@@ -8,10 +8,12 @@
       "custo": 60,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "tiro",
-        "projetil": null,
+        "modelo": "Explosão",
+        "efeito_executor": null,
         "efeito_alvo": null,
-        "efeito_usuario": null
+        "contato": "Projetil",
+        "projetil": "Generico",
+        "efeito_impacto_secundario": null
       },
       "execute_principal": "ataque_bola_eletrica",
       "parametros": {
@@ -35,10 +37,9 @@
       "custo": 45,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "raio",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "Raio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_energizar",
       "parametros": {
@@ -63,10 +64,9 @@
       "custo": 40,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_amplificar",
       "parametros": {
@@ -82,10 +82,9 @@
       "custo": 55,
       "estilo_logico": "ativo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "EfeitoProprio",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_dança_elétrica",
       "parametros": {
@@ -100,10 +99,9 @@
       "custo": 40,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "nenhum",
-        "projetil": null,
-        "efeito_alvo": "BarreiraCelular",
-        "efeito_usuario": null
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "BarreiraCelular"
       },
       "execute_principal": "ataque_campo_condutor",
       "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (12% de Ene).",

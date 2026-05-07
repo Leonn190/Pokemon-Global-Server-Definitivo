@@ -8,10 +8,9 @@
       "custo": 90,
       "estilo_logico": "alvo",
       "animacao": {
-        "contato": "laser_linha",
-        "projetil": null,
-        "efeito_alvo": null,
-        "efeito_usuario": null
+        "modelo": "Laser",
+        "efeito_executor": null,
+        "efeito_alvo": null
       },
       "execute_principal": "ataque_raio_cósmico",
       "parametros": {

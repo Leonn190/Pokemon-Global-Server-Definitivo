@@ -190,11 +190,14 @@ def _exec_bola_climatica(ctx, alvo):
     usuario = ctx.get("usuario")
     partida = ctx.get("partida")
     bruto = usuario.obter_atributo("SpA") * (1.00 if getattr(partida, "clima_atual", None) else 0.80)
-    ret = dano_generico(ctx, alvo, bruto, "especial")
+    secundarios = inimigos_vivos_adjacentes_ao_alvo(ctx, alvo)
+    alvo_principal_id = getattr(alvo, "id_batalha", None)
+    secundarios_ids = [getattr(p, "id_batalha", None) for p in secundarios if p is not None]
+    ret = dano_generico(ctx, alvo, bruto, "especial", alvo_principal_id=alvo_principal_id, alvos_secundarios_ids=secundarios_ids, impacto_principal=True)
     dano_vida = fnum(ret.get("dano_vida"), 0.0)
     if dano_vida > 0:
-        for adjacente in inimigos_vivos_adjacentes_ao_alvo(ctx, alvo):
-            dano_generico(ctx, adjacente, dano_vida * 0.5, "especial", tipo="normal")
+        for adjacente in secundarios:
+            dano_generico(ctx, adjacente, dano_vida * 0.5, "especial", tipo="normal", alvo_principal_id=alvo_principal_id, alvos_secundarios_ids=secundarios_ids, impacto_secundario=True)
     return ret
 
 

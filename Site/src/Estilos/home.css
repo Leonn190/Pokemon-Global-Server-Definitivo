@@ -836,3 +836,68 @@ body.detalhe-aberto .pokemon-carrossel-trilho {
 .instalar-card h2 { margin: 0; font-family: "Exo 2", Arial, Helvetica, sans-serif; font-size: clamp(2.2rem, 5vw, 4.8rem); line-height: 0.98; letter-spacing: -0.055em; }
 .instalar-card p:not(.selo) { max-width: 760px; margin: 0; color: var(--texto-fraco); font-size: 1.08rem; line-height: 1.65; }
 .instalar-acoes { justify-content: center; }
+
+
+/* =========================
+   Entrada animada da home
+   ========================= */
+body.home-entrada-pronta .home-entrada {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+  transition:
+    opacity 520ms ease,
+    transform 620ms cubic-bezier(0.18, 0.92, 0.24, 1);
+  transition-delay: var(--home-delay, 0ms);
+  will-change: opacity, transform;
+}
+body.home-entrada-pronta .home-entrada.visivel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+body.home-entrada-pronta .logo-palco.home-entrada {
+  transform: translateY(20px) scale(0.94) rotateX(5deg);
+}
+body.home-entrada-pronta .logo-palco.home-entrada.visivel {
+  transform: translateY(0) scale(1) rotateX(0);
+}
+body.home-entrada-pronta .hero-copy h1.home-entrada {
+  transform: translateY(18px) scale(0.97);
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.2));
+}
+body.home-entrada-pronta .hero-copy h1.home-entrada.visivel {
+  transform: translateY(0) scale(1);
+  filter: none;
+}
+body.home-entrada-pronta .hero-acoes.home-entrada.visivel .botao,
+body.home-entrada-pronta .pokemon-carrossel-acoes.home-entrada.visivel .botao,
+body.home-entrada-pronta .instalar-acoes.home-entrada.visivel .botao {
+  animation: home-botao-pop 420ms ease-out both;
+}
+body.home-entrada-pronta .hero-acoes.home-entrada.visivel .botao:nth-child(2),
+body.home-entrada-pronta .pokemon-carrossel-acoes.home-entrada.visivel .botao:nth-child(2),
+body.home-entrada-pronta .instalar-acoes.home-entrada.visivel .botao:nth-child(2) {
+  animation-delay: 90ms;
+}
+body.home-entrada-pronta .instalar-acoes.home-entrada.visivel .botao:nth-child(3) {
+  animation-delay: 150ms;
+}
+@keyframes home-botao-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  70% { opacity: 1; transform: translateY(-2px) scale(1.025); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.home-entrada-pronta .home-entrada,
+  body.home-entrada-pronta .logo-palco.home-entrada,
+  body.home-entrada-pronta .hero-copy h1.home-entrada {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    filter: none;
+  }
+  body.home-entrada-pronta .hero-acoes.home-entrada.visivel .botao,
+  body.home-entrada-pronta .pokemon-carrossel-acoes.home-entrada.visivel .botao,
+  body.home-entrada-pronta .instalar-acoes.home-entrada.visivel .botao {
+    animation: none;
+  }
+}

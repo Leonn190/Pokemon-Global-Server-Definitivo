@@ -48,3 +48,255 @@
     justify-content: flex-start;
   }
 }
+
+
+/* =========================
+   Impacto visual otimizado dos modais da wiki
+   ========================= */
+.pokemon-detalhe:not([hidden]) .pokemon-detalhe-backdrop {
+  animation: wiki-modal-backdrop-impacto 180ms ease-out both;
+}
+.pokemon-detalhe:not([hidden]) .pokemon-detalhe-card {
+  transform-origin: center 56%;
+  animation: wiki-modal-card-impacto 280ms cubic-bezier(0.18, 0.92, 0.24, 1.08) both;
+  will-change: transform, opacity;
+}
+.pokemon-detalhe:not([hidden]) .pokemon-palco-detalhe img,
+.pokemon-detalhe:not([hidden]) .item-palco-detalhe img {
+  animation: wiki-modal-imagem-bounce 420ms cubic-bezier(0.2, 1.18, 0.34, 1) 80ms both;
+  will-change: transform, opacity;
+}
+.pokemon-detalhe:not([hidden]) .pokemon-cabecalho-detalhe > *,
+.pokemon-detalhe:not([hidden]) .pokemon-tags > *,
+.pokemon-detalhe:not([hidden]) .painel-detalhe,
+.pokemon-detalhe:not([hidden]) .atributo-linha,
+.pokemon-detalhe:not([hidden]) .pokemon-info-lista > *,
+.pokemon-detalhe:not([hidden]) .foco-barra,
+.pokemon-detalhe:not([hidden]) .linhagem-lista > * {
+  animation: wiki-modal-conteudo-cascata 300ms ease-out both;
+}
+.pokemon-detalhe:not([hidden]) .pokemon-cabecalho-detalhe > :nth-child(1) { animation-delay: 70ms; }
+.pokemon-detalhe:not([hidden]) .pokemon-cabecalho-detalhe > :nth-child(2) { animation-delay: 100ms; }
+.pokemon-detalhe:not([hidden]) .pokemon-cabecalho-detalhe > :nth-child(3) { animation-delay: 130ms; }
+.pokemon-detalhe:not([hidden]) .pokemon-tags > :nth-child(1),
+.pokemon-detalhe:not([hidden]) .atributo-linha:nth-child(1),
+.pokemon-detalhe:not([hidden]) .pokemon-info-lista > :nth-child(1),
+.pokemon-detalhe:not([hidden]) .foco-barra:nth-child(1) { animation-delay: 150ms; }
+.pokemon-detalhe:not([hidden]) .pokemon-tags > :nth-child(2),
+.pokemon-detalhe:not([hidden]) .atributo-linha:nth-child(2),
+.pokemon-detalhe:not([hidden]) .pokemon-info-lista > :nth-child(2),
+.pokemon-detalhe:not([hidden]) .foco-barra:nth-child(2) { animation-delay: 175ms; }
+.pokemon-detalhe:not([hidden]) .pokemon-tags > :nth-child(3),
+.pokemon-detalhe:not([hidden]) .atributo-linha:nth-child(3),
+.pokemon-detalhe:not([hidden]) .pokemon-info-lista > :nth-child(3),
+.pokemon-detalhe:not([hidden]) .foco-barra:nth-child(3) { animation-delay: 200ms; }
+.pokemon-detalhe:not([hidden]) .pokemon-tags > :nth-child(4),
+.pokemon-detalhe:not([hidden]) .atributo-linha:nth-child(4),
+.pokemon-detalhe:not([hidden]) .pokemon-info-lista > :nth-child(4),
+.pokemon-detalhe:not([hidden]) .foco-barra:nth-child(4) { animation-delay: 225ms; }
+.pokemon-detalhe:not([hidden]) .painel-detalhe:nth-of-type(1) { animation-delay: 145ms; }
+.pokemon-detalhe:not([hidden]) .painel-detalhe:nth-of-type(2) { animation-delay: 185ms; }
+.pokemon-detalhe:not([hidden]) .painel-detalhe:nth-of-type(3) { animation-delay: 225ms; }
+
+@keyframes wiki-modal-backdrop-impacto {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+@keyframes wiki-modal-card-impacto {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.95);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.006);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes wiki-modal-imagem-bounce {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.86) rotate(-1.5deg);
+  }
+  66% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.045) rotate(0.4deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+@keyframes wiki-modal-conteudo-cascata {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   Microanimações dos tipos apenas no hover/foco
+   ========================= */
+.tipo-chip-icone,
+.tipo-bola,
+.tipo-badge,
+.tipo-pill {
+  --tipo-glow: rgba(255, 217, 52, 0.34);
+  --tipo-glow-fraco: rgba(255, 255, 255, 0.16);
+}
+[data-tipo="fogo"] { --tipo-glow: rgba(255, 91, 48, 0.62); --tipo-glow-fraco: rgba(255, 169, 64, 0.28); }
+[data-tipo="agua"] { --tipo-glow: rgba(44, 163, 255, 0.62); --tipo-glow-fraco: rgba(92, 214, 255, 0.28); }
+[data-tipo="eletrico"] { --tipo-glow: rgba(255, 226, 58, 0.72); --tipo-glow-fraco: rgba(255, 248, 133, 0.34); }
+[data-tipo="fantasma"] { --tipo-glow: rgba(171, 116, 255, 0.64); --tipo-glow-fraco: rgba(74, 39, 137, 0.3); }
+[data-tipo="gelo"] { --tipo-glow: rgba(137, 235, 255, 0.68); --tipo-glow-fraco: rgba(209, 250, 255, 0.34); }
+[data-tipo="planta"],
+[data-tipo="grama"] { --tipo-glow: rgba(86, 218, 111, 0.62); --tipo-glow-fraco: rgba(154, 255, 139, 0.28); }
+[data-tipo="voador"] { --tipo-glow: rgba(167, 214, 255, 0.62); --tipo-glow-fraco: rgba(233, 245, 255, 0.3); }
+.tipo-chip-icone:hover,
+.tipo-chip-icone:focus-visible,
+.tipo-bola:hover,
+.tipo-bola:focus-visible,
+.tipo-badge:hover,
+.tipo-badge:focus-visible,
+.tipo-pill:hover,
+.tipo-pill:focus-visible {
+  border-color: var(--tipo-glow);
+  box-shadow:
+    0 0 0 3px var(--tipo-glow-fraco),
+    0 10px 24px rgba(0, 0, 0, 0.22),
+    0 0 22px var(--tipo-glow);
+}
+.tipo-chip-icone:hover .tipo-icone-mini,
+.tipo-chip-icone:focus-visible .tipo-icone-mini,
+.tipo-bola:hover,
+.tipo-bola:focus-visible,
+.tipo-badge:hover .tipo-icone,
+.tipo-badge:focus-visible .tipo-icone,
+.tipo-pill:hover .tipo-icone-mini,
+.tipo-pill:focus-visible .tipo-icone-mini {
+  animation: tipo-hover-padrao 420ms ease-out both;
+}
+[data-tipo="fogo"]:hover .tipo-icone-mini,
+[data-tipo="fogo"].tipo-bola:hover,
+[data-tipo="fogo"]:focus-visible .tipo-icone-mini,
+[data-tipo="fogo"].tipo-bola:focus-visible {
+  animation-name: tipo-hover-fogo;
+}
+[data-tipo="agua"]:hover .tipo-icone-mini,
+[data-tipo="agua"].tipo-bola:hover,
+[data-tipo="agua"]:focus-visible .tipo-icone-mini,
+[data-tipo="agua"].tipo-bola:focus-visible {
+  animation-name: tipo-hover-agua;
+}
+[data-tipo="eletrico"]:hover .tipo-icone-mini,
+[data-tipo="eletrico"].tipo-bola:hover,
+[data-tipo="eletrico"]:focus-visible .tipo-icone-mini,
+[data-tipo="eletrico"].tipo-bola:focus-visible {
+  animation-name: tipo-hover-eletrico;
+  animation-duration: 520ms;
+}
+[data-tipo="fantasma"]:hover .tipo-icone-mini,
+[data-tipo="fantasma"].tipo-bola:hover,
+[data-tipo="fantasma"]:focus-visible .tipo-icone-mini,
+[data-tipo="fantasma"].tipo-bola:focus-visible {
+  animation-name: tipo-hover-fantasma;
+  animation-duration: 620ms;
+}
+[data-tipo="gelo"]:hover .tipo-icone-mini,
+[data-tipo="gelo"].tipo-bola:hover,
+[data-tipo="gelo"]:focus-visible .tipo-icone-mini,
+[data-tipo="gelo"].tipo-bola:focus-visible {
+  animation-name: tipo-hover-gelo;
+}
+[data-tipo="planta"]:hover .tipo-icone-mini,
+[data-tipo="grama"]:hover .tipo-icone-mini,
+[data-tipo="planta"].tipo-bola:hover,
+[data-tipo="grama"].tipo-bola:hover,
+[data-tipo="planta"]:focus-visible .tipo-icone-mini,
+[data-tipo="grama"]:focus-visible .tipo-icone-mini,
+[data-tipo="planta"].tipo-bola:focus-visible,
+[data-tipo="grama"].tipo-bola:focus-visible {
+  animation-name: tipo-hover-planta;
+}
+[data-tipo="voador"]:hover .tipo-icone-mini,
+[data-tipo="voador"].tipo-bola:hover,
+[data-tipo="voador"]:focus-visible .tipo-icone-mini,
+[data-tipo="voador"].tipo-bola:focus-visible {
+  animation-name: tipo-hover-voador;
+}
+
+@keyframes tipo-hover-padrao {
+  0% { transform: translateY(0) scale(1); filter: saturate(1); }
+  60% { transform: translateY(-3px) scale(1.08); filter: saturate(1.18); }
+  100% { transform: translateY(0) scale(1.03); filter: saturate(1.08); }
+}
+@keyframes tipo-hover-fogo {
+  0%, 100% { transform: translateY(0) scale(1.03); filter: drop-shadow(0 0 0 transparent) saturate(1.08); }
+  50% { transform: translateY(-3px) scale(1.12); filter: drop-shadow(0 0 10px rgba(255, 107, 47, 0.7)) saturate(1.32); }
+}
+@keyframes tipo-hover-agua {
+  0% { transform: translateX(0) scale(1.02); }
+  35% { transform: translateX(-2px) translateY(-2px) scale(1.08); }
+  70% { transform: translateX(2px) translateY(-1px) scale(1.08); }
+  100% { transform: translateX(0) scale(1.03); }
+}
+@keyframes tipo-hover-eletrico {
+  0%, 100% { transform: translate(0, 0) scale(1.04); filter: brightness(1.05); }
+  20% { transform: translate(-1px, -2px) scale(1.1); filter: brightness(1.45) saturate(1.45); }
+  42% { transform: translate(2px, 1px) scale(1.04); filter: brightness(0.95); }
+  62% { transform: translate(-2px, 0) scale(1.12); filter: brightness(1.6) saturate(1.5); }
+}
+@keyframes tipo-hover-fantasma {
+  0%, 100% { transform: translateY(0) scale(1.02); opacity: 1; }
+  45% { transform: translateY(-4px) scale(1.08); opacity: 0.72; }
+  72% { transform: translateY(-1px) scale(1.04); opacity: 0.92; }
+}
+@keyframes tipo-hover-gelo {
+  0%, 100% { transform: scale(1.02); filter: brightness(1.05); }
+  55% { transform: scale(1.1); filter: brightness(1.35) drop-shadow(0 0 10px rgba(174, 244, 255, 0.72)); }
+}
+@keyframes tipo-hover-planta {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.14) rotate(-2deg); }
+  100% { transform: scale(1.04) rotate(0); }
+}
+@keyframes tipo-hover-voador {
+  0%, 100% { transform: translateY(0) scale(1.03); }
+  45% { transform: translateY(-6px) scale(1.06); }
+  70% { transform: translateY(-3px) scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pokemon-detalhe:not([hidden]) .pokemon-detalhe-backdrop,
+  .pokemon-detalhe:not([hidden]) .pokemon-detalhe-card,
+  .pokemon-detalhe:not([hidden]) .pokemon-palco-detalhe img,
+  .pokemon-detalhe:not([hidden]) .item-palco-detalhe img,
+  .pokemon-detalhe:not([hidden]) .pokemon-cabecalho-detalhe > *,
+  .pokemon-detalhe:not([hidden]) .pokemon-tags > *,
+  .pokemon-detalhe:not([hidden]) .painel-detalhe,
+  .pokemon-detalhe:not([hidden]) .atributo-linha,
+  .pokemon-detalhe:not([hidden]) .pokemon-info-lista > *,
+  .pokemon-detalhe:not([hidden]) .foco-barra,
+  .pokemon-detalhe:not([hidden]) .linhagem-lista > *,
+  .tipo-chip-icone:hover .tipo-icone-mini,
+  .tipo-chip-icone:focus-visible .tipo-icone-mini,
+  .tipo-bola:hover,
+  .tipo-bola:focus-visible,
+  .tipo-badge:hover .tipo-icone,
+  .tipo-badge:focus-visible .tipo-icone {
+    animation: none !important;
+  }
+}

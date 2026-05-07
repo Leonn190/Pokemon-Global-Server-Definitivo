@@ -123,7 +123,7 @@ const payloadHomePokemon = {
                 {pokemon.tipos.map((tipo) => {
                   const icone = iconesTiposHome[normalizarChave(tipo.nome)];
                   return (
-                    <span class={`tipo-bola pequena ${classeChanceHome(tipo.chance)}`} title={`${tipo.nome}${tipo.chance ? ` ${tipo.chance}%` : ""}`}>
+                    <span class={`tipo-bola pequena ${classeChanceHome(tipo.chance)}`} data-tipo={normalizarChave(tipo.nome)} title={`${tipo.nome}${tipo.chance ? ` ${tipo.chance}%` : ""}`}>
                       {icone ? <img src={icone} alt={tipo.nome} loading="eager" decoding="async" /> : <b>{tipo.nome.slice(0, 1)}</b>}
                     </span>
                   );

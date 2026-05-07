@@ -96,6 +96,44 @@ function configurarContato() {
   });
 }
 
+
+function configurarEntradaHome() {
+  if (!document.querySelector(".hero-home")) return;
+  const seletores = [
+    ".logo-palco",
+    ".hero-copy .selo",
+    ".hero-copy h1",
+    ".subtitulo-home",
+    ".hero-acoes",
+    ".intro-home",
+    ".pokemon-destaque-copy",
+    ".pokemon-carrossel-janela",
+    ".pokemon-carrossel-acoes",
+    ".instalar-card",
+    ".aviso-legal",
+  ];
+  const elementos = seletores.flatMap((seletor) => Array.from(document.querySelectorAll(seletor)));
+  if (!elementos.length) return;
+  const reduzirMovimento = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  elementos.forEach((elemento, indice) => {
+    elemento.classList.add("home-entrada");
+    elemento.style.setProperty("--home-delay", `${Math.min(indice * 70, 420)}ms`);
+  });
+  document.body.classList.add("home-entrada-pronta");
+  if (reduzirMovimento || !("IntersectionObserver" in window)) {
+    elementos.forEach((elemento) => elemento.classList.add("visivel"));
+    return;
+  }
+  const observador = new IntersectionObserver((entradas) => {
+    entradas.forEach((entrada) => {
+      if (!entrada.isIntersecting) return;
+      entrada.target.classList.add("visivel");
+      observador.unobserve(entrada.target);
+    });
+  }, { threshold: 0.16, rootMargin: "0px 0px -8% 0px" });
+  elementos.forEach((elemento) => observador.observe(elemento));
+}
+
 window.addEventListener("scroll", atualizarTopbar, { passive: true });
 atualizarTopbar();
 
@@ -117,3 +155,4 @@ configurarAbasConta();
 configurarLogin();
 configurarCadastro();
 configurarContato();
+configurarEntradaHome();

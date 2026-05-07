@@ -146,7 +146,7 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
         {tabela.map((linha) => (
           <article class="combate-fr-linha" role="row">
             <div class="combate-fr-tipo" role="cell">
-              <span class="tipo-bola pequena">
+              <span class="tipo-bola pequena" data-tipo={normalizarChave(linha.nome)}>
                 {iconeTipo(linha) ? <img src={iconeTipo(linha)} alt="" loading="lazy" decoding="async" /> : <b>{linha.nome.slice(0, 1)}</b>}
               </span>
               <strong>{linha.nome}</strong>
@@ -155,7 +155,7 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
               <div class="combate-fr-icones" role="cell">
                 {listaIcones(grupo).map((tipo) => (
                   tipo.vazio ? <span class="combate-fr-vazio">-</span> :
-                  <span class="tipo-bola pequena" title={tipo.nome} aria-label={tipo.nome}>
+                  <span class="tipo-bola pequena" data-tipo={normalizarChave(tipo.nome)} title={tipo.nome} aria-label={tipo.nome}>
                     {iconeTipo(tipo) ? <img src={iconeTipo(tipo)} alt="" loading="lazy" decoding="async" /> : <b>{tipo.nome.slice(0, 1)}</b>}
                   </span>
                 ))}

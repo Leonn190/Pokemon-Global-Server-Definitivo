@@ -5,8 +5,8 @@ function assetEquipavel(equipavel, dados) {
 function tipoIcone(tipo, dados, classe = "tipo-bola pequena") {
   const chave = normalizar(tipo);
   const src = dados.iconesTipos?.[chave];
-  if (src) return `<span class="${classe}"><img src="${src}" alt="" loading="lazy" decoding="async" /></span>`;
-  return `<span class="${classe}"><b>${html(String(tipo || "?").slice(0, 1).toUpperCase())}</b></span>`;
+  if (src) return `<span class="${classe}" data-tipo="${html(chave)}"><img src="${src}" alt="" loading="lazy" decoding="async" /></span>`;
+  return `<span class="${classe}" data-tipo="${html(chave)}"><b>${html(String(tipo || "?").slice(0, 1).toUpperCase())}</b></span>`;
 }
 function afinidadeHtml(equipavel, dados) {
   const afinidades = equipavel.afinidades?.length ? equipavel.afinidades : [equipavel.afinidade];

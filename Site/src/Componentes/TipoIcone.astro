@@ -8,6 +8,7 @@ const estadoPressionado = ativo === undefined ? undefined : (ativo ? "true" : "f
   title={tipo}
   aria-label={`Filtrar por ${tipo}`}
   aria-pressed={estadoPressionado}
+  data-tipo={chave || undefined}
   {...atributos}
 >
   <span class="tipo-icone-mini">

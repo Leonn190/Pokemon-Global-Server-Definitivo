@@ -192,11 +192,63 @@ class ContextoIA:
     def area_ocupada(self, area_id: object) -> bool:
         return self.pokemon_na_area(area_id) is not None
 
+    @staticmethod
+    def _bool_alvo(valor: object) -> bool:
+        if isinstance(valor, bool):
+            return valor
+        texto = str(valor or "").strip().lower()
+        if texto in {"1", "true", "sim", "yes", "on"}:
+            return True
+        if texto in {"0", "false", "nao", "no", "off", ""}:
+            return False
+        return bool(valor)
+
+    def config_alvo(self, props: Mapping[str, Any] | None, indice: int = 0) -> dict[str, Any]:
+        base = {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": ["lado_oposto"],
+            "exige_area_ocupada": False,
+            "inclui_reserva": False,
+        }
+        alvificacao = props.get("alvificacao") if isinstance(props, Mapping) and isinstance(props.get("alvificacao"), Mapping) else {}
+        alvos = alvificacao.get("alvos") if isinstance(alvificacao, Mapping) else None
+        config = None
+        if isinstance(alvos, list) and alvos:
+            try:
+                config = alvos[max(0, min(int(indice), len(alvos) - 1))]
+            except (TypeError, ValueError):
+                config = alvos[0]
+        elif isinstance(alvificacao, Mapping) and any(chave in alvificacao for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva")):
+            config = alvificacao
+        if isinstance(config, Mapping):
+            for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva"):
+                if chave in config:
+                    base[chave] = config.get(chave)
+        base["tipo"] = str(base.get("tipo") or "area").strip().lower() or "area"
+        base["quantidade"] = max(1, inteiro(base.get("quantidade"), 1))
+        permitidos = base.get("lados_permitidos")
+        if isinstance(permitidos, str):
+            permitidos = [permitidos]
+        if not isinstance(permitidos, (list, tuple, set)):
+            permitidos = ["lado_oposto"]
+        base["lados_permitidos"] = [str(item) for item in permitidos if str(item or "").strip()] or ["lado_oposto"]
+        base["exige_area_ocupada"] = self._bool_alvo(base.get("exige_area_ocupada"))
+        base["inclui_reserva"] = self._bool_alvo(base.get("inclui_reserva"))
+        return base
+
+    def alvificacao_suportada_ia(self, props: Mapping[str, Any] | None) -> bool:
+        alvificacao = props.get("alvificacao") if isinstance(props, Mapping) and isinstance(props.get("alvificacao"), Mapping) else {}
+        alvos = alvificacao.get("alvos") if isinstance(alvificacao, Mapping) else None
+        if isinstance(alvos, list) and len([a for a in alvos if isinstance(a, Mapping)]) > 1:
+            return False
+        return int(self.config_alvo(props).get("quantidade") or 1) == 1
+
     def areas_afetadas(self, area_id: object, props: Mapping[str, Any] | None) -> list[str]:
         area_id = str(area_id or "")
         if not area_id:
             return []
-        alvo_cfg = props.get("alvificacao") if isinstance(props, Mapping) and isinstance(props.get("alvificacao"), Mapping) else {}
+        alvo_cfg = self.config_alvo(props)
         tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
         coords = self.coords_area(area_id)
         if coords is None:
@@ -220,7 +272,7 @@ class ContextoIA:
         area = self.area_por_id(area_id)
         if not isinstance(area, dict):
             return False
-        alvo_cfg = props.get("alvificacao") if isinstance(props, Mapping) and isinstance(props.get("alvificacao"), Mapping) else {}
+        alvo_cfg = self.config_alvo(props)
         if bool(alvo_cfg.get("exige_area_ocupada")) and self.pokemon_na_area(area_id) is None:
             return False
         tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
@@ -248,7 +300,7 @@ class ContextoIA:
     def pokemon_permitido_para_ataque(self, pokemon, alvo, props: Mapping[str, Any] | None) -> bool:
         if alvo is None or not self.vivo(alvo):
             return False
-        alvo_cfg = props.get("alvificacao") if isinstance(props, Mapping) and isinstance(props.get("alvificacao"), Mapping) else {}
+        alvo_cfg = self.config_alvo(props)
         if self.reserva(alvo) and not bool(alvo_cfg.get("inclui_reserva", False)):
             return False
         if self.lado(alvo) != self.lado(pokemon):

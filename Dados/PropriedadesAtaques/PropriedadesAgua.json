@@ -23,12 +23,16 @@
         "splash_frac": 0.5
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "22": {
@@ -50,12 +54,16 @@
         "negativo": true
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "23": {

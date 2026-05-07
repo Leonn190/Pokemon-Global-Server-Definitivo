@@ -21,12 +21,16 @@
         "tipo_linha": "reta"
       },
       "alvificacao": {
-        "tipo": "linha",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     }
   },

@@ -111,8 +111,8 @@ class PlayerBatalha:
         if poke is not None:
             area_id = getattr(poke, "AreaId", None)
             if ctrl.ataque_selecionado is not None and montador.estado_montagem == "preparando_ataque" and area_id:
-                montador.confirmar_alvo(area_id)
-                ctrl.limpar_ataque()
+                if montador.confirmar_alvo(area_id):
+                    ctrl.limpar_ataque()
                 return
             if ctrl.pokemon_selecionado == poke:
                 ctrl.desselecionar_pokemon()

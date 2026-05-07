@@ -58,13 +58,17 @@
         "percentual_usuario_atributo": 0.1
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "mesmo_lado",
-          "usuario"
-        ],
-        "exige_area_ocupada": true
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
       }
     },
     "51": {

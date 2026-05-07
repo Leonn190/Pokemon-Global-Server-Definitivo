@@ -168,7 +168,7 @@ class EstadoEditorAtaque:
         "normal", "fogo", "agua", "planta", "eletrico", "gelo", "lutador", "venenoso", "terra", "voador",
         "psiquico", "inseto", "pedra", "fantasma", "dragao", "sombrio", "metal", "fada", "cosmico", "sonoro",
     ]
-    ALVOS = ["area", "linha", "coluna", "arena", "pokemon"]
+    ALVOS = ["area", "pokemon", "linha", "coluna", "arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"]
     LADOS = ["lado_oposto", "mesmo_lado", "qualquer", "usuario"]
     CONTATOS_EXPLOSAO = ["Projetil", "Avanço", "Salto", "Raio", "Jato"]
 
@@ -206,6 +206,15 @@ class EstadoEditorAtaque:
             "mostrar_cartucho": "true",
             "valor_cartucho": "35",
         }
+        self.alvos_config: list[dict[str, Any]] = [
+            {
+                "tipo": "area",
+                "lados_permitidos": "lado_oposto",
+                "exige_area_ocupada": "false",
+                "inclui_reserva": "false",
+                "quantidade": "1",
+            }
+        ]
         self._json_cache = ""
 
     @property
@@ -217,7 +226,47 @@ class EstadoEditorAtaque:
         return str(self.campos.get("tipo") or "normal")
 
     def setar(self, chave: str, valor: Any) -> None:
+        alvo_chave = self._parse_chave_alvo(chave)
+        if alvo_chave is not None:
+            idx, campo = alvo_chave
+            if 0 <= idx < len(self.alvos_config):
+                self.alvos_config[idx][campo] = valor
+            return
         self.campos[chave] = valor
+
+    def valor(self, chave: str) -> Any:
+        alvo_chave = self._parse_chave_alvo(chave)
+        if alvo_chave is not None:
+            idx, campo = alvo_chave
+            if 0 <= idx < len(self.alvos_config):
+                return self.alvos_config[idx].get(campo, "")
+            return ""
+        return self.campos.get(chave, "")
+
+    @staticmethod
+    def _parse_chave_alvo(chave: str):
+        partes = str(chave or "").split(".")
+        if len(partes) != 3 or partes[0] != "alvos":
+            return None
+        try:
+            return int(partes[1]), partes[2]
+        except ValueError:
+            return None
+
+    def adicionar_grupo_alvo(self) -> None:
+        self.alvos_config.append({
+            "tipo": "area",
+            "lados_permitidos": "lado_oposto",
+            "exige_area_ocupada": "false",
+            "inclui_reserva": "false",
+            "quantidade": "1",
+        })
+
+    def remover_grupo_alvo(self, idx: int) -> None:
+        if len(self.alvos_config) <= 1:
+            return
+        if 0 <= idx < len(self.alvos_config):
+            self.alvos_config.pop(idx)
 
     def alternar_bool(self, chave: str) -> None:
         self.campos[chave] = "false" if parse_bool(self.campos.get(chave)) else "true"
@@ -306,13 +355,17 @@ class EstadoEditorAtaque:
         return anim
 
     def alvificacao(self) -> dict[str, Any]:
-        lados = str(self.campos.get("lados_permitidos") or "lado_oposto")
-        return {
-            "tipo": str(self.campos.get("alv_tipo") or "area"),
-            "quantidade": parse_int(self.campos.get("quantidade"), 1),
-            "lados_permitidos": [lados],
-            "exige_area_ocupada": parse_bool(self.campos.get("exige_area_ocupada")),
-        }
+        alvos = []
+        for grupo in self.alvos_config:
+            lados = str(grupo.get("lados_permitidos") or "lado_oposto")
+            alvos.append({
+                "tipo": str(grupo.get("tipo") or "area"),
+                "quantidade": max(1, parse_int(grupo.get("quantidade"), 1)),
+                "lados_permitidos": [lados],
+                "exige_area_ocupada": parse_bool(grupo.get("exige_area_ocupada")),
+                "inclui_reserva": parse_bool(grupo.get("inclui_reserva")),
+            })
+        return {"alvos": alvos or [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": False, "inclui_reserva": False}]}
 
     def props(self) -> dict[str, Any]:
         return {
@@ -374,13 +427,13 @@ class PainelEditorAtaque:
                 editor.aplicar_em_todos()
                 return True
             if evento.key == pygame.K_BACKSPACE:
-                atual = str(self.estado.campos.get(self.campo_ativo, ""))
-                self.estado.campos[self.campo_ativo] = atual[:-1]
+                atual = str(self.estado.valor(self.campo_ativo))
+                self.estado.setar(self.campo_ativo, atual[:-1])
                 editor.aplicar_em_todos()
                 return True
             if evento.unicode:
-                atual = str(self.estado.campos.get(self.campo_ativo, ""))
-                self.estado.campos[self.campo_ativo] = atual + evento.unicode
+                atual = str(self.estado.valor(self.campo_ativo))
+                self.estado.setar(self.campo_ativo, atual + evento.unicode)
                 editor.aplicar_em_todos()
                 return True
             return True
@@ -421,6 +474,13 @@ class PainelEditorAtaque:
             elif tipo == "input":
                 self.dropdown_aberto = None
                 self.campo_ativo = chave
+            elif tipo == "acao":
+                acao = str(row.get("acao") or "")
+                if acao == "adicionar_alvo":
+                    self.estado.adicionar_grupo_alvo()
+                elif acao.startswith("remover_alvo:"):
+                    self.estado.remover_grupo_alvo(parse_int(acao.split(":", 1)[1], -1))
+                self.dropdown_aberto = None
             editor.aplicar_em_todos()
             return
         self.dropdown_aberto = None
@@ -458,10 +518,17 @@ class PainelEditorAtaque:
         y = self._row(surface, x, y, "Estilo lógico", "estilo_logico", "select", ["alvo", "ativo"])
 
         y = self._secao(surface, x, y, "Alvificação real")
-        y = self._row(surface, x, y, "Tipo alvo", "alv_tipo", "select", EstadoEditorAtaque.ALVOS)
-        y = self._row(surface, x, y, "Lados", "lados_permitidos", "select", EstadoEditorAtaque.LADOS)
-        y = self._row(surface, x, y, "Exige ocupado", "exige_area_ocupada", "bool")
-        y = self._row(surface, x, y, "Quantidade", "quantidade", "input")
+        for idx, _grupo in enumerate(self.estado.alvos_config):
+            y = self._secao(surface, x, y, f"Grupo {idx + 1}")
+            prefixo = f"alvos.{idx}"
+            y = self._row(surface, x, y, "Tipo alvo", f"{prefixo}.tipo", "select", EstadoEditorAtaque.ALVOS)
+            y = self._row(surface, x, y, "Lados", f"{prefixo}.lados_permitidos", "select", EstadoEditorAtaque.LADOS)
+            y = self._row(surface, x, y, "Exige ocupado", f"{prefixo}.exige_area_ocupada", "bool")
+            y = self._row(surface, x, y, "Inclui reserva", f"{prefixo}.inclui_reserva", "bool")
+            y = self._row(surface, x, y, "Quantidade", f"{prefixo}.quantidade", "input")
+            if len(self.estado.alvos_config) > 1:
+                y = self._row_acao(surface, x, y, "Remover grupo", f"remover_alvo:{idx}")
+        y = self._row_acao(surface, x, y, "Adicionar grupo", "adicionar_alvo")
 
         y = self._secao(surface, x, y, "Efeitos")
         y = self._row(surface, x, y, "Efeito executor", "efeito_executor", "input")
@@ -545,7 +612,7 @@ class PainelEditorAtaque:
         bg = (28, 38, 58) if not ativo else (42, 58, 86)
         pygame.draw.rect(surface, bg, value_rect, border_radius=6)
         pygame.draw.rect(surface, (90, 110, 150), value_rect, 1, border_radius=6)
-        valor = str(self.estado.campos.get(chave, ""))
+        valor = str(self.estado.valor(chave))
         if tipo == "bool":
             valor = "true" if parse_bool(valor) else "false"
         txt_cor = (250, 250, 255) if valor else (126, 136, 160)
@@ -553,6 +620,16 @@ class PainelEditorAtaque:
         if tipo in {"select", "bool"}:
             surface.blit(self.fonte.render("▼", True, (175, 190, 220)), (value_rect.right - 20, value_rect.y + 6))
         self.rows.append({"rect": value_rect, "chave": chave, "tipo": tipo, "opcoes": opcoes or []})
+        return y + h + 4
+
+    def _row_acao(self, surface, x, y, label, acao) -> int:
+        h = 28
+        rect = pygame.Rect(x + 156, y, self.largura - 188, h)
+        surface.blit(self.fonte.render(str(label), True, (214, 222, 240)), (x, y + 6))
+        pygame.draw.rect(surface, (43, 58, 88), rect, border_radius=6)
+        pygame.draw.rect(surface, (116, 146, 205), rect, 1, border_radius=6)
+        surface.blit(self.fonte_bold.render(str(label), True, (250, 250, 255)), (rect.x + 8, rect.y + 6))
+        self.rows.append({"rect": rect, "chave": str(acao), "tipo": "acao", "acao": str(acao)})
         return y + h + 4
 
     def _desenhar_dropdown(self, surface: pygame.Surface, painel: pygame.Rect) -> None:
@@ -577,7 +654,7 @@ class PainelEditorAtaque:
                 break
             if item_rect.collidepoint(pygame.mouse.get_pos()):
                 pygame.draw.rect(surface, (44, 63, 96), item_rect)
-            atual = str(self.estado.campos.get(self.dropdown_aberto.get("chave"), ""))
+            atual = str(self.estado.valor(self.dropdown_aberto.get("chave")))
             cor = (255, 242, 166) if str(valor) == atual else (238, 242, 255)
             img = self.fonte.render(str(valor), True, cor)
             surface.blit(img, (item_rect.x + 8, item_rect.y + 5))
@@ -639,6 +716,8 @@ class EditorIntegracaoBatalha:
             montador.propriedades_ataques[int(EDITOR_ATTACK_CODE)] = copy.deepcopy(props)
             # Alguns caminhos procuram por nome; manter uma entrada nomeada evita falha se o code mudar de tipo.
             montador.propriedades_ataques[str(ataque.get("Nome") or ataque.get("Ataque"))] = copy.deepcopy(props)
+            if getattr(montador, "estado_montagem", "") == "preparando_ataque" and hasattr(montador, "_normalizar_alvos_config"):
+                montador.alvos_config = montador._normalizar_alvos_config(props)
         for pokemon in list(getattr(self.controlador, "pokemons", []) or []):
             pokemon.ListaAtaques = [copy.deepcopy(ataque)]
             # Editor é visual: deixa qualquer Pokémon capaz de pagar o ataque.
@@ -743,7 +822,8 @@ class EditorIntegracaoBatalha:
         ataque = self.estado.ataque()
         executor = ctrl.pokemons_por_id.get(str(acao.get("pokemon_id") or ""))
         alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
-        area_alvo = alvo.get("area_id")
+        alvos_selecionados = self._alvos_selecionados(acao)
+        area_alvo = self._area_alvo_visual(acao)
         alvos = self._resolver_alvos_da_acao(acao, props)
         alvo_principal = alvos[0] if alvos else None
 
@@ -773,6 +853,7 @@ class EditorIntegracaoBatalha:
             "alvos_ids": alvos_ids,
             "alvo_principal_id": alvo_principal_id,
             "alvos_secundarios_ids": secundarios_ids,
+            "alvos_selecionados": alvos_selecionados,
             "animacao": copy.deepcopy(animacao),
         }
         if alvo_principal is not None:
@@ -847,6 +928,32 @@ class EditorIntegracaoBatalha:
     def _resolver_alvos_da_acao(self, acao: dict[str, Any], props: dict[str, Any]) -> list[Any]:
         ctrl = self.controlador
         alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
+        if str(alvo.get("tipo") or "").lower() == "multi":
+            saida = []
+            vistos = set()
+            for selecao in list(alvo.get("alvos") or []):
+                if not isinstance(selecao, dict):
+                    continue
+                if str(selecao.get("tipo") or "").lower() == "pokemon" and selecao.get("pokemon_id"):
+                    poke = ctrl.pokemons_por_id.get(str(selecao.get("pokemon_id")))
+                    if poke is not None and poke.id_batalha not in vistos:
+                        vistos.add(poke.id_batalha)
+                        saida.append(poke)
+                    continue
+                area_id = selecao.get("area_id")
+                if not area_id:
+                    continue
+                config = selecao.get("config") if isinstance(selecao.get("config"), dict) else {}
+                try:
+                    areas = ctrl.montador_jogadas.areas_afetadas_por_config(area_id, config)
+                except Exception:
+                    areas = list(selecao.get("areas") or [area_id])
+                for aid in areas or [area_id]:
+                    poke = ctrl.arena.pokemon_na_area(aid)
+                    if poke is not None and poke.id_batalha not in vistos:
+                        vistos.add(poke.id_batalha)
+                        saida.append(poke)
+            return saida
         if str(alvo.get("tipo") or "").lower() == "pokemon" and alvo.get("pokemon_id"):
             poke = ctrl.pokemons_por_id.get(str(alvo.get("pokemon_id")))
             return [poke] if poke is not None else []
@@ -869,6 +976,23 @@ class EditorIntegracaoBatalha:
         if saida:
             return saida
         return []
+
+    @staticmethod
+    def _alvos_selecionados(acao: dict[str, Any]) -> list[dict[str, Any]]:
+        alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
+        if str(alvo.get("tipo") or "").lower() == "multi":
+            return [copy.deepcopy(item) for item in list(alvo.get("alvos") or []) if isinstance(item, dict)]
+        return [copy.deepcopy(alvo)] if alvo else []
+
+    @staticmethod
+    def _area_alvo_visual(acao: dict[str, Any]):
+        alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
+        if str(alvo.get("tipo") or "").lower() == "multi":
+            for selecao in list(alvo.get("alvos") or []):
+                if isinstance(selecao, dict) and selecao.get("area_id"):
+                    return selecao.get("area_id")
+            return None
+        return alvo.get("area_id")
 
     def _secundarios_explosao(self, alvo_principal, executor) -> list[Any]:
         if alvo_principal is None:

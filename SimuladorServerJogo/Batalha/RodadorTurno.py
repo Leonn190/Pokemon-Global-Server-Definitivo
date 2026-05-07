@@ -162,7 +162,7 @@ class RodadorTurno:
         if normalizar(animacao.get("modelo")) == "explosao" and contexto["alvos"]:
             secundarios = inimigos_vivos_adjacentes_ao_alvo(contexto, contexto["alvos"][0])
             alvos_secundarios_ids = [alvo.id_batalha for alvo in secundarios if alvo is not None]
-            alvo_ids = [alvo_principal_id, *alvos_secundarios_ids]
+            alvo_ids = self._ids_unicos([alvo_principal_id, *alvos_secundarios_ids])
         self.partida.registrar_evento_log("ataque_usado", self._dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids, animacao=animacao, alvo_principal_id=alvo_principal_id, alvos_secundarios_ids=alvos_secundarios_ids))
         if not contexto["alvos"] and str(props.get("estilo_logico") or "").lower() != "ativo":
             self.partida.registrar_evento_log("ataque_sem_alvo_real", self._dados_ataque(pokemon, acao, props, alvo_ids=[], animacao=animacao))
@@ -386,6 +386,33 @@ class RodadorTurno:
         animacao.setdefault("efeito_alvo", None)
         return animacao
 
+    @staticmethod
+    def _ids_unicos(ids):
+        saida = []
+        vistos = set()
+        for pid in ids or []:
+            if pid is None or pid in vistos:
+                continue
+            vistos.add(pid)
+            saida.append(pid)
+        return saida
+
+    @staticmethod
+    def _alvos_selecionados(acao):
+        alvo = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+        if str(alvo.get("tipo") or "").strip().lower() == "multi":
+            return [copy.deepcopy(item) for item in list(alvo.get("alvos") or []) if isinstance(item, dict)]
+        return [copy.deepcopy(alvo)] if alvo else []
+
+    def _area_alvo_visual(self, acao):
+        alvo = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+        if str(alvo.get("tipo") or "").strip().lower() == "multi":
+            for selecao in list(alvo.get("alvos") or []):
+                if isinstance(selecao, dict) and selecao.get("area_id"):
+                    return selecao.get("area_id")
+            return None
+        return alvo.get("area_id")
+
     def _dados_ataque(self, pokemon, acao, props, alvo_ids=None, alvo=None, animacao=None, alvo_principal_id=None, alvos_secundarios_ids=None):
         ataque = (acao or {}).get("ataque") if isinstance((acao or {}).get("ataque"), dict) else {}
         alvo_dict = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
@@ -401,10 +428,11 @@ class RodadorTurno:
             "pokemon_id": pokemon.id_batalha,
             "pokemon_nome": pokemon.nome,
             "area_origem": pokemon.area_id,
-            "area_alvo": alvo_dict.get("area_id"),
-            "alvos_ids": list(alvo_ids or []),
+            "area_alvo": self._area_alvo_visual(acao),
+            "alvos_ids": self._ids_unicos(alvo_ids or []),
             "alvo_principal_id": alvo_principal_id,
             "alvos_secundarios_ids": list(alvos_secundarios_ids or []),
+            "alvos_selecionados": self._alvos_selecionados(acao),
             "animacao": copy.deepcopy(animacao or self._dados_animacao(props)),
         }
         if alvo is not None:

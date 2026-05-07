@@ -21,13 +21,17 @@
         "negativo": false
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "mesmo_lado",
-          "usuario"
-        ],
-        "exige_area_ocupada": true
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
       }
     },
     "74": {
@@ -68,12 +72,16 @@
         "duracao": 6
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     }
   },

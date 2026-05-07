@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import csv
 import json
 from pathlib import Path
@@ -21,6 +22,10 @@ class MontadorJogadas:
         self.ataque_selecionado = None
         self.area_alvo_previa = None
         self.alvo_previa_mundo = None
+        self.alvos_config = []
+        self.alvos_selecionados = []
+        self.indice_grupo_alvo = 0
+        self.indicadores_alvos_parciais = []
         self.estado_montagem = "ocioso"
         self.proximo_id_local = 1
         self.acao_selecionada_id = None
@@ -64,6 +69,75 @@ class MontadorJogadas:
             return False
         return str(props.get("estilo_logico") or "").strip().lower() != "passivo"
 
+    def _alvo_fallback(self):
+        return {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": ["lado_oposto"],
+            "exige_area_ocupada": False,
+            "inclui_reserva": False,
+        }
+
+    @staticmethod
+    def _bool_config_alvo(valor):
+        if isinstance(valor, bool):
+            return valor
+        texto = str(valor or "").strip().lower()
+        if texto in {"1", "true", "sim", "yes", "on"}:
+            return True
+        if texto in {"0", "false", "nao", "no", "off", ""}:
+            return False
+        return bool(valor)
+
+    def _normalizar_config_alvo(self, config):
+        base = self._alvo_fallback()
+        if isinstance(config, dict):
+            for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva"):
+                if chave in config:
+                    base[chave] = copy.deepcopy(config.get(chave))
+        try:
+            base["quantidade"] = max(1, int(float(base.get("quantidade") or 1)))
+        except (TypeError, ValueError):
+            base["quantidade"] = 1
+        permitidos = base.get("lados_permitidos")
+        if isinstance(permitidos, str):
+            permitidos = [permitidos]
+        if not isinstance(permitidos, (list, tuple, set)):
+            permitidos = ["lado_oposto"]
+        base["lados_permitidos"] = [str(item) for item in permitidos if str(item or "").strip()]
+        if not base["lados_permitidos"]:
+            base["lados_permitidos"] = ["lado_oposto"]
+        base["tipo"] = str(base.get("tipo") or "area").strip().lower() or "area"
+        base["exige_area_ocupada"] = self._bool_config_alvo(base.get("exige_area_ocupada"))
+        base["inclui_reserva"] = self._bool_config_alvo(base.get("inclui_reserva"))
+        return base
+
+    def _normalizar_alvos_config(self, props):
+        props = props if isinstance(props, dict) else {}
+        alvificacao = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvos = alvificacao.get("alvos") if isinstance(alvificacao, dict) else None
+        if isinstance(alvos, list):
+            configs = [self._normalizar_config_alvo(item) for item in alvos if isinstance(item, dict)]
+            if configs:
+                return configs
+        if isinstance(alvificacao, dict) and any(chave in alvificacao for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva")):
+            return [self._normalizar_config_alvo(alvificacao)]
+        return [self._alvo_fallback()]
+
+    def _config_grupo_alvo_atual(self):
+        if not self.alvos_config:
+            props = self.buscar_propriedades_ataque(self.ataque_selecionado) or {}
+            self.alvos_config = self._normalizar_alvos_config(props)
+        if self.indice_grupo_alvo < 0 or self.indice_grupo_alvo >= len(self.alvos_config):
+            return None
+        return self.alvos_config[self.indice_grupo_alvo]
+
+    def _limpar_selecao_alvos(self):
+        self.alvos_config = []
+        self.alvos_selecionados = []
+        self.indice_grupo_alvo = 0
+        self.indicadores_alvos_parciais = []
+
     def iniciar_preparacao_ataque(self, pokemon, ataque):
         if pokemon is None or ataque is None:
             return False
@@ -79,10 +153,15 @@ class MontadorJogadas:
         self.ataque_selecionado = dict(ataque)
         self.area_alvo_previa = None
         self.alvo_previa_mundo = None
+        self.alvos_config = []
+        self.alvos_selecionados = []
+        self.indice_grupo_alvo = 0
+        self.indicadores_alvos_parciais = []
         if estilo == "ativo":
             ok = self.adicionar_acao(self._criar_acao_ataque(pokemon, ataque, None))
             self.cancelar_previa()
             return ok
+        self.alvos_config = self._normalizar_alvos_config(props)
         origem = self.arena.centro_area(self.area_prevista_pokemon(pokemon))
         self.indicador_previa = IndicadorAtaque().configurar(origem, origem, "ataque", coordenadas_mundo=True)
         self.estado_montagem = "preparando_ataque"
@@ -129,24 +208,102 @@ class MontadorJogadas:
     def confirmar_alvo(self, area_id):
         if self.pokemon_origem is None or self.ataque_selecionado is None:
             return False
+        config = self._config_grupo_alvo_atual()
+        if config is None:
+            return False
+        if str(config.get("tipo") or "").strip().lower() == "pokemon":
+            return self.confirmar_alvo_pokemon(self.arena.pokemon_na_area(area_id))
         if not self.area_permitida_para_ataque(area_id):
             return False
-        props = self.buscar_propriedades_ataque(self.ataque_selecionado) or {}
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
-        if bool(alvo_cfg.get("exige_area_ocupada")) and not self.arena.area_esta_ocupada(area_id):
+        selecao = self._montar_selecao_area(area_id, config)
+        if not selecao:
             return False
-        ok = self.adicionar_acao(self._criar_acao_ataque(self.pokemon_origem, self.ataque_selecionado, area_id))
-        self.cancelar_previa()
-        return ok
+        return self._registrar_selecao_alvo(selecao)
 
     def confirmar_alvo_pokemon(self, pokemon):
         if self.pokemon_origem is None or self.ataque_selecionado is None:
             return False
+        config = self._config_grupo_alvo_atual()
+        if config is None or str(config.get("tipo") or "").strip().lower() != "pokemon":
+            return False
         if not self.pokemon_permitido_para_ataque(pokemon):
             return False
-        ok = self.adicionar_acao(self._criar_acao_ataque(self.pokemon_origem, self.ataque_selecionado, {"tipo": "pokemon", "pokemon_id": pokemon.id_batalha, "reserva": bool(pokemon.esta_na_reserva())}))
+        selecao = self._montar_selecao_pokemon(pokemon, config)
+        if not selecao:
+            return False
+        return self._registrar_selecao_alvo(selecao)
+
+    def _montar_selecao_area(self, area_id, config):
+        area_id = str(area_id or "").upper()
+        if not area_id:
+            return None
+        chave = self._chave_selecao_area(area_id, config)
+        if self._selecao_alvo_existe(chave):
+            return None
+        return {
+            "tipo": "area",
+            "area_id": area_id,
+            "grupo": int(self.indice_grupo_alvo),
+            "ordem": self._quantidade_selecionada_no_grupo(self.indice_grupo_alvo),
+            "config": copy.deepcopy(config),
+            "areas": self.areas_afetadas_por_config(area_id, config),
+            "_chave": chave,
+        }
+
+    def _montar_selecao_pokemon(self, pokemon, config):
+        if pokemon is None:
+            return None
+        pid = str(getattr(pokemon, "id_batalha", "") or "")
+        if not pid:
+            return None
+        chave = ("pokemon", pid)
+        if self._selecao_alvo_existe(chave):
+            return None
+        area_id = str(getattr(pokemon, "AreaId", "") or "").upper()
+        selecao = {
+            "tipo": "pokemon",
+            "pokemon_id": pid,
+            "reserva": bool(pokemon.esta_na_reserva()),
+            "grupo": int(self.indice_grupo_alvo),
+            "ordem": self._quantidade_selecionada_no_grupo(self.indice_grupo_alvo),
+            "config": copy.deepcopy(config),
+            "_chave": chave,
+        }
+        if area_id:
+            selecao["area_id"] = area_id
+            selecao["areas"] = [area_id]
+        return selecao
+
+    def _registrar_selecao_alvo(self, selecao):
+        if not isinstance(selecao, dict):
+            return False
+        self.alvos_selecionados.append(selecao)
+        self._adicionar_indicador_selecao_parcial(selecao)
+        config = self._config_grupo_alvo_atual() or {}
+        if self._quantidade_selecionada_no_grupo(self.indice_grupo_alvo) >= int(config.get("quantidade") or 1):
+            self.indice_grupo_alvo += 1
+        if self.indice_grupo_alvo < len(self.alvos_config):
+            self.recalcular_previsao_energia()
+            return False
+        ok = self.adicionar_acao(self._criar_acao_ataque(self.pokemon_origem, self.ataque_selecionado, None))
         self.cancelar_previa()
         return ok
+
+    def _quantidade_selecionada_no_grupo(self, indice):
+        return sum(1 for alvo in self.alvos_selecionados if int(alvo.get("grupo", -1)) == int(indice))
+
+    def _selecao_alvo_existe(self, chave):
+        return any(alvo.get("_chave") == chave for alvo in self.alvos_selecionados)
+
+    def _chave_selecao_area(self, area_id, config):
+        areas = tuple(self.areas_afetadas_por_config(area_id, config))
+        return ("area", str(config.get("tipo") or "area").strip().lower(), areas or (str(area_id or "").upper(),))
+
+    def _adicionar_indicador_selecao_parcial(self, selecao):
+        origem = self.arena.centro_area(self.area_prevista_pokemon(self.pokemon_origem))
+        for destino in self._destinos_indicador_selecao(selecao):
+            if origem and destino:
+                self.indicadores_alvos_parciais.append(IndicadorAtaque().configurar(origem, destino, "ataque", estado="preparado", coordenadas_mundo=True))
 
     def iniciar_arraste_pokemon(self, pokemon, pos_mouse):
         if self._acao_bloqueada_por_efeito(pokemon, "movimento"):
@@ -310,13 +467,24 @@ class MontadorJogadas:
     def _criar_acao_ataque(self, pokemon, ataque, area_id):
         code = int(float(ataque.get("Code") or ataque.get("code") or 0))
         props = self.buscar_propriedades_ataque(ataque) or {}
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
-        tipo_alvo = str(alvo_cfg.get("tipo") or "area")
-        if isinstance(area_id, dict):
-            alvo = dict(area_id)
-            alvo.setdefault("tipo", tipo_alvo)
-        else:
-            alvo = {"tipo": tipo_alvo, "area_id": area_id, "areas": self.areas_afetadas_por_alvo(area_id, props)} if area_id else None
+        selecoes = []
+        if self.alvos_selecionados:
+            selecoes = [self._serializar_selecao_alvo(alvo) for alvo in self.alvos_selecionados]
+        elif isinstance(area_id, dict):
+            config = self._normalizar_alvos_config(props)[0]
+            if str(area_id.get("tipo") or "").strip().lower() == "pokemon":
+                selecao = dict(area_id)
+                selecao["tipo"] = "pokemon"
+                selecao["grupo"] = 0
+                selecao["ordem"] = 0
+                selecao["config"] = copy.deepcopy(config)
+                selecoes = [self._serializar_selecao_alvo(selecao)]
+        elif area_id:
+            config = self._normalizar_alvos_config(props)[0]
+            selecao = self._montar_selecao_area(area_id, config)
+            if selecao:
+                selecoes = [self._serializar_selecao_alvo(selecao)]
+        alvo = {"tipo": "multi", "alvos": selecoes} if selecoes else None
         return {
             "tipo": "ataque",
             "estilo": str(props.get("estilo_logico") or "alvo"),
@@ -331,6 +499,11 @@ class MontadorJogadas:
             },
             "alvo": alvo,
         }
+
+    def _serializar_selecao_alvo(self, alvo):
+        saida = copy.deepcopy(alvo)
+        saida.pop("_chave", None)
+        return saida
 
     def adicionar_acao(self, acao):
         if not isinstance(acao, dict):
@@ -370,6 +543,12 @@ class MontadorJogadas:
         if tipo == "ataque":
             origem = self.arena.centro_area(self.area_prevista_pokemon(self.controlador.pokemons_por_id[acao["pokemon_id"]]))
             alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
+            if str(alvo.get("tipo") or "").lower() == "multi":
+                for selecao in list(alvo.get("alvos") or []):
+                    for destino in self._destinos_indicador_selecao(selecao):
+                        if origem and destino:
+                            self.indicadores_preparados.append(IndicadorAtaque().configurar(origem, destino, tipo, estado="preparado", id_acao=acao.get("id"), coordenadas_mundo=True))
+                return
             if str(alvo.get("tipo") or "").lower() == "pokemon" and alvo.get("pokemon_id"):
                 poke_alvo = self.controlador.pokemons_por_id.get(str(alvo.get("pokemon_id") or ""))
                 destino = self._centro_visual_pokemon(poke_alvo)
@@ -398,6 +577,17 @@ class MontadorJogadas:
         if origem and destino:
             self.indicadores_preparados.append(IndicadorAtaque().configurar(origem, destino, tipo, estado="preparado", id_acao=acao.get("id"), coordenadas_mundo=True))
 
+    def _destinos_indicador_selecao(self, selecao):
+        if not isinstance(selecao, dict):
+            return []
+        if str(selecao.get("tipo") or "").strip().lower() == "pokemon" and selecao.get("pokemon_id"):
+            destino = self._centro_visual_pokemon(self.controlador.pokemons_por_id.get(str(selecao.get("pokemon_id") or "")))
+            return [destino] if destino is not None else []
+        config = selecao.get("config") if isinstance(selecao.get("config"), dict) else {}
+        area_id = selecao.get("area_id")
+        areas = list(selecao.get("areas") or []) or self.areas_afetadas_por_config(area_id, config)
+        return [self.arena.centro_area(aid) for aid in areas if self.arena.centro_area(aid) is not None]
+
     def area_prevista_pokemon(self, pokemon):
         if pokemon is None:
             return None
@@ -416,11 +606,17 @@ class MontadorJogadas:
         return area
 
     def areas_afetadas_por_alvo(self, area_id, props=None):
+        props = props if isinstance(props, dict) else {}
+        if "tipo" in props and "alvificacao" not in props:
+            return self.areas_afetadas_por_config(area_id, props)
+        config = self._normalizar_alvos_config(props)[0]
+        return self.areas_afetadas_por_config(area_id, config)
+
+    def areas_afetadas_por_config(self, area_id, config=None):
         area_id = str(area_id or "")
         if not area_id:
             return []
-        props = props if isinstance(props, dict) else {}
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvo_cfg = self._normalizar_config_alvo(config or {})
         tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
         if tipo in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
             prefixo = area_id[:1].upper()
@@ -455,6 +651,16 @@ class MontadorJogadas:
         tipo = str((acao or {}).get("tipo") or "")
         if tipo == "ataque":
             alvo = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+            if str(alvo.get("tipo") or "").lower() == "multi":
+                alvos = list(alvo.get("alvos") or [])
+                primeiro = alvos[0] if alvos and isinstance(alvos[0], dict) else {}
+                if str(primeiro.get("tipo") or "").lower() == "pokemon" and primeiro.get("pokemon_id"):
+                    return {"pokemon": self.controlador.pokemons_por_id.get(str(primeiro.get("pokemon_id") or ""))}
+                area_id = primeiro.get("area_id")
+                if not area_id:
+                    return {"pokemon": (acao or {}).get("executor")}
+                poke = self.arena.pokemon_na_area(area_id)
+                return {"area_id": area_id, "pokemon": poke}
             if str(alvo.get("tipo") or "").lower() == "pokemon" and alvo.get("pokemon_id"):
                 return {"pokemon": self.controlador.pokemons_por_id.get(str(alvo.get("pokemon_id") or ""))}
             area_id = alvo.get("area_id")
@@ -520,12 +726,15 @@ class MontadorJogadas:
         area = self.arena.obter_area_por_id(area_id)
         if area is None:
             return False
-        props = self.buscar_propriedades_ataque(self.ataque_selecionado) or {}
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvo_cfg = self._config_grupo_alvo_atual() or {}
+        tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
+        if tipo_alvo == "pokemon":
+            return self.pokemon_permitido_para_ataque(self.arena.pokemon_na_area(area_id))
         if bool(alvo_cfg.get("exige_area_ocupada")) and not self.arena.area_esta_ocupada(area_id):
             return False
-        tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
-        if tipo_alvo not in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"} and not self._area_respeita_provocando(area_id, props):
+        if self._selecao_alvo_existe(self._chave_selecao_area(area_id, alvo_cfg)):
+            return False
+        if tipo_alvo not in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"} and not self._area_respeita_provocando(area_id, alvo_cfg):
             return False
         permitidos = alvo_cfg.get("lados_permitidos")
         if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
@@ -550,9 +759,12 @@ class MontadorJogadas:
             return False
         if not self.controlador.pokemon_visivel(pokemon):
             return False
-        props = self.buscar_propriedades_ataque(self.ataque_selecionado) or {}
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvo_cfg = self._config_grupo_alvo_atual() or {}
+        if str(alvo_cfg.get("tipo") or "").strip().lower() != "pokemon":
+            return False
         if pokemon.esta_na_reserva() and not bool(alvo_cfg.get("inclui_reserva", False)):
+            return False
+        if self._selecao_alvo_existe(("pokemon", str(getattr(pokemon, "id_batalha", "") or ""))):
             return False
         if not pokemon.esta_vivo():
             return False
@@ -595,7 +807,7 @@ class MontadorJogadas:
             return True
         return False
 
-    def _area_respeita_provocando(self, area_id, props=None):
+    def _area_respeita_provocando(self, area_id, alvo_cfg=None):
         area = self.arena.obter_area_por_id(area_id)
         if area is None:
             return False
@@ -609,7 +821,7 @@ class MontadorJogadas:
         ]
         if not provocadores:
             return True
-        areas_afetadas = set(self.areas_afetadas_por_alvo(area_id, props or {}))
+        areas_afetadas = set(self.areas_afetadas_por_config(area_id, alvo_cfg or {}))
         return any(str(getattr(p, "AreaId", "")) in areas_afetadas for p in provocadores)
 
     def _centro_visual_pokemon(self, pokemon):
@@ -633,6 +845,17 @@ class MontadorJogadas:
         return []
 
     def reservas_destacadas(self):
+        if self.estado_montagem == "preparando_ataque" and self.ataque_selecionado is not None:
+            config = self._config_grupo_alvo_atual() or {}
+            if str(config.get("tipo") or "").strip().lower() != "pokemon" or not bool(config.get("inclui_reserva")):
+                return []
+            saida = []
+            for lado in ("jogador", "inimigo"):
+                for slot in self.arena.obter_slots_reserva(lado):
+                    poke = self.controlador.pokemons_por_id.get(str(slot.get("pokemon_id") or ""))
+                    if self.pokemon_permitido_para_ataque(poke):
+                        saida.append(str(slot.get("id_slot")))
+            return saida
         if self.estado_montagem != "arrastando" or self.pokemon_origem is None:
             return []
         lado_visual = str(getattr(self.pokemon_origem, "Lado", ""))
@@ -643,7 +866,8 @@ class MontadorJogadas:
             return
         tile = max(1, int(getattr(self.controlador.camera, "TilePx", 40) or 40))
         props = self.buscar_propriedades_ataque(self.ataque_selecionado) if self.estado_montagem == "preparando_ataque" else None
-        areas = [] if isinstance(self.area_alvo_previa, dict) else (self.areas_afetadas_por_alvo(self.area_alvo_previa, props) if props else [])
+        config = self._config_grupo_alvo_atual() if self.estado_montagem == "preparando_ataque" else None
+        areas = [] if isinstance(self.area_alvo_previa, dict) else (self.areas_afetadas_por_config(self.area_alvo_previa, config) if props else [])
         centros = [self.arena.centro_area(aid) for aid in areas] if areas else [self.alvo_previa_mundo]
         for centro in [c for c in centros if c is not None]:
             pos = self.controlador.camera.mundo_para_tela_px(centro)
@@ -678,6 +902,7 @@ class MontadorJogadas:
         self.indicador_previa = None
         self.area_alvo_previa = None
         self.alvo_previa_mundo = None
+        self._limpar_selecao_alvos()
         self.acao_selecionada_id = None
         self.recalcular_previsao_energia()
 
@@ -687,6 +912,7 @@ class MontadorJogadas:
         self.ataque_selecionado = None
         self.area_alvo_previa = None
         self.alvo_previa_mundo = None
+        self._limpar_selecao_alvos()
         self.estado_montagem = "ocioso"
         self.recalcular_previsao_energia()
 
@@ -800,10 +1026,14 @@ def gerar_propriedades_ataques_json(csv_path: Path, out_path: Path):
             }
             if estilo == "alvo":
                 base["alvificacao"] = {
-                    "tipo": "area",
-                    "quantidade": 1,
-                    "lados_permitidos": ["lado_oposto"],
-                    "exige_area_ocupada": False,
+                    "alvos": [
+                        {
+                            "tipo": "area",
+                            "quantidade": 1,
+                            "lados_permitidos": ["lado_oposto"],
+                            "exige_area_ocupada": False,
+                        }
+                    ],
                 }
             ataques[str(int(float(code)))] = base
     out = {"schema_version": 1, "ataques": ataques}

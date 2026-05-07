@@ -97,7 +97,9 @@ class GeradorAcoesIA:
         return saida
 
     def _gerar_ataques_alvo(self, contexto: ContextoIA, pokemon, ataque: dict, props: dict, categoria: str) -> list[CandidatoIA]:
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        if not contexto.alvificacao_suportada_ia(props):
+            return []
+        alvo_cfg = contexto.config_alvo(props)
         tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
         saida: list[CandidatoIA] = []
 
@@ -106,7 +108,19 @@ class GeradorAcoesIA:
                 if not contexto.pokemon_permitido_para_ataque(pokemon, alvo, props):
                     continue
                 acao = self._base_acao_ataque(contexto, pokemon, ataque, props)
-                acao["alvo"] = {"tipo": "pokemon", "pokemon_id": contexto.pid(alvo)}
+                selecao = {
+                    "tipo": "pokemon",
+                    "pokemon_id": contexto.pid(alvo),
+                    "reserva": bool(contexto.reserva(alvo)),
+                    "grupo": 0,
+                    "ordem": 0,
+                    "config": copy.deepcopy(alvo_cfg),
+                }
+                area_id = contexto.area_id(alvo)
+                if area_id:
+                    selecao["area_id"] = area_id
+                    selecao["areas"] = [area_id]
+                acao["alvo"] = {"tipo": "multi", "alvos": [selecao]}
                 saida.append(
                     CandidatoIA(
                         tipo="ataque",
@@ -131,11 +145,14 @@ class GeradorAcoesIA:
                 # A IA evita gastar acao nessas tentativas vazias.
                 continue
             acao = self._base_acao_ataque(contexto, pokemon, ataque, props)
-            acao["alvo"] = {
-                "tipo": str(alvo_cfg.get("tipo") or "area"),
+            acao["alvo"] = {"tipo": "multi", "alvos": [{
+                "tipo": "area",
                 "area_id": str(area_id),
+                "grupo": 0,
+                "ordem": 0,
+                "config": copy.deepcopy(alvo_cfg),
                 "areas": contexto.areas_afetadas(area_id, props),
-            }
+            }]}
             saida.append(
                 CandidatoIA(
                     tipo="ataque",
@@ -182,7 +199,7 @@ class GeradorAcoesIA:
         )
 
     def _pokemons_candidatos_para_props(self, contexto: ContextoIA, pokemon, props: dict, categoria: str) -> list:
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvo_cfg = contexto.config_alvo(props)
         permitidos = alvo_cfg.get("lados_permitidos") if isinstance(alvo_cfg.get("lados_permitidos"), (list, tuple, set)) else []
         incluir_reserva = bool(alvo_cfg.get("inclui_reserva", False))
         pools = []
@@ -216,7 +233,7 @@ class GeradorAcoesIA:
         return unicos
 
     def _areas_candidatas_para_props(self, contexto: ContextoIA, pokemon, props: dict, categoria: str) -> list[str]:
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvo_cfg = contexto.config_alvo(props)
         permitidos = alvo_cfg.get("lados_permitidos") if isinstance(alvo_cfg.get("lados_permitidos"), (list, tuple, set)) else []
         areas: list[str] = []
         for area in contexto.todas_areas():

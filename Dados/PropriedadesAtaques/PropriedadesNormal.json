@@ -17,12 +17,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "2": {
@@ -41,12 +45,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "mesmo_lado"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "3": {
@@ -94,12 +102,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "mesmo_lado"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "6": {
@@ -117,12 +129,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "7": {
@@ -155,12 +171,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "9": {
@@ -178,12 +198,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "linha",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "10": {
@@ -201,12 +225,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "11": {
@@ -225,12 +253,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "12": {
@@ -248,12 +280,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "13": {
@@ -271,13 +307,17 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "pokemon",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "qualquer"
-        ],
-        "exige_area_ocupada": true,
-        "inclui_reserva": true
+        "alvos": [
+          {
+            "tipo": "pokemon",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "qualquer"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": true
+          }
+        ]
       }
     },
     "14": {
@@ -310,12 +350,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "16": {
@@ -340,12 +384,16 @@
         "splash_frac": 0.5
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "17": {
@@ -363,12 +411,16 @@
         "tipo": "normal"
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "18": {
@@ -406,12 +458,16 @@
         "duracao": 6
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "20": {

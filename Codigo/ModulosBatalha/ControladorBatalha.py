@@ -261,6 +261,9 @@ class ControladorBatalha:
         if self.montador_jogadas is not None:
             self.montador_jogadas.desenhar_pulso_previa(surface)
             self.montador_jogadas.desenhar_fantasmas_movimento(surface)
+        for indicador in list(getattr(self.montador_jogadas, "indicadores_alvos_parciais", []) or []):
+            indicador.atualizar(dt=self._ultimo_dt)
+            indicador.desenhar(surface, self.camera)
         for indicador in list(getattr(self.montador_jogadas, "indicadores_preparados", []) or []):
             indicador.atualizar(dt=self._ultimo_dt)
             indicador.desenhar(surface, self.camera)

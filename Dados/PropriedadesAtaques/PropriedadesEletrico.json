@@ -23,12 +23,16 @@
         "splash_frac": 0.5
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "31": {
@@ -49,13 +53,17 @@
         "negativo": false
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "mesmo_lado",
-          "usuario"
-        ],
-        "exige_area_ocupada": true
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
       }
     },
     "32": {
@@ -112,13 +120,17 @@
         "percentual_usuario_atributo": 0.12
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "mesmo_lado",
-          "usuario"
-        ],
-        "exige_area_ocupada": true
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
       }
     }
   },

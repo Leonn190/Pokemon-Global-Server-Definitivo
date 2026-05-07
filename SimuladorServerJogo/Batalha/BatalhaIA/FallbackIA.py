@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 from .ContextoIA import fnum
@@ -78,10 +79,17 @@ class FallbackIA:
         candidatos.sort(key=lambda item: (fnum(item[1].get("custo"), 0.0), str(item[1].get("nome") or "")))
         ataque, props, area_id = candidatos[0]
         code = self._code_ataque(ataque, props)
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvo_cfg = self._alvo_config(props)
         alvo = None
         if area_id:
-            alvo = {"tipo": str(alvo_cfg.get("tipo") or "area"), "area_id": area_id, "areas": self._areas_afetadas(area_id, props)}
+            alvo = {"tipo": "multi", "alvos": [{
+                "tipo": "area",
+                "area_id": area_id,
+                "grupo": 0,
+                "ordem": 0,
+                "config": copy.deepcopy(alvo_cfg),
+                "areas": self._areas_afetadas(area_id, props),
+            }]}
         return {
             "tipo": "ataque",
             "estilo": str(props.get("estilo_logico") or "alvo"),
@@ -122,7 +130,9 @@ class FallbackIA:
         }
 
     def _fallback_area_alvo(self, partida, pokemon, props, inimigos, rng):
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        if not self._alvificacao_suportada(props):
+            return None
+        alvo_cfg = self._alvo_config(props)
         exige_ocupada = bool(alvo_cfg.get("exige_area_ocupada"))
         permitidos = alvo_cfg.get("lados_permitidos") if isinstance(alvo_cfg.get("lados_permitidos"), (list, tuple, set)) else []
         quer_aliado = any(str(x).lower() in {"mesmo_lado", "aliado", "aliados", "proprio_lado", "usuario"} for x in permitidos)
@@ -170,7 +180,7 @@ class FallbackIA:
         area = self._area_por_id(partida, area_id)
         if not isinstance(area, dict):
             return False
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvo_cfg = self._alvo_config(props)
         if bool(alvo_cfg.get("exige_area_ocupada")) and not self._area_esta_ocupada(partida, area_id):
             return False
         permitidos = alvo_cfg.get("lados_permitidos")
@@ -244,11 +254,61 @@ class FallbackIA:
             return 0
 
     @staticmethod
+    def _bool_alvo(valor):
+        if isinstance(valor, bool):
+            return valor
+        texto = str(valor or "").strip().lower()
+        if texto in {"1", "true", "sim", "yes", "on"}:
+            return True
+        if texto in {"0", "false", "nao", "no", "off", ""}:
+            return False
+        return bool(valor)
+
+    @staticmethod
+    def _alvo_config(props):
+        base = {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": ["lado_oposto"],
+            "exige_area_ocupada": False,
+            "inclui_reserva": False,
+        }
+        alvificacao = props.get("alvificacao") if isinstance(props, dict) and isinstance(props.get("alvificacao"), dict) else {}
+        alvos = alvificacao.get("alvos") if isinstance(alvificacao, dict) else None
+        config = alvos[0] if isinstance(alvos, list) and alvos and isinstance(alvos[0], dict) else alvificacao
+        if isinstance(config, dict):
+            for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva"):
+                if chave in config:
+                    base[chave] = copy.deepcopy(config.get(chave))
+        try:
+            base["quantidade"] = max(1, int(float(base.get("quantidade") or 1)))
+        except (TypeError, ValueError):
+            base["quantidade"] = 1
+        permitidos = base.get("lados_permitidos")
+        if isinstance(permitidos, str):
+            permitidos = [permitidos]
+        if not isinstance(permitidos, (list, tuple, set)):
+            permitidos = ["lado_oposto"]
+        base["lados_permitidos"] = [str(item) for item in permitidos if str(item or "").strip()] or ["lado_oposto"]
+        base["tipo"] = str(base.get("tipo") or "area").strip().lower() or "area"
+        base["exige_area_ocupada"] = FallbackIA._bool_alvo(base.get("exige_area_ocupada"))
+        base["inclui_reserva"] = FallbackIA._bool_alvo(base.get("inclui_reserva"))
+        return base
+
+    @staticmethod
+    def _alvificacao_suportada(props):
+        alvificacao = props.get("alvificacao") if isinstance(props, dict) and isinstance(props.get("alvificacao"), dict) else {}
+        alvos = alvificacao.get("alvos") if isinstance(alvificacao, dict) else None
+        if isinstance(alvos, list) and len([item for item in alvos if isinstance(item, dict)]) > 1:
+            return False
+        return int(FallbackIA._alvo_config(props).get("quantidade") or 1) == 1
+
+    @staticmethod
     def _areas_afetadas(area_id, props):
         area_id = str(area_id or "")
         if not area_id:
             return []
-        alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+        alvo_cfg = FallbackIA._alvo_config(props)
         tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
         try:
             idx = int(area_id[1:]) - 1

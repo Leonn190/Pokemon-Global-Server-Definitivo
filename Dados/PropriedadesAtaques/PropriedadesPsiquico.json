@@ -21,12 +21,16 @@
         "negativo": true
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "53": {
@@ -85,12 +89,16 @@
         "tipo_linha": "reta"
       },
       "alvificacao": {
-        "tipo": "linha",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "lado_oposto"
-        ],
-        "exige_area_ocupada": false
+        "alvos": [
+          {
+            "tipo": "linha",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": false
+          }
+        ]
       }
     },
     "59": {
@@ -112,13 +120,17 @@
         "percentual_usuario_atributo": 0.12
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "mesmo_lado",
-          "usuario"
-        ],
-        "exige_area_ocupada": true
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
       }
     },
     "60": {
@@ -140,13 +152,17 @@
         "percentual_usuario_atributo": 0.1
       },
       "alvificacao": {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": [
-          "mesmo_lado",
-          "usuario"
-        ],
-        "exige_area_ocupada": true
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "mesmo_lado",
+              "usuario"
+            ],
+            "exige_area_ocupada": true
+          }
+        ]
       }
     },
     "56": {

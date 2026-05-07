@@ -74,6 +74,82 @@
   border-color: rgba(255, 217, 52, 0.62);
   box-shadow: 0 0 0 4px rgba(255, 217, 52, 0.1);
 }
+.filtro-select-wiki {
+  position: relative;
+}
+.filtro-select-wiki select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 44px;
+  color: #f8fbff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    radial-gradient(circle at 18% 0%, rgba(16, 135, 255, 0.18), transparent 58%),
+    rgba(2, 6, 20, 0.76);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 12px 24px rgba(0, 0, 0, 0.18);
+  transition:
+    transform 170ms ease,
+    border-color 170ms ease,
+    box-shadow 170ms ease,
+    background 170ms ease;
+}
+.filtro-select-wiki::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46px;
+  border-radius: 16px;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(120deg, transparent 12%, rgba(255, 217, 52, 0.18), transparent 44%);
+  transform: translateX(-18%);
+  transition: opacity 170ms ease, transform 300ms ease;
+}
+.filtro-select-wiki::after {
+  content: "⌄";
+  position: absolute;
+  right: 13px;
+  bottom: 8px;
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: #071531;
+  background: linear-gradient(135deg, var(--amarelo), #ff9d00);
+  box-shadow: 0 0 18px rgba(255, 217, 52, 0.28);
+  pointer-events: none;
+  font-size: 1.16rem;
+  font-weight: 1000;
+  line-height: 1;
+  transition: transform 170ms ease, box-shadow 170ms ease;
+}
+.filtro-select-wiki:hover select,
+.filtro-select-wiki:focus-within select {
+  transform: translateY(-1px);
+  border-color: rgba(255, 217, 52, 0.52);
+  box-shadow:
+    0 0 0 4px rgba(255, 217, 52, 0.08),
+    0 16px 30px rgba(0, 0, 0, 0.26),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+.filtro-select-wiki:hover::before,
+.filtro-select-wiki:focus-within::before {
+  opacity: 1;
+  transform: translateX(18%);
+}
+.filtro-select-wiki:focus-within::after {
+  transform: translateY(-1px) rotate(180deg);
+  box-shadow: 0 0 24px rgba(255, 217, 52, 0.42);
+}
+.filtro-select-wiki select option {
+  color: #f7faff;
+  background: #06122f;
+}
 .filtros-rapidos {
   display: flex;
   flex-wrap: wrap;

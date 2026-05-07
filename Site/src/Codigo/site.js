@@ -120,18 +120,22 @@ function configurarEntradaHome() {
     elemento.style.setProperty("--home-delay", `${Math.min(indice * 70, 420)}ms`);
   });
   document.body.classList.add("home-entrada-pronta");
+  const revelarTudo = () => elementos.forEach((elemento) => elemento.classList.add("visivel"));
   if (reduzirMovimento || !("IntersectionObserver" in window)) {
-    elementos.forEach((elemento) => elemento.classList.add("visivel"));
+    revelarTudo();
     return;
   }
-  const observador = new IntersectionObserver((entradas) => {
-    entradas.forEach((entrada) => {
-      if (!entrada.isIntersecting) return;
-      entrada.target.classList.add("visivel");
-      observador.unobserve(entrada.target);
-    });
-  }, { threshold: 0.16, rootMargin: "0px 0px -8% 0px" });
-  elementos.forEach((elemento) => observador.observe(elemento));
+  const iniciarEntrada = () => {
+    const observador = new IntersectionObserver((entradas) => {
+      entradas.forEach((entrada) => {
+        if (!entrada.isIntersecting) return;
+        entrada.target.classList.add("visivel");
+        observador.unobserve(entrada.target);
+      });
+    }, { threshold: 0.08, rootMargin: "0px 0px -5% 0px" });
+    elementos.forEach((elemento) => observador.observe(elemento));
+  };
+  requestAnimationFrame(() => requestAnimationFrame(iniciarEntrada));
 }
 
 window.addEventListener("scroll", atualizarTopbar, { passive: true });

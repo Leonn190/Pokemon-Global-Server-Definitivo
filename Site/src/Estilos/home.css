@@ -30,6 +30,35 @@ body:has(.hero-home) .aviso-legal {
   overflow: hidden;
   isolation: isolate;
 }
+.hero-home::before,
+.hero-home::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.hero-home::before {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.72) 0 1px, transparent 1.8px) 4% 12% / 132px 132px,
+    radial-gradient(circle, rgba(16, 135, 255, 0.68) 0 1.2px, transparent 2.2px) 18% 72% / 176px 176px,
+    radial-gradient(circle, rgba(255, 54, 79, 0.62) 0 1.1px, transparent 2.1px) 84% 22% / 158px 158px,
+    radial-gradient(circle, rgba(255, 217, 52, 0.58) 0 1px, transparent 2px) 64% 86% / 190px 190px;
+  opacity: 0.34;
+  filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.34));
+  animation: hero-particulas-flutuar 14s linear infinite;
+}
+.hero-home::after {
+  inset: 2% 0 6%;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.7) 0 9px, transparent 9px) 11% 18% / 230px 150px,
+    linear-gradient(90deg, rgba(16, 135, 255, 0.7) 0 7px, transparent 7px) 26% 88% / 310px 190px,
+    linear-gradient(90deg, rgba(255, 54, 79, 0.66) 0 8px, transparent 8px) 82% 45% / 280px 180px,
+    linear-gradient(90deg, rgba(255, 217, 52, 0.62) 0 7px, transparent 7px) 58% 10% / 340px 210px;
+  opacity: 0.13;
+  transform: rotate(-8deg);
+  animation: hero-confetes-deslizar 18s linear infinite;
+}
 .hero-aurora {
   position: absolute;
   inset: -120px max(-8vw, -90px) 0;
@@ -881,12 +910,24 @@ body.home-entrada-pronta .instalar-acoes.home-entrada.visivel .botao:nth-child(2
 body.home-entrada-pronta .instalar-acoes.home-entrada.visivel .botao:nth-child(3) {
   animation-delay: 150ms;
 }
+@keyframes hero-particulas-flutuar {
+  from { background-position: 4% 12%, 18% 72%, 84% 22%, 64% 86%; }
+  to { background-position: calc(4% + 132px) calc(12% + 132px), calc(18% - 176px) calc(72% + 176px), calc(84% + 158px) calc(22% - 158px), calc(64% - 190px) calc(86% - 190px); }
+}
+@keyframes hero-confetes-deslizar {
+  from { background-position: 11% 18%, 26% 88%, 82% 45%, 58% 10%; }
+  to { background-position: calc(11% + 230px) calc(18% + 150px), calc(26% - 310px) calc(88% + 190px), calc(82% + 280px) calc(45% - 180px), calc(58% - 340px) calc(10% + 210px); }
+}
 @keyframes home-botao-pop {
   from { opacity: 0; transform: translateY(8px) scale(0.96); }
   70% { opacity: 1; transform: translateY(-2px) scale(1.025); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
+  .hero-home::before,
+  .hero-home::after {
+    animation: none;
+  }
   body.home-entrada-pronta .home-entrada,
   body.home-entrada-pronta .logo-palco.home-entrada,
   body.home-entrada-pronta .hero-copy h1.home-entrada {

@@ -1,12 +1,13 @@
 ---
-const { tipo = "", chave = "", icone = "", ativo = false, ...atributos } = Astro.props;
+const { tipo = "", chave = "", icone = "", ativo = undefined, ...atributos } = Astro.props;
+const estadoPressionado = ativo === undefined ? undefined : (ativo ? "true" : "false");
 ---
 <button
-  class:list={["tipo-chip", "tipo-chip-icone", { ativo }]}
+  class:list={["tipo-chip", "tipo-chip-icone", { ativo: Boolean(ativo) }]}
   type="button"
   title={tipo}
   aria-label={`Filtrar por ${tipo}`}
-  aria-pressed={ativo ? "true" : "false"}
+  aria-pressed={estadoPressionado}
   {...atributos}
 >
   <span class="tipo-icone-mini">

@@ -1,0 +1,16 @@
+---
+const {
+  label = "Filtro",
+  options = [],
+  ...atributos
+} = Astro.props;
+---
+<label>
+  <span>{label}</span>
+  <select {...atributos}>
+    {options.map((option) => (
+      <option value={option.value ?? ""}>{option.label ?? option.rotulo ?? option.value ?? "Todos"}</option>
+    ))}
+    <slot />
+  </select>
+</label>

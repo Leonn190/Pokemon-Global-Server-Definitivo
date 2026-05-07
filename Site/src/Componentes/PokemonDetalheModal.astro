@@ -1,0 +1,52 @@
+---
+import ModalDetalhe from "./ModalDetalhe.astro";
+import ModalControles from "./ModalControles.astro";
+import DetalheTopo from "./DetalheTopo.astro";
+import PainelDetalhe from "./PainelDetalhe.astro";
+const {
+  labelledby = "pokemon-detalhe-nome",
+  class: classe = "pokemon-detalhe",
+  detailAttrs = {},
+  backdropAttrs = { "data-pokemon-close": true },
+  closeAttrs = { "data-pokemon-close": true },
+  prevAttrs = { "data-pokemon-prev": true },
+  nextAttrs = { "data-pokemon-next": true },
+  titulo = "Pokémon",
+  linhagemHidden = false,
+} = Astro.props;
+---
+<ModalDetalhe class={classe} labelledby={labelledby} backdropAttrs={backdropAttrs} {...detailAttrs}>
+  <ModalControles
+    rotulo="Navegação do Pokémon aberto"
+    prevLabel="Pokémon anterior"
+    nextLabel="Próximo Pokémon"
+    prevAttrs={prevAttrs}
+    nextAttrs={nextAttrs}
+    closeAttrs={closeAttrs}
+  />
+  <DetalheTopo
+    imageAttrs={{ "data-detail-image": true }}
+    codeAttrs={{ "data-detail-code": true }}
+    nameAttrs={{ id: labelledby, "data-detail-name": true }}
+    nomeFallback={titulo}
+    fallback
+  >
+    <div class="pokemon-tags" data-detail-tags></div>
+    <p data-detail-summary hidden></p>
+  </DetalheTopo>
+  <div class="pokemon-detalhe-grid">
+    <PainelDetalhe titulo="Atributos básicos">
+      <div class="barras-atributos" data-detail-stats></div>
+    </PainelDetalhe>
+    <PainelDetalhe titulo="Informações">
+      <dl class="pokemon-info-lista" data-detail-info></dl>
+    </PainelDetalhe>
+  </div>
+  <section class="painel-detalhe painel-linhagem" data-detail-line-panel hidden={linhagemHidden ? true : undefined}>
+    <div class="painel-titulo-linha">
+      <h3>Linhagem / evoluções</h3>
+      <span data-detail-line-count></span>
+    </div>
+    <div class="linhagem-lista" data-detail-line></div>
+  </section>
+</ModalDetalhe>

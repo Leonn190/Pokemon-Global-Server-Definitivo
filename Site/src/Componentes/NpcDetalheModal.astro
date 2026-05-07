@@ -1,0 +1,46 @@
+---
+import ModalDetalhe from "./ModalDetalhe.astro";
+import ModalControles from "./ModalControles.astro";
+import DetalheTopo from "./DetalheTopo.astro";
+import PainelDetalhe from "./PainelDetalhe.astro";
+const {
+  labelledby = "npc-detalhe-nome",
+  class: classe = "item-detalhe pokemon-detalhe",
+  detailAttrs = {},
+  titulo = "NPC",
+} = Astro.props;
+---
+<ModalDetalhe
+  class={classe}
+  cardClass="pokemon-detalhe-card item-detalhe-card npc-detalhe-card"
+  labelledby={labelledby}
+  backdropAttrs={{ "data-npc-close": true }}
+  {...detailAttrs}
+>
+  <ModalControles
+    rotulo="Navegação do NPC aberto"
+    prevLabel="NPC anterior"
+    nextLabel="Próximo NPC"
+    prevAttrs={{ "data-npc-prev": true }}
+    nextAttrs={{ "data-npc-next": true }}
+    closeAttrs={{ "data-npc-close": true }}
+  />
+  <DetalheTopo
+    class="item-detalhe-topo npc-detalhe-topo"
+    palcoClass="item-palco-detalhe npc-palco-detalhe"
+    cabecalhoClass="npc-cabecalho-detalhe"
+    imageAttrs={{ "data-npc-image": true }}
+    codeAttrs={{ "data-npc-code": true }}
+    nameAttrs={{ id: labelledby, "data-npc-name": true }}
+    nomeFallback={titulo}
+  >
+    <div class="pokemon-tags" data-npc-tags></div>
+  </DetalheTopo>
+  <PainelDetalhe titulo="Informações" class="item-info-painel">
+    <dl class="pokemon-info-lista" data-npc-info></dl>
+  </PainelDetalhe>
+  <section class="painel-detalhe item-info-painel dungeon-pokemon-painel" data-npc-team-panel hidden>
+    <h3>Equipe Pokémon</h3>
+    <div class="dungeon-pokemon-grid" data-npc-team></div>
+  </section>
+</ModalDetalhe>

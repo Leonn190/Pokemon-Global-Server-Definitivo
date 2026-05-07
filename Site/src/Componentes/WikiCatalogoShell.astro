@@ -1,0 +1,42 @@
+---
+import WikiToolbar from "./WikiToolbar.astro";
+import WikiGrid from "./WikiGrid.astro";
+import WikiStatus from "./WikiStatus.astro";
+import WikiVazio from "./WikiVazio.astro";
+const {
+  appClass = "",
+  appAttrs = {},
+  toolbarClass = "",
+  toolbarRotulo = "Ferramentas da wiki",
+  quantidade = 0,
+  countAttrs = {},
+  directionAttrs = {},
+  clearAttrs = {},
+  clearAriaLabel = "Limpar todos os filtros",
+  gridClass = "",
+  gridAttrs = {},
+  gridRotulo = "Lista da wiki",
+  vazioAttrs = {},
+  vazioTitulo = "Nenhum resultado encontrado.",
+  vazioTexto = "Tente remover algum filtro ou pesquisar por outro nome.",
+  sentinelAttrs = {},
+} = Astro.props;
+---
+<section class="wiki-layout wiki-layout-pokedex">
+  <div class:list={["wiki-conteudo", "pokedex-app", appClass]} {...appAttrs}>
+    <WikiToolbar class={toolbarClass} rotulo={toolbarRotulo}>
+      <slot name="toolbar" />
+    </WikiToolbar>
+    <slot name="after-toolbar" />
+    <WikiStatus
+      quantidade={quantidade}
+      countAttrs={countAttrs}
+      directionAttrs={directionAttrs}
+      clearAttrs={clearAttrs}
+      clearAriaLabel={clearAriaLabel}
+    />
+    <WikiGrid class={gridClass} rotulo={gridRotulo} {...gridAttrs} />
+    <WikiVazio titulo={vazioTitulo} texto={vazioTexto} {...vazioAttrs} />
+    <div class="pokedex-sentinel" aria-hidden="true" {...sentinelAttrs}></div>
+  </div>
+</section>

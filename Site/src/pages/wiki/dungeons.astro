@@ -1,6 +1,15 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import ModalDetalhe from "../../Componentes/ModalDetalhe.astro";
+import ModalControles from "../../Componentes/ModalControles.astro";
+import DetalheTopo from "../../Componentes/DetalheTopo.astro";
+import PainelDetalhe from "../../Componentes/PainelDetalhe.astro";
+import PokemonDetalheModal from "../../Componentes/PokemonDetalheModal.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
 import {
   DIFICULDADES_DUNGEON,
   TAMANHOS_DUNGEON,
@@ -26,149 +35,90 @@ const imagensPorNome = indexarPublicoPorNome("Imagens");
 const iconesTipos = indexarPublicoPorNome("Tipos");
 const iconesAtributos = indexarPublicoPorNome("Atributos");
 const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome);
-const payloadDungeons = JSON.stringify({ dungeons, assetsDungeons, resumo }).replace(/</g, "\\u003c");
-const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, iconesAtributos, atributosBase: ATRIBUTOS_BASE }).replace(/</g, "\\u003c");
+const payloadDungeons = { dungeons, assetsDungeons, resumo };
+const payloadPokedex = { pokemons, assetsPokemons, iconesTipos, iconesAtributos, atributosBase: ATRIBUTOS_BASE };
+const opcoesOrdenacao = [
+  ["ordem", "Ordem oficial"],
+  ["nome", "Alfabética"],
+  ["dificuldade", "Dificuldade"],
+  ["tamanho", "Tamanho"],
+  ["bioma", "Bioma"],
+].map(([value, label]) => ({ value, label }));
+const opcoesDificuldade = [{ value: "", label: "Todas" }, ...Object.entries(DIFICULDADES_DUNGEON).map(([value, label]) => ({ value, label }))];
+const opcoesTamanho = [{ value: "", label: "Todos" }, ...Object.entries(TAMANHOS_DUNGEON).map(([value, label]) => ({ value, label }))];
+const opcoesBioma = [{ value: "", label: "Todos" }, ...resumo.biomas.map((bioma) => ({ value: normalizarChave(bioma), label: bioma }))];
 ---
 <Layout
   titulo="Dungeons"
   descricao="Wiki de dungeons do Pokémon Global Server, com tamanho, dificuldade, biomas, entradas, bosses e servos."
 >
-  <WikiTopo
-    ativo="dungeons"
-    titulo="Dungeons"
-    tituloId="titulo-dungeons"
+  <WikiTopo ativo="dungeons" titulo="Dungeons" tituloId="titulo-dungeons" />
+  <WikiCatalogoShell
+    appClass="dungeons-app"
+    appAttrs={{ "data-dungeons-app": true }}
+    toolbarClass="dungeons-toolbar"
+    toolbarRotulo="Ferramentas da wiki de dungeons"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-dungeons-count": true }}
+    directionAttrs={{ "data-dungeons-direction": true }}
+    clearAttrs={{ "data-dungeons-clear": true }}
+    clearAriaLabel="Limpar todos os filtros de dungeons"
+    gridClass="itens-grid dungeons-grid"
+    gridAttrs={{ "data-dungeons-grid": true }}
+    gridRotulo="Lista de dungeons"
+    vazioAttrs={{ "data-dungeons-empty": true }}
+    vazioTitulo="Nenhuma dungeon encontrada."
+    sentinelAttrs={{ "data-dungeons-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-dungeons-search placeholder="Nome, código, bioma ou Pokémon..." />
+      <SelectFiltroWiki data-dungeons-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-dungeons-difficulty label="Dificuldade" options={opcoesDificuldade} />
+      <SelectFiltroWiki data-dungeons-size label="Tamanho" options={opcoesTamanho} />
+      <SelectFiltroWiki data-dungeons-biome label="Bioma" options={opcoesBioma} />
+    </Fragment>
+  </WikiCatalogoShell>
+  <ModalDetalhe
+    class="item-detalhe pokemon-detalhe"
+    cardClass="pokemon-detalhe-card item-detalhe-card dungeon-detalhe-card"
+    labelledby="dungeon-detalhe-nome"
+    backdropAttrs={{ "data-dungeon-close": true }}
+    data-dungeon-detail
+  >
+    <ModalControles
+      rotulo="Navegação da dungeon aberta"
+      prevLabel="Dungeon anterior"
+      nextLabel="Próxima dungeon"
+      prevAttrs={{ "data-dungeon-prev": true }}
+      nextAttrs={{ "data-dungeon-next": true }}
+      closeAttrs={{ "data-dungeon-close": true }}
+    />
+    <DetalheTopo
+      class="item-detalhe-topo dungeon-detalhe-topo"
+      palcoClass="item-palco-detalhe dungeon-palco-detalhe"
+      cabecalhoClass="dungeon-cabecalho-detalhe"
+      imageAttrs={{ "data-dungeon-image": true }}
+      codeAttrs={{ "data-dungeon-code": true }}
+      nameAttrs={{ id: "dungeon-detalhe-nome", "data-dungeon-name": true }}
+      nomeFallback="Dungeon"
+    />
+    <PainelDetalhe titulo="Informações" class="item-info-painel">
+      <dl class="pokemon-info-lista" data-dungeon-info></dl>
+    </PainelDetalhe>
+    <PainelDetalhe titulo="Pokémons envolvidos" class="item-info-painel dungeon-pokemon-painel">
+      <div class="dungeon-pokemon-grid" data-dungeon-pokemons></div>
+    </PainelDetalhe>
+    <PainelDetalhe titulo="Pokémons servos" class="item-info-painel dungeon-pokemon-painel">
+      <div class="dungeon-pokemon-grid" data-dungeon-servos></div>
+    </PainelDetalhe>
+  </ModalDetalhe>
+  <PokemonDetalheModal
+    labelledby="pokemon-dungeon-detalhe-nome"
+    class="pokemon-detalhe dungeon-pokemon-detalhe"
+    detailAttrs={{ "data-dungeon-pokemon-detail": true }}
   />
-  <section class="wiki-layout wiki-layout-pokedex">
-    <div class="wiki-conteudo pokedex-app dungeons-app" data-dungeons-app>
-      <section class="pokedex-toolbar dungeons-toolbar" aria-label="Ferramentas da wiki de dungeons">
-        <label class="campo-busca">
-          <span>Pesquisar</span>
-          <input data-dungeons-search type="search" placeholder="Nome, código, bioma ou Pokémon..." autocomplete="off" />
-        </label>
-        <label>
-          <span>Ordenar</span>
-          <select data-dungeons-sort>
-            <option value="ordem">Ordem oficial</option>
-            <option value="nome">Alfabética</option>
-            <option value="dificuldade">Dificuldade</option>
-            <option value="tamanho">Tamanho</option>
-            <option value="bioma">Bioma</option>
-          </select>
-        </label>
-        <label>
-          <span>Dificuldade</span>
-          <select data-dungeons-difficulty>
-            <option value="">Todas</option>
-            {Object.entries(DIFICULDADES_DUNGEON).map(([numero, rotulo]) => <option value={numero}>{rotulo}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Tamanho</span>
-          <select data-dungeons-size>
-            <option value="">Todos</option>
-            {Object.entries(TAMANHOS_DUNGEON).map(([numero, rotulo]) => <option value={numero}>{rotulo}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Bioma</span>
-          <select data-dungeons-biome>
-            <option value="">Todos</option>
-            {resumo.biomas.map((bioma) => <option value={normalizarChave(bioma)}>{bioma}</option>)}
-          </select>
-        </label>
-      </section>
-      <section class="pokedex-status" aria-live="polite">
-        <div>
-          <strong data-dungeons-count>{resumo.quantidade}</strong>
-          <span>resultados encontrados</span>
-        </div>
-        <div class="pokedex-acoes-status">
-          <button class="botao fantasma compacto" type="button" data-dungeons-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-dungeons-clear aria-label="Limpar todos os filtros de dungeons">Limpar filtros</button>
-        </div>
-      </section>
-      <section class="itens-grid dungeons-grid" data-dungeons-grid aria-label="Lista de dungeons"></section>
-      <div class="pokedex-vazio" data-dungeons-empty hidden>
-        <strong>Nenhuma dungeon encontrada.</strong>
-        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
-      </div>
-      <div class="pokedex-sentinel" data-dungeons-sentinel aria-hidden="true"></div>
-    </div>
-  </section>
-  <aside class="item-detalhe pokemon-detalhe" data-dungeon-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-dungeon-close></div>
-    <article class="pokemon-detalhe-card item-detalhe-card dungeon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="dungeon-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação da dungeon aberta">
-        <button class="pokemon-navegar" type="button" data-dungeon-prev aria-label="Dungeon anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-dungeon-next aria-label="Próxima dungeon">›</button>
-        <button class="pokemon-fechar" type="button" data-dungeon-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo item-detalhe-topo dungeon-detalhe-topo">
-        <div class="pokemon-palco-detalhe item-palco-detalhe dungeon-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-dungeon-image alt="" loading="lazy" decoding="async" />
-        </div>
-        <div class="pokemon-cabecalho-detalhe dungeon-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-dungeon-code>#000</span>
-          <h2 id="dungeon-detalhe-nome" data-dungeon-name>Dungeon</h2>
-        </div>
-      </div>
-      <section class="painel-detalhe item-info-painel">
-        <h3>Informações</h3>
-        <dl class="pokemon-info-lista" data-dungeon-info></dl>
-      </section>
-      <section class="painel-detalhe item-info-painel dungeon-pokemon-painel">
-        <h3>Pokémons envolvidos</h3>
-        <div class="dungeon-pokemon-grid" data-dungeon-pokemons></div>
-      </section>
-      <section class="painel-detalhe item-info-painel dungeon-pokemon-painel">
-        <h3>Pokémons servos</h3>
-        <div class="dungeon-pokemon-grid" data-dungeon-servos></div>
-      </section>
-    </article>
-  </aside>
-  <aside class="pokemon-detalhe dungeon-pokemon-detalhe" data-dungeon-pokemon-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
-    <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-dungeon-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do Pokémon aberto">
-        <button class="pokemon-navegar" type="button" data-pokemon-prev aria-label="Pokémon anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
-        <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo">
-        <div class="pokemon-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-detail-image alt="" loading="lazy" decoding="async" />
-          <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
-        </div>
-        <div class="pokemon-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-detail-code>#000</span>
-          <h2 id="pokemon-dungeon-detalhe-nome" data-detail-name>Pokémon</h2>
-          <div class="pokemon-tags" data-detail-tags></div>
-          <p data-detail-summary hidden></p>
-        </div>
-      </div>
-      <div class="pokemon-detalhe-grid">
-        <section class="painel-detalhe">
-          <h3>Atributos básicos</h3>
-          <div class="barras-atributos" data-detail-stats></div>
-        </section>
-        <section class="painel-detalhe">
-          <h3>Informações</h3>
-          <dl class="pokemon-info-lista" data-detail-info></dl>
-        </section>
-      </div>
-      <section class="painel-detalhe painel-linhagem" data-detail-line-panel>
-        <div class="painel-titulo-linha">
-          <h3>Linhagem / evoluções</h3>
-          <span data-detail-line-count></span>
-        </div>
-        <div class="linhagem-lista" data-detail-line></div>
-      </section>
-    </article>
-  </aside>
-  <script id="dungeons-data" type="application/json" set:html={payloadDungeons}></script>
-  <script id="dungeons-pokedex-data" type="application/json" set:html={payloadPokedex}></script>
+  <JsonPayload id="dungeons-data" dados={payloadDungeons} />
+  <JsonPayload id="dungeons-pokedex-data" dados={payloadPokedex} />
   <script>
     import { inicializarWikiDungeons } from "../../Codigo/DungeonsRuntime.js";
     inicializarWikiDungeons();

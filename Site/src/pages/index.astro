@@ -1,6 +1,10 @@
 ---
 import Layout from "../Componentes/Layout.astro";
 import Botao from "../Componentes/Botao.astro";
+import CardCatalogo from "../Componentes/CardCatalogo.astro";
+import ResumoWiki from "../Componentes/ResumoWiki.astro";
+import PokemonDetalheModal from "../Componentes/PokemonDetalheModal.astro";
+import JsonPayload from "../Componentes/JsonPayload.astro";
 import { indexarPublicoPorNome, urlPublica } from "../Codigo/AssetsPublicos.js";
 import { carregarAtaques } from "../Codigo/AtaquesWikiDados.js";
 import { carregarItens } from "../Codigo/ItemWikiDados.js";
@@ -41,13 +45,13 @@ const classeChanceHome = (chance) => {
 };
 const ehRadianteHome = (pokemon) => normalizarChave(pokemon?.nome).includes("radiante");
 const nomeHome = (pokemon) => String(pokemon.nome || pokemon.nomeExibicao || "Pokémon").replace(/\s+/g, " ").trim();
-const payloadHomePokemon = JSON.stringify({
+const payloadHomePokemon = {
   pokemons: destaquesHome,
   assetsPokemons: assetsDestaquesHome,
   iconesTipos: iconesTiposHome,
   iconesAtributos: iconesAtributosHome,
   atributosBase: ATRIBUTOS_BASE,
-}).replace(/</g, "\\u003c");
+};
 ---
 <Layout
   titulo="Início | Pokémon Global Server"
@@ -86,14 +90,7 @@ const payloadHomePokemon = JSON.stringify({
         <p>
           Pokémon Global Server é um fan game 2D onde o jogador sai pelo mapa, descobre biomas, captura criaturas, coleta recursos, monta equipe, cria itens e entra em batalhas que dependem de energia, efeitos, tipos e posicionamento.
         </p>
-        <div class="mini-destaques metricas-home" aria-label="Números do projeto">
-          {estatisticasPrincipais.map((item) => (
-            <article>
-              <strong>{item.valor}</strong>
-              <span>{item.rotulo}</span>
-            </article>
-          ))}
-        </div>
+        <ResumoWiki baseClass="" class="mini-destaques metricas-home" itens={estatisticasPrincipais} aria-label="Números do projeto" />
       </div>
     </div>
   </section>
@@ -107,17 +104,21 @@ const payloadHomePokemon = JSON.stringify({
           const asset = assetsDestaquesHome[pokemon.id];
           const radiante = ehRadianteHome(pokemon);
           return (
-            <button class={`pokemon-card pokemon-card-home ${radiante ? "pokemon-radiante" : ""}`} type="button" data-home-pokemon-id={pokemon.id}>
-              <span class="pokemon-card-codigo">#{pokemon.id}</span>
-              <span class="pokemon-card-arte">
-                {asset?.imagem ? (
-                  <img class={radiante ? "sprite-radiante" : ""} src={asset.imagem} alt={nomeHome(pokemon)} loading="lazy" decoding="async" />
-                ) : (
-                  <span class="pokemon-card-sem-arte">{nomeHome(pokemon).slice(0, 1)}</span>
-                )}
-              </span>
-              <span class="pokemon-card-nome">{nomeHome(pokemon)}</span>
-              <span class="pokemon-card-meta">{pokemon.grupo}</span>
+            <CardCatalogo
+              class={`pokemon-card pokemon-card-home ${radiante ? "pokemon-radiante" : ""}`}
+              codigo={pokemon.id}
+              nome={nomeHome(pokemon)}
+              imagem={asset?.imagem}
+              meta={pokemon.grupo}
+              alt={nomeHome(pokemon)}
+              imageClass={radiante ? "sprite-radiante" : ""}
+              codigoClass="pokemon-card-codigo"
+              arteClass="pokemon-card-arte"
+              nomeClass="pokemon-card-nome"
+              metaClass="pokemon-card-meta"
+              fallbackClass="pokemon-card-sem-arte"
+              data-home-pokemon-id={pokemon.id}
+            >
               <span class="pokemon-card-tipos">
                 {pokemon.tipos.map((tipo) => {
                   const icone = iconesTiposHome[normalizarChave(tipo.nome)];
@@ -129,7 +130,7 @@ const payloadHomePokemon = JSON.stringify({
                 })}
               </span>
               <span class="pokemon-card-poder"><strong>{pokemon.total}</strong><small>Poder total</small></span>
-            </button>
+            </CardCatalogo>
           );
         })}
       </div>
@@ -154,53 +155,18 @@ const payloadHomePokemon = JSON.stringify({
       </div>
     </div>
   </section>
-  <aside class="pokemon-detalhe" data-home-pokemon-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
-    <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-home-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do Pokémon aberto">
-        <button class="pokemon-navegar" type="button" data-pokemon-prev aria-label="Pokémon anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
-        <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo">
-        <div class="pokemon-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-detail-image alt="" loading="lazy" decoding="async" />
-          <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
-        </div>
-        <div class="pokemon-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-detail-code>#000</span>
-          <h2 id="pokemon-home-detalhe-nome" data-detail-name>Pokémon</h2>
-          <div class="pokemon-tags" data-detail-tags></div>
-          <p data-detail-summary hidden></p>
-        </div>
-      </div>
-      <div class="pokemon-detalhe-grid">
-        <section class="painel-detalhe">
-          <h3>Atributos básicos</h3>
-          <div class="barras-atributos" data-detail-stats></div>
-        </section>
-        <section class="painel-detalhe">
-          <h3>Informações</h3>
-          <dl class="pokemon-info-lista" data-detail-info></dl>
-        </section>
-      </div>
-      <section class="painel-detalhe painel-linhagem" data-detail-line-panel hidden>
-        <div class="painel-titulo-linha">
-          <h3>Linhagem / evoluções</h3>
-          <span data-detail-line-count></span>
-        </div>
-        <div class="linhagem-lista" data-detail-line></div>
-      </section>
-    </article>
-  </aside>
+  <PokemonDetalheModal
+    labelledby="pokemon-home-detalhe-nome"
+    detailAttrs={{ "data-home-pokemon-detail": true }}
+    linhagemHidden
+  />
   <section class="aviso-legal">
     <strong>Projeto independente e educacional.</strong>
     <p>
       Este projeto é feito para estudo e portfólio, sem finalidade comercial. Não é afiliado, patrocinado, aprovado ou associado à Nintendo, The Pokémon Company, Creatures Inc. ou GAME FREAK inc. Pokémon e marcas relacionadas pertencem aos seus respectivos proprietários.
     </p>
   </section>
-  <script id="pokemon-home-data" type="application/json" set:html={payloadHomePokemon}></script>
+  <JsonPayload id="pokemon-home-data" dados={payloadHomePokemon} />
   <script>
     import { inicializarCarrosselHome } from "../Codigo/PokedexRuntime.js";
     inicializarCarrosselHome();

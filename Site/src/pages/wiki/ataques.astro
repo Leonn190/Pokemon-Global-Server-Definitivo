@@ -1,8 +1,15 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
-import WikiToolbar from "../../Componentes/WikiToolbar.astro";
-import WikiGrid from "../../Componentes/WikiGrid.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import FiltroTipoIcones from "../../Componentes/FiltroTipoIcones.astro";
+import ModalDetalhe from "../../Componentes/ModalDetalhe.astro";
+import ModalControles from "../../Componentes/ModalControles.astro";
+import DetalheTopo from "../../Componentes/DetalheTopo.astro";
+import PainelDetalhe from "../../Componentes/PainelDetalhe.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
 import {
   FOCOS_ATAQUE,
   carregarAtaques,
@@ -10,7 +17,6 @@ import {
   indexarIconesAtaques,
   resumoAtaques,
 } from "../../Codigo/AtaquesWikiDados.js";
-import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import { indexarPublicoPorNome, listarImagensPublicas } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const ataques = carregarAtaques();
@@ -20,118 +26,96 @@ const iconesTipos = indexarPublicoPorNome("Tipos");
 const assetsAtaques = criarAssetsAtaques(ataques, iconesAtaques);
 const estilos = [...new Map(ataques.map((ataque) => [ataque.estiloBusca, ataque.estiloRotulo])).entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
 const motores = resumo.motores;
-const payloadAtaques = JSON.stringify({ ataques, assetsAtaques, iconesTipos, resumo }).replace(/</g, "\\u003c");
+const payloadAtaques = { ataques, assetsAtaques, iconesTipos, resumo };
+const opcoesOrdenacao = [
+  ["ordem", "Ordem oficial"],
+  ["nome", "Alfabética"],
+  ["custo", "Custo"],
+  ["ofensivo", "Ofensivo"],
+  ["defensivo", "Defensivo"],
+  ["suporte", "Suporte"],
+  ["utilitario", "Utilitário"],
+].map(([value, label]) => ({ value, label }));
+const opcoesEstilo = [{ value: "", label: "Todos" }, ...estilos.map(([value, label]) => ({ value, label }))];
+const opcoesMotor = [{ value: "", label: "Todos" }, ...motores.map((motor) => ({ value: motor.chave, label: motor.rotulo }))];
+const opcoesFoco = [{ value: "", label: "Todos" }, ...FOCOS_ATAQUE.map((foco) => ({ value: foco.chave, label: foco.rotulo }))];
 ---
 <Layout
   titulo="Ataques"
   descricao="Wiki de ataques do Pokémon Global Server, com busca, filtros por tipo, estilo, motor, foco e detalhes de aprimoramento."
 >
-  <WikiTopo
-    ativo="ataques"
-    titulo="Ataques"
-    tituloId="titulo-ataques"
-  />
-  <section class="wiki-layout wiki-layout-pokedex">
-    <div class="wiki-conteudo pokedex-app ataques-app" data-ataques-app>
-      <WikiToolbar class="ataques-toolbar" rotulo="Ferramentas da wiki de ataques">
-        <label class="campo-busca">
-          <span>Pesquisar</span>
-          <input data-ataques-search type="search" placeholder="Nome, código, tipo, motor ou descrição..." autocomplete="off" />
-        </label>
-        <label>
-          <span>Ordenar</span>
-          <select data-ataques-sort>
-            <option value="ordem">Ordem oficial</option>
-            <option value="nome">Alfabética</option>
-            <option value="custo">Custo</option>
-            <option value="ofensivo">Ofensivo</option>
-            <option value="defensivo">Defensivo</option>
-            <option value="suporte">Suporte</option>
-            <option value="utilitario">Utilitário</option>
-          </select>
-        </label>
-        <label>
-          <span>Estilo</span>
-          <select data-ataques-style>
-            <option value="">Todos</option>
-            {estilos.map(([chave, rotulo]) => <option value={chave}>{rotulo}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Motor</span>
-          <select data-ataques-motor>
-            <option value="">Todos</option>
-            {motores.map((motor) => <option value={motor.chave}>{motor.rotulo}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Foco</span>
-          <select data-ataques-focus>
-            <option value="">Todos</option>
-            {FOCOS_ATAQUE.map((foco) => <option value={foco.chave}>{foco.rotulo}</option>)}
-          </select>
-        </label>
-      </WikiToolbar>
-      <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-ataques" aria-label="Filtros por tipo. Selecione um tipo por vez.">
-        {resumo.tipos.map((tipo) => (
-          <button class="tipo-chip tipo-chip-icone" type="button" data-ataques-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`} aria-pressed="false">
-            <span class="tipo-icone-mini">
-              {iconesTipos[normalizarChave(tipo)] ? <img src={iconesTipos[normalizarChave(tipo)]} alt="" loading="eager" decoding="async" /> : null}
-            </span>
-          </button>
-        ))}
-      </section>
-      <section class="pokedex-status" aria-live="polite">
-        <div>
-          <strong data-ataques-count>{resumo.quantidade}</strong>
-          <span>resultados encontrados</span>
-        </div>
-        <div class="pokedex-acoes-status">
-          <button class="botao fantasma compacto" type="button" data-ataques-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-ataques-clear aria-label="Limpar todos os filtros de ataques">Limpar filtros</button>
-        </div>
-      </section>
-      <WikiGrid class="itens-grid ataques-grid" data-ataques-grid rotulo="Lista de ataques" />
-      <div class="pokedex-vazio" data-ataques-empty hidden>
-        <strong>Nenhum ataque encontrado.</strong>
-        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
-      </div>
-      <div class="pokedex-sentinel" data-ataques-sentinel aria-hidden="true"></div>
-    </div>
-  </section>
-  <aside class="item-detalhe pokemon-detalhe" data-ataque-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-ataque-close></div>
-    <article class="pokemon-detalhe-card item-detalhe-card ataque-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="ataque-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do ataque aberto">
-        <button class="pokemon-navegar" type="button" data-ataque-prev aria-label="Ataque anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-ataque-next aria-label="Próximo ataque">›</button>
-        <button class="pokemon-fechar" type="button" data-ataque-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo item-detalhe-topo ataque-detalhe-topo">
-        <div class="pokemon-palco-detalhe item-palco-detalhe ataque-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-ataque-image alt="" loading="lazy" decoding="async" />
-        </div>
-        <div class="pokemon-cabecalho-detalhe ataque-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-ataque-code>#000</span>
-          <h2 id="ataque-detalhe-nome" data-ataque-name>Ataque</h2>
-          <div class="pokemon-tags" data-ataque-tags></div>
-        </div>
-      </div>
-      <section class="painel-detalhe item-info-painel ataque-texto-painel">
-        <h3>Descrição</h3>
-        <p class="item-descricao-melhor" data-ataque-description></p>
-      </section>
-      <section class="painel-detalhe item-info-painel ataque-texto-painel">
-        <h3>Aprimoramento</h3>
-        <div class="item-descricao-melhor" data-ataque-upgrade></div>
-      </section>
-      <section class="painel-detalhe ataque-foco-painel">
-        <div data-ataque-focus-bars></div>
-      </section>
-    </article>
-  </aside>
-  <script id="ataques-data" type="application/json" set:html={payloadAtaques}></script>
+  <WikiTopo ativo="ataques" titulo="Ataques" tituloId="titulo-ataques" />
+  <WikiCatalogoShell
+    appClass="ataques-app"
+    appAttrs={{ "data-ataques-app": true }}
+    toolbarClass="ataques-toolbar"
+    toolbarRotulo="Ferramentas da wiki de ataques"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-ataques-count": true }}
+    directionAttrs={{ "data-ataques-direction": true }}
+    clearAttrs={{ "data-ataques-clear": true }}
+    clearAriaLabel="Limpar todos os filtros de ataques"
+    gridClass="itens-grid ataques-grid"
+    gridAttrs={{ "data-ataques-grid": true }}
+    gridRotulo="Lista de ataques"
+    vazioAttrs={{ "data-ataques-empty": true }}
+    vazioTitulo="Nenhum ataque encontrado."
+    sentinelAttrs={{ "data-ataques-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-ataques-search placeholder="Nome, código, tipo, motor ou descrição..." />
+      <SelectFiltroWiki data-ataques-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-ataques-style label="Estilo" options={opcoesEstilo} />
+      <SelectFiltroWiki data-ataques-motor label="Motor" options={opcoesMotor} />
+      <SelectFiltroWiki data-ataques-focus label="Foco" options={opcoesFoco} />
+    </Fragment>
+    <FiltroTipoIcones
+      slot="after-toolbar"
+      itens={resumo.tipos}
+      icones={iconesTipos}
+      dataAttr="data-ataques-type-chip"
+      class="filtros-tipos-ataques"
+      rotulo="Filtros por tipo. Selecione um tipo por vez."
+      ariaPressed
+    />
+  </WikiCatalogoShell>
+  <ModalDetalhe
+    class="item-detalhe pokemon-detalhe"
+    cardClass="pokemon-detalhe-card item-detalhe-card ataque-detalhe-card"
+    labelledby="ataque-detalhe-nome"
+    backdropAttrs={{ "data-ataque-close": true }}
+    data-ataque-detail
+  >
+    <ModalControles
+      rotulo="Navegação do ataque aberto"
+      prevLabel="Ataque anterior"
+      nextLabel="Próximo ataque"
+      prevAttrs={{ "data-ataque-prev": true }}
+      nextAttrs={{ "data-ataque-next": true }}
+      closeAttrs={{ "data-ataque-close": true }}
+    />
+    <DetalheTopo
+      class="item-detalhe-topo ataque-detalhe-topo"
+      palcoClass="item-palco-detalhe ataque-palco-detalhe"
+      cabecalhoClass="ataque-cabecalho-detalhe"
+      imageAttrs={{ "data-ataque-image": true }}
+      codeAttrs={{ "data-ataque-code": true }}
+      nameAttrs={{ id: "ataque-detalhe-nome", "data-ataque-name": true }}
+      nomeFallback="Ataque"
+    >
+      <div class="pokemon-tags" data-ataque-tags></div>
+    </DetalheTopo>
+    <PainelDetalhe titulo="Descrição" class="item-info-painel ataque-texto-painel">
+      <p class="item-descricao-melhor" data-ataque-description></p>
+    </PainelDetalhe>
+    <PainelDetalhe titulo="Aprimoramento" class="item-info-painel ataque-texto-painel">
+      <div class="item-descricao-melhor" data-ataque-upgrade></div>
+    </PainelDetalhe>
+    <section class="painel-detalhe ataque-foco-painel">
+      <div data-ataque-focus-bars></div>
+    </section>
+  </ModalDetalhe>
+  <JsonPayload id="ataques-data" dados={payloadAtaques} />
   <script>
     import { inicializarWikiAtaques } from "../../Codigo/AtaquesRuntime.js";
     inicializarWikiAtaques();

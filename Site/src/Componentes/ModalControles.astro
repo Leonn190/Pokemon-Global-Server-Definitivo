@@ -1,0 +1,16 @@
+---
+const {
+  rotulo = "Navegação do item aberto",
+  prevAttrs = {},
+  nextAttrs = {},
+  closeAttrs = {},
+  prevLabel = "Anterior",
+  nextLabel = "Próximo",
+  closeLabel = "Fechar detalhes",
+} = Astro.props;
+---
+<div class="pokemon-controles-detalhe" aria-label={rotulo}>
+  <button class="pokemon-navegar" type="button" aria-label={prevLabel} {...prevAttrs}>‹</button>
+  <button class="pokemon-navegar" type="button" aria-label={nextLabel} {...nextAttrs}>›</button>
+  <button class="pokemon-fechar" type="button" aria-label={closeLabel} {...closeAttrs}>×</button>
+</div>

@@ -1,6 +1,14 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import ModalDetalhe from "../../Componentes/ModalDetalhe.astro";
+import ModalControles from "../../Componentes/ModalControles.astro";
+import DetalheTopo from "../../Componentes/DetalheTopo.astro";
+import PainelDetalhe from "../../Componentes/PainelDetalhe.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
 import {
   OPCOES_ESTILO_EFEITO,
   OPCOES_SENTIDO_EFEITO,
@@ -15,91 +23,72 @@ const efeitos = carregarEfeitos();
 const resumo = resumoEfeitos(efeitos);
 const iconesEfeitos = indexarIconesEfeitos(listarImagensPublicas("Efeitos"));
 const assetsEfeitos = criarAssetsEfeitos(efeitos, iconesEfeitos);
-const payloadEfeitos = JSON.stringify({ efeitos, assetsEfeitos, resumo }).replace(/</g, "\\u003c");
+const payloadEfeitos = { efeitos, assetsEfeitos, resumo };
+const opcoesOrdenacao = [{ value: "ordem", label: "Ordem oficial" }, { value: "nome", label: "Alfabética" }];
+const opcoesEstilo = [{ value: "", label: "Todos" }, ...Object.entries(OPCOES_ESTILO_EFEITO).map(([value, label]) => ({ value, label }))];
+const opcoesSentido = [{ value: "", label: "Todos" }, ...Object.entries(OPCOES_SENTIDO_EFEITO).map(([value, label]) => ({ value, label }))];
 ---
 <Layout
   titulo="Efeitos"
   descricao="Wiki de efeitos do Pokémon Global Server, com status de Pokémon, climas, terrenos, filtros e descrições."
 >
-  <WikiTopo
-    ativo="efeitos"
-    titulo="Efeitos"
-    tituloId="titulo-efeitos"
-  />
-  <section class="wiki-layout wiki-layout-pokedex">
-    <div class="wiki-conteudo pokedex-app efeitos-app" data-efeitos-app>
-      <section class="pokedex-toolbar efeitos-toolbar" aria-label="Ferramentas da wiki de efeitos">
-        <label class="campo-busca">
-          <span>Pesquisar</span>
-          <input data-efeitos-search type="search" placeholder="Nome, código, estilo ou descrição..." autocomplete="off" />
-        </label>
-        <label>
-          <span>Ordenar</span>
-          <select data-efeitos-sort>
-            <option value="ordem">Ordem oficial</option>
-            <option value="nome">Alfabética</option>
-          </select>
-        </label>
-        <label>
-          <span>Estilo</span>
-          <select data-efeitos-style>
-            <option value="">Todos</option>
-            {Object.entries(OPCOES_ESTILO_EFEITO).map(([chave, rotulo]) => <option value={chave}>{rotulo}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Sentido</span>
-          <select data-efeitos-sense>
-            <option value="">Todos</option>
-            {Object.entries(OPCOES_SENTIDO_EFEITO).map(([chave, rotulo]) => <option value={chave}>{rotulo}</option>)}
-          </select>
-        </label>
-      </section>
-      <section class="pokedex-status" aria-live="polite">
-        <div>
-          <strong data-efeitos-count>{efeitos.length}</strong>
-          <span>resultados encontrados</span>
-        </div>
-        <div class="pokedex-acoes-status">
-          <button class="botao fantasma compacto" type="button" data-efeitos-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-efeitos-clear aria-label="Limpar todos os filtros de efeitos">Limpar filtros</button>
-        </div>
-      </section>
-      <section class="itens-grid efeitos-grid" data-efeitos-grid aria-label="Lista de efeitos"></section>
-      <div class="pokedex-vazio" data-efeitos-empty hidden>
-        <strong>Nenhum efeito encontrado.</strong>
-        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
-      </div>
-      <div class="pokedex-sentinel" data-efeitos-sentinel aria-hidden="true"></div>
-    </div>
-  </section>
-  <aside class="item-detalhe pokemon-detalhe" data-efeito-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-efeito-close></div>
-    <article class="pokemon-detalhe-card item-detalhe-card efeito-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="efeito-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do efeito aberto">
-        <button class="pokemon-navegar" type="button" data-efeito-prev aria-label="Efeito anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-efeito-next aria-label="Próximo efeito">›</button>
-        <button class="pokemon-fechar" type="button" data-efeito-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo item-detalhe-topo efeito-detalhe-topo">
-        <div class="pokemon-palco-detalhe item-palco-detalhe efeito-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-efeito-image alt="" loading="lazy" decoding="async" />
-        </div>
-        <div class="pokemon-cabecalho-detalhe efeito-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-efeito-code>#000</span>
-          <h2 id="efeito-detalhe-nome" data-efeito-name>Efeito</h2>
-          <div class="pokemon-tags" data-efeito-tags></div>
-          <p class="item-descricao-melhor" data-efeito-description></p>
-        </div>
-      </div>
-      <section class="painel-detalhe item-info-painel">
-        <h3>Informações</h3>
-        <dl class="pokemon-info-lista" data-efeito-info></dl>
-      </section>
-    </article>
-  </aside>
-  <script id="efeitos-data" type="application/json" set:html={payloadEfeitos}></script>
+  <WikiTopo ativo="efeitos" titulo="Efeitos" tituloId="titulo-efeitos" />
+  <WikiCatalogoShell
+    appClass="efeitos-app"
+    appAttrs={{ "data-efeitos-app": true }}
+    toolbarClass="efeitos-toolbar"
+    toolbarRotulo="Ferramentas da wiki de efeitos"
+    quantidade={efeitos.length}
+    countAttrs={{ "data-efeitos-count": true }}
+    directionAttrs={{ "data-efeitos-direction": true }}
+    clearAttrs={{ "data-efeitos-clear": true }}
+    clearAriaLabel="Limpar todos os filtros de efeitos"
+    gridClass="itens-grid efeitos-grid"
+    gridAttrs={{ "data-efeitos-grid": true }}
+    gridRotulo="Lista de efeitos"
+    vazioAttrs={{ "data-efeitos-empty": true }}
+    vazioTitulo="Nenhum efeito encontrado."
+    sentinelAttrs={{ "data-efeitos-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-efeitos-search placeholder="Nome, código, estilo ou descrição..." />
+      <SelectFiltroWiki data-efeitos-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-efeitos-style label="Estilo" options={opcoesEstilo} />
+      <SelectFiltroWiki data-efeitos-sense label="Sentido" options={opcoesSentido} />
+    </Fragment>
+  </WikiCatalogoShell>
+  <ModalDetalhe
+    class="item-detalhe pokemon-detalhe"
+    cardClass="pokemon-detalhe-card item-detalhe-card efeito-detalhe-card"
+    labelledby="efeito-detalhe-nome"
+    backdropAttrs={{ "data-efeito-close": true }}
+    data-efeito-detail
+  >
+    <ModalControles
+      rotulo="Navegação do efeito aberto"
+      prevLabel="Efeito anterior"
+      nextLabel="Próximo efeito"
+      prevAttrs={{ "data-efeito-prev": true }}
+      nextAttrs={{ "data-efeito-next": true }}
+      closeAttrs={{ "data-efeito-close": true }}
+    />
+    <DetalheTopo
+      class="item-detalhe-topo efeito-detalhe-topo"
+      palcoClass="item-palco-detalhe efeito-palco-detalhe"
+      cabecalhoClass="efeito-cabecalho-detalhe"
+      imageAttrs={{ "data-efeito-image": true }}
+      codeAttrs={{ "data-efeito-code": true }}
+      nameAttrs={{ id: "efeito-detalhe-nome", "data-efeito-name": true }}
+      nomeFallback="Efeito"
+    >
+      <div class="pokemon-tags" data-efeito-tags></div>
+      <p class="item-descricao-melhor" data-efeito-description></p>
+    </DetalheTopo>
+    <PainelDetalhe titulo="Informações" class="item-info-painel">
+      <dl class="pokemon-info-lista" data-efeito-info></dl>
+    </PainelDetalhe>
+  </ModalDetalhe>
+  <JsonPayload id="efeitos-data" dados={payloadEfeitos} />
   <script>
     import { inicializarWikiEfeitos } from "../../Codigo/EfeitosRuntime.js";
     inicializarWikiEfeitos();

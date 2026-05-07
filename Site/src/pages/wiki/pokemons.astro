@@ -1,8 +1,12 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
-import WikiToolbar from "../../Componentes/WikiToolbar.astro";
-import WikiGrid from "../../Componentes/WikiGrid.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import FiltroTipoIcones from "../../Componentes/FiltroTipoIcones.astro";
+import PokemonDetalheModal from "../../Componentes/PokemonDetalheModal.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
 import {
   ATRIBUTOS_BASE,
   ATRIBUTOS_REGULARES,
@@ -20,143 +24,74 @@ const iconesTipos = indexarPublicoPorNome("Tipos");
 const iconesAtributos = indexarPublicoPorNome("Atributos");
 const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome);
 const tiposVisiveis = resumo.tipos;
-const payloadPokedex = JSON.stringify({
+const payloadPokedex = {
   pokemons,
   assetsPokemons,
   iconesTipos,
   iconesAtributos,
   atributosBase: ATRIBUTOS_BASE,
   resumo,
-}).replace(/</g, "\\u003c");
+};
+const opcoesOrdenacao = [
+  ["ordem", "Ordem oficial"],
+  ["nome", "Alfabética"],
+  ["vida", "Vida"],
+  ["atk", "Atk"],
+  ["def", "Def"],
+  ["spa", "SpA"],
+  ["spd", "SpD"],
+  ["vel", "Vel"],
+  ["mag", "Mag"],
+  ["per", "Per"],
+  ["ene", "Ene"],
+  ["int", "Int"],
+  ["crd", "CrD"],
+  ["crc", "CrC"],
+  ["total", "Total"],
+  ["altura", "Altura"],
+  ["peso", "Peso"],
+].map(([value, label]) => ({ value, label }));
+const opcoesFoco = [{ value: "", label: "Todos" }, ...ATRIBUTOS_REGULARES.map((foco) => ({ value: normalizarChave(foco), label: foco }))];
+const opcoesGrupo = [{ value: "", label: "Todos" }, ...resumo.grupos.map((grupo) => ({ value: normalizarChave(grupo), label: grupo }))];
+const opcoesRaridade = [{ value: "", label: "Todas" }, ...resumo.raridades.map((raridade) => ({ value: normalizarChave(raridade), label: raridade }))];
 ---
 <Layout
   titulo="Pokémons"
   descricao="Wiki de Pokémons do Pokémon Global Server, com busca, filtros por foco, filtros por tipos, atributos, raridade, linhagem e imagens principais."
 >
-  <WikiTopo
-    ativo="pokemons"
-    titulo="Pokémons"
-    tituloId="titulo-pokedex"
-  />
-  <section class="wiki-layout wiki-layout-pokedex">
-    <div class="wiki-conteudo pokedex-app" data-pokedex-app>
-      <WikiToolbar rotulo="Ferramentas da wiki de Pokémons">
-        <label class="campo-busca">
-          <span>Pesquisar</span>
-          <input data-pokedex-search type="search" placeholder="Nome, código, tipo ou grupo..." autocomplete="off" />
-        </label>
-        <label>
-          <span>Ordenar</span>
-          <select data-pokedex-sort>
-            <option value="ordem">Ordem oficial</option>
-            <option value="nome">Alfabética</option>
-            <option value="vida">Vida</option>
-            <option value="atk">Atk</option>
-            <option value="def">Def</option>
-            <option value="spa">SpA</option>
-            <option value="spd">SpD</option>
-            <option value="vel">Vel</option>
-            <option value="mag">Mag</option>
-            <option value="per">Per</option>
-            <option value="ene">Ene</option>
-            <option value="int">Int</option>
-            <option value="crd">CrD</option>
-            <option value="crc">CrC</option>
-            <option value="total">Total</option>
-            <option value="altura">Altura</option>
-            <option value="peso">Peso</option>
-          </select>
-        </label>
-        <label>
-          <span>Foco</span>
-          <select data-pokedex-focus>
-            <option value="">Todos</option>
-            {ATRIBUTOS_REGULARES.map((foco) => <option value={normalizarChave(foco)}>{foco}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Grupo</span>
-          <select data-pokedex-group>
-            <option value="">Todos</option>
-            {resumo.grupos.map((grupo) => <option value={normalizarChave(grupo)}>{grupo}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Raridade</span>
-          <select data-pokedex-rarity>
-            <option value="">Todas</option>
-            {resumo.raridades.map((raridade) => <option value={normalizarChave(raridade)}>{raridade}</option>)}
-          </select>
-        </label>
-      </WikiToolbar>
-      <section class="filtros-rapidos filtros-tipos-icones" aria-label="Filtros por tipo. Selecione até três tipos.">
-        {tiposVisiveis.map((tipo) => (
-          <button class="tipo-chip tipo-chip-icone" type="button" data-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`}>
-            <span class="tipo-icone-mini">
-              {iconesTipos[normalizarChave(tipo)] ? <img src={iconesTipos[normalizarChave(tipo)]} alt="" loading="eager" decoding="async" /> : null}
-            </span>
-          </button>
-        ))}
-      </section>
-      <section class="pokedex-status" aria-live="polite">
-        <div>
-          <strong data-pokedex-count>{resumo.quantidade}</strong>
-          <span>resultados encontrados</span>
-        </div>
-        <div class="pokedex-acoes-status">
-          <button class="botao fantasma compacto" type="button" data-pokedex-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-pokedex-clear aria-label="Limpar todos os filtros de Pokémons">Limpar filtros</button>
-        </div>
-      </section>
-      <WikiGrid class="pokedex-grid" data-pokedex-grid rotulo="Lista de Pokémons" />
-      <div class="pokedex-vazio" data-pokedex-empty hidden>
-        <strong>Nenhum Pokémon encontrado.</strong>
-        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
-      </div>
-      <div class="pokedex-sentinel" data-pokedex-sentinel aria-hidden="true"></div>
-    </div>
-  </section>
-  <aside class="pokemon-detalhe" data-pokemon-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
-    <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do Pokémon aberto">
-        <button class="pokemon-navegar" type="button" data-pokemon-prev aria-label="Pokémon anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
-        <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo">
-        <div class="pokemon-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-detail-image alt="" loading="lazy" decoding="async" />
-          <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
-        </div>
-        <div class="pokemon-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-detail-code>#000</span>
-          <h2 id="pokemon-detalhe-nome" data-detail-name>Pokémon</h2>
-          <div class="pokemon-tags" data-detail-tags></div>
-          <p data-detail-summary hidden></p>
-        </div>
-      </div>
-      <div class="pokemon-detalhe-grid">
-        <section class="painel-detalhe">
-          <h3>Atributos básicos</h3>
-          <div class="barras-atributos" data-detail-stats></div>
-        </section>
-        <section class="painel-detalhe">
-          <h3>Informações</h3>
-          <dl class="pokemon-info-lista" data-detail-info></dl>
-        </section>
-      </div>
-      <section class="painel-detalhe painel-linhagem" data-detail-line-panel>
-        <div class="painel-titulo-linha">
-          <h3>Linhagem / evoluções</h3>
-          <span data-detail-line-count></span>
-        </div>
-        <div class="linhagem-lista" data-detail-line></div>
-      </section>
-    </article>
-  </aside>
-  <script id="pokedex-data" type="application/json" set:html={payloadPokedex}></script>
+  <WikiTopo ativo="pokemons" titulo="Pokémons" tituloId="titulo-pokedex" />
+  <WikiCatalogoShell
+    appAttrs={{ "data-pokedex-app": true }}
+    toolbarRotulo="Ferramentas da wiki de Pokémons"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-pokedex-count": true }}
+    directionAttrs={{ "data-pokedex-direction": true }}
+    clearAttrs={{ "data-pokedex-clear": true }}
+    clearAriaLabel="Limpar todos os filtros de Pokémons"
+    gridClass="pokedex-grid"
+    gridAttrs={{ "data-pokedex-grid": true }}
+    gridRotulo="Lista de Pokémons"
+    vazioAttrs={{ "data-pokedex-empty": true }}
+    vazioTitulo="Nenhum Pokémon encontrado."
+    sentinelAttrs={{ "data-pokedex-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-pokedex-search placeholder="Nome, código, tipo ou grupo..." />
+      <SelectFiltroWiki data-pokedex-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-pokedex-focus label="Foco" options={opcoesFoco} />
+      <SelectFiltroWiki data-pokedex-group label="Grupo" options={opcoesGrupo} />
+      <SelectFiltroWiki data-pokedex-rarity label="Raridade" options={opcoesRaridade} />
+    </Fragment>
+    <FiltroTipoIcones
+      slot="after-toolbar"
+      itens={tiposVisiveis}
+      icones={iconesTipos}
+      dataAttr="data-type-chip"
+      rotulo="Filtros por tipo. Selecione até três tipos."
+    />
+  </WikiCatalogoShell>
+  <PokemonDetalheModal labelledby="pokemon-detalhe-nome" detailAttrs={{ "data-pokemon-detail": true }} />
+  <JsonPayload id="pokedex-data" dados={payloadPokedex} />
   <script>
     import { inicializarPokedex } from "../../Codigo/PokedexRuntime.js";
     inicializarPokedex();

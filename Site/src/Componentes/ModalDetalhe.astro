@@ -3,11 +3,12 @@ const {
   class: classe = "",
   cardClass = "pokemon-detalhe-card",
   labelledby,
+  backdropAttrs = {},
   ...atributos
 } = Astro.props;
 ---
 <aside class:list={[classe]} {...atributos} hidden aria-live="polite">
-  <div class="pokemon-detalhe-backdrop" data-modal-backdrop></div>
+  <div class="pokemon-detalhe-backdrop" {...backdropAttrs}></div>
   <article class={cardClass} role="dialog" aria-modal="true" aria-labelledby={labelledby}>
     <slot />
   </article>

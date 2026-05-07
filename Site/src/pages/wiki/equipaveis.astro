@@ -1,6 +1,15 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import FiltroTipoIcones from "../../Componentes/FiltroTipoIcones.astro";
+import ModalDetalhe from "../../Componentes/ModalDetalhe.astro";
+import ModalControles from "../../Componentes/ModalControles.astro";
+import DetalheTopo from "../../Componentes/DetalheTopo.astro";
+import PainelDetalhe from "../../Componentes/PainelDetalhe.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
 import {
   ATRIBUTOS_EQUIPAVEIS,
   FOCOS_EQUIPAVEIS,
@@ -8,7 +17,6 @@ import {
   criarAssetsEquipaveis,
   resumoEquipaveis,
 } from "../../Codigo/EquipaveisWikiDados.js";
-import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const equipaveis = carregarEquipaveis();
@@ -17,111 +25,98 @@ const imagensEquipaveis = indexarPublicoPorNome(["Equipaveis", "Equipáveis", "O
 const iconesTipos = indexarPublicoPorNome("Tipos");
 const iconesAtributos = indexarPublicoPorNome("Atributos");
 const assetsEquipaveis = criarAssetsEquipaveis(equipaveis, imagensEquipaveis);
-const payloadEquipaveis = JSON.stringify({ equipaveis, assetsEquipaveis, iconesTipos, iconesAtributos, resumo }).replace(/</g, "\\u003c");
+const payloadEquipaveis = { equipaveis, assetsEquipaveis, iconesTipos, iconesAtributos, resumo };
+const opcoesOrdenacao = [
+  ["ordem", "Ordem oficial"],
+  ["nome", "Alfabética"],
+  ["atributo", "Aumento do atributo"],
+  ["ofensivo", "Ofensivo"],
+  ["defensivo", "Defensivo"],
+  ["suporte", "Suporte"],
+  ["utilitario", "Utilitário"],
+].map(([value, label]) => ({ value, label }));
+const opcoesAtributo = [
+  { value: "", label: "Todos" },
+  ...ATRIBUTOS_EQUIPAVEIS.filter((atributo) => !["Bar", "Dur", "Amp"].includes(atributo.chave)).map((atributo) => ({ value: atributo.chave, label: atributo.rotulo })),
+];
+const opcoesFoco = [{ value: "", label: "Todos" }, ...FOCOS_EQUIPAVEIS.map((foco) => ({ value: foco.chave, label: foco.rotulo }))];
 ---
 <Layout
   titulo="Equipáveis"
   descricao="Wiki de equipáveis do Pokémon Global Server, com afinidade, atributos aumentados, foco e detalhes de cada equipamento."
 >
-  <WikiTopo
-    ativo="equipaveis"
-    titulo="Equipáveis"
-    tituloId="titulo-equipaveis"
-  />
-  <section class="wiki-layout wiki-layout-pokedex">
-    <div class="wiki-conteudo pokedex-app equipaveis-app" data-equipaveis-app>
-      <section class="pokedex-toolbar equipaveis-toolbar" aria-label="Ferramentas da wiki de equipáveis">
-        <label class="campo-busca">
-          <span>Pesquisar</span>
-          <input data-equipaveis-search type="search" placeholder="Nome, código, afinidade ou descrição..." autocomplete="off" />
-        </label>
-        <label>
-          <span>Ordenar</span>
-          <select data-equipaveis-sort>
-            <option value="ordem">Ordem oficial</option>
-            <option value="nome">Alfabética</option>
-            <option value="atributo">Aumento do atributo</option>
-            <option value="ofensivo">Ofensivo</option>
-            <option value="defensivo">Defensivo</option>
-            <option value="suporte">Suporte</option>
-            <option value="utilitario">Utilitário</option>
-          </select>
-        </label>
-        <label>
-          <span>Atributo</span>
-          <select data-equipaveis-attribute>
-            <option value="">Todos</option>
-            {ATRIBUTOS_EQUIPAVEIS.filter((atributo) => !["Bar", "Dur", "Amp"].includes(atributo.chave)).map((atributo) => <option value={atributo.chave}>{atributo.rotulo}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Foco</span>
-          <select data-equipaveis-focus>
-            <option value="">Todos</option>
-            {FOCOS_EQUIPAVEIS.map((foco) => <option value={foco.chave}>{foco.rotulo}</option>)}
-          </select>
-        </label>
-      </section>
-      <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-equipaveis" aria-label="Filtros por afinidade. Selecione uma afinidade por vez.">
-        {resumo.afinidades.filter((afinidade) => normalizarChave(afinidade) !== "semafinidade").map((afinidade) => (
-          <button class="tipo-chip tipo-chip-icone" type="button" data-equipaveis-type-chip={normalizarChave(afinidade)} title={afinidade} aria-label={`Filtrar por ${afinidade}`} aria-pressed="false">
-            <span class="tipo-icone-mini">
-              {iconesTipos[normalizarChave(afinidade)] ? <img src={iconesTipos[normalizarChave(afinidade)]} alt="" loading="eager" decoding="async" /> : null}
-            </span>
-          </button>
-        ))}
-      </section>
-      <section class="pokedex-status" aria-live="polite">
-        <div>
-          <strong data-equipaveis-count>{resumo.quantidade}</strong>
-          <span>resultados encontrados</span>
-        </div>
-        <div class="pokedex-acoes-status">
-          <button class="botao fantasma compacto" type="button" data-equipaveis-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-equipaveis-clear aria-label="Limpar todos os filtros de equipáveis">Limpar filtros</button>
-        </div>
-      </section>
-      <section class="itens-grid equipaveis-grid" data-equipaveis-grid aria-label="Lista de equipáveis"></section>
-      <div class="pokedex-vazio" data-equipaveis-empty hidden>
-        <strong>Nenhum equipável encontrado.</strong>
-        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
-      </div>
-      <div class="pokedex-sentinel" data-equipaveis-sentinel aria-hidden="true"></div>
+  <WikiTopo ativo="equipaveis" titulo="Equipáveis" tituloId="titulo-equipaveis" />
+  <WikiCatalogoShell
+    appClass="equipaveis-app"
+    appAttrs={{ "data-equipaveis-app": true }}
+    toolbarClass="equipaveis-toolbar"
+    toolbarRotulo="Ferramentas da wiki de equipáveis"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-equipaveis-count": true }}
+    directionAttrs={{ "data-equipaveis-direction": true }}
+    clearAttrs={{ "data-equipaveis-clear": true }}
+    clearAriaLabel="Limpar todos os filtros de equipáveis"
+    gridClass="itens-grid equipaveis-grid"
+    gridAttrs={{ "data-equipaveis-grid": true }}
+    gridRotulo="Lista de equipáveis"
+    vazioAttrs={{ "data-equipaveis-empty": true }}
+    vazioTitulo="Nenhum equipável encontrado."
+    sentinelAttrs={{ "data-equipaveis-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-equipaveis-search placeholder="Nome, código, afinidade ou descrição..." />
+      <SelectFiltroWiki data-equipaveis-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-equipaveis-attribute label="Atributo" options={opcoesAtributo} />
+      <SelectFiltroWiki data-equipaveis-focus label="Foco" options={opcoesFoco} />
+    </Fragment>
+    <FiltroTipoIcones
+      slot="after-toolbar"
+      itens={resumo.afinidades}
+      icones={iconesTipos}
+      dataAttr="data-equipaveis-type-chip"
+      class="filtros-tipos-equipaveis"
+      rotulo="Filtros por afinidade. Selecione uma afinidade por vez."
+      ignorarChaves={["semafinidade"]}
+      ariaPressed
+    />
+  </WikiCatalogoShell>
+  <ModalDetalhe
+    class="item-detalhe pokemon-detalhe"
+    cardClass="pokemon-detalhe-card item-detalhe-card equipavel-detalhe-card"
+    labelledby="equipavel-detalhe-nome"
+    backdropAttrs={{ "data-equipavel-close": true }}
+    data-equipavel-detail
+  >
+    <ModalControles
+      rotulo="Navegação do equipável aberto"
+      prevLabel="Equipável anterior"
+      nextLabel="Próximo equipável"
+      prevAttrs={{ "data-equipavel-prev": true }}
+      nextAttrs={{ "data-equipavel-next": true }}
+      closeAttrs={{ "data-equipavel-close": true }}
+    />
+    <DetalheTopo
+      class="item-detalhe-topo equipavel-detalhe-topo"
+      palcoClass="item-palco-detalhe equipavel-palco-detalhe"
+      cabecalhoClass="equipavel-cabecalho-detalhe"
+      imageAttrs={{ "data-equipavel-image": true }}
+      codeAttrs={{ "data-equipavel-code": true }}
+      nameAttrs={{ id: "equipavel-detalhe-nome", "data-equipavel-name": true }}
+      nomeFallback="Equipável"
+    >
+      <div class="pokemon-tags" data-equipavel-tags></div>
+      <p class="item-descricao-melhor" data-equipavel-description></p>
+    </DetalheTopo>
+    <div class="pokemon-detalhe-grid equipavel-detalhe-grid">
+      <PainelDetalhe titulo="Atributos aumentados">
+        <div class="equipavel-atributos" data-equipavel-attributes></div>
+      </PainelDetalhe>
+      <PainelDetalhe titulo="Foco">
+        <div data-equipavel-focus-bars></div>
+      </PainelDetalhe>
     </div>
-  </section>
-  <aside class="item-detalhe pokemon-detalhe" data-equipavel-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-equipavel-close></div>
-    <article class="pokemon-detalhe-card item-detalhe-card equipavel-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="equipavel-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do equipável aberto">
-        <button class="pokemon-navegar" type="button" data-equipavel-prev aria-label="Equipável anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-equipavel-next aria-label="Próximo equipável">›</button>
-        <button class="pokemon-fechar" type="button" data-equipavel-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo item-detalhe-topo equipavel-detalhe-topo">
-        <div class="pokemon-palco-detalhe item-palco-detalhe equipavel-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-equipavel-image alt="" loading="lazy" decoding="async" />
-        </div>
-        <div class="pokemon-cabecalho-detalhe equipavel-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-equipavel-code>#000</span>
-          <h2 id="equipavel-detalhe-nome" data-equipavel-name>Equipável</h2>
-          <div class="pokemon-tags" data-equipavel-tags></div>
-          <p class="item-descricao-melhor" data-equipavel-description></p>
-        </div>
-      </div>
-      <div class="pokemon-detalhe-grid equipavel-detalhe-grid">
-        <section class="painel-detalhe">
-          <h3>Atributos aumentados</h3>
-          <div class="equipavel-atributos" data-equipavel-attributes></div>
-        </section>
-        <section class="painel-detalhe">
-          <h3>Foco</h3>
-          <div data-equipavel-focus-bars></div>
-        </section>
-      </div>
-    </article>
-  </aside>
-  <script id="equipaveis-data" type="application/json" set:html={payloadEquipaveis}></script>
+  </ModalDetalhe>
+  <JsonPayload id="equipaveis-data" dados={payloadEquipaveis} />
   <script>
     import { inicializarWikiEquipaveis } from "../../Codigo/EquipaveisRuntime.js";
     inicializarWikiEquipaveis();

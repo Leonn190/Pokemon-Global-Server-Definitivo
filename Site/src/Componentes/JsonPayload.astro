@@ -1,0 +1,5 @@
+---
+const { id, dados } = Astro.props;
+const payload = typeof dados === "string" ? dados : JSON.stringify(dados).replace(/</g, "\\u003c");
+---
+<script id={id} type="application/json" set:html={payload}></script>

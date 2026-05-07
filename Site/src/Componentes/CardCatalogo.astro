@@ -8,16 +8,25 @@ const {
   detalhe = "",
   tipo = "",
   alt = nome,
+  imageClass = "",
+  codigoClass = "item-card-codigo",
+  arteClass = "item-card-arte",
+  nomeClass = "item-card-nome",
+  metaClass = "item-card-meta",
+  detalheClass = "item-card-linha",
+  fallbackClass = "item-card-sem-arte",
   ...atributos
 } = Astro.props;
 ---
-<button type="button" class={classe} data-tipo={tipo} {...atributos}>
-  {codigo && <span class="item-card-codigo">#{codigo}</span>}
-  <span class="item-card-arte">
-    {imagem ? <img src={imagem} alt={alt} loading="lazy" decoding="async" /> : <span class="item-card-sem-arte">{String(nome).slice(0, 1)}</span>}
+<button type="button" class={classe} data-tipo={tipo || undefined} {...atributos}>
+  {codigo && <span class={codigoClass}>#{codigo}</span>}
+  <span class={arteClass}>
+    {imagem
+      ? <img class={imageClass || undefined} src={imagem} alt={alt} loading="lazy" decoding="async" />
+      : <span class={fallbackClass}>{String(nome).slice(0, 1)}</span>}
   </span>
-  <span class="item-card-nome">{nome}</span>
-  {meta && <span class="item-card-meta">{meta}</span>}
-  {detalhe && <span class="item-card-linha" set:html={detalhe}></span>}
+  <span class={nomeClass}>{nome}</span>
+  {meta && <span class={metaClass}>{meta}</span>}
+  {detalhe && <span class={detalheClass} set:html={detalhe}></span>}
   <slot />
 </button>

@@ -1,6 +1,14 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import ModalDetalhe from "../../Componentes/ModalDetalhe.astro";
+import ModalControles from "../../Componentes/ModalControles.astro";
+import DetalheTopo from "../../Componentes/DetalheTopo.astro";
+import PainelDetalhe from "../../Componentes/PainelDetalhe.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
 import {
   carregarItens,
   criarAssetsItens,
@@ -9,7 +17,6 @@ import {
   MAPA_RARIDADES,
   OPCOES_VENDA,
 } from "../../Codigo/ItemWikiDados.js";
-import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import { listarImagensPublicas } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const itens = carregarItens();
@@ -30,109 +37,81 @@ const imagensItens = indexarImagensItens(listarImagensPublicas([
 const assetsItens = criarAssetsItens(itens, imagensItens);
 const estilos = [...new Map(itens.map((item) => [item.estiloBusca, item.estiloRotulo])).entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
 const raridades = Object.entries(MAPA_RARIDADES).sort((a, b) => Number(a[0]) - Number(b[0]));
-const payloadItens = JSON.stringify({ itens, assetsItens, resumo }).replace(/</g, "\\u003c");
+const payloadItens = { itens, assetsItens, resumo };
+const opcoesOrdenacao = [
+  ["ordem", "Ordem oficial"],
+  ["nome", "Alfabética"],
+  ["valor", "Valor médio"],
+  ["raridade", "Raridade"],
+  ["estilo", "Estilo"],
+].map(([value, label]) => ({ value, label }));
+const opcoesEstilo = [{ value: "", label: "Todos" }, ...estilos.map(([value, label]) => ({ value, label }))];
+const opcoesRaridade = [{ value: "", label: "Todas" }, ...raridades.map(([value, dados]) => ({ value, label: dados.nome }))];
+const opcoesBau = [{ value: "", label: "Todos" }, { value: "s", label: "Sim" }, { value: "n", label: "Não" }];
+const opcoesVenda = [{ value: "", label: "Todos" }, ...Object.entries(OPCOES_VENDA).map(([value, label]) => ({ value, label }))];
 ---
 <Layout
   titulo="Itens"
   descricao="Wiki de itens do Pokémon Global Server, com busca, filtros por estilo, raridade, baús, lojas e detalhes de cada item."
 >
-  <WikiTopo
-    ativo="itens"
-    titulo="Itens"
-    tituloId="titulo-itens"
-  />
-  <section class="wiki-layout wiki-layout-pokedex">
-    <div class="wiki-conteudo pokedex-app itens-app" data-itens-app>
-      <section class="pokedex-toolbar itens-toolbar" aria-label="Ferramentas da wiki de itens">
-        <label class="campo-busca">
-          <span>Pesquisar</span>
-          <input data-itens-search type="search" placeholder="Nome, código, estilo ou descrição..." autocomplete="off" />
-        </label>
-        <label>
-          <span>Ordenar</span>
-          <select data-itens-sort>
-            <option value="ordem">Ordem oficial</option>
-            <option value="nome">Alfabética</option>
-            <option value="valor">Valor médio</option>
-            <option value="raridade">Raridade</option>
-            <option value="estilo">Estilo</option>
-          </select>
-        </label>
-        <label>
-          <span>Estilo</span>
-          <select data-itens-style>
-            <option value="">Todos</option>
-            {estilos.map(([chave, rotulo]) => <option value={chave}>{rotulo}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Raridade</span>
-          <select data-itens-rarity>
-            <option value="">Todas</option>
-            {raridades.map(([numero, dados]) => <option value={numero}>{dados.nome}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Baús</span>
-          <select data-itens-chest>
-            <option value="">Todos</option>
-            <option value="s">Sim</option>
-            <option value="n">Não</option>
-          </select>
-        </label>
-        <label>
-          <span>Venda</span>
-          <select data-itens-sale>
-            <option value="">Todos</option>
-            {Object.entries(OPCOES_VENDA).map(([codigo, rotulo]) => <option value={codigo}>{rotulo}</option>)}
-          </select>
-        </label>
-      </section>
-      <section class="pokedex-status" aria-live="polite">
-        <div>
-          <strong data-itens-count>{resumo.quantidade}</strong>
-          <span>resultados encontrados</span>
-        </div>
-        <div class="pokedex-acoes-status">
-          <button class="botao fantasma compacto" type="button" data-itens-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-itens-clear aria-label="Limpar todos os filtros de itens">Limpar filtros</button>
-        </div>
-      </section>
-      <section class="itens-grid" data-itens-grid aria-label="Lista de itens"></section>
-      <div class="pokedex-vazio" data-itens-empty hidden>
-        <strong>Nenhum item encontrado.</strong>
-        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
-      </div>
-      <div class="pokedex-sentinel" data-itens-sentinel aria-hidden="true"></div>
-    </div>
-  </section>
-  <aside class="item-detalhe pokemon-detalhe" data-item-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-item-close></div>
-    <article class="pokemon-detalhe-card item-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="item-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do item aberto">
-        <button class="pokemon-navegar" type="button" data-item-prev aria-label="Item anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-item-next aria-label="Próximo item">›</button>
-        <button class="pokemon-fechar" type="button" data-item-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo item-detalhe-topo">
-        <div class="pokemon-palco-detalhe item-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-item-image alt="" loading="lazy" decoding="async" />
-        </div>
-        <div class="pokemon-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-item-code>#000</span>
-          <h2 id="item-detalhe-nome" data-item-name>Item</h2>
-          <span class="raridade-pill" data-item-rarity>Comum</span>
-          <p class="item-descricao-melhor" data-item-description></p>
-        </div>
-      </div>
-      <section class="painel-detalhe item-info-painel">
-        <h3>Informações</h3>
-        <dl class="pokemon-info-lista" data-item-info></dl>
-      </section>
-    </article>
-  </aside>
-  <script id="itens-data" type="application/json" set:html={payloadItens}></script>
+  <WikiTopo ativo="itens" titulo="Itens" tituloId="titulo-itens" />
+  <WikiCatalogoShell
+    appClass="itens-app"
+    appAttrs={{ "data-itens-app": true }}
+    toolbarClass="itens-toolbar"
+    toolbarRotulo="Ferramentas da wiki de itens"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-itens-count": true }}
+    directionAttrs={{ "data-itens-direction": true }}
+    clearAttrs={{ "data-itens-clear": true }}
+    clearAriaLabel="Limpar todos os filtros de itens"
+    gridClass="itens-grid"
+    gridAttrs={{ "data-itens-grid": true }}
+    gridRotulo="Lista de itens"
+    vazioAttrs={{ "data-itens-empty": true }}
+    vazioTitulo="Nenhum item encontrado."
+    sentinelAttrs={{ "data-itens-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-itens-search placeholder="Nome, código, estilo ou descrição..." />
+      <SelectFiltroWiki data-itens-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-itens-style label="Estilo" options={opcoesEstilo} />
+      <SelectFiltroWiki data-itens-rarity label="Raridade" options={opcoesRaridade} />
+      <SelectFiltroWiki data-itens-chest label="Baús" options={opcoesBau} />
+      <SelectFiltroWiki data-itens-sale label="Venda" options={opcoesVenda} />
+    </Fragment>
+  </WikiCatalogoShell>
+  <ModalDetalhe
+    class="item-detalhe pokemon-detalhe"
+    cardClass="pokemon-detalhe-card item-detalhe-card"
+    labelledby="item-detalhe-nome"
+    backdropAttrs={{ "data-item-close": true }}
+    data-item-detail
+  >
+    <ModalControles
+      rotulo="Navegação do item aberto"
+      prevLabel="Item anterior"
+      nextLabel="Próximo item"
+      prevAttrs={{ "data-item-prev": true }}
+      nextAttrs={{ "data-item-next": true }}
+      closeAttrs={{ "data-item-close": true }}
+    />
+    <DetalheTopo
+      class="item-detalhe-topo"
+      palcoClass="item-palco-detalhe"
+      imageAttrs={{ "data-item-image": true }}
+      codeAttrs={{ "data-item-code": true }}
+      nameAttrs={{ id: "item-detalhe-nome", "data-item-name": true }}
+      nomeFallback="Item"
+    >
+      <span class="raridade-pill" data-item-rarity>Comum</span>
+      <p class="item-descricao-melhor" data-item-description></p>
+    </DetalheTopo>
+    <PainelDetalhe titulo="Informações" class="item-info-painel">
+      <dl class="pokemon-info-lista" data-item-info></dl>
+    </PainelDetalhe>
+  </ModalDetalhe>
+  <JsonPayload id="itens-data" dados={payloadItens} />
   <script>
     import { inicializarWikiItens } from "../../Codigo/ItensRuntime.js";
     inicializarWikiItens();

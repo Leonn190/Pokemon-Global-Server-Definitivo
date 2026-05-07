@@ -1,6 +1,13 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import FiltroTipoIcones from "../../Componentes/FiltroTipoIcones.astro";
+import NpcDetalheModal from "../../Componentes/NpcDetalheModal.astro";
+import PokemonDetalheModal from "../../Componentes/PokemonDetalheModal.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
 import {
   carregarNpcs,
   criarAssetsNpcs,
@@ -24,157 +31,67 @@ const imagensPorNome = indexarPublicoPorNome("Imagens");
 const iconesTipos = indexarPublicoPorNome("Tipos");
 const iconesAtributos = indexarPublicoPorNome("Atributos");
 const assetsPokemons = criarAssetsPokemons(pokemons, imagensPorNome);
-const payloadNpcs = JSON.stringify({ npcs, assetsNpcs, resumo, iconesTipos }).replace(/</g, "\\u003c");
-const payloadPokedex = JSON.stringify({ pokemons, assetsPokemons, iconesTipos, iconesAtributos, atributosBase: ATRIBUTOS_BASE }).replace(/</g, "\\u003c");
+const payloadNpcs = { npcs, assetsNpcs, resumo, iconesTipos };
+const payloadPokedex = { pokemons, assetsPokemons, iconesTipos, iconesAtributos, atributosBase: ATRIBUTOS_BASE };
+const opcoesOrdenacao = [
+  ["ordem", "Ordem oficial"],
+  ["nome", "Alfabética"],
+  ["nivel", "Nível"],
+  ["tipo", "Tipo"],
+  ["cargo", "Cargo"],
+  ["categoria", "Categoria"],
+].map(([value, label]) => ({ value, label }));
+const opcoesTipo = [{ value: "", label: "Todos" }, { value: "combatente", label: "Combatente" }, { value: "vendedor", label: "Vendedor" }];
+const opcoesCategoria = [{ value: "", label: "Todas" }, ...resumo.categorias.map((categoria) => ({ value: normalizarChave(categoria), label: categoria }))];
+const opcoesCargo = [{ value: "", label: "Todos" }, ...resumo.cargos.map((cargo) => ({ value: normalizarChave(cargo), label: cargo }))];
 ---
 <Layout
   titulo="NPCs"
   descricao="Wiki de NPCs do Pokémon Global Server, com combatentes, vendedores, cargos, categorias e equipes de Pokémon."
 >
-  <WikiTopo
-    ativo="npcs"
-    titulo="NPCs"
-    tituloId="titulo-npcs"
+  <WikiTopo ativo="npcs" titulo="NPCs" tituloId="titulo-npcs" />
+  <WikiCatalogoShell
+    appClass="npcs-app"
+    appAttrs={{ "data-npcs-app": true }}
+    toolbarClass="npcs-toolbar"
+    toolbarRotulo="Ferramentas da wiki de NPCs"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-npcs-count": true }}
+    directionAttrs={{ "data-npcs-direction": true }}
+    clearAttrs={{ "data-npcs-clear": true }}
+    clearAriaLabel="Limpar todos os filtros de NPCs"
+    gridClass="itens-grid npcs-grid"
+    gridAttrs={{ "data-npcs-grid": true }}
+    gridRotulo="Lista de NPCs"
+    vazioAttrs={{ "data-npcs-empty": true }}
+    vazioTitulo="Nenhum NPC encontrado."
+    sentinelAttrs={{ "data-npcs-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-npcs-search placeholder="Nome, código, categoria, cargo, estádio ou Pokémon..." />
+      <SelectFiltroWiki data-npcs-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-npcs-kind label="Tipo" options={opcoesTipo} />
+      <SelectFiltroWiki data-npcs-category label="Categoria" options={opcoesCategoria} />
+      <SelectFiltroWiki data-npcs-role label="Cargo" options={opcoesCargo} />
+    </Fragment>
+    <FiltroTipoIcones
+      slot="after-toolbar"
+      itens={resumo.tipagens}
+      icones={iconesTipos}
+      dataAttr="data-npcs-type-chip"
+      class="filtros-tipos-npcs"
+      rotulo="Filtro por tipagem de combatentes"
+      ariaPressed
+    />
+  </WikiCatalogoShell>
+  <NpcDetalheModal labelledby="npc-detalhe-nome" detailAttrs={{ "data-npc-detail": true }} />
+  <PokemonDetalheModal
+    labelledby="pokemon-npc-detalhe-nome"
+    class="pokemon-detalhe dungeon-pokemon-detalhe"
+    detailAttrs={{ "data-npc-pokemon-detail": true }}
   />
-  <section class="wiki-layout wiki-layout-pokedex">
-    <div class="wiki-conteudo pokedex-app npcs-app" data-npcs-app>
-      <section class="pokedex-toolbar npcs-toolbar" aria-label="Ferramentas da wiki de NPCs">
-        <label class="campo-busca">
-          <span>Pesquisar</span>
-          <input data-npcs-search type="search" placeholder="Nome, código, categoria, cargo, estádio ou Pokémon..." autocomplete="off" />
-        </label>
-        <label>
-          <span>Ordenar</span>
-          <select data-npcs-sort>
-            <option value="ordem">Ordem oficial</option>
-            <option value="nome">Alfabética</option>
-            <option value="nivel">Nível</option>
-            <option value="tipo">Tipo</option>
-            <option value="cargo">Cargo</option>
-            <option value="categoria">Categoria</option>
-          </select>
-        </label>
-        <label>
-          <span>Tipo</span>
-          <select data-npcs-kind>
-            <option value="">Todos</option>
-            <option value="combatente">Combatente</option>
-            <option value="vendedor">Vendedor</option>
-          </select>
-        </label>
-        <label>
-          <span>Categoria</span>
-          <select data-npcs-category>
-            <option value="">Todas</option>
-            {resumo.categorias.map((categoria) => <option value={normalizarChave(categoria)}>{categoria}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Cargo</span>
-          <select data-npcs-role>
-            <option value="">Todos</option>
-            {resumo.cargos.map((cargo) => <option value={normalizarChave(cargo)}>{cargo}</option>)}
-          </select>
-        </label>
-      </section>
-      <section class="filtros-rapidos filtros-tipos-icones filtros-tipos-npcs" aria-label="Filtro por tipagem de combatentes">
-        {resumo.tipagens.map((tipo) => (
-          <button class="tipo-chip tipo-chip-icone" type="button" data-npcs-type-chip={normalizarChave(tipo)} title={tipo} aria-label={`Filtrar por ${tipo}`} aria-pressed="false">
-            <span class="tipo-icone-mini">
-              {iconesTipos[normalizarChave(tipo)] ? <img src={iconesTipos[normalizarChave(tipo)]} alt="" loading="eager" decoding="async" /> : null}
-            </span>
-          </button>
-        ))}
-      </section>
-      <section class="pokedex-status" aria-live="polite">
-        <div>
-          <strong data-npcs-count>{resumo.quantidade}</strong>
-          <span>resultados encontrados</span>
-        </div>
-        <div class="pokedex-acoes-status">
-          <button class="botao fantasma compacto" type="button" data-npcs-direction data-sort-direction="asc">Crescente</button>
-          <button class="botao fantasma compacto" type="button" data-npcs-clear aria-label="Limpar todos os filtros de NPCs">Limpar filtros</button>
-        </div>
-      </section>
-      <section class="itens-grid npcs-grid" data-npcs-grid aria-label="Lista de NPCs"></section>
-      <div class="pokedex-vazio" data-npcs-empty hidden>
-        <strong>Nenhum NPC encontrado.</strong>
-        <span>Tente remover algum filtro ou pesquisar por outro nome.</span>
-      </div>
-      <div class="pokedex-sentinel" data-npcs-sentinel aria-hidden="true"></div>
-    </div>
-  </section>
-  <aside class="item-detalhe pokemon-detalhe" data-npc-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-npc-close></div>
-    <article class="pokemon-detalhe-card item-detalhe-card npc-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="npc-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do NPC aberto">
-        <button class="pokemon-navegar" type="button" data-npc-prev aria-label="NPC anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-npc-next aria-label="Próximo NPC">›</button>
-        <button class="pokemon-fechar" type="button" data-npc-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo item-detalhe-topo npc-detalhe-topo">
-        <div class="pokemon-palco-detalhe item-palco-detalhe npc-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-npc-image alt="" loading="lazy" decoding="async" />
-        </div>
-        <div class="pokemon-cabecalho-detalhe npc-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-npc-code>#000</span>
-          <h2 id="npc-detalhe-nome" data-npc-name>NPC</h2>
-          <div class="pokemon-tags" data-npc-tags></div>
-        </div>
-      </div>
-      <section class="painel-detalhe item-info-painel">
-        <h3>Informações</h3>
-        <dl class="pokemon-info-lista" data-npc-info></dl>
-      </section>
-      <section class="painel-detalhe item-info-painel dungeon-pokemon-painel" data-npc-team-panel hidden>
-        <h3>Equipe Pokémon</h3>
-        <div class="dungeon-pokemon-grid" data-npc-team></div>
-      </section>
-    </article>
-  </aside>
-  <aside class="pokemon-detalhe dungeon-pokemon-detalhe" data-npc-pokemon-detail hidden aria-live="polite">
-    <div class="pokemon-detalhe-backdrop" data-pokemon-close></div>
-    <article class="pokemon-detalhe-card" role="dialog" aria-modal="true" aria-labelledby="pokemon-npc-detalhe-nome">
-      <div class="pokemon-controles-detalhe" aria-label="Navegação do Pokémon aberto">
-        <button class="pokemon-navegar" type="button" data-pokemon-prev aria-label="Pokémon anterior">‹</button>
-        <button class="pokemon-navegar" type="button" data-pokemon-next aria-label="Próximo Pokémon">›</button>
-        <button class="pokemon-fechar" type="button" data-pokemon-close aria-label="Fechar detalhes">×</button>
-      </div>
-      <div class="pokemon-detalhe-topo">
-        <div class="pokemon-palco-detalhe">
-          <div class="pokemon-brilho-detalhe"></div>
-          <img data-detail-image alt="" loading="lazy" decoding="async" />
-          <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>
-        </div>
-        <div class="pokemon-cabecalho-detalhe">
-          <span class="codigo-pokemon" data-detail-code>#000</span>
-          <h2 id="pokemon-npc-detalhe-nome" data-detail-name>Pokémon</h2>
-          <div class="pokemon-tags" data-detail-tags></div>
-          <p data-detail-summary hidden></p>
-        </div>
-      </div>
-      <div class="pokemon-detalhe-grid">
-        <section class="painel-detalhe">
-          <h3>Atributos básicos</h3>
-          <div class="barras-atributos" data-detail-stats></div>
-        </section>
-        <section class="painel-detalhe">
-          <h3>Informações</h3>
-          <dl class="pokemon-info-lista" data-detail-info></dl>
-        </section>
-      </div>
-      <section class="painel-detalhe painel-linhagem" data-detail-line-panel>
-        <div class="painel-titulo-linha">
-          <h3>Linhagem / evoluções</h3>
-          <span data-detail-line-count></span>
-        </div>
-        <div class="linhagem-lista" data-detail-line></div>
-      </section>
-    </article>
-  </aside>
-  <script id="npcs-data" type="application/json" set:html={payloadNpcs}></script>
-  <script id="npcs-pokedex-data" type="application/json" set:html={payloadPokedex}></script>
+  <JsonPayload id="npcs-data" dados={payloadNpcs} />
+  <JsonPayload id="npcs-pokedex-data" dados={payloadPokedex} />
   <script>
     import { inicializarWikiNpcs } from "../../Codigo/NpcsRuntime.js";
     inicializarWikiNpcs();

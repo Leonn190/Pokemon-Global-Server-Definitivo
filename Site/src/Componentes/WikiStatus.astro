@@ -1,0 +1,20 @@
+---
+const {
+  quantidade = 0,
+  countAttrs = {},
+  directionAttrs = {},
+  clearAttrs = {},
+  clearLabel = "Limpar filtros",
+  clearAriaLabel = "Limpar todos os filtros",
+} = Astro.props;
+---
+<section class="pokedex-status" aria-live="polite">
+  <div>
+    <strong {...countAttrs}>{quantidade}</strong>
+    <span>resultados encontrados</span>
+  </div>
+  <div class="pokedex-acoes-status">
+    <button class="botao fantasma compacto" type="button" data-sort-direction="asc" {...directionAttrs}>Crescente</button>
+    <button class="botao fantasma compacto" type="button" aria-label={clearAriaLabel} {...clearAttrs}>{clearLabel}</button>
+  </div>
+</section>

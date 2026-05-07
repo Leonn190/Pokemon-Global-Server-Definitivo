@@ -1,0 +1,7 @@
+---
+const { titulo = "Nenhum resultado encontrado.", texto = "Tente remover algum filtro ou pesquisar por outro nome.", ...atributos } = Astro.props;
+---
+<div class="pokedex-vazio" hidden {...atributos}>
+  <strong>{titulo}</strong>
+  <span>{texto}</span>
+</div>

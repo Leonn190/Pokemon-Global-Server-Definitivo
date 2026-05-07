@@ -1,7 +1,7 @@
 ---
-const { itens = [], class: classe = "" } = Astro.props;
+const { itens = [], class: classe = "", baseClass = "pokedex-resumo", ...atributos } = Astro.props;
 ---
-<div class:list={["pokedex-resumo", classe]}>
+<div class:list={[baseClass, classe]} {...atributos}>
   {itens.map((item) => (
     <article>
       <strong>{item.valor}</strong>

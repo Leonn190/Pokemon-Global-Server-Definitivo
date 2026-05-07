@@ -1,0 +1,7 @@
+---
+const { titulo = "Informações", class: classe = "", headingClass = "", ...atributos } = Astro.props;
+---
+<section class:list={["painel-detalhe", classe]} {...atributos}>
+  <h3 class={headingClass || undefined}>{titulo}</h3>
+  <slot />
+</section>

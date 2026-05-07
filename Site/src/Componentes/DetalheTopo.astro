@@ -1,0 +1,25 @@
+---
+const {
+  class: classe = "",
+  palcoClass = "",
+  cabecalhoClass = "",
+  imageAttrs = {},
+  codeAttrs = {},
+  nameAttrs = {},
+  nomeFallback = "Item",
+  codigoFallback = "#000",
+  fallback = false,
+} = Astro.props;
+---
+<div class:list={["pokemon-detalhe-topo", classe]}>
+  <div class:list={["pokemon-palco-detalhe", palcoClass]}>
+    <div class="pokemon-brilho-detalhe"></div>
+    <img alt="" loading="lazy" decoding="async" {...imageAttrs} />
+    {fallback && <div class="pokemon-sem-imagem" data-detail-fallback hidden></div>}
+  </div>
+  <div class:list={["pokemon-cabecalho-detalhe", cabecalhoClass]}>
+    <span class="codigo-pokemon" {...codeAttrs}>{codigoFallback}</span>
+    <h2 {...nameAttrs}>{nomeFallback}</h2>
+    <slot />
+  </div>
+</div>

@@ -40,6 +40,10 @@ def _meta_mundo_para_mapa() -> dict:
     meta = BANCO_DADOS._estado_mundo.get("meta", {}) if isinstance(getattr(BANCO_DADOS, "_estado_mundo", {}), dict) else {}
     largura, altura = BANCO_DADOS.limites_mundo()
     chunk = int(BANCO_DADOS.chunk_tamanho_unidade())
+    seed = int(meta.get("seed", 0) or 0)
+    chunks_x = int(meta.get("chunks_x", BANCO_DADOS.total_chunks()[0]))
+    chunks_y = int(meta.get("chunks_y", BANCO_DADOS.total_chunks()[1]))
+    world_fingerprint = f"{seed}:{int(largura)}:{int(altura)}:{chunks_x}:{chunks_y}:{int(chunk)}"
     cores = {
         "0": [18, 74, 156], "1": [95, 176, 232], "2": [110, 186, 72], "3": [48, 126, 54],
         "4": [228, 214, 149], "5": [218, 188, 100], "6": [235, 242, 248], "7": [138, 72, 192],
@@ -49,8 +53,10 @@ def _meta_mundo_para_mapa() -> dict:
         "largura_blocos": int(largura),
         "altura_blocos": int(altura),
         "chunk_blocos": int(chunk),
-        "chunks_x": int(meta.get("chunks_x", BANCO_DADOS.total_chunks()[0])),
-        "chunks_y": int(meta.get("chunks_y", BANCO_DADOS.total_chunks()[1])),
+        "chunks_x": chunks_x,
+        "chunks_y": chunks_y,
+        "seed": seed,
+        "world_fingerprint": world_fingerprint,
         "atlas_chunks_lado": 100,
         "atlas_px": 1000,
         "cores_blocos": cores,
@@ -89,14 +95,20 @@ def _poi_mapa() -> tuple[list, list, list, list]:
 
 def _resolver_posicao_mundo_referencia(obj_player, posicao_camera: Vector2) -> Vector2:
     estado = getattr(obj_player, "estado_extra", {}) if obj_player is not None and isinstance(getattr(obj_player, "estado_extra", {}), dict) else {}
-    ultima = estado.get("ultima_pos_mundo")
-    if isinstance(ultima, (list, tuple)) and len(ultima) == 2:
-        return (float(ultima[0]), float(ultima[1]))
+    dimensao = str(estado.get("dimensao") or "Mundo")
+    if dimensao == "Mundo" and obj_player is not None:
+        pos = getattr(obj_player, "posicao", None)
+        if isinstance(pos, (list, tuple)) and len(pos) == 2:
+            return (float(pos[0]), float(pos[1]))
+        return (float(posicao_camera[0]), float(posicao_camera[1]))
     estadio_id = int(estado.get("estadio_atual_id", 0) or 0)
     if estadio_id > 0:
         estadio = BANCO_DADOS.obter_objeto(estadio_id)
         if estadio is not None:
             return (float(getattr(estadio, "posicao", [0.0, 0.0])[0]), float(getattr(estadio, "posicao", [0.0, 0.0])[1]))
+    ultima = estado.get("ultima_pos_mundo")
+    if isinstance(ultima, (list, tuple)) and len(ultima) == 2:
+        return (float(ultima[0]), float(ultima[1]))
     pos_dim = estado.get("posicoes_por_dimensao") if isinstance(estado.get("posicoes_por_dimensao"), dict) else {}
     pos_mundo = pos_dim.get("Mundo")
     if isinstance(pos_mundo, (list, tuple)) and len(pos_mundo) == 2:
@@ -166,6 +178,10 @@ def _chunks_explorados_para_set(explorados: dict) -> set[Chunk]:
 
 def _atlas_conhecidos(conhecidos: dict | None) -> dict[tuple[int, int], set[Chunk]]:
     out: dict[tuple[int, int], set[Chunk]] = {}
+    atual = str(_meta_mundo_para_mapa().get("world_fingerprint") or "")
+    recebido = str(conhecidos.get("world_fingerprint") or "") if isinstance(conhecidos, dict) else ""
+    if atual and recebido != atual:
+        return out
     atlas_lista = conhecidos.get("atlas") if isinstance(conhecidos, dict) and isinstance(conhecidos.get("atlas"), list) else []
     for item in atlas_lista:
         if not isinstance(item, dict):

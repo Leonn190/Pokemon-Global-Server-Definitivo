@@ -517,6 +517,11 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["dimensao_atual"] = dimensao_atual
     dados["posicoes_por_dimensao"] = pos_dim_norm
     dados["exploracao_chunks"] = _normalizar_exploracao_chunks(dados.get("exploracao_chunks"))
+    fingerprint_mundo = _fingerprint_mundo_atual()
+    if fingerprint_mundo:
+        if str(dados.get("exploracao_chunks_world_id") or "") != fingerprint_mundo:
+            dados["exploracao_chunks"] = {"Mundo": {}}
+        dados["exploracao_chunks_world_id"] = fingerprint_mundo
     dados["dungeons"] = copy.deepcopy(dados.get("dungeons")) if isinstance(dados.get("dungeons"), dict) else {}
     return dados
 
@@ -544,6 +549,36 @@ def _normalizar_exploracao_chunks(valor: dict | None) -> dict:
     return {"Mundo": out_mundo}
 
 
+def _fingerprint_mundo_atual() -> str:
+    meta = _ESTADO_MUNDO.get("meta", {}) if isinstance(_ESTADO_MUNDO.get("meta"), dict) else {}
+    if not meta:
+        return ""
+    seed = int(meta.get("seed", 0) or 0)
+    largura = int(meta.get("largura_blocos", 0) or 0)
+    altura = int(meta.get("altura_blocos", 0) or 0)
+    chunks_x = int(meta.get("chunks_x", 0) or 0)
+    chunks_y = int(meta.get("chunks_y", 0) or 0)
+    chunk_blocos = int(meta.get("chunk_blocos", meta.get("chunk_blocos_disco", 10)) or 10)
+    if largura <= 0 or altura <= 0:
+        return ""
+    return f"{seed}:{largura}:{altura}:{chunks_x}:{chunks_y}:{chunk_blocos}"
+
+
+def _sincronizar_exploracao_mundo_atual(personagem: dict) -> bool:
+    if not isinstance(personagem, dict):
+        return False
+    fingerprint = _fingerprint_mundo_atual()
+    if not fingerprint:
+        personagem["exploracao_chunks"] = _normalizar_exploracao_chunks(personagem.get("exploracao_chunks"))
+        return False
+    if str(personagem.get("exploracao_chunks_world_id") or "") != fingerprint:
+        personagem["exploracao_chunks"] = {"Mundo": {}}
+        personagem["exploracao_chunks_world_id"] = fingerprint
+        return True
+    personagem["exploracao_chunks"] = _normalizar_exploracao_chunks(personagem.get("exploracao_chunks"))
+    return False
+
+
 def obter_exploracao_chunks(usuario: str) -> dict:
     try:
         _garantir_estado_ativo()
@@ -555,6 +590,8 @@ def obter_exploracao_chunks(usuario: str) -> dict:
         personagem = _ESTADO.get("personagens", {}).get(usuario)
         if not isinstance(personagem, dict):
             return {"Mundo": {}}
+        if _sincronizar_exploracao_mundo_atual(personagem):
+            _persistir_personagens()
         return _normalizar_exploracao_chunks(personagem.get("exploracao_chunks"))
 
 
@@ -569,6 +606,7 @@ def registrar_chunks_explorados(usuario: str, chunks: list[tuple[int, int]] | se
         personagem = _ESTADO.get("personagens", {}).get(usuario)
         if not isinstance(personagem, dict):
             return
+        _sincronizar_exploracao_mundo_atual(personagem)
         explor = _normalizar_exploracao_chunks(personagem.get("exploracao_chunks"))
         mundo = explor.setdefault("Mundo", {})
         alterou = False

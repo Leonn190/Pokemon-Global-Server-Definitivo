@@ -727,7 +727,7 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
 def _processar_evento_interacao_dungeon(client_id: str, payload: Dict[str, object]) -> bool:
     acao = str(payload.get("acao") or "entrar").strip().lower()
     if acao == "sair":
-        return bool(CEREBRO._cerebro_dungeons.sair_dungeon(client_id))
+        return bool(CEREBRO._cerebro_dungeons.sair_dungeon(client_id, registrar_diff=registrar_diff))
     if acao == "destrancar_porta":
         return bool(CEREBRO._cerebro_dungeons.destrancar_porta(client_id, str(payload.get("porta_id") or ""), registrar_diff=registrar_diff))
-    return bool(CEREBRO._cerebro_dungeons.entrar_dungeon(client_id, int(payload.get("pedra_id", payload.get("estrutura_id", 0)) or 0), int(payload.get("porta_idx", 1) or 1), str(payload.get("dungeon_code") or "")))
+    return bool(CEREBRO._cerebro_dungeons.entrar_dungeon(client_id, int(payload.get("pedra_id", payload.get("estrutura_id", 0)) or 0), int(payload.get("porta_idx", 1) or 1), str(payload.get("dungeon_code") or ""), registrar_diff=registrar_diff))

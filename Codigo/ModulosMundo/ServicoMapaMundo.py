@@ -51,6 +51,7 @@ class ServicoMapaMundo:
             pos = estadio.get("posicao") if isinstance(estadio, dict) and isinstance(estadio.get("posicao"), (list, tuple)) and len(estadio.get("posicao")) == 2 else None
             if pos is not None:
                 return (float(pos[0]), float(pos[1]))
+            return self.gerenciador.posicao_player_mundo(estado, tuple(getattr(player, "Posicao", (0.0, 0.0))))
         camera = getattr(cena, "Camera", None)
         pos = getattr(camera, "PosicaoTiles", (0.0, 0.0))
         return (float(pos[0]), float(pos[1]))

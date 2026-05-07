@@ -95,7 +95,7 @@ class CerebroDungeons:
             out.append(row)
         return out
 
-    def entrar_dungeon(self, client_id, pedra_id, porta_idx, dungeon_code):
+    def entrar_dungeon(self, client_id, pedra_id, porta_idx, dungeon_code, registrar_diff=None):
         obj_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
         player = BANCO_DADOS.obter_objeto(obj_id)
         if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
@@ -137,9 +137,11 @@ class CerebroDungeons:
         registrar_sala_explorada(player, code_real, str(entrada.get("sala_id") or ""), client_id=str(client_id))
         sx, sy = centro_sala_em_tiles(entrada.get("posicao_sala", [0, 0]))
         BANCO_DADOS.atualizar_objeto(player.Id, {"posicao": [sx, sy], "estado": player.estado_extra})
+        if callable(registrar_diff):
+            registrar_diff("update", payload=player.serializar(), escopo={"centro": [sx, sy], "raio": 120}, objeto_id=player.Id, autor="server", categoria="player")
         return True
 
-    def sair_dungeon(self, client_id):
+    def sair_dungeon(self, client_id, registrar_diff=None):
         obj_id = int(BANCO_DADOS.objeto_id_por_usuario(str(client_id)) or 0)
         player = BANCO_DADOS.obter_objeto(obj_id)
         if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
@@ -160,6 +162,8 @@ class CerebroDungeons:
             if (dx * dx + dy * dy) > float(self._regras.get("raio_interacao_porta", 2.0)) ** 2:
                 return False
         self._expulsar_player_dungeon(player)
+        if callable(registrar_diff):
+            registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=player.Id, autor="server", categoria="player")
         return True
 
     def registrar_derrota_dungeon(self, client_id, motivo="derrota_batalha", pokemon_id=0, registrar_diff=None):

@@ -99,6 +99,9 @@ class GerenciadorImagensMapa:
                     reg["id"] = int(idx + 1)
             self._regioes_idx = {int(r.get("id", -1)): r for r in self._regioes if r.get("id") is not None}
             self._carregar_manifest()
+            if not self._manifest_compativel_com_meta():
+                self._limpar_cache_persistente_locked()
+                self._explorados_mundo = self._normalizar_explorados(explorados)
             self._sincronizar_manifest_meta()
             self._mesclar_explorados_manifest()
             self._prepared = True
@@ -220,6 +223,9 @@ class GerenciadorImagensMapa:
 
     def posicao_player_mundo(self, estado_player: dict | None, fallback_pos: Tuple[float, float]) -> Tuple[float, float]:
         estado = dict(estado_player or {})
+        dimensao = str(estado.get("dimensao") or "Mundo")
+        if dimensao == "Mundo":
+            return (float(fallback_pos[0]), float(fallback_pos[1]))
         ultima = estado.get("ultima_pos_mundo")
         if isinstance(ultima, (list, tuple)) and len(ultima) == 2:
             return (float(ultima[0]), float(ultima[1]))
@@ -464,7 +470,11 @@ class GerenciadorImagensMapa:
             for (ax, ay), reg in self._atlas_manifest.items():
                 chunks = [[int(cx), int(cy)] for cx, cy in sorted(reg.get("chunks", set()))]
                 atlas.append({"atlas": [int(ax), int(ay)], "versao": int(reg.get("versao", 0) or 0), "chunks": chunks})
-            return {"atlas": atlas}
+            fingerprint = str(self._manifest.get("world_fingerprint") or self._fingerprint_meta() or "")
+            payload = {"atlas": atlas}
+            if fingerprint:
+                payload["world_fingerprint"] = fingerprint
+            return payload
 
     def garantir_manifest_carregado(self) -> None:
         with self._lock:
@@ -551,27 +561,68 @@ class GerenciadorImagensMapa:
                 "chunks": chunks,
                 "versao": int(item.get("versao", 0) or 0),
             }
-        for base_path in self.pasta_cache.glob("atlas_*_*_base.png"):
-            partes = base_path.stem.split("_")
-            if len(partes) < 4:
-                continue
-            try:
-                ax, ay = int(partes[1]), int(partes[2])
-            except Exception:
-                continue
-            self._atlas_manifest.setdefault((ax, ay), {"chunks": set(), "versao": 0})
+        if not self._manifest.get("world_fingerprint"):
+            for base_path in self.pasta_cache.glob("atlas_*_*_base.png"):
+                partes = base_path.stem.split("_")
+                if len(partes) < 4:
+                    continue
+                try:
+                    ax, ay = int(partes[1]), int(partes[2])
+                except Exception:
+                    continue
+                self._atlas_manifest.setdefault((ax, ay), {"chunks": set(), "versao": 0})
 
     def _garantir_manifest_carregado(self) -> None:
         if self._manifest_carregado:
             return
         self._carregar_manifest()
 
+    def _fingerprint_meta(self) -> str:
+        if not isinstance(self.meta, dict):
+            return ""
+        direto = self.meta.get("world_fingerprint")
+        if direto not in (None, ""):
+            return str(direto)
+        if self.meta.get("largura_blocos") in (None, "") or self.meta.get("altura_blocos") in (None, ""):
+            return ""
+        partes = (
+            self.meta.get("seed", ""),
+            self.meta.get("largura_blocos", ""),
+            self.meta.get("altura_blocos", ""),
+            self.meta.get("chunks_x", ""),
+            self.meta.get("chunks_y", ""),
+            self.meta.get("chunk_blocos", self.chunk_blocos),
+        )
+        return ":".join(str(p) for p in partes)
+
+    def _manifest_compativel_com_meta(self) -> bool:
+        atual = self._fingerprint_meta()
+        if not atual:
+            return True
+        return str(self._manifest.get("world_fingerprint") or "") == atual
+
+    def _limpar_cache_persistente_locked(self) -> None:
+        self._atlas.clear()
+        self._atlas_manifest.clear()
+        self._explorados_mundo.clear()
+        self._manifest = {}
+        self._manifest_dirty = True
+        self._flush_pendente_atlas.clear()
+        self._flush_pendente_manifest = None
+        try:
+            if self.pasta_cache.exists():
+                for item in self.pasta_cache.glob("*"):
+                    if item.is_file():
+                        item.unlink(missing_ok=True)
+        except Exception:
+            pass
+
     def _manifest_payload(self) -> Dict[str, object]:
         atlas = []
         for (ax, ay), reg in sorted(self._atlas_manifest.items(), key=lambda it: (it[0][1], it[0][0])):
             chunks = [[int(cx), int(cy)] for cx, cy in sorted(reg.get("chunks", set()))]
             atlas.append({"atlas": [int(ax), int(ay)], "versao": int(reg.get("versao", 0) or 0), "chunks": chunks})
-        return {
+        payload = {
             "server_id": self.server_id,
             "client_id": self.client_id,
             "chunk_blocos": int(self.chunk_blocos),
@@ -579,6 +630,10 @@ class GerenciadorImagensMapa:
             "atlas_px": int(self.atlas_px),
             "atlas": atlas,
         }
+        fingerprint = self._fingerprint_meta()
+        if fingerprint:
+            payload["world_fingerprint"] = fingerprint
+        return payload
 
     def _sincronizar_manifest_meta(self) -> None:
         mudou = False
@@ -591,6 +646,10 @@ class GerenciadorImagensMapa:
         if str(self._manifest.get("server_id", "")) != self.server_id:
             mudou = True
         if str(self._manifest.get("client_id", "")) != self.client_id:
+            mudou = True
+        fingerprint = self._fingerprint_meta()
+        if fingerprint and str(self._manifest.get("world_fingerprint", "")) != fingerprint:
+            self._manifest["world_fingerprint"] = fingerprint
             mudou = True
         if mudou:
             self._manifest_dirty = True

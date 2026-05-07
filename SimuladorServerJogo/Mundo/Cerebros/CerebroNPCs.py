@@ -415,6 +415,29 @@ class CerebroNPCs:
         c = BANCO_DADOS.chunk_da_posicao(pos)
         return c in carregados or c in simulados
 
+    @staticmethod
+    def _dimensao_interna_com_player(dimensao: str) -> bool:
+        dim = str(dimensao or "Mundo")
+        if dim == "Mundo":
+            return False
+        for obj in BANCO_DADOS.listar_objetos():
+            if not isinstance(obj, AtorServer):
+                continue
+            estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+            if str(estado.get("subtipo") or "").strip().lower() != "player":
+                continue
+            if bool(estado.get("morto", False) or estado.get("game_over", False)):
+                continue
+            if str(estado.get("dimensao") or "Mundo") == dim:
+                return True
+        return False
+
+    def _area_ativa_npc(self, npc: Dict[str, object], pos: Vector2, carregados: Set[Chunk], simulados: Set[Chunk]) -> bool:
+        dimensao = str(npc.get("dimensao") or "Mundo")
+        if dimensao == "Mundo":
+            return self._chunk_in_qualquer(pos, carregados, simulados)
+        return self._dimensao_interna_com_player(dimensao)
+
     def _materializar_npc(self, npc: Dict[str, object]) -> AtorServer:
         oid = int(npc.get("id", 0) or 0)
         obj = BANCO_DADOS.obter_objeto(oid)
@@ -687,7 +710,7 @@ class CerebroNPCs:
                             atual = candidato
                             npc["posicao"] = [float(atual[0]), float(atual[1])]
 
-            area_ativa = self._chunk_in_qualquer(atual, chunks_carregados, chunks_simulados)
+            area_ativa = self._area_ativa_npc(npc, atual, chunks_carregados, chunks_simulados)
             if area_ativa:
                 self._atualizar_angulo_npc(npc, atual, movimento_vec, inter, tick)
 

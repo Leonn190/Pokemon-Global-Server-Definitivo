@@ -168,6 +168,9 @@ class RodadorTurno:
             self.partida.registrar_evento_log("ataque_sem_alvo_real", self._dados_ataque(pokemon, acao, props, alvo_ids=[], animacao=animacao))
             self._falhar(acao, "sem_alvo_real")
             return
+        modo_execucao = str(props.get("modo_execucao") or "por_alvo").strip().lower()
+        if modo_execucao not in {"por_alvo", "uma_vez"}:
+            modo_execucao = "por_alvo"
         atingiu = False
         if str(props.get("estilo_logico") or "").lower() == "ativo":
             retorno = executar_execute_principal(chave_ataque, contexto, alvo=None)
@@ -175,6 +178,24 @@ class RodadorTurno:
                 self._falhar(acao, str(retorno.get("motivo") or "execute_falhou"))
             else:
                 self.partida.registrar_evento_log("ataque_acertou", self._dados_ataque(pokemon, acao, props, alvo_ids=[pokemon.id_batalha], alvo=pokemon, animacao=animacao, alvo_principal_id=pokemon.id_batalha))
+                atingiu = True
+        elif modo_execucao == "uma_vez":
+            alvos_validos = [alvo for alvo in contexto["alvos"] if alvo is not None and alvo.esta_vivo()]
+            if not alvos_validos:
+                self.partida.registrar_evento_log("ataque_sem_alvo_real", self._dados_ataque(pokemon, acao, props, alvo_ids=[], animacao=animacao))
+                self._falhar(acao, "sem_alvo_real")
+                return
+            ctx_unico = dict(contexto)
+            ctx_unico["alvo"] = alvos_validos[0]
+            retorno = executar_execute_principal(chave_ataque, ctx_unico, alvo=None)
+            if retorno.get("falha"):
+                self._falhar(acao, str(retorno.get("motivo") or "execute_falhou"))
+            else:
+                alvo_ids_unicos = [alvo.id_batalha for alvo in alvos_validos]
+                self.partida.registrar_evento_log(
+                    "ataque_acertou",
+                    self._dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids_unicos, alvo=alvos_validos[0], animacao=animacao, alvo_principal_id=alvo_principal_id),
+                )
                 atingiu = True
         else:
             for alvo in contexto["alvos"]:

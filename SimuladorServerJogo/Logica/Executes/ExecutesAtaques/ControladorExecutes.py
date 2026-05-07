@@ -104,6 +104,7 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ExecutesVoador import (
     obter_passivas_ataques_voador,
 )
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import normalizar
+from SimuladorServerJogo.Batalha.Alvificacao import resolver_alvos_reais_acao
 from SimuladorServerJogo.Batalha.ResolvedorFlags import ExecuteReativo
 
 
@@ -229,116 +230,6 @@ def executar_execute_principal(nome_ou_code, contexto, alvo=None):
     return dict(func(dict(contexto or {}), alvo) or {})
 
 
-def _alvo_fallback():
-    return {
-        "tipo": "area",
-        "quantidade": 1,
-        "lados_permitidos": ["lado_oposto"],
-        "exige_area_ocupada": False,
-        "inclui_reserva": False,
-    }
-
-
-def _bool_config_alvo(valor):
-    if isinstance(valor, bool):
-        return valor
-    texto = str(valor or "").strip().lower()
-    if texto in {"1", "true", "sim", "yes", "on"}:
-        return True
-    if texto in {"0", "false", "nao", "no", "off", ""}:
-        return False
-    return bool(valor)
-
-
-def _normalizar_config_alvo(config):
-    base = _alvo_fallback()
-    if isinstance(config, dict):
-        for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva"):
-            if chave in config:
-                base[chave] = config.get(chave)
-    try:
-        base["quantidade"] = max(1, int(float(base.get("quantidade") or 1)))
-    except (TypeError, ValueError):
-        base["quantidade"] = 1
-    permitidos = base.get("lados_permitidos")
-    if isinstance(permitidos, str):
-        permitidos = [permitidos]
-    if not isinstance(permitidos, (list, tuple, set)):
-        permitidos = ["lado_oposto"]
-    base["lados_permitidos"] = [str(item) for item in permitidos if str(item or "").strip()] or ["lado_oposto"]
-    base["tipo"] = str(base.get("tipo") or "area").strip().lower() or "area"
-    base["exige_area_ocupada"] = _bool_config_alvo(base.get("exige_area_ocupada"))
-    base["inclui_reserva"] = _bool_config_alvo(base.get("inclui_reserva"))
-    return base
-
-
-def _normalizar_alvos_config(props):
-    props = props if isinstance(props, dict) else {}
-    alvificacao = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
-    alvos = alvificacao.get("alvos") if isinstance(alvificacao, dict) else None
-    if isinstance(alvos, list):
-        configs = [_normalizar_config_alvo(item) for item in alvos if isinstance(item, dict)]
-        if configs:
-            return configs
-    if isinstance(alvificacao, dict) and any(chave in alvificacao for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva")):
-        return [_normalizar_config_alvo(alvificacao)]
-    return [_alvo_fallback()]
-
-
-def _config_para_selecao(selecao, props):
-    if isinstance(selecao, dict) and isinstance(selecao.get("config"), dict):
-        return _normalizar_config_alvo(selecao.get("config"))
-    configs = _normalizar_alvos_config(props)
-    try:
-        grupo = int((selecao or {}).get("grupo", 0))
-    except (TypeError, ValueError):
-        grupo = 0
-    if 0 <= grupo < len(configs):
-        return configs[grupo]
-    return configs[0]
-
-
-def _selecoes_alvo_acao(acao, props):
-    alvo = acao.get("alvo") if isinstance(acao.get("alvo"), dict) else {}
-    if str(alvo.get("tipo") or "").strip().lower() == "multi":
-        return [item for item in list(alvo.get("alvos") or []) if isinstance(item, dict)]
-    config = _normalizar_alvos_config(props)[0]
-    if str(alvo.get("tipo") or "").strip().lower() == "pokemon" and alvo.get("pokemon_id"):
-        return [{**alvo, "grupo": 0, "ordem": 0, "config": config}]
-    if alvo.get("area_id"):
-        return [{"tipo": "area", "area_id": alvo.get("area_id"), "grupo": 0, "ordem": 0, "config": config}]
-    return []
-
-
-def _areas_afetadas_por_alvificacao(area_id, props, lado_usuario, alvo_cfg=None):
-    area_id = str(area_id or "").upper()
-    if not area_id:
-        return []
-    alvo_cfg = _normalizar_config_alvo(alvo_cfg or _normalizar_alvos_config(props)[0])
-    tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
-    if tipo in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
-        return [area_id]
-    try:
-        idx = int(area_id[1:]) - 1
-    except (TypeError, ValueError, IndexError):
-        return [area_id]
-    if idx < 0 or idx > 8:
-        return [area_id]
-    prefixo = area_id[:1]
-    row, col = idx // 3, idx % 3
-    if tipo in {"linha", "fileira", "row", "line"}:
-        colunas = range(3)
-        try:
-            if int(lado_usuario) == 51:
-                colunas = range(2, -1, -1)
-        except (TypeError, ValueError):
-            pass
-        return [f"{prefixo}{row * 3 + c + 1}" for c in colunas]
-    if tipo in {"coluna", "column"}:
-        return [f"{prefixo}{r * 3 + col + 1}" for r in range(3)]
-    return [area_id]
-
-
 def executar_alvificacao(nome_ou_code, contexto):
     props = (contexto or {}).get("propriedades") if isinstance((contexto or {}).get("propriedades"), dict) else {}
     estilo = str(props.get("estilo_logico") or "").strip().lower()
@@ -349,42 +240,7 @@ def executar_alvificacao(nome_ou_code, contexto):
     if partida is None:
         return []
     usuario = (contexto or {}).get("usuario")
-    lado_usuario = getattr(usuario, "lado_id", None)
-    alvos = []
-    vistos = set()
-    for selecao in _selecoes_alvo_acao(acao, props):
-        alvo_cfg = _config_para_selecao(selecao, props)
-        tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
-        if tipo_alvo == "pokemon":
-            if not selecao.get("pokemon_id"):
-                continue
-            pokemon = partida.obter_pokemon(selecao.get("pokemon_id"))
-            if pokemon is None:
-                continue
-            chave = getattr(pokemon, "id_batalha", id(pokemon))
-            if chave not in vistos:
-                vistos.add(chave)
-                alvos.append(pokemon)
-            continue
-        area_id = selecao.get("area_id")
-        if not area_id:
-            continue
-        if tipo_alvo in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
-            area_base = partida.areas.get(str(area_id or ""))
-            lado_area = int((area_base or {}).get("lado_id", -999))
-            areas = [aid for aid, area in partida.areas.items() if int((area or {}).get("lado_id", -998)) == lado_area]
-        else:
-            areas = _areas_afetadas_por_alvificacao(area_id, props, lado_usuario, alvo_cfg)
-        for area_afetada in areas:
-            ocupante = partida.pokemon_na_area(area_afetada)
-            if ocupante is None:
-                continue
-            chave = getattr(ocupante, "id_batalha", id(ocupante))
-            if chave in vistos:
-                continue
-            vistos.add(chave)
-            alvos.append(ocupante)
-    return alvos
+    return resolver_alvos_reais_acao(partida, acao, props, usuario)
 
 
 def registrar_execute_reativo(nome, flag, func, origem_ataque=None, code=None, grupo=None):

@@ -3,6 +3,16 @@ from __future__ import annotations
 import copy
 import unicodedata
 
+from SimuladorServerJogo.Batalha.Alvificacao import (
+    area_id_para_selecao,
+    area_permitida_para_ataque,
+    areas_afetadas_por_alvificacao,
+    config_para_selecao,
+    pokemon_permitido_para_ataque,
+    selecoes_alvo_acao,
+    validar_provocando_selecoes,
+    validar_quantidade_selecoes,
+)
 from SimuladorServerJogo.Batalha.PropriedadesAtaques import buscar_por_nome_ou_code, carregar_propriedades_ataques
 
 
@@ -115,30 +125,32 @@ class ColetorAcoes:
                 out["alvo"] = None
             else:
                 alvo = out.get("alvo") if isinstance(out.get("alvo"), dict) else {}
-                selecoes = self._selecoes_alvo_acao(alvo, props)
+                selecoes = selecoes_alvo_acao(alvo, props)
                 if not selecoes:
                     return self._invalidar(out, "ataque_sem_area_alvo")
-                motivo_quantidade = self._validar_quantidade_selecoes(alvo, selecoes, props)
+                motivo_quantidade = validar_quantidade_selecoes(alvo, selecoes, props)
                 if motivo_quantidade:
                     return self._invalidar(out, motivo_quantidade)
                 vistos = set()
                 for selecao in selecoes:
-                    alvo_cfg = self._config_para_selecao(selecao, props)
+                    alvo_cfg = config_para_selecao(selecao, props)
                     if str(alvo_cfg.get("tipo") or "").strip().lower() == "pokemon":
                         alvo_pokemon = self.partida.obter_pokemon(selecao.get("pokemon_id"))
-                        if not self._pokemon_permitido_para_ataque(pokemon, alvo_pokemon, props, alvo_cfg):
+                        if not pokemon_permitido_para_ataque(self.partida, pokemon, alvo_pokemon, props, alvo_cfg, checar_provocando=False):
                             return self._invalidar(out, "pokemon_alvo_nao_permitido")
                         chave = ("pokemon", str(getattr(alvo_pokemon, "id_batalha", "") or ""))
                     else:
-                        area_id = selecao.get("area_id")
+                        area_id = area_id_para_selecao(selecao, alvo_cfg)
                         if not area_id:
                             return self._invalidar(out, "ataque_sem_area_alvo")
-                        if not self._area_permitida_para_ataque(pokemon, area_id, props, alvo_cfg):
+                        if not area_permitida_para_ataque(self.partida, pokemon, area_id, props, alvo_cfg, checar_provocando=False):
                             return self._invalidar(out, "area_alvo_nao_permitida")
-                        chave = ("area", str(alvo_cfg.get("tipo") or "area"), tuple(self._areas_afetadas_por_alvificacao(area_id, props, getattr(pokemon, "lado_id", None), alvo_cfg)))
+                        chave = ("area", str(alvo_cfg.get("tipo") or "area"), tuple(areas_afetadas_por_alvificacao(area_id, props, getattr(pokemon, "lado_id", None), alvo_cfg, self.partida)))
                     if chave in vistos:
                         return self._invalidar(out, "alvo_repetido")
                     vistos.add(chave)
+                if not validar_provocando_selecoes(self.partida, pokemon, selecoes, props):
+                    return self._invalidar(out, "alvo_nao_respeita_provocando")
             out["propriedades"] = copy.deepcopy(props)
         elif tipo == "movimento":
             destino = out.get("destino") if isinstance(out.get("destino"), dict) else {}
@@ -215,162 +227,6 @@ class ColetorAcoes:
         out["motivo_invalidacao"] = motivo
         return out
 
-    def _alvo_fallback(self):
-        return {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": ["lado_oposto"],
-            "exige_area_ocupada": False,
-            "inclui_reserva": False,
-        }
-
-    @staticmethod
-    def _bool_config_alvo(valor):
-        if isinstance(valor, bool):
-            return valor
-        texto = str(valor or "").strip().lower()
-        if texto in {"1", "true", "sim", "yes", "on"}:
-            return True
-        if texto in {"0", "false", "nao", "no", "off", ""}:
-            return False
-        return bool(valor)
-
-    def _normalizar_config_alvo(self, config):
-        base = self._alvo_fallback()
-        if isinstance(config, dict):
-            for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva"):
-                if chave in config:
-                    base[chave] = copy.deepcopy(config.get(chave))
-        try:
-            base["quantidade"] = max(1, int(float(base.get("quantidade") or 1)))
-        except (TypeError, ValueError):
-            base["quantidade"] = 1
-        permitidos = base.get("lados_permitidos")
-        if isinstance(permitidos, str):
-            permitidos = [permitidos]
-        if not isinstance(permitidos, (list, tuple, set)):
-            permitidos = ["lado_oposto"]
-        base["lados_permitidos"] = [str(item) for item in permitidos if str(item or "").strip()] or ["lado_oposto"]
-        base["tipo"] = str(base.get("tipo") or "area").strip().lower() or "area"
-        base["exige_area_ocupada"] = self._bool_config_alvo(base.get("exige_area_ocupada"))
-        base["inclui_reserva"] = self._bool_config_alvo(base.get("inclui_reserva"))
-        return base
-
-    def _normalizar_alvos_config(self, props):
-        props = props if isinstance(props, dict) else {}
-        alvificacao = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
-        alvos = alvificacao.get("alvos") if isinstance(alvificacao, dict) else None
-        if isinstance(alvos, list):
-            configs = [self._normalizar_config_alvo(item) for item in alvos if isinstance(item, dict)]
-            if configs:
-                return configs
-        if isinstance(alvificacao, dict) and any(chave in alvificacao for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva")):
-            return [self._normalizar_config_alvo(alvificacao)]
-        return [self._alvo_fallback()]
-
-    def _config_para_selecao(self, selecao, props):
-        if isinstance(selecao, dict) and isinstance(selecao.get("config"), dict):
-            return self._normalizar_config_alvo(selecao.get("config"))
-        configs = self._normalizar_alvos_config(props)
-        try:
-            grupo = int((selecao or {}).get("grupo", 0))
-        except (TypeError, ValueError):
-            grupo = 0
-        if 0 <= grupo < len(configs):
-            return configs[grupo]
-        return configs[0]
-
-    def _selecoes_alvo_acao(self, alvo, props):
-        alvo = alvo if isinstance(alvo, dict) else {}
-        if str(alvo.get("tipo") or "").strip().lower() == "multi":
-            return [item for item in list(alvo.get("alvos") or []) if isinstance(item, dict)]
-        config = self._normalizar_alvos_config(props)[0]
-        if str(alvo.get("tipo") or "").strip().lower() == "pokemon" and alvo.get("pokemon_id"):
-            return [{**alvo, "grupo": 0, "ordem": 0, "config": config}]
-        if alvo.get("area_id"):
-            return [{"tipo": "area", "area_id": alvo.get("area_id"), "grupo": 0, "ordem": 0, "config": config}]
-        return []
-
-    def _validar_quantidade_selecoes(self, alvo, selecoes, props):
-        if str((alvo or {}).get("tipo") or "").strip().lower() != "multi":
-            configs = self._normalizar_alvos_config(props)
-            if len(configs) > 1 or int(configs[0].get("quantidade") or 1) != 1:
-                return "quantidade_alvos_incompleta"
-            return None
-        configs = self._normalizar_alvos_config(props)
-        contagem = {}
-        for selecao in selecoes:
-            try:
-                grupo = int(selecao.get("grupo", 0))
-            except (TypeError, ValueError):
-                grupo = 0
-            if grupo < 0 or grupo >= len(configs):
-                return "grupo_alvo_invalido"
-            contagem[grupo] = contagem.get(grupo, 0) + 1
-        for idx, config in enumerate(configs):
-            if contagem.get(idx, 0) != int(config.get("quantidade") or 1):
-                return "quantidade_alvos_incompleta"
-        return None
-
-    def _area_permitida_para_ataque(self, pokemon, area_id, props, alvo_cfg=None):
-        area = self.partida.areas.get(str(area_id or ""))
-        if not isinstance(area, dict):
-            return False
-        alvo_cfg = self._normalizar_config_alvo(alvo_cfg or self._normalizar_alvos_config(props)[0])
-        if bool(alvo_cfg.get("exige_area_ocupada")) and self.partida.pokemon_na_area(area_id) is None:
-            return False
-        tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
-        if tipo_alvo not in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"} and not self._area_respeita_provocando(pokemon, area_id, alvo_cfg):
-            return False
-        permitidos = alvo_cfg.get("lados_permitidos")
-        if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
-            return True
-        lado_area = int(area.get("lado_id", -999))
-        lado_origem = int(getattr(pokemon, "lado_id", -998))
-        area_origem = str(getattr(pokemon, "area_id", ""))
-        for item in permitidos:
-            token = str(item or "").strip().lower()
-            if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
-                return True
-            if token in {"lado_oposto", "oposto", "inimigo", "inimigos", "adversario", "adversarios"} and lado_area != lado_origem:
-                return True
-            if token in {"mesmo_lado", "aliado", "aliados", "proprio_lado"} and lado_area == lado_origem:
-                return True
-            if token in {"usuario", "proprio", "si_mesmo"} and str(area_id) == area_origem:
-                return True
-        return False
-
-    def _pokemon_permitido_para_ataque(self, pokemon, alvo, props, alvo_cfg=None):
-        if alvo is None or not alvo.esta_vivo():
-            return False
-        alvo_cfg = self._normalizar_config_alvo(alvo_cfg or self._normalizar_alvos_config(props)[0])
-        if bool(getattr(alvo, "reserva", False)) and not bool(alvo_cfg.get("inclui_reserva", False)):
-            return False
-        lado_alvo = int(getattr(alvo, "lado_id", -999))
-        lado_origem = int(getattr(pokemon, "lado_id", -998))
-        tipo_alvo = str(alvo_cfg.get("tipo") or "pokemon").strip().lower()
-        if lado_alvo != lado_origem and tipo_alvo not in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
-            provocadores = [
-                p for p in self.partida.pokemons_por_lado.get(lado_alvo, [])
-                if p.esta_vivo() and p.ativo and not p.reserva and p.possui_efeito("Provocando")
-            ]
-            if provocadores and not any(str(getattr(p, "id_batalha", "")) == str(getattr(alvo, "id_batalha", "")) for p in provocadores):
-                return False
-        permitidos = alvo_cfg.get("lados_permitidos")
-        if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
-            return True
-        for item in permitidos:
-            token = str(item or "").strip().lower()
-            if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
-                return True
-            if token in {"lado_oposto", "oposto", "inimigo", "inimigos", "adversario", "adversarios"} and lado_alvo != lado_origem:
-                return True
-            if token in {"mesmo_lado", "aliado", "aliados", "proprio_lado"} and lado_alvo == lado_origem:
-                return True
-            if token in {"usuario", "proprio", "si_mesmo"} and str(getattr(alvo, "id_batalha", "")) == str(getattr(pokemon, "id_batalha", "")):
-                return True
-        return False
-
     def _bloqueio_efeito_acao(self, pokemon, tipo):
         tipo = str(tipo or "")
         if tipo == "captura":
@@ -382,53 +238,6 @@ class ColetorAcoes:
         if tipo in {"movimento", "troca_posicao", "troca_reserva"} and pokemon.possui_efeito("Enraizado"):
             return "movimento_bloqueado_por_enraizado"
         return None
-
-    def _areas_afetadas_por_alvificacao(self, area_id, props, lado_usuario=None, alvo_cfg=None):
-        area_id = str(area_id or "").upper()
-        if not area_id:
-            return []
-        alvo_cfg = self._normalizar_config_alvo(alvo_cfg or self._normalizar_alvos_config(props)[0])
-        tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
-        if tipo in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
-            area = self.partida.areas.get(area_id)
-            lado_area = int((area or {}).get("lado_id", -999))
-            return [aid for aid, a in self.partida.areas.items() if int((a or {}).get("lado_id", -998)) == lado_area]
-        try:
-            idx = int(area_id[1:]) - 1
-        except (TypeError, ValueError, IndexError):
-            return [area_id]
-        if idx < 0 or idx > 8:
-            return [area_id]
-        prefixo = area_id[:1]
-        row, col = idx // 3, idx % 3
-        if tipo in {"linha", "fileira", "row", "line"}:
-            colunas = range(3)
-            try:
-                if int(lado_usuario) == 51:
-                    colunas = range(2, -1, -1)
-            except (TypeError, ValueError):
-                pass
-            return [f"{prefixo}{row * 3 + c + 1}" for c in colunas]
-        if tipo in {"coluna", "column"}:
-            return [f"{prefixo}{r * 3 + col + 1}" for r in range(3)]
-        return [area_id]
-
-    def _area_respeita_provocando(self, pokemon, area_id, alvo_cfg=None):
-        area = self.partida.areas.get(str(area_id or ""))
-        if not isinstance(area, dict):
-            return False
-        lado_area = int(area.get("lado_id", -999))
-        lado_origem = int(getattr(pokemon, "lado_id", -998))
-        if lado_area == lado_origem:
-            return True
-        provocadores = [
-            p for p in self.partida.pokemons_por_lado.get(lado_area, [])
-            if p.esta_vivo() and p.ativo and not p.reserva and p.possui_efeito("Provocando")
-        ]
-        if not provocadores:
-            return True
-        areas_afetadas = set(self._areas_afetadas_por_alvificacao(area_id, {}, getattr(pokemon, "lado_id", None), alvo_cfg))
-        return any(str(getattr(p, "area_id", "")) in areas_afetadas for p in provocadores)
 
     def ordenar_acoes(self, acoes):
         desempates = {}

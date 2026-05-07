@@ -25,14 +25,14 @@ function tipoBolinhaHtml(tipo, iconesTipos, pequeno = true) {
   const chave = normalizar(tipo.nome);
   const icone = iconesTipos?.[chave];
   return `<span class="tipo-bola ${pequeno ? "pequena" : ""} ${classeChance(tipo.chance)}" data-tipo="${html(chave)}" title="${html(tipo.nome)}${tipo.chance ? ` ${formatarNumero(tipo.chance, "%")}` : ""}">
-    ${icone ? `<img src="${icone}" alt="${html(tipo.nome)}" loading="eager" decoding="async" />` : `<b>${html(String(tipo.nome || "?").slice(0, 1))}</b>`}
+    ${icone ? `<img src="${icone}" alt="${html(tipo.nome)}" loading="lazy" decoding="async" />` : `<b>${html(String(tipo.nome || "?").slice(0, 1))}</b>`}
   </span>`;
 }
 function tipoBadgeHtml(tipo, iconesTipos) {
   const chave = normalizar(tipo.nome);
   const icone = iconesTipos?.[chave];
   return `<span class="tipo-badge ${classeChance(tipo.chance)}" data-tipo="${html(chave)}">
-    <span class="tipo-icone">${icone ? `<img src="${icone}" alt="" loading="eager" decoding="async" />` : ""}</span>
+    <span class="tipo-icone">${icone ? `<img src="${icone}" alt="" loading="lazy" decoding="async" />` : ""}</span>
     <strong>${html(tipo.nome)}</strong>
     ${tipo.chance ? `<em>${formatarNumero(tipo.chance, "%")}</em>` : ""}
   </span>`;

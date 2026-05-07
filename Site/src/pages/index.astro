@@ -33,7 +33,7 @@ const quadroLogo = urlPublica("GlobalServer/QuadroLogo.webp");
 const imagensPokemonsHomeIndexadas = indexarPublicoPorNome("Imagens");
 const iconesTiposHome = indexarPublicoPorNome("Tipos");
 const iconesAtributosHome = indexarPublicoPorNome("Atributos");
-const destaquesHome = selecionarDestaquesHome(pokemonsHome, 44, imagensPokemonsHomeIndexadas);
+const destaquesHome = selecionarDestaquesHome(pokemonsHome, 24, imagensPokemonsHomeIndexadas);
 const trilhoDestaquesHome = [...destaquesHome, ...destaquesHome];
 const assetsDestaquesHome = criarAssetsPokemons(destaquesHome, imagensPokemonsHomeIndexadas);
 const classeChanceHome = (chance) => {
@@ -124,7 +124,7 @@ const payloadHomePokemon = {
                   const icone = iconesTiposHome[normalizarChave(tipo.nome)];
                   return (
                     <span class={`tipo-bola pequena ${classeChanceHome(tipo.chance)}`} data-tipo={normalizarChave(tipo.nome)} title={`${tipo.nome}${tipo.chance ? ` ${tipo.chance}%` : ""}`}>
-                      {icone ? <img src={icone} alt={tipo.nome} loading="eager" decoding="async" /> : <b>{tipo.nome.slice(0, 1)}</b>}
+                      {icone ? <img src={icone} alt={tipo.nome} loading="lazy" decoding="async" /> : <b>{tipo.nome.slice(0, 1)}</b>}
                     </span>
                   );
                 })}

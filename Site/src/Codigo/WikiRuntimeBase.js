@@ -208,11 +208,15 @@ export function criarListagemPaginada(opcoes) {
   function anexarCard(inicio, fim) {
     if (!grid) return;
     const fragmento = document.createDocumentFragment();
-    estado.resultadoAtual.slice(inicio, fim).forEach((item) => {
+    estado.resultadoAtual.slice(inicio, fim).forEach((item, indiceLocal) => {
       const card = criarCard(item);
       if (classeEntrada) {
         card.classList.add(classeEntrada);
-        card.addEventListener("animationend", () => card.classList.remove(classeEntrada), { once: true });
+        card.style.setProperty("--card-delay", `${Math.min(indiceLocal * 24, 180)}ms`);
+        card.addEventListener("animationend", () => {
+          card.classList.remove(classeEntrada);
+          card.style.removeProperty("--card-delay");
+        }, { once: true });
       }
       fragmento.appendChild(card);
     });
@@ -232,7 +236,7 @@ export function criarListagemPaginada(opcoes) {
     if (!preservarScroll) return;
     window.setTimeout(() => {
       if (grid && idRender === estado.renderRequest) grid.style.minHeight = "";
-    }, 120);
+    }, 220);
   }
   function sentinelaPertoDaTela() {
     if (!sentinela || sentinela.hidden || estado.visiveis >= estado.resultadoAtual.length) return false;
@@ -267,7 +271,8 @@ export function criarListagemPaginada(opcoes) {
     estado.renderizando = true;
     window.requestAnimationFrame(() => {
       if (estado.cancelado || idRender !== estado.renderRequest) return;
-      anexarCard(jaRenderizados, jaRenderizados + 1);
+      const proximoFim = Math.min(alvo, jaRenderizados + 8);
+      anexarCard(jaRenderizados, proximoFim);
       window.setTimeout(() => renderizarAte(alvo, idRender), renderDelay);
     });
   }
@@ -281,11 +286,16 @@ export function criarListagemPaginada(opcoes) {
       estado.resultadoAtual = obterResultado(direcaoAtual());
       estado.visiveis = Math.min(pageSize, estado.resultadoAtual.length);
       manterScrollAposReset(alturaAnterior, scrollAnterior);
+      grid.classList.add("wiki-grid-resetando");
       grid.replaceChildren();
       estado.renderizando = false;
       atualizarEstado();
-      renderizarAte(estado.visiveis, idRender);
-      agendarChecagemDeCarga(idRender);
+      window.requestAnimationFrame(() => {
+        if (idRender !== estado.renderRequest) return;
+        grid.classList.remove("wiki-grid-resetando");
+        renderizarAte(estado.visiveis, idRender);
+        agendarChecagemDeCarga(idRender);
+      });
       return;
     }
     if (estado.renderizando || estado.visiveis >= estado.resultadoAtual.length) {

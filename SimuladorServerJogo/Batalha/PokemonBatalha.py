@@ -544,16 +544,33 @@ class PokemonBatalha:
                     "cura": round(cura, 4),
                 },
             )
-        self._disparar_flag(
-            "AoReceberDano",
-            {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno), "dados_dano": dict(dados), "reativos_acao": dados.get("reativos_acao")},
-            reativos=dados.get("reativos_acao"),
-        )
+        if dano_vida > 0:
+            self._disparar_flag(
+                "AoReceberDano",
+                {
+                    "partida": self.partida,
+                    "usuario": origem,
+                    "origem": origem,
+                    "alvo": self,
+                    "pokemon_evento": self,
+                    "dano_vida": round(dano_vida, 4),
+                    "resultado": dict(retorno),
+                    "dados_dano": dict(dados),
+                    "reativos_acao": dados.get("reativos_acao"),
+                },
+                reativos=dados.get("reativos_acao"),
+            )
         return retorno
 
     def AplicarCura(self, alvo, valor, dados=None):
         retorno = alvo.ReceberCura(valor, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
-        self._disparar_flag("AoCurar", {"partida": self.partida, "usuario": self, "alvo": alvo, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao"))
+        valor_cura = _f((retorno or {}).get("cura"), 0.0)
+        if valor_cura > 0:
+            self._disparar_flag(
+                "AoCurar",
+                {"partida": self.partida, "usuario": self, "alvo": alvo, "pokemon_evento": self, "valor_cura": round(valor_cura, 4), "resultado": dict(retorno)},
+                reativos=(dados or {}).get("reativos_acao"),
+            )
         return retorno
 
     def ReceberCura(self, valor, origem=None, dados=None):
@@ -636,7 +653,12 @@ class PokemonBatalha:
                 },
             )
         retorno = {"aplicado": True, "cura": round(real, 4), "dados": dict(dados or {})}
-        self._disparar_flag("AoReceberCura", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao"))
+        if real > 0:
+            self._disparar_flag(
+                "AoReceberCura",
+                {"partida": self.partida, "usuario": origem, "origem": origem, "alvo": self, "pokemon_evento": self, "valor_cura": round(real, 4), "resultado": dict(retorno)},
+                reativos=(dados or {}).get("reativos_acao"),
+            )
         return retorno
 
     def AplicarBarreira(self, alvo, valor, dados=None):
@@ -669,7 +691,24 @@ class PokemonBatalha:
 
     def AplicarEfeito(self, alvo, efeito, dados=None):
         retorno = alvo.ReceberEfeito(efeito, origem=self, dados=dados) if alvo is not None else {"aplicado": False}
-        self._disparar_flag("AoAplicarEfeito", {"partida": self.partida, "usuario": self, "alvo": alvo, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao"))
+        if bool(retorno.get("aplicado")):
+            efeito_final = dict(retorno.get("efeito") or efeito or {})
+            negativo = str(efeito_final.get("tipo") or "").lower() == "negativo" or bool(efeito_final.get("negativo"))
+            self._disparar_flag(
+                "AoAplicarEfeito",
+                {
+                    "partida": self.partida,
+                    "usuario": self,
+                    "origem": self,
+                    "alvo": alvo,
+                    "pokemon_evento": self,
+                    "efeito": efeito_final,
+                    "positivo": not negativo,
+                    "negativo": negativo,
+                    "resultado": dict(retorno),
+                },
+                reativos=(dados or {}).get("reativos_acao"),
+            )
         return retorno
 
     def ReceberEfeito(self, efeito, origem=None, dados=None):
@@ -750,7 +789,20 @@ class PokemonBatalha:
                 formal = dict(existente)
                 self.recalcular_atributos()
                 retorno = {"aplicado": True, "efeito": dict(formal), "ja_existia": True}
-                self._disparar_flag("AoReceberEfeito", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao") if isinstance(dados, dict) else None)
+                self._disparar_flag(
+                    "AoReceberEfeito",
+                    {
+                        "partida": self.partida,
+                        "usuario": origem,
+                        "origem": origem,
+                        "alvo": self,
+                        "pokemon_evento": self,
+                        "efeito": dict(formal),
+                        "duracao": formal.get("passos_restantes"),
+                        "resultado": dict(retorno),
+                    },
+                    reativos=(dados or {}).get("reativos_acao") if isinstance(dados, dict) else None,
+                )
                 return retorno
             passos_anteriores = max(0, _i(existente.get("passos_restantes"), 0))
             passos_novos = max(1, _i(formal.get("passos_restantes"), 1))
@@ -800,7 +852,20 @@ class PokemonBatalha:
             },
         )
         retorno = {"aplicado": True, "efeito": dict(formal)}
-        self._disparar_flag("AoReceberEfeito", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno)}, reativos=(dados or {}).get("reativos_acao") if isinstance(dados, dict) else None)
+        self._disparar_flag(
+            "AoReceberEfeito",
+            {
+                "partida": self.partida,
+                "usuario": origem,
+                "origem": origem,
+                "alvo": self,
+                "pokemon_evento": self,
+                "efeito": dict(formal),
+                "duracao": formal.get("passos_restantes"),
+                "resultado": dict(retorno),
+            },
+            reativos=(dados or {}).get("reativos_acao") if isinstance(dados, dict) else None,
+        )
         return retorno
 
     def RemoverEfeito(self, filtro):
@@ -923,7 +988,9 @@ class PokemonBatalha:
         self.VidaAtual = 0.0
         self.estados_transitorios["morto_na_rodada"] = dict(dados or {})
         origem_id = dados.get("origem_id")
-        origem = self.partida.obter_pokemon(origem_id) if self.partida is not None and origem_id is not None else None
+        origem = dados.get("origem")
+        if origem is None:
+            origem = self.partida.obter_pokemon(origem_id) if self.partida is not None and origem_id is not None else None
         if origem is not None and origem.id_batalha != self.id_batalha:
             origem.estatisticas_batalha["abates"] = _f(origem.estatisticas_batalha.get("abates"), 0.0) + 1
         self._registrar_evento(
@@ -938,7 +1005,8 @@ class PokemonBatalha:
         )
         if origem is not None and origem.id_batalha != self.id_batalha:
             self._disparar_flag("AoMatar", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": origem, "dados": dict(dados)}, reativos=dados.get("reativos_acao"))
-        self._disparar_flag("AoMorrer", {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "dados": dict(dados)}, reativos=dados.get("reativos_acao"))
+            self._disparar_flag("AoAbater", {"partida": self.partida, "usuario": origem, "origem": origem, "alvo": self, "pokemon_evento": origem, "dados": dict(dados)}, reativos=dados.get("reativos_acao"))
+        self._disparar_flag("AoMorrer", {"partida": self.partida, "usuario": origem, "origem": origem, "alvo": self, "pokemon_evento": self, "dados": dict(dados)}, reativos=dados.get("reativos_acao"))
         return True
 
     def esta_vivo(self):
@@ -952,6 +1020,33 @@ class PokemonBatalha:
 
     def pode_ser_movido_por_ataque(self):
         return not self.possui_efeito("Imparavel")
+
+    def receber_recuo(self, origem=None, dados=None):
+        dados = dict(dados or {})
+        if not self.pode_ser_movido_por_ataque():
+            self._registrar_evento(
+                "recuo_bloqueado_por_imparavel",
+                {
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    "bloqueador_nome": "Imparavel",
+                    "bloqueador_code": "Imparavel",
+                    **self._dados_origem(origem),
+                    **dados,
+                },
+            )
+            return {"aplicado": False, "motivo": "imparavel"}
+        self.adicionar_estado_transitorio("recuado", dados or {"ativo": True})
+        self._registrar_evento(
+            "pokemon_recuou",
+            {
+                "pokemon_id": self.id_batalha,
+                "pokemon_nome": self.nome,
+                **self._dados_origem(origem),
+                **dados,
+            },
+        )
+        return {"aplicado": True, "estado": "recuado"}
 
     def possui_efeito(self, nome_ou_code):
         alvo = _normalizar(nome_ou_code)

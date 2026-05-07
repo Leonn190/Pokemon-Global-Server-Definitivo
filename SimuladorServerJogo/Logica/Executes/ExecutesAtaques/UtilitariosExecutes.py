@@ -18,14 +18,27 @@ def fnum(valor: object, default: float = 0.0) -> float:
         return float(default)
 
 
-def critico_simples(usuario, ctx, maximo=None):
-    if usuario is not None and hasattr(usuario, "possui_efeito") and usuario.possui_efeito("Cauterizado"):
-        return False
-    chance = float(usuario.obter_atributo("CrC", 0.0))
+def resolver_critico_contextual(usuario, ctx, maximo=None, tipo="generico"):
+    chance_bruta = float(usuario.obter_atributo("CrC", 0.0)) if usuario is not None else 0.0
     if maximo is not None:
-        chance = min(chance, float(maximo))
-    rng = (ctx or {}).get("rng")
-    return bool(chance > 0 and rng is not None and rng.random() * 100.0 <= chance)
+        chance_bruta = min(chance_bruta, float(maximo))
+    excedente = max(0.0, chance_bruta - 100.0)
+    chance_real = max(0.0, min(100.0, chance_bruta))
+    rng = (ctx or {}).get("rng") or getattr((ctx or {}).get("partida"), "rng", None)
+    tem_rng = rng is not None
+    rolagem = rng.random() * 100.0 if rng is not None else 100.0
+    cauterizado = usuario is not None and hasattr(usuario, "possui_efeito") and usuario.possui_efeito("Cauterizado")
+    return {
+        "critico": bool((not cauterizado) and tem_rng and chance_real > 0 and rolagem <= chance_real),
+        "chance_critico": round(chance_real, 4),
+        "bonus_crd_excedente": round(excedente / 2.0, 4),
+        "rolagem": round(rolagem, 4),
+        "tipo": str(tipo or "generico"),
+    }
+
+
+def critico_simples(usuario, ctx, maximo=None):
+    return bool(resolver_critico_contextual(usuario, ctx, maximo=maximo).get("critico"))
 
 
 def dano_generico(ctx, alvo, bruto, categoria="normal", **extra):

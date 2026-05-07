@@ -335,6 +335,7 @@ class RodadorTurno:
             if pokemon.esta_vivo():
                 pokemon.decrementar_efeitos(self.partida.passo_atual)
         self.partida.verificar_fim_batalha()
+        self.partida.disparar_flag("AoFimDoPasso", {"partida": self.partida, "passo_atual": self.partida.passo_atual})
 
     def _falhar(self, acao, motivo, alvo_id=None):
         falha = {

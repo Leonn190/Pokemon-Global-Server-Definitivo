@@ -441,7 +441,7 @@ class Partida:
         self.registrar_evento_log("terreno_alterado", {"area_id": area_id, "terreno_antes": antes, "terreno": terreno, "origem_id": getattr(origem, "id_batalha", None)})
         ocupante = self.pokemon_na_area(area_id)
         if ocupante is not None:
-            self.aplicar_terreno_ao_entrar(ocupante, area_id)
+            self.aplicar_terreno_ao_entrar(ocupante, area_id, dados=dados)
         return True
 
     def limpar_terreno(self, area_id, motivo=None):
@@ -458,10 +458,26 @@ class Partida:
             return dado.get("terreno") or dado.get("nome") or dado.get("efeito")
         return dado
 
-    def aplicar_terreno_ao_entrar(self, pokemon, area_id):
-        terreno = _normalizar(self.obter_terreno_area(area_id))
+    def aplicar_terreno_ao_entrar(self, pokemon, area_id, dados=None):
+        dados = dict(dados or {})
+        terreno_bruto = self.obter_terreno_area(area_id)
+        terreno = _normalizar(terreno_bruto)
         if pokemon is None or not pokemon.esta_vivo():
             return
+        if terreno:
+            self.disparar_flag(
+                "AoEntrarEmTerreno",
+                {
+                    "partida": self,
+                    "pokemon_evento": pokemon,
+                    "alvo": pokemon,
+                    "area_id": str(area_id or "").upper(),
+                    "terreno": terreno_bruto,
+                    "dados": dict(dados),
+                    "reativos_acao": dados.get("reativos_acao"),
+                },
+                reativos=dados.get("reativos_acao"),
+            )
         if terreno == "contaminada":
             pokemon.ReceberEfeito({"nome": "Envenenado", "duracao": 3, "negativo": True}, origem=pokemon, dados={"terreno": "Contaminada"})
             self.registrar_evento_log("terreno_aplicou_efeito", {"area_id": area_id, "pokemon_id": pokemon.id_batalha, "terreno": "Contaminada", "efeito": "Envenenado"})
@@ -821,6 +837,7 @@ class Partida:
 
     def mover_pokemon_para_area(self, pokemon, area_id, dados=None):
         area_id = str(area_id or "")
+        dados = dict(dados or {})
         if pokemon is None or not self.area_existe(area_id):
             return False
         ocupante_id = self.ocupacao_areas.get(area_id)
@@ -844,9 +861,21 @@ class Partida:
                 "area_destino": area_id,
             },
         )
-        dados = dict(dados or {})
-        self.disparar_flag("AoMover", {"partida": self, "pokemon_evento": pokemon, "pokemon": pokemon, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
-        self.aplicar_terreno_ao_entrar(pokemon, area_id)
+        self.disparar_flag(
+            "AoMover",
+            {
+                "partida": self,
+                "pokemon_evento": pokemon,
+                "pokemon": pokemon,
+                "area_antes": area_origem,
+                "area_depois": area_id,
+                "origem": dados.get("origem"),
+                "dados": dict(dados),
+                "reativos_acao": dados.get("reativos_acao"),
+            },
+            reativos=dados.get("reativos_acao"),
+        )
+        self.aplicar_terreno_ao_entrar(pokemon, area_id, dados=dados)
         return True
 
     def trocar_posicao(self, pokemon_a, pokemon_b, dados=None):
@@ -878,9 +907,24 @@ class Partida:
             },
         )
         dados = dict(dados or {})
+        for pokemon, antes, depois in ((pokemon_a, area_a, area_b), (pokemon_b, area_b, area_a)):
+            self.disparar_flag(
+                "AoMover",
+                {
+                    "partida": self,
+                    "pokemon_evento": pokemon,
+                    "pokemon": pokemon,
+                    "area_antes": antes,
+                    "area_depois": depois,
+                    "origem": dados.get("origem"),
+                    "dados": dict(dados),
+                    "reativos_acao": dados.get("reativos_acao"),
+                },
+                reativos=dados.get("reativos_acao"),
+            )
         self.disparar_flag("AoTrocar", {"partida": self, "pokemon_evento": pokemon_a, "pokemon": pokemon_a, "pokemon_outro": pokemon_b, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
-        self.aplicar_terreno_ao_entrar(pokemon_a, pokemon_a.area_id)
-        self.aplicar_terreno_ao_entrar(pokemon_b, pokemon_b.area_id)
+        self.aplicar_terreno_ao_entrar(pokemon_a, pokemon_a.area_id, dados=dados)
+        self.aplicar_terreno_ao_entrar(pokemon_b, pokemon_b.area_id, dados=dados)
         return True
 
     def trocar_reserva(self, pokemon_ativo, pokemon_reserva, dados=None):
@@ -916,8 +960,22 @@ class Partida:
         self.registrar_evento_log("pokemon_saiu", {"pokemon_id": pokemon_ativo.id_batalha, "pokemon_nome": pokemon_ativo.nome, "area_id": area, "slot_reserva_id": reserva_slot_id})
         self.registrar_evento_log("pokemon_entrou", {"pokemon_id": pokemon_reserva.id_batalha, "pokemon_nome": pokemon_reserva.nome, "area_id": area, "slot_reserva_id": reserva_slot_id})
         dados = dict(dados or {})
+        self.disparar_flag(
+            "AoMover",
+            {
+                "partida": self,
+                "pokemon_evento": pokemon_reserva,
+                "pokemon": pokemon_reserva,
+                "area_antes": None,
+                "area_depois": area,
+                "origem": dados.get("origem"),
+                "dados": dict(dados),
+                "reativos_acao": dados.get("reativos_acao"),
+            },
+            reativos=dados.get("reativos_acao"),
+        )
         self.disparar_flag("AoTrocar", {"partida": self, "pokemon_evento": pokemon_reserva, "pokemon": pokemon_reserva, "pokemon_outro": pokemon_ativo, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
-        self.aplicar_terreno_ao_entrar(pokemon_reserva, area)
+        self.aplicar_terreno_ao_entrar(pokemon_reserva, area, dados=dados)
         return True
 
     def substituir_derrotados_por_reserva(self):
@@ -943,6 +1001,7 @@ class Partida:
                 "pokemon_entrou",
                 {"pokemon_id": reserva.id_batalha, "pokemon_nome": reserva.nome, "area_id": area, "motivo": "substituicao_derrotado"},
             )
+            self.disparar_flag("AoMover", {"partida": self, "pokemon_evento": reserva, "pokemon": reserva, "area_antes": None, "area_depois": area, "origem": pokemon, "dados": {"motivo": "substituicao_derrotado"}})
             self.aplicar_terreno_ao_entrar(reserva, area)
 
     def finalizar(self, motivo=None, lado_id=None):

@@ -9,6 +9,7 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
     fnum,
     inimigos_vivos_adjacentes_ao_alvo,
     normalizar,
+    resolver_critico_contextual,
 )
 
 
@@ -26,7 +27,8 @@ def _exec_biscoito(ctx, alvo):
     if usuario is None or alvo is None:
         return {"falha": True, "motivo": "alvo_invalido"}
     stacks = int(alvo.contadores_especiais.get("Biscoito", 0) or 0)
-    critico = critico_simples(usuario, ctx)
+    critico_ctx = resolver_critico_contextual(usuario, ctx, tipo="cura")
+    critico = bool(critico_ctx.get("critico"))
     cura = usuario.obter_atributo("Mag") * 0.55
     mult_stacks = 1.0 + (stacks * ((0.15 if critico else 0.10) / 0.55))
     ret = usuario.AplicarCura(
@@ -37,6 +39,7 @@ def _exec_biscoito(ctx, alvo):
             "ataque_id": 2,
             "ataque_nome": "Biscoito",
             "critico": critico,
+            "critico_contextual": critico_ctx,
             "reativos_acao": ctx.get("reativos_acao"),
             "multiplicadores_condicionais": [
                 {"label": "Multiplicador Condicional (stacks de Biscoito)", "multiplicador": mult_stacks}
@@ -53,7 +56,7 @@ def _exec_enraivecer(ctx, alvo):
     usuario = ctx.get("usuario")
     vida_max = max(1.0, usuario.obter_atributo("Vida", 1.0))
     if usuario.VidaAtual / vida_max < 0.40:
-        return aplicar_efeito(usuario, usuario, "Amplificado", duracao=3, valor=max(10.0, usuario.obter_atributo("Mag") * 0.20), negativo=False)
+        return aplicar_efeito(usuario, usuario, "Amplificado", duracao=3, negativo=False)
     return {"aplicado": True, "sem_efeito": True}
 
 
@@ -164,10 +167,12 @@ def _exec_resetar(ctx, alvo):
 def _exec_tankar(ctx, alvo):
     usuario = ctx.get("usuario")
     bonus = usuario.obter_atributo("Mag") * 0.20
-    ret = aplicar_efeito(usuario, usuario, "Fortificado", duracao=3, dados={"atributo": "Dur", "valor": bonus}, valor=bonus, negativo=False)
-    if critico_simples(usuario, ctx):
-        usuario.ReceberBarreira(bonus, origem=usuario, dados={"ataque": "Tankar", "ataque_id": 14, "ataque_nome": "Tankar", "critico": True})
+    ret = aplicar_efeito(usuario, usuario, "Fortificado", duracao=3, negativo=False)
+    critico_ctx = resolver_critico_contextual(usuario, ctx, tipo="efeito")
+    if critico_ctx.get("critico"):
+        usuario.ReceberBarreira(bonus, origem=usuario, dados={"ataque": "Tankar", "ataque_id": 14, "ataque_nome": "Tankar", "critico": True, "critico_contextual": critico_ctx})
         ret["barreira_critica"] = bonus
+    ret["critico_contextual"] = critico_ctx
     return ret
 
 
@@ -196,7 +201,7 @@ def _exec_bola_climatica(ctx, alvo):
 def _exec_hiper_presa(ctx, alvo):
     ret = dano_generico(ctx, alvo, ctx.get("usuario").obter_atributo("Atk") * 1.00, "normal", chance_critico_max=80.0)
     if ret.get("critico") and alvo is not None:
-        alvo.adicionar_estado_transitorio("recuado", {"ataque": "Hiper Presa"})
+        alvo.receber_recuo(origem=ctx.get("usuario"), dados={"ataque": "Hiper Presa", "reativos_acao": ctx.get("reativos_acao")})
     return ret
 
 

@@ -26,8 +26,8 @@ VARIACOES_TEMPORARIAS_EFEITOS = {
     "fortificado": {"Dur": 50.0},
     "congelado": {"Dur": 30.0},
     "encharcado": {"Vel": -0.20},
-    "energizado": {"EneM": 0.50},
-    "descarregado": {"EneM": -0.50},
+    "energizado": {"Ene": 0.50},
+    "descarregado": {"Ene": -0.50},
     "quebrado": {"Dur": -50.0},
     "enfraquecido": {"Amp": -50.0},
     "confuso": {"Acuracia": -50.0},
@@ -257,7 +257,7 @@ class PokemonBatalha:
             if not variacoes:
                 continue
             for atributo, valor in variacoes.items():
-                if abs(valor) < 1.0 and atributo in {"Vel", "EneM", "Acuracia", "Def", "SpD"}:
+                if abs(valor) < 1.0 and atributo in {"Vel", "Ene", "EneM", "Acuracia", "Def", "SpD"}:
                     base = self.atributos_base.get(atributo, 0.0)
                     self.aplicar_variacao_temporaria(atributo, base * valor)
                 else:

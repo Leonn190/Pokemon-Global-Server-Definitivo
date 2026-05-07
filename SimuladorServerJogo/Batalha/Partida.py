@@ -369,7 +369,7 @@ class Partida:
                 pokemon.aplicar_variacao_temporaria("Def", pokemon.atributos_base.get("Def", 0.0) * bonus / 100.0)
                 pokemon.aplicar_variacao_temporaria("SpD", pokemon.atributos_base.get("SpD", 0.0) * bonus / 100.0)
         elif clima in {"tempestadederaios", "tempestaderaios"} and "eletrico" in tipos:
-            pokemon.aplicar_variacao_temporaria("EneM", max(1.0, pokemon.atributos_base.get("EneM", 1.0)) * 0.50)
+            pokemon.aplicar_variacao_temporaria("Ene", max(1.0, pokemon.atributos_base.get("Ene", 1.0)) * 0.50)
         elif clima == "noitedensa":
             if "sombrio" in tipos:
                 pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
@@ -489,7 +489,7 @@ class Partida:
             pokemon.aplicar_variacao_temporaria("Amp", -15.0)
             pokemon.aplicar_variacao_temporaria("Dur", -15.0)
         elif terreno == "energizada":
-            pokemon.aplicar_variacao_temporaria("EneM", pokemon.atributos_base.get("EneM", 1.0))
+            pokemon.aplicar_variacao_temporaria("Ene", pokemon.atributos_base.get("Ene", 1.0))
         elif terreno == "sagrada":
             pokemon.aplicar_variacao_temporaria("Amp", 30.0)
         elif terreno == "elevada":

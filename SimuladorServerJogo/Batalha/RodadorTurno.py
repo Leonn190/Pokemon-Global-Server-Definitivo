@@ -151,8 +151,9 @@ class RodadorTurno:
             "alvos": [],
             "primeiro_ataque_da_rodada": self._ataques_executados == 0,
         }
-        contexto["reativos_acao"] = obter_executes_reativos(props.get("nome") or (contexto["ataque"] or {}).get("Code"))
-        alvos = executar_alvificacao(props.get("nome") or (contexto["ataque"] or {}).get("nome") or (contexto["ataque"] or {}).get("Code"), contexto)
+        chave_ataque = props.get("ID") or (contexto["ataque"] or {}).get("ID") or (contexto["ataque"] or {}).get("Code") or props.get("nome")
+        contexto["reativos_acao"] = obter_executes_reativos(chave_ataque)
+        alvos = executar_alvificacao(chave_ataque, contexto)
         contexto["alvos"] = list(alvos or [])
         alvo_ids = [alvo.id_batalha for alvo in contexto["alvos"] if alvo is not None]
         self.partida.registrar_evento_log("ataque_usado", self._dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids, animacao=animacao))
@@ -162,7 +163,7 @@ class RodadorTurno:
             return
         atingiu = False
         if str(props.get("estilo_logico") or "").lower() == "ativo":
-            retorno = executar_execute_principal(props.get("nome"), contexto, alvo=None)
+            retorno = executar_execute_principal(chave_ataque, contexto, alvo=None)
             if retorno.get("falha"):
                 self._falhar(acao, str(retorno.get("motivo") or "execute_falhou"))
             else:
@@ -185,12 +186,14 @@ class RodadorTurno:
                     "reativos_acao": contexto.get("reativos_acao"),
                 }
                 self.partida.disparar_flag("AntesReceberAtaque", ctx_flag, reativos=contexto.get("reativos_acao"))
-                if not self._acertou(pokemon, alvo):
-                    self.partida.registrar_evento_log("ataque_errou", self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao))
+                acerto = self._calcular_acerto(pokemon, alvo, props)
+                ctx_alvo["bonus_critico_acerto"] = acerto.get("bonus_critico_acerto", 0.0)
+                if not acerto.get("acertou"):
+                    self.partida.registrar_evento_log("ataque_errou", {**self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao), "acerto": acerto})
                     self._falhar(acao, "ataque_errou", alvo_id=alvo.id_batalha)
                     continue
-                self.partida.registrar_evento_log("ataque_acertou", self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao))
-                retorno = executar_execute_principal(props.get("nome"), ctx_alvo, alvo=alvo)
+                self.partida.registrar_evento_log("ataque_acertou", {**self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao), "acerto": acerto})
+                retorno = executar_execute_principal(chave_ataque, ctx_alvo, alvo=alvo)
                 if retorno.get("falha"):
                     self._falhar(acao, str(retorno.get("motivo") or "execute_falhou"), alvo_id=alvo.id_batalha)
                 else:
@@ -284,7 +287,13 @@ class RodadorTurno:
         )
 
     def _acertou(self, usuario, alvo):
-        acuracia = usuario.obter_atributo("Acuracia", 100.0) / 100.0
+        return bool(self._calcular_acerto(usuario, alvo).get("acertou"))
+
+    def _calcular_acerto(self, usuario, alvo, props=None):
+        props = props if isinstance(props, dict) else {}
+        parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        acuracia_ataque = float(parametros.get("acuracia", props.get("acuracia", 100.0)) or 100.0) / 100.0
+        acuracia = (usuario.obter_atributo("Acuracia", 100.0) / 100.0) * acuracia_ataque
         assertividade = alvo.obter_atributo("Assertividade", 100.0) / 100.0
         chance = acuracia * assertividade
         vel_usuario = usuario.obter_atributo("Vel", 0.0)
@@ -299,12 +308,29 @@ class RodadorTurno:
             chance -= (vel_alvo - media - escudo) / 100.0
         elif vel_alvo < media - escudo:
             chance += (media - escudo - vel_alvo) / 100.0
-        chance = max(0.0, chance)
-        return self.partida.rng.random() <= chance
+        tipo_ataque = parametros.get("tipo") or props.get("tipo") or "normal"
+        if alvo.possui_efeito("Flutuando") and str(tipo_ataque or "").strip().lower() == "normal":
+            chance -= 0.40
+        chance_percentual = max(0.0, chance * 100.0)
+        chance_real = min(100.0, chance_percentual)
+        bonus_critico = max(0.0, chance_percentual - 100.0) / 2.0
+        sorte = self.partida.rng.random() * 100.0
+        return {
+            "acertou": sorte <= chance_real,
+            "chance_final": round(chance_percentual, 4),
+            "chance_real": round(chance_real, 4),
+            "bonus_critico_acerto": round(bonus_critico, 4),
+            "rolagem": round(sorte, 4),
+        }
 
     def _fim_passo(self):
         for pokemon in list(self.partida.pokemons_por_id.values()):
             pokemon.Verificar()
+        for pokemon in list(self.partida.pokemons_por_id.values()):
+            if pokemon.esta_vivo():
+                pokemon.aplicar_efeitos_por_passo()
+        if hasattr(self.partida, "processar_clima_por_passo"):
+            self.partida.processar_clima_por_passo()
         for pokemon in list(self.partida.pokemons_por_id.values()):
             if pokemon.esta_vivo():
                 pokemon.decrementar_efeitos(self.partida.passo_atual)

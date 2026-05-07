@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ExecutesAgua import (
     obter_aliases_executes_agua,
     obter_executes_agua,
@@ -128,6 +130,29 @@ _FONTES_EXECUTES = (
     (obter_executes_voador, obter_passivas_ataques_voador, obter_aliases_executes_voador),
 )
 
+_MODULOS_TIPOS = (
+    "ExecutesNormal",
+    "ExecutesAgua",
+    "ExecutesCosmico",
+    "ExecutesDragao",
+    "ExecutesEletrico",
+    "ExecutesFada",
+    "ExecutesFantasma",
+    "ExecutesFogo",
+    "ExecutesGelo",
+    "ExecutesInseto",
+    "ExecutesLutador",
+    "ExecutesMetal",
+    "ExecutesPedra",
+    "ExecutesPlanta",
+    "ExecutesPsiquico",
+    "ExecutesSombrio",
+    "ExecutesSonoro",
+    "ExecutesTerra",
+    "ExecutesVeneno",
+    "ExecutesVoador",
+)
+
 
 def _montar_executes():
     saida = {}
@@ -150,8 +175,32 @@ def _montar_aliases():
     return saida
 
 
+def _montar_reativos():
+    saida = []
+    base = "SimuladorServerJogo.Logica.Executes.ExecutesAtaques"
+    for nome_modulo in _MODULOS_TIPOS:
+        try:
+            modulo = importlib.import_module(f"{base}.{nome_modulo}")
+        except Exception:
+            continue
+        for nome_funcao in dir(modulo):
+            if not nome_funcao.startswith("obter_executes_reativos_"):
+                continue
+            func = getattr(modulo, nome_funcao, None)
+            if not callable(func):
+                continue
+            try:
+                saida.extend(list(func() or []))
+            except Exception:
+                continue
+    for idx, reativo in enumerate(saida, start=1):
+        if not getattr(reativo, "ordem", 0):
+            reativo.ordem = idx
+    return saida
+
+
 _EXECUTES = _montar_executes()
-_REATIVOS = obter_executes_reativos_normais()
+_REATIVOS = _montar_reativos()
 _PASSIVAS = _montar_passivas()
 _ALIASES = _montar_aliases()
 
@@ -186,6 +235,8 @@ def _areas_afetadas_por_alvificacao(area_id, props, lado_usuario):
         return []
     alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
     tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
+    if tipo in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
+        return [area_id]
     try:
         idx = int(area_id[1:]) - 1
     except (TypeError, ValueError, IndexError):
@@ -225,7 +276,15 @@ def executar_alvificacao(nome_ou_code, contexto):
     lado_usuario = getattr(usuario, "lado_id", None)
     alvos = []
     vistos = set()
-    for area_afetada in _areas_afetadas_por_alvificacao(area_id, props, lado_usuario):
+    alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
+    tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
+    if tipo_alvo in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
+        area_base = partida.areas.get(str(area_id or ""))
+        lado_area = int((area_base or {}).get("lado_id", -999))
+        areas = [aid for aid, area in partida.areas.items() if int((area or {}).get("lado_id", -998)) == lado_area]
+    else:
+        areas = _areas_afetadas_por_alvificacao(area_id, props, lado_usuario)
+    for area_afetada in areas:
         ocupante = partida.pokemon_na_area(area_afetada)
         if ocupante is None:
             continue
@@ -253,8 +312,22 @@ def registrar_execute_reativo(nome, flag, func, origem_ataque=None, code=None, g
 
 def obter_executes_reativos(nome_ou_code, flag=None):
     chave = resolver_chave(nome_ou_code)
-    origem = str(nome_ou_code)
-    saida = [r for r in _REATIVOS if str((r.origem_ataque or "")).lower() in {str(origem).lower(), chave}]
+    origem = str(nome_ou_code or "").strip()
+    candidatos = {origem.lower(), chave, normalizar(origem)}
+    try:
+        candidatos.add(str(int(float(origem))))
+    except (TypeError, ValueError):
+        pass
+    saida = []
+    for reativo in _REATIVOS:
+        chaves_reativo = {
+            str(getattr(reativo, "code", "") or "").strip().lower(),
+            str(getattr(reativo, "origem_ataque", "") or "").strip().lower(),
+            normalizar(getattr(reativo, "origem_ataque", "")),
+            resolver_chave(getattr(reativo, "code", None) or getattr(reativo, "origem_ataque", None)),
+        }
+        if candidatos & {c for c in chaves_reativo if c}:
+            saida.append(reativo)
     if flag:
         saida = [r for r in saida if str(r.flag) == str(flag)]
     return saida

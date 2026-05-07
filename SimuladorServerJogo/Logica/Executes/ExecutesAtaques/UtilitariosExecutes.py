@@ -19,6 +19,8 @@ def fnum(valor: object, default: float = 0.0) -> float:
 
 
 def critico_simples(usuario, ctx, maximo=None):
+    if usuario is not None and hasattr(usuario, "possui_efeito") and usuario.possui_efeito("Cauterizado"):
+        return False
     chance = float(usuario.obter_atributo("CrC", 0.0))
     if maximo is not None:
         chance = min(chance, float(maximo))
@@ -40,6 +42,7 @@ def dano_generico(ctx, alvo, bruto, categoria="normal", **extra):
         "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
         "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
         "reativos_acao": (ctx or {}).get("reativos_acao"),
+        "bonus_critico_acerto": (ctx or {}).get("bonus_critico_acerto", 0.0),
         **extra,
     }
     return usuario.AplicarDano(alvo, dados, contexto=ctx)
@@ -158,6 +161,19 @@ def aplicar_mod_atributo(ctx, alvo, nome_efeito, atributo, valor, duracao=6, neg
     ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
     props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
     valor = fnum(valor, 0.0)
+    if hasattr(alvo, "modificar_atributo_permanente"):
+        return alvo.modificar_atributo_permanente(
+            alvo,
+            atributo,
+            valor,
+            origem=usuario,
+            dados={
+                "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
+                "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome") or nome_efeito,
+                "positivo": valor >= 0,
+                "negativo": bool(negativo) or valor < 0,
+            },
+        )
     antes = fnum(alvo.obter_atributo(atributo) if hasattr(alvo, "obter_atributo") else 0.0, 0.0)
     variacao_antes = fnum(alvo.variacoes_permanentes.get(atributo), 0.0)
     alvo.variacoes_permanentes[atributo] = fnum(alvo.variacoes_permanentes.get(atributo), 0.0) + valor
@@ -252,6 +268,8 @@ def executar_danca_clima(ctx, clima):
     props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
     if partida is None:
         return {"falha": True, "motivo": "partida_invalida"}
+    if hasattr(partida, "mudar_clima"):
+        return partida.mudar_clima(clima, origem=usuario, dados={"ataque_nome": props.get("nome")})
     antes = getattr(partida, "clima_atual", None)
     partida.clima_atual = clima
     if hasattr(partida, "registrar_evento_log"):

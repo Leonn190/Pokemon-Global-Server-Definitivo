@@ -74,6 +74,10 @@ class ResolvedorFlags:
         pokemon_evento = contexto.get("pokemon_evento")
         saida = []
         for passiva in list(self._passivas_por_flag.get(str(flag), [])):
+            origem = str(getattr(passiva, "origem", "") or "").strip().lower()
+            dono = getattr(passiva, "dono", None)
+            if origem in {"habilidade", "item"} and dono is not None and hasattr(dono, "possui_efeito") and dono.possui_efeito("Atordoado"):
+                continue
             if self._grupo_compativel(passiva.grupo, passiva.dono, pokemon_evento):
                 saida.append(("passiva", passiva))
         for reativo in list(reativos or []):

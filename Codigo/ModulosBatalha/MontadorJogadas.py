@@ -422,6 +422,9 @@ class MontadorJogadas:
         props = props if isinstance(props, dict) else {}
         alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
         tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
+        if tipo in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
+            prefixo = area_id[:1].upper()
+            return [f"{prefixo}{idx}" for idx in range(1, 10)]
         try:
             idx = int(area_id[1:]) - 1
         except (ValueError, IndexError):
@@ -521,7 +524,8 @@ class MontadorJogadas:
         alvo_cfg = props.get("alvificacao") if isinstance(props.get("alvificacao"), dict) else {}
         if bool(alvo_cfg.get("exige_area_ocupada")) and not self.arena.area_esta_ocupada(area_id):
             return False
-        if not self._area_respeita_provocando(area_id):
+        tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
+        if tipo_alvo not in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"} and not self._area_respeita_provocando(area_id, props):
             return False
         permitidos = alvo_cfg.get("lados_permitidos")
         if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
@@ -552,11 +556,19 @@ class MontadorJogadas:
             return False
         if not pokemon.esta_vivo():
             return False
+        lado_alvo = int(getattr(pokemon, "lado_id", -999))
+        lado_origem = int(getattr(self.pokemon_origem, "lado_id", -998))
+        tipo_alvo = str(alvo_cfg.get("tipo") or "pokemon").strip().lower()
+        if lado_alvo != lado_origem and tipo_alvo not in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
+            provocadores = [
+                p for p in self.controlador.pokemons
+                if p.esta_vivo() and p.esta_ativo() and int(getattr(p, "lado_id", -1)) == lado_alvo and p.possui_efeito("Provocando")
+            ]
+            if provocadores and not any(str(getattr(p, "id_batalha", "")) == str(getattr(pokemon, "id_batalha", "")) for p in provocadores):
+                return False
         permitidos = alvo_cfg.get("lados_permitidos")
         if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
             return True
-        lado_alvo = int(getattr(pokemon, "lado_id", -999))
-        lado_origem = int(getattr(self.pokemon_origem, "lado_id", -998))
         for item in permitidos:
             token = str(item or "").strip().lower()
             if token in {"qualquer", "qualquer_lado", "todos", "ambos"}:
@@ -583,7 +595,7 @@ class MontadorJogadas:
             return True
         return False
 
-    def _area_respeita_provocando(self, area_id):
+    def _area_respeita_provocando(self, area_id, props=None):
         area = self.arena.obter_area_por_id(area_id)
         if area is None:
             return False
@@ -591,16 +603,14 @@ class MontadorJogadas:
         lado_origem = int(getattr(self.pokemon_origem, "lado_id", -998))
         if lado_area == lado_origem:
             return True
-        ocupante = self.arena.pokemon_na_area(area_id)
-        if ocupante is None:
-            return True
         provocadores = [
             p for p in self.controlador.pokemons
             if p.esta_vivo() and p.esta_ativo() and int(getattr(p, "lado_id", -1)) == lado_area and p.possui_efeito("Provocando")
         ]
         if not provocadores:
             return True
-        return any(str(getattr(p, "AreaId", "")) == str(area_id) for p in provocadores)
+        areas_afetadas = set(self.areas_afetadas_por_alvo(area_id, props or {}))
+        return any(str(getattr(p, "AreaId", "")) in areas_afetadas for p in provocadores)
 
     def _centro_visual_pokemon(self, pokemon):
         if pokemon is None:
@@ -694,6 +704,10 @@ class MontadorJogadas:
             at = (acao_base or {}).get("ataque") if isinstance((acao_base or {}).get("ataque"), dict) else {}
             props = self.buscar_propriedades_ataque(at)
             base = float((props or {}).get("custo", at.get("Custo") or at.get("custo") or 0.0))
+        if tipo == "ataque" and pokemon is not None and pokemon.possui_efeito("Encharcado"):
+            base *= 1.20
+        if tipo == "movimento" and str(getattr(self.controlador, "clima_atual", "") or "").lower() in {"gravidade_anomala", "gravidade anomala", "gravidade anômala"}:
+            base *= 2.0
         mult = self.multiplicador_segunda_acao if int(ordem_pokemon) >= 2 else 1.0
         return round(base * mult, 2)
 

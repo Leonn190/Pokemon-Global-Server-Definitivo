@@ -85,12 +85,12 @@ class LeitorLogs:
         if perfil is not None and hasattr(perfil, "registrar_conhecimento_efeito"):
             if tipo in {"pokemon_recebeu_efeito", "efeito_tickou", "efeito_expirou"}:
                 perfil.registrar_conhecimento_efeito(dados.get("efeito_code") or dados.get("efeito_nome"))
-            elif tipo in {"efeito_bloqueado_por_limite", "efeito_bloqueado_por_imunidade"}:
+            elif tipo in {"efeito_bloqueado_por_limite", "efeito_bloqueado_por_imunidade", "efeito_bloqueado_por_bloqueado"}:
                 perfil.registrar_conhecimento_efeito(dados.get("efeito_code") or dados.get("efeito_nome") or dados.get("efeito"))
                 perfil.registrar_conhecimento_efeito(dados.get("bloqueador_code") or dados.get("bloqueador_nome"))
-            elif tipo in {"clima_aplicado", "clima_alterado", "clima_iniciado"}:
+            elif tipo in {"clima_aplicado", "clima_alterado", "clima_iniciado", "clima_mudou"}:
                 perfil.registrar_conhecimento_efeito(dados.get("clima_code") or dados.get("clima") or dados.get("clima_nome") or dados.get("nome"))
-            elif tipo in {"efeito_area_aplicado", "efeito_area_tickou", "efeito_area_expirou"}:
+            elif tipo in {"efeito_area_aplicado", "efeito_area_tickou", "efeito_area_expirou", "terreno_alterado", "terreno_expirou", "terreno_removido", "terreno_aplicou_efeito", "terreno_tickou"}:
                 perfil.registrar_conhecimento_efeito(dados.get("efeito_code") or dados.get("efeito_nome"))
         if perfil is not None and hasattr(ctrl, "sincronizar_perfil_local"):
             ctrl.sincronizar_perfil_local()
@@ -166,10 +166,18 @@ class LeitorLogs:
         elif tipo == "inventario_atualizado_batalha":
             if int(dados.get("lado_id", getattr(ctrl, "lado_jogador", 50)) or 0) == int(getattr(ctrl, "lado_jogador", 50)) and isinstance(dados.get("inventario"), dict):
                 ctrl.aplicar_inventario_batalha(dados.get("inventario"))
-        elif tipo in {"clima_aplicado", "clima_alterado", "clima_iniciado"}:
-            ctrl.clima_atual = dados.get("clima") or dados.get("clima_nome") or dados.get("nome") or dados
+        elif tipo in {"clima_aplicado", "clima_alterado", "clima_iniciado", "clima_mudou"}:
+            ctrl.clima_atual = dados.get("clima_depois") or dados.get("clima") or dados.get("clima_nome") or dados.get("nome") or dados
         elif tipo == "clima_expirou":
             ctrl.clima_atual = None
+        elif tipo == "terreno_alterado":
+            if not hasattr(ctrl, "terrenos_area") or not isinstance(getattr(ctrl, "terrenos_area", None), dict):
+                ctrl.terrenos_area = {}
+            if dados.get("area_id"):
+                ctrl.terrenos_area[str(dados.get("area_id"))] = dados.get("terreno")
+        elif tipo in {"terreno_expirou", "terreno_removido"}:
+            if hasattr(ctrl, "terrenos_area") and isinstance(getattr(ctrl, "terrenos_area", None), dict):
+                ctrl.terrenos_area.pop(str(dados.get("area_id") or ""), None)
         ctrl.arena.atualizar_ocupacao(ctrl.pokemons)
 
     def enviar_evento_para_hud(self, evento):

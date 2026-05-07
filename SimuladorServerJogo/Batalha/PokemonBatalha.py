@@ -16,6 +16,24 @@ _ALIAS_ATRIBUTO_EFEITO = {
     "vida": "Vida",
     "acuracia": "Acuracia",
 }
+EFEITOS_NEGATIVOS = {
+    "queimado", "envenenado", "intoxicado", "congelado", "dormindo", "paralisado",
+    "enraizado", "cauterizado", "descarregado", "encharcado", "atordoado",
+    "quebrado", "enfraquecido", "confuso", "bloqueado", "amaldicoado",
+}
+VARIACOES_TEMPORARIAS_EFEITOS = {
+    "amplificado": {"Amp": 50.0},
+    "fortificado": {"Dur": 50.0},
+    "congelado": {"Dur": 30.0},
+    "encharcado": {"Vel": -0.20},
+    "energizado": {"EneM": 0.50},
+    "descarregado": {"EneM": -0.50},
+    "quebrado": {"Dur": -50.0},
+    "enfraquecido": {"Amp": -50.0},
+    "confuso": {"Acuracia": -50.0},
+    "voando": {"Assertividade": -40.0},
+    "focado": {"Acuracia": 50.0},
+}
 
 
 def _normalizar(valor: object) -> str:
@@ -156,39 +174,27 @@ class PokemonBatalha:
         self.atributos_base["EneM"] = self.atributos_base.get("EneM") or ene * 3.0
 
     def Verificar(self):
+        if self.VidaAtual <= 0:
+            if self.vivo:
+                self.Morrer()
+            return False
+        if not self.vivo:
+            return False
+        self.resetar_variacoes_temporarias()
+        self.aplicar_efeitos_temporarios()
+        if self.partida is not None and hasattr(self.partida, "aplicar_variacoes_temporarias_clima"):
+            self.partida.aplicar_variacoes_temporarias_clima(self)
+        if self.partida is not None and hasattr(self.partida, "aplicar_variacoes_temporarias_terreno"):
+            self.partida.aplicar_variacoes_temporarias_terreno(self)
+        self.recalcular_atributos()
         if self.VidaAtual <= 0 and self.vivo:
             self.Morrer()
-        self.recalcular_atributos()
         return self.vivo
 
     def recalcular_atributos(self):
         finais = {}
         for chave in ATRIBUTOS_OFICIAIS:
             finais[chave] = _f(self.atributos_base.get(chave, 0.0)) + _f(self.variacoes_permanentes.get(chave, 0.0)) + _f(self.variacoes_temporarias.get(chave, 0.0))
-        for efeito in self.efeitos_formais:
-            nome = _normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
-            dados = (efeito or {}).get("dados") if isinstance((efeito or {}).get("dados"), dict) else {}
-            valor = _f((efeito or {}).get("valor", dados.get("valor", 0.0)), 0.0)
-            stacks = max(1, _i((efeito or {}).get("stacks"), 1))
-            if str(dados.get("tipo") or "").strip().lower() == "mod_atributo" or bool(dados.get("mod_atributo")):
-                chave = _normalizar(dados.get("atributo") or "")
-                atributo = _ALIAS_ATRIBUTO_EFEITO.get(chave)
-                if atributo is None:
-                    atributo = next((k for k in ATRIBUTOS_OFICIAIS if _normalizar(k) == chave), None)
-                if atributo in finais:
-                    finais[atributo] += valor
-            if nome == "amplificado":
-                finais["Amp"] += valor if valor else 15.0 * stacks
-            elif nome == "fortificado":
-                atributo = str(dados.get("atributo") or "Dur")
-                if atributo in {"Def", "SpD"}:
-                    atributo = "Dur"
-                if atributo in finais:
-                    finais[atributo] += valor if valor else 10.0 * stacks
-            elif nome == "energizado":
-                finais["EneM"] += valor if valor else max(1.0, finais.get("Ene", 1.0))
-            elif nome == "descarregado":
-                finais["EneM"] = max(1.0, finais["EneM"] - (valor if valor else max(1.0, finais.get("Ene", 1.0))))
         finais["Vida"] = max(1.0, finais.get("Vida", 1.0))
         finais["EneM"] = max(1.0, finais.get("EneM", 1.0))
         finais["Acuracia"] = finais.get("Acuracia") or 100.0
@@ -197,7 +203,87 @@ class PokemonBatalha:
         if hasattr(self, "VidaAtual"):
             self.VidaAtual = _clamp(self.VidaAtual, 0.0, finais["Vida"])
         if hasattr(self, "EnergiaAtual"):
-            self.EnergiaAtual = _clamp(self.EnergiaAtual, 0.0, finais["EneM"])
+            if self.possui_efeito("Energizado"):
+                self.EnergiaAtual = max(0.0, self.EnergiaAtual)
+            else:
+                self.EnergiaAtual = _clamp(self.EnergiaAtual, 0.0, finais["EneM"])
+
+    def modificar_atributo_permanente(self, alvo, atributo, valor, origem=None, dados=None):
+        alvo = alvo or self
+        if atributo not in ATRIBUTOS_OFICIAIS:
+            return {"aplicado": False, "motivo": "atributo_invalido"}
+        valor = _f(valor, 0.0)
+        antes = alvo.obter_atributo(atributo)
+        variacao_antes = _f(alvo.variacoes_permanentes.get(atributo), 0.0)
+        alvo.variacoes_permanentes[atributo] = variacao_antes + valor
+        alvo.recalcular_atributos()
+        depois = alvo.obter_atributo(atributo)
+        if abs(valor) > 0.001:
+            info = dict(dados or {})
+            alvo._registrar_evento(
+                "pokemon_variou_atributo",
+                {
+                    "pokemon_id": alvo.id_batalha,
+                    "pokemon_nome": alvo.nome,
+                    "alvo_id": alvo.id_batalha,
+                    "alvo_nome": alvo.nome,
+                    **alvo._dados_origem(origem or self),
+                    "atributo": atributo,
+                    "valor": round(valor, 4),
+                    "variacao": round(valor, 4),
+                    "valor_antes": round(antes, 4),
+                    "valor_depois": round(depois, 4),
+                    "variacao_antes": round(variacao_antes, 4),
+                    "variacao_total": round(alvo.variacoes_permanentes.get(atributo, 0.0), 4),
+                    **info,
+                },
+            )
+        return {"aplicado": True, "atributo": atributo, "valor": valor, "valor_antes": antes, "valor_depois": depois}
+
+    def aplicar_variacao_temporaria(self, atributo, valor):
+        if atributo not in ATRIBUTOS_OFICIAIS:
+            return False
+        self.variacoes_temporarias[atributo] = _f(self.variacoes_temporarias.get(atributo), 0.0) + _f(valor, 0.0)
+        return True
+
+    def resetar_variacoes_temporarias(self):
+        for chave in ATRIBUTOS_OFICIAIS:
+            self.variacoes_temporarias[chave] = 0.0
+
+    def aplicar_efeitos_temporarios(self):
+        for efeito in list(self.efeitos_formais or []):
+            nome = _normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
+            variacoes = VARIACOES_TEMPORARIAS_EFEITOS.get(nome)
+            if not variacoes:
+                continue
+            for atributo, valor in variacoes.items():
+                if abs(valor) < 1.0 and atributo in {"Vel", "EneM", "Acuracia", "Def", "SpD"}:
+                    base = self.atributos_base.get(atributo, 0.0)
+                    self.aplicar_variacao_temporaria(atributo, base * valor)
+                else:
+                    self.aplicar_variacao_temporaria(atributo, valor)
+
+    def aplicar_efeitos_por_passo(self):
+        if not self.esta_vivo():
+            return
+        vida = self.obter_atributo("Vida", 1.0)
+        faltante = max(0.0, vida - self.VidaAtual)
+        for efeito in list(self.efeitos_formais or []):
+            nome = _normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
+            if nome == "queimado":
+                self.ReceberDano(vida * 0.03, dados={"efeito": "Queimado", "ignorar_defensivos": True})
+            elif nome == "envenenado":
+                self.ReceberDano(vida * 0.02, dados={"efeito": "Envenenado", "ignorar_defensivos": True})
+            elif nome == "intoxicado":
+                self.ReceberDano(vida * 0.03, dados={"efeito": "Intoxicado", "ignorar_defensivos": True})
+            elif nome == "regeneracao":
+                self.ReceberCura(faltante * 0.05, dados={"efeito": "Regeneracao"})
+            elif nome == "abencoado":
+                self.ReceberCura(faltante * 0.03, dados={"efeito": "Abencoado"})
+        if self.partida is not None and hasattr(self.partida, "aplicar_clima_em_pokemon_por_passo"):
+            self.partida.aplicar_clima_em_pokemon_por_passo(self)
+        if self.partida is not None and hasattr(self.partida, "aplicar_terreno_por_passo"):
+            self.partida.aplicar_terreno_por_passo(self)
 
     def obter_atributo(self, chave: str, default: float = 0.0) -> float:
         return _f(self.atributos_finais.get(str(chave), default), default)
@@ -234,6 +320,11 @@ class PokemonBatalha:
         dano_pos_condicional = dano
         tipo = dados.get("tipo") or contexto.get("tipo_ataque") or "normal"
         categoria = _normalizar(dados.get("categoria") or "normal")
+        if self.partida is not None and hasattr(self.partida, "aplicar_modificadores_dano_clima"):
+            antes = dano
+            dano, mult_clima = self.partida.aplicar_modificadores_dano_clima(tipo, dano)
+            if abs(mult_clima - 1.0) > 0.001:
+                calculo.append(f"Clima: {round(antes, 4)} * {round(mult_clima, 4)} = {round(dano, 4)}")
         mult_amp = 1.0 + (self.obter_atributo("Amp") / 100.0)
         if abs(mult_amp - 1.0) > 0.001:
             antes = dano
@@ -249,14 +340,17 @@ class PokemonBatalha:
             dano *= 1.20
             calculo.append(f"STAB: {round(antes, 4)} * 1.2 = {round(dano, 4)}")
         rng = contexto.get("rng") or getattr(getattr(self, "partida", None), "rng", None)
-        chance_crit = _f(dados.get("chance_critico", self.obter_atributo("CrC")), 0.0)
-        chance_crit = min(chance_crit, _f(dados.get("chance_critico_max", 999.0), 999.0))
+        chance_crit_bruta = _f(dados.get("chance_critico", self.obter_atributo("CrC")), 0.0) + _f(dados.get("bonus_critico_acerto", contexto.get("bonus_critico_acerto", 0.0)), 0.0)
+        chance_crit_bruta = min(chance_crit_bruta, _f(dados.get("chance_critico_max", 999.0), 999.0))
+        excedente_crit = max(0.0, chance_crit_bruta - 100.0)
+        chance_crit = _clamp(chance_crit_bruta, 0.0, 100.0)
         critico = False
-        if not alvo.possui_efeito("Cauterizado") and chance_crit > 0:
+        if not self.possui_efeito("Cauterizado") and chance_crit > 0:
             sorte = rng.random() * 100.0 if rng is not None else 100.0
             critico = sorte <= chance_crit
         if critico:
-            mult_crit = 1.0 + (self.obter_atributo("CrD") / 100.0)
+            crd_contexto = self.obter_atributo("CrD") + (excedente_crit / 2.0)
+            mult_crit = 1.0 + (crd_contexto / 100.0)
             antes = dano
             dano *= mult_crit
             calculo.append(f"Critico: {round(antes, 4)} * {round(mult_crit, 4)} = {round(dano, 4)}")
@@ -273,8 +367,9 @@ class PokemonBatalha:
         dur_alvo = alvo.obter_atributo("Dur")
         if dur_alvo > 0:
             antes = dano
-            dano = max(0.0, dano - dur_alvo)
-            calculo.append(f"Durabilidade: max(0, {round(antes, 4)} - {round(dur_alvo, 4)}) = {round(dano, 4)}")
+            mult_dur = max(0.0, 1.0 - (dur_alvo / 100.0))
+            dano *= mult_dur
+            calculo.append(f"Durabilidade: {round(antes, 4)} * {round(mult_dur, 4)} = {round(dano, 4)}")
         calculo.append(f"Dano final = {round(dano, 4)}")
         detalhes = {
             "dano_bruto": round(_f(dados.get("dano_bruto", dados.get("dano", 0.0)), 0.0), 4),
@@ -283,10 +378,13 @@ class PokemonBatalha:
             "multiplicador_tipo": round(mult_tipo, 4),
             "multiplicador_stab": 1.2 if _normalizar(tipo) in {_normalizar(t) for t in self.tipos} else 1.0,
             "multiplicador_critico": round(1.0 + (self.obter_atributo("CrD") / 100.0), 4) if critico else 1.0,
+            "chance_critico": round(chance_crit, 4),
+            "bonus_crd_excedente": round(excedente_crit / 2.0, 4),
             "defesa_base": round(defesa, 4),
             "defesa_aplicada": round(defesa_efetiva, 4),
             "multiplicador_defesa": round(mult_defesa, 4),
             "durabilidade": round(dur_alvo, 4),
+            "multiplicador_durabilidade": round(max(0.0, 1.0 - (dur_alvo / 100.0)), 4),
         }
         recebido = alvo.ReceberDano(dano, origem=self, dados={**dados, "critico": critico, "tipo": tipo, "detalhes": detalhes, "calculo": calculo})
         dano_vida = _f(recebido.get("dano_vida"), 0.0)
@@ -306,6 +404,54 @@ class PokemonBatalha:
         if not self.esta_vivo():
             return {"aplicado": False, "motivo": "morto", "dano_vida": 0.0, "dano_barreira": 0.0}
         dano = max(0.0, _f(valor, 0.0))
+        dano_original_defensivo = dano
+        if not bool(dados.get("ignorar_defensivos")):
+            if self.possui_efeito("Evasivo"):
+                self.RemoverEfeito("Evasivo")
+                self._registrar_evento(
+                    "evasivo_consumido",
+                    {
+                        "pokemon_id": self.id_batalha,
+                        "pokemon_nome": self.nome,
+                        **self._dados_origem(origem),
+                        "dano_original": round(dano, 4),
+                    },
+                )
+                return {"aplicado": True, "evasivo": True, "dano_vida": 0.0, "dano_barreira": 0.0}
+            if self.possui_efeito("Preparado"):
+                dano = dano_original_defensivo * 0.40
+                percentual_devolucao = max(0.0, self.obter_atributo("Vel", 0.0) * 0.40) / 100.0
+                retorno = dano_original_defensivo * percentual_devolucao
+                self._registrar_evento(
+                    "preparado_ativou",
+                    {
+                        "pokemon_id": self.id_batalha,
+                        "pokemon_nome": self.nome,
+                        **self._dados_origem(origem),
+                        "dano_original": round(dano_original_defensivo, 4),
+                        "dano_reduzido": round(dano, 4),
+                        "percentual_devolucao": round(percentual_devolucao * 100.0, 4),
+                        "dano_retorno": round(retorno, 4),
+                    },
+                )
+                if origem is not None and origem is not self and retorno > 0:
+                    origem.ReceberDano(retorno, origem=self, dados={"efeito": "Preparado", "ignorar_defensivos": True})
+            elif self.possui_efeito("Refletindo"):
+                dano = dano_original_defensivo * 0.35
+                retorno = dano_original_defensivo * 0.70
+                self._registrar_evento(
+                    "refletindo_ativou",
+                    {
+                        "pokemon_id": self.id_batalha,
+                        "pokemon_nome": self.nome,
+                        **self._dados_origem(origem),
+                        "dano_original": round(dano_original_defensivo, 4),
+                        "dano_reduzido": round(dano, 4),
+                        "dano_refletido": round(retorno, 4),
+                    },
+                )
+                if origem is not None and origem is not self and retorno > 0:
+                    origem.ReceberDano(retorno, origem=self, dados={"efeito": "Refletindo", "ignorar_defensivos": True})
         if self.estados_transitorios.get("protegido"):
             self.estados_transitorios.pop("protegido", None)
             self._registrar_evento(
@@ -381,6 +527,23 @@ class PokemonBatalha:
         if self.VidaAtual <= 0:
             self.Morrer({"origem_id": getattr(origem, "id_batalha", None), **dados})
         retorno = {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0}
+        if dano_vida > 0 and self.possui_efeito("Dormindo"):
+            self.RemoverEfeito("Dormindo")
+            self._registrar_evento("pokemon_removeu_efeito", {"pokemon_id": self.id_batalha, "pokemon_nome": self.nome, "efeito_nome": "Dormindo", "motivo": "dano_real"})
+        if dano_vida > 0 and self.possui_efeito("Vampirico") and origem is not None and origem is not self and int(getattr(origem, "lado_id", -1)) != int(getattr(self, "lado_id", -1)):
+            cura = dano_vida * 0.25
+            origem.ReceberCura(cura, origem=self, dados={"efeito": "Vampirico", "motivo": "defensor_vampirico"})
+            self._registrar_evento(
+                "vampirico_curou_atacante",
+                {
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    "atacante_id": getattr(origem, "id_batalha", None),
+                    "atacante_nome": getattr(origem, "nome", None),
+                    "dano_vida": round(dano_vida, 4),
+                    "cura": round(cura, 4),
+                },
+            )
         self._disparar_flag(
             "AoReceberDano",
             {"partida": self.partida, "usuario": origem, "alvo": self, "pokemon_evento": self, "resultado": dict(retorno), "dados_dano": dict(dados), "reativos_acao": dados.get("reativos_acao")},
@@ -425,6 +588,21 @@ class PokemonBatalha:
             antes_calc = cura
             cura *= 0.65
             calculo.append(f"Queimado: {round(antes_calc, 4)} * 0.65 = {round(cura, 4)}")
+        if self.possui_efeito("Abencoado"):
+            antes_calc = cura
+            cura *= 1.35
+            calculo.append(f"Abencoado: {round(antes_calc, 4)} * 1.35 = {round(cura, 4)}")
+        terreno = None
+        if self.partida is not None and hasattr(self.partida, "obter_terreno_area"):
+            terreno = _normalizar(self.partida.obter_terreno_area(getattr(self, "area_id", None)))
+        if terreno == "incendiada":
+            antes_calc = cura
+            cura *= 0.50
+            calculo.append(f"Terreno Incendiada: {round(antes_calc, 4)} * 0.5 = {round(cura, 4)}")
+        elif terreno == "abencoada":
+            antes_calc = cura
+            cura *= 1.50
+            calculo.append(f"Terreno Abencoada: {round(antes_calc, 4)} * 1.5 = {round(cura, 4)}")
         antes = self.VidaAtual
         self.VidaAtual = min(self.obter_atributo("Vida", 1.0), self.VidaAtual + cura)
         real = max(0.0, self.VidaAtual - antes)
@@ -502,11 +680,12 @@ class PokemonBatalha:
         if not nome:
             return {"aplicado": False, "motivo": "efeito_sem_nome"}
         duracao_base = max(1, _i(base.get("duracao", base.get("passos", base.get("passos_restantes", 3))), 3))
-        negativo = bool(base.get("negativo", _normalizar(nome) in {"queimado", "envenenado", "intoxicado", "congelado", "dormindo", "paralisado", "enraizado", "cauterizado", "descarregado"}))
+        nome_norm = _normalizar(nome)
+        negativo = bool(base.get("negativo", nome_norm in EFEITOS_NEGATIVOS))
         base_dados = base.get("dados") if isinstance(base.get("dados"), dict) else {}
         dados_recebidos = dados if isinstance(dados, dict) else {}
         permanente = bool(base.get("permanente") or base_dados.get("permanente") or dados_recebidos.get("permanente"))
-        if negativo and origem is not None and origem is not self and self.possui_efeito("Imune"):
+        if negativo and self.possui_efeito("Imune"):
             self._registrar_evento(
                 "efeito_bloqueado_por_imunidade",
                 {
@@ -520,6 +699,20 @@ class PokemonBatalha:
                 },
             )
             return {"aplicado": False, "motivo": "imune"}
+        if (not negativo) and self.possui_efeito("Bloqueado"):
+            self._registrar_evento(
+                "efeito_bloqueado_por_bloqueado",
+                {
+                    "pokemon_id": self.id_batalha,
+                    "pokemon_nome": self.nome,
+                    "efeito_nome": nome,
+                    "efeito_code": base.get("code", nome),
+                    "bloqueador_nome": "Bloqueado",
+                    "bloqueador_code": "Bloqueado",
+                    **self._dados_origem(origem),
+                },
+            )
+            return {"aplicado": False, "motivo": "bloqueado"}
         mag_origem = origem.obter_atributo("Mag") if origem is not None and hasattr(origem, "obter_atributo") else 0.0
         mag_alvo = self.obter_atributo("Mag")
         if negativo and origem is self:
@@ -528,13 +721,20 @@ class PokemonBatalha:
             duracao = max(math.ceil(duracao_base / 2.0), int(round(duracao_base + mag_origem / 5.0 - mag_alvo / 5.0)))
         else:
             duracao = int(round(duracao_base + mag_origem / 5.0))
+        duracao_antes_modificadores = max(1, int(duracao))
+        if negativo and self.possui_efeito("Amaldicoado"):
+            duracao = math.ceil(duracao * 1.5)
+        if (not negativo) and self.possui_efeito("Encantado"):
+            duracao = math.ceil(duracao * 1.5)
+        if negativo and self.partida is not None and hasattr(self.partida, "obter_terreno_area") and _normalizar(self.partida.obter_terreno_area(getattr(self, "area_id", None))) == "amaldicoada":
+            duracao = math.ceil(duracao * 2.0)
         formal = {
             "nome": nome,
             "code": base.get("code", nome),
             "passos_restantes": -1 if permanente else max(1, int(duracao)),
             "passos_totais": -1 if permanente else max(1, int(duracao)),
             "dados": dict(dados or base.get("dados") or {}),
-            "valor": base.get("valor", (dados or {}).get("valor") if isinstance(dados, dict) else 0.0),
+            "valor": 0.0,
             "stacks": 1,
             "tipo": "negativo" if negativo else "positivo",
             "permanente": permanente,
@@ -561,6 +761,7 @@ class PokemonBatalha:
             existente["dados"] = {**dict(existente.get("dados") or {}), **dict(formal.get("dados") or {})}
             existente["tipo"] = formal["tipo"]
             formal = dict(existente)
+            formal["duracao_antes_soma"] = passos_anteriores
         else:
             efeitos_temporarios = [e for e in self.efeitos_formais if not bool((e or {}).get("permanente"))]
             if (not permanente) and len(efeitos_temporarios) >= 4:
@@ -590,6 +791,9 @@ class PokemonBatalha:
                 "tipo": "negativo" if negativo else "positivo",
                 "passos_restantes": formal.get("passos_restantes"),
                 "passos_totais": formal.get("passos_totais"),
+                "duracao_base": duracao_base,
+                "duracao_antes_modificadores": duracao_antes_modificadores,
+                "duracao_antes_soma": formal.get("duracao_antes_soma"),
                 "stacks": formal.get("stacks", 1),
                 **self._dados_origem(origem),
                 "efeito": dict(formal),
@@ -606,25 +810,34 @@ class PokemonBatalha:
         self.recalcular_atributos()
         return antes - len(self.efeitos_formais)
 
+    def _decremento_efeito_por_passo(self, nome):
+        clima = _normalizar(getattr(self.partida, "clima_atual", None)) if self.partida is not None else ""
+        terreno = _normalizar(self.partida.obter_terreno_area(getattr(self, "area_id", None))) if self.partida is not None and hasattr(self.partida, "obter_terreno_area") else ""
+        if clima == "chuva" and nome == "encharcado":
+            return 0
+        if clima == "chuva" and nome == "queimado":
+            return 3
+        if clima == "solforte" and nome == "queimado":
+            return 0
+        if clima == "solforte" and nome == "encharcado":
+            return 3
+        if clima == "chuvaacida" and nome in {"envenenado", "intoxicado"}:
+            return 0
+        if terreno == "contaminada" and nome == "envenenado":
+            return 0
+        return 1
+
     def decrementar_efeitos(self, passo_atual):
         restantes = []
         for efeito in self.efeitos_formais:
             nome = _normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
-            vida = self.obter_atributo("Vida", 1.0)
             duracao_antes = _i((efeito or {}).get("passos_restantes"), 1)
-            if nome == "queimado":
-                self.ReceberDano(vida * 0.01, dados={"efeito": "Queimado"})
-            elif nome == "envenenado":
-                self.ReceberDano(vida * 0.02, dados={"efeito": "Envenenado"})
-            elif nome == "intoxicado":
-                self.ReceberDano(vida * 0.03, dados={"efeito": "Intoxicado"})
-            elif nome in {"regeneracao", "abencoado"}:
-                self.ReceberCura(vida * 0.02, dados={"efeito": nome})
             efeito = dict(efeito)
             if bool(efeito.get("permanente")):
                 restantes.append(efeito)
                 continue
-            efeito["passos_restantes"] = duracao_antes - 1
+            decremento = self._decremento_efeito_por_passo(nome)
+            efeito["passos_restantes"] = duracao_antes - decremento
             self._registrar_evento(
                 "efeito_tickou",
                 {
@@ -634,6 +847,7 @@ class PokemonBatalha:
                     "efeito_code": efeito.get("code"),
                     "passos_antes": duracao_antes,
                     "passos_depois": efeito["passos_restantes"],
+                    "decremento": decremento,
                     "passos_totais": efeito.get("passos_totais", duracao_antes),
                     "passo": passo_atual,
                 },
@@ -666,7 +880,10 @@ class PokemonBatalha:
         dados = dict(dados or {})
         ganho = max(0.0, _f(valor, 0.0))
         antes = self.EnergiaAtual
-        self.EnergiaAtual = min(self.obter_atributo("EneM", 1.0), self.EnergiaAtual + ganho)
+        if self.possui_efeito("Energizado"):
+            self.EnergiaAtual = max(0.0, self.EnergiaAtual + ganho)
+        else:
+            self.EnergiaAtual = min(self.obter_atributo("EneM", 1.0), self.EnergiaAtual + ganho)
         real = max(0.0, self.EnergiaAtual - antes)
         if real > 0:
             self._registrar_evento(
@@ -732,6 +949,9 @@ class PokemonBatalha:
             return False
         bloqueios = {"dormindo", "congelado"}
         return not any(self.possui_efeito(nome) for nome in bloqueios)
+
+    def pode_ser_movido_por_ataque(self):
+        return not self.possui_efeito("Imparavel")
 
     def possui_efeito(self, nome_ou_code):
         alvo = _normalizar(nome_ou_code)

@@ -50,12 +50,12 @@ def carregar_propriedades_ataques(base_dir: Path | None = None):
 def buscar_por_nome_ou_code(mapa, ataque):
     if not isinstance(ataque, dict):
         return None
+    code = _code_norm(ataque.get("Code") or ataque.get("ID") or ataque.get("code"))
+    if code and code in mapa:
+        return mapa.get(code)
     nome = _normalizar(ataque.get("nome") or ataque.get("Nome") or ataque.get("Ataque"))
     if nome:
         for item in mapa.values():
             if _normalizar((item or {}).get("nome")) == nome:
                 return item
-    code = _code_norm(ataque.get("Code") or ataque.get("ID") or ataque.get("code"))
-    if code and code in mapa:
-        return mapa.get(code)
     return None

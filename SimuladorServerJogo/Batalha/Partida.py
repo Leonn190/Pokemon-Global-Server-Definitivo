@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import random
+import unicodedata
 import uuid
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
@@ -18,6 +20,11 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import materializar_pok
 from SimuladorServerJogo.Mundo.ServicoInventario import ServicoInventario
 
 
+TERRENO_DANO_INCENDIADA_PCT_VIDA = 0.02
+TERRENO_DANO_CONTAMINADA_PCT_VIDA = 0.02
+TERRENO_CURA_ABENCOADA_PCT_VIDA = 0.03
+
+
 def _jsonavel(dados):
     return json.loads(json.dumps(dados, ensure_ascii=False))
 
@@ -27,6 +34,12 @@ def _i(valor, default=0):
         return int(float(valor))
     except (TypeError, ValueError):
         return int(default)
+
+
+def _normalizar(valor):
+    bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+    return "".join(ch for ch in sem_acento if ch.isalnum())
 
 
 class Partida:
@@ -59,6 +72,8 @@ class Partida:
         self.ocupacao_areas = {area_id: None for area_id in self.areas}
         self.jogadas_recebidas = {}
         self.clima_atual = dados.get("clima_atual")
+        self.clima_turnos_ativo = int(dados.get("clima_turnos_ativo", 0) or 0)
+        self._ultimo_passo_raios = 0
         self.efeitos_area = copy.deepcopy(dados.get("efeitos_area") or {})
         self.construtos = {}
         self.finalizada = False
@@ -289,6 +304,7 @@ class Partida:
             "ocupacao_areas": dict(self.ocupacao_areas),
             "pokemons": [pokemon.serializar() for pokemon in self.pokemons_por_id.values()],
             "clima_atual": self.clima_atual,
+            "clima_turnos_ativo": self.clima_turnos_ativo,
             "efeitos_area": copy.deepcopy(self.efeitos_area),
             "finalizada": bool(self.finalizada),
             "vencedor": self.vencedor,
@@ -302,6 +318,183 @@ class Partida:
         if self.regras_mundo:
             estado["regras_mundo"] = copy.deepcopy(self.regras_mundo)
         return _jsonavel(estado)
+
+    def mudar_clima(self, nome, origem=None, dados=None):
+        antes = self.clima_atual
+        self.clima_atual = nome
+        self.clima_turnos_ativo = 0
+        self.registrar_evento_log(
+            "clima_alterado",
+            {
+                "clima_antes": antes,
+                "clima_depois": nome,
+                "clima": nome,
+                "origem_id": getattr(origem, "id_batalha", None),
+                "origem_nome": getattr(origem, "nome", None),
+                **(dict(dados or {})),
+            },
+        )
+        self.disparar_flag("AoMudarClima", {"partida": self, "usuario": origem, "pokemon_evento": origem, "clima_antes": antes, "clima_depois": nome})
+        return {"aplicado": True, "clima_antes": antes, "clima_depois": nome}
+
+    def limpar_clima(self, motivo=None):
+        antes = self.clima_atual
+        if not antes:
+            return False
+        self.clima_atual = None
+        self.clima_turnos_ativo = 0
+        self.registrar_evento_log("clima_expirou", {"clima": antes, "motivo": motivo or "expirou"})
+        return True
+
+    def aplicar_variacoes_temporarias_clima(self, pokemon):
+        clima = _normalizar(self.clima_atual)
+        if pokemon is None or not pokemon.esta_vivo():
+            return
+        tipos = {_normalizar(t) for t in getattr(pokemon, "tipos", [])}
+        if clima == "nevasca" and "gelo" in tipos:
+            pokemon.aplicar_variacao_temporaria("Def", pokemon.atributos_base.get("Def", 0.0) * 0.30)
+            pokemon.aplicar_variacao_temporaria("SpD", pokemon.atributos_base.get("SpD", 0.0) * 0.30)
+        elif clima in {"tempestadedeareia", "tempestadeareia"}:
+            if "terra" in tipos:
+                pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
+        elif clima == "nevoa":
+            pokemon.aplicar_variacao_temporaria("Assertividade", -30.0)
+            if "fantasma" in tipos:
+                pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
+        elif clima == "gravidadeanomala":
+            if "cosmico" in tipos:
+                pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
+            bonus = min(32, math.floor(float(getattr(pokemon, "dados_originais", {}).get("Peso", getattr(pokemon, "dados_originais", {}).get("peso", 0)) or 0) / 50.0) * 4)
+            if bonus > 0:
+                pokemon.aplicar_variacao_temporaria("Def", pokemon.atributos_base.get("Def", 0.0) * bonus / 100.0)
+                pokemon.aplicar_variacao_temporaria("SpD", pokemon.atributos_base.get("SpD", 0.0) * bonus / 100.0)
+        elif clima in {"tempestadederaios", "tempestaderaios"} and "eletrico" in tipos:
+            pokemon.aplicar_variacao_temporaria("EneM", max(1.0, pokemon.atributos_base.get("EneM", 1.0)) * 0.50)
+        elif clima == "noitedensa":
+            if "sombrio" in tipos:
+                pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
+            else:
+                pokemon.aplicar_variacao_temporaria("Acuracia", -pokemon.atributos_base.get("Acuracia", 100.0) * 0.25)
+
+    def aplicar_clima_em_pokemon_por_passo(self, pokemon):
+        clima = _normalizar(self.clima_atual)
+        if pokemon is None or not pokemon.esta_vivo():
+            return
+        tipos = {_normalizar(t) for t in getattr(pokemon, "tipos", [])}
+        vida = pokemon.obter_atributo("Vida", 1.0)
+        if clima == "chuva" and "gelo" in tipos:
+            pokemon.ReceberCura(vida * 0.01, dados={"efeito": "Chuva"})
+        elif clima == "solforte" and "gelo" in tipos:
+            pokemon.ReceberDano(vida * 0.01, dados={"efeito": "Sol Forte", "ignorar_defensivos": True})
+        elif clima in {"tempestadedeareia", "tempestadeareia"} and not (tipos & {"terra", "metal", "pedra"}):
+            pokemon.ReceberDano(vida * 0.02, dados={"efeito": "Tempestade de Areia", "ignorar_defensivos": True})
+        elif clima == "gravidadeanomala" and pokemon.possui_efeito("Voando"):
+            pokemon.ReceberDano(vida * 0.02, dados={"efeito": "Gravidade Anomala", "ignorar_defensivos": True})
+        elif clima == "chuvaacida":
+            if "venenoso" in tipos or "veneno" in tipos:
+                pokemon.ReceberCura(vida * 0.01, dados={"efeito": "Chuva Acida"})
+            else:
+                pokemon.ReceberDano(vida * 0.01, dados={"efeito": "Chuva Acida", "ignorar_defensivos": True})
+
+    def aplicar_modificadores_dano_clima(self, tipo_ataque, dano):
+        clima = _normalizar(self.clima_atual)
+        tipo = _normalizar(tipo_ataque)
+        mult = 1.0
+        if clima == "chuva":
+            mult = 1.25 if tipo == "agua" else 0.75 if tipo == "fogo" else 1.0
+        elif clima == "solforte":
+            mult = 0.75 if tipo == "agua" else 1.25 if tipo == "fogo" else 1.0
+        return max(0.0, float(dano or 0.0)) * mult, mult
+
+    def processar_fim_de_turno_clima(self):
+        if not self.clima_atual:
+            return False
+        self.clima_turnos_ativo += 1
+        chance = min(100.0, 10.0 + max(0, self.clima_turnos_ativo - 1) * 5.0)
+        if self.rng.random() * 100.0 <= chance:
+            return self.limpar_clima(motivo="rng_fim_turno")
+        return False
+
+    def processar_clima_por_passo(self):
+        if _normalizar(self.clima_atual) not in {"tempestadederaios", "tempestaderaios"}:
+            return
+        if self.passo_atual <= 0 or self.passo_atual % 2 != 0 or self._ultimo_passo_raios == self.passo_atual:
+            return
+        self._ultimo_passo_raios = self.passo_atual
+        por_lado = {}
+        for area_id, area in self.areas.items():
+            por_lado.setdefault(int(area.get("lado_id", 0)), []).append(area_id)
+        for lado_id, areas in por_lado.items():
+            area_id = self.rng.choice(list(areas))
+            self.registrar_evento_log("clima_raio_area", {"clima": self.clima_atual, "lado_id": lado_id, "area_id": area_id})
+            alvo = self.pokemon_na_area(area_id)
+            if alvo is not None and alvo.esta_vivo():
+                dano = alvo.obter_atributo("Vida", 1.0) * 0.35
+                alvo.ReceberDano(dano, dados={"efeito": "Tempestade de Raios", "ignorar_defensivos": True})
+
+    def mudar_terreno(self, area_id, terreno, origem=None, dados=None):
+        area_id = str(area_id or "").upper()
+        if not self.area_existe(area_id):
+            return False
+        antes = self.efeitos_area.get(area_id)
+        self.efeitos_area[area_id] = {"terreno": terreno, "nome": terreno, **(dict(dados or {}))}
+        self.registrar_evento_log("terreno_alterado", {"area_id": area_id, "terreno_antes": antes, "terreno": terreno, "origem_id": getattr(origem, "id_batalha", None)})
+        ocupante = self.pokemon_na_area(area_id)
+        if ocupante is not None:
+            self.aplicar_terreno_ao_entrar(ocupante, area_id)
+        return True
+
+    def limpar_terreno(self, area_id, motivo=None):
+        area_id = str(area_id or "").upper()
+        terreno = self.efeitos_area.pop(area_id, None)
+        if terreno is None:
+            return False
+        self.registrar_evento_log("terreno_removido", {"area_id": area_id, "terreno": terreno, "motivo": motivo})
+        return True
+
+    def obter_terreno_area(self, area_id):
+        dado = self.efeitos_area.get(str(area_id or "").upper())
+        if isinstance(dado, dict):
+            return dado.get("terreno") or dado.get("nome") or dado.get("efeito")
+        return dado
+
+    def aplicar_terreno_ao_entrar(self, pokemon, area_id):
+        terreno = _normalizar(self.obter_terreno_area(area_id))
+        if pokemon is None or not pokemon.esta_vivo():
+            return
+        if terreno == "contaminada":
+            pokemon.ReceberEfeito({"nome": "Envenenado", "duracao": 3, "negativo": True}, origem=pokemon, dados={"terreno": "Contaminada"})
+            self.registrar_evento_log("terreno_aplicou_efeito", {"area_id": area_id, "pokemon_id": pokemon.id_batalha, "terreno": "Contaminada", "efeito": "Envenenado"})
+
+    def aplicar_terreno_por_passo(self, pokemon):
+        terreno = _normalizar(self.obter_terreno_area(getattr(pokemon, "area_id", None)))
+        if pokemon is None or not pokemon.esta_vivo():
+            return
+        vida = pokemon.obter_atributo("Vida", 1.0)
+        if terreno == "incendiada":
+            pokemon.ReceberDano(vida * TERRENO_DANO_INCENDIADA_PCT_VIDA, dados={"efeito": "Terreno Incendiada", "ignorar_defensivos": True})
+            self.registrar_evento_log("terreno_tickou", {"area_id": pokemon.area_id, "pokemon_id": pokemon.id_batalha, "terreno": "Incendiada"})
+        elif terreno == "contaminada":
+            pokemon.ReceberDano(vida * TERRENO_DANO_CONTAMINADA_PCT_VIDA, dados={"efeito": "Terreno Contaminada", "ignorar_defensivos": True})
+            self.registrar_evento_log("terreno_tickou", {"area_id": pokemon.area_id, "pokemon_id": pokemon.id_batalha, "terreno": "Contaminada"})
+        elif terreno == "abencoada":
+            pokemon.ReceberCura(vida * TERRENO_CURA_ABENCOADA_PCT_VIDA, dados={"efeito": "Terreno Abencoada"})
+            self.registrar_evento_log("terreno_tickou", {"area_id": pokemon.area_id, "pokemon_id": pokemon.id_batalha, "terreno": "Abencoada"})
+
+    def aplicar_variacoes_temporarias_terreno(self, pokemon):
+        terreno = _normalizar(self.obter_terreno_area(getattr(pokemon, "area_id", None)))
+        if pokemon is None or not pokemon.esta_vivo():
+            return
+        if terreno == "destruida":
+            pokemon.aplicar_variacao_temporaria("Amp", -15.0)
+            pokemon.aplicar_variacao_temporaria("Dur", -15.0)
+        elif terreno == "energizada":
+            pokemon.aplicar_variacao_temporaria("EneM", pokemon.atributos_base.get("EneM", 1.0))
+        elif terreno == "sagrada":
+            pokemon.aplicar_variacao_temporaria("Amp", 30.0)
+        elif terreno == "elevada":
+            pokemon.aplicar_variacao_temporaria("Acuracia", 35.0)
+            pokemon.aplicar_variacao_temporaria("Assertividade", -15.0)
 
     def receber_jogada(self, lado_id, jogada):
         if self.finalizada:
@@ -464,6 +657,7 @@ class Partida:
                 ganho *= 0.75
             pokemon.GanharEnergia(ganho, dados={"fim_rodada": True})
             pokemon.limpar_transitorios_fim_rodada()
+        self.processar_fim_de_turno_clima()
         self.substituir_derrotados_por_reserva()
         self.verificar_fim_batalha()
         self.jogadas_recebidas = {}
@@ -652,6 +846,7 @@ class Partida:
         )
         dados = dict(dados or {})
         self.disparar_flag("AoMover", {"partida": self, "pokemon_evento": pokemon, "pokemon": pokemon, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
+        self.aplicar_terreno_ao_entrar(pokemon, area_id)
         return True
 
     def trocar_posicao(self, pokemon_a, pokemon_b, dados=None):
@@ -684,6 +879,8 @@ class Partida:
         )
         dados = dict(dados or {})
         self.disparar_flag("AoTrocar", {"partida": self, "pokemon_evento": pokemon_a, "pokemon": pokemon_a, "pokemon_outro": pokemon_b, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
+        self.aplicar_terreno_ao_entrar(pokemon_a, pokemon_a.area_id)
+        self.aplicar_terreno_ao_entrar(pokemon_b, pokemon_b.area_id)
         return True
 
     def trocar_reserva(self, pokemon_ativo, pokemon_reserva, dados=None):
@@ -720,6 +917,7 @@ class Partida:
         self.registrar_evento_log("pokemon_entrou", {"pokemon_id": pokemon_reserva.id_batalha, "pokemon_nome": pokemon_reserva.nome, "area_id": area, "slot_reserva_id": reserva_slot_id})
         dados = dict(dados or {})
         self.disparar_flag("AoTrocar", {"partida": self, "pokemon_evento": pokemon_reserva, "pokemon": pokemon_reserva, "pokemon_outro": pokemon_ativo, "reativos_acao": dados.get("reativos_acao")}, reativos=dados.get("reativos_acao"))
+        self.aplicar_terreno_ao_entrar(pokemon_reserva, area)
         return True
 
     def substituir_derrotados_por_reserva(self):
@@ -745,6 +943,7 @@ class Partida:
                 "pokemon_entrou",
                 {"pokemon_id": reserva.id_batalha, "pokemon_nome": reserva.nome, "area_id": area, "motivo": "substituicao_derrotado"},
             )
+            self.aplicar_terreno_ao_entrar(reserva, area)
 
     def finalizar(self, motivo=None, lado_id=None):
         motivo = str(motivo or "fim_normal")

@@ -223,7 +223,9 @@ class ContextoIA:
         alvo_cfg = props.get("alvificacao") if isinstance(props, Mapping) and isinstance(props.get("alvificacao"), Mapping) else {}
         if bool(alvo_cfg.get("exige_area_ocupada")) and self.pokemon_na_area(area_id) is None:
             return False
-        if not self._area_respeita_provocando(pokemon, area_id):
+        tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
+        self._props_provocando_atual = props
+        if tipo_alvo not in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"} and not self._area_respeita_provocando(pokemon, area_id):
             return False
         permitidos = alvo_cfg.get("lados_permitidos")
         if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
@@ -246,11 +248,15 @@ class ContextoIA:
     def pokemon_permitido_para_ataque(self, pokemon, alvo, props: Mapping[str, Any] | None) -> bool:
         if alvo is None or not self.vivo(alvo):
             return False
-        if self.lado(alvo) != self.lado(pokemon) and self.possui_efeito(alvo, "Furtivo") and not bool(getattr(self.partida, "modo_teste", False)):
-            return False
         alvo_cfg = props.get("alvificacao") if isinstance(props, Mapping) and isinstance(props.get("alvificacao"), Mapping) else {}
         if self.reserva(alvo) and not bool(alvo_cfg.get("inclui_reserva", False)):
             return False
+        if self.lado(alvo) != self.lado(pokemon):
+            tipo_alvo = str(alvo_cfg.get("tipo") or "pokemon").strip().lower()
+            if tipo_alvo not in {"arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"}:
+                provocadores = [p for p in self.inimigos_ativos if self.possui_efeito(p, "Provocando")]
+                if provocadores and not any(self.pid(p) == self.pid(alvo) for p in provocadores):
+                    return False
         permitidos = alvo_cfg.get("lados_permitidos")
         if not isinstance(permitidos, (list, tuple, set)) or not permitidos:
             return True
@@ -276,7 +282,9 @@ class ContextoIA:
         provocadores = [p for p in self.inimigos_ativos if self.possui_efeito(p, "Provocando")]
         if not provocadores:
             return True
-        return any(str(self.area_id(p)) == str(area_id) for p in provocadores)
+        props = getattr(self, "_props_provocando_atual", None)
+        areas = set(self.areas_afetadas(area_id, props if isinstance(props, Mapping) else {}))
+        return any(str(self.area_id(p)) in areas for p in provocadores)
 
     @staticmethod
     def coords_area(area_id: object) -> tuple[str, int, int] | None:

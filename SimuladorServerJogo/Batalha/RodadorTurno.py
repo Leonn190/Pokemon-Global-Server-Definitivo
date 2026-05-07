@@ -381,12 +381,6 @@ class RodadorTurno:
 
     def _dados_animacao(self, props):
         animacao = copy.deepcopy(props.get("animacao") if isinstance(props.get("animacao"), dict) else {})
-        visual = props.get("visual") if isinstance(props.get("visual"), dict) else {}
-        if visual:
-            animacao.setdefault("visual", copy.deepcopy(visual))
-        for chave in ("modelo", "projetil", "efeito_alvo", "efeito_executor"):
-            if chave in props and chave not in animacao:
-                animacao[chave] = copy.deepcopy(props.get(chave))
         animacao.setdefault("modelo", "EfeitoAlvo")
         animacao.setdefault("efeito_executor", None)
         animacao.setdefault("efeito_alvo", None)
@@ -412,8 +406,6 @@ class RodadorTurno:
             "alvo_principal_id": alvo_principal_id,
             "alvos_secundarios_ids": list(alvos_secundarios_ids or []),
             "animacao": copy.deepcopy(animacao or self._dados_animacao(props)),
-            "visual": copy.deepcopy(props.get("visual") if isinstance(props.get("visual"), dict) else {}),
-            "modelo": (animacao or {}).get("modelo") if isinstance(animacao, dict) else None,
         }
         if alvo is not None:
             dados.update({"alvo_id": alvo.id_batalha, "alvo_nome": alvo.nome, "area_alvo_real": alvo.area_id})

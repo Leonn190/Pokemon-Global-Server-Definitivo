@@ -6,6 +6,7 @@ import unicodedata
 from pathlib import Path
 
 from Codigo.Visual.PokemonBatalhaAnimator import PokemonAnimator
+from Codigo.Visual.AuxiliaresVisuais import EFEITOS_ATAQUE_FPS
 
 
 MODELOS_VISUAIS = {
@@ -210,7 +211,8 @@ class ControladorAnimacoes:
             return []
         if modelo == "EfeitoAlvo":
             impactos = self._animar_efeitos_alvos(animacao, alvos, base_delay=0.0)
-            self._registrar_ataque_ativo(dados, animacao, modelo, impactos, self._tempo + max([0.15, *impactos.values()]) + 0.1, principal)
+            fim = max((impacto + self._duracao_efeito(self._efeito_alvo(animacao, idx), animacao) for idx, (alvo_id, impacto) in enumerate(impactos.items(), start=1)), default=0.15)
+            self._registrar_ataque_ativo(dados, animacao, modelo, impactos, self._tempo + fim + 0.1, principal)
             return []
         if modelo in {"Avanco", "Salto"}:
             impactos, fim = self._animar_deslocamento(usuario, alvos, animacao, modelo)
@@ -240,15 +242,16 @@ class ControladorAnimacoes:
     def _animar_efeitos_alvos(self, animacao, alvos, base_delay=0.0, impactos_rel=None):
         impactos = {}
         delay = float(base_delay or 0.0)
+        simultaneo = bool((animacao or {}).get("simultaneo", False)) and not impactos_rel
         for idx, alvo in enumerate(list(alvos or []), start=1):
             efeito = self._efeito_alvo(animacao, idx)
             alvo_id = str(getattr(alvo, "id_batalha", ""))
-            impacto = float((impactos_rel or {}).get(alvo_id, delay))
+            impacto = float((impactos_rel or {}).get(alvo_id, 0.0 if simultaneo else delay))
             impactos[alvo_id] = impacto
             if efeito:
                 self.agendar_callback(impacto, lambda p=alvo, e=efeito: self.animator.animar_efeito(p, e, posicao="alvo"))
-            if not impactos_rel:
-                delay = self._proximo_delay(delay, 0.15, animacao)
+            if not impactos_rel and not simultaneo:
+                delay = self._proximo_delay(delay, self._duracao_efeito(efeito, animacao), animacao)
         return impactos
 
     def _animar_deslocamento(self, usuario, alvos, animacao, modelo):
@@ -357,20 +360,15 @@ class ControladorAnimacoes:
         raio = float(animacao.get("raio_explosao") or 1.5)
         cor_onda = _cor(animacao.get("cor_onda")) or _cor(animacao.get("cor"))
         largura_onda = float(animacao.get("largura_onda") or 1.0)
-        self.agendar_callback(impacto_principal, lambda: self.animator.animar_explosao_onda(principal, alvos=secundarios, tipo_ataque=tipo_ataque, raio=raio, duracao=dur_onda, largura=largura_onda, cor=cor_onda))
+        self.agendar_callback(impacto_principal, lambda: self.animator.animar_explosao_onda(principal, alvos=[], tipo_ataque=tipo_ataque, raio=raio, duracao=dur_onda, largura=largura_onda, cor=cor_onda))
         impactos[pid_principal] = impacto_principal
-        efeito_sec = animacao.get("efeito_impacto_secundario")
-        for alvo in secundarios:
-            atraso = impacto_principal + self._tempo_onda(principal, alvo, raio, dur_onda)
-            impactos[str(getattr(alvo, "id_batalha", ""))] = atraso
-            if efeito_sec:
-                self.agendar_callback(atraso, lambda p=alvo, e=efeito_sec: self.animator.animar_efeito(p, e, posicao="alvo"))
         fim = max([fim_contato, impacto_principal + dur_onda, *impactos.values()])
         contexto = self._registrar_ataque_ativo(dados, animacao, "Explosao", impactos, self._tempo + fim, principal)
         if contexto:
             contexto["raio_explosao"] = raio
             contexto["duracao_onda"] = dur_onda
             contexto["impacto_principal"] = self._tempo + impacto_principal
+            contexto["secundarios_ids"] = {str(pid) for pid in list(dados.get("alvos_secundarios_ids") or []) if str(pid or "")}
         return impactos, fim
 
     def _registrar_ataque_ativo(self, dados, animacao, modelo, impactos_rel, fim_abs, principal):
@@ -400,7 +398,7 @@ class ControladorAnimacoes:
         if not alvo_id:
             return 0.0
         impacto_abs = (contexto.get("impactos") or {}).get(alvo_id)
-        if impacto_abs is None and contexto.get("modelo") == "Explosao":
+        if impacto_abs is None and contexto.get("modelo") == "Explosao" and self._evento_impacto_secundario_explosao(contexto, dados, alvo_id):
             impacto_abs = self._impacto_explosao_para_alvo(contexto, alvo_id)
             if impacto_abs is not None:
                 contexto.setdefault("impactos", {})[alvo_id] = impacto_abs
@@ -546,6 +544,13 @@ class ControladorAnimacoes:
         base = float(contexto.get("impacto_principal") or self._tempo)
         return base + self._tempo_onda(principal, alvo, contexto.get("raio_explosao") or 1.5, contexto.get("duracao_onda") or 0.45)
 
+    def _evento_impacto_secundario_explosao(self, contexto, dados, alvo_id):
+        if not alvo_id or str(alvo_id) == str(contexto.get("principal_id") or ""):
+            return False
+        if bool(dados.get("impacto_secundario")):
+            return True
+        return str(alvo_id) in set(contexto.get("secundarios_ids") or set())
+
     def _contexto_ativo_para_evento(self, dados):
         ataque_id = str(dados.get("ataque_id") or "")
         ataque_nome = str(dados.get("ataque_nome") or "")
@@ -630,6 +635,19 @@ class ControladorAnimacoes:
             return any(c.is_file() and c.suffix.lower() in {".png", ".webp", ".jpg", ".jpeg"} and _normalizar_nome(c.stem) == chave for c in base.rglob("*"))
         except Exception:
             return False
+
+    def _duracao_efeito(self, efeito, animacao=None):
+        if not efeito:
+            return 0.0
+        duracao_cfg = _num((animacao or {}).get("duracao"))
+        if duracao_cfg is not None:
+            return max(0.0, duracao_cfg)
+        try:
+            frames = self.animator.arena_animator._carregar_frames_efeito(efeito)
+        except Exception:
+            frames = []
+        fps = float(EFEITOS_ATAQUE_FPS.get(str(efeito), 20.0) or 20.0)
+        return max(0.15, len(frames) / max(1.0, fps)) if frames else 0.15
 
     @staticmethod
     def _dados(evento):

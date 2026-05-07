@@ -81,6 +81,7 @@ class MontadorJogadas:
             "exige_area_ocupada": False,
             "inclui_reserva": False,
             "area_id": None,
+            "areas": [],
         }
 
     @staticmethod
@@ -97,7 +98,7 @@ class MontadorJogadas:
     def _normalizar_config_alvo(self, config):
         base = self._alvo_fallback()
         if isinstance(config, dict):
-            for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id"):
+            for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id", "areas"):
                 if chave in config:
                     base[chave] = copy.deepcopy(config.get(chave))
         try:
@@ -119,6 +120,18 @@ class MontadorJogadas:
             base["area_id"] = str(base.get("area_id")).strip().upper()
         else:
             base["area_id"] = None
+        areas = base.get("areas")
+        if isinstance(areas, str):
+            areas = [areas]
+        if not isinstance(areas, (list, tuple, set)):
+            areas = []
+        base["areas"] = [str(area).strip().upper() for area in areas if str(area or "").strip()]
+        if base["area_id"] and not base["areas"]:
+            base["areas"] = [base["area_id"]]
+        if base["areas"] and not base["area_id"]:
+            base["area_id"] = base["areas"][0]
+        if base["tipo"] == "fixa":
+            base["quantidade"] = 1
         return base
 
     def _normalizar_alvos_config(self, props):
@@ -129,7 +142,7 @@ class MontadorJogadas:
             configs = [self._normalizar_config_alvo(item) for item in alvos if isinstance(item, dict)]
             if configs:
                 return configs
-        if isinstance(alvificacao, dict) and any(chave in alvificacao for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id")):
+        if isinstance(alvificacao, dict) and any(chave in alvificacao for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id", "areas")):
             return [self._normalizar_config_alvo(alvificacao)]
         return [self._alvo_fallback()]
 
@@ -137,7 +150,8 @@ class MontadorJogadas:
         alvo_cfg = self._normalizar_config_alvo(config or {})
         tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
         if tipo == "fixa":
-            return str(alvo_cfg.get("area_id") or area_id or "").upper()
+            areas = list(alvo_cfg.get("areas") or [])
+            return str((areas[0] if areas else None) or alvo_cfg.get("area_id") or area_id or "").upper()
         area_id = str(area_id or "").upper()
         if not area_id:
             return ""
@@ -160,26 +174,26 @@ class MontadorJogadas:
 
     def _configs_apenas_fixas(self, configs):
         configs = list(configs or [])
-        return bool(configs) and all(str(cfg.get("tipo") or "").strip().lower() == "fixa" and cfg.get("area_id") for cfg in configs)
+        return bool(configs) and all(str(cfg.get("tipo") or "").strip().lower() == "fixa" and cfg.get("areas") for cfg in configs)
 
     def _montar_selecoes_fixas(self):
         selecoes = []
         for grupo, config in enumerate(list(self.alvos_config or [])):
             alvo_cfg = self._normalizar_config_alvo(config)
-            area_id = self._area_ancora_por_config(alvo_cfg.get("area_id"), alvo_cfg)
-            if not area_id or not self.area_permitida_para_ataque(area_id, alvo_cfg):
+            areas = list(alvo_cfg.get("areas") or [])
+            area_id = self._area_ancora_por_config(areas[0] if areas else alvo_cfg.get("area_id"), alvo_cfg)
+            if not areas or not self.area_permitida_para_ataque(area_id, alvo_cfg):
                 return []
-            for ordem in range(int(alvo_cfg.get("quantidade") or 1)):
-                selecoes.append(
-                    {
-                        "tipo": "area",
-                        "area_id": area_id,
-                        "grupo": grupo,
-                        "ordem": ordem,
-                        "config": copy.deepcopy(alvo_cfg),
-                        "areas": self.areas_afetadas_por_config(area_id, alvo_cfg),
-                    }
-                )
+            selecoes.append(
+                {
+                    "tipo": "area",
+                    "area_id": area_id,
+                    "grupo": grupo,
+                    "ordem": 0,
+                    "config": copy.deepcopy(alvo_cfg),
+                    "areas": self.areas_afetadas_por_config(area_id, alvo_cfg),
+                }
+            )
         return selecoes
 
     def _config_grupo_alvo_atual(self):
@@ -662,6 +676,9 @@ class MontadorJogadas:
             return [destino] if destino is not None else []
         config = selecao.get("config") if isinstance(selecao.get("config"), dict) else {}
         area_id = selecao.get("area_id")
+        if str((config or {}).get("tipo") or "").strip().lower() == "fixa":
+            areas = list(selecao.get("areas") or []) or self.areas_afetadas_por_config(area_id, config)
+            return [self.arena.centro_area(aid) for aid in areas if self.arena.centro_area(aid) is not None]
         area_ancora = self._area_ancora_por_config(area_id, config)
         destino = self.arena.centro_area(area_ancora)
         return [destino] if destino is not None else []
@@ -694,7 +711,8 @@ class MontadorJogadas:
         alvo_cfg = self._normalizar_config_alvo(config or {})
         tipo = str(alvo_cfg.get("tipo") or "area").strip().lower()
         if tipo == "fixa":
-            area_id = alvo_cfg.get("area_id") or area_id
+            areas = list(alvo_cfg.get("areas") or [])
+            return areas or ([str(area_id).upper()] if str(area_id or "").strip() else [])
         area_id = str(area_id or "").upper()
         if not area_id:
             return []
@@ -813,6 +831,20 @@ class MontadorJogadas:
         tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
         if tipo_alvo == "pokemon":
             return self.pokemon_permitido_para_ataque(self.arena.pokemon_na_area(area_id))
+        if tipo_alvo == "fixa":
+            areas = self.areas_afetadas_por_config(area_id, alvo_cfg)
+            if not areas or any(self.arena.obter_area_por_id(aid) is None for aid in areas):
+                return False
+            return self._selecoes_respeitam_provocando([
+                {
+                    "tipo": "area",
+                    "area_id": area_id,
+                    "grupo": int(self.indice_grupo_alvo),
+                    "ordem": self._quantidade_selecionada_no_grupo(self.indice_grupo_alvo),
+                    "config": copy.deepcopy(alvo_cfg),
+                    "areas": list(areas),
+                }
+            ])
         if bool(alvo_cfg.get("exige_area_ocupada")) and not self.arena.area_esta_ocupada(area_id):
             return False
         if self._selecao_alvo_existe(self._chave_selecao_area(area_id, alvo_cfg)):
@@ -937,17 +969,17 @@ class MontadorJogadas:
                     dados["areas"].add(area_alvo)
                 continue
             area_id = self._area_ancora_por_config(selecao.get("area_id"), config)
-            area = self.arena.obter_area_por_id(area_id)
-            if area is None:
-                continue
-            lado_alvo = int(area.get("lado_id", -999))
-            if lado_alvo == lado_origem:
-                continue
-            dados = por_lado.setdefault(lado_alvo, {"pokemon_ids": set(), "areas": set()})
             for area_afetada in self.areas_afetadas_por_config(area_id, config):
                 area_afetada = str(area_afetada or "").upper()
                 if not area_afetada:
                     continue
+                area = self.arena.obter_area_por_id(area_afetada)
+                if area is None:
+                    continue
+                lado_alvo = int(area.get("lado_id", -999))
+                if lado_alvo == lado_origem:
+                    continue
+                dados = por_lado.setdefault(lado_alvo, {"pokemon_ids": set(), "areas": set()})
                 dados["areas"].add(area_afetada)
                 ocupante = self.arena.pokemon_na_area(area_afetada)
                 if ocupante is not None:
@@ -975,7 +1007,8 @@ class MontadorJogadas:
         if self.estado_montagem == "preparando_ataque" and self.ataque_selecionado is not None:
             config = self._config_grupo_alvo_atual() or {}
             if str(config.get("tipo") or "").strip().lower() == "fixa":
-                area_id = config.get("area_id")
+                areas = list(config.get("areas") or [])
+                area_id = areas[0] if areas else config.get("area_id")
                 return self.areas_afetadas_por_config(area_id, config) if self.area_permitida_para_ataque(area_id, config) else []
             return [str(a.get("id")) for a in getattr(self.arena, "_areas", []) if self.area_permitida_para_ataque(a.get("id"))]
         if self.estado_montagem == "arrastando" and self.pokemon_origem is not None:

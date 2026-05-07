@@ -16,6 +16,7 @@ def alvo_fallback():
         "exige_area_ocupada": False,
         "inclui_reserva": False,
         "area_id": None,
+        "areas": [],
     }
 
 
@@ -33,7 +34,7 @@ def bool_config_alvo(valor):
 def normalizar_config_alvo(config):
     base = alvo_fallback()
     if isinstance(config, dict):
-        for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id"):
+        for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id", "areas"):
             if chave in config:
                 base[chave] = copy.deepcopy(config.get(chave))
     try:
@@ -53,6 +54,18 @@ def normalizar_config_alvo(config):
         base["area_id"] = str(base.get("area_id")).strip().upper()
     else:
         base["area_id"] = None
+    areas = base.get("areas")
+    if isinstance(areas, str):
+        areas = [areas]
+    if not isinstance(areas, (list, tuple, set)):
+        areas = []
+    base["areas"] = [str(area).strip().upper() for area in areas if str(area or "").strip()]
+    if base["area_id"] and not base["areas"]:
+        base["areas"] = [base["area_id"]]
+    if base["areas"] and not base["area_id"]:
+        base["area_id"] = base["areas"][0]
+    if base["tipo"] == "fixa":
+        base["quantidade"] = 1
     return base
 
 
@@ -64,7 +77,7 @@ def normalizar_alvos_config(props):
         configs = [normalizar_config_alvo(item) for item in alvos if isinstance(item, dict)]
         if configs:
             return configs
-    chaves_antigas = ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id")
+    chaves_antigas = ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id", "areas")
     if isinstance(alvificacao, dict) and any(chave in alvificacao for chave in chaves_antigas):
         return [normalizar_config_alvo(alvificacao)]
     return [alvo_fallback()]
@@ -78,8 +91,13 @@ def config_para_selecao(selecao, props):
         grupo = 0
     if isinstance(selecao, dict) and isinstance(selecao.get("config"), dict):
         config = normalizar_config_alvo(selecao.get("config"))
-        if str(config.get("tipo") or "").strip().lower() == "fixa" and not config.get("area_id") and 0 <= grupo < len(configs):
-            config["area_id"] = configs[grupo].get("area_id")
+        if str(config.get("tipo") or "").strip().lower() == "fixa":
+            if not config.get("areas") and isinstance(selecao.get("areas"), list):
+                config["areas"] = normalizar_config_alvo({"tipo": "fixa", "areas": selecao.get("areas")}).get("areas")
+            if not config.get("areas") and 0 <= grupo < len(configs):
+                config["areas"] = list(configs[grupo].get("areas") or [])
+            if config.get("areas"):
+                config["area_id"] = config["areas"][0]
         return config
     if 0 <= grupo < len(configs):
         return configs[grupo]
@@ -90,7 +108,8 @@ def area_id_para_selecao(selecao, alvo_cfg=None):
     selecao = selecao if isinstance(selecao, dict) else {}
     alvo_cfg = normalizar_config_alvo(alvo_cfg or selecao.get("config") or {})
     if str(alvo_cfg.get("tipo") or "").strip().lower() == "fixa":
-        area_id = alvo_cfg.get("area_id") or selecao.get("area_id")
+        areas = list(alvo_cfg.get("areas") or [])
+        area_id = (areas[0] if areas else None) or selecao.get("area_id")
     else:
         area_id = selecao.get("area_id")
     return str(area_id or "").strip().upper()
@@ -110,19 +129,19 @@ def selecoes_alvo_acao(alvo_ou_acao, props):
     if alvo.get("area_id"):
         return [{"tipo": "area", "area_id": alvo.get("area_id"), "grupo": 0, "ordem": 0, "config": config}]
     configs = normalizar_alvos_config(props)
-    if all(str(cfg.get("tipo") or "").strip().lower() == "fixa" and cfg.get("area_id") for cfg in configs):
+    if all(str(cfg.get("tipo") or "").strip().lower() == "fixa" and cfg.get("areas") for cfg in configs):
         selecoes = []
         for grupo, cfg in enumerate(configs):
-            for ordem in range(int(cfg.get("quantidade") or 1)):
-                selecoes.append(
-                    {
-                        "tipo": "area",
-                        "area_id": cfg.get("area_id"),
-                        "grupo": grupo,
-                        "ordem": ordem,
-                        "config": copy.deepcopy(cfg),
-                    }
-                )
+            selecoes.append(
+                {
+                    "tipo": "area",
+                    "area_id": cfg.get("areas", [""])[0],
+                    "areas": list(cfg.get("areas") or []),
+                    "grupo": grupo,
+                    "ordem": 0,
+                    "config": copy.deepcopy(cfg),
+                }
+            )
         return selecoes
     return []
 
@@ -146,7 +165,8 @@ def validar_quantidade_selecoes(alvo, selecoes, props):
             return "grupo_alvo_invalido"
         contagem[grupo] = contagem.get(grupo, 0) + 1
     for idx, config in enumerate(configs):
-        if contagem.get(idx, 0) != int(config.get("quantidade") or 1):
+        esperado = 1 if str(config.get("tipo") or "").strip().lower() == "fixa" else int(config.get("quantidade") or 1)
+        if contagem.get(idx, 0) != esperado:
             return "quantidade_alvos_incompleta"
     return None
 
@@ -154,7 +174,8 @@ def validar_quantidade_selecoes(alvo, selecoes, props):
 def areas_afetadas_por_alvificacao(area_id, props=None, lado_usuario=None, alvo_cfg=None, partida=None):
     alvo_cfg = normalizar_config_alvo(alvo_cfg or normalizar_alvos_config(props)[0])
     if str(alvo_cfg.get("tipo") or "").strip().lower() == "fixa":
-        area_id = alvo_cfg.get("area_id") or area_id
+        areas = list(alvo_cfg.get("areas") or [])
+        return areas or ([str(area_id).strip().upper()] if str(area_id or "").strip() else [])
     area_id = str(area_id or "").strip().upper()
     if not area_id:
         return []
@@ -195,11 +216,19 @@ def area_permitida_para_ataque(partida, pokemon, area_id, props, alvo_cfg=None, 
     area = _area(partida, area_id)
     if not isinstance(area, dict):
         return False
+    tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
+    if tipo_alvo == "fixa":
+        areas_fixas = areas_afetadas_por_alvificacao(area_id, props, getattr(pokemon, "lado_id", None), alvo_cfg, partida)
+        if not areas_fixas or any(not isinstance(_area(partida, area_fixa), dict) for area_fixa in areas_fixas):
+            return False
+        if checar_provocando:
+            selecao = {"tipo": "area", "area_id": area_id, "areas": list(areas_fixas), "grupo": 0, "ordem": 0, "config": copy.deepcopy(alvo_cfg)}
+            return validar_provocando_selecoes(partida, pokemon, [selecao], props)
+        return True
     if bool(alvo_cfg.get("exige_area_ocupada")) and _pokemon_na_area(partida, area_id) is None:
         return False
     if not _lado_area_permitido(pokemon, area_id, area, alvo_cfg):
         return False
-    tipo_alvo = str(alvo_cfg.get("tipo") or "area").strip().lower()
     if checar_provocando and tipo_alvo not in TIPOS_GLOBAIS:
         selecao = {"tipo": "area", "area_id": area_id, "grupo": 0, "ordem": 0, "config": copy.deepcopy(alvo_cfg)}
         return validar_provocando_selecoes(partida, pokemon, [selecao], props)
@@ -247,14 +276,14 @@ def validar_provocando_selecoes(partida, pokemon, selecoes, props):
                 dados["areas"].add(str(area_alvo).upper())
             continue
         area_id = area_id_para_selecao(selecao, alvo_cfg)
-        lado_alvo = _lado_area(partida, area_id)
-        if lado_alvo is None or lado_alvo == lado_origem:
-            continue
-        dados = por_lado.setdefault(lado_alvo, {"pokemon_ids": set(), "areas": set()})
         for area_afetada in areas_afetadas_por_alvificacao(area_id, props, _lado_pokemon(pokemon), alvo_cfg, partida):
             area_afetada = str(area_afetada or "").upper()
             if not area_afetada:
                 continue
+            lado_alvo = _lado_area(partida, area_afetada)
+            if lado_alvo is None or lado_alvo == lado_origem:
+                continue
+            dados = por_lado.setdefault(lado_alvo, {"pokemon_ids": set(), "areas": set()})
             dados["areas"].add(area_afetada)
             ocupante = _pokemon_na_area(partida, area_afetada)
             if ocupante is not None:

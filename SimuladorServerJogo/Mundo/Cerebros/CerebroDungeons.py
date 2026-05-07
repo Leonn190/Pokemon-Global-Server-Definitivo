@@ -5,7 +5,14 @@ import random
 
 from SimuladorServerJogo.Gerais.Geradores.GeradorDungeons import gerar_dungeon_layout
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_server, materializar_pokemon
-from SimuladorServerJogo.Gerais.EstadoServidor import aplicar_respawn_mundo, registrar_checkpoint_mundo_seguro
+from SimuladorServerJogo.Gerais.EstadoServidor import (
+    aplicar_dano_player,
+    aplicar_invulnerabilidade_player,
+    matar_player,
+    player_invulneravel,
+    atualizar_posicao_personagem,
+    registrar_checkpoint_mundo_seguro,
+)
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_dungeons
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Mundo.DungeonGeometria import (
@@ -126,8 +133,9 @@ class CerebroDungeons:
         player.estado_extra["entradas_dungeon_mundo"] = entradas_dungeon
         player.estado_extra["dimensao"] = layout.get("dimensao")
         player.estado_extra["estado_dungeon"] = criar_estado_entrada(player, client_id, code_real, porta_real, pedra_id, layout, entrada, self._regras)
+        aplicar_invulnerabilidade_player(player, 90, "entrada_dungeon")
         registrar_sala_explorada(player, code_real, str(entrada.get("sala_id") or ""), client_id=str(client_id))
-        sx, sy = float(entrada.get("spawn", [0, 0])[0]), float(entrada.get("spawn", [0, 0])[1])
+        sx, sy = centro_sala_em_tiles(entrada.get("posicao_sala", [0, 0]))
         BANCO_DADOS.atualizar_objeto(player.Id, {"posicao": [sx, sy], "estado": player.estado_extra})
         return True
 
@@ -161,7 +169,7 @@ class CerebroDungeons:
             return False
         if not eh_dimensao_dungeon(player.estado_extra.get("dimensao")):
             return False
-        return self._perder_vida_player(player, str(motivo or "derrota_batalha"), registrar_diff=registrar_diff, forcar=True)
+        return aplicar_dano_player(player, 1, str(motivo or "derrota_batalha_dungeon"), registrar_diff=registrar_diff, ignorar_invulnerabilidade=True)
 
     def executar_tick(self, chunks_carregados, chunks_simulados, registrar_diff):
         _ = (chunks_carregados, chunks_simulados)
@@ -193,8 +201,8 @@ class CerebroDungeons:
                 layout,
                 players,
                 int(getattr(self._cerebro, "_tick_contador", 0)),
-                aplicar_dano=lambda player, motivo: self._perder_vida_player(player, motivo, registrar_diff=registrar_diff),
-                matar_queda=lambda player, motivo: self._matar_player_dungeon(player, motivo, registrar_diff=registrar_diff),
+                aplicar_dano=lambda player, motivo: aplicar_dano_player(player, 1, motivo, registrar_diff=registrar_diff),
+                iniciar_queda=lambda player, motivo: self.iniciar_morte_por_queda(player, registrar_diff=registrar_diff),
                 registrar_diff=registrar_diff,
             )
             if alterou_tiles:
@@ -281,7 +289,7 @@ class CerebroDungeons:
             players_sala = [
                 p for p in players
                 if not bool(p.estado_extra.get("morto", False) or p.estado_extra.get("game_over", False))
-                and int(p.estado_extra.get("queda_buraco_pendente_ate_tick", 0) or 0) <= 0
+                and not bool(p.estado_extra.get("queda_buraco", False))
                 and str((p.estado_extra.get("estado_dungeon") or {}).get("sala_id") or "") == sala_id
             ]
             if not players_sala:
@@ -427,9 +435,7 @@ class CerebroDungeons:
         tick = int(getattr(self._cerebro, "_tick_contador", 0))
         if tick < int(poke.estado_extra.get("cooldown_colisao_ate_tick", 0) or 0):
             return
-        estado = player.estado_extra.get("estado_dungeon") if isinstance(player.estado_extra.get("estado_dungeon"), dict) else {}
-        inv_ate = max(int(player.estado_extra.get("invulneravel_ate_tick", 0) or 0), int(estado.get("invulneravel_dungeon_ate_tick", 0) or 0))
-        if tick < inv_ate:
+        if player_invulneravel(player, tick) or bool(player.estado_extra.get("queda_buraco", False)):
             return
         if self._player_tem_pokemon_apto(player):
             poke.estado_extra["cooldown_colisao_ate_tick"] = tick + int(self._regras.get("servo_cooldown_colisao_ticks", 30) or 30)
@@ -437,7 +443,7 @@ class CerebroDungeons:
             BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": poke.estado_extra})
             registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 80}, objeto_id=poke.Id, autor="server", categoria="pokemon")
             return
-        self._perder_vida_player(player, "colisao_sem_pokemon", registrar_diff=registrar_diff)
+        aplicar_dano_player(player, 1, "colisao_sem_pokemon", registrar_diff=registrar_diff)
 
     def _liberar_lock_batalha_expirado(self, poke, registrar_diff) -> bool:
         if bool(poke.estado_extra.get("batalha_confirmada", False)):
@@ -641,9 +647,6 @@ class CerebroDungeons:
         return (max(sx + m, min(sx + w - m, float(x))), max(sy + m, min(sy + h - m, float(y))))
 
     def _clamp_sala_com_passagem(self, sala, x, y, margem=0.5):
-        ajuste = self._clamp_passagem_sala(sala, x, y, margem=margem)
-        if ajuste is not None:
-            return ajuste
         return self._clamp_sala(sala, x, y, margem=margem)
 
     def _clamp_passagem_sala(self, sala, x, y, margem=0.5):
@@ -838,73 +841,39 @@ class CerebroDungeons:
             if 0 <= y < len(grid) and isinstance(grid[y], list) and 0 <= x < len(grid[y]):
                 grid[y][x] = int(tile)
 
-    def _perder_vida_player(self, player, motivo, registrar_diff=None, forcar=False):
-        if bool(player.estado_extra.get("morto", False) or player.estado_extra.get("game_over", False)):
-            return False
-        estado = player.estado_extra.get("estado_dungeon")
-        if not isinstance(estado, dict):
+    def iniciar_morte_por_queda(self, player, registrar_diff=None):
+        if not isinstance(player, AtorServer) or not isinstance(getattr(player, "estado_extra", None), dict):
             return False
         tick = int(getattr(self._cerebro, "_tick_contador", 0))
-        if not bool(forcar) and tick < int(estado.get("invulneravel_dungeon_ate_tick", 0) or 0):
+        if bool(player.estado_extra.get("morto", False) or player.estado_extra.get("game_over", False) or player.estado_extra.get("queda_buraco", False)):
             return False
-        coracoes = max(0, int(estado.get("coracoes", self._regras.get("coracoes_iniciais", 3)) or 0) - 1)
-        estado["coracoes"] = coracoes
-        estado["ultimo_dano_motivo"] = str(motivo or "")
-        estado["invulneravel_dungeon_ate_tick"] = tick + int(self._regras.get("invulnerabilidade_dungeon_ticks", 90) or 90)
-        player.estado_extra["invulneravel_ate_tick"] = int(estado["invulneravel_dungeon_ate_tick"])
-        if coracoes <= 0:
-            aplicar_respawn_mundo(str(player.estado_extra.get("usuario") or ""), player, str(motivo or "sem_coracoes"), registrar_diff=registrar_diff)
-        else:
-            BANCO_DADOS.atualizar_objeto(player.Id, {"estado": player.estado_extra})
-        if callable(registrar_diff) and coracoes > 0:
-            registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=player.Id, autor="server", categoria="player")
-        return True
-
-    def _matar_player_dungeon(self, player, motivo="queda_buraco", registrar_diff=None):
-        if bool(player.estado_extra.get("morto", False) or player.estado_extra.get("game_over", False)):
-            return False
-        estado = player.estado_extra.get("estado_dungeon")
-        if not isinstance(estado, dict):
-            return False
-        tick = int(getattr(self._cerebro, "_tick_contador", 0))
-        if int(estado.get("queda_buraco_pendente_ate_tick", 0) or 0) > tick:
-            return False
-        estado["coracoes"] = 0
-        estado["ultimo_dano_motivo"] = str(motivo or "queda_buraco")
-        estado["queda_buraco"] = True
-        estado["animacao_queda_tick"] = tick
-        estado["queda_buraco_pendente_ate_tick"] = tick + int(self._regras.get("queda_buraco_animacao_ticks", 20) or 20)
+        duracao = int(self._regras.get("queda_buraco_animacao_ticks", 20) or 20)
+        duracao = max(18, min(24, duracao))
+        morte_tick = tick + duracao
         player.estado_extra["queda_buraco"] = True
-        player.estado_extra["queda_buraco_pendente_ate_tick"] = int(estado["queda_buraco_pendente_ate_tick"])
+        player.estado_extra["queda_buraco_inicio_tick"] = tick
+        player.estado_extra["queda_buraco_morte_tick"] = morte_tick
+        player.estado_extra["motivo_morte"] = "queda_buraco"
+        aplicar_invulnerabilidade_player(player, duracao, "queda_buraco")
+        estado = player.estado_extra.get("estado_dungeon") if isinstance(player.estado_extra.get("estado_dungeon"), dict) else None
+        if estado is not None:
+            estado["queda_buraco"] = True
+            estado["queda_buraco_inicio_tick"] = tick
+            estado["queda_buraco_morte_tick"] = morte_tick
         BANCO_DADOS.atualizar_objeto(player.Id, {"estado": player.estado_extra})
         if callable(registrar_diff):
             registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=player.Id, autor="server", categoria="player")
         return True
 
     def _processar_queda_pendente(self, player, registrar_diff=None) -> bool:
-        estado = player.estado_extra.get("estado_dungeon") if isinstance(player.estado_extra.get("estado_dungeon"), dict) else {}
-        ate = int(estado.get("queda_buraco_pendente_ate_tick", player.estado_extra.get("queda_buraco_pendente_ate_tick", 0)) or 0)
-        if ate <= 0:
+        morte_tick = int(player.estado_extra.get("queda_buraco_morte_tick", 0) or 0)
+        if morte_tick <= 0:
             return False
         tick = int(getattr(self._cerebro, "_tick_contador", 0))
-        if tick < ate:
+        if tick < morte_tick:
             return True
-        aplicar_respawn_mundo(str(player.estado_extra.get("usuario") or ""), player, str(estado.get("ultimo_dano_motivo") or "queda_buraco"), registrar_diff=registrar_diff)
+        matar_player(player, "queda_buraco", registrar_diff=registrar_diff)
         return True
-
-    def _marcar_game_over_dungeon(self, player, motivo: str, queda: bool = False) -> None:
-        estado = player.estado_extra.get("estado_dungeon")
-        if isinstance(estado, dict):
-            estado["coracoes"] = 0
-            estado["ultimo_dano_motivo"] = str(motivo or "morte_dungeon")
-            if bool(queda):
-                estado["queda_buraco"] = True
-                estado["animacao_queda_tick"] = int(getattr(self._cerebro, "_tick_contador", 0))
-        player.estado_extra["morto"] = True
-        player.estado_extra["game_over"] = True
-        player.estado_extra["motivo_morte"] = str(motivo or "morte_dungeon")
-        player.estado_extra["queda_buraco"] = bool(queda)
-        BANCO_DADOS.atualizar_objeto(player.Id, {"estado": player.estado_extra})
 
     def _expulsar_player_dungeon(self, player):
         estado_dungeon = player.estado_extra.get("estado_dungeon") if isinstance(player.estado_extra.get("estado_dungeon"), dict) else {}
@@ -914,13 +883,10 @@ class CerebroDungeons:
         player.estado_extra["posicoes_por_dimensao"] = pos_dim
         player.estado_extra["ultima_pos_mundo"] = [float(pos[0]), float(pos[1])]
         limpar_estado_temporario(player)
+        aplicar_invulnerabilidade_player(player, 90, "saida_dungeon")
         BANCO_DADOS.atualizar_objeto(player.Id, {"posicao": [float(pos[0]), float(pos[1])], "estado": player.estado_extra})
-        try:
-            from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_posicao_personagem
-
-            atualizar_posicao_personagem(str(player.estado_extra.get("usuario") or ""), [float(pos[0]), float(pos[1])], dimensao="Mundo")
-        except Exception:
-            pass
+        atualizar_posicao_personagem(str(player.estado_extra.get("usuario") or ""), [float(pos[0]), float(pos[1])], dimensao="Mundo")
+        registrar_checkpoint_mundo_seguro(str(player.estado_extra.get("usuario") or ""), player)
 
     @staticmethod
     def _player_tem_pokemon_apto(player):

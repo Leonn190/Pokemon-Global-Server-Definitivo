@@ -1,5 +1,6 @@
 import copy
 import json
+import random
 import threading
 import time
 import re
@@ -20,6 +21,7 @@ from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
 from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import criar_pokemon_inicial_materializado
 from SimuladorServerJogo.Gerais.LoaderRegras import (
     carregar_regras_cliente_mundo,
+    carregar_regras_dungeons,
     carregar_regras_estruturas_naturais,
     carregar_regras_mundo,
     carregar_regras_player,
@@ -1055,6 +1057,81 @@ def _tile_mundo_seguro(posicao) -> bool:
         return False
 
 
+def _tick_servidor_atual() -> int:
+    return max(0, int(PACOTES_TICK.tick_atual()))
+
+
+def _vida_player(player) -> dict:
+    estado = getattr(player, "estado_extra", {}) if player is not None and isinstance(getattr(player, "estado_extra", {}), dict) else {}
+    vida = estado.get("vida_player") if isinstance(estado.get("vida_player"), dict) else {}
+    regras = carregar_regras_dungeons()
+    coracoes_max = int(vida.get("coracoes_max", regras.get("coracoes_maximos", regras.get("coracoes_iniciais", 3))) or 3)
+    coracoes_max = max(1, coracoes_max)
+    coracoes = int(vida.get("coracoes", coracoes_max) or coracoes_max)
+    vida = {"coracoes": max(0, min(coracoes_max, coracoes)), "coracoes_max": coracoes_max}
+    estado["vida_player"] = vida
+    estado_dungeon = estado.get("estado_dungeon") if isinstance(estado.get("estado_dungeon"), dict) else None
+    if estado_dungeon is not None:
+        estado_dungeon["coracoes"] = int(vida["coracoes"])
+        estado_dungeon["coracoes_max"] = int(vida["coracoes_max"])
+    return vida
+
+
+def player_invulneravel(player, tick: int | None = None) -> bool:
+    estado = getattr(player, "estado_extra", {}) if player is not None and isinstance(getattr(player, "estado_extra", {}), dict) else {}
+    atual = _tick_servidor_atual() if tick is None else int(tick)
+    return atual < int(estado.get("invulneravel_ate_tick", 0) or 0)
+
+
+def aplicar_invulnerabilidade_player(player, ticks: int = 90, motivo: str = "") -> bool:
+    if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
+        return False
+    ate = _tick_servidor_atual() + max(1, int(ticks or 90))
+    player.estado_extra["invulneravel_ate_tick"] = max(int(player.estado_extra.get("invulneravel_ate_tick", 0) or 0), ate)
+    player.estado_extra["invulneravel_motivo"] = str(motivo or "")
+    estado_dungeon = player.estado_extra.get("estado_dungeon") if isinstance(player.estado_extra.get("estado_dungeon"), dict) else None
+    if estado_dungeon is not None:
+        estado_dungeon["invulneravel_dungeon_ate_tick"] = int(player.estado_extra["invulneravel_ate_tick"])
+    return True
+
+
+def matar_player(player, motivo: str = "", registrar_diff=None) -> bool:
+    if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
+        return False
+    estado = player.estado_extra
+    if bool(estado.get("morto", False) and estado.get("game_over", False)):
+        return False
+    estado["morto"] = True
+    estado["game_over"] = True
+    estado["motivo_morte"] = str(motivo or "morte")
+    BANCO_DADOS.atualizar_objeto(int(player.Id), {"estado": estado})
+    if callable(registrar_diff) and hasattr(player, "serializar"):
+        registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 999999.0}, objeto_id=int(player.Id), autor="server", categoria="player")
+    return True
+
+
+def aplicar_dano_player(player, quantidade: int = 1, motivo: str = "", registrar_diff=None, ignorar_invulnerabilidade: bool = False) -> bool:
+    if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
+        return False
+    estado = player.estado_extra
+    if bool(estado.get("morto", False) or estado.get("game_over", False) or estado.get("queda_buraco", False)):
+        return False
+    if not bool(ignorar_invulnerabilidade) and player_invulneravel(player):
+        return False
+    vida = _vida_player(player)
+    vida["coracoes"] = max(0, int(vida["coracoes"]) - max(1, int(quantidade or 1)))
+    _vida_player(player)
+    estado["ultimo_dano_motivo"] = str(motivo or "")
+    aplicar_invulnerabilidade_player(player, 90, motivo)
+    if int(vida["coracoes"]) <= 0:
+        matar_player(player, str(motivo or "sem_coracoes"), registrar_diff=registrar_diff)
+        return True
+    BANCO_DADOS.atualizar_objeto(int(player.Id), {"estado": estado})
+    if callable(registrar_diff) and hasattr(player, "serializar"):
+        registrar_diff("update", payload=player.serializar(), escopo={"centro": [player.posicao[0], player.posicao[1]], "raio": 120}, objeto_id=int(player.Id), autor="server", categoria="player")
+    return True
+
+
 def registrar_checkpoint_mundo_seguro(usuario, player) -> bool:
     if not usuario or player is None or not isinstance(getattr(player, "estado_extra", None), dict):
         return False
@@ -1065,16 +1142,21 @@ def registrar_checkpoint_mundo_seguro(usuario, player) -> bool:
         return False
     chunk = BANCO_DADOS.chunk_da_posicao(pos)
     checkpoint = {"chunk": [int(chunk[0]), int(chunk[1])], "posicao": pos}
+    anterior = player.estado_extra.get("checkpoint_mundo") if isinstance(player.estado_extra.get("checkpoint_mundo"), dict) else None
+    if isinstance(anterior, dict) and anterior.get("chunk") != checkpoint["chunk"]:
+        player.estado_extra["checkpoint_mundo_anterior"] = dict(anterior)
     player.estado_extra["checkpoint_mundo"] = dict(checkpoint)
     with _LOCK:
         personagem = _ESTADO["personagens"].get(str(usuario))
         if isinstance(personagem, dict):
+            if isinstance(anterior, dict) and anterior.get("chunk") != checkpoint["chunk"]:
+                personagem["checkpoint_mundo_anterior"] = dict(anterior)
             personagem["checkpoint_mundo"] = dict(checkpoint)
             _persistir_personagens()
     return True
 
 
-def _posicao_segura_no_chunk(chunk) -> list[float] | None:
+def _posicao_segura_no_chunk(chunk, aleatoria: bool = False) -> list[float] | None:
     try:
         cx, cy = int(chunk[0]), int(chunk[1])
     except (TypeError, ValueError, IndexError):
@@ -1084,16 +1166,19 @@ def _posicao_segura_no_chunk(chunk) -> list[float] | None:
         return None
     grid = BANCO_DADOS.chunk_em_grade((cx, cy))
     tamanho = max(1, int(BANCO_DADOS.chunk_tamanho_unidade()))
+    candidatos: list[list[float]] = []
     for y, linha in enumerate(grid):
         if not isinstance(linha, list):
             continue
         for x, tile in enumerate(linha):
             try:
                 if int(tile) != 0:
-                    return [float(cx * tamanho + x) + 0.5, float(cy * tamanho + y) + 0.5]
+                    candidatos.append([float(cx * tamanho + x) + 0.5, float(cy * tamanho + y) + 0.5])
             except (TypeError, ValueError):
                 continue
-    return None
+    if not candidatos:
+        return None
+    return random.choice(candidatos) if bool(aleatoria) else candidatos[0]
 
 
 def _posicao_segura_perto_spawn() -> list[float] | None:
@@ -1123,12 +1208,27 @@ def resolver_respawn_mundo_seguro(usuario, player) -> list[float]:
         with _LOCK:
             personagem = _ESTADO["personagens"].get(str(usuario))
             checkpoint = personagem.get("checkpoint_mundo") if isinstance(personagem, dict) and isinstance(personagem.get("checkpoint_mundo"), dict) else None
+    if isinstance(checkpoint, dict) and player is not None and not _tile_mundo_seguro(getattr(player, "posicao", [])):
+        chunk_morte = BANCO_DADOS.chunk_da_posicao(getattr(player, "posicao", [0.0, 0.0]))
+        if checkpoint.get("chunk") == [int(chunk_morte[0]), int(chunk_morte[1])]:
+            anterior = estado.get("checkpoint_mundo_anterior") if isinstance(estado.get("checkpoint_mundo_anterior"), dict) else None
+            if anterior is None and usuario:
+                with _LOCK:
+                    personagem = _ESTADO["personagens"].get(str(usuario))
+                    anterior = personagem.get("checkpoint_mundo_anterior") if isinstance(personagem, dict) and isinstance(personagem.get("checkpoint_mundo_anterior"), dict) else None
+            if isinstance(anterior, dict):
+                checkpoint = anterior
+                estado["checkpoint_mundo"] = dict(anterior)
+            else:
+                checkpoint = None
     if isinstance(checkpoint, dict):
         pos = checkpoint.get("posicao")
-        if isinstance(pos, (list, tuple)) and len(pos) == 2 and _tile_mundo_seguro(pos):
-            return [float(pos[0]), float(pos[1])]
         chunk_pos = checkpoint.get("chunk")
-        pos_chunk = _posicao_segura_no_chunk(chunk_pos) if isinstance(chunk_pos, (list, tuple)) and len(chunk_pos) == 2 else None
+        if isinstance(pos, (list, tuple)) and len(pos) == 2 and _tile_mundo_seguro(pos):
+            chunk_pos = chunk_pos if isinstance(chunk_pos, (list, tuple)) and len(chunk_pos) == 2 else BANCO_DADOS.chunk_da_posicao(pos)
+            pos_chunk = _posicao_segura_no_chunk(chunk_pos, aleatoria=True)
+            return pos_chunk or [float(pos[0]), float(pos[1])]
+        pos_chunk = _posicao_segura_no_chunk(chunk_pos, aleatoria=True) if isinstance(chunk_pos, (list, tuple)) and len(chunk_pos) == 2 else None
         if pos_chunk is not None:
             return pos_chunk
     perto_spawn = _posicao_segura_perto_spawn()
@@ -1148,8 +1248,10 @@ def aplicar_respawn_mundo(usuario, player, motivo="respawn", registrar_diff=None
     estado["game_over"] = False
     estado["queda_buraco"] = False
     estado["motivo_respawn"] = str(motivo or "respawn")
-    for chave in ("motivo_morte", "estado_dungeon", "queda_buraco_pendente", "queda_buraco_pendente_ate_tick", "animacao_queda_tick"):
+    for chave in ("motivo_morte", "estado_dungeon", "queda_buraco_pendente", "queda_buraco_pendente_ate_tick", "queda_buraco_inicio_tick", "queda_buraco_morte_tick", "animacao_queda_tick"):
         estado.pop(chave, None)
+    vida = _vida_player(player)
+    vida["coracoes"] = int(vida["coracoes_max"])
     pos_dim = estado.get("posicoes_por_dimensao") if isinstance(estado.get("posicoes_por_dimensao"), dict) else {}
     pos_dim["Mundo"] = [float(pos[0]), float(pos[1])]
     estado["posicoes_por_dimensao"] = pos_dim
@@ -1157,6 +1259,7 @@ def aplicar_respawn_mundo(usuario, player, motivo="respawn", registrar_diff=None
     if perfil:
         perfil["stamina"] = float(perfil.get("stamina_max", perfil.get("stamina", 100.0)) or 100.0)
         estado["perfil"] = perfil
+    aplicar_invulnerabilidade_player(player, 90, str(motivo or "respawn"))
     BANCO_DADOS.atualizar_objeto(int(player.Id), {"posicao": pos, "estado": estado, "perfil": perfil})
     atualizar_posicao_personagem(str(usuario or estado.get("usuario") or ""), pos, dimensao="Mundo")
     if perfil:

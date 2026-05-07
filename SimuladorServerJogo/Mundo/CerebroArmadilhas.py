@@ -205,7 +205,7 @@ class CerebroArmadilhas:
         players: list,
         tick: int,
         aplicar_dano: Callable[[object, str], bool],
-        matar_queda: Callable[[object, str], bool],
+        iniciar_queda: Callable[[object, str], bool],
         registrar_diff: Callable | None = None,
     ) -> bool:
         if not isinstance(layout, dict) or not players:
@@ -222,7 +222,7 @@ class CerebroArmadilhas:
         players_por_sala: dict[str, list] = {}
         for player in players:
             if self._player_no_buraco(layout, player):
-                matar_queda(player, "queda_buraco")
+                iniciar_queda(player, "queda_buraco")
                 continue
             sala = salas_por_pos.get(tuple(sala_atual_por_posicao(player.posicao)))
             if isinstance(sala, dict):

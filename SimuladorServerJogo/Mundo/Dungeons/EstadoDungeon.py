@@ -64,12 +64,17 @@ def criar_estado_entrada(player, client_id: str, dungeon_code: str, porta_idx: i
     if sala_entrada:
         persistidas.add(sala_entrada)
     salvar_exploracao_persistida(client_id, dungeon_code, persistidas)
+    vida = getattr(player, "estado_extra", {}).get("vida_player") if isinstance(getattr(player, "estado_extra", {}), dict) and isinstance(getattr(player, "estado_extra", {}).get("vida_player"), dict) else {}
+    coracoes_max = max(1, int(vida.get("coracoes_max", (regras or {}).get("coracoes_maximos", 3)) or 3))
+    coracoes = max(0, min(coracoes_max, int(vida.get("coracoes", coracoes_max) or coracoes_max)))
+    if isinstance(getattr(player, "estado_extra", None), dict):
+        player.estado_extra["vida_player"] = {"coracoes": coracoes, "coracoes_max": coracoes_max}
     return {
         "dungeon_code": str(dungeon_code),
         "porta_idx": int(porta_idx or 1),
         "pedra_id": int(pedra_id or 0),
-        "coracoes": int((regras or {}).get("coracoes_iniciais", 3) or 3),
-        "coracoes_max": int((regras or {}).get("coracoes_maximos", 3) or 3),
+        "coracoes": coracoes,
+        "coracoes_max": coracoes_max,
         "entrada_mundo": list(getattr(player, "estado_extra", {}).get("ultima_pos_mundo", list(getattr(player, "posicao", [0.0, 0.0])))),
         "entrada_mundo_pos": list(getattr(player, "estado_extra", {}).get("ultima_pos_mundo", list(getattr(player, "posicao", [0.0, 0.0])))),
         "dimensao": (layout or {}).get("dimensao"),

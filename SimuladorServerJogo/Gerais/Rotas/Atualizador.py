@@ -10,7 +10,7 @@ from typing import Dict
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, diff_seq_atual, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, PokemonServer, criar_objeto_mundo_server
-from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem, aplicar_respawn_mundo, registrar_checkpoint_mundo_seguro
+from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem, aplicar_respawn_mundo, registrar_checkpoint_mundo_seguro, matar_player, player_invulneravel, aplicar_dano_player, aplicar_invulnerabilidade_player
 from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
@@ -391,7 +391,7 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 ignorados += 1
                 continue
             usuario = BANCO_DADOS.usuario_por_objeto_id(int(objeto_id))
-            if isinstance(obj, AtorServer) and bool(getattr(obj, "estado_extra", {}).get("morto", False)):
+            if isinstance(obj, AtorServer) and bool(getattr(obj, "estado_extra", {}).get("morto", False) or getattr(obj, "estado_extra", {}).get("game_over", False) or getattr(obj, "estado_extra", {}).get("queda_buraco", False)):
                 ignorados += 1
                 continue
             payload_in = dict(payload)
@@ -433,16 +433,19 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                     centro = [0.0, 0.0]
                 contexto = _coletar_contexto_batalha_servidor((float(centro[0]), float(centro[1])), rx=40, ry=20)
                 pokemon_id = int(payload.get("pokemon_id", 0) or 0)
+                obj_id_ctx = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+                obj_ctx = BANCO_DADOS.obter_objeto(obj_id_ctx) if obj_id_ctx > 0 else None
+                estado_ctx = getattr(obj_ctx, "estado_extra", {}) if isinstance(getattr(obj_ctx, "estado_extra", {}), dict) else {}
+                dimensao = str(estado_ctx.get("dimensao") or "Mundo")
+                if isinstance(obj_ctx, AtorServer) and (player_invulneravel(obj_ctx) or bool(estado_ctx.get("morto", False) or estado_ctx.get("game_over", False) or estado_ctx.get("queda_buraco", False))):
+                    ignorados += 1
+                    return _erro("Player indisponivel para batalha", serializar=serializar_resposta)
                 poke_batalha = None
                 if pokemon_id > 0:
                     contexto["pokemon_mundo_id"] = int(pokemon_id)
                     poke_batalha = CEREBRO.marcar_pokemon_em_batalha(pokemon_id, client_id)
                     if poke_batalha is not None:
                         registrar_diff("update", payload=poke_batalha.serializar(), escopo=_escopo_objeto(poke_batalha), objeto_id=int(pokemon_id), autor="server", categoria="pokemon")
-                obj_id_ctx = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
-                obj_ctx = BANCO_DADOS.obter_objeto(obj_id_ctx) if obj_id_ctx > 0 else None
-                estado_ctx = getattr(obj_ctx, "estado_extra", {}) if isinstance(getattr(obj_ctx, "estado_extra", {}), dict) else {}
-                dimensao = str(estado_ctx.get("dimensao") or "Mundo")
                 if eh_dimensao_dungeon(dimensao) and isinstance(poke_batalha, PokemonServer):
                     estado_poke = poke_batalha.estado_extra if isinstance(poke_batalha.estado_extra, dict) else {}
                     tipo_batalha = str(estado_poke.get("tipo_batalha") or estado_poke.get("comportamento_mundo") or "confronto").strip().lower()
@@ -524,16 +527,33 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 if poke_fuga is not None:
                     BANCO_DADOS.atualizar_objeto(poke_fuga.Id, {"estado": poke_fuga.estado_extra})
                     registrar_diff("update", payload=poke_fuga.serializar(), escopo=_escopo_objeto(poke_fuga), objeto_id=int(pokemon_id), autor="server", categoria="pokemon")
+                    estado_fuga = getattr(poke_fuga, "estado_extra", {}) if isinstance(getattr(poke_fuga, "estado_extra", {}), dict) else {}
+                    if eh_dimensao_dungeon(estado_fuga.get("dimensao")) and str(estado_fuga.get("comportamento_mundo") or estado_fuga.get("tipo_batalha") or "") in {"servo", "boss"}:
+                        CEREBRO._cerebro_dungeons.registrar_derrota_dungeon(client_id, "fuga_batalha_dungeon", int(pokemon_id), registrar_diff=registrar_diff)
                     aplicados += 1
                     return _ok("Pokemon liberado apos fuga", serializar=serializar_resposta, client_id=client_id, aplicados=aplicados, ignorados=ignorados)
                 ignorados += 1
                 return _erro("Pokemon da fuga nao encontrado", serializar=serializar_resposta)
-            if categoria in {"dungeon_perder_vida", "dungeon_batalha_derrota"}:
+            if categoria in {"player_invulnerabilidade", "player_invulnerabilidade_pos_batalha"}:
+                obj_id_player = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+                obj_player = BANCO_DADOS.obter_objeto(obj_id_player) if obj_id_player > 0 else None
+                if isinstance(obj_player, AtorServer):
+                    aplicar_invulnerabilidade_player(obj_player, 90, str(payload.get("motivo") or categoria))
+                    registrar_diff("update", payload=obj_player.serializar(), escopo=_escopo_objeto(obj_player), objeto_id=int(obj_player.Id), autor="server", categoria="player")
+                    aplicados += 1
+                    continue
+                ignorados += 1
+                continue
+            if categoria == "dungeon_perder_vida":
+                obj_id_player = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
+                obj_player = BANCO_DADOS.obter_objeto(obj_id_player) if obj_id_player > 0 else None
+                if isinstance(obj_player, AtorServer) and aplicar_dano_player(obj_player, 1, str(payload.get("motivo") or categoria), registrar_diff=registrar_diff):
+                    aplicados += 1
+                    continue
+                ignorados += 1
+                continue
+            if categoria == "dungeon_batalha_derrota":
                 if CEREBRO._cerebro_dungeons.registrar_derrota_dungeon(client_id, str(payload.get("motivo") or categoria), int(payload.get("pokemon_id", 0) or 0), registrar_diff=registrar_diff):
-                    obj_id_player = int(BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
-                    obj_player = BANCO_DADOS.obter_objeto(obj_id_player) if obj_id_player > 0 else None
-                    if obj_player is not None:
-                        registrar_diff("update", payload=obj_player.serializar(), escopo=_escopo_objeto(obj_player), objeto_id=int(obj_player.Id), autor="server", categoria="player")
                     aplicados += 1
                     continue
                 ignorados += 1
@@ -542,20 +562,7 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 player_id = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
                 if isinstance(player, AtorServer):
-                    if eh_dimensao_dungeon(player.estado_extra.get("dimensao")):
-                        aplicar_respawn_mundo(client_id, player, str(payload.get("motivo") or "morte_dungeon"), registrar_diff=registrar_diff)
-                        aplicados += 1
-                        continue
-                    player.estado_extra["morto"] = True
-                    player.estado_extra["motivo_morte"] = str(payload.get("motivo") or "morte")
-                    registrar_diff(
-                        "despawn",
-                        payload={"id": int(player.Id), "motivo": "player_morreu"},
-                        escopo=_escopo_objeto(player),
-                        objeto_id=int(player.Id),
-                        autor="server",
-                        categoria="player",
-                    )
+                    matar_player(player, str(payload.get("motivo") or "morte"), registrar_diff=registrar_diff)
                     aplicados += 1
                 else:
                     ignorados += 1

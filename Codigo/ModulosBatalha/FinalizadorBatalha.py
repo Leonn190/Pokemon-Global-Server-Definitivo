@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-import pygame
-
 from Codigo.ModulosGerais.Sonoridades import tocar_musica_resultado_batalha
 from Codigo.Telas.Subtelas.SubtelaFinalizacao import SubtelaFinalizacao
 from Codigo.ModulosGerais.GerenciadorPokemons import ganhar_xp_pokemon
@@ -131,7 +129,11 @@ class FinalizadorBatalha:
             contexto.setdefault("avisos_persistencia_batalha", []).extend(avisos)
         inventario = self._inventario_atualizado_pos_batalha(jogo, contexto) or deepcopy(inventario_resultado)
         if inventario_resultado:
-            for chave in ("itens", "doces", "limite_itens", "limite_slots", "limite_pokemons", "limite_times_pokemon", "slot_selecionado"):
+            tipo_batalha = str(getattr(self.controlador, "tipo_batalha", "") or contexto.get("tipo_batalha") or contexto.get("tipo") or "").strip().lower()
+            chaves_inventario = ("limite_pokemons", "limite_times_pokemon")
+            if tipo_batalha == "confronto":
+                chaves_inventario = ("itens", "doces", "limite_itens", "limite_slots", "limite_pokemons", "limite_times_pokemon", "slot_selecionado")
+            for chave in chaves_inventario:
                 if chave in inventario_resultado:
                     inventario[chave] = deepcopy(inventario_resultado.get(chave))
             capturados = resultado.get("pokemons_capturados") if isinstance(resultado.get("pokemons_capturados"), list) else []
@@ -179,7 +181,7 @@ class FinalizadorBatalha:
             if perfil is not None:
                 jogo.INFO.setdefault("SincronizacaoPosBatalhaMundo", {})["perfil"] = deepcopy(perfil)
             self._preparar_dialogo_pos_batalha(jogo)
-            jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
+            jogo.INFO["ImuneCombatePendenteMundo"] = True
             jogo.INFO.pop("CombateContextoTemporario", None)
             jogo.CenaAlvo = "Mundo"
         ctrl.solicitou_encerrar_batalha = True
@@ -211,6 +213,15 @@ class FinalizadorBatalha:
         except Exception:
             return
 
+    def _agendar_evento_mundo_pos_transicao(self, categoria: str, payload: dict) -> None:
+        ctrl = self.controlador
+        jogo = getattr(ctrl, "jogo", None)
+        info = getattr(jogo, "INFO", {}) if jogo is not None else {}
+        if not isinstance(info, dict):
+            return
+        info.setdefault("EventosMundoPosTransicao", []).append({"categoria": str(categoria or ""), "payload": dict(payload or {})})
+        info["ImuneCombatePendenteMundo"] = True
+
     def _notificar_fuga_mundo(self):
         ctrl = self.controlador
         jogo = getattr(ctrl, "jogo", None)
@@ -219,15 +230,9 @@ class FinalizadorBatalha:
         pokemon_id = _i(contexto.get("pokemon_mundo_id"), 0)
         server = info.get("ServerSelecionado") if isinstance(info, dict) and isinstance(info.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
-        client_id = str(info.get("UsuarioLogado", "anon")) if isinstance(info, dict) else "anon"
         if pokemon_id <= 0 or not link:
             return
-        try:
-            from Codigo.ModulosGerais.Server.ServerMundo import notificar_pokemon_fuga_batalha_mundo
-
-            notificar_pokemon_fuga_batalha_mundo(link, client_id, pokemon_id)
-        except Exception:
-            return
+        self._agendar_evento_mundo_pos_transicao("pokemon_fuga_batalha", {"pokemon_id": int(pokemon_id)})
 
     def _notificar_derrota_dungeon(self, resultado):
         ctrl = self.controlador
@@ -240,15 +245,9 @@ class FinalizadorBatalha:
         pokemon_id = _i(contexto.get("pokemon_mundo_id"), 0)
         server = info.get("ServerSelecionado") if isinstance(info, dict) and isinstance(info.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
-        client_id = str(info.get("UsuarioLogado", "anon")) if isinstance(info, dict) else "anon"
         if not link:
             return
-        try:
-            from Codigo.ModulosGerais.Server.ServerMundo import notificar_derrota_dungeon_batalha_mundo
-
-            notificar_derrota_dungeon_batalha_mundo(link, client_id, pokemon_id)
-        except Exception:
-            return
+        self._agendar_evento_mundo_pos_transicao("dungeon_batalha_derrota", {"motivo": "derrota_batalha", "pokemon_id": int(pokemon_id)})
 
     def _vencedor_visual(self, resultado):
         vencedor = resultado.get("vencedor") if isinstance(resultado, dict) else None

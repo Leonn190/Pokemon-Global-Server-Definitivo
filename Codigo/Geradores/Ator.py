@@ -103,6 +103,7 @@ class Ator:
         self.GameOverServidor = False
         self.MotivoMorteServidor = ""
         self.AnimacaoQuedaAteMs = 0
+        self._UltimaQuedaBuracoInicioTick = 0
 
     def update(self, payload: dict) -> None:
         dados = payload if isinstance(payload, dict) else {}
@@ -141,17 +142,25 @@ class Ator:
             self.ImuneCombateAteMs = max(int(getattr(self, "ImuneCombateAteMs", 0) or 0), int(pygame.time.get_ticks()) + 3000)
         motivo_morte = str(estado.get("motivo_morte") or estado_dungeon.get("ultimo_dano_motivo") or "")
         if bool(estado.get("morto", False) or estado.get("game_over", False)):
+            self.Morto = True
             self.GameOverServidor = True
             self.MotivoMorteServidor = motivo_morte
         elif "morto" in estado or "game_over" in estado:
+            self.Morto = False
             self.GameOverServidor = False
             self.MotivoMorteServidor = ""
-        if bool(estado.get("queda_buraco", False) or estado_dungeon.get("queda_buraco", False) or motivo_morte == "queda_buraco"):
+        queda_ativa_estado = bool(estado.get("queda_buraco", False) or estado_dungeon.get("queda_buraco", False))
+        queda_inicio_tick = max(int(estado.get("queda_buraco_inicio_tick", 0) or 0), int(estado_dungeon.get("queda_buraco_inicio_tick", 0) or 0))
+        if queda_ativa_estado and (queda_inicio_tick <= 0 or queda_inicio_tick > int(getattr(self, "_UltimaQuedaBuracoInicioTick", 0) or 0)):
             agora = int(pygame.time.get_ticks())
+            self._UltimaQuedaBuracoInicioTick = queda_inicio_tick if queda_inicio_tick > 0 else int(getattr(self, "_UltimaQuedaBuracoInicioTick", 0) or 0) + 1
             self.AnimacaoQuedaAteMs = max(int(getattr(self, "AnimacaoQuedaAteMs", 0) or 0), agora + 680)
             self.SobreBuraco = True
             if getattr(self, "EstadoVisual", None) is not None and hasattr(self.EstadoVisual, "iniciar_queda"):
                 self.EstadoVisual.iniciar_queda(680)
+        elif not queda_ativa_estado and "queda_buraco" in estado:
+            self.SobreBuraco = False
+            self.AnimacaoQuedaAteMs = 0
         if self.Perfil is not None and isinstance(dados.get("perfil"), dict):
             self.Perfil.aplicar_serializado(dados.get("perfil"))
         if self.Inventario is not None and hasattr(self.Inventario, "Perfil") and self.Inventario.Perfil is None and self.Perfil is not None:

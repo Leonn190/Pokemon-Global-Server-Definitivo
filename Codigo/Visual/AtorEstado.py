@@ -40,7 +40,13 @@ class AtorEstado:
             return 1.0
         dur = max(120.0, float(self._queda_duracao_ms or 620))
         t = max(0.0, min(1.0, (pygame.time.get_ticks() - self._queda_inicio_ms) / dur))
-        return max(0.0, 1.0 - t)
+        return max(0.05, 1.0 - (t * t))
+
+    def _progresso_queda(self) -> float:
+        if self._queda_inicio_ms <= 0:
+            return 0.0
+        dur = max(120.0, float(self._queda_duracao_ms or 620))
+        return max(0.0, min(1.0, (pygame.time.get_ticks() - self._queda_inicio_ms) / dur))
 
     def desenhar(self, tela, posicao_tela, respiracao_tempo: float = 0.0) -> None:
         ator = self.ator
@@ -58,26 +64,33 @@ class AtorEstado:
                 self._desenhar_ondinhas(tela, posicao_tela, estado_agua, camada="cima")
             return
 
-        camada = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
-        clip_original = None
         if escala < 0.999:
             tile_px = max(1, int(getattr(getattr(ator, "Desenhador", None), "_tile_px", 50) or 50))
-            clip_original = camada.get_clip()
-            buraco_rect = pygame.Rect(0, 0, int(tile_px * 1.05), int(tile_px * 1.05))
-            buraco_rect.center = (int(posicao_tela[0]), int(posicao_tela[1]))
-            camada.set_clip(buraco_rect)
-            original = getattr(ator.Desenhador, "_escala_tiles", 1.0)
-            ator.Desenhador._escala_tiles = float(original) * escala
-            try:
-                ator.desenhar(camada, posicao_tela=posicao_tela, respiracao_tempo=respiracao_tempo)
-            finally:
-                ator.Desenhador._escala_tiles = original
-                if clip_original is not None:
-                    camada.set_clip(clip_original)
-        else:
+            t = self._progresso_queda()
+            buraco_rect = pygame.Rect(0, 0, int(tile_px * 0.92), int(tile_px * 0.42))
+            buraco_rect.center = (int(posicao_tela[0]), int(posicao_tela[1] + tile_px * 0.28))
+            chao = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
+            pygame.draw.ellipse(chao, (4, 4, 6, 210), buraco_rect)
+            pygame.draw.ellipse(chao, (24, 21, 28, 170), buraco_rect.inflate(int(tile_px * 0.16), int(tile_px * 0.10)), 2)
+            tela.blit(chao, (0, 0))
+            camada = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
             ator.desenhar(camada, posicao_tela=posicao_tela, respiracao_tempo=respiracao_tempo)
-        camada.set_alpha(alpha)
-        tela.blit(camada, (0, 0))
+            rect = camada.get_bounding_rect()
+            if rect.width > 0 and rect.height > 0:
+                sprite = camada.subsurface(rect).copy()
+                w = max(1, int(rect.width * escala))
+                h = max(1, int(rect.height * escala))
+                sprite = pygame.transform.smoothscale(sprite, (w, h))
+                alpha_queda = int(alpha * max(0.0, 1.0 - max(0.0, t - 0.72) / 0.28))
+                sprite.set_alpha(alpha_queda)
+                destino = sprite.get_rect()
+                destino.center = (int(posicao_tela[0]), int(posicao_tela[1] + tile_px * 0.22 * t))
+                tela.blit(sprite, destino)
+        else:
+            camada = pygame.Surface(tela.get_size(), pygame.SRCALPHA)
+            ator.desenhar(camada, posicao_tela=posicao_tela, respiracao_tempo=respiracao_tempo)
+            camada.set_alpha(alpha)
+            tela.blit(camada, (0, 0))
         if estado_agua:
             self._desenhar_ondinhas(tela, posicao_tela, estado_agua, camada="cima")
 

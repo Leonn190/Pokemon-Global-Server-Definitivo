@@ -59,8 +59,9 @@ class ElementosHudMundo:
         y = altura - slot - 20
         if isinstance(estado_dungeon, dict):
             self._carregar_coracao()
-            coracoes = max(0, int(estado_dungeon.get("coracoes", 0) or 0))
-            max_cor = max(coracoes, int(estado_dungeon.get("coracoes_max", 3) or 3))
+            vida = estado_dungeon.get("vida_player") if isinstance(estado_dungeon.get("vida_player"), dict) else {}
+            coracoes = max(0, int(vida.get("coracoes", estado_dungeon.get("coracoes", 0)) or 0))
+            max_cor = max(coracoes, int(vida.get("coracoes_max", estado_dungeon.get("coracoes_max", 3)) or 3))
             gap_h = 6
             lado = self._coracao.get_width() if self._coracao is not None else 28
             total_h = (lado * max_cor) + (gap_h * max(0, max_cor - 1))

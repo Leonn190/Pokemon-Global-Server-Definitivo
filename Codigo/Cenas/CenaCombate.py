@@ -164,7 +164,7 @@ class CenaCombate:
         return enviar_mensagem_terminal(link, usuario, texto, contexto="batalha", meta=self._meta_terminal_batalha(self._jogo_ref))
 
     def _fugir_combate(self, jogo) -> None:
-        jogo.INFO["ImuneCombateAteMs"] = int(pygame.time.get_ticks()) + 3000
+        jogo.INFO["ImuneCombatePendenteMundo"] = True
         jogo.CenaAlvo = "Mundo"
 
     def _cancelar_batalha_com_esc(self) -> bool:

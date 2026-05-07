@@ -164,15 +164,6 @@ class CenaMundo:
             "angulo": float(getattr(player, "AnguloOlhar", estado_payload.get("angulo", estado_base.get("angulo", 0.0))) or 0.0),
         }
         posicao = [float(player.Posicao[0]), float(player.Posicao[1])]
-        if str(estado.get("dimensao") or "").startswith("Dungeon_"):
-            checkpoint = self._ultimo_chunk_seguro_mundo if isinstance(self._ultimo_chunk_seguro_mundo, dict) else {}
-            base_chunk = checkpoint.get("chave") if isinstance(checkpoint.get("chave"), tuple) else None
-            leitor = getattr(self.ControladorMundo, "Leitor", None) if self.ControladorMundo is not None else None
-            tamanho = max(1, int(getattr(leitor, "TamanhoChunkBlocos", 10) or 10))
-            if base_chunk is not None:
-                posicao = [float(base_chunk[0] * tamanho + 0.5), float(base_chunk[1] * tamanho + 0.5)]
-            estado["dimensao"] = "Mundo"
-            estado.pop("estado_dungeon", None)
         inventario = getattr(player, "Inventario", None)
         perfil = getattr(player, "Perfil", None)
         slot_selecionado = int(getattr(inventario, "SlotSelecionado", base.get("slot_selecionado", 0)) or 0) if inventario is not None else int(base.get("slot_selecionado", 0) or 0)
@@ -208,9 +199,8 @@ class CenaMundo:
         self._npc_interacao_id = 0
         self._npc_interacao_pendente = {"npc_id": 0, "desde_ms": 0}
         self._texto_estadio = Texto("", style={"size": 22, "align": "center", "outline": True, "color": (230, 236, 245)})
-        agora_ms = int(pygame.time.get_ticks())
-        self._imune_combate_ate_ms = max(int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0), agora_ms + 3000)
-        JOGO.INFO["ImuneCombateAteMs"] = int(self._imune_combate_ate_ms)
+        self._imune_combate_ate_ms = int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0)
+        self._imunidade_combate_pendente = bool(JOGO.INFO.pop("ImuneCombatePendenteMundo", False))
         self._filtro_camera = FiltroCamera()
         self._tela_morrer = TelaMorrer()
         self._ultimo_chunk_seguro = None
@@ -230,13 +220,55 @@ class CenaMundo:
             ResetTelaConfig()
         self.TelaAtual = tela
 
-    def _atualizar_imunidade_combate_visual(self, JOGO) -> bool:
-        agora = int(pygame.time.get_ticks())
-        ate = max(int(getattr(self, "_imune_combate_ate_ms", 0) or 0), int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0))
-        self._imune_combate_ate_ms = int(ate)
+    def _iniciar_imunidade_combate_agora(self, JOGO) -> None:
+        agora_ms = int(pygame.time.get_ticks())
+        self._imune_combate_ate_ms = max(int(getattr(self, "_imune_combate_ate_ms", 0) or 0), agora_ms + 3000)
+        JOGO.INFO["ImuneCombateAteMs"] = int(self._imune_combate_ate_ms)
         player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
         if player is not None:
-            setattr(player, "ImuneCombateAteMs", int(ate))
+            setattr(player, "ImuneCombateAteMs", max(int(getattr(player, "ImuneCombateAteMs", 0) or 0), int(self._imune_combate_ate_ms)))
+            setattr(player, "ImuneCombateAtiva", True)
+
+    def _ativar_imunidade_combate_pendente(self, JOGO) -> None:
+        eventos = JOGO.INFO.get("EventosMundoPosTransicao")
+        tem_eventos = isinstance(eventos, list) and bool(eventos)
+        if not bool(getattr(self, "_imunidade_combate_pendente", False) or tem_eventos):
+            return
+        if JOGO.CenaAlvo is not None or self._portal_transicao is not None or float(getattr(JOGO, "Escuro", 0.0) or 0.0) > 0.0:
+            return
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        if player is None:
+            return
+        self._imunidade_combate_pendente = False
+        eventos = JOGO.INFO.pop("EventosMundoPosTransicao", []) if tem_eventos else []
+        diffs = []
+        for ev in eventos:
+            if not isinstance(ev, dict):
+                continue
+            categoria = str(ev.get("categoria") or "").strip()
+            payload = ev.get("payload") if isinstance(ev.get("payload"), dict) else {}
+            if categoria:
+                diffs.append({"tipo": "evento", "categoria": categoria, "payload": payload})
+        diffs.append({"tipo": "evento", "categoria": "player_invulnerabilidade_pos_batalha", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "pos_batalha"}})
+        server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
+        link = server.get("ip")
+        if link:
+            resposta = enviar_diffs_mundo(link, str(JOGO.INFO.get("UsuarioLogado", "anon")), diffs)
+            self._aplicar_resposta_mundo(resposta)
+        self._iniciar_imunidade_combate_agora(JOGO)
+
+    def _atualizar_imunidade_combate_visual(self, JOGO) -> bool:
+        agora = int(pygame.time.get_ticks())
+        player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
+        ate = max(
+            int(getattr(self, "_imune_combate_ate_ms", 0) or 0),
+            int(JOGO.INFO.get("ImuneCombateAteMs", 0) or 0),
+            int(getattr(player, "ImuneCombateAteMs", 0) or 0) if player is not None else 0,
+        )
+        self._imune_combate_ate_ms = int(ate)
+        JOGO.INFO["ImuneCombateAteMs"] = int(ate)
+        if player is not None:
+            setattr(player, "ImuneCombateAteMs", max(int(getattr(player, "ImuneCombateAteMs", 0) or 0), int(ate)))
             setattr(player, "ImuneCombateAtiva", bool(agora < ate))
         return bool(agora < ate)
 
@@ -362,7 +394,9 @@ class CenaMundo:
                         self.TelaAtual = "Mapa"
                     break
 
-        player_bloqueado = (self.TelaAtual == "Mapa") or bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo or self._portal_transicao is not None
+        transicao_global = float(getattr(JOGO, "Escuro", 0.0) or 0.0) > 0.0
+        player_bloqueado = (self.TelaAtual == "Mapa") or bloqueio_gameplay or (opcoes_modal is not None) or self.TelaAtual == "Config" or dialogo_ativo or self._portal_transicao is not None or transicao_global
+        self._ativar_imunidade_combate_pendente(JOGO)
         imune_combate = self._atualizar_imunidade_combate_visual(JOGO)
         self.ControladorMundo.atualizar_frame(EVENTOS, dt, bloqueio_gameplay=player_bloqueado)
         self._atualizar_checkpoint_seguro()
@@ -544,7 +578,10 @@ class CenaMundo:
                 if pos_estadio is not None:
                     pos_player_mundo = (float(pos_estadio[0]), float(pos_estadio[1]))
             layout_dungeon = self.ControladorMundo.Leitor.MetaMundo.get("layout_dungeon") if dentro_dungeon and isinstance(self.ControladorMundo.Leitor.MetaMundo, dict) else None
-            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=((estado_player or {}).get("estado_dungeon") if dentro_dungeon else None), layout_dungeon=layout_dungeon)
+            estado_hud_dungeon = (estado_player or {}).get("estado_dungeon") if dentro_dungeon and isinstance((estado_player or {}).get("estado_dungeon"), dict) else None
+            if isinstance(estado_hud_dungeon, dict) and isinstance((estado_player or {}).get("vida_player"), dict):
+                estado_hud_dungeon = {**estado_hud_dungeon, "vida_player": (estado_player or {}).get("vida_player")}
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=estado_hud_dungeon, layout_dungeon=layout_dungeon)
             if dentro_dungeon:
                 self.ControladorMundo.Dungeons.renderizar_texto(surface)
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
@@ -820,18 +857,6 @@ class CenaMundo:
         estado_player = payload_player.get("estado") if isinstance(payload_player.get("estado"), dict) else {}
         game_over_server = bool(estado_player.get("morto", False) or estado_player.get("game_over", False) or getattr(player, "GameOverServidor", False))
         if game_over_server:
-            estado_dungeon = estado_player.get("estado_dungeon") if isinstance(estado_player.get("estado_dungeon"), dict) else {}
-            motivo_morte = str(estado_player.get("motivo_morte") or getattr(player, "MotivoMorteServidor", ""))
-            queda_buraco = bool(estado_player.get("queda_buraco", False) or estado_dungeon.get("queda_buraco", False) or motivo_morte == "queda_buraco")
-            if queda_buraco and int(getattr(player, "AnimacaoQuedaAteMs", 0) or 0) <= 0:
-                setattr(player, "AnimacaoQuedaAteMs", int(pygame.time.get_ticks()) + 680)
-                setattr(player, "SobreBuraco", True)
-                estado_visual = getattr(player, "EstadoVisual", None)
-                if estado_visual is not None and hasattr(estado_visual, "iniciar_queda"):
-                    estado_visual.iniciar_queda(680)
-            queda_ativa = int(pygame.time.get_ticks()) < int(getattr(player, "AnimacaoQuedaAteMs", 0) or 0)
-            if queda_ativa:
-                return
             self._definir_player_morto(True)
             self._tela_morrer.abrir(jogo.TELA.get_size(), ao_ressurgir=lambda: self._ressurgir_player(jogo), ao_menu=lambda: self._voltar_menu(jogo))
             return
@@ -846,7 +871,8 @@ class CenaMundo:
             em_agua_funda = int(tile_atual) == 0
         except (TypeError, ValueError):
             em_agua_funda = False
-        if em_agua_funda and float(getattr(perfil, "Stamina", 0.0)) <= 0.001:
+        dimensao = str(self.ControladorMundo.Objetos.dimensao_atual_client() or "Mundo") if self.ControladorMundo is not None and getattr(self.ControladorMundo, "Objetos", None) is not None else "Mundo"
+        if dimensao == "Mundo" and em_agua_funda and float(getattr(perfil, "Stamina", 0.0)) <= 0.001:
             self._definir_player_morto(True)
             self._enviar_diff_morte(jogo)
             self._tela_morrer.abrir(jogo.TELA.get_size(), ao_ressurgir=lambda: self._ressurgir_player(jogo), ao_menu=lambda: self._voltar_menu(jogo))
@@ -861,18 +887,15 @@ class CenaMundo:
             setattr(player, "MotivoMorteServidor", "")
             setattr(player, "AnimacaoQuedaAteMs", 0)
             setattr(player, "SobreBuraco", False)
-        try:
-            oid = int(getattr(player, "Id", 0) or 0)
-            atual = self.ControladorMundo.Objetos.ObjetosPorId.get(oid, {})
-            estado = atual.get("estado") if isinstance(atual.get("estado"), dict) else {}
-            estado["morto"] = bool(morto)
-            estado["game_over"] = bool(morto)
-            estado["queda_buraco"] = False if not bool(morto) else bool(estado.get("queda_buraco", False))
-            if not bool(morto):
-                estado.pop("estado_dungeon", None)
-            self.ControladorMundo.Objetos.aplicar_diff({"tipo": "update", "objeto_id": oid, "payload": {"estado": estado}})
-        except Exception:
-            pass
+        oid = int(getattr(player, "Id", 0) or 0)
+        atual = self.ControladorMundo.Objetos.ObjetosPorId.get(oid, {})
+        estado = atual.get("estado") if isinstance(atual.get("estado"), dict) else {}
+        estado["morto"] = bool(morto)
+        estado["game_over"] = bool(morto)
+        estado["queda_buraco"] = False if not bool(morto) else bool(estado.get("queda_buraco", False))
+        if not bool(morto):
+            estado.pop("estado_dungeon", None)
+        self.ControladorMundo.Objetos.aplicar_diff({"tipo": "update", "objeto_id": oid, "payload": {"estado": estado}})
 
     def _enviar_diff_morte(self, jogo):
         player = self.ControladorMundo.player_local if self.ControladorMundo is not None else None
@@ -902,7 +925,6 @@ class CenaMundo:
         if link:
             resposta = enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_ressurgir", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "pedido_cliente"}}])
             self._aplicar_resposta_mundo(resposta)
-        self._definir_player_morto(False)
         self._tela_morrer.fechar()
 
     def _voltar_menu(self, jogo):

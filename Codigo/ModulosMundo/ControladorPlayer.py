@@ -132,11 +132,12 @@ class ControladorPlayer:
                 if str(tipo_obj).strip().lower() in {"entidade_pokemon", "pokemon"}:
                     limite_real = float(raio_ator + raio_obj)
                     if d2 <= (limite_real * limite_real):
-                        payload_pokemon = self._objetos.snapshot_objeto_por_id(int(oid))
-                        if isinstance(payload_pokemon, dict) and payload_pokemon:
-                            self._colisao_pokemon_pendente = payload_pokemon
-                        else:
-                            self._colisao_pokemon_pendente = {"id": int(oid), "posicao": [float(sx), float(sy)]}
+                        if not self._ator_bloqueia_batalha(ator):
+                            payload_pokemon = self._objetos.snapshot_objeto_por_id(int(oid))
+                            if isinstance(payload_pokemon, dict) and payload_pokemon:
+                                self._colisao_pokemon_pendente = payload_pokemon
+                            else:
+                                self._colisao_pokemon_pendente = {"id": int(oid), "posicao": [float(sx), float(sy)]}
                     continue
                 limite = float(raio_ator + raio_obj + margem)
                 if d2 <= (limite * limite):
@@ -186,11 +187,11 @@ class ControladorPlayer:
         porta_w = max(1, int(layout.get("porta_largura_tiles", 4) or 4))
         if direcao in {"N", "S"}:
             centro = a[0] * bloco_w + bloco_w * 0.5
-            if abs(float(depois[0]) - centro) > (porta_w * 0.5 + max(0.1, raio)):
+            if abs(float(depois[0]) - centro) > (porta_w * 0.5):
                 return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio, layout, sala)
         else:
             centro = a[1] * bloco_h + bloco_h * 0.5
-            if abs(float(depois[1]) - centro) > (porta_w * 0.5 + max(0.1, raio)):
+            if abs(float(depois[1]) - centro) > (porta_w * 0.5):
                 return self._clamp_sala_pos(antes, a, bloco_w, bloco_h, raio, layout, sala)
         return depois
 
@@ -212,7 +213,7 @@ class ControladorPlayer:
             direcao = str(info.get("direcao") or "")
             if direcao in {"N", "S"}:
                 centro = x0 + bloco_w * 0.5
-                if abs(x - centro) > porta_w * 0.5 + max(0.1, raio):
+                if abs(x - centro) > porta_w * 0.5:
                     continue
                 if direcao == "N" and y <= y0 + parede + raio:
                     return True
@@ -220,7 +221,7 @@ class ControladorPlayer:
                     return True
             elif direcao in {"L", "O"}:
                 centro = y0 + bloco_h * 0.5
-                if abs(y - centro) > porta_w * 0.5 + max(0.1, raio):
+                if abs(y - centro) > porta_w * 0.5:
                     continue
                 if direcao == "O" and x <= x0 + parede + raio:
                     return True
@@ -233,9 +234,6 @@ class ControladorPlayer:
         bx, by = sala_idx
         layout = layout if isinstance(layout, dict) else {}
         sala = sala or {}
-        ajuste_passagem = ControladorPlayer._clamp_passagem(pos, sala_idx, bloco_w, bloco_h, raio, layout, sala)
-        if ajuste_passagem is not None:
-            return ajuste_passagem
         if ControladorPlayer._pos_em_abertura(pos, sala_idx, bloco_w, bloco_h, raio, layout, sala):
             return (float(pos[0]), float(pos[1]))
         margem = max(0.08, float(raio)) + max(1, int(layout.get("parede_largura_tiles", 2) or 2))
@@ -296,6 +294,14 @@ class ControladorPlayer:
         if callable(normalizar):
             normalizar()
 
+    @staticmethod
+    def _ator_bloqueia_batalha(ator) -> bool:
+        if ator is None:
+            return True
+        if bool(getattr(ator, "GameOverServidor", False) or getattr(ator, "Morto", False) or getattr(ator, "SobreBuraco", False)):
+            return True
+        return bool(getattr(ator, "ImuneCombateAtiva", False)) or int(pygame.time.get_ticks()) < int(getattr(ator, "ImuneCombateAteMs", 0) or 0)
+
     def consumir_colisao_pokemon(self) -> Optional[Dict[str, object]]:
         evento = dict(self._colisao_pokemon_pendente) if isinstance(self._colisao_pokemon_pendente, dict) else None
         self._colisao_pokemon_pendente = None
@@ -304,6 +310,9 @@ class ControladorPlayer:
     def _detectar_colisao_pokemon_proxima(self) -> None:
         ator = self._player_local
         if ator is None:
+            return
+        if self._ator_bloqueia_batalha(ator):
+            self._colisao_pokemon_pendente = None
             return
         pos = tuple(ator.Posicao)
         player_id = getattr(ator, "Id", None)

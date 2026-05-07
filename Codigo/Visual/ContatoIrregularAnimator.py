@@ -349,7 +349,10 @@ class ContatoIrregularAnimator:
         nx, ny = _normal(inicio, fim)
         px, py = -ny, nx
         lado = 1.0 if ((origem[0] - inicio[0]) * px + (origem[1] - inicio[1]) * py) >= 0 else -1.0
-        return (inicio[0] + px * lado * 0.72, inicio[1] + py * lado * 0.72)
+        dist_inicio = _distancia(origem, inicio)
+        dist_fim = _distancia(origem, fim)
+        ancora = fim if dist_fim < dist_inicio else inicio
+        return (ancora[0] + px * lado * 0.72, ancora[1] + py * lado * 0.72)
 
     def _overlay(self, surface: pygame.Surface) -> pygame.Surface:
         return pygame.Surface(surface.get_size(), pygame.SRCALPHA)

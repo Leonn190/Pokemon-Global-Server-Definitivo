@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import random
 import sys
+import unicodedata
 from pathlib import Path
 
 import pygame
@@ -19,6 +20,18 @@ from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosGerais.PipelineGrafica import PipelineGrafica
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
+
+
+ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
+    # Preencha com nomes do CSV. Cada ataque listado aparece em ao menos um Pokemon.
+    # Exemplo: "Laser de Fogo",
+]
+
+
+def _chave_ataque(nome: object) -> str:
+    bruto = unicodedata.normalize("NFKD", str(nome or "").strip().casefold())
+    sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+    return "".join(ch for ch in sem_acento if ch.isalnum())
 
 
 def carregar_especies_validas(caminho_csv: Path) -> list[str]:
@@ -87,6 +100,59 @@ def carregar_ataques(caminho_csv: Path) -> list[dict]:
     return ataques
 
 
+def resolver_ataques_obrigatorios(ataques: list[dict]) -> list[dict]:
+    if not ATAQUES_OBRIGATORIOS_SIMULADOR:
+        return []
+    por_nome = {_chave_ataque(atk.get("Ataque") or atk.get("Nome")): atk for atk in ataques}
+    obrigatorios: list[dict] = []
+    vistos: set[str] = set()
+    for nome in ATAQUES_OBRIGATORIOS_SIMULADOR:
+        chave = _chave_ataque(nome)
+        if not chave or chave in vistos:
+            continue
+        vistos.add(chave)
+        ataque = por_nome.get(chave)
+        if ataque is None:
+            print(f"[SimuladorBatalha] Ataque obrigatorio nao encontrado no CSV: {nome!r}")
+            continue
+        obrigatorios.append(ataque)
+    return obrigatorios
+
+
+def distribuir_ataques_obrigatorios(ataques_obrigatorios: list[dict], total_pokemons: int, slots_por_pokemon: int = 5) -> list[list[dict]]:
+    grupos: list[list[dict]] = [[] for _ in range(max(0, total_pokemons))]
+    if not grupos:
+        return grupos
+    limite = len(grupos) * max(1, int(slots_por_pokemon or 1))
+    for i, ataque in enumerate(ataques_obrigatorios[:limite]):
+        grupos[i % len(grupos)].append(ataque)
+    if len(ataques_obrigatorios) > limite:
+        excedente = len(ataques_obrigatorios) - limite
+        print(f"[SimuladorBatalha] {excedente} ataque(s) obrigatorio(s) sem slot disponivel.")
+    return grupos
+
+
+def sortear_ataques_simulador(ataques: list[dict], obrigatorios: list[dict] | None = None, total: int = 5) -> list[dict]:
+    total = max(0, int(total or 0))
+    escolhidos: list[dict] = []
+    usados: set[str] = set()
+
+    for ataque in list(obrigatorios or []):
+        chave = _chave_ataque(ataque.get("Ataque") or ataque.get("Nome"))
+        if not chave or chave in usados or len(escolhidos) >= total:
+            continue
+        escolhidos.append(ataque)
+        usados.add(chave)
+
+    if len(escolhidos) >= total or not ataques:
+        return escolhidos[:total]
+
+    pool = [atk for atk in ataques if _chave_ataque(atk.get("Ataque") or atk.get("Nome")) not in usados]
+    random.shuffle(pool)
+    escolhidos.extend(pool[: max(0, total - len(escolhidos))])
+    return escolhidos[:total]
+
+
 def criar_materializado(especie: str) -> dict:
     try:
         from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_server, materializar_pokemon
@@ -136,6 +202,7 @@ def criar_materializado(especie: str) -> dict:
 def montar_estado_inicial() -> dict:
     especies = carregar_especies_validas(RAIZ / "Dados" / "Tabelas" / "Pokemon Global Server - Pokemons.csv")
     ataques = carregar_ataques(RAIZ / "Dados" / "Tabelas" / "Pokemon Global Server - Ataques.csv")
+    ataques_obrigatorios = distribuir_ataques_obrigatorios(resolver_ataques_obrigatorios(ataques), total_pokemons=12)
     random.shuffle(especies)
 
     precisa = 12
@@ -152,11 +219,16 @@ def montar_estado_inicial() -> dict:
 
     for lado_id, lado_visual, offset in ((50, "jogador", 1), (51, "inimigo", 101)):
         for i in range(6):
+            indice_pokemon = len(pokemons_serializados)
             especie = escolhidas[(0 if lado_id == 50 else 6) + i]
             dados = criar_materializado(especie)
             ativo = i < 3
             area_id = (areas_j if lado_id == 50 else areas_i)[i] if ativo else None
-            atk_sample = random.sample(ataques, k=min(5, len(ataques))) if ataques else []
+            atk_sample = sortear_ataques_simulador(
+                ataques,
+                obrigatorios=ataques_obrigatorios[indice_pokemon] if indice_pokemon < len(ataques_obrigatorios) else [],
+                total=5,
+            )
             stats_base = dict((dados.get("stats_base") if isinstance(dados.get("stats_base"), dict) else dados.get("stats")) or {})
             stats_normalizado = dict(stats_base)
             variacoes = {chave: 0 for chave in stats_normalizado.keys()}

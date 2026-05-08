@@ -99,10 +99,15 @@ class ControladorPlayer:
 
     def montar_player_local(self, dados_player):
         dados = dados_player if isinstance(dados_player, dict) else {}
-        estado = dados.get("estado") if isinstance(dados.get("estado"), dict) else {}
-        dim_inicial = str(estado.get("dimensao") or dados.get("dimensao") or "Mundo")
+        estado = dict(dados.get("estado") if isinstance(dados.get("estado"), dict) else {})
+        dim_inicial = str(estado.get("dimensao") or dados.get("dimensao") or dados.get("dimensao_atual") or "Mundo")
+        estado["dimensao"] = dim_inicial
+        if "estadio_atual_id" not in estado and dados.get("estadio_atual_id") is not None:
+            estado["estadio_atual_id"] = int(dados.get("estadio_atual_id", 0) or 0)
         self._estado_player_local_base = dict(estado)
-        self._player_local = self._hidratar_ator_payload(None, dados, com_controle=True)
+        dados_hidratados = dict(dados)
+        dados_hidratados["estado"] = estado
+        self._player_local = self._hidratar_ator_payload(None, dados_hidratados, com_controle=True)
         setattr(self._player_local, "DimensaoAtual", dim_inicial)
         self._objetos.definir_player_local_info(self._player_local)
         self._objetos.definir_dimensao_atual_client(dim_inicial)
@@ -630,7 +635,6 @@ class ControladorPlayer:
         if tipo_alvo != "estadio_entrada":
             return
         estadio = alvo.get("estadio") if isinstance(alvo.get("estadio"), dict) else {}
-        entrada = alvo.get("posicao") if isinstance(alvo.get("posicao"), (list, tuple)) and len(alvo.get("posicao")) == 2 else [0.0, 0.0]
         estado = estadio.get("estado") if isinstance(estadio.get("estado"), dict) else {}
         self._objetos.EnfileirarDiffRapida({
             "tipo": "evento",
@@ -639,7 +643,6 @@ class ControladorPlayer:
                 "acao": "entrar",
                 "estadio_id": int(estadio.get("id", 0) or 0),
                 "dimensao_destino": str(estado.get("dimensao_destino") or "EstadioNormal"),
-                "entrada_pos": [float(entrada[0]), float(entrada[1])],
                 "instante_cliente_ms": int(time.time() * 1000),
             },
         })

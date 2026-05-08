@@ -512,7 +512,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
                 pos_dim_norm[str(chave)] = [float(valor[0]), float(valor[1])]
             except (TypeError, ValueError):
                 continue
-    if "Mundo" not in pos_dim_norm:
+    if "Mundo" not in pos_dim_norm and dimensao_atual == "Mundo":
         pos_dim_norm["Mundo"] = [float(dados.get("posicao", [0.0, 0.0])[0]), float(dados.get("posicao", [0.0, 0.0])[1])]
     dados["dimensao_atual"] = dimensao_atual
     dados["posicoes_por_dimensao"] = pos_dim_norm

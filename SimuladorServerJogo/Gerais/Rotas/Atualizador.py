@@ -254,6 +254,18 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     estadio_id = int(payload.get("estadio_id", 0) or int(player.estado_extra.get("estadio_atual_id", 0) or 0))
     estadio = BANCO_DADOS.obter_objeto(estadio_id) if estadio_id > 0 else None
 
+    def _estadio_por_dimensao(dimensao: str):
+        dim = str(dimensao or "").strip()
+        if not dim.startswith("Estadio"):
+            return None
+        for obj in BANCO_DADOS.listar_objetos():
+            if str(getattr(obj, "tipo_classe", "") or "") != "entidade_estadio":
+                continue
+            estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+            if str(estado.get("dimensao_destino") or "EstadioNormal") == dim:
+                return obj
+        return None
+
     def _dist_ok(a, b, lim):
         try:
             dx = float(a[0]) - float(b[0]); dy = float(a[1]) - float(b[1])
@@ -283,10 +295,12 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         return [float(estadio.posicao[0] + offset_x), float(estadio.posicao[1] + offset_y)]
 
     if acao == "sair":
+        dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
+        if estadio is None:
+            estadio = _estadio_por_dimensao(dim_atual)
         if estadio is None:
             return False
         estado_est = getattr(estadio, "estado_extra", {}) if isinstance(getattr(estadio, "estado_extra", {}), dict) else {}
-        dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
         if dim_atual == "Mundo":
             return False
         pos_dim = player.estado_extra.get("posicoes_por_dimensao") if isinstance(player.estado_extra.get("posicoes_por_dimensao"), dict) else {}
@@ -298,13 +312,10 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
         entrada = _entrada_externa(estado_est)
         player.estado_extra["dimensao"] = "Mundo"
         player.estado_extra["estadio_atual_id"] = 0
+        player.estado_extra.pop("ultima_pos_mundo", None)
+        pos_dim["Mundo"] = [float(entrada[0]), float(entrada[1])]
         player.estado_extra["posicoes_por_dimensao"] = pos_dim
-        mundo_salvo = player.estado_extra.get("ultima_pos_mundo")
-        if isinstance(mundo_salvo, (list, tuple)) and len(mundo_salvo) == 2:
-            mundo_pos = [float(mundo_salvo[0]), float(mundo_salvo[1])]
-        else:
-            mundo_pos = pos_dim.get("Mundo") if isinstance(pos_dim.get("Mundo"), (list, tuple)) and len(pos_dim.get("Mundo")) == 2 else entrada
-        player.definir_posicao(float(mundo_pos[0]), float(mundo_pos[1]))
+        player.definir_posicao(float(entrada[0]), float(entrada[1]))
         atualizar_posicao_personagem(client_id, player.posicao, dimensao="Mundo")
         registrar_diff("update", payload=player.serializar(), escopo=_escopo_objeto(player), objeto_id=player.Id, autor="server", categoria="player")
         return True
@@ -312,7 +323,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     if estadio is None:
         return False
     estado_est = getattr(estadio, "estado_extra", {}) if isinstance(getattr(estadio, "estado_extra", {}), dict) else {}
-    entrada = payload.get("entrada_pos") if isinstance(payload.get("entrada_pos"), (list, tuple)) and len(payload.get("entrada_pos")) == 2 else _entrada_externa(estado_est)
+    entrada = _entrada_externa(estado_est)
     if not _dist_ok(player.posicao, entrada, 2.0):
         return False
 
@@ -322,8 +333,7 @@ def _processar_evento_interacao_estadio(client_id: str, payload: Dict[str, objec
     dim_atual = str(player.estado_extra.get("dimensao") or "Mundo")
     if dim_atual != "Mundo":
         return False
-    pos_dim[dim_atual] = [float(player.posicao[0]), float(player.posicao[1])]
-    player.estado_extra["ultima_pos_mundo"] = [float(player.posicao[0]), float(player.posicao[1])]
+    pos_dim[dim_atual] = [float(entrada[0]), float(entrada[1])]
     destino = spawn
     player.estado_extra["dimensao"] = dim
     player.estado_extra["estadio_atual_id"] = int(estadio.Id)

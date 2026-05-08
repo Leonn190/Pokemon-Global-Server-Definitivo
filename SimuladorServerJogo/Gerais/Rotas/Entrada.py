@@ -57,6 +57,19 @@ def _ator_payload(usuario: str, personagem: dict) -> dict:
     }
 
 
+def _estadio_id_por_dimensao(dimensao: str) -> int:
+    dim = str(dimensao or "").strip()
+    if not dim.startswith("Estadio"):
+        return 0
+    for obj in BANCO_DADOS.listar_objetos():
+        if str(getattr(obj, "tipo_classe", "") or "") != "entidade_estadio":
+            continue
+        estado = getattr(obj, "estado_extra", {}) if isinstance(getattr(obj, "estado_extra", {}), dict) else {}
+        if str(estado.get("dimensao_destino") or "EstadioNormal") == dim:
+            return int(getattr(obj, "Id", 0) or 0)
+    return 0
+
+
 # ============================= ROTA =============================
 # ROTA: processa requisições de entrada no servidor.
 def processar_entrada_json(requisicao_json):
@@ -107,6 +120,12 @@ def processar_entrada_json(requisicao_json):
             )
             ator.estado_extra["dimensao"] = dimensao_atual
             ator.estado_extra["posicoes_por_dimensao"] = {str(k): [float(v[0]), float(v[1])] for k, v in pos_dim.items() if isinstance(v, (list, tuple)) and len(v) == 2}
+            personagem["posicao"] = [float(pos_dim_dim[0]), float(pos_dim_dim[1])]
+            personagem["dimensao"] = dimensao_atual
+            estadio_id = _estadio_id_por_dimensao(dimensao_atual)
+            if estadio_id > 0:
+                ator.estado_extra["estadio_atual_id"] = estadio_id
+                personagem["estadio_atual_id"] = estadio_id
             registrar_checkpoint_mundo_seguro(usuario, ator)
             aplicar_invulnerabilidade_player(ator, 90, "entrada_mundo")
             personagem["id"] = ator.Id

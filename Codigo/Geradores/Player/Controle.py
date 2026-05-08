@@ -228,12 +228,7 @@ class Controle:
                 else:
                     self._batendo = True
                     self._soltar_apos_tapa_atual = False
-                    item_mao = self._item_qualquer_na_mao()
-                    estilo_item = str((item_mao or {}).get("Estilo") or "").strip().lower()
-                    if estilo_item == "ferramenta":
-                        tocar("BaterFerramenta")
-                    if not self.Ator.esta_tapando():
-                        self.Ator.iniciar_tapa()
+                    self._iniciar_tapa_com_som()
 
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
                 if self.Ator.esta_tapando():
@@ -401,7 +396,18 @@ class Controle:
                 self._batendo = False
                 self._soltar_apos_tapa_atual = False
                 return
-            self.Ator.iniciar_tapa()
+            self._iniciar_tapa_com_som()
+
+    def _iniciar_tapa_com_som(self):
+        if self.Ator.esta_tapando():
+            return
+        self.Ator.iniciar_tapa()
+        if not self.Ator.esta_tapando():
+            return
+        item_mao = self._item_qualquer_na_mao()
+        estilo_item = str((item_mao or {}).get("Estilo") or (item_mao or {}).get("estilo") or "").strip().lower()
+        if estilo_item == "ferramenta":
+            tocar("BaterFerramenta")
 
     def _processar_scroll_inventario(self, eventos):
         for evento in eventos:

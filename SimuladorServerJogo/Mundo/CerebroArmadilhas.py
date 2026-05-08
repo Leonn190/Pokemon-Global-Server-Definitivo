@@ -160,7 +160,7 @@ class CerebroArmadilhas:
                     return True
         return False
 
-    def _atualizar_torreta(self, layout: dict, trap: dict, estado: dict, players: list, tick: int) -> None:
+    def _atualizar_torreta(self, layout: dict, trap: dict, estado: dict, players: list, tick: int, aplicar_dano: Callable[[object, str], bool] | None = None) -> None:
         cfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
         pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else [0.0, 0.0]
         projeteis = estado.setdefault("projeteis", [])
@@ -177,7 +177,16 @@ class CerebroArmadilhas:
                 continue
             proj["posicao"] = [nx, ny]
             proj["distancia"] = float(proj.get("distancia", 0.0) or 0.0) + vel / self.tick_rate
-            if float(proj["distancia"]) < float(cfg.get("alcance", 8.0) or 8.0):
+            raio_proj = float(proj.get("raio", cfg.get("raio_tiro", 0.18)) or 0.18)
+            atingiu_player = False
+            for player in players:
+                raio_player = max(0.1, float(getattr(player, "raio_colisao", 0.55) or 0.55))
+                if self._dist2(player.posicao, [nx, ny]) <= (raio_player + raio_proj) ** 2:
+                    if callable(aplicar_dano):
+                        aplicar_dano(player, "tiro_torreta")
+                    atingiu_player = True
+                    break
+            if not atingiu_player:
                 vivos.append(proj)
         estado["projeteis"] = vivos
         cooldown = int(cfg.get("cooldown_ticks", 60) or 60)
@@ -243,7 +252,7 @@ class CerebroArmadilhas:
                 elif tipo == "quebradinho":
                     alterou_tiles = self._atualizar_quebradinho(layout, trap, estado, players_sala, int(tick)) or alterou_tiles
                 elif tipo == "torreta":
-                    self._atualizar_torreta(layout, trap, estado, players_sala, int(tick))
+                    self._atualizar_torreta(layout, trap, estado, players_sala, int(tick), aplicar_dano)
                 elif tipo == "barra_fogo":
                     estado["bolas_posicoes"] = self._bolas_barra_fogo(trap, int(tick))
 
@@ -255,9 +264,6 @@ class CerebroArmadilhas:
                 elif tipo == "barra_fogo":
                     raio = float((trap.get("config") or {}).get("raio_bola", 0.23) if isinstance(trap.get("config"), dict) else 0.23)
                     pontos_dano.extend((p, raio, "barra_fogo") for p in list(estado.get("bolas_posicoes") or []))
-                elif tipo == "torreta":
-                    for proj in list(estado.get("projeteis") or []):
-                        pontos_dano.append((proj.get("posicao", [0.0, 0.0]), float(proj.get("raio", 0.18) or 0.18), "tiro_torreta"))
                 for player in players_sala:
                     raio_player = max(0.1, float(getattr(player, "raio_colisao", 0.55) or 0.55))
                     for pos, raio, motivo in pontos_dano:

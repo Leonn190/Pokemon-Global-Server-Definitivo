@@ -43,6 +43,29 @@ class ArmadilhaVisual:
                 cache.pop(pid, None)
         return out
 
+    @staticmethod
+    def _suavizar_pontos_identificados(cache: dict[str, list[float]], pontos: list, dt: float, prefixo: str) -> list[list[float]]:
+        vivos = set()
+        k = min(1.0, max(0.0, float(dt)) * 20.0)
+        out = []
+        for idx, item in enumerate(pontos):
+            if not isinstance(item, (list, tuple)) or len(item) != 2:
+                continue
+            pid_bruto, ponto = item
+            if not isinstance(ponto, (list, tuple)) or len(ponto) != 2:
+                continue
+            pid = f"{prefixo}_{pid_bruto or idx}"
+            vivos.add(pid)
+            alvo = [float(ponto[0]), float(ponto[1])]
+            atual = cache.setdefault(pid, list(alvo))
+            atual[0] += (alvo[0] - atual[0]) * k
+            atual[1] += (alvo[1] - atual[1]) * k
+            out.append([float(atual[0]), float(atual[1])])
+        for pid in list(cache.keys()):
+            if pid not in vivos:
+                cache.pop(pid, None)
+        return out
+
 
 class ArmadilhasDungeon:
     def __init__(self) -> None:
@@ -106,11 +129,11 @@ class ArmadilhasDungeon:
                 self._bolas_suavizadas[tid] = visual._suavizar_pontos(visual.bolas, list(estado.get("bolas_posicoes") or []), dt, "bola")
             elif tipo == "torreta":
                 pontos = [
-                    proj.get("posicao")
+                    (proj.get("id"), proj.get("posicao"))
                     for proj in list(estado.get("projeteis") or [])
                     if isinstance(proj, dict) and isinstance(proj.get("posicao"), (list, tuple))
                 ]
-                self._projeteis_suavizados[tid] = visual._suavizar_pontos(visual.projeteis, pontos, dt, "tiro")
+                self._projeteis_suavizados[tid] = visual._suavizar_pontos_identificados(visual.projeteis, pontos, dt, "tiro")
         for tid in list(self._visuais.keys()):
             if tid not in vistos:
                 self._visuais.pop(tid, None)

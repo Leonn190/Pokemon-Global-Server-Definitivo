@@ -134,7 +134,7 @@ class ControladorCriaveis:
                 "item_base_id": str(dados.get("item_base_id") or ""), "quantidade": max(1, int(dados.get("quantidade", 1) or 1)),
                 "dono_id": int(dados.get("dono_id", 0) or 0), "token_drop": token,
                 "posicao": [float(pos_inicial[0]), float(pos_inicial[1])],
-                "estado": {"subtipo": "item_mundo", "pos_inicial": [float(pos_inicial[0]), float(pos_inicial[1])], "pos_final": [float(pos_final[0]), float(pos_final[1])], "velocidade": float(dados.get("velocidade_tiles_s", 3.0) or 3.0), "voando": True, "token_drop": token, "predito_local": False},
+                "estado": {"subtipo": "item_mundo", "dimensao": str(dados.get("dimensao") or "Mundo"), "pos_inicial": [float(pos_inicial[0]), float(pos_inicial[1])], "pos_final": [float(pos_final[0]), float(pos_final[1])], "velocidade": float(dados.get("velocidade_tiles_s", 3.0) or 3.0), "voando": True, "token_drop": token, "predito_local": False},
             }
             aplicar_diff_cb({"tipo": "spawn", "objeto_id": int(oid_vis), "payload": fake})
             return True

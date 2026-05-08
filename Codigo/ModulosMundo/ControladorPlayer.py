@@ -490,6 +490,7 @@ class ControladorPlayer:
         quantidade = max(1, int(item.get("quantidade", 1) or 1))
 
         token = str(uuid.uuid4())
+        dimensao = str(self._objetos.dimensao_atual_client() or "Mundo")
 
         self._seq_id_projetil_predito -= 1
         oid = self._seq_id_projetil_predito
@@ -504,6 +505,7 @@ class ControladorPlayer:
             "posicao": [float(origem[0]), float(origem[1])],
             "estado": {
                 "subtipo": "item_mundo",
+                "dimensao": dimensao,
                 "pos_inicial": [float(origem[0]), float(origem[1])],
                 "pos_final": [float(destino[0]), float(destino[1])],
                 "velocidade": float(velocidade),
@@ -526,6 +528,7 @@ class ControladorPlayer:
                     "quantidade": quantidade,
                 },
                 "quantidade": quantidade,
+                "dimensao": dimensao,
                 "pos_inicial": [float(origem[0]), float(origem[1])],
                 "pos_final": [float(destino[0]), float(destino[1])],
                 "velocidade_tiles_s": float(velocidade),

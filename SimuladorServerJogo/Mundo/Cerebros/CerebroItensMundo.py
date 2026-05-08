@@ -25,6 +25,7 @@ class CerebroItensMundo:
         dono_obj = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
         if dono_obj is None:
             return True
+        dimensao = str(getattr(dono_obj, "estado_extra", {}).get("dimensao") or "Mundo")
 
         item = payload.get("item") if isinstance(payload.get("item"), dict) else {}
         item_base_id = str(item.get("Code") or payload.get("item_base_id") or "")
@@ -44,10 +45,11 @@ class CerebroItensMundo:
         atraso_ms = max(0, int(time.time() * 1000) - cliente_ms) if cliente_ms > 0 else 0
         velocidade_visual = min(9.0, velocidade + (atraso_ms / 1000.0) * 1.5)
 
-        registrar_diff("spawn", payload={"token": token, "item_nome": item_nome, "item_base_id": item_base_id, "item_dados": dict(item_dados), "quantidade": quantidade, "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": float(velocidade_visual), "dono_id": int(player_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(player_id), autor=usuario, categoria="item_mundo_lancamento")
+        registrar_diff("spawn", payload={"token": token, "item_nome": item_nome, "item_base_id": item_base_id, "item_dados": dict(item_dados), "quantidade": quantidade, "dimensao": dimensao, "pos_inicial": [float(p0[0]), float(p0[1])], "pos_final": [float(destino[0]), float(destino[1])], "velocidade_tiles_s": float(velocidade_visual), "dono_id": int(player_id)}, escopo={"centro": [float(p0[0]), float(p0[1])], "raio": 120}, objeto_id=int(player_id), autor=usuario, categoria="item_mundo_lancamento")
 
         novo_id = BANCO_DADOS.gerar_id()
         obj = ItemMundoServer(id_objeto=novo_id, posicao=(float(p0[0]), float(p0[1])), dono_id=player_id, item_nome=item_nome, item_base_id=item_base_id, quantidade=quantidade, pos_inicial=(float(p0[0]), float(p0[1])), pos_final=(float(destino[0]), float(destino[1])), velocidade=velocidade, tick_spawn=int(self._core._tick_contador), token_drop=token, item_dados=item_dados)
+        obj.estado_extra["dimensao"] = dimensao
         BANCO_DADOS.inserir_objeto(obj)
         self._core._itens_mundo_ids.add(int(obj.Id))
         registrar_diff("spawn", payload=obj.serializar(), escopo={"centro": [float(obj.posicao[0]), float(obj.posicao[1])], "raio": 120}, objeto_id=obj.Id, autor="server", categoria="item_mundo")
@@ -118,7 +120,8 @@ class CerebroItensMundo:
                     item.definir_posicao(float(destino[0]), float(destino[1])); estado["voando"] = False
                     BANCO_DADOS.atualizar_objeto(item.Id, {"posicao": [item.posicao[0], item.posicao[1]], "estado": estado})
                 continue
-            if BANCO_DADOS.chunk_da_posicao(item.posicao) not in chunks_validos:
+            dim_item = str(estado.get("dimensao") or "Mundo")
+            if dim_item == "Mundo" and BANCO_DADOS.chunk_da_posicao(item.posicao) not in chunks_validos:
                 rem = BANCO_DADOS.remover_objeto(item.Id); self._core._itens_mundo_ids.discard(item.Id)
                 if rem is not None:
                     registrar_diff("despawn", payload={"id": rem.Id, "motivo": "chunk_nao_mantido"}, escopo={"centro": [rem.posicao[0], rem.posicao[1]], "raio": 120}, objeto_id=rem.Id, autor="server", categoria="item_mundo")
@@ -134,7 +137,6 @@ class CerebroItensMundo:
                     if rem is not None:
                         registrar_diff("despawn", payload={"id": rem.Id, "motivo": "evento"}, escopo={"centro": [rem.posicao[0], rem.posicao[1]], "raio": 120}, objeto_id=rem.Id, autor="server", categoria="item_mundo")
                 continue
-            dim_item = str(estado.get("dimensao") or "Mundo")
             for player in players:
                 if str(getattr(player, "estado_extra", {}).get("dimensao") or "Mundo") != dim_item:
                     continue

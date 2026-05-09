@@ -3,9 +3,41 @@ chance_por_tick = 0.025
 limite_200_ticks = 2
 tentativas = 5
 limite_chunk = 2
+limite_chunk_3x3 = 7
 limite_total = 100
 limite_total_por_chunk_existente = 1.0
 chance_despawn_simulado_por_tick = 0.003
+
+[progressao_raridade]
+1 = 0
+2 = 0
+3 = 0
+4 = 0
+5 = 3
+6 = 5
+7 = 7
+8 = 10
+9 = 12
+10 = 15
+
+[multiplicadores_spawn.chuva]
+agua_intensidade_30 = 1.25
+agua_intensidade_80 = 1.5
+
+[multiplicadores_spawn.horario.sombrio]
+inicio = "20:00"
+fim = "04:00"
+multiplicador = 1.35
+
+[multiplicadores_spawn.horario.fantasma]
+inicio = "22:00"
+fim = "04:00"
+multiplicador = 1.25
+
+[multiplicadores_spawn.horario.planta]
+inicio = "06:00"
+fim = "10:00"
+multiplicador = 1.1
 
 [baus]
 chance_por_tick = 0.01

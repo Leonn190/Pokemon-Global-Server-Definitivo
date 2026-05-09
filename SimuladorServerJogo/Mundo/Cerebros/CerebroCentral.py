@@ -18,6 +18,7 @@ from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import materializar_pok
 
 from SimuladorServerJogo.Mundo.Cerebros.CerebroBaus import CerebroBaus
 from SimuladorServerJogo.Mundo.Cerebros.CerebroPokemons import CerebroPokemons
+from SimuladorServerJogo.Mundo.Cerebros.CerebroSpawnPokemons import CerebroSpawnPokemons
 from SimuladorServerJogo.Mundo.Cerebros.CerebroProjeteis import CerebroProjeteis
 from SimuladorServerJogo.Mundo.Cerebros.CerebroItensMundo import CerebroItensMundo
 from SimuladorServerJogo.Mundo.Cerebros.CerebroEstruturasNaturais import CerebroEstruturasNaturais
@@ -52,6 +53,7 @@ class CerebroCentral:
         self._servico_inventario = ServicoInventario()
         self._cerebro_baus = CerebroBaus(self)
         self._cerebro_pokemons = CerebroPokemons(self)
+        self._cerebro_spawn_pokemons = CerebroSpawnPokemons(self)
         self._cerebro_projeteis = CerebroProjeteis(self)
         self._cerebro_itens_mundo = CerebroItensMundo(self)
         self._cerebro_estruturas = CerebroEstruturasNaturais(self)
@@ -78,6 +80,7 @@ class CerebroCentral:
             self._servico_inventario = ServicoInventario()
             self._cerebro_baus = CerebroBaus(self)
             self._cerebro_pokemons = CerebroPokemons(self)
+            self._cerebro_spawn_pokemons = CerebroSpawnPokemons(self)
             self._cerebro_projeteis = CerebroProjeteis(self)
             self._cerebro_itens_mundo = CerebroItensMundo(self)
             self._cerebro_estruturas = CerebroEstruturasNaturais(self)
@@ -237,7 +240,7 @@ class CerebroCentral:
             BANCO_DADOS.descarregar_estruturas_fora_dos_chunks(chunks_ativos)
 
         if chunks_simulados:
-            self._cerebro_pokemons.tentar_spawn(chunks_simulados)
+            self._cerebro_spawn_pokemons.tentar_spawn(chunks_simulados)
             self._tentar_spawn_bau(chunks_simulados)
 
         self._cerebro_pokemons.atualizar_movimento(chunks_carregados)

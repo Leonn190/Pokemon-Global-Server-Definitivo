@@ -503,6 +503,24 @@ class BancoDadosMundo:
                     return 0
             return 0
 
+    def bioma_em(self, gx: int, gy: int) -> int:
+        with self._lock:
+            if gx < 0 or gy < 0 or gx >= self._largura_blocos or gy >= self._altura_blocos:
+                return 2
+            dc = max(1, int(self._chunk_blocos_disco))
+            cx = gx // dc
+            cy = gy // dc
+            lx = gx % dc
+            ly = gy % dc
+            chunk = self._carregar_chunk(cx, cy)
+            grid = chunk.get("grid_biomas", [])
+            if 0 <= ly < len(grid) and isinstance(grid[ly], list) and 0 <= lx < len(grid[ly]):
+                try:
+                    return int(grid[ly][lx])
+                except (TypeError, ValueError):
+                    return 2
+            return 2
+
     def limites_mundo(self) -> Tuple[int, int]:
         with self._lock:
             return (max(1, int(self._largura_blocos)), max(1, int(self._altura_blocos)))

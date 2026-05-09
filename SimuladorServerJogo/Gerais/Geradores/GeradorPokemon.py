@@ -850,8 +850,12 @@ def _escolher_especie(especie=None) -> Dict[str, str]:
     return item["row"]
 
 
-def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None) -> PokemonServer:
-    row = _escolher_especie(especie)
+def listar_candidatos_spawn_pokemon() -> List[Dict[str, str]]:
+    return [dict(item.get("row", {})) for item in _BASE_POKEMONS if isinstance(item, dict)]
+
+
+def gerar_pokemon_server(novo_id: int, posicao, chunk_xy, especie=None, row_pokemon: Optional[Dict[str, str]] = None) -> PokemonServer:
+    row = dict(row_pokemon) if isinstance(row_pokemon, dict) else _escolher_especie(especie)
     iv_global = random.randint(0, 100)
     nivel = _nivel_baixo_comum(60)
 

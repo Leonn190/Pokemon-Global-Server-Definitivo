@@ -8,7 +8,6 @@ from typing import List, Optional, Set, Tuple
 
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import PokemonServer, BauServer
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import gerar_pokemon_server
 
 Vector2 = Tuple[float, float]
 Chunk = Tuple[int, int]
@@ -122,46 +121,6 @@ class CerebroPokemons:
         minimo = self._core._f("pokemon_mundo_vel_min_tiles_s", 1.0)
         maximo = self._core._f("pokemon_mundo_vel_max_tiles_s", 4.8)
         return max(minimo, min(maximo, base + (vel / divisor)))
-
-    def tentar_spawn(self, chunks_simulados: Set[Chunk]) -> None:
-        from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff
-
-        if random.random() >= self._core._f("chance_spawn_pokemon_por_tick", 0.02):
-            return
-        if len(self._core._spawns_pokemon_ultimos_200) >= self._core._i("limite_spawn_pokemon_200_ticks", 4):
-            return
-        if self._core.contagem_pokemons_registrados() >= self._core._i("limite_total_pokemons", 100):
-            return
-        limite_por_chunk = self._core._f("limite_total_pokemons_por_chunk_existente", -1.0)
-        if limite_por_chunk >= 0.0:
-            chunks_existentes = len(set(chunks_simulados) | set(getattr(self._core, "_chunks_carregados_tick_atual", set())))
-            if self._core.contagem_pokemons_registrados() >= int(math.floor(max(0.0, limite_por_chunk) * max(0, chunks_existentes))):
-                return
-
-        tentativas = int(self._core._i("tentativas_spawn_pokemon", 5))
-        if tentativas <= 0:
-            return
-        chunk_tamanho = BANCO_DADOS.chunk_tamanho_unidade()
-        chunk_list = list(chunks_simulados)
-        random.shuffle(chunk_list)
-        for _ in range(tentativas):
-            if not chunk_list:
-                return
-            chunk = random.choice(chunk_list)
-            if self._core._contar_pokemons_chunk(chunk) >= self._core._i("limite_pokemons_chunk", 2):
-                continue
-            x0, y0 = chunk[0] * chunk_tamanho, chunk[1] * chunk_tamanho
-            px = random.uniform(x0 + 0.2, x0 + chunk_tamanho - 0.2)
-            py = random.uniform(y0 + 0.2, y0 + chunk_tamanho - 0.2)
-            if not self._core._posicao_spawn_valida((px, py), raio=0.45):
-                continue
-            novo_id = BANCO_DADOS.gerar_id()
-            poke = gerar_pokemon_server(novo_id=novo_id, posicao=(px, py), chunk_xy=chunk)
-            BANCO_DADOS.inserir_objeto(poke)
-            self._core._pokemons_ids.add(int(poke.Id))
-            self._core._spawns_pokemon_ultimos_200.append(self._core._tick_contador)
-            registrar_diff("spawn", payload=poke.serializar(), escopo={"centro": [px, py], "raio": 80}, objeto_id=poke.Id, autor="server", categoria="pokemon")
-            return
 
     def atualizar_movimento(self, chunks_carregados: Set[Chunk]) -> None:
         from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff

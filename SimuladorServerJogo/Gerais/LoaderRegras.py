@@ -188,9 +188,14 @@ def carregar_regras_spawn() -> Dict[str, object]:
     out["limite_spawn_pokemon_200_ticks"] = _int_cfg(pok, "limite_200_ticks", 4)
     out["tentativas_spawn_pokemon"] = _int_cfg(pok, "tentativas", 5)
     out["limite_pokemons_chunk"] = _int_cfg(pok, "limite_chunk", 2)
+    out["limite_pokemons_chunk_3x3"] = _int_cfg(pok, "limite_chunk_3x3", 7)
     out["limite_total_pokemons"] = _int_cfg(pok, "limite_total", 100)
     out["limite_total_pokemons_por_chunk_existente"] = _float_cfg(pok, "limite_total_por_chunk_existente", -1.0)
     out["chance_despawn_pokemon_simulado_por_tick"] = _float_cfg(pok, "chance_despawn_simulado_por_tick", 0.003)
+    progressao = dados.get("progressao_raridade") if isinstance(dados.get("progressao_raridade"), dict) else {}
+    out["progressao_raridade"] = {str(k): _int_cfg(progressao, str(k), 0) for k in range(1, 11)}
+    multiplicadores = dados.get("multiplicadores_spawn") if isinstance(dados.get("multiplicadores_spawn"), dict) else {}
+    out["multiplicadores_spawn"] = dict(multiplicadores)
 
     out["chance_spawn_bau_por_tick"] = _float_cfg(bau, "chance_por_tick", 0.010)
     out["limite_spawn_bau_200_ticks"] = _int_cfg(bau, "limite_200_ticks", 2)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 from typing import Callable
 
@@ -11,6 +13,8 @@ from Codigo.Prefabs.Texto import Texto
 
 
 class Loja:
+    SLOTS_POR_LINHA = 6
+
     def __init__(
         self,
         npc_nome: str,
@@ -57,7 +61,14 @@ class Loja:
         return ("item", nome)
 
     def _carregar_catalogo_npc(self) -> dict:
-        return {"padrao": self._carregar_loja_padrao(), "secreta": self._carregar_loja_secreta(), "presentes": self._carregar_presentes()}
+        presentes = self._carregar_presentes()
+        return {
+            "padrao": self._carregar_loja_padrao(),
+            "secreta": self._carregar_loja_secreta(),
+            "presentes": presentes,
+            "presente_1": [dict(o) for o in presentes if str(o.get("id") or "") == "presente_1"],
+            "presente_2": [dict(o) for o in presentes if str(o.get("id") or "") == "presente_2"],
+        }
 
     def _procurar_row_csv(self, arquivo: str) -> dict | None:
         try:
@@ -116,12 +127,22 @@ class Loja:
         return ofertas
 
     def _carregar_presentes(self) -> list[dict]:
+        presentes_estado = []
+        for chave in ("presente_1", "presente_2"):
+            ofertas = self._catalogo_estado.get(chave) if isinstance(self._catalogo_estado.get(chave), list) else []
+            presentes_estado.extend(dict(o) for o in ofertas if isinstance(o, dict))
+        if presentes_estado:
+            return presentes_estado
+        ofertas_estado = self._catalogo_estado.get("presentes") if isinstance(self._catalogo_estado.get("presentes"), list) else None
+        if ofertas_estado is not None:
+            return [dict(o) for o in ofertas_estado if isinstance(o, dict)]
+
         arquivo = "Pokemon Global Server - NPC Combatente.csv" if self._npc_estilo == "combatente" else "Pokemon Global Server - NPC Vendedor.csv"
         row = self._procurar_row_csv(arquivo)
         if not isinstance(row, dict):
             return []
         presentes = []
-        for i in range(1, 4):
+        for i in range(1, 3):
             nome_presente = self._ler_coluna(row, f"Presente {i}")
             if not nome_presente:
                 continue
@@ -193,6 +214,12 @@ class Loja:
             return [o for o in self._catalogo.get("padrao", []) if isinstance(o, dict)]
         if tipo == "secreta":
             return [o for o in self._catalogo.get("secreta", []) if isinstance(o, dict)]
+        if tipo in {"presente_1", "presente_2"}:
+            try:
+                idx = int(tipo.split("_")[-1])
+            except ValueError:
+                return []
+            return [o for o in self._catalogo.get(tipo, []) if isinstance(o, dict) and self.status_presente(idx) == "ok"]
         if tipo == "presente":
             return self._presentes_disponiveis()
         return []
@@ -208,11 +235,11 @@ class Loja:
         self._botoes_loja = []
         self._tamanho_loja_montado = tela_size
         ofertas = self._ofertas_por_tipo(tipo)
-        if tipo not in {"padrao", "secreta", "presente"}:
+        if tipo not in {"padrao", "secreta", "presente", "presente_1", "presente_2"}:
             return
 
         w, h = tela_size
-        cols = max(1, min(5, len(ofertas) if ofertas else 1))
+        cols = max(1, min(self.SLOTS_POR_LINHA, len(ofertas) if ofertas else 1))
         gap = 16
         lado = max(72, min(110, int(w * 0.07)))
         total_w = (cols * lado) + ((cols - 1) * gap)
@@ -243,7 +270,7 @@ class Loja:
     def _texto_preco(oferta: dict, tipo_loja: str) -> tuple[str, tuple[int, int, int]]:
         qtd = int(oferta.get("quantidade", 1) or 1)
         sufixo = f"x{qtd}" if qtd > 1 else ""
-        if tipo_loja == "presente":
+        if tipo_loja.startswith("presente"):
             return (f"Grátis {sufixo}".strip(), (136, 242, 168))
         return (f"{int(oferta.get('preco', 0) or 0)} dinheiro {sufixo}".strip(), (255, 223, 120))
 
@@ -301,7 +328,7 @@ class Loja:
 
         if oferta_id.startswith("presente_"):
             self._registrar_presente_coletado(oferta_id)
-            self.montar_botoes("presente", self._tamanho_loja_montado or (1280, 720))
+            self.montar_botoes(oferta_id if oferta_id in {"presente_1", "presente_2"} else "presente", self._tamanho_loja_montado or (1280, 720))
 
     def renderizar(self, tela: pygame.Surface, eventos: list, dt: float, tipo: str, fechar_callback: Callable[[], None]) -> None:
         w, h = tela.get_size()

@@ -12,7 +12,9 @@ class LeitorDialogo:
     SAIDAS_INTERFACE = {
         "loja": "padrao",
         "loja_secreta": "secreta",
-        "presente": "presente",
+        "presente": "presente_1",
+        "presente_1": "presente_1",
+        "presente_2": "presente_2",
     }
 
     def __init__(
@@ -463,8 +465,10 @@ class LeitorDialogo:
         if acao == "batalha":
             inventario = getattr(self._ator_local, "Inventario", None)
             times_jogador = list(getattr(inventario, "TimesPokemon", []) or []) if inventario is not None else []
-            if not InicializadorBatalha.times_completos(times_jogador, slots_por_time=6):
-                self.fala_atual = "Você não possui nenhum time completo para batalhar."
+            times_validos = InicializadorBatalha.times_completos_por_tipo(times_jogador, self.npc_estadio, slots_por_time=6)
+            if not times_validos:
+                tipo = InicializadorBatalha.nome_tipo_estadio(self.npc_estadio)
+                self.fala_atual = f"Você não possui nenhum time completo do tipo {tipo} para batalhar." if tipo else "Você não possui nenhum time completo para batalhar."
                 self._opcoes_visiveis = [{"texto": "Entendi.", "acao": "fim"}]
                 return {"tipo": "navegou"}
             try:

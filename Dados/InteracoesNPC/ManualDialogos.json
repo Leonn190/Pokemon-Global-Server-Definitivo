@@ -6,7 +6,7 @@
     "O player deve ter self.SetorDialogo = {} no __init__. O leitor tambem garante esse dicionario em runtime se ele nao existir.",
     "O contador padrao de visitas e automatico: setor.NPCs.<npc_code_ou_nome_normalizado>.visitas.",
     "Para detectar revisita, use npc.visitas_anteriores > 0. O contador ja foi incrementado quando o dialogo abre.",
-    "Campos desconhecidos sao ignorados pelo leitor, entao metadados de loja/presente podem coexistir no mesmo JSON."
+    "Campos desconhecidos sao ignorados pelo leitor, mas o fluxo novo de presentes escolhe o presente pela propria saida do no."
   ],
   "pastas_recomendadas": {
     "vendedor": "Dados/InteracoesNPC/Vendedor/<Nome>.json",
@@ -104,7 +104,7 @@
             ]
           }
         },
-        "saida": "Opcional. Valores suportados pelo leitor: loja, loja_secreta, presente.",
+        "saida": "Opcional. Valores suportados pelo leitor: loja, loja_secreta, presente_1, presente_2.",
         "opcoes": [
           {
             "texto": "texto exibido ao player",
@@ -228,7 +228,9 @@
     "pos_batalha": "Depois de uma batalha contra treinador, o jogo reabre o dialogo do NPC no no indicado por pos_batalha.vitoria ou pos_batalha.derrota.",
     "loja": "Use em um no com saida = loja.",
     "loja_secreta": "Use em um no com saida = loja_secreta.",
-    "presente": "Use em um no com saida = presente."
+    "presente_1": "Use em um no com saida = presente_1. Abre o primeiro presente gerado para aquele NPC.",
+    "presente_2": "Use em um no com saida = presente_2. Abre o segundo presente gerado para aquele NPC.",
+    "presentes": "Presentes abrem uma interface igual a loja, mas gratuita, mostrando apenas o slot daquele presente e sua quantidade. Nao use metadados_presente.presente_id para escolher entre presente 1 e 2."
   },
   "regras_recomendadas_para_npcs_associados": {
     "desafiante": "Nao exige respeito para batalhar, mas as falas podem variar com respeito.",

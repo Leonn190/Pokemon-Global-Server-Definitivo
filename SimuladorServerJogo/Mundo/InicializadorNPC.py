@@ -193,6 +193,19 @@ class InicializadorNPC:
                 out.append({**dict(row), "Nome": nome, "Valor": self.inteiro(row.get("Valor"), 0), "venda": venda})
         return out
 
+    @classmethod
+    def _valor_coluna(cls, row: Dict[str, object], *nomes: str) -> str:
+        if not isinstance(row, dict):
+            return ""
+        for nome in nomes:
+            if nome in row:
+                return str(row.get(nome) or "").strip()
+        alvos = {cls.slug(nome) for nome in nomes}
+        for chave, valor in row.items():
+            if cls.slug(chave) in alvos:
+                return str(valor or "").strip()
+        return ""
+
     def _preco_variado(self, valor: int, rnd: random.Random, minimo_pct: float, maximo_pct: float) -> int:
         return max(1, int(round(float(valor) * (1.0 + rnd.uniform(float(minimo_pct), float(maximo_pct))))))
 
@@ -227,6 +240,59 @@ class InicializadorNPC:
             restantes = [x for x in restantes if str(x.get("Nome")) != str(item.get("Nome"))]
         return escolhidos
 
+    def _quantidade_presentes(self, row: Dict[str, object]) -> int:
+        valor = self._valor_coluna(row, "Presentes", "Numero de Presentes", "Número de Presentes", "Qtd Presentes", "Quantidade Presentes")
+        return max(0, min(2, self.inteiro(valor, 0)))
+
+    def montar_presentes(self, row: Dict[str, object]) -> Dict[str, List[Dict[str, object]]]:
+        quantidade_presentes = self._quantidade_presentes(row)
+        if quantidade_presentes <= 0:
+            return {}
+
+        nome_npc = str(row.get("Nome") or "NPC").strip()
+        nivel = max(0, self.inteiro(row.get("Nivel"), 1))
+        code = str(row.get("Code") or nome_npc).strip()
+        rnd = random.Random(63_000 + self.inteiro(code, sum(ord(c) for c in nome_npc)))
+        candidatos = [item for item in self.itens if str(item.get("Nome") or "").strip() and int(item.get("Valor", 0) or 0) > 0]
+        if not candidatos:
+            return {}
+
+        usados: set[str] = set()
+        presentes: Dict[str, List[Dict[str, object]]] = {}
+        for idx in range(1, quantidade_presentes + 1):
+            alvo_total = max(5.0, 10.0 + (nivel * 1.65) + rnd.uniform(-4.0, 8.0))
+            pool = [item for item in candidatos if str(item.get("Nome") or "").casefold() not in usados]
+            if not pool:
+                pool = list(candidatos)
+            pool_nivel = [item for item in pool if float(item.get("Valor", 0) or 0) <= alvo_total * 1.35]
+            if pool_nivel:
+                pool = pool_nivel
+
+            def pontuar(item: Dict[str, object]) -> float:
+                valor = max(1, int(item.get("Valor", 1) or 1))
+                qtd_ideal = max(1, round(alvo_total / valor))
+                total = valor * qtd_ideal
+                return 1.0 / (1.0 + abs(total - alvo_total) / max(1.0, alvo_total))
+
+            item = rnd.choices(pool, weights=[pontuar(item) for item in pool], k=1)[0]
+            valor_item = max(1, int(item.get("Valor", 1) or 1))
+            limite_stack = max(1, self.inteiro(item.get("Stacks", item.get("stacks", 99)), 99))
+            qtd_max = max(1, min(limite_stack, int(alvo_total // valor_item) if valor_item <= alvo_total else 1))
+            quantidade = max(1, min(qtd_max, round((alvo_total / valor_item) * rnd.uniform(0.75, 1.20))))
+            presente_id = f"presente_{idx}"
+            presentes[presente_id] = [
+                {
+                    "id": presente_id,
+                    "tipo": "item",
+                    "item_nome": str(item.get("Nome") or ""),
+                    "quantidade": int(quantidade),
+                    "preco": 0,
+                    "gratuito": True,
+                }
+            ]
+            usados.add(str(item.get("Nome") or "").casefold())
+        return presentes
+
     def montar_loja(self, row: Dict[str, object]) -> Dict[str, List[Dict[str, object]]]:
         nome = str(row.get("Nome") or "Vendedor").strip()
         nivel = self.inteiro(row.get("Nivel"), 1)
@@ -247,10 +313,12 @@ class InicializadorNPC:
             preco = self._preco_variado(valor, rnd, -0.20, -0.10) if secreta else self._preco_variado(valor, rnd, -0.07, 0.07)
             return {"id": ("secreta_" if secreta else "padrao_") + str(idx), "tipo": "item", "item_nome": str(item.get("Nome") or ""), "quantidade": 1, "preco": int(preco)}
 
-        return {
+        loja = {
             "padrao": [oferta(item, i + 1, False) for i, item in enumerate(itens_normais)],
             "secreta": [oferta(item, i + 1, True) for i, item in enumerate(itens_secretos)],
         }
+        loja.update(self.montar_presentes(row))
+        return loja
 
     def _nivel_pokemon_treinador(self, nivel_treinador: int, rnd: random.Random) -> int:
         return max(0, min(100, int(nivel_treinador) + rnd.randint(-10, 10)))
@@ -427,9 +495,13 @@ class InicializadorNPC:
                         }
                     else:
                         npc = self.base_movel(chave=f"combatente:{code}", row=row, estilo="combatente", cargo=cargo or "dissociado", id_base=910000)
-                        npc["estadio_tipo"] = self.normalizar_tipo_estadio(str(row.get("Estadio") or ""))
+                        estadio_raw = str(row.get("Estadio") or "").strip()
+                        npc["estadio_tipo"] = self.normalizar_tipo_estadio(estadio_raw) if estadio_raw else ""
                         npc["pokemons"] = pokemons
                         npc["times_pokemon"] = times
+                    presentes = self.montar_presentes(row)
+                    if presentes:
+                        npc["loja"] = presentes
                     base[f"combatente:{code}"] = npc
         return base
 

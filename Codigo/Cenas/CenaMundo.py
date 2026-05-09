@@ -702,7 +702,8 @@ class CenaMundo:
         player = self.ControladorMundo.player_local
         inventario = getattr(player, "Inventario", None)
         times = list(getattr(inventario, "TimesPokemon", []) or []) if inventario is not None else []
-        times_validos = InicializadorBatalha.times_completos(times, slots_por_time=6)
+        npc_ctx = dict(contexto_dialogo or {})
+        times_validos = InicializadorBatalha.times_completos_por_tipo(times, npc_ctx.get("npc_estadio"), slots_por_time=6)
         if not times_validos:
             return
 
@@ -730,8 +731,6 @@ class CenaMundo:
             estadio_payload = self.ControladorMundo.Objetos.EstadiosPorId.get(estadio_atual_id, {})
             estado_estadio = estadio_payload.get("estado") if isinstance(estadio_payload.get("estado"), dict) else {}
             contexto_base = EstadioInterno.contexto_batalha(estado_estadio)
-
-        npc_ctx = dict(contexto_dialogo or {})
 
         def _comecar_com_time(time_escolhido: dict):
             indice_time = next((i for i, time_existente in enumerate(times_validos) if time_existente == time_escolhido), 0)

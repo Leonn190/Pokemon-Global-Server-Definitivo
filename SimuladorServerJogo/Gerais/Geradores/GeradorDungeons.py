@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import random
 import re
 from collections import deque
@@ -519,8 +520,8 @@ def _gerar_armadilha(sala: dict, idx: int, rng: random.Random, dificuldade_sala:
         tipos.extend(["espeto_movel", "barra_fogo"])
         pesos.extend([0.75 + dif * 0.12, 0.55 + dif * 0.13])
     if dif >= 3:
-        tipos.append("torreta")
-        pesos.append(0.35 + dif * 0.14)
+        tipos.extend(["torreta", "espeto_ricochete"])
+        pesos.extend([0.35 + dif * 0.14, 0.45 + dif * 0.11])
     tipo = rng.choices(tipos, weights=pesos, k=1)[0]
     tid = f"trap_{pos_sala[0]}_{pos_sala[1]}_{idx}"
     pos = _posicao_interna(rng, pos_sala, ocupados, margem_extra=3)
@@ -533,6 +534,9 @@ def _gerar_armadilha(sala: dict, idx: int, rng: random.Random, dificuldade_sala:
     elif tipo == "espeto_movel":
         ang = rng.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
         cfg.update({"direcao": [ang[0], ang[1]], "velocidade": round(2.1 + dif * 0.34 + rng.random() * 0.55, 3), "escala": round(rng.uniform(1.08, 1.34), 3), "raio_dano": 0.50, "solido": False, "limites_sala": list(_retangulo_interno_sala(pos_sala, margem_extra=3))})
+    elif tipo == "espeto_ricochete":
+        ang = rng.random() * math.tau
+        cfg.update({"direcao": [round(math.cos(ang), 4), round(math.sin(ang), 4)], "velocidade": round(2.3 + dif * 0.30 + rng.random() * 0.65, 3), "escala": round(rng.uniform(1.05, 1.28), 3), "raio_dano": 0.50, "raio_colisao": 0.42, "solido": False})
     elif tipo == "quebradinho":
         cfg.update({"tempo_rachando_ticks": 45, "tile_original": int(_REGRAS.get("tile_chao_dungeon", 8) or 8)})
     elif tipo == "barra_fogo":

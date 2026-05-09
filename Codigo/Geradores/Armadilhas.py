@@ -153,7 +153,7 @@ class ArmadilhasDungeon:
             pos = visual.posicao if visual is not None else trap.get("posicao", [0.0, 0.0])
             if tipo == "espeto":
                 self._desenhar_espeto(tela, camera, pos, movel=False, escala=float(self._config(trap).get("escala", 1.0) or 1.0))
-            elif tipo == "espeto_movel":
+            elif tipo in {"espeto_movel", "espeto_ricochete"}:
                 self._desenhar_espeto(tela, camera, pos, movel=True, escala=float(self._config(trap).get("escala", 1.0) or 1.0))
             elif tipo == "quebradinho":
                 self._desenhar_quebradinho(tela, camera, trap.get("posicao", [0, 0]), fase=str(estado.get("fase") or "inteiro"))

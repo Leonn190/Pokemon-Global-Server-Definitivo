@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import random
 from typing import Callable
 
 from SimuladorServerJogo.Mundo.DungeonGeometria import sala_atual_por_posicao
@@ -89,6 +90,103 @@ class CerebroArmadilhas:
             if bateu and abs(dx) + abs(dy) <= 0.001:
                 dx = 1.0
         estado["posicao"] = [float(nx), float(ny)]
+        estado["direcao"] = [float(dx), float(dy)]
+
+    @staticmethod
+    def _ponto_em_passagem_sala(layout: dict, sala: dict, x: float, y: float, raio: float) -> bool:
+        pos_sala = sala.get("posicao_sala") if isinstance(sala.get("posicao_sala"), (list, tuple)) else None
+        if pos_sala is None:
+            return False
+        bloco_w = int(layout.get("largura_bloco_sala_tiles", layout.get("tamanho_bloco_sala_tiles", 32)) or 32)
+        bloco_h = int(layout.get("altura_bloco_sala_tiles", layout.get("tamanho_bloco_sala_tiles", 24)) or 24)
+        parede = max(1, int(layout.get("parede_largura_tiles", 2) or 2))
+        porta_w = max(1, int(layout.get("porta_largura_tiles", 4) or 4))
+        bx, by = int(pos_sala[0]), int(pos_sala[1])
+        x0, y0 = bx * bloco_w, by * bloco_h
+        x1, y1 = (bx + 1) * bloco_w, (by + 1) * bloco_h
+        folga = max(0.0, float(raio))
+        for info in list(sala.get("portas_info") or []):
+            if not isinstance(info, dict):
+                continue
+            direcao = str(info.get("direcao") or "")
+            if direcao in {"N", "S"}:
+                centro = x0 + bloco_w * 0.5
+                if abs(float(x) - centro) > porta_w * 0.5 + folga:
+                    continue
+                if direcao == "N" and float(y) <= y0 + parede + folga:
+                    return True
+                if direcao == "S" and float(y) >= y1 - parede - folga:
+                    return True
+            elif direcao in {"L", "O"}:
+                centro = y0 + bloco_h * 0.5
+                if abs(float(y) - centro) > porta_w * 0.5 + folga:
+                    continue
+                if direcao == "O" and float(x) <= x0 + parede + folga:
+                    return True
+                if direcao == "L" and float(x) >= x1 - parede - folga:
+                    return True
+        return False
+
+    def _espeto_ricochete_bloqueado(self, layout: dict, sala: dict, x: float, y: float, raio: float, ignorar_trap_id: str) -> bool:
+        pos_sala = sala.get("posicao_sala") if isinstance(sala.get("posicao_sala"), (list, tuple)) else None
+        if pos_sala is not None and tuple(sala_atual_por_posicao([x, y])) != (int(pos_sala[0]), int(pos_sala[1])):
+            return True
+        if self._ponto_em_passagem_sala(layout, sala, x, y, raio):
+            return True
+        tile_vazio = int(layout.get("tile_vazio_dungeon", 9) or 9)
+        amostras = [(0.0, 0.0), (raio, 0.0), (-raio, 0.0), (0.0, raio), (0.0, -raio)]
+        for ox, oy in amostras:
+            tile = self._grid_tile(layout, float(x) + float(ox), float(y) + float(oy))
+            if tile is None or int(tile) == tile_vazio:
+                return True
+        cfg_sala = sala.get("config") if isinstance(sala.get("config"), dict) else {}
+        for trap in list(cfg_sala.get("armadilhas") or []):
+            if not isinstance(trap, dict) or str(trap.get("id") or "") == str(ignorar_trap_id or ""):
+                continue
+            tcfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
+            if not bool(tcfg.get("solido", False) or tcfg.get("solido_centro", False)):
+                continue
+            pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else None
+            if pos is None:
+                continue
+            limite = float(raio) + float(tcfg.get("raio_colisao", 0.58) or 0.58)
+            if self._dist2([x, y], pos) <= limite * limite:
+                return True
+        return False
+
+    def _atualizar_espeto_ricochete(self, layout: dict, sala: dict, trap: dict, estado: dict) -> None:
+        cfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
+        pos0 = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else [0.0, 0.0]
+        pos = estado.get("posicao") if isinstance(estado.get("posicao"), (list, tuple)) else [float(pos0[0]), float(pos0[1])]
+        direcao = estado.get("direcao") if isinstance(estado.get("direcao"), (list, tuple)) else cfg.get("direcao")
+        if not isinstance(direcao, (list, tuple)) or len(direcao) != 2:
+            rng = random.Random(int(cfg.get("seed", 1) or 1))
+            ang = rng.random() * math.tau
+            direcao = [math.cos(ang), math.sin(ang)]
+        dx, dy = float(direcao[0]), float(direcao[1])
+        n = math.hypot(dx, dy) or 1.0
+        dx, dy = dx / n, dy / n
+        vel = float(cfg.get("velocidade", 2.6) or 2.6)
+        raio = float(cfg.get("raio_colisao", cfg.get("raio_dano", 0.45)) or 0.45)
+        passo = vel / self.tick_rate
+        x, y = float(pos[0]), float(pos[1])
+        nx, ny = x + dx * passo, y + dy * passo
+        tid = str(trap.get("id") or "")
+        if self._espeto_ricochete_bloqueado(layout, sala, nx, ny, raio, tid):
+            x_livre = not self._espeto_ricochete_bloqueado(layout, sala, nx, y, raio, tid)
+            y_livre = not self._espeto_ricochete_bloqueado(layout, sala, x, ny, raio, tid)
+            if x_livre and not y_livre:
+                x = nx
+                dy *= -1.0
+            elif y_livre and not x_livre:
+                y = ny
+                dx *= -1.0
+            else:
+                dx *= -1.0
+                dy *= -1.0
+        else:
+            x, y = nx, ny
+        estado["posicao"] = [float(x), float(y)]
         estado["direcao"] = [float(dx), float(dy)]
 
     def _atualizar_quebradinho(self, layout: dict, trap: dict, estado: dict, players: list, tick: int) -> bool:
@@ -249,6 +347,8 @@ class CerebroArmadilhas:
                 estado = self._estado_trap(layout, trap)
                 if tipo == "espeto_movel":
                     self._atualizar_espeto_movel(trap, estado)
+                elif tipo == "espeto_ricochete":
+                    self._atualizar_espeto_ricochete(layout, sala, trap, estado)
                 elif tipo == "quebradinho":
                     alterou_tiles = self._atualizar_quebradinho(layout, trap, estado, players_sala, int(tick)) or alterou_tiles
                 elif tipo == "torreta":
@@ -257,7 +357,7 @@ class CerebroArmadilhas:
                     estado["bolas_posicoes"] = self._bolas_barra_fogo(trap, int(tick))
 
                 pontos_dano = []
-                if tipo in {"espeto", "espeto_movel"}:
+                if tipo in {"espeto", "espeto_movel", "espeto_ricochete"}:
                     pos = estado.get("posicao") if isinstance(estado.get("posicao"), (list, tuple)) else trap.get("posicao", [0.0, 0.0])
                     raio = float((trap.get("config") or {}).get("raio_dano", 0.44) if isinstance(trap.get("config"), dict) else 0.44)
                     pontos_dano.append((pos, raio, tipo))

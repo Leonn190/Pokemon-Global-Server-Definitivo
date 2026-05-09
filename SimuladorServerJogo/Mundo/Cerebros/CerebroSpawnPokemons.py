@@ -142,7 +142,11 @@ class CerebroSpawnPokemons:
         total = 0
         for oid in list(self._core._pokemons_ids):
             obj = BANCO_DADOS.obter_objeto(oid)
-            if isinstance(obj, PokemonServer) and BANCO_DADOS.chunk_da_posicao(obj.posicao) in area:
+            if not isinstance(obj, PokemonServer):
+                continue
+            if str(obj.estado_extra.get("dimensao") or "Mundo").startswith("Dungeon_") or str(obj.estado_extra.get("comportamento_mundo") or "") in {"servo", "boss"}:
+                continue
+            if BANCO_DADOS.chunk_da_posicao(obj.posicao) in area:
                 total += 1
         return total
 
@@ -223,6 +227,24 @@ class CerebroSpawnPokemons:
                 soma += max(0.0, float(mult)) * (float(chance) / 100.0)
         return soma / max(1, len(tipos))
 
+    def _media_bonus_tipos(self, row: Dict[str, str], multiplicador_tipo) -> float:
+        tipos = self._tipos_chances(row)
+        if not tipos:
+            return 1.0
+        soma = 0.0
+        afetados = 0
+        for tipo, chance in tipos:
+            mult = multiplicador_tipo(tipo)
+            if mult is None:
+                soma += 1.0
+                continue
+            afetados += 1
+            chance_norm = 1.0 if chance is None else (float(chance) / 100.0)
+            soma += 1.0 + ((max(0.0, float(mult)) - 1.0) * chance_norm)
+        if afetados <= 0:
+            return 1.0
+        return soma / max(1, len(tipos))
+
     def _multiplicador_bioma(self, row: Dict[str, str], bioma: str) -> float:
         por_tipo = self._multiplicadores_bioma.get(_normalizar_chave(bioma))
         if not isinstance(por_tipo, dict):
@@ -239,7 +261,7 @@ class CerebroSpawnPokemons:
         if not isinstance(chuva_cfg, dict):
             return 1.0
         agua_mult = self._multiplicador_chuva_agua(chuva_cfg, intensidade)
-        return self._media_ponderada_tipos(row, lambda tipo: agua_mult if tipo == "agua" else None)
+        return self._media_bonus_tipos(row, lambda tipo: agua_mult if tipo == "agua" else None)
 
     @staticmethod
     def _multiplicador_chuva_agua(chuva_cfg: Dict[str, object], intensidade: int) -> Optional[float]:
@@ -278,7 +300,7 @@ class CerebroSpawnPokemons:
                 return None
             return float(mult) if self._horario_em_intervalo(minuto_atual, inicio, fim) else None
 
-        return self._media_ponderada_tipos(row, mult_tipo)
+        return self._media_bonus_tipos(row, mult_tipo)
 
     def _multiplicadores_spawn(self) -> Dict[str, object]:
         bruto = self._core._regras.get("multiplicadores_spawn", {})

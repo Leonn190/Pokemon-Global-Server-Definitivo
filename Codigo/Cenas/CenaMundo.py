@@ -843,7 +843,7 @@ class CenaMundo:
                 return
         except (IndexError, TypeError, ValueError):
             return
-        checkpoint = {"chave": (cx, cy), "grid": [list(linha) for linha in chunk], "dimensao": dim}
+        checkpoint = {"chave": (cx, cy), "posicao": [float(px), float(py)], "grid": [list(linha) for linha in chunk], "dimensao": dim}
         self._ultimo_chunk_seguro = checkpoint
         self._ultimo_chunk_seguro_mundo = checkpoint
 
@@ -905,7 +905,11 @@ class CenaMundo:
         link = server.get("ip")
         if not link:
             return
-        enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_morreu", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": {"motivo": "agua_funda_stamina_zero"}}])
+        payload = {"motivo": "agua_funda_stamina_zero"}
+        checkpoint = self._ultimo_chunk_seguro_mundo if isinstance(self._ultimo_chunk_seguro_mundo, dict) else {}
+        if isinstance(checkpoint.get("chave"), (list, tuple)) and len(checkpoint.get("chave")) == 2:
+            payload["checkpoint_mundo"] = {"chunk": [int(checkpoint["chave"][0]), int(checkpoint["chave"][1])], "posicao": list(checkpoint.get("posicao") or [])}
+        enviar_diffs_mundo(link, str(jogo.INFO.get("UsuarioLogado", "anon")), [{"tipo": "evento", "categoria": "player_morreu", "objeto_id": int(getattr(player, "Id", 0) or 0), "payload": payload}])
 
     def _aplicar_resposta_mundo(self, resposta):
         pacotes = resposta.get("pacotes", []) if isinstance(resposta, dict) and isinstance(resposta.get("pacotes"), list) else []

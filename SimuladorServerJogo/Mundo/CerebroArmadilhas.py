@@ -211,6 +211,23 @@ class CerebroArmadilhas:
                 return self._grid_set(layout, tx, ty, int(layout.get("tile_buraco", 10) or 10))
         return False
 
+    def _resetar_quebradinhos_sala_vazia(self, layout: dict, sala: dict) -> bool:
+        cfg_sala = sala.get("config") if isinstance(sala.get("config"), dict) else {}
+        alterou_tiles = False
+        for trap in list(cfg_sala.get("armadilhas") or []):
+            if not isinstance(trap, dict) or str(trap.get("tipo") or "") != "quebradinho":
+                continue
+            estado = self._estado_trap(layout, trap)
+            estado["fase"] = "inteiro"
+            estado.pop("rachando_desde_tick", None)
+            pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else None
+            if pos is None:
+                continue
+            cfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
+            tile_original = int(cfg.get("tile_original", layout.get("tile_chao_dungeon", 8)) or layout.get("tile_chao_dungeon", 8) or 8)
+            alterou_tiles = self._grid_set(layout, int(float(pos[0])), int(float(pos[1])), tile_original) or alterou_tiles
+        return alterou_tiles
+
     def _bolas_barra_fogo(self, trap: dict, tick: int) -> list[list[float]]:
         cfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
         centro = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else [0.0, 0.0]
@@ -228,7 +245,10 @@ class CerebroArmadilhas:
                 out.append([float(centro[0]) + math.cos(ang) * r, float(centro[1]) + math.sin(ang) * r])
         return out
 
-    def _projetil_bloqueado(self, layout: dict, x: float, y: float, ignorar_trap_id: str = "") -> bool:
+    def _projetil_bloqueado(self, layout: dict, x: float, y: float, ignorar_trap_id: str = "", sala: dict | None = None) -> bool:
+        pos_sala = sala.get("posicao_sala") if isinstance(sala, dict) and isinstance(sala.get("posicao_sala"), (list, tuple)) else None
+        if pos_sala is not None and tuple(sala_atual_por_posicao([x, y])) != (int(pos_sala[0]), int(pos_sala[1])):
+            return True
         tile = self._grid_tile(layout, x, y)
         if tile is None:
             return True
@@ -258,7 +278,7 @@ class CerebroArmadilhas:
                     return True
         return False
 
-    def _atualizar_torreta(self, layout: dict, trap: dict, estado: dict, players: list, tick: int, aplicar_dano: Callable[[object, str], bool] | None = None) -> None:
+    def _atualizar_torreta(self, layout: dict, sala: dict, trap: dict, estado: dict, players: list, tick: int, aplicar_dano: Callable[[object, str], bool] | None = None) -> None:
         cfg = trap.get("config") if isinstance(trap.get("config"), dict) else {}
         pos = trap.get("posicao") if isinstance(trap.get("posicao"), (list, tuple)) else [0.0, 0.0]
         projeteis = estado.setdefault("projeteis", [])
@@ -271,7 +291,7 @@ class CerebroArmadilhas:
             p = proj.get("posicao") if isinstance(proj.get("posicao"), (list, tuple)) else list(pos)
             nx = float(p[0]) + float(direcao[0]) * vel / self.tick_rate
             ny = float(p[1]) + float(direcao[1]) * vel / self.tick_rate
-            if self._projetil_bloqueado(layout, nx, ny, ignorar_trap_id=str(trap.get("id") or "")):
+            if self._projetil_bloqueado(layout, nx, ny, ignorar_trap_id=str(trap.get("id") or ""), sala=sala):
                 continue
             proj["posicao"] = [nx, ny]
             proj["distancia"] = float(proj.get("distancia", 0.0) or 0.0) + vel / self.tick_rate
@@ -315,11 +335,10 @@ class CerebroArmadilhas:
         iniciar_queda: Callable[[object, str], bool],
         registrar_diff: Callable | None = None,
     ) -> bool:
-        if not isinstance(layout, dict) or not players:
+        if not isinstance(layout, dict):
             return False
+        players = list(players or [])
         players = [p for p in players if not bool(getattr(p, "estado_extra", {}).get("morto", False) or getattr(p, "estado_extra", {}).get("game_over", False))]
-        if not players:
-            return False
         alterou_tiles = False
         salas_por_pos = {
             tuple(s.get("posicao_sala", [0, 0])): s
@@ -339,6 +358,10 @@ class CerebroArmadilhas:
             if not isinstance(sala, dict):
                 continue
             players_sala = players_por_sala.get(str(sala.get("id") or ""), [])
+            if not players_sala:
+                alterou_tiles = self._resetar_quebradinhos_sala_vazia(layout, sala) or alterou_tiles
+                if not players:
+                    continue
             cfg_sala = sala.get("config") if isinstance(sala.get("config"), dict) else {}
             for trap in list(cfg_sala.get("armadilhas") or []):
                 if not isinstance(trap, dict):
@@ -352,7 +375,7 @@ class CerebroArmadilhas:
                 elif tipo == "quebradinho":
                     alterou_tiles = self._atualizar_quebradinho(layout, trap, estado, players_sala, int(tick)) or alterou_tiles
                 elif tipo == "torreta":
-                    self._atualizar_torreta(layout, trap, estado, players_sala, int(tick), aplicar_dano)
+                    self._atualizar_torreta(layout, sala, trap, estado, players_sala, int(tick), aplicar_dano)
                 elif tipo == "barra_fogo":
                     estado["bolas_posicoes"] = self._bolas_barra_fogo(trap, int(tick))
 
@@ -371,7 +394,7 @@ class CerebroArmadilhas:
                             aplicar_dano(player, str(motivo))
                             break
 
-        if callable(registrar_diff):
+        if callable(registrar_diff) and (players or alterou_tiles):
             estado = layout.get("estado_armadilhas") if isinstance(layout.get("estado_armadilhas"), dict) else {}
             registrar_diff(
                 "evento",

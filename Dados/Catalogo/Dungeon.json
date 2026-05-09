@@ -1,54 +1,836 @@
 {
-  "catalogo_versao": "v1",
+  "catalogo_versao": "v2_modelos_salas",
+  "descricao": "Catalogo de modelos prontos de salas de dungeon. A dungeon ainda pode ser gerada proceduralmente, mas o conteudo interno das salas deve vir destes modelos.",
+  "tamanho_sala_tiles": {
+    "largura": 32,
+    "altura": 18,
+    "observacao": "As posicoes das armadilhas usam coordenadas locais dentro da sala. O gerador deve converter posicao_local para posicao absoluta usando posicao_sala."
+  },
+  "calculo_dificuldade_sala": {
+    "formula": "dificuldade_final = dificuldade_base + variacao_armadilhas + variacao_servos + variacao_claridade",
+    "observacao": "A dificuldade da dungeon deve influenciar a media das salas escolhidas e das variacoes, mas nao deve forcar toda sala a usar maximo de servos, minimo de claridade ou armadilhas no maximo.",
+    "pesos_recomendados": {
+      "armadilhas": 1.0,
+      "servos": 1.0,
+      "claridade": 0.35
+    }
+  },
+  "configuracoes_armadilhas": {
+    "espeto": [
+      "tamanho"
+    ],
+    "espeto_movel": [
+      "tamanho",
+      "velocidade"
+    ],
+    "espeto_ricochete": [
+      "tamanho",
+      "velocidade"
+    ],
+    "torreta": [
+      "tamanho_tiro",
+      "velocidade_tiro",
+      "frequencia_tiros"
+    ],
+    "barra_fogo": [
+      "numero_bolas",
+      "numero_cabos",
+      "tamanho_bolas",
+      "velocidade_giro"
+    ],
+    "quebradico": []
+  },
   "salas": [
     {
       "id": 1,
+      "modelo_id": "entrada",
       "nome": "Sala de Entrada",
       "tipo": "entrada",
-      "chance": 0.0,
-      "dificuldade": 0
+      "categoria": "fixa",
+      "chance_spawn": 0.0,
+      "dificuldade_base": 0,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 10,
+        "max": 10
+      },
+      "armadilhas": [],
+      "conteudo_especial": {
+        "portal": true
+      }
     },
     {
       "id": 2,
-      "nome": "Sala Comum",
-      "tipo": "comum",
-      "chance": 1.0,
-      "dificuldade": 1
+      "modelo_id": "boss",
+      "nome": "Sala de Boss",
+      "tipo": "boss",
+      "categoria": "fixa",
+      "chance_spawn": 0.0,
+      "dificuldade_base": 0,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 8,
+        "max": 10
+      },
+      "armadilhas": [],
+      "conteudo_especial": {
+        "boss": true
+      }
     },
     {
       "id": 3,
-      "nome": "Sala Pacifica",
-      "tipo": "pacifica",
-      "chance": 0.28,
-      "dificuldade": 0
+      "modelo_id": "inundada",
+      "nome": "Sala Inundada",
+      "tipo": "inundada",
+      "categoria": "especial",
+      "chance_spawn": 0.16,
+      "dificuldade_base": 2,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 4,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [],
+      "conteudo_especial": {
+        "tipo": "inundada",
+        "preencher_sala_com": "agua_funda",
+        "observacao": "Toda a area jogavel da sala deve virar agua funda."
+      },
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.7
+        }
+      }
     },
     {
       "id": 4,
-      "nome": "Sala Dificil",
-      "tipo": "dificil",
-      "chance": 0.35,
-      "dificuldade": 3
+      "modelo_id": "piscina_grande",
+      "nome": "Sala Piscina Grande",
+      "tipo": "piscina",
+      "categoria": "especial",
+      "chance_spawn": 0.2,
+      "dificuldade_base": 2,
+      "servos": {
+        "min": 0,
+        "max": 3
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [],
+      "conteudo_especial": {
+        "tipo": "piscina",
+        "retangulo_local": [
+          5,
+          4,
+          26,
+          13
+        ],
+        "tile": "agua_funda",
+        "observacao": "Piscina maior que a atual, mas sem preencher a sala inteira."
+      },
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.4
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.6
+        }
+      }
     },
     {
       "id": 5,
-      "nome": "Sala Piscina",
-      "tipo": "piscina",
-      "chance": 0.18,
-      "dificuldade": 1
+      "modelo_id": "buracao_grande",
+      "nome": "Sala do Buracão Grande",
+      "tipo": "buracao",
+      "categoria": "especial",
+      "chance_spawn": 0.14,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [],
+      "conteudo_especial": {
+        "tipo": "buracao",
+        "retangulo_local": [
+          7,
+          5,
+          24,
+          12
+        ],
+        "tile": "buraco",
+        "observacao": "Buracao maior que o atual, deixando bordas para circulacao."
+      },
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.6
+        }
+      }
     },
     {
       "id": 6,
-      "nome": "Sala de Boss",
-      "tipo": "boss",
-      "chance": 0.0,
-      "dificuldade": 0
+      "modelo_id": "duas_barras_fogo_simetricas",
+      "nome": "Sala com 2 Barras de Fogo",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.18,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "simetria": {
+        "eixo": "X",
+        "centro_x": 16
+      },
+      "armadilhas": [
+        {
+          "id_local": "barra_fogo_esquerda",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            10.5,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 4,
+            "numero_cabos": 1,
+            "tamanho_bolas": 0.26,
+            "velocidade_giro": 0.9
+          },
+          "config_max": {
+            "numero_bolas": 8,
+            "numero_cabos": 3,
+            "tamanho_bolas": 0.38,
+            "velocidade_giro": 1.65
+          }
+        },
+        {
+          "id_local": "barra_fogo_direita",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            21.5,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 4,
+            "numero_cabos": 1,
+            "tamanho_bolas": 0.26,
+            "velocidade_giro": 0.9
+          },
+          "config_max": {
+            "numero_bolas": 8,
+            "numero_cabos": 3,
+            "tamanho_bolas": 0.38,
+            "velocidade_giro": 1.65
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.4,
+          "max": 3.4
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.5
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      }
     },
     {
       "id": 7,
-      "nome": "Sala Escura",
-      "tipo": "escura",
-      "chance": 0.20,
-      "dificuldade": 2
+      "modelo_id": "tres_espetos_moveis_verticais",
+      "nome": "Sala dos Espetos Móveis",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.18,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "espeto_movel_esquerda",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            8.5,
+            4.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              1
+            ],
+            "limites_local": [
+              8.5,
+              3.5,
+              8.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.0,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.35,
+            "velocidade": 3.4
+          }
+        },
+        {
+          "id_local": "espeto_movel_centro",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            16.0,
+            14.5
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              -1
+            ],
+            "limites_local": [
+              16.0,
+              3.5,
+              16.0,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.0,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.35,
+            "velocidade": 3.4
+          }
+        },
+        {
+          "id_local": "espeto_movel_direita",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            23.5,
+            4.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              1
+            ],
+            "limites_local": [
+              23.5,
+              3.5,
+              23.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.0,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.35,
+            "velocidade": 3.4
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.2,
+          "max": 3.0
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.5
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      }
+    },
+    {
+      "id": 8,
+      "modelo_id": "espeto_ricochete_grande",
+      "nome": "Sala do Espeto Ricochete Grande",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.12,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "espeto_ricochete_grande",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "movimento": {
+            "direcao": [
+              0.72,
+              0.69
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.6,
+            "velocidade": 4.8
+          },
+          "config_max": {
+            "tamanho": 2.25,
+            "velocidade": 7.35
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.4,
+          "max": 3.2
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      }
+    },
+    {
+      "id": 9,
+      "modelo_id": "sala_so_servos",
+      "nome": "Sala Só com Servos",
+      "tipo": "servos",
+      "categoria": "combate",
+      "chance_spawn": 0.22,
+      "dificuldade_base": 2,
+      "servos": {
+        "min": 1,
+        "max": 5
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "servos": {
+          "min": 0.6,
+          "max": 2.6
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      }
+    },
+    {
+      "id": 10,
+      "modelo_id": "torretas_cruzadas",
+      "nome": "Sala das Torretas Cruzadas",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.14,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_noroeste",
+          "tipo": "torreta",
+          "posicao_local": [
+            6.5,
+            4.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.18,
+            "velocidade_tiro": 3.5,
+            "frequencia_tiros": 0.55
+          },
+          "config_max": {
+            "tamanho_tiro": 0.3,
+            "velocidade_tiro": 5.8,
+            "frequencia_tiros": 1.15
+          }
+        },
+        {
+          "id_local": "torreta_sudeste",
+          "tipo": "torreta",
+          "posicao_local": [
+            25.5,
+            13.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.18,
+            "velocidade_tiro": 3.5,
+            "frequencia_tiros": 0.55
+          },
+          "config_max": {
+            "tamanho_tiro": 0.3,
+            "velocidade_tiro": 5.8,
+            "frequencia_tiros": 1.15
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.4,
+          "max": 3.3
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.6
+        }
+      }
+    },
+    {
+      "id": 11,
+      "modelo_id": "corredor_espetos_fixos",
+      "nome": "Sala Corredor de Espetos",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.16,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "espeto_1",
+          "tipo": "espeto",
+          "posicao_local": [
+            9.5,
+            5.5
+          ],
+          "config_min": {
+            "tamanho": 1.25
+          },
+          "config_max": {
+            "tamanho": 1.9
+          }
+        },
+        {
+          "id_local": "espeto_2",
+          "tipo": "espeto",
+          "posicao_local": [
+            14.5,
+            12.5
+          ],
+          "config_min": {
+            "tamanho": 1.25
+          },
+          "config_max": {
+            "tamanho": 1.9
+          }
+        },
+        {
+          "id_local": "espeto_3",
+          "tipo": "espeto",
+          "posicao_local": [
+            19.5,
+            5.5
+          ],
+          "config_min": {
+            "tamanho": 1.25
+          },
+          "config_max": {
+            "tamanho": 1.9
+          }
+        },
+        {
+          "id_local": "espeto_4",
+          "tipo": "espeto",
+          "posicao_local": [
+            24.5,
+            12.5
+          ],
+          "config_min": {
+            "tamanho": 1.25
+          },
+          "config_max": {
+            "tamanho": 1.9
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.0,
+          "max": 2.5
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      }
+    },
+    {
+      "id": 12,
+      "modelo_id": "piso_quebradico_xadrez",
+      "nome": "Sala do Piso Quebradiço",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.15,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "quebradico_1",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            6
+          ]
+        },
+        {
+          "id_local": "quebradico_2",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            6
+          ]
+        },
+        {
+          "id_local": "quebradico_3",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            6
+          ]
+        },
+        {
+          "id_local": "quebradico_4",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            10
+          ]
+        },
+        {
+          "id_local": "quebradico_5",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            10
+          ]
+        },
+        {
+          "id_local": "quebradico_6",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            10
+          ]
+        },
+        {
+          "id_local": "quebradico_7",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            14
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 0.8,
+          "max": 2.2
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      }
+    },
+    {
+      "id": 13,
+      "modelo_id": "mista_leve_torreta_espetos",
+      "nome": "Sala Mista Leve",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.17,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_central_baixa",
+          "tipo": "torreta",
+          "posicao_local": [
+            16.0,
+            13.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.16,
+            "velocidade_tiro": 3.0,
+            "frequencia_tiros": 0.45
+          },
+          "config_max": {
+            "tamanho_tiro": 0.25,
+            "velocidade_tiro": 4.8,
+            "frequencia_tiros": 0.9
+          }
+        },
+        {
+          "id_local": "espeto_esquerda",
+          "tipo": "espeto",
+          "posicao_local": [
+            8.5,
+            8.5
+          ],
+          "config_min": {
+            "tamanho": 1.1
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "espeto_direita",
+          "tipo": "espeto",
+          "posicao_local": [
+            23.5,
+            8.5
+          ],
+          "config_min": {
+            "tamanho": 1.1
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "quebradico_centro",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            8
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.0,
+          "max": 2.6
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      }
     }
   ]
 }

@@ -10,7 +10,7 @@ from typing import Dict
 from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff, diff_seq_atual, _obter_state_client, _coletar_diffs_visibilidade, _filtrar_pacotes_por_camera, _normalizar_posicao, _chunks_carregados_cliente, _raio_visao_por_regras
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer, PokemonServer, criar_objeto_mundo_server
-from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem, aplicar_respawn_mundo, registrar_checkpoint_mundo_seguro, matar_player, player_invulneravel, aplicar_dano_player, aplicar_invulnerabilidade_player
+from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_perfil_personagem, atualizar_posicao_personagem, atualizar_inventario_personagem, aplicar_respawn_mundo, registrar_checkpoint_mundo_seguro, registrar_checkpoint_mundo_chunk_seguro, matar_player, player_invulneravel, aplicar_dano_player, aplicar_invulnerabilidade_player
 from SimuladorServerJogo.Mundo.PacotesTick import PACOTES_TICK
 from SimuladorServerJogo.Mundo.Cerebros.CerebroCentral import CEREBRO
 from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
@@ -572,6 +572,10 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 player_id = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 player = BANCO_DADOS.obter_objeto(player_id) if player_id > 0 else None
                 if isinstance(player, AtorServer):
+                    checkpoint = payload.get("checkpoint_mundo") if isinstance(payload.get("checkpoint_mundo"), dict) else {}
+                    chunk = checkpoint.get("chunk")
+                    if isinstance(chunk, (list, tuple)) and len(chunk) == 2:
+                        registrar_checkpoint_mundo_chunk_seguro(client_id, player, chunk, checkpoint.get("posicao"))
                     matar_player(player, str(payload.get("motivo") or "morte"), registrar_diff=registrar_diff)
                     aplicados += 1
                 else:

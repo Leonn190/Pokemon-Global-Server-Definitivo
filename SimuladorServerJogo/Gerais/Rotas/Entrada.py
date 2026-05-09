@@ -120,6 +120,8 @@ def processar_entrada_json(requisicao_json):
             )
             ator.estado_extra["dimensao"] = dimensao_atual
             ator.estado_extra["posicoes_por_dimensao"] = {str(k): [float(v[0]), float(v[1])] for k, v in pos_dim.items() if isinstance(v, (list, tuple)) and len(v) == 2}
+            ator.estado_extra["perfil"] = {k: v for k, v in dict(personagem).items() if k != "inventario"}
+            ator.estado_extra["inventario"] = dict(personagem.get("inventario") or {}) if isinstance(personagem.get("inventario"), dict) else {}
             personagem["posicao"] = [float(pos_dim_dim[0]), float(pos_dim_dim[1])]
             personagem["dimensao"] = dimensao_atual
             estadio_id = _estadio_id_por_dimensao(dimensao_atual)

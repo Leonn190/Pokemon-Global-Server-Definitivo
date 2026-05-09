@@ -649,6 +649,12 @@ def _normalizar_inventario(payload: dict) -> dict:
     }
 
 
+def _inventario_tem_conteudo(inventario: dict | None) -> bool:
+    if not isinstance(inventario, dict):
+        return False
+    return bool(inventario.get("itens") or inventario.get("pokemons") or inventario.get("times_pokemon") or inventario.get("doces"))
+
+
 def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> dict:
     base = _normalizar_perfil(personagem_atual)
     payload = dict(atualizacao) if isinstance(atualizacao, dict) else {}
@@ -1137,6 +1143,7 @@ def matar_player(player, motivo: str = "", registrar_diff=None) -> bool:
     if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
         return False
     estado = player.estado_extra
+    _restaurar_inventario_player_persistido(str(estado.get("usuario") or ""), player)
     if bool(estado.get("morto", False) and estado.get("game_over", False)):
         return False
     estado["morto"] = True
@@ -1180,6 +1187,36 @@ def registrar_checkpoint_mundo_seguro(usuario, player) -> bool:
         return False
     chunk = BANCO_DADOS.chunk_da_posicao(pos)
     checkpoint = {"chunk": [int(chunk[0]), int(chunk[1])], "posicao": pos}
+    anterior = player.estado_extra.get("checkpoint_mundo") if isinstance(player.estado_extra.get("checkpoint_mundo"), dict) else None
+    if isinstance(anterior, dict) and anterior.get("chunk") != checkpoint["chunk"]:
+        player.estado_extra["checkpoint_mundo_anterior"] = dict(anterior)
+    player.estado_extra["checkpoint_mundo"] = dict(checkpoint)
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(str(usuario))
+        if isinstance(personagem, dict):
+            if isinstance(anterior, dict) and anterior.get("chunk") != checkpoint["chunk"]:
+                personagem["checkpoint_mundo_anterior"] = dict(anterior)
+            personagem["checkpoint_mundo"] = dict(checkpoint)
+            _persistir_personagens()
+    return True
+
+
+def registrar_checkpoint_mundo_chunk_seguro(usuario, player, chunk, posicao=None) -> bool:
+    if not usuario or player is None or not isinstance(getattr(player, "estado_extra", None), dict):
+        return False
+    try:
+        chunk_norm = BANCO_DADOS.normalizar_chunk((int(chunk[0]), int(chunk[1])))
+    except (TypeError, ValueError, IndexError):
+        return False
+    pos = None
+    if isinstance(posicao, (list, tuple)) and len(posicao) == 2 and _tile_mundo_seguro(posicao):
+        if BANCO_DADOS.chunk_da_posicao(posicao) == chunk_norm:
+            pos = [float(posicao[0]), float(posicao[1])]
+    if pos is None:
+        pos = _posicao_segura_no_chunk(chunk_norm, aleatoria=True)
+    if pos is None:
+        return False
+    checkpoint = {"chunk": [int(chunk_norm[0]), int(chunk_norm[1])], "posicao": pos}
     anterior = player.estado_extra.get("checkpoint_mundo") if isinstance(player.estado_extra.get("checkpoint_mundo"), dict) else None
     if isinstance(anterior, dict) and anterior.get("chunk") != checkpoint["chunk"]:
         player.estado_extra["checkpoint_mundo_anterior"] = dict(anterior)
@@ -1279,6 +1316,7 @@ def resolver_respawn_mundo_seguro(usuario, player) -> list[float]:
 def aplicar_respawn_mundo(usuario, player, motivo="respawn", registrar_diff=None):
     if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
         return None
+    _restaurar_inventario_player_persistido(str(usuario or player.estado_extra.get("usuario") or ""), player)
     pos = resolver_respawn_mundo_seguro(usuario, player)
     estado = player.estado_extra
     estado["dimensao"] = "Mundo"
@@ -1313,6 +1351,21 @@ def aplicar_respawn_mundo(usuario, player, motivo="respawn", registrar_diff=None
             categoria="player",
         )
     return player
+
+
+def _restaurar_inventario_player_persistido(usuario: str, player) -> bool:
+    if player is None or not isinstance(getattr(player, "estado_extra", None), dict) or not str(usuario or "").strip():
+        return False
+    atual = player.estado_extra.get("inventario") if isinstance(player.estado_extra.get("inventario"), dict) else {}
+    if _inventario_tem_conteudo(atual):
+        return False
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(str(usuario))
+        persistido = copy.deepcopy(personagem.get("inventario")) if isinstance(personagem, dict) and isinstance(personagem.get("inventario"), dict) else None
+    if not _inventario_tem_conteudo(persistido):
+        return False
+    player.estado_extra["inventario"] = _normalizar_inventario(persistido)
+    return True
 
 
 

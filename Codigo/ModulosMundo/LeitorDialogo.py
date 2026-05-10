@@ -158,6 +158,7 @@ class LeitorDialogo:
             "fada": "RespeitoEstadioFada",
             "cosmico": "RespeitoEstadioCosmico",
             "sonoro": "RespeitoEstadioSonoro",
+            "geral": "RespeitoEstadioGeral",
         }
         chave = mapa.get(tipo, "")
         valor = int(getattr(perfil, chave, 0) if chave else 0)

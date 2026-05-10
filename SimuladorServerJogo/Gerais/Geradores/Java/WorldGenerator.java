@@ -147,7 +147,7 @@ final class RegionData {
 final class GeneratorContext {
     static final String[] GYM_TYPES = {
         "Normal","Fogo","Agua","Planta","Eletrico","Gelo","Lutador","Venenoso","Terra","Voador",
-        "Psiquico","Inseto","Pedra","Fantasma","Dragao","Sombrio","Metal","Fada","Cosmico","Sonoro"
+        "Psiquico","Inseto","Pedra","Fantasma","Dragao","Sombrio","Metal","Fada","Cosmico","Sonoro","Geral"
     };
 
     final long seed;

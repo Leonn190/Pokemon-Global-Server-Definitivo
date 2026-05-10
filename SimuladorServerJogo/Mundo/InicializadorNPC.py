@@ -362,6 +362,7 @@ class InicializadorNPC:
         cargo = self.slug(row.get("Cargo"))
         nivel = self.inteiro(row.get("Nivel"), 1)
         code = self.inteiro(row.get("Code"), sum(ord(c) for c in nome_npc))
+        batalhas = max(1, self.inteiro(row.get("Batalhas"), 1))
         rnd = random.Random(72_000 + code)
         nomes = [str(row.get(col) or "").strip() for col in self.colunas_pokemon(row)]
         pokes: List[Dict[str, object] | None] = []
@@ -371,7 +372,13 @@ class InicializadorNPC:
             return [base[i] for i in indices if 0 <= i < len(base) and isinstance(base[i], dict)]
 
         times: List[Dict[str, object]] = []
-        if cargo == "lider" and len(nomes) >= 12:
+        if cargo == "lider" and batalhas >= 3 and len(nomes) >= 18:
+            total_times = min(batalhas, len(nomes) // 6)
+            pokes = self._pokemons_treinador(nomes[:total_times * 6], nivel, rnd)
+            for indice in range(total_times):
+                inicio = indice * 6
+                times.append({"Nome": f"Time {indice + 1}", "Slots": compact(list(range(inicio, inicio + 6)))[:6]})
+        elif cargo == "lider" and len(nomes) >= 12:
             meio = list(range(3, 9))
             sorteados = rnd.sample(meio, k=3)
             sobraram = [i for i in meio if i not in sorteados]

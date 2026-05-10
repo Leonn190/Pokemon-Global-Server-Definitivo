@@ -11,7 +11,7 @@ DIMENSOES_ESTADIO = [
     "EstadioNormal", "EstadioFogo", "EstadioAgua", "EstadioPlanta", "EstadioEletrico",
     "EstadioGelo", "EstadioLutador", "EstadioVenenoso", "EstadioTerra", "EstadioVoador",
     "EstadioPsiquico", "EstadioInseto", "EstadioPedra", "EstadioFantasma", "EstadioDragao",
-    "EstadioSombrio", "EstadioMetal", "EstadioFada", "EstadioCosmico", "EstadioSonoro",
+    "EstadioSombrio", "EstadioMetal", "EstadioFada", "EstadioCosmico", "EstadioSonoro", "EstadioGeral",
 ]
 
 

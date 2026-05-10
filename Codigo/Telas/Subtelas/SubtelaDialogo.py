@@ -196,6 +196,7 @@ class SubtelaDialogo(Subtela):
         return candidatos
 
     def _dialogo_fallback(self) -> Dict[str, object]:
+        estado = self._npc.get("estado") if isinstance(self._npc.get("estado"), dict) else {}
         opcoes = [{"texto": "Até depois.", "acao": "fim"}]
         if self._npc_cargo == "vendedor":
             opcoes.insert(0, {"texto": "Quero ver seus produtos.", "destino": "abrir_loja"})
@@ -207,7 +208,12 @@ class SubtelaDialogo(Subtela):
                 }
             }
         else:
-            opcoes.insert(0, {"texto": "Quero batalhar.", "acao": "batalha", "batalha": 1})
+            times = estado.get("times_pokemon") if isinstance(estado.get("times_pokemon"), list) else []
+            if len(times) > 1:
+                for indice in range(min(3, len(times)), 0, -1):
+                    opcoes.insert(0, {"texto": f"Quero batalhar contra o Time {indice}.", "acao": "batalha", "batalha": indice})
+            else:
+                opcoes.insert(0, {"texto": "Quero batalhar.", "acao": "batalha", "batalha": 1})
             nos_extra = {}
         return {
             "inicio": "saudacao",

@@ -6,7 +6,7 @@ class Perfil:
     NIVEL_MAXIMO = 50
     TIPOS_ESTADIO = (
         "Normal", "Fogo", "Agua", "Planta", "Eletrico", "Gelo", "Lutador", "Venenoso", "Terrestre", "Voador",
-        "Psiquico", "Inseto", "Pedra", "Fantasma", "Dragao", "Sombrio", "Metal", "Fada", "Cosmico", "Sonoro",
+        "Psiquico", "Inseto", "Pedra", "Fantasma", "Dragao", "Sombrio", "Metal", "Fada", "Cosmico", "Sonoro", "Geral",
     )
 
     def __init__(self):

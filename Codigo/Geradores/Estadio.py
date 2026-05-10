@@ -35,6 +35,7 @@ class GeradorEstadio:
             "fada": (220, 154, 196),
             "cosmico": (102, 105, 176),
             "sonoro": (198, 123, 219),
+            "geral": (229, 207, 123),
         }
         return paleta.get(str(tipo or "").strip().lower(), (170, 170, 170))
 

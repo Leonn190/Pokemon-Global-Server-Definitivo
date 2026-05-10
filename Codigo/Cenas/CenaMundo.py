@@ -581,7 +581,8 @@ class CenaMundo:
             estado_hud_dungeon = (estado_player or {}).get("estado_dungeon") if dentro_dungeon and isinstance((estado_player or {}).get("estado_dungeon"), dict) else None
             if isinstance(estado_hud_dungeon, dict) and isinstance((estado_player or {}).get("vida_player"), dict):
                 estado_hud_dungeon = {**estado_hud_dungeon, "vida_player": (estado_player or {}).get("vida_player")}
-            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=estado_hud_dungeon, layout_dungeon=layout_dungeon)
+            captura_hud = self.ControladorMundo.Objetos.captura_hud_atual()
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=estado_hud_dungeon, layout_dungeon=layout_dungeon, captura_hud=captura_hud)
             if dentro_dungeon:
                 self.ControladorMundo.Dungeons.renderizar_texto(surface)
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})

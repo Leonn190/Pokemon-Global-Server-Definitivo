@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import unicodedata
 from typing import Dict, List
 
 from SimuladorServerJogo.Logica.Executes.ExecutesFrutas import executar_fruta
@@ -32,6 +33,41 @@ def _normalizar_checks(checks: List[bool]) -> List[bool]:
     return base[:3]
 
 
+def _normalizar_texto(v):
+    texto = str(v or "").strip().lower()
+    return "".join(c for c in unicodedata.normalize("NFKD", texto) if not unicodedata.combining(c))
+
+
+def _multiplicadores_checks(ctx) -> List[float]:
+    bruto = ctx.get("captura_chance_multiplicadores_checks", [2.5, 1.5, 1.0])
+    if not isinstance(bruto, (list, tuple)):
+        bruto = [2.5, 1.5, 1.0]
+    out = []
+    for valor in list(bruto)[:3]:
+        try:
+            out.append(float(valor))
+        except (TypeError, ValueError):
+            pass
+    while len(out) < 3:
+        out.append([2.5, 1.5, 1.0][len(out)])
+    return out[:3]
+
+
+def _calcular_chances_checks(poder, dificuldade, garantida, ctx):
+    base_check = _f(ctx.get("captura_chance_base_check", 58.0), 58.0)
+    escala_diferenca = _f(ctx.get("captura_chance_escala_diferenca", 0.82), 0.82)
+    check_min = _f(ctx.get("captura_chance_check_min", 3.0), 3.0)
+    check_max = _f(ctx.get("captura_chance_check_max", 98.0), 98.0)
+    multiplicadores = _multiplicadores_checks(ctx)
+    if bool(garantida):
+        return 100.0, [100.0, 100.0, 100.0], multiplicadores, 100.0
+    teto = min(100.0, max(check_min, check_max))
+    chance_base = max(check_min, min(teto, base_check + ((float(poder) - float(dificuldade)) * escala_diferenca)))
+    chance_checks = [min(100.0, max(check_min, chance_base * mult)) for mult in multiplicadores]
+    chance_geral = (chance_checks[0] / 100.0) * (chance_checks[1] / 100.0) * (chance_checks[2] / 100.0) * 100.0
+    return float(chance_base), [float(x) for x in chance_checks], multiplicadores, float(chance_geral)
+
+
 def resolver_captura(pokemon, nome_bola, contexto=None):
     ctx = dict(contexto or {})
     captura = pokemon.estado_extra.setdefault("captura", {})
@@ -45,7 +81,8 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     estado_fruta = pokemon.estado_extra.get("estado_frutificacao") if isinstance(pokemon.estado_extra.get("estado_frutificacao"), dict) else {}
     bonus_frutas = float(estado_fruta.get("bonus_captura_frutas", 0.0) or 0.0)
     bonus_bioma = estado_fruta.get("bonus_captura_bioma") if isinstance(estado_fruta.get("bonus_captura_bioma"), dict) else {}
-    bonus_bioma_valor = float(bonus_bioma.get(str(ctx.get("bioma", "")).lower(), 0.0) or 0.0)
+    bioma_norm = _normalizar_texto(ctx.get("bioma", ""))
+    bonus_bioma_valor = float(bonus_bioma.get(bioma_norm, 0.0) or 0.0)
 
     maestria = float(ctx.get("maestria", 0.0) if ctx.get("maestria", 0.0) not in (None, "") else 0.0)
     maestria_max = float(ctx.get("captura_poder_maestria_max", 10.0) if ctx.get("captura_poder_maestria_max", 10.0) not in (None, "") else 10.0)
@@ -60,13 +97,9 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
 
     dificuldade = float(pokemon.estado_extra.get("dificuldade_captura", 50.0) or 50.0)
     garantida = bool(bola.get("captura_garantida", False))
-    base_check = float(ctx.get("captura_chance_base_check", 58.0) if ctx.get("captura_chance_base_check", 58.0) not in (None, "") else 58.0)
-    escala_diferenca = float(ctx.get("captura_chance_escala_diferenca", 0.82) if ctx.get("captura_chance_escala_diferenca", 0.82) not in (None, "") else 0.82)
-    check_min = float(ctx.get("captura_chance_check_min", 3.0) if ctx.get("captura_chance_check_min", 3.0) not in (None, "") else 3.0)
-    check_max = float(ctx.get("captura_chance_check_max", 98.0) if ctx.get("captura_chance_check_max", 98.0) not in (None, "") else 98.0)
-    checks_necessarios = max(1, int(ctx.get("captura_chance_checks_necessarios", 3) if ctx.get("captura_chance_checks_necessarios", 3) not in (None, "") else 3))
-    chance_check = 100.0 if garantida else max(check_min, min(check_max, base_check + ((poder - dificuldade) * escala_diferenca)))
-    chance_real_checks = 100.0 if garantida else (chance_check / 100.0) ** checks_necessarios * 100.0
+    checks_necessarios = min(3, max(1, int(ctx.get("captura_chance_checks_necessarios", 3) if ctx.get("captura_chance_checks_necessarios", 3) not in (None, "") else 3)))
+    chance_check_base, chance_checks, multiplicadores_checks, chance_geral = _calcular_chances_checks(poder, dificuldade, garantida, ctx)
+    chance_real_checks = float(chance_geral)
 
     dono_pos = ctx.get("dono_posicao") if isinstance(ctx.get("dono_posicao"), (list, tuple)) and len(ctx.get("dono_posicao")) == 2 else None
     bola_pos = [float(pokemon.posicao[0]), float(pokemon.posicao[1])]
@@ -75,7 +108,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
     checks: List[bool] = []
     rolagens: List[float] = []
     falhou = False
-    for _idx in range(1, checks_necessarios + 1):
+    for idx in range(checks_necessarios):
         if falhou:
             checks.append(False)
             continue
@@ -83,7 +116,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         if not passou:
             rolagem = random.uniform(0.0, 100.0)
             rolagens.append(float(rolagem))
-            passou = rolagem <= chance_check
+            passou = rolagem <= chance_checks[min(idx, len(chance_checks) - 1)]
         checks.append(bool(passou))
         if not passou:
             falhou = True
@@ -101,6 +134,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
             "captura_pendente": True,
             "checks_total": 3,
             "checagens": list(checks),
+            "rolagens": list(rolagens),
             "resultado": str(resultado),
             "capturador_id": int(ctx.get("dono_id", 0) or 0),
             "dono_id": int(ctx.get("dono_id", 0) or 0),
@@ -110,7 +144,12 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
             "retorno_inicio": list(bola_pos),
             "retorno_destino": list(retorno_destino),
             "poder_total": float(poder),
-            "chance_check": float(chance_check),
+            "dificuldade_captura": float(dificuldade),
+            "chance_check": float(chance_check_base),
+            "chance_check_base": float(chance_check_base),
+            "chance_checks": list(chance_checks),
+            "multiplicadores_checks": list(multiplicadores_checks),
+            "chance_geral": float(chance_geral),
             "chance_real_3_checks": float(chance_real_checks),
             "captura_garantida": bool(garantida),
             "liberar_movimento_tick": int(liberar_tick),
@@ -132,7 +171,7 @@ def resolver_captura(pokemon, nome_bola, contexto=None):
         f"critica_cliente={critica_cliente} multiplicador_critico={multiplicador_critico:.3f} "
         f"poder_total={poder:.3f} dificuldade={dificuldade:.3f} "
         f"formula_chance='clamp(base_check + (poder_total - dificuldade) * escala_diferenca, check_min, check_max)' "
-        f"chance_check={chance_check:.3f}% chance_real_3_checks={chance_real_checks:.3f}% "
+        f"chance_base={chance_check_base:.3f}% chance_checks={[round(x, 3) for x in chance_checks]} chance_geral={chance_geral:.3f}% "
         f"rolagens={[round(x, 3) for x in rolagens]} checagens={checks} resultado={resultado}"
     )
 
@@ -199,6 +238,17 @@ def calcular_dificuldade_captura_batalha(pokemon, regras=None) -> float:
 
 def resolver_captura_batalha(pokemon, nome_bola, contexto=None):
     ctx = dict(contexto or {})
+    regras_ctx = ctx.get("regras") if isinstance(ctx.get("regras"), dict) else {}
+    for chave in (
+        "captura_chance_base_check",
+        "captura_chance_escala_diferenca",
+        "captura_chance_check_min",
+        "captura_chance_check_max",
+        "captura_chance_checks_necessarios",
+        "captura_chance_multiplicadores_checks",
+    ):
+        if chave not in ctx and chave in regras_ctx:
+            ctx[chave] = regras_ctx[chave]
     estado = _estado_captura_batalha(pokemon)
     adaptado = _PokemonCapturaBatalha(pokemon, estado)
     bola = executar_pokebola(nome_bola, adaptado, contexto={**ctx, "em_batalha": True})
@@ -214,28 +264,22 @@ def resolver_captura_batalha(pokemon, nome_bola, contexto=None):
 
     dificuldade = calcular_dificuldade_captura_batalha(pokemon, ctx.get("regras"))
     garantida = bool(bola.get("captura_garantida", False))
-    checks_necessarios = max(1, int(ctx.get("captura_chance_checks_necessarios", 3) or 3))
-    chance_check = 100.0 if garantida else max(
-        _f(ctx.get("captura_chance_check_min", 3.0), 3.0),
-        min(
-            _f(ctx.get("captura_chance_check_max", 98.0), 98.0),
-            _f(ctx.get("captura_chance_base_check", 58.0), 58.0) + ((poder - dificuldade) * _f(ctx.get("captura_chance_escala_diferenca", 0.82), 0.82)),
-        ),
-    )
-    chance_real_checks = 100.0 if garantida else (chance_check / 100.0) ** checks_necessarios * 100.0
+    checks_necessarios = min(3, max(1, int(ctx.get("captura_chance_checks_necessarios", 3) or 3)))
+    chance_check_base, chance_checks, multiplicadores_checks, chance_geral = _calcular_chances_checks(poder, dificuldade, garantida, ctx)
+    chance_real_checks = float(chance_geral)
     rng = ctx.get("rng")
     rand = rng.random if hasattr(rng, "random") else random.random
     checks: List[bool] = []
     rolagens: List[float] = []
     falhou = False
-    for _idx in range(checks_necessarios):
+    for idx in range(checks_necessarios):
         if falhou:
             checks.append(False)
             continue
         rolagem = 0.0 if garantida else float(rand() * 100.0)
         if not garantida:
             rolagens.append(rolagem)
-        passou = bool(garantida or rolagem <= chance_check)
+        passou = bool(garantida or rolagem <= chance_checks[min(idx, len(chance_checks) - 1)])
         checks.append(passou)
         if not passou:
             falhou = True
@@ -247,7 +291,11 @@ def resolver_captura_batalha(pokemon, nome_bola, contexto=None):
         "sucesso": sucesso,
         "checagens": list(checks),
         "rolagens": rolagens,
-        "chance_check": float(chance_check),
+        "chance_check": float(chance_check_base),
+        "chance_check_base": float(chance_check_base),
+        "chance_checks": list(chance_checks),
+        "multiplicadores_checks": list(multiplicadores_checks),
+        "chance_geral": float(chance_geral),
         "chance_real_3_checks": float(chance_real_checks),
         "dificuldade_batalha": float(dificuldade),
         "poder_total": float(poder),

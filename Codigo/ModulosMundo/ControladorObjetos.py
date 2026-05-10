@@ -563,6 +563,7 @@ class ControladorObjetos:
                 self.ObjetosPorId[oid] = dados
                 self._upsert_indice_chunk_objeto(oid, dados)
                 self._upsert_especializado(oid, dados)
+                self._registrar_snapshot_hud_captura(dados)
                 self._invalidar_cache_objetos_visiveis_locked()
                 if self._eh_payload_estrutura(dados) or self._eh_payload_estadio(dados):
                     self._invalidar_cache_estruturas_visiveis_locked()
@@ -586,6 +587,7 @@ class ControladorObjetos:
                 self.ObjetosPorId[oid] = atual
                 self._upsert_indice_chunk_objeto(oid, atual)
                 self._upsert_especializado(oid, atual)
+                self._registrar_snapshot_hud_captura(atual)
                 self._invalidar_cache_objetos_visiveis_locked()
                 if self._eh_payload_estrutura(atual) or self._eh_payload_estadio(atual):
                     self._invalidar_cache_estruturas_visiveis_locked()
@@ -670,6 +672,52 @@ class ControladorObjetos:
             "impacto_local_enviado_ms": 0,
         })
 
+    @staticmethod
+    def _captura_tem_dados_hud(captura: Dict[str, object]) -> bool:
+        if not isinstance(captura, dict):
+            return False
+        if not str(captura.get("token_arremesso") or "").strip():
+            return False
+        if str(captura.get("resultado") or "").strip().lower() not in {"sucesso", "falha"}:
+            return False
+        return any(chave in captura for chave in ("poder_total", "dificuldade_captura", "chance_geral", "chance_real_3_checks"))
+
+    def _registrar_snapshot_hud_captura(self, payload: Dict[str, object]) -> None:
+        estado = payload.get("estado") if isinstance(payload.get("estado"), dict) else {}
+        if str(estado.get("subtipo", "")).strip().lower() != "pokemon":
+            return
+        captura = estado.get("captura") if isinstance(estado.get("captura"), dict) else {}
+        if not self._captura_tem_dados_hud(captura):
+            return
+        token = str(captura.get("token_arremesso") or "").strip()
+        snapshot = dict(captura)
+        snapshot.setdefault("dificuldade_captura", estado.get("dificuldade_captura"))
+        snapshot["recebido_ms"] = int(pygame.time.get_ticks())
+        snapshot["expira_ms"] = int(snapshot["recebido_ms"] + 5000)
+        info = self._token_info(token)
+        info["hud_snapshot"] = snapshot
+        info["hud_recebido_ms"] = int(snapshot["recebido_ms"])
+
+    def captura_hud_atual(self) -> Dict[str, object]:
+        agora = int(pygame.time.get_ticks())
+        melhor: Dict[str, object] = {}
+        melhor_ms = -1
+        for token, info in list(self._capturas_por_token.items()):
+            if not isinstance(info, dict):
+                continue
+            snap = info.get("hud_snapshot") if isinstance(info.get("hud_snapshot"), dict) else None
+            if not isinstance(snap, dict):
+                continue
+            if agora > int(snap.get("expira_ms", 0) or 0):
+                info.pop("hud_snapshot", None)
+                continue
+            recebido = int(snap.get("recebido_ms", 0) or 0)
+            if recebido > melhor_ms:
+                melhor = dict(snap)
+                melhor["token_arremesso"] = str(melhor.get("token_arremesso") or token)
+                melhor_ms = recebido
+        return melhor
+
     def _registrar_colisao_local_projetil_pokemon(self, proj: Projetil, poke: Pokemon) -> None:
         token = str(getattr(proj, "TokenArremesso", "") or "").strip()
         if not token:
@@ -720,6 +768,7 @@ class ControladorObjetos:
         info = self._token_info(token)
         info["resultado_servidor_recebido"] = True
         info["resultado_servidor_recebido_ms"] = pygame.time.get_ticks()
+        self._registrar_snapshot_hud_captura(payload)
         poke = self.PokemonsPorId.get(int(payload.get("id", 0) or 0))
         if poke is None:
             return

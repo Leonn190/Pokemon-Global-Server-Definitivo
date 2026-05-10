@@ -329,11 +329,13 @@ class CerebroCentral:
 
         iv_base = int(estado.get("iv", 0) or 0)
         bonus_iv = int(efeitos_bola.get("bonus_iv", 0) or 0)
+        bonus_iv += int(estado_fruta.get("bonus_iv", 0) or 0)
         bonus_iv += int(round(iv_base * (float(efeitos_bola.get("bonus_iv_percentual", 0.0) or 0.0) / 100.0)))
         bonus_iv += int(round(iv_base * (float(estado_fruta.get("bonus_iv_percentual_captura", 0.0) or 0.0) / 100.0)))
 
-        bonus_nivel = int(efeitos_bola.get("bonus_nivel", 0) or 0) + int(efeitos_bola.get("nivel_aumentado", 0) or 0)
+        bonus_nivel = int(efeitos_bola.get("bonus_nivel", 0) or 0) + int(efeitos_bola.get("nivel_aumentado", 0) or 0) + int(estado_fruta.get("bonus_nivel_captura", 0) or 0)
         bonus_amizade = int(efeitos_bola.get("bonus_amizade", 0) or 0) + int(estado_fruta.get("bonus_amizade_captura", 0) or 0)
+        multiplicador_doces = float(estado_fruta.get("multiplicador_doces", 1.0) or 1.0) * float(efeitos_bola.get("multiplicador_doces", 1.0) or 1.0)
 
         bruto = {
             "id": int(getattr(poke, "Id", 0) or 0),
@@ -355,7 +357,12 @@ class CerebroCentral:
             "chunk_origem": list(estado.get("chunk_origem", [])) if isinstance(estado.get("chunk_origem"), list) else [],
             "capturado_em_ms": int(time.time() * 1000),
         }
-        return materializar_pokemon(bruto, efeitos_captura={"bonus_iv": bonus_iv, "bonus_nivel": bonus_nivel, "bonus_amizade": bonus_amizade})
+        capturado = materializar_pokemon(bruto, efeitos_captura={"bonus_iv": bonus_iv, "bonus_nivel": bonus_nivel, "bonus_amizade": bonus_amizade})
+        estado_capturado = capturado.get("estado") if isinstance(capturado.get("estado"), dict) else capturado
+        if isinstance(estado_capturado, dict):
+            # Consumido pelo sistema de recompensa de doces quando ele existir.
+            estado_capturado["multiplicador_doces_captura"] = float(max(0.0, multiplicador_doces))
+        return capturado
 
     def _adicionar_pokemon_capturado_inventario(self, dono_id: int, pokemon_snapshot: Dict[str, object]) -> None:
         from SimuladorServerJogo.Gerais.Rotas.Ativador import registrar_diff

@@ -22,6 +22,8 @@ incremento_por_escala = 0.15
 
 [captura]
 limite_frutas = 2
+jujuca_bonus_limite_frutas = 2
+jujuca_max_por_pokemon = 1
 cooldown_movimento_ticks = 36
 atraso_inventario_ticks = 24
 atraso_spawn_xp_ticks = 16
@@ -59,6 +61,11 @@ escala_diferenca = 0.82
 check_min = 3.0
 check_max = 98.0
 checks_necessarios = 3
+multiplicadores_checks = [2.5, 1.5, 1.0]
+
+[captura.sniperball]
+distancia_max_tiles = 9.0
+poder_max = 100.0
 
 [captura.falhas]
 incremento_dificuldade_por_falha = 3.0

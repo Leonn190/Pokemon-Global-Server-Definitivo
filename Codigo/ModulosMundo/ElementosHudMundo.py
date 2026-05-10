@@ -7,6 +7,7 @@ from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Mensagem import MensagensGanhosMundo
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosMundo.Minimapa import MinimapaMundo
+from Codigo.Paineis.PainelCaptura import PainelCaptura
 
 
 class ElementosHudMundo:
@@ -15,6 +16,7 @@ class ElementosHudMundo:
         self.TextoQtd = Texto("", style={"size": 14, "align": "bottomright", "outline_thickness": 1})
         self._mensagens_ganhos = MensagensGanhosMundo()
         self._minimapa = MinimapaMundo()
+        self._painel_captura = PainelCaptura()
         self._coracao = None
         self._coracao_preto = None
 
@@ -50,7 +52,7 @@ class ElementosHudMundo:
     def atualizar(self, dt: float) -> None:
         self._mensagens_ganhos.atualizar(dt)
 
-    def desenhar(self, tela, inventario, terminal=None, eventos=None, dt=0.0, servico_mapa=None, pos_player_mundo=(0.0, 0.0), angulo_olhar=0.0, mostrar_minimapa=False, estado_dungeon=None, layout_dungeon=None):
+    def desenhar(self, tela, inventario, terminal=None, eventos=None, dt=0.0, servico_mapa=None, pos_player_mundo=(0.0, 0.0), angulo_olhar=0.0, mostrar_minimapa=False, estado_dungeon=None, layout_dungeon=None, captura_hud=None):
         largura, altura = tela.get_size()
         slot = 50
         gap = 8
@@ -96,6 +98,7 @@ class ElementosHudMundo:
 
         if bool(mostrar_minimapa):
             self._minimapa.desenhar(tela, servico_mapa, pos_player_mundo, float(angulo_olhar or 0.0), layout_dungeon=layout_dungeon, estado_dungeon=estado_dungeon)
+        self._painel_captura.desenhar(tela, captura=captura_hud, mostrar_minimapa=bool(mostrar_minimapa), dt=dt)
 
         if terminal is not None:
             terminal.desenhar(tela, eventos or [], dt)

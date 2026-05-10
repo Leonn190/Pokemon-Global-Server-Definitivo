@@ -103,6 +103,7 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     captura_poder = captura.get("poder") if isinstance(captura.get("poder"), dict) else {}
     captura_chance = captura.get("chance") if isinstance(captura.get("chance"), dict) else {}
     captura_falhas = captura.get("falhas") if isinstance(captura.get("falhas"), dict) else {}
+    captura_sniperball = captura.get("sniperball") if isinstance(captura.get("sniperball"), dict) else {}
     personalidade = dados.get("personalidade_mundo") if isinstance(dados.get("personalidade_mundo"), dict) else {}
     personalidade_curioso = personalidade.get("curioso") if isinstance(personalidade.get("curioso"), dict) else {}
     personalidade_medroso = personalidade.get("medroso") if isinstance(personalidade.get("medroso"), dict) else {}
@@ -126,6 +127,8 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     out["combate_tamanho_incremento_por_escala"] = _float_cfg(batalha_tamanho, "incremento_por_escala", 0.15)
     out["animacao_intervalo_frame_ms"] = _int_cfg(anim, "intervalo_frame_ms", 85)
     out["captura_limite_frutas"] = _int_cfg(captura, "limite_frutas", 2)
+    out["captura_jujuca_bonus_limite_frutas"] = _int_cfg(captura, "jujuca_bonus_limite_frutas", 2)
+    out["captura_jujuca_max_por_pokemon"] = _int_cfg(captura, "jujuca_max_por_pokemon", 1)
     out["captura_cooldown_movimento_ticks"] = _int_cfg(captura, "cooldown_movimento_ticks", 36)
     out["captura_atraso_inventario_ticks"] = _int_cfg(captura, "atraso_inventario_ticks", 24)
     out["captura_atraso_spawn_xp_ticks"] = _int_cfg(captura, "atraso_spawn_xp_ticks", 16)
@@ -152,6 +155,10 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     out["captura_chance_check_min"] = _float_cfg(captura_chance, "check_min", 3.0)
     out["captura_chance_check_max"] = _float_cfg(captura_chance, "check_max", 98.0)
     out["captura_chance_checks_necessarios"] = _int_cfg(captura_chance, "checks_necessarios", 3)
+    mult_checks = _ler_valor(captura_chance, "multiplicadores_checks", [2.5, 1.5, 1.0])
+    out["captura_chance_multiplicadores_checks"] = list(mult_checks) if isinstance(mult_checks, (list, tuple)) else [2.5, 1.5, 1.0]
+    out["captura_sniperball_distancia_max_tiles"] = _float_cfg(captura_sniperball, "distancia_max_tiles", 9.0)
+    out["captura_sniperball_poder_max"] = _float_cfg(captura_sniperball, "poder_max", 100.0)
     out["captura_falhas_incremento_dificuldade_por_falha"] = _float_cfg(captura_falhas, "incremento_dificuldade_por_falha", 3.0)
     out["captura_falhas_falhas_para_irritar"] = _int_cfg(captura_falhas, "falhas_para_irritar", 5)
     out["captura_falhas_limiar_dificuldade_irritado"] = _float_cfg(captura_falhas, "limiar_dificuldade_irritado", 85.0)

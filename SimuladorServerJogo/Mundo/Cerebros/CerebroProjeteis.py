@@ -86,8 +86,17 @@ class CerebroProjeteis:
         cap = poke.estado_extra.get("captura") if isinstance(poke.estado_extra.get("captura"), dict) else {}
         if bool(cap.get("captura_pendente", False)) or str(cap.get("token_arremesso") or "") == token:
             return False
+        distancia_servidor_tiles = math.hypot(
+            float(dono_obj.posicao[0]) - float(poke.posicao[0]),
+            float(dono_obj.posicao[1]) - float(poke.posicao[1]),
+        )
         if fruta:
-            resolver_fruta(poke, str(payload.get("item_nome") or lanc.get("item_nome") or payload.get("variante") or "fruta"), contexto={"dono_id": dono_id, "limite_frutas": int(self._core._i("captura_limite_frutas", 2))})
+            resolver_fruta(poke, str(payload.get("item_nome") or lanc.get("item_nome") or payload.get("variante") or "fruta"), contexto={
+                "dono_id": dono_id,
+                "limite_frutas": int(self._core._i("captura_limite_frutas", 2)),
+                "captura_jujuca_bonus_limite_frutas": int(self._core._i("captura_jujuca_bonus_limite_frutas", 2)),
+                "captura_jujuca_max_por_pokemon": int(self._core._i("captura_jujuca_max_por_pokemon", 1)),
+            })
             BANCO_DADOS.atualizar_objeto(poke.Id, {"estado": poke.estado_extra})
             registrar_diff("update", payload=poke.serializar(), escopo={"centro": [poke.posicao[0], poke.posicao[1]], "raio": 120}, objeto_id=poke.Id, autor="server", categoria="pokemon")
             self._tokens_impacto_processados.add(token)
@@ -98,6 +107,7 @@ class CerebroProjeteis:
             "dono_id": dono_id,
             "dono_posicao": [float(dono_obj.posicao[0]), float(dono_obj.posicao[1])],
             "distancia_arremesso_tiles": float(payload.get("distancia_arremesso_tiles", 0.0) or 0.0),
+            "distancia_servidor_tiles": float(distancia_servidor_tiles),
             "tentativas_falhas_anteriores": int(poke.estado_extra.get("tentativas_falhas_captura", 0) or 0),
             "bioma": str(poke.estado_extra.get("bioma", "")),
             "captura_critica_cliente": bool(payload.get("captura_critica_cliente", False)),
@@ -118,6 +128,9 @@ class CerebroProjeteis:
             "captura_chance_check_min": float(self._core._f("captura_chance_check_min", 3.0)),
             "captura_chance_check_max": float(self._core._f("captura_chance_check_max", 98.0)),
             "captura_chance_checks_necessarios": int(self._core._i("captura_chance_checks_necessarios", 3)),
+            "captura_chance_multiplicadores_checks": list(self._core._regras.get("captura_chance_multiplicadores_checks", [2.5, 1.5, 1.0]) or [2.5, 1.5, 1.0]),
+            "captura_sniperball_distancia_max_tiles": float(self._core._f("captura_sniperball_distancia_max_tiles", 9.0)),
+            "captura_sniperball_poder_max": float(self._core._f("captura_sniperball_poder_max", 100.0)),
         })
         if bool(ret.get("iniciada", False)):
             if not bool(ret.get("sucesso", False)):

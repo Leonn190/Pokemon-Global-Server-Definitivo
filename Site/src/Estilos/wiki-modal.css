@@ -217,3 +217,25 @@
     animation: none !important;
   }
 }
+
+/* Saída leve dos modais: evita o sumiço seco ao fechar cartuchos/detalhes. */
+.pokemon-detalhe.modal-saindo .pokemon-detalhe-backdrop {
+  animation: wiki-modal-backdrop-saida 150ms ease-in both;
+}
+.pokemon-detalhe.modal-saindo .pokemon-detalhe-card {
+  animation: wiki-modal-card-saida 150ms ease-in both;
+}
+@keyframes wiki-modal-backdrop-saida {
+  from { opacity: 1; backdrop-filter: blur(12px); }
+  to { opacity: 0; backdrop-filter: blur(4px); }
+}
+@keyframes wiki-modal-card-saida {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(0.985); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pokemon-detalhe.modal-saindo .pokemon-detalhe-backdrop,
+  .pokemon-detalhe.modal-saindo .pokemon-detalhe-card {
+    animation: none !important;
+  }
+}

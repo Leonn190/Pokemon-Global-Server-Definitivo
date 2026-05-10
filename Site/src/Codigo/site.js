@@ -138,6 +138,55 @@ function configurarEntradaHome() {
   requestAnimationFrame(() => requestAnimationFrame(iniciarEntrada));
 }
 
+function configurarSelectsWiki() {
+  const grupos = [...document.querySelectorAll(".filtro-select-wiki")];
+  if (!grupos.length) return;
+  const fecharTodos = (exceto = null) => {
+    grupos.forEach((grupo) => {
+      if (grupo !== exceto) grupo.classList.remove("select-aberto");
+    });
+  };
+  grupos.forEach((grupo) => {
+    const select = grupo.querySelector("select");
+    if (!select) return;
+    select.addEventListener("pointerdown", () => {
+      const estavaAberto = grupo.classList.contains("select-aberto");
+      fecharTodos(grupo);
+      grupo.classList.toggle("select-aberto", !estavaAberto);
+    });
+    select.addEventListener("keydown", (evento) => {
+      if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(evento.key)) {
+        fecharTodos(grupo);
+        grupo.classList.add("select-aberto");
+      }
+      if (["Escape", "Tab"].includes(evento.key)) grupo.classList.remove("select-aberto");
+    });
+    select.addEventListener("change", () => window.setTimeout(() => grupo.classList.remove("select-aberto"), 0));
+    select.addEventListener("blur", () => grupo.classList.remove("select-aberto"));
+  });
+  document.addEventListener("pointerdown", (evento) => {
+    if (!evento.target.closest?.(".filtro-select-wiki")) fecharTodos();
+  });
+}
+
+function configurarTransicaoPorLogo() {
+  const links = document.querySelectorAll("[data-page-fade-link]");
+  if (!links.length) return;
+  const reduzirMovimento = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  links.forEach((link) => {
+    link.addEventListener("click", (evento) => {
+      if (reduzirMovimento || evento.defaultPrevented || evento.button !== 0 || evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return;
+      const destino = link.href;
+      if (!destino || destino === window.location.href) return;
+      evento.preventDefault();
+      document.body.classList.add("pagina-saindo");
+      window.setTimeout(() => {
+        window.location.href = destino;
+      }, 170);
+    });
+  });
+}
+
 window.addEventListener("scroll", atualizarTopbar, { passive: true });
 atualizarTopbar();
 
@@ -160,3 +209,5 @@ configurarLogin();
 configurarCadastro();
 configurarContato();
 configurarEntradaHome();
+configurarSelectsWiki();
+configurarTransicaoPorLogo();

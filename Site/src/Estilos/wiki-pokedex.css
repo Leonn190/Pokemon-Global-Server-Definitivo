@@ -1200,3 +1200,21 @@ body.detalhe-aberto {
     transition: none;
   }
 }
+
+/* Ajuste fino dos selects: a seta só vira quando o dropdown está realmente aberto pelo JS. */
+.filtro-select-wiki:focus-within::after {
+  transform: rotate(45deg);
+  border-color: rgba(255, 217, 52, 0.9);
+  filter: none;
+}
+.filtro-select-wiki.select-aberto::after {
+  transform: translateY(2px) rotate(225deg);
+  border-color: #fff0a6;
+  filter: drop-shadow(0 0 8px rgba(255, 217, 52, 0.42));
+}
+.tipo-icone-mini b {
+  color: #071531;
+  font-size: 0.92rem;
+  font-weight: 1000;
+  line-height: 1;
+}

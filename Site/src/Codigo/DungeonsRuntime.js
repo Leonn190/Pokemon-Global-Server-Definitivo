@@ -1,5 +1,5 @@
 import { criarCardPokemon, criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-import { infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { fecharModalDetalhe, abrirModalDetalhe, infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetDungeon(dungeon, dados) {
   return dados.assetsDungeons?.[dungeon.id] ?? { imagem: null };
 }
@@ -91,12 +91,10 @@ function criarControladorDetalhe(dados, pokedex, obterListaAtual) {
     }
     preencherPokemonGrid(pokemons, dungeon.pokemons, pokedex, "dungeon");
     preencherPokemonGrid(servos, dungeon.servos, pokedex, "dungeon-servo");
-    detalhe.hidden = false;
-    document.body.classList.add("detalhe-aberto");
+    abrirModalDetalhe(detalhe);
   }
   function fecharDetalhe() {
-    if (detalhe) detalhe.hidden = true;
-    document.body.classList.remove("detalhe-aberto");
+    fecharModalDetalhe(detalhe);
   }
   detalhe?.querySelectorAll("[data-dungeon-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-dungeon-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));

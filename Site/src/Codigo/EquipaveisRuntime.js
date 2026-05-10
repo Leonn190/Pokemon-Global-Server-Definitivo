@@ -1,4 +1,4 @@
-import { aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { fecharModalDetalhe, abrirModalDetalhe, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetEquipavel(equipavel, dados) {
   return dados.assetsEquipaveis?.[equipavel.id] ?? { imagem: null };
 }
@@ -103,12 +103,10 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       }
     }
     if (focos) focos.innerHTML = focoBarrasHtml(equipavel);
-    detalhe.hidden = false;
-    document.body.classList.add("detalhe-aberto");
+    abrirModalDetalhe(detalhe);
   }
   function fecharDetalhe() {
-    if (detalhe) detalhe.hidden = true;
-    document.body.classList.remove("detalhe-aberto");
+    fecharModalDetalhe(detalhe);
   }
   detalhe?.querySelectorAll("[data-equipavel-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-equipavel-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));

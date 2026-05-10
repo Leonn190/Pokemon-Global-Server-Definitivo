@@ -1,0 +1,90 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import Botao from "../../Componentes/Botao.astro";
+import CardWiki from "../../Componentes/CardWiki.astro";
+import "../../Estilos/wiki.css";
+import "../../Estilos/por-tras-do-jogo.css";
+
+const sistemas = [
+  {
+    href: "/wiki/combate",
+    emoji: "⚔️",
+    titulo: "Batalha e turnos",
+    texto: "Rodador de turno, logs, efeitos, energia, dano, alvos e leitura visual no cliente.",
+  },
+  {
+    href: "/wiki/mundo",
+    emoji: "🌍",
+    titulo: "Mundo e chunks",
+    texto: "Geração de terreno, biomas, estruturas naturais, tiles especiais e exploração em mapa grande.",
+  },
+  {
+    href: "/wiki/dungeons",
+    emoji: "🗺️",
+    titulo: "Dungeons",
+    texto: "Dimensões fechadas, salas, armadilhas, servos, dificuldade e exploração progressiva.",
+  },
+  {
+    href: "/wiki/pokemons",
+    emoji: "🐾",
+    titulo: "Pokémon e dados",
+    texto: "Base extensa de criaturas, atributos, raridade, tipagens, linhagens e assets carregados por dados.",
+  },
+  {
+    href: "/wiki/ataques",
+    emoji: "💥",
+    titulo: "Ataques e animações",
+    texto: "Ataques por tipo, custo, foco, descrições, aprimoramentos e motores de execução.",
+  },
+  {
+    href: "/wiki/itens",
+    emoji: "🎒",
+    titulo: "Itens e progressão",
+    texto: "Consumíveis, recursos, craft, valores, uso em sistemas e integração com a progressão do jogador.",
+  },
+  {
+    href: "/wiki/equipaveis",
+    emoji: "🛡️",
+    titulo: "Equipáveis",
+    texto: "Bônus, afinidades, foco, atributos aumentados e uso estratégico em builds de Pokémon.",
+  },
+  {
+    href: "/por-tras-do-jogo/relatorio",
+    emoji: "📘",
+    titulo: "Relatórios do projeto",
+    texto: "Registro atual e relatórios antigos usados para acompanhar evolução, métricas e mudanças do código.",
+  },
+];
+---
+<Layout
+  titulo="Por trás do jogo | Pokémon Global Server"
+  descricao="Área técnica do Pokémon Global Server, com explicações sobre sistemas, código e relatórios do projeto."
+>
+  <section class="por-tras-hero" aria-labelledby="titulo-por-tras">
+    <p class="selo">Por trás do jogo</p>
+    <h1 id="titulo-por-tras">A parte técnica do Pokémon Global Server</h1>
+    <p>
+      Esta área existe para mostrar como o jogo é construído por dentro. A ideia não é ser uma wiki comum de jogador, mas uma vitrine técnica: aqui entram explicações sobre arquitetura, sistemas, código, dados, decisões de implementação e relatórios usados para acompanhar a evolução do projeto como portfólio.
+    </p>
+    <div class="acoes por-tras-acoes">
+      <Botao href="/por-tras-do-jogo/relatorio">Abrir relatório atual</Botao>
+      <Botao href="/wiki" tipo="secundario">Voltar para a wiki</Botao>
+    </div>
+  </section>
+
+  <section class="secao por-tras-intro" aria-labelledby="titulo-sistemas-tecnicos">
+    <div>
+      <p class="selo selo-azul">Sistemas</p>
+      <h2 id="titulo-sistemas-tecnicos">Cartuchos técnicos</h2>
+      <p>
+        Por enquanto estes cartuchos funcionam como entrada inicial. No futuro, cada sistema pode ganhar uma página própria explicando a lógica real do código, arquivos envolvidos, fluxo de dados e pontos importantes de manutenção.
+      </p>
+    </div>
+  </section>
+
+  <section class="secao" aria-label="Sistemas técnicos do jogo">
+    <div class="cards wiki-cards-dez por-tras-cards">
+      {sistemas.map((sistema) => <CardWiki {...sistema} />)}
+    </div>
+  </section>
+</Layout>

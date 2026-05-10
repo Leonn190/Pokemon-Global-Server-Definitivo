@@ -1,14 +1,15 @@
 ---
-import { urlPublica } from "../Codigo/AssetsPublicos.js";
+import { urlPublicaExistente } from "../Codigo/AssetsPublicos.js";
 import { caminhoSite, rotaSite } from "../Codigo/RotasSite.js";
 
 const rotaAtual = caminhoSite(Astro.url.pathname);
-const icone = urlPublica("GlobalServer/Icone.png");
+const icone = urlPublicaExistente(["GlobalServer/Icone.webp", "GlobalServer/Icone.png"]);
 const links = [
   { href: "/", texto: "Início" },
   { href: "/conta", texto: "Conta" },
   { href: "/contato", texto: "Contato" },
   { href: "/wiki", texto: "Wiki" },
+  { href: "/por-tras-do-jogo", texto: "Por trás do jogo" },
   { href: "/download", texto: "Download", destaque: true },
 ];
 function ativo(href) {

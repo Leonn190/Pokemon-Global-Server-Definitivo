@@ -1,4 +1,4 @@
-import { infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { fecharModalDetalhe, abrirModalDetalhe, infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetEfeito(efeito, dados) {
   return dados.assetsEfeitos?.[efeito.id] ?? { imagem: null };
 }
@@ -60,12 +60,10 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       ];
       info.innerHTML = infoHtml(linhas);
     }
-    detalhe.hidden = false;
-    document.body.classList.add("detalhe-aberto");
+    abrirModalDetalhe(detalhe);
   }
   function fecharDetalhe() {
-    if (detalhe) detalhe.hidden = true;
-    document.body.classList.remove("detalhe-aberto");
+    fecharModalDetalhe(detalhe);
   }
   detalhe?.querySelectorAll("[data-efeito-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-efeito-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));

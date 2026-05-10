@@ -10,16 +10,16 @@ const {
   ariaPressed = false,
   ignorarChaves = [],
 } = Astro.props;
-const ignorados = new Set(ignorarChaves);
+const ignorados = new Set((Array.isArray(ignorarChaves) ? ignorarChaves : [ignorarChaves]).map(normalizarChave).filter(Boolean));
 const visiveis = itens
   .map((item) => (typeof item === "string" ? { nome: item } : item))
   .filter((item) => item?.nome || item?.rotulo)
   .map((item) => {
-    const nome = item.nome ?? item.rotulo;
-    const chave = item.chave ?? normalizarChave(nome);
+    const nome = String(item.nome ?? item.rotulo ?? "").trim();
+    const chave = normalizarChave(item.chave ?? nome);
     return { nome, chave, icone: item.icone ?? icones[chave] };
   })
-  .filter((item) => !ignorados.has(item.chave));
+  .filter((item) => item.chave && !ignorados.has(item.chave));
 ---
 <section class:list={["filtros-rapidos", "filtros-tipos-icones", classe]} aria-label={rotulo}>
   {visiveis.map((item) => (

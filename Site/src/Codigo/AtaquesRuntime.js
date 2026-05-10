@@ -1,4 +1,4 @@
-import { aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { fecharModalDetalhe, abrirModalDetalhe, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetAtaque(ataque, dados) {
   return dados.assetsAtaques?.[ataque.uid] ?? dados.assetsAtaques?.[ataque.id] ?? { imagem: null };
 }
@@ -87,12 +87,10 @@ function criarControladorDetalhe(dados, obterListaAtual) {
       aprimoramento.innerHTML = `${html(ataque.aprimoramento || "Aprimoramento ainda não cadastrado.")}<span class="custo-aprimoramento">Custo após aprimoramento: ${formatarNumero(ataque.custoAprimorado)}</span>`;
     }
     if (focos) focos.innerHTML = focoBarrasHtml(ataque);
-    detalhe.hidden = false;
-    document.body.classList.add("detalhe-aberto");
+    abrirModalDetalhe(detalhe);
   }
   function fecharDetalhe() {
-    if (detalhe) detalhe.hidden = true;
-    document.body.classList.remove("detalhe-aberto");
+    fecharModalDetalhe(detalhe);
   }
   detalhe?.querySelectorAll("[data-ataque-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-ataque-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));

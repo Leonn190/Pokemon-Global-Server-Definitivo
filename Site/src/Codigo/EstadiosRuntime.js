@@ -1,6 +1,6 @@
 import { criarCardNpc, criarControladorDetalheNpc } from "./NpcsRuntime.js";
 import { criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-import { aplicarImagemDetalhe, criarGridProgressiva, html, lerJson } from "./WikiRuntimeBase.js";
+import { fecharModalDetalhe, abrirModalDetalhe, aplicarImagemDetalhe, criarGridProgressiva, html, lerJson } from "./WikiRuntimeBase.js";
 function assetEstadio(estadio, dados) {
   return dados.assetsEstadios?.[estadio.id] ?? { imagem: null };
 }
@@ -86,12 +86,10 @@ function criarControladorEstadio(dados, obterListaAtual, npcController) {
         membros.appendChild(listaMembros);
       }
     }
-    detalhe.hidden = false;
-    document.body.classList.add("detalhe-aberto");
+    abrirModalDetalhe(detalhe);
   }
   function fecharDetalhe() {
-    if (detalhe) detalhe.hidden = true;
-    document.body.classList.remove("detalhe-aberto");
+    fecharModalDetalhe(detalhe);
   }
   detalhe?.querySelectorAll("[data-estadio-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-estadio-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));

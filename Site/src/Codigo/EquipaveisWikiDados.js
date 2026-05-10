@@ -198,8 +198,9 @@ export function criarAssetsEquipaveis(equipaveis, imagensPorNome) {
   return Object.fromEntries(equipaveis.map((equipavel) => [equipavel.id, { imagem: resolverImagemEquipavel(equipavel, imagensPorNome) }]));
 }
 export function resumoEquipaveis(equipaveis) {
-  const afinidades = [...new Map(equipaveis.flatMap((equipavel) => equipavel.afinidades || [equipavel.afinidade]).map((afinidade) => [normalizarChave(afinidade), afinidade])).values()]
-    .filter(Boolean)
+  const afinidades = [...new Map(equipaveis.flatMap((equipavel) => equipavel.afinidades || [equipavel.afinidade]).map((afinidade) => [normalizarChave(afinidade), afinidade])).entries()]
+    .filter(([chave, afinidade]) => chave && chave !== "semafinidade" && Boolean(afinidade))
+    .map(([, afinidade]) => afinidade)
     .sort((a, b) => a.localeCompare(b, "pt-BR"));
   const formas = new Set(equipaveis.map((item) => item.formaFinal).filter(Boolean));
   const passivas = new Set(equipaveis.map((item) => item.passiva).filter(Boolean));

@@ -1,4 +1,4 @@
-import { infoHtml, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { fecharModalDetalhe, abrirModalDetalhe, infoHtml, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 const MAXIMOS_BARRAS = {
   Vida: 200,
   CrD: 75,
@@ -195,14 +195,13 @@ export function criarControladorDetalhe(dados, opcoes = {}) {
         botao.addEventListener("click", () => abrirDetalhe(botao.dataset.linePokemon));
       });
     }
-    detalhe.hidden = false;
-    document.body.classList.add("detalhe-aberto");
+    abrirModalDetalhe(detalhe);
     document.dispatchEvent(new CustomEvent("pokemon-detail-opened", { detail: { id: pokemon.id } }));
   }
   function fecharDetalhe() {
-    if (detalhe) detalhe.hidden = true;
-    document.body.classList.remove("detalhe-aberto");
-    document.dispatchEvent(new CustomEvent("pokemon-detail-closed"));
+    fecharModalDetalhe(detalhe, () => {
+      document.dispatchEvent(new CustomEvent("pokemon-detail-closed"));
+    });
   }
   detalhe?.querySelectorAll("[data-pokemon-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-pokemon-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));

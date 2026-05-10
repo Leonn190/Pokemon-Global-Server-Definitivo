@@ -1,6 +1,7 @@
 ---
 const { tipo = "", chave = "", icone = "", ativo = undefined, ...atributos } = Astro.props;
 const estadoPressionado = ativo === undefined ? undefined : (ativo ? "true" : "false");
+const inicial = String(tipo || "?").trim().slice(0, 1).toUpperCase() || "?";
 ---
 <button
   class:list={["tipo-chip", "tipo-chip-icone", { ativo: Boolean(ativo) }]}
@@ -12,6 +13,6 @@ const estadoPressionado = ativo === undefined ? undefined : (ativo ? "true" : "f
   {...atributos}
 >
   <span class="tipo-icone-mini">
-    {icone ? <img src={icone} alt="" loading="eager" decoding="async" /> : null}
+    {icone ? <img src={icone} alt="" loading="eager" decoding="async" /> : <b>{inicial}</b>}
   </span>
 </button>

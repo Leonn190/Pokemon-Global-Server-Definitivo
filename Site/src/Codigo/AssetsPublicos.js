@@ -212,6 +212,21 @@ export function urlPublica(caminho) {
   return relativo ? `${baseSite()}${relativo}` : baseSite();
 }
 
+
+export function urlPublicaExistente(caminhos, fallback = "") {
+  const candidatos = (Array.isArray(caminhos) ? caminhos : [caminhos]).filter(Boolean);
+  for (const candidato of candidatos) {
+    const absoluto = caminhoPublicSeguro(candidato);
+    if (!absoluto) continue;
+    try {
+      if (existsSync(absoluto) && statSync(absoluto).isFile()) return urlPublica(candidato);
+    } catch {
+      // continua procurando outro formato disponível
+    }
+  }
+  return urlPublica(fallback || candidatos[0] || "");
+}
+
 export function listarImagensPublicas(pastas) {
   const listaPastas = (Array.isArray(pastas) ? pastas : [pastas]).map(caminhoRelativo).filter(Boolean);
   const chaveCache = `${RAIZ_PUBLIC}|${listaPastas.join("|")}`;

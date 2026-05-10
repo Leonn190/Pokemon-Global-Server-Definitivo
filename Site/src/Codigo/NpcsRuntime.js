@@ -1,5 +1,5 @@
 import { criarCardPokemon, criarControladorDetalhe as criarControladorPokemonDetalhe } from "./PokedexRuntime.js";
-import { infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
+import { fecharModalDetalhe, abrirModalDetalhe, infoHtml, aplicarImagemDetalhe, criarWikiCatalogo, formatarNumero, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 function assetNpc(npc, dados) {
   return dados.assetsNpcs?.[npc.id] ?? { imagem: null };
 }
@@ -113,12 +113,10 @@ export function criarControladorDetalheNpc(dados, pokedex, opcoes = {}) {
     if (equipePainel) equipePainel.hidden = npc.tipo !== "combatente";
     if (npc.tipo === "combatente") preencherPokemonGrid(equipe, npc.pokemons, pokedex, "npc");
     else if (equipe) equipe.replaceChildren();
-    detalhe.hidden = false;
-    document.body.classList.add("detalhe-aberto");
+    abrirModalDetalhe(detalhe);
   }
   function fecharDetalhe() {
-    if (detalhe) detalhe.hidden = true;
-    document.body.classList.remove("detalhe-aberto");
+    fecharModalDetalhe(detalhe);
   }
   detalhe?.querySelectorAll("[data-npc-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-npc-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));

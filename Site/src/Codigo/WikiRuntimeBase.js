@@ -55,6 +55,44 @@ export function ordenarComDirecao(lista, ordenadores, sort, direcao, ordenadorPa
     return direcao === "desc" ? -final : final;
   });
 }
+
+const MODAL_FECHAMENTO_MS = 150;
+
+function existeModalDetalheAberto(ignorar = null) {
+  return [...document.querySelectorAll(".pokemon-detalhe:not([hidden])")].some((modal) => modal !== ignorar && !modal.classList.contains("modal-saindo"));
+}
+
+export function abrirModalDetalhe(detalhe) {
+  if (!detalhe) return;
+  detalhe.dataset.modalFechamentoId = String((Number(detalhe.dataset.modalFechamentoId) || 0) + 1);
+  detalhe.classList.remove("modal-saindo");
+  detalhe.hidden = false;
+  document.body.classList.add("detalhe-aberto");
+}
+
+export function fecharModalDetalhe(detalhe, aoFechar) {
+  if (!detalhe || detalhe.hidden) {
+    aoFechar?.();
+    return;
+  }
+  const reduzirMovimento = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const idFechamento = String((Number(detalhe.dataset.modalFechamentoId) || 0) + 1);
+  detalhe.dataset.modalFechamentoId = idFechamento;
+  const finalizar = () => {
+    if (detalhe.dataset.modalFechamentoId !== idFechamento) return;
+    detalhe.hidden = true;
+    detalhe.classList.remove("modal-saindo");
+    if (!existeModalDetalheAberto(detalhe)) document.body.classList.remove("detalhe-aberto");
+    aoFechar?.();
+  };
+  if (reduzirMovimento) {
+    finalizar();
+    return;
+  }
+  detalhe.classList.add("modal-saindo");
+  window.setTimeout(finalizar, MODAL_FECHAMENTO_MS);
+}
+
 function iniciarAcessibilidadeModaisWiki() {
   if (typeof window === "undefined" || typeof document === "undefined" || window.__PGS_MODAL_A11Y) return;
   window.__PGS_MODAL_A11Y = true;

@@ -6,6 +6,7 @@ import ResumoWiki from "../Componentes/ResumoWiki.astro";
 import PokemonDetalheModal from "../Componentes/PokemonDetalheModal.astro";
 import JsonPayload from "../Componentes/JsonPayload.astro";
 import { indexarPublicoPorNome, urlPublica } from "../Codigo/AssetsPublicos.js";
+import { rotaSite } from "../Codigo/RotasSite.js";
 import { carregarAtaques } from "../Codigo/AtaquesWikiDados.js";
 import { carregarItens } from "../Codigo/ItemWikiDados.js";
 import {
@@ -59,13 +60,13 @@ const payloadHomePokemon = {
 >
   <section class="hero-home" aria-labelledby="titulo-principal">
     <div class="hero-aurora" aria-hidden="true"></div>
-    <div class="logo-palco" aria-label="Logo Pokémon Global Server">
+    <a class="logo-palco logo-palco-link" href={rotaSite("/por-tras-do-jogo")} aria-label="Abrir a área Por trás do jogo" data-page-fade-link>
       <div class="anel-luz anel-luz-azul"></div>
       <div class="anel-luz anel-luz-vermelho"></div>
       <div class="orbita orbita-um"></div>
       <div class="orbita orbita-dois"></div>
       <img class="logo-principal" src={logo} alt="Logo Pokémon Global Server" />
-    </div>
+    </a>
     <div class="hero-copy">
       <p class="selo">Fan game online 2D em desenvolvimento</p>
       <h1 id="titulo-principal">Pokémon Global Server</h1>

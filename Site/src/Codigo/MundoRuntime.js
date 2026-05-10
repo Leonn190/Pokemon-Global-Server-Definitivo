@@ -1,4 +1,4 @@
-import { aplicarImagemDetalhe, criarGridProgressiva, html, lerJson } from "./WikiRuntimeBase.js";
+import { fecharModalDetalhe, abrirModalDetalhe, aplicarImagemDetalhe, criarGridProgressiva, html, lerJson } from "./WikiRuntimeBase.js";
 function assetEstrutura(estrutura, dados) {
   return dados.assetsEstruturas?.[estrutura.id] ?? { imagem: null };
 }
@@ -72,12 +72,10 @@ function criarControladorDetalhe(dados) {
         : [estrutura.biomasTexto];
       biomas.innerHTML = listaBiomas.map((bioma) => `<span>${html(bioma)}</span>`).join("");
     }
-    detalhe.hidden = false;
-    document.body.classList.add("detalhe-aberto");
+    abrirModalDetalhe(detalhe);
   }
   function fecharDetalhe() {
-    if (detalhe) detalhe.hidden = true;
-    document.body.classList.remove("detalhe-aberto");
+    fecharModalDetalhe(detalhe);
   }
   detalhe?.querySelectorAll("[data-mundo-prev]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(-1)));
   detalhe?.querySelectorAll("[data-mundo-next]").forEach((botao) => botao.addEventListener("click", () => abrirVizinho(1)));

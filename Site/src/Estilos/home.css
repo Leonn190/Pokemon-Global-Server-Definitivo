@@ -994,3 +994,33 @@ body.home-entrada-pronta .instalar-acoes.home-entrada.visivel .botao:nth-child(3
     animation: none;
   }
 }
+
+.logo-palco-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: transform 190ms ease, filter 190ms ease;
+}
+.logo-palco-link:hover,
+.logo-palco-link:focus-visible {
+  transform: translateY(-3px) scale(1.01);
+  filter: drop-shadow(0 0 24px rgba(255, 217, 52, 0.18));
+  outline: none;
+}
+.logo-palco-link:focus-visible::before {
+  box-shadow:
+    0 0 0 3px rgba(255, 217, 52, 0.24),
+    0 0 70px rgba(16, 135, 255, 0.23),
+    0 0 96px rgba(255, 54, 79, 0.18),
+    inset 0 0 58px rgba(255, 255, 255, 0.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-palco-link {
+    transition: none;
+  }
+  .logo-palco-link:hover,
+  .logo-palco-link:focus-visible {
+    transform: none;
+  }
+}

@@ -155,7 +155,7 @@ class Loja:
     def tipo_loja_no(self, no_atual: str, no_obj: dict | None = None) -> str:
         no = no_obj if isinstance(no_obj, dict) else {}
         loja = str(no.get("loja") or "").strip().lower()
-        if loja in {"padrao", "secreta", "presente"}:
+        if loja in {"padrao", "secreta", "presente", "presente_1", "presente_2"}:
             return loja
         return "secreta" if no_atual == "loja_secreta" else "padrao" if no_atual == "loja_padrao" else ""
 

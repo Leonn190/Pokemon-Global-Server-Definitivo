@@ -262,6 +262,10 @@
             "destino": "conversa"
           },
           {
+            "texto": "Receber presente",
+            "destino": "presente_1"
+          },
+          {
             "texto": "Sair",
             "acao": "fim"
           }
@@ -277,6 +281,16 @@
         "opcoes": [
           {
             "texto": "Encerrar",
+            "acao": "fim"
+          }
+        ]
+      },
+      "presente_1": {
+        "fala": "Tenho um presente para voce.",
+        "saida": "presente_1",
+        "opcoes": [
+          {
+            "texto": "Fechar",
             "acao": "fim"
           }
         ]

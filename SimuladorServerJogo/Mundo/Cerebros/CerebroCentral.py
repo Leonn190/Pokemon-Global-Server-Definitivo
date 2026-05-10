@@ -360,7 +360,7 @@ class CerebroCentral:
         capturado = materializar_pokemon(bruto, efeitos_captura={"bonus_iv": bonus_iv, "bonus_nivel": bonus_nivel, "bonus_amizade": bonus_amizade})
         estado_capturado = capturado.get("estado") if isinstance(capturado.get("estado"), dict) else capturado
         if isinstance(estado_capturado, dict):
-            # Consumido pelo sistema de recompensa de doces quando ele existir.
+            # TODO: consumir no sistema real de recompensa de doces; por enquanto fica persistido no Pokemon capturado.
             estado_capturado["multiplicador_doces_captura"] = float(max(0.0, multiplicador_doces))
         return capturado
 

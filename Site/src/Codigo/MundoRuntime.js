@@ -26,9 +26,6 @@ function montarLinhasInfo(estrutura) {
     ["Quantidade", estrutura.quantidadeTexto],
     ["Onde aparece", estrutura.biomasTexto],
     ["Coletável", estrutura.dropAtivo ? "Sim" : "Não"],
-    ["Colisão", estrutura.raioColisaoTexto],
-    ["Interação", estrutura.raioInteracaoTexto],
-    ["Inquebrável", estrutura.inquebravel ? "Sim" : "Não"],
   ];
 }
 function criarControladorDetalhe(dados) {
@@ -59,7 +56,10 @@ function criarControladorDetalhe(dados) {
     const biomas = detalhe.querySelector("[data-mundo-biomes]");
     if (codigo) codigo.textContent = `#${estrutura.id}`;
     if (nome) nome.textContent = estrutura.nome;
-    if (descricao) descricao.textContent = estrutura.descricao || "Estrutura natural registrada nas regras do mundo.";
+    if (descricao) {
+      descricao.textContent = estrutura.descricao || "";
+      descricao.hidden = !estrutura.descricao;
+    }
     aplicarImagemDetalhe(imagem, asset.imagem, estrutura.nome);
     if (info) {
       info.innerHTML = montarLinhasInfo(estrutura)

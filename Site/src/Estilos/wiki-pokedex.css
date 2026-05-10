@@ -678,9 +678,9 @@ body.detalhe-aberto {
 }
 .tipo-chip-icone {
   position: relative;
-  width: 45px;
-  min-height: 45px;
-  padding: 3px;
+  width: 49px;
+  min-height: 49px;
+  padding: 4px;
   justify-content: center;
   border-radius: 999px;
 }
@@ -708,8 +708,8 @@ body.detalhe-aberto {
   background: #fff;
 }
 .tipo-icone-mini {
-  width: 36px;
-  height: 36px;
+  width: 39px;
+  height: 39px;
 }
 .tipo-icone {
   width: 31px;
@@ -881,12 +881,12 @@ body.detalhe-aberto {
 }
 @media (max-width: 620px) {
   .tipo-chip-icone {
-    width: 40px;
-    min-height: 40px;
+    width: 43px;
+    min-height: 43px;
   }
   .tipo-icone-mini {
-    width: 29px;
-    height: 29px;
+    width: 32px;
+    height: 32px;
   }
 }
 /* Ajustes solicitados da Pokédex v3 */
@@ -1018,7 +1018,7 @@ body.detalhe-aberto {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   .filtros-tipos-icones {
-    grid-template-columns: repeat(10, 45px);
+    grid-template-columns: repeat(10, 49px);
   }
 }
 @media (max-width: 680px) {
@@ -1030,7 +1030,7 @@ body.detalhe-aberto {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .filtros-tipos-icones {
-    grid-template-columns: repeat(5, 45px);
+    grid-template-columns: repeat(5, 49px);
   }
 }
 /* Ajustes da wiki v4 */
@@ -1061,16 +1061,16 @@ body.detalhe-aberto {
   border-radius: 14px;
 }
 .filtros-tipos-icones {
-  grid-template-columns: repeat(20, 45px);
+  grid-template-columns: repeat(20, 49px);
   gap: 5px;
 }
 .tipo-chip-icone {
-  width: 45px;
-  min-height: 45px;
+  width: 49px;
+  min-height: 49px;
 }
 .tipo-icone-mini {
-  width: 35px;
-  height: 35px;
+  width: 39px;
+  height: 39px;
 }
 .tipo-icone-mini img,
 .tipo-icone img,

@@ -226,12 +226,7 @@ function biomasDaEstrutura(subtipo, biomasToml) {
     .map(({ chance, ...bioma }) => bioma);
 }
 function gerarDescricaoEstrutura(estrutura) {
-  if (DESCRICOES_ESTRUTURAS[estrutura.subtipo]) return DESCRICOES_ESTRUTURAS[estrutura.subtipo];
-  const locais = estrutura.biomasTexto;
-  if (estrutura.material !== "Sem material") {
-    return `${estrutura.nome} aparece em ${locais} e pode ser consultada nesta wiki como uma estrutura do mundo ligada ao material ${estrutura.material}.`;
-  }
-  return `${estrutura.nome} aparece em ${locais} e funciona como uma estrutura de ambiente dentro das regras atuais do mundo.`;
+  return DESCRICOES_ESTRUTURAS[estrutura.subtipo] || "";
 }
 function montarEstrutura([codigo, cfg], biomasToml) {
   const subtipo = limparTexto(cfg.subtipo) || `estrutura_${codigo}`;
@@ -353,9 +348,40 @@ function candidatosImagemEstrutura(estrutura) {
     estrutura.id,
   ].filter(Boolean).map(normalizarChave);
 }
+function imagemPreferidaDaLista(indice, candidatos) {
+  const lista = indice?.__listaOrdenada;
+  if (!Array.isArray(lista) || !lista.length) return null;
+  let melhor = null;
+  for (const entrada of lista) {
+    const caminho = normalizarChave(entrada.caminho);
+    const nome = normalizarChave(entrada.nomeArquivo || arquivoSemExtensao(entrada.arquivo || ""));
+    const pasta = normalizarChave(entrada.pastaPai || "");
+    const raiz = normalizarChave(entrada.pastaRaiz || "");
+    let score = -Infinity;
+    candidatos.forEach((candidato) => {
+      if (!candidato) return;
+      if (nome === candidato) score = Math.max(score, 1200);
+      if (nome.startsWith(candidato) || nome.endsWith(candidato)) score = Math.max(score, 780);
+      if (pasta === candidato || raiz === candidato) score = Math.max(score, 480);
+      if (caminho.includes(candidato)) score = Math.max(score, 260);
+    });
+    if (!Number.isFinite(score)) continue;
+    if (caminho.includes("objeto") || caminho.includes("objetos")) score += 420;
+    if (caminho.includes("item") || caminho.includes("itens")) score -= 520;
+    if (caminho.endsWith("webp")) score += 24;
+    if (!melhor || score > melhor.score) melhor = { score, url: entrada.url };
+  }
+  return melhor?.score > 0 ? melhor.url : null;
+}
 export function resolverImagemEstrutura(estrutura, imagensPorNome) {
-  for (const candidato of candidatosImagemEstrutura(estrutura)) {
-    if (imagensPorNome[candidato]) return imagensPorNome[candidato];
+  const indices = Array.isArray(imagensPorNome) ? imagensPorNome : [imagensPorNome];
+  const candidatos = candidatosImagemEstrutura(estrutura);
+  for (const indice of indices.filter(Boolean)) {
+    const preferida = imagemPreferidaDaLista(indice, candidatos);
+    if (preferida) return preferida;
+    for (const candidato of candidatos) {
+      if (indice[candidato]) return indice[candidato];
+    }
   }
   return null;
 }

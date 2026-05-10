@@ -87,6 +87,17 @@ function tipoCanonico(valor) {
   const chave = normalizarChave(valor);
   return TIPOS_CANONICOS[chave] ?? limparTexto(valor).replace(/^./, (letra) => letra.toUpperCase());
 }
+function converterRaridadePokemon(valor) {
+  const texto = limparTexto(valor);
+  const chave = normalizarChave(texto);
+  const conversoes = {
+    ff: "Forma Final",
+    f: "Forma",
+    l: "Lendario",
+    m: "Mitico",
+  };
+  return conversoes[chave] ?? texto ?? "-";
+}
 function nomeBaseRadiante(nome) {
   return String(nome ?? "")
     .replace(/\bradiante\b/gi, "")
@@ -171,7 +182,7 @@ function normalizarPokemon(linha, indice) {
     tamanho: normalizado.Tamanho,
     grupo: limparTexto(linha.Grupo) || "sem grupo",
     raridade: normalizado.Raridade,
-    raridadeTexto: limparTexto(linha.Raridade) || "-",
+    raridadeTexto: converterRaridadePokemon(linha.Raridade) || "-",
     estagio: limparTexto(linha.Estagio) || "-",
     formaFinal: limparTexto(linha.FF),
     code,

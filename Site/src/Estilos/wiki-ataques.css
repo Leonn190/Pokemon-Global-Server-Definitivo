@@ -80,3 +80,35 @@
     grid-template-columns: 1fr;
   }
 }
+
+.ataque-aprimoramento-painel {
+  position: relative;
+  padding-right: min(260px, 38%);
+}
+.ataque-aprimoramento-painel h3 {
+  margin-right: 220px;
+}
+.ataque-aprimoramento-painel .item-descricao-melhor {
+  min-height: 38px;
+}
+.ataque-aprimoramento-painel .item-descricao-melhor p {
+  margin: 0;
+}
+.ataque-aprimoramento-painel .custo-aprimoramento {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  margin: 0;
+}
+@media (max-width: 720px) {
+  .ataque-aprimoramento-painel {
+    padding-right: 20px;
+  }
+  .ataque-aprimoramento-painel h3 {
+    margin-right: 0;
+  }
+  .ataque-aprimoramento-painel .custo-aprimoramento {
+    position: static;
+    margin-top: 12px;
+  }
+}

@@ -84,7 +84,7 @@ function criarControladorDetalhe(dados, obterListaAtual) {
     }
     if (descricao) descricao.textContent = ataque.descricao || "Descrição ainda não cadastrada.";
     if (aprimoramento) {
-      aprimoramento.innerHTML = `${html(ataque.aprimoramento || "Aprimoramento ainda não cadastrado.")}<span class="custo-aprimoramento">Custo após aprimoramento: ${formatarNumero(ataque.custoAprimorado)}</span>`;
+      aprimoramento.innerHTML = `<p>${html(ataque.aprimoramento || "Aprimoramento ainda não cadastrado.")}</p><span class="custo-aprimoramento">Custo após aprimoramento: ${formatarNumero(ataque.custoAprimorado)}</span>`;
     }
     if (focos) focos.innerHTML = focoBarrasHtml(ataque);
     abrirModalDetalhe(detalhe);

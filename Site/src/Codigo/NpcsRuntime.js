@@ -106,7 +106,6 @@ export function criarControladorDetalheNpc(dados, pokedex, opcoes = {}) {
       } else {
         linhas.push(["Cargo", npc.cargo || "-"]);
         linhas.push(["Estádio", npc.estadio ? `Estádio ${npc.estadio}` : "-"]);
-        linhas.push(["Batalhas", formatarNumero(npc.batalhas)]);
       }
       info.innerHTML = infoHtml(linhas);
     }

@@ -15,7 +15,11 @@ import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const dadosMundo = carregarWikiMundo();
 const { estruturas, biomas, resumo, captura } = dadosMundo;
-const imagensEstruturas = indexarPublicoPorNome(["Recursos", "Objetos", "Ferramentas", "Itens", "Mundo"]);
+const imagensEstruturas = [
+  indexarPublicoPorNome(["Objetos", "Recursos/Objetos", "Recursos/Visual/Objetos", "Visual/Objetos", "Mundo/Objetos"]),
+  indexarPublicoPorNome(["Mundo", "Recursos/Mundo", "Recursos/Visual/Mundo"]),
+  indexarPublicoPorNome(["Ferramentas", "Itens", "Recursos", "Recursos/Itens", "Recursos/Visual/Itens"]),
+];
 const assetsEstruturas = criarAssetsEstruturas(estruturas, imagensEstruturas);
 const estruturasPublicas = estruturas.map(({ subtipo, sprite, spriteArquivo, slug, origemEspecial, ...estrutura }) => estrutura);
 const payloadMundo = { estruturas: estruturasPublicas, biomas, resumo, assetsEstruturas };
@@ -113,7 +117,7 @@ const payloadMundo = { estruturas: estruturasPublicas, biomas, resumo, assetsEst
         </div>
         <p>
           Os cartuchos mostram o básico para consulta rápida. Ao abrir uma estrutura, a subtela mostra material,
-          ferramenta, dureza, quantidade, locais de aparição e outras informações úteis para entender aquele objeto.
+          ferramenta, dureza, quantidade, coleta e locais de aparição sem expor campos internos de colisão.
         </p>
       </div>
       <WikiGrid class="itens-grid mundo-estrutura-grid" data-mundo-estruturas-grid rotulo="Lista de estruturas naturais" />

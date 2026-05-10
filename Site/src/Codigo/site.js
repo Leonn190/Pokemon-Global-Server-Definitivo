@@ -82,6 +82,12 @@ function configurarContato() {
   const form = document.querySelector("[data-contact-form]");
   const mensagem = document.querySelector("[data-contact-message]");
   if (!form) return;
+  const selectMotivo = form.querySelector('select[name="motivo"]');
+  const motivoUrl = new URLSearchParams(window.location.search).get("motivo");
+  if (selectMotivo && motivoUrl) {
+    const opcao = [...selectMotivo.options].find((item) => item.value.toLowerCase() === motivoUrl.toLowerCase());
+    if (opcao) selectMotivo.value = opcao.value;
+  }
   form.addEventListener("submit", (evento) => {
     evento.preventDefault();
     const dados = new FormData(form);
@@ -149,20 +155,25 @@ function configurarSelectsWiki() {
   grupos.forEach((grupo) => {
     const select = grupo.querySelector("select");
     if (!select) return;
-    select.addEventListener("pointerdown", () => {
-      const estavaAberto = grupo.classList.contains("select-aberto");
+    let fecharTimer = 0;
+    const abrir = () => {
+      window.clearTimeout(fecharTimer);
       fecharTodos(grupo);
-      grupo.classList.toggle("select-aberto", !estavaAberto);
-    });
+      grupo.classList.add("select-aberto");
+      fecharTimer = window.setTimeout(() => grupo.classList.remove("select-aberto"), 1200);
+    };
+    const fecharLogo = () => {
+      window.clearTimeout(fecharTimer);
+      fecharTimer = window.setTimeout(() => grupo.classList.remove("select-aberto"), 80);
+    };
+    select.addEventListener("pointerdown", abrir);
+    select.addEventListener("input", fecharLogo);
+    select.addEventListener("change", fecharLogo);
+    select.addEventListener("blur", () => grupo.classList.remove("select-aberto"));
     select.addEventListener("keydown", (evento) => {
-      if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(evento.key)) {
-        fecharTodos(grupo);
-        grupo.classList.add("select-aberto");
-      }
+      if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(evento.key)) abrir();
       if (["Escape", "Tab"].includes(evento.key)) grupo.classList.remove("select-aberto");
     });
-    select.addEventListener("change", () => window.setTimeout(() => grupo.classList.remove("select-aberto"), 0));
-    select.addEventListener("blur", () => grupo.classList.remove("select-aberto"));
   });
   document.addEventListener("pointerdown", (evento) => {
     if (!evento.target.closest?.(".filtro-select-wiki")) fecharTodos();

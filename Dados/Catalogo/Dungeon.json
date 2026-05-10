@@ -1,6 +1,6 @@
 {
   "catalogo_versao": "v2_modelos_salas",
-  "descricao": "Catalogo de modelos prontos de salas de dungeon. A dungeon ainda pode ser gerada proceduralmente, mas o conteudo interno das salas deve vir destes modelos.",
+  "descricao": "Catalogo de modelos prontos de salas de dungeon. A dungeon ainda pode ser gerada proceduralmente, mas o conteudo interno das salas deve vir destes modelos. Inclui modelos adicionais de armadilhas, salas totalmente quebradicas e sala de alta densidade sem servos.",
   "tamanho_sala_tiles": {
     "largura": 32,
     "altura": 18,
@@ -831,6 +831,4221 @@
           "max": 0.4
         }
       }
+    },
+    {
+      "id": 14,
+      "modelo_id": "relogio_fogo_quebradicos",
+      "nome": "Sala Relógio de Fogo",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.14,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "barra_relogio_central",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 5,
+            "numero_cabos": 2,
+            "tamanho_bolas": 0.25,
+            "velocidade_giro": 0.85,
+            "comprimento": 2.8
+          },
+          "config_max": {
+            "numero_bolas": 8,
+            "numero_cabos": 3,
+            "tamanho_bolas": 0.36,
+            "velocidade_giro": 1.45,
+            "comprimento": 4.0
+          }
+        },
+        {
+          "id_local": "quebradico_canto_noroeste",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            4
+          ]
+        },
+        {
+          "id_local": "quebradico_canto_nordeste",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            4
+          ]
+        },
+        {
+          "id_local": "quebradico_canto_sudoeste",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            14
+          ]
+        },
+        {
+          "id_local": "quebradico_canto_sudeste",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            14
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.2,
+          "max": 3.0
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.5
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      },
+      "observacao": "Barra de fogo central como ponteiro de relogio, com quebradicos nos cantos para punir fuga desatenta."
+    },
+    {
+      "id": 15,
+      "modelo_id": "funil_espetos",
+      "nome": "Sala Funil de Espetos",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.16,
+      "dificuldade_base": 2,
+      "servos": {
+        "min": 1,
+        "max": 2
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "espeto_funil_esq_1",
+          "tipo": "espeto",
+          "posicao_local": [
+            8.5,
+            5.5
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "espeto_funil_dir_1",
+          "tipo": "espeto",
+          "posicao_local": [
+            23.5,
+            5.5
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "espeto_funil_esq_2",
+          "tipo": "espeto",
+          "posicao_local": [
+            11.5,
+            8.5
+          ],
+          "config_min": {
+            "tamanho": 1.05
+          },
+          "config_max": {
+            "tamanho": 1.65
+          }
+        },
+        {
+          "id_local": "espeto_funil_dir_2",
+          "tipo": "espeto",
+          "posicao_local": [
+            20.5,
+            8.5
+          ],
+          "config_min": {
+            "tamanho": 1.05
+          },
+          "config_max": {
+            "tamanho": 1.65
+          }
+        },
+        {
+          "id_local": "espeto_funil_esq_3",
+          "tipo": "espeto",
+          "posicao_local": [
+            13.5,
+            12.5
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "espeto_funil_dir_3",
+          "tipo": "espeto",
+          "posicao_local": [
+            18.5,
+            12.5
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 0.9,
+          "max": 2.2
+        },
+        "servos": {
+          "min": 0.5,
+          "max": 1.1
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      },
+      "observacao": "Espetos fixos afunilam o caminho e deixam o combate com servos mais apertado."
+    },
+    {
+      "id": 16,
+      "modelo_id": "pendulo_triplo_horizontal",
+      "nome": "Sala Pêndulo Triplo",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.15,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "pendulo_superior",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.0,
+            5.0
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              5.0,
+              26.5,
+              5.0
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.0,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.2
+          }
+        },
+        {
+          "id_local": "pendulo_central",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            26.0,
+            9.0
+          ],
+          "movimento": {
+            "direcao": [
+              -1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              9.0,
+              26.5,
+              9.0
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.0,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.2
+          }
+        },
+        {
+          "id_local": "pendulo_inferior",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.0,
+            13.0
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              13.0,
+              26.5,
+              13.0
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.0,
+            "velocidade": 1.7
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.2
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.2,
+          "max": 3.0
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.5
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      },
+      "observacao": "Tres espetos moveis horizontais obrigam o player a atravessar no timing certo."
+    },
+    {
+      "id": 17,
+      "modelo_id": "x_ricochete",
+      "nome": "Sala X de Ricochete",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.1,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "ricochete_diagonal_a",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            8.0,
+            5.0
+          ],
+          "movimento": {
+            "direcao": [
+              0.78,
+              0.62
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.0,
+            "velocidade": 2.4
+          },
+          "config_max": {
+            "tamanho": 1.35,
+            "velocidade": 4.1
+          }
+        },
+        {
+          "id_local": "ricochete_diagonal_b",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            24.0,
+            13.0
+          ],
+          "movimento": {
+            "direcao": [
+              -0.78,
+              -0.62
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.0,
+            "velocidade": 2.4
+          },
+          "config_max": {
+            "tamanho": 1.35,
+            "velocidade": 4.1
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.8,
+          "max": 3.8
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      },
+      "observacao": "Dois ricochetes cruzam a sala em diagonais; sem servos para nao ficar injusto."
+    },
+    {
+      "id": 18,
+      "modelo_id": "quatro_torretas_fracas",
+      "nome": "Sala das Quatro Torretas Fracas",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.11,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_noroeste_fraca",
+          "tipo": "torreta",
+          "posicao_local": [
+            6.5,
+            4.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.14,
+            "velocidade_tiro": 2.8,
+            "frequencia_tiros": 0.35
+          },
+          "config_max": {
+            "tamanho_tiro": 0.22,
+            "velocidade_tiro": 4.4,
+            "frequencia_tiros": 0.75
+          }
+        },
+        {
+          "id_local": "torreta_nordeste_fraca",
+          "tipo": "torreta",
+          "posicao_local": [
+            25.5,
+            4.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.14,
+            "velocidade_tiro": 2.8,
+            "frequencia_tiros": 0.35
+          },
+          "config_max": {
+            "tamanho_tiro": 0.22,
+            "velocidade_tiro": 4.4,
+            "frequencia_tiros": 0.75
+          }
+        },
+        {
+          "id_local": "torreta_sudoeste_fraca",
+          "tipo": "torreta",
+          "posicao_local": [
+            6.5,
+            13.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.14,
+            "velocidade_tiro": 2.8,
+            "frequencia_tiros": 0.35
+          },
+          "config_max": {
+            "tamanho_tiro": 0.22,
+            "velocidade_tiro": 4.4,
+            "frequencia_tiros": 0.75
+          }
+        },
+        {
+          "id_local": "torreta_sudeste_fraca",
+          "tipo": "torreta",
+          "posicao_local": [
+            25.5,
+            13.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.14,
+            "velocidade_tiro": 2.8,
+            "frequencia_tiros": 0.35
+          },
+          "config_max": {
+            "tamanho_tiro": 0.22,
+            "velocidade_tiro": 4.4,
+            "frequencia_tiros": 0.75
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.7,
+          "max": 3.5
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.5
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.6
+        }
+      },
+      "observacao": "Quatro torretas de baixa intensidade; parece ameaçadora, mas os tiros sao menores e mais lentos."
+    },
+    {
+      "id": 19,
+      "modelo_id": "ponte_quebradica",
+      "nome": "Sala Ponte Quebradiça",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.13,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 1,
+        "max": 2
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "ponte_quebradica_1",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_2",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_3",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_4",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_5",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_6",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_7",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_8",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_9",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_10",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_11",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_12",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_13",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_14",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_15",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_16",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_17",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_18",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            9
+          ]
+        },
+        {
+          "id_local": "ponte_quebradica_19",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            9
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.0,
+          "max": 2.7
+        },
+        "servos": {
+          "min": 0.5,
+          "max": 1.2
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      },
+      "observacao": "Uma faixa central de piso quebradico funciona como ponte de travessia rapida."
+    },
+    {
+      "id": 20,
+      "modelo_id": "nucleo_protegido",
+      "nome": "Sala Núcleo Protegido",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.13,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_nucleo",
+          "tipo": "torreta",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.16,
+            "velocidade_tiro": 3.2,
+            "frequencia_tiros": 0.45
+          },
+          "config_max": {
+            "tamanho_tiro": 0.27,
+            "velocidade_tiro": 5.0,
+            "frequencia_tiros": 0.95
+          }
+        },
+        {
+          "id_local": "espeto_nucleo_norte",
+          "tipo": "espeto",
+          "posicao_local": [
+            16.0,
+            5.5
+          ],
+          "config_min": {
+            "tamanho": 1.1
+          },
+          "config_max": {
+            "tamanho": 1.65
+          }
+        },
+        {
+          "id_local": "espeto_nucleo_sul",
+          "tipo": "espeto",
+          "posicao_local": [
+            16.0,
+            12.5
+          ],
+          "config_min": {
+            "tamanho": 1.1
+          },
+          "config_max": {
+            "tamanho": 1.65
+          }
+        },
+        {
+          "id_local": "espeto_nucleo_oeste",
+          "tipo": "espeto",
+          "posicao_local": [
+            11.5,
+            9.0
+          ],
+          "config_min": {
+            "tamanho": 1.1
+          },
+          "config_max": {
+            "tamanho": 1.65
+          }
+        },
+        {
+          "id_local": "espeto_nucleo_leste",
+          "tipo": "espeto",
+          "posicao_local": [
+            20.5,
+            9.0
+          ],
+          "config_min": {
+            "tamanho": 1.1
+          },
+          "config_max": {
+            "tamanho": 1.65
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.2,
+          "max": 2.9
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      },
+      "observacao": "Torreta central protegida por espetos fixos ao redor."
+    },
+    {
+      "id": 21,
+      "modelo_id": "duplo_trilho_vertical",
+      "nome": "Sala Duplo Trilho Vertical",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.14,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 1,
+        "max": 3
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "trilho_vertical_esquerdo",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            9.5,
+            4.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              1
+            ],
+            "limites_local": [
+              9.5,
+              3.5,
+              9.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.2,
+            "velocidade": 1.6
+          },
+          "config_max": {
+            "tamanho": 1.6,
+            "velocidade": 3.0
+          }
+        },
+        {
+          "id_local": "trilho_vertical_direito",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            22.5,
+            14.0
+          ],
+          "movimento": {
+            "direcao": [
+              0,
+              -1
+            ],
+            "limites_local": [
+              22.5,
+              3.5,
+              22.5,
+              14.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 1.2,
+            "velocidade": 1.6
+          },
+          "config_max": {
+            "tamanho": 1.6,
+            "velocidade": 3.0
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.0,
+          "max": 2.6
+        },
+        "servos": {
+          "min": 0.7,
+          "max": 1.6
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      },
+      "observacao": "Dois trilhos verticais deixam o centro como arena de combate e punem fuga lateral."
+    },
+    {
+      "id": 22,
+      "modelo_id": "espiral_fogo",
+      "nome": "Sala Espiral de Fogo",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.11,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "barra_espiral_central",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 3,
+            "numero_cabos": 1,
+            "tamanho_bolas": 0.34,
+            "velocidade_giro": 0.65,
+            "comprimento": 3.8
+          },
+          "config_max": {
+            "numero_bolas": 5,
+            "numero_cabos": 2,
+            "tamanho_bolas": 0.48,
+            "velocidade_giro": 1.15,
+            "comprimento": 5.2
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.6,
+          "max": 3.3
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.6
+        }
+      },
+      "observacao": "Uma barra de fogo unica, lenta e grande, com bolas maiores e alcance longo."
+    },
+    {
+      "id": 23,
+      "modelo_id": "mista_caotica_controlada",
+      "nome": "Sala Mista Caótica Controlada",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.1,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 4,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_canto_caotico",
+          "tipo": "torreta",
+          "posicao_local": [
+            6.5,
+            5.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.17,
+            "velocidade_tiro": 3.4,
+            "frequencia_tiros": 0.5
+          },
+          "config_max": {
+            "tamanho_tiro": 0.28,
+            "velocidade_tiro": 5.4,
+            "frequencia_tiros": 1.05
+          }
+        },
+        {
+          "id_local": "ricochete_pequeno_caotico",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            23.5,
+            12.5
+          ],
+          "movimento": {
+            "direcao": [
+              -0.66,
+              0.75
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.9,
+            "velocidade": 2.4
+          },
+          "config_max": {
+            "tamanho": 1.15,
+            "velocidade": 3.8
+          }
+        },
+        {
+          "id_local": "quebradico_fuga_1",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            7
+          ]
+        },
+        {
+          "id_local": "quebradico_fuga_2",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            11
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.8,
+          "max": 3.8
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.7
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.7
+        }
+      },
+      "observacao": "Mistura de torreta, ricochete e rotas de fuga quebradicas; sala dificil mas sem excesso de servo."
+    },
+    {
+      "id": 24,
+      "modelo_id": "forno_cruzado",
+      "nome": "Sala Forno Cruzado",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.1,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 4,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "barra_forno_central",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 5,
+            "numero_cabos": 1,
+            "tamanho_bolas": 0.25,
+            "velocidade_giro": 0.9,
+            "comprimento": 2.8
+          },
+          "config_max": {
+            "numero_bolas": 9,
+            "numero_cabos": 3,
+            "tamanho_bolas": 0.38,
+            "velocidade_giro": 1.7,
+            "comprimento": 4.3
+          }
+        },
+        {
+          "id_local": "torreta_forno_norte",
+          "tipo": "torreta",
+          "posicao_local": [
+            16.0,
+            4.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.15,
+            "velocidade_tiro": 3.0,
+            "frequencia_tiros": 0.4
+          },
+          "config_max": {
+            "tamanho_tiro": 0.25,
+            "velocidade_tiro": 5.0,
+            "frequencia_tiros": 0.9
+          }
+        },
+        {
+          "id_local": "torreta_forno_sul",
+          "tipo": "torreta",
+          "posicao_local": [
+            16.0,
+            13.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.15,
+            "velocidade_tiro": 3.0,
+            "frequencia_tiros": 0.4
+          },
+          "config_max": {
+            "tamanho_tiro": 0.25,
+            "velocidade_tiro": 5.0,
+            "frequencia_tiros": 0.9
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.0,
+          "max": 4.2
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.5
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.7
+        }
+      },
+      "observacao": "Barra de fogo central com torretas em cima e embaixo, criando pressao cruzada."
+    },
+    {
+      "id": 25,
+      "modelo_id": "ziguezague_espetos_moveis",
+      "nome": "Sala Zigue-Zague de Espetos Móveis",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.12,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "zigue_superior_a",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.5,
+            5.0
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              5.0,
+              26.5,
+              5.0
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.3
+          }
+        },
+        {
+          "id_local": "zigue_superior_b",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            25.5,
+            7.5
+          ],
+          "movimento": {
+            "direcao": [
+              -1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              7.5,
+              26.5,
+              7.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.3
+          }
+        },
+        {
+          "id_local": "zigue_inferior_a",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.5,
+            10.5
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              10.5,
+              26.5,
+              10.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.3
+          }
+        },
+        {
+          "id_local": "zigue_inferior_b",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            25.5,
+            13.0
+          ],
+          "movimento": {
+            "direcao": [
+              -1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              13.0,
+              26.5,
+              13.0
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.3
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.6,
+          "max": 3.5
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.6
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      },
+      "observacao": "Quatro trilhos horizontais alternados criam uma travessia em zigue-zague."
+    },
+    {
+      "id": 26,
+      "modelo_id": "duplo_ricochete_pequeno",
+      "nome": "Sala Duplo Ricochete Pequeno",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.1,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 6,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "ricochete_pequeno_a",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            9.0,
+            6.0
+          ],
+          "movimento": {
+            "direcao": [
+              0.84,
+              0.54
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.85,
+            "velocidade": 3.0
+          },
+          "config_max": {
+            "tamanho": 1.15,
+            "velocidade": 4.8
+          }
+        },
+        {
+          "id_local": "ricochete_pequeno_b",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            23.0,
+            12.0
+          ],
+          "movimento": {
+            "direcao": [
+              -0.84,
+              -0.54
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.85,
+            "velocidade": 3.0
+          },
+          "config_max": {
+            "tamanho": 1.15,
+            "velocidade": 4.8
+          }
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.6,
+          "max": 3.4
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.4
+        }
+      },
+      "observacao": "Dois ricochetes menores e mais rapidos; sem servos para manter leitura justa."
+    },
+    {
+      "id": 27,
+      "modelo_id": "coroa_espetos_quebradico",
+      "nome": "Sala Coroa de Espetos",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.12,
+      "dificuldade_base": 3,
+      "servos": {
+        "min": 0,
+        "max": 2
+      },
+      "claridade": {
+        "min": 5,
+        "max": 10,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "espeto_coroa_n",
+          "tipo": "espeto",
+          "posicao_local": [
+            16.0,
+            5.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "espeto_coroa_s",
+          "tipo": "espeto",
+          "posicao_local": [
+            16.0,
+            13.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "espeto_coroa_o",
+          "tipo": "espeto",
+          "posicao_local": [
+            10.0,
+            9.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "espeto_coroa_l",
+          "tipo": "espeto",
+          "posicao_local": [
+            22.0,
+            9.0
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.55
+          }
+        },
+        {
+          "id_local": "espeto_coroa_no",
+          "tipo": "espeto",
+          "posicao_local": [
+            12.0,
+            6.5
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "espeto_coroa_ne",
+          "tipo": "espeto",
+          "posicao_local": [
+            20.0,
+            6.5
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "espeto_coroa_so",
+          "tipo": "espeto",
+          "posicao_local": [
+            12.0,
+            11.5
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "espeto_coroa_se",
+          "tipo": "espeto",
+          "posicao_local": [
+            20.0,
+            11.5
+          ],
+          "config_min": {
+            "tamanho": 0.95
+          },
+          "config_max": {
+            "tamanho": 1.45
+          }
+        },
+        {
+          "id_local": "quebradico_coroa_centro",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            9
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.3,
+          "max": 3.0
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 1.0
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      },
+      "observacao": "Espetos formam uma coroa ao redor do centro, com um quebradico no miolo."
+    },
+    {
+      "id": 28,
+      "modelo_id": "anel_quebradico_torreta",
+      "nome": "Sala Anel Quebradiço com Torreta",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.11,
+      "dificuldade_base": 4,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "torreta_anel_central",
+          "tipo": "torreta",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.16,
+            "velocidade_tiro": 3.2,
+            "frequencia_tiros": 0.45
+          },
+          "config_max": {
+            "tamanho_tiro": 0.27,
+            "velocidade_tiro": 5.2,
+            "frequencia_tiros": 1.0
+          }
+        },
+        {
+          "id_local": "anel_quebradico_1",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            7
+          ]
+        },
+        {
+          "id_local": "anel_quebradico_2",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            6
+          ]
+        },
+        {
+          "id_local": "anel_quebradico_3",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            7
+          ]
+        },
+        {
+          "id_local": "anel_quebradico_4",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            9
+          ]
+        },
+        {
+          "id_local": "anel_quebradico_5",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            11
+          ]
+        },
+        {
+          "id_local": "anel_quebradico_6",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            12
+          ]
+        },
+        {
+          "id_local": "anel_quebradico_7",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            11
+          ]
+        },
+        {
+          "id_local": "anel_quebradico_8",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            9
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 1.4,
+          "max": 3.2
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.5
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.5
+        }
+      },
+      "observacao": "Torreta central rodeada por um anel de pisos quebradicos, criando risco progressivo no centro."
+    },
+    {
+      "id": 29,
+      "modelo_id": "sala_totalmente_quebradica",
+      "nome": "Sala 100% Quebradiça",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.08,
+      "dificuldade_base": 5,
+      "servos": {
+        "min": 0,
+        "max": 1
+      },
+      "claridade": {
+        "min": 5,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "full_quebradico_001",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_002",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_003",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_004",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_005",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_006",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_007",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_008",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_009",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_010",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_011",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_012",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_013",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_014",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_015",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_016",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_017",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_018",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_019",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_020",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_021",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_022",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_023",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_024",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            3
+          ]
+        },
+        {
+          "id_local": "full_quebradico_025",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_026",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_027",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_028",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_029",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_030",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_031",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_032",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_033",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_034",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_035",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_036",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_037",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_038",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_039",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_040",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_041",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_042",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_043",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_044",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_045",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_046",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_047",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_048",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            4
+          ]
+        },
+        {
+          "id_local": "full_quebradico_049",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_050",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_051",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_052",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_053",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_054",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_055",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_056",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_057",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_058",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_059",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_060",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_061",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_062",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_063",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_064",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_065",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_066",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_067",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_068",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_069",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_070",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_071",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_072",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            5
+          ]
+        },
+        {
+          "id_local": "full_quebradico_073",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_074",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_075",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_076",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_077",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_078",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_079",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_080",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_081",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_082",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_083",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_084",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_085",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_086",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_087",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_088",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_089",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_090",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_091",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_092",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_093",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_094",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_095",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_096",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            6
+          ]
+        },
+        {
+          "id_local": "full_quebradico_097",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_098",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_099",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_100",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_101",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_102",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_103",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_104",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_105",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_106",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_107",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_108",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_109",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_110",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_111",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_112",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_113",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_114",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_115",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_116",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_117",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_118",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_119",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_120",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            7
+          ]
+        },
+        {
+          "id_local": "full_quebradico_121",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_122",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_123",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_124",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_125",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_126",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_127",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_128",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_129",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_130",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_131",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_132",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_133",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_134",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_135",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_136",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_137",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_138",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_139",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_140",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_141",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_142",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_143",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_144",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            8
+          ]
+        },
+        {
+          "id_local": "full_quebradico_145",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_146",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_147",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_148",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_149",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_150",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_151",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_152",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_153",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_154",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_155",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_156",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_157",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_158",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_159",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_160",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_161",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_162",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_163",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_164",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_165",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_166",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_167",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_168",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            9
+          ]
+        },
+        {
+          "id_local": "full_quebradico_169",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_170",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_171",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_172",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_173",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_174",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_175",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_176",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_177",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_178",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_179",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_180",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_181",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_182",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_183",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_184",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_185",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_186",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_187",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_188",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_189",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_190",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_191",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_192",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            10
+          ]
+        },
+        {
+          "id_local": "full_quebradico_193",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_194",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_195",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_196",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_197",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_198",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_199",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_200",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_201",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_202",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_203",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_204",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_205",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_206",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_207",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_208",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_209",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_210",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_211",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_212",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_213",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_214",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_215",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_216",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            11
+          ]
+        },
+        {
+          "id_local": "full_quebradico_217",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_218",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_219",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_220",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_221",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_222",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_223",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_224",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_225",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_226",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_227",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_228",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_229",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_230",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_231",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_232",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_233",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_234",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_235",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_236",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_237",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_238",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_239",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_240",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            12
+          ]
+        },
+        {
+          "id_local": "full_quebradico_241",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_242",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_243",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_244",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_245",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_246",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_247",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_248",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_249",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_250",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_251",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_252",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_253",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_254",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_255",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_256",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_257",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_258",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_259",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_260",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_261",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_262",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_263",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_264",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            13
+          ]
+        },
+        {
+          "id_local": "full_quebradico_265",
+          "tipo": "quebradico",
+          "posicao_local": [
+            4,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_266",
+          "tipo": "quebradico",
+          "posicao_local": [
+            5,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_267",
+          "tipo": "quebradico",
+          "posicao_local": [
+            6,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_268",
+          "tipo": "quebradico",
+          "posicao_local": [
+            7,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_269",
+          "tipo": "quebradico",
+          "posicao_local": [
+            8,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_270",
+          "tipo": "quebradico",
+          "posicao_local": [
+            9,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_271",
+          "tipo": "quebradico",
+          "posicao_local": [
+            10,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_272",
+          "tipo": "quebradico",
+          "posicao_local": [
+            11,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_273",
+          "tipo": "quebradico",
+          "posicao_local": [
+            12,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_274",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_275",
+          "tipo": "quebradico",
+          "posicao_local": [
+            14,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_276",
+          "tipo": "quebradico",
+          "posicao_local": [
+            15,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_277",
+          "tipo": "quebradico",
+          "posicao_local": [
+            16,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_278",
+          "tipo": "quebradico",
+          "posicao_local": [
+            17,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_279",
+          "tipo": "quebradico",
+          "posicao_local": [
+            18,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_280",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_281",
+          "tipo": "quebradico",
+          "posicao_local": [
+            20,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_282",
+          "tipo": "quebradico",
+          "posicao_local": [
+            21,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_283",
+          "tipo": "quebradico",
+          "posicao_local": [
+            22,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_284",
+          "tipo": "quebradico",
+          "posicao_local": [
+            23,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_285",
+          "tipo": "quebradico",
+          "posicao_local": [
+            24,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_286",
+          "tipo": "quebradico",
+          "posicao_local": [
+            25,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_287",
+          "tipo": "quebradico",
+          "posicao_local": [
+            26,
+            14
+          ]
+        },
+        {
+          "id_local": "full_quebradico_288",
+          "tipo": "quebradico",
+          "posicao_local": [
+            27,
+            14
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.2,
+          "max": 4.6
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.5
+        },
+        "claridade": {
+          "min": 0.0,
+          "max": 0.6
+        }
+      },
+      "observacao": "Toda a area jogavel central da sala e composta por pisos quebradicos; maximo de 1 servo."
+    },
+    {
+      "id": 30,
+      "modelo_id": "muitas_armadilhas_sem_servos",
+      "nome": "Sala de Muitas Armadilhas sem Servos",
+      "tipo": "armadilha",
+      "categoria": "armadilhas",
+      "chance_spawn": 0.07,
+      "dificuldade_base": 6,
+      "servos": {
+        "min": 0,
+        "max": 0
+      },
+      "claridade": {
+        "min": 4,
+        "max": 9,
+        "peso_dificuldade": 0.35
+      },
+      "armadilhas": [
+        {
+          "id_local": "barra_caos_central",
+          "tipo": "barra_fogo",
+          "posicao_local": [
+            16.0,
+            9.0
+          ],
+          "config_min": {
+            "numero_bolas": 5,
+            "numero_cabos": 2,
+            "tamanho_bolas": 0.26,
+            "velocidade_giro": 0.9,
+            "comprimento": 2.6
+          },
+          "config_max": {
+            "numero_bolas": 9,
+            "numero_cabos": 3,
+            "tamanho_bolas": 0.4,
+            "velocidade_giro": 1.8,
+            "comprimento": 4.2
+          }
+        },
+        {
+          "id_local": "torreta_caos_no",
+          "tipo": "torreta",
+          "posicao_local": [
+            6.5,
+            4.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.15,
+            "velocidade_tiro": 3.2,
+            "frequencia_tiros": 0.45
+          },
+          "config_max": {
+            "tamanho_tiro": 0.25,
+            "velocidade_tiro": 5.4,
+            "frequencia_tiros": 1.0
+          }
+        },
+        {
+          "id_local": "torreta_caos_se",
+          "tipo": "torreta",
+          "posicao_local": [
+            25.5,
+            13.5
+          ],
+          "config_min": {
+            "tamanho_tiro": 0.15,
+            "velocidade_tiro": 3.2,
+            "frequencia_tiros": 0.45
+          },
+          "config_max": {
+            "tamanho_tiro": 0.25,
+            "velocidade_tiro": 5.4,
+            "frequencia_tiros": 1.0
+          }
+        },
+        {
+          "id_local": "espeto_caos_horizontal_topo",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            6.0,
+            6.5
+          ],
+          "movimento": {
+            "direcao": [
+              1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              6.5,
+              26.5,
+              6.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.2
+          }
+        },
+        {
+          "id_local": "espeto_caos_horizontal_baixo",
+          "tipo": "espeto_movel",
+          "posicao_local": [
+            26.0,
+            11.5
+          ],
+          "movimento": {
+            "direcao": [
+              -1,
+              0
+            ],
+            "limites_local": [
+              5.5,
+              11.5,
+              26.5,
+              11.5
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.95,
+            "velocidade": 1.8
+          },
+          "config_max": {
+            "tamanho": 1.25,
+            "velocidade": 3.2
+          }
+        },
+        {
+          "id_local": "ricochete_caos_a",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            9.0,
+            12.5
+          ],
+          "movimento": {
+            "direcao": [
+              0.74,
+              -0.67
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.9,
+            "velocidade": 2.5
+          },
+          "config_max": {
+            "tamanho": 1.2,
+            "velocidade": 4.0
+          }
+        },
+        {
+          "id_local": "ricochete_caos_b",
+          "tipo": "espeto_ricochete",
+          "posicao_local": [
+            23.0,
+            5.5
+          ],
+          "movimento": {
+            "direcao": [
+              -0.74,
+              0.67
+            ]
+          },
+          "config_min": {
+            "tamanho": 0.9,
+            "velocidade": 2.5
+          },
+          "config_max": {
+            "tamanho": 1.2,
+            "velocidade": 4.0
+          }
+        },
+        {
+          "id_local": "espeto_caos_1",
+          "tipo": "espeto",
+          "posicao_local": [
+            10.5,
+            8.5
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.5
+          }
+        },
+        {
+          "id_local": "espeto_caos_2",
+          "tipo": "espeto",
+          "posicao_local": [
+            21.5,
+            9.5
+          ],
+          "config_min": {
+            "tamanho": 1.0
+          },
+          "config_max": {
+            "tamanho": 1.5
+          }
+        },
+        {
+          "id_local": "quebradico_caos_1",
+          "tipo": "quebradico",
+          "posicao_local": [
+            13,
+            5
+          ]
+        },
+        {
+          "id_local": "quebradico_caos_2",
+          "tipo": "quebradico",
+          "posicao_local": [
+            19,
+            13
+          ]
+        }
+      ],
+      "variacao_dificuldade": {
+        "armadilhas": {
+          "min": 2.8,
+          "max": 5.4
+        },
+        "servos": {
+          "min": 0.0,
+          "max": 0.0
+        },
+        "claridade": {
+          "min": 0.1,
+          "max": 0.7
+        }
+      },
+      "observacao": "Sala de alta densidade de armadilhas, sem nenhum servo/pokemon para focar o desafio em movimentacao."
     }
   ]
 }

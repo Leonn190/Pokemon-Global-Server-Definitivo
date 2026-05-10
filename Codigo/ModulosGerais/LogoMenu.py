@@ -9,22 +9,6 @@ import pygame
 
 
 class LogoMenu:
-    """
-    Logo exclusiva do menu principal.
-
-    Esta classe NAO tenta mais fazer aura, fumaca, orbita ou bloom em Python.
-    Ela so entrega uma logo limpa em uma Surface transparente para o compositor
-    ModernGL usar como mascara/texture no shader.
-
-    O trabalho caro/bonito fica no fragment shader:
-      - fumaca azul/vermelha ao redor da logo;
-      - glow/bloom recortado pela alpha da propria logo;
-      - orbitas discretas atras do icone;
-      - pulso visual sem redesenhar camadas pesadas no CPU.
-
-    Em fallback sem shader, ela continua desenhando a logo normal com uma
-    flutuacao/pulso bem leve, usando cache de escalas quantizadas.
-    """
 
     def __init__(
         self,

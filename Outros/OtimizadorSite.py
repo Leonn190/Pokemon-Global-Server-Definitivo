@@ -14,8 +14,10 @@ PUBLIC_DIR = RAIZ_PROJETO / "Site" / "public"
 
 MIN_BYTES_WEBP = 8 * 1024  # 8 KB
 
-ATAQUES_TAMANHO_ORIGINAL = (1254, 1254)
-ATAQUES_TAMANHO_NOVO = (750, 750)
+# Antes você usava 750x750.
+# Agora os ataques maiores que isso serão reduzidos para este tamanho.
+# Se quiser mais agressivo, use (384, 384).
+ATAQUES_TAMANHO_NOVO = (512, 512)
 
 WEBP_QUALITY = 92
 
@@ -41,6 +43,28 @@ def esta_na_pasta_ataques(caminho: Path) -> bool:
 
     primeira_pasta = relativo.parts[0].lower()
     return primeira_pasta in {"ataques", "ataque"}
+
+
+def imagem_maior_que_tamanho(imagem: Image.Image, tamanho_limite: tuple[int, int]) -> bool:
+    largura, altura = imagem.size
+    limite_largura, limite_altura = tamanho_limite
+
+    return largura > limite_largura or altura > limite_altura
+
+
+def redimensionar_ataque(imagem: Image.Image) -> Image.Image:
+    """
+    Reduz imagens de ataques para o tamanho configurado.
+
+    Se a imagem for quadrada, redimensiona exatamente para ATAQUES_TAMANHO_NOVO.
+    Se não for quadrada, mantém proporção para evitar distorção.
+    """
+    largura, altura = imagem.size
+
+    if largura == altura:
+        return imagem.resize(ATAQUES_TAMANHO_NOVO, Image.Resampling.LANCZOS)
+
+    return ImageOps.contain(imagem, ATAQUES_TAMANHO_NOVO, Image.Resampling.LANCZOS)
 
 
 def salvar_webp(imagem: Image.Image, destino: Path):
@@ -76,20 +100,28 @@ def processar_imagem(caminho: Path):
             img.load()
 
             esta_em_ataques = esta_na_pasta_ataques(caminho)
+            ja_eh_webp = caminho.suffix.lower() == ".webp"
+
+            tamanho_original_px = img.size
 
             precisa_redimensionar_ataque = (
                 esta_em_ataques
-                and img.size == ATAQUES_TAMANHO_ORIGINAL
+                and imagem_maior_que_tamanho(img, ATAQUES_TAMANHO_NOVO)
             )
 
-            precisa_converter_webp = tamanho_original_bytes > MIN_BYTES_WEBP
+            # Só converte para WebP se ainda NÃO for WebP.
+            # Isso evita recomprimir WebPs antigos sem necessidade.
+            precisa_converter_webp = (
+                tamanho_original_bytes > MIN_BYTES_WEBP
+                and not ja_eh_webp
+            )
 
             if not precisa_redimensionar_ataque and not precisa_converter_webp:
-                print(f"[MANTEVE] {caminho} ({tamanho_original_kb:.1f} KB)")
+                print(f"[MANTEVE] {caminho.relative_to(PUBLIC_DIR)} ({tamanho_original_kb:.1f} KB)")
                 return
 
             if precisa_redimensionar_ataque:
-                img = img.resize(ATAQUES_TAMANHO_NOVO, Image.Resampling.LANCZOS)
+                img = redimensionar_ataque(img)
 
             destino_webp = caminho.with_suffix(".webp")
 
@@ -113,10 +145,15 @@ def processar_imagem(caminho: Path):
             acoes = []
 
             if precisa_redimensionar_ataque:
-                acoes.append("redimensionou 1254x1254 -> 750x750")
+                acoes.append(
+                    f"redimensionou ataque {tamanho_original_px[0]}x{tamanho_original_px[1]} "
+                    f"-> {img.size[0]}x{img.size[1]}"
+                )
 
-            if precisa_converter_webp or caminho.suffix.lower() != ".webp":
+            if precisa_converter_webp or not ja_eh_webp:
                 acoes.append("converteu para .webp")
+            elif precisa_redimensionar_ataque and ja_eh_webp:
+                acoes.append("resalvou .webp reduzido")
 
             print(
                 f"[OK] {caminho.relative_to(PUBLIC_DIR)} -> "
@@ -149,6 +186,7 @@ def main():
     ]
 
     print(f"Imagens encontradas: {len(imagens)}")
+    print(f"Tamanho novo dos ataques: {ATAQUES_TAMANHO_NOVO[0]}x{ATAQUES_TAMANHO_NOVO[1]}")
     print("Começando otimização...\n")
 
     for caminho in imagens:

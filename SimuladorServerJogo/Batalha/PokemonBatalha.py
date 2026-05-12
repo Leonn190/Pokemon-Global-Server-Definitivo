@@ -203,10 +203,23 @@ class PokemonBatalha:
         if hasattr(self, "VidaAtual"):
             self.VidaAtual = _clamp(self.VidaAtual, 0.0, finais["Vida"])
         if hasattr(self, "EnergiaAtual"):
-            if self.possui_efeito("Energizado"):
+            if self.possui_efeito("Energizado") or self._reservatorio_ignora_limite_energia():
+                self.EnergiaAtual = max(0.0, self.EnergiaAtual)
+            elif self._reservatorio_preserva_excedente_energia(finais["EneM"]):
                 self.EnergiaAtual = max(0.0, self.EnergiaAtual)
             else:
                 self.EnergiaAtual = _clamp(self.EnergiaAtual, 0.0, finais["EneM"])
+
+    def _possui_ataque_code(self, code):
+        alvo = str(code or "").strip()
+        return bool(alvo) and any(str((ataque or {}).get("Code") or (ataque or {}).get("ID") or "").strip() == alvo for ataque in list(getattr(self, "ataques", []) or []))
+
+    def _reservatorio_ignora_limite_energia(self):
+        clima = _normalizar(getattr(getattr(self, "partida", None), "clima_atual", None))
+        return clima == "chuva" and self._possui_ataque_code("55")
+
+    def _reservatorio_preserva_excedente_energia(self, limite):
+        return self._possui_ataque_code("55") and _f(getattr(self, "EnergiaAtual", 0.0), 0.0) > _f(limite, 1.0)
 
     def modificar_atributo_permanente(self, alvo, atributo, valor, origem=None, dados=None):
         alvo = alvo or self
@@ -969,8 +982,10 @@ class PokemonBatalha:
         dados = dict(dados or {})
         ganho = max(0.0, _f(valor, 0.0))
         antes = self.EnergiaAtual
-        if self.possui_efeito("Energizado"):
+        if self.possui_efeito("Energizado") or self._reservatorio_ignora_limite_energia():
             self.EnergiaAtual = max(0.0, self.EnergiaAtual + ganho)
+        elif self._reservatorio_preserva_excedente_energia(self.obter_atributo("EneM", 1.0)):
+            self.EnergiaAtual = max(0.0, self.EnergiaAtual)
         else:
             self.EnergiaAtual = min(self.obter_atributo("EneM", 1.0), self.EnergiaAtual + ganho)
         real = max(0.0, self.EnergiaAtual - antes)

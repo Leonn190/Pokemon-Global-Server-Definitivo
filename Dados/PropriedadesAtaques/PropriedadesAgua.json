@@ -133,7 +133,7 @@
       "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_lanca_de_agua",
       "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.75, "mult_per": 0.2, "reducao": 0.3, "aumento_encharcado": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "37": {
       "ID": 37,
@@ -197,6 +197,168 @@
       "parametros": {"tipo": "agua", "cura_mag": 0.3, "duracao": 6},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true}]}
     },
+    "42": {
+      "ID": 42,
+      "nome": "Absorção Total",
+      "custo": 55,
+      "custo_ap": 65,
+      "poder": 65,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_absorcao_total",
+      "parametros": {"tipo": "agua", "cura_mag": 0.03, "amp_mag": 0.03}
+    },
+    "43": {
+      "ID": 43,
+      "nome": "Redemoinho",
+      "custo": 50,
+      "custo_ap": 60,
+      "poder": 60,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_redemoinho",
+      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.70, "mult_chuva": 1.20, "mult_encharcado": 1.20},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+    },
+    "44": {
+      "ID": 44,
+      "nome": "Gêiser",
+      "custo": 55,
+      "custo_ap": 65,
+      "poder": 65,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_geiser",
+      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.85, "percentual_spd_critico": 0.15},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+    },
+    "45": {
+      "ID": 45,
+      "nome": "Pele Aquática",
+      "custo": 0,
+      "custo_ap": 0,
+      "poder": 0,
+      "estilo_logico": "passivo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_pele_aquatica",
+      "parametros": {"tipo": "agua", "percentual_vida_perdida": 0.05}
+    },
+    "46": {
+      "ID": 46,
+      "nome": "Mergulho",
+      "custo": 35,
+      "custo_ap": 40,
+      "poder": 40,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_mergulho",
+      "parametros": {"tipo": "agua", "chance_base": 0.50, "chance_critico": 0.70, "duracao": 3}
+    },
+    "47": {
+      "ID": 47,
+      "nome": "Dilúvio",
+      "custo": 80,
+      "custo_ap": 95,
+      "poder": 95,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_diluvio",
+      "parametros": {"tipo": "agua", "amp": 3, "energia": 10, "mult_se_ja_chuva": 2}
+    },
+    "48": {
+      "ID": 48,
+      "nome": "Tsunami",
+      "custo": 90,
+      "custo_ap": 105,
+      "poder": 105,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_tsunami",
+      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.85, "bonus_esquerda_max": 0.35, "chance_encharcar": 0.35, "duracao": 6}
+    },
+    "49": {
+      "ID": 49,
+      "nome": "Martelo Caranguejo",
+      "custo": 50,
+      "custo_ap": 60,
+      "poder": 60,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_martelo_caranguejo",
+      "parametros": {"tipo": "agua", "categoria": "normal", "mult_atk": 1.00},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+    },
+    "50": {
+      "ID": 50,
+      "nome": "Golpe Abissal",
+      "custo": 55,
+      "custo_ap": 65,
+      "poder": 65,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_golpe_abissal",
+      "parametros": {"tipo": "agua", "categoria": "normal", "mult_atk": 0.75, "limite_vida": 0.40, "mult_alvo_baixo": 1.35},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+    },
+    "51": {
+      "ID": 51,
+      "nome": "Nadador",
+      "custo": 0,
+      "custo_ap": 0,
+      "poder": 0,
+      "estilo_logico": "passivo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_nadador",
+      "parametros": {"tipo": "agua", "percentual_vel": 0.50}
+    },
+    "52": {
+      "ID": 52,
+      "nome": "Drenagem Hidrica",
+      "custo": 0,
+      "custo_ap": 0,
+      "poder": 0,
+      "estilo_logico": "passivo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_drenagem_hidrica",
+      "parametros": {"tipo": "agua", "percentual_cura": 0.30, "percentual_energia": 0.20}
+    },
+    "53": {
+      "ID": 53,
+      "nome": "Controle do Oceano",
+      "custo": 65,
+      "custo_ap": 75,
+      "poder": 75,
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_controle_do_oceano",
+      "parametros": {"tipo": "agua", "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["qualquer"], "exige_area_ocupada": false}]}
+    },
+    "54": {
+      "ID": 54,
+      "nome": "Surfar",
+      "custo": 60,
+      "custo_ap": 70,
+      "poder": 70,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_surfar",
+      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.85},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+    },
+    "55": {
+      "ID": 55,
+      "nome": "Reservatório",
+      "custo": 0,
+      "custo_ap": 0,
+      "poder": 0,
+      "estilo_logico": "passivo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_reservatorio",
+      "parametros": {"tipo": "agua", "amp_por_turno": 1}
+    },
     "56": {
       "ID": 56,
       "nome": "Correnteza",
@@ -205,7 +367,7 @@
       "estilo_logico": "ativo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_correnteza",
-      "parametros": {"tipo": "agua", "atributo": "Vel", "percentual_mag": 0.2, "percentual_usuario_atributo": 0.1, "duracao": 6}
+      "parametros": {"tipo": "agua", "atributo": "Vel", "mult_mag": 0.2, "mult_vel": 0.1, "percentual_mag": 0.2, "percentual_usuario_atributo": 0.1}
     },
     "57": {
       "ID": 57,

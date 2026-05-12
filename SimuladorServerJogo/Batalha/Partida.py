@@ -376,6 +376,26 @@ class Partida:
                 pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
             else:
                 pokemon.aplicar_variacao_temporaria("Acuracia", -pokemon.atributos_base.get("Acuracia", 100.0) * 0.25)
+        if clima == "chuva" and self._pokemon_possui_ataque_code(pokemon, "51"):
+            pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * self._parametro_ataque_code("51", "percentual_vel", 0.50))
+
+    def _pokemon_possui_ataque_code(self, pokemon, code):
+        alvo = str(code or "").strip()
+        return bool(alvo) and any(str((ataque or {}).get("Code") or (ataque or {}).get("ID") or "").strip() == alvo for ataque in list(getattr(pokemon, "ataques", []) or []))
+
+    def _parametro_ataque_code(self, code, chave, default=0.0):
+        props = None
+        mapa = getattr(getattr(self, "coletor_acoes", None), "propriedades_ataques", {}) or {}
+        code = str(code or "").strip()
+        if code:
+            props = mapa.get(code)
+        if not isinstance(props, dict):
+            props = {}
+        parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        try:
+            return float(str(parametros.get(chave, default)).replace(",", "."))
+        except (TypeError, ValueError):
+            return float(default)
 
     def aplicar_clima_em_pokemon_por_passo(self, pokemon):
         clima = _normalizar(self.clima_atual)
@@ -665,6 +685,9 @@ class Partida:
 
     def aplicar_fim_de_rodada(self):
         for pokemon in self.pokemons_por_id.values():
+            if pokemon.esta_vivo() and pokemon.ativo and not pokemon.reserva:
+                self.disparar_flag("AoFimDaRodada", {"partida": self, "usuario": pokemon, "alvo": pokemon, "pokemon_evento": pokemon})
+        for pokemon in self.pokemons_por_id.values():
             if not pokemon.esta_vivo():
                 continue
             ganho = pokemon.obter_atributo("Ene", 0.0)
@@ -675,6 +698,9 @@ class Partida:
             pokemon.GanharEnergia(ganho, dados={"fim_rodada": True})
             pokemon.limpar_transitorios_fim_rodada()
         self.processar_fim_de_turno_clima()
+        for pokemon in self.pokemons_por_id.values():
+            if pokemon.esta_vivo():
+                pokemon.Verificar()
         self.substituir_derrotados_por_reserva()
         self.verificar_fim_batalha()
         self.jogadas_recebidas = {}

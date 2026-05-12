@@ -66,6 +66,22 @@ ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
     "Cachoeira",
     "Águas Mágicas",
     "Fonte Termal",
+    "Absorção Total",
+    "Redemoinho",
+    "Gêiser",
+    "Pele Aquática",
+    "Mergulho",
+    "Dilúvio",
+    "Tsunami",
+    "Martelo Caranguejo",
+    "Golpe Abissal",
+    "Nadador",
+    "Drenagem Hidrica",
+    "Controle do Oceano",
+    "Surfar",
+    "Reservatório",
+    "Correnteza",
+    "Dança da Chuva",
 ]
 
 

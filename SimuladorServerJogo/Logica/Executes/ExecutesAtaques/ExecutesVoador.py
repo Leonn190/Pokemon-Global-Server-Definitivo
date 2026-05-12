@@ -36,9 +36,9 @@ _EXECUTES = {
     "voador": execute_passiva_nao_manual,
 }
 _PASSIVAS_ATAQUE = [
-    {"nome": "Voador", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_voador, "origem": "ataque", "code": "51"},
+    {"nome": "Voador", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_voador, "origem": "ataque", "code": "151"},
 ]
-_ALIASES = {"49": "voar", "50": "olhodeaguia", "51": "voador"}
+_ALIASES = {"149": "voar", "150": "olhodeaguia", "151": "voador", "152": "cortinadevento"}
 
 
 def obter_executes_voador():

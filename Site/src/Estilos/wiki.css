@@ -8,3 +8,30 @@
 @import "./wiki-combate.css";
 @import "./wiki-equipaveis.css";
 @import "./wiki-dungeons.css";
+@import "./wiki-musicas.css";
+
+/* Ajuste do menu para 15 wikis. */
+.wiki-topo-simples .wiki-menu-topo {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-height: auto;
+}
+.wiki-topo-simples .wiki-menu-topo a {
+  min-height: 38px;
+  padding: 8px 8px;
+  font-size: 0.82rem;
+}
+.wiki-cards-quinze {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (max-width: 1180px) {
+  .wiki-topo-simples .wiki-menu-topo,
+  .wiki-cards-quinze {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .wiki-topo-simples .wiki-menu-topo,
+  .wiki-cards-quinze {
+    grid-template-columns: 1fr;
+  }
+}

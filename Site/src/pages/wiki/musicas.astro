@@ -1,0 +1,58 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
+import { carregarMusicas, resumoMusicas } from "../../Codigo/MusicasWikiDados.js";
+import "../../Estilos/wiki.css";
+
+const musicas = carregarMusicas();
+const resumo = resumoMusicas(musicas);
+const payloadMusicas = { musicas, resumo };
+const opcoesOrdenacao = [
+  { value: "ordem", label: "Ordem oficial" },
+  { value: "nome", label: "Alfabética" },
+  { value: "duracao", label: "Duração" },
+];
+const opcoesEstilo = [
+  { value: "", label: "Todos" },
+  ...resumo.estilos.map((estilo) => ({ value: estilo.chave, label: estilo.rotulo })),
+];
+---
+<Layout
+  titulo="Músicas"
+  descricao="Wiki de músicas do Pokémon Global Server, com busca, filtro por estilo, ordenação e player por faixa."
+>
+  <WikiTopo ativo="musicas" titulo="Músicas" tituloId="titulo-musicas" />
+  <WikiCatalogoShell
+    appClass="musicas-app"
+    appAttrs={{ "data-musicas-app": true }}
+    toolbarClass="musicas-toolbar"
+    toolbarRotulo="Ferramentas da wiki de músicas"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-musicas-count": true }}
+    directionAttrs={{ "data-musicas-direction": true }}
+    clearAttrs={{ "data-musicas-clear": true }}
+    clearAriaLabel="Limpar busca e filtros de músicas"
+    gridClass="musicas-grid"
+    gridAttrs={{ "data-musicas-grid": true }}
+    gridRotulo="Lista de faixas de música"
+    vazioAttrs={{ "data-musicas-empty": true }}
+    vazioTitulo="Nenhuma música encontrada."
+    vazioTexto="Confira se os arquivos estão em Site/public/Musicas ou limpe os filtros."
+    sentinelAttrs={{ "data-musicas-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-musicas-search placeholder="Nome, pasta, estilo ou arquivo..." />
+      <SelectFiltroWiki data-musicas-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-musicas-style label="Estilo" options={opcoesEstilo} />
+    </Fragment>
+  </WikiCatalogoShell>
+  <JsonPayload id="musicas-data" dados={payloadMusicas} />
+  <script>
+    import { inicializarWikiMusicas } from "../../Codigo/MusicasRuntime.js";
+    inicializarWikiMusicas();
+  </script>
+</Layout>

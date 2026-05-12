@@ -10,10 +10,10 @@ const secoes = [
     texto: "Pokédex com busca, filtros, atributos, tipagens, raridades e linhagens.",
   },
   {
-    href: "/wiki/itens",
-    emoji: "🎒",
-    titulo: "Itens",
-    texto: "Consumíveis, doces, equipamentos, receitas e itens especiais do jogo.",
+    href: "/wiki/tipos",
+    emoji: "🔷",
+    titulo: "Tipos",
+    texto: "Tabela de efetividades, fraquezas, resistências e imunidades dos tipos.",
   },
   {
     href: "/wiki/ataques",
@@ -28,16 +28,10 @@ const secoes = [
     texto: "Status de Pokémon, climas, terrenos, sentido, passos base e descrições.",
   },
   {
-    href: "/wiki/combate",
-    emoji: "⚔️",
-    titulo: "Combate",
-    texto: "Regras de batalha, turnos, energia, dano, colisões, indicadores e animações.",
-  },
-  {
-    href: "/wiki/dungeons",
-    emoji: "🗺️",
-    titulo: "Dungeons",
-    texto: "Áreas fechadas, desafios especiais, progressão, recompensas e exploração por etapas.",
+    href: "/wiki/itens",
+    emoji: "🎒",
+    titulo: "Itens",
+    texto: "Consumíveis, doces, equipamentos, receitas e itens especiais do jogo.",
   },
   {
     href: "/wiki/equipaveis",
@@ -46,10 +40,10 @@ const secoes = [
     texto: "Equipamentos, bônus, raridades, slots e efeitos aplicados aos Pokémons.",
   },
   {
-    href: "/wiki/estadios",
-    emoji: "🏟️",
-    titulo: "Estádios",
-    texto: "Estádios de cada tipo, progressão de respeito, insígnias, líderes e associados.",
+    href: "/wiki/receitas",
+    emoji: "🧪",
+    titulo: "Receitas",
+    texto: "Receitas de criação, materiais, combinações e itens produzidos pelos sistemas de craft.",
   },
   {
     href: "/wiki/npcs",
@@ -64,16 +58,40 @@ const secoes = [
     texto: "Biomas, chunks, exploração, vilas, rotas, mapa e geração do mundo.",
   },
   {
+    href: "/wiki/combate",
+    emoji: "⚔️",
+    titulo: "Combate",
+    texto: "Regras de batalha, turnos, energia, dano, colisões, indicadores e animações.",
+  },
+  {
+    href: "/wiki/dungeons",
+    emoji: "🗺️",
+    titulo: "Dungeons",
+    texto: "Áreas fechadas, desafios especiais, progressão, recompensas e exploração por etapas.",
+  },
+  {
+    href: "/wiki/estadios",
+    emoji: "🏟️",
+    titulo: "Estádios",
+    texto: "Estádios de cada tipo, progressão de respeito, insígnias, líderes e associados.",
+  },
+  {
+    href: "/wiki/musicas",
+    emoji: "🎵",
+    titulo: "Músicas",
+    texto: "Faixas do jogo com player, busca, filtro por estilo, ordem oficial e duração.",
+  },
+  {
+    href: "/wiki/habilidades",
+    emoji: "🌟",
+    titulo: "Habilidades",
+    texto: "Espaço reservado para a árvore de skills do jogador e progressão de nível.",
+  },
+  {
     href: "/wiki/comandos",
     emoji: "⌨️",
     titulo: "Comandos",
     texto: "Comandos disponíveis, atalhos, permissões e ações rápidas para usar dentro do jogo.",
-  },
-  {
-    href: "/wiki/receitas",
-    emoji: "🧪",
-    titulo: "Receitas",
-    texto: "Receitas de criação, materiais, combinações e itens produzidos pelos sistemas de craft.",
   },
 ];
 ---
@@ -86,7 +104,7 @@ const secoes = [
     </p>
   </section>
   <section class="secao">
-    <div class="cards wiki-cards-dez">
+    <div class="cards wiki-cards-quinze">
       {secoes.map((secao) => <CardWiki {...secao} />)}
     </div>
   </section>

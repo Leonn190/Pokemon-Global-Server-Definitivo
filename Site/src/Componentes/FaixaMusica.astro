@@ -1,0 +1,22 @@
+---
+const { musica } = Astro.props;
+const nome = musica?.nome ?? "Música";
+const estilo = musica?.estiloRotulo ?? "Gerais";
+const pasta = musica?.pasta ?? "Raiz";
+const extensao = musica?.extensao ?? "Áudio";
+const url = musica?.url ?? "";
+---
+<article class="faixa-musica" data-musica-id={musica?.id} data-nome={nome}>
+  <button class="faixa-musica-botao" type="button" data-musica-toggle aria-label={`Tocar ${nome}`}>
+    <span data-musica-icone aria-hidden="true">▶</span>
+  </button>
+  <div class="faixa-musica-texto">
+    <strong>{nome}</strong>
+    <span>{estilo} · {pasta} · {extensao}</span>
+  </div>
+  <label class="faixa-musica-barra" aria-label={`Posição da música ${nome}`}>
+    <input type="range" min="0" max="1000" value="0" step="1" data-musica-progress />
+  </label>
+  <time class="faixa-musica-tempo" data-musica-tempo>0:00 / --:--</time>
+  <audio preload="metadata" src={url}></audio>
+</article>

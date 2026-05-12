@@ -2,18 +2,13 @@
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
 import { carregarWikiCombate } from "../../Codigo/CombateWikiDados.js";
-import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
-import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import "../../Estilos/wiki.css";
 const dadosCombate = carregarWikiCombate();
-const { tabela, regra } = dadosCombate;
-const iconesTipos = indexarPublicoPorNome("Tipos");
-const iconeTipo = (tipo) => iconesTipos[normalizarChave(tipo.nome ?? tipo)] ?? null;
-const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazio", vazio: true }];
+const { regra } = dadosCombate;
 ---
 <Layout
   titulo="Combate"
-  descricao="Wiki de combate do Pokémon Global Server, com fluxo real da rodada, validação de ações, energia, dano e tabela de fraquezas e resistências."
+  descricao="Wiki de combate do Pokémon Global Server, com fluxo real da rodada, validação de ações, energia, dano, colisões, indicadores e animações."
 >
   <WikiTopo
     ativo="combate"
@@ -124,46 +119,5 @@ const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazi
       </div>
     </section>
 
-    <section class="combate-secao" aria-labelledby="titulo-tabela-fr">
-      <div class="combate-cabecalho">
-        <div>
-          <p class="selo">Tipos</p>
-          <h2 id="titulo-tabela-fr">Efetividades, fraquezas, resistências e imunidades</h2>
-        </div>
-        <p>
-          A tabela abaixo é montada diretamente a partir de <code>Pokemon Global Server - Sistema FR.csv</code>.
-          Se o CSV mudar, os ícones desta área mudam junto.
-        </p>
-      </div>
-      <div class="combate-tabela-fr" role="table" aria-label="Tabela de fraquezas e resistências">
-        <div class="combate-fr-cabecalho" role="row">
-          <span role="columnheader">Tipo</span>
-          <span role="columnheader">Super eficaz contra</span>
-          <span role="columnheader">Fraquezas</span>
-          <span role="columnheader">Resiste</span>
-          <span role="columnheader">Imune</span>
-        </div>
-        {tabela.map((linha) => (
-          <article class="combate-fr-linha" role="row">
-            <div class="combate-fr-tipo" role="cell">
-              <span class="tipo-bola pequena" data-tipo={normalizarChave(linha.nome)}>
-                {iconeTipo(linha) ? <img src={iconeTipo(linha)} alt="" loading="lazy" decoding="async" /> : <b>{linha.nome.slice(0, 1)}</b>}
-              </span>
-              <strong>{linha.nome}</strong>
-            </div>
-            {[linha.superEfetivo, linha.fraquezas, linha.resistencias, linha.imunidades].map((grupo) => (
-              <div class="combate-fr-icones" role="cell">
-                {listaIcones(grupo).map((tipo) => (
-                  tipo.vazio ? <span class="combate-fr-vazio">-</span> :
-                  <span class="tipo-bola pequena" data-tipo={normalizarChave(tipo.nome)} title={tipo.nome} aria-label={tipo.nome}>
-                    {iconeTipo(tipo) ? <img src={iconeTipo(tipo)} alt="" loading="lazy" decoding="async" /> : <b>{tipo.nome.slice(0, 1)}</b>}
-                  </span>
-                ))}
-              </div>
-            ))}
-          </article>
-        ))}
-      </div>
-    </section>
   </main>
 </Layout>

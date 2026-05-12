@@ -1,0 +1,20 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
+import "../../Estilos/wiki.css";
+---
+<Layout
+  titulo="Habilidades"
+  descricao="Wiki de habilidades do jogador do Pokémon Global Server."
+>
+  <WikiTopo ativo="habilidades" titulo="Habilidades" tituloId="titulo-habilidades" />
+  <main class="wiki-vazia-habilidades" aria-labelledby="titulo-habilidades-vazio">
+    <section class="bloco-info">
+      <p class="selo">Em preparação</p>
+      <h2 id="titulo-habilidades-vazio">Árvore de habilidades do jogador</h2>
+      <p>
+        Esta wiki já está criada para entrar no menu principal, mas fica vazia por enquanto até os dados finais das skills do player serem definidos.
+      </p>
+    </section>
+  </main>
+</Layout>

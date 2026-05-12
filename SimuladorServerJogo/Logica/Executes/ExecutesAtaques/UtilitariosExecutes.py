@@ -137,6 +137,17 @@ def obter_passos_efeito(pokemon, nome):
     alvo = normalizar(nome)
     for efeito in list(getattr(pokemon, "efeitos_formais", []) or []):
         if normalizar((efeito or {}).get("nome") or (efeito or {}).get("code")) == alvo:
+            dados = (efeito or {}).get("dados") if isinstance((efeito or {}).get("dados"), dict) else {}
+            if bool((efeito or {}).get("permanente")):
+                return max(
+                    0,
+                    int(
+                        fnum(
+                            dados.get("passos_equivalentes", dados.get("queimado_passos_equivalentes", (efeito or {}).get("passos_equivalentes"))),
+                            0.0,
+                        )
+                    ),
+                )
             return max(0, int(fnum((efeito or {}).get("passos_restantes"), 0.0)))
     return 0
 

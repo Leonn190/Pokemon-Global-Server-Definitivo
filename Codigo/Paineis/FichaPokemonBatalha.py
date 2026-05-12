@@ -170,8 +170,28 @@ class FichaPokemonBatalha:
         self._cache_ataque_icones[chave] = surf
         return surf
 
+    @staticmethod
+    def _code_ataque(valor) -> str:
+        texto = str(valor or "").strip()
+        if not texto:
+            return ""
+        try:
+            return str(int(float(texto)))
+        except (TypeError, ValueError):
+            return texto.casefold()
+
     @classmethod
     def _estilo_tecnico_ataque(cls, ataque: dict | None) -> str:
+        ataque = ataque or {}
+        estilo_direto = str(
+            ataque.get("estilo_logico")
+            or ataque.get("estilo")
+            or ataque.get("EstiloLogico")
+            or ataque.get("Estilo")
+            or ""
+        ).strip().casefold()
+        if estilo_direto:
+            return estilo_direto
         if cls._CACHE_ESTILO_ATAQUES is None:
             cls._CACHE_ESTILO_ATAQUES = {}
             try:
@@ -179,16 +199,37 @@ class FichaPokemonBatalha:
                 for item in ataques.values():
                     if not isinstance(item, dict):
                         continue
+                    parametros = item.get("parametros") if isinstance(item.get("parametros"), dict) else {}
                     nome = str(item.get("nome") or "").strip().casefold()
+                    nome_norm = FichaAtaque._compactar(nome)
+                    tipo_norm = FichaAtaque._compactar(item.get("tipo") or parametros.get("tipo"))
+                    code = cls._code_ataque(item.get("ID") or item.get("Code"))
                     estilo = str(item.get("estilo_logico") or item.get("estilo") or "").strip().casefold()
                     if nome and estilo:
                         cls._CACHE_ESTILO_ATAQUES[nome] = estilo
+                    if nome_norm and estilo:
+                        cls._CACHE_ESTILO_ATAQUES[nome_norm] = estilo
+                    if code and estilo:
+                        cls._CACHE_ESTILO_ATAQUES.setdefault(f"code:{code}", estilo)
+                    if code and tipo_norm and estilo:
+                        cls._CACHE_ESTILO_ATAQUES[f"code:{code}:tipo:{tipo_norm}"] = estilo
             except Exception:
                 cls._CACHE_ESTILO_ATAQUES = {}
-        nome = str((ataque or {}).get("Ataque") or (ataque or {}).get("Nome") or "").strip().casefold()
-        if not nome:
-            return ""
-        return str(cls._CACHE_ESTILO_ATAQUES.get(nome, ""))
+        nome = str(ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome") or "").strip().casefold()
+        tipo_norm = FichaAtaque._compactar(ataque.get("Tipo") or ataque.get("tipo"))
+        code = cls._code_ataque(ataque.get("Code") or ataque.get("ID") or ataque.get("code"))
+        chaves = []
+        if code and tipo_norm:
+            chaves.append(f"code:{code}:tipo:{tipo_norm}")
+        if code:
+            chaves.append(f"code:{code}")
+        if nome:
+            chaves.extend([nome, FichaAtaque._compactar(nome)])
+        for chave in chaves:
+            estilo = cls._CACHE_ESTILO_ATAQUES.get(chave)
+            if estilo:
+                return str(estilo)
+        return ""
 
     def _sincronizar_botoes_habilidade(self, quantidade: int):
         quantidade = max(0, int(quantidade))
@@ -451,18 +492,32 @@ class FichaPokemonBatalha:
         gap_barras = max(8, int(area_barras.height * 0.12))
         y0 = area_barras.y + max(2, (area_barras.height - (barra_h * 2 + gap_barras)) // 2)
 
+        vida_max = max(1.0, float(getattr(pokemon, "VidaMax", 1.0)))
+        vida_atual = max(0.0, min(vida_max, float(getattr(pokemon, "VidaAtual", 0.0))))
+        barreira_atual = max(0.0, float(getattr(pokemon, "BarreiraAtual", 0.0)))
+        maximo_barra_vida = max(1.0, vida_max + barreira_atual)
         self._barra_vida.configurar(
             rect=pygame.Rect(area_barras.x, y0, area_barras.width, barra_h),
             minimo=0.0,
-            maximo=max(1.0, float(getattr(pokemon, "VidaMax", 1.0))),
+            maximo=maximo_barra_vida,
             cor_fundo=(18, 25, 34),
             cor_borda=(234, 242, 255),
             cor_preenchimento=(62, 205, 82),
             vertical=False,
             border_radius=max(6, barra_h // 2),
         )
-        self._barra_vida.set_valor(float(getattr(pokemon, "VidaAtual", 0.0)), animar=True)
+        self._barra_vida.set_valor(vida_atual, animar=True)
         self._barra_vida.render(tela, [], dt)
+        inicio_barreira = vida_atual / maximo_barra_vida
+        fim_barreira = min(1.0, inicio_barreira + (barreira_atual / maximo_barra_vida))
+        if fim_barreira > inicio_barreira:
+            self._desenhar_reserva_arredondada(
+                tela,
+                self._barra_vida.rect.inflate(-2, -2),
+                inicio_barreira,
+                fim_barreira,
+                (248, 250, 255, 236),
+            )
         self._desenhar_texto(
             self._txt_barra,
             tela,

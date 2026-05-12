@@ -2,6 +2,71 @@
   "schema_version": 1,
   "tipo": "fogo",
   "ataques": {
+    "73": {
+      "ID": 73,
+      "nome": "Queimadura Eterna",
+      "custo": 75,
+      "estilo_logico": "alvo",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_queimadura_eterna",
+      "parametros": {"tipo": "fogo", "custo_ap_aprimorado": 85, "efeito": "Queimado", "permanente": true, "passos_equivalentes": 10, "queimado_passos_equivalentes": 10, "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "74": {
+      "ID": 74,
+      "nome": "Erupção",
+      "custo": 75,
+      "estilo_logico": "alvo",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_erupcao",
+      "parametros": {"tipo": "fogo", "categoria": "especial", "custo_ap_aprimorado": 85, "mult_spa": 1.25, "chance_critico": 0, "chance_critico_max": 0, "nao_critico": true, "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "75": {
+      "ID": 75,
+      "nome": "Explosão Ardente",
+      "custo": 65,
+      "estilo_logico": "alvo",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": null},
+      "execute_principal": "ataque_explosao_ardente",
+      "parametros": {"tipo": "fogo", "categoria": "especial", "custo_ap_aprimorado": 75, "mult_spa": 0.85, "splash_pct": 0.60, "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "76": {
+      "ID": 76,
+      "nome": "Jato de Lava",
+      "custo": 70,
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_jato_de_lava",
+      "parametros": {"tipo": "fogo", "categoria": "especial", "custo_ap_aprimorado": 80, "mult_spa": 0.75, "terreno_nome": "Incendiada", "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "77": {
+      "ID": 77,
+      "nome": "Raio de Fogo",
+      "custo": 75,
+      "estilo_logico": "alvo",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_raio_de_fogo",
+      "parametros": {"tipo": "fogo", "categoria": "especial", "custo_ap_aprimorado": 85, "mult_spa": 1.00, "reducao_por_alvo": 0.15, "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "78": {
+      "ID": 78,
+      "nome": "Dança do Sol",
+      "custo": 40,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_danca_do_sol",
+      "parametros": {"tipo": "fogo", "custo_ap_aprimorado": 35, "clima": "Sol Forte"}
+    },
     "25": {
       "ID": 25,
       "nome": "Bola de Fogo",

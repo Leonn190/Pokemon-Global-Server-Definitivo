@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import (
     alvos_linha_inimigos_area,
+    aplicar_efeito,
     aplicar_mod_atributo,
     aplicar_status,
     area_selecionada_da_acao,
@@ -10,7 +11,10 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
     efeito_formal,
     executar_bola,
     executar_danca_clima,
+    executar_raio,
     fnum,
+    inimigos_vivos_adjacentes_ao_alvo,
+    linha_ordenada_por_direcao,
     normalizar,
     obter_passos_efeito,
     pokemons_ativos_em_campo,
@@ -236,6 +240,98 @@ def _exec_superaquecer(ctx, alvo):
     return {"aplicado": True, "critico_contextual": critico_ctx, "passos_antes": antes, "passos_depois": depois, "passos_extra_critico": extra}
 
 
+def _exec_queimadura_eterna(ctx, alvo):
+    usuario = ctx.get("usuario")
+    passos = int(_param(ctx, "queimado_passos_equivalentes", _param(ctx, "passos_equivalentes", 10)))
+    return aplicar_efeito(
+        usuario,
+        alvo,
+        "Queimado",
+        duracao=passos,
+        negativo=True,
+        dados={
+            "permanente": True,
+            "passos_equivalentes": passos,
+            "queimado_passos_equivalentes": passos,
+            **_ataque_id_nome(ctx, "Queimadura Eterna"),
+        },
+    )
+
+
+def _exec_erupcao(ctx, alvo):
+    usuario = ctx.get("usuario")
+    return dano_generico(
+        ctx,
+        alvo,
+        usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 1.25),
+        "especial",
+        chance_critico=0,
+        chance_critico_max=0,
+    )
+
+
+def _exec_explosao_ardente(ctx, alvo):
+    usuario = ctx.get("usuario")
+    base = usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.85)
+    splash = base * _param(ctx, "splash_pct", 0.60)
+    adjacentes = inimigos_vivos_adjacentes_ao_alvo(ctx, alvo)
+    alvo_principal_id = getattr(alvo, "id_batalha", None)
+    secundarios_ids = [getattr(p, "id_batalha", None) for p in adjacentes if p is not None]
+    ret = dano_generico(
+        ctx,
+        alvo,
+        base,
+        "especial",
+        alvo_principal_id=alvo_principal_id,
+        alvos_secundarios_ids=secundarios_ids,
+        impacto_principal=True,
+    )
+    if alvo is not None and not alvo.esta_vivo():
+        resultados = []
+        for adjacente in adjacentes:
+            resultados.append(
+                {
+                    "pokemon_id": adjacente.id_batalha,
+                    "resultado": dano_generico(
+                        ctx,
+                        adjacente,
+                        splash,
+                        "especial",
+                        alvo_principal_id=alvo_principal_id,
+                        alvos_secundarios_ids=secundarios_ids,
+                        impacto_secundario=True,
+                    ),
+                }
+            )
+        ret["splash"] = {"dano_bruto": round(splash, 4), "alvos_atingidos": len(resultados), "resultados": resultados}
+    return ret
+
+
+def _exec_jato_de_lava(ctx, alvo):
+    partida = ctx.get("partida")
+    usuario = ctx.get("usuario")
+    area_id = area_selecionada_da_acao(ctx) or getattr(alvo, "area_id", None)
+    if partida is None or usuario is None or not area_id:
+        return {"falha": True, "motivo": "area_alvo_invalida"}
+    terreno = str((ctx.get("propriedades") or {}).get("parametros", {}).get("terreno_nome") or "Incendiada")
+    linha = linha_ordenada_por_direcao(area_id, getattr(usuario, "lado_id", 50))
+    terrenos = []
+    for area_linha in linha:
+        aplicado = partida.mudar_terreno(area_linha, terreno, origem=usuario, dados={**_ataque_id_nome(ctx, "Jato de Lava"), "reativos_acao": ctx.get("reativos_acao")})
+        terrenos.append({"area_id": area_linha, "aplicado": bool(aplicado), "terreno": terreno})
+    resultados = []
+    for area_linha in linha:
+        pokemon = partida.pokemon_na_area(area_linha)
+        if pokemon is None or not pokemon.esta_vivo() or int(getattr(pokemon, "lado_id", -1)) == int(getattr(usuario, "lado_id", -2)):
+            continue
+        resultados.append({"pokemon_id": pokemon.id_batalha, "area_id": area_linha, "resultado": dano_generico(ctx, pokemon, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.75), "especial")})
+    return {"aplicado": True, "area_id": area_id, "linha": linha, "terrenos": terrenos, "alvos_atingidos": len(resultados), "resultados": resultados}
+
+
+def _exec_raio_de_fogo(ctx, alvo):
+    return executar_raio(ctx, alvo, _param(ctx, "mult_spa", 1.00), _param(ctx, "reducao_por_alvo", 0.15), "fogo")
+
+
 def _exec_danca_do_sol(ctx, alvo):
     return executar_danca_clima(ctx, "Sol Forte")
 
@@ -257,6 +353,11 @@ _EXECUTES = {
     "raiodefogo": _exec_laser_de_fogo,
     "ferver": _exec_ferver,
     "superaquecer": _exec_superaquecer,
+    "queimaduraeterna": _exec_queimadura_eterna,
+    "erupcao": _exec_erupcao,
+    "explosaoardente": _exec_explosao_ardente,
+    "jatodelava": _exec_jato_de_lava,
+    "raiodefogo": _exec_raio_de_fogo,
     "dancadosol": _exec_danca_do_sol,
 }
 
@@ -278,7 +379,18 @@ _ALIASES = {
     "70": "laserdefogo",
     "71": "ferver",
     "72": "superaquecer",
-    "77": "laserdefogo",
+    "73": "queimaduraeterna",
+    "74": "erupcao",
+    "75": "explosaoardente",
+    "76": "jatodelava",
+    "77": "raiodefogo",
+    "78": "dancadosol",
+    "queimaduraeterna": "queimaduraeterna",
+    "erupcao": "erupcao",
+    "explosaoardente": "explosaoardente",
+    "jatodelava": "jatodelava",
+    "raiodefogo": "raiodefogo",
+    "dancadosol": "dancadosol",
 }
 
 

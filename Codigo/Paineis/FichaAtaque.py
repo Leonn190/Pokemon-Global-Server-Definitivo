@@ -11,6 +11,7 @@ from Codigo.Prefabs.Texto import Texto, TextoAtaque
 class FichaAtaque:
     _cache_superficies: dict[tuple[str, tuple[int, int], str], pygame.Surface] = {}
     _cache_listagem: dict[str, dict[str, Path]] = {}
+    _cache_icone_ataque_path: dict[str, Path | None] = {}
 
     _cores_tipo = {
         'normal': (166, 168, 181),
@@ -92,6 +93,20 @@ class FichaAtaque:
         return ' '.join(base.split())
 
     @classmethod
+    def _compactar(cls, texto) -> str:
+        return ''.join(ch for ch in cls._normalizar(texto) if ch.isalnum())
+
+    @staticmethod
+    def _eh_subsequencia(agulha: str, texto: str) -> bool:
+        if not agulha:
+            return False
+        pos = 0
+        for ch in texto:
+            if pos < len(agulha) and agulha[pos] == ch:
+                pos += 1
+        return pos == len(agulha)
+
+    @classmethod
     def _roots(cls) -> list[Path]:
         atual = Path(__file__).resolve()
         candidatos = [Path('.').resolve(), atual.parent]
@@ -142,9 +157,33 @@ class FichaAtaque:
                     return mapa[nome]
             for nome in candidatos:
                 for chave, arquivo in mapa.items():
-                    if chave == nome or chave.startswith(nome) or nome in chave:
+                    nome_comp = cls._compactar(nome)
+                    chave_comp = cls._compactar(chave)
+                    if (
+                        chave == nome
+                        or chave.startswith(nome)
+                        or nome in chave
+                        or (len(nome_comp) >= 4 and (cls._eh_subsequencia(nome_comp, chave_comp) or cls._eh_subsequencia(chave_comp, nome_comp)))
+                    ):
                         return arquivo
         return None
+
+    @classmethod
+    def _valor_chave(cls, dados: dict | None, *chaves, default=''):
+        if not isinstance(dados, dict):
+            return default
+        alvo = {cls._normalizar(chave) for chave in chaves if str(chave or '').strip()}
+        alvo_comp = {cls._compactar(chave) for chave in chaves if str(chave or '').strip()}
+        for chave in chaves:
+            if chave in dados and dados.get(chave) not in (None, ''):
+                return dados.get(chave)
+        for chave, valor in dados.items():
+            chave_norm = cls._normalizar(chave)
+            chave_comp = cls._compactar(chave)
+            descricao_corrompida = "descricao" in alvo_comp and chave_comp.startswith("descri") and chave_comp.endswith("o")
+            if (chave_norm in alvo or chave_comp in alvo_comp or descricao_corrompida) and valor not in (None, ''):
+                return valor
+        return default
 
     @classmethod
     def _carregar_surface(cls, arquivo: Path | None, tamanho: tuple[int, int], chave_extra='contain') -> pygame.Surface | None:
@@ -181,7 +220,7 @@ class FichaAtaque:
         nivel = None
         for chave in ('Nivel', 'Nível', 'nivel', 'nível', 'NivelAtual', 'NívelAtual', 'nivel_atual'):
             try:
-                valor = int(ataque.get(chave))
+                valor = int(cls._valor_chave(ataque, chave))
                 nivel = max(1, valor)
                 break
             except (TypeError, ValueError):
@@ -189,7 +228,7 @@ class FichaAtaque:
 
         if nivel is not None:
             for chave in (f'Descrição Nivel {nivel}', f'Descricao Nivel {nivel}', f'Descrição Nível {nivel}', f'Descricao Nível {nivel}'):
-                texto = str(ataque.get(chave) or '').strip()
+                texto = str(cls._valor_chave(ataque, chave) or '').strip()
                 if texto:
                     return texto
 
@@ -198,7 +237,7 @@ class FichaAtaque:
             'Descrição Nivel 1', 'Descricao Nivel 1', 'Descrição Nível 1', 'Descricao Nível 1',
             'Efeito', 'Texto', 'Resumo',
         ):
-            texto = str(ataque.get(chave) or '').strip()
+            texto = str(cls._valor_chave(ataque, chave) or '').strip()
             if texto:
                 return texto
         return 'Sem descrição cadastrada.'
@@ -266,6 +305,27 @@ class FichaAtaque:
         )
         return self._carregar_surface(arquivo, tamanho, chave_extra='fill')
 
+    @classmethod
+    def _icone_ataque_path(cls, nome_ataque: str) -> Path | None:
+        chave = cls._normalizar(nome_ataque)
+        if not chave:
+            return None
+        if chave in cls._cache_icone_ataque_path:
+            return cls._cache_icone_ataque_path[chave]
+        for sub in (
+            Path('Site') / 'public' / 'Ataques',
+            Path('Recursos') / 'Visual' / 'Icones' / 'Ataques',
+        ):
+            arquivo = cls._achar_arquivo(sub, nome_ataque, chave)
+            if arquivo is not None:
+                cls._cache_icone_ataque_path[chave] = arquivo
+                return arquivo
+        cls._cache_icone_ataque_path[chave] = None
+        return None
+
+    def _icone_ataque(self, nome_ataque: str, lado: int) -> pygame.Surface | None:
+        return self._carregar_surface(self._icone_ataque_path(nome_ataque), (lado, lado), chave_extra='contain')
+
     def _retangulo_tooltip(self, tela: pygame.Surface, area_ancora=None, mouse_pos=None, largura=368, altura=176) -> pygame.Rect:
         tela_rect = tela.get_rect()
         if area_ancora is not None:
@@ -311,15 +371,15 @@ class FichaAtaque:
             self.TxtVazio.draw(tela)
             return
 
-        nome = str(ataque.get('Ataque') or ataque.get('Nome') or ataque.get('nome') or 'Ataque').strip()
-        tipo = str(ataque.get('Tipo') or ataque.get('tipo') or 'Normal').strip() or 'Normal'
-        estilo = str(ataque.get('Estilo') or ataque.get('estilo') or '-').strip() or '-'
-        custo = str(ataque.get('Custo') or ataque.get('custo') or '0').strip() or '0'
+        nome = str(self._valor_chave(ataque, 'Ataque', 'Nome', 'nome', default='Ataque')).strip()
+        tipo = str(self._valor_chave(ataque, 'Tipo', 'tipo', default='Normal')).strip() or 'Normal'
+        custo = str(self._valor_chave(ataque, 'Custo', 'custo', 'Custo Nivel 1', 'Custo Nível 1', default='0')).strip() or '0'
         descricao = self._descricao_ataque(ataque)
 
         header = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 58)
         fundo = self._fundo_tipo(tipo, header.size)
         if fundo is not None:
+            pygame.draw.rect(tela, self._cor_tipo(tipo), header, border_radius=12)
             sombra = pygame.Surface(header.size, pygame.SRCALPHA)
             sombra.fill((255, 255, 255, 0))
             sombra.blit(fundo, fundo.get_rect(center=sombra.get_rect().center))
@@ -329,22 +389,22 @@ class FichaAtaque:
             pygame.draw.rect(tela, self._cor_tipo(tipo), header, border_radius=12)
         pygame.draw.rect(tela, (235, 241, 255), header, 2, border_radius=12)
 
+        icone = self._icone_ataque(nome, 44)
+        texto_x = header.x + 14
+        if icone is not None:
+            tela.blit(icone, icone.get_rect(midleft=(header.x + 10, header.centery)))
+            texto_x = header.x + 62
+
         self.TxtNome.set_text(nome)
-        self.TxtNome.set_pos((header.x + 14, header.y + 10))
+        self.TxtNome.set_pos((texto_x, header.y + 10))
         self.TxtNome.draw(tela)
 
         pill_h = 22
         pill_custo = pygame.Rect(header.right - 78, header.y + 10, 64, pill_h)
-        pill_estilo = pygame.Rect(header.right - 164, header.y + 10, 78, pill_h)
 
-        pygame.draw.rect(tela, (30, 39, 63), pill_estilo, border_radius=10)
-        pygame.draw.rect(tela, (244, 248, 255), pill_estilo, 1, border_radius=10)
         pygame.draw.rect(tela, (76, 56, 18), pill_custo, border_radius=10)
         pygame.draw.rect(tela, (255, 235, 185), pill_custo, 1, border_radius=10)
 
-        self.TxtEstilo.set_text(estilo)
-        self.TxtEstilo.set_pos(pill_estilo.center)
-        self.TxtEstilo.draw(tela)
         self.TxtCusto.set_text(f'Custo {custo}')
         self.TxtCusto.set_pos(pill_custo.center)
         self.TxtCusto.draw(tela)

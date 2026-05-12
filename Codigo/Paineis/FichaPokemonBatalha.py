@@ -378,7 +378,7 @@ class FichaPokemonBatalha:
                 botao.set_habilitado(pode_interagir)
                 selecionado = ataque == self._ataque_selecionado
                 botao.set_style(
-                    radius=max(12, skill_lado // 4),
+                    radius=0,
                     border_width=3 if selecionado else 2,
                     bg=(34, 106, 66) if selecionado else (18, 28, 44),
                     bg_hover=(44, 128, 78) if selecionado else (28, 42, 64),
@@ -394,26 +394,19 @@ class FichaPokemonBatalha:
                     estilo = self._estilo_tecnico_ataque(ataque if isinstance(ataque, dict) else None)
                     if estilo and estilo != "passiva":
                         self._ataque_selecionado = None if selecionado else ataque
-                area_icone = botao.rect.inflate(-10, -10)
-                pygame.draw.rect(
-                    tela,
-                    (14, 20, 32),
-                    area_icone,
-                    border_radius=max(10, area_icone.height // 4),
-                )
-                pygame.draw.rect(
-                    tela,
-                    (255, 255, 255) if selecionado else (86, 108, 148),
-                    area_icone,
-                    width=1,
-                    border_radius=max(10, area_icone.height // 4),
-                )
-                icone = self._icone_ataque(ataque, max(18, area_icone.width - 8))
+                area_icone = botao.rect.inflate(-2, -2)
+                icone = self._icone_ataque(ataque, max(18, area_icone.width))
                 if icone is not None:
                     tela.blit(icone, icone.get_rect(center=area_icone.center))
                 else:
                     nome = str(ataque.get("Ataque") or ataque.get("Nome") or "Atk")[:2].upper()
                     self._desenhar_texto(self._txt_centro, tela, nome, area_icone.center, align="center")
+                pygame.draw.rect(
+                    tela,
+                    (255, 255, 255) if selecionado else (86, 108, 148),
+                    botao.rect,
+                    width=3 if selecionado else 2,
+                )
                 if botao.rect.collidepoint(self._mouse_pos):
                     self._hover_ataque = (ataque, pygame.Rect(botao.rect))
                 x += skill_lado + gap

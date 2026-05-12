@@ -232,9 +232,18 @@ class PokemonBatalha:
     def atualizar_por_diff(self, diff):
         if not isinstance(diff, dict):
             return
+        identidade_visual_antes = (
+            str(self.Nome or ""),
+            str(self.Especie or ""),
+            str((self.Dados or {}).get("CaminhoFrames") or (self.Dados or {}).get("caminho_frames") or (self.Dados or {}).get("FramesPath") or (self.Dados or {}).get("frames_path") or ""),
+        )
         self.Vivo = bool(diff.get("Vivo", diff.get("vivo", self.Vivo)))
         self.Ativo = bool(diff.get("Ativo", diff.get("ativo", self.Ativo)))
         self.EmReserva = bool(diff.get("EmReserva", diff.get("em_reserva", self.EmReserva)))
+        self.Nome = str(diff.get("Nome", diff.get("nome", self.Nome)) or self.Nome)
+        self.Especie = str(diff.get("Especie", diff.get("especie", self.Especie)) or self.Especie)
+        if diff.get("id_original") is not None:
+            self.id_original = diff.get("id_original")
         self.AreaId = diff.get("AreaId", diff.get("area_id", self.AreaId))
         self.VidaAtual = _f(diff.get("VidaAtual", self.VidaAtual), self.VidaAtual)
         self.VidaMax = max(1.0, _f(diff.get("VidaMax", self.VidaMax), self.VidaMax))
@@ -268,6 +277,18 @@ class PokemonBatalha:
         self.EnergiaPrevista = float(self.Energia)
         self.CustoPrevistoPendente = 0.0
         self.PodePagarPrevisao = True
+        identidade_visual_depois = (
+            str(self.Nome or ""),
+            str(self.Especie or ""),
+            str((self.Dados or {}).get("CaminhoFrames") or (self.Dados or {}).get("caminho_frames") or (self.Dados or {}).get("FramesPath") or (self.Dados or {}).get("frames_path") or ""),
+        )
+        if identidade_visual_depois != identidade_visual_antes:
+            self.FrameAtual = 0
+            self.TimerAnimacao = 0.0
+            self.Frames = []
+            self._cache_frames_escalados = {}
+            self._carregamento_frames_tentado = False
+            self.Estado.carregar_animacao()
 
     def obter_ataques_ficha(self, limite=5):
         return list(self.ListaAtaques or [])[: max(0, int(limite or 5))]

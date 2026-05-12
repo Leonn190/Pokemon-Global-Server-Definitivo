@@ -19,9 +19,11 @@ if str(RAIZ) not in sys.path:
 from Codigo.ModulosBatalha.ControladorBatalha import ControladorBatalha
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosGerais.PipelineGrafica import PipelineGrafica
+from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mundo
 
 
+PERMITIR_ATAQUES_FORA_DA_LISTA_OBRIGATORIA = False
 ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
     "Investida",
     "Biscoito",
@@ -57,6 +59,16 @@ def _chave_ataque(nome: object) -> str:
     return "".join(ch for ch in sem_acento if ch.isalnum())
 
 
+def _valor_coluna(linha: dict, *nomes, default=""):
+    if not isinstance(linha, dict):
+        return default
+    alvos = {_chave_ataque(nome) for nome in nomes if str(nome or "").strip()}
+    for chave, valor in linha.items():
+        if _chave_ataque(chave) in alvos and valor not in (None, ""):
+            return valor
+    return default
+
+
 def carregar_especies_validas(caminho_csv: Path) -> list[str]:
     bloqueios = ("Mega", "Gigantamax", "Ultra", "Eternamax", "Radiante")
     especies: list[str] = []
@@ -82,14 +94,15 @@ def carregar_especies_validas(caminho_csv: Path) -> list[str]:
 
 
 def normalizar_ataque(bruto: dict) -> dict:
-    ataque = str(bruto.get("Ataque") or bruto.get("Nome") or bruto.get("nome") or "").strip()
-    tipo = str(bruto.get("Tipo") or bruto.get("tipo") or "Normal").strip() or "Normal"
-    estilo = str(bruto.get("Estilo") or bruto.get("estilo") or "Ativa").strip()
-    code = str(bruto.get("Code") or bruto.get("code") or "").strip()
+    ataque = str(_valor_coluna(bruto, "Ataque", "Nome", "nome")).strip()
+    tipo = str(_valor_coluna(bruto, "Tipo", "tipo", default="Normal")).strip() or "Normal"
+    estilo = str(_valor_coluna(bruto, "Estilo", "estilo", default="Ativa")).strip()
+    code = str(_valor_coluna(bruto, "Code", "code")).strip()
     try:
-        custo = int(float(bruto.get("Custo") or bruto.get("custo") or 0))
+        custo = int(float(_valor_coluna(bruto, "Custo", "custo", default=0) or 0))
     except (TypeError, ValueError):
         custo = 0
+    descricao = str(_valor_coluna(bruto, "Descrição", "Descricao", "Descrição Nivel 1", "Descricao Nivel 1")).strip()
     return {
         "Ataque": ataque,
         "Nome": ataque,
@@ -100,9 +113,11 @@ def normalizar_ataque(bruto: dict) -> dict:
         "custo": custo,
         "Estilo": estilo,
         "estilo": estilo,
-        "Descrição Nivel 1": str(bruto.get("Descrição Nivel 1") or "").strip(),
-        "Descrição Nivel 2": str(bruto.get("Descrição Nivel 2") or "").strip(),
-        "Descrição Nivel 3": str(bruto.get("Descrição Nivel 3") or "").strip(),
+        "Descrição": descricao,
+        "Descricao": descricao,
+        "Descrição Nivel 1": descricao,
+        "Descrição Nivel 2": str(_valor_coluna(bruto, "Descrição Nivel 2", "Descricao Nivel 2")).strip(),
+        "Descrição Nivel 3": str(_valor_coluna(bruto, "Descrição Nivel 3", "Descricao Nivel 3")).strip(),
         "Code": code,
         "code": code,
     }
@@ -112,14 +127,13 @@ def carregar_ataques(caminho_csv: Path) -> list[dict]:
     ataques = []
     if not caminho_csv.exists():
         return ataques
-    with caminho_csv.open(encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
-            if not any(str(v).strip() for v in row.values()):
-                continue
-            atk = normalizar_ataque(row)
-            if not atk["Ataque"]:
-                continue
-            ataques.append(atk)
+    for row in carregar_csv_dict(caminho_csv.name):
+        if not any(str(v).strip() for v in row.values()):
+            continue
+        atk = normalizar_ataque(row)
+        if not atk["Ataque"]:
+            continue
+        ataques.append(atk)
     return ataques
 
 
@@ -168,6 +182,8 @@ def sortear_ataques_simulador(ataques: list[dict], obrigatorios: list[dict] | No
         usados.add(chave)
 
     if len(escolhidos) >= total or not ataques:
+        return escolhidos[:total]
+    if not PERMITIR_ATAQUES_FORA_DA_LISTA_OBRIGATORIA:
         return escolhidos[:total]
 
     pool = [atk for atk in ataques if _chave_ataque(atk.get("Ataque") or atk.get("Nome")) not in usados]

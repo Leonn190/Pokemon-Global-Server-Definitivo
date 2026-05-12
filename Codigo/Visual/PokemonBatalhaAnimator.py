@@ -332,8 +332,8 @@ class PokemonAnimator:
         restantes = []
         for anim in list(self.animacoes):
             anim["tempo"] = float(anim.get("tempo", 0.0)) + dt
-            self._aplicar_animacao(anim)
             if float(anim.get("tempo", 0.0)) < float(anim.get("duracao", 0.0)):
+                self._aplicar_animacao(anim)
                 restantes.append(anim)
             else:
                 self._finalizar_animacao(anim)

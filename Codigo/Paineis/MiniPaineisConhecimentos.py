@@ -176,6 +176,10 @@ class _RecursosVisuais:
 
     @classmethod
     def icone_ataque(cls, nome: str, tipo: str, lado: int) -> pygame.Surface | None:
+        arq_global = FichaAtaque._icone_ataque_path(nome)
+        surf = cls.carregar_surface(arq_global, (lado, lado), "contain")
+        if surf is not None:
+            return surf
         sub = Path("Recursos") / "Visual" / "Icones" / "Ataques"
         for pasta_base in cls.pastas_existentes(sub):
             pastas_tipo = []

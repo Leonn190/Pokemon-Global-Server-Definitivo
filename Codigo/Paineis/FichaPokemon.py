@@ -564,6 +564,10 @@ class FichaPokemon:
         chave = (cls._normalizar(nome_ataque), cls._normalizar(tipo))
         if chave in cls._cache_icone_ataque_path:
             return cls._cache_icone_ataque_path[chave]
+        arquivo_global = FichaAtaque._icone_ataque_path(nome_ataque)
+        if arquivo_global is not None:
+            cls._cache_icone_ataque_path[chave] = arquivo_global
+            return arquivo_global
         candidatos = [chave[0]]
         for pasta in cls._pastas_tipo_ataque(tipo):
             mapa = cls._listar_arquivos(pasta)

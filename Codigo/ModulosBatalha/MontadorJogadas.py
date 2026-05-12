@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from Codigo.ModulosBatalha.IndicadorAtaque import IndicadorAtaque
-from Codigo.ModulosGerais.PropriedadesAtaques import carregar_propriedades_ataques
+from Codigo.ModulosGerais.PropriedadesAtaques import buscar_por_nome_ou_code, carregar_propriedades_ataques
 
 
 class MontadorJogadas:
@@ -58,14 +58,7 @@ class MontadorJogadas:
     def buscar_propriedades_ataque(self, ataque):
         if not isinstance(ataque, dict):
             return None
-        code = str(ataque.get("ID") or ataque.get("Code") or ataque.get("code") or "").strip()
-        if code and code in self.propriedades_ataques:
-            return self.propriedades_ataques.get(code)
-        nome = str(ataque.get("Ataque") or ataque.get("Nome") or ataque.get("nome") or "").strip().casefold()
-        for item in self.propriedades_ataques.values():
-            if str(item.get("nome") or "").strip().casefold() == nome:
-                return item
-        return None
+        return buscar_por_nome_ou_code(self.propriedades_ataques, ataque)
 
     def ataque_esta_disponivel(self, ataque):
         props = self.buscar_propriedades_ataque(ataque)

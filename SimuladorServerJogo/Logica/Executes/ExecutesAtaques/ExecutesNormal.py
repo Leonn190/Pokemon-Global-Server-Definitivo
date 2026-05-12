@@ -212,6 +212,19 @@ def _exec_transformar(ctx, alvo):
     vida_max_antes = max(1.0, usuario.obter_atributo("Vida", 1.0))
     pct_vida = max(0.0, min(1.0, usuario.VidaAtual / vida_max_antes))
     energia_atual = fnum(getattr(usuario, "EnergiaAtual", 0.0), 0.0)
+    alvo_nome = str(getattr(alvo, "nome", "") or getattr(alvo, "especie", "") or usuario.nome)
+    alvo_especie = str(getattr(alvo, "especie", "") or alvo_nome)
+    usuario.nome = alvo_nome
+    usuario.especie = alvo_especie
+    if isinstance(getattr(usuario, "dados_originais", None), dict):
+        usuario.dados_originais["nome"] = alvo_nome
+        usuario.dados_originais["Nome"] = alvo_nome
+        usuario.dados_originais["especie"] = alvo_especie
+        usuario.dados_originais["Especie"] = alvo_especie
+        dados_alvo = getattr(alvo, "dados_originais", {}) if isinstance(getattr(alvo, "dados_originais", None), dict) else {}
+        for chave in ("CaminhoFrames", "caminho_frames", "FramesPath", "frames_path", "SpriteFrames", "sprite_frames"):
+            if chave in dados_alvo:
+                usuario.dados_originais[chave] = copy.deepcopy(dados_alvo[chave])
     usuario.tipos = copy.deepcopy(getattr(alvo, "tipos", []) or [])
     usuario.atributos_base = copy.deepcopy(getattr(alvo, "atributos_base", {}) or {})
     usuario.variacoes_permanentes = copy.deepcopy(getattr(alvo, "variacoes_permanentes", {}) or {})

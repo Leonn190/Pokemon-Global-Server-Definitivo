@@ -1,5 +1,6 @@
 import json
 import random
+import unicodedata
 from pathlib import Path
 
 import pygame
@@ -38,7 +39,45 @@ for _nome_musica, _dados_musica in Musicas.items():
     if isinstance(_dados_musica, dict):
         _dados_musica.setdefault("id", str(_nome_musica))
 
-MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão", "Estadio", "Dungeon"}
+MUSICAS_DUNGEON = {"Dungeon", "Dungeon1", "Dungeon2", "Dungeon3", "EternatusDungeon"}
+MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão", "Estadio", *MUSICAS_DUNGEON}
+MUSICAS_TIPO_ESTADIO = {
+    "agua": "Agua",
+    "cosmico": "Cosmico",
+    "dragao": "Dragão",
+    "eletrico": "Eletrico",
+    "fada": "Fada",
+    "fantasma": "Fantasma",
+    "fogo": "Fogo",
+    "gelo": "Gelo",
+    "inseto": "Inseto",
+    "normal": "Normal",
+    "planta": "Planta",
+    "terrestre": "Terrestre",
+    "terra": "Terrestre",
+    "venenoso": "Venenoso",
+    "voador": "Voador",
+}
+MUSICAS_LIDER_ESTADIO = {
+    "agua": "Agua-Caio",
+    "dragao": "Dragao-Felps",
+    "eletrico": "Eletrico-Ph",
+    "fantasma": "Fantasma-Ferraz",
+    "fogo": "Fogo-Batalha",
+    "gelo": "Gelo-Joao",
+    "geral": "Geral-Leon",
+    "inseto": "Inseto-Murilo",
+    "lutador": "Lutador-Guedes",
+    "metal": "Metal-Ale",
+    "normal": "Normal-Suriane",
+    "pedra": "Pedra-Sidney",
+    "sombrio": "Sombrio-Vasques",
+    "sonoro": "Sonoro-Ramos",
+    "terrestre": "Terrestre-Amable",
+    "terra": "Terrestre-Amable",
+    "venenoso": "Venenoso-Paulo",
+    "voador": "Voador-Lis",
+}
 
 # Estado da música atual
 _musica_atual = None
@@ -329,6 +368,50 @@ def _musica_por_tile(tile):
     }.get(bioma)
 
 
+def _normalizar_chave(valor):
+    texto = unicodedata.normalize("NFKD", str(valor or "")).encode("ascii", "ignore").decode("ascii")
+    texto = "".join(ch if ch.isalnum() else "_" for ch in texto.strip().lower())
+    while "__" in texto:
+        texto = texto.replace("__", "_")
+    return texto.strip("_")
+
+
+def _musica_existente(*nomes):
+    for nome in nomes:
+        nome = str(nome or "").strip()
+        if nome in Musicas:
+            return nome
+    return None
+
+
+def _layout_dungeon_cena(cena):
+    controlador = getattr(cena, "ControladorMundo", None)
+    leitor = getattr(controlador, "Leitor", None)
+    meta = getattr(leitor, "MetaMundo", {}) if leitor is not None else {}
+    layout = meta.get("layout_dungeon") if isinstance(meta, dict) and isinstance(meta.get("layout_dungeon"), dict) else {}
+    if layout:
+        return layout
+    objetos = getattr(controlador, "Objetos", None)
+    layout = getattr(objetos, "LayoutDungeonAtual", {}) if objetos is not None else {}
+    return layout if isinstance(layout, dict) else {}
+
+
+def _musica_dungeon(cena):
+    layout = _layout_dungeon_cena(cena)
+    return _musica_existente(layout.get("musica_dungeon"), layout.get("musica"), "Dungeon")
+
+
+def _musica_treinador_estadio(contexto):
+    npc = contexto.get("npc_contexto") if isinstance(contexto.get("npc_contexto"), dict) else {}
+    cargo = _normalizar_chave(npc.get("npc_cargo") or npc.get("cargo"))
+    tipo = _normalizar_chave(npc.get("npc_estadio") or npc.get("estadio_tipo") or contexto.get("tipo_estadio"))
+    if cargo == "lider":
+        return _musica_existente(MUSICAS_LIDER_ESTADIO.get(tipo), MUSICAS_TIPO_ESTADIO.get(tipo))
+    if cargo in {"capitao", "desafiante"}:
+        return _musica_existente(MUSICAS_TIPO_ESTADIO.get(tipo), MUSICAS_LIDER_ESTADIO.get(tipo))
+    return None
+
+
 def musica_confronto_por_tile(tile):
     bioma = bioma_por_tile(tile)
     return {
@@ -416,7 +499,7 @@ def _resolver_musica_alvo(jogo):
         objetos = getattr(getattr(cena, "ControladorMundo", None), "Objetos", None)
         dimensao = str(objetos.dimensao_atual_client() or "Mundo") if objetos is not None else "Mundo"
         if dimensao.startswith("Dungeon_"):
-            return "Dungeon"
+            return _musica_dungeon(cena)
         if dimensao.startswith("Estadio"):
             return "Estadio"
         return _musica_mundo_estavel(cena)
@@ -429,6 +512,15 @@ def _resolver_musica_alvo(jogo):
             if musica_fechamento:
                 return musica_fechamento
         contexto = getattr(jogo, "INFO", {}).get("CombateContexto") if isinstance(getattr(jogo, "INFO", None), dict) else {}
+        if isinstance(contexto, dict):
+            tipo_batalha = str(contexto.get("tipo_batalha") or contexto.get("tipo") or "").strip().lower()
+            if tipo_batalha == "boss":
+                return _musica_existente("ConfrontoBoss", "ConfrontoDungeon")
+            if tipo_batalha == "servo":
+                return _musica_existente("ConfrontoDungeon", "ConfrontoBoss")
+            musica_estadio = _musica_treinador_estadio(contexto)
+            if musica_estadio:
+                return musica_estadio
         tile_bioma = contexto.get("tile_bioma") if isinstance(contexto, dict) else None
         return musica_confronto_por_tile(tile_bioma)
 

@@ -53,6 +53,45 @@ def _escopo_objeto(obj) -> Dict[str, object]:
     return {"centro": [obj.posicao[0], obj.posicao[1]], "raio": 780.0}
 
 
+def _pokemons_dungeon_batalha(dimensao: str, sala_id: str, tipo_batalha: str, principal: PokemonServer) -> list[PokemonServer]:
+    if str(tipo_batalha or "").strip().lower() != "servo":
+        return [principal]
+    candidatos = []
+    for obj in BANCO_DADOS.listar_objetos():
+        if not isinstance(obj, PokemonServer):
+            continue
+        estado = obj.estado_extra if isinstance(obj.estado_extra, dict) else {}
+        if str(estado.get("dimensao") or "") != str(dimensao or ""):
+            continue
+        if str(estado.get("sala_id") or "") != str(sala_id or ""):
+            continue
+        if str(estado.get("comportamento_mundo") or estado.get("tipo_batalha") or "").strip().lower() != "servo":
+            continue
+        candidatos.append(obj)
+    if all(int(getattr(obj, "Id", 0) or 0) != int(principal.Id) for obj in candidatos):
+        candidatos.append(principal)
+    return sorted(candidatos, key=lambda obj: int(getattr(obj, "Id", 0) or 0))
+
+
+def _materializar_inimigo_dungeon(poke: PokemonServer, tipo_batalha: str) -> dict:
+    estado_poke = poke.estado_extra if isinstance(poke.estado_extra, dict) else {}
+    inimigo = materializar_pokemon(poke.serializar())
+    if isinstance(inimigo, dict):
+        est = inimigo.get("estado") if isinstance(inimigo.get("estado"), dict) else inimigo
+        if isinstance(est, dict):
+            est.update(
+                {
+                    "capturavel": False,
+                    "tipo_batalha": tipo_batalha,
+                    "comportamento": tipo_batalha,
+                    "comportamento_mundo": tipo_batalha,
+                    "boss": bool(estado_poke.get("boss", False)),
+                    "pokemon_boss": estado_poke.get("pokemon_boss", ""),
+                }
+            )
+    return inimigo
+
+
 def _processar_pendencias_pokemon_nivel(inventario: dict) -> dict:
     inv = dict(inventario) if isinstance(inventario, dict) else {}
     pokemons = list(inv.get("pokemons", [])) if isinstance(inv.get("pokemons"), list) else []
@@ -464,26 +503,26 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                         if not isinstance(layout_dungeon, dict):
                             layout_dungeon = {}
                         sala = next((s for s in layout_dungeon.get("salas", []) if isinstance(s, dict) and str(s.get("id") or "") == str(estado_poke.get("sala_id") or "")), None)
-                        inimigo = materializar_pokemon(poke_batalha.serializar())
-                        if isinstance(inimigo, dict):
-                            est = inimigo.get("estado") if isinstance(inimigo.get("estado"), dict) else inimigo
-                            if isinstance(est, dict):
-                                est.update(
-                                    {
-                                        "capturavel": False,
-                                        "tipo_batalha": tipo_batalha,
-                                        "comportamento": tipo_batalha,
-                                        "comportamento_mundo": tipo_batalha,
-                                        "boss": bool(estado_poke.get("boss", False)),
-                                        "pokemon_boss": estado_poke.get("pokemon_boss", ""),
-                                    }
-                                )
+                        pokemons_batalha = _pokemons_dungeon_batalha(dimensao, str(estado_poke.get("sala_id") or ""), tipo_batalha, poke_batalha)
+                        pokemons_inimigo = []
+                        pokemon_mundo_ids = []
+                        for poke_inimigo in pokemons_batalha:
+                            if int(poke_inimigo.Id) != int(poke_batalha.Id):
+                                poke_inimigo = CEREBRO.marcar_pokemon_em_batalha(int(poke_inimigo.Id), client_id)
+                                if not isinstance(poke_inimigo, PokemonServer):
+                                    continue
+                                registrar_diff("update", payload=poke_inimigo.serializar(), escopo=_escopo_objeto(poke_inimigo), objeto_id=int(poke_inimigo.Id), autor="server", categoria="pokemon")
+                            inimigo = _materializar_inimigo_dungeon(poke_inimigo, tipo_batalha)
+                            if isinstance(inimigo, dict):
+                                pokemons_inimigo.append(inimigo)
+                                pokemon_mundo_ids.append(int(poke_inimigo.Id))
                         contexto = contexto_batalha_dungeon(layout_dungeon, sala, tipo_batalha, estado_poke, contexto)
                         contexto.update(
                             {
                                 "dimensao": dimensao,
                                 "pokemon_mundo_id": int(pokemon_id),
-                                "pokemons_inimigo": [inimigo],
+                                "pokemon_mundo_ids": pokemon_mundo_ids,
+                                "pokemons_inimigo": pokemons_inimigo,
                                 "dungeon": {
                                     "dungeon_code": str(estado_poke.get("dungeon_code") or ""),
                                     "sala_id": str(estado_poke.get("sala_id") or ""),

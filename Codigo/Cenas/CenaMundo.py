@@ -141,9 +141,19 @@ class CenaMundo:
                     }
                 ],
             )
+        pokemon_ids = []
+        for pid in list(pendente.get("pokemon_mundo_ids") or []):
+            try:
+                pid_int = int(pid or 0)
+            except (TypeError, ValueError):
+                continue
+            if pid_int > 0 and pid_int not in pokemon_ids:
+                pokemon_ids.append(pid_int)
         pokemon_mundo_id = int(pendente.get("pokemon_mundo_id", 0) or 0)
-        if pokemon_mundo_id > 0:
-            notificar_pokemon_derrotado_batalha_mundo(link, client_id, pokemon_mundo_id)
+        if pokemon_mundo_id > 0 and pokemon_mundo_id not in pokemon_ids:
+            pokemon_ids.append(pokemon_mundo_id)
+        for pokemon_id in pokemon_ids:
+            notificar_pokemon_derrotado_batalha_mundo(link, client_id, pokemon_id)
         # Essas chamadas passam pela rota de atualização, que sintetiza visibilidade.
         # Como ainda não existe um cliente de mundo ativo para aplicar o retorno, limpamos
         # o estado transitório antes do bootstrap real da cena.

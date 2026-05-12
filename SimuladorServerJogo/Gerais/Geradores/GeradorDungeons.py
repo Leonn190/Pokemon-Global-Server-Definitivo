@@ -1005,6 +1005,12 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
     catalogo = carregar_catalogo_dungeons()
     seed_layout = _seed_layout(str(dungeon_code), row, entradas_reais)
     rng = random.Random(seed_layout)
+    alvo_musica = " ".join([str(dungeon_code), nome, " ".join(bosses_nomes)]).lower()
+    musica_dungeon = (
+        "EternatusDungeon"
+        if ("eternatus" in alvo_musica or "eternatos" in alvo_musica)
+        else random.Random(f"{seed_layout}:musica").choice(["Dungeon1", "Dungeon2", "Dungeon3"])
+    )
 
     ocupadas: dict[tuple[int, int], dict] = {}
     entradas_out = []
@@ -1113,6 +1119,7 @@ def gerar_dungeon_layout(dungeon_code: str, entradas: list[dict]) -> dict:
         "dimensao": nome_dimensao_dungeon(dungeon_code),
         "dungeon_code": str(dungeon_code),
         "dungeon_nome": nome,
+        "musica_dungeon": musica_dungeon,
         "tamanho": tamanho,
         "dificuldade": dificuldade,
         "largura_blocos": largura,

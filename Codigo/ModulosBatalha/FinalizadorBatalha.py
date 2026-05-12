@@ -110,6 +110,7 @@ class FinalizadorBatalha:
         if not pokemons and not inventario_resultado:
             return
         contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
+        derrotados_mundo = self._ids_pokemons_mundo_derrotados(resultado, contexto)
         avisos = []
         for dados in pokemons.values():
             if not isinstance(dados, dict):
@@ -149,12 +150,16 @@ class FinalizadorBatalha:
                     inventario["pokemons"].append(deepcopy(capturado))
                     if chave:
                         existentes.add(chave)
-        if inventario:
-            jogo.INFO.setdefault("PlayerDadosServer", {})["inventario"] = inventario
-            jogo.INFO["SincronizacaoPosBatalhaMundo"] = {
-                "inventario": inventario,
-                "pokemon_mundo_id": int(contexto.get("pokemon_mundo_id", 0) or 0) if bool(resultado.get("finalizada")) and self._vencedor_visual(resultado) == "jogador" else 0,
-            }
+        if inventario or derrotados_mundo:
+            if inventario:
+                jogo.INFO.setdefault("PlayerDadosServer", {})["inventario"] = inventario
+            pokemon_mundo_id = int(contexto.get("pokemon_mundo_id", 0) or 0) if bool(resultado.get("finalizada")) and self._vencedor_visual(resultado) == "jogador" else 0
+            if derrotados_mundo:
+                pokemon_mundo_id = int(derrotados_mundo[0])
+            sync = {"pokemon_mundo_id": pokemon_mundo_id, "pokemon_mundo_ids": derrotados_mundo}
+            if inventario:
+                sync["inventario"] = inventario
+            jogo.INFO["SincronizacaoPosBatalhaMundo"] = sync
 
     def abrir_subtela_resultados(self, resultado):
         self._finalizacao_aberta = True
@@ -255,6 +260,31 @@ class FinalizadorBatalha:
         if isinstance(vencedor, list):
             return "jogador" if lado in [_i(v) for v in vencedor] else "inimigo"
         return "jogador" if _i(vencedor, -999) == lado else "inimigo"
+
+    def _ids_pokemons_mundo_derrotados(self, resultado, contexto):
+        ids_contexto = {
+            _i(valor, 0)
+            for valor in list(contexto.get("pokemon_mundo_ids") or [])
+            if _i(valor, 0) > 0
+        }
+        id_unico = _i(contexto.get("pokemon_mundo_id"), 0)
+        if id_unico > 0:
+            ids_contexto.add(id_unico)
+        if not ids_contexto:
+            return []
+        lado_jogador = int(getattr(self.controlador, "lado_jogador", 50) or 50)
+        derrotados = []
+        for pokemon in (resultado.get("pokemons") if isinstance(resultado, dict) else {}).values():
+            if not isinstance(pokemon, dict):
+                continue
+            if _i(pokemon.get("lado_id"), lado_jogador) == lado_jogador:
+                continue
+            if bool(pokemon.get("Vivo", pokemon.get("vivo", True))):
+                continue
+            id_original = _i(pokemon.get("id_original"), 0)
+            if id_original in ids_contexto and id_original not in derrotados:
+                derrotados.append(id_original)
+        return derrotados
 
     def _localizar_pokemons_contexto(self, contexto, id_original):
         alvo_id = str(id_original)

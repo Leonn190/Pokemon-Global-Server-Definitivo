@@ -39,11 +39,12 @@ class CenaCombate:
         contexto_servidor = ret.get("contexto_batalha") if isinstance(ret, dict) and isinstance(ret.get("contexto_batalha"), dict) else {}
         if not contexto_servidor:
             return
+        inimigos_servidor = contexto_servidor.get("pokemons_inimigo") if isinstance(contexto_servidor.get("pokemons_inimigo"), list) else None
         JOGO.INFO["CombateContexto"] = {
             **dict(contexto),
             **dict(contexto_servidor),
             "pokemon_colisao": dict(pokemon_colisao),
-            "pokemons_inimigo": list(contexto.get("pokemons_inimigo") or contexto_servidor.get("pokemons_inimigo") or []),
+            "pokemons_inimigo": list(inimigos_servidor if inimigos_servidor is not None else contexto.get("pokemons_inimigo") or []),
             "time_jogador": dict(contexto.get("time_jogador") or {}),
             "times_jogador": list(contexto.get("times_jogador") or []),
             "pokemons_jogador": list(contexto.get("pokemons_jogador") or []),

@@ -29,6 +29,12 @@
     "loop": 1.28,
     "fimloop": 109.43
   },
+  "Creditos": {
+    "id": "Creditos",
+    "arquivo": "Recursos/Sonoridades/Musicas/Menu/Creditos.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
   "ConfrontoDoVale": {
     "id": "ConfrontoDoVale",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDoVale.ogg",
@@ -71,6 +77,18 @@
     "loop": 2.34,
     "fimloop": 83.62
   },
+  "ConfrontoDungeon": {
+    "id": "ConfrontoDungeon",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoDungeon.ogg",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "ConfrontoBoss": {
+    "id": "ConfrontoBoss",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Confrontos/ConfrontoBoss.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
   "Vale": {
     "id": "Vale",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Vale.ogg",
@@ -108,9 +126,37 @@
   },
   "Dungeon": {
     "id": "Dungeon",
-    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Dungeon.mp3",
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Dungeon1.mp3",
     "loop": 0,
-    "fimloop": 200,
+    "fimloop": 999999,
+    "volume": 0.55
+  },
+  "Dungeon1": {
+    "id": "Dungeon1",
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Dungeon1.mp3",
+    "loop": 0,
+    "fimloop": 999999,
+    "volume": 0.55
+  },
+  "Dungeon2": {
+    "id": "Dungeon2",
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Dungeon2.mp3",
+    "loop": 0,
+    "fimloop": 999999,
+    "volume": 0.55
+  },
+  "Dungeon3": {
+    "id": "Dungeon3",
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Dungeon3.mp3",
+    "loop": 0,
+    "fimloop": 999999,
+    "volume": 0.55
+  },
+  "EternatusDungeon": {
+    "id": "EternatusDungeon",
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/EternatusDungeon.mp3",
+    "loop": 0,
+    "fimloop": 999999,
     "volume": 0.55
   },
   "Agua": {
@@ -209,11 +255,83 @@
     "loop": 0,
     "fimloop": 7.131
   },
+  "Agua-Caio": {
+    "id": "Agua-Caio",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Agua-Caio.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Dragao-Felps": {
+    "id": "Dragao-Felps",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Dragão-Felps.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Eletrico-Ph": {
+    "id": "Eletrico-Ph",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Eletrico-Ph.ogg",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Fantasma-Ferraz": {
+    "id": "Fantasma-Ferraz",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Fantasma-Ferraz.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
   "Fogo-Batalha": {
     "id": "Fogo-Batalha",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Fogo-Batalha.ogg",
     "loop": 0,
     "fimloop": 239.398
+  },
+  "Gelo-Joao": {
+    "id": "Gelo-Joao",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Gelo-Joao.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Geral-Leon": {
+    "id": "Geral-Leon",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Geral-Leon.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Inseto-Murilo": {
+    "id": "Inseto-Murilo",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Inseto-Murilo.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Lutador-Guedes": {
+    "id": "Lutador-Guedes",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Lutador-Guedes.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Metal-Ale": {
+    "id": "Metal-Ale",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Metal-Ale.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Normal-Suriane": {
+    "id": "Normal-Suriane",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Normal-Suriane.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Pedra-Sidney": {
+    "id": "Pedra-Sidney",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Pedra-Sidney.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Sombrio-Vasques": {
+    "id": "Sombrio-Vasques",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Sombrio-Vasques.mp3",
+    "loop": 0,
+    "fimloop": 999999
   },
   "Sonoro-Ramos": {
     "id": "Sonoro-Ramos",
@@ -221,11 +339,23 @@
     "loop": 0,
     "fimloop": 344.886
   },
+  "Terrestre-Amable": {
+    "id": "Terrestre-Amable",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Terrestre-Amable.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
   "Venenoso-Paulo": {
     "id": "Venenoso-Paulo",
-    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Venenoso-Paulo.ogg",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Venenoso-Paulo.mp3",
     "loop": 0,
-    "fimloop": 339.894
+    "fimloop": 999999
+  },
+  "Voador-Lis": {
+    "id": "Voador-Lis",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Voador-Lis.mp3",
+    "loop": 0,
+    "fimloop": 999999
   },
   "Estadio": {
     "id": "Estadio",

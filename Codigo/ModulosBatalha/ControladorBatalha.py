@@ -120,7 +120,7 @@ class ControladorBatalha:
         return copy.deepcopy(inv)
 
     def aplicar_inventario_batalha(self, inventario):
-        if not isinstance(inventario, dict):
+        if not isinstance(inventario, dict) or not inventario:
             return
         ator = self.ator_local()
         inv_obj = getattr(ator, "Inventario", None)
@@ -136,7 +136,7 @@ class ControladorBatalha:
         self.contexto_batalha = dict(estado)
         estado_cliente = dict(estado)
         tipo_estado = str(estado.get("tipo_batalha") or estado.get("tipo") or self.tipo_batalha).strip().lower()
-        if tipo_estado == "confronto" and not bool(estado.get("modo_teste", self.modo_teste)):
+        if tipo_estado in {"confronto", "treinador", "trainer"} and not bool(estado.get("modo_teste", self.modo_teste)):
             estado.setdefault("inventario_jogador", self.inventario_local_serializado())
         estado.setdefault("id_partida", self.id_partida)
         estado.setdefault("lado_jogador", self.lado_jogador)

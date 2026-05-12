@@ -1,0 +1,43 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import Botao from "../../Componentes/Botao.astro";
+import { sistemasPorTrasDoJogo } from "../../Codigo/SistemasPorTrasDoJogo.js";
+import "../../Estilos/wiki.css";
+import "../../Estilos/por-tras-do-jogo.css";
+
+export function getStaticPaths() {
+  return sistemasPorTrasDoJogo.map((sistema) => ({
+    params: { sistema: sistema.slug },
+    props: { sistema },
+  }));
+}
+
+const { sistema } = Astro.props;
+---
+<Layout
+  titulo={`${sistema.titulo} | Por trás do jogo`}
+  descricao={`Estrutura técnica reservada para ${sistema.titulo} no Pokémon Global Server.`}
+>
+  <section class="por-tras-hero por-tras-sistema-hero" aria-labelledby="titulo-sistema">
+    <p class="selo">Por trás do jogo</p>
+    <div class="por-tras-sistema-topo">
+      <span class="por-tras-sistema-emoji" aria-hidden="true">{sistema.emoji}</span>
+      <h1 id="titulo-sistema">{sistema.titulo}</h1>
+    </div>
+    <p>
+      Estrutura reservada para documentação técnica futura deste sistema.
+    </p>
+    <div class="acoes por-tras-acoes">
+      <Botao href="/por-tras-do-jogo">Voltar para sistemas</Botao>
+      <Botao href="/" tipo="secundario">Voltar para a tela inicial</Botao>
+    </div>
+  </section>
+
+  <section class="secao por-tras-pagina-vazia" aria-label="Página técnica vazia">
+    <p class="selo selo-azul">Conteúdo futuro</p>
+    <h2>Página ainda sem conteúdo</h2>
+    <p>
+      Este espaço foi criado apenas para manter a estrutura da seção. O conteúdo técnico pode ser preenchido depois.
+    </p>
+  </section>
+</Layout>

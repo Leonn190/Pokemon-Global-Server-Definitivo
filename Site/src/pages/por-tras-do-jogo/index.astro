@@ -2,59 +2,9 @@
 import Layout from "../../Componentes/Layout.astro";
 import Botao from "../../Componentes/Botao.astro";
 import CardWiki from "../../Componentes/CardWiki.astro";
+import { sistemasPorTrasDoJogo } from "../../Codigo/SistemasPorTrasDoJogo.js";
 import "../../Estilos/wiki.css";
 import "../../Estilos/por-tras-do-jogo.css";
-
-const sistemas = [
-  {
-    href: "/wiki/combate",
-    emoji: "⚔️",
-    titulo: "Batalha e turnos",
-    texto: "Rodador de turno, logs, efeitos, energia, dano, alvos e leitura visual no cliente.",
-  },
-  {
-    href: "/wiki/mundo",
-    emoji: "🌍",
-    titulo: "Mundo e chunks",
-    texto: "Geração de terreno, biomas, estruturas naturais, tiles especiais e exploração em mapa grande.",
-  },
-  {
-    href: "/wiki/dungeons",
-    emoji: "🗺️",
-    titulo: "Dungeons",
-    texto: "Dimensões fechadas, salas, armadilhas, servos, dificuldade e exploração progressiva.",
-  },
-  {
-    href: "/wiki/pokemons",
-    emoji: "🐾",
-    titulo: "Pokémon e dados",
-    texto: "Base extensa de criaturas, atributos, raridade, tipagens, linhagens e assets carregados por dados.",
-  },
-  {
-    href: "/wiki/ataques",
-    emoji: "💥",
-    titulo: "Ataques e animações",
-    texto: "Ataques por tipo, custo, foco, descrições, aprimoramentos e motores de execução.",
-  },
-  {
-    href: "/wiki/itens",
-    emoji: "🎒",
-    titulo: "Itens e progressão",
-    texto: "Consumíveis, recursos, craft, valores, uso em sistemas e integração com a progressão do jogador.",
-  },
-  {
-    href: "/wiki/equipaveis",
-    emoji: "🛡️",
-    titulo: "Equipáveis",
-    texto: "Bônus, afinidades, foco, atributos aumentados e uso estratégico em builds de Pokémon.",
-  },
-  {
-    href: "/por-tras-do-jogo/relatorio",
-    emoji: "📘",
-    titulo: "Relatórios do projeto",
-    texto: "Registro atual e relatórios antigos usados para acompanhar evolução, métricas e mudanças do código.",
-  },
-];
 ---
 <Layout
   titulo="Por trás do jogo | Pokémon Global Server"
@@ -76,16 +26,16 @@ const sistemas = [
   <section class="secao por-tras-intro" aria-labelledby="titulo-sistemas-tecnicos">
     <div>
       <p class="selo selo-azul">Sistemas</p>
-      <h2 id="titulo-sistemas-tecnicos">Cartuchos técnicos</h2>
+      <h2 id="titulo-sistemas-tecnicos">Sistemas técnicos do projeto</h2>
       <p>
-        Por enquanto estes cartuchos funcionam como entrada inicial. No futuro, cada sistema pode ganhar uma página própria explicando a lógica real do código, arquivos envolvidos, fluxo de dados e pontos importantes de manutenção.
+        Abaixo ficam as estruturas de páginas técnicas do jogo. Por enquanto elas estão reservadas para documentação futura, sem conteúdo detalhado preenchido.
       </p>
     </div>
   </section>
 
   <section class="secao" aria-label="Sistemas técnicos do jogo">
     <div class="cards wiki-cards-dez por-tras-cards">
-      {sistemas.map((sistema) => <CardWiki {...sistema} />)}
+      {sistemasPorTrasDoJogo.map((sistema) => <CardWiki {...sistema} />)}
     </div>
   </section>
 </Layout>

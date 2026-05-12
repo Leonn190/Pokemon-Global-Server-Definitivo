@@ -50,6 +50,22 @@ ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
     "Bola Climática",
     "Hiper Presa",
     "Inflar",
+    "Bola de Agua",
+    "Gota Pesada",
+    "Splash",
+    "Bolhas",
+    "Esguicho Suave",
+    "Jato de Água",
+    "Jato Duplo",
+    "Jato Triplo",
+    "Golpe de Concha",
+    "Chuva Curativa",
+    "Lança de Água",
+    "Torrente Vital",
+    "Esfera Hidrocaótica",
+    "Cachoeira",
+    "Águas Mágicas",
+    "Fonte Termal",
 ]
 
 

@@ -165,7 +165,9 @@ class RodadorTurno:
             alvos_secundarios_ids = [alvo.id_batalha for alvo in secundarios if alvo is not None]
             alvo_ids = self._ids_unicos([alvo_principal_id, *alvos_secundarios_ids])
         self.partida.registrar_evento_log("ataque_usado", self._dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids, animacao=animacao, alvo_principal_id=alvo_principal_id, alvos_secundarios_ids=alvos_secundarios_ids))
-        if not contexto["alvos"] and str(props.get("estilo_logico") or "").lower() != "ativo":
+        parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        permite_area_vazia = bool(parametros.get("permite_area_vazia", props.get("permite_area_vazia", False)))
+        if not contexto["alvos"] and str(props.get("estilo_logico") or "").lower() != "ativo" and not permite_area_vazia:
             self.partida.registrar_evento_log("ataque_sem_alvo_real", self._dados_ataque(pokemon, acao, props, alvo_ids=[], animacao=animacao))
             self._falhar(acao, "sem_alvo_real")
             return
@@ -182,20 +184,21 @@ class RodadorTurno:
                 atingiu = True
         elif modo_execucao == "uma_vez":
             alvos_validos = [alvo for alvo in contexto["alvos"] if alvo is not None and alvo.esta_vivo()]
-            if not alvos_validos:
+            if not alvos_validos and not permite_area_vazia:
                 self.partida.registrar_evento_log("ataque_sem_alvo_real", self._dados_ataque(pokemon, acao, props, alvo_ids=[], animacao=animacao))
                 self._falhar(acao, "sem_alvo_real")
                 return
             ctx_unico = dict(contexto)
-            ctx_unico["alvo"] = alvos_validos[0]
-            retorno = executar_execute_principal(chave_ataque, ctx_unico, alvo=None)
+            alvo_unico = alvos_validos[0] if alvos_validos else None
+            ctx_unico["alvo"] = alvo_unico
+            retorno = executar_execute_principal(chave_ataque, ctx_unico, alvo=alvo_unico)
             if retorno.get("falha"):
                 self._falhar(acao, str(retorno.get("motivo") or "execute_falhou"))
             else:
                 alvo_ids_unicos = [alvo.id_batalha for alvo in alvos_validos]
                 self.partida.registrar_evento_log(
                     "ataque_acertou",
-                    self._dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids_unicos, alvo=alvos_validos[0], animacao=animacao, alvo_principal_id=alvo_principal_id),
+                    self._dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids_unicos, alvo=alvo_unico, animacao=animacao, alvo_principal_id=alvo_principal_id),
                 )
                 atingiu = True
         else:

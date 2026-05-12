@@ -172,7 +172,8 @@ def _montar_passivas():
 def _montar_aliases():
     saida = {}
     for _, _, obter_aliases in _FONTES_EXECUTES:
-        saida.update(obter_aliases())
+        for alias, chave in obter_aliases().items():
+            saida.setdefault(alias, chave)
     return saida
 
 

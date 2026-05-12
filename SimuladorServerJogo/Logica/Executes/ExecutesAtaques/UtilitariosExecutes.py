@@ -114,14 +114,30 @@ def linha_ordenada_por_direcao(area_id, lado_usuario):
 
 
 def inimigos_vivos_adjacentes_ao_alvo(ctx, alvo):
+    return inimigos_vivos_adjacentes_area(ctx, getattr(alvo, "area_id", None), ignorar=alvo)
+
+
+def area_alvo_contexto(ctx):
+    alvo = (ctx or {}).get("acao", {}).get("alvo") if isinstance((ctx or {}).get("acao"), dict) else {}
+    if not isinstance(alvo, dict):
+        return None
+    if str(alvo.get("tipo") or "").strip().lower() == "multi":
+        for selecao in list(alvo.get("alvos") or []):
+            if isinstance(selecao, dict) and selecao.get("area_id"):
+                return str(selecao.get("area_id")).upper()
+        return None
+    return str(alvo.get("area_id") or "").upper() or None
+
+
+def inimigos_vivos_adjacentes_area(ctx, area_id, ignorar=None):
     partida = (ctx or {}).get("partida")
     usuario = (ctx or {}).get("usuario")
-    if partida is None or alvo is None or usuario is None:
+    if partida is None or area_id is None or usuario is None:
         return []
     saida = []
-    for area_id in adjacentes_mesmo_lado(getattr(alvo, "area_id", None)):
-        pokemon = partida.pokemon_na_area(area_id)
-        if pokemon is None or pokemon is alvo or not pokemon.esta_vivo():
+    for area_adjacente in adjacentes_mesmo_lado(area_id):
+        pokemon = partida.pokemon_na_area(area_adjacente)
+        if pokemon is None or pokemon is ignorar or not pokemon.esta_vivo():
             continue
         if int(getattr(pokemon, "lado_id", -1)) == int(getattr(usuario, "lado_id", -2)):
             continue
@@ -130,15 +146,19 @@ def inimigos_vivos_adjacentes_ao_alvo(ctx, alvo):
 
 
 def alvos_linha_inimigos(ctx, alvo_inicial):
+    return alvos_linha_inimigos_area(ctx, getattr(alvo_inicial, "area_id", None), alvo_inicial=alvo_inicial)
+
+
+def alvos_linha_inimigos_area(ctx, area_id, alvo_inicial=None):
     partida = (ctx or {}).get("partida")
     usuario = (ctx or {}).get("usuario")
-    if partida is None or usuario is None or alvo_inicial is None:
+    if partida is None or usuario is None or not area_id:
         return []
-    linha = linha_ordenada_por_direcao(getattr(alvo_inicial, "area_id", None), getattr(usuario, "lado_id", 50))
+    linha = linha_ordenada_por_direcao(area_id, getattr(usuario, "lado_id", 50))
     if not linha:
         return [alvo_inicial] if alvo_inicial is not None else []
     try:
-        idx_inicial = linha.index(str(getattr(alvo_inicial, "area_id", "")).upper())
+        idx_inicial = linha.index(str(area_id or "").upper())
     except ValueError:
         idx_inicial = 0
     saida = []
@@ -240,13 +260,24 @@ def aplicar_mod_atributo(ctx, alvo, nome_efeito, atributo, valor, duracao=6, neg
 
 def executar_bola(ctx, alvo, tipo):
     usuario = (ctx or {}).get("usuario")
+    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
+    parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+    escala_spa = fnum(parametros.get("escala_spa"), 0.80)
+    splash_frac = fnum(parametros.get("splash_frac"), 0.50)
+    if alvo is None:
+        area_id = area_alvo_contexto(ctx)
+        secundarios = inimigos_vivos_adjacentes_area(ctx, area_id)
+        ultimo = {"aplicado": True, "area_alvo": area_id, "impacto_area_vazia": True, "alvos_secundarios": len(secundarios)}
+        for adjacente in secundarios:
+            ultimo = dano_generico(ctx, adjacente, usuario.obter_atributo("SpA") * escala_spa * splash_frac, "especial", tipo=tipo, impacto_secundario=True, area_alvo=area_id)
+        return ultimo
     secundarios = inimigos_vivos_adjacentes_ao_alvo(ctx, alvo)
     alvo_principal_id = getattr(alvo, "id_batalha", None)
     secundarios_ids = [getattr(p, "id_batalha", None) for p in secundarios if p is not None]
     ret = dano_generico(
         ctx,
         alvo,
-        usuario.obter_atributo("SpA") * 0.80,
+        usuario.obter_atributo("SpA") * escala_spa,
         "especial",
         tipo=tipo,
         alvo_principal_id=alvo_principal_id,
@@ -260,7 +291,7 @@ def executar_bola(ctx, alvo, tipo):
         dano_generico(
             ctx,
             adjacente,
-            dano_vida * 0.5,
+                dano_vida * splash_frac,
             "especial",
             tipo=tipo,
             alvo_principal_id=alvo_principal_id,

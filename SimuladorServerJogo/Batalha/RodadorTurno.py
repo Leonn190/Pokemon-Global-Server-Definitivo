@@ -325,6 +325,19 @@ class RodadorTurno:
     def _calcular_acerto(self, usuario, alvo, props=None):
         props = props if isinstance(props, dict) else {}
         parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        condicional = parametros.get("sempre_acerta_se_alvo_efeito", props.get("sempre_acerta_se_alvo_efeito"))
+        if condicional and alvo is not None and hasattr(alvo, "possui_efeito"):
+            efeitos = condicional if isinstance(condicional, (list, tuple, set)) else [condicional]
+            if any(alvo.possui_efeito(efeito) for efeito in efeitos):
+                return {
+                    "acertou": True,
+                    "chance_final": 100.0,
+                    "chance_real": 100.0,
+                    "bonus_critico_acerto": 0.0,
+                    "rolagem": None,
+                    "sempre_acerta_condicional": True,
+                    "efeito_condicional": [str(efeito) for efeito in efeitos],
+                }
         if bool(parametros.get("sempre_acerta", props.get("sempre_acerta", False))):
             return {
                 "acertou": True,

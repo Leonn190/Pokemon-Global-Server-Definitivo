@@ -31,6 +31,14 @@ def _f(valor: object, default: float = 0.0) -> float:
         return float(default)
 
 
+def _prioridade_acao(acao) -> float:
+    if str((acao or {}).get("tipo") or "") != "ataque":
+        return 0.0
+    props = (acao or {}).get("propriedades") if isinstance((acao or {}).get("propriedades"), dict) else {}
+    parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+    return _f(parametros.get("prioridade_acao", props.get("prioridade_acao", 0.0)), 0.0)
+
+
 class ColetorAcoes:
     TIPOS_VALIDOS = {"ataque", "movimento", "troca_posicao", "troca_reserva", "captura"}
 
@@ -255,7 +263,7 @@ class ColetorAcoes:
             int_val = pokemon.obter_atributo("Int") if pokemon is not None else 0.0
             vel_val = pokemon.obter_atributo("Vel") if pokemon is not None else 0.0
             pid = str(acao.get("pokemon_id") or "")
-            return (0, -int_val, -vel_val, desempates.get(pid, 0.0), int(acao.get("ordem_pokemon") or 1), int(acao.get("ordem_global") or 0))
+            return (0, -_prioridade_acao(acao), -int_val, -vel_val, desempates.get(pid, 0.0), int(acao.get("ordem_pokemon") or 1), int(acao.get("ordem_global") or 0))
 
         ordenadas = sorted(acoes, key=chave)
         for idx, acao in enumerate(ordenadas, start=1):

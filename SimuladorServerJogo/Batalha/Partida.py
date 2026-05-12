@@ -76,6 +76,7 @@ class Partida:
         self._ultimo_passo_raios = 0
         self.efeitos_area = copy.deepcopy(dados.get("efeitos_area") or {})
         self.construtos = {}
+        self.historico_ataques_batalha = {"ultimo_por_usuario": {}, "ultimo_contra_alvo": {}}
         self.finalizada = False
         self.vencedor = None
         self.perdedor = None

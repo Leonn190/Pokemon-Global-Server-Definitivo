@@ -151,8 +151,9 @@ class RodadorTurno:
             "rng": self.partida.rng,
             "alvos": [],
             "primeiro_ataque_da_rodada": self._ataques_executados == 0,
+            "estado_execucao_ataque": {},
         }
-        chave_ataque = props.get("ID") or (contexto["ataque"] or {}).get("ID") or (contexto["ataque"] or {}).get("Code") or props.get("nome")
+        chave_ataque = props.get("execute_principal") or props.get("nome") or props.get("ID") or (contexto["ataque"] or {}).get("ID") or (contexto["ataque"] or {}).get("Code")
         contexto["reativos_acao"] = obter_executes_reativos(chave_ataque)
         alvos = executar_alvificacao(chave_ataque, contexto)
         contexto["alvos"] = list(alvos or [])
@@ -228,6 +229,7 @@ class RodadorTurno:
                     atingiu = True
         if atingiu:
             self._ataques_executados += 1
+            self._registrar_historico_ataque(pokemon, acao, props, contexto["alvos"])
 
     def _executar_captura(self, pokemon, acao):
         tipo_batalha = str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower()
@@ -320,6 +322,15 @@ class RodadorTurno:
     def _calcular_acerto(self, usuario, alvo, props=None):
         props = props if isinstance(props, dict) else {}
         parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        if bool(parametros.get("sempre_acerta", props.get("sempre_acerta", False))):
+            return {
+                "acertou": True,
+                "chance_final": 100.0,
+                "chance_real": 100.0,
+                "bonus_critico_acerto": 0.0,
+                "rolagem": None,
+                "sempre_acerta": True,
+            }
         acuracia_ataque = float(parametros.get("acuracia", props.get("acuracia", 100.0)) or 100.0) / 100.0
         acuracia = (usuario.obter_atributo("Acuracia", 100.0) / 100.0) * acuracia_ataque
         assertividade = alvo.obter_atributo("Assertividade", 100.0) / 100.0
@@ -350,6 +361,26 @@ class RodadorTurno:
             "bonus_critico_acerto": round(bonus_critico, 4),
             "rolagem": round(sorte, 4),
         }
+
+    def _registrar_historico_ataque(self, pokemon, acao, props, alvos):
+        if pokemon is None or normalizar(props.get("nome")) == "mimica":
+            return
+        if not hasattr(self.partida, "historico_ataques_batalha"):
+            self.partida.historico_ataques_batalha = {"ultimo_por_usuario": {}, "ultimo_contra_alvo": {}}
+        historico = self.partida.historico_ataques_batalha
+        registro = {
+            "usuario_id": pokemon.id_batalha,
+            "ataque": copy.deepcopy((acao or {}).get("ataque") if isinstance((acao or {}).get("ataque"), dict) else {}),
+            "propriedades": copy.deepcopy(props),
+            "rodada": getattr(self.partida, "rodada_atual", None),
+            "passo": getattr(self.partida, "passo_atual", None),
+        }
+        historico.setdefault("ultimo_por_usuario", {})[pokemon.id_batalha] = copy.deepcopy(registro)
+        por_alvo = historico.setdefault("ultimo_contra_alvo", {})
+        for alvo in list(alvos or []):
+            if alvo is None:
+                continue
+            por_alvo[(pokemon.id_batalha, alvo.id_batalha)] = copy.deepcopy(registro)
 
     def _fim_passo(self):
         for pokemon in list(self.partida.pokemons_por_id.values()):

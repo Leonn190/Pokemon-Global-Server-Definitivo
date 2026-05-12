@@ -5,491 +5,272 @@
     "1": {
       "ID": 1,
       "nome": "Investida",
-      "custo": 40,
+      "custo": 30,
+      "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Avanço",
-        "efeito_executor": null,
-        "efeito_alvo": "ImpactoRochoso"
-      },
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
       "execute_principal": "ataque_investida",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal", "mult_atk": 0.9, "percentual_recuo": 0.2},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "2": {
       "ID": 2,
       "nome": "Biscoito",
-      "custo": 25,
+      "custo": 30,
+      "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": "ChuvaBrilhante",
-        "projetil": "Biscoito"
-      },
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "ChuvaBrilhante", "projetil": "Biscoito"},
       "execute_principal": "ataque_biscoito",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "mesmo_lado"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal", "percentual_cura": 0.5, "percentual_stack": 0.1, "percentual_stack_critico": 0.15},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": false}]}
     },
     "3": {
       "ID": 3,
       "nome": "Enraivecer",
       "custo": 20,
+      "custo_ap": 25,
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": "EstouroVermelho",
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "EstouroVermelho", "efeito_alvo": null},
       "execute_principal": "ataque_enraivecer",
-      "parametros": {
-        "tipo": "normal"
-      }
+      "parametros": {"tipo": "normal", "limite_vida": 0.4}
     },
     "4": {
       "ID": 4,
       "nome": "Provocar",
-      "custo": 20,
+      "custo": 25,
+      "custo_ap": 20,
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": "MarcaAmarela",
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "MarcaAmarela", "efeito_alvo": null},
       "execute_principal": "ataque_provocar",
-      "parametros": {
-        "tipo": "normal"
-      }
+      "parametros": {"tipo": "normal"}
     },
     "5": {
       "ID": 5,
       "nome": "Proteger",
-      "custo": 30,
+      "custo": 40,
+      "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "EfeitoAlvo",
-        "efeito_executor": null,
-        "efeito_alvo": "BarreiraCelular"
-      },
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
       "execute_principal": "ataque_proteger",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "mesmo_lado"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": false}]}
     },
     "6": {
       "ID": 6,
       "nome": "Arranhar",
       "custo": 35,
+      "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Avanço",
-        "efeito_executor": null,
-        "efeito_alvo": "Garra"
-      },
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "Garra"},
       "execute_principal": "ataque_arranhar",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal", "mult_atk": 1.0},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "7": {
       "ID": 7,
       "nome": "Recarga",
-      "custo": 25,
+      "custo": 15,
+      "custo_ap": 20,
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": "EnergiaAzul",
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "EnergiaAzul", "efeito_alvo": null},
       "execute_principal": "ataque_recarga",
-      "parametros": {
-        "tipo": "normal"
-      }
+      "parametros": {"tipo": "normal", "multiplicador_custo_real": 1.5}
     },
     "8": {
       "ID": 8,
       "nome": "Energia",
       "custo": 30,
+      "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Laser",
-        "efeito_executor": null,
-        "efeito_alvo": "EnergiaAzul"
-      },
+      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": "EnergiaAzul"},
       "execute_principal": "ataque_energia",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal", "mult_spa": 0.85, "categoria": "especial"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "9": {
       "ID": 9,
       "nome": "Hiper Raio",
-      "custo": 100,
+      "custo": 90,
+      "custo_ap": 100,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Laser",
-        "efeito_executor": null,
-        "efeito_alvo": "RaioAzul"
-      },
+      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": "RaioAzul"},
       "execute_principal": "ataque_hiper_raio",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "linha",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal", "mult_spa": 1.2, "reducao_por_alvo": 0.2, "categoria": "especial"},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "10": {
       "ID": 10,
       "nome": "Guilhotina",
-      "custo": 80,
+      "custo": 75,
+      "custo_ap": 85,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Salto",
-        "efeito_executor": null,
-        "efeito_alvo": "CorteDourado"
-      },
+      "animacao": {"modelo": "Salto", "efeito_executor": null, "efeito_alvo": "CorteDourado"},
       "execute_principal": "ataque_guilhotina",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal", "mult_atk": 0.6, "limite_execucao_critico": 0.3},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "11": {
       "ID": 11,
       "nome": "Disparo",
-      "custo": 35,
+      "custo": 25,
+      "custo_ap": 30,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": "TirosAmarelos",
-        "projetil": "Generico"
-      },
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "TirosAmarelos", "projetil": "Generico"},
       "execute_principal": "ataque_disparo",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal", "mult_atk": 0.75, "sempre_acerta": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "12": {
       "ID": 12,
       "nome": "Chifrada",
       "custo": 45,
+      "custo_ap": 50,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Avanço",
-        "efeito_executor": null,
-        "efeito_alvo": "ImpactoRochoso"
-      },
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
       "execute_principal": "ataque_chifrada",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "normal", "mult_atk": 0.7, "mult_per": 0.3},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "13": {
       "ID": 13,
-      "nome": "Resetar",
-      "custo": 30,
+      "nome": "Golpe Precavido",
+      "custo": 60,
+      "custo_ap": 70,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "EfeitoAlvo",
-        "efeito_executor": null,
-        "efeito_alvo": "MarcaAzul"
-      },
-      "execute_principal": "ataque_resetar",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "pokemon",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "qualquer"
-            ],
-            "exige_area_ocupada": true,
-            "inclui_reserva": true
-          }
-        ]
-      }
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "FacasBrancas", "projetil": "Generico"},
+      "execute_principal": "ataque_golpe_precavido",
+      "parametros": {"tipo": "normal", "mult_atk": 0.8, "quantidade_alvos": 3},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 3, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "14": {
       "ID": 14,
-      "nome": "Tankar",
-      "custo": 60,
-      "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": "BarreiraCelular",
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_tankar",
-      "parametros": {
-        "tipo": "normal"
-      }
+      "nome": "Pancada Seca",
+      "custo": 45,
+      "custo_ap": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_pancada_seca",
+      "parametros": {"tipo": "normal", "mult_atk": 0.65, "percentual_ene_usuario": 0.25},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "15": {
       "ID": 15,
-      "nome": "Estocada",
-      "custo": 35,
+      "nome": "Esmagar",
+      "custo": 50,
+      "custo_ap": 60,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Avanço",
-        "efeito_executor": null,
-        "efeito_alvo": "FacasBrancas"
-      },
-      "execute_principal": "ataque_estocada",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_esmagar",
+      "parametros": {"tipo": "normal", "mult_peso": 0.4, "kg_por_bloco": 40, "reducao_por_bloco": 0.15, "minimo_dano": 0.1},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "16": {
       "ID": 16,
-      "nome": "Bola Climática",
-      "custo": 50,
+      "nome": "Transformar",
+      "custo": 70,
+      "custo_ap": 80,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Explosão",
-        "efeito_executor": null,
-        "efeito_alvo": "SuperNova",
-        "contato": "Projetil",
-        "projetil": "Generico",
-        "efeito_impacto_secundario": "SuperNova"
-      },
-      "execute_principal": "ataque_bola_climática",
-      "parametros": {
-        "tipo": "normal",
-        "categoria": "especial",
-        "escala_spa": 0.8,
-        "escala_clima_spa": 1.0,
-        "splash_frac": 0.5
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": "MarcaBrilhosa", "efeito_alvo": "MarcaBrilhosa"},
+      "execute_principal": "ataque_transformar",
+      "parametros": {"tipo": "normal"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["qualquer"], "exige_area_ocupada": true}]}
     },
     "17": {
       "ID": 17,
-      "nome": "Hiper Presa",
+      "nome": "Ataque Rápido",
       "custo": 45,
+      "custo_ap": 55,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Avanço",
-        "efeito_executor": null,
-        "efeito_alvo": "Mordida"
-      },
-      "execute_principal": "ataque_hiper_presa",
-      "parametros": {
-        "tipo": "normal"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "FacasBrancas"},
+      "execute_principal": "ataque_rapido",
+      "parametros": {"tipo": "normal", "mult_atk": 0.5, "mult_vel": 0.3, "prioridade_acao": 100},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "18": {
       "ID": 18,
-      "nome": "Acumulador",
-      "custo": 0,
-      "estilo_logico": "passivo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": "MarcaBrilhosa",
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_acumulador",
-      "parametros": {
-        "tipo": "normal"
-      }
+      "nome": "Mimica",
+      "custo": 30,
+      "custo_ap": 30,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": "MarcaBrilhosa", "efeito_alvo": "MarcaBrilhosa"},
+      "execute_principal": "ataque_mimica",
+      "parametros": {"tipo": "normal"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "19": {
       "ID": 19,
-      "nome": "Rugido",
-      "custo": 25,
-      "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
-      "execute_principal": "ataque_rugido",
-      "parametros": {
-        "tipo": "normal",
-        "atributo": "Atk",
-        "percentual_alvo": 0.1,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "nome": "Normalizar",
+      "custo": 0,
+      "custo_ap": 0,
+      "estilo_logico": "passivo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "MarcaBrilhosa", "efeito_alvo": null},
+      "execute_principal": "ataque_normalizar",
+      "parametros": {"tipo": "normal"}
     },
     "20": {
       "ID": 20,
+      "nome": "Resetar",
+      "custo": 60,
+      "custo_ap": 70,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "MarcaAzul"},
+      "execute_principal": "ataque_resetar",
+      "parametros": {"tipo": "normal"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["qualquer"], "exige_area_ocupada": true}]}
+    },
+    "21": {
+      "ID": 21,
+      "nome": "Tankar",
+      "custo": 55,
+      "custo_ap": 65,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": "BarreiraCelular", "efeito_alvo": null},
+      "execute_principal": "ataque_tankar",
+      "parametros": {"tipo": "normal", "mult_mag_defesa": 0.2, "mult_mag_barreira_critico": 0.3}
+    },
+    "22": {
+      "ID": 22,
+      "nome": "Estocada",
+      "custo": 40,
+      "custo_ap": 45,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "FacasBrancas"},
+      "execute_principal": "ataque_estocada",
+      "parametros": {"tipo": "normal", "mult_atk": 0.8, "bonus_primeiro_ataque": 0.25},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+    },
+    "23": {
+      "ID": 23,
+      "nome": "Bola Climática",
+      "custo": 60,
+      "custo_ap": 70,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Explosão", "efeito_executor": null, "efeito_alvo": "SuperNova", "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": "SuperNova"},
+      "execute_principal": "ataque_bola_climatica",
+      "parametros": {"tipo": "normal", "categoria": "especial", "mult_spa": 0.75, "mult_spa_clima": 1.0, "dano_adjacente": 0.5},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+    },
+    "24": {
+      "ID": 24,
+      "nome": "Hiper Presa",
+      "custo": 45,
+      "custo_ap": 50,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "Mordida"},
+      "execute_principal": "ataque_hiper_presa",
+      "parametros": {"tipo": "normal", "mult_atk": 1.05, "limite_critico": 80},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+    },
+    "25": {
+      "ID": 25,
       "nome": "Inflar",
       "custo": 35,
+      "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_inflar",
-      "parametros": {
-        "tipo": "normal",
-        "atributo": "Vida",
-        "percentual_mag": 0.25,
-        "percentual_usuario_atributo": 0.1,
-        "rotulo_atributo": "Vida Máxima",
-        "duracao": 6
-      }
+      "parametros": {"tipo": "normal", "atributo": "Vida", "mult_mag": 0.25, "mult_vida_max": 0.1}
     }
   },
-  "_comentario": "Ataques normais migrados do arquivo legado neste patch."
+  "_comentario": "Ataques normais Code 1 a 25 adaptados ao sistema atual de batalha."
 }

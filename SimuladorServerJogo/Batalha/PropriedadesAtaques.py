@@ -51,11 +51,24 @@ def buscar_por_nome_ou_code(mapa, ataque):
     if not isinstance(ataque, dict):
         return None
     code = _code_norm(ataque.get("Code") or ataque.get("ID") or ataque.get("code"))
-    if code and code in mapa:
-        return mapa.get(code)
     nome = _normalizar(ataque.get("nome") or ataque.get("Nome") or ataque.get("Ataque"))
+    tipo = _normalizar(ataque.get("tipo") or ataque.get("Tipo"))
     if nome:
+        for item in mapa.values():
+            if _normalizar((item or {}).get("nome")) != nome:
+                continue
+            item_code = _code_norm((item or {}).get("ID") or (item or {}).get("Code"))
+            if not code or item_code == code:
+                return item
         for item in mapa.values():
             if _normalizar((item or {}).get("nome")) == nome:
                 return item
+    if code and tipo:
+        for item in mapa.values():
+            item_code = _code_norm((item or {}).get("ID") or (item or {}).get("Code"))
+            parametros = (item or {}).get("parametros") if isinstance((item or {}).get("parametros"), dict) else {}
+            if item_code == code and _normalizar((item or {}).get("tipo") or parametros.get("tipo")) == tipo:
+                return item
+    if code and code in mapa:
+        return mapa.get(code)
     return None

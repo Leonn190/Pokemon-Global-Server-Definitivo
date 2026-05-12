@@ -23,8 +23,31 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mund
 
 
 ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
-    # Preencha com nomes do CSV. Cada ataque listado aparece em ao menos um Pokemon.
-    # Exemplo: "Laser de Fogo",
+    "Investida",
+    "Biscoito",
+    "Enraivecer",
+    "Provocar",
+    "Proteger",
+    "Arranhar",
+    "Recarga",
+    "Energia",
+    "Hiper Raio",
+    "Guilhotina",
+    "Disparo",
+    "Chifrada",
+    "Golpe Precavido",
+    "Pancada Seca",
+    "Esmagar",
+    "Transformar",
+    "Ataque Rápido",
+    "Mimica",
+    "Normalizar",
+    "Resetar",
+    "Tankar",
+    "Estocada",
+    "Bola Climática",
+    "Hiper Presa",
+    "Inflar",
 ]
 
 

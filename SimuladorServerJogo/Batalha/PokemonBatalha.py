@@ -295,6 +295,18 @@ class PokemonBatalha:
         dados = dict(dados_dano or {})
         dano = max(0.0, _f(dados.get("dano_bruto", dados.get("dano", 0.0)), 0.0))
         calculo = [f"Dano bruto = {round(dano, 4)}"]
+        self._disparar_flag(
+            "AntesAplicarDano",
+            {
+                "partida": self.partida,
+                "usuario": self,
+                "alvo": alvo,
+                "pokemon_evento": self,
+                "dados_dano": dados,
+                **contexto,
+            },
+            reativos=contexto.get("reativos_acao"),
+        )
         for item in list(dados.get("multiplicadores_condicionais") or []):
             if not isinstance(item, dict):
                 continue

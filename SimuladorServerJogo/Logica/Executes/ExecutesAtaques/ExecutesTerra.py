@@ -10,8 +10,8 @@ def _exec_rachar_terra(ctx, alvo):
 
 def _exec_poeira_nos_olhos(ctx, alvo):
     usuario = ctx.get("usuario")
-    valor = alvo.obter_atributo("Acuracia") * 0.10 + usuario.obter_atributo("Mag") * 0.10
-    return aplicar_mod_atributo(ctx, alvo, "Poeira nos Olhos", "Acuracia", -valor, 6, True)
+    valor = alvo.obter_atributo("Acu") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Poeira nos Olhos", "Acu", -valor, 6, True)
 
 
 _EXECUTES = {"racharterra": _exec_rachar_terra, "poeiranosolhos": _exec_poeira_nos_olhos}

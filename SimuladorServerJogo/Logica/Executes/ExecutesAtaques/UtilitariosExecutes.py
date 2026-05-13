@@ -18,7 +18,7 @@ def fnum(valor: object, default: float = 0.0) -> float:
         return float(default)
 
 
-# Atributos regulares sorteaveis por ataques como Crescimento. Nao inclui Vida, EneM, Acuracia, Assertividade, CrC, CrD, Dur, Amp, Vamp.
+# Atributos regulares sorteaveis por ataques como Crescimento. Nao inclui Vida, EneM, Acu, Ass, CrC, CrD, Dur, Amp, Vamp.
 ATRIBUTOS_REGULARES = ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"]
 
 
@@ -259,6 +259,11 @@ def dano_puro_ignorando_barreira(ctx, alvo, valor, reducao_dur=True):
     if partida is not None and hasattr(partida, "registrar_evento_log"):
         partida.registrar_evento_log("pokemon_sofreu_dano", dados)
     retorno = {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0, "dano_puro": True, "critico": False}
+    letalidade = False
+    if dano_vida > 0 and usuario is not None and hasattr(alvo, "_aplicar_letalidade"):
+        letalidade = bool(alvo._aplicar_letalidade(usuario, dano_vida, {"origem": usuario, "ataque_nome": dados.get("ataque_nome"), "reativos_acao": (ctx or {}).get("reativos_acao")}))
+    if letalidade:
+        retorno["letalidade"] = True
     if alvo.VidaAtual <= 0:
         alvo.Morrer({"origem_id": getattr(usuario, "id_batalha", None), "origem": usuario, "ataque_nome": dados.get("ataque_nome"), "reativos_acao": (ctx or {}).get("reativos_acao")})
     if partida is not None and hasattr(partida, "disparar_flag") and dano_vida > 0:

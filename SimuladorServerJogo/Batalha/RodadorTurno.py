@@ -376,8 +376,8 @@ class RodadorTurno:
                 "sempre_acerta": True,
             }
         acuracia_ataque = float(parametros.get("acuracia", props.get("acuracia", 100.0)) or 100.0) / 100.0
-        acuracia = (usuario.obter_atributo("Acuracia", 100.0) / 100.0) * acuracia_ataque
-        assertividade = alvo.obter_atributo("Assertividade", 100.0) / 100.0
+        acuracia = (usuario.obter_atributo("Acu", 100.0) / 100.0) * acuracia_ataque
+        assertividade = alvo.obter_atributo("Ass", 100.0) / 100.0
         chance = acuracia * assertividade
         vel_usuario = usuario.obter_atributo("Vel", 0.0)
         vel_alvo = alvo.obter_atributo("Vel", 0.0)

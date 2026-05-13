@@ -28,7 +28,7 @@ class FichaPokemonBatalha:
     _COR_TITULO = (245, 249, 255)
     _COR_SUB = (188, 202, 232)
     _COR_TEXTO = (236, 241, 252)
-    _ATRIBUTOS_PERCENTUAIS = {"Acuracia", "Assertividade", "CrC", "CrD", "Amp", "Dur", "Amplificacao", "Durabilidade"}
+    _ATRIBUTOS_PERCENTUAIS = {"Acu", "Ass", "Let", "Acuracia", "Assertividade", "Letalidade", "CrC", "CrD", "Amp", "Dur", "Amplificacao", "Durabilidade"}
 
     _ESTILO_TEXTO_BASE = {
         "outline": True,
@@ -138,8 +138,12 @@ class FichaPokemonBatalha:
             "SpD": ("SpD", "DefesaEspecial"),
             "CrC": ("CrC", "CriticoChance", "ChanceCritico"),
             "CrD": ("CrD", "CriticoDano", "DanoCritico"),
-            "Acuracia": ("Acuracia", "Precisao", "Accuracy"),
-            "Assertividade": ("Assertividade", "Assertiveness"),
+            "Acu": ("Acu", "Acuracia", "Precisao", "Accuracy"),
+            "Ass": ("Ass", "Assertividade", "Assertiveness"),
+            "Let": ("Let", "Letalidade"),
+            "Acuracia": ("Acu", "Acuracia", "Precisao", "Accuracy"),
+            "Assertividade": ("Ass", "Assertividade", "Assertiveness"),
+            "Letalidade": ("Let", "Letalidade"),
         }
         chave_cache = (str(chave), int(lado))
         if chave_cache in self._cache_icones_stats:
@@ -274,8 +278,12 @@ class FichaPokemonBatalha:
             "Durabilidade": "Durabilidade",
             "CrC": "Chance Critica",
             "CrD": "Dano Critico",
+            "Acu": "Acuracia",
+            "Ass": "Assertividade",
+            "Let": "Letalidade",
             "Acuracia": "Acuracia",
             "Assertividade": "Assertividade",
+            "Letalidade": "Letalidade",
             "Barreira": "Barreira",
             "Precisao": "Perfuracao",
         }
@@ -337,7 +345,7 @@ class FichaPokemonBatalha:
             x += 26
         texto = self._fmt_numero(valor, chave) if isinstance(valor, (int, float)) else str(valor)
         variacao = float(getattr(pokemon, "obter_variacao_ficha", lambda _c: 0.0)(chave) or 0.0)
-        if str(chave) == "Assertividade" and abs(variacao) > 0.001:
+        if str(chave) == "Ass" and abs(variacao) > 0.001:
             self._txt_numero.set_style(color=(104, 220, 126))
         elif variacao > 0.001:
             self._txt_numero.set_style(color=(104, 220, 126))
@@ -368,8 +376,8 @@ class FichaPokemonBatalha:
         if area.width <= 8:
             return
         self._desenhar_setor(tela, area, secundario=True)
-        esquerda = ["Vida", "Amplificacao", "Assertividade", "CrC", None]
-        direita = ["EnergiaMaxima", "Durabilidade", "Acuracia", "CrD", "Barreira"]
+        esquerda = ["Vida", "Amplificacao", "Ass", "CrC", None]
+        direita = ["EnergiaMaxima", "Durabilidade", "Acu", "CrD", "Let"]
         self._desenhar_grade_atributos(tela, area, pokemon, esquerda, direita)
 
     def _desenhar_stats_esquerda(self, tela: pygame.Surface, area: pygame.Rect, pokemon):

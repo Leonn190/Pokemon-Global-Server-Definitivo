@@ -364,7 +364,7 @@ class Partida:
             if "terra" in tipos:
                 pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
         elif clima == "nevoa":
-            pokemon.aplicar_variacao_temporaria("Assertividade", -30.0)
+            pokemon.aplicar_variacao_temporaria("Ass", -30.0)
             if "fantasma" in tipos:
                 pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
         elif clima == "gravidadeanomala":
@@ -380,7 +380,7 @@ class Partida:
             if "sombrio" in tipos:
                 pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
             else:
-                pokemon.aplicar_variacao_temporaria("Acuracia", -pokemon.atributos_base.get("Acuracia", 100.0) * 0.25)
+                pokemon.aplicar_variacao_temporaria("Acu", -pokemon.atributos_base.get("Acu", 100.0) * 0.25)
         if clima == "chuva" and self._pokemon_possui_ataque_code(pokemon, "51"):
             pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * self._parametro_ataque_code("51", "percentual_vel", 0.50))
 
@@ -535,8 +535,8 @@ class Partida:
         elif terreno == "sagrada":
             pokemon.aplicar_variacao_temporaria("Amp", 30.0)
         elif terreno == "elevada":
-            pokemon.aplicar_variacao_temporaria("Acuracia", 35.0)
-            pokemon.aplicar_variacao_temporaria("Assertividade", -15.0)
+            pokemon.aplicar_variacao_temporaria("Acu", 35.0)
+            pokemon.aplicar_variacao_temporaria("Ass", -15.0)
 
     def receber_jogada(self, lado_id, jogada):
         if self.finalizada:

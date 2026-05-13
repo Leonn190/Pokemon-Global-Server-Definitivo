@@ -127,22 +127,23 @@ class PokemonBatalha:
         self.Estado.definir_intervalo_frame_ms(intervalo_ms)
 
     def _aplicar_stats(self, stats: dict, stats_base: dict):
-        aliases = {"Amplificacao": "Amp", "Durabilidade": "Dur"}
-        chaves = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int", "CrD", "CrC", "Amp", "Dur", "Vamp", "Acuracia", "Assertividade", "EneM"]
+        aliases = {"Amplificacao": "Amp", "Durabilidade": "Dur", "Acuracia": "Acu", "Assertividade": "Ass", "Letalidade": "Let"}
+        leitura_aliases = {"Amp": ("Amplificacao",), "Dur": ("Durabilidade",), "Acu": ("Acuracia",), "Ass": ("Assertividade",), "Let": ("Letalidade",)}
+        chaves = ["Vida", "Atk", "Def", "SpA", "SpD", "Vel", "Mag", "Per", "Ene", "Int", "CrD", "CrC", "Amp", "Dur", "Vamp", "Acu", "Ass", "Let", "EneM"]
         variacoes_brutas = self.Dados.get("variacoes")
         if not isinstance(variacoes_brutas, dict):
             variacoes_brutas = self.Dados.get("Variacoes") if isinstance(self.Dados.get("Variacoes"), dict) else {}
         for chave in chaves:
-            chave_stats = chave
-            if chave in ("Amp", "Dur"):
-                alt = "Amplificacao" if chave == "Amp" else "Durabilidade"
-                chave_stats = chave if chave in stats or chave in stats_base else alt
-            base = _f(stats_base.get(chave_stats, stats.get(chave_stats, 0.0)), 0.0)
-            atual = _f(stats.get(chave_stats, base), base)
+            nomes = (chave, *leitura_aliases.get(chave, ()))
+            padrao = 100.0 if chave in {"Acu", "Ass"} else 0.0
+            base_raw = next((stats_base[n] for n in nomes if n in stats_base), next((stats[n] for n in nomes if n in stats), padrao))
+            atual_raw = next((stats[n] for n in nomes if n in stats), base_raw)
+            base = _f(base_raw, padrao)
+            atual = _f(atual_raw, base)
             variacao_real = atual - base
             self.AtributosBase[chave] = base
             self.Atributos[chave] = atual
-            variacao = _f(variacoes_brutas.get(chave, 0.0), 0.0)
+            variacao = _f(next((variacoes_brutas[n] for n in nomes if n in variacoes_brutas), 0.0), 0.0)
             self.Variacoes[chave] = variacao_real if abs(variacao) < 0.001 and abs(variacao_real) > 0.001 else variacao
 
         for alias_antigo, oficial in aliases.items():
@@ -191,7 +192,7 @@ class PokemonBatalha:
             self.Variacoes["Escala"] = 0.0
 
     def _sincronizar_alias_atributos(self):
-        aliases = {"Amplificacao": "Amp", "Durabilidade": "Dur"}
+        aliases = {"Amplificacao": "Amp", "Durabilidade": "Dur", "Acuracia": "Acu", "Assertividade": "Ass", "Letalidade": "Let"}
         for alias, oficial in aliases.items():
             if oficial in self.Atributos:
                 self.Atributos[alias] = self.Atributos[oficial]
@@ -325,8 +326,12 @@ class PokemonBatalha:
             "Mag": self.Atributos.get("Mag", 0.0),
             "Per": self.Atributos.get("Per", 0.0),
             "Vel": self.Atributos.get("Vel", 0.0),
-            "Acuracia": self.Atributos.get("Acuracia", 100.0),
-            "Assertividade": self.Atributos.get("Assertividade", 100.0),
+            "Acu": self.Atributos.get("Acu", self.Atributos.get("Acuracia", 100.0)),
+            "Ass": self.Atributos.get("Ass", self.Atributos.get("Assertividade", 100.0)),
+            "Let": self.Atributos.get("Let", self.Atributos.get("Letalidade", 0.0)),
+            "Acuracia": self.Atributos.get("Acu", self.Atributos.get("Acuracia", 100.0)),
+            "Assertividade": self.Atributos.get("Ass", self.Atributos.get("Assertividade", 100.0)),
+            "Letalidade": self.Atributos.get("Let", self.Atributos.get("Letalidade", 0.0)),
         }
 
     def obter_itens_ficha(self, limite=3):

@@ -14,8 +14,8 @@ def _exec_voar(ctx, alvo):
 
 def _exec_olho_de_aguia(ctx, alvo):
     usuario = ctx.get("usuario")
-    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("Acuracia") * 0.10
-    return aplicar_mod_atributo(ctx, usuario, "Olho de \u00c1guia", "Acuracia", valor, 6, False)
+    valor = usuario.obter_atributo("Mag") * 0.20 + usuario.obter_atributo("Acu") * 0.10
+    return aplicar_mod_atributo(ctx, usuario, "Olho de \u00c1guia", "Acu", valor, 6, False)
 
 
 def _exec_cortina_de_vento(ctx, alvo):

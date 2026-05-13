@@ -38,8 +38,8 @@ def _exec_silenciar(ctx, alvo):
 
 def _exec_intimidar(ctx, alvo):
     usuario = ctx.get("usuario")
-    valor = alvo.obter_atributo("Assertividade") * 0.10 + usuario.obter_atributo("Mag") * 0.10
-    return aplicar_mod_atributo(ctx, alvo, "Intimidar", "Assertividade", -valor, 6, True)
+    valor = alvo.obter_atributo("Ass") * 0.10 + usuario.obter_atributo("Mag") * 0.10
+    return aplicar_mod_atributo(ctx, alvo, "Intimidar", "Ass", -valor, 6, True)
 
 
 _EXECUTES = {

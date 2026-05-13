@@ -9,12 +9,17 @@ from SimuladorServerJogo.Batalha.FraquezasResistencia import obter_multiplicador
 
 ATRIBUTOS_OFICIAIS = [
     "Vida", "Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int",
-    "Vamp", "CrC", "CrD", "Dur", "Amp", "EneM", "Acuracia", "Assertividade",
+    "Vamp", "CrC", "CrD", "Dur", "Amp", "EneM", "Acu", "Ass", "Let",
 ]
 _ALIAS_ATRIBUTO_EFEITO = {
     "vidamaxima": "Vida",
     "vida": "Vida",
-    "acuracia": "Acuracia",
+    "acuracia": "Acu",
+    "acu": "Acu",
+    "assertividade": "Ass",
+    "ass": "Ass",
+    "letalidade": "Let",
+    "let": "Let",
 }
 EFEITOS_NEGATIVOS = {
     "queimado", "envenenado", "intoxicado", "congelado", "dormindo", "paralisado",
@@ -30,9 +35,9 @@ VARIACOES_TEMPORARIAS_EFEITOS = {
     "descarregado": {"Ene": -0.50},
     "quebrado": {"Dur": -50.0},
     "enfraquecido": {"Amp": -50.0},
-    "confuso": {"Acuracia": -50.0},
-    "voando": {"Assertividade": -40.0},
-    "focado": {"Acuracia": 50.0},
+    "confuso": {"Acu": -50.0},
+    "voando": {"Ass": -40.0},
+    "focado": {"Acu": 50.0},
 }
 
 
@@ -40,6 +45,20 @@ def _normalizar(valor: object) -> str:
     bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
     sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
     return "".join(ch for ch in sem_acento if ch.isalnum())
+
+
+def _atributo_oficial(chave: object) -> str:
+    return _ALIAS_ATRIBUTO_EFEITO.get(_normalizar(chave), str(chave))
+
+
+def _buscar_atributo(fontes: tuple[dict, ...], nomes: tuple[str, ...], default=None):
+    for fonte in fontes:
+        if not isinstance(fonte, dict):
+            continue
+        for nome in nomes:
+            if nome in fonte:
+                return fonte.get(nome)
+    return default
 
 
 def _f(valor: object, default: float = 0.0) -> float:
@@ -157,19 +176,21 @@ class PokemonBatalha:
         attrs = bruto.get("Atributos") if isinstance(bruto.get("Atributos"), dict) else {}
         attrs_base = bruto.get("AtributosBase") if isinstance(bruto.get("AtributosBase"), dict) else {}
         variacoes = bruto.get("Variacoes") if isinstance(bruto.get("Variacoes"), dict) else info.get("variacoes") if isinstance(info.get("variacoes"), dict) else {}
-        aliases = {"Amp": "Amplificacao", "Dur": "Durabilidade"}
+        aliases = {"Amp": ("Amplificacao",), "Dur": ("Durabilidade",), "Acu": ("Acuracia",), "Ass": ("Assertividade",), "Let": ("Letalidade",)}
         for chave in ATRIBUTOS_OFICIAIS:
-            alt = aliases.get(chave, chave)
-            base = _f(attrs_base.get(chave, stats_base.get(chave, stats_base.get(alt, stats.get(chave, stats.get(alt, attrs.get(chave, 0.0)))))), 0.0)
-            atual = _f(attrs.get(chave, stats.get(chave, stats.get(alt, base))), base)
+            nomes = (chave, *aliases.get(chave, ()))
+            padrao = 100.0 if chave in {"Acu", "Ass"} else 0.0
+            base = _f(_buscar_atributo((attrs_base, stats_base, stats, attrs), nomes, padrao), padrao)
+            atual = _f(_buscar_atributo((attrs, stats), nomes, base), base)
             self.atributos_base[chave] = atual
-            self.variacoes_permanentes[chave] = _f(variacoes.get(chave, 0.0), 0.0)
+            self.variacoes_permanentes[chave] = _f(_buscar_atributo((variacoes,), nomes, 0.0), 0.0)
             self.variacoes_temporarias[chave] = 0.0
         self.atributos_base["Dur"] = self.atributos_base.get("Dur", 0.0)
         self.atributos_base["Amp"] = self.atributos_base.get("Amp", 0.0)
         self.atributos_base["Vamp"] = self.atributos_base.get("Vamp", 0.0)
-        self.atributos_base["Acuracia"] = self.atributos_base.get("Acuracia") or 100.0
-        self.atributos_base["Assertividade"] = self.atributos_base.get("Assertividade") or 100.0
+        self.atributos_base["Acu"] = self.atributos_base.get("Acu") or 100.0
+        self.atributos_base["Ass"] = self.atributos_base.get("Ass") or 100.0
+        self.atributos_base["Let"] = self.atributos_base.get("Let", 0.0)
         ene = self.atributos_base.get("Ene", 1.0) or 1.0
         self.atributos_base["EneM"] = self.atributos_base.get("EneM") or ene * 3.0
 
@@ -197,8 +218,9 @@ class PokemonBatalha:
             finais[chave] = _f(self.atributos_base.get(chave, 0.0)) + _f(self.variacoes_permanentes.get(chave, 0.0)) + _f(self.variacoes_temporarias.get(chave, 0.0))
         finais["Vida"] = max(1.0, finais.get("Vida", 1.0))
         finais["EneM"] = max(1.0, finais.get("EneM", 1.0))
-        finais["Acuracia"] = finais.get("Acuracia") or 100.0
-        finais["Assertividade"] = finais.get("Assertividade") or 100.0
+        finais["Acu"] = finais.get("Acu") or 100.0
+        finais["Ass"] = finais.get("Ass") or 100.0
+        finais["Let"] = finais.get("Let", 0.0)
         self.atributos_finais = finais
         if hasattr(self, "VidaAtual"):
             self.VidaAtual = _clamp(self.VidaAtual, 0.0, finais["Vida"])
@@ -223,6 +245,7 @@ class PokemonBatalha:
 
     def modificar_atributo_permanente(self, alvo, atributo, valor, origem=None, dados=None):
         alvo = alvo or self
+        atributo = _atributo_oficial(atributo)
         if atributo not in ATRIBUTOS_OFICIAIS:
             return {"aplicado": False, "motivo": "atributo_invalido"}
         valor = _f(valor, 0.0)
@@ -254,6 +277,7 @@ class PokemonBatalha:
         return {"aplicado": True, "atributo": atributo, "valor": valor, "valor_antes": antes, "valor_depois": depois}
 
     def aplicar_variacao_temporaria(self, atributo, valor):
+        atributo = _atributo_oficial(atributo)
         if atributo not in ATRIBUTOS_OFICIAIS:
             return False
         self.variacoes_temporarias[atributo] = _f(self.variacoes_temporarias.get(atributo), 0.0) + _f(valor, 0.0)
@@ -270,7 +294,7 @@ class PokemonBatalha:
             if not variacoes:
                 continue
             for atributo, valor in variacoes.items():
-                if abs(valor) < 1.0 and atributo in {"Vel", "Ene", "EneM", "Acuracia", "Def", "SpD"}:
+                if abs(valor) < 1.0 and atributo in {"Vel", "Ene", "EneM", "Acu", "Def", "SpD"}:
                     base = self.atributos_base.get(atributo, 0.0)
                     self.aplicar_variacao_temporaria(atributo, base * valor)
                 else:
@@ -299,6 +323,7 @@ class PokemonBatalha:
             self.partida.aplicar_terreno_por_passo(self)
 
     def obter_atributo(self, chave: str, default: float = 0.0) -> float:
+        chave = _atributo_oficial(chave)
         return _f(self.atributos_finais.get(str(chave), default), default)
 
     def AplicarDano(self, alvo, dados_dano, contexto=None):
@@ -427,6 +452,16 @@ class PokemonBatalha:
             reativos=contexto.get("reativos_acao"),
         )
         return recebido
+
+    def _aplicar_letalidade(self, origem, dano_vida: float, dados=None) -> bool:
+        if dano_vida <= 0 or origem is None or origem is self or self.VidaAtual <= 0:
+            return False
+        let = max(0.0, origem.obter_atributo("Let", 0.0) if hasattr(origem, "obter_atributo") else 0.0)
+        vida_max = max(1.0, self.obter_atributo("Vida", 1.0))
+        if let <= 0 or self.VidaAtual > vida_max * (let / 100.0):
+            return False
+        self.Morrer({"origem_id": getattr(origem, "id_batalha", None), "origem": origem, "letalidade": True, **dict(dados or {})})
+        return True
 
     def ReceberDano(self, valor, origem=None, dados=None):
         dados = dict(dados or {})
@@ -565,9 +600,12 @@ class PokemonBatalha:
                     "calculo": list(dados.get("calculo") or []),
                 },
             )
-        if self.VidaAtual <= 0:
+        letalidade = self._aplicar_letalidade(origem, dano_vida, dados)
+        if self.VidaAtual <= 0 and self.vivo:
             self.Morrer({"origem_id": getattr(origem, "id_batalha", None), **dados})
         retorno = {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0}
+        if letalidade:
+            retorno["letalidade"] = True
         if dano_vida > 0 and self.possui_efeito("Dormindo"):
             self.RemoverEfeito("Dormindo")
             self._registrar_evento("pokemon_removeu_efeito", {"pokemon_id": self.id_batalha, "pokemon_nome": self.nome, "efeito_nome": "Dormindo", "motivo": "dano_real"})

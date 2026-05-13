@@ -25,6 +25,7 @@ from SimuladorServerJogo.Gerais.LoaderRegras import (
     carregar_regras_estruturas_naturais,
     carregar_regras_mundo,
     carregar_regras_player,
+    carregar_regras_skils,
 )
 
 _CHAVE_SEGURANCA = ""
@@ -65,7 +66,7 @@ _PERSISTENCIA_LOCK = threading.Lock()
 _persistencia_thread = None
 _persistencia_snapshot_pendente = {}
 _persistencia_secoes_pendentes: set[str] = set()
-_NIVEL_MAXIMO_JOGADOR = 50
+_NIVEL_MAXIMO_JOGADOR = 100
 _SECOES_PERSISTENCIA = ("players", "npcs_vendedores", "estruturas_naturais_tocadas", "tempo_mundo")
 _TIPOS_ESTADIO_RESPEITO = (
     "normal", "fogo", "agua", "planta", "eletrico", "gelo", "lutador", "venenoso", "terrestre", "voador",
@@ -77,6 +78,12 @@ _CATEGORIAS_CONHECIMENTO = ("Efeitos", "Ataques", "Pokemons", "Itens", "Musicas"
 def _valor_regra(regras: dict, chave: str, padrao):
     valor = regras.get(chave, padrao) if isinstance(regras, dict) else padrao
     return padrao if valor in (None, "") else valor
+
+
+def _bool_cfg(valor) -> bool:
+    if isinstance(valor, str):
+        return valor.strip().lower() in ("1", "true", "sim", "yes", "on")
+    return bool(valor)
 
 
 def _skins_liberadas_padrao() -> list[str]:
@@ -487,6 +494,42 @@ def _normalizar_perfil(personagem: dict) -> dict:
     for campo, chave_regra in mapa_regras.items():
         dados[campo] = float(dados.get(campo, regras.get(chave_regra)))
 
+    defaults_int = {
+        "coracoes_dungeon_max": 3,
+        "bonus_limite_frutas_captura": 0,
+        "renda_passiva_xp_taxa": 0,
+        "renda_passiva_xp_acumulado": 0,
+        "bonus_raio_exploracao_chunks": 0,
+        "bonus_invulnerabilidade_dungeon_segundos": 0,
+        "chave_inicial_dungeon_nova": 0,
+        "capacidade_mochila": 100,
+        "nivel_acumulador": 0,
+    }
+    for campo, padrao in defaults_int.items():
+        dados[campo] = int(max(0, dados.get(campo, dados.get("".join(p.capitalize() for p in campo.split("_")), padrao)) or 0))
+
+    defaults_float = {
+        "multiplicador_penalidade_agua_rasa": 1.0,
+        "multiplicador_penalidade_agua_funda": 1.0,
+        "energia_inicial_pokemon_percent": 0.50,
+        "multiplicador_alcance_projetil": 1.0,
+        "multiplicador_xp_recebido": 1.0,
+        "desconto_lojas_percent": 0.0,
+        "multiplicador_velocidade_projetil": 1.0,
+    }
+    for campo, padrao in defaults_float.items():
+        dados[campo] = float(dados.get(campo, dados.get("".join(p.capitalize() for p in campo.split("_")), padrao)) or padrao)
+
+    defaults_bool = {
+        "visao_expandida_mundo": False,
+        "rastreador_pokemons": False,
+        "rastreador_baus": False,
+        "teleportador_ativo": False,
+        "mochila_sem_limite": False,
+    }
+    for campo, padrao in defaults_bool.items():
+        dados[campo] = _bool_cfg(dados.get(campo, dados.get("".join(p.capitalize() for p in campo.split("_")), padrao)))
+
     inv = dados.get("inventario") if isinstance(dados.get("inventario"), dict) else {}
     limite_pokemons = int(inv.get("limite_pokemons", dados.get("limite_pokemons", _valor_regra(regras, "LimitePokemons", 64))))
     limite_times_pokemon = int(inv.get("limite_times_pokemon", dados.get("limite_times_pokemon", _valor_regra(regras, "LimiteTimesPokemon", 6))))
@@ -496,7 +539,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
         "itens": list(inv.get("itens", [])),
         "pokemons": pokemons,
         "times_pokemon": times_pokemon,
-        "limite_itens": int(max(1, inv.get("limite_itens", 100))),
+        "limite_itens": 0 if bool(dados.get("mochila_sem_limite", False)) else int(max(1, inv.get("limite_itens", dados.get("capacidade_mochila", 100)) or dados.get("capacidade_mochila", 100))),
         "limite_slots": int(max(1, inv.get("limite_slots", dados.get("limite_slots_inventario", 32)))),
         "limite_pokemons": limite_pokemons,
         "limite_times_pokemon": limite_times_pokemon,
@@ -641,7 +684,7 @@ def _normalizar_inventario(payload: dict) -> dict:
         "pokemons": list(base.get("pokemons", []))[:limite_pokemons],
         "times_pokemon": list(base.get("times_pokemon", [])),
         "doces": {str(k): int(max(0, v or 0)) for k, v in (base.get("doces", {}).items() if isinstance(base.get("doces"), dict) else [])},
-        "limite_itens": int(max(1, base.get("limite_itens", 100))),
+        "limite_itens": 0 if int(base.get("limite_itens", 100) or 0) <= 0 else int(max(1, base.get("limite_itens", 100))),
         "limite_slots": int(max(1, base.get("limite_slots", 32))),
         "limite_pokemons": limite_pokemons,
         "limite_times_pokemon": limite_times_pokemon,
@@ -675,6 +718,15 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         "limite_slots_inventario",
         "limite_pokemons",
         "limite_times_pokemon",
+        "coracoes_dungeon_max",
+        "bonus_limite_frutas_captura",
+        "renda_passiva_xp_taxa",
+        "renda_passiva_xp_acumulado",
+        "bonus_raio_exploracao_chunks",
+        "bonus_invulnerabilidade_dungeon_segundos",
+        "chave_inicial_dungeon_nova",
+        "capacidade_mochila",
+        "nivel_acumulador",
         *[f"respeito_estadio_{tipo}" for tipo in _TIPOS_ESTADIO_RESPEITO],
     )
     for campo in campos_int:
@@ -736,6 +788,28 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         base["raio_tapa"] = max(0.05, float(payload.get("raio_tapa", base.get("raio_tapa", 0.36))))
     if "multiplicador_ferramenta_tapa" in payload:
         base["multiplicador_ferramenta_tapa"] = max(1.0, float(payload.get("multiplicador_ferramenta_tapa", base.get("multiplicador_ferramenta_tapa", 1.5))))
+    for campo in (
+        "velocidade_base_tiles",
+        "bonus_velocidade_corrida_min",
+        "bonus_velocidade_corrida_max",
+        "tempo_aceleracao_corrida",
+        "tempo_desaceleracao_corrida",
+        "regeneracao_stamina_parado",
+        "regeneracao_stamina_andando",
+        "custo_stamina_agua_funda",
+        "multiplicador_penalidade_agua_rasa",
+        "multiplicador_penalidade_agua_funda",
+        "energia_inicial_pokemon_percent",
+        "multiplicador_alcance_projetil",
+        "multiplicador_xp_recebido",
+        "desconto_lojas_percent",
+        "multiplicador_velocidade_projetil",
+    ):
+        if campo in payload:
+            base[campo] = float(payload.get(campo, base.get(campo, 0.0)))
+    for campo in ("visao_expandida_mundo", "rastreador_pokemons", "rastreador_baus", "teleportador_ativo", "mochila_sem_limite"):
+        if campo in payload:
+            base[campo] = _bool_cfg(payload.get(campo))
     _normalizar_progresso_xp(base)
     return base
 
@@ -866,6 +940,7 @@ def obter_regras_cliente() -> dict:
     if escala_min > escala_max:
         escala_min, escala_max = escala_max, escala_min
     regras["player"] = dict(carregar_regras_player())
+    regras["skils"] = carregar_regras_skils()
     regras["mundo"] = {
         "chunk_tiles": int(_valor_regra(carregar_regras_mundo(), "ChunkTiles", 10)),
         "seed": int(seed_mundo),
@@ -1109,7 +1184,9 @@ def _vida_player(player) -> dict:
     estado = getattr(player, "estado_extra", {}) if player is not None and isinstance(getattr(player, "estado_extra", {}), dict) else {}
     vida = estado.get("vida_player") if isinstance(estado.get("vida_player"), dict) else {}
     regras = carregar_regras_dungeons()
-    coracoes_max = int(vida.get("coracoes_max", regras.get("coracoes_maximos", regras.get("coracoes_iniciais", 3))) or 3)
+    perfil = estado.get("perfil") if isinstance(estado.get("perfil"), dict) else {}
+    coracoes_padrao = int(perfil.get("coracoes_dungeon_max", regras.get("coracoes_maximos", regras.get("coracoes_iniciais", 3))) or 3)
+    coracoes_max = max(coracoes_padrao, int(vida.get("coracoes_max", coracoes_padrao) or coracoes_padrao))
     coracoes_max = max(1, coracoes_max)
     coracoes = int(vida.get("coracoes", coracoes_max) or coracoes_max)
     vida = {"coracoes": max(0, min(coracoes_max, coracoes)), "coracoes_max": coracoes_max}
@@ -1130,7 +1207,11 @@ def player_invulneravel(player, tick: int | None = None) -> bool:
 def aplicar_invulnerabilidade_player(player, ticks: int = 90, motivo: str = "") -> bool:
     if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
         return False
-    ate = _tick_servidor_atual() + max(1, int(ticks or 90))
+    perfil = player.estado_extra.get("perfil") if isinstance(player.estado_extra.get("perfil"), dict) else {}
+    bonus_ticks = int(perfil.get("bonus_invulnerabilidade_dungeon_segundos", 0) or 0) * 30
+    em_dungeon = isinstance(player.estado_extra.get("estado_dungeon"), dict) or str(player.estado_extra.get("dimensao") or "").lower().startswith("dungeon")
+    total_ticks = max(1, int(ticks or 90)) + (bonus_ticks if em_dungeon else 0)
+    ate = _tick_servidor_atual() + total_ticks
     player.estado_extra["invulneravel_ate_tick"] = max(int(player.estado_extra.get("invulneravel_ate_tick", 0) or 0), ate)
     player.estado_extra["invulneravel_motivo"] = str(motivo or "")
     estado_dungeon = player.estado_extra.get("estado_dungeon") if isinstance(player.estado_extra.get("estado_dungeon"), dict) else None

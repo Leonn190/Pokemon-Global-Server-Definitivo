@@ -14,6 +14,7 @@ from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Texto import Texto
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Visual.AtorEstado import AtorEstado
+from Codigo.ModulosGerais.ServicoSkills import aplicar_ganho_xp_perfil
 
 Vector2 = Tuple[float, float]
 
@@ -257,7 +258,7 @@ class Ator:
         perfil = getattr(self, "Perfil", None)
         if perfil is None:
             return {"xp_ganho": 0, "niveis_ganhos": 0, "nivel_atual": 0, "xp_atual": 0, "xp_alvo": 0}
-        ganho = max(0, int(quantidade_xp or 0))
+        ganho = aplicar_ganho_xp_perfil(perfil, quantidade_xp)
         if ganho <= 0 or int(getattr(perfil, "Nivel", 0)) >= int(getattr(perfil, "NIVEL_MAXIMO", 50)):
             perfil.normalizar_progresso_xp()
             return {"xp_ganho": 0, "niveis_ganhos": 0, "nivel_atual": int(perfil.Nivel), "xp_atual": int(perfil.XP), "xp_alvo": int(perfil.XPAlvo)}

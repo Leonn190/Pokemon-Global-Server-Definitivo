@@ -5,6 +5,7 @@ import pygame
 
 from Codigo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Painel import PainelRolavel
+from Codigo.ModulosGerais.ServicoSkills import stack_efetivo
 
 
 class Container(PainelRolavel):
@@ -22,6 +23,7 @@ class Container(PainelRolavel):
         renderizador_item=None,
         **kwargs,
     ):
+        nivel_acumulador = int(kwargs.pop("nivel_acumulador", 0) or 0)
         super().__init__(rect, area_real=(0, 0, rect[2], rect[3]), **kwargs)
         self.Itens = itens
         self.SlotsTotal = max(1, int(slots_total))
@@ -31,6 +33,7 @@ class Container(PainelRolavel):
         self.Gap = max(0, int(gap))
         self.Titulo = titulo
         self.Stackable = bool(stackable)
+        self.NivelAcumulador = nivel_acumulador
         self.Padding = 18
         self.RenderizadorItem = renderizador_item or ItemInventario
 
@@ -118,7 +121,7 @@ class Container(PainelRolavel):
             try:
                 valor = int(item.get(chave, 0) or 0)
                 if valor > 0:
-                    return valor
+                    return stack_efetivo(valor, self.NivelAcumulador)
             except (TypeError, ValueError):
                 continue
         return 999999

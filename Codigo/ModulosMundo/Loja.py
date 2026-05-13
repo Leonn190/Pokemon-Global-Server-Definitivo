@@ -266,13 +266,20 @@ class Loja:
         botao = Botao(rect, "", execute=_comprar, style={"radius": 12, "border_width": 2, "bg": (35, 52, 82), "bg_hover": (51, 74, 112), "bg_pressed": (25, 39, 62), "border": (112, 138, 182), "border_hover": (201, 224, 255), "text_style": {"size": 1, "outline_thickness": 0, "shadow": False, "align": "center"}})
         return {"botao": botao, "item": item, "oferta": oferta, "icone": icone, "texto_centro": texto_centro}
 
-    @staticmethod
-    def _texto_preco(oferta: dict, tipo_loja: str) -> tuple[str, tuple[int, int, int]]:
+    def _preco_efetivo(self, oferta: dict, tipo_loja: str) -> int:
+        preco = max(0, int(oferta.get("preco", 0) or 0))
+        if preco <= 0 or str(tipo_loja or "").startswith("presente"):
+            return preco
+        perfil = self._perfil()
+        desconto = max(0.0, float(getattr(perfil, "DescontoLojasPercent", 0.0) or 0.0)) if perfil is not None else 0.0
+        return max(0, int(round(preco * (1.0 - min(0.95, desconto)))))
+
+    def _texto_preco(self, oferta: dict, tipo_loja: str) -> tuple[str, tuple[int, int, int]]:
         qtd = int(oferta.get("quantidade", 1) or 1)
         sufixo = f"x{qtd}" if qtd > 1 else ""
         if tipo_loja.startswith("presente"):
             return (f"Grátis {sufixo}".strip(), (136, 242, 168))
-        return (f"{int(oferta.get('preco', 0) or 0)} dinheiro {sufixo}".strip(), (255, 223, 120))
+        return (f"{self._preco_efetivo(oferta, tipo_loja)} dinheiro {sufixo}".strip(), (255, 223, 120))
 
     def _emitir_ganho(self, tipo: str, nome: str, quantidade: int) -> None:
         if callable(self._callback_ganho):
@@ -291,7 +298,8 @@ class Loja:
             self._status_compra = "Esse presente já foi resgatado"
             return
 
-        preco = int(oferta.get("preco", 0) or 0)
+        tipo_loja = "presente" if oferta_id.startswith("presente_") else "padrao"
+        preco = self._preco_efetivo(oferta, tipo_loja)
         saldo = int(getattr(perfil, "Dinheiro", 0) or 0)
         if preco > saldo:
             self._status_compra = "Dinheiro insuficiente"

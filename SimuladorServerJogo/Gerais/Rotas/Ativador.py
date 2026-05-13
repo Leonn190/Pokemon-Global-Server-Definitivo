@@ -274,6 +274,24 @@ def _chunks_carregados_cliente(posicao_camera: Vector2, dimensao: str = "Mundo")
     return chunks
 
 
+def _bonus_raio_exploracao(obj_player) -> int:
+    estado = getattr(obj_player, "estado_extra", {}) if obj_player is not None and isinstance(getattr(obj_player, "estado_extra", {}), dict) else {}
+    perfil = estado.get("perfil") if isinstance(estado.get("perfil"), dict) else {}
+    return max(0, int(perfil.get("bonus_raio_exploracao_chunks", perfil.get("BonusRaioExploracaoChunks", 0)) or 0))
+
+
+def _expandir_chunks_exploracao(chunks: Set[Chunk], bonus_raio: int) -> Set[Chunk]:
+    bonus = max(0, int(bonus_raio or 0))
+    if bonus <= 0:
+        return set(chunks)
+    out = set(chunks)
+    for cx, cy in set(chunks):
+        for dx in range(-bonus, bonus + 1):
+            for dy in range(-bonus, bonus + 1):
+                out.add(BANCO_DADOS.normalizar_chunk((int(cx) + dx, int(cy) + dy)))
+    return out
+
+
 def _raio_visao_por_regras() -> float:
     chunk_u = float(BANCO_DADOS.chunk_tamanho_unidade())
     raio_carregado = max(0, int(CEREBRO._i("raio_chunks_carregados", 4)))
@@ -477,6 +495,7 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
             if obj_player is not None:
                 if _eh_dimensao_estadio(dimensao):
                     chunks_mundo = {BANCO_DADOS.normalizar_chunk(ch) for ch in _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")}
+                    chunks_mundo = _expandir_chunks_exploracao(chunks_mundo, _bonus_raio_exploracao(obj_player))
                     registrar_chunks_explorados(client_id, list(chunks_mundo), dimensao="Mundo")
             dim_largura = int(CEREBRO_ESTADIOS.chunks_largura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[0])
             dim_altura = int(CEREBRO_ESTADIOS.chunks_altura * BANCO_DADOS.chunk_tamanho_unidade()) if _eh_dimensao_estadio(dimensao) else int(BANCO_DADOS.limites_mundo()[1])
@@ -498,6 +517,7 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
 
         if modo == "mapa_bootstrap":
             chunks_base = _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")
+            chunks_base = _expandir_chunks_exploracao(chunks_base, _bonus_raio_exploracao(obj_player))
             registrar_chunks_explorados(client_id, list(chunks_base), dimensao="Mundo")
             explorados = obter_exploracao_chunks(client_id)
             chunks_explorados = _chunks_explorados_para_set(explorados)
@@ -517,6 +537,7 @@ def processar_ativador_json(requisicao_json: str | Dict[str, object]):
 
         if modo == "mapa_delta":
             chunks_base = _chunks_carregados_cliente(_resolver_posicao_mundo_referencia(obj_player, posicao_camera), dimensao="Mundo")
+            chunks_base = _expandir_chunks_exploracao(chunks_base, _bonus_raio_exploracao(obj_player))
             novos = {BANCO_DADOS.normalizar_chunk(ch) for ch in chunks_base}
             registrar_chunks_explorados(client_id, list(novos), dimensao="Mundo")
             explorados_depois = obter_exploracao_chunks(client_id)

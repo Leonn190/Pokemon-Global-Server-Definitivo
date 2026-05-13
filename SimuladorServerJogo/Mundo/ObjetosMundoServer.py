@@ -9,13 +9,14 @@ from SimuladorServerJogo.Mundo.EstadioGeometria import offset_porta_externa
 from SimuladorServerJogo.Mundo.Colisor import Colisor
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_pokemons
 from SimuladorServerJogo.Mundo.AutoridadeCaptura import resolver_captura, resolver_fruta
+from Codigo.ModulosGerais.ServicoSkills import aplicar_ganho_xp_perfil
 
 Vector2 = Tuple[float, float]
 _REGRAS_POKEMONS = carregar_regras_pokemons()
 
 
 class AtorServer:
-    NIVEL_MAXIMO = 50
+    NIVEL_MAXIMO = 100
 
     def __init__(self, id_objeto: int, usuario: str, skin: str, posicao: Vector2 = (0.0, 0.0), dimensao: str = "Mundo") -> None:
         self.id_objeto = int(id_objeto)
@@ -50,7 +51,7 @@ class AtorServer:
             self.estado_extra["perfil"] = perfil
         nivel = max(0, min(self.NIVEL_MAXIMO, int(perfil.get("nivel", 0) or 0)))
         xp = max(0, int(perfil.get("xp", 0) or 0))
-        ganho = max(0, int(quantidade_xp or 0))
+        ganho = aplicar_ganho_xp_perfil(perfil, quantidade_xp)
         if ganho > 0 and nivel < self.NIVEL_MAXIMO:
             xp += ganho
             while nivel < self.NIVEL_MAXIMO:

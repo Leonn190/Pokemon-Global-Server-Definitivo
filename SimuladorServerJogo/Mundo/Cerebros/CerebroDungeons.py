@@ -133,6 +133,16 @@ class CerebroDungeons:
         player.estado_extra["entradas_dungeon_mundo"] = entradas_dungeon
         player.estado_extra["dimensao"] = layout.get("dimensao")
         player.estado_extra["estado_dungeon"] = criar_estado_entrada(player, client_id, code_real, porta_real, pedra_id, layout, entrada, self._regras)
+        perfil = player.estado_extra.get("perfil") if isinstance(player.estado_extra.get("perfil"), dict) else {}
+        bonus_chave = max(0, int(perfil.get("chave_inicial_dungeon_nova", perfil.get("ChaveInicialDungeonNova", 0)) or 0))
+        chave_entrada = f"{code_real}:{int(porta_real)}:{int(pedra_id or 0)}"
+        chaves_concedidas = player.estado_extra.get("chaves_skill_dungeon_concedidas") if isinstance(player.estado_extra.get("chaves_skill_dungeon_concedidas"), list) else []
+        if bonus_chave > 0 and chave_entrada not in chaves_concedidas:
+            inventario = dict(player.estado_extra.get("inventario", {})) if isinstance(player.estado_extra.get("inventario"), dict) else {}
+            self._cerebro._servico_inventario.adicionar_item(inventario, {"Code": "ChaveDungeon", "Nome": "ChaveDungeon"}, bonus_chave, dados_personagem=perfil)
+            player.estado_extra["inventario"] = inventario
+            chaves_concedidas.append(chave_entrada)
+            player.estado_extra["chaves_skill_dungeon_concedidas"] = chaves_concedidas
         aplicar_invulnerabilidade_player(player, 90, "entrada_dungeon")
         registrar_sala_explorada(player, code_real, str(entrada.get("sala_id") or ""), client_id=str(client_id))
         sx, sy = centro_sala_em_tiles(entrada.get("posicao_sala", [0, 0]))

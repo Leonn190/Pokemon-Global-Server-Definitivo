@@ -256,6 +256,18 @@ def carregar_regras_projeteis() -> Dict[str, object]:
     return out
 
 
+def carregar_regras_skils() -> Dict[str, object]:
+    dados = _ler_toml("Skils.toml")
+    meta = dados.get("meta") if isinstance(dados.get("meta"), dict) else {}
+    base = dados.get("base") if isinstance(dados.get("base"), dict) else {}
+    skills = dados.get("skills") if isinstance(dados.get("skills"), dict) else {}
+    return {
+        "meta": dict(meta),
+        "base": dict(base),
+        "skills": {str(k): dict(v) for k, v in skills.items() if isinstance(v, dict)},
+    }
+
+
 def carregar_regras_ciclo() -> Dict[str, object]:
     dados = _ler_toml("Ciclo.toml")
     out = _flatten(dados)
@@ -417,6 +429,7 @@ def carregar_regras_runtime_servidor() -> Dict[str, object]:
         carregar_regras_dungeons(),
     ):
         regras.update(bloco)
+    regras["skils"] = carregar_regras_skils()
     return regras
 
 
@@ -427,6 +440,7 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
     regras_ciclo = carregar_regras_ciclo()
     regras_gerais = carregar_regras_gerais()
     regras_batalha = carregar_regras_batalha_publicas()
+    regras_skils = carregar_regras_skils()
     return {
         "mundo": {"chunk_tiles": int(_ler_valor(carregar_regras_mundo(), "ChunkTiles", 10))},
         "animacao": {
@@ -477,6 +491,7 @@ def carregar_regras_cliente_mundo() -> Dict[str, object]:
             "combate_camera_zoom_max": int(_ler_valor(regras_gerais, "combate_camera_zoom_max", 50)),
         },
         "batalha": dict(regras_batalha),
+        "skils": regras_skils,
     }
 
 

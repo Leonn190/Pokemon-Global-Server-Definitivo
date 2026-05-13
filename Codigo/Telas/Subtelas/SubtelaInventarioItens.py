@@ -75,6 +75,11 @@ class InventarioItens:
                 break
 
     def _capacidade_total(self):
+        if bool(getattr(self.Perfil, 'MochilaSemLimite', False)):
+            return 0
+        capacidade = getattr(self.Perfil, 'CapacidadeMochila', None)
+        if capacidade not in (None, ''):
+            return max(0, int(capacidade))
         return max(1, int(getattr(self.Perfil, 'NivelMochila', 1)) * 100)
 
     def _limite_slots(self):
@@ -130,6 +135,7 @@ class InventarioItens:
                 borda=2,
                 raio=16,
                 stackable=True,
+                nivel_acumulador=int(getattr(self.Perfil, 'NivelAcumulador', 0) or 0),
             )
             self._barra_pesquisa = BarraPesquisa(pygame.Rect(0, 0, 10, 10), placeholder='Buscar item...')
             self._barra_pesquisa.definir_prefixo_imutavel(8)
@@ -144,6 +150,7 @@ class InventarioItens:
         else:
             self._container.Itens = self.Inventario.Itens
             self._container.SlotsTotal = self._limite_slots()
+            self._container.NivelAcumulador = int(getattr(self.Perfil, 'NivelAcumulador', 0) or 0)
             self._container.SlotPx = 68
             self._container.configurar_rect(self._area_grid)
             self._container.configurar_barra_pesquisa(self._barra_pesquisa)
@@ -497,7 +504,8 @@ class InventarioItens:
         )
 
         self._painel_info.render(tela, [], 0)
-        self.TxtTotal.set_text(f'{self._quantidade_total_itens()} / {self._capacidade_total()}')
+        capacidade = self._capacidade_total()
+        self.TxtTotal.set_text(f"{self._quantidade_total_itens()} / {'sem limite' if capacidade <= 0 else capacidade}")
         self.TxtTotal.set_pos((self._area_info.x + 14, self._area_info.centery))
         self.TxtTotal.draw(tela)
 

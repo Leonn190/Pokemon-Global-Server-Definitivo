@@ -12,7 +12,7 @@ class MinimapaMundo:
         self._cache_key = None
         self._cache_surface = None
 
-    def desenhar(self, tela: pygame.Surface, servico_mapa, pos_player_mundo: tuple[float, float], angulo: float, layout_dungeon=None, estado_dungeon=None) -> None:
+    def desenhar(self, tela: pygame.Surface, servico_mapa, pos_player_mundo: tuple[float, float], angulo: float, layout_dungeon=None, estado_dungeon=None, objetos_mundo=None, perfil=None) -> None:
         area = pygame.Rect(tela.get_width() - self.tamanho - self.margem, self.margem, self.tamanho, self.tamanho)
         if isinstance(layout_dungeon, dict) and str(layout_dungeon.get("dimensao") or "").startswith("Dungeon_"):
             base = construir_surface_mapa_dungeon_local(layout_dungeon, estado_dungeon, cell=16, raio=1)
@@ -52,5 +52,41 @@ class MinimapaMundo:
         mini = self._cache_surface if self._cache_surface is not None else pygame.Surface((area.width, area.height))
         tela.blit(mini, area)
         pygame.draw.rect(tela, (8, 8, 8), area, 2)
+        self._desenhar_rastreadores(tela, area, pos_player_mundo, lado_px_logico, objetos_mundo, perfil)
 
         desenhar_seta_player(tela, area.center, angulo, tamanho=10, escala_extra=0.5)
+
+    def _desenhar_rastreadores(self, tela, area, pos_player_mundo, lado_px_logico, objetos_mundo=None, perfil=None) -> None:
+        if objetos_mundo is None or perfil is None:
+            return
+        mostrar_pokemons = bool(getattr(perfil, "RastreadorPokemons", False))
+        mostrar_baus = bool(getattr(perfil, "RastreadorBaus", False))
+        if not mostrar_pokemons and not mostrar_baus:
+            return
+        objetos = getattr(objetos_mundo, "ObjetosPorId", None)
+        if not isinstance(objetos, dict):
+            return
+        x0 = float(pos_player_mundo[0]) - (float(lado_px_logico) / 2.0)
+        y0 = float(pos_player_mundo[1]) - (float(lado_px_logico) / 2.0)
+        escala_x = float(area.width) / max(1.0, float(lado_px_logico))
+        escala_y = float(area.height) / max(1.0, float(lado_px_logico))
+        for obj in list(objetos.values()):
+            if not isinstance(obj, dict):
+                continue
+            estado = obj.get("estado") if isinstance(obj.get("estado"), dict) else {}
+            subtipo = str(estado.get("subtipo") or obj.get("tipo") or "").strip().lower()
+            eh_pokemon = "pokemon" in subtipo or str(obj.get("tipo") or "").strip().lower() == "entidade_pokemon"
+            eh_bau = "bau" in subtipo or "baú" in subtipo or str(obj.get("tipo") or "").strip().lower() in {"bau", "entidade_bau"}
+            if (eh_pokemon and not mostrar_pokemons) or (eh_bau and not mostrar_baus) or (not eh_pokemon and not eh_bau):
+                continue
+            pos = obj.get("posicao") if isinstance(obj.get("posicao"), (list, tuple)) and len(obj.get("posicao")) == 2 else None
+            if pos is None:
+                continue
+            px = area.left + int((float(pos[0]) - x0) * escala_x)
+            py = area.top + int((float(pos[1]) - y0) * escala_y)
+            if not area.collidepoint(px, py):
+                continue
+            if eh_pokemon:
+                pygame.draw.circle(tela, (98, 236, 132), (px, py), 3)
+            else:
+                pygame.draw.rect(tela, (255, 208, 86), pygame.Rect(px - 3, py - 3, 6, 6), border_radius=1)

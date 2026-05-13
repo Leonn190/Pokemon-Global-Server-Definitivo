@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import copy
 
+from Codigo.ModulosGerais.ServicoSkills import stack_efetivo
+
 
 class Inventario:
     def __init__(self, limite_itens=100, limite_slots=32, limite_pokemons=64, limite_times_pokemon=6):
@@ -19,7 +21,7 @@ class Inventario:
         self.Perfil = None
 
     def definir_limite_itens(self, limite_itens, preservar=True):
-        self.LimiteItens = int(limite_itens)
+        self.LimiteItens = 0 if limite_itens is None else int(limite_itens)
 
     def definir_limite_slots(self, limite_slots, preservar=True):
         novo_limite = int(limite_slots)
@@ -85,18 +87,22 @@ class Inventario:
         if hasattr(self.Perfil, "registrar_conhecimento_ataques_pokemon"):
             self.Perfil.registrar_conhecimento_ataques_pokemon(pokemon)
 
-    @staticmethod
-    def _limite_stack(item) -> int:
+    def _nivel_acumulador(self) -> int:
+        return int(getattr(self.Perfil, "NivelAcumulador", 0) or 0) if self.Perfil is not None else 0
+
+    def _limite_stack(self, item) -> int:
         if not isinstance(item, dict):
             return 1
+        base = 999999
         for chave in ("Stacks", "stacks", "Stack", "stack", "limite_stack"):
             try:
                 valor = int(item.get(chave, 0) or 0)
                 if valor > 0:
-                    return valor
+                    base = valor
+                    break
             except (TypeError, ValueError):
                 continue
-        return 999999
+        return stack_efetivo(base, self._nivel_acumulador())
 
     def adicionar_item(self, item):
         item_copia = self._normalizar_item(item)
@@ -104,7 +110,8 @@ class Inventario:
             return False
 
         quantidade_nova = int(item_copia.get("quantidade", 1)) if isinstance(item_copia, dict) else 1
-        if (self.quantidade_total_itens() + quantidade_nova) > self.LimiteItens:
+        mochila_sem_limite = bool(getattr(self.Perfil, "MochilaSemLimite", False)) if self.Perfil is not None else self.LimiteItens <= 0
+        if not mochila_sem_limite and self.LimiteItens > 0 and (self.quantidade_total_itens() + quantidade_nova) > self.LimiteItens:
             return False
 
         adicionado = 0

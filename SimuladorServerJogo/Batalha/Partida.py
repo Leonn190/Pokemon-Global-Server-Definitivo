@@ -57,6 +57,7 @@ class Partida:
         self.arena_contexto = dict(dados.get("arena") or {})
         self.regras = copy.deepcopy(dados.get("regras") or {}) if isinstance(dados.get("regras"), dict) else {}
         self.regras_mundo = copy.deepcopy(dados.get("regras_mundo") or {}) if isinstance(dados.get("regras_mundo"), dict) else {}
+        self.perfil_jogador = copy.deepcopy(dados.get("perfil_jogador") or {}) if isinstance(dados.get("perfil_jogador"), dict) else {}
         for chave in ("centro", "largura", "altura", "arena_largura", "arena_altura", "origem", "tiles", "estruturas", "contexto_estadio", "tipo_estadio"):
             if chave in dados and chave not in self.arena_contexto:
                 self.arena_contexto[chave] = copy.deepcopy(dados.get(chave))
@@ -262,6 +263,10 @@ class Partida:
             lado_id = _i(bruto.get("lado_id"), 50 if indice <= 6 else 51)
             self.lados.setdefault(lado_id, {"lado_id": lado_id})
             pokemon = PokemonBatalha(bruto, partida=self, lado_id=lado_id, indice=indice)
+            if int(lado_id) == int(self.lado_jogador):
+                pct = float(self.perfil_jogador.get("energia_inicial_pokemon_percent", self.perfil_jogador.get("EnergiaInicialPokemonPercent", 0.50)) or 0.50)
+                energia_max = max(1.0, float(pokemon.obter_atributo("EneM", 1.0) if hasattr(pokemon, "obter_atributo") else getattr(pokemon, "EnergiaMax", 1.0)))
+                pokemon.EnergiaAtual = max(0.0, min(energia_max, energia_max * max(0.0, pct)))
             self.pokemons_por_id[pokemon.id_batalha] = pokemon
             self.pokemons_por_lado.setdefault(lado_id, []).append(pokemon)
             if pokemon.ativo and not pokemon.reserva:

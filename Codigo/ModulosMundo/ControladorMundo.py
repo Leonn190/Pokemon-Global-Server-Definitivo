@@ -37,6 +37,9 @@ class ControladorMundo:
         info = getattr(self.JOGO, "INFO", {}) if self.JOGO is not None else {}
         regras = info.get("RegrasMundo") if isinstance(info, dict) and isinstance(info.get("RegrasMundo"), dict) else {}
         gerais = regras.get("gerais") if isinstance(regras.get("gerais"), dict) else {}
+        perfil = getattr(getattr(self.Player, "player_local", None), "Perfil", None)
+        if bool(getattr(perfil, "VisaoExpandidaMundo", False)):
+            return 45
         return max(1, int(gerais.get("camera_px_por_tile", 50) or 50))
 
     def _sincronizar_tile_px_dimensao(self, dimensao: str) -> None:

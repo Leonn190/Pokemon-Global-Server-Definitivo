@@ -8,6 +8,7 @@ from typing import Dict, Optional
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
 from SimuladorServerJogo.Gerais.EstadoServidor import atualizar_inventario_personagem, obter_personagem_para_entrada
 from SimuladorServerJogo.Gerais.LoaderTabelas import carregar_csv_dict
+from Codigo.ModulosGerais.ServicoSkills import stack_efetivo
 
 
 def _carregar_itens() -> tuple[Dict[str, Dict[str, object]], Dict[str, Dict[str, object]]]:
@@ -43,16 +44,17 @@ _ITENS_POR_CODE, _ITENS_POR_NOME = _carregar_itens()
 
 class ServicoInventario:
     @staticmethod
-    def _limite_stack(item: Dict[str, object]) -> int:
+    def _limite_stack(item: Dict[str, object], nivel_acumulador: int = 0) -> int:
         if not isinstance(item, dict):
             return 1
+        base = 999999
         try:
             valor = int(item.get("Stacks", 0) or 0)
             if valor > 0:
-                return valor
+                base = valor
         except (TypeError, ValueError):
             pass
-        return 999999
+        return stack_efetivo(base, nivel_acumulador)
 
     @staticmethod
     def _lista_pokemons_ocupados(valor: object) -> list[Dict[str, object]]:
@@ -134,7 +136,10 @@ class ServicoInventario:
         inv = dict(inventario or {})
         lim = self.limite_slots(inv, dados_personagem)
         inv["limite_slots"] = int(lim)
-        limite_itens = int(max(1, inv.get("limite_itens", 100) or 100))
+        dados = dados_personagem if isinstance(dados_personagem, dict) else {}
+        nivel_acumulador = int(dados.get("nivel_acumulador", dados.get("NivelAcumulador", 0)) or 0)
+        mochila_sem_limite = bool(dados.get("mochila_sem_limite", dados.get("MochilaSemLimite", False)))
+        limite_itens = int(inv.get("limite_itens", 100) or 0)
         itens = list(inv.get("itens", []))
         if len(itens) < lim:
             itens.extend([None] * (lim - len(itens)))
@@ -145,11 +150,15 @@ class ServicoInventario:
         for atual in itens:
             if isinstance(atual, dict):
                 total_itens += int(max(1, atual.get("quantidade", 1) or 1))
-        espaco = max(0, limite_itens - total_itens)
-        if espaco <= 0:
-            return (0, qtd)
-        adicionavel = min(qtd, espaco)
-        sobra = qtd - adicionavel
+        if mochila_sem_limite or limite_itens <= 0:
+            adicionavel = qtd
+            sobra = 0
+        else:
+            espaco = max(0, limite_itens - total_itens)
+            if espaco <= 0:
+                return (0, qtd)
+            adicionavel = min(qtd, espaco)
+            sobra = qtd - adicionavel
 
         chave_code = str(item_base.get("Code") or "").strip().lower()
         chave_nome = str(item_base.get("Nome") or "").strip().lower()
@@ -159,7 +168,7 @@ class ServicoInventario:
             code_atual = str(atual.get("Code") or "").strip().lower()
             nome_atual = str(atual.get("Nome") or "").strip().lower()
             if (chave_code and code_atual == chave_code) or (not chave_code and nome_atual == chave_nome):
-                limite_stack = self._limite_stack(atual)
+                limite_stack = self._limite_stack(atual, nivel_acumulador)
                 qtd_atual = int(atual.get("quantidade", 1) or 1)
                 pode_entrar = max(0, min(adicionavel, limite_stack - qtd_atual))
                 if pode_entrar > 0:
@@ -175,7 +184,7 @@ class ServicoInventario:
             i = next((idx for idx, atual in enumerate(itens) if atual is None), None)
             if i is None:
                 break
-            quantidade_slot = min(adicionavel, self._limite_stack(item_base))
+            quantidade_slot = min(adicionavel, self._limite_stack(item_base, nivel_acumulador))
             itens[i] = self.normalizar_item(item_base, quantidade_padrao=quantidade_slot)
             adicionavel -= quantidade_slot
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 class Perfil:
-    NIVEL_MAXIMO = 50
+    NIVEL_MAXIMO = 100
     TIPOS_ESTADIO = (
         "Normal", "Fogo", "Agua", "Planta", "Eletrico", "Gelo", "Lutador", "Venenoso", "Terrestre", "Voador",
         "Psiquico", "Inseto", "Pedra", "Fantasma", "Dragao", "Sombrio", "Metal", "Fada", "Cosmico", "Sonoro", "Geral",
@@ -57,6 +57,27 @@ class Perfil:
         self.TapaPorSegundo = 2.0
         self.RaioTapa = 0.36
         self.MultiplicadorFerramentaTapa = 1.5
+        self.MultiplicadorPenalidadeAguaRasa = 1.0
+        self.MultiplicadorPenalidadeAguaFunda = 1.0
+        self.CoracoesDungeonMax = 3
+        self.VisaoExpandidaMundo = False
+        self.EnergiaInicialPokemonPercent = 0.50
+        self.MultiplicadorAlcanceProjetil = 1.0
+        self.BonusLimiteFrutasCaptura = 0
+        self.RendaPassivaXpTaxa = 0
+        self.RendaPassivaXpAcumulado = 0
+        self.MultiplicadorXpRecebido = 1.0
+        self.RastreadorPokemons = False
+        self.RastreadorBaus = False
+        self.BonusRaioExploracaoChunks = 0
+        self.DescontoLojasPercent = 0.0
+        self.MultiplicadorVelocidadeProjetil = 1.0
+        self.TeleportadorAtivo = False
+        self.BonusInvulnerabilidadeDungeonSegundos = 0
+        self.ChaveInicialDungeonNova = 0
+        self.MochilaSemLimite = False
+        self.CapacidadeMochila = 100
+        self.NivelAcumulador = 0
         for tipo in self.TIPOS_ESTADIO:
             setattr(self, f"RespeitoEstadio{tipo}", 0)
 
@@ -162,6 +183,12 @@ class Perfil:
                 return dados[chave]
         return padrao
 
+    @staticmethod
+    def _bool_cfg(valor) -> bool:
+        if isinstance(valor, str):
+            return valor.strip().lower() in ("1", "true", "sim", "yes", "on")
+        return bool(valor)
+
     def aplicar_serializado(self, dados):
         if not isinstance(dados, dict):
             return
@@ -241,6 +268,27 @@ class Perfil:
         self.TapaPorSegundo = float(self._pegar(dados, "tapa_por_segundo", "TapaPorSegundo", padrao=self.TapaPorSegundo))
         self.RaioTapa = float(self._pegar(dados, "raio_tapa", "RaioTapa", padrao=self.RaioTapa))
         self.MultiplicadorFerramentaTapa = float(self._pegar(dados, "multiplicador_ferramenta_tapa", "MultiplicadorFerramentaTapa", padrao=self.MultiplicadorFerramentaTapa))
+        self.MultiplicadorPenalidadeAguaRasa = float(self._pegar(dados, "multiplicador_penalidade_agua_rasa", "MultiplicadorPenalidadeAguaRasa", padrao=self.MultiplicadorPenalidadeAguaRasa))
+        self.MultiplicadorPenalidadeAguaFunda = float(self._pegar(dados, "multiplicador_penalidade_agua_funda", "MultiplicadorPenalidadeAguaFunda", padrao=self.MultiplicadorPenalidadeAguaFunda))
+        self.CoracoesDungeonMax = max(1, int(self._pegar(dados, "coracoes_dungeon_max", "CoracoesDungeonMax", padrao=self.CoracoesDungeonMax)))
+        self.VisaoExpandidaMundo = self._bool_cfg(self._pegar(dados, "visao_expandida_mundo", "VisaoExpandidaMundo", padrao=self.VisaoExpandidaMundo))
+        self.EnergiaInicialPokemonPercent = float(self._pegar(dados, "energia_inicial_pokemon_percent", "EnergiaInicialPokemonPercent", padrao=self.EnergiaInicialPokemonPercent))
+        self.MultiplicadorAlcanceProjetil = float(self._pegar(dados, "multiplicador_alcance_projetil", "MultiplicadorAlcanceProjetil", padrao=self.MultiplicadorAlcanceProjetil))
+        self.BonusLimiteFrutasCaptura = max(0, int(self._pegar(dados, "bonus_limite_frutas_captura", "BonusLimiteFrutasCaptura", padrao=self.BonusLimiteFrutasCaptura)))
+        self.RendaPassivaXpTaxa = max(0, int(self._pegar(dados, "renda_passiva_xp_taxa", "RendaPassivaXpTaxa", padrao=self.RendaPassivaXpTaxa)))
+        self.RendaPassivaXpAcumulado = max(0, int(self._pegar(dados, "renda_passiva_xp_acumulado", "RendaPassivaXpAcumulado", padrao=self.RendaPassivaXpAcumulado)))
+        self.MultiplicadorXpRecebido = float(self._pegar(dados, "multiplicador_xp_recebido", "MultiplicadorXpRecebido", padrao=self.MultiplicadorXpRecebido))
+        self.RastreadorPokemons = self._bool_cfg(self._pegar(dados, "rastreador_pokemons", "RastreadorPokemons", padrao=self.RastreadorPokemons))
+        self.RastreadorBaus = self._bool_cfg(self._pegar(dados, "rastreador_baus", "RastreadorBaus", padrao=self.RastreadorBaus))
+        self.BonusRaioExploracaoChunks = max(0, int(self._pegar(dados, "bonus_raio_exploracao_chunks", "BonusRaioExploracaoChunks", padrao=self.BonusRaioExploracaoChunks)))
+        self.DescontoLojasPercent = max(0.0, float(self._pegar(dados, "desconto_lojas_percent", "DescontoLojasPercent", padrao=self.DescontoLojasPercent)))
+        self.MultiplicadorVelocidadeProjetil = float(self._pegar(dados, "multiplicador_velocidade_projetil", "MultiplicadorVelocidadeProjetil", padrao=self.MultiplicadorVelocidadeProjetil))
+        self.TeleportadorAtivo = self._bool_cfg(self._pegar(dados, "teleportador_ativo", "TeleportadorAtivo", padrao=self.TeleportadorAtivo))
+        self.BonusInvulnerabilidadeDungeonSegundos = max(0, int(self._pegar(dados, "bonus_invulnerabilidade_dungeon_segundos", "BonusInvulnerabilidadeDungeonSegundos", padrao=self.BonusInvulnerabilidadeDungeonSegundos)))
+        self.ChaveInicialDungeonNova = max(0, int(self._pegar(dados, "chave_inicial_dungeon_nova", "ChaveInicialDungeonNova", padrao=self.ChaveInicialDungeonNova)))
+        self.MochilaSemLimite = self._bool_cfg(self._pegar(dados, "mochila_sem_limite", "MochilaSemLimite", padrao=self.MochilaSemLimite))
+        self.CapacidadeMochila = max(0, int(self._pegar(dados, "capacidade_mochila", "CapacidadeMochila", padrao=self.CapacidadeMochila)))
+        self.NivelAcumulador = max(0, int(self._pegar(dados, "nivel_acumulador", "NivelAcumulador", padrao=self.NivelAcumulador)))
         for tipo in self.TIPOS_ESTADIO:
             chave_snake = f"respeito_estadio_{tipo.lower()}"
             chave_camel = f"RespeitoEstadio{tipo}"
@@ -296,6 +344,27 @@ class Perfil:
             "tapa_por_segundo": self.TapaPorSegundo,
             "raio_tapa": self.RaioTapa,
             "multiplicador_ferramenta_tapa": self.MultiplicadorFerramentaTapa,
+            "multiplicador_penalidade_agua_rasa": self.MultiplicadorPenalidadeAguaRasa,
+            "multiplicador_penalidade_agua_funda": self.MultiplicadorPenalidadeAguaFunda,
+            "coracoes_dungeon_max": self.CoracoesDungeonMax,
+            "visao_expandida_mundo": bool(self.VisaoExpandidaMundo),
+            "energia_inicial_pokemon_percent": self.EnergiaInicialPokemonPercent,
+            "multiplicador_alcance_projetil": self.MultiplicadorAlcanceProjetil,
+            "bonus_limite_frutas_captura": self.BonusLimiteFrutasCaptura,
+            "renda_passiva_xp_taxa": self.RendaPassivaXpTaxa,
+            "renda_passiva_xp_acumulado": self.RendaPassivaXpAcumulado,
+            "multiplicador_xp_recebido": self.MultiplicadorXpRecebido,
+            "rastreador_pokemons": bool(self.RastreadorPokemons),
+            "rastreador_baus": bool(self.RastreadorBaus),
+            "bonus_raio_exploracao_chunks": self.BonusRaioExploracaoChunks,
+            "desconto_lojas_percent": self.DescontoLojasPercent,
+            "multiplicador_velocidade_projetil": self.MultiplicadorVelocidadeProjetil,
+            "teleportador_ativo": bool(self.TeleportadorAtivo),
+            "bonus_invulnerabilidade_dungeon_segundos": self.BonusInvulnerabilidadeDungeonSegundos,
+            "chave_inicial_dungeon_nova": self.ChaveInicialDungeonNova,
+            "mochila_sem_limite": bool(self.MochilaSemLimite),
+            "capacidade_mochila": self.CapacidadeMochila,
+            "nivel_acumulador": self.NivelAcumulador,
         }
         for tipo in self.TIPOS_ESTADIO:
             dados[f"respeito_estadio_{tipo.lower()}"] = int(max(0, min(4, getattr(self, f"RespeitoEstadio{tipo}", 0))))

@@ -41,6 +41,8 @@ class CerebroItensMundo:
         dist = math.hypot(dx, dy) or 1.0
         destino = [float(p0[0]) + (dx / dist) * min(1.0, dist), float(p0[1]) + (dy / dist) * min(1.0, dist)]
         velocidade = float(self._core._f("projetil_velocidade_item_mundo_tiles_s", 3.0))
+        dados_jogador = obter_personagem_para_entrada(usuario) or {}
+        velocidade *= float(dados_jogador.get("multiplicador_velocidade_projetil", dados_jogador.get("MultiplicadorVelocidadeProjetil", 1.0)) or 1.0)
         cliente_ms = int(payload.get("instante_cliente_ms", 0) or 0)
         atraso_ms = max(0, int(time.time() * 1000) - cliente_ms) if cliente_ms > 0 else 0
         velocidade_visual = min(9.0, velocidade + (atraso_ms / 1000.0) * 1.5)

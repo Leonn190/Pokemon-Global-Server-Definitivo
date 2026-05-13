@@ -50,6 +50,9 @@ class ControladorPlayer:
     def _tile_px_base(self) -> int:
         regras = self._regras()
         gerais = regras.get("gerais") if isinstance(regras.get("gerais"), dict) else {}
+        perfil = getattr(self._player_local, "Perfil", None)
+        if bool(getattr(perfil, "VisaoExpandidaMundo", False)):
+            return 45
         return int(gerais.get("camera_px_por_tile", 50))
 
     @property
@@ -419,6 +422,9 @@ class ControladorPlayer:
         proj = regras.get("projeteis") if isinstance(regras.get("projeteis"), dict) else {}
         subtipo = "fruta" if variante == "fruta" else "pokebola"
         velocidade, alcance = self._calcular_parametros_projetil_client(proj, subtipo, variante, mirando=bool(acao.get("mirando", False)))
+        perfil = getattr(self._player_local, "Perfil", None)
+        velocidade *= float(getattr(perfil, "MultiplicadorVelocidadeProjetil", 1.0) or 1.0)
+        alcance *= float(getattr(perfil, "MultiplicadorAlcanceProjetil", 1.0) or 1.0)
         dx, dy = float(destino_click[0]) - float(origem[0]), float(destino_click[1]) - float(origem[1])
         n = math.hypot(dx, dy) or 1.0
         direcao = (dx / n, dy / n)
@@ -487,6 +493,8 @@ class ControladorPlayer:
         regras = self._regras()
         proj = regras.get("projeteis") if isinstance(regras.get("projeteis"), dict) else {}
         velocidade = float(proj.get("velocidade_item_mundo_tiles_s", 3.0) or 3.0)
+        perfil = getattr(self._player_local, "Perfil", None)
+        velocidade *= float(getattr(perfil, "MultiplicadorVelocidadeProjetil", 1.0) or 1.0)
         quantidade = max(1, int(item.get("quantidade", 1) or 1))
 
         token = str(uuid.uuid4())

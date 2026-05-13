@@ -34,11 +34,18 @@ class CerebroProjeteis:
         dono_obj = BANCO_DADOS.obter_objeto(dono_id)
         if dono_obj is None:
             return False
+        usuario = str(BANCO_DADOS.usuario_por_objeto_id(int(dono_id)) or client_id or "").strip()
+        if not usuario:
+            return False
+        dados_jogador = obter_personagem_para_entrada(usuario) or {}
+        perfil = dados_jogador if isinstance(dados_jogador, dict) else {}
 
         subtipo = str(payload.get("subtipo_projetil") or "pokebola").strip().lower()
         variante = str(payload.get("variante") or "pokebola").strip().lower()
         mirando = bool(payload.get("mirando", False))
         velocidade, alcance = calcular_parametros_projetil(self._core._regras, subtipo, variante, mirando=mirando)
+        velocidade *= float(perfil.get("multiplicador_velocidade_projetil", perfil.get("MultiplicadorVelocidadeProjetil", 1.0)) or 1.0)
+        alcance *= float(perfil.get("multiplicador_alcance_projetil", perfil.get("MultiplicadorAlcanceProjetil", 1.0)) or 1.0)
 
         p0 = payload.get("pos_inicial") if isinstance(payload.get("pos_inicial"), (list, tuple)) and len(payload.get("pos_inicial")) == 2 else [dono_obj.posicao[0], dono_obj.posicao[1]]
         p1 = payload.get("pos_final") if isinstance(payload.get("pos_final"), (list, tuple)) and len(payload.get("pos_final")) == 2 else list(p0)
@@ -47,10 +54,6 @@ class CerebroProjeteis:
         ux, uy = dx / dist, dy / dist
         dist_final = min(float(alcance), dist)
         destino = [float(p0[0]) + ux * dist_final, float(p0[1]) + uy * dist_final]
-        usuario = str(BANCO_DADOS.usuario_por_objeto_id(int(dono_id)) or client_id or "").strip()
-        if not usuario:
-            return False
-        dados_jogador = obter_personagem_para_entrada(usuario) or {}
         inventario = dict(dados_jogador.get("inventario", {})) if isinstance(dados_jogador.get("inventario"), dict) else {}
         item_base_id = str(payload.get("item_base_id") or "").strip()
         item_nome = str(payload.get("item_nome") or payload.get("item") or variante).strip()
@@ -91,9 +94,12 @@ class CerebroProjeteis:
             float(dono_obj.posicao[1]) - float(poke.posicao[1]),
         )
         if fruta:
+            usuario = str(BANCO_DADOS.usuario_por_objeto_id(int(dono_id)) or client_id or "").strip()
+            dados_jogador = obter_personagem_para_entrada(usuario) or {}
+            bonus_frutas = int(dados_jogador.get("bonus_limite_frutas_captura", dados_jogador.get("BonusLimiteFrutasCaptura", 0)) or 0)
             resolver_fruta(poke, str(payload.get("item_nome") or lanc.get("item_nome") or payload.get("variante") or "fruta"), contexto={
                 "dono_id": dono_id,
-                "limite_frutas": int(self._core._i("captura_limite_frutas", 2)),
+                "limite_frutas": int(self._core._i("captura_limite_frutas", 2)) + max(0, bonus_frutas),
                 "captura_jujuca_bonus_limite_frutas": int(self._core._i("captura_jujuca_bonus_limite_frutas", 2)),
                 "captura_jujuca_max_por_pokemon": int(self._core._i("captura_jujuca_max_por_pokemon", 1)),
             })

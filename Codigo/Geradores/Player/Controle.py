@@ -334,7 +334,14 @@ class Controle:
                     self._bonus_corrida_atual - (dt / tempo_desacel) * float(getattr(self.Ator.Perfil, "BonusVelocidadeCorridaMax", 0.60)),
                 )
 
-        mult = (1.0 + max(0.0, self._bonus_corrida_atual)) * MecanicasTiles.multiplicador_velocidade(tile_atual)
+        mult_agua = MecanicasTiles.multiplicador_velocidade(tile_atual)
+        if tile_atual == 1:
+            fator = float(getattr(self.Ator.Perfil, "MultiplicadorPenalidadeAguaRasa", 1.0) or 1.0)
+            mult_agua = 1.0 - ((1.0 - mult_agua) * max(0.0, fator))
+        elif tile_atual == 0:
+            fator = float(getattr(self.Ator.Perfil, "MultiplicadorPenalidadeAguaFunda", 1.0) or 1.0)
+            mult_agua = 1.0 - ((1.0 - mult_agua) * max(0.0, fator))
+        mult = (1.0 + max(0.0, self._bonus_corrida_atual)) * max(0.0, mult_agua)
         vbase = float(getattr(self.Ator.Perfil, "VelocidadeBaseTiles", self.VelocidadeTiles))
         antes = self.Ator.Posicao
         self.Ator.mover(eixo_x * vbase * mult * dt, eixo_y * vbase * mult * dt)

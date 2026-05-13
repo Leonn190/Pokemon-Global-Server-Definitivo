@@ -457,6 +457,7 @@ class CenaMundo:
                     "pokemons_jogador": pokemons_jogador,
                     "time_jogador": deepcopy(time_escolhido),
                     "time_jogador_indice": int(indice_time),
+                    "perfil_jogador": player.Perfil.serializar() if getattr(player, "Perfil", None) is not None else {},
                     "tipo": tipo_batalha,
                     "tipo_batalha": tipo_batalha,
                     "origem": [0.0, 0.0],
@@ -592,7 +593,7 @@ class CenaMundo:
             if isinstance(estado_hud_dungeon, dict) and isinstance((estado_player or {}).get("vida_player"), dict):
                 estado_hud_dungeon = {**estado_hud_dungeon, "vida_player": (estado_player or {}).get("vida_player")}
             captura_hud = self.ControladorMundo.Objetos.captura_hud_atual()
-            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=estado_hud_dungeon, layout_dungeon=layout_dungeon, captura_hud=captura_hud)
+            self.ElementosHud.desenhar(surface, player.Inventario, terminal=self.Terminal, eventos=EVENTOS, dt=dt, servico_mapa=self.ServicoMapa, pos_player_mundo=pos_player_mundo, angulo_olhar=float(getattr(player, "AnguloOlhar", 0.0) or 0.0), mostrar_minimapa=bool(JOGO.CONFIG.get("MostrarMinimapa", False)), estado_dungeon=estado_hud_dungeon, layout_dungeon=layout_dungeon, captura_hud=captura_hud, objetos_mundo=self.ControladorMundo.Objetos, perfil=getattr(player, "Perfil", None))
             if dentro_dungeon:
                 self.ControladorMundo.Dungeons.renderizar_texto(surface)
             player_payload = self.ControladorMundo.Objetos.ObjetosPorId.get(int(getattr(player, "Id", 0) or 0), {})
@@ -761,6 +762,7 @@ class CenaMundo:
                 "pokemons_jogador": pokemons_jogador,
                 "time_jogador": deepcopy(dict(time_escolhido or {})),
                 "time_jogador_indice": int(indice_time),
+                "perfil_jogador": player.Perfil.serializar() if player is not None and getattr(player, "Perfil", None) is not None else {},
                 "time_inimigo": time_npc,
                 "pokemons_inimigo": deepcopy(pokemons_npc),
                 "tile_bioma": tile_mundo_atual(self),

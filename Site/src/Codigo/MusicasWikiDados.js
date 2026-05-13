@@ -86,14 +86,22 @@ function listarAudiosRecursivo(diretorio, destino) {
   return destino;
 }
 
+function tituloPtBr(texto) {
+  return String(texto || "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/(^|\s)(\p{L})/gu, (_, espaco, letra) => `${espaco}${letra.toLocaleUpperCase("pt-BR")}`);
+}
+
 function nomeBonitoArquivo(arquivo) {
-  return String(arquivo || "")
+  return tituloPtBr(String(arquivo || "")
     .replace(/\.[^.]+$/, "")
+    .replace(/([\p{Ll}\d])([\p{Lu}])/gu, "$1 $2")
+    .replace(/([\p{L}])([0-9])/gu, "$1 $2")
+    .replace(/([0-9])([\p{L}])/gu, "$1 $2")
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/^\d+\s*/, "")
-    .replace(/\b\w/g, (letra) => letra.toUpperCase());
+    .replace(/^\d+\s*/, ""));
 }
 
 function contemSegmento(segmentos, chaves) {
@@ -102,11 +110,13 @@ function contemSegmento(segmentos, chaves) {
 }
 
 function estiloPorCaminho(segmentos) {
-  if (contemSegmento(segmentos, ["outros", "fechamento", "fechamentos"])) return null;
-  if (contemSegmento(segmentos, ["mundo", "biomas", "exploracao", "exploracao"])) return "mundo";
-  if (contemSegmento(segmentos, ["lider", "lideres", "liderancas", "estadios", "estadio"])) return "lideres";
-  if (contemSegmento(segmentos, ["tipo", "tipos"])) return "tipos";
-  if (contemSegmento(segmentos, ["confronto", "confrontos", "batalha", "batalhas", "combate", "combates", "boss", "bosses"])) return "confrontos";
+  const chaves = segmentos.map((segmento) => normalizarChave(segmento));
+  const contemParte = (partes) => chaves.some((chave) => partes.some((parte) => chave.includes(parte)));
+  if (contemParte(["outros", "fechamento", "fechamentos"])) return null;
+  if (contemParte(["mundo", "bioma", "exploracao"])) return "mundo";
+  if (contemParte(["lider", "lideres", "lideranca", "estadio", "estadios"])) return "lideres";
+  if (contemParte(["tipo", "tipos"])) return "tipos";
+  if (contemParte(["confronto", "confrontos", "batalha", "batalhas", "combate", "combates", "boss", "bosses"])) return "confrontos";
   return "gerais";
 }
 

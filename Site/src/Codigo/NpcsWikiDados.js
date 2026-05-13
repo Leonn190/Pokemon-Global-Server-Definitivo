@@ -174,7 +174,7 @@ export function resumoNpcs(npcs) {
   const vendedores = npcs.filter((npc) => npc.tipo === "vendedor");
   const categorias = [...new Map(vendedores.map((npc) => [npc.categoriaBusca, npc.categoria]).filter(([chave]) => chave)).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const cargos = [...new Map(combatentes.map((npc) => [npc.cargoBusca, npc.cargo]).filter(([chave]) => chave)).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
-  const tipagens = [...new Map(combatentes.map((npc) => [npc.estadioBusca, npc.estadio]).filter(([chave]) => chave)).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const tipagens = [...new Map(combatentes.map((npc) => [npc.estadioBusca, npc.estadio]).filter(([chave]) => chave && chave !== "geral")).values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
   return {
     quantidade: npcs.length,
     combatentes: combatentes.length,

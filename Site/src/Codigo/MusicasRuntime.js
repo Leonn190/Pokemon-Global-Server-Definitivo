@@ -45,16 +45,20 @@ function criarFaixa(musica) {
     </button>
     <div class="faixa-musica-texto">
       <strong>${html(musica.nome)}</strong>
-      <span>${html(musica.estiloRotulo)} · ${html(musica.pasta)} · ${html(musica.extensao)}</span>
+      <span>${html(musica.estiloRotulo)}</span>
     </div>
+    <label class="faixa-musica-volume" aria-label="Volume da música ${html(musica.nome)}">
+      <input type="range" min="0" max="1" value="1" step="0.01" data-musica-volume />
+    </label>
     <label class="faixa-musica-barra" aria-label="Posição da música ${html(musica.nome)}">
       <input type="range" min="0" max="1000" value="0" step="1" data-musica-progress />
     </label>
     <time class="faixa-musica-tempo" data-musica-tempo>0:00 / ${formatarTempo(musica.duracao)}</time>
-    <audio preload="metadata" src="${html(musica.url)}"></audio>
+    <audio preload="none" src="${html(musica.url)}"></audio>
   `;
   const audio = card.querySelector("audio");
   const barra = card.querySelector("[data-musica-progress]");
+  const volume = card.querySelector("[data-musica-volume]");
   audio?.addEventListener("loadedmetadata", () => {
     if (Number.isFinite(audio.duration)) {
       card.dataset.duracao = String(audio.duration);
@@ -72,6 +76,10 @@ function criarFaixa(musica) {
     if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
     audio.currentTime = (Number(barra.value) / 1000) * audio.duration;
     atualizarFaixaTempo(card);
+  });
+  volume?.addEventListener("input", () => {
+    if (!audio) return;
+    audio.volume = Math.min(1, Math.max(0, Number(volume.value) || 0));
   });
   return card;
 }
@@ -95,26 +103,34 @@ function buscarDuracao(musica) {
   });
 }
 
-function medirDuracoes(musicas, aoAtualizar) {
+function medirDuracoes(musicas, aoAtualizar, podeMedir = () => true) {
   let indice = 0;
-  let ativas = 0;
-  const limite = 3;
-  const proxima = () => {
-    while (ativas < limite && indice < musicas.length) {
-      const musica = musicas[indice];
-      indice += 1;
-      ativas += 1;
-      buscarDuracao(musica).then((duracao) => {
-        ativas -= 1;
-        if (Number.isFinite(duracao)) {
-          musica.duracao = duracao;
-          aoAtualizar?.(musica);
-        }
-        proxima();
-      });
-    }
+  let ativa = false;
+  let reagendar = 0;
+  const agendar = (callback) => {
+    const requestIdle = window.requestIdleCallback || ((fn) => window.setTimeout(fn, 160));
+    requestIdle(callback);
   };
-  proxima();
+  const proxima = () => {
+    window.clearTimeout(reagendar);
+    if (ativa || indice >= musicas.length) return;
+    if (!podeMedir()) {
+      reagendar = window.setTimeout(proxima, 900);
+      return;
+    }
+    const musica = musicas[indice];
+    indice += 1;
+    ativa = true;
+    buscarDuracao(musica).then((duracao) => {
+      ativa = false;
+      if (Number.isFinite(duracao)) {
+        musica.duracao = duracao;
+        aoAtualizar?.(musica);
+      }
+      agendar(proxima);
+    });
+  };
+  agendar(proxima);
 }
 
 export function inicializarWikiMusicas() {
@@ -161,6 +177,7 @@ export function inicializarWikiMusicas() {
     controles: [busca, sort, estilo].filter(Boolean),
     pageSize: 32,
     cardSelector: ".faixa-musica",
+    classeEntrada: "",
     criarCard: criarFaixa,
     obterResultado,
     limparFiltros() {
@@ -205,7 +222,7 @@ export function inicializarWikiMusicas() {
       atualizarFaixaTempo(card);
     }
     if (sort?.value === "duracao") catalogo.renderLista(true);
-  });
+  }, () => !tocandoAtual || tocandoAtual.paused);
 
   catalogo.iniciar();
 }

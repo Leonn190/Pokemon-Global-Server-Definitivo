@@ -155,24 +155,18 @@ function configurarSelectsWiki() {
   grupos.forEach((grupo) => {
     const select = grupo.querySelector("select");
     if (!select) return;
-    let fecharTimer = 0;
     const abrir = () => {
-      window.clearTimeout(fecharTimer);
       fecharTodos(grupo);
       grupo.classList.add("select-aberto");
-      fecharTimer = window.setTimeout(() => grupo.classList.remove("select-aberto"), 1200);
     };
-    const fecharLogo = () => {
-      window.clearTimeout(fecharTimer);
-      fecharTimer = window.setTimeout(() => grupo.classList.remove("select-aberto"), 80);
-    };
+    const fechar = () => grupo.classList.remove("select-aberto");
     select.addEventListener("pointerdown", abrir);
-    select.addEventListener("input", fecharLogo);
-    select.addEventListener("change", fecharLogo);
-    select.addEventListener("blur", () => grupo.classList.remove("select-aberto"));
+    select.addEventListener("input", fechar);
+    select.addEventListener("change", fechar);
+    select.addEventListener("blur", fechar);
     select.addEventListener("keydown", (evento) => {
       if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(evento.key)) abrir();
-      if (["Escape", "Tab"].includes(evento.key)) grupo.classList.remove("select-aberto");
+      if (["Escape", "Tab"].includes(evento.key)) fechar();
     });
   });
   document.addEventListener("pointerdown", (evento) => {

@@ -11,8 +11,10 @@
 .faixa-musica {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+  contain: paint;
   display: grid;
-  grid-template-columns: 48px minmax(150px, 1.05fr) minmax(180px, 1.6fr) 96px;
+  grid-template-columns: 48px minmax(150px, 1.05fr) minmax(72px, 0.42fr) minmax(180px, 1.45fr) 96px;
   align-items: center;
   gap: 14px;
   min-height: 72px;
@@ -25,7 +27,7 @@
     radial-gradient(circle at 88% 100%, rgba(16, 135, 255, 0.14), transparent 38%),
     rgba(255, 255, 255, 0.052);
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.22);
-  transition: transform 170ms ease, border-color 170ms ease, box-shadow 170ms ease, background 170ms ease;
+  transition: border-color 170ms ease, box-shadow 170ms ease;
 }
 .faixa-musica::before {
   content: "";
@@ -40,7 +42,6 @@
 .faixa-musica.tocando {
   border-color: rgba(255, 217, 52, 0.42);
   box-shadow: 0 20px 54px rgba(0, 0, 0, 0.3), 0 0 28px rgba(255, 217, 52, 0.08);
-  transform: translateY(-2px);
 }
 .faixa-musica.tocando {
   background:
@@ -66,6 +67,19 @@
   font-weight: 1000;
   line-height: 1;
 }
+
+.faixa-musica-botao span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  line-height: 1;
+  transform: translateY(-0.5px);
+}
+.faixa-musica-botao span:not(:empty) {
+  text-align: center;
+}
+
 .faixa-musica-botao:hover,
 .faixa-musica-botao:focus-visible {
   outline: none;
@@ -96,6 +110,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.faixa-musica-volume {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+}
+.faixa-musica-volume input {
+  width: 100%;
+  accent-color: var(--amarelo);
+  cursor: pointer;
+}
+
 .faixa-musica-barra {
   position: relative;
   z-index: 1;
@@ -146,6 +172,9 @@
   .faixa-musica {
     grid-template-columns: 48px minmax(0, 1fr) 88px;
   }
+  .faixa-musica-volume {
+    grid-column: 2 / 3;
+  }
   .faixa-musica-barra {
     grid-column: 2 / -1;
   }
@@ -163,6 +192,7 @@
     width: 40px;
     height: 40px;
   }
+  .faixa-musica-volume,
   .faixa-musica-barra,
   .faixa-musica-tempo {
     grid-column: 1 / -1;

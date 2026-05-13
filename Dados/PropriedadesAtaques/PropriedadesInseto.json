@@ -2,69 +2,156 @@
   "schema_version": 1,
   "tipo": "inseto",
   "ataques": {
-    "57": {
-      "ID": 57,
+    "208": {
+      "ID": 208,
       "nome": "Regeneração",
       "custo": 45,
+      "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
-      "execute_principal": "ataque_regeneração",
-      "parametros": {
-        "tipo": "inseto",
-        "efeito": "Regeneração",
-        "duracao": 6,
-        "negativo": false
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "mesmo_lado",
-              "usuario"
-            ],
-            "exige_area_ocupada": true
-          }
-        ]
-      }
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_regeneracao",
+      "parametros": {"tipo": "inseto", "efeito": "Regeneração"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "58": {
-      "ID": 58,
+    "209": {
+      "ID": 209,
+      "nome": "Regenerador",
+      "custo": 0,
+      "custo_ap": 0,
+      "estilo_logico": "passivo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_regenerador",
+      "parametros": {"tipo": "inseto", "mag_pct": 0.06, "vida_perdida_pct": 0.02}
+    },
+    "210": {
+      "ID": 210,
+      "nome": "Seda",
+      "custo": 25,
+      "custo_ap": 30,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_seda",
+      "parametros": {"tipo": "inseto", "categoria": "especial", "spa_pct": 0.35, "vel_base_pct": 0.03, "vel_stack_pct": 0.01},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "211": {
+      "ID": 211,
+      "nome": "Casulo Improvisado",
+      "custo": 45,
+      "custo_ap": 55,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_casulo_improvisado",
+      "parametros": {"tipo": "inseto", "vida_perdida_pct": 0.75, "mag_pct": 0.05}
+    },
+    "212": {
+      "ID": 212,
+      "nome": "Mordida de Inseto",
+      "custo": 40,
+      "custo_ap": 50,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_mordida_de_inseto",
+      "parametros": {"tipo": "inseto", "categoria": "normal", "atk_pct": 0.8, "vamp_crit_mult": 2.0},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "213": {
+      "ID": 213,
+      "nome": "Doação de Energia",
+      "custo": 35,
+      "custo_ap": 40,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_doacao_de_energia",
+      "parametros": {"tipo": "inseto", "energia_pct": 0.6, "energia_pct_critico": 0.85},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "214": {
+      "ID": 214,
+      "nome": "Corte Serrilhado",
+      "custo": 70,
+      "custo_ap": 80,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_corte_serrilhado",
+      "parametros": {"tipo": "inseto", "categoria": "normal", "atk_pct": 0.55, "per_pct": 0.25, "dur_alvo_pct": 2.0},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "215": {
+      "ID": 215,
+      "nome": "Carcomer",
+      "custo": 45,
+      "custo_ap": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_carcomer",
+      "parametros": {"tipo": "inseto", "categoria": "normal", "atk_pct": 0.7, "cura_pct_max": 0.8},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "216": {
+      "ID": 216,
+      "nome": "Evolução Incerta",
+      "custo": 55,
+      "custo_ap": 65,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_evolucao_incerta",
+      "parametros": {"tipo": "inseto", "atributos_regulares": ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"], "qtd_menores": 2, "qtd_maiores": 2, "perda_pct": 0.2, "ganho_pct": 0.25}
+    },
+    "217": {
+      "ID": 217,
+      "nome": "Infestação",
+      "custo": 45,
+      "custo_ap": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_infestacao",
+      "parametros": {"tipo": "inseto", "categoria": "especial", "spa_pct": 0.65, "crit_stack_dano_pct": 0.15, "crit_cura_dano_pct": 0.1},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "218": {
+      "ID": 218,
+      "nome": "Tesoura X",
+      "custo": 75,
+      "custo_ap": 85,
+      "estilo_logico": "ativo",
+      "modo_execucao": "uma_vez",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_tesoura_x",
+      "parametros": {"tipo": "inseto", "categoria": "normal", "posicoes_inimigas": [1, 3, 5, 7, 9], "atk_pct": 0.65, "mult_posicao_5": 1.35}
+    },
+    "219": {
+      "ID": 219,
+      "nome": "Canibalismo Filial",
+      "custo": 60,
+      "custo_ap": 70,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_canibalismo_filial",
+      "parametros": {"tipo": "inseto", "limite_vida_alvo_pct": 0.3, "cura_vida_perdida_usuario_pct": 0.85},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "220": {
+      "ID": 220,
+      "nome": "Devorar",
+      "custo": 55,
+      "custo_ap": 65,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_devorar",
+      "parametros": {"tipo": "inseto", "categoria": "normal", "atk_pct": 0.85, "cura_dano_pct": 0.25, "cura_dano_pct_nocaute": 0.5, "vamp_bonus_nocaute": 10.0},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "221": {
+      "ID": 221,
       "nome": "Teia Pegajosa",
       "custo": 25,
+      "custo_ap": 30,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Jato",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "Jato", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_teia_pegajosa",
-      "parametros": {
-        "tipo": "inseto",
-        "atributo": "Vel",
-        "percentual_alvo": 0.1,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "inseto", "atributo": "Vel", "vel_alvo_pct": 0.1, "mag_usuario_pct": 0.1},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     }
-  },
-  "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
+  }
 }

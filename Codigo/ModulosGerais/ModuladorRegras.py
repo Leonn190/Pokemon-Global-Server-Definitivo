@@ -2,32 +2,50 @@ from __future__ import annotations
 
 from typing import Dict
 
-from Codigo.Geradores.PokemonMundo import Pokemon
-from Codigo.ModulosGerais.Camera import CameraBatalha
-from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
-from Codigo.Paineis.FichaPokemon import FichaPokemon
-from Codigo.ModulosGerais.Server.ServerMundo import coletar_regras_mundo
+
+_REGRAS_MUNDO: Dict[str, object] = {}
+
+
+def definir_regras_mundo(regras: dict) -> None:
+    global _REGRAS_MUNDO
+    _REGRAS_MUNDO = dict(regras or {}) if isinstance(regras, dict) else {}
+
+
+def obter_regras_mundo() -> Dict[str, object]:
+    return dict(_REGRAS_MUNDO)
+
+
+def obter_regras_skils() -> Dict[str, object]:
+    regras = obter_regras_mundo()
+    for chave in ("skils", "skills", "RegrasSkils"):
+        valor = regras.get(chave)
+        if isinstance(valor, dict):
+            return dict(valor)
+    return {}
 
 
 class ModuladorRegras:
     def __init__(self) -> None:
-        self._regras: Dict[str, object] = {}
+        self._regras: Dict[str, object] = obter_regras_mundo()
 
     def coletar_regras(self, ip_server: str) -> Dict[str, object]:
         if not str(ip_server or "").strip():
             return {}
+        from Codigo.ModulosGerais.Server.ServerMundo import coletar_regras_mundo
+
         resposta = coletar_regras_mundo(ip_server)
         if not isinstance(resposta, dict) or str(resposta.get("status")) != "ok":
             return {}
         regras = resposta.get("regras") if isinstance(resposta.get("regras"), dict) else {}
-        self._regras = dict(regras)
-        return dict(self._regras)
+        self.definir_regras(regras)
+        return self.obter()
 
     def obter(self) -> Dict[str, object]:
-        return dict(self._regras)
+        return obter_regras_mundo()
 
     def definir_regras(self, regras: Dict[str, object]) -> None:
         self._regras = dict(regras or {})
+        definir_regras_mundo(self._regras)
 
     def aplicar_em_cena_mundo(self, cena, jogo) -> None:
         if cena is None or jogo is None:
@@ -35,6 +53,11 @@ class ModuladorRegras:
         regras = self.obter()
         if not regras:
             return
+
+        from Codigo.Geradores.PokemonMundo import Pokemon
+        from Codigo.ModulosGerais.Camera import CameraBatalha
+        from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
+        from Codigo.Paineis.FichaPokemon import FichaPokemon
 
         jogo.INFO["RegrasMundo"] = dict(regras)
 

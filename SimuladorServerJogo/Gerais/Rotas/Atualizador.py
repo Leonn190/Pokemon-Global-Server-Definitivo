@@ -587,7 +587,7 @@ def processar_atualizador_json(requisicao_json: str | Dict[str, object]):
                 obj_id_player = int(diff.get("objeto_id") or BANCO_DADOS.objeto_id_por_usuario(client_id) or 0)
                 obj_player = BANCO_DADOS.obter_objeto(obj_id_player) if obj_id_player > 0 else None
                 if isinstance(obj_player, AtorServer):
-                    aplicar_invulnerabilidade_player(obj_player, 90, str(payload.get("motivo") or categoria))
+                    aplicar_invulnerabilidade_player(obj_player, None, str(payload.get("motivo") or categoria))
                     registrar_diff("update", payload=obj_player.serializar(), escopo=_escopo_objeto(obj_player), objeto_id=int(obj_player.Id), autor="server", categoria="player")
                     aplicados += 1
                     continue

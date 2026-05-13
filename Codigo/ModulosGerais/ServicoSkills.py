@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
-import tomllib
+from Codigo.ModulosGerais.ModuladorRegras import obter_regras_skils
 
 
-_ARQ_SKILS = Path(__file__).resolve().parents[2] / "SimuladorServerJogo" / "Logica" / "Regras" / "Skils.toml"
 _CACHE_SKILLS: tuple[dict[str, Any], dict[str, "SkillDef"]] | None = None
 
 
@@ -22,14 +20,6 @@ class SkillDef:
     descricao: str
     efeitos: dict[str, Any]
     custo: int = 1
-
-
-def _ler_toml_skils() -> dict[str, Any]:
-    try:
-        dados = tomllib.loads(_ARQ_SKILS.read_text(encoding="utf-8"))
-        return dados if isinstance(dados, dict) else {}
-    except Exception:
-        return {}
 
 
 def _normalizar_skill(skill_id: str, dados: dict[str, Any]) -> SkillDef:
@@ -50,8 +40,8 @@ def _normalizar_skill(skill_id: str, dados: dict[str, Any]) -> SkillDef:
 
 def carregar_definicoes_skills(forcar: bool = False) -> dict[str, SkillDef]:
     global _CACHE_SKILLS
-    if _CACHE_SKILLS is None or forcar:
-        bruto = _ler_toml_skils()
+    bruto = obter_regras_skils()
+    if _CACHE_SKILLS is None or forcar or _CACHE_SKILLS[0] != bruto:
         skills_raw = bruto.get("skills") if isinstance(bruto.get("skills"), dict) else {}
         skills = {str(sid): _normalizar_skill(str(sid), dados) for sid, dados in skills_raw.items() if isinstance(dados, dict)}
         _CACHE_SKILLS = (bruto, skills)
@@ -60,7 +50,8 @@ def carregar_definicoes_skills(forcar: bool = False) -> dict[str, SkillDef]:
 
 def carregar_regras_skils_brutas() -> dict[str, Any]:
     global _CACHE_SKILLS
-    if _CACHE_SKILLS is None:
+    bruto = obter_regras_skils()
+    if _CACHE_SKILLS is None or _CACHE_SKILLS[0] != bruto:
         carregar_definicoes_skills()
     return dict(_CACHE_SKILLS[0]) if _CACHE_SKILLS is not None else {}
 

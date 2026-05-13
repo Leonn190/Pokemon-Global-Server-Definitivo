@@ -634,7 +634,7 @@ grupo = "desbravador"
 sigla = "DB"
 pais = ["coracoes_4"]
 descricao = "Mais 1 segundo de invulnerabilidade e 1 chave inicial em dungeon nova."
-efeitos = { BonusInvulnerabilidadeDungeonSegundos = 1, ChaveInicialDungeonNova = 1 }
+efeitos = { InvulnerabilidadePadraoTicks = 120, ChaveInicialDungeonNova = 1 }
 
 [skills.mochila_1]
 nome = "Mochila I"

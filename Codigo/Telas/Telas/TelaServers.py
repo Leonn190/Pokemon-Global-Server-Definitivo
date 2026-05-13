@@ -7,6 +7,7 @@ from Codigo.Prefabs.Mensagem import Mensagem
 from Codigo.ModulosGerais.Server import GerenciadorServerList as GERENCIADOR_SERVER_LIST
 from Codigo.ModulosGerais.Server.ServerMenu import entrar_server, obter_status_operacao, operar_server
 from Codigo.ModulosGerais.Server.ServerLogin import registrar_server_conta
+from Codigo.ModulosGerais.ModuladorRegras import definir_regras_mundo
 from Codigo.Telas.Telas.TelaConfig import salvar_config_fixa
 from Codigo.Telas.Subtelas.SubtelaCriarPersonagem import SubtelaCriarPersonagem
 from Codigo.Telas.Telas.TelasGenericas import SubtelaConfirmacao, SubtelaEscolha, SubtelaTexto
@@ -194,6 +195,14 @@ def _entrar_server(jogo):
     _iniciar_requisicao("entrar", server.get("id"), usuario, "Conectando ao servidor de jogo...")
 
 
+def _registrar_regras_entrada(jogo, resposta: dict) -> None:
+    regras = resposta.get("regras") if isinstance(resposta, dict) and isinstance(resposta.get("regras"), dict) else {}
+    if not regras:
+        return
+    jogo.INFO["RegrasMundo"] = dict(regras)
+    definir_regras_mundo(regras)
+
+
 def _abrir_subtela_criar_personagem(jogo):
     if _SERVER_SELECIONADO is None:
         return
@@ -207,6 +216,7 @@ def _abrir_subtela_criar_personagem(jogo):
             skin_val = f"{skin_val}.png"
 
         entrada = entrar_server(server.get("id"), usuario)
+        _registrar_regras_entrada(jogo, entrada)
         personagem = entrada.get("personagem") if isinstance(entrada, dict) else None
         if not isinstance(personagem, dict):
             personagem = {}
@@ -500,6 +510,7 @@ def _processar_requisicao(Cena, JOGO):
         return
 
     if payload["tipo"] == "entrar" and sucesso:
+        _registrar_regras_entrada(JOGO, resposta)
         if _SERVER_SELECIONADO is not None:
             server = SERVER_LIST[_SERVER_SELECIONADO]
             JOGO.INFO["ServerSelecionado"] = {

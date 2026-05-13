@@ -22,3 +22,7 @@ CustoStaminaAguaFunda = 16.0
 TapaPorSegundo = 2.0
 RaioTapa = 0.36
 MultiplicadorFerramentaTapa = 1.5
+
+[invulnerabilidade]
+duracao_padrao_ticks = 90
+ticks_por_segundo = 30

@@ -73,6 +73,7 @@ class Perfil:
         self.DescontoLojasPercent = 0.0
         self.MultiplicadorVelocidadeProjetil = 1.0
         self.TeleportadorAtivo = False
+        self.InvulnerabilidadePadraoTicks = 90
         self.BonusInvulnerabilidadeDungeonSegundos = 0
         self.ChaveInicialDungeonNova = 0
         self.MochilaSemLimite = False
@@ -284,7 +285,11 @@ class Perfil:
         self.DescontoLojasPercent = max(0.0, float(self._pegar(dados, "desconto_lojas_percent", "DescontoLojasPercent", padrao=self.DescontoLojasPercent)))
         self.MultiplicadorVelocidadeProjetil = float(self._pegar(dados, "multiplicador_velocidade_projetil", "MultiplicadorVelocidadeProjetil", padrao=self.MultiplicadorVelocidadeProjetil))
         self.TeleportadorAtivo = self._bool_cfg(self._pegar(dados, "teleportador_ativo", "TeleportadorAtivo", padrao=self.TeleportadorAtivo))
+        tem_invulnerabilidade_geral = "invulnerabilidade_padrao_ticks" in dados or "InvulnerabilidadePadraoTicks" in dados
+        self.InvulnerabilidadePadraoTicks = max(1, int(self._pegar(dados, "invulnerabilidade_padrao_ticks", "InvulnerabilidadePadraoTicks", padrao=self.InvulnerabilidadePadraoTicks)))
         self.BonusInvulnerabilidadeDungeonSegundos = max(0, int(self._pegar(dados, "bonus_invulnerabilidade_dungeon_segundos", "BonusInvulnerabilidadeDungeonSegundos", padrao=self.BonusInvulnerabilidadeDungeonSegundos)))
+        if not tem_invulnerabilidade_geral and self.BonusInvulnerabilidadeDungeonSegundos > 0:
+            self.InvulnerabilidadePadraoTicks += self.BonusInvulnerabilidadeDungeonSegundos * 30
         self.ChaveInicialDungeonNova = max(0, int(self._pegar(dados, "chave_inicial_dungeon_nova", "ChaveInicialDungeonNova", padrao=self.ChaveInicialDungeonNova)))
         self.MochilaSemLimite = self._bool_cfg(self._pegar(dados, "mochila_sem_limite", "MochilaSemLimite", padrao=self.MochilaSemLimite))
         self.CapacidadeMochila = max(0, int(self._pegar(dados, "capacidade_mochila", "CapacidadeMochila", padrao=self.CapacidadeMochila)))
@@ -360,6 +365,7 @@ class Perfil:
             "desconto_lojas_percent": self.DescontoLojasPercent,
             "multiplicador_velocidade_projetil": self.MultiplicadorVelocidadeProjetil,
             "teleportador_ativo": bool(self.TeleportadorAtivo),
+            "invulnerabilidade_padrao_ticks": self.InvulnerabilidadePadraoTicks,
             "bonus_invulnerabilidade_dungeon_segundos": self.BonusInvulnerabilidadeDungeonSegundos,
             "chave_inicial_dungeon_nova": self.ChaveInicialDungeonNova,
             "mochila_sem_limite": bool(self.MochilaSemLimite),

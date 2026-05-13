@@ -143,7 +143,7 @@ class CerebroDungeons:
             player.estado_extra["inventario"] = inventario
             chaves_concedidas.append(chave_entrada)
             player.estado_extra["chaves_skill_dungeon_concedidas"] = chaves_concedidas
-        aplicar_invulnerabilidade_player(player, 90, "entrada_dungeon")
+        aplicar_invulnerabilidade_player(player, None, "entrada_dungeon")
         registrar_sala_explorada(player, code_real, str(entrada.get("sala_id") or ""), client_id=str(client_id))
         sx, sy = centro_sala_em_tiles(entrada.get("posicao_sala", [0, 0]))
         BANCO_DADOS.atualizar_objeto(player.Id, {"posicao": [sx, sy], "estado": player.estado_extra})
@@ -897,7 +897,7 @@ class CerebroDungeons:
         player.estado_extra["posicoes_por_dimensao"] = pos_dim
         player.estado_extra["ultima_pos_mundo"] = [float(pos[0]), float(pos[1])]
         limpar_estado_temporario(player)
-        aplicar_invulnerabilidade_player(player, 90, "saida_dungeon")
+        aplicar_invulnerabilidade_player(player, None, "saida_dungeon")
         BANCO_DADOS.atualizar_objeto(player.Id, {"posicao": [float(pos[0]), float(pos[1])], "estado": player.estado_extra})
         atualizar_posicao_personagem(str(player.estado_extra.get("usuario") or ""), [float(pos[0]), float(pos[1])], dimensao="Mundo")
         registrar_checkpoint_mundo_seguro(str(player.estado_extra.get("usuario") or ""), player)

@@ -72,8 +72,14 @@ def carregar_regras_player() -> Dict[str, object]:
         "TapaPorSegundo": 2.0,
         "RaioTapa": 0.36,
         "MultiplicadorFerramentaTapa": 1.5,
+        "InvulnerabilidadePadraoTicks": 90,
+        "InvulnerabilidadeTicksPorSegundo": 30,
     }
-    base.update(_ler_toml("Player.toml"))
+    dados = _ler_toml("Player.toml")
+    base.update(dados)
+    invulnerabilidade = dados.get("invulnerabilidade") if isinstance(dados.get("invulnerabilidade"), dict) else {}
+    base["InvulnerabilidadePadraoTicks"] = _int_cfg(invulnerabilidade, "duracao_padrao_ticks", int(base.get("InvulnerabilidadePadraoTicks", 90) or 90))
+    base["InvulnerabilidadeTicksPorSegundo"] = _int_cfg(invulnerabilidade, "ticks_por_segundo", int(base.get("InvulnerabilidadeTicksPorSegundo", 30) or 30))
     return base
 
 

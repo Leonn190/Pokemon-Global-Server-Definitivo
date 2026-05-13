@@ -172,21 +172,24 @@ class Tooltip:
         largura, altura, espacamento = self._medidas_caixa()
         x, y = self._posicao_caixa(tela, largura, altura, mouse_pos=mouse_pos)
 
-        sombra = pygame.Rect(x + 4, y + 5, largura, altura)
-        caixa = pygame.Rect(x, y, largura, altura)
+        margem_sombra = 10
+        overlay = pygame.Surface((largura + margem_sombra, altura + margem_sombra), pygame.SRCALPHA)
+        sombra = pygame.Rect(4, 5, largura, altura)
+        caixa = pygame.Rect(0, 0, largura, altura)
 
-        pygame.draw.rect(tela, self.CorSombra, sombra, border_radius=self.Raio)
-        pygame.draw.rect(tela, self.CorFundo, caixa, border_radius=self.Raio)
-        pygame.draw.rect(tela, self.CorBorda, caixa, 2, border_radius=self.Raio)
+        pygame.draw.rect(overlay, self.CorSombra, sombra, border_radius=self.Raio)
+        pygame.draw.rect(overlay, self.CorFundo, caixa, border_radius=self.Raio)
+        pygame.draw.rect(overlay, self.CorBorda, caixa, 2, border_radius=self.Raio)
+        tela.blit(overlay, (x, y))
 
-        cy = caixa.y + self.Padding
+        cy = y + self.Padding
         if self.Titulo:
-            self._texto_titulo.set_pos((caixa.x + self.Padding, cy))
+            self._texto_titulo.set_pos((x + self.Padding, cy))
             self._texto_titulo.draw(tela)
             cy += self._texto_titulo.get_rect().height + (6 if self._textos_descricao else 0)
 
         for texto in self._textos_descricao:
-            texto.set_pos((caixa.x + self.Padding, cy))
+            texto.set_pos((x + self.Padding, cy))
             texto.draw(tela)
             cy += texto.get_rect().height + espacamento
         return True

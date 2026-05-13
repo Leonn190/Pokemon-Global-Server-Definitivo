@@ -129,7 +129,7 @@ def processar_entrada_json(requisicao_json):
                 ator.estado_extra["estadio_atual_id"] = estadio_id
                 personagem["estadio_atual_id"] = estadio_id
             registrar_checkpoint_mundo_seguro(usuario, ator)
-            aplicar_invulnerabilidade_player(ator, 90, "entrada_mundo")
+            aplicar_invulnerabilidade_player(ator, None, "entrada_mundo")
             personagem["id"] = ator.Id
             mensagem = "Entrada autorizada: personagem já encontrado no servidor."
         else:
@@ -179,7 +179,7 @@ def processar_entrada_json(requisicao_json):
             pos = personagem.get("posicao", (0.0, 0.0))
             ator = BANCO_DADOS.garantir_player(usuario=usuario, skin=skin, posicao=(float(pos[0]), float(pos[1])))
             registrar_checkpoint_mundo_seguro(usuario, ator)
-            aplicar_invulnerabilidade_player(ator, 90, "entrada_mundo")
+            aplicar_invulnerabilidade_player(ator, None, "entrada_mundo")
             registrar_diff(
                 "spawn",
                 payload=ator.serializar(),

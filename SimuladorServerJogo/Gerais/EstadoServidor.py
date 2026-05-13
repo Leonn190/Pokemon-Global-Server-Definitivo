@@ -500,6 +500,7 @@ def _normalizar_perfil(personagem: dict) -> dict:
         "renda_passiva_xp_taxa": 0,
         "renda_passiva_xp_acumulado": 0,
         "bonus_raio_exploracao_chunks": 0,
+        "invulnerabilidade_padrao_ticks": int(_valor_regra(regras, "InvulnerabilidadePadraoTicks", 90)),
         "bonus_invulnerabilidade_dungeon_segundos": 0,
         "chave_inicial_dungeon_nova": 0,
         "capacidade_mochila": 100,
@@ -507,6 +508,10 @@ def _normalizar_perfil(personagem: dict) -> dict:
     }
     for campo, padrao in defaults_int.items():
         dados[campo] = int(max(0, dados.get(campo, dados.get("".join(p.capitalize() for p in campo.split("_")), padrao)) or 0))
+    if "invulnerabilidade_padrao_ticks" not in personagem and "InvulnerabilidadePadraoTicks" not in personagem:
+        bonus = int(dados.get("bonus_invulnerabilidade_dungeon_segundos", 0) or 0)
+        if bonus > 0:
+            dados["invulnerabilidade_padrao_ticks"] = int(_valor_regra(regras, "InvulnerabilidadePadraoTicks", 90)) + bonus * int(_valor_regra(regras, "InvulnerabilidadeTicksPorSegundo", 30))
 
     defaults_float = {
         "multiplicador_penalidade_agua_rasa": 1.0,
@@ -723,6 +728,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         "renda_passiva_xp_taxa",
         "renda_passiva_xp_acumulado",
         "bonus_raio_exploracao_chunks",
+        "invulnerabilidade_padrao_ticks",
         "bonus_invulnerabilidade_dungeon_segundos",
         "chave_inicial_dungeon_nova",
         "capacidade_mochila",
@@ -1204,13 +1210,14 @@ def player_invulneravel(player, tick: int | None = None) -> bool:
     return atual < int(estado.get("invulneravel_ate_tick", 0) or 0)
 
 
-def aplicar_invulnerabilidade_player(player, ticks: int = 90, motivo: str = "") -> bool:
+def aplicar_invulnerabilidade_player(player, ticks: int | None = None, motivo: str = "") -> bool:
     if player is None or not isinstance(getattr(player, "estado_extra", None), dict):
         return False
     perfil = player.estado_extra.get("perfil") if isinstance(player.estado_extra.get("perfil"), dict) else {}
-    bonus_ticks = int(perfil.get("bonus_invulnerabilidade_dungeon_segundos", 0) or 0) * 30
-    em_dungeon = isinstance(player.estado_extra.get("estado_dungeon"), dict) or str(player.estado_extra.get("dimensao") or "").lower().startswith("dungeon")
-    total_ticks = max(1, int(ticks or 90)) + (bonus_ticks if em_dungeon else 0)
+    if ticks is None or int(ticks or 0) <= 0:
+        regras = carregar_regras_player()
+        ticks = perfil.get("invulnerabilidade_padrao_ticks", perfil.get("InvulnerabilidadePadraoTicks", _valor_regra(regras, "InvulnerabilidadePadraoTicks", 90)))
+    total_ticks = max(1, int(ticks or 90))
     ate = _tick_servidor_atual() + total_ticks
     player.estado_extra["invulneravel_ate_tick"] = max(int(player.estado_extra.get("invulneravel_ate_tick", 0) or 0), ate)
     player.estado_extra["invulneravel_motivo"] = str(motivo or "")
@@ -1248,7 +1255,7 @@ def aplicar_dano_player(player, quantidade: int = 1, motivo: str = "", registrar
     vida["coracoes"] = max(0, int(vida["coracoes"]) - max(1, int(quantidade or 1)))
     _vida_player(player)
     estado["ultimo_dano_motivo"] = str(motivo or "")
-    aplicar_invulnerabilidade_player(player, 90, motivo)
+    aplicar_invulnerabilidade_player(player, None, motivo)
     if int(vida["coracoes"]) <= 0:
         matar_player(player, str(motivo or "sem_coracoes"), registrar_diff=registrar_diff)
         return True
@@ -1416,7 +1423,7 @@ def aplicar_respawn_mundo(usuario, player, motivo="respawn", registrar_diff=None
     if perfil:
         perfil["stamina"] = float(perfil.get("stamina_max", perfil.get("stamina", 100.0)) or 100.0)
         estado["perfil"] = perfil
-    aplicar_invulnerabilidade_player(player, 90, str(motivo or "respawn"))
+    aplicar_invulnerabilidade_player(player, None, str(motivo or "respawn"))
     BANCO_DADOS.atualizar_objeto(int(player.Id), {"posicao": pos, "estado": estado, "perfil": perfil})
     atualizar_posicao_personagem(str(usuario or estado.get("usuario") or ""), pos, dimensao="Mundo")
     if perfil:

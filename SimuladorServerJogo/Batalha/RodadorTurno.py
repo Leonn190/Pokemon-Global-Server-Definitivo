@@ -222,6 +222,21 @@ class RodadorTurno:
                 ctx_alvo["bonus_critico_acerto"] = acerto.get("bonus_critico_acerto", 0.0)
                 if not acerto.get("acertou"):
                     self.partida.registrar_evento_log("ataque_errou", {**self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao, alvo_principal_id=alvo_principal_id), "acerto": acerto})
+                    self.partida.disparar_flag(
+                        "AoErrarAtaque",
+                        {
+                            "partida": self.partida,
+                            "usuario": pokemon,
+                            "alvo": alvo,
+                            "pokemon_evento": pokemon,
+                            "acao": acao,
+                            "ataque": contexto.get("ataque"),
+                            "propriedades": props,
+                            "acerto": acerto,
+                            "reativos_acao": contexto.get("reativos_acao"),
+                        },
+                        reativos=contexto.get("reativos_acao"),
+                    )
                     self._falhar(acao, "ataque_errou", alvo_id=alvo.id_batalha)
                     continue
                 self.partida.registrar_evento_log("ataque_acertou", {**self._dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao, alvo_principal_id=alvo_principal_id), "acerto": acerto})

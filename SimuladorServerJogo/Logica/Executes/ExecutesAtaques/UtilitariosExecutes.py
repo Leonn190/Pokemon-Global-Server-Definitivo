@@ -537,6 +537,98 @@ def dano_direto_vida(ctx, alvo, valor, motivo=None, respeitar_imortal=True):
     return {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0, "direto_vida": True, "imortal_bloqueou": imortal_bloqueou}
 
 
+def dano_fixo_respeitando_barreira(ctx, alvo, valor, motivo=None):
+    usuario = (ctx or {}).get("usuario")
+    if alvo is None or not alvo.esta_vivo():
+        return {"aplicado": False, "motivo": "alvo_invalido", "dano_vida": 0.0, "dano_barreira": 0.0}
+    ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
+    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
+    dano = max(0.0, fnum(valor, 0.0))
+    antes_barreira = fnum(getattr(alvo, "BarreiraAtual", 0.0), 0.0)
+    dano_barreira = min(antes_barreira, dano)
+    alvo.BarreiraAtual = max(0.0, antes_barreira - dano_barreira)
+    restante = max(0.0, dano - dano_barreira)
+    antes_vida = fnum(getattr(alvo, "VidaAtual", 0.0), 0.0)
+    alvo.VidaAtual = max(0.0, antes_vida - restante)
+    dano_vida = max(0.0, antes_vida - alvo.VidaAtual)
+    if hasattr(alvo, "estatisticas_batalha"):
+        alvo.estatisticas_batalha["dano_recebido"] = fnum(alvo.estatisticas_batalha.get("dano_recebido"), 0.0) + dano_vida
+    if usuario is not None and hasattr(usuario, "estatisticas_batalha"):
+        usuario.estatisticas_batalha["dano_causado"] = fnum(usuario.estatisticas_batalha.get("dano_causado"), 0.0) + dano_vida
+    partida = (ctx or {}).get("partida") or getattr(alvo, "partida", None)
+    base_evento = {
+        "alvo_id": getattr(alvo, "id_batalha", None),
+        "alvo_nome": getattr(alvo, "nome", None),
+        "pokemon_id": getattr(alvo, "id_batalha", None),
+        "pokemon_nome": getattr(alvo, "nome", None),
+        "origem_id": getattr(usuario, "id_batalha", None),
+        "origem_nome": getattr(usuario, "nome", None),
+        "critico": False,
+        "tipo": (props.get("parametros") if isinstance(props.get("parametros"), dict) else {}).get("tipo") or props.get("tipo"),
+        "categoria": "fixo",
+        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
+        "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
+        "motivo": motivo or "dano_fixo_respeitando_barreira",
+        "detalhes": {
+            "dano_fixo": round(dano, 4),
+            "ignora_modificadores": True,
+            "respeita_barreira": True,
+        },
+        "calculo": [
+            f"Dano fixo = {round(dano, 4)}",
+            f"Barreira absorvida = {round(dano_barreira, 4)}",
+            f"Dano em vida = {round(dano_vida, 4)}",
+        ],
+    }
+    if partida is not None and hasattr(partida, "registrar_evento_log"):
+        if dano_barreira > 0:
+            partida.registrar_evento_log(
+                "barreira_absorveu",
+                {
+                    **base_evento,
+                    "dano_original": round(dano, 4),
+                    "dano_barreira": round(dano_barreira, 4),
+                    "barreira_antes": round(antes_barreira, 4),
+                    "barreira_depois": round(alvo.BarreiraAtual, 4),
+                },
+            )
+        if dano_vida > 0 or dano <= 0.001:
+            partida.registrar_evento_log(
+                "pokemon_sofreu_dano",
+                {
+                    **base_evento,
+                    "valor": round(dano_vida, 4),
+                    "vida_antes": round(antes_vida, 4),
+                    "vida_depois": round(alvo.VidaAtual, 4),
+                    "dano_barreira": round(dano_barreira, 4),
+                },
+            )
+    retorno = {
+        "aplicado": True,
+        "dano_vida": round(dano_vida, 4),
+        "dano_barreira": round(dano_barreira, 4),
+        "dano_fixo": True,
+        "critico": False,
+    }
+    if alvo.VidaAtual <= 0 and getattr(alvo, "vivo", False):
+        alvo.Morrer({"origem_id": getattr(usuario, "id_batalha", None), "origem": usuario, "ataque_nome": base_evento.get("ataque_nome"), "reativos_acao": (ctx or {}).get("reativos_acao")})
+    if partida is not None and hasattr(partida, "disparar_flag") and dano_vida > 0:
+        flag_ctx = {
+            "partida": partida,
+            "usuario": usuario,
+            "origem": usuario,
+            "alvo": alvo,
+            "pokemon_evento": alvo,
+            "dano_vida": round(dano_vida, 4),
+            "resultado": dict(retorno),
+            "dados_dano": dict(base_evento),
+            "reativos_acao": (ctx or {}).get("reativos_acao"),
+        }
+        partida.disparar_flag("AoReceberDano", flag_ctx, reativos=(ctx or {}).get("reativos_acao"))
+        partida.disparar_flag("AoAplicarDano", {**flag_ctx, "pokemon_evento": usuario}, reativos=(ctx or {}).get("reativos_acao"))
+    return retorno
+
+
 def pokemons_vivos_adjacentes_todos_lados(ctx, area_id, ignorar=None):
     partida = (ctx or {}).get("partida")
     if partida is None or area_id is None:

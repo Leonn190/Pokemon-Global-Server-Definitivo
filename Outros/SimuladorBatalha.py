@@ -45,6 +45,19 @@ ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
     "Golpe Cruel",
     "Fantasma",
     "Azar",
+    "Escama Mistica",
+    "Barragem Draconica",
+    "Rugido",
+    "Garra do Dragao",
+    "Ultraje",
+    "Sopro do Dragao",
+    "Tiro de Escamas",
+    "Sem Fraquezas",
+    "Juramento do Dracomante",
+    "Golpe Destrutivo",
+    "Investida Draconica",
+    "Territorio Sagrado",
+    "Lanca Eterea",
 ]
 
 

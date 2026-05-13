@@ -46,6 +46,200 @@ def critico_simples(usuario, ctx, maximo=None):
     return bool(resolver_critico_contextual(usuario, ctx, maximo=maximo).get("critico"))
 
 
+def parametros_execute(ctx):
+    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
+    return props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+
+
+def parametro_execute(ctx, chave, default):
+    return fnum(parametros_execute(ctx).get(chave), default)
+
+
+def parametro_str_execute(ctx, chave, default=""):
+    return str(parametros_execute(ctx).get(chave, default) or default)
+
+
+def propriedades_ataque_por_code(code):
+    try:
+        from SimuladorServerJogo.Batalha.PropriedadesAtaques import carregar_propriedades_ataques
+
+        return (carregar_propriedades_ataques() or {}).get(str(code or "").strip()) or {}
+    except Exception:
+        return {}
+
+
+def parametro_passiva_ataque(ctx, chave, default):
+    passiva = (ctx or {}).get("passiva")
+    props = propriedades_ataque_por_code(getattr(passiva, "code", None))
+    parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+    return fnum(parametros.get(chave), default)
+
+
+def ctx_passiva_ataque(ctx, dono, fallback):
+    passiva = (ctx or {}).get("passiva")
+    code = getattr(passiva, "code", None)
+    props = propriedades_ataque_por_code(code)
+    return {
+        **dict(ctx or {}),
+        "usuario": dono,
+        "ataque": {"ID": code, "Code": code, "Nome": props.get("nome") or fallback},
+        "propriedades": props,
+    }
+
+
+def dados_ataque_contexto(ctx, fallback):
+    ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
+    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
+    return {
+        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
+        "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome") or fallback,
+    }
+
+
+def registrar_log_execute(ctx, tipo, dados):
+    partida = (ctx or {}).get("partida")
+    if partida is not None and hasattr(partida, "registrar_evento_log"):
+        partida.registrar_evento_log(tipo, dados)
+
+
+def efeito_eh_negativo(efeito, lista_negativos=None):
+    nome = normalizar((efeito or {}).get("nome") or (efeito or {}).get("code"))
+    tipo = str((efeito or {}).get("tipo") or "").strip().lower()
+    negativos = {normalizar(item) for item in list(lista_negativos or [])}
+    return tipo == "negativo" or nome in negativos
+
+
+def efeito_eh_positivo(efeito):
+    return str((efeito or {}).get("tipo") or "").strip().lower() == "positivo"
+
+
+def passos_positivos_efeito(efeito):
+    if bool((efeito or {}).get("permanente")):
+        return 0
+    return max(0, int(fnum((efeito or {}).get("passos_restantes"), 0.0)))
+
+
+def adicionar_efeito_formal_preservado(ctx, alvo, efeito, origem=None):
+    if alvo is None or not isinstance(efeito, dict):
+        return {"aplicado": False, "motivo": "efeito_invalido"}
+    formal = copy.deepcopy(efeito)
+    alvo.efeitos_formais.append(formal)
+    if hasattr(alvo, "recalcular_atributos"):
+        alvo.recalcular_atributos()
+    registrar_log_execute(
+        ctx,
+        "pokemon_recebeu_efeito",
+        {
+            "pokemon_id": getattr(alvo, "id_batalha", None),
+            "pokemon_nome": getattr(alvo, "nome", None),
+            "efeito_nome": formal.get("nome"),
+            "efeito_code": formal.get("code"),
+            "tipo": formal.get("tipo"),
+            "passos_restantes": formal.get("passos_restantes"),
+            "passos_totais": formal.get("passos_totais"),
+            "stacks": formal.get("stacks", 1),
+            "origem_id": getattr(origem, "id_batalha", None),
+            "origem_nome": getattr(origem, "nome", None),
+            "efeito": copy.deepcopy(formal),
+        },
+    )
+    return {"aplicado": True, "efeito": formal}
+
+
+def remover_efeito_formal(ctx, alvo, efeito, origem=None, motivo=None):
+    if alvo is None or not isinstance(efeito, dict):
+        return False
+    removido = False
+    restantes = []
+    for atual in list(getattr(alvo, "efeitos_formais", []) or []):
+        if not removido and atual is efeito:
+            removido = True
+            continue
+        restantes.append(atual)
+    if not removido:
+        chave = normalizar(efeito.get("code") or efeito.get("nome"))
+        restantes = []
+        for atual in list(getattr(alvo, "efeitos_formais", []) or []):
+            if not removido and normalizar((atual or {}).get("code") or (atual or {}).get("nome")) == chave:
+                removido = True
+                continue
+            restantes.append(atual)
+    if not removido:
+        return False
+    alvo.efeitos_formais = restantes
+    if hasattr(alvo, "recalcular_atributos"):
+        alvo.recalcular_atributos()
+    registrar_log_execute(
+        ctx,
+        "pokemon_removeu_efeito",
+        {
+            "pokemon_id": getattr(alvo, "id_batalha", None),
+            "pokemon_nome": getattr(alvo, "nome", None),
+            "efeito_nome": efeito.get("nome") or efeito.get("code"),
+            "passos_removidos": passos_positivos_efeito(efeito),
+            "origem_id": getattr(origem, "id_batalha", None),
+            "origem_nome": getattr(origem, "nome", None),
+            "motivo": motivo,
+            **dados_ataque_contexto(ctx, motivo or "Ataque"),
+        },
+    )
+    return True
+
+
+def remover_efeitos_negativos(ctx, alvo, lista_negativos, origem=None, motivo=None):
+    removidos = []
+    restantes = []
+    passos = 0
+    for efeito in list(getattr(alvo, "efeitos_formais", []) or []):
+        if efeito_eh_negativo(efeito, lista_negativos):
+            removidos.append(copy.deepcopy(efeito))
+            passos += passos_positivos_efeito(efeito)
+        else:
+            restantes.append(efeito)
+    alvo.efeitos_formais = restantes
+    if removidos and hasattr(alvo, "recalcular_atributos"):
+        alvo.recalcular_atributos()
+    for efeito in removidos:
+        registrar_log_execute(
+            ctx,
+            "pokemon_removeu_efeito",
+            {
+                "pokemon_id": getattr(alvo, "id_batalha", None),
+                "pokemon_nome": getattr(alvo, "nome", None),
+                "efeito_nome": efeito.get("nome") or efeito.get("code"),
+                "passos_removidos": passos_positivos_efeito(efeito),
+                "origem_id": getattr(origem, "id_batalha", None),
+                "origem_nome": getattr(origem, "nome", None),
+                "motivo": motivo,
+                **dados_ataque_contexto(ctx, motivo or "Ataque"),
+            },
+        )
+    return {"removidos": len(removidos), "passos": passos, "efeitos": removidos}
+
+
+def numero_area_batalha(area_id):
+    try:
+        return int(str(area_id or "")[1:])
+    except (TypeError, ValueError):
+        return None
+
+
+def inicio_fileira_area(area_id):
+    area = str(area_id or "").strip().upper()
+    if len(area) < 2:
+        return None
+    numero = numero_area_batalha(area)
+    if numero is None:
+        return None
+    if 1 <= numero <= 3:
+        return f"{area[0]}1"
+    if 4 <= numero <= 6:
+        return f"{area[0]}4"
+    if 7 <= numero <= 9:
+        return f"{area[0]}7"
+    return None
+
+
 def dano_generico(ctx, alvo, bruto, categoria="normal", **extra):
     usuario = (ctx or {}).get("usuario")
     if usuario is None or alvo is None:

@@ -2,100 +2,232 @@
   "schema_version": 1,
   "tipo": "fantasma",
   "ataques": {
-    "60": {
-      "ID": 60,
+    "237": {
+      "ID": 237,
       "nome": "Selar Arcano",
       "custo": 35,
+      "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Raio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_selar_arcano",
-      "parametros": {
-        "tipo": "fantasma",
-        "atributo": "Mag",
-        "percentual_alvo": 0.1,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "descricao": "O inimigo perde Mag baseada na Mag do alvo e na Mag do usuario.",
+      "parametros": {"tipo": "fantasma", "mag_alvo_pct": 0.10, "mag_usuario_pct": 0.10},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "61": {
-      "ID": 61,
+    "238": {
+      "ID": 238,
       "nome": "Desorientar",
       "custo": 30,
+      "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Salto",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_desorientar",
-      "parametros": {
-        "tipo": "fantasma",
-        "atributo": "Int",
-        "percentual_alvo": 0.1,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "descricao": "O inimigo perde Int baseada na Int do alvo e na Mag do usuario.",
+      "parametros": {"tipo": "fantasma", "int_alvo_pct": 0.10, "mag_usuario_pct": 0.10},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "62": {
-      "ID": 62,
+    "239": {
+      "ID": 239,
+      "nome": "Atravessar",
+      "custo": 45,
+      "custo_ap": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_atravessar",
+      "descricao": "Causa dano especial e rouba um efeito positivo aleatorio do alvo.",
+      "parametros": {"tipo": "fantasma", "spa_pct": 0.40, "qtd_efeitos_roubar": 1, "tipo_efeito_roubado": "positivo"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "240": {
+      "ID": 240,
+      "nome": "Lambida",
+      "custo": 35,
+      "custo_ap": 45,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_lambida",
+      "descricao": "Causa dano normal. Neste ataque, o Vamp do usuario conta em dobro.",
+      "parametros": {"tipo": "fantasma", "atk_pct": 0.65, "vamp_mult": 2.0},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "241": {
+      "ID": 241,
+      "nome": "Toque do Medo",
+      "custo": 35,
+      "custo_ap": 45,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_toque_do_medo",
+      "descricao": "Causa dano especial dobrado se o alvo estiver Paralisado.",
+      "parametros": {"tipo": "fantasma", "spa_pct": 0.40, "mult_alvo_paralisado": 2.0},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "242": {
+      "ID": 242,
+      "nome": "Susto",
+      "custo": 45,
+      "custo_ap": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_susto",
+      "descricao": "Causa dano normal. Forca critico contra alvo Dormindo ou em Nevoa; critico aplica Paralisado.",
+      "parametros": {"tipo": "fantasma", "atk_pct": 0.60, "critico_se_alvo_dormindo": true, "critico_se_clima": "Névoa", "efeito_critico": "Paralisado"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "243": {
+      "ID": 243,
+      "nome": "Maldade",
+      "custo": 35,
+      "custo_ap": 40,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_maldade",
+      "descricao": "Aplica um efeito negativo aleatorio no alvo.",
+      "parametros": {"tipo": "fantasma", "qtd_efeitos_negativos": 1},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "244": {
+      "ID": 244,
+      "nome": "Golpe Espelhado",
+      "custo": 50,
+      "custo_ap": 60,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_golpe_espelhado",
+      "descricao": "Causa dano especial maior se usuario e alvo estiverem em areas de mesmo numero.",
+      "parametros": {"tipo": "fantasma", "spa_pct": 0.75, "mult_mesmo_numero_area": 1.50},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "245": {
+      "ID": 245,
+      "nome": "Mão Espectral",
+      "custo": 65,
+      "custo_ap": 75,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_mao_espectral",
+      "descricao": "Causa dano especial e move o alvo para o inicio da fileira da arena dele.",
+      "parametros": {"tipo": "fantasma", "spa_pct": 0.70, "mult_dano_ocupante_destino": 1.20, "mover_para_inicio_fileira": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "246": {
+      "ID": 246,
+      "nome": "Pulso de Plasma",
+      "custo": 50,
+      "custo_ap": 60,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_pulso_de_plasma",
+      "descricao": "Causa dano especial e aplica Enfraquecido se for critico.",
+      "parametros": {"tipo": "fantasma", "spa_pct": 0.85, "efeito_critico": "Enfraquecido"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "247": {
+      "ID": 247,
+      "nome": "Devorador de Pecados",
+      "custo": 55,
+      "custo_ap": 65,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_devorador_de_pecados",
+      "descricao": "Remove efeitos negativos do alvo e converte passos removidos em Vamp permanente.",
+      "parametros": {"tipo": "fantasma", "vamp_por_passo": 3, "vamp_max": 30},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["qualquer_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "248": {
+      "ID": 248,
+      "nome": "Maldição",
+      "custo": 50,
+      "custo_ap": 60,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_maldicao",
+      "descricao": "Aplica Amaldicoado no alvo.",
+      "parametros": {"tipo": "fantasma", "efeito": "Amaldiçoado"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "249": {
+      "ID": 249,
+      "nome": "Jogada de Sorte",
+      "custo": 35,
+      "custo_ap": 45,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_jogada_de_sorte",
+      "descricao": "Tem chance alta de nao fazer nada; se funcionar, causa dano normal alto.",
+      "parametros": {"tipo": "fantasma", "chance_nao_fazer_nada": 0.70, "atk_pct": 1.60},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "250": {
+      "ID": 250,
+      "nome": "Ataque Fantasmagórico",
+      "custo": 65,
+      "custo_ap": 75,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_ataque_fantasmagorico",
+      "descricao": "Causa dano especial com bonus se o alvo estiver Amaldicoado e se houver Nevoa.",
+      "parametros": {"tipo": "fantasma", "spa_pct": 0.85, "bonus_alvo_amaldicoado": 0.35, "bonus_clima_nevoa": 0.25},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "251": {
+      "ID": 251,
+      "nome": "Sede de Sangue",
+      "custo": 30,
+      "custo_ap": 35,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_sede_de_sangue_fantasma",
+      "descricao": "O usuario ganha Vamp baseado em Mag.",
+      "parametros": {"tipo": "fantasma", "mag_pct": 0.25}
+    },
+    "252": {
+      "ID": 252,
+      "nome": "Explosão Fantasma",
+      "custo": 70,
+      "custo_ap": 80,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_explosao_fantasma",
+      "descricao": "Causa dano especial no alvo principal, dano real reduzido aos adjacentes e Vampirico neles.",
+      "parametros": {"tipo": "fantasma", "spa_pct": 0.90, "splash_dano_real_pct": 0.10, "efeito_adjacentes": "Vampírico"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "253": {
+      "ID": 253,
+      "nome": "Golpe Cruel",
+      "custo": 55,
+      "custo_ap": 65,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_golpe_cruel",
+      "descricao": "Causa dano normal maior conforme passos positivos de efeitos negativos no alvo.",
+      "parametros": {"tipo": "fantasma", "atk_pct": 0.70, "bonus_por_passo_negativo": 0.03, "max_passos_considerados": 25},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "254": {
+      "ID": 254,
+      "nome": "Fantasma",
+      "custo": 0,
+      "custo_ap": 0,
+      "estilo_logico": "passivo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_fantasma",
+      "descricao": "O usuario perde Acuracia e Amp, mas fica Furtivo permanentemente.",
+      "parametros": {"tipo": "fantasma", "perda_acuracia": 25, "perda_amp": 25, "efeito_permanente": "Furtivo"}
+    },
+    "255": {
+      "ID": 255,
       "nome": "Azar",
       "custo": 30,
+      "custo_ap": 35,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_azar",
-      "parametros": {
-        "tipo": "fantasma",
-        "atributo": "CrC",
-        "valor_base": 5.0,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "descricao": "O inimigo perde CrC baseado em valor fixo e Mag do usuario.",
+      "parametros": {"tipo": "fantasma", "perda_fixa_crc": 5, "mag_usuario_pct": 0.10},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     }
   },
-  "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
+  "_comentario": "Ataques fantasma Code 237 a 255 sincronizados com o CSV."
 }

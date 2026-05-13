@@ -25,22 +25,26 @@ from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_cliente_mund
 
 PERMITIR_ATAQUES_FORA_DA_LISTA_OBRIGATORIA = False
 ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
-    "Confusão",
-    "Teleporte",
-    "Olho Que Tudo Vê",
-    "Toque Mental",
-    "Cabeçada Zen",
-    "Super Meditação",
-    "Distúrbio",
-    "Proteção Mental",
-    "Turbomente",
-    "Teletransporte",
-    "Transferência Mental",
-    "Ataque Psicológico",
-    "Ultrapsíquico",
-    "Instinto",
-    "Raio Psíquico",
-    "Barragem Mental",
+
+    "Selar Arcano",
+    "Desorientar",
+    "Atravessar",
+    "Lambida",
+    "Toque do Medo",
+    "Susto",
+    "Maldade",
+    "Golpe Espelhado",
+    "Mão Espectral",
+    "Pulso de Plasma",
+    "Devorador de Pecados",
+    "Maldição",
+    "Jogada de Sorte",
+    "Ataque Fantasmagórico",
+    "Sede de Sangue",
+    "Explosão Fantasma",
+    "Golpe Cruel",
+    "Fantasma",
+    "Azar",
 ]
 
 

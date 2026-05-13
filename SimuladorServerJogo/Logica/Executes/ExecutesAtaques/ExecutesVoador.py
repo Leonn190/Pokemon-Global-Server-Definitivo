@@ -264,7 +264,7 @@ def _calcular_acerto(ctx, usuario, alvo):
 
 def _exec_voar(ctx, alvo):
     usuario = ctx.get("usuario")
-    return aplicar_status(ctx, usuario, _param_str(ctx, "efeito", "Voando"), duracao=_param(ctx, "duracao", 6), negativo=False)
+    return aplicar_status(ctx, usuario, _param_str(ctx, "efeito", "Voando"), negativo=False)
 
 
 def _exec_olho_de_aguia(ctx, alvo):
@@ -309,7 +309,7 @@ def _exec_voo_alto(ctx, alvo):
     condicao = usuario.possui_efeito(efeito_condicao)
     efeito = None
     if condicao or critico_ctx.get("critico"):
-        efeito = aplicar_status(ctx, usuario, efeito_ganho, duracao=_param(ctx, "duracao", 6), negativo=False)
+        efeito = aplicar_status(ctx, usuario, efeito_ganho, negativo=False)
     return {"aplicado": True, "condicao_ativa": condicao, "critico_contextual": critico_ctx, "efeito": efeito}
 
 
@@ -362,7 +362,7 @@ def _exec_tornadinho_amigo(ctx, alvo):
     usuario = ctx.get("usuario")
     if alvo is None or getattr(alvo, "id_batalha", None) == getattr(usuario, "id_batalha", None):
         return {"falha": True, "motivo": "alvo_usuario_nao_permitido"}
-    return aplicar_status(ctx, alvo, _param_str(ctx, "efeito", "Voando"), duracao=_param(ctx, "duracao", 6), negativo=False)
+    return aplicar_status(ctx, alvo, _param_str(ctx, "efeito", "Voando"), negativo=False)
 
 
 def _exec_voo_estrategico(ctx, alvo):
@@ -370,7 +370,7 @@ def _exec_voo_estrategico(ctx, alvo):
     area_destino = _destino_movimento(ctx)
     if not _destino_valido_mesmo_lado(ctx, usuario, area_destino):
         return {"falha": True, "motivo": "destino_invalido"}
-    efeito = aplicar_status(ctx, usuario, _param_str(ctx, "efeito", "Voando"), duracao=_param(ctx, "duracao", 6), negativo=False)
+    efeito = aplicar_status(ctx, usuario, _param_str(ctx, "efeito", "Voando"), negativo=False)
     movimento = _mover_para_destino(ctx, usuario, area_destino, "Voo Estrategico")
     if movimento.get("falha"):
         return movimento

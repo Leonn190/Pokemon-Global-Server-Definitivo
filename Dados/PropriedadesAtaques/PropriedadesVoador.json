@@ -10,7 +10,7 @@
       "estilo_logico": "ativo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_voar",
-      "parametros": {"tipo": "voador", "efeito": "Voando", "duracao": 6}
+      "parametros": {"tipo": "voador", "efeito": "Voando"}
     },
     "174": {
       "ID": 174,
@@ -43,7 +43,7 @@
       "estilo_logico": "ativo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_voo_alto",
-      "parametros": {"tipo": "voador", "chance_erro_natural": 15, "efeito_condicao": "Voando", "efeito_ganho": "Evasivo", "duracao": 6}
+      "parametros": {"tipo": "voador", "chance_erro_natural": 15, "efeito_condicao": "Voando", "efeito_ganho": "Evasivo"}
     },
     "177": {
       "ID": 177,
@@ -76,7 +76,7 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "Vento"},
       "execute_principal": "ataque_tornadinho_amigo",
-      "parametros": {"tipo": "voador", "efeito": "Voando", "duracao": 6},
+      "parametros": {"tipo": "voador", "efeito": "Voando"},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
     "180": {
@@ -89,7 +89,7 @@
       "permite_area_vazia": true,
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_voo_estrategico",
-      "parametros": {"tipo": "voador", "efeito": "Voando", "duracao": 6, "permite_area_vazia": true},
+      "parametros": {"tipo": "voador", "efeito": "Voando", "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "181": {
@@ -113,8 +113,8 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Avan\u00e7o", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
       "execute_principal": "ataque_bico_broca",
-      "parametros": {"tipo": "voador", "categoria": "normal", "mult_atk": 0.45, "mult_per": 2.00},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "voador", "categoria": "normal", "mult_atk": 0.45, "mult_per": 2.00, "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "183": {
       "ID": 183,
@@ -124,8 +124,8 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Avan\u00e7o", "efeito_executor": null, "efeito_alvo": "Vento"},
       "execute_principal": "ataque_golpe_de_asa",
-      "parametros": {"tipo": "voador", "categoria": "normal", "mult_atk": 0.85, "efeito_condicao": "Voando", "mult_voando": 0.75},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "voador", "categoria": "normal", "mult_atk": 0.85, "efeito_condicao": "Voando", "mult_voando": 0.75, "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "184": {
       "ID": 184,

@@ -12,7 +12,7 @@
       "estilo_logico": "alvo",
       "execute_principal": "executar_confusao",
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": "Confuso", "projetil": "Generico"},
-      "parametros": {"tipo": "psiquico", "efeito": "Confuso", "duracao": 6, "negativo": true},
+      "parametros": {"tipo": "psiquico", "efeito": "Confuso", "negativo": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
     "193": {
@@ -164,8 +164,8 @@
       "estilo_logico": "alvo",
       "execute_principal": "executar_ataque_psicologico",
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "categoria": "especial", "mult_spa": 0.35, "mult_int": 0.9},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "psiquico", "categoria": "especial", "mult_spa": 0.35, "mult_int": 0.9, "permite_area_vazia": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "204": {
       "ID": 204,
@@ -217,54 +217,6 @@
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
       "parametros": {"tipo": "psiquico", "percentual_mag": 0.18, "percentual_int": 0.1},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
-    },
-    "53": {
-      "ID": 53,
-      "Code": 53,
-      "nome": "Flutuar",
-      "custo": 40,
-      "custo_ap": 0,
-      "estilo_logico": "ativo",
-      "execute_principal": "ataque_flutuar",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "efeito": "Flutuando", "duracao": 6, "negativo": false}
-    },
-    "56": {
-      "ID": 56,
-      "Code": 56,
-      "nome": "Flutuante",
-      "custo": 0,
-      "custo_ap": 0,
-      "estilo_logico": "passivo",
-      "execute_principal": "ataque_flutuante",
-      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
-      "parametros": {"tipo": "psiquico", "efeito": "Flutuando", "permanente": true}
-    },
-    "59": {
-      "ID": 59,
-      "Code": 59,
-      "nome": "Véu Arcano",
-      "custo": 40,
-      "custo_ap": 0,
-      "estilo_logico": "alvo",
-      "execute_principal": "ataque_veu_arcano",
-      "descricao": "O alvo ganha uma barreira equivalente a (20% de Mag) + (12% de SpA).",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
-      "parametros": {"tipo": "psiquico", "percentual_mag": 0.2, "atributo": "SpA", "percentual_usuario_atributo": 0.12},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
-    },
-    "60": {
-      "ID": 60,
-      "Code": 60,
-      "nome": "Mente Protetora",
-      "custo": 35,
-      "custo_ap": 0,
-      "estilo_logico": "alvo",
-      "execute_principal": "ataque_mente_protetora",
-      "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (10% de Int).",
-      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
-      "parametros": {"tipo": "psiquico", "percentual_mag": 0.18, "atributo": "Int", "percentual_usuario_atributo": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     }
   },
   "_comentario": "Ataques psiquicos do CSV oficial. Custo AP foi mantido em custo_ap, sem alterar acuracia."

@@ -5,7 +5,6 @@ import copy
 from SimuladorServerJogo.Batalha.PropriedadesAtaques import carregar_propriedades_ataques
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import (
     aplicar_mod_atributo,
-    aplicar_passiva_permanente,
     aplicar_status,
     dano_generico,
     execute_passiva_nao_manual,
@@ -233,8 +232,7 @@ def _transferir_efeito_temporario(ctx, origem, destino, efeito, bonus_passos, mo
 
 
 def executar_confusao(ctx, alvo):
-    duracao = int(_param(ctx, "duracao", 6))
-    return aplicar_status(ctx, alvo, "Confuso", duracao=duracao, negativo=True)
+    return aplicar_status(ctx, alvo, "Confuso", negativo=True)
 
 
 def executar_teleporte(ctx, alvo):
@@ -327,7 +325,9 @@ def executar_teletransporte(ctx, alvo):
     destino = (_areas_selecionadas(ctx, grupo=1) or [None])[0]
     if partida is None or not origem or not destino or not partida.area_existe(origem) or not partida.area_existe(destino):
         return {"falha": True, "motivo": "area_invalida"}
-    if _area_lado(partida, origem) != _area_lado(partida, destino):
+    lado_origem = _area_lado(partida, origem)
+    lado_destino = _area_lado(partida, destino)
+    if lado_origem is None or lado_destino is None or lado_origem != lado_destino:
         return {"falha": True, "motivo": "areas_de_lados_diferentes"}
     pokemon_origem = partida.pokemon_na_area(origem)
     if pokemon_origem is None or not pokemon_origem.esta_vivo() or getattr(pokemon_origem, "reserva", False) or not getattr(pokemon_origem, "ativo", False):
@@ -420,10 +420,6 @@ def executar_barragem_mental(ctx, alvo):
     return usuario.AplicarBarreira(alvo, valor, dados=dados)
 
 
-def _passiva_flutuante(ctx):
-    return aplicar_passiva_permanente(ctx, "Flutuando")
-
-
 def _passiva_olho_que_tudo_ve(ctx):
     dono = (ctx or {}).get("dono_passiva") or (ctx or {}).get("pokemon_evento")
     partida = (ctx or {}).get("partida")
@@ -482,26 +478,14 @@ _EXECUTES = {
     "executarraiopsiquico": executar_raio_psiquico,
     "barragemmental": executar_barragem_mental,
     "executarbarragemmental": executar_barragem_mental,
-    "flutuar": lambda ctx, alvo: aplicar_status(ctx, ctx.get("usuario"), "Flutuando", duracao=6, negativo=False),
-    "flutuante": execute_passiva_nao_manual,
-    "veuarcano": lambda ctx, alvo: ctx.get("usuario").AplicarBarreira(alvo or ctx.get("usuario"), max(0.0, ctx.get("usuario").obter_atributo("Mag") * 0.20 + ctx.get("usuario").obter_atributo("SpA") * 0.12), dados={"ataque": "Véu Arcano", "ataque_id": 59, "ataque_nome": "Véu Arcano", "reativos_acao": ctx.get("reativos_acao")}),
-    "menteprotetora": lambda ctx, alvo: ctx.get("usuario").AplicarBarreira(alvo or ctx.get("usuario"), max(0.0, ctx.get("usuario").obter_atributo("Mag") * 0.18 + ctx.get("usuario").obter_atributo("Int") * 0.10), dados={"ataque": "Mente Protetora", "ataque_id": 60, "ataque_nome": "Mente Protetora", "reativos_acao": ctx.get("reativos_acao")}),
 }
 
 _PASSIVAS_ATAQUE = [
-    {"nome": "Flutuante", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_flutuante, "origem": "ataque", "code": "56"},
     {"nome": "Olho Que Tudo Vê", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_olho_que_tudo_ve, "origem": "ataque", "code": "194"},
     {"nome": "Turbomente", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_turbomente, "origem": "ataque", "code": "200"},
 ]
 
 _ALIASES = {
-    "52": "confusao",
-    "53": "flutuar",
-    "54": "instinto",
-    "55": "raiopsiquico",
-    "56": "flutuante",
-    "59": "veuarcano",
-    "60": "menteprotetora",
     "192": "confusao",
     "193": "teleporte",
     "194": "olhoquetudove",

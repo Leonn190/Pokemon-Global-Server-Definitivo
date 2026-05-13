@@ -58,7 +58,8 @@
         "categoria": "especial",
         "dano_spa_pct": 0.35,
         "dano_spa_pct_tempestade_areia": 0.7,
-        "def_debuff_tempestade_areia_pct": 0.08
+        "def_debuff_tempestade_areia_pct": 0.08,
+        "permite_area_vazia": true
       },
       "alvificacao": {
         "alvos": [
@@ -68,7 +69,7 @@
             "lados_permitidos": [
               "lado_oposto"
             ],
-            "exige_area_ocupada": true,
+            "exige_area_ocupada": false,
             "inclui_reserva": false
           }
         ]
@@ -94,7 +95,8 @@
         "categoria": "normal",
         "dano_atk_pct": 0.75,
         "bonus_terreno_alvo_pct": 0.25,
-        "bonus_terreno_usuario_pct": 0.25
+        "bonus_terreno_usuario_pct": 0.25,
+        "permite_area_vazia": true
       },
       "alvificacao": {
         "alvos": [
@@ -104,7 +106,7 @@
             "lados_permitidos": [
               "lado_oposto"
             ],
-            "exige_area_ocupada": true,
+            "exige_area_ocupada": false,
             "inclui_reserva": false
           }
         ]
@@ -210,7 +212,8 @@
         "categoria": "normal",
         "dano_atk_pct": 0.6,
         "dano_vida_atual_usuario_pct": 0.2,
-        "recoil_vida_atual_usuario_pct": 0.08
+        "recoil_vida_atual_usuario_pct": 0.08,
+        "permite_area_vazia": true
       },
       "alvificacao": {
         "alvos": [
@@ -220,7 +223,7 @@
             "lados_permitidos": [
               "lado_oposto"
             ],
-            "exige_area_ocupada": true,
+            "exige_area_ocupada": false,
             "inclui_reserva": false
           }
         ]
@@ -249,7 +252,8 @@
         "mag_debuff_pct": 0.08,
         "vel_debuff_pct": 0.1,
         "mag_debuff_critico_pct": 0.12,
-        "vel_debuff_critico_pct": 0.15
+        "vel_debuff_critico_pct": 0.15,
+        "permite_area_vazia": true
       },
       "alvificacao": {
         "alvos": [
@@ -259,7 +263,7 @@
             "lados_permitidos": [
               "lado_oposto"
             ],
-            "exige_area_ocupada": true,
+            "exige_area_ocupada": false,
             "inclui_reserva": false
           }
         ]

@@ -317,22 +317,6 @@ _EXECUTES = {
 }
 
 _ALIASES = {
-    "47": "racharterra",
-    "48": "poeiranosolhos",
-    "133": "areia",
-    "134": "rachadura",
-    "135": "dominiodosolo",
-    "136": "dancadaareia",
-    "137": "golpedeossos",
-    "138": "quedasismica",
-    "139": "tirodelama",
-    "140": "tremorfocalizado",
-    "141": "tremor",
-    "142": "quebrachao",
-    "143": "fissura",
-    "146": "terremoto",
-    "147": "racharterra",
-    "148": "poeiranosolhos",
     "159": "racharterra",
     "160": "areia",
     "161": "rachadura",

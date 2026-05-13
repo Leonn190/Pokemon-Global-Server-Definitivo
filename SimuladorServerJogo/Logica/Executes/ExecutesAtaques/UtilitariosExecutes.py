@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import unicodedata
 
 
@@ -216,6 +217,20 @@ def pokemons_ativos_em_campo(partida, filtro_lado=None):
     return saida
 
 
+def adjacentes_todos_lados(area_id):
+    area = str(area_id or "").upper()
+    if area not in _AREAS_BATALHA:
+        return []
+    linha_base, coluna_base = _AREAS_BATALHA[area]
+    saida = []
+    for chave, (linha, coluna) in _AREAS_BATALHA.items():
+        if chave == area:
+            continue
+        if abs(linha - linha_base) <= 1 and abs(coluna - coluna_base) <= 1:
+            saida.append(chave)
+    return saida
+
+
 def dano_puro_ignorando_barreira(ctx, alvo, valor, reducao_dur=True):
     usuario = (ctx or {}).get("usuario")
     if alvo is None or not alvo.esta_vivo():
@@ -281,6 +296,150 @@ def dano_puro_ignorando_barreira(ctx, alvo, valor, reducao_dur=True):
         partida.disparar_flag("AoReceberDano", flag_ctx, reativos=(ctx or {}).get("reativos_acao"))
         partida.disparar_flag("AoAplicarDano", {**flag_ctx, "pokemon_evento": usuario}, reativos=(ctx or {}).get("reativos_acao"))
     return retorno
+
+
+def dano_direto_vida(ctx, alvo, valor, motivo=None, respeitar_imortal=True):
+    usuario = (ctx or {}).get("usuario")
+    if alvo is None or not alvo.esta_vivo():
+        return {"aplicado": False, "motivo": "alvo_invalido", "dano_vida": 0.0}
+    ataque = (ctx or {}).get("ataque") if isinstance((ctx or {}).get("ataque"), dict) else {}
+    props = (ctx or {}).get("propriedades") if isinstance((ctx or {}).get("propriedades"), dict) else {}
+    dano = max(0.0, fnum(valor, 0.0))
+    antes = fnum(getattr(alvo, "VidaAtual", 0.0), 0.0)
+    vida_depois = max(0.0, antes - dano)
+    imortal_bloqueou = False
+    if respeitar_imortal and vida_depois <= 0 and hasattr(alvo, "possui_efeito") and alvo.possui_efeito("Imortal"):
+        vida_depois = min(max(1.0, vida_depois), max(1.0, alvo.obter_atributo("Vida", 1.0)))
+        imortal_bloqueou = True
+    alvo.VidaAtual = vida_depois
+    dano_vida = max(0.0, antes - alvo.VidaAtual)
+    if hasattr(alvo, "estatisticas_batalha"):
+        alvo.estatisticas_batalha["dano_recebido"] = fnum(alvo.estatisticas_batalha.get("dano_recebido"), 0.0) + dano_vida
+    partida = (ctx or {}).get("partida") or getattr(alvo, "partida", None)
+    dados = {
+        "alvo_id": getattr(alvo, "id_batalha", None),
+        "alvo_nome": getattr(alvo, "nome", None),
+        "pokemon_id": getattr(alvo, "id_batalha", None),
+        "pokemon_nome": getattr(alvo, "nome", None),
+        "origem_id": getattr(usuario, "id_batalha", None),
+        "origem_nome": getattr(usuario, "nome", None),
+        "valor": round(dano_vida, 4),
+        "vida_antes": round(antes, 4),
+        "vida_depois": round(alvo.VidaAtual, 4),
+        "critico": False,
+        "tipo": (props.get("parametros") if isinstance(props.get("parametros"), dict) else {}).get("tipo") or props.get("tipo"),
+        "categoria": "direto",
+        "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
+        "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
+        "motivo": motivo or "dano_direto_vida",
+        "ignora_barreira": True,
+        "ignora_defesa": True,
+        "imortal_bloqueou": imortal_bloqueou,
+    }
+    if partida is not None and hasattr(partida, "registrar_evento_log") and (dano_vida > 0 or dano > 0):
+        partida.registrar_evento_log("pokemon_sofreu_dano", dados)
+    if alvo.VidaAtual <= 0 and getattr(alvo, "vivo", False):
+        alvo.Morrer({"origem_id": getattr(usuario, "id_batalha", None), "origem": usuario, "ataque_nome": dados.get("ataque_nome"), "reativos_acao": (ctx or {}).get("reativos_acao")})
+    return {"aplicado": True, "dano_vida": round(dano_vida, 4), "dano_barreira": 0.0, "direto_vida": True, "imortal_bloqueou": imortal_bloqueou}
+
+
+def pokemons_vivos_adjacentes_todos_lados(ctx, area_id, ignorar=None):
+    partida = (ctx or {}).get("partida")
+    if partida is None or area_id is None:
+        return []
+    saida = []
+    vistos = set()
+    for area_adjacente in adjacentes_todos_lados(area_id):
+        pokemon = partida.pokemon_na_area(area_adjacente)
+        if pokemon is None or pokemon is ignorar or not pokemon.esta_vivo():
+            continue
+        chave = getattr(pokemon, "id_batalha", None) or id(pokemon)
+        if chave in vistos:
+            continue
+        vistos.add(chave)
+        saida.append(pokemon)
+    return saida
+
+
+def remover_equipavel_temporario_batalha(ctx, alvo, quantidade=1):
+    if alvo is None:
+        return {"aplicado": False, "motivo": "alvo_invalido", "removidos": []}
+    rng = (ctx or {}).get("rng") or getattr((ctx or {}).get("partida"), "rng", None)
+    candidatos = []
+    if isinstance(getattr(alvo, "Build", None), dict):
+        for chave, valor in alvo.Build.items():
+            if isinstance(valor, dict):
+                candidatos.append(("Build", chave, valor))
+    if isinstance(getattr(alvo, "dados_originais", None), dict):
+        build = alvo.dados_originais.get("BuildEquipaveis")
+        if isinstance(build, list):
+            for idx, valor in enumerate(build):
+                if isinstance(valor, dict):
+                    candidatos.append(("BuildEquipaveis", idx, valor))
+        estado = alvo.dados_originais.get("estado") if isinstance(alvo.dados_originais.get("estado"), dict) else {}
+        build_estado = estado.get("BuildEquipaveis")
+        if isinstance(build_estado, list):
+            for idx, valor in enumerate(build_estado):
+                if isinstance(valor, dict):
+                    candidatos.append(("estado.BuildEquipaveis", idx, valor))
+    if not candidatos:
+        return {"aplicado": False, "motivo": "sem_equipavel_removivel", "removidos": []}
+    removidos = []
+    quantidade = max(1, int(fnum(quantidade, 1.0)))
+    for _ in range(min(quantidade, len(candidatos))):
+        idx = rng.randrange(len(candidatos)) if rng is not None else 0
+        fonte_nome, chave, equipavel = candidatos.pop(idx)
+        if fonte_nome == "Build":
+            alvo.Build.pop(chave, None)
+        elif fonte_nome == "BuildEquipaveis" and isinstance(alvo.dados_originais.get("BuildEquipaveis"), list):
+            alvo.dados_originais["BuildEquipaveis"][int(chave)] = None
+        elif fonte_nome == "estado.BuildEquipaveis":
+            estado = alvo.dados_originais.get("estado") if isinstance(alvo.dados_originais.get("estado"), dict) else {}
+            if isinstance(estado.get("BuildEquipaveis"), list):
+                estado["BuildEquipaveis"][int(chave)] = None
+        bonus = _bonus_equipavel_batalha(equipavel)
+        for atributo, valor in bonus.items():
+            if atributo in getattr(alvo, "atributos_base", {}):
+                alvo.atributos_base[atributo] = fnum(alvo.atributos_base.get(atributo), 0.0) - fnum(valor, 0.0)
+        removidos.append({"fonte": fonte_nome, "chave": chave, "equipavel": copy.deepcopy(equipavel), "bonus_removido": bonus})
+    alvo.estados_transitorios.setdefault("equipaveis_removidos_batalha", []).extend(copy.deepcopy(removidos))
+    if hasattr(alvo, "recalcular_atributos"):
+        alvo.recalcular_atributos()
+    partida = (ctx or {}).get("partida") or getattr(alvo, "partida", None)
+    usuario = (ctx or {}).get("usuario")
+    if partida is not None and hasattr(partida, "registrar_evento_log"):
+        partida.registrar_evento_log(
+            "equipavel_removido_batalha",
+            {
+                "alvo_id": getattr(alvo, "id_batalha", None),
+                "alvo_nome": getattr(alvo, "nome", None),
+                "origem_id": getattr(usuario, "id_batalha", None),
+                "origem_nome": getattr(usuario, "nome", None),
+                "removidos": copy.deepcopy(removidos),
+            },
+        )
+    return {"aplicado": bool(removidos), "removidos": removidos}
+
+
+def _bonus_equipavel_batalha(equipavel):
+    if not isinstance(equipavel, dict):
+        return {}
+    bonus = {}
+    for idx in range(1, 5):
+        atributo = str(equipavel.get(f"Status {idx}") or "").strip()
+        if not atributo:
+            continue
+        valor = fnum(equipavel.get(f"Aumento {idx}"), 0.0)
+        if abs(valor) > 0.001:
+            bonus[atributo] = bonus.get(atributo, 0.0) + valor
+    if bonus:
+        return bonus
+    try:
+        from Codigo.ModulosGerais.GerenciadorPokemons import atributos_equipavel
+
+        return dict(atributos_equipavel(equipavel) or {})
+    except Exception:
+        return {}
 
 
 def inimigos_vivos_adjacentes_area(ctx, area_id, ignorar=None):

@@ -1123,5 +1123,155 @@
     "efeitos_relevantes": ["barreira"],
     "condicoes": ["melhor_se_alvo_vai_ser_focado"],
     "prioridade_simulacao": 0.64
+  },
+  "Casca de Pedra": {
+    "codigo": 222,
+    "nome": "Casca de Pedra",
+    "papeis": ["buff", "protecao"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["def"],
+    "condicoes": ["melhor_antes_de_receber_dano"],
+    "prioridade_simulacao": 0.58
+  },
+  "Barragem Rochosa": {
+    "codigo": 223,
+    "nome": "Barragem Rochosa",
+    "papeis": ["protecao", "suporte", "barreira"],
+    "alvos_preferidos": ["aliado_focado", "self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["barreira"],
+    "condicoes": ["melhor_se_alvo_vai_ser_focado"],
+    "prioridade_simulacao": 0.64
+  },
+  "Pedregulho": {
+    "codigo": 224,
+    "nome": "Pedregulho",
+    "papeis": ["dano", "finalizacao"],
+    "alvos_preferidos": ["inimigo_ferido", "inimigo_com_def_baixa"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dano_fisico", "defesa_alvo_maior"],
+    "condicoes": ["melhor_contra_def_baixa"],
+    "prioridade_simulacao": 0.56
+  },
+  "Polida Estrategica": {
+    "codigo": 225,
+    "nome": "Polida Estratégica",
+    "papeis": ["buff", "velocidade"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "medio"},
+    "efeitos_relevantes": ["vel", "perda_vida", "critico"],
+    "condicoes": ["melhor_antes_de_agir", "pior_se_usuario_ferido"],
+    "prioridade_simulacao": 0.6
+  },
+  "Chuva Aspera": {
+    "codigo": 226,
+    "nome": "Chuva Áspera",
+    "papeis": ["dano", "area", "aleatorio"],
+    "alvos_preferidos": ["inimigos_agrupados"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["areas_aleatorias", "dano_fisico"],
+    "condicoes": ["melhor_com_multiplos_inimigos"],
+    "prioridade_simulacao": 0.78
+  },
+  "Fragmento Incisivo": {
+    "codigo": 227,
+    "nome": "Fragmento Incisivo",
+    "papeis": ["dano", "debuff"],
+    "alvos_preferidos": ["inimigo_resistente", "inimigo_perigoso"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["quebrado"],
+    "condicoes": ["melhor_contra_alvo_tanque"],
+    "prioridade_simulacao": 0.76
+  },
+  "Pedra Especial": {
+    "codigo": 228,
+    "nome": "Pedra Especial",
+    "papeis": ["dano", "especial"],
+    "alvos_preferidos": ["inimigo_ferido", "inimigo_com_spd_baixa"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dano_especial"],
+    "condicoes": ["melhor_com_spa_alto"],
+    "prioridade_simulacao": 0.72
+  },
+  "Pedra Dupla": {
+    "codigo": 229,
+    "nome": "Pedra Dupla",
+    "papeis": ["dano", "area"],
+    "alvos_preferidos": ["dois_inimigos", "inimigo_ferido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["duas_areas", "nao_critico"],
+    "condicoes": ["melhor_com_dois_alvos"],
+    "prioridade_simulacao": 0.78
+  },
+  "Poder Anciao": {
+    "codigo": 230,
+    "nome": "Poder Ancião",
+    "papeis": ["buff", "suporte"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["atk", "spa", "def", "spd"],
+    "condicoes": ["melhor_em_luta_longa"],
+    "prioridade_simulacao": 0.66
+  },
+  "Lamina de Cristal": {
+    "codigo": 231,
+    "nome": "Lâmina de Cristal",
+    "papeis": ["dano", "remocao"],
+    "alvos_preferidos": ["inimigo_buffado", "inimigo_ferido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["remove_def_positiva", "dano_adaptativo"],
+    "condicoes": ["melhor_contra_alvo_buffado"],
+    "prioridade_simulacao": 0.82
+  },
+  "Escudo de Pedra": {
+    "codigo": 232,
+    "nome": "Escudo de Pedra",
+    "papeis": ["protecao", "barreira"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["barreira"],
+    "condicoes": ["melhor_se_usuario_vai_ser_focado"],
+    "prioridade_simulacao": 0.66
+  },
+  "Rolagem": {
+    "codigo": 233,
+    "nome": "Rolagem",
+    "papeis": ["dano", "linha"],
+    "alvos_preferidos": ["linha_inimiga", "inimigo_agrupado"],
+    "riscos": {"usuario": "medio"},
+    "efeitos_relevantes": ["linha", "reducao_por_alvo", "recoil"],
+    "condicoes": ["melhor_em_linha_com_multiplos_alvos"],
+    "prioridade_simulacao": 0.84
+  },
+  "Impacto Rochoso": {
+    "codigo": 234,
+    "nome": "Impacto Rochoso",
+    "papeis": ["dano", "finalizacao"],
+    "alvos_preferidos": ["inimigo_ferido", "inimigo_fraco"],
+    "riscos": {"usuario": "medio"},
+    "efeitos_relevantes": ["dano_def", "perda_def"],
+    "condicoes": ["melhor_com_def_alta"],
+    "prioridade_simulacao": 0.78
+  },
+  "Pedra Colossal": {
+    "codigo": 235,
+    "nome": "Pedra Colossal",
+    "papeis": ["dano", "remocao"],
+    "alvos_preferidos": ["inimigo_com_equipavel", "inimigo_perigoso"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["remove_equipavel"],
+    "condicoes": ["melhor_contra_alvo_equipado"],
+    "prioridade_simulacao": 0.86
+  },
+  "Autodestruicao": {
+    "codigo": 236,
+    "nome": "Autodestruição",
+    "papeis": ["dano", "area", "sacrificio"],
+    "alvos_preferidos": ["adjacentes", "inimigos_agrupados"],
+    "riscos": {"usuario": "alto", "aliados": "alto"},
+    "efeitos_relevantes": ["adjacencia", "recoil", "imortal"],
+    "condicoes": ["melhor_com_multiplos_inimigos_adjacentes", "pior_com_aliados_adjacentes"],
+    "prioridade_simulacao": 0.5
   }
 }

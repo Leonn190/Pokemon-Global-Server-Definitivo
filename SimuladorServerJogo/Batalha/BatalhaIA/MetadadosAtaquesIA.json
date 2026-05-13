@@ -963,5 +963,165 @@
     "efeitos_relevantes": ["enfraquecido", "critico"],
     "condicoes": ["melhor_com_chance_critica_alta"],
     "prioridade_simulacao": 0.78
+  },
+  "Confusão": {
+    "codigo": 192,
+    "nome": "Confusão",
+    "papeis": ["controle", "debuff"],
+    "alvos_preferidos": ["inimigo_perigoso"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["confuso"],
+    "condicoes": ["melhor_contra_inimigo_ofensivo"],
+    "prioridade_simulacao": 0.66
+  },
+  "Teleporte": {
+    "codigo": 193,
+    "nome": "Teleporte",
+    "papeis": ["movimento", "suporte"],
+    "alvos_preferidos": ["reposicionamento", "self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["movimento", "troca_posicao", "critico_energia"],
+    "condicoes": ["melhor_para_reposicionar"],
+    "prioridade_simulacao": 0.5
+  },
+  "Olho Que Tudo Vê": {
+    "codigo": 194,
+    "nome": "Olho Que Tudo Vê",
+    "papeis": ["passivo", "utilidade"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["ignora_furtivo"],
+    "condicoes": ["melhor_contra_furtivo"],
+    "prioridade_simulacao": 0.5
+  },
+  "Toque Mental": {
+    "codigo": 195,
+    "nome": "Toque Mental",
+    "papeis": ["dano", "remocao"],
+    "alvos_preferidos": ["inimigo_buffado", "inimigo_ferido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dano_fisico", "critico", "remover_buff"],
+    "condicoes": ["melhor_contra_alvo_buffado"],
+    "prioridade_simulacao": 0.74
+  },
+  "Cabeçada Zen": {
+    "codigo": 196,
+    "nome": "Cabeçada Zen",
+    "papeis": ["dano", "remocao"],
+    "alvos_preferidos": ["inimigo_com_imune", "inimigo_ferido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dano_fisico", "remove_imune"],
+    "condicoes": ["melhor_contra_imune"],
+    "prioridade_simulacao": 0.76
+  },
+  "Super Meditação": {
+    "codigo": 197,
+    "nome": "Super Meditação",
+    "papeis": ["limpeza", "energia", "suporte"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["remove_debuff", "energia"],
+    "condicoes": ["melhor_se_usuario_com_debuff"],
+    "prioridade_simulacao": 0.62
+  },
+  "Distúrbio": {
+    "codigo": 198,
+    "nome": "Distúrbio",
+    "papeis": ["dano", "condicional"],
+    "alvos_preferidos": ["inimigo_ferido", "inimigo_fraco"],
+    "riscos": {"usuario": "medio"},
+    "efeitos_relevantes": ["dano_especial", "consome_buffs"],
+    "condicoes": ["melhor_com_usuario_buffado"],
+    "prioridade_simulacao": 0.78
+  },
+  "Proteção Mental": {
+    "codigo": 199,
+    "nome": "Proteção Mental",
+    "papeis": ["protecao", "suporte"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["imune", "protegido"],
+    "condicoes": ["melhor_antes_de_receber_debuff"],
+    "prioridade_simulacao": 0.6
+  },
+  "Turbomente": {
+    "codigo": 200,
+    "nome": "Turbomente",
+    "papeis": ["passivo", "buff"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["amp", "inicio_batalha"],
+    "condicoes": ["melhor_em_luta_longa"],
+    "prioridade_simulacao": 0.5
+  },
+  "Teletransporte": {
+    "codigo": 201,
+    "nome": "Teletransporte",
+    "papeis": ["controle", "movimento"],
+    "alvos_preferidos": ["reposicionamento", "inimigo_perigoso"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["movimento_forcado", "troca_posicao"],
+    "condicoes": ["melhor_para_desorganizar_posicao"],
+    "prioridade_simulacao": 0.64
+  },
+  "Transferência Mental": {
+    "codigo": 202,
+    "nome": "Transferência Mental",
+    "papeis": ["suporte", "controle", "transferencia"],
+    "alvos_preferidos": ["aliado_debuffado", "inimigo_buffado"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["transferir_buff", "transferir_debuff", "critico"],
+    "condicoes": ["melhor_com_aliado_debuffado_e_inimigo_buffado"],
+    "prioridade_simulacao": 0.7
+  },
+  "Ataque Psicológico": {
+    "codigo": 203,
+    "nome": "Ataque Psicológico",
+    "papeis": ["dano", "finalizacao"],
+    "alvos_preferidos": ["inimigo_ferido", "inimigo_fraco"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dano_especial", "int"],
+    "condicoes": ["melhor_com_int_alta"],
+    "prioridade_simulacao": 0.78
+  },
+  "Ultrapsíquico": {
+    "codigo": 204,
+    "nome": "Ultrapsíquico",
+    "papeis": ["dano", "condicional"],
+    "alvos_preferidos": ["inimigo_com_efeitos", "inimigo_ferido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dano_especial", "passos_efeitos"],
+    "condicoes": ["melhor_contra_alvo_com_muitos_efeitos"],
+    "prioridade_simulacao": 0.82
+  },
+  "Instinto": {
+    "codigo": 205,
+    "nome": "Instinto",
+    "papeis": ["buff"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["int"],
+    "condicoes": ["melhor_em_luta_longa"],
+    "prioridade_simulacao": 0.56
+  },
+  "Raio Psíquico": {
+    "codigo": 206,
+    "nome": "Raio Psíquico",
+    "papeis": ["dano", "area", "linha"],
+    "alvos_preferidos": ["linha_inimiga", "inimigo_agrupado"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["linha", "reducao_por_alvo"],
+    "condicoes": ["melhor_em_linha_com_multiplos_alvos"],
+    "prioridade_simulacao": 0.84
+  },
+  "Barragem Mental": {
+    "codigo": 207,
+    "nome": "Barragem Mental",
+    "papeis": ["protecao", "suporte", "barreira"],
+    "alvos_preferidos": ["aliado_focado", "self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["barreira"],
+    "condicoes": ["melhor_se_alvo_vai_ser_focado"],
+    "prioridade_simulacao": 0.64
   }
 }

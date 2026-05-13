@@ -840,7 +840,7 @@ class PokemonBatalha:
         else:
             duracao = int(round(duracao_base + mag_origem / 5.0))
         duracao_antes_modificadores = max(1, int(duracao))
-        if negativo and self.possui_efeito("Amaldicoado"):
+        if negativo and self.possui_efeito("Amaldiçoado"):
             duracao = math.ceil(duracao * 1.5)
         if (not negativo) and self.possui_efeito("Encantado"):
             duracao = math.ceil(duracao * 1.5)

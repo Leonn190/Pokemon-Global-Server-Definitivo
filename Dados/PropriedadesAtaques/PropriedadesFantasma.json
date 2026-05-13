@@ -48,7 +48,7 @@
       "execute_principal": "ataque_lambida",
       "descricao": "Causa dano normal. Neste ataque, o Vamp do usuario conta em dobro.",
       "parametros": {"tipo": "fantasma", "atk_pct": 0.65, "vamp_mult": 2.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "241": {
       "ID": 241,
@@ -60,7 +60,7 @@
       "execute_principal": "ataque_toque_do_medo",
       "descricao": "Causa dano especial dobrado se o alvo estiver Paralisado.",
       "parametros": {"tipo": "fantasma", "spa_pct": 0.40, "mult_alvo_paralisado": 2.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "242": {
       "ID": 242,
@@ -72,7 +72,7 @@
       "execute_principal": "ataque_susto",
       "descricao": "Causa dano normal. Forca critico contra alvo Dormindo ou em Nevoa; critico aplica Paralisado.",
       "parametros": {"tipo": "fantasma", "atk_pct": 0.60, "critico_se_alvo_dormindo": true, "critico_se_clima": "Névoa", "efeito_critico": "Paralisado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "243": {
       "ID": 243,
@@ -84,7 +84,7 @@
       "execute_principal": "ataque_maldade",
       "descricao": "Aplica um efeito negativo aleatorio no alvo.",
       "parametros": {"tipo": "fantasma", "qtd_efeitos_negativos": 1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "244": {
       "ID": 244,
@@ -96,7 +96,7 @@
       "execute_principal": "ataque_golpe_espelhado",
       "descricao": "Causa dano especial maior se usuario e alvo estiverem em areas de mesmo numero.",
       "parametros": {"tipo": "fantasma", "spa_pct": 0.75, "mult_mesmo_numero_area": 1.50},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "245": {
       "ID": 245,
@@ -120,7 +120,7 @@
       "execute_principal": "ataque_pulso_de_plasma",
       "descricao": "Causa dano especial e aplica Enfraquecido se for critico.",
       "parametros": {"tipo": "fantasma", "spa_pct": 0.85, "efeito_critico": "Enfraquecido"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "247": {
       "ID": 247,
@@ -142,9 +142,9 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_maldicao",
-      "descricao": "Aplica Amaldicoado no alvo.",
+      "descricao": "Aplica Amaldiçoado no alvo.",
       "parametros": {"tipo": "fantasma", "efeito": "Amaldiçoado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "249": {
       "ID": 249,
@@ -156,7 +156,7 @@
       "execute_principal": "ataque_jogada_de_sorte",
       "descricao": "Tem chance alta de nao fazer nada; se funcionar, causa dano normal alto.",
       "parametros": {"tipo": "fantasma", "chance_nao_fazer_nada": 0.70, "atk_pct": 1.60},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "250": {
       "ID": 250,
@@ -166,9 +166,9 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_ataque_fantasmagorico",
-      "descricao": "Causa dano especial com bonus se o alvo estiver Amaldicoado e se houver Nevoa.",
+      "descricao": "Causa dano especial com bonus se o alvo estiver Amaldiçoado e se houver Nevoa.",
       "parametros": {"tipo": "fantasma", "spa_pct": 0.85, "bonus_alvo_amaldicoado": 0.35, "bonus_clima_nevoa": 0.25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "251": {
       "ID": 251,
@@ -226,7 +226,7 @@
       "execute_principal": "ataque_azar",
       "descricao": "O inimigo perde CrC baseado em valor fixo e Mag do usuario.",
       "parametros": {"tipo": "fantasma", "perda_fixa_crc": 5, "mag_usuario_pct": 0.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     }
   },
   "_comentario": "Ataques fantasma Code 237 a 255 sincronizados com o CSV."

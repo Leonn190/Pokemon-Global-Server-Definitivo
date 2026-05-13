@@ -334,7 +334,7 @@ _EXECUTES = {
 }
 
 _PASSIVAS_ATAQUE = [
-    {"nome": "Regenerador", "flag": "AoFimDaRodada", "grupo": "self", "func": _passiva_regenerador, "origem": "ataque", "code": "209"},
+    {"nome": "Regenerador", "flag": "AoFimDoPasso", "grupo": "todos", "func": _passiva_regenerador, "origem": "ataque", "code": "209"},
 ]
 
 _ALIASES = {

@@ -53,7 +53,7 @@
       "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
       "execute_principal": "ataque_mordida_de_inseto",
       "parametros": {"tipo": "inseto", "categoria": "normal", "atk_pct": 0.8, "vamp_crit_mult": 2.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "213": {
       "ID": 213,
@@ -140,7 +140,7 @@
       "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
       "execute_principal": "ataque_devorar",
       "parametros": {"tipo": "inseto", "categoria": "normal", "atk_pct": 0.85, "cura_dano_pct": 0.25, "cura_dano_pct_nocaute": 0.5, "vamp_bonus_nocaute": 10.0},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "221": {
       "ID": 221,

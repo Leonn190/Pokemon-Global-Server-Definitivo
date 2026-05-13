@@ -59,7 +59,7 @@
       "execute_principal": "ataque_ultraje",
       "descricao": "Causa exatamente 27 de dano fixo. Este dano não recebe aumento, redução, crítico, defesa, resistência, fraqueza, Amp ou qualquer outro modificador.",
       "parametros": {"tipo": "dragao", "dano_fixo": 27, "ignora_modificadores": true, "respeita_barreira": true, "pode_critico": false},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "261": {
       "ID": 261,
@@ -117,7 +117,7 @@
       "execute_principal": "ataque_golpe_destrutivo",
       "descricao": "Causa (90% de Atk) como dano normal. Se for crítico, transforma a área do alvo em Destruída.",
       "parametros": {"tipo": "dragao", "atk_pct": 0.90, "area_critico": "Destruida"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "266": {
       "ID": 266,
@@ -129,7 +129,7 @@
       "execute_principal": "ataque_investida_draconica",
       "descricao": "Causa (110% de Atk) como dano normal. O usuário recebe 20% do dano causado. Se errar, recebe dano equivalente a 30% do dano base deste ataque.",
       "parametros": {"tipo": "dragao", "atk_pct": 1.10, "recoil_dano_causado_pct": 0.20, "recoil_erro_dano_base_pct": 0.30},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "267": {
       "ID": 267,
@@ -154,7 +154,7 @@
       "execute_principal": "ataque_lanca_eterea",
       "descricao": "Causa (110% de SpD) como dano especial.",
       "parametros": {"tipo": "dragao", "spd_pct": 1.10},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     }
   },
   "_comentario": "Ataques dragao Code 256 a 268 conforme CSV oficial. Custo AP foi mantido em custo_ap, sem tratar como acuracia."

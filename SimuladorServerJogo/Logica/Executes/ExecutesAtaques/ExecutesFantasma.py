@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import copy
 
@@ -54,7 +54,7 @@ _NOMES_EFEITOS_NEGATIVOS = {
     "enfraquecido": "Enfraquecido",
     "confuso": "Confuso",
     "bloqueado": "Bloqueado",
-    "amaldicoado": "Amaldicoado",
+    "amaldicoado": "Amaldiçoado",
 }
 
 def _exec_selar_arcano(ctx, alvo):
@@ -195,7 +195,7 @@ def _exec_devorador_de_pecados(ctx, alvo):
 
 
 def _exec_maldicao(ctx, alvo):
-    return aplicar_status(ctx, alvo, parametro_str_execute(ctx, "efeito", "Amaldicoado"), negativo=True)
+    return aplicar_status(ctx, alvo, parametro_str_execute(ctx, "efeito", "Amaldiçoado"), negativo=True)
 
 
 def _exec_jogada_de_sorte(ctx, alvo):
@@ -226,7 +226,7 @@ def _exec_ataque_fantasmagorico(ctx, alvo):
     usuario = ctx.get("usuario")
     partida = ctx.get("partida")
     bonus = 0.0
-    if alvo is not None and alvo.possui_efeito("Amaldicoado"):
+    if alvo is not None and alvo.possui_efeito("Amaldiçoado"):
         bonus += parametro_execute(ctx, "bonus_alvo_amaldicoado", 0.35)
     if normalizar(getattr(partida, "clima_atual", "")) == "nevoa":
         bonus += parametro_execute(ctx, "bonus_clima_nevoa", 0.25)

@@ -198,7 +198,7 @@ class ControladorAnimacoes:
         animacao = dados.get("animacao") if isinstance(dados.get("animacao"), dict) else {}
         modelo = self._modelo(animacao)
         tipo_ataque = dados.get("tipo_ataque") or animacao.get("tipo_ataque") or animacao.get("tipo")
-        alvos = self._resolver_alvos(dados)
+        alvos = self._resolver_alvos(dados, animacao)
         principal = self._resolver_principal(dados, alvos)
         self._validar_animacao(animacao, tipo_ataque=tipo_ataque)
 
@@ -235,6 +235,10 @@ class ControladorAnimacoes:
             self._registrar_ataque_ativo(dados, animacao, modelo, impactos, self._tempo + fim, principal)
             return []
         if modelo == "Explosao":
+            if bool(animacao.get("multiplos_principais")) and len(alvos) > 1:
+                for principal_explosao in alvos:
+                    self._animar_explosao(usuario, principal_explosao, [], animacao, tipo_ataque, dados)
+                return []
             self._animar_explosao(usuario, principal, [a for a in alvos if a is not principal], animacao, tipo_ataque, dados)
             return []
         return []
@@ -454,7 +458,7 @@ class ControladorAnimacoes:
             return "EfeitoAlvo"
         return modelo
 
-    def _resolver_alvos(self, dados):
+    def _resolver_alvos(self, dados, animacao=None):
         ctrl = self.controlador
         alvos = []
         vistos = set()
@@ -468,10 +472,28 @@ class ControladorAnimacoes:
             poke = ctrl.pokemons_por_id.get(str(alvo_id))
             if poke is not None:
                 alvos.append(poke)
-        if not alvos:
+        if not alvos and not bool((animacao or {}).get("usar_alvos_selecionados")):
             alvo = self._resolver_alvo(dados)
             if alvo is not None:
                 alvos.append(alvo)
+        if bool((animacao or {}).get("usar_alvos_selecionados")) and getattr(ctrl, "arena", None) is not None:
+            for alvo in alvos:
+                area_alvo = str(getattr(alvo, "AreaId", "") or getattr(alvo, "area_id", "") or "").upper()
+                if area_alvo:
+                    vistos.add(f"area:{area_alvo}")
+            for selecao in list(dados.get("alvos_selecionados") or []):
+                if not isinstance(selecao, dict):
+                    continue
+                area_id = str(selecao.get("area_id") or "").upper()
+                if not area_id:
+                    continue
+                chave = f"area:{area_id}"
+                if chave in vistos:
+                    continue
+                centro = ctrl.arena.centro_area(area_id)
+                if centro is not None:
+                    vistos.add(chave)
+                    alvos.append(centro)
         return alvos
 
     def _resolver_principal(self, dados, alvos):

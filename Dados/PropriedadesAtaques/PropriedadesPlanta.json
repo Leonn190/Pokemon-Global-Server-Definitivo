@@ -116,13 +116,12 @@
       "nome": "Flecha de Madeira",
       "custo": 60,
       "custo_ap": 70,
-      "estilo_logico": "alvo",
+      "estilo_logico": "ativo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_flecha_de_madeira",
-      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.70, "bonus_atk_por_area": 0.05, "bonus_atk_max": 0.40, "reducao_apos_atravessar": 0.40, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.78, "bonus_atk_por_area": 0.06, "bonus_atk_max": 0.48, "reducao_apos_atravessar": 0.35}},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.70, "bonus_atk_por_area": 0.05, "bonus_atk_max": 0.40, "reducao_apos_atravessar": 0.40, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.78, "bonus_atk_por_area": 0.06, "bonus_atk_max": 0.48, "reducao_apos_atravessar": 0.35}}
     },
     "102": {
       "ID": 102,
@@ -165,7 +164,7 @@
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
-      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico"},
+      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "usar_alvos_selecionados": true, "multiplos_principais": true, "simultaneo": true},
       "execute_principal": "ataque_bomba_de_sementes",
       "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "quantidade_areas": 2, "splash_frac": 0.25, "splash_em_area_vazia": true, "splash_usa_dano_base_teorico": true, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.82, "splash_frac": 0.30}},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}

@@ -322,6 +322,34 @@ class RodadorTurno:
     def _acertou(self, usuario, alvo):
         return bool(self._calcular_acerto(usuario, alvo).get("acertou"))
 
+    def _bonus_acerto_condicional(self, alvo, parametros):
+        try:
+            bonus = float(parametros.get("bonus_acerto_condicional") or 0.0)
+        except (TypeError, ValueError):
+            bonus = 0.0
+        if bonus <= 0:
+            return {"bonus": 0.0, "condicoes_ativas": []}
+        condicoes = parametros.get("condicoes_bonus_acerto")
+        condicoes = condicoes if isinstance(condicoes, list) else [condicoes]
+        ativas = [condicao for condicao in condicoes if self._condicao_acerto_ativa(alvo, condicao)]
+        return {"bonus": bonus if ativas else 0.0, "condicoes_ativas": ativas}
+
+    def _condicao_acerto_ativa(self, alvo, condicao):
+        if isinstance(condicao, dict):
+            tipo = normalizar(condicao.get("tipo") or condicao.get("condicao"))
+            nome = condicao.get("nome") or condicao.get("efeito") or condicao.get("clima")
+            if tipo in {"alvoefeito", "efeitoalvo", "efeito"}:
+                return bool(alvo is not None and hasattr(alvo, "possui_efeito") and alvo.possui_efeito(nome))
+            if tipo == "clima":
+                return normalizar(getattr(self.partida, "clima_atual", "")) == normalizar(nome)
+            return False
+        token = normalizar(condicao)
+        if token in {"congelado"}:
+            return bool(alvo is not None and hasattr(alvo, "possui_efeito") and alvo.possui_efeito("Congelado"))
+        if token in {"nevasca"}:
+            return normalizar(getattr(self.partida, "clima_atual", "")) == "nevasca"
+        return False
+
     def _calcular_acerto(self, usuario, alvo, props=None):
         props = props if isinstance(props, dict) else {}
         parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
@@ -366,6 +394,9 @@ class RodadorTurno:
         tipo_ataque = parametros.get("tipo") or props.get("tipo") or "normal"
         if alvo.possui_efeito("Flutuando") and str(tipo_ataque or "").strip().lower() == "normal":
             chance -= 0.40
+        bonus_condicional = self._bonus_acerto_condicional(alvo, parametros)
+        if bonus_condicional.get("bonus", 0.0) > 0:
+            chance += bonus_condicional.get("bonus", 0.0) / 100.0
         chance_percentual = max(0.0, chance * 100.0)
         chance_real = min(100.0, chance_percentual)
         bonus_critico = max(0.0, chance_percentual - 100.0) / 2.0
@@ -376,6 +407,8 @@ class RodadorTurno:
             "chance_real": round(chance_real, 4),
             "bonus_critico_acerto": round(bonus_critico, 4),
             "rolagem": round(sorte, 4),
+            "bonus_acerto_condicional": round(bonus_condicional.get("bonus", 0.0), 4),
+            "condicoes_bonus_acerto_ativas": list(bonus_condicional.get("condicoes_ativas") or []),
         }
 
     def _registrar_historico_ataque(self, pokemon, acao, props, alvos):

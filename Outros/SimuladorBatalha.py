@@ -44,6 +44,21 @@ ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
     "Flor Magica",
     "Murchar",
     "Raio Solar",
+    "Nevoa Fria",
+    "Cristalizar",
+    "Gelinho",
+    "Olhar Frio",
+    "Congelamento Tatico",
+    "Gelo Verdadeiro",
+    "Raio Aurora",
+    "Nevasca",
+    "Tumba de Gelo",
+    "Quebra-Gelo",
+    "Ataque Polar",
+    "Avalanche",
+    "Bola de Neve",
+    "Reinado de Gelo",
+    "Raio de Gelo",
 ]
 
 

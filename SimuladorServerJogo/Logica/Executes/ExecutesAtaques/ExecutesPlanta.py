@@ -225,9 +225,23 @@ def _distancia_areas(origem, destino):
     return max(0, abs((idx_destino % 3) - (idx_origem % 3)))
 
 
+def _area_oposta_mesma_linha(pokemon):
+    area = str(getattr(pokemon, "area_id", "") or "").upper()
+    if len(area) < 2:
+        return None
+    try:
+        idx = int(area[1:]) - 1
+    except (TypeError, ValueError):
+        return None
+    if idx < 0 or idx > 8:
+        return None
+    prefixo = "I" if area[:1] == "A" else "A"
+    return f"{prefixo}{idx + 1}"
+
+
 def _exec_flecha_de_madeira(ctx, alvo):
     usuario = ctx.get("usuario")
-    area_id = area_selecionada_da_acao(ctx) or getattr(alvo, "area_id", None)
+    area_id = area_selecionada_da_acao(ctx) or getattr(alvo, "area_id", None) or _area_oposta_mesma_linha(usuario)
     dano_atual = usuario.obter_atributo("Atk") * (
         _param(ctx, "escala_atk", 0.70)
         + min(_distancia_areas(getattr(usuario, "area_id", None), area_id) * _param(ctx, "bonus_atk_por_area", 0.05), _param(ctx, "bonus_atk_max", 0.40))

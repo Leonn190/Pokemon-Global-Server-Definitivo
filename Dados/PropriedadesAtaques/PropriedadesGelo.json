@@ -2,86 +2,204 @@
   "schema_version": 1,
   "tipo": "gelo",
   "ataques": {
-    "38": {
-      "ID": 38,
+    "109": {
+      "ID": 109,
+      "Code": 109,
       "nome": "Névoa Fria",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
       "custo": 25,
-      "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
-      "execute_principal": "ataque_névoa_fria",
-      "parametros": {
-        "tipo": "gelo",
-        "atributo": "SpA",
-        "percentual_alvo": 0.08,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "custo_ap": 30,
+      "execute_principal": "nevoafria",
+      "descricao": "O inimigo perde (10% de SpA do alvo) + (10% da Mag do usuario) em SpA.",
+      "parametros": {"tipo": "gelo", "mult_spa_alvo": 0.1, "mult_mag_usuario": 0.1, "aprimoramento": {"mult_spa_alvo": 0.12, "mult_mag_usuario": 0.1}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "39": {
-      "ID": 39,
-      "nome": "Sangue Frio",
-      "custo": 30,
+    "110": {
+      "ID": 110,
+      "Code": 110,
+      "nome": "Cristalizar",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 35,
+      "custo_ap": 40,
+      "execute_principal": "cristalizar",
+      "descricao": "Se o alvo estiver Encharcado, remove Encharcado e aplica Congelado. Se o alvo nao estiver Encharcado, causa (45% de SpA) como dano especial.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa_dano": 0.45, "duracao": 6, "aprimoramento": {"mult_spa_encharcado": 0.35}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "111": {
+      "ID": 111,
+      "Code": 111,
+      "nome": "Gelinho",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 15,
+      "custo_ap": 20,
+      "acuracia": 50.0,
+      "execute_principal": "gelinho",
+      "descricao": "Tem 50% de chance de errar. Causa (65% de SpA) como dano especial. Ganha +25 pontos de chance de acerto se o alvo estiver Congelado ou se o clima for Nevasca.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "acuracia": 50.0, "mult_spa": 0.65, "bonus_acerto_condicional": 25.0, "condicoes_bonus_acerto": [{"tipo": "alvo_efeito", "nome": "Congelado"}, {"tipo": "clima", "nome": "Nevasca"}], "aprimoramento": {"mult_spa": 0.75, "bonus_acerto_condicional": 30.0}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "112": {
+      "ID": 112,
+      "Code": 112,
+      "nome": "Olhar Frio",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 35,
+      "custo_ap": 40,
+      "execute_principal": "olharfrio",
+      "descricao": "O alvo perde 15% do seu maior atributo regular.",
+      "parametros": {"tipo": "gelo", "percentual_reducao": 0.15, "atributos_regulares": ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"], "aprimoramento": {"percentual_reducao": 0.18}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "113": {
+      "ID": 113,
+      "Code": 113,
+      "nome": "Congelamento Tático",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 45,
+      "custo_ap": 55,
+      "execute_principal": "congelamentotatico",
+      "descricao": "Escolhe o usuário ou um aliado. O alvo recebe Congelado e Regeneração.",
+      "parametros": {"tipo": "gelo", "duracao": 6, "aprimoramento": {"barreira_mult_mag": 0.2}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "114": {
+      "ID": 114,
+      "Code": 114,
+      "nome": "Gelo Verdadeiro",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 65,
+      "custo_ap": 75,
+      "execute_principal": "geloverdadeiro",
+      "descricao": "Causa (80% de SpA) como dano especial e ignora Def e SpD do alvo.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.8, "ignorar_defesa": true, "aprimoramento": {"mult_spa": 0.9}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "115": {
+      "ID": 115,
+      "Code": 115,
+      "nome": "Raio Aurora",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "permite_area_vazia": true,
+      "custo": 55,
+      "custo_ap": 65,
+      "execute_principal": "raioaurora",
+      "descricao": "Causa (85% de SpA) como dano especial. Se for critico, aplica Congelado no alvo.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.85, "duracao": 6, "permite_area_vazia": true, "aprimoramento": {"mult_spa": 0.95}},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "116": {
+      "ID": 116,
+      "Code": 116,
+      "nome": "Nevasca",
+      "tipo": "gelo",
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_sangue_frio",
-      "parametros": {
-        "tipo": "gelo",
-        "atributo": "CrC",
-        "percentual_mag": 0.25,
-        "duracao": 6
-      }
+      "custo": 45,
+      "custo_ap": 40,
+      "execute_principal": "nevasca",
+      "descricao": "Muda o clima para Nevasca.",
+      "parametros": {"tipo": "gelo", "clima": "Nevasca", "aprimoramento": {}}
     },
-    "40": {
-      "ID": 40,
-      "nome": "Raio de Gelo",
-      "custo": 75,
+    "117": {
+      "ID": 117,
+      "Code": 117,
+      "nome": "Tumba de Gelo",
+      "tipo": "gelo",
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Laser",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_raio_de_gelo",
-      "parametros": {
-        "tipo": "gelo",
-        "categoria": "especial",
-        "escala_inicial_spa": 1.0,
-        "reducao_spa_por_alvo": 0.15,
-        "tipo_linha": "reta"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "linha",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "custo": 45,
+      "custo_ap": 55,
+      "execute_principal": "tumbadegelo",
+      "descricao": "Se alvo estiver Congelado, dobra a duracao do Congelado e causa (70% de SpA) como dano especial. Se nao estiver Congelado, nao causa dano; porem, se o clima for Nevasca, aplica Congelado e causa (35% de SpA) como dano especial.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa_congelado": 0.7, "mult_spa_nevasca": 0.35, "duracao": 6, "aprimoramento": {"mult_spa_congelado": 0.8, "mult_spa_nevasca": 0.45}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "118": {
+      "ID": 118,
+      "Code": 118,
+      "nome": "Quebra-Gelo",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 55,
+      "custo_ap": 65,
+      "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "quebragelo",
+      "descricao": "Causa (70% de Atk) como dano normal. Se alvo estiver Congelado, causa +70% de dano e remove Congelado. Se for critico, remove apenas metade da duracao do Congelado.",
+      "parametros": {"tipo": "gelo", "categoria": "normal", "mult_atk": 0.7, "bonus_dano_congelado": 0.7, "aprimoramento": {"mult_atk": 0.78, "bonus_dano_congelado": 0.8}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "119": {
+      "ID": 119,
+      "Code": 119,
+      "nome": "Ataque Polar",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 50,
+      "custo_ap": 60,
+      "execute_principal": "ataquepolar",
+      "descricao": "Causa (75% de Atk) como dano normal. Se o usuario estiver em uma das pontas da arena, causa +25% de dano. Se o alvo tambem estiver em uma das pontas da arena, causa mais +25% de dano.",
+      "parametros": {"tipo": "gelo", "categoria": "normal", "mult_atk": 0.75, "bonus_ponta_usuario": 0.25, "bonus_ponta_alvo": 0.25, "areas_ponta": ["A1", "A3", "A7", "A9", "I1", "I3", "I7", "I9"], "aprimoramento": {"mult_atk": 0.85, "bonus_ponta_usuario": 0.3, "bonus_ponta_alvo": 0.3}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "120": {
+      "ID": 120,
+      "Code": 120,
+      "nome": "Avalanche",
+      "tipo": "gelo",
+      "estilo_logico": "ativo",
+      "custo": 80,
+      "custo_ap": 90,
+      "execute_principal": "avalanche",
+      "descricao": "Causa (60% de SpA) como dano especial a todos os inimigos. Se o clima for Nevasca, causa +25% de dano. Contra alvos Encharcados, causa mais +25% de dano.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.6, "bonus_nevasca": 0.25, "bonus_encharcado": 0.25, "aprimoramento": {"mult_spa": 0.68, "bonus_nevasca": 0.3, "bonus_encharcado": 0.3}}
+    },
+    "121": {
+      "ID": 121,
+      "Code": 121,
+      "nome": "Bola de Neve",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 30,
+      "custo_ap": 35,
+      "execute_principal": "boladeneve",
+      "descricao": "Se o alvo estiver Congelado, nao causa dano. Se nao estiver Congelado, causa (45% de SpA) como dano especial e adiciona 1 stack de Bola de Neve. A cada 3 stacks, remove os stacks e aplica Congelado.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.45, "stacks_para_congelar": 3, "stacks_por_uso": 1, "nome_contador": "Bola de Neve", "duracao": 6, "aprimoramento": {"mult_spa": 0.52, "mult_spa_extra_ao_congelar": 0.2}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "122": {
+      "ID": 122,
+      "Code": 122,
+      "nome": "Reinado de Gelo",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "custo": 70,
+      "custo_ap": 80,
+      "execute_principal": "reinadodegelo",
+      "descricao": "Causa (80% de SpA) como dano especial. Para cada Pokémon Congelado em campo, causa +10% de dano, até +60%.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 0.8, "bonus_por_congelado": 0.1, "bonus_max": 0.6, "aprimoramento": {"mult_spa": 0.9, "bonus_por_congelado": 0.12, "bonus_max": 0.72}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "123": {
+      "ID": 123,
+      "Code": 123,
+      "nome": "Raio de Gelo",
+      "tipo": "gelo",
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
+      "custo": 75,
+      "custo_ap": 85,
+      "execute_principal": "raiodegelo",
+      "descricao": "Causa (100% de SpA) como dano especial em linha. Para cada alvo atingido, reduz (15% de SpA) do dano deste ataque.",
+      "parametros": {"tipo": "gelo", "categoria": "especial", "mult_spa": 1.0, "reducao_spa_por_alvo": 0.15, "permite_area_vazia": true, "aprimoramento": {"mult_spa": 1.1, "reducao_spa_por_alvo": 0.12}},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     }
   },
-  "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
+  "_comentario": "Ataques de gelo 109-123 implementados no padrao de propriedades por ataque."
 }

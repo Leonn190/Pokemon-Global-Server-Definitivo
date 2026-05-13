@@ -1,31 +1,22 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import Botao from "../../Componentes/Botao.astro";
-import JsonPayload from "../../Componentes/JsonPayload.astro";
 import { carregarRelatorios } from "../../Codigo/RelatoriosDados.js";
 import "../../Estilos/wiki.css";
 import "../../Estilos/por-tras-do-jogo.css";
 
 const relatorios = carregarRelatorios();
 const relatorioAtual = relatorios.find((relatorio) => relatorio.atual) ?? relatorios[0];
-const relatoriosPayload = relatorios.map((relatorio) => ({
-  id: relatorio.id,
-  titulo: relatorio.titulo,
-  arquivo: relatorio.arquivo,
-  atual: relatorio.atual,
-  atualizadoEm: relatorio.atualizadoEm,
-  html: relatorio.html,
-}));
 ---
 <Layout
   titulo="Relatórios | Pokémon Global Server"
-  descricao="Relatórios técnicos do Pokémon Global Server, incluindo o Registro.md atual e relatórios antigos."
+  descricao="Relatório técnico atual do Pokémon Global Server a partir do Registro.md."
 >
   <section class="por-tras-hero relatorio-hero" aria-labelledby="titulo-relatorios">
     <p class="selo">Relatórios</p>
     <h1 id="titulo-relatorios">Registro técnico do projeto</h1>
     <p>
-      Esta página carrega primeiro o relatório atual da raiz do repositório, o <code>Registro.md</code>. Os demais relatórios, quando existirem na pasta de relatórios antigos, aparecem no seletor de Outros Relatórios.
+      Esta página carrega o relatório atual da raiz do repositório, o <code>Registro.md</code>, para mostrar o andamento técnico mais recente do projeto.
     </p>
     <div class="acoes por-tras-acoes">
       <Botao href="/por-tras-do-jogo" tipo="secundario">Voltar para Por trás do jogo</Botao>
@@ -33,22 +24,6 @@ const relatoriosPayload = relatorios.map((relatorio) => ({
   </section>
 
   <section class="secao relatorio-app" data-relatorios-app aria-labelledby="titulo-relatorio-aberto">
-    <div class="relatorio-controles">
-      <label class="filtro-select-wiki relatorio-select">
-        <span>Outros Relatórios</span>
-        <select data-relatorio-select aria-label="Selecionar relatório">
-          {relatoriosPayload.map((relatorio) => (
-            <option value={relatorio.id} selected={relatorio.id === relatorioAtual.id}>
-              {relatorio.atual ? `Atual — ${relatorio.titulo}` : relatorio.titulo}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p data-relatorio-meta>
-        Arquivo inicial: <strong>{relatorioAtual.arquivo}</strong>
-      </p>
-    </div>
-
     <article class="relatorio-card" aria-live="polite">
       <header>
         <p class="selo selo-azul" data-relatorio-arquivo>{relatorioAtual.arquivo}</p>
@@ -58,9 +33,4 @@ const relatoriosPayload = relatorios.map((relatorio) => ({
     </article>
   </section>
 
-  <JsonPayload id="relatorios-data" dados={{ relatorios: relatoriosPayload }} />
-  <script>
-    import { inicializarRelatorios } from "../../Codigo/RelatoriosRuntime.js";
-    inicializarRelatorios();
-  </script>
 </Layout>

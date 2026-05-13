@@ -14,16 +14,16 @@
   isolation: isolate;
   contain: paint;
   display: grid;
-  grid-template-columns: 48px minmax(150px, 1.05fr) minmax(72px, 0.42fr) minmax(180px, 1.45fr) 96px;
+  grid-template-columns: 48px minmax(132px, 0.82fr) minmax(82px, 0.34fr) minmax(260px, 1.9fr) 104px;
   align-items: center;
-  gap: 14px;
+  gap: 20px;
   min-height: 72px;
   padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 22px;
   color: var(--texto);
   background:
-    radial-gradient(circle at 15% 0%, rgba(255, 217, 52, 0.12), transparent 32%),
+    radial-gradient(circle at 12% 0%, rgba(255, 54, 79, 0.18), transparent 34%),
     radial-gradient(circle at 88% 100%, rgba(16, 135, 255, 0.14), transparent 38%),
     rgba(255, 255, 255, 0.052);
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.22);
@@ -40,12 +40,12 @@
 .faixa-musica:hover,
 .faixa-musica:focus-within,
 .faixa-musica.tocando {
-  border-color: rgba(255, 217, 52, 0.42);
-  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.3), 0 0 28px rgba(255, 217, 52, 0.08);
+  border-color: rgba(255, 54, 79, 0.46);
+  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.3), 0 0 28px rgba(255, 54, 79, 0.1);
 }
 .faixa-musica.tocando {
   background:
-    radial-gradient(circle at 16% 0%, rgba(255, 217, 52, 0.2), transparent 36%),
+    radial-gradient(circle at 14% 0%, rgba(255, 54, 79, 0.24), transparent 38%),
     radial-gradient(circle at 92% 100%, rgba(16, 135, 255, 0.18), transparent 42%),
     rgba(255, 255, 255, 0.068);
 }
@@ -59,7 +59,7 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
   color: #061123;
-  background: linear-gradient(135deg, var(--amarelo), #ff9d00);
+  background: linear-gradient(135deg, var(--vermelho), #ff7a34);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   font: inherit;
@@ -84,7 +84,7 @@
 .faixa-musica-botao:focus-visible {
   outline: none;
   transform: scale(1.04);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34), 0 0 0 4px rgba(255, 217, 52, 0.12);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34), 0 0 0 4px rgba(255, 54, 79, 0.14);
 }
 .faixa-musica-texto {
   position: relative;
@@ -118,7 +118,7 @@
 }
 .faixa-musica-volume input {
   width: 100%;
-  accent-color: var(--amarelo);
+  accent-color: var(--vermelho);
   cursor: pointer;
 }
 
@@ -130,7 +130,7 @@
 }
 .faixa-musica-barra input {
   width: 100%;
-  accent-color: var(--amarelo);
+  accent-color: var(--vermelho);
   cursor: pointer;
 }
 .faixa-musica-tempo {

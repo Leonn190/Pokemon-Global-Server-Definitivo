@@ -6,259 +6,140 @@
       "ID": 79,
       "nome": "Bola Eletrica",
       "custo": 60,
+      "custo_ap": 70,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": null},
       "execute_principal": "ataque_bola_eletrica",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "custo_ap_aprimorado": 70, "mult_spa": 0.80, "escala_spa": 0.80, "splash_frac": 0.50, "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.80, "escala_spa": 0.80, "splash_frac": 0.50, "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "80": {
       "ID": 80,
       "nome": "Energizar",
       "custo": 45,
+      "custo_ap": 40,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_energizar",
-      "parametros": {"tipo": "eletrico", "custo_ap_aprimorado": 40, "efeito": "Energizado", "duracao": 6, "negativo": false, "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "efeito": "Energizado", "negativo": false, "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "81": {
       "ID": 81,
       "nome": "Choque Duplo",
       "custo": 55,
+      "custo_ap": 65,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_choque_duplo",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "custo_ap_aprimorado": 65, "mult_spa": 0.70, "quantidade_alvos": 2, "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.70, "quantidade_alvos": 2, "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "82": {
       "ID": 82,
       "nome": "Descarga Total",
       "custo": 0,
+      "custo_ap": 0,
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
       "permite_area_vazia": true,
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_descarga_total",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "custo_ap_aprimorado": 0, "mult_spa": 0.45, "mult_energia": 1.20, "gasta_toda_energia": true, "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.45, "mult_energia": 1.20, "gasta_toda_energia": true, "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "83": {
       "ID": 83,
       "nome": "Vampirismo Energetico",
       "custo": 45,
+      "custo_ap": 55,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_vampirismo_energetico",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "custo_ap_aprimorado": 55, "mult_spa": 0.45, "roubo_pct_energia": 0.25, "roubo_crit_vamp_pct": 0.15, "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.45, "roubo_pct_energia": 0.25, "roubo_crit_vamp_pct": 0.15, "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "84": {
       "ID": 84,
       "nome": "Eletrochoque",
       "custo": 50,
+      "custo_ap": 60,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_eletrochoque",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "custo_ap_aprimorado": 60, "mult_spa": 0.65, "replica_pct_base": 0.50, "contador_alvo": "eletrochoque_usos", "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.65, "replica_pct_base": 0.50, "contador_alvo": "eletrochoque_usos", "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "85": {
       "ID": 85,
       "nome": "Curto",
       "custo": 40,
+      "custo_ap": 50,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_curto",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "custo_ap_aprimorado": 50, "mult_spa": 0.55, "mult_energia_alvo": 0.25, "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.55, "mult_energia_alvo": 0.25, "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "86": {
       "ID": 86,
       "nome": "Choque do Trovão",
       "custo": 55,
+      "custo_ap": 65,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "animacao": {"modelo": "Raio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_choque_do_trovao",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "custo_ap_aprimorado": 65, "mult_spa": 0.80, "efeito_critico": "Paralisado", "duracao": 6, "sempre_acerta_se_alvo_efeito": "Encharcado", "critico_forcado_se_alvo_efeito": "Encharcado", "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 0.80, "efeito_critico": "Paralisado", "sempre_acerta_se_alvo_efeito": "Encharcado", "critico_forcado_se_alvo_efeito": "Encharcado", "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "87": {
       "ID": 87,
       "nome": "Ultra Raio Aleatorio",
       "custo": 75,
+      "custo_ap": 85,
       "estilo_logico": "ativo",
       "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_ultra_raio_aleatorio",
-      "parametros": {"tipo": "eletrico", "categoria": "especial", "custo_ap_aprimorado": 85, "mult_spa": 1.35, "sorteia_area_arena": true}
+      "parametros": {"tipo": "eletrico", "categoria": "especial", "mult_spa": 1.35, "sorteia_area_arena": true}
     },
     "88": {
       "ID": 88,
       "nome": "Amplificar",
       "custo": 40,
+      "custo_ap": 45,
       "estilo_logico": "ativo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_amplificar",
-      "parametros": {"tipo": "eletrico", "custo_ap_aprimorado": 45, "atributo": "Amp", "percentual_mag": 0.25}
+      "parametros": {"tipo": "eletrico", "atributo": "Amp", "percentual_mag": 0.25}
     },
     "89": {
       "ID": 89,
       "nome": "Dança Elétrica",
       "custo": 55,
+      "custo_ap": 50,
       "estilo_logico": "ativo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_danca_eletrica",
-      "parametros": {"tipo": "eletrico", "custo_ap_aprimorado": 50, "clima": "Tempestade de Raios", "alias_clima": "Tempestade Eletrica"}
+      "parametros": {"tipo": "eletrico", "clima": "Tempestade de Raios", "alias_clima": "Tempestade Eletrica"}
     },
     "90": {
       "ID": 90,
       "nome": "Barragem Energetica",
       "custo": 40,
+      "custo_ap": 45,
       "estilo_logico": "alvo",
       "permite_area_vazia": true,
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "BarreiraCelular"},
       "execute_principal": "ataque_barragem_energetica",
-      "parametros": {"tipo": "eletrico", "custo_ap_aprimorado": 45, "percentual_mag": 0.18, "percentual_ene": 0.12, "permite_area_vazia": true},
+      "parametros": {"tipo": "eletrico", "percentual_mag": 0.18, "percentual_ene": 0.12, "permite_area_vazia": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": false, "inclui_reserva": false}]}
-    },
-    "30": {
-      "ID": 30,
-      "nome": "Bola Eletrica",
-      "custo": 60,
-      "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Explosão",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "contato": "Projetil",
-        "projetil": "Generico",
-        "efeito_impacto_secundario": null
-      },
-      "execute_principal": "ataque_bola_eletrica",
-      "parametros": {
-        "tipo": "eletrico",
-        "categoria": "especial",
-        "escala_spa": 0.8,
-        "splash_frac": 0.5
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
-    },
-    "31": {
-      "ID": 31,
-      "nome": "Energizar",
-      "custo": 45,
-      "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Raio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_energizar",
-      "parametros": {
-        "tipo": "eletrico",
-        "efeito": "Energizado",
-        "duracao": 6,
-        "negativo": false
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "mesmo_lado",
-              "usuario"
-            ],
-            "exige_area_ocupada": true
-          }
-        ]
-      }
-    },
-    "32": {
-      "ID": 32,
-      "nome": "Amplificar",
-      "custo": 40,
-      "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_amplificar",
-      "parametros": {
-        "tipo": "eletrico",
-        "atributo": "Amp",
-        "percentual_mag": 0.25,
-        "duracao": 6
-      }
-    },
-    "33": {
-      "ID": 33,
-      "nome": "Dança Elétrica",
-      "custo": 55,
-      "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_dança_elétrica",
-      "parametros": {
-        "tipo": "eletrico",
-        "clima": "Tempestade de Raios",
-        "alias_clima": "Tempestade Elétrica"
-      }
-    },
-    "34": {
-      "ID": 34,
-      "nome": "Campo Condutor",
-      "custo": 40,
-      "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "EfeitoAlvo",
-        "efeito_executor": null,
-        "efeito_alvo": "BarreiraCelular"
-      },
-      "execute_principal": "ataque_campo_condutor",
-      "descricao": "O alvo ganha uma barreira equivalente a (18% de Mag) + (12% de Ene).",
-      "parametros": {
-        "tipo": "eletrico",
-        "percentual_mag": 0.18,
-        "atributo": "Ene",
-        "percentual_usuario_atributo": 0.12
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "mesmo_lado",
-              "usuario"
-            ],
-            "exige_area_ocupada": true
-          }
-        ]
-      }
     }
   },
   "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."

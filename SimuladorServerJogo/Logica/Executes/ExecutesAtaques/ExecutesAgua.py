@@ -137,7 +137,7 @@ def _exec_bola_de_agua(ctx, alvo):
 
 
 def _exec_gota_pesada(ctx, alvo):
-    return aplicar_status(ctx, alvo, "Encharcado", duracao=_param(ctx, "duracao", 6), negativo=True)
+    return aplicar_status(ctx, alvo, "Encharcado", negativo=True)
 
 
 def _exec_splash(ctx, alvo):
@@ -168,10 +168,12 @@ def _exec_bolhas(ctx, alvo):
     usuario = ctx.get("usuario")
     chave = "Bolhas"
     usos_anteriores = int(fnum(usuario.contadores_especiais.get(chave), 0.0))
-    mult = _param(ctx, "base_spa", 0.35) + usos_anteriores * _param(ctx, "bonus_spa_por_uso", 0.08)
+    usos_considerados = min(usos_anteriores, int(_param(ctx, "max_acumulos", 6)))
+    mult = _param(ctx, "base_spa", 0.35) + usos_considerados * _param(ctx, "bonus_spa_por_uso", 0.10)
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * mult, "especial")
     usuario.contadores_especiais[chave] = usos_anteriores + 1
     ret["usos_anteriores_bolhas"] = usos_anteriores
+    ret["usos_considerados_bolhas"] = usos_considerados
     ret["usos_bolhas"] = usos_anteriores + 1
     return ret
 
@@ -198,7 +200,7 @@ def _exec_jato_de_agua(ctx, alvo):
     usuario = ctx.get("usuario")
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.65), "especial")
     if ret.get("critico") and alvo is not None and alvo.esta_vivo():
-        ret["encharcado"] = aplicar_status(ctx, alvo, "Encharcado", duracao=_param(ctx, "duracao", 6), negativo=True)
+        ret["encharcado"] = aplicar_status(ctx, alvo, "Encharcado", negativo=True)
     return ret
 
 
@@ -207,7 +209,7 @@ def _exec_jato_multiplo(ctx, alvo, fallback_hits, fallback_mult):
     mult = _param(ctx, "mult_spa", fallback_mult)
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * mult, "especial")
     if ret.get("critico") and alvo is not None and alvo.esta_vivo():
-        ret["encharcado"] = aplicar_status(ctx, alvo, "Encharcado", duracao=_param(ctx, "duracao", 6), negativo=True)
+        ret["encharcado"] = aplicar_status(ctx, alvo, "Encharcado", negativo=True)
     return ret
 
 
@@ -345,7 +347,7 @@ def _exec_fonte_termal(ctx, alvo):
         alvo.recalcular_atributos()
     efeito = None
     if removidos:
-        efeito = aplicar_status(ctx, alvo, "Encharcado", duracao=_param(ctx, "duracao", 6), negativo=True)
+        efeito = aplicar_status(ctx, alvo, "Encharcado", negativo=True)
     cura = usuario.AplicarCura(alvo, usuario.obter_atributo("Mag") * _param(ctx, "cura_mag", 0.30), dados={**_ataque_id_nome(ctx, "Fonte Termal"), "reativos_acao": ctx.get("reativos_acao")})
     return {"aplicado": True, "efeitos_removidos": len(removidos), "encharcado": efeito, "cura": cura}
 
@@ -446,7 +448,7 @@ def _exec_tsunami(ctx, alvo):
             rolagem = rng.random() if rng is not None else 1.0
             ret["rolagem_encharcar"] = round(rolagem, 4)
             if rolagem <= chance:
-                ret["encharcado"] = aplicar_status(ctx, pokemon, "Encharcado", duracao=_param(ctx, "duracao", 6), negativo=True)
+                ret["encharcado"] = aplicar_status(ctx, pokemon, "Encharcado", negativo=True)
         resultados.append({"pokemon_id": pokemon.id_batalha, "area_id": getattr(pokemon, "area_id", None), "coluna": coluna, "multiplicador": round(mult, 4), "resultado": ret})
     return {"aplicado": True, "alvos": len(resultados), "resultados": resultados}
 

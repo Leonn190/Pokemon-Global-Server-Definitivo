@@ -32,7 +32,7 @@ def _exec_bola_eletrica(ctx, alvo):
 def _exec_energizar(ctx, alvo):
     if alvo is None:
         return {"aplicado": True, "sem_alvo": True}
-    return aplicar_status(ctx, alvo, "Energizado", duracao=_param(ctx, "duracao", 6), negativo=False)
+    return aplicar_status(ctx, alvo, "Energizado", negativo=False)
 
 
 def _exec_choque_duplo(ctx, alvo):
@@ -121,7 +121,7 @@ def _exec_choque_do_trovao(ctx, alvo):
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.80), "especial", **extras)
     ret["alvo_encharcado"] = encharcado
     if ret.get("critico") and alvo is not None and alvo.esta_vivo():
-        ret["paralisado"] = aplicar_status(ctx, alvo, "Paralisado", duracao=_param(ctx, "duracao", 6), negativo=True)
+        ret["paralisado"] = aplicar_status(ctx, alvo, "Paralisado", negativo=True)
     return ret
 
 
@@ -173,15 +173,9 @@ _EXECUTES = {
     "ultraraioaleatorio": _exec_ultra_raio_aleatorio,
     "amplificar": _exec_amplificar,
     "dancaeletrica": _exec_danca_eletrica,
-    "campocondutor": _exec_campo_condutor,
     "barragemenergetica": _exec_campo_condutor,
 }
 _ALIASES = {
-    "30": "bolaeletrica",
-    "31": "energizar",
-    "32": "amplificar",
-    "33": "dancaeletrica",
-    "34": "campocondutor",
     "79": "bolaeletrica",
     "80": "energizar",
     "81": "choqueduplo",

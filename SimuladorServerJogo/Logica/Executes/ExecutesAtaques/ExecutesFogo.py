@@ -69,7 +69,7 @@ def _exec_bola_de_fogo(ctx, alvo):
 
 
 def _exec_queimar(ctx, alvo):
-    return aplicar_status(ctx, alvo, "Queimado", duracao=_param(ctx, "duracao", 6), negativo=True)
+    return aplicar_status(ctx, alvo, "Queimado", negativo=True)
 
 
 def _exec_chama_interior(ctx, alvo):
@@ -94,9 +94,9 @@ def _exec_investida_flamejante(ctx, alvo):
     usuario = ctx.get("usuario")
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("Atk") * _param(ctx, "mult_atk", 0.85), "normal")
     if usuario is not None:
-        ret["queimado_usuario"] = aplicar_status(ctx, usuario, "Queimado", duracao=_param(ctx, "duracao", 6), negativo=True)
+        ret["queimado_usuario"] = aplicar_status(ctx, usuario, "Queimado", negativo=True)
     if alvo is not None and alvo.esta_vivo():
-        ret["queimado_alvo"] = aplicar_status(ctx, alvo, "Queimado", duracao=_param(ctx, "duracao", 6), negativo=True)
+        ret["queimado_alvo"] = aplicar_status(ctx, alvo, "Queimado", negativo=True)
     dano_vida = fnum(ret.get("dano_vida"), 0.0)
     if usuario is not None and dano_vida > 0:
         ret["recuo"] = usuario.ReceberDano(
@@ -152,7 +152,7 @@ def _exec_labareda(ctx, alvo):
     usuario = ctx.get("usuario")
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.80), "especial")
     if ret.get("critico") and alvo is not None and alvo.esta_vivo():
-        ret["queimado"] = aplicar_status(ctx, alvo, "Queimado", duracao=_param(ctx, "duracao", 6), negativo=True)
+        ret["queimado"] = aplicar_status(ctx, alvo, "Queimado", negativo=True)
     return ret
 
 
@@ -181,7 +181,7 @@ def _exec_inferno(ctx, alvo):
     resultados = []
     for pokemon in _todos_ativos(ctx):
         ret = dano_generico(ctx, pokemon, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.70), "especial")
-        efeito = aplicar_status(ctx, pokemon, "Queimado", duracao=_param(ctx, "duracao", 6), negativo=True) if pokemon.esta_vivo() else None
+        efeito = aplicar_status(ctx, pokemon, "Queimado", negativo=True) if pokemon.esta_vivo() else None
         resultados.append({"pokemon_id": pokemon.id_batalha, "dano": ret, "queimado": efeito})
     return {"aplicado": True, "alvos_atingidos": len(resultados), "resultados": resultados}
 
@@ -350,7 +350,6 @@ _EXECUTES = {
     "fluxoinfernal": _exec_fluxo_infernal,
     "inferno": _exec_inferno,
     "laserdefogo": _exec_laser_de_fogo,
-    "raiodefogo": _exec_laser_de_fogo,
     "ferver": _exec_ferver,
     "superaquecer": _exec_superaquecer,
     "queimaduraeterna": _exec_queimadura_eterna,
@@ -362,11 +361,9 @@ _EXECUTES = {
 }
 
 _ALIASES = {
-    "25": "boladefogo",
-    "26": "queimar",
-    "27": "chamainterior",
-    "28": "laserdefogo",
-    "29": "dancadosol",
+    "58": "boladefogo",
+    "59": "queimar",
+    "60": "chamainterior",
     "61": "foguinho",
     "62": "investidaflamejante",
     "63": "incendiar",

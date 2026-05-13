@@ -24,7 +24,7 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_gota_pesada",
-      "parametros": {"tipo": "agua", "efeito": "Encharcado", "duracao": 6, "negativo": true},
+      "parametros": {"tipo": "agua", "efeito": "Encharcado", "negativo": true},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "28": {
@@ -48,7 +48,7 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_bolhas",
-      "parametros": {"tipo": "agua", "categoria": "especial", "base_spa": 0.35, "bonus_spa_por_uso": 0.08},
+      "parametros": {"tipo": "agua", "categoria": "especial", "base_spa": 0.35, "bonus_spa_por_uso": 0.10, "max_acumulos": 6},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "30": {
@@ -72,7 +72,7 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_jato_de_agua",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.65, "duracao": 6},
+      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.65},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "32": {
@@ -84,7 +84,7 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_jato_duplo",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.5, "duracao": 6},
+      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.5},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "33": {
@@ -96,7 +96,7 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_jato_triplo",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.45, "duracao": 6},
+      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.45},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 3, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "34": {
@@ -109,7 +109,7 @@
       "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
       "execute_principal": "ataque_golpe_de_concha",
       "parametros": {"tipo": "agua", "categoria": "normal", "mult_atk": 0.45, "mult_def": 0.35},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false}]}
     },
     "35": {
       "ID": 35,
@@ -194,7 +194,7 @@
       "estilo_logico": "alvo",
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_fonte_termal",
-      "parametros": {"tipo": "agua", "cura_mag": 0.3, "duracao": 6},
+      "parametros": {"tipo": "agua", "cura_mag": 0.3},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true}]}
     },
     "42": {
@@ -274,7 +274,7 @@
       "estilo_logico": "ativo",
       "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_tsunami",
-      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.85, "bonus_esquerda_max": 0.35, "chance_encharcar": 0.35, "duracao": 6}
+      "parametros": {"tipo": "agua", "categoria": "especial", "mult_spa": 0.85, "bonus_esquerda_max": 0.35, "chance_encharcar": 0.35}
     },
     "49": {
       "ID": 49,

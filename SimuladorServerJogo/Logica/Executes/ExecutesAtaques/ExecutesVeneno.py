@@ -90,7 +90,7 @@ def _dobrar_passos_efeito(ctx, alvo, nomes):
 
 
 def _exec_envenenar(ctx, alvo):
-    return aplicar_status(ctx, alvo, "Envenenado", duracao=int(_param(ctx, "duracao", 6)), negativo=True)
+    return aplicar_status(ctx, alvo, "Envenenado", negativo=True)
 
 
 def _exec_farpa(ctx, alvo):
@@ -101,7 +101,7 @@ def _exec_farpa(ctx, alvo):
         extras["chance_critico_max"] = _param(ctx, "chance_critico_forcado", 100.0)
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("Atk") * _param(ctx, "mult_atk", 0.45), "normal", **extras)
     if ret.get("critico"):
-        ret["envenenado"] = aplicar_status(ctx, alvo, "Envenenado", duracao=int(_param(ctx, "duracao_envenenado", 6)), negativo=True)
+        ret["envenenado"] = aplicar_status(ctx, alvo, "Envenenado", negativo=True)
     return ret
 
 
@@ -137,9 +137,9 @@ def _exec_fumaca_toxica(ctx, alvo):
     usuario = ctx.get("usuario")
     critico = resolver_critico_contextual(usuario, ctx, tipo="efeito")
     if alvo.possui_efeito("Envenenado") or critico.get("critico"):
-        efeito = aplicar_status(ctx, alvo, "Intoxicado", duracao=int(_param(ctx, "duracao_intoxicado", 6)), negativo=True)
+        efeito = aplicar_status(ctx, alvo, "Intoxicado", negativo=True)
         return {"aplicado": True, "critico_contextual": critico, "intoxicado": efeito}
-    efeito = aplicar_status(ctx, alvo, "Envenenado", duracao=int(_param(ctx, "duracao_envenenado", 6)), negativo=True)
+    efeito = aplicar_status(ctx, alvo, "Envenenado", negativo=True)
     return {"aplicado": True, "critico_contextual": critico, "envenenado": efeito}
 
 
@@ -178,11 +178,10 @@ def _exec_gas_corrosivo(ctx, alvo):
 def _exec_bomba_de_lodo(ctx, alvo):
     usuario = ctx.get("usuario")
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.80), "especial")
-    duracao = int(_param(ctx, "duracao_envenenado", 6))
-    ret["envenenado_alvo"] = aplicar_status(ctx, alvo, "Envenenado", duracao=duracao, negativo=True)
+    ret["envenenado_alvo"] = aplicar_status(ctx, alvo, "Envenenado", negativo=True)
     adjacentes = []
     for adjacente in inimigos_vivos_adjacentes_ao_alvo(ctx, alvo):
-        adjacentes.append({"alvo_id": adjacente.id_batalha, "envenenado": aplicar_status(ctx, adjacente, "Envenenado", duracao=duracao, negativo=True)})
+        adjacentes.append({"alvo_id": adjacente.id_batalha, "envenenado": aplicar_status(ctx, adjacente, "Envenenado", negativo=True)})
     ret["adjacentes_envenenados"] = adjacentes
     return ret
 
@@ -258,12 +257,8 @@ _EXECUTES = {
 }
 _PASSIVAS_ATAQUE = [
     {"nome": "Imunizado", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_imunizado, "origem": "ataque", "code": "158"},
-    {"nome": "Imunizado", "flag": "AoRegistrarPassiva", "grupo": "self", "func": _passiva_imunizado, "origem": "ataque", "code": "46"},
 ]
 _ALIASES = {
-    "44": "envenenar",
-    "45": "armaduramole",
-    "46": "imunizado",
     "144": "envenenar",
     "145": "farpa",
     "146": "poluicao",

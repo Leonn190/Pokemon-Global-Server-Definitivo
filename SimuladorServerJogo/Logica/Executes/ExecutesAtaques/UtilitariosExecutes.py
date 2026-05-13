@@ -19,7 +19,7 @@ def fnum(valor: object, default: float = 0.0) -> float:
 
 
 # Atributos regulares sorteaveis por ataques como Crescimento. Nao inclui Vida, EneM, Acuracia, Assertividade, CrC, CrD, Dur, Amp, Vamp.
-ATRIBUTOS_REGULARES = ("Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int")
+ATRIBUTOS_REGULARES = ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"]
 
 
 def resolver_critico_contextual(usuario, ctx, maximo=None, tipo="generico"):

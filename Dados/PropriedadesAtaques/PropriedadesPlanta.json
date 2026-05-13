@@ -11,7 +11,7 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_raizes",
       "parametros": {"tipo": "planta", "efeito": "Enraizado", "aprimoramento": {}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "92": {
       "ID": 92,
@@ -32,7 +32,7 @@
       "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_chicote_de_vinhas",
       "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "bonus_crc": 20, "aprimoramento": {"escala_atk": 0.85, "bonus_crc": 25}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "94": {
       "ID": 94,
@@ -63,7 +63,7 @@
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_dreno",
       "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa_dano": 0.65, "escala_spa_cura": 0.35, "aprimoramento": {"escala_spa_dano": 0.72, "escala_spa_cura": 0.42}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "97": {
       "ID": 97,
@@ -74,7 +74,7 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_seiva_misteriosa",
       "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 0.75, "bonus_dano_envenenado": 0.35, "aprimoramento": {"escala_spa": 0.82, "bonus_dano_envenenado": 0.45}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "98": {
       "ID": 98,
@@ -85,7 +85,7 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_tiro_de_semente",
       "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "efeito_removido": "Regeneracao", "aprimoramento": {"escala_atk": 0.85}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "99": {
       "ID": 99,
@@ -178,7 +178,7 @@
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_flor_magica",
       "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa_dano": 0.50, "escala_mag_dano": 0.50, "escala_mag_para_spa": 0.06, "escala_spa_para_mag": 0.06, "buffs_usam_valores_pre_buff": true, "aprimoramento": {"escala_spa_dano": 0.55, "escala_mag_dano": 0.55, "escala_mag_para_spa": 0.08, "escala_spa_para_mag": 0.08}},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "107": {
       "ID": 107,

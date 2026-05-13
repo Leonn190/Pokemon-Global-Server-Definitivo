@@ -2,86 +2,6 @@
   "schema_version": 1,
   "tipo": "venenoso",
   "ataques": {
-    "44": {
-      "ID": 44,
-      "nome": "Envenenar",
-      "custo": 40,
-      "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
-      "execute_principal": "ataque_envenenar",
-      "parametros": {
-        "tipo": "venenoso",
-        "efeito": "Envenenado",
-        "duracao": 6,
-        "negativo": true
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
-    },
-    "45": {
-      "ID": 45,
-      "nome": "Armadura Mole",
-      "custo": 35,
-      "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
-      "execute_principal": "ataque_armadura_mole",
-      "parametros": {
-        "tipo": "venenoso",
-        "atributo": "Per",
-        "percentual_alvo": 0.1,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
-    },
-    "46": {
-      "ID": 46,
-      "nome": "Imunizado",
-      "custo": 0,
-      "estilo_logico": "passivo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_imunizado",
-      "parametros": {
-        "tipo": "venenoso",
-        "efeito": "Imunizado",
-        "permanente": true
-      }
-    },
     "144": {
       "ID": 144,
       "nome": "Envenenar",
@@ -92,8 +12,8 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_envenenar",
       "descricao": "Aplica Envenenado no alvo.",
-      "parametros": {"tipo": "venenoso", "duracao": 6},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "venenoso"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "145": {
       "ID": 145,
@@ -105,8 +25,8 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_farpa",
       "descricao": "Causa dano fisico e pode envenenar se o acerto for critico.",
-      "parametros": {"tipo": "venenoso", "mult_atk": 0.45, "chance_critico_forcado": 100.0, "duracao_envenenado": 6},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "venenoso", "mult_atk": 0.45, "chance_critico_forcado": 100.0},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "146": {
       "ID": 146,
@@ -158,8 +78,8 @@
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_fumaca_toxica",
       "descricao": "Aplica Envenenado ou Intoxicado conforme estado do alvo e critico contextual.",
-      "parametros": {"tipo": "venenoso", "duracao_envenenado": 6, "duracao_intoxicado": 6},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "venenoso"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "150": {
       "ID": 150,
@@ -214,8 +134,8 @@
       "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_bomba_de_lodo",
       "descricao": "Causa dano no alvo principal e envenena inimigos adjacentes.",
-      "parametros": {"tipo": "venenoso", "mult_spa": 0.8, "duracao_envenenado": 6},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "venenoso", "mult_spa": 0.8},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "154": {
       "ID": 154,
@@ -250,7 +170,7 @@
       "custo_ap": 65,
       "tipo": "venenoso",
       "estilo_logico": "alvo",
-      "animacao": {"modelo": "AvanÃ§o", "efeito_executor": null, "efeito_alvo": null},
+      "animacao": {"modelo": "Avanço", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_extracao",
       "descricao": "Converte passos de veneno em Vamp, remove venenos e causa dano fisico.",
       "parametros": {"tipo": "venenoso", "vamp_por_passo": 2.0, "vamp_max": 20.0, "mult_atk": 0.75},
@@ -282,5 +202,5 @@
       "parametros": {"tipo": "venenoso", "efeito_interno": "Imune"}
     }
   },
-  "_comentario": "Ataques venenosos novos 144 a 158 e aliases antigos 44 a 46 preservados."
+  "_comentario": "Ataques venenosos 144 a 158."
 }

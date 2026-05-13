@@ -111,7 +111,7 @@ def _exec_cristalizar(ctx, alvo):
     usuario = ctx.get("usuario")
     if alvo is not None and alvo.possui_efeito("Encharcado"):
         removido = remover_efeitos_contando_passos(alvo, ["Encharcado"], origem=usuario, dados={**_ataque_id_nome(ctx, "Cristalizar"), "motivo": "Cristalizar"})
-        congelado = aplicar_status(ctx, alvo, "Congelado", duracao=_param(ctx, "duracao", 6), negativo=True)
+        congelado = aplicar_status(ctx, alvo, "Congelado", negativo=True)
         ret = {"aplicado": True, "encharcado_removido": removido, "congelado": congelado}
         if _esta_aprimorado(ctx) and alvo.esta_vivo():
             ret["dano"] = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa_encharcado", 0.35), "especial")
@@ -154,10 +154,16 @@ def _exec_gelo_verdadeiro(ctx, alvo):
 
 def _exec_raio_aurora(ctx, alvo):
     usuario = ctx.get("usuario")
-    ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.85), "especial")
-    if ret.get("critico") and alvo is not None and alvo.esta_vivo():
-        ret["congelado"] = aplicar_status(ctx, alvo, "Congelado", duracao=_param(ctx, "duracao", 6), negativo=True)
-    return ret
+    area_id = area_selecionada_da_acao(ctx) or getattr(alvo, "area_id", None)
+    if usuario is None or not area_id:
+        return {"falha": True, "motivo": "area_alvo_invalida"}
+    resultados = []
+    for idx, inimigo in enumerate(alvos_linha_inimigos_area(ctx, area_id, alvo_inicial=alvo)):
+        ret = dano_generico(ctx, inimigo, usuario.obter_atributo("SpA") * _param(ctx, "mult_spa", 0.85), "especial")
+        if ret.get("critico") and inimigo.esta_vivo():
+            ret["congelado"] = aplicar_status(ctx, inimigo, "Congelado", negativo=True)
+        resultados.append({"pokemon_id": inimigo.id_batalha, "indice_hit": idx, "dano": ret})
+    return {"aplicado": True, "area_id": area_id, "alvos_atingidos": len(resultados), "resultados": resultados}
 
 
 def _exec_nevasca(ctx, alvo):
@@ -290,6 +296,7 @@ _ALIASES = {
     "117": "tumbadegelo",
     "118": "quebragelo",
     "119": "ataquepolar",
+    "polar": "ataquepolar",
     "120": "avalanche",
     "121": "boladeneve",
     "122": "reinadodegelo",

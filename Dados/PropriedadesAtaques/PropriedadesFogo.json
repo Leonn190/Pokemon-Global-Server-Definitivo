@@ -82,7 +82,7 @@
       "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": null},
       "execute_principal": "ataque_bola_de_fogo",
       "parametros": {"tipo": "fogo", "categoria": "especial", "acuracia": 70, "mult_spa": 0.8, "escala_spa": 0.8, "percentual_secundario": 0.5, "splash_frac": 0.5},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "59": {
       "ID": 59,
@@ -93,7 +93,7 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_queimar",
       "parametros": {"tipo": "fogo", "acuracia": 30, "efeito_condicional": "Queimado", "efeito": "Queimado", "negativo": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "60": {
       "ID": 60,
@@ -125,7 +125,7 @@
       "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_investida_flamejante",
       "parametros": {"tipo": "fogo", "categoria": "normal", "acuracia": 60, "mult_atk": 0.85, "percentual_recuo": 0.2, "efeito_condicional": "Queimado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "63": {
       "ID": 63,
@@ -149,7 +149,7 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_estouro_solar",
       "parametros": {"tipo": "fogo", "categoria": "especial", "acuracia": 65, "mult_spa": 0.85, "multiplicador_sol_forte": 1.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "65": {
       "ID": 65,
@@ -171,7 +171,7 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_labareda",
       "parametros": {"tipo": "fogo", "categoria": "especial", "acuracia": 50, "mult_spa": 0.8, "efeito_condicional": "Queimado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "67": {
       "ID": 67,
@@ -192,7 +192,7 @@
       "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_fluxo_infernal",
       "parametros": {"tipo": "fogo", "categoria": "puro", "acuracia": 105, "percentual_vida_atual": 0.5, "nao_critico": true},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "69": {
       "ID": 69,
@@ -226,7 +226,7 @@
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_ferver",
       "parametros": {"tipo": "fogo", "categoria": "especial", "acuracia": 40, "mult_spa": 0.45, "mult_mag": 0.35, "efeito_condicional": "Queimado", "sempre_acerta_se_alvo_efeito": "Queimado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "72": {
       "ID": 72,

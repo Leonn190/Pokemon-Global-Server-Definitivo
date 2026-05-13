@@ -51,7 +51,7 @@
       "execute_principal": "ataque_acido",
       "descricao": "Reduz permanentemente a maior defesa do alvo.",
       "parametros": {"tipo": "venenoso", "mult_spa_reducao": 0.15},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "148": {
       "ID": 148,
@@ -187,7 +187,7 @@
       "execute_principal": "ataque_armadura_mole",
       "descricao": "Reduz permanentemente a Per do alvo.",
       "parametros": {"tipo": "venenoso", "mult_per_alvo": 0.1, "mult_mag_usuario": 0.1},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "158": {
       "ID": 158,

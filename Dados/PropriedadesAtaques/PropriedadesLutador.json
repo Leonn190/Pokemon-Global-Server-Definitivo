@@ -188,7 +188,45 @@
       "execute_principal": "ataque_submissao",
       "parametros": {"tipo": "lutador", "categoria": "normal", "mult_atk": 0.85, "aprimoramento": {"mult_atk": 0.95}},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "141": {
+      "ID": 141,
+      "nome": "Cauter",
+      "custo": 55,
+      "custo_ap": 65,
+      "tipo": "lutador",
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "AvanÃ§o", "efeito_executor": null, "efeito_alvo": "ImpactoRochoso"},
+      "execute_principal": "ataque_cauter",
+      "descricao": "Remove defesas ativas do alvo antes de causar dano e aplica Cauterizado.",
+      "parametros": {"tipo": "lutador", "sempre_acerta": true, "mult_atk": 0.7, "bonus_por_efeito": 0.2, "efeitos_quebrados": ["Protegido", "Refletindo", "Evasivo", "Imparavel"], "duracao_cauterizado": 6},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "142": {
+      "ID": 142,
+      "nome": "Postura de Combatente",
+      "custo": 45,
+      "custo_ap": 55,
+      "tipo": "lutador",
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_postura_de_combatente",
+      "descricao": "O usuario recebe Imparavel e Fortificado temporariamente.",
+      "parametros": {"tipo": "lutador", "duracao_imparavel": 6, "duracao_fortificado": 6}
+    },
+    "143": {
+      "ID": 143,
+      "nome": "Barragem Punho Guardião",
+      "custo": 45,
+      "custo_ap": 55,
+      "tipo": "lutador",
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": "Barreira"},
+      "execute_principal": "ataque_barragem_punho_guardiao",
+      "descricao": "Concede barreira a um aliado ou ao proprio usuario.",
+      "parametros": {"tipo": "lutador", "mult_mag_barreira": 0.2, "mult_atk_barreira": 0.12},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     }
   },
-  "_comentario": "Ataques lutador Code 124 a 140 adaptados ao sistema atual de batalha."
+  "_comentario": "Ataques lutador Code 124 a 143 adaptados ao sistema atual de batalha."
 }

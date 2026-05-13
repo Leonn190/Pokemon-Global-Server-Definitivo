@@ -483,6 +483,122 @@ def _exec_submissao(ctx, alvo):
     return ret
 
 
+def _remover_efeito_formal_unico(ctx, alvo, nome):
+    alvo_norm = normalizar(nome)
+    removidos = []
+    restantes = []
+    for efeito in list(getattr(alvo, "efeitos_formais", []) or []):
+        if normalizar((efeito or {}).get("nome") or (efeito or {}).get("code")) == alvo_norm:
+            removidos.append(copy.deepcopy(efeito))
+        else:
+            restantes.append(efeito)
+    if not removidos:
+        return []
+    alvo.efeitos_formais = restantes
+    if hasattr(alvo, "recalcular_atributos"):
+        alvo.recalcular_atributos()
+    for efeito in removidos:
+        _registrar_log(
+            ctx,
+            "pokemon_removeu_efeito",
+            {
+                "pokemon_id": getattr(alvo, "id_batalha", None),
+                "pokemon_nome": getattr(alvo, "nome", None),
+                "efeito_nome": (efeito or {}).get("nome") or (efeito or {}).get("code"),
+                "motivo": "Cauter",
+                **_ataque_id_nome(ctx, "Cauter"),
+            },
+        )
+    return removidos
+
+
+def _remover_cauter_quebras(ctx, alvo):
+    efeitos = _param_lista(ctx, "efeitos_quebrados", ["Protegido", "Refletindo", "Evasivo", "Imparavel"])
+    removidos = []
+    for nome in efeitos:
+        nome_norm = normalizar(nome)
+        presente = False
+        detalhe = {"efeito": nome, "formal": False, "transitorio": False}
+        if nome_norm == "protegido" and isinstance(getattr(alvo, "estados_transitorios", None), dict) and alvo.estados_transitorios.get("protegido"):
+            alvo.estados_transitorios.pop("protegido", None)
+            presente = True
+            detalhe["transitorio"] = True
+            _registrar_log(
+                ctx,
+                "estado_transitorio_removido",
+                {
+                    "pokemon_id": getattr(alvo, "id_batalha", None),
+                    "pokemon_nome": getattr(alvo, "nome", None),
+                    "estado": "protegido",
+                    "motivo": "Cauter",
+                    **_ataque_id_nome(ctx, "Cauter"),
+                },
+            )
+        formais = _remover_efeito_formal_unico(ctx, alvo, nome)
+        if not formais and nome_norm == "imparavel":
+            formais = _remover_efeito_formal_unico(ctx, alvo, "Imparável")
+        if formais:
+            presente = True
+            detalhe["formal"] = True
+            detalhe["efeitos_formais"] = formais
+        if presente:
+            removidos.append(detalhe)
+    return removidos
+
+
+def _exec_cauter(ctx, alvo):
+    usuario = ctx.get("usuario")
+    removidos = _remover_cauter_quebras(ctx, alvo)
+    quantidade = len(removidos)
+    mult = _param(ctx, "mult_atk", 0.70)
+    bonus = _param(ctx, "bonus_por_efeito", 0.20)
+    bruto = usuario.obter_atributo("Atk") * mult * (1.0 + bonus * quantidade)
+    def_alvo = alvo.obter_atributo("Def")
+    spd_alvo = alvo.obter_atributo("SpD")
+    categoria = "normal" if def_alvo <= spd_alvo else "especial"
+    dano = dano_generico(
+        ctx,
+        alvo,
+        bruto,
+        categoria,
+        categoria_logica="fisica",
+        defesa_escolhida="Def" if categoria == "normal" else "SpD",
+        cauter_efeitos_removidos=quantidade,
+    )
+    duracao = int(_param(ctx, "duracao_cauterizado", 6))
+    cauterizado = aplicar_status(ctx, alvo, "Cauterizado", duracao=duracao, negativo=True)
+    dano["efeitos_quebrados"] = removidos
+    dano["quantidade_efeitos_quebrados"] = quantidade
+    dano["cauterizado"] = cauterizado
+    dano["defesa_escolhida"] = "Def" if categoria == "normal" else "SpD"
+    dano["categoria_logica"] = "fisica"
+    return dano
+
+
+def _exec_postura_de_combatente(ctx, alvo):
+    usuario = ctx.get("usuario")
+    return {
+        "aplicado": True,
+        "imparavel": aplicar_status(ctx, usuario, "Imparavel", duracao=int(_param(ctx, "duracao_imparavel", 6)), negativo=False),
+        "fortificado": aplicar_status(ctx, usuario, "Fortificado", duracao=int(_param(ctx, "duracao_fortificado", 6)), negativo=False),
+    }
+
+
+def _exec_barragem_punho_guardiao(ctx, alvo):
+    usuario = ctx.get("usuario")
+    valor = usuario.obter_atributo("Mag") * _param(ctx, "mult_mag_barreira", 0.20)
+    valor += usuario.obter_atributo("Atk") * _param(ctx, "mult_atk_barreira", 0.12)
+    dados = {
+        **_ataque_id_nome(ctx, "Barragem Punho Guardiao"),
+        "calculo": [
+            f"Mag * mult_mag_barreira = {round(usuario.obter_atributo('Mag'), 4)} * {round(_param(ctx, 'mult_mag_barreira', 0.20), 4)}",
+            f"Atk * mult_atk_barreira = {round(usuario.obter_atributo('Atk'), 4)} * {round(_param(ctx, 'mult_atk_barreira', 0.12), 4)}",
+            f"Barreira final = {round(valor, 4)}",
+        ],
+    }
+    return usuario.AplicarBarreira(alvo, valor, dados=dados)
+
+
 _EXECUTES = {
     "gritodeguerra": _exec_grito_de_guerra,
     "implacavel": execute_passiva_nao_manual,
@@ -501,6 +617,9 @@ _EXECUTES = {
     "chuteduplo": _exec_chute_duplo,
     "contraataque": _exec_contra_ataque,
     "submissao": _exec_submissao,
+    "cauter": _exec_cauter,
+    "posturadecombatente": _exec_postura_de_combatente,
+    "barragempunhoguardiao": _exec_barragem_punho_guardiao,
 }
 
 _PASSIVAS_ATAQUE = [
@@ -525,6 +644,9 @@ _ALIASES = {
     "138": "chuteduplo",
     "139": "contraataque",
     "140": "submissao",
+    "141": "cauter",
+    "142": "posturadecombatente",
+    "143": "barragempunhoguardiao",
 }
 
 

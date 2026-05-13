@@ -12,6 +12,8 @@ def alvo_fallback():
     return {
         "tipo": "area",
         "quantidade": 1,
+        "quantidade_minima": None,
+        "quantidade_maxima": None,
         "lados_permitidos": ["lado_oposto"],
         "exige_area_ocupada": False,
         "inclui_reserva": False,
@@ -34,13 +36,20 @@ def bool_config_alvo(valor):
 def normalizar_config_alvo(config):
     base = alvo_fallback()
     if isinstance(config, dict):
-        for chave in ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id", "areas"):
+        for chave in ("tipo", "quantidade", "quantidade_minima", "quantidade_maxima", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id", "areas"):
             if chave in config:
                 base[chave] = copy.deepcopy(config.get(chave))
     try:
         base["quantidade"] = max(1, int(float(base.get("quantidade") or 1)))
     except (TypeError, ValueError):
         base["quantidade"] = 1
+    for chave in ("quantidade_minima", "quantidade_maxima"):
+        if base.get(chave) is None:
+            continue
+        try:
+            base[chave] = max(1, int(float(base.get(chave) or 1)))
+        except (TypeError, ValueError):
+            base[chave] = None
     permitidos = base.get("lados_permitidos")
     if isinstance(permitidos, str):
         permitidos = [permitidos]
@@ -77,7 +86,7 @@ def normalizar_alvos_config(props):
         configs = [normalizar_config_alvo(item) for item in alvos if isinstance(item, dict)]
         if configs:
             return configs
-    chaves_antigas = ("tipo", "quantidade", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id", "areas")
+    chaves_antigas = ("tipo", "quantidade", "quantidade_minima", "quantidade_maxima", "lados_permitidos", "exige_area_ocupada", "inclui_reserva", "area_id", "areas")
     if isinstance(alvificacao, dict) and any(chave in alvificacao for chave in chaves_antigas):
         return [normalizar_config_alvo(alvificacao)]
     return [alvo_fallback()]
@@ -152,7 +161,18 @@ def validar_quantidade_selecoes(alvo, selecoes, props):
     alvo_multi = str(alvo.get("tipo") or "").strip().lower() == "multi"
     alvo_fixo_implicito = not alvo and all(str(cfg.get("tipo") or "").strip().lower() == "fixa" for cfg in configs)
     if not alvo_multi and not alvo_fixo_implicito:
-        if len(configs) > 1 or int(configs[0].get("quantidade") or 1) != 1:
+        if len(configs) > 1:
+            return "quantidade_alvos_incompleta"
+        config = configs[0]
+        minimo = config.get("quantidade_minima")
+        maximo = config.get("quantidade_maxima")
+        if minimo is not None or maximo is not None:
+            minimo = int(minimo or config.get("quantidade") or 1)
+            maximo = int(maximo or config.get("quantidade") or 1)
+            if not (minimo <= 1 <= maximo):
+                return "quantidade_alvos_incompleta"
+            return None
+        if int(config.get("quantidade") or 1) != 1:
             return "quantidade_alvos_incompleta"
         return None
     contagem = {}
@@ -165,8 +185,15 @@ def validar_quantidade_selecoes(alvo, selecoes, props):
             return "grupo_alvo_invalido"
         contagem[grupo] = contagem.get(grupo, 0) + 1
     for idx, config in enumerate(configs):
-        esperado = 1 if str(config.get("tipo") or "").strip().lower() == "fixa" else int(config.get("quantidade") or 1)
-        if contagem.get(idx, 0) != esperado:
+        if str(config.get("tipo") or "").strip().lower() == "fixa":
+            minimo = maximo = 1
+        elif config.get("quantidade_minima") is not None or config.get("quantidade_maxima") is not None:
+            minimo = int(config.get("quantidade_minima") or config.get("quantidade") or 1)
+            maximo = int(config.get("quantidade_maxima") or config.get("quantidade") or 1)
+        else:
+            minimo = maximo = int(config.get("quantidade") or 1)
+        atual = contagem.get(idx, 0)
+        if atual < minimo or atual > maximo:
             return "quantidade_alvos_incompleta"
     return None
 

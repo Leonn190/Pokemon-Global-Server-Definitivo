@@ -1,0 +1,448 @@
+{
+  "schema_version": 1,
+  "tipo": "terrestre",
+  "ataques": {
+    "159": {
+      "ID": 159,
+      "nome": "Rachar Terra",
+      "custo": 35,
+      "custo_ap": 40,
+      "poder": 40,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": null,
+        "projetil": "Generico"
+      },
+      "execute_principal": "ataque_rachar_terra",
+      "parametros": {
+        "tipo": "terrestre",
+        "dur_base": 5.0,
+        "dur_mag_usuario_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    },
+    "160": {
+      "ID": 160,
+      "nome": "Areia",
+      "custo": 25,
+      "custo_ap": 30,
+      "poder": 30,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": null,
+        "projetil": "Generico"
+      },
+      "execute_principal": "ataque_areia",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "especial",
+        "dano_spa_pct": 0.35,
+        "dano_spa_pct_tempestade_areia": 0.7,
+        "def_debuff_tempestade_areia_pct": 0.08
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    },
+    "161": {
+      "ID": 161,
+      "nome": "Rachadura",
+      "custo": 45,
+      "custo_ap": 55,
+      "poder": 55,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
+      "execute_principal": "ataque_rachadura",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "normal",
+        "dano_atk_pct": 0.75,
+        "bonus_terreno_alvo_pct": 0.25,
+        "bonus_terreno_usuario_pct": 0.25
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    },
+    "162": {
+      "ID": 162,
+      "nome": "Domínio do Solo",
+      "custo": 40,
+      "custo_ap": 35,
+      "poder": 35,
+      "tipo": "terrestre",
+      "estilo_logico": "ativo",
+      "modo_execucao": "uma_vez",
+      "animacao": {
+        "modelo": "EfeitoCampo",
+        "efeito_executor": null,
+        "efeito_alvo": null
+      },
+      "execute_principal": "ataque_dominio_do_solo",
+      "parametros": {
+        "tipo": "terrestre",
+        "incluir_adjacentes_diagonais": true
+      }
+    },
+    "163": {
+      "ID": 163,
+      "nome": "Dança da Areia",
+      "custo": 40,
+      "custo_ap": 35,
+      "poder": 35,
+      "tipo": "terrestre",
+      "estilo_logico": "ativo",
+      "modo_execucao": "uma_vez",
+      "animacao": {
+        "modelo": "EfeitoCampo",
+        "efeito_executor": null,
+        "efeito_alvo": null
+      },
+      "execute_principal": "ataque_danca_da_areia",
+      "parametros": {
+        "tipo": "terrestre",
+        "clima": "Tempestade de Areia"
+      }
+    },
+    "164": {
+      "ID": 164,
+      "nome": "Golpe de Ossos",
+      "custo": 55,
+      "custo_ap": 65,
+      "poder": 65,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
+      "execute_principal": "ataque_golpe_de_ossos",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "normal",
+        "dano_atk_pct": 0.8,
+        "efeitos_remover": [
+          "Protegido",
+          "Evasivo",
+          "Refletindo"
+        ],
+        "ignorar_defensivos": true
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    },
+    "165": {
+      "ID": 165,
+      "nome": "Queda Sísmica",
+      "custo": 60,
+      "custo_ap": 70,
+      "poder": 70,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "Avanco",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
+      "execute_principal": "ataque_queda_sismica",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "normal",
+        "dano_atk_pct": 0.6,
+        "dano_vida_atual_usuario_pct": 0.2,
+        "recoil_vida_atual_usuario_pct": 0.08
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    },
+    "166": {
+      "ID": 166,
+      "nome": "Tiro de Lama",
+      "custo": 40,
+      "custo_ap": 50,
+      "poder": 50,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": null,
+        "projetil": "Generico"
+      },
+      "execute_principal": "ataque_tiro_de_lama",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "especial",
+        "dano_spa_pct": 0.5,
+        "mag_debuff_pct": 0.08,
+        "vel_debuff_pct": 0.1,
+        "mag_debuff_critico_pct": 0.12,
+        "vel_debuff_critico_pct": 0.15
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    },
+    "167": {
+      "ID": 167,
+      "nome": "Tremor Focalizado",
+      "custo": 65,
+      "custo_ap": 75,
+      "poder": 75,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
+      "execute_principal": "ataque_tremor_focalizado",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "normal",
+        "dano_atk_pct": 0.65,
+        "dano_vida_atual_alvo_pct": 0.15,
+        "def_debuff_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    },
+    "168": {
+      "ID": 168,
+      "nome": "Tremor",
+      "custo": 75,
+      "custo_ap": 85,
+      "poder": 85,
+      "tipo": "terrestre",
+      "estilo_logico": "ativo",
+      "modo_execucao": "uma_vez",
+      "animacao": {
+        "modelo": "EfeitoCampo",
+        "efeito_executor": null,
+        "efeito_alvo": null
+      },
+      "execute_principal": "ataque_tremor",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "normal",
+        "dano_atk_pct": 0.55,
+        "def_debuff_pct": 0.08
+      }
+    },
+    "169": {
+      "ID": 169,
+      "nome": "Quebra Chão",
+      "custo": 80,
+      "custo_ap": 90,
+      "poder": 90,
+      "tipo": "terrestre",
+      "estilo_logico": "ativo",
+      "modo_execucao": "uma_vez",
+      "animacao": {
+        "modelo": "EfeitoCampo",
+        "efeito_executor": null,
+        "efeito_alvo": null
+      },
+      "execute_principal": "ataque_quebra_chao",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "normal",
+        "dano_atk_pct": 0.4,
+        "recoil_vida_atual_usuario_pct": 0.1,
+        "terreno_inimigo": "Destruida"
+      }
+    },
+    "170": {
+      "ID": 170,
+      "nome": "Fissura",
+      "custo": 95,
+      "custo_ap": 110,
+      "poder": 110,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "EfeitoAlvo",
+        "efeito_executor": null,
+        "efeito_alvo": "ImpactoRochoso"
+      },
+      "execute_principal": "ataque_fissura",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "normal",
+        "dano_atk_pct": 0.45,
+        "executar_abaixo_vida_pct": 0.45
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    },
+    "171": {
+      "ID": 171,
+      "nome": "Terremoto",
+      "custo": 105,
+      "custo_ap": 120,
+      "poder": 120,
+      "tipo": "terrestre",
+      "estilo_logico": "ativo",
+      "modo_execucao": "uma_vez",
+      "animacao": {
+        "modelo": "EfeitoCampo",
+        "efeito_executor": null,
+        "efeito_alvo": null
+      },
+      "execute_principal": "ataque_terremoto",
+      "parametros": {
+        "tipo": "terrestre",
+        "categoria": "normal",
+        "dano_atk_pct": 0.75,
+        "efeitos_remover": [
+          "Protegido",
+          "Evasivo",
+          "Refletindo"
+        ],
+        "ignorar_defensivos": true
+      }
+    },
+    "172": {
+      "ID": 172,
+      "nome": "Poeira nos Olhos",
+      "custo": 25,
+      "custo_ap": 30,
+      "poder": 30,
+      "tipo": "terrestre",
+      "estilo_logico": "alvo",
+      "modo_execucao": "por_alvo",
+      "animacao": {
+        "modelo": "Projetil",
+        "efeito_executor": null,
+        "efeito_alvo": null,
+        "projetil": "Generico"
+      },
+      "execute_principal": "ataque_poeira_nos_olhos",
+      "parametros": {
+        "tipo": "terrestre",
+        "acuracia_alvo_pct": 0.1,
+        "mag_usuario_pct": 0.1
+      },
+      "alvificacao": {
+        "alvos": [
+          {
+            "tipo": "area",
+            "quantidade": 1,
+            "lados_permitidos": [
+              "lado_oposto"
+            ],
+            "exige_area_ocupada": true,
+            "inclui_reserva": false
+          }
+        ]
+      }
+    }
+  },
+  "_comentario": "Ataques terrestres modelados com execute proprio por ataque."
+}

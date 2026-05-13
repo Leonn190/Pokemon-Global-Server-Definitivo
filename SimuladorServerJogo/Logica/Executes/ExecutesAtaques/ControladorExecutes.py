@@ -88,10 +88,10 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ExecutesSonoro import (
     obter_executes_sonoro,
     obter_passivas_ataques_sonoro,
 )
-from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ExecutesTerra import (
-    obter_aliases_executes_terra,
-    obter_executes_terra,
-    obter_passivas_ataques_terra,
+from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ExecutesTerrestre import (
+    obter_aliases_executes_terrestre,
+    obter_executes_terrestre,
+    obter_passivas_ataques_terrestre,
 )
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.ExecutesVeneno import (
     obter_aliases_executes_veneno,
@@ -126,7 +126,7 @@ _FONTES_EXECUTES = (
     (obter_executes_psiquicos, obter_passivas_ataques_psiquicas, obter_aliases_executes_psiquicos),
     (obter_executes_sombrio, obter_passivas_ataques_sombrio, obter_aliases_executes_sombrio),
     (obter_executes_sonoro, obter_passivas_ataques_sonoro, obter_aliases_executes_sonoro),
-    (obter_executes_terra, obter_passivas_ataques_terra, obter_aliases_executes_terra),
+    (obter_executes_terrestre, obter_passivas_ataques_terrestre, obter_aliases_executes_terrestre),
     (obter_executes_veneno, obter_passivas_ataques_veneno, obter_aliases_executes_veneno),
     (obter_executes_voador, obter_passivas_ataques_voador, obter_aliases_executes_voador),
 )
@@ -149,7 +149,7 @@ _MODULOS_TIPOS = (
     "ExecutesPsiquico",
     "ExecutesSombrio",
     "ExecutesSonoro",
-    "ExecutesTerra",
+    "ExecutesTerrestre",
     "ExecutesVeneno",
     "ExecutesVoador",
 )

@@ -333,6 +333,20 @@ _ALIASES = {
     "146": "terremoto",
     "147": "racharterra",
     "148": "poeiranosolhos",
+    "159": "racharterra",
+    "160": "areia",
+    "161": "rachadura",
+    "162": "dominiodosolo",
+    "163": "dancadaareia",
+    "164": "golpedeossos",
+    "165": "quedasismica",
+    "166": "tirodelama",
+    "167": "tremorfocalizado",
+    "168": "tremor",
+    "169": "quebrachao",
+    "170": "fissura",
+    "171": "terremoto",
+    "172": "poeiranosolhos",
     "ataqueracharterra": "racharterra",
     "ataqueareia": "areia",
     "ataquerachadura": "rachadura",
@@ -350,13 +364,13 @@ _ALIASES = {
 }
 
 
-def obter_executes_terra():
+def obter_executes_terrestre():
     return dict(_EXECUTES)
 
 
-def obter_passivas_ataques_terra():
+def obter_passivas_ataques_terrestre():
     return []
 
 
-def obter_aliases_executes_terra():
+def obter_aliases_executes_terrestre():
     return dict(_ALIASES)

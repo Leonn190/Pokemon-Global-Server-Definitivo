@@ -165,7 +165,7 @@ def copiar_ataque_editor(tipo: str, nome: str = EDITOR_ATTACK_NAME, custo: int =
 class EstadoEditorAtaque:
     MODELOS = ["EfeitoProprio", "EfeitoAlvo", "Avanço", "Salto", "Raio", "Laser", "Jato", "Projetil", "Explosão"]
     TIPOS = [
-        "normal", "fogo", "agua", "planta", "eletrico", "gelo", "lutador", "venenoso", "terra", "voador",
+        "normal", "fogo", "agua", "planta", "eletrico", "gelo", "lutador", "venenoso", "terrestre", "voador",
         "psiquico", "inseto", "pedra", "fantasma", "dragao", "sombrio", "metal", "fada", "cosmico", "sonoro",
     ]
     ALVOS = ["area", "pokemon", "linha", "coluna", "arena", "campo", "arena_inimiga", "campo_inimigo", "todos_inimigos"]

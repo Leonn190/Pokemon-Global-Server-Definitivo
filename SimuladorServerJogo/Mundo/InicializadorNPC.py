@@ -37,7 +37,7 @@ class InicializadorNPC:
     @staticmethod
     def normalizar_tipo_estadio(valor: str) -> str:
         base = InicializadorNPC.slug(valor)
-        alias = {"terrestre": "terra", "eletrico": "eletrico", "psiquico": "psiquico", "agua": "agua", "dragao": "dragao"}
+        alias = {"terrestre": "terrestre", "eletrico": "eletrico", "psiquico": "psiquico", "agua": "agua", "dragao": "dragao"}
         return alias.get(base, base or "normal")
 
     @staticmethod

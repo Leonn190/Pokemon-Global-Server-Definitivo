@@ -361,7 +361,7 @@ class Partida:
             pokemon.aplicar_variacao_temporaria("Def", pokemon.atributos_base.get("Def", 0.0) * 0.30)
             pokemon.aplicar_variacao_temporaria("SpD", pokemon.atributos_base.get("SpD", 0.0) * 0.30)
         elif clima in {"tempestadedeareia", "tempestadeareia"}:
-            if "terra" in tipos:
+            if "terrestre" in tipos:
                 pokemon.aplicar_variacao_temporaria("Vel", pokemon.atributos_base.get("Vel", 0.0) * 0.25)
         elif clima == "nevoa":
             pokemon.aplicar_variacao_temporaria("Ass", -30.0)
@@ -412,7 +412,7 @@ class Partida:
             pokemon.ReceberCura(vida * 0.01, dados={"efeito": "Chuva"})
         elif clima == "solforte" and "gelo" in tipos:
             pokemon.ReceberDano(vida * 0.01, dados={"efeito": "Sol Forte", "ignorar_defensivos": True})
-        elif clima in {"tempestadedeareia", "tempestadeareia"} and not (tipos & {"terra", "metal", "pedra"}):
+        elif clima in {"tempestadedeareia", "tempestadeareia"} and not (tipos & {"terrestre", "metal", "pedra"}):
             pokemon.ReceberDano(vida * 0.02, dados={"efeito": "Tempestade de Areia", "ignorar_defensivos": True})
         elif clima == "gravidadeanomala" and pokemon.possui_efeito("Voando"):
             pokemon.ReceberDano(vida * 0.02, dados={"efeito": "Gravidade Anomala", "ignorar_defensivos": True})

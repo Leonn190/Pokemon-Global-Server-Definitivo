@@ -516,7 +516,7 @@ class CerebroNPCs:
     def _normalizar_tipo_estadio(valor: str) -> str:
         base = unicodedata.normalize("NFD", str(valor or "").strip().lower())
         base = "".join(ch for ch in base if unicodedata.category(ch) != "Mn")
-        alias = {"eletrico": "eletrico", "psiquico": "psiquico", "terrestre": "terra", "agua": "agua", "dragao": "dragao"}
+        alias = {"eletrico": "eletrico", "psiquico": "psiquico", "terrestre": "terrestre", "agua": "agua", "dragao": "dragao"}
         return alias.get(base, base or "normal")
 
     def _mapa_dimensao_estadios(self) -> Dict[str, str]:

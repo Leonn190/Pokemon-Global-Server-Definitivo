@@ -613,5 +613,185 @@
     "efeitos_relevantes": ["barreira"],
     "condicoes": ["melhor_se_alvo_vai_ser_focado"],
     "prioridade_simulacao": 0.64
+  },
+  "Raizes": {
+    "codigo": 91,
+    "nome": "Raizes",
+    "papeis": ["controle", "debuff"],
+    "alvos_preferidos": ["inimigo_perigoso"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["enraizado"],
+    "condicoes": ["melhor_contra_inimigo_movel"],
+    "prioridade_simulacao": 0.66
+  },
+  "Casco Vivo": {
+    "codigo": 92,
+    "nome": "Casco Vivo",
+    "papeis": ["buff", "sobrevivencia"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dur"],
+    "condicoes": ["melhor_se_usuario_vai_ser_focado"],
+    "prioridade_simulacao": 0.58
+  },
+  "Chicote de Vinhas": {
+    "codigo": 93,
+    "nome": "Chicote de Vinhas",
+    "papeis": ["dano", "finalizacao"],
+    "alvos_preferidos": ["inimigo_ferido", "inimigo_fraco"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["critico", "dano_fisico"],
+    "condicoes": ["melhor_com_chance_critica_alta"],
+    "prioridade_simulacao": 0.72
+  },
+  "Sintese": {
+    "codigo": 94,
+    "nome": "Sintese",
+    "papeis": ["energia", "suporte"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["energia", "sol_forte"],
+    "condicoes": ["melhor_se_usuario_sem_energia", "melhor_em_sol_forte"],
+    "prioridade_simulacao": 0.54
+  },
+  "Trevo da Sorte": {
+    "codigo": 95,
+    "nome": "Trevo da Sorte",
+    "papeis": ["buff"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["crc"],
+    "condicoes": ["melhor_antes_de_causar_dano"],
+    "prioridade_simulacao": 0.55
+  },
+  "Dreno": {
+    "codigo": 96,
+    "nome": "Dreno",
+    "papeis": ["dano", "cura", "sobrevivencia"],
+    "alvos_preferidos": ["inimigo_ferido", "inimigo_fraco"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dano_especial", "cura"],
+    "condicoes": ["melhor_se_usuario_ferido"],
+    "prioridade_simulacao": 0.76
+  },
+  "Seiva Misteriosa": {
+    "codigo": 97,
+    "nome": "Seiva Misteriosa",
+    "papeis": ["dano", "condicional"],
+    "alvos_preferidos": ["inimigo_envenenado", "inimigo_ferido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["envenenado", "intoxicado"],
+    "condicoes": ["melhor_contra_envenenado"],
+    "prioridade_simulacao": 0.77
+  },
+  "Tiro de Semente": {
+    "codigo": 98,
+    "nome": "Tiro de Semente",
+    "papeis": ["dano", "remocao"],
+    "alvos_preferidos": ["inimigo_regenerando", "inimigo_ferido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["regeneracao", "remover_buff"],
+    "condicoes": ["melhor_contra_alvo_com_regeneracao"],
+    "prioridade_simulacao": 0.72
+  },
+  "Absorver": {
+    "codigo": 99,
+    "nome": "Absorver",
+    "papeis": ["dano", "roubo_efeito"],
+    "alvos_preferidos": ["inimigo_buffado"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["roubo_efeito"],
+    "condicoes": ["melhor_contra_alvo_buffado"],
+    "prioridade_simulacao": 0.74
+  },
+  "Folha Navalha": {
+    "codigo": 100,
+    "nome": "Folha Navalha",
+    "papeis": ["dano", "linha"],
+    "alvos_preferidos": ["linha_inimiga", "inimigo_agrupado"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["linha", "perfuracao"],
+    "condicoes": ["melhor_em_linha_com_multiplos_alvos"],
+    "prioridade_simulacao": 0.82
+  },
+  "Flecha de Madeira": {
+    "codigo": 101,
+    "nome": "Flecha de Madeira",
+    "papeis": ["dano", "linha", "critico"],
+    "alvos_preferidos": ["linha_inimiga", "inimigo_ferido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["critico", "atravessar"],
+    "condicoes": ["melhor_com_chance_critica_alta"],
+    "prioridade_simulacao": 0.8
+  },
+  "Crescimento": {
+    "codigo": 102,
+    "nome": "Crescimento",
+    "papeis": ["buff"],
+    "alvos_preferidos": ["self"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["atributos_aleatorios", "sol_forte"],
+    "condicoes": ["melhor_em_luta_longa", "melhor_em_sol_forte"],
+    "prioridade_simulacao": 0.6
+  },
+  "Danca das Petalas": {
+    "codigo": 103,
+    "nome": "Danca das Petalas",
+    "papeis": ["buff", "suporte"],
+    "alvos_preferidos": ["self", "aliados_adjacentes"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["vel", "adjacencia"],
+    "condicoes": ["melhor_com_aliados_adjacentes"],
+    "prioridade_simulacao": 0.66
+  },
+  "Tornado de Folhas": {
+    "codigo": 104,
+    "nome": "Tornado de Folhas",
+    "papeis": ["dano", "linha", "debuff"],
+    "alvos_preferidos": ["linha_inimiga", "inimigo_rapido"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["linha", "vel", "sempre_acerta"],
+    "condicoes": ["melhor_em_linha_com_multiplos_alvos"],
+    "prioridade_simulacao": 0.84
+  },
+  "Bomba de Sementes": {
+    "codigo": 105,
+    "nome": "Bomba de Sementes",
+    "papeis": ["dano", "area", "splash"],
+    "alvos_preferidos": ["inimigo_agrupado", "area_vazia_predict"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["duas_areas", "splash"],
+    "condicoes": ["melhor_em_inimigos_agrupados"],
+    "prioridade_simulacao": 0.82
+  },
+  "Flor Magica": {
+    "codigo": 106,
+    "nome": "Flor Magica",
+    "papeis": ["dano", "buff"],
+    "alvos_preferidos": ["inimigo_ferido", "inimigo_fraco"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["dano_especial", "spa", "mag"],
+    "condicoes": ["melhor_em_luta_longa"],
+    "prioridade_simulacao": 0.78
+  },
+  "Murchar": {
+    "codigo": 107,
+    "nome": "Murchar",
+    "papeis": ["debuff", "vida_maxima"],
+    "alvos_preferidos": ["inimigo_resistente", "inimigo_perigoso"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["vida_maxima"],
+    "condicoes": ["melhor_contra_alvo_com_vida_alta"],
+    "prioridade_simulacao": 0.72
+  },
+  "Raio Solar": {
+    "codigo": 108,
+    "nome": "Raio Solar",
+    "papeis": ["dano", "linha", "clima"],
+    "alvos_preferidos": ["linha_inimiga", "inimigo_agrupado"],
+    "riscos": {"usuario": "baixo"},
+    "efeitos_relevantes": ["linha", "sol_forte", "reducao_por_alvo"],
+    "condicoes": ["melhor_em_sol_forte", "melhor_em_linha_com_multiplos_alvos"],
+    "prioridade_simulacao": 0.88
   }
 }

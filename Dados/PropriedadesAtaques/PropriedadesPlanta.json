@@ -2,120 +2,209 @@
   "schema_version": 1,
   "tipo": "planta",
   "ataques": {
-    "34": {
-      "ID": 34,
+    "91": {
+      "ID": 91,
       "nome": "Raizes",
       "custo": 50,
+      "custo_ap": 45,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_raizes",
-      "parametros": {
-        "tipo": "planta",
-        "efeito": "Enraizado",
-        "duracao": 6,
-        "negativo": true
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "planta", "efeito": "Enraizado", "aprimoramento": {}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "35": {
-      "ID": 35,
+    "92": {
+      "ID": 92,
       "nome": "Casco Vivo",
       "custo": 35,
+      "custo_ap": 40,
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_casco_vivo",
-      "parametros": {
-        "tipo": "planta",
-        "atributo": "Dur",
-        "percentual_mag": 0.25,
-        "duracao": 6
-      }
+      "parametros": {"tipo": "planta", "escala_mag_dur": 0.25, "aprimoramento": {"escala_mag_dur": 0.30}}
     },
-    "36": {
-      "ID": 36,
+    "93": {
+      "ID": 93,
+      "nome": "Chicote de Vinhas",
+      "custo": 40,
+      "custo_ap": 45,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_chicote_de_vinhas",
+      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "bonus_crc": 20, "aprimoramento": {"escala_atk": 0.85, "bonus_crc": 25}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "94": {
+      "ID": 94,
+      "nome": "Sintese",
+      "custo": 25,
+      "custo_ap": 30,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_sintese",
+      "parametros": {"tipo": "planta", "recuperacao_energia_mult": 1.80, "recuperacao_energia_sol_forte_mult": 3.00, "aprimoramento": {"recuperacao_energia_mult": 2.20, "recuperacao_energia_sol_forte_mult": 3.30}}
+    },
+    "95": {
+      "ID": 95,
+      "nome": "Trevo da Sorte",
+      "custo": 35,
+      "custo_ap": 40,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_trevo_da_sorte",
+      "parametros": {"tipo": "planta", "escala_mag_crc": 0.20, "aprimoramento": {"escala_mag_crc": 0.25}}
+    },
+    "96": {
+      "ID": 96,
+      "nome": "Dreno",
+      "custo": 40,
+      "custo_ap": 50,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_dreno",
+      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa_dano": 0.65, "escala_spa_cura": 0.35, "aprimoramento": {"escala_spa_dano": 0.72, "escala_spa_cura": 0.42}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "97": {
+      "ID": 97,
+      "nome": "Seiva Misteriosa",
+      "custo": 45,
+      "custo_ap": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_seiva_misteriosa",
+      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 0.75, "bonus_dano_envenenado": 0.35, "aprimoramento": {"escala_spa": 0.82, "bonus_dano_envenenado": 0.45}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "98": {
+      "ID": 98,
+      "nome": "Tiro de Semente",
+      "custo": 35,
+      "custo_ap": 40,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_tiro_de_semente",
+      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "efeito_removido": "Regeneracao", "aprimoramento": {"escala_atk": 0.85}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "99": {
+      "ID": 99,
+      "nome": "Absorver",
+      "custo": 50,
+      "custo_ap": 60,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_absorver",
+      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 0.35, "qtd_efeitos_roubados": 1, "aprimoramento": {"escala_spa": 0.45}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "100": {
+      "ID": 100,
+      "nome": "Folha Navalha",
+      "custo": 65,
+      "custo_ap": 75,
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_folha_navalha",
+      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.80, "fator_per_proximo": 0.50, "minimo_proximo": 0.20, "maximo_proximo": 0.80, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.88, "fator_per_proximo": 0.60, "minimo_proximo": 0.25, "maximo_proximo": 0.90}},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "101": {
+      "ID": 101,
+      "nome": "Flecha de Madeira",
+      "custo": 60,
+      "custo_ap": 70,
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_flecha_de_madeira",
+      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.70, "bonus_atk_por_area": 0.05, "bonus_atk_max": 0.40, "reducao_apos_atravessar": 0.40, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.78, "bonus_atk_por_area": 0.06, "bonus_atk_max": 0.48, "reducao_apos_atravessar": 0.35}},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "102": {
+      "ID": 102,
+      "nome": "Crescimento",
+      "custo": 45,
+      "custo_ap": 55,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_crescimento",
+      "parametros": {"tipo": "planta", "atributos_regulares": ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"], "percentual": 0.04, "quantidade": 3, "percentual_sol_forte": 0.05, "quantidade_sol_forte": 4, "aprimoramento": {"percentual": 0.05, "quantidade": 3, "percentual_sol_forte": 0.06, "quantidade_sol_forte": 4}}
+    },
+    "103": {
+      "ID": 103,
+      "nome": "Danca das Petalas",
+      "custo": 50,
+      "custo_ap": 60,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_danca_das_petalas",
+      "parametros": {"tipo": "planta", "escala_mag_vel": 0.18, "inclui_usuario": true, "adjacencia_diagonal": true, "aprimoramento": {"escala_mag_vel": 0.22}}
+    },
+    "104": {
+      "ID": 104,
+      "nome": "Tornado de Folhas",
+      "custo": 60,
+      "custo_ap": 70,
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_tornado_de_folhas",
+      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 0.65, "escala_vel_alvo_debuff": 0.10, "escala_mag_usuario_debuff": 0.10, "nunca_erra": true, "sempre_acerta": true, "permite_area_vazia": true, "aprimoramento": {"escala_spa": 0.72, "escala_vel_alvo_debuff": 0.12, "escala_mag_usuario_debuff": 0.12}},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "105": {
+      "ID": 105,
+      "nome": "Bomba de Sementes",
+      "custo": 65,
+      "custo_ap": 75,
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico"},
+      "execute_principal": "ataque_bomba_de_sementes",
+      "parametros": {"tipo": "planta", "categoria": "normal", "escala_atk": 0.75, "quantidade_areas": 2, "splash_frac": 0.25, "splash_em_area_vazia": true, "splash_usa_dano_base_teorico": true, "permite_area_vazia": true, "aprimoramento": {"escala_atk": 0.82, "splash_frac": 0.30}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
+    },
+    "106": {
+      "ID": 106,
+      "nome": "Flor Magica",
+      "custo": 65,
+      "custo_ap": 75,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_flor_magica",
+      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa_dano": 0.50, "escala_mag_dano": 0.50, "escala_mag_para_spa": 0.06, "escala_spa_para_mag": 0.06, "buffs_usam_valores_pre_buff": true, "aprimoramento": {"escala_spa_dano": 0.55, "escala_mag_dano": 0.55, "escala_mag_para_spa": 0.08, "escala_spa_para_mag": 0.08}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "107": {
+      "ID": 107,
       "nome": "Murchar",
       "custo": 35,
+      "custo_ap": 40,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_murchar",
-      "parametros": {
-        "tipo": "planta",
-        "atributo": "Vida",
-        "percentual_alvo": 0.06,
-        "percentual_mag": 0.08,
-        "rotulo_atributo": "Vida Máxima",
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "planta", "escala_vida_alvo": 0.06, "escala_mag_usuario": 0.08, "preservar_percentual_vida_atual": true, "aprimoramento": {"escala_vida_alvo": 0.07, "escala_mag_usuario": 0.10}},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "37": {
-      "ID": 37,
+    "108": {
+      "ID": 108,
       "nome": "Raio Solar",
       "custo": 80,
+      "custo_ap": 90,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Laser",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
+      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_raio_solar",
-      "parametros": {
-        "tipo": "planta",
-        "categoria": "especial",
-        "escala_inicial_spa": 1.0,
-        "escala_sol_forte_spa": 1.25,
-        "reducao_spa_por_alvo": 0.15,
-        "tipo_linha": "reta"
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "linha",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "planta", "categoria": "especial", "escala_spa": 1.00, "escala_spa_sol_forte": 1.25, "reducao_spa_por_alvo": 0.15, "permite_area_vazia": true, "aprimoramento": {"escala_spa": 1.10, "escala_spa_sol_forte": 1.35, "reducao_spa_por_alvo": 0.12}},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     }
   },
-  "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
+  "_comentario": "Ataques de planta 91-108 implementados no padrao de propriedades por ataque."
 }

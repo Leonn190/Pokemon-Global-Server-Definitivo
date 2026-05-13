@@ -1,98 +1,1072 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Cosmico",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Felipox, líder do estádio Cosmico. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Opa, eu sou Felipox, lider do estadio Cosmico. Se voce veio pela batalha, a gente resolve isso com calma. Se veio conversar, melhor ainda.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce chegou no respeito 3. Agora da para abrir as duas batalhas do Cosmico sem enrolar. So nao confunde calma com facilidade."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Voce ja tem respeito suficiente para a primeira batalha. A segunda ainda precisa de mais constelacao no curriculo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voce voltou. Legal. Eu gosto quando alguem nao aparece so para clicar em batalha e sumir."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda nao tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero desafiar sua batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero enfrentar sua batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Por que voce escolheu o tipo Cosmico?",
+          "destino": "tipo_cosmico"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Cosmico. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Nao e para te barrar por ego, e para garantir que voce entendeu pelo menos o basico antes de entrar no meu codigo principal.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou buscar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Posso conversar primeiro?",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Cosmico, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro vem a batalha 1, depois o Capitao, depois a minha segunda luta. Progressao sem ordem vira bug de design.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Essa ordem faz sentido.",
+          "destino": "ordem_estadio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Cosmico permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "ordem_estadio": {
+      "fala": "Faz. Desafiante abre caminho, lider testa a base, Capitao confirma disciplina e a segunda batalha fecha o ciclo. Eu gosto de fluxo que da para debugar.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuOrdemFelipox": true
+        }
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Voce pensa tudo como sistema?",
+          "destino": "programacao"
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Cosmico. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha e para ver se voce entende o estranho sem se perder nele. Cosmico parece raro, mas tem logica.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCosmicoFelipox",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce ja entendeu um pouco do meu jeito de ver o Cosmico. Otimo. Agora vamos ver se entende na arena."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Felipox": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Quero conversar mais antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora sim. A segunda batalha e onde eu paro de tratar o Cosmico como curiosidade e comeco a tratar como projeto completo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuProjetoEstadioFelipox",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce ouviu meu plano para um estadio feito por mim. Entao entende que essa segunda batalha e quase um prototipo vivo."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Comecar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Felipox": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Claro. Eu sempre prefiro conversar antes de julgar alguem. Conflito quase nunca compila direito.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce ja voltou algumas vezes. Isso e legal. Eu gosto de gente que entende que dialogo tambem e parte da jornada."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComFelipox": true,
+          "ConversasFelipox": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fala sobre programacao.",
+          "destino": "programacao"
+        },
+        {
+          "texto": "Fala sobre o tipo Cosmico.",
+          "destino": "tipo_cosmico"
+        },
+        {
+          "texto": "Voce quer abrir outro estadio?",
+          "destino": "estadio_proprio"
+        },
+        {
+          "texto": "Voce da festas em casa?",
+          "destino": "festas"
+        },
+        {
+          "texto": "Por que voce nao gosta do Caio?",
+          "destino": "caio_agua"
+        },
+        {
+          "texto": "O que voce acha do tipo Sombrio?",
+          "destino": "sombrio_modinha"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "programacao": {
+      "fala": "Eu passo muito tempo programando. Para mim, codigo e quase uma forma de organizar pensamento. Quando algo funciona depois de horas quebrando, parece que uma estrela finalmente entrou na orbita certa.",
+      "ao_entrar": {
+        "setor": {
+          "FalouProgramacaoFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce programa o que?",
+          "destino": "projetos_codigo"
+        },
+        {
+          "texto": "Voce ja perdeu noites programando?",
+          "destino": "noites_codigo"
+        },
+        {
+          "texto": "Programacao combina com Cosmico?",
+          "destino": "codigo_cosmico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "projetos_codigo": {
+      "fala": "Gosto de fazer sistemas. Coisa com regra, simulacao, interface, calculo... qualquer projeto onde pequenas pecas se encaixam ate parecer que sempre estiveram no lugar.",
+      "opcoes": [
+        {
+          "texto": "Isso parece matematica.",
+          "destino": "matematica"
+        },
+        {
+          "texto": "E o estadio proprio?",
+          "destino": "estadio_proprio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "programacao"
+        }
+      ]
+    },
+    "noites_codigo": {
+      "fala_condicional": {
+        "padrao": "Ja passei madrugada inteira atras de bug pequeno. O pior e quando o erro era uma coisa ridicula e voce fica encarando a tela em silencio.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouProgramacaoFelipox",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Madrugada programando e perigosa. Voce comeca corrigindo uma funcao e termina redesenhando metade do sistema porque percebeu que dava para ficar melhor."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRotinaCodigoFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual foi o pior bug?",
+          "destino": "bugs"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "programacao"
+        }
+      ]
+    },
+    "bugs": {
+      "fala": "O pior bug e aquele que parece sobrenatural. O codigo jura que esta certo, a tela jura que esta errado, e voce comeca a considerar se o tipo Fantasma mexeu no projeto.",
+      "opcoes": [
+        {
+          "texto": "Isso combina com Cosmico tambem.",
+          "destino": "codigo_cosmico"
+        },
+        {
+          "texto": "Voce fica bravo com bugs?",
+          "destino": "conflitos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "programacao"
+        }
+      ]
+    },
+    "codigo_cosmico": {
+      "fala": "Combina muito. Programacao e misterio com estrutura. O Cosmico tambem. Parece distante, raro e meio impossivel, mas quando voce entende o padrao, tudo comeca a fazer sentido.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCosmicoFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Essa explicacao foi boa.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Entao voce escolheu Cosmico por isso?",
+          "destino": "tipo_cosmico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "programacao"
+        }
+      ]
+    },
+    "matematica": {
+      "fala": "Eu gosto de matematica porque ela nao precisa gritar para ser bonita. Um padrao bem encontrado ja basta. Acho isso muito Cosmico tambem.",
+      "ao_entrar": {
+        "setor": {
+          "FalouMatematicaFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Matematica te ajudou a programar?",
+          "destino": "programacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "tipo_cosmico": {
+      "fala_condicional": {
+        "padrao": "Eu escolhi Cosmico porque ele e raro, misterioso e um pouco fora do lugar. Sempre gostei dessa sensacao de olhar para algo e pensar: tem um sistema escondido aqui.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuEmoFelipox",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "No fundo eu escolhi Cosmico por varias razoes. Raridade, misterio, estetica e talvez um restinho daquela fase em que eu achava bonito parecer incompreendido."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouTipoCosmicoFelipox": true,
+          "EntendeuCosmicoFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce acha Cosmico melhor que Sombrio?",
+          "destino": "sombrio_modinha"
+        },
+        {
+          "texto": "Isso tem a ver com sua fase emo?",
+          "destino": "emo_passado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "emo_passado": {
+      "fala": "Eu ja me considerei emo, sim. Nao exatamente do jeito dramatico que as pessoas imaginam. Era mais essa vontade de gostar do raro, do escuro bonito, do misterioso.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEmoFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao por que nao Sombrio?",
+          "destino": "sombrio_modinha"
+        },
+        {
+          "texto": "Cosmico foi sua evolucao?",
+          "destino": "cosmico_evolucao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_cosmico"
+        }
+      ]
+    },
+    "cosmico_evolucao": {
+      "fala": "Talvez. Sombrio parece a vontade de parecer misterioso. Cosmico parece a vontade de entender o misterio. Para mim, a segunda opcao e bem mais interessante.",
+      "opcoes": [
+        {
+          "texto": "Voce esta provocando o Vasques.",
+          "destino": "vasques"
+        },
+        {
+          "texto": "Boa frase.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "emo_passado"
+        }
+      ]
+    },
+    "sombrio_modinha": {
+      "fala_condicional": {
+        "padrao": "Eu acho Sombrio meio modinha. Nao odeio o tipo, mas muita gente usa como se vestir de preto ja fosse personalidade completa. Cosmico e bem melhor.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouVasquesFelipox",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Como eu disse, Sombrio virou modinha demais. E o Vasques nao ajuda exatamente a melhorar minha opiniao."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouSombrioFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce nao gosta do Vasques?",
+          "destino": "vasques"
+        },
+        {
+          "texto": "Isso foi meio pesado para alguem simpatico.",
+          "destino": "conflitos"
+        },
+        {
+          "texto": "Cosmico e melhor por que?",
+          "destino": "cosmico_vs_sombrio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "cosmico_vs_sombrio": {
+      "fala": "Sombrio tenta parecer profundo. Cosmico e profundo sem tentar. Um fica na sombra da sala, o outro olha para o teto e percebe que a sala inteira e pequena.",
+      "opcoes": [
+        {
+          "texto": "Voce definitivamente ainda tem fase emo.",
+          "destino": "emo_passado"
+        },
+        {
+          "texto": "Vasques ouviria isso quieto?",
+          "destino": "vasques"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombrio_modinha"
+        }
+      ]
+    },
+    "vasques": {
+      "fala": "O Vasques, lider do Sombrio, me parece meio patetico. Eu sei que isso soa estranho vindo de mim, porque normalmente eu gosto de quase todo mundo. Mas ele forca uma aura que nao me convence.",
+      "ao_entrar": {
+        "setor": {
+          "FalouVasquesFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce raramente fala mal assim?",
+          "destino": "conflitos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombrio_modinha"
+        }
+      ]
+    },
+    "caio_agua": {
+      "fala": "O Caio, do tipo Agua... eu normalmente tento gostar de todo mundo. Mas com ele nao encaixa. Tem alguma coisa no jeito dele que me irrita mais do que deveria.",
+      "ao_entrar": {
+        "setor": {
+          "FalouCaioFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que ele fez?",
+          "destino": "caio_motivo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "caio_motivo": {
+      "fala": "Nada absurdo. Talvez seja justamente isso. Nao tem um grande evento, so uma soma de pequenas coisas. O tipo de pessoa que parece pingar irritacao devagar ate virar enchente.",
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "caio_agua"
+        }
+      ]
+    },
+    "conflitos": {
+      "fala": "Eu evito conflito quase sempre. Nao por medo. E que a maioria das brigas tem pessimo retorno de investimento emocional.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPacienciaFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece calculado.",
+          "destino": "matematica"
+        },
+        {
+          "texto": "Mas voce falou mal do Vasques.",
+          "destino": "vasques"
+        },
+        {
+          "texto": "E do Caio tambem.",
+          "destino": "caio_agua"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Eu tento ser tranquilo. O mundo ja tem gente demais tentando ganhar discussao pequena. Prefiro guardar energia para codigo, batalha e festa boa.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPersonalidadeFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Festa boa?",
+          "destino": "festas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "festas": {
+      "fala": "Eu gosto de dar festas em casa. Parece contraditorio com passar horas programando, mas para mim faz sentido. Depois de muito tempo sozinho com codigo, uma sala cheia de gente muda o clima.",
+      "ao_entrar": {
+        "setor": {
+          "FalouFestasFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Que tipo de festa?",
+          "destino": "casa_festas"
+        },
+        {
+          "texto": "Isso combina com sua simpatia.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "casa_festas": {
+      "fala": "Nada muito caotico. Musica, conversa, comida, gente jogando alguma coisa, alguem discutindo teoria absurda no canto. Gosto quando a casa parece cheia de pequenas orbitas.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFestasFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voltar.",
+          "destino": "festas"
+        }
+      ]
+    },
+    "estadio_proprio": {
+      "fala": "Eu ja sou lider, mas ainda quero abrir um estadio proprio, feito por mim do zero. Nao so ocupar uma estrutura existente. Quero um lugar com minha logica, minha estetica e meus sistemas.",
+      "ao_entrar": {
+        "setor": {
+          "FalouEstadioProprioFelipox": true,
+          "EntendeuProjetoEstadioFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como seria esse estadio?",
+          "destino": "design_estadio"
+        },
+        {
+          "texto": "Voce programaria ele inteiro?",
+          "destino": "sistema_estadio"
+        },
+        {
+          "texto": "Isso e ambicioso.",
+          "destino": "ambicao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "design_estadio": {
+      "fala": "Seria um estadio Cosmico com sensacao de observatorio, laboratorio e festa estranha ao mesmo tempo. Luz baixa, mapa bonito, desafios com padrao escondido e uma arena que parece estar fora do lugar.",
+      "opcoes": [
+        {
+          "texto": "Isso parece muito bom.",
+          "destino": "ambicao"
+        },
+        {
+          "texto": "Desafios com padrao escondido?",
+          "destino": "sistema_estadio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "estadio_proprio"
+        }
+      ]
+    },
+    "sistema_estadio": {
+      "fala": "Eu tentaria programar o maximo possivel. Portas, puzzles, dialogos, simulacoes, talvez ate uma mecanica que muda conforme o jogador entende o estadio. Um sistema que conversa com quem presta atencao.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSistemaEstadioFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece seu projeto perfeito.",
+          "destino": "ambicao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "estadio_proprio"
+        }
+      ]
+    },
+    "ambicao": {
+      "fala": "E ambicioso, mas nao no sentido de querer parecer maior que os outros. Eu so gosto de criar coisa minha. Quando uma ideia fica tempo demais na cabeca, ela comeca a pedir forma.",
+      "opcoes": [
+        {
+          "texto": "Voce nao parece arrogante.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso merece uma batalha seria.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "estadio_proprio"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Se voce chegou ate aqui, ja viu que o Cosmico nao e so raridade. Ele e projeto, misterio e um pouco de teimosia criativa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasFelipox",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Voce conversou bastante comigo. Eu gosto disso. Pouca gente tem paciencia para ouvir alguem explicar codigo, tipo raro e projeto de estadio na mesma conversa."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que o Cosmico ensina?",
+          "destino": "licao_cosmica"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "licao_cosmica": {
+      "fala": "Cosmico ensina que nem tudo precisa ser comum para funcionar. As vezes o raro parece errado so porque ninguem teve paciencia de entender.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLicaoCosmicaFelipox": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora eu entendi seu tipo.",
+          "destino": "tipo_cosmico"
+        },
+        {
+          "texto": "Quero seu presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero sua batalha final.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuFelipoxHumano",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuLicaoCosmicaFelipox",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComFelipox",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuCosmicoFelipox",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda nao. Eu gosto de dar presente para quem presta atencao no caminho, nao so para quem aperta a primeira opcao brilhando na tela.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Voce entendeu a primeira camada do Cosmico. Leve isso. Nao e nada absurdo, mas eu escolhi pensando em quem realmente escutou.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Felipox.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora sim. Esse aqui e para quem viu alem da raridade, dos bugs e das minhas piadas sobre Sombrio. Use bem.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do Felipox.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Voce venceu. Legal mesmo. O Cosmico nao entrega resposta facil, entao atravessar isso ja diz bastante sobre voce.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuProjetoEstadioFelipox",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce venceu e ainda entendeu meu projeto. Talvez eu use essa derrota como dado para melhorar o estadio que eu quero construir."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Voce perdeu. Sem problema. Perder tambem e log. O importante e voltar com uma versao melhor do seu time.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Felipox",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha pesa mais. Mas voce chegou nela, e isso ja mostra que seu caminho nao esta quebrado. So precisa de ajuste."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

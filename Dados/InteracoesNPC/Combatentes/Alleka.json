@@ -1,98 +1,1325 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Metal",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Alleka, líder do estádio Metal. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Alleka. Lider do ginasio Metal. Se veio atras de batalha, organize a propria base primeiro. Metal nao carrega treinador desleixado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Entao voce chegou ao respeito 3. Finalmente alguem que talvez consiga acompanhar o peso real do Metal. As duas batalhas estao liberadas."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Voce ganhou respeito suficiente para a primeira batalha. Nao confunda isso com estar pronto para a segunda."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou. Bom. Treinador que some depois da primeira derrota normalmente nao entende nada de Metal."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda nao tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero desafiar sua batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero enfrentar sua batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voce realmente acha o tipo Metal superior?",
+          "destino": "metal_superior"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Metal. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Antes disso voce ainda esta tentando subir estrutura sem fundacao. Engenharia ruim faz predio cair. Time ruim faz treinador passar vergonha.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou ganhar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero conversar entao.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Metal, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro passe pela primeira luta, depois pelo Capitao. Ordem existe porque funciona. Diferente de certos lideres que improvisam tudo.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Voce esta falando do PH Guedes e do Batalha?",
+          "destino": "lideres_antigos"
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Metal permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede sua base. Velocidade sem estrutura e so um jeito rapido de perder.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversouMetalAlleka",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Pelo menos voce escutou antes de lutar. Isso ja coloca voce acima da maioria que entra aqui apertando tecla sem pensar."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Alleka": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar mais antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Metal. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora sim voce chegou na parte importante. A segunda batalha existe para separar treinador consistente de treinador emocionado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuAllekaMetal",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce finalmente entendeu porque Metal exige constancia. Agora eu posso lutar serio."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Alleka": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Ainda quero conversar.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode perguntar. So nao espere resposta emocional demais. Eu prefiro argumento funcionando do que drama.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce continua voltando para conversar. Estranhamente isso e melhor do que metade dos treinadores que aparecem aqui."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComAlleka": true,
+          "ConversouMetalAlleka": true,
+          "ConversasAlleka": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que voce acha o tipo Metal superior?",
+          "destino": "metal_superior"
+        },
+        {
+          "texto": "Voce estudou engenharia eletrica?",
+          "destino": "engenharia"
+        },
+        {
+          "texto": "Ouvi dizer que voce joga LoL.",
+          "destino": "lol"
+        },
+        {
+          "texto": "Voce realmente gosta de K-pop?",
+          "destino": "kpop"
+        },
+        {
+          "texto": "Me falaram que voce treina jiu jitsu.",
+          "destino": "jiujitsu"
+        },
+        {
+          "texto": "Quero falar sobre Pokemon.",
+          "destino": "pokemon"
+        },
+        {
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero a batalha 2.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "metal_superior": {
+      "fala": "Metal tem resistencia, cobertura boa, capacidade defensiva absurda e estabilidade. Eu literalmente fiz calculos comparando consistencia competitiva entre tipos. O resultado sempre favorecia Metal.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuAllekaMetal": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece coisa de engenheiro.",
+          "destino": "engenharia"
+        },
+        {
+          "texto": "Mas Metal tambem tem fraquezas.",
+          "destino": "fraquezas_metal"
+        },
+        {
+          "texto": "Voce sempre foi assim competitivo?",
+          "destino": "pokemon"
+        },
+        {
+          "texto": "Entendi. Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "fraquezas_metal": {
+      "fala": "Claro que tem. Tudo tem. O problema e que muita gente usa fraqueza como desculpa para montar time ruim. Eu prefiro otimizar o que funciona do que reclamar do que nao funciona.",
+      "opcoes": [
+        {
+          "texto": "Voce admite quando erra?",
+          "destino": "culpa"
+        },
+        {
+          "texto": "Voce parece muito convencido.",
+          "destino": "arrogancia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "metal_superior"
+        }
+      ]
+    },
+    "culpa": {
+      "fala_condicional": {
+        "padrao": "Eu admito quando os dados provam que eu estava errado. O problema e que normalmente eu nao estou.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.CriticouAlleka",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce ainda esta preso nessa ideia de arrogancia? Relaxa. Se eu erro eu corrijo. Eu so nao fico dramatizando erro pequeno."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi a coisa mais arrogante que ouvi hoje.",
+          "destino": "arrogancia",
+          "ao_escolher": {
+            "setor": {
+              "CriticouAlleka": true
+            }
+          }
+        },
+        {
+          "texto": "Pelo menos voce e sincero.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "arrogancia": {
+      "fala": "Nao confundem confianca com arrogancia porque odeiam perder? Eu treino, estudo e testo estrategia desde antes de virar lider. Quando eu digo algo, normalmente tenho motivo.",
+      "opcoes": [
+        {
+          "texto": "Voce estudava Pokemon antes de ser treinador?",
+          "destino": "pokemon"
+        },
+        {
+          "texto": "Ainda acho voce arrogante.",
+          "destino": "arrogancia_2"
+        },
+        {
+          "texto": "Entendi o ponto.",
+          "destino": "simpatia"
+        }
+      ]
+    },
+    "arrogancia_2": {
+      "fala": "Tudo bem. Ja ouvi pior. Enquanto isso eu continuo liderando o ginasio Metal e montando times melhores do que quem reclama.",
+      "opcoes": [
+        {
+          "texto": "Voce evita confusao mesmo sendo assim?",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero mudar de assunto.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Eu nao gosto de confusao inutil. Se a pessoa quiser conversar normal, eu converso. Se quiser transformar tudo em ego, eu prefiro ficar sozinho.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPersonalidadeAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao voce prefere trabalhar sozinho?",
+          "destino": "sozinho"
+        },
+        {
+          "texto": "Isso explica bastante coisa.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "sozinho": {
+      "fala": "Muito. Equipe mal organizada atrasa resultado. Ja trabalhei com PH Guedes e Batalha. No fim eu concluia as coisas mais rapido sozinho.",
+      "opcoes": [
+        {
+          "texto": "Eles eram ruins?",
+          "destino": "lideres_antigos"
+        },
+        {
+          "texto": "Voce realmente fala isso na cara deles?",
+          "destino": "lideres_antigos_2"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lideres_antigos": {
+      "fala": "Ruins nao. Mas tomaram gap. Cada um tinha uma forma muito emocional de lidar com estrategia. Eu prefiro metodo, eficiencia e constancia.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuHistoriaLideresAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Eles sabem que voce fala assim?",
+          "destino": "lideres_antigos_2"
+        },
+        {
+          "texto": "Isso foi muito especifico.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero falar de outra coisa.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lideres_antigos_2": {
+      "fala": "Provavelmente. E sinceramente? Eles devem responder alguma coisa sobre eu ser insuportavel tambem. Faz parte.",
+      "opcoes": [
+        {
+          "texto": "Finalmente humildade.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Voce parece respeitar eles no fundo.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "humildade": {
+      "fala": "Respeito resultado. Se eles chegaram onde chegaram, alguma coisa fizeram certo. Eu so acho meu metodo melhor.",
+      "opcoes": [
+        {
+          "texto": "Isso e muito voce.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero falar sobre engenharia.",
+          "destino": "engenharia"
+        }
+      ]
+    },
+    "engenharia": {
+      "fala": "Formado em engenharia eletrica. Analise de sistema, calculo, eficiencia energetica, estatistica... depois disso comecou a ficar dificil levar treinador impulsivo a serio.",
+      "ao_entrar": {
+        "setor": {
+          "FalouEngenhariaAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Foi dai que veio sua obsessao por Metal?",
+          "destino": "metal_superior"
+        },
+        {
+          "texto": "Voce parece bem de exatas mesmo.",
+          "destino": "exatas"
+        },
+        {
+          "texto": "Voce usa matematica em batalha?",
+          "destino": "matematica"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "exatas": {
+      "fala": "Claro. Eu nao tomo decisao baseado em vibe. Tem treinador que escolhe Pokemon porque achou bonito. Depois perde e culpa RNG.",
+      "opcoes": [
+        {
+          "texto": "Voce odeia RNG?",
+          "destino": "rng"
+        },
+        {
+          "texto": "Mas estilo tambem importa.",
+          "destino": "estilo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "engenharia"
+        }
+      ]
+    },
+    "matematica": {
+      "fala": "O tempo todo. Range de dano, cobertura defensiva, troca segura, porcentagem de setup eficiente... treinador que ignora isso esta literalmente escolhendo jogar pior.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMetodoAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao voce trata batalha como ciencia.",
+          "destino": "ciencia"
+        },
+        {
+          "texto": "Parece cansativo.",
+          "destino": "cansativo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "engenharia"
+        }
+      ]
+    },
+    "rng": {
+      "fala": "Eu odeio perder por erro evitavel. RNG acontece. O problema e quando a pessoa joga mal e usa azar como desculpa dramatica.",
+      "opcoes": [
+        {
+          "texto": "Voce joga LoL do mesmo jeito?",
+          "destino": "lol"
+        },
+        {
+          "texto": "Voce parece reclamar bastante.",
+          "destino": "cansativo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "engenharia"
+        }
+      ]
+    },
+    "estilo": {
+      "fala": "Importa. Claro que importa. So nao pode substituir competencia. Time bonito que perde continua sendo time que perdeu.",
+      "opcoes": [
+        {
+          "texto": "Voce realmente fala como engenheiro.",
+          "destino": "engenharia"
+        },
+        {
+          "texto": "Entendi.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ciencia": {
+      "fala": "Batalha Pokemon e estrategia aplicada. Tem leitura, adaptacao e improviso, claro. Mas estrutura ainda vence a longo prazo.",
+      "opcoes": [
+        {
+          "texto": "Isso explica o ginasio Metal.",
+          "destino": "metal_superior"
+        },
+        {
+          "texto": "Agora quero lutar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "engenharia"
+        }
+      ]
+    },
+    "cansativo": {
+      "fala": "Talvez. Mas funciona. Eu prefiro parecer cansativo do que parecer perdido.",
+      "opcoes": [
+        {
+          "texto": "Justo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Ainda acho exagerado.",
+          "destino": "arrogancia"
+        }
+      ]
+    },
+    "pokemon": {
+      "fala": "Muito antes de virar lider eu ja estudava Pokemon por conta propria. Lore, estrategia, breeding, competitivos antigos, tudo. Eu era o tipo de pessoa que lia sobre matchup por diversao.",
+      "ao_entrar": {
+        "setor": {
+          "FalouPokemonAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual seu Pokemon favorito?",
+          "destino": "favorito"
+        },
+        {
+          "texto": "Voce era nerd antes de ser lider.",
+          "destino": "nerd"
+        },
+        {
+          "texto": "Voce parece gostar mesmo disso.",
+          "destino": "paixao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "favorito": {
+      "fala": "Lucario. E antes que voce fale que nao e Metal puro, eu sei. Ainda assim ele representa disciplina e adaptacao melhor do que muito pseudo lendario por ai.",
+      "ao_entrar": {
+        "setor": {
+          "DescobriuLucarioAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ouvi dizer que voce quer vencer seu Lucario no jiu jitsu.",
+          "destino": "jiujitsu"
+        },
+        {
+          "texto": "Lucario combina bastante com voce.",
+          "destino": "paixao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pokemon"
+        }
+      ]
+    },
+    "nerd": {
+      "fala": "Sim. E continuo sendo. A diferenca e que agora eu tenho um ginasio inteiro para provar que eu estava certo.",
+      "opcoes": [
+        {
+          "texto": "Isso foi muito arrogante.",
+          "destino": "arrogancia"
+        },
+        {
+          "texto": "Pelo menos voce admite.",
+          "destino": "simpatia"
+        }
+      ]
+    },
+    "paixao": {
+      "fala": "Gosto de treinador que realmente estuda o que faz. Muita gente joga Pokemon como se fosse apertar botao. Eu gosto do sistema inteiro.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPaixaoAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce parece feliz falando disso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Agora faz sentido voce ser lider.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lol": {
+      "fala_condicional": {
+        "padrao": "Jogo. E antes que pergunte, sim, eu reclamo de teammate ruim igual qualquer pessoa normal.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouLolAlleka",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Nao, eu ainda nao subi de elo desde a ultima vez que falamos. E sim, continuo caindo com gente estranha."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouLolAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual lane voce joga?",
+          "destino": "lane"
+        },
+        {
+          "texto": "Voce parece tiltado.",
+          "destino": "tilt"
+        },
+        {
+          "texto": "Voce leva jogo competitivo muito a serio.",
+          "destino": "ciencia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lane": {
+      "fala": "Top ou mid dependendo do patch. Eu gosto de campeao consistente. Nao tenho paciencia para pick que depende de highlight em TikTok.",
+      "opcoes": [
+        {
+          "texto": "Voce critica tudo mesmo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Qual seu campeao favorito?",
+          "destino": "campeao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "campeao": {
+      "fala": "Qualquer coisa que recompense controle e disciplina. Campeao caotico demais me irrita.",
+      "opcoes": [
+        {
+          "texto": "Isso parece o tipo Metal.",
+          "destino": "metal_superior"
+        },
+        {
+          "texto": "Voce transformou ate LoL em engenharia.",
+          "destino": "engenharia"
+        }
+      ]
+    },
+    "tilt": {
+      "fala": "Nao tiltado. So impressionado com a capacidade humana de ignorar minimapa.",
+      "opcoes": [
+        {
+          "texto": "Agora voce parece simpatico.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso foi engraçado.",
+          "destino": "simpatia"
+        }
+      ]
+    },
+    "kpop": {
+      "fala": "Gosto bastante. K-pop tem producao absurda, coreografia sincronizada e disciplina. De novo: estrutura funcionando bem.",
+      "ao_entrar": {
+        "setor": {
+          "FalouKpopAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce acabou de transformar K-pop em matematica.",
+          "destino": "engenharia"
+        },
+        {
+          "texto": "Qual sua comida favorita?",
+          "destino": "comida"
+        },
+        {
+          "texto": "Nao imaginava isso vindo de voce.",
+          "destino": "contraste"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "comida": {
+      "fala": "Comida coreana. Facil. Bem temperada, organizada e consistente. Alem disso combina muito com madrugada vendo anime ou jogando.",
+      "ao_entrar": {
+        "setor": {
+          "FalouComidaAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce ve anime tambem?",
+          "destino": "anime"
+        },
+        {
+          "texto": "Voce tem hobbies inesperados.",
+          "destino": "contraste"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "kpop"
+        }
+      ]
+    },
+    "contraste": {
+      "fala": "As pessoas esperam que lider de Metal fique parado olhando parede de ferro o dia inteiro. Eu ainda sou uma pessoa normal fora das batalhas.",
+      "opcoes": [
+        {
+          "texto": "Normal talvez seja exagero.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Agora voce parece menos intimidador.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "anime": {
+      "fala": "Vejo bastante. Principalmente coisa de luta, estrategia ou ficcao cientifica. E nao, eu nao vou recomendar anime durante uma avaliacao de ginasio.",
+      "ao_entrar": {
+        "setor": {
+          "FalouAnimeAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce parece bem mais nerd do que eu esperava.",
+          "destino": "nerd"
+        },
+        {
+          "texto": "Qual seu favorito?",
+          "destino": "anime_2"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "comida"
+        }
+      ]
+    },
+    "anime_2": {
+      "fala": "Depende da fase. Eu gosto quando o protagonista realmente treina e melhora ao inves de ganhar poder aleatorio porque acreditou em si mesmo.",
+      "opcoes": [
+        {
+          "texto": "Voce odeia roteiro emocional.",
+          "destino": "ciencia"
+        },
+        {
+          "texto": "Isso explica sua personalidade inteira.",
+          "destino": "simpatia"
+        }
+      ]
+    },
+    "jiujitsu": {
+      "fala_condicional": {
+        "padrao": "Treino sim. E antes que venha com piadinha infantil sobre contato fisico com outros homens, poupe meu tempo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.RespeitouJiuAlleka",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Jiu jitsu exige tecnica, disciplina e controle. Igual batalha Pokemon bem jogada."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouJiuAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Relaxa, eu respeito.",
+          "destino": "jiu_respeito",
+          "ao_escolher": {
+            "setor": {
+              "RespeitouJiuAlleka": true
+            }
+          }
+        },
+        {
+          "texto": "Voce realmente quer ganhar do Lucario no jiu jitsu?",
+          "destino": "lucario_jiu"
+        },
+        {
+          "texto": "Voce ficou defensivo rapido.",
+          "destino": "defensivo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "jiu_respeito": {
+      "fala": "Bom. Finalmente alguem maduro. Jiu jitsu ensina paciencia, leitura corporal e adaptacao. Honestamente ajudou muito no meu jeito de batalhar.",
+      "opcoes": [
+        {
+          "texto": "Agora faz sentido.",
+          "destino": "ciencia"
+        },
+        {
+          "texto": "E o Lucario?",
+          "destino": "lucario_jiu"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "jiujitsu"
+        }
+      ]
+    },
+    "lucario_jiu": {
+      "fala": "Um dia eu ainda derrubo aquele Lucario numa luta limpa. Ele olha para mim como se ja soubesse todos os movimentos antes de eu fazer.",
+      "opcoes": [
+        {
+          "texto": "Isso e meio engraçado.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Talvez ele seja melhor que voce.",
+          "destino": "arrogancia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "jiujitsu"
+        }
+      ]
+    },
+    "defensivo": {
+      "fala": "Porque ja ouvi piada suficiente sobre isso. Gente insegura transforma qualquer esporte em comentario estranho.",
+      "opcoes": [
+        {
+          "texto": "Entendi.",
+          "destino": "jiu_respeito"
+        },
+        {
+          "texto": "Foi mal.",
+          "destino": "jiu_respeito"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Chegar ate aqui ja significa que voce aguentou bastante coisa. A maioria dos treinadores so quer badge e vai embora.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasAlleka",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Voce continua voltando para conversar comigo. Estranhamente eu respeito isso."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaAlleka": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce gosta de ser lider?",
+          "destino": "lider"
+        },
+        {
+          "texto": "Voce parece carregar muita responsabilidade.",
+          "destino": "responsabilidade"
+        },
+        {
+          "texto": "Voce se sente sozinho?",
+          "destino": "sozinho_2"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lider": {
+      "fala": "Gosto. Liderar o Metal significa manter um padrao alto. Eu nao quero treinador entrando aqui e saindo achando que venceu algo mediocre.",
+      "opcoes": [
+        {
+          "texto": "Voce leva isso muito a serio.",
+          "destino": "responsabilidade"
+        },
+        {
+          "texto": "Isso combina com voce.",
+          "destino": "simpatia"
+        }
+      ]
+    },
+    "responsabilidade": {
+      "fala": "Alguem precisa levar. Se o lider nao tiver padrao, o estadio vira bagunca. E sinceramente? Eu odeio bagunca.",
+      "opcoes": [
+        {
+          "texto": "Agora eu entendo melhor o Metal.",
+          "destino": "metal_superior"
+        },
+        {
+          "texto": "Voce parece cansado.",
+          "destino": "sozinho_2"
+        }
+      ]
+    },
+    "sozinho_2": {
+      "fala": "As vezes. Trabalhar sozinho e eficiente, mas tambem significa carregar tudo sozinho. So que eu ainda prefiro isso do que depender de gente desorganizada.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuAllekaHumano": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi surpreendentemente honesto.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Talvez voce precise confiar mais nas pessoas.",
+          "destino": "confianca"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "confianca": {
+      "fala": "Talvez. Mas confianca mal colocada vira peso morto rapido. Ainda estou aprendendo a equilibrar isso.",
+      "opcoes": [
+        {
+          "texto": "Finalmente um defeito admitido.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Isso te faz parecer mais humano.",
+          "destino": "simpatia"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuAllekaHumano",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComAlleka",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuAllekaMetal",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda nao. Primeiro prove que veio aqui para entender o Metal, nao so pegar recompensa gratis e desaparecer.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Voce pelo menos entendeu a base do que eu tento ensinar aqui. Pegue isto e use direito.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Alleka.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora sim. Pouca gente chega nesse ponto comigo. Este presente e para quem conseguiu enxergar alem da armadura.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do Alleka.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Voce venceu. Bom. Pouca gente consegue atravessar o Metal sem quebrar no caminho.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuAllekaMetal",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce venceu e ainda entendeu minha filosofia. Isso torna a derrota menos irritante."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Voce perdeu. Ajusta a estrutura, reorganiza o time e volta. Metal recompensa constancia, nao orgulho ferido.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Alleka",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha nao perdoa erro pequeno. Mas voce chegou longe o suficiente para eu acreditar que consegue voltar melhor."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar mais forte.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

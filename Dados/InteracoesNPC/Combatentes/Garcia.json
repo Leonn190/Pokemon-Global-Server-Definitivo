@@ -1,98 +1,1393 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Psiquico",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Garcia, líder do estádio Psiquico. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Garcia, lider do estadio Psiquico. Se voce veio por batalha, prepare a mente antes do time. Aqui, impulso sem raciocinio vira derrota rapida.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce chegou ao respeito 3. Agora sim posso liberar minhas duas batalhas. A segunda exige mais do que forca: exige leitura, paciencia e decisao fria."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Voce ja tem respeito suficiente para a primeira batalha. Ainda nao e a prova completa, mas sua mente ja saiu do basico."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voce voltou. Bom sinal. Quem retorna para aprender ja demonstra mais inteligencia do que quem so procura uma vitoria rapida."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda nao tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero desafiar sua batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero enfrentar sua batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Por que voce escolheu o tipo Psiquico?",
+          "destino": "tipo_psiquico"
+        },
+        {
+          "texto": "Voce tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Psiquico. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Inteligencia tambem e saber reconhecer quando ainda falta base. Volte depois de provar que sabe seguir uma linha de raciocinio ate o fim.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou conquistar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Entao quero conversar.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Psiquico, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro venha pela primeira luta, avance no estadio e so depois tente minha leitura completa. Atalho mental costuma terminar em erro bobo.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero entender melhor seu metodo.",
+          "destino": "metodo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Psiquico permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede sua organizacao mental. Eu observo padroes, punho escolhas ruins e deixo os meus Pokemon inteligentes completarem o raciocinio.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComGarcia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce conversou antes de batalhar. Isso ja melhora suas chances, mesmo que eu ainda pretenda ler suas jogadas antes de voce perceber que as fez."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Garcia": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar mais antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Psiquico. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora entramos na prova verdadeira. Na batalha 2, eu nao jogo apenas com forca psiquica. Eu jogo com leitura, memoria e antecipacao.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMetodoGarcia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce entendeu meu metodo. Otimo. Isso torna a batalha mais interessante, porque agora voce sabe exatamente o que precisa tentar impedir."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Garcia": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Quero uma conversa avancada primeiro.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode perguntar. Eu gosto de conversar quando a pessoa realmente escuta. Conhecimento nao precisa ser grosseria, apesar de algumas pessoas acharem isso bonito.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce ja voltou varias vezes para conversar. Isso e raro. A maioria dos treinadores so quer batalha, premio e uma frase de efeito."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComGarcia": true,
+          "ConversasGarcia": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fale sobre o cursinho e a engenharia.",
+          "destino": "cursinho"
+        },
+        {
+          "texto": "Por que o tipo Psiquico?",
+          "destino": "tipo_psiquico"
+        },
+        {
+          "texto": "Voce acha inteligencia tao importante assim?",
+          "destino": "inteligencia"
+        },
+        {
+          "texto": "Voce diz ser mais sabio que Alleka?",
+          "destino": "alleka"
+        },
+        {
+          "texto": "Voce e amigo do Vasques?",
+          "destino": "vasques"
+        },
+        {
+          "texto": "Voce procura uma mulher mesmo?",
+          "destino": "romance"
+        },
+        {
+          "texto": "Quero falar dos seus Pokemon.",
+          "destino": "pokemon_psiquico"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "cursinho": {
+      "fala": "Eu passei muito tempo no cursinho tentando entrar em engenharia. Estudava como se cada lista de exercicio fosse uma batalha de estadio. Quando finalmente passei, percebi que a conquista era real, mas o caminho nao era meu.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuCursinhoGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao voce desistiu de engenharia?",
+          "destino": "engenharia"
+        },
+        {
+          "texto": "Isso deve ter sido frustrante.",
+          "destino": "frustracao"
+        },
+        {
+          "texto": "Voce aprendeu algo nesse periodo?",
+          "destino": "aprendizado_cursinho"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "engenharia": {
+      "fala": "Nao gosto de chamar de desistir. Eu passei. Provei que podia. So percebi que nao queria me especializar nisso para sempre. Ha uma diferenca entre vencer uma porta e morar atras dela.",
+      "opcoes": [
+        {
+          "texto": "Boa frase.",
+          "destino": "sabedoria"
+        },
+        {
+          "texto": "E por isso virou treinador Psiquico?",
+          "destino": "virada_psiquica"
+        },
+        {
+          "texto": "Alleka terminou engenharia, nao foi?",
+          "destino": "alleka"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "cursinho"
+        }
+      ]
+    },
+    "frustracao": {
+      "fala": "Foi estranho. Eu tinha lutado tanto para chegar la que demorei para aceitar que passar nao significava pertencer. Mas essa percepcao tambem e inteligencia.",
+      "opcoes": [
+        {
+          "texto": "Isso e bem maduro.",
+          "destino": "sabedoria"
+        },
+        {
+          "texto": "Como voce decidiu mudar?",
+          "destino": "virada_psiquica"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "cursinho"
+        }
+      ]
+    },
+    "aprendizado_cursinho": {
+      "fala": "Aprendi disciplina, paciencia e humildade. Tambem aprendi que decorar formula sem entender o problema e igual mandar ataque forte sem ler o campo: parece bonito ate dar errado.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuBaseGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce usa isso em batalha?",
+          "destino": "metodo"
+        },
+        {
+          "texto": "Isso combina com Psiquico.",
+          "destino": "tipo_psiquico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "cursinho"
+        }
+      ]
+    },
+    "virada_psiquica": {
+      "fala": "Sim. Eu comecei a olhar para os Pokemon Psiquicos e enxerguei o que eu realmente valorizava: mente, leitura, silencio, calculo e intuicao. Engenharia me mostrou estrutura. Psiquico me mostrou sentido.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEscolhaPsiquicaGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao inteligencia e o centro de tudo?",
+          "destino": "inteligencia"
+        },
+        {
+          "texto": "Voce parece feliz falando disso.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "tipo_psiquico": {
+      "fala_condicional": {
+        "padrao": "Escolhi o tipo Psiquico porque inteligencia muda tudo. Forca vence uma troca. Inteligencia vence uma partida inteira.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuEscolhaPsiquicaGarcia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Como eu disse, Psiquico nao e so poder mental. E saber quando agir, quando esperar e quando deixar o adversario se derrotar sozinho."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouTipoPsiquicoGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece arrogante.",
+          "destino": "arrogancia"
+        },
+        {
+          "texto": "Isso parece sabedoria.",
+          "destino": "sabedoria"
+        },
+        {
+          "texto": "E seus Pokemon sao tao inteligentes assim?",
+          "destino": "pokemon_psiquico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "inteligencia": {
+      "fala": "Inteligencia nao e so tirar nota alta. E perceber contexto, controlar ansiedade, escolher bem e admitir quando a rota mudou. Eu gosto disso. Talvez porque precisei aprender do jeito dificil.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuGarciaSabedoria": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce fala como professor.",
+          "destino": "professor"
+        },
+        {
+          "texto": "Voce acha que vai vencer todo mundo assim?",
+          "destino": "ganhar_todos"
+        },
+        {
+          "texto": "Entendi seu ponto.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "professor": {
+      "fala": "Talvez eu tenha passado tempo demais explicando conteudo para colegas no cursinho. Eu gostava quando alguem finalmente entendia uma questao dificil. Batalha tambem tem esse momento de clareza.",
+      "opcoes": [
+        {
+          "texto": "Voce seria um bom professor.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Mas em batalha voce nao vai ensinar, vai vencer.",
+          "destino": "ganhar_todos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "inteligencia"
+        }
+      ]
+    },
+    "sabedoria": {
+      "fala_condicional": {
+        "padrao": "Sabedoria e diferente de inteligencia. Inteligencia resolve. Sabedoria escolhe qual problema merece ser resolvido.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouAllekaGarcia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "E sim, e por isso eu digo que sou mais sabio que Alleka. Ele concluiu o curso. Eu conclui que o curso nao era meu."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouSabedoriaGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce realmente acha que superou Alleka?",
+          "destino": "alleka"
+        },
+        {
+          "texto": "Isso foi bonito.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Quero entender seu metodo.",
+          "destino": "metodo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "arrogancia": {
+      "fala": "Eu entendo parecer assim, mas nao quero diminuir ninguem. Eu so acredito muito no valor da mente. Talvez eu fale com confianca demais quando o assunto e raciocinio.",
+      "opcoes": [
+        {
+          "texto": "Voce parece mais simpatico do que arrogante.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Mas voce disse que vai ganhar de todos.",
+          "destino": "ganhar_todos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_psiquico"
+        }
+      ]
+    },
+    "docilidade": {
+      "fala": "Eu tento ser gentil. Conhecimento usado para humilhar os outros perde parte da beleza. Eu prefiro vencer pensando bem do que vencer fazendo alguem se sentir pequeno.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuGarciaHumano": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com voce.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Nem todo lider pensa assim.",
+          "destino": "vasques"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Obrigado. Eu gosto de pessoas, mesmo quando nao sei exatamente o que dizer para elas. Principalmente quando a conversa sai de estrategia e entra em sentimento.",
+      "opcoes": [
+        {
+          "texto": "Isso tem a ver com mulheres?",
+          "destino": "romance"
+        },
+        {
+          "texto": "Voce parece honesto.",
+          "destino": "honestidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "honestidade": {
+      "fala": "Tento ser. A mente mente muito para proteger o ego. Eu prefiro perceber logo quando estou fugindo de uma verdade desconfortavel.",
+      "opcoes": [
+        {
+          "texto": "Isso e bem Psiquico.",
+          "destino": "tipo_psiquico"
+        },
+        {
+          "texto": "Voce devia aplicar isso no amor.",
+          "destino": "romance"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "simpatia"
+        }
+      ]
+    },
+    "alleka": {
+      "fala": "Alleka concluiu engenharia, e eu respeito isso. Mas eu me considero mais sabio. Ele terminou o caminho que escolheu. Eu tive coragem de perceber que meu caminho era outro.",
+      "ao_entrar": {
+        "setor": {
+          "FalouAllekaGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso e uma provocacao?",
+          "destino": "alleka_provocacao"
+        },
+        {
+          "texto": "Voce respeita ele entao?",
+          "destino": "alleka_respeito"
+        },
+        {
+          "texto": "Voce acha que sabedoria vale mais que diploma?",
+          "destino": "sabedoria"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "alleka_provocacao": {
+      "fala": "Um pouco. Mas e uma provocacao educada. Eu nao quero conflito com ele. So acho curioso como algumas pessoas confundem concluir uma rota com entender a propria vida.",
+      "opcoes": [
+        {
+          "texto": "Isso foi profundo.",
+          "destino": "sabedoria"
+        },
+        {
+          "texto": "Voce fala isso para ele?",
+          "destino": "alleka_respeito"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "alleka"
+        }
+      ]
+    },
+    "alleka_respeito": {
+      "fala": "Respeito bastante. Alleka tem disciplina real. So nao acho que disciplina sem mudanca interior seja necessariamente sabedoria. Talvez ele discorde, e tudo bem.",
+      "opcoes": [
+        {
+          "texto": "Voce evita conflito mesmo.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Vamos falar de outro lider.",
+          "destino": "vasques"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "vasques": {
+      "fala": "Vasques e um grande amigo meu. Muita gente olha para o tipo Sombrio e acha que ele deve ser frio ou distante, mas ele entende muito bem as partes complicadas das pessoas.",
+      "ao_entrar": {
+        "setor": {
+          "FalouVasquesGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Psiquico e Sombrio nao deveriam ser opostos?",
+          "destino": "vasques_contraste"
+        },
+        {
+          "texto": "O que voce admira nele?",
+          "destino": "vasques_admiracao"
+        },
+        {
+          "texto": "Ele te ajuda com mulheres?",
+          "destino": "vasques_romance"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "vasques_contraste": {
+      "fala": "Justamente por isso a amizade funciona. Eu penso em clareza, ele entende sombra. Eu observo padroes, ele percebe intencoes escondidas. As vezes, opostos conversam melhor do que iguais.",
+      "opcoes": [
+        {
+          "texto": "Isso e muito bonito.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Ele parece te equilibrar.",
+          "destino": "vasques_admiracao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "vasques"
+        }
+      ]
+    },
+    "vasques_admiracao": {
+      "fala": "Vasques nao precisa provar inteligencia a cada frase. Isso e raro. Ele observa, sorri pouco e fala quando precisa. Eu gosto dessa calma escura dele.",
+      "opcoes": [
+        {
+          "texto": "Calma escura foi poetico.",
+          "destino": "poesia"
+        },
+        {
+          "texto": "Voce fala dele com carinho.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "vasques"
+        }
+      ]
+    },
+    "poesia": {
+      "fala": "Talvez todo Psiquico tenha um pouco de poeta escondido. A mente nao vive so de calculo; ela tambem cria imagens para entender o que nao cabe em formula.",
+      "opcoes": [
+        {
+          "texto": "Isso ajuda em batalha?",
+          "destino": "metodo"
+        },
+        {
+          "texto": "Isso ajuda no romance?",
+          "destino": "romance"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "vasques"
+        }
+      ]
+    },
+    "vasques_romance": {
+      "fala": "Ele tenta. O problema e que conselho de amigo confiante nem sempre funciona em alguem que pensa demais antes de mandar uma mensagem simples.",
+      "opcoes": [
+        {
+          "texto": "Voce pensa demais mesmo?",
+          "destino": "romance"
+        },
+        {
+          "texto": "Que tipo de conselho ele da?",
+          "destino": "conselho_vasques"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "vasques"
+        }
+      ]
+    },
+    "conselho_vasques": {
+      "fala": "Ele diz para eu ser direto. Eu digo que preciso considerar contexto, tom, timing, historico, abertura emocional e possiveis interpretacoes. Ai ele respira fundo.",
+      "opcoes": [
+        {
+          "texto": "Eu entendo o Vasques.",
+          "destino": "romance_humor"
+        },
+        {
+          "texto": "Eu entendo voce.",
+          "destino": "romance_verdade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "romance"
+        }
+      ]
+    },
+    "romance": {
+      "fala_condicional": {
+        "padrao": "Eu busco encontrar uma mulher legal, sim. Mas admito que nao sou muito bom com isso. Eu consigo prever jogadas complexas, mas uma conversa simples pode virar um labirinto na minha cabeca.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouRomanceGarcia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ainda continuo nao sendo exatamente brilhante nesse tema. Minha mente calcula demais e, quando percebo, a conversa ja virou uma tese."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouRomanceGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce fica nervoso?",
+          "destino": "romance_verdade"
+        },
+        {
+          "texto": "Voce pensa demais.",
+          "destino": "romance_humor"
+        },
+        {
+          "texto": "Vasques te ajuda nisso?",
+          "destino": "vasques_romance"
+        },
+        {
+          "texto": "Talvez seja so ser gentil.",
+          "destino": "romance_gentileza"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "romance_verdade": {
+      "fala": "Fico. Nao por falta de respeito, claro. E mais medo de falar demais, falar de menos, parecer estranho ou transformar uma conversa bonita em seminario.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRomanceGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso e meio fofo.",
+          "destino": "romance_gentileza"
+        },
+        {
+          "texto": "Voce precisa relaxar.",
+          "destino": "romance_humor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "romance"
+        }
+      ]
+    },
+    "romance_humor": {
+      "fala": "Eu sei. Se existisse uma prova objetiva de paquera, talvez eu fosse melhor. O problema e que pessoas nao seguem gabarito.",
+      "opcoes": [
+        {
+          "texto": "Ainda bem.",
+          "destino": "romance_gentileza"
+        },
+        {
+          "texto": "Voce fala como alguem de cursinho.",
+          "destino": "cursinho"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "romance"
+        }
+      ]
+    },
+    "romance_gentileza": {
+      "fala": "Talvez seja isso. Ser gentil, ouvir de verdade e nao tentar vencer a conversa. Engracado como o tema mais simples pode ser o mais dificil para alguem que pensa tanto.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuGarciaHumano": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce vai conseguir.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Isso tambem e sabedoria.",
+          "destino": "sabedoria"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_psiquico": {
+      "fala": "Meus Pokemon estao entre os mais inteligentes que conheco. Eles nao obedecem de forma cega; eles interpretam. Por isso eu gosto deles. Uma boa jogada nasce de duas mentes pensando juntas.",
+      "ao_entrar": {
+        "setor": {
+          "FalouPokemonPsiquicoGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao eles pensam com voce?",
+          "destino": "mente_dupla"
+        },
+        {
+          "texto": "Isso torna suas jogadas melhores?",
+          "destino": "melhores_jogadas"
+        },
+        {
+          "texto": "Qual e o risco disso?",
+          "destino": "risco_psiquico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "mente_dupla": {
+      "fala": "Exatamente. Eu nao trato meus Pokemon como ferramentas. Eles sao parceiros de raciocinio. Um Alakazam percebe uma abertura de um jeito; um Gardevoir percebe de outro. Meu papel e coordenar essas leituras.",
+      "opcoes": [
+        {
+          "texto": "Isso e bonito.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Isso parece muito forte.",
+          "destino": "melhores_jogadas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pokemon_psiquico"
+        }
+      ]
+    },
+    "melhores_jogadas": {
+      "fala": "Com eles pensando e eu pensando junto, sim, eu acredito que posso fazer as melhores jogadas. Talvez eu nao ganhe de todos sempre, mas entro em campo como se cada turno pudesse ser resolvido pela mente certa.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMetodoGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esse e seu metodo?",
+          "destino": "metodo"
+        },
+        {
+          "texto": "Voce parece confiante.",
+          "destino": "ganhar_todos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pokemon_psiquico"
+        }
+      ]
+    },
+    "risco_psiquico": {
+      "fala": "O risco e pensar demais. O mesmo dom que antecipa uma jogada tambem pode prender voce em possibilidades infinitas. Por isso eu treino decisao, nao so analise.",
+      "opcoes": [
+        {
+          "texto": "Isso serve para sua vida tambem.",
+          "destino": "romance"
+        },
+        {
+          "texto": "Isso serve para batalha 2.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pokemon_psiquico"
+        }
+      ]
+    },
+    "metodo": {
+      "fala_condicional": {
+        "padrao": "Meu metodo e simples de explicar e dificil de executar: observar, prever, testar, ajustar e agir antes que o adversario entenda o proprio padrao.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuBaseGarcia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Meu metodo veio muito do estudo. Observar enunciado, separar dados importantes, ignorar distracoes e resolver. Em batalha, o campo e o enunciado."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMetodoGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece prova de engenharia.",
+          "destino": "cursinho"
+        },
+        {
+          "texto": "Como eu enfrento isso?",
+          "destino": "contra_metodo"
+        },
+        {
+          "texto": "Quero batalhar agora.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "contra_metodo": {
+      "fala": "Voce precisa me fazer duvidar da primeira leitura. Mudar ritmo, esconder intencao, usar uma troca que pareca ruim mas tenha plano. So cuidado: eu tambem espero que voce tente isso.",
+      "opcoes": [
+        {
+          "texto": "Voce acabou de me ajudar?",
+          "destino": "ajuda"
+        },
+        {
+          "texto": "Agora quero testar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "metodo"
+        }
+      ]
+    },
+    "ajuda": {
+      "fala": "Um pouco. Eu prefiro vencer alguem que entendeu o problema. Vencer confusao pura nao prova tanta coisa.",
+      "opcoes": [
+        {
+          "texto": "Voce e gentil ate competindo.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Isso me deu vontade de lutar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "ganhar_todos": {
+      "fala": "Eu digo que vou ganhar de todos porque preciso entrar em campo acreditando no melhor raciocinio possivel. Mas nao confunda confianca com desprezo. Eu respeito bons adversarios.",
+      "opcoes": [
+        {
+          "texto": "Isso soa mais justo.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Mesmo assim voce e bem confiante.",
+          "destino": "melhores_jogadas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "inteligencia"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Chegar ate aqui mostra que voce nao esta apenas colecionando vitorias. Voce esta tentando entender a mente por tras do estadio.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasGarcia",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Voce conversou bastante comigo. Isso me agrada. Pouca gente tem paciencia para ouvir alguem que ainda organiza sentimentos como se fossem exercicios."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaGarcia": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce sente falta da engenharia?",
+          "destino": "saudade_engenharia"
+        },
+        {
+          "texto": "Voce se considera realizado?",
+          "destino": "realizacao"
+        },
+        {
+          "texto": "Voce ainda quer encontrar alguem?",
+          "destino": "romance"
+        },
+        {
+          "texto": "Quero seu presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos para a batalha 2.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "saudade_engenharia": {
+      "fala": "As vezes sinto falta da sensacao de resolver algo exato. Mas nao sinto falta de fingir que aquele era meu destino final. Hoje eu resolvo problemas vivos, com vontade, medo e estrategia.",
+      "opcoes": [
+        {
+          "texto": "Isso parece realizacao.",
+          "destino": "realizacao"
+        },
+        {
+          "texto": "Isso parece Psiquico.",
+          "destino": "tipo_psiquico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "realizacao": {
+      "fala": "Acho que sim. Ainda tenho insegurancas, principalmente fora das batalhas. Mas quando estou no estadio Psiquico, com meus Pokemon pensando comigo, eu sinto que escolhi certo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuGarciaHumano": true,
+          "EntendeuGarciaRealizacao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Fico feliz por voce.",
+          "destino": "docilidade"
+        },
+        {
+          "texto": "Isso merece uma batalha boa.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuGarciaHumano",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuMetodoGarcia",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuGarciaSabedoria",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda nao. Eu gosto de presentear quem entendeu algo comigo, nao quem apenas procurou uma recompensa escondida no menu.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Voce entendeu pelo menos a primeira camada: inteligencia sem gentileza fica incompleta. Pegue isto. Use com calma.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Garcia.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora voce viu o metodo e a pessoa por tras dele. Poucos chegam nesse ponto sem pressa. Este presente e mais pessoal.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do Garcia.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Voce venceu. Excelente. Uma derrota bem explicada ensina mais do que uma vitoria vazia.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMetodoGarcia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce venceu entendendo meu metodo. Isso e raro. Talvez sua leitura tenha sido melhor que a minha neste turno da vida."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Voce perdeu. Respire. A mente aprende melhor quando nao tenta transformar derrota em vergonha.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Garcia",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha exige leitura constante. Voce errou, mas errou em um nivel mais alto. Isso tambem e progresso."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar mais preparado.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

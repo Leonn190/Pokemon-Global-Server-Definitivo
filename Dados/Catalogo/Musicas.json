@@ -124,6 +124,20 @@
     "fimloop": 154.99,
     "volume": 0.55
   },
+  "Magico": {
+    "id": "Magico",
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Magico.mp3",
+    "loop": 0,
+    "fimloop": 999999,
+    "volume": 0.55
+  },
+  "Pantano": {
+    "id": "Pantano",
+    "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Pantano.mp3",
+    "loop": 0,
+    "fimloop": 999999,
+    "volume": 0.55
+  },
   "Dungeon": {
     "id": "Dungeon",
     "arquivo": "Recursos/Sonoridades/Musicas/Mundo/Dungeon1.mp3",
@@ -213,6 +227,18 @@
     "loop": 0,
     "fimloop": 125.086
   },
+  "Lutador": {
+    "id": "Lutador",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Lutador.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Metal": {
+    "id": "Metal",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Metal.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
   "Normal": {
     "id": "Normal",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Normal.ogg",
@@ -221,9 +247,33 @@
   },
   "Planta": {
     "id": "Planta",
-    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Planta.ogg",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Planta.mp3",
     "loop": 0,
-    "fimloop": 131.1
+    "fimloop": 999999
+  },
+  "Pedra": {
+    "id": "Pedra",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Pedra.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Psiquico": {
+    "id": "Psiquico",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Psiquico.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Sombrio": {
+    "id": "Sombrio",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Sombrio.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Sonoro": {
+    "id": "Sonoro",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/BatalhasTipos/Sonoro.mp3",
+    "loop": 0,
+    "fimloop": 999999
   },
   "Terrestre": {
     "id": "Terrestre",
@@ -243,6 +293,24 @@
     "loop": 0,
     "fimloop": 217.594
   },
+  "ArceusBoss": {
+    "id": "ArceusBoss",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Bosses/Arceus.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "EternatusBoss": {
+    "id": "EternatusBoss",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Bosses/Eternatus.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "NecrozmaBoss": {
+    "id": "NecrozmaBoss",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Bosses/Necrozma.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
   "Derrota": {
     "id": "Derrota",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Fechamento/Derrota.mp3",
@@ -261,6 +329,12 @@
     "loop": 0,
     "fimloop": 999999
   },
+  "Cosmico-Felipox": {
+    "id": "Cosmico-Felipox",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Cosmico - Felipox.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
   "Dragao-Felps": {
     "id": "Dragao-Felps",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Dragão-Felps.mp3",
@@ -270,6 +344,12 @@
   "Eletrico-Ph": {
     "id": "Eletrico-Ph",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Eletrico-Ph.ogg",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Fada-Nathzinha": {
+    "id": "Fada-Nathzinha",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Fada - Nathzinha.mp3",
     "loop": 0,
     "fimloop": 999999
   },
@@ -324,6 +404,18 @@
   "Pedra-Sidney": {
     "id": "Pedra-Sidney",
     "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Pedra-Sidney.mp3",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Planta-Suneiva": {
+    "id": "Planta-Suneiva",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Planta - Suneiva.ogg",
+    "loop": 0,
+    "fimloop": 999999
+  },
+  "Psiquico-Garcia": {
+    "id": "Psiquico-Garcia",
+    "arquivo": "Recursos/Sonoridades/Musicas/Batalha/Lideres/Psiquico - Garcia.mp3",
     "loop": 0,
     "fimloop": 999999
   },

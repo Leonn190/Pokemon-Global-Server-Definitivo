@@ -7,10 +7,11 @@ import { normalizarChave } from "./PokemonWikiDados.js";
 const PASTA_MUSICAS = "Musicas";
 const EXTENSOES_AUDIO = new Set([".mp3", ".ogg", ".wav", ".m4a", ".aac", ".flac", ".webm"]);
 
-const ESTILOS_PRIORIDADE = ["mundo", "confrontos", "lideres", "tipos", "gerais"];
+const ESTILOS_PRIORIDADE = ["mundo", "confrontos", "boss", "lideres", "tipos", "gerais"];
 const ESTILOS_ROTULOS = {
   mundo: "Mundo",
   confrontos: "Confrontos",
+  boss: "Boss",
   lideres: "Líderes",
   tipos: "Tipos",
   gerais: "Gerais",
@@ -113,10 +114,11 @@ function estiloPorCaminho(segmentos) {
   const chaves = segmentos.map((segmento) => normalizarChave(segmento));
   const contemParte = (partes) => chaves.some((chave) => partes.some((parte) => chave.includes(parte)));
   if (contemParte(["outros", "fechamento", "fechamentos"])) return null;
+  if (contemParte(["boss", "bosses"])) return "boss";
   if (contemParte(["mundo", "bioma", "exploracao"])) return "mundo";
   if (contemParte(["lider", "lideres", "lideranca", "estadio", "estadios"])) return "lideres";
   if (contemParte(["tipo", "tipos"])) return "tipos";
-  if (contemParte(["confronto", "confrontos", "batalha", "batalhas", "combate", "combates", "boss", "bosses"])) return "confrontos";
+  if (contemParte(["confronto", "confrontos", "batalha", "batalhas", "combate", "combates"])) return "confrontos";
   return "gerais";
 }
 
@@ -124,6 +126,7 @@ function detalheEstilo(estilo) {
   const detalhes = {
     mundo: "Músicas que tocam durante exploração, biomas, rotas e ambientes do mundo.",
     confrontos: "Músicas usadas em confrontos, batalhas comuns, bosses e momentos de tensão.",
+    boss: "Músicas próprias dos bosses especiais de dungeon.",
     lideres: "Músicas reservadas para líderes, estádios e batalhas especiais de progressão.",
     tipos: "Músicas temáticas ligadas aos tipos do jogo.",
     gerais: "Músicas gerais de menu, transição, créditos e outras áreas fora das categorias principais.",

@@ -40,7 +40,7 @@ for _nome_musica, _dados_musica in Musicas.items():
         _dados_musica.setdefault("id", str(_nome_musica))
 
 MUSICAS_DUNGEON = {"Dungeon", "Dungeon1", "Dungeon2", "Dungeon3", "EternatusDungeon"}
-MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão", "Estadio", *MUSICAS_DUNGEON}
+MUSICAS_MUNDO = {"Vale", "Neve", "Deserto", "Praia", "Vulcão", "Magico", "Pantano", "Estadio", *MUSICAS_DUNGEON}
 MUSICAS_TIPO_ESTADIO = {
     "agua": "Agua",
     "cosmico": "Cosmico",
@@ -51,8 +51,14 @@ MUSICAS_TIPO_ESTADIO = {
     "fogo": "Fogo",
     "gelo": "Gelo",
     "inseto": "Inseto",
+    "lutador": "Lutador",
+    "metal": "Metal",
     "normal": "Normal",
+    "pedra": "Pedra",
     "planta": "Planta",
+    "psiquico": "Psiquico",
+    "sombrio": "Sombrio",
+    "sonoro": "Sonoro",
     "terrestre": "Terrestre",
     "terra": "Terrestre",
     "venenoso": "Venenoso",
@@ -60,8 +66,10 @@ MUSICAS_TIPO_ESTADIO = {
 }
 MUSICAS_LIDER_ESTADIO = {
     "agua": "Agua-Caio",
+    "cosmico": "Cosmico-Felipox",
     "dragao": "Dragao-Felps",
     "eletrico": "Eletrico-Ph",
+    "fada": "Fada-Nathzinha",
     "fantasma": "Fantasma-Ferraz",
     "fogo": "Fogo-Batalha",
     "gelo": "Gelo-Joao",
@@ -71,12 +79,19 @@ MUSICAS_LIDER_ESTADIO = {
     "metal": "Metal-Ale",
     "normal": "Normal-Suriane",
     "pedra": "Pedra-Sidney",
+    "planta": "Planta-Suneiva",
+    "psiquico": "Psiquico-Garcia",
     "sombrio": "Sombrio-Vasques",
     "sonoro": "Sonoro-Ramos",
     "terrestre": "Terrestre-Amable",
     "terra": "Terrestre-Amable",
     "venenoso": "Venenoso-Paulo",
     "voador": "Voador-Lis",
+}
+MUSICAS_BOSS_DUNGEON = {
+    "arceus": "ArceusBoss",
+    "necrozma": "NecrozmaBoss",
+    "eternatus": "EternatusBoss",
 }
 
 # Estado da música atual
@@ -365,6 +380,8 @@ def _musica_por_tile(tile):
         "Deserto": "Deserto",
         "Praia": "Praia",
         "Vulcão": "Vulcão",
+        "Magico": "Magico",
+        "Pantano": "Pantano",
     }.get(bioma)
 
 
@@ -409,6 +426,46 @@ def _musica_treinador_estadio(contexto):
         return _musica_existente(MUSICAS_LIDER_ESTADIO.get(tipo), MUSICAS_TIPO_ESTADIO.get(tipo))
     if cargo in {"capitao", "desafiante"}:
         return _musica_existente(MUSICAS_TIPO_ESTADIO.get(tipo), MUSICAS_LIDER_ESTADIO.get(tipo))
+    return None
+
+
+def _musica_boss_dungeon(contexto):
+    candidatos = []
+    pokemon_colisao = contexto.get("pokemon_colisao") if isinstance(contexto.get("pokemon_colisao"), dict) else {}
+    estado_colisao = pokemon_colisao.get("estado") if isinstance(pokemon_colisao.get("estado"), dict) else {}
+    candidatos.extend(
+        [
+            pokemon_colisao.get("pokemon_boss"),
+            pokemon_colisao.get("especie"),
+            pokemon_colisao.get("Especie"),
+            pokemon_colisao.get("nome"),
+            pokemon_colisao.get("Nome"),
+            estado_colisao.get("pokemon_boss"),
+            estado_colisao.get("especie"),
+            estado_colisao.get("Especie"),
+            estado_colisao.get("nome"),
+            estado_colisao.get("Nome"),
+        ]
+    )
+    for pokemon in list(contexto.get("pokemons_inimigo") or []):
+        if not isinstance(pokemon, dict):
+            continue
+        estado = pokemon.get("estado") if isinstance(pokemon.get("estado"), dict) else pokemon
+        if isinstance(estado, dict):
+            candidatos.extend(
+                [
+                    estado.get("pokemon_boss"),
+                    estado.get("especie"),
+                    estado.get("Especie"),
+                    estado.get("nome"),
+                    estado.get("Nome"),
+                ]
+            )
+    for candidato in candidatos:
+        chave = _normalizar_chave(candidato)
+        for parte, musica in MUSICAS_BOSS_DUNGEON.items():
+            if parte in chave:
+                return _musica_existente(musica)
     return None
 
 
@@ -515,6 +572,9 @@ def _resolver_musica_alvo(jogo):
         if isinstance(contexto, dict):
             tipo_batalha = str(contexto.get("tipo_batalha") or contexto.get("tipo") or "").strip().lower()
             if tipo_batalha == "boss":
+                musica_boss = _musica_boss_dungeon(contexto)
+                if musica_boss:
+                    return musica_boss
                 return _musica_existente("ConfrontoBoss", "ConfrontoDungeon")
             if tipo_batalha == "servo":
                 return _musica_existente("ConfrontoDungeon", "ConfrontoBoss")

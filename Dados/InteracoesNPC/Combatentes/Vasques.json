@@ -1,98 +1,1678 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Sombrio",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Vasques, líder do estádio Sombrio. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Vasques, lider do estadio Sombrio. Se veio procurar uma batalha facil, escolheu a porta errada. Se veio conversar, eu tambem escuto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce chegou ao respeito 3 no Sombrio. Agora da para falar de batalha seria, daquelas que deixam ate o PH sem argumento."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Voce ja tem respeito suficiente para a primeira batalha. Ainda nao e o topo, mas pelo menos saiu da fase de achar que Sombrio e so pose."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou. Gosto disso. A maioria aparece uma vez, perde para um golpe bem lido e comeca a dizer que o tipo Sombrio e injusto."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda nao tenho respeito para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero sua batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 ainda esta bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero sua batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Por que voce escolheu o tipo Sombrio?",
+          "destino": "escolha_sombrio"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Sombrio. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Antes disso, voce ainda esta tentando entrar no escuro sem saber onde pisa. No Sombrio, isso costuma terminar mal.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou conquistar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Entao quero conversar primeiro.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Me explica por que Sombrio e tao bom.",
+          "destino": "sombrio_melhor"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Sombrio, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro prove consistencia, depois venha falar de confronto final. Eu nao sou o Felipox fazendo misterio cosmico para parecer profundo.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Voce tem muita implicancia com o Felipox.",
+          "destino": "felipox"
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero tentar a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Sombrio permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede leitura. Eu quero ver se voce entende quando atacar, quando recuar e quando deixar o adversario errar sozinho.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuSombrioVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce pelo menos ouviu minha filosofia antes de lutar. Isso ja aumenta um pouco minha expectativa."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouPHVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Depois de falar de PH, estou ate mais animado. Vamos ver se voce joga melhor que um treinador Eletrico."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Vasques": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Sombrio. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora sim. A segunda batalha e o ponto em que eu paro de medir potencial e comeco a medir limite.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuVasquesIsolado",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce entendeu um pouco do motivo de eu ter me afastado. Entao vou lutar sem mascara: treino, escolha e consequencia."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.OuviuRankingTiposVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce ouviu meu ranking de tipos e ainda voltou. Corajoso. Agora vamos testar se sua teoria aguenta pratica."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Vasques": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu passo muito tempo batalhando e jogando Brawl Stars, mas ainda sei conversar como uma pessoa normal.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce continua voltando para conversar. Isso e raro. Normalmente as pessoas so querem batalha, presente ou uma opiniao rapida sobre tipo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComGarciaVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Se veio falar do Garcia de novo, tudo bem. Ele pensa demais, mas e um dos poucos que entende meu jeito sem transformar tudo em drama."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComVasques": true,
+          "ConversasVasques": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que voce se afastou dos amigos?",
+          "destino": "isolamento"
+        },
+        {
+          "texto": "Voce sempre quis ser treinador?",
+          "destino": "sonho_treinador"
+        },
+        {
+          "texto": "Voce e formado em administracao?",
+          "destino": "administracao"
+        },
+        {
+          "texto": "Voce fala muito da sua namorada?",
+          "destino": "namorada"
+        },
+        {
+          "texto": "Quero ouvir sobre o tipo Sombrio.",
+          "destino": "sombrio_melhor"
+        },
+        {
+          "texto": "Qual e sua rixa com o PH?",
+          "destino": "ph_eletrico"
+        },
+        {
+          "texto": "O que voce acha do Felipox?",
+          "destino": "felipox"
+        },
+        {
+          "texto": "Voce e amigo do Garcia e do Leon?",
+          "destino": "amigos"
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "escolha_sombrio": {
+      "fala": "Eu escolhi Sombrio porque era o tipo que eu queria. Simples assim. Nao fiquei esperando sobrar alguma coisa depois que os outros decidiram. Quando voce sabe o que quer, pega antes.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEscolhaSombriaVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao os outros lideres pegaram o que sobrou?",
+          "destino": "tipos_sobraram"
+        },
+        {
+          "texto": "E por que Sombrio e melhor?",
+          "destino": "sombrio_melhor"
+        },
+        {
+          "texto": "Isso parece meio competitivo.",
+          "destino": "melhor_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "tipos_sobraram": {
+      "fala": "Alguns escolheram bem. Outros correram atras do que dava. Eu nao julgo tanto assim, mas tambem nao vou fingir que todo tipo tem o mesmo peso. Sombrio tem presenca.",
+      "opcoes": [
+        {
+          "texto": "Voce ranqueou todos os tipos?",
+          "destino": "ranking_tipos"
+        },
+        {
+          "texto": "Isso inclui o Cosmico?",
+          "destino": "cosmico_pior"
+        },
+        {
+          "texto": "E o Eletrico?",
+          "destino": "ph_eletrico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "escolha_sombrio"
+        }
+      ]
+    },
+    "sombrio_melhor": {
+      "fala_condicional": {
+        "padrao": "Sombrio e leitura, pressao, ameaca e controle psicologico. Quem acha que e so estetica nao entendeu metade do jogo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouFelipoxVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Sombrio e melhor que Cosmico em conceito, em presenca e em utilidade. Felipox pode programar mil argumentos; nenhum compila contra isso."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSombrioVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce acha Cosmico tao ruim assim?",
+          "destino": "cosmico_pior"
+        },
+        {
+          "texto": "Voce acha Eletrico pior tambem?",
+          "destino": "ph_eletrico"
+        },
+        {
+          "texto": "Voce usa so Pokemon Sombrio?",
+          "destino": "nao_se_limita"
+        },
+        {
+          "texto": "Voce parece bem seguro disso.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "cosmico_pior": {
+      "fala": "Cosmico e o pior tipo existente. Raro, misterioso, cheio de pose... e ainda assim inferior. Felipox fala como se raridade fosse qualidade. Nao e. As vezes e so estatistica baixa com marketing bom.",
+      "ao_entrar": {
+        "setor": {
+          "FalouCosmicoVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce realmente nao gosta do Felipox.",
+          "destino": "felipox"
+        },
+        {
+          "texto": "Mas Cosmico parece misterioso.",
+          "destino": "cosmico_misterioso"
+        },
+        {
+          "texto": "Voce fala isso para provocar?",
+          "destino": "provocacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "sombrio_melhor"
+        }
+      ]
+    },
+    "cosmico_misterioso": {
+      "fala": "Misterioso ate o primeiro turno. Depois vira calculo, resistencia, dano e decisao. O misterio acaba quando o Pokemon cai.",
+      "opcoes": [
+        {
+          "texto": "Isso e bem direto.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Felipox discordaria muito.",
+          "destino": "felipox"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "cosmico_pior"
+        }
+      ]
+    },
+    "felipox": {
+      "fala_condicional": {
+        "padrao": "Felipox e simpatico, programador, cheio de ideia cosmica e ainda assim escolheu o tipo errado. Acho ele inteligente, so nao acho que ele esteja certo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouCosmicoVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Felipox pode ser gente boa, mas Cosmico continua sendo uma escolha patetica perto de Sombrio. O problema nao e a pessoa. E a tese."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouFelipoxVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce chamou o Felipox de patetico?",
+          "destino": "felipox_patetico"
+        },
+        {
+          "texto": "Voce respeita ele pelo menos?",
+          "destino": "respeito_felipox"
+        },
+        {
+          "texto": "Voce acha programacao util em batalha?",
+          "destino": "programacao_felipox"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "felipox_patetico": {
+      "fala": "Nao, eu chamei a defesa dele do Cosmico de patetica. O Felipox em si e tranquilo. Eu tento separar pessoa de argumento. As vezes.",
+      "opcoes": [
+        {
+          "texto": "Isso foi quase diplomatico.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Quase.",
+          "destino": "provocacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "felipox"
+        }
+      ]
+    },
+    "respeito_felipox": {
+      "fala": "Respeito. Ele programa bastante, pensa diferente e nao costuma arrumar conflito. So tem um gosto terrivel para tipo. Ninguem e perfeito.",
+      "opcoes": [
+        {
+          "texto": "Voce e menos agressivo do que parece.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "E o PH?",
+          "destino": "ph_eletrico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "felipox"
+        }
+      ]
+    },
+    "programacao_felipox": {
+      "fala": "Util, claro. Organizacao logica ajuda em qualquer sistema. So nao transforma Cosmico em bom tipo. Tem coisa que nem refatoracao salva.",
+      "opcoes": [
+        {
+          "texto": "Essa foi boa.",
+          "destino": "provocacao"
+        },
+        {
+          "texto": "Voce tambem gosta de logica?",
+          "destino": "administracao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "felipox"
+        }
+      ]
+    },
+    "ph_eletrico": {
+      "fala_condicional": {
+        "padrao": "PH e minha rixa pessoal. O tipo Eletrico nao e o mais fraco porque Cosmico existe, mas chega perto. Segundo mais fraco, no meu ranking.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.OuviuRankingTiposVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ja falei do ranking, mas repito: Cosmico em ultimo, Eletrico brigando ali embaixo. PH sabe que eu acho isso e provavelmente odeia."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouPHVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que voce ranqueou todos os tipos?",
+          "destino": "ranking_tipos"
+        },
+        {
+          "texto": "O PH joga tao mal assim?",
+          "destino": "richa_ph"
+        },
+        {
+          "texto": "Voce nao esta exagerando?",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "richa_ph": {
+      "fala": "Nao e so sobre jogar mal. E sobre postura. Eletrico vive dessa ideia de velocidade e impacto. Bonito ate encontrar alguem que le o turno antes.",
+      "opcoes": [
+        {
+          "texto": "Entao Sombrio vence Eletrico?",
+          "destino": "sombrio_vs_eletrico"
+        },
+        {
+          "texto": "Voce fala isso para irritar ele.",
+          "destino": "provocacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ph_eletrico"
+        }
+      ]
+    },
+    "sombrio_vs_eletrico": {
+      "fala": "Depende do treinador, claro. Mas se for eu contra PH, eu aposto em mim. E nao e aposta emocional; e historico, leitura e preparo.",
+      "opcoes": [
+        {
+          "texto": "Voce parece competitivo demais.",
+          "destino": "melhor_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ph_eletrico"
+        }
+      ]
+    },
+    "ranking_tipos": {
+      "fala": "Eu ja ranqueei todos os tipos no meu tempo livre. Nao foi uma lista aleatoria. Eu considerei presenca, consistencia, cobertura, pressao, matchups e potencial nas maos de alguem que pensa.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuRankingTiposVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual ficou em primeiro?",
+          "destino": "ranking_primeiro"
+        },
+        {
+          "texto": "Qual ficou em ultimo?",
+          "destino": "ranking_ultimo"
+        },
+        {
+          "texto": "Voce fez isso so por diversao?",
+          "destino": "tempo_livre"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ranking_primeiro": {
+      "fala": "Sombrio. Obvio. Eu nao escolheria liderar um tipo se achasse que ele era mediano. Escolhi porque queria e porque sabia que dava para dominar.",
+      "opcoes": [
+        {
+          "texto": "E o segundo?",
+          "destino": "ranking_segundo"
+        },
+        {
+          "texto": "Isso parece soberbo.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ranking_tipos"
+        }
+      ]
+    },
+    "ranking_segundo": {
+      "fala": "Depende do criterio, mas eu separo bem tipo forte de treinador forte. Tem tipo que parece absurdo ate cair na mao errada. Por isso ranking sem contexto e conversa pela metade.",
+      "opcoes": [
+        {
+          "texto": "Entao voce nao se limita ao Sombrio.",
+          "destino": "nao_se_limita"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ranking_tipos"
+        }
+      ]
+    },
+    "ranking_ultimo": {
+      "fala": "Cosmico. Depois eu vejo onde encaixo Eletrico para irritar o PH com precisao estatistica.",
+      "opcoes": [
+        {
+          "texto": "Voce tem problema com os dois.",
+          "destino": "provocacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ranking_tipos"
+        }
+      ]
+    },
+    "tempo_livre": {
+      "fala": "Hoje eu passo boa parte do tempo livre batalhando, jogando Brawl Stars ou pensando em times. Eu sei que parece repetitivo, mas e o que eu gosto.",
+      "ao_entrar": {
+        "setor": {
+          "FalouTempoLivreVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce joga Brawl Stars?",
+          "destino": "brawl_stars"
+        },
+        {
+          "texto": "Voce batalha tanto assim?",
+          "destino": "batalhar_livre"
+        },
+        {
+          "texto": "Voce nao cansa?",
+          "destino": "cansaco"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "brawl_stars": {
+      "fala_condicional": {
+        "padrao": "Jogo Brawl Stars. Competitivo o suficiente para me divertir e irritante o suficiente para eu lembrar que nem toda equipe tem administracao decente.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouBrawlVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Sim, ainda jogo. Nao, eu nao mudei de opiniao: teammate ruim e teste psicologico."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouBrawlVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce leva ate Brawl Stars a serio?",
+          "destino": "brawl_serio"
+        },
+        {
+          "texto": "Qual seu estilo de jogo?",
+          "destino": "brawl_estilo"
+        },
+        {
+          "texto": "Isso combina com administracao?",
+          "destino": "administracao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tempo_livre"
+        }
+      ]
+    },
+    "brawl_serio": {
+      "fala": "Levo o suficiente para tentar ganhar. Se e para entrar numa partida sem pensar, melhor nem abrir o jogo.",
+      "opcoes": [
+        {
+          "texto": "Voce e competitivo em tudo.",
+          "destino": "melhor_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "brawl_stars"
+        }
+      ]
+    },
+    "brawl_estilo": {
+      "fala": "Controle de mapa, leitura de avanco e punir erro. Parece Sombrio, ne? No fim, toda arena ensina a mesma coisa para quem presta atencao.",
+      "opcoes": [
+        {
+          "texto": "Isso explica seu tipo.",
+          "destino": "sombrio_melhor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "brawl_stars"
+        }
+      ]
+    },
+    "administracao": {
+      "fala": "Sou formado em administracao. Isso me ensinou a olhar recurso, risco, equipe e resultado. Batalha Pokemon tambem e isso, so que com mais gente fingindo que improviso resolve tudo.",
+      "ao_entrar": {
+        "setor": {
+          "FalouAdministracaoVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce administra seus times como uma empresa?",
+          "destino": "gestao_e_time"
+        },
+        {
+          "texto": "Isso ajuda em batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voce parece bem pragmatico.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "gestao_e_time": {
+      "fala": "De certa forma, sim. Cada Pokemon tem funcao, custo, risco e retorno. Time bom nao e colecao de favorito; e operacao funcionando.",
+      "opcoes": [
+        {
+          "texto": "Voce capturou quase todos os Pokemon?",
+          "destino": "captura"
+        },
+        {
+          "texto": "Voce nao usa so Sombrio?",
+          "destino": "nao_se_limita"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "administracao"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Ajuda. Administracao nao e so planilha. E decisao sob pressao, priorizacao e leitura de cenario. Quem acha isso chato normalmente perde para quem estudou.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMetodoVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce fala como melhor treinador da ilha.",
+          "destino": "melhor_treinador"
+        },
+        {
+          "texto": "Isso parece coisa que o Garcia entenderia.",
+          "destino": "garcia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "administracao"
+        }
+      ]
+    },
+    "captura": {
+      "fala": "Ja capturei quase todos os Pokemon existentes. Quase todos. E sim, eu sei que isso parece exagero. Mas se voce quer entender o jogo inteiro, precisa conhecer mais do que um tipo.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuCapturasVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao voce nao se limita ao Sombrio.",
+          "destino": "nao_se_limita"
+        },
+        {
+          "texto": "Voce acha que e o melhor treinador da ilha?",
+          "destino": "melhor_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "gestao_e_time"
+        }
+      ]
+    },
+    "nao_se_limita": {
+      "fala": "Embora eu lidere Sombrio, tenho muitos outros Pokemon. Nao gosto de me limitar. Ser lider de um tipo e identidade publica; ser treinador de verdade e saber jogar o mapa inteiro.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuVasquesNaoLimitado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao por que escolheu Sombrio?",
+          "destino": "escolha_sombrio"
+        },
+        {
+          "texto": "Isso te torna mais forte?",
+          "destino": "melhor_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "melhor_treinador": {
+      "fala_condicional": {
+        "padrao": "Provavelmente sou o melhor treinador da ilha. Eu sei que soa forte, mas nao falo por ego vazio. Eu batalho muito, estudo muito e tenho experiencia com quase todo tipo de Pokemon.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuVasquesIsolado",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Eu digo que provavelmente sou o melhor treinador da ilha, mas isso teve custo. Me afastei de muita coisa para ficar bom de verdade."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece soberbo.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Voce abriu mao dos amigos por isso?",
+          "destino": "isolamento"
+        },
+        {
+          "texto": "Leon concordaria?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Garcia concordaria?",
+          "destino": "garcia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "humildade": {
+      "fala": "Eu nao me acho invencivel como personagem de lenda. Eu so confio no meu preparo. Tem diferenca entre soberba e historico bem construido.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuHumildadeVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao voce admite que pode perder?",
+          "destino": "pode_perder"
+        },
+        {
+          "texto": "Voce e mais simpatico do que parece.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pode_perder": {
+      "fala": "Claro. Todo mundo pode perder. So que eu tento fazer a derrota precisar trabalhar muito para me alcancar.",
+      "opcoes": [
+        {
+          "texto": "Boa frase.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Agora quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "humildade"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Eu sou tranquilo no geral. So fico mais fechado quando percebo que a conversa virou disputa de ego. Ai prefiro gastar energia treinando.",
+      "opcoes": [
+        {
+          "texto": "Isso explica seu isolamento.",
+          "destino": "isolamento"
+        },
+        {
+          "texto": "Voce parece gostar de poucas pessoas.",
+          "destino": "amigos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "isolamento": {
+      "fala": "Eu me afastei de alguns amigos para virar lider Sombrio e ser realmente bom nisso. Nao foi raiva. Foi foco. As vezes ficar perto de todo mundo impede voce de ouvir o proprio plano.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuVasquesIsolado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce se arrepende?",
+          "destino": "arrependimento"
+        },
+        {
+          "texto": "Isso te deixou mais forte?",
+          "destino": "foco"
+        },
+        {
+          "texto": "Quem continuou proximo?",
+          "destino": "amigos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "arrependimento": {
+      "fala": "Um pouco. Nao vou fingir que foco nao cobra preco. Mas tambem nao vou fingir que eu teria chegado aqui do mesmo jeito se tivesse mantido tudo igual.",
+      "opcoes": [
+        {
+          "texto": "Isso foi bem honesto.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Sua namorada entende isso?",
+          "destino": "namorada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "isolamento"
+        }
+      ]
+    },
+    "foco": {
+      "fala": "Me deixou melhor no que eu escolhi fazer. Melhor pessoa? Talvez nao sempre. Melhor treinador? Com certeza ajudou.",
+      "opcoes": [
+        {
+          "texto": "Voce ainda tenta equilibrar isso?",
+          "destino": "equilibrio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "isolamento"
+        }
+      ]
+    },
+    "equilibrio": {
+      "fala": "Tento. Garcia me lembra de pensar menos como ranking e mais como gente. Leon me lembra que forca sem direcao vira barulho.",
+      "opcoes": [
+        {
+          "texto": "Fala do Garcia.",
+          "destino": "garcia"
+        },
+        {
+          "texto": "Fala do Leon.",
+          "destino": "leon"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "isolamento"
+        }
+      ]
+    },
+    "amigos": {
+      "fala": "Sou mais proximo do Garcia e do Leon. Nao tenho um circulo gigante e nem finjo ter. Prefiro poucas pessoas que entendem meu ritmo.",
+      "ao_entrar": {
+        "setor": {
+          "FalouAmigosVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Garcia?",
+          "destino": "garcia"
+        },
+        {
+          "texto": "Por que Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Voce sente falta dos outros amigos?",
+          "destino": "arrependimento"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "garcia": {
+      "fala": "Garcia e meu amigo. Ele pensa demais, fala como se estivesse defendendo tese, mas tem coracao bom. O tipo Psiquico combinou com ele mais do que engenharia combinou.",
+      "ao_entrar": {
+        "setor": {
+          "FalouComGarciaVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ele diz que e mais sabio que Alleka.",
+          "destino": "garcia_sabio"
+        },
+        {
+          "texto": "Voce pediria conselho para ele?",
+          "destino": "conselho_garcia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "amigos"
+        }
+      ]
+    },
+    "garcia_sabio": {
+      "fala": "Ele diria isso mesmo. Garcia tem essa confianca intelectual meio doce. Eu gosto dele porque ate quando quer parecer superior, parece alguem pedindo desculpa com vocabulario grande.",
+      "opcoes": [
+        {
+          "texto": "Isso foi carinhoso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "garcia"
+        }
+      ]
+    },
+    "conselho_garcia": {
+      "fala": "Pediria. Nao sobre mulher, porque ele tambem esta tentando entender esse sistema. Mas sobre decisao dificil, sim. Ele escuta antes de responder.",
+      "opcoes": [
+        {
+          "texto": "Voce fala de relacionamento tambem?",
+          "destino": "namorada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "garcia"
+        }
+      ]
+    },
+    "leon": {
+      "fala": "Leon e outro nivel. Ele entende pressao sem precisar fazer discurso. Quando ele fala pouco, as vezes diz mais do que um ranking inteiro.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLeonVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce acha Leon mais forte que voce?",
+          "destino": "leon_forca"
+        },
+        {
+          "texto": "Voce confia nele?",
+          "destino": "confianca_leon"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "amigos"
+        }
+      ]
+    },
+    "leon_forca": {
+      "fala": "Leon e Leon. Eu nao preciso diminuir ele para me sentir forte. Se algum dia eu disser que sou o melhor da ilha, ele e a excecao que me obriga a pensar duas vezes.",
+      "opcoes": [
+        {
+          "texto": "Finalmente uma duvida.",
+          "destino": "humildade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "leon"
+        }
+      ]
+    },
+    "confianca_leon": {
+      "fala": "Confio. Ele nao precisa concordar comigo para me respeitar. Isso e raro.",
+      "opcoes": [
+        {
+          "texto": "Voce valoriza isso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "leon"
+        }
+      ]
+    },
+    "namorada": {
+      "fala_condicional": {
+        "padrao": "Gosto muito da minha namorada. Ela e uma das poucas pessoas que me ve fora dessa pose de lider Sombrio e ainda assim fica.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouNamoradaVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ja falei dela, ne? Pois e. Posso ser isolado, mas nao sou feito de pedra escura."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouNamoradaVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ela entende seu jeito?",
+          "destino": "namorada_entende"
+        },
+        {
+          "texto": "Voce muda perto dela?",
+          "destino": "namorada_muda"
+        },
+        {
+          "texto": "Isso te deixa menos sombrio.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "namorada_entende": {
+      "fala": "Entende mais do que a maioria. Ela sabe quando eu quero silencio, quando estou pensando em batalha e quando so estou fingindo que nao fiquei feliz com alguma coisa.",
+      "opcoes": [
+        {
+          "texto": "Isso e fofo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "namorada"
+        }
+      ]
+    },
+    "namorada_muda": {
+      "fala": "Mudo um pouco. Nao no sentido de virar outra pessoa. So fico menos na defensiva. Tem gente que faz a gente nao precisar provar tudo o tempo inteiro.",
+      "opcoes": [
+        {
+          "texto": "Isso combina com o presente 2.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "namorada"
+        }
+      ]
+    },
+    "sonho_treinador": {
+      "fala": "Eu sempre quis ser treinador Pokemon. Antes de ser lider, antes de ranking, antes de rivalidade com PH. Eu queria batalhar, capturar, entender o jogo e construir meu nome.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuSonhoTreinadorVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "E conseguiu?",
+          "destino": "melhor_treinador"
+        },
+        {
+          "texto": "Voce batalha todo dia?",
+          "destino": "batalhar_livre"
+        },
+        {
+          "texto": "Voce capturou quase todos?",
+          "destino": "captura"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "batalhar_livre": {
+      "fala": "Atualmente o que mais faco no tempo livre e batalhar. Mesmo quando nao preciso. Tem gente que relaxa parando; eu relaxo testando time.",
+      "opcoes": [
+        {
+          "texto": "Isso parece cansativo.",
+          "destino": "cansaco"
+        },
+        {
+          "texto": "Isso explica suas capturas.",
+          "destino": "captura"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tempo_livre"
+        }
+      ]
+    },
+    "cansaco": {
+      "fala": "Cansa as vezes. Mas parar tambem cansa, so que de outro jeito. Eu prefiro o cansaco de melhorar.",
+      "opcoes": [
+        {
+          "texto": "Voce parece mais humano assim.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "provocacao": {
+      "fala": "Eu provoco, mas nao de graca. Provocacao boa revela como o outro pensa sob pressao. PH reage de um jeito. Felipox reage de outro. Eu observo.",
+      "opcoes": [
+        {
+          "texto": "Entao voce usa isso como estrategia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voce e perigoso conversando tambem.",
+          "destino": "sombrio_melhor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Se voce chegou ate aqui, ja percebeu que o Sombrio nao e so vencer. E entender o que a pessoa esconde enquanto tenta vencer.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasVasques",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Voce realmente conversou bastante comigo. Nao e comum. Talvez por isso eu esteja falando mais do que deveria."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaVasques": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que voce esconde?",
+          "destino": "vasques_esconde"
+        },
+        {
+          "texto": "Voce tem medo de perder amigos de vez?",
+          "destino": "medo_perder"
+        },
+        {
+          "texto": "Voce quer ser lembrado como que?",
+          "destino": "legado"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "vasques_esconde": {
+      "fala": "Que eu sinto falta de algumas coisas. Nao dos ruidos, nao das discussoes inuteis. Mas de quando ser bom em algo nao parecia exigir se afastar tanto.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuVasquesProfundo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi bem sincero.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voce pode se reaproximar.",
+          "destino": "medo_perder"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "medo_perder": {
+      "fala": "Tenho. Nao de perder batalha. Isso eu resolvo treinando. Tenho medo de treinar tanto uma versao de mim que as pessoas antigas nao reconhecam mais.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuVasquesIsolado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Garcia e Leon ainda reconhecem.",
+          "destino": "amigos"
+        },
+        {
+          "texto": "Sua namorada tambem.",
+          "destino": "namorada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "legado": {
+      "fala": "Quero ser lembrado como alguem que escolheu o proprio tipo, construiu o proprio caminho e nao aceitou ser definido por limite de tabela.",
+      "opcoes": [
+        {
+          "texto": "Isso combina com Sombrio.",
+          "destino": "sombrio_melhor"
+        },
+        {
+          "texto": "Isso combina com presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuVasquesProfundo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuVasquesIsolado",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComVasques",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuSombrioVasques",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda nao. Se eu entregasse recompensa so porque alguem pediu, eu seria vendedor de brinde, nao lider Sombrio. Converse, entenda e volte.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o Sombrio.",
+          "destino": "sombrio_melhor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Voce entendeu o basico: Sombrio nao e modinha, e leitura e presenca. Pegue isto e use com cabeca.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Vasques.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Voce foi alem da pose de lider e ouviu o que fica por tras. Esse presente e para quem entende que ate o escuro tem custo.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do Vasques.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Voce venceu. Bom. Nao vou transformar isso em discurso dramatico: voce jogou melhor e mereceu.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuSombrioVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce venceu e ainda entendeu o Sombrio. Isso e raro. Talvez eu tenha que revisar alguma linha do meu ranking pessoal."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Vasques",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Voce venceu minha segunda batalha. Isso nao apaga meu caminho, mas coloca seu nome nele. Respeito."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Voce perdeu. Acontece. O que define treinador nao e perder, e o que ele faz depois que percebe onde errou.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Vasques",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra caro. Mas voce chegou nela, entao nao vou fingir que e qualquer um. Volte melhor."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouPHVasques",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce perdeu, mas pelo menos nao tentou me convencer de que Eletrico era superior depois disso."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar mais forte.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

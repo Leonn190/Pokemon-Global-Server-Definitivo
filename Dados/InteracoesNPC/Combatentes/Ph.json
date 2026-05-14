@@ -1,98 +1,1232 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Eletrico",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Ph, líder do estádio Eletrico. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou PH, lider do estadio Eletrico. Se voce veio procurar energia, achou. Se veio procurar humildade, errou o predio.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Olha so, respeito 3. Finalmente alguem passou do modo tomada frouxa. As duas batalhas estao liberadas."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Respeito 1. Da para liberar a primeira batalha. A segunda ainda exige mais do que apertar botao e torcer."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou? Corajoso. Ou teimoso. As duas opcoes combinam com quem desafia o Eletrico."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda nao tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voce sempre fala assim dos outros?",
+          "destino": "provocacoes"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Eletrico. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Antes disso, voce ainda esta no nivel de pilha descarregada. Volta quando o estadio reconhecer alguma faisca em voce.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou buscar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero conversar primeiro.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Eletrico, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro passa pela primeira luta, depois pelo Capitao, e ai talvez eu pare de te tratar como tutorial ambulante.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Quero tentar a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Por que voce fala tanto do Capitao?",
+          "destino": "ordem_estadio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Eletrico permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "Primeira batalha. Aqui eu vejo se voce sabe montar circuito ou se so fica fazendo curto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMetodoPH",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Pelo menos voce ouviu minha aula antes de lutar. Ainda pode perder, mas vai perder com um pouco mais de contexto."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1PH": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero ouvir suas estrategias antes.",
+          "destino": "metodo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Eletrico. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora sim. Segunda batalha. Aqui eu jogo serio, sem economia de energia e sem pena de quem nao sabe se posicionar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConheceuLadoPH",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce conversou bastante, entao ja sabe: eu brinco, provoco, mas na hora da luta eu calculo tudo."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2PH": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Quero falar de TFT antes.",
+          "destino": "tft"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Manda. So tenta nao fazer pergunta nivel Ferraz analisando matchup Fantasma com calculadora quebrada.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce voltou varias vezes para conversar. Ta quase virando aluno fixo. Cuidado, daqui a pouco eu cobro mensalidade."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComPH": true,
+          "ConversasPH": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que voce escolheu Eletrico?",
+          "destino": "tipo_eletrico"
+        },
+        {
+          "texto": "Fala do Ferraz.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Fala do Caio.",
+          "destino": "caio"
+        },
+        {
+          "texto": "Voce e parceiro da Alleka?",
+          "destino": "alleka"
+        },
+        {
+          "texto": "Voce conhece bem o Vasques?",
+          "destino": "vasques"
+        },
+        {
+          "texto": "Voce investe em estadios?",
+          "destino": "mercado"
+        },
+        {
+          "texto": "Voce gosta tanto assim de TFT?",
+          "destino": "tft"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "tipo_eletrico": {
+      "fala": "Eletrico e velocidade, pressao e decisao rapida. Se o adversario pisca, ja tomou choque. Eu gosto de tipo que transforma erro pequeno em derrota grande.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTipoEletricoPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com voce.",
+          "destino": "metodo"
+        },
+        {
+          "texto": "E por que voce acha outros tipos fracos?",
+          "destino": "ranking_tipos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "metodo": {
+      "fala": "Meu metodo e simples: leitura rapida, punicao imediata e vantagem acumulada. Se a pessoa hesita, eu capitalizo. Administracao, TFT e batalha Pokemon acabam ensinando a mesma coisa.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMetodoPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Administracao entra nisso?",
+          "destino": "administracao"
+        },
+        {
+          "texto": "TFT tambem?",
+          "destino": "tft"
+        },
+        {
+          "texto": "Isso parece arrogancia.",
+          "destino": "provocacoes"
+        },
+        {
+          "texto": "Quero testar esse metodo.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provocacoes": {
+      "fala": "Eu jogo os outros para baixo? Talvez. Ou talvez eu so descreva o que estou vendo com menos maquiagem. Tem treinador que chama isso de grosseria porque nao gosta de ouvir diagnostico.",
+      "opcoes": [
+        {
+          "texto": "Voce se acha demais.",
+          "destino": "arrogancia"
+        },
+        {
+          "texto": "Tem alguem que voce respeita?",
+          "destino": "respeito"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "arrogancia": {
+      "fala": "Arrogancia e falar sem base. Eu tenho historico, estudo, resultado e uma planilha mental de erro alheio. Entao tecnicamente e so confianca bem documentada.",
+      "opcoes": [
+        {
+          "texto": "Isso foi exatamente arrogante.",
+          "destino": "humor"
+        },
+        {
+          "texto": "Voce sempre foi assim?",
+          "destino": "passado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "provocacoes"
+        }
+      ]
+    },
+    "humor": {
+      "fala": "Relaxa. Se eu quisesse destruir sua autoestima de verdade, eu cobraria consultoria financeira e revisaria seu time ao mesmo tempo.",
+      "ao_entrar": {
+        "setor": {
+          "ConheceuHumorPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce e piadista mesmo.",
+          "destino": "piadista"
+        },
+        {
+          "texto": "Quero mudar de assunto.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "piadista": {
+      "fala": "Piadista, sim. Mas piada boa tem timing. Igual troca em batalha. O problema e que muita gente perde o timing nos dois.",
+      "opcoes": [
+        {
+          "texto": "Isso tambem vale para TFT?",
+          "destino": "tft"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "respeito": {
+      "fala": "Respeito a Alleka. Respeito resultado. Respeito quem aprende rapido. Tambem respeito o Vasques, mesmo ele parecendo que mora dentro de uma pasta fechada.",
+      "ao_entrar": {
+        "setor": {
+          "ConheceuRespeitosPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que a Alleka?",
+          "destino": "alleka"
+        },
+        {
+          "texto": "Por que o Vasques?",
+          "destino": "vasques"
+        },
+        {
+          "texto": "E o Ferraz?",
+          "destino": "ferraz"
+        }
+      ]
+    },
+    "ferraz": {
+      "fala_condicional": {
+        "padrao": "Ferraz como pessoa? Ate vai. Ferraz como treinador Fantasma? Patetico. Eu faria mais com o tipo Fantasma em uma semana do que ele faz em uma temporada.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouFerrazPH",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ainda quer falar do Ferraz? Cuidado, daqui a pouco eu viro consultor gratuito do estadio Fantasma."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouFerrazPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce acha que seria melhor lider Fantasma?",
+          "destino": "fantasma"
+        },
+        {
+          "texto": "Isso e pesado.",
+          "destino": "critica_ferraz"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "fantasma": {
+      "fala": "Com certeza. Fantasma tem controle, pressao psicologica, punicao de erro e varias linhas de jogo. Nas maos certas, e arte. Nas maos do Ferraz, e teatro escolar com fumaca.",
+      "opcoes": [
+        {
+          "texto": "Voce fala isso para ele?",
+          "destino": "critica_ferraz"
+        },
+        {
+          "texto": "Mas voce escolheu Eletrico.",
+          "destino": "tipo_eletrico"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ferraz"
+        }
+      ]
+    },
+    "critica_ferraz": {
+      "fala": "Eu exagero? Talvez. Mas rivalidade sem exagero vira reuniao de condominio. E ninguem quer assistir batalha com clima de ata administrativa.",
+      "opcoes": [
+        {
+          "texto": "Voce estudou administracao demais.",
+          "destino": "administracao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "caio": {
+      "fala": "Caio e estressado demais. O cara lidera Agua e ainda assim parece que ferve por dentro. Eu entendo a rixa dele comigo, mas calma, peixe tambem precisa de oxigenio.",
+      "ao_entrar": {
+        "setor": {
+          "FalouCaioPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ele acha que vence voce mesmo com fraqueza.",
+          "destino": "richa_caio"
+        },
+        {
+          "texto": "Voce acha Agua fraco?",
+          "destino": "agua"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "richa_caio": {
+      "fala": "Ele pode achar. Opiniao e livre. Campo eletrificado tambem. Quando ele quiser testar o time principal dele contra o meu, eu levo guarda-chuva so pela ironia.",
+      "opcoes": [
+        {
+          "texto": "Voce provoca muito.",
+          "destino": "provocacoes"
+        },
+        {
+          "texto": "E o tipo Eletrico contra Agua?",
+          "destino": "agua"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "caio"
+        }
+      ]
+    },
+    "agua": {
+      "fala": "Agua nao e ruim. Caio e que fica nervoso demais para admitir quando a matchup aperta. Eu diria que Eletrico nasceu para ensinar humildade para lider aquatico.",
+      "opcoes": [
+        {
+          "texto": "Voce acha Eletrico o melhor tipo?",
+          "destino": "ranking_tipos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "caio"
+        }
+      ]
+    },
+    "alleka": {
+      "fala_condicional": {
+        "padrao": "Alleka e parceira antiga. LoL, TFT, discussao de estrategia, planilha mental, tudo. Ela e metalica demais no jeito, mas pelo menos entende jogo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouAllekaPH",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ja falei: Alleka e uma das poucas pessoas que nao me faz querer fechar a call depois de cinco minutos."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouAllekaPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce jogava LoL com ela?",
+          "destino": "lol"
+        },
+        {
+          "texto": "E TFT?",
+          "destino": "tft"
+        },
+        {
+          "texto": "Voce respeita ela?",
+          "destino": "respeito_alleka"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lol": {
+      "fala": "Joguei muito LoL com a Alleka. Bons tempos e pessimas filas. Se voce acha que batalha Pokemon revela carater, espera ver alguem dar engage errado e culpar o suporte.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLolPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce ainda joga?",
+          "destino": "lol_2"
+        },
+        {
+          "texto": "Isso explica seu jeito.",
+          "destino": "humor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "alleka"
+        }
+      ]
+    },
+    "lol_2": {
+      "fala": "Hoje eu prefiro TFT. Menos gente gritando na minha orelha, mais economia, composicao, adaptacao e humilhacao silenciosa no late game.",
+      "opcoes": [
+        {
+          "texto": "Entao fala de TFT.",
+          "destino": "tft"
+        },
+        {
+          "texto": "Voce ainda fala como administrador.",
+          "destino": "administracao"
+        }
+      ]
+    },
+    "tft": {
+      "fala_condicional": {
+        "padrao": "TFT e perfeito: economia, probabilidade, scouting, timing e punicao. Basicamente mercado financeiro com bichinho batendo na tela.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouTftPH",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ainda quer falar de TFT? Otimo. Finalmente um assunto em que perder tambem pode ser culpa sua de forma estatisticamente demonstravel."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouTftPH": true,
+          "ConversouTftPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual sua estrategia?",
+          "destino": "estrategia_tft"
+        },
+        {
+          "texto": "Isso parece mercado financeiro.",
+          "destino": "mercado"
+        },
+        {
+          "texto": "Voce jogava isso com a Alleka?",
+          "destino": "alleka_tft"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia_tft": {
+      "fala": "Eu jogo pelo que o lobby entrega. Quem forca composicao sem olhar o tabuleiro merece oitavo. Adaptacao e tudo, tanto no TFT quanto no Eletrico.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTftPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com batalha.",
+          "destino": "metodo"
+        },
+        {
+          "texto": "Voce parece competitivo demais.",
+          "destino": "arrogancia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tft"
+        }
+      ]
+    },
+    "alleka_tft": {
+      "fala": "Joguei. Alleka era metodica, obvio. As vezes parecia que ela queria calcular o lobby inteiro antes do primeiro carrossel. Funcionava mais do que eu gostaria de admitir.",
+      "opcoes": [
+        {
+          "texto": "Voce admite que ela e boa?",
+          "destino": "respeito_alleka"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tft"
+        }
+      ]
+    },
+    "respeito_alleka": {
+      "fala": "Respeito. Ela e chata, mas competente. E isso ja coloca ela acima de uns oitenta por cento dos treinadores que eu conheco.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuAllekaPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce chama isso de elogio?",
+          "destino": "humor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "alleka"
+        }
+      ]
+    },
+    "vasques": {
+      "fala": "Vasques se formou em administracao comigo. Inteligente, competitivo, mas recluso. O cara parece que abriu uma empresa chamada Silencio Ltda e virou socio majoritario.",
+      "ao_entrar": {
+        "setor": {
+          "FalouVasquesPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce gosta dele?",
+          "destino": "vasques_2"
+        },
+        {
+          "texto": "Administracao uniu voces?",
+          "destino": "administracao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "vasques_2": {
+      "fala": "Gosto. Ele fala pouco, mas quando fala normalmente tem alguma coisa util. Diferente de muita gente que fala muito e entrega pouco. Sim, talvez eu esteja me excluindo dessa frase por conveniencia.",
+      "ao_entrar": {
+        "setor": {
+          "ConheceuLadoPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce foi quase humilde.",
+          "destino": "humor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "vasques"
+        }
+      ]
+    },
+    "administracao": {
+      "fala": "Sou formado em administracao. E isso ajuda mais em batalha do que parece: recurso, risco, retorno, posicionamento, timing e decisao sob pressao.",
+      "ao_entrar": {
+        "setor": {
+          "FalouAdministracaoPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso tem a ver com mercado financeiro?",
+          "destino": "mercado"
+        },
+        {
+          "texto": "Voce estudou com o Vasques?",
+          "destino": "vasques"
+        },
+        {
+          "texto": "Isso influencia seu estadio?",
+          "destino": "estadio_investimento"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "mercado": {
+      "fala_condicional": {
+        "padrao": "Gosto muito de mercado financeiro. Gosto de ver dinheiro trabalhando enquanto treinador fica parado pensando se troca ou nao troca.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouMercadoPH",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Mercado financeiro de novo? Boa. Pelo menos isso tem volatilidade com grafico, nao com treinador surtando no chat."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouMercadoPH": true,
+          "EntendeuFinanceiroPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce investe em estadios?",
+          "destino": "estadio_investimento"
+        },
+        {
+          "texto": "Voce compara tudo com investimento?",
+          "destino": "risco_retorno"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estadio_investimento": {
+      "fala": "Invisto em estadios da regiao. Estrutura boa atrai batalha boa, publico bom e retorno melhor. E claro, eu gosto de saber onde a energia da ilha esta circulando.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuInvestimentosPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece bem ambicioso.",
+          "destino": "ambicao"
+        },
+        {
+          "texto": "Voce investiria no estadio Fantasma?",
+          "destino": "fantasma_investimento"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "mercado"
+        }
+      ]
+    },
+    "risco_retorno": {
+      "fala": "Tudo e risco e retorno. Batalha, TFT, investimento, amizade com gente complicada. A diferenca e que alguns ativos desvalorizam quando abrem a boca.",
+      "opcoes": [
+        {
+          "texto": "Voce esta falando de alguem?",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voce e insuportavel.",
+          "destino": "humor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "mercado"
+        }
+      ]
+    },
+    "fantasma_investimento": {
+      "fala": "Investiria se eu pudesse trocar a gestao. Fantasma tem potencial. Ferraz e que deixa o ativo subutilizado. Olha eu sendo generoso: chamei de ativo.",
+      "opcoes": [
+        {
+          "texto": "Voce nao perdoa o Ferraz.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "estadio_investimento"
+        }
+      ]
+    },
+    "ambicao": {
+      "fala": "Ambicao nao e defeito. Defeito e fingir que nao quer crescer para parecer humilde. Eu quero vencer, investir, melhorar a regiao e ainda fazer piada no caminho.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuAmbicaoPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso e ate admiravel.",
+          "destino": "lado_bom"
+        },
+        {
+          "texto": "E um pouco arrogante.",
+          "destino": "arrogancia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "mercado"
+        }
+      ]
+    },
+    "ranking_tipos": {
+      "fala": "Eu ja ranqueei todos os tipos no meu tempo livre. Eletrico fica no topo. Fantasma subiria se Ferraz nao fosse o exemplo publico. Agua e bom, mas Caio faz parecer terapia de raiva.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuRankingTiposPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual o pior tipo?",
+          "destino": "pior_tipo"
+        },
+        {
+          "texto": "Voce colocou Sombrio onde?",
+          "destino": "sombrio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_eletrico"
+        }
+      ]
+    },
+    "pior_tipo": {
+      "fala": "Depende do criterio. Mas se o criterio for 'o quanto o lider faz o tipo parecer pior', Ferraz derruba Fantasma e Caio quase afoga Agua.",
+      "opcoes": [
+        {
+          "texto": "Voce so quer provocar.",
+          "destino": "provocacoes"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ranking_tipos"
+        }
+      ]
+    },
+    "sombrio": {
+      "fala": "Sombrio e forte. Vasques representa bem. O tipo nao tem culpa do lider ser recluso como se estivesse sempre no modo offline.",
+      "opcoes": [
+        {
+          "texto": "Voce respeita o Vasques mesmo.",
+          "destino": "vasques_2"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ranking_tipos"
+        }
+      ]
+    },
+    "passado": {
+      "fala": "Eu sempre gostei de competir. Antes era jogo, depois curso, depois mercado, depois estadio. So muda o tabuleiro. A vontade de ganhar fica.",
+      "opcoes": [
+        {
+          "texto": "Isso te aproximou da Alleka?",
+          "destino": "alleka"
+        },
+        {
+          "texto": "Isso te deixou arrogante?",
+          "destino": "arrogancia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lado_bom": {
+      "fala": "Eu provoco, mas nao quero ver a regiao piorar. Estadio bom forma treinador melhor. Treinador melhor perde para mim de um jeito mais interessante.",
+      "ao_entrar": {
+        "setor": {
+          "ConheceuLadoPH": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quase bonito, ate a ultima frase.",
+          "destino": "humor"
+        },
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ordem_estadio": {
+      "fala": "Ordem importa. Desafiante, primeira batalha do lider, Capitao, segunda batalha. Quem pula etapa vira aquele jogador de TFT que aperta reroll ate quebrar a economia.",
+      "opcoes": [
+        {
+          "texto": "Agora entendi.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero lutar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConheceuLadoPH",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuFinanceiroPH",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComPH",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuMetodoPH",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Presente? Ainda nao. Primeiro mostra que voce entendeu alguma coisa alem de 'PH fala muito'. Isso ate o Ferraz perceberia num dia bom.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Beleza. Voce entendeu o basico do meu metodo. Pega isso antes que eu transforme em investimento de longo prazo.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Valeu, PH.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora sim. Voce entendeu energia, estrategia e retorno. Esse presente e para quem nao ficou no choque inicial.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do PH. Ate meu sistema parece ter tomado stun.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Voce venceu. Parabens. Nao vou fingir que gostei, mas tambem nao vou negar que funcionou.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMetodoPH",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce venceu e ainda entendeu meu metodo. Isso e irritante, mas e respeitavel."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Voce perdeu. Acontece. Alguns chamam de aprendizado. Eu chamo de mercado corrigindo preco errado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2PH",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobrou caro. Volta com economia melhor, composicao melhor e menos fe no improviso."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar mais forte.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

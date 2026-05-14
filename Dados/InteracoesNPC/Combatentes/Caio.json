@@ -1,98 +1,1580 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Agua",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Caio, líder do estádio Agua. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Sou Caio, lider do estadio Agua. Se veio esperando um treinador calmo o tempo todo, ja aviso: eu estudo, pesco, batalho e as vezes me irrito mais do que deveria.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce chegou ao respeito 3 no estadio Agua. Agora posso liberar as duas batalhas. So nao ache que Agua e mole porque parece tranquilo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Voce ja tem respeito suficiente para a primeira batalha. A segunda ainda exige mais correnteza, mais preparo e menos pose."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voce voltou. Bom. Gosto de gente que retorna, pesquisa melhor e nao some igual treinador que perde para peixe e coloca culpa no clima."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda nao tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero desafiar sua batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero enfrentar sua batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voce parece mais pesquisador do que treinador.",
+          "destino": "pesquisador"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Agua. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Antes disso voce ainda esta boiando na superficie. Agua parece simples ate voce perceber que tem correnteza por baixo.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou ganhar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero conversar entao.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Agua, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro vem a primeira luta, depois o Capitao, depois voce volta para me enfrentar de verdade. Ordem existe ate no mar.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Por que voce leva isso tao a serio?",
+          "destino": "grande_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Agua permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede sua base. Se voce acha que tipo Agua e so jogar onda e esperar, vai sair daqui encharcado de vergonha.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPesquisaCaio",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Pelo menos voce ouviu minha parte de pesquisador antes de lutar. Isso ja ajuda. Quem entende o habitat, entende melhor a batalha."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Caio": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar mais antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Agua. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora voce chegou na parte seria. Na segunda batalha eu nao luto como pesquisador distraido. Eu luto como alguem que conhece cada criatura do proprio aquario.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCaioCompleto",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce entendeu que eu nao sou so agua, peixe e filme de terror. Otimo. Agora tenta acompanhar meu time principal."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Comecar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Caio": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Ainda quero conversar.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu pareco irritado as vezes, mas normalmente sou simpatico. So nao começa defendendo LoL ou PH que ai complica.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Voce ja voltou varias vezes para conversar. Isso e raro. A maioria so quer badge, presente e sair correndo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComCaio": true,
+          "ConversasCaio": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce se considera pesquisador?",
+          "destino": "pesquisador"
+        },
+        {
+          "texto": "Por que tipo Agua?",
+          "destino": "agua"
+        },
+        {
+          "texto": "Voce gosta tanto assim de peixes?",
+          "destino": "peixes"
+        },
+        {
+          "texto": "E essa historia de dinossauros?",
+          "destino": "dinossauros"
+        },
+        {
+          "texto": "Voce queria ser diretor de terror?",
+          "destino": "terror"
+        },
+        {
+          "texto": "Fala do Ferraz.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Por que voce odeia o PH?",
+          "destino": "ph"
+        },
+        {
+          "texto": "Por que voce odeia LoL?",
+          "destino": "lol"
+        },
+        {
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero a batalha 2.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pesquisador": {
+      "fala": "Sempre me considerei mais pesquisador do que treinador. Eu gosto de observar comportamento, ambiente, padrao de movimento, ecossistema. Batalha para mim veio depois.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPesquisaCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao por que virou lider?",
+          "destino": "lider"
+        },
+        {
+          "texto": "Isso combina com Agua.",
+          "destino": "agua"
+        },
+        {
+          "texto": "Voce usa pesquisa em batalha?",
+          "destino": "pesquisa_batalha"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lider": {
+      "fala": "Porque uma hora pesquisar de fora nao bastava. Eu queria provar que entender Pokemon tambem vence batalha. E liderar o estadio Agua me deu um laboratorio vivo.",
+      "opcoes": [
+        {
+          "texto": "Laboratorio vivo?",
+          "destino": "laboratorio_vivo"
+        },
+        {
+          "texto": "Voce parece levar isso com carinho.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Agora quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "laboratorio_vivo": {
+      "fala": "Sim. Cada treinador que entra aqui testa uma hipotese. Alguns provam que estudaram. Outros provam que apertaram botao ate cair na agua.",
+      "opcoes": [
+        {
+          "texto": "Voce e simpatico, mas da umas cortadas.",
+          "destino": "irritado"
+        },
+        {
+          "texto": "Isso e bem cientifico.",
+          "destino": "pesquisa_batalha"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pesquisador"
+        }
+      ]
+    },
+    "pesquisa_batalha": {
+      "fala": "Uso o tempo todo. Um peixe nao nada contra correnteza sem motivo. Pokemon tambem nao. Se voce entende padrao, entende abertura. Se entende abertura, vence.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMetodoCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao Agua e leitura de movimento.",
+          "destino": "agua"
+        },
+        {
+          "texto": "Isso explica sua confianca contra PH.",
+          "destino": "ph"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pesquisador"
+        }
+      ]
+    },
+    "agua": {
+      "fala": "Eu adoro o tipo Agua porque ele parece simples, mas nao e. Tem peixe, monstro marinho, anfibio, criatura antiga, coisa fofa, coisa assustadora. E um tipo com vida de verdade.",
+      "ao_entrar": {
+        "setor": {
+          "FalouAguaCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Peixes sao o principal motivo?",
+          "destino": "peixes"
+        },
+        {
+          "texto": "Voce parece gostar de criaturas antigas.",
+          "destino": "dinossauros"
+        },
+        {
+          "texto": "Agua tambem tem fraqueza contra Eletrico.",
+          "destino": "ph"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "peixes": {
+      "fala_condicional": {
+        "padrao": "Peixe e simplesmente perfeito. Tem especie estranha, especie bonita, especie feia de um jeito maravilhoso. Quanto mais fundo voce vai, mais bizarro fica.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComFerrazCaio",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ferraz entende isso. Pescar com alguem que realmente gosta de peixe e outra experiencia. Nao e so pegar Pokemon e ir embora."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPeixesCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso explica sua amizade com Ferraz.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voce gosta mais de peixe ou dinossauro?",
+          "destino": "peixe_ou_dino"
+        },
+        {
+          "texto": "E se existisse tipo Peixe?",
+          "destino": "tipo_peixe"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "agua"
+        }
+      ]
+    },
+    "tipo_peixe": {
+      "fala": "Tipo Peixe seria engraçado, mas talvez redundante. Agora tipo Dinossauro? Esse eu defenderia em reuniao oficial se me deixassem falar.",
+      "opcoes": [
+        {
+          "texto": "Entao vamos falar de dinossauros.",
+          "destino": "dinossauros"
+        },
+        {
+          "texto": "Voce realmente pensa nessas coisas.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "peixes"
+        }
+      ]
+    },
+    "dinossauros": {
+      "fala": "Eu gosto muito de dinossauros. Muito mesmo. Tem Pokemon que parecem fossil, reptil antigo, predador pre-historico... eu olho e penso: isso merecia um tipo proprio.",
+      "ao_entrar": {
+        "setor": {
+          "FalouDinossaurosCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Tipo Dinossauro seria bom?",
+          "destino": "tipo_dinossauro"
+        },
+        {
+          "texto": "Seu time tem muitos Pokemon assim?",
+          "destino": "time_dino"
+        },
+        {
+          "texto": "Isso tambem combina com filmes de terror.",
+          "destino": "terror"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "agua"
+        }
+      ]
+    },
+    "tipo_dinossauro": {
+      "fala": "Seria otimo. Forte, antigo, meio bruto, meio cientifico. Talvez quebrasse metade do balanceamento, mas eu resolveria depois. Primeiro a gente cria, depois corrige os problemas.",
+      "opcoes": [
+        {
+          "texto": "Isso nao parece muito seguro.",
+          "destino": "irritado"
+        },
+        {
+          "texto": "Voce pensaria no balanceamento mesmo.",
+          "destino": "pesquisador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "dinossauros"
+        }
+      ]
+    },
+    "time_dino": {
+      "fala": "Tenho varios Pokemon que lembram dinossauro, fossil ou criatura antiga. Mesmo sendo lider de Agua, eu nao gosto de me limitar demais. Pokemon e maior que um rotulo.",
+      "opcoes": [
+        {
+          "texto": "Entao voce nao usa so Agua?",
+          "destino": "fora_do_tipo"
+        },
+        {
+          "texto": "Isso irrita lider tradicional?",
+          "destino": "grande_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "dinossauros"
+        }
+      ]
+    },
+    "peixe_ou_dino": {
+      "fala": "Pergunta cruel. Peixe e meu lado pesquisador. Dinossauro e meu lado criança olhando enciclopedia e achando tudo absurdo de legal. Eu fico com os dois.",
+      "opcoes": [
+        {
+          "texto": "Justo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar para peixes.",
+          "destino": "peixes"
+        },
+        {
+          "texto": "Voltar para dinossauros.",
+          "destino": "dinossauros"
+        }
+      ]
+    },
+    "terror": {
+      "fala": "Antes de ser treinador, eu queria ser diretor de filme. Principalmente terror. Imagina usar Pokemon para criar cena, clima, sombra, som, perseguição... daria para fazer coisa absurda.",
+      "ao_entrar": {
+        "setor": {
+          "FalouTerrorCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Que tipo de terror?",
+          "destino": "filmes_terror"
+        },
+        {
+          "texto": "Zoroark daria um bom slasher?",
+          "destino": "zoroark"
+        },
+        {
+          "texto": "Voce gosta do Michael Myers?",
+          "destino": "michael"
+        },
+        {
+          "texto": "Ferraz gosta disso tambem?",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "filmes_terror": {
+      "fala": "Eu gosto de suspense, slasher, monstro, terror de clima. O susto facil ate funciona, mas o melhor e quando voce sente que alguma coisa errada esta chegando.",
+      "opcoes": [
+        {
+          "texto": "Isso parece bem Fantasma.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "E Zoroark nisso?",
+          "destino": "zoroark"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "terror"
+        }
+      ]
+    },
+    "zoroark": {
+      "fala": "Zoroark daria um slasher perfeito. Ilusao, paranoia, identidade falsa, perseguição. O problema seria convencer ele a seguir roteiro sem transformar todo mundo em figurante traumatizado.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCinemaCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce pensou bastante nisso.",
+          "destino": "diretor"
+        },
+        {
+          "texto": "Ferraz aprovaria?",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "terror"
+        }
+      ]
+    },
+    "michael": {
+      "fala": "Michael Myers e uma das melhores ideias de terror: simples, silencioso, inevitavel. Tem algo quase aquatico nisso tambem. Nao adianta se debater se a corrente ja te puxou.",
+      "opcoes": [
+        {
+          "texto": "Voce comparou Michael Myers com correnteza?",
+          "destino": "diretor"
+        },
+        {
+          "texto": "Isso foi meio sombrio.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "terror"
+        }
+      ]
+    },
+    "diretor": {
+      "fala": "Eu teria sido um bom diretor. Talvez irritado no set, mas bom. Pokemon em cena mudariam tudo: luz, sombra, agua, reflexo, ameaça, escala. Cinema Pokemon e subaproveitado.",
+      "opcoes": [
+        {
+          "texto": "Voce ainda faria um filme?",
+          "destino": "filme_futuro"
+        },
+        {
+          "texto": "Isso parece projeto com Ferraz.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "terror"
+        }
+      ]
+    },
+    "filme_futuro": {
+      "fala": "Faria. Um terror de pesca em hotel isolado, com agua parada demais e algum Pokemon fingindo ser parte do ambiente. Ferraz provavelmente toparia na hora.",
+      "opcoes": [
+        {
+          "texto": "Grande Hotel Pesque e Pague?",
+          "destino": "hotel"
+        },
+        {
+          "texto": "Isso realmente combina com voces.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "diretor"
+        }
+      ]
+    },
+    "ferraz": {
+      "fala_condicional": {
+        "padrao": "Ferraz e meu grande amigo. Lider Fantasma, pescador de respeito e uma das poucas pessoas que entende que ficar horas olhando agua pode ser um otimo programa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouLolCaio",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ferraz tambem nao gosta de LoL. Isso por si so ja prova que ele tem bom senso."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComFerrazCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voces pescam juntos?",
+          "destino": "pesca"
+        },
+        {
+          "texto": "Que historia e essa do hotel?",
+          "destino": "hotel"
+        },
+        {
+          "texto": "Ele tambem odeia LoL?",
+          "destino": "ferraz_lol"
+        },
+        {
+          "texto": "Fantasma e Agua combinam?",
+          "destino": "agua_fantasma"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pesca": {
+      "fala": "Pescamos. E pescar com Ferraz e bom porque ele nao precisa preencher silencio com conversa inutil. A gente fica ali, espera, comenta alguma coisa estranha e pronto.",
+      "opcoes": [
+        {
+          "texto": "Isso parece amizade de verdade.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "E o hotel?",
+          "destino": "hotel"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ferraz"
+        }
+      ]
+    },
+    "hotel": {
+      "fala": "O Grande Hotel Pesque e Pague foi uma experiencia. Eu e Ferraz no mesmo quarto, varas de pesca, conversa sobre Pokemon estranho e zero vontade de ouvir alguem falando de LoL.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuHotelCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece cena de filme.",
+          "destino": "filme_futuro"
+        },
+        {
+          "texto": "Vocês realmente sao proximos.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ferraz"
+        }
+      ]
+    },
+    "agua_fantasma": {
+      "fala": "Combinam muito. Agua tem profundidade, silencio, coisa escondida. Fantasma tem presença, ausencia e susto. Juntos viram praticamente um filme que eu dirigiria.",
+      "opcoes": [
+        {
+          "texto": "Isso explica Zoroark no seu filme.",
+          "destino": "zoroark"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ferraz"
+        }
+      ]
+    },
+    "ph": {
+      "fala_condicional": {
+        "padrao": "PH e lider Eletrico, e sim, teoricamente Eletrico bate em Agua. Na pratica, se o treinador for ruim, vantagem natural vira enfeite.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.CriticouPHCaio",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Ja falei do PH, mas posso repetir: eu acho ele ruim. E quando eu acho alguem ruim, normalmente nao e sem motivo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouPHCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce acha que vence ele mesmo sendo Agua?",
+          "destino": "eletrico"
+        },
+        {
+          "texto": "Por que essa richa?",
+          "destino": "richa_ph"
+        },
+        {
+          "texto": "Eletrico e tao fraco assim?",
+          "destino": "ranking_tipos"
+        },
+        {
+          "texto": "Voce esta sendo irritado agora.",
+          "destino": "irritado",
+          "ao_escolher": {
+            "setor": {
+              "CriticouPHCaio": true
+            }
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "eletrico": {
+      "fala": "Com meu time principal? Eu acredito que ganho. Eletrico pode ser fraqueza natural de Agua, mas estrategia nao e tabela colada na parede. Eu nao jogo como manual ruim.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRichaPHCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso e muita confianca.",
+          "destino": "grande_treinador"
+        },
+        {
+          "texto": "E se ele usar vantagem direito?",
+          "destino": "ph_resposta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ph"
+        }
+      ]
+    },
+    "ph_resposta": {
+      "fala": "Ai finalmente teriamos uma batalha interessante. Mas primeiro ele teria que usar vantagem direito, e essa e exatamente a parte que me deixa tranquilo.",
+      "opcoes": [
+        {
+          "texto": "Voce realmente nao perdoa o PH.",
+          "destino": "richa_ph"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ph"
+        }
+      ]
+    },
+    "richa_ph": {
+      "fala": "Nao e odio gratuito. E richa. Tem gente que desperta uma vontade especifica de provar um ponto. PH desperta isso em mim.",
+      "opcoes": [
+        {
+          "texto": "Isso parece pessoal.",
+          "destino": "irritado"
+        },
+        {
+          "texto": "Voce ranqueou Eletrico por causa dele?",
+          "destino": "ranking_tipos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ph"
+        }
+      ]
+    },
+    "ranking_tipos": {
+      "fala": "Eu ja ranqueei todos os tipos no meu tempo livre. Agua fica alto, claro. Eletrico fica la embaixo por culpa de varios fatores cientificos... e talvez um pouco por culpa do PH.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuRankingCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual o pior tipo?",
+          "destino": "pior_tipo"
+        },
+        {
+          "texto": "Agua fica em primeiro?",
+          "destino": "agua_primeiro"
+        },
+        {
+          "texto": "Voce leva ranking muito a serio.",
+          "destino": "pesquisador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ph"
+        }
+      ]
+    },
+    "pior_tipo": {
+      "fala": "Depende do criterio. Mas se eu estiver irritado, eu digo Eletrico so para provocar. Se eu estiver honesto, eu preciso abrir minha tabela inteira.",
+      "opcoes": [
+        {
+          "texto": "Voce tem tabela?",
+          "destino": "pesquisador"
+        },
+        {
+          "texto": "Claro que tem.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ranking_tipos"
+        }
+      ]
+    },
+    "agua_primeiro": {
+      "fala": "Agua nao precisa estar sempre em primeiro para ser o tipo que eu escolhi. Mas se eu montar o ranking certo, com criterios certos, provavelmente da para justificar.",
+      "opcoes": [
+        {
+          "texto": "Isso foi bem pesquisador.",
+          "destino": "pesquisador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "ranking_tipos"
+        }
+      ]
+    },
+    "lol": {
+      "fala_condicional": {
+        "padrao": "LoL e uma droga. Nao falo isso como metafora bonita. Eu vi gente boa desaparecer naquele buraco de partida, elo e tilt.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouGuedesCaio",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Eu ja falei do Guedes. LoL levou meu grande amigo para um lugar de sofrimento competitivo que ninguem merece."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouLolCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce perdeu o Guedes para o LoL?",
+          "destino": "guedes"
+        },
+        {
+          "texto": "Ferraz tambem nao gosta?",
+          "destino": "ferraz_lol"
+        },
+        {
+          "texto": "Isso nao e exagero?",
+          "destino": "lol_exagero"
+        },
+        {
+          "texto": "Voce joga algum jogo?",
+          "destino": "jogos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "guedes": {
+      "fala": "Guedes era meu grande amigo. Ai veio LoL, ranked, champion, rota, patch, e de repente o cara estava falando lingua de invocador. Triste. Muito triste.",
+      "ao_entrar": {
+        "setor": {
+          "FalouGuedesCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce fala como se ele tivesse sumido.",
+          "destino": "lol_exagero"
+        },
+        {
+          "texto": "Ferraz concorda com voce?",
+          "destino": "ferraz_lol"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "ferraz_lol": {
+      "fala": "Ferraz tambem nao gosta de LoL. Mais uma prova de que nossa amizade tem base forte. Pesca, terror, silencio e rejeicao a jogo que sequestra paciencia.",
+      "opcoes": [
+        {
+          "texto": "Voces deveriam fazer um clube.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar para Ferraz.",
+          "destino": "ferraz"
+        },
+        {
+          "texto": "Voltar para LoL.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "lol_exagero": {
+      "fala": "Talvez seja exagero. Mas eu sou um homem de Agua, terror e pesquisa, nao de ficar preso em fila ranqueada ouvindo alguem culpar suporte.",
+      "opcoes": [
+        {
+          "texto": "Isso foi especifico.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "jogos": {
+      "fala": "Jogo coisas, claro. Mas se o jogo comeca a parecer trabalho mal pago, eu fecho. Batalhar Pokemon ja me da competicao suficiente.",
+      "opcoes": [
+        {
+          "texto": "Entao seu tempo livre e batalha?",
+          "destino": "grande_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "irritado": {
+      "fala_condicional": {
+        "padrao": "Eu sei que me irrito. Na maioria das vezes sou tranquilo, mas tem assunto que me puxa para fora da agua com forca.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.CriticouPHCaio",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Sim, eu fiquei irritado falando do PH. Isso nao significa que eu esteja errado. So significa que eu falei mais alto."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Pelo menos voce admite.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voce resolveria na porrada?",
+          "destino": "porrada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "porrada": {
+      "fala": "Olha... oficialmente, batalha regular e o certo. Extraoficialmente, as vezes eu acho que venceria alguns lideres na porrada tambem. Nao e uma proposta. E so uma conviccao ruim.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuPorradaCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi preocupante.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voce acha que vence quem?",
+          "destino": "grande_treinador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "irritado"
+        }
+      ]
+    },
+    "grande_treinador": {
+      "fala": "Eu estou entre os maiores treinadores da ilha. Talvez nao pareca porque falo de peixe, filme e hotel pesque e pague, mas quando a batalha comeca eu sei exatamente o que estou fazendo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuForcaCaio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce capturou muitos Pokemon?",
+          "destino": "capturas"
+        },
+        {
+          "texto": "Voce nao se limita a Agua?",
+          "destino": "fora_do_tipo"
+        },
+        {
+          "texto": "Isso explica desafiar PH.",
+          "destino": "ph"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "capturas": {
+      "fala": "Ja capturei uma quantidade absurda de Pokemon. Nao digo todos porque sempre aparece algo estranho, raro, regional, escondido ou simplesmente irritante de achar.",
+      "opcoes": [
+        {
+          "texto": "Isso parece pesquisador de campo.",
+          "destino": "pesquisador"
+        },
+        {
+          "texto": "Voce tem muitos fora do tipo Agua?",
+          "destino": "fora_do_tipo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "grande_treinador"
+        }
+      ]
+    },
+    "fora_do_tipo": {
+      "fala": "Sim. Eu sou lider de Agua porque escolhi Agua, nao porque o resto do mundo deixou. Tenho muitos outros Pokemon e nao gosto de fingir que treinador bom so sabe usar uma cor.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCaioNaoLimitado": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entao seu time principal e diferente?",
+          "destino": "time_principal"
+        },
+        {
+          "texto": "Alguns lideres nao gostam disso?",
+          "destino": "lider_tradicional"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "grande_treinador"
+        }
+      ]
+    },
+    "time_principal": {
+      "fala": "Meu time principal nao existe para agradar regra de estadio. Existe para vencer. Agua e minha identidade, mas eu nao vou jogar fora todo o conhecimento que tenho dos outros Pokemon.",
+      "opcoes": [
+        {
+          "texto": "Por isso acha que vence PH?",
+          "destino": "eletrico"
+        },
+        {
+          "texto": "Isso e meio rebelde.",
+          "destino": "lider_tradicional"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "fora_do_tipo"
+        }
+      ]
+    },
+    "lider_tradicional": {
+      "fala": "Tem lider que acha bonito se delimitar totalmente. Eu respeito. So nao faço. Se eu conheço quase todo o ecossistema, por que fingir que so existe uma lagoa?",
+      "opcoes": [
+        {
+          "texto": "Boa metafora.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "fora_do_tipo"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "No fundo eu sou tranquilo. Eu gosto de conversar, gosto de explicar e gosto quando alguem realmente escuta. O problema e que alguns assuntos me cutucam errado.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCaioHumano": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce parece mais sensivel do que irritado.",
+          "destino": "sensivel"
+        },
+        {
+          "texto": "Isso combina com pesquisador.",
+          "destino": "pesquisador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "sensivel": {
+      "fala": "Talvez. Quem pesquisa bicho, pesca, gosta de filme e observa tudo acaba sentindo muita coisa tambem. Eu so nao embrulho isso em discurso bonito.",
+      "opcoes": [
+        {
+          "texto": "Isso foi honesto.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "simpatia"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Chegar ate aqui significa que voce viu mais do que o lider de Agua irritado. Viu o pesquisador, o pescador, o cara do terror e talvez um pouco do amigo que sobrou depois do LoL.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasCaio",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Voce continua conversando comigo. Isso e bom. Eu reclamo, mas gosto quando alguem tem paciencia para ouvir a corrente inteira."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaCaio": true,
+          "EntendeuCaioCompleto": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voce gosta de ser lider?",
+          "destino": "lider_avancado"
+        },
+        {
+          "texto": "Voce sente falta de dirigir filmes?",
+          "destino": "filme_futuro"
+        },
+        {
+          "texto": "Voce sente falta do Guedes?",
+          "destino": "guedes_saudade"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lider_avancado": {
+      "fala": "Gosto. Mesmo quando me irrita. Ser lider me deixa testar ideias, conhecer treinadores e provar que Agua nao e so tipo inicial bonito para tutorial.",
+      "opcoes": [
+        {
+          "texto": "Voce se orgulha do estadio.",
+          "destino": "orgulho_estadio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "orgulho_estadio": {
+      "fala": "Muito. Cada batalha aqui precisa parecer mergulho: voce entra achando que sabe onde pisa, perde o fundo e descobre se nada ou afunda.",
+      "opcoes": [
+        {
+          "texto": "Isso foi forte.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero testar isso.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "guedes_saudade": {
+      "fala": "Sinto. Eu brinco falando que perdi ele para o LoL, mas amizade muda mesmo. As vezes a pessoa continua viva e perto, so que em outra fila, outro horario, outro mundo.",
+      "opcoes": [
+        {
+          "texto": "Isso foi triste.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Talvez ele volte.",
+          "destino": "esperanca_guedes"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "esperanca_guedes": {
+      "fala": "Talvez. Se um dia ele largar a ranqueada e quiser pescar, eu ainda levo uma vara extra. Mas se ele falar de patch notes no caminho, eu jogo ele no lago.",
+      "opcoes": [
+        {
+          "texto": "Ameacador, mas carinhoso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes_saudade"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCaioCompleto",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComCaio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPesquisaCaio",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda nao. Nao e por mal. Eu so nao gosto de entregar coisa para quem nao sabe diferenciar correnteza de poça decorativa.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Voce entendeu pelo menos a parte de pesquisador. Pegue isto. E usa direito, por favor. Presente mal usado me irrita mais do que deveria.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Caio.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora sim. Voce viu o lado inteiro: Agua, pesquisa, terror, pesca, irritacao e amizade. Esse presente e para quem mergulhou de verdade.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Nao consegui abrir o dialogo do Caio.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Voce venceu. Bom. Nao vou fingir que gostei, mas tambem nao vou negar resultado. Agua reconhece quem aprende a nadar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPesquisaCaio",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Voce venceu e ainda entendeu minha forma de pensar. Isso torna a derrota menos irritante. Um pouco menos."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Voce perdeu. Respira, reorganiza e volta. Se bater contra correnteza sem pensar, ela so te empurra mais forte.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Caio",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha afunda quem vem so com orgulho. Mas voce chegou longe. Volta melhor e talvez eu me irrite menos na proxima."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar mais forte.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

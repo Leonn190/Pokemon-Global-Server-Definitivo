@@ -1,98 +1,918 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Planta",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Suneiva, líder do estádio Planta. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Olá, meu bem. Eu sou Suneiva, líder do estádio Planta. Aqui tudo cresce com calma: conversa, treino, respeito e batalha.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você chegou ao respeito 3. Muito bem. Agora posso liberar as duas batalhas e ver se sua estratégia criou raiz de verdade."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Vamos começar devagar, como uma planta que pega força aos poucos."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Gosto disso. Quem volta com paciência normalmente aprende melhor."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Você é avó do Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Planta nenhuma cresce sem tempo, e treinador nenhum cresce pulando etapa.",
       "opcoes": [
         {
           "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar um pouco.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Planta. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro a semente, depois a raiz, depois a árvore. A ordem importa.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero entender melhor o tipo Planta.",
+          "destino": "tipo_planta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Planta, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede sua paciência. Planta não vence sempre na pressa; vence quando ocupa espaço, cria raiz e sustenta o campo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPlantaSuneiva",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que Planta é crescimento e equilíbrio. Então vamos ver se sua equipe sabe esperar o momento certo."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Suneiva": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Planta permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui eu mostro que o tipo Planta pode parecer calmo, mas sabe tomar conta do terreno inteiro.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMatematicaSuneiva",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu meu jeito de pensar. Agora vamos ver se consegue lidar com uma batalha onde cada passo precisa fazer sentido."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Suneiva": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Planta. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu gosto de conversa calma, pensamento organizado e gente que escuta antes de responder.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou outras vezes. Isso é bom. Repetição bem feita ajuda tanto em batalha quanto em matemática."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComSuneiva": true,
+          "ConversasSuneiva": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Por que tipo Planta?",
+          "destino": "tipo_planta"
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Você gosta de matemática?",
+          "destino": "matematica"
+        },
+        {
+          "texto": "Você é avó do Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Você conhece a Lisciele?",
+          "destino": "lisciele"
+        },
+        {
+          "texto": "Você fala da Suriane?",
+          "destino": "suriane"
+        },
+        {
+          "texto": "Como é ser líder de estádio?",
+          "destino": "lideranca"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "tipo_planta": {
+      "fala": "Eu gosto do tipo Planta porque ele ensina paciência. A planta parece quieta, mas está sempre trabalhando por dentro.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPlantaSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então Planta é crescimento?",
+          "destino": "crescimento"
+        },
+        {
+          "texto": "Muita gente subestima esse tipo.",
+          "destino": "subestimado"
+        },
+        {
+          "texto": "Isso combina com matemática?",
+          "destino": "matematica"
+        },
+        {
+          "texto": "Quero ver isso na batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "crescimento": {
+      "fala": "É crescimento com ordem. Primeiro a raiz, depois o caule, depois as folhas. Em batalha também é assim: cada escolha sustenta a próxima.",
+      "opcoes": [
+        {
+          "texto": "Isso parece uma conta bem feita.",
+          "destino": "matematica"
+        },
+        {
+          "texto": "Gostei disso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_planta"
+        }
+      ]
+    },
+    "subestimado": {
+      "fala": "Subestimam bastante. Mas quem subestima uma semente esquece que ela pode virar uma árvore.",
+      "opcoes": [
+        {
+          "texto": "Essa foi boa.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_planta"
+        }
+      ]
+    },
+    "matematica": {
+      "fala": "Eu gosto muito de matemática. Gosto da ordem, da lógica e da sensação de que cada coisa tem um motivo. Uma boa batalha também precisa disso.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMatematicaSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você usa matemática em batalha?",
+          "destino": "matematica_batalha"
+        },
+        {
+          "texto": "Então você gosta de pensar antes de agir.",
+          "destino": "pensamento"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "matematica_batalha": {
+      "fala": "Uso do meu jeito. Não preciso falar difícil. Eu olho proporção, risco, tempo e consequência. Se a conta não fecha, a jogada normalmente também não fecha.",
+      "opcoes": [
+        {
+          "texto": "Isso combina com Planta.",
+          "destino": "tipo_planta"
+        },
+        {
+          "texto": "Quero testar essa lógica.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "matematica"
+        }
+      ]
+    },
+    "pensamento": {
+      "fala": "Sim. Pensar antes de agir evita muito problema. Às vezes uma decisão calma vale mais que dez decisões apressadas.",
+      "opcoes": [
+        {
+          "texto": "Isso é um bom conselho.",
+          "destino": "conselho"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "matematica"
+        }
+      ]
+    },
+    "leon": {
+      "fala": "Sim, sou avó do Leon. Fico feliz de ver o caminho dele como líder do estádio Geral. Ele tem o jeito dele, e eu torço para que siga firme.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLeonSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você tem orgulho dele?",
+          "destino": "orgulho_leon"
+        },
+        {
+          "texto": "Você dá conselho para ele?",
+          "destino": "conselho"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "orgulho_leon": {
+      "fala": "Tenho orgulho, claro. Mas orgulho não precisa fazer barulho. Às vezes é só olhar e saber que a pessoa está construindo algo importante.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLeonSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi bonito.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "leon"
+        }
+      ]
+    },
+    "lisciele": {
+      "fala": "Lisciele tem o jeito dela, mais leve, ligada ao estádio Voador. Acho bonito quando alguém aprende a subir sem esquecer da base.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLiscieleSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Voador e Planta combinam?",
+          "destino": "planta_voador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "planta_voador": {
+      "fala": "Combinam se houver equilíbrio. A planta lembra da raiz; o voo lembra do céu. Um sem o outro pode se perder.",
+      "opcoes": [
+        {
+          "texto": "Gostei dessa comparação.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lisciele"
+        }
+      ]
+    },
+    "suriane": {
+      "fala": "Suriane tem um jeito calmo e cuidadoso. Como líder do estádio Normal, ela entende muito bem o valor do básico bem feito.",
+      "ao_entrar": {
+        "setor": {
+          "FalouSurianeSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Normal e Planta parecem pacientes.",
+          "destino": "normal_planta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "normal_planta": {
+      "fala": "Parecem, sim. Normal cuida da base. Planta cuida do crescimento. Os dois tipos ensinam que força não precisa ser apressada.",
+      "opcoes": [
+        {
+          "texto": "Isso combina com família.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "suriane"
+        }
+      ]
+    },
+    "conselho": {
+      "fala": "Meu conselho é simples: pense com calma e cuide da raiz. Se a raiz está forte, o resto cresce melhor.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuConselhoSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esse conselho serve para treinador.",
+          "destino": "tipo_planta"
+        },
+        {
+          "texto": "E também para matemática.",
+          "destino": "matematica"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lideranca": {
+      "fala": "Ser líder é orientar sem pressa. Cada treinador chega num ponto diferente, como plantas em fases diferentes de crescimento.",
+      "opcoes": [
+        {
+          "texto": "Você parece paciente.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso combina com Planta.",
+          "destino": "tipo_planta"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Obrigada, meu bem. Eu só tento tratar as pessoas com calma e ensinar do jeito mais claro possível.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Você já entendeu o principal: Planta é paciência, lógica, raiz e crescimento.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasSuneiva",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Você conversou bastante comigo. Gosto disso. Quem escuta bem aprende melhor."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é seu objetivo como líder?",
+          "destino": "objetivo"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "objetivo": {
+      "fala": "Meu objetivo é mostrar que crescer com calma também é força. Nem toda vitória precisa vir correndo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuObjetivoSuneiva": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com você.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver isso em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuObjetivoSuneiva",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuMatematicaSuneiva",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComSuneiva",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPlantaSuneiva",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Converse um pouco mais, entenda melhor o estádio e volte com paciência.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a base do tipo Planta. Pegue isto e use com paciência.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Suneiva.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu melhor meu jeito de pensar. Esse presente é para quem valoriza calma, lógica e crescimento.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Suneiva.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Parabéns. Vitória boa é aquela que cresce de uma boa preparação.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPlantaSuneiva",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e entendeu o valor da paciência. Isso torna a vitória ainda melhor."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu, mas tudo bem. Respire, cuide da raiz e tente de novo quando estiver pronto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Suneiva",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra paciência. Você chegou longe, mas ainda precisa deixar sua estratégia criar raiz."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

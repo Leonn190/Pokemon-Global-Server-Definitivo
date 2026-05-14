@@ -1,98 +1,831 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Normal",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Suriane, líder do estádio Normal. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Olá, querido. Eu sou Suriane, líder do estádio Normal. A conversa aqui é tranquila, mas a batalha precisa ser respeitada.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você chegou ao respeito 3. Muito bem. Agora posso liberar as duas batalhas."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Vamos com calma, mas sem subestimar."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Que bom. Gosto de ver treinador que insiste com educação."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Você é mãe do Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Não é para dificultar sua vida, é só para manter a ordem do estádio.",
       "opcoes": [
         {
           "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar um pouco.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Normal. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro a gente confirma a base, depois aumenta o desafio.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero entender melhor.",
+          "destino": "tipo_normal"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Normal, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha é para testar sua base. Tipo Normal parece simples, mas simplicidade bem feita derruba muita gente.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuNormalSuriane",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que Normal não é falta de criatividade. Então vamos ver como você lida com uma batalha direta."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Suriane": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Normal permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui eu mostro que o tipo Normal pode ser calmo, estável e muito difícil de quebrar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCuidadoSuriane",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu meu jeito. Então vamos batalhar com respeito, calma e força de verdade."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Suriane": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Normal. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu gosto de conversar com calma. Nem tudo precisa virar disputa ou provocação.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já veio conversar outras vezes. Acho isso bacana. Educação e constância dizem bastante sobre um treinador."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComSuriane": true,
+          "ConversasSuriane": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Por que tipo Normal?",
+          "destino": "tipo_normal"
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Você é mãe do Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Como é ser líder de estádio?",
+          "destino": "lideranca"
+        },
+        {
+          "texto": "Você parece muito tranquila.",
+          "destino": "tranquilidade"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "tipo_normal": {
+      "fala": "Eu gosto do tipo Normal porque ele não precisa provar nada com exagero. Ele é base, equilíbrio e adaptação.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuNormalSuriane": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então Normal é estabilidade?",
+          "destino": "estabilidade"
+        },
+        {
+          "texto": "Muita gente subestima esse tipo.",
+          "destino": "subestimado"
+        },
+        {
+          "texto": "Quero ver isso na batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estabilidade": {
+      "fala": "É. Um bom treinador precisa de estabilidade. Se tudo depender de uma jogada bonita, qualquer erro vira desastre.",
+      "opcoes": [
+        {
+          "texto": "Isso parece conselho de mãe.",
+          "destino": "conselho"
+        },
+        {
+          "texto": "Faz sentido para batalha.",
+          "destino": "tipo_normal"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_normal"
+        }
+      ]
+    },
+    "subestimado": {
+      "fala": "Subestimam bastante. Talvez porque Normal não grite tanto quanto outros tipos. Mas nem toda força precisa fazer barulho.",
+      "opcoes": [
+        {
+          "texto": "Gostei disso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_normal"
+        }
+      ]
+    },
+    "leon": {
+      "fala": "Sim, eu sou mãe do Leon, líder do estádio Geral. Fico feliz por ver o caminho que ele construiu, mas prefiro falar disso de forma simples. Mãe torce, apoia e lembra de cuidar da base.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLeonSuriane": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você tem orgulho dele?",
+          "destino": "orgulho_leon"
+        },
+        {
+          "texto": "Você dá conselhos para ele?",
+          "destino": "conselho"
+        },
+        {
+          "texto": "Isso explica seu jeito.",
+          "destino": "tranquilidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "orgulho_leon": {
+      "fala": "Tenho, claro. Mas orgulho de mãe não precisa virar cena. Às vezes é só estar por perto, torcer em silêncio e cobrar o básico quando precisa.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLeonSuriane": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi bonito.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "leon"
+        }
+      ]
+    },
+    "conselho": {
+      "fala": "Meu conselho é simples: não deixe a pressa passar por cima do cuidado. Em batalha, em treino e na vida, quem esquece o básico tropeça no que parecia fácil.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCuidadoSuriane": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esse conselho serve para treinador.",
+          "destino": "tipo_normal"
+        },
+        {
+          "texto": "Você fala de um jeito calmo.",
+          "destino": "tranquilidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lideranca": {
+      "fala": "Ser líder de estádio é receber gente diferente o tempo todo. Alguns chegam confiantes demais, outros nervosos demais. Eu tento tratar todos com respeito, mas a batalha continua sendo uma prova.",
+      "opcoes": [
+        {
+          "texto": "Você parece justa.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso combina com tipo Normal.",
+          "destino": "tipo_normal"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "tranquilidade": {
+      "fala": "Eu tento ser tranquila. Brigar por qualquer coisa cansa. Quando dá para resolver com conversa e bom senso, é melhor.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTranquilidadeSuriane": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é bem bacana.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "E na batalha?",
+          "destino": "calma_batalha"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "calma_batalha": {
+      "fala": "Na batalha também. Calma não significa fraqueza. Significa olhar direito antes de agir.",
+      "opcoes": [
+        {
+          "texto": "Quero testar isso.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tranquilidade"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Obrigada. Eu só tento ser justa e tratar as pessoas bem. Às vezes isso já ajuda mais do que parece.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaSuriane": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Você já entendeu o principal: meu estádio não precisa de exagero para ser forte. Normal é cuidado, base e constância.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasSuriane",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Você conversou bastante comigo. Gosto disso. Treinador que escuta aprende mais do que parece."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaSuriane": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é seu objetivo como líder?",
+          "destino": "objetivo"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "objetivo": {
+      "fala": "Meu objetivo é simples: mostrar que o básico bem cuidado sustenta qualquer caminho. Nem todo líder precisa falar alto para ser lembrado.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuObjetivoSuriane": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com você.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver isso em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuObjetivoSuriane",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuCuidadoSuriane",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComSuriane",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuNormalSuriane",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Converse um pouco mais, entenda melhor o estádio e volte com calma.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a base do tipo Normal. Pegue isto com carinho e use bem.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Suriane.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu meu jeito de liderar. Esse presente é para quem valoriza calma, cuidado e constância.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo da Suriane.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Parabéns. Vitória boa é aquela que vem com respeito e preparo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuNormalSuriane",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e entendeu o valor da base. Isso torna a vitória ainda melhor."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu, mas tudo bem. Respire, ajuste o básico e tente de novo quando estiver pronto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Suriane",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra constância. Você chegou longe, mas ainda precisa cuidar melhor da base."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

@@ -1,98 +1,906 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Pedra",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Sidney, líder do estádio Pedra. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Olá. Eu sou Sidney, líder do estádio Pedra. Aqui a conversa é calma, mas a batalha é firme. Pedra não corre, não se assusta fácil e não cai por qualquer coisa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você chegou ao respeito 3. Muito bem. Agora posso liberar as duas batalhas e testar se sua base aguenta impacto de verdade."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Vamos começar com firmeza, sem pressa."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Bom. Quem volta depois de uma pedra no caminho normalmente aprendeu alguma coisa."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Você é avô do Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Pedra não se levanta em terreno fraco. Primeiro firme a base, depois venha lutar.",
       "opcoes": [
         {
           "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar um pouco.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Pedra. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro você aprende a bater na pedra. Depois aprende a não quebrar a mão.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero entender melhor o tipo Pedra.",
+          "destino": "tipo_pedra"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Pedra, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede sua resistência. Pedra não precisa correr atrás de você. Ela espera você errar o passo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPedraSidney",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que Pedra é firmeza e paciência. Então vamos ver se sua equipe aguenta pressão de verdade."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Sidney": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Pedra permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui eu mostro que o tipo Pedra pode parecer parado, mas cada movimento pesa bastante.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuFamiliaSidney",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu meu jeito e minha base. Agora vamos batalhar com respeito e firmeza."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Sidney": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Pedra. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu gosto de conversa simples. Muita coisa se resolve melhor quando a gente escuta antes de empurrar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou algumas vezes. Isso é bom. Pedra gosta de constância."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComSidney": true,
+          "ConversasSidney": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Por que tipo Pedra?",
+          "destino": "tipo_pedra"
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Você é avô do Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Fala da Lisciele.",
+          "destino": "lisciele"
+        },
+        {
+          "texto": "Fala da Suriane.",
+          "destino": "suriane"
+        },
+        {
+          "texto": "Como é ser líder de estádio?",
+          "destino": "lideranca"
+        },
+        {
+          "texto": "Você parece bem firme.",
+          "destino": "firmeza"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "tipo_pedra": {
+      "fala": "Eu gosto do tipo Pedra porque ele representa resistência. Não é o tipo mais apressado, nem o mais espalhafatoso. Mas quando fica no caminho, todo mundo precisa respeitar.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPedraSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então Pedra é resistência?",
+          "destino": "resistencia"
+        },
+        {
+          "texto": "Muita gente subestima esse tipo.",
+          "destino": "subestimado"
+        },
+        {
+          "texto": "Quero ver isso na batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "resistencia": {
+      "fala": "É resistência e paciência. Pedra boa não quebra no primeiro impacto. Ela aguenta, observa e responde quando precisa.",
+      "opcoes": [
+        {
+          "texto": "Isso parece conselho de avô.",
+          "destino": "conselho"
+        },
+        {
+          "texto": "Faz sentido para batalha.",
+          "destino": "tipo_pedra"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_pedra"
+        }
+      ]
+    },
+    "subestimado": {
+      "fala": "Subestimam bastante. Mas pedra não precisa convencer ninguém. Ela continua firme, mesmo quando passam por cima dela sem prestar atenção.",
+      "opcoes": [
+        {
+          "texto": "Gostei disso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_pedra"
+        }
+      ]
+    },
+    "leon": {
+      "fala": "Sim, sou avô do Leon. Fico feliz de ver o caminho dele como líder do estádio Geral. Ele tem uma responsabilidade grande, e eu torço para que siga firme.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLeonSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você tem orgulho dele?",
+          "destino": "orgulho_leon"
+        },
+        {
+          "texto": "Você dá conselho para ele?",
+          "destino": "conselho"
+        },
+        {
+          "texto": "E a Lisciele?",
+          "destino": "lisciele"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "orgulho_leon": {
+      "fala": "Tenho orgulho, claro. Mas orgulho não precisa fazer barulho. Às vezes basta ver a pessoa de pé, construindo o próprio caminho.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLeonSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi bonito.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "leon"
+        }
+      ]
+    },
+    "lisciele": {
+      "fala": "Lisciele tem um jeito leve, ligada ao estádio Voador. Acho bonito isso. Quem sabe subir sem esquecer da base vai longe.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLiscieleSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Pedra e Voador parecem bem diferentes.",
+          "destino": "pedra_voador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pedra_voador": {
+      "fala": "São diferentes, mas podem conversar. A pedra lembra o chão. O voo lembra o alto. Quem entende os dois sabe subir sem perder firmeza.",
+      "opcoes": [
+        {
+          "texto": "Gostei dessa comparação.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lisciele"
+        }
+      ]
+    },
+    "suriane": {
+      "fala": "Suriane tem um jeito calmo e cuidadoso. Como líder do estádio Normal, ela entende muito bem o valor do básico bem feito.",
+      "ao_entrar": {
+        "setor": {
+          "FalouSurianeSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Normal e Pedra parecem tipos de base.",
+          "destino": "normal_pedra"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "normal_pedra": {
+      "fala": "Parecem, sim. Normal cuida do básico. Pedra cuida da firmeza. Os dois ensinam que força não precisa aparecer gritando.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFamiliaSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com família.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "suriane"
+        }
+      ]
+    },
+    "conselho": {
+      "fala": "Meu conselho é simples: fique firme antes de tentar avançar. Passo apressado em chão ruim vira queda.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuConselhoSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esse conselho serve para treinador.",
+          "destino": "tipo_pedra"
+        },
+        {
+          "texto": "Você fala de um jeito calmo.",
+          "destino": "firmeza"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lideranca": {
+      "fala": "Ser líder é manter o estádio de pé. Vem gente confiante demais, gente nervosa demais, e todo mundo precisa encontrar o próprio equilíbrio.",
+      "opcoes": [
+        {
+          "texto": "Você parece justo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso combina com Pedra.",
+          "destino": "tipo_pedra"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "firmeza": {
+      "fala": "Eu tento ser firme. Não é ser duro com todo mundo. É saber o que não pode sair do lugar.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFirmezaSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é bem bacana.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "E na batalha?",
+          "destino": "firmeza_batalha"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "firmeza_batalha": {
+      "fala": "Na batalha também. Firmeza não é ficar parado. É escolher bem quando aguentar e quando responder.",
+      "opcoes": [
+        {
+          "texto": "Quero testar isso.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "firmeza"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Obrigado. Eu só tento ser simples e correto. Pedra boa não precisa de enfeite para mostrar valor.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Você já entendeu o principal: Pedra é base, resistência e paciência.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasSidney",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Você conversou bastante comigo. Gosto disso. Quem escuta melhor pisa com mais firmeza."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é seu objetivo como líder?",
+          "destino": "objetivo"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "objetivo": {
+      "fala": "Meu objetivo é mostrar que força também pode ser quieta. Se a base está firme, o resto pode crescer sem medo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuObjetivoSidney": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com você.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver isso em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuObjetivoSidney",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuConselhoSidney",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComSidney",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPedraSidney",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Converse um pouco mais, entenda melhor o estádio e volte com calma.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a base do tipo Pedra. Pegue isto e use com firmeza.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Sidney.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu melhor meu jeito de liderar. Esse presente é para quem valoriza paciência, base e resistência.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Sidney.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Parabéns. Vitória boa é aquela que continua firme depois do impacto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPedraSidney",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e entendeu o valor da resistência. Isso torna a vitória ainda melhor."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu, mas tudo bem. Respire, firme a base e tente de novo quando estiver pronto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Sidney",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra resistência. Você chegou longe, mas ainda precisa aguentar melhor o impacto."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

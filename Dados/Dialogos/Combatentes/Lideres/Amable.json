@@ -1,98 +1,888 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Terrestre",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Amable, líder do estádio Terrestre. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Olá. Eu sou Amable, líder do estádio Terrestre. Aqui a conversa é simples e a batalha é firme, como chão bem pisado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você chegou ao respeito 3. Muito bem. Agora posso liberar as duas batalhas e testar sua base de verdade."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Vamos começar pelo fundamento."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Bom sinal. Quem volta com calma costuma aprender mais."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Você é pai do Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Não é pressa que faz um bom caminho, é preparo.",
       "opcoes": [
         {
           "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar um pouco.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Terrestre. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro a base, depois o peso maior.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero entender melhor.",
+          "destino": "tipo_terrestre"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Terrestre, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede sua base. Tipo Terrestre não precisa correr: ele sustenta, pressiona e derruba no tempo certo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuTerrestreAmable",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que Terrestre é fundamento. Então vamos ver se sua equipe fica em pé quando o chão pesa."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Amable": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Terrestre permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui eu mostro o lado mais firme do estádio Terrestre.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuFamiliaAmable",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu meu jeito e minha base. Então vamos batalhar com respeito e firmeza."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Amable": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Terrestre. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu prefiro conversa direta, sem muita complicação. Às vezes o simples resolve melhor.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou outras vezes. Gosto disso. Constância vale muito no meu estádio."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComAmable": true,
+          "ConversasAmable": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Por que tipo Terrestre?",
+          "destino": "tipo_terrestre"
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Você é pai do Leon?",
+          "destino": "leon"
+        },
+        {
+          "texto": "Você é marido da Suriane?",
+          "destino": "suriane"
+        },
+        {
+          "texto": "Como é ser líder de estádio?",
+          "destino": "lideranca"
+        },
+        {
+          "texto": "Você parece bem tranquilo.",
+          "destino": "tranquilidade"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "tipo_terrestre": {
+      "fala": "Eu gosto do tipo Terrestre porque ele representa base. Terra não precisa aparecer demais. Ela sustenta tudo antes da batalha começar.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTerrestreAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então Terrestre é firmeza?",
+          "destino": "firmeza"
+        },
+        {
+          "texto": "Muita gente subestima esse tipo?",
+          "destino": "subestimado"
+        },
+        {
+          "texto": "Quero ver isso na batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "firmeza": {
+      "fala": "É. Treinador bom precisa de firmeza. Se qualquer vento muda sua decisão, a batalha já começou perdida.",
+      "opcoes": [
+        {
+          "texto": "Isso parece conselho de pai.",
+          "destino": "conselho"
+        },
+        {
+          "texto": "Faz sentido para batalha.",
+          "destino": "tipo_terrestre"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_terrestre"
+        }
+      ]
+    },
+    "subestimado": {
+      "fala": "Subestimam, sim. Mas a terra não liga muito para opinião. Ela continua ali, segurando o peso.",
+      "opcoes": [
+        {
+          "texto": "Gostei disso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_terrestre"
+        }
+      ]
+    },
+    "leon": {
+      "fala": "Sim, sou pai do Leon, líder do estádio Geral. Tenho orgulho dele. Mas prefiro falar disso com simplicidade: ele construiu o próprio caminho, e eu fico feliz por ver isso.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLeonAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você tem orgulho dele?",
+          "destino": "orgulho_leon"
+        },
+        {
+          "texto": "Você dá conselhos para ele?",
+          "destino": "conselho"
+        },
+        {
+          "texto": "E a Suriane?",
+          "destino": "suriane"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "orgulho_leon": {
+      "fala": "Tenho, claro. Orgulho de pai não precisa ser barulhento. Às vezes é só ver a pessoa seguindo firme e saber que ela está no caminho dela.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLeonAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi bonito.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "leon"
+        }
+      ]
+    },
+    "suriane": {
+      "fala": "Suriane é líder do estádio Normal e minha esposa. Ela tem um jeito calmo, justo e muito dela. Acho que a força dela aparece justamente por não precisar exagerar.",
+      "ao_entrar": {
+        "setor": {
+          "FalouSurianeAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Vocês combinam bastante.",
+          "destino": "familia"
+        },
+        {
+          "texto": "Normal e Terrestre parecem tipos de base.",
+          "destino": "base_familia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "familia": {
+      "fala": "Acho que sim. Cada um tem seu jeito, mas os dois valorizam base, cuidado e constância. Isso ajuda muito.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFamiliaAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com vocês.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "suriane"
+        }
+      ]
+    },
+    "base_familia": {
+      "fala": "Normal e Terrestre têm isso em comum. Um mostra o básico bem feito. O outro mostra o chão firme. Não precisa complicar para ser forte.",
+      "opcoes": [
+        {
+          "texto": "Gostei dessa comparação.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "suriane"
+        }
+      ]
+    },
+    "conselho": {
+      "fala": "Meu conselho é simples: escolha bem onde pisa. Em batalha e na vida, passo errado cobra caro.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuConselhoAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Esse conselho serve para treinador.",
+          "destino": "tipo_terrestre"
+        },
+        {
+          "texto": "Você fala de um jeito calmo.",
+          "destino": "tranquilidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lideranca": {
+      "fala": "Ser líder de estádio é receber gente de todo tipo. Eu tento ser justo, mas também firme. Quem entra numa batalha precisa saber que ali tem regra.",
+      "opcoes": [
+        {
+          "texto": "Você parece justo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso combina com Terrestre.",
+          "destino": "tipo_terrestre"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "tranquilidade": {
+      "fala": "Eu tento manter a calma. Às vezes a melhor resposta é não se mexer antes da hora.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTranquilidadeAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é bem bacana.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "E na batalha?",
+          "destino": "calma_batalha"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "calma_batalha": {
+      "fala": "Na batalha também. Calma não é ficar parado. É saber o momento certo de agir.",
+      "opcoes": [
+        {
+          "texto": "Quero testar isso.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tranquilidade"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Obrigado. Eu só tento ser simples e correto. Nem todo líder precisa fazer discurso grande para mostrar força.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Você já entendeu o principal: meu estádio fala de base, firmeza e constância.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasAmable",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Você conversou bastante comigo. Gosto disso. Treinador que escuta pisa melhor no próprio caminho."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é seu objetivo como líder?",
+          "destino": "objetivo"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "objetivo": {
+      "fala": "Meu objetivo é mostrar que força também pode ser simples. Se a base é boa, o resto tem onde crescer.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuObjetivoAmable": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com você.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver isso em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuObjetivoAmable",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuConselhoAmable",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComAmable",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuTerrestreAmable",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Converse um pouco mais, entenda melhor o estádio e volte com calma.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a base do tipo Terrestre. Pegue isto e use com firmeza.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Amable.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu melhor meu jeito de liderar. Esse presente é para quem valoriza base, calma e constância.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Amable.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Parabéns. Vitória boa é aquela que fica em pé depois do impacto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuTerrestreAmable",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e entendeu o valor da base. Isso torna a vitória ainda melhor."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu, mas tudo bem. Respire, ajuste a base e tente de novo quando estiver pronto.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Amable",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra firmeza. Você chegou longe, mas ainda precisa cuidar melhor do chão onde pisa."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

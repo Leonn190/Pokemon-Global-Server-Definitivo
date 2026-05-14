@@ -39,6 +39,20 @@ ATAQUES_OBRIGATORIOS_SIMULADOR: list[str] = [
     "Super Fincada",
     "Liga Metálica",
     "Treinamento de Metal",
+    "Benção",
+    "Barragem Arcana",
+    "Canalizar",
+    "Amolecer",
+    "Brilho",
+    "Salvamento",
+    "Toque Fabuloso",
+    "Corte das Fadas",
+    "Chuva Cintilante",
+    "Vento Fada",
+    "Bondade",
+    "Luz Purificadora",
+    "Ataque de Positividade",
+    "Encanto",
 
 ]
 

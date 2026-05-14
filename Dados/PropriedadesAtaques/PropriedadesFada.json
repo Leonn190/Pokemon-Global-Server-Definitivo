@@ -2,88 +2,141 @@
   "schema_version": 1,
   "tipo": "fada",
   "ataques": {
-    "73": {
-      "ID": 73,
+    "299": {
+      "ID": 299,
       "nome": "Benção",
       "custo": 55,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
       "execute_principal": "ataque_benção",
-      "parametros": {
-        "tipo": "fada",
-        "efeito": "Abençoado",
-        "duracao": 6,
-        "negativo": false
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "mesmo_lado",
-              "usuario"
-            ],
-            "exige_area_ocupada": true
-          }
-        ]
-      }
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "parametros": {"tipo": "fada", "custo": 55, "acuracia": 50, "efeito_aplicado": "Abençoado"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "74": {
-      "ID": 74,
+    "300": {
+      "ID": 300,
+      "nome": "Barragem Arcana",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "execute_principal": "ataque_barragem_arcana",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "parametros": {"tipo": "fada", "custo": 40, "acuracia": 45, "percentual_mag_barreira": 0.20, "percentual_spa_barreira": 0.12},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "301": {
+      "ID": 301,
       "nome": "Canalizar",
       "custo": 35,
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
       "execute_principal": "ataque_canalizar",
-      "parametros": {
-        "tipo": "fada",
-        "atributo": "Mag",
-        "percentual_mag": 0.3,
-        "duracao": 6
-      }
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "parametros": {"tipo": "fada", "custo": 35, "acuracia": 40, "atributo": "Mag", "percentual_mag_1": 0.20, "percentual_mag_2": 0.10, "percentual_mag_total": 0.30}
     },
-    "75": {
-      "ID": 75,
+    "302": {
+      "ID": 302,
       "nome": "Amolecer",
       "custo": 30,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
       "execute_principal": "ataque_amolecer",
-      "parametros": {
-        "tipo": "fada",
-        "atributo": "CrD",
-        "valor_base": 5.0,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "parametros": {"tipo": "fada", "custo": 30, "acuracia": 35, "atributo": "CrD", "reducao_base_crd": 5, "percentual_mag_usuario": 0.10},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "303": {
+      "ID": 303,
+      "nome": "Brilho",
+      "custo": 40,
+      "estilo_logico": "ativo",
+      "execute_principal": "ataque_brilho",
+      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "parametros": {"tipo": "fada", "custo": 40, "acuracia": 50, "multiplicador_mag": 0.80, "efeito_requerido": "Furtivo", "efeito_remover": "Furtivo"}
+    },
+    "304": {
+      "ID": 304,
+      "nome": "Salvamento",
+      "custo": 55,
+      "estilo_logico": "ativo",
+      "execute_principal": "ataque_salvamento",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "parametros": {"tipo": "fada", "custo": 55, "acuracia": 65, "efeitos_aplicados": ["Regeneração", "Imune"]}
+    },
+    "305": {
+      "ID": 305,
+      "nome": "Toque Fabuloso",
+      "custo": 45,
+      "estilo_logico": "alvo",
+      "execute_principal": "ataque_toque_fabuloso",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "parametros": {"tipo": "fada", "custo": 45, "acuracia": 55, "multiplicador_spa": 0.75, "efeitos_critico_garantido": ["Encantado", "Abençoado", "Amplificado"]},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "306": {
+      "ID": 306,
+      "nome": "Corte das Fadas",
+      "custo": 70,
+      "estilo_logico": "alvo",
+      "execute_principal": "ataque_corte_das_fadas",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "parametros": {"tipo": "fada", "custo": 70, "acuracia": 80, "percentual_soma_mag_base": 0.50, "percentual_soma_mag_extra_por_aliado_fada": 0.10},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "307": {
+      "ID": 307,
+      "nome": "Chuva Cintilante",
+      "custo": 65,
+      "estilo_logico": "ativo",
+      "execute_principal": "ataque_chuva_cintilante",
+      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "parametros": {"tipo": "fada", "custo": 65, "acuracia": 75, "efeito_aplicado": "Furtivo", "percentual_vida_perdida_cura": 0.10}
+    },
+    "308": {
+      "ID": 308,
+      "nome": "Vento Fada",
+      "custo": 55,
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "execute_principal": "ataque_vento_fada",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "parametros": {"tipo": "fada", "custo": 55, "acuracia": 65, "multiplicador_spa": 0.70, "multiplicador_mag": 0.20},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "309": {
+      "ID": 309,
+      "nome": "Bondade",
+      "custo": 35,
+      "estilo_logico": "alvo",
+      "execute_principal": "ataque_bondade",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "parametros": {"tipo": "fada", "custo": 35, "acuracia": 40, "efeitos_positivos_possiveis": ["Abençoado", "Amplificado", "Fortificado", "Focado", "Energizado", "Preparado", "Regeneração", "Imune", "Furtivo"]},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "310": {
+      "ID": 310,
+      "nome": "Luz Purificadora",
+      "custo": 55,
+      "estilo_logico": "ativo",
+      "execute_principal": "ataque_luz_purificadora",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "parametros": {"tipo": "fada", "custo": 55, "acuracia": 65, "efeitos_negativos": ["Queimado", "Envenenado", "Intoxicado", "Congelado", "Dormindo", "Paralisado", "Enraizado", "Cauterizado", "Descarregado", "Encharcado", "Atordoado", "Quebrado", "Enfraquecido", "Confuso", "Bloqueado", "Amaldiçoado"]}
+    },
+    "311": {
+      "ID": 311,
+      "nome": "Ataque de Positividade",
+      "custo": 55,
+      "estilo_logico": "alvo",
+      "execute_principal": "ataque_de_positividade",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "parametros": {"tipo": "fada", "custo": 55, "acuracia": 65, "multiplicador_spa": 0.65, "bonus_dano_por_passo_positivo": 0.03, "max_passos_considerados": 25},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "312": {
+      "ID": 312,
+      "nome": "Encanto",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "execute_principal": "ataque_encanto",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "parametros": {"tipo": "fada", "custo": 40, "acuracia": 35, "efeito_aplicado": "Encantado"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["mesmo_lado", "usuario"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     }
-  },
-  "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
+  }
 }

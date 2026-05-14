@@ -57,7 +57,10 @@ CONFIG = {
     "Usuario": None
 }
 
-from Ferramentas.ConfigFixa import ConfigFixa
+try:
+    from Ferramentas.ConfigFixa import ConfigFixa
+except ImportError:
+    ConfigFixa = None
 
 if ConfigFixa is not None:
     CONFIG = ConfigFixa

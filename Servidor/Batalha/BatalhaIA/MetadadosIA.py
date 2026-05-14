@@ -8,6 +8,77 @@ from .ConfigIA import clamp01
 from .ContextoIA import normalizar
 
 
+def carregar_metadados_ataques(caminho: str | Path) -> dict[str, Any]:
+    """Carrega e junta arquivos MetaDados*.json em um indice plano por ataque."""
+    base = Path(caminho)
+    if base.is_dir():
+        dados_agregados: dict[str, Any] = {}
+        for arquivo in sorted(base.glob("MetaDados*.json")):
+            try:
+                dados = json.loads(arquivo.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            dados_agregados.update(_extrair_registros(dados, tipo=_tipo_por_arquivo(arquivo)))
+        return dados_agregados
+
+    if not base.exists():
+        return {}
+
+    try:
+        dados = json.loads(base.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return _extrair_registros(dados, tipo=None)
+
+
+def _tipo_por_arquivo(arquivo: Path) -> str | None:
+    nome = arquivo.stem
+    if nome.startswith("MetaDados"):
+        tipo = nome.removeprefix("MetaDados").strip()
+        return tipo or None
+    return None
+
+
+def _extrair_registros(dados: Any, tipo: str | None) -> dict[str, Any]:
+    if isinstance(dados, Mapping):
+        for chave in ("ataques", "metadados", "dados"):
+            bloco = dados.get(chave)
+            if isinstance(bloco, (Mapping, list)):
+                return _extrair_registros(bloco, tipo)
+
+        if _parece_registro_unico(dados):
+            return _registrar_item(dados, None, tipo)
+
+        saida: dict[str, Any] = {}
+        for chave, valor in dados.items():
+            if isinstance(valor, Mapping):
+                saida.update(_registrar_item(valor, chave, tipo))
+        return saida
+
+    if isinstance(dados, list):
+        saida: dict[str, Any] = {}
+        for indice, valor in enumerate(dados):
+            if isinstance(valor, Mapping):
+                saida.update(_registrar_item(valor, str(indice), tipo))
+        return saida
+
+    return {}
+
+
+def _parece_registro_unico(dados: Mapping[str, Any]) -> bool:
+    return any(chave in dados for chave in ("papeis", "alvos_preferidos", "prioridade_simulacao", "efeitos_relevantes"))
+
+
+def _registrar_item(valor: Mapping[str, Any], chave: object, tipo: str | None) -> dict[str, Any]:
+    item = dict(valor)
+    if tipo and not item.get("tipo"):
+        item["tipo"] = tipo
+    nome = str(item.get("nome") or item.get("Ataque") or item.get("Nome") or chave or "").strip()
+    codigo = item.get("codigo", item.get("Code", item.get("ID")))
+    chave_saida = nome or (str(codigo).strip() if codigo is not None else "")
+    return {chave_saida: item} if chave_saida else {}
+
+
 class MetadadosIA:
     """Consulta metadados estratégicos dos ataques.
 
@@ -31,23 +102,7 @@ class MetadadosIA:
         self._indexar()
 
     def _carregar_arquivo(self) -> dict[str, Any]:
-        if self.caminho.is_dir():
-            dados_agregados: dict[str, Any] = {}
-            for arquivo in sorted(self.caminho.glob("MetaDados*.json")):
-                try:
-                    dados = json.loads(arquivo.read_text(encoding="utf-8"))
-                except Exception:
-                    continue
-                if isinstance(dados, dict):
-                    dados_agregados.update(dados)
-            return dados_agregados
-        if not self.caminho.exists():
-            return {}
-        try:
-            dados = json.loads(self.caminho.read_text(encoding="utf-8"))
-        except Exception:
-            return {}
-        return dados if isinstance(dados, dict) else {}
+        return carregar_metadados_ataques(self.caminho)
 
     def _indexar(self) -> None:
         for chave, valor in self._dados_brutos.items():

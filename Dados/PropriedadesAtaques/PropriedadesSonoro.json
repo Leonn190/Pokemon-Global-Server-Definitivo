@@ -2,37 +2,75 @@
   "schema_version": 1,
   "tipo": "sonoro",
   "ataques": {
-    "76": {
-      "ID": 76,
+    "313": {
+      "ID": 313,
       "nome": "Som Atordoante",
       "custo": 45,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_som_atordoante",
-      "parametros": {
-        "tipo": "sonoro",
-        "efeito": "Atordoado",
-        "duracao": 6,
-        "negativo": true
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "parametros": {"tipo": "sonoro", "custo": 45, "poder_csv": 40, "efeito_aplicado": "Atordoado"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "314": {
+      "ID": 314,
+      "nome": "Voz Desarmadora",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_voz_desarmadora",
+      "parametros": {"tipo": "sonoro", "custo": 40, "poder_csv": 45, "chance_natural_erro": 0.10, "acuracia_natural": 0.90, "acuracia": 90, "multiplicador_spa": 0.55, "aplica_recuo": true},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "315": {
+      "ID": 315,
+      "nome": "Grito",
+      "custo": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_grito",
+      "parametros": {"tipo": "sonoro", "custo": 55, "poder_csv": 65, "multiplicador_spa": 0.60, "reducao_amp_critico": 3},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "316": {
+      "ID": 316,
+      "nome": "Ataque Hipersônico",
+      "custo": 60,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_hipersonico",
+      "parametros": {"tipo": "sonoro", "custo": 60, "poder_csv": 70, "multiplicador_spa": 0.70, "multiplicador_vel": 0.25, "prioridade_absoluta": true, "prioridade_acao": 9999},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "317": {
+      "ID": 317,
+      "nome": "Canto Prolongador",
+      "custo": 45,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_canto_prolongador",
+      "parametros": {"tipo": "sonoro", "custo": 45, "poder_csv": 55, "percentual_aumento_passos": 0.50, "arredondamento": "ceil"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["qualquer"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "318": {
+      "ID": 318,
+      "nome": "Melodia Anticlimática",
+      "custo": 35,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_melodia_anticlimatica",
+      "parametros": {"tipo": "sonoro", "custo": 35, "poder_csv": 30, "remove_clima": true}
+    },
+    "319": {
+      "ID": 319,
+      "nome": "Volume Máximo",
+      "custo": 75,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_volume_maximo",
+      "parametros": {"tipo": "sonoro", "custo": 75, "poder_csv": 90, "multiplicador_spa": 1.15, "percentual_dano_causado_aliados_adjacentes": 0.25},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     }
   },
-  "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
+  "_comentario": "Ataques sonoros Code 313 a 319 adaptados ao sistema atual de batalha."
 }

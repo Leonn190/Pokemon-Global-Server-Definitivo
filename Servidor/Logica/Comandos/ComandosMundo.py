@@ -208,94 +208,6 @@ _ITENS, _ITENS_CODE, _ITENS_NOME = _carregar_itens()
 _POKES, _POKE_CODE, _POKE_NOME = _carregar_pokemons()
 
 
-_AJUDA_COMANDOS = {
-    "give": {
-        "uso": "/give alvo item quantidade",
-        "descricao": "Entrega item para um jogador específico, para você mesmo (y), aleatório (r) ou todos.",
-        "detalhes": [
-            "alvo: y, r, todos, ou nome do jogador.",
-            "item: code ou nome do item (se vazio, escolhe um item válido).",
-            "quantidade: inteiro maior que 0.",
-            "Também aceita argumentos nomeados: alvo=, item=, qtd=.",
-        ],
-    },
-    "tp": {
-        "uso": "/tp alvo posx posy | /tp destino (nomes compostos com _)",
-        "descricao": "Teleporta jogador(es) para coordenadas ou teleporta você para player/NPC/estádio por nome.",
-        "detalhes": [
-            "alvo: y, r, todos, ou nome do jogador.",
-            "posx/posy: coordenadas em tiles; a posição é normalizada nos limites do mundo.",
-            "destino: nome exato (case-insensitive) de player, NPC ou estádio (ex.: Edward_Newgate, EstadioPlanta).",
-            "Nomes compostos devem usar _ no lugar de espaço.",
-            "Se houver mais de um destino com o mesmo nome, o comando falha por ambiguidade.",
-            "Também aceita argumentos nomeados: alvo=, x=, y=.",
-        ],
-    },
-    "locate": {
-        "uso": "/locate nome | /locate dungeon <code>",
-        "descricao": "Retorna coordenadas por nome e também portas de dungeon por code.",
-        "detalhes": [
-            "nome: nome exato (case-insensitive), como Edward_Newgate, Josefa ou EstadioPlanta.",
-            "Nomes compostos devem usar _ no lugar de espaço.",
-            "Se houver mais de um resultado com o mesmo nome, o comando falha por ambiguidade.",
-        ],
-    },
-    "spawn": {
-        "uso": "/spawn pokemon posx posy",
-        "descricao": "Cria um Pokémon no mundo usando espécie do CSV (com estágio, tamanho e stats).",
-        "detalhes": [
-            "pokemon: code ou nome do Pokémon.",
-            "posx/posy são opcionais; se faltar, spawn acontece perto do autor.",
-            "Não permite estágio FF.",
-            "Não permite raridade fora de 1..10.",
-            "Aceita ajustes de stats/iv no spawn (ex.: iv=80 atk=30 ivatk=50).",
-        ],
-    },
-    "chest": {
-        "uso": "/chest tipo posx posy",
-        "descricao": "Cria um baú de raridade específica no mundo.",
-        "detalhes": [
-            "tipo: 1..6 ou nome (comum, incomum, raro, epico, lendario, mitico).",
-            "posx/posy são opcionais; se faltar, cria perto do autor.",
-        ],
-    },
-    "count": {
-        "uso": "/count chunks|chests|pokemons",
-        "descricao": "Mostra contagens rápidas do estado atual do servidor.",
-        "detalhes": [
-            "chunks: carregados/simulados/total.",
-            "chests: total de baús no banco e no cérebro.",
-            "pokemons: total de pokémons no banco e no cérebro.",
-        ],
-    },
-    "xp": {
-        "uso": "/xp quantidade_xp [nome_do_jogador]",
-        "descricao": "Adiciona XP para você ou para um jogador alvo.",
-        "detalhes": [
-            "quantidade_xp precisa ser maior que 0.",
-            "Se nome_do_jogador não for informado, aplica no autor do comando.",
-        ],
-    },
-    "chuva": {
-        "uso": "/chuva [intensidade]",
-        "descricao": "Alterna a chuva global ou define a chuva alvo (0..100).",
-        "detalhes": [
-            "Sem argumento: alterna chuva global entre ativa/desativada (persistente).",
-            "Com número: define chuva alvo para convergência (0..100).",
-            "Com número só funciona se a chuva estiver ativa.",
-        ],
-    },
-    "help": {
-        "uso": "/help [comando]",
-        "descricao": "Lista todos os comandos ou explica um comando específico.",
-        "detalhes": [
-            "Sem argumento: lista comandos disponíveis.",
-            "Com argumento: exibe uso e detalhes completos do comando.",
-        ],
-    },
-}
-
-
 def _resolver_item(raw):
     if not raw:
         return random.choice(_ITENS) if _ITENS else None
@@ -654,26 +566,6 @@ def _cmd_xp(autor, args):
     )
 
 
-def _cmd_help(args):
-    _, livres = _split_args(args)
-    if not livres:
-        comandos = sorted(_AJUDA_COMANDOS.keys())
-        return "Comandos disponíveis: " + ", ".join(f"/{c}" for c in comandos)
-    alvo = str(livres[0] or "").strip().lower().lstrip("/")
-    info = _AJUDA_COMANDOS.get(alvo)
-    if not isinstance(info, dict):
-        return f"Comando não encontrado: /{alvo}"
-    uso = str(info.get("uso") or f"/{alvo}")
-    descricao = str(info.get("descricao") or "")
-    detalhes = [str(d).strip() for d in list(info.get("detalhes") or []) if str(d).strip()]
-    msg = [f"Comando /{alvo}", f"Uso: {uso}"]
-    if descricao:
-        msg.append(descricao)
-    for det in detalhes:
-        msg.append(f"- {det}")
-    return " | ".join(msg)
-
-
 def _cmd_chuva(args):
     _, livres = _split_args(args)
     if not livres:
@@ -724,93 +616,13 @@ def comando_chuva(autor, args, contexto=None, meta=None, catalogo=None):
     return _cmd_chuva(list(args or []))
 
 
-CATALOGO_COMANDOS_MUNDO = [
-    {
-        "nome": "give",
-        "aliases": [],
-        "funcao": comando_give,
-        "contexto": "mundo",
-        "nivel": 1,
-        "uso": "/give [alvo] item quantidade | /give item quantidade | /give alvo=y item=1 qtd=5",
-        "descricao": "Entrega item respeitando regras de inventário, stacks e slots.",
-        "argumentos": ["alvo: y, r, todos ou jogador", "item: code ou nome", "quantidade/qtd: inteiro"],
-        "exemplos": ["/give y 1 5", "/give item=Potion qtd=3", "/give alvo=todos item=1 quantidade=2"],
-    },
-    {
-        "nome": "tp",
-        "aliases": [],
-        "funcao": comando_tp,
-        "contexto": "mundo",
-        "nivel": 1,
-        "uso": "/tp alvo x y | /tp destino",
-        "descricao": "Teleporta jogador(es) para coordenadas ou o autor para player/NPC/estádio.",
-        "argumentos": ["alvo: y, r, todos ou jogador", "destino aceita acento, espaço, _ e case-insensitive"],
-        "exemplos": ["/tp y 50 80", "/tp Edward Newgate", "/tp Estadio_Planta"],
-    },
-    {
-        "nome": "locate",
-        "aliases": [],
-        "funcao": comando_locate,
-        "contexto": "mundo",
-        "nivel": 1,
-        "uso": "/locate nome | /locate dungeon code",
-        "descricao": "Mostra coordenadas de player, NPC, estádio ou porta de dungeon.",
-        "argumentos": ["nome aceita acento, espaço, _ e case-insensitive"],
-        "exemplos": ["/locate Josefa", "/locate dungeon D1"],
-    },
-    {
-        "nome": "spawn",
-        "aliases": ["summon"],
-        "funcao": comando_spawn,
-        "contexto": "mundo",
-        "nivel": 1,
-        "uso": "/spawn pokemon [x y] [iv=80|atk=30|ivatk=50]",
-        "descricao": "Cria Pokémon no mundo usando o gerador oficial.",
-        "argumentos": ["pokemon: code ou nome", "não permite estágio FF nem raridade fora de 1..10"],
-        "exemplos": ["/spawn Pikachu", "/spawn Pikachu iv=80", "/spawn 25 40 60"],
-    },
-    {
-        "nome": "chest",
-        "aliases": ["bau", "baú"],
-        "funcao": comando_chest,
-        "contexto": "mundo",
-        "nivel": 1,
-        "uso": "/chest tipo [x y]",
-        "descricao": "Cria baú usando os dados sorteados pelo gerador oficial.",
-        "argumentos": ["tipo: 1..6, comum, incomum, raro, epico, lendario ou mitico"],
-        "exemplos": ["/chest raro", "/bau 3 40 50"],
-    },
-    {
-        "nome": "count",
-        "aliases": ["contar"],
-        "funcao": comando_count,
-        "contexto": "mundo",
-        "nivel": 1,
-        "uso": "/count chunks|chests|pokemons",
-        "descricao": "Mostra contagens rápidas do servidor.",
-        "argumentos": ["alvo: chunks, chests ou pokemons"],
-        "exemplos": ["/count pokemons", "/contar chunks"],
-    },
-    {
-        "nome": "xp",
-        "aliases": [],
-        "funcao": comando_xp,
-        "contexto": "mundo",
-        "nivel": 1,
-        "uso": "/xp quantidade [jogador]",
-        "descricao": "Adiciona XP ao autor ou jogador informado.",
-        "argumentos": ["quantidade: inteiro maior que 0"],
-        "exemplos": ["/xp 100", "/xp 250 Leon19"],
-    },
-    {
-        "nome": "chuva",
-        "aliases": [],
-        "funcao": comando_chuva,
-        "contexto": "mundo",
-        "nivel": 1,
-        "uso": "/chuva [intensidade]",
-        "descricao": "Alterna a chuva global ou define intensidade alvo.",
-        "argumentos": ["intensidade opcional: 0..100"],
-        "exemplos": ["/chuva", "/chuva 60"],
-    },
-]
+MAPA_FUNCOES_COMANDOS_MUNDO = {
+    "give": comando_give,
+    "tp": comando_tp,
+    "locate": comando_locate,
+    "spawn": comando_spawn,
+    "chest": comando_chest,
+    "count": comando_count,
+    "xp": comando_xp,
+    "chuva": comando_chuva,
+}

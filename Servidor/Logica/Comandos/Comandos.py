@@ -1,12 +1,49 @@
 from __future__ import annotations
 
+import json
 import time
 import unicodedata
+from pathlib import Path
 
 from Servidor.Gerais.EstadoServidor import garantir_bootstrap_op, obter_nivel_op
-from Servidor.Logica.Comandos.ComandosBatalha import CATALOGO_COMANDOS_BATALHA
-from Servidor.Logica.Comandos.ComandosGeral import CATALOGO_COMANDOS_GERAL
-from Servidor.Logica.Comandos.ComandosMundo import CATALOGO_COMANDOS_MUNDO
+from Servidor.Logica.Comandos.ComandosBatalha import MAPA_FUNCOES_COMANDOS_BATALHA
+from Servidor.Logica.Comandos.ComandosGeral import MAPA_FUNCOES_COMANDOS_GERAL
+from Servidor.Logica.Comandos.ComandosMundo import MAPA_FUNCOES_COMANDOS_MUNDO
+
+
+_RAIZ_PROJETO = Path(__file__).resolve().parents[3]
+_CAMINHO_CATALOGO_COMANDOS = _RAIZ_PROJETO / "Dados" / "Catalogo" / "Comandos.json"
+_CAMPOS_CATALOGO = ("nome", "aliases", "contexto", "nivel", "uso", "descricao", "argumentos", "exemplos")
+
+MAPA_FUNCOES_COMANDOS = {
+    **MAPA_FUNCOES_COMANDOS_GERAL,
+    **MAPA_FUNCOES_COMANDOS_MUNDO,
+    **MAPA_FUNCOES_COMANDOS_BATALHA,
+}
+
+_FALLBACK_CATALOGO_MINIMO = {
+    "help": {"aliases": ["ajuda"], "contexto": "geral", "nivel": 1, "uso": "/help [mundo|batalha|geral|all|comando]"},
+    "gamerule": {"aliases": [], "contexto": "geral", "nivel": 1, "uso": "/gamerule list|search|nome [valor|reset]"},
+    "kick": {"aliases": [], "contexto": "geral", "nivel": 2, "uso": "/kick jogador"},
+    "ban": {"aliases": [], "contexto": "geral", "nivel": 2, "uso": "/ban jogador"},
+    "desban": {"aliases": ["unban"], "contexto": "geral", "nivel": 2, "uso": "/desban jogador"},
+    "op": {"aliases": [], "contexto": "geral", "nivel": 2, "uso": "/op nivel jogador"},
+    "give": {"aliases": [], "contexto": "mundo", "nivel": 1, "uso": "/give [alvo] item quantidade"},
+    "tp": {"aliases": [], "contexto": "mundo", "nivel": 1, "uso": "/tp alvo x y | /tp destino"},
+    "locate": {"aliases": [], "contexto": "mundo", "nivel": 1, "uso": "/locate nome | /locate dungeon code"},
+    "spawn": {"aliases": ["summon"], "contexto": "mundo", "nivel": 1, "uso": "/spawn pokemon [x y]"},
+    "chest": {"aliases": ["bau", "baú"], "contexto": "mundo", "nivel": 1, "uso": "/chest tipo [x y]"},
+    "count": {"aliases": ["contar"], "contexto": "mundo", "nivel": 1, "uso": "/count chunks|chests|pokemons"},
+    "xp": {"aliases": [], "contexto": "mundo", "nivel": 1, "uso": "/xp quantidade [jogador]"},
+    "chuva": {"aliases": [], "contexto": "mundo", "nivel": 1, "uso": "/chuva [intensidade]"},
+    "win": {"aliases": ["vencer"], "contexto": "batalha", "nivel": 1, "uso": "/win"},
+    "lose": {"aliases": ["loose", "perder"], "contexto": "batalha", "nivel": 1, "uso": "/lose"},
+    "revert": {"aliases": [], "contexto": "batalha", "nivel": 1, "uso": "/revert"},
+    "test": {"aliases": [], "contexto": "batalha", "nivel": 1, "uso": "/test [on|off|status]"},
+    "heal": {"aliases": [], "contexto": "batalha", "nivel": 1, "uso": "/heal valor [A1]"},
+    "dmg": {"aliases": [], "contexto": "batalha", "nivel": 1, "uso": "/dmg valor [N|E|V] [A1]"},
+    "kill": {"aliases": ["matar"], "contexto": "batalha", "nivel": 1, "uso": "/kill A1"},
+}
 
 
 def _normalizar_nome(valor: object) -> str:
@@ -15,15 +52,89 @@ def _normalizar_nome(valor: object) -> str:
     return sem_acento.lstrip("/")
 
 
+def _lista_texto(valor) -> list[str]:
+    if isinstance(valor, (list, tuple)):
+        return [str(v).strip() for v in valor if str(v).strip()]
+    if valor in (None, ""):
+        return []
+    return [str(valor).strip()]
+
+
+def _normalizar_aliases(valor) -> list[str]:
+    aliases = []
+    for alias in _lista_texto(valor):
+        alias_norm = _normalizar_nome(alias)
+        if alias_norm and alias_norm not in aliases:
+            aliases.append(alias_norm)
+    return aliases
+
+
+def _metadados_minimos(nome: str) -> dict:
+    base = dict(_FALLBACK_CATALOGO_MINIMO.get(nome, {}))
+    return {
+        "nome": nome,
+        "aliases": list(base.get("aliases") or []),
+        "contexto": str(base.get("contexto") or "geral"),
+        "nivel": int(base.get("nivel", 1) or 1),
+        "uso": str(base.get("uso") or f"/{nome}"),
+        "descricao": f"Comando /{nome}.",
+        "argumentos": [],
+        "exemplos": [str(base.get("uso") or f"/{nome}").split(" | ", 1)[0]],
+    }
+
+
+def _itens_catalogo_json() -> list[dict]:
+    try:
+        dados = json.loads(_CAMINHO_CATALOGO_COMANDOS.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"[Comandos] Falha ao carregar catalogo JSON {_CAMINHO_CATALOGO_COMANDOS}: {exc}")
+        return []
+    if isinstance(dados, dict):
+        itens = dados.get("comandos", [])
+    else:
+        itens = dados
+    if not isinstance(itens, list):
+        print(f"[Comandos] Catalogo JSON invalido: campo 'comandos' deve ser lista")
+        return []
+    return [item for item in itens if isinstance(item, dict)]
+
+
+def _carregar_metadados_comandos() -> list[dict]:
+    itens_json = _itens_catalogo_json()
+    catalogo = {}
+    for item in itens_json:
+        nome = _normalizar_nome(item.get("nome"))
+        if not nome or nome not in MAPA_FUNCOES_COMANDOS:
+            continue
+        fallback = _metadados_minimos(nome)
+        cmd = {}
+        for campo in _CAMPOS_CATALOGO:
+            valor = item.get(campo, fallback.get(campo))
+            cmd[campo] = fallback.get(campo) if valor in (None, "") else valor
+        cmd["nome"] = nome
+        catalogo[nome] = cmd
+    if not catalogo:
+        catalogo = {nome: _metadados_minimos(nome) for nome in MAPA_FUNCOES_COMANDOS}
+    for nome in MAPA_FUNCOES_COMANDOS:
+        if nome not in catalogo:
+            catalogo[nome] = _metadados_minimos(nome)
+    return [catalogo[nome] for nome in catalogo]
+
+
 def _montar_catalogo():
     catalogo = {}
     aliases = {}
-    for item in [*CATALOGO_COMANDOS_GERAL, *CATALOGO_COMANDOS_MUNDO, *CATALOGO_COMANDOS_BATALHA]:
+    for item in _carregar_metadados_comandos():
         cmd = dict(item)
         nome = _normalizar_nome(cmd.get("nome"))
         cmd["nome"] = nome
-        cmd["aliases"] = [_normalizar_nome(a) for a in list(cmd.get("aliases") or []) if _normalizar_nome(a)]
+        cmd["aliases"] = _normalizar_aliases(cmd.get("aliases"))
         cmd["nivel"] = int(cmd.get("nivel", 1) or 1)
+        cmd["argumentos"] = _lista_texto(cmd.get("argumentos"))
+        cmd["exemplos"] = _lista_texto(cmd.get("exemplos"))
+        cmd["funcao"] = MAPA_FUNCOES_COMANDOS.get(nome)
+        if cmd["funcao"] is None:
+            continue
         catalogo[nome] = cmd
     for nome, cmd in catalogo.items():
         aliases[nome] = nome

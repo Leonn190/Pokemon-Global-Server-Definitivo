@@ -26,6 +26,7 @@ from Servidor.Gerais.LoaderRegras import (
     carregar_regras_estruturas_naturais,
     carregar_regras_mundo,
     carregar_regras_player,
+    carregar_regras_server,
     carregar_regras_skils,
 )
 
@@ -70,6 +71,7 @@ _persistencia_thread = None
 _persistencia_snapshot_pendente = {}
 _persistencia_secoes_pendentes: set[str] = set()
 _NIVEL_MAXIMO_JOGADOR = 100
+_COMANDOS_DEFAULT_NIVEL_FALLBACK = 1
 _SECOES_PERSISTENCIA = ("players", "npcs_vendedores", "estruturas_naturais_tocadas", "tempo_mundo")
 _TIPOS_ESTADIO_RESPEITO = (
     "normal", "fogo", "agua", "planta", "eletrico", "gelo", "lutador", "venenoso", "terrestre", "voador",
@@ -1172,6 +1174,17 @@ def existe_op_nivel_2() -> bool:
     return any(int(v or 0) >= 2 for v in listar_ops().values())
 
 
+def _obter_nivel_padrao_comandos() -> int:
+    # Regra explicita para jogador sem entrada em ops. O valor base atual e 1
+    # para manter compatibilidade, mas pode ser sobrescrito em runtime.comandos_default_nivel.
+    try:
+        regras = carregar_regras_server()
+        nivel = int(_valor_regra(regras, "comandos_default_nivel", _COMANDOS_DEFAULT_NIVEL_FALLBACK))
+    except Exception:
+        nivel = _COMANDOS_DEFAULT_NIVEL_FALLBACK
+    return max(0, min(2, nivel))
+
+
 def obter_nivel_op(usuario: str) -> int:
     _garantir_estado_ativo()
     nome = _normalizar_usuario_chave(usuario)
@@ -1182,7 +1195,7 @@ def obter_nivel_op(usuario: str) -> int:
         for chave, nivel in ops.items():
             if str(chave).strip().lower() == nome.lower():
                 return max(0, min(2, int(nivel or 0)))
-    return 1
+    return _obter_nivel_padrao_comandos()
 
 
 def definir_nivel_op(usuario: str, nivel: int) -> bool:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import unicodedata
+
 from Servidor.Gerais.EstadoServidor import (
     banir_usuario,
     definir_nivel_op,
@@ -11,6 +13,12 @@ from Servidor.Gerais.EstadoServidor import (
     resetar_regra_servidor,
 )
 from Servidor.Gerais.LoaderRegras import listar_regras_base_flat
+
+
+def _normalizar_nome(valor: object) -> str:
+    bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+    return sem_acento.lstrip("/")
 
 
 def _resolver_regra(raw: str):
@@ -54,9 +62,10 @@ def comando_help(autor, args, contexto=None, meta=None, catalogo=None):
     args = list(args or [])
     aliases = {}
     for nome, cmd in catalogo.items():
-        aliases[nome] = nome
+        nome_norm = _normalizar_nome(nome)
+        aliases[nome_norm] = nome_norm
         for alias in list(cmd.get("aliases") or []):
-            aliases[str(alias).lower()] = nome
+            aliases[_normalizar_nome(alias)] = nome_norm
 
     def visiveis(ctx):
         if ctx == "all":
@@ -67,7 +76,7 @@ def comando_help(autor, args, contexto=None, meta=None, catalogo=None):
     if not args:
         nomes = visiveis(contexto)
         return "Comandos: " + ", ".join(f"/{n}" for n in nomes)
-    alvo = str(args[0] or "").strip().lower().lstrip("/")
+    alvo = _normalizar_nome(args[0])
     if alvo in {"mundo", "batalha", "geral", "all"}:
         nomes = visiveis(alvo)
         return f"Comandos ({alvo}): " + ", ".join(f"/{n}" for n in nomes)
@@ -168,11 +177,12 @@ def comando_gamerule(autor, args, contexto=None, meta=None, catalogo=None):
     return f"{chave}: {atual!r} -> {novo!r}"
 
 
-CATALOGO_COMANDOS_GERAL = [
-    {"nome": "help", "aliases": ["ajuda"], "funcao": comando_help, "contexto": "geral", "nivel": 1, "uso": "/help [mundo|batalha|geral|all|comando]", "descricao": "Mostra comandos ou detalhes de um comando.", "argumentos": ["filtro opcional"], "exemplos": ["/help", "/help batalha", "/help give"]},
-    {"nome": "gamerule", "aliases": [], "funcao": comando_gamerule, "contexto": "geral", "nivel": 1, "uso": "/gamerule list|search|nome [valor|reset]", "descricao": "Consulta ou altera regras sobrescritas do servidor ativo.", "argumentos": ["nome: regra namespaced ou única", "valor: bool/int/float/str"], "exemplos": ["/gamerule", "/gamerule player.StaminaMax 120", "/gamerule player.StaminaMax reset"]},
-    {"nome": "kick", "aliases": [], "funcao": comando_kick, "contexto": "geral", "nivel": 2, "uso": "/kick jogador", "descricao": "Desconecta jogador sem banir.", "argumentos": ["jogador"], "exemplos": ["/kick Leon19"]},
-    {"nome": "ban", "aliases": [], "funcao": comando_ban, "contexto": "geral", "nivel": 2, "uso": "/ban jogador", "descricao": "Bane e desconecta jogador.", "argumentos": ["jogador"], "exemplos": ["/ban Leon19"]},
-    {"nome": "desban", "aliases": ["unban"], "funcao": comando_desban, "contexto": "geral", "nivel": 2, "uso": "/desban jogador", "descricao": "Remove jogador da lista de banidos.", "argumentos": ["jogador"], "exemplos": ["/desban Leon19"]},
-    {"nome": "op", "aliases": [], "funcao": comando_op, "contexto": "geral", "nivel": 2, "uso": "/op nivel jogador", "descricao": "Define nível de permissão 0, 1 ou 2.", "argumentos": ["nível: 0..2", "jogador"], "exemplos": ["/op 2 Leon19", "/op 1 Jogador"]},
-]
+MAPA_FUNCOES_COMANDOS_GERAL = {
+    "help": comando_help,
+    "gamerule": comando_gamerule,
+    "kick": comando_kick,
+    "ban": comando_ban,
+    "desban": comando_desban,
+    "op": comando_op,
+}
+

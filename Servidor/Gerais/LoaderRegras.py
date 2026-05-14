@@ -377,9 +377,11 @@ def carregar_regras_server() -> Dict[str, object]:
     out = _flatten(dados)
     ticks = dados.get("ticks") if isinstance(dados.get("ticks"), dict) else {}
     chunks = dados.get("chunks") if isinstance(dados.get("chunks"), dict) else {}
+    comandos = dados.get("comandos") if isinstance(dados.get("comandos"), dict) else {}
     out["tick_segundos"] = _float_cfg(ticks, "segundos", 0.0333)
     out["raio_chunks_simulados"] = _int_cfg(chunks, "raio_simulados", 3)
     out["raio_chunks_carregados"] = _int_cfg(chunks, "raio_carregados", 4)
+    out["comandos_default_nivel"] = _int_cfg(comandos, "default_nivel", 1)
     return _aplicar_sobrescritas("runtime", out)
 
 

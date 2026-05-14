@@ -223,12 +223,12 @@ def comando_revert(autor, args, contexto=None, meta=None, catalogo=None):
     return _resultado(partida, f"Turno revertido para rodada {partida.rodada_atual}")
 
 
-CATALOGO_COMANDOS_BATALHA = [
-    {"nome": "win", "aliases": ["vencer"], "funcao": comando_win, "contexto": "batalha", "nivel": 1, "uso": "/win", "descricao": "Força vitória matando todos os Pokémon adversários.", "argumentos": [], "exemplos": ["/win"]},
-    {"nome": "lose", "aliases": ["loose", "perder"], "funcao": comando_lose, "contexto": "batalha", "nivel": 1, "uso": "/lose", "descricao": "Força derrota matando todos os Pokémon aliados.", "argumentos": [], "exemplos": ["/lose", "/loose"]},
-    {"nome": "revert", "aliases": [], "funcao": comando_revert, "contexto": "batalha", "nivel": 1, "uso": "/revert", "descricao": "Restaura o snapshot anterior da batalha.", "argumentos": [], "exemplos": ["/revert"]},
-    {"nome": "test", "aliases": [], "funcao": comando_test, "contexto": "batalha", "nivel": 1, "uso": "/test [on|off|status]", "descricao": "Alterna o modo teste existente da partida.", "argumentos": ["on/off/status opcionais"], "exemplos": ["/test", "/test on", "/test status"]},
-    {"nome": "heal", "aliases": [], "funcao": comando_heal, "contexto": "batalha", "nivel": 1, "uso": "/heal valor [A1]", "descricao": "Cura alvo ou um Pokémon vivo aleatório.", "argumentos": ["valor: número ou full", "alvo: area_id opcional"], "exemplos": ["/heal 50 A1", "/heal full"]},
-    {"nome": "dmg", "aliases": [], "funcao": comando_dmg, "contexto": "batalha", "nivel": 1, "uso": "/dmg valor [N|E|V] [A1]", "descricao": "Aplica dano normal, especial ou verdadeiro.", "argumentos": ["valor numérico", "tipo opcional: N/E/V", "alvo opcional"], "exemplos": ["/dmg 40 V I1", "/dmg 50"]},
-    {"nome": "kill", "aliases": ["matar"], "funcao": comando_kill, "contexto": "batalha", "nivel": 1, "uso": "/kill A1", "descricao": "Mata o Pokémon ativo na área informada.", "argumentos": ["area_id: A1..A9 ou I1..I9"], "exemplos": ["/kill I1", "/matar a2"]},
-]
+MAPA_FUNCOES_COMANDOS_BATALHA = {
+    "win": comando_win,
+    "lose": comando_lose,
+    "revert": comando_revert,
+    "test": comando_test,
+    "heal": comando_heal,
+    "dmg": comando_dmg,
+    "kill": comando_kill,
+}

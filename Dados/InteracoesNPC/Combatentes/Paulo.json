@@ -1,98 +1,1342 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Venenoso",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Paulo, líder do estádio Venenoso. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "E aí! Eu sou Paulo, líder do estádio Venenoso. Se veio esperando um cara sombrio, dramático e cheio de mistério, errou porta. Aqui o veneno tem ritmo, luz, festa e estratégia.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Olha quem chegou no respeito 3. Agora sim dá para falar de veneno de verdade. As duas batalhas estão abertas, mas cuidado: meu time não perdoa treinador travado."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já ganhou respeito suficiente para a primeira batalha. Ainda não é a pista principal da festa, mas já pode entrar no salão."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou! Gosto disso. Tem gente que perde, some e depois fala mal do meu estilo de vida. Você pelo menos apareceu de novo."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Como você virou líder Venenoso?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Venenoso. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Eu sou tranquilo, mas não sou desorganizado. Até festa boa tem lista, segurança e horário para começar.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou ganhar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero conversar primeiro.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Venenoso, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro passa pela entrada, depois entende o ambiente, aí sim encara o veneno mais forte.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Por que você fala como se tudo fosse festa?",
+          "destino": "festa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Venenoso permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha é para sentir seu ritmo. Se você entrar duro demais, meu veneno te quebra. Se entrar mole demais, ele te engole.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPauloVeneno",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que veneno não é só dano. É pressão, desgaste e leitura de momento. Vamos ver se aplica isso em batalha."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Paulo": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar mais antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Venenoso. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a segunda batalha. Aqui eu paro de brincar tanto. Continuo sorrindo, mas meu time começa a sorrir junto, e isso normalmente é péssimo sinal para o adversário.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPauloContradicao",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu que eu não sou só festa. Ótimo. Agora dá para mostrar o lado sério do veneno sem você achar que é só fumaça e música alta."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Paulo": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Manda. Eu gosto de conversar. Festa boa começa assim: alguém puxa assunto, alguém ri, alguém exagera e depois todo mundo finge que foi planejado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou várias vezes para conversar. Isso é raro. A maioria chega julgando, perde para meu time e sai falando que eu sou irresponsável."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComPaulo": true,
+          "ConversasPaulo": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como você virou líder Venenoso?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Você realmente gosta tanto de festa?",
+          "destino": "festa"
+        },
+        {
+          "texto": "Como você entende Pokémon venenosos?",
+          "destino": "veneno"
+        },
+        {
+          "texto": "O que aconteceu com o Guedes?",
+          "destino": "guedes"
+        },
+        {
+          "texto": "O Batalha acha que você atrapalhou o Guedes.",
+          "destino": "batalha_critica"
+        },
+        {
+          "texto": "Você liga para quem critica seu estilo?",
+          "destino": "criticos"
+        },
+        {
+          "texto": "Você conhece muita gente mesmo?",
+          "destino": "contatos"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Eu não virei líder Venenoso porque acordei um dia querendo parecer perigoso. Eu vivi perto de coisa forte, ambiente carregado, gente exagerada, noite longa. Com o tempo eu comecei a entender veneno como poucos entendem.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você fala de vape e substâncias?",
+          "destino": "substancias"
+        },
+        {
+          "texto": "Então foi experiência de vida?",
+          "destino": "experiencia"
+        },
+        {
+          "texto": "Isso parece arriscado.",
+          "destino": "risco"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "substancias": {
+      "fala": "Sim, mas sem romantizar. Eu vivi esse mundo de perto, com vape, festa e umas escolhas que muita gente julga antes de entender. Não é manual para ninguém copiar. É parte da minha história.",
+      "ao_entrar": {
+        "setor": {
+          "FalouSubstanciasPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "E isso te aproximou dos venenosos?",
+          "destino": "veneno"
+        },
+        {
+          "texto": "Você se arrepende?",
+          "destino": "arrependimento"
+        },
+        {
+          "texto": "Você parece defender demais isso.",
+          "destino": "criticos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "experiencia": {
+      "fala": "Foi. Tem treinador que aprende no livro, tem treinador que aprende perdendo batalha, e tem gente como eu, que aprende sentindo o ambiente. Eu li, treinei e vivi o tema do meu tipo.",
+      "opcoes": [
+        {
+          "texto": "Isso combina com Venenoso.",
+          "destino": "veneno"
+        },
+        {
+          "texto": "Mas você não tem medo do excesso?",
+          "destino": "risco"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "risco": {
+      "fala": "Claro que tem risco. Quem diz que não tem está mentindo ou tentando vender uma imagem. Eu só não aceito que me tratem como burro porque minha vida não parece limpa para quem olha de fora.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPauloContradicao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então você sabe que não é simples.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "Isso explica sua crítica aos críticos.",
+          "destino": "criticos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "arrependimento": {
+      "fala": "Eu me arrependo de algumas influências, não de ser quem eu sou. Tem diferença. Eu gosto de festa, gosto de gente, gosto de intensidade. Mas nem toda intensidade precisa ser empurrada para os outros.",
+      "opcoes": [
+        {
+          "texto": "Você está falando do Guedes?",
+          "destino": "guedes"
+        },
+        {
+          "texto": "Isso foi mais sério do que eu esperava.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "substancias"
+        }
+      ]
+    },
+    "maturidade": {
+      "fala": "Eu sou animado, não inconsequente o tempo inteiro. Às vezes as pessoas confundem sorriso com falta de noção. Meu time não chegou onde chegou por acaso.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMaturidadePaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Entendi melhor você.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero falar do Guedes.",
+          "destino": "guedes"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "veneno": {
+      "fala": "Pokémon venenosos são honestos de um jeito estranho. Eles avisam que são perigosos, mostram cor, cheiro, presença. O problema é que o adversário acha que consegue ignorar até o efeito acumular.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPauloVeneno": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você fala deles com carinho.",
+          "destino": "carinho_veneno"
+        },
+        {
+          "texto": "Veneno é só desgaste?",
+          "destino": "estrategia_veneno"
+        },
+        {
+          "texto": "Você se acha imune?",
+          "destino": "imunidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "carinho_veneno": {
+      "fala": "Tenho carinho mesmo. Muita gente olha para Venenoso e vê sujeira. Eu vejo adaptação. É um tipo que sobrevive onde os outros tipos fazem cara feia.",
+      "opcoes": [
+        {
+          "texto": "Isso parece sua vida.",
+          "destino": "experiencia"
+        },
+        {
+          "texto": "Você realmente combina com o tipo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "veneno"
+        }
+      ]
+    },
+    "estrategia_veneno": {
+      "fala": "Não. Desgaste é só uma parte. Veneno é controle de ritmo. Você obriga o outro a decidir rápido, errar cedo e gastar recurso onde não queria.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEstrategiaPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece batalha de paciência.",
+          "destino": "paciencia"
+        },
+        {
+          "texto": "Quero ver isso na prática.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "veneno"
+        }
+      ]
+    },
+    "paciencia": {
+      "fala": "Exato. Engraçado, né? Eu pareço o cara da pressa, da festa e da música alta, mas em batalha eu sei esperar o adversário se intoxicar com as próprias decisões.",
+      "opcoes": [
+        {
+          "texto": "Isso foi uma boa frase.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Você é mais calculista do que parece.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "estrategia_veneno"
+        }
+      ]
+    },
+    "imunidade": {
+      "fala": "Eu brinco que sou imune, mas não sou invencível. O que eu tenho é resistência, costume e leitura. Pokémon venenoso bom não depende de ser intocável, depende de saber até onde pode ir.",
+      "opcoes": [
+        {
+          "texto": "Isso é bem mais sensato.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "Você devia falar isso para seus críticos.",
+          "destino": "criticos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "veneno"
+        }
+      ]
+    },
+    "festa": {
+      "fala": "Eu gosto de festa porque gosto de gente. Música, conversa, amigo sumindo e voltando com história absurda, alguém tentando dançar sem coordenação... isso tudo é vida acontecendo.",
+      "ao_entrar": {
+        "setor": {
+          "FalouFestaPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você parece conhecer todo mundo.",
+          "destino": "contatos"
+        },
+        {
+          "texto": "Festa combina com liderança?",
+          "destino": "lideranca"
+        },
+        {
+          "texto": "Você nunca cansa?",
+          "destino": "cansa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "contatos": {
+      "fala": "Eu tenho contato em tudo quanto é canto. Vendedor, treinador, DJ, pesquisador estranho, capitão que finge que não gosta de festa... a ilha é menor do que parece quando você conversa com as pessoas.",
+      "ao_entrar": {
+        "setor": {
+          "ConheceuContatosPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso ajuda no estádio?",
+          "destino": "rede"
+        },
+        {
+          "texto": "Você usa isso para conseguir vantagem?",
+          "destino": "vantagem"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "festa"
+        }
+      ]
+    },
+    "rede": {
+      "fala": "Ajuda muito. Liderança não é só mandar Pokémon atacar. É saber quem está chegando, quem está crescendo, quem está perdido e quem só quer aparecer.",
+      "opcoes": [
+        {
+          "texto": "Você observa mais do que parece.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "Isso parece administração social.",
+          "destino": "lideranca"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "contatos"
+        }
+      ]
+    },
+    "vantagem": {
+      "fala": "Vantagem todo mundo busca. A diferença é que eu faço isso conversando, não fingindo que sou monge isolado. Informação também é recurso.",
+      "opcoes": [
+        {
+          "texto": "Isso parece meio perigoso.",
+          "destino": "risco"
+        },
+        {
+          "texto": "Faz sentido.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "contatos"
+        }
+      ]
+    },
+    "lideranca": {
+      "fala": "Combina. Uma festa sem liderança vira caos. Um estádio sem clima vira repartição. Eu quero que meu estádio pareça vivo, mas ainda funcione.",
+      "opcoes": [
+        {
+          "texto": "Você leva isso mais a sério do que parece.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "E seus críticos não entendem isso?",
+          "destino": "criticos"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "festa"
+        }
+      ]
+    },
+    "cansa": {
+      "fala": "Canso. Só não gosto de admitir. Às vezes eu fico quieto depois de um rolê grande, mas aí alguém chama, toca música, aparece uma batalha... pronto, voltei.",
+      "opcoes": [
+        {
+          "texto": "Você parece viver no limite.",
+          "destino": "risco"
+        },
+        {
+          "texto": "Isso é meio engraçado.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "festa"
+        }
+      ]
+    },
+    "guedes": {
+      "fala": "O Guedes é parceiro. Eu apresentei umas coisas para ele, sim. Não vou mentir. Para mim era rolê, amizade, experiência. Para o Batalha, foi como se eu tivesse sabotado o estádio Lutador.",
+      "ao_entrar": {
+        "setor": {
+          "FalouGuedesPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você acha que piorou ele como treinador?",
+          "destino": "guedes_culpa"
+        },
+        {
+          "texto": "O Batalha ficou bravo?",
+          "destino": "batalha_critica"
+        },
+        {
+          "texto": "Você ainda é amigo do Guedes?",
+          "destino": "amizade_guedes"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "guedes_culpa": {
+      "fala": "Essa é a parte complicada. Eu não acho que uma pessoa vira pior só porque conheceu um rolê. Mas também não vou fingir que influência não existe. Talvez eu devesse ter cuidado mais.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCulpaGuedesPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi honesto.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "Você já falou isso para ele?",
+          "destino": "amizade_guedes"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "amizade_guedes": {
+      "fala": "Sou. Amigo não some só porque alguém de fora decidiu apontar dedo. Se ele quiser mudar, eu apoio. Se quiser continuar sendo ele, eu também converso.",
+      "opcoes": [
+        {
+          "texto": "Você é mais leal do que parece.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Mas o Batalha não aceita isso.",
+          "destino": "batalha_critica"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "batalha_critica": {
+      "fala": "O Batalha me olha como se eu fosse um efeito negativo ambulante. Ele acha que o Guedes perdeu foco por minha causa. Eu acho que ele confunde disciplina com controlar a vida dos outros.",
+      "ao_entrar": {
+        "setor": {
+          "FalouBatalhaPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Talvez ele só esteja preocupado.",
+          "destino": "batalha_preocupacao"
+        },
+        {
+          "texto": "Você acha ele careta?",
+          "destino": "careta"
+        },
+        {
+          "texto": "Você falaria isso na cara dele?",
+          "destino": "confronto_batalha"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "batalha_preocupacao": {
+      "fala": "Pode ser. E preocupação tem valor. Só que preocupação sem escuta vira julgamento. Eu aceito crítica, não sentença pronta.",
+      "opcoes": [
+        {
+          "texto": "Isso resume você.",
+          "destino": "criticos"
+        },
+        {
+          "texto": "Você devia conversar com ele.",
+          "destino": "confronto_batalha"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "batalha_critica"
+        }
+      ]
+    },
+    "careta": {
+      "fala": "Um pouco. Mas não é só isso. Ele é líder de Fogo, né? Quer tudo limpo, claro, heroico. O meu tipo trabalha com coisa que muita gente prefere fingir que não existe.",
+      "opcoes": [
+        {
+          "texto": "Faz sentido para Venenoso.",
+          "destino": "veneno"
+        },
+        {
+          "texto": "Você gosta de provocar também.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "batalha_critica"
+        }
+      ]
+    },
+    "confronto_batalha": {
+      "fala": "Falaria. Com sorriso, provavelmente. Eu não gosto de briga desnecessária, mas também não vou aceitar que me transformem em vilão porque eu vivo diferente.",
+      "opcoes": [
+        {
+          "texto": "Você evita conflito até certo ponto.",
+          "destino": "limite"
+        },
+        {
+          "texto": "Isso parece bem Paulo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "batalha_critica"
+        }
+      ]
+    },
+    "limite": {
+      "fala": "Exato. Eu sou positivo, animado, converso com todo mundo. Mas se alguém tenta resumir minha vida a uma moralzinha pronta, aí o veneno aparece.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLimitePaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora entendi seus críticos.",
+          "destino": "criticos"
+        },
+        {
+          "texto": "Quero mudar de assunto.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "criticos": {
+      "fala_condicional": {
+        "padrao": "Crítico eu escuto. Fiscal de vida alheia, nem tanto. Tem gente que não quer entender, só quer se sentir superior.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCulpaGuedesPaulo",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Eu escuto crítica quando ela vem com preocupação real. O que eu não aceito é gente usando o Guedes como desculpa para me pintar como problema."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCriticosPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você acha que é mal interpretado?",
+          "destino": "mal_interpretado"
+        },
+        {
+          "texto": "E se a crítica for justa?",
+          "destino": "critica_justa"
+        },
+        {
+          "texto": "Isso combina com seu tipo.",
+          "destino": "veneno"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "mal_interpretado": {
+      "fala": "Muito. As pessoas veem festa e acham vazio. Veem vape e acham que sabem tudo. Veem sorriso e acham irresponsabilidade. Aí perdem para meu time e continuam sem entender nada.",
+      "opcoes": [
+        {
+          "texto": "Você sente raiva disso?",
+          "destino": "raiva"
+        },
+        {
+          "texto": "Você usa isso como motivação?",
+          "destino": "motivacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "criticos"
+        }
+      ]
+    },
+    "critica_justa": {
+      "fala": "Aí eu tento ouvir. Não sou perfeito e nem tento vender essa imagem. Só não quero que minha história seja reduzida a uma lição moral para os outros se sentirem limpos.",
+      "opcoes": [
+        {
+          "texto": "Isso foi maduro.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "Você pensa mais do que parece.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "criticos"
+        }
+      ]
+    },
+    "raiva": {
+      "fala": "Às vezes. Mas raiva passa. Veneno que fica tempo demais no próprio corpo também faz mal. Eu prefiro transformar isso em treino.",
+      "opcoes": [
+        {
+          "texto": "Boa frase.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver esse treino.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "criticos"
+        }
+      ]
+    },
+    "motivacao": {
+      "fala": "Uso. Cada pessoa que me subestima vira mais um motivo para mostrar que o tipo Venenoso não é resto, não é piada e não é fase ruim.",
+      "opcoes": [
+        {
+          "texto": "Você tem orgulho do seu tipo.",
+          "destino": "carinho_veneno"
+        },
+        {
+          "texto": "Quero a batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "criticos"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Viu? Eu sou de boa. Só não sou fácil de colocar numa caixinha. Gosto de festa, gosto de gente, gosto de veneno e gosto de ganhar batalha.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você é mais profundo do que parece.",
+          "destino": "maturidade"
+        },
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Se você chegou até aqui, já entendeu que meu veneno não é só estética. É vida, escolha, consequência e estratégia.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasPaulo",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Você conversou comigo mais do que muita gente que diz me conhecer. Isso conta bastante."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você mudaria alguma coisa?",
+          "destino": "arrependimento"
+        },
+        {
+          "texto": "Você acha que o Guedes vai ficar bem?",
+          "destino": "amizade_guedes"
+        },
+        {
+          "texto": "Você quer ser lembrado como quê?",
+          "destino": "legado"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos para a batalha.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "legado": {
+      "fala": "Como alguém que mostrou que Venenoso não é tipo descartável. E talvez como alguém que errou, exagerou, riu, aprendeu e ainda assim continuou sendo ele mesmo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLegadoPaulo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi bonito.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Agora quero te enfrentar sério.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuLegadoPaulo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPauloContradicao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComPaulo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPauloVeneno",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Presente não é brinde de entrada. Primeiro entende o ritmo, entende o veneno e para de olhar para mim como se eu fosse só festa.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a base do meu veneno. Leva isso. Só usa com cabeça, por favor. Eu já tenho crítico demais no meu pé.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Valeu, Paulo.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu mais do que a maioria. Não só o tipo, mas a pessoa por trás do estádio. Esse aqui é mais especial.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Paulo.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Boa. Eu poderia fazer uma piada para aliviar, mas vou respeitar: você segurou bem o veneno.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPauloVeneno",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e ainda entendeu o que eu quis ensinar. Aí sim. Derrota assim até desce melhor."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu. Relaxa, acontece. Só não bota a culpa no meu estilo de vida, porque aí eu vou rir.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Paulo",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha pesa mesmo. Venenoso não derruba sempre de uma vez; às vezes ele vence porque o outro não percebe onde começou a perder."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

@@ -1,98 +1,1230 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Fantasma",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Ferraz, líder do estádio Fantasma. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "E aí. Eu sou Ferraz, líder do estádio Fantasma. Relaxa, eu não vou aparecer atrás de você falando frase misteriosa. Pelo menos não antes da batalha começar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Olha só, respeito 3. Agora dá para liberar as duas batalhas. Se você ouvir barulho estranho no estádio, provavelmente é meu time. Ou eu tentando fazer piada ruim."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Boa. Fantasma gosta de gente curiosa, mas gosta ainda mais de gente que volta depois de tomar susto."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Corajoso. Ou desatento. Nos dois casos, serve para meu estádio."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Por que Fantasma?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Fantasma. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Eu até deixaria passar, mas aí o fantasma da organização viria me assombrar. E esse é o pior tipo de fantasma.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou ganhar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero conversar primeiro.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Fantasma, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Fantasma trabalha com presença, ausência e momento certo. E agora o momento certo ainda não chegou.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Então me explica melhor esse tipo.",
+          "destino": "fantasma"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Fantasma permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha é para sentir seu reflexo. Fantasma não vence só no susto. Ele vence quando você percebe tarde demais que já estava cercado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuFerrazFantasma",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que Fantasma não é só efeito visual bonito. Então vamos ver se você consegue lutar contra algo que não fica parado esperando apanhar."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Ferraz": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Fantasma. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui o estádio apaga um pouco, meu time aparece menos do que deveria e você começa a questionar se errou antes do turno começar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuBasculegionFerraz",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu meu Basculegion e meu jeito de lutar. Então entra preparado: água pode puxar, mas fantasma leva para baixo em silêncio."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Ferraz": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Manda. Eu sou piadista, mas eu escuto. Só não garanto que eu não vou encaixar uma piada ruim no meio da explicação.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou várias vezes para conversar comigo. Ou você gosta de Fantasma, ou perdeu alguma coisa aqui e está procurando até agora."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComFerraz": true,
+          "ConversasFerraz": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que você escolheu Fantasma?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Você quase competiu com Caio pelo tipo Água?",
+          "destino": "agua_caio"
+        },
+        {
+          "texto": "Fala do seu Basculegion.",
+          "destino": "basculegion"
+        },
+        {
+          "texto": "Você pesca com o Caio?",
+          "destino": "pesca"
+        },
+        {
+          "texto": "Você jogava CS?",
+          "destino": "cs"
+        },
+        {
+          "texto": "Você estudou com o Guedes?",
+          "destino": "guedes"
+        },
+        {
+          "texto": "Você gosta de Star Wars?",
+          "destino": "star_wars"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Eu sempre achei o tipo Fantasma muito foda. Não tem jeito mais técnico de dizer. Ele tem estilo, mistério, presença e aquela sensação de que a batalha começou antes do adversário perceber.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então sempre foi Fantasma?",
+          "destino": "sempre_fantasma"
+        },
+        {
+          "texto": "Mas você pensou em Água?",
+          "destino": "agua_caio"
+        },
+        {
+          "texto": "Isso explica seu estádio.",
+          "destino": "fantasma"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "sempre_fantasma": {
+      "fala": "No fundo, sim. Água me chamou atenção por causa da pesca e do Caio, mas Fantasma sempre teve aquele negócio a mais. Parecia mais meu tipo de caos.",
+      "opcoes": [
+        {
+          "texto": "Seu tipo de caos?",
+          "destino": "fantasma"
+        },
+        {
+          "texto": "E o Basculegion entra nisso?",
+          "destino": "basculegion"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "fantasma": {
+      "fala": "Fantasma é leitura de espaço. Você tira presença de um lado, aparece no outro, força medo, dúvida, erro. É quase um jogo de tiro com assombração, o que honestamente é uma bela descrição.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFerrazFantasma": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você compara tudo com CS?",
+          "destino": "cs"
+        },
+        {
+          "texto": "Isso é mais estratégico do que eu esperava.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Quero ver isso na prática.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "É muito estratégico. Quem acha que Fantasma é só susto normalmente toma o susto mais óbvio e ainda reclama depois. Meu time gosta de punir pressa.",
+      "opcoes": [
+        {
+          "texto": "Punir pressa parece CS.",
+          "destino": "cs"
+        },
+        {
+          "texto": "Parece também pescaria.",
+          "destino": "pesca"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "fantasma"
+        }
+      ]
+    },
+    "agua_caio": {
+      "fala": "Eu até pensei em competir com o Caio pelo tipo Água. Gosto de pescar, gosto do clima, gosto de Pokémon aquáticos. Mas competir com o Caio nisso seria pedir para ele ficar irritado por uns três anos.",
+      "ao_entrar": {
+        "setor": {
+          "FalouAguaCaioFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você e Caio são muito amigos?",
+          "destino": "caio"
+        },
+        {
+          "texto": "Então você escolheu Fantasma para evitar briga?",
+          "destino": "escolha_final"
+        },
+        {
+          "texto": "E o Basculegion?",
+          "destino": "basculegion"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "escolha_final": {
+      "fala": "Não foi só para evitar briga. Fantasma era minha escolha real. Água era uma tentação por causa da pesca. Fantasma era identidade.",
+      "opcoes": [
+        {
+          "texto": "Isso foi sincero.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "agua_caio"
+        }
+      ]
+    },
+    "basculegion": {
+      "fala": "Basculegion é perfeito para mim. Tem Água, tem Fantasma, tem aquela cara de quem já viu coisa demais no fundo do rio e voltou só para assustar pescador desprevenido.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuBasculegionFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você gosta dele por unir Água e Fantasma.",
+          "destino": "basculegion_2"
+        },
+        {
+          "texto": "Caio deve gostar dele também.",
+          "destino": "caio"
+        },
+        {
+          "texto": "Isso foi específico demais.",
+          "destino": "piadas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "basculegion_2": {
+      "fala": "Exato. Ele é quase um lembrete de que eu poderia ter ido para Água, mas escolhi ficar com Fantasma. É como se ele dissesse: dá para pescar e assombrar ao mesmo tempo.",
+      "opcoes": [
+        {
+          "texto": "Essa frase é absurda.",
+          "destino": "piadas"
+        },
+        {
+          "texto": "Quero ver ele em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "basculegion"
+        }
+      ]
+    },
+    "pesca": {
+      "fala": "Pescar com o Caio é uma das melhores coisas da ilha. Você fica horas esperando, falando besteira e fingindo que o silêncio é estratégia. Depois alguém perde um peixe e culpa o vento.",
+      "ao_entrar": {
+        "setor": {
+          "FalouPescaFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você e Caio foram para o hotel pesque e pague?",
+          "destino": "hotel"
+        },
+        {
+          "texto": "Pesca ajuda em batalha?",
+          "destino": "pesca_batalha"
+        },
+        {
+          "texto": "Você pesca melhor que ele?",
+          "destino": "competicao_caio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "caio": {
+      "fala": "Caio é grande amigo meu. Ele ama Água, peixe, dinossauro, terror e provavelmente qualquer bicho que pareça que saiu de um lago pré-histórico.",
+      "ao_entrar": {
+        "setor": {
+          "FalouCaioFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Vocês pescam juntos?",
+          "destino": "pesca"
+        },
+        {
+          "texto": "Vocês dois não gostam de LoL, né?",
+          "destino": "nao_lol"
+        },
+        {
+          "texto": "Você respeita o tipo Água?",
+          "destino": "agua_caio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "hotel": {
+      "fala": "Sim. O grande hotel pesque e pague. Nome enorme, experiência maior ainda. Eu e Caio no mesmo quarto parecia começo de filme de terror ruim, mas no fim foi só pescaria e conversa idiota.",
+      "opcoes": [
+        {
+          "texto": "Isso daria filme.",
+          "destino": "star_wars"
+        },
+        {
+          "texto": "Vocês são muito próximos.",
+          "destino": "caio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pesca"
+        }
+      ]
+    },
+    "pesca_batalha": {
+      "fala": "Ajuda. Pesca ensina paciência. Você espera, observa, sente o momento e puxa na hora certa. Fantasma faz isso com o psicológico do adversário.",
+      "opcoes": [
+        {
+          "texto": "Isso é uma boa comparação.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pesca"
+        }
+      ]
+    },
+    "competicao_caio": {
+      "fala": "Depende de quem você perguntar. Se perguntar para mim, eu seguro bem. Se perguntar para o Caio, ele vai fazer uma palestra de quarenta minutos sobre peixe, Água e por que eu estou errado.",
+      "opcoes": [
+        {
+          "texto": "Isso parece o Caio.",
+          "destino": "caio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "pesca"
+        }
+      ]
+    },
+    "cs": {
+      "fala_condicional": {
+        "padrao": "Eu jogava muito CS antes de virar treinador Pokémon. Muito mesmo. Tinha época que eu pensava em smoke, mira e posicionamento mais do que em comida.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouCsFerraz",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Sim, eu ainda gosto de CS. Não, eu não vou transformar cada corredor do estádio em bombsite. Pelo menos não oficialmente."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouCsFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "CS influenciou seu jeito de batalhar?",
+          "destino": "cs_batalha"
+        },
+        {
+          "texto": "Você ainda joga?",
+          "destino": "cs_hoje"
+        },
+        {
+          "texto": "Fantasma combina com jogo de tiro?",
+          "destino": "fantasma"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "cs_batalha": {
+      "fala": "Influenciou. Posicionamento, timing, leitura de canto, bait, pressão psicológica... se trocar granada por assombração, meu estádio faz bastante sentido.",
+      "opcoes": [
+        {
+          "texto": "Você acabou de vender muito bem seu estádio.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero testar isso.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "cs"
+        }
+      ]
+    },
+    "cs_hoje": {
+      "fala": "Jogo menos. Ser líder ocupa tempo. Mas às vezes dá saudade de entrar, errar um tiro fácil e culpar o ping com toda a convicção do mundo.",
+      "opcoes": [
+        {
+          "texto": "Isso foi honesto.",
+          "destino": "piadas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "cs"
+        }
+      ]
+    },
+    "guedes": {
+      "fala": "Estudei na mesma faculdade que o Guedes. Ele foi ficando mais na vibe dele, medicina, treino, festas, academia... a gente se distanciou um pouco, mas ainda tenho respeito por ele.",
+      "ao_entrar": {
+        "setor": {
+          "FalouGuedesFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Vocês eram próximos?",
+          "destino": "guedes_proximo"
+        },
+        {
+          "texto": "Você entende o lado dele?",
+          "destino": "guedes_entende"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "guedes_proximo": {
+      "fala": "A gente convivia mais. Faculdade faz isso: junta gente por rotina, trabalho, cansaço e umas histórias que ninguém sabe explicar depois.",
+      "opcoes": [
+        {
+          "texto": "E por que se distanciaram?",
+          "destino": "guedes_distancia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "guedes_distancia": {
+      "fala": "Nada cinematográfico. Só vida mesmo. Cada um foi puxado por uma direção. Ele para Lutador, medicina e treino. Eu para Fantasma, pesca, CS e piada duvidosa.",
+      "opcoes": [
+        {
+          "texto": "Isso acontece.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "guedes_entende": {
+      "fala": "Entendo. O Guedes tem uma coisa física muito forte. Ele vive o tipo Lutador de um jeito real. Eu só prefiro assombrar o adversário sem precisar tomar soco junto.",
+      "opcoes": [
+        {
+          "texto": "Essa foi boa.",
+          "destino": "piadas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "star_wars": {
+      "fala": "Gosto de Star Wars. Tem fantasma, mentor aparecendo depois da morte, sabre de luz, drama familiar e gente tomando decisão ruim com trilha sonora épica. Como não gostar?",
+      "ao_entrar": {
+        "setor": {
+          "FalouStarWarsFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você gosta dos fantasmas da Força?",
+          "destino": "fantasmas_forca"
+        },
+        {
+          "texto": "Você usaria sabre de luz?",
+          "destino": "sabre"
+        },
+        {
+          "texto": "Isso combina com você.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "fantasmas_forca": {
+      "fala": "Claro. É literalmente o conceito de aparecer depois para dar conselho enigmático. Se isso não é coisa de líder Fantasma, eu não sei o que é.",
+      "opcoes": [
+        {
+          "texto": "Você seria esse mentor?",
+          "destino": "mentor"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "star_wars"
+        }
+      ]
+    },
+    "sabre": {
+      "fala": "Usaria, mas provavelmente ia fazer pose demais e perder a luta. Melhor deixar meus Pokémon cuidarem da parte perigosa.",
+      "opcoes": [
+        {
+          "texto": "Pelo menos você admite.",
+          "destino": "piadas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "star_wars"
+        }
+      ]
+    },
+    "mentor": {
+      "fala": "Eu tentaria, mas meu conselho provavelmente sairia tipo: confie na Força, mas olha o minimapa. Serve para Star Wars, CS e batalha Pokémon.",
+      "opcoes": [
+        {
+          "texto": "Isso foi terrível e bom.",
+          "destino": "piadas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "star_wars"
+        }
+      ]
+    },
+    "nao_lol": {
+      "fala": "Eu e Caio temos isso em comum: a gente não gosta muito de LoL. Eu respeito quem gosta, mas minha paz mental já foi testada o suficiente em jogo de tiro.",
+      "opcoes": [
+        {
+          "texto": "Caio também fala mal de LoL.",
+          "destino": "caio"
+        },
+        {
+          "texto": "Você prefere CS mesmo.",
+          "destino": "cs"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "piadas": {
+      "fala": "Eu sei, eu sei. Às vezes a piada vem antes do bom senso. Mas pensa pelo lado bom: se você perder para mim, pelo menos sai com uma frase ruim para contar depois.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuHumorFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você é engraçado mesmo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Nem tanto.",
+          "destino": "piada_ruim"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "piada_ruim": {
+      "fala": "Tudo bem. Nem todo fantasma aparece para agradar. Alguns aparecem só para incomodar em horário inconveniente.",
+      "opcoes": [
+        {
+          "texto": "Agora foi melhor.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "piadas"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Eu tento levar as coisas na boa. Fantasma já tem fama de assustador demais; se eu ainda ficar sério o tempo inteiro, vira velório com tabela de batalha.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Se você chegou até aqui, já entendeu que meu estádio não é só susto. Tem pesca, paciência, mira, amizade e um Basculegion com cara de quem sabe seus segredos.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasFerraz",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Você conversou bastante comigo. Isso conta. Normalmente as pessoas desistem depois da terceira piada ruim."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é seu objetivo como líder?",
+          "destino": "legado"
+        },
+        {
+          "texto": "Você quer ser levado mais a sério?",
+          "destino": "serio"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "legado": {
+      "fala": "Quero mostrar que Fantasma pode ser engraçado, técnico e assustador ao mesmo tempo. Tipo uma piada boa contada no escuro. Rara, mas quando acerta, fica na cabeça.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLegadoFerraz": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso resume você.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver isso na batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "serio": {
+      "fala": "Às vezes. Mas ser levado a sério não precisa significar virar pedra. Eu posso brincar e ainda saber exatamente onde seu time vai quebrar.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFerrazSerio": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é bem Fantasma.",
+          "destino": "fantasma"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuLegadoFerraz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuBasculegionFerraz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComFerraz",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuFerrazFantasma",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Presente fantasma não aparece só porque você pediu. Primeiro entende o tipo, o Basculegion e pelo menos uma piada minha.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a base do meu Fantasma. Leva isso. Se sumir da sua bolsa depois, aí não fui eu. Provavelmente.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Valeu, Ferraz.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu mais do que a assombração. Entendeu o estilo. Esse presente é para quem ficou até depois da piada ruim.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Ferraz.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Boa. Eu até tentaria fingir que era parte do plano, mas acho que nem fantasma acreditaria.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuFerrazFantasma",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e entendeu meu estilo. Isso torna a derrota menos vergonhosa. Ainda vergonhosa, mas menos."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu. Acontece. Às vezes o fantasma nem precisa assustar; o adversário se assusta sozinho.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Ferraz",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra presença de espírito. Literalmente, no meu caso. Volta mais preparado."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

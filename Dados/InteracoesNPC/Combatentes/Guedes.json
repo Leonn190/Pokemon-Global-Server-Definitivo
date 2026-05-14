@@ -1,98 +1,1384 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Lutador",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Guedes, líder do estádio Lutador. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Opa. Eu sou Guedes, líder do estádio Lutador. Aqui a conversa é tranquila, mas a batalha não costuma ser. Se veio testar força, postura e sinergia, chegou no lugar certo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você chegou no respeito 3. Aí sim. Agora dá para liberar as duas batalhas e ver se você aguenta o ritmo completo do meu time."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Ainda não é o treino completo, mas já dá para entrar no tatame."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou? Boa. Eu gosto de quem insiste. Treino bom é repetição, correção e mais repetição."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Como você virou líder Lutador?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Lutador. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Não é arrogância, é segurança. Ninguém começa levantamento pesado sem aquecer primeiro.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou ganhar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero conversar um pouco.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Lutador, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro você passa pelo básico, depois prova constância. Lutador forte não pula etapa só para parecer confiante.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Entendi. Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Lutador permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede sua base. Eu vou olhar postura, troca, ritmo e como seu time aguenta pressão física.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuSinergiaGuedes",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que meu time não luta separado de mim. Então entra sabendo: cada golpe deles tem treino por trás."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Guedes": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Lutador. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui eu não entro só como líder. Entro como alguém que treinou junto com o próprio time.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMedicinaGuedes",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu a parte física, a parte médica e a parte de treino. Então vamos ver se entende a parte mais simples: aguentar o impacto."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Guedes": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu sou tranquilo. Só não confunde tranquilidade com moleza, porque essa confusão costuma acabar rápido em batalha.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou bastante para trocar ideia. Isso é legal. A maioria só quer lutar e ir embora, como se treinador fosse máquina de entregar insígnia."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComGuedes": true,
+          "ConversasGuedes": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como você virou líder Lutador?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Você treinava junto com seus Pokémon?",
+          "destino": "treino_pokemon"
+        },
+        {
+          "texto": "Você é formado em medicina?",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Você jogava LoL com o pessoal?",
+          "destino": "lol"
+        },
+        {
+          "texto": "O que aconteceu com Paulo e as festas?",
+          "destino": "paulo_festas"
+        },
+        {
+          "texto": "O Batalha se preocupava com você?",
+          "destino": "batalha_preocupacao"
+        },
+        {
+          "texto": "Você ainda gosta de anime?",
+          "destino": "anime"
+        },
+        {
+          "texto": "Você tenta outros esportes?",
+          "destino": "esportes"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Eu comecei cedo na academia. No começo era só vontade de ficar mais forte. Depois eu percebi que Pokémon Lutador não treinam só o corpo: eles treinam disciplina, respiração e coragem.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Foi aí que você escolheu o tipo Lutador?",
+          "destino": "escolha_lutador"
+        },
+        {
+          "texto": "Você treinava com eles de verdade?",
+          "destino": "treino_pokemon"
+        },
+        {
+          "texto": "Isso combina com medicina?",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "escolha_lutador": {
+      "fala": "Foi. Eu olhei para meus Pokémon treinando e pensei: se eu vou ser treinador, eu não quero só mandar. Quero entender o esforço do lado deles.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEscolhaLutadorGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso explica sua sinergia.",
+          "destino": "sinergia"
+        },
+        {
+          "texto": "Você parece respeitar muito seu time.",
+          "destino": "respeito_time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "treino_pokemon": {
+      "fala": "Treinava e ainda treino. Não do mesmo jeito que eles, claro. Um Machamp me desmontaria em cinco segundos se quisesse. Mas eu corro, faço força, caio, levanto e aprendo o ritmo junto.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuTreinoGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso deve criar muita conexão.",
+          "destino": "sinergia"
+        },
+        {
+          "texto": "Você já se machucou treinando?",
+          "destino": "machucados"
+        },
+        {
+          "texto": "Parece coisa de anime.",
+          "destino": "anime"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "sinergia": {
+      "fala": "Cria. Meu time sabe quando eu vou arriscar, quando vou segurar, quando eu estou lendo o adversário e quando é hora de partir para cima. Isso não vem de planilha, vem de convivência.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSinergiaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é bonito.",
+          "destino": "respeito_time"
+        },
+        {
+          "texto": "Quero ver essa sinergia na prática.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "treino_pokemon"
+        }
+      ]
+    },
+    "respeito_time": {
+      "fala": "Respeito demais. Pokémon Lutador sente quando o treinador quer só usar força para aparecer. Eles respondem melhor quando você está ali junto, sem pose falsa.",
+      "opcoes": [
+        {
+          "texto": "Você parece bem diferente do Paulo.",
+          "destino": "paulo_festas"
+        },
+        {
+          "texto": "Isso combina com líder Lutador.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "machucados": {
+      "fala": "Já. Nada absurdo, mas já. Foi aí que medicina e treino começaram a conversar na minha cabeça. Entender corpo muda muito a forma de treinar.",
+      "opcoes": [
+        {
+          "texto": "Fala mais da medicina.",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Você cuida dos seus Pokémon assim também?",
+          "destino": "medicina_pokemon"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "treino_pokemon"
+        }
+      ]
+    },
+    "medicina": {
+      "fala": "Sou formado em medicina. No começo parecia um caminho separado de ser treinador, mas não é. Corpo, limite, recuperação, estresse, sono... tudo isso muda uma batalha.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMedicinaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você aplica isso nos treinos?",
+          "destino": "medicina_pokemon"
+        },
+        {
+          "texto": "E a faculdade teve muita festa?",
+          "destino": "faculdade_festas"
+        },
+        {
+          "texto": "Batalha falava disso?",
+          "destino": "batalha_preocupacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "medicina_pokemon": {
+      "fala": "Aplico. Treino forte sem recuperação vira burrice. Pokémon Lutador gosta de desafio, mas se o treinador não sabe dosar, ele quebra o próprio time.",
+      "opcoes": [
+        {
+          "texto": "Isso é bem responsável.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Então você não é só força bruta.",
+          "destino": "estrategia_lutador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "medicina"
+        }
+      ]
+    },
+    "estrategia_lutador": {
+      "fala": "Força bruta vence muita coisa, mas não vence tudo. Lutador bom sabe entrar, sair, trocar postura e esperar a abertura. Parece pancada, mas tem leitura.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEstrategiaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Quero testar isso.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Isso parece treino de esporte.",
+          "destino": "esportes"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "medicina_pokemon"
+        }
+      ]
+    },
+    "faculdade_festas": {
+      "fala": "Teve bastante. Faculdade de medicina pesa muito, então quando a galera descansava, às vezes descansava forte demais. Eu entrei em muita festa nessa fase.",
+      "opcoes": [
+        {
+          "texto": "Foi aí que Paulo entrou mais na sua vida?",
+          "destino": "paulo_festas"
+        },
+        {
+          "texto": "Você se arrepende?",
+          "destino": "arrependimento"
+        },
+        {
+          "texto": "Você bebia bastante?",
+          "destino": "bebida"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "medicina"
+        }
+      ]
+    },
+    "bebida": {
+      "fala": "Eu gosto de beber, sim. Não vou pagar de santo. Só tento não deixar isso mandar em mim. Batalha, treino e saúde cobram conta quando você exagera.",
+      "ao_entrar": {
+        "setor": {
+          "FalouBebidaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você parece saber o limite.",
+          "destino": "limite"
+        },
+        {
+          "texto": "Batalha devia se preocupar com isso.",
+          "destino": "batalha_preocupacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "faculdade_festas"
+        }
+      ]
+    },
+    "limite": {
+      "fala": "Tento saber. Nem sempre acerto. Mas eu sei diferenciar curtir de se perder. Essa diferença parece pequena, mas muda muita coisa.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLimiteGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é honesto.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "E o Paulo?",
+          "destino": "paulo_festas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "bebida"
+        }
+      ]
+    },
+    "paulo_festas": {
+      "fala": "O Paulo é parceiro. Ele tem uma energia muito própria, de festa, contato, rolê e conversa. Eu acabei entrando em muita coisa com ele, e depois nós dois paramos um pouco com o LoL também.",
+      "ao_entrar": {
+        "setor": {
+          "FalouPauloGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você acha que ele te influenciou demais?",
+          "destino": "influencia_paulo"
+        },
+        {
+          "texto": "Vocês ainda são amigos?",
+          "destino": "amizade_paulo"
+        },
+        {
+          "texto": "O Batalha não gostava disso, né?",
+          "destino": "batalha_preocupacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "influencia_paulo": {
+      "fala": "Influenciou. Mas eu também tenho responsabilidade pelas minhas escolhas. É muito fácil apontar para o Paulo e fingir que eu não decidi nada.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuResponsabilidadeGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é maduro.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Batalha discordaria?",
+          "destino": "batalha_preocupacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "paulo_festas"
+        }
+      ]
+    },
+    "amizade_paulo": {
+      "fala": "Somos. Paulo é animado, às vezes exagera, mas não é ruim. Muita gente julga ele antes de tentar entender.",
+      "opcoes": [
+        {
+          "texto": "Você defende ele.",
+          "destino": "defende_paulo"
+        },
+        {
+          "texto": "Você parece mais equilibrado.",
+          "destino": "limite"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "paulo_festas"
+        }
+      ]
+    },
+    "defende_paulo": {
+      "fala": "Defendo porque amigo não vira inimigo só porque erra ou vive diferente. Mas defender não significa concordar com tudo.",
+      "opcoes": [
+        {
+          "texto": "Isso é justo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero falar do Batalha.",
+          "destino": "batalha_preocupacao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "amizade_paulo"
+        }
+      ]
+    },
+    "batalha_preocupacao": {
+      "fala": "O Batalha sempre apoiou meu lado treinador Lutador. Ele via o quanto eu treinava, o quanto eu podia crescer. Quando eu entrei mais nas festas, ele achou que eu estava jogando isso fora.",
+      "ao_entrar": {
+        "setor": {
+          "FalouBatalhaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Ele estava certo?",
+          "destino": "batalha_certo"
+        },
+        {
+          "texto": "Você ficou bravo com ele?",
+          "destino": "batalha_bravo"
+        },
+        {
+          "texto": "Ele queria te proteger?",
+          "destino": "batalha_proteger"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "batalha_certo": {
+      "fala": "Em parte. Eu não virei treinador ruim por causa disso, mas talvez tenha perdido foco em alguns momentos. O chato é admitir que quem pega no seu pé às vezes tem um pedaço de razão.",
+      "opcoes": [
+        {
+          "texto": "Você admite as coisas numa boa.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "E isso mudou você?",
+          "destino": "mudanca"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "batalha_preocupacao"
+        }
+      ]
+    },
+    "batalha_bravo": {
+      "fala": "Fiquei. Ninguém gosta de ouvir que está se desviando. Ainda mais quando a pessoa fala como se soubesse mais da sua vida do que você.",
+      "opcoes": [
+        {
+          "texto": "Mas você entendeu depois?",
+          "destino": "batalha_proteger"
+        },
+        {
+          "texto": "Isso parece conflito de amigo.",
+          "destino": "mudanca"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "batalha_preocupacao"
+        }
+      ]
+    },
+    "batalha_proteger": {
+      "fala": "Acho que sim. Do jeito dele, ele queria proteger o meu lado treinador. Eu posso discordar do tom, mas não acho que veio de maldade.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuBatalhaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso mostra que você respeita ele.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Você conversaria com ele?",
+          "destino": "mudanca"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "batalha_preocupacao"
+        }
+      ]
+    },
+    "mudanca": {
+      "fala": "Mudei um pouco. Não virei monge, calma. Mas comecei a prestar mais atenção no que me fortalece de verdade e no que só parece divertido por algumas horas.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMudancaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com Lutador.",
+          "destino": "estrategia_lutador"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "lol": {
+      "fala": "Eu jogava LoL com Alleka, Batalha, Paulo e PH. Era divertido, mas também era um teste psicológico. Às vezes a luta mais difícil não era no mapa, era no chat.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLolGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que você parou um pouco?",
+          "destino": "parou_lol"
+        },
+        {
+          "texto": "Como era jogar com eles?",
+          "destino": "grupo_lol"
+        },
+        {
+          "texto": "Você sente falta?",
+          "destino": "saudade_lol"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "parou_lol": {
+      "fala": "Eu e Paulo demos uma afastada. Não foi grande drama. Só chega uma hora que você percebe que poderia estar treinando, dormindo ou fazendo qualquer coisa que não envolva discutir rota.",
+      "opcoes": [
+        {
+          "texto": "Isso parece saudável.",
+          "destino": "limite"
+        },
+        {
+          "texto": "PH ainda joga muito, né?",
+          "destino": "grupo_lol"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "grupo_lol": {
+      "fala": "Alleka analisava tudo, PH zoava todo mundo, Batalha tentava manter ordem, Paulo deixava o clima mais solto e eu só queria uma partida sem surto coletivo.",
+      "opcoes": [
+        {
+          "texto": "Isso parece caótico.",
+          "destino": "saudade_lol"
+        },
+        {
+          "texto": "Você era o tranquilo do grupo?",
+          "destino": "tranquilo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "saudade_lol": {
+      "fala": "Um pouco. Não do estresse, mas da época. Tinha risada, madrugada, besteira e aquela sensação de que todo mundo estava no mesmo lugar por algumas horas.",
+      "opcoes": [
+        {
+          "texto": "Você é nostálgico.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "anime": {
+      "fala": "Eu gostava muito de anime. Ainda curto um pouco. Principalmente quando tem treino, superação e personagem que apanha, levanta e fica mais forte sem discurso vazio demais.",
+      "ao_entrar": {
+        "setor": {
+          "FalouAnimeGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso influenciou seu treino?",
+          "destino": "anime_treino"
+        },
+        {
+          "texto": "Você ainda recomenda anime?",
+          "destino": "anime_recomenda"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "anime_treino": {
+      "fala": "Talvez. Quem nunca terminou um episódio e pensou em treinar no dia seguinte está mentindo ou assistiu errado.",
+      "opcoes": [
+        {
+          "texto": "Isso é muito líder Lutador.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "anime"
+        }
+      ]
+    },
+    "anime_recomenda": {
+      "fala": "Recomendo, mas com moderação. Se você usar anime para treinar, ótimo. Se usar para gritar nome de golpe no meio da academia, aí complica.",
+      "opcoes": [
+        {
+          "texto": "Justo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "anime"
+        }
+      ]
+    },
+    "esportes": {
+      "fala": "Eu tento outros esportes. Natação me ajuda com fôlego e recuperação. Baseball é estranho, técnico e divertido de um jeito que eu não esperava.",
+      "ao_entrar": {
+        "setor": {
+          "FalouEsportesGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Natação combina com treino?",
+          "destino": "natacao"
+        },
+        {
+          "texto": "Baseball parece aleatório.",
+          "destino": "baseball"
+        },
+        {
+          "texto": "Você gosta de experimentar.",
+          "destino": "experimentar"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "natacao": {
+      "fala": "Combina muito. Fôlego, controle de respiração, corpo inteiro trabalhando. Lutador que não sabe respirar perde antes de cair.",
+      "opcoes": [
+        {
+          "texto": "Isso é bem técnico.",
+          "destino": "estrategia_lutador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "esportes"
+        }
+      ]
+    },
+    "baseball": {
+      "fala": "É aleatório até você tentar. Timing, leitura de trajetória, explosão curta. Parece distante de batalha Pokémon, mas tem coisa ali.",
+      "opcoes": [
+        {
+          "texto": "Você enxerga treino em tudo.",
+          "destino": "experimentar"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "esportes"
+        }
+      ]
+    },
+    "experimentar": {
+      "fala": "Gosto. Nem tudo precisa virar obsessão. Às vezes testar um esporte novo só lembra seu corpo que ele ainda tem muito para aprender.",
+      "opcoes": [
+        {
+          "texto": "Isso foi uma boa filosofia.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "esportes"
+        }
+      ]
+    },
+    "tranquilo": {
+      "fala": "Eu tento ser. Ser tranquilo não significa não sentir nada. Só significa que eu prefiro resolver antes de explodir.",
+      "opcoes": [
+        {
+          "texto": "Isso combina com médico.",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Isso combina com lutador experiente.",
+          "destino": "estrategia_lutador"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "arrependimento": {
+      "fala": "Eu me arrependo de alguns exageros, mas não da fase inteira. Fiz amigos, vivi coisa boa, aprendi limite. O problema é quando a festa começa a treinar você em vez de você treinar para a vida.",
+      "opcoes": [
+        {
+          "texto": "Essa frase foi pesada.",
+          "destino": "mudanca"
+        },
+        {
+          "texto": "Você ainda gosta de beber?",
+          "destino": "bebida"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "faculdade_festas"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Eu sou de boa. Gosto de treinar, conversar, beber com amigo quando dá, ver uns animes e testar esporte estranho. Só levo a sério o suficiente para não desperdiçar o que meu time construiu comigo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você parece bem equilibrado.",
+          "destino": "limite"
+        },
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Se você chegou até aqui, já entendeu que meu estádio não é só soco forte. É corpo, limite, amizade, erro e voltar melhor no treino seguinte.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasGuedes",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Você conversou bastante comigo. Isso conta. Treinador que escuta aprende mais rápido do que treinador que só quer provar força."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é seu objetivo como líder?",
+          "destino": "legado"
+        },
+        {
+          "texto": "Você ainda quer melhorar?",
+          "destino": "melhorar"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "legado": {
+      "fala": "Quero que lembrem que força sem cuidado quebra, e cuidado sem coragem trava. O tipo Lutador vive no meio disso.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLegadoGuedes": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso resume bem você.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver isso na batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "melhorar": {
+      "fala": "Sempre. Medicina me ensinou que corpo vivo muda o tempo todo. Treino me ensinou que orgulho demais impede ajuste. Então sim, ainda quero melhorar muito.",
+      "opcoes": [
+        {
+          "texto": "Isso é bem humilde.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuLegadoGuedes",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuMedicinaGuedes",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComGuedes",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuSinergiaGuedes",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Presente meu não é só brinde. Primeiro entende meu treino, meu time e por que Lutador não é só bater forte.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a sinergia básica do meu time. Leva isso. Usa com disciplina, não só com pressa.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Valeu, Guedes.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu melhor a parte séria: força, cuidado e limite. Esse presente é para quem passou do discurso e prestou atenção.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Guedes.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Boa. Perder faz parte do treino, desde que a gente não finja que não doeu.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuSinergiaGuedes",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e entendeu a sinergia do meu time. Isso torna sua vitória mais limpa. Parabéns."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu. Respira. Derrota boa é aquela que mostra exatamente onde o treino precisa começar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Guedes",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra corpo e cabeça. Você chegou longe, mas ainda precisa aguentar melhor o impacto."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar mais forte.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

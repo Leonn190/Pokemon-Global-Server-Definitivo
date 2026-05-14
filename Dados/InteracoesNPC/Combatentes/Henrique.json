@@ -1,98 +1,1280 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Fogo",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Henrique, líder do estádio Fogo. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Olá. Eu sou Batalha, líder do estádio Fogo. Se veio lutar, ótimo. Se veio conversar, melhor ainda. Eu gosto de entender quem está entrando no meu estádio antes de acender tudo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você chegou ao respeito 3. Agora sim dá para liberar as duas batalhas. Cuidado: fogo controlado aquece, mas fogo solto consome tudo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Ainda não é o confronto completo, mas já posso ver se sua chama aguenta pressão."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Isso já mostra algo bom. Eu respeito quem não some depois de ouvir uma crítica ou perder uma batalha."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Como você virou líder de Fogo?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Fogo. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Eu posso ser amigável, mas não misturo amizade com falta de critério. Todo bom negócio começa com base.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Vou ganhar mais respeito.",
+          "acao": "fim"
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero conversar primeiro.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Fogo, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Primeiro você mostra valor, depois sustenta esse valor. Sem isso, é só promessa bonita em apresentação de empresa.",
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Por que você fala tanto de empresa?",
+          "destino": "empresa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Fogo permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede sua iniciativa. Fogo não é só ataque forte. É timing, pressão e saber quando acelerar.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuFogoBatalha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que meu Fogo não é descontrole. É energia aplicada na hora certa. Vamos ver se você consegue lidar com isso."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Batalha": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Fogo. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui eu uso tudo: leitura, pressão, experiência e fogo suficiente para testar até treinador confiante demais.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuAmigosBatalha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu que eu luto também pelos amigos que me trouxeram até aqui. Então vamos fazer isso direito."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Batalha": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu gosto de conversa direta. Economia, amizade e batalha têm uma coisa em comum: se você não entende o contexto, toma decisão ruim.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou várias vezes. Isso é raro. A maioria quer só a batalha, perde, reclama do calor e vai embora."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComBatalha": true,
+          "ConversasBatalha": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como você virou líder de Fogo?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Você é formado em economia?",
+          "destino": "economia"
+        },
+        {
+          "texto": "Você trabalha no ramo empresarial?",
+          "destino": "empresa"
+        },
+        {
+          "texto": "Você virou treinador pelos seus amigos?",
+          "destino": "amigos"
+        },
+        {
+          "texto": "O que você acha do Guedes?",
+          "destino": "guedes"
+        },
+        {
+          "texto": "Você jogava LoL com Alleka e Guedes?",
+          "destino": "lol"
+        },
+        {
+          "texto": "Você namora?",
+          "destino": "namoro"
+        },
+        {
+          "texto": "Você parece meio soberbo às vezes.",
+          "destino": "soberba"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Para ser sincero, eu não nasci dizendo que ia ser treinador. Eu sempre gostei do grupo, dos meus amigos, da energia que todo mundo criava junto. Quando vi todos virando líderes, pensei: talvez eu também devesse acender minha parte disso.",
+      "ao_entrar": {
+        "setor": {
+          "OuviuOrigemBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então você virou treinador pelos amigos?",
+          "destino": "amigos"
+        },
+        {
+          "texto": "E por que tipo Fogo?",
+          "destino": "fogo"
+        },
+        {
+          "texto": "Você continuou na empresa mesmo assim?",
+          "destino": "empresa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "fogo": {
+      "fala": "Fogo combina com iniciativa. É energia, impulso, coragem e risco. Eu sempre gostei dessa ideia: uma chama controlada pode mover muita coisa. Uma chama sem controle só queima capital e confiança.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFogoBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você transformou Fogo em economia.",
+          "destino": "economia"
+        },
+        {
+          "texto": "Então seu estilo é controle?",
+          "destino": "controle_fogo"
+        },
+        {
+          "texto": "Quero ver isso em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "origem"
+        }
+      ]
+    },
+    "controle_fogo": {
+      "fala": "Exato. Muita gente acha que Fogo é só explodir na primeira rodada. Eu prefiro queimar recurso do adversário, forçar decisão ruim e atacar quando o retorno é maior.",
+      "opcoes": [
+        {
+          "texto": "Isso é bem calculista.",
+          "destino": "economia"
+        },
+        {
+          "texto": "Isso combina com empresa.",
+          "destino": "empresa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "fogo"
+        }
+      ]
+    },
+    "economia": {
+      "fala": "Sou formado em economia. Eu tenho orgulho disso. Economia te ensina que decisão sem custo não existe. Em batalha é igual: toda troca, todo ataque e toda defesa têm preço.",
+      "ao_entrar": {
+        "setor": {
+          "FalouEconomiaBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você usa isso nas batalhas?",
+          "destino": "economia_batalha"
+        },
+        {
+          "texto": "Você parece gostar muito do mundo empresarial.",
+          "destino": "empresa"
+        },
+        {
+          "texto": "Isso te deixa soberbo?",
+          "destino": "soberba"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "economia_batalha": {
+      "fala": "Uso o tempo todo. Se eu forço você a gastar cura cedo, trocar mal ou entrar no meu ritmo, eu já comprei vantagem. O dano vem depois.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMetodoBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você pensa como gestor até lutando.",
+          "destino": "empresa"
+        },
+        {
+          "texto": "Quero testar esse método.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "economia"
+        }
+      ]
+    },
+    "empresa": {
+      "fala": "Eu sempre trabalhei no ramo empresarial e me orgulho disso. Não vejo contradição entre tocar uma carreira séria e ser líder de estádio. Na verdade, uma coisa ajuda a outra.",
+      "ao_entrar": {
+        "setor": {
+          "FalouEmpresaBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como uma coisa ajuda a outra?",
+          "destino": "gestao_estadio"
+        },
+        {
+          "texto": "Você consegue fazer tudo ao mesmo tempo?",
+          "destino": "equilibrio"
+        },
+        {
+          "texto": "Você parece muito orgulhoso disso.",
+          "destino": "soberba"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "gestao_estadio": {
+      "fala": "Um estádio também é gestão. Tem equipe, imagem, investimento, relação com público, formação de treinadores e resultado. Quem acha que líder só escolhe Pokémon está olhando metade do negócio.",
+      "opcoes": [
+        {
+          "texto": "Isso faz sentido.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Você fala como administrador.",
+          "destino": "empresa"
+        },
+        {
+          "texto": "E seus amigos?",
+          "destino": "amigos"
+        }
+      ]
+    },
+    "equilibrio": {
+      "fala": "Consigo porque eu gosto de trabalhar. E porque ser treinador não precisa anular o resto da vida. Eu não entrei nisso para fugir da empresa. Entrei porque também fazia sentido para mim.",
+      "opcoes": [
+        {
+          "texto": "Você tem bastante disciplina.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso ajuda no namoro?",
+          "destino": "namoro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "empresa"
+        }
+      ]
+    },
+    "amigos": {
+      "fala": "Eu gosto muito do grupo. Ver todo mundo virando líder me deixou feliz de verdade. Cada um escolheu um caminho meio torto, às vezes confuso, mas todo mundo chegou em algum lugar grande.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuAmigosBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você se tornou treinador por eles?",
+          "destino": "pelos_amigos"
+        },
+        {
+          "texto": "Você se preocupa com o Guedes?",
+          "destino": "guedes"
+        },
+        {
+          "texto": "Você sente orgulho do grupo?",
+          "destino": "orgulho_grupo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pelos_amigos": {
+      "fala": "Sim. Eu poderia continuar só trabalhando, tocando a empresa e seguindo minha vida. Mas quando vi o grupo se movendo, percebi que eu queria fazer parte disso também.",
+      "opcoes": [
+        {
+          "texto": "Isso é bem leal.",
+          "destino": "orgulho_grupo"
+        },
+        {
+          "texto": "Você parece menos frio do que fala.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "amigos"
+        }
+      ]
+    },
+    "orgulho_grupo": {
+      "fala": "Tenho orgulho. Mesmo quando eu discordo deles. Alleka com aquele jeito analítico, Guedes tentando se encontrar, PH zoando todo mundo, Paulo sendo Paulo... é um grupo complicado, mas é nosso.",
+      "opcoes": [
+        {
+          "texto": "Fala do Guedes.",
+          "destino": "guedes"
+        },
+        {
+          "texto": "Fala do LoL.",
+          "destino": "lol"
+        },
+        {
+          "texto": "Isso foi bonito.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "amigos"
+        }
+      ]
+    },
+    "guedes": {
+      "fala": "O Guedes é um grande amigo. Eu sempre apoiei o lado treinador Lutador dele, porque ele tem potencial real. Por isso mesmo eu critico algumas atitudes. Quem não se importa deixa a pessoa se perder em silêncio.",
+      "ao_entrar": {
+        "setor": {
+          "FalouGuedesBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você fala das festas?",
+          "destino": "guedes_festas"
+        },
+        {
+          "texto": "Você acha que Paulo influenciou ele?",
+          "destino": "paulo_guedes"
+        },
+        {
+          "texto": "Você pega pesado com ele?",
+          "destino": "critica_pesada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "guedes_festas": {
+      "fala": "Sim. Faculdade, festa, bebida, rolê demais... eu entendo que a vida não é só treino, mas também sei quando alguém começa a apagar a própria força para caber em ambiente errado.",
+      "opcoes": [
+        {
+          "texto": "Você queria proteger ele?",
+          "destino": "proteger_guedes"
+        },
+        {
+          "texto": "Isso parece julgamento.",
+          "destino": "critica_pesada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "paulo_guedes": {
+      "fala": "Paulo tem energia boa, mas influência existe. Eu não acho justo jogar tudo nas costas dele, só acho que certas escolhas em grupo puxam todo mundo junto.",
+      "opcoes": [
+        {
+          "texto": "Você não odeia o Paulo então?",
+          "destino": "paulo_visao"
+        },
+        {
+          "texto": "Você fala isso para o Guedes?",
+          "destino": "proteger_guedes"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "paulo_visao": {
+      "fala": "Não odeio. Paulo é animado, positivo e tem um lado bom. O problema é quando a festa vira centro de gravidade. Eu prefiro que meus amigos escolham o próprio eixo.",
+      "opcoes": [
+        {
+          "texto": "Você pensa como economista até nisso.",
+          "destino": "economia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "paulo_guedes"
+        }
+      ]
+    },
+    "proteger_guedes": {
+      "fala": "Queria. Talvez eu tenha falado de um jeito duro demais algumas vezes, mas minha intenção era boa. Eu queria ver o Guedes treinando, crescendo e usando o potencial que ele tem.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuGuedesBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso mostra que você se importa.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Você deveria falar isso mais claramente.",
+          "destino": "clareza"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "critica_pesada": {
+      "fala": "Pode ser. Eu sei que às vezes pareço soberbo. O problema é que quando vejo alguém desperdiçando potencial, eu tenho dificuldade de fingir calma.",
+      "opcoes": [
+        {
+          "texto": "Então sua soberba vem de cobrança?",
+          "destino": "soberba"
+        },
+        {
+          "texto": "Você quer bem aos seus amigos.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "guedes"
+        }
+      ]
+    },
+    "clareza": {
+      "fala": "Talvez. Economia ensina a ser objetivo, empresa ensina a cobrar, mas amizade exige outro tom. Ainda estou aprendendo essa parte.",
+      "opcoes": [
+        {
+          "texto": "Isso foi bem honesto.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "proteger_guedes"
+        }
+      ]
+    },
+    "lol": {
+      "fala": "Eu gostava muito de jogar LoL com Alleka e Guedes, principalmente. Era uma bagunça, mas uma bagunça boa. Às vezes parecia que a partida era menos importante do que a resenha.",
+      "ao_entrar": {
+        "setor": {
+          "FalouLolBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Como era jogar com Alleka?",
+          "destino": "lol_alleka"
+        },
+        {
+          "texto": "E com Guedes?",
+          "destino": "lol_guedes"
+        },
+        {
+          "texto": "Você sente falta dessa época?",
+          "destino": "saudade_lol"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "lol_alleka": {
+      "fala": "Alleka analisava tudo. Se desse, ele transformava até invade mal feita em tese de engenharia. Era irritante, mas útil.",
+      "opcoes": [
+        {
+          "texto": "Vocês combinavam então.",
+          "destino": "saudade_lol"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "lol_guedes": {
+      "fala": "Guedes era mais tranquilo. Às vezes tranquilo até demais. Mas quando entrava no foco, jogava bem. Eu sempre achei que ele tinha mais consistência do que percebia.",
+      "opcoes": [
+        {
+          "texto": "Você realmente acredita nele.",
+          "destino": "proteger_guedes"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "saudade_lol": {
+      "fala": "Sinto. Não necessariamente do jogo em si, mas do grupo ali, falando besteira, tentando ganhar, discutindo jogada e esquecendo um pouco o resto.",
+      "opcoes": [
+        {
+          "texto": "Você é nostálgico.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "lol"
+        }
+      ]
+    },
+    "namoro": {
+      "fala": "Eu namoro, sim. E isso me faz bem. Ter alguém do lado ajuda a lembrar que trabalho, batalha e resultado não são a vida inteira.",
+      "ao_entrar": {
+        "setor": {
+          "FalouNamoroBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso te deixa mais equilibrado?",
+          "destino": "equilibrio_emocional"
+        },
+        {
+          "texto": "Você fala pouco disso.",
+          "destino": "reservado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "equilibrio_emocional": {
+      "fala": "Deixa. Eu posso gostar de empresa, meta e resultado, mas ninguém deveria viver só de planilha e batalha. Relacionamento também ensina prioridade.",
+      "opcoes": [
+        {
+          "texto": "Isso é maduro.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "namoro"
+        }
+      ]
+    },
+    "reservado": {
+      "fala": "Algumas coisas eu prefiro proteger. Nem tudo precisa virar tema de estádio. Às vezes ser discreto é o maior sinal de respeito.",
+      "opcoes": [
+        {
+          "texto": "Justo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "namoro"
+        }
+      ]
+    },
+    "soberba": {
+      "fala_condicional": {
+        "padrao": "Eu sei que pareço soberbo às vezes. Talvez eu seja um pouco. Mas existe diferença entre se achar superior e ter orgulho do que construiu.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuGuedesBatalha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Eu pareço soberbo principalmente quando cobro quem eu gosto. Não é a melhor forma de demonstrar cuidado, mas é algo que estou tentando ajustar."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouSoberbaBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você admite isso numa boa.",
+          "destino": "auto_consciencia"
+        },
+        {
+          "texto": "Você tem orgulho demais?",
+          "destino": "orgulho"
+        },
+        {
+          "texto": "Isso afeta seus amigos?",
+          "destino": "clareza"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "auto_consciencia": {
+      "fala": "Admitir problema é melhor do que fingir humildade. Falsa humildade também é vaidade, só que com embalagem mais bonita.",
+      "opcoes": [
+        {
+          "texto": "Essa foi boa.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "soberba"
+        }
+      ]
+    },
+    "orgulho": {
+      "fala": "Tenho orgulho do meu caminho. Economia, empresa, estádio, amigos... nada disso apareceu do nada. Se isso soa soberbo, paciência. Eu sei o que custou.",
+      "opcoes": [
+        {
+          "texto": "Faz sentido.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver esse orgulho em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "soberba"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Eu posso cobrar, provocar e parecer sério demais, mas no fundo eu quero ver meus amigos bem e meu estádio forte. Para mim, fogo bom é o que impulsiona, não o que destrói.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso resume bem você.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Se você chegou até aqui, já entendeu que eu não sou só cobrança. Eu entrei nessa por amizade, fiquei por responsabilidade e luto porque agora isso também é meu.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasBatalha",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Você conversou bastante comigo. Isso é raro. Talvez você entenda melhor meu fogo do que muita gente que só vê a parte da cobrança."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual seu objetivo como líder?",
+          "destino": "legado"
+        },
+        {
+          "texto": "Você tem medo de perder os amigos?",
+          "destino": "medo"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "legado": {
+      "fala": "Quero ser lembrado como alguém que manteve a chama do grupo acesa sem deixar o próprio caminho esfriar. Parece frase pronta, eu sei, mas é verdade.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuLegadoBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é bem líder de Fogo.",
+          "destino": "fogo"
+        },
+        {
+          "texto": "Isso foi sincero.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero batalhar agora.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "medo": {
+      "fala": "Um pouco. Todo mundo cresceu, mudou, virou líder, seguiu caminho. Eu fico feliz por isso, mas também sei que grupo nenhum fica exatamente igual para sempre.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuHumanoBatalha": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é bem humano.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Você devia falar isso para eles.",
+          "destino": "clareza"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuLegadoBatalha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuHumanoBatalha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComBatalha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuFogoBatalha",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Presente, para mim, precisa representar confiança. Primeiro entende meu fogo, meu grupo e minha forma de cobrar.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a base do meu Fogo. Leve isso. Use com iniciativa, mas sem sair queimando tudo ao redor.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Batalha.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu mais do que a estratégia. Entendeu o motivo. Esse presente é para quem viu a chama por trás da cobrança.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Batalha.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Boa. Eu respeito resultado, principalmente quando vem com preparo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuFogoBatalha",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e entendeu meu Fogo. Isso torna sua vitória mais forte do que só número no placar."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu. Acontece. Agora decide se essa derrota vira custo afundado ou investimento em treino.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Batalha",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra demais mesmo. Volte quando conseguir transformar pressão em decisão boa."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

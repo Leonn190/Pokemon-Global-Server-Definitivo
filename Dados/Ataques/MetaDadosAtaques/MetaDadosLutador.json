@@ -1,0 +1,397 @@
+{
+  "Grito de Guerra": {
+    "codigo": 124,
+    "nome": "Grito de Guerra",
+    "papeis": [
+      "buff"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "atk"
+    ],
+    "condicoes": [
+      "melhor_antes_de_causar_dano"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Implacavel": {
+    "codigo": 125,
+    "nome": "Implacável",
+    "papeis": [
+      "passivo",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "imparavel",
+      "dur"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.5
+  },
+  "Soco": {
+    "codigo": 126,
+    "nome": "Soco",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico"
+    ],
+    "condicoes": [
+      "bom_para_economizar_energia"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Treinar": {
+    "codigo": 127,
+    "nome": "Treinar",
+    "papeis": [
+      "buff"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "atributo_aleatorio",
+      "focado"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Acrobacia": {
+    "codigo": 128,
+    "nome": "Acrobacia",
+    "papeis": [
+      "dano",
+      "movimento"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "reposicionamento"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "movimento",
+      "dano_fisico"
+    ],
+    "condicoes": [
+      "melhor_com_area_aliada_livre"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Concentracao": {
+    "codigo": 129,
+    "nome": "Concentração",
+    "papeis": [
+      "suporte",
+      "limpeza",
+      "buff"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "remove_debuff",
+      "focado",
+      "energia"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_com_debuff"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Lancamento": {
+    "codigo": 130,
+    "nome": "Lançamento",
+    "papeis": [
+      "dano",
+      "controle",
+      "movimento"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_fisico",
+      "movimento_forcado"
+    ],
+    "condicoes": [
+      "melhor_para_desorganizar_posicao"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Treino em Grupo": {
+    "codigo": 131,
+    "nome": "Treino em Grupo",
+    "papeis": [
+      "buff",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliados_adjacentes"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "atributo_aleatorio",
+      "adjacencia"
+    ],
+    "condicoes": [
+      "melhor_com_aliados_adjacentes"
+    ],
+    "prioridade_simulacao": 0.64
+  },
+  "Karate": {
+    "codigo": 132,
+    "nome": "Karatê",
+    "papeis": [
+      "dano",
+      "controle",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "critico",
+      "recuo",
+      "focado"
+    ],
+    "condicoes": [
+      "melhor_com_usuario_focado"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Soco Carregado": {
+    "codigo": 133,
+    "nome": "Soco Carregado",
+    "papeis": [
+      "dano",
+      "controle",
+      "energia"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "energia_atual",
+      "critico",
+      "movimento_forcado"
+    ],
+    "condicoes": [
+      "melhor_com_energia_alta",
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.84
+  },
+  "Socos Multiplos": {
+    "codigo": 134,
+    "nome": "Socos Múltiplos",
+    "papeis": [
+      "dano",
+      "multi_hit",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "quatro_hits",
+      "critico_por_hit"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_sem_barreira"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Missil de Punho": {
+    "codigo": 135,
+    "nome": "Míssil de Punho",
+    "papeis": [
+      "dano",
+      "especial",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "sempre_acerta",
+      "dano_especial"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_evasivo"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Chamar para Briga": {
+    "codigo": 136,
+    "nome": "Chamar para Briga",
+    "papeis": [
+      "controle",
+      "protecao",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "provocando",
+      "preparado",
+      "energia"
+    ],
+    "condicoes": [
+      "melhor_se_aliados_vulneraveis"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Chute Pirueta Aereo": {
+    "codigo": 137,
+    "nome": "Chute Pirueta Aéreo",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_aereo",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "bonus_alvo_aereo"
+    ],
+    "condicoes": [
+      "melhor_contra_flutuando_ou_voando"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Chute Duplo": {
+    "codigo": 138,
+    "nome": "Chute Duplo",
+    "papeis": [
+      "dano",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "inimigos_adjacentes",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "duas_areas",
+      "adjacencia"
+    ],
+    "condicoes": [
+      "melhor_com_dois_alvos_adjacentes"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Contra Ataque": {
+    "codigo": 139,
+    "nome": "Contra Ataque",
+    "papeis": [
+      "dano",
+      "retaliacao",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_que_atacou_usuario",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "historico_ataque",
+      "bonus_retaliacao"
+    ],
+    "condicoes": [
+      "melhor_contra_inimigo_que_atacou_usuario"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Submissao": {
+    "codigo": 140,
+    "nome": "Submissão",
+    "papeis": [
+      "dano",
+      "debuff",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "enfraquecido",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.78
+  }
+}

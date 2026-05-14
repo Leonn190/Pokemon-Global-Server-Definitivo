@@ -3,12 +3,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const NOMES_PASTAS_RELATORIOS = [
-  "Outros Relatorios",
-  "Outros Relatórios",
+  "Documentação/Relatorios/Registros",
+  "Documentação/Relatorios/Readmes",
+  "Documentação/Relatorios",
   "Relatorios",
   "Relatórios",
-  "Outros/Relatorios",
-  "Outros/Relatórios",
 ];
 
 function diretorioModulo() {

@@ -10,19 +10,19 @@ import threading
 
 import pygame
 
-from Codigo.Geradores.Baus import Bau
-from Codigo.Geradores.Armadilhas import ArmadilhasDungeon
-from Codigo.Geradores.EstruturaNaturais import (
+from Codigo.ModulosMundo.Geradores.Baus import Bau
+from Codigo.ModulosMundo.Geradores.Armadilhas import ArmadilhasDungeon
+from Codigo.ModulosMundo.Geradores.EstruturaNaturais import (
     EstruturaNatural,
     limitar_escala_estrutura_natural,
     prioridade_estrutura_natural,
     tipo_estrutura_natural_por_codigo,
 )
-from Codigo.Geradores.Estadio import GeradorEstadio, EstadioInterno
-from Codigo.Geradores.Dungeon import renderizar_entrada_mundo as renderizar_entrada_dungeon_mundo
-from Codigo.Geradores.portal import Portal
-from Codigo.Geradores.PokemonMundo import Pokemon
-from Codigo.Geradores.Projetil import Projetil
+from Codigo.ModulosMundo.Geradores.Estadio import GeradorEstadio, EstadioInterno
+from Codigo.ModulosMundo.Geradores.Dungeon import renderizar_entrada_mundo as renderizar_entrada_dungeon_mundo
+from Codigo.ModulosMundo.Geradores.portal import Portal
+from Codigo.ModulosMundo.Geradores.PokemonMundo import Pokemon
+from Codigo.ModulosMundo.Geradores.Projetil import Projetil
 from Codigo.ModulosMundo.ControladorAtores import ControladorAtores
 from Codigo.ModulosMundo.ControladorCriaveis import ControladorCriaveis
 

@@ -1,0 +1,271 @@
+{
+  "Bola Eletrica": {
+    "codigo": 79,
+    "nome": "Bola Eletrica",
+    "papeis": [
+      "dano",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "splash"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Energizar": {
+    "codigo": 80,
+    "nome": "Energizar",
+    "papeis": [
+      "suporte",
+      "energia"
+    ],
+    "alvos_preferidos": [
+      "aliado_importante",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "energizado"
+    ],
+    "condicoes": [
+      "melhor_em_aliado_com_gasto_alto"
+    ],
+    "prioridade_simulacao": 0.58
+  },
+  "Choque Duplo": {
+    "codigo": 81,
+    "nome": "Choque Duplo",
+    "papeis": [
+      "dano",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "duas_areas"
+    ],
+    "condicoes": [
+      "melhor_com_dois_alvos"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Descarga Total": {
+    "codigo": 82,
+    "nome": "Descarga Total",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "energia"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "alto"
+    },
+    "efeitos_relevantes": [
+      "gasta_energia_total"
+    ],
+    "condicoes": [
+      "melhor_com_energia_alta",
+      "pior_com_energia_baixa"
+    ],
+    "prioridade_simulacao": 0.74
+  },
+  "Vampirismo Energético": {
+    "codigo": 83,
+    "nome": "Vampirismo Energético",
+    "papeis": [
+      "dano",
+      "energia",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_com_energia",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "roubo_energia",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_energia"
+    ],
+    "prioridade_simulacao": 0.76
+  },
+  "Eletrochoque": {
+    "codigo": 84,
+    "nome": "Eletrochoque",
+    "papeis": [
+      "dano",
+      "area",
+      "stack"
+    ],
+    "alvos_preferidos": [
+      "inimigo_resistente",
+      "inimigo_recorrente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "replicas",
+      "stack_no_alvo"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Curto": {
+    "codigo": 85,
+    "nome": "Curto",
+    "papeis": [
+      "dano",
+      "energia"
+    ],
+    "alvos_preferidos": [
+      "inimigo_com_energia"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_por_energia_alvo"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_energia"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Choque do Trovão": {
+    "codigo": 86,
+    "nome": "Choque do Trovão",
+    "papeis": [
+      "dano",
+      "controle"
+    ],
+    "alvos_preferidos": [
+      "inimigo_encharcado",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "paralisado",
+      "critico",
+      "encharcado"
+    ],
+    "condicoes": [
+      "melhor_contra_encharcado"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Ultra Raio Aleatório": {
+    "codigo": 87,
+    "nome": "Ultra Raio Aleatório",
+    "papeis": [
+      "dano",
+      "aleatorio"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "medio",
+      "aliados": "alto"
+    },
+    "efeitos_relevantes": [
+      "area_aleatoria"
+    ],
+    "condicoes": [
+      "melhor_quando_risco_aliado_aceitavel"
+    ],
+    "prioridade_simulacao": 0.45
+  },
+  "Amplificar": {
+    "codigo": 88,
+    "nome": "Amplificar",
+    "papeis": [
+      "buff",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "amp"
+    ],
+    "condicoes": [
+      "melhor_antes_de_causar_dano"
+    ],
+    "prioridade_simulacao": 0.56
+  },
+  "Dança Elétrica": {
+    "codigo": 89,
+    "nome": "Dança Elétrica",
+    "papeis": [
+      "clima",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "tempestade_de_raios"
+    ],
+    "condicoes": [
+      "melhor_com_time_eletrico"
+    ],
+    "prioridade_simulacao": 0.62
+  },
+  "Barragem Energetica": {
+    "codigo": 90,
+    "nome": "Barragem Energetica",
+    "papeis": [
+      "protecao",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "aliado_ferido",
+      "aliado_importante",
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "barreira"
+    ],
+    "condicoes": [
+      "melhor_se_alvo_vai_ser_focado"
+    ],
+    "prioridade_simulacao": 0.64
+  }
+}

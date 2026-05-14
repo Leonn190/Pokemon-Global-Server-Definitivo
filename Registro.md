@@ -34,9 +34,9 @@
 
 ## 3. Principais pastas
 
-![Gráfico de barras das 16 pastas principais](Outros/Relatorios/Imagens/2026-05-14_14-56-24/rank_16_pastas_barras.png)
+![Gráfico de barras das 16 pastas principais](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/rank_16_pastas_barras.png)
 
-![Gráfico de pizza das 16 pastas principais](Outros/Relatorios/Imagens/2026-05-14_14-56-24/rank_16_pastas_pizza.png)
+![Gráfico de pizza das 16 pastas principais](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/rank_16_pastas_pizza.png)
 
 | Rank | Pasta | Subpastas | Arquivos | Linhas gerais | Tamanho (KB) |
 |---:|---|---:|---:|---:|---:|
@@ -48,7 +48,7 @@
 | 6 | `Paineis` | 0 | 18 | 8.747 | 390.21 |
 | 7 | `ServerMundo` | 2 | 26 | 7.160 | 379.00 |
 | 8 | `Telas` | 2 | 21 | 6.815 | 270.10 |
-| 9 | `Outros` | 0 | 10 | 6.175 | 232.33 |
+| 9 | `Ferramentas` | 0 | 10 | 6.175 | 232.33 |
 | 10 | `ModulosBatalha` | 0 | 13 | 5.591 | 269.97 |
 | 11 | `ModulosGerais` | 1 | 26 | 5.261 | 201.47 |
 | 12 | `ModulosMundo` | 0 | 16 | 5.153 | 244.67 |
@@ -150,7 +150,7 @@ Codigo/
 │   ├── ServicoCraft.py
 │   ├── ServicoMapaMundo.py
 │   └── SistemaPacotes.py
-├── Outros/
+├── Ferramentas/
 │   └── Shaders/
 │       ├── mundo.frag
 │       └── mundo.vert
@@ -261,7 +261,7 @@ Codigo/
 ### `Server/`
 
 ```text
-SimuladorServerJogo/
+Servidor/
 ├── Batalha/
 │   ├── BatalhaIA/
 │   │   ├── AvaliadorIA.py
@@ -274,7 +274,7 @@ SimuladorServerJogo/
 │   │   ├── HackerIA.py
 │   │   ├── MacroSimulador.py
 │   │   ├── MemoriaIA.py
-│   │   ├── MetadadosAtaquesIA.json
+│   │   ├── MetaDadosAtaques/
 │   │   ├── MetadadosIA.py
 │   │   ├── MicroSimulador.py
 │   │   └── PlanejadorIA.py
@@ -433,14 +433,14 @@ SimuladorServerJogo/
 
 ```text
 Dados/
-├── Catalogo/
+├── Catalogos/
 │   ├── Creditos.json
 │   ├── Dungeon.json
 │   ├── Musicas.json
 │   ├── Pokemon Global Server - Baus.json
 │   ├── Pokemon Global Server - Receitas.json
 │   └── Sons.json
-├── InteracoesNPC/
+├── Dialogos/
 │   ├── Combatentes/
 │   │   ├── Alleka.json
 │   │   ├── Amable.json
@@ -2491,10 +2491,10 @@ Site/
 └── package.json
 ```
 
-### `Outros/`
+### `Ferramentas/`
 
 ```text
-Outros/
+Ferramentas/
 ├── AtualizadorReadMe.py
 ├── AtualizadorRelatorios.py
 ├── ConfigFixa.py
@@ -2513,55 +2513,55 @@ Outros/
 
 | Arquivo | Linhas | Tamanho (KB) |
 |---|---:|---:|
-| `Outros/GeradorRelatorios.py` | 1.828 | 67.77 |
-| `SimuladorServerJogo/Gerais/EstadoServidor.py` | 1.680 | 73.46 |
+| `Ferramentas/GeradorRelatorios.py` | 1.828 | 67.77 |
+| `Servidor/Gerais/EstadoServidor.py` | 1.680 | 73.46 |
 | `Codigo/ModulosMundo/ControladorObjetos.py` | 1.310 | 66.61 |
 | `Codigo/Paineis/FichaPokemon.py` | 1.269 | 57.15 |
 | `Codigo/ModulosBatalha/MontadorJogadas.py` | 1.210 | 60.39 |
-| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | 1.195 | 61.28 |
-| `SimuladorServerJogo/Gerais/Geradores/GeradorDungeons.py` | 1.168 | 52.95 |
-| `Outros/EditorAnimaçãoAtaques.py` | 1.118 | 48.03 |
+| `Servidor/Batalha/PokemonBatalha.py` | 1.195 | 61.28 |
+| `Servidor/Gerais/Geradores/GeradorDungeons.py` | 1.168 | 52.95 |
+| `Ferramentas/EditorAnimaçãoAtaques.py` | 1.118 | 48.03 |
 | `Codigo/Paineis/VisualizadorLog.py` | 1.101 | 64.15 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py` | 1.096 | 50.19 |
-| `SimuladorServerJogo/Batalha/Partida.py` | 1.063 | 53.29 |
-| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/UtilitariosExecutes.py` | 1.019 | 43.11 |
-| `Codigo/Cenas/CenaMundo.py` | 1.006 | 58.58 |
-| `SimuladorServerJogo/Mundo/Cerebros/CerebroDungeons.py` | 944 | 55.41 |
+| `Servidor/Batalha/Partida.py` | 1.063 | 53.29 |
+| `Servidor/Logica/Executes/ExecutesAtaques/UtilitariosExecutes.py` | 1.019 | 43.11 |
+| `Codigo/ModulosGerais/Cenas/CenaMundo.py` | 1.006 | 58.58 |
+| `Servidor/Mundo/Cerebros/CerebroDungeons.py` | 944 | 55.41 |
 | `Codigo/ModulosMundo/ControladorPlayer.py` | 931 | 46.04 |
-| `SimuladorServerJogo/Gerais/Geradores/GeradorPokemon.py` | 926 | 38.57 |
-| `SimuladorServerJogo/Mundo/BancoDados.py` | 821 | 40.74 |
+| `Servidor/Gerais/Geradores/GeradorPokemon.py` | 926 | 38.57 |
+| `Servidor/Mundo/BancoDados.py` | 821 | 40.74 |
 | `Codigo/Prefabs/Texto.py` | 819 | 31.41 |
 | `Codigo/ModulosGerais/Sonoridades.py` | 786 | 24.16 |
-| `SimuladorServerJogo/Gerais/Rotas/Atualizador.py` | 786 | 42.70 |
+| `Servidor/Gerais/Rotas/Atualizador.py` | 786 | 42.70 |
 | `Codigo/Visual/PokemonBatalhaAnimator.py` | 770 | 34.52 |
-| `SimuladorServerJogo/Mundo/Cerebros/CerebroNPCs.py` | 747 | 39.54 |
+| `Servidor/Mundo/Cerebros/CerebroNPCs.py` | 747 | 39.54 |
 | `Codigo/Paineis/FichaPokemonBatalha.py` | 733 | 35.87 |
-| `SimuladorServerJogo/Logica/Comandos/Comandos.py` | 729 | 30.92 |
+| `Servidor/Logica/Comandos/Comandos.py` | 729 | 30.92 |
 | `Codigo/ModulosBatalha/ControladorAnimacoes.py` | 716 | 36.29 |
-| `SimuladorServerJogo/Gerais/Geradores/GeradorMundo.py` | 689 | 27.82 |
-| `Codigo/Geradores/PokemonMundo.py` | 688 | 33.25 |
+| `Servidor/Gerais/Geradores/GeradorMundo.py` | 689 | 27.82 |
+| `Codigo/ModulosMundo/Geradores/PokemonMundo.py` | 688 | 33.25 |
 | `Codigo/ModulosBatalha/ControladorBatalha.py` | 680 | 32.84 |
-| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/ExecutesAgua.py` | 678 | 29.98 |
+| `Servidor/Logica/Executes/ExecutesAtaques/ExecutesAgua.py` | 678 | 29.98 |
 | `Codigo/ModulosGerais/ImagensMapa.py` | 669 | 29.71 |
-| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/ExecutesLutador.py` | 662 | 28.75 |
-| `Outros/AtualizadorRelatorios.py` | 651 | 23.61 |
+| `Servidor/Logica/Executes/ExecutesAtaques/ExecutesLutador.py` | 662 | 28.75 |
+| `Ferramentas/AtualizadorRelatorios.py` | 651 | 23.61 |
 | `Codigo/Paineis/Container.py` | 640 | 23.54 |
 | `Codigo/Telas/Telas/TelaCreditos.py` | 627 | 27.04 |
 | `Codigo/Paineis/PainelConhecimento.py` | 617 | 25.33 |
-| `Codigo/Geradores/Player/Perfil.py` | 613 | 33.11 |
+| `Codigo/ModulosMundo/Geradores/Player/Perfil.py` | 613 | 33.11 |
 | `Codigo/Visual/PokemonBatalhaEstado.py` | 596 | 26.86 |
-| `SimuladorServerJogo/Gerais/Rotas/Ativador.py` | 589 | 29.28 |
+| `Servidor/Gerais/Rotas/Ativador.py` | 589 | 29.28 |
 | `Codigo/Telas/Telas/TelaServers.py` | 581 | 18.36 |
-| `SimuladorServerJogo/Batalha/RodadorTurno.py` | 566 | 29.70 |
-| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/ExecutesVoador.py` | 559 | 23.84 |
-| `SimuladorServerJogo/Gerais/LoaderRegras.py` | 549 | 33.01 |
+| `Servidor/Batalha/RodadorTurno.py` | 566 | 29.70 |
+| `Servidor/Logica/Executes/ExecutesAtaques/ExecutesVoador.py` | 559 | 23.84 |
+| `Servidor/Gerais/LoaderRegras.py` | 549 | 33.01 |
 | `Codigo/ModulosMundo/LeitorMundo.py` | 547 | 25.03 |
 | `Codigo/Telas/Telas/TelasGenericas.py` | 547 | 18.58 |
-| `SimuladorServerJogo/Mundo/InicializadorNPC.py` | 538 | 27.66 |
+| `Servidor/Mundo/InicializadorNPC.py` | 538 | 27.66 |
 | `Codigo/Visual/ContatoIrregularAnimator.py` | 529 | 23.57 |
-| `Outros/GameTestFPS.py` | 528 | 18.13 |
+| `Ferramentas/GameTestFPS.py` | 528 | 18.13 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioItens.py` | 517 | 23.75 |
-| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/ExecutesPsiquico.py` | 517 | 23.96 |
+| `Servidor/Logica/Executes/ExecutesAtaques/ExecutesPsiquico.py` | 517 | 23.96 |
 | `Codigo/ModulosBatalha/PokemonBatalha.py` | 514 | 24.97 |
 
 ### Top 20 maiores classes
@@ -2571,48 +2571,48 @@ Outros/
 | `Codigo/ModulosMundo/ControladorObjetos.py` | `ControladorObjetos` | 1.281 |
 | `Codigo/Paineis/FichaPokemon.py` | `FichaPokemon` | 1.246 |
 | `Codigo/ModulosBatalha/MontadorJogadas.py` | `MontadorJogadas` | 1.163 |
-| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | `PokemonBatalha` | 1.112 |
+| `Servidor/Batalha/PokemonBatalha.py` | `PokemonBatalha` | 1.112 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py` | `InventarioPokemons` | 1.066 |
-| `SimuladorServerJogo/Batalha/Partida.py` | `Partida` | 1.019 |
-| `Codigo/Cenas/CenaMundo.py` | `CenaMundo` | 964 |
+| `Servidor/Batalha/Partida.py` | `Partida` | 1.019 |
+| `Codigo/ModulosGerais/Cenas/CenaMundo.py` | `CenaMundo` | 964 |
 | `Codigo/ModulosMundo/ControladorPlayer.py` | `ControladorPlayer` | 912 |
 | `Codigo/Paineis/VisualizadorLog.py` | `VisualizadorLog` | 911 |
-| `SimuladorServerJogo/Mundo/Cerebros/CerebroDungeons.py` | `CerebroDungeons` | 906 |
-| `SimuladorServerJogo/Mundo/BancoDados.py` | `BancoDadosMundo` | 791 |
+| `Servidor/Mundo/Cerebros/CerebroDungeons.py` | `CerebroDungeons` | 906 |
+| `Servidor/Mundo/BancoDados.py` | `BancoDadosMundo` | 791 |
 | `Codigo/Visual/PokemonBatalhaAnimator.py` | `PokemonAnimator` | 738 |
-| `SimuladorServerJogo/Mundo/Cerebros/CerebroNPCs.py` | `CerebroNPCs` | 727 |
+| `Servidor/Mundo/Cerebros/CerebroNPCs.py` | `CerebroNPCs` | 727 |
 | `Codigo/Paineis/FichaPokemonBatalha.py` | `FichaPokemonBatalha` | 713 |
-| `Codigo/Geradores/PokemonMundo.py` | `Pokemon` | 663 |
+| `Codigo/ModulosMundo/Geradores/PokemonMundo.py` | `Pokemon` | 663 |
 | `Codigo/ModulosBatalha/ControladorBatalha.py` | `ControladorBatalha` | 657 |
 | `Codigo/ModulosBatalha/ControladorAnimacoes.py` | `ControladorAnimacoes` | 654 |
 | `Codigo/Paineis/Container.py` | `Container` | 630 |
 | `Codigo/ModulosGerais/ImagensMapa.py` | `GerenciadorImagensMapa` | 622 |
-| `Codigo/Geradores/Player/Perfil.py` | `Perfil` | 606 |
+| `Codigo/ModulosMundo/Geradores/Player/Perfil.py` | `Perfil` | 606 |
 
 ### Top 20 maiores funções e métodos
 
 | Arquivo | Nome | Tipo | Linhas |
 |---|---|---:|---:|
-| `SimuladorServerJogo/Gerais/Rotas/Atualizador.py` | `processar_atualizador_json` | funcao | 392 |
+| `Servidor/Gerais/Rotas/Atualizador.py` | `processar_atualizador_json` | funcao | 392 |
 | `Codigo/Paineis/VisualizadorLog.py` | `VisualizadorLog._registro_evento` | metodo | 340 |
 | `Codigo/Prefabs/Fluxos.py` | `Fluxo.desenhar` | metodo | 249 |
-| `Outros/GeradorRelatorios.py` | `coletar_metricas` | funcao | 247 |
-| `Codigo/Geradores/Estadio.py` | `EstadioInterno.renderizar` | metodo | 196 |
-| `SimuladorServerJogo/Gerais/Geradores/GeradorDungeons.py` | `gerar_dungeon_layout` | funcao | 186 |
-| `Codigo/Cenas/CenaMundo.py` | `CenaMundo.atualizar_cena` | metodo | 185 |
-| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | `PokemonBatalha.ReceberDano` | metodo | 177 |
+| `Ferramentas/GeradorRelatorios.py` | `coletar_metricas` | funcao | 247 |
+| `Codigo/ModulosMundo/Geradores/Estadio.py` | `EstadioInterno.renderizar` | metodo | 196 |
+| `Servidor/Gerais/Geradores/GeradorDungeons.py` | `gerar_dungeon_layout` | funcao | 186 |
+| `Codigo/ModulosGerais/Cenas/CenaMundo.py` | `CenaMundo.atualizar_cena` | metodo | 185 |
+| `Servidor/Batalha/PokemonBatalha.py` | `PokemonBatalha.ReceberDano` | metodo | 177 |
 | `Codigo/Telas/Telas/TelaMapa.py` | `TelaMapa.desenhar` | metodo | 164 |
-| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | `PokemonBatalha.ReceberEfeito` | metodo | 156 |
-| `SimuladorServerJogo/Gerais/EstadoServidor.py` | `_mesclar_perfil_atualizacao` | funcao | 154 |
+| `Servidor/Batalha/PokemonBatalha.py` | `PokemonBatalha.ReceberEfeito` | metodo | 156 |
+| `Servidor/Gerais/EstadoServidor.py` | `_mesclar_perfil_atualizacao` | funcao | 154 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py` | `InventarioPokemons.atualizar` | metodo | 148 |
 | `Codigo/ModulosGerais/Colisor.py` | `Colisor.resolver_movimento_com_colisores` | metodo | 146 |
-| `SimuladorServerJogo/Gerais/Geradores/GeradorMundo.py` | `_executar_world_generator` | funcao | 144 |
-| `SimuladorServerJogo/Gerais/EstadoServidor.py` | `_normalizar_perfil` | funcao | 142 |
-| `SimuladorServerJogo/Gerais/Rotas/Ativador.py` | `processar_ativador_json` | funcao | 142 |
-| `Outros/AtualizadorRelatorios.py` | `main` | funcao | 140 |
-| `Outros/GeradorRelatorios.py` | `gerar_markdown` | funcao | 139 |
-| `Outros/GeradorRelatorios.py` | `analisar_python_ast` | funcao | 132 |
-| `SimuladorServerJogo/Batalha/PokemonBatalha.py` | `PokemonBatalha.AplicarDano` | metodo | 131 |
+| `Servidor/Gerais/Geradores/GeradorMundo.py` | `_executar_world_generator` | funcao | 144 |
+| `Servidor/Gerais/EstadoServidor.py` | `_normalizar_perfil` | funcao | 142 |
+| `Servidor/Gerais/Rotas/Ativador.py` | `processar_ativador_json` | funcao | 142 |
+| `Ferramentas/AtualizadorRelatorios.py` | `main` | funcao | 140 |
+| `Ferramentas/GeradorRelatorios.py` | `gerar_markdown` | funcao | 139 |
+| `Ferramentas/GeradorRelatorios.py` | `analisar_python_ast` | funcao | 132 |
+| `Servidor/Batalha/PokemonBatalha.py` | `PokemonBatalha.AplicarDano` | metodo | 131 |
 
 ### Top 10 arquivos mais importados
 
@@ -2620,50 +2620,50 @@ Outros/
 |---|---:|
 | `Codigo/Prefabs/Texto.py` | 47 |
 | `Codigo/Prefabs/Botao.py` | 34 |
-| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/UtilitariosExecutes.py` | 22 |
-| `SimuladorServerJogo/Gerais/EstadoServidor.py` | 19 |
+| `Servidor/Logica/Executes/ExecutesAtaques/UtilitariosExecutes.py` | 22 |
+| `Servidor/Gerais/EstadoServidor.py` | 19 |
 | `Codigo/ModulosGerais/Sonoridades.py` | 18 |
-| `Codigo/Geradores/ItemInventario.py` | 18 |
-| `SimuladorServerJogo/Mundo/BancoDados.py` | 18 |
+| `Codigo/ModulosMundo/Geradores/ItemInventario.py` | 18 |
+| `Servidor/Mundo/BancoDados.py` | 18 |
 | `Codigo/ModulosGerais/Auxiliares.py` | 14 |
-| `SimuladorServerJogo/Mundo/ObjetosMundoServer.py` | 14 |
-| `SimuladorServerJogo/Gerais/Rotas/Ativador.py` | 13 |
+| `Servidor/Mundo/ObjetosMundoServer.py` | 14 |
+| `Servidor/Gerais/Rotas/Ativador.py` | 13 |
 
 ### Top 10 arquivos que mais importam
 
 | Arquivo | Arquivos internos importados | Imports totais | Linhas |
 |---|---:|---:|---:|
-| `Codigo/Cenas/CenaMundo.py` | 25 | 28 | 1.006 |
-| `SimuladorServerJogo/Logica/Executes/ExecutesAtaques/ControladorExecutes.py` | 23 | 25 | 285 |
-| `SimuladorServerJogo/Mundo/Cerebros/CerebroCentral.py` | 18 | 27 | 492 |
+| `Codigo/ModulosGerais/Cenas/CenaMundo.py` | 25 | 28 | 1.006 |
+| `Servidor/Logica/Executes/ExecutesAtaques/ControladorExecutes.py` | 23 | 25 | 285 |
+| `Servidor/Mundo/Cerebros/CerebroCentral.py` | 18 | 27 | 492 |
 | `Codigo/Telas/Subtelas/SubtelaInventarioPokemons.py` | 17 | 22 | 1.096 |
 | `Codigo/ModulosBatalha/ControladorBatalha.py` | 13 | 18 | 680 |
-| `SimuladorServerJogo/Gerais/Rotas/Atualizador.py` | 12 | 17 | 786 |
-| `SimuladorServerJogo/Batalha/BatalhaIA/ControladorIA.py` | 12 | 16 | 166 |
-| `SimuladorServerJogo/Batalha/Partida.py` | 11 | 19 | 1.063 |
-| `Codigo/Cenas/ControladorCenas.py` | 11 | 16 | 306 |
-| `Codigo/Cenas/CenaCombate.py` | 11 | 15 | 371 |
+| `Servidor/Gerais/Rotas/Atualizador.py` | 12 | 17 | 786 |
+| `Servidor/Batalha/BatalhaIA/ControladorIA.py` | 12 | 16 | 166 |
+| `Servidor/Batalha/Partida.py` | 11 | 19 | 1.063 |
+| `Codigo/ModulosGerais/Cenas/ControladorCenas.py` | 11 | 16 | 306 |
+| `Codigo/ModulosGerais/Cenas/CenaCombate.py` | 11 | 15 | 371 |
 
 ### Top 10 maiores arquivos por linhas
 
 | Arquivo | Ext | Linhas |
 |---|---:|---:|
-| `Dados/Catalogo/Dungeon.json` | `.json` | 5.051 |
-| `Outros/GeradorRelatorios.py` | `.py` | 1.828 |
-| `SimuladorServerJogo/Gerais/EstadoServidor.py` | `.py` | 1.680 |
-| `Dados/InteracoesNPC/Combatentes/Vasques.json` | `.json` | 1.678 |
-| `Dados/InteracoesNPC/Combatentes/Caio.json` | `.json` | 1.580 |
-| `Dados/InteracoesNPC/Combatentes/Garcia.json` | `.json` | 1.393 |
-| `Dados/InteracoesNPC/Combatentes/Alleka.json` | `.json` | 1.325 |
+| `Dados/Catalogos/Dungeon.json` | `.json` | 5.051 |
+| `Ferramentas/GeradorRelatorios.py` | `.py` | 1.828 |
+| `Servidor/Gerais/EstadoServidor.py` | `.py` | 1.680 |
+| `Dados/Dialogos/Combatentes/Vasques.json` | `.json` | 1.678 |
+| `Dados/Dialogos/Combatentes/Caio.json` | `.json` | 1.580 |
+| `Dados/Dialogos/Combatentes/Garcia.json` | `.json` | 1.393 |
+| `Dados/Dialogos/Combatentes/Alleka.json` | `.json` | 1.325 |
 | `Codigo/ModulosMundo/ControladorObjetos.py` | `.py` | 1.310 |
 | `Dados/Tabelas/Pokemon Global Server - Pokemons.csv` | `.csv` | 1.309 |
-| `SimuladorServerJogo/Batalha/BatalhaIA/MetadadosAtaquesIA.json` | `.json` | 1.277 |
+| `Dados/Ataques/MetaDadosAtaques/` | `.json` | 1.277 |
 
 ## 6. Linhas por extensão
 
-![Gráfico de barras das linhas por extensão](Outros/Relatorios/Imagens/2026-05-14_14-56-24/linhas_por_extensao_barras.png)
+![Gráfico de barras das linhas por extensão](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/linhas_por_extensao_barras.png)
 
-![Gráfico de pizza das linhas por extensão](Outros/Relatorios/Imagens/2026-05-14_14-56-24/linhas_por_extensao_pizza.png)
+![Gráfico de pizza das linhas por extensão](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/linhas_por_extensao_pizza.png)
 
 | Ext | Linhas | % das linhas | Arquivos | Peso |
 |---:|---:|---:|---:|---:|
@@ -2679,9 +2679,9 @@ Outros/
 
 ## 7. Peso por extensão
 
-![Gráfico de barras do peso por extensão - Top 12](Outros/Relatorios/Imagens/2026-05-14_14-56-24/peso_por_extensao_barras_top12.png)
+![Gráfico de barras do peso por extensão - Top 12](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/peso_por_extensao_barras_top12.png)
 
-![Gráfico de pizza do peso por categoria](Outros/Relatorios/Imagens/2026-05-14_14-56-24/peso_por_categoria_pizza.png)
+![Gráfico de pizza do peso por categoria](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/peso_por_categoria_pizza.png)
 
 | Ext | Arquivos | Peso | % do jogo |
 |---:|---:|---:|---:|
@@ -2731,12 +2731,12 @@ Outros/
 
 ## 9. Gráficos de crescimento
 
-![Crescimento de linhas gerais](Outros/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_linhas_totais.png)
+![Crescimento de linhas gerais](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_linhas_totais.png)
 
-![Crescimento de linhas .py](Outros/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_linhas_py.png)
+![Crescimento de linhas .py](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_linhas_py.png)
 
-![Crescimento de arquivos .py](Outros/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_arquivos_py.png)
+![Crescimento de arquivos .py](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_arquivos_py.png)
 
-![Crescimento de commits](Outros/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_commits.png)
+![Crescimento de commits](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_commits.png)
 
-![Crescimento de peso do jogo](Outros/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_peso_jogo.png)
+![Crescimento de peso do jogo](Documentação/Relatorios/Imagens/2026-05-14_14-56-24/crescimento_peso_jogo.png)

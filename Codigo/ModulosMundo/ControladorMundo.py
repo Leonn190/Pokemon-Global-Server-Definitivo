@@ -9,7 +9,7 @@ from .ControladorObjetos import ControladorObjetos
 from .ControladorPlayer import ControladorPlayer
 from .SistemaPacotes import SistemaPacotes
 from Codigo.ModulosMundo.ControladorDungeons import ControladorDungeons
-from Codigo.Geradores.ConstrutorDungeon import renderizar_dungeon
+from Codigo.ModulosMundo.Geradores.ConstrutorDungeon import renderizar_dungeon
 
 
 class ControladorMundo:

@@ -113,7 +113,7 @@ def _worker(tipo, server_id, payload):
     _REQUISICAO_RESULTADO = {"tipo": tipo, "resposta": resposta, "payload": payload}
 
 
-def _iniciar_requisicao(tipo, server_id, payload=None, mensagem="Comunicando com SimuladorServerJogo..."):
+def _iniciar_requisicao(tipo, server_id, payload=None, mensagem="Comunicando com Servidor..."):
     global _REQUISICAO_THREAD, _REQUISICAO_RESULTADO, _REQUISICAO_TIPO_ATUAL, _REQUISICAO_PENDENTE
     if _REQUISICAO_THREAD and _REQUISICAO_THREAD.is_alive():
         if _REQUISICAO_TIPO_ATUAL == "status" and tipo != "status":

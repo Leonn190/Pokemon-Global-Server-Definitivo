@@ -7,11 +7,11 @@ import time
 from pathlib import Path
 
 from Codigo.ModulosGerais.Server.GerenciadorServerList import obter_servidor_por_id
-from SimuladorServerJogo.Gerais.ContextoServidor import definir_servidor_ativo, obter_pasta_servidor_ativo
-from SimuladorServerJogo.Mundo.TiqueServidor import TIQUE_SERVIDOR
-from SimuladorServerJogo.Gerais.Rotas.Ativador import processar_ativador_json
-from SimuladorServerJogo.Gerais.Rotas.Atualizador import processar_atualizador_json
-from SimuladorServerJogo.Gerais.Rotas.Entrada import processar_entrada_json
+from Servidor.Gerais.ContextoServidor import definir_servidor_ativo, obter_pasta_servidor_ativo
+from Servidor.Mundo.TiqueServidor import TIQUE_SERVIDOR
+from Servidor.Gerais.Rotas.Ativador import processar_ativador_json
+from Servidor.Gerais.Rotas.Atualizador import processar_atualizador_json
+from Servidor.Gerais.Rotas.Entrada import processar_entrada_json
 
 
 def _erro_padrao(mensagem):
@@ -35,7 +35,7 @@ def _preparar_servidor_local(server_id):
     pasta = Path(server.get("pasta")).resolve()
     if pasta_ativa != pasta:
         definir_servidor_ativo(pasta)
-        from SimuladorServerJogo.Gerais.EstadoServidor import snapshot_estado
+        from Servidor.Gerais.EstadoServidor import snapshot_estado
         snapshot_estado()
     _CACHE_SERVIDOR_LOCAL.update({"server_id": str(server_id or ""), "pasta": pasta, "tipo": "local"})
     return None

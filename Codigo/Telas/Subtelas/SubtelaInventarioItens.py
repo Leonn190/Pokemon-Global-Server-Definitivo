@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import pygame
 
-from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
 from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Paineis.Container import Container
 from Codigo.Paineis.FichaItem import FichaItem

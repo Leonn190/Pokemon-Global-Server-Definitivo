@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pygame
 from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
-from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon_local
+from Codigo.ModulosMundo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon_local
 
 
 class MinimapaMundo:

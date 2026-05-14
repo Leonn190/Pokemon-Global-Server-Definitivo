@@ -54,7 +54,7 @@ class ModuladorRegras:
         if not regras:
             return
 
-        from Codigo.Geradores.PokemonMundo import Pokemon
+        from Codigo.ModulosMundo.Geradores.PokemonMundo import Pokemon
         from Codigo.ModulosGerais.Camera import CameraBatalha
         from Codigo.ModulosGerais.FiltroCamera import FiltroCamera
         from Codigo.Paineis.FichaPokemon import FichaPokemon

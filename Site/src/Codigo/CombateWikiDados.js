@@ -163,11 +163,11 @@ function caminhosCsv() {
 function caminhosRegra(nomeArquivo) {
   const atual = diretorioAtual();
   return [
-    path.resolve(atual, "../../../SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(atual, "../../SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(process.cwd(), "../SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(process.cwd(), "SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(process.cwd(), "../Pokemon-Global-Server-Definitivo/SimuladorServerJogo/Logica/Regras", nomeArquivo),
+    path.resolve(atual, "../../../Dados/Regras", nomeArquivo),
+    path.resolve(atual, "../../Dados/Regras", nomeArquivo),
+    path.resolve(process.cwd(), "../Dados/Regras", nomeArquivo),
+    path.resolve(process.cwd(), "Dados/Regras", nomeArquivo),
+    path.resolve(process.cwd(), "../Pokemon-Global-Server-Definitivo/Dados/Regras", nomeArquivo),
   ];
 }
 function carregarCsvFr() {
@@ -219,7 +219,7 @@ function montarLinhasTabela(matriz) {
   }));
 }
 function resumoRegraBatalha() {
-  // Valores refletidos pelo código atual em SimuladorServerJogo/Batalha:
+  // Valores refletidos pelo código atual em Servidor/Batalha:
   // ColetorAcoes valida limites/custos/ordem; RodadorTurno executa passos;
   // PokemonBatalha calcula dano, cura, energia, barreira e efeitos.
   return {

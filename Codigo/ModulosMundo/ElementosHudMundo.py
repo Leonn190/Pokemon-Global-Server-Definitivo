@@ -3,7 +3,7 @@ from __future__ import annotations
 import pygame
 from pathlib import Path
 
-from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Mensagem import MensagensGanhosMundo
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosMundo.Minimapa import MinimapaMundo

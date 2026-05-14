@@ -1,6 +1,6 @@
 import json
 
-from SimuladorServerGeral.Main import processar_requisicao_json
+from ServidorGeral.Main import processar_requisicao_json
 
 
 def _enviar_pacote(pacote):

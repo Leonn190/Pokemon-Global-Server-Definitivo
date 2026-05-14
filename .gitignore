@@ -2,7 +2,7 @@
 # SERVIDOR / SAVES / ESTADO
 # =========================
 
-SimuladorServerJogo/EstadoMundo/
+Servidor/EstadoMundo/
 
 ServerList/
 Saves/
@@ -25,7 +25,7 @@ __pycache__/
 *.pyo
 *.pyd
 
-Outros/ConfigFixa.py
+Ferramentas/ConfigFixa.py
 
 
 # =========================

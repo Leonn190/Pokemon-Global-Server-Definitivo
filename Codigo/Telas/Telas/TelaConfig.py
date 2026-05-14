@@ -62,7 +62,7 @@ def salvar_config_fixa(config):
         conta_info.pop("servidores_registrados", None)
         dados["ContaInfo"] = conta_info
 
-    caminho = Path("Outros/ConfigFixa.py")
+    caminho = Path("Ferramentas/ConfigFixa.py")
     caminho.write_text("ConfigFixa = " + repr(dados) + "\n", encoding="utf-8")
 
 

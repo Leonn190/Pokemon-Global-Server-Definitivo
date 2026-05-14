@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 
 import pygame
 
-from Codigo.Geradores.EstruturaNaturais import EstruturaNaturalFake, tipo_estrutura_natural_por_codigo
+from Codigo.ModulosMundo.Geradores.EstruturaNaturais import EstruturaNaturalFake, tipo_estrutura_natural_por_codigo
 from Codigo.ModulosGerais.GerenciadorTiles import GerenciadorTiles
 from Codigo.Prefabs.Texto import Texto
 

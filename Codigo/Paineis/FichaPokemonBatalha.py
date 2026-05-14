@@ -6,8 +6,8 @@ from typing import Optional, Tuple
 
 import pygame
 
-from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.ModulosGerais.Auxiliares import criar_botao_expandir, configurar_estilo_botao_expandir, renderizar_botao_expandir
 from Codigo.Paineis.FichaAtaque import FichaAtaque
 from Codigo.Paineis.FichaPokemon import FichaPokemon

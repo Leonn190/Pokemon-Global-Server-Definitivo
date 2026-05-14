@@ -1,6 +1,6 @@
 from __future__ import annotations
 import pygame
-from Codigo.Geradores.ConstrutorDungeon import salvar_debug_layout
+from Codigo.ModulosMundo.Geradores.ConstrutorDungeon import salvar_debug_layout
 from Codigo.Prefabs.TextoCinematico import TextoCinematico
 
 

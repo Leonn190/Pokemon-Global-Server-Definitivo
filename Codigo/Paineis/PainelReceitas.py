@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import copy
-import json
 import unicodedata
-from pathlib import Path
 import pygame
 
+from Codigo.ModulosGerais.LoaderCatalogos import carregar_catalogo
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
-from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Painel import PainelRolavel
 from Codigo.Prefabs.Texto import Texto
@@ -63,16 +62,6 @@ class PainelReceitas(PainelRolavel):
         for ch in ('_', '-', "'", '.'):
             base = base.replace(ch, ' ')
         return ' '.join(base.split())
-
-    @classmethod
-    def _caminho_json(cls):
-        caminhos = [
-            Path('Dados') / 'Catalogo' / 'Pokemon Global Server - Receitas.json',
-            Path('Pokemon Global Server - Receitas.json'),
-            Path(__file__).resolve().parents[3] / 'Dados' / 'Catalogo' / 'Pokemon Global Server - Receitas.json',
-            Path(__file__).resolve().parents[3] / 'Pokemon Global Server - Receitas.json',
-        ]
-        return next((p for p in caminhos if p.exists()), None)
 
     @classmethod
     def _carregar_itens_csv(cls):
@@ -156,18 +145,8 @@ class PainelReceitas(PainelRolavel):
         if cls._receitas_cache is not None:
             return cls._receitas_cache
 
-        caminho = cls._caminho_json()
         receitas = []
-
-        if caminho is None:
-            cls._receitas_cache = receitas
-            return receitas
-
-        try:
-            with caminho.open('r', encoding='utf-8-sig') as arquivo:
-                bruto = json.load(arquivo)
-        except (OSError, json.JSONDecodeError):
-            bruto = {}
+        bruto = carregar_catalogo("Pokemon Global Server - Receitas")
 
         if isinstance(bruto, dict):
             for nome_saida, grade in bruto.items():

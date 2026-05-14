@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pygame
 
-from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosMundo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Prefabs.Painel import PainelRolavel
 from Codigo.Prefabs.Texto import Texto
 

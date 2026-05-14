@@ -9,7 +9,7 @@ try:
 except ImportError:
     moderngl = None
 
-from Codigo.Cenas.ControladorCenas import ControladorCenas
+from Codigo.ModulosGerais.Cenas.ControladorCenas import ControladorCenas
 from Codigo.ModulosGerais.Sonoridades import VerificaSonoridade
 
 if hasattr(ctypes, "windll") and hasattr(ctypes.windll, "shell32"):
@@ -57,7 +57,7 @@ CONFIG = {
     "Usuario": None
 }
 
-from Outros.ConfigFixa import ConfigFixa
+from Ferramentas.ConfigFixa import ConfigFixa
 
 if ConfigFixa is not None:
     CONFIG = ConfigFixa

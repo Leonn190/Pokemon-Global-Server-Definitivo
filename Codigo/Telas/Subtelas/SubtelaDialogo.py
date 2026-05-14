@@ -8,7 +8,7 @@ import pygame
 
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
-from Codigo.Geradores.Ator import Ator
+from Codigo.ModulosMundo.Geradores.Ator import Ator
 from Codigo.ModulosMundo.LeitorDialogo import LeitorDialogo
 from Codigo.ModulosMundo.Loja import Loja
 from Codigo.Prefabs.Texto import Texto, TextoAnimado
@@ -61,7 +61,7 @@ class SubtelaDialogo(Subtela):
         self._npc_tipo_estadio = str(estado.get("estadio_tipo") or estado.get("estadio") or self._npc.get("estadio_tipo") or self._npc.get("estadio") or "").strip()
         self._npc_cargo = self._inferir_cargo_npc(estado)
 
-        self._player_nome = str(player_nome or "Você")
+        self._player_nome = str(player_nome or "VocÃª")
         self._player_skin = str(player_skin or "1.png")
 
         self._ator_player = Ator(nome_skin=self._player_skin, posicao=(0.0, 0.0), escala_skin_tiles=1.15, tile_px=64)
@@ -179,30 +179,29 @@ class SubtelaDialogo(Subtela):
 
     def _pastas_dialogo(self) -> List[str]:
         mapa = {
-            "vendedor": ["Vendedor", "Vendedores"],
-            "dissociado": ["Dissociado", "Dissociados"],
-            "lider": ["Lider", "Lideres"],
-            "capitao": ["Capitao", "Capitão", "Capitaes"],
-            "desafiante": ["Desafiante", "Desafiantes"],
+            "vendedor": ["Vendedores/Moedas", "Vendedores/Pokemons", "Vendedores/Itens"],
+            "dissociado": ["Combatentes/Dissociados"],
+            "lider": ["Combatentes/Lideres"],
+            "capitao": ["Combatentes/Capitaes"],
+            "desafiante": ["Combatentes/Desafiantes"],
         }
-        return mapa.get(self._npc_cargo, ["Vendedor"])
+        return mapa.get(self._npc_cargo, ["Vendedores/Moedas", "Vendedores/Pokemons", "Vendedores/Itens"])
 
     def _caminhos_dialogo_possiveis(self) -> List[Path]:
         nome = self._npc_nome.strip()
         candidatos: List[Path] = []
         for pasta in self._pastas_dialogo():
-            candidatos.append(Path("Dados") / "InteracoesNPC" / pasta / f"{nome}.json")
-        candidatos.append(Path("Dados") / "InteracoesNPC" / f"{nome}.json")
+            candidatos.append(Path("Dados") / "Dialogos" / pasta / f"{nome}.json")
         return candidatos
 
     def _dialogo_fallback(self) -> Dict[str, object]:
         estado = self._npc.get("estado") if isinstance(self._npc.get("estado"), dict) else {}
-        opcoes = [{"texto": "Até depois.", "acao": "fim"}]
+        opcoes = [{"texto": "AtÃ© depois.", "acao": "fim"}]
         if self._npc_cargo == "vendedor":
             opcoes.insert(0, {"texto": "Quero ver seus produtos.", "destino": "abrir_loja"})
             nos_extra = {
                 "abrir_loja": {
-                    "fala": f"Claro. Fique à vontade para olhar meus produtos, {self._player_nome}.",
+                    "fala": f"Claro. Fique Ã  vontade para olhar meus produtos, {self._player_nome}.",
                     "saida": "loja",
                     "opcoes": [{"texto": "Fechar", "acao": "fim"}],
                 }
@@ -221,11 +220,11 @@ class SubtelaDialogo(Subtela):
             "nos": {
                 "saudacao": {
                     "fala_condicional": {
-                        "padrao": f"Olá, eu sou {self._npc_nome}. Ainda não tenho um diálogo configurado.",
+                        "padrao": f"OlÃ¡, eu sou {self._npc_nome}. Ainda nÃ£o tenho um diÃ¡logo configurado.",
                         "casos": [
                             {
                                 "condicoes": [{"alvo": "npc.visitas_anteriores", "op": ">", "valor": 0}],
-                                "valor": f"Você voltou a falar comigo, {self._player_nome}. Ainda não tenho um diálogo configurado.",
+                                "valor": f"VocÃª voltou a falar comigo, {self._player_nome}. Ainda nÃ£o tenho um diÃ¡logo configurado.",
                             }
                         ],
                     },
@@ -241,7 +240,7 @@ class SubtelaDialogo(Subtela):
                     "opcoes": [{"texto": "Encerrar conversa.", "acao": "fim"}],
                 },
                 "fallback": {
-                    "fala": "Tive um problema para montar este diálogo.",
+                    "fala": "Tive um problema para montar este diÃ¡logo.",
                     "opcoes": [{"texto": "Fechar", "acao": "fim"}],
                 },
             },

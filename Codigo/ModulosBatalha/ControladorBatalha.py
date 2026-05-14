@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pygame
 
-from Codigo.Geradores.Ator import Ator
+from Codigo.ModulosMundo.Geradores.Ator import Ator
 from Codigo.ModulosBatalha.Arena import Arena
 from Codigo.ModulosBatalha.ControladorAnimacoes import ControladorAnimacoes
 from Codigo.ModulosBatalha.ElementosHudBatalha import ElementosHudBatalha
@@ -15,8 +15,8 @@ from Codigo.ModulosBatalha.LeitorLogs import LeitorLogs
 from Codigo.ModulosBatalha.MontadorJogadas import MontadorJogadas
 from Codigo.ModulosBatalha.PlayerBatalha import PlayerBatalha
 from Codigo.ModulosBatalha.PokemonBatalha import PokemonBatalha
-from Codigo.Geradores.Player.Inventario import Inventario
-from Codigo.Geradores.Player.Perfil import Perfil
+from Codigo.ModulosMundo.Geradores.Player.Inventario import Inventario
+from Codigo.ModulosMundo.Geradores.Player.Perfil import Perfil
 from Codigo.ModulosGerais.Camera import CameraBatalha
 from Codigo.ModulosGerais.Server import ServerBatalha
 

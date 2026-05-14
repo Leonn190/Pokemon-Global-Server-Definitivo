@@ -1,0 +1,309 @@
+{
+  "arquivo": "ManualDialogos.json",
+  "objetivo": "Manual do formato de dialogos usado por LeitorDialogo.py e consumido pela SubtelaDialogo.",
+  "observacoes_gerais": [
+    "Cada NPC deve ter um arquivo JSON proprio.",
+    "O player deve ter self.SetorDialogo = {} no __init__. O leitor tambem garante esse dicionario em runtime se ele nao existir.",
+    "O contador padrao de visitas e automatico: setor.NPCs.<npc_code_ou_nome_normalizado>.visitas.",
+    "Para detectar revisita, use npc.visitas_anteriores > 0. O contador ja foi incrementado quando o dialogo abre.",
+    "Campos desconhecidos sao ignorados pelo leitor, mas o fluxo novo de presentes escolhe o presente pela propria saida do no."
+  ],
+  "pastas_recomendadas": {
+    "vendedor": "Dados/Dialogos/Vendedores/<Moedas|Pokemons|Itens>/<Nome>.json",
+    "dissociado": "Dados/Dialogos/Combatentes/Dissociados/<Nome>.json",
+    "lider": "Dados/Dialogos/Combatentes/Lideres/<Nome>.json",
+    "capitao": "Dados/Dialogos/Combatentes/Capitaes/<Nome>.json",
+    "desafiante": "Dados/Dialogos/Combatentes/Desafiantes/<Nome>.json"
+  },
+  "estrutura_raiz": {
+    "inicio": "id do no inicial",
+    "pos_batalha": {
+      "descricao": "Opcional para treinadores. Define para qual no o dialogo volta depois de uma batalha.",
+      "formato": {
+        "vitoria": "pos_batalha_vitoria",
+        "derrota": "pos_batalha_derrota",
+        "padrao": "pos_batalha_derrota"
+      }
+    },
+    "inicio_condicional": {
+      "descricao": "Opcional. Escolhe o no inicial por condicao.",
+      "formato": {
+        "padrao": "saudacao",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "saudacao_respeito_alto"
+          }
+        ]
+      }
+    },
+    "nos": {
+      "<id_do_no>": {
+        "fala": "texto simples",
+        "fala_condicional": {
+          "descricao": "Opcional. Escolhe a fala do no por condicao.",
+          "formato": {
+            "padrao": "fala padrao",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "npc.visitas_anteriores",
+                    "op": ">",
+                    "valor": 0
+                  }
+                ],
+                "valor": "fala alternativa"
+              }
+            ]
+          }
+        },
+        "ao_entrar": {
+          "descricao": "Opcional. Aplica efeitos quando o no e aberto.",
+          "formato": {
+            "setor": {
+              "FalouComLia": true,
+              "ContadorSegredo": {
+                "op": "add",
+                "valor": 1
+              },
+              "TagsConhecidas": {
+                "op": "append_unique",
+                "valor": "mares"
+              }
+            },
+            "perfil": {
+              "Dinheiro": {
+                "op": "add",
+                "valor": 10
+              }
+            }
+          }
+        },
+        "desvio_condicional": {
+          "descricao": "Opcional. Redireciona automaticamente para outro no.",
+          "formato": {
+            "padrao": "no_padrao",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "setor.DescobriuSegredoDosMares",
+                    "op": "==",
+                    "valor": true
+                  }
+                ],
+                "valor": "no_secreto"
+              }
+            ]
+          }
+        },
+        "saida": "Opcional. Valores suportados pelo leitor: loja, loja_secreta, presente_1, presente_2.",
+        "opcoes": [
+          {
+            "texto": "texto exibido ao player",
+            "texto_condicional": {
+              "padrao": "texto padrao",
+              "casos": [
+                {
+                  "condicoes": [
+                    {
+                      "alvo": "respeito_atual",
+                      "op": "<",
+                      "valor": 2
+                    }
+                  ],
+                  "valor": "texto alternativo"
+                }
+              ]
+            },
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComLia",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "destino": "id do proximo no",
+            "destino_condicional": {
+              "padrao": "destino_padrao",
+              "casos": [
+                {
+                  "condicoes": [
+                    {
+                      "alvo": "player.Nivel",
+                      "op": ">=",
+                      "valor": 10
+                    }
+                  ],
+                  "valor": "destino_avancado"
+                }
+              ]
+            },
+            "acao": "Opcional. Suportados: batalha, fim.",
+            "batalha": "Numero da batalha quando acao = batalha.",
+            "pos_batalha": "Opcional. Sobrescreve o pos_batalha raiz para esta opcao. Ex.: {\"vitoria\": \"venceu_batalha_1\", \"derrota\": \"perdeu_batalha_1\"}.",
+            "ao_escolher": {
+              "setor": {
+                "PerguntouSobreSegredo": true,
+                "TentativasComAlleka": {
+                  "op": "add",
+                  "valor": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "condicoes": {
+    "alvos_prontos": {
+      "player.<campo>": "Le primeiro no objeto player. Se nao existir la, tenta no Perfil. Ex.: player.Nivel, player.TempoJogoSegundos.",
+      "perfil.<campo>": "Le direto do Perfil do player.",
+      "setor.<caminho>": "Le do SetorDialogo. Ex.: setor.FalouComLia, setor.NPCs.josefa.visitas.",
+      "respeito_atual": "Nivel de respeito do estadio do NPC atual.",
+      "respeito.<Tipo>": "Nivel de respeito de um tipo especifico. Ex.: respeito.Fogo, respeito.Metal.",
+      "npc.nome": "Nome do NPC atual.",
+      "npc.code": "Code ou id textual do NPC atual.",
+      "npc.cargo": "vendedor, dissociado, lider, capitao ou desafiante.",
+      "npc.estadio": "Tipo de estadio associado ao NPC, quando existir.",
+      "npc.visitas": "Visitas acumuladas incluindo a conversa atual.",
+      "npc.visitas_anteriores": "Visitas antes de abrir a conversa atual."
+    },
+    "operadores": [
+      "==",
+      "!=",
+      ">",
+      ">=",
+      "<",
+      "<=",
+      "truthy",
+      "falsy",
+      "contains",
+      "in",
+      "not_in"
+    ],
+    "grupos_logicos": {
+      "lista": "Uma lista de condicoes equivale a AND.",
+      "todas": "Agrupador AND explicito.",
+      "qualquer": "Agrupador OR.",
+      "nao": "Negacao."
+    }
+  },
+  "efeitos": {
+    "escopos": [
+      "setor",
+      "player",
+      "perfil"
+    ],
+    "operacoes": {
+      "valor cru": "Seta diretamente. Ex.: True, 12, 'texto'.",
+      "set": {
+        "op": "set",
+        "valor": "qualquer"
+      },
+      "add": {
+        "op": "add",
+        "valor": 1
+      },
+      "append_unique": {
+        "op": "append_unique",
+        "valor": "tag"
+      },
+      "toggle": {
+        "op": "toggle"
+      }
+    }
+  },
+  "saidas_principais": {
+    "fim": "Use em uma opcao com acao = fim.",
+    "batalha": "Use em uma opcao com acao = batalha e batalha = numero.",
+    "pos_batalha": "Depois de uma batalha contra treinador, o jogo reabre o dialogo do NPC no no indicado por pos_batalha.vitoria ou pos_batalha.derrota.",
+    "loja": "Use em um no com saida = loja.",
+    "loja_secreta": "Use em um no com saida = loja_secreta.",
+    "presente_1": "Use em um no com saida = presente_1. Abre o primeiro presente gerado para aquele NPC.",
+    "presente_2": "Use em um no com saida = presente_2. Abre o segundo presente gerado para aquele NPC.",
+    "presentes": "Presentes abrem uma interface igual a loja, mas gratuita, mostrando apenas o slot daquele presente e sua quantidade. Nao use metadados_presente.presente_id para escolher entre presente 1 e 2."
+  },
+  "regras_recomendadas_para_npcs_associados": {
+    "desafiante": "Nao exige respeito para batalhar, mas as falas podem variar com respeito.",
+    "capitao": "Exige respeito 2 para batalhar. As falas de batalha variam com respeito.",
+    "lider": "Batalha 1 exige respeito 1. Batalha 2 exige respeito 3. Se tiver respeito 1 mas nao 3, ofereca a batalha 1 e mantenha a 2 bloqueada."
+  },
+  "exemplo_minimo": {
+    "inicio": "saudacao",
+    "nos": {
+      "saudacao": {
+        "fala_condicional": {
+          "padrao": "Ola, viajante.",
+          "casos": [
+            {
+              "condicoes": [
+                {
+                  "alvo": "npc.visitas_anteriores",
+                  "op": ">",
+                  "valor": 0
+                }
+              ],
+              "valor": "Voce voltou. Bom te ver de novo."
+            }
+          ]
+        },
+        "opcoes": [
+          {
+            "texto": "Conversar",
+            "destino": "conversa"
+          },
+          {
+            "texto": "Receber presente",
+            "destino": "presente_1"
+          },
+          {
+            "texto": "Sair",
+            "acao": "fim"
+          }
+        ]
+      },
+      "conversa": {
+        "fala": "Dialogos podem alterar setor e destravar outros NPCs.",
+        "ao_entrar": {
+          "setor": {
+            "FalouComExemplo": true
+          }
+        },
+        "opcoes": [
+          {
+            "texto": "Encerrar",
+            "acao": "fim"
+          }
+        ]
+      },
+      "presente_1": {
+        "fala": "Tenho um presente para voce.",
+        "saida": "presente_1",
+        "opcoes": [
+          {
+            "texto": "Fechar",
+            "acao": "fim"
+          }
+        ]
+      },
+      "fallback": {
+        "fala": "Dialogo invalido.",
+        "opcoes": [
+          {
+            "texto": "Fechar",
+            "acao": "fim"
+          }
+        ]
+      }
+    }
+  }
+}

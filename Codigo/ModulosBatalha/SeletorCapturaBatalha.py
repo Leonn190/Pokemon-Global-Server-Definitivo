@@ -4,7 +4,7 @@ import unicodedata
 
 import pygame
 
-from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Texto import Texto
 
 

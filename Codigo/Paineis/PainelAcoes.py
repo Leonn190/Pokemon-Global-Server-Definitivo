@@ -6,8 +6,8 @@ from typing import Dict, List, Optional
 
 import pygame
 
-from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.FichaPokemon import FichaPokemon
 from Codigo.Prefabs.Botao import Botao
 from Codigo.Prefabs.Texto import Texto

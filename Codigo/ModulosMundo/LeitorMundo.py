@@ -11,7 +11,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import pygame
 
 from Codigo.ModulosGerais.GerenciadorTiles import GerenciadorTiles
-from Codigo.Geradores.EstruturaNaturais import definir_limites_escala_estrutura_natural
+from Codigo.ModulosMundo.Geradores.EstruturaNaturais import definir_limites_escala_estrutura_natural
 
 Vector2 = Tuple[float, float]
 PacoteMundo = Dict[str, object]

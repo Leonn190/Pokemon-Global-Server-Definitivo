@@ -6,9 +6,9 @@ from typing import Callable, Dict, List
 import math
 import time
 
-from Codigo.Geradores.Projetil import Projetil
-from Codigo.Geradores.ItemMundo import ItemMundo
-from Codigo.Geradores.XpMundo import XpMundo
+from Codigo.ModulosMundo.Geradores.Projetil import Projetil
+from Codigo.ModulosMundo.Geradores.ItemMundo import ItemMundo
+from Codigo.ModulosMundo.Geradores.XpMundo import XpMundo
 
 
 class ControladorCriaveis:

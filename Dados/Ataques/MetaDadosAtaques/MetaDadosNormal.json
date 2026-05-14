@@ -1,0 +1,437 @@
+{
+  "Investida": {
+    "codigo": 1,
+    "nome": "Investida",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "recoil"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_hp_baixo",
+      "pior_se_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Biscoito": {
+    "codigo": 2,
+    "nome": "Biscoito",
+    "papeis": [
+      "cura",
+      "suporte",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "aliado_ferido",
+      "aliado_focado",
+      "aliado_importante"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "cura",
+      "stack",
+      "critico_cura"
+    ],
+    "condicoes": [
+      "melhor_com_aliado_ferido",
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.75
+  },
+  "Enraivecer": {
+    "codigo": 3,
+    "nome": "Enraivecer",
+    "papeis": [
+      "buff",
+      "sobrevivencia",
+      "dano"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "amplificado",
+      "aprimorado"
+    ],
+    "condicoes": [
+      "melhor_com_usuario_ferido"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Provocar": {
+    "codigo": 4,
+    "nome": "Provocar",
+    "papeis": [
+      "controle",
+      "protecao",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_importante"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "provocando"
+    ],
+    "condicoes": [
+      "melhor_se_aliados_vulneraveis"
+    ],
+    "prioridade_simulacao": 0.6
+  },
+  "Proteger": {
+    "codigo": 5,
+    "nome": "Proteger",
+    "papeis": [
+      "protecao",
+      "suporte",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "aliado_focado",
+      "aliado_ferido",
+      "aliado_importante"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "protegido"
+    ],
+    "condicoes": [
+      "melhor_se_alvo_vai_ser_focado"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Arranhar": {
+    "codigo": 6,
+    "nome": "Arranhar",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_hp_baixo",
+      "bom_para_economizar_energia"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Recarga": {
+    "codigo": 7,
+    "nome": "Recarga",
+    "papeis": [
+      "energia",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_sem_energia"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "energia"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_sem_energia",
+      "melhor_se_acao_ofensiva_fraca"
+    ],
+    "prioridade_simulacao": 0.45
+  },
+  "Energia": {
+    "codigo": 8,
+    "nome": "Energia",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_spd_baixo"
+    ],
+    "prioridade_simulacao": 0.55
+  },
+  "Hiper Raio": {
+    "codigo": 9,
+    "nome": "Hiper Raio",
+    "papeis": [
+      "dano",
+      "area",
+      "linha",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_ferido"
+    ],
+    "riscos": {
+      "usuario": "alto",
+      "aliados": "baixo"
+    },
+    "efeitos_relevantes": [
+      "dano_especial",
+      "linha",
+      "overkill"
+    ],
+    "condicoes": [
+      "melhor_em_inimigos_agrupados",
+      "pior_se_alvo_unico_fraco"
+    ],
+    "prioridade_simulacao": 0.9
+  },
+  "Guilhotina": {
+    "codigo": 10,
+    "nome": "Guilhotina",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "execucao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_importante"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "execucao",
+      "critico"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_com_hp_baixo"
+    ],
+    "prioridade_simulacao": 0.9
+  },
+  "Disparo": {
+    "codigo": 11,
+    "nome": "Disparo",
+    "papeis": [
+      "dano",
+      "projetil",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "ricochete",
+      "projetil"
+    ],
+    "condicoes": [
+      "melhor_com_alvos_proximos"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Chifrada": {
+    "codigo": 12,
+    "nome": "Chifrada",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_com_def_baixa"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "perfuracao",
+      "dano_fisico"
+    ],
+    "condicoes": [
+      "melhor_com_usuario_com_perfuracao_alta"
+    ],
+    "prioridade_simulacao": 0.6
+  },
+  "Resetar": {
+    "codigo": 13,
+    "nome": "Resetar",
+    "papeis": [
+      "controle",
+      "debuff",
+      "remover_buff"
+    ],
+    "alvos_preferidos": [
+      "inimigo_buffado",
+      "aliado_debuffado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "remover_buff",
+      "remover_debuff"
+    ],
+    "condicoes": [
+      "melhor_contra_alvo_buffado",
+      "melhor_em_aliado_muito_debuffado"
+    ],
+    "prioridade_simulacao": 0.75
+  },
+  "Tankar": {
+    "codigo": 14,
+    "nome": "Tankar",
+    "papeis": [
+      "buff",
+      "protecao",
+      "barreira",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self",
+      "aliado_focado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "fortificado",
+      "barreira",
+      "defesa"
+    ],
+    "condicoes": [
+      "melhor_se_usuario_vai_ser_focado"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Estocada": {
+    "codigo": 15,
+    "nome": "Estocada",
+    "papeis": [
+      "dano",
+      "finalizacao",
+      "prioridade"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "bonus_primeiro_ataque"
+    ],
+    "condicoes": [
+      "melhor_se_primeiro_ataque_do_turno"
+    ],
+    "prioridade_simulacao": 0.7
+  },
+  "Bola Climática": {
+    "codigo": 16,
+    "nome": "Bola Climática",
+    "papeis": [
+      "dano",
+      "area",
+      "clima"
+    ],
+    "alvos_preferidos": [
+      "inimigo_agrupado",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo",
+      "aliados": "medio"
+    },
+    "efeitos_relevantes": [
+      "clima",
+      "splash",
+      "tipo_adaptavel"
+    ],
+    "condicoes": [
+      "melhor_com_clima",
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.85
+  },
+  "Hiper Presa": {
+    "codigo": 17,
+    "nome": "Hiper Presa",
+    "papeis": [
+      "dano",
+      "controle",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_perigoso"
+    ],
+    "riscos": {
+      "usuario": "medio"
+    },
+    "efeitos_relevantes": [
+      "critico",
+      "recuo"
+    ],
+    "condicoes": [
+      "melhor_com_chance_critica_alta"
+    ],
+    "prioridade_simulacao": 0.85
+  },
+  "Acumulador": {
+    "codigo": 18,
+    "nome": "Acumulador",
+    "papeis": [
+      "buff",
+      "passivo",
+      "sobrevivencia"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "amplificacao_ao_sofrer_dano"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa",
+      "melhor_se_usuario_vai_ser_focado"
+    ],
+    "prioridade_simulacao": 0.5
+  }
+}

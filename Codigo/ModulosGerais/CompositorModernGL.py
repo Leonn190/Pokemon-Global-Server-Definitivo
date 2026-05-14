@@ -27,7 +27,7 @@ class CompositorModernGL:
 
     O jogo ainda renderiza a cena e o HUD em surfaces do Pygame. Esta classe
     sobe essas duas surfaces como texturas e aplica um shader de tela inteira.
-    Os arquivos GLSL ficam em ``Codigo/Shaders`` e podem usar includes simples.
+    Os arquivos GLSL ficam em ``Codigo/Visual/Shaders`` e podem usar includes simples.
     A pasta foi dividida em ``comum``, ``uniformes`` e ``efeitos`` para evitar
     um fragment shader gigante conforme novos efeitos surgirem.
     """
@@ -49,11 +49,11 @@ class CompositorModernGL:
         if moderngl is None:
             raise RuntimeError("moderngl indisponivel")
 
-        base_dir = Path(__file__).resolve().parents[1] / "Shaders"
+        base_dir = Path(__file__).resolve().parents[1] / "Visual" / "Shaders"
         vert_path = base_dir / "compositor.vert"
         frag_path = base_dir / "compositor.frag"
         if not vert_path.exists() or not frag_path.exists():
-            raise FileNotFoundError("Arquivos de shader do compositor nao encontrados em Codigo/Shaders.")
+            raise FileNotFoundError("Arquivos de shader do compositor nao encontrados em Codigo/Visual/Shaders.")
 
         self._ctx = moderngl.create_context()
         self._ctx.disable(moderngl.DEPTH_TEST)

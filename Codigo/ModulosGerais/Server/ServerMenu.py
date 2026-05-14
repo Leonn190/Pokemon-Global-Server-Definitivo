@@ -1,9 +1,9 @@
 import json
 
 from Codigo.ModulosGerais.Server.GerenciadorServerList import obter_servidor_por_id
-from SimuladorServerJogo.Gerais.ContextoServidor import definir_servidor_ativo
-from SimuladorServerJogo.Gerais.Rotas.Entrada import processar_entrada_json
-from SimuladorServerJogo.Gerais.Rotas.ServerOperar import processar_operacao_json
+from Servidor.Gerais.ContextoServidor import definir_servidor_ativo
+from Servidor.Gerais.Rotas.Entrada import processar_entrada_json
+from Servidor.Gerais.Rotas.ServerOperar import processar_operacao_json
 
 
 def _erro_padrao(mensagem):

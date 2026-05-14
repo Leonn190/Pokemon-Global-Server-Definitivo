@@ -9,9 +9,9 @@ import pygame
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 from Codigo.ModulosGerais.GerenciadorPokemons import evoluir_pokemon
 
-from Codigo.Geradores.PokemonInventario import PokemonInventario
-from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Geradores.Doce import Doce
+from Codigo.ModulosMundo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.Doce import Doce
 from Codigo.ModulosGerais.Sonoridades import tocar
 from Codigo.Paineis.Container import Container
 from Codigo.Paineis.PainelAuxiliarPoke import PainelAuxiliarPoke

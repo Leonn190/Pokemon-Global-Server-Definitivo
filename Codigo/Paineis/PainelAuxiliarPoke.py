@@ -4,9 +4,9 @@ import pygame
 
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
-from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Geradores.Doce import Doce
-from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.Doce import Doce
+from Codigo.ModulosMundo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Paineis.Container import Container
 from Codigo.Prefabs.Botao import BotaoSelecao
 from Codigo.Prefabs.Texto import Texto

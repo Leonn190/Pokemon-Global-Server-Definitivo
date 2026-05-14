@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Dict
 
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
-from SimuladorServerJogo.Gerais.Geradores.GeradorPokemon import (
+from Servidor.Gerais.Geradores.GeradorPokemon import (
     ganhar_xp_pokemon,
     aprender_ataque_aleatorio,
     evoluir_pokemon,

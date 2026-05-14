@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 from Codigo.ModulosGerais.Server.GerenciadorServerList import obter_servidor_por_id
-from SimuladorServerJogo.Gerais.ContextoServidor import definir_servidor_ativo, obter_pasta_servidor_ativo
-from SimuladorServerJogo.Gerais.Rotas.Terminal import processar_terminal_json
+from Servidor.Gerais.ContextoServidor import definir_servidor_ativo, obter_pasta_servidor_ativo
+from Servidor.Gerais.Rotas.Terminal import processar_terminal_json
 
 
 def _erro_padrao(mensagem):
@@ -23,7 +23,7 @@ def _preparar_servidor_local(server_id):
     pasta = Path(server.get("pasta")).resolve()
     if obter_pasta_servidor_ativo() != pasta:
         definir_servidor_ativo(pasta)
-        from SimuladorServerJogo.Gerais.EstadoServidor import snapshot_estado
+        from Servidor.Gerais.EstadoServidor import snapshot_estado
         snapshot_estado()
     return None
 

@@ -6,7 +6,7 @@ import pygame
 
 from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 
-from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
 from Codigo.Prefabs.Painel import Painel
 from Codigo.ModulosMundo.ServicoCraft import ServicoCraft
 from Codigo.Prefabs.Texto import Texto

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from SimuladorServerJogo.Gerais.Rotas.RotasBatalha import rota_enviar_jogada, rota_finalizar_batalha, rota_inicializar_batalha
+from Servidor.Gerais.Rotas.RotasBatalha import rota_enviar_jogada, rota_finalizar_batalha, rota_inicializar_batalha
 
 
 def inicializar_batalha(dados_inicializacao):

@@ -7,7 +7,7 @@ from typing import Tuple
 
 import pygame
 
-from Codigo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
 from Codigo.Visual.ArenaAnimator import ArenaAnimator
 from Codigo.Visual.AuxiliaresVisuais import EFEITOS_ATAQUE_FPS
 from Codigo.Visual.ContatoIrregularAnimator import ContatoIrregularAnimator

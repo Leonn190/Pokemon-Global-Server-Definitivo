@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import json
 from pathlib import Path
 import unicodedata
 
@@ -22,6 +21,11 @@ try:
     from Codigo.ModulosGerais.LoaderTabelas import carregar_csv_dict
 except Exception:
     carregar_csv_dict = None
+
+try:
+    from Codigo.ModulosGerais.LoaderCatalogos import carregar_catalogo
+except Exception:
+    carregar_catalogo = None
 
 try:
     import Codigo.ModulosGerais.Sonoridades as Sonoridades
@@ -206,14 +210,9 @@ class PainelConhecimento:
                     item.setdefault("id", str(item.get("id") or chave))
                     saida.append(item)
             return saida
-        caminho = cls._arquivo_dados(Path("Dados") / "Catalogo" / "Musicas.json")
-        if caminho is None:
+        if carregar_catalogo is None:
             return []
-        try:
-            with caminho.open("r", encoding="utf-8") as arq:
-                dados = json.load(arq)
-        except Exception:
-            return []
+        dados = carregar_catalogo("Musicas")
         saida = []
         if isinstance(dados, dict):
             for chave, valor in dados.items():

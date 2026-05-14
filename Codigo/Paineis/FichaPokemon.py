@@ -9,8 +9,8 @@ import pygame
 
 from Codigo.ModulosGerais.Auxiliares import carregar_frames
 from Codigo.ModulosGerais.GerenciadorPokemons import definir_equipavel_slot, retirar_equipavel_slot
-from Codigo.Geradores.ItemInventario import ItemInventario
-from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosMundo.Geradores.ItemInventario import ItemInventario
+from Codigo.ModulosMundo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.Prefabs.Arrastavel import Arrastavel
 from Codigo.Prefabs.Barra import Barra
 from Codigo.Prefabs.Botao import Botao

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pygame
 
-from Codigo.Geradores.Ator import Ator
-from Codigo.Geradores.PokemonInventario import PokemonInventario
+from Codigo.ModulosMundo.Geradores.Ator import Ator
+from Codigo.ModulosMundo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.ModulosGerais.DesenhaAtor import DesenhaAtor
 from Codigo.Paineis.PainelArvoreHabilidades import PainelArvoreHabilidades
 from Codigo.Paineis.PainelConhecimento import PainelConhecimento

@@ -9,18 +9,14 @@ from typing import Callable
 
 import pygame
 
+from Codigo.ModulosGerais.LoaderCatalogos import carregar_catalogo
 from Codigo.Prefabs.TextoCinematico import TextoCinematico
 
 
 _RAIZ_PROJETO = Path(__file__).resolve().parents[3]
 _CAMINHO_FONTE_PADRAO = _RAIZ_PROJETO / "Recursos" / "Visual" / "Fontes" / "FontePadrão.ttf"
 _CAMINHO_FONTE_CINEMATICA = _RAIZ_PROJETO / "Recursos" / "Visual" / "Fontes" / "FonteCinematica.ttf"
-_CAMINHOS_JSON = (
-    _RAIZ_PROJETO / "Dados" / "Catalogo" / "Creditos.json",
-    Path("Dados") / "Catalogo" / "Creditos.json",
-    Path(__file__).with_name("Creditos.json"),
-    Path("Creditos.json"),
-)
+_CAMINHOS_JSON_FALLBACK = (Path(__file__).with_name("Creditos.json"), Path("Creditos.json"))
 _AUTOR_PADRAO = "Leon Cunha Alvaro Lopez Soto"
 
 
@@ -176,7 +172,11 @@ class TelaCreditos:
         candidatos: list[Path] = []
         if caminho_json is not None:
             candidatos.append(Path(caminho_json))
-        candidatos.extend(_CAMINHOS_JSON)
+        if caminho_json is None:
+            dados_catalogo = carregar_catalogo("Creditos")
+            if dados_catalogo:
+                return dados_catalogo
+        candidatos.extend(_CAMINHOS_JSON_FALLBACK)
         for caminho in candidatos:
             try:
                 if caminho.exists():
@@ -420,7 +420,7 @@ class TelaCreditos:
             f"{self._fmt_int(self._contar_csv('Pokemon Global Server - Equipaveis.csv'))} equipaveis registrados",
             f"{self._fmt_int(self._contar_csv('Pokemon Global Server - NPC Combatente.csv') + self._contar_csv('Pokemon Global Server - NPC Vendedor.csv'))} NPCs cadastrados",
             f"{self._fmt_int(self._contar_json_catalogo('Musicas'))} trilhas sonoras",
-            f"{self._fmt_int(len(list((_RAIZ_PROJETO / 'Dados' / 'PropriedadesAtaques').glob('Propriedades*.json'))))} tipos de Pokemon",
+            f"{self._fmt_int(len(list((_RAIZ_PROJETO / 'Dados' / 'Ataques' / 'PropriedadesAtaques').glob('Propriedades*.json'))))} tipos de Pokemon",
             f"{self._fmt_int(resumo.get('linhas_totais_geral'))} linhas totais gerais",
             f"{self._fmt_int(python.get('linhas_totais'))} linhas de Python",
             f"{self._fmt_int(python.get('py_arquivos'))} arquivos Python",
@@ -439,16 +439,11 @@ class TelaCreditos:
             return 0
 
     def _contar_json_catalogo(self, nome: str) -> int:
-        caminho = _RAIZ_PROJETO / "Dados" / "Catalogo" / f"{nome}.json"
-        try:
-            with caminho.open("r", encoding="utf-8") as arquivo:
-                dados = json.load(arquivo)
-            return len(dados) if isinstance(dados, dict) else 0
-        except Exception:
-            return 0
+        dados = carregar_catalogo(nome)
+        return len(dados) if isinstance(dados, dict) else 0
 
     def _ultimo_relatorio(self) -> dict:
-        pasta = _RAIZ_PROJETO / "Outros" / "Relatorios" / "Relatorios"
+        pasta = _RAIZ_PROJETO / "Documentação" / "Relatorios" / "Relatorios"
         try:
             arquivos = sorted(pasta.glob("*.json"), key=lambda p: p.name)
             if not arquivos:

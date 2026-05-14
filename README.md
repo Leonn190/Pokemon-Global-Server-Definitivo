@@ -40,7 +40,7 @@ A proposta principal é criar um jogo com aparência simples, mas sistemas inter
 
 ## 3. Detalhes estatísticos
 
-Os números abaixo são atualizados automaticamente pelo `Outros/AtualizadorReadMe.py` a partir dos arquivos atuais do projeto e do último relatório gerado.
+Os números abaixo são atualizados automaticamente pelo `Ferramentas/AtualizadorReadMe.py` a partir dos arquivos atuais do projeto e do último relatório gerado.
 
 ### Dados estatísticos do jogo
 

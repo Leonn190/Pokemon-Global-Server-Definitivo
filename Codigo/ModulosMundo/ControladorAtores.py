@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Dict, Optional, Tuple
 
-from Codigo.Geradores.Ator import Ator
-from Codigo.Geradores.Player.Inventario import Inventario
-from Codigo.Geradores.Player.Perfil import Perfil
+from Codigo.ModulosMundo.Geradores.Ator import Ator
+from Codigo.ModulosMundo.Geradores.Player.Inventario import Inventario
+from Codigo.ModulosMundo.Geradores.Player.Perfil import Perfil
 
 
 class ControladorAtores:

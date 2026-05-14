@@ -1,0 +1,139 @@
+{
+  "Queimadura Eterna": {
+    "codigo": 73,
+    "nome": "Queimadura Eterna",
+    "papeis": [
+      "controle",
+      "dano_indireto"
+    ],
+    "alvos_preferidos": [
+      "inimigo_perigoso",
+      "inimigo_resistente"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "queimado",
+      "permanente"
+    ],
+    "condicoes": [
+      "melhor_em_luta_longa"
+    ],
+    "prioridade_simulacao": 0.72
+  },
+  "Erupção": {
+    "codigo": 74,
+    "nome": "Erupção",
+    "papeis": [
+      "dano",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_fraco"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "nao_critico"
+    ],
+    "condicoes": [
+      "melhor_com_spa_alto"
+    ],
+    "prioridade_simulacao": 0.78
+  },
+  "Explosão Ardente": {
+    "codigo": 75,
+    "nome": "Explosão Ardente",
+    "papeis": [
+      "dano",
+      "area",
+      "finalizacao"
+    ],
+    "alvos_preferidos": [
+      "inimigo_ferido",
+      "inimigo_agrupado"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "splash",
+      "nocaute"
+    ],
+    "condicoes": [
+      "melhor_se_pode_nocautear",
+      "melhor_em_inimigos_agrupados"
+    ],
+    "prioridade_simulacao": 0.82
+  },
+  "Jato de Lava": {
+    "codigo": 76,
+    "nome": "Jato de Lava",
+    "papeis": [
+      "dano",
+      "area",
+      "terreno"
+    ],
+    "alvos_preferidos": [
+      "linha_inimiga",
+      "area_vazia_predict"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "incendiada",
+      "linha"
+    ],
+    "condicoes": [
+      "melhor_em_linha_com_multiplos_alvos"
+    ],
+    "prioridade_simulacao": 0.86
+  },
+  "Raio de Fogo": {
+    "codigo": 77,
+    "nome": "Raio de Fogo",
+    "papeis": [
+      "dano",
+      "area"
+    ],
+    "alvos_preferidos": [
+      "linha_inimiga"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "linha",
+      "reducao_por_alvo"
+    ],
+    "condicoes": [
+      "melhor_em_linha_com_multiplos_alvos"
+    ],
+    "prioridade_simulacao": 0.8
+  },
+  "Dança do Sol": {
+    "codigo": 78,
+    "nome": "Dança do Sol",
+    "papeis": [
+      "clima",
+      "suporte"
+    ],
+    "alvos_preferidos": [
+      "self"
+    ],
+    "riscos": {
+      "usuario": "baixo"
+    },
+    "efeitos_relevantes": [
+      "sol_forte"
+    ],
+    "condicoes": [
+      "melhor_com_time_fogo"
+    ],
+    "prioridade_simulacao": 0.62
+  }
+}

@@ -177,12 +177,12 @@ function parseToml(texto) {
 function candidatosRegras(nomeArquivo) {
   const diretorioAtual = path.dirname(fileURLToPath(import.meta.url));
   return [
-    path.resolve(diretorioAtual, "../../../SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(diretorioAtual, "../../SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(diretorioAtual, "../SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(process.cwd(), "../SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(process.cwd(), "SimuladorServerJogo/Logica/Regras", nomeArquivo),
-    path.resolve(process.cwd(), "../Pokemon-Global-Server-Definitivo/SimuladorServerJogo/Logica/Regras", nomeArquivo),
+    path.resolve(diretorioAtual, "../../../Dados/Regras", nomeArquivo),
+    path.resolve(diretorioAtual, "../../Dados/Regras", nomeArquivo),
+    path.resolve(diretorioAtual, "../Dados/Regras", nomeArquivo),
+    path.resolve(process.cwd(), "../Dados/Regras", nomeArquivo),
+    path.resolve(process.cwd(), "Dados/Regras", nomeArquivo),
+    path.resolve(process.cwd(), "../Pokemon-Global-Server-Definitivo/Dados/Regras", nomeArquivo),
   ];
 }
 function carregarToml(nomeArquivo, rotulo) {

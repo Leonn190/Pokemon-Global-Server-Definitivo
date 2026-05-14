@@ -5,7 +5,7 @@ import pygame
 from Codigo.Prefabs.Botao import BotaoAlavanca
 from Codigo.Prefabs.Texto import Texto
 from Codigo.ModulosGerais.DesenhoMapa import desenhar_seta_player
-from Codigo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon
+from Codigo.ModulosMundo.Geradores.ConstrutorDungeon import construir_surface_mapa_dungeon
 
 
 class TelaMapa:

@@ -1,32 +1,16 @@
-import json
 import random
 import unicodedata
-from pathlib import Path
 
 import pygame
 
 from Codigo.ModulosGerais.Auxiliares import bioma_por_tile
+from Codigo.ModulosGerais.LoaderCatalogos import carregar_catalogo
 
 silencio = False
 Volume = 0.0
 
-_RAIZ_PROJETO = Path(__file__).resolve().parents[2]
-_CAMINHO_CATALOGO = _RAIZ_PROJETO / "Dados" / "Catalogo"
-
-
-def _carregar_catalogo(nome):
-    caminho = _CAMINHO_CATALOGO / f"{nome}.json"
-    try:
-        with caminho.open("r", encoding="utf-8") as arquivo:
-            dados = json.load(arquivo)
-    except Exception as exc:
-        print(f"[ERRO] Falha ao carregar catalogo de sonoridades '{nome}': {exc}")
-        return {}
-    return dados if isinstance(dados, dict) else {}
-
-
 def _carregar_sons():
-    sons = _carregar_catalogo("Sons")
+    sons = carregar_catalogo("Sons")
     for dados in sons.values():
         if isinstance(dados, dict):
             dados.setdefault("Som", None)
@@ -34,7 +18,7 @@ def _carregar_sons():
 
 
 Sons = _carregar_sons()
-Musicas = _carregar_catalogo("Musicas")
+Musicas = carregar_catalogo("Musicas")
 for _nome_musica, _dados_musica in Musicas.items():
     if isinstance(_dados_musica, dict):
         _dados_musica.setdefault("id", str(_nome_musica))

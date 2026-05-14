@@ -407,12 +407,16 @@ class PokemonBatalha:
         defesa_chave = "SpD" if categoria in {"especial", "spa", "magico"} else "Def"
         defesa = alvo.obter_atributo(defesa_chave)
         ignora_defesa = bool(dados.get("ignorar_defesa") or dados.get("ignora_defesa"))
-        defesa_efetiva = 0.0 if ignora_defesa else max(0.0, defesa - (self.obter_atributo("Per") / 2.0))
+        usar_per_no_dano = not (dados.get("usar_per_no_dano") is False or dados.get("ignorar_perfuracao") or dados.get("sem_per"))
+        perfuracao = self.obter_atributo("Per") / 2.0 if usar_per_no_dano else 0.0
+        defesa_efetiva = 0.0 if ignora_defesa else max(0.0, defesa - perfuracao)
         calculo.append(f"Defesa bruta ({defesa_chave}) = {round(defesa, 4)}")
         if ignora_defesa:
             calculo.append("Defesa ignorada = 0")
-        elif self.obter_atributo("Per") > 0:
-            calculo.append(f"Defesa apos perfuracao = {round(defesa, 4)} - {round(self.obter_atributo('Per') / 2.0, 4)} = {round(defesa_efetiva, 4)}")
+        elif usar_per_no_dano and self.obter_atributo("Per") > 0:
+            calculo.append(f"Defesa apos perfuracao = {round(defesa, 4)} - {round(perfuracao, 4)} = {round(defesa_efetiva, 4)}")
+        elif not usar_per_no_dano:
+            calculo.append("Perfuracao por Per ignorada")
         mult_defesa = 100.0 / (100.0 + defesa_efetiva)
         antes = dano
         dano *= mult_defesa
@@ -436,6 +440,7 @@ class PokemonBatalha:
             "defesa_base": round(defesa, 4),
             "defesa_aplicada": round(defesa_efetiva, 4),
             "ignora_defesa": ignora_defesa,
+            "usar_per_no_dano": usar_per_no_dano,
             "multiplicador_defesa": round(mult_defesa, 4),
             "durabilidade": round(dur_alvo, 4),
             "multiplicador_durabilidade": round(max(0.0, 1.0 - (dur_alvo / 100.0)), 4),

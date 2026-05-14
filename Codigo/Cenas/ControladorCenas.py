@@ -253,6 +253,8 @@ class ControladorCenas:
         self._encerrado = True
 
     def DesenharInfosAdicionais(self, tela=None):
+        if isinstance(getattr(self, "INFO", None), dict) and self.INFO.get("CreditosAtivos"):
+            return
         destino = self.TELA if tela is None else tela
         largura_tela = destino.get_width()
         deslocamento_direita = 0

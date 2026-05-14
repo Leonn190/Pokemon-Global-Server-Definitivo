@@ -530,6 +530,12 @@ def _resolver_musica_alvo(jogo):
     cena = getattr(jogo, "Cena", None)
     cena_id = str(getattr(cena, "ID", "") or "")
 
+    if isinstance(getattr(jogo, "INFO", None), dict) and jogo.INFO.get("CreditosAtivos") and "Creditos" in Musicas:
+        return "Creditos"
+
+    if getattr(jogo, "CenaAlvo", None) == "Menu" and _musica_atual == "Creditos" and "Creditos" in Musicas:
+        return "Creditos"
+
     if cena_id != "Mundo":
         _tile_confirmado = None
         _tile_candidato = None
@@ -761,7 +767,9 @@ class SistemaMusicas:
             alvo = _resolver_musica_alvo(jogo)
 
             if alvo and alvo != _musica_atual:
-                if alvo in MUSICAS_MUNDO and _musica_atual in MUSICAS_MUNDO:
+                if _fade_alvo == alvo:
+                    pass
+                elif alvo in MUSICAS_MUNDO and _musica_atual in MUSICAS_MUNDO:
                     TransicaoMusica(alvo)
                 else:
                     _iniciar_musica(alvo)

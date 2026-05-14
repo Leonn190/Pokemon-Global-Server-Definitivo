@@ -7,6 +7,7 @@ from Codigo.Telas.Subtelas.SubtelaOpcoes import SubtelaOpcoes
 from Codigo.ModulosGerais.Server.ServerMundo import finalizar_interacao_npc_mundo, solicitar_contexto_batalha_mundo
 from Codigo.ModulosGerais.Server.ServerTerminal import buscar_mensagens_terminal, enviar_mensagem_terminal
 from Codigo.Telas.Telas.TelaConfig import TelaConfig, ResetTelaConfig
+from Codigo.Telas.Telas.TelaCreditos import TelaCreditos
 from Codigo.Prefabs.Terminal import Terminal
 import pygame
 from copy import deepcopy
@@ -81,6 +82,7 @@ class CenaCombate:
         self.ControladorBatalha = ControladorBatalha(self.Camera, jogo=JOGO)
         self.ControladorBatalha.iniciar(self._estado_inicial_batalha(JOGO, contexto))
         self.ClimaBatalha = ClimaBatalha()
+        self._tela_creditos = TelaCreditos()
 
         server = JOGO.INFO.get("ServerSelecionado") if isinstance(JOGO.INFO.get("ServerSelecionado"), dict) else {}
         link = server.get("ip")
@@ -184,6 +186,12 @@ class CenaCombate:
         self.TelaAtual = str(tela)
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
+        if self._tela_creditos.ativa:
+            self._tela_creditos.atualizar(EVENTOS, dt, JOGO)
+            self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
+            self.Camera.atualizar(dt)
+            self._eventos_ui_atual = []
+            return
         if self.TelaAtual == "Config":
             return
         self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
@@ -231,6 +239,8 @@ class CenaCombate:
 
     def coletar_efeito_shader(self, JOGO, dt, tamanho_tela):
         _ = (JOGO, dt)
+        if getattr(self, "_tela_creditos", None) is not None and self._tela_creditos.ativa:
+            return self._tela_creditos.coletar_efeito_shader() or {}
         if self.TelaAtual == "Config":
             return None
         efeito = {}
@@ -317,6 +327,23 @@ class CenaCombate:
         eventos_ui = list(getattr(self, "_eventos_ui_atual", EVENTOS) or [])
         if self.Terminal is not None:
             self.Terminal.desenhar(surface, eventos_ui, dt)
+        self._tela_creditos.desenhar(surface, EVENTOS, dt, JOGO)
+
+    def abrir_creditos_pos_batalha(self, JOGO):
+        self._abrir_creditos(JOGO)
+
+    def _abrir_creditos(self, JOGO):
+        gerenciador = getattr(JOGO, "GerenciadorSubtelas", None)
+        if gerenciador is not None:
+            gerenciador.limpar()
+        JOGO.INFO["CreditosAtivos"] = True
+        self._tela_creditos.abrir(JOGO.TELA.get_size(), ao_finalizar=lambda: self._finalizar_creditos(JOGO))
+
+    def _finalizar_creditos(self, JOGO):
+        JOGO.INFO.pop("CreditosAtivos", None)
+        JOGO.INFO.pop("CombateContextoTemporario", None)
+        JOGO.Escuro = 100
+        JOGO.CenaAlvo = "Menu"
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.atualizar_cena(JOGO, EVENTOS, dt)

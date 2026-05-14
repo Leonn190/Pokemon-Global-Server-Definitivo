@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import unicodedata
 
 from Codigo.ModulosGerais.Sonoridades import tocar_musica_resultado_batalha
 from Codigo.Telas.Subtelas.SubtelaFinalizacao import SubtelaFinalizacao
@@ -19,6 +20,12 @@ def _f(valor, default=0.0) -> float:
         return float(valor)
     except (TypeError, ValueError):
         return float(default)
+
+
+def _normalizar_creditos(valor) -> str:
+    bruto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    sem_acento = "".join(ch for ch in bruto if not unicodedata.combining(ch))
+    return "".join(ch for ch in sem_acento if ch.isalnum())
 
 
 class FinalizadorBatalha:
@@ -173,7 +180,65 @@ class FinalizadorBatalha:
             self.voltar_ao_mundo()
             return
         tocar_musica_resultado_batalha(vencedor)
-        gerenciador.abrir(SubtelaFinalizacao(itens, rodadas_totais=rodadas, vencedor=vencedor, ao_continuar=self.voltar_ao_mundo))
+        ao_continuar = self._abrir_creditos_pos_batalha if self._deve_disparar_creditos(resultado) else self.voltar_ao_mundo
+        gerenciador.abrir(SubtelaFinalizacao(itens, rodadas_totais=rodadas, vencedor=vencedor, ao_continuar=ao_continuar))
+
+    def _abrir_creditos_pos_batalha(self):
+        jogo = getattr(self.controlador, "jogo", None)
+        cena = getattr(jogo, "Cena", None) if jogo is not None else None
+        abrir = getattr(cena, "abrir_creditos_pos_batalha", None)
+        if callable(abrir):
+            abrir(jogo)
+        else:
+            self.voltar_ao_mundo()
+
+    def _deve_disparar_creditos(self, resultado) -> bool:
+        if self._vencedor_visual(resultado) != "jogador":
+            return False
+        jogo = getattr(self.controlador, "jogo", None)
+        contexto = jogo.INFO.get("CombateContexto") if jogo is not None and isinstance(getattr(jogo, "INFO", None), dict) and isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
+        if not contexto and isinstance(getattr(self.controlador, "contexto_batalha", None), dict):
+            contexto = getattr(self.controlador, "contexto_batalha")
+        return self._vitoria_boss_eternatus(contexto) or self._vitoria_leon_terceira_batalha(contexto)
+
+    def _vitoria_boss_eternatus(self, contexto: dict) -> bool:
+        tipo = _normalizar_creditos(contexto.get("tipo_batalha") or contexto.get("tipo") or getattr(self.controlador, "tipo_batalha", ""))
+        if tipo != "boss":
+            return False
+        campos = []
+        for chave in ("pokemon_colisao", "pokemons_inimigo", "estado", "nome", "especie", "pokemon_boss"):
+            campos.append(contexto.get(chave))
+        return self._contem_normalizado(campos, "eternatus")
+
+    def _vitoria_leon_terceira_batalha(self, contexto: dict) -> bool:
+        npc = contexto.get("npc_contexto") if isinstance(contexto.get("npc_contexto"), dict) else {}
+        campos_nome = [npc.get(chave) for chave in ("nome", "npc_nome", "Name", "Nome")]
+        campos_cargo = [npc.get(chave) for chave in ("cargo", "npc_cargo")]
+        campos_estadio = [npc.get(chave) for chave in ("estadio_tipo", "npc_estadio", "tipo_estadio", "estadio")]
+        campos_estadio.extend(contexto.get(chave) for chave in ("estadio_tipo", "npc_estadio", "tipo_estadio"))
+        campos_etapa = [npc.get(chave) for chave in ("etapa", "numero_batalha", "batalha_numero", "ordem", "desafio")]
+        campos_etapa.extend(contexto.get(chave) for chave in ("etapa", "numero_batalha", "batalha_numero", "ordem", "desafio"))
+        if bool(npc.get("dispara_creditos") or contexto.get("dispara_creditos")):
+            return True
+        return (
+            self._contem_normalizado(campos_nome, "leon")
+            and self._contem_normalizado(campos_cargo, "lider")
+            and self._contem_normalizado(campos_estadio, "geral")
+            and any(str(valor or "").strip() == "3" or _normalizar_creditos(valor) in {"terceira", "terceiro", "final"} for valor in campos_etapa)
+        )
+
+    def _contem_normalizado(self, valores, alvo: str) -> bool:
+        alvo_norm = _normalizar_creditos(alvo)
+        for valor in list(valores or []):
+            if isinstance(valor, dict):
+                if self._contem_normalizado(valor.values(), alvo_norm):
+                    return True
+            elif isinstance(valor, (list, tuple, set)):
+                if self._contem_normalizado(valor, alvo_norm):
+                    return True
+            elif alvo_norm and alvo_norm in _normalizar_creditos(valor):
+                return True
+        return False
 
     def voltar_ao_mundo(self):
         ctrl = self.controlador

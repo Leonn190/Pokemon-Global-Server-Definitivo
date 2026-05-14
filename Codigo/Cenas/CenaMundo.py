@@ -35,6 +35,7 @@ from Codigo.Geradores.Estadio import EstadioInterno
 from Codigo.ModulosBatalha.InicializadorBatalha import InicializadorBatalha
 from Codigo.ModulosGerais.GerenciadorPokemons import materializar_pokemon, gerar_bando_confronto
 from Codigo.Prefabs.Texto import Texto
+from Codigo.Telas.Telas.TelaCreditos import TelaCreditos
 from Codigo.Telas.Telas.TelaMorrer import TelaMorrer
 from Codigo.Geradores.portal import Portal
 
@@ -213,6 +214,7 @@ class CenaMundo:
         self._imunidade_combate_pendente = bool(JOGO.INFO.pop("ImuneCombatePendenteMundo", False))
         self._filtro_camera = FiltroCamera()
         self._tela_morrer = TelaMorrer()
+        self._tela_creditos = TelaCreditos()
         self._ultimo_chunk_seguro = None
         self._ultimo_chunk_seguro_mundo = None
         self._portal_transicao = None
@@ -338,6 +340,12 @@ class CenaMundo:
             normalizar()
 
     def atualizar_cena(self, JOGO, EVENTOS, dt):
+        if self._tela_creditos.ativa:
+            self._tela_creditos.atualizar(EVENTOS, dt, JOGO)
+            self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
+            self.ElementosHud.atualizar(dt)
+            self.Camera.atualizar(dt)
+            return EVENTOS
         if self._tela_morrer.ativa:
             self._tela_morrer.atualizar(EVENTOS, dt, JOGO)
             self.Camera.TamanhoTelaPx = JOGO.TELA.get_size()
@@ -361,6 +369,15 @@ class CenaMundo:
         inventario_modal = ger.obter_por_tipo(SubtelaInventario)
         opcoes_modal = ger.obter_por_tipo(SubtelaOpcoes)
         dialogo_ativo = ger.contem(SubtelaDialogo)
+
+        # Atalho temporario de teste dos creditos; remover quando houver gatilho definitivo.
+        sem_modal_bloqueando = opcoes_modal is None and inventario_modal is None and not dialogo_ativo and not ger.ativa
+        if self.TelaAtual is None and (not bloqueio_gameplay) and sem_modal_bloqueando:
+            for ev in EVENTOS:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_c:
+                    JOGO.INFO["CreditosAtivos"] = True
+                    self._tela_creditos.abrir(JOGO.TELA.get_size(), ao_finalizar=lambda: self._finalizar_creditos(JOGO))
+                    return EVENTOS
 
         if player is not None and getattr(player, "Controle", None) is not None:
             player.Controle.BloquearToggleInventario = inventario_modal.bloquear_toggle_inventario() if inventario_modal is not None else False
@@ -538,6 +555,8 @@ class CenaMundo:
 
     def coletar_efeito_shader(self, JOGO, dt, tamanho_tela):
         _ = (JOGO, dt)
+        if getattr(self, "_tela_creditos", None) is not None and self._tela_creditos.ativa:
+            return self._tela_creditos.coletar_efeito_shader() or {}
         if self.TelaAtual == "Config":
             return None
         efeito = self._filtro_camera.uniformes_atuais()
@@ -609,6 +628,7 @@ class CenaMundo:
                 self._texto_estadio.draw(surface)
         self._tela_morrer.desenhar(surface, EVENTOS, dt, JOGO)
         self._renderizar_transicao_portal(JOGO, dt)
+        self._tela_creditos.desenhar(surface, EVENTOS, dt, JOGO)
 
     def _iniciar_transicao_portal(self, acao):
         if self._portal_transicao is not None or not callable(acao):
@@ -640,12 +660,13 @@ class CenaMundo:
         return self.TelaAtual not in ("Config", "Mapa")
 
     def bloquear_claridade_global(self) -> bool:
-        return bool(self._tela_morrer.ativa)
+        return bool(self._tela_morrer.ativa or self._tela_creditos.ativa)
 
     def render_tela(self, surface, JOGO, EVENTOS, dt):
         if self.TelaAtual == "Config":
             TelaConfig(self, JOGO, EVENTOS, dt, tela_destino=surface)
             self._tela_morrer.desenhar(surface, EVENTOS, dt, JOGO)
+            self._tela_creditos.desenhar(surface, EVENTOS, dt, JOGO)
             return
         if self.TelaAtual == "Mapa" and (self.ServicoMapa is not None or isinstance(getattr(self.TelaMapa, "_layout_dungeon", None), dict)):
             player = self.ControladorMundo.player_local
@@ -664,6 +685,7 @@ class CenaMundo:
             if not self.TelaMapa.ativo:
                 self.TelaAtual = None
         self._tela_morrer.desenhar(surface, EVENTOS, dt, JOGO)
+        self._tela_creditos.desenhar(surface, EVENTOS, dt, JOGO)
 
     def Tela(self, JOGO, EVENTOS, dt):
         self.atualizar_cena(JOGO, EVENTOS, dt)
@@ -774,6 +796,12 @@ class CenaMundo:
 
         if jogo.GerenciadorSubtelas.obter_por_tipo(SubtelaPreBatalha) is None:
             jogo.GerenciadorSubtelas.abrir(SubtelaPreBatalha(times=times_validos, ao_confirmar=_comecar_com_time))
+
+    def _finalizar_creditos(self, JOGO) -> None:
+        JOGO.INFO.pop("CreditosAtivos", None)
+        JOGO.INFO["MenuTelaInicial"] = "MenuPrincipal"
+        JOGO.Escuro = 100
+        JOGO.CenaAlvo = "Menu"
 
     def _processar_estado_dialogo_npc(self, jogo) -> None:
         if jogo.GerenciadorSubtelas.contem(SubtelaDialogo):

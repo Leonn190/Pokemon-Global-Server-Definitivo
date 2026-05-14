@@ -1,0 +1,463 @@
+{
+  "config": {
+    "duracao_total": 110.0,
+    "inicio_scroll": 12.0,
+    "inicio_final": 94.5,
+    "musica": "Creditos",
+    "permitir_pular": false,
+    "logo": "Recursos/Visual/Icones/GlobalServer Logo.png",
+    "logo_alternativas": [
+      "Recursos/Visual/Icones/GlobalServer Logo.png",
+      "Recursos/Visual/Icones/GlobalServer/Logo.png",
+      "Recursos/Visual/Icones/GlobalServer/Icone.png"
+    ]
+  },
+  "cinematico_inicio": {
+    "titulo": "Pokemon Global Server",
+    "subtitulo": "Obrigado por jogar"
+  },
+  "creditos": [
+    {
+      "topico": "Direção e Criação",
+      "entradas": [
+        {
+          "cargo": "Direção Geral",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Diretor Criativo",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Diretor de Artes",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Líder de Requisitos",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Game Design",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Balanceamento Geral",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Coordenador",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Líder de FrontEnd",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Líder de BackEnd",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        }
+      ]
+    },
+    {
+      "topico": "Programação",
+      "entradas": [
+        {
+          "cargo": "Sistema de Arquitetura Geral",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Dados",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Mundo Aberto",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Geração de Mundo",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Biomas, Terrenos e Tiles",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Localidades, Rotas e Estruturas Naturais",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Chunks, Pacotes e Sincronização",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Mapa, Minimap e Mapa-Múndi",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Player, Atores e Objetos do Mundo",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Colisão e Física do Mundo",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Cérebros do Servidor",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Pokémon",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Tipos, Fraquezas e Resistências",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Baús",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Captura",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Progressão",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Batalha",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Logs de Batalha",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Turnos, Jogadas e Ações Planejadas",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Propriedades de Efeitos e Ataques",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Passivas, Gatilhos e Reações",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de IA de Combate",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Inventário, Itens e Craft",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Equipáveis",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de NPCs, Diálogos e Interações",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Lojas, Vendedores e Presentes",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Dungeons",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Armadilhas e Servos",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Estádios",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Interface",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Cenas, Telas e Painéis",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de HUDs",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Configuração",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Regras",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Renderização, Animações e Shaders",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Áudio e Trilhas Sonoras",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Site, Wiki e Portfólio",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Relatórios e Estatísticas",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Salvamento, Estado e Persistência",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Materialização e Instâncias de Pokémon",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Habilidades, Skills e Árvore de Progressão",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Projéteis e Captura Visual",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Clima, Tempo e Ambiente",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        },
+        {
+          "cargo": "Sistema de Testes, Simuladores e Ferramentas",
+          "nomes": [
+            "Leon Cunha Alvaro Lopez Soto"
+          ]
+        }
+      ]
+    },
+    {
+      "topico": "Números do Projeto",
+      "auto": "numeros_projeto"
+    },
+    {
+      "topico": "Arte e Visual",
+      "texto": [
+        "Todas as artes e recursos visuais foram coletados de:"
+      ],
+      "nomes": [
+        "League of Legends",
+        "Nintendo",
+        "Pokémon",
+        "Riot Games",
+        "Starve.io"
+      ],
+      "rodape": "Todos os créditos de arte e visual são destinados aos seus respectivos autores e proprietários."
+    },
+    {
+      "topico": "Áudio",
+      "texto": [
+        "Músicas, efeitos sonoros e referências de áudio foram coletados de:"
+      ],
+      "nomes": [
+        "EyenDJ",
+        "Mediatonic",
+        "Nintendo"
+      ],
+      "rodape": "Todos os créditos de áudio são destinados aos seus respectivos autores e proprietários."
+    },
+    {
+      "topico": "Ferramentas e Tecnologias",
+      "nomes": [
+        "Astro",
+        "Codex",
+        "CSS",
+        "CSV",
+        "Discord Rich Presence / pypresence",
+        "Gemini",
+        "Git",
+        "GitHub",
+        "GitHub Actions",
+        "Gpt",
+        "HTML",
+        "Java",
+        "JavaScript",
+        "JSON",
+        "ModernGL",
+        "OpenGL",
+        "Pygame",
+        "Python",
+        "TOML",
+        "Visual Studio Code"
+      ]
+    },
+    {
+      "topico": "Equipe de Testes",
+      "nomes": [
+        "Alexandre Delbim",
+        "Arthur Ramos",
+        "Caio Ponte",
+        "Felipe Lima",
+        "Felipe Riva",
+        "Henrique Santana",
+        "João Gannoun",
+        "Leon Soto",
+        "Lisciele Soto",
+        "Nathali Thomazini",
+        "Rafael Ferraz",
+        "Rafael Vasques",
+        "Suriane Soto"
+      ]
+    },
+    {
+      "topico": "Inspirações",
+      "nomes": [
+        "League Of Legends",
+        "Link is Awekening",
+        "Minecraft",
+        "Pokemon Champions",
+        "Pokemon Go",
+        "Pokemon Scarlet Violet",
+        "Pokemon Showdown",
+        "Pokemon Sword and Shield",
+        "Pokemon TCG Online",
+        "Pokemon Unite",
+        "Starve.io",
+        "Zelda Breath Of The Wild"
+      ]
+    },
+    {
+      "topico": "Agradecimentos Especiais",
+      "nomes": [
+        "Alexandre Delbim",
+        "Amable Soto",
+        "Caio Ponte",
+        "Felipe Lima",
+        "Felipe Riva",
+        "Lisciele Soto",
+        "Nathali Thomazini",
+        "Rafael Vasques",
+        "Sidney Cunha",
+        "Suneiva Cunha",
+        "Suriane Soto"
+      ]
+    }
+  ],
+  "cinematico_final": {
+    "texto": [
+      "Pokémon Global Server é um fangame independente, sem fins comerciais, criado inicialmente como portfólio, estudo e aprendizado em programação, game design, arquitetura de sistemas e desenvolvimento de jogos.",
+      "Este projeto não é afiliado, associado, aprovado ou patrocinado pela Nintendo, The Pokémon Company, Game Freak ou qualquer uma das empresas detentoras da marca Pokémon.",
+      "Pokémon, personagens, marcas, músicas, imagens, sprites, efeitos sonoros e demais recursos de terceiros pertencem aos seus respectivos autores e proprietários."
+    ],
+    "agradecimento": "Obrigado novamente por jogar Pokémon Global Server."
+  }
+}

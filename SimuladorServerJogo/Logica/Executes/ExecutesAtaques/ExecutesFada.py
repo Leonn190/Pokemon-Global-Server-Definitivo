@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import (
+    EFEITOS_NEGATIVOS_PADRAO,
+    EFEITOS_POSITIVOS_PADRAO,
     adjacentes_mesmo_lado,
     alvos_linha_inimigos_area,
     aplicar_mod_atributo,
+    area_selecionada_da_acao,
     dano_generico,
     fnum,
     normalizar,
@@ -12,26 +15,6 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
     remover_efeitos_contando_passos,
     remover_efeitos_negativos,
 )
-
-
-EFEITOS_NEGATIVOS_FORMAIS = [
-    "Queimado",
-    "Envenenado",
-    "Intoxicado",
-    "Congelado",
-    "Dormindo",
-    "Paralisado",
-    "Enraizado",
-    "Cauterizado",
-    "Descarregado",
-    "Encharcado",
-    "Atordoado",
-    "Quebrado",
-    "Enfraquecido",
-    "Confuso",
-    "Bloqueado",
-    "Amaldiçoado",
-]
 
 
 def _param(ctx, chave, default):
@@ -224,9 +207,9 @@ def _exec_chuva_cintilante(ctx, alvo):
 
 def _exec_vento_fada(ctx, alvo):
     usuario = ctx.get("usuario")
-    area_id = getattr(alvo, "area_id", None)
+    area_id = area_selecionada_da_acao(ctx) or getattr(alvo, "area_id", None)
     if not area_id:
-        return {"falha": True, "motivo": "area_alvo_invalida"}
+        return {"aplicado": True, "alvos_atingidos": 0, "resultados": []}
     resultados = []
     for inimigo in alvos_linha_inimigos_area(ctx, area_id, alvo_inicial=alvo):
         bruto = usuario.obter_atributo("SpA") * _param(ctx, "multiplicador_spa", 0.70)
@@ -237,7 +220,7 @@ def _exec_vento_fada(ctx, alvo):
 
 def _exec_bondade(ctx, alvo):
     rng = ctx.get("rng") or getattr(ctx.get("partida"), "rng", None)
-    efeitos = _param_lista(ctx, "efeitos_positivos_possiveis", ["Abençoado", "Amplificado", "Fortificado", "Focado", "Energizado", "Preparado", "Regeneração", "Imune", "Furtivo"])
+    efeitos = _param_lista(ctx, "efeitos_positivos_possiveis", EFEITOS_POSITIVOS_PADRAO)
     if not efeitos:
         return {"falha": True, "motivo": "lista_efeitos_positivos_vazia"}
     efeito = rng.choice(efeitos) if rng is not None else efeitos[0]
@@ -258,7 +241,7 @@ def _exec_luz_purificadora(ctx, alvo):
             continue
         alvos.append(pokemon)
     resultados = []
-    lista_negativos = _param_lista(ctx, "efeitos_negativos", EFEITOS_NEGATIVOS_FORMAIS)
+    lista_negativos = _param_lista(ctx, "efeitos_negativos", EFEITOS_NEGATIVOS_PADRAO)
     for pokemon in alvos:
         resultados.append(
             {

@@ -3,8 +3,12 @@ from __future__ import annotations
 import copy
 
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import (
+    ATRIBUTOS_REGULARES,
+    alvos_linha_inimigos_area,
     aplicar_mod_atributo,
     aplicar_status,
+    aplicar_status_mag_efetiva,
+    area_selecionada_da_acao,
     dano_direto_vida,
     dano_generico,
     adjacentes_mesmo_lado,
@@ -14,26 +18,8 @@ from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes imp
     normalizar,
     parametros_execute,
     pokemons_ativos_em_campo,
+    resolver_critico_contextual,
 )
-
-
-def _duracao(ctx, default=6):
-    return max(1, int(fnum(parametros_execute(ctx).get("duracao"), default)))
-
-
-def _aplicar_status_mag_efetiva(ctx, alvo, nome, percentual_mag, negativo):
-    usuario = ctx.get("usuario")
-    if usuario is None:
-        return {"falha": True, "motivo": "usuario_invalido"}
-    atributos = getattr(usuario, "atributos_finais", None)
-    if not isinstance(atributos, dict):
-        return aplicar_status(ctx, alvo, nome, duracao=_duracao(ctx), negativo=negativo)
-    mag_original = atributos.get("Mag", 0.0)
-    atributos["Mag"] = fnum(mag_original, 0.0) * fnum(percentual_mag, 1.0)
-    try:
-        return aplicar_status(ctx, alvo, nome, duracao=_duracao(ctx), negativo=negativo)
-    finally:
-        atributos["Mag"] = mag_original
 
 
 def _clima_normalizado(partida):
@@ -82,7 +68,7 @@ def _exec_bola_sombria(ctx, alvo):
 
 
 def _exec_nas_sombras(ctx, alvo):
-    return aplicar_status(ctx, ctx.get("usuario"), parametros_execute(ctx).get("efeito", "Furtivo"), duracao=_duracao(ctx), negativo=False)
+    return aplicar_status(ctx, ctx.get("usuario"), parametros_execute(ctx).get("efeito", "Furtivo"), negativo=False)
 
 
 def _exec_confronto_trevoso(ctx, alvo):
@@ -91,9 +77,9 @@ def _exec_confronto_trevoso(ctx, alvo):
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("Atk") * fnum(p.get("multiplicador_atk"), 0.55), "normal")
     efeito = p.get("efeito", "Provocando")
     if usuario is not None and usuario.esta_vivo():
-        aplicar_status(ctx, usuario, efeito, duracao=_duracao(ctx), negativo=True)
+        aplicar_status(ctx, usuario, efeito, negativo=True)
     if alvo is not None and alvo.esta_vivo():
-        aplicar_status(ctx, alvo, efeito, duracao=_duracao(ctx), negativo=True)
+        aplicar_status(ctx, alvo, efeito, negativo=True)
     return ret
 
 
@@ -108,7 +94,7 @@ def _exec_vinganca(ctx, alvo):
 
 def _exec_correntes_eternas(ctx, alvo):
     p = parametros_execute(ctx)
-    return _aplicar_status_mag_efetiva(ctx, alvo, p.get("efeito", "Enraizado"), p.get("percentual_mag_efeito", 2.0), True)
+    return aplicar_status_mag_efetiva(ctx, alvo, p.get("efeito", "Enraizado"), p.get("percentual_mag_efeito", 2.0), True)
 
 
 def _exec_nevoa_sombria(ctx, alvo):
@@ -126,13 +112,12 @@ def _exec_expurgo_dos_fracos(ctx, alvo):
     empatados = [pokemon for pokemon in vivos if fnum(getattr(pokemon, "atributos_base", {}).get("Vida"), pokemon.obter_atributo("Vida", 1.0)) == menor]
     rng = ctx.get("rng") or getattr(partida, "rng", None)
     escolhido = rng.choice(empatados) if rng is not None and len(empatados) > 1 else empatados[0]
-    critico = False
-    if usuario is not None and not (hasattr(usuario, "possui_efeito") and usuario.possui_efeito("Cauterizado")):
-        chance = max(0.0, min(100.0, usuario.obter_atributo("CrC", 0.0)))
-        critico = bool(rng is not None and rng.random() * 100.0 <= chance)
+    critico_ctx = resolver_critico_contextual(usuario, ctx, tipo="expurgo_dos_fracos")
+    critico = bool(critico_ctx.get("critico"))
     percentual = fnum(p.get("percentual_vida_atual_critico"), 0.55) if critico else fnum(p.get("percentual_vida_atual"), 0.50)
     ret = dano_direto_vida(ctx, escolhido, fnum(getattr(escolhido, "VidaAtual", 0.0), 0.0) * percentual, motivo="expurgo_dos_fracos")
     ret["critico"] = critico
+    ret["critico_contextual"] = critico_ctx
     ret["alvo_id"] = getattr(escolhido, "id_batalha", None)
     return ret
 
@@ -164,7 +149,10 @@ def _exec_execucao_massiva(ctx, alvo):
 
 
 def _exec_corredor_escuro(ctx, alvo):
-    alvos = [pokemon for pokemon in list(ctx.get("alvos") or []) if pokemon is not None and pokemon.esta_vivo()]
+    area_id = area_selecionada_da_acao(ctx) or getattr(alvo, "area_id", None)
+    alvos = alvos_linha_inimigos_area(ctx, area_id, alvo_inicial=alvo)
+    if not alvos:
+        alvos = [pokemon for pokemon in list(ctx.get("alvos") or []) if pokemon is not None and pokemon.esta_vivo()]
     uniao = {}
     for pokemon in alvos:
         for efeito in _efeitos_negativos(pokemon):
@@ -212,7 +200,7 @@ def _exec_dominacao(ctx, alvo):
     p = parametros_execute(ctx)
     atributos = p.get("atributos_regulares")
     if not isinstance(atributos, list):
-        atributos = ["Atk", "SpA", "SpD", "Def", "Per", "Vel", "Int", "Ene", "Mag"]
+        atributos = ATRIBUTOS_REGULARES
     superiores = sum(1 for atributo in atributos if usuario.obter_atributo(atributo) > alvo.obter_atributo(atributo))
     mult = 1.0 + superiores * fnum(p.get("bonus_por_atributo_superior"), 0.08)
     bruto = usuario.obter_atributo("Atk") * fnum(p.get("multiplicador_atk"), 0.65)
@@ -246,7 +234,7 @@ def _exec_breu(ctx, alvo):
         if chave in vistos:
             continue
         vistos.add(chave)
-        _aplicar_status_mag_efetiva(ctx, alvo_furtivo, p.get("efeito", "Furtivo"), percentual_mag, False)
+        aplicar_status_mag_efetiva(ctx, alvo_furtivo, p.get("efeito", "Furtivo"), percentual_mag, False)
     ret["furtivo_alvos"] = len(vistos)
     return ret
 
@@ -273,14 +261,14 @@ def _exec_adaga_das_trevas(ctx, alvo):
 def _exec_sombra(ctx, alvo):
     usuario = ctx.get("usuario")
     p = parametros_execute(ctx)
-    return aplicar_mod_atributo(ctx, usuario, "Sombra", p.get("atributo", "CrD"), usuario.obter_atributo("Mag") * fnum(p.get("percentual_mag"), 0.25), _duracao(ctx), False)
+    return aplicar_mod_atributo(ctx, usuario, "Sombra", p.get("atributo", "CrD"), usuario.obter_atributo("Mag") * fnum(p.get("percentual_mag"), 0.25), negativo=False)
 
 
 def _exec_silenciar(ctx, alvo):
     usuario = ctx.get("usuario")
     p = parametros_execute(ctx)
     valor = fnum(p.get("valor_base"), 5.0) + usuario.obter_atributo("Mag") * fnum(p.get("percentual_mag"), 0.10)
-    return aplicar_mod_atributo(ctx, alvo, "Silenciar", p.get("atributo", "Amp"), -valor, _duracao(ctx), True)
+    return aplicar_mod_atributo(ctx, alvo, "Silenciar", p.get("atributo", "Amp"), -valor, negativo=True)
 
 
 _EXECUTES = {

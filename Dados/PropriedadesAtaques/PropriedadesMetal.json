@@ -48,11 +48,12 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
+      "permite_area_vazia": true,
       "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_corte_e_recorte",
       "descricao": "Causa 55% de Atk + 25% de Per + 25% de Vamp como dano normal.",
       "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_atk": 0.55, "multiplicador_per": 0.25, "multiplicador_vamp": 0.25},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "290": {
       "ID": 290,
@@ -74,6 +75,7 @@
       "custo": 60,
       "custo_ap": 70,
       "estilo_logico": "alvo",
+      "permite_area_vazia": true,
       "modo_execucao": "uma_vez",
       "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_ima",
@@ -88,11 +90,12 @@
       "custo": 60,
       "custo_ap": 70,
       "estilo_logico": "alvo",
+      "permite_area_vazia": true,
       "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_impacto_de_aco",
       "descricao": "Causa 55% de Def + 55% de SpD como dano normal.",
       "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_def": 0.55, "multiplicador_spd": 0.55},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "293": {
       "ID": 293,
@@ -101,11 +104,12 @@
       "custo": 50,
       "custo_ap": 60,
       "estilo_logico": "alvo",
+      "permite_area_vazia": true,
       "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_cabecada_de_ferro",
       "descricao": "Causa 115% de Atk como dano normal. Este ataque nao usa Per no dano.",
       "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_atk": 1.15, "usar_per_no_dano": false},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "294": {
       "ID": 294,
@@ -127,11 +131,12 @@
       "custo": 45,
       "custo_ap": 55,
       "estilo_logico": "alvo",
+      "permite_area_vazia": true,
       "animacao": {"modelo": "Avanco", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_britadeira",
       "descricao": "Causa 160% de Per como dano normal.",
       "parametros": {"tipo": "metal", "categoria": "normal", "multiplicador_per": 1.60},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "296": {
       "ID": 296,
@@ -154,11 +159,12 @@
       "custo_ap": 75,
       "estilo_logico": "alvo",
       "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
       "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_liga_metalica",
       "descricao": "Escolhe exatamente 2 areas. Causa 65% de Atk + 35% de Def como dano normal nos alvos. Soma a Def dos alvos atingidos; se a Def do usuario for maior que essa soma, causa +45% de dano.",
       "parametros": {"tipo": "metal", "categoria": "normal", "quantidade_alvos": 2, "multiplicador_atk": 0.65, "multiplicador_def": 0.35, "bonus_dano_se_def_maior_soma": 0.45},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 2, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "298": {
       "ID": 298,

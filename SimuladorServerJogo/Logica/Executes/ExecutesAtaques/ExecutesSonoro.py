@@ -4,7 +4,9 @@ import math
 
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import (
     adjacentes_mesmo_lado,
+    alvos_linha_inimigos_area,
     aplicar_mod_atributo,
+    area_selecionada_da_acao,
     dano_generico,
     fnum,
 )
@@ -64,6 +66,19 @@ def _exec_voz_desarmadora(ctx, alvo):
 
 def _exec_grito(ctx, alvo):
     usuario = ctx.get("usuario")
+    area_id = area_selecionada_da_acao(ctx) or getattr(alvo, "area_id", None)
+    alvos = alvos_linha_inimigos_area(ctx, area_id, alvo_inicial=alvo)
+    resultados = []
+    for alvo_linha in alvos:
+        ret = dano_generico(ctx, alvo_linha, usuario.obter_atributo("SpA") * _param(ctx, "multiplicador_spa", 0.60), "especial")
+        if ret.get("critico"):
+            reducao = abs(_param(ctx, "reducao_amp_critico", 3.0))
+            ret["reducao_amp"] = aplicar_mod_atributo(ctx, alvo_linha, "Grito", "Amp", -reducao, negativo=True)
+        resultados.append({"pokemon_id": getattr(alvo_linha, "id_batalha", None), "dano": ret})
+    if resultados:
+        return {"aplicado": True, "alvos_atingidos": len(resultados), "resultados": resultados}
+    if alvo is None:
+        return {"aplicado": True, "alvos_atingidos": 0, "resultados": []}
     ret = dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * _param(ctx, "multiplicador_spa", 0.60), "especial")
     if ret.get("critico") and alvo is not None:
         reducao = abs(_param(ctx, "reducao_amp_critico", 3.0))

@@ -3,6 +3,8 @@ from __future__ import annotations
 from SimuladorServerJogo.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import (
     aplicar_mod_atributo,
     aplicar_passiva_permanente,
+    alvos_linha_inimigos_area,
+    area_selecionada_da_acao,
     dano_generico,
     dano_puro_ignorando_barreira,
     execute_passiva_nao_manual,
@@ -60,6 +62,10 @@ def _exec_flutuar(ctx, alvo):
 def _exec_raio_cosmico(ctx, alvo):
     usuario = ctx.get("usuario")
     alvos = [item for item in list(ctx.get("alvos") or []) if item is not None and item.esta_vivo()]
+    if not alvos:
+        alvos = alvos_linha_inimigos_area(ctx, area_selecionada_da_acao(ctx) or getattr(alvo, "area_id", None), alvo_inicial=alvo)
+    if not alvos and alvo is None:
+        return {"aplicado": True, "alvos_atingidos": 0, "resultados": []}
     idx = next((i for i, item in enumerate(alvos) if item is alvo), 0)
     mult = max(0.0, _param(ctx, "multiplicador_spa_inicial", 1.00) - _param(ctx, "reducao_multiplicador_por_alvo", 0.15) * idx)
     return dano_generico(ctx, alvo, usuario.obter_atributo("SpA") * mult, "especial", indice_alvo_linha=idx, multiplicador_spa=mult)

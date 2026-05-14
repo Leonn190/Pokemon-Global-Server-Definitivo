@@ -6,85 +6,97 @@
       "ID": 320,
       "nome": "Flutuante",
       "custo": 0,
+      "custo_ap": 0,
       "estilo_logico": "passivo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_flutuante",
-      "parametros": {"tipo": "cosmico", "custo": 0, "poder_csv": 0, "efeito_permanente": "Flutuando", "permanente": true}
+      "parametros": {"tipo": "cosmico", "efeito_permanente": "Flutuando", "permanente": true}
     },
     "321": {
       "ID": 321,
       "nome": "Flutuar",
       "custo": 40,
+      "custo_ap": 35,
       "estilo_logico": "ativo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_flutuar",
-      "parametros": {"tipo": "cosmico", "custo": 40, "poder_csv": 35, "efeito_aplicado": "Flutuando"}
+      "parametros": {"tipo": "cosmico", "efeito_aplicado": "Flutuando"}
     },
     "322": {
       "ID": 322,
       "nome": "Raio Cósmico",
       "custo": 75,
+      "custo_ap": 85,
       "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "permite_area_vazia": true,
       "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_raio_cosmico",
-      "parametros": {"tipo": "cosmico", "custo": 75, "poder_csv": 85, "multiplicador_spa_inicial": 1.00, "reducao_multiplicador_por_alvo": 0.15, "ordem_alvos": "mais_proximo_para_mais_distante"},
-      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "cosmico", "multiplicador_spa_inicial": 1, "reducao_multiplicador_por_alvo": 0.15, "ordem_alvos": "mais_proximo_para_mais_distante"},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "323": {
       "ID": 323,
       "nome": "Gravidade",
       "custo": 75,
+      "custo_ap": 85,
       "estilo_logico": "ativo",
       "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_gravidade",
-      "parametros": {"tipo": "cosmico", "custo": 75, "poder_csv": 85, "multiplicador_spa": 0.25, "bonus_dano_contra_flutuando_voando": 2.00, "efeitos_bonus_remover": ["Flutuando", "Voando"]}
+      "parametros": {"tipo": "cosmico", "multiplicador_spa": 0.25, "bonus_dano_contra_flutuando_voando": 2, "efeitos_bonus_remover": ["Flutuando", "Voando"]}
     },
     "324": {
       "ID": 324,
       "nome": "Estrela Cadente",
       "custo": 45,
+      "custo_ap": 55,
       "estilo_logico": "ativo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_estrela_cadente",
-      "parametros": {"tipo": "cosmico", "custo": 45, "poder_csv": 55, "atributos_percentuais_possiveis": ["SpD", "SpA", "Mag"], "atributo_fixo_possivel": "CrC", "percentual_ganho_normal": 0.25, "percentual_ganho_critico": 0.30, "ganho_crc_normal": 25, "ganho_crc_critico": 30}
+      "parametros": {"tipo": "cosmico", "atributos_percentuais_possiveis": ["SpD", "SpA", "Mag"], "atributo_fixo_possivel": "CrC", "percentual_ganho_normal": 0.25, "percentual_ganho_critico": 0.3, "ganho_crc_normal": 25, "ganho_crc_critico": 30}
     },
     "325": {
       "ID": 325,
       "nome": "Radiação",
       "custo": 55,
+      "custo_ap": 65,
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_radiacao",
-      "parametros": {"tipo": "cosmico", "custo": 55, "poder_csv": 65, "percentual_vida_atual_base": 0.10, "percentual_vida_atual_condicional": 0.15, "bonus_percentual_critico": 0.05, "efeito_condicional_alvo": "Envenenado", "efeito_condicional_usuario": "Flutuando"},
+      "parametros": {"tipo": "cosmico", "percentual_vida_atual_base": 0.1, "percentual_vida_atual_condicional": 0.15, "bonus_percentual_critico": 0.05, "efeito_condicional_alvo": "Envenenado", "efeito_condicional_usuario": "Flutuando"},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
     "326": {
       "ID": 326,
       "nome": "Dança Gravitacional",
       "custo": 45,
+      "custo_ap": 40,
       "estilo_logico": "ativo",
       "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_danca_gravitacional",
-      "parametros": {"tipo": "cosmico", "custo": 45, "poder_csv": 40, "clima": "Gravidade Anômala"}
+      "parametros": {"tipo": "cosmico", "clima": "Gravidade Anômala"}
     },
     "327": {
       "ID": 327,
       "nome": "Supernova",
       "custo": 110,
+      "custo_ap": 130,
       "estilo_logico": "alvo",
+      "permite_area_vazia": true,
       "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": "SuperNova"},
       "execute_principal": "ataque_supernova",
-      "parametros": {"tipo": "cosmico", "custo": 110, "poder_csv": 130, "multiplicador_spa": 1.70, "pode_critico": false, "efeito_pos_uso": "Descarregado"},
-      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+      "parametros": {"tipo": "cosmico", "multiplicador_spa": 1.7, "pode_critico": false, "efeito_pos_uso": "Descarregado"},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": false, "inclui_reserva": false}]}
     },
     "328": {
       "ID": 328,
       "nome": "Explosão Lunar",
       "custo": 80,
+      "custo_ap": 95,
       "estilo_logico": "alvo",
       "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_explosao_lunar",
-      "parametros": {"tipo": "cosmico", "custo": 80, "poder_csv": 95, "multiplicador_spa": 0.85, "percentual_dano_base_adjacentes": 1.20},
+      "parametros": {"tipo": "cosmico", "multiplicador_spa": 0.85, "percentual_dano_base_adjacentes": 1.2},
       "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     }
   },

@@ -20,7 +20,43 @@ def fnum(valor: object, default: float = 0.0) -> float:
 
 
 # Atributos regulares sorteaveis por ataques como Crescimento. Nao inclui Vida, EneM, Acu, Ass, CrC, CrD, Dur, Amp, Vamp.
-ATRIBUTOS_REGULARES = ["Atk", "SpA", "Def", "SpD", "Mag", "Ene", "Vel", "Per", "Int"]
+ATRIBUTOS_REGULARES = ["Atk", "Def", "SpA", "SpD", "Vel", "Per", "Mag", "Ene", "Int"]
+
+EFEITOS_POSITIVOS_PADRAO = [
+    "Abençoado",
+    "Amplificado",
+    "Fortificado",
+    "Focado",
+    "Energizado",
+    "Preparado",
+    "Regeneração",
+    "Imune",
+    "Furtivo",
+    "Voando",
+    "Flutuando",
+    "Evasivo",
+    "Protegido",
+]
+
+EFEITOS_NEGATIVOS_PADRAO = [
+    "Queimado",
+    "Envenenado",
+    "Intoxicado",
+    "Congelado",
+    "Dormindo",
+    "Paralisado",
+    "Enraizado",
+    "Cauterizado",
+    "Descarregado",
+    "Encharcado",
+    "Atordoado",
+    "Quebrado",
+    "Enfraquecido",
+    "Confuso",
+    "Bloqueado",
+    "Amaldiçoado",
+    "Provocando",
+]
 
 
 def resolver_critico_contextual(usuario, ctx, maximo=None, tipo="generico"):
@@ -782,6 +818,21 @@ def aplicar_status(ctx, alvo, nome, duracao=6, negativo=True):
         negativo=negativo,
         dados={"origem_ataque": props.get("nome")},
     )
+
+
+def aplicar_status_mag_efetiva(ctx, alvo, nome, percentual_mag=1.0, negativo=True):
+    usuario = (ctx or {}).get("usuario")
+    if usuario is None:
+        return {"falha": True, "motivo": "usuario_invalido"}
+    atributos = getattr(usuario, "atributos_finais", None)
+    if not isinstance(atributos, dict):
+        return aplicar_status(ctx, alvo, nome, negativo=negativo)
+    mag_original = atributos.get("Mag", 0.0)
+    atributos["Mag"] = fnum(mag_original, 0.0) * fnum(percentual_mag, 1.0)
+    try:
+        return aplicar_status(ctx, alvo, nome, negativo=negativo)
+    finally:
+        atributos["Mag"] = mag_original
 
 
 def aplicar_mod_atributo(ctx, alvo, nome_efeito, atributo, valor, duracao=6, negativo=False):

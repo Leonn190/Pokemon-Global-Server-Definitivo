@@ -2,189 +2,188 @@
   "schema_version": 1,
   "tipo": "sombrio",
   "ataques": {
-    "64": {
-      "ID": 64,
+    "269": {
+      "ID": 269,
       "nome": "Bola Sombria",
       "custo": 60,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Explosão",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "contato": "Projetil",
-        "projetil": "Generico",
-        "efeito_impacto_secundario": null
-      },
+      "animacao": {"modelo": "Explosao", "efeito_executor": null, "efeito_alvo": null, "contato": "Projetil", "projetil": "Generico", "efeito_impacto_secundario": null},
       "execute_principal": "ataque_bola_sombria",
-      "parametros": {
-        "tipo": "sombrio",
-        "categoria": "especial",
-        "escala_spa": 0.8,
-        "splash_frac": 0.5
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "descricao": "Causa 80% de SpA como dano especial. Tambem causa 50% do dano causado a inimigos adjacentes ao alvo.",
+      "parametros": {"tipo": "sombrio", "categoria": "especial", "acuracia": 70, "multiplicador_spa": 0.80, "percentual_dano_adjacente": 0.50},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "65": {
-      "ID": 65,
+    "270": {
+      "ID": 270,
       "nome": "Nas Sombras",
       "custo": 50,
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
       "execute_principal": "ataque_nas_sombras",
-      "parametros": {
-        "tipo": "sombrio",
-        "efeito": "Furtivo",
-        "duracao": 6,
-        "negativo": false
-      }
+      "descricao": "O usuario fica Furtivo.",
+      "parametros": {"tipo": "sombrio", "acuracia": 45, "efeito": "Furtivo", "duracao": 6}
     },
-    "66": {
-      "ID": 66,
-      "nome": "Sussurro Sombrio",
-      "custo": 25,
+    "271": {
+      "ID": 271,
+      "nome": "Confronto Trevoso",
+      "custo": 35,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
-      "execute_principal": "ataque_sussurro_sombrio",
-      "parametros": {
-        "tipo": "sombrio",
-        "atributo": "SpD",
-        "percentual_alvo": 0.1,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_confronto_trevoso",
+      "descricao": "Causa 55% de Atk como dano normal. O usuario e o alvo recebem Provocando.",
+      "parametros": {"tipo": "sombrio", "categoria": "normal", "acuracia": 40, "multiplicador_atk": 0.55, "efeito": "Provocando", "duracao": 6},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     },
-    "67": {
-      "ID": 67,
-      "nome": "Sede de Sangue",
+    "272": {
+      "ID": 272,
+      "nome": "Vingança",
+      "custo": 50,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_vinganca",
+      "descricao": "Causa 75% de Atk como dano normal. Se o alvo ja atacou o usuario neste turno, causa +65% de dano.",
+      "parametros": {"tipo": "sombrio", "categoria": "normal", "acuracia": 60, "multiplicador_atk": 0.75, "bonus_dano_se_ja_atacou_usuario": 0.65},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "273": {
+      "ID": 273,
+      "nome": "Correntes Eternas",
+      "custo": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_correntes_eternas",
+      "descricao": "Aplica Enraizado no inimigo usando 200% da Mag do usuario no calculo de aplicacao/duracao do efeito.",
+      "parametros": {"tipo": "sombrio", "acuracia": 65, "efeito": "Enraizado", "duracao": 6, "percentual_mag_efeito": 2.0},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "274": {
+      "ID": 274,
+      "nome": "Névoa Sombria",
+      "custo": 45,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_nevoa_sombria",
+      "descricao": "Muda o clima para Nevoa.",
+      "parametros": {"tipo": "sombrio", "acuracia": 40, "clima": "Nevoa"}
+    },
+    "275": {
+      "ID": 275,
+      "nome": "Expurgo dos Fracos",
+      "custo": 80,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_expurgo_dos_fracos",
+      "descricao": "O Pokemon em campo com menor Vida base perde 50% da Vida atual. Se for critico, perde 55% da Vida atual.",
+      "parametros": {"tipo": "sombrio", "acuracia": 95, "percentual_vida_atual": 0.50, "percentual_vida_atual_critico": 0.55}
+    },
+    "276": {
+      "ID": 276,
+      "nome": "Olhar Cruel",
+      "custo": 40,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoAlvo", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_olhar_cruel",
+      "descricao": "Aumenta em 1 passo a duracao de todos os efeitos negativos do alvo.",
+      "parametros": {"tipo": "sombrio", "acuracia": 50, "incremento_passos": 1},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "277": {
+      "ID": 277,
+      "nome": "Execução Massiva",
+      "custo": 85,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_execucao_massiva",
+      "descricao": "Escolhe exatamente 3 areas. Causa 45% de Atk como dano normal em cada alvo e executa inimigos com menos de 10% da Vida.",
+      "parametros": {"tipo": "sombrio", "categoria": "normal", "acuracia": 100, "multiplicador_atk": 0.45, "quantidade_areas": 3, "percentual_execucao_vida": 0.10},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 3, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "278": {
+      "ID": 278,
+      "nome": "Corredor Escuro",
+      "custo": 70,
+      "estilo_logico": "alvo",
+      "modo_execucao": "uma_vez",
+      "animacao": {"modelo": "Laser", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_corredor_escuro",
+      "descricao": "Escolhe uma linha. Todos os efeitos negativos dos Pokemon nessa linha sao compartilhados entre os Pokemon atingidos.",
+      "parametros": {"tipo": "sombrio", "acuracia": 80, "quantidade_linhas": 1},
+      "alvificacao": {"alvos": [{"tipo": "linha", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "279": {
+      "ID": 279,
+      "nome": "Golpe Noturno",
+      "custo": 55,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_golpe_noturno",
+      "descricao": "Causa 80% de Atk como dano normal. Se o clima for Noite Densa, causa +30% de dano. Se o alvo estiver Furtivo, causa mais +30% de dano.",
+      "parametros": {"tipo": "sombrio", "categoria": "normal", "acuracia": 65, "multiplicador_atk": 0.80, "clima_bonus": "Noite Densa", "bonus_noite_densa": 0.30, "efeito_alvo_bonus": "Furtivo", "bonus_alvo_furtivo": 0.30},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "280": {
+      "ID": 280,
+      "nome": "Dominação",
+      "custo": 60,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_dominacao",
+      "descricao": "Causa 65% de Atk como dano normal. Para cada atributo regular do usuario maior que o mesmo atributo do alvo, causa +8% de dano.",
+      "parametros": {"tipo": "sombrio", "categoria": "normal", "acuracia": 70, "multiplicador_atk": 0.65, "atributos_regulares": ["Atk", "SpA", "SpD", "Def", "Per", "Vel", "Int", "Ene", "Mag"], "bonus_por_atributo_superior": 0.08},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "281": {
+      "ID": 281,
+      "nome": "Inveja",
+      "custo": 65,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
+      "execute_principal": "ataque_inveja",
+      "descricao": "Usa apenas 25% da Acuracia do usuario, mas ganha +25% da Acuracia para cada efeito positivo do alvo. Causa 125% de SpA como dano especial.",
+      "parametros": {"tipo": "sombrio", "categoria": "especial", "acuracia": 75, "multiplicador_spa": 1.25, "acuracia_base_usuario_pct": 25, "bonus_acuracia_por_efeito_positivo_alvo_pct": 25},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "282": {
+      "ID": 282,
+      "nome": "Breu",
+      "custo": 60,
+      "estilo_logico": "ativo",
+      "animacao": {"modelo": "EfeitoArea", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_breu",
+      "descricao": "Muda o clima para Noite Densa. O usuario e todos os aliados adjacentes recebem Furtivo usando Mag efetiva.",
+      "parametros": {"tipo": "sombrio", "acuracia": 70, "clima": "Noite Densa", "efeito": "Furtivo", "duracao": 6, "percentual_mag_furtivo_normal": 0.50, "percentual_mag_furtivo_noite_densa": 0.80}
+    },
+    "283": {
+      "ID": 283,
+      "nome": "Adaga das Trevas",
+      "custo": 50,
+      "estilo_logico": "alvo",
+      "animacao": {"modelo": "Contato", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_adaga_das_trevas",
+      "descricao": "Causa 70% de Atk como dano normal e aumenta em 15% todas as reducoes permanentes de atributos do alvo. Se for critico, aumenta em 25%.",
+      "parametros": {"tipo": "sombrio", "categoria": "normal", "acuracia": 60, "multiplicador_atk": 0.70, "percentual_reducao": 0.15, "percentual_reducao_critico": 0.25},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
+    },
+    "284": {
+      "ID": 284,
+      "nome": "Sombra",
       "custo": 30,
       "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_sede_de_sangue",
-      "parametros": {
-        "tipo": "sombrio",
-        "atributo": "Vamp",
-        "percentual_mag": 0.25,
-        "duracao": 6
-      }
+      "animacao": {"modelo": "EfeitoProprio", "efeito_executor": null, "efeito_alvo": null},
+      "execute_principal": "ataque_sombra",
+      "descricao": "O usuario ganha 25% de Mag em CrD.",
+      "parametros": {"tipo": "sombrio", "acuracia": 35, "atributo": "CrD", "percentual_mag": 0.25, "duracao": 6}
     },
-    "68": {
-      "ID": 68,
-      "nome": "Golpe Letal",
-      "custo": 30,
-      "estilo_logico": "ativo",
-      "animacao": {
-        "modelo": "EfeitoProprio",
-        "efeito_executor": null,
-        "efeito_alvo": null
-      },
-      "execute_principal": "ataque_golpe_letal",
-      "parametros": {
-        "tipo": "sombrio",
-        "atributo": "CrD",
-        "percentual_mag": 0.25,
-        "duracao": 6
-      }
-    },
-    "69": {
-      "ID": 69,
+    "285": {
+      "ID": 285,
       "nome": "Silenciar",
       "custo": 35,
       "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
+      "animacao": {"modelo": "Projetil", "efeito_executor": null, "efeito_alvo": null, "projetil": "Generico"},
       "execute_principal": "ataque_silenciar",
-      "parametros": {
-        "tipo": "sombrio",
-        "atributo": "Amp",
-        "valor_base": 5.0,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
-    },
-    "70": {
-      "ID": 70,
-      "nome": "Intimidar",
-      "custo": 25,
-      "estilo_logico": "alvo",
-      "animacao": {
-        "modelo": "Projetil",
-        "efeito_executor": null,
-        "efeito_alvo": null,
-        "projetil": "Generico"
-      },
-      "execute_principal": "ataque_intimidar",
-      "parametros": {
-        "tipo": "sombrio",
-        "atributo": "Assertividade",
-        "percentual_alvo": 0.1,
-        "percentual_mag": 0.1,
-        "duracao": 6
-      },
-      "alvificacao": {
-        "alvos": [
-          {
-            "tipo": "area",
-            "quantidade": 1,
-            "lados_permitidos": [
-              "lado_oposto"
-            ],
-            "exige_area_ocupada": false
-          }
-        ]
-      }
+      "descricao": "O inimigo perde 5 + 10% da Mag do usuario em Amp.",
+      "parametros": {"tipo": "sombrio", "acuracia": 40, "atributo": "Amp", "valor_base": 5.0, "percentual_mag": 0.10, "duracao": 6},
+      "alvificacao": {"alvos": [{"tipo": "area", "quantidade": 1, "lados_permitidos": ["lado_oposto"], "exige_area_ocupada": true, "inclui_reserva": false}]}
     }
-  },
-  "_comentario": "Placeholder commitavel; adicionar ataques deste tipo aqui futuramente."
+  }
 }

@@ -391,7 +391,17 @@ class RodadorTurno:
                 "sempre_acerta": True,
             }
         acuracia_ataque = float(parametros.get("acuracia", props.get("acuracia", 100.0)) or 100.0) / 100.0
-        acuracia = (usuario.obter_atributo("Acu", 100.0) / 100.0) * acuracia_ataque
+        acuracia_usuario = usuario.obter_atributo("Acu", 100.0)
+        if "acuracia_base_usuario_pct" in parametros:
+            base_pct = float(parametros.get("acuracia_base_usuario_pct") or 0.0)
+            bonus_pct = float(parametros.get("bonus_acuracia_por_efeito_positivo_alvo_pct") or 0.0)
+            efeitos_positivos = sum(
+                1
+                for efeito in list(getattr(alvo, "efeitos_formais", []) or [])
+                if str((efeito or {}).get("tipo") or "").strip().lower() == "positivo"
+            )
+            acuracia_usuario *= (base_pct + bonus_pct * efeitos_positivos) / 100.0
+        acuracia = (acuracia_usuario / 100.0) * acuracia_ataque
         assertividade = alvo.obter_atributo("Ass", 100.0) / 100.0
         chance = acuracia * assertividade
         vel_usuario = usuario.obter_atributo("Vel", 0.0)

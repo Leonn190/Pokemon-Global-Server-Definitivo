@@ -8,6 +8,63 @@ import tomllib
 _RAIZ_PROJETO = Path(__file__).resolve().parents[2]
 _BASE_REGRAS = _RAIZ_PROJETO / "Dados" / "Regras"
 _AUSENTE = object()
+_SOBRESCRITAS_ATIVAS = True
+
+
+def _sobrescritas_servidor() -> Dict[str, Any]:
+    if not _SOBRESCRITAS_ATIVAS:
+        return {}
+    try:
+        from Servidor.Gerais.EstadoServidor import obter_regras_servidor
+
+        return obter_regras_servidor()
+    except Exception:
+        return {}
+
+
+def _aplicar_sobrescritas(namespace: str, regras: Dict[str, Any]) -> Dict[str, Any]:
+    saida = dict(regras or {})
+    prefixo = f"{str(namespace or '').strip()}."
+    for chave, valor in _sobrescritas_servidor().items():
+        chave_txt = str(chave or "").strip()
+        if chave_txt.startswith(prefixo):
+            saida[chave_txt[len(prefixo):]] = valor
+    return saida
+
+
+def carregar_regras_base_servidor() -> Dict[str, Any]:
+    global _SOBRESCRITAS_ATIVAS
+    anterior = _SOBRESCRITAS_ATIVAS
+    _SOBRESCRITAS_ATIVAS = False
+    try:
+        return {
+            "player": carregar_regras_player(),
+            "mundo": carregar_regras_mundo(),
+            "estruturas": carregar_regras_estruturas_naturais(),
+            "pokemons": carregar_regras_pokemons(),
+            "spawn": carregar_regras_spawn(),
+            "npcs": carregar_regras_npcs(),
+            "projeteis": carregar_regras_projeteis(),
+            "ciclo": carregar_regras_ciclo(),
+            "runtime": carregar_regras_server(),
+            "batalha": carregar_regras_batalha(),
+            "gerais": carregar_regras_gerais(),
+            "dungeons": carregar_regras_dungeons(),
+        }
+    finally:
+        _SOBRESCRITAS_ATIVAS = anterior
+
+
+def listar_regras_base_flat() -> Dict[str, Any]:
+    flat: Dict[str, Any] = {}
+    for namespace, regras in carregar_regras_base_servidor().items():
+        if not isinstance(regras, dict):
+            continue
+        for chave, valor in regras.items():
+            if isinstance(valor, (dict, list, tuple, set)):
+                continue
+            flat[f"{namespace}.{chave}"] = valor
+    return flat
 
 
 def _ler_toml(nome: str) -> Dict[str, Any]:
@@ -81,13 +138,13 @@ def carregar_regras_player() -> Dict[str, object]:
     invulnerabilidade = dados.get("invulnerabilidade") if isinstance(dados.get("invulnerabilidade"), dict) else {}
     base["InvulnerabilidadePadraoTicks"] = _int_cfg(invulnerabilidade, "duracao_padrao_ticks", int(base.get("InvulnerabilidadePadraoTicks", 90) or 90))
     base["InvulnerabilidadeTicksPorSegundo"] = _int_cfg(invulnerabilidade, "ticks_por_segundo", int(base.get("InvulnerabilidadeTicksPorSegundo", 30) or 30))
-    return base
+    return _aplicar_sobrescritas("player", base)
 
 
 def carregar_regras_mundo() -> Dict[str, object]:
     base = {"ChunkTiles": 10}
     base.update(_ler_toml("Mundo.toml"))
-    return base
+    return _aplicar_sobrescritas("mundo", base)
 
 
 def carregar_regras_estruturas_naturais() -> Dict[str, object]:
@@ -95,7 +152,7 @@ def carregar_regras_estruturas_naturais() -> Dict[str, object]:
     base.update(_ler_toml("EstruturasNaturais.toml"))
     tipos = base.get("tipos") if isinstance(base.get("tipos"), dict) else {}
     base["tipos"] = tipos
-    return base
+    return _aplicar_sobrescritas("estruturas", base)
 
 
 def carregar_regras_pokemons() -> Dict[str, object]:
@@ -187,7 +244,7 @@ def carregar_regras_pokemons() -> Dict[str, object]:
     out["personalidade_mundo_super_bravo_raio_ativacao_tiles"] = _float_cfg(personalidade_super_bravo, "raio_ativacao_tiles", 7.0)
     out["personalidade_mundo_super_bravo_raio_busca_irritado_tiles"] = _float_cfg(personalidade_super_bravo, "raio_busca_irritado_tiles", 9.0)
     out["personalidade_mundo_super_bravo_multiplicador_velocidade_irritado"] = _float_cfg(personalidade_super_bravo, "multiplicador_velocidade_irritado", 1.35)
-    return out
+    return _aplicar_sobrescritas("pokemons", out)
 
 
 def carregar_regras_spawn() -> Dict[str, object]:
@@ -221,7 +278,7 @@ def carregar_regras_spawn() -> Dict[str, object]:
 
     out["item_mundo_ttl_ticks"] = _int_cfg(item_mundo, "ttl_ticks", 5000)
     out["xp_mundo_ttl_ticks"] = _int_cfg(xp_mundo, "ttl_ticks", 600)
-    return out
+    return _aplicar_sobrescritas("spawn", out)
 
 
 def carregar_regras_npcs() -> Dict[str, object]:
@@ -237,7 +294,7 @@ def carregar_regras_npcs() -> Dict[str, object]:
     out["npc_rota_tentativas_replanejamento"] = _int_cfg(rotas, "tentativas_replanejamento", 3)
     out["npc_rota_chance_variacao_por_tick"] = _float_cfg(rotas, "chance_variacao_por_tick", 0.04)
     out["npc_velocidade_base"] = _float_cfg(movimento, "velocidade_base_tiles_s", 4.5)
-    return out
+    return _aplicar_sobrescritas("npcs", out)
 
 
 def carregar_regras_projeteis() -> Dict[str, object]:
@@ -260,7 +317,7 @@ def carregar_regras_projeteis() -> Dict[str, object]:
 
     out["projetil_mira_multiplicador_velocidade"] = _float_cfg(mira, "multiplicador_velocidade", 1.10)
     out["projetil_mira_multiplicador_alcance"] = _float_cfg(mira, "multiplicador_alcance", 1.15)
-    return out
+    return _aplicar_sobrescritas("projeteis", out)
 
 
 def carregar_regras_skils() -> Dict[str, object]:
@@ -312,7 +369,7 @@ def carregar_regras_ciclo() -> Dict[str, object]:
     out["chuva_passo_suave"] = _int_cfg(chuva, "passo_suave", 1)
     out["chuva_passo_forte"] = _int_cfg(chuva, "passo_forte", 2)
     out["chuva_delta_passo_suave_limite"] = _int_cfg(chuva, "delta_passo_suave_limite", 12)
-    return out
+    return _aplicar_sobrescritas("ciclo", out)
 
 
 def carregar_regras_server() -> Dict[str, object]:
@@ -323,7 +380,7 @@ def carregar_regras_server() -> Dict[str, object]:
     out["tick_segundos"] = _float_cfg(ticks, "segundos", 0.0333)
     out["raio_chunks_simulados"] = _int_cfg(chunks, "raio_simulados", 3)
     out["raio_chunks_carregados"] = _int_cfg(chunks, "raio_carregados", 4)
-    return out
+    return _aplicar_sobrescritas("runtime", out)
 
 
 def carregar_regras_batalha() -> Dict[str, object]:
@@ -346,7 +403,7 @@ def carregar_regras_batalha() -> Dict[str, object]:
 
     out["batalha_multiplas_acoes_multiplicador_base"] = _float_cfg(multiplas_acoes, "multiplicador_base", 1.0)
     out["batalha_multiplas_acoes_acrescimo_por_acao_extra"] = _float_cfg(multiplas_acoes, "acrescimo_multiplicador_por_acao_extra", 0.2)
-    return out
+    return _aplicar_sobrescritas("batalha", out)
 
 
 def carregar_regras_batalha_publicas() -> Dict[str, object]:
@@ -386,7 +443,7 @@ def carregar_regras_gerais() -> Dict[str, object]:
     out["combate_camera_px_por_tile"] = _int_cfg(combate, "camera_px_por_tile", 40)
     out["combate_camera_zoom_min"] = _int_cfg(combate, "camera_zoom_min", 30)
     out["combate_camera_zoom_max"] = _int_cfg(combate, "camera_zoom_max", 50)
-    return out
+    return _aplicar_sobrescritas("gerais", out)
 
 
 def calcular_parametros_projetil(regras: Dict[str, object], subtipo: str, variante: str, mirando: bool = False) -> tuple[float, float]:
@@ -547,4 +604,4 @@ def carregar_regras_dungeons() -> Dict[str, object]:
         "dungeon_distancia_min_boss_entrada": 3,
     }
     base.update(_ler_toml("Dungeons.toml"))
-    return base
+    return _aplicar_sobrescritas("dungeons", base)

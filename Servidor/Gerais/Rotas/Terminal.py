@@ -46,21 +46,24 @@ def processar_terminal_json(requisicao_json: str) -> str:
             return _erro("texto obrigatório")
         texto = texto[:220]
         if texto.startswith("/"):
-            cmd = {"ok": False, "feedback": "Comandos de batalha desativados"} if contexto == "batalha" else executar_comando_terminal(autor, texto)
-            if cmd.get("ok"):
-                with _TERMINAL_LOCK:
-                    msg = {
-                        "id": _proximo_id(),
-                        "autor": str(cmd.get("autor", "Servidor"))[:32],
-                        "texto": str(cmd.get("feedback", "Comando processado"))[:220],
-                        "timestamp": float(cmd.get("timestamp", time.time())),
-                        "contexto": contexto,
-                        "batalha_id": str(meta.get("batalha_id") or "") if contexto == "batalha" else "",
-                    }
-                extras = {"contexto": contexto, "meta": dict(meta)}
-                if isinstance(cmd.get("batalha_atualizacao"), dict):
-                    extras["batalha_atualizacao"] = dict(cmd.get("batalha_atualizacao"))
-                return _ok("Comando processado", mensagem_terminal=msg, **extras)
+            cmd = executar_comando_terminal(autor, texto, contexto=contexto, meta=meta)
+            with _TERMINAL_LOCK:
+                msg = {
+                    "id": _proximo_id(),
+                    "autor": str(cmd.get("autor", "Servidor"))[:32],
+                    "texto": str(cmd.get("feedback", "Comando processado"))[:220],
+                    "timestamp": float(cmd.get("timestamp", time.time())),
+                    "contexto": contexto,
+                    "batalha_id": str(meta.get("batalha_id") or "") if contexto == "batalha" else "",
+                }
+                _TERMINAL_MENSAGENS.append(msg)
+                if len(_TERMINAL_MENSAGENS) > _TERMINAL_MAX:
+                    del _TERMINAL_MENSAGENS[:-_TERMINAL_MAX]
+            extras = {"contexto": contexto, "meta": dict(meta)}
+            if isinstance(cmd.get("batalha_atualizacao"), dict):
+                extras["batalha_atualizacao"] = dict(cmd.get("batalha_atualizacao"))
+            status_msg = "Comando processado" if cmd.get("ok") else "Comando não processado"
+            return _ok(status_msg, mensagem_terminal=msg, **extras)
         with _TERMINAL_LOCK:
             msg = {"id": _proximo_id(), "autor": autor[:32], "texto": texto, "timestamp": time.time(), "contexto": contexto, "batalha_id": str(meta.get("batalha_id") or "") if contexto == "batalha" else ""}
             _TERMINAL_MENSAGENS.append(msg)

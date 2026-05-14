@@ -155,8 +155,9 @@ class CenaCombate:
 
     def _meta_terminal_batalha(self, jogo) -> dict:
         contexto = jogo.INFO.get("CombateContexto") if isinstance(jogo.INFO.get("CombateContexto"), dict) else {}
+        controlador = getattr(self, "ControladorBatalha", None)
         meta = {
-            "batalha_id": str(contexto.get("batalha_id_servidor") or ""),
+            "batalha_id": str(contexto.get("batalha_id_servidor") or getattr(controlador, "id_partida", "") or ""),
             "client_id": str(contexto.get("client_id") or jogo.INFO.get("UsuarioLogado", "anon")),
         }
         return meta
@@ -164,7 +165,29 @@ class CenaCombate:
     def _enviar_terminal_batalha(self, link: str, usuario: str, texto: str) -> dict:
         if not link:
             return {"status": "erro", "mensagem": "Servidor indisponível"}
-        return enviar_mensagem_terminal(link, usuario, texto, contexto="batalha", meta=self._meta_terminal_batalha(self._jogo_ref))
+        resposta = enviar_mensagem_terminal(link, usuario, texto, contexto="batalha", meta=self._meta_terminal_batalha(self._jogo_ref))
+        self._aplicar_atualizacao_terminal_batalha(resposta)
+        return resposta
+
+    def _aplicar_atualizacao_terminal_batalha(self, resposta: dict) -> None:
+        if not isinstance(resposta, dict):
+            return
+        atualizacao = resposta.get("batalha_atualizacao") if isinstance(resposta.get("batalha_atualizacao"), dict) else {}
+        if not atualizacao:
+            return
+        controlador = getattr(self, "ControladorBatalha", None)
+        if controlador is None:
+            return
+        if "modo_teste" in atualizacao:
+            controlador.definir_modo_teste(bool(atualizacao.get("modo_teste")))
+        log = atualizacao.get("log")
+        if isinstance(log, dict) and list(log.get("historico") or []):
+            controlador.receber_log(log)
+        resultado = atualizacao.get("resultado") if isinstance(atualizacao.get("resultado"), dict) else None
+        if isinstance(resultado, dict):
+            controlador.aplicar_resultado_final(resultado)
+            if bool(resultado.get("finalizada")) and getattr(controlador, "finalizador", None) is not None:
+                controlador.finalizador.finalizar_por_resultado(resultado)
 
     def _fugir_combate(self, jogo) -> None:
         jogo.INFO["ImuneCombatePendenteMundo"] = True

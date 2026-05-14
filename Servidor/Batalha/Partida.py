@@ -90,6 +90,7 @@ class Partida:
         self.controlador_ia = self._criar_controlador_ia() if self.batalha_usa_ia() else None
         self.rodador_turno = RodadorTurno(self)
         self.construtor_log = ConstrutorLog(self)
+        self.snapshots_reversao = []
         self._ia_executor = None
         self._ia_futures = {}
         self._desabilitar_thread_ia = False
@@ -663,6 +664,7 @@ class Partida:
 
     def resolver_rodada(self):
         rodada_anterior = self.rodada_atual
+        self.registrar_snapshot_reversao("inicio_rodada")
         self.estado_partida = "resolvendo"
         self.avisos = list(self.avisos)
         self.construtor_log.iniciar_log_rodada(rodada_anterior)
@@ -751,6 +753,89 @@ class Partida:
         if getattr(self, "construtor_log", None) is None:
             return None
         return self.construtor_log.registrar_evento(tipo, dados=dados or {}, passo=passo, ordem=ordem)
+
+    def _snapshot_reversao_atual(self, motivo=None):
+        return _jsonavel(
+            {
+                "motivo": str(motivo or ""),
+                "rodada_atual": int(self.rodada_atual),
+                "passo_atual": int(self.passo_atual),
+                "estado_partida": str(self.estado_partida),
+                "finalizada": bool(self.finalizada),
+                "vencedor": copy.deepcopy(self.vencedor),
+                "perdedor": copy.deepcopy(self.perdedor),
+                "motivo_finalizacao": copy.deepcopy(self.motivo_finalizacao),
+                "clima_atual": copy.deepcopy(self.clima_atual),
+                "clima_turnos_ativo": int(self.clima_turnos_ativo),
+                "efeitos_area": copy.deepcopy(self.efeitos_area),
+                "ocupacao_areas": copy.deepcopy(self.ocupacao_areas),
+                "areas": copy.deepcopy(self.areas),
+                "jogadas_recebidas": copy.deepcopy(self.jogadas_recebidas),
+                "pokemons": {
+                    pid: {
+                        "VidaAtual": p.VidaAtual,
+                        "EnergiaAtual": p.EnergiaAtual,
+                        "BarreiraAtual": p.BarreiraAtual,
+                        "vivo": p.vivo,
+                        "ativo": p.ativo,
+                        "reserva": p.reserva,
+                        "area_id": p.area_id,
+                        "efeitos_formais": copy.deepcopy(p.efeitos_formais),
+                        "estados_transitorios": copy.deepcopy(p.estados_transitorios),
+                        "contadores_especiais": copy.deepcopy(p.contadores_especiais),
+                        "estatisticas_batalha": copy.deepcopy(p.estatisticas_batalha),
+                        "variacoes_permanentes": copy.deepcopy(p.variacoes_permanentes),
+                    }
+                    for pid, p in self.pokemons_por_id.items()
+                },
+            }
+        )
+
+    def registrar_snapshot_reversao(self, motivo=None):
+        self.snapshots_reversao = list(getattr(self, "snapshots_reversao", []) or [])
+        self.snapshots_reversao.append(self._snapshot_reversao_atual(motivo))
+        self.snapshots_reversao = self.snapshots_reversao[-12:]
+        return True
+
+    def reverter_snapshot(self):
+        pilha = list(getattr(self, "snapshots_reversao", []) or [])
+        if not pilha:
+            return None
+        snap = pilha.pop()
+        self.snapshots_reversao = pilha
+        self.rodada_atual = int(snap.get("rodada_atual", self.rodada_atual) or self.rodada_atual)
+        self.passo_atual = int(snap.get("passo_atual", self.passo_atual) or self.passo_atual)
+        self.estado_partida = str(snap.get("estado_partida") or self.estado_partida)
+        self.finalizada = bool(snap.get("finalizada", self.finalizada))
+        self.vencedor = copy.deepcopy(snap.get("vencedor"))
+        self.perdedor = copy.deepcopy(snap.get("perdedor"))
+        self.motivo_finalizacao = copy.deepcopy(snap.get("motivo_finalizacao"))
+        self.clima_atual = copy.deepcopy(snap.get("clima_atual"))
+        self.clima_turnos_ativo = int(snap.get("clima_turnos_ativo", self.clima_turnos_ativo) or 0)
+        self.efeitos_area = copy.deepcopy(snap.get("efeitos_area") or {})
+        self.ocupacao_areas = copy.deepcopy(snap.get("ocupacao_areas") or self.ocupacao_areas)
+        self.areas = copy.deepcopy(snap.get("areas") or self.areas)
+        self.jogadas_recebidas = copy.deepcopy(snap.get("jogadas_recebidas") or {})
+        for pid, dados in dict(snap.get("pokemons") or {}).items():
+            pokemon = self.pokemons_por_id.get(str(pid))
+            if pokemon is None or not isinstance(dados, dict):
+                continue
+            pokemon.VidaAtual = float(dados.get("VidaAtual", pokemon.VidaAtual) or 0.0)
+            pokemon.EnergiaAtual = float(dados.get("EnergiaAtual", pokemon.EnergiaAtual) or 0.0)
+            pokemon.BarreiraAtual = float(dados.get("BarreiraAtual", pokemon.BarreiraAtual) or 0.0)
+            pokemon.vivo = bool(dados.get("vivo", pokemon.vivo))
+            pokemon.ativo = bool(dados.get("ativo", pokemon.ativo))
+            pokemon.reserva = bool(dados.get("reserva", pokemon.reserva))
+            pokemon.area_id = dados.get("area_id")
+            pokemon.efeitos_formais = copy.deepcopy(dados.get("efeitos_formais") or [])
+            pokemon.estados_transitorios = copy.deepcopy(dados.get("estados_transitorios") or {})
+            pokemon.contadores_especiais = copy.deepcopy(dados.get("contadores_especiais") or {})
+            pokemon.estatisticas_batalha = copy.deepcopy(dados.get("estatisticas_batalha") or {})
+            pokemon.variacoes_permanentes = copy.deepcopy(dados.get("variacoes_permanentes") or pokemon.variacoes_permanentes)
+            pokemon.recalcular_atributos()
+        self.construtor_log.iniciar_log_rodada(self.rodada_atual)
+        self.registrar_evento_log("turno_revertido", {"rodada": self.rodada_atual})
+        return snap
 
     def obter_pokemon(self, id_pokemon):
         return self.pokemons_por_id.get(str(id_pokemon or ""))

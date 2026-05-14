@@ -48,6 +48,8 @@ _ESTADO = {
     "ligado": False,
     "mundo_existente": False,
     "banidos": set(),
+    "ops": {},
+    "regras_servidor": {},
     "jogadores_com_personagem": set(),
     "personagens": {},
 }
@@ -329,6 +331,8 @@ def _salvar_json_servidor_ativo_locked() -> None:
     payload["ligado"] = bool(_ESTADO.get("ligado", False))
     payload["mundo_existente"] = bool(_ESTADO.get("mundo_existente", False))
     payload["banidos"] = sorted(str(x) for x in _ESTADO.get("banidos", set()))
+    payload["ops"] = {str(k): int(v) for k, v in dict(_ESTADO.get("ops", {})).items()}
+    payload["regras_servidor"] = dict(_ESTADO.get("regras_servidor", {}))
     payload["atualizado_em"] = _agora_iso()
     with arquivo.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
@@ -364,6 +368,8 @@ def _garantir_estado_ativo() -> None:
             "ligado": bool(servidor.get("ligado", False)) and mundo_existente,
             "mundo_existente": mundo_existente,
             "banidos": set(servidor.get("banidos", []) or []),
+            "ops": {str(k): max(0, min(2, int(v or 0))) for k, v in dict(servidor.get("ops", {}) or {}).items()},
+            "regras_servidor": dict(servidor.get("regras_servidor", {}) or {}),
             "jogadores_com_personagem": set(personagens.keys()),
             "personagens": personagens,
         }
@@ -1151,6 +1157,150 @@ def obter_regras_cliente() -> dict:
     }
     return regras
 
+
+def _normalizar_usuario_chave(usuario: str) -> str:
+    return str(usuario or "").strip()
+
+
+def listar_ops() -> dict:
+    _garantir_estado_ativo()
+    with _LOCK:
+        return {str(k): int(v) for k, v in dict(_ESTADO.get("ops", {})).items()}
+
+
+def existe_op_nivel_2() -> bool:
+    return any(int(v or 0) >= 2 for v in listar_ops().values())
+
+
+def obter_nivel_op(usuario: str) -> int:
+    _garantir_estado_ativo()
+    nome = _normalizar_usuario_chave(usuario)
+    with _LOCK:
+        ops = dict(_ESTADO.get("ops", {}))
+        if nome in ops:
+            return max(0, min(2, int(ops.get(nome, 0) or 0)))
+        for chave, nivel in ops.items():
+            if str(chave).strip().lower() == nome.lower():
+                return max(0, min(2, int(nivel or 0)))
+    return 1
+
+
+def definir_nivel_op(usuario: str, nivel: int) -> bool:
+    _garantir_estado_ativo()
+    nome = _normalizar_usuario_chave(usuario)
+    if not nome:
+        return False
+    nivel_norm = max(0, min(2, int(nivel or 0)))
+    with _LOCK:
+        ops = dict(_ESTADO.get("ops", {}))
+        chave_real = next((k for k in ops.keys() if str(k).strip().lower() == nome.lower()), nome)
+        niveis_futuros = dict(ops)
+        niveis_futuros[chave_real] = nivel_norm
+        if not any(int(v or 0) >= 2 for v in niveis_futuros.values()):
+            return False
+        _ESTADO["ops"] = niveis_futuros
+        _salvar_json_servidor_ativo_locked()
+    return True
+
+
+def garantir_bootstrap_op(usuario: str) -> bool:
+    _garantir_estado_ativo()
+    nome = _normalizar_usuario_chave(usuario)
+    if not nome:
+        return False
+    with _LOCK:
+        ops = dict(_ESTADO.get("ops", {}))
+        if any(int(v or 0) >= 2 for v in ops.values()):
+            return False
+        ops[nome] = 2
+        _ESTADO["ops"] = ops
+        _salvar_json_servidor_ativo_locked()
+    return True
+
+
+def banir_usuario(usuario: str) -> bool:
+    _garantir_estado_ativo()
+    nome = _normalizar_usuario_chave(usuario)
+    if not nome:
+        return False
+    with _LOCK:
+        _ESTADO.setdefault("banidos", set()).add(nome)
+        _salvar_json_servidor_ativo_locked()
+    expulsar_usuario(nome)
+    return True
+
+
+def desbanir_usuario(usuario: str) -> bool:
+    _garantir_estado_ativo()
+    nome = _normalizar_usuario_chave(usuario)
+    if not nome:
+        return False
+    with _LOCK:
+        banidos = set(_ESTADO.get("banidos", set()))
+        antes = len(banidos)
+        banidos = {u for u in banidos if str(u).strip().lower() != nome.lower()}
+        _ESTADO["banidos"] = banidos
+        _salvar_json_servidor_ativo_locked()
+    return len(banidos) != antes
+
+
+def usuario_banido(usuario: str) -> bool:
+    _garantir_estado_ativo()
+    nome = _normalizar_usuario_chave(usuario)
+    with _LOCK:
+        return any(str(u).strip().lower() == nome.lower() for u in set(_ESTADO.get("banidos", set())))
+
+
+def expulsar_usuario(usuario: str) -> bool:
+    nome = _normalizar_usuario_chave(usuario)
+    if not nome:
+        return False
+    try:
+        from Servidor.Gerais.Rotas.Ativador import desconectar_client
+
+        desconectar_client(nome)
+        return True
+    except Exception:
+        return False
+
+
+def obter_regras_servidor() -> dict:
+    try:
+        _garantir_estado_ativo()
+    except RuntimeError:
+        return {}
+    with _LOCK:
+        return dict(_ESTADO.get("regras_servidor", {}) or {})
+
+
+def definir_regra_servidor(nome: str, valor) -> bool:
+    _garantir_estado_ativo()
+    chave = str(nome or "").strip()
+    if not chave:
+        return False
+    with _LOCK:
+        regras = dict(_ESTADO.get("regras_servidor", {}) or {})
+        regras[chave] = valor
+        _ESTADO["regras_servidor"] = regras
+        _salvar_json_servidor_ativo_locked()
+    return True
+
+
+def resetar_regra_servidor(nome: str) -> bool:
+    _garantir_estado_ativo()
+    chave = str(nome or "").strip()
+    with _LOCK:
+        regras = dict(_ESTADO.get("regras_servidor", {}) or {})
+        existia = chave in regras
+        regras.pop(chave, None)
+        _ESTADO["regras_servidor"] = regras
+        _salvar_json_servidor_ativo_locked()
+    return existia
+
+
+def listar_regras_servidor() -> dict:
+    return obter_regras_servidor()
+
 def chave_seguranca():
     _garantir_estado_ativo()
     return _CHAVE_SEGURANCA
@@ -1164,6 +1314,8 @@ def snapshot_estado():
             "ligado": _ESTADO["ligado"],
             "mundo_existente": _ESTADO["mundo_existente"],
             "banidos": set(_ESTADO["banidos"]),
+            "ops": {k: int(v) for k, v in dict(_ESTADO.get("ops", {})).items()},
+            "regras_servidor": dict(_ESTADO.get("regras_servidor", {}) or {}),
             "jogadores_com_personagem": set(_ESTADO["jogadores_com_personagem"]),
             "personagens": {k: dict(v) for k, v in _ESTADO["personagens"].items()},
             "mundo_em_geracao": bool(_ESTADO_GERACAO["em_andamento"]),

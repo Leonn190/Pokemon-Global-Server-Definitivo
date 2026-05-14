@@ -25,6 +25,9 @@ class Perfil:
         self.MetrosAndados = 0.0
         self.TempoJogoSegundos = 0.0
         self.Insignias = []
+        self.Medalhoes = []
+        self.BossesDungeonDerrotados = {}
+        self.DungeonsConcluidas = []
         self.Maestria = 0
         self.Fugas = 0
         self.DungeonsTerminadas = 0
@@ -190,6 +193,42 @@ class Perfil:
             return valor.strip().lower() in ("1", "true", "sim", "yes", "on")
         return bool(valor)
 
+    @staticmethod
+    def _normalizar_lista_ids(valor) -> list[str]:
+        if isinstance(valor, dict):
+            bruto = list(valor.keys())
+        elif isinstance(valor, (list, tuple, set)):
+            bruto = list(valor)
+        elif valor in (None, ""):
+            bruto = []
+        else:
+            bruto = [valor]
+        saida = []
+        vistos = set()
+        for item in bruto:
+            if item is None:
+                continue
+            texto = str(item).strip()
+            if not texto or texto in vistos:
+                continue
+            vistos.add(texto)
+            saida.append(texto)
+        return saida
+
+    @classmethod
+    def _normalizar_dict_lista_ids(cls, valor) -> dict[str, list[str]]:
+        if not isinstance(valor, dict):
+            return {}
+        saida = {}
+        for chave, itens in valor.items():
+            dungeon_id = str(chave or "").strip()
+            if not dungeon_id:
+                continue
+            lista = cls._normalizar_lista_ids(itens)
+            if lista:
+                saida[dungeon_id] = lista
+        return saida
+
     def aplicar_serializado(self, dados):
         if not isinstance(dados, dict):
             return
@@ -208,10 +247,14 @@ class Perfil:
         self.BausAbertos = max(0, int(self._pegar(dados, "baus_abertos", "BausAbertos", padrao=self.BausAbertos)))
         self.MetrosAndados = max(0.0, float(self._pegar(dados, "metros_andados", "MetrosAndados", padrao=self.MetrosAndados)))
         self.TempoJogoSegundos = max(0.0, float(self._pegar(dados, "tempo_jogo_segundos", "TempoJogoSegundos", padrao=self.TempoJogoSegundos)))
-        self.Insignias = list(self._pegar(dados, "insignias", "Insignias", padrao=self.Insignias) or [])
+        self.Insignias = self._normalizar_lista_ids(self._pegar(dados, "insignias", "Insignias", padrao=self.Insignias))
+        self.Medalhoes = self._normalizar_lista_ids(self._pegar(dados, "medalhoes", "Medalhoes", padrao=self.Medalhoes))
+        self.BossesDungeonDerrotados = self._normalizar_dict_lista_ids(self._pegar(dados, "bosses_dungeon_derrotados", "BossesDungeonDerrotados", padrao=self.BossesDungeonDerrotados))
+        self.DungeonsConcluidas = self._normalizar_lista_ids(self._pegar(dados, "dungeons_concluidas", "DungeonsConcluidas", padrao=self.DungeonsConcluidas))
         self.Maestria = int(self._pegar(dados, "maestria", "Maestria", padrao=self.Maestria))
         self.Fugas = max(0, int(self._pegar(dados, "fugas", "Fugas", padrao=self.Fugas)))
         self.DungeonsTerminadas = max(0, int(self._pegar(dados, "dungeons_terminadas", "DungeonsTerminadas", padrao=self.DungeonsTerminadas)))
+        self.DungeonsTerminadas = max(self.DungeonsTerminadas, len(self.DungeonsConcluidas))
         self.Elo = int(self._pegar(dados, "elo", "Elo", padrao=self.Elo))
         self.EternidadeDerrotada = bool(self._pegar(dados, "eternidade_derrotada", "EternidadeDerrotada", padrao=self.EternidadeDerrotada))
         self.GrandeCampeaoDerrotado = bool(self._pegar(dados, "grande_campeao_derrotado", "GrandeCampeaoDerrotado", padrao=self.GrandeCampeaoDerrotado))
@@ -318,9 +361,12 @@ class Perfil:
             "metros_andados": self.MetrosAndados,
             "tempo_jogo_segundos": int(self.TempoJogoSegundos),
             "insignias": list(self.Insignias),
+            "medalhoes": list(self.Medalhoes),
+            "bosses_dungeon_derrotados": {str(k): list(v) for k, v in self.BossesDungeonDerrotados.items()},
+            "dungeons_concluidas": list(self.DungeonsConcluidas),
             "maestria": self.Maestria,
             "fugas": self.Fugas,
-            "dungeons_terminadas": self.DungeonsTerminadas,
+            "dungeons_terminadas": max(int(self.DungeonsTerminadas), len(self.DungeonsConcluidas)),
             "elo": self.Elo,
             "eternidade_derrotada": bool(self.EternidadeDerrotada),
             "grande_campeao_derrotado": bool(self.GrandeCampeaoDerrotado),
@@ -408,6 +454,54 @@ class Perfil:
             else:
                 self.BatalhasPVPVencidas = max(0, int(self.BatalhasPVPVencidas) + qtd)
         self._perfil_dirty = True
+
+    def adicionar_insignia(self, insignia_id: str) -> bool:
+        texto = str(insignia_id or "").strip()
+        if not texto or texto in self.Insignias:
+            return False
+        self.Insignias.append(texto)
+        self._perfil_dirty = True
+        return True
+
+    def adicionar_medalhao(self, medalhao_id: str) -> bool:
+        texto = str(medalhao_id or "").strip()
+        if not texto or texto in self.Medalhoes:
+            return False
+        self.Medalhoes.append(texto)
+        self._perfil_dirty = True
+        return True
+
+    def registrar_boss_dungeon_derrotado(self, dungeon_id: str, boss_id: str) -> bool:
+        dungeon = str(dungeon_id or "").strip()
+        boss = str(boss_id or "").strip()
+        if not dungeon or not boss:
+            return False
+        atuais = self.BossesDungeonDerrotados.setdefault(dungeon, [])
+        if boss in atuais:
+            return False
+        atuais.append(boss)
+        self._perfil_dirty = True
+        return True
+
+    def marcar_dungeon_concluida(self, dungeon_id: str, medalhao_id: str | None = None) -> bool:
+        dungeon = str(dungeon_id or "").strip()
+        if not dungeon:
+            return False
+        mudou = False
+        if dungeon not in self.DungeonsConcluidas:
+            self.DungeonsConcluidas.append(dungeon)
+            mudou = True
+        novo_total = max(int(self.DungeonsTerminadas), len(self.DungeonsConcluidas))
+        if novo_total != int(self.DungeonsTerminadas):
+            self.DungeonsTerminadas = novo_total
+            mudou = True
+        medalhao = str(medalhao_id or dungeon).strip()
+        if medalhao and medalhao not in self.Medalhoes:
+            self.Medalhoes.append(medalhao)
+            mudou = True
+        if mudou:
+            self._perfil_dirty = True
+        return mudou
 
     def registrar_conhecimento(self, categoria: str, conhecimento_id) -> bool:
         categoria_fmt = str(categoria or "").strip().title()

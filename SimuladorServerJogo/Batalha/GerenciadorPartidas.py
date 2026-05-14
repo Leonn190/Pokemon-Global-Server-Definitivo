@@ -38,6 +38,12 @@ class GerenciadorPartidas:
         if partida is None:
             return {"status": "erro", "mensagem": "Partida nao encontrada", "id_partida": str(id_partida or ""), "estado_finalizacao": "ausente", "avisos": [], "erros": ["partida_inexistente"]}
         retorno = partida.finalizar(motivo, lado_id=lado_id)
+        try:
+            from SimuladorServerJogo.Gerais.EstadoServidor import registrar_recompensas_batalha_finalizada
+
+            registrar_recompensas_batalha_finalizada(partida)
+        except Exception as exc:
+            retorno.setdefault("avisos", []).append({"tipo": "recompensa_batalha", "erro": str(exc)})
         self.partidas_ativas.pop(str(id_partida), None)
         self.partidas_finalizadas[str(id_partida)] = partida
         return retorno

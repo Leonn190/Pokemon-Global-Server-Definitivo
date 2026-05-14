@@ -9,6 +9,7 @@ from Codigo.Geradores.PokemonInventario import PokemonInventario
 from Codigo.ModulosGerais.DesenhaAtor import DesenhaAtor
 from Codigo.Paineis.PainelArvoreHabilidades import PainelArvoreHabilidades
 from Codigo.Paineis.PainelConhecimento import PainelConhecimento
+from Codigo.Paineis.PainelGaleria import PainelGaleria
 from Codigo.Paineis.PainelProgresso import PainelProgresso
 from Codigo.Prefabs.Barra import Barra, BarraEditavel
 from Codigo.Prefabs.Botao import Botao
@@ -29,8 +30,10 @@ class PainelEstatisticas:
         self._botao_skill: Botao | None = None
         self._botao_conhecimento: Botao | None = None
         self._botao_progresso: Botao | None = None
+        self._botao_galeria: Botao | None = None
         self._painel_conhecimento = PainelConhecimento(ator)
         self._painel_progresso = PainelProgresso(ator)
+        self._painel_galeria = PainelGaleria(ator)
         self._overlay_extra = ""
 
         self._area_stats = pygame.Rect(0, 0, 0, 0)
@@ -166,6 +169,10 @@ class PainelEstatisticas:
             self._arvore_aberta = False
             self._overlay_extra = "progresso"
 
+        def _abrir_galeria(_jogo, _botao):
+            self._arvore_aberta = False
+            self._overlay_extra = "galeria"
+
         self._botao_skill = Botao(
             pygame.Rect(self._area_direita.x + 18, y_botao_skill, self._area_direita.width - 36, h_botao_skill),
             "Abrir árvore de habilidades",
@@ -185,14 +192,19 @@ class PainelEstatisticas:
         coluna3_x = self._area_stats.x + 18 + 2 * (((self._area_stats.width - 72) // 3) + 18)
         col_w = ((self._area_stats.width - 72) // 3)
         self._botao_conhecimento = Botao(
-            pygame.Rect(coluna3_x, self._area_stats.bottom - 122, col_w, 42),
+            pygame.Rect(coluna3_x, self._area_stats.bottom - 150, col_w, 40),
             "Conhecimento", execute=_abrir_conhecimento,
             style={"radius": 12, "bg": (52, 100, 160), "bg_hover": (67, 122, 191), "bg_pressed": (45, 86, 140), "border": (188, 224, 255), "text_style": {"size": 18, "outline_thickness": 1, "shadow": False}},
         )
         self._botao_progresso = Botao(
-            pygame.Rect(coluna3_x, self._area_stats.bottom - 72, col_w, 42),
+            pygame.Rect(coluna3_x, self._area_stats.bottom - 104, col_w, 40),
             "Progresso", execute=_abrir_progresso,
             style={"radius": 12, "bg": (70, 112, 76), "bg_hover": (86, 136, 92), "bg_pressed": (58, 96, 64), "border": (210, 236, 214), "text_style": {"size": 18, "outline_thickness": 1, "shadow": False}},
+        )
+        self._botao_galeria = Botao(
+            pygame.Rect(coluna3_x, self._area_stats.bottom - 58, col_w, 40),
+            "Galeria", execute=_abrir_galeria,
+            style={"radius": 12, "bg": (98, 79, 150), "bg_hover": (119, 96, 180), "bg_pressed": (78, 62, 124), "border": (218, 205, 255), "text_style": {"size": 18, "outline_thickness": 1, "shadow": False}},
         )
     def on_open(self):
         pass
@@ -328,6 +340,8 @@ class PainelEstatisticas:
             self._botao_conhecimento.render(tela, eventos, dt, None)
         if self._botao_progresso is not None:
             self._botao_progresso.render(tela, eventos, dt, None)
+        if self._botao_galeria is not None:
+            self._botao_galeria.render(tela, eventos, dt, None)
 
     def _desenhar_direita(self, tela, eventos, dt):
         pygame.draw.rect(tela, (10, 16, 30), self._area_direita, border_radius=18)
@@ -410,6 +424,11 @@ class PainelEstatisticas:
         if self._overlay_extra == "progresso":
             self._painel_progresso.Ator = self.Ator
             if self._painel_progresso.renderizar(tela, pygame.Rect(rect), eventos=eventos, dt=dt):
+                self._overlay_extra = ""
+            return
+        if self._overlay_extra == "galeria":
+            self._painel_galeria.Ator = self.Ator
+            if self._painel_galeria.renderizar(tela, pygame.Rect(rect), eventos=eventos, dt=dt):
                 self._overlay_extra = ""
             return
 

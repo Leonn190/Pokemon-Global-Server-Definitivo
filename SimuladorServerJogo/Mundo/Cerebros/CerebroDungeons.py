@@ -12,6 +12,7 @@ from SimuladorServerJogo.Gerais.EstadoServidor import (
     player_invulneravel,
     atualizar_posicao_personagem,
     registrar_checkpoint_mundo_seguro,
+    registrar_boss_dungeon_derrotado,
 )
 from SimuladorServerJogo.Gerais.LoaderRegras import carregar_regras_dungeons
 from SimuladorServerJogo.Mundo.BancoDados import BANCO_DADOS
@@ -604,6 +605,20 @@ class CerebroDungeons:
             return False
         estado = poke.estado_extra if isinstance(poke.estado_extra, dict) else {}
         if str(estado.get("comportamento_mundo") or "") == "boss" or bool(estado.get("boss", False)):
+            dimensao = str(estado.get("dimensao") or "")
+            layout = self._layouts.get(dimensao) if isinstance(self._layouts.get(dimensao), dict) else {}
+            bosses = [
+                str(b.get("pokemon") or b.get("sala_id") or "").strip()
+                for b in list(layout.get("bosses") or [])
+                if isinstance(b, dict) and str(b.get("pokemon") or b.get("sala_id") or "").strip()
+            ]
+            registrar_boss_dungeon_derrotado(
+                str(client_id or ""),
+                str(estado.get("dungeon_code") or layout.get("dungeon_code") or ""),
+                str(estado.get("pokemon_boss") or estado.get("sala_id") or ""),
+                bosses,
+                str(layout.get("dungeon_nome") or estado.get("dungeon_code") or ""),
+            )
             estado.pop("em_batalha", None)
             estado.pop("batalha_client_id", None)
             estado.pop("batalha_confirmada", None)

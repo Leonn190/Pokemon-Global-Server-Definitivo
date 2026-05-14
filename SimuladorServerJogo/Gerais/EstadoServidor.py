@@ -4,6 +4,7 @@ import random
 import threading
 import time
 import re
+import unicodedata
 from pathlib import Path
 
 from SimuladorServerJogo.Gerais import ContextoServidor
@@ -153,6 +154,42 @@ def _normalizar_conhecimento(conhecimento: dict | None) -> dict:
             unicos.append(valor_norm)
         normalizado[categoria] = list(dict.fromkeys(unicos))
     return normalizado
+
+
+def _normalizar_lista_ids(valor) -> list[str]:
+    if isinstance(valor, dict):
+        bruto = list(valor.keys())
+    elif isinstance(valor, (list, tuple, set)):
+        bruto = list(valor)
+    elif valor in (None, ""):
+        bruto = []
+    else:
+        bruto = [valor]
+    saida: list[str] = []
+    vistos: set[str] = set()
+    for item in bruto:
+        if item is None:
+            continue
+        texto = str(item).strip()
+        if not texto or texto in vistos:
+            continue
+        vistos.add(texto)
+        saida.append(texto)
+    return saida
+
+
+def _normalizar_dict_lista_ids(valor) -> dict[str, list[str]]:
+    if not isinstance(valor, dict):
+        return {}
+    saida: dict[str, list[str]] = {}
+    for chave, itens in valor.items():
+        dungeon_id = str(chave or "").strip()
+        if not dungeon_id:
+            continue
+        lista = _normalizar_lista_ids(itens)
+        if lista:
+            saida[dungeon_id] = lista
+    return saida
 
 
 def _contar_recursos_miticos_inventario(inventario: dict | None) -> int:
@@ -454,7 +491,14 @@ def _normalizar_perfil(personagem: dict) -> dict:
     dados["metros_andados"] = float(max(0.0, dados.get("metros_andados", 0.0)))
     dados["tempo_jogo_segundos"] = float(max(0.0, dados.get("tempo_jogo_segundos", 0.0)))
     dados["dinheiro"] = int(dados.get("dinheiro", _valor_regra(regras, "Dinheiro", 20)))
-    dados["insignias"] = list(dados.get("insignias", []))
+    dados["insignias"] = _normalizar_lista_ids(dados.get("insignias", dados.get("Insignias")))
+    dados["medalhoes"] = _normalizar_lista_ids(dados.get("medalhoes", dados.get("Medalhoes")))
+    dados["bosses_dungeon_derrotados"] = _normalizar_dict_lista_ids(dados.get("bosses_dungeon_derrotados", dados.get("BossesDungeonDerrotados")))
+    dados["dungeons_concluidas"] = _normalizar_lista_ids(dados.get("dungeons_concluidas", dados.get("DungeonsConcluidas")))
+    dados["dungeons_terminadas"] = max(
+        int(dados.get("dungeons_terminadas", dados.get("DungeonsTerminadas", 0)) or 0),
+        len(dados["dungeons_concluidas"]),
+    )
     dados["maestria"] = int(dados.get("maestria", _valor_regra(regras, "Maestria", 0)))
     dados["limite_conhecimento"] = int(max(0, dados.get("limite_conhecimento", dados.get("LimiteConhecimento", 300))))
     dados["conhecimento"] = _normalizar_conhecimento(dados.get("conhecimento", dados.get("Conhecimento")))
@@ -717,6 +761,7 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
         "batalhas_pvp_vencidas",
         "batalhas_bot_vencidas",
         "baus_abertos",
+        "dungeons_terminadas",
         "dinheiro",
         "maestria",
         "limite_conhecimento",
@@ -758,8 +803,41 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     base["metros_andados"] = max(0.0, float(base.get("metros_andados", 0.0)))
     base["tempo_jogo_segundos"] = max(0.0, float(base.get("tempo_jogo_segundos", 0.0)))
 
-    if "insignias" in payload:
-        base["insignias"] = list(payload.get("insignias", []))
+    if "insignias" in payload or "Insignias" in payload:
+        atuais = _normalizar_lista_ids(base.get("insignias", []))
+        vistos = set(atuais)
+        for item in _normalizar_lista_ids(payload.get("insignias", payload.get("Insignias"))):
+            if item not in vistos:
+                atuais.append(item)
+                vistos.add(item)
+        base["insignias"] = atuais
+    if "medalhoes" in payload or "Medalhoes" in payload:
+        atuais = _normalizar_lista_ids(base.get("medalhoes", []))
+        vistos = set(atuais)
+        for item in _normalizar_lista_ids(payload.get("medalhoes", payload.get("Medalhoes"))):
+            if item not in vistos:
+                atuais.append(item)
+                vistos.add(item)
+        base["medalhoes"] = atuais
+    if "bosses_dungeon_derrotados" in payload or "BossesDungeonDerrotados" in payload:
+        bosses = _normalizar_dict_lista_ids(base.get("bosses_dungeon_derrotados", {}))
+        for dungeon_id, lista in _normalizar_dict_lista_ids(payload.get("bosses_dungeon_derrotados", payload.get("BossesDungeonDerrotados"))).items():
+            atuais = bosses.setdefault(dungeon_id, [])
+            vistos = set(atuais)
+            for item in lista:
+                if item not in vistos:
+                    atuais.append(item)
+                    vistos.add(item)
+        base["bosses_dungeon_derrotados"] = bosses
+    if "dungeons_concluidas" in payload or "DungeonsConcluidas" in payload:
+        atuais = _normalizar_lista_ids(base.get("dungeons_concluidas", []))
+        vistos = set(atuais)
+        for item in _normalizar_lista_ids(payload.get("dungeons_concluidas", payload.get("DungeonsConcluidas"))):
+            if item not in vistos:
+                atuais.append(item)
+                vistos.add(item)
+        base["dungeons_concluidas"] = atuais
+        base["dungeons_terminadas"] = max(int(base.get("dungeons_terminadas", 0) or 0), len(base["dungeons_concluidas"]))
     if "skins_liberadas" in payload:
         base["skins_liberadas"] = _normalizar_skins_liberadas(payload.get("skins_liberadas", []))
     if "habilidades_aprendidas" in payload:
@@ -816,6 +894,11 @@ def _mesclar_perfil_atualizacao(personagem_atual: dict, atualizacao: dict) -> di
     for campo in ("visao_expandida_mundo", "rastreador_pokemons", "rastreador_baus", "teleportador_ativo", "mochila_sem_limite"):
         if campo in payload:
             base[campo] = _bool_cfg(payload.get(campo))
+    base["insignias"] = _normalizar_lista_ids(base.get("insignias", []))
+    base["medalhoes"] = _normalizar_lista_ids(base.get("medalhoes", []))
+    base["bosses_dungeon_derrotados"] = _normalizar_dict_lista_ids(base.get("bosses_dungeon_derrotados", {}))
+    base["dungeons_concluidas"] = _normalizar_lista_ids(base.get("dungeons_concluidas", []))
+    base["dungeons_terminadas"] = max(int(base.get("dungeons_terminadas", 0) or 0), len(base["dungeons_concluidas"]))
     _normalizar_progresso_xp(base)
     return base
 
@@ -929,6 +1012,118 @@ def _persistir_personagens(force: bool = False) -> None:
     _agendar_persistencia_locked(force=force, secoes={"players"})
 
 
+
+
+def _slug_id(valor) -> str:
+    texto = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    sem_acento = "".join(ch for ch in texto if not unicodedata.combining(ch))
+    return "".join(ch if ch.isalnum() else "_" for ch in sem_acento).strip("_")
+
+
+def _adicionar_unico(lista: list[str], valor: str) -> bool:
+    texto = str(valor or "").strip()
+    if not texto or texto in lista:
+        return False
+    lista.append(texto)
+    return True
+
+
+def _sincronizar_perfil_player_ativo_locked(usuario: str, perfil: dict) -> None:
+    from SimuladorServerJogo.Mundo.ObjetosMundoServer import AtorServer
+
+    obj_id = int(BANCO_DADOS.objeto_id_por_usuario(str(usuario)) or 0)
+    if obj_id <= 0:
+        return
+    obj = BANCO_DADOS.obter_objeto(obj_id)
+    if not isinstance(obj, AtorServer) or not isinstance(getattr(obj, "estado_extra", None), dict):
+        return
+    obj.estado_extra["perfil"] = copy.deepcopy(perfil)
+    BANCO_DADOS.atualizar_objeto(int(obj.Id), {"estado": obj.estado_extra, "perfil": perfil})
+
+
+def _player_venceu_partida(partida) -> bool:
+    lado = int(getattr(partida, "lado_jogador", 50) or 50)
+    vencedor = getattr(partida, "vencedor", None)
+    if isinstance(vencedor, (list, tuple, set)):
+        for v in vencedor:
+            try:
+                if int(v) == lado:
+                    return True
+            except (TypeError, ValueError):
+                continue
+        return False
+    try:
+        return int(vencedor) == lado
+    except (TypeError, ValueError):
+        return False
+
+
+def registrar_recompensas_batalha_finalizada(partida) -> bool:
+    if partida is None or not _player_venceu_partida(partida):
+        return False
+    client_id = str(getattr(partida, "client_id", "") or "").strip()
+    npc_ctx = getattr(partida, "npc_contexto", {}) if isinstance(getattr(partida, "npc_contexto", {}), dict) else {}
+    if not client_id or str(npc_ctx.get("npc_cargo") or "").strip().lower() != "lider":
+        return False
+    try:
+        batalha_numero = int(npc_ctx.get("batalha_numero", 1) or 1)
+    except (TypeError, ValueError):
+        batalha_numero = 1
+    if batalha_numero != 2:
+        return False
+    npc_id = int(npc_ctx.get("npc_id", 0) or 0)
+    npc_obj = BANCO_DADOS.obter_objeto(npc_id) if npc_id > 0 else None
+    estado_npc = getattr(npc_obj, "estado_extra", {}) if npc_obj is not None and isinstance(getattr(npc_obj, "estado_extra", {}), dict) else {}
+    if str(estado_npc.get("cargo") or "").strip().lower() != "lider":
+        return False
+    tipo_estadio = _slug_id(estado_npc.get("estadio_tipo") or npc_ctx.get("npc_estadio"))
+    if not tipo_estadio:
+        return False
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(client_id)
+        if not isinstance(personagem, dict):
+            return False
+        dados = _normalizar_perfil(personagem)
+        if not _adicionar_unico(dados["insignias"], tipo_estadio):
+            return False
+        _ESTADO["personagens"][client_id] = dados
+        _sincronizar_perfil_player_ativo_locked(client_id, dados)
+        _persistir_personagens(force=True)
+    return True
+
+
+def registrar_boss_dungeon_derrotado(client_id: str, dungeon_id: str, boss_id: str, bosses_dungeon, medalhao_id: str | None = None) -> bool:
+    usuario = str(client_id or "").strip()
+    dungeon = str(dungeon_id or "").strip()
+    boss = str(boss_id or "").strip()
+    bosses = _normalizar_lista_ids(bosses_dungeon)
+    if not usuario or not dungeon or not boss or not bosses:
+        return False
+    medalhao = str(medalhao_id or dungeon).strip()
+    with _LOCK:
+        personagem = _ESTADO["personagens"].get(usuario)
+        if not isinstance(personagem, dict):
+            return False
+        dados = _normalizar_perfil(personagem)
+        mudou = False
+        derrotados = dados["bosses_dungeon_derrotados"].setdefault(dungeon, [])
+        if _adicionar_unico(derrotados, boss):
+            mudou = True
+        if set(bosses).issubset(set(derrotados)):
+            if _adicionar_unico(dados["dungeons_concluidas"], dungeon):
+                mudou = True
+            novo_total = max(int(dados.get("dungeons_terminadas", 0) or 0), len(dados["dungeons_concluidas"]))
+            if novo_total != int(dados.get("dungeons_terminadas", 0) or 0):
+                dados["dungeons_terminadas"] = novo_total
+                mudou = True
+            if _adicionar_unico(dados["medalhoes"], medalhao):
+                mudou = True
+        if not mudou:
+            return False
+        _ESTADO["personagens"][usuario] = dados
+        _sincronizar_perfil_player_ativo_locked(usuario, dados)
+        _persistir_personagens(force=True)
+    return True
 
 
 def obter_regras_cliente() -> dict:

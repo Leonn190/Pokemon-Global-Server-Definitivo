@@ -58,6 +58,9 @@ class Partida:
         self.regras = copy.deepcopy(dados.get("regras") or {}) if isinstance(dados.get("regras"), dict) else {}
         self.regras_mundo = copy.deepcopy(dados.get("regras_mundo") or {}) if isinstance(dados.get("regras_mundo"), dict) else {}
         self.perfil_jogador = copy.deepcopy(dados.get("perfil_jogador") or {}) if isinstance(dados.get("perfil_jogador"), dict) else {}
+        self.client_id = str(dados.get("client_id") or "")
+        self.npc_contexto = copy.deepcopy(dados.get("npc_contexto") or {}) if isinstance(dados.get("npc_contexto"), dict) else {}
+        self.contexto_dungeon = copy.deepcopy(dados.get("dungeon") or {}) if isinstance(dados.get("dungeon"), dict) else {}
         for chave in ("centro", "largura", "altura", "arena_largura", "arena_altura", "origem", "tiles", "estruturas", "contexto_estadio", "tipo_estadio"):
             if chave in dados and chave not in self.arena_contexto:
                 self.arena_contexto[chave] = copy.deepcopy(dados.get(chave))

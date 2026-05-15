@@ -2,19 +2,277 @@
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
 import "../../Estilos/wiki.css";
+
+const pilaresLore = [
+  {
+    numero: "01",
+    titulo: "A lua Alencar",
+    texto:
+      "Pokémon Global Server se passa em Alencar, uma lua pequena, mas com propriedades parecidas com as da Terra. Seu ar especial permite que humanos, Pokémons e animais vivam sem depender de alimento para sobreviver, tornando a convivência e a exploração mais importantes do que a simples busca por recursos.",
+  },
+  {
+    numero: "02",
+    titulo: "Os novos habitantes",
+    texto:
+      "Os primeiros humanos chegaram para explorar Alencar, mas parte deles decidiu permanecer. Com o tempo, surgiram comunidades, treinadores e uma relação cada vez mais próxima entre pessoas e Pokémons, incluindo batalhas, jornadas e descobertas pelo território lunar.",
+  },
+  {
+    numero: "03",
+    titulo: "Dungeons antigas",
+    texto:
+      "Pokémons lendários e míticos existem em mais de um exemplar, mas são extremamente raros porque não podem procriar. Muitos vivem escondidos em dungeons antigas, protegidos por mistérios, perigos e energias que ainda não foram totalmente compreendidas.",
+  },
+];
+
+const formasEspeciais = [
+  ["Radiante", "Arceus", "Uma forma ligada à ordem, à essência e ao poder divino de Alencar."],
+  ["Gigantamax", "Eternatus", "Uma manifestação de poder colossal, instável e destrutivo."],
+  ["Ultra", "Necrozma", "Uma forma associada à luz, às dimensões e à energia vinda de fora da lua."],
+  ["Mega", "Natural", "Uma transformação natural já existente no mundo, sem origem direta em um dos três deuses."],
+];
 ---
 <Layout
   titulo="Lore"
-  descricao="Espaço reservado para a lore do Pokémon Global Server."
+  descricao="Introdução à lore do Pokémon Global Server, com a lua Alencar, os deuses Pokémon, as formas especiais e o tipo Cósmico."
 >
   <WikiTopo ativo="lore" titulo="Lore" tituloId="titulo-lore" />
-  <main class="wiki-vazia-habilidades" aria-labelledby="titulo-lore-vazio">
-    <section class="bloco-info">
-      <p class="selo">Em preparação</p>
-      <h2 id="titulo-lore-vazio">Lore do Pokémon Global Server</h2>
-      <p>
-        Esta wiki substitui a antiga página isolada de tipos. A tabela de tipos agora fica dentro da wiki de combate; este espaço fica reservado para história, regiões, personagens e contexto do universo do jogo.
-      </p>
+  <main class="wiki-lore" aria-labelledby="titulo-lore">
+    <section class="lore-intro" aria-labelledby="titulo-lore-intro">
+      <article class="lore-intro-card">
+        <p class="selo">Universo do jogo</p>
+        <h2 id="titulo-lore-intro">Alencar, a lua onde humanos e Pokémons constroem uma nova história.</h2>
+        <p>
+          Em <strong>Pokémon Global Server</strong>, a aventura acontece em Alencar, uma lua muito menor que a Terra,
+          mas capaz de sustentar vida de forma própria. Seu ar possui características únicas: humanos, Pokémons e
+          animais conseguem sobreviver sem precisar se alimentar, embora ainda possam comer por costume, prazer ou cultura.
+        </p>
+        <p>
+          Os humanos chegaram como exploradores, mas muitos decidiram ficar. Assim nasceram comunidades convivendo com
+          Pokémons, treinadores dedicados às batalhas e uma sociedade marcada pela exploração de regiões desconhecidas,
+          estádios, dungeons e encontros raros com criaturas lendárias.
+        </p>
+      </article>
+    </section>
+
+    <section class="lore-pilares" aria-label="Pilares principais da lore">
+      {pilaresLore.map((pilar) => (
+        <article class="lore-pilar-card">
+          <span>{pilar.numero}</span>
+          <h3>{pilar.titulo}</h3>
+          <p>{pilar.texto}</p>
+        </article>
+      ))}
+    </section>
+
+    <section class="lore-secao lore-deuses" aria-labelledby="titulo-deuses-lore">
+      <div class="lore-secao-cabecalho">
+        <p class="selo">Deuses Pokémon</p>
+        <h2 id="titulo-deuses-lore">Arceus, Eternatus e Necrozma</h2>
+        <p>
+          Em Alencar, Arceus, Eternatus e Necrozma são tratados como entidades divinas. Cada um representa uma força
+          diferente e deixou marcas profundas na história, nas formas especiais e nos mistérios da lua.
+        </p>
+      </div>
+      <div class="lore-deuses-grid">
+        <article class="lore-deus-card">
+          <h3>Arceus</h3>
+          <p>
+            Considerado o deus da ordem, Arceus é nativo de Alencar e está ligado ao equilíbrio da lua. Ele criou a
+            <strong> Forma Radiante</strong>, uma manifestação associada à essência elevada dos Pokémons.
+          </p>
+        </article>
+        <article class="lore-deus-card">
+          <h3>Eternatus</h3>
+          <p>
+            Eternatus veio do espaço e é visto como uma força destrutiva e vilanesca. Seus confrontos com Arceus são
+            alguns dos eventos mais estrondosos da história de Alencar, e sua influência deu origem à
+            <strong> Forma Gigantamax</strong>.
+          </p>
+        </article>
+        <article class="lore-deus-card">
+          <h3>Necrozma</h3>
+          <p>
+            Necrozma veio de outra dimensão. Mesmo sem participar tanto dos grandes confrontos, também é considerado
+            um deus e está ligado à luz, aos mistérios dimensionais e à <strong>Forma Ultra</strong>.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="lore-secao" aria-labelledby="titulo-formas-lore">
+      <div class="lore-secao-cabecalho">
+        <p class="selo">Transformações</p>
+        <h2 id="titulo-formas-lore">Formas especiais</h2>
+        <p>
+          As formas especiais ajudam a explicar como diferentes forças moldam os Pokémons de Alencar. Algumas surgem
+          por influência divina, enquanto a Mega Evolução já existe como um fenômeno natural do próprio mundo.
+        </p>
+      </div>
+      <div class="lore-formas-grid" aria-label="Lista de formas especiais">
+        {formasEspeciais.map(([forma, origem, descricao]) => (
+          <article class="lore-forma-card">
+            <span>{origem}</span>
+            <h3>{forma}</h3>
+            <p>{descricao}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="lore-secao lore-cosmico" aria-labelledby="titulo-cosmico-lore">
+      <article class="lore-cosmico-card">
+        <p class="selo">Tipo especial</p>
+        <h2 id="titulo-cosmico-lore">Tipo Cósmico</h2>
+        <p>
+          O tipo <strong>Cósmico</strong> representa Pokémons capazes de viver tranquilamente no espaço, com características
+          siderais, origem extraterrestre ou forte ligação com corpos celestes, energia espacial e fenômenos vindos de
+          fora de Alencar.
+        </p>
+      </article>
     </section>
   </main>
 </Layout>
+
+<style>
+  .wiki-lore {
+    display: grid;
+    gap: 22px;
+    padding: 34px 0 64px;
+  }
+
+  .lore-intro-card,
+  .lore-pilar-card,
+  .lore-secao,
+  .lore-cosmico-card {
+    border: 1px solid var(--borda);
+    border-radius: 28px;
+    background: var(--vidro);
+    box-shadow: var(--sombra);
+  }
+
+  .lore-intro-card {
+    padding: clamp(24px, 4vw, 42px);
+  }
+
+  .lore-intro-card h2,
+  .lore-secao-cabecalho h2,
+  .lore-cosmico-card h2 {
+    max-width: 920px;
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 1;
+    letter-spacing: -0.06em;
+  }
+
+  .lore-intro-card p,
+  .lore-secao-cabecalho p,
+  .lore-pilar-card p,
+  .lore-deus-card p,
+  .lore-forma-card p,
+  .lore-cosmico-card p {
+    color: var(--texto-fraco);
+    line-height: 1.7;
+  }
+
+  .lore-intro-card p {
+    max-width: 880px;
+    font-size: 1.04rem;
+  }
+
+  .lore-intro-card strong,
+  .lore-deus-card strong,
+  .lore-cosmico-card strong {
+    color: var(--texto);
+  }
+
+  .lore-pilares,
+  .lore-deuses-grid,
+  .lore-formas-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .lore-pilares {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .lore-pilar-card,
+  .lore-deus-card,
+  .lore-forma-card {
+    padding: 22px;
+  }
+
+  .lore-pilar-card span,
+  .lore-forma-card span {
+    display: inline-flex;
+    margin-bottom: 14px;
+    color: var(--texto-fraco);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .lore-pilar-card h3,
+  .lore-deus-card h3,
+  .lore-forma-card h3 {
+    margin: 0 0 10px;
+    font-size: 1.25rem;
+  }
+
+  .lore-secao {
+    display: grid;
+    gap: 18px;
+    padding: clamp(22px, 4vw, 34px);
+  }
+
+  .lore-secao-cabecalho {
+    display: grid;
+    gap: 10px;
+  }
+
+  .lore-secao-cabecalho p {
+    max-width: 840px;
+    margin: 0;
+  }
+
+  .lore-deuses-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .lore-formas-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .lore-deus-card,
+  .lore-forma-card {
+    border: 1px solid var(--borda);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .lore-cosmico-card {
+    padding: clamp(24px, 4vw, 36px);
+  }
+
+  .lore-cosmico-card p {
+    max-width: 820px;
+    font-size: 1.04rem;
+  }
+
+  @media (max-width: 1100px) {
+    .lore-pilares,
+    .lore-deuses-grid,
+    .lore-formas-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 720px) {
+    .lore-pilares,
+    .lore-deuses-grid,
+    .lore-formas-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

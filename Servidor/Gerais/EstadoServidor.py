@@ -63,7 +63,7 @@ _ESTADO_GERACAO = {
     "operacao": "nenhuma",
 }
 
-_LOCK = threading.Lock()
+_LOCK = threading.RLock()
 _INTERVALO_PERSISTENCIA_SEGUNDOS = 1.0
 _ultimo_persistencia_ts = 0.0
 _PERSISTENCIA_LOCK = threading.Lock()
@@ -385,10 +385,15 @@ def _garantir_estado_ativo() -> None:
             "operacao": "nenhuma",
         }
     )
-    BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
-    PACOTES_TICK.resetar()
+    servidor_ativo_anterior = _SERVIDOR_ATIVO_ATUAL
     _SERVIDOR_ATIVO_ATUAL = pasta
-    _recarregar_cerebro_mundo()
+    try:
+        BANCO_DADOS.recarregar_mundo(_ESTADO_MUNDO, limpar_objetos=True)
+        PACOTES_TICK.resetar()
+        _recarregar_cerebro_mundo()
+    except Exception:
+        _SERVIDOR_ATIVO_ATUAL = servidor_ativo_anterior
+        raise
 
 
 def _worker_persistencia_estado_mundo() -> None:

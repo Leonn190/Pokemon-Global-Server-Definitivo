@@ -6,6 +6,8 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+from Servidor.Gerais.LoaderRegras import listar_regras_base_flat
+
 
 RAIZ_REPOSITORIO = Path(__file__).resolve().parents[3]
 PASTA_SERVER_LIST = RAIZ_REPOSITORIO / "ServerList"
@@ -109,6 +111,7 @@ def criar_servidor_local(nome: str, chave_acesso: str) -> dict:
         "ligado": False,
         "mundo_existente": False,
         "banidos": [],
+        "regras_servidor": listar_regras_base_flat(),
         "criado_em": agora,
         "atualizado_em": agora,
     }

@@ -1,98 +1,1172 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Gelo",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou João, líder do estádio Gelo. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Olá. Eu sou João, líder do estádio Gelo. Aqui a batalha precisa de cabeça fria, leitura de campo e respeito pelo frio.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você chegou ao respeito 3. Agora libero as duas batalhas e uso o estádio Gelo sem reduzir nada."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Vamos ver se sua equipe aguenta o campo gelado."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Bom sinal. Treinador que insiste com calma escorrega menos."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Por que você escolheu o tipo Gelo?",
+          "destino": "tipo_gelo"
+        },
+        {
+          "texto": "Você é formado em medicina?",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1 no estádio Gelo. Primeiro mostre preparo, depois a gente mede força.",
       "opcoes": [
         {
           "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar um pouco.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Gelo. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Eu não libero o confronto completo para quem ainda não provou estabilidade.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero entender melhor.",
+          "destino": "tipo_gelo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Gelo, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede controle. Gelo não é só congelar: é reduzir espaço, obrigar erro e punir pressa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuGeloJoao",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que Gelo é controle e precisão. Então vamos ver se sua equipe aguenta cada passo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuPinguinsJoao",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você ouviu minha história dos pinguins. Agora pense nisso: postura calma, movimento eficiente e resistência ao frio."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Joao": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Gelo permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Eu vou usar o estádio Gelo com defesa, precisão, pressão e paciência.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMedicinaJoao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuEmpoleonJoao",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu meu lado médico e meu respeito pelo Empoleon. Então vou batalhar com técnica, diagnóstico e execução."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuFelpsJoao",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Depois de falar do Felps, preciso provar uma coisa: líder digno não depende de pose. Depende de batalha boa."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Joao": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Gelo. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu pareço fechado por causa do estádio Gelo, mas converso de boa. Só não me peça para elogiar o Felps.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou outras vezes. Gosto disso. Treinador constante é igual defesa boa: não desmonta no primeiro impacto."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouFelpsJoao",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Pode conversar. Mas se o assunto for o Felps de novo, minha opinião continua congelada."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComJoao": true,
+          "ConversasJoao": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Por que tipo Gelo?",
+          "destino": "tipo_gelo"
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Seu Pokémon favorito é Empoleon?",
+          "destino": "empoleon"
+        },
+        {
+          "texto": "Você joga Rocket League?",
+          "destino": "rocket_league"
+        },
+        {
+          "texto": "Você é médico?",
+          "destino": "medicina"
+        },
+        {
+          "texto": "O que você acha do Felps?",
+          "destino": "felps"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "tipo_gelo": {
+      "fala": "Eu escolhi o tipo Gelo porque gosto de pinguins. Parece simples, mas é isso mesmo. Pinguim é elegante, resistente, engraçado e sobrevive onde muita coisa desiste.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuGeloJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então o Gelo vem dos pinguins?",
+          "destino": "pinguins"
+        },
+        {
+          "texto": "Isso combina com Empoleon.",
+          "destino": "empoleon"
+        },
+        {
+          "texto": "Como isso vira estilo de batalha?",
+          "destino": "estilo_gelo"
+        },
+        {
+          "texto": "Quero ver isso na batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pinguins": {
+      "fala": "Pinguim parece fofo, mas é resistente. Ele anda de um jeito estranho, escorrega quando precisa, mergulha melhor do que muita coisa e não entra em pânico no frio.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuPinguinsJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso explica o Gelo.",
+          "destino": "tipo_gelo"
+        },
+        {
+          "texto": "Isso explica o Empoleon.",
+          "destino": "empoleon"
+        },
+        {
+          "texto": "Você batalha como um pinguim?",
+          "destino": "estilo_gelo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "empoleon": {
+      "fala": "Empoleon é meu Pokémon favorito. É pinguim, é imponente, tem postura de líder e mistura frieza com presença. É exatamente o tipo de Pokémon que eu respeito.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEmpoleonJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Empoleon combina com medicina?",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Ele é melhor que os dragões do Felps?",
+          "destino": "felps"
+        },
+        {
+          "texto": "Isso merece presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "medicina": {
+      "fala": "Sim, eu sou formado em medicina. Isso muda meu jeito de ver batalha: observo sintomas, padrão, erro repetido e momento certo de intervenção.",
+      "ao_entrar": {
+        "setor": {
+          "FalouMedicinaJoao": true,
+          "EntendeuMedicinaJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então você diagnostica batalhas?",
+          "destino": "diagnostico"
+        },
+        {
+          "texto": "Isso combina com Gelo.",
+          "destino": "estilo_gelo"
+        },
+        {
+          "texto": "Você é calmo por causa disso?",
+          "destino": "calma_medica"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "diagnostico": {
+      "fala": "Diagnostico, sim. Tem treinador que perde por falta de dano, outro por pressa, outro por montar time bonito e esquecer função. Quase sempre dá para ver o problema cedo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuDiagnosticoJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Vou provar em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Isso parece perigoso.",
+          "destino": "estilo_gelo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "medicina"
+        }
+      ]
+    },
+    "calma_medica": {
+      "fala": "Medicina ensina que pânico raramente ajuda. No estádio Gelo é igual: se você se desespera, escorrega.",
+      "opcoes": [
+        {
+          "texto": "Boa frase.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver se mantenho a calma.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "medicina"
+        }
+      ]
+    },
+    "rocket_league": {
+      "fala": "No tempo livre eu jogo Rocket League. É ótimo para treinar leitura de campo, rotação, impulso e a arte de não sair voando igual desesperado.",
+      "ao_entrar": {
+        "setor": {
+          "FalouRocketLeagueJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso influencia suas batalhas?",
+          "destino": "rocket_batalha"
+        },
+        {
+          "texto": "Felps jogaria mal?",
+          "destino": "felps_rocket"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "rocket_batalha": {
+      "fala": "Influencia. Rocket League pune quem quebra rotação. Batalha também. Se você gasta recurso errado, abre espaço e toma punição.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRocketJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Rotação combina com controle de campo.",
+          "destino": "estilo_gelo"
+        },
+        {
+          "texto": "Isso é bem estratégico.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "rocket_league"
+        }
+      ]
+    },
+    "felps_rocket": {
+      "fala": "O Felps provavelmente tentaria fazer jogada de dragão, furaria a bola e ainda chamaria de estratégia ancestral. Patetinhas demais.",
+      "ao_entrar": {
+        "setor": {
+          "FalouFelpsJoao": true,
+          "EntendeuFelpsJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você pegou pesado.",
+          "destino": "felps"
+        },
+        {
+          "texto": "Patetinhas foi forte.",
+          "destino": "patetinhas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "rocket_league"
+        }
+      ]
+    },
+    "felps": {
+      "fala": "O Felps, líder do estádio Dragão? Para mim ele é um patetinhas. Não acho que ele seja digno do estádio Dragão. Dragão deveria impor respeito, não só fazer cena.",
+      "ao_entrar": {
+        "setor": {
+          "FalouFelpsJoao": true,
+          "EntendeuFelpsJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que você acha isso?",
+          "destino": "critica_felps"
+        },
+        {
+          "texto": "Você respeita o tipo Dragão?",
+          "destino": "respeito_dragao"
+        },
+        {
+          "texto": "Você falaria isso para ele?",
+          "destino": "falaria_felps"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "critica_felps": {
+      "fala": "Para liderar Dragão precisa ter presença, disciplina e peso. O Felps até pode ter força, mas eu olho para ele e penso: patetinhas.",
+      "opcoes": [
+        {
+          "texto": "Você é bem direto.",
+          "destino": "patetinhas"
+        },
+        {
+          "texto": "E se ele te desafiar?",
+          "destino": "respeito_dragao"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "felps"
+        }
+      ]
+    },
+    "respeito_dragao": {
+      "fala": "Eu respeito o tipo Dragão. Muito. Justamente por isso acho que o estádio Dragão não deveria estar nas mãos de qualquer um.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuDragaoJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então o problema é o Felps, não Dragão.",
+          "destino": "critica_felps"
+        },
+        {
+          "texto": "Empoleon encararia dragões?",
+          "destino": "empoleon"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "felps"
+        }
+      ]
+    },
+    "falaria_felps": {
+      "fala": "Falaria. Com tranquilidade. Talvez até com prontuário: queixa principal, excesso de pose; hipótese diagnóstica, patetinhas avançado.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuHumorJoao": true,
+          "EntendeuFelpsJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso foi cruel e médico.",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Patetinhas avançado é diagnóstico?",
+          "destino": "patetinhas"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "felps"
+        }
+      ]
+    },
+    "patetinhas": {
+      "fala": "Patetinhas é meu termo técnico não oficial. Não está em livro de medicina, mas às vezes descreve melhor que muita palavra difícil.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuHumorJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Vou anotar.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar para falar do Felps.",
+          "destino": "felps"
+        },
+        {
+          "texto": "Melhor mudar de assunto.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estilo_gelo": {
+      "fala": "Meu estilo é controle. Eu gosto de diminuir as opções do adversário até ele achar que ainda está escolhendo, quando na verdade só sobrou uma jogada ruim.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEstiloGeloJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece Rocket League.",
+          "destino": "rocket_batalha"
+        },
+        {
+          "texto": "Isso parece medicina.",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Quero testar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_gelo"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Obrigado. Eu posso ser meio seco, mas não sou injusto. Treinador que escuta, pergunta e aprende ganha meu respeito.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Você já entendeu o essencial: pinguins, Empoleon, medicina, Rocket League e minha opinião tecnicamente congelada sobre o Felps.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasJoao",
+                "op": ">=",
+                "valor": 5
+              }
+            ],
+            "valor": "Você conversou bastante comigo. Agora sabe que meu gelo não é só tipo: é método."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual é seu objetivo como líder?",
+          "destino": "objetivo_lider"
+        },
+        {
+          "texto": "O que torna alguém digno de um estádio?",
+          "destino": "dignidade_estadio"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino": "batalha_2_liberada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "objetivo_lider": {
+      "fala": "Meu objetivo é ensinar que frieza não é falta de emoção. É saber controlar emoção para tomar decisão melhor.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuObjetivoJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com medicina.",
+          "destino": "medicina"
+        },
+        {
+          "texto": "Isso combina com Gelo.",
+          "destino": "estilo_gelo"
+        },
+        {
+          "texto": "Gostei disso.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "dignidade_estadio": {
+      "fala": "Dignidade de estádio vem de coerência. O líder precisa representar o tipo, não só usar Pokémon fortes e fazer pose.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuDignidadeJoao": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso é sobre o Felps, né?",
+          "destino": "critica_felps"
+        },
+        {
+          "texto": "Você representa o Gelo como?",
+          "destino": "estilo_gelo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa_avancada"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMedicinaJoao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuEmpoleonJoao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuFelpsJoao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComJoao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuGeloJoao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuPinguinsJoao",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Converse um pouco mais, entenda por que eu escolhi o Gelo e volte quando tiver respeito suficiente.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender os pinguins.",
+          "destino": "tipo_gelo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu a base do meu estádio: Gelo, pinguins e controle. Pegue este primeiro presente e use com cabeça fria.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, João.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu meu método completo: medicina, Empoleon e a diferença entre presença real e pose de patetinhas. Esse presente é merecido.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do João.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Bom trabalho. Seu time manteve a cabeça fria quando o campo tentou quebrar seu ritmo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuGeloJoao",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e entendeu o valor do controle. Isso torna a vitória melhor. Não foi só força, foi leitura."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Joao",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você venceu minha batalha completa. Admito: seu diagnóstico em campo foi melhor que o meu hoje."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Tem presente agora?",
+          "destino": "checar_presente"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu. Não é o fim. Reorganize o time, respire e volte quando conseguir manter o controle no frio.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Joao",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobrou precisão. Você chegou no confronto completo, mas ainda deixou o campo escorregar debaixo do seu time."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMedicinaJoao",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Meu diagnóstico: você tem potencial, mas precisa reduzir erro repetido. Ajuste isso e a próxima batalha muda."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero tentar de novo.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

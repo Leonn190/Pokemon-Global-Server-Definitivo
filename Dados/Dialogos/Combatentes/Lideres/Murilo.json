@@ -1,98 +1,715 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Inseto",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Murilo, líder do estádio Inseto. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "E aí. Eu sou Murilo, líder do estádio Inseto. Aqui ninguém ganha no grito: ganha quem entende o valor do que todo mundo subestima.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Agora você tem respeito 3. Posso liberar as duas batalhas e mostrar o estádio Inseto sem aliviar."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito para a primeira batalha. Bom. Inseto começa pequeno, mas incomoda o jogo inteiro."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Isso já é mais constância do que muita gente que olha para Inseto e acha que é piada."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Por que tipo Inseto?",
+          "destino": "tipo_inseto"
+        },
+        {
+          "texto": "Você conhece o Caio?",
+          "destino": "caio"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Antes disso, você ainda está olhando para o estádio Inseto de longe.",
       "opcoes": [
         {
           "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero entender melhor esse estádio.",
+          "destino": "tipo_inseto"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Inseto. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Para ver o enxame completo, você precisa provar que aguenta pressão de verdade.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Inseto, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha é para você entender que Inseto não é fraco. Ele só cobra paciência de quem usa.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuInsetoMurilo",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que Inseto é subestimado. Agora vamos ver se entende isso no campo."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Murilo": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Inseto permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui eu não peço desculpa por usar o tipo que todo mundo subestima.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCaioMurilo",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você ouviu até a parte do Caio. Então vamos batalhar sem fugir das coisas mal resolvidas."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Murilo": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Inseto. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Só não vem com esse papo de que Inseto é tipo pequeno. Pequeno é o olhar de quem subestima.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou algumas vezes. Talvez esteja entendendo que o estádio Inseto tem mais camada do que parece."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComMurilo": true,
+          "ConversasMurilo": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Por que tipo Inseto?",
+          "destino": "tipo_inseto"
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Você gosta de economia?",
+          "destino": "economia"
+        },
+        {
+          "texto": "Você toca violão?",
+          "destino": "violao"
+        },
+        {
+          "texto": "Você fuma maconha?",
+          "destino": "maconha"
+        },
+        {
+          "texto": "O que aconteceu com sua barba?",
+          "destino": "barba"
+        },
+        {
+          "texto": "E o Caio?",
+          "destino": "caio"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "tipo_inseto": {
+      "fala": "Eu escolhi Inseto porque todo mundo subestima. É exatamente por isso que eu gosto. Quando a pessoa acha que já venceu, o enxame começa a trabalhar.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuInsetoMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Então você gosta de provar ponto?",
+          "destino": "subestimado"
+        },
+        {
+          "texto": "Quero ver isso em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "subestimado": {
+      "fala": "É isso. Eu gosto de mostrar que valor não depende do barulho que fazem em volta. Inseto vence pela insistência, pelo acúmulo, pelo detalhe.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuValorMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso parece economia.",
+          "destino": "economia"
+        },
+        {
+          "texto": "Isso merece respeito.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "tipo_inseto"
+        }
+      ]
+    },
+    "economia": {
+      "fala": "Eu gosto de economia porque ela fala de sistemas: escolha, incentivo, escassez e custo de oportunidade. Batalha não é tão diferente disso.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEconomiaMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Custo de oportunidade em batalha?",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso combina com Inseto.",
+          "destino": "subestimado"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "violao": {
+      "fala": "Eu toco violão para desligar um pouco a cabeça. Nem tudo precisa virar cálculo, batalha ou discussão. Às vezes só precisa soar certo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuViolaoMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso combina com você.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "maconha": {
+      "fala": "Eu gosto de fumar maconha no meu tempo livre, mas isso é coisa pessoal. No estádio, eu separo as coisas: aqui é treino, regra e responsabilidade.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMaconhaMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Justo, cada coisa no seu lugar.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "barba": {
+      "fala": "Quando entrei na faculdade, cortaram minha barba. Eu fiquei triste de verdade. O pior é que ela nunca mais cresceu igual.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuBarbaMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Nossa, isso te marcou mesmo.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "caio": {
+      "fala": "Eu sei que o Caio não gosta de mim. Não vou fingir que não percebo. Mesmo assim, eu tento fazer as pazes, porque carregar isso cansa.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCaioMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Você já tentou falar com ele?",
+          "destino": "paz_caio"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "paz_caio": {
+      "fala": "Tentei do meu jeito. Talvez não tenha sido perfeito, mas eu não quero uma rivalidade eterna. Já tenho batalha suficiente dentro do estádio.",
+      "ao_entrar": {
+        "setor": {
+          "TentouPazCaioMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso mostra maturidade.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "caio"
+        }
+      ]
+    },
+    "simpatia": {
+      "fala": "Valeu. Eu posso parecer meio atravessado, mas não estou tentando criar problema. Só não gosto de fingir que as coisas são simples quando não são.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaMurilo": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar para a conversa.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuCaioMurilo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuEconomiaMurilo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComMurilo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuInsetoMurilo",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Converse mais, entenda o estádio Inseto e volte quando tiver respeito suficiente.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu por que eu escolhi Inseto. Pegue isso. É para lembrar que o subestimado também vence.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Murilo.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Você entendeu mais do que o tipo. Entendeu meu jeito. Esse presente é para quem respeita o detalhe antes de julgar.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Murilo.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Beleza. Dessa vez o enxame não fechou a tempo, mas eu respeito o resultado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuInsetoMurilo",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e ainda entendeu o valor do tipo Inseto. Isso é melhor do que só apertar botão."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu. Acontece. O problema de subestimar Inseto é perceber tarde demais que já estava cercado.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Murilo",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra leitura. Você chegou longe, mas ainda tentou resolver rápido demais."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

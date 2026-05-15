@@ -1,98 +1,733 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Dragão",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Felps, líder do estádio Dragão. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "E aí. Eu sou Felps, líder do estádio Dragão. Meu estádio é para quem gosta de impacto, decisão rápida e radicalidade controlada.",
+        "casos": [
+          {
+            "condicoes": [
+              {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+            ],
+            "valor": "Você chegou ao respeito 3. Agora libero as duas batalhas e mostro o Dragão sem freio de segurança."
+          },
+          {
+            "condicoes": [
+              {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+            ],
+            "valor": "Você já tem respeito suficiente para a primeira batalha. Dragão combina com gente que encara risco."
+          },
+          {
+            "condicoes": [
+              {"alvo": "npc.visitas_anteriores", "op": ">", "valor": 0}
+            ],
+            "valor": "Você voltou. Persistência conta ponto comigo. Foi assim que aplicação virou esporte na minha vida."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Entendi, vou me preparar.",
-          "fim": true
-        }
-      ]
-    },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Dragão. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
-      "opcoes": [
-        {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
-        }
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Quero conversar.", "destino": "conversa"},
+        {"texto": "Por que Dragão?", "destino": "tipo_dragao"},
+        {"texto": "Tem algum presente?", "destino": "checar_presente"},
+        {"texto": "Sair.", "acao": "fim"}
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Dragão, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Dragão não é só pose radical; primeiro você precisa provar que aguenta a pressão.",
       "opcoes": [
-        {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
-        },
-        {
-          "texto": "Volto depois.",
-          "fim": true
-        }
+        {"texto": "Entendi, vou me preparar.", "acao": "fim"},
+        {"texto": "Quero conversar um pouco.", "destino": "conversa"}
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Dragão permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. A primeira é entrada de calor. A segunda é quando o estádio realmente cospe fogo.",
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
-        {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
-        }
+        {"texto": "Quero conversar antes.", "destino": "conversa"},
+        {"texto": "Voltar.", "destino": "saudacao"}
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Dragão. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A batalha 1 mede se você consegue entrar no ritmo do Dragão sem se perder na própria coragem.",
+        "casos": [
+          {
+            "condicoes": [
+              {"alvo": "setor.EntendeuDragaoFelps", "op": "==", "valor": true}
+            ],
+            "valor": "Você já entendeu por que eu escolhi Dragão. Agora falta provar se você aguenta algo radical de verdade."
+          },
+          {
+            "condicoes": [
+              {"alvo": "setor.EntendeuAplicacoesFelps", "op": "==", "valor": true}
+            ],
+            "valor": "Você ouviu minha história das aplicações. Batalha também é tentativa, erro, revisão e mais uma tentativa."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Felps": {"op": "add", "valor": 1}
+            }
+          }
         },
+        {"texto": "Quero conversar antes.", "destino": "conversa"},
+        {"texto": "Voltar.", "destino": "saudacao"}
+      ]
+    },
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "Agora é a batalha completa. Aqui eu não quero uma aplicação bem escrita; quero resultado bruto em campo.",
+        "casos": [
+          {
+            "condicoes": [
+              {"alvo": "setor.EntendeuEstiloVidaFelps", "op": "==", "valor": true}
+            ],
+            "valor": "Você entendeu meu estilo de vida: fazer muito, errar rápido, ajustar e continuar. A batalha 2 segue essa lógica."
+          },
+          {
+            "condicoes": [
+              {"alvo": "setor.EntendeuPaoFelps", "op": "==", "valor": true}
+            ],
+            "valor": "Você ouviu até a história da máquina de pães. Então já sabe: eu levo minhas obsessões muito a sério."
+          }
+        ]
+      },
+      "opcoes": [
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Felps": {"op": "add", "valor": 1}
+            }
+          }
+        },
+        {"texto": "Quero conversar antes.", "destino": "conversa_avancada"},
+        {"texto": "Voltar.", "destino": "saudacao"}
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Manda. Eu pareço acelerado, mas consigo conversar. Só não garanto que eu não vá comparar tudo com aplicações, dragões ou pão.",
+        "casos": [
+          {
+            "condicoes": [
+              {"alvo": "npc.visitas_anteriores", "op": ">=", "valor": 3}
+            ],
+            "valor": "Você já voltou várias vezes. Isso é bom. Repetição é o segredo de qualquer aplicação decente e de qualquer time Dragão que presta."
+          },
+          {
+            "condicoes": [
+              {"alvo": "setor.ConversasFelps", "op": ">=", "valor": 4}
+            ],
+            "valor": "Você já conversou bastante comigo. Nesse ponto, sua aplicação para entender o Felps está quase aprovada."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComFelps": true,
+          "ConversasFelps": {"op": "add", "valor": 1}
         }
+      },
+      "opcoes": [
+        {"texto": "Por que você escolheu Dragão?", "destino": "tipo_dragao"},
+        {"texto": "Você é obcecado por aplicações?", "destino": "aplicacoes"},
+        {"texto": "O que você faz no tempo livre?", "destino": "tempo_livre"},
+        {"texto": "Você cozinha mesmo?", "destino": "cozinha"},
+        {"texto": "Como você encara liderança?", "destino": "lideranca"},
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Tem presente para mim?", "destino": "checar_presente"},
+        {"texto": "Encerrar.", "acao": "fim"}
+      ]
+    },
+    "tipo_dragao": {
+      "fala": "Eu escolhi Dragão porque dragões são radicais. Não tem como olhar para um dragão e pensar: nossa, que escolha burocrática. Dragão impõe presença, parece cena de anime e transforma qualquer luta em espetáculo.",
+      "ao_entrar": {
+        "setor": {"EntendeuDragaoFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Você gosta muito de dragões?", "destino": "gosto_dragao"},
+        {"texto": "E o lado técnico?", "destino": "tecnica_dragao"},
+        {"texto": "Isso combina com suas aplicações?", "destino": "aplicacoes"},
+        {
+          "texto": "Quero ver isso na batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar.", "destino": "conversa"}
+      ]
+    },
+    "gosto_dragao": {
+      "fala": "Eu gosto de dragões porque eles são impossíveis de ignorar. Em jogo, anime ou imaginação, quando aparece um dragão todo mundo para para olhar. Eu queria esse efeito no meu ginásio.",
+      "ao_entrar": {
+        "setor": {"EntendeuPresencaFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Isso faz sentido para um líder.", "destino": "lideranca"},
+        {
+          "texto": "Agora quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar.", "destino": "tipo_dragao"}
+      ]
+    },
+    "tecnica_dragao": {
+      "fala": "O lado técnico é controlar força demais sem desperdiçar. Dragão não pode ser só grito. Tem que saber quando bater, recuar e incendiar tudo sem queimar o próprio plano.",
+      "ao_entrar": {
+        "setor": {"EntendeuTecnicaFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Isso é mais sério do que parece.", "destino": "lideranca"},
+        {
+          "texto": "Quero testar isso.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar.", "destino": "tipo_dragao"}
+      ]
+    },
+    "aplicacoes": {
+      "fala": "Eu fiquei obcecado por fazer aplicações quando queria entrar na faculdade. No começo era necessidade. Depois virou esporte. Depois virou estilo de vida.",
+      "ao_entrar": {
+        "setor": {"FalouAplicacoesFelps": true, "EntendeuAplicacoesFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Como isso virou esporte?", "destino": "aplicacoes_esporte"},
+        {"texto": "Você deixava de sair por isso?", "destino": "evitava_sair"},
+        {"texto": "Isso ajudou no estádio?", "destino": "aplicacoes_estadio"},
+        {"texto": "Você chegou a cansar?", "destino": "equilibrio"},
+        {"texto": "Voltar.", "destino": "conversa"}
+      ]
+    },
+    "aplicacoes_esporte": {
+      "fala": "Virou esporte porque eu tratava cada aplicação como partida. Ajustava texto, revisava estratégia, pensava em resultado e já preparava a próxima. Era quase ranking mental.",
+      "ao_entrar": {
+        "setor": {"EntendeuEstiloVidaFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Isso é meio intenso.", "destino": "intensidade"},
+        {"texto": "Parece treino Pokémon.", "destino": "aplicacoes_estadio"},
+        {"texto": "Voltar.", "destino": "aplicacoes"}
+      ]
+    },
+    "evitava_sair": {
+      "fala": "Sim. Muitas vezes eu evitava sair de casa para fazer mais aplicações. Eu pensava: se eu mandar mais uma, talvez essa seja a que muda tudo. Era disciplina e exagero ao mesmo tempo.",
+      "ao_entrar": {
+        "setor": {"EntendeuSacrificioFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Disciplina ou exagero?", "destino": "equilibrio"},
+        {"texto": "Você ainda pensa assim?", "destino": "aplicacoes_estadio"},
+        {"texto": "Voltar.", "destino": "aplicacoes"}
+      ]
+    },
+    "equilibrio": {
+      "fala": "Hoje eu tento transformar isso em foco, não em prisão. A obsessão me ensinou muito, mas gente também precisa respirar antes de quebrar.",
+      "ao_entrar": {
+        "setor": {"EntendeuEquilibrioFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Isso é uma boa evolução.", "destino": "simpatia"},
+        {"texto": "Voltar.", "destino": "aplicacoes"}
+      ]
+    },
+    "aplicacoes_estadio": {
+      "fala": "Eu aplico essa mentalidade em tudo: projeto, treino, time, pão e batalha. Cada Pokémon virou uma versão nova do plano, revisada até soar como rugido.",
+      "ao_entrar": {
+        "setor": {"EntendeuAplicacaoEstadioFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Então o estádio nasceu disso?", "destino": "lideranca"},
+        {
+          "texto": "Quero testar esse time.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar.", "destino": "aplicacoes"}
+      ]
+    },
+    "intensidade": {
+      "fala": "É intenso mesmo. Mas intensidade sem direção vira fumaça. Por isso eu gosto de Dragão: parece caos, mas quando funciona vira domínio.",
+      "opcoes": [
+        {
+          "texto": "Quero ver esse domínio.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar.", "destino": "aplicacoes_esporte"}
+      ]
+    },
+    "tempo_livre": {
+      "fala": "No tempo livre eu gosto de jogar, ver animes e cozinhar. Parece mistura aleatória, mas para mim tudo tem ritmo: desafio, história e recompensa final.",
+      "ao_entrar": {
+        "setor": {"FalouTempoLivreFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Jogos e animes combinam com você.", "destino": "jogos_animes"},
+        {"texto": "Cozinhar também?", "destino": "cozinha"},
+        {"texto": "Voltar.", "destino": "conversa"}
+      ]
+    },
+    "jogos_animes": {
+      "fala": "Eu gosto de jogo que dá coisa para otimizar e anime pelo exagero bonito. Build, rota, ranking, golpe impossível, tela explodindo: tudo isso conversa com Dragão.",
+      "ao_entrar": {
+        "setor": {"EntendeuHobbiesFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Isso explica bastante.", "destino": "tipo_dragao"},
+        {"texto": "Voltar.", "destino": "tempo_livre"}
+      ]
+    },
+    "cozinha": {
+      "fala": "Cozinhar é o lado mais calmo do caos. Você segue processo, ajusta detalhe, espera o tempo certo e descobre se prestou ou não.",
+      "ao_entrar": {
+        "setor": {"FalouCozinhaFelps": true}
+      },
+      "opcoes": [
+        {"texto": "E a máquina de fazer pães?", "destino": "maquina_pao"},
+        {"texto": "Isso parece batalha.", "destino": "cozinha_batalha"},
+        {"texto": "Voltar.", "destino": "tempo_livre"}
+      ]
+    },
+    "maquina_pao": {
+      "fala": "Eu comprei a melhor máquina de fazer pães do mundo. Não uma boa. A melhor. Quando eu entro numa coisa, entro com configuração máxima.",
+      "ao_entrar": {
+        "setor": {"EntendeuPaoFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Você fala disso com orgulho demais.", "destino": "pao_metodo"},
+        {"texto": "Isso merece presente?", "destino": "checar_presente"},
+        {"texto": "Voltar.", "destino": "cozinha"}
+      ]
+    },
+    "pao_metodo": {
+      "fala": "Pão bom é uma aplicação que deu certo: ingrediente certo, processo certo, espera certa e resultado quentinho. Com time Dragão é igual, só que com mais fogo.",
+      "ao_entrar": {
+        "setor": {"EntendeuLogicaPaoFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Boa metáfora.", "destino": "simpatia"},
+        {
+          "texto": "Quero batalhar com essa lógica.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar.", "destino": "maquina_pao"}
+      ]
+    },
+    "cozinha_batalha": {
+      "fala": "Batalha é receita sob pressão. Você pode ter bons ingredientes, mas se errar o tempo, queima tudo. Eu tento não queimar o pão nem o plano.",
+      "opcoes": [
+        {"texto": "Justo.", "destino": "simpatia"},
+        {"texto": "Voltar.", "destino": "cozinha"}
+      ]
+    },
+    "lideranca": {
+      "fala": "Ser líder Dragão é aceitar que todo mundo espera espetáculo. Eu gosto disso, mas espetáculo sem preparo vira só barulho caro. Minha obsessão por aplicações virou método para organizar esse caos.",
+      "ao_entrar": {
+        "setor": {"EntendeuLiderancaFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Você leva isso a sério.", "destino": "seriedade"},
+        {"texto": "Qual é seu objetivo?", "destino": "objetivo"},
+        {"texto": "Voltar.", "destino": "conversa"}
+      ]
+    },
+    "seriedade": {
+      "fala": "Levo a sério. Posso brincar, exagerar e falar de pão do nada, mas quando a batalha começa eu respeito o desafiante.",
+      "ao_entrar": {
+        "setor": {"EntendeuSeriedadeFelps": true}
+      },
+      "opcoes": [
+        {
+          "texto": "Isso me deu vontade de batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar.", "destino": "lideranca"}
+      ]
+    },
+    "objetivo": {
+      "fala": "Meu objetivo é mostrar que intensidade pode virar construção. Eu não quero só parecer radical; quero que o estádio Dragão pareça inevitável.",
+      "ao_entrar": {
+        "setor": {"EntendeuObjetivoFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Inevitável é forte.", "destino": "simpatia"},
+        {
+          "texto": "Quero ver isso em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar.", "destino": "lideranca"}
+      ]
+    },
+    "simpatia": {
+      "fala": "Valeu. Eu sei que pareço um pacote de energia tentando passar por pessoa normal, mas tem método no meu caos.",
+      "ao_entrar": {
+        "setor": {"EntendeuSimpatiaFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Isso merece um presente?", "destino": "checar_presente"},
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {"texto": "Voltar para conversa.", "destino": "conversa"}
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Agora você já entendeu o básico: Dragão, aplicações, intensidade e pão. Sim, essa combinação é estranha, mas funciona.",
+        "casos": [
+          {
+            "condicoes": [
+              {"alvo": "setor.ConversasFelps", "op": ">=", "valor": 5}
+            ],
+            "valor": "Você conversou bastante comigo. A essa altura, sua aplicação para entender o Felps foi aprovada."
+          },
+          {
+            "condicoes": [
+              {"alvo": "setor.EntendeuTecnicaFelps", "op": "==", "valor": true}
+            ],
+            "valor": "Você entendeu que Dragão não é só força. É controle de força absurda. Isso muda a batalha."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {"ConversaAvancadaFelps": true}
+      },
+      "opcoes": [
+        {"texto": "Qual é seu objetivo como líder?", "destino": "objetivo"},
+        {"texto": "Quero o presente.", "destino": "checar_presente"},
+        {"texto": "Vamos batalhar.", "destino": "batalha_2_liberada"},
+        {"texto": "Voltar.", "destino": "conversa"}
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {"alvo": "setor.EntendeuObjetivoFelps", "op": "==", "valor": true},
+              {"alvo": "setor.EntendeuPaoFelps", "op": "==", "valor": true},
+              {"alvo": "setor.EntendeuEstiloVidaFelps", "op": "==", "valor": true},
+              {"alvo": "respeito_atual", "op": ">=", "valor": 3}
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {"alvo": "setor.FalouComFelps", "op": "==", "valor": true},
+              {"alvo": "setor.EntendeuDragaoFelps", "op": "==", "valor": true},
+              {"alvo": "respeito_atual", "op": ">=", "valor": 1}
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Você precisa entender melhor meu Dragão, meu método e talvez aceitar que a história do pão também importa.",
+      "opcoes": [
+        {"texto": "Vou conversar mais.", "destino": "conversa"},
+        {"texto": "Quero entender Dragão.", "destino": "tipo_dragao"},
+        {"texto": "Voltar.", "destino": "saudacao"}
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu o espírito do Dragão: impacto, coragem e exagero bem direcionado. Pega esse presente e usa sem desperdiçar timing.",
+      "saida": "presente_1",
+      "opcoes": [
+        {"texto": "Obrigado, Felps.", "acao": "fim"}
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu a parte mais difícil: intensidade precisa de método. Esse presente é para quem sabe transformar obsessão em evolução.",
+      "saida": "presente_2",
+      "opcoes": [
+        {"texto": "Obrigado de verdade.", "acao": "fim"}
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Felps. Isso parece uma aplicação enviada sem revisar, e eu odeio isso.",
+      "opcoes": [
+        {"texto": "Fechar.", "acao": "fim"}
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. Mandou bem. Seu plano entrou melhor que muita aplicação que eu já vi por aí.",
+        "casos": [
+          {
+            "condicoes": [
+              {"alvo": "setor.EntendeuDragaoFelps", "op": "==", "valor": true}
+            ],
+            "valor": "Você venceu e entendeu o Dragão. Muita gente quer o rugido, pouca gente entende o controle."
+          },
+          {
+            "condicoes": [
+              {"alvo": "setor.TentouBatalha2Felps", "op": ">=", "valor": 1}
+            ],
+            "valor": "Você venceu minha batalha completa. Sua aplicação para respeito no estádio Dragão veio forte."
+          }
+        ]
+      },
       "opcoes": [
-        {
-          "texto": "Encerrar conversa.",
-          "acao": "fim"
-        }
+        {"texto": "Encerrar conversa.", "acao": "fim"},
+        {"texto": "Quero conversar mais.", "destino": "conversa_avancada"}
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu. Mas derrota não é rejeição definitiva; é pedido de revisão. Ajusta, melhora e manda de novo.",
+        "casos": [
+          {
+            "condicoes": [
+              {"alvo": "setor.TentouBatalha2Felps", "op": ">=", "valor": 1}
+            ],
+            "valor": "A segunda batalha cobrou caro. Seu time chegou perto, mas ainda precisa de uma versão melhor antes do Dragão completo."
+          },
+          {
+            "condicoes": [
+              {"alvo": "setor.FalouAplicacoesFelps", "op": "==", "valor": true}
+            ],
+            "valor": "Você já sabe como eu penso: falhou, revisa. A pior aplicação é a que a pessoa abandona antes de melhorar."
+          }
+        ]
+      },
       "opcoes": [
-        {
-          "texto": "Encerrar conversa.",
-          "acao": "fim"
-        }
+        {"texto": "Vou voltar melhor.", "acao": "fim"},
+        {"texto": "Quero conversar antes.", "destino": "conversa"}
       ]
     }
   },
-  "pos_batalha": {
-    "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
-  }
+  "pos_batalha": {"vitoria": "pos_batalha_vitoria", "derrota": "pos_batalha_derrota", "padrao": "pos_batalha_derrota"}
 }

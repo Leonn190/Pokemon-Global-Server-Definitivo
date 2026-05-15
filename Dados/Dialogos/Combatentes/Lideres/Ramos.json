@@ -1,98 +1,861 @@
 {
   "inicio": "saudacao",
-  "inicio_por_respeito": {
-    "tipo_estadio": "Sonoro",
-    "mapa": {
-      "0": "respeito_0",
-      "1": "respeito_1",
-      "2": "respeito_2",
-      "3": "respeito_3",
-      "4": "respeito_4"
-    }
-  },
   "nos": {
-    "respeito_0": {
-      "fala": "Sou Ramos, líder do estádio Sonoro. Você ainda não mostrou preparo aqui. Derrote meu Capitão primeiro e volte quando estiver pronto.",
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Ramos, líder do estádio Sonoro. Bateirista, médico formado e treinador que aprendeu a fazer barulho sem depender de banda nenhuma.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você chegou ao respeito 3. Agora dá para liberar as duas batalhas e tocar o estádio Sonoro no volume real."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você já tem respeito para a primeira batalha. Vamos ver se seu time acompanha o compasso."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. Bom. Quem volta depois de ouvir o estádio já começou a entender o ritmo."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito suficiente para a batalha 1.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "Quero a batalha 1."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto_condicional": {
+            "padrao": "A batalha 2 continua bloqueada.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "Quero a batalha 2."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito_b2",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Você tinha uma banda?",
+          "destino": "banda"
+        },
+        {
+          "texto": "Tem algum presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Sair.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito_b1": {
+      "fala": "A primeira batalha exige respeito 1. Antes de subir no palco, prove que consegue ouvir o básico sem atravessar o tempo.",
       "opcoes": [
         {
           "texto": "Entendi, vou me preparar.",
-          "fim": true
+          "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar um pouco.",
+          "destino": "conversa"
         }
       ]
     },
-    "respeito_1": {
-      "fala": "Então você venceu o Capitão do estádio Sonoro. Eu aceito sua batalha, mas ainda preciso ver constância do seu jogo.",
+    "sem_respeito_b2": {
+      "fala": "A segunda batalha exige respeito 3. Essa não é aquecimento; é apresentação completa, com virada, pausa e explosão no final.",
       "opcoes": [
         {
-          "texto": "Quero batalhar agora!",
-          "acao": "batalha"
+          "texto": "Quero a batalha 1.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
         },
         {
-          "texto": "Vou treinar mais um pouco.",
-          "fim": true
+          "texto": "Quero entender melhor seu estádio.",
+          "destino": "tipo_sonoro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_2": {
-      "fala": "Boa evolução. Você já me derrotou uma vez no Sonoro, então ganhou meu olhar. Por enquanto lutamos em ritmo controlado até você passar pelo Capitão novamente.",
+    "batalha_1_liberada": {
+      "fala_condicional": {
+        "padrao": "A primeira batalha mede seu ouvido de treinador. No estádio Sonoro, quem erra o tempo abre espaço para o golpe seguinte.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuSonoroRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu que som não é só volume. Então vamos ver se seu time aguenta precisão, pausa e impacto."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouBandaRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Depois de falar da banda, nada mais justo que uma batalha em ritmo de ensaio sério."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Fechado, vamos nessa.",
-          "acao": "batalha"
+          "texto": "Começar batalha 1.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha1Ramos": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Volto depois.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_3": {
-      "fala": "Agora sim. Seu respeito no estádio Sonoro permite confronto completo. Hoje eu vou usar meu poder real, sem reduzir nada.",
+    "batalha_2_liberada": {
+      "fala_condicional": {
+        "padrao": "A segunda batalha é meu ritmo completo. Sem banda negligente, sem apoio externo, só eu, meus Pokémon e o som batendo certo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuEsforcoRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você ouviu minha história. Agora vai ouvir o estádio inteiro responder no mesmo pulso."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuMedicinaRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Medicina ensina atenção; bateria ensina tempo. A segunda batalha cobra os dois."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Perfeito, quero o desafio máximo!",
-          "acao": "batalha"
+          "texto": "Começar batalha 2.",
+          "acao": "batalha",
+          "batalha": 2,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalha2Ramos": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
         },
         {
-          "texto": "Melhor voltar outro dia.",
-          "fim": true
+          "texto": "Quero conversar antes.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
         }
       ]
     },
-    "respeito_4": {
-      "fala": "Você já me superou no estádio Sonoro. Tenho respeito total pelo seu nome. Se quiser, lutamos de igual para igual a qualquer momento.",
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode falar. Eu converso no ritmo certo: direto, mas sem cortar a entrada de ninguém.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "Você já voltou algumas vezes. Gosto disso. Treinador que escuta repetição aprende detalhe que passa batido."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComRamos": true,
+          "ConversasRamos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
       "opcoes": [
         {
-          "texto": "Vamos batalhar de novo!",
-          "acao": "batalha"
+          "texto": "Por que tipo Sonoro?",
+          "destino": "tipo_sonoro"
         },
         {
-          "texto": "Hoje não, campeão.",
-          "fim": true
+          "texto": "Você era baterista?",
+          "destino": "baterista"
+        },
+        {
+          "texto": "Você tinha uma banda?",
+          "destino": "banda"
+        },
+        {
+          "texto": "Você é formado em medicina?",
+          "destino": "medicina"
+        },
+        {
+          "texto": "O que acha dos outros líderes?",
+          "destino": "outros_lideres"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Tem presente para mim?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "tipo_sonoro": {
+      "fala": "Escolhi o tipo Sonoro porque som é presença. Bateria me ensinou que ritmo decide ataque, pausa e pressão. Com meus Pokémon, o estádio inteiro virou instrumento.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSonoroRamos": true,
+          "EntendeuLiderancaRamos": true,
+          "EntendeuObjetivoRamos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Som é disciplina então?",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Seus Pokémon são sua banda agora?",
+          "destino": "banda"
+        },
+        {
+          "texto": "Quero ver isso em batalha.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "baterista": {
+      "fala": "Sou baterista. Não daqueles que batem forte só para aparecer. Eu gosto de segurar a música por baixo, deixar tudo encaixar e entrar pesado quando a hora chega.",
+      "ao_entrar": {
+        "setor": {
+          "FalouBateristaRamos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso influenciou sua batalha?",
+          "destino": "tipo_sonoro"
+        },
+        {
+          "texto": "Você ainda toca?",
+          "destino": "banda"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "banda": {
+      "fala": "Eu tinha uma banda com Garcia, Henrique e Alleka. No começo era promissor: Garcia encaixava quando focava, Henrique tinha presença, e Alleka segurava energia. Depois ficaram negligentes, faltavam ensaio e tratavam compromisso como detalhe.",
+      "ao_entrar": {
+        "setor": {
+          "FalouBandaRamos": true,
+          "EntendeuNegligenciaRamos": true,
+          "ConversasRamos": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Aí você teve que se virar sozinho?",
+          "destino": "esforco_solo"
+        },
+        {
+          "texto": "Você ficou decepcionado?",
+          "destino": "esforco_solo"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "esforco_solo": {
+      "fala": "Sim. Eu me empenhei sozinho com meus Pokémon. Em vez de implorar por banda, criei um ginásio onde o som responde ao meu comando. Eu queria uma banda séria; acabei construindo algo maior.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuEsforcoRamos": true,
+          "EntendeuLiderancaRamos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece respeito.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero ver essa apresentação.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "banda"
+        }
+      ]
+    },
+    "medicina": {
+      "fala": "Sou formado em medicina. Pode parecer distante da bateria, mas não é. Medicina exige escuta, precisão, leitura de sinais e calma sob pressão.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuMedicinaRamos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso ajuda na batalha?",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Isso combina com Sonoro.",
+          "destino": "tipo_sonoro"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "outros_lideres": {
+      "fala": "Ferraz eu acho engraçado: parece que entrou numa piada e decidiu morar nela. Felps e Vasques, por outro lado, são esquisitões; Felps tenta parecer imponente demais e Vasques dobra a estranheza do Sombrio como se fosse obrigação.",
+      "opcoes": [
+        {
+          "texto": "Essa foi boa.",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Você fala isso rindo ou sério?",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ],
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFerrazRamos": true,
+          "EntendeuFelpsVasquesRamos": true
+        }
+      }
+    },
+    "simpatia": {
+      "fala_condicional": {
+        "padrao": "Valeu. Eu posso soar duro às vezes, mas é porque levo ritmo e compromisso a sério.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuEsforcoRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Obrigado. Se você entendeu que esforço solo também pode virar palco, já escutou a parte principal da minha história."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuSonoroRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Obrigado. O tipo Sonoro recompensa quem presta atenção no detalhe, não só no volume."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSimpatiaRamos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Isso merece um presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "conversa_avancada": {
+      "fala_condicional": {
+        "padrao": "Agora dá para falar com mais detalhe. O estádio Sonoro não nasceu de sorte; nasceu de repetição e teimosia bem direcionada.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuEsforcoRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você já entendeu o essencial: quando a banda falhou, eu não parei a música. Só mudei o palco."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "ConversaAvancadaRamos": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Qual seu objetivo como líder?",
+          "destino": "tipo_sonoro"
+        },
+        {
+          "texto": "O que você exige de um treinador?",
+          "destino": "simpatia"
+        },
+        {
+          "texto": "Quero o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Vamos batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito_b1",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 3
+                  }
+                ],
+                "valor": "batalha_2_liberada"
+              },
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 1
+                  }
+                ],
+                "valor": "batalha_1_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuObjetivoRamos",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuEsforcoRamos",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuLiderancaRamos",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 3
+              }
+            ],
+            "valor": "presente_2"
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.FalouComRamos",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuSonoroRamos",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "presente_1"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. Primeiro escute melhor o estádio. Presente sem atenção vira item esquecido no fundo da mochila.",
+      "opcoes": [
+        {
+          "texto": "Vou conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Você entendeu o básico do estádio Sonoro. Pegue isto. Use no tempo certo, não só porque está disponível.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado, Ramos.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "presente_2": {
+      "fala": "Agora você entendeu minha história: banda, esforço, disciplina e palco próprio. Esse presente é para quem respeita o ritmo inteiro.",
+      "saida": "presente_2",
+      "opcoes": [
+        {
+          "texto": "Obrigado de verdade.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "Não consegui abrir o diálogo do Ramos.",
+      "opcoes": [
+        {
+          "texto": "Fechar.",
+          "acao": "fim"
         }
       ]
     },
     "pos_batalha_vitoria": {
-      "fala": "Voce venceu. A batalha termina aqui, mas esse resultado ainda vai ecoar no estadio.",
+      "fala_condicional": {
+        "padrao": "Você venceu. A batalha acabou, mas o eco dela ainda vai ficar no estádio por um tempo.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuEsforcoRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você venceu e não se perdeu no ritmo. Boa. Talvez você tenha mais ouvido de batalha do que parecia."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Ramos",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "Você venceu minha apresentação completa. Isso não acontece por sorte; aconteceu porque você leu o compasso."
+          }
+        ]
+      },
       "opcoes": [
         {
           "texto": "Encerrar conversa.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar mais.",
+          "destino": "conversa_avancada"
         }
       ]
     },
     "pos_batalha_derrota": {
-      "fala": "Voce perdeu. Reorganize seu time, respire e volte quando quiser tentar de novo.",
+      "fala_condicional": {
+        "padrao": "Você perdeu. Respire, reorganize seu time e volte quando conseguir ouvir a luta antes de tentar responder.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.TentouBatalha2Ramos",
+                "op": ">=",
+                "valor": 1
+              }
+            ],
+            "valor": "A segunda batalha cobra presença. Você ouviu o começo, mas se perdeu na virada."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.EntendeuSonoroRamos",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "Você entendeu a ideia, mas ainda precisa aplicar melhor. No Sonoro, conceito sem tempo certo não segura batalha."
+          }
+        ]
+      },
       "opcoes": [
         {
-          "texto": "Encerrar conversa.",
+          "texto": "Vou voltar melhor.",
           "acao": "fim"
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
         }
       ]
     }
   },
   "pos_batalha": {
     "vitoria": "pos_batalha_vitoria",
-    "derrota": "pos_batalha_derrota"
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
   }
 }

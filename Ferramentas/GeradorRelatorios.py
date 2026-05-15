@@ -18,7 +18,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 MODELO_RELATORIO = 11
 AUTOR_RELATORIO = "Leon Cunha Alvaro Lopez Soto"
 INCREMENTO_HORAS = 0.0
-HORAS_PADRAO_SEM_HISTORICO = 313.0
+HORAS_PADRAO_SEM_HISTORICO = 637.0
 DATA_CRIACAO_OFICIAL = datetime(2025, 6, 1)
 
 CLASS_RE = re.compile(r"^\s*class\s+[A-Za-z_]\w*\s*(\(|:)")

@@ -55,20 +55,26 @@ EXTENSOES_IMAGEM = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".
 EXTENSOES_AUDIO = {".ogg", ".mp3", ".wav", ".flac", ".midi", ".mid"}
 
 # 12 itens fixos conforme pedido.
-PASTAS_IMPORTANTES_RANK: List[Tuple[str, str]] = [
-    ("Codigo/ModulosBatalha", "ModulosBatalha"),
-    ("Codigo/ModulosGerais", "ModulosGerais"),
-    ("Codigo/ModulosMundo", "ModulosMundo"),
-    ("Codigo/Paineis", "Paineis"),
-    ("Codigo/Prefabs", "Prefabs"),
-    ("Codigo/Telas", "Telas"),
-    ("Codigo/Visual", "Visual"),
-    ("Servidor/Logica", "ServerLogica"),
-    ("Servidor/Gerais", "ServerGerais"),
-    ("Servidor/Mundo", "ServerMundo"),
-    ("Servidor/Batalha", "ServerBatalha"),
-    ("Ferramentas", "Ferramentas"),
+PASTAS_IMPORTANTES_RANK: List[Tuple[Sequence[str], str]] = [
+    (["Codigo/ModulosBatalha"], "ModulosBatalha"),
+    (["Codigo/ModulosGerais", "Codigo/Server", "Codigo/Cenas"], "ModulosGerais"),
+    (["Codigo/ModulosMundo", "Codigo/Geradores"], "ModulosMundo"),
+    (["Codigo/Paineis"], "Paineis"),
+    (["Codigo/Prefabs"], "Prefabs"),
+    (["Codigo/Telas"], "Telas"),
+    (["Codigo/Visual"], "Visual"),
+    (["Servidor/Logica"], "ServerLogica"),
+    (["Servidor/Gerais"], "ServerGerais"),
+    (["Servidor/Mundo"], "ServerMundo"),
+    (["Servidor/Batalha"], "ServerBatalha"),
+    (["Ferramentas", "Outros"], "Ferramentas"),
 ]
+
+ALIASES_PASTAS_IMPORTANTES = {
+    "Ferramentas": ("Outros",),
+    "ModulosMundo": ("Geradores",),
+    "ModulosGerais": ("Server", "Cenas"),
+}
 
 MACRO_AREAS_RELATORIO: List[Dict[str, Any]] = [
     {"nome": "Site", "caminhos": ["Site/src"], "observacao": "Site sem considerar Site/public."},
@@ -717,6 +723,11 @@ def extrair_mapa_linhas(relatorio: Dict[str, Any], secao: str, campo_nome: str =
         linhas = item.get("linhas_gerais", item.get("linhas"))
         if isinstance(nome, str) and isinstance(linhas, (int, float)):
             resultado[nome] = float(linhas)
+    if secao == "pastas_importantes":
+        for destino, aliases in ALIASES_PASTAS_IMPORTANTES.items():
+            soma_aliases = sum(resultado.get(alias, 0.0) for alias in aliases)
+            if soma_aliases:
+                resultado[destino] = resultado.get(destino, 0.0) + soma_aliases
     return resultado
 
 
@@ -1187,12 +1198,11 @@ def coletar_metricas_pasta_importante(pasta_base: Path, repo_root: Path, relator
 def coletar_rank_pastas_importantes(repo_root: Path, relatorios_dir: Path) -> List[Dict[str, Any]]:
     itens: List[Dict[str, Any]] = []
 
-    for caminho_relativo, nome_exibicao in PASTAS_IMPORTANTES_RANK:
-        pasta = repo_root / caminho_relativo
-        metricas = coletar_metricas_pasta_importante(pasta, repo_root, relatorios_dir)
+    for caminhos_relativos, nome_exibicao in PASTAS_IMPORTANTES_RANK:
+        metricas = coletar_metricas_multialvo(caminhos_relativos, repo_root, relatorios_dir)
         itens.append({
             "pasta": nome_exibicao,
-            "caminho": caminho_relativo.replace("\\", "/"),
+            "caminho": " + ".join(c.replace("\\", "/") for c in caminhos_relativos),
             "existe": bool(metricas.get("existe", False)),
             "arquivos": int(metricas.get("arquivos", 0)),
             "subpastas": int(metricas.get("subpastas", 0)),

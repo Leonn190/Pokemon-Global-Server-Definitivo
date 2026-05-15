@@ -1,0 +1,449 @@
+from __future__ import annotations
+
+import copy
+
+from Servidor.Logica.Executes.ExecutesAtaques.ControladorExecutes import executar_alvificacao, executar_execute_principal, obter_executes_reativos
+from Servidor.Logica.Executes.ExecutesAtaques.UtilitariosExecutes import inimigos_vivos_adjacentes_ao_alvo, normalizar
+from Servidor.Mundo.AutoridadeCaptura import resolver_captura_batalha
+
+
+class ExecutorAcoesBatalha:
+    def __init__(self, rodador):
+        self.rodador = rodador
+        self.partida = rodador.partida
+
+    def validar_estado_atual(self, pokemon, acao):
+        if pokemon is None:
+            return "pokemon_inexistente_execucao"
+        if not pokemon.esta_vivo():
+            return "pokemon_morto_execucao"
+        if int(pokemon.lado_id) != int((acao or {}).get("lado_id", -1)):
+            return "lado_divergente_execucao"
+        if pokemon.estados_transitorios.get("entrou_na_rodada"):
+            return "pokemon_entrou_na_rodada"
+        if pokemon.estados_transitorios.get("recuado"):
+            return "pokemon_recuado"
+        tipo = str((acao or {}).get("tipo") or "")
+        if tipo != "captura" and (pokemon.possui_efeito("Dormindo") or pokemon.possui_efeito("Congelado")):
+            return "pokemon_inapto"
+        if tipo == "ataque" and pokemon.possui_efeito("Paralisado"):
+            return "ataque_bloqueado_por_paralisia"
+        if tipo in {"movimento", "troca_posicao", "troca_reserva"} and pokemon.possui_efeito("Enraizado"):
+            return "movimento_bloqueado_por_enraizado"
+        if str((acao or {}).get("tipo")) in {"ataque", "movimento", "troca_posicao", "troca_reserva", "captura"} and (not pokemon.ativo or pokemon.reserva):
+            return "pokemon_nao_ativo_execucao"
+        return None
+
+    def executar_movimento(self, pokemon, acao):
+        if pokemon.possui_efeito("Enraizado") or pokemon.possui_efeito("Congelado") or pokemon.possui_efeito("Dormindo"):
+            self.rodador._falhar(acao, "movimento_bloqueado_por_efeito")
+            return
+        destino = acao.get("destino") if isinstance(acao.get("destino"), dict) else {}
+        area_id = destino.get("area_id")
+        ocupante = self.partida.pokemon_na_area(area_id)
+        if ocupante is None:
+            if not self.partida.mover_pokemon_para_area(pokemon, area_id, dados={"reativos_acao": (acao or {}).get("reativos_acao")}):
+                self.rodador._falhar(acao, "movimento_falhou")
+            return
+        if int(ocupante.lado_id) == int(pokemon.lado_id):
+            if not self.partida.trocar_posicao(pokemon, ocupante, dados={"reativos_acao": (acao or {}).get("reativos_acao")}):
+                self.rodador._falhar(acao, "troca_posicao_convertida_falhou")
+            return
+        self.rodador._falhar(acao, "area_ocupada_por_oponente")
+
+    def executar_troca_posicao(self, pokemon, acao):
+        outro = self.partida.obter_pokemon(acao.get("pokemon_destino_id"))
+        if outro is None or not outro.esta_vivo():
+            self.rodador._falhar(acao, "troca_posicao_alvo_morto")
+            return
+        if not self.partida.trocar_posicao(pokemon, outro, dados={"reativos_acao": (acao or {}).get("reativos_acao")}):
+            self.rodador._falhar(acao, "troca_posicao_falhou")
+
+    def executar_troca_reserva(self, pokemon, acao):
+        reserva = self.partida.obter_pokemon(acao.get("pokemon_reserva_id") or acao.get("troca_reserva_id"))
+        if reserva is None or not reserva.esta_vivo():
+            self.rodador._falhar(acao, "reserva_morta_ou_inexistente")
+            return
+        if not self.partida.trocar_reserva(pokemon, reserva, dados={"reativos_acao": (acao or {}).get("reativos_acao")}):
+            self.rodador._falhar(acao, "troca_reserva_falhou")
+
+    def executar_ataque(self, pokemon, acao):
+        props = acao.get("propriedades") if isinstance(acao.get("propriedades"), dict) else None
+        if not props:
+            self.rodador._falhar(acao, "ataque_sem_propriedades")
+            return
+        animacao = self.dados_animacao(props)
+        contexto = {
+            "partida": self.partida,
+            "usuario": pokemon,
+            "acao": acao,
+            "propriedades": props,
+            "ataque": acao.get("ataque") if isinstance(acao.get("ataque"), dict) else {},
+            "custo_real": float(acao.get("custo_real") or 0.0),
+            "passo": self.partida.passo_atual,
+            "rng": self.partida.rng,
+            "alvos": [],
+            "primeiro_ataque_da_rodada": self.rodador._ataques_executados == 0,
+            "estado_execucao_ataque": {},
+        }
+        chave_ataque = props.get("execute_principal") or props.get("nome") or props.get("ID") or (contexto["ataque"] or {}).get("ID") or (contexto["ataque"] or {}).get("Code")
+        contexto["reativos_acao"] = obter_executes_reativos(chave_ataque)
+        alvos = executar_alvificacao(chave_ataque, contexto)
+        contexto["alvos"] = list(alvos or [])
+        alvo_ids = [alvo.id_batalha for alvo in contexto["alvos"] if alvo is not None]
+        alvo_principal_id = alvo_ids[0] if alvo_ids else None
+        alvos_secundarios_ids = []
+        if normalizar(animacao.get("modelo")) == "explosao" and contexto["alvos"]:
+            secundarios = inimigos_vivos_adjacentes_ao_alvo(contexto, contexto["alvos"][0])
+            alvos_secundarios_ids = [alvo.id_batalha for alvo in secundarios if alvo is not None]
+            alvo_ids = self.ids_unicos([alvo_principal_id, *alvos_secundarios_ids])
+        self.partida.registrar_evento_log("ataque_usado", self.dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids, animacao=animacao, alvo_principal_id=alvo_principal_id, alvos_secundarios_ids=alvos_secundarios_ids))
+        parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        permite_area_vazia = bool(parametros.get("permite_area_vazia", props.get("permite_area_vazia", False)))
+        if not contexto["alvos"] and str(props.get("estilo_logico") or "").lower() != "ativo" and not permite_area_vazia:
+            self.partida.registrar_evento_log("ataque_sem_alvo_real", self.dados_ataque(pokemon, acao, props, alvo_ids=[], animacao=animacao))
+            self.rodador._falhar(acao, "sem_alvo_real")
+            return
+        modo_execucao = str(props.get("modo_execucao") or "por_alvo").strip().lower()
+        if modo_execucao not in {"por_alvo", "uma_vez"}:
+            modo_execucao = "por_alvo"
+        atingiu = False
+        if str(props.get("estilo_logico") or "").lower() == "ativo":
+            retorno = executar_execute_principal(chave_ataque, contexto, alvo=None)
+            if retorno.get("falha"):
+                self.rodador._falhar(acao, str(retorno.get("motivo") or "execute_falhou"))
+            else:
+                self.partida.registrar_evento_log("ataque_acertou", self.dados_ataque(pokemon, acao, props, alvo_ids=[pokemon.id_batalha], alvo=pokemon, animacao=animacao, alvo_principal_id=pokemon.id_batalha))
+                atingiu = True
+        elif modo_execucao == "uma_vez":
+            alvos_validos = [alvo for alvo in contexto["alvos"] if alvo is not None and alvo.esta_vivo()]
+            if not alvos_validos and not permite_area_vazia:
+                self.partida.registrar_evento_log("ataque_sem_alvo_real", self.dados_ataque(pokemon, acao, props, alvo_ids=[], animacao=animacao))
+                self.rodador._falhar(acao, "sem_alvo_real")
+                return
+            ctx_unico = dict(contexto)
+            alvo_unico = alvos_validos[0] if alvos_validos else None
+            ctx_unico["alvo"] = alvo_unico
+            retorno = executar_execute_principal(chave_ataque, ctx_unico, alvo=alvo_unico)
+            if retorno.get("falha"):
+                self.rodador._falhar(acao, str(retorno.get("motivo") or "execute_falhou"))
+            else:
+                alvo_ids_unicos = [alvo.id_batalha for alvo in alvos_validos]
+                self.partida.registrar_evento_log(
+                    "ataque_acertou",
+                    self.dados_ataque(pokemon, acao, props, alvo_ids=alvo_ids_unicos, alvo=alvo_unico, animacao=animacao, alvo_principal_id=alvo_principal_id),
+                )
+                atingiu = True
+        else:
+            for alvo in contexto["alvos"]:
+                if alvo is None or not alvo.esta_vivo():
+                    continue
+                ctx_alvo = dict(contexto)
+                ctx_alvo["alvo"] = alvo
+                ctx_flag = {
+                    "partida": self.partida,
+                    "usuario": pokemon,
+                    "alvo": alvo,
+                    "pokemon_evento": alvo,
+                    "acao": acao,
+                    "ataque": contexto.get("ataque"),
+                    "propriedades": props,
+                    "reativos_acao": contexto.get("reativos_acao"),
+                }
+                self.partida.disparar_flag("AntesReceberAtaque", ctx_flag, reativos=contexto.get("reativos_acao"))
+                acerto = self.calcular_acerto(pokemon, alvo, props)
+                ctx_alvo["bonus_critico_acerto"] = acerto.get("bonus_critico_acerto", 0.0)
+                if not acerto.get("acertou"):
+                    self.partida.registrar_evento_log("ataque_errou", {**self.dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao, alvo_principal_id=alvo_principal_id), "acerto": acerto})
+                    self.partida.disparar_flag(
+                        "AoErrarAtaque",
+                        {
+                            "partida": self.partida,
+                            "usuario": pokemon,
+                            "alvo": alvo,
+                            "pokemon_evento": pokemon,
+                            "acao": acao,
+                            "ataque": contexto.get("ataque"),
+                            "propriedades": props,
+                            "acerto": acerto,
+                            "reativos_acao": contexto.get("reativos_acao"),
+                        },
+                        reativos=contexto.get("reativos_acao"),
+                    )
+                    self.rodador._falhar(acao, "ataque_errou", alvo_id=alvo.id_batalha)
+                    continue
+                self.partida.registrar_evento_log("ataque_acertou", {**self.dados_ataque(pokemon, acao, props, alvo_ids=[alvo.id_batalha], alvo=alvo, animacao=animacao, alvo_principal_id=alvo_principal_id), "acerto": acerto})
+                retorno = executar_execute_principal(chave_ataque, ctx_alvo, alvo=alvo)
+                if retorno.get("falha"):
+                    self.rodador._falhar(acao, str(retorno.get("motivo") or "execute_falhou"), alvo_id=alvo.id_batalha)
+                else:
+                    atingiu = True
+        if atingiu:
+            self.rodador._ataques_executados += 1
+            self.registrar_historico_ataque(pokemon, acao, props, contexto["alvos"])
+
+    def executar_captura(self, pokemon, acao):
+        tipo_batalha = str(getattr(self.partida, "tipo_batalha", "") or "").strip().lower()
+        if tipo_batalha != "confronto":
+            self.rodador._falhar(acao, "captura_bloqueada_tipo_batalha" if tipo_batalha in {"servo", "boss"} else "captura_fora_de_confronto")
+            return
+        lado_id = int((acao or {}).get("lado_id", getattr(self.partida, "lado_jogador", 50)) or getattr(self.partida, "lado_jogador", 50))
+        jogador_nome = str((acao or {}).get("jogador_nome") or "Jogador").strip() or "Jogador"
+        usuario_id = str((acao or {}).get("usuario_id") or f"jogador_{lado_id}")
+        alvo = self.partida.obter_pokemon(((acao or {}).get("alvo") or {}).get("pokemon_id") if isinstance((acao or {}).get("alvo"), dict) else None)
+        if alvo is None:
+            self.rodador._falhar(acao, "captura_alvo_inexistente")
+            return
+        if int(getattr(alvo, "lado_id", -1)) == int(lado_id):
+            self.rodador._falhar(acao, "captura_alvo_aliado", alvo_id=alvo.id_batalha)
+            return
+        if not alvo.esta_vivo() or not bool(getattr(alvo, "ativo", False)) or bool(getattr(alvo, "reserva", False)):
+            self.rodador._falhar(acao, "captura_alvo_invalido", alvo_id=alvo.id_batalha)
+            return
+        item_base_id = str((acao or {}).get("item_base_id") or ((acao or {}).get("bola") or {}).get("item_base_id") or ((acao or {}).get("bola") or {}).get("Code") or "").strip()
+        item_nome = str((acao or {}).get("item_nome") or ((acao or {}).get("bola") or {}).get("Nome") or "Pokeball").strip()
+        if not self.partida.consumir_pokebola_batalha(lado_id, item_base_id, item_nome):
+            self.rodador._falhar(acao, "pokebola_indisponivel", alvo_id=alvo.id_batalha)
+            return
+        self.partida.registrar_evento_log(
+            "captura_batalha_lancada",
+            {
+                "id_acao": acao.get("id_acao"),
+                "usuario_id": usuario_id,
+                "usuario_nome": jogador_nome,
+                "capturador_tipo": "jogador",
+                "lado_id": lado_id,
+                "alvo_id": alvo.id_batalha,
+                "alvo_nome": alvo.nome,
+                "bola_nome": item_nome,
+                "item_base_id": item_base_id,
+            },
+        )
+        resultado = resolver_captura_batalha(
+            alvo,
+            item_nome,
+            contexto={
+                "rng": self.partida.rng,
+                "regras": getattr(self.partida, "regras_mundo", {}) or getattr(self.partida, "regras", {}),
+                "em_batalha": True,
+                "captura_critica_cliente": False,
+                "captura_chance_checks_necessarios": 3,
+            },
+        )
+        sucesso = bool(resultado.get("sucesso", False))
+        snapshot = None
+        if sucesso:
+            snapshot = self.partida.snapshot_pokemon_capturado_batalha(alvo, efeitos_bola=resultado.get("efeitos_bola") if isinstance(resultado.get("efeitos_bola"), dict) else {})
+            self.partida.adicionar_pokemon_capturado_batalha(lado_id, snapshot)
+            self.partida.remover_pokemon_capturado_batalha(alvo)
+        self.partida.registrar_evento_log(
+            "captura_batalha_resultado",
+            {
+                "id_acao": acao.get("id_acao"),
+                "usuario_id": usuario_id,
+                "usuario_nome": jogador_nome,
+                "capturador_tipo": "jogador",
+                "lado_id": lado_id,
+                "alvo_id": alvo.id_batalha,
+                "alvo_nome": alvo.nome,
+                "bola_nome": item_nome,
+                "item_base_id": item_base_id,
+                "checagens": list(resultado.get("checagens") or []),
+                "resultado": "sucesso" if sucesso else "falha",
+                "capturado": sucesso,
+                "chance_check": resultado.get("chance_check"),
+                "chance_real_3_checks": resultado.get("chance_real_3_checks"),
+                "dificuldade_batalha": resultado.get("dificuldade_batalha"),
+                "poder_total": resultado.get("poder_total"),
+                "pokemon_capturado": snapshot if sucesso else None,
+                "inventario_jogador": copy.deepcopy(self.partida.inventarios_lado.get(int(self.partida.lado_jogador), {})),
+            },
+        )
+        self.partida.registrar_evento_log(
+            "inventario_atualizado_batalha",
+            {
+                "lado_id": int(lado_id),
+                "inventario": copy.deepcopy(self.partida.inventarios_lado.get(int(lado_id), {})),
+            },
+        )
+
+    def acertou(self, usuario, alvo):
+        return bool(self.calcular_acerto(usuario, alvo).get("acertou"))
+
+    def bonus_acerto_condicional(self, alvo, parametros):
+        try:
+            bonus = float(parametros.get("bonus_acerto_condicional") or 0.0)
+        except (TypeError, ValueError):
+            bonus = 0.0
+        if bonus <= 0:
+            return {"bonus": 0.0, "condicoes_ativas": []}
+        condicoes = parametros.get("condicoes_bonus_acerto")
+        condicoes = condicoes if isinstance(condicoes, list) else [condicoes]
+        ativas = [condicao for condicao in condicoes if self.condicao_acerto_ativa(alvo, condicao)]
+        return {"bonus": bonus if ativas else 0.0, "condicoes_ativas": ativas}
+
+    def condicao_acerto_ativa(self, alvo, condicao):
+        if isinstance(condicao, dict):
+            tipo = normalizar(condicao.get("tipo") or condicao.get("condicao"))
+            nome = condicao.get("nome") or condicao.get("efeito") or condicao.get("clima")
+            if tipo in {"alvoefeito", "efeitoalvo", "efeito"}:
+                return bool(alvo is not None and hasattr(alvo, "possui_efeito") and alvo.possui_efeito(nome))
+            if tipo == "clima":
+                return normalizar(getattr(self.partida, "clima_atual", "")) == normalizar(nome)
+            return False
+        token = normalizar(condicao)
+        if token in {"congelado"}:
+            return bool(alvo is not None and hasattr(alvo, "possui_efeito") and alvo.possui_efeito("Congelado"))
+        if token in {"nevasca"}:
+            return normalizar(getattr(self.partida, "clima_atual", "")) == "nevasca"
+        return False
+
+    def calcular_acerto(self, usuario, alvo, props=None):
+        props = props if isinstance(props, dict) else {}
+        parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        condicional = parametros.get("sempre_acerta_se_alvo_efeito", props.get("sempre_acerta_se_alvo_efeito"))
+        if condicional and alvo is not None and hasattr(alvo, "possui_efeito"):
+            efeitos = condicional if isinstance(condicional, (list, tuple, set)) else [condicional]
+            if any(alvo.possui_efeito(efeito) for efeito in efeitos):
+                return {
+                    "acertou": True,
+                    "chance_final": 100.0,
+                    "chance_real": 100.0,
+                    "bonus_critico_acerto": 0.0,
+                    "rolagem": None,
+                    "sempre_acerta_condicional": True,
+                    "efeito_condicional": [str(efeito) for efeito in efeitos],
+                }
+        if bool(parametros.get("sempre_acerta", props.get("sempre_acerta", False))):
+            return {
+                "acertou": True,
+                "chance_final": 100.0,
+                "chance_real": 100.0,
+                "bonus_critico_acerto": 0.0,
+                "rolagem": None,
+                "sempre_acerta": True,
+            }
+        acuracia_ataque = float(parametros.get("acuracia", props.get("acuracia", 100.0)) or 100.0) / 100.0
+        acuracia_usuario = usuario.obter_atributo("Acu", 100.0)
+        if "acuracia_base_usuario_pct" in parametros:
+            base_pct = float(parametros.get("acuracia_base_usuario_pct") or 0.0)
+            bonus_pct = float(parametros.get("bonus_acuracia_por_efeito_positivo_alvo_pct") or 0.0)
+            efeitos_positivos = sum(
+                1
+                for efeito in list(getattr(alvo, "efeitos_formais", []) or [])
+                if str((efeito or {}).get("tipo") or "").strip().lower() == "positivo"
+            )
+            acuracia_usuario *= (base_pct + bonus_pct * efeitos_positivos) / 100.0
+        acuracia = (acuracia_usuario / 100.0) * acuracia_ataque
+        assertividade = alvo.obter_atributo("Ass", 100.0) / 100.0
+        chance = acuracia * assertividade
+        vel_usuario = usuario.obter_atributo("Vel", 0.0)
+        vel_alvo = alvo.obter_atributo("Vel", 0.0)
+        media = (vel_usuario + vel_alvo) / 2.0
+        escudo = 10.0
+        if vel_usuario > media + escudo:
+            chance += (vel_usuario - media - escudo) / 100.0
+        elif vel_usuario < media - escudo:
+            chance -= (media - escudo - vel_usuario) / 100.0
+        if vel_alvo > media + escudo:
+            chance -= (vel_alvo - media - escudo) / 100.0
+        elif vel_alvo < media - escudo:
+            chance += (media - escudo - vel_alvo) / 100.0
+        tipo_ataque = parametros.get("tipo") or props.get("tipo") or "normal"
+        if alvo.possui_efeito("Flutuando") and str(tipo_ataque or "").strip().lower() == "normal":
+            chance -= 0.40
+        bonus_condicional = self.bonus_acerto_condicional(alvo, parametros)
+        if bonus_condicional.get("bonus", 0.0) > 0:
+            chance += bonus_condicional.get("bonus", 0.0) / 100.0
+        chance_percentual = max(0.0, chance * 100.0)
+        chance_real = min(100.0, chance_percentual)
+        bonus_critico = max(0.0, chance_percentual - 100.0) / 2.0
+        sorte = self.partida.rng.random() * 100.0
+        return {
+            "acertou": sorte <= chance_real,
+            "chance_final": round(chance_percentual, 4),
+            "chance_real": round(chance_real, 4),
+            "bonus_critico_acerto": round(bonus_critico, 4),
+            "rolagem": round(sorte, 4),
+            "bonus_acerto_condicional": round(bonus_condicional.get("bonus", 0.0), 4),
+            "condicoes_bonus_acerto_ativas": list(bonus_condicional.get("condicoes_ativas") or []),
+        }
+
+    def registrar_historico_ataque(self, pokemon, acao, props, alvos):
+        if pokemon is None or normalizar(props.get("nome")) == "mimica":
+            return
+        if not hasattr(self.partida, "historico_ataques_batalha"):
+            self.partida.historico_ataques_batalha = {"ultimo_por_usuario": {}, "ultimo_contra_alvo": {}}
+        historico = self.partida.historico_ataques_batalha
+        registro = {
+            "usuario_id": pokemon.id_batalha,
+            "ataque": copy.deepcopy((acao or {}).get("ataque") if isinstance((acao or {}).get("ataque"), dict) else {}),
+            "propriedades": copy.deepcopy(props),
+            "rodada": getattr(self.partida, "rodada_atual", None),
+            "passo": getattr(self.partida, "passo_atual", None),
+        }
+        historico.setdefault("ultimo_por_usuario", {})[pokemon.id_batalha] = copy.deepcopy(registro)
+        por_alvo = historico.setdefault("ultimo_contra_alvo", {})
+        for alvo in list(alvos or []):
+            if alvo is None:
+                continue
+            por_alvo[(pokemon.id_batalha, alvo.id_batalha)] = copy.deepcopy(registro)
+
+    def dados_animacao(self, props):
+        animacao = copy.deepcopy(props.get("animacao") if isinstance(props.get("animacao"), dict) else {})
+        animacao.setdefault("modelo", "EfeitoAlvo")
+        animacao.setdefault("efeito_executor", None)
+        animacao.setdefault("efeito_alvo", None)
+        return animacao
+
+    @staticmethod
+    def ids_unicos(ids):
+        saida = []
+        vistos = set()
+        for pid in ids or []:
+            if pid is None or pid in vistos:
+                continue
+            vistos.add(pid)
+            saida.append(pid)
+        return saida
+
+    @staticmethod
+    def alvos_selecionados(acao):
+        alvo = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+        if str(alvo.get("tipo") or "").strip().lower() == "multi":
+            return [copy.deepcopy(item) for item in list(alvo.get("alvos") or []) if isinstance(item, dict)]
+        return [copy.deepcopy(alvo)] if alvo else []
+
+    def area_alvo_visual(self, acao):
+        alvo = (acao or {}).get("alvo") if isinstance((acao or {}).get("alvo"), dict) else {}
+        if str(alvo.get("tipo") or "").strip().lower() == "multi":
+            for selecao in list(alvo.get("alvos") or []):
+                if isinstance(selecao, dict) and selecao.get("area_id"):
+                    return selecao.get("area_id")
+            return None
+        return alvo.get("area_id")
+
+    def dados_ataque(self, pokemon, acao, props, alvo_ids=None, alvo=None, animacao=None, alvo_principal_id=None, alvos_secundarios_ids=None):
+        ataque = (acao or {}).get("ataque") if isinstance((acao or {}).get("ataque"), dict) else {}
+        parametros = props.get("parametros") if isinstance(props.get("parametros"), dict) else {}
+        tipo_ataque = parametros.get("tipo") or props.get("tipo") or ataque.get("Tipo") or ataque.get("tipo") or "normal"
+        dados = {
+            "id_acao": (acao or {}).get("id_acao"),
+            "ataque_id": ataque.get("ID") or ataque.get("Code") or props.get("ID"),
+            "ataque_nome": ataque.get("nome") or ataque.get("Nome") or props.get("nome"),
+            "tipo_ataque": tipo_ataque,
+            "usuario_id": pokemon.id_batalha,
+            "usuario_nome": pokemon.nome,
+            "pokemon_id": pokemon.id_batalha,
+            "pokemon_nome": pokemon.nome,
+            "area_origem": pokemon.area_id,
+            "area_alvo": self.area_alvo_visual(acao),
+            "alvos_ids": self.ids_unicos(alvo_ids or []),
+            "alvo_principal_id": alvo_principal_id,
+            "alvos_secundarios_ids": list(alvos_secundarios_ids or []),
+            "alvos_selecionados": self.alvos_selecionados(acao),
+            "animacao": copy.deepcopy(animacao or self.dados_animacao(props)),
+        }
+        if alvo is not None:
+            dados.update({"alvo_id": alvo.id_batalha, "alvo_nome": alvo.nome, "area_alvo_real": alvo.area_id})
+        return dados

@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Isabela Geada, capitã do estádio Gelo.\nFale baixo: gelo bom não quebra com grito, quebra com descuido.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora posso abrir a pista oficial.\nCuidado com a beleza do gelo. O brilho distrai justamente antes da queda."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou. A maioria acha que frio é ausência.\nEu gosto de quem percebe que frio também é forma, memória e aviso."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Para batalhar comigo precisa de respeito 2.\nO gelo pune quem entra confiante demais e também quem entra tremendo demais.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Weavile corta a primeira hesitação, Beartic ocupa espaço, Frosmoth espalha calma, Glaceon firma precisão, Vanilluxe muda o clima e Walrein aguenta a tempestade.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, já dá para falar sem simplificar.\nGelo não é só fragilidade. É superfície, reflexo, atrito baixo e paciência para esperar o adversário escorregar sozinho."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaIsabelaGeada": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode perguntar.\nSó não pisa fora das marcas azuis. Algumas partes do chão estão lisas de propósito, outras estão lisas por rancor.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasIsabelaGeada",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou para a neve.\nIsso é raro. Treinadores costumam gostar de fogo porque ele responde rápido. Gelo responde devagar, mas responde fundo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComIsabelaGeada": true,
+          "ConversasIsabelaGeada": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Gelo?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é cristal?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é silêncio?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é degelo?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conversa com outros capitães?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Gelo porque ele obriga elegância.\nUm movimento brusco demais vira queda. Um movimento tímido demais vira congelamento.\nEntre os dois existe uma linha fina, e eu gosto de lutar nessa linha.",
+      "opcoes": [
+        {
+          "texto": "O que é cristal?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Cristal é ordem visível.\nQuando a água encontra forma, ela revela desenho. Meu time faz isso com a batalha: transforma impulso confuso em padrão previsível.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCristalIsabelaGeada": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é silêncio?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Silêncio é parte do golpe.\nNa neve, dá para ouvir o erro pequeno: a sola raspando, a respiração subindo, a decisão mudando de lugar.\nWeavile vive desses detalhes.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSilencioIsabelaGeada": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é degelo?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Degelo é saber soltar sem destruir.\nNem todo bloqueio precisa quebrar. Às vezes você deixa a tensão derreter e o adversário perde o apoio que achava firme.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuDegeloIsabelaGeada": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Eu reduzo velocidade emocional.\nSe você se irrita, escorrega. Se se apavora, congela. Se tenta acelerar tudo, entra no ângulo de Glaceon e no peso de Walrein.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time parece delicado de longe. De perto, cada um é uma textura diferente do frio.",
+      "opcoes": [
+        {
+          "texto": "Weavile e Beartic.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Frosmoth e Glaceon.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Vanilluxe e Walrein.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Weavile é a lâmina no canto do olho.\nBeartic é a massa branca que não sai do caminho. Um tira espaço, o outro ocupa o que sobrou.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Frosmoth espalha silêncio como neve fina.\nGlaceon transforma esse silêncio em precisão. Se você pisca fora de hora, o campo muda.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Vanilluxe muda o clima sem pedir licença, e Walrein aguenta a tempestade.\nContra eles, pressa só vira escorregão com plateia.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Helena Voltz me chama de lenta, e Dante Brasa me chama de dramática.\nEu chamo os dois de barulhentos. Funciona. Capitães também treinam provocando uns aos outros.",
+      "opcoes": [
+        {
+          "texto": "O que é cristal?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComIsabelaGeada",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuCristalIsabelaGeada",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuSilencioIsabelaGeada",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuDegeloIsabelaGeada",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente está atrás de uma pequena vitrine congelada.\nPara abrir sem rachar, você precisa entender cristal, silêncio e degelo.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "A vitrine respondeu ao seu caminho.\nAgora escolha como tocar o gelo. Um toque errado não destrói o presente, mas fecha a vitrine de novo.",
+      "opcoes": [
+        {
+          "texto": "Observar o cristal, respeitar o silêncio e usar o degelo.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Bater no vidro até trincar.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Aquecer tudo de uma vez.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Trinca não é abertura.\nÉ só dano com aparência de solução.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Calor sem controle vira alagamento.\nO presente não quer pressa; quer transição.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto.\nGuarde como um cristal pequeno: bonito, frio e mais resistente do que parece.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Pisou melhor do que eu esperava.\nPouca gente encara gelo sem tentar transformar tudo em corrida.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque confundiu hesitação com paciência.\nPaciência escolhe esperar. Hesitação só espera ser empurrada.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa escapa por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

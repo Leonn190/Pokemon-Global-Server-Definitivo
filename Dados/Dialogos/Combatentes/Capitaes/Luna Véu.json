@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Luna Véu, capitã do estádio Fantasma.\nNão precisa falar alto. Aqui até o silêncio responde, quando está de bom humor.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora posso abrir a cortina da batalha.\nSe sentir que alguém observou sua escolha antes de você escolher, provavelmente foi verdade."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Você voltou.\nAlgumas pessoas voltam por coragem, outras por curiosidade. Fantasmas gostam das duas, desde que nenhuma venha vazia."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Para batalhar comigo precisa de respeito 2.\nFantasma não impede entrada por maldade; impede para você não confundir susto com preparo.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Spiritomb fecha saídas, Banette puxa rancores, Mismagius engana direção, Cofagrigus guarda o tempo, Trevenant enraíza medo e Chandelure ilumina o que você queria esconder.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já entende que Fantasma não é só assustar.\nÉ ausência, lembrança, culpa, truque e o espaço entre perceber e reagir."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaLunaVeu": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Pode perguntar.\nSe alguma cortina se mexer sem vento, não interrompa. Às vezes é só o estádio respirando.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasLunaVeu",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou para conversar.\nGosto disso. Quem retorna ao escuro por vontade própria costuma enxergar melhor do que quem exige lanterna."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComLunaVeu": true,
+          "ConversasLunaVeu": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Fantasma?",
+          "destino": "origem"
+        },
+        {
+          "texto": "Por que nomes importam?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é sombra?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Para que serve a vela?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você se dá bem com Dante?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Fantasma porque ele trata memória como força.\nOutros tipos atacam o que está na frente. Fantasma também ataca o que ficou para trás e ainda pesa no bolso.",
+      "opcoes": [
+        {
+          "texto": "Por que nomes importam?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Nome é âncora.\nQuando você nomeia o medo, ele perde um pedaço do teatro. Spiritomb odeia quando o adversário entende exatamente o que está enfrentando.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuNomeLunaVeu": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é sombra?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Sombra não é inimiga. É prova de que existe luz em algum lugar.\nMismagius usa sombra para confundir, mas a confusão só funciona se você esquece onde estava seu próprio corpo.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuSombraLunaVeu": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Para que serve a vela?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Vela é limite.\nEla não elimina o escuro; só desenha uma borda para você decidir até onde vai.\nCofagrigus respeita quem não entra correndo em todo corredor.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuVelaLunaVeu": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é fazer o campo parecer maior por dentro.\nBanette mexe com arrependimento, Trevenant prende rota, Chandelure ilumina demais e Spiritomb fecha o teatro.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time parece uma peça de teatro antiga. Cada Pokémon entra quando a plateia acha que já entendeu a cena.",
+      "opcoes": [
+        {
+          "texto": "Spiritomb e Banette.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Mismagius e Cofagrigus.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Trevenant e Chandelure.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Spiritomb é porta fechada com muitas vozes atrás.\nBanette é rancor que aprendeu a andar. Juntos, eles fazem pressa parecer culpa.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Mismagius troca direção com elegância.\nCofagrigus não corre. Ele espera você aceitar a moldura errada e então fecha a tampa.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Trevenant é floresta lembrando que também pode assombrar, e Chandelure é luz perigosa.\nUm prende rota; o outro ilumina o que você queria esconder.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Dante Brasa diz que Chandelure fica mais dramático comigo.\nEu digo que fogo sem memória é só incêndio bonito. A gente discorda sorrindo.",
+      "opcoes": [
+        {
+          "texto": "Por que nomes importam?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComLunaVeu",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuNomeLunaVeu",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuSombraLunaVeu",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuVelaLunaVeu",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente está atrás de um véu com três nós.\nPara desfazer sem rasgar, você precisa entender nome, sombra e vela.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "O véu ficou leve.\nAgora escolha como atravessar. Se tentar assustar o escuro, ele só vai rir baixo.",
+      "opcoes": [
+        {
+          "texto": "Dizer o nome, aceitar a sombra e carregar a vela.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Correr pelo escuro sem olhar para trás.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Apagar a vela para provar coragem.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Coragem sem memória tropeça no mesmo lugar.\nO escuro não precisa correr para vencer quem foge de si.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Isso não prova coragem.\nProva apenas que você confundiu limite com fraqueza.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto.\nNão é assombração, é lembrança: até no escuro, escolha onde colocar os pés.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Não se deixou guiar pelo susto.\nQuando um treinador encara a própria sombra sem fazer pose, Fantasma respeita.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu quando tentou brigar com o medo em vez de nomeá-lo.\nNa próxima, não expulse a sombra. Use-a para saber onde está a luz.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa escapa por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

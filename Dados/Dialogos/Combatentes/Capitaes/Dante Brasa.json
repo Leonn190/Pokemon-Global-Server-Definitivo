@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Dante Brasa, capitão do estádio Fogo.\nRelaxa: aqui nada queima sem motivo. Quando queima sem motivo, eu finjo que era teste de segurança.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora o fogo pode subir.\nSó lembra: chama bonita também consome oxigênio. Se perder a cabeça, perde o campo."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Olha quem voltou para perto da fornalha.\nBom sinal. Ou coragem. Ou frio. Qualquer uma das três serve para começar conversa."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Para batalha oficial comigo, respeito 2.\nFogo sem preparo vira incêndio. E incêndio não é estratégia, é trabalho extra.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Houndoom pressiona a entrada, Ninetales controla o clima, Salazzle envenena a pressa, Chandelure castiga foco ruim, Coalossal segura a fornalha e Cinderace decide no movimento.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já sabe que fogo não é só explosão.\nÉ temperatura, combustível, espaço e aquele segundo exato em que a faísca vira plano."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaDanteBrasa": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Manda a pergunta.\nSó não encosta nas marcas vermelhas do chão. As frias estão quentes e as quentes estão mais quentes.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasDanteBrasa",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Voltou? Perfeito.\nTreinador que volta depois de sentir calor tem duas qualidades: teimosia e alguma noção de que ainda não entendeu tudo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComDanteBrasa": true,
+          "ConversasDanteBrasa": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Fogo?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é faísca?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é forno?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que sobra na cinza?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você tem rivalidade com Isabela?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Fogo porque ele é honesto sobre consequência.\nVocê alimenta a chama e ela cresce. Você esquece a chama e ela apaga. Você brinca com ela e ela cobra.",
+      "opcoes": [
+        {
+          "texto": "O que é faísca?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Faísca é começo pequeno com vontade grande.\nCinderace vive disso: um passo, uma abertura, uma bola de fogo que parecia só movimento e virou decisão.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFaiscaDanteBrasa": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é forno?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Forno é controle.\nTodo mundo gosta da explosão, mas a fornalha de verdade mantém temperatura. Coalossal entende isso melhor do que qualquer discurso meu.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuFornoDanteBrasa": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que sobra na cinza?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Cinza é memória do que queimou.\nNão é fracasso. É registro. Chandelure adora quando o adversário ignora o que acabou de perder.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuCinzaDanteBrasa": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Eu crio urgência.\nHoundoom faz você recuar, Ninetales muda o ar, Salazzle complica a troca e Cinderace pune quem acha que velocidade é só número.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time é uma cozinha perigosa: tem chama alta, panela pesada, fumaça e alguém correndo com uma bola em chamas.",
+      "opcoes": [
+        {
+          "texto": "Houndoom e Ninetales.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Salazzle e Chandelure.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Coalossal e Cinderace.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Houndoom é alarme de incêndio com dentes.\nNinetales é a parte bonita do perigo: quando você percebe que o clima mudou, já está no ritmo dela.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Salazzle transforma pressa em veneno.\nChandelure faz o adversário olhar para a própria sombra antes de escolher ataque.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Coalossal é meu forno de pedra, Cinderace é improviso treinado.\nUm controla temperatura; o outro transforma leitura em chute decisivo.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Isabela Geada diz que eu sou barulhento. Eu digo que ela congela até piada.\nNo fundo, a gente se respeita. Fogo e gelo só brigam feio quando ninguém entende controle.",
+      "opcoes": [
+        {
+          "texto": "O que é faísca?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComDanteBrasa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuFaiscaDanteBrasa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuFornoDanteBrasa",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuCinzaDanteBrasa",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente está numa caixa de forno com três travas.\nPara abrir, precisa entender faísca, forno e cinza.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "A caixa esquentou na medida certa.\nAgora escolhe a sequência. Se tentar parecer herói de filme, a trava fecha de novo.",
+      "opcoes": [
+        {
+          "texto": "Acender a faísca, controlar o forno e ler a cinza.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Aumentar o fogo no máximo.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Apagar tudo para não correr risco.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Isso só queima a borda e deixa o centro cru.\nPotência sem controle é receita ruim e batalha pior.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Sem risco nenhum, não tem fogo.\nO segredo não é apagar a chama: é fazer ela obedecer.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto.\nNão esquenta sozinho, mas lembra uma coisa: chama pequena também abre caminho.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Boa leitura da temperatura.\nQuando percebeu que eu estava forçando urgência, parou de correr atrás da chama.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu porque tentou resolver fogo com pânico.\nRespira, olha o combustível e só depois decide onde pisar.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa escapa por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

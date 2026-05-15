@@ -1,0 +1,572 @@
+{
+  "inicio": "saudacao",
+  "pos_batalha": {
+    "vitoria": "pos_batalha_vitoria",
+    "derrota": "pos_batalha_derrota",
+    "padrao": "pos_batalha_derrota"
+  },
+  "nos": {
+    "saudacao": {
+      "fala_condicional": {
+        "padrao": "Eu sou Breno Punho, capitão do estádio Lutador.\nAqui ninguém ganha só por bater forte. Quem entra sem base, cai antes de entender de onde veio o golpe.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Respeito 2 confirmado. Agora dá para lutar de verdade.\nSe veio procurando pancadaria vazia, errou sala. Minha batalha cobra postura, respiração e leitura."
+          },
+          {
+            "condicoes": [
+              {
+                "alvo": "npc.visitas_anteriores",
+                "op": ">",
+                "valor": 0
+              }
+            ],
+            "valor": "Voltou ao tatame? Bom.\nO corpo aprende repetindo, mas a cabeça só aprende quando para de inventar desculpa."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto_condicional": {
+            "padrao": "Ainda não tenho respeito 2 para batalhar.",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "Quero desafiar você."
+              }
+            ]
+          },
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Conversar.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "sem_respeito": {
+      "fala": "Ainda não. Capitão Lutador não entra em combate oficial sem respeito 2.\nNão é arrogância; é segurança. Mienshao até brinca com distância, mas Machamp não brinca com erro.",
+      "opcoes": [
+        {
+          "texto": "Então vou buscar mais respeito.",
+          "acao": "fim"
+        },
+        {
+          "texto": "Conversar mesmo assim.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "batalha_liberada": {
+      "fala_condicional": {
+        "padrao": "Meu time avança em camadas: Mienshao abre espaço, Heracross quebra ritmo, Bewear pune aproximação, Conkeldurr pesa o centro, Lucario lê a aura e Machamp fecha a luta.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 4
+              }
+            ],
+            "valor": "Com respeito alto, você já sabe que tipo Lutador não é só soco.\nÉ ângulo, fôlego, queda, recuperação e coragem para levantar sem teatralizar."
+          }
+        ]
+      },
+      "opcoes": [
+        {
+          "texto": "Começar batalha.",
+          "acao": "batalha",
+          "batalha": 1,
+          "ao_escolher": {
+            "setor": {
+              "TentouBatalhaBrenoPunho": {
+                "op": "add",
+                "valor": 1
+              }
+            }
+          }
+        },
+        {
+          "texto": "Quero conversar antes.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "saudacao"
+        }
+      ]
+    },
+    "conversa": {
+      "fala_condicional": {
+        "padrao": "Fala. Só não confunde calma com moleza.\nEu posso conversar sorrindo e ainda perceber quando seu pé de apoio está entregue.",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "setor.ConversasBrenoPunho",
+                "op": ">=",
+                "valor": 2
+              }
+            ],
+            "valor": "Você voltou para conversar mais. Isso é bom.\nTem treinador que só quer o grito da torcida. Eu prefiro quem pergunta onde estava o peso do próprio corpo."
+          }
+        ]
+      },
+      "ao_entrar": {
+        "setor": {
+          "FalouComBrenoPunho": true,
+          "ConversasBrenoPunho": {
+            "op": "add",
+            "valor": 1
+          }
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Por que Lutador?",
+          "destino": "origem"
+        },
+        {
+          "texto": "O que é base?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "O que é ritmo?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "O que é guarda?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Fala do seu time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Você conhece o líder Felipox?",
+          "destino": "ligacao"
+        },
+        {
+          "texto": "Quero entender o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "origem": {
+      "fala": "Escolhi Lutador porque ele não deixa esconder muita coisa.\nNo metal você culpa a armadura. No psíquico você culpa a mente. No lutador, se a postura quebrou, todo mundo viu.\nGosto dessa honestidade.",
+      "opcoes": [
+        {
+          "texto": "O que é base?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "E o seu time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_a": {
+      "fala": "Base é o acordo entre o chão e o corpo.\nSe o pé pede pressa e o tronco pede força, o golpe nasce dividido. Meu presente só abre para quem entende que força sem base vira queda.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuBaseBrenoPunho": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é ritmo?",
+          "destino": "topico_b"
+        },
+        {
+          "texto": "Isso entra no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_b": {
+      "fala": "Ritmo não é atacar rápido.\nRitmo é saber quando o adversário respirou errado, quando recuou por medo e quando avançou por orgulho.\nHeracross adora quebrar esse segundo exato.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuRitmoBrenoPunho": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "O que é guarda?",
+          "destino": "topico_c"
+        },
+        {
+          "texto": "Isso muda a batalha?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "topico_c": {
+      "fala": "Guarda é respeito pelo perigo.\nNão é se esconder. É deixar claro que você está inteiro mesmo quando decidiu esperar.\nLucario percebe quando a guarda é postura ou fingimento.",
+      "ao_entrar": {
+        "setor": {
+          "EntendeuGuardaBrenoPunho": true
+        }
+      },
+      "opcoes": [
+        {
+          "texto": "Agora acho que entendi o presente.",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "estrategia": {
+      "fala": "Minha estratégia é fazer o adversário escolher mal.\nMienshao chama para longe, Bewear ameaça perto, Conkeldurr pesa a troca e Machamp termina quando o outro já gastou o fôlego mental.",
+      "opcoes": [
+        {
+          "texto": "Como isso aparece no time?",
+          "destino": "time"
+        },
+        {
+          "texto": "Quero batalhar.",
+          "destino_condicional": {
+            "padrao": "sem_respeito",
+            "casos": [
+              {
+                "condicoes": [
+                  {
+                    "alvo": "respeito_atual",
+                    "op": ">=",
+                    "valor": 2
+                  }
+                ],
+                "valor": "batalha_liberada"
+              }
+            ]
+          }
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "time": {
+      "fala": "Meu time não é academia de pose. Cada um carrega uma parte do treino.",
+      "opcoes": [
+        {
+          "texto": "Mienshao e Heracross.",
+          "destino": "pokemon_1"
+        },
+        {
+          "texto": "Bewear e Conkeldurr.",
+          "destino": "pokemon_2"
+        },
+        {
+          "texto": "Lucario e Machamp.",
+          "destino": "pokemon_3"
+        },
+        {
+          "texto": "Qual é a ideia geral?",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_1": {
+      "fala": "Mienshao mede distância como se o campo fosse uma corda esticada.\nHeracross é o contrário: entra no espaço e obriga você a responder antes de estar pronto.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_2": {
+      "fala": "Bewear parece abraço, mas o abraço dele é aviso.\nConkeldurr carrega peso porque entende peso. Contra ele, recuar sem plano só empurra sua derrota.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "pokemon_3": {
+      "fala": "Lucario é o juiz silencioso do time, e Machamp é a porta final.\nUm percebe intenção; o outro transforma decisão ruim em quatro respostas ao mesmo tempo.",
+      "opcoes": [
+        {
+          "texto": "Ver outro ponto do time.",
+          "destino": "time"
+        },
+        {
+          "texto": "Isso ajuda no presente?",
+          "destino": "checar_presente"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "ligacao": {
+      "fala": "Felipox, o líder Lutador, gosta de transformar desafio em espetáculo.\nEu respeito isso. Meu papel é diferente: sou o corredor estreito antes da arena grande. Passou por mim, chega nele com menos ilusão.",
+      "opcoes": [
+        {
+          "texto": "O que é base?",
+          "destino": "topico_a"
+        },
+        {
+          "texto": "Fala da estratégia.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Voltar.",
+          "destino": "conversa"
+        }
+      ]
+    },
+    "checar_presente": {
+      "desvio_condicional": {
+        "padrao": "presente_negado",
+        "casos": [
+          {
+            "condicoes": [
+              {
+                "alvo": "respeito_atual",
+                "op": ">=",
+                "valor": 2
+              },
+              {
+                "alvo": "setor.FalouComBrenoPunho",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuBaseBrenoPunho",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuRitmoBrenoPunho",
+                "op": "==",
+                "valor": true
+              },
+              {
+                "alvo": "setor.EntendeuGuardaBrenoPunho",
+                "op": "==",
+                "valor": true
+              }
+            ],
+            "valor": "porta_presente"
+          }
+        ]
+      },
+      "opcoes": []
+    },
+    "presente_negado": {
+      "fala": "Ainda não. O presente está no armário de treino, mas o cadeado não abre com força.\nVocê precisa entender três coisas comigo: base, ritmo e guarda.",
+      "opcoes": [
+        {
+          "texto": "Me mostra o caminho certo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar ao começo.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Deixar para depois.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "porta_presente": {
+      "fala": "Você atravessou o pequeno labirinto do tatame.\nAgora escolha a sequência certa. O presente é para quem entendeu a luta antes de pedir recompensa.",
+      "opcoes": [
+        {
+          "texto": "Firmar a base, ler o ritmo e manter a guarda.",
+          "destino": "presente_1"
+        },
+        {
+          "texto": "Socar o cadeado até ele abrir.",
+          "destino": "erro_presente_1"
+        },
+        {
+          "texto": "Correr para pegar o presente antes da luta.",
+          "destino": "erro_presente_2"
+        }
+      ]
+    },
+    "erro_presente_1": {
+      "fala": "Isso é exatamente o que meu estádio tenta corrigir.\nForça sem leitura só faz barulho e machuca a própria mão.",
+      "opcoes": [
+        {
+          "texto": "Tentar entender de novo.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "erro_presente_2": {
+      "fala": "Pressa não é coragem.\nQuem corre para o prêmio costuma tropeçar no primeiro golpe simples.",
+      "opcoes": [
+        {
+          "texto": "Refazer o caminho.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Voltar para a escolha.",
+          "destino": "porta_presente"
+        }
+      ]
+    },
+    "presente_1": {
+      "fala": "Agora sim. Pegue isto.\nNão é troféu de pancada; é lembrança de treino. Base firme, fôlego limpo e guarda viva.",
+      "saida": "presente_1",
+      "opcoes": [
+        {
+          "texto": "Obrigado.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_vitoria": {
+      "fala": "Você venceu. Bom controle de distância.\nNão foi só dano: você me obrigou a reposicionar o tatame dentro da cabeça.",
+      "opcoes": [
+        {
+          "texto": "Conversar mais.",
+          "destino": "conversa"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "pos_batalha_derrota": {
+      "fala": "Você perdeu, mas não foi vergonhoso.\nO problema apareceu quando sua guarda virou pressa. Corrige isso e a luta muda.",
+      "opcoes": [
+        {
+          "texto": "Pedir conselho.",
+          "destino": "estrategia"
+        },
+        {
+          "texto": "Encerrar conversa.",
+          "acao": "fim"
+        }
+      ]
+    },
+    "fallback": {
+      "fala": "A conversa escapa por um instante, mas o caminho principal ainda está aqui.",
+      "opcoes": [
+        {
+          "texto": "Voltar ao início.",
+          "destino": "saudacao"
+        },
+        {
+          "texto": "Encerrar.",
+          "acao": "fim"
+        }
+      ]
+    }
+  }
+}

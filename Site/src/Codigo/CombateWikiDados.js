@@ -154,6 +154,8 @@ function caminhosCsv() {
   return [
     path.resolve(atual, "../../../Dados/Tabelas", CSV_FR),
     path.resolve(atual, "../../../Dados", CSV_FR),
+    path.resolve(atual, "../../Dados/Tabelas", CSV_FR),
+    path.resolve(atual, "../../Dados", CSV_FR),
     path.resolve(process.cwd(), "../Dados/Tabelas", CSV_FR),
     path.resolve(process.cwd(), "../Dados", CSV_FR),
     path.resolve(process.cwd(), "Dados/Tabelas", CSV_FR),

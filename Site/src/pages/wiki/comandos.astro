@@ -1,16 +1,105 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import ModalDetalhe from "../../Componentes/ModalDetalhe.astro";
+import ModalControles from "../../Componentes/ModalControles.astro";
+import PainelDetalhe from "../../Componentes/PainelDetalhe.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
+import { carregarComandos, resumoComandos } from "../../Codigo/ComandosWikiDados.js";
 import "../../Estilos/wiki.css";
+
+const comandos = carregarComandos();
+const resumo = resumoComandos(comandos);
+const payloadComandos = { comandos, resumo };
+const opcoesOrdenacao = [
+  { value: "ordem", label: "Ordem oficial" },
+  { value: "nome", label: "Alfabética" },
+  { value: "nivel", label: "Nível" },
+  { value: "local", label: "Local" },
+];
+const opcoesNivel = [{ value: "", label: "Todos" }, ...resumo.niveis.map((nivel) => ({ value: nivel.chave, label: nivel.rotulo }))];
+const opcoesLocal = [{ value: "", label: "Todos" }, ...resumo.locais.map((local) => ({ value: local.chave, label: local.rotulo }))];
 ---
-<Layout titulo="Comandos | Wiki Pokémon Global Server" descricao="Wiki de comandos do Pokémon Global Server.">
+<Layout
+  titulo="Comandos"
+  descricao="Wiki de comandos do Pokémon Global Server, com busca, filtros por local, nível de acesso, aliases, uso e detalhes avançados."
+>
   <WikiTopo ativo="comandos" titulo="Comandos" tituloId="titulo-comandos" />
-  <section class="wiki-layout wiki-layout-pokedex">
-    <div class="wiki-conteudo wiki-placeholder">
-      <article class="bloco-info">
-        <h2>Comandos</h2>
-        <p>Lista reservada para comandos do jogo, atalhos e permissões de uso.</p>
-      </article>
+  <WikiCatalogoShell
+    appClass="comandos-app"
+    appAttrs={{ "data-comandos-app": true }}
+    toolbarClass="comandos-toolbar"
+    toolbarRotulo="Ferramentas da wiki de comandos"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-comandos-count": true }}
+    directionAttrs={{ "data-comandos-direction": true }}
+    clearAttrs={{ "data-comandos-clear": true }}
+    clearAriaLabel="Limpar busca e filtros de comandos"
+    gridClass="catalogo-grid comandos-grid"
+    gridAttrs={{ "data-comandos-grid": true }}
+    gridRotulo="Lista de comandos"
+    vazioAttrs={{ "data-comandos-empty": true }}
+    vazioTitulo="Nenhum comando encontrado."
+    vazioTexto="Confira o catálogo em Dados/Catalogos/Comandos.json ou limpe os filtros."
+    sentinelAttrs={{ "data-comandos-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-comandos-search placeholder="Nome, uso, alias, descrição ou argumento..." />
+      <SelectFiltroWiki data-comandos-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-comandos-level label="Nível" options={opcoesNivel} />
+      <SelectFiltroWiki data-comandos-local label="Local" options={opcoesLocal} />
+    </Fragment>
+  </WikiCatalogoShell>
+
+  <ModalDetalhe
+    class="pokemon-detalhe catalogo-detalhe comando-detalhe"
+    cardClass="pokemon-detalhe-card item-detalhe-card catalogo-detalhe-card comando-detalhe-card"
+    labelledby="comando-detalhe-nome"
+    backdropAttrs={{ "data-comando-close": true }}
+    data-comando-detail
+  >
+    <ModalControles
+      rotulo="Navegação do comando aberto"
+      prevLabel="Comando anterior"
+      nextLabel="Próximo comando"
+      prevAttrs={{ "data-comando-prev": true }}
+      nextAttrs={{ "data-comando-next": true }}
+      closeAttrs={{ "data-comando-close": true }}
+    />
+    <header class="catalogo-detalhe-topo">
+      <span class="catalogo-detalhe-icone" aria-hidden="true">⌨</span>
+      <div>
+        <p class="selo">Comando</p>
+        <h2 id="comando-detalhe-nome" data-comando-name>/comando</h2>
+        <code data-comando-use>/comando</code>
+        <div class="catalogo-detalhe-tags" data-comando-tags></div>
+      </div>
+    </header>
+    <PainelDetalhe titulo="Descrição" class="item-info-painel catalogo-texto-painel">
+      <p class="item-descricao-melhor" data-comando-description></p>
+    </PainelDetalhe>
+    <div class="catalogo-detalhe-duplo">
+      <PainelDetalhe titulo="Aliases" class="item-info-painel catalogo-texto-painel">
+        <div class="catalogo-chips" data-comando-aliases></div>
+      </PainelDetalhe>
+      <PainelDetalhe titulo="Exemplos" class="item-info-painel catalogo-texto-painel">
+        <div class="catalogo-codigos" data-comando-examples></div>
+      </PainelDetalhe>
     </div>
-  </section>
+    <PainelDetalhe titulo="Argumentos" class="item-info-painel catalogo-texto-painel">
+      <div class="catalogo-lista" data-comando-args></div>
+    </PainelDetalhe>
+    <PainelDetalhe titulo="Informações técnicas" class="item-info-painel catalogo-texto-painel">
+      <dl class="item-info-lista" data-comando-info></dl>
+    </PainelDetalhe>
+  </ModalDetalhe>
+
+  <JsonPayload id="comandos-data" dados={payloadComandos} />
+  <script>
+    import { inicializarWikiComandos } from "../../Codigo/ComandosRuntime.js";
+    inicializarWikiComandos();
+  </script>
 </Layout>

@@ -1,6 +1,8 @@
 import { criarWikiCatalogo, html, lerJson, normalizar, ordenarComDirecao } from "./WikiRuntimeBase.js";
 
 const DURACAO_DESCONHECIDA = Number.POSITIVE_INFINITY;
+const CHAVE_VOLUME_GLOBAL = "pokemon-global-server-volume-musicas";
+let volumeGlobal = 1;
 
 function formatarTempo(segundos) {
   if (!Number.isFinite(segundos) || segundos < 0) return "--:--";
@@ -8,6 +10,34 @@ function formatarTempo(segundos) {
   const minutos = Math.floor(total / 60);
   const resto = String(total % 60).padStart(2, "0");
   return `${minutos}:${resto}`;
+}
+
+function limitarVolume(valor) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return 1;
+  return Math.min(1, Math.max(0, numero));
+}
+
+function lerVolumeSalvo() {
+  try {
+    return limitarVolume(window.localStorage?.getItem(CHAVE_VOLUME_GLOBAL) ?? 1);
+  } catch {
+    return 1;
+  }
+}
+
+function salvarVolume(valor) {
+  try {
+    window.localStorage?.setItem(CHAVE_VOLUME_GLOBAL, String(valor));
+  } catch {
+    // localStorage pode estar indisponível em alguns contextos.
+  }
+}
+
+function aplicarVolumeGlobal(raiz = document) {
+  raiz.querySelectorAll?.(".faixa-musica audio").forEach((audio) => {
+    audio.volume = volumeGlobal;
+  });
 }
 
 function atualizarFaixaTempo(card) {
@@ -47,9 +77,6 @@ function criarFaixa(musica) {
       <strong>${html(musica.nome)}</strong>
       <span>${html(musica.estiloRotulo)}</span>
     </div>
-    <label class="faixa-musica-volume" aria-label="Volume da música ${html(musica.nome)}">
-      <input type="range" min="0" max="1" value="1" step="0.01" data-musica-volume />
-    </label>
     <label class="faixa-musica-barra" aria-label="Posição da música ${html(musica.nome)}">
       <input type="range" min="0" max="1000" value="0" step="1" data-musica-progress />
     </label>
@@ -58,7 +85,7 @@ function criarFaixa(musica) {
   `;
   const audio = card.querySelector("audio");
   const barra = card.querySelector("[data-musica-progress]");
-  const volume = card.querySelector("[data-musica-volume]");
+  if (audio) audio.volume = volumeGlobal;
   audio?.addEventListener("loadedmetadata", () => {
     if (Number.isFinite(audio.duration)) {
       card.dataset.duracao = String(audio.duration);
@@ -76,10 +103,6 @@ function criarFaixa(musica) {
     if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
     audio.currentTime = (Number(barra.value) / 1000) * audio.duration;
     atualizarFaixaTempo(card);
-  });
-  volume?.addEventListener("input", () => {
-    if (!audio) return;
-    audio.volume = Math.min(1, Math.max(0, Number(volume.value) || 0));
   });
   return card;
 }
@@ -145,9 +168,13 @@ export function inicializarWikiMusicas() {
   const contador = document.querySelector("[data-musicas-count]");
   const direcaoBotao = document.querySelector("[data-musicas-direction]");
   const limparBotao = document.querySelector("[data-musicas-clear]");
+  const volumeControle = document.querySelector("[data-musicas-global-volume]");
   const vazio = document.querySelector("[data-musicas-empty]");
   const sentinela = document.querySelector("[data-musicas-sentinel]");
   if (!app || !grid) return;
+
+  volumeGlobal = lerVolumeSalvo();
+  if (volumeControle) volumeControle.value = String(volumeGlobal);
 
   let tocandoAtual = null;
   const ordenadores = {
@@ -198,6 +225,11 @@ export function inicializarWikiMusicas() {
   });
   direcaoBotao?.addEventListener("click", pararAtual);
   limparBotao?.addEventListener("click", pararAtual);
+  volumeControle?.addEventListener("input", () => {
+    volumeGlobal = limitarVolume(volumeControle.value);
+    salvarVolume(volumeGlobal);
+    aplicarVolumeGlobal(grid);
+  });
   window.addEventListener("pagehide", pararAtual, { once: true });
 
   grid.addEventListener("click", (evento) => {
@@ -206,6 +238,7 @@ export function inicializarWikiMusicas() {
     const card = botao.closest(".faixa-musica");
     const audio = card?.querySelector?.("audio");
     if (!card || !audio) return;
+    audio.volume = volumeGlobal;
     if (tocandoAtual && tocandoAtual !== audio) tocandoAtual.pause();
     if (audio.paused) {
       tocandoAtual = audio;
@@ -225,4 +258,5 @@ export function inicializarWikiMusicas() {
   }, () => !tocandoAtual || tocandoAtual.paused);
 
   catalogo.iniciar();
+  aplicarVolumeGlobal(grid);
 }

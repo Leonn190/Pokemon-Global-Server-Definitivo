@@ -15,6 +15,7 @@ const {
   </div>
   <div class="pokedex-acoes-status">
     <button class="botao fantasma compacto" type="button" data-sort-direction="asc" {...directionAttrs}>Crescente</button>
+    <slot name="acoes" />
     <button class="botao fantasma compacto" type="button" aria-label={clearAriaLabel} {...clearAttrs}>{clearLabel}</button>
   </div>
 </section>

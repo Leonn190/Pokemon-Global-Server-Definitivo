@@ -12,9 +12,6 @@ const url = musica?.url ?? "";
     <strong>{nome}</strong>
     <span>{estilo}</span>
   </div>
-  <label class="faixa-musica-volume" aria-label={`Volume da música ${nome}`}>
-    <input type="range" min="0" max="1" value="1" step="0.01" data-musica-volume />
-  </label>
   <label class="faixa-musica-barra" aria-label={`Posição da música ${nome}`}>
     <input type="range" min="0" max="1000" value="0" step="1" data-musica-progress />
   </label>

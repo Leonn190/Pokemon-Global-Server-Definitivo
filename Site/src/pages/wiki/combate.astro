@@ -1,10 +1,16 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import TipoIcone from "../../Componentes/TipoIcone.astro";
+import { indexarPublicoPorNome } from "../../Codigo/AssetsPublicos.js";
 import { carregarWikiCombate } from "../../Codigo/CombateWikiDados.js";
+import { normalizarChave } from "../../Codigo/PokemonWikiDados.js";
 import "../../Estilos/wiki.css";
 const dadosCombate = carregarWikiCombate();
-const { regra } = dadosCombate;
+const { regra, tabela } = dadosCombate;
+const iconesTipos = indexarPublicoPorNome("Tipos");
+const iconeTipo = (tipo) => iconesTipos[normalizarChave(tipo?.nome ?? tipo)] ?? null;
+const listaIcones = (tipos) => tipos.length ? tipos : [{ nome: "-", chave: "vazio", vazio: true }];
 ---
 <Layout
   titulo="Combate"
@@ -116,6 +122,42 @@ const { regra } = dadosCombate;
             Em caso de erro, o servidor registra <code>ataque_errou</code> e a ação falha naquele alvo.
           </p>
         </article>
+      </div>
+    </section>
+
+    <section class="combate-secao" aria-labelledby="titulo-tabela-fr">
+      <div class="combate-cabecalho">
+        <div>
+          <p class="selo">Tabela de tipos</p>
+          <h2 id="titulo-tabela-fr">Fraquezas, resistências e imunidades</h2>
+        </div>
+        <p>
+          A antiga wiki isolada de tipos foi trazida para a wiki de combate, porque a tabela de tipos é regra central da batalha.
+        </p>
+      </div>
+      <div class="combate-tabela-fr" role="table" aria-label="Tabela de tipos, fraquezas e resistências">
+        <div class="combate-fr-cabecalho" role="row">
+          <span role="columnheader">Tipo</span>
+          <span role="columnheader">Causa forte contra</span>
+          <span role="columnheader">Causa fraco contra</span>
+          <span role="columnheader">Não afeta</span>
+          <span role="columnheader">Sofre forte de</span>
+        </div>
+        {tabela.map((linha) => (
+          <div class="combate-fr-linha" role="row">
+            <div class="combate-fr-tipo" role="cell">
+              <TipoIcone tipo={linha.nome} chave={linha.chave} icone={iconeTipo(linha)} aria-label={linha.nome} />
+              <strong>{linha.nome}</strong>
+            </div>
+            {[linha.superEfetivo, linha.poucoEfetivo, linha.naoAfeta, linha.fraquezas].map((lista) => (
+              <div class="combate-fr-icones" role="cell">
+                {listaIcones(lista).map((tipo) => tipo.vazio
+                  ? <span class="combate-fr-vazio">—</span>
+                  : <TipoIcone tipo={tipo.nome} chave={tipo.chave} icone={iconeTipo(tipo)} aria-label={tipo.nome} />)}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </section>
 

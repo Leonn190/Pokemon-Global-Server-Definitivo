@@ -186,3 +186,8 @@
     padding: 24px;
   }
 }
+.combate-fr-tipo .tipo-chip,
+.combate-fr-icones .tipo-chip {
+  pointer-events: none;
+  cursor: default;
+}

@@ -2,6 +2,28 @@
 .musicas-toolbar {
   grid-template-columns: minmax(260px, 1.6fr) minmax(150px, 0.8fr) minmax(150px, 0.8fr);
 }
+
+.musicas-volume-global {
+  display: inline-grid;
+  grid-template-columns: auto minmax(94px, 140px);
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: var(--texto-fraco);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+.musicas-volume-global input {
+  width: 100%;
+  min-width: 94px;
+  accent-color: var(--amarelo);
+  cursor: pointer;
+}
+
 .musicas-grid {
   display: grid;
   gap: 12px;
@@ -14,7 +36,7 @@
   isolation: isolate;
   contain: paint;
   display: grid;
-  grid-template-columns: 48px minmax(128px, 0.66fr) minmax(80px, 0.26fr) minmax(360px, 2.7fr) 92px;
+  grid-template-columns: 48px minmax(128px, 0.8fr) minmax(360px, 2.7fr) 92px;
   align-items: center;
   gap: 18px;
   min-height: 72px;
@@ -108,18 +130,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.faixa-musica-volume {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  min-width: 0;
-}
-.faixa-musica-volume input {
-  width: 100%;
-  accent-color: var(--amarelo);
-  cursor: pointer;
-}
-
 .faixa-musica-barra {
   position: relative;
   z-index: 1;
@@ -170,14 +180,15 @@
   .faixa-musica {
     grid-template-columns: 48px minmax(0, 1fr) 88px;
   }
-  .faixa-musica-volume {
-    grid-column: 2 / 3;
-  }
   .faixa-musica-barra {
     grid-column: 2 / -1;
   }
 }
 @media (max-width: 620px) {
+  .musicas-volume-global {
+    width: 100%;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
   .musicas-toolbar {
     grid-template-columns: 1fr;
   }
@@ -190,7 +201,6 @@
     width: 40px;
     height: 40px;
   }
-  .faixa-musica-volume,
   .faixa-musica-barra,
   .faixa-musica-tempo {
     grid-column: 1 / -1;

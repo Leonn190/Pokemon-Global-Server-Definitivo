@@ -34,7 +34,9 @@ const {
       directionAttrs={directionAttrs}
       clearAttrs={clearAttrs}
       clearAriaLabel={clearAriaLabel}
-    />
+    >
+      <slot name="status-actions" slot="acoes" />
+    </WikiStatus>
     <WikiGrid class={gridClass} rotulo={gridRotulo} {...gridAttrs} />
     <WikiVazio titulo={vazioTitulo} texto={vazioTexto} {...vazioAttrs} />
     <div class="pokedex-sentinel" aria-hidden="true" {...sentinelAttrs}></div>

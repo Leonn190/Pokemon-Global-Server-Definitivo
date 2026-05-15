@@ -9,6 +9,7 @@
 @import "./wiki-equipaveis.css";
 @import "./wiki-dungeons.css";
 @import "./wiki-musicas.css";
+@import "./wiki-catalogos.css";
 
 /* Ajuste do menu para 15 wikis. */
 .wiki-topo-simples .wiki-menu-topo {

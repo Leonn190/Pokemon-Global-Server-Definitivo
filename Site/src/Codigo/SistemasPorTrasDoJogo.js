@@ -33,6 +33,7 @@ export const sistemasPorTrasDoJogo = [
   { slug: "sistema-de-huds", emoji: "📊", titulo: "Sistema de HUDs" },
   { slug: "sistema-de-configuracao", emoji: "⚙️", titulo: "Sistema de Configuração" },
   { slug: "sistema-de-regras-centralizadas", emoji: "📐", titulo: "Sistema de Regras Centralizadas" },
+  { slug: "sistema-de-comandos", emoji: "⌨️", titulo: "Sistema de Comandos" },
   { slug: "sistema-de-renderizacao-e-shaders", emoji: "✨", titulo: "Sistema de Renderização e Shaders" },
   { slug: "sistema-de-sprites-e-animacoes", emoji: "🎞️", titulo: "Sistema de Sprites e Animações" },
   { slug: "sistema-de-sons-e-musicas", emoji: "🎵", titulo: "Sistema de Sons e Músicas" },

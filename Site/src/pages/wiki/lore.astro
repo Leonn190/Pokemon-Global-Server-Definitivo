@@ -1,0 +1,20 @@
+---
+import Layout from "../../Componentes/Layout.astro";
+import WikiTopo from "../../Componentes/WikiTopo.astro";
+import "../../Estilos/wiki.css";
+---
+<Layout
+  titulo="Lore"
+  descricao="Espaço reservado para a lore do Pokémon Global Server."
+>
+  <WikiTopo ativo="lore" titulo="Lore" tituloId="titulo-lore" />
+  <main class="wiki-vazia-habilidades" aria-labelledby="titulo-lore-vazio">
+    <section class="bloco-info">
+      <p class="selo">Em preparação</p>
+      <h2 id="titulo-lore-vazio">Lore do Pokémon Global Server</h2>
+      <p>
+        Esta wiki substitui a antiga página isolada de tipos. A tabela de tipos agora fica dentro da wiki de combate; este espaço fica reservado para história, regiões, personagens e contexto do universo do jogo.
+      </p>
+    </section>
+  </main>
+</Layout>

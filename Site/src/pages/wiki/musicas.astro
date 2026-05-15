@@ -23,7 +23,7 @@ const opcoesEstilo = [
 ---
 <Layout
   titulo="Músicas"
-  descricao="Wiki de músicas do Pokémon Global Server, com busca, filtro por estilo, ordenação e player por faixa."
+  descricao="Wiki de músicas do Pokémon Global Server, com busca, filtro por estilo, ordenação, player por faixa e volume geral."
 >
   <WikiTopo ativo="musicas" titulo="Músicas" tituloId="titulo-musicas" />
   <WikiCatalogoShell
@@ -49,6 +49,10 @@ const opcoesEstilo = [
       <SelectFiltroWiki data-musicas-sort label="Ordenar" options={opcoesOrdenacao} />
       <SelectFiltroWiki data-musicas-style label="Estilo" options={opcoesEstilo} />
     </Fragment>
+    <label slot="status-actions" class="musicas-volume-global" aria-label="Volume geral das músicas">
+      <span>Volume</span>
+      <input type="range" min="0" max="1" value="1" step="0.01" data-musicas-global-volume />
+    </label>
   </WikiCatalogoShell>
   <JsonPayload id="musicas-data" dados={payloadMusicas} />
   <script>

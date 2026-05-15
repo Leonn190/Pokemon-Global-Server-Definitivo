@@ -1,20 +1,102 @@
 ---
 import Layout from "../../Componentes/Layout.astro";
 import WikiTopo from "../../Componentes/WikiTopo.astro";
+import WikiCatalogoShell from "../../Componentes/WikiCatalogoShell.astro";
+import CampoBuscaWiki from "../../Componentes/CampoBuscaWiki.astro";
+import SelectFiltroWiki from "../../Componentes/SelectFiltroWiki.astro";
+import ModalDetalhe from "../../Componentes/ModalDetalhe.astro";
+import ModalControles from "../../Componentes/ModalControles.astro";
+import PainelDetalhe from "../../Componentes/PainelDetalhe.astro";
+import JsonPayload from "../../Componentes/JsonPayload.astro";
+import { carregarHabilidades, resumoHabilidades } from "../../Codigo/HabilidadesWikiDados.js";
 import "../../Estilos/wiki.css";
+
+const habilidades = carregarHabilidades();
+const resumo = resumoHabilidades(habilidades);
+const payloadHabilidades = { habilidades, resumo };
+const opcoesOrdenacao = [
+  { value: "ordem", label: "Ordem oficial" },
+  { value: "nome", label: "Alfabética" },
+  { value: "nivel", label: "Nível" },
+  { value: "ramo", label: "Ramo" },
+  { value: "grupo", label: "Grupo" },
+];
+const opcoesRamo = [{ value: "", label: "Todos" }, ...resumo.ramos.map((ramo) => ({ value: ramo.chave, label: ramo.rotulo }))];
+const opcoesNivel = [{ value: "", label: "Todos" }, ...resumo.niveis.map((nivel) => ({ value: nivel.chave, label: nivel.rotulo }))];
 ---
 <Layout
   titulo="Habilidades"
-  descricao="Wiki de habilidades do jogador do Pokémon Global Server."
+  descricao="Wiki de habilidades do jogador do Pokémon Global Server, com busca, filtros por ramo, nível, grupo, efeitos e dependências."
 >
   <WikiTopo ativo="habilidades" titulo="Habilidades" tituloId="titulo-habilidades" />
-  <main class="wiki-vazia-habilidades" aria-labelledby="titulo-habilidades-vazio">
-    <section class="bloco-info">
-      <p class="selo">Em preparação</p>
-      <h2 id="titulo-habilidades-vazio">Árvore de habilidades do jogador</h2>
-      <p>
-        Esta wiki já está criada para entrar no menu principal, mas fica vazia por enquanto até os dados finais das skills do player serem definidos.
-      </p>
-    </section>
-  </main>
+  <WikiCatalogoShell
+    appClass="habilidades-app"
+    appAttrs={{ "data-habilidades-app": true }}
+    toolbarClass="habilidades-toolbar"
+    toolbarRotulo="Ferramentas da wiki de habilidades"
+    quantidade={resumo.quantidade}
+    countAttrs={{ "data-habilidades-count": true }}
+    directionAttrs={{ "data-habilidades-direction": true }}
+    clearAttrs={{ "data-habilidades-clear": true }}
+    clearAriaLabel="Limpar busca e filtros de habilidades"
+    gridClass="catalogo-grid habilidades-grid"
+    gridAttrs={{ "data-habilidades-grid": true }}
+    gridRotulo="Lista de habilidades"
+    vazioAttrs={{ "data-habilidades-empty": true }}
+    vazioTitulo="Nenhuma habilidade encontrada."
+    vazioTexto="Confira a regra Dados/Regras/Skils.toml ou limpe os filtros."
+    sentinelAttrs={{ "data-habilidades-sentinel": true }}
+  >
+    <Fragment slot="toolbar">
+      <CampoBuscaWiki data-habilidades-search placeholder="Nome, sigla, grupo, descrição, efeito ou dependência..." />
+      <SelectFiltroWiki data-habilidades-sort label="Ordenar" options={opcoesOrdenacao} />
+      <SelectFiltroWiki data-habilidades-branch label="Ramo" options={opcoesRamo} />
+      <SelectFiltroWiki data-habilidades-level label="Nível" options={opcoesNivel} />
+    </Fragment>
+  </WikiCatalogoShell>
+
+  <ModalDetalhe
+    class="pokemon-detalhe catalogo-detalhe habilidade-detalhe"
+    cardClass="pokemon-detalhe-card item-detalhe-card catalogo-detalhe-card habilidade-detalhe-card"
+    labelledby="skill-detalhe-nome"
+    backdropAttrs={{ "data-skill-close": true }}
+    data-skill-detail
+  >
+    <ModalControles
+      rotulo="Navegação da habilidade aberta"
+      prevLabel="Habilidade anterior"
+      nextLabel="Próxima habilidade"
+      prevAttrs={{ "data-skill-prev": true }}
+      nextAttrs={{ "data-skill-next": true }}
+      closeAttrs={{ "data-skill-close": true }}
+    />
+    <header class="catalogo-detalhe-topo">
+      <span class="catalogo-detalhe-icone habilidade-detalhe-icone" aria-hidden="true">✦</span>
+      <div>
+        <p class="selo">Skill</p>
+        <h2 id="skill-detalhe-nome" data-skill-name>Habilidade</h2>
+        <div class="catalogo-detalhe-tags" data-skill-tags></div>
+      </div>
+    </header>
+    <PainelDetalhe titulo="Descrição" class="item-info-painel catalogo-texto-painel">
+      <p class="item-descricao-melhor" data-skill-description></p>
+    </PainelDetalhe>
+    <div class="catalogo-detalhe-duplo">
+      <PainelDetalhe titulo="Efeitos" class="item-info-painel catalogo-texto-painel">
+        <div class="habilidade-efeitos" data-skill-effects></div>
+      </PainelDetalhe>
+      <PainelDetalhe titulo="Dependências" class="item-info-painel catalogo-texto-painel">
+        <div class="catalogo-codigos" data-skill-parents></div>
+      </PainelDetalhe>
+    </div>
+    <PainelDetalhe titulo="Informações técnicas" class="item-info-painel catalogo-texto-painel">
+      <dl class="item-info-lista" data-skill-info></dl>
+    </PainelDetalhe>
+  </ModalDetalhe>
+
+  <JsonPayload id="habilidades-data" dados={payloadHabilidades} />
+  <script>
+    import { inicializarWikiHabilidades } from "../../Codigo/HabilidadesRuntime.js";
+    inicializarWikiHabilidades();
+  </script>
 </Layout>

@@ -107,7 +107,7 @@ function iniciarAcessibilidadeModaisWiki() {
   const focoAnterior = new WeakMap();
 
   function containerDoDialog(dialog) {
-    return dialog?.closest("aside, [data-pokemon-detail], [data-item-detail], [data-ataque-detail], [data-efeito-detail], [data-equipavel-detail], [data-dungeon-detail], [data-mundo-detail], [data-npc-detail], [data-estadio-detail]") ?? null;
+    return dialog?.closest("aside, [data-pokemon-detail], [data-item-detail], [data-ataque-detail], [data-efeito-detail], [data-equipavel-detail], [data-dungeon-detail], [data-mundo-detail], [data-npc-detail], [data-estadio-detail], [data-comando-detail], [data-skill-detail]") ?? null;
   }
   function estaVisivel(elemento) {
     return !!elemento && !elemento.hidden && elemento.getClientRects().length > 0;
